@@ -1,16 +1,9 @@
-import { track } from '@vercel/analytics';
-
 export enum ARCHIVE_TYPES {
   ADVERT = 'advert',
   CATALOGUES = 'catalogues',
   MANUAL = 'manual',
   GENERIC = 'generic',
   TUNING = 'tuning',
-}
-
-export enum TRACKING_EVENTS {
-  PATREON = 'patreon',
-  SERVER_COST = 'server cost',
 }
 
 export interface SubmissionInfo {
@@ -100,8 +93,4 @@ export function determineArchiveType(path: string) {
   } else {
     return ARCHIVE_TYPES.GENERIC;
   }
-}
-
-export function trackStuff(event: TRACKING_EVENTS, path: string) {
-  track(event, { location: path });
 }

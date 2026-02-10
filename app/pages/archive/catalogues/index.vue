@@ -1,14 +1,9 @@
 <script setup lang="ts">
   import { HERO_TYPES } from '../../../../data/models/generic';
-  import {
-    ARCHIVE_TYPES,
-    determineArchiveType,
-    submitArchiveFile,
-    TRACKING_EVENTS,
-    trackStuff,
-  } from '../../../../data/models/helper-utils';
+  import { ARCHIVE_TYPES, determineArchiveType, submitArchiveFile } from '../../../../data/models/helper-utils';
 
   const { path } = useRoute();
+  const { capture } = usePostHog();
   const archiveType = determineArchiveType(path);
   const { data: catalogues, status } = await useAsyncData(() => queryCollection('catalogues').all());
 
@@ -120,7 +115,7 @@
                 color="secondary"
                 to="https://buy.stripe.com/3cs8yWe1P1ER3Oo5kl"
                 target="_blank"
-                @click="trackStuff(TRACKING_EVENTS.SERVER_COST, path)"
+                @click="capture('support_cta_clicked', { type: 'server_cost', location: path })"
               >
                 <i class="fad fa-hand-holding-circle-dollar mr-2"></i>
                 {{ $t('actions.cover_server_costs') }}

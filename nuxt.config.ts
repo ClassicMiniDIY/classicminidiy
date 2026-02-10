@@ -234,7 +234,6 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/ui',
     'nuxt-llms',
-    ['nuxt-gtag', { id: 'G-FBH0E64HM1' }],
     '@nuxtjs/i18n',
     '@nuxtjs/mcp-toolkit',
   ],
@@ -454,7 +453,6 @@ export default defineNuxtConfig({
       include: [
         'luxon',
         'lodash',
-        '@vercel/analytics',
         'highcharts',
         'highcharts-vue',
         'highcharts/modules/exporting',
@@ -492,7 +490,7 @@ export default defineNuxtConfig({
             utilities: ['luxon', 'lodash'],
 
             // Analytics and tracking
-            analytics: ['@vercel/analytics', 'posthog-js'],
+            analytics: ['posthog-js'],
           },
         },
       },

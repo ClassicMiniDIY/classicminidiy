@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import { ArchiveItems, BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
-  import { ARCHIVE_TYPES, submitArchiveFile, TRACKING_EVENTS, trackStuff } from '../../../data/models/helper-utils';
+  import { ARCHIVE_TYPES, submitArchiveFile } from '../../../data/models/helper-utils';
   const { path } = useRoute();
+  const { capture } = usePostHog();
   const { t } = useI18n();
 
   // Function to get translated archive item title
@@ -124,7 +125,7 @@
           to="https://buy.stripe.com/3cs8yWe1P1ER3Oo5kl"
           target="_blank"
           external
-          @click="trackStuff(TRACKING_EVENTS.SERVER_COST, path)"
+          @click="capture('support_cta_clicked', { type: 'server_cost', location: path })"
         >
           <i class="fa-duotone fa-hand-holding-circle-dollar mr-2"></i>
           {{ $t('cover_server_costs') }}

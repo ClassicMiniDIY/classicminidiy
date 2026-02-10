@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-  import { SpeedInsights } from '@vercel/speed-insights/nuxt';
   import { DateTime } from 'luxon';
   import { HERO_TYPES } from '../../data/models/generic';
 
@@ -261,7 +260,6 @@
 
   <!-- Floating Chat Input -->
   <FloatingChatInput />
-  <SpeedInsights />
 </template>
 
 <style lang="scss">
