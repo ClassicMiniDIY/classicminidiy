@@ -544,7 +544,7 @@ export default defineNuxtConfig({
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
       // Exclude Highcharts routes from service worker caching
       // to prevent issues with client-side rendering
-      navigateFallbackDenylist: [/\/technical\/calculators\/needles/, /\/technical\/calculators\/gearbox/],
+      navigateFallbackDenylist: [/\/technical\/calculators\/needles/, /\/technical\/calculators\/gearbox/, /^\/t\//],
       // Customize caching strategies
       runtimeCaching: [
         {
