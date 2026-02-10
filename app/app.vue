@@ -1,7 +1,4 @@
 <script lang="ts" setup>
-  import { Analytics } from '@vercel/analytics/nuxt';
-  import { SpeedInsights } from '@vercel/speed-insights/nuxt';
-
   const route = useRoute();
   const isHomepage = ref(route.path === '/');
   watch(
@@ -25,8 +22,6 @@
       </div>
       <Footer></Footer>
       <VitePwaManifest />
-      <Analytics />
-      <SpeedInsights />
       <AppPromoPopup />
     </div>
   </UApp>
