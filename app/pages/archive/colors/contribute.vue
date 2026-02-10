@@ -117,6 +117,12 @@
         submissionSuccess.value = true;
         apiError.value = false;
         submissionId.value = response.value.uuid;
+
+        const { capture } = usePostHog();
+        capture('form_submitted', {
+          form: 'color_contribution',
+          color_code: formData.code,
+        });
       } else {
         throw new Error('No response from server');
       }

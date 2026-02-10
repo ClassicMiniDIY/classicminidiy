@@ -2,6 +2,7 @@
   import { TRACKING_EVENTS, trackStuff } from '../../data/models/helper-utils';
 
   const { t } = useI18n();
+  const { capture } = usePostHog();
 
   const { path } = useRoute();
 
@@ -12,6 +13,11 @@
       required: true,
     },
   });
+
+  const handlePatreonClick = () => {
+    trackStuff(TRACKING_EVENTS.PATREON, path);
+    capture('support_cta_clicked', { type: 'patreon', location: path });
+  };
 </script>
 
 <template>
@@ -43,7 +49,7 @@
               target="_blank"
               rel="noopener"
               class="is-patreon"
-              @click="trackStuff(TRACKING_EVENTS.PATREON, path)"
+              @click="handlePatreonClick"
             >
               <i class="fab fa-patreon mr-2"></i>
               <span>{{ t('button_text') }}</span>
@@ -72,7 +78,7 @@
             rel="noopener"
             size="sm"
             class="is-patreon mt-4"
-            @click="trackStuff(TRACKING_EVENTS.PATREON, path)"
+            @click="handlePatreonClick"
           >
             <i class="fab fa-patreon mr-2"></i>
             <span>{{ t('button_text') }}</span>

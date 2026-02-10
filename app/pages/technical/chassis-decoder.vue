@@ -79,6 +79,13 @@
 
       decodedResult.value = response;
 
+      const { capture } = usePostHog();
+      capture('decoder_used', {
+        decoder: 'chassis',
+        year_range: yearRange.value,
+        is_valid: !!response,
+      });
+
       // Smooth scroll to decoded results section
       await nextTick(); // Wait for DOM to update
       if (decodedResultsSection.value) {

@@ -201,6 +201,8 @@
     displayLimit.value = 50;
   });
 
+  const { capture } = usePostHog();
+
   // Select a needle from dropdown
   const selectNeedle = (name: string) => {
     const needle = needleLookup.value.get(name);
@@ -217,6 +219,12 @@
     isDropdownOpen.value = false;
     displayLimit.value = 50;
     updateArrayItem();
+
+    capture('calculator_used', {
+      calculator: 'needles',
+      needle_count: selectedNeedles.value.length,
+      needles: selectedNeedles.value.map((n) => n.name),
+    });
   };
 
   // Close dropdown when clicking outside

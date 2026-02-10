@@ -369,13 +369,19 @@ export default defineNuxtConfig({
     sitemap: ['/sitemap.xml'],
   },
 
-  plugins: [{ src: '~/plugins/highcharts.ts', mode: 'client' }],
+  plugins: [
+    { src: '~/plugins/highcharts.ts', mode: 'client' },
+    { src: '~/plugins/posthog.ts', mode: 'client' },
+  ],
 
   runtimeConfig: {
     public: {
       s3BaseURL: process.env.s3Base,
       serverlessEndpoint: process.env.serverlessEndpoint,
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.classicminidiy.com',
+      posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY || '',
+      posthogHost: process.env.NODE_ENV === 'production' ? '/t' : 'https://us.i.posthog.com',
+      posthogUiHost: 'https://us.posthog.com',
     },
     githubAPIKey: process.env.githubAPIKey,
     GITLAB: process.env.GITLAB,
@@ -454,6 +460,7 @@ export default defineNuxtConfig({
         'highcharts/modules/exporting',
         'highcharts/modules/export-data',
         'highcharts/modules/accessibility',
+        'posthog-js',
       ],
       exclude: [],
     },
@@ -485,7 +492,7 @@ export default defineNuxtConfig({
             utilities: ['luxon', 'lodash'],
 
             // Analytics and tracking
-            analytics: ['@vercel/analytics'],
+            analytics: ['@vercel/analytics', 'posthog-js'],
           },
         },
       },
