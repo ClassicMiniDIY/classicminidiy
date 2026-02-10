@@ -439,8 +439,6 @@ export default defineNuxtConfig({
       '/images/**': { headers: { 'cache-control': 'public,max-age=31536000,immutable' } },
       '/fonts/**': { headers: { 'cache-control': 'public,max-age=31536000,immutable' } },
       '/assets/**': { headers: { 'cache-control': 'public,max-age=31536000,immutable' } },
-      '/t/static/**': { proxy: 'https://us-assets.i.posthog.com/static/**' },
-      '/t/**': { proxy: 'https://us.i.posthog.com/**' },
     },
     // Minify responses
     minify: true,
