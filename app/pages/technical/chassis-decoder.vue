@@ -2,6 +2,8 @@
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
   import { chassisRanges } from '../../../data/models/decoders';
 
+  const { capture } = usePostHog();
+
   interface ChassisPosition {
     position: number;
     value: string;
@@ -79,7 +81,6 @@
 
       decodedResult.value = response;
 
-      const { capture } = usePostHog();
       capture('decoder_used', {
         decoder: 'chassis',
         year_range: yearRange.value,

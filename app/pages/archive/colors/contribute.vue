@@ -2,6 +2,7 @@
   import type { PrettyColor, ColorQueueItem, ColorQueueSubmissionResponse } from '../../../../data/models/colors';
   import { HERO_TYPES } from '../../../../data/models/generic';
 
+  const { capture } = usePostHog();
   const { query } = useRoute();
   const { data: color, status } = await useFetch<PrettyColor | null>(`/api/colors/single`, {
     query: {
@@ -118,7 +119,6 @@
         apiError.value = false;
         submissionId.value = response.value.uuid;
 
-        const { capture } = usePostHog();
         capture('form_submitted', {
           form: 'color_contribution',
           color_code: formData.code,
