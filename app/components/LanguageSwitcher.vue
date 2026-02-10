@@ -10,7 +10,14 @@
     return locales.value.filter((i) => i.code !== locale.value);
   });
 
+  const { capture } = usePostHog();
+
   const handleLanguageChange = async (localeCode: string) => {
+    capture('language_changed', {
+      from_language: locale.value,
+      to_language: localeCode,
+    });
+
     // Set the locale which will persist in cookie/localStorage
     await setLocale(localeCode as any);
 

@@ -2,6 +2,8 @@
   import { DateTime } from 'luxon';
   import { HERO_TYPES } from '../../data/models/generic';
 
+  const { capture } = usePostHog();
+
   useHead({
     title: $t('seo.title'),
     meta: [
@@ -317,7 +319,12 @@
               {{ $t('options.purchase.description') }}
             </p>
             <div class="flex justify-center">
-              <UButton to="https://store.classicminidiy.com/collections/efi-base-maps" color="primary" target="_blank">
+              <UButton
+                to="https://store.classicminidiy.com/collections/efi-base-maps"
+                color="primary"
+                target="_blank"
+                @click="capture('maps_cta_clicked', { action: 'purchase' })"
+              >
                 <i class="fad fa-credit-card mr-2"></i> {{ $t('options.purchase.button') }}
               </UButton>
             </div>
@@ -338,10 +345,16 @@
                 to="https://github.com/SomethingNew71/MiniECUMaps/archive/refs/heads/master.zip"
                 color="primary"
                 target="_blank"
+                @click="capture('maps_cta_clicked', { action: 'download' })"
               >
                 <i class="fad fa-download mr-2"></i> {{ $t('options.download.button') }}
               </UButton>
-              <UButton to="https://github.com/SomethingNew71/MiniECUMaps" color="neutral" target="_blank">
+              <UButton
+                to="https://github.com/SomethingNew71/MiniECUMaps"
+                color="neutral"
+                target="_blank"
+                @click="capture('maps_cta_clicked', { action: 'source' })"
+              >
                 <i class="fad fa-code-branch mr-2"></i> {{ $t('options.download.viewSource') }}
               </UButton>
             </div>

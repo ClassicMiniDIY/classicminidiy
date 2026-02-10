@@ -36,6 +36,19 @@
     const preRoundcap = stroke.value * (boreRadius.value * boreRadius.value) * pi * 4;
     return Math.round((preRoundcap + Number.EPSILON) * 100) / 100;
   });
+
+  const { capture } = usePostHog();
+  let captureTimer: ReturnType<typeof setTimeout> | null = null;
+  watch([ratio, capacity], () => {
+    if (captureTimer) clearTimeout(captureTimer);
+    captureTimer = setTimeout(() => {
+      capture('calculator_used', {
+        calculator: 'compression',
+        compression_ratio: ratio.value,
+        capacity_cc: capacity.value,
+      });
+    }, 1000);
+  });
 </script>
 
 <template>

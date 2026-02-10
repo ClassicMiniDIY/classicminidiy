@@ -32,6 +32,7 @@
   const imagesValid = ref(false);
   const contactValid = ref(false);
   const step = ref(1);
+  const { capture } = usePostHog();
 
   // Track field interactions
   const touchedFields = ref(new Set());
@@ -268,6 +269,13 @@
 
       hasSuccess.value = true;
       step.value++;
+      capture('form_submitted', {
+        form: 'wheel_submission',
+        wheel_name: name.value,
+        wheel_width: width.value,
+        wheel_size: size.value,
+        is_new: props.newWheel,
+      });
     } catch (error) {
       hasError.value = true;
       errorMessage.value = error instanceof Error ? error.message : 'An error occurred during submission';
@@ -285,6 +293,10 @@
     validateForm(); // Re-validate before proceeding
     if (canProceedToNextStep.value) {
       step.value++;
+      capture('form_step_changed', {
+        form: 'wheel_submission',
+        step: step.value,
+      });
     } else {
       console.error('Cannot proceed to next step. Validation failed.', {
         detailsValid: detailsValid.value,

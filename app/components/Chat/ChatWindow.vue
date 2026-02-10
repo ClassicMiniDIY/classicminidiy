@@ -280,10 +280,18 @@
   const messages = computed(() => streamContext?.messages.value || []);
   const isLoading = computed(() => streamContext?.isLoading.value || false);
 
+  const { capture } = usePostHog();
+
   async function handleSubmit() {
     if (!input.value.trim() || !streamContext || isLoading.value) return;
 
     const message = input.value.trim();
+
+    capture('chat_message_sent', {
+      message_length: message.length,
+      is_first_message: isChatEmpty.value,
+    });
+
     input.value = '';
 
     // Auto-resize textarea

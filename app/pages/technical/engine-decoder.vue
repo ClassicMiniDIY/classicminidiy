@@ -42,6 +42,8 @@
     },
   ];
 
+  const { capture } = usePostHog();
+
   // Computed property for filtered engine codes
   const filteredEngineCodes = computed(() => {
     if (!engineCodes.value) return [];
@@ -57,6 +59,19 @@
         item.description.toLowerCase().includes(searchTerm)
       );
     });
+  });
+
+  let engineSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  watch(search, (val) => {
+    if (!val) return;
+    if (engineSearchTimer) clearTimeout(engineSearchTimer);
+    engineSearchTimer = setTimeout(() => {
+      capture('decoder_used', {
+        decoder: 'engine',
+        search_term: val,
+        results_count: filteredEngineCodes.value.length,
+      });
+    }, 1000);
   });
 
   useHead({

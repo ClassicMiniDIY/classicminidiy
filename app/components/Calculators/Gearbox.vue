@@ -108,10 +108,17 @@
   const debouncedUpdate = ref(0);
   let debounceTimer: NodeJS.Timeout | null = null;
 
+  const { capture } = usePostHog();
+
   const triggerDebouncedUpdate = () => {
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debouncedUpdate.value++;
+      capture('calculator_used', {
+        calculator: 'gearbox',
+        gearbox_type: gear_ratios.value.length === 4 ? '4-speed' : '5-speed',
+        final_drive: final_drive.value,
+      });
     }, 150); // 150ms debounce
   };
 
