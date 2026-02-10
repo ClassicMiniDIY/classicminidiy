@@ -74,6 +74,10 @@
     }, 1000);
   });
 
+  onUnmounted(() => {
+    if (engineSearchTimer) clearTimeout(engineSearchTimer);
+  });
+
   useHead({
     title: $t('title'),
     meta: [

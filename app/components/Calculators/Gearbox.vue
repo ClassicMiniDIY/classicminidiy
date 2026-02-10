@@ -122,6 +122,10 @@
     }, 150); // 150ms debounce
   };
 
+  onUnmounted(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+  });
+
   // Section for Table Data - these will be computed now
   // Use type assertion to fix TypeScript errors with Vuetify table headers
   const tableHeadersGearing = tableHeaders.tableHeadersGearing as any[];

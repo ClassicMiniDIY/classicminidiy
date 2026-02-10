@@ -49,6 +49,10 @@
       });
     }, 1000);
   });
+
+  onUnmounted(() => {
+    if (captureTimer) clearTimeout(captureTimer);
+  });
 </script>
 
 <template>
