@@ -39,13 +39,43 @@
   const today = DateTime.now();
   const activePromos = promotions.filter((p) => DateTime.fromISO(p.expiresAt) > today);
 
-  // Default to first promo during SSR, randomize on client mount to avoid hydration mismatch
-  const selectedPromo = ref<Promotion | null>(activePromos.length > 0 ? activePromos[0] : null);
+  // Default to first promo during SSR, randomize starting index on client
+  const currentIndex = ref(0);
+  const selectedPromo = computed(() => (activePromos.length > 0 ? activePromos[currentIndex.value] : null));
+
+  let autoRotateInterval: ReturnType<typeof setInterval> | null = null;
+  const AUTO_ROTATE_MS = 6000;
+
+  const goToPromo = (index: number) => {
+    currentIndex.value = index;
+    resetAutoRotate();
+  };
+
+  const nextPromo = () => {
+    currentIndex.value = (currentIndex.value + 1) % activePromos.length;
+  };
+
+  const prevPromo = () => {
+    currentIndex.value = (currentIndex.value - 1 + activePromos.length) % activePromos.length;
+  };
+
+  const resetAutoRotate = () => {
+    if (autoRotateInterval) clearInterval(autoRotateInterval);
+    if (activePromos.length > 1) {
+      autoRotateInterval = setInterval(nextPromo, AUTO_ROTATE_MS);
+    }
+  };
 
   onMounted(() => {
     if (activePromos.length > 1) {
-      selectedPromo.value = activePromos[Math.floor(Math.random() * activePromos.length)];
+      // Randomize starting slide on client
+      currentIndex.value = Math.floor(Math.random() * activePromos.length);
+      autoRotateInterval = setInterval(nextPromo, AUTO_ROTATE_MS);
     }
+  });
+
+  onUnmounted(() => {
+    if (autoRotateInterval) clearInterval(autoRotateInterval);
   });
 
   const promoStyle = computed(() =>
@@ -87,14 +117,30 @@
           <i v-if="selectedPromo.external" class="fas fa-external-link-alt ml-2 text-sm"></i>
         </UButton>
 
-        <!-- Dot indicators when multiple promos are active -->
-        <div v-if="activePromos.length > 1" class="flex gap-2 mt-6">
-          <span
-            v-for="promo in activePromos"
+        <!-- Dot indicators + nav when multiple promos are active -->
+        <div v-if="activePromos.length > 1" class="flex items-center gap-3 mt-6">
+          <button
+            class="text-white/60 hover:text-white transition-colors"
+            aria-label="Previous promotion"
+            @click="prevPromo"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button
+            v-for="(promo, index) in activePromos"
             :key="promo.id"
-            class="w-2.5 h-2.5 rounded-full"
-            :class="promo.id === selectedPromo.id ? 'bg-white' : 'bg-white/40'"
+            class="w-2.5 h-2.5 rounded-full transition-colors cursor-pointer"
+            :class="promo.id === selectedPromo?.id ? 'bg-white' : 'bg-white/40 hover:bg-white/60'"
+            :aria-label="`Go to promotion ${index + 1}`"
+            @click="goToPromo(index)"
           />
+          <button
+            class="text-white/60 hover:text-white transition-colors"
+            aria-label="Next promotion"
+            @click="nextPromo"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
       </div>
     </div>
