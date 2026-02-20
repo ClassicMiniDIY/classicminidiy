@@ -13,9 +13,11 @@
 ### Task 1: Create `HeroPromo.vue` component
 
 **Files:**
+
 - Create: `app/components/HeroPromo.vue`
 
 **Context:**
+
 - The existing hero component is at `app/components/Hero.vue`
 - It uses `HERO_TYPES` from `data/models/generic.ts`
 - The homepage hero uses props: `titleKey="'home_title'"`, `subtitleKey="'home_subtitle'"`, `size="'is-medium'"`, `special=true`, `heroType=HERO_TYPES.HOME`, `background="'/backdrop2'"`, `navigation=true`
@@ -58,7 +60,8 @@
       title: 'Win a Turbocharged A-Series Engine',
       subtitle: 'Enter the Classic Mini DIY giveaway — drawing March 6th!',
       ctaText: 'Enter the Giveaway',
-      ctaUrl: 'https://raffall.com/404519/enter-raffle-to-win-turbocharged-classic-mini-a-series-engine-hosted-by-cole-gentry',
+      ctaUrl:
+        'https://raffall.com/404519/enter-raffle-to-win-turbocharged-classic-mini-a-series-engine-hosted-by-cole-gentry',
       backgroundImage: 'https://classicminidiy.s3.amazonaws.com/misc/promo-engine-giveaway.webp',
       expiresAt: '2026-03-06',
       external: true,
@@ -166,9 +169,11 @@ git commit -m "feat: add HeroPromo component with promotional banner support"
 ### Task 2: Wire `HeroPromo` into the homepage
 
 **Files:**
+
 - Modify: `app/pages/index.vue:1-3` (remove Hero import/enum), `app/pages/index.vue:86-94` (replace hero tag)
 
 **Context:**
+
 - Current `index.vue` imports `HERO_TYPES` from `../../data/models/generic` at line 3
 - The hero is rendered at lines 86-94: `<hero :titleKey="'home_title'" ... />`
 - `HeroPromo` is auto-imported by Nuxt (it's in `app/components/`)
@@ -176,6 +181,7 @@ git commit -m "feat: add HeroPromo component with promotional banner support"
 **Step 1: Remove the `HERO_TYPES` import (no longer needed on this page)**
 
 In `app/pages/index.vue`, remove line 3:
+
 ```
   import { HERO_TYPES } from '../../data/models/generic';
 ```
@@ -183,21 +189,23 @@ In `app/pages/index.vue`, remove line 3:
 **Step 2: Replace the hero tag**
 
 Replace lines 86-94:
+
 ```vue
-  <hero
-    :titleKey="'home_title'"
-    :subtitleKey="'home_subtitle'"
-    :size="'is-medium'"
-    :special="true"
-    :heroType="HERO_TYPES.HOME"
-    :background="'/backdrop2'"
-    :navigation="true"
-  />
+<hero
+  :titleKey="'home_title'"
+  :subtitleKey="'home_subtitle'"
+  :size="'is-medium'"
+  :special="true"
+  :heroType="HERO_TYPES.HOME"
+  :background="'/backdrop2'"
+  :navigation="true"
+/>
 ```
 
 With:
+
 ```vue
-  <HeroPromo />
+<HeroPromo />
 ```
 
 **Step 3: Test in browser**
@@ -205,6 +213,7 @@ With:
 Run: `cd /Users/colegentry/Development/classicminidiy && bun run dev`
 
 Open http://localhost:3000 and verify:
+
 1. A promotional banner appears (one of the two, randomly)
 2. The banner has the title, subtitle, and CTA button
 3. Dot indicators appear at bottom (since both promos should be active)
@@ -227,11 +236,13 @@ git commit -m "feat: replace static homepage hero with HeroPromo promotional ban
 ### Task 3: Upload placeholder images and finalize
 
 **Files:**
+
 - Modify: `app/components/HeroPromo.vue` (update image URLs if needed)
 
 **Step 1: Verify background images**
 
 The two promo background images need to exist at:
+
 - `https://classicminidiy.s3.amazonaws.com/misc/promo-mini-exchange.webp`
 - `https://classicminidiy.s3.amazonaws.com/misc/promo-engine-giveaway.webp`
 
@@ -240,6 +251,7 @@ If these don't exist yet, the promos will render with the `#242424` dark backgro
 **Step 2: Final visual check**
 
 Verify the promos look good on:
+
 - Desktop (wide screen)
 - Tablet (medium)
 - Mobile (narrow) — the `special-title` font size drops to `2rem` on screens < 1024px

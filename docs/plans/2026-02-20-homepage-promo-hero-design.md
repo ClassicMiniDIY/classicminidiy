@@ -17,20 +17,21 @@ Hardcoded array of promotions:
 
 ```ts
 interface Promotion {
-  id: string
-  title: string           // Bold headline
-  subtitle: string        // Supporting text
-  ctaText: string         // Button label
-  ctaUrl: string          // Link destination
-  backgroundImage: string // Full S3 URL for hero background
-  expiresAt: string       // ISO date string (e.g. '2026-03-06')
-  external?: boolean      // Opens in new tab if true
+  id: string;
+  title: string; // Bold headline
+  subtitle: string; // Supporting text
+  ctaText: string; // Button label
+  ctaUrl: string; // Link destination
+  backgroundImage: string; // Full S3 URL for hero background
+  expiresAt: string; // ISO date string (e.g. '2026-03-06')
+  external?: boolean; // Opens in new tab if true
 }
 ```
 
 ### Initial Promotions
 
 1. **The Mini Exchange Launch**
+
    - Title: "The Mini Exchange is Live!"
    - Subtitle: "Buy and sell Classic Minis on the brand new marketplace from Classic Mini DIY"
    - CTA: "Visit The Mini Exchange" -> https://theminiexchange.com
