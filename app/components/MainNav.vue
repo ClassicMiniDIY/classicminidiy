@@ -30,26 +30,30 @@
     },
   ]);
 
-  // Community dropdown items (external links)
-  const communityItems = computed(() => [
-    [
-      {
-        label: t('navigation.exchange'),
-        icon: 'i-heroicons-building-storefront',
-        to: 'https://theminiexchange.com',
-      },
-      {
-        label: t('navigation.blog'),
-        icon: 'i-heroicons-pencil-square',
-        to: 'https://classicminidiy.substack.com/',
-      },
-      {
-        label: t('navigation.store'),
-        icon: 'i-heroicons-shopping-bag',
-        to: 'https://store.classicminidiy.com/',
-      },
-    ],
+  // Community link data (single source of truth for desktop + mobile)
+  const communityLinks = computed(() => [
+    {
+      label: t('navigation.exchange'),
+      icon: 'i-heroicons-building-storefront',
+      faIcon: 'fa-shop',
+      to: 'https://theminiexchange.com',
+    },
+    {
+      label: t('navigation.blog'),
+      icon: 'i-heroicons-pencil-square',
+      faIcon: 'fa-pencil',
+      to: 'https://classicminidiy.substack.com/',
+    },
+    {
+      label: t('navigation.store'),
+      icon: 'i-heroicons-shopping-bag',
+      faIcon: 'fa-store',
+      to: 'https://store.classicminidiy.com/',
+    },
   ]);
+
+  // Desktop dropdown format (nested array for UDropdownMenu)
+  const communityItems = computed(() => [communityLinks.value]);
 
   // Get current locale info
   const currentLocale = computed(() => {
@@ -206,37 +210,17 @@
           <!-- Community Links -->
           <p class="text-sm text-muted px-2">{{ t('navigation.community') }}</p>
           <UButton
-            to="https://theminiexchange.com"
+            v-for="link in communityLinks"
+            :key="link.to"
+            :to="link.to"
             target="_blank"
             variant="ghost"
             color="neutral"
             block
             class="justify-start font-bold"
           >
-            <i class="fad fa-shop mr-2"></i>
-            {{ t('navigation.exchange') }}
-          </UButton>
-          <UButton
-            to="https://classicminidiy.substack.com/"
-            target="_blank"
-            variant="ghost"
-            color="neutral"
-            block
-            class="justify-start font-bold"
-          >
-            <i class="fad fa-pencil mr-2"></i>
-            {{ t('navigation.blog') }}
-          </UButton>
-          <UButton
-            to="https://store.classicminidiy.com/"
-            target="_blank"
-            variant="ghost"
-            color="neutral"
-            block
-            class="justify-start font-bold"
-          >
-            <i class="fad fa-store mr-2"></i>
-            {{ t('navigation.store') }}
+            <i :class="['fad', link.faIcon, 'mr-2']"></i>
+            {{ link.label }}
           </UButton>
 
           <USeparator class="my-2" />

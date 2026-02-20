@@ -76,11 +76,21 @@
     }
   };
 
+  const handlePrevClick = () => {
+    prevPromo();
+    resetAutoRotate();
+  };
+
+  const handleNextClick = () => {
+    nextPromo(true);
+    resetAutoRotate();
+  };
+
   onMounted(() => {
     if (activePromos.length > 1) {
       // Randomize starting slide on client
       currentIndex.value = Math.floor(Math.random() * activePromos.length);
-      autoRotateInterval = setInterval(() => nextPromo(), AUTO_ROTATE_MS);
+      resetAutoRotate();
     }
     if (selectedPromo.value) {
       capture('promo_viewed', { promo_id: selectedPromo.value.id, total_active: activePromos.length });
@@ -137,10 +147,7 @@
           <button
             class="text-white/60 hover:text-white transition-colors"
             aria-label="Previous promotion"
-            @click="
-              prevPromo();
-              resetAutoRotate();
-            "
+            @click="handlePrevClick"
           >
             <i class="fas fa-chevron-left"></i>
           </button>
@@ -155,10 +162,7 @@
           <button
             class="text-white/60 hover:text-white transition-colors"
             aria-label="Next promotion"
-            @click="
-              nextPromo(true);
-              resetAutoRotate();
-            "
+            @click="handleNextClick"
           >
             <i class="fas fa-chevron-right"></i>
           </button>
