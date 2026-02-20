@@ -1,6 +1,5 @@
 <script lang="ts" setup>
   import { DateTime } from 'luxon';
-  import { HERO_TYPES } from '../../data/models/generic';
 
   const birthday = DateTime.local(1989, 5, 11);
   const today = DateTime.now();
@@ -83,15 +82,7 @@
 </script>
 
 <template>
-  <hero
-    :titleKey="'home_title'"
-    :subtitleKey="'home_subtitle'"
-    :size="'is-medium'"
-    :special="true"
-    :heroType="HERO_TYPES.HOME"
-    :background="'/backdrop2'"
-    :navigation="true"
-  />
+  <HeroPromo />
   <div class="spacer layer"></div>
   <div class="container mx-auto px-4 pt-10">
     <div class="grid grid-cols-12 gap-4 pb-5">
