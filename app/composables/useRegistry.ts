@@ -31,12 +31,16 @@ export const useRegistry = () => {
     return (data || []).map(mapToRegistry);
   };
 
-  const submitRegistryEntry = async (entry: Partial<RegistryItem>) => {
+  const submitRegistryEntry = async (entry: Partial<RegistryItem>): Promise<any> => {
+    const { user } = useAuth();
+    if (!user.value) throw new Error('Must be authenticated to submit');
+
     const { data, error } = await supabase
       .from('submission_queue')
       .insert({
         type: 'new_item',
         target_type: 'registry',
+        submitted_by: user.value.id,
         status: 'pending',
         data: entry,
       })

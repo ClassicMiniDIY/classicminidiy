@@ -31,6 +31,7 @@
   const { data: wheelsStats, refresh: refreshWheelsStats } =
     await useFetch<IWheelsDataReviewItem[]>('/api/wheels/review/list');
   const { data: colorsStats, refresh: refreshColorsStats } = await useFetch<ColorQueueItem[]>('/api/colors/queue/list');
+  const { data: documentsCount, refresh: refreshDocumentsCount } = await useFetch<{ count: number }>('/api/admin/queue/count?targetType=document');
 
   // Refresh state
   const isRefreshing = ref(false);
@@ -39,7 +40,7 @@
   const refreshStats = async () => {
     isRefreshing.value = true;
     try {
-      await Promise.all([refreshRegistryStats(), refreshWheelsStats(), refreshColorsStats()]);
+      await Promise.all([refreshRegistryStats(), refreshWheelsStats(), refreshColorsStats(), refreshDocumentsCount()]);
     } catch (error) {
       console.error('Error refreshing stats:', error);
     } finally {
@@ -236,6 +237,37 @@
           </div>
         </UCard>
 
+        <!-- Documents Queue Card -->
+        <UCard class="hover:shadow-2xl transition-shadow">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+              <i class="fad fa-books text-2xl text-accent"></i>
+            </div>
+            <h2 class="text-xl font-bold">Documents Queue</h2>
+          </div>
+          <p class="opacity-70 mb-6">Review submitted archive documents from the community.</p>
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-check-circle text-success"></i>
+              <span>Approve documents</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-times-circle text-error"></i>
+              <span>Reject submissions</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-edit text-info"></i>
+              <span>Review edit suggestions</span>
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <UButton to="/archive/documents" color="neutral">
+              <i class="fad fa-arrow-right mr-2"></i>
+              View Documents
+            </UButton>
+          </div>
+        </UCard>
+
         <!-- Chat Threads Card -->
         <UCard class="hover:shadow-2xl transition-shadow">
           <div class="flex items-center gap-3 mb-4">
@@ -285,7 +317,7 @@
               {{ isRefreshing ? 'Refreshing...' : 'Refresh' }}
             </UButton>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 text-center">
             <div class="p-4 rounded-lg">
               <div class="text-primary mb-2">
                 <i class="fad fa-clipboard-list text-3xl"></i>
@@ -311,6 +343,15 @@
               <div class="text-sm opacity-70">Colors Queue</div>
               <div class="text-3xl font-bold text-warning">{{ colorsCount || '0' }}</div>
               <div class="text-xs opacity-60">Pending reviews</div>
+            </div>
+
+            <div class="p-4 rounded-lg">
+              <div class="text-accent mb-2">
+                <i class="fad fa-books text-3xl"></i>
+              </div>
+              <div class="text-sm opacity-70">Documents Queue</div>
+              <div class="text-3xl font-bold text-accent">{{ documentsCount?.count || '0' }}</div>
+              <div class="text-xs opacity-60">Pending submissions</div>
             </div>
 
             <div class="p-4 rounded-lg">

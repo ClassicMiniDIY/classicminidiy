@@ -4,6 +4,7 @@
 
   const { capture } = usePostHog();
   const { query } = useRoute();
+  const { isAuthenticated } = useAuth();
   const { getColor, submitColor } = useColors();
   const { data: color, status } = await useAsyncData(
     `contribute-color-${query.color || 'new'}`,
@@ -39,8 +40,6 @@
     years: color.value?.pretty.Years || '',
     imageSwatch: color.value?.raw.imageSwatch || '',
     primaryColor: color.value?.pretty['Primary Color'] || '',
-    submittedBy: '',
-    submittedByEmail: '',
   });
 
   useHead({
@@ -70,19 +69,6 @@
   });
 
   async function submit() {
-    // Validate submitter info
-    if (!formData.submittedBy || !formData.submittedByEmail) {
-      apiError.value = true;
-      apiMessage.value = $t('form.error.submitter_required');
-      return;
-    }
-
-    if (!formData.submittedByEmail.includes('@')) {
-      apiError.value = true;
-      apiMessage.value = $t('form.error.invalid_email');
-      return;
-    }
-
     if (!formData.name || !formData.code) {
       apiError.value = true;
       apiMessage.value = $t('form.error.name_code_required');
@@ -104,7 +90,7 @@
         originalColorId: color.value?.raw.id || undefined,
       };
 
-      const response = await submitColor(colorData, formData.submittedBy, formData.submittedByEmail);
+      const response = await submitColor(colorData);
 
       if (response) {
         submissionSuccess.value = true;
@@ -147,7 +133,23 @@
       <USeparator />
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Auth Gate -->
+    <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
+      <UCard>
+        <div class="p-6 text-center">
+          <div class="mb-4">
+            <i class="fas fa-lock text-5xl text-muted"></i>
+          </div>
+          <h2 class="text-xl font-bold mb-2">{{ $t('auth.sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ $t('auth.sign_in_description') }}</p>
+          <UButton to="/login" color="primary" class="w-full">
+            {{ $t('auth.sign_in_button') }}
+          </UButton>
+        </div>
+      </UCard>
+    </div>
+
+    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Current Data Card -->
       <div class="lg:col-span-1">
         <UCard>
@@ -291,37 +293,6 @@
 
               <!-- Form Fields -->
               <form @submit.prevent="submit" class="space-y-4">
-                <!-- Submitter Information -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <UFormField :label="`${$t('form.fields.submitted_by.label')} *`">
-                    <UInput
-                      id="submittedBy"
-                      type="text"
-                      v-model="formData.submittedBy"
-                      :placeholder="$t('form.fields.submitted_by.placeholder')"
-                      class="w-full"
-                      :disabled="processing"
-                      required
-                      icon="i-fa6-solid-user"
-                    />
-                  </UFormField>
-
-                  <UFormField :label="`${$t('form.fields.submitted_by_email.label')} *`">
-                    <UInput
-                      id="submittedByEmail"
-                      type="email"
-                      v-model="formData.submittedByEmail"
-                      :placeholder="$t('form.fields.submitted_by_email.placeholder')"
-                      class="w-full"
-                      :disabled="processing"
-                      required
-                      icon="i-fa6-solid-envelope"
-                    />
-                  </UFormField>
-                </div>
-
-                <USeparator />
-
                 <!-- Color Information -->
                 <UFormField :label="`${$t('form.fields.color_name.label')} *`">
                   <UInput
@@ -457,6 +428,11 @@
     },
     "main_heading": "Contribute Color",
     "description_text": "Help us expand the Classic Mini color archive by contributing a new color. Please provide as much detail as possible to help other enthusiasts. Your submission will be reviewed by an administrator before being added to the database.",
+    "auth": {
+      "sign_in_title": "Sign In to Contribute",
+      "sign_in_description": "You need to be signed in to submit colors to the archive. Create a free account to get started.",
+      "sign_in_button": "Sign In to Continue"
+    },
     "form": {
       "title": "Submit Color Contribution",
       "color_name": "Color Name",
@@ -472,14 +448,6 @@
       },
       "cancel": "Cancel",
       "fields": {
-        "submitted_by": {
-          "label": "Your Name",
-          "placeholder": "Enter your name"
-        },
-        "submitted_by_email": {
-          "label": "Your Email",
-          "placeholder": "Enter your email address"
-        },
         "color_name": {
           "label": "Color Name",
           "placeholder": "Enter color name"
@@ -520,7 +488,6 @@
       "error": {
         "title": "Submission Error",
         "default_message": "There was an error submitting your contribution. Please try again.",
-        "submitter_required": "Please enter your name and email address.",
         "invalid_email": "Please enter a valid email address.",
         "name_code_required": "Color name and code are required.",
         "submission_failed": "Failed to submit your contribution. Please try again."
