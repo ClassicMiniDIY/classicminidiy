@@ -7,6 +7,12 @@
       isHomepage.value = route.path === '/';
     }
   );
+
+  // Initialize Supabase auth state on app mount
+  const { initAuth } = useAuth();
+  onMounted(() => {
+    initAuth();
+  });
 </script>
 
 <template>

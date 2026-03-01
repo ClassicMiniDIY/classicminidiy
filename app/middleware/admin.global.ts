@@ -5,19 +5,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // Skip middleware on server-side during initial page load
-  if (process.server) {
+  if (import.meta.server) {
     return;
   }
 
-  // Check authentication
-  try {
-    await $fetch('/api/auth/verify', {
-      credentials: 'include', // Ensure cookies are sent
-    });
-    // User is authenticated, allow access
-    return;
-  } catch (error) {
-    // User is not authenticated, redirect to login
+  const { waitForAuth, isAuthenticated, isAdmin } = useAuth();
+  await waitForAuth();
+
+  if (!isAuthenticated.value || !isAdmin.value) {
     return navigateTo('/login', { replace: true });
   }
 });
