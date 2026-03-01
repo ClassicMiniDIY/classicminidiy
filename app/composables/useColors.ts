@@ -63,22 +63,18 @@ export const useColors = () => {
     };
   };
 
-  const submitColor = async (
-    colorData: Partial<Color>,
-    submitterName: string,
-    submitterEmail: string,
-  ) => {
+  const submitColor = async (colorData: Partial<Color>): Promise<any> => {
+    const { user } = useAuth();
+    if (!user.value) throw new Error('Must be authenticated to submit');
+
     const { data, error } = await supabase
       .from('submission_queue')
       .insert({
         type: 'new_item',
         target_type: 'color',
+        submitted_by: user.value.id,
         status: 'pending',
-        data: {
-          ...colorData,
-          submittedBy: submitterName,
-          submittedByEmail: submitterEmail,
-        },
+        data: colorData,
       })
       .select()
       .single();

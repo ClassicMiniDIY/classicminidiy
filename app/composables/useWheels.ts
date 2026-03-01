@@ -70,12 +70,16 @@ export const useWheels = () => {
     return mapToWheel(data);
   };
 
-  const submitWheel = async (wheelData: Partial<IWheelsData>) => {
+  const submitWheel = async (wheelData: Partial<IWheelsData>): Promise<any> => {
+    const { user } = useAuth();
+    if (!user.value) throw new Error('Must be authenticated to submit');
+
     const { data, error } = await supabase
       .from('submission_queue')
       .insert({
         type: 'new_item',
         target_type: 'wheel',
+        submitted_by: user.value.id,
         status: 'pending',
         data: wheelData,
       })
