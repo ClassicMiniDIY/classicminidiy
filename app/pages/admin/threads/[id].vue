@@ -17,17 +17,6 @@
   });
 
   // Define types
-  interface AuthUser {
-    username: string;
-    isAdmin: boolean;
-    loginTime: string;
-  }
-
-  interface AuthResponse {
-    authenticated: boolean;
-    user: AuthUser;
-  }
-
   interface MessageContent {
     type?: string;
     text?: string;
@@ -76,9 +65,8 @@
     history?: unknown[];
   }
 
-  // Get user info
-  const { data: authData } = await useFetch<AuthResponse>('/api/auth/verify');
-  const user = computed(() => authData.value?.user);
+  // Get user info from Supabase auth
+  const { userProfile, signOut } = useAuth();
 
   // Get thread ID from route
   const route = useRoute();
@@ -102,12 +90,11 @@
   // Logout handler
   const handleLogout = async () => {
     try {
-      await $fetch('/api/auth/logout', { method: 'POST' });
-      await navigateTo('/login');
+      await signOut();
     } catch (error) {
       console.error('Logout error:', error);
-      await navigateTo('/login');
     }
+    await navigateTo('/login');
   };
 
   // Get status badge color
@@ -224,7 +211,7 @@
         />
 
         <div class="flex items-center gap-4">
-          <span class="text-sm opacity-70"> Welcome, {{ user?.username }} </span>
+          <span class="text-sm opacity-70"> Welcome, {{ userProfile?.display_name || userProfile?.email }} </span>
           <UButton @click="handleLogout" variant="ghost" size="sm">
             <i class="fad fa-sign-out mr-2"></i>
             Logout

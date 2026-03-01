@@ -1,5 +1,5 @@
 import { createLangGraphClient } from '../../langgraph/_utils';
-import { sessions } from '../../auth/login.post';
+import { requireAdminAuth } from '../../../utils/adminAuth';
 
 /**
  * Admin API endpoint to get a specific thread and its state/history
@@ -7,23 +7,7 @@ import { sessions } from '../../auth/login.post';
  */
 export default defineEventHandler(async (event) => {
   try {
-    // Verify admin session
-    const sessionToken = getCookie(event, 'admin-session');
-
-    if (!sessionToken || !sessions.has(sessionToken)) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
-      });
-    }
-
-    const sessionData = sessions.get(sessionToken);
-    if (!sessionData?.isAdmin) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Forbidden - Admin access required',
-      });
-    }
+    await requireAdminAuth(event);
 
     // Get thread ID from route params
     const threadId = getRouterParam(event, 'threadId');

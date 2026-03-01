@@ -22,21 +22,8 @@
     ],
   });
 
-  // Define user type
-  interface AuthUser {
-    username: string;
-    isAdmin: boolean;
-    loginTime: string;
-  }
-
-  interface AuthResponse {
-    authenticated: boolean;
-    user: AuthUser;
-  }
-
-  // Get user info
-  const { data: authData } = await useFetch<AuthResponse>('/api/auth/verify');
-  const user = computed(() => authData.value?.user);
+  // Get user info from Supabase auth
+  const { userProfile, signOut } = useAuth();
 
   // Fetch stats data
   const { data: registryStats, refresh: refreshRegistryStats } =
@@ -93,13 +80,11 @@
   // Logout handler
   const handleLogout = async () => {
     try {
-      await $fetch('/api/auth/logout', { method: 'POST' });
-      await navigateTo('/login');
+      await signOut();
     } catch (error) {
       console.error('Logout error:', error);
-      // Force redirect even if logout fails
-      await navigateTo('/login');
     }
+    await navigateTo('/login');
   };
 
   // Helper function
@@ -137,7 +122,7 @@
         />
 
         <div class="flex items-center gap-4">
-          <span class="text-sm opacity-70"> Welcome, {{ user?.username }} </span>
+          <span class="text-sm opacity-70"> Welcome, {{ userProfile?.display_name || userProfile?.email }} </span>
           <UButton @click="handleLogout" variant="ghost" size="sm">
             <i class="fad fa-sign-out mr-2"></i>
             Logout
