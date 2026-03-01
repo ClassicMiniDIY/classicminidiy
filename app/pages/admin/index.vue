@@ -32,6 +32,7 @@
     await useFetch<IWheelsDataReviewItem[]>('/api/wheels/review/list');
   const { data: colorsStats, refresh: refreshColorsStats } = await useFetch<ColorQueueItem[]>('/api/colors/queue/list');
   const { data: documentsCount, refresh: refreshDocumentsCount } = await useFetch<{ count: number }>('/api/admin/queue/count?targetType=document');
+  const { data: totalPendingCount, refresh: refreshTotalPendingCount } = await useFetch<{ count: number }>('/api/admin/queue/count');
 
   // Refresh state
   const isRefreshing = ref(false);
@@ -40,7 +41,7 @@
   const refreshStats = async () => {
     isRefreshing.value = true;
     try {
-      await Promise.all([refreshRegistryStats(), refreshWheelsStats(), refreshColorsStats(), refreshDocumentsCount()]);
+      await Promise.all([refreshRegistryStats(), refreshWheelsStats(), refreshColorsStats(), refreshDocumentsCount(), refreshTotalPendingCount()]);
     } catch (error) {
       console.error('Error refreshing stats:', error);
     } finally {
@@ -135,6 +136,42 @@
     <!-- Admin Components Grid -->
     <div class="container mx-auto px-4 py-8">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <!-- Moderation Queue Card -->
+        <UCard class="hover:shadow-2xl transition-shadow">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+              <i class="fad fa-inbox text-2xl text-primary"></i>
+            </div>
+            <h2 class="text-xl font-bold">Moderation Queue</h2>
+          </div>
+
+          <p class="opacity-70 mb-6">
+            Unified queue for reviewing all community submissions across documents, registry, colors, and wheels.
+          </p>
+
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-check-circle text-success"></i>
+              <span>Review all submission types</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-columns text-info"></i>
+              <span>Side-by-side diff for edit suggestions</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-comment text-info"></i>
+              <span>Add reviewer notes</span>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <UButton to="/admin/queue" color="primary">
+              <i class="fad fa-arrow-right mr-2"></i>
+              Open Queue
+            </UButton>
+          </div>
+        </UCard>
+
         <!-- Registry Review Card -->
         <UCard class="hover:shadow-2xl transition-shadow">
           <div class="flex items-center gap-3 mb-4">
@@ -303,6 +340,40 @@
             </UButton>
           </div>
         </UCard>
+
+        <!-- User Management Card -->
+        <UCard class="hover:shadow-2xl transition-shadow">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
+              <i class="fad fa-users-cog text-2xl text-info"></i>
+            </div>
+            <h2 class="text-xl font-bold">User Management</h2>
+          </div>
+
+          <p class="opacity-70 mb-6">Manage users, trust levels, and permissions for the contributor system.</p>
+
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-list text-info"></i>
+              <span>View all users</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-shield text-warning"></i>
+              <span>Manage trust levels</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fad fa-search text-info"></i>
+              <span>Search by name or email</span>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <UButton to="/admin/users" color="info">
+              <i class="fad fa-arrow-right mr-2"></i>
+              Manage Users
+            </UButton>
+          </div>
+        </UCard>
       </div>
 
       <!-- Admin Stats Section -->
@@ -317,7 +388,16 @@
               {{ isRefreshing ? 'Refreshing...' : 'Refresh' }}
             </UButton>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 text-center">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 text-center">
+            <div class="p-4 rounded-lg">
+              <div class="text-primary mb-2">
+                <i class="fad fa-inbox text-3xl"></i>
+              </div>
+              <div class="text-sm opacity-70">Total Pending</div>
+              <div class="text-3xl font-bold text-primary">{{ totalPendingCount?.count || '0' }}</div>
+              <div class="text-xs opacity-60">All submission types</div>
+            </div>
+
             <div class="p-4 rounded-lg">
               <div class="text-primary mb-2">
                 <i class="fad fa-clipboard-list text-3xl"></i>
