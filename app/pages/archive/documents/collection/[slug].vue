@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-  import { HERO_TYPES } from '../../../../data/models/generic';
-  import { shareArchiveItem } from '../../../../data/models/helper-utils';
+  import { HERO_TYPES } from '../../../../../data/models/generic';
+  import { shareArchiveItem } from '../../../../../data/models/helper-utils';
 
   const { t } = useI18n();
   const route = useRoute();
