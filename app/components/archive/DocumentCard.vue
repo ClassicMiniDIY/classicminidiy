@@ -1,6 +1,6 @@
 <script lang="ts" setup>
   import type { ArchiveDocumentItem } from '../../composables/useArchiveDocuments';
-  import { shareArchiveItem } from '../../data/models/helper-utils';
+  import { shareArchiveItem } from '../../../data/models/helper-utils';
 
   const { t } = useI18n();
 
