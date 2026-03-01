@@ -210,5 +210,34 @@ export const useArchiveDocuments = () => {
     };
   };
 
-  return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, getCollectionBySlug, getStorageUrl, getThumbnailUrl };
+  const submitDocument = async (documentData: {
+    type: 'manual' | 'advert' | 'catalogue' | 'tuning' | 'electrical';
+    title: string;
+    description?: string;
+    code?: string;
+    author?: string;
+    year?: number;
+    filePath?: string;
+    thumbnailPath?: string;
+  }): Promise<{ id: string }> => {
+    const { user } = useAuth();
+    if (!user.value) throw new Error('Must be authenticated to submit');
+
+    const { data, error } = await supabase
+      .from('submission_queue')
+      .insert({
+        type: 'new_item',
+        target_type: 'document',
+        submitted_by: user.value.id,
+        status: 'pending',
+        data: documentData,
+      })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, getCollectionBySlug, getStorageUrl, getThumbnailUrl, submitDocument };
 };
