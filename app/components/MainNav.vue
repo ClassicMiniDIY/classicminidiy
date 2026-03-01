@@ -1,7 +1,26 @@
 <script lang="ts" setup>
   const route = useRoute();
+  const router = useRouter();
   const switchLocalePath = useSwitchLocalePath();
   const { t, locale, locales, setLocale } = useI18n();
+  const { user, userProfile, isAuthenticated, isAdmin, signOut } = useAuth();
+
+  const displayName = computed(() => {
+    if (!user.value) return '';
+    return userProfile.value?.display_name || user.value.email?.split('@')[0] || 'User';
+  });
+
+  const initials = computed(() => {
+    const name = displayName.value;
+    if (!name) return '?';
+    return name.charAt(0).toUpperCase();
+  });
+
+  const handleSignOut = async () => {
+    isMobileMenuOpen.value = false;
+    await signOut();
+    router.push('/');
+  };
 
   // Drawer state for mobile menu
   const isMobileMenuOpen = ref(false);
@@ -163,10 +182,57 @@
           <!-- Color Mode Toggle -->
           <UColorModeButton />
 
-          <!-- Patreon Button -->
-          <UButton to="https://patreon.com/classicminidiy" target="_blank" class="is-patreon" size="sm">
-            <i class="fab fa-patreon mr-1"></i>
-            {{ t('donate_button') }}
+          <!-- Profile Dropdown (authenticated) -->
+          <UDropdownMenu
+            v-if="isAuthenticated"
+            :items="[
+              [
+                ...(isAdmin ? [{
+                  label: t('profile.admin'),
+                  icon: 'i-heroicons-shield-check',
+                  to: '/admin',
+                }] : []),
+                {
+                  label: t('profile.submissions'),
+                  icon: 'i-heroicons-document-text',
+                  to: '/submissions',
+                },
+                {
+                  label: t('profile.contribute_color'),
+                  icon: 'i-heroicons-swatch',
+                  to: '/archive/colors/contribute',
+                },
+                {
+                  label: t('profile.submit_wheel'),
+                  icon: 'i-heroicons-cog-6-tooth',
+                  to: '/archive/wheels/submit',
+                },
+              ],
+              [
+                {
+                  label: t('profile.sign_out'),
+                  icon: 'i-heroicons-arrow-right-on-rectangle',
+                  onSelect: handleSignOut,
+                },
+              ],
+            ]"
+          >
+            <UButton variant="ghost" color="neutral" size="sm" class="gap-2">
+              <div v-if="userProfile?.avatar_url" class="w-6 h-6 rounded-full overflow-hidden">
+                <img :src="userProfile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
+              </div>
+              <div v-else class="w-6 h-6 rounded-full bg-primary text-primary-content flex items-center justify-center text-xs font-bold">
+                {{ initials }}
+              </div>
+              <span class="hidden xl:inline text-sm">{{ displayName }}</span>
+              <i class="fad fa-chevron-down text-xs"></i>
+            </UButton>
+          </UDropdownMenu>
+
+          <!-- Sign In Button (not authenticated) -->
+          <UButton v-else to="/login" variant="soft" color="primary" size="sm">
+            <i class="fad fa-right-to-bracket mr-1"></i>
+            {{ t('profile.sign_in') }}
           </UButton>
         </div>
 
@@ -244,11 +310,80 @@
 
           <USeparator class="my-2" />
 
-          <!-- Patreon Button -->
-          <UButton to="https://patreon.com/classicminidiy" target="_blank" class="is-patreon" block>
-            <i class="fab fa-patreon mr-2"></i>
-            {{ t('donate_button') }}
-          </UButton>
+          <!-- Account Section -->
+          <template v-if="isAuthenticated">
+            <p class="text-sm text-muted px-2">{{ t('profile.account') }}</p>
+            <div class="flex items-center gap-2 px-2 py-1">
+              <div v-if="userProfile?.avatar_url" class="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                <img :src="userProfile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
+              </div>
+              <div v-else class="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold shrink-0">
+                {{ initials }}
+              </div>
+              <span class="text-sm font-medium truncate">{{ displayName }}</span>
+            </div>
+            <UButton
+              v-if="isAdmin"
+              to="/admin"
+              variant="ghost"
+              color="neutral"
+              block
+              class="justify-start font-bold"
+              @click="isMobileMenuOpen = false"
+            >
+              <i class="fad fa-shield-check mr-2"></i>
+              {{ t('profile.admin') }}
+            </UButton>
+            <UButton
+              to="/submissions"
+              variant="ghost"
+              color="neutral"
+              block
+              class="justify-start font-bold"
+              @click="isMobileMenuOpen = false"
+            >
+              <i class="fad fa-file-lines mr-2"></i>
+              {{ t('profile.submissions') }}
+            </UButton>
+            <UButton
+              to="/archive/colors/contribute"
+              variant="ghost"
+              color="neutral"
+              block
+              class="justify-start font-bold"
+              @click="isMobileMenuOpen = false"
+            >
+              <i class="fad fa-swatchbook mr-2"></i>
+              {{ t('profile.contribute_color') }}
+            </UButton>
+            <UButton
+              to="/archive/wheels/submit"
+              variant="ghost"
+              color="neutral"
+              block
+              class="justify-start font-bold"
+              @click="isMobileMenuOpen = false"
+            >
+              <i class="fad fa-tire mr-2"></i>
+              {{ t('profile.submit_wheel') }}
+            </UButton>
+            <UButton
+              variant="ghost"
+              color="error"
+              block
+              class="justify-start font-bold"
+              @click="handleSignOut"
+            >
+              <i class="fad fa-right-from-bracket mr-2"></i>
+              {{ t('profile.sign_out') }}
+            </UButton>
+          </template>
+          <template v-else>
+            <UButton to="/login" variant="soft" color="primary" block @click="isMobileMenuOpen = false">
+              <i class="fad fa-right-to-bracket mr-2"></i>
+              {{ t('profile.sign_in') }}
+            </UButton>
+          </template>
         </div>
       </template>
     </USlideover>
@@ -269,7 +404,15 @@
       "blog": "Blog",
       "store": "Store"
     },
-    "donate_button": "Join CMDIY",
+    "profile": {
+      "sign_in": "Sign In",
+      "sign_out": "Sign Out",
+      "account": "Account",
+      "admin": "Admin Dashboard",
+      "submissions": "My Submissions",
+      "contribute_color": "Contribute Color",
+      "submit_wheel": "Submit Wheel"
+    },
     "language_label": "Language",
     "mobile_menu_title": "Menu"
   },
@@ -285,7 +428,15 @@
       "blog": "Blog",
       "store": "Tienda"
     },
-    "donate_button": "Únete a CMDIY",
+    "profile": {
+      "sign_in": "Iniciar sesión",
+      "sign_out": "Cerrar sesión",
+      "account": "Cuenta",
+      "admin": "Panel de Admin",
+      "submissions": "Mis envíos",
+      "contribute_color": "Contribuir color",
+      "submit_wheel": "Enviar rueda"
+    },
     "language_label": "Idioma",
     "mobile_menu_title": "Menú"
   },
@@ -301,7 +452,15 @@
       "blog": "Blog",
       "store": "Boutique"
     },
-    "donate_button": "Rejoindre CMDIY",
+    "profile": {
+      "sign_in": "Se connecter",
+      "sign_out": "Se déconnecter",
+      "account": "Compte",
+      "admin": "Tableau de bord Admin",
+      "submissions": "Mes soumissions",
+      "contribute_color": "Contribuer une couleur",
+      "submit_wheel": "Soumettre une roue"
+    },
     "language_label": "Langue",
     "mobile_menu_title": "Menu"
   },
@@ -317,7 +476,15 @@
       "blog": "Blog",
       "store": "Shop"
     },
-    "donate_button": "CMDIY beitreten",
+    "profile": {
+      "sign_in": "Anmelden",
+      "sign_out": "Abmelden",
+      "account": "Konto",
+      "admin": "Admin-Dashboard",
+      "submissions": "Meine Einreichungen",
+      "contribute_color": "Farbe beitragen",
+      "submit_wheel": "Felge einreichen"
+    },
     "language_label": "Sprache",
     "mobile_menu_title": "Menü"
   },
@@ -333,7 +500,15 @@
       "blog": "Blog",
       "store": "Negozio"
     },
-    "donate_button": "Unisciti a CMDIY",
+    "profile": {
+      "sign_in": "Accedi",
+      "sign_out": "Esci",
+      "account": "Account",
+      "admin": "Pannello Admin",
+      "submissions": "I miei invii",
+      "contribute_color": "Contribuisci colore",
+      "submit_wheel": "Invia ruota"
+    },
     "language_label": "Lingua",
     "mobile_menu_title": "Menu"
   },
@@ -349,7 +524,15 @@
       "blog": "ブログ",
       "store": "ストア"
     },
-    "donate_button": "CMDIYに参加",
+    "profile": {
+      "sign_in": "ログイン",
+      "sign_out": "ログアウト",
+      "account": "アカウント",
+      "admin": "管理ダッシュボード",
+      "submissions": "投稿一覧",
+      "contribute_color": "カラーを追加",
+      "submit_wheel": "ホイールを投稿"
+    },
     "language_label": "言語",
     "mobile_menu_title": "メニュー"
   },
@@ -365,7 +548,15 @@
       "blog": "블로그",
       "store": "스토어"
     },
-    "donate_button": "CMDIY 가입",
+    "profile": {
+      "sign_in": "로그인",
+      "sign_out": "로그아웃",
+      "account": "계정",
+      "admin": "관리자 대시보드",
+      "submissions": "내 제출",
+      "contribute_color": "색상 기여",
+      "submit_wheel": "휠 제출"
+    },
     "language_label": "언어",
     "mobile_menu_title": "메뉴"
   },
@@ -381,7 +572,15 @@
       "blog": "Blog",
       "store": "Loja"
     },
-    "donate_button": "Junte-se ao CMDIY",
+    "profile": {
+      "sign_in": "Entrar",
+      "sign_out": "Sair",
+      "account": "Conta",
+      "admin": "Painel Admin",
+      "submissions": "Minhas submissões",
+      "contribute_color": "Contribuir cor",
+      "submit_wheel": "Enviar roda"
+    },
     "language_label": "Idioma",
     "mobile_menu_title": "Menu"
   },
@@ -397,7 +596,15 @@
       "blog": "Блог",
       "store": "Магазин"
     },
-    "donate_button": "Присоединиться к CMDIY",
+    "profile": {
+      "sign_in": "Войти",
+      "sign_out": "Выйти",
+      "account": "Аккаунт",
+      "admin": "Панель администратора",
+      "submissions": "Мои заявки",
+      "contribute_color": "Добавить цвет",
+      "submit_wheel": "Отправить колесо"
+    },
     "language_label": "Язык",
     "mobile_menu_title": "Меню"
   },
@@ -413,7 +620,15 @@
       "blog": "博客",
       "store": "商店"
     },
-    "donate_button": "加入 CMDIY",
+    "profile": {
+      "sign_in": "登录",
+      "sign_out": "退出",
+      "account": "账户",
+      "admin": "管理面板",
+      "submissions": "我的提交",
+      "contribute_color": "贡献颜色",
+      "submit_wheel": "提交轮毂"
+    },
     "language_label": "语言",
     "mobile_menu_title": "菜单"
   }

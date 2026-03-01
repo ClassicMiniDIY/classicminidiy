@@ -247,7 +247,7 @@ export const PAGE_DESCRIPTIONS: PageDescription[] = [
     category: 'archive',
   },
   {
-    route: '/archive/manuals',
+    route: '/archive/documents?type=manual',
     title: 'Manuals Archive',
     description: "Collection of original Classic Mini owner's manuals, workshop manuals, and technical publications.",
     functions: [
@@ -308,20 +308,20 @@ export const PAGE_DESCRIPTIONS: PageDescription[] = [
     category: 'archive',
   },
   {
-    route: '/archive/carbs',
-    title: 'Carburetors Archive',
+    route: '/archive/documents?type=tuning',
+    title: 'Tuning & Carburetors Archive',
     description:
-      'Historical database of Classic Mini carburetors including SU, Weber, and other carburetor types with specifications and tuning information.',
+      'Historical database of Classic Mini tuning documentation including carburetors, SU, Weber, and other tuning specifications.',
     functions: [
-      'Browse carburetors by type and application',
+      'Browse tuning documents by type',
       'View carburetor specifications',
       'Access tuning information',
-      'Compare different carburetor setups',
+      'Submit tuning documentation',
     ],
     category: 'archive',
   },
   {
-    route: '/archive/adverts',
+    route: '/archive/documents?type=advert',
     title: 'Classic Advertisements',
     description:
       'Collection of historical Classic Mini advertisements, brochures, and marketing materials from the BMC/British Leyland era.',

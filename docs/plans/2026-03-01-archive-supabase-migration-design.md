@@ -189,13 +189,13 @@ profiles
 
 ### Trust Level Progression
 
-| Level | Threshold | Permissions |
-|---|---|---|
-| **new** | Default on signup | Submissions always go to mod queue |
-| **contributor** | 3+ approved submissions | Same as new, earns profile badge |
-| **trusted** | 10+ approved, <20% rejection rate | Submissions auto-approved. Edits still queued. |
-| **moderator** | Manually promoted by admin | Can review/approve/reject others' submissions |
-| **admin** | Inherited from TME `is_admin` | Full access. Can promote moderators, override anything. |
+| Level           | Threshold                         | Permissions                                             |
+| --------------- | --------------------------------- | ------------------------------------------------------- |
+| **new**         | Default on signup                 | Submissions always go to mod queue                      |
+| **contributor** | 3+ approved submissions           | Same as new, earns profile badge                        |
+| **trusted**     | 10+ approved, <20% rejection rate | Submissions auto-approved. Edits still queued.          |
+| **moderator**   | Manually promoted by admin        | Can review/approve/reject others' submissions           |
+| **admin**       | Inherited from TME `is_admin`     | Full access. Can promote moderators, override anything. |
 
 Trust levels recalculated automatically via Postgres triggers when submissions are approved/rejected. Admins can manually promote or demote.
 
@@ -325,12 +325,12 @@ The five separate document sections (manuals, adverts, catalogues, tuning, elect
 
 **Static section-level redirects** (301, via `nuxt.config.ts` `routeRules`):
 
-| Old Route | New Route |
-|---|---|
-| `/archive/manuals` | `/archive/documents?type=manual` |
-| `/archive/adverts` | `/archive/documents?type=advert` |
-| `/archive/catalogues` | `/archive/documents?type=catalogue` |
-| `/archive/tuning` | `/archive/documents?type=tuning` |
+| Old Route             | New Route                            |
+| --------------------- | ------------------------------------ |
+| `/archive/manuals`    | `/archive/documents?type=manual`     |
+| `/archive/adverts`    | `/archive/documents?type=advert`     |
+| `/archive/catalogues` | `/archive/documents?type=catalogue`  |
+| `/archive/tuning`     | `/archive/documents?type=tuning`     |
 | `/archive/electrical` | `/archive/documents?type=electrical` |
 
 **Dynamic individual document redirects**: Store `legacy_slug` on `archive_documents`. Server middleware catches old URLs (e.g., `/archive/manuals/akd4935`), looks up by legacy slug, issues 301 to new slug-based URL.
@@ -456,4 +456,4 @@ The five separate document sections (manuals, adverts, catalogues, tuning, elect
 - Remove `content.config.ts`
 - Clean up unused env vars
 - 30-day observation period
-- Decommission DynamoDB tables and S3 bucket
+

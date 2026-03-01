@@ -316,50 +316,29 @@ export default defineNuxtConfig({
         links: parsedToolbox,
       },
       {
-        title: 'Manuals',
+        title: 'Document Archive',
         description:
-          'Technical documentation and guides for the classic mini. Curated and organized for easy viewing.',
+          'Unified archive of Classic Mini documentation including workshop manuals, advertisements, catalogues, tuning guides, and electrical diagrams.',
         links: [
           {
             title: 'Workshop Manuals',
             description: 'Factory workshop manuals for Classic Mini',
-            href: 'https://classicminidiy.com/archive/manuals',
+            href: 'https://classicminidiy.com/archive/documents?type=manual',
           },
-        ],
-      },
-      {
-        title: 'Advertisements',
-        description:
-          'Collection of historical advertisements for the classic mini. Curated and organized for easy viewing.',
-        links: [
           {
             title: 'Adverts Archive',
             description: 'Historical Classic Mini advertisements',
-            href: 'https://classicminidiy.com/archive/adverts',
+            href: 'https://classicminidiy.com/archive/documents?type=advert',
           },
-        ],
-      },
-      {
-        title: 'Tuning',
-        description:
-          'Collection of historical documents related to Classic Mini tuning and modifications. Curated and organized for easy viewing.',
-        links: [
           {
             title: 'Tuning Archive',
             description: 'Classic Mini tuning documentation',
-            href: 'https://classicminidiy.com/archive/tuning',
+            href: 'https://classicminidiy.com/archive/documents?type=tuning',
           },
-        ],
-      },
-      {
-        title: 'Catalogues',
-        description:
-          'Collection of historical documents related to Classic Mini Vendor Catalogues. Curated and organized for easy viewing.',
-        links: [
           {
             title: 'Catalogues Archive',
             description: 'Classic Mini vendor catalogues',
-            href: 'https://classicminidiy.com/archive/catalogues',
+            href: 'https://classicminidiy.com/archive/documents?type=catalogue',
           },
         ],
       },
@@ -396,7 +375,6 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      serverlessEndpoint: process.env.serverlessEndpoint,
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.classicminidiy.com',
       posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY || '',
       posthogHost: process.env.NODE_ENV === 'production' ? '/t' : 'https://us.i.posthog.com',
