@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware((to: any, from: any) => {
     return navigateTo('/archive/colors');
   }
   if (to.path.includes('technical/manuals')) {
-    return navigateTo('/archive/manuals');
+    return navigateTo('/archive/documents?type=manual');
   }
   if (to.path.includes('technical/wheels')) {
     return navigateTo('/archive/wheels');
@@ -24,6 +24,6 @@ export default defineNuxtRouteMiddleware((to: any, from: any) => {
     return navigateTo('/archive/registry');
   }
   if (to.path.includes('archive/carbs')) {
-    return navigateTo('/archive/tuning');
+    return navigateTo('/archive/documents?type=tuning');
   }
 });

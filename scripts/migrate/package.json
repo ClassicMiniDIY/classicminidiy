@@ -1,0 +1,19 @@
+{
+  "name": "cmdiy-migration",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate:colors": "bun run migrate-colors.ts",
+    "migrate:wheels": "bun run migrate-wheels.ts",
+    "migrate:registry": "bun run migrate-registry.ts",
+    "migrate:documents": "bun run migrate-documents.ts",
+    "migrate:queues": "bun run migrate-queues.ts",
+    "migrate:all": "bun run migrate-colors.ts && bun run migrate-wheels.ts && bun run migrate-registry.ts && bun run migrate-documents.ts && bun run migrate-queues.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.700.0",
+    "@aws-sdk/lib-dynamodb": "^3.700.0",
+    "@supabase/supabase-js": "^2.49.0",
+    "dotenv": "^16.4.0"
+  }
+}
