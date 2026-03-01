@@ -377,6 +377,10 @@ export default defineNuxtConfig({
     '/technical/calculators/needles': { prerender: false },
     '/technical/calculators/gearbox': { prerender: false },
     '/admin/**': { prerender: false },
+    '/archive/manuals': { redirect: { to: '/archive/documents?type=manual', statusCode: 301 } },
+    '/archive/adverts': { redirect: { to: '/archive/documents?type=advert', statusCode: 301 } },
+    '/archive/catalogues': { redirect: { to: '/archive/documents?type=catalogue', statusCode: 301 } },
+    '/archive/tuning': { redirect: { to: '/archive/documents?type=tuning', statusCode: 301 } },
   },
 
   robots: {
