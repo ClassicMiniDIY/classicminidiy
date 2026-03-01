@@ -1,6 +1,3 @@
-// @ts-ignore
-import type { ParsedContent } from '@nuxt/content/dist/runtime/types';
-
 export enum BREADCRUMB_VERSIONS {
   TECH = 'technical',
   ARCHIVE = 'archive',
@@ -14,12 +11,16 @@ export enum HERO_TYPES {
   MAPS = 'maps',
   CONTACT = 'contact',
 }
-export interface Post extends ParsedContent {
+export interface Post {
+  title?: string;
+  path?: string;
   image?: string;
   author?: string;
   date?: string;
   description?: string;
   slug?: string;
+  code?: string;
+  download?: string;
 }
 
 export interface ToolboxItem {

@@ -231,7 +231,6 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt',
     '@nuxtjs/sitemap',
     '@nuxtjs/robots',
-    '@nuxt/content',
     '@nuxt/image',
     '@nuxt/ui',
     'nuxt-llms',
@@ -277,19 +276,12 @@ export default defineNuxtConfig({
     },
   },
 
-  content: {
-    database: {
-      type: 'postgres',
-      url: process.env.POSTGRES_POSTGRES_URL || '',
-    },
-  },
-
   // Image optimization configuration
   image: {
     // Provider options
     provider: 'ipx',
     // Domains allowed for external images
-    domains: ['classicminidiy.s3.us-east-1.amazonaws.com'],
+    domains: ['classicminidiy.s3.us-east-1.amazonaws.com', 'psoqirvbujwohemmwplv.supabase.co'],
     // Image formats to generate
     format: ['webp', 'avif', 'jpg', 'png'],
     // Default image quality
@@ -326,26 +318,50 @@ export default defineNuxtConfig({
       {
         title: 'Manuals',
         description:
-          'Technical documentation and guides for the classic mini. Currated and organized for easy viewing.',
-        contentCollection: 'manuals',
+          'Technical documentation and guides for the classic mini. Curated and organized for easy viewing.',
+        links: [
+          {
+            title: 'Workshop Manuals',
+            description: 'Factory workshop manuals for Classic Mini',
+            href: 'https://classicminidiy.com/archive/manuals',
+          },
+        ],
       },
       {
         title: 'Advertisements',
         description:
-          'Collection of hisorical advertisements for the classic mini. Currated and organized for easy viewing.',
-        contentCollection: 'adverts',
+          'Collection of historical advertisements for the classic mini. Curated and organized for easy viewing.',
+        links: [
+          {
+            title: 'Adverts Archive',
+            description: 'Historical Classic Mini advertisements',
+            href: 'https://classicminidiy.com/archive/adverts',
+          },
+        ],
       },
       {
         title: 'Tuning',
         description:
-          'Collection of hisorical documents related to Classic Mini tuning and modifications. Currated and organized for easy viewing.',
-        contentCollection: 'tuning',
+          'Collection of historical documents related to Classic Mini tuning and modifications. Curated and organized for easy viewing.',
+        links: [
+          {
+            title: 'Tuning Archive',
+            description: 'Classic Mini tuning documentation',
+            href: 'https://classicminidiy.com/archive/tuning',
+          },
+        ],
       },
       {
         title: 'Catalogues',
         description:
-          'Collection of hisorical documents related to Classic Mini Vendor Catalogues. Currated and organized for easy viewing.',
-        contentCollection: 'catalogues',
+          'Collection of historical documents related to Classic Mini Vendor Catalogues. Curated and organized for easy viewing.',
+        links: [
+          {
+            title: 'Catalogues Archive',
+            description: 'Classic Mini vendor catalogues',
+            href: 'https://classicminidiy.com/archive/catalogues',
+          },
+        ],
       },
     ],
   },
@@ -376,7 +392,6 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      s3BaseURL: process.env.s3Base,
       serverlessEndpoint: process.env.serverlessEndpoint,
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.classicminidiy.com',
       posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY || '',
@@ -389,13 +404,7 @@ export default defineNuxtConfig({
     githubAPIKey: process.env.githubAPIKey,
     GITLAB: process.env.GITLAB,
     youtubeAPIKey: process.env.youtubeAPIKey,
-    dynamo_id: process.env.dynamo_id,
-    dynamo_key: process.env.dynamo_key,
-    s3_id: process.env.s3_id,
-    s3_key: process.env.s3_key,
     validation_key: process.env.validation_key,
-    CMDIY_NAMEPSACE: process.env.CMDIY_NAMEPSACE,
-    POSTGRES_POSTGRES_URL: process.env.POSTGRES_URL || '',
     NUXT_LANGGRAPH_API_URL: process.env.NUXT_LANGGRAPH_API_URL,
     NUXT_LANGSMITH_API_KEY: process.env.NUXT_LANGSMITH_API_KEY,
     // MCP API Keys
@@ -552,6 +561,17 @@ export default defineNuxtConfig({
           handler: 'CacheFirst',
           options: {
             cacheName: 's3-assets',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/psoqirvbujwohemmwplv\.supabase\.co\/storage\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'supabase-storage',
             expiration: {
               maxEntries: 100,
               maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days

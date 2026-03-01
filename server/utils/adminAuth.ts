@@ -1,11 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-function getServiceClient() {
-  const config = useRuntimeConfig();
-  return createClient(config.public.supabaseUrl as string, config.SUPABASE_SERVICE_KEY as string, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
+import { getServiceClient } from './supabase';
 
 export async function requireAdminAuth(event: any) {
   // Try to get the access token from the Authorization header

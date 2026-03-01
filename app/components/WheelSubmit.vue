@@ -19,6 +19,7 @@
   import { humanFileSize } from '../../data/models/helper-utils';
 
   const { t } = useI18n();
+  const { getWheel: fetchWheel, submitWheel } = useWheels();
 
   // Reactive state
   const wheel = ref();
@@ -114,28 +115,20 @@
   // Load existing wheel data if editing
   if (!props.newWheel && props.uuid) {
     try {
-      const { data, error } = await useFetch(`/api/wheels/wheel`, {
-        query: {
-          uuid: props.uuid,
-        },
-        server: true,
-        default: () => ({}) as IWheelsData,
-      });
+      const data = await fetchWheel(props.uuid);
 
-      if (error.value) {
-        pageError.value = error.value;
+      if (!data) {
+        pageError.value = new Error('Wheel not found');
         errorMessage.value = t('errors.load_failed');
       } else {
-        wheel.value = data.value;
+        wheel.value = data;
         // Pre-populate form fields with existing data
-        if (wheel.value) {
-          name.value = wheel.value.name || '';
-          type.value = wheel.value.type || '';
-          width.value = wheel.value.width || '';
-          size.value = wheel.value.size || '';
-          offset.value = wheel.value.offset || '';
-          notes.value = wheel.value.notes || '';
-        }
+        name.value = data.name || '';
+        type.value = data.type || '';
+        width.value = data.width || '';
+        size.value = data.size || '';
+        offset.value = data.offset || '';
+        notes.value = data.notes || '';
       }
     } catch (error) {
       pageError.value = error;
@@ -168,7 +161,7 @@
 
   // Store wheel details
   async function storeWheelDetails() {
-    const details: IWheelsData = {
+    const details: Partial<IWheelsData> = {
       uuid: props.uuid,
       name: name.value,
       type: type.value,
@@ -182,14 +175,13 @@
       newWheel: props.newWheel,
     };
 
-    return await useFetch('/api/wheels/save/details', {
-      method: 'POST',
-      body: details,
-      headers: { 'cache-control': 'no-cache' },
-    }).catch((err) => {
+    try {
+      const data = await submitWheel(details);
+      return { data };
+    } catch (err) {
       console.error('Error saving wheel details:', err);
       throw new Error('Failed to save wheel details');
-    });
+    }
   }
 
   // Store wheel images
@@ -256,8 +248,8 @@
       if (props.newWheel) {
         // For new wheels, save details first, then images
         const { data: detailsResponse } = await storeWheelDetails();
-        if (detailsResponse.value?.uuid && dropFiles.value.length > 0) {
-          await storeWheelImages(detailsResponse.value.uuid);
+        if (detailsResponse?.id && dropFiles.value.length > 0) {
+          await storeWheelImages(detailsResponse.id);
         }
       } else {
         // For existing wheels, save details (updates) first, then any new images

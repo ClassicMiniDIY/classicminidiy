@@ -5,17 +5,19 @@
 
   const route = useRoute();
   const wheelId = ref(route.params.wheel);
+  const { getWheel } = useWheels();
   const {
     data: wheel,
     pending,
     error,
-  } = useFetch<IWheelsData>('/api/wheels/wheel', {
-    query: {
-      uuid: wheelId.value?.[0] || 'noWheel',
-    },
-    server: !!wheelId.value?.[0], // Only fetch on server if wheel UUID exists
-    default: () => ({}) as IWheelsData, // Provide default value when fetch is skipped
-  });
+  } = await useAsyncData(
+    `wheel-${wheelId.value?.[0] || 'noWheel'}`,
+    () => getWheel(wheelId.value?.[0] || 'noWheel'),
+    {
+      server: !!wheelId.value?.[0],
+      default: () => ({}) as IWheelsData,
+    }
+  );
 
   const copied = ref<boolean>(false);
   const shareImage = computed(() => {

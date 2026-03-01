@@ -1,94 +1,55 @@
-import { PutCommand, UpdateCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
-import type { ColorQueueItem, Color, ColorSaveResponse } from '../../../../data/models/colors';
-import { ColorItemStatus } from '../../../../data/models/colors';
+import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
-import { getDynamoDBClient, handleDynamoDBError } from '../../../utils/dynamodb';
 
-export default defineEventHandler(async (event): Promise<ColorSaveResponse> => {
-  // Require admin authentication
-  await requireAdminAuth(event);
+export default defineEventHandler(async (event) => {
+  const { user } = await requireAdminAuth(event);
+  const body = await readBody(event);
+  const supabase = getServiceClient();
 
-  const docClient = getDynamoDBClient();
+  const { uuid, details } = body;
 
-  try {
-    const { uuid, details } = await readBody<{
-      uuid: string;
-      details: ColorQueueItem;
-    }>(event);
-
-    if (!uuid || typeof uuid !== 'string') {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid or missing uuid',
-      });
-    }
-
-    if (!details || !details.name) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid or missing color details',
-      });
-    }
-
-    // Create the color object for the colors table (without queue-specific fields)
-    const colorData: Color = {
-      id: details.originalColorId || details.id,
-      name: details.name,
-      code: details.code,
-      shortCode: details.shortCode || '',
-      ditzlerPpgCode: details.ditzlerPpgCode || '',
-      duluxCode: details.duluxCode || '',
-      years: details.years || '',
-      primaryColor: details.primaryColor || '',
-      imageSwatch: details.imageSwatch || '',
-      hasSwatch: details.hasSwatch || false,
-      images: details.images || [],
-    };
-
-    // Step 1: Insert/update the color in the colors table
-    await docClient.send(
-      new PutCommand({
-        TableName: 'colors',
-        Item: { ...colorData },
-      })
-    );
-
-    // Step 2: Update the status in the queue to APPROVED
-    try {
-      await docClient.send(
-        new UpdateCommand({
-          TableName: 'colorsQueue',
-          Key: {
-            id: uuid,
-          },
-          UpdateExpression: 'set #itemStatus = :itemStatus',
-          ExpressionAttributeNames: {
-            '#itemStatus': 'status',
-          },
-          ExpressionAttributeValues: {
-            ':itemStatus': ColorItemStatus.APPROVED,
-          },
-        })
-      );
-    } catch (queueError: any) {
-      // If queue update fails, we need to rollback the color insertion
-      // to maintain consistency
-      console.error('Queue update failed, rolling back color insertion:', queueError);
-      try {
-        await docClient.send(
-          new DeleteCommand({
-            TableName: 'colors',
-            Key: { id: colorData.id },
-          })
-        );
-      } catch (rollbackError) {
-        console.error('Rollback failed - inconsistent state:', { colorId: colorData.id, queueId: uuid, rollbackError });
-      }
-      throw queueError;
-    }
-
-    return { success: true, message: 'Color has been approved', colorId: colorData.id };
-  } catch (error: any) {
-    throw handleDynamoDBError(error, 'Color approval');
+  if (!uuid || typeof uuid !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid or missing uuid' });
   }
+
+  if (!details || !details.name) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid or missing color details' });
+  }
+
+  // Insert the approved color into the colors table
+  const { error: colorError } = await supabase.from('colors').insert({
+    name: details.name,
+    code: details.code || '',
+    short_code: details.shortCode || '',
+    ditzler_ppg_code: details.ditzlerPpgCode || '',
+    dulux_code: details.duluxCode || '',
+    hex_value: details.primaryColor || '',
+    has_swatch: details.hasSwatch || false,
+    swatch_path: details.imageSwatch || null,
+    contributor_images: details.images || [],
+    status: 'approved',
+    legacy_submitted_by: details.submittedBy || null,
+    legacy_submitted_by_email: details.submittedByEmail || null,
+  });
+
+  if (colorError) {
+    throw createError({ statusCode: 500, statusMessage: colorError.message });
+  }
+
+  // Update submission queue status to approved
+  const { error: queueError } = await supabase
+    .from('submission_queue')
+    .update({
+      status: 'approved',
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+      data: details,
+    })
+    .eq('id', uuid);
+
+  if (queueError) {
+    console.error('Queue update failed after color insert:', queueError);
+  }
+
+  return { success: true, message: 'Color has been approved', colorId: uuid };
 });

@@ -1,6 +1,14 @@
 <script lang="ts" setup>
-  import type { AdvertsCollectionItem, ContentCollectionItem, ManualsCollectionItem } from '@nuxt/content';
   import { shareArchiveItem, submitArchiveFile, type ARCHIVE_TYPES } from '../../data/models/helper-utils';
+
+  interface ArchiveItem {
+    title: string;
+    description: string | null;
+    image: string;
+    download: string;
+    code: string;
+    path: string;
+  }
 
   const { t } = useI18n();
   const search = ref('');
@@ -14,7 +22,7 @@
       default: '',
     },
     content: {
-      type: Array as PropType<AdvertsCollectionItem[] | ManualsCollectionItem[] | ContentCollectionItem[] | null>,
+      type: Array as PropType<ArchiveItem[] | null>,
       default: () => [],
     },
     loading: {

@@ -1,9 +1,10 @@
 export enum ARCHIVE_TYPES {
   ADVERT = 'advert',
-  CATALOGUES = 'catalogues',
+  CATALOGUE = 'catalogue',
   MANUAL = 'manual',
-  GENERIC = 'generic',
   TUNING = 'tuning',
+  ELECTRICAL = 'electrical',
+  GENERIC = 'generic',
 }
 
 export interface SubmissionInfo {
@@ -90,6 +91,12 @@ export function determineArchiveType(path: string) {
     return ARCHIVE_TYPES.MANUAL;
   } else if (path.includes('adverts')) {
     return ARCHIVE_TYPES.ADVERT;
+  } else if (path.includes('catalogues')) {
+    return ARCHIVE_TYPES.CATALOGUE;
+  } else if (path.includes('tuning')) {
+    return ARCHIVE_TYPES.TUNING;
+  } else if (path.includes('electrical')) {
+    return ARCHIVE_TYPES.ELECTRICAL;
   } else {
     return ARCHIVE_TYPES.GENERIC;
   }

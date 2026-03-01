@@ -10,15 +10,17 @@
   const selectedOffsets = ref<string[]>([]);
   const selectedMaterials = ref<string[]>([]);
 
-  // Fetch wheels data with error handling
+  // Fetch wheels data from Supabase via composable
+  const { listBySizeName } = useWheels();
   const {
     data: wheels,
     status,
     error,
-  } = await useFetch<IWheelsData[]>(() => `/api/wheels/${size.value}`, {
-    watch: [size], // Automatically refetch when size changes
-    default: () => [], // Provide default value to prevent null reference errors
-  });
+  } = await useAsyncData(
+    `wheels-${size.value}`,
+    () => listBySizeName(size.value),
+    { watch: [size], default: () => [] }
+  );
 
   // Create a Fuse instance for fuzzy searching with memoization
   const fuseInstance = computed(() => {

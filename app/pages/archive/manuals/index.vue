@@ -5,13 +5,8 @@
   const { path } = useRoute();
   const { capture } = usePostHog();
   const archiveType = determineArchiveType(path);
-  const { data: manuals, status } = await useAsyncData(() => queryCollection('manuals').all());
-
-  manuals?.value?.sort((a, b) => {
-    const k1 = a.download === null ? 0 : 1;
-    const k2 = b.download === null ? 0 : 2;
-    return k2 - k1;
-  });
+  const { listByType } = useArchiveDocuments();
+  const { data: manuals, status } = await useAsyncData('archive-manuals', () => listByType('manual'));
 
   const crumbs = ref([
     {
