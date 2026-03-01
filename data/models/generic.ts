@@ -172,12 +172,13 @@ export const ArchiveItems: ArchiveItem[] = [
     to: '/archive/weights',
   },
   {
-    title: 'Workshop Manuals',
+    title: 'Documents',
     description: '',
     image: 'https://cmdiy-archive.s3.us-east-1.amazonaws.com/manuals/images/manuals.jpg',
-    path: '/archive/manuals',
-    iconHtml: '<i class="fa-duotone fa-book-sparkles"></i>',
-    to: '/archive/manuals',
+    path: '/archive/documents',
+    iconHtml:
+      '<i class="fa-duotone fa-books" style="--fa-primary-color: #71784e; --fa-secondary-color: #af6946; --fa-secondary-opacity: 0.7;"></i>',
+    to: '/archive/documents',
   },
   {
     title: 'Electrical Diagrams',
@@ -206,32 +207,6 @@ export const ArchiveItems: ArchiveItem[] = [
     iconHtml:
       '<i class="fa-duotone fa-brush" style="--fa-primary-color: #431f23; --fa-secondary-color: #c3a166; --fa-secondary-opacity: 0.8;"></i>',
     to: '/archive/colors',
-  },
-  {
-    title: 'Adverts',
-    description: '',
-    image: '',
-    path: '/archive/adverts',
-    iconHtml:
-      '<i class="fa-duotone fa-solid fa-tv-retro" style="--fa-primary-color: #2f2f2f; --fa-secondary-color: #554416; --fa-secondary-opacity: 0.8;"></i>',
-    to: '/archive/adverts',
-  },
-  {
-    title: 'Vendor Catalogues',
-    description: '',
-    image: '',
-    path: '/archive/catalogues',
-    iconHtml: '<i class="fa-duotone fa-solid fa-book-open-cover"></i>',
-    to: '/archive/catalogues',
-  },
-  {
-    title: 'Tuning and Modifications',
-    description: '',
-    image: '',
-    path: '/archive/tuning',
-    iconHtml:
-      '<i class="fa-duotone fa-solid fa-chart-network" style="--fa-primary-color: #004f2d; --fa-secondary-color: #004f2d;"></i>',
-    to: '/archive/tuning',
   },
   {
     title: 'Dimensions',
