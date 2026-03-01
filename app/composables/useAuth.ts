@@ -5,6 +5,10 @@ interface UserProfile {
   display_name: string | null;
   email: string;
   avatar_url: string | null;
+  trust_level: 'new' | 'contributor' | 'trusted' | 'moderator' | 'admin';
+  total_submissions: number;
+  approved_submissions: number;
+  rejected_submissions: number;
 }
 
 // Store auth subscription and init promise outside of useState to avoid SSR serialization issues
@@ -24,7 +28,7 @@ export const useAuth = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_admin, display_name, email, avatar_url')
+        .select('is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions')
         .eq('id', userId)
         .single();
 
