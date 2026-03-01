@@ -11,13 +11,14 @@
     },
   ]);
 
-  // Add error handling for data fetching
+  // Fetch document from Supabase archive_documents table
+  const { getByPath } = useArchiveDocuments();
   const {
     data: currentPostData,
     status,
     error,
   } = await useAsyncData(path, async () => {
-    const result = await queryCollection('content').path(path).first();
+    const result = await getByPath(path);
     return result || null;
   });
 

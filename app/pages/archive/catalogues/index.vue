@@ -5,13 +5,8 @@
   const { path } = useRoute();
   const { capture } = usePostHog();
   const archiveType = determineArchiveType(path);
-  const { data: catalogues, status } = await useAsyncData(() => queryCollection('catalogues').all());
-
-  catalogues?.value?.sort((a, b) => {
-    const k1 = a.image === null ? 0 : 1;
-    const k2 = b.image === null ? 0 : 2;
-    return k2 - k1;
-  });
+  const { listByType } = useArchiveDocuments();
+  const { data: catalogues, status } = await useAsyncData('archive-catalogues', () => listByType('catalogue'));
 
   const crumbs = ref([
     {
@@ -107,7 +102,7 @@
             <h1 class="text-2xl font-bold mb-4">{{ $t('main_heading') }}</h1>
             <p class="mb-6">{{ $t('description_text') }}</p>
             <div class="flex flex-wrap gap-3 mb-6">
-              <UButton color="primary" @click="submitArchiveFile(ARCHIVE_TYPES.CATALOGUES)">
+              <UButton color="primary" @click="submitArchiveFile(ARCHIVE_TYPES.CATALOGUE)">
                 <i class="fad fa-paper-plane mr-2"></i>
                 {{ $t('actions.add_to_archive') }}
               </UButton>

@@ -3,16 +3,16 @@
   import type { PrettyColor } from '../../../../data/models/colors';
 
   const { params } = useRoute();
-  const { data: color, status } = await useFetch<PrettyColor>(`/api/colors/single`, {
-    query: { id: params.color },
-  });
+  const colorId = Array.isArray(params.color) ? params.color[0] : params.color;
+  const { getColor } = useColors();
+  const { data: color, status } = await useAsyncData(`color-${colorId}`, () => getColor(colorId as string));
 
   const copied = ref(false);
   const shareImage = ref('');
 
   watch(color, (newColor) => {
-    if (newColor?.raw.hasSwatch) {
-      shareImage.value = `https://classicminidiy.s3.amazonaws.com/colors/${newColor.raw.code}.jpg`;
+    if (newColor?.raw.hasSwatch && newColor.raw.imageSwatch) {
+      shareImage.value = newColor.raw.imageSwatch;
     } else {
       shareImage.value = 'https://classicminidiy.s3.amazonaws.com/misc/noSwatch.jpeg';
     }
@@ -122,8 +122,8 @@
             <div class="w-full md:w-1/3 lg:w-1/4">
               <figure class="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                 <img
-                  v-if="color.raw.hasSwatch"
-                  :src="`https://classicminidiy.s3.amazonaws.com/colors/${color.raw.code}.jpg`"
+                  v-if="color.raw.hasSwatch && color.raw.imageSwatch"
+                  :src="color.raw.imageSwatch"
                   :alt="$t('pages.archive.subpages.colors_detail.alt_text', { name: color.pretty.Name })"
                   class="w-full h-full object-cover"
                 />

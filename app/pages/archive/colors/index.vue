@@ -2,7 +2,9 @@
   import type { Color } from '../../../../data/models/colors';
   import { HERO_TYPES } from '../../../../data/models/generic';
 
-  const { data: colors, pending } = await useFetch<Color[]>('/api/colors/list');
+  const { listColors } = useColors();
+  const { data: colors, status } = await useAsyncData('colors-list', () => listColors());
+  const pending = computed(() => status.value === 'pending');
   const search = ref('');
   const debouncedSearch = ref('');
   const currentPage = ref(1);
@@ -97,10 +99,6 @@
       {
         rel: 'canonical',
         href: 'https://classicminidiy.com/archive/colors',
-      },
-      {
-        rel: 'preconnect',
-        href: 'https://classicminidiy.s3.amazonaws.com',
       },
     ],
   });
@@ -304,24 +302,15 @@
                     <!-- Color Swatch -->
                     <td class="p-2">
                       <div class="inline-block">
-                        <picture v-if="color.hasSwatch">
-                          <source
-                            :srcset="`https://classicminidiy.s3.amazonaws.com/colors/${color.code}.webp`"
-                            type="image/webp"
-                          />
-                          <source
-                            :srcset="`https://classicminidiy.s3.amazonaws.com/colors/${color.code}.jpg`"
-                            type="image/jpeg"
-                          />
-                          <img
-                            loading="lazy"
-                            width="40"
-                            height="40"
-                            :alt="`${color.name || 'Color'} swatch`"
-                            :src="`https://classicminidiy.s3.amazonaws.com/colors/${color.code}.jpg`"
-                            class="w-10 h-10 object-cover rounded border border-default"
-                          />
-                        </picture>
+                        <img
+                          v-if="color.hasSwatch && color.imageSwatch"
+                          loading="lazy"
+                          width="40"
+                          height="40"
+                          :alt="`${color.name || 'Color'} swatch`"
+                          :src="color.imageSwatch"
+                          class="w-10 h-10 object-cover rounded border border-default"
+                        />
 
                         <div v-else class="w-10 h-10 flex items-center justify-center">
                           <i class="fa-regular fa-square-xmark text-4xl text-gray-400"></i>

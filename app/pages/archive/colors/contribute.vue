@@ -4,14 +4,11 @@
 
   const { capture } = usePostHog();
   const { query } = useRoute();
-  const { data: color, status } = await useFetch<PrettyColor | null>(`/api/colors/single`, {
-    query: {
-      id: query.color,
-    },
-    // Only fetch if we have a color ID
-    server: !!query.color,
-    default: () => null,
-  });
+  const { getColor, submitColor } = useColors();
+  const { data: color, status } = await useAsyncData(
+    `contribute-color-${query.color || 'new'}`,
+    () => (query.color ? getColor(query.color as string) : Promise.resolve(null)),
+  );
 
   watch(color, (newColor: PrettyColor | null) => {
     if (newColor) {
@@ -94,7 +91,7 @@
 
     processing.value = true;
     try {
-      const details: Partial<ColorQueueItem> = {
+      const colorData: Partial<ColorQueueItem> = {
         code: formData.code,
         ditzlerPpgCode: formData.ditzlerPpgCode,
         duluxCode: formData.duluxCode,
@@ -103,21 +100,16 @@
         years: formData.years,
         imageSwatch: formData.imageSwatch,
         primaryColor: formData.primaryColor,
-        submittedBy: formData.submittedBy,
-        submittedByEmail: formData.submittedByEmail,
         hasSwatch: !!formData.imageSwatch,
         originalColorId: color.value?.raw.id || undefined,
       };
 
-      const { data: response } = await useFetch<ColorQueueSubmissionResponse>('/api/colors/queue/submit', {
-        method: 'POST',
-        body: { details },
-      });
+      const response = await submitColor(colorData, formData.submittedBy, formData.submittedByEmail);
 
-      if (response.value) {
+      if (response) {
         submissionSuccess.value = true;
         apiError.value = false;
-        submissionId.value = response.value.uuid;
+        submissionId.value = response.id;
 
         capture('form_submitted', {
           form: 'color_contribution',
@@ -174,22 +166,13 @@
 
           <div v-else-if="status === 'success' && color" class="p-4">
             <div class="flex justify-center mb-4">
-              <picture v-if="color.pretty.hasSwatch" class="block w-full max-w-xs">
-                <source
-                  :srcset="`https://classicminidiy.s3.amazonaws.com/colors/${color.pretty.Code}.webp`"
-                  type="image/webp"
-                />
-                <source
-                  :srcset="`https://classicminidiy.s3.amazonaws.com/colors/${color.pretty.Code}.jpg`"
-                  type="image/jpg"
-                />
-                <img
-                  loading="lazy"
-                  alt="Color swatch"
-                  :src="`https://classicminidiy.s3.amazonaws.com/colors/${color?.pretty?.Code}.jpg`"
-                  class="w-full h-auto rounded-lg shadow"
-                />
-              </picture>
+              <img
+                v-if="color.pretty.hasSwatch && color.raw.imageSwatch"
+                loading="lazy"
+                alt="Color swatch"
+                :src="color.raw.imageSwatch"
+                class="w-full h-auto rounded-lg shadow max-w-xs"
+              />
               <div v-else class="flex items-center justify-center py-8">
                 <div class="text-center">
                   <i class="fas fa-spinner fa-spin text-3xl text-primary mb-2"></i>

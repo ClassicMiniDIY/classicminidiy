@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-  import type { RegistryItem, RegistryQueueSubmissionResponse } from '../../data/models/registry';
+  import type { RegistryItem } from '../../data/models/registry';
 
   const { t } = useI18n();
+  const { submitRegistryEntry } = useRegistry();
   interface TouchedFields {
     submittedBy: boolean;
     submittedByEmail: boolean;
@@ -101,14 +102,9 @@
 
     processing.value = true;
     try {
-      const { data } = await useFetch<RegistryQueueSubmissionResponse>('/api/registry/queue/submit', {
-        method: 'POST',
-        body: { details: details.value },
-      });
+      await submitRegistryEntry(details.value);
       issueCreated.value = true;
-      if (data.value?.uuid) {
-        resetForm();
-      }
+      resetForm();
     } catch (error) {
       issueCreated.value = false;
       apiError.value = true;

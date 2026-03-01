@@ -1,47 +1,40 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, UpdateCommand, type DeleteCommandOutput } from '@aws-sdk/lib-dynamodb';
-import { RegistryItemStatus, type RegistryItem } from '../../../../data/models/registry';
+import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 
-export default defineEventHandler(async (event: any): Promise<DeleteCommandOutput> => {
-  // Require admin authentication
-  await requireAdminAuth(event);
-  const config = useRuntimeConfig();
-  const docClient = DynamoDBDocumentClient.from(
-    new DynamoDBClient({
-      region: 'us-east-1',
-      credentials: {
-        accessKeyId: config.dynamo_id,
-        secretAccessKey: config.dynamo_key,
-      },
-    })
-  );
+export default defineEventHandler(async (event) => {
+  const { user } = await requireAdminAuth(event);
+  const supabase = getServiceClient();
 
   try {
-    const { uuid, details } = await readBody<{
+    const { uuid } = await readBody<{
       uuid: string;
-      issueNumber: string | number;
-      details: RegistryItem;
+      details?: any;
     }>(event);
 
-    return await docClient.send(
-      new UpdateCommand({
-        TableName: 'MiniRegisterQueue',
-        Key: {
-          uniqueId: uuid,
-          year: details.year,
-        },
-        UpdateExpression: 'set #itemStatus = :itemStatus',
-        ExpressionAttributeNames: {
-          '#itemStatus': 'status',
-        },
-        ExpressionAttributeValues: {
-          ':itemStatus': RegistryItemStatus.REJECTED,
-        },
+    if (!uuid) {
+      throw createError({ statusCode: 400, statusMessage: 'Missing required uuid' });
+    }
+
+    const { error } = await supabase
+      .from('submission_queue')
+      .update({
+        status: 'rejected',
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
       })
-    );
+      .eq('id', uuid);
+
+    if (error) {
+      throw createError({ statusCode: 500, statusMessage: error.message });
+    }
+
+    return { success: true };
   } catch (error: any) {
-    console.error(`Error rejecting registry queue item: ${error.message}`, error);
-    throw new Error(`Error rejecting registry queue item - ${error.message}`);
+    if (error.statusCode) throw error;
+    console.error('Error rejecting registry queue item:', error);
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Error rejecting registry queue item: ${error.message || 'Unknown error'}`,
+    });
   }
 });

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../../data/models/generic';
-  import type { RegistryItem } from '../../../../data/models/registry';
+
+  const { listApproved } = useRegistry();
 
   // Define table columns
   const tableHeaders = [
@@ -10,7 +11,7 @@
     { title: $t('table_headers.color'), key: 'color' },
   ];
 
-  const { data: registryItems, status } = await useFetch<RegistryItem[]>('/api/registry/list');
+  const { data: registryItems, status } = await useAsyncData('registry-list', () => listApproved());
 
   useHead({
     title: $t('title'),

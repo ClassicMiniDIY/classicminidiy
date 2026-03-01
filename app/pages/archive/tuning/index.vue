@@ -5,13 +5,8 @@
   const { path } = useRoute();
   const { capture } = usePostHog();
   const archiveType = determineArchiveType(path);
-  const { data: tuning, status } = await useAsyncData(() => queryCollection('tuning').all());
-
-  tuning?.value?.sort((a, b) => {
-    const k1 = a.image === null ? 0 : 1;
-    const k2 = b.image === null ? 0 : 2;
-    return k2 - k1;
-  });
+  const { listByType } = useArchiveDocuments();
+  const { data: tuning, status } = await useAsyncData('archive-tuning', () => listByType('tuning'));
 
   const crumbs = ref([
     {
