@@ -27,6 +27,11 @@
             ]"
           ></i>
         </div>
+        <div v-if="item.language && item.language !== 'en'" class="absolute top-2 left-2">
+          <span class="badge badge-sm badge-info font-bold">
+            {{ item.language.toUpperCase() }}
+          </span>
+        </div>
       </figure>
       <div v-else class="flex justify-center items-center h-[150px] bg-muted rounded-t-lg relative">
         <i class="fad fa-image-slash text-4xl text-muted"></i>
@@ -39,6 +44,11 @@
               'text-secondary',
             ]"
           ></i>
+        </div>
+        <div v-if="item.language && item.language !== 'en'" class="absolute top-2 left-2">
+          <span class="badge badge-sm badge-info font-bold">
+            {{ item.language.toUpperCase() }}
+          </span>
         </div>
       </div>
     </template>

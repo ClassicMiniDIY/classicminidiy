@@ -1,18 +1,16 @@
 <script setup lang="ts">
-  import { HERO_TYPES } from '../../../../data/models/generic';
-  import { determineArchiveType, shareArchiveItem, submitArchiveFile } from '../../../../data/models/helper-utils';
-
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
   const route = useRoute();
   const slug = route.params.slug as string;
-  const fullPath = route.fullPath;
-  const showSuggestEdit = ref(false);
 
-  // Fetch document from Supabase archive_documents table
-  const { getDocumentBySlug } = useArchiveDocuments();
+  const showSuggestEdit = ref(false);
+  const copied = ref(false);
+
+  // Fetch document from Supabase
+  const { getDocumentBySlug, getRelatedDocuments } = useArchiveDocuments();
   const {
-    data: currentPostData,
+    data: doc,
     status,
     error,
   } = await useAsyncData(`archive-document-${slug}`, async () => {
@@ -20,77 +18,137 @@
     return result || null;
   });
 
-  // Provide default values and handle potential undefined values
-  const archiveType = determineArchiveType(currentPostData.value?.path || slug);
-  const fileType = currentPostData.value?.download?.split('.')?.pop() || 'unknown';
+  // Fetch related documents if this doc belongs to a collection
+  const { data: relatedDocs } = await useAsyncData(
+    `archive-document-related-${slug}`,
+    async () => {
+      if (!doc.value?.collection) return [];
+      return getRelatedDocuments(doc.value.collection.id, doc.value.id);
+    },
+    { watch: [doc] },
+  );
 
-  // Function to handle image loading errors
+  // Type config for badge display
+  const typeConfig: Record<string, { icon: string; label: string; color: string }> = {
+    manual: { icon: 'fas fa-book', label: t('type.manual'), color: 'primary' },
+    advert: { icon: 'fas fa-rectangle-ad', label: t('type.advert'), color: 'secondary' },
+    catalogue: { icon: 'fas fa-book-open', label: t('type.catalogue'), color: 'info' },
+    tuning: { icon: 'fas fa-gauge-high', label: t('type.tuning'), color: 'warning' },
+    electrical: { icon: 'fas fa-bolt', label: t('type.electrical'), color: 'error' },
+  };
+
+  // Language display map
+  const languageNames: Record<string, string> = {
+    en: 'English',
+    fr: 'French',
+    de: 'German',
+    it: 'Italian',
+    es: 'Spanish',
+    pt: 'Portuguese',
+    nl: 'Dutch',
+    sv: 'Swedish',
+    da: 'Danish',
+    no: 'Norwegian',
+    ja: 'Japanese',
+  };
+
+  // Derive file type from download URL
+  const fileType = computed(() => doc.value?.download?.split('.')?.pop()?.toUpperCase() || null);
+
+  // Derive vehicle year range string
+  const vehicleYears = computed(() => {
+    if (!doc.value) return null;
+    const start = doc.value.vehicleYearStart;
+    const end = doc.value.vehicleYearEnd;
+    if (start && end) return `${start} - ${end}`;
+    if (start) return `${start}+`;
+    if (end) return `- ${end}`;
+    return null;
+  });
+
+  // Derive applicable models string
+  const modelsDisplay = computed(() => {
+    if (!doc.value?.applicableModels?.length) return null;
+    return doc.value.applicableModels.join(', ');
+  });
+
+  // Build stats grid (only show stats with data)
+  const stats = computed(() => {
+    if (!doc.value) return [];
+    const items: Array<{ key: string; icon: string; label: string; value: string | null }> = [
+      { key: 'code', icon: 'fas fa-hashtag', label: t('stat.code'), value: doc.value.code || null },
+      { key: 'publisher', icon: 'fas fa-building', label: t('stat.publisher'), value: doc.value.publisher },
+      { key: 'edition', icon: 'fas fa-bookmark', label: t('stat.edition'), value: doc.value.edition },
+      {
+        key: 'pages',
+        icon: 'fas fa-file-lines',
+        label: t('stat.pages'),
+        value: doc.value.pageCount ? String(doc.value.pageCount) : null,
+      },
+      {
+        key: 'language',
+        icon: 'fas fa-language',
+        label: t('stat.language'),
+        value: languageNames[doc.value.language] || doc.value.language || null,
+      },
+      { key: 'vehicle_years', icon: 'fas fa-calendar-days', label: t('stat.vehicle_years'), value: vehicleYears.value },
+      { key: 'models', icon: 'fas fa-car', label: t('stat.models'), value: modelsDisplay.value },
+      { key: 'file_type', icon: 'fas fa-file', label: t('stat.file_type'), value: fileType.value },
+    ];
+    return items;
+  });
+
+  // Copy link to clipboard
+  async function copyUrl() {
+    const url = `https://classicminidiy.com/archive/documents/${slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      copied.value = true;
+      setTimeout(() => (copied.value = false), 2000);
+    } catch {
+      copied.value = false;
+    }
+  }
+
+  // Share via Web Share API
+  async function shareDocument() {
+    if (!doc.value) return;
+    try {
+      await navigator.share({
+        title: doc.value.title,
+        text: doc.value.description || t('seo.description_fallback', { title: doc.value.title }),
+        url: `https://classicminidiy.com/archive/documents/${slug}`,
+      });
+    } catch {
+      // User cancelled or API not available — fall back to copy
+      copyUrl();
+    }
+  }
+
+  // Image error handler
   const handleImageError = (event: Event) => {
     const imgElement = event.target as HTMLImageElement;
     if (imgElement) {
       imgElement.src = 'https://classicminidiy.s3.amazonaws.com/misc/placeholder.png';
-      imgElement.classList.add('error');
+      imgElement.classList.add('opacity-50');
     }
   };
 
-  await useHead({
-    title: `${currentPostData.value?.title} ${t('seo.title_suffix')}`,
-    meta: [
-      {
-        key: 'description',
-        name: 'description',
-        content:
-          currentPostData.value?.description || t('seo.description_fallback', { title: currentPostData.value?.title }),
-      },
-      {
-        key: 'keywords',
-        name: 'keywords',
-        content: t('seo.keywords_template', {
-          title: currentPostData.value?.title,
-          fileType: fileType || 'resource',
-          archiveType,
-        }),
-      },
-    ],
-    link: [
-      {
-        rel: 'canonical',
-        href: `https://classicminidiy.com${fullPath}`,
-      },
-      {
-        rel: 'preconnect',
-        href: 'https://classicminidiy.s3.amazonaws.com',
-      },
-    ],
-  });
-
-  await useSeoMeta({
-    ogTitle: `${currentPostData.value?.title} ${t('seo.og_title_suffix')}`,
-    ogDescription:
-      currentPostData.value?.description || t('seo.description_fallback', { title: currentPostData.value?.title }),
-    ogUrl: `https://classicminidiy.com${fullPath}`,
-    ogImage: currentPostData.value?.image,
-    ogType: 'article',
-    author: currentPostData.value?.author,
-    twitterCard: 'summary_large_image',
-    twitterTitle: `${currentPostData.value?.title} ${t('seo.twitter_title_suffix')}`,
-    twitterDescription:
-      currentPostData.value?.description || t('seo.description_fallback', { title: currentPostData.value?.title }),
-    twitterImage: currentPostData.value?.image,
-  });
-
-  // Add structured data for the archive item
-  const archiveItemJsonLd = {
+  // Structured data (JSON-LD) — must be defined before useHead which references it
+  const jsonLd = computed(() => ({
     '@context': 'https://schema.org',
     '@type': 'DigitalDocument',
-    name: currentPostData.value?.title,
-    description: currentPostData.value?.description,
-    url: `https://classicminidiy.com${fullPath}`,
-    image: currentPostData.value?.image,
-    encodingFormat: fileType,
+    name: doc.value?.title,
+    description: doc.value?.description,
+    url: `https://classicminidiy.com/archive/documents/${slug}`,
+    image: doc.value?.image,
+    encodingFormat: fileType.value?.toLowerCase(),
+    numberOfPages: doc.value?.pageCount || undefined,
+    inLanguage: doc.value?.language || undefined,
+    datePublished: doc.value?.year ? `${doc.value.year}` : undefined,
     author: {
       '@type': 'Person',
-      name: currentPostData.value?.author || t('structured_data.author_fallback'),
+      name: doc.value?.author || t('structured_data.author_fallback'),
     },
     publisher: {
       '@type': 'Organization',
@@ -105,219 +163,342 @@
       name: t('structured_data.collection_name'),
       url: 'https://classicminidiy.com/archive/documents',
     },
-  };
+  }));
 
-  // Add JSON-LD structured data to head
-  useHead({
+  // SEO — use callback form for reactivity on client-side navigation
+  useHead(() => ({
+    title: `${doc.value?.title || ''} ${t('seo.title_suffix')}`,
+    meta: [
+      {
+        key: 'description',
+        name: 'description',
+        content: doc.value?.description || t('seo.description_fallback', { title: doc.value?.title }),
+      },
+      {
+        key: 'keywords',
+        name: 'keywords',
+        content: t('seo.keywords_template', {
+          title: doc.value?.title,
+          fileType: fileType.value || 'resource',
+          type: doc.value?.type || 'document',
+        }),
+      },
+    ],
+    link: [
+      {
+        rel: 'canonical',
+        href: `https://classicminidiy.com/archive/documents/${slug}`,
+      },
+    ],
     script: [
       {
         type: 'application/ld+json',
-        innerHTML: JSON.stringify(archiveItemJsonLd),
+        innerHTML: JSON.stringify(jsonLd.value),
       },
     ],
-  });
+  }));
+
+  useSeoMeta(() => ({
+    ogTitle: `${doc.value?.title || ''} ${t('seo.og_title_suffix')}`,
+    ogDescription: doc.value?.description || t('seo.description_fallback', { title: doc.value?.title }),
+    ogUrl: `https://classicminidiy.com/archive/documents/${slug}`,
+    ogImage: doc.value?.image,
+    ogType: 'article' as const,
+    author: doc.value?.author,
+    twitterCard: 'summary_large_image' as const,
+    twitterTitle: `${doc.value?.title || ''} ${t('seo.og_title_suffix')}`,
+    twitterDescription: doc.value?.description || t('seo.description_fallback', { title: doc.value?.title }),
+    twitterImage: doc.value?.image,
+  }));
 </script>
 
 <template>
-  <hero
-    :navigation="true"
-    :title="t('hero_title')"
-    textSize="text-3xl"
-    :subtitle="currentPostData?.title"
-    :heroType="HERO_TYPES.ARCHIVE"
-  />
-  <div class="container mx-auto px-4">
-    <div class="mt-5">
-      <div class="w-full">
-        <breadcrumb
-          class="my-6"
-          :page="currentPostData?.title || t('fallback_title')"
-          subpage="Documents"
-          subpageHref="/archive/documents"
-        />
-      </div>
-      <!-- Loading state with skeleton loader -->
-      <div v-if="status === 'pending'" class="mx-auto max-w-xs border p-4 rounded-lg">
-        <USkeleton class="h-32 w-full" />
-        <USkeleton class="h-4 w-28 mt-4" />
-        <USkeleton class="h-4 w-full mt-2" />
-        <USkeleton class="h-4 w-full mt-2" />
-      </div>
-
-      <!-- Error state -->
-      <UAlert v-else-if="error" color="error" class="max-w-2xl mx-auto" icon="i-fa6-solid-circle-exclamation">
-        <template #title>{{ t('loading_error') }}</template>
-      </UAlert>
-      <!-- Content state - only show if we have data and no errors -->
-      <div v-if="currentPostData && status !== 'pending' && !error" class="flex justify-center">
-        <UCard class="w-full max-w-4xl">
-          <div class="px-10 pt-4 pb-6 flex justify-center">
-            <!-- No image case -->
-            <i
-              v-if="!currentPostData.image || currentPostData.image === ''"
-              class="fa-duotone fa-image-slash text-6xl"
-              :aria-label="t('no_image_alt')"
-            ></i>
-            <!-- Image with download link -->
-            <a
-              v-else-if="currentPostData.download && currentPostData.download !== ''"
-              :href="currentPostData.download"
-              :aria-label="t('download_aria_label', { title: currentPostData.title || 'file' })"
-              class="block"
-            >
-              <img
-                :src="currentPostData.image"
-                class="rounded-xl max-h-50 object-contain"
-                :alt="
-                  t('preview_image_alt', {
-                    title: currentPostData.title || t('fallback_title'),
-                  })
-                "
-                loading="lazy"
-                @error="(e: Event) => handleImageError(e)"
-              />
-            </a>
-            <!-- Image without download link -->
-            <img
-              v-else
-              :src="currentPostData.image"
-              class="rounded-xl max-h-50 object-contain"
-              :alt="
-                t('archive_item_alt', {
-                  title: currentPostData.title || t('fallback_title'),
-                })
-              "
-              loading="lazy"
-              @error="(e: Event) => handleImageError(e)"
-            />
-          </div>
-          <div class="items-center text-center">
-            <!-- Title with fallback -->
-            <h2 class="text-2xl font-bold capitalize">
-              {{ currentPostData.title?.toLowerCase() || t('fallback_title') }}
-            </h2>
-
-            <div class="flex flex-wrap items-center justify-center gap-4 my-2">
-              <!-- Code/reference number if available -->
-              <div v-if="currentPostData.code" class="flex items-center">
-                <i class="fa-duotone fa-list-timeline text-primary mr-2"></i>
-                <span class="font-medium">{{ currentPostData.code }}</span>
-              </div>
-
-              <!-- File type if available -->
-              <div v-if="currentPostData.download" class="flex items-center">
-                <i class="fa-duotone fa-file text-secondary mr-2"></i>
-                <span class="font-medium"
-                  >{{ t('file_type_label') }} {{ currentPostData.download?.split('.')?.pop() || 'unknown' }}</span
-                >
-              </div>
-            </div>
-
-            <!-- Description with fallback -->
-            <p class="my-4">{{ currentPostData.description || t('no_description') }}</p>
-
-            <div class="flex flex-wrap justify-center mt-4 gap-2">
-              <ClientOnly>
-                <UButton
-                  variant="outline"
-                  color="info"
-                  class="m-1"
-                  @click="shareArchiveItem(currentPostData.title, currentPostData.path)"
-                >
-                  <i class="fa-duotone fa-solid fa-arrow-up-from-bracket mr-2"></i>
-                  {{ t('share_button') }}
-                </UButton>
-                <UButton
-                  color="secondary"
-                  class="m-1"
-                  @click="
-                    submitArchiveFile(
-                      archiveType,
-                      currentPostData.title,
-                      currentPostData.path,
-                      currentPostData.code,
-                      currentPostData.description
-                    )
-                  "
-                >
-                  <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
-                  {{ t('contribute_button') }}
-                </UButton>
-                <UButton
-                  v-if="!currentPostData.download || currentPostData.download === ''"
-                  class="m-1"
-                  disabled
-                >
-                  <i class="fa-duotone fa-solid fa-question mr-2"></i>
-                  {{ t('missing_file_button') }}
-                </UButton>
-                <UButton
-                  v-else
-                  color="primary"
-                  class="m-1"
-                  :to="currentPostData.download"
-                >
-                  <i class="fa-duotone fa-solid fa-download mr-2"></i>
-                  {{ t('download_button') }}
-                </UButton>
-                <UButton
-                  v-if="isAuthenticated"
-                  variant="outline"
-                  size="sm"
-                  class="m-1"
-                  @click="showSuggestEdit = true"
-                >
-                  <i class="fad fa-pen-to-square mr-2"></i>
-                  {{ t('suggest_edit') }}
-                </UButton>
-              </ClientOnly>
-            </div>
-          </div>
-        </UCard>
+  <div class="min-h-screen bg-muted">
+    <!-- Hero Section -->
+    <div class="bg-primary text-primary-content py-8">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-file-lines text-3xl"></i>
+          <h1 class="text-3xl font-bold">{{ t('hero_title') }}</h1>
+        </div>
+        <div class="text-sm">
+          <ul class="flex items-center gap-2">
+            <li>
+              <NuxtLink to="/" class="hover:underline">{{ t('breadcrumb_home') }}</NuxtLink>
+              <span class="mx-2">/</span>
+            </li>
+            <li>
+              <NuxtLink to="/archive/documents" class="hover:underline">{{ t('breadcrumb_documents') }}</NuxtLink>
+              <span class="mx-2">/</span>
+            </li>
+            <li v-if="doc">{{ doc.title }}</li>
+          </ul>
+        </div>
       </div>
     </div>
 
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+      <!-- Loading State -->
+      <div v-if="status === 'pending'" class="flex justify-center p-8">
+        <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+      </div>
+
+      <!-- Error State -->
+      <UAlert v-else-if="error" color="error" class="max-w-2xl mx-auto" icon="i-fa6-solid-circle-exclamation">
+        <template #title>{{ t('loading_error') }}</template>
+      </UAlert>
+
+      <!-- Not Found State -->
+      <div v-else-if="!doc" class="text-center py-16">
+        <i class="fas fa-file-circle-question text-6xl opacity-30 mb-4"></i>
+        <h2 class="text-2xl font-bold mb-2">{{ t('not_found_title') }}</h2>
+        <p class="opacity-70 mb-6">{{ t('not_found_text') }}</p>
+        <UButton to="/archive/documents" color="primary">
+          <i class="fas fa-arrow-left mr-2"></i>
+          {{ t('back_to_documents') }}
+        </UButton>
+      </div>
+
+      <!-- Document Content -->
+      <template v-else>
+        <UCard class="mb-8">
+          <!-- Header: Info Left + Thumbnail Right -->
+          <div class="flex flex-col md:flex-row gap-6 items-center">
+            <!-- Document Info -->
+            <div class="flex-1 text-center md:text-left">
+              <UBadge
+                v-if="doc.type && typeConfig[doc.type]"
+                size="lg"
+                :color="(typeConfig[doc.type].color as any)"
+                class="mb-4"
+              >
+                <i :class="[typeConfig[doc.type].icon, 'mr-1']"></i>
+                {{ typeConfig[doc.type].label }}
+              </UBadge>
+
+              <h2 class="text-3xl font-bold mb-2">{{ doc.title }}</h2>
+
+              <p v-if="doc.author || doc.year" class="text-lg opacity-70 mb-4">
+                <span v-if="doc.author">{{ doc.author }}</span>
+                <span v-if="doc.author && doc.year"> &bull; </span>
+                <span v-if="doc.year">{{ doc.year }}</span>
+              </p>
+
+              <h3 v-if="doc.code" class="text-5xl font-bold text-primary">{{ doc.code }}</h3>
+            </div>
+
+            <!-- Thumbnail -->
+            <div class="w-full md:w-1/3 lg:w-1/4">
+              <figure class="relative aspect-4/3 rounded-xl overflow-hidden shadow-lg">
+                <img
+                  v-if="doc.image"
+                  :src="doc.image"
+                  :alt="t('alt.preview_image', { title: doc.title })"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                  @error="handleImageError"
+                />
+                <div
+                  v-else
+                  class="w-full h-full bg-linear-to-br from-muted to-muted/50 flex items-center justify-center"
+                >
+                  <i class="fas fa-file-lines text-6xl opacity-30"></i>
+                </div>
+              </figure>
+            </div>
+          </div>
+
+          <!-- Details Section -->
+          <USeparator :label="t('section.details')" class="my-6" />
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div v-for="stat in stats" :key="stat.key" class="bg-muted rounded-lg p-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm opacity-70">{{ stat.label }}</span>
+                <i :class="[stat.icon, 'text-xl text-primary']"></i>
+              </div>
+              <div class="text-lg font-semibold truncate" :class="{ 'text-error': !stat.value }">
+                {{ stat.value || t('stat.missing') }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Description Section -->
+          <USeparator :label="t('section.description')" class="my-6" />
+          <div class="prose max-w-none">
+            <p>{{ doc.description || t('no_description') }}</p>
+          </div>
+
+          <!-- Collection Section (conditional) -->
+          <template v-if="doc.collection">
+            <USeparator :label="t('section.collection')" class="my-6" />
+            <div class="mb-4">
+              <p class="text-lg">
+                {{ t('collection.part_of') }}
+                <NuxtLink
+                  :to="`/archive/documents/collection/${doc.collection.slug}`"
+                  class="font-semibold text-primary hover:underline"
+                >
+                  {{ doc.collection.title }}
+                </NuxtLink>
+              </p>
+            </div>
+            <div
+              v-if="relatedDocs && relatedDocs.length > 0"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+            >
+              <archive-document-card v-for="related in relatedDocs.slice(0, 4)" :key="related.id" :item="related" />
+            </div>
+          </template>
+
+          <!-- Actions Section -->
+          <USeparator :label="t('section.actions')" class="my-6" />
+          <div class="flex flex-wrap gap-4 justify-center">
+            <UButton v-if="doc.download" color="primary" :to="doc.download" target="_blank">
+              <i class="fas fa-download mr-2"></i>
+              {{ t('action.download') }}
+            </UButton>
+
+            <ClientOnly>
+              <UButton :color="copied ? 'success' : 'neutral'" @click="copyUrl()">
+                <i :class="[copied ? 'fas fa-check' : 'fas fa-link', 'mr-2']"></i>
+                {{ copied ? t('action.copied') : t('action.copy_link') }}
+              </UButton>
+
+              <UButton color="neutral" @click="shareDocument()">
+                <i class="fas fa-share-nodes mr-2"></i>
+                {{ t('action.share') }}
+              </UButton>
+            </ClientOnly>
+
+            <UButton v-if="isAuthenticated" variant="outline" @click="showSuggestEdit = true">
+              <i class="fad fa-pen-to-square mr-2"></i>
+              {{ t('action.suggest_edit') }}
+            </UButton>
+          </div>
+        </UCard>
+
+        <!-- Patreon Support -->
+        <UCard>
+          <patreon-card size="large" />
+        </UCard>
+      </template>
+    </div>
+
+    <!-- Suggest Edit Modal -->
     <SuggestEditModal
-      v-if="currentPostData"
+      v-if="doc"
       v-model="showSuggestEdit"
       target-type="document"
-      :target-id="currentPostData.id"
-      :current-data="{ title: currentPostData.title, description: currentPostData.description, code: currentPostData.code }"
+      :target-id="doc.id"
+      :current-data="{
+        title: doc.title,
+        code: doc.code,
+        description: doc.description,
+        author: doc.author,
+        year: doc.year,
+        publisher: doc.publisher,
+        edition: doc.edition,
+        page_count: doc.pageCount,
+        language: doc.language,
+        vehicle_year_start: doc.vehicleYearStart,
+        vehicle_year_end: doc.vehicleYearEnd,
+      }"
       :editable-fields="[
-        { key: 'title', label: t('field_title'), type: 'text' },
-        { key: 'code', label: t('field_code'), type: 'text' },
-        { key: 'description', label: t('field_description'), type: 'textarea' },
+        { key: 'title', label: t('field.title'), type: 'text' },
+        { key: 'code', label: t('field.code'), type: 'text' },
+        { key: 'description', label: t('field.description'), type: 'textarea' },
+        { key: 'author', label: t('field.author'), type: 'text' },
+        { key: 'year', label: t('field.year'), type: 'number' },
+        { key: 'publisher', label: t('field.publisher'), type: 'text' },
+        { key: 'edition', label: t('field.edition'), type: 'text' },
+        { key: 'page_count', label: t('field.page_count'), type: 'number' },
+        { key: 'language', label: t('field.language'), type: 'text' },
+        { key: 'vehicle_year_start', label: t('field.vehicle_year_start'), type: 'number' },
+        { key: 'vehicle_year_end', label: t('field.vehicle_year_end'), type: 'number' },
       ]"
     />
   </div>
 </template>
 
+<style scoped>
+  figure {
+    transition: transform 0.3s ease;
+  }
+
+  figure:hover {
+    transform: translateY(-4px);
+  }
+</style>
+
 <i18n lang="json">
 {
   "en": {
     "hero_title": "Classic Mini Archives",
-    "loading_error": "Error loading content. Please try again later.",
-    "no_image_alt": "No image available",
-    "download_aria_label": "Download {title}",
-    "preview_image_alt": "{title} preview image",
-    "archive_item_alt": "{title} image",
-    "fallback_title": "Archive Item",
-    "file_type_label": "Type:",
+    "breadcrumb_home": "Home",
+    "breadcrumb_documents": "Documents",
+    "type": {
+      "manual": "Manual",
+      "advert": "Advert",
+      "catalogue": "Catalogue",
+      "tuning": "Tuning",
+      "electrical": "Electrical"
+    },
+    "stat": {
+      "code": "Code",
+      "publisher": "Publisher",
+      "edition": "Edition",
+      "pages": "Pages",
+      "language": "Language",
+      "vehicle_years": "Vehicle Years",
+      "models": "Models",
+      "file_type": "File Type",
+      "missing": "Missing"
+    },
+    "section": {
+      "details": "Details",
+      "description": "Description",
+      "collection": "In This Collection",
+      "actions": "Actions"
+    },
+    "collection": {
+      "part_of": "Part of",
+      "view_all": "View All"
+    },
+    "action": {
+      "download": "Download",
+      "copy_link": "Copy Link",
+      "copied": "Copied!",
+      "share": "Share",
+      "suggest_edit": "Suggest Edit"
+    },
+    "field": {
+      "title": "Title",
+      "code": "Code",
+      "description": "Description",
+      "author": "Author",
+      "year": "Year",
+      "publisher": "Publisher",
+      "edition": "Edition",
+      "page_count": "Page Count",
+      "language": "Language",
+      "vehicle_year_start": "Vehicle Year Start",
+      "vehicle_year_end": "Vehicle Year End"
+    },
+    "alt": {
+      "preview_image": "{title} preview image",
+      "no_image": "No image available"
+    },
     "no_description": "No description available.",
-    "share_button": "Share",
-    "contribute_button": "Contribute",
-    "missing_file_button": "Missing File",
-    "download_button": "Download",
-    "suggest_edit": "Suggest Edit",
-    "field_title": "Title",
-    "field_code": "Code",
-    "field_description": "Description",
+    "loading_error": "Error loading content. Please try again later.",
+    "not_found_title": "Document Not Found",
+    "not_found_text": "The document you are looking for could not be found.",
+    "back_to_documents": "Back to Documents",
     "seo": {
       "title_suffix": "- Classic Mini Archive - Classic Mini DIY",
       "description_fallback": "Archive resource for {title} in the Classic Mini DIY collection.",
-      "keywords_template": "Classic Mini, {title}, archive, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Classic Mini Archive",
-      "twitter_title_suffix": "- Classic Mini Archive"
+      "keywords_template": "Classic Mini, {title}, archive, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Classic Mini Archive"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -327,28 +508,70 @@
   },
   "es": {
     "hero_title": "Archivos Classic Mini",
-    "loading_error": "Error al cargar el contenido. Por favor, inténtalo de nuevo más tarde.",
-    "no_image_alt": "No hay imagen disponible",
-    "download_aria_label": "Descargar {title}",
-    "preview_image_alt": "Imagen de vista previa de {title}",
-    "archive_item_alt": "Imagen de {title}",
-    "fallback_title": "Elemento del Archivo",
-    "file_type_label": "Tipo:",
+    "breadcrumb_home": "Inicio",
+    "breadcrumb_documents": "Documentos",
+    "type": {
+      "manual": "Manual",
+      "advert": "Anuncio",
+      "catalogue": "Catálogo",
+      "tuning": "Preparación",
+      "electrical": "Eléctrico"
+    },
+    "stat": {
+      "code": "Código",
+      "publisher": "Editorial",
+      "edition": "Edición",
+      "pages": "Páginas",
+      "language": "Idioma",
+      "vehicle_years": "Años del vehículo",
+      "models": "Modelos",
+      "file_type": "Tipo de archivo",
+      "missing": "Faltante"
+    },
+    "section": {
+      "details": "Detalles",
+      "description": "Descripción",
+      "collection": "En esta colección",
+      "actions": "Acciones"
+    },
+    "collection": {
+      "part_of": "Parte de",
+      "view_all": "Ver todo"
+    },
+    "action": {
+      "download": "Descargar",
+      "copy_link": "Copiar enlace",
+      "copied": "¡Copiado!",
+      "share": "Compartir",
+      "suggest_edit": "Sugerir edición"
+    },
+    "field": {
+      "title": "Título",
+      "code": "Código",
+      "description": "Descripción",
+      "author": "Autor",
+      "year": "Año",
+      "publisher": "Editorial",
+      "edition": "Edición",
+      "page_count": "Número de páginas",
+      "language": "Idioma",
+      "vehicle_year_start": "Año inicio vehículo",
+      "vehicle_year_end": "Año fin vehículo"
+    },
+    "alt": {
+      "preview_image": "Imagen de vista previa de {title}",
+      "no_image": "No hay imagen disponible"
+    },
     "no_description": "No hay descripción disponible.",
-    "share_button": "Compartir",
-    "contribute_button": "Contribuir",
-    "missing_file_button": "Archivo Faltante",
-    "download_button": "Descargar",
-    "suggest_edit": "Sugerir Edición",
-    "field_title": "Título",
-    "field_code": "Código",
-    "field_description": "Descripción",
+    "loading_error": "Error al cargar el contenido. Por favor, inténtalo de nuevo más tarde.",
+    "not_found_title": "Documento no encontrado",
+    "not_found_text": "El documento que buscas no se ha podido encontrar.",
+    "back_to_documents": "Volver a documentos",
     "seo": {
       "title_suffix": "- Archivo Classic Mini - Classic Mini DIY",
       "description_fallback": "Recurso de archivo para {title} en la colección Classic Mini DIY.",
-      "keywords_template": "Classic Mini, {title}, archivo, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Archivo Classic Mini",
-      "twitter_title_suffix": "- Archivo Classic Mini"
+      "keywords_template": "Classic Mini, {title}, archivo, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Archivo Classic Mini"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -358,28 +581,70 @@
   },
   "fr": {
     "hero_title": "Archives Classic Mini",
-    "loading_error": "Erreur lors du chargement du contenu. Veuillez réessayer plus tard.",
-    "no_image_alt": "Aucune image disponible",
-    "download_aria_label": "Télécharger {title}",
-    "preview_image_alt": "Image d'aperçu de {title}",
-    "archive_item_alt": "Image de {title}",
-    "fallback_title": "Élément d'Archive",
-    "file_type_label": "Type :",
+    "breadcrumb_home": "Accueil",
+    "breadcrumb_documents": "Documents",
+    "type": {
+      "manual": "Manuel",
+      "advert": "Publicité",
+      "catalogue": "Catalogue",
+      "tuning": "Préparation",
+      "electrical": "Électrique"
+    },
+    "stat": {
+      "code": "Code",
+      "publisher": "Éditeur",
+      "edition": "Édition",
+      "pages": "Pages",
+      "language": "Langue",
+      "vehicle_years": "Années du véhicule",
+      "models": "Modèles",
+      "file_type": "Type de fichier",
+      "missing": "Manquant"
+    },
+    "section": {
+      "details": "Détails",
+      "description": "Description",
+      "collection": "Dans cette collection",
+      "actions": "Actions"
+    },
+    "collection": {
+      "part_of": "Fait partie de",
+      "view_all": "Voir tout"
+    },
+    "action": {
+      "download": "Télécharger",
+      "copy_link": "Copier le lien",
+      "copied": "Copié !",
+      "share": "Partager",
+      "suggest_edit": "Suggérer une modification"
+    },
+    "field": {
+      "title": "Titre",
+      "code": "Code",
+      "description": "Description",
+      "author": "Auteur",
+      "year": "Année",
+      "publisher": "Éditeur",
+      "edition": "Édition",
+      "page_count": "Nombre de pages",
+      "language": "Langue",
+      "vehicle_year_start": "Année début véhicule",
+      "vehicle_year_end": "Année fin véhicule"
+    },
+    "alt": {
+      "preview_image": "Image d'aperçu de {title}",
+      "no_image": "Aucune image disponible"
+    },
     "no_description": "Aucune description disponible.",
-    "share_button": "Partager",
-    "contribute_button": "Contribuer",
-    "missing_file_button": "Fichier Manquant",
-    "download_button": "Télécharger",
-    "suggest_edit": "Suggérer une Modification",
-    "field_title": "Titre",
-    "field_code": "Code",
-    "field_description": "Description",
+    "loading_error": "Erreur lors du chargement du contenu. Veuillez réessayer plus tard.",
+    "not_found_title": "Document introuvable",
+    "not_found_text": "Le document que vous recherchez est introuvable.",
+    "back_to_documents": "Retour aux documents",
     "seo": {
       "title_suffix": "- Archive Classic Mini - Classic Mini DIY",
       "description_fallback": "Ressource d'archive pour {title} dans la collection Classic Mini DIY.",
-      "keywords_template": "Classic Mini, {title}, archive, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Archive Classic Mini",
-      "twitter_title_suffix": "- Archive Classic Mini"
+      "keywords_template": "Classic Mini, {title}, archive, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Archive Classic Mini"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -389,28 +654,70 @@
   },
   "it": {
     "hero_title": "Archivi Classic Mini",
-    "loading_error": "Errore nel caricamento del contenuto. Riprova più tardi.",
-    "no_image_alt": "Nessuna immagine disponibile",
-    "download_aria_label": "Scarica {title}",
-    "preview_image_alt": "Immagine di anteprima di {title}",
-    "archive_item_alt": "Immagine di {title}",
-    "fallback_title": "Elemento dell'Archivio",
-    "file_type_label": "Tipo:",
+    "breadcrumb_home": "Home",
+    "breadcrumb_documents": "Documenti",
+    "type": {
+      "manual": "Manuale",
+      "advert": "Annuncio",
+      "catalogue": "Catalogo",
+      "tuning": "Preparazione",
+      "electrical": "Elettrico"
+    },
+    "stat": {
+      "code": "Codice",
+      "publisher": "Editore",
+      "edition": "Edizione",
+      "pages": "Pagine",
+      "language": "Lingua",
+      "vehicle_years": "Anni del veicolo",
+      "models": "Modelli",
+      "file_type": "Tipo di file",
+      "missing": "Mancante"
+    },
+    "section": {
+      "details": "Dettagli",
+      "description": "Descrizione",
+      "collection": "In questa collezione",
+      "actions": "Azioni"
+    },
+    "collection": {
+      "part_of": "Parte di",
+      "view_all": "Vedi tutto"
+    },
+    "action": {
+      "download": "Scarica",
+      "copy_link": "Copia link",
+      "copied": "Copiato!",
+      "share": "Condividi",
+      "suggest_edit": "Suggerisci modifica"
+    },
+    "field": {
+      "title": "Titolo",
+      "code": "Codice",
+      "description": "Descrizione",
+      "author": "Autore",
+      "year": "Anno",
+      "publisher": "Editore",
+      "edition": "Edizione",
+      "page_count": "Numero di pagine",
+      "language": "Lingua",
+      "vehicle_year_start": "Anno inizio veicolo",
+      "vehicle_year_end": "Anno fine veicolo"
+    },
+    "alt": {
+      "preview_image": "Immagine di anteprima di {title}",
+      "no_image": "Nessuna immagine disponibile"
+    },
     "no_description": "Nessuna descrizione disponibile.",
-    "share_button": "Condividi",
-    "contribute_button": "Contribuisci",
-    "missing_file_button": "File Mancante",
-    "download_button": "Scarica",
-    "suggest_edit": "Suggerisci Modifica",
-    "field_title": "Titolo",
-    "field_code": "Codice",
-    "field_description": "Descrizione",
+    "loading_error": "Errore nel caricamento del contenuto. Riprova più tardi.",
+    "not_found_title": "Documento non trovato",
+    "not_found_text": "Il documento che stai cercando non è stato trovato.",
+    "back_to_documents": "Torna ai documenti",
     "seo": {
       "title_suffix": "- Archivio Classic Mini - Classic Mini DIY",
       "description_fallback": "Risorsa di archivio per {title} nella collezione Classic Mini DIY.",
-      "keywords_template": "Classic Mini, {title}, archivio, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Archivio Classic Mini",
-      "twitter_title_suffix": "- Archivio Classic Mini"
+      "keywords_template": "Classic Mini, {title}, archivio, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Archivio Classic Mini"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -420,28 +727,70 @@
   },
   "de": {
     "hero_title": "Classic Mini Archive",
-    "loading_error": "Fehler beim Laden des Inhalts. Bitte versuchen Sie es später erneut.",
-    "no_image_alt": "Kein Bild verfügbar",
-    "download_aria_label": "{title} herunterladen",
-    "preview_image_alt": "Vorschaubild von {title}",
-    "archive_item_alt": "Bild von {title}",
-    "fallback_title": "Archiv-Element",
-    "file_type_label": "Typ:",
+    "breadcrumb_home": "Startseite",
+    "breadcrumb_documents": "Dokumente",
+    "type": {
+      "manual": "Handbuch",
+      "advert": "Anzeige",
+      "catalogue": "Katalog",
+      "tuning": "Tuning",
+      "electrical": "Elektrik"
+    },
+    "stat": {
+      "code": "Code",
+      "publisher": "Verlag",
+      "edition": "Ausgabe",
+      "pages": "Seiten",
+      "language": "Sprache",
+      "vehicle_years": "Fahrzeugjahre",
+      "models": "Modelle",
+      "file_type": "Dateityp",
+      "missing": "Fehlend"
+    },
+    "section": {
+      "details": "Details",
+      "description": "Beschreibung",
+      "collection": "In dieser Sammlung",
+      "actions": "Aktionen"
+    },
+    "collection": {
+      "part_of": "Teil von",
+      "view_all": "Alle anzeigen"
+    },
+    "action": {
+      "download": "Herunterladen",
+      "copy_link": "Link kopieren",
+      "copied": "Kopiert!",
+      "share": "Teilen",
+      "suggest_edit": "Bearbeitung vorschlagen"
+    },
+    "field": {
+      "title": "Titel",
+      "code": "Code",
+      "description": "Beschreibung",
+      "author": "Autor",
+      "year": "Jahr",
+      "publisher": "Verlag",
+      "edition": "Ausgabe",
+      "page_count": "Seitenzahl",
+      "language": "Sprache",
+      "vehicle_year_start": "Fahrzeugjahr Beginn",
+      "vehicle_year_end": "Fahrzeugjahr Ende"
+    },
+    "alt": {
+      "preview_image": "Vorschaubild von {title}",
+      "no_image": "Kein Bild verfügbar"
+    },
     "no_description": "Keine Beschreibung verfügbar.",
-    "share_button": "Teilen",
-    "contribute_button": "Beitragen",
-    "missing_file_button": "Fehlende Datei",
-    "download_button": "Herunterladen",
-    "suggest_edit": "Bearbeitung Vorschlagen",
-    "field_title": "Titel",
-    "field_code": "Code",
-    "field_description": "Beschreibung",
+    "loading_error": "Fehler beim Laden des Inhalts. Bitte versuchen Sie es später erneut.",
+    "not_found_title": "Dokument nicht gefunden",
+    "not_found_text": "Das gesuchte Dokument konnte nicht gefunden werden.",
+    "back_to_documents": "Zurück zu Dokumenten",
     "seo": {
       "title_suffix": "- Classic Mini Archiv - Classic Mini DIY",
       "description_fallback": "Archiv-Ressource für {title} in der Classic Mini DIY Sammlung.",
-      "keywords_template": "Classic Mini, {title}, Archiv, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Classic Mini Archiv",
-      "twitter_title_suffix": "- Classic Mini Archiv"
+      "keywords_template": "Classic Mini, {title}, Archiv, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Classic Mini Archiv"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -451,28 +800,70 @@
   },
   "pt": {
     "hero_title": "Arquivos Classic Mini",
-    "loading_error": "Erro ao carregar o conteúdo. Tente novamente mais tarde.",
-    "no_image_alt": "Nenhuma imagem disponível",
-    "download_aria_label": "Baixar {title}",
-    "preview_image_alt": "Imagem de visualização de {title}",
-    "archive_item_alt": "Imagem de {title}",
-    "fallback_title": "Item do Arquivo",
-    "file_type_label": "Tipo:",
+    "breadcrumb_home": "Início",
+    "breadcrumb_documents": "Documentos",
+    "type": {
+      "manual": "Manual",
+      "advert": "Anúncio",
+      "catalogue": "Catálogo",
+      "tuning": "Preparação",
+      "electrical": "Elétrico"
+    },
+    "stat": {
+      "code": "Código",
+      "publisher": "Editora",
+      "edition": "Edição",
+      "pages": "Páginas",
+      "language": "Idioma",
+      "vehicle_years": "Anos do veículo",
+      "models": "Modelos",
+      "file_type": "Tipo de arquivo",
+      "missing": "Ausente"
+    },
+    "section": {
+      "details": "Detalhes",
+      "description": "Descrição",
+      "collection": "Nesta coleção",
+      "actions": "Ações"
+    },
+    "collection": {
+      "part_of": "Parte de",
+      "view_all": "Ver tudo"
+    },
+    "action": {
+      "download": "Baixar",
+      "copy_link": "Copiar link",
+      "copied": "Copiado!",
+      "share": "Compartilhar",
+      "suggest_edit": "Sugerir edição"
+    },
+    "field": {
+      "title": "Título",
+      "code": "Código",
+      "description": "Descrição",
+      "author": "Autor",
+      "year": "Ano",
+      "publisher": "Editora",
+      "edition": "Edição",
+      "page_count": "Número de páginas",
+      "language": "Idioma",
+      "vehicle_year_start": "Ano início veículo",
+      "vehicle_year_end": "Ano fim veículo"
+    },
+    "alt": {
+      "preview_image": "Imagem de visualização de {title}",
+      "no_image": "Nenhuma imagem disponível"
+    },
     "no_description": "Nenhuma descrição disponível.",
-    "share_button": "Compartilhar",
-    "contribute_button": "Contribuir",
-    "missing_file_button": "Arquivo Ausente",
-    "download_button": "Baixar",
-    "suggest_edit": "Sugerir Edição",
-    "field_title": "Título",
-    "field_code": "Código",
-    "field_description": "Descrição",
+    "loading_error": "Erro ao carregar o conteúdo. Tente novamente mais tarde.",
+    "not_found_title": "Documento não encontrado",
+    "not_found_text": "O documento que você procura não foi encontrado.",
+    "back_to_documents": "Voltar aos documentos",
     "seo": {
       "title_suffix": "- Arquivo Classic Mini - Classic Mini DIY",
       "description_fallback": "Recurso de arquivo para {title} na coleção Classic Mini DIY.",
-      "keywords_template": "Classic Mini, {title}, arquivo, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Arquivo Classic Mini",
-      "twitter_title_suffix": "- Arquivo Classic Mini"
+      "keywords_template": "Classic Mini, {title}, arquivo, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Arquivo Classic Mini"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -482,28 +873,70 @@
   },
   "ru": {
     "hero_title": "Архивы Classic Mini",
-    "loading_error": "Ошибка загрузки контента. Пожалуйста, попробуйте позже.",
-    "no_image_alt": "Изображение недоступно",
-    "download_aria_label": "Скачать {title}",
-    "preview_image_alt": "Превью изображение {title}",
-    "archive_item_alt": "Изображение {title}",
-    "fallback_title": "Элемент Архива",
-    "file_type_label": "Тип:",
+    "breadcrumb_home": "Главная",
+    "breadcrumb_documents": "Документы",
+    "type": {
+      "manual": "Руководство",
+      "advert": "Реклама",
+      "catalogue": "Каталог",
+      "tuning": "Тюнинг",
+      "electrical": "Электрика"
+    },
+    "stat": {
+      "code": "Код",
+      "publisher": "Издатель",
+      "edition": "Издание",
+      "pages": "Страницы",
+      "language": "Язык",
+      "vehicle_years": "Годы выпуска",
+      "models": "Модели",
+      "file_type": "Тип файла",
+      "missing": "Отсутствует"
+    },
+    "section": {
+      "details": "Детали",
+      "description": "Описание",
+      "collection": "В этой коллекции",
+      "actions": "Действия"
+    },
+    "collection": {
+      "part_of": "Часть",
+      "view_all": "Показать все"
+    },
+    "action": {
+      "download": "Скачать",
+      "copy_link": "Копировать ссылку",
+      "copied": "Скопировано!",
+      "share": "Поделиться",
+      "suggest_edit": "Предложить правку"
+    },
+    "field": {
+      "title": "Название",
+      "code": "Код",
+      "description": "Описание",
+      "author": "Автор",
+      "year": "Год",
+      "publisher": "Издатель",
+      "edition": "Издание",
+      "page_count": "Количество страниц",
+      "language": "Язык",
+      "vehicle_year_start": "Год начала выпуска",
+      "vehicle_year_end": "Год окончания выпуска"
+    },
+    "alt": {
+      "preview_image": "Превью изображение {title}",
+      "no_image": "Изображение недоступно"
+    },
     "no_description": "Описание недоступно.",
-    "share_button": "Поделиться",
-    "contribute_button": "Внести вклад",
-    "missing_file_button": "Отсутствующий Файл",
-    "download_button": "Скачать",
-    "suggest_edit": "Предложить Правку",
-    "field_title": "Название",
-    "field_code": "Код",
-    "field_description": "Описание",
+    "loading_error": "Ошибка загрузки контента. Пожалуйста, попробуйте позже.",
+    "not_found_title": "Документ не найден",
+    "not_found_text": "Документ, который вы ищете, не найден.",
+    "back_to_documents": "Назад к документам",
     "seo": {
       "title_suffix": "- Архив Classic Mini - Classic Mini DIY",
       "description_fallback": "Архивный ресурс для {title} в коллекции Classic Mini DIY.",
-      "keywords_template": "Classic Mini, {title}, архив, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Архив Classic Mini",
-      "twitter_title_suffix": "- Архив Classic Mini"
+      "keywords_template": "Classic Mini, {title}, архив, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Архив Classic Mini"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -513,28 +946,70 @@
   },
   "ja": {
     "hero_title": "Classic Mini アーカイブ",
-    "loading_error": "コンテンツの読み込みエラーです。後でもう一度お試しください。",
-    "no_image_alt": "画像がありません",
-    "download_aria_label": "{title}をダウンロード",
-    "preview_image_alt": "{title}のプレビュー画像",
-    "archive_item_alt": "{title}の画像",
-    "fallback_title": "アーカイブアイテム",
-    "file_type_label": "タイプ：",
+    "breadcrumb_home": "ホーム",
+    "breadcrumb_documents": "ドキュメント",
+    "type": {
+      "manual": "マニュアル",
+      "advert": "広告",
+      "catalogue": "カタログ",
+      "tuning": "チューニング",
+      "electrical": "電装"
+    },
+    "stat": {
+      "code": "コード",
+      "publisher": "出版社",
+      "edition": "版",
+      "pages": "ページ数",
+      "language": "言語",
+      "vehicle_years": "車両年式",
+      "models": "モデル",
+      "file_type": "ファイル形式",
+      "missing": "不明"
+    },
+    "section": {
+      "details": "詳細",
+      "description": "説明",
+      "collection": "このコレクション内",
+      "actions": "アクション"
+    },
+    "collection": {
+      "part_of": "所属コレクション：",
+      "view_all": "すべて表示"
+    },
+    "action": {
+      "download": "ダウンロード",
+      "copy_link": "リンクをコピー",
+      "copied": "コピーしました！",
+      "share": "共有",
+      "suggest_edit": "編集を提案"
+    },
+    "field": {
+      "title": "タイトル",
+      "code": "コード",
+      "description": "説明",
+      "author": "著者",
+      "year": "年",
+      "publisher": "出版社",
+      "edition": "版",
+      "page_count": "ページ数",
+      "language": "言語",
+      "vehicle_year_start": "車両年式開始",
+      "vehicle_year_end": "車両年式終了"
+    },
+    "alt": {
+      "preview_image": "{title}のプレビュー画像",
+      "no_image": "画像がありません"
+    },
     "no_description": "説明がありません。",
-    "share_button": "共有",
-    "contribute_button": "貢献",
-    "missing_file_button": "ファイルが見つかりません",
-    "download_button": "ダウンロード",
-    "suggest_edit": "編集を提案",
-    "field_title": "タイトル",
-    "field_code": "コード",
-    "field_description": "説明",
+    "loading_error": "コンテンツの読み込みエラーです。後でもう一度お試しください。",
+    "not_found_title": "ドキュメントが見つかりません",
+    "not_found_text": "お探しのドキュメントは見つかりませんでした。",
+    "back_to_documents": "ドキュメント一覧に戻る",
     "seo": {
       "title_suffix": "- Classic Mini アーカイブ - Classic Mini DIY",
       "description_fallback": "Classic Mini DIYコレクションの{title}のアーカイブリソース。",
-      "keywords_template": "Classic Mini, {title}, アーカイブ, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Classic Mini アーカイブ",
-      "twitter_title_suffix": "- Classic Mini アーカイブ"
+      "keywords_template": "Classic Mini, {title}, アーカイブ, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Classic Mini アーカイブ"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -544,28 +1019,70 @@
   },
   "zh": {
     "hero_title": "Classic Mini 档案",
-    "loading_error": "加载内容时出错。请稍后重试。",
-    "no_image_alt": "无可用图片",
-    "download_aria_label": "下载 {title}",
-    "preview_image_alt": "{title} 预览图片",
-    "archive_item_alt": "{title} 图片",
-    "fallback_title": "档案项目",
-    "file_type_label": "类型：",
+    "breadcrumb_home": "首页",
+    "breadcrumb_documents": "文档",
+    "type": {
+      "manual": "手册",
+      "advert": "广告",
+      "catalogue": "目录",
+      "tuning": "调校",
+      "electrical": "电气"
+    },
+    "stat": {
+      "code": "编号",
+      "publisher": "出版商",
+      "edition": "版本",
+      "pages": "页数",
+      "language": "语言",
+      "vehicle_years": "车辆年份",
+      "models": "型号",
+      "file_type": "文件类型",
+      "missing": "缺失"
+    },
+    "section": {
+      "details": "详情",
+      "description": "描述",
+      "collection": "此合集中",
+      "actions": "操作"
+    },
+    "collection": {
+      "part_of": "属于",
+      "view_all": "查看全部"
+    },
+    "action": {
+      "download": "下载",
+      "copy_link": "复制链接",
+      "copied": "已复制！",
+      "share": "分享",
+      "suggest_edit": "建议编辑"
+    },
+    "field": {
+      "title": "标题",
+      "code": "编号",
+      "description": "描述",
+      "author": "作者",
+      "year": "年份",
+      "publisher": "出版商",
+      "edition": "版本",
+      "page_count": "页数",
+      "language": "语言",
+      "vehicle_year_start": "车辆年份起始",
+      "vehicle_year_end": "车辆年份结束"
+    },
+    "alt": {
+      "preview_image": "{title} 预览图片",
+      "no_image": "无可用图片"
+    },
     "no_description": "无可用描述。",
-    "share_button": "分享",
-    "contribute_button": "贡献",
-    "missing_file_button": "缺少文件",
-    "download_button": "下载",
-    "suggest_edit": "建议编辑",
-    "field_title": "标题",
-    "field_code": "代码",
-    "field_description": "描述",
+    "loading_error": "加载内容时出错。请稍后重试。",
+    "not_found_title": "未找到文档",
+    "not_found_text": "找不到您要查找的文档。",
+    "back_to_documents": "返回文档列表",
     "seo": {
       "title_suffix": "- Classic Mini 档案 - Classic Mini DIY",
       "description_fallback": "Classic Mini DIY 收藏中 {title} 的档案资源。",
-      "keywords_template": "Classic Mini, {title}, 档案, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Classic Mini 档案",
-      "twitter_title_suffix": "- Classic Mini 档案"
+      "keywords_template": "Classic Mini, {title}, 档案, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Classic Mini 档案"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -575,28 +1092,70 @@
   },
   "ko": {
     "hero_title": "Classic Mini 아카이브",
-    "loading_error": "콘텐츠 로딩 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
-    "no_image_alt": "사용 가능한 이미지가 없습니다",
-    "download_aria_label": "{title} 다운로드",
-    "preview_image_alt": "{title} 미리보기 이미지",
-    "archive_item_alt": "{title} 이미지",
-    "fallback_title": "아카이브 항목",
-    "file_type_label": "유형:",
+    "breadcrumb_home": "홈",
+    "breadcrumb_documents": "문서",
+    "type": {
+      "manual": "매뉴얼",
+      "advert": "광고",
+      "catalogue": "카탈로그",
+      "tuning": "튜닝",
+      "electrical": "전장"
+    },
+    "stat": {
+      "code": "코드",
+      "publisher": "출판사",
+      "edition": "판",
+      "pages": "페이지",
+      "language": "언어",
+      "vehicle_years": "차량 연식",
+      "models": "모델",
+      "file_type": "파일 형식",
+      "missing": "없음"
+    },
+    "section": {
+      "details": "상세정보",
+      "description": "설명",
+      "collection": "이 컬렉션의 문서",
+      "actions": "작업"
+    },
+    "collection": {
+      "part_of": "소속 컬렉션:",
+      "view_all": "전체 보기"
+    },
+    "action": {
+      "download": "다운로드",
+      "copy_link": "링크 복사",
+      "copied": "복사됨!",
+      "share": "공유",
+      "suggest_edit": "편집 제안"
+    },
+    "field": {
+      "title": "제목",
+      "code": "코드",
+      "description": "설명",
+      "author": "저자",
+      "year": "연도",
+      "publisher": "출판사",
+      "edition": "판",
+      "page_count": "페이지 수",
+      "language": "언어",
+      "vehicle_year_start": "차량 연식 시작",
+      "vehicle_year_end": "차량 연식 종료"
+    },
+    "alt": {
+      "preview_image": "{title} 미리보기 이미지",
+      "no_image": "사용 가능한 이미지가 없습니다"
+    },
     "no_description": "사용 가능한 설명이 없습니다.",
-    "share_button": "공유",
-    "contribute_button": "기여",
-    "missing_file_button": "누락된 파일",
-    "download_button": "다운로드",
-    "suggest_edit": "편집 제안",
-    "field_title": "제목",
-    "field_code": "코드",
-    "field_description": "설명",
+    "loading_error": "콘텐츠 로딩 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+    "not_found_title": "문서를 찾을 수 없습니다",
+    "not_found_text": "찾고 있는 문서를 찾을 수 없습니다.",
+    "back_to_documents": "문서 목록으로 돌아가기",
     "seo": {
       "title_suffix": "- Classic Mini 아카이브 - Classic Mini DIY",
       "description_fallback": "Classic Mini DIY 컬렉션의 {title} 아카이브 리소스.",
-      "keywords_template": "Classic Mini, {title}, 아카이브, Mini Cooper, {fileType}, {archiveType}",
-      "og_title_suffix": "- Classic Mini 아카이브",
-      "twitter_title_suffix": "- Classic Mini 아카이브"
+      "keywords_template": "Classic Mini, {title}, 아카이브, Mini Cooper, {fileType}, {type}",
+      "og_title_suffix": "- Classic Mini 아카이브"
     },
     "structured_data": {
       "author_fallback": "Classic Mini DIY",
@@ -606,12 +1165,3 @@
   }
 }
 </i18n>
-
-<style lang="scss">
-  /* Fallback for image loading errors */
-  img {
-    &.error {
-      opacity: 0.5;
-    }
-  }
-</style>
