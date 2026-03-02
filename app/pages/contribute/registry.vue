@@ -228,7 +228,6 @@
                         v-model.number="formData.year"
                         :color="!formData.year && touchedFields.year ? 'error' : undefined"
                         :disabled="processing"
-                        required
                         @blur="touchedFields.year = true"
                       />
                       <p v-if="!formData.year && touchedFields.year" class="text-sm text-error mt-1">
@@ -250,7 +249,6 @@
                         v-model="formData.model"
                         :color="formData.model === '' && touchedFields.model ? 'error' : undefined"
                         :disabled="processing"
-                        required
                         @blur="touchedFields.model = true"
                       />
                       <p v-if="formData.model === '' && touchedFields.model" class="text-sm text-error mt-1">
@@ -272,7 +270,6 @@
                         v-model="formData.trim"
                         :color="formData.trim === '' && touchedFields.trim ? 'error' : undefined"
                         :disabled="processing"
-                        required
                         @blur="touchedFields.trim = true"
                       />
                       <p v-if="formData.trim === '' && touchedFields.trim" class="text-sm text-error mt-1">
@@ -293,7 +290,6 @@
                         :items="bodyTypeOptions"
                         :color="formData.bodyType === '' && touchedFields.bodyType ? 'error' : undefined"
                         :disabled="processing"
-                        required
                         @blur="touchedFields.bodyType = true"
                         @change="touchedFields.bodyType = true"
                       />
@@ -318,7 +314,6 @@
                         :items="engineSizeOptions"
                         :color="!formData.engineSize && touchedFields.engineSize ? 'error' : undefined"
                         :disabled="processing"
-                        required
                         @blur="touchedFields.engineSize = true"
                         @change="touchedFields.engineSize = true"
                       />
