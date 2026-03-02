@@ -51,24 +51,9 @@
   });
 
   // Inline validation errors
-  const nameError = computed(() => {
-    if (touched.name && !formData.name.trim()) return t('form.validation.name_required');
-    return '';
-  });
-
-  const codeError = computed(() => {
-    if (touched.code && !formData.code.trim()) return t('form.validation.code_required');
-    return '';
-  });
-
   const isValidHex = computed(() => {
     if (!formData.hexValue) return true;
     return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(formData.hexValue);
-  });
-
-  const hexError = computed(() => {
-    if (formData.hexValue && !isValidHex.value) return t('form.validation.hex_invalid');
-    return '';
   });
 
   const isFormValid = computed(() => {
@@ -279,7 +264,11 @@
                 <!-- Form Fields -->
                 <form @submit.prevent="submit" class="space-y-4">
                   <!-- Color Name (required) -->
-                  <UFormField :label="`${t('form.fields.color_name.label')} *`" :error="nameError">
+                  <div class="w-full">
+                    <label class="flex justify-between items-center mb-1">
+                      <span class="text-sm font-medium">{{ t('form.fields.color_name.label') }} <span class="text-error">*</span></span>
+                      <span class="text-sm text-muted"><i class="fad fa-paintbrush"></i></span>
+                    </label>
                     <UInput
                       id="colorName"
                       type="text"
@@ -288,14 +277,21 @@
                       class="w-full"
                       maxlength="100"
                       :disabled="processing"
-                      icon="i-fa6-solid-paintbrush"
+                      :color="touched.name && !formData.name.trim() ? 'error' : undefined"
                       @blur="touched.name = true"
                     />
-                  </UFormField>
+                    <p v-if="touched.name && !formData.name.trim()" class="text-sm text-error mt-1">
+                      {{ t('form.validation.name_required') }}
+                    </p>
+                  </div>
 
                   <!-- Primary Code + Short Code -->
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <UFormField :label="`${t('form.fields.primary_code.label')} *`" :error="codeError">
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.fields.primary_code.label') }} <span class="text-error">*</span></span>
+                        <span class="text-sm text-muted"><i class="fad fa-code"></i></span>
+                      </label>
                       <UInput
                         id="primaryCode"
                         type="text"
@@ -303,12 +299,19 @@
                         :placeholder="t('form.fields.primary_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
-                        icon="i-fa6-solid-code"
+                        :color="touched.code && !formData.code.trim() ? 'error' : undefined"
                         @blur="touched.code = true"
                       />
-                    </UFormField>
+                      <p v-if="touched.code && !formData.code.trim()" class="text-sm text-error mt-1">
+                        {{ t('form.validation.code_required') }}
+                      </p>
+                    </div>
 
-                    <UFormField :label="t('form.fields.short_code.label')">
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.fields.short_code.label') }}</span>
+                        <span class="text-sm text-muted"><i class="fad fa-code"></i></span>
+                      </label>
                       <UInput
                         id="shortCode"
                         type="text"
@@ -316,14 +319,17 @@
                         :placeholder="t('form.fields.short_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
-                        icon="i-fa6-solid-code"
                       />
-                    </UFormField>
+                    </div>
                   </div>
 
                   <!-- Ditzler/PPG Code + Dulux Code -->
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <UFormField :label="t('form.fields.ditzler_ppg_code.label')">
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.fields.ditzler_ppg_code.label') }}</span>
+                        <span class="text-sm text-muted"><i class="fad fa-code"></i></span>
+                      </label>
                       <UInput
                         id="ditzlerPpgCode"
                         type="text"
@@ -331,11 +337,14 @@
                         :placeholder="t('form.fields.ditzler_ppg_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
-                        icon="i-fa6-solid-code"
                       />
-                    </UFormField>
+                    </div>
 
-                    <UFormField :label="t('form.fields.dulux_code.label')">
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.fields.dulux_code.label') }}</span>
+                        <span class="text-sm text-muted"><i class="fad fa-code"></i></span>
+                      </label>
                       <UInput
                         id="duluxCode"
                         type="text"
@@ -343,13 +352,16 @@
                         :placeholder="t('form.fields.dulux_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
-                        icon="i-fa6-solid-code"
                       />
-                    </UFormField>
+                    </div>
                   </div>
 
                   <!-- Hex Value with color preview swatch -->
-                  <UFormField :label="t('form.fields.hex_value.label')" :error="hexError">
+                  <div class="w-full">
+                    <label class="flex justify-between items-center mb-1">
+                      <span class="text-sm font-medium">{{ t('form.fields.hex_value.label') }}</span>
+                      <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
+                    </label>
                     <div class="flex items-center gap-3">
                       <UInput
                         id="hexValue"
@@ -358,7 +370,7 @@
                         :placeholder="t('form.fields.hex_value.placeholder')"
                         class="w-full"
                         :disabled="processing"
-                        icon="i-fa6-solid-hashtag"
+                        :color="formData.hexValue && !isValidHex ? 'error' : undefined"
                       />
                       <div
                         v-if="formData.hexValue && isValidHex"
@@ -367,10 +379,17 @@
                         :title="formData.hexValue"
                       ></div>
                     </div>
-                  </UFormField>
+                    <p v-if="formData.hexValue && !isValidHex" class="text-sm text-error mt-1">
+                      {{ t('form.validation.hex_invalid') }}
+                    </p>
+                  </div>
 
                   <!-- Years Used -->
-                  <UFormField :label="t('form.fields.years_used.label')">
+                  <div class="w-full">
+                    <label class="flex justify-between items-center mb-1">
+                      <span class="text-sm font-medium">{{ t('form.fields.years_used.label') }}</span>
+                      <span class="text-sm text-muted"><i class="fad fa-calendar-days"></i></span>
+                    </label>
                     <UInput
                       id="years"
                       type="text"
@@ -378,9 +397,8 @@
                       :placeholder="t('form.fields.years_used.placeholder')"
                       class="w-full"
                       :disabled="processing"
-                      icon="i-fa6-solid-calendar-days"
                     />
-                  </UFormField>
+                  </div>
 
                   <!-- Swatch / Example Photos -->
                   <ContributeFileUpload
