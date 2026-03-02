@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
   const { isAuthenticated, userProfile } = useAuth();
 
   useHead({
