@@ -288,7 +288,6 @@
                       class="w-full"
                       maxlength="100"
                       :disabled="processing"
-                      required
                       icon="i-fa6-solid-paintbrush"
                       @blur="touched.name = true"
                     />
@@ -304,7 +303,6 @@
                         :placeholder="t('form.fields.primary_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
-                        required
                         icon="i-fa6-solid-code"
                         @blur="touched.code = true"
                       />

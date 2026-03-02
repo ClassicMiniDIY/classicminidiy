@@ -259,7 +259,6 @@
                       :placeholder="t('placeholders.name')"
                       v-model="name"
                       :color="name.trim() === '' && touchedFields.name ? 'error' : undefined"
-                      required
                       @blur="touchedFields.name = true"
                     />
                     <p v-if="name.trim() === '' && touchedFields.name" class="text-sm text-error mt-1">
@@ -291,7 +290,6 @@
                       :items="sizeOptions"
                       :placeholder="t('placeholders.size')"
                       :color="size === '' && touchedFields.size ? 'error' : undefined"
-                      required
                       @blur="touchedFields.size = true"
                       @change="touchedFields.size = true"
                     />
@@ -311,7 +309,6 @@
                       :placeholder="t('placeholders.width')"
                       v-model="width"
                       :color="width.trim() === '' && touchedFields.width ? 'error' : undefined"
-                      required
                       @blur="touchedFields.width = true"
                     />
                     <p v-if="width.trim() === '' && touchedFields.width" class="text-sm text-error mt-1">
