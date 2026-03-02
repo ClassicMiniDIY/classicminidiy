@@ -1,10 +1,27 @@
 export interface ArchiveDocumentItem {
+  id: string;
   title: string;
   description: string | null;
+  author: string | null;
   image: string;
   download: string;
   code: string;
   path: string;
+  language?: string;
+}
+
+export interface ArchiveDocumentDetail extends ArchiveDocumentItem {
+  year: number | null;
+  type: string;
+  pageCount: number | null;
+  language: string;
+  publisher: string | null;
+  edition: string | null;
+  applicableModels: string[];
+  vehicleYearStart: number | null;
+  vehicleYearEnd: number | null;
+  collection: { id: string; slug: string; title: string; description: string | null; image: string } | null;
+  createdAt: string;
 }
 
 export interface ArchiveCollectionItem {
@@ -33,14 +50,55 @@ export const useArchiveDocuments = () => {
     return `${config.public.supabaseUrl}/storage/v1/object/public/archive-thumbnails/${path}`;
   };
 
+  // Strip HTML comments, markdown headings, and other artifacts from migrated descriptions
+  const cleanDescription = (raw: string | null): string => {
+    if (!raw) return '';
+    return raw
+      .replace(/<!--.*?-->/g, '')  // HTML comments
+      .replace(/^#+\s*/gm, '')     // Markdown headings
+      .replace(/\s+/g, ' ')        // Collapse whitespace
+      .trim();
+  };
+
   const mapToArchiveItem = (row: any): ArchiveDocumentItem => ({
+    id: row.id,
     title: row.title || '',
-    description: row.description || '',
+    description: cleanDescription(row.description),
+    author: row.author || null,
     image: getThumbnailUrl(row.thumbnail_path),
     download: getStorageUrl(row.file_path),
     code: row.code || '',
     path: `/archive/documents/${row.slug}`,
+    language: row.language || undefined,
   });
+
+  const mapToArchiveDetail = (row: any): ArchiveDocumentDetail => {
+    const base = mapToArchiveItem(row);
+    const col = row.document_collections;
+
+    return {
+      ...base,
+      year: row.year ?? null,
+      type: row.type || '',
+      pageCount: row.page_count ?? null,
+      language: row.language || 'en',
+      publisher: row.publisher || null,
+      edition: row.edition || null,
+      applicableModels: row.applicable_models || [],
+      vehicleYearStart: row.vehicle_year_start ?? null,
+      vehicleYearEnd: row.vehicle_year_end ?? null,
+      collection: col
+        ? {
+            id: col.id,
+            slug: col.slug,
+            title: col.title || '',
+            description: col.description || null,
+            image: getThumbnailUrl(col.thumbnail_path),
+          }
+        : null,
+      createdAt: row.created_at || '',
+    };
+  };
 
   const listByType = async (
     type: 'manual' | 'advert' | 'catalogue' | 'tuning' | 'electrical',
@@ -112,7 +170,9 @@ export const useArchiveDocuments = () => {
     }
 
     if (opts?.search) {
-      query = query.or(`title.ilike.%${opts.search}%,description.ilike.%${opts.search}%,code.ilike.%${opts.search}%`);
+      // Escape special PostgREST characters to prevent filter injection
+      const escaped = opts.search.replace(/[,%().*]/g, (c) => `\\${c}`);
+      query = query.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%,code.ilike.%${escaped}%`);
     }
 
     if (opts?.sort === 'newest') {
@@ -164,21 +224,56 @@ export const useArchiveDocuments = () => {
     }));
   };
 
-  const getDocumentBySlug = async (slug: string): Promise<ArchiveDocumentItem | null> => {
+  const getDocumentBySlug = async (slug: string): Promise<ArchiveDocumentDetail | null> => {
     const { data, error } = await supabase
       .from('archive_documents')
-      .select('*')
+      .select('*, document_collections(id, slug, title, description, thumbnail_path)')
       .eq('slug', slug)
       .eq('status', 'approved')
       .maybeSingle();
 
-    if (error || !data) return null;
-    return mapToArchiveItem(data);
+    if (error) throw error;
+    if (!data) return null;
+    return mapToArchiveDetail(data);
+  };
+
+  const getRelatedDocuments = async (
+    collectionId: string,
+    excludeDocId: string,
+  ): Promise<ArchiveDocumentItem[]> => {
+    const { data, error } = await supabase
+      .from('archive_documents')
+      .select('*')
+      .eq('collection_id', collectionId)
+      .eq('status', 'approved')
+      .neq('id', excludeDocId)
+      .order('sort_order');
+
+    if (error) throw error;
+    return (data || []).map(mapToArchiveItem);
+  };
+
+  const getDocumentTypeCounts = async (): Promise<Record<string, number>> => {
+    const { data, error } = await supabase
+      .from('archive_documents')
+      .select('type')
+      .eq('status', 'approved');
+
+    if (error) throw error;
+
+    const counts: Record<string, number> = {};
+    for (const row of data || []) {
+      const type = row.type as string;
+      if (type) {
+        counts[type] = (counts[type] || 0) + 1;
+      }
+    }
+    return counts;
   };
 
   const getCollectionBySlug = async (slug: string): Promise<{
     collection: ArchiveCollectionItem;
-    documents: ArchiveDocumentItem[];
+    documents: ArchiveDocumentDetail[];
   } | null> => {
     const { data: collection, error } = await supabase
       .from('document_collections')
@@ -187,7 +282,8 @@ export const useArchiveDocuments = () => {
       .eq('status', 'approved')
       .maybeSingle();
 
-    if (error || !collection) return null;
+    if (error) throw error;
+    if (!collection) return null;
 
     const { data: docs } = await supabase
       .from('archive_documents')
@@ -206,7 +302,7 @@ export const useArchiveDocuments = () => {
         image: getThumbnailUrl(collection.thumbnail_path),
         itemCount: docs?.length || 0,
       },
-      documents: (docs || []).map(mapToArchiveItem),
+      documents: (docs || []).map(mapToArchiveDetail),
     };
   };
 
@@ -239,5 +335,5 @@ export const useArchiveDocuments = () => {
     return data;
   };
 
-  return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, getCollectionBySlug, getStorageUrl, getThumbnailUrl, submitDocument };
+  return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, getRelatedDocuments, getDocumentTypeCounts, getCollectionBySlug, getStorageUrl, getThumbnailUrl, submitDocument };
 };

@@ -19,9 +19,10 @@
     { value: 'advert', labelKey: 'filters.adverts' },
     { value: 'catalogue', labelKey: 'filters.catalogues' },
     { value: 'tuning', labelKey: 'filters.tuning' },
+    { value: 'electrical', labelKey: 'filters.electrical' },
   ];
 
-  const { listAll, listCollections } = useArchiveDocuments();
+  const { listAll, listCollections, getDocumentTypeCounts } = useArchiveDocuments();
 
   // Fetch documents
   const { data: documents, status } = await useAsyncData(
@@ -44,6 +45,19 @@
     { watch: [activeType] },
   );
 
+  // Fetch type counts for filter chips
+  const { data: typeCounts } = await useAsyncData('archive-doc-type-counts', () => getDocumentTypeCounts());
+
+  const totalCount = computed(() => {
+    if (!typeCounts.value) return 0;
+    return Object.values(typeCounts.value).reduce((sum, n) => sum + n, 0);
+  });
+
+  const getFilterCount = (value: string): number => {
+    if (value === 'all') return totalCount.value;
+    return typeCounts.value?.[value] ?? 0;
+  };
+
   // Client-side search filter
   const filteredDocuments = computed(() => {
     if (!documents.value) return [];
@@ -53,7 +67,8 @@
       (item) =>
         item.title?.toLowerCase().includes(q) ||
         item.description?.toLowerCase().includes(q) ||
-        item.code?.toLowerCase().includes(q),
+        item.code?.toLowerCase().includes(q) ||
+        item.author?.toLowerCase().includes(q),
     );
   });
 
@@ -139,7 +154,7 @@
             size="sm"
             @click="activeType = filter.value"
           >
-            {{ t(filter.labelKey) }}
+            {{ t(filter.labelKey) }} ({{ getFilterCount(filter.value) }})
           </UButton>
         </div>
 
@@ -166,8 +181,9 @@
             />
 
             <!-- View Mode Toggle -->
-            <UButtonGroup>
+            <div class="join">
               <UButton
+                class="join-item"
                 :color="viewMode === 'cards' ? 'primary' : 'neutral'"
                 :variant="viewMode === 'cards' ? 'solid' : 'outline'"
                 @click="viewMode = 'cards'"
@@ -175,13 +191,14 @@
                 <i class="fad fa-grid-2"></i>
               </UButton>
               <UButton
+                class="join-item"
                 :color="viewMode === 'table' ? 'primary' : 'neutral'"
                 :variant="viewMode === 'table' ? 'solid' : 'outline'"
                 @click="viewMode = 'table'"
               >
                 <i class="fad fa-table"></i>
               </UButton>
-            </UButtonGroup>
+            </div>
           </div>
         </div>
 
@@ -235,6 +252,7 @@
                   <th class="hidden md:table-cell p-3 text-left">{{ t('table_headers.image') }}</th>
                   <th class="hidden md:table-cell p-3 text-center">{{ t('table_headers.file_type') }}</th>
                   <th class="p-3 text-left">{{ t('table_headers.title') }}</th>
+                  <th class="hidden lg:table-cell p-3 text-left">{{ t('table_headers.author') }}</th>
                   <th class="p-3 text-right">{{ t('table_headers.actions') }}</th>
                 </tr>
               </thead>
@@ -276,6 +294,7 @@
                     </NuxtLink>
                     <div class="text-sm text-muted">{{ item.description }}</div>
                   </td>
+                  <td class="hidden lg:table-cell p-3 text-muted">{{ item.author || '\u2014' }}</td>
                   <td class="p-3 text-right">
                     <div class="flex gap-2 justify-end">
                       <UButton
@@ -297,17 +316,17 @@
 
           <!-- Pagination -->
           <div v-if="pageCount > 1" class="flex justify-center items-center mt-8">
-            <UButtonGroup>
-              <UButton size="sm" :disabled="currentPage === 1" @click="prevPage" square>
+            <div class="join">
+              <UButton class="join-item" size="sm" :disabled="currentPage === 1" @click="prevPage" square>
                 <i class="fad fa-arrow-left"></i>
               </UButton>
-              <UButton size="sm" variant="ghost" color="neutral">
+              <UButton class="join-item" size="sm" variant="ghost" color="neutral">
                 {{ t('pagination.page_text', { current: currentPage, total: pageCount }) }}
               </UButton>
-              <UButton size="sm" :disabled="currentPage >= pageCount" @click="nextPage" square>
+              <UButton class="join-item" size="sm" :disabled="currentPage >= pageCount" @click="nextPage" square>
                 <i class="fad fa-arrow-right"></i>
               </UButton>
-            </UButtonGroup>
+            </div>
           </div>
         </div>
 
@@ -335,7 +354,8 @@
       "manuals": "Manuals",
       "adverts": "Adverts",
       "catalogues": "Catalogues",
-      "tuning": "Tuning"
+      "tuning": "Tuning",
+      "electrical": "Electrical"
     },
     "search_placeholder": "Search documents (ex. MPI, Cooper S, AKD4935)",
     "sort": {
@@ -350,6 +370,7 @@
       "image": "Image",
       "file_type": "Type",
       "title": "Title",
+      "author": "Author",
       "actions": "Actions"
     },
     "pagination": {
@@ -372,7 +393,8 @@
       "manuals": "Handbücher",
       "adverts": "Anzeigen",
       "catalogues": "Kataloge",
-      "tuning": "Tuning"
+      "tuning": "Tuning",
+      "electrical": "Elektrik"
     },
     "search_placeholder": "Dokumente suchen (z.B. MPI, Cooper S, AKD4935)",
     "sort": {
@@ -387,6 +409,7 @@
       "image": "Bild",
       "file_type": "Typ",
       "title": "Titel",
+      "author": "Autor",
       "actions": "Aktionen"
     },
     "pagination": {
@@ -409,7 +432,8 @@
       "manuals": "Manuales",
       "adverts": "Anuncios",
       "catalogues": "Catálogos",
-      "tuning": "Modificaciones"
+      "tuning": "Modificaciones",
+      "electrical": "Eléctrico"
     },
     "search_placeholder": "Buscar documentos (ej. MPI, Cooper S, AKD4935)",
     "sort": {
@@ -424,6 +448,7 @@
       "image": "Imagen",
       "file_type": "Tipo",
       "title": "Título",
+      "author": "Autor",
       "actions": "Acciones"
     },
     "pagination": {
@@ -446,7 +471,8 @@
       "manuals": "Manuels",
       "adverts": "Publicités",
       "catalogues": "Catalogues",
-      "tuning": "Tuning"
+      "tuning": "Tuning",
+      "electrical": "Électrique"
     },
     "search_placeholder": "Rechercher des documents (ex. MPI, Cooper S, AKD4935)",
     "sort": {
@@ -461,6 +487,7 @@
       "image": "Image",
       "file_type": "Type",
       "title": "Titre",
+      "author": "Auteur",
       "actions": "Actions"
     },
     "pagination": {
@@ -483,7 +510,8 @@
       "manuals": "Manuali",
       "adverts": "Pubblicità",
       "catalogues": "Cataloghi",
-      "tuning": "Tuning"
+      "tuning": "Tuning",
+      "electrical": "Elettrico"
     },
     "search_placeholder": "Cerca documenti (es. MPI, Cooper S, AKD4935)",
     "sort": {
@@ -498,6 +526,7 @@
       "image": "Immagine",
       "file_type": "Tipo",
       "title": "Titolo",
+      "author": "Autore",
       "actions": "Azioni"
     },
     "pagination": {
@@ -520,7 +549,8 @@
       "manuals": "Manuais",
       "adverts": "Anúncios",
       "catalogues": "Catálogos",
-      "tuning": "Tuning"
+      "tuning": "Tuning",
+      "electrical": "Elétrico"
     },
     "search_placeholder": "Pesquisar documentos (ex. MPI, Cooper S, AKD4935)",
     "sort": {
@@ -535,6 +565,7 @@
       "image": "Imagem",
       "file_type": "Tipo",
       "title": "Título",
+      "author": "Autor",
       "actions": "Ações"
     },
     "pagination": {
@@ -557,7 +588,8 @@
       "manuals": "Руководства",
       "adverts": "Реклама",
       "catalogues": "Каталоги",
-      "tuning": "Тюнинг"
+      "tuning": "Тюнинг",
+      "electrical": "Электрика"
     },
     "search_placeholder": "Поиск документов (напр. MPI, Cooper S, AKD4935)",
     "sort": {
@@ -572,6 +604,7 @@
       "image": "Изображение",
       "file_type": "Тип",
       "title": "Название",
+      "author": "Автор",
       "actions": "Действия"
     },
     "pagination": {
@@ -594,7 +627,8 @@
       "manuals": "マニュアル",
       "adverts": "広告",
       "catalogues": "カタログ",
-      "tuning": "チューニング"
+      "tuning": "チューニング",
+      "electrical": "電装"
     },
     "search_placeholder": "ドキュメントを検索（例：MPI、Cooper S、AKD4935）",
     "sort": {
@@ -609,6 +643,7 @@
       "image": "画像",
       "file_type": "タイプ",
       "title": "タイトル",
+      "author": "著者",
       "actions": "アクション"
     },
     "pagination": {
@@ -631,7 +666,8 @@
       "manuals": "手册",
       "adverts": "广告",
       "catalogues": "目录",
-      "tuning": "改装"
+      "tuning": "改装",
+      "electrical": "电气"
     },
     "search_placeholder": "搜索文件（例：MPI、Cooper S、AKD4935）",
     "sort": {
@@ -646,6 +682,7 @@
       "image": "图片",
       "file_type": "类型",
       "title": "标题",
+      "author": "作者",
       "actions": "操作"
     },
     "pagination": {
@@ -668,7 +705,8 @@
       "manuals": "매뉴얼",
       "adverts": "광고",
       "catalogues": "카탈로그",
-      "tuning": "튜닝"
+      "tuning": "튜닝",
+      "electrical": "전기"
     },
     "search_placeholder": "문서 검색 (예: MPI, Cooper S, AKD4935)",
     "sort": {
@@ -683,6 +721,7 @@
       "image": "이미지",
       "file_type": "유형",
       "title": "제목",
+      "author": "저자",
       "actions": "동작"
     },
     "pagination": {
