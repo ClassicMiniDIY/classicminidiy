@@ -254,7 +254,7 @@
         </div>
         <h2 class="text-2xl font-bold mb-2">{{ $t('empty.title') }}</h2>
         <p class="opacity-70 mb-6 max-w-md mx-auto">{{ $t('empty.description') }}</p>
-        <UButton to="/contribute/document" color="primary" variant="outline">
+        <UButton to="/contribute" color="primary" variant="outline">
           {{ $t('empty.contribute_link') }}
         </UButton>
       </div>
@@ -302,7 +302,7 @@
     "empty": {
       "title": "No Submissions Yet",
       "description": "You haven't made any contributions to the archive yet. Start by submitting a document, registering your Mini, or contributing a color.",
-      "contribute_link": "Submit a Contribution"
+      "contribute_link": "Start Contributing"
     }
   },
   "de": {
@@ -343,7 +343,7 @@
     "empty": {
       "title": "Noch keine Einreichungen",
       "description": "Sie haben noch keine Beiträge zum Archiv geleistet. Beginnen Sie mit der Einreichung eines Dokuments, der Registrierung Ihres Mini oder der Einreichung einer Farbe.",
-      "contribute_link": "Beitrag einreichen"
+      "contribute_link": "Jetzt beitragen"
     }
   },
   "es": {
@@ -384,7 +384,7 @@
     "empty": {
       "title": "Sin Envíos Aún",
       "description": "Aún no has hecho contribuciones al archivo. Comienza enviando un documento, registrando tu Mini o contribuyendo un color.",
-      "contribute_link": "Enviar una Contribución"
+      "contribute_link": "Empezar a Contribuir"
     }
   },
   "fr": {
@@ -425,7 +425,7 @@
     "empty": {
       "title": "Aucune Soumission Pour l'Instant",
       "description": "Vous n'avez pas encore fait de contributions aux archives. Commencez par soumettre un document, enregistrer votre Mini ou contribuer une couleur.",
-      "contribute_link": "Soumettre une Contribution"
+      "contribute_link": "Commencer a Contribuer"
     }
   },
   "it": {
@@ -466,7 +466,7 @@
     "empty": {
       "title": "Nessuna Proposta Ancora",
       "description": "Non hai ancora fatto contributi all'archivio. Inizia inviando un documento, registrando il tuo Mini o contribuendo un colore.",
-      "contribute_link": "Invia un Contributo"
+      "contribute_link": "Inizia a Contribuire"
     }
   },
   "pt": {
@@ -507,7 +507,7 @@
     "empty": {
       "title": "Sem Envios Ainda",
       "description": "Você ainda não fez contribuições ao arquivo. Comece enviando um documento, registrando seu Mini ou contribuindo com uma cor.",
-      "contribute_link": "Enviar uma Contribuição"
+      "contribute_link": "Comece a Contribuir"
     }
   },
   "nl": {
@@ -548,7 +548,7 @@
     "empty": {
       "title": "Nog Geen Inzendingen",
       "description": "U heeft nog geen bijdragen aan het archief gemaakt. Begin met het indienen van een document, het registreren van uw Mini of het bijdragen van een kleur.",
-      "contribute_link": "Een Bijdrage Indienen"
+      "contribute_link": "Begin met Bijdragen"
     }
   },
   "sv": {
@@ -589,7 +589,7 @@
     "empty": {
       "title": "Inga Inlämningar Ännu",
       "description": "Du har inte gjort några bidrag till arkivet ännu. Börja med att skicka in ett dokument, registrera din Mini eller bidra med en färg.",
-      "contribute_link": "Skicka in ett Bidrag"
+      "contribute_link": "Borja Bidra"
     }
   },
   "da": {
@@ -630,7 +630,7 @@
     "empty": {
       "title": "Ingen Indsendelser Endnu",
       "description": "Du har endnu ikke gjort bidrag til arkivet. Start med at indsende et dokument, registrere din Mini eller bidrage med en farve.",
-      "contribute_link": "Indsend et Bidrag"
+      "contribute_link": "Begynd at Bidrage"
     }
   },
   "no": {
@@ -671,7 +671,7 @@
     "empty": {
       "title": "Ingen Innsendinger Ennå",
       "description": "Du har ennå ikke gjort bidrag til arkivet. Start med å sende inn et dokument, registrere din Mini eller bidra med en farge.",
-      "contribute_link": "Send inn et Bidrag"
+      "contribute_link": "Begynn a Bidra"
     }
   }
 }
