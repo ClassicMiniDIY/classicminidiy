@@ -9,7 +9,13 @@
     targetType: 'document' | 'color' | 'wheel' | 'registry';
     targetId: string;
     currentData: Record<string, any>;
-    editableFields: Array<{ key: string; label: string; type?: 'text' | 'number' | 'textarea' }>;
+    editableFields: Array<{
+      key: string;
+      label: string;
+      type?: 'text' | 'number' | 'textarea' | 'select';
+      options?: Array<{ value: string | null; label: string }>;
+      conditionalFields?: Record<string, Array<{ key: string; label: string; type?: 'text' | 'textarea' }>>;
+    }>;
   }>();
 
   const emit = defineEmits<{
@@ -28,30 +34,55 @@
   const processing = ref(false);
   const error = ref('');
 
-  // Populate formData from currentData when modal opens or currentData changes
+  // Populate formData from source data (currentData or override)
+  function initFormData(source: Record<string, any>) {
+    for (const field of props.editableFields) {
+      if (field.type === 'select') {
+        formData[field.key] = source[field.key] !== undefined ? source[field.key] : null;
+      } else {
+        formData[field.key] = source[field.key] ?? '';
+      }
+      // Initialize conditional sub-field keys
+      // Note: sub-field values from inactive branches persist in formData but are not submitted.
+      if (field.conditionalFields) {
+        for (const subFields of Object.values(field.conditionalFields)) {
+          for (const cf of subFields) {
+            formData[cf.key] = source[cf.key] ?? '';
+          }
+        }
+      }
+    }
+  }
+
   watch(
     () => props.currentData,
     (newData) => {
-      if (newData) {
-        for (const field of props.editableFields) {
-          formData[field.key] = newData[field.key] ?? '';
-        }
-      }
+      if (newData) initFormData(newData);
     },
     { immediate: true, deep: true },
   );
 
-  // Also repopulate when modal opens
   watch(isOpen, (open) => {
-    if (open && props.currentData) {
-      for (const field of props.editableFields) {
-        formData[field.key] = props.currentData[field.key] ?? '';
-      }
-    }
+    if (open && props.currentData) initFormData(props.currentData);
   });
 
   const hasChanges = computed(() => {
     return props.editableFields.some((field) => {
+      if (field.type === 'select') {
+        // Direct comparison for select fields (preserves null vs '' distinction)
+        if (formData[field.key] !== props.currentData[field.key]) return true;
+        // Check active conditional sub-fields for actual changes vs currentData
+        const selectedValue = formData[field.key] != null ? String(formData[field.key]) : null;
+        const activeSubFields = selectedValue != null ? field.conditionalFields?.[selectedValue] : undefined;
+        if (activeSubFields) {
+          return activeSubFields.some((cf) => {
+            const from = String(props.currentData[cf.key] ?? '').trim();
+            const to = String(formData[cf.key] ?? '').trim();
+            return from !== to;
+          });
+        }
+        return false;
+      }
       const current = String(props.currentData[field.key] ?? '').trim();
       const proposed = String(formData[field.key] ?? '').trim();
       return current !== proposed;
@@ -84,11 +115,37 @@
       const changedFields: string[] = [];
 
       for (const field of props.editableFields) {
-        const from = String(props.currentData[field.key] ?? '').trim();
-        const to = String(formData[field.key] ?? '').trim();
-        if (from !== to) {
-          changes[field.key] = { from: props.currentData[field.key] ?? '', to: formData[field.key] ?? '' };
-          changedFields.push(field.key);
+        if (field.type === 'select') {
+          // Direct comparison for select fields (preserves null)
+          if (formData[field.key] !== props.currentData[field.key]) {
+            changes[field.key] = { from: props.currentData[field.key] ?? null, to: formData[field.key] ?? null };
+            changedFields.push(field.key);
+          }
+        } else {
+          const from = String(props.currentData[field.key] ?? '').trim();
+          const to = String(formData[field.key] ?? '').trim();
+          if (from !== to) {
+            changes[field.key] = { from: props.currentData[field.key] ?? '', to: formData[field.key] ?? '' };
+            changedFields.push(field.key);
+          }
+        }
+      }
+
+      // Second pass: include active conditional sub-field values that actually changed
+      for (const field of props.editableFields) {
+        if (field.type === 'select' && field.conditionalFields) {
+          const selectedValue = formData[field.key] != null ? String(formData[field.key]) : null;
+          const activeSubFields = selectedValue != null ? field.conditionalFields[selectedValue] : undefined;
+          if (activeSubFields) {
+            for (const cf of activeSubFields) {
+              const from = String(props.currentData[cf.key] ?? '').trim();
+              const to = String(formData[cf.key] ?? '').trim();
+              if (to !== '' && from !== to) {
+                changes[cf.key] = { from: props.currentData[cf.key] ?? '', to: formData[cf.key] ?? '' };
+                changedFields.push(cf.key);
+              }
+            }
+          }
         }
       }
 
@@ -117,10 +174,7 @@
       submitted.value = false;
       error.value = '';
       reason.value = '';
-      // Reset form data to current values
-      for (const field of props.editableFields) {
-        formData[field.key] = props.currentData[field.key] ?? '';
-      }
+      initFormData(props.currentData);
     }, 300);
   }
 </script>
@@ -163,7 +217,13 @@
               <UFormField :label="field.label">
                 <template #hint>
                   <span class="text-xs opacity-60">
-                    {{ t('form.current_value') }}: {{ currentData[field.key] || '—' }}
+                    {{ t('form.current_value') }}:
+                    <template v-if="field.type === 'select' && field.options">
+                      {{ field.options.find((o) => o.value === currentData[field.key])?.label || '—' }}
+                    </template>
+                    <template v-else>
+                      {{ currentData[field.key] || '—' }}
+                    </template>
                   </span>
                 </template>
                 <UTextarea
@@ -171,6 +231,15 @@
                   v-model="formData[field.key]"
                   class="w-full"
                   :rows="3"
+                  :disabled="processing"
+                />
+                <USelect
+                  v-else-if="field.type === 'select'"
+                  v-model="formData[field.key]"
+                  :items="field.options ?? []"
+                  value-key="value"
+                  label-key="label"
+                  class="w-full"
                   :disabled="processing"
                 />
                 <UInput
@@ -181,6 +250,26 @@
                   :disabled="processing"
                 />
               </UFormField>
+
+              <!-- Conditional sub-fields for select fields -->
+              <template v-if="field.type === 'select' && field.conditionalFields?.[String(formData[field.key])]">
+                <div
+                  v-for="cf in field.conditionalFields[String(formData[field.key])]"
+                  :key="cf.key"
+                  class="mt-3 pl-4 border-l-2 border-primary/30"
+                >
+                  <UFormField :label="cf.label">
+                    <UTextarea
+                      v-if="cf.type === 'textarea'"
+                      v-model="formData[cf.key]"
+                      class="w-full"
+                      :rows="3"
+                      :disabled="processing"
+                    />
+                    <UInput v-else v-model="formData[cf.key]" type="text" class="w-full" :disabled="processing" />
+                  </UFormField>
+                </div>
+              </template>
             </div>
 
             <USeparator />
