@@ -226,6 +226,7 @@
                         min="1959"
                         max="2000"
                         v-model.number="formData.year"
+                        class="w-full"
                         :color="!formData.year && touchedFields.year ? 'error' : undefined"
                         :disabled="processing"
                         @blur="touchedFields.year = true"
@@ -247,6 +248,7 @@
                         type="text"
                         :placeholder="t('placeholders.model')"
                         v-model="formData.model"
+                        class="w-full"
                         :color="formData.model === '' && touchedFields.model ? 'error' : undefined"
                         :disabled="processing"
                         @blur="touchedFields.model = true"
@@ -268,6 +270,7 @@
                         type="text"
                         :placeholder="t('placeholders.trim')"
                         v-model="formData.trim"
+                        class="w-full"
                         :color="formData.trim === '' && touchedFields.trim ? 'error' : undefined"
                         :disabled="processing"
                         @blur="touchedFields.trim = true"
@@ -288,6 +291,7 @@
                       <USelect
                         v-model="formData.bodyType"
                         :items="bodyTypeOptions"
+                        class="w-full"
                         :color="formData.bodyType === '' && touchedFields.bodyType ? 'error' : undefined"
                         :disabled="processing"
                         @blur="touchedFields.bodyType = true"
@@ -312,6 +316,7 @@
                       <USelect
                         v-model.number="formData.engineSize"
                         :items="engineSizeOptions"
+                        class="w-full"
                         :color="!formData.engineSize && touchedFields.engineSize ? 'error' : undefined"
                         :disabled="processing"
                         @blur="touchedFields.engineSize = true"
@@ -332,6 +337,7 @@
                         type="text"
                         :placeholder="t('placeholders.color')"
                         v-model="formData.color"
+                        class="w-full"
                         :disabled="processing"
                       />
                     </div>
@@ -346,6 +352,7 @@
                         type="text"
                         :placeholder="t('placeholders.body_number')"
                         v-model="formData.bodyNum"
+                        class="w-full"
                         :disabled="processing"
                       />
                     </div>
@@ -360,6 +367,7 @@
                         type="text"
                         :placeholder="t('placeholders.engine_number')"
                         v-model="formData.engineNum"
+                        class="w-full"
                         :disabled="processing"
                       />
                     </div>
@@ -376,6 +384,7 @@
                         :placeholder="t('placeholders.notes')"
                         v-model="formData.notes"
                         :rows="4"
+                        class="w-full"
                         :disabled="processing"
                       />
                     </div>
