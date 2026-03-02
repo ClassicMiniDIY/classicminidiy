@@ -159,13 +159,14 @@
         </div>
 
         <!-- Search + Sort + View Toggle -->
-        <div class="flex flex-col lg:flex-row gap-4 items-end mb-8">
-          <div class="flex-1">
+        <div class="flex flex-col lg:flex-row gap-4 lg:items-end mb-8">
+          <div class="w-full lg:flex-1">
             <UInput
               v-model="search"
               :placeholder="t('search_placeholder')"
               icon="i-fa6-solid-magnifying-glass"
               size="lg"
+              class="w-full"
             />
           </div>
 
