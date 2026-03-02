@@ -115,9 +115,10 @@
         </UCard>
       </div>
     </div>
+    <div class="max-w-3xl mx-auto mt-8 mb-10">
+      <patreon-card size="large" />
+    </div>
   </div>
-
-  <patreon-card size="large" />
 </template>
 
 <i18n lang="json">
