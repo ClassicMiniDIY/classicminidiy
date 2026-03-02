@@ -400,7 +400,7 @@
 
                   <!-- Document Files -->
                   <div class="w-full">
-                    <FileUpload
+                    <ContributeFileUpload
                       accept="application/pdf,image/jpeg,image/png"
                       :maxFiles="maxDocumentFiles"
                       :maxSizeMb="10"
@@ -418,7 +418,7 @@
 
                   <!-- Thumbnail (non-collection only) -->
                   <div v-if="!isCollection" class="w-full">
-                    <FileUpload
+                    <ContributeFileUpload
                       accept="image/jpeg,image/png"
                       :maxFiles="1"
                       :maxSizeMb="5"

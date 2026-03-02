@@ -4,7 +4,7 @@
     revokeObjectURL(url: string): void;
   };
 
-  import { humanFileSize } from '../../data/models/helper-utils';
+  import { humanFileSize } from '../../../data/models/helper-utils';
 
   const { t } = useI18n();
 

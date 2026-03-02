@@ -399,7 +399,7 @@
 
                   <!-- Photos (full width) -->
                   <div class="col-span-1 md:col-span-2">
-                    <FileUpload
+                    <ContributeFileUpload
                       accept="image/jpeg,image/png"
                       :maxFiles="5"
                       :maxSizeMb="3"

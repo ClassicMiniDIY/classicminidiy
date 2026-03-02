@@ -2,8 +2,8 @@ export default {
   legacy: false,
   locale: 'en',
   fallbackLocale: 'en',
-  silentTranslationWarn: true,
-  silentFallbackWarn: true,
+  missingWarn: false,
+  fallbackWarn: false,
   globalInjection: true,
   messages: {
     en: {},
