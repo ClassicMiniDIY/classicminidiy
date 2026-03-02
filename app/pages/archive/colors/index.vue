@@ -163,6 +163,23 @@
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
         <breadcrumb class="my-6" :page="$t('breadcrumb_title')"></breadcrumb>
+
+        <!-- Contribute Banner -->
+        <UCard class="mb-6 bg-primary/5">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
+              <div>
+                <p class="font-medium">{{ $t('contribute_banner_title') }}</p>
+                <p class="text-sm opacity-70">{{ $t('contribute_banner_description') }}</p>
+              </div>
+            </div>
+            <UButton to="/contribute/color" color="primary" variant="outline" size="sm">
+              {{ $t('contribute_banner_button') }}
+            </UButton>
+          </div>
+        </UCard>
+
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
             <h1 class="text-3xl font-bold">{{ $t('main_heading') }}</h1>
@@ -473,6 +490,9 @@
       "title": "Classic Mini Color:",
       "text": "Check out this Classic Mini color:"
     },
+    "contribute_banner_title": "Know something we're missing?",
+    "contribute_banner_description": "Help grow the archive with your knowledge.",
+    "contribute_banner_button": "Contribute",
     "support_divider": "Support",
     "seo": {
       "og_title": "Classic Mini Color Picker | Classic Mini DIY",
