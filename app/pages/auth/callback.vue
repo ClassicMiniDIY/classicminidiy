@@ -21,7 +21,7 @@
     meta: [{ name: 'robots', content: 'noindex, nofollow' }],
   });
 
-  const { initAuth, isAuthenticated, isAdmin } = useAuth();
+  const { initAuth, isAuthenticated, isAdmin, userProfile, waitForAuth } = useAuth();
   const errorMessage = ref('');
 
   onMounted(async () => {
@@ -31,7 +31,14 @@
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       if (isAuthenticated.value) {
-        if (isAdmin.value) {
+        // Wait for profile to be fetched
+        await waitForAuth();
+
+        // First-time user: null display_name means they haven't onboarded
+        if (!userProfile.value?.display_name) {
+          const redirect = isAdmin.value ? '/admin' : '/';
+          navigateTo(`/welcome?redirect=${encodeURIComponent(redirect)}`, { replace: true });
+        } else if (isAdmin.value) {
           navigateTo('/admin', { replace: true });
         } else {
           navigateTo('/', { replace: true });
