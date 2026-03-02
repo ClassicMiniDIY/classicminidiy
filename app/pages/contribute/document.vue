@@ -417,7 +417,7 @@
                   </div>
 
                   <!-- Thumbnail (non-collection only) -->
-                  <div v-if="!isCollection" class="w-full">
+                  <div class="w-full">
                     <ContributeFileUpload
                       accept="image/jpeg,image/png"
                       :maxFiles="1"
