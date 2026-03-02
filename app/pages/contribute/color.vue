@@ -384,7 +384,7 @@
                   </UFormField>
 
                   <!-- Swatch / Example Photos -->
-                  <FileUpload
+                  <ContributeFileUpload
                     accept="image/jpeg,image/png"
                     :maxFiles="3"
                     :maxSizeMb="5"
