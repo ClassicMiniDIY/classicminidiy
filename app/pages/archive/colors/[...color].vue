@@ -2,12 +2,14 @@
   import { shareColorItem } from '../../../../data/models/helper-utils';
   import type { PrettyColor } from '../../../../data/models/colors';
 
+  const { isAuthenticated } = useAuth();
   const { params } = useRoute();
   const colorId = Array.isArray(params.color) ? params.color[0] : params.color;
   const { getColor } = useColors();
   const { data: color, status } = await useAsyncData(`color-${colorId}`, () => getColor(colorId as string));
 
   const copied = ref(false);
+  const showSuggestEdit = ref(false);
   const shareImage = ref('');
 
   watch(color, (newColor) => {
@@ -216,10 +218,33 @@
               <i class="fas fa-edit mr-2"></i>
               {{ $t('pages.archive.subpages.colors_detail.actions.contribute') }}
             </UButton>
+
+            <UButton
+              v-if="isAuthenticated"
+              variant="outline"
+              size="sm"
+              @click="showSuggestEdit = true"
+            >
+              <i class="fad fa-pen-to-square mr-2"></i>
+              {{ $t('suggest_edit') }}
+            </UButton>
           </div>
         </div>
       </UCard>
     </div>
+
+    <SuggestEditModal
+      v-if="color"
+      v-model="showSuggestEdit"
+      target-type="color"
+      :target-id="color.raw.id"
+      :current-data="{ name: color.pretty.Name, code: color.pretty.Code, years: color.pretty.Years }"
+      :editable-fields="[
+        { key: 'name', label: $t('field_name'), type: 'text' },
+        { key: 'code', label: $t('field_code'), type: 'text' },
+        { key: 'years', label: $t('field_years'), type: 'text' },
+      ]"
+    />
   </div>
 </template>
 
@@ -236,6 +261,10 @@
 <i18n lang="json">
 {
   "en": {
+    "suggest_edit": "Suggest Edit",
+    "field_name": "Name",
+    "field_code": "Code",
+    "field_years": "Years",
     "title": "Classic Mini Archive - {colorName}",
     "description": "Details for Classic Mini color {colorName}",
     "hero_title": "Classic Mini Archives",
@@ -265,6 +294,10 @@
     }
   },
   "de": {
+    "suggest_edit": "Bearbeitung Vorschlagen",
+    "field_name": "Name",
+    "field_code": "Code",
+    "field_years": "Jahre",
     "title": "Classic Mini Archiv - {colorName}",
     "description": "Details für Classic Mini Farbe {colorName}",
     "hero_title": "Classic Mini Archive",
@@ -294,6 +327,10 @@
     }
   },
   "es": {
+    "suggest_edit": "Sugerir Edición",
+    "field_name": "Nombre",
+    "field_code": "Código",
+    "field_years": "Años",
     "title": "Archivo Classic Mini - {colorName}",
     "description": "Detalles del color Classic Mini {colorName}",
     "hero_title": "Archivos Classic Mini",
@@ -323,6 +360,10 @@
     }
   },
   "fr": {
+    "suggest_edit": "Suggérer une Modification",
+    "field_name": "Nom",
+    "field_code": "Code",
+    "field_years": "Années",
     "title": "Archives Classic Mini - {colorName}",
     "description": "Détails de la couleur Classic Mini {colorName}",
     "hero_title": "Archives Classic Mini",
@@ -352,6 +393,10 @@
     }
   },
   "it": {
+    "suggest_edit": "Suggerisci Modifica",
+    "field_name": "Nome",
+    "field_code": "Codice",
+    "field_years": "Anni",
     "title": "Archivio Classic Mini - {colorName}",
     "description": "Dettagli del colore Classic Mini {colorName}",
     "hero_title": "Archivi Classic Mini",
@@ -381,6 +426,10 @@
     }
   },
   "pt": {
+    "suggest_edit": "Sugerir Edição",
+    "field_name": "Nome",
+    "field_code": "Código",
+    "field_years": "Anos",
     "title": "Arquivo Classic Mini - {colorName}",
     "description": "Detalhes da cor Classic Mini {colorName}",
     "hero_title": "Arquivos Classic Mini",
@@ -410,6 +459,10 @@
     }
   },
   "nl": {
+    "suggest_edit": "Bewerking Voorstellen",
+    "field_name": "Naam",
+    "field_code": "Code",
+    "field_years": "Jaren",
     "title": "Classic Mini Archief - {colorName}",
     "description": "Details van Classic Mini kleur {colorName}",
     "hero_title": "Classic Mini Archieven",
@@ -439,6 +492,10 @@
     }
   },
   "sv": {
+    "suggest_edit": "Föreslå Redigering",
+    "field_name": "Namn",
+    "field_code": "Kod",
+    "field_years": "År",
     "title": "Classic Mini Arkiv - {colorName}",
     "description": "Detaljer för Classic Mini färg {colorName}",
     "hero_title": "Classic Mini Arkiv",
@@ -468,6 +525,10 @@
     }
   },
   "da": {
+    "suggest_edit": "Foreslå Redigering",
+    "field_name": "Navn",
+    "field_code": "Kode",
+    "field_years": "År",
     "title": "Classic Mini Arkiv - {colorName}",
     "description": "Detaljer for Classic Mini farve {colorName}",
     "hero_title": "Classic Mini Arkiver",
@@ -497,6 +558,10 @@
     }
   },
   "no": {
+    "suggest_edit": "Foreslå Redigering",
+    "field_name": "Navn",
+    "field_code": "Kode",
+    "field_years": "År",
     "title": "Classic Mini Arkiv - {colorName}",
     "description": "Detaljer for Classic Mini farge {colorName}",
     "hero_title": "Classic Mini Arkiver",

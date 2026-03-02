@@ -3,6 +3,7 @@
   import { shareWheelItem } from '../../../../data/models/helper-utils';
   import type { IWheelsData } from '../../../../data/models/wheels';
 
+  const { isAuthenticated } = useAuth();
   const route = useRoute();
   const wheelId = ref(route.params.wheel);
   const { getWheel } = useWheels();
@@ -20,6 +21,7 @@
   );
 
   const copied = ref<boolean>(false);
+  const showSuggestEdit = ref(false);
   const shareImage = computed(() => {
     if (!wheel.value?.images?.length) return 'no-image';
     return wheel.value.images[0].src;
@@ -238,11 +240,34 @@
                   <i class="fad fa-edit mr-2"></i>
                   <span>{{ $t('actions.contribute') }}</span>
                 </UButton>
+                <UButton
+                  v-if="isAuthenticated"
+                  variant="outline"
+                  size="sm"
+                  @click="showSuggestEdit = true"
+                >
+                  <i class="fad fa-pen-to-square mr-2"></i>
+                  <span>{{ $t('suggest_edit') }}</span>
+                </UButton>
               </div>
             </div>
           </UCard>
         </div>
       </div>
+
+      <SuggestEditModal
+        v-if="wheel?.uuid"
+        v-model="showSuggestEdit"
+        target-type="wheel"
+        :target-id="wheel.uuid"
+        :current-data="{ name: wheel.name, width: wheel.width, size: wheel.size, offset: wheel.offset }"
+        :editable-fields="[
+          { key: 'name', label: $t('field_name'), type: 'text' },
+          { key: 'width', label: $t('field_width'), type: 'text' },
+          { key: 'size', label: $t('field_size'), type: 'text' },
+          { key: 'offset', label: $t('field_offset'), type: 'text' },
+        ]"
+      />
     </div>
   </div>
 </template>
@@ -281,6 +306,11 @@
       "width": "Width",
       "not_specified": "Not specified"
     },
+    "suggest_edit": "Suggest Edit",
+    "field_name": "Name",
+    "field_width": "Width",
+    "field_size": "Diameter",
+    "field_offset": "Offset",
     "actions": {
       "copied": "Link copied!",
       "copy_link": "Copy Link",
