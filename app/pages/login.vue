@@ -86,6 +86,13 @@
           {{ $t('back_to_site') }}
         </UButton>
       </div>
+
+      <div class="text-center mt-2 p-3 bg-base-200 rounded-lg">
+        <p class="text-xs opacity-70">
+          <i class="fad fa-link mr-1"></i>
+          {{ $t('unified_account_note') }}
+        </p>
+      </div>
     </UCard>
   </div>
 </template>
@@ -190,9 +197,9 @@
 {
   "en": {
     "page_title": "Sign In - Classic Mini DIY",
-    "page_description": "Sign in to access Classic Mini DIY admin panel.",
+    "page_description": "Sign in to contribute, track submissions, and more.",
     "title": "Sign In",
-    "subtitle": "Access Classic Mini DIY admin panel",
+    "subtitle": "Sign in to contribute, track submissions, and more",
     "email_label": "Email Address",
     "email_placeholder": "Enter your email address",
     "send_magic_link": "Send Magic Link",
@@ -206,13 +213,14 @@
     "or_divider": "or",
     "oauth_error": "Sign in failed. Please try again.",
     "validation_error": "Please enter a valid email address",
-    "login_error": "Failed to send magic link. Please try again."
+    "login_error": "Failed to send magic link. Please try again.",
+    "unified_account_note": "Your account works on both classicminidiy.com and theminiexchange.com"
   },
   "es": {
     "page_title": "Iniciar Sesión - Classic Mini DIY",
-    "page_description": "Inicia sesión para acceder al panel de administración de Classic Mini DIY.",
+    "page_description": "Inicia sesión para contribuir, seguir tus envíos y más.",
     "title": "Iniciar Sesión",
-    "subtitle": "Accede al panel de administración de Classic Mini DIY",
+    "subtitle": "Inicia sesión para contribuir, seguir tus envíos y más",
     "email_label": "Correo Electrónico",
     "email_placeholder": "Ingresa tu correo electrónico",
     "send_magic_link": "Enviar Enlace Mágico",
@@ -226,13 +234,14 @@
     "or_divider": "o",
     "oauth_error": "Error al iniciar sesión. Inténtalo de nuevo.",
     "validation_error": "Por favor ingresa un correo electrónico válido",
-    "login_error": "Error al enviar el enlace mágico. Inténtalo de nuevo."
+    "login_error": "Error al enviar el enlace mágico. Inténtalo de nuevo.",
+    "unified_account_note": "Tu cuenta funciona tanto en classicminidiy.com como en theminiexchange.com"
   },
   "fr": {
     "page_title": "Connexion - Classic Mini DIY",
-    "page_description": "Connectez-vous pour accéder au panneau d'administration Classic Mini DIY.",
+    "page_description": "Connectez-vous pour contribuer, suivre vos soumissions et plus encore.",
     "title": "Connexion",
-    "subtitle": "Accédez au panneau d'administration Classic Mini DIY",
+    "subtitle": "Connectez-vous pour contribuer, suivre vos soumissions et plus",
     "email_label": "Adresse Email",
     "email_placeholder": "Entrez votre adresse email",
     "send_magic_link": "Envoyer le Lien Magique",
@@ -246,13 +255,14 @@
     "or_divider": "ou",
     "oauth_error": "Échec de la connexion. Veuillez réessayer.",
     "validation_error": "Veuillez entrer une adresse email valide",
-    "login_error": "Échec de l'envoi du lien magique. Veuillez réessayer."
+    "login_error": "Échec de l'envoi du lien magique. Veuillez réessayer.",
+    "unified_account_note": "Votre compte fonctionne sur classicminidiy.com et theminiexchange.com"
   },
   "it": {
     "page_title": "Accedi - Classic Mini DIY",
-    "page_description": "Accedi per accedere al pannello di amministrazione Classic Mini DIY.",
+    "page_description": "Accedi per contribuire, seguire le tue proposte e altro.",
     "title": "Accedi",
-    "subtitle": "Accedi al pannello di amministrazione Classic Mini DIY",
+    "subtitle": "Accedi per contribuire, seguire le tue proposte e altro",
     "email_label": "Indirizzo Email",
     "email_placeholder": "Inserisci il tuo indirizzo email",
     "send_magic_link": "Invia Link Magico",
@@ -266,13 +276,14 @@
     "or_divider": "o",
     "oauth_error": "Accesso fallito. Riprova.",
     "validation_error": "Inserisci un indirizzo email valido",
-    "login_error": "Invio del link magico fallito. Riprova."
+    "login_error": "Invio del link magico fallito. Riprova.",
+    "unified_account_note": "Il tuo account funziona sia su classicminidiy.com che su theminiexchange.com"
   },
   "de": {
     "page_title": "Anmelden - Classic Mini DIY",
-    "page_description": "Melden Sie sich an, um auf das Classic Mini DIY Admin-Panel zuzugreifen.",
+    "page_description": "Melden Sie sich an, um beizutragen, Einreichungen zu verfolgen und mehr.",
     "title": "Anmelden",
-    "subtitle": "Zugriff auf das Classic Mini DIY Admin-Panel",
+    "subtitle": "Anmelden, um beizutragen, Einreichungen zu verfolgen und mehr",
     "email_label": "E-Mail-Adresse",
     "email_placeholder": "Geben Sie Ihre E-Mail-Adresse ein",
     "send_magic_link": "Magic Link Senden",
@@ -286,13 +297,14 @@
     "or_divider": "oder",
     "oauth_error": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "validation_error": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
-    "login_error": "Magic Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    "login_error": "Magic Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "unified_account_note": "Ihr Konto funktioniert sowohl auf classicminidiy.com als auch auf theminiexchange.com"
   },
   "pt": {
     "page_title": "Entrar - Classic Mini DIY",
-    "page_description": "Entre para acessar o painel de administração Classic Mini DIY.",
+    "page_description": "Entre para contribuir, acompanhar suas submissões e mais.",
     "title": "Entrar",
-    "subtitle": "Acesse o painel de administração Classic Mini DIY",
+    "subtitle": "Entre para contribuir, acompanhar suas submissões e mais",
     "email_label": "Endereço de Email",
     "email_placeholder": "Digite seu endereço de email",
     "send_magic_link": "Enviar Link Mágico",
@@ -306,13 +318,14 @@
     "or_divider": "ou",
     "oauth_error": "Falha ao entrar. Tente novamente.",
     "validation_error": "Por favor, digite um endereço de email válido",
-    "login_error": "Falha ao enviar o link mágico. Tente novamente."
+    "login_error": "Falha ao enviar o link mágico. Tente novamente.",
+    "unified_account_note": "Sua conta funciona tanto em classicminidiy.com quanto em theminiexchange.com"
   },
   "ru": {
     "page_title": "Вход - Classic Mini DIY",
-    "page_description": "Войдите для доступа к панели управления Classic Mini DIY.",
+    "page_description": "Войдите, чтобы вносить вклад, отслеживать заявки и многое другое.",
     "title": "Вход",
-    "subtitle": "Доступ к панели администрирования Classic Mini DIY",
+    "subtitle": "Войдите, чтобы вносить вклад, отслеживать заявки и многое другое",
     "email_label": "Электронная Почта",
     "email_placeholder": "Введите ваш email адрес",
     "send_magic_link": "Отправить Ссылку для Входа",
@@ -321,18 +334,19 @@
     "magic_link_description": "Мы отправили ссылку для входа на ваш email адрес. Нажмите на ссылку, чтобы войти.",
     "try_different_email": "Попробовать другой email",
     "back_to_site": "Назад к Сайту",
-    "sign_in_google": "Google で続行",
-    "sign_in_apple": "Apple で続行",
+    "sign_in_google": "Продолжить с Google",
+    "sign_in_apple": "Продолжить с Apple",
     "or_divider": "или",
     "oauth_error": "Ошибка входа. Попробуйте снова.",
     "validation_error": "Пожалуйста, введите действительный email адрес",
-    "login_error": "Не удалось отправить ссылку для входа. Попробуйте снова."
+    "login_error": "Не удалось отправить ссылку для входа. Попробуйте снова.",
+    "unified_account_note": "Ваш аккаунт работает как на classicminidiy.com, так и на theminiexchange.com"
   },
   "ja": {
     "page_title": "サインイン - Classic Mini DIY",
-    "page_description": "Classic Mini DIY管理パネルにアクセスするためにサインインしてください。",
+    "page_description": "サインインして投稿、提出物の追跡などを行いましょう。",
     "title": "サインイン",
-    "subtitle": "Classic Mini DIY管理パネルにアクセス",
+    "subtitle": "サインインして投稿、提出物の追跡などを行う",
     "email_label": "メールアドレス",
     "email_placeholder": "メールアドレスを入力",
     "send_magic_link": "マジックリンクを送信",
@@ -346,13 +360,14 @@
     "or_divider": "または",
     "oauth_error": "サインインに失敗しました。もう一度お試しください。",
     "validation_error": "有効なメールアドレスを入力してください",
-    "login_error": "マジックリンクの送信に失敗しました。もう一度お試しください。"
+    "login_error": "マジックリンクの送信に失敗しました。もう一度お試しください。",
+    "unified_account_note": "あなたのアカウントはclassicminidiy.comとtheminiexchange.comの両方で使えます"
   },
   "zh": {
     "page_title": "登录 - Classic Mini DIY",
-    "page_description": "登录以访问Classic Mini DIY管理面板。",
+    "page_description": "登录以贡献内容、跟踪提交等。",
     "title": "登录",
-    "subtitle": "访问Classic Mini DIY管理面板",
+    "subtitle": "登录以贡献内容、跟踪提交等",
     "email_label": "邮箱地址",
     "email_placeholder": "输入您的邮箱地址",
     "send_magic_link": "发送魔法链接",
@@ -366,13 +381,14 @@
     "or_divider": "或",
     "oauth_error": "登录失败。请重试。",
     "validation_error": "请输入有效的邮箱地址",
-    "login_error": "发送魔法链接失败。请重试。"
+    "login_error": "发送魔法链接失败。请重试。",
+    "unified_account_note": "您的账户可在classicminidiy.com和theminiexchange.com上使用"
   },
   "ko": {
     "page_title": "로그인 - Classic Mini DIY",
-    "page_description": "Classic Mini DIY 관리 패널에 액세스하려면 로그인하세요.",
+    "page_description": "로그인하여 기여하고, 제출물을 추적하고, 더 많은 것을 하세요.",
     "title": "로그인",
-    "subtitle": "Classic Mini DIY 관리 패널에 액세스",
+    "subtitle": "로그인하여 기여하고, 제출물을 추적하세요",
     "email_label": "이메일 주소",
     "email_placeholder": "이메일 주소를 입력하세요",
     "send_magic_link": "매직 링크 보내기",
@@ -386,7 +402,8 @@
     "or_divider": "또는",
     "oauth_error": "로그인에 실패했습니다. 다시 시도해주세요.",
     "validation_error": "유효한 이메일 주소를 입력해주세요",
-    "login_error": "매직 링크 전송에 실패했습니다. 다시 시도해주세요."
+    "login_error": "매직 링크 전송에 실패했습니다. 다시 시도해주세요.",
+    "unified_account_note": "계정은 classicminidiy.com과 theminiexchange.com 모두에서 사용할 수 있습니다"
   }
 }
 </i18n>
