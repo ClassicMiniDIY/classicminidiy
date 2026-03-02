@@ -212,7 +212,7 @@
               {{ $t('pages.archive.subpages.colors_detail.actions.share') }}
             </UButton>
 
-            <UButton :to="`/archive/colors/contribute?color=${color.raw.id}`" variant="outline">
+            <UButton :to="`/contribute/color?color=${color.raw.id}`" variant="outline">
               <i class="fas fa-edit mr-2"></i>
               {{ $t('pages.archive.subpages.colors_detail.actions.contribute') }}
             </UButton>

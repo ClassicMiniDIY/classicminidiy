@@ -231,7 +231,7 @@
                 </UButton>
                 <UButton
                   v-if="wheel.uuid"
-                  :to="`/archive/wheels/submit?uuid=${wheel.uuid}`"
+                  :to="`/contribute/wheel?uuid=${wheel.uuid}`"
                   size="lg"
                   variant="outline"
                 >

@@ -235,7 +235,7 @@ export const PAGE_DESCRIPTIONS: PageDescription[] = [
     category: 'archive',
   },
   {
-    route: '/archive/colors/contribute',
+    route: '/contribute/color',
     title: 'Contribute Paint Colors',
     description: 'Form for submitting new paint color information to expand the Classic Mini color database.',
     functions: [
@@ -296,7 +296,7 @@ export const PAGE_DESCRIPTIONS: PageDescription[] = [
     category: 'archive',
   },
   {
-    route: '/archive/wheels/submit',
+    route: '/contribute/wheel',
     title: 'Submit Wheel Information',
     description: 'Form for contributing new wheel information and photos to expand the wheels database.',
     functions: [

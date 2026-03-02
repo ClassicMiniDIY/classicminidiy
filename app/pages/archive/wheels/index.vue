@@ -85,7 +85,7 @@
           </p>
         </div>
         <div class="col-span-12 md:col-span-4">
-          <NuxtLink :to="'/archive/wheels/submit?newWheel=true'" :title="$t('add_wheel_card.link_title')">
+          <NuxtLink :to="'/contribute/wheel?newWheel=true'" :title="$t('add_wheel_card.link_title')">
             <UCard class="hover:shadow-2xl transition-shadow">
               <div class="flex items-start">
                 <div class="mr-4">

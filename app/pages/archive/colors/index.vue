@@ -361,7 +361,7 @@
                     <!-- Edit Button -->
                     <td class="p-2 text-center">
                       <UButton
-                        :to="'/archive/colors/contribute?color=' + color.id"
+                        :to="'/contribute/color?color=' + color.id"
                         variant="ghost"
                         size="md"
                         :aria-label="`Edit ${color.name || 'color'}`"

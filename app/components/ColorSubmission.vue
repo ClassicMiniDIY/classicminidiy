@@ -171,7 +171,7 @@
 
   function editExistingColor(colorId: string) {
     showDuplicateWarning.value = false;
-    navigateTo(`/archive/colors/contribute?color=${colorId}`);
+    navigateTo(`/contribute/color?color=${colorId}`);
   }
 
   function resetForm() {
