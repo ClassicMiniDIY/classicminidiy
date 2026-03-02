@@ -198,14 +198,14 @@
                   to: '/submissions',
                 },
                 {
-                  label: t('profile.contribute_color'),
-                  icon: 'i-heroicons-swatch',
-                  to: '/archive/colors/contribute',
+                  label: t('profile.edit_profile'),
+                  icon: 'i-fa6-solid-user-pen',
+                  to: '/profile/edit',
                 },
                 {
-                  label: t('profile.submit_wheel'),
-                  icon: 'i-heroicons-cog-6-tooth',
-                  to: '/archive/wheels/submit',
+                  label: t('profile.contribute'),
+                  icon: 'i-fa6-solid-paper-plane',
+                  to: '/contribute',
                 },
               ],
               [
@@ -346,26 +346,26 @@
               {{ t('profile.submissions') }}
             </UButton>
             <UButton
-              to="/archive/colors/contribute"
+              to="/profile/edit"
               variant="ghost"
               color="neutral"
               block
               class="justify-start font-bold"
               @click="isMobileMenuOpen = false"
             >
-              <i class="fad fa-swatchbook mr-2"></i>
-              {{ t('profile.contribute_color') }}
+              <i class="fad fa-user-pen mr-2"></i>
+              {{ t('profile.edit_profile') }}
             </UButton>
             <UButton
-              to="/archive/wheels/submit"
+              to="/contribute"
               variant="ghost"
               color="neutral"
               block
               class="justify-start font-bold"
               @click="isMobileMenuOpen = false"
             >
-              <i class="fad fa-tire mr-2"></i>
-              {{ t('profile.submit_wheel') }}
+              <i class="fad fa-paper-plane mr-2"></i>
+              {{ t('profile.contribute') }}
             </UButton>
             <UButton
               variant="ghost"
@@ -410,8 +410,8 @@
       "account": "Account",
       "admin": "Admin Dashboard",
       "submissions": "My Submissions",
-      "contribute_color": "Contribute Color",
-      "submit_wheel": "Submit Wheel"
+      "edit_profile": "Edit Profile",
+      "contribute": "Contribute"
     },
     "language_label": "Language",
     "mobile_menu_title": "Menu"
@@ -434,8 +434,8 @@
       "account": "Cuenta",
       "admin": "Panel de Admin",
       "submissions": "Mis envíos",
-      "contribute_color": "Contribuir color",
-      "submit_wheel": "Enviar rueda"
+      "edit_profile": "Editar Perfil",
+      "contribute": "Contribuir"
     },
     "language_label": "Idioma",
     "mobile_menu_title": "Menú"
@@ -458,8 +458,8 @@
       "account": "Compte",
       "admin": "Tableau de bord Admin",
       "submissions": "Mes soumissions",
-      "contribute_color": "Contribuer une couleur",
-      "submit_wheel": "Soumettre une roue"
+      "edit_profile": "Modifier le Profil",
+      "contribute": "Contribuer"
     },
     "language_label": "Langue",
     "mobile_menu_title": "Menu"
@@ -482,8 +482,8 @@
       "account": "Konto",
       "admin": "Admin-Dashboard",
       "submissions": "Meine Einreichungen",
-      "contribute_color": "Farbe beitragen",
-      "submit_wheel": "Felge einreichen"
+      "edit_profile": "Profil Bearbeiten",
+      "contribute": "Beitragen"
     },
     "language_label": "Sprache",
     "mobile_menu_title": "Menü"
@@ -506,8 +506,8 @@
       "account": "Account",
       "admin": "Pannello Admin",
       "submissions": "I miei invii",
-      "contribute_color": "Contribuisci colore",
-      "submit_wheel": "Invia ruota"
+      "edit_profile": "Modifica Profilo",
+      "contribute": "Contribuisci"
     },
     "language_label": "Lingua",
     "mobile_menu_title": "Menu"
@@ -530,8 +530,8 @@
       "account": "アカウント",
       "admin": "管理ダッシュボード",
       "submissions": "投稿一覧",
-      "contribute_color": "カラーを追加",
-      "submit_wheel": "ホイールを投稿"
+      "edit_profile": "プロフィール編集",
+      "contribute": "コントリビュート"
     },
     "language_label": "言語",
     "mobile_menu_title": "メニュー"
@@ -554,8 +554,8 @@
       "account": "계정",
       "admin": "관리자 대시보드",
       "submissions": "내 제출",
-      "contribute_color": "색상 기여",
-      "submit_wheel": "휠 제출"
+      "edit_profile": "프로필 편집",
+      "contribute": "기여하기"
     },
     "language_label": "언어",
     "mobile_menu_title": "메뉴"
@@ -578,8 +578,8 @@
       "account": "Conta",
       "admin": "Painel Admin",
       "submissions": "Minhas submissões",
-      "contribute_color": "Contribuir cor",
-      "submit_wheel": "Enviar roda"
+      "edit_profile": "Editar Perfil",
+      "contribute": "Contribuir"
     },
     "language_label": "Idioma",
     "mobile_menu_title": "Menu"
@@ -602,8 +602,8 @@
       "account": "Аккаунт",
       "admin": "Панель администратора",
       "submissions": "Мои заявки",
-      "contribute_color": "Добавить цвет",
-      "submit_wheel": "Отправить колесо"
+      "edit_profile": "Редактировать Профиль",
+      "contribute": "Внести вклад"
     },
     "language_label": "Язык",
     "mobile_menu_title": "Меню"
@@ -626,8 +626,8 @@
       "account": "账户",
       "admin": "管理面板",
       "submissions": "我的提交",
-      "contribute_color": "贡献颜色",
-      "submit_wheel": "提交轮毂"
+      "edit_profile": "编辑个人资料",
+      "contribute": "贡献"
     },
     "language_label": "语言",
     "mobile_menu_title": "菜单"
