@@ -198,8 +198,9 @@ export default defineNuxtConfig({
       '/readme',
       '/readme-tools',
       '/archive/registry/pending',
-      '/archive/colors/contribute',
-      '/archive/wheels/submit',
+      '/contribute/**',
+      '/welcome',
+      '/profile/**',
     ],
   },
 
@@ -360,6 +361,9 @@ export default defineNuxtConfig({
     '/archive/adverts': { redirect: { to: '/archive/documents?type=advert', statusCode: 301 } },
     '/archive/catalogues': { redirect: { to: '/archive/documents?type=catalogue', statusCode: 301 } },
     '/archive/tuning': { redirect: { to: '/archive/documents?type=tuning', statusCode: 301 } },
+    '/archive/documents/submit': { redirect: { to: '/contribute/document', statusCode: 301 } },
+    '/archive/colors/contribute': { redirect: { to: '/contribute/color', statusCode: 301 } },
+    '/archive/wheels/submit': { redirect: { to: '/contribute/wheel', statusCode: 301 } },
   },
 
   robots: {
