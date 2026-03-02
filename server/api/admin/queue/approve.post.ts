@@ -153,6 +153,13 @@ async function applyEditSuggestion(supabase: any, targetType: string, targetId: 
     }
   }
 
+  // Strip meta-only fields (prefixed with _) that are not actual DB columns
+  // and sentinel values that should not be written to the database
+  for (const key of Object.keys(updates)) {
+    if (key.startsWith('_')) delete updates[key];
+  }
+  if (updates.collection_id === '__new__') delete updates.collection_id;
+
   if (Object.keys(updates).length === 0) return null;
 
   const tableMap: Record<string, string> = {

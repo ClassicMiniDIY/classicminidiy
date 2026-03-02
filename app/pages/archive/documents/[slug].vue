@@ -8,7 +8,7 @@
   const copied = ref(false);
 
   // Fetch document from Supabase
-  const { getDocumentBySlug, getRelatedDocuments } = useArchiveDocuments();
+  const { getDocumentBySlug, getRelatedDocuments, listCollections } = useArchiveDocuments();
   const {
     data: doc,
     status,
@@ -17,6 +17,20 @@
     const result = await getDocumentBySlug(slug);
     return result || null;
   });
+
+  // Fetch all collections for the suggest-edit dropdown
+  const { data: collections } = await useAsyncData(
+    'archive-document-collections',
+    () => listCollections(),
+    { default: () => [] },
+  );
+
+  // Build collection options for the suggest edit modal
+  const collectionOptions = computed(() => [
+    { value: null, label: t('field.collection_none') },
+    ...(collections.value || []).map((c) => ({ value: c.id, label: c.title })),
+    { value: '__new__', label: t('field.collection_suggest_new') },
+  ]);
 
   // Fetch related documents if this doc belongs to a collection
   const { data: relatedDocs } = await useAsyncData(
@@ -329,6 +343,24 @@
             <p>{{ doc.description || t('no_description') }}</p>
           </div>
 
+          <!-- Suggest Collection Callout (when doc has no collection) -->
+          <template v-if="!doc.collection && isAuthenticated">
+            <USeparator :label="t('section.suggest_collection')" class="my-6" />
+            <UAlert color="info" variant="soft">
+              <template #icon>
+                <i class="fad fa-folder-plus"></i>
+              </template>
+              <template #title>{{ t('suggest_collection.prompt_title') }}</template>
+              <template #description>{{ t('suggest_collection.prompt_description') }}</template>
+              <template #actions>
+                <UButton size="sm" color="info" variant="outline" @click="showSuggestEdit = true">
+                  <i class="fad fa-folder-plus mr-2"></i>
+                  {{ t('suggest_collection.cta') }}
+                </UButton>
+              </template>
+            </UAlert>
+          </template>
+
           <!-- Collection Section (conditional) -->
           <template v-if="doc.collection">
             <USeparator :label="t('section.collection')" class="my-6" />
@@ -403,6 +435,7 @@
         language: doc.language,
         vehicle_year_start: doc.vehicleYearStart,
         vehicle_year_end: doc.vehicleYearEnd,
+        collection_id: doc.collection?.id ?? null,
       }"
       :editable-fields="[
         { key: 'title', label: t('field.title'), type: 'text' },
@@ -416,6 +449,18 @@
         { key: 'language', label: t('field.language'), type: 'text' },
         { key: 'vehicle_year_start', label: t('field.vehicle_year_start'), type: 'number' },
         { key: 'vehicle_year_end', label: t('field.vehicle_year_end'), type: 'number' },
+        {
+          key: 'collection_id',
+          label: t('field.collection'),
+          type: 'select',
+          options: collectionOptions,
+          conditionalFields: {
+            __new__: [
+              { key: '_new_collection_title', label: t('field.new_collection_title') },
+              { key: '_new_collection_description', label: t('field.new_collection_description'), type: 'textarea' },
+            ],
+          },
+        },
       ]"
     />
   </div>
@@ -459,11 +504,17 @@
       "details": "Details",
       "description": "Description",
       "collection": "In This Collection",
+      "suggest_collection": "Collection",
       "actions": "Actions"
     },
     "collection": {
       "part_of": "Part of",
       "view_all": "View All"
+    },
+    "suggest_collection": {
+      "prompt_title": "Know which collection this belongs to?",
+      "prompt_description": "Help organize the archive by suggesting a collection for this document.",
+      "cta": "Suggest Collection"
     },
     "action": {
       "download": "Download",
@@ -483,7 +534,12 @@
       "page_count": "Page Count",
       "language": "Language",
       "vehicle_year_start": "Vehicle Year Start",
-      "vehicle_year_end": "Vehicle Year End"
+      "vehicle_year_end": "Vehicle Year End",
+      "collection": "Collection",
+      "collection_none": "No Collection",
+      "collection_suggest_new": "Suggest New Collection...",
+      "new_collection_title": "Proposed Collection Title",
+      "new_collection_description": "Proposed Collection Description"
     },
     "alt": {
       "preview_image": "{title} preview image",
@@ -532,11 +588,17 @@
       "details": "Detalles",
       "description": "Descripción",
       "collection": "En esta colección",
+      "suggest_collection": "Colección",
       "actions": "Acciones"
     },
     "collection": {
       "part_of": "Parte de",
       "view_all": "Ver todo"
+    },
+    "suggest_collection": {
+      "prompt_title": "¿Sabes a qué colección pertenece?",
+      "prompt_description": "Ayuda a organizar el archivo sugiriendo una colección para este documento.",
+      "cta": "Sugerir colección"
     },
     "action": {
       "download": "Descargar",
@@ -556,7 +618,12 @@
       "page_count": "Número de páginas",
       "language": "Idioma",
       "vehicle_year_start": "Año inicio vehículo",
-      "vehicle_year_end": "Año fin vehículo"
+      "vehicle_year_end": "Año fin vehículo",
+      "collection": "Colección",
+      "collection_none": "Sin colección",
+      "collection_suggest_new": "Sugerir nueva colección...",
+      "new_collection_title": "Título de colección propuesto",
+      "new_collection_description": "Descripción de colección propuesta"
     },
     "alt": {
       "preview_image": "Imagen de vista previa de {title}",
@@ -605,11 +672,17 @@
       "details": "Détails",
       "description": "Description",
       "collection": "Dans cette collection",
+      "suggest_collection": "Collection",
       "actions": "Actions"
     },
     "collection": {
       "part_of": "Fait partie de",
       "view_all": "Voir tout"
+    },
+    "suggest_collection": {
+      "prompt_title": "Savez-vous à quelle collection cela appartient ?",
+      "prompt_description": "Aidez à organiser les archives en suggérant une collection pour ce document.",
+      "cta": "Suggérer une collection"
     },
     "action": {
       "download": "Télécharger",
@@ -629,7 +702,12 @@
       "page_count": "Nombre de pages",
       "language": "Langue",
       "vehicle_year_start": "Année début véhicule",
-      "vehicle_year_end": "Année fin véhicule"
+      "vehicle_year_end": "Année fin véhicule",
+      "collection": "Collection",
+      "collection_none": "Aucune collection",
+      "collection_suggest_new": "Suggérer une nouvelle collection...",
+      "new_collection_title": "Titre de collection proposé",
+      "new_collection_description": "Description de collection proposée"
     },
     "alt": {
       "preview_image": "Image d'aperçu de {title}",
@@ -678,11 +756,17 @@
       "details": "Dettagli",
       "description": "Descrizione",
       "collection": "In questa collezione",
+      "suggest_collection": "Collezione",
       "actions": "Azioni"
     },
     "collection": {
       "part_of": "Parte di",
       "view_all": "Vedi tutto"
+    },
+    "suggest_collection": {
+      "prompt_title": "Sai a quale collezione appartiene?",
+      "prompt_description": "Aiuta a organizzare l'archivio suggerendo una collezione per questo documento.",
+      "cta": "Suggerisci collezione"
     },
     "action": {
       "download": "Scarica",
@@ -702,7 +786,12 @@
       "page_count": "Numero di pagine",
       "language": "Lingua",
       "vehicle_year_start": "Anno inizio veicolo",
-      "vehicle_year_end": "Anno fine veicolo"
+      "vehicle_year_end": "Anno fine veicolo",
+      "collection": "Collezione",
+      "collection_none": "Nessuna collezione",
+      "collection_suggest_new": "Suggerisci nuova collezione...",
+      "new_collection_title": "Titolo raccolta proposto",
+      "new_collection_description": "Descrizione raccolta proposta"
     },
     "alt": {
       "preview_image": "Immagine di anteprima di {title}",
@@ -751,11 +840,17 @@
       "details": "Details",
       "description": "Beschreibung",
       "collection": "In dieser Sammlung",
+      "suggest_collection": "Sammlung",
       "actions": "Aktionen"
     },
     "collection": {
       "part_of": "Teil von",
       "view_all": "Alle anzeigen"
+    },
+    "suggest_collection": {
+      "prompt_title": "Wissen Sie, zu welcher Sammlung dies gehört?",
+      "prompt_description": "Helfen Sie beim Organisieren des Archivs, indem Sie eine Sammlung für dieses Dokument vorschlagen.",
+      "cta": "Sammlung vorschlagen"
     },
     "action": {
       "download": "Herunterladen",
@@ -775,7 +870,12 @@
       "page_count": "Seitenzahl",
       "language": "Sprache",
       "vehicle_year_start": "Fahrzeugjahr Beginn",
-      "vehicle_year_end": "Fahrzeugjahr Ende"
+      "vehicle_year_end": "Fahrzeugjahr Ende",
+      "collection": "Sammlung",
+      "collection_none": "Keine Sammlung",
+      "collection_suggest_new": "Neue Sammlung vorschlagen...",
+      "new_collection_title": "Vorgeschlagener Sammlungstitel",
+      "new_collection_description": "Vorgeschlagene Sammlungsbeschreibung"
     },
     "alt": {
       "preview_image": "Vorschaubild von {title}",
@@ -824,11 +924,17 @@
       "details": "Detalhes",
       "description": "Descrição",
       "collection": "Nesta coleção",
+      "suggest_collection": "Coleção",
       "actions": "Ações"
     },
     "collection": {
       "part_of": "Parte de",
       "view_all": "Ver tudo"
+    },
+    "suggest_collection": {
+      "prompt_title": "Sabe a que coleção pertence?",
+      "prompt_description": "Ajude a organizar o arquivo sugerindo uma coleção para este documento.",
+      "cta": "Sugerir coleção"
     },
     "action": {
       "download": "Baixar",
@@ -848,7 +954,12 @@
       "page_count": "Número de páginas",
       "language": "Idioma",
       "vehicle_year_start": "Ano início veículo",
-      "vehicle_year_end": "Ano fim veículo"
+      "vehicle_year_end": "Ano fim veículo",
+      "collection": "Coleção",
+      "collection_none": "Sem coleção",
+      "collection_suggest_new": "Sugerir nova coleção...",
+      "new_collection_title": "Título de coleção proposto",
+      "new_collection_description": "Descrição de coleção proposta"
     },
     "alt": {
       "preview_image": "Imagem de visualização de {title}",
@@ -897,11 +1008,17 @@
       "details": "Детали",
       "description": "Описание",
       "collection": "В этой коллекции",
+      "suggest_collection": "Коллекция",
       "actions": "Действия"
     },
     "collection": {
       "part_of": "Часть",
       "view_all": "Показать все"
+    },
+    "suggest_collection": {
+      "prompt_title": "Знаете, к какой коллекции это относится?",
+      "prompt_description": "Помогите упорядочить архив, предложив коллекцию для этого документа.",
+      "cta": "Предложить коллекцию"
     },
     "action": {
       "download": "Скачать",
@@ -921,7 +1038,12 @@
       "page_count": "Количество страниц",
       "language": "Язык",
       "vehicle_year_start": "Год начала выпуска",
-      "vehicle_year_end": "Год окончания выпуска"
+      "vehicle_year_end": "Год окончания выпуска",
+      "collection": "Коллекция",
+      "collection_none": "Без коллекции",
+      "collection_suggest_new": "Предложить новую коллекцию...",
+      "new_collection_title": "Предлагаемое название коллекции",
+      "new_collection_description": "Предлагаемое описание коллекции"
     },
     "alt": {
       "preview_image": "Превью изображение {title}",
@@ -970,11 +1092,17 @@
       "details": "詳細",
       "description": "説明",
       "collection": "このコレクション内",
+      "suggest_collection": "コレクション",
       "actions": "アクション"
     },
     "collection": {
       "part_of": "所属コレクション：",
       "view_all": "すべて表示"
+    },
+    "suggest_collection": {
+      "prompt_title": "このドキュメントがどのコレクションに属するかご存じですか？",
+      "prompt_description": "このドキュメントのコレクションを提案して、アーカイブの整理にご協力ください。",
+      "cta": "コレクションを提案"
     },
     "action": {
       "download": "ダウンロード",
@@ -994,7 +1122,12 @@
       "page_count": "ページ数",
       "language": "言語",
       "vehicle_year_start": "車両年式開始",
-      "vehicle_year_end": "車両年式終了"
+      "vehicle_year_end": "車両年式終了",
+      "collection": "コレクション",
+      "collection_none": "コレクションなし",
+      "collection_suggest_new": "新しいコレクションを提案...",
+      "new_collection_title": "提案するコレクションタイトル",
+      "new_collection_description": "提案するコレクションの説明"
     },
     "alt": {
       "preview_image": "{title}のプレビュー画像",
@@ -1043,11 +1176,17 @@
       "details": "详情",
       "description": "描述",
       "collection": "此合集中",
+      "suggest_collection": "合集",
       "actions": "操作"
     },
     "collection": {
       "part_of": "属于",
       "view_all": "查看全部"
+    },
+    "suggest_collection": {
+      "prompt_title": "知道这个文档属于哪个合集吗？",
+      "prompt_description": "通过为此文档建议合集来帮助整理档案。",
+      "cta": "建议合集"
     },
     "action": {
       "download": "下载",
@@ -1067,7 +1206,12 @@
       "page_count": "页数",
       "language": "语言",
       "vehicle_year_start": "车辆年份起始",
-      "vehicle_year_end": "车辆年份结束"
+      "vehicle_year_end": "车辆年份结束",
+      "collection": "合集",
+      "collection_none": "无合集",
+      "collection_suggest_new": "建议新合集...",
+      "new_collection_title": "建议合集标题",
+      "new_collection_description": "建议合集描述"
     },
     "alt": {
       "preview_image": "{title} 预览图片",
@@ -1116,11 +1260,17 @@
       "details": "상세정보",
       "description": "설명",
       "collection": "이 컬렉션의 문서",
+      "suggest_collection": "컬렉션",
       "actions": "작업"
     },
     "collection": {
       "part_of": "소속 컬렉션:",
       "view_all": "전체 보기"
+    },
+    "suggest_collection": {
+      "prompt_title": "이 문서가 어느 컬렉션에 속하는지 아십니까?",
+      "prompt_description": "이 문서의 컬렉션을 제안하여 아카이브 정리를 도와주세요.",
+      "cta": "컬렉션 제안"
     },
     "action": {
       "download": "다운로드",
@@ -1140,7 +1290,12 @@
       "page_count": "페이지 수",
       "language": "언어",
       "vehicle_year_start": "차량 연식 시작",
-      "vehicle_year_end": "차량 연식 종료"
+      "vehicle_year_end": "차량 연식 종료",
+      "collection": "컬렉션",
+      "collection_none": "컬렉션 없음",
+      "collection_suggest_new": "새 컬렉션 제안...",
+      "new_collection_title": "제안된 컬렉션 제목",
+      "new_collection_description": "제안된 컬렉션 설명"
     },
     "alt": {
       "preview_image": "{title} 미리보기 이미지",
