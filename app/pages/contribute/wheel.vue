@@ -7,11 +7,11 @@
   const { capture } = usePostHog();
 
   useHead({
-    title: $t('page_title'),
+    title: t('page_title'),
     meta: [
       {
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'robots',
@@ -21,14 +21,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/contribute/wheel',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/wheels.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/wheels.png',
   });
 
@@ -183,11 +183,11 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" :page="$t('breadcrumb_title')" />
+      <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" :page="t('breadcrumb_title')" />
     </div>
 
     <!-- Auth Gate -->
@@ -197,10 +197,10 @@
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2">{{ $t('sign_in_title') }}</h2>
-          <p class="text-base mb-6 opacity-70">{{ $t('sign_in_description') }}</p>
+          <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
           <UButton to="/login" color="primary" class="w-full">
-            {{ $t('sign_in_button') }}
+            {{ t('sign_in_button') }}
           </UButton>
         </div>
       </UCard>
@@ -211,8 +211,8 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ $t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ $t('subtitle') }}</p>
+          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
+          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
           <USeparator class="mb-6" />
         </div>
 

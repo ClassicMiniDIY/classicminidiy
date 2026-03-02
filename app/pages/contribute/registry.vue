@@ -42,13 +42,13 @@
   });
 
   const bodyTypeOptions = computed(() => [
-    { label: $t('body_types.saloon'), value: 'Saloon' },
-    { label: $t('body_types.pickup'), value: 'Pickup' },
-    { label: $t('body_types.estate'), value: 'Estate' },
-    { label: $t('body_types.cabriolet'), value: 'Cabriolet' },
-    { label: $t('body_types.clubman'), value: 'Clubman' },
-    { label: $t('body_types.van'), value: 'Van' },
-    { label: $t('body_types.hornet'), value: 'Hornet' },
+    { label: t('body_types.saloon'), value: 'Saloon' },
+    { label: t('body_types.pickup'), value: 'Pickup' },
+    { label: t('body_types.estate'), value: 'Estate' },
+    { label: t('body_types.cabriolet'), value: 'Cabriolet' },
+    { label: t('body_types.clubman'), value: 'Clubman' },
+    { label: t('body_types.van'), value: 'Van' },
+    { label: t('body_types.hornet'), value: 'Hornet' },
   ]);
 
   const engineSizeOptions = [850, 997, 998, 1100, 1275].map((size) => ({
@@ -57,11 +57,11 @@
   }));
 
   useHead({
-    title: $t('seo.title'),
+    title: t('seo.title'),
     meta: [
       {
         name: 'description',
-        content: $t('seo.description'),
+        content: t('seo.description'),
       },
       {
         name: 'robots',
@@ -71,8 +71,8 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/contribute/registry',
     ogType: 'website',
   });
@@ -121,7 +121,7 @@
     } catch (error) {
       submissionSuccess.value = false;
       apiError.value = true;
-      apiMessage.value = $t('error.api_unavailable');
+      apiMessage.value = t('error.api_unavailable');
       console.error('Error submitting registry entry:', error);
     } finally {
       processing.value = false;
@@ -149,14 +149,14 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="container mx-auto px-4 py-6">
     <!-- Breadcrumb -->
     <div class="mb-6">
       <breadcrumb
         :version="BREADCRUMB_VERSIONS.ARCHIVE"
-        :page="$t('breadcrumb_title')"
+        :page="t('breadcrumb_title')"
         subpage="Contribute"
         subpageHref="/contribute"
       />
@@ -169,10 +169,10 @@
           <div class="mb-4">
             <i class="fas fa-lock text-5xl text-muted"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2">{{ $t('sign_in_title') }}</h2>
-          <p class="text-base mb-6 opacity-70">{{ $t('sign_in_description') }}</p>
+          <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
           <UButton to="/login" color="primary" class="w-full">
-            {{ $t('sign_in_button') }}
+            {{ t('sign_in_button') }}
           </UButton>
         </div>
       </UCard>
@@ -183,8 +183,8 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ $t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ $t('subtitle') }}</p>
+          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
+          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
           <USeparator class="mb-6" />
         </div>
 
@@ -194,15 +194,15 @@
             <!-- Success State -->
             <div v-if="submissionSuccess" class="text-center py-5">
               <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
-              <h1 class="text-2xl font-bold mb-1">{{ $t('success.thank_you') }}</h1>
-              <h2 class="text-lg mb-4">{{ $t('success.submitted_message') }}</h2>
+              <h1 class="text-2xl font-bold mb-1">{{ t('success.thank_you') }}</h1>
+              <h2 class="text-lg mb-4">{{ t('success.submitted_message') }}</h2>
               <div class="space-y-4 max-w-md mx-auto">
                 <UButton color="primary" @click="resetForm" class="w-full">
                   <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
-                  {{ $t('success.submit_another') }}
+                  {{ t('success.submit_another') }}
                 </UButton>
                 <UButton to="/submissions" color="neutral" variant="outline" class="w-full">
-                  {{ $t('success.view_submissions') }}
+                  {{ t('success.view_submissions') }}
                 </UButton>
               </div>
             </div>
@@ -217,7 +217,7 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium"
-                          >{{ $t('form_labels.model_year') }} <span class="text-error">*</span></span
+                          >{{ t('form_labels.model_year') }} <span class="text-error">*</span></span
                         >
                         <span class="text-sm text-muted"><i class="fad fa-calendar"></i></span>
                       </label>
@@ -232,7 +232,7 @@
                         @blur="touchedFields.year = true"
                       />
                       <p v-if="!formData.year && touchedFields.year" class="text-sm text-error mt-1">
-                        {{ $t('validation.required') }}
+                        {{ t('validation.required') }}
                       </p>
                     </div>
 
@@ -240,13 +240,13 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium"
-                          >{{ $t('form_labels.model') }} <span class="text-error">*</span></span
+                          >{{ t('form_labels.model') }} <span class="text-error">*</span></span
                         >
                         <span class="text-sm text-muted"><i class="fad fa-car"></i></span>
                       </label>
                       <UInput
                         type="text"
-                        :placeholder="$t('placeholders.model')"
+                        :placeholder="t('placeholders.model')"
                         v-model="formData.model"
                         :color="formData.model === '' && touchedFields.model ? 'error' : undefined"
                         :disabled="processing"
@@ -254,7 +254,7 @@
                         @blur="touchedFields.model = true"
                       />
                       <p v-if="formData.model === '' && touchedFields.model" class="text-sm text-error mt-1">
-                        {{ $t('validation.required') }}
+                        {{ t('validation.required') }}
                       </p>
                     </div>
 
@@ -262,13 +262,13 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium"
-                          >{{ $t('form_labels.trim') }} <span class="text-error">*</span></span
+                          >{{ t('form_labels.trim') }} <span class="text-error">*</span></span
                         >
                         <span class="text-sm text-muted"><i class="fad fa-scissors"></i></span>
                       </label>
                       <UInput
                         type="text"
-                        :placeholder="$t('placeholders.trim')"
+                        :placeholder="t('placeholders.trim')"
                         v-model="formData.trim"
                         :color="formData.trim === '' && touchedFields.trim ? 'error' : undefined"
                         :disabled="processing"
@@ -276,7 +276,7 @@
                         @blur="touchedFields.trim = true"
                       />
                       <p v-if="formData.trim === '' && touchedFields.trim" class="text-sm text-error mt-1">
-                        {{ $t('validation.required') }}
+                        {{ t('validation.required') }}
                       </p>
                     </div>
 
@@ -284,7 +284,7 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium"
-                          >{{ $t('form_labels.body_type') }} <span class="text-error">*</span></span
+                          >{{ t('form_labels.body_type') }} <span class="text-error">*</span></span
                         >
                         <span class="text-sm text-muted"><i class="fad fa-cars"></i></span>
                       </label>
@@ -298,7 +298,7 @@
                         @change="touchedFields.bodyType = true"
                       />
                       <p v-if="formData.bodyType === '' && touchedFields.bodyType" class="text-sm text-error mt-1">
-                        {{ $t('validation.required') }}
+                        {{ t('validation.required') }}
                       </p>
                     </div>
                   </div>
@@ -309,7 +309,7 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium"
-                          >{{ $t('form_labels.original_engine_size') }} <span class="text-error">*</span></span
+                          >{{ t('form_labels.original_engine_size') }} <span class="text-error">*</span></span
                         >
                         <span class="text-sm text-muted"><i class="fad fa-engine"></i></span>
                       </label>
@@ -323,19 +323,19 @@
                         @change="touchedFields.engineSize = true"
                       />
                       <p v-if="!formData.engineSize && touchedFields.engineSize" class="text-sm text-error mt-1">
-                        {{ $t('validation.required') }}
+                        {{ t('validation.required') }}
                       </p>
                     </div>
 
                     <!-- Factory Color -->
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ $t('form_labels.factory_color') }}</span>
+                        <span class="text-sm font-medium">{{ t('form_labels.factory_color') }}</span>
                         <span class="text-sm text-muted"><i class="fad fa-palette"></i></span>
                       </label>
                       <UInput
                         type="text"
-                        :placeholder="$t('placeholders.color')"
+                        :placeholder="t('placeholders.color')"
                         v-model="formData.color"
                         :disabled="processing"
                       />
@@ -344,12 +344,12 @@
                     <!-- Body Shell Number -->
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ $t('form_labels.body_shell_number') }}</span>
+                        <span class="text-sm font-medium">{{ t('form_labels.body_shell_number') }}</span>
                         <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
                       </label>
                       <UInput
                         type="text"
-                        :placeholder="$t('placeholders.body_number')"
+                        :placeholder="t('placeholders.body_number')"
                         v-model="formData.bodyNum"
                         :disabled="processing"
                       />
@@ -358,12 +358,12 @@
                     <!-- Engine Plate Number -->
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ $t('form_labels.engine_plate_number') }}</span>
+                        <span class="text-sm font-medium">{{ t('form_labels.engine_plate_number') }}</span>
                         <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
                       </label>
                       <UInput
                         type="text"
-                        :placeholder="$t('placeholders.engine_number')"
+                        :placeholder="t('placeholders.engine_number')"
                         v-model="formData.engineNum"
                         :disabled="processing"
                       />
@@ -374,11 +374,11 @@
                   <div class="col-span-1 md:col-span-2">
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ $t('form_labels.special_notes') }}</span>
+                        <span class="text-sm font-medium">{{ t('form_labels.special_notes') }}</span>
                         <span class="text-sm text-muted"><i class="fad fa-note"></i></span>
                       </label>
                       <UTextarea
-                        :placeholder="$t('placeholders.notes')"
+                        :placeholder="t('placeholders.notes')"
                         v-model="formData.notes"
                         :rows="4"
                         :disabled="processing"
@@ -393,14 +393,14 @@
                     <template #icon>
                       <i class="fa-duotone fa-circle-exclamation"></i>
                     </template>
-                    <template #title>{{ $t('error.title') }}</template>
+                    <template #title>{{ t('error.title') }}</template>
                     <template #description>
-                      {{ apiMessage || $t('error.message') }}
-                      <p class="mt-2">{{ $t('error.check_entries') }}</p>
+                      {{ apiMessage || t('error.message') }}
+                      <p class="mt-2">{{ t('error.check_entries') }}</p>
                     </template>
                     <template #actions>
                       <UButton size="sm" variant="outline" @click="apiError = false">
-                        {{ $t('error.dismiss') }}
+                        {{ t('error.dismiss') }}
                       </UButton>
                     </template>
                   </UAlert>
@@ -414,7 +414,7 @@
                     :loading="processing"
                   >
                     <i class="fad fa-paper-plane mr-2" v-if="!processing"></i>
-                    {{ $t('submit_button') }}
+                    {{ t('submit_button') }}
                   </UButton>
                 </div>
               </form>

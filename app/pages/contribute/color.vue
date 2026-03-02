@@ -52,12 +52,12 @@
 
   // Inline validation errors
   const nameError = computed(() => {
-    if (touched.name && !formData.name.trim()) return $t('form.validation.name_required');
+    if (touched.name && !formData.name.trim()) return t('form.validation.name_required');
     return '';
   });
 
   const codeError = computed(() => {
-    if (touched.code && !formData.code.trim()) return $t('form.validation.code_required');
+    if (touched.code && !formData.code.trim()) return t('form.validation.code_required');
     return '';
   });
 
@@ -67,7 +67,7 @@
   });
 
   const hexError = computed(() => {
-    if (formData.hexValue && !isValidHex.value) return $t('form.validation.hex_invalid');
+    if (formData.hexValue && !isValidHex.value) return t('form.validation.hex_invalid');
     return '';
   });
 
@@ -76,11 +76,11 @@
   });
 
   useHead({
-    title: $t('page_title'),
+    title: t('page_title'),
     meta: [
       {
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'robots',
@@ -90,14 +90,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/contribute/color',
     ogType: 'website',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/colors.png',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/colors.png',
   });
 
@@ -108,7 +108,7 @@
 
     if (!isFormValid.value) {
       apiError.value = true;
-      apiMessage.value = $t('form.error.validation_failed');
+      apiMessage.value = t('form.error.validation_failed');
       return;
     }
 
@@ -161,7 +161,7 @@
     } catch (error) {
       submissionSuccess.value = false;
       apiError.value = true;
-      apiMessage.value = $t('form.error.submission_failed');
+      apiMessage.value = t('form.error.submission_failed');
       console.error('Error submitting color contribution:', error);
     } finally {
       processing.value = false;
@@ -187,14 +187,14 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="container mx-auto px-4 py-6">
     <!-- Breadcrumb -->
     <div class="mb-6">
       <breadcrumb
         :version="BREADCRUMB_VERSIONS.ARCHIVE"
-        :page="$t('breadcrumb_title')"
+        :page="t('breadcrumb_title')"
         subpage="Contribute"
         subpageHref="/contribute"
       />
@@ -207,10 +207,10 @@
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2">{{ $t('sign_in_title') }}</h2>
-          <p class="text-base mb-6 opacity-70">{{ $t('sign_in_description') }}</p>
+          <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
           <UButton to="/login" color="primary" class="w-full">
-            {{ $t('sign_in_button') }}
+            {{ t('sign_in_button') }}
           </UButton>
         </div>
       </UCard>
@@ -221,8 +221,8 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ $t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ $t('subtitle') }}</p>
+          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
+          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
           <USeparator class="mb-6" />
         </div>
 
@@ -241,18 +241,18 @@
               <div class="mb-4">
                 <i class="fad fa-circle-check text-6xl text-success"></i>
               </div>
-              <h1 class="text-2xl font-bold mb-2">{{ $t('form.success.title') }}</h1>
-              <h2 class="text-xl mb-6">{{ $t('form.success.subtitle') }}</h2>
+              <h1 class="text-2xl font-bold mb-2">{{ t('form.success.title') }}</h1>
+              <h2 class="text-xl mb-6">{{ t('form.success.subtitle') }}</h2>
               <div class="space-y-4 text-left max-w-md mx-auto">
                 <div class="bg-muted p-4 rounded-lg">
-                  <p class="font-medium">{{ $t('form.success.submission_id') }}{{ submissionId }}</p>
-                  <p class="text-sm opacity-70">{{ $t('form.success.pending_review') }}</p>
+                  <p class="font-medium">{{ t('form.success.submission_id') }}{{ submissionId }}</p>
+                  <p class="text-sm opacity-70">{{ t('form.success.pending_review') }}</p>
                 </div>
                 <UButton @click="resetForm" color="primary" class="w-full">
-                  {{ $t('form.success.make_another') }}
+                  {{ t('form.success.make_another') }}
                 </UButton>
                 <UButton to="/submissions" color="neutral" variant="outline" class="w-full">
-                  {{ $t('form.success.view_submissions') }}
+                  {{ t('form.success.view_submissions') }}
                 </UButton>
               </div>
             </div>
@@ -261,7 +261,7 @@
             <div v-else>
               <div class="flex items-center bg-primary text-primary-content -m-4 mb-4 p-4 rounded-t-lg">
                 <i class="fad fa-palette mr-2"></i>
-                <h2 class="text-lg font-semibold">{{ $t('form.title') }}</h2>
+                <h2 class="text-lg font-semibold">{{ t('form.title') }}</h2>
               </div>
 
               <div class="p-2">
@@ -270,21 +270,21 @@
                   <template #icon>
                     <i class="fas fa-exclamation-triangle"></i>
                   </template>
-                  <template #title>{{ $t('form.error.title') }}</template>
+                  <template #title>{{ t('form.error.title') }}</template>
                   <template #description>
-                    {{ apiMessage || $t('form.error.default_message') }}
+                    {{ apiMessage || t('form.error.default_message') }}
                   </template>
                 </UAlert>
 
                 <!-- Form Fields -->
                 <form @submit.prevent="submit" class="space-y-4">
                   <!-- Color Name (required) -->
-                  <UFormField :label="`${$t('form.fields.color_name.label')} *`" :error="nameError">
+                  <UFormField :label="`${t('form.fields.color_name.label')} *`" :error="nameError">
                     <UInput
                       id="colorName"
                       type="text"
                       v-model="formData.name"
-                      :placeholder="$t('form.fields.color_name.placeholder')"
+                      :placeholder="t('form.fields.color_name.placeholder')"
                       class="w-full"
                       maxlength="100"
                       :disabled="processing"
@@ -296,12 +296,12 @@
 
                   <!-- Primary Code + Short Code -->
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <UFormField :label="`${$t('form.fields.primary_code.label')} *`" :error="codeError">
+                    <UFormField :label="`${t('form.fields.primary_code.label')} *`" :error="codeError">
                       <UInput
                         id="primaryCode"
                         type="text"
                         v-model="formData.code"
-                        :placeholder="$t('form.fields.primary_code.placeholder')"
+                        :placeholder="t('form.fields.primary_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
                         required
@@ -310,12 +310,12 @@
                       />
                     </UFormField>
 
-                    <UFormField :label="$t('form.fields.short_code.label')">
+                    <UFormField :label="t('form.fields.short_code.label')">
                       <UInput
                         id="shortCode"
                         type="text"
                         v-model="formData.shortCode"
-                        :placeholder="$t('form.fields.short_code.placeholder')"
+                        :placeholder="t('form.fields.short_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
                         icon="i-fa6-solid-code"
@@ -325,24 +325,24 @@
 
                   <!-- Ditzler/PPG Code + Dulux Code -->
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <UFormField :label="$t('form.fields.ditzler_ppg_code.label')">
+                    <UFormField :label="t('form.fields.ditzler_ppg_code.label')">
                       <UInput
                         id="ditzlerPpgCode"
                         type="text"
                         v-model="formData.ditzlerPpgCode"
-                        :placeholder="$t('form.fields.ditzler_ppg_code.placeholder')"
+                        :placeholder="t('form.fields.ditzler_ppg_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
                         icon="i-fa6-solid-code"
                       />
                     </UFormField>
 
-                    <UFormField :label="$t('form.fields.dulux_code.label')">
+                    <UFormField :label="t('form.fields.dulux_code.label')">
                       <UInput
                         id="duluxCode"
                         type="text"
                         v-model="formData.duluxCode"
-                        :placeholder="$t('form.fields.dulux_code.placeholder')"
+                        :placeholder="t('form.fields.dulux_code.placeholder')"
                         class="w-full"
                         :disabled="processing"
                         icon="i-fa6-solid-code"
@@ -351,13 +351,13 @@
                   </div>
 
                   <!-- Hex Value with color preview swatch -->
-                  <UFormField :label="$t('form.fields.hex_value.label')" :error="hexError">
+                  <UFormField :label="t('form.fields.hex_value.label')" :error="hexError">
                     <div class="flex items-center gap-3">
                       <UInput
                         id="hexValue"
                         type="text"
                         v-model="formData.hexValue"
-                        :placeholder="$t('form.fields.hex_value.placeholder')"
+                        :placeholder="t('form.fields.hex_value.placeholder')"
                         class="w-full"
                         :disabled="processing"
                         icon="i-fa6-solid-hashtag"
@@ -372,12 +372,12 @@
                   </UFormField>
 
                   <!-- Years Used -->
-                  <UFormField :label="$t('form.fields.years_used.label')">
+                  <UFormField :label="t('form.fields.years_used.label')">
                     <UInput
                       id="years"
                       type="text"
                       v-model="formData.years"
-                      :placeholder="$t('form.fields.years_used.placeholder')"
+                      :placeholder="t('form.fields.years_used.placeholder')"
                       class="w-full"
                       :disabled="processing"
                       icon="i-fa6-solid-calendar-days"
@@ -389,13 +389,13 @@
                     accept="image/jpeg,image/png"
                     :maxFiles="3"
                     :maxSizeMb="5"
-                    :label="$t('form.fields.swatch_photos.label')"
+                    :label="t('form.fields.swatch_photos.label')"
                     @update:files="swatchFiles = $event"
                   />
 
                   <div class="pt-4">
                     <UButton type="submit" color="primary" class="w-full" :disabled="processing" :loading="processing">
-                      {{ processing ? $t('form.submit.submitting') : $t('form.submit.button') }}
+                      {{ processing ? t('form.submit.submitting') : t('form.submit.button') }}
                     </UButton>
                   </div>
                 </form>
