@@ -254,7 +254,7 @@
         </div>
         <h2 class="text-2xl font-bold mb-2">{{ $t('empty.title') }}</h2>
         <p class="opacity-70 mb-6 max-w-md mx-auto">{{ $t('empty.description') }}</p>
-        <UButton to="/archive/documents/submit" color="primary" variant="outline">
+        <UButton to="/contribute/document" color="primary" variant="outline">
           {{ $t('empty.contribute_link') }}
         </UButton>
       </div>
