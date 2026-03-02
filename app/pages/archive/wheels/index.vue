@@ -77,6 +77,23 @@
     <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
     <div class="container mx-auto px-4">
       <breadcrumb :page="$t('breadcrumb_title')" class="my-6"></breadcrumb>
+
+      <!-- Contribute Banner -->
+      <UCard class="mb-6 bg-primary/5">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
+            <div>
+              <p class="font-medium">{{ $t('contribute_banner_title') }}</p>
+              <p class="text-sm opacity-70">{{ $t('contribute_banner_description') }}</p>
+            </div>
+          </div>
+          <UButton to="/contribute/wheel" color="primary" variant="outline" size="sm">
+            {{ $t('contribute_banner_button') }}
+          </UButton>
+        </div>
+      </UCard>
+
       <div class="grid grid-cols-12 gap-4 items-center">
         <div class="col-span-12 md:col-span-8">
           <h1 class="text-3xl font-bold mb-2">{{ $t('main_heading') }}</h1>
@@ -144,6 +161,9 @@
       "description": "Contribute to our wheels database",
       "link_title": "Add a new wheel to the database"
     },
+    "contribute_banner_title": "Know something we're missing?",
+    "contribute_banner_description": "Help grow the archive with your knowledge.",
+    "contribute_banner_button": "Contribute",
     "footer": {
       "title": "Special thanks to",
       "description": "This database was originally sourced from the now-defunct"

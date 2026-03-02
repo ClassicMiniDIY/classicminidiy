@@ -113,6 +113,22 @@
           </div>
         </div>
 
+        <!-- Contribute Banner -->
+        <UCard class="mb-6 bg-primary/5">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
+              <div>
+                <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+                <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+              </div>
+            </div>
+            <UButton to="/contribute/document" color="primary" variant="outline" size="sm">
+              {{ t('contribute_banner_button') }}
+            </UButton>
+          </div>
+        </UCard>
+
         <!-- Type Filter Chips -->
         <div class="flex flex-wrap gap-2 mb-6">
           <UButton
@@ -339,6 +355,9 @@
     "pagination": {
       "page_text": "Page {current} of {total}"
     },
+    "contribute_banner_title": "Know something we're missing?",
+    "contribute_banner_description": "Help grow the archive with your knowledge.",
+    "contribute_banner_button": "Contribute",
     "support_divider": "Support"
   },
   "de": {
@@ -373,6 +392,9 @@
     "pagination": {
       "page_text": "Seite {current} von {total}"
     },
+    "contribute_banner_title": "Wissen Sie etwas, das uns fehlt?",
+    "contribute_banner_description": "Helfen Sie, das Archiv mit Ihrem Wissen zu erweitern.",
+    "contribute_banner_button": "Beitragen",
     "support_divider": "Support"
   },
   "es": {
@@ -407,6 +429,9 @@
     "pagination": {
       "page_text": "Página {current} de {total}"
     },
+    "contribute_banner_title": "Sabes algo que nos falta?",
+    "contribute_banner_description": "Ayuda a hacer crecer el archivo con tu conocimiento.",
+    "contribute_banner_button": "Contribuir",
     "support_divider": "Soporte"
   },
   "fr": {
@@ -441,6 +466,9 @@
     "pagination": {
       "page_text": "Page {current} sur {total}"
     },
+    "contribute_banner_title": "Vous savez quelque chose qui nous manque ?",
+    "contribute_banner_description": "Aidez à enrichir l'archive avec vos connaissances.",
+    "contribute_banner_button": "Contribuer",
     "support_divider": "Support"
   },
   "it": {
@@ -475,6 +503,9 @@
     "pagination": {
       "page_text": "Pagina {current} di {total}"
     },
+    "contribute_banner_title": "Sai qualcosa che ci manca?",
+    "contribute_banner_description": "Aiuta a far crescere l'archivio con le tue conoscenze.",
+    "contribute_banner_button": "Contribuisci",
     "support_divider": "Supporto"
   },
   "pt": {
@@ -509,6 +540,9 @@
     "pagination": {
       "page_text": "Página {current} de {total}"
     },
+    "contribute_banner_title": "Sabe algo que nos falta?",
+    "contribute_banner_description": "Ajude a expandir o arquivo com seu conhecimento.",
+    "contribute_banner_button": "Contribuir",
     "support_divider": "Suporte"
   },
   "ru": {
@@ -543,6 +577,9 @@
     "pagination": {
       "page_text": "Страница {current} из {total}"
     },
+    "contribute_banner_title": "Знаете что-то, что мы упустили?",
+    "contribute_banner_description": "Помогите расширить архив своими знаниями.",
+    "contribute_banner_button": "Внести вклад",
     "support_divider": "Поддержка"
   },
   "ja": {
@@ -577,6 +614,9 @@
     "pagination": {
       "page_text": "{total}ページ中{current}ページ"
     },
+    "contribute_banner_title": "何か見落としがありますか？",
+    "contribute_banner_description": "あなたの知識でアーカイブの充実にご協力ください。",
+    "contribute_banner_button": "貢献する",
     "support_divider": "サポート"
   },
   "zh": {
@@ -611,6 +651,9 @@
     "pagination": {
       "page_text": "第{current}页，共{total}页"
     },
+    "contribute_banner_title": "我们遗漏了什么吗？",
+    "contribute_banner_description": "用您的知识帮助扩充档案。",
+    "contribute_banner_button": "贡献",
     "support_divider": "支持"
   },
   "ko": {
@@ -645,6 +688,9 @@
     "pagination": {
       "page_text": "{total} 페이지 중 {current} 페이지"
     },
+    "contribute_banner_title": "우리가 놓친 것을 알고 계신가요?",
+    "contribute_banner_description": "당신의 지식으로 아카이브를 풍성하게 만들어주세요.",
+    "contribute_banner_button": "기여하기",
     "support_divider": "지원"
   }
 }

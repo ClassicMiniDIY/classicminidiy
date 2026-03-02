@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { ArchiveItems, BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
-  import { ARCHIVE_TYPES, submitArchiveFile } from '../../../data/models/helper-utils';
   const { path } = useRoute();
   const { capture } = usePostHog();
   const { t } = useI18n();
@@ -115,9 +114,9 @@
         <p class="text-lg pb-5">
           {{ $t('maintenance_description') }}
         </p>
-        <UButton class="mr-3 text-lg" color="primary" @click="submitArchiveFile(ARCHIVE_TYPES.GENERIC)">
+        <UButton class="mr-3 text-lg" color="primary" to="/contribute">
           <i class="fa-duotone fa-paper-plane mr-2"></i>
-          {{ $t('add_to_archive') }}
+          {{ $t('contribute_to_archive') }}
         </UButton>
         <UButton
           class="mr-3 text-lg"
@@ -149,6 +148,15 @@
           </UCard>
         </NuxtLink>
       </div>
+      <div class="col-span-1">
+        <NuxtLink to="/contribute" class="block h-full">
+          <UCard class="text-center p-5 h-full hover:shadow-xl transition-shadow bg-primary/5">
+            <i class="fad fa-hand-holding-heart text-4xl text-primary"></i>
+            <p class="text-lg mt-2 font-semibold">{{ $t('contribute') }}</p>
+            <p class="text-sm opacity-70 mt-1">{{ $t('contribute_description') }}</p>
+          </UCard>
+        </NuxtLink>
+      </div>
     </div>
     <div class="grid grid-cols-12 gap-4 mt-6">
       <div class="col-span-12 md:col-span-10 md:col-start-2">
@@ -171,7 +179,9 @@
     "main_heading": "Classic Mini DIY Archive",
     "description_text": "Welcome to the Classic Mini DIY Archive - a comprehensive collection of historical documents, manuals, brochures, and resources dedicated to preserving Classic Mini history.",
     "maintenance_description": "This archive is maintained by the community and relies on contributions from Classic Mini enthusiasts worldwide. Help us preserve this valuable history for future generations.",
-    "add_to_archive": "Add to Archive",
+    "contribute_to_archive": "Contribute to Archive",
+    "contribute": "Contribute",
+    "contribute_description": "Help preserve Classic Mini history",
     "cover_server_costs": "Cover Server Costs",
     "coming_soon": "Coming Soon",
     "support_divider": "Support Our Work",
@@ -211,7 +221,9 @@
     "main_heading": "Archivo Classic Mini DIY",
     "description_text": "Bienvenido al Archivo Classic Mini DIY - una colección completa de documentos históricos, manuales, folletos y recursos dedicados a preservar la historia del Classic Mini.",
     "maintenance_description": "Este archivo es mantenido por la comunidad y depende de las contribuciones de entusiastas del Classic Mini de todo el mundo. Ayúdanos a preservar esta valiosa historia para las futuras generaciones.",
-    "add_to_archive": "Agregar al Archivo",
+    "contribute_to_archive": "Contribuir al Archivo",
+    "contribute": "Contribuir",
+    "contribute_description": "Ayuda a preservar la historia del Classic Mini",
     "cover_server_costs": "Cubrir Costos del Servidor",
     "coming_soon": "Próximamente",
     "support_divider": "Apoya Nuestro Trabajo",
@@ -238,7 +250,9 @@
     "main_heading": "Archive Classic Mini DIY",
     "description_text": "Bienvenue dans l'Archive Classic Mini DIY - une collection complète de documents historiques, manuels, brochures et ressources dédiés à la préservation de l'histoire du Classic Mini.",
     "maintenance_description": "Cette archive est maintenue par la communauté et dépend des contributions d'enthousiastes du Classic Mini du monde entier. Aidez-nous à préserver cette histoire précieuse pour les générations futures.",
-    "add_to_archive": "Ajouter à l'Archive",
+    "contribute_to_archive": "Contribuer à l'Archive",
+    "contribute": "Contribuer",
+    "contribute_description": "Aidez à préserver l'histoire du Classic Mini",
     "cover_server_costs": "Couvrir les Coûts du Serveur",
     "coming_soon": "Bientôt Disponible",
     "support_divider": "Soutenez Notre Travail",
@@ -278,7 +292,9 @@
     "main_heading": "Archivio Classic Mini DIY",
     "description_text": "Benvenuto nell'Archivio Classic Mini DIY - una collezione completa di documenti storici, manuali, brochure e risorse dedicate alla preservazione della storia del Classic Mini.",
     "maintenance_description": "Questo archivio è mantenuto dalla comunità e dipende dai contributi di appassionati del Classic Mini di tutto il mondo. Aiutaci a preservare questa preziosa storia per le generazioni future.",
-    "add_to_archive": "Aggiungi all'Archivio",
+    "contribute_to_archive": "Contribuisci all'Archivio",
+    "contribute": "Contribuisci",
+    "contribute_description": "Aiuta a preservare la storia del Classic Mini",
     "cover_server_costs": "Copri i Costi del Server",
     "coming_soon": "Prossimamente",
     "support_divider": "Supporta il Nostro Lavoro",
@@ -318,7 +334,9 @@
     "main_heading": "Classic Mini DIY Archiv",
     "description_text": "Willkommen im Classic Mini DIY Archiv - einer umfassenden Sammlung historischer Dokumente, Handbücher, Broschüren und Ressourcen zur Bewahrung der Classic Mini Geschichte.",
     "maintenance_description": "Dieses Archiv wird von der Community gepflegt und ist auf Beiträge von Classic Mini Enthusiasten weltweit angewiesen. Helfen Sie uns, diese wertvolle Geschichte für zukünftige Generationen zu bewahren.",
-    "add_to_archive": "Zum Archiv Hinzufügen",
+    "contribute_to_archive": "Zum Archiv Beitragen",
+    "contribute": "Beitragen",
+    "contribute_description": "Helfen Sie, die Classic Mini Geschichte zu bewahren",
     "cover_server_costs": "Serverkosten Decken",
     "coming_soon": "Demnächst",
     "support_divider": "Unterstützen Sie Unsere Arbeit",
@@ -358,7 +376,9 @@
     "main_heading": "Arquivo Classic Mini DIY",
     "description_text": "Bem-vindo ao Arquivo Classic Mini DIY - uma coleção abrangente de documentos históricos, manuais, folhetos e recursos dedicados à preservação da história do Classic Mini.",
     "maintenance_description": "Este arquivo é mantido pela comunidade e depende de contribuições de entusiastas do Classic Mini do mundo todo. Ajude-nos a preservar esta valiosa história para as gerações futuras.",
-    "add_to_archive": "Adicionar ao Arquivo",
+    "contribute_to_archive": "Contribuir para o Arquivo",
+    "contribute": "Contribuir",
+    "contribute_description": "Ajude a preservar a historia do Classic Mini",
     "cover_server_costs": "Cobrir Custos do Servidor",
     "coming_soon": "Em Breve",
     "support_divider": "Apoie Nosso Trabalho",
@@ -398,7 +418,9 @@
     "main_heading": "Архив Classic Mini DIY",
     "description_text": "Добро пожаловать в Архив Classic Mini DIY - всеобъемлющую коллекцию исторических документов, руководств, брошюр и ресурсов, посвященных сохранению истории Classic Mini.",
     "maintenance_description": "Этот архив поддерживается сообществом и зависит от вклада энтузиастов Classic Mini со всего мира. Помогите нам сохранить эту ценную историю для будущих поколений.",
-    "add_to_archive": "Добавить в Архив",
+    "contribute_to_archive": "Внести вклад в Архив",
+    "contribute": "Внести вклад",
+    "contribute_description": "Помогите сохранить историю Classic Mini",
     "cover_server_costs": "Покрыть Расходы на Сервер",
     "coming_soon": "Скоро",
     "support_divider": "Поддержите Нашу Работу",
@@ -438,7 +460,9 @@
     "main_heading": "Classic Mini DIY アーカイブ",
     "description_text": "Classic Mini DIY アーカイブへようこそ - Classic Miniの歴史を保存することに専念した歴史的文書、マニュアル、パンフレット、リソースの包括的なコレクションです。",
     "maintenance_description": "このアーカイブはコミュニティによって維持され、世界中のClassic Mini愛好家からの貢献に依存しています。将来の世代のためにこの貴重な歴史を保存するのにご協力ください。",
-    "add_to_archive": "アーカイブに追加",
+    "contribute_to_archive": "アーカイブに貢献する",
+    "contribute": "貢献する",
+    "contribute_description": "Classic Miniの歴史を保存するのにご協力ください",
     "cover_server_costs": "サーバー費用をカバー",
     "coming_soon": "近日公開",
     "support_divider": "私たちの活動をサポート",
@@ -478,7 +502,9 @@
     "main_heading": "Classic Mini DIY 档案",
     "description_text": "欢迎来到Classic Mini DIY档案 - 一个致力于保存Classic Mini历史的历史文档、手册、小册子和资源的综合收藏。",
     "maintenance_description": "这个档案由社区维护，依赖于来自世界各地Classic Mini爱好者的贡献。帮助我们为后代保存这段宝贵的历史。",
-    "add_to_archive": "添加到档案",
+    "contribute_to_archive": "为档案做贡献",
+    "contribute": "贡献",
+    "contribute_description": "帮助保存Classic Mini的历史",
     "cover_server_costs": "支付服务器费用",
     "coming_soon": "即将推出",
     "support_divider": "支持我们的工作",
@@ -518,7 +544,9 @@
     "main_heading": "Classic Mini DIY 아카이브",
     "description_text": "Classic Mini DIY 아카이브에 오신 것을 환영합니다 - Classic Mini 역사 보존에 전념하는 역사적 문서, 매뉴얼, 브로셔, 자료의 포괄적인 컬렉션입니다.",
     "maintenance_description": "이 아카이브는 커뮤니티에 의해 유지되며 전 세계 Classic Mini 애호가들의 기여에 의존합니다. 미래 세대를 위해 이 소중한 역사를 보존하는 데 도움을 주세요.",
-    "add_to_archive": "아카이브에 추가",
+    "contribute_to_archive": "아카이브에 기여하기",
+    "contribute": "기여하기",
+    "contribute_description": "Classic Mini 역사 보존에 도움을 주세요",
     "cover_server_costs": "서버 비용 지원",
     "coming_soon": "곧 출시",
     "support_divider": "우리의 작업을 지원하세요",
