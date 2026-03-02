@@ -3,9 +3,11 @@
   import { determineArchiveType, shareArchiveItem, submitArchiveFile } from '../../../../data/models/helper-utils';
 
   const { t } = useI18n();
+  const { isAuthenticated } = useAuth();
   const route = useRoute();
   const slug = route.params.slug as string;
   const fullPath = route.fullPath;
+  const showSuggestEdit = ref(false);
 
   // Fetch document from Supabase archive_documents table
   const { getDocumentBySlug } = useArchiveDocuments();
@@ -258,12 +260,35 @@
                   <i class="fa-duotone fa-solid fa-download mr-2"></i>
                   {{ t('download_button') }}
                 </UButton>
+                <UButton
+                  v-if="isAuthenticated"
+                  variant="outline"
+                  size="sm"
+                  class="m-1"
+                  @click="showSuggestEdit = true"
+                >
+                  <i class="fad fa-pen-to-square mr-2"></i>
+                  {{ t('suggest_edit') }}
+                </UButton>
               </ClientOnly>
             </div>
           </div>
         </UCard>
       </div>
     </div>
+
+    <SuggestEditModal
+      v-if="currentPostData"
+      v-model="showSuggestEdit"
+      target-type="document"
+      :target-id="currentPostData.id"
+      :current-data="{ title: currentPostData.title, description: currentPostData.description, code: currentPostData.code }"
+      :editable-fields="[
+        { key: 'title', label: t('field_title'), type: 'text' },
+        { key: 'code', label: t('field_code'), type: 'text' },
+        { key: 'description', label: t('field_description'), type: 'textarea' },
+      ]"
+    />
   </div>
 </template>
 
@@ -283,6 +308,10 @@
     "contribute_button": "Contribute",
     "missing_file_button": "Missing File",
     "download_button": "Download",
+    "suggest_edit": "Suggest Edit",
+    "field_title": "Title",
+    "field_code": "Code",
+    "field_description": "Description",
     "seo": {
       "title_suffix": "- Classic Mini Archive - Classic Mini DIY",
       "description_fallback": "Archive resource for {title} in the Classic Mini DIY collection.",
@@ -310,6 +339,10 @@
     "contribute_button": "Contribuir",
     "missing_file_button": "Archivo Faltante",
     "download_button": "Descargar",
+    "suggest_edit": "Sugerir Edición",
+    "field_title": "Título",
+    "field_code": "Código",
+    "field_description": "Descripción",
     "seo": {
       "title_suffix": "- Archivo Classic Mini - Classic Mini DIY",
       "description_fallback": "Recurso de archivo para {title} en la colección Classic Mini DIY.",
@@ -337,6 +370,10 @@
     "contribute_button": "Contribuer",
     "missing_file_button": "Fichier Manquant",
     "download_button": "Télécharger",
+    "suggest_edit": "Suggérer une Modification",
+    "field_title": "Titre",
+    "field_code": "Code",
+    "field_description": "Description",
     "seo": {
       "title_suffix": "- Archive Classic Mini - Classic Mini DIY",
       "description_fallback": "Ressource d'archive pour {title} dans la collection Classic Mini DIY.",
@@ -364,6 +401,10 @@
     "contribute_button": "Contribuisci",
     "missing_file_button": "File Mancante",
     "download_button": "Scarica",
+    "suggest_edit": "Suggerisci Modifica",
+    "field_title": "Titolo",
+    "field_code": "Codice",
+    "field_description": "Descrizione",
     "seo": {
       "title_suffix": "- Archivio Classic Mini - Classic Mini DIY",
       "description_fallback": "Risorsa di archivio per {title} nella collezione Classic Mini DIY.",
@@ -391,6 +432,10 @@
     "contribute_button": "Beitragen",
     "missing_file_button": "Fehlende Datei",
     "download_button": "Herunterladen",
+    "suggest_edit": "Bearbeitung Vorschlagen",
+    "field_title": "Titel",
+    "field_code": "Code",
+    "field_description": "Beschreibung",
     "seo": {
       "title_suffix": "- Classic Mini Archiv - Classic Mini DIY",
       "description_fallback": "Archiv-Ressource für {title} in der Classic Mini DIY Sammlung.",
@@ -418,6 +463,10 @@
     "contribute_button": "Contribuir",
     "missing_file_button": "Arquivo Ausente",
     "download_button": "Baixar",
+    "suggest_edit": "Sugerir Edição",
+    "field_title": "Título",
+    "field_code": "Código",
+    "field_description": "Descrição",
     "seo": {
       "title_suffix": "- Arquivo Classic Mini - Classic Mini DIY",
       "description_fallback": "Recurso de arquivo para {title} na coleção Classic Mini DIY.",
@@ -445,6 +494,10 @@
     "contribute_button": "Внести вклад",
     "missing_file_button": "Отсутствующий Файл",
     "download_button": "Скачать",
+    "suggest_edit": "Предложить Правку",
+    "field_title": "Название",
+    "field_code": "Код",
+    "field_description": "Описание",
     "seo": {
       "title_suffix": "- Архив Classic Mini - Classic Mini DIY",
       "description_fallback": "Архивный ресурс для {title} в коллекции Classic Mini DIY.",
@@ -472,6 +525,10 @@
     "contribute_button": "貢献",
     "missing_file_button": "ファイルが見つかりません",
     "download_button": "ダウンロード",
+    "suggest_edit": "編集を提案",
+    "field_title": "タイトル",
+    "field_code": "コード",
+    "field_description": "説明",
     "seo": {
       "title_suffix": "- Classic Mini アーカイブ - Classic Mini DIY",
       "description_fallback": "Classic Mini DIYコレクションの{title}のアーカイブリソース。",
@@ -499,6 +556,10 @@
     "contribute_button": "贡献",
     "missing_file_button": "缺少文件",
     "download_button": "下载",
+    "suggest_edit": "建议编辑",
+    "field_title": "标题",
+    "field_code": "代码",
+    "field_description": "描述",
     "seo": {
       "title_suffix": "- Classic Mini 档案 - Classic Mini DIY",
       "description_fallback": "Classic Mini DIY 收藏中 {title} 的档案资源。",
@@ -526,6 +587,10 @@
     "contribute_button": "기여",
     "missing_file_button": "누락된 파일",
     "download_button": "다운로드",
+    "suggest_edit": "편집 제안",
+    "field_title": "제목",
+    "field_code": "코드",
+    "field_description": "설명",
     "seo": {
       "title_suffix": "- Classic Mini 아카이브 - Classic Mini DIY",
       "description_fallback": "Classic Mini DIY 컬렉션의 {title} 아카이브 리소스.",
