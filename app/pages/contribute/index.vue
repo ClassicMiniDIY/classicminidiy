@@ -5,11 +5,11 @@
   const { isAuthenticated, userProfile } = useAuth();
 
   useHead({
-    title: $t('page_title'),
+    title: t('page_title'),
     meta: [
       {
         name: 'description',
-        content: $t('subtitle'),
+        content: t('subtitle'),
       },
       {
         name: 'robots',
@@ -47,11 +47,11 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" :page="$t('breadcrumb_title')" />
+      <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" :page="t('breadcrumb_title')" />
     </div>
 
     <!-- Auth Gate -->
@@ -61,10 +61,10 @@
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2">{{ $t('sign_in_title') }}</h2>
-          <p class="text-base mb-6 opacity-70">{{ $t('sign_in_description') }}</p>
+          <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
           <UButton to="/login" color="primary" class="w-full">
-            {{ $t('sign_in_button') }}
+            {{ t('sign_in_button') }}
           </UButton>
         </div>
       </UCard>
@@ -74,8 +74,8 @@
     <div v-else>
       <!-- Heading -->
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold mb-2">{{ $t('heading') }}</h1>
-        <p class="text-base opacity-70">{{ $t('subtitle') }}</p>
+        <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
+        <p class="text-base opacity-70">{{ t('subtitle') }}</p>
       </div>
 
       <!-- 2x2 Contribution Type Grid -->
@@ -84,8 +84,8 @@
           <UCard class="h-full hover:shadow-xl transition-shadow">
             <div class="text-center p-6">
               <i :class="item.icon" class="text-4xl text-primary mb-4 block"></i>
-              <h2 class="text-lg font-bold mb-2">{{ $t(item.titleKey) }}</h2>
-              <p class="text-sm opacity-70">{{ $t(item.descriptionKey) }}</p>
+              <h2 class="text-lg font-bold mb-2">{{ t(item.titleKey) }}</h2>
+              <p class="text-sm opacity-70">{{ t(item.descriptionKey) }}</p>
             </div>
           </UCard>
         </NuxtLink>
@@ -96,9 +96,9 @@
         <UCard>
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
             <div>
-              <h3 class="text-lg font-bold mb-1">{{ $t('stats_title') }}</h3>
+              <h3 class="text-lg font-bold mb-1">{{ t('stats_title') }}</h3>
               <p class="text-sm opacity-70">
-                {{ $t('stats_description', { total: userProfile.total_submissions, approved: userProfile.approved_submissions }) }}
+                {{ t('stats_description', { total: userProfile.total_submissions, approved: userProfile.approved_submissions }) }}
               </p>
             </div>
             <div class="flex items-center gap-3">
@@ -109,7 +109,7 @@
                 {{ userProfile.trust_level }}
               </UBadge>
               <UButton to="/submissions" color="primary" variant="outline">
-                {{ $t('view_all') }}
+                {{ t('view_all') }}
               </UButton>
             </div>
           </div>

@@ -205,13 +205,13 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
       <breadcrumb
         :version="BREADCRUMB_VERSIONS.ARCHIVE"
-        :page="$t('breadcrumb_title')"
+        :page="t('breadcrumb_title')"
         subpage="Contribute"
         subpageHref="/contribute"
       />
@@ -224,10 +224,10 @@
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2">{{ $t('sign_in_title') }}</h2>
-          <p class="text-base mb-6 opacity-70">{{ $t('sign_in_description') }}</p>
+          <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
           <UButton to="/login" color="primary" class="w-full">
-            {{ $t('sign_in_button') }}
+            {{ t('sign_in_button') }}
           </UButton>
         </div>
       </UCard>
@@ -238,8 +238,8 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ $t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ $t('subtitle') }}</p>
+          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
+          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
           <USeparator class="mb-6" />
         </div>
 
@@ -251,18 +251,18 @@
               <div class="mb-4">
                 <i class="fad fa-box-check fa-beat text-6xl text-success"></i>
               </div>
-              <h1 class="text-2xl font-bold mb-2">{{ $t('form.success.title') }}</h1>
-              <h2 class="text-xl mb-6">{{ $t('form.success.subtitle') }}</h2>
+              <h1 class="text-2xl font-bold mb-2">{{ t('form.success.title') }}</h1>
+              <h2 class="text-xl mb-6">{{ t('form.success.subtitle') }}</h2>
               <div class="space-y-4 text-left max-w-md mx-auto">
                 <div class="bg-base-200 p-4 rounded-lg">
-                  <p class="font-medium">{{ $t('form.success.submission_id') }}{{ submissionId }}</p>
-                  <p class="text-sm opacity-70">{{ $t('form.success.pending_review') }}</p>
+                  <p class="font-medium">{{ t('form.success.submission_id') }}{{ submissionId }}</p>
+                  <p class="text-sm opacity-70">{{ t('form.success.pending_review') }}</p>
                 </div>
                 <UButton @click="resetForm" color="primary" class="w-full">
-                  {{ $t('form.success.make_another') }}
+                  {{ t('form.success.make_another') }}
                 </UButton>
                 <UButton to="/submissions" color="neutral" variant="outline" class="w-full">
-                  {{ $t('form.success.view_submissions') }}
+                  {{ t('form.success.view_submissions') }}
                 </UButton>
               </div>
             </div>
@@ -271,7 +271,7 @@
             <div v-else>
               <div class="flex items-center bg-primary text-primary-content -m-4 mb-4 p-4 rounded-t-lg">
                 <i class="fad fa-file-arrow-up mr-2"></i>
-                <h2 class="text-lg font-semibold">{{ $t('form.card_title') }}</h2>
+                <h2 class="text-lg font-semibold">{{ t('form.card_title') }}</h2>
               </div>
 
               <div class="p-2">
@@ -280,9 +280,9 @@
                   <template #icon>
                     <i class="fad fa-circle-exclamation"></i>
                   </template>
-                  <template #title>{{ $t('form.error.title') }}</template>
+                  <template #title>{{ t('form.error.title') }}</template>
                   <template #description>
-                    {{ apiMessage || $t('form.error.default_message') }}
+                    {{ apiMessage || t('form.error.default_message') }}
                   </template>
                 </UAlert>
 
@@ -292,14 +292,14 @@
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
                       <span class="text-sm font-medium"
-                        >{{ $t('form.fields.type.label') }} <span class="text-error">*</span></span
+                        >{{ t('form.fields.type.label') }} <span class="text-error">*</span></span
                       >
                       <span class="text-sm text-muted"><i class="fad fa-folder-open"></i></span>
                     </label>
                     <USelect
                       v-model="formData.type"
                       :items="typeOptions"
-                      :placeholder="$t('form.fields.type.placeholder')"
+                      :placeholder="t('form.fields.type.placeholder')"
                       class="w-full"
                       :disabled="processing"
                       :color="formData.type === '' && touchedFields.type ? 'error' : undefined"
@@ -307,7 +307,7 @@
                       @change="touchedFields.type = true"
                     />
                     <p v-if="formData.type === '' && touchedFields.type" class="text-sm text-error mt-1">
-                      {{ $t('form.error.type_required') }}
+                      {{ t('form.error.type_required') }}
                     </p>
                   </div>
 
@@ -315,21 +315,21 @@
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
                       <span class="text-sm font-medium"
-                        >{{ $t('form.fields.title.label') }} <span class="text-error">*</span></span
+                        >{{ t('form.fields.title.label') }} <span class="text-error">*</span></span
                       >
                       <span class="text-sm text-muted"><i class="fad fa-heading"></i></span>
                     </label>
                     <UInput
                       type="text"
                       v-model="formData.title"
-                      :placeholder="$t('form.fields.title.placeholder')"
+                      :placeholder="t('form.fields.title.placeholder')"
                       class="w-full"
                       :disabled="processing"
                       :color="formData.title === '' && touchedFields.title ? 'error' : undefined"
                       @blur="touchedFields.title = true"
                     />
                     <p v-if="formData.title === '' && touchedFields.title" class="text-sm text-error mt-1">
-                      {{ $t('form.error.title_required') }}
+                      {{ t('form.error.title_required') }}
                     </p>
                   </div>
 
@@ -337,29 +337,29 @@
                     <!-- Code -->
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ $t('form.fields.code.label') }}</span>
+                        <span class="text-sm font-medium">{{ t('form.fields.code.label') }}</span>
                         <span class="text-sm text-muted"><i class="fad fa-barcode"></i></span>
                       </label>
                       <UInput
                         type="text"
                         v-model="formData.code"
-                        :placeholder="$t('form.fields.code.placeholder')"
+                        :placeholder="t('form.fields.code.placeholder')"
                         class="w-full"
                         :disabled="processing"
                       />
-                      <p class="text-xs opacity-50 mt-1">{{ $t('form.fields.code.help') }}</p>
+                      <p class="text-xs opacity-50 mt-1">{{ t('form.fields.code.help') }}</p>
                     </div>
 
                     <!-- Author -->
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ $t('form.fields.author.label') }}</span>
+                        <span class="text-sm font-medium">{{ t('form.fields.author.label') }}</span>
                         <span class="text-sm text-muted"><i class="fad fa-user-pen"></i></span>
                       </label>
                       <UInput
                         type="text"
                         v-model="formData.author"
-                        :placeholder="$t('form.fields.author.placeholder')"
+                        :placeholder="t('form.fields.author.placeholder')"
                         class="w-full"
                         :disabled="processing"
                       />
@@ -369,13 +369,13 @@
                   <!-- Year -->
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ $t('form.fields.year.label') }}</span>
+                      <span class="text-sm font-medium">{{ t('form.fields.year.label') }}</span>
                       <span class="text-sm text-muted"><i class="fad fa-calendar"></i></span>
                     </label>
                     <UInput
                       type="number"
                       v-model.number="formData.year"
-                      :placeholder="$t('form.fields.year.placeholder')"
+                      :placeholder="t('form.fields.year.placeholder')"
                       class="w-full"
                       :disabled="processing"
                       min="1959"
@@ -386,12 +386,12 @@
                   <!-- Description -->
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ $t('form.fields.description.label') }}</span>
+                      <span class="text-sm font-medium">{{ t('form.fields.description.label') }}</span>
                       <span class="text-sm text-muted"><i class="fad fa-align-left"></i></span>
                     </label>
                     <UTextarea
                       v-model="formData.description"
-                      :placeholder="$t('form.fields.description.placeholder')"
+                      :placeholder="t('form.fields.description.placeholder')"
                       class="w-full"
                       :disabled="processing"
                       :rows="4"
@@ -405,14 +405,14 @@
                       :maxFiles="maxDocumentFiles"
                       :maxSizeMb="10"
                       :required="true"
-                      :label="$t('form.fields.document_files.label')"
+                      :label="t('form.fields.document_files.label')"
                       @update:files="documentFiles = $event"
                     />
                     <p
                       v-if="documentFiles.length === 0 && touchedFields.documentFiles"
                       class="text-sm text-error mt-1"
                     >
-                      {{ $t('form.error.files_required') }}
+                      {{ t('form.error.files_required') }}
                     </p>
                   </div>
 
@@ -423,10 +423,10 @@
                       :maxFiles="1"
                       :maxSizeMb="5"
                       :required="false"
-                      :label="$t('form.fields.thumbnail.label')"
+                      :label="t('form.fields.thumbnail.label')"
                       @update:files="thumbnailFiles = $event"
                     />
-                    <p class="text-xs opacity-50 mt-1">{{ $t('form.fields.thumbnail.help') }}</p>
+                    <p class="text-xs opacity-50 mt-1">{{ t('form.fields.thumbnail.help') }}</p>
                   </div>
 
                   <USeparator />
@@ -441,8 +441,8 @@
                         :disabled="processing"
                       />
                       <div>
-                        <span class="text-sm font-medium">{{ $t('form.collection.toggle') }}</span>
-                        <p class="text-xs opacity-50">{{ $t('form.collection.toggle_help') }}</p>
+                        <span class="text-sm font-medium">{{ t('form.collection.toggle') }}</span>
+                        <p class="text-xs opacity-50">{{ t('form.collection.toggle_help') }}</p>
                       </div>
                     </label>
                   </div>
@@ -451,21 +451,21 @@
                   <div v-if="isCollection" class="space-y-4 p-4 bg-base-200 rounded-lg">
                     <h3 class="text-lg font-semibold">
                       <i class="fad fa-layer-group mr-2"></i>
-                      {{ $t('form.collection.section_title') }}
+                      {{ t('form.collection.section_title') }}
                     </h3>
 
                     <!-- Collection Title -->
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium"
-                          >{{ $t('form.collection.title_label') }} <span class="text-error">*</span></span
+                          >{{ t('form.collection.title_label') }} <span class="text-error">*</span></span
                         >
                         <span class="text-sm text-muted"><i class="fad fa-bookmark"></i></span>
                       </label>
                       <UInput
                         type="text"
                         v-model="formData.collectionTitle"
-                        :placeholder="$t('form.collection.title_placeholder')"
+                        :placeholder="t('form.collection.title_placeholder')"
                         class="w-full"
                         :disabled="processing"
                         :color="
@@ -479,19 +479,19 @@
                         v-if="isCollection && formData.collectionTitle === '' && touchedFields.collectionTitle"
                         class="text-sm text-error mt-1"
                       >
-                        {{ $t('form.error.collection_title_required') }}
+                        {{ t('form.error.collection_title_required') }}
                       </p>
                     </div>
 
                     <!-- Collection Description -->
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ $t('form.collection.description_label') }}</span>
+                        <span class="text-sm font-medium">{{ t('form.collection.description_label') }}</span>
                         <span class="text-sm text-muted"><i class="fad fa-align-left"></i></span>
                       </label>
                       <UTextarea
                         v-model="formData.collectionDescription"
-                        :placeholder="$t('form.collection.description_placeholder')"
+                        :placeholder="t('form.collection.description_placeholder')"
                         class="w-full"
                         :disabled="processing"
                         :rows="3"
@@ -511,7 +511,7 @@
                       @click="touchedFields.documentFiles = true"
                     >
                       <i class="fad fa-paper-plane mr-2" v-if="!processing"></i>
-                      {{ processing ? $t('form.submit.submitting') : $t('form.submit.button') }}
+                      {{ processing ? t('form.submit.submitting') : t('form.submit.button') }}
                     </UButton>
                   </div>
                 </form>
