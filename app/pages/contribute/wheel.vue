@@ -187,7 +187,12 @@
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" :page="t('breadcrumb_title')" />
+      <breadcrumb
+        :version="BREADCRUMB_VERSIONS.ARCHIVE"
+        :page="t('breadcrumb_title')"
+        subpage="Contribute"
+        subpageHref="/contribute"
+      />
     </div>
 
     <!-- Auth Gate -->
@@ -258,6 +263,7 @@
                       type="text"
                       :placeholder="t('placeholders.name')"
                       v-model="name"
+                      class="w-full"
                       :color="name.trim() === '' && touchedFields.name ? 'error' : undefined"
                       @blur="touchedFields.name = true"
                     />
@@ -276,6 +282,7 @@
                       type="text"
                       :placeholder="t('placeholders.type')"
                       v-model="type"
+                      class="w-full"
                     />
                   </div>
 
@@ -289,6 +296,7 @@
                       v-model="size"
                       :items="sizeOptions"
                       :placeholder="t('placeholders.size')"
+                      class="w-full"
                       :color="size === '' && touchedFields.size ? 'error' : undefined"
                       @blur="touchedFields.size = true"
                       @change="touchedFields.size = true"
@@ -308,6 +316,7 @@
                       type="text"
                       :placeholder="t('placeholders.width')"
                       v-model="width"
+                      class="w-full"
                       :color="width.trim() === '' && touchedFields.width ? 'error' : undefined"
                       @blur="touchedFields.width = true"
                     />
@@ -326,6 +335,7 @@
                       type="text"
                       :placeholder="t('placeholders.offset')"
                       v-model="offset"
+                      class="w-full"
                     />
                   </div>
 
@@ -339,6 +349,7 @@
                       type="text"
                       :placeholder="t('placeholders.manufacturer')"
                       v-model="manufacturer"
+                      class="w-full"
                     />
                   </div>
 
@@ -352,6 +363,7 @@
                       type="text"
                       :placeholder="t('placeholders.bolt_pattern')"
                       v-model="boltPattern"
+                      class="w-full"
                     />
                   </div>
 
@@ -365,6 +377,7 @@
                       type="text"
                       :placeholder="t('placeholders.center_bore')"
                       v-model="centerBore"
+                      class="w-full"
                     />
                   </div>
 
@@ -378,6 +391,7 @@
                       type="text"
                       :placeholder="t('placeholders.weight')"
                       v-model="weight"
+                      class="w-full"
                     />
                   </div>
 
@@ -391,6 +405,7 @@
                       :placeholder="t('placeholders.notes')"
                       v-model="notes"
                       :rows="4"
+                      class="w-full"
                     />
                   </div>
 
