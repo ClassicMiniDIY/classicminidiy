@@ -1,42 +1,44 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
+
   const { data, status } = await useFetch('/api/engines');
   const tableHeaders: any[] = [
-    { title: $t('table_headers.size'), key: 'color' },
-    { title: $t('table_headers.original_block'), key: 'group' },
-    { title: $t('table_headers.engine_size'), key: 'engineSize' },
-    { title: $t('table_headers.bore_size'), key: 'boreSize' },
-    { title: $t('table_headers.over_bore'), key: 'overBore' },
-    { title: $t('table_headers.stroke'), key: 'stroke' },
-    { title: $t('table_headers.estimated_power'), key: 'power' },
-    { title: $t('table_headers.estimated_torque'), key: 'torque' },
+    { title: t('table_headers.size'), key: 'color' },
+    { title: t('table_headers.original_block'), key: 'group' },
+    { title: t('table_headers.engine_size'), key: 'engineSize' },
+    { title: t('table_headers.bore_size'), key: 'boreSize' },
+    { title: t('table_headers.over_bore'), key: 'overBore' },
+    { title: t('table_headers.stroke'), key: 'stroke' },
+    { title: t('table_headers.estimated_power'), key: 'power' },
+    { title: t('table_headers.estimated_torque'), key: 'torque' },
   ];
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
   });
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/archive/engines',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/engines.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/engines.png',
   });
 
@@ -44,16 +46,16 @@
   const engineCodesJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
-    headline: $t('structured_data.headline'),
-    description: $t('structured_data.description'),
+    headline: t('structured_data.headline'),
+    description: t('structured_data.description'),
     image: 'https://classicminidiy.s3.amazonaws.com/misc/archive-seo.jpg',
     author: {
       '@type': 'Person',
-      name: $t('structured_data.author_name'),
+      name: t('structured_data.author_name'),
     },
     publisher: {
       '@type': 'Organization',
-      name: $t('structured_data.publisher_name'),
+      name: t('structured_data.publisher_name'),
       logo: {
         '@type': 'ImageObject',
         url: 'https://classicminidiy.s3.amazonaws.com/misc/logo.png',
@@ -62,8 +64,8 @@
     url: 'https://classicminidiy.com/archive/engines',
     mainEntity: {
       '@type': 'Dataset',
-      name: $t('structured_data.dataset_name'),
-      description: $t('structured_data.dataset_description'),
+      name: t('structured_data.dataset_name'),
+      description: t('structured_data.dataset_description'),
     },
   };
 
@@ -79,20 +81,20 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :page="t('breadcrumb_title')"></breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-2xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+            <h1 class="text-2xl font-bold mb-4">{{ t('main_heading') }}</h1>
             <p class="mb-6">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
           </div>
           <div class="col-span-12 md:col-span-4">
-            <NuxtLink :to="'/technical/compression'" :title="$t('compression_card.link_title')">
+            <NuxtLink :to="'/technical/compression'" :title="t('compression_card.link_title')">
               <UCard class="hover:shadow-xl transition-shadow duration-300">
                 <div class="flex items-start">
                   <div class="mr-4">
@@ -108,7 +110,7 @@
                         />
                         <nuxt-img
                           src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-calculator-100.png"
-                          :alt="$t('compression_card.alt_text')"
+                          :alt="t('compression_card.alt_text')"
                           class="w-full h-full object-contain"
                         />
                       </picture>
@@ -116,9 +118,9 @@
                   </div>
                   <div>
                     <h2 class="text-lg font-semibold">
-                      {{ $t('compression_card.title') }}
+                      {{ t('compression_card.title') }}
                     </h2>
-                    <p>{{ $t('compression_card.description') }}</p>
+                    <p>{{ t('compression_card.description') }}</p>
                   </div>
                 </div>
               </UCard>
@@ -128,17 +130,17 @@
       </div>
       <div class="col-span-12">
         <div class="mb-5">
-          <i class="fas fa-circle text-primary mr-2"></i> {{ $t('legend.standard') }}
+          <i class="fas fa-circle text-primary mr-2"></i> {{ t('legend.standard') }}
           <i class="fas fa-circle text-info mx-2"></i>
-          {{ $t('legend.standard_overbore') }}
+          {{ t('legend.standard_overbore') }}
           <i class="fas fa-circle text-error mx-2"></i>
-          {{ $t('legend.different_stroke') }}
+          {{ t('legend.different_stroke') }}
         </div>
         <UCard>
           <template #header>
             <div class="flex items-center">
               <i class="fad fa-engine mr-2"></i>
-              <span class="font-semibold text-lg">{{ $t('table_title') }}</span>
+              <span class="font-semibold text-lg">{{ t('table_title') }}</span>
             </div>
           </template>
           <div class="overflow-x-auto" v-if="data?.engines">
@@ -171,14 +173,14 @@
             </table>
             <div v-if="status === 'pending'" class="flex justify-center items-center py-4">
               <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <span class="ml-2">{{ $t('loading_text') }}</span>
+              <span class="ml-2">{{ t('loading_text') }}</span>
             </div>
           </div>
         </UCard>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <USeparator>
-          <span class="text-sm text-muted">{{ $t('support_divider') }}</span>
+          <span class="text-sm text-muted">{{ t('support_divider') }}</span>
         </USeparator>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10">

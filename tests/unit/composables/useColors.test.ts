@@ -87,7 +87,7 @@ describe('useColors', () => {
       const { getSwatchUrl } = useColors();
 
       expect(getSwatchUrl('swatches/almond-green.png')).toBe(
-        'https://test.supabase.co/storage/v1/object/public/archive-colors/swatches/almond-green.png',
+        'https://test.supabase.co/storage/v1/object/public/archive-colors/swatches/almond-green.png'
       );
     });
 
@@ -96,7 +96,7 @@ describe('useColors', () => {
       const { getSwatchUrl } = useColors();
 
       expect(getSwatchUrl('swatch.png')).toBe(
-        'https://test.supabase.co/storage/v1/object/public/archive-colors/swatch.png',
+        'https://test.supabase.co/storage/v1/object/public/archive-colors/swatch.png'
       );
     });
   });
@@ -104,7 +104,7 @@ describe('useColors', () => {
   describe('listColors', () => {
     it('queries the colors table with status approved and ordered by name', async () => {
       mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [mockColorRow, mockColorRow2], error: null }),
+        resolve({ data: [mockColorRow, mockColorRow2], error: null })
       );
 
       const { useColors } = await import('~/app/composables/useColors');
@@ -119,9 +119,7 @@ describe('useColors', () => {
     });
 
     it('maps database rows to Color objects correctly', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [mockColorRow], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [mockColorRow], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { listColors } = useColors();
@@ -143,9 +141,7 @@ describe('useColors', () => {
     });
 
     it('returns empty array when data is null', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: null, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: null, error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { listColors } = useColors();
@@ -155,9 +151,7 @@ describe('useColors', () => {
     });
 
     it('returns empty array when no colors match', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { listColors } = useColors();
@@ -168,9 +162,7 @@ describe('useColors', () => {
 
     it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Database error', code: '42P01' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: null, error: supabaseError }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: null, error: supabaseError }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { listColors } = useColors();
@@ -195,9 +187,7 @@ describe('useColors', () => {
         status: 'approved',
       };
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [minimalRow], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [minimalRow], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { listColors } = useColors();
@@ -226,9 +216,7 @@ describe('useColors', () => {
         year_end: null,
       };
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [rowWithStartOnly], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [rowWithStartOnly], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { listColors } = useColors();
@@ -321,9 +309,7 @@ describe('useColors', () => {
 
   describe('checkDuplicate', () => {
     it('queries colors table by code with limit 1', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { checkDuplicate } = useColors();
@@ -336,9 +322,7 @@ describe('useColors', () => {
     });
 
     it('returns true when a matching color exists', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [{ id: 'color-1' }], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [{ id: 'color-1' }], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { checkDuplicate } = useColors();
@@ -348,9 +332,7 @@ describe('useColors', () => {
     });
 
     it('returns false when no matching color exists', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { checkDuplicate } = useColors();
@@ -360,9 +342,7 @@ describe('useColors', () => {
     });
 
     it('returns false when data is null', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: null, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: null, error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { checkDuplicate } = useColors();
@@ -380,9 +360,7 @@ describe('useColors', () => {
       const { useColors } = await import('~/app/composables/useColors');
       const { submitColor } = useColors();
 
-      await expect(submitColor({ name: 'Test Color' })).rejects.toThrow(
-        'Must be authenticated to submit',
-      );
+      await expect(submitColor({ name: 'Test Color' })).rejects.toThrow('Must be authenticated to submit');
     });
 
     it('inserts into submission_queue with correct data when authenticated', async () => {
@@ -447,7 +425,7 @@ describe('useColors', () => {
       await submitColor({ name: 'Custom Color' });
 
       expect(mockSupabase._queryBuilder.insert).toHaveBeenCalledWith(
-        expect.objectContaining({ submitted_by: 'custom-user-123' }),
+        expect.objectContaining({ submitted_by: 'custom-user-123' })
       );
     });
   });
@@ -455,7 +433,7 @@ describe('useColors', () => {
   describe('mapToColor (internal mapping)', () => {
     it('builds years string from year_start and year_end', async () => {
       mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [{ ...mockColorRow, year_start: 1959, year_end: 2000 }], error: null }),
+        resolve({ data: [{ ...mockColorRow, year_start: 1959, year_end: 2000 }], error: null })
       );
 
       const { useColors } = await import('~/app/composables/useColors');
@@ -470,7 +448,7 @@ describe('useColors', () => {
         resolve({
           data: [{ ...mockColorRow, year_start: 1975, year_end: null }],
           error: null,
-        }),
+        })
       );
 
       const { useColors } = await import('~/app/composables/useColors');
@@ -485,7 +463,7 @@ describe('useColors', () => {
         resolve({
           data: [{ ...mockColorRow, year_start: null, year_end: null }],
           error: null,
-        }),
+        })
       );
 
       const { useColors } = await import('~/app/composables/useColors');
@@ -500,7 +478,7 @@ describe('useColors', () => {
         resolve({
           data: [{ ...mockColorRow, swatch_path: 'path/to/swatch.jpg' }],
           error: null,
-        }),
+        })
       );
 
       const { useColors } = await import('~/app/composables/useColors');
@@ -508,7 +486,7 @@ describe('useColors', () => {
       const result = await listColors();
 
       expect(result[0].imageSwatch).toBe(
-        'https://test.supabase.co/storage/v1/object/public/archive-colors/path/to/swatch.jpg',
+        'https://test.supabase.co/storage/v1/object/public/archive-colors/path/to/swatch.jpg'
       );
     });
 
@@ -517,7 +495,7 @@ describe('useColors', () => {
         resolve({
           data: [{ ...mockColorRow, swatch_path: null }],
           error: null,
-        }),
+        })
       );
 
       const { useColors } = await import('~/app/composables/useColors');
@@ -532,7 +510,7 @@ describe('useColors', () => {
         resolve({
           data: [{ ...mockColorRow, contributor_images: null }],
           error: null,
-        }),
+        })
       );
 
       const { useColors } = await import('~/app/composables/useColors');

@@ -40,9 +40,7 @@ describe('useRegistry', () => {
   describe('listApproved()', () => {
     it('queries registry_entries table for approved entries ordered by year descending', async () => {
       const rows = [makeRow(), makeRow({ id: 'row-2', year: 1970 })];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -62,9 +60,7 @@ describe('useRegistry', () => {
     });
 
     it('returns an empty array when no data is returned', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -75,9 +71,7 @@ describe('useRegistry', () => {
 
     it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Database connection failed', code: '500' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: supabaseError })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: supabaseError }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -87,9 +81,7 @@ describe('useRegistry', () => {
 
     it('maps rows to RegistryItem objects with correct field names', async () => {
       const row = makeRow();
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -130,9 +122,7 @@ describe('useRegistry', () => {
         legacy_submitted_by_email: null,
         status: 'approved',
       };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [sparseRow], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [sparseRow], error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -160,9 +150,7 @@ describe('useRegistry', () => {
   describe('mapToRegistry (internal helper via listApproved)', () => {
     it('maps status "approved" to "A"', async () => {
       const row = makeRow({ status: 'approved' });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -174,9 +162,7 @@ describe('useRegistry', () => {
     it('maps status "pending" to "P"', async () => {
       // Even though listApproved filters for approved, mapToRegistry handles any status
       const row = makeRow({ status: 'pending' });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -187,9 +173,7 @@ describe('useRegistry', () => {
 
     it('maps status "rejected" to "R"', async () => {
       const row = makeRow({ status: 'rejected' });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -200,9 +184,7 @@ describe('useRegistry', () => {
 
     it('maps any unrecognized status to "R"', async () => {
       const row = makeRow({ status: 'unknown_status' });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { listApproved } = useRegistry();
@@ -220,9 +202,7 @@ describe('useRegistry', () => {
       const { useRegistry } = await import('~/app/composables/useRegistry');
       const { submitRegistryEntry } = useRegistry();
 
-      await expect(submitRegistryEntry({ model: 'Cooper' })).rejects.toThrow(
-        'Must be authenticated to submit'
-      );
+      await expect(submitRegistryEntry({ model: 'Cooper' })).rejects.toThrow('Must be authenticated to submit');
     });
 
     it('inserts into submission_queue with correct fields when authenticated', async () => {

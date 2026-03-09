@@ -6,16 +6,16 @@
         <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <i class="fad fa-hand-wave text-3xl text-primary"></i>
         </div>
-        <h1 class="text-3xl font-bold">{{ $t('title') }}</h1>
-        <p class="opacity-70 mt-2">{{ $t('subtitle') }}</p>
+        <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
+        <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
       </div>
 
       <!-- One Account, Two Sites Explanation -->
       <UAlert
         color="info"
         icon="i-fa6-solid-circle-info"
-        :title="$t('unified_title')"
-        :description="$t('unified_description')"
+        :title="t('unified_title')"
+        :description="t('unified_description')"
         class="mb-6"
       />
 
@@ -23,45 +23,39 @@
 
       <!-- Optional Profile Setup Form -->
       <div class="space-y-4 mb-6">
-        <h2 class="text-lg font-semibold">{{ $t('profile_heading') }}</h2>
-        <p class="text-sm opacity-70">{{ $t('profile_subheading') }}</p>
+        <h2 class="text-lg font-semibold">{{ t('profile_heading') }}</h2>
+        <p class="text-sm opacity-70">{{ t('profile_subheading') }}</p>
 
-        <UFormField :label="$t('display_name_label')">
+        <UFormField :label="t('display_name_label')">
           <UInput
             v-model="displayName"
-            :placeholder="$t('display_name_placeholder')"
+            :placeholder="t('display_name_placeholder')"
             class="w-full"
             :disabled="isSaving"
           />
         </UFormField>
 
-        <UFormField :label="$t('bio_label')">
-          <UTextarea
-            v-model="bio"
-            :placeholder="$t('bio_placeholder')"
-            class="w-full"
-            :rows="3"
-            :disabled="isSaving"
-          />
+        <UFormField :label="t('bio_label')">
+          <UTextarea v-model="bio" :placeholder="t('bio_placeholder')" class="w-full" :rows="3" :disabled="isSaving" />
         </UFormField>
 
         <UAlert v-if="saveError" color="error" icon="i-fa6-solid-triangle-exclamation" :title="saveError" />
-        <UAlert v-if="saveSuccess" color="success" icon="i-fa6-solid-circle-check" :title="$t('save_success')" />
+        <UAlert v-if="saveSuccess" color="success" icon="i-fa6-solid-circle-check" :title="t('save_success')" />
       </div>
 
       <USeparator class="my-4" />
 
       <!-- What You Can Do Section -->
       <div class="mb-6">
-        <h2 class="text-lg font-semibold mb-3">{{ $t('what_you_can_do') }}</h2>
+        <h2 class="text-lg font-semibold mb-3">{{ t('what_you_can_do') }}</h2>
         <ul class="space-y-3">
           <li class="flex items-start gap-3">
             <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
               <i class="fad fa-books text-primary text-sm"></i>
             </div>
             <div>
-              <p class="font-medium">{{ $t('feature_archive_title') }}</p>
-              <p class="text-sm opacity-70">{{ $t('feature_archive_desc') }}</p>
+              <p class="font-medium">{{ t('feature_archive_title') }}</p>
+              <p class="text-sm opacity-70">{{ t('feature_archive_desc') }}</p>
             </div>
           </li>
           <li class="flex items-start gap-3">
@@ -69,8 +63,8 @@
               <i class="fad fa-wrench text-primary text-sm"></i>
             </div>
             <div>
-              <p class="font-medium">{{ $t('feature_tools_title') }}</p>
-              <p class="text-sm opacity-70">{{ $t('feature_tools_desc') }}</p>
+              <p class="font-medium">{{ t('feature_tools_title') }}</p>
+              <p class="text-sm opacity-70">{{ t('feature_tools_desc') }}</p>
             </div>
           </li>
           <li class="flex items-start gap-3">
@@ -78,8 +72,8 @@
               <i class="fad fa-users text-primary text-sm"></i>
             </div>
             <div>
-              <p class="font-medium">{{ $t('feature_contribute_title') }}</p>
-              <p class="text-sm opacity-70">{{ $t('feature_contribute_desc') }}</p>
+              <p class="font-medium">{{ t('feature_contribute_title') }}</p>
+              <p class="text-sm opacity-70">{{ t('feature_contribute_desc') }}</p>
             </div>
           </li>
         </ul>
@@ -89,26 +83,15 @@
 
       <!-- Action Buttons -->
       <div class="flex flex-col gap-3">
-        <UButton
-          color="primary"
-          class="w-full"
-          :disabled="isSaving"
-          :loading="isSaving"
-          @click="handleGetStarted"
-        >
+        <UButton color="primary" class="w-full" :disabled="isSaving" :loading="isSaving" @click="handleGetStarted">
           <template #leading>
             <i v-if="!isSaving" class="fad fa-rocket"></i>
           </template>
-          {{ $t('get_started') }}
+          {{ t('get_started') }}
         </UButton>
 
-        <UButton
-          variant="ghost"
-          class="w-full"
-          :disabled="isSaving"
-          @click="handleSkip"
-        >
-          {{ $t('skip_for_now') }}
+        <UButton variant="ghost" class="w-full" :disabled="isSaving" @click="handleSkip">
+          {{ t('skip_for_now') }}
         </UButton>
       </div>
     </UCard>
@@ -184,10 +167,7 @@
           updates.bio = bio.value.trim();
         }
 
-        const { error } = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('id', user.value!.id);
+        const { error } = await supabase.from('profiles').update(updates).eq('id', user.value!.id);
 
         if (error) {
           saveError.value = t('save_error');

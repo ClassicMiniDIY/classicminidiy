@@ -22,11 +22,9 @@ export function getDynamoDB() {
 }
 
 export function getSupabase() {
-  return createClient(
-    process.env.NUXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
+  return createClient(process.env.NUXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 export function getGitHubToken() {

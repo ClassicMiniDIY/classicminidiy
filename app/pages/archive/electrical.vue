@@ -2,6 +2,8 @@
   import { HERO_TYPES } from '../../../data/models/generic';
   import Fuse from 'fuse.js';
 
+  const { t } = useI18n();
+
   const { data: diagrams, status } = await useFetch('/api/diagrams');
   const activePanel = ref<string | null>(null);
   const searchQuery = ref('');
@@ -50,17 +52,17 @@
   });
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -76,14 +78,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/archive/electrical',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/electrical.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/electrical.png',
   });
 
@@ -91,16 +93,16 @@
   const electricalDiagramsJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
-    headline: $t('structured_data.headline'),
-    description: $t('structured_data.description'),
+    headline: t('structured_data.headline'),
+    description: t('structured_data.description'),
     image: 'https://classicminidiy.s3.amazonaws.com/misc/archive-seo.jpg',
     author: {
       '@type': 'Person',
-      name: $t('structured_data.author_name'),
+      name: t('structured_data.author_name'),
     },
     publisher: {
       '@type': 'Organization',
-      name: $t('structured_data.publisher_name'),
+      name: t('structured_data.publisher_name'),
       logo: {
         '@type': 'ImageObject',
         url: 'https://classicminidiy.s3.amazonaws.com/misc/logo.png',
@@ -109,8 +111,8 @@
     url: 'https://classicminidiy.com/archive/electrical',
     mainEntity: {
       '@type': 'Dataset',
-      name: $t('structured_data.dataset_name'),
-      description: $t('structured_data.dataset_description'),
+      name: t('structured_data.dataset_name'),
+      description: t('structured_data.dataset_description'),
     },
   };
 
@@ -126,16 +128,16 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :page="t('breadcrumb_title')"></breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-2xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+            <h1 class="text-2xl font-bold mb-4">{{ t('main_heading') }}</h1>
             <p class="mb-6">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
           </div>
         </div>
@@ -146,7 +148,7 @@
         <div class="w-full max-w-md">
           <UInput
             v-model="searchQuery"
-            :placeholder="$t('search_placeholder')"
+            :placeholder="t('search_placeholder')"
             type="search"
             class="w-full"
             icon="i-fa6-solid-magnifying-glass"
@@ -160,7 +162,7 @@
           <UCard>
             <template #header>
               <div class="bg-primary text-primary-content -m-4 p-4 rounded-t-lg">
-                <h3 class="text-lg font-semibold">{{ $t('search_results_title') }} ({{ filteredResults.length }})</h3>
+                <h3 class="text-lg font-semibold">{{ t('search_results_title') }} ({{ filteredResults.length }})</h3>
               </div>
             </template>
             <ul class="divide-y divide-default">
@@ -179,13 +181,13 @@
                     <div class="text-sm opacity-70 flex items-center mt-1">
                       <i class="fa-solid fa-calendar mr-2"></i>
                       <span v-if="result.from || result.to"
-                        >{{ result.from || $t('date_range.unknown_placeholder') }}{{ $t('date_range.separator')
-                        }}{{ result.to || $t('date_range.unknown_placeholder') }}</span
+                        >{{ result.from || t('date_range.unknown_placeholder') }}{{ t('date_range.separator')
+                        }}{{ result.to || t('date_range.unknown_placeholder') }}</span
                       >
-                      <span v-else>{{ $t('date_range.unknown') }}</span>
+                      <span v-else>{{ t('date_range.unknown') }}</span>
                     </div>
                   </div>
-                  <UButton variant="ghost" size="lg" :aria-label="$t('download_button_aria')">
+                  <UButton variant="ghost" size="lg" :aria-label="t('download_button_aria')">
                     <i class="fa-solid fa-download"></i>
                   </UButton>
                 </a>
@@ -199,7 +201,7 @@
           <template #icon>
             <i class="fa-solid fa-info-circle"></i>
           </template>
-          <template #title>{{ $t('no_results_message') }}</template>
+          <template #title>{{ t('no_results_message') }}</template>
         </UAlert>
 
         <!-- Loading state -->
@@ -236,13 +238,13 @@
                       <div class="text-lg opacity-70 flex items-center mt-1">
                         <i class="fa-solid fa-calendar mr-2"></i>
                         <span v-if="diagramItem.from || diagramItem.to"
-                          >{{ diagramItem.from || $t('date_range.unknown_placeholder') }}{{ $t('date_range.separator')
-                          }}{{ diagramItem.to || $t('date_range.unknown_placeholder') }}</span
+                          >{{ diagramItem.from || t('date_range.unknown_placeholder') }}{{ t('date_range.separator')
+                          }}{{ diagramItem.to || t('date_range.unknown_placeholder') }}</span
                         >
-                        <span v-else>{{ $t('date_range.unknown') }}</span>
+                        <span v-else>{{ t('date_range.unknown') }}</span>
                       </div>
                     </div>
-                    <UButton variant="ghost" size="lg" :aria-label="$t('download_button_aria')">
+                    <UButton variant="ghost" size="lg" :aria-label="t('download_button_aria')">
                       <i class="fa-solid fa-download"></i>
                     </UButton>
                   </a>
@@ -255,7 +257,7 @@
 
       <!-- Support section -->
       <div class="col-span-12 mt-8 mb-10">
-        <USeparator :label="$t('support_divider')" class="mb-6" />
+        <USeparator :label="t('support_divider')" class="mb-6" />
         <patreon-card size="large" />
       </div>
     </div>

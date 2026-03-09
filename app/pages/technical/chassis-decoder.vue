@@ -2,6 +2,7 @@
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
   import { chassisRanges } from '../../../data/models/decoders';
 
+  const { t } = useI18n();
   const { capture } = usePostHog();
 
   interface ChassisPosition {
@@ -62,7 +63,7 @@
 
   async function decodeChassisNumber() {
     if (!chassisNumber.value.trim()) {
-      errorMessage.value = $t('form.error_empty_chassis');
+      errorMessage.value = t('form.error_empty_chassis');
       return;
     }
 
@@ -97,7 +98,7 @@
       }
     } catch (error: any) {
       console.error('Error decoding chassis number:', error);
-      errorMessage.value = error?.data?.statusMessage || $t('form.error_decode_failed');
+      errorMessage.value = error?.data?.statusMessage || t('form.error_decode_failed');
     } finally {
       isLoading.value = false;
     }
@@ -117,17 +118,17 @@
   }
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -149,7 +150,7 @@
     name: 'Classic Mini Chassis Number Decoder',
     applicationCategory: 'AutomotiveApplication',
     operatingSystem: 'Web Browser',
-    description: $t('description'),
+    description: t('description'),
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -168,34 +169,34 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('og_title'),
-    ogDescription: $t('og_description'),
+    ogTitle: t('og_title'),
+    ogDescription: t('og_description'),
     ogUrl: 'https://classicminidiy.com/technical/chassis-decoder',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/chassis-decoder.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitter_title'),
-    twitterDescription: $t('twitter_description'),
+    twitterTitle: t('twitter_title'),
+    twitterDescription: t('twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/chassis-decoder.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.TECH" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.TECH" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-7">
-            <h1 class="text-3xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+            <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
             <p class="mb-4">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
           </div>
           <div class="col-span-12 md:col-span-5">
-            <NuxtLink :to="'/technical/engine-decoder'" :title="$t('engine_decoder_card.link_title')" class="block">
+            <NuxtLink :to="'/technical/engine-decoder'" :title="t('engine_decoder_card.link_title')" class="block">
               <UCard class="hover:shadow-lg transition-shadow">
                 <div class="flex items-start space-x-4">
                   <div class="shrink-0">
@@ -207,7 +208,7 @@
                         />
                         <img
                           src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
-                          :alt="$t('engine_decoder_card.alt_text')"
+                          :alt="t('engine_decoder_card.alt_text')"
                           class="w-full h-full object-cover rounded"
                         />
                       </picture>
@@ -215,10 +216,10 @@
                   </div>
                   <div class="flex-1">
                     <h3 class="text-lg font-semibold">
-                      {{ $t('engine_decoder_card.heading') }}
+                      {{ t('engine_decoder_card.heading') }}
                     </h3>
                     <p class="mt-1">
-                      {{ $t('engine_decoder_card.description') }}
+                      {{ t('engine_decoder_card.description') }}
                     </p>
                   </div>
                 </div>
@@ -233,31 +234,31 @@
         <UCard>
           <div class="text-center">
             <h3 class="text-xl font-semibold mb-4">
-              {{ $t('form.card_title') }}
+              {{ t('form.card_title') }}
             </h3>
             <p class="mb-6">
-              {{ $t('form.card_description') }}
+              {{ t('form.card_description') }}
             </p>
 
             <div class="space-y-4 max-w-md mx-auto">
               <!-- Year Range Selection -->
-              <UFormField :label="$t('form.year_range_label')">
+              <UFormField :label="t('form.year_range_label')">
                 <USelect v-model="yearRange" :items="yearRangeOptions" class="w-full" />
               </UFormField>
 
               <!-- Chassis Number Input -->
-              <UFormField :label="$t('form.chassis_number_label')">
+              <UFormField :label="t('form.chassis_number_label')">
                 <UInput
                   v-model="chassisNumber"
                   type="text"
-                  :placeholder="$t('form.chassis_number_placeholder')"
+                  :placeholder="t('form.chassis_number_placeholder')"
                   class="w-full"
                   @keyup.enter="decodeChassisNumber"
                 />
                 <!-- Example for selected year range -->
                 <template #help>
                   <div v-if="exampleChassisNumber" class="text-sm opacity-70">
-                    <span class="font-medium">{{ $t('form.example_text') }} {{ yearRange }}:</span>
+                    <span class="font-medium">{{ t('form.example_text') }} {{ yearRange }}:</span>
                     <span class="font-mono ml-2 text-primary">{{ exampleChassisNumber }}</span>
                   </div>
                 </template>
@@ -271,10 +272,10 @@
                   :loading="isLoading"
                   color="primary"
                 >
-                  {{ isLoading ? $t('form.decoding_button') : $t('form.decode_button') }}
+                  {{ isLoading ? t('form.decoding_button') : t('form.decode_button') }}
                 </UButton>
                 <UButton @click="resetForm" variant="ghost">
-                  {{ $t('form.reset_button') }}
+                  {{ t('form.reset_button') }}
                 </UButton>
               </div>
 
@@ -290,11 +291,11 @@
         <UCard>
           <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-semibold">
-              {{ $t('results.title') }}
+              {{ t('results.title') }}
             </h3>
             <div>
-              <UBadge v-if="decodedResult.isValid" color="success">{{ $t('results.status_decoded') }}</UBadge>
-              <UBadge v-else color="error">{{ $t('results.status_invalid') }}</UBadge>
+              <UBadge v-if="decodedResult.isValid" color="success">{{ t('results.status_decoded') }}</UBadge>
+              <UBadge v-else color="error">{{ t('results.status_invalid') }}</UBadge>
             </div>
           </div>
           <!-- Summary -->
@@ -302,13 +303,13 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div class="p-4 bg-muted rounded-lg">
                 <div class="text-sm opacity-70">
-                  {{ $t('results.year_range_stat') }}
+                  {{ t('results.year_range_stat') }}
                 </div>
                 <div class="text-lg font-bold">{{ decodedResult.yearRange }}</div>
               </div>
               <div class="p-4 bg-muted rounded-lg">
                 <div class="text-sm opacity-70">
-                  {{ $t('results.chassis_number_stat') }}
+                  {{ t('results.chassis_number_stat') }}
                 </div>
                 <div class="text-xl font-mono mt-1">
                   <UBadge color="secondary" size="lg">{{ decodedResult.chassisNumber }}</UBadge>
@@ -316,7 +317,7 @@
               </div>
               <div class="p-4 bg-muted rounded-lg">
                 <div class="text-sm opacity-70">
-                  {{ $t('results.expected_pattern_stat') }}
+                  {{ t('results.expected_pattern_stat') }}
                 </div>
                 <div class="text-lg font-mono font-bold">{{ decodedResult.pattern }}</div>
               </div>
@@ -326,7 +327,7 @@
           <!-- Validation Errors -->
           <div v-if="decodedResult.errors.length > 0" class="mb-6">
             <h4 class="text-lg font-semibold mb-3">
-              {{ $t('results.validation_issues_title') }}
+              {{ t('results.validation_issues_title') }}
             </h4>
             <div class="space-y-2">
               <UAlert v-for="error in decodedResult.errors" :key="error" color="warning" :title="error" />
@@ -336,7 +337,7 @@
           <!-- Decoded Positions -->
           <div>
             <h4 class="text-lg font-semibold mb-4">
-              {{ $t('results.decoded_positions_title') }}
+              {{ t('results.decoded_positions_title') }}
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div
@@ -349,7 +350,7 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-2">
                     <span class="font-medium">
-                      {{ $t('results.position_label') }}
+                      {{ t('results.position_label') }}
                       {{ position.position }}: <strong>{{ position.value }}</strong>
                     </span>
                     <UBadge v-if="position.matched" color="success" size="sm">✓</UBadge>
@@ -367,23 +368,23 @@
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <UCard>
           <h3 class="text-2xl font-semibold mb-4">
-            {{ $t('special_notes.title') }}
+            {{ t('special_notes.title') }}
           </h3>
           <div class="space-y-4">
             <div>
               <h4 class="text-lg font-semibold mb-2">
-                {{ $t('special_notes.build_number_title') }}
+                {{ t('special_notes.build_number_title') }}
               </h4>
               <p>
-                {{ $t('special_notes.build_number_text') }}
+                {{ t('special_notes.build_number_text') }}
               </p>
             </div>
             <div>
               <h4 class="text-lg font-semibold mb-2">
-                {{ $t('special_notes.assembly_plant_title') }}
+                {{ t('special_notes.assembly_plant_title') }}
               </h4>
               <p>
-                {{ $t('special_notes.assembly_plant_text') }}
+                {{ t('special_notes.assembly_plant_text') }}
               </p>
             </div>
           </div>
@@ -393,23 +394,23 @@
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <div class="text-center">
           <p>
-            {{ $t('attribution.text') }}
-            <strong>{{ $t('attribution.mini_mania') }}</strong>
-            {{ $t('attribution.technical_articles') }}
+            {{ t('attribution.text') }}
+            <strong>{{ t('attribution.mini_mania') }}</strong>
+            {{ t('attribution.technical_articles') }}
             <a
               href="https://www.minimania.com/Mini_Chassis_VIN_and_Commission_Numbers__Part_I__Revised_"
               target="_blank"
               rel="noopener noreferrer"
               class="link link-primary"
             >
-              {{ $t('attribution.link_text') }}</a
+              {{ t('attribution.link_text') }}</a
             >
           </p>
         </div>
       </div>
 
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="$t('ui.support_section')" />
+        <USeparator :label="t('ui.support_section')" />
       </div>
 
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10">

@@ -29,11 +29,7 @@ export const useWheels = () => {
   });
 
   const listAll = async (): Promise<IWheelsData[]> => {
-    const { data, error } = await supabase
-      .from('wheels')
-      .select('*')
-      .eq('status', 'approved')
-      .order('name');
+    const { data, error } = await supabase.from('wheels').select('*').eq('status', 'approved').order('name');
 
     if (error) throw error;
     return (data || []).map(mapToWheel);
@@ -60,12 +56,7 @@ export const useWheels = () => {
   };
 
   const getWheel = async (id: string): Promise<IWheelsData | null> => {
-    const { data, error } = await supabase
-      .from('wheels')
-      .select('*')
-      .eq('id', id)
-      .eq('status', 'approved')
-      .single();
+    const { data, error } = await supabase.from('wheels').select('*').eq('id', id).eq('status', 'approved').single();
 
     if (error) return null;
     return mapToWheel(data);

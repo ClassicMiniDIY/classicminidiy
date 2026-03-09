@@ -90,36 +90,25 @@
 
   // SEO
   useHead({
-    title: profile.value
-      ? `${displayName.value} - ${t('title')}`
-      : t('not_found.title'),
+    title: profile.value ? `${displayName.value} - ${t('title')}` : t('not_found.title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: profile.value
-          ? t('description', { name: displayName.value })
-          : t('not_found.description'),
+        content: profile.value ? t('description', { name: displayName.value }) : t('not_found.description'),
       },
     ],
   });
 
   useSeoMeta({
     ogTitle: profile.value ? `${displayName.value} - ${t('title')}` : t('not_found.title'),
-    ogDescription: profile.value
-      ? t('description', { name: displayName.value })
-      : t('not_found.description'),
+    ogDescription: profile.value ? t('description', { name: displayName.value }) : t('not_found.description'),
     ogType: 'profile',
   });
 </script>
 
 <template>
-  <hero
-    :navigation="true"
-    :title="t('hero_title')"
-    textSize="text-3xl"
-    :heroType="HERO_TYPES.ARCHIVE"
-  />
+  <hero :navigation="true" :title="t('hero_title')" textSize="text-3xl" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4">
     <div class="mt-5">
       <div class="w-full">
@@ -148,7 +137,6 @@
 
       <!-- Profile found -->
       <div v-else class="max-w-4xl mx-auto space-y-6 pb-12">
-
         <!-- Profile Card -->
         <UCard>
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-2">
@@ -161,11 +149,7 @@
             <div class="flex-1 text-center sm:text-left">
               <h1 class="text-3xl font-bold mb-2">{{ displayName }}</h1>
               <div class="mb-3">
-                <UBadge
-                  :color="trustLevelConfig.color as any"
-                  variant="subtle"
-                  size="md"
-                >
+                <UBadge :color="trustLevelConfig.color as any" variant="subtle" size="md">
                   {{ trustLevelConfig.label }}
                 </UBadge>
               </div>
@@ -253,11 +237,7 @@
 
           <!-- Contribution list -->
           <ul v-else class="divide-y divide-base-200">
-            <li
-              v-for="item in contributions"
-              :key="item.id"
-              class="flex items-center gap-3 py-3 px-1"
-            >
+            <li v-for="item in contributions" :key="item.id" class="flex items-center gap-3 py-3 px-1">
               <i
                 :class="`fa-duotone fa-${targetTypeIcon(item.targetType)} text-xl text-base-content/40 shrink-0 w-6 text-center`"
               ></i>
@@ -270,11 +250,7 @@
                 </p>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <UBadge
-                  :color="actionBadgeColor(item.action) as any"
-                  variant="subtle"
-                  size="sm"
-                >
+                <UBadge :color="actionBadgeColor(item.action) as any" variant="subtle" size="sm">
                   {{ t(`contributions.action.${item.action}`) }}
                 </UBadge>
                 <span class="text-xs text-base-content/40 hidden sm:inline">
@@ -284,7 +260,6 @@
             </li>
           </ul>
         </UCard>
-
       </div>
     </div>
   </div>

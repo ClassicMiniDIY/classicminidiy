@@ -48,7 +48,7 @@ export const useSubmissions = () => {
 
   const submitNewItem = async (
     targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
-    itemData: Record<string, any>,
+    itemData: Record<string, any>
   ): Promise<SubmissionItem> => {
     if (!user.value) throw new Error('Must be authenticated to submit');
 
@@ -72,7 +72,7 @@ export const useSubmissions = () => {
     targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
     targetId: string,
     changes: Record<string, { from: any; to: any }>,
-    reason: string,
+    reason: string
   ): Promise<SubmissionItem> => {
     if (!user.value) throw new Error('Must be authenticated to suggest edits');
 
@@ -94,11 +94,7 @@ export const useSubmissions = () => {
   };
 
   const getSubmission = async (id: string): Promise<SubmissionItem | null> => {
-    const { data, error } = await supabase
-      .from('submission_queue')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from('submission_queue').select('*').eq('id', id).maybeSingle();
 
     if (error || !data) return null;
     return mapToSubmission(data);

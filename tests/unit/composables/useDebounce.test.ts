@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ref, nextTick } from 'vue';
-import {
-  useDebounce,
-  useDebouncedFunction,
-  useThrottledFunction,
-} from '~/app/composables/useDebounce';
+import { useDebounce, useDebouncedFunction, useThrottledFunction } from '~/app/composables/useDebounce';
 
 describe('useDebounce', () => {
   beforeEach(() => {

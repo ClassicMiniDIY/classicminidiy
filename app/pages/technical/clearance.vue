@@ -2,6 +2,8 @@
   import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
+
   interface ClearanceItem {
     name: string;
     thou: string;
@@ -28,12 +30,12 @@
   const tableColumns = [
     {
       accessorKey: 'name',
-      header: () => $t('table.headers.part'),
+      header: () => t('table.headers.part'),
       cell: ({ row }) => row.getValue('name'),
     },
     {
       accessorKey: 'thou',
-      header: () => $t('table.headers.clearance_thou'),
+      header: () => t('table.headers.clearance_thou'),
       cell: ({ row }) => {
         const value = row.getValue('thou');
         return value
@@ -44,12 +46,12 @@
               },
               value
             )
-          : $t('table.no_value');
+          : t('table.no_value');
       },
     },
     {
       accessorKey: 'mm',
-      header: () => $t('table.headers.clearance_mm'),
+      header: () => t('table.headers.clearance_mm'),
       cell: ({ row }) => {
         const value = row.getValue('mm');
         return value
@@ -60,12 +62,12 @@
               },
               value
             )
-          : $t('table.no_value');
+          : t('table.no_value');
       },
     },
     {
       accessorKey: 'expand',
-      header: () => $t('table.headers.expand'),
+      header: () => t('table.headers.expand'),
       cell: ({ row }) => {
         const hasNotes = row.original.notes;
         const rowId = `${row.index}`;
@@ -98,16 +100,16 @@
   };
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -127,7 +129,7 @@
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
     headline: 'Classic Mini Clearance Specifications',
-    description: $t('description'),
+    description: t('description'),
     url: 'https://classicminidiy.com/technical/clearance',
     author: {
       '@type': 'Organization',
@@ -150,7 +152,7 @@
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: 'Classic Mini Clearance Specifications Database',
-    description: $t('description'),
+    description: t('description'),
     url: 'https://classicminidiy.com/technical/clearance',
     keywords: [
       'Classic Mini clearances',
@@ -196,24 +198,24 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('og_title'),
-    ogDescription: $t('og_description'),
+    ogTitle: t('og_title'),
+    ogDescription: t('og_description'),
     ogUrl: 'https://classicminidiy.com/technical/clearance',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/clearance.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitter_title'),
-    twitterDescription: $t('twitter_description'),
+    twitterTitle: t('twitter_title'),
+    twitterDescription: t('twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/clearance.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.TECH" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.TECH" />
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="$t('breadcrumb_title')" />
+      <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')" />
     </div>
 
     <div class="space-y-6">
@@ -232,7 +234,7 @@
               <UInput
                 type="text"
                 v-model="searchValue"
-                :placeholder="$t('search.placeholder')"
+                :placeholder="t('search.placeholder')"
                 icon="i-fa6-solid-magnifying-glass"
               />
             </div>
@@ -242,10 +244,10 @@
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-default">
-                  <th class="text-left p-2 font-medium">{{ $t('table.headers.part') }}</th>
-                  <th class="text-left p-2 font-medium">{{ $t('table.headers.clearance_thou') }}</th>
-                  <th class="text-left p-2 font-medium">{{ $t('table.headers.clearance_mm') }}</th>
-                  <th class="text-left p-2 font-medium">{{ $t('table.headers.expand') }}</th>
+                  <th class="text-left p-2 font-medium">{{ t('table.headers.part') }}</th>
+                  <th class="text-left p-2 font-medium">{{ t('table.headers.clearance_thou') }}</th>
+                  <th class="text-left p-2 font-medium">{{ t('table.headers.clearance_mm') }}</th>
+                  <th class="text-left p-2 font-medium">{{ t('table.headers.expand') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -259,7 +261,7 @@
                       <span v-if="tableItem.thou" class="px-2 py-1 rounded bg-primary/10 text-primary font-medium">
                         {{ tableItem.thou }}
                       </span>
-                      <span v-else class="text-muted">{{ $t('table.no_value') }}</span>
+                      <span v-else class="text-muted">{{ t('table.no_value') }}</span>
                     </td>
                     <td class="p-2">
                       <span
@@ -268,7 +270,7 @@
                       >
                         {{ tableItem.mm }}
                       </span>
-                      <span v-else class="text-muted">{{ $t('table.no_value') }}</span>
+                      <span v-else class="text-muted">{{ t('table.no_value') }}</span>
                     </td>
                     <td class="p-2 text-right">
                       <i
@@ -281,7 +283,7 @@
                   <tr v-if="expandedRows[`${item.value}-${itemIndex}`] && tableItem.notes" class="bg-muted">
                     <td colspan="4" class="p-4">
                       <div class="font-semibold mb-2">
-                        {{ $t('table.extra_notes_title') }}
+                        {{ t('table.extra_notes_title') }}
                       </div>
                       <div class="whitespace-pre-line">
                         {{ tableItem.notes }}
@@ -291,7 +293,7 @@
                 </template>
                 <tr v-if="!filterItems(item.table.items, item.value).length">
                   <td colspan="4" class="text-center py-4 text-muted">
-                    {{ $t('table.no_items_found') }}
+                    {{ t('table.no_items_found') }}
                   </td>
                 </tr>
               </tbody>
@@ -302,7 +304,7 @@
     </div>
 
     <USeparator class="my-12">
-      <span class="text-sm text-muted">{{ $t('ui.support_section') }}</span>
+      <span class="text-sm text-muted">{{ t('ui.support_section') }}</span>
     </USeparator>
     <div class="mb-8">
       <patreon-card size="large" />

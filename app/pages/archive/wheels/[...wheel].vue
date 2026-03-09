@@ -3,6 +3,8 @@
   import { shareWheelItem } from '../../../../data/models/helper-utils';
   import type { IWheelsData } from '../../../../data/models/wheels';
 
+  const { t } = useI18n();
+
   const { isAuthenticated } = useAuth();
   const route = useRoute();
   const wheelId = ref(route.params.wheel);
@@ -11,14 +13,10 @@
     data: wheel,
     pending,
     error,
-  } = await useAsyncData(
-    `wheel-${wheelId.value?.[0] || 'noWheel'}`,
-    () => getWheel(wheelId.value?.[0] || 'noWheel'),
-    {
-      server: !!wheelId.value?.[0],
-      default: () => ({}) as IWheelsData,
-    }
-  );
+  } = await useAsyncData(`wheel-${wheelId.value?.[0] || 'noWheel'}`, () => getWheel(wheelId.value?.[0] || 'noWheel'), {
+    server: !!wheelId.value?.[0],
+    default: () => ({}) as IWheelsData,
+  });
 
   const copied = ref<boolean>(false);
   const showSuggestEdit = ref(false);
@@ -41,12 +39,12 @@
   // Update head and meta tags when wheel data is loaded
   watchEffect(() => {
     if (wheel.value) {
-      const title = $t('seo.title_template', {
+      const title = t('seo.title_template', {
         name: wheel.value.name,
         size: wheel.value.size,
         width: wheel.value.width,
       });
-      const description = $t('seo.description');
+      const description = t('seo.description');
 
       useHead({
         title,
@@ -59,7 +57,7 @@
           {
             key: 'keywords',
             name: 'keywords',
-            content: $t('seo.keywords'),
+            content: t('seo.keywords'),
           },
         ],
         link: [
@@ -89,22 +87,22 @@
   });
 </script>
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4 py-4">
     <!-- Loading State -->
     <div v-if="pending" class="flex justify-center items-center min-h-[50vh]">
       <div class="text-center">
         <span class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary inline-block"></span>
-        <p class="mt-4">{{ $t('loading_text') }}</p>
+        <p class="mt-4">{{ t('loading_text') }}</p>
       </div>
     </div>
 
     <!-- Error State -->
     <UAlert v-else-if="error" color="error" class="my-8" icon="i-fa6-solid-triangle-exclamation">
-      <template #title>{{ $t('error_message') }}</template>
+      <template #title>{{ t('error_message') }}</template>
       <template #actions>
         <UButton to="/archive/wheels" size="sm" variant="ghost">
-          <i class="fas fa-arrow-left mr-2"></i> {{ $t('back_to_wheels') }}
+          <i class="fas fa-arrow-left mr-2"></i> {{ t('back_to_wheels') }}
         </UButton>
       </template>
     </UAlert>
@@ -115,8 +113,8 @@
         <div class="col-span-12 md:col-span-8">
           <breadcrumb
             class="mt-6"
-            :page="wheel?.name || $t('breadcrumb_fallback')"
-            :subpage="$t('breadcrumb_subpage')"
+            :page="wheel?.name || t('breadcrumb_fallback')"
+            :subpage="t('breadcrumb_subpage')"
             subpage-href="/archive/wheels"
           ></breadcrumb>
         </div>
@@ -162,12 +160,12 @@
                     </div>
                     <img
                       v-else-if="wheel.images && wheel.images[0]"
-                      :alt="$t('image_alt', { name: wheel.name })"
+                      :alt="t('image_alt', { name: wheel.name })"
                       class="w-full h-auto rounded-lg shadow-md"
                       :src="wheel.images[0].src"
                     />
                     <div v-else class="w-full aspect-square flex items-center justify-center bg-gray-100 rounded-lg">
-                      <i class="fas fa-image text-6xl text-gray-300" :title="$t('no_image_placeholder')"></i>
+                      <i class="fas fa-image text-6xl text-gray-300" :title="t('no_image_placeholder')"></i>
                     </div>
                   </div>
                 </div>
@@ -180,11 +178,11 @@
                     <i class="fad fa-arrow-right-to-line text-xl text-primary"></i>
                   </div>
                   <h3 class="font-semibold text-gray-600 mb-1">
-                    {{ $t('specifications.offset') }}
+                    {{ t('specifications.offset') }}
                   </h3>
                   <p v-if="wheel.offset" class="text-lg font-medium">{{ wheel.offset }}</p>
                   <p v-else class="text-error text-sm">
-                    {{ $t('specifications.not_specified') }}
+                    {{ t('specifications.not_specified') }}
                   </p>
                 </div>
                 <div class="flex flex-col items-center text-center">
@@ -192,11 +190,11 @@
                     <i class="fad fa-arrows-to-line text-xl text-secondary"></i>
                   </div>
                   <h3 class="font-semibold text-gray-600 mb-1">
-                    {{ $t('specifications.diameter') }}
+                    {{ t('specifications.diameter') }}
                   </h3>
                   <p v-if="wheel.size" class="text-lg font-medium">{{ wheel.size }}</p>
                   <p v-else class="text-error text-sm">
-                    {{ $t('specifications.not_specified') }}
+                    {{ t('specifications.not_specified') }}
                   </p>
                 </div>
                 <div class="flex flex-col items-center text-center">
@@ -204,11 +202,11 @@
                     <i class="fad fa-arrows-left-right-to-line text-xl text-info"></i>
                   </div>
                   <h3 class="font-semibold text-gray-600 mb-1">
-                    {{ $t('specifications.width') }}
+                    {{ t('specifications.width') }}
                   </h3>
                   <p v-if="wheel.width" class="text-lg font-medium">{{ wheel.width }}</p>
                   <p v-else class="text-error text-sm">
-                    {{ $t('specifications.not_specified') }}
+                    {{ t('specifications.not_specified') }}
                   </p>
                 </div>
               </div>
@@ -216,11 +214,11 @@
               <div class="flex flex-wrap justify-center gap-3 pt-2">
                 <UButton v-if="copied" size="lg" color="neutral" disabled>
                   <i class="fad fa-check text-success mr-2"></i>
-                  <span>{{ $t('actions.copied') }}</span>
+                  <span>{{ t('actions.copied') }}</span>
                 </UButton>
                 <UButton v-else size="lg" color="primary" @click="copyUrl">
                   <i class="fad fa-link mr-2"></i>
-                  <span>{{ $t('actions.copy_link') }}</span>
+                  <span>{{ t('actions.copy_link') }}</span>
                 </UButton>
                 <UButton
                   v-if="wheel.name && wheel.uuid"
@@ -229,25 +227,15 @@
                   @click="shareWheelItem(wheel.name, wheel.uuid)"
                 >
                   <i class="fad fa-share mr-2"></i>
-                  <span>{{ $t('actions.share') }}</span>
+                  <span>{{ t('actions.share') }}</span>
                 </UButton>
-                <UButton
-                  v-if="wheel.uuid"
-                  :to="`/contribute/wheel?uuid=${wheel.uuid}`"
-                  size="lg"
-                  variant="outline"
-                >
+                <UButton v-if="wheel.uuid" :to="`/contribute/wheel?uuid=${wheel.uuid}`" size="lg" variant="outline">
                   <i class="fad fa-edit mr-2"></i>
-                  <span>{{ $t('actions.contribute') }}</span>
+                  <span>{{ t('actions.contribute') }}</span>
                 </UButton>
-                <UButton
-                  v-if="isAuthenticated"
-                  variant="outline"
-                  size="sm"
-                  @click="showSuggestEdit = true"
-                >
+                <UButton v-if="isAuthenticated" variant="outline" size="sm" @click="showSuggestEdit = true">
                   <i class="fad fa-pen-to-square mr-2"></i>
-                  <span>{{ $t('suggest_edit') }}</span>
+                  <span>{{ t('suggest_edit') }}</span>
                 </UButton>
               </div>
             </div>
@@ -262,10 +250,10 @@
         :target-id="wheel.uuid"
         :current-data="{ name: wheel.name, width: wheel.width, size: wheel.size, offset: wheel.offset }"
         :editable-fields="[
-          { key: 'name', label: $t('field_name'), type: 'text' },
-          { key: 'width', label: $t('field_width'), type: 'text' },
-          { key: 'size', label: $t('field_size'), type: 'text' },
-          { key: 'offset', label: $t('field_offset'), type: 'text' },
+          { key: 'name', label: t('field_name'), type: 'text' },
+          { key: 'width', label: t('field_width'), type: 'text' },
+          { key: 'size', label: t('field_size'), type: 'text' },
+          { key: 'offset', label: t('field_offset'), type: 'text' },
         ]"
       />
     </div>

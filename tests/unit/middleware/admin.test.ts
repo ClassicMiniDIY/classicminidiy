@@ -13,18 +13,24 @@ describe('admin middleware', () => {
 
     // Re-stub globals after resetModules
     vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
-    vi.stubGlobal('navigateTo', vi.fn((path: string, opts?: any) => ({ path, ...opts })));
+    vi.stubGlobal(
+      'navigateTo',
+      vi.fn((path: string, opts?: any) => ({ path, ...opts }))
+    );
 
     mockWaitForAuth.mockClear();
     mockWaitForAuth.mockResolvedValue(true);
     mockIsAuthenticated = computed(() => false);
     mockIsAdmin = computed(() => false);
 
-    vi.stubGlobal('useAuth', vi.fn(() => ({
-      waitForAuth: mockWaitForAuth,
-      isAuthenticated: mockIsAuthenticated,
-      isAdmin: mockIsAdmin,
-    })));
+    vi.stubGlobal(
+      'useAuth',
+      vi.fn(() => ({
+        waitForAuth: mockWaitForAuth,
+        isAuthenticated: mockIsAuthenticated,
+        isAdmin: mockIsAdmin,
+      }))
+    );
 
     const mod = await import('~/app/middleware/admin.global');
     middleware = mod.default;
@@ -47,21 +53,30 @@ describe('admin middleware', () => {
   it('redirects to /login when not authenticated on admin route', async () => {
     mockIsAuthenticated = computed(() => false);
     mockIsAdmin = computed(() => false);
-    vi.stubGlobal('useAuth', vi.fn(() => ({
-      waitForAuth: mockWaitForAuth,
-      isAuthenticated: mockIsAuthenticated,
-      isAdmin: mockIsAdmin,
-    })));
+    vi.stubGlobal(
+      'useAuth',
+      vi.fn(() => ({
+        waitForAuth: mockWaitForAuth,
+        isAuthenticated: mockIsAuthenticated,
+        isAdmin: mockIsAdmin,
+      }))
+    );
 
     // Re-import to pick up new useAuth mock
     vi.resetModules();
     vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
-    vi.stubGlobal('navigateTo', vi.fn((path: string, opts?: any) => ({ path, ...opts })));
-    vi.stubGlobal('useAuth', vi.fn(() => ({
-      waitForAuth: mockWaitForAuth,
-      isAuthenticated: computed(() => false),
-      isAdmin: computed(() => false),
-    })));
+    vi.stubGlobal(
+      'navigateTo',
+      vi.fn((path: string, opts?: any) => ({ path, ...opts }))
+    );
+    vi.stubGlobal(
+      'useAuth',
+      vi.fn(() => ({
+        waitForAuth: mockWaitForAuth,
+        isAuthenticated: computed(() => false),
+        isAdmin: computed(() => false),
+      }))
+    );
 
     const mod = await import('~/app/middleware/admin.global');
     const mw = mod.default;
@@ -74,12 +89,18 @@ describe('admin middleware', () => {
   it('redirects to /login when authenticated but NOT admin', async () => {
     vi.resetModules();
     vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
-    vi.stubGlobal('navigateTo', vi.fn((path: string, opts?: any) => ({ path, ...opts })));
-    vi.stubGlobal('useAuth', vi.fn(() => ({
-      waitForAuth: mockWaitForAuth,
-      isAuthenticated: computed(() => true),
-      isAdmin: computed(() => false),
-    })));
+    vi.stubGlobal(
+      'navigateTo',
+      vi.fn((path: string, opts?: any) => ({ path, ...opts }))
+    );
+    vi.stubGlobal(
+      'useAuth',
+      vi.fn(() => ({
+        waitForAuth: mockWaitForAuth,
+        isAuthenticated: computed(() => true),
+        isAdmin: computed(() => false),
+      }))
+    );
 
     const mod = await import('~/app/middleware/admin.global');
     const mw = mod.default;
@@ -92,12 +113,18 @@ describe('admin middleware', () => {
   it('allows access when authenticated AND admin', async () => {
     vi.resetModules();
     vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
-    vi.stubGlobal('navigateTo', vi.fn((path: string, opts?: any) => ({ path, ...opts })));
-    vi.stubGlobal('useAuth', vi.fn(() => ({
-      waitForAuth: mockWaitForAuth,
-      isAuthenticated: computed(() => true),
-      isAdmin: computed(() => true),
-    })));
+    vi.stubGlobal(
+      'navigateTo',
+      vi.fn((path: string, opts?: any) => ({ path, ...opts }))
+    );
+    vi.stubGlobal(
+      'useAuth',
+      vi.fn(() => ({
+        waitForAuth: mockWaitForAuth,
+        isAuthenticated: computed(() => true),
+        isAdmin: computed(() => true),
+      }))
+    );
 
     const mod = await import('~/app/middleware/admin.global');
     const mw = mod.default;
@@ -111,7 +138,10 @@ describe('admin middleware', () => {
   it('calls waitForAuth before checking authentication', async () => {
     vi.resetModules();
     vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
-    vi.stubGlobal('navigateTo', vi.fn((path: string, opts?: any) => ({ path, ...opts })));
+    vi.stubGlobal(
+      'navigateTo',
+      vi.fn((path: string, opts?: any) => ({ path, ...opts }))
+    );
 
     const callOrder: string[] = [];
     const trackingWaitForAuth = vi.fn(async () => {
@@ -123,11 +153,14 @@ describe('admin middleware', () => {
       return { path, ...opts };
     });
     vi.stubGlobal('navigateTo', trackingNavigateTo);
-    vi.stubGlobal('useAuth', vi.fn(() => ({
-      waitForAuth: trackingWaitForAuth,
-      isAuthenticated: computed(() => false),
-      isAdmin: computed(() => false),
-    })));
+    vi.stubGlobal(
+      'useAuth',
+      vi.fn(() => ({
+        waitForAuth: trackingWaitForAuth,
+        isAuthenticated: computed(() => false),
+        isAdmin: computed(() => false),
+      }))
+    );
 
     const mod = await import('~/app/middleware/admin.global');
     const mw = mod.default;
@@ -140,12 +173,18 @@ describe('admin middleware', () => {
   it('applies to nested admin routes like /admin/listings', async () => {
     vi.resetModules();
     vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
-    vi.stubGlobal('navigateTo', vi.fn((path: string, opts?: any) => ({ path, ...opts })));
-    vi.stubGlobal('useAuth', vi.fn(() => ({
-      waitForAuth: mockWaitForAuth,
-      isAuthenticated: computed(() => true),
-      isAdmin: computed(() => true),
-    })));
+    vi.stubGlobal(
+      'navigateTo',
+      vi.fn((path: string, opts?: any) => ({ path, ...opts }))
+    );
+    vi.stubGlobal(
+      'useAuth',
+      vi.fn(() => ({
+        waitForAuth: mockWaitForAuth,
+        isAuthenticated: computed(() => true),
+        isAdmin: computed(() => true),
+      }))
+    );
 
     const mod = await import('~/app/middleware/admin.global');
     const mw = mod.default;

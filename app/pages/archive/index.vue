@@ -19,22 +19,22 @@
       'Tuning and Modifications': 'archive_items.tuning_modifications',
       Dimensions: 'archive_items.dimensions',
     };
-    return $t(titleMap[title] || title);
+    return t(titleMap[title] || title);
   };
 
   // Enhanced SEO metadata
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -50,14 +50,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/archive',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive.png',
   });
 
@@ -65,16 +65,16 @@
   const collectionJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
-    headline: $t('structured_data.headline'),
-    description: $t('structured_data.description'),
+    headline: t('structured_data.headline'),
+    description: t('structured_data.description'),
     image: 'https://classicminidiy.s3.amazonaws.com/misc/archive-seo.jpg',
     author: {
       '@type': 'Person',
-      name: $t('structured_data.author_name'),
+      name: t('structured_data.author_name'),
     },
     publisher: {
       '@type': 'Organization',
-      name: $t('structured_data.publisher_name'),
+      name: t('structured_data.publisher_name'),
       logo: {
         '@type': 'ImageObject',
         url: 'https://classicminidiy.s3.amazonaws.com/misc/logo.png',
@@ -83,8 +83,8 @@
     url: 'https://classicminidiy.com/archive',
     mainEntity: {
       '@type': 'Dataset',
-      name: $t('structured_data.dataset_name'),
-      description: $t('structured_data.dataset_description'),
+      name: t('structured_data.dataset_name'),
+      description: t('structured_data.dataset_description'),
     },
   };
 
@@ -100,23 +100,23 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4 pb-15 pt-6">
     <div class="grid grid-cols-1 gap-4">
       <div class="col-span-1 text-center">
         <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" root></breadcrumb>
-        <h1 class="text-2xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+        <h1 class="text-2xl font-bold mb-4">{{ t('main_heading') }}</h1>
       </div>
       <div class="col-span-1 text-center">
         <p class="text-lg py-5">
-          {{ $t('description_text') }}
+          {{ t('description_text') }}
         </p>
         <p class="text-lg pb-5">
-          {{ $t('maintenance_description') }}
+          {{ t('maintenance_description') }}
         </p>
         <UButton class="mr-3 text-lg" color="primary" to="/contribute">
           <i class="fa-duotone fa-paper-plane mr-2"></i>
-          {{ $t('contribute_to_archive') }}
+          {{ t('contribute_to_archive') }}
         </UButton>
         <UButton
           class="mr-3 text-lg"
@@ -127,7 +127,7 @@
           @click="capture('support_cta_clicked', { type: 'server_cost', location: path })"
         >
           <i class="fa-duotone fa-hand-holding-circle-dollar mr-2"></i>
-          {{ $t('cover_server_costs') }}
+          {{ t('cover_server_costs') }}
         </UButton>
       </div>
     </div>
@@ -135,7 +135,7 @@
       <div v-for="archive in ArchiveItems" :key="archive.to" class="col-span-1">
         <template v-if="archive.disabled">
           <UCard class="text-center p-5 h-full opacity-50 cursor-not-allowed">
-            <p class="text-xs text-right">{{ $t('coming_soon') }}</p>
+            <p class="text-xs text-right">{{ t('coming_soon') }}</p>
             <span class="text-4xl block" v-html="archive.iconHtml"> </span>
             <p class="text-lg mt-2">{{ getArchiveItemTitle(archive.title) }}</p>
           </UCard>
@@ -152,15 +152,15 @@
         <NuxtLink to="/contribute" class="block h-full">
           <UCard class="text-center p-5 h-full hover:shadow-xl transition-shadow bg-primary/5">
             <i class="fad fa-hand-holding-heart text-4xl text-primary"></i>
-            <p class="text-lg mt-2 font-semibold">{{ $t('contribute') }}</p>
-            <p class="text-sm opacity-70 mt-1">{{ $t('contribute_description') }}</p>
+            <p class="text-lg mt-2 font-semibold">{{ t('contribute') }}</p>
+            <p class="text-sm opacity-70 mt-1">{{ t('contribute_description') }}</p>
           </UCard>
         </NuxtLink>
       </div>
     </div>
     <div class="grid grid-cols-12 gap-4 mt-6">
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="$t('support_divider')" />
+        <USeparator :label="t('support_divider')" />
       </div>
       <div class="col-span-12">
         <patreon-card size="large" />

@@ -7,10 +7,7 @@
 
   const { getCollectionBySlug } = useArchiveDocuments();
 
-  const { data: result, status, error } = await useAsyncData(
-    `collection-${slug}`,
-    () => getCollectionBySlug(slug),
-  );
+  const { data: result, status, error } = await useAsyncData(`collection-${slug}`, () => getCollectionBySlug(slug));
 
   const collection = computed(() => result.value?.collection || null);
   const documents = computed(() => result.value?.documents || []);
@@ -24,14 +21,10 @@
     electrical: { icon: 'fas fa-bolt', label: t('type.electrical'), color: 'error' },
   };
 
-  const totalPages = computed(() =>
-    documents.value.reduce((sum, doc) => sum + (doc.pageCount || 0), 0),
-  );
+  const totalPages = computed(() => documents.value.reduce((sum, doc) => sum + (doc.pageCount || 0), 0));
 
   useHead({
-    title: computed(() =>
-      collection.value ? `${collection.value.title} | Classic Mini DIY` : t('title'),
-    ),
+    title: computed(() => (collection.value ? `${collection.value.title} | Classic Mini DIY` : t('title'))),
     meta: [
       {
         key: 'description',
@@ -64,7 +57,9 @@
         <nav class="my-6 text-sm">
           <NuxtLink to="/archive" class="hover:underline text-muted">{{ t('breadcrumb_archive') }}</NuxtLink>
           <span class="mx-2 text-muted">/</span>
-          <NuxtLink to="/archive/documents" class="hover:underline text-muted">{{ t('breadcrumb_documents') }}</NuxtLink>
+          <NuxtLink to="/archive/documents" class="hover:underline text-muted">{{
+            t('breadcrumb_documents')
+          }}</NuxtLink>
           <span class="mx-2 text-muted">/</span>
           <span>{{ collection?.title || '...' }}</span>
         </nav>
@@ -106,7 +101,7 @@
                 <UBadge
                   v-if="collection.type && typeConfig[collection.type]"
                   size="lg"
-                  :color="(typeConfig[collection.type].color as any)"
+                  :color="typeConfig[collection.type].color as any"
                 >
                   <i :class="[typeConfig[collection.type].icon, 'mr-1']"></i>
                   {{ typeConfig[collection.type].label }}
@@ -128,11 +123,7 @@
           <!-- Collection items -->
           <h2 class="text-lg font-semibold mb-4">{{ t('items_heading') }}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <archive-document-card
-              v-for="doc in documents"
-              :key="doc.title"
-              :item="doc"
-            />
+            <archive-document-card v-for="doc in documents" :key="doc.title" :item="doc" />
           </div>
 
           <!-- Empty collection -->

@@ -11,11 +11,13 @@ let allItems: any[] = [];
 let lastKey: any = undefined;
 
 do {
-  const result = await dynamo.send(new ScanCommand({
-    TableName: 'MiniRegister',
-    ExclusiveStartKey: lastKey,
-    Limit: 1000,
-  }));
+  const result = await dynamo.send(
+    new ScanCommand({
+      TableName: 'MiniRegister',
+      ExclusiveStartKey: lastKey,
+      Limit: 1000,
+    })
+  );
   allItems.push(...(result.Items || []));
   lastKey = result.LastEvaluatedKey;
   console.log(`  Scanned ${allItems.length} registry entries so far...`);

@@ -53,7 +53,7 @@ describe('useContributions', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
       expect(mockSupabase._mockSelect).toHaveBeenCalledWith(
-        'id, display_name, avatar_url, bio, trust_level, total_submissions, approved_submissions, created_at',
+        'id, display_name, avatar_url, bio, trust_level, total_submissions, approved_submissions, created_at'
       );
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'user-1');
       expect(mockSupabase._mockMaybeSingle).toHaveBeenCalled();
@@ -148,9 +148,7 @@ describe('useContributions', () => {
   describe('listContributions()', () => {
     it('queries contributions table by userId ordered by created_at desc', async () => {
       const rows = [makeContributionRow()];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -166,9 +164,7 @@ describe('useContributions', () => {
 
     it('returns mapped ContributionItem objects', async () => {
       const row = makeContributionRow();
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -191,9 +187,7 @@ describe('useContributions', () => {
         makeContributionRow({ id: 'contrib-2', created_at: '2025-07-01T12:00:00Z' }),
         makeContributionRow({ id: 'contrib-1', created_at: '2025-06-01T12:00:00Z' }),
       ];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -205,9 +199,7 @@ describe('useContributions', () => {
     });
 
     it('returns empty array when data is null', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -217,9 +209,7 @@ describe('useContributions', () => {
     });
 
     it('returns empty array when no contributions exist', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -230,9 +220,7 @@ describe('useContributions', () => {
 
     it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Query failed', code: '500' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: supabaseError }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: supabaseError }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -241,9 +229,7 @@ describe('useContributions', () => {
     });
 
     it('applies targetType filter when provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -255,9 +241,7 @@ describe('useContributions', () => {
     });
 
     it('applies limit filter when provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -267,9 +251,7 @@ describe('useContributions', () => {
     });
 
     it('applies both targetType and limit filters when provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -280,9 +262,7 @@ describe('useContributions', () => {
     });
 
     it('does not call eq for target_type when targetType option is not provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -294,9 +274,7 @@ describe('useContributions', () => {
     });
 
     it('does not call limit when limit option is not provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -307,12 +285,8 @@ describe('useContributions', () => {
 
     it('maps all action types correctly', async () => {
       const actions = ['submitted', 'edited', 'approved', 'rejected'] as const;
-      const rows = actions.map((action, i) =>
-        makeContributionRow({ id: `contrib-${i}`, action }),
-      );
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      const rows = actions.map((action, i) => makeContributionRow({ id: `contrib-${i}`, action }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -323,31 +297,19 @@ describe('useContributions', () => {
 
     it('maps all target types correctly', async () => {
       const types = ['document', 'collection', 'registry', 'color', 'wheel'] as const;
-      const rows = types.map((type, i) =>
-        makeContributionRow({ id: `contrib-${i}`, target_type: type }),
-      );
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      const rows = types.map((type, i) => makeContributionRow({ id: `contrib-${i}`, target_type: type }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
       const result = await listContributions('user-1');
 
-      expect(result.map((r) => r.targetType)).toEqual([
-        'document',
-        'collection',
-        'registry',
-        'color',
-        'wheel',
-      ]);
+      expect(result.map((r) => r.targetType)).toEqual(['document', 'collection', 'registry', 'color', 'wheel']);
     });
 
     it('handles rows with null target_title and details', async () => {
       const row = makeContributionRow({ target_title: null, details: null });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { listContributions } = useContributions();
@@ -360,9 +322,7 @@ describe('useContributions', () => {
 
   describe('getContributionStats()', () => {
     it('queries contributions table filtered by userId and action approved', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { getContributionStats } = useContributions();
@@ -383,9 +343,7 @@ describe('useContributions', () => {
         { target_type: 'color' },
         { target_type: 'color' },
       ];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { getContributionStats } = useContributions();
@@ -399,9 +357,7 @@ describe('useContributions', () => {
     });
 
     it('returns empty object when no approved contributions exist', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { getContributionStats } = useContributions();
@@ -411,9 +367,7 @@ describe('useContributions', () => {
     });
 
     it('returns empty object when data is null', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { getContributionStats } = useContributions();
@@ -424,9 +378,7 @@ describe('useContributions', () => {
 
     it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Aggregation failed', code: '500' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: supabaseError }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: supabaseError }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { getContributionStats } = useContributions();
@@ -436,9 +388,7 @@ describe('useContributions', () => {
 
     it('counts a single target_type correctly', async () => {
       const rows = [{ target_type: 'wheel' }];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { getContributionStats } = useContributions();
@@ -455,9 +405,7 @@ describe('useContributions', () => {
         { target_type: 'color' },
         { target_type: 'wheel' },
       ];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useContributions } = await import('~/app/composables/useContributions');
       const { getContributionStats } = useContributions();

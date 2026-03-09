@@ -30,7 +30,7 @@ vi.stubGlobal(
   vi.fn(() => ({
     public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
     SUPABASE_SERVICE_KEY: 'test-service-key',
-  })),
+  }))
 );
 
 // Import module under test AFTER mocks are in place

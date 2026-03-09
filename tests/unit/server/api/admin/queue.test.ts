@@ -42,10 +42,13 @@ vi.stubGlobal('createError', (opts: any) => {
 vi.stubGlobal('getQuery', vi.fn().mockReturnValue({}));
 vi.stubGlobal('readBody', vi.fn().mockResolvedValue({}));
 vi.stubGlobal('setResponseHeaders', vi.fn());
-vi.stubGlobal('useRuntimeConfig', vi.fn(() => ({
-  public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
-  SUPABASE_SERVICE_KEY: 'test-service-key',
-})));
+vi.stubGlobal(
+  'useRuntimeConfig',
+  vi.fn(() => ({
+    public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
+    SUPABASE_SERVICE_KEY: 'test-service-key',
+  }))
+);
 
 // ---------------------------------------------------------------------------
 // Mock server utility modules
@@ -72,7 +75,7 @@ function createMockEvent() {
 /** Make the next await on the query builder resolve with { data, error, count }. */
 function resolveQuery(result: { data?: any; error?: any; count?: any }) {
   queryBuilder.then = vi.fn((resolve: any) =>
-    resolve({ data: result.data ?? null, error: result.error ?? null, count: result.count ?? undefined }),
+    resolve({ data: result.data ?? null, error: result.error ?? null, count: result.count ?? undefined })
   );
 }
 
@@ -125,9 +128,7 @@ describe('server/api/admin/queue/list', () => {
 
   it('throws when admin auth fails', async () => {
     const event = createMockEvent();
-    mockRequireAdminAuth.mockRejectedValueOnce(
-      Object.assign(new Error('Unauthorized'), { statusCode: 401 }),
-    );
+    mockRequireAdminAuth.mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
     await expect(handler(event)).rejects.toMatchObject({ statusCode: 401 });
   });
 
@@ -137,7 +138,7 @@ describe('server/api/admin/queue/list', () => {
 
     expect(mockFrom).toHaveBeenCalledWith('submission_queue');
     expect(mockSelect).toHaveBeenCalledWith(
-      '*, submitter:profiles!submission_queue_submitted_by_fkey(display_name, email, avatar_url, trust_level)',
+      '*, submitter:profiles!submission_queue_submitted_by_fkey(display_name, email, avatar_url, trust_level)'
     );
     expect(mockOrder).toHaveBeenCalledWith('created_at', { ascending: false });
   });
@@ -223,12 +224,21 @@ describe('server/api/admin/queue/list', () => {
 
   it('falls back to email for submitterName when display_name is missing', async () => {
     resolveQuery({
-      data: [{
-        id: 'sub-2', type: 'new_item', target_type: 'wheel', target_id: null,
-        status: 'pending', data: {}, reviewer_notes: null, reviewed_at: null,
-        created_at: '2026-01-01', submitted_by: 'u1',
-        submitter: { display_name: null, email: 'fallback@email.com', avatar_url: null, trust_level: null },
-      }],
+      data: [
+        {
+          id: 'sub-2',
+          type: 'new_item',
+          target_type: 'wheel',
+          target_id: null,
+          status: 'pending',
+          data: {},
+          reviewer_notes: null,
+          reviewed_at: null,
+          created_at: '2026-01-01',
+          submitted_by: 'u1',
+          submitter: { display_name: null, email: 'fallback@email.com', avatar_url: null, trust_level: null },
+        },
+      ],
     });
 
     const result = await handler(createMockEvent());
@@ -237,12 +247,21 @@ describe('server/api/admin/queue/list', () => {
 
   it('returns "Unknown" when submitter has no display_name or email', async () => {
     resolveQuery({
-      data: [{
-        id: 'sub-3', type: 'edit_suggestion', target_type: 'registry', target_id: 'r1',
-        status: 'pending', data: {}, reviewer_notes: null, reviewed_at: null,
-        created_at: '2026-01-01', submitted_by: 'u2',
-        submitter: { display_name: null, email: null, avatar_url: null, trust_level: null },
-      }],
+      data: [
+        {
+          id: 'sub-3',
+          type: 'edit_suggestion',
+          target_type: 'registry',
+          target_id: 'r1',
+          status: 'pending',
+          data: {},
+          reviewer_notes: null,
+          reviewed_at: null,
+          created_at: '2026-01-01',
+          submitted_by: 'u2',
+          submitter: { display_name: null, email: null, avatar_url: null, trust_level: null },
+        },
+      ],
     });
 
     const result = await handler(createMockEvent());
@@ -251,12 +270,21 @@ describe('server/api/admin/queue/list', () => {
 
   it('returns "Unknown" when submitter object is null', async () => {
     resolveQuery({
-      data: [{
-        id: 'sub-4', type: 'new_item', target_type: 'document', target_id: null,
-        status: 'pending', data: {}, reviewer_notes: null, reviewed_at: null,
-        created_at: '2026-01-01', submitted_by: 'u3',
-        submitter: null,
-      }],
+      data: [
+        {
+          id: 'sub-4',
+          type: 'new_item',
+          target_type: 'document',
+          target_id: null,
+          status: 'pending',
+          data: {},
+          reviewer_notes: null,
+          reviewed_at: null,
+          created_at: '2026-01-01',
+          submitted_by: 'u3',
+          submitter: null,
+        },
+      ],
     });
 
     const result = await handler(createMockEvent());
@@ -309,9 +337,7 @@ describe('server/api/admin/queue/count', () => {
   });
 
   it('throws when admin auth fails', async () => {
-    mockRequireAdminAuth.mockRejectedValueOnce(
-      Object.assign(new Error('Forbidden'), { statusCode: 403 }),
-    );
+    mockRequireAdminAuth.mockRejectedValueOnce(Object.assign(new Error('Forbidden'), { statusCode: 403 }));
     await expect(handler(createMockEvent())).rejects.toMatchObject({ statusCode: 403 });
   });
 
@@ -468,7 +494,11 @@ describe('server/api/admin/queue/approve.post', () => {
     };
 
     mockFetchSubmission({
-      id: 'sub-1', type: 'new_item', target_type: 'color', target_id: null, data: colorData,
+      id: 'sub-1',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: colorData,
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-1' });
@@ -477,20 +507,22 @@ describe('server/api/admin/queue/approve.post', () => {
     await handler(createMockEvent());
 
     expect(mockFrom).toHaveBeenCalledWith('colors');
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'Almond Green',
-      code: 'AG',
-      short_code: 'ALG',
-      ditzler_ppg_code: '12345',
-      dulux_code: 'DX99',
-      hex_value: '#556B2F',
-      has_swatch: true,
-      swatch_path: '/swatches/almond.png',
-      contributor_images: ['/img1.jpg'],
-      status: 'approved',
-      legacy_submitted_by: 'contributor-1',
-      legacy_submitted_by_email: 'contributor@test.com',
-    }));
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Almond Green',
+        code: 'AG',
+        short_code: 'ALG',
+        ditzler_ppg_code: '12345',
+        dulux_code: 'DX99',
+        hex_value: '#556B2F',
+        has_swatch: true,
+        swatch_path: '/swatches/almond.png',
+        contributor_images: ['/img1.jpg'],
+        status: 'approved',
+        legacy_submitted_by: 'contributor-1',
+        legacy_submitted_by_email: 'contributor@test.com',
+      })
+    );
   });
 
   it('inserts into wheels table for new_item wheel submission', async () => {
@@ -511,7 +543,11 @@ describe('server/api/admin/queue/approve.post', () => {
     };
 
     mockFetchSubmission({
-      id: 'sub-2', type: 'new_item', target_type: 'wheel', target_id: null, data: wheelData,
+      id: 'sub-2',
+      type: 'new_item',
+      target_type: 'wheel',
+      target_id: null,
+      data: wheelData,
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-2' });
@@ -520,21 +556,23 @@ describe('server/api/admin/queue/approve.post', () => {
     await handler(createMockEvent());
 
     expect(mockFrom).toHaveBeenCalledWith('wheels');
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'Minilite',
-      wheel_type: 'alloy',
-      size: 10,
-      width: '6J',
-      offset_value: 'ET25',
-      bolt_pattern: '4x101.6',
-      center_bore: '67.1',
-      manufacturer: 'Minilite',
-      weight: '4.5kg',
-      notes: 'Classic look',
-      status: 'approved',
-      legacy_submitted_by: 'WheelGuy',
-      legacy_submitted_by_email: 'wheels@test.com',
-    }));
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Minilite',
+        wheel_type: 'alloy',
+        size: 10,
+        width: '6J',
+        offset_value: 'ET25',
+        bolt_pattern: '4x101.6',
+        center_bore: '67.1',
+        manufacturer: 'Minilite',
+        weight: '4.5kg',
+        notes: 'Classic look',
+        status: 'approved',
+        legacy_submitted_by: 'WheelGuy',
+        legacy_submitted_by_email: 'wheels@test.com',
+      })
+    );
   });
 
   it('inserts into registry_entries table for new_item registry submission', async () => {
@@ -556,7 +594,11 @@ describe('server/api/admin/queue/approve.post', () => {
     };
 
     mockFetchSubmission({
-      id: 'sub-3', type: 'new_item', target_type: 'registry', target_id: null, data: registryData,
+      id: 'sub-3',
+      type: 'new_item',
+      target_type: 'registry',
+      target_id: null,
+      data: registryData,
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-3' });
@@ -565,21 +607,23 @@ describe('server/api/admin/queue/approve.post', () => {
     await handler(createMockEvent());
 
     expect(mockFrom).toHaveBeenCalledWith('registry_entries');
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      year: 1967,
-      model: 'Cooper S',
-      body_number: 'KA2S7-123456',
-      engine_number: '9F-SA-H-12345',
-      engine_size: '1275',
-      body_type: 'saloon',
-      color: 'Almond Green',
-      trim: 'Porcelain Green',
-      build_date: '1967-03-15',
-      owner: 'John Smith',
-      location: 'Austin, TX',
-      notes: 'Original condition',
-      status: 'approved',
-    }));
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        year: 1967,
+        model: 'Cooper S',
+        body_number: 'KA2S7-123456',
+        engine_number: '9F-SA-H-12345',
+        engine_size: '1275',
+        body_type: 'saloon',
+        color: 'Almond Green',
+        trim: 'Porcelain Green',
+        build_date: '1967-03-15',
+        owner: 'John Smith',
+        location: 'Austin, TX',
+        notes: 'Original condition',
+        status: 'approved',
+      })
+    );
   });
 
   it('inserts into archive_documents table for new_item document submission', async () => {
@@ -595,7 +639,11 @@ describe('server/api/admin/queue/approve.post', () => {
     };
 
     mockFetchSubmission({
-      id: 'sub-4', type: 'new_item', target_type: 'document', target_id: null, data: docData,
+      id: 'sub-4',
+      type: 'new_item',
+      target_type: 'document',
+      target_id: null,
+      data: docData,
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-4' });
@@ -604,23 +652,29 @@ describe('server/api/admin/queue/approve.post', () => {
     await handler(createMockEvent());
 
     expect(mockFrom).toHaveBeenCalledWith('archive_documents');
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      slug: 'workshop-manual',
-      type: 'manual',
-      title: 'Workshop Manual',
-      description: 'Official BMC workshop manual',
-      code: 'AKD4935',
-      author: 'BMC',
-      year: 1967,
-      file_path: '/docs/workshop-manual.pdf',
-      thumbnail_path: '/thumbs/workshop-manual.jpg',
-      status: 'approved',
-    }));
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        slug: 'workshop-manual',
+        type: 'manual',
+        title: 'Workshop Manual',
+        description: 'Official BMC workshop manual',
+        code: 'AKD4935',
+        author: 'BMC',
+        year: 1967,
+        file_path: '/docs/workshop-manual.pdf',
+        thumbnail_path: '/thumbs/workshop-manual.jpg',
+        status: 'approved',
+      })
+    );
   });
 
   it('throws 500 for unsupported target type on new_item', async () => {
     mockFetchSubmission({
-      id: 'sub-5', type: 'new_item', target_type: 'unknown_type', target_id: null, data: {},
+      id: 'sub-5',
+      type: 'new_item',
+      target_type: 'unknown_type',
+      target_id: null,
+      data: {},
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-5' });
@@ -641,7 +695,11 @@ describe('server/api/admin/queue/approve.post', () => {
     };
 
     mockFetchSubmission({
-      id: 'sub-6', type: 'edit_suggestion', target_type: 'color', target_id: 'color-99', data: editData,
+      id: 'sub-6',
+      type: 'edit_suggestion',
+      target_type: 'color',
+      target_id: 'color-99',
+      data: editData,
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-6' });
@@ -657,7 +715,10 @@ describe('server/api/admin/queue/approve.post', () => {
 
   it('does not apply edit_suggestion when target_id is null', async () => {
     mockFetchSubmission({
-      id: 'sub-7', type: 'edit_suggestion', target_type: 'wheel', target_id: null,
+      id: 'sub-7',
+      type: 'edit_suggestion',
+      target_type: 'wheel',
+      target_id: null,
       data: { changes: { name: { from: 'A', to: 'B' } } },
     });
 
@@ -676,7 +737,11 @@ describe('server/api/admin/queue/approve.post', () => {
     const editedData = { name: 'Admin Edited' };
 
     mockFetchSubmission({
-      id: 'sub-8', type: 'new_item', target_type: 'color', target_id: null, data: submissionData,
+      id: 'sub-8',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: submissionData,
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-8', editedData });
@@ -685,14 +750,20 @@ describe('server/api/admin/queue/approve.post', () => {
     await handler(createMockEvent());
 
     // The insert should use editedData, not submissionData
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'Admin Edited',
-    }));
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Admin Edited',
+      })
+    );
   });
 
   it('updates submission status to approved with reviewer info', async () => {
     mockFetchSubmission({
-      id: 'sub-9', type: 'new_item', target_type: 'color', target_id: null, data: { name: 'Test' },
+      id: 'sub-9',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: { name: 'Test' },
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-9', reviewerNotes: 'Looks good!' });
@@ -701,17 +772,23 @@ describe('server/api/admin/queue/approve.post', () => {
     await handler(createMockEvent());
 
     expect(mockFrom).toHaveBeenCalledWith('submission_queue');
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      status: 'approved',
-      reviewed_by: 'admin-123',
-      reviewer_notes: 'Looks good!',
-    }));
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'approved',
+        reviewed_by: 'admin-123',
+        reviewer_notes: 'Looks good!',
+      })
+    );
     expect(mockEq).toHaveBeenCalledWith('id', 'sub-9');
   });
 
   it('sets reviewer_notes to null when not provided', async () => {
     mockFetchSubmission({
-      id: 'sub-10', type: 'new_item', target_type: 'color', target_id: null, data: { name: 'Test' },
+      id: 'sub-10',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: { name: 'Test' },
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-10' });
@@ -719,9 +796,11 @@ describe('server/api/admin/queue/approve.post', () => {
 
     await handler(createMockEvent());
 
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      reviewer_notes: null,
-    }));
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewer_notes: null,
+      })
+    );
   });
 
   it('returns { success: true } on successful approval', async () => {
@@ -734,7 +813,11 @@ describe('server/api/admin/queue/approve.post', () => {
 
   it('throws 500 when status update fails', async () => {
     mockFetchSubmission({
-      id: 'sub-err', type: 'new_item', target_type: 'color', target_id: null, data: { name: 'Test' },
+      id: 'sub-err',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: { name: 'Test' },
     });
 
     (readBody as any).mockResolvedValue({ id: 'sub-err' });
@@ -748,7 +831,11 @@ describe('server/api/admin/queue/approve.post', () => {
 
   it('throws 500 when insert for new_item fails', async () => {
     mockFetchSubmission({
-      id: 'sub-insert-err', type: 'new_item', target_type: 'color', target_id: null, data: { name: 'Fail' },
+      id: 'sub-insert-err',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: { name: 'Fail' },
     });
 
     // Make the insert chain return an error via then()
@@ -835,11 +922,13 @@ describe('server/api/admin/queue/reject.post', () => {
     await handler(createMockEvent());
 
     expect(mockFrom).toHaveBeenCalledWith('submission_queue');
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      status: 'rejected',
-      reviewed_by: 'admin-123',
-      reviewer_notes: 'Duplicate entry',
-    }));
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'rejected',
+        reviewed_by: 'admin-123',
+        reviewer_notes: 'Duplicate entry',
+      })
+    );
     expect(mockEq).toHaveBeenCalledWith('id', 'rej-1');
   });
 
@@ -848,9 +937,11 @@ describe('server/api/admin/queue/reject.post', () => {
 
     await handler(createMockEvent());
 
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      reviewer_notes: null,
-    }));
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewer_notes: null,
+      })
+    );
   });
 
   it('includes reviewed_at timestamp in update', async () => {
@@ -858,9 +949,11 @@ describe('server/api/admin/queue/reject.post', () => {
 
     await handler(createMockEvent());
 
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      reviewed_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
-    }));
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reviewed_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      })
+    );
   });
 
   it('returns { success: true } on successful rejection', async () => {
@@ -879,9 +972,7 @@ describe('server/api/admin/queue/reject.post', () => {
   });
 
   it('throws when admin auth fails', async () => {
-    mockRequireAdminAuth.mockRejectedValueOnce(
-      Object.assign(new Error('Forbidden'), { statusCode: 403 }),
-    );
+    mockRequireAdminAuth.mockRejectedValueOnce(Object.assign(new Error('Forbidden'), { statusCode: 403 }));
     await expect(handler(createMockEvent())).rejects.toMatchObject({ statusCode: 403 });
   });
 });

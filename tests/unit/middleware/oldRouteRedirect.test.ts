@@ -8,7 +8,10 @@ describe('oldRouteRedirect middleware', () => {
     // Stub defineNuxtRouteMiddleware to return the handler function directly
     vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
     // Reset navigateTo mock
-    vi.stubGlobal('navigateTo', vi.fn((path: string) => path));
+    vi.stubGlobal(
+      'navigateTo',
+      vi.fn((path: string) => path)
+    );
 
     const mod = await import('~/app/middleware/oldRouteRedirect.global');
     middleware = mod.default;

@@ -173,14 +173,7 @@
       <p class="text-sm opacity-50 mt-1">
         {{ t('accepted_types', { types: acceptedTypeLabels }) }} &mdash; {{ t('max_size', { size: maxSizeMb }) }}
       </p>
-      <input
-        type="file"
-        hidden
-        ref="fileInput"
-        :accept="accept"
-        multiple
-        @change="handleFileChange"
-      />
+      <input type="file" hidden ref="fileInput" :accept="accept" multiple @change="handleFileChange" />
     </div>
 
     <!-- Max files notice -->

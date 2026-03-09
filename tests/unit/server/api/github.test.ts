@@ -233,7 +233,7 @@ describe('server/api/github/commits', () => {
         }),
         owner: 'SomethingNew71',
         repo: 'MiniECUMaps',
-      }),
+      })
     );
   });
 });
@@ -288,10 +288,7 @@ describe('server/api/github/releases', () => {
   });
 
   it('latestRelease is the tag_name of the first release', async () => {
-    const releases = [
-      makeRelease('v2.0.0', 'Latest', 2),
-      makeRelease('v1.0.0', 'Older', 1),
-    ];
+    const releases = [makeRelease('v2.0.0', 'Latest', 2), makeRelease('v1.0.0', 'Older', 1)];
     mockRequest.mockResolvedValueOnce({ data: releases });
     const result = await handler({});
     expect(result.latestRelease).toBe('v2.0.0');
@@ -412,7 +409,7 @@ describe('server/api/github/releases', () => {
         }),
         owner: 'SomethingNew71',
         repo: 'MiniECUMaps',
-      }),
+      })
     );
   });
 

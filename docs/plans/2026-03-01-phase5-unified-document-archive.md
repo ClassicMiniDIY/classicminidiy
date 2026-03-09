@@ -17,12 +17,14 @@
 Phase 4 rewrote the data layer — all archive pages now query Supabase instead of DynamoDB/@nuxt/content. The four document listing pages (`manuals`, `adverts`, `catalogues`, `tuning`) each call `useArchiveDocuments().listByType(type)` and render via `ArchiveLandingIterator`. This phase merges them into one unified page.
 
 **Important architectural notes:**
+
 - The `/archive/electrical` page is NOT a document listing — it's an interactive wiring diagram viewer powered by a static JSON file (`data/wiringDiagrams.json`) with Fuse.js search. It stays separate and is NOT redirected.
 - The `document_collections` table exists in Supabase (created in Phase 1) and may or may not have data. The unified page must handle collections gracefully (show them if they exist, otherwise just show standalone documents).
 - The `archive_documents` table has a GIN full-text search index on `to_tsvector('english', title || description || code || author)`.
 - The `[...slug].vue` catch-all page at the root currently handles individual document detail views. This will be replaced by explicit `/archive/documents/[slug].vue` route.
 
 **Key files (read these before implementing):**
+
 - `app/composables/useArchiveDocuments.ts` — current composable with `listByType()`, `getByPath()`, `getStorageUrl()`, `getThumbnailUrl()`
 - `app/components/ArchiveLandingIterator.vue` — current card/table rendering with search, pagination, view toggle
 - `app/pages/[...slug].vue` — current catch-all for document detail
@@ -35,6 +37,7 @@ Phase 4 rewrote the data layer — all archive pages now query Supabase instead 
 ## Task 1: Extend useArchiveDocuments Composable
 
 **Files:**
+
 - Modify: `app/composables/useArchiveDocuments.ts`
 
 **Step 1: Add collection interface and new methods**
@@ -61,10 +64,7 @@ const listAll = async (opts?: {
   search?: string;
   sort?: 'title' | 'newest' | 'oldest';
 }): Promise<ArchiveDocumentItem[]> => {
-  let query = supabase
-    .from('archive_documents')
-    .select('*')
-    .eq('status', 'approved');
+  let query = supabase.from('archive_documents').select('*').eq('status', 'approved');
 
   if (opts?.type) {
     query = query.eq('type', opts.type);
@@ -96,13 +96,8 @@ const listAll = async (opts?: {
   return items;
 };
 
-const listCollections = async (opts?: {
-  type?: string;
-}): Promise<ArchiveCollectionItem[]> => {
-  let query = supabase
-    .from('document_collections')
-    .select('*, archive_documents(count)')
-    .eq('status', 'approved');
+const listCollections = async (opts?: { type?: string }): Promise<ArchiveCollectionItem[]> => {
+  let query = supabase.from('document_collections').select('*, archive_documents(count)').eq('status', 'approved');
 
   if (opts?.type) {
     query = query.eq('type', opts.type);
@@ -136,7 +131,9 @@ const getDocumentBySlug = async (slug: string): Promise<ArchiveDocumentItem | nu
   return mapToArchiveItem(data);
 };
 
-const getCollectionBySlug = async (slug: string): Promise<{
+const getCollectionBySlug = async (
+  slug: string
+): Promise<{
   collection: ArchiveCollectionItem;
   documents: ArchiveDocumentItem[];
 } | null> => {
@@ -201,6 +198,7 @@ if (opts?.search) {
 ## Task 2: Create DocumentCard Component
 
 **Files:**
+
 - Create: `app/components/archive/DocumentCard.vue`
 
 **Step 1: Create the component**
@@ -266,13 +264,7 @@ Extract the card rendering from `ArchiveLandingIterator.vue` into a standalone c
           {{ t('actions.share') }}
         </UButton>
 
-        <UButton
-          v-if="item.download"
-          :to="item.download"
-          target="_blank"
-          size="sm"
-          color="primary"
-        >
+        <UButton v-if="item.download" :to="item.download" target="_blank" size="sm" color="primary">
           <i class="fad fa-download mr-1"></i> {{ t('actions.download') }}
         </UButton>
       </div>
@@ -323,6 +315,7 @@ Extract the card rendering from `ArchiveLandingIterator.vue` into a standalone c
 ## Task 3: Create CollectionCard Component
 
 **Files:**
+
 - Create: `app/components/archive/CollectionCard.vue`
 
 **Step 1: Create the component**
@@ -437,11 +430,13 @@ A "stacked card" visual that shows a collection with an item count badge. Uses a
 ## Task 4: Build Unified Documents Page
 
 **Files:**
+
 - Create: `app/pages/archive/documents/index.vue`
 
 **Step 1: Create the page**
 
 This is the main unified listing page. Features:
+
 - Type filter chips (All, Manuals, Adverts, Catalogues, Tuning)
 - Search bar with debounce
 - Sort dropdown (Title, Newest, Oldest)
@@ -460,9 +455,7 @@ This is the main unified listing page. Features:
   const router = useRouter();
 
   // Read type from query param (for redirect support)
-  const activeType = ref<string>(
-    (route.query.type as string) || 'all'
-  );
+  const activeType = ref<string>((route.query.type as string) || 'all');
   const search = ref('');
   const sortBy = ref<'title' | 'newest' | 'oldest'>('title');
   const viewMode = ref<'cards' | 'table'>('table');
@@ -482,19 +475,21 @@ This is the main unified listing page. Features:
   // Fetch documents
   const { data: documents, status } = await useAsyncData(
     () => `archive-docs-${activeType.value}-${sortBy.value}`,
-    () => listAll({
-      type: activeType.value === 'all' ? undefined : activeType.value,
-      sort: sortBy.value,
-    }),
+    () =>
+      listAll({
+        type: activeType.value === 'all' ? undefined : activeType.value,
+        sort: sortBy.value,
+      }),
     { watch: [activeType, sortBy] }
   );
 
   // Fetch collections
   const { data: collections } = await useAsyncData(
     () => `archive-collections-${activeType.value}`,
-    () => listCollections({
-      type: activeType.value === 'all' ? undefined : activeType.value,
-    }),
+    () =>
+      listCollections({
+        type: activeType.value === 'all' ? undefined : activeType.value,
+      }),
     { watch: [activeType] }
   );
 
@@ -541,12 +536,8 @@ This is the main unified listing page. Features:
   // SEO
   useHead({
     title: t('title'),
-    meta: [
-      { key: 'description', name: 'description', content: t('description') },
-    ],
-    link: [
-      { rel: 'canonical', href: 'https://classicminidiy.com/archive/documents' },
-    ],
+    meta: [{ key: 'description', name: 'description', content: t('description') }],
+    link: [{ rel: 'canonical', href: 'https://classicminidiy.com/archive/documents' }],
   });
 
   useSeoMeta({
@@ -646,7 +637,10 @@ This is the main unified listing page. Features:
         <!-- Content -->
         <div v-else>
           <!-- Empty State -->
-          <div v-if="filteredDocuments.length === 0 && (!collections || collections.length === 0)" class="text-center py-8">
+          <div
+            v-if="filteredDocuments.length === 0 && (!collections || collections.length === 0)"
+            class="text-center py-8"
+          >
             <UCard>
               <p class="text-muted">{{ t('empty_state') }}</p>
             </UCard>
@@ -656,21 +650,13 @@ This is the main unified listing page. Features:
           <div v-if="collections && collections.length > 0 && viewMode === 'cards' && !search" class="mb-8">
             <h2 class="text-lg font-semibold mb-4">{{ t('collections_heading') }}</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <archive-collection-card
-                v-for="col in collections"
-                :key="col.id"
-                :collection="col"
-              />
+              <archive-collection-card v-for="col in collections" :key="col.id" :collection="col" />
             </div>
           </div>
 
           <!-- Documents Cards View -->
           <div v-if="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <archive-document-card
-              v-for="item in paginatedDocuments"
-              :key="item.title"
-              :item="item"
-            />
+            <archive-document-card v-for="item in paginatedDocuments" :key="item.title" :item="item" />
           </div>
 
           <!-- Documents Table View -->
@@ -686,15 +672,14 @@ This is the main unified listing page. Features:
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in paginatedDocuments" :key="item.title" class="border-b border-default hover:bg-muted/50">
+                <tr
+                  v-for="item in paginatedDocuments"
+                  :key="item.title"
+                  class="border-b border-default hover:bg-muted/50"
+                >
                   <td class="hidden md:table-cell p-3">
                     <div class="h-12 w-12 rounded-lg overflow-hidden">
-                      <img
-                        v-if="item.image"
-                        :src="item.image"
-                        :alt="item.title"
-                        class="h-12 w-12 object-cover"
-                      />
+                      <img v-if="item.image" :src="item.image" :alt="item.title" class="h-12 w-12 object-cover" />
                       <div v-else class="flex justify-center items-center h-12 w-12 bg-muted">
                         <i class="fad fa-image-slash text-lg text-muted"></i>
                       </div>
@@ -1117,6 +1102,7 @@ This is the main unified listing page. Features:
 ## Task 5: Build Document Detail Page
 
 **Files:**
+
 - Create: `app/pages/archive/documents/[slug].vue`
 
 **Step 1: Create the page**
@@ -1124,6 +1110,7 @@ This is the main unified listing page. Features:
 Replaces the catch-all `[...slug].vue` for document detail. Uses `getDocumentBySlug()` for clean slug-based lookup. Replicates the existing catch-all page's layout and functionality.
 
 The page should follow the same pattern as the existing `[...slug].vue` but simplified:
+
 - Use `route.params.slug` to get the slug directly
 - Call `getDocumentBySlug(slug)` from the composable
 - Show document with image, title, code, description, download/share buttons
@@ -1141,6 +1128,7 @@ The page should follow the same pattern as the existing `[...slug].vue` but simp
 ## Task 6: Build Collection Detail Page
 
 **Files:**
+
 - Create: `app/pages/archive/documents/collection/[slug].vue`
 
 **Step 1: Create the page**
@@ -1148,6 +1136,7 @@ The page should follow the same pattern as the existing `[...slug].vue` but simp
 Shows a collection with its items listed in sort order. Each item has a download link.
 
 The page should:
+
 - Call `getCollectionBySlug(slug)` from the composable
 - Show collection title, description, thumbnail
 - List all documents in the collection with their individual download links and thumbnails
@@ -1156,6 +1145,7 @@ The page should:
 - Include i18n translations in all 10 locales
 
 Template structure:
+
 - Hero + breadcrumb (Archive > Documents > Collection Title)
 - Collection header with title, description, thumbnail
 - Grid or list of items in the collection
@@ -1169,6 +1159,7 @@ Template structure:
 ## Task 7: Update Archive Hub Page
 
 **Files:**
+
 - Modify: `data/models/generic.ts`
 - Modify: `app/pages/archive/index.vue`
 
@@ -1177,6 +1168,7 @@ Template structure:
 Replace the four separate document tiles (Workshop Manuals, Adverts, Vendor Catalogues, Tuning and Modifications) with a single "Documents" tile:
 
 Remove these four items:
+
 ```typescript
 // REMOVE: Workshop Manuals (path: '/archive/manuals')
 // REMOVE: Adverts (path: '/archive/adverts')
@@ -1185,6 +1177,7 @@ Remove these four items:
 ```
 
 Add one replacement:
+
 ```typescript
 {
   title: 'Documents',
@@ -1205,6 +1198,7 @@ The resulting hub should have 8 items: Mini Registry, Engine Sizes, Mini Weights
 ## Task 8: Set Up 301 Redirects
 
 **Files:**
+
 - Modify: `nuxt.config.ts`
 - Create: `server/middleware/legacy-archive-redirect.ts`
 
@@ -1282,6 +1276,7 @@ export default defineEventHandler(async (event) => {
 ## Task 9: Delete Old Pages and Clean Up
 
 **Files:**
+
 - Delete: `app/pages/archive/manuals/index.vue`
 - Delete: `app/pages/archive/adverts/index.vue`
 - Delete: `app/pages/archive/catalogues/index.vue`
@@ -1298,6 +1293,7 @@ Check if these directories are now empty. If `manuals/` only contained `index.vu
 **Step 3: Update or keep `ArchiveLandingIterator.vue`**
 
 Check if `ArchiveLandingIterator.vue` is still used anywhere after removing the four pages. Search for `ArchiveLandingIterator` across the codebase:
+
 - If no remaining references: delete it
 - If still referenced elsewhere: keep it
 
@@ -1308,6 +1304,7 @@ Check if `ArchiveLandingIterator.vue` is still used anywhere after removing the 
 ## Task 10: Update `[...slug].vue` Catch-All
 
 **Files:**
+
 - Modify: `app/pages/[...slug].vue`
 
 **Step 1: Add redirect logic for old document URLs**
@@ -1319,6 +1316,7 @@ If the path matches `/archive/(manuals|adverts|catalogues|tuning)/something`, an
 **Alternatively**, if the server middleware from Task 8 handles all legacy redirects reliably, the catch-all can be simplified to only handle non-archive paths or show a 404 for unmatched archive paths.
 
 **Implementation decision:** Read the current `[...slug].vue` and decide whether to:
+
 1. Add client-side redirect logic for legacy archive URLs
 2. Leave it as-is (it still works via `getByPath()`)
 3. Simplify it to handle only non-document paths
@@ -1334,6 +1332,7 @@ Option 2 is safest for now — the server middleware handles the redirect, and t
 **Step 1: Run `bun run build`**
 
 Verify no build errors. Check for:
+
 - Missing imports
 - Broken references to deleted files
 - TypeScript errors
@@ -1341,6 +1340,7 @@ Verify no build errors. Check for:
 **Step 2: Verify routes**
 
 Manually check these routes work:
+
 - `/archive` — hub page shows "Documents" tile instead of 4 separate tiles
 - `/archive/documents` — unified page loads with all documents, type filters work
 - `/archive/documents?type=manual` — filters to manuals only
@@ -1355,6 +1355,7 @@ Manually check these routes work:
 **Step 3: Verify no broken references**
 
 Search codebase for references to deleted pages:
+
 - `/archive/manuals` as a string (should only appear in redirects now)
 - `/archive/adverts` as a string
 - `ArchiveLandingIterator` (should be gone or still used)
@@ -1365,21 +1366,21 @@ Search codebase for references to deleted pages:
 
 ## Summary of Changes
 
-| Action | File |
-|--------|------|
-| Modify | `app/composables/useArchiveDocuments.ts` (add 4 new methods) |
-| Create | `app/components/archive/DocumentCard.vue` |
-| Create | `app/components/archive/CollectionCard.vue` |
-| Create | `app/pages/archive/documents/index.vue` |
-| Create | `app/pages/archive/documents/[slug].vue` |
-| Create | `app/pages/archive/documents/collection/[slug].vue` |
-| Modify | `data/models/generic.ts` (consolidate hub tiles) |
-| Modify | `app/pages/archive/index.vue` (if needed for hub changes) |
-| Modify | `nuxt.config.ts` (add routeRules redirects) |
-| Create | `server/middleware/legacy-archive-redirect.ts` |
-| Delete | `app/pages/archive/manuals/index.vue` |
-| Delete | `app/pages/archive/adverts/index.vue` |
-| Delete | `app/pages/archive/catalogues/index.vue` |
-| Delete | `app/pages/archive/tuning/index.vue` |
-| Maybe Delete | `app/components/ArchiveLandingIterator.vue` |
-| Modify | `app/pages/[...slug].vue` (optional simplification) |
+| Action       | File                                                         |
+| ------------ | ------------------------------------------------------------ |
+| Modify       | `app/composables/useArchiveDocuments.ts` (add 4 new methods) |
+| Create       | `app/components/archive/DocumentCard.vue`                    |
+| Create       | `app/components/archive/CollectionCard.vue`                  |
+| Create       | `app/pages/archive/documents/index.vue`                      |
+| Create       | `app/pages/archive/documents/[slug].vue`                     |
+| Create       | `app/pages/archive/documents/collection/[slug].vue`          |
+| Modify       | `data/models/generic.ts` (consolidate hub tiles)             |
+| Modify       | `app/pages/archive/index.vue` (if needed for hub changes)    |
+| Modify       | `nuxt.config.ts` (add routeRules redirects)                  |
+| Create       | `server/middleware/legacy-archive-redirect.ts`               |
+| Delete       | `app/pages/archive/manuals/index.vue`                        |
+| Delete       | `app/pages/archive/adverts/index.vue`                        |
+| Delete       | `app/pages/archive/catalogues/index.vue`                     |
+| Delete       | `app/pages/archive/tuning/index.vue`                         |
+| Maybe Delete | `app/components/ArchiveLandingIterator.vue`                  |
+| Modify       | `app/pages/[...slug].vue` (optional simplification)          |

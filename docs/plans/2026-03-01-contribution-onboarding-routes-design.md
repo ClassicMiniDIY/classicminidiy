@@ -21,38 +21,38 @@
 
 ### New Routes
 
-| Route | Purpose |
-|---|---|
-| `/welcome` | First-time user onboarding (profile setup + unified account explanation) |
-| `/profile/edit` | Edit shared profile fields (display_name, avatar, bio) |
-| `/contribute` | Hub: pick contribution type (document, color, wheel, registry) |
+| Route                  | Purpose                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `/welcome`             | First-time user onboarding (profile setup + unified account explanation)             |
+| `/profile/edit`        | Edit shared profile fields (display_name, avatar, bio)                               |
+| `/contribute`          | Hub: pick contribution type (document, color, wheel, registry)                       |
 | `/contribute/document` | New document submission form (with type selector: manual, advert, catalogue, tuning) |
-| `/contribute/color` | New color submission form |
-| `/contribute/wheel` | New wheel submission form |
-| `/contribute/registry` | New registry entry submission form |
+| `/contribute/color`    | New color submission form                                                            |
+| `/contribute/wheel`    | New wheel submission form                                                            |
+| `/contribute/registry` | New registry entry submission form                                                   |
 
 ### Redirects (301 via `nuxt.config.ts` routeRules)
 
-| Old Route | New Route |
-|---|---|
-| `/archive/documents/submit` | `/contribute/document` |
-| `/archive/colors/contribute` | `/contribute/color` |
-| `/archive/wheels/submit` | `/contribute/wheel` |
+| Old Route                    | New Route              |
+| ---------------------------- | ---------------------- |
+| `/archive/documents/submit`  | `/contribute/document` |
+| `/archive/colors/contribute` | `/contribute/color`    |
+| `/archive/wheels/submit`     | `/contribute/wheel`    |
 
 ### Removed Routes
 
-| Route | Replacement |
-|---|---|
+| Route                                    | Replacement                          |
+| ---------------------------------------- | ------------------------------------ |
 | `/archive/documents/[slug]/suggest-edit` | Inline modal on document detail page |
 
 ### Unchanged Routes
 
-| Route | Notes |
-|---|---|
-| `/login` | Updated copy to mention unified account |
-| `/submissions` | User's submission history (no changes) |
-| `/contributors/[id]` | Public contributor profiles (no changes) |
-| `/auth/callback` | OAuth callback (updated redirect logic for first-time detection) |
+| Route                | Notes                                                            |
+| -------------------- | ---------------------------------------------------------------- |
+| `/login`             | Updated copy to mention unified account                          |
+| `/submissions`       | User's submission history (no changes)                           |
+| `/contributors/[id]` | Public contributor profiles (no changes)                         |
+| `/auth/callback`     | OAuth callback (updated redirect logic for first-time detection) |
 
 ---
 
@@ -79,6 +79,7 @@ After the auth callback completes:
 ### Welcome Page (`/welcome`)
 
 Layout:
+
 - Hero section with welcome message
 - Unified account explanation: "Your account works on classicminidiy.com and theminiexchange.com"
 - Profile setup form (optional — user can skip):
@@ -102,6 +103,7 @@ The welcome page is accessible later at `/welcome` but only auto-redirects on fi
 Requires authentication (redirect to `/login` if not signed in).
 
 Content:
+
 - Page title: "Contribute to the Archive"
 - Subtitle: "Help preserve Classic Mini history"
 - Grid of 4 cards linking to type-specific forms:
@@ -118,14 +120,15 @@ Content:
 
 Each `/contribute/*` page is a dedicated form that replaces the existing scattered submission pages:
 
-| Form | Source (migrated from) | Key Fields |
-|---|---|---|
-| `/contribute/document` | `pages/archive/documents/submit.vue` | Type selector (manual/advert/catalogue/tuning), title, description, code, author, year, file upload, thumbnail |
-| `/contribute/color` | `pages/archive/colors/contribute.vue` + `components/ColorSubmission.vue` | Name, code, hex value, year range, model, swatch upload |
-| `/contribute/wheel` | `pages/archive/wheels/submit.vue` + `components/WheelSubmit.vue` | Name, size, width, offset, bolt pattern, style, manufacturer, photos |
-| `/contribute/registry` | `components/RegistrySubmission.vue` (inline component, no page existed) | Year, model, engine number, body number, color, owner, location, notes, photos |
+| Form                   | Source (migrated from)                                                   | Key Fields                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `/contribute/document` | `pages/archive/documents/submit.vue`                                     | Type selector (manual/advert/catalogue/tuning), title, description, code, author, year, file upload, thumbnail |
+| `/contribute/color`    | `pages/archive/colors/contribute.vue` + `components/ColorSubmission.vue` | Name, code, hex value, year range, model, swatch upload                                                        |
+| `/contribute/wheel`    | `pages/archive/wheels/submit.vue` + `components/WheelSubmit.vue`         | Name, size, width, offset, bolt pattern, style, manufacturer, photos                                           |
+| `/contribute/registry` | `components/RegistrySubmission.vue` (inline component, no page existed)  | Year, model, engine number, body number, color, owner, location, notes, photos                                 |
 
 All forms:
+
 - Use the existing `submission_queue` system via `useSubmissions.submitNewItem()`
 - Trusted users get auto-approval via existing Postgres trigger
 - Others go to mod queue as `pending`
@@ -171,11 +174,11 @@ No top-level nav change — contribution is discoverable from within the archive
 
 Requires authentication. Edits the shared `profiles` table:
 
-| Field | Input Type | Notes |
-|---|---|---|
-| `display_name` | Text input | Required for contributor visibility |
-| `avatar_url` | Image upload | Supabase Storage `avatars/` bucket |
-| `bio` | Textarea | Optional |
+| Field          | Input Type   | Notes                               |
+| -------------- | ------------ | ----------------------------------- |
+| `display_name` | Text input   | Required for contributor visibility |
+| `avatar_url`   | Image upload | Supabase Storage `avatars/` bucket  |
+| `bio`          | Textarea     | Optional                            |
 
 Changes are reflected on both classicminidiy.com and theminiexchange.com since both read from the same `profiles` table.
 
@@ -191,47 +194,48 @@ Changes are reflected on both classicminidiy.com and theminiexchange.com since b
 
 ### New Files
 
-| File | Purpose |
-|---|---|
-| `pages/welcome.vue` | First-time onboarding page |
-| `pages/profile/edit.vue` | Profile editing page |
-| `pages/contribute/index.vue` | Contribution hub |
-| `pages/contribute/document.vue` | Document submission form (migrated) |
-| `pages/contribute/color.vue` | Color submission form (migrated) |
-| `pages/contribute/wheel.vue` | Wheel submission form (migrated) |
-| `pages/contribute/registry.vue` | Registry submission form (new dedicated page) |
+| File                              | Purpose                                        |
+| --------------------------------- | ---------------------------------------------- |
+| `pages/welcome.vue`               | First-time onboarding page                     |
+| `pages/profile/edit.vue`          | Profile editing page                           |
+| `pages/contribute/index.vue`      | Contribution hub                               |
+| `pages/contribute/document.vue`   | Document submission form (migrated)            |
+| `pages/contribute/color.vue`      | Color submission form (migrated)               |
+| `pages/contribute/wheel.vue`      | Wheel submission form (migrated)               |
+| `pages/contribute/registry.vue`   | Registry submission form (new dedicated page)  |
 | `components/SuggestEditModal.vue` | Reusable suggest-edit modal for all item types |
-| `components/ContributeCard.vue` | CTA card for archive pages |
+| `components/ContributeCard.vue`   | CTA card for archive pages                     |
 
 ### Removed Files
 
-| File | Replacement |
-|---|---|
-| `pages/archive/documents/submit.vue` | `/contribute/document` + 301 redirect |
-| `pages/archive/colors/contribute.vue` | `/contribute/color` + 301 redirect |
-| `pages/archive/wheels/submit.vue` | `/contribute/wheel` + 301 redirect |
+| File                                              | Replacement                              |
+| ------------------------------------------------- | ---------------------------------------- |
+| `pages/archive/documents/submit.vue`              | `/contribute/document` + 301 redirect    |
+| `pages/archive/colors/contribute.vue`             | `/contribute/color` + 301 redirect       |
+| `pages/archive/wheels/submit.vue`                 | `/contribute/wheel` + 301 redirect       |
 | `pages/archive/documents/[slug]/suggest-edit.vue` | Inline `SuggestEditModal` on detail page |
 
 ### Modified Files
 
-| File | Change |
-|---|---|
-| `pages/login.vue` | Add unified account messaging |
-| `pages/auth/callback.vue` | First-time detection (null display_name → `/welcome`) |
-| `pages/archive/index.vue` | Add contribute CTA card |
-| `pages/archive/documents/index.vue` | Add "help grow the archive" banner |
-| `pages/archive/documents/[slug].vue` | Add suggest-edit modal trigger |
-| `pages/archive/colors/index.vue` | Add contribute banner |
-| `pages/archive/colors/[...color].vue` | Add suggest-edit modal trigger |
-| `pages/archive/wheels/index.vue` | Add contribute banner |
-| `pages/archive/wheels/[...wheel].vue` | Add suggest-edit modal trigger |
-| `pages/archive/registry/index.vue` | Add contribute banner, add suggest-edit modal trigger |
-| `components/MainNav.vue` | Add "Edit Profile" to auth dropdown, add "My Submissions" if not present |
-| `nuxt.config.ts` | Add 301 redirect routeRules |
+| File                                  | Change                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| `pages/login.vue`                     | Add unified account messaging                                            |
+| `pages/auth/callback.vue`             | First-time detection (null display_name → `/welcome`)                    |
+| `pages/archive/index.vue`             | Add contribute CTA card                                                  |
+| `pages/archive/documents/index.vue`   | Add "help grow the archive" banner                                       |
+| `pages/archive/documents/[slug].vue`  | Add suggest-edit modal trigger                                           |
+| `pages/archive/colors/index.vue`      | Add contribute banner                                                    |
+| `pages/archive/colors/[...color].vue` | Add suggest-edit modal trigger                                           |
+| `pages/archive/wheels/index.vue`      | Add contribute banner                                                    |
+| `pages/archive/wheels/[...wheel].vue` | Add suggest-edit modal trigger                                           |
+| `pages/archive/registry/index.vue`    | Add contribute banner, add suggest-edit modal trigger                    |
+| `components/MainNav.vue`              | Add "Edit Profile" to auth dropdown, add "My Submissions" if not present |
+| `nuxt.config.ts`                      | Add 301 redirect routeRules                                              |
 
 ### No New Composables
 
 The existing data layer handles everything:
+
 - `useSubmissions` — submit new items, suggest edits, list user's submissions
 - `useContributions` — contribution stats, contributor profiles
 - `useAuth` — profile fetching, authentication state
@@ -240,6 +244,7 @@ The existing data layer handles everything:
 ### No Database Changes
 
 All required tables and columns already exist:
+
 - `profiles` with `display_name`, `avatar_url`, `bio`, `trust_level`, submission counters
 - `submission_queue` with `type`, `target_type`, `data`, `status`
 - `contributions` for history tracking
@@ -250,21 +255,25 @@ All required tables and columns already exist:
 ## Implementation Phases
 
 ### Phase 1: Route Cleanup & Redirects
+
 - Add 301 redirects in `nuxt.config.ts`
 - Create placeholder `/contribute` pages (can be empty initially)
 - Verify old URLs redirect correctly
 
 ### Phase 2: Onboarding
+
 - Update `/login` page with unified account messaging
 - Build `/welcome` page with profile setup
 - Update `/auth/callback` with first-time detection logic
 
 ### Phase 3: Profile Editing
+
 - Build `/profile/edit` page
 - Add "Edit Profile" links to nav dropdown and contributor profile
 - Wire up avatar upload to Supabase Storage
 
 ### Phase 4: Contribution Hub & Forms
+
 - Build `/contribute` hub page
 - Migrate document submission form to `/contribute/document`
 - Migrate color submission form to `/contribute/color`
@@ -273,6 +282,7 @@ All required tables and columns already exist:
 - Remove old submission pages (replaced by redirects)
 
 ### Phase 5: Suggest Edit & Archive CTAs
+
 - Build `SuggestEditModal.vue` component
 - Add suggest-edit to document, color, wheel, and registry detail pages
 - Remove `/archive/documents/[slug]/suggest-edit` page

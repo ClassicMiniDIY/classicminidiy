@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex items-center gap-2 pb-2 border-b border-default">
       <i class="fa-solid fa-link text-primary"></i>
-      <h3 class="text-sm font-semibold">{{ $t('title') }}</h3>
+      <h3 class="text-sm font-semibold">{{ t('title') }}</h3>
       <span class="text-xs text-muted ml-auto">{{ links.length }}</span>
     </div>
 
@@ -46,7 +46,7 @@
 
     <!-- Show More Indicator if many links -->
     <div v-if="links.length > 5" class="text-center pt-2 border-t border-default">
-      <p class="text-xs text-muted">{{ $t('showing_results', { count: links.length }) }}</p>
+      <p class="text-xs text-muted">{{ t('showing_results', { count: links.length }) }}</p>
     </div>
   </div>
 </template>
@@ -62,6 +62,8 @@
   interface Props {
     links: UsefulLink[];
   }
+
+  const { t } = useI18n();
 
   defineProps<Props>();
 

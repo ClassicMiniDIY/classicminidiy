@@ -263,9 +263,7 @@ describe('useAuth', () => {
       await auth.signInWithEmail('user@example.com');
 
       const call = mockSupabase.auth.signInWithOtp.mock.calls[0][0];
-      expect(call.options.emailRedirectTo).toBe(
-        `${window.location.origin}/auth/callback`
-      );
+      expect(call.options.emailRedirectTo).toBe(`${window.location.origin}/auth/callback`);
     });
 
     it('throws when supabase returns an error', async () => {

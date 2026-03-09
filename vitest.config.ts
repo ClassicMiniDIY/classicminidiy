@@ -11,9 +11,7 @@ export default defineConfig({
         if (id.includes('node_modules')) return;
         if (!code.includes('import.meta.client') && !code.includes('import.meta.server')) return;
         return {
-          code: code
-            .replace(/\bimport\.meta\.client\b/g, '(true)')
-            .replace(/\bimport\.meta\.server\b/g, '(false)'),
+          code: code.replace(/\bimport\.meta\.client\b/g, '(true)').replace(/\bimport\.meta\.server\b/g, '(false)'),
           map: null,
         };
       },
@@ -29,13 +27,7 @@ export default defineConfig({
     sequence: { shuffle: false },
     coverage: {
       provider: 'v8',
-      exclude: [
-        'tests/**',
-        'data/*.json',
-        'node_modules/**',
-        '*.config.*',
-        '.nuxt/**',
-      ],
+      exclude: ['tests/**', 'data/*.json', 'node_modules/**', '*.config.*', '.nuxt/**'],
     },
   },
   resolve: {

@@ -66,11 +66,7 @@ describe('useSupabase', () => {
       const useSupabase = await freshComposable();
       useSupabase();
 
-      expect(mockCreateClient).toHaveBeenCalledWith(
-        'https://test.supabase.co',
-        'test-anon-key',
-        expect.any(Object),
-      );
+      expect(mockCreateClient).toHaveBeenCalledWith('https://test.supabase.co', 'test-anon-key', expect.any(Object));
     });
   });
 

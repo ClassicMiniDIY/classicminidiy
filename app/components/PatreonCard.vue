@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+  const { t } = useI18n();
   const { capture } = usePostHog();
 
   const { path } = useRoute();
@@ -25,19 +26,19 @@
             format="webp"
             loading="lazy"
             src="https://classicminidiy.s3.amazonaws.com/misc/avatar.png"
-            :alt="$t('image_alt')"
+            :alt="t('image_alt')"
             class="w-full rounded-lg"
           />
         </div>
         <div class="col-span-9">
           <h3 class="fancy-font-book-oblique text-lg font-semibold">
-            <i class="fad fa-hands-heart"></i> {{ $t('title') }}
+            <i class="fad fa-hands-heart"></i> {{ t('title') }}
           </h3>
           <p class="text-lg py-5">
-            {{ $t('description') }}
+            {{ t('description') }}
           </p>
           <p class="pt-3">
-            <strong>{{ $t('membership_benefits') }}</strong>
+            <strong>{{ t('membership_benefits') }}</strong>
           </p>
           <p class="mt-4">
             <UButton
@@ -48,7 +49,7 @@
               @click="handlePatreonClick"
             >
               <i class="fab fa-patreon mr-2"></i>
-              <span>{{ $t('button_text') }}</span>
+              <span>{{ t('button_text') }}</span>
             </UButton>
           </p>
         </div>
@@ -58,15 +59,15 @@
       <div class="grid grid-cols-1 gap-2">
         <div>
           <h3 class="fancy-font-book-oblique text-lg font-semibold pt-2">
-            <i class="fad fa-hands-heart"></i> {{ $t('title') }}
+            <i class="fad fa-hands-heart"></i> {{ t('title') }}
           </h3>
         </div>
         <div>
           <p class="text-sm">
-            {{ $t('description') }}
+            {{ t('description') }}
           </p>
           <p class="pt-3">
-            <strong>{{ $t('membership_benefits') }}</strong>
+            <strong>{{ t('membership_benefits') }}</strong>
           </p>
           <UButton
             to="https://patreon.com/classicminidiy"
@@ -77,7 +78,7 @@
             @click="handlePatreonClick"
           >
             <i class="fab fa-patreon mr-2"></i>
-            <span>{{ $t('button_text') }}</span>
+            <span>{{ t('button_text') }}</span>
           </UButton>
         </div>
       </div>

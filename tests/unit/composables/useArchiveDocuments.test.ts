@@ -104,9 +104,7 @@ describe('useArchiveDocuments', () => {
   describe('listByType()', () => {
     it('queries archive_documents table for a given type with approved status', async () => {
       const rows = [makeDocRow()];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listByType } = useArchiveDocuments();
@@ -121,9 +119,7 @@ describe('useArchiveDocuments', () => {
 
     it('maps rows to ArchiveDocumentItem objects', async () => {
       const row = makeDocRow();
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listByType } = useArchiveDocuments();
@@ -157,9 +153,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('returns empty array when data is null', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listByType } = useArchiveDocuments();
@@ -170,9 +164,7 @@ describe('useArchiveDocuments', () => {
 
     it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Connection failed', code: '500' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: supabaseError })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: supabaseError }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listByType } = useArchiveDocuments();
@@ -188,9 +180,7 @@ describe('useArchiveDocuments', () => {
         file_path: null,
         thumbnail_path: null,
       });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [sparseRow], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [sparseRow], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listByType } = useArchiveDocuments();
@@ -206,9 +196,7 @@ describe('useArchiveDocuments', () => {
 
   describe('listAll()', () => {
     it('queries with no filters when no options provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listAll } = useArchiveDocuments();
@@ -222,9 +210,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('filters by type when provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listAll } = useArchiveDocuments();
@@ -234,9 +220,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('applies search filter using .or() with ilike on title, description, and code', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listAll } = useArchiveDocuments();
@@ -248,9 +232,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('sorts by newest (created_at descending) when sort is "newest"', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listAll } = useArchiveDocuments();
@@ -260,9 +242,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('sorts by oldest (created_at ascending) when sort is "oldest"', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listAll } = useArchiveDocuments();
@@ -272,9 +252,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('sorts by title by default when sort is "title"', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listAll } = useArchiveDocuments();
@@ -300,9 +278,7 @@ describe('useArchiveDocuments', () => {
 
     it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Query failed', code: '500' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: supabaseError })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: supabaseError }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listAll } = useArchiveDocuments();
@@ -313,9 +289,7 @@ describe('useArchiveDocuments', () => {
 
   describe('listCollections()', () => {
     it('queries document_collections with count join and approved status', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listCollections } = useArchiveDocuments();
@@ -328,9 +302,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('filters by type when provided', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listCollections } = useArchiveDocuments();
@@ -341,9 +313,7 @@ describe('useArchiveDocuments', () => {
 
     it('maps rows to ArchiveCollectionItem objects with correct item count', async () => {
       const row = makeCollectionRow();
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listCollections } = useArchiveDocuments();
@@ -363,9 +333,7 @@ describe('useArchiveDocuments', () => {
 
     it('returns itemCount 0 when archive_documents count is missing', async () => {
       const row = makeCollectionRow({ archive_documents: null });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listCollections } = useArchiveDocuments();
@@ -375,9 +343,7 @@ describe('useArchiveDocuments', () => {
     });
 
     it('returns empty array when data is null', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listCollections } = useArchiveDocuments();
@@ -388,9 +354,7 @@ describe('useArchiveDocuments', () => {
 
     it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Query failed', code: '500' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: supabaseError })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: supabaseError }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { listCollections } = useArchiveDocuments();
@@ -540,9 +504,7 @@ describe('useArchiveDocuments', () => {
       // First call for collection lookup
       mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: collection, error: null });
       // Second call chain for documents query (uses .then)
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { getCollectionBySlug } = useArchiveDocuments();
@@ -592,9 +554,7 @@ describe('useArchiveDocuments', () => {
       // First: collection lookup via maybeSingle
       mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: collection, error: null });
       // Second: documents query via implicit await (.then)
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: docs, error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: docs, error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { getCollectionBySlug } = useArchiveDocuments();
@@ -621,9 +581,7 @@ describe('useArchiveDocuments', () => {
       };
 
       mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: collection, error: null });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { getCollectionBySlug } = useArchiveDocuments();
@@ -647,9 +605,7 @@ describe('useArchiveDocuments', () => {
       };
 
       mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: collection, error: null });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: null }));
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { getCollectionBySlug } = useArchiveDocuments();
@@ -669,9 +625,9 @@ describe('useArchiveDocuments', () => {
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { submitDocument } = useArchiveDocuments();
 
-      await expect(
-        submitDocument({ type: 'manual', title: 'Test Manual' })
-      ).rejects.toThrow('Must be authenticated to submit');
+      await expect(submitDocument({ type: 'manual', title: 'Test Manual' })).rejects.toThrow(
+        'Must be authenticated to submit'
+      );
     });
 
     it('inserts into submission_queue with correct fields when authenticated', async () => {
@@ -716,9 +672,7 @@ describe('useArchiveDocuments', () => {
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { submitDocument } = useArchiveDocuments();
 
-      await expect(
-        submitDocument({ type: 'manual', title: 'Test' })
-      ).rejects.toEqual(supabaseError);
+      await expect(submitDocument({ type: 'manual', title: 'Test' })).rejects.toEqual(supabaseError);
     });
 
     it('passes all optional fields in the data payload', async () => {

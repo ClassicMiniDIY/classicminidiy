@@ -336,9 +336,7 @@
       class="mb-6"
     >
       <template #actions>
-        <UButton variant="outline" color="error" size="sm" @click="refreshData()">
-          Retry
-        </UButton>
+        <UButton variant="outline" color="error" size="sm" @click="refreshData()"> Retry </UButton>
       </template>
     </UAlert>
 
@@ -378,11 +376,12 @@
             <td class="p-2">
               <div class="flex items-center gap-3">
                 <!-- Avatar -->
-                <div
-                  v-if="userItem.avatar_url"
-                  class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
-                >
-                  <img :src="userItem.avatar_url" :alt="userItem.display_name || userItem.email" class="w-full h-full object-cover" />
+                <div v-if="userItem.avatar_url" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                  <img
+                    :src="userItem.avatar_url"
+                    :alt="userItem.display_name || userItem.email"
+                    class="w-full h-full object-cover"
+                  />
                 </div>
                 <div
                   v-else
@@ -461,19 +460,14 @@
       <!-- Result Count -->
       <div class="flex items-center justify-between mt-4 text-sm opacity-70">
         <span>
-          Showing {{ currentPage * pageSize + 1 }}-{{ Math.min((currentPage + 1) * pageSize, totalUsers) }}
-          of {{ totalUsers }} users
+          Showing {{ currentPage * pageSize + 1 }}-{{ Math.min((currentPage + 1) * pageSize, totalUsers) }} of
+          {{ totalUsers }} users
         </span>
       </div>
 
       <!-- Pagination -->
       <div v-if="totalPages > 1" class="flex justify-center items-center gap-2 mt-4">
-        <UButton
-          size="sm"
-          variant="ghost"
-          :disabled="!hasPrevPage || isLoading"
-          @click="goToPage(currentPage - 1)"
-        >
+        <UButton size="sm" variant="ghost" :disabled="!hasPrevPage || isLoading" @click="goToPage(currentPage - 1)">
           <i class="fa-solid fa-chevron-left mr-1"></i>
           Previous
         </UButton>
@@ -490,19 +484,11 @@
             >
               {{ page }}
             </UButton>
-            <span
-              v-else-if="Math.abs(page - 1 - currentPage) === 2"
-              class="px-1 opacity-50"
-            >...</span>
+            <span v-else-if="Math.abs(page - 1 - currentPage) === 2" class="px-1 opacity-50">...</span>
           </template>
         </div>
 
-        <UButton
-          size="sm"
-          variant="ghost"
-          :disabled="!hasNextPage || isLoading"
-          @click="goToPage(currentPage + 1)"
-        >
+        <UButton size="sm" variant="ghost" :disabled="!hasNextPage || isLoading" @click="goToPage(currentPage + 1)">
           Next
           <i class="fa-solid fa-chevron-right ml-1"></i>
         </UButton>
@@ -518,11 +504,12 @@
           <!-- User Summary -->
           <div v-if="selectedUser" class="bg-muted p-4 rounded-lg mb-4">
             <div class="flex items-center gap-3 mb-3">
-              <div
-                v-if="selectedUser.avatar_url"
-                class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0"
-              >
-                <img :src="selectedUser.avatar_url" :alt="selectedUser.display_name || selectedUser.email" class="w-full h-full object-cover" />
+              <div v-if="selectedUser.avatar_url" class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                <img
+                  :src="selectedUser.avatar_url"
+                  :alt="selectedUser.display_name || selectedUser.email"
+                  class="w-full h-full object-cover"
+                />
               </div>
               <div
                 v-else
@@ -548,12 +535,7 @@
           </div>
 
           <!-- Danger Warning -->
-          <UAlert
-            v-if="isDangerousChange"
-            color="warning"
-            icon="i-fa6-solid-triangle-exclamation"
-            class="mb-4"
-          >
+          <UAlert v-if="isDangerousChange" color="warning" icon="i-fa6-solid-triangle-exclamation" class="mb-4">
             <template #title>
               <span v-if="newTrustLevel === 'moderator'">
                 You are about to grant moderator status. This user will have elevated trust for content moderation.
@@ -566,9 +548,7 @@
 
           <!-- Actions -->
           <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="closeTrustModal" :disabled="isProcessing">
-              Cancel
-            </UButton>
+            <UButton variant="outline" @click="closeTrustModal" :disabled="isProcessing"> Cancel </UButton>
             <UButton
               :color="isDangerousChange ? 'warning' : 'primary'"
               @click="confirmTrustLevelChange"

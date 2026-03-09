@@ -59,7 +59,7 @@
     (newData) => {
       if (newData) initFormData(newData);
     },
-    { immediate: true, deep: true },
+    { immediate: true, deep: true }
   );
 
   watch(isOpen, (open) => {

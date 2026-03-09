@@ -31,6 +31,7 @@ All pages in this project follow these patterns. Follow them exactly:
 ## Task 1: Add 301 Redirects in nuxt.config.ts
 
 **Files:**
+
 - Modify: `nuxt.config.ts` (routeRules section, around line 127)
 
 **Step 1: Add redirect rules**
@@ -46,6 +47,7 @@ Add these 3 redirects to the `routeRules` object in `nuxt.config.ts`, alongside 
 **Step 2: Update sitemap excludes**
 
 In the sitemap config section, replace these excludes:
+
 - `/archive/colors/contribute` → `/contribute/**`
 - `/archive/wheels/submit` → (already covered by above glob)
 
@@ -63,11 +65,13 @@ git commit -m "feat: add 301 redirects for old submission routes to /contribute/
 ## Task 2: Create Welcome Page
 
 **Files:**
+
 - Create: `app/pages/welcome.vue`
 
 **Step 1: Create the welcome page**
 
 Create `app/pages/welcome.vue`. This page:
+
 - Requires authentication (redirect to `/login` if not)
 - Shows unified account explanation (classicminidiy.com + theminiexchange.com)
 - Optional profile setup form (display_name, avatar_url, bio)
@@ -77,6 +81,7 @@ Create `app/pages/welcome.vue`. This page:
 - SEO: noindex, nofollow
 
 Key template structure:
+
 ```
 <div class="min-h-screen flex items-center justify-center bg-muted">
   <div class="w-full max-w-2xl mx-auto p-4">
@@ -159,6 +164,7 @@ Key template structure:
 ```
 
 Script logic:
+
 ```ts
 const { isAuthenticated, userProfile, fetchUserProfile } = useAuth();
 const supabase = useSupabase();
@@ -174,12 +180,17 @@ async function saveProfile() {
   if (!displayName.value.trim()) return;
   saving.value = true;
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('profiles').update({
-        display_name: displayName.value.trim(),
-        bio: bio.value.trim() || null,
-      }).eq('id', user.id);
+      await supabase
+        .from('profiles')
+        .update({
+          display_name: displayName.value.trim(),
+          bio: bio.value.trim() || null,
+        })
+        .eq('id', user.id);
       await fetchUserProfile(user.id);
     }
   } finally {
@@ -222,6 +233,7 @@ git commit -m "feat: add welcome page with unified account onboarding"
 ## Task 3: Update Auth Callback for First-Time Detection
 
 **Files:**
+
 - Modify: `app/pages/auth/callback.vue`
 
 **Step 1: Add first-time user detection**
@@ -229,6 +241,7 @@ git commit -m "feat: add welcome page with unified account onboarding"
 In `auth/callback.vue`, update the `onMounted` handler. After `initAuth()` and the 500ms wait, check the user's profile for null `display_name`:
 
 Replace the current redirect logic (lines 33-38):
+
 ```ts
 if (isAuthenticated.value) {
   if (isAdmin.value) {
@@ -240,6 +253,7 @@ if (isAuthenticated.value) {
 ```
 
 With:
+
 ```ts
 if (isAuthenticated.value) {
   // Wait for profile to be fetched
@@ -258,6 +272,7 @@ if (isAuthenticated.value) {
 ```
 
 Update the destructured imports at line 24 to include `userProfile` and `waitForAuth`:
+
 ```ts
 const { initAuth, isAuthenticated, isAdmin, userProfile, waitForAuth } = useAuth();
 ```
@@ -274,6 +289,7 @@ git commit -m "feat: redirect first-time users to /welcome after auth callback"
 ## Task 4: Update Login Page Messaging
 
 **Files:**
+
 - Modify: `app/pages/login.vue`
 
 **Step 1: Update subtitle and add unified account note**
@@ -294,6 +310,7 @@ In `login.vue`, make these changes:
 ```
 
 3. Add i18n keys for all 10 locales:
+
 - `subtitle` → update from "Access Classic Mini DIY admin panel" to "Sign in to contribute, track submissions, and more" (and translations)
 - `unified_account_note` → "Your account works on both classicminidiy.com and theminiexchange.com" (and translations)
 
@@ -302,6 +319,7 @@ Also update `page_description` meta to not reference "admin panel".
 **Step 2: Fix the Russian locale bug**
 
 The Russian locale has Japanese text for `sign_in_google` and `sign_in_apple` (lines 324-325). Fix:
+
 ```json
 "sign_in_google": "Продолжить с Google",
 "sign_in_apple": "Продолжить с Apple",
@@ -319,11 +337,13 @@ git commit -m "feat: update login page with unified account messaging"
 ## Task 5: Create Profile Edit Page
 
 **Files:**
+
 - Create: `app/pages/profile/edit.vue`
 
 **Step 1: Create the profile edit page**
 
 Create `app/pages/profile/edit.vue`. This page:
+
 - Requires authentication
 - Edits shared `profiles` table fields: display_name, avatar_url, bio
 - Uses `useAuth()` for state, `useSupabase()` for updates
@@ -332,6 +352,7 @@ Create `app/pages/profile/edit.vue`. This page:
 - SEO: noindex, nofollow
 
 Template structure:
+
 ```
 <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 <div class="container mx-auto px-4 py-6">
@@ -388,6 +409,7 @@ Template structure:
 ```
 
 Script:
+
 ```ts
 import { HERO_TYPES, BREADCRUMB_VERSIONS } from '../../../data/models/generic';
 
@@ -400,23 +422,32 @@ const saving = ref(false);
 const saved = ref(false);
 
 // Pre-populate from profile
-watch(userProfile, (profile) => {
-  if (profile) {
-    displayName.value = profile.display_name || '';
-    // bio is not in UserProfile interface yet, may need to fetch separately or add to interface
-  }
-}, { immediate: true });
+watch(
+  userProfile,
+  (profile) => {
+    if (profile) {
+      displayName.value = profile.display_name || '';
+      // bio is not in UserProfile interface yet, may need to fetch separately or add to interface
+    }
+  },
+  { immediate: true }
+);
 
 async function save() {
   saving.value = true;
   saved.value = false;
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('profiles').update({
-        display_name: displayName.value.trim() || null,
-        bio: bio.value.trim() || null,
-      }).eq('id', user.id);
+      await supabase
+        .from('profiles')
+        .update({
+          display_name: displayName.value.trim() || null,
+          bio: bio.value.trim() || null,
+        })
+        .eq('id', user.id);
       await fetchUserProfile(user.id);
       saved.value = true;
     }
@@ -442,11 +473,13 @@ git commit -m "feat: add profile edit page for shared profile fields"
 ## Task 6: Update MainNav Profile Dropdown
 
 **Files:**
+
 - Modify: `app/components/MainNav.vue`
 
 **Step 1: Update dropdown items**
 
 In MainNav.vue, the profile dropdown (when authenticated) currently has these items:
+
 - Admin (if admin)
 - Submissions → `/submissions`
 - Contribute Color → `/archive/colors/contribute`
@@ -454,6 +487,7 @@ In MainNav.vue, the profile dropdown (when authenticated) currently has these it
 - Sign Out
 
 Replace "Contribute Color" and "Submit Wheel" with:
+
 - Edit Profile → `/profile/edit`
 - Contribute → `/contribute`
 
@@ -462,6 +496,7 @@ Keep "Submissions" and "Admin" (if admin) as-is.
 Find the desktop dropdown items section and the mobile slideover account section. Update both to use the new routes.
 
 For the desktop profile dropdown `items` array, replace the "Contribute Color" and "Submit Wheel" entries with:
+
 ```ts
 {
   label: t('nav.edit_profile'),
@@ -480,6 +515,7 @@ Do the same for the mobile slideover section.
 **Step 2: Update i18n keys**
 
 Add new i18n keys and remove old ones:
+
 - Add: `nav.edit_profile` → "Edit Profile" (10 locales)
 - Add: `nav.contribute` → "Contribute" (10 locales)
 - Remove: old contribute color / submit wheel keys if they exist
@@ -496,17 +532,20 @@ git commit -m "feat: update nav dropdown with profile edit and contribute links"
 ## Task 7: Create Contribute Hub Page
 
 **Files:**
+
 - Create: `app/pages/contribute/index.vue`
 
 **Step 1: Create the hub page**
 
 Create `app/pages/contribute/index.vue`. This page:
+
 - Requires authentication (auth gate pattern)
 - Shows 4 contribution type cards in a grid
 - Shows user's contribution stats at the bottom
 - Links to `/submissions` for full history
 
 Template structure:
+
 ```
 <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 <div class="container mx-auto px-4 py-6">
@@ -586,6 +625,7 @@ Template structure:
 ```
 
 Script:
+
 ```ts
 import { HERO_TYPES, BREADCRUMB_VERSIONS } from '../../../data/models/generic';
 
@@ -608,6 +648,7 @@ git commit -m "feat: add /contribute hub page with type selection grid"
 ## Task 8: Migrate Document Submission Form
 
 **Files:**
+
 - Create: `app/pages/contribute/document.vue`
 
 **Step 1: Create the document contribution page**
@@ -634,6 +675,7 @@ git commit -m "feat: add /contribute/document page (migrated from archive submit
 ## Task 9: Migrate Color Contribution Form
 
 **Files:**
+
 - Create: `app/pages/contribute/color.vue`
 
 **Step 1: Create the color contribution page**
@@ -660,6 +702,7 @@ git commit -m "feat: add /contribute/color page (migrated from archive contribut
 ## Task 10: Create Wheel Contribution Page
 
 **Files:**
+
 - Create: `app/pages/contribute/wheel.vue`
 
 **Step 1: Create the wheel contribution page**
@@ -718,6 +761,7 @@ git commit -m "feat: add /contribute/wheel page wrapping WheelSubmit component"
 ## Task 11: Create Registry Contribution Page
 
 **Files:**
+
 - Create: `app/pages/contribute/registry.vue`
 
 **Step 1: Create the registry contribution page**
@@ -775,6 +819,7 @@ git commit -m "feat: add /contribute/registry page wrapping RegistrySubmission c
 ## Task 12: Remove Old Submission Pages
 
 **Files:**
+
 - Delete: `app/pages/archive/documents/submit.vue`
 - Delete: `app/pages/archive/colors/contribute.vue`
 - Delete: `app/pages/archive/wheels/submit.vue`
@@ -809,12 +854,14 @@ grep -r "suggest-edit" app/ --include="*.vue" --include="*.ts"
 Update any found references to point to the new `/contribute/*` routes.
 
 Key files likely to contain old links:
+
 - `app/pages/archive/documents/[slug].vue` — may have a "Contribute" or download button
 - `app/pages/archive/colors/[...color].vue` — has "Contribute" button linking to `/archive/colors/contribute?color=`
 - `app/pages/archive/wheels/[...wheel].vue` — has "Edit/Contribute" button linking to `/archive/wheels/submit?uuid=`
 - `app/pages/submissions/index.vue` — empty state links to `/archive/documents/submit`
 
 Update these links:
+
 - `/archive/colors/contribute?color=X` → `/contribute/color?color=X`
 - `/archive/wheels/submit?uuid=X` → `/contribute/wheel?uuid=X`
 - `/archive/documents/submit` → `/contribute/document`
@@ -831,6 +878,7 @@ git commit -m "feat: remove old submission pages, update internal links to /cont
 ## Task 13: Create SuggestEditModal Component
 
 **Files:**
+
 - Create: `app/components/SuggestEditModal.vue`
 
 **Step 1: Create the reusable suggest-edit modal**
@@ -838,6 +886,7 @@ git commit -m "feat: remove old submission pages, update internal links to /cont
 Create `app/components/SuggestEditModal.vue`. This is a generic modal that works across all archive types. It accepts the current item's data, shows editable fields, detects changes, and submits via `useSubmissions().submitEditSuggestion()`.
 
 Props:
+
 - `modelValue` (boolean) — v-model for open/close
 - `targetType` (string) — 'document' | 'color' | 'wheel' | 'registry'
 - `targetId` (string) — the item's UUID
@@ -845,10 +894,12 @@ Props:
 - `editableFields` (Array<{ key: string, label: string, type?: 'text' | 'number' | 'textarea' }>) — which fields are editable
 
 Emits:
+
 - `update:modelValue` — for v-model
 - `submitted` — after successful submission
 
 Template structure:
+
 ```
 <UModal v-model="isOpen">
   <UCard>
@@ -900,6 +951,7 @@ Template structure:
 ```
 
 Script:
+
 ```ts
 const props = defineProps<{
   modelValue: boolean;
@@ -911,7 +963,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
-  'submitted': [];
+  submitted: [];
 }>();
 
 const { submitEditSuggestion } = useSubmissions();
@@ -929,11 +981,15 @@ const error = ref('');
 const submitted = ref(false);
 
 // Initialize form data from current values
-watch(() => props.currentData, (data) => {
-  for (const field of props.editableFields) {
-    formData[field.key] = data[field.key] || '';
-  }
-}, { immediate: true });
+watch(
+  () => props.currentData,
+  (data) => {
+    for (const field of props.editableFields) {
+      formData[field.key] = data[field.key] || '';
+    }
+  },
+  { immediate: true }
+);
 
 const hasChanges = computed(() => {
   return props.editableFields.some((field) => {
@@ -998,6 +1054,7 @@ git commit -m "feat: add reusable SuggestEditModal component for all archive typ
 ## Task 14: Add Suggest Edit to Document Detail Page
 
 **Files:**
+
 - Modify: `app/pages/archive/documents/[slug].vue`
 
 **Step 1: Add suggest-edit trigger and modal**
@@ -1005,12 +1062,14 @@ git commit -m "feat: add reusable SuggestEditModal component for all archive typ
 In the document detail page, add:
 
 1. Import and state for the modal:
+
 ```ts
 const { isAuthenticated } = useAuth();
 const showSuggestEdit = ref(false);
 ```
 
 2. A "Suggest Edit" button near the existing action buttons (Share, Contribute, Download area). Only show when authenticated:
+
 ```html
 <UButton v-if="isAuthenticated" variant="outline" size="sm" @click="showSuggestEdit = true">
   <i class="fad fa-pen-to-square mr-2"></i>
@@ -1019,6 +1078,7 @@ const showSuggestEdit = ref(false);
 ```
 
 3. The modal at the bottom of the template:
+
 ```html
 <SuggestEditModal
   v-if="document"
@@ -1048,6 +1108,7 @@ git commit -m "feat: add inline suggest-edit modal to document detail page"
 ## Task 15: Add Suggest Edit to Color, Wheel, and Registry Detail Pages
 
 **Files:**
+
 - Modify: `app/pages/archive/colors/[...color].vue`
 - Modify: `app/pages/archive/wheels/[...wheel].vue`
 - Modify: `app/pages/archive/registry/index.vue`
@@ -1055,6 +1116,7 @@ git commit -m "feat: add inline suggest-edit modal to document detail page"
 **Step 1: Add suggest-edit to color detail page**
 
 In `archive/colors/[...color].vue`, add the same pattern as Task 14:
+
 - "Suggest Edit" button (auth-gated)
 - `SuggestEditModal` with color-specific fields:
   ```ts
@@ -1071,6 +1133,7 @@ Also update the existing "Contribute" button link from `/archive/colors/contribu
 **Step 2: Add suggest-edit to wheel detail page**
 
 In `archive/wheels/[...wheel].vue`:
+
 - "Suggest Edit" button (auth-gated)
 - `SuggestEditModal` with wheel-specific fields (name, width, size, offset)
 
@@ -1092,6 +1155,7 @@ git commit -m "feat: add suggest-edit modal to color, wheel, and registry detail
 ## Task 16: Add Contribute CTAs to Archive Pages
 
 **Files:**
+
 - Modify: `app/pages/archive/index.vue`
 - Modify: `app/pages/archive/documents/index.vue`
 - Modify: `app/pages/archive/colors/index.vue`
@@ -1151,6 +1215,7 @@ For each archive section listing page (documents, colors, wheels, registry), add
 ```
 
 Where `contributeLink` is:
+
 - `/contribute/document` for documents page
 - `/contribute/color` for colors page
 - `/contribute/wheel` for wheels page
@@ -1170,6 +1235,7 @@ git commit -m "feat: add contribute CTAs to archive hub and section listing page
 ## Task 17: Update Submissions Page Empty State
 
 **Files:**
+
 - Modify: `app/pages/submissions/index.vue`
 
 **Step 1: Update empty state link**

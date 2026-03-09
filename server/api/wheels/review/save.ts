@@ -34,9 +34,9 @@ export default defineEventHandler(async (event) => {
     }
 
     // Parse photos from either old format (array of {src} objects) or new format (array of strings)
-    const photos = (wheelData.images || wheelData.photos || []).map((img: any) =>
-      typeof img === 'string' ? img : img.src || img.location || '',
-    ).filter(Boolean);
+    const photos = (wheelData.images || wheelData.photos || [])
+      .map((img: any) => (typeof img === 'string' ? img : img.src || img.location || ''))
+      .filter(Boolean);
 
     // Insert the approved wheel into the wheels table
     const { error: wheelError } = await supabase.from('wheels').insert({

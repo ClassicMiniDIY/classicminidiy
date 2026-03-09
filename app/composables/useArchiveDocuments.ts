@@ -55,9 +55,9 @@ export const useArchiveDocuments = () => {
   const cleanDescription = (raw: string | null): string => {
     if (!raw) return '';
     return raw
-      .replace(/<!--.*?-->/g, '')  // HTML comments
-      .replace(/^#+\s*/gm, '')     // Markdown headings
-      .replace(/\s+/g, ' ')        // Collapse whitespace
+      .replace(/<!--.*?-->/g, '') // HTML comments
+      .replace(/^#+\s*/gm, '') // Markdown headings
+      .replace(/\s+/g, ' ') // Collapse whitespace
       .trim();
   };
 
@@ -103,7 +103,7 @@ export const useArchiveDocuments = () => {
   };
 
   const listByType = async (
-    type: 'manual' | 'advert' | 'catalogue' | 'tuning' | 'electrical',
+    type: 'manual' | 'advert' | 'catalogue' | 'tuning' | 'electrical'
   ): Promise<ArchiveDocumentItem[]> => {
     const { data, error } = await supabase
       .from('archive_documents')
@@ -162,10 +162,7 @@ export const useArchiveDocuments = () => {
     search?: string;
     sort?: 'title' | 'newest' | 'oldest';
   }): Promise<ArchiveDocumentItem[]> => {
-    let query = supabase
-      .from('archive_documents')
-      .select('*')
-      .eq('status', 'approved');
+    let query = supabase.from('archive_documents').select('*').eq('status', 'approved');
 
     if (opts?.type) {
       query = query.eq('type', opts.type);
@@ -198,13 +195,8 @@ export const useArchiveDocuments = () => {
     return items;
   };
 
-  const listCollections = async (opts?: {
-    type?: string;
-  }): Promise<ArchiveCollectionItem[]> => {
-    let query = supabase
-      .from('document_collections')
-      .select('*, archive_documents(count)')
-      .eq('status', 'approved');
+  const listCollections = async (opts?: { type?: string }): Promise<ArchiveCollectionItem[]> => {
+    let query = supabase.from('document_collections').select('*, archive_documents(count)').eq('status', 'approved');
 
     if (opts?.type) {
       query = query.eq('type', opts.type);
@@ -239,10 +231,7 @@ export const useArchiveDocuments = () => {
     return mapToArchiveDetail(data);
   };
 
-  const getRelatedDocuments = async (
-    collectionId: string,
-    excludeDocId: string,
-  ): Promise<ArchiveDocumentItem[]> => {
+  const getRelatedDocuments = async (collectionId: string, excludeDocId: string): Promise<ArchiveDocumentItem[]> => {
     const { data, error } = await supabase
       .from('archive_documents')
       .select('*')
@@ -256,10 +245,7 @@ export const useArchiveDocuments = () => {
   };
 
   const getDocumentTypeCounts = async (): Promise<Record<string, number>> => {
-    const { data, error } = await supabase
-      .from('archive_documents')
-      .select('type')
-      .eq('status', 'approved');
+    const { data, error } = await supabase.from('archive_documents').select('type').eq('status', 'approved');
 
     if (error) throw error;
 
@@ -273,7 +259,9 @@ export const useArchiveDocuments = () => {
     return counts;
   };
 
-  const getCollectionBySlug = async (slug: string): Promise<{
+  const getCollectionBySlug = async (
+    slug: string
+  ): Promise<{
     collection: ArchiveCollectionItem;
     documents: ArchiveDocumentDetail[];
   } | null> => {
@@ -337,5 +325,17 @@ export const useArchiveDocuments = () => {
     return data;
   };
 
-  return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, getRelatedDocuments, getDocumentTypeCounts, getCollectionBySlug, getStorageUrl, getThumbnailUrl, submitDocument };
+  return {
+    listByType,
+    listAll,
+    listCollections,
+    getByPath,
+    getDocumentBySlug,
+    getRelatedDocuments,
+    getDocumentTypeCounts,
+    getCollectionBySlug,
+    getStorageUrl,
+    getThumbnailUrl,
+    submitDocument,
+  };
 };

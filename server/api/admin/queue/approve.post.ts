@@ -75,7 +75,10 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
         if (fileObj.category === 'swatch' && !swatchPath) {
           swatchPath = fileObj.url;
         } else if (fileObj.category === 'car-photos' || fileObj.category === 'general') {
-          contributorImages.push({ url: fileObj.url, contributor: data.submittedBy || data.legacy_submitted_by || null });
+          contributorImages.push({
+            url: fileObj.url,
+            contributor: data.submittedBy || data.legacy_submitted_by || null,
+          });
         }
       }
 
@@ -137,7 +140,10 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
 
     case 'document':
       ({ error } = await supabase.from('archive_documents').insert({
-        slug: (data.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+        slug: (data.title || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, ''),
         type: data.type || 'manual',
         title: data.title || '',
         description: data.description || null,
@@ -157,7 +163,12 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
   return error?.message || null;
 }
 
-async function applyEditSuggestion(supabase: any, targetType: string, targetId: string, data: any): Promise<string | null> {
+async function applyEditSuggestion(
+  supabase: any,
+  targetType: string,
+  targetId: string,
+  data: any
+): Promise<string | null> {
   const changes = data.changes;
   if (!changes || typeof changes !== 'object') return 'No changes provided';
 
@@ -175,13 +186,12 @@ async function applyEditSuggestion(supabase: any, targetType: string, targetId: 
 
     if (newTitle) {
       // Determine collection type from the target document
-      const { data: targetDoc } = await supabase
-        .from('archive_documents')
-        .select('type')
-        .eq('id', targetId)
-        .single();
+      const { data: targetDoc } = await supabase.from('archive_documents').select('type').eq('id', targetId).single();
 
-      const slug = String(newTitle).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const slug = String(newTitle)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
 
       const { data: newCollection, error: collError } = await supabase
         .from('document_collections')

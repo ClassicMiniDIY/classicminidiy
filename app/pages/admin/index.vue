@@ -125,9 +125,7 @@
             <h2 class="text-xl font-bold">User Management</h2>
           </div>
 
-          <p class="opacity-70 mb-6">
-            Manage users, trust levels, and permissions for the contributor system.
-          </p>
+          <p class="opacity-70 mb-6">Manage users, trust levels, and permissions for the contributor system.</p>
 
           <div class="flex justify-end">
             <UButton to="/admin/users" color="warning">

@@ -19,13 +19,11 @@ export async function requireAdminAuth(event: any) {
         .map((c) => {
           const [key, ...val] = c.trim().split('=');
           return [key, val.join('=')];
-        }),
+        })
     );
 
     // Supabase stores tokens in cookies named sb-<project-ref>-auth-token
-    const authCookieKey = Object.keys(cookies).find(
-      (k) => k.startsWith('sb-') && k.endsWith('-auth-token'),
-    );
+    const authCookieKey = Object.keys(cookies).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
     if (authCookieKey) {
       try {
         const decoded = JSON.parse(decodeURIComponent(cookies[authCookieKey]));

@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+  const { t } = useI18n();
   const { data: stats } = await useFetch('/api/youtube/stats');
 </script>
 
@@ -25,9 +26,9 @@
           </svg>
         </div>
         <div>
-          <div class="text-sm text-muted">{{ $t('all_time_views') }}</div>
+          <div class="text-sm text-muted">{{ t('all_time_views') }}</div>
           <div class="text-2xl font-bold text-primary" v-if="stats && stats.views">{{ stats?.views }}</div>
-          <div class="text-xs text-muted">{{ $t('since_2015') }}</div>
+          <div class="text-xs text-muted">{{ t('since_2015') }}</div>
         </div>
       </div>
     </div>
@@ -39,11 +40,11 @@
           <i class="fad fa-user text-3xl"></i>
         </div>
         <div>
-          <div class="text-sm text-muted">{{ $t('subscribers') }}</div>
+          <div class="text-sm text-muted">{{ t('subscribers') }}</div>
           <div class="text-2xl font-bold text-secondary" v-if="stats && stats.subscribers">
             {{ stats?.subscribers }}
           </div>
-          <div class="text-xs text-muted">{{ $t('across_world') }}</div>
+          <div class="text-xs text-muted">{{ t('across_world') }}</div>
         </div>
       </div>
     </div>
@@ -56,8 +57,8 @@
         </div>
         <div>
           <div class="text-2xl font-bold text-info" v-if="stats && stats.videos">{{ stats?.videos }}</div>
-          <div class="text-sm text-muted">{{ $t('videos') }}</div>
-          <div class="text-xs text-muted">{{ $t('since_2015') }}</div>
+          <div class="text-sm text-muted">{{ t('videos') }}</div>
+          <div class="text-xs text-muted">{{ t('since_2015') }}</div>
         </div>
       </div>
     </div>

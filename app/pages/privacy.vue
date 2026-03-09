@@ -1,13 +1,15 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../data/models/generic';
 
+  const { t } = useI18n();
+
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
@@ -28,8 +30,8 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('title'),
-    ogDescription: $t('description'),
+    ogTitle: t('title'),
+    ogDescription: t('description'),
     ogUrl: 'https://classicminidiy.com/privacy',
     ogType: 'website',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.png',
@@ -70,8 +72,8 @@
 
 <template>
   <hero
-    :title="$t('hero_title')"
-    :subtitle="$t('hero_subtitle')"
+    :title="t('hero_title')"
+    :subtitle="t('hero_subtitle')"
     :textSize="'3xl'"
     :special="true"
     :heroType="HERO_TYPES.HOME"
@@ -81,63 +83,63 @@
   <div class="container mx-auto px-4 py-8">
     <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12">
-        <h1 class="text-3xl font-medium">{{ $t('heading') }}</h1>
+        <h1 class="text-3xl font-medium">{{ t('heading') }}</h1>
 
         <ol class="list-decimal pl-5 pt-5">
           <li>
-            <h3 class="text-xl font-medium mb-2">{{ $t('acceptance_title') }}</h3>
+            <h3 class="text-xl font-medium mb-2">{{ t('acceptance_title') }}</h3>
             <p class="py-2 mb-4">
-              {{ $t('acceptance_content') }}
+              {{ t('acceptance_content') }}
               <a
                 class="link link-primary mr-3"
                 href="https://www.youtube.com/t/terms"
                 target="_blank"
                 rel="noopener noreferrer"
-                >{{ $t('youtube_privacy_link') }}</a
+                >{{ t('youtube_privacy_link') }}</a
               >.
             </p>
           </li>
           <li>
-            <h3 class="text-xl font-medium mb-2">{{ $t('accessibility_title') }}</h3>
+            <h3 class="text-xl font-medium mb-2">{{ t('accessibility_title') }}</h3>
             <p class="py-2 mb-4">
-              {{ $t('accessibility_content') }}
+              {{ t('accessibility_content') }}
               <a
                 class="link link-primary"
                 href="http://www.google.com/policies/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                >{{ $t('google_privacy_link') }}</a
+                >{{ t('google_privacy_link') }}</a
               >.
             </p>
           </li>
           <li>
-            <h3 class="text-xl font-medium mb-2">{{ $t('youtube_api_title') }}</h3>
+            <h3 class="text-xl font-medium mb-2">{{ t('youtube_api_title') }}</h3>
             <p class="py-2 mb-4">
-              {{ $t('youtube_api_content') }}
+              {{ t('youtube_api_content') }}
             </p>
           </li>
           <li>
-            <h3 class="text-xl font-medium mb-2">{{ $t('data_collection_title') }}</h3>
+            <h3 class="text-xl font-medium mb-2">{{ t('data_collection_title') }}</h3>
             <p class="py-2 mb-4">
-              {{ $t('data_collection_content') }}
+              {{ t('data_collection_content') }}
             </p>
           </li>
           <li>
-            <h3 class="text-xl font-medium mb-2">{{ $t('data_processing_title') }}</h3>
+            <h3 class="text-xl font-medium mb-2">{{ t('data_processing_title') }}</h3>
             <p class="py-2 mb-4">
-              {{ $t('data_processing_content') }}
+              {{ t('data_processing_content') }}
             </p>
           </li>
           <li>
-            <h3 class="text-xl font-medium mb-2">{{ $t('data_methods_title') }}</h3>
+            <h3 class="text-xl font-medium mb-2">{{ t('data_methods_title') }}</h3>
             <p class="py-2 mb-4">
-              {{ $t('data_methods_content') }}
+              {{ t('data_methods_content') }}
             </p>
           </li>
           <li>
-            <h3 class="text-xl font-medium mb-2">{{ $t('contact_title') }}</h3>
+            <h3 class="text-xl font-medium mb-2">{{ t('contact_title') }}</h3>
             <p class="py-2 mb-4">
-              {{ $t('contact_content') }}
+              {{ t('contact_content') }}
               <a class="link link-primary" href="mailto:classicminidiy@gmail.com" target="_blank"
                 >classicminidiy@gmail.com</a
               >.

@@ -2,20 +2,22 @@
   <div class="min-h-screen flex items-center justify-center">
     <div class="text-center">
       <div v-if="errorMessage">
-        <UAlert color="error" :title="$t('auth_error')" :description="errorMessage" />
-        <UButton to="/login" class="mt-4">{{ $t('back_to_login') }}</UButton>
+        <UAlert color="error" :title="t('auth_error')" :description="errorMessage" />
+        <UButton to="/login" class="mt-4">{{ t('back_to_login') }}</UButton>
       </div>
       <div v-else class="space-y-4">
         <div class="flex justify-center">
           <UButton loading variant="ghost" size="xl" />
         </div>
-        <p class="opacity-70">{{ $t('verifying') }}</p>
+        <p class="opacity-70">{{ t('verifying') }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+  const { t } = useI18n();
+
   useHead({
     title: 'Verifying Login - Classic Mini DIY',
     meta: [{ name: 'robots', content: 'noindex, nofollow' }],

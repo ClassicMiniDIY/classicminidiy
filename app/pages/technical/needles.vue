@@ -1,20 +1,22 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+
+  const { t } = useI18n();
   // Track calculator loading state
   const isCalculatorLoaded = ref(false);
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -30,14 +32,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('og_title'),
-    ogDescription: $t('og_description'),
+    ogTitle: t('og_title'),
+    ogDescription: t('og_description'),
     ogUrl: 'https://classicminidiy.com/technical/needles',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/needles.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitter_title'),
-    twitterDescription: $t('twitter_description'),
+    twitterTitle: t('twitter_title'),
+    twitterDescription: t('twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/needles.png',
   });
 
@@ -45,29 +47,29 @@
   const howToJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
-    name: $t('structured_data.name'),
-    description: $t('structured_data.description'),
+    name: t('structured_data.name'),
+    description: t('structured_data.description'),
     step: [
       {
         '@type': 'HowToStep',
-        name: $t('structured_data.steps.select_needles.name'),
-        text: $t('structured_data.steps.select_needles.text'),
+        name: t('structured_data.steps.select_needles.name'),
+        text: t('structured_data.steps.select_needles.text'),
       },
       {
         '@type': 'HowToStep',
-        name: $t('structured_data.steps.add_to_comparison.name'),
-        text: $t('structured_data.steps.add_to_comparison.text'),
+        name: t('structured_data.steps.add_to_comparison.name'),
+        text: t('structured_data.steps.add_to_comparison.text'),
       },
       {
         '@type': 'HowToStep',
-        name: $t('structured_data.steps.view_comparison.name'),
-        text: $t('structured_data.steps.view_comparison.text'),
+        name: t('structured_data.steps.view_comparison.name'),
+        text: t('structured_data.steps.view_comparison.text'),
       },
     ],
     tool: [
       {
         '@type': 'HowToTool',
-        name: $t('structured_data.tool_name'),
+        name: t('structured_data.tool_name'),
       },
     ],
   };
@@ -84,42 +86,42 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" text-size="text-3xl" :heroType="HERO_TYPES.TECH" />
+  <hero :navigation="true" :title="t('hero_title')" text-size="text-3xl" :heroType="HERO_TYPES.TECH" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12 pt-6">
-        <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
       </div>
       <div class="col-span-12">
-        <h1 class="fancy-font-bold text-2xl">{{ $t('main_heading') }}</h1>
+        <h1 class="fancy-font-bold text-2xl">{{ t('main_heading') }}</h1>
         <p class="text-lg pt-5">
-          {{ $t('description_text') }}
+          {{ t('description_text') }}
         </p>
       </div>
       <div class="col-span-12 border-t border-base-300 mt-5"></div>
       <div class="col-span-12">
-        <ClientOnly fallback-tag="div" :fallback="$t('ui.loading_fallback')">
+        <ClientOnly fallback-tag="div" :fallback="t('ui.loading_fallback')">
           <div class="min-h-96 flex items-center justify-center" v-if="!isCalculatorLoaded">
             <div class="flex flex-col items-center space-y-4">
               <span class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></span>
-              <p class="opacity-70">{{ $t('ui.loading_text') }}</p>
+              <p class="opacity-70">{{ t('ui.loading_text') }}</p>
             </div>
           </div>
           <LazyCalculatorsNeedles @vue:mounted="isCalculatorLoaded = true" />
         </ClientOnly>
       </div>
       <div class="col-span-12">
-        <USeparator :label="$t('ui.needle_charts_section')" />
+        <USeparator :label="t('ui.needle_charts_section')" />
       </div>
       <div class="col-span-12 text-center">
-        <h2 class="fancy-font-book text-2xl">{{ $t('ui.find_needle_heading') }}</h2>
+        <h2 class="fancy-font-book text-2xl">{{ t('ui.find_needle_heading') }}</h2>
         <h3 class="fancy-font-book text-lg">
-          {{ $t('ui.information_provided_by') }}
+          {{ t('ui.information_provided_by') }}
           <a
             href="https://www.7ent.com/pages/articles-tech-tips/chart-carburetor-needle.html"
             target="_blank"
             class="link link-primary"
-            >{{ $t('ui.seven_mini_parts_link') }}</a
+            >{{ t('ui.seven_mini_parts_link') }}</a
           >
         </h3>
       </div>
@@ -127,7 +129,7 @@
         <NeedleTable />
       </div>
       <div class="col-span-12">
-        <USeparator :label="$t('ui.support_section')" />
+        <USeparator :label="t('ui.support_section')" />
       </div>
       <div class="col-span-12">
         <patreon-card size="large" />

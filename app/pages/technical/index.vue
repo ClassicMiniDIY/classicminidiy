@@ -1,18 +1,20 @@
 <script lang="ts" setup>
   import { ToolboxItems, BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
+
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -28,14 +30,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('ogTitle'),
-    ogDescription: $t('ogDescription'),
+    ogTitle: t('ogTitle'),
+    ogDescription: t('ogDescription'),
     ogUrl: 'https://classicminidiy.com/technical',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitterTitle'),
-    twitterDescription: $t('twitterDescription'),
+    twitterTitle: t('twitterTitle'),
+    twitterDescription: t('twitterDescription'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical.png',
   });
 
@@ -43,14 +45,14 @@
   const toolboxJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: $t('structured_data.name'),
-    description: $t('structured_data.description'),
+    name: t('structured_data.name'),
+    description: t('structured_data.description'),
     url: 'https://classicminidiy.com/technical',
     itemListElement: ToolboxItems.map((item, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       url: `https://classicminidiy.com${item.to}`,
-      name: $t(item.titleKey),
+      name: t(item.titleKey),
     })),
   };
 
@@ -68,21 +70,21 @@
 <template>
   <hero
     :navigation="true"
-    :title="$t('hero_title')"
+    :title="t('hero_title')"
     textSize="text-3xl"
-    :subtitle="$t('hero_subtitle')"
+    :subtitle="t('hero_subtitle')"
     :heroType="HERO_TYPES.TECH"
   />
   <div class="container mx-auto px-4 pb-15 pt-6">
     <div class="grid grid-cols-1 gap-4">
       <div class="col-span-1 text-center">
         <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" root></breadcrumb>
-        <h2 class="fancy-font-book-oblique">{{ $t('breadcrumb_subtitle') }}</h2>
-        <h3 class="fancy-font-bold text-2xl">{{ $t('main_heading') }}</h3>
+        <h2 class="fancy-font-book-oblique">{{ t('breadcrumb_subtitle') }}</h2>
+        <h3 class="fancy-font-bold text-2xl">{{ t('main_heading') }}</h3>
       </div>
       <div class="col-span-1 text-center">
         <p class="text-lg py-5">
-          {{ $t('description_text') }}
+          {{ t('description_text') }}
         </p>
       </div>
     </div>
@@ -91,14 +93,14 @@
         <NuxtLink :to="tool.to" class="block h-full">
           <UCard class="text-center p-5 h-full hover:shadow-xl transition-shadow">
             <span class="text-4xl block" v-html="tool.iconHtml"> </span>
-            <p class="text-lg mt-2">{{ $t(tool.titleKey) }}</p>
+            <p class="text-lg mt-2">{{ t(tool.titleKey) }}</p>
           </UCard>
         </NuxtLink>
       </div>
     </div>
     <div class="grid grid-cols-12 gap-4 mt-6">
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="$t('support_section')" />
+        <USeparator :label="t('support_section')" />
       </div>
       <div class="col-span-12">
         <patreon-card size="large" />
