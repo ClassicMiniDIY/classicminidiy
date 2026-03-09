@@ -1,6 +1,8 @@
 <script lang="ts" setup>
   import { chartOptions, type Needle, type NeedleResponse } from '../../../data/models/needles';
 
+  const { t } = useI18n();
+
   // Dark mode support
   const colorMode = useColorMode();
   const isDark = computed(() => colorMode.value === 'dark');
@@ -292,31 +294,31 @@
   <div class="grid grid-cols-12 gap-3 configurator-component">
     <div class="col-span-12 md:col-span-4">
       <UCard>
-        <h3 class="fancy-font-bold text-xl pb-3">{{ $t('title') }}</h3>
+        <h3 class="fancy-font-bold text-xl pb-3">{{ t('title') }}</h3>
         <p class="pb-3">
-          {{ $t('description') }}
+          {{ t('description') }}
         </p>
         <!-- Modal dialog for diagram -->
         <div>
           <UButton size="sm" color="neutral" class="mb-5" @click="showDiagramModal = true">
-            {{ $t('diagram_button') }}
+            {{ t('diagram_button') }}
           </UButton>
           <UModal v-model:open="showDiagramModal">
             <template #content>
               <UCard>
                 <template #header>
-                  <h3 class="font-bold text-lg">{{ $t('diagram_modal.title') }}</h3>
+                  <h3 class="font-bold text-lg">{{ t('diagram_modal.title') }}</h3>
                 </template>
                 <img
                   loading="lazy"
                   class="diagram mx-auto"
                   src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/diagram.jpg"
-                  :alt="$t('diagram_modal.alt_text')"
+                  :alt="t('diagram_modal.alt_text')"
                 />
                 <template #footer>
                   <div class="flex justify-end">
                     <UButton color="primary" @click="showDiagramModal = false">
-                      {{ $t('diagram_modal.close_button') }}
+                      {{ t('diagram_modal.close_button') }}
                     </UButton>
                   </div>
                 </template>
@@ -334,7 +336,7 @@
           <div class="needle-autocomplete relative" ref="inputContainerRef">
             <UInput
               v-model="searchQuery"
-              :placeholder="$t('form.select_placeholder')"
+              :placeholder="t('form.select_placeholder')"
               class="w-full"
               autocomplete="off"
               @focus="isDropdownOpen = true"
@@ -387,12 +389,12 @@
             color="info"
             class="mt-4"
             icon="i-fa6-solid-circle-info"
-            :title="$t('alerts.already_exists')"
+            :title="t('alerts.already_exists')"
           />
 
           <USeparator class="my-4" />
 
-          <h3 class="text-lg font-medium">{{ $t('selected_needles_title') }}</h3>
+          <h3 class="text-lg font-medium">{{ t('selected_needles_title') }}</h3>
           <div v-if="selectedNeedles" class="flex flex-wrap gap-2 mt-3">
             <UBadge
               v-for="(needle, index) in selectedNeedles"
@@ -419,7 +421,7 @@
         <ClientOnly fallback-tag="span">
           <highcharts ref="needlesChart" :options="reactiveChartOptions"></highcharts>
           <template #fallback>
-            <p class="p-10 text-center text-xl">{{ $t('chart.loading') }}</p>
+            <p class="p-10 text-center text-xl">{{ t('chart.loading') }}</p>
           </template>
         </ClientOnly>
       </UCard>

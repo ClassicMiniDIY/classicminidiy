@@ -3,13 +3,15 @@
   import type { RegistryItem } from '../../../../data/models/registry';
   import { RegistryItemStatus } from '../../../../data/models/registry';
 
+  const { t } = useI18n();
+
   // Define table columns
   const tableHeaders = [
-    { title: $t('table_headers.year'), key: 'year' },
-    { title: $t('table_headers.model'), key: 'model' },
-    { title: $t('table_headers.body_number'), key: 'bodyNum' },
-    { title: $t('table_headers.submitted_by'), key: 'submittedBy' },
-    { title: $t('table_headers.status'), key: 'status', width: '100px' },
+    { title: t('table_headers.year'), key: 'year' },
+    { title: t('table_headers.model'), key: 'model' },
+    { title: t('table_headers.body_number'), key: 'bodyNum' },
+    { title: t('table_headers.submitted_by'), key: 'submittedBy' },
+    { title: t('table_headers.status'), key: 'status', width: '100px' },
   ];
 
   // Fetch pending registry items
@@ -22,12 +24,12 @@
   });
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'robots',
@@ -36,64 +38,64 @@
     ],
   });
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'classicminidiy.com/archive/registry/pending',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/registry.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/registry.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :page="$t('breadcrumb_title')">
+        <breadcrumb class="my-6" :page="t('breadcrumb_title')">
           <template #parent>
-            <nuxt-link to="/archive/registry">{{ $t('breadcrumb_parent') }}</nuxt-link>
+            <nuxt-link to="/archive/registry">{{ t('breadcrumb_parent') }}</nuxt-link>
           </template>
         </breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-3xl font-bold">{{ $t('main_heading') }}</h1>
+            <h1 class="text-3xl font-bold">{{ t('main_heading') }}</h1>
             <h2 class="text-xl mt-4">
               <strong>{{ pendingItems?.length || '0' }}</strong>
-              {{ $t('subtitle') }}
+              {{ t('subtitle') }}
             </h2>
             <p class="my-4">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
             <p class="my-4">
-              {{ $t('contact_text') }}
-              <ULink to="/contact" class="text-primary hover:underline">{{ $t('contact_link') }}</ULink
+              {{ t('contact_text') }}
+              <ULink to="/contact" class="text-primary hover:underline">{{ t('contact_link') }}</ULink
               >.
             </p>
           </div>
           <div class="col-span-12 md:col-span-4">
             <UCard>
-              <h2 class="text-lg font-semibold mb-4">{{ $t('status_card.title') }}</h2>
+              <h2 class="text-lg font-semibold mb-4">{{ t('status_card.title') }}</h2>
               <div class="flex items-center gap-2 mb-2">
                 <UBadge color="primary">
-                  {{ $t('status_card.pending') }}
+                  {{ t('status_card.pending') }}
                 </UBadge>
-                <span>{{ $t('status_card.pending_description') }}</span>
+                <span>{{ t('status_card.pending_description') }}</span>
               </div>
               <div class="flex items-center gap-2 mb-2">
                 <UBadge color="success">
-                  {{ $t('status_card.approved') }}
+                  {{ t('status_card.approved') }}
                 </UBadge>
-                <span>{{ $t('status_card.approved_description') }}</span>
+                <span>{{ t('status_card.approved_description') }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <UBadge color="error">
-                  {{ $t('status_card.rejected') }}
+                  {{ t('status_card.rejected') }}
                 </UBadge>
-                <span>{{ $t('status_card.rejected_description') }}</span>
+                <span>{{ t('status_card.rejected_description') }}</span>
               </div>
             </UCard>
           </div>
@@ -108,7 +110,7 @@
         />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="$t('submit_divider')" />
+        <USeparator :label="t('submit_divider')" />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-15">
         <RegistrySubmission />

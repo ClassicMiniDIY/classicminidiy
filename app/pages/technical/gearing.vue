@@ -1,20 +1,22 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+
+  const { t } = useI18n();
   // Track calculator loading state
   const isCalculatorLoaded = ref(false);
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -33,10 +35,10 @@
   const calculatorJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: $t('structured_data.calculator_name'),
+    name: t('structured_data.calculator_name'),
     applicationCategory: 'AutomotiveApplication',
     operatingSystem: 'Web Browser',
-    description: $t('structured_data.calculator_description'),
+    description: t('structured_data.calculator_description'),
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -48,28 +50,28 @@
   const howToJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
-    name: $t('structured_data.how_to_name'),
-    description: $t('structured_data.how_to_description'),
+    name: t('structured_data.how_to_name'),
+    description: t('structured_data.how_to_description'),
     step: [
       {
         '@type': 'HowToStep',
-        name: $t('structured_data.steps.select_gearbox.name'),
-        text: $t('structured_data.steps.select_gearbox.text'),
+        name: t('structured_data.steps.select_gearbox.name'),
+        text: t('structured_data.steps.select_gearbox.text'),
       },
       {
         '@type': 'HowToStep',
-        name: $t('structured_data.steps.enter_tire.name'),
-        text: $t('structured_data.steps.enter_tire.text'),
+        name: t('structured_data.steps.enter_tire.name'),
+        text: t('structured_data.steps.enter_tire.text'),
       },
       {
         '@type': 'HowToStep',
-        name: $t('structured_data.steps.select_final_drive.name'),
-        text: $t('structured_data.steps.select_final_drive.text'),
+        name: t('structured_data.steps.select_final_drive.name'),
+        text: t('structured_data.steps.select_final_drive.text'),
       },
       {
         '@type': 'HowToStep',
-        name: $t('structured_data.steps.view_results.name'),
-        text: $t('structured_data.steps.view_results.text'),
+        name: t('structured_data.steps.view_results.name'),
+        text: t('structured_data.steps.view_results.text'),
       },
     ],
   };
@@ -89,33 +91,33 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('og_title'),
-    ogDescription: $t('og_description'),
+    ogTitle: t('og_title'),
+    ogDescription: t('og_description'),
     ogUrl: 'https://classicminidiy.com/technical/gearing',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/gearing.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitter_title'),
-    twitterDescription: $t('twitter_description'),
+    twitterTitle: t('twitter_title'),
+    twitterDescription: t('twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/gearing.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.TECH" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.TECH" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
         <div class="grid grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-3xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+            <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
             <p class="mb-4">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
           </div>
           <div class="col-span-12 md:col-span-4">
-            <NuxtLink :to="'/archive/engines'" :title="$t('engine_sizes_card.link_title')" class="block">
+            <NuxtLink :to="'/archive/engines'" :title="t('engine_sizes_card.link_title')" class="block">
               <UCard class="hover:shadow-lg transition-shadow">
                 <div class="flex items-start space-x-4">
                   <div class="shrink-0">
@@ -133,16 +135,16 @@
                           loading="lazy"
                           src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png"
                           class="w-full h-full object-contain"
-                          :alt="$t('engine_sizes_card.alt_text')"
+                          :alt="t('engine_sizes_card.alt_text')"
                         />
                       </picture>
                     </figure>
                   </div>
                   <div>
                     <h2 class="text-xl font-semibold">
-                      {{ $t('engine_sizes_card.heading') }}
+                      {{ t('engine_sizes_card.heading') }}
                     </h2>
-                    <p class="mt-1">{{ $t('engine_sizes_card.description') }}</p>
+                    <p class="mt-1">{{ t('engine_sizes_card.description') }}</p>
                   </div>
                 </div>
               </UCard>
@@ -151,18 +153,18 @@
         </div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <ClientOnly fallback-tag="div" :fallback="$t('ui.loading_fallback')">
+        <ClientOnly fallback-tag="div" :fallback="t('ui.loading_fallback')">
           <div class="min-h-96 flex items-center justify-center" v-if="!isCalculatorLoaded">
             <div class="flex flex-col items-center space-y-4">
               <span class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></span>
-              <p class="opacity-70">{{ $t('ui.loading_text') }}</p>
+              <p class="opacity-70">{{ t('ui.loading_text') }}</p>
             </div>
           </div>
           <LazyCalculatorsGearbox @vue:mounted="isCalculatorLoaded = true" />
         </ClientOnly>
       </div>
       <div class="col-span-12 md:col-span-4 md:col-start-5">
-        <USeparator :label="$t('ui.more_section')" />
+        <USeparator :label="t('ui.more_section')" />
       </div>
       <div class="col-span-12">
         <patreon-card size="large" />

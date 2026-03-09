@@ -187,11 +187,15 @@
             v-if="isAuthenticated"
             :items="[
               [
-                ...(isAdmin ? [{
-                  label: t('profile.admin'),
-                  icon: 'i-heroicons-shield-check',
-                  to: '/admin',
-                }] : []),
+                ...(isAdmin
+                  ? [
+                      {
+                        label: t('profile.admin'),
+                        icon: 'i-heroicons-shield-check',
+                        to: '/admin',
+                      },
+                    ]
+                  : []),
                 {
                   label: t('profile.submissions'),
                   icon: 'i-heroicons-document-text',
@@ -221,7 +225,10 @@
               <div v-if="userProfile?.avatar_url" class="w-6 h-6 rounded-full overflow-hidden">
                 <img :src="userProfile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
               </div>
-              <div v-else class="w-6 h-6 rounded-full bg-primary text-primary-content flex items-center justify-center text-xs font-bold">
+              <div
+                v-else
+                class="w-6 h-6 rounded-full bg-primary text-primary-content flex items-center justify-center text-xs font-bold"
+              >
                 {{ initials }}
               </div>
               <span class="hidden xl:inline text-sm">{{ displayName }}</span>
@@ -317,7 +324,10 @@
               <div v-if="userProfile?.avatar_url" class="w-8 h-8 rounded-full overflow-hidden shrink-0">
                 <img :src="userProfile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
               </div>
-              <div v-else class="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold shrink-0">
+              <div
+                v-else
+                class="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold shrink-0"
+              >
                 {{ initials }}
               </div>
               <span class="text-sm font-medium truncate">{{ displayName }}</span>
@@ -367,13 +377,7 @@
               <i class="fad fa-paper-plane mr-2"></i>
               {{ t('profile.contribute') }}
             </UButton>
-            <UButton
-              variant="ghost"
-              color="error"
-              block
-              class="justify-start font-bold"
-              @click="handleSignOut"
-            >
+            <UButton variant="ghost" color="error" block class="justify-start font-bold" @click="handleSignOut">
               <i class="fad fa-right-from-bracket mr-2"></i>
               {{ t('profile.sign_out') }}
             </UButton>

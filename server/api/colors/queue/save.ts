@@ -56,10 +56,7 @@ export default defineEventHandler(async (event) => {
 
   if (submission.type === 'edit_suggestion' && submission.target_id) {
     // UPDATE the existing color instead of inserting a new one
-    const { error: colorError } = await supabase
-      .from('colors')
-      .update(colorData)
-      .eq('id', submission.target_id);
+    const { error: colorError } = await supabase.from('colors').update(colorData).eq('id', submission.target_id);
 
     if (colorError) {
       throw createError({ statusCode: 500, statusMessage: colorError.message });

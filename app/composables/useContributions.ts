@@ -55,7 +55,7 @@ export const useContributions = () => {
 
   const listContributions = async (
     userId: string,
-    opts?: { targetType?: string; limit?: number },
+    opts?: { targetType?: string; limit?: number }
   ): Promise<ContributionItem[]> => {
     let query = supabase
       .from('contributions')

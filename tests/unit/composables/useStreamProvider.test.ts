@@ -101,10 +101,13 @@ describe('useStreamProvider', () => {
 
     describe('assistantId', () => {
       it('uses runtime config value when available', async () => {
-        vi.stubGlobal('useRuntimeConfig', vi.fn(() => ({
-          public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
-          NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: 'custom-assistant',
-        })));
+        vi.stubGlobal(
+          'useRuntimeConfig',
+          vi.fn(() => ({
+            public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
+            NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: 'custom-assistant',
+          }))
+        );
 
         const { useStreamProvider } = await freshModule();
         const provider = useStreamProvider();
@@ -113,10 +116,13 @@ describe('useStreamProvider', () => {
       });
 
       it('defaults to "agent" when config is empty', async () => {
-        vi.stubGlobal('useRuntimeConfig', vi.fn(() => ({
-          public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
-          NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: '',
-        })));
+        vi.stubGlobal(
+          'useRuntimeConfig',
+          vi.fn(() => ({
+            public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
+            NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: '',
+          }))
+        );
 
         const { useStreamProvider } = await freshModule();
         const provider = useStreamProvider();
@@ -125,9 +131,12 @@ describe('useStreamProvider', () => {
       });
 
       it('defaults to "agent" when config property is missing', async () => {
-        vi.stubGlobal('useRuntimeConfig', vi.fn(() => ({
-          public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
-        })));
+        vi.stubGlobal(
+          'useRuntimeConfig',
+          vi.fn(() => ({
+            public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
+          }))
+        );
 
         const { useStreamProvider } = await freshModule();
         const provider = useStreamProvider();
@@ -307,9 +316,7 @@ describe('useStreamProvider', () => {
 
     describe('submit()', () => {
       it('adds user message to messages array immediately', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse(['data: [DONE]', ''])
-        ));
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', ''])));
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -347,9 +354,7 @@ describe('useStreamProvider', () => {
       });
 
       it('sets isLoading to false after completion', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse(['data: [DONE]', ''])
-        ));
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', ''])));
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -362,9 +367,7 @@ describe('useStreamProvider', () => {
       });
 
       it('posts to correct endpoint for new thread', async () => {
-        const mockFetch = vi.fn().mockResolvedValue(
-          createMockFetchResponse(['data: [DONE]', ''])
-        );
+        const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
         vi.stubGlobal('fetch', mockFetch);
 
         const { createStreamSession } = await freshModule();
@@ -379,14 +382,12 @@ describe('useStreamProvider', () => {
           expect.objectContaining({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-          }),
+          })
         );
       });
 
       it('posts to correct endpoint for existing thread', async () => {
-        const mockFetch = vi.fn().mockResolvedValue(
-          createMockFetchResponse(['data: [DONE]', ''])
-        );
+        const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
         vi.stubGlobal('fetch', mockFetch);
 
         const { createStreamSession } = await freshModule();
@@ -396,16 +397,11 @@ describe('useStreamProvider', () => {
           messages: [{ type: 'human', content: 'Test' }],
         });
 
-        expect(mockFetch).toHaveBeenCalledWith(
-          '/api/langgraph/threads/thread-xyz/runs/stream',
-          expect.any(Object),
-        );
+        expect(mockFetch).toHaveBeenCalledWith('/api/langgraph/threads/thread-xyz/runs/stream', expect.any(Object));
       });
 
       it('includes assistant_id in the request payload', async () => {
-        const mockFetch = vi.fn().mockResolvedValue(
-          createMockFetchResponse(['data: [DONE]', ''])
-        );
+        const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
         vi.stubGlobal('fetch', mockFetch);
 
         const { createStreamSession } = await freshModule();
@@ -420,9 +416,7 @@ describe('useStreamProvider', () => {
       });
 
       it('includes language metadata from locale', async () => {
-        const mockFetch = vi.fn().mockResolvedValue(
-          createMockFetchResponse(['data: [DONE]', ''])
-        );
+        const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
         vi.stubGlobal('fetch', mockFetch);
 
         const { createStreamSession } = await freshModule();
@@ -462,11 +456,14 @@ describe('useStreamProvider', () => {
 
       it('throws error when response has no body', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-          ok: true,
-          body: null,
-          headers: new Headers(),
-        }));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue({
+            ok: true,
+            body: null,
+            headers: new Headers(),
+          })
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -485,13 +482,18 @@ describe('useStreamProvider', () => {
     // ─────────────────────────────────────────
     describe('handleStreamEvent - thread_id', () => {
       it('sets currentThreadId when thread_id event is received', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'new-thread-abc' } }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'new-thread-abc' } }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -505,13 +507,18 @@ describe('useStreamProvider', () => {
 
       it('calls onThreadCreated callback for new threads', async () => {
         const onThreadCreated = vi.fn();
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'callback-thread' } }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'callback-thread' } }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent', null, onThreadCreated);
@@ -525,26 +532,36 @@ describe('useStreamProvider', () => {
 
       it('does not call onThreadCreated when thread already existed', async () => {
         const onThreadCreated = vi.fn();
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'existing-id' } }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'existing-id' } }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         // Pass an existing threadId
         const session = createStreamSession('agent', 'existing-id', onThreadCreated);
 
         // Override fetch for submit (loadThreadHistory will also fetch)
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'existing-id' } }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' + JSON.stringify({ event: 'thread_id', data: { thread_id: 'existing-id' } }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         await session.submit({
           messages: [{ type: 'human', content: 'Hello' }],
@@ -567,13 +584,18 @@ describe('useStreamProvider', () => {
           created_at: '2026-01-01T00:00:00Z',
         };
 
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'messages/partial', data: [aiMessage] }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' + JSON.stringify({ event: 'messages/partial', data: [aiMessage] }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -587,14 +609,27 @@ describe('useStreamProvider', () => {
       });
 
       it('updates existing message by ID when it already exists', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'messages/partial', data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1' }] }),
-            'data: ' + JSON.stringify({ event: 'messages/partial', data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1 and Part 2' }] }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' +
+                  JSON.stringify({
+                    event: 'messages/partial',
+                    data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1' }],
+                  }),
+                'data: ' +
+                  JSON.stringify({
+                    event: 'messages/partial',
+                    data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1 and Part 2' }],
+                  }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -610,13 +645,19 @@ describe('useStreamProvider', () => {
       });
 
       it('skips messages without valid content', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'messages/partial', data: [{ id: 'empty-msg', type: 'ai', content: '' }] }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' +
+                  JSON.stringify({ event: 'messages/partial', data: [{ id: 'empty-msg', type: 'ai', content: '' }] }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -636,14 +677,27 @@ describe('useStreamProvider', () => {
     // ─────────────────────────────────────────
     describe('handleStreamEvent - messages/complete', () => {
       it('replaces existing message with completed version', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'messages/partial', data: [{ id: 'stream-1', type: 'ai', content: 'Partial...' }] }),
-            'data: ' + JSON.stringify({ event: 'messages/complete', data: [{ id: 'stream-1', type: 'ai', content: 'Complete response' }] }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' +
+                  JSON.stringify({
+                    event: 'messages/partial',
+                    data: [{ id: 'stream-1', type: 'ai', content: 'Partial...' }],
+                  }),
+                'data: ' +
+                  JSON.stringify({
+                    event: 'messages/complete',
+                    data: [{ id: 'stream-1', type: 'ai', content: 'Complete response' }],
+                  }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -658,14 +712,27 @@ describe('useStreamProvider', () => {
       });
 
       it('removes empty messages when complete event has no valid content', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({ event: 'messages/partial', data: [{ id: 'will-be-empty', type: 'ai', content: 'temp' }] }),
-            'data: ' + JSON.stringify({ event: 'messages/complete', data: [{ id: 'will-be-empty', type: 'ai', content: '' }] }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi
+            .fn()
+            .mockResolvedValue(
+              createMockFetchResponse([
+                'data: ' +
+                  JSON.stringify({
+                    event: 'messages/partial',
+                    data: [{ id: 'will-be-empty', type: 'ai', content: 'temp' }],
+                  }),
+                'data: ' +
+                  JSON.stringify({
+                    event: 'messages/complete',
+                    data: [{ id: 'will-be-empty', type: 'ai', content: '' }],
+                  }),
+                'data: [DONE]',
+                '',
+              ])
+            )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -680,16 +747,20 @@ describe('useStreamProvider', () => {
       });
 
       it('adds completed message as new if it does not exist yet', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{ id: 'new-complete', type: 'ai', content: 'Brand new response' }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'new-complete', type: 'ai', content: 'Brand new response' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -709,20 +780,22 @@ describe('useStreamProvider', () => {
     // ─────────────────────────────────────────
     describe('handleStreamEvent - updates', () => {
       it('processes messages from updates event data', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'updates',
-              data: {
-                messages: [
-                  { id: 'update-msg', type: 'ai', content: 'From updates event' },
-                ],
-              },
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'updates',
+                  data: {
+                    messages: [{ id: 'update-msg', type: 'ai', content: 'From updates event' }],
+                  },
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -742,20 +815,22 @@ describe('useStreamProvider', () => {
     // ─────────────────────────────────────────
     describe('handleStreamEvent - values', () => {
       it('processes messages from values event data', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'values',
-              data: {
-                messages: [
-                  { id: 'values-msg', type: 'ai', content: 'From values event' },
-                ],
-              },
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'values',
+                  data: {
+                    messages: [{ id: 'values-msg', type: 'ai', content: 'From values event' }],
+                  },
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -775,16 +850,20 @@ describe('useStreamProvider', () => {
     // ─────────────────────────────────────────
     describe('hasValidContent (tested via stream events)', () => {
       it('includes human messages regardless of content', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{ id: 'human-1', type: 'human', content: '' }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'human-1', type: 'human', content: '' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -800,16 +879,20 @@ describe('useStreamProvider', () => {
       });
 
       it('filters out empty AI messages', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/partial',
-              data: [{ id: 'empty-ai', type: 'ai', content: '' }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/partial',
+                  data: [{ id: 'empty-ai', type: 'ai', content: '' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -823,16 +906,20 @@ describe('useStreamProvider', () => {
       });
 
       it('includes AI messages with text content', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/partial',
-              data: [{ id: 'ai-with-text', type: 'ai', content: 'Some text' }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/partial',
+                  data: [{ id: 'ai-with-text', type: 'ai', content: 'Some text' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -847,21 +934,27 @@ describe('useStreamProvider', () => {
       });
 
       it('includes AI messages with tool_calls', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/partial',
-              data: [{
-                id: 'ai-with-tools',
-                type: 'ai',
-                content: '',
-                tool_calls: [{ id: 'tc1', name: 'search', type: 'function' }],
-              }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/partial',
+                  data: [
+                    {
+                      id: 'ai-with-tools',
+                      type: 'ai',
+                      content: '',
+                      tool_calls: [{ id: 'tc1', name: 'search', type: 'function' }],
+                    },
+                  ],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -881,16 +974,20 @@ describe('useStreamProvider', () => {
     // ─────────────────────────────────────────
     describe('getContentString (tested via message processing)', () => {
       it('handles string content', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{ id: 'str-msg', type: 'ai', content: 'Simple string' }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'str-msg', type: 'ai', content: 'Simple string' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -904,20 +1001,26 @@ describe('useStreamProvider', () => {
       });
 
       it('handles array content with text objects', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{
-                id: 'arr-msg',
-                type: 'ai',
-                content: [{ text: 'Array item 1' }, { text: 'Array item 2' }],
-              }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [
+                    {
+                      id: 'arr-msg',
+                      type: 'ai',
+                      content: [{ text: 'Array item 1' }, { text: 'Array item 2' }],
+                    },
+                  ],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -931,16 +1034,20 @@ describe('useStreamProvider', () => {
       });
 
       it('handles object content with text property', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{ id: 'obj-msg', type: 'ai', content: { text: 'Object text' } }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'obj-msg', type: 'ai', content: { text: 'Object text' } }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -959,20 +1066,25 @@ describe('useStreamProvider', () => {
     // ─────────────────────────────────────────
     describe('shouldGroupWithLastMessage (tested via complete events)', () => {
       it('groups consecutive AI messages in complete events', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{ id: 'ai-first', type: 'ai', content: 'First part' }],
-            }),
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{ id: 'ai-second', type: 'ai', content: 'Second part' }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'ai-first', type: 'ai', content: 'First part' }],
+                }),
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'ai-second', type: 'ai', content: 'Second part' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -982,9 +1094,7 @@ describe('useStreamProvider', () => {
         });
 
         // The two consecutive AI messages should be grouped (merged into one)
-        const aiMessages = session.messages.value.filter(
-          (m: any) => m.type === 'ai' && !m.id?.startsWith('error-')
-        );
+        const aiMessages = session.messages.value.filter((m: any) => m.type === 'ai' && !m.id?.startsWith('error-'));
         // They should be grouped, so we expect the content to be merged
         if (aiMessages.length === 1) {
           expect(aiMessages[0].content).toContain('First part');
@@ -997,16 +1107,20 @@ describe('useStreamProvider', () => {
       });
 
       it('does not group human message with AI message', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-          createMockFetchResponse([
-            'data: ' + JSON.stringify({
-              event: 'messages/complete',
-              data: [{ id: 'complete-ai', type: 'ai', content: 'AI response' }],
-            }),
-            'data: [DONE]',
-            '',
-          ])
-        ));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'complete-ai', type: 'ai', content: 'AI response' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent');
@@ -1017,9 +1131,7 @@ describe('useStreamProvider', () => {
 
         // Human and AI messages should be separate
         const humanMsgs = session.messages.value.filter((m: any) => m.type === 'human');
-        const aiMsgs = session.messages.value.filter(
-          (m: any) => m.type === 'ai' && !m.id?.startsWith('error-')
-        );
+        const aiMsgs = session.messages.value.filter((m: any) => m.type === 'ai' && !m.id?.startsWith('error-'));
         expect(humanMsgs.length).toBeGreaterThanOrEqual(1);
         expect(aiMsgs.length).toBeGreaterThanOrEqual(1);
       });
@@ -1057,7 +1169,7 @@ describe('useStreamProvider', () => {
           expect.objectContaining({
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-          }),
+          })
         );
       });
 
@@ -1075,11 +1187,14 @@ describe('useStreamProvider', () => {
       it('handles failed history load gracefully', async () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-          ok: false,
-          status: 404,
-          statusText: 'Not Found',
-        }));
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+          })
+        );
 
         const { createStreamSession } = await freshModule();
         const session = createStreamSession('agent', 'nonexistent-thread');
@@ -1089,11 +1204,7 @@ describe('useStreamProvider', () => {
 
         // Messages should still be empty
         expect(session.messages.value).toEqual([]);
-        expect(warnSpy).toHaveBeenCalledWith(
-          'Failed to load thread history:',
-          404,
-          'Not Found',
-        );
+        expect(warnSpy).toHaveBeenCalledWith('Failed to load thread history:', 404, 'Not Found');
 
         warnSpy.mockRestore();
       });
@@ -1110,10 +1221,7 @@ describe('useStreamProvider', () => {
         await new Promise((r) => setTimeout(r, 10));
 
         expect(session.messages.value).toEqual([]);
-        expect(warnSpy).toHaveBeenCalledWith(
-          'Error loading thread history:',
-          expect.any(Error),
-        );
+        expect(warnSpy).toHaveBeenCalledWith('Error loading thread history:', expect.any(Error));
 
         warnSpy.mockRestore();
       });
@@ -1156,10 +1264,7 @@ describe('useStreamProvider', () => {
 
       provideStreamContext(mockContext);
 
-      expect(mockProvide).toHaveBeenCalledWith(
-        expect.any(Symbol),
-        mockContext,
-      );
+      expect(mockProvide).toHaveBeenCalledWith(expect.any(Symbol), mockContext);
     });
 
     it('useStreamContext returns injected context', async () => {
@@ -1185,9 +1290,7 @@ describe('useStreamProvider', () => {
 
       const { useStreamContext } = await freshModule();
 
-      expect(() => useStreamContext()).toThrow(
-        'useStreamContext must be used within a StreamProvider',
-      );
+      expect(() => useStreamContext()).toThrow('useStreamContext must be used within a StreamProvider');
     });
   });
 });

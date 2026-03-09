@@ -2,6 +2,8 @@
   import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
+
   interface PartItem {
     brand: string;
     part: string;
@@ -30,7 +32,7 @@
   const tableColumns = [
     {
       accessorKey: 'brand',
-      header: () => $t('table_headers.brand'),
+      header: () => t('table_headers.brand'),
       cell: ({ row }) =>
         h(
           'span',
@@ -42,7 +44,7 @@
     },
     {
       accessorKey: 'part',
-      header: () => $t('table_headers.part_number'),
+      header: () => t('table_headers.part_number'),
       cell: ({ row }) =>
         h(
           'span',
@@ -54,7 +56,7 @@
     },
     {
       accessorKey: 'info',
-      header: () => $t('table_headers.usage_info'),
+      header: () => t('table_headers.usage_info'),
       cell: ({ row }) => row.getValue('info') || '',
     },
   ];
@@ -78,22 +80,22 @@
 
   // Computed property for mailto link with prefilled information
   const mailtoLink = computed(() => {
-    const subject = encodeURIComponent($t('mailto.subject'));
-    const body = encodeURIComponent($t('mailto.body'));
+    const subject = encodeURIComponent(t('mailto.subject'));
+    const body = encodeURIComponent(t('mailto.body'));
     return `mailto:cole@classicminidiy.com?subject=${subject}&body=${body}`;
   });
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -113,7 +115,7 @@
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: 'Classic Mini Parts Equivalency Database',
-    description: $t('description'),
+    description: t('description'),
     url: 'https://classicminidiy.com/technical/parts',
     keywords: [
       'Classic Mini parts',
@@ -156,34 +158,34 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('og_title'),
-    ogDescription: $t('og_description'),
+    ogTitle: t('og_title'),
+    ogDescription: t('og_description'),
     ogUrl: 'https://classicminidiy.com/technical/parts',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/parts.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitter_title'),
-    twitterDescription: $t('twitter_description'),
+    twitterTitle: t('twitter_title'),
+    twitterDescription: t('twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/parts.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.TECH" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.TECH" />
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="$t('breadcrumb_title')" />
+      <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')" />
     </div>
 
     <!-- Description and Contact Card Section -->
     <div class="grid grid-cols-12 gap-6 mb-8">
       <div class="col-span-12 md:col-span-8">
-        <h1 class="text-3xl font-bold mb-4">{{ $t('main_heading') }}</h1>
-        <p class="mb-4">{{ $t('description_text') }}</p>
+        <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
+        <p class="mb-4">{{ t('description_text') }}</p>
       </div>
       <div class="col-span-12 md:col-span-4">
-        <a @click="scrollToSubmissions" :title="$t('contact_card.link_title')" class="block cursor-pointer">
+        <a @click="scrollToSubmissions" :title="t('contact_card.link_title')" class="block cursor-pointer">
           <UCard class="hover:shadow-lg transition-shadow">
             <div class="flex items-start space-x-4">
               <div class="flex-shrink-0">
@@ -193,9 +195,9 @@
               </div>
               <div>
                 <h2 class="text-xl font-semibold">
-                  {{ $t('contact_card.heading') }}
+                  {{ t('contact_card.heading') }}
                 </h2>
-                <p class="mt-1">{{ $t('contact_card.description') }}</p>
+                <p class="mt-1">{{ t('contact_card.description') }}</p>
               </div>
             </div>
           </UCard>
@@ -221,7 +223,7 @@
         <div class="p-4 bg-muted/50">
           <!-- Search field -->
           <div class="flex justify-end mb-4">
-            <UInput v-model="searchValue" :placeholder="$t('ui.search_placeholder')" class="w-full max-w-xs" />
+            <UInput v-model="searchValue" :placeholder="t('ui.search_placeholder')" class="w-full max-w-xs" />
           </div>
 
           <div class="w-full overflow-x-auto">
@@ -232,43 +234,43 @@
     </div>
 
     <!-- Contact Section for Submissions -->
-    <USeparator :label="$t('ui.submissions_section')" class="my-12" />
+    <USeparator :label="t('ui.submissions_section')" class="my-12" />
     <div id="submissions-section" class="mb-8">
       <UCard>
         <div class="text-center">
           <div class="mb-4">
             <i class="fas fa-plus-circle text-6xl text-primary"></i>
           </div>
-          <h2 class="text-2xl font-bold mb-4">{{ $t('submissions.heading') }}</h2>
-          <p class="text-lg mb-6">{{ $t('submissions.description') }}</p>
+          <h2 class="text-2xl font-bold mb-4">{{ t('submissions.heading') }}</h2>
+          <p class="text-lg mb-6">{{ t('submissions.description') }}</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div class="text-left">
-              <h3 class="font-semibold text-lg mb-2">{{ $t('submissions.what_to_include.heading') }}</h3>
+              <h3 class="font-semibold text-lg mb-2">{{ t('submissions.what_to_include.heading') }}</h3>
               <ul class="list-disc list-inside space-y-1">
-                <li>{{ $t('submissions.what_to_include.brand') }}</li>
-                <li>{{ $t('submissions.what_to_include.part_number') }}</li>
-                <li>{{ $t('submissions.what_to_include.fits') }}</li>
-                <li>{{ $t('submissions.what_to_include.store') }}</li>
+                <li>{{ t('submissions.what_to_include.brand') }}</li>
+                <li>{{ t('submissions.what_to_include.part_number') }}</li>
+                <li>{{ t('submissions.what_to_include.fits') }}</li>
+                <li>{{ t('submissions.what_to_include.store') }}</li>
               </ul>
             </div>
             <div class="text-left">
-              <h3 class="font-semibold text-lg mb-2">{{ $t('submissions.examples.heading') }}</h3>
+              <h3 class="font-semibold text-lg mb-2">{{ t('submissions.examples.heading') }}</h3>
               <ul class="list-disc list-inside space-y-1">
-                <li>{{ $t('submissions.examples.oil_filter') }}</li>
-                <li>{{ $t('submissions.examples.spark_plug') }}</li>
-                <li>{{ $t('submissions.examples.brake_pad') }}</li>
+                <li>{{ t('submissions.examples.oil_filter') }}</li>
+                <li>{{ t('submissions.examples.spark_plug') }}</li>
+                <li>{{ t('submissions.examples.brake_pad') }}</li>
               </ul>
             </div>
           </div>
           <UButton :to="mailtoLink" color="primary" size="lg">
             <i class="fas fa-envelope mr-2"></i>
-            {{ $t('submissions.submit_button') }}
+            {{ t('submissions.submit_button') }}
           </UButton>
         </div>
       </UCard>
     </div>
 
-    <USeparator :label="$t('ui.support_section')" class="my-12" />
+    <USeparator :label="t('ui.support_section')" class="my-12" />
     <div class="mb-8">
       <patreon-card size="large" />
     </div>

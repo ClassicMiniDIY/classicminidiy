@@ -9,9 +9,8 @@
   const { submitNewItem } = useSubmissions();
 
   // Pre-populate from existing color if ?color= query param exists
-  const { data: color, status: colorStatus } = await useAsyncData(
-    `contribute-color-${query.color || 'new'}`,
-    () => (query.color ? getColor(query.color as string) : Promise.resolve(null)),
+  const { data: color, status: colorStatus } = await useAsyncData(`contribute-color-${query.color || 'new'}`, () =>
+    query.color ? getColor(query.color as string) : Promise.resolve(null)
   );
 
   const submissionSuccess = ref(false);
@@ -284,7 +283,9 @@
                   <!-- Color Name (required) -->
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.fields.color_name.label') }} <span class="text-error">*</span></span>
+                      <span class="text-sm font-medium"
+                        >{{ t('form.fields.color_name.label') }} <span class="text-error">*</span></span
+                      >
                       <span class="text-sm text-muted"><i class="fad fa-paintbrush"></i></span>
                     </label>
                     <UInput
@@ -307,7 +308,9 @@
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ t('form.fields.primary_code.label') }} <span class="text-error">*</span></span>
+                        <span class="text-sm font-medium"
+                          >{{ t('form.fields.primary_code.label') }} <span class="text-error">*</span></span
+                        >
                         <span class="text-sm text-muted"><i class="fad fa-code"></i></span>
                       </label>
                       <UInput
@@ -456,7 +459,6 @@
             </div>
           </UCard>
         </div>
-
       </div>
     </div>
   </div>

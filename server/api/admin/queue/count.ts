@@ -7,10 +7,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const targetType = query.targetType?.toString();
 
-  let q = supabase
-    .from('submission_queue')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'pending');
+  let q = supabase.from('submission_queue').select('id', { count: 'exact', head: true }).eq('status', 'pending');
 
   if (targetType) q = q.eq('target_type', targetType);
 

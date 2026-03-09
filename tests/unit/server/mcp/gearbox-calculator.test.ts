@@ -156,7 +156,8 @@ describe('Gearbox Calculator MCP Tool', () => {
     it('total ratio equals ratio * final_drive * drop_gear', async () => {
       const result = await toolConfig.handler(defaultInputs);
       for (const gear of result.gearing) {
-        const expected = Math.round((gear.ratio * defaultInputs.final_drive * defaultInputs.drop_gear + Number.EPSILON) * 1000) / 1000;
+        const expected =
+          Math.round((gear.ratio * defaultInputs.final_drive * defaultInputs.drop_gear + Number.EPSILON) * 1000) / 1000;
         expect(gear.totalRatio).toBe(expected);
       }
     });
@@ -325,7 +326,7 @@ describe('Gearbox Calculator MCP Tool', () => {
     it('matches known tire option label for default tire', async () => {
       const result = await toolConfig.handler(defaultInputs);
       const expected = options.tires.find(
-        (t) => t.value.width === 145 && t.value.profile === 80 && t.value.size === 10,
+        (t) => t.value.width === 145 && t.value.profile === 80 && t.value.size === 10
       );
       expect(result.context.tireSize).toBe(expected!.label);
     });
@@ -339,7 +340,7 @@ describe('Gearbox Calculator MCP Tool', () => {
     it('matches known gear ratio option label for default ratios', async () => {
       const result = await toolConfig.handler(defaultInputs);
       const expected = options.gearRatios.find(
-        (g) => JSON.stringify(g.value) === JSON.stringify([2.583, 1.644, 1.25, 1.0]),
+        (g) => JSON.stringify(g.value) === JSON.stringify([2.583, 1.644, 1.25, 1.0])
       );
       expect(result.context.gearRatios).toBe(expected!.label);
     });

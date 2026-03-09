@@ -1,17 +1,19 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../../data/models/generic';
 
+  const { t } = useI18n();
+
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -31,7 +33,7 @@
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Classic Mini Wheels Archive',
-    description: $t('description'),
+    description: t('description'),
     url: 'https://classicminidiy.com/archive/wheels',
     mainEntity: {
       '@type': 'ItemList',
@@ -60,23 +62,23 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/archive/wheels',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/wheels.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/wheels.png',
   });
 </script>
 
 <template>
   <div>
-    <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+    <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
     <div class="container mx-auto px-4">
-      <breadcrumb :page="$t('breadcrumb_title')" class="my-6"></breadcrumb>
+      <breadcrumb :page="t('breadcrumb_title')" class="my-6"></breadcrumb>
 
       <!-- Contribute Banner -->
       <UCard class="mb-6 bg-primary/5">
@@ -84,33 +86,33 @@
           <div class="flex items-center gap-3">
             <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
             <div>
-              <p class="font-medium">{{ $t('contribute_banner_title') }}</p>
-              <p class="text-sm opacity-70">{{ $t('contribute_banner_description') }}</p>
+              <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+              <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
             </div>
           </div>
           <UButton to="/contribute/wheel" color="primary" variant="outline" size="sm">
-            {{ $t('contribute_banner_button') }}
+            {{ t('contribute_banner_button') }}
           </UButton>
         </div>
       </UCard>
 
       <div class="grid grid-cols-12 gap-4 items-center">
         <div class="col-span-12 md:col-span-8">
-          <h1 class="text-3xl font-bold mb-2">{{ $t('main_heading') }}</h1>
+          <h1 class="text-3xl font-bold mb-2">{{ t('main_heading') }}</h1>
           <p class="pb-5">
-            {{ $t('description_text') }}
+            {{ t('description_text') }}
           </p>
         </div>
         <div class="col-span-12 md:col-span-4">
-          <NuxtLink :to="'/contribute/wheel?newWheel=true'" :title="$t('add_wheel_card.link_title')">
+          <NuxtLink :to="'/contribute/wheel?newWheel=true'" :title="t('add_wheel_card.link_title')">
             <UCard class="hover:shadow-2xl transition-shadow">
               <div class="flex items-start">
                 <div class="mr-4">
                   <i class="fad fa-rectangle-history-circle-plus text-3xl"></i>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold">{{ $t('add_wheel_card.title') }}</h2>
-                  <p>{{ $t('add_wheel_card.description') }}</p>
+                  <h2 class="text-lg font-semibold">{{ t('add_wheel_card.title') }}</h2>
+                  <p>{{ t('add_wheel_card.description') }}</p>
                 </div>
               </div>
             </UCard>
@@ -126,7 +128,7 @@
       <footer class="bg-muted text-center p-6 rounded-lg">
         <div>
           <h2 class="text-xl font-bold mb-2">
-            {{ $t('footer.title') }}
+            {{ t('footer.title') }}
             <a
               href="https://www.mini-forum.de/"
               target="_blank"
@@ -136,7 +138,7 @@
             >.
           </h2>
           <p class="pb-5">
-            {{ $t('footer.description') }}
+            {{ t('footer.description') }}
             <i class="fad fa-tombstone"></i>www.wheeldictionary.net
           </p>
         </div>

@@ -2,8 +2,8 @@
   <div class="min-h-screen flex items-center justify-center bg-muted">
     <UCard class="w-full max-w-md">
       <div class="text-center mb-6">
-        <h1 class="text-3xl font-bold">{{ $t('title') }}</h1>
-        <p class="opacity-70 mt-2">{{ $t('subtitle') }}</p>
+        <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
+        <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
       </div>
 
       <!-- Magic link sent success state -->
@@ -11,10 +11,10 @@
         <div class="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto">
           <i class="fad fa-envelope-circle-check text-3xl text-success"></i>
         </div>
-        <h2 class="text-xl font-semibold">{{ $t('magic_link_sent') }}</h2>
-        <p class="opacity-70">{{ $t('magic_link_description') }}</p>
+        <h2 class="text-xl font-semibold">{{ t('magic_link_sent') }}</h2>
+        <p class="opacity-70">{{ t('magic_link_description') }}</p>
         <UButton @click="resetForm" variant="ghost" size="sm">
-          {{ $t('try_different_email') }}
+          {{ t('try_different_email') }}
         </UButton>
       </div>
 
@@ -22,42 +22,30 @@
       <div v-else class="space-y-4">
         <!-- OAuth buttons -->
         <div class="space-y-3">
-          <UButton
-            class="w-full"
-            color="neutral"
-            variant="outline"
-            :disabled="isLoading"
-            @click="handleGoogleLogin"
-          >
+          <UButton class="w-full" color="neutral" variant="outline" :disabled="isLoading" @click="handleGoogleLogin">
             <template #leading>
               <i class="fab fa-google"></i>
             </template>
-            {{ $t('sign_in_google') }}
+            {{ t('sign_in_google') }}
           </UButton>
 
-          <UButton
-            class="w-full"
-            color="neutral"
-            variant="outline"
-            :disabled="isLoading"
-            @click="handleAppleLogin"
-          >
+          <UButton class="w-full" color="neutral" variant="outline" :disabled="isLoading" @click="handleAppleLogin">
             <template #leading>
               <i class="fab fa-apple"></i>
             </template>
-            {{ $t('sign_in_apple') }}
+            {{ t('sign_in_apple') }}
           </UButton>
         </div>
 
-        <USeparator :label="$t('or_divider')" class="my-4" />
+        <USeparator :label="t('or_divider')" class="my-4" />
 
         <!-- Email magic link form -->
         <form @submit.prevent="handleLogin" class="space-y-4">
-          <UFormField :label="$t('email_label')">
+          <UFormField :label="t('email_label')">
             <UInput
               v-model="email"
               type="email"
-              :placeholder="$t('email_placeholder')"
+              :placeholder="t('email_placeholder')"
               class="w-full"
               :color="hasError ? 'error' : undefined"
               required
@@ -72,7 +60,7 @@
               <template #leading>
                 <i v-if="!isLoading" class="fad fa-paper-plane"></i>
               </template>
-              {{ isLoading ? $t('sending') : $t('send_magic_link') }}
+              {{ isLoading ? t('sending') : t('send_magic_link') }}
             </UButton>
           </div>
         </form>
@@ -83,14 +71,14 @@
       <div class="text-center">
         <UButton to="/" variant="ghost" size="sm">
           <i class="fad fa-arrow-left mr-2"></i>
-          {{ $t('back_to_site') }}
+          {{ t('back_to_site') }}
         </UButton>
       </div>
 
       <div class="text-center mt-2 p-3 bg-base-200 rounded-lg">
         <p class="text-xs opacity-70">
           <i class="fad fa-link mr-1"></i>
-          {{ $t('unified_account_note') }}
+          {{ t('unified_account_note') }}
         </p>
       </div>
     </UCard>
@@ -98,13 +86,15 @@
 </template>
 
 <script setup lang="ts">
+  const { t } = useI18n();
+
   // SEO and meta
   useHead({
-    title: $t('page_title'),
+    title: t('page_title'),
     meta: [
       {
         name: 'description',
-        content: $t('page_description'),
+        content: t('page_description'),
       },
       {
         name: 'robots',
@@ -134,7 +124,7 @@
   // Login handler
   const handleLogin = async () => {
     if (!email.value) {
-      errorMessage.value = $t('validation_error');
+      errorMessage.value = t('validation_error');
       return;
     }
 
@@ -146,7 +136,7 @@
       magicLinkSent.value = true;
     } catch (error: any) {
       console.error('Login error:', error);
-      errorMessage.value = error.message || $t('login_error');
+      errorMessage.value = error.message || t('login_error');
     } finally {
       isLoading.value = false;
     }
@@ -160,7 +150,7 @@
       await signInWithGoogle();
     } catch (error: any) {
       console.error('Google login error:', error);
-      errorMessage.value = error.message || $t('oauth_error');
+      errorMessage.value = error.message || t('oauth_error');
       isLoading.value = false;
     }
   };
@@ -173,7 +163,7 @@
       await signInWithApple();
     } catch (error: any) {
       console.error('Apple login error:', error);
-      errorMessage.value = error.message || $t('oauth_error');
+      errorMessage.value = error.message || t('oauth_error');
       isLoading.value = false;
     }
   };

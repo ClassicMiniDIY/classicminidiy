@@ -48,9 +48,7 @@ describe('useSubmissions', () => {
       vi.stubGlobal('useAuth', () => mockAuth);
 
       const rows = [makeSubmissionRow(), makeSubmissionRow({ id: 'sub-2' })];
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: rows, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -68,9 +66,7 @@ describe('useSubmissions', () => {
       const mockAuth = createMockAuth(mockUser);
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -84,9 +80,7 @@ describe('useSubmissions', () => {
       const mockAuth = createMockAuth(mockUser);
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -100,9 +94,7 @@ describe('useSubmissions', () => {
       const mockAuth = createMockAuth(mockUser);
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -129,9 +121,7 @@ describe('useSubmissions', () => {
         created_at: '2026-02-01T12:00:00Z',
         reviewed_at: '2026-02-02T08:00:00Z',
       });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -155,9 +145,7 @@ describe('useSubmissions', () => {
       const mockAuth = createMockAuth(mockUser);
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: null }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -172,9 +160,7 @@ describe('useSubmissions', () => {
       vi.stubGlobal('useAuth', () => mockAuth);
 
       const supabaseError = { message: 'Database connection failed', code: '500' };
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: supabaseError }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: supabaseError }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -188,9 +174,7 @@ describe('useSubmissions', () => {
       vi.stubGlobal('useAuth', () => mockAuth);
 
       const row = makeSubmissionRow({ data: null });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: [row], error: null }),
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [row], error: null }));
 
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { listMySubmissions } = useSubmissions();
@@ -208,9 +192,7 @@ describe('useSubmissions', () => {
       const { useSubmissions } = await import('~/app/composables/useSubmissions');
       const { submitNewItem } = useSubmissions();
 
-      await expect(submitNewItem('document', { title: 'Test' })).rejects.toThrow(
-        'Must be authenticated to submit',
-      );
+      await expect(submitNewItem('document', { title: 'Test' })).rejects.toThrow('Must be authenticated to submit');
     });
 
     it('inserts into submission_queue with correct fields when authenticated', async () => {
@@ -298,9 +280,7 @@ describe('useSubmissions', () => {
       const { submitNewItem } = useSubmissions();
       await submitNewItem('wheel', { brand: 'Minilite' });
 
-      expect(mockSupabase._mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ target_type: 'wheel' }),
-      );
+      expect(mockSupabase._mockInsert).toHaveBeenCalledWith(expect.objectContaining({ target_type: 'wheel' }));
     });
 
     it('uses the authenticated user id as submitted_by', async () => {
@@ -315,7 +295,7 @@ describe('useSubmissions', () => {
       await submitNewItem('color', { name: 'Almond Green' });
 
       expect(mockSupabase._mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ submitted_by: 'custom-user-456' }),
+        expect.objectContaining({ submitted_by: 'custom-user-456' })
       );
     });
   });
@@ -329,7 +309,7 @@ describe('useSubmissions', () => {
       const { submitEditSuggestion } = useSubmissions();
 
       await expect(
-        submitEditSuggestion('document', 'doc-1', { title: { from: 'Old', to: 'New' } }, 'Typo fix'),
+        submitEditSuggestion('document', 'doc-1', { title: { from: 'Old', to: 'New' } }, 'Typo fix')
       ).rejects.toThrow('Must be authenticated to suggest edits');
     });
 
@@ -392,7 +372,7 @@ describe('useSubmissions', () => {
         'color',
         'color-5',
         { hex_value: { from: '#000', to: '#111' } },
-        'Wrong hex',
+        'Wrong hex'
       );
 
       expect(result).toEqual({
@@ -423,7 +403,7 @@ describe('useSubmissions', () => {
       const { submitEditSuggestion } = useSubmissions();
 
       await expect(
-        submitEditSuggestion('wheel', 'wheel-1', { size: { from: 10, to: 12 } }, 'Wrong size'),
+        submitEditSuggestion('wheel', 'wheel-1', { size: { from: 10, to: 12 } }, 'Wrong size')
       ).rejects.toEqual(supabaseError);
     });
 
@@ -438,9 +418,7 @@ describe('useSubmissions', () => {
       const { submitEditSuggestion } = useSubmissions();
       await submitEditSuggestion('document', 'doc-42', { content: { from: 'a', to: 'b' } }, 'Fix');
 
-      expect(mockSupabase._mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ target_id: 'doc-42' }),
-      );
+      expect(mockSupabase._mockInsert).toHaveBeenCalledWith(expect.objectContaining({ target_id: 'doc-42' }));
     });
 
     it('wraps changes and reason into the data field', async () => {

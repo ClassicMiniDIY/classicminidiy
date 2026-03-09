@@ -83,36 +83,28 @@ export default defineEventHandler(async (event) => {
 
       const storagePath = `uploads/${submissionId}/${file.filename}`;
 
-      const { error } = await supabase.storage
-        .from(bucket)
-        .upload(storagePath, file.data, {
-          contentType: fileType,
-          upsert: true,
-        });
+      const { error } = await supabase.storage.from(bucket).upload(storagePath, file.data, {
+        contentType: fileType,
+        upsert: true,
+      });
 
       if (error) {
         console.error(`Error uploading file ${file.filename}:`, error);
         throw createError({ statusCode: 500, statusMessage: `Upload failed: ${error.message}` });
       }
 
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(storagePath);
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(storagePath);
 
       uploadedPaths.push(urlData.publicUrl);
     }
 
     // Update the submission queue entry with new file paths
     if (uploadedPaths.length > 0) {
-      const { data: existing } = await supabase
-        .from('submission_queue')
-        .select('data')
-        .eq('id', submissionId)
-        .single();
+      const { data: existing } = await supabase.from('submission_queue').select('data').eq('id', submissionId).single();
 
       const currentData = (existing?.data as Record<string, unknown>) || {};
       const currentFiles = (currentData.uploadedFiles as any[]) || [];
-      const newFiles = uploadedPaths.map(url => ({ url, category }));
+      const newFiles = uploadedPaths.map((url) => ({ url, category }));
 
       await supabase
         .from('submission_queue')

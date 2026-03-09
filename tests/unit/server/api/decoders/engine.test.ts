@@ -3,14 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.stubGlobal('defineEventHandler', (handler: Function) => handler);
 vi.stubGlobal('setResponseHeaders', vi.fn());
-vi.stubGlobal(
-  'createError',
-  (opts: any) => {
-    const e = new Error(opts.message || opts.statusMessage);
-    (e as any).statusCode = opts.statusCode;
-    return e;
-  },
-);
+vi.stubGlobal('createError', (opts: any) => {
+  const e = new Error(opts.message || opts.statusMessage);
+  (e as any).statusCode = opts.statusCode;
+  return e;
+});
 
 describe('server/api/decoders/engine', () => {
   let handler: Function;
@@ -55,9 +52,12 @@ describe('server/api/decoders/engine', () => {
   it('calls setResponseHeaders with long-lived cache headers', () => {
     const mockEvent = { id: 'test' };
     handler(mockEvent);
-    expect(setResponseHeaders).toHaveBeenCalledWith(mockEvent, expect.objectContaining({
-      'Cache-Control': expect.stringContaining('31536000'),
-    }));
+    expect(setResponseHeaders).toHaveBeenCalledWith(
+      mockEvent,
+      expect.objectContaining({
+        'Cache-Control': expect.stringContaining('31536000'),
+      })
+    );
   });
 
   it('contains known engine code 8A', () => {

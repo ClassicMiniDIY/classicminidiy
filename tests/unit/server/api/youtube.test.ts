@@ -242,12 +242,7 @@ describe('server/api/youtube/videos', () => {
     vi.clearAllMocks();
   });
 
-  function makeVideoItem(
-    title: string,
-    videoId: string,
-    publishedAt: string,
-    thumbnails?: any,
-  ) {
+  function makeVideoItem(title: string, videoId: string, publishedAt: string, thumbnails?: any) {
     return {
       kind: 'youtube#playlistItem',
       etag: 'etag-' + videoId,
@@ -485,9 +480,7 @@ describe('server/api/youtube/videos', () => {
 
   it('retries on failure and succeeds on second attempt', async () => {
     const items = [makeVideoItem('Retry Success', 'r1', '2024-06-01T00:00:00Z')];
-    mockAxiosGet
-      .mockRejectedValueOnce(new Error('transient'))
-      .mockResolvedValueOnce(makeVideosResponse(items));
+    mockAxiosGet.mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce(makeVideosResponse(items));
     const result = await handler({});
     expect(result[0].title).toBe('Retry Success');
     expect(mockAxiosGet).toHaveBeenCalledTimes(2);

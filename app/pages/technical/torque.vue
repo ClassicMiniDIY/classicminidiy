@@ -1,18 +1,20 @@
 <script lang="ts" setup>
   import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+
+  const { t } = useI18n();
   const { data: tables, status } = await useFetch('/api/torque');
   const tableSearchQueries = ref<Record<string, string>>({});
 
   const tableColumns = [
     {
       accessorKey: 'name',
-      header: () => $t('table_headers.fastener'),
+      header: () => t('table_headers.fastener'),
       cell: ({ row }) => row.getValue('name'),
     },
     {
       accessorKey: 'lbft',
-      header: () => $t('table_headers.torque_lbft'),
+      header: () => t('table_headers.torque_lbft'),
       cell: ({ row }) =>
         h(
           'span',
@@ -24,7 +26,7 @@
     },
     {
       accessorKey: 'nm',
-      header: () => $t('table_headers.torque_nm'),
+      header: () => t('table_headers.torque_nm'),
       cell: ({ row }) =>
         h(
           'span',
@@ -36,24 +38,24 @@
     },
     {
       accessorKey: 'notes',
-      header: () => $t('table_headers.notes'),
-      cell: ({ row }) => row.getValue('notes') || $t('ui.no_notes'),
+      header: () => t('table_headers.notes'),
+      cell: ({ row }) => row.getValue('notes') || t('ui.no_notes'),
     },
   ];
   const activePanel = ref<string | null>(null);
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -69,14 +71,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('og_title'),
-    ogDescription: $t('og_description'),
+    ogTitle: t('og_title'),
+    ogDescription: t('og_description'),
     ogUrl: 'https://classicminidiy.com/technical/torque',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/torque.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitter_title'),
-    twitterDescription: $t('twitter_description'),
+    twitterTitle: t('twitter_title'),
+    twitterDescription: t('twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/torque.png',
   });
 
@@ -84,8 +86,8 @@
   const torqueSpecsJsonLd = computed(() => ({
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
-    headline: $t('structured_data.headline'),
-    description: $t('structured_data.description'),
+    headline: t('structured_data.headline'),
+    description: t('structured_data.description'),
     image: 'https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png',
     author: {
       '@type': 'Person',
@@ -102,9 +104,9 @@
     url: 'https://classicminidiy.com/technical/torque',
     mainEntity: {
       '@type': 'Dataset',
-      name: $t('structured_data.dataset_name'),
-      description: $t('structured_data.dataset_description'),
-      variableMeasured: $t('structured_data.variable_measured'),
+      name: t('structured_data.dataset_name'),
+      description: t('structured_data.dataset_description'),
+      variableMeasured: t('structured_data.variable_measured'),
     },
   }));
 
@@ -131,16 +133,16 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :textSize="'text-3xl'" :heroType="HERO_TYPES.TECH" />
+  <hero :navigation="true" :title="t('hero_title')" :textSize="'text-3xl'" :heroType="HERO_TYPES.TECH" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-2xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+            <h1 class="text-2xl font-bold mb-4">{{ t('main_heading') }}</h1>
             <p class="mb-6">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
           </div>
         </div>
@@ -172,7 +174,7 @@
               <div class="flex justify-end mb-4">
                 <UInput
                   type="text"
-                  :placeholder="$t('ui.search_placeholder')"
+                  :placeholder="t('ui.search_placeholder')"
                   v-model="tableSearchQueries[item.value]"
                   class="w-full max-w-xs"
                   icon="i-fa6-solid-magnifying-glass"
@@ -194,7 +196,7 @@
 
       <!-- Support section -->
       <div class="col-span-12 mt-8 mb-10">
-        <USeparator :label="$t('support_divider')" class="mb-6" />
+        <USeparator :label="t('support_divider')" class="mb-6" />
         <patreon-card size="large" />
       </div>
     </div>

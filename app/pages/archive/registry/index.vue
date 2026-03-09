@@ -1,29 +1,30 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../../data/models/generic';
 
+  const { t } = useI18n();
   const { listApproved } = useRegistry();
 
   // Define table columns
   const tableHeaders = [
-    { title: $t('table_headers.year'), key: 'year' },
-    { title: $t('table_headers.model'), key: 'model' },
-    { title: $t('table_headers.trim'), key: 'trim' },
-    { title: $t('table_headers.color'), key: 'color' },
+    { title: t('table_headers.year'), key: 'year' },
+    { title: t('table_headers.model'), key: 'model' },
+    { title: t('table_headers.trim'), key: 'trim' },
+    { title: t('table_headers.color'), key: 'color' },
   ];
 
   const { data: registryItems, status } = await useAsyncData('registry-list', () => listApproved());
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -43,7 +44,7 @@
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Classic Mini Registry',
-    description: $t('description'),
+    description: t('description'),
     url: 'https://classicminidiy.com/archive/registry',
     mainEntity: {
       '@type': 'ItemList',
@@ -68,24 +69,24 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/archive/registry',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/registry.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/registry.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :page="t('breadcrumb_title')"></breadcrumb>
 
         <!-- Contribute Banner -->
         <UCard class="mb-6 bg-primary/5">
@@ -93,30 +94,30 @@
             <div class="flex items-center gap-3">
               <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
               <div>
-                <p class="font-medium">{{ $t('contribute_banner_title') }}</p>
-                <p class="text-sm opacity-70">{{ $t('contribute_banner_description') }}</p>
+                <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+                <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
               </div>
             </div>
             <UButton to="/contribute/registry" color="primary" variant="outline" size="sm">
-              {{ $t('contribute_banner_button') }}
+              {{ t('contribute_banner_button') }}
             </UButton>
           </div>
         </UCard>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-3xl font-bold">{{ $t('main_heading') }}</h1>
+            <h1 class="text-3xl font-bold">{{ t('main_heading') }}</h1>
             <h2 class="text-xl mt-4">
-              <strong>{{ registryItems?.length || $t('subtitle_count') }}</strong>
-              {{ $t('subtitle') }}
+              <strong>{{ registryItems?.length || t('subtitle_count') }}</strong>
+              {{ t('subtitle') }}
             </h2>
             <p class="my-4">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
-            <p class="font-bold mt-4 mb-5">{{ $t('submission_status_text') }}</p>
+            <p class="font-bold mt-4 mb-5">{{ t('submission_status_text') }}</p>
             <UButton to="/archive/registry/pending" color="primary">
               <i class="fa-duotone fa-clipboard-question mr-2"></i>
-              {{ $t('track_submission_button') }}
+              {{ t('track_submission_button') }}
             </UButton>
           </div>
           <div class="col-span-12 md:col-span-4">
@@ -137,16 +138,16 @@
                         <nuxt-img
                           loading="lazy"
                           src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
-                          :alt="$t('submit_card.alt_text')"
+                          :alt="t('submit_card.alt_text')"
                           class="w-16 h-16"
                         />
                       </picture>
                     </figure>
                   </div>
                   <div>
-                    <h2 class="text-lg font-semibold">{{ $t('submit_card.title') }}</h2>
+                    <h2 class="text-lg font-semibold">{{ t('submit_card.title') }}</h2>
                     <p>
-                      {{ $t('submit_card.description') }}
+                      {{ t('submit_card.description') }}
                     </p>
                   </div>
                 </div>
@@ -164,13 +165,13 @@
         />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator id="submitAnchor" :label="$t('submit_divider')" />
+        <USeparator id="submitAnchor" :label="t('submit_divider')" />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <RegistrySubmission></RegistrySubmission>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="$t('support_divider')" />
+        <USeparator :label="t('support_divider')" />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <patreon-card size="large" />

@@ -33,7 +33,7 @@
         type: activeType.value === 'all' ? undefined : activeType.value,
         sort: sortBy.value,
       }),
-    { watch: [activeType, sortBy] },
+    { watch: [activeType, sortBy] }
   );
 
   // Fetch collections
@@ -43,7 +43,7 @@
       listCollections({
         type: activeType.value === 'all' ? undefined : activeType.value,
       }),
-    { watch: [activeType] },
+    { watch: [activeType] }
   );
 
   // Fetch type counts for filter chips
@@ -69,7 +69,7 @@
         item.title?.toLowerCase().includes(q) ||
         item.description?.toLowerCase().includes(q) ||
         item.code?.toLowerCase().includes(q) ||
-        item.author?.toLowerCase().includes(q),
+        item.author?.toLowerCase().includes(q)
     );
   });
 
@@ -99,8 +99,8 @@
     }
 
     const result: Array<
-      { kind: 'collection'; col: typeof cols[0]; docs: ArchiveDocumentItem[] } |
-      { kind: 'standalone'; doc: ArchiveDocumentItem }
+      | { kind: 'collection'; col: (typeof cols)[0]; docs: ArchiveDocumentItem[] }
+      | { kind: 'standalone'; doc: ArchiveDocumentItem }
     > = [];
 
     for (const col of cols) {
@@ -410,11 +410,7 @@
 
           <!-- Documents Table View -->
           <div v-else>
-            <UTable
-              :data="flatTableData"
-              :columns="tableColumns"
-              :get-row-id="(row: FlatTableRow) => row.id"
-            >
+            <UTable :data="flatTableData" :columns="tableColumns" :get-row-id="(row: FlatTableRow) => row.id">
               <!-- Image cell: expand toggle for collections, thumbnail for docs, hidden for children -->
               <template #image-cell="{ row }">
                 <div v-if="row.original.depth === 0" class="flex items-center gap-2">
@@ -423,7 +419,14 @@
                     @click.stop.prevent="toggleCollection(row.original.collectionId!)"
                     class="text-muted hover:text-primary transition-colors p-1"
                   >
-                    <i :class="expandedCollections.has(row.original.collectionId!) ? 'fas fa-chevron-down' : 'fas fa-chevron-right'" class="text-xs"></i>
+                    <i
+                      :class="
+                        expandedCollections.has(row.original.collectionId!)
+                          ? 'fas fa-chevron-down'
+                          : 'fas fa-chevron-right'
+                      "
+                      class="text-xs"
+                    ></i>
                   </button>
                   <div class="hidden md:block h-12 w-12 rounded-lg overflow-hidden">
                     <img
@@ -433,7 +436,13 @@
                       class="h-12 w-12 object-cover"
                     />
                     <div v-else class="flex justify-center items-center h-12 w-12 bg-muted">
-                      <i :class="row.original.isCollection ? 'fad fa-books text-lg text-muted' : 'fad fa-image-slash text-lg text-muted'"></i>
+                      <i
+                        :class="
+                          row.original.isCollection
+                            ? 'fad fa-books text-lg text-muted'
+                            : 'fad fa-image-slash text-lg text-muted'
+                        "
+                      ></i>
                     </div>
                   </div>
                 </div>
@@ -442,7 +451,9 @@
               <!-- File type cell: hidden for nested child rows -->
               <template #fileType-cell="{ row }">
                 <div v-if="row.original.depth === 0" class="hidden md:flex justify-center">
-                  <span v-if="row.original.isCollection" class="badge badge-primary badge-sm">{{ row.original.childCount }}</span>
+                  <span v-if="row.original.isCollection" class="badge badge-primary badge-sm">{{
+                    row.original.childCount
+                  }}</span>
                   <i
                     v-else-if="row.original.download"
                     :class="[

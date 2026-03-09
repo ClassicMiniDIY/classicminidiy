@@ -11,10 +11,12 @@ let allItems: any[] = [];
 let lastKey: any = undefined;
 
 do {
-  const result = await dynamo.send(new ScanCommand({
-    TableName: 'wheels',
-    ExclusiveStartKey: lastKey,
-  }));
+  const result = await dynamo.send(
+    new ScanCommand({
+      TableName: 'wheels',
+      ExclusiveStartKey: lastKey,
+    })
+  );
   allItems.push(...(result.Items || []));
   lastKey = result.LastEvaluatedKey;
   console.log(`  Scanned ${allItems.length} wheels so far...`);
@@ -27,12 +29,14 @@ const supabaseRows = allItems.map((item: any) => {
   // Parse photos from various formats
   let photos: string[] = [];
   if (Array.isArray(item.images)) {
-    photos = item.images.map((img: any) => {
-      if (typeof img === 'string') return img;
-      if (img?.src) return img.src;
-      if (img?.url) return img.url;
-      return '';
-    }).filter(Boolean);
+    photos = item.images
+      .map((img: any) => {
+        if (typeof img === 'string') return img;
+        if (img?.src) return img.src;
+        if (img?.url) return img.url;
+        return '';
+      })
+      .filter(Boolean);
   }
 
   return {

@@ -25,12 +25,10 @@ export default defineEventHandler(async (event) => {
 
       const storagePath = `uploads/${uuid}/${file.filename}`;
 
-      const { error } = await supabase.storage
-        .from('archive-wheels')
-        .upload(storagePath, file.data, {
-          contentType: file.type || 'application/octet-stream',
-          upsert: true,
-        });
+      const { error } = await supabase.storage.from('archive-wheels').upload(storagePath, file.data, {
+        contentType: file.type || 'application/octet-stream',
+        upsert: true,
+      });
 
       if (error) {
         console.error(`Error uploading file ${file.filename}:`, error);
@@ -38,20 +36,14 @@ export default defineEventHandler(async (event) => {
       }
 
       // Get the public URL for the uploaded file
-      const { data: urlData } = supabase.storage
-        .from('archive-wheels')
-        .getPublicUrl(storagePath);
+      const { data: urlData } = supabase.storage.from('archive-wheels').getPublicUrl(storagePath);
 
       uploadedPaths.push(urlData.publicUrl);
     }
 
     // Update the submission queue entry with new photo paths
     if (uploadedPaths.length > 0) {
-      const { data: existing } = await supabase
-        .from('submission_queue')
-        .select('data')
-        .eq('id', uuid)
-        .single();
+      const { data: existing } = await supabase.from('submission_queue').select('data').eq('id', uuid).single();
 
       const currentData = existing?.data || {};
       const currentPhotos = currentData.images || currentData.photos || [];

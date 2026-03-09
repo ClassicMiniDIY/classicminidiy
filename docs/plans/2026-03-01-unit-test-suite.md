@@ -13,11 +13,13 @@
 ## Task 1: Install Test Dependencies
 
 **Files:**
+
 - Modify: `package.json`
 
 **Step 1: Install devDependencies**
 
 Run:
+
 ```bash
 cd /Users/colegentry/Development/classicminidiy && bun add -d vitest @vue/test-utils happy-dom @vitest/coverage-v8 @vitejs/plugin-vue
 ```
@@ -25,6 +27,7 @@ cd /Users/colegentry/Development/classicminidiy && bun add -d vitest @vue/test-u
 **Step 2: Add test scripts to package.json**
 
 Add these scripts to the `"scripts"` section:
+
 ```json
 "test": "vitest run",
 "test:watch": "vitest",
@@ -44,6 +47,7 @@ git commit -m "chore: add vitest test infrastructure dependencies"
 ## Task 2: Create Vitest Configuration
 
 **Files:**
+
 - Create: `vitest.config.ts`
 
 **Step 1: Create vitest config**
@@ -63,9 +67,7 @@ export default defineConfig({
         if (id.includes('node_modules')) return;
         if (!code.includes('import.meta.client') && !code.includes('import.meta.server')) return;
         return {
-          code: code
-            .replace(/\bimport\.meta\.client\b/g, '(true)')
-            .replace(/\bimport\.meta\.server\b/g, '(false)'),
+          code: code.replace(/\bimport\.meta\.client\b/g, '(true)').replace(/\bimport\.meta\.server\b/g, '(false)'),
           map: null,
         };
       },
@@ -103,6 +105,7 @@ git commit -m "chore: add vitest configuration"
 ## Task 3: Create Global Test Setup
 
 **Files:**
+
 - Create: `tests/setup/vitest.setup.ts`
 
 **Step 1: Create the global setup file**
@@ -255,7 +258,9 @@ if (isBrowserEnv) {
     constructor() {}
     disconnect() {}
     observe() {}
-    takeRecords() { return []; }
+    takeRecords() {
+      return [];
+    }
     unobserve() {}
   } as any;
 
@@ -269,9 +274,14 @@ if (isBrowserEnv) {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation((query) => ({
-      matches: false, media: query, onchange: null,
-      addListener: vi.fn(), removeListener: vi.fn(),
-      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
     })),
   });
 
@@ -288,7 +298,12 @@ if (isBrowserEnv) {
   Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 } else {
   (global as any).localStorage = {
-    getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn(), clear: vi.fn(), length: 0, key: vi.fn(),
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+    length: 0,
+    key: vi.fn(),
   };
 }
 ```
@@ -305,6 +320,7 @@ git commit -m "chore: add global vitest setup with Nuxt auto-import mocks"
 ## Task 4: Create Mock Supabase Client & Test Helpers
 
 **Files:**
+
 - Create: `tests/setup/mockSupabase.ts`
 - Create: `tests/setup/testHelpers.ts`
 - Create: `tests/setup/globals.d.ts`
@@ -517,6 +533,7 @@ git commit -m "chore: add Supabase mock client and test helper utilities"
 ## Task 5: Sanity Test — Verify Infrastructure Works
 
 **Files:**
+
 - Create: `tests/sanity.test.ts`
 
 **Step 1: Write a trivial sanity test**
@@ -565,6 +582,7 @@ git commit -m "test: add sanity test to verify vitest infrastructure"
 ## Task 6: Test `data/models/helper-utils.ts` — Pure Utility Functions
 
 **Files:**
+
 - Create: `tests/unit/data/helper-utils.test.ts`
 - Test: `data/models/helper-utils.ts`
 
@@ -658,6 +676,7 @@ git commit -m "test: add unit tests for helper-utils (humanFileSize, determineAr
 ## Task 7: Test `server/utils/cache.ts` — In-Memory TTL Cache
 
 **Files:**
+
 - Create: `tests/unit/server/utils/cache.test.ts`
 - Test: `server/utils/cache.ts`
 
@@ -740,6 +759,7 @@ git commit -m "test: add unit tests for server TTL cache utility"
 ## Task 8: Test `app/composables/useDebounce.ts` — Pure Reactive Utilities
 
 **Files:**
+
 - Create: `tests/unit/composables/useDebounce.test.ts`
 - Test: `app/composables/useDebounce.ts`
 
@@ -884,6 +904,7 @@ git commit -m "test: add unit tests for useDebounce composable"
 ## Task 9: Test `app/composables/usePersistentThread.ts` — localStorage Thread Persistence
 
 **Files:**
+
 - Create: `tests/unit/composables/usePersistentThread.test.ts`
 - Test: `app/composables/usePersistentThread.ts`
 
@@ -892,6 +913,7 @@ git commit -m "test: add unit tests for useDebounce composable"
 Test localStorage persistence, expiry, auto-cleanup, and SSR guards. Mock `localStorage` and use `vi.useFakeTimers()` for expiry tests.
 
 Key test cases:
+
 - `persistThread` writes to localStorage with correct keys
 - `getThreadData` reads and parses stored data
 - `clearPersistedThread` removes keys and nulls ref
@@ -917,6 +939,7 @@ git commit -m "test: add unit tests for usePersistentThread composable"
 ## Task 10: Test `app/composables/useColors.ts` — Supabase CRUD Composable
 
 **Files:**
+
 - Create: `tests/unit/composables/useColors.test.ts`
 - Test: `app/composables/useColors.ts`
 
@@ -963,9 +986,7 @@ describe('useColors', () => {
     });
 
     it('throws on Supabase error', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: null, error: { message: 'DB error' } })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: null, error: { message: 'DB error' } }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { listColors } = useColors();
@@ -990,9 +1011,7 @@ describe('useColors', () => {
 
   describe('checkDuplicate', () => {
     it('returns true when color code exists', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [{ id: '1' }], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [{ id: '1' }], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { checkDuplicate } = useColors();
@@ -1002,9 +1021,7 @@ describe('useColors', () => {
     });
 
     it('returns false when color code does not exist', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve) =>
-        resolve({ data: [], error: null })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve) => resolve({ data: [], error: null }));
 
       const { useColors } = await import('~/app/composables/useColors');
       const { checkDuplicate } = useColors();
@@ -1078,10 +1095,12 @@ git commit -m "test: add unit tests for useColors composable"
 ## Task 11: Test `app/composables/useWheels.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useWheels.test.ts`
 - Test: `app/composables/useWheels.ts`
 
 Key test cases:
+
 - `listAll` queries approved wheels ordered by name
 - `listBySize` filters by numeric size
 - `listBySizeName` maps string names to numbers ('ten'→10, 'twelve'→12, 'thirteen'→13, 'list'→all)
@@ -1099,10 +1118,12 @@ Follow same pattern as Task 10 (useColors).
 ## Task 12: Test `app/composables/useRegistry.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useRegistry.test.ts`
 - Test: `app/composables/useRegistry.ts`
 
 Key test cases:
+
 - `listApproved` queries approved registry entries ordered by year desc
 - `submitRegistryEntry` requires auth, inserts into submission_queue
 - `mapToRegistry` internal helper correctly maps status string to enum code ('P'|'A'|'R')
@@ -1115,10 +1136,12 @@ Follow same pattern as Task 10.
 ## Task 13: Test `app/composables/useContributions.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useContributions.test.ts`
 - Test: `app/composables/useContributions.ts`
 
 Key test cases:
+
 - `getContributorProfile` returns mapped profile or null
 - `listContributions` returns items ordered by created_at desc, respects targetType/limit filters
 - `getContributionStats` returns counts grouped by target_type
@@ -1129,10 +1152,12 @@ Key test cases:
 ## Task 14: Test `app/composables/useSubmissions.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useSubmissions.test.ts`
 - Test: `app/composables/useSubmissions.ts`
 
 Key test cases:
+
 - `listMySubmissions` filters by current user ID, supports status/targetType filters
 - `submitNewItem` inserts with correct target_type
 - `submitEditSuggestion` inserts with type='edit_suggestion' and changes payload
@@ -1144,10 +1169,12 @@ Key test cases:
 ## Task 15: Test `app/composables/useArchiveDocuments.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useArchiveDocuments.test.ts`
 - Test: `app/composables/useArchiveDocuments.ts`
 
 Key test cases:
+
 - `listByType` queries by type, sorts downloads-first
 - `listAll` supports type/search/sort options
 - `listCollections` returns collections with item counts
@@ -1162,12 +1189,14 @@ Key test cases:
 ## Task 16: Test `app/composables/useAuth.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useAuth.test.ts`
 - Test: `app/composables/useAuth.ts`
 
 This is the most complex composable. Use `vi.resetModules()` + dynamic imports since it reads state at module load time.
 
 Key test cases:
+
 - `initAuth` calls `getSession` and sets up `onAuthStateChange`
 - `initAuth` is singleton (calling twice doesn't duplicate subscriptions)
 - `waitForAuth` resolves when auth loads, rejects on timeout
@@ -1185,10 +1214,12 @@ Key test cases:
 ## Task 17: Test `app/composables/usePostHog.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/usePostHog.test.ts`
 - Test: `app/composables/usePostHog.ts`
 
 Key test cases:
+
 - `capture` no-ops when PostHog not initialized
 - `capture` forwards to PostHog when available
 - `identify` no-ops when not initialized, forwards when available
@@ -1199,6 +1230,7 @@ Key test cases:
 ## Task 18: Test `app/middleware/oldRouteRedirect.global.ts`
 
 **Files:**
+
 - Create: `tests/unit/middleware/oldRouteRedirect.test.ts`
 - Test: `app/middleware/oldRouteRedirect.global.ts`
 
@@ -1252,10 +1284,12 @@ describe('oldRouteRedirect middleware', () => {
 ## Task 19: Test `app/middleware/admin.global.ts`
 
 **Files:**
+
 - Create: `tests/unit/middleware/admin.test.ts`
 - Test: `app/middleware/admin.global.ts`
 
 Key test cases:
+
 - No-op for non-admin routes
 - No-op during SSR (`import.meta.server`)
 - Redirects to `/login` when not authenticated
@@ -1268,12 +1302,14 @@ Key test cases:
 ## Task 20: Test `server/middleware/mcp-auth.ts`
 
 **Files:**
+
 - Create: `tests/unit/server/middleware/mcp-auth.test.ts`
 - Test: `server/middleware/mcp-auth.ts`
 
 Requires mocking Nitro globals (`defineEventHandler`, `getRequestURL`, `getHeader`, `createError`, `useRuntimeConfig`).
 
 Key test cases:
+
 - Passes through non-`/mcp` routes
 - Rejects requests without Bearer token (401)
 - Rejects invalid Bearer tokens (403)
@@ -1287,10 +1323,12 @@ Key test cases:
 ## Task 21: Test `server/middleware/legacy-archive-redirect.ts`
 
 **Files:**
+
 - Create: `tests/unit/server/middleware/legacy-archive-redirect.test.ts`
 - Test: `server/middleware/legacy-archive-redirect.ts`
 
 Key test cases:
+
 - Passes through non-legacy paths
 - Redirects `/archive/manuals/:slug` when found by `legacy_slug`
 - Falls back to `slug` lookup when `legacy_slug` fails
@@ -1302,6 +1340,7 @@ Key test cases:
 ## Task 22: Test Static Data API Endpoints
 
 **Files:**
+
 - Create: `tests/unit/server/api/static-data.test.ts`
 - Test: `server/api/clearance.ts`, `engines.ts`, `torque.ts`, `weights.ts`, `parts.ts`, `gearing.ts`
 
@@ -1367,10 +1406,12 @@ describe('Static Data Endpoints', () => {
 ## Task 23: Test `server/api/decoders/engine.ts`
 
 **Files:**
+
 - Create: `tests/unit/server/api/decoders/engine.test.ts`
 - Test: `server/api/decoders/engine.ts`
 
 Key test cases:
+
 - Returns engine code data
 - Sets 1-year cache headers
 - Data has expected structure
@@ -1380,12 +1421,14 @@ Key test cases:
 ## Task 24: Test `server/api/decoders/chassis.ts` — Complex Decoder Logic
 
 **Files:**
+
 - Create: `tests/unit/server/api/decoders/chassis.test.ts`
 - Test: `server/api/decoders/chassis.ts`
 
 This is the highest-value test target — 567 lines of position-by-position parsing logic.
 
 Key test cases:
+
 - Rejects non-PUT methods
 - Validates required fields (yearRange, chassisNumber)
 - Validates input length limits (50 chars chassis, 20 chars yearRange)
@@ -1410,10 +1453,12 @@ NOTE: Read the actual `chassisRanges` data from `data/models/decoders.ts` to con
 ## Task 25: Test `server/api/needles/list.ts` and `suggested.ts`
 
 **Files:**
+
 - Create: `tests/unit/server/api/needles.test.ts`
 - Test: `server/api/needles/list.ts`, `server/api/needles/suggested.ts`
 
 Key test cases:
+
 - `list` returns `{ all, initial }` shape
 - `suggested` returns data
 - Both set 1-day cache headers
@@ -1423,12 +1468,14 @@ Key test cases:
 ## Task 26: Test `server/utils/adminAuth.ts`
 
 **Files:**
+
 - Create: `tests/unit/server/utils/adminAuth.test.ts`
 - Test: `server/utils/adminAuth.ts`
 
 Mock `@supabase/supabase-js` createClient and Nitro globals.
 
 Key test cases for `requireAdminAuth`:
+
 - Extracts Bearer token from Authorization header
 - Extracts token from Supabase auth cookie (JSON string format)
 - Extracts token from Supabase auth cookie (JSON array format)
@@ -1438,6 +1485,7 @@ Key test cases for `requireAdminAuth`:
 - Returns user and profile on success
 
 Key test cases for `isAdminAuthenticated`:
+
 - Returns true on valid admin auth
 - Returns false on any error
 
@@ -1446,12 +1494,14 @@ Key test cases for `isAdminAuthenticated`:
 ## Task 27: Test `server/api/admin/queue/*.ts` — Admin Queue Endpoints
 
 **Files:**
+
 - Create: `tests/unit/server/api/admin/queue.test.ts`
 - Test: `server/api/admin/queue/list.ts`, `count.ts`, `approve.post.ts`, `reject.post.ts`
 
 Mock `requireAdminAuth`, `getServiceClient`, and Nitro globals.
 
 Key test cases:
+
 - All endpoints require admin auth (call `requireAdminAuth`)
 - `list`: respects `targetType` and `status` query params, returns mapped submissions
 - `count`: returns `{ count }` for pending items, respects `targetType` filter
@@ -1465,12 +1515,14 @@ Key test cases:
 ## Task 28: Test MCP Tools — Compression Calculator
 
 **Files:**
+
 - Create: `tests/unit/server/mcp/compression-calculator.test.ts`
 - Test: `server/mcp/tools/compression-calculator.ts`
 
 Mock `defineMcpTool` to extract the handler function, then test the pure math.
 
 Key test cases:
+
 - Stock 1275cc: bore=7.06, stroke=8.128 → known compression ratio (~8.3-9.5:1 depending on volumes)
 - Stock 998cc: verify capacity calculation
 - Custom gasket volume (when gasket=0, use customGasket)
@@ -1484,10 +1536,12 @@ Key test cases:
 ## Task 29: Test MCP Tools — Gearbox Calculator
 
 **Files:**
+
 - Create: `tests/unit/server/mcp/gearbox-calculator.test.ts`
 - Test: `server/mcp/tools/gearbox-calculator.ts`
 
 Key test cases:
+
 - Default inputs produce sensible top speed (50-120 mph range)
 - Metric mode multiplies by kphFactor (1.60934)
 - Each gear has lower max speed than the next (1st < 2nd < 3rd < 4th)
@@ -1500,10 +1554,12 @@ Key test cases:
 ## Task 30: Test `data/models/gearing.ts` — Exported Constants
 
 **Files:**
+
 - Create: `tests/unit/data/gearing.test.ts`
 - Test: `data/models/gearing.ts`
 
 Key test cases:
+
 - `kphFactor` equals 1.60934
 - `options.tires` has 17 entries, each with width/profile/size
 - `options.diffs` has 20 entries, each with numeric value
@@ -1516,10 +1572,12 @@ Key test cases:
 ## Task 31: Test `data/models/compression.ts` — Form Options Data
 
 **Files:**
+
 - Create: `tests/unit/data/compression.test.ts`
 - Test: `data/models/compression.ts`
 
 Key test cases:
+
 - `formOptions.pistonOptions` has 17 entries with numeric values
 - `formOptions.crankshaftOptions` has 10 entries
 - `formOptions.headGasketOptions` has 7 entries, includes value=0 sentinel
@@ -1530,12 +1588,14 @@ Key test cases:
 ## Task 32: Test `server/api/youtube/stats.ts` and `videos.ts`
 
 **Files:**
+
 - Create: `tests/unit/server/api/youtube.test.ts`
 - Test: `server/api/youtube/stats.ts`, `server/api/youtube/videos.ts`
 
 Mock `axios` to avoid real HTTP calls.
 
 Key test cases:
+
 - `stats`: returns formatted view/subscriber/video counts
 - `stats`: handles YouTube API errors
 - `stats`: retries on failure (up to 3 times)
@@ -1547,12 +1607,14 @@ Key test cases:
 ## Task 33: Test `server/api/github/commits.ts` and `releases.ts`
 
 **Files:**
+
 - Create: `tests/unit/server/api/github.test.ts`
 - Test: `server/api/github/commits.ts`, `server/api/github/releases.ts`
 
 Mock `@octokit/core` to avoid real HTTP calls.
 
 Key test cases:
+
 - `commits`: returns commits with formatted date fields
 - `commits`: handles timeout (504)
 - `commits`: handles GitHub API errors
@@ -1564,10 +1626,12 @@ Key test cases:
 ## Task 34: Test `app/composables/useSupabase.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useSupabase.test.ts`
 - Test: `app/composables/useSupabase.ts`
 
 Key test cases:
+
 - Client-side: returns singleton (same instance on multiple calls)
 - Client-side: configures `persistSession: true`, `autoRefreshToken: true`
 - Server-side: creates fresh instance per call
@@ -1581,16 +1645,19 @@ This requires `vi.mock('@supabase/supabase-js')` to mock the `createClient` func
 ## Task 35: Test `app/composables/useStreamProvider.ts`
 
 **Files:**
+
 - Create: `tests/unit/composables/useStreamProvider.test.ts`
 - Test: `app/composables/useStreamProvider.ts`
 
 Key test cases for `useStreamProvider`:
+
 - Returns correct shape (assistantId, threadId, isConfigured, etc.)
 - `setThreadId` updates threadId ref
 - `createNewThread` clears thread data
 - Delegates to usePersistentThread for storage
 
 Key test cases for `createStreamSession`:
+
 - `submit` sends POST to correct langgraph endpoint
 - Handles SSE stream events (messages/partial, messages/complete, updates, values)
 - `stop` aborts the stream
@@ -1638,13 +1705,13 @@ Adds Vitest infrastructure and 30+ test files covering:
 
 ## Summary
 
-| Category | Files | Test Files | Key Patterns |
-|----------|-------|------------|--------------|
-| Composables | 12 | 12 | `vi.stubGlobal('useSupabase')`, mock query chains, `vi.resetModules()` for state |
-| Server Utils | 3 | 3 | `vi.useFakeTimers()` for cache, mock `createClient` for Supabase |
-| Server Middleware | 2 | 2 | Mock Nitro globals, `defineEventHandler` identity stub |
-| App Middleware | 2 | 2 | `defineNuxtRouteMiddleware` identity stub, mock `navigateTo` |
-| Server API Routes | 18 | 7 | `defineEventHandler` identity, mock external APIs |
-| MCP Tools | 2 | 2 | `defineMcpTool` extraction, pure math assertions |
-| Data Models | 3 | 3 | Pure data validation, no mocking needed |
-| **Total** | **42** | **31** | |
+| Category          | Files  | Test Files | Key Patterns                                                                     |
+| ----------------- | ------ | ---------- | -------------------------------------------------------------------------------- |
+| Composables       | 12     | 12         | `vi.stubGlobal('useSupabase')`, mock query chains, `vi.resetModules()` for state |
+| Server Utils      | 3      | 3          | `vi.useFakeTimers()` for cache, mock `createClient` for Supabase                 |
+| Server Middleware | 2      | 2          | Mock Nitro globals, `defineEventHandler` identity stub                           |
+| App Middleware    | 2      | 2          | `defineNuxtRouteMiddleware` identity stub, mock `navigateTo`                     |
+| Server API Routes | 18     | 7          | `defineEventHandler` identity, mock external APIs                                |
+| MCP Tools         | 2      | 2          | `defineMcpTool` extraction, pure math assertions                                 |
+| Data Models       | 3      | 3          | Pure data validation, no mocking needed                                          |
+| **Total**         | **42** | **31**     |                                                                                  |

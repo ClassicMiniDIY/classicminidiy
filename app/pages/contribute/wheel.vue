@@ -74,12 +74,7 @@
   ];
 
   function validateForm(): boolean {
-    return (
-      name.value.trim() !== '' &&
-      size.value !== '' &&
-      width.value.trim() !== '' &&
-      photoFiles.value.length >= 1
-    );
+    return name.value.trim() !== '' && size.value !== '' && width.value.trim() !== '' && photoFiles.value.length >= 1;
   }
 
   async function submit() {
@@ -278,12 +273,7 @@
                       <span class="text-sm font-medium">{{ t('form.type') }}</span>
                       <span class="text-sm text-muted"><i class="fad fa-shapes"></i></span>
                     </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.type')"
-                      v-model="type"
-                      class="w-full"
-                    />
+                    <UInput type="text" :placeholder="t('placeholders.type')" v-model="type" class="w-full" />
                   </div>
 
                   <!-- Size -->
@@ -331,12 +321,7 @@
                       <span class="text-sm font-medium">{{ t('form.offset') }}</span>
                       <span class="text-sm text-muted"><i class="fad fa-arrows-up-down"></i></span>
                     </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.offset')"
-                      v-model="offset"
-                      class="w-full"
-                    />
+                    <UInput type="text" :placeholder="t('placeholders.offset')" v-model="offset" class="w-full" />
                   </div>
 
                   <!-- Manufacturer -->
@@ -387,12 +372,7 @@
                       <span class="text-sm font-medium">{{ t('form.weight') }}</span>
                       <span class="text-sm text-muted"><i class="fad fa-weight-hanging"></i></span>
                     </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.weight')"
-                      v-model="weight"
-                      class="w-full"
-                    />
+                    <UInput type="text" :placeholder="t('placeholders.weight')" v-model="weight" class="w-full" />
                   </div>
 
                   <!-- Notes (full width) -->
@@ -401,12 +381,7 @@
                       <span class="text-sm font-medium">{{ t('form.notes') }}</span>
                       <span class="text-sm text-muted"><i class="fad fa-note"></i></span>
                     </label>
-                    <UTextarea
-                      :placeholder="t('placeholders.notes')"
-                      v-model="notes"
-                      :rows="4"
-                      class="w-full"
-                    />
+                    <UTextarea :placeholder="t('placeholders.notes')" v-model="notes" :rows="4" class="w-full" />
                   </div>
 
                   <!-- Photos (full width) -->

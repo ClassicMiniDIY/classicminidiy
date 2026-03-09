@@ -11,10 +11,12 @@ let allItems: any[] = [];
 let lastKey: any = undefined;
 
 do {
-  const result = await dynamo.send(new ScanCommand({
-    TableName: 'colors',
-    ExclusiveStartKey: lastKey,
-  }));
+  const result = await dynamo.send(
+    new ScanCommand({
+      TableName: 'colors',
+      ExclusiveStartKey: lastKey,
+    })
+  );
   allItems.push(...(result.Items || []));
   lastKey = result.LastEvaluatedKey;
   console.log(`  Scanned ${allItems.length} colors so far...`);

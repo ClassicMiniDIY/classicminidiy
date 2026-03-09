@@ -1,27 +1,29 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
+
   const { data: tables, status } = await useFetch('/api/weights');
   const activePanel = ref<string | null>(null);
   const tableHeaders = [
-    { title: $t('table_headers.item'), key: 'item' },
-    { title: $t('table_headers.kg'), key: 'weight' },
-    { title: $t('table_headers.lbs'), key: 'lbs' },
+    { title: t('table_headers.item'), key: 'item' },
+    { title: t('table_headers.kg'), key: 'weight' },
+    { title: t('table_headers.lbs'), key: 'lbs' },
   ];
   const tableSearchQueries = ref<Record<string, string>>({});
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -37,19 +39,19 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/archive/weights',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/weights.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/weights.png',
   });
 
   function convertKgToLbs(weightInKg: number | null) {
-    if (!weightInKg) return $t('no_weight');
+    if (!weightInKg) return t('no_weight');
     return (weightInKg * 2.20462).toFixed(3);
   }
 
@@ -63,20 +65,20 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :page="t('breadcrumb_title')"></breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-2xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+            <h1 class="text-2xl font-bold mb-4">{{ t('main_heading') }}</h1>
             <p class="mb-6">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
             <UButton to="/contact" variant="outline" class="mb-6">
               <i class="fas fa-paper-plane mr-2"></i>
-              {{ $t('contact_button') }}
+              {{ t('contact_button') }}
             </UButton>
           </div>
         </div>
@@ -105,7 +107,7 @@
                 <div class="w-full max-w-xs">
                   <UInput
                     type="text"
-                    :placeholder="$t('search_placeholder')"
+                    :placeholder="t('search_placeholder')"
                     v-model="tableSearchQueries[item.value]"
                     icon="i-fa6-solid-magnifying-glass"
                   />

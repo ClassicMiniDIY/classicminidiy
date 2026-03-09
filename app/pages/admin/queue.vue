@@ -537,10 +537,7 @@
         <!-- Submitter Info -->
         <div class="flex items-center gap-3 mb-4">
           <!-- Avatar -->
-          <div
-            v-if="item.submitterAvatar"
-            class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
-          >
+          <div v-if="item.submitterAvatar" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
             <img :src="item.submitterAvatar" :alt="item.submitterName" class="w-full h-full object-cover" />
           </div>
           <div
@@ -552,11 +549,7 @@
 
           <div class="flex flex-wrap items-center gap-2 text-sm">
             <span class="font-medium">{{ item.submitterName }}</span>
-            <UBadge
-              :color="getTrustLevelBadgeColor(item.submitterTrustLevel)"
-              variant="subtle"
-              size="xs"
-            >
+            <UBadge :color="getTrustLevelBadgeColor(item.submitterTrustLevel)" variant="subtle" size="xs">
               {{ getTrustLevelLabel(item.submitterTrustLevel) }}
             </UBadge>
             <span class="opacity-60">{{ formatDate(item.createdAt) }}</span>
@@ -579,11 +572,7 @@
         <div v-if="getUploadedImages(item).length > 0" class="mb-4">
           <p class="text-sm font-medium opacity-70 mb-2">Uploaded Files</p>
           <div class="flex flex-wrap gap-3">
-            <div
-              v-for="(img, idx) in getUploadedImages(item)"
-              :key="idx"
-              class="relative"
-            >
+            <div v-for="(img, idx) in getUploadedImages(item)" :key="idx" class="relative">
               <a :href="img.url" target="_blank" rel="noopener">
                 <img
                   :src="img.url"
@@ -616,11 +605,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="change in getEditChanges(item)"
-                  :key="change.field"
-                  class="border-t border-default"
-                >
+                <tr v-for="change in getEditChanges(item)" :key="change.field" class="border-t border-default">
                   <td class="p-2 font-medium">{{ formatFieldName(change.field) }}</td>
                   <td class="p-2 bg-error/10 text-error-700 dark:text-error-300">
                     {{ formatDiffValue(change.from, change.field, item) }}
@@ -646,7 +631,12 @@
         </div>
 
         <!-- Edit Suggestion with no changes but has preview fields -->
-        <div v-if="item.type === 'edit_suggestion' && getEditChanges(item).length === 0 && getPreviewFields(item).length > 0" class="mb-4">
+        <div
+          v-if="
+            item.type === 'edit_suggestion' && getEditChanges(item).length === 0 && getPreviewFields(item).length > 0
+          "
+          class="mb-4"
+        >
           <div class="bg-muted rounded-lg p-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
               <div v-for="field in getPreviewFields(item)" :key="field.label" class="flex gap-2 text-sm py-0.5">
@@ -659,30 +649,16 @@
 
         <!-- Reviewer Notes (if already reviewed) -->
         <div v-if="item.reviewerNotes" class="mb-4">
-          <UAlert
-            color="info"
-            icon="i-fa6-solid-circle-info"
-            :title="`Reviewer Notes: ${item.reviewerNotes}`"
-          />
+          <UAlert color="info" icon="i-fa6-solid-circle-info" :title="`Reviewer Notes: ${item.reviewerNotes}`" />
         </div>
 
         <!-- Action Buttons (only for pending items) -->
         <div v-if="item.status === 'pending'" class="flex justify-end gap-2 pt-2 border-t border-default">
-          <UButton
-            color="success"
-            size="sm"
-            @click="openApproveModal(item)"
-            :disabled="isProcessing"
-          >
+          <UButton color="success" size="sm" @click="openApproveModal(item)" :disabled="isProcessing">
             <i class="fa-solid fa-check mr-1.5"></i>
             Approve
           </UButton>
-          <UButton
-            color="error"
-            size="sm"
-            @click="openRejectModal(item)"
-            :disabled="isProcessing"
-          >
+          <UButton color="error" size="sm" @click="openRejectModal(item)" :disabled="isProcessing">
             <i class="fa-solid fa-times mr-1.5"></i>
             Reject
           </UButton>
@@ -740,9 +716,7 @@
 
           <!-- Actions -->
           <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="closeApproveModal" :disabled="isProcessing">
-              Cancel
-            </UButton>
+            <UButton variant="outline" @click="closeApproveModal" :disabled="isProcessing"> Cancel </UButton>
             <UButton color="success" @click="approveItem" :disabled="isProcessing" :loading="isProcessing">
               Approve
             </UButton>
@@ -801,9 +775,7 @@
 
           <!-- Actions -->
           <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="closeRejectModal" :disabled="isProcessing">
-              Cancel
-            </UButton>
+            <UButton variant="outline" @click="closeRejectModal" :disabled="isProcessing"> Cancel </UButton>
             <UButton color="error" @click="rejectItem" :disabled="isProcessing" :loading="isProcessing">
               Reject
             </UButton>

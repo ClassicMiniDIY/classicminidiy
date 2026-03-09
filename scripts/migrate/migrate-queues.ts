@@ -12,10 +12,12 @@ let colorQueueItems: any[] = [];
 let lastKey: any = undefined;
 
 do {
-  const result = await dynamo.send(new ScanCommand({
-    TableName: 'colorsQueue',
-    ExclusiveStartKey: lastKey,
-  }));
+  const result = await dynamo.send(
+    new ScanCommand({
+      TableName: 'colorsQueue',
+      ExclusiveStartKey: lastKey,
+    })
+  );
   colorQueueItems.push(...(result.Items || []));
   lastKey = result.LastEvaluatedKey;
 } while (lastKey);
@@ -63,10 +65,12 @@ let wheelQueueItems: any[] = [];
 lastKey = undefined;
 
 do {
-  const result = await dynamo.send(new ScanCommand({
-    TableName: 'wheelsQueue',
-    ExclusiveStartKey: lastKey,
-  }));
+  const result = await dynamo.send(
+    new ScanCommand({
+      TableName: 'wheelsQueue',
+      ExclusiveStartKey: lastKey,
+    })
+  );
   wheelQueueItems.push(...(result.Items || []));
   lastKey = result.LastEvaluatedKey;
 } while (lastKey);

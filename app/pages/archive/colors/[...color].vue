@@ -2,6 +2,7 @@
   import { shareColorItem } from '../../../../data/models/helper-utils';
   import type { PrettyColor } from '../../../../data/models/colors';
 
+  const { t } = useI18n();
   const { params } = useRoute();
   const colorId = Array.isArray(params.color) ? params.color[0] : params.color;
   const { getColor } = useColors();
@@ -30,7 +31,7 @@
   }
 
   useHead({
-    title: $t('title_template', {
+    title: t('title_template', {
       name: color.value?.pretty.Name,
       code: color.value?.pretty.Code,
     }),
@@ -38,7 +39,7 @@
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
     ],
     link: [
@@ -51,20 +52,20 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title_template', {
+    ogTitle: t('seo.og_title_template', {
       name: color.value?.pretty.Name,
       code: color.value?.pretty.Code,
     }),
-    ogDescription: $t('seo.og_description'),
+    ogDescription: t('seo.og_description'),
     ogUrl: `classicminidiy.com/archive/colors/${color?.value?.raw.id}`,
     ogImage: shareImage.value,
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title_template', {
+    twitterTitle: t('seo.twitter_title_template', {
       name: color.value?.pretty.Name,
       code: color.value?.pretty.Code,
     }),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: shareImage.value,
   });
 </script>
@@ -76,20 +77,16 @@
       <div class="container mx-auto px-4">
         <div class="flex items-center gap-2 mb-4">
           <i class="fas fa-palette text-3xl"></i>
-          <h1 class="text-3xl font-bold">{{ $t('hero_title') }}</h1>
+          <h1 class="text-3xl font-bold">{{ t('hero_title') }}</h1>
         </div>
         <div class="text-sm">
           <ul class="flex items-center gap-2">
             <li>
-              <NuxtLink to="/" class="hover:underline">{{
-                $t('breadcrumb.home')
-              }}</NuxtLink>
+              <NuxtLink to="/" class="hover:underline">{{ t('breadcrumb.home') }}</NuxtLink>
               <span class="mx-2">/</span>
             </li>
             <li>
-              <NuxtLink to="/archive/colors" class="hover:underline">{{
-                $t('breadcrumb.colors')
-              }}</NuxtLink>
+              <NuxtLink to="/archive/colors" class="hover:underline">{{ t('breadcrumb.colors') }}</NuxtLink>
               <span class="mx-2">/</span>
             </li>
             <li v-if="color">{{ color.pretty.Name }}</li>
@@ -113,7 +110,7 @@
               <h2 class="text-3xl font-bold mb-2">{{ color.pretty.Name }}</h2>
               <UBadge size="lg" color="primary" class="mb-4">
                 <i class="fas fa-palette mr-1"></i>
-                {{ $t('primary_color_badge') }}
+                {{ t('primary_color_badge') }}
               </UBadge>
               <h3 class="text-5xl font-bold text-primary mb-6">{{ color.pretty.Code }}</h3>
             </div>
@@ -124,7 +121,7 @@
                 <img
                   v-if="color.raw.hasSwatch && color.raw.imageSwatch"
                   :src="color.raw.imageSwatch"
-                  :alt="$t('alt_text', { name: color.pretty.Name })"
+                  :alt="t('alt_text', { name: color.pretty.Name })"
                   class="w-full h-full object-cover"
                 />
                 <div
@@ -138,100 +135,89 @@
           </div>
 
           <!-- Color Details -->
-          <USeparator :label="$t('details_divider')" class="my-6" />
+          <USeparator :label="t('details_divider')" class="my-6" />
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{ $t('stats.years') }}</span>
+                <span class="text-sm opacity-70">{{ t('stats.years') }}</span>
                 <i class="fas fa-calendar-days text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty.Years }">
-                {{ color.pretty.Years || $t('stats.missing') }}
+                {{ color.pretty.Years || t('stats.missing') }}
               </div>
             </div>
 
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{
-                  $t('stats.short_code')
-                }}</span>
+                <span class="text-sm opacity-70">{{ t('stats.short_code') }}</span>
                 <i class="fas fa-code text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Short Code'] }">
-                {{ color.pretty['Short Code'] || $t('stats.missing') }}
+                {{ color.pretty['Short Code'] || t('stats.missing') }}
               </div>
             </div>
 
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{
-                  $t('stats.ditzler_ppg_code')
-                }}</span>
+                <span class="text-sm opacity-70">{{ t('stats.ditzler_ppg_code') }}</span>
                 <i class="fas fa-barcode text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Ditzler PPG Code'] }">
-                {{ color.pretty['Ditzler PPG Code'] || $t('stats.missing') }}
+                {{ color.pretty['Ditzler PPG Code'] || t('stats.missing') }}
               </div>
             </div>
 
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{
-                  $t('stats.dulux_code')
-                }}</span>
+                <span class="text-sm opacity-70">{{ t('stats.dulux_code') }}</span>
                 <i class="fas fa-barcode text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Dulux Code'] }">
-                {{ color.pretty['Dulux Code'] || $t('stats.missing') }}
+                {{ color.pretty['Dulux Code'] || t('stats.missing') }}
               </div>
             </div>
           </div>
 
           <!-- Community Photos -->
           <template v-if="color.raw.images && color.raw.images.length > 0">
-            <USeparator :label="$t('community_photos_divider')" class="my-6" />
+            <USeparator :label="t('community_photos_divider')" class="my-6" />
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div v-for="(photo, idx) in color.raw.images" :key="idx" class="rounded-xl overflow-hidden shadow-md">
                 <img
                   :src="photo.url"
-                  :alt="`${color.pretty.Name} - ${$t('community_photo_alt', { contributor: photo.contributor || $t('community_photo_anonymous') })}`"
+                  :alt="`${color.pretty.Name} - ${t('community_photo_alt', { contributor: photo.contributor || t('community_photo_anonymous') })}`"
                   loading="lazy"
                   class="w-full aspect-4/3 object-cover"
                 />
                 <div v-if="photo.contributor" class="p-2 bg-muted text-xs text-center">
                   <i class="fas fa-camera mr-1"></i>
-                  {{ $t('community_photo_by', { name: photo.contributor }) }}
+                  {{ t('community_photo_by', { name: photo.contributor }) }}
                 </div>
               </div>
             </div>
           </template>
 
           <!-- Action Buttons -->
-          <USeparator :label="$t('share_divider')" class="my-6" />
+          <USeparator :label="t('share_divider')" class="my-6" />
           <div class="flex flex-wrap gap-4 justify-center">
             <UButton @click="copyUrl()" :color="copied ? 'success' : 'primary'">
               <i class="fas fa-link mr-2"></i>
-              {{
-                copied
-                  ? $t('actions.copied')
-                  : $t('actions.copy_link')
-              }}
+              {{ copied ? t('actions.copied') : t('actions.copy_link') }}
             </UButton>
 
             <UButton @click="shareColorItem(color.pretty.Name, color.pretty.ID)" color="neutral">
               <i class="fas fa-share-nodes mr-2"></i>
-              {{ $t('actions.share') }}
+              {{ t('actions.share') }}
             </UButton>
 
             <UButton :to="`/contribute/color?color=${color.raw.id}`" variant="outline">
               <i class="fas fa-edit mr-2"></i>
-              {{ $t('actions.contribute') }}
+              {{ t('actions.contribute') }}
             </UButton>
           </div>
         </div>
       </UCard>
     </div>
-
   </div>
 </template>
 

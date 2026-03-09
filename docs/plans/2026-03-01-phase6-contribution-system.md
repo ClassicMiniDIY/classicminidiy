@@ -17,6 +17,7 @@
 Phase 1 created the database infrastructure — `submission_queue`, `contributions`, `profiles` (with `trust_level`, `total_submissions`, `approved_submissions`, `rejected_submissions` columns), trust level triggers, and contribution logging triggers. Phase 4 rewrote the data layer with Supabase composables. Phase 5 unified the document archive.
 
 **What exists:**
+
 - `submission_queue` table with RLS: authenticated users INSERT own rows, SELECT own rows, admins/moderators can UPDATE (review)
 - `contributions` table with RLS: public SELECT, admin INSERT
 - `profiles` table has `trust_level` (enum: new/contributor/trusted/moderator/admin), `total_submissions`, `approved_submissions`, `rejected_submissions`
@@ -28,6 +29,7 @@ Phase 1 created the database infrastructure — `submission_queue`, `contributio
 - `server/utils/adminAuth.ts` has `getServiceClient()` and `requireAdminAuth()`
 
 **What needs building:**
+
 - `useSubmissions` composable — list user's own submissions, submit new items, submit edit suggestions
 - `useContributions` composable — query contribution history for a user
 - Update `useAuth()` to include trust level fields in profile
@@ -39,6 +41,7 @@ Phase 1 created the database infrastructure — `submission_queue`, `contributio
 - Update admin dashboard to show document queue counts
 
 **Critical file references:**
+
 - `app/composables/useAuth.ts:26` — `fetchUserProfile` SELECT only fetches 4 fields, needs trust level fields added
 - `app/composables/useColors.ts` — `submitColor()` puts `submittedBy`/`submittedByEmail` in `data` jsonb
 - `app/composables/useWheels.ts` — `submitWheel()` same pattern
@@ -53,6 +56,7 @@ Phase 1 created the database infrastructure — `submission_queue`, `contributio
 ## Task 1: Update useAuth to Include Trust Level Fields
 
 **Files:**
+
 - Modify: `app/composables/useAuth.ts`
 
 **Step 1: Extend UserProfile interface and fetchUserProfile query**
@@ -77,7 +81,9 @@ Update the `fetchUserProfile` SELECT query at line 26:
 ```typescript
 const { data, error } = await supabase
   .from('profiles')
-  .select('is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions')
+  .select(
+    'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions'
+  )
   .eq('id', userId)
   .single();
 ```
@@ -89,6 +95,7 @@ const { data, error } = await supabase
 ## Task 2: Create useSubmissions Composable
 
 **Files:**
+
 - Create: `app/composables/useSubmissions.ts`
 
 **Step 1: Write the composable**
@@ -148,7 +155,7 @@ export const useSubmissions = () => {
   // Submit a new item (generic — works for any target type)
   const submitNewItem = async (
     targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
-    itemData: Record<string, any>,
+    itemData: Record<string, any>
   ): Promise<SubmissionItem> => {
     if (!user.value) throw new Error('Must be authenticated to submit');
 
@@ -173,7 +180,7 @@ export const useSubmissions = () => {
     targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
     targetId: string,
     changes: Record<string, { from: any; to: any }>,
-    reason: string,
+    reason: string
   ): Promise<SubmissionItem> => {
     if (!user.value) throw new Error('Must be authenticated to suggest edits');
 
@@ -196,11 +203,7 @@ export const useSubmissions = () => {
 
   // Get a single submission by ID (user can only see their own via RLS)
   const getSubmission = async (id: string): Promise<SubmissionItem | null> => {
-    const { data, error } = await supabase
-      .from('submission_queue')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from('submission_queue').select('*').eq('id', id).maybeSingle();
 
     if (error || !data) return null;
     return mapToSubmission(data);
@@ -217,6 +220,7 @@ export const useSubmissions = () => {
 ## Task 3: Create useContributions Composable
 
 **Files:**
+
 - Create: `app/composables/useContributions.ts`
 
 **Step 1: Write the composable**
@@ -283,7 +287,7 @@ export const useContributions = () => {
   // Get contribution history for a user
   const listContributions = async (
     userId: string,
-    opts?: { targetType?: string; limit?: number },
+    opts?: { targetType?: string; limit?: number }
   ): Promise<ContributionItem[]> => {
     let query = supabase
       .from('contributions')
@@ -327,6 +331,7 @@ export const useContributions = () => {
 ## Task 4: Add Document Submit Method to useArchiveDocuments
 
 **Files:**
+
 - Modify: `app/composables/useArchiveDocuments.ts`
 
 **Step 1: Add submitDocument method**
@@ -369,7 +374,17 @@ const submitDocument = async (documentData: {
 Update the return statement to include `submitDocument`:
 
 ```typescript
-return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, getCollectionBySlug, getStorageUrl, getThumbnailUrl, submitDocument };
+return {
+  listByType,
+  listAll,
+  listCollections,
+  getByPath,
+  getDocumentBySlug,
+  getCollectionBySlug,
+  getStorageUrl,
+  getThumbnailUrl,
+  submitDocument,
+};
 ```
 
 **Step 2: Commit**
@@ -379,6 +394,7 @@ return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, get
 ## Task 5: Build Document Submission Page
 
 **Files:**
+
 - Create: `app/pages/archive/documents/submit.vue`
 
 **Step 1: Build the page**
@@ -386,6 +402,7 @@ return { listByType, listAll, listCollections, getByPath, getDocumentBySlug, get
 Auth-gated form for submitting new archive documents. Requires the user to be authenticated (redirect to `/login` if not). Fields: type (dropdown: manual/advert/catalogue/tuning/electrical), title (required), description, code (part number/identifier), author, year, file URL (text input for now — file upload via Supabase Storage is a Phase 7 enhancement). On submit, calls `useSubmissions().submitNewItem('document', data)`. Shows success state with submission ID after submission.
 
 **Key patterns to follow from** `app/pages/archive/colors/contribute.vue`:
+
 - Hero component with archive type
 - Breadcrumb navigation
 - UCard with form inside
@@ -398,6 +415,7 @@ Auth-gated form for submitting new archive documents. Requires the user to be au
 - Uses `useAuth()` for authentication check — if not authenticated, show a login prompt instead of the form
 
 **Differences from colors/contribute:**
+
 - No "submittedBy" / "submittedByEmail" text fields — we use the authenticated user's identity
 - Type selector dropdown (manual, advert, catalogue, tuning, electrical)
 - Different form fields (title, description, code, author, year)
@@ -410,6 +428,7 @@ Auth-gated form for submitting new archive documents. Requires the user to be au
 ## Task 6: Build Edit Suggestion Page
 
 **Files:**
+
 - Create: `app/pages/archive/documents/[slug]/suggest-edit.vue`
 
 **Step 1: Build the page**
@@ -417,6 +436,7 @@ Auth-gated form for submitting new archive documents. Requires the user to be au
 Auth-gated page for suggesting edits to existing archive documents. Loads the current document via `useArchiveDocuments().getDocumentBySlug(slug)`, displays current values as read-only, and provides editable fields alongside. Only changed fields are submitted. Requires a reason/explanation text field.
 
 **Layout:**
+
 - Hero + breadcrumbs
 - Two-column layout: left shows current values (read-only UCard), right shows the edit form
 - Form pre-fills with current values
@@ -424,6 +444,7 @@ Auth-gated page for suggesting edits to existing archive documents. Loads the cu
 - Success state with submission ID
 
 **Edge cases:**
+
 - If document not found: show 404-style message
 - If no changes detected: show warning, don't submit
 - If not authenticated: show login prompt
@@ -435,6 +456,7 @@ Auth-gated page for suggesting edits to existing archive documents. Loads the cu
 ## Task 7: Build User Submissions Page
 
 **Files:**
+
 - Create: `app/pages/submissions/index.vue`
 
 **Step 1: Build the page**
@@ -442,6 +464,7 @@ Auth-gated page for suggesting edits to existing archive documents. Loads the cu
 Auth-gated page showing the current user's submission history with status tracking. Uses `useSubmissions().listMySubmissions()`.
 
 **Layout:**
+
 - Hero + breadcrumb
 - Status filter chips: All | Pending | Approved | Rejected
 - Type filter chips: All | Documents | Registry | Colors | Wheels
@@ -462,6 +485,7 @@ Auth-gated page showing the current user's submission history with status tracki
 ## Task 8: Build Contributor Profile Page
 
 **Files:**
+
 - Create: `app/pages/contributors/[id].vue`
 
 **Step 1: Build the page**
@@ -469,6 +493,7 @@ Auth-gated page showing the current user's submission history with status tracki
 Public page showing a contributor's profile, trust level, stats, and contribution history. Uses `useContributions().getContributorProfile()` and `useContributions().listContributions()`.
 
 **Layout:**
+
 - Hero + breadcrumb
 - Profile card: avatar, display name, trust level badge, bio
 - Stats row: total submissions, approved count, member since
@@ -489,6 +514,7 @@ Public page showing a contributor's profile, trust level, stats, and contributio
 ## Task 9: Update Existing Submit Forms to Use Auth
 
 **Files:**
+
 - Modify: `app/composables/useColors.ts` — update `submitColor()` to use `user.value.id` as `submitted_by`
 - Modify: `app/composables/useWheels.ts` — update `submitWheel()` to use `user.value.id` as `submitted_by`
 - Modify: `app/composables/useRegistry.ts` — update `submitRegistryEntry()` to use `user.value.id` as `submitted_by`
@@ -501,18 +527,23 @@ Each composable's submit method currently does NOT set `submitted_by` (the FK fi
 Update each submit method to set `submitted_by: user.value.id` instead of putting name/email in data. Keep the data blob for the actual item content only.
 
 **useColors.ts — submitColor():**
+
 ```typescript
 const submitColor = async (colorData: Partial<Color>) => {
   const { user } = useAuth();
   if (!user.value) throw new Error('Must be authenticated to submit');
 
-  const { data, error } = await supabase.from('submission_queue').insert({
-    type: 'new_item',
-    target_type: 'color',
-    submitted_by: user.value.id,
-    status: 'pending',
-    data: colorData,
-  }).select().single();
+  const { data, error } = await supabase
+    .from('submission_queue')
+    .insert({
+      type: 'new_item',
+      target_type: 'color',
+      submitted_by: user.value.id,
+      status: 'pending',
+      data: colorData,
+    })
+    .select()
+    .single();
   if (error) throw error;
   return data;
 };
@@ -534,6 +565,7 @@ Same pattern for `useWheels.submitWheel()` and `useRegistry.submitRegistryEntry(
 ## Task 10: Update Admin Dashboard for Documents Queue
 
 **Files:**
+
 - Modify: `app/pages/admin/index.vue`
 
 **Step 1: Add document submission count to dashboard**
@@ -554,10 +586,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const targetType = query.targetType?.toString();
 
-  let q = supabase
-    .from('submission_queue')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'pending');
+  let q = supabase.from('submission_queue').select('id', { count: 'exact', head: true }).eq('status', 'pending');
 
   if (targetType) q = q.eq('target_type', targetType);
 
@@ -601,6 +630,7 @@ Fix any build errors (import paths, TypeScript issues).
 ## Scope Notes
 
 **Deferred to Phase 7 (Moderation):**
+
 - Unified admin moderation queue (`/admin/queue`) with side-by-side diff view
 - Admin document review page
 - Reviewer notes UI
@@ -608,6 +638,7 @@ Fix any build errors (import paths, TypeScript issues).
 - Notification to submitters on approval/rejection
 
 **Deferred to later:**
+
 - File upload via Supabase Storage in submission form (currently text URL input)
 - Profile edit page (`/profile/edit`) — users can edit display name, avatar, bio
 - Auto-approval for trusted users (trigger exists but UI doesn't surface it)

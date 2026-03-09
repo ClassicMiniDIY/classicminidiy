@@ -1,20 +1,22 @@
 <script lang="ts" setup>
   import { DateTime } from 'luxon';
 
+  const { t } = useI18n();
+
   const birthday = DateTime.local(1989, 5, 11);
   const today = DateTime.now();
   const age = ref<string | undefined>(today.diff(birthday, 'years').toObject().years?.toFixed(0));
 
   useHead({
-    title: $t('home.title'),
+    title: t('home.title'),
     meta: [
       {
         name: 'description',
-        content: $t('home.description'),
+        content: t('home.description'),
       },
       {
         name: 'keywords',
-        content: $t('home.keywords'),
+        content: t('home.keywords'),
       },
     ],
     link: [
@@ -35,7 +37,7 @@
     '@type': 'WebSite',
     name: 'Classic Mini DIY',
     url: 'https://classicminidiy.com',
-    description: $t('home.description'),
+    description: t('home.description'),
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -70,13 +72,13 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('home.title'),
-    ogDescription: $t('home.description'),
+    ogTitle: t('home.title'),
+    ogDescription: t('home.description'),
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
     ogUrl: 'https://classicminidiy.com',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('home.title'),
-    twitterDescription: $t('home.description'),
+    twitterTitle: t('home.title'),
+    twitterDescription: t('home.description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
   });
 </script>
@@ -88,18 +90,18 @@
     <div class="grid grid-cols-12 gap-4 pb-5">
       <div class="col-span-12"></div>
       <div class="col-span-12 md:col-span-8">
-        <h2 class="fancy-font-book-oblique"><i class="fad fa-book"></i> {{ $t('home.mission.title') }}</h2>
-        <h3 class="text-3xl font-bold pt-2 pb-3">{{ $t('home.mission.heading') }}</h3>
+        <h2 class="fancy-font-book-oblique"><i class="fad fa-book"></i> {{ t('home.mission.title') }}</h2>
+        <h3 class="text-3xl font-bold pt-2 pb-3">{{ t('home.mission.heading') }}</h3>
         <p class="text-lg pb-5">
-          {{ $t('home.mission.content') }}
+          {{ t('home.mission.content') }}
         </p>
         <stats />
       </div>
       <div class="col-span-12 md:col-span-4">
-        <h3 class="fancy-font-book-oblique"><i class="fad fa-gift"></i> {{ $t('home.support.title') }}</h3>
-        <h4 class="text-3xl font-bold pt-2 pb-3">{{ $t('home.support.heading') }}</h4>
+        <h3 class="fancy-font-book-oblique"><i class="fad fa-gift"></i> {{ t('home.support.title') }}</h3>
+        <h4 class="text-3xl font-bold pt-2 pb-3">{{ t('home.support.heading') }}</h4>
         <p class="text-lg pt-2 pb-3">
-          {{ $t('home.support.content') }}
+          {{ t('home.support.content') }}
         </p>
         <UButton
           class="mr-3 text-lg is-patreon"
@@ -109,7 +111,7 @@
           external
         >
           <i class="fab fa-patreon mr-2" />
-          {{ $t('common.donate') }}
+          {{ t('common.donate') }}
         </UButton>
         <UButton
           class="text-lg"
@@ -120,7 +122,7 @@
           external
         >
           <i class="fab fa-github mr-2" />
-          {{ $t('common.contribute') }}
+          {{ t('common.contribute') }}
         </UButton>
       </div>
       <div class="pt-20 pb-10 grid grid-cols-subgrid col-span-12 gap-4">
@@ -139,23 +141,21 @@
           </video>
         </div>
         <div class="col-span-12 md:col-span-7">
-          <h3 class="fancy-font-book-oblique"><i class="fad fa-handshake-alt"></i> {{ $t('home.toolbox.title') }}</h3>
-          <h3 class="text-3xl font-bold">{{ $t('home.toolbox.heading') }}</h3>
-          <h4 class="fancy-font-book-oblique pt-5 pb-5">{{ $t('home.toolbox.subtitle') }}</h4>
+          <h3 class="fancy-font-book-oblique"><i class="fad fa-handshake-alt"></i> {{ t('home.toolbox.title') }}</h3>
+          <h3 class="text-3xl font-bold">{{ t('home.toolbox.heading') }}</h3>
+          <h4 class="fancy-font-book-oblique pt-5 pb-5">{{ t('home.toolbox.subtitle') }}</h4>
           <p class="pb-5 text-lg">
-            {{ $t('home.toolbox.content') }}
+            {{ t('home.toolbox.content') }}
           </p>
-          <UButton color="primary" class="text-lg" to="/technical"> {{ $t('home.toolbox.button') }} </UButton>
+          <UButton color="primary" class="text-lg" to="/technical"> {{ t('home.toolbox.button') }} </UButton>
         </div>
       </div>
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-8 lg:col-span-6">
-          <h3 class="fancy-font-book-oblique pb-5">
-            <i class="fad fa-hands-heart"></i> {{ $t('home.patreon.title') }}
-          </h3>
-          <h3 class="text-3xl font-bold pb-5">{{ $t('home.patreon.heading') }}</h3>
+          <h3 class="fancy-font-book-oblique pb-5"><i class="fad fa-hands-heart"></i> {{ t('home.patreon.title') }}</h3>
+          <h3 class="text-3xl font-bold pb-5">{{ t('home.patreon.heading') }}</h3>
           <p class="text-lg">
-            {{ $t('home.patreon.content') }}
+            {{ t('home.patreon.content') }}
           </p>
           <UButton
             class="mt-5 mb-5 is-patreon"
@@ -165,13 +165,13 @@
             external
           >
             <i class="fab fa-patreon mr-2" />
-            {{ $t('home.patreon.button') }}
+            {{ t('home.patreon.button') }}
           </UButton>
 
           <div class="max-w-2xl mx-auto">
             <UCard class="mt-5 max-w-md">
               <template #header>
-                <h3 class="text-xl font-bold leading-none">{{ $t('home.patreon.benefits.title') }}</h3>
+                <h3 class="text-xl font-bold leading-none">{{ t('home.patreon.benefits.title') }}</h3>
               </template>
               <ul role="list" class="divide-y divide-default benefits-list">
                 <li class="py-3 sm:py-4">
@@ -180,7 +180,7 @@
                       <i class="text-h4 fab fa-discord pt-2"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-lg font-medium">{{ $t('home.patreon.benefits.discord') }}</p>
+                      <p class="text-lg font-medium">{{ t('home.patreon.benefits.discord') }}</p>
                     </div>
                   </div>
                 </li>
@@ -190,7 +190,7 @@
                       <i class="text-h4 fad fa-video pt-2"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-lg font-medium">{{ $t('home.patreon.benefits.early_access') }}</p>
+                      <p class="text-lg font-medium">{{ t('home.patreon.benefits.early_access') }}</p>
                     </div>
                   </div>
                 </li>
@@ -200,7 +200,7 @@
                       <i class="text-h4 fad fa-gift pt-2"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-lg font-medium">{{ $t('home.patreon.benefits.gifts') }}</p>
+                      <p class="text-lg font-medium">{{ t('home.patreon.benefits.gifts') }}</p>
                     </div>
                   </div>
                 </li>
@@ -210,7 +210,7 @@
                       <i class="text-h4 fad fa-circle-info pt-2"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                      <p class="text-lg font-medium">{{ $t('home.patreon.benefits.insider') }}</p>
+                      <p class="text-lg font-medium">{{ t('home.patreon.benefits.insider') }}</p>
                     </div>
                   </div>
                 </li>
@@ -229,14 +229,14 @@
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-7 mb-5 pb-10">
-          <h3 class="fancy-font-bold text-2xl"><i class="fad fa-address-card"></i> {{ $t('home.about.title') }}</h3>
-          <h4 class="fancy-font-book-oblique pt-5">{{ $t('home.about.name') }}</h4>
+          <h3 class="fancy-font-bold text-2xl"><i class="fad fa-address-card"></i> {{ t('home.about.title') }}</h3>
+          <h4 class="fancy-font-book-oblique pt-5">{{ t('home.about.name') }}</h4>
           <p>
-            {{ $t('home.about.bio', { age: age }) }}
+            {{ t('home.about.bio', { age: age }) }}
           </p>
-          <h3 class="fancy-font-book-oblique pt-10">{{ $t('home.about.promise_title') }}</h3>
+          <h3 class="fancy-font-book-oblique pt-10">{{ t('home.about.promise_title') }}</h3>
           <p>
-            {{ $t('home.about.promise') }}
+            {{ t('home.about.promise') }}
           </p>
         </div>
         <div class="col-span-12 md:col-span-5 avatar-container">

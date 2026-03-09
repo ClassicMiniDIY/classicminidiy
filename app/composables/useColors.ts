@@ -18,33 +18,21 @@ export const useColors = () => {
     ditzlerPpgCode: row.ditzler_ppg_code || '',
     duluxCode: row.dulux_code || '',
     primaryColor: row.hex_value || '',
-    years:
-      row.year_start && row.year_end
-        ? `${row.year_start}-${row.year_end}`
-        : row.year_start?.toString() || '',
+    years: row.year_start && row.year_end ? `${row.year_start}-${row.year_end}` : row.year_start?.toString() || '',
     hasSwatch: row.has_swatch || false,
     imageSwatch: getSwatchUrl(row.swatch_path),
     images: row.contributor_images || [],
   });
 
   const listColors = async (): Promise<Color[]> => {
-    const { data, error } = await supabase
-      .from('colors')
-      .select('*')
-      .eq('status', 'approved')
-      .order('name');
+    const { data, error } = await supabase.from('colors').select('*').eq('status', 'approved').order('name');
 
     if (error) throw error;
     return (data || []).map(mapToColor);
   };
 
   const getColor = async (id: string): Promise<PrettyColor | null> => {
-    const { data, error } = await supabase
-      .from('colors')
-      .select('*')
-      .eq('id', id)
-      .eq('status', 'approved')
-      .single();
+    const { data, error } = await supabase.from('colors').select('*').eq('id', id).eq('status', 'approved').single();
 
     if (error) return null;
     const color = mapToColor(data);
@@ -85,11 +73,7 @@ export const useColors = () => {
   };
 
   const checkDuplicate = async (code: string): Promise<boolean> => {
-    const { data } = await supabase
-      .from('colors')
-      .select('id')
-      .eq('code', code)
-      .limit(1);
+    const { data } = await supabase.from('colors').select('id').eq('code', code).limit(1);
 
     return (data?.length || 0) > 0;
   };

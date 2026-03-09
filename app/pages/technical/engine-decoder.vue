@@ -1,6 +1,8 @@
 <script lang="ts" setup>
   import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+
+  const { t } = useI18n();
   const { data: engineCodes } = await useFetch('/api/decoders/engine');
   const search = ref('');
 
@@ -8,7 +10,7 @@
   const tableColumns = [
     {
       accessorKey: 'color',
-      header: () => $t('table.headers.color'),
+      header: () => t('table.headers.color'),
       cell: ({ row }) =>
         h('i', {
           class: `fas fa-circle pt-1 color-${row.getValue('size')}`,
@@ -17,27 +19,27 @@
     },
     {
       accessorKey: 'code',
-      header: () => $t('table.headers.code'),
+      header: () => t('table.headers.code'),
       cell: ({ row }) => row.getValue('code'),
     },
     {
       accessorKey: 'size',
-      header: () => $t('table.headers.engine_size'),
+      header: () => t('table.headers.engine_size'),
       cell: ({ row }) => row.getValue('size'),
     },
     {
       accessorKey: 'variant',
-      header: () => $t('table.headers.engine_variant'),
+      header: () => t('table.headers.engine_variant'),
       cell: ({ row }) => row.getValue('variant'),
     },
     {
       accessorKey: 'gearbox',
-      header: () => $t('table.headers.gearbox_details'),
+      header: () => t('table.headers.gearbox_details'),
       cell: ({ row }) => row.getValue('gearbox'),
     },
     {
       accessorKey: 'description',
-      header: () => $t('table.headers.details'),
+      header: () => t('table.headers.details'),
       cell: ({ row }) => row.getValue('description'),
     },
   ];
@@ -79,17 +81,17 @@
   });
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -109,7 +111,7 @@
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: 'Classic Mini Engine Code Database',
-    description: $t('description'),
+    description: t('description'),
     url: 'https://classicminidiy.com/technical/engine-decoder',
     keywords: ['Classic Mini', 'engine codes', 'Mini Cooper', 'A-series engine'],
     creator: {
@@ -129,35 +131,35 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('og_title'),
-    ogDescription: $t('og_description'),
+    ogTitle: t('og_title'),
+    ogDescription: t('og_description'),
     ogUrl: 'https://classicminidiy.com/technical/engine-decoder',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/engine-decoder.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('twitter_title'),
-    twitterDescription: $t('twitter_description'),
+    twitterTitle: t('twitter_title'),
+    twitterDescription: t('twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/engine-decoder.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :subtitle="$t('keep_minis_driving')" :heroType="HERO_TYPES.TECH" />
+  <hero :navigation="true" :title="t('hero_title')" :subtitle="t('keep_minis_driving')" :heroType="HERO_TYPES.TECH" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
       <div class="col-span-12">
-        <breadcrumb class="my-4" :version="BREADCRUMB_VERSIONS.TECH" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-4" :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-7">
-            <h1 class="text-3xl font-bold mb-4">{{ $t('main_heading') }}</h1>
+            <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
             <p class="mb-4">
-              {{ $t('description_text') }}
+              {{ t('description_text') }}
             </p>
             <EnginePlateModal></EnginePlateModal>
           </div>
           <div class="col-span-12 md:col-span-5">
-            <NuxtLink :to="'/technical/chassis-decoder'" :title="$t('chassis_decoder_card.link_title')" class="block">
+            <NuxtLink :to="'/technical/chassis-decoder'" :title="t('chassis_decoder_card.link_title')" class="block">
               <UCard class="hover:shadow-lg transition-shadow">
                 <div class="flex items-center">
                   <div class="shrink-0">
@@ -173,17 +175,17 @@
                       <nuxt-img
                         loading="lazy"
                         src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
-                        :alt="$t('chassis_decoder_card.alt_text')"
+                        :alt="t('chassis_decoder_card.alt_text')"
                         class="w-16 h-16"
                       />
                     </picture>
                   </div>
                   <div class="ml-4">
                     <h2 class="text-xl font-semibold mb-2">
-                      {{ $t('chassis_decoder_card.heading') }}
+                      {{ t('chassis_decoder_card.heading') }}
                     </h2>
                     <p class="text-gray-600">
-                      {{ $t('chassis_decoder_card.description') }}
+                      {{ t('chassis_decoder_card.description') }}
                     </p>
                   </div>
                 </div>
@@ -195,23 +197,23 @@
       <div class="col-span-12">
         <div class="col-span-12 pb-5">
           <i class="fas fa-circle pl-1 color-850"></i>
-          {{ $t('engine_sizes_legend.850cc') }}
+          {{ t('engine_sizes_legend.850cc') }}
           <i class="fas fa-circle pl-1 color-970"></i>
-          {{ $t('engine_sizes_legend.970cc') }}
+          {{ t('engine_sizes_legend.970cc') }}
           <i class="fas fa-circle pl-1 color-997"></i>
-          {{ $t('engine_sizes_legend.997cc') }}
+          {{ t('engine_sizes_legend.997cc') }}
           <i class="fas fa-circle pl-1 color-998"></i>
-          {{ $t('engine_sizes_legend.998cc') }}
+          {{ t('engine_sizes_legend.998cc') }}
           <i class="fas fa-circle pl-1 color-1070"></i>
-          {{ $t('engine_sizes_legend.1070cc') }}
+          {{ t('engine_sizes_legend.1070cc') }}
           <i class="fas fa-circle pl-1 color-1100"></i>
-          {{ $t('engine_sizes_legend.1100cc') }}
+          {{ t('engine_sizes_legend.1100cc') }}
           <i class="fas fa-circle pl-1 color-1275"></i>
-          {{ $t('engine_sizes_legend.1275cc') }}
+          {{ t('engine_sizes_legend.1275cc') }}
         </div>
         <div class="col-span-12 md:col-span-6">
           <div class="pb-5">
-            <UInput v-model="search" :placeholder="$t('search.placeholder')" class="w-full">
+            <UInput v-model="search" :placeholder="t('search.placeholder')" class="w-full">
               <template #leading>
                 <i class="fad fa-search"></i>
               </template>
@@ -226,7 +228,7 @@
                   <i class="fad fa-engine text-2xl"></i>
                 </div>
                 <h3 class="text-xl font-semibold ml-2">
-                  {{ $t('table.title') }}
+                  {{ t('table.title') }}
                 </h3>
               </div>
             </template>
@@ -238,7 +240,7 @@
         </div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="$t('ui.support_section')" class="mb-4" />
+        <USeparator :label="t('ui.support_section')" class="mb-4" />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10">
         <patreon-card size="large" />

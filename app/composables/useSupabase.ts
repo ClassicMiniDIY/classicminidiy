@@ -22,7 +22,7 @@ export const useSupabase = () => {
               const existing = locks.get(name) ?? Promise.resolve();
               const next = existing.then(
                 () => fn(),
-                () => fn(),
+                () => fn()
               );
               locks.set(name, next);
               next.finally(() => {

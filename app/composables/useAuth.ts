@@ -28,7 +28,9 @@ export const useAuth = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions')
+        .select(
+          'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions'
+        )
         .eq('id', userId)
         .single();
 
@@ -121,9 +123,7 @@ export const useAuth = () => {
     try {
       await Promise.race([
         initPromise,
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth initialization timeout')), timeout),
-        ),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth initialization timeout')), timeout)),
       ]);
       return true;
     } catch (error) {

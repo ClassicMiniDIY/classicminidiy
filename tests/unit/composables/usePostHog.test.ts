@@ -55,7 +55,11 @@ describe('usePostHog', () => {
   });
 
   describe('when PostHog is initialized', () => {
-    let mockPosthog: { capture: ReturnType<typeof vi.fn>; identify: ReturnType<typeof vi.fn>; reset: ReturnType<typeof vi.fn> };
+    let mockPosthog: {
+      capture: ReturnType<typeof vi.fn>;
+      identify: ReturnType<typeof vi.fn>;
+      reset: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(() => {
       mockPosthog = {
@@ -95,7 +99,10 @@ describe('usePostHog', () => {
       const { identify } = usePostHog();
       identify('user-abc-123', { email: 'user@example.com', name: 'Test User' });
       expect(mockPosthog.identify).toHaveBeenCalledOnce();
-      expect(mockPosthog.identify).toHaveBeenCalledWith('user-abc-123', { email: 'user@example.com', name: 'Test User' });
+      expect(mockPosthog.identify).toHaveBeenCalledWith('user-abc-123', {
+        email: 'user@example.com',
+        name: 'Test User',
+      });
     });
 
     it('reset forwards to PostHog', async () => {

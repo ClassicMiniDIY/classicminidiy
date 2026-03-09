@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  const { t } = useI18n();
   const route = useRoute();
   const isVisible = ref(false);
   const STORAGE_KEY = 'cmdiy-app-promo-dismissed';
@@ -59,27 +60,27 @@
         <div class="p-6">
           <!-- Title -->
           <div class="text-center mb-6">
-            <h3 class="font-bold text-2xl mb-2">{{ $t('title') }}</h3>
-            <p class="text-muted">{{ $t('subtitle') }}</p>
+            <h3 class="font-bold text-2xl mb-2">{{ t('title') }}</h3>
+            <p class="text-muted">{{ t('subtitle') }}</p>
           </div>
 
           <!-- Features Grid -->
           <div class="grid grid-cols-2 gap-3 mb-6">
             <div class="flex items-center gap-2 text-sm">
               <i class="fas fa-wifi-slash text-success"></i>
-              <span>{{ $t('features.offline') }}</span>
+              <span>{{ t('features.offline') }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <i class="fas fa-calculator text-success"></i>
-              <span>{{ $t('features.calculators') }}</span>
+              <span>{{ t('features.calculators') }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <i class="fas fa-bolt text-success"></i>
-              <span>{{ $t('features.fast') }}</span>
+              <span>{{ t('features.fast') }}</span>
             </div>
             <div class="flex items-center gap-2 text-sm">
               <i class="fas fa-gift text-success"></i>
-              <span>{{ $t('features.free') }}</span>
+              <span>{{ t('features.free') }}</span>
             </div>
           </div>
 
@@ -93,7 +94,7 @@
               @click="handleAppClick('ios')"
             >
               <i class="fab fa-apple text-xl mr-2"></i>
-              {{ $t('buttons.ios') }}
+              {{ t('buttons.ios') }}
             </UButton>
             <UButton
               to="https://play.google.com/store/apps/details?id=com.classicminidiy.toolbox"
@@ -103,14 +104,14 @@
               @click="handleAppClick('android')"
             >
               <i class="fab fa-google-play text-xl mr-2"></i>
-              {{ $t('buttons.android') }}
+              {{ t('buttons.android') }}
             </UButton>
           </div>
 
           <!-- Dismiss text -->
           <div class="text-center">
             <button @click="dismissPopup" class="text-sm text-muted hover:text-default underline">
-              {{ $t('dismiss') }}
+              {{ t('dismiss') }}
             </button>
           </div>
         </div>

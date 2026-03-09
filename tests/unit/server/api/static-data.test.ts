@@ -3,14 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.stubGlobal('defineEventHandler', (handler: Function) => handler);
 vi.stubGlobal('setResponseHeaders', vi.fn());
-vi.stubGlobal(
-  'createError',
-  (opts: any) => {
-    const e = new Error(opts.message || opts.statusMessage);
-    (e as any).statusCode = opts.statusCode;
-    return e;
-  },
-);
+vi.stubGlobal('createError', (opts: any) => {
+  const e = new Error(opts.message || opts.statusMessage);
+  (e as any).statusCode = opts.statusCode;
+  return e;
+});
 
 describe('server/api/clearance', () => {
   let handler: Function;
@@ -40,9 +37,12 @@ describe('server/api/clearance', () => {
   it('calls setResponseHeaders with cache headers', () => {
     const mockEvent = { id: 'test' };
     handler(mockEvent);
-    expect(setResponseHeaders).toHaveBeenCalledWith(mockEvent, expect.objectContaining({
-      'Cache-Control': expect.stringContaining('max-age='),
-    }));
+    expect(setResponseHeaders).toHaveBeenCalledWith(
+      mockEvent,
+      expect.objectContaining({
+        'Cache-Control': expect.stringContaining('max-age='),
+      })
+    );
   });
 
   it('throws createError when setResponseHeaders throws', () => {

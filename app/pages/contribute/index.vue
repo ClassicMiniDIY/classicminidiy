@@ -98,12 +98,25 @@
             <div>
               <h3 class="text-lg font-bold mb-1">{{ t('stats_title') }}</h3>
               <p class="text-sm opacity-70">
-                {{ t('stats_description', { total: userProfile.total_submissions, approved: userProfile.approved_submissions }) }}
+                {{
+                  t('stats_description', {
+                    total: userProfile.total_submissions,
+                    approved: userProfile.approved_submissions,
+                  })
+                }}
               </p>
             </div>
             <div class="flex items-center gap-3">
               <UBadge
-                :color="userProfile.trust_level === 'admin' || userProfile.trust_level === 'moderator' ? 'primary' : userProfile.trust_level === 'trusted' ? 'success' : userProfile.trust_level === 'contributor' ? 'info' : 'neutral'"
+                :color="
+                  userProfile.trust_level === 'admin' || userProfile.trust_level === 'moderator'
+                    ? 'primary'
+                    : userProfile.trust_level === 'trusted'
+                      ? 'success'
+                      : userProfile.trust_level === 'contributor'
+                        ? 'info'
+                        : 'neutral'
+                "
                 variant="soft"
               >
                 {{ userProfile.trust_level }}

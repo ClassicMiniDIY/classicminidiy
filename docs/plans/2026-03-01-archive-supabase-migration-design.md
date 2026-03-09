@@ -456,4 +456,3 @@ The five separate document sections (manuals, adverts, catalogues, tuning, elect
 - Remove `content.config.ts`
 - Clean up unused env vars
 - 30-day observation period
-

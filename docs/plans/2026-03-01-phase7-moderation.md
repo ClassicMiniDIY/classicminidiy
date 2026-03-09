@@ -17,6 +17,7 @@
 Phase 6 built the contribution system: submission forms, `useSubmissions` composable, edit suggestion flow, contributor profiles, and trust level integration. The `submission_queue` table already stores all submission types (document, registry, color, wheel) with status, reviewer_notes, reviewed_by, and reviewed_at fields.
 
 Currently the admin has 3 separate review pages (`/admin/colors/review`, `/admin/wheels/review`, `/admin/registry/review`) with duplicated code patterns. Each page:
+
 - Fetches its own type-specific list via dedicated API routes
 - Uses inline editing with approve/reject buttons
 - Has a rejection confirmation modal (but NO reviewer notes field)
@@ -25,6 +26,7 @@ Currently the admin has 3 separate review pages (`/admin/colors/review`, `/admin
 Phase 7 unifies these into a single queue page while keeping the per-type pages as optional deep-links.
 
 **Key existing files:**
+
 - `server/utils/adminAuth.ts` — `requireAdminAuth()` and `getServiceClient()`
 - `server/utils/supabase.ts` — `getServiceClient()` for Supabase service_role client
 - `server/api/admin/queue/count.ts` — existing pending count endpoint
@@ -38,6 +40,7 @@ Phase 7 unifies these into a single queue page while keeping the per-type pages 
 ## Task 1: Create Unified Queue API Routes
 
 **Files:**
+
 - Create: `server/api/admin/queue/list.ts`
 - Create: `server/api/admin/queue/approve.post.ts`
 - Create: `server/api/admin/queue/reject.post.ts`
@@ -218,7 +221,10 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
 
     case 'document':
       ({ error } = await supabase.from('archive_documents').insert({
-        slug: (data.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+        slug: (data.title || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, ''),
         type: data.type || 'manual',
         title: data.title || '',
         description: data.description || null,
@@ -239,7 +245,12 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
 }
 
 // Helper: apply edit suggestion changes to the target item
-async function applyEditSuggestion(supabase: any, targetType: string, targetId: string, data: any): Promise<string | null> {
+async function applyEditSuggestion(
+  supabase: any,
+  targetType: string,
+  targetId: string,
+  data: any
+): Promise<string | null> {
   const changes = data.changes;
   if (!changes || typeof changes !== 'object') return 'No changes provided';
 
@@ -312,11 +323,13 @@ export default defineEventHandler(async (event) => {
 ## Task 2: Create Unified Queue Page
 
 **Files:**
+
 - Create: `app/pages/admin/queue.vue`
 
 **Step 1: Build the unified queue page**
 
 This page replaces navigating to 3 separate review pages. It shows all submissions in a card-based layout with:
+
 - Filter chips: All | Documents | Registry | Colors | Wheels
 - Status filter: Pending (default) | Approved | Rejected | All
 - Each submission card shows: type badge, target type badge, submitter info, date, data preview, action buttons
@@ -328,6 +341,7 @@ This page replaces navigating to 3 separate review pages. It shows all submissio
 The page fetches from `/api/admin/queue/list` with query params for filtering.
 
 Key UI elements:
+
 - `UBadge` for type/target/status badges
 - `UCard` for each submission item
 - `UModal` for approve/reject with reviewer notes `UTextarea`
@@ -336,6 +350,7 @@ Key UI elements:
 - Submission type labels: new_item→"New", edit_suggestion→"Edit Suggestion", new_collection→"New Collection"
 
 For edit suggestions, the diff view should show:
+
 ```
 Field Name    | Current Value | Proposed Value
 ──────────────┼───────────────┼──────────────
@@ -352,6 +367,7 @@ Use a two-column layout inside a `UCard` with `bg-error/5` for "from" values and
 ## Task 3: Create User Management API Routes
 
 **Files:**
+
 - Create: `server/api/admin/users/list.ts`
 - Create: `server/api/admin/users/update-trust.post.ts`
 
@@ -420,10 +436,7 @@ export default defineEventHandler(async (event) => {
   if (trustLevel === 'admin') updates.is_admin = true;
   if (trustLevel !== 'admin') updates.is_admin = false;
 
-  const { error } = await supabase
-    .from('profiles')
-    .update(updates)
-    .eq('id', userId);
+  const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
 
   if (error) {
     throw createError({ statusCode: 500, statusMessage: error.message });
@@ -440,11 +453,13 @@ export default defineEventHandler(async (event) => {
 ## Task 4: Create User Management Page
 
 **Files:**
+
 - Create: `app/pages/admin/users.vue`
 
 **Step 1: Build the user management page**
 
 Admin page showing all users with:
+
 - Search bar for display name / email
 - Trust level filter chips: All | New | Contributor | Trusted | Moderator | Admin
 - Table/card layout showing: avatar, display name, email, trust level badge, submission counts (total/approved/rejected), joined date
@@ -453,6 +468,7 @@ Admin page showing all users with:
 - Pagination (50 per page)
 
 Trust level badge colors:
+
 - new → neutral
 - contributor → info
 - trusted → success
@@ -468,11 +484,13 @@ The page fetches from `/api/admin/users/list` and uses `/api/admin/users/update-
 ## Task 5: Update Admin Dashboard
 
 **Files:**
+
 - Modify: `app/pages/admin/index.vue`
 
 **Step 1: Add unified queue link and users link**
 
 Update the admin dashboard to:
+
 1. Add a "Moderation Queue" card that links to `/admin/queue` (replace or supplement the individual type cards)
 2. Add a "User Management" card linking to `/admin/users`
 3. Keep existing per-type cards as secondary deep-links

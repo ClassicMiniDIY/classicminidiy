@@ -5,14 +5,11 @@ vi.stubGlobal('defineEventHandler', (handler: Function) => handler);
 vi.stubGlobal('setResponseHeaders', vi.fn());
 vi.stubGlobal('assertMethod', vi.fn());
 vi.stubGlobal('readBody', vi.fn());
-vi.stubGlobal(
-  'createError',
-  (opts: any) => {
-    const e = new Error(opts.message || opts.statusMessage);
-    (e as any).statusCode = opts.statusCode;
-    return e;
-  },
-);
+vi.stubGlobal('createError', (opts: any) => {
+  const e = new Error(opts.message || opts.statusMessage);
+  (e as any).statusCode = opts.statusCode;
+  return e;
+});
 
 describe('server/api/decoders/chassis', () => {
   let handler: Function;
@@ -453,9 +450,12 @@ describe('server/api/decoders/chassis', () => {
       });
       const mockEvent = { id: 'test' };
       await handler(mockEvent);
-      expect(setResponseHeaders).toHaveBeenCalledWith(mockEvent, expect.objectContaining({
-        'Cache-Control': expect.stringContaining('31536000'),
-      }));
+      expect(setResponseHeaders).toHaveBeenCalledWith(
+        mockEvent,
+        expect.objectContaining({
+          'Cache-Control': expect.stringContaining('31536000'),
+        })
+      );
     });
 
     it('assertMethod is called with PUT', async () => {

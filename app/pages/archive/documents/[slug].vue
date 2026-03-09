@@ -19,11 +19,9 @@
   });
 
   // Fetch all collections for the suggest-edit dropdown
-  const { data: collections } = await useAsyncData(
-    'archive-document-collections',
-    () => listCollections(),
-    { default: () => [] },
-  );
+  const { data: collections } = await useAsyncData('archive-document-collections', () => listCollections(), {
+    default: () => [],
+  });
 
   // Build collection options for the suggest edit modal
   const collectionOptions = computed(() => [
@@ -39,7 +37,7 @@
       if (!doc.value?.collection) return [];
       return getRelatedDocuments(doc.value.collection.id, doc.value.id);
     },
-    { watch: [doc] },
+    { watch: [doc] }
   );
 
   // Type config for badge display
@@ -284,7 +282,7 @@
               <UBadge
                 v-if="doc.type && typeConfig[doc.type]"
                 size="lg"
-                :color="(typeConfig[doc.type].color as any)"
+                :color="typeConfig[doc.type].color as any"
                 class="mb-4"
               >
                 <i :class="[typeConfig[doc.type].icon, 'mr-1']"></i>

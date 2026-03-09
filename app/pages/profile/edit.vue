@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
   const { isAuthenticated, userProfile, fetchUserProfile } = useAuth();
   const supabase = useSupabase();
 
@@ -17,7 +18,7 @@
         displayName.value = profile.display_name || '';
       }
     },
-    { immediate: true },
+    { immediate: true }
   );
 
   async function save() {
@@ -44,11 +45,11 @@
   }
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'robots',
@@ -59,11 +60,11 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :page="$t('breadcrumb_title')" />
+      <breadcrumb :page="t('breadcrumb_title')" />
     </div>
 
     <!-- Auth gate -->
@@ -73,10 +74,10 @@
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2">{{ $t('auth.sign_in_title') }}</h2>
-          <p class="text-base mb-6 opacity-70">{{ $t('auth.sign_in_description') }}</p>
+          <h2 class="text-xl font-bold mb-2">{{ t('auth.sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('auth.sign_in_description') }}</p>
           <UButton to="/login" color="primary" class="w-full">
-            {{ $t('auth.sign_in_button') }}
+            {{ t('auth.sign_in_button') }}
           </UButton>
         </div>
       </UCard>
@@ -88,34 +89,34 @@
         <template #header>
           <div class="flex items-center bg-muted -m-4 p-4">
             <i class="fad fa-user-pen mr-2"></i>
-            <h2 class="text-lg font-semibold">{{ $t('card_title') }}</h2>
+            <h2 class="text-lg font-semibold">{{ t('card_title') }}</h2>
           </div>
         </template>
 
         <div class="p-4">
           <!-- Success alert -->
           <UAlert v-if="saved" color="success" class="mb-6">
-            <template #title>{{ $t('success_title') }}</template>
-            <template #description>{{ $t('success_description') }}</template>
+            <template #title>{{ t('success_title') }}</template>
+            <template #description>{{ t('success_description') }}</template>
           </UAlert>
 
           <!-- Form -->
           <form @submit.prevent="save" class="space-y-4">
-            <UFormField :label="$t('form.display_name.label')">
+            <UFormField :label="t('form.display_name.label')">
               <UInput
                 v-model="displayName"
                 type="text"
-                :placeholder="$t('form.display_name.placeholder')"
+                :placeholder="t('form.display_name.placeholder')"
                 class="w-full"
                 maxlength="50"
                 icon="i-fa6-solid-user"
               />
             </UFormField>
 
-            <UFormField :label="$t('form.bio.label')">
+            <UFormField :label="t('form.bio.label')">
               <UTextarea
                 v-model="bio"
-                :placeholder="$t('form.bio.placeholder')"
+                :placeholder="t('form.bio.placeholder')"
                 :rows="4"
                 class="w-full"
                 maxlength="500"
@@ -126,15 +127,15 @@
 
             <p class="text-sm opacity-60">
               <i class="fad fa-circle-info mr-1"></i>
-              {{ $t('shared_note') }}
+              {{ t('shared_note') }}
             </p>
 
             <div class="flex gap-3 pt-2">
               <UButton to="/" variant="ghost" color="neutral">
-                {{ $t('form.cancel') }}
+                {{ t('form.cancel') }}
               </UButton>
               <UButton type="submit" color="primary" :loading="saving" :disabled="saving">
-                {{ $t('form.save') }}
+                {{ t('form.save') }}
               </UButton>
             </div>
           </form>

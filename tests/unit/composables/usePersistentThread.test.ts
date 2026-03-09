@@ -47,11 +47,11 @@ describe('usePersistentThread', () => {
           createdAt: now,
           lastUsedAt: now,
           messageCount: 5,
-        }),
+        })
       );
       expect(window.localStorage.setItem).toHaveBeenCalledWith(
         THREAD_EXPIRY_KEY,
-        (now + THREAD_EXPIRY_TIME).toString(),
+        (now + THREAD_EXPIRY_TIME).toString()
       );
     });
 
@@ -69,7 +69,7 @@ describe('usePersistentThread', () => {
           createdAt: now,
           lastUsedAt: now,
           messageCount: 0,
-        }),
+        })
       );
     });
 
@@ -106,10 +106,7 @@ describe('usePersistentThread', () => {
       // Should not throw
       persistThread('thread-err');
 
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to persist thread:',
-        expect.any(Error),
-      );
+      expect(warnSpy).toHaveBeenCalledWith('Failed to persist thread:', expect.any(Error));
       warnSpy.mockRestore();
     });
   });
@@ -196,10 +193,7 @@ describe('usePersistentThread', () => {
       });
 
       clearPersistedThread();
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to clear persisted thread:',
-        expect.any(Error),
-      );
+      expect(warnSpy).toHaveBeenCalledWith('Failed to clear persisted thread:', expect.any(Error));
       warnSpy.mockRestore();
     });
   });
@@ -259,7 +253,7 @@ describe('usePersistentThread', () => {
           createdAt: now - 5000,
           lastUsedAt: now,
           messageCount: 3,
-        }),
+        })
       );
     });
 
@@ -292,7 +286,7 @@ describe('usePersistentThread', () => {
           createdAt: now - 1000,
           lastUsedAt: now,
           messageCount: 10,
-        }),
+        })
       );
     });
 
@@ -320,7 +314,7 @@ describe('usePersistentThread', () => {
 
       expect(window.localStorage.setItem).toHaveBeenCalledWith(
         THREAD_EXPIRY_KEY,
-        (now + THREAD_EXPIRY_TIME).toString(),
+        (now + THREAD_EXPIRY_TIME).toString()
       );
     });
 
@@ -376,10 +370,7 @@ describe('usePersistentThread', () => {
       });
 
       updateThreadUsage();
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to update thread usage:',
-        expect.any(Error),
-      );
+      expect(warnSpy).toHaveBeenCalledWith('Failed to update thread usage:', expect.any(Error));
       warnSpy.mockRestore();
     });
   });
@@ -597,7 +588,7 @@ describe('usePersistentThread', () => {
         JSON.stringify({
           ...threadData,
           lastUsedAt: now,
-        }),
+        })
       );
     });
 
@@ -734,13 +725,8 @@ describe('usePersistentThread', () => {
     it('persist -> update -> get -> clear cycle works correctly', async () => {
       const now = Date.now();
       const usePersistentThread = await freshComposable();
-      const {
-        persistThread,
-        updateThreadUsage,
-        getThreadData,
-        clearPersistedThread,
-        currentThreadId,
-      } = usePersistentThread();
+      const { persistThread, updateThreadUsage, getThreadData, clearPersistedThread, currentThreadId } =
+        usePersistentThread();
 
       // 1. Persist a new thread
       persistThread('lifecycle-thread', 0);
@@ -768,7 +754,7 @@ describe('usePersistentThread', () => {
       updateThreadUsage(5);
       expect(window.localStorage.setItem).toHaveBeenCalledWith(
         THREAD_STORAGE_KEY,
-        expect.stringContaining('"messageCount":5'),
+        expect.stringContaining('"messageCount":5')
       );
 
       // 5. Clear

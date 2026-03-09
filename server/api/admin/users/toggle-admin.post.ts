@@ -21,10 +21,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Cannot remove your own admin access' });
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ is_admin: isAdmin })
-    .eq('id', userId);
+  const { error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId);
 
   if (error) {
     throw createError({ statusCode: 500, statusMessage: error.message });

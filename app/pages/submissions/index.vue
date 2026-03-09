@@ -184,12 +184,14 @@
               <!-- Badge row -->
               <div class="flex flex-wrap gap-2 mb-2">
                 <!-- Type badge -->
-                <UBadge
-                  :color="item.type === 'new_item' ? 'neutral' : 'info'"
-                  variant="soft"
-                  size="sm"
-                >
-                  {{ item.type === 'new_item' ? t('submission.new_item') : item.type === 'edit_suggestion' ? t('submission.edit_suggestion') : t('submission.new_collection') }}
+                <UBadge :color="item.type === 'new_item' ? 'neutral' : 'info'" variant="soft" size="sm">
+                  {{
+                    item.type === 'new_item'
+                      ? t('submission.new_item')
+                      : item.type === 'edit_suggestion'
+                        ? t('submission.edit_suggestion')
+                        : t('submission.new_collection')
+                  }}
                 </UBadge>
 
                 <!-- Target type badge -->
@@ -229,15 +231,8 @@
               </div>
 
               <!-- Reviewer notes -->
-              <div
-                v-if="item.reviewerNotes && (item.status === 'approved' || item.status === 'rejected')"
-                class="mt-3"
-              >
-                <UAlert
-                  :color="item.status === 'approved' ? 'success' : 'error'"
-                  variant="soft"
-                  size="sm"
-                >
+              <div v-if="item.reviewerNotes && (item.status === 'approved' || item.status === 'rejected')" class="mt-3">
+                <UAlert :color="item.status === 'approved' ? 'success' : 'error'" variant="soft" size="sm">
                   <template #title>{{ t('submission.reviewer_notes') }}</template>
                   <template #description>{{ item.reviewerNotes }}</template>
                 </UAlert>
@@ -250,7 +245,13 @@
                 :color="item.status === 'pending' ? 'warning' : item.status === 'approved' ? 'success' : 'error'"
                 size="md"
               >
-                {{ item.status === 'pending' ? t('submission.status.pending') : item.status === 'approved' ? t('submission.status.approved') : t('submission.status.rejected') }}
+                {{
+                  item.status === 'pending'
+                    ? t('submission.status.pending')
+                    : item.status === 'approved'
+                      ? t('submission.status.approved')
+                      : t('submission.status.rejected')
+                }}
               </UBadge>
             </div>
           </div>

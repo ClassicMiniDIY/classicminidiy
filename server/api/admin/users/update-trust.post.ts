@@ -18,10 +18,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Only update trust_level — is_admin is a separate flag managed independently
-  const { error } = await supabase
-    .from('profiles')
-    .update({ trust_level: trustLevel })
-    .eq('id', userId);
+  const { error } = await supabase.from('profiles').update({ trust_level: trustLevel }).eq('id', userId);
 
   if (error) {
     throw createError({ statusCode: 500, statusMessage: error.message });

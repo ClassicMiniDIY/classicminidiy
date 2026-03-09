@@ -3,19 +3,20 @@
   import { HERO_TYPES } from '../../data/models/generic';
 
   const { capture } = usePostHog();
+  const { t } = useI18n();
 
   useHead({
-    title: $t('seo.title'),
+    title: t('seo.title'),
     meta: [
       {
         key: 'description',
         name: 'description',
-        content: $t('seo.description'),
+        content: t('seo.description'),
       },
       {
         key: 'keywords',
         name: 'keywords',
-        content: $t('seo.keywords'),
+        content: t('seo.keywords'),
       },
     ],
     link: [
@@ -31,14 +32,14 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.ogTitle'),
-    ogDescription: $t('seo.description'),
+    ogTitle: t('seo.ogTitle'),
+    ogDescription: t('seo.description'),
     ogUrl: 'https://classicminidiy.com/maps',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/maps.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitterTitle'),
-    twitterDescription: $t('seo.twitterDescription'),
+    twitterTitle: t('seo.twitterTitle'),
+    twitterDescription: t('seo.twitterDescription'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/maps.png',
   });
 
@@ -147,29 +148,29 @@
 
   const legend = computed(() => [
     {
-      name: $t('legend.included.name'),
+      name: t('legend.included.name'),
       id: 'yes',
-      description: $t('legend.included.description'),
+      description: t('legend.included.description'),
     },
     {
-      name: $t('legend.notIncluded.name'),
+      name: t('legend.notIncluded.name'),
       id: 'no',
-      description: $t('legend.notIncluded.description'),
+      description: t('legend.notIncluded.description'),
     },
     {
-      name: $t('legend.notAvailable.name'),
+      name: t('legend.notAvailable.name'),
       id: 'na',
-      description: $t('legend.notAvailable.description'),
+      description: t('legend.notAvailable.description'),
     },
     {
-      name: $t('legend.workInProgress.name'),
+      name: t('legend.workInProgress.name'),
       id: 'wip',
-      description: $t('legend.workInProgress.description'),
+      description: t('legend.workInProgress.description'),
     },
   ]);
   const items = computed(() => [
     {
-      features: $t('table.ignitionMap'),
+      features: t('table.ignitionMap'),
       haltech: 'yes',
       speeduino: 'yes',
       megasquirt: 'yes',
@@ -180,7 +181,7 @@
       megaJolt: 'yes',
     },
     {
-      features: $t('table.fuelMap'),
+      features: t('table.fuelMap'),
       haltech: 'yes',
       speeduino: 'yes',
       megasquirt: 'yes',
@@ -191,7 +192,7 @@
       megaJolt: 'na',
     },
     {
-      features: $t('table.veTable'),
+      features: t('table.veTable'),
       haltech: 'yes',
       speeduino: 'yes',
       megasquirt: 'yes',
@@ -202,7 +203,7 @@
       megaJolt: 'na',
     },
     {
-      features: $t('table.targetAfr'),
+      features: t('table.targetAfr'),
       haltech: 'yes',
       speeduino: 'yes',
       megasquirt: 'yes',
@@ -213,7 +214,7 @@
       megaJolt: 'yes',
     },
     {
-      features: $t('table.throttleEnrichment'),
+      features: t('table.throttleEnrichment'),
       haltech: 'yes',
       speeduino: 'no',
       megasquirt: 'no',
@@ -224,7 +225,7 @@
       megaJolt: 'na',
     },
     {
-      features: $t('table.driveByWire'),
+      features: t('table.driveByWire'),
       haltech: 'yes',
       speeduino: 'no',
       megasquirt: 'no',
@@ -235,7 +236,7 @@
       megaJolt: 'na',
     },
     {
-      features: $t('table.boostControl'),
+      features: t('table.boostControl'),
       haltech: 'yes',
       speeduino: 'no',
       megasquirt: 'no',
@@ -246,7 +247,7 @@
       megaJolt: 'na',
     },
     {
-      features: $t('table.idleMap'),
+      features: t('table.idleMap'),
       haltech: 'yes',
       speeduino: 'no',
       megasquirt: 'no',
@@ -257,7 +258,7 @@
       megaJolt: 'na',
     },
     {
-      features: $t('table.sixteenVEngine'),
+      features: t('table.sixteenVEngine'),
       haltech: 'yes',
       speeduino: 'yes',
       megasquirt: 'yes',
@@ -274,36 +275,36 @@
   <div>
     <hero
       :navigation="true"
-      :title="$t('hero.title')"
-      :subtitle="$t('hero.subtitle')"
+      :title="t('hero.title')"
+      :subtitle="t('hero.subtitle')"
       :heroType="HERO_TYPES.MAPS"
       :textSize="'3xl'"
     />
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-6 md:col-start-4">
-          <h1 class="fancy-font-bold text-2xl text-center pt-10 pb-5">{{ $t('mainTitle') }}</h1>
+          <h1 class="fancy-font-bold text-2xl text-center pt-10 pb-5">{{ t('mainTitle') }}</h1>
           <h2 class="fancy-font-book-oblique text-center text-xl">
-            {{ $t('description') }}
+            {{ t('description') }}
           </h2>
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2 py-10">
           <div class="flex flex-wrap justify-center gap-8">
             <div class="text-center">
               <i class="fad fa-flag-checkered text-3xl pb-3"></i>
-              <h3 class="text-lg">{{ $t('features.lifetimeUpdates') }}</h3>
+              <h3 class="text-lg">{{ t('features.lifetimeUpdates') }}</h3>
             </div>
             <div class="text-center">
               <i class="fad fa-microchip text-3xl pb-3"></i>
-              <h3 class="text-lg">{{ $t('features.multipleEcus') }}</h3>
+              <h3 class="text-lg">{{ t('features.multipleEcus') }}</h3>
             </div>
             <div class="text-center">
               <i class="fad fa-arrows-rotate text-3xl pb-3"></i>
-              <h3 class="text-lg">{{ $t('features.constantlyUpdated') }}</h3>
+              <h3 class="text-lg">{{ t('features.constantlyUpdated') }}</h3>
             </div>
             <div class="text-center">
               <i class="fad fa-money-bill fa-beat text-3xl pb-3"></i>
-              <h3 class="text-lg">{{ $t('features.payWhatYouWant') }}</h3>
+              <h3 class="text-lg">{{ t('features.payWhatYouWant') }}</h3>
             </div>
           </div>
         </div>
@@ -313,10 +314,10 @@
             <div class="text-center">
               <i class="fad fa-credit-card text-3xl pb-3"></i>
             </div>
-            <h3 class="fancy-font-bold text-2xl">{{ $t('options.purchase.title') }}</h3>
-            <h4 class="fancy-font-bold text-xl">{{ $t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
+            <h3 class="fancy-font-bold text-2xl">{{ t('options.purchase.title') }}</h3>
+            <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
             <p class="py-3">
-              {{ $t('options.purchase.description') }}
+              {{ t('options.purchase.description') }}
             </p>
             <div class="flex justify-center">
               <UButton
@@ -325,7 +326,7 @@
                 target="_blank"
                 @click="capture('maps_cta_clicked', { action: 'purchase' })"
               >
-                <i class="fad fa-credit-card mr-2"></i> {{ $t('options.purchase.button') }}
+                <i class="fad fa-credit-card mr-2"></i> {{ t('options.purchase.button') }}
               </UButton>
             </div>
           </UCard>
@@ -335,10 +336,10 @@
             <div class="text-center">
               <i class="fad fa-download text-3xl pb-3"></i>
             </div>
-            <h3 class="fancy-font-bold text-2xl">{{ $t('options.download.title') }}</h3>
-            <h4 class="fancy-font-bold text-xl">{{ $t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
+            <h3 class="fancy-font-bold text-2xl">{{ t('options.download.title') }}</h3>
+            <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
             <p class="py-3">
-              {{ $t('options.download.description') }}
+              {{ t('options.download.description') }}
             </p>
             <div class="flex justify-center gap-2">
               <UButton
@@ -347,7 +348,7 @@
                 target="_blank"
                 @click="capture('maps_cta_clicked', { action: 'download' })"
               >
-                <i class="fad fa-download mr-2"></i> {{ $t('options.download.button') }}
+                <i class="fad fa-download mr-2"></i> {{ t('options.download.button') }}
               </UButton>
               <UButton
                 to="https://github.com/SomethingNew71/MiniECUMaps"
@@ -355,14 +356,14 @@
                 target="_blank"
                 @click="capture('maps_cta_clicked', { action: 'source' })"
               >
-                <i class="fad fa-code-branch mr-2"></i> {{ $t('options.download.viewSource') }}
+                <i class="fad fa-code-branch mr-2"></i> {{ t('options.download.viewSource') }}
               </UButton>
             </div>
           </UCard>
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2">
           <USeparator>
-            <span class="text-sm text-muted">{{ $t('moreDetails') }}</span>
+            <span class="text-sm text-muted">{{ t('moreDetails') }}</span>
           </USeparator>
         </div>
         <div class="col-span-12">
@@ -371,7 +372,7 @@
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-default">
-                    <th class="text-left p-2 font-medium">{{ $t('table.features') }}</th>
+                    <th class="text-left p-2 font-medium">{{ t('table.features') }}</th>
                     <th class="text-center p-2 font-medium">Haltech</th>
                     <th class="text-center p-2 font-medium">Speeduino</th>
                     <th class="text-center p-2 font-medium">MegaSquirt</th>
@@ -429,7 +430,7 @@
             <template #header>
               <div class="flex items-center">
                 <i class="fad fa-code-branch mr-2"></i>
-                <h5 class="font-bold text-lg">{{ $t('updates.title') }}</h5>
+                <h5 class="font-bold text-lg">{{ t('updates.title') }}</h5>
               </div>
             </template>
             <div class="p-2">
@@ -471,7 +472,7 @@
                     <i class="fad fa-exclamation-triangle text-warning" aria-hidden="true"></i>
                   </span>
                   <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
-                  <span>{{ $t('updates.error') }}</span>
+                  <span>{{ t('updates.error') }}</span>
                 </div>
                 <div v-for="i in 10" :key="`error-${i}`" class="flex items-center p-3 border-b border-default">
                   <span class="mr-2">
@@ -487,7 +488,7 @@
                     <i class="fad fa-info-circle" aria-hidden="true"></i>
                   </span>
                   <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
-                  <span>{{ $t('updates.noUpdates') }}</span>
+                  <span>{{ t('updates.noUpdates') }}</span>
                 </div>
                 <div v-for="i in 10" :key="`empty-${i}`" class="flex items-center p-3 border-b border-default">
                   <span class="mr-2">
@@ -504,17 +505,17 @@
                   class="w-full"
                   target="_blank"
                 >
-                  <i class="fad fa-code-branch mr-2"></i> {{ $t('updates.viewAllCommits') }}
+                  <i class="fad fa-code-branch mr-2"></i> {{ t('updates.viewAllCommits') }}
                 </UButton>
               </div>
             </div>
           </UCard>
         </div>
         <div class="col-span-12 md:col-span-6">
-          <h3 class="fancy-font-bold text-3xl text-center pb-5">{{ $t('supportedEcus.title') }}</h3>
+          <h3 class="fancy-font-bold text-3xl text-center pb-5">{{ t('supportedEcus.title') }}</h3>
           <UCard>
             <USeparator class="mb-4">
-              <span class="text-sm text-muted">{{ $t('supportedEcus.subtitle') }}</span>
+              <span class="text-sm text-muted">{{ t('supportedEcus.subtitle') }}</span>
             </USeparator>
             <div class="grid grid-cols-1 gap-6">
               <div class="image">
@@ -564,7 +565,7 @@
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2">
           <USeparator>
-            <span class="text-sm text-muted">{{ $t('otherSupport') }}</span>
+            <span class="text-sm text-muted">{{ t('otherSupport') }}</span>
           </USeparator>
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10">

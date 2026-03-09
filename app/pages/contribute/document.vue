@@ -408,10 +408,7 @@
                       :label="t('form.fields.document_files.label')"
                       @update:files="documentFiles = $event"
                     />
-                    <p
-                      v-if="documentFiles.length === 0 && touchedFields.documentFiles"
-                      class="text-sm text-error mt-1"
-                    >
+                    <p v-if="documentFiles.length === 0 && touchedFields.documentFiles" class="text-sm text-error mt-1">
                       {{ t('form.error.files_required') }}
                     </p>
                   </div>

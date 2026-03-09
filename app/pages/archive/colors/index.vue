@@ -2,6 +2,7 @@
   import type { Color } from '../../../../data/models/colors';
   import { HERO_TYPES } from '../../../../data/models/generic';
 
+  const { t } = useI18n();
   const { listColors } = useColors();
   const { data: colors, status } = await useAsyncData('colors-list', () => listColors());
   const pending = computed(() => status.value === 'pending');
@@ -65,8 +66,8 @@
     if (navigator.share) {
       navigator
         .share({
-          title: `${$t('share.title')} ${color.name || $t('states.unnamed_color')}`,
-          text: `${$t('share.text')} ${color.name || $t('states.unnamed_color')}`,
+          title: `${t('share.title')} ${color.name || t('states.unnamed_color')}`,
+          text: `${t('share.text')} ${color.name || t('states.unnamed_color')}`,
           url,
         })
         .catch(() => {
@@ -74,7 +75,7 @@
         });
     } else {
       navigator.clipboard.writeText(url);
-      alert($t('states.link_copied'));
+      alert(t('states.link_copied'));
     }
   };
 
@@ -84,15 +85,15 @@
   });
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'keywords',
-        content: $t('keywords'),
+        content: t('keywords'),
       },
     ],
     link: [
@@ -108,7 +109,7 @@
     '@context': 'https://schema.org',
     '@type': 'Dataset',
     name: 'Classic Mini Paint Color Database',
-    description: $t('description'),
+    description: t('description'),
     url: 'https://classicminidiy.com/archive/colors',
     keywords: ['Classic Mini colors', 'paint codes', 'BMC colors', 'Mini Cooper paint'],
     creator: {
@@ -143,26 +144,26 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('seo.og_title'),
-    ogDescription: $t('seo.og_description'),
+    ogTitle: t('seo.og_title'),
+    ogDescription: t('seo.og_description'),
     ogUrl: 'https://classicminidiy.com/archive/colors',
     ogType: 'website',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/colors.png',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('seo.twitter_title'),
-    twitterDescription: $t('seo.twitter_description'),
+    twitterTitle: t('seo.twitter_title'),
+    twitterDescription: t('seo.twitter_description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/colors.png',
   });
 </script>
 
 <template>
-  <hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4 pb-15">
     <!-- Breadcrumb -->
     <!-- Header -->
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" :page="$t('breadcrumb_title')"></breadcrumb>
+        <breadcrumb class="my-6" :page="t('breadcrumb_title')"></breadcrumb>
 
         <!-- Contribute Banner -->
         <UCard class="mb-6 bg-primary/5">
@@ -170,25 +171,25 @@
             <div class="flex items-center gap-3">
               <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
               <div>
-                <p class="font-medium">{{ $t('contribute_banner_title') }}</p>
-                <p class="text-sm opacity-70">{{ $t('contribute_banner_description') }}</p>
+                <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+                <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
               </div>
             </div>
             <UButton to="/contribute/color" color="primary" variant="outline" size="sm">
-              {{ $t('contribute_banner_button') }}
+              {{ t('contribute_banner_button') }}
             </UButton>
           </div>
         </UCard>
 
-        <h1 class="text-3xl font-bold">{{ $t('main_heading') }}</h1>
+        <h1 class="text-3xl font-bold">{{ t('main_heading') }}</h1>
         <h2 class="text-xl mt-4">
           <strong>{{ colors?.length || '0' }}</strong>
-          {{ $t('subtitle') }}
+          {{ t('subtitle') }}
         </h2>
         <p class="my-4">
-          {{ $t('description_text') }}
-          <a href="http://mini-colours.co.uk" class="text-primary hover:underline">{{ $t('partner_link') }}</a>
-          {{ $t('description_text_2') }}
+          {{ t('description_text') }}
+          <a href="http://mini-colours.co.uk" class="text-primary hover:underline">{{ t('partner_link') }}</a>
+          {{ t('description_text_2') }}
         </p>
       </div>
       <div class="col-span-12">
@@ -200,21 +201,21 @@
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div class="flex items-center gap-2">
             <i class="fas fa-tire fa-spin text-primary text-2xl"></i>
-            <h2 class="text-2xl font-semibold">{{ $t('search.card_title') }}</h2>
+            <h2 class="text-2xl font-semibold">{{ t('search.card_title') }}</h2>
           </div>
           <div class="w-full md:w-96">
             <UInput
               v-model="search"
               type="text"
-              :placeholder="$t('search.placeholder')"
-              :aria-label="$t('search.placeholder')"
+              :placeholder="t('search.placeholder')"
+              :aria-label="t('search.placeholder')"
               icon="i-fa6-solid-magnifying-glass"
               class="w-full"
             />
           </div>
         </div>
         <p class="text-base mb-6">
-          {{ $t('search.help_text') }}
+          {{ t('search.help_text') }}
         </p>
       </div>
 
@@ -236,7 +237,7 @@
 
       <!-- Empty State -->
       <div v-else-if="!filteredColors.length" class="col-span-12">
-        <UAlert color="info" icon="i-fa6-solid-circle-info" :title="$t('states.no_colors')" />
+        <UAlert color="info" icon="i-fa6-solid-circle-info" :title="t('states.no_colors')" />
       </div>
 
       <!-- Color Cards Grid -->
@@ -273,7 +274,8 @@
                     :href="`#color-${color.id}-slide-${idx}`"
                     class="w-2 h-2 rounded-full bg-base-100/60 hover:bg-base-100"
                     @click.stop.prevent="
-                      $event.currentTarget?.closest('.carousel')
+                      $event.currentTarget
+                        ?.closest('.carousel')
                         ?.querySelector(`#color-${color.id}-slide-${idx}`)
                         ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
                     "
@@ -295,13 +297,18 @@
             <!-- Card Body -->
             <div class="card-body p-4">
               <h3 class="card-title text-base">
-                {{ color.name || $t('states.unnamed_color') }}
+                {{ color.name || t('states.unnamed_color') }}
               </h3>
               <div class="flex flex-wrap gap-1.5 mt-1">
                 <UBadge v-if="color.code && color.code !== 'Unknown'" color="primary" variant="soft" size="xs">
                   {{ color.code }}
                 </UBadge>
-                <UBadge v-if="color.shortCode && color.shortCode !== 'Unknown'" color="neutral" variant="soft" size="xs">
+                <UBadge
+                  v-if="color.shortCode && color.shortCode !== 'Unknown'"
+                  color="neutral"
+                  variant="soft"
+                  size="xs"
+                >
                   {{ color.shortCode }}
                 </UBadge>
               </div>
@@ -331,7 +338,7 @@
               «
             </UButton>
             <UButton variant="outline" class="rounded-none border-x-0" disabled>
-              {{ $t('pagination.page') }} {{ currentPage }} {{ $t('pagination.of') }} {{ totalPages }}
+              {{ t('pagination.page') }} {{ currentPage }} {{ t('pagination.of') }} {{ totalPages }}
             </UButton>
             <UButton
               :disabled="currentPage >= totalPages"
@@ -344,7 +351,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>
