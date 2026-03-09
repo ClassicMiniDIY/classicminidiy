@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
   const params = getQuery(event);
   const bucket = params.bucket?.toString();
   const submissionId = params.submissionId?.toString();
+  const category = params.category?.toString() || 'general';
 
   if (!bucket) {
     throw createError({ statusCode: 400, statusMessage: 'Missing required bucket parameter' });
@@ -110,14 +111,15 @@ export default defineEventHandler(async (event) => {
         .single();
 
       const currentData = (existing?.data as Record<string, unknown>) || {};
-      const currentFiles = (currentData.uploadedFiles as string[]) || [];
+      const currentFiles = (currentData.uploadedFiles as any[]) || [];
+      const newFiles = uploadedPaths.map(url => ({ url, category }));
 
       await supabase
         .from('submission_queue')
         .update({
           data: {
             ...currentData,
-            uploadedFiles: [...currentFiles, ...uploadedPaths],
+            uploadedFiles: [...currentFiles, ...newFiles],
           },
         })
         .eq('id', submissionId);

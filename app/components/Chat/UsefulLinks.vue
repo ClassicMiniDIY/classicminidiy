@@ -2,7 +2,7 @@
   <div v-if="links && links.length > 0" class="mt-4 rounded-lg bg-default border border-default p-4">
     <div class="flex items-center gap-2 mb-3">
       <i class="fa-solid fa-link text-primary"></i>
-      <h3 class="text-sm font-semibold">{{ t('title') }}</h3>
+      <h3 class="text-sm font-semibold">{{ $t('title') }}</h3>
     </div>
     <div class="space-y-2">
       <a
@@ -35,8 +35,6 @@
 </template>
 
 <script setup lang="ts">
-  const { t } = useI18n();
-
   interface UsefulLink {
     url: string;
     title: string;

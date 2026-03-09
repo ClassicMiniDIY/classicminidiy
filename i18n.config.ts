@@ -1,4 +1,6 @@
-export default {
+/// <reference path="./.nuxt/imports.d.ts" />
+
+export default defineI18nConfig(() => ({
   legacy: false,
   locale: 'en',
   fallbackLocale: 'en',
@@ -17,4 +19,4 @@ export default {
     zh: {},
     ko: {},
   },
-};
+}));

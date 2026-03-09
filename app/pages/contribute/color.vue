@@ -20,6 +20,7 @@
   const apiMessage = ref('');
   const processing = ref(false);
   const swatchFiles = ref<File[]>([]);
+  const carPhotoFiles = ref<File[]>([]);
 
   // Touched field tracking for inline validation
   const touched = reactive({
@@ -124,12 +125,27 @@
         const { error: uploadError } = await useFetch('/api/archive/upload', {
           method: 'POST',
           body: uploadData,
-          query: { bucket: 'archive-colors', submissionId: submission.id },
+          query: { bucket: 'archive-colors', submissionId: submission.id, category: 'swatch' },
         });
 
         if (uploadError.value) {
           console.error('Error uploading swatch files:', uploadError.value);
-          // Submission succeeded but upload failed - still show success with a note
+        }
+      }
+
+      // Upload car photos if provided
+      if (carPhotoFiles.value.length > 0) {
+        const uploadData = new FormData();
+        carPhotoFiles.value.forEach((file, i) => uploadData.append(`file${i}`, file));
+
+        const { error: uploadError } = await useFetch('/api/archive/upload', {
+          method: 'POST',
+          body: uploadData,
+          query: { bucket: 'archive-colors', submissionId: submission.id, category: 'car-photos' },
+        });
+
+        if (uploadError.value) {
+          console.error('Error uploading car photos:', uploadError.value);
         }
       }
 
@@ -141,6 +157,7 @@
         form: 'color_contribution',
         color_code: formData.code,
         has_swatch_files: swatchFiles.value.length > 0,
+        has_car_photos: carPhotoFiles.value.length > 0,
         source: 'contribute_hub',
       });
     } catch (error) {
@@ -159,6 +176,7 @@
     submissionId.value = '';
     apiMessage.value = '';
     swatchFiles.value = [];
+    carPhotoFiles.value = [];
     touched.name = false;
     touched.code = false;
     formData.name = '';
@@ -400,14 +418,33 @@
                     />
                   </div>
 
-                  <!-- Swatch / Example Photos -->
-                  <ContributeFileUpload
-                    accept="image/jpeg,image/png"
-                    :maxFiles="3"
-                    :maxSizeMb="5"
-                    :label="t('form.fields.swatch_photos.label')"
-                    @update:files="swatchFiles = $event"
-                  />
+                  <!-- Swatch Photo -->
+                  <div>
+                    <USeparator class="my-2" />
+                    <h3 class="text-lg font-semibold mb-1">{{ t('form.fields.swatch_photo.section_title') }}</h3>
+                    <p class="text-sm opacity-70 mb-3">{{ t('form.fields.swatch_photo.description') }}</p>
+                    <ContributeFileUpload
+                      accept="image/jpeg,image/png"
+                      :maxFiles="1"
+                      :maxSizeMb="5"
+                      :label="t('form.fields.swatch_photo.label')"
+                      @update:files="swatchFiles = $event"
+                    />
+                  </div>
+
+                  <!-- Car / Example Photos -->
+                  <div>
+                    <USeparator class="my-2" />
+                    <h3 class="text-lg font-semibold mb-1">{{ t('form.fields.car_photos.section_title') }}</h3>
+                    <p class="text-sm opacity-70 mb-3">{{ t('form.fields.car_photos.description') }}</p>
+                    <ContributeFileUpload
+                      accept="image/jpeg,image/png"
+                      :maxFiles="5"
+                      :maxSizeMb="5"
+                      :label="t('form.fields.car_photos.label')"
+                      @update:files="carPhotoFiles = $event"
+                    />
+                  </div>
 
                   <div class="pt-4">
                     <UButton type="submit" color="primary" class="w-full" :disabled="processing" :loading="processing">
@@ -420,10 +457,6 @@
           </UCard>
         </div>
 
-        <!-- Patreon Card -->
-        <div class="col-span-12 md:col-span-8 md:col-start-3 mt-6">
-          <patreon-card size="large" />
-        </div>
       </div>
     </div>
   </div>
@@ -478,8 +511,15 @@
           "label": "Years Used",
           "placeholder": "e.g. 1959-1967"
         },
-        "swatch_photos": {
-          "label": "Swatch / Example Photos"
+        "swatch_photo": {
+          "section_title": "Paint Swatch Image",
+          "description": "Upload a photo of the actual paint swatch or color chip. This is the primary reference image for this color.",
+          "label": "Swatch Photo (1 image)"
+        },
+        "car_photos": {
+          "section_title": "Example Car Photos",
+          "description": "Upload photos of Classic Minis painted in this color. These help the community see how the color looks on actual cars.",
+          "label": "Car Photos (up to 5 images)"
         }
       },
       "submit": {
@@ -554,8 +594,15 @@
           "label": "Anos de Uso",
           "placeholder": "ej. 1959-1967"
         },
-        "swatch_photos": {
-          "label": "Fotos de Muestra / Ejemplo"
+        "swatch_photo": {
+          "section_title": "Imagen de Muestra de Pintura",
+          "description": "Sube una foto de la muestra de pintura o chip de color real. Esta es la imagen de referencia principal para este color.",
+          "label": "Foto de Muestra (1 imagen)"
+        },
+        "car_photos": {
+          "section_title": "Fotos de Ejemplo de Coches",
+          "description": "Sube fotos de Classic Minis pintados en este color. Estas ayudan a la comunidad a ver como se ve el color en coches reales.",
+          "label": "Fotos de Coches (hasta 5 imagenes)"
         }
       },
       "submit": {
@@ -630,8 +677,15 @@
           "label": "Annees d'Utilisation",
           "placeholder": "ex. 1959-1967"
         },
-        "swatch_photos": {
-          "label": "Photos d'Echantillon / Exemple"
+        "swatch_photo": {
+          "section_title": "Image d'Echantillon de Peinture",
+          "description": "Telechargez une photo de l'echantillon de peinture ou du nuancier reel. C'est l'image de reference principale pour cette couleur.",
+          "label": "Photo d'Echantillon (1 image)"
+        },
+        "car_photos": {
+          "section_title": "Photos d'Exemple de Voitures",
+          "description": "Telechargez des photos de Classic Minis peintes dans cette couleur. Elles aident la communaute a voir a quoi ressemble la couleur sur de vraies voitures.",
+          "label": "Photos de Voitures (jusqu'a 5 images)"
         }
       },
       "submit": {
@@ -706,8 +760,15 @@
           "label": "Anni di Utilizzo",
           "placeholder": "es. 1959-1967"
         },
-        "swatch_photos": {
-          "label": "Foto Campione / Esempio"
+        "swatch_photo": {
+          "section_title": "Immagine Campione di Vernice",
+          "description": "Carica una foto del campione di vernice o chip colore reale. Questa e l'immagine di riferimento principale per questo colore.",
+          "label": "Foto Campione (1 immagine)"
+        },
+        "car_photos": {
+          "section_title": "Foto di Esempio di Auto",
+          "description": "Carica foto di Classic Mini verniciate in questo colore. Queste aiutano la comunita a vedere come appare il colore su auto reali.",
+          "label": "Foto di Auto (fino a 5 immagini)"
         }
       },
       "submit": {
@@ -782,8 +843,15 @@
           "label": "Verwendungsjahre",
           "placeholder": "z.B. 1959-1967"
         },
-        "swatch_photos": {
-          "label": "Farbmuster / Beispielfotos"
+        "swatch_photo": {
+          "section_title": "Farbmuster-Bild",
+          "description": "Laden Sie ein Foto des tatsaechlichen Farbmusters oder Farbchips hoch. Dies ist das primaere Referenzbild fuer diese Farbe.",
+          "label": "Farbmuster-Foto (1 Bild)"
+        },
+        "car_photos": {
+          "section_title": "Beispielfotos von Autos",
+          "description": "Laden Sie Fotos von Classic Minis in dieser Farbe hoch. Diese helfen der Community zu sehen, wie die Farbe auf echten Autos aussieht.",
+          "label": "Auto-Fotos (bis zu 5 Bilder)"
         }
       },
       "submit": {
@@ -858,8 +926,15 @@
           "label": "Anos de Uso",
           "placeholder": "ex. 1959-1967"
         },
-        "swatch_photos": {
-          "label": "Fotos de Amostra / Exemplo"
+        "swatch_photo": {
+          "section_title": "Imagem de Amostra de Tinta",
+          "description": "Envie uma foto da amostra de tinta ou chip de cor real. Esta e a imagem de referencia principal para esta cor.",
+          "label": "Foto de Amostra (1 imagem)"
+        },
+        "car_photos": {
+          "section_title": "Fotos de Exemplo de Carros",
+          "description": "Envie fotos de Classic Minis pintados nesta cor. Estas ajudam a comunidade a ver como a cor fica em carros reais.",
+          "label": "Fotos de Carros (ate 5 imagens)"
         }
       },
       "submit": {
@@ -934,8 +1009,15 @@
           "label": "Годы использования",
           "placeholder": "напр. 1959-1967"
         },
-        "swatch_photos": {
-          "label": "Фото образца / примера"
+        "swatch_photo": {
+          "section_title": "Изображение образца краски",
+          "description": "Загрузите фото реального образца краски или цветового чипа. Это основное справочное изображение для данного цвета.",
+          "label": "Фото образца (1 изображение)"
+        },
+        "car_photos": {
+          "section_title": "Примеры фото автомобилей",
+          "description": "Загрузите фото Classic Mini, окрашенных в этот цвет. Они помогут сообществу увидеть, как цвет выглядит на реальных автомобилях.",
+          "label": "Фото автомобилей (до 5 изображений)"
         }
       },
       "submit": {
@@ -1010,8 +1092,15 @@
           "label": "使用年数",
           "placeholder": "例: 1959-1967"
         },
-        "swatch_photos": {
-          "label": "色見本 / サンプル写真"
+        "swatch_photo": {
+          "section_title": "塗料見本画像",
+          "description": "実際の塗料見本またはカラーチップの写真をアップロードしてください。これがこの色の主要な参考画像となります。",
+          "label": "見本写真（1枚）"
+        },
+        "car_photos": {
+          "section_title": "車の例写真",
+          "description": "この色で塗装されたClassic Miniの写真をアップロードしてください。実際の車での色の見え方をコミュニティに共有できます。",
+          "label": "車の写真（最大5枚）"
         }
       },
       "submit": {
@@ -1086,8 +1175,15 @@
           "label": "使用年份",
           "placeholder": "例如 1959-1967"
         },
-        "swatch_photos": {
-          "label": "色样 / 示例照片"
+        "swatch_photo": {
+          "section_title": "油漆色板图片",
+          "description": "上传实际油漆色板或色卡的照片。这是该颜色的主要参考图片。",
+          "label": "色板照片（1张图片）"
+        },
+        "car_photos": {
+          "section_title": "汽车示例照片",
+          "description": "上传喷涂此颜色的Classic Mini照片。这些照片帮助社区了解该颜色在实际汽车上的效果。",
+          "label": "汽车照片（最多5张图片）"
         }
       },
       "submit": {
@@ -1162,8 +1258,15 @@
           "label": "사용 연도",
           "placeholder": "예: 1959-1967"
         },
-        "swatch_photos": {
-          "label": "색상 견본 / 예시 사진"
+        "swatch_photo": {
+          "section_title": "페인트 색상 견본 이미지",
+          "description": "실제 페인트 견본 또는 컬러 칩의 사진을 업로드하세요. 이것은 이 색상의 주요 참고 이미지입니다.",
+          "label": "견본 사진 (1장)"
+        },
+        "car_photos": {
+          "section_title": "자동차 예시 사진",
+          "description": "이 색상으로 도장된 Classic Mini의 사진을 업로드하세요. 이는 커뮤니티가 실제 자동차에서 색상이 어떻게 보이는지 확인하는 데 도움이 됩니다.",
+          "label": "자동차 사진 (최대 5장)"
         }
       },
       "submit": {

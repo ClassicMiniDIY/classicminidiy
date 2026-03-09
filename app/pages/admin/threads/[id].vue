@@ -73,7 +73,7 @@
   const threadId = route.params.id as string;
 
   // Fetch thread details
-  const { data: threadData, pending, error } = await useFetch<ThreadData>(`/api/admin/threads/${threadId}`);
+  const { data: threadData, pending, error } = await useAdminFetch<ThreadData>(`/api/admin/threads/${threadId}`);
 
   // Format date
   const formatDate = (dateString: string) => {

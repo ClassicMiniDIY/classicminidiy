@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../data/models/generic';
 
+  const { t } = useI18n();
   const { isAuthenticated } = useAuth();
   const { listMySubmissions } = useSubmissions();
 
@@ -35,11 +36,11 @@
   }
 
   useHead({
-    title: $t('title'),
+    title: t('title'),
     meta: [
       {
         name: 'description',
-        content: $t('description'),
+        content: t('description'),
       },
       {
         name: 'robots',
@@ -50,16 +51,16 @@
 </script>
 
 <template>
-  <Hero :navigation="true" :title="$t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <Hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <Breadcrumb :page="$t('breadcrumb_title')" />
+      <Breadcrumb :page="t('breadcrumb_title')" />
     </div>
 
     <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-4">{{ $t('main_heading') }}</h1>
-      <p class="mb-6 text-base">{{ $t('description_text') }}</p>
+      <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
+      <p class="mb-6 text-base">{{ t('description_text') }}</p>
       <USeparator />
     </div>
 
@@ -70,10 +71,10 @@
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
-          <h2 class="text-xl font-bold mb-2">{{ $t('auth.sign_in_title') }}</h2>
-          <p class="text-base mb-6 opacity-70">{{ $t('auth.sign_in_description') }}</p>
+          <h2 class="text-xl font-bold mb-2">{{ t('auth.sign_in_title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('auth.sign_in_description') }}</p>
           <UButton to="/login" color="primary" class="w-full">
-            {{ $t('auth.sign_in_button') }}
+            {{ t('auth.sign_in_button') }}
           </UButton>
         </div>
       </UCard>
@@ -85,79 +86,88 @@
       <div class="flex flex-wrap gap-6 mb-6">
         <!-- Status filters -->
         <div class="flex flex-wrap gap-2">
-          <button
-            class="btn btn-sm"
-            :class="statusFilter === 'all' ? 'btn-primary' : 'btn-outline'"
+          <UButton
+            size="sm"
+            :color="statusFilter === 'all' ? 'primary' : 'neutral'"
+            :variant="statusFilter === 'all' ? 'solid' : 'outline'"
             @click="statusFilter = 'all'"
           >
-            {{ $t('filters.all') }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="statusFilter === 'pending' ? 'btn-warning' : 'btn-outline'"
+            {{ t('filters.all') }}
+          </UButton>
+          <UButton
+            size="sm"
+            :color="statusFilter === 'pending' ? 'warning' : 'neutral'"
+            :variant="statusFilter === 'pending' ? 'solid' : 'outline'"
             @click="statusFilter = 'pending'"
           >
-            {{ $t('filters.pending') }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="statusFilter === 'approved' ? 'btn-success' : 'btn-outline'"
+            {{ t('filters.pending') }}
+          </UButton>
+          <UButton
+            size="sm"
+            :color="statusFilter === 'approved' ? 'success' : 'neutral'"
+            :variant="statusFilter === 'approved' ? 'solid' : 'outline'"
             @click="statusFilter = 'approved'"
           >
-            {{ $t('filters.approved') }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="statusFilter === 'rejected' ? 'btn-error' : 'btn-outline'"
+            {{ t('filters.approved') }}
+          </UButton>
+          <UButton
+            size="sm"
+            :color="statusFilter === 'rejected' ? 'error' : 'neutral'"
+            :variant="statusFilter === 'rejected' ? 'solid' : 'outline'"
             @click="statusFilter = 'rejected'"
           >
-            {{ $t('filters.rejected') }}
-          </button>
+            {{ t('filters.rejected') }}
+          </UButton>
         </div>
 
         <USeparator orientation="vertical" class="hidden sm:block h-8" />
 
         <!-- Type filters -->
         <div class="flex flex-wrap gap-2">
-          <button
-            class="btn btn-sm"
-            :class="typeFilter === 'all' ? 'btn-neutral' : 'btn-outline'"
+          <UButton
+            size="sm"
+            :color="typeFilter === 'all' ? 'neutral' : 'neutral'"
+            :variant="typeFilter === 'all' ? 'solid' : 'outline'"
             @click="typeFilter = 'all'"
           >
-            {{ $t('filters.all') }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="typeFilter === 'document' ? 'btn-neutral' : 'btn-outline'"
+            {{ t('filters.all') }}
+          </UButton>
+          <UButton
+            size="sm"
+            :color="typeFilter === 'document' ? 'neutral' : 'neutral'"
+            :variant="typeFilter === 'document' ? 'solid' : 'outline'"
             @click="typeFilter = 'document'"
           >
             <i class="fa-duotone fa-books mr-1"></i>
-            {{ $t('filters.documents') }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="typeFilter === 'registry' ? 'btn-neutral' : 'btn-outline'"
+            {{ t('filters.documents') }}
+          </UButton>
+          <UButton
+            size="sm"
+            :color="typeFilter === 'registry' ? 'neutral' : 'neutral'"
+            :variant="typeFilter === 'registry' ? 'solid' : 'outline'"
             @click="typeFilter = 'registry'"
           >
             <i class="fa-duotone fa-clipboard-list mr-1"></i>
-            {{ $t('filters.registry') }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="typeFilter === 'color' ? 'btn-neutral' : 'btn-outline'"
+            {{ t('filters.registry') }}
+          </UButton>
+          <UButton
+            size="sm"
+            :color="typeFilter === 'color' ? 'neutral' : 'neutral'"
+            :variant="typeFilter === 'color' ? 'solid' : 'outline'"
             @click="typeFilter = 'color'"
           >
             <i class="fa-duotone fa-palette mr-1"></i>
-            {{ $t('filters.colors') }}
-          </button>
-          <button
-            class="btn btn-sm"
-            :class="typeFilter === 'wheel' ? 'btn-neutral' : 'btn-outline'"
+            {{ t('filters.colors') }}
+          </UButton>
+          <UButton
+            size="sm"
+            :color="typeFilter === 'wheel' ? 'neutral' : 'neutral'"
+            :variant="typeFilter === 'wheel' ? 'solid' : 'outline'"
             @click="typeFilter = 'wheel'"
           >
             <i class="fa-duotone fa-tire mr-1"></i>
-            {{ $t('filters.wheels') }}
-          </button>
+            {{ t('filters.wheels') }}
+          </UButton>
         </div>
       </div>
 
@@ -179,7 +189,7 @@
                   variant="soft"
                   size="sm"
                 >
-                  {{ item.type === 'new_item' ? $t('submission.new_item') : item.type === 'edit_suggestion' ? $t('submission.edit_suggestion') : $t('submission.new_collection') }}
+                  {{ item.type === 'new_item' ? t('submission.new_item') : item.type === 'edit_suggestion' ? t('submission.edit_suggestion') : t('submission.new_collection') }}
                 </UBadge>
 
                 <!-- Target type badge -->
@@ -210,11 +220,11 @@
               <div class="flex flex-wrap gap-4 mt-2 text-sm opacity-60">
                 <span>
                   <i class="fas fa-calendar-plus mr-1"></i>
-                  {{ $t('submission.submitted') }}: {{ formatDate(item.createdAt) }}
+                  {{ t('submission.submitted') }}: {{ formatDate(item.createdAt) }}
                 </span>
                 <span v-if="item.reviewedAt">
                   <i class="fas fa-calendar-check mr-1"></i>
-                  {{ $t('submission.reviewed') }}: {{ formatDate(item.reviewedAt) }}
+                  {{ t('submission.reviewed') }}: {{ formatDate(item.reviewedAt) }}
                 </span>
               </div>
 
@@ -228,7 +238,7 @@
                   variant="soft"
                   size="sm"
                 >
-                  <template #title>{{ $t('submission.reviewer_notes') }}</template>
+                  <template #title>{{ t('submission.reviewer_notes') }}</template>
                   <template #description>{{ item.reviewerNotes }}</template>
                 </UAlert>
               </div>
@@ -240,7 +250,7 @@
                 :color="item.status === 'pending' ? 'warning' : item.status === 'approved' ? 'success' : 'error'"
                 size="md"
               >
-                {{ item.status === 'pending' ? $t('submission.status.pending') : item.status === 'approved' ? $t('submission.status.approved') : $t('submission.status.rejected') }}
+                {{ item.status === 'pending' ? t('submission.status.pending') : item.status === 'approved' ? t('submission.status.approved') : t('submission.status.rejected') }}
               </UBadge>
             </div>
           </div>
@@ -252,10 +262,10 @@
         <div class="mb-4">
           <i class="fa-duotone fa-inbox text-6xl opacity-30"></i>
         </div>
-        <h2 class="text-2xl font-bold mb-2">{{ $t('empty.title') }}</h2>
-        <p class="opacity-70 mb-6 max-w-md mx-auto">{{ $t('empty.description') }}</p>
+        <h2 class="text-2xl font-bold mb-2">{{ t('empty.title') }}</h2>
+        <p class="opacity-70 mb-6 max-w-md mx-auto">{{ t('empty.description') }}</p>
         <UButton to="/contribute" color="primary" variant="outline">
-          {{ $t('empty.contribute_link') }}
+          {{ t('empty.contribute_link') }}
         </UButton>
       </div>
     </div>
@@ -510,168 +520,168 @@
       "contribute_link": "Comece a Contribuir"
     }
   },
-  "nl": {
-    "title": "Mijn Inzendingen - Classic Mini DIY",
-    "description": "Bekijk uw inzendingsgeschiedenis en volg de status van uw bijdragen aan het Classic Mini DIY archief.",
-    "hero_title": "Classic Mini Archieven",
-    "breadcrumb_title": "Mijn Inzendingen",
-    "main_heading": "Mijn Inzendingen",
-    "description_text": "Volg de status van al uw bijdragen aan het Classic Mini DIY archief, inclusief documenten, registerinvoer, kleuren en wielen.",
+  "ru": {
+    "title": "Мои заявки - Classic Mini DIY",
+    "description": "Просматривайте историю заявок и отслеживайте статус ваших вкладов в архив Classic Mini DIY.",
+    "hero_title": "Архивы Classic Mini",
+    "breadcrumb_title": "Мои заявки",
+    "main_heading": "Мои заявки",
+    "description_text": "Отслеживайте статус всех ваших вкладов в архив Classic Mini DIY, включая документы, записи реестра, цвета и колёса.",
     "auth": {
-      "sign_in_title": "Inloggen om Inzendingen te Bekijken",
-      "sign_in_description": "U moet ingelogd zijn om uw inzendingsgeschiedenis te bekijken. Maak een gratis account aan om te beginnen.",
-      "sign_in_button": "Inloggen om Door te Gaan"
+      "sign_in_title": "Войдите для просмотра заявок",
+      "sign_in_description": "Для просмотра истории заявок необходимо войти в систему. Создайте бесплатную учётную запись, чтобы начать.",
+      "sign_in_button": "Войти для продолжения"
     },
     "filters": {
-      "all": "Alle",
-      "pending": "In behandeling",
-      "approved": "Goedgekeurd",
-      "rejected": "Afgewezen",
-      "documents": "Documenten",
-      "registry": "Register",
-      "colors": "Kleuren",
-      "wheels": "Wielen"
+      "all": "Все",
+      "pending": "Ожидает",
+      "approved": "Одобрено",
+      "rejected": "Отклонено",
+      "documents": "Документы",
+      "registry": "Реестр",
+      "colors": "Цвета",
+      "wheels": "Колёса"
     },
     "submission": {
-      "new_item": "Nieuw",
-      "edit_suggestion": "Bewerking",
-      "new_collection": "Collectie",
+      "new_item": "Новый",
+      "edit_suggestion": "Правка",
+      "new_collection": "Коллекция",
       "status": {
-        "pending": "In behandeling",
-        "approved": "Goedgekeurd",
-        "rejected": "Afgewezen"
+        "pending": "Ожидает",
+        "approved": "Одобрено",
+        "rejected": "Отклонено"
       },
-      "reviewer_notes": "Beoordelaarnotities",
-      "submitted": "Ingediend",
-      "reviewed": "Beoordeeld"
+      "reviewer_notes": "Заметки проверяющего",
+      "submitted": "Отправлено",
+      "reviewed": "Проверено"
     },
     "empty": {
-      "title": "Nog Geen Inzendingen",
-      "description": "U heeft nog geen bijdragen aan het archief gemaakt. Begin met het indienen van een document, het registreren van uw Mini of het bijdragen van een kleur.",
-      "contribute_link": "Begin met Bijdragen"
+      "title": "Заявок пока нет",
+      "description": "Вы ещё не внесли вклад в архив. Начните с отправки документа, регистрации вашего Mini или добавления цвета.",
+      "contribute_link": "Начать вносить вклад"
     }
   },
-  "sv": {
-    "title": "Mina Inlämningar - Classic Mini DIY",
-    "description": "Visa din inlämningshistorik och spåra statusen för dina bidrag till Classic Mini DIY arkivet.",
-    "hero_title": "Classic Mini Arkiv",
-    "breadcrumb_title": "Mina Inlämningar",
-    "main_heading": "Mina Inlämningar",
-    "description_text": "Spåra statusen för alla dina bidrag till Classic Mini DIY arkivet, inklusive dokument, registerposter, färger och hjul.",
+  "ja": {
+    "title": "私の申請 - Classic Mini DIY",
+    "description": "申請履歴を確認し、Classic Mini DIY アーカイブへの貢献状況を追跡する。",
+    "hero_title": "Classic Mini アーカイブ",
+    "breadcrumb_title": "私の申請",
+    "main_heading": "私の申請",
+    "description_text": "ドキュメント、レジストリエントリ、カラー、ホイールを含む、Classic Mini DIY アーカイブへのすべての貢献状況を追跡します。",
     "auth": {
-      "sign_in_title": "Logga In för att Se Inlämningar",
-      "sign_in_description": "Du måste vara inloggad för att se din inlämningshistorik. Skapa ett gratis konto för att komma igång.",
-      "sign_in_button": "Logga In för att Fortsätta"
+      "sign_in_title": "申請を確認するにはサインインしてください",
+      "sign_in_description": "申請履歴を確認するにはサインインが必要です。無料アカウントを作成して始めましょう。",
+      "sign_in_button": "続けるにはサインイン"
     },
     "filters": {
-      "all": "Alla",
-      "pending": "Väntande",
-      "approved": "Godkänd",
-      "rejected": "Avvisad",
-      "documents": "Dokument",
-      "registry": "Register",
-      "colors": "Färger",
-      "wheels": "Hjul"
+      "all": "すべて",
+      "pending": "審査中",
+      "approved": "承認済み",
+      "rejected": "却下",
+      "documents": "ドキュメント",
+      "registry": "レジストリ",
+      "colors": "カラー",
+      "wheels": "ホイール"
     },
     "submission": {
-      "new_item": "Ny",
-      "edit_suggestion": "Redigering",
-      "new_collection": "Samling",
+      "new_item": "新規",
+      "edit_suggestion": "編集",
+      "new_collection": "コレクション",
       "status": {
-        "pending": "Väntande",
-        "approved": "Godkänd",
-        "rejected": "Avvisad"
+        "pending": "審査中",
+        "approved": "承認済み",
+        "rejected": "却下"
       },
-      "reviewer_notes": "Granskningsanteckningar",
-      "submitted": "Skickad",
-      "reviewed": "Granskad"
+      "reviewer_notes": "レビュアーのメモ",
+      "submitted": "提出日",
+      "reviewed": "審査日"
     },
     "empty": {
-      "title": "Inga Inlämningar Ännu",
-      "description": "Du har inte gjort några bidrag till arkivet ännu. Börja med att skicka in ett dokument, registrera din Mini eller bidra med en färg.",
-      "contribute_link": "Borja Bidra"
+      "title": "申請はまだありません",
+      "description": "アーカイブへの貢献がまだありません。ドキュメントの送信、ミニの登録、またはカラーの投稿から始めましょう。",
+      "contribute_link": "貢献を始める"
     }
   },
-  "da": {
-    "title": "Mine Indsendelser - Classic Mini DIY",
-    "description": "Se din indsendelseshistorik og følg status på dine bidrag til Classic Mini DIY arkivet.",
-    "hero_title": "Classic Mini Arkiver",
-    "breadcrumb_title": "Mine Indsendelser",
-    "main_heading": "Mine Indsendelser",
-    "description_text": "Følg status på alle dine bidrag til Classic Mini DIY arkivet, herunder dokumenter, registerposter, farver og hjul.",
+  "zh": {
+    "title": "我的提交 - Classic Mini DIY",
+    "description": "查看您的提交历史并追踪您对 Classic Mini DIY 档案库贡献的状态。",
+    "hero_title": "Classic Mini 档案库",
+    "breadcrumb_title": "我的提交",
+    "main_heading": "我的提交",
+    "description_text": "追踪您对 Classic Mini DIY 档案库所有贡献的状态，包括文档、注册表条目、颜色和轮毂。",
     "auth": {
-      "sign_in_title": "Log Ind for at Se Indsendelser",
-      "sign_in_description": "Du skal være logget ind for at se din indsendelseshistorik. Opret en gratis konto for at komme i gang.",
-      "sign_in_button": "Log Ind for at Fortsætte"
+      "sign_in_title": "登录以查看提交",
+      "sign_in_description": "您需要登录才能查看提交历史。创建免费账户即可开始。",
+      "sign_in_button": "登录以继续"
     },
     "filters": {
-      "all": "Alle",
-      "pending": "Afventer",
-      "approved": "Godkendt",
-      "rejected": "Afvist",
-      "documents": "Dokumenter",
-      "registry": "Register",
-      "colors": "Farver",
-      "wheels": "Hjul"
+      "all": "全部",
+      "pending": "待审核",
+      "approved": "已批准",
+      "rejected": "已拒绝",
+      "documents": "文档",
+      "registry": "注册表",
+      "colors": "颜色",
+      "wheels": "轮毂"
     },
     "submission": {
-      "new_item": "Ny",
-      "edit_suggestion": "Redigering",
-      "new_collection": "Samling",
+      "new_item": "新建",
+      "edit_suggestion": "编辑",
+      "new_collection": "集合",
       "status": {
-        "pending": "Afventer",
-        "approved": "Godkendt",
-        "rejected": "Afvist"
+        "pending": "待审核",
+        "approved": "已批准",
+        "rejected": "已拒绝"
       },
-      "reviewer_notes": "Reviewernotater",
-      "submitted": "Indsendt",
-      "reviewed": "Gennemgået"
+      "reviewer_notes": "审核员备注",
+      "submitted": "提交时间",
+      "reviewed": "审核时间"
     },
     "empty": {
-      "title": "Ingen Indsendelser Endnu",
-      "description": "Du har endnu ikke gjort bidrag til arkivet. Start med at indsende et dokument, registrere din Mini eller bidrage med en farve.",
-      "contribute_link": "Begynd at Bidrage"
+      "title": "暂无提交",
+      "description": "您还没有为档案库做出任何贡献。从提交文档、注册您的迷你或贡献颜色开始吧。",
+      "contribute_link": "开始贡献"
     }
   },
-  "no": {
-    "title": "Mine Innsendinger - Classic Mini DIY",
-    "description": "Se din innsendingshistorikk og følg statusen til dine bidrag til Classic Mini DIY arkivet.",
-    "hero_title": "Classic Mini Arkiver",
-    "breadcrumb_title": "Mine Innsendinger",
-    "main_heading": "Mine Innsendinger",
-    "description_text": "Følg statusen til alle dine bidrag til Classic Mini DIY arkivet, inkludert dokumenter, registerposter, farger og hjul.",
+  "ko": {
+    "title": "내 제출 - Classic Mini DIY",
+    "description": "제출 기록을 확인하고 Classic Mini DIY 아카이브에 대한 기여 상태를 추적하세요.",
+    "hero_title": "Classic Mini 아카이브",
+    "breadcrumb_title": "내 제출",
+    "main_heading": "내 제출",
+    "description_text": "문서, 레지스트리 항목, 색상, 휠을 포함한 Classic Mini DIY 아카이브에 대한 모든 기여 상태를 추적하세요.",
     "auth": {
-      "sign_in_title": "Logg Inn for å Se Innsendinger",
-      "sign_in_description": "Du må være logget inn for å se din innsendingshistorikk. Opprett en gratis konto for å komme i gang.",
-      "sign_in_button": "Logg Inn for å Fortsette"
+      "sign_in_title": "제출을 보려면 로그인하세요",
+      "sign_in_description": "제출 기록을 보려면 로그인이 필요합니다. 무료 계정을 만들어 시작하세요.",
+      "sign_in_button": "계속하려면 로그인"
     },
     "filters": {
-      "all": "Alle",
-      "pending": "Venter",
-      "approved": "Godkjent",
-      "rejected": "Avvist",
-      "documents": "Dokumenter",
-      "registry": "Register",
-      "colors": "Farger",
-      "wheels": "Hjul"
+      "all": "전체",
+      "pending": "대기 중",
+      "approved": "승인됨",
+      "rejected": "거부됨",
+      "documents": "문서",
+      "registry": "레지스트리",
+      "colors": "색상",
+      "wheels": "휠"
     },
     "submission": {
-      "new_item": "Ny",
-      "edit_suggestion": "Redigering",
-      "new_collection": "Samling",
+      "new_item": "신규",
+      "edit_suggestion": "수정",
+      "new_collection": "컬렉션",
       "status": {
-        "pending": "Venter",
-        "approved": "Godkjent",
-        "rejected": "Avvist"
+        "pending": "대기 중",
+        "approved": "승인됨",
+        "rejected": "거부됨"
       },
-      "reviewer_notes": "Reviewernotater",
-      "submitted": "Sendt inn",
-      "reviewed": "Gjennomgått"
+      "reviewer_notes": "검토자 메모",
+      "submitted": "제출일",
+      "reviewed": "검토일"
     },
     "empty": {
-      "title": "Ingen Innsendinger Ennå",
-      "description": "Du har ennå ikke gjort bidrag til arkivet. Start med å sende inn et dokument, registrere din Mini eller bidra med en farge.",
-      "contribute_link": "Begynn a Bidra"
+      "title": "제출이 아직 없습니다",
+      "description": "아직 아카이브에 기여한 내용이 없습니다. 문서 제출, 미니 등록, 또는 색상 기여로 시작하세요.",
+      "contribute_link": "기여 시작하기"
     }
   }
 }

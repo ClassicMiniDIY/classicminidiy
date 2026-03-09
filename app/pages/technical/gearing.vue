@@ -239,6 +239,30 @@
       "description": "Haz clic aquí para aprender sobre los tamaños comunes de motor en el classic mini.",
       "alt_text": "Vista previa de imagen de tabla de tamaños de motor"
     },
+    "structured_data": {
+      "calculator_name": "Calculadora de Caja de Cambios Classic Mini",
+      "calculator_description": "Una calculadora interactiva para determinar las relaciones de engranajes, el engranaje del velocímetro y las velocidades máximas para la construcción de cajas de cambios del Classic Mini.",
+      "how_to_name": "Cómo Calcular el Engranaje para una Caja de Cambios Classic Mini",
+      "how_to_description": "Aprende cómo calcular el engranaje correcto para la caja de cambios de tu Classic Mini usando nuestra calculadora interactiva.",
+      "steps": {
+        "select_gearbox": {
+          "name": "Seleccionar Tipo de Caja de Cambios",
+          "text": "Elige el tipo de caja de cambios entre las opciones disponibles (A+, cambio de varilla, etc.)."
+        },
+        "enter_tire": {
+          "name": "Introducir Tamaño de Neumático",
+          "text": "Introduce las dimensiones de tu neumático para calcular lecturas de velocidad precisas."
+        },
+        "select_final_drive": {
+          "name": "Seleccionar Relación de Transmisión Final",
+          "text": "Elige tu relación de transmisión final del desplegable o introduce un valor personalizado."
+        },
+        "view_results": {
+          "name": "Ver Resultados",
+          "text": "La calculadora mostrará la velocidad a las RPM para cada marcha y el engranaje de velocímetro recomendado."
+        }
+      }
+    },
     "ui": {
       "loading_fallback": "Cargando calculadora de caja de cambios...",
       "loading_text": "Cargando calculadora de caja de cambios...",
@@ -262,6 +286,30 @@
       "heading": "Quelles sont les tailles de moteur standard ?",
       "description": "Cliquez ici pour en savoir plus sur les tailles de moteur communes dans la classic mini.",
       "alt_text": "Aperçu de l'image du tableau des tailles de moteur"
+    },
+    "structured_data": {
+      "calculator_name": "Calculateur de Boîte de Vitesses Classic Mini",
+      "calculator_description": "Un calculateur interactif pour déterminer les rapports de vitesse, l'engrenage du compteur de vitesse et les vitesses maximales pour la construction de boîtes de vitesses Classic Mini.",
+      "how_to_name": "Comment Calculer les Rapports de Transmission pour une Boîte de Vitesses Classic Mini",
+      "how_to_description": "Apprenez à calculer les bons rapports de transmission pour la boîte de vitesses de votre Classic Mini grâce à notre calculateur interactif.",
+      "steps": {
+        "select_gearbox": {
+          "name": "Sélectionner le Type de Boîte de Vitesses",
+          "text": "Choisissez votre type de boîte de vitesses parmi les options disponibles (A+, commande à tige, etc.)."
+        },
+        "enter_tire": {
+          "name": "Saisir la Taille des Pneus",
+          "text": "Entrez les dimensions de vos pneus pour calculer des lectures de vitesse précises."
+        },
+        "select_final_drive": {
+          "name": "Sélectionner le Rapport de Pont",
+          "text": "Choisissez votre rapport de pont dans la liste déroulante ou entrez une valeur personnalisée."
+        },
+        "view_results": {
+          "name": "Voir les Résultats",
+          "text": "Le calculateur affichera la vitesse en fonction des RPM pour chaque rapport et l'engrenage de compteur recommandé."
+        }
+      }
     },
     "ui": {
       "loading_fallback": "Chargement du calculateur de boîte de vitesses...",
@@ -287,6 +335,30 @@
       "description": "Clicca qui per saperne di più sulle dimensioni comuni del motore nella classic mini.",
       "alt_text": "Anteprima immagine tabella dimensioni motore"
     },
+    "structured_data": {
+      "calculator_name": "Calcolatore Cambio Classic Mini",
+      "calculator_description": "Un calcolatore interattivo per determinare i rapporti di trasmissione, l'ingranaggio del tachimetro e le velocità massime per la costruzione del cambio del Classic Mini.",
+      "how_to_name": "Come Calcolare il Rapporto di Trasmissione per un Cambio Classic Mini",
+      "how_to_description": "Scopri come calcolare il rapporto di trasmissione corretto per il cambio della tua Classic Mini usando il nostro calcolatore interattivo.",
+      "steps": {
+        "select_gearbox": {
+          "name": "Seleziona il Tipo di Cambio",
+          "text": "Scegli il tipo di cambio tra le opzioni disponibili (A+, cambio a leva, ecc.)."
+        },
+        "enter_tire": {
+          "name": "Inserisci la Dimensione del Pneumatico",
+          "text": "Inserisci le dimensioni del pneumatico per calcolare letture di velocità accurate."
+        },
+        "select_final_drive": {
+          "name": "Seleziona il Rapporto del Differenziale",
+          "text": "Scegli il rapporto del differenziale dal menu a tendina o inserisci un valore personalizzato."
+        },
+        "view_results": {
+          "name": "Visualizza i Risultati",
+          "text": "Il calcolatore mostrerà la velocità agli RPM per ogni marcia e l'ingranaggio del tachimetro consigliato."
+        }
+      }
+    },
     "ui": {
       "loading_fallback": "Caricamento calcolatore cambio...",
       "loading_text": "Caricamento calcolatore cambio...",
@@ -310,6 +382,30 @@
       "heading": "Was sind die Standard-Motorgrößen?",
       "description": "Klicken Sie hier, um mehr über die gängigen Motorgrößen im Classic Mini zu erfahren.",
       "alt_text": "Vorschaubild der Motorgrößen-Tabelle"
+    },
+    "structured_data": {
+      "calculator_name": "Classic Mini Getriebe-Rechner",
+      "calculator_description": "Ein interaktiver Rechner zur Bestimmung von Übersetzungsverhältnissen, Tachoantrieb und Höchstgeschwindigkeiten für Classic Mini Getriebeaufbauten.",
+      "how_to_name": "Wie man die Übersetzung für ein Classic Mini Getriebe berechnet",
+      "how_to_description": "Erfahren Sie, wie Sie mit unserem interaktiven Rechner die richtige Übersetzung für das Getriebe Ihres Classic Mini berechnen.",
+      "steps": {
+        "select_gearbox": {
+          "name": "Getriebetyp auswählen",
+          "text": "Wählen Sie Ihren Getriebetyp aus den verfügbaren Optionen (A+, Stangenschaltung usw.)."
+        },
+        "enter_tire": {
+          "name": "Reifengröße eingeben",
+          "text": "Geben Sie Ihre Reifenmaße ein, um genaue Geschwindigkeitswerte zu berechnen."
+        },
+        "select_final_drive": {
+          "name": "Achsübersetzung auswählen",
+          "text": "Wählen Sie Ihre Achsübersetzung aus dem Dropdown-Menü oder geben Sie einen benutzerdefinierten Wert ein."
+        },
+        "view_results": {
+          "name": "Ergebnisse anzeigen",
+          "text": "Der Rechner zeigt die Geschwindigkeit bei den RPM für jeden Gang und das empfohlene Tachometer-Zahnrad an."
+        }
+      }
     },
     "ui": {
       "loading_fallback": "Lade Getriebe-Rechner...",
@@ -335,6 +431,30 @@
       "description": "Clique aqui para aprender sobre os tamanhos comuns de motor no classic mini.",
       "alt_text": "Visualização da imagem da tabela de tamanhos de motor"
     },
+    "structured_data": {
+      "calculator_name": "Calculadora de Caixa de Câmbio Classic Mini",
+      "calculator_description": "Uma calculadora interativa para determinar relações de transmissão, engrenagem do velocímetro e velocidades máximas para construções de caixa de câmbio do Classic Mini.",
+      "how_to_name": "Como Calcular a Transmissão para uma Caixa de Câmbio Classic Mini",
+      "how_to_description": "Aprenda como calcular a transmissão correta para a caixa de câmbio do seu Classic Mini usando nossa calculadora interativa.",
+      "steps": {
+        "select_gearbox": {
+          "name": "Selecionar Tipo de Caixa de Câmbio",
+          "text": "Escolha o tipo de caixa de câmbio entre as opções disponíveis (A+, câmbio de haste, etc.)."
+        },
+        "enter_tire": {
+          "name": "Inserir Tamanho do Pneu",
+          "text": "Insira as dimensões do seu pneu para calcular leituras de velocidade precisas."
+        },
+        "select_final_drive": {
+          "name": "Selecionar Relação de Transmissão Final",
+          "text": "Escolha a relação de transmissão final no menu suspenso ou insira um valor personalizado."
+        },
+        "view_results": {
+          "name": "Ver Resultados",
+          "text": "A calculadora exibirá a velocidade em RPM para cada marcha e a engrenagem de velocímetro recomendada."
+        }
+      }
+    },
     "ui": {
       "loading_fallback": "Carregando calculadora de caixa de câmbio...",
       "loading_text": "Carregando calculadora de caixa de câmbio...",
@@ -358,6 +478,30 @@
       "heading": "Каковы стандартные размеры двигателей?",
       "description": "Нажмите здесь, чтобы узнать о распространенных размерах двигателей в classic mini.",
       "alt_text": "Предварительный просмотр изображения таблицы размеров двигателей"
+    },
+    "structured_data": {
+      "calculator_name": "Калькулятор Коробки Передач Classic Mini",
+      "calculator_description": "Интерактивный калькулятор для определения передаточных чисел, шестерни спидометра и максимальных скоростей для сборки коробки передач Classic Mini.",
+      "how_to_name": "Как рассчитать передаточные числа для коробки передач Classic Mini",
+      "how_to_description": "Узнайте, как рассчитать правильные передаточные числа для коробки передач вашего Classic Mini с помощью нашего интерактивного калькулятора.",
+      "steps": {
+        "select_gearbox": {
+          "name": "Выбрать Тип Коробки Передач",
+          "text": "Выберите тип коробки передач из доступных вариантов (A+, штанговое переключение и т.д.)."
+        },
+        "enter_tire": {
+          "name": "Ввести Размер Шины",
+          "text": "Введите размеры вашей шины для расчёта точных показаний скорости."
+        },
+        "select_final_drive": {
+          "name": "Выбрать Передаточное Число Главной Передачи",
+          "text": "Выберите передаточное число главной передачи из выпадающего списка или введите пользовательское значение."
+        },
+        "view_results": {
+          "name": "Просмотреть Результаты",
+          "text": "Калькулятор отобразит скорость при оборотах двигателя для каждой передачи и рекомендуемую шестерню спидометра."
+        }
+      }
     },
     "ui": {
       "loading_fallback": "Загрузка калькулятора коробки передач...",
@@ -383,6 +527,30 @@
       "description": "クラシックミニの一般的なエンジンサイズについて学ぶにはここをクリック。",
       "alt_text": "エンジンサイズ表の画像プレビュー"
     },
+    "structured_data": {
+      "calculator_name": "Classic Mini ギアボックス計算機",
+      "calculator_description": "Classic Mini のギアボックス構築における歯車比、スピードメーターギア、最高速度を算出するインタラクティブ計算機です。",
+      "how_to_name": "Classic Mini ギアボックスのギアリングを計算する方法",
+      "how_to_description": "インタラクティブ計算機を使用して、Classic Mini のギアボックスに適切なギアリングを計算する方法を学びます。",
+      "steps": {
+        "select_gearbox": {
+          "name": "ギアボックスタイプを選択",
+          "text": "利用可能なオプション（A+、ロッドチェンジなど）からギアボックスタイプを選択してください。"
+        },
+        "enter_tire": {
+          "name": "タイヤサイズを入力",
+          "text": "正確な速度計算のためにタイヤの寸法を入力してください。"
+        },
+        "select_final_drive": {
+          "name": "ファイナルドライブ比を選択",
+          "text": "ドロップダウンからファイナルドライブ比を選択するか、カスタム値を入力してください。"
+        },
+        "view_results": {
+          "name": "結果を表示",
+          "text": "計算機は各ギアのRPMごとの速度と推奨スピードメーターギアを表示します。"
+        }
+      }
+    },
     "ui": {
       "loading_fallback": "ギアボックス計算機を読み込み中...",
       "loading_text": "ギアボックス計算機を読み込み中...",
@@ -407,6 +575,30 @@
       "description": "点击这里了解经典迷你中常见的发动机尺寸。",
       "alt_text": "发动机尺寸表图像预览"
     },
+    "structured_data": {
+      "calculator_name": "Classic Mini 变速箱计算器",
+      "calculator_description": "一个交互式计算器，用于确定 Classic Mini 变速箱构建的齿轮比、速度表齿轮和最高速度。",
+      "how_to_name": "如何计算 Classic Mini 变速箱的传动比",
+      "how_to_description": "通过我们的交互式计算器，学习如何为您的 Classic Mini 变速箱计算正确的传动比。",
+      "steps": {
+        "select_gearbox": {
+          "name": "选择变速箱类型",
+          "text": "从可用选项中选择您的变速箱类型（A+、拉杆换挡等）。"
+        },
+        "enter_tire": {
+          "name": "输入轮胎尺寸",
+          "text": "输入轮胎尺寸以计算准确的速度读数。"
+        },
+        "select_final_drive": {
+          "name": "选择最终传动比",
+          "text": "从下拉菜单中选择最终传动比，或输入自定义值。"
+        },
+        "view_results": {
+          "name": "查看结果",
+          "text": "计算器将显示每个档位在各转速下的速度以及推荐的速度表齿轮。"
+        }
+      }
+    },
     "ui": {
       "loading_fallback": "正在加载变速箱计算器...",
       "loading_text": "正在加载变速箱计算器...",
@@ -430,6 +622,30 @@
       "heading": "표준 엔진 크기는 무엇입니까?",
       "description": "클래식 미니의 일반적인 엔진 크기에 대해 알아보려면 여기를 클릭하세요.",
       "alt_text": "엔진 크기 표 이미지 미리보기"
+    },
+    "structured_data": {
+      "calculator_name": "Classic Mini 기어박스 계산기",
+      "calculator_description": "Classic Mini 기어박스 구축을 위한 기어비, 속도계 기어, 최고 속도를 계산하는 인터랙티브 계산기입니다.",
+      "how_to_name": "Classic Mini 기어박스의 기어링을 계산하는 방법",
+      "how_to_description": "인터랙티브 계산기를 사용하여 Classic Mini 기어박스에 적합한 기어링을 계산하는 방법을 알아보세요.",
+      "steps": {
+        "select_gearbox": {
+          "name": "기어박스 유형 선택",
+          "text": "사용 가능한 옵션(A+, 로드 체인지 등)에서 기어박스 유형을 선택하세요."
+        },
+        "enter_tire": {
+          "name": "타이어 크기 입력",
+          "text": "정확한 속도 계산을 위해 타이어 치수를 입력하세요."
+        },
+        "select_final_drive": {
+          "name": "파이널 드라이브 비율 선택",
+          "text": "드롭다운에서 파이널 드라이브 비율을 선택하거나 사용자 정의 값을 입력하세요."
+        },
+        "view_results": {
+          "name": "결과 보기",
+          "text": "계산기는 각 기어의 RPM별 속도와 권장 속도계 기어를 표시합니다."
+        }
+      }
     },
     "ui": {
       "loading_fallback": "기어박스 계산기 로딩 중...",

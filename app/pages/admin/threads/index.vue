@@ -46,7 +46,7 @@
   const searchQuery = ref('');
 
   // Fetch threads
-  const { data: threadsData, refresh: refreshThreads } = await useFetch<ThreadsResponse>('/api/admin/threads/list', {
+  const { data: threadsData, refresh: refreshThreads } = await useAdminFetch<ThreadsResponse>('/api/admin/threads/list', {
     query: {
       limit: 100,
     },

@@ -1,8 +1,6 @@
 <script lang="ts" setup>
   import type { ArchiveCollectionItem } from '../../composables/useArchiveDocuments';
 
-  const { t } = useI18n();
-
   defineProps<{
     collection: ArchiveCollectionItem;
   }>();
@@ -30,7 +28,7 @@
           <!-- Item count badge -->
           <div class="absolute top-2 right-2">
             <span class="badge badge-primary badge-lg font-bold">
-              {{ collection.itemCount }} {{ t('items_label') }}
+              {{ collection.itemCount }} {{ $t('items_label') }}
             </span>
           </div>
         </template>
@@ -43,7 +41,7 @@
         <template #footer>
           <div class="flex justify-end">
             <span class="text-sm text-primary font-medium">
-              {{ t('view_collection') }} <i class="fad fa-arrow-right ml-1"></i>
+              {{ $t('view_collection') }} <i class="fad fa-arrow-right ml-1"></i>
             </span>
           </div>
         </template>

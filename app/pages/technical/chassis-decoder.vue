@@ -715,6 +715,301 @@
     "ui": {
       "support_section": "Support"
     }
+  },
+  "pt": {
+    "title": "Tech - Decodificador de Placa de Chassi Mini",
+    "description": "Decodifique a placa de chassi do seu Classic Mini para determinar o ano do modelo, fábrica de montagem e número de construção sequencial do carro. A placa de chassi também é conhecida como placa VIN, etiqueta VIN ou placa VIN dependendo da geração.",
+    "keywords": "decodificador de chassi, VIN Classic Mini, placa de chassi, decodificador VIN Mini Cooper, pesquisa número de chassi, identificação Mini, decodificador número de construção",
+    "hero_title": "Decodificador de Chassi",
+    "breadcrumb_title": "Decodificador de Chassi",
+    "og_title": "Tech - Decodificador de Placa de Chassi Mini",
+    "og_description": "Decodifique a placa de chassi do seu Classic Mini para determinar o ano do modelo, fábrica de montagem e número de construção sequencial do carro. A placa de chassi também é conhecida como placa VIN, etiqueta VIN ou placa VIN dependendo da geração.",
+    "twitter_title": "Tech - Decodificador de Placa de Chassi Mini",
+    "twitter_description": "Decodifique a placa de chassi do seu Classic Mini para determinar o ano do modelo, fábrica de montagem e número de construção sequencial do carro.",
+    "main_heading": "Decodificador de Placa de Chassi",
+    "description_text": "A placa de chassi é uma série de números e letras estampados em uma placa metálica rebitada à carroceria do carro. Esta placa está localizada em diferentes lugares em todas as gerações de Mini e é usada para identificar o ano do modelo, a fábrica de montagem e o número de construção sequencial do carro. A placa de chassi também é conhecida como placa VIN, etiqueta VIN ou placa VIN dependendo da geração.",
+    "engine_decoder_card": {
+      "link_title": "Link para o decodificador de placa de motor",
+      "heading": "Decodificador de Motor",
+      "description": "Clique aqui para identificar o seu motor usando nossa nova tabela de decodificação de números de motor.",
+      "alt_text": "Decodificador de Motor"
+    },
+    "form": {
+      "card_title": "Decodifique Seu Número de Chassi",
+      "card_description": "Insira o número do chassi e selecione o intervalo de anos apropriado para decodificar todos os detalhes automaticamente.",
+      "year_range_label": "Intervalo de Anos",
+      "chassis_number_label": "Número de Chassi",
+      "chassis_number_placeholder": "Insira o número do seu chassi",
+      "example_text": "Exemplo para",
+      "decode_button": "Decodificar Chassi",
+      "decoding_button": "Decodificando...",
+      "reset_button": "Redefinir",
+      "error_empty_chassis": "Por favor, insira um número de chassi",
+      "error_decode_failed": "Falha ao decodificar o número de chassi. Por favor, tente novamente."
+    },
+    "results": {
+      "title": "Resultados Decodificados",
+      "status_decoded": "Decodificado",
+      "status_invalid": "Inválido",
+      "year_range_stat": "Intervalo de Anos",
+      "chassis_number_stat": "Seu Número de Chassi",
+      "expected_pattern_stat": "Padrão Esperado",
+      "validation_issues_title": "Problemas de Validação",
+      "decoded_positions_title": "Posições Decodificadas",
+      "position_label": "Posição"
+    },
+    "special_notes": {
+      "title": "Notas Especiais",
+      "build_number_title": "Nota sobre o Número de Construção",
+      "build_number_text": "O primeiro carro em Longbridge foi o número 101, assim como o primeiro em Cowley. A partir daí, cada fábrica continuou com sua própria sequência numérica independentemente do modelo; por exemplo, Sedan, Furgão, etc. Em outras palavras, cada modelo não começou no 101 e manteve sua própria sequência. Sedans e Furgões, etc., estão misturados na sequência numérica junto com os modelos Cooper e Cooper S.",
+      "assembly_plant_title": "Nota sobre a Fábrica de Montagem",
+      "assembly_plant_text": "Isso parece ser usado de forma inconsistente em carros fabricados na Inglaterra, e entende-se que o carro foi construído na fábrica \"normal\" se a letra for omitida; por exemplo, um Austin, Riley ou Wolseley em Longbridge pode ou não ter um \"A\" após o número de sequência. Sim, havia Austin Minis construídos na fábrica Morris em Cowley e Morris Minis construídos na fábrica Austin em Longbridge. Observe que todos os modelos Cooper e Cooper S fabricados na Inglaterra (Austin e Morris), bem como os modelos Riley Elf e Wolseley Hornet, foram construídos na fábrica Austin de Longbridge."
+    },
+    "attribution": {
+      "text": "Observe que os detalhes acima foram retirados dos",
+      "mini_mania": "Mini Mania's",
+      "technical_articles": "artigos técnicos. Mais detalhes podem ser encontrados aqui:",
+      "link_text": "Artigos Técnicos sobre Códigos de Chassi"
+    },
+    "ui": {
+      "support_section": "Suporte"
+    }
+  },
+  "ru": {
+    "title": "Tech - Декодер таблички шасси Mini",
+    "description": "Расшифруйте табличку шасси вашего Classic Mini, чтобы определить год выпуска модели, завод-изготовитель и порядковый номер сборки автомобиля. Табличка шасси также известна как табличка VIN, этикетка VIN или пластина VIN в зависимости от поколения.",
+    "keywords": "декодер шасси, VIN Classic Mini, табличка шасси, декодер VIN Mini Cooper, поиск по номеру шасси, идентификация Mini, декодер номера сборки",
+    "hero_title": "Декодер шасси",
+    "breadcrumb_title": "Декодер шасси",
+    "og_title": "Tech - Декодер таблички шасси Mini",
+    "og_description": "Расшифруйте табличку шасси вашего Classic Mini, чтобы определить год выпуска модели, завод-изготовитель и порядковый номер сборки автомобиля. Табличка шасси также известна как табличка VIN, этикетка VIN или пластина VIN в зависимости от поколения.",
+    "twitter_title": "Tech - Декодер таблички шасси Mini",
+    "twitter_description": "Расшифруйте табличку шасси вашего Classic Mini, чтобы определить год выпуска модели, завод-изготовитель и порядковый номер сборки автомобиля.",
+    "main_heading": "Декодер таблички шасси",
+    "description_text": "Табличка шасси — это последовательность цифр и букв, нанесённых на металлическую пластину, заклёпанную к кузову автомобиля. Эта пластина расположена в разных местах в зависимости от поколения Mini и используется для определения года выпуска модели, завода-изготовителя и порядкового номера сборки. Табличка шасси также известна как табличка VIN, этикетка VIN или пластина VIN в зависимости от поколения.",
+    "engine_decoder_card": {
+      "link_title": "Ссылка на декодер таблички двигателя",
+      "heading": "Декодер двигателя",
+      "description": "Нажмите здесь, чтобы идентифицировать ваш двигатель с помощью нашей новой таблицы декодирования номеров двигателей.",
+      "alt_text": "Декодер двигателя"
+    },
+    "form": {
+      "card_title": "Декодируйте номер шасси",
+      "card_description": "Введите номер шасси и выберите подходящий диапазон годов, чтобы автоматически декодировать все детали.",
+      "year_range_label": "Диапазон годов",
+      "chassis_number_label": "Номер шасси",
+      "chassis_number_placeholder": "Введите номер шасси",
+      "example_text": "Пример для",
+      "decode_button": "Декодировать шасси",
+      "decoding_button": "Декодирование...",
+      "reset_button": "Сбросить",
+      "error_empty_chassis": "Пожалуйста, введите номер шасси",
+      "error_decode_failed": "Не удалось декодировать номер шасси. Пожалуйста, попробуйте снова."
+    },
+    "results": {
+      "title": "Результаты декодирования",
+      "status_decoded": "Декодировано",
+      "status_invalid": "Недействительно",
+      "year_range_stat": "Диапазон годов",
+      "chassis_number_stat": "Ваш номер шасси",
+      "expected_pattern_stat": "Ожидаемый шаблон",
+      "validation_issues_title": "Проблемы валидации",
+      "decoded_positions_title": "Декодированные позиции",
+      "position_label": "Позиция"
+    },
+    "special_notes": {
+      "title": "Особые примечания",
+      "build_number_title": "Примечание о номере сборки",
+      "build_number_text": "Первый автомобиль на заводе в Лонгбридже получил номер 101, как и первый на заводе в Кавли. С тех пор каждый завод продолжил собственную числовую последовательность независимо от модели; например, седаны, фургоны и т. д. Иными словами, каждая модель не начинала с номера 101 и не вела собственную отдельную нумерацию. Седаны и фургоны и т. д. перемешаны в числовой последовательности вместе с моделями Cooper и Cooper S.",
+      "assembly_plant_title": "Примечание о заводе-изготовителе",
+      "assembly_plant_text": "Этот признак, по всей видимости, использовался непоследовательно на автомобилях британской сборки. Считается, что если буква отсутствует, автомобиль был собран на «основном» заводе; например, Austin, Riley или Wolseley из Лонгбриджа может иметь или не иметь букву «A» после порядкового номера. Да, существовали Austin Mini, собранные на заводе Morris в Кавли, и Morris Mini, собранные на заводе Austin в Лонгбридже. Обратите внимание, что все модели Cooper и Cooper S британской сборки (Austin и Morris), а также модели Riley Elf и Wolseley Hornet были собраны на заводе Austin в Лонгбридже."
+    },
+    "attribution": {
+      "text": "Обратите внимание, что приведённые выше сведения взяты из технических статей",
+      "mini_mania": "Mini Mania's",
+      "technical_articles": "Дополнительные сведения можно найти здесь:",
+      "link_text": "Технические статьи по кодам шасси"
+    },
+    "ui": {
+      "support_section": "Поддержка"
+    }
+  },
+  "ja": {
+    "title": "Tech - ミニ シャシープレート デコーダー",
+    "description": "クラシックミニのシャシープレートをデコードして、モデルイヤー、組立工場、車両の連番ビルド番号を確認できます。シャシープレートは世代によってVINプレート、VINタグとも呼ばれます。",
+    "keywords": "シャシーデコーダー, クラシックミニ VIN, シャシープレート, ミニクーパー VINデコーダー, シャシー番号検索, ミニ識別, ビルド番号デコーダー",
+    "hero_title": "シャシーデコーダー",
+    "breadcrumb_title": "シャシーデコーダー",
+    "og_title": "Tech - ミニ シャシープレート デコーダー",
+    "og_description": "クラシックミニのシャシープレートをデコードして、モデルイヤー、組立工場、車両の連番ビルド番号を確認できます。シャシープレートは世代によってVINプレート、VINタグとも呼ばれます。",
+    "twitter_title": "Tech - ミニ シャシープレート デコーダー",
+    "twitter_description": "クラシックミニのシャシープレートをデコードして、モデルイヤー、組立工場、車両の連番ビルド番号を確認できます。",
+    "main_heading": "シャシープレート デコーダー",
+    "description_text": "シャシープレートは、車体にリベットで固定された金属プレートに刻印された一連の数字とアルファベットです。このプレートはミニの各世代によって異なる場所に取り付けられており、モデルイヤー、組立工場、連番ビルド番号を識別するために使用されます。シャシープレートは世代によってVINプレート、VINタグとも呼ばれます。",
+    "engine_decoder_card": {
+      "link_title": "エンジンプレートデコーダーへのリンク",
+      "heading": "エンジンデコーダー",
+      "description": "こちらをクリックして、新しいエンジン番号デコードテーブルでエンジンを識別してください。",
+      "alt_text": "エンジンデコーダー"
+    },
+    "form": {
+      "card_title": "シャシー番号をデコードする",
+      "card_description": "シャシー番号を入力し、適切な年式範囲を選択すると、すべての詳細が自動的にデコードされます。",
+      "year_range_label": "年式範囲",
+      "chassis_number_label": "シャシー番号",
+      "chassis_number_placeholder": "シャシー番号を入力してください",
+      "example_text": "例（年式範囲：",
+      "decode_button": "シャシーをデコード",
+      "decoding_button": "デコード中...",
+      "reset_button": "リセット",
+      "error_empty_chassis": "シャシー番号を入力してください",
+      "error_decode_failed": "シャシー番号のデコードに失敗しました。もう一度お試しください。"
+    },
+    "results": {
+      "title": "デコード結果",
+      "status_decoded": "デコード済み",
+      "status_invalid": "無効",
+      "year_range_stat": "年式範囲",
+      "chassis_number_stat": "入力したシャシー番号",
+      "expected_pattern_stat": "期待されるパターン",
+      "validation_issues_title": "バリデーションエラー",
+      "decoded_positions_title": "デコードされた各桁の意味",
+      "position_label": "桁"
+    },
+    "special_notes": {
+      "title": "特記事項",
+      "build_number_title": "ビルド番号について",
+      "build_number_text": "ロングブリッジの最初の車は番号101から始まり、コウリーの最初の車も同様でした。それ以降、各工場はモデルに関係なく独自の番号シーケンスを継続しました。たとえば、サルーン、バンなど。つまり、各モデルが101から始まり独自のシーケンスを維持したわけではありません。サルーンやバンなどは、CooperおよびCooper Sモデルと混在して番号が付けられています。",
+      "assembly_plant_title": "組立工場について",
+      "assembly_plant_text": "英国製の車ではこの表記が一貫して使用されていないようです。アルファベットが省略されている場合は「通常の」工場で製造されたと解釈されます。たとえば、ロングブリッジのAustin、Riley、Wolseleyには、シーケンス番号の後に「A」が付く場合と付かない場合があります。コウリーのMorris工場でAustin Miniが製造され、ロングブリッジのAustin工場でMorris Miniが製造されたケースも存在します。英国製のCooperおよびCooper S（AustinおよびMorris）、Riley Elf、Wolseley HornetはすべてロングブリッジのAustin工場で製造されました。"
+    },
+    "attribution": {
+      "text": "上記の情報は",
+      "mini_mania": "Mini Mania's",
+      "technical_articles": "の技術記事から引用しています。詳細はこちらをご覧ください：",
+      "link_text": "シャシーコード技術記事"
+    },
+    "ui": {
+      "support_section": "サポート"
+    }
+  },
+  "zh": {
+    "title": "Tech - 迷你底盘铭牌解码器",
+    "description": "解码您的经典迷你的底盘铭牌，以确定车辆的生产年份、装配工厂和顺序生产编号。底盘铭牌也被称为VIN铭牌、VIN标签或VIN板，具体名称取决于车辆的生产年代。",
+    "keywords": "底盘解码器, 经典迷你VIN, 底盘铭牌, 迷你库珀VIN解码器, 底盘号查询, 迷你识别, 生产编号解码器",
+    "hero_title": "底盘解码器",
+    "breadcrumb_title": "底盘解码器",
+    "og_title": "Tech - 迷你底盘铭牌解码器",
+    "og_description": "解码您的经典迷你的底盘铭牌，以确定车辆的生产年份、装配工厂和顺序生产编号。底盘铭牌也被称为VIN铭牌、VIN标签或VIN板，具体名称取决于车辆的生产年代。",
+    "twitter_title": "Tech - 迷你底盘铭牌解码器",
+    "twitter_description": "解码您的经典迷你的底盘铭牌，以确定车辆的生产年份、装配工厂和顺序生产编号。",
+    "main_heading": "底盘铭牌解码器",
+    "description_text": "底盘铭牌是由一系列数字和字母组成的标识，铆接在车身上的金属板上。该铭牌在各个迷你车型代际中位置各有不同，用于识别车辆的生产年份、装配工厂以及顺序生产编号。底盘铭牌也被称为VIN铭牌、VIN标签或VIN板，具体名称取决于车辆的生产年代。",
+    "engine_decoder_card": {
+      "link_title": "跳转到发动机铭牌解码器",
+      "heading": "发动机解码器",
+      "description": "点击此处，使用我们最新的发动机编号解码表来识别您的发动机。",
+      "alt_text": "发动机解码器"
+    },
+    "form": {
+      "card_title": "解码您的底盘号",
+      "card_description": "输入底盘号并选择对应的年份范围，即可自动解码所有详情。",
+      "year_range_label": "年份范围",
+      "chassis_number_label": "底盘号",
+      "chassis_number_placeholder": "请输入您的底盘号",
+      "example_text": "示例（年份范围：",
+      "decode_button": "解码底盘",
+      "decoding_button": "解码中...",
+      "reset_button": "重置",
+      "error_empty_chassis": "请输入底盘号",
+      "error_decode_failed": "底盘号解码失败，请重试。"
+    },
+    "results": {
+      "title": "解码结果",
+      "status_decoded": "已解码",
+      "status_invalid": "无效",
+      "year_range_stat": "年份范围",
+      "chassis_number_stat": "您的底盘号",
+      "expected_pattern_stat": "预期格式",
+      "validation_issues_title": "验证问题",
+      "decoded_positions_title": "各位含义",
+      "position_label": "位置"
+    },
+    "special_notes": {
+      "title": "特别说明",
+      "build_number_title": "关于生产编号",
+      "build_number_text": "朗布里奇工厂的第一辆车编号为101，考利工厂的第一辆车同样如此。此后，每个工厂无论车型（例如轿车、厢式货车等）均沿用各自独立的编号序列。换言之，每种车型并不从101开始独立编号。轿车和厢式货车等车型的编号与Cooper及Cooper S车型混排。",
+      "assembly_plant_title": "关于装配工厂",
+      "assembly_plant_text": "该字母在英国制造的车辆上使用不一致。通常认为，若序列号后省略字母，则表示该车在「默认」工厂生产；例如，朗布里奇的Austin、Riley或Wolseley车型可能在序列号后有「A」，也可能没有。确实存在在考利Morris工厂生产的Austin Mini，以及在朗布里奇Austin工厂生产的Morris Mini。需要注意的是，所有英国制造的Cooper和Cooper S车型（包括Austin和Morris），以及Riley Elf和Wolseley Hornet车型，均在朗布里奇的Austin工厂生产。"
+    },
+    "attribution": {
+      "text": "以上详细信息来源于",
+      "mini_mania": "Mini Mania's",
+      "technical_articles": "技术文章。更多详情请参阅：",
+      "link_text": "底盘代码技术文章"
+    },
+    "ui": {
+      "support_section": "支持"
+    }
+  },
+  "ko": {
+    "title": "Tech - 미니 섀시 플레이트 디코더",
+    "description": "클래식 미니의 섀시 플레이트를 디코딩하여 모델 연도, 조립 공장 및 차량의 순차 생산 번호를 확인하세요. 섀시 플레이트는 세대에 따라 VIN 플레이트, VIN 태그 또는 VIN 판이라고도 불립니다.",
+    "keywords": "섀시 디코더, 클래식 미니 VIN, 섀시 플레이트, 미니 쿠퍼 VIN 디코더, 섀시 번호 조회, 미니 식별, 생산 번호 디코더",
+    "hero_title": "섀시 디코더",
+    "breadcrumb_title": "섀시 디코더",
+    "og_title": "Tech - 미니 섀시 플레이트 디코더",
+    "og_description": "클래식 미니의 섀시 플레이트를 디코딩하여 모델 연도, 조립 공장 및 차량의 순차 생산 번호를 확인하세요. 섀시 플레이트는 세대에 따라 VIN 플레이트, VIN 태그 또는 VIN 판이라고도 불립니다.",
+    "twitter_title": "Tech - 미니 섀시 플레이트 디코더",
+    "twitter_description": "클래식 미니의 섀시 플레이트를 디코딩하여 모델 연도, 조립 공장 및 차량의 순차 생산 번호를 확인하세요.",
+    "main_heading": "섀시 플레이트 디코더",
+    "description_text": "섀시 플레이트는 차체에 리벳으로 고정된 금속 판에 각인된 일련의 숫자와 문자로 구성되어 있습니다. 이 플레이트는 미니의 세대별로 다른 위치에 부착되어 있으며, 모델 연도, 조립 공장 및 순차 생산 번호를 식별하는 데 사용됩니다. 섀시 플레이트는 세대에 따라 VIN 플레이트, VIN 태그 또는 VIN 판이라고도 불립니다.",
+    "engine_decoder_card": {
+      "link_title": "엔진 플레이트 디코더 링크",
+      "heading": "엔진 디코더",
+      "description": "새로운 엔진 번호 디코딩 표를 사용하여 엔진을 식별하려면 여기를 클릭하세요.",
+      "alt_text": "엔진 디코더"
+    },
+    "form": {
+      "card_title": "섀시 번호 디코딩",
+      "card_description": "섀시 번호를 입력하고 적절한 연도 범위를 선택하면 모든 세부 정보가 자동으로 디코딩됩니다.",
+      "year_range_label": "연도 범위",
+      "chassis_number_label": "섀시 번호",
+      "chassis_number_placeholder": "섀시 번호를 입력하세요",
+      "example_text": "예시 (연도 범위:",
+      "decode_button": "섀시 디코딩",
+      "decoding_button": "디코딩 중...",
+      "reset_button": "초기화",
+      "error_empty_chassis": "섀시 번호를 입력해 주세요",
+      "error_decode_failed": "섀시 번호 디코딩에 실패했습니다. 다시 시도해 주세요."
+    },
+    "results": {
+      "title": "디코딩 결과",
+      "status_decoded": "디코딩됨",
+      "status_invalid": "유효하지 않음",
+      "year_range_stat": "연도 범위",
+      "chassis_number_stat": "입력한 섀시 번호",
+      "expected_pattern_stat": "예상 패턴",
+      "validation_issues_title": "유효성 검사 문제",
+      "decoded_positions_title": "디코딩된 위치",
+      "position_label": "위치"
+    },
+    "special_notes": {
+      "title": "특별 참고사항",
+      "build_number_title": "생산 번호 관련 참고사항",
+      "build_number_text": "롱브리지의 첫 번째 차량은 101번이었으며, 코울리의 첫 번째 차량도 마찬가지였습니다. 이후 각 공장은 모델 종류(예: 세단, 밴 등)에 관계없이 자체 번호 순서를 계속 사용했습니다. 즉, 각 모델이 101번부터 시작하여 독자적인 번호 순서를 유지한 것이 아닙니다. 세단, 밴 등의 차량이 Cooper 및 Cooper S 모델과 함께 번호 순서에 혼재되어 있습니다.",
+      "assembly_plant_title": "조립 공장 관련 참고사항",
+      "assembly_plant_text": "이 표기는 영국산 차량에서 일관되지 않게 사용된 것으로 보이며, 알파벳이 생략된 경우 해당 차량이 '기본' 공장에서 생산된 것으로 이해됩니다. 예를 들어 롱브리지의 Austin, Riley 또는 Wolseley는 순서 번호 뒤에 'A'가 있을 수도 있고 없을 수도 있습니다. 실제로 코울리의 Morris 공장에서 생산된 Austin Mini와 롱브리지의 Austin 공장에서 생산된 Morris Mini가 존재했습니다. 영국산 Cooper 및 Cooper S 모델(Austin 및 Morris)과 Riley Elf, Wolseley Hornet 모델은 모두 롱브리지의 Austin 공장에서 생산되었습니다."
+    },
+    "attribution": {
+      "text": "위 내용은",
+      "mini_mania": "Mini Mania's",
+      "technical_articles": "기술 문서에서 발췌한 것입니다. 자세한 내용은 여기에서 확인하세요:",
+      "link_text": "섀시 코드 기술 문서"
+    },
+    "ui": {
+      "support_section": "지원"
+    }
   }
 }
 </i18n>

@@ -142,8 +142,6 @@
       </UCard>
     </div>
   </div>
-
-  <patreon-card size="large" />
 </template>
 
 <i18n lang="json">

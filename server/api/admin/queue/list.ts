@@ -20,6 +20,28 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await q;
   if (error) throw createError({ statusCode: 500, statusMessage: error.message });
 
+  // Collect any collection_id UUIDs referenced in edit suggestion diffs so we can resolve names
+  const collectionIds = new Set<string>();
+  for (const item of data || []) {
+    if (item.type === 'edit_suggestion' && item.data?.changes?.collection_id) {
+      const diff = item.data.changes.collection_id;
+      if (diff?.from && diff.from !== '__new__') collectionIds.add(diff.from);
+      if (diff?.to && diff.to !== '__new__') collectionIds.add(diff.to);
+    }
+  }
+
+  // Batch-fetch collection names
+  const collectionNames: Record<string, string> = {};
+  if (collectionIds.size > 0) {
+    const { data: cols } = await supabase
+      .from('document_collections')
+      .select('id, title')
+      .in('id', [...collectionIds]);
+    for (const col of cols || []) {
+      collectionNames[col.id] = col.title;
+    }
+  }
+
   return (data || []).map((item: any) => ({
     id: item.id,
     type: item.type,
@@ -27,6 +49,7 @@ export default defineEventHandler(async (event) => {
     targetId: item.target_id,
     status: item.status,
     data: item.data,
+    collectionNames,
     reviewerNotes: item.reviewer_notes,
     reviewedAt: item.reviewed_at,
     createdAt: item.created_at,

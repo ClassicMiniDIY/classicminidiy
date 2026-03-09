@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-  const { t } = useI18n();
   import type { IWheelsData } from '../../data/models/wheels';
   import Fuse from 'fuse.js';
 
@@ -90,11 +89,11 @@
     <!-- Header section -->
     <template #header>
       <div class="flex items-center justify-between">
-        <h2 class="font-semibold text-lg"><i class="fad fa-tire fa-spin mr-2"></i> {{ t('title') }}</h2>
-        <UTooltip v-if="filtersActive" :text="t('clear_filters')">
+        <h2 class="font-semibold text-lg"><i class="fad fa-tire fa-spin mr-2"></i> {{ $t('title') }}</h2>
+        <UTooltip v-if="filtersActive" :text="$t('clear_filters')">
           <UButton variant="ghost" size="sm" @click="clearFilters">
             <i class="fas fa-filter-circle-xmark mr-1"></i>
-            {{ t('clear_filters') }}
+            {{ $t('clear_filters') }}
           </UButton>
         </UTooltip>
       </div>
@@ -109,34 +108,34 @@
               :variant="size === 'list' ? 'solid' : 'outline'"
               @click="size = 'list'"
             >
-              {{ t('all_sizes') }}
+              {{ $t('all_sizes') }}
             </UButton>
             <UButton
               :color="size === 'ten' ? 'primary' : 'neutral'"
               :variant="size === 'ten' ? 'solid' : 'outline'"
               @click="size = 'ten'"
             >
-              {{ t('ten_inch_wheels') }}
+              {{ $t('ten_inch_wheels') }}
             </UButton>
             <UButton
               :color="size === 'twelve' ? 'primary' : 'neutral'"
               :variant="size === 'twelve' ? 'solid' : 'outline'"
               @click="size = 'twelve'"
             >
-              {{ t('twelve_inch_wheels') }}
+              {{ $t('twelve_inch_wheels') }}
             </UButton>
             <UButton
               :color="size === 'thirteen' ? 'primary' : 'neutral'"
               :variant="size === 'thirteen' ? 'solid' : 'outline'"
               @click="size = 'thirteen'"
             >
-              {{ t('thirteen_inch_wheels') }}
+              {{ $t('thirteen_inch_wheels') }}
             </UButton>
           </UButtonGroup>
         </div>
       </div>
 
-      <UInput v-model="search" :placeholder="t('search_placeholder')" icon="i-fa6-solid-magnifying-glass" size="lg" />
+      <UInput v-model="search" :placeholder="$t('search_placeholder')" icon="i-fa6-solid-magnifying-glass" size="lg" />
     </div>
 
     <!-- Content section -->
@@ -145,7 +144,7 @@
       <UAlert
         v-if="error"
         color="error"
-        :title="error.message || t('error_loading')"
+        :title="error.message || $t('error_loading')"
         icon="i-fa6-solid-circle-exclamation"
       />
 
@@ -157,8 +156,8 @@
       <!-- No results -->
       <div v-else-if="filteredWheels.length === 0" class="text-center p-8">
         <i class="fas fa-tire text-6xl text-muted mb-4"></i>
-        <h3 class="text-xl font-semibold mb-2">{{ t('no_results_title') }}</h3>
-        <p class="text-muted">{{ t('no_results_message') }}</p>
+        <h3 class="text-xl font-semibold mb-2">{{ $t('no_results_title') }}</h3>
+        <p class="text-muted">{{ $t('no_results_message') }}</p>
       </div>
 
       <!-- Grid of wheels -->
@@ -181,26 +180,26 @@
           <h3 class="font-semibold text-lg mb-2">{{ wheel.name }}</h3>
           <div class="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <div class="text-muted">{{ t('size_label') }}</div>
-              <div class="font-medium">{{ wheel.size || t('not_available') }}</div>
+              <div class="text-muted">{{ $t('size_label') }}</div>
+              <div class="font-medium">{{ wheel.size || $t('not_available') }}</div>
             </div>
             <div>
-              <div class="text-muted">{{ t('width_label') }}</div>
-              <div class="font-medium">{{ wheel.width || t('not_available') }}</div>
+              <div class="text-muted">{{ $t('width_label') }}</div>
+              <div class="font-medium">{{ wheel.width || $t('not_available') }}</div>
             </div>
             <div>
-              <div class="text-muted">{{ t('offset_label') }}</div>
-              <div class="font-medium">{{ wheel.offset || t('not_available') }}</div>
+              <div class="text-muted">{{ $t('offset_label') }}</div>
+              <div class="font-medium">{{ wheel.offset || $t('not_available') }}</div>
             </div>
             <div>
-              <div class="text-muted">{{ t('material_label') }}</div>
-              <div class="font-medium">{{ wheel.type || t('not_available') }}</div>
+              <div class="text-muted">{{ $t('material_label') }}</div>
+              <div class="font-medium">{{ wheel.type || $t('not_available') }}</div>
             </div>
           </div>
           <template #footer>
             <div class="flex justify-end">
               <UButton :to="`/archive/wheels/${wheel.uuid}`" size="sm" color="secondary">
-                {{ t('view_details') }}
+                {{ $t('view_details') }}
               </UButton>
             </div>
           </template>
@@ -216,7 +215,7 @@
             <i class="fad fa-arrow-left"></i>
           </UButton>
           <UButton variant="ghost" color="neutral">
-            {{ t('page_info', { current: page, total: Math.ceil(filteredWheels.length / 12) }) }}
+            {{ $t('page_info', { current: page, total: Math.ceil(filteredWheels.length / 12) }) }}
           </UButton>
           <UButton
             :disabled="page >= Math.ceil(filteredWheels.length / 12)"

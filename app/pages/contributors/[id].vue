@@ -610,216 +610,216 @@
       "wheels": "Rodas"
     }
   },
-  "nl": {
-    "title": "Bijdrager Profiel | Classic Mini DIY",
-    "description": "Bekijk het bijdragerprofiel, vertrouwensniveau en bijdragegeschiedenis van {name} op Classic Mini DIY.",
-    "hero_title": "Bijdragerprofiel",
-    "breadcrumb_title": "Bijdrager",
+  "ru": {
+    "title": "Профиль участника | Classic Mini DIY",
+    "description": "Просматривайте профиль участника, уровень доверия и историю вкладов {name} на Classic Mini DIY.",
+    "hero_title": "Профиль участника",
+    "breadcrumb_title": "Участник",
     "not_found": {
-      "title": "Bijdrager Niet Gevonden",
-      "description": "Dit bijdragerprofiel bestaat niet of is verwijderd.",
-      "back": "Terug naar Bijdragers"
+      "title": "Участник не найден",
+      "description": "Этот профиль участника не существует или был удалён.",
+      "back": "Вернуться к участникам"
     },
     "profile": {
-      "member_since": "Lid sinds",
-      "bio": "Over",
-      "unknown": "Onbekende Bijdrager"
+      "member_since": "Участник с",
+      "bio": "О себе",
+      "unknown": "Неизвестный участник"
     },
     "trust_level": {
-      "new": "Nieuw Lid",
-      "contributor": "Bijdrager",
-      "trusted": "Vertrouwde Bijdrager",
-      "moderator": "Moderator",
-      "admin": "Admin"
+      "new": "Новый участник",
+      "contributor": "Участник",
+      "trusted": "Доверенный участник",
+      "moderator": "Модератор",
+      "admin": "Администратор"
     },
     "stats": {
-      "total_submissions": "Totaal Ingediend",
-      "approved": "Goedgekeurde Inzendingen",
-      "member_since": "Lid Sinds"
+      "total_submissions": "Всего заявок",
+      "approved": "Одобренных заявок",
+      "member_since": "Участник с"
     },
     "contributions": {
-      "title": "Recente Bijdragen",
-      "empty": "Nog geen bijdragen.",
-      "untitled": "Zonder titel",
+      "title": "Последние вклады",
+      "empty": "Вкладов пока нет.",
+      "untitled": "Без названия",
       "action": {
-        "submitted": "Ingediend",
-        "edited": "Bewerkt",
-        "approved": "Goedgekeurd",
-        "rejected": "Afgewezen"
+        "submitted": "Отправлено",
+        "edited": "Отредактировано",
+        "approved": "Одобрено",
+        "rejected": "Отклонено"
       },
       "target": {
-        "document": "Document",
-        "collection": "Collectie",
-        "registry": "Register",
-        "color": "Kleur",
-        "wheel": "Wiel"
+        "document": "Документ",
+        "collection": "Коллекция",
+        "registry": "Реестр",
+        "color": "Цвет",
+        "wheel": "Колесо"
       }
     },
     "stats_breakdown": {
-      "title": "Bijdragen op Type",
-      "documents": "Documenten",
-      "registry": "Register",
-      "colors": "Kleuren",
-      "wheels": "Wielen"
+      "title": "Вклады по типам",
+      "documents": "Документы",
+      "registry": "Реестр",
+      "colors": "Цвета",
+      "wheels": "Колёса"
     }
   },
-  "sv": {
-    "title": "Bidragsprofil | Classic Mini DIY",
-    "description": "Visa {name}:s bidragsprofil, förtroendenivå och bidragshistorik på Classic Mini DIY.",
-    "hero_title": "Bidragsprofil",
-    "breadcrumb_title": "Bidragsgivare",
+  "ja": {
+    "title": "投稿者プロフィール | Classic Mini DIY",
+    "description": "Classic Mini DIY での {name} の投稿者プロフィール、信頼レベル、貢献履歴を確認する。",
+    "hero_title": "投稿者プロフィール",
+    "breadcrumb_title": "投稿者",
     "not_found": {
-      "title": "Bidragsgivare Hittades Inte",
-      "description": "Denna bidragsprofil finns inte eller har tagits bort.",
-      "back": "Tillbaka till Bidragsgivare"
+      "title": "投稿者が見つかりません",
+      "description": "この投稿者プロフィールは存在しないか、削除されました。",
+      "back": "投稿者一覧に戻る"
     },
     "profile": {
-      "member_since": "Medlem sedan",
-      "bio": "Om",
-      "unknown": "Okänd Bidragsgivare"
+      "member_since": "参加日",
+      "bio": "自己紹介",
+      "unknown": "不明な投稿者"
     },
     "trust_level": {
-      "new": "Ny Medlem",
-      "contributor": "Bidragsgivare",
-      "trusted": "Betrodd Bidragsgivare",
-      "moderator": "Moderator",
-      "admin": "Admin"
+      "new": "新規メンバー",
+      "contributor": "投稿者",
+      "trusted": "信頼された投稿者",
+      "moderator": "モデレーター",
+      "admin": "管理者"
     },
     "stats": {
-      "total_submissions": "Totalt Inskickat",
-      "approved": "Godkända Bidrag",
-      "member_since": "Medlem Sedan"
+      "total_submissions": "総申請数",
+      "approved": "承認済み申請数",
+      "member_since": "参加日"
     },
     "contributions": {
-      "title": "Senaste Bidrag",
-      "empty": "Inga bidrag ännu.",
-      "untitled": "Namnlös",
+      "title": "最近の貢献",
+      "empty": "まだ貢献がありません。",
+      "untitled": "無題",
       "action": {
-        "submitted": "Inskickat",
-        "edited": "Redigerat",
-        "approved": "Godkänt",
-        "rejected": "Avvisat"
+        "submitted": "提出",
+        "edited": "編集",
+        "approved": "承認",
+        "rejected": "却下"
       },
       "target": {
-        "document": "Dokument",
-        "collection": "Samling",
-        "registry": "Register",
-        "color": "Färg",
-        "wheel": "Hjul"
+        "document": "ドキュメント",
+        "collection": "コレクション",
+        "registry": "レジストリ",
+        "color": "カラー",
+        "wheel": "ホイール"
       }
     },
     "stats_breakdown": {
-      "title": "Bidrag efter Typ",
-      "documents": "Dokument",
-      "registry": "Register",
-      "colors": "Färger",
-      "wheels": "Hjul"
+      "title": "種類別の貢献",
+      "documents": "ドキュメント",
+      "registry": "レジストリ",
+      "colors": "カラー",
+      "wheels": "ホイール"
     }
   },
-  "da": {
-    "title": "Bidragyderprofil | Classic Mini DIY",
-    "description": "Se {name}s bidragyderprofil, tillidsniveau og bidragshistorik på Classic Mini DIY.",
-    "hero_title": "Bidragyderprofil",
-    "breadcrumb_title": "Bidragyder",
+  "zh": {
+    "title": "贡献者资料 | Classic Mini DIY",
+    "description": "查看 {name} 在 Classic Mini DIY 上的贡献者资料、信任等级和贡献历史。",
+    "hero_title": "贡献者资料",
+    "breadcrumb_title": "贡献者",
     "not_found": {
-      "title": "Bidragyder Ikke Fundet",
-      "description": "Denne bidragyderprofil eksisterer ikke eller er blevet fjernet.",
-      "back": "Tilbage til Bidragydere"
+      "title": "未找到贡献者",
+      "description": "此贡献者资料不存在或已被删除。",
+      "back": "返回贡献者列表"
     },
     "profile": {
-      "member_since": "Medlem siden",
-      "bio": "Om",
-      "unknown": "Ukendt Bidragyder"
+      "member_since": "加入时间",
+      "bio": "关于",
+      "unknown": "未知贡献者"
     },
     "trust_level": {
-      "new": "Nyt Medlem",
-      "contributor": "Bidragyder",
-      "trusted": "Betroet Bidragyder",
-      "moderator": "Moderator",
-      "admin": "Admin"
+      "new": "新成员",
+      "contributor": "贡献者",
+      "trusted": "受信任的贡献者",
+      "moderator": "版主",
+      "admin": "管理员"
     },
     "stats": {
-      "total_submissions": "Samlede Indsendelser",
-      "approved": "Godkendte Indsendelser",
-      "member_since": "Medlem Siden"
+      "total_submissions": "总提交数",
+      "approved": "已批准提交",
+      "member_since": "加入时间"
     },
     "contributions": {
-      "title": "Seneste Bidrag",
-      "empty": "Ingen bidrag endnu.",
-      "untitled": "Uden titel",
+      "title": "最近的贡献",
+      "empty": "暂无贡献。",
+      "untitled": "无标题",
       "action": {
-        "submitted": "Indsendt",
-        "edited": "Redigeret",
-        "approved": "Godkendt",
-        "rejected": "Afvist"
+        "submitted": "已提交",
+        "edited": "已编辑",
+        "approved": "已批准",
+        "rejected": "已拒绝"
       },
       "target": {
-        "document": "Dokument",
-        "collection": "Samling",
-        "registry": "Register",
-        "color": "Farve",
-        "wheel": "Hjul"
+        "document": "文档",
+        "collection": "集合",
+        "registry": "注册表",
+        "color": "颜色",
+        "wheel": "轮毂"
       }
     },
     "stats_breakdown": {
-      "title": "Bidrag efter Type",
-      "documents": "Dokumenter",
-      "registry": "Register",
-      "colors": "Farver",
-      "wheels": "Hjul"
+      "title": "按类型统计贡献",
+      "documents": "文档",
+      "registry": "注册表",
+      "colors": "颜色",
+      "wheels": "轮毂"
     }
   },
-  "no": {
-    "title": "Bidragsyterprofil | Classic Mini DIY",
-    "description": "Se {name}s bidragsyterprofil, tillitsnivå og bidragshistorikk på Classic Mini DIY.",
-    "hero_title": "Bidragsyterprofil",
-    "breadcrumb_title": "Bidragsyter",
+  "ko": {
+    "title": "기여자 프로필 | Classic Mini DIY",
+    "description": "Classic Mini DIY에서 {name}의 기여자 프로필, 신뢰 수준 및 기여 내역을 확인하세요.",
+    "hero_title": "기여자 프로필",
+    "breadcrumb_title": "기여자",
     "not_found": {
-      "title": "Bidragsyter Ikke Funnet",
-      "description": "Denne bidragsyterprofilen eksisterer ikke eller er blitt fjernet.",
-      "back": "Tilbake til Bidragsytere"
+      "title": "기여자를 찾을 수 없습니다",
+      "description": "이 기여자 프로필이 존재하지 않거나 삭제되었습니다.",
+      "back": "기여자 목록으로 돌아가기"
     },
     "profile": {
-      "member_since": "Medlem siden",
-      "bio": "Om",
-      "unknown": "Ukjent Bidragsyter"
+      "member_since": "가입일",
+      "bio": "소개",
+      "unknown": "알 수 없는 기여자"
     },
     "trust_level": {
-      "new": "Nytt Medlem",
-      "contributor": "Bidragsyter",
-      "trusted": "Betrodd Bidragsyter",
-      "moderator": "Moderator",
-      "admin": "Admin"
+      "new": "신규 멤버",
+      "contributor": "기여자",
+      "trusted": "신뢰된 기여자",
+      "moderator": "모더레이터",
+      "admin": "관리자"
     },
     "stats": {
-      "total_submissions": "Totale Innsendelser",
-      "approved": "Godkjente Innsendelser",
-      "member_since": "Medlem Siden"
+      "total_submissions": "총 제출 수",
+      "approved": "승인된 제출",
+      "member_since": "가입일"
     },
     "contributions": {
-      "title": "Nylige Bidrag",
-      "empty": "Ingen bidrag ennå.",
-      "untitled": "Uten tittel",
+      "title": "최근 기여",
+      "empty": "아직 기여가 없습니다.",
+      "untitled": "제목 없음",
       "action": {
-        "submitted": "Innsendt",
-        "edited": "Redigert",
-        "approved": "Godkjent",
-        "rejected": "Avvist"
+        "submitted": "제출됨",
+        "edited": "편집됨",
+        "approved": "승인됨",
+        "rejected": "거부됨"
       },
       "target": {
-        "document": "Dokument",
-        "collection": "Samling",
-        "registry": "Register",
-        "color": "Farge",
-        "wheel": "Hjul"
+        "document": "문서",
+        "collection": "컬렉션",
+        "registry": "레지스트리",
+        "color": "색상",
+        "wheel": "휠"
       }
     },
     "stats_breakdown": {
-      "title": "Bidrag etter Type",
-      "documents": "Dokumenter",
-      "registry": "Register",
-      "colors": "Farger",
-      "wheels": "Hjul"
+      "title": "유형별 기여",
+      "documents": "문서",
+      "registry": "레지스트리",
+      "colors": "색상",
+      "wheels": "휠"
     }
   }
 }

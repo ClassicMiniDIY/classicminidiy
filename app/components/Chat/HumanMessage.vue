@@ -11,7 +11,7 @@
     <div class="flex items-center gap-2 mt-2 opacity-0 transition-opacity group-hover:opacity-100 justify-end">
       <UButton @click="copyToClipboard(contentString)" size="xs" variant="ghost" color="neutral">
         <i class="fa-solid fa-copy h-3 w-3 mr-1" />
-        {{ t('copy_button') }}
+        {{ $t('copy_button') }}
       </UButton>
     </div>
   </div>
@@ -21,7 +21,6 @@
   import type { HumanMessageProps } from '../../../data/models/chat';
   import { useStreamContext } from '~/composables/useStreamProvider';
 
-  const { t } = useI18n();
   const props = defineProps<HumanMessageProps>();
   useStreamContext();
 
