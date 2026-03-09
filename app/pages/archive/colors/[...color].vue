@@ -2,14 +2,12 @@
   import { shareColorItem } from '../../../../data/models/helper-utils';
   import type { PrettyColor } from '../../../../data/models/colors';
 
-  const { isAuthenticated } = useAuth();
   const { params } = useRoute();
   const colorId = Array.isArray(params.color) ? params.color[0] : params.color;
   const { getColor } = useColors();
   const { data: color, status } = await useAsyncData(`color-${colorId}`, () => getColor(colorId as string));
 
   const copied = ref(false);
-  const showSuggestEdit = ref(false);
   const shareImage = ref('');
 
   watch(color, (newColor) => {
@@ -32,7 +30,7 @@
   }
 
   useHead({
-    title: $t('pages.archive.subpages.colors_detail.title_template', {
+    title: $t('title_template', {
       name: color.value?.pretty.Name,
       code: color.value?.pretty.Code,
     }),
@@ -40,7 +38,7 @@
       {
         key: 'description',
         name: 'description',
-        content: $t('pages.archive.subpages.colors_detail.description'),
+        content: $t('description'),
       },
     ],
     link: [
@@ -53,20 +51,20 @@
   });
 
   useSeoMeta({
-    ogTitle: $t('pages.archive.subpages.colors_detail.seo.og_title_template', {
+    ogTitle: $t('seo.og_title_template', {
       name: color.value?.pretty.Name,
       code: color.value?.pretty.Code,
     }),
-    ogDescription: $t('pages.archive.subpages.colors_detail.seo.og_description'),
+    ogDescription: $t('seo.og_description'),
     ogUrl: `classicminidiy.com/archive/colors/${color?.value?.raw.id}`,
     ogImage: shareImage.value,
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: $t('pages.archive.subpages.colors_detail.seo.twitter_title_template', {
+    twitterTitle: $t('seo.twitter_title_template', {
       name: color.value?.pretty.Name,
       code: color.value?.pretty.Code,
     }),
-    twitterDescription: $t('pages.archive.subpages.colors_detail.seo.twitter_description'),
+    twitterDescription: $t('seo.twitter_description'),
     twitterImage: shareImage.value,
   });
 </script>
@@ -78,19 +76,19 @@
       <div class="container mx-auto px-4">
         <div class="flex items-center gap-2 mb-4">
           <i class="fas fa-palette text-3xl"></i>
-          <h1 class="text-3xl font-bold">{{ $t('pages.archive.subpages.colors_detail.hero_title') }}</h1>
+          <h1 class="text-3xl font-bold">{{ $t('hero_title') }}</h1>
         </div>
         <div class="text-sm">
           <ul class="flex items-center gap-2">
             <li>
               <NuxtLink to="/" class="hover:underline">{{
-                $t('pages.archive.subpages.colors_detail.breadcrumb.home')
+                $t('breadcrumb.home')
               }}</NuxtLink>
               <span class="mx-2">/</span>
             </li>
             <li>
               <NuxtLink to="/archive/colors" class="hover:underline">{{
-                $t('pages.archive.subpages.colors_detail.breadcrumb.colors')
+                $t('breadcrumb.colors')
               }}</NuxtLink>
               <span class="mx-2">/</span>
             </li>
@@ -115,7 +113,7 @@
               <h2 class="text-3xl font-bold mb-2">{{ color.pretty.Name }}</h2>
               <UBadge size="lg" color="primary" class="mb-4">
                 <i class="fas fa-palette mr-1"></i>
-                {{ $t('pages.archive.subpages.colors_detail.primary_color_badge') }}
+                {{ $t('primary_color_badge') }}
               </UBadge>
               <h3 class="text-5xl font-bold text-primary mb-6">{{ color.pretty.Code }}</h3>
             </div>
@@ -126,12 +124,12 @@
                 <img
                   v-if="color.raw.hasSwatch && color.raw.imageSwatch"
                   :src="color.raw.imageSwatch"
-                  :alt="$t('pages.archive.subpages.colors_detail.alt_text', { name: color.pretty.Name })"
+                  :alt="$t('alt_text', { name: color.pretty.Name })"
                   class="w-full h-full object-cover"
                 />
                 <div
                   v-else
-                  class="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center"
+                  class="w-full h-full bg-linear-to-br from-muted to-muted/50 flex items-center justify-center"
                 >
                   <i class="fas fa-paint-roller text-6xl opacity-30"></i>
                 </div>
@@ -140,111 +138,100 @@
           </div>
 
           <!-- Color Details -->
-          <USeparator :label="$t('pages.archive.subpages.colors_detail.details_divider')" class="my-6" />
+          <USeparator :label="$t('details_divider')" class="my-6" />
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{ $t('pages.archive.subpages.colors_detail.stats.years') }}</span>
+                <span class="text-sm opacity-70">{{ $t('stats.years') }}</span>
                 <i class="fas fa-calendar-days text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty.Years }">
-                {{ color.pretty.Years || $t('pages.archive.subpages.colors_detail.stats.missing') }}
+                {{ color.pretty.Years || $t('stats.missing') }}
               </div>
             </div>
 
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-sm opacity-70">{{
-                  $t('pages.archive.subpages.colors_detail.stats.short_code')
+                  $t('stats.short_code')
                 }}</span>
                 <i class="fas fa-code text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Short Code'] }">
-                {{ color.pretty['Short Code'] || $t('pages.archive.subpages.colors_detail.stats.missing') }}
+                {{ color.pretty['Short Code'] || $t('stats.missing') }}
               </div>
             </div>
 
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-sm opacity-70">{{
-                  $t('pages.archive.subpages.colors_detail.stats.ditzler_ppg_code')
+                  $t('stats.ditzler_ppg_code')
                 }}</span>
                 <i class="fas fa-barcode text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Ditzler PPG Code'] }">
-                {{ color.pretty['Ditzler PPG Code'] || $t('pages.archive.subpages.colors_detail.stats.missing') }}
+                {{ color.pretty['Ditzler PPG Code'] || $t('stats.missing') }}
               </div>
             </div>
 
             <div class="bg-muted rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-sm opacity-70">{{
-                  $t('pages.archive.subpages.colors_detail.stats.dulux_code')
+                  $t('stats.dulux_code')
                 }}</span>
                 <i class="fas fa-barcode text-xl text-primary"></i>
               </div>
               <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Dulux Code'] }">
-                {{ color.pretty['Dulux Code'] || $t('pages.archive.subpages.colors_detail.stats.missing') }}
+                {{ color.pretty['Dulux Code'] || $t('stats.missing') }}
               </div>
             </div>
           </div>
 
+          <!-- Community Photos -->
+          <template v-if="color.raw.images && color.raw.images.length > 0">
+            <USeparator :label="$t('community_photos_divider')" class="my-6" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div v-for="(photo, idx) in color.raw.images" :key="idx" class="rounded-xl overflow-hidden shadow-md">
+                <img
+                  :src="photo.url"
+                  :alt="`${color.pretty.Name} - ${$t('community_photo_alt', { contributor: photo.contributor || $t('community_photo_anonymous') })}`"
+                  loading="lazy"
+                  class="w-full aspect-4/3 object-cover"
+                />
+                <div v-if="photo.contributor" class="p-2 bg-muted text-xs text-center">
+                  <i class="fas fa-camera mr-1"></i>
+                  {{ $t('community_photo_by', { name: photo.contributor }) }}
+                </div>
+              </div>
+            </div>
+          </template>
+
           <!-- Action Buttons -->
-          <USeparator :label="$t('pages.archive.subpages.colors_detail.share_divider')" class="my-6" />
+          <USeparator :label="$t('share_divider')" class="my-6" />
           <div class="flex flex-wrap gap-4 justify-center">
             <UButton @click="copyUrl()" :color="copied ? 'success' : 'primary'">
               <i class="fas fa-link mr-2"></i>
               {{
                 copied
-                  ? $t('pages.archive.subpages.colors_detail.actions.copied')
-                  : $t('pages.archive.subpages.colors_detail.actions.copy_link')
+                  ? $t('actions.copied')
+                  : $t('actions.copy_link')
               }}
-            </UButton>
-
-            <UButton
-              :to="`mailto:?subject=Mini Color Swatch - ${color.pretty.Name} | ${color.pretty.Code}&body=Color%20Name%20-%20${color.pretty.Name}%20%0ABMC%20Code%20-%20${color.pretty.Code}%20%0ADulux%20Code%20-%20${color.pretty['Dulux Code']}%20%0ADitzler%20Code%20-%20${color.pretty['Ditzler PPG Code']}%20`"
-              color="secondary"
-            >
-              <i class="fas fa-envelope mr-2"></i>
-              {{ $t('pages.archive.subpages.colors_detail.actions.email') }}
             </UButton>
 
             <UButton @click="shareColorItem(color.pretty.Name, color.pretty.ID)" color="neutral">
               <i class="fas fa-share-nodes mr-2"></i>
-              {{ $t('pages.archive.subpages.colors_detail.actions.share') }}
+              {{ $t('actions.share') }}
             </UButton>
 
             <UButton :to="`/contribute/color?color=${color.raw.id}`" variant="outline">
               <i class="fas fa-edit mr-2"></i>
-              {{ $t('pages.archive.subpages.colors_detail.actions.contribute') }}
-            </UButton>
-
-            <UButton
-              v-if="isAuthenticated"
-              variant="outline"
-              size="sm"
-              @click="showSuggestEdit = true"
-            >
-              <i class="fad fa-pen-to-square mr-2"></i>
-              {{ $t('suggest_edit') }}
+              {{ $t('actions.contribute') }}
             </UButton>
           </div>
         </div>
       </UCard>
     </div>
 
-    <SuggestEditModal
-      v-if="color"
-      v-model="showSuggestEdit"
-      target-type="color"
-      :target-id="color.raw.id"
-      :current-data="{ name: color.pretty.Name, code: color.pretty.Code, years: color.pretty.Years }"
-      :editable-fields="[
-        { key: 'name', label: $t('field_name'), type: 'text' },
-        { key: 'code', label: $t('field_code'), type: 'text' },
-        { key: 'years', label: $t('field_years'), type: 'text' },
-      ]"
-    />
   </div>
 </template>
 
@@ -261,333 +248,363 @@
 <i18n lang="json">
 {
   "en": {
-    "suggest_edit": "Suggest Edit",
-    "field_name": "Name",
-    "field_code": "Code",
-    "field_years": "Years",
-    "title": "Classic Mini Archive - {colorName}",
-    "description": "Details for Classic Mini color {colorName}",
+    "community_photos_divider": "Community Photos",
+    "community_photo_alt": "Photo contributed by {contributor}",
+    "community_photo_anonymous": "Anonymous",
+    "community_photo_by": "Photo by {name}",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Classic Mini paint color details and codes",
     "hero_title": "Classic Mini Archives",
-    "breadcrumb_title": "{colorName}",
     "breadcrumb": {
       "home": "Home",
-      "archive": "Archive",
       "colors": "Colors"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Color Code",
-      "year_range": "Year Range",
-      "manufacturer": "Manufacturer",
-      "hex_color": "Hex Color",
-      "description": "Description"
+    "primary_color_badge": "Classic Mini Color",
+    "alt_text": "{name} color swatch",
+    "details_divider": "Color Details",
+    "stats": {
+      "years": "Years Used",
+      "missing": "Unknown",
+      "short_code": "Short Code",
+      "ditzler_ppg_code": "Ditzler/PPG Code",
+      "dulux_code": "Dulux Code"
     },
+    "share_divider": "Share & Contribute",
     "actions": {
-      "back_to_colors": "Back to Colors",
-      "edit_color": "Edit Color"
+      "copy_link": "Copy Link",
+      "copied": "Copied!",
+      "share": "Share",
+      "contribute": "Contribute"
     },
     "seo": {
-      "og_title": "Classic Mini Archive - {colorName}",
-      "og_description": "Details for Classic Mini color {colorName}",
-      "twitter_title": "Classic Mini Archive - {colorName}",
-      "twitter_description": "Details for Classic Mini color {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Classic Mini paint color details and codes",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Classic Mini paint color details and codes"
     }
   },
   "de": {
-    "suggest_edit": "Bearbeitung Vorschlagen",
-    "field_name": "Name",
-    "field_code": "Code",
-    "field_years": "Jahre",
-    "title": "Classic Mini Archiv - {colorName}",
-    "description": "Details für Classic Mini Farbe {colorName}",
+    "community_photos_divider": "Community Fotos",
+    "community_photo_alt": "Foto beigetragen von {contributor}",
+    "community_photo_anonymous": "Anonym",
+    "community_photo_by": "Foto von {name}",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Classic Mini Lackfarben-Details und Codes",
     "hero_title": "Classic Mini Archive",
-    "breadcrumb_title": "{colorName}",
     "breadcrumb": {
       "home": "Startseite",
-      "archive": "Archiv",
       "colors": "Farben"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Farbcode",
-      "year_range": "Jahresbereich",
-      "manufacturer": "Hersteller",
-      "hex_color": "Hex-Farbe",
-      "description": "Beschreibung"
+    "primary_color_badge": "Classic Mini Farbe",
+    "alt_text": "{name} Farbmuster",
+    "details_divider": "Farbdetails",
+    "stats": {
+      "years": "Verwendete Jahre",
+      "missing": "Unbekannt",
+      "short_code": "Kurzcode",
+      "ditzler_ppg_code": "Ditzler/PPG Code",
+      "dulux_code": "Dulux Code"
     },
+    "share_divider": "Teilen & Beitragen",
     "actions": {
-      "back_to_colors": "Zurück zu Farben",
-      "edit_color": "Farbe Bearbeiten"
+      "copy_link": "Link Kopieren",
+      "copied": "Kopiert!",
+      "share": "Teilen",
+      "contribute": "Beitragen"
     },
     "seo": {
-      "og_title": "Classic Mini Archiv - {colorName}",
-      "og_description": "Details für Classic Mini Farbe {colorName}",
-      "twitter_title": "Classic Mini Archiv - {colorName}",
-      "twitter_description": "Details für Classic Mini Farbe {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Classic Mini Lackfarben-Details und Codes",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Classic Mini Lackfarben-Details und Codes"
     }
   },
   "es": {
-    "suggest_edit": "Sugerir Edición",
-    "field_name": "Nombre",
-    "field_code": "Código",
-    "field_years": "Años",
-    "title": "Archivo Classic Mini - {colorName}",
-    "description": "Detalles del color Classic Mini {colorName}",
+    "community_photos_divider": "Fotos de la Comunidad",
+    "community_photo_alt": "Foto contribuida por {contributor}",
+    "community_photo_anonymous": "An\u00f3nimo",
+    "community_photo_by": "Foto de {name}",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Detalles y c\u00f3digos de pintura Classic Mini",
     "hero_title": "Archivos Classic Mini",
-    "breadcrumb_title": "{colorName}",
     "breadcrumb": {
       "home": "Inicio",
-      "archive": "Archivo",
       "colors": "Colores"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Código de Color",
-      "year_range": "Rango de Años",
-      "manufacturer": "Fabricante",
-      "hex_color": "Color Hexadecimal",
-      "description": "Descripción"
+    "primary_color_badge": "Color Classic Mini",
+    "alt_text": "Muestra de color {name}",
+    "details_divider": "Detalles del Color",
+    "stats": {
+      "years": "A\u00f1os de Uso",
+      "missing": "Desconocido",
+      "short_code": "C\u00f3digo Corto",
+      "ditzler_ppg_code": "C\u00f3digo Ditzler/PPG",
+      "dulux_code": "C\u00f3digo Dulux"
     },
+    "share_divider": "Compartir y Contribuir",
     "actions": {
-      "back_to_colors": "Volver a Colores",
-      "edit_color": "Editar Color"
+      "copy_link": "Copiar Enlace",
+      "copied": "\u00a1Copiado!",
+      "share": "Compartir",
+      "contribute": "Contribuir"
     },
     "seo": {
-      "og_title": "Archivo Classic Mini - {colorName}",
-      "og_description": "Detalles del color Classic Mini {colorName}",
-      "twitter_title": "Archivo Classic Mini - {colorName}",
-      "twitter_description": "Detalles del color Classic Mini {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Detalles y c\u00f3digos de pintura Classic Mini",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Detalles y c\u00f3digos de pintura Classic Mini"
     }
   },
   "fr": {
-    "suggest_edit": "Suggérer une Modification",
-    "field_name": "Nom",
-    "field_code": "Code",
-    "field_years": "Années",
-    "title": "Archives Classic Mini - {colorName}",
-    "description": "Détails de la couleur Classic Mini {colorName}",
+    "community_photos_divider": "Photos de la Communaut\u00e9",
+    "community_photo_alt": "Photo contribu\u00e9e par {contributor}",
+    "community_photo_anonymous": "Anonyme",
+    "community_photo_by": "Photo de {name}",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "D\u00e9tails et codes de peinture Classic Mini",
     "hero_title": "Archives Classic Mini",
-    "breadcrumb_title": "{colorName}",
     "breadcrumb": {
       "home": "Accueil",
-      "archive": "Archive",
       "colors": "Couleurs"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Code Couleur",
-      "year_range": "Plage d'Années",
-      "manufacturer": "Fabricant",
-      "hex_color": "Couleur Hexadécimale",
-      "description": "Description"
+    "primary_color_badge": "Couleur Classic Mini",
+    "alt_text": "\u00c9chantillon de couleur {name}",
+    "details_divider": "D\u00e9tails de la Couleur",
+    "stats": {
+      "years": "Ann\u00e9es d'Utilisation",
+      "missing": "Inconnu",
+      "short_code": "Code Court",
+      "ditzler_ppg_code": "Code Ditzler/PPG",
+      "dulux_code": "Code Dulux"
     },
+    "share_divider": "Partager et Contribuer",
     "actions": {
-      "back_to_colors": "Retour aux Couleurs",
-      "edit_color": "Modifier la Couleur"
+      "copy_link": "Copier le Lien",
+      "copied": "Copi\u00e9 !",
+      "share": "Partager",
+      "contribute": "Contribuer"
     },
     "seo": {
-      "og_title": "Archives Classic Mini - {colorName}",
-      "og_description": "Détails de la couleur Classic Mini {colorName}",
-      "twitter_title": "Archives Classic Mini - {colorName}",
-      "twitter_description": "Détails de la couleur Classic Mini {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "D\u00e9tails et codes de peinture Classic Mini",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "D\u00e9tails et codes de peinture Classic Mini"
     }
   },
   "it": {
-    "suggest_edit": "Suggerisci Modifica",
-    "field_name": "Nome",
-    "field_code": "Codice",
-    "field_years": "Anni",
-    "title": "Archivio Classic Mini - {colorName}",
-    "description": "Dettagli del colore Classic Mini {colorName}",
+    "community_photos_divider": "Foto della Comunit\u00e0",
+    "community_photo_alt": "Foto contribuita da {contributor}",
+    "community_photo_anonymous": "Anonimo",
+    "community_photo_by": "Foto di {name}",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Dettagli e codici di vernice Classic Mini",
     "hero_title": "Archivi Classic Mini",
-    "breadcrumb_title": "{colorName}",
     "breadcrumb": {
       "home": "Home",
-      "archive": "Archivio",
       "colors": "Colori"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Codice Colore",
-      "year_range": "Intervallo Anni",
-      "manufacturer": "Produttore",
-      "hex_color": "Colore Esadecimale",
-      "description": "Descrizione"
+    "primary_color_badge": "Colore Classic Mini",
+    "alt_text": "Campione di colore {name}",
+    "details_divider": "Dettagli del Colore",
+    "stats": {
+      "years": "Anni di Utilizzo",
+      "missing": "Sconosciuto",
+      "short_code": "Codice Breve",
+      "ditzler_ppg_code": "Codice Ditzler/PPG",
+      "dulux_code": "Codice Dulux"
     },
+    "share_divider": "Condividi e Contribuisci",
     "actions": {
-      "back_to_colors": "Torna ai Colori",
-      "edit_color": "Modifica Colore"
+      "copy_link": "Copia Link",
+      "copied": "Copiato!",
+      "share": "Condividi",
+      "contribute": "Contribuisci"
     },
     "seo": {
-      "og_title": "Archivio Classic Mini - {colorName}",
-      "og_description": "Dettagli del colore Classic Mini {colorName}",
-      "twitter_title": "Archivio Classic Mini - {colorName}",
-      "twitter_description": "Dettagli del colore Classic Mini {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Dettagli e codici di vernice Classic Mini",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Dettagli e codici di vernice Classic Mini"
     }
   },
   "pt": {
-    "suggest_edit": "Sugerir Edição",
-    "field_name": "Nome",
-    "field_code": "Código",
-    "field_years": "Anos",
-    "title": "Arquivo Classic Mini - {colorName}",
-    "description": "Detalhes da cor Classic Mini {colorName}",
+    "community_photos_divider": "Fotos da Comunidade",
+    "community_photo_alt": "Foto contribu\u00edda por {contributor}",
+    "community_photo_anonymous": "An\u00f3nimo",
+    "community_photo_by": "Foto de {name}",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Detalhes e c\u00f3digos de tinta Classic Mini",
     "hero_title": "Arquivos Classic Mini",
-    "breadcrumb_title": "{colorName}",
     "breadcrumb": {
-      "home": "Início",
-      "archive": "Arquivo",
+      "home": "In\u00edcio",
       "colors": "Cores"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Código da Cor",
-      "year_range": "Faixa de Anos",
-      "manufacturer": "Fabricante",
-      "hex_color": "Cor Hexadecimal",
-      "description": "Descrição"
+    "primary_color_badge": "Cor Classic Mini",
+    "alt_text": "Amostra de cor {name}",
+    "details_divider": "Detalhes da Cor",
+    "stats": {
+      "years": "Anos de Uso",
+      "missing": "Desconhecido",
+      "short_code": "C\u00f3digo Curto",
+      "ditzler_ppg_code": "C\u00f3digo Ditzler/PPG",
+      "dulux_code": "C\u00f3digo Dulux"
     },
+    "share_divider": "Compartilhar e Contribuir",
     "actions": {
-      "back_to_colors": "Voltar às Cores",
-      "edit_color": "Editar Cor"
+      "copy_link": "Copiar Link",
+      "copied": "Copiado!",
+      "share": "Compartilhar",
+      "contribute": "Contribuir"
     },
     "seo": {
-      "og_title": "Arquivo Classic Mini - {colorName}",
-      "og_description": "Detalhes da cor Classic Mini {colorName}",
-      "twitter_title": "Arquivo Classic Mini - {colorName}",
-      "twitter_description": "Detalhes da cor Classic Mini {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Detalhes e c\u00f3digos de tinta Classic Mini",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Detalhes e c\u00f3digos de tinta Classic Mini"
     }
   },
-  "nl": {
-    "suggest_edit": "Bewerking Voorstellen",
-    "field_name": "Naam",
-    "field_code": "Code",
-    "field_years": "Jaren",
-    "title": "Classic Mini Archief - {colorName}",
-    "description": "Details van Classic Mini kleur {colorName}",
-    "hero_title": "Classic Mini Archieven",
-    "breadcrumb_title": "{colorName}",
+  "ru": {
+    "community_photos_divider": "\u0424\u043e\u0442\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u0441\u0442\u0432\u0430",
+    "community_photo_alt": "\u0424\u043e\u0442\u043e, \u043f\u0440\u0435\u0434\u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043d\u043e\u0435 {contributor}",
+    "community_photo_anonymous": "\u0410\u043d\u043e\u043d\u0438\u043c",
+    "community_photo_by": "\u0424\u043e\u0442\u043e \u043e\u0442 {name}",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "\u0414\u0435\u0442\u0430\u043b\u0438 \u0438 \u043a\u043e\u0434\u044b \u0446\u0432\u0435\u0442\u0430 \u043a\u0443\u0437\u043e\u0432\u0430 Classic Mini",
+    "hero_title": "\u0410\u0440\u0445\u0438\u0432\u044b Classic Mini",
     "breadcrumb": {
-      "home": "Home",
-      "archive": "Archief",
-      "colors": "Kleuren"
+      "home": "\u0413\u043b\u0430\u0432\u043d\u0430\u044f",
+      "colors": "\u0426\u0432\u0435\u0442\u0430"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Kleurcode",
-      "year_range": "Jaarbereik",
-      "manufacturer": "Fabrikant",
-      "hex_color": "Hex Kleur",
-      "description": "Beschrijving"
+    "primary_color_badge": "\u0426\u0432\u0435\u0442 Classic Mini",
+    "alt_text": "\u041e\u0431\u0440\u0430\u0437\u0435\u0446 \u0446\u0432\u0435\u0442\u0430 {name}",
+    "details_divider": "\u0414\u0435\u0442\u0430\u043b\u0438 \u0446\u0432\u0435\u0442\u0430",
+    "stats": {
+      "years": "\u0413\u043e\u0434\u044b \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u044f",
+      "missing": "\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e",
+      "short_code": "\u041a\u0440\u0430\u0442\u043a\u0438\u0439 \u043a\u043e\u0434",
+      "ditzler_ppg_code": "\u041a\u043e\u0434 Ditzler/PPG",
+      "dulux_code": "\u041a\u043e\u0434 Dulux"
     },
+    "share_divider": "\u041f\u043e\u0434\u0435\u043b\u0438\u0442\u044c\u0441\u044f \u0438 \u0432\u043d\u0435\u0441\u0442\u0438 \u0432\u043a\u043b\u0430\u0434",
     "actions": {
-      "back_to_colors": "Terug naar Kleuren",
-      "edit_color": "Kleur Bewerken"
+      "copy_link": "\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0441\u0441\u044b\u043b\u043a\u0443",
+      "copied": "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e!",
+      "share": "\u041f\u043e\u0434\u0435\u043b\u0438\u0442\u044c\u0441\u044f",
+      "contribute": "\u0412\u043d\u0435\u0441\u0442\u0438 \u0432\u043a\u043b\u0430\u0434"
     },
     "seo": {
-      "og_title": "Classic Mini Archief - {colorName}",
-      "og_description": "Details van Classic Mini kleur {colorName}",
-      "twitter_title": "Classic Mini Archief - {colorName}",
-      "twitter_description": "Details van Classic Mini kleur {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "\u0414\u0435\u0442\u0430\u043b\u0438 \u0438 \u043a\u043e\u0434\u044b \u0446\u0432\u0435\u0442\u0430 \u043a\u0443\u0437\u043e\u0432\u0430 Classic Mini",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "\u0414\u0435\u0442\u0430\u043b\u0438 \u0438 \u043a\u043e\u0434\u044b \u0446\u0432\u0435\u0442\u0430 \u043a\u0443\u0437\u043e\u0432\u0430 Classic Mini"
     }
   },
-  "sv": {
-    "suggest_edit": "Föreslå Redigering",
-    "field_name": "Namn",
-    "field_code": "Kod",
-    "field_years": "År",
-    "title": "Classic Mini Arkiv - {colorName}",
-    "description": "Detaljer för Classic Mini färg {colorName}",
-    "hero_title": "Classic Mini Arkiv",
-    "breadcrumb_title": "{colorName}",
+  "ja": {
+    "community_photos_divider": "\u30b3\u30df\u30e5\u30cb\u30c6\u30a3\u30d5\u30a9\u30c8",
+    "community_photo_alt": "{contributor}\u63d0\u4f9b\u306e\u5199\u771f",
+    "community_photo_anonymous": "\u533f\u540d",
+    "community_photo_by": "{name}\u306e\u5199\u771f",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Classic Mini\u30da\u30a4\u30f3\u30c8\u30ab\u30e9\u30fc\u306e\u8a73\u7d30\u3068\u30b3\u30fc\u30c9",
+    "hero_title": "Classic Mini\u30a2\u30fc\u30ab\u30a4\u30d6",
     "breadcrumb": {
-      "home": "Hem",
-      "archive": "Arkiv",
-      "colors": "Färger"
+      "home": "\u30db\u30fc\u30e0",
+      "colors": "\u30ab\u30e9\u30fc"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Färgkod",
-      "year_range": "Årsintervall",
-      "manufacturer": "Tillverkare",
-      "hex_color": "Hex Färg",
-      "description": "Beskrivning"
+    "primary_color_badge": "Classic Mini\u30ab\u30e9\u30fc",
+    "alt_text": "{name}\u30ab\u30e9\u30fc\u30b5\u30f3\u30d7\u30eb",
+    "details_divider": "\u30ab\u30e9\u30fc\u8a73\u7d30",
+    "stats": {
+      "years": "\u4f7f\u7528\u5e74\u6570",
+      "missing": "\u4e0d\u660e",
+      "short_code": "\u30b7\u30e7\u30fc\u30c8\u30b3\u30fc\u30c9",
+      "ditzler_ppg_code": "Ditzler/PPG\u30b3\u30fc\u30c9",
+      "dulux_code": "Dulux\u30b3\u30fc\u30c9"
     },
+    "share_divider": "\u30b7\u30a7\u30a2\u30fb\u8c37\u63f4",
     "actions": {
-      "back_to_colors": "Tillbaka till Färger",
-      "edit_color": "Redigera Färg"
+      "copy_link": "\u30ea\u30f3\u30af\u3092\u30b3\u30d4\u30fc",
+      "copied": "\u30b3\u30d4\u30fc\u3057\u307e\u3057\u305f\uff01",
+      "share": "\u30b7\u30a7\u30a2",
+      "contribute": "\u8c37\u63f4\u3059\u308b"
     },
     "seo": {
-      "og_title": "Classic Mini Arkiv - {colorName}",
-      "og_description": "Detaljer för Classic Mini färg {colorName}",
-      "twitter_title": "Classic Mini Arkiv - {colorName}",
-      "twitter_description": "Detaljer för Classic Mini färg {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Classic Mini\u30da\u30a4\u30f3\u30c8\u30ab\u30e9\u30fc\u306e\u8a73\u7d30\u3068\u30b3\u30fc\u30c9",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Classic Mini\u30da\u30a4\u30f3\u30c8\u30ab\u30e9\u30fc\u306e\u8a73\u7d30\u3068\u30b3\u30fc\u30c9"
     }
   },
-  "da": {
-    "suggest_edit": "Foreslå Redigering",
-    "field_name": "Navn",
-    "field_code": "Kode",
-    "field_years": "År",
-    "title": "Classic Mini Arkiv - {colorName}",
-    "description": "Detaljer for Classic Mini farve {colorName}",
-    "hero_title": "Classic Mini Arkiver",
-    "breadcrumb_title": "{colorName}",
+  "zh": {
+    "community_photos_divider": "\u793e\u533a\u7167\u7247",
+    "community_photo_alt": "{contributor}\u63d0\u4f9b\u7684\u7167\u7247",
+    "community_photo_anonymous": "\u533f\u540d",
+    "community_photo_by": "{name}\u7684\u7167\u7247",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Classic Mini\u6c46\u6f06\u989c\u8272\u8be6\u60c5\u548c\u4ee3\u7801",
+    "hero_title": "Classic Mini\u6863\u6848\u9986",
     "breadcrumb": {
-      "home": "Hjem",
-      "archive": "Arkiv",
-      "colors": "Farver"
+      "home": "\u9996\u9875",
+      "colors": "\u989c\u8272"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Farvekode",
-      "year_range": "Årsinterval",
-      "manufacturer": "Producent",
-      "hex_color": "Hex Farve",
-      "description": "Beskrivelse"
+    "primary_color_badge": "Classic Mini\u989c\u8272",
+    "alt_text": "{name}\u989c\u8272\u8272\u5361",
+    "details_divider": "\u989c\u8272\u8be6\u60c5",
+    "stats": {
+      "years": "\u4f7f\u7528\u5e74\u4efd",
+      "missing": "\u672a\u77e5",
+      "short_code": "\u77ed\u4ee3\u7801",
+      "ditzler_ppg_code": "Ditzler/PPG\u4ee3\u7801",
+      "dulux_code": "Dulux\u4ee3\u7801"
     },
+    "share_divider": "\u5206\u4eab\u4e0e\u8d21\u732e",
     "actions": {
-      "back_to_colors": "Tilbage til Farver",
-      "edit_color": "Rediger Farve"
+      "copy_link": "\u590d\u5236\u94fe\u63a5",
+      "copied": "\u5df2\u590d\u5236\uff01",
+      "share": "\u5206\u4eab",
+      "contribute": "\u8d21\u732e"
     },
     "seo": {
-      "og_title": "Classic Mini Arkiv - {colorName}",
-      "og_description": "Detaljer for Classic Mini farve {colorName}",
-      "twitter_title": "Classic Mini Arkiv - {colorName}",
-      "twitter_description": "Detaljer for Classic Mini farve {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Classic Mini\u6c46\u6f06\u989c\u8272\u8be6\u60c5\u548c\u4ee3\u7801",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Classic Mini\u6c46\u6f06\u989c\u8272\u8be6\u60c5\u548c\u4ee3\u7801"
     }
   },
-  "no": {
-    "suggest_edit": "Foreslå Redigering",
-    "field_name": "Navn",
-    "field_code": "Kode",
-    "field_years": "År",
-    "title": "Classic Mini Arkiv - {colorName}",
-    "description": "Detaljer for Classic Mini farge {colorName}",
-    "hero_title": "Classic Mini Arkiver",
-    "breadcrumb_title": "{colorName}",
+  "ko": {
+    "community_photos_divider": "\ucee4\ubba4\ub2c8\ud2f0 \uc0ac\uc9c4",
+    "community_photo_alt": "{contributor}\uc774(\uac00) \uc81c\uacf5\ud55c \uc0ac\uc9c4",
+    "community_photo_anonymous": "\uc775\uba85",
+    "community_photo_by": "{name}\uc758 \uc0ac\uc9c4",
+    "title_template": "{name} - {code} | Classic Mini DIY",
+    "description": "Classic Mini \ub3c4\ub8cc \uc0c9\uc0c1 \uc138\ubd80 \uc815\ubcf4 \ubc0f \ucf54\ub4dc",
+    "hero_title": "Classic Mini \uc544\uce74\uc774\ube0c",
     "breadcrumb": {
-      "home": "Hjem",
-      "archive": "Arkiv",
-      "colors": "Farger"
+      "home": "\ud648",
+      "colors": "\uc0c9\uc0c1"
     },
-    "main_heading": "{colorName}",
-    "color_details": {
-      "color_code": "Fargekode",
-      "year_range": "Årsperiode",
-      "manufacturer": "Produsent",
-      "hex_color": "Hex Farge",
-      "description": "Beskrivelse"
+    "primary_color_badge": "Classic Mini \uc0c9\uc0c1",
+    "alt_text": "{name} \uc0c9\uc0c1 \uc0d8\ud50c",
+    "details_divider": "\uc0c9\uc0c1 \uc138\ubd80 \uc815\ubcf4",
+    "stats": {
+      "years": "\uc0ac\uc6a9 \uc5f0\ub3c4",
+      "missing": "\uc54c \uc218 \uc5c6\uc74c",
+      "short_code": "\ub2e8\ucd95 \ucf54\ub4dc",
+      "ditzler_ppg_code": "Ditzler/PPG \ucf54\ub4dc",
+      "dulux_code": "Dulux \ucf54\ub4dc"
     },
+    "share_divider": "\uacf5\uc720 \ubc0f \uae30\uc5ec",
     "actions": {
-      "back_to_colors": "Tilbake til Farger",
-      "edit_color": "Rediger Farge"
+      "copy_link": "\ub9c1\ud06c \ubcf5\uc0ac",
+      "copied": "\ubcf5\uc0ac\ub428!",
+      "share": "\uacf5\uc720",
+      "contribute": "\uae30\uc5ec\ud558\uae30"
     },
     "seo": {
-      "og_title": "Classic Mini Arkiv - {colorName}",
-      "og_description": "Detaljer for Classic Mini farge {colorName}",
-      "twitter_title": "Classic Mini Arkiv - {colorName}",
-      "twitter_description": "Detaljer for Classic Mini farge {colorName}"
+      "og_title_template": "{name} - {code} | Classic Mini DIY",
+      "og_description": "Classic Mini \ub3c4\ub8cc \uc0c9\uc0c1 \uc138\ubd80 \uc815\ubcf4 \ubc0f \ucf54\ub4dc",
+      "twitter_title_template": "{name} - {code} | Classic Mini DIY",
+      "twitter_description": "Classic Mini \ub3c4\ub8cc \uc0c9\uc0c1 \uc138\ubd80 \uc815\ubcf4 \ubc0f \ucf54\ub4dc"
     }
   }
 }

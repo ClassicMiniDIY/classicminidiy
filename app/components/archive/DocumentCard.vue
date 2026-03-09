@@ -2,8 +2,6 @@
   import type { ArchiveDocumentItem } from '../../composables/useArchiveDocuments';
   import { shareArchiveItem } from '../../../data/models/helper-utils';
 
-  const { t } = useI18n();
-
   defineProps<{
     item: ArchiveDocumentItem;
   }>();
@@ -63,7 +61,7 @@
       <div class="flex justify-between gap-2">
         <UButton variant="outline" size="sm" @click="shareArchiveItem(item.title, item.path)">
           <i class="fad fa-arrow-up-from-bracket mr-1"></i>
-          {{ t('actions.share') }}
+          {{ $t('actions.share') }}
         </UButton>
 
         <UButton
@@ -73,7 +71,7 @@
           size="sm"
           color="primary"
         >
-          <i class="fad fa-download mr-1"></i> {{ t('actions.download') }}
+          <i class="fad fa-download mr-1"></i> {{ $t('actions.download') }}
         </UButton>
       </div>
     </template>

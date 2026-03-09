@@ -24,6 +24,7 @@
     targetId: string | null;
     status: 'pending' | 'approved' | 'rejected';
     data: Record<string, any>;
+    collectionNames: Record<string, string>;
     reviewerNotes: string | null;
     reviewedAt: string | null;
     createdAt: string;
@@ -72,12 +73,13 @@
     return params;
   });
 
-  // Fetch data
+  // Fetch data — uses useAdminFetch to inject auth header and skip SSR
   const {
     data: items,
     status: fetchStatus,
+    error: fetchError,
     refresh: refreshData,
-  } = await useFetch<QueueItem[]>('/api/admin/queue/list', {
+  } = await useAdminFetch<QueueItem[]>('/api/admin/queue/list', {
     query: queryParams,
     watch: [queryParams],
     default: () => [],
@@ -235,6 +237,18 @@
   };
 
   /**
+   * Returns uploaded file images from a queue item for preview.
+   * Handles both legacy string[] format and new { url, category }[] format.
+   */
+  const getUploadedImages = (item: QueueItem): { url: string; category: string }[] => {
+    const files = item.data?.uploadedFiles;
+    if (!Array.isArray(files)) return [];
+    return files.map((f: any) =>
+      typeof f === 'string' ? { url: f, category: 'general' } : { url: f.url, category: f.category || 'general' }
+    );
+  };
+
+  /**
    * Returns the key data fields to preview for a given target type.
    */
   const getPreviewFields = (item: QueueItem): { label: string; value: string }[] => {
@@ -292,7 +306,14 @@
     }));
   };
 
+  const FRIENDLY_FIELD_LABELS: Record<string, string> = {
+    collection_id: 'Collection',
+    _new_collection_title: 'New Collection Title',
+    _new_collection_description: 'New Collection Description',
+  };
+
   const formatFieldName = (field: string): string => {
+    if (FRIENDLY_FIELD_LABELS[field]) return FRIENDLY_FIELD_LABELS[field];
     return field
       .replace(/([A-Z])/g, ' $1')
       .replace(/_/g, ' ')
@@ -300,8 +321,14 @@
       .trim();
   };
 
-  const formatDiffValue = (value: any): string => {
+  const formatDiffValue = (value: any, field?: string, item?: QueueItem): string => {
     if (value === null || value === undefined) return '-';
+    if (field === 'collection_id') {
+      if (value === '__new__') return 'New Collection (see details below)';
+      // Resolve UUID to friendly name
+      const name = item?.collectionNames?.[value];
+      if (name) return name;
+    }
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
   };
@@ -355,7 +382,7 @@
     errorMessage.value = '';
 
     try {
-      await $fetch('/api/admin/queue/approve', {
+      await $adminFetch('/api/admin/queue/approve', {
         method: 'POST',
         body: {
           id: itemToApprove.id,
@@ -395,7 +422,7 @@
     errorMessage.value = '';
 
     try {
-      await $fetch('/api/admin/queue/reject', {
+      await $adminFetch('/api/admin/queue/reject', {
         method: 'POST',
         body: {
           id: itemToReject.id,
@@ -435,10 +462,9 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h1 class="text-2xl font-bold">Moderation Queue</h1>
-      <UButton color="primary" @click="refresh" :disabled="isLoading">
-        <span v-if="isLoading" class="fa-solid fa-refresh fa-spin"></span>
-        <i v-else class="fa-solid fa-refresh mr-2"></i>
-        {{ isLoading ? 'Loading...' : 'Refresh' }}
+      <UButton color="primary" @click="refresh" :loading="isLoading">
+        <i class="fa-solid fa-refresh mr-2"></i>
+        Refresh
       </UButton>
     </div>
 
@@ -549,6 +575,35 @@
           </div>
         </div>
 
+        <!-- Uploaded Images Preview -->
+        <div v-if="getUploadedImages(item).length > 0" class="mb-4">
+          <p class="text-sm font-medium opacity-70 mb-2">Uploaded Files</p>
+          <div class="flex flex-wrap gap-3">
+            <div
+              v-for="(img, idx) in getUploadedImages(item)"
+              :key="idx"
+              class="relative"
+            >
+              <a :href="img.url" target="_blank" rel="noopener">
+                <img
+                  :src="img.url"
+                  :alt="`Upload ${idx + 1}`"
+                  class="h-24 w-24 object-cover rounded-lg border border-default hover:opacity-80 transition-opacity"
+                />
+              </a>
+              <UBadge
+                v-if="img.category !== 'general'"
+                color="neutral"
+                variant="subtle"
+                size="xs"
+                class="absolute bottom-1 left-1"
+              >
+                {{ img.category }}
+              </UBadge>
+            </div>
+          </div>
+        </div>
+
         <!-- Edit Suggestion Diff Table -->
         <div v-if="item.type === 'edit_suggestion' && getEditChanges(item).length > 0" class="mb-4">
           <div class="overflow-x-auto">
@@ -568,14 +623,25 @@
                 >
                   <td class="p-2 font-medium">{{ formatFieldName(change.field) }}</td>
                   <td class="p-2 bg-error/10 text-error-700 dark:text-error-300">
-                    {{ formatDiffValue(change.from) }}
+                    {{ formatDiffValue(change.from, change.field, item) }}
                   </td>
                   <td class="p-2 bg-success/10 text-success-700 dark:text-success-300">
-                    {{ formatDiffValue(change.to) }}
+                    {{ formatDiffValue(change.to, change.field, item) }}
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Edit Suggestion Reason -->
+        <div v-if="item.type === 'edit_suggestion' && item.data?.reason" class="mb-4">
+          <div class="bg-info/5 border border-info/20 rounded-lg p-3">
+            <p class="text-sm font-medium opacity-70 mb-1">
+              <i class="fad fa-comment-dots mr-1"></i>
+              Reason for Change
+            </p>
+            <p class="text-sm">{{ item.data.reason }}</p>
           </div>
         </div>
 
@@ -647,6 +713,18 @@
                 <strong>{{ field.label }}:</strong> {{ field.value }}
               </div>
             </div>
+            <div v-if="getUploadedImages(selectedItem).length > 0" class="mt-2 pt-2 border-t border-default">
+              <p class="text-xs font-medium opacity-70 mb-1">Uploaded Files</p>
+              <div class="flex flex-wrap gap-2">
+                <img
+                  v-for="(img, idx) in getUploadedImages(selectedItem)"
+                  :key="idx"
+                  :src="img.url"
+                  :alt="`Upload ${idx + 1}`"
+                  class="h-16 w-16 object-cover rounded border border-default"
+                />
+              </div>
+            </div>
           </div>
 
           <!-- Reviewer Notes -->
@@ -694,6 +772,18 @@
             <div v-if="getPreviewFields(selectedItem).length > 0" class="mt-2 pt-2 border-t border-default">
               <div v-for="field in getPreviewFields(selectedItem)" :key="field.label" class="text-sm">
                 <strong>{{ field.label }}:</strong> {{ field.value }}
+              </div>
+            </div>
+            <div v-if="getUploadedImages(selectedItem).length > 0" class="mt-2 pt-2 border-t border-default">
+              <p class="text-xs font-medium opacity-70 mb-1">Uploaded Files</p>
+              <div class="flex flex-wrap gap-2">
+                <img
+                  v-for="(img, idx) in getUploadedImages(selectedItem)"
+                  :key="idx"
+                  :src="img.url"
+                  :alt="`Upload ${idx + 1}`"
+                  class="h-16 w-16 object-cover rounded border border-default"
+                />
               </div>
             </div>
           </div>

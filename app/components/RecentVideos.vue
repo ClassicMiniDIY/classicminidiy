@@ -1,16 +1,15 @@
 <script setup lang="ts">
-  const { t } = useI18n();
   const { data: videos, status, error } = await useFetch('/api/youtube/videos');
 </script>
 
 <template>
   <div class="col-span-12">
-    <h3 class="font-bold text-3xl text-center pb-5">{{ t('title') }}</h3>
+    <h3 class="font-bold text-3xl text-center pb-5">{{ $t('title') }}</h3>
   </div>
 
   <div v-if="status === 'pending'" class="col-span-12 md:col-span-3" v-for="item in 3"></div>
   <div v-else-if="error" class="col-span-12">
-    <p>{{ t('error_message') }}</p>
+    <p>{{ $t('error_message') }}</p>
   </div>
 
   <template v-else-if="videos">
@@ -19,10 +18,10 @@
         <nuxt-picture :src="video.thumbnails.maxres" alt="Video Thumbnail" class="w-full" />
       </template>
       <h2 class="font-semibold text-lg">{{ video.title }}</h2>
-      <p class="text-sm text-muted">{{ t('published_on') }} {{ video.publishedOn }}</p>
+      <p class="text-sm text-muted">{{ $t('published_on') }} {{ video.publishedOn }}</p>
       <template #footer>
         <div class="flex justify-end">
-          <UButton :to="video.videoUrl" target="_blank" color="primary">{{ t('watch_button') }}</UButton>
+          <UButton :to="video.videoUrl" target="_blank" color="primary">{{ $t('watch_button') }}</UButton>
         </div>
       </template>
     </UCard>

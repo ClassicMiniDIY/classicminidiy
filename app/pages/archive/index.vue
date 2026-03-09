@@ -240,6 +240,19 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Archivo Histórico Classic Mini",
       "dataset_description": "Colección de documentos históricos, manuales y recursos para entusiastas del Classic Mini"
+    },
+    "archive_items": {
+      "mini_registry": "Registro Mini",
+      "engine_sizes": "Tamaños de Motor",
+      "mini_weights": "Pesos del Mini",
+      "workshop_manuals": "Manuales de Taller",
+      "electrical_diagrams": "Diagramas Eléctricos",
+      "wheel_library": "Biblioteca de Ruedas",
+      "color_picker": "Selector de Color",
+      "adverts": "Anuncios",
+      "vendor_catalogues": "Catálogos de Proveedores",
+      "tuning_modifications": "Ajustes y Modificaciones",
+      "dimensions": "Dimensiones"
     }
   },
   "fr": {

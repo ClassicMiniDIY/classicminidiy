@@ -17,7 +17,13 @@ export default defineEventHandler(async (event) => {
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (trustLevel && trustLevel !== 'all') q = q.eq('trust_level', trustLevel);
+  if (trustLevel && trustLevel !== 'all') {
+    if (trustLevel === 'admin') {
+      q = q.eq('is_admin', true);
+    } else {
+      q = q.eq('trust_level', trustLevel);
+    }
+  }
   if (search) q = q.or(`display_name.ilike.%${search}%,email.ilike.%${search}%`);
 
   const { data, error, count } = await q;

@@ -40,8 +40,8 @@
   // Current user
   const { user: currentUser } = useAuth();
 
-  // Trust level configuration
-  const trustLevels: TrustLevel[] = ['new', 'contributor', 'trusted', 'moderator', 'admin'];
+  // Trust level configuration — 'admin' is a separate boolean flag, not a trust level
+  const trustLevels: TrustLevel[] = ['new', 'contributor', 'trusted', 'moderator'];
 
   const trustLevelFilters: TrustLevelFilter[] = [
     { label: 'All', value: 'all' },
@@ -85,12 +85,13 @@
     return params;
   });
 
-  // Fetch data
+  // Fetch data — uses useAdminFetch to inject auth header and skip SSR
   const {
     data: response,
     status: fetchStatus,
+    error: fetchError,
     refresh: refreshData,
-  } = await useFetch<{ users: UserItem[]; total: number }>('/api/admin/users/list', {
+  } = await useAdminFetch<{ users: UserItem[]; total: number }>('/api/admin/users/list', {
     query: queryParams,
     watch: [queryParams],
     default: () => ({ users: [], total: 0 }),
@@ -113,12 +114,11 @@
   const hasNextPage = computed(() => currentPage.value < totalPages.value - 1);
   const hasPrevPage = computed(() => currentPage.value > 0);
 
-  // Determine if trust level change is dangerous
+  // Trust level changes to/from moderator are notable
   const isDangerousChange = computed(() => {
     if (!selectedUser.value) return false;
     const currentLevel = selectedUser.value.trust_level;
-    // Promoting to admin or demoting from admin
-    return newTrustLevel.value === 'admin' || currentLevel === 'admin';
+    return newTrustLevel.value === 'moderator' || currentLevel === 'moderator';
   });
 
   // --- Helpers ---
@@ -210,7 +210,7 @@
     errorMessage.value = '';
 
     try {
-      await $fetch('/api/admin/users/update-trust', {
+      await $adminFetch('/api/admin/users/update-trust', {
         method: 'POST',
         body: {
           userId: userToUpdate.id,
@@ -218,12 +218,11 @@
         },
       });
 
-      // Update user locally
+      // Update trust level locally — is_admin is independent and not changed here
       if (response.value?.users) {
         const index = response.value.users.findIndex((u) => u.id === userToUpdate.id);
         if (index !== -1 && response.value.users[index]) {
           response.value.users[index].trust_level = newTrustLevel.value;
-          response.value.users[index].is_admin = newTrustLevel.value === 'admin';
         }
       }
 
@@ -240,6 +239,37 @@
   function handleTrustLevelSelect(userItem: UserItem, level: string) {
     if (level === userItem.trust_level) return;
     openTrustModal(userItem, level as TrustLevel);
+  }
+
+  // --- Admin toggle (independent of trust level) ---
+  async function toggleAdmin(userItem: UserItem) {
+    if (isSelf(userItem)) return;
+
+    const newValue = !userItem.is_admin;
+    isProcessing.value = true;
+    errorMessage.value = '';
+
+    try {
+      await $adminFetch('/api/admin/users/toggle-admin', {
+        method: 'POST',
+        body: {
+          userId: userItem.id,
+          isAdmin: newValue,
+        },
+      });
+
+      // Update locally
+      if (response.value?.users) {
+        const index = response.value.users.findIndex((u) => u.id === userItem.id);
+        if (index !== -1 && response.value.users[index]) {
+          response.value.users[index].is_admin = newValue;
+        }
+      }
+    } catch (error: any) {
+      errorMessage.value = error?.data?.message || error?.message || 'Failed to update admin status';
+    } finally {
+      isProcessing.value = false;
+    }
   }
 
   function goToPage(page: number) {
@@ -259,10 +289,11 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h1 class="text-2xl font-bold">User Management</h1>
-      <UButton color="primary" @click="refresh" :disabled="isLoading">
-        <span v-if="isLoading" class="fa-solid fa-refresh fa-spin"></span>
-        <i v-else class="fa-solid fa-refresh mr-2"></i>
-        {{ isLoading ? 'Loading...' : 'Refresh' }}
+      <UButton color="primary" @click="refresh" :disabled="isLoading" :loading="isLoading">
+        <template #leading>
+          <i v-if="!isLoading" class="fa-solid fa-refresh"></i>
+        </template>
+        Refresh
       </UButton>
     </div>
 
@@ -295,8 +326,21 @@
       </div>
     </div>
 
-    <!-- Error Message -->
+    <!-- Error Messages -->
     <UAlert v-if="errorMessage" color="error" icon="i-fa6-solid-circle-xmark" :title="errorMessage" class="mb-6" />
+    <UAlert
+      v-if="fetchError"
+      color="error"
+      icon="i-fa6-solid-circle-xmark"
+      :title="`Failed to load users: ${fetchError.data?.message || fetchError.message || 'Unknown error'}`"
+      class="mb-6"
+    >
+      <template #actions>
+        <UButton variant="outline" color="error" size="sm" @click="refreshData()">
+          Retry
+        </UButton>
+      </template>
+    </UAlert>
 
     <!-- Loading State -->
     <div v-if="fetchStatus === 'pending'" class="flex justify-center my-8">
@@ -305,7 +349,7 @@
 
     <!-- Empty State -->
     <UAlert
-      v-else-if="!users.length"
+      v-else-if="!fetchError && !users.length"
       color="info"
       icon="i-fa6-solid-circle-info"
       title="No users found matching the current filters."
@@ -318,9 +362,10 @@
           <tr class="border-b border-default">
             <th class="text-left p-2 font-medium bg-muted">User</th>
             <th class="text-left p-2 font-medium bg-muted">Trust Level</th>
+            <th class="text-center p-2 font-medium bg-muted">Admin</th>
             <th class="text-left p-2 font-medium bg-muted">Submissions</th>
             <th class="text-left p-2 font-medium bg-muted">Joined</th>
-            <th class="text-center p-2 font-medium bg-muted w-48">Actions</th>
+            <th class="text-center p-2 font-medium bg-muted w-48">Change Trust Level</th>
           </tr>
         </thead>
         <tbody>
@@ -361,6 +406,17 @@
               <UBadge :color="getTrustLevelBadgeColor(userItem.trust_level)" size="sm">
                 {{ getTrustLevelLabel(userItem.trust_level) }}
               </UBadge>
+            </td>
+
+            <!-- Admin Toggle -->
+            <td class="p-2 text-center">
+              <input
+                type="checkbox"
+                class="toggle toggle-sm toggle-primary"
+                :checked="userItem.is_admin"
+                :disabled="isSelf(userItem) || isProcessing"
+                @change="toggleAdmin(userItem)"
+              />
             </td>
 
             <!-- Submissions -->
@@ -499,11 +555,11 @@
             class="mb-4"
           >
             <template #title>
-              <span v-if="newTrustLevel === 'admin'">
-                You are about to grant admin privileges. This user will have full access to all admin features.
+              <span v-if="newTrustLevel === 'moderator'">
+                You are about to grant moderator status. This user will have elevated trust for content moderation.
               </span>
               <span v-else>
-                You are about to revoke admin privileges from this user. They will lose access to admin features.
+                You are about to remove moderator status from this user. They will lose elevated moderation trust.
               </span>
             </template>
           </UAlert>

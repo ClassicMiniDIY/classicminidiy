@@ -8,7 +8,7 @@
             ref="inputRef"
             v-model="input"
             @keydown="handleInputKeyDown"
-            :placeholder="t('placeholder')"
+            :placeholder="$t('placeholder')"
             class="flex-1 bg-transparent resize-none outline-none min-h-[1.5rem] max-h-32 placeholder:text-muted"
             rows="1"
           ></textarea>
@@ -23,7 +23,7 @@
       <div class="flex justify-center mt-2">
         <span class="text-xs text-muted">
           <i class="fa-solid fa-comments text-xs mr-1"></i>
-          {{ t('helper_text') }}
+          {{ $t('helper_text') }}
         </span>
       </div>
     </div>
@@ -31,7 +31,6 @@
 </template>
 
 <script setup lang="ts">
-  const { t } = useI18n();
   const input = ref('');
   const inputRef = ref<HTMLTextAreaElement>();
   const router = useRouter();

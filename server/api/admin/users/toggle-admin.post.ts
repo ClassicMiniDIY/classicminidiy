@@ -2,25 +2,28 @@ import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 
 export default defineEventHandler(async (event) => {
-  await requireAdminAuth(event);
+  const { user } = await requireAdminAuth(event);
   const body = await readBody(event);
   const supabase = getServiceClient();
 
-  const { userId, trustLevel } = body;
+  const { userId, isAdmin } = body;
 
   if (!userId || typeof userId !== 'string') {
     throw createError({ statusCode: 400, statusMessage: 'Missing userId' });
   }
 
-  const validLevels = ['new', 'contributor', 'trusted', 'moderator', 'admin'];
-  if (!validLevels.includes(trustLevel)) {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid trust level' });
+  if (typeof isAdmin !== 'boolean') {
+    throw createError({ statusCode: 400, statusMessage: 'isAdmin must be a boolean' });
   }
 
-  // Only update trust_level — is_admin is a separate flag managed independently
+  // Prevent removing your own admin access
+  if (userId === user.id && !isAdmin) {
+    throw createError({ statusCode: 400, statusMessage: 'Cannot remove your own admin access' });
+  }
+
   const { error } = await supabase
     .from('profiles')
-    .update({ trust_level: trustLevel })
+    .update({ is_admin: isAdmin })
     .eq('id', userId);
 
   if (error) {

@@ -219,6 +219,7 @@
   "de": {
     "title": "Classic Mini Registry - Classic Mini DIY",
     "description": "Durchsuchen und beitragen zur Classic Mini Registry-Datenbank",
+    "keywords": "Classic Mini Registry, Mini Cooper Datenbank, registrierte Minis, Classic Mini Besitzer, Mini Fahrzeugregister, Oldtimer Mini Datenbank",
     "hero_title": "Classic Mini Registry",
     "breadcrumb_title": "Registry",
     "main_heading": "Classic Mini Registry",
@@ -253,6 +254,7 @@
   "es": {
     "title": "Registro Classic Mini - Classic Mini DIY",
     "description": "Navega y contribuye a la base de datos del registro Classic Mini",
+    "keywords": "registro Classic Mini, base de datos Mini Cooper, Minis registrados, propietarios Classic Mini, registro de vehículos Mini, base de datos Mini clásico",
     "hero_title": "Registro Classic Mini",
     "breadcrumb_title": "Registro",
     "main_heading": "Registro Classic Mini",
@@ -287,6 +289,7 @@
   "fr": {
     "title": "Registre Classic Mini - Classic Mini DIY",
     "description": "Parcourez et contribuez à la base de données du registre Classic Mini",
+    "keywords": "registre Classic Mini, base de données Mini Cooper, Minis enregistrées, propriétaires Classic Mini, registre de véhicules Mini, base de données Mini vintage",
     "hero_title": "Registre Classic Mini",
     "breadcrumb_title": "Registre",
     "main_heading": "Registre Classic Mini",
@@ -321,6 +324,7 @@
   "it": {
     "title": "Registro Classic Mini - Classic Mini DIY",
     "description": "Sfoglia e contribuisci al database del registro Classic Mini",
+    "keywords": "registro Classic Mini, database Mini Cooper, Mini registrate, proprietari Classic Mini, registro veicoli Mini, database Mini d'epoca",
     "hero_title": "Registro Classic Mini",
     "breadcrumb_title": "Registro",
     "main_heading": "Registro Classic Mini",
@@ -355,6 +359,7 @@
   "pt": {
     "title": "Registro Classic Mini - Classic Mini DIY",
     "description": "Navegue e contribua para o banco de dados do registro Classic Mini",
+    "keywords": "registro Classic Mini, banco de dados Mini Cooper, Minis registrados, proprietários Classic Mini, registro de veículos Mini, banco de dados Mini clássico",
     "hero_title": "Registro Classic Mini",
     "breadcrumb_title": "Registro",
     "main_heading": "Registro Classic Mini",
@@ -386,140 +391,144 @@
       "twitter_description": "Navegue e contribua para o banco de dados do registro Classic Mini"
     }
   },
-  "nl": {
-    "title": "Classic Mini Register - Classic Mini DIY",
-    "description": "Blader door en draag bij aan de Classic Mini register database",
-    "hero_title": "Classic Mini Register",
-    "breadcrumb_title": "Register",
-    "main_heading": "Classic Mini Register",
+  "ru": {
+    "title": "Реестр Classic Mini - Classic Mini DIY",
+    "description": "Просматривайте и вносите вклад в базу данных реестра Classic Mini",
+    "keywords": "реестр Classic Mini, база данных Mini Cooper, зарегистрированные Mini, владельцы Classic Mini, реестр автомобилей Mini, база данных винтажных Mini",
+    "hero_title": "Реестр Classic Mini",
+    "breadcrumb_title": "Реестр",
+    "main_heading": "Реестр Classic Mini",
     "subtitle_count": "0",
-    "subtitle": "Classic Minis geregistreerd",
-    "description_text": "Het Classic Mini Register is een door de gemeenschap gedreven database van Classic Mini voertuigen. Help ons het meest uitgebreide register te bouwen door de details van je Mini in te dienen.",
-    "submission_status_text": "Wil je de status van je inzending volgen?",
-    "track_submission_button": "Inzending Volgen",
+    "subtitle": "Classic Mini зарегистрировано",
+    "description_text": "Реестр Classic Mini — это управляемая сообществом база данных автомобилей Classic Mini. Помогите нам создать наиболее полный реестр, отправив данные вашего Mini.",
+    "submission_status_text": "Хотите отслеживать статус вашей заявки?",
+    "track_submission_button": "Отследить заявку",
     "table_headers": {
-      "year": "Jaar",
-      "model": "Model",
-      "trim": "Uitvoering",
-      "color": "Kleur"
+      "year": "Год",
+      "model": "Модель",
+      "trim": "Комплектация",
+      "color": "Цвет"
     },
     "submit_card": {
-      "title": "Dien je Mini in",
-      "description": "Voeg je Classic Mini toe aan ons register",
-      "alt_text": "Mini Indienen Pictogram"
+      "title": "Добавьте ваш Mini",
+      "description": "Добавьте ваш Classic Mini в наш реестр",
+      "alt_text": "Иконка добавления Mini"
     },
-    "submit_divider": "Dien je Mini in",
-    "contribute_banner_title": "Weet je iets dat we missen?",
-    "contribute_banner_description": "Help het archief te verrijken met jouw kennis.",
-    "contribute_banner_button": "Bijdragen",
-    "support_divider": "Ondersteuning",
+    "submit_divider": "Добавьте ваш Mini",
+    "contribute_banner_title": "Знаете что-то, чего нам не хватает?",
+    "contribute_banner_description": "Помогите пополнить архив своими знаниями.",
+    "contribute_banner_button": "Внести вклад",
+    "support_divider": "Поддержка",
     "seo": {
-      "og_title": "Classic Mini Register - Classic Mini DIY",
-      "og_description": "Blader door en draag bij aan de Classic Mini register database",
-      "twitter_title": "Classic Mini Register - Classic Mini DIY",
-      "twitter_description": "Blader door en draag bij aan de Classic Mini register database"
+      "og_title": "Реестр Classic Mini - Classic Mini DIY",
+      "og_description": "Просматривайте и вносите вклад в базу данных реестра Classic Mini",
+      "twitter_title": "Реестр Classic Mini - Classic Mini DIY",
+      "twitter_description": "Просматривайте и вносите вклад в базу данных реестра Classic Mini"
     }
   },
-  "sv": {
-    "title": "Classic Mini Register - Classic Mini DIY",
-    "description": "Bläddra i och bidra till Classic Mini register-databasen",
-    "hero_title": "Classic Mini Register",
-    "breadcrumb_title": "Register",
-    "main_heading": "Classic Mini Register",
+  "ja": {
+    "title": "クラシックミニ レジストリ - Classic Mini DIY",
+    "description": "クラシックミニ レジストリ データベースを閲覧・投稿する",
+    "keywords": "クラシックミニ レジストリ, ミニクーパー データベース, 登録済みミニ, クラシックミニ オーナー, ミニ車両登録, ビンテージミニ データベース",
+    "hero_title": "クラシックミニ レジストリ",
+    "breadcrumb_title": "レジストリ",
+    "main_heading": "クラシックミニ レジストリ",
     "subtitle_count": "0",
-    "subtitle": "Classic Minis registrerade",
-    "description_text": "Classic Mini Registret är en community-driven databas av Classic Mini fordon. Hjälp oss att bygga det mest omfattande registret genom att skicka in din Minis detaljer.",
-    "submission_status_text": "Vill du spåra din inlämnings status?",
-    "track_submission_button": "Spåra Inlämning",
+    "subtitle": "台のクラシックミニが登録済み",
+    "description_text": "クラシックミニ レジストリは、クラシックミニ車両のコミュニティ主導のデータベースです。あなたのミニの詳細を送信して、最も包括的なレジストリの構築にご協力ください。",
+    "submission_status_text": "申請状況を確認しますか？",
+    "track_submission_button": "申請を追跡",
     "table_headers": {
-      "year": "År",
-      "model": "Modell",
-      "trim": "Utrustning",
-      "color": "Färg"
+      "year": "年式",
+      "model": "モデル",
+      "trim": "グレード",
+      "color": "カラー"
     },
     "submit_card": {
-      "title": "Skicka in din Mini",
-      "description": "Lägg till din Classic Mini i vårt register",
-      "alt_text": "Skicka in Mini Ikon"
+      "title": "あなたのミニを登録",
+      "description": "あなたのクラシックミニをレジストリに追加",
+      "alt_text": "ミニ登録アイコン"
     },
-    "submit_divider": "Skicka in din Mini",
-    "contribute_banner_title": "Vet du nagot vi saknar?",
-    "contribute_banner_description": "Hjalp till att utoka arkivet med din kunskap.",
-    "contribute_banner_button": "Bidra",
-    "support_divider": "Support",
+    "submit_divider": "あなたのミニを登録",
+    "contribute_banner_title": "私たちが見落としていることを知っていますか？",
+    "contribute_banner_description": "あなたの知識でアーカイブの充実にご協力ください。",
+    "contribute_banner_button": "投稿する",
+    "support_divider": "サポート",
     "seo": {
-      "og_title": "Classic Mini Register - Classic Mini DIY",
-      "og_description": "Bläddra i och bidra till Classic Mini register-databasen",
-      "twitter_title": "Classic Mini Register - Classic Mini DIY",
-      "twitter_description": "Bläddra i och bidra till Classic Mini register-databasen"
+      "og_title": "クラシックミニ レジストリ - Classic Mini DIY",
+      "og_description": "クラシックミニ レジストリ データベースを閲覧・投稿する",
+      "twitter_title": "クラシックミニ レジストリ - Classic Mini DIY",
+      "twitter_description": "クラシックミニ レジストリ データベースを閲覧・投稿する"
     }
   },
-  "da": {
-    "title": "Classic Mini Register - Classic Mini DIY",
-    "description": "Gennemse og bidrag til Classic Mini register-databasen",
-    "hero_title": "Classic Mini Register",
-    "breadcrumb_title": "Register",
-    "main_heading": "Classic Mini Register",
+  "zh": {
+    "title": "经典迷你注册表 - Classic Mini DIY",
+    "description": "浏览并为经典迷你注册数据库做出贡献",
+    "keywords": "经典迷你注册表, Mini Cooper数据库, 已注册迷你, 经典迷你车主, 迷你车辆登记, 老爷迷你数据库",
+    "hero_title": "经典迷你注册表",
+    "breadcrumb_title": "注册表",
+    "main_heading": "经典迷你注册表",
     "subtitle_count": "0",
-    "subtitle": "Classic Minis registreret",
-    "description_text": "Classic Mini Registret er en fællesskabsdrevet database af Classic Mini køretøjer. Hjælp os med at bygge det mest omfattende register ved at indsende din Minis detaljer.",
-    "submission_status_text": "Vil du spore din indleveringsstatus?",
-    "track_submission_button": "Spor Indlevering",
+    "subtitle": "辆经典迷你已注册",
+    "description_text": "经典迷你注册表是一个由社区驱动的经典迷你车辆数据库。请提交您的迷你车辆详情，帮助我们建立最全面的注册表。",
+    "submission_status_text": "想要追踪您的提交状态吗？",
+    "track_submission_button": "追踪提交",
     "table_headers": {
-      "year": "År",
-      "model": "Model",
-      "trim": "Udstyr",
-      "color": "Farve"
+      "year": "年份",
+      "model": "型号",
+      "trim": "配置",
+      "color": "颜色"
     },
     "submit_card": {
-      "title": "Indsend din Mini",
-      "description": "Tilføj din Classic Mini til vores register",
-      "alt_text": "Indsend Mini Ikon"
+      "title": "提交您的迷你",
+      "description": "将您的经典迷你添加到我们的注册表",
+      "alt_text": "提交迷你图标"
     },
-    "submit_divider": "Indsend din Mini",
-    "contribute_banner_title": "Ved du noget, vi mangler?",
-    "contribute_banner_description": "Hjaelp med at udvide arkivet med din viden.",
-    "contribute_banner_button": "Bidrag",
-    "support_divider": "Support",
+    "submit_divider": "提交您的迷你",
+    "contribute_banner_title": "知道我们遗漏了什么吗？",
+    "contribute_banner_description": "用您的知识帮助充实档案库。",
+    "contribute_banner_button": "贡献",
+    "support_divider": "支持",
     "seo": {
-      "og_title": "Classic Mini Register - Classic Mini DIY",
-      "og_description": "Gennemse og bidrag til Classic Mini register-databasen",
-      "twitter_title": "Classic Mini Register - Classic Mini DIY",
-      "twitter_description": "Gennemse og bidrag til Classic Mini register-databasen"
+      "og_title": "经典迷你注册表 - Classic Mini DIY",
+      "og_description": "浏览并为经典迷你注册数据库做出贡献",
+      "twitter_title": "经典迷你注册表 - Classic Mini DIY",
+      "twitter_description": "浏览并为经典迷你注册数据库做出贡献"
     }
   },
-  "no": {
-    "title": "Classic Mini Register - Classic Mini DIY",
-    "description": "Bla gjennom og bidra til Classic Mini register-databasen",
-    "hero_title": "Classic Mini Register",
-    "breadcrumb_title": "Register",
-    "main_heading": "Classic Mini Register",
+  "ko": {
+    "title": "클래식 미니 레지스트리 - Classic Mini DIY",
+    "description": "클래식 미니 레지스트리 데이터베이스 탐색 및 기여",
+    "keywords": "클래식 미니 레지스트리, 미니 쿠퍼 데이터베이스, 등록된 미니, 클래식 미니 소유자, 미니 차량 등록부, 빈티지 미니 데이터베이스",
+    "hero_title": "클래식 미니 레지스트리",
+    "breadcrumb_title": "레지스트리",
+    "main_heading": "클래식 미니 레지스트리",
     "subtitle_count": "0",
-    "subtitle": "Classic Minis registrert",
-    "description_text": "Classic Mini Registeret er en fellesskapsdrevet database av Classic Mini kjøretøy. Hjelp oss å bygge det mest omfattende registeret ved å sende inn din Minis detaljer.",
-    "submission_status_text": "Vil du spore din innleveringsstatus?",
-    "track_submission_button": "Spor Innlevering",
+    "subtitle": "대의 클래식 미니가 등록됨",
+    "description_text": "클래식 미니 레지스트리는 커뮤니티 기반의 클래식 미니 차량 데이터베이스입니다. 미니의 세부 정보를 제출하여 가장 포괄적인 레지스트리 구축에 도움을 주세요.",
+    "submission_status_text": "제출 상태를 추적하시겠습니까?",
+    "track_submission_button": "제출 추적",
     "table_headers": {
-      "year": "År",
-      "model": "Modell",
-      "trim": "Utstyr",
-      "color": "Farge"
+      "year": "연도",
+      "model": "모델",
+      "trim": "트림",
+      "color": "색상"
     },
     "submit_card": {
-      "title": "Send inn din Mini",
-      "description": "Legg til din Classic Mini i vårt register",
-      "alt_text": "Send inn Mini Ikon"
+      "title": "미니를 등록하세요",
+      "description": "클래식 미니를 레지스트리에 추가하세요",
+      "alt_text": "미니 등록 아이콘"
     },
-    "submit_divider": "Send inn din Mini",
-    "contribute_banner_title": "Vet du noe vi mangler?",
-    "contribute_banner_description": "Hjelp til a utvide arkivet med din kunnskap.",
-    "contribute_banner_button": "Bidra",
-    "support_divider": "Støtte",
+    "submit_divider": "미니를 등록하세요",
+    "contribute_banner_title": "우리가 놓친 내용을 알고 계신가요?",
+    "contribute_banner_description": "당신의 지식으로 아카이브를 풍부하게 만들어 주세요.",
+    "contribute_banner_button": "기여하기",
+    "support_divider": "지원",
     "seo": {
-      "og_title": "Classic Mini Register - Classic Mini DIY",
-      "og_description": "Bla gjennom og bidra til Classic Mini register-databasen",
-      "twitter_title": "Classic Mini Register - Classic Mini DIY",
-      "twitter_description": "Bla gjennom og bidra til Classic Mini register-databasen"
+      "og_title": "클래식 미니 레지스트리 - Classic Mini DIY",
+      "og_description": "클래식 미니 레지스트리 데이터베이스 탐색 및 기여",
+      "twitter_title": "클래식 미니 레지스트리 - Classic Mini DIY",
+      "twitter_description": "클래식 미니 레지스트리 데이터베이스 탐색 및 기여"
     }
   }
 }

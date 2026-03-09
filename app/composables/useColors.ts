@@ -43,6 +43,7 @@ export const useColors = () => {
       .from('colors')
       .select('*')
       .eq('id', id)
+      .eq('status', 'approved')
       .single();
 
     if (error) return null;

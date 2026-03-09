@@ -146,8 +146,8 @@
         console.error('Document upload error:', docUploadError.value);
       }
 
-      // Upload thumbnail if provided (only for non-collection)
-      if (!isCollection.value && thumbnailFiles.value.length > 0) {
+      // Upload thumbnail if provided
+      if (thumbnailFiles.value.length > 0) {
         const thumbFormData = new FormData();
         thumbnailFiles.value.forEach((file, i) => thumbFormData.append(`file${i}`, file));
         const { error: thumbUploadError } = await useFetch('/api/archive/upload', {

@@ -42,7 +42,7 @@
     data: registryItems,
     status: fetchStatus,
     refresh: refreshData,
-  } = await useFetch<RegistryItem[]>('/api/registry/queue/list');
+  } = await useAdminFetch<RegistryItem[]>('/api/registry/queue/list');
 
   // Table Configuration
   const tableHeaders: TableHeader[] = [
@@ -128,7 +128,7 @@
       // Use edited data if available, otherwise use original item
       const dataToSave = editedData.value.get(item.uniqueId) || item;
 
-      const { error } = await useFetch('/api/registry/queue/save', {
+      const { error } = await useAdminFetch('/api/registry/queue/save', {
         method: 'POST',
         body: {
           uuid: item.uniqueId,
@@ -176,7 +176,7 @@
     errorMessage.value = '';
 
     try {
-      const { error } = await useFetch('/api/registry/queue/reject', {
+      const { error } = await useAdminFetch('/api/registry/queue/reject', {
         method: 'POST',
         body: {
           uuid: selectedItem.value.uniqueId,

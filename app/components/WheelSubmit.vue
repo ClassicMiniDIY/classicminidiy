@@ -932,10 +932,14 @@
       "update_message": "Ihre vorgeschlagenen Updates wurden zur Überprüfung eingereicht. Wir werden Sie unter {email} benachrichtigen, sobald sie bearbeitet wurden.",
       "submit_another": "Weitere Felge einreichen"
     },
+    "success": {
+      "submission_processing": "Ihre Einreichung wird verarbeitet..."
+    },
     "navigation": {
       "back": "Zurück",
       "next": "Weiter",
-      "submit": "Absenden"
+      "submit": "Absenden",
+      "submitting": "Wird gesendet..."
     },
     "errors": {
       "load_failed": "Fehler beim Laden der Felgendaten. Bitte versuchen Sie es erneut.",
@@ -1023,10 +1027,14 @@
       "update_message": "Tus actualizaciones sugeridas han sido enviadas para revisión. Te notificaremos en {email} una vez que hayan sido procesadas.",
       "submit_another": "Enviar Otra Llanta"
     },
+    "success": {
+      "submission_processing": "Tu envío está siendo procesado..."
+    },
     "navigation": {
       "back": "Atrás",
       "next": "Siguiente",
-      "submit": "Enviar"
+      "submit": "Enviar",
+      "submitting": "Enviando..."
     },
     "errors": {
       "load_failed": "Error al cargar los datos de la llanta. Por favor inténtalo de nuevo.",
@@ -1114,10 +1122,14 @@
       "update_message": "Vos mises à jour suggérées ont été soumises pour révision. Nous vous notifierons à {email} une fois traitées.",
       "submit_another": "Soumettre autre jante"
     },
+    "success": {
+      "submission_processing": "Votre soumission est en cours de traitement..."
+    },
     "navigation": {
       "back": "Retour",
       "next": "Suivant",
-      "submit": "Soumettre"
+      "submit": "Soumettre",
+      "submitting": "Envoi en cours..."
     },
     "errors": {
       "load_failed": "Échec chargement données jante. Veuillez réessayer.",
@@ -1205,7 +1217,10 @@
       "update_message": "Tuoi aggiornamenti suggeriti inviati per revisione. Ti notificheremo a {email} una volta elaborati.",
       "submit_another": "Invia altro cerchio"
     },
-    "navigation": { "back": "Indietro", "next": "Avanti", "submit": "Invia" },
+    "success": {
+      "submission_processing": "La tua sottomissione è in elaborazione..."
+    },
+    "navigation": { "back": "Indietro", "next": "Avanti", "submit": "Invia", "submitting": "Invio in corso..." },
     "errors": {
       "load_failed": "Caricamento dati cerchio fallito. Riprova.",
       "unable_to_load": "Impossibile caricare dati cerchio",
@@ -1292,7 +1307,10 @@
       "update_message": "提案された更新が審査のために送信されました。処理されたら{email}に通知します。",
       "submit_another": "別のホイールを送信"
     },
-    "navigation": { "back": "戻る", "next": "次へ", "submit": "送信" },
+    "success": {
+      "submission_processing": "送信内容を処理中です..."
+    },
+    "navigation": { "back": "戻る", "next": "次へ", "submit": "送信", "submitting": "送信中..." },
     "errors": {
       "load_failed": "ホイールデータの読み込みに失敗しました。もう一度お試しください。",
       "unable_to_load": "ホイールデータを読み込めません",
@@ -1379,7 +1397,10 @@
       "update_message": "제안된 업데이트가 검토를 위해 제출되었습니다. 처리되면 {email}로 알려드리겠습니다.",
       "submit_another": "다른 휠 제출"
     },
-    "navigation": { "back": "뒤로", "next": "다음", "submit": "제출" },
+    "success": {
+      "submission_processing": "제출 내용을 처리 중입니다..."
+    },
+    "navigation": { "back": "뒤로", "next": "다음", "submit": "제출", "submitting": "제출 중..." },
     "errors": {
       "load_failed": "휠 데이터 로드에 실패했습니다. 다시 시도해 주세요.",
       "unable_to_load": "휠 데이터를 로드할 수 없습니다",
@@ -1466,7 +1487,10 @@
       "update_message": "Suas atualizações sugeridas foram enviadas para revisão. Notificaremos você em {email} uma vez processadas.",
       "submit_another": "Enviar outra roda"
     },
-    "navigation": { "back": "Voltar", "next": "Próximo", "submit": "Enviar" },
+    "success": {
+      "submission_processing": "Seu envio está sendo processado..."
+    },
+    "navigation": { "back": "Voltar", "next": "Próximo", "submit": "Enviar", "submitting": "Enviando..." },
     "errors": {
       "load_failed": "Falha carregar dados roda. Tente novamente.",
       "unable_to_load": "Impossível carregar dados roda",
@@ -1553,7 +1577,10 @@
       "update_message": "Ваши предлагаемые обновления отправлены на рассмотрение. Мы уведомим вас на {email}, как только они будут обработаны.",
       "submit_another": "Отправить другой диск"
     },
-    "navigation": { "back": "Назад", "next": "Далее", "submit": "Отправить" },
+    "success": {
+      "submission_processing": "Ваша заявка обрабатывается..."
+    },
+    "navigation": { "back": "Назад", "next": "Далее", "submit": "Отправить", "submitting": "Отправка..." },
     "errors": {
       "load_failed": "Не удалось загрузить данные диска. Попробуйте еще раз.",
       "unable_to_load": "Невозможно загрузить данные диска",
@@ -1640,7 +1667,10 @@
       "update_message": "您建议的更新已提交审核。一旦处理完成，我们将通知您的邮箱{email}。",
       "submit_another": "提交另一个轮毂"
     },
-    "navigation": { "back": "返回", "next": "下一步", "submit": "提交" },
+    "success": {
+      "submission_processing": "您的提交正在处理中..."
+    },
+    "navigation": { "back": "返回", "next": "下一步", "submit": "提交", "submitting": "提交中..." },
     "errors": {
       "load_failed": "加载轮毂数据失败。请重试。",
       "unable_to_load": "无法加载轮毂数据",

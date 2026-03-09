@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  const { t } = useI18n();
-
   import { formOptions } from '../../../data/models/compression';
 
   const reactiveFormOptions = ref(formOptions);
@@ -60,7 +58,7 @@
     <div class="col-span-1">
       <UButton color="primary" class="mb-5" @click="showHelpModal = true">
         <i class="fad fa-question-circle mr-2"></i>
-        {{ t('help_button') }}
+        {{ $t('help_button') }}
       </UButton>
 
       <!-- Help Modal -->
@@ -68,7 +66,7 @@
         <template #content>
           <UCard>
             <template #header>
-              <h2 class="text-lg font-semibold">{{ t('help_modal.title') }}</h2>
+              <h2 class="text-lg font-semibold">{{ $t('help_modal.title') }}</h2>
             </template>
             <div class="aspect-video w-full">
               <iframe
@@ -81,19 +79,19 @@
               ></iframe>
             </div>
             <div class="mt-4">
-              <h3 class="text-xl font-bold">{{ t('help_modal.friend_title') }}</h3>
+              <h3 class="text-xl font-bold">{{ $t('help_modal.friend_title') }}</h3>
               <p class="text-sm opacity-70">
                 <a href="https://www.youtube.com/watch?v=GxlgkbrfK2Y" class="text-primary hover:underline">@hreirl</a>
-                {{ t('help_modal.friend_description') }}
+                {{ $t('help_modal.friend_description') }}
               </p>
               <p class="mt-2">
-                {{ t('help_modal.friend_text') }}
+                {{ $t('help_modal.friend_text') }}
               </p>
             </div>
             <template #footer>
               <div class="flex justify-end">
                 <UButton color="primary" @click="showHelpModal = false">
-                  {{ t('help_modal.close_button') }}
+                  {{ $t('help_modal.close_button') }}
                 </UButton>
               </div>
             </template>
@@ -108,7 +106,7 @@
         <template #label>
           <span class="flex items-center gap-2">
             <i class="fad fa-engine"></i>
-            {{ t('form_labels.piston_size') }}
+            {{ $t('form_labels.piston_size') }}
           </span>
         </template>
         <USelect v-model="bore" :items="reactiveFormOptions.pistonOptions" value-key="value" class="w-full" />
@@ -119,7 +117,7 @@
         <template #label>
           <span class="flex items-center gap-2">
             <i class="fad fa-arrows-rotate fa-spin"></i>
-            {{ t('form_labels.crankshaft') }}
+            {{ $t('form_labels.crankshaft') }}
           </span>
         </template>
         <USelect v-model="stroke" :items="reactiveFormOptions.crankshaftOptions" value-key="value" class="w-full" />
@@ -133,7 +131,7 @@
           <template #label>
             <span class="flex items-center gap-2">
               <i class="fad fa-head-side-gear"></i>
-              {{ t('form_labels.head_gasket') }}
+              {{ $t('form_labels.head_gasket') }}
             </span>
           </template>
           <USelect
@@ -148,7 +146,7 @@
             <template #label>
               <span class="flex items-center gap-2">
                 <i class="fad fa-ruler"></i>
-                {{ t('form_labels.custom_gasket_size') }}
+                {{ $t('form_labels.custom_gasket_size') }}
               </span>
             </template>
             <UInput type="number" min="0.1" max="10" step="0.1" v-model.number="customGasket" class="w-full" />
@@ -161,7 +159,7 @@
         <template #label>
           <span class="flex items-center gap-2">
             <i class="fad fa-arrow-down-to-line"></i>
-            {{ t('form_labels.decompression_plate') }}
+            {{ $t('form_labels.decompression_plate') }}
           </span>
         </template>
         <USelect v-model="decomp" :items="reactiveFormOptions.decompPlateOptions" value-key="value" class="w-full" />
@@ -174,7 +172,7 @@
         <template #label>
           <span class="flex items-center gap-2">
             <i class="fad fa-circle-half fa-rotate-270"></i>
-            {{ t('form_labels.piston_dish_size') }}
+            {{ $t('form_labels.piston_dish_size') }}
           </span>
         </template>
         <UInput v-model.number="pistonDish" type="number" min="0" max="20" step="0.1" class="w-full" />
@@ -185,7 +183,7 @@
         <template #label>
           <span class="flex items-center gap-2">
             <i class="fad fa-arrows-to-dot"></i>
-            {{ t('form_labels.cylinder_head_chamber_volume') }}
+            {{ $t('form_labels.cylinder_head_chamber_volume') }}
           </span>
         </template>
         <UInput v-model.number="headVolume" type="number" min="15" max="35" step="0.1" class="w-full" />
@@ -196,7 +194,7 @@
         <template #label>
           <span class="flex items-center gap-2">
             <i class="fad fa-arrow-up-to-line"></i>
-            {{ t('form_labels.piston_deck_height') }}
+            {{ $t('form_labels.piston_deck_height') }}
           </span>
         </template>
         <UInput v-model.number="deckHeight" type="number" min="0" max="80" step="1" class="w-full" />
@@ -205,19 +203,19 @@
 
     <!-- Results Section -->
     <div class="mt-8">
-      <h2 class="text-2xl font-bold mb-4">{{ t('results.title') }}</h2>
+      <h2 class="text-2xl font-bold mb-4">{{ $t('results.title') }}</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="rounded-lg bg-secondary shadow-sm p-6 text-center text-white">
           <h3 class="text-lg opacity-70">
             <i class="fa-jelly-duo fa-regular fa-compress fa-beat"></i>
-            {{ t('results.compression_ratio') }}
+            {{ $t('results.compression_ratio') }}
           </h3>
           <p class="text-3xl font-bold">{{ ratio || '?' }}</p>
         </div>
         <div class="rounded-lg bg-primary shadow-sm p-6 text-center text-white">
           <h3 class="text-lg opacity-70">
             <i class="fa-duotone fa-solid fa-fill"></i>
-            {{ t('results.engine_capacity') }}
+            {{ $t('results.engine_capacity') }}
           </h3>
           <p class="text-3xl font-bold">{{ capacity || '?' }}</p>
         </div>
@@ -228,25 +226,25 @@
     <div class="text-center mt-4">
       <div class="max-w-3xl mx-auto">
         <p class="mb-2">
-          <span v-html="t('disclaimer.text', { strong_start: '<strong>', strong_end: '</strong>' })"></span>
+          <span v-html="$t('disclaimer.text', { strong_start: '<strong>', strong_end: '</strong>' })"></span>
           <a
             href="https://github.com/SomethingNew71/classicminidiy/blob/master/components/CompressionCalculator.vue#L344"
             target="_blank"
             rel="noopener noreferrer"
             class="text-primary hover:underline"
           >
-            {{ t('disclaimer.equation_source') }}
+            {{ $t('disclaimer.equation_source') }}
           </a>
         </p>
         <p>
-          {{ t('disclaimer.alternate_source') }}
+          {{ $t('disclaimer.alternate_source') }}
           <a
             href="https://www.calverst.com/technical-info/compression-ratio-%E2%80%93-working-it-out/"
             target="_blank"
             rel="noopener noreferrer"
             class="text-primary hover:underline"
           >
-            {{ t('disclaimer.calver_link') }}</a
+            {{ $t('disclaimer.calver_link') }}</a
           >,
           <a
             href="https://www.jepistons.com/blog/how-to-calculate-engine-compression-ratio-and-displacement"
@@ -254,7 +252,7 @@
             rel="noopener noreferrer"
             class="text-primary hover:underline"
           >
-            {{ t('disclaimer.je_pistons_link') }}
+            {{ $t('disclaimer.je_pistons_link') }}
           </a>
         </p>
       </div>

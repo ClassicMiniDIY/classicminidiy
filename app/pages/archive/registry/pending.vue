@@ -13,7 +13,7 @@
   ];
 
   // Fetch pending registry items
-  const { data: pendingItemsRaw, status } = await useFetch<RegistryItem[]>('/api/registry/queue/list');
+  const { data: pendingItemsRaw, status } = await useAdminFetch<RegistryItem[]>('/api/registry/queue/list');
 
   // Computed property to filter only pending items
   const pendingItems = computed(() => {
@@ -329,144 +329,144 @@
       "twitter_description": "Acompanhe o status das submissões de registro Classic Mini pendentes"
     }
   },
-  "nl": {
-    "title": "Wachtende Register Inzendingen - Classic Mini DIY",
-    "description": "Volg de status van wachtende Classic Mini register inzendingen",
-    "hero_title": "Wachtende Register Inzendingen",
-    "breadcrumb_title": "Wachtende Inzendingen",
-    "breadcrumb_parent": "Register",
-    "main_heading": "Wachtende Register Inzendingen",
-    "subtitle": "inzendingen wachten op beoordeling",
-    "description_text": "Hieronder kun je alle wachtende register inzendingen zien die momenteel worden beoordeeld. Inzendingen worden meestal binnen 7-14 dagen verwerkt.",
-    "contact_text": "Als je vragen hebt over je inzending, neem dan",
-    "contact_link": "contact met ons op",
+  "ru": {
+    "title": "Ожидающие заявки в реестр - Classic Mini DIY",
+    "description": "Отслеживайте статус ожидающих заявок в реестр Classic Mini",
+    "hero_title": "Ожидающие заявки в реестр",
+    "breadcrumb_title": "Ожидающие заявки",
+    "breadcrumb_parent": "Реестр",
+    "main_heading": "Ожидающие заявки в реестр",
+    "subtitle": "заявок ожидают проверки",
+    "description_text": "Ниже вы можете видеть все ожидающие заявки в реестр, которые в данный момент проходят проверку. Заявки обычно обрабатываются в течение 7-14 дней.",
+    "contact_text": "Если у вас есть вопросы по вашей заявке, пожалуйста",
+    "contact_link": "свяжитесь с нами",
     "table_headers": {
-      "year": "Jaar",
-      "model": "Model",
-      "body_number": "Carrosserienummer",
-      "submitted_by": "Ingezonden door",
-      "status": "Status"
+      "year": "Год",
+      "model": "Модель",
+      "body_number": "Номер кузова",
+      "submitted_by": "Отправил",
+      "status": "Статус"
     },
     "status_card": {
-      "title": "Inzending Status Gids",
-      "pending": "Wachtend",
-      "pending_description": "Onder beoordeling",
-      "approved": "Goedgekeurd",
-      "approved_description": "Toegevoegd aan register",
-      "rejected": "Afgewezen",
-      "rejected_description": "Heeft correctie nodig"
+      "title": "Руководство по статусу заявки",
+      "pending": "Ожидает",
+      "pending_description": "На проверке",
+      "approved": "Одобрено",
+      "approved_description": "Добавлено в реестр",
+      "rejected": "Отклонено",
+      "rejected_description": "Требует исправления"
     },
-    "submit_divider": "Dien je Mini in",
+    "submit_divider": "Добавьте ваш Mini",
     "seo": {
-      "og_title": "Wachtende Register Inzendingen - Classic Mini DIY",
-      "og_description": "Volg de status van wachtende Classic Mini register inzendingen",
-      "twitter_title": "Wachtende Register Inzendingen - Classic Mini DIY",
-      "twitter_description": "Volg de status van wachtende Classic Mini register inzendingen"
+      "og_title": "Ожидающие заявки в реестр - Classic Mini DIY",
+      "og_description": "Отслеживайте статус ожидающих заявок в реестр Classic Mini",
+      "twitter_title": "Ожидающие заявки в реестр - Classic Mini DIY",
+      "twitter_description": "Отслеживайте статус ожидающих заявок в реестр Classic Mini"
     }
   },
-  "sv": {
-    "title": "Väntande Registerinlämningar - Classic Mini DIY",
-    "description": "Spåra statusen för väntande Classic Mini registerinlämningar",
-    "hero_title": "Väntande Registerinlämningar",
-    "breadcrumb_title": "Väntande Inlämningar",
-    "breadcrumb_parent": "Register",
-    "main_heading": "Väntande Registerinlämningar",
-    "subtitle": "inlämningar väntar på granskning",
-    "description_text": "Nedan kan du se alla väntande registerinlämningar som för närvarande granskas. Inlämningar behandlas vanligtvis inom 7-14 dagar.",
-    "contact_text": "Om du har frågor om din inlämning, vänligen",
-    "contact_link": "kontakta oss",
+  "ja": {
+    "title": "審査中のレジストリ申請 - Classic Mini DIY",
+    "description": "クラシックミニ レジストリの審査中申請状況を追跡する",
+    "hero_title": "審査中のレジストリ申請",
+    "breadcrumb_title": "審査中の申請",
+    "breadcrumb_parent": "レジストリ",
+    "main_heading": "審査中のレジストリ申請",
+    "subtitle": "件の申請が審査待ち",
+    "description_text": "現在審査中のすべてのレジストリ申請を以下でご確認いただけます。申請は通常7〜14日以内に処理されます。",
+    "contact_text": "申請についてご質問がある場合は、",
+    "contact_link": "お問い合わせください",
     "table_headers": {
-      "year": "År",
-      "model": "Modell",
-      "body_number": "Karossnummer",
-      "submitted_by": "Inlämnad av",
-      "status": "Status"
+      "year": "年式",
+      "model": "モデル",
+      "body_number": "ボディ番号",
+      "submitted_by": "申請者",
+      "status": "ステータス"
     },
     "status_card": {
-      "title": "Guide för Inlämningsstatus",
-      "pending": "Väntande",
-      "pending_description": "Under granskning",
-      "approved": "Godkänd",
-      "approved_description": "Tillagd i register",
-      "rejected": "Avvisad",
-      "rejected_description": "Behöver korrigering"
+      "title": "申請ステータスガイド",
+      "pending": "審査中",
+      "pending_description": "確認中",
+      "approved": "承認済み",
+      "approved_description": "レジストリに追加済み",
+      "rejected": "却下",
+      "rejected_description": "修正が必要"
     },
-    "submit_divider": "Skicka in din Mini",
+    "submit_divider": "あなたのミニを登録",
     "seo": {
-      "og_title": "Väntande Registerinlämningar - Classic Mini DIY",
-      "og_description": "Spåra statusen för väntande Classic Mini registerinlämningar",
-      "twitter_title": "Väntande Registerinlämningar - Classic Mini DIY",
-      "twitter_description": "Spåra statusen för väntande Classic Mini registerinlämningar"
+      "og_title": "審査中のレジストリ申請 - Classic Mini DIY",
+      "og_description": "クラシックミニ レジストリの審査中申請状況を追跡する",
+      "twitter_title": "審査中のレジストリ申請 - Classic Mini DIY",
+      "twitter_description": "クラシックミニ レジストリの審査中申請状況を追跡する"
     }
   },
-  "da": {
-    "title": "Afventende Registerindleveringer - Classic Mini DIY",
-    "description": "Spor status for afventende Classic Mini registerindleveringer",
-    "hero_title": "Afventende Registerindleveringer",
-    "breadcrumb_title": "Afventende Indleveringer",
-    "breadcrumb_parent": "Register",
-    "main_heading": "Afventende Registerindleveringer",
-    "subtitle": "indleveringer afventer gennemgang",
-    "description_text": "Nedenfor kan du se alle afventende registerindleveringer, der i øjeblikket bliver gennemgået. Indleveringer behandles typisk inden for 7-14 dage.",
-    "contact_text": "Hvis du har spørgsmål om din indlevering, venligst",
-    "contact_link": "kontakt os",
+  "zh": {
+    "title": "待审核的注册表提交 - Classic Mini DIY",
+    "description": "追踪经典迷你注册表待审核提交的状态",
+    "hero_title": "待审核的注册表提交",
+    "breadcrumb_title": "待审核提交",
+    "breadcrumb_parent": "注册表",
+    "main_heading": "待审核的注册表提交",
+    "subtitle": "条提交待审核",
+    "description_text": "以下您可以查看所有正在审核中的待处理注册表提交。提交通常在7-14天内处理完成。",
+    "contact_text": "如果您对提交有疑问，请",
+    "contact_link": "联系我们",
     "table_headers": {
-      "year": "År",
-      "model": "Model",
-      "body_number": "Karrosserinummer",
-      "submitted_by": "Indleveret af",
-      "status": "Status"
+      "year": "年份",
+      "model": "型号",
+      "body_number": "车身编号",
+      "submitted_by": "提交者",
+      "status": "状态"
     },
     "status_card": {
-      "title": "Guide til Indleveringsstatus",
-      "pending": "Afventende",
-      "pending_description": "Under gennemgang",
-      "approved": "Godkendt",
-      "approved_description": "Tilføjet til register",
-      "rejected": "Afvist",
-      "rejected_description": "Kræver rettelse"
+      "title": "提交状态指南",
+      "pending": "待审核",
+      "pending_description": "审核中",
+      "approved": "已批准",
+      "approved_description": "已添加到注册表",
+      "rejected": "已拒绝",
+      "rejected_description": "需要修正"
     },
-    "submit_divider": "Indsend din Mini",
+    "submit_divider": "提交您的迷你",
     "seo": {
-      "og_title": "Afventende Registerindleveringer - Classic Mini DIY",
-      "og_description": "Spor status for afventende Classic Mini registerindleveringer",
-      "twitter_title": "Afventende Registerindleveringer - Classic Mini DIY",
-      "twitter_description": "Spor status for afventende Classic Mini registerindleveringer"
+      "og_title": "待审核的注册表提交 - Classic Mini DIY",
+      "og_description": "追踪经典迷你注册表待审核提交的状态",
+      "twitter_title": "待审核的注册表提交 - Classic Mini DIY",
+      "twitter_description": "追踪经典迷你注册表待审核提交的状态"
     }
   },
-  "no": {
-    "title": "Ventende Registerinnleveringer - Classic Mini DIY",
-    "description": "Spor statusen til ventende Classic Mini registerinnleveringer",
-    "hero_title": "Ventende Registerinnleveringer",
-    "breadcrumb_title": "Ventende Innleveringer",
-    "breadcrumb_parent": "Register",
-    "main_heading": "Ventende Registerinnleveringer",
-    "subtitle": "innleveringer venter på gjennomgang",
-    "description_text": "Nedenfor kan du se alle ventende registerinnleveringer som for øyeblikket blir gjennomgått. Innleveringer behandles vanligvis innen 7-14 dager.",
-    "contact_text": "Hvis du har spørsmål om din innlevering, vennligst",
-    "contact_link": "kontakt oss",
+  "ko": {
+    "title": "대기 중인 레지스트리 제출 - Classic Mini DIY",
+    "description": "클래식 미니 레지스트리 대기 중인 제출 상태 추적",
+    "hero_title": "대기 중인 레지스트리 제출",
+    "breadcrumb_title": "대기 중인 제출",
+    "breadcrumb_parent": "레지스트리",
+    "main_heading": "대기 중인 레지스트리 제출",
+    "subtitle": "건의 제출이 검토 대기 중",
+    "description_text": "아래에서 현재 검토 중인 모든 대기 중인 레지스트리 제출을 확인할 수 있습니다. 제출은 보통 7-14일 이내에 처리됩니다.",
+    "contact_text": "제출에 대한 질문이 있으시면",
+    "contact_link": "문의하세요",
     "table_headers": {
-      "year": "År",
-      "model": "Modell",
-      "body_number": "Karosserinummer",
-      "submitted_by": "Innlevert av",
-      "status": "Status"
+      "year": "연도",
+      "model": "모델",
+      "body_number": "차체 번호",
+      "submitted_by": "제출자",
+      "status": "상태"
     },
     "status_card": {
-      "title": "Guide for Innleveringsstatus",
-      "pending": "Ventende",
-      "pending_description": "Under gjennomgang",
-      "approved": "Godkjent",
-      "approved_description": "Lagt til i register",
-      "rejected": "Avvist",
-      "rejected_description": "Trenger korrigering"
+      "title": "제출 상태 안내",
+      "pending": "대기 중",
+      "pending_description": "검토 중",
+      "approved": "승인됨",
+      "approved_description": "레지스트리에 추가됨",
+      "rejected": "거부됨",
+      "rejected_description": "수정 필요"
     },
-    "submit_divider": "Send inn din Mini",
+    "submit_divider": "미니를 등록하세요",
     "seo": {
-      "og_title": "Ventende Registerinnleveringer - Classic Mini DIY",
-      "og_description": "Spor statusen til ventende Classic Mini registerinnleveringer",
-      "twitter_title": "Ventende Registerinnleveringer - Classic Mini DIY",
-      "twitter_description": "Spor statusen til ventende Classic Mini registerinnleveringer"
+      "og_title": "대기 중인 레지스트리 제출 - Classic Mini DIY",
+      "og_description": "클래식 미니 레지스트리 대기 중인 제출 상태 추적",
+      "twitter_title": "대기 중인 레지스트리 제출 - Classic Mini DIY",
+      "twitter_description": "클래식 미니 레지스트리 대기 중인 제출 상태 추적"
     }
   }
 }

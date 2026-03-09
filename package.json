@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@fontsource/outfit": "^5.2.8",
+    "@iconify-json/heroicons": "^1.2.3",
     "@langchain/langgraph-sdk": "^1.6.0",
     "@nuxt/ui": "^4.4.0",
     "@nuxtjs/mcp-toolkit": "^0.6.3",

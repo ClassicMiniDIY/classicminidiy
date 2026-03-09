@@ -43,10 +43,11 @@
     data: colorItems,
     status: fetchStatus,
     refresh: refreshData,
-  } = await useFetch<ColorQueueItem[]>('/api/colors/queue/list');
+  } = await useAdminFetch<ColorQueueItem[]>('/api/colors/queue/list');
 
   // Table Configuration
   const tableHeaders: TableHeader[] = [
+    { title: 'Images', value: 'uploadedFiles' },
     { title: 'Name', value: 'name', sortable: true },
     { title: 'Code', value: 'code', sortable: true },
     { title: 'Short Code', value: 'shortCode' },
@@ -61,6 +62,15 @@
 
   // Computed
   const isLoading = computed(() => fetchStatus.value === 'pending' || isProcessing.value);
+
+  // Helper to extract uploaded images (handles both string[] and { url, category }[] formats)
+  const getUploadedImages = (item: ColorQueueItem): { url: string; category: string }[] => {
+    const files = (item as any).uploadedFiles;
+    if (!Array.isArray(files)) return [];
+    return files.map((f: any) =>
+      typeof f === 'string' ? { url: f, category: 'general' } : { url: f.url, category: f.category || 'general' }
+    );
+  };
 
   // Helper function to check if item is pending
   const isPending = (item: ColorQueueItem) => !item.status || item.status === ColorItemStatus.PENDING;
@@ -142,7 +152,7 @@
       // Use edited data if available, otherwise use original item
       const dataToSave = editedData[item.id] || item;
 
-      const { error } = await useFetch('/api/colors/queue/save', {
+      const { error } = await useAdminFetch('/api/colors/queue/save', {
         method: 'POST',
         body: {
           uuid: item.id,
@@ -196,7 +206,7 @@
     errorMessage.value = '';
 
     try {
-      await $fetch('/api/colors/queue/reject', {
+      await $adminFetch('/api/colors/queue/reject', {
         method: 'POST',
         body: {
           uuid: itemToReject.id,
@@ -283,6 +293,26 @@
             :key="item.id"
             class="border-b border-default last:border-0 hover:bg-muted transition-colors"
           >
+            <!-- Images -->
+            <td class="p-2">
+              <div v-if="getUploadedImages(item).length > 0" class="flex gap-1">
+                <a
+                  v-for="(img, idx) in getUploadedImages(item)"
+                  :key="idx"
+                  :href="img.url"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <img
+                    :src="img.url"
+                    :alt="`Upload ${idx + 1}`"
+                    class="h-12 w-12 object-cover rounded border border-default hover:opacity-80 transition-opacity"
+                  />
+                </a>
+              </div>
+              <span v-else class="text-xs opacity-50">No images</span>
+            </td>
+
             <!-- Name -->
             <td class="p-2">
               <UInput

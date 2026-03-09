@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  const { t, locale, locales, setLocale } = useI18n();
+  const { locale, locales, setLocale } = useI18n({ useScope: 'global' });
   const switchLocalePath = useSwitchLocalePath();
 
   const currentLocale = computed(() => {
@@ -59,14 +59,14 @@
         onSelect: () => handleLanguageChange(loc.code),
       }))
     "
-    :aria-label="t('language_menu_aria')"
+    :aria-label="$t('language_menu_aria')"
   >
     <UButton
       variant="ghost"
       size="sm"
       class="w-20"
-      :aria-label="t('language_button_aria')"
-      :title="t('language_button_title')"
+      :aria-label="$t('language_button_aria')"
+      :title="$t('language_button_title')"
     >
       <i class="fad fa-globe shrink-0"></i>
       <span class="text-xs font-medium">{{ currentLocale?.code?.toUpperCase() || 'EN' }}</span>

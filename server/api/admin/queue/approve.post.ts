@@ -64,22 +64,37 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
   let error;
 
   switch (targetType) {
-    case 'color':
+    case 'color': {
+      // Map uploaded files to swatch_path and contributor_images based on category
+      let swatchPath = data.imageSwatch || data.swatch_path || null;
+      const contributorImages: { url: string; contributor?: string }[] = data.images || data.contributor_images || [];
+      const uploadedFiles = data.uploadedFiles || [];
+
+      for (const file of uploadedFiles) {
+        const fileObj = typeof file === 'string' ? { url: file, category: 'general' } : file;
+        if (fileObj.category === 'swatch' && !swatchPath) {
+          swatchPath = fileObj.url;
+        } else if (fileObj.category === 'car-photos' || fileObj.category === 'general') {
+          contributorImages.push({ url: fileObj.url, contributor: data.submittedBy || data.legacy_submitted_by || null });
+        }
+      }
+
       ({ error } = await supabase.from('colors').insert({
         name: data.name,
         code: data.code || '',
         short_code: data.shortCode || data.short_code || '',
         ditzler_ppg_code: data.ditzlerPpgCode || data.ditzler_ppg_code || '',
         dulux_code: data.duluxCode || data.dulux_code || '',
-        hex_value: data.primaryColor || data.hex_value || '',
-        has_swatch: data.hasSwatch || data.has_swatch || false,
-        swatch_path: data.imageSwatch || data.swatch_path || null,
-        contributor_images: data.images || data.contributor_images || [],
+        hex_value: data.primaryColor || data.hex_value || data.hexValue || '',
+        has_swatch: !!swatchPath || data.hasSwatch || data.has_swatch || false,
+        swatch_path: swatchPath,
+        contributor_images: contributorImages,
         status: 'approved',
         legacy_submitted_by: data.submittedBy || data.legacy_submitted_by || null,
         legacy_submitted_by_email: data.submittedByEmail || data.legacy_submitted_by_email || null,
       }));
       break;
+    }
 
     case 'wheel':
       ({ error } = await supabase.from('wheels').insert({
@@ -153,12 +168,46 @@ async function applyEditSuggestion(supabase: any, targetType: string, targetId: 
     }
   }
 
+  // Handle new collection creation before stripping meta fields
+  if (updates.collection_id === '__new__') {
+    const newTitle = updates._new_collection_title;
+    const newDescription = updates._new_collection_description;
+
+    if (newTitle) {
+      // Determine collection type from the target document
+      const { data: targetDoc } = await supabase
+        .from('archive_documents')
+        .select('type')
+        .eq('id', targetId)
+        .single();
+
+      const slug = String(newTitle).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+      const { data: newCollection, error: collError } = await supabase
+        .from('document_collections')
+        .insert({
+          slug,
+          type: targetDoc?.type || 'manual',
+          title: newTitle,
+          description: newDescription || null,
+          status: 'approved',
+        })
+        .select('id')
+        .single();
+
+      if (collError) return `Failed to create collection: ${collError.message}`;
+
+      // Replace sentinel with actual new collection ID
+      updates.collection_id = newCollection.id;
+    } else {
+      delete updates.collection_id;
+    }
+  }
+
   // Strip meta-only fields (prefixed with _) that are not actual DB columns
-  // and sentinel values that should not be written to the database
   for (const key of Object.keys(updates)) {
     if (key.startsWith('_')) delete updates[key];
   }
-  if (updates.collection_id === '__new__') delete updates.collection_id;
 
   if (Object.keys(updates).length === 0) return null;
 

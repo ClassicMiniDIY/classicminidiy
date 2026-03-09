@@ -64,6 +64,7 @@ export const useWheels = () => {
       .from('wheels')
       .select('*')
       .eq('id', id)
+      .eq('status', 'approved')
       .single();
 
     if (error) return null;

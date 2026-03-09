@@ -25,6 +25,8 @@ export default defineEventHandler(async (event) => {
   return (data || []).map((item: any) => ({
     id: item.id,
     ...item.data,
+    submissionType: item.type,
+    targetId: item.target_id,
     status: item.status === 'pending' ? 'P' : item.status === 'approved' ? 'A' : 'R',
   }));
 });

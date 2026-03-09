@@ -1,5 +1,6 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../data/models/generic';
+  import type { ArchiveDocumentItem } from '../../../composables/useArchiveDocuments';
 
   const { t } = useI18n();
   const route = useRoute();
@@ -72,12 +73,56 @@
     );
   });
 
+  // Cards view uses simple pagination over flat documents
   const paginatedDocuments = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
     return filteredDocuments.value.slice(start, start + itemsPerPage);
   });
 
-  const pageCount = computed(() => Math.ceil(filteredDocuments.value.length / itemsPerPage));
+  // Table view: group ALL filtered docs by collection, paginate top-level items only
+  const topLevelTableItems = computed(() => {
+    const docs = filteredDocuments.value;
+    const cols = collections.value || [];
+
+    const collectionDocs = new Map<string, ArchiveDocumentItem[]>();
+    const standalone: ArchiveDocumentItem[] = [];
+
+    for (const doc of docs) {
+      if (doc.collectionId) {
+        if (!collectionDocs.has(doc.collectionId)) {
+          collectionDocs.set(doc.collectionId, []);
+        }
+        collectionDocs.get(doc.collectionId)!.push(doc);
+      } else {
+        standalone.push(doc);
+      }
+    }
+
+    const result: Array<
+      { kind: 'collection'; col: typeof cols[0]; docs: ArchiveDocumentItem[] } |
+      { kind: 'standalone'; doc: ArchiveDocumentItem }
+    > = [];
+
+    for (const col of cols) {
+      const colDocs = collectionDocs.get(col.id);
+      if (colDocs && colDocs.length > 0) {
+        result.push({ kind: 'collection', col, docs: colDocs });
+      }
+    }
+
+    for (const doc of standalone) {
+      result.push({ kind: 'standalone', doc });
+    }
+
+    return result;
+  });
+
+  const pageCount = computed(() => {
+    if (viewMode.value === 'table') {
+      return Math.ceil(topLevelTableItems.value.length / itemsPerPage);
+    }
+    return Math.ceil(filteredDocuments.value.length / itemsPerPage);
+  });
 
   // Sync type filter with URL query param
   watch(activeType, (val) => {
@@ -98,6 +143,125 @@
   function nextPage() {
     if (currentPage.value < pageCount.value) currentPage.value++;
   }
+
+  // Flat table data with manual expand/collapse (avoids UTable tree DOM patching bug)
+  interface FlatTableRow {
+    id: string;
+    title: string;
+    description: string | null;
+    image: string;
+    download: string;
+    author: string | null;
+    path: string;
+    isCollection: boolean;
+    collectionId?: string;
+    childCount?: number;
+    depth: number;
+    isExpanded: boolean;
+    canExpand: boolean;
+  }
+
+  const expandedCollections = ref<Set<string>>(new Set());
+
+  function toggleCollection(collectionId: string) {
+    const next = new Set(expandedCollections.value);
+    if (next.has(collectionId)) {
+      next.delete(collectionId);
+    } else {
+      next.add(collectionId);
+    }
+    expandedCollections.value = next;
+  }
+
+  const flatTableData = computed<FlatTableRow[]>(() => {
+    // Paginate top-level items, then flatten with full children
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const pageItems = topLevelTableItems.value.slice(start, start + itemsPerPage);
+
+    const rows: FlatTableRow[] = [];
+
+    for (const item of pageItems) {
+      if (item.kind === 'collection') {
+        const isExpanded = expandedCollections.value.has(item.col.id);
+        rows.push({
+          id: `col-${item.col.id}`,
+          collectionId: item.col.id,
+          title: item.col.title,
+          description: item.col.description,
+          image: item.col.image,
+          download: '',
+          author: null,
+          path: `/archive/documents/collection/${item.col.slug}`,
+          isCollection: true,
+          childCount: item.docs.length,
+          depth: 0,
+          isExpanded,
+          canExpand: true,
+        });
+
+        if (isExpanded) {
+          for (const doc of item.docs) {
+            rows.push({
+              id: doc.id,
+              title: doc.title,
+              description: doc.description,
+              image: doc.image,
+              download: doc.download,
+              author: doc.author,
+              path: doc.path,
+              isCollection: false,
+              depth: 1,
+              isExpanded: false,
+              canExpand: false,
+            });
+          }
+        }
+      } else {
+        rows.push({
+          id: item.doc.id,
+          title: item.doc.title,
+          description: item.doc.description,
+          image: item.doc.image,
+          download: item.doc.download,
+          author: item.doc.author,
+          path: item.doc.path,
+          isCollection: false,
+          depth: 0,
+          isExpanded: false,
+          canExpand: false,
+        });
+      }
+    }
+
+    return rows;
+  });
+
+  const tableColumns = [
+    {
+      id: 'image',
+      header: t('table_headers.image'),
+      meta: { class: { th: 'w-24', td: 'w-24' } },
+    },
+    {
+      id: 'fileType',
+      header: t('table_headers.file_type'),
+      meta: { class: { th: 'w-16', td: 'w-16' } },
+    },
+    {
+      id: 'title',
+      accessorKey: 'title',
+      header: t('table_headers.title'),
+    },
+    {
+      id: 'author',
+      accessorKey: 'author',
+      header: t('table_headers.author'),
+    },
+    {
+      id: 'actions',
+      header: t('table_headers.actions'),
+    },
+  ];
 
   // SEO
   useHead({
@@ -245,74 +409,98 @@
           </div>
 
           <!-- Documents Table View -->
-          <div v-else class="overflow-x-auto">
-            <!-- Reuse same table pattern from ArchiveLandingIterator -->
-            <table class="w-full">
-              <thead class="border-b border-default">
-                <tr>
-                  <th class="hidden md:table-cell p-3 text-left">{{ t('table_headers.image') }}</th>
-                  <th class="hidden md:table-cell p-3 text-center">{{ t('table_headers.file_type') }}</th>
-                  <th class="p-3 text-left">{{ t('table_headers.title') }}</th>
-                  <th class="hidden lg:table-cell p-3 text-left">{{ t('table_headers.author') }}</th>
-                  <th class="p-3 text-right">{{ t('table_headers.actions') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="item in paginatedDocuments"
-                  :key="item.title"
-                  class="border-b border-default hover:bg-muted/50"
-                >
-                  <td class="hidden md:table-cell p-3">
-                    <div class="h-12 w-12 rounded-lg overflow-hidden">
-                      <img
-                        v-if="item.image"
-                        :src="item.image"
-                        :alt="item.title"
-                        class="h-12 w-12 object-cover"
-                      />
-                      <div v-else class="flex justify-center items-center h-12 w-12 bg-muted">
-                        <i class="fad fa-image-slash text-lg text-muted"></i>
-                      </div>
+          <div v-else>
+            <UTable
+              :data="flatTableData"
+              :columns="tableColumns"
+              :get-row-id="(row: FlatTableRow) => row.id"
+            >
+              <!-- Image cell: expand toggle for collections, thumbnail for docs, hidden for children -->
+              <template #image-cell="{ row }">
+                <div v-if="row.original.depth === 0" class="flex items-center gap-2">
+                  <button
+                    v-if="row.original.canExpand"
+                    @click.stop.prevent="toggleCollection(row.original.collectionId!)"
+                    class="text-muted hover:text-primary transition-colors p-1"
+                  >
+                    <i :class="expandedCollections.has(row.original.collectionId!) ? 'fas fa-chevron-down' : 'fas fa-chevron-right'" class="text-xs"></i>
+                  </button>
+                  <div class="hidden md:block h-12 w-12 rounded-lg overflow-hidden">
+                    <img
+                      v-if="row.original.image"
+                      :src="row.original.image"
+                      :alt="row.original.title"
+                      class="h-12 w-12 object-cover"
+                    />
+                    <div v-else class="flex justify-center items-center h-12 w-12 bg-muted">
+                      <i :class="row.original.isCollection ? 'fad fa-books text-lg text-muted' : 'fad fa-image-slash text-lg text-muted'"></i>
                     </div>
-                  </td>
-                  <td class="hidden md:table-cell p-3">
-                    <div class="flex justify-center">
-                      <i
-                        v-if="item.download"
-                        :class="[
-                          'fad',
-                          'fa-file-' + (item.download.split('.').pop()?.toLowerCase() || ''),
-                          'text-2xl text-secondary',
-                        ]"
-                      ></i>
-                      <i v-else class="fad fa-question-circle text-2xl text-warning"></i>
-                    </div>
-                  </td>
-                  <td class="p-3">
-                    <NuxtLink :to="item.path" class="hover:underline">
-                      <div class="font-bold">{{ item.title }}</div>
-                    </NuxtLink>
-                    <div class="text-sm text-muted">{{ item.description }}</div>
-                  </td>
-                  <td class="hidden lg:table-cell p-3 text-muted">{{ item.author || '\u2014' }}</td>
-                  <td class="p-3 text-right">
-                    <div class="flex gap-2 justify-end">
-                      <UButton
-                        v-if="item.download"
-                        :to="item.download"
-                        target="_blank"
-                        variant="ghost"
-                        color="primary"
-                        square
-                      >
-                        <i class="fad fa-download"></i>
-                      </UButton>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </div>
+              </template>
+
+              <!-- File type cell: hidden for nested child rows -->
+              <template #fileType-cell="{ row }">
+                <div v-if="row.original.depth === 0" class="hidden md:flex justify-center">
+                  <span v-if="row.original.isCollection" class="badge badge-primary badge-sm">{{ row.original.childCount }}</span>
+                  <i
+                    v-else-if="row.original.download"
+                    :class="[
+                      'fad',
+                      'fa-file-' + (row.original.download.split('.').pop()?.toLowerCase() || ''),
+                      'text-2xl text-secondary',
+                    ]"
+                  ></i>
+                  <i v-else class="fad fa-question-circle text-2xl text-warning"></i>
+                </div>
+              </template>
+
+              <!-- Title cell: indented for children -->
+              <template #title-cell="{ row }">
+                <div :style="{ paddingLeft: `${row.original.depth * 1.5}rem` }">
+                  <NuxtLink :to="row.original.path" class="hover:underline">
+                    <span class="font-bold flex items-center gap-2">
+                      <i v-if="row.original.isCollection" class="fad fa-folder text-primary"></i>
+                      {{ row.original.title }}
+                    </span>
+                  </NuxtLink>
+                  <p v-if="row.original.description" class="text-sm text-muted line-clamp-1">
+                    {{ row.original.description }}
+                  </p>
+                </div>
+              </template>
+
+              <!-- Author cell -->
+              <template #author-cell="{ row }">
+                <span class="hidden lg:inline text-muted">{{ row.original.author || '\u2014' }}</span>
+              </template>
+
+              <!-- Actions cell -->
+              <template #actions-cell="{ row }">
+                <div class="flex gap-2 justify-end">
+                  <UButton
+                    v-if="row.original.isCollection"
+                    :to="row.original.path"
+                    variant="ghost"
+                    color="primary"
+                    size="sm"
+                  >
+                    {{ t('table_view_collection') }}
+                    <i class="fad fa-arrow-right ml-1"></i>
+                  </UButton>
+                  <UButton
+                    v-else-if="row.original.download"
+                    :to="row.original.download"
+                    target="_blank"
+                    variant="ghost"
+                    color="primary"
+                    square
+                  >
+                    <i class="fad fa-download"></i>
+                  </UButton>
+                </div>
+              </template>
+            </UTable>
           </div>
 
           <!-- Pagination -->
@@ -377,6 +565,7 @@
     "pagination": {
       "page_text": "Page {current} of {total}"
     },
+    "table_view_collection": "View Collection",
     "contribute_banner_title": "Know something we're missing?",
     "contribute_banner_description": "Help grow the archive with your knowledge.",
     "contribute_banner_button": "Contribute",
@@ -416,6 +605,7 @@
     "pagination": {
       "page_text": "Seite {current} von {total}"
     },
+    "table_view_collection": "Sammlung anzeigen",
     "contribute_banner_title": "Wissen Sie etwas, das uns fehlt?",
     "contribute_banner_description": "Helfen Sie, das Archiv mit Ihrem Wissen zu erweitern.",
     "contribute_banner_button": "Beitragen",
@@ -455,6 +645,7 @@
     "pagination": {
       "page_text": "Página {current} de {total}"
     },
+    "table_view_collection": "Ver Colección",
     "contribute_banner_title": "Sabes algo que nos falta?",
     "contribute_banner_description": "Ayuda a hacer crecer el archivo con tu conocimiento.",
     "contribute_banner_button": "Contribuir",
@@ -494,6 +685,7 @@
     "pagination": {
       "page_text": "Page {current} sur {total}"
     },
+    "table_view_collection": "Voir la Collection",
     "contribute_banner_title": "Vous savez quelque chose qui nous manque ?",
     "contribute_banner_description": "Aidez à enrichir l'archive avec vos connaissances.",
     "contribute_banner_button": "Contribuer",
@@ -533,6 +725,7 @@
     "pagination": {
       "page_text": "Pagina {current} di {total}"
     },
+    "table_view_collection": "Vedi Collezione",
     "contribute_banner_title": "Sai qualcosa che ci manca?",
     "contribute_banner_description": "Aiuta a far crescere l'archivio con le tue conoscenze.",
     "contribute_banner_button": "Contribuisci",
@@ -572,6 +765,7 @@
     "pagination": {
       "page_text": "Página {current} de {total}"
     },
+    "table_view_collection": "Ver Coleção",
     "contribute_banner_title": "Sabe algo que nos falta?",
     "contribute_banner_description": "Ajude a expandir o arquivo com seu conhecimento.",
     "contribute_banner_button": "Contribuir",
@@ -611,6 +805,7 @@
     "pagination": {
       "page_text": "Страница {current} из {total}"
     },
+    "table_view_collection": "Просмотр Коллекции",
     "contribute_banner_title": "Знаете что-то, что мы упустили?",
     "contribute_banner_description": "Помогите расширить архив своими знаниями.",
     "contribute_banner_button": "Внести вклад",
@@ -650,6 +845,7 @@
     "pagination": {
       "page_text": "{total}ページ中{current}ページ"
     },
+    "table_view_collection": "コレクションを見る",
     "contribute_banner_title": "何か見落としがありますか？",
     "contribute_banner_description": "あなたの知識でアーカイブの充実にご協力ください。",
     "contribute_banner_button": "貢献する",
@@ -689,6 +885,7 @@
     "pagination": {
       "page_text": "第{current}页，共{total}页"
     },
+    "table_view_collection": "查看合集",
     "contribute_banner_title": "我们遗漏了什么吗？",
     "contribute_banner_description": "用您的知识帮助扩充档案。",
     "contribute_banner_button": "贡献",
@@ -728,6 +925,7 @@
     "pagination": {
       "page_text": "{total} 페이지 중 {current} 페이지"
     },
+    "table_view_collection": "컬렉션 보기",
     "contribute_banner_title": "우리가 놓친 것을 알고 계신가요?",
     "contribute_banner_description": "당신의 지식으로 아카이브를 풍성하게 만들어주세요.",
     "contribute_banner_button": "기여하기",

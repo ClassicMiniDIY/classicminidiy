@@ -8,6 +8,7 @@ export interface ArchiveDocumentItem {
   code: string;
   path: string;
   language?: string;
+  collectionId: string | null;
 }
 
 export interface ArchiveDocumentDetail extends ArchiveDocumentItem {
@@ -70,6 +71,7 @@ export const useArchiveDocuments = () => {
     code: row.code || '',
     path: `/archive/documents/${row.slug}`,
     language: row.language || undefined,
+    collectionId: row.collection_id || null,
   });
 
   const mapToArchiveDetail = (row: any): ArchiveDocumentDetail => {

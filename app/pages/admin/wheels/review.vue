@@ -31,7 +31,7 @@
     data: rawWheels,
     status: fetchStatus,
     refresh: refreshData,
-  } = await useFetch<IWheelsData[]>('/api/wheels/review/list');
+  } = await useAdminFetch<IWheelsData[]>('/api/wheels/review/list');
 
   const wheelsToReview = ref<IWheelsDataReviewItem[]>([]);
 
@@ -65,7 +65,7 @@
     try {
       // Use edited data if available, otherwise use original item
       const dataToSave = editedData.value.get(item.uuid) || item;
-      const { error } = await useFetch('/api/wheels/review/save', {
+      const { error } = await useAdminFetch('/api/wheels/review/save', {
         method: 'POST',
         body: {
           wheel: {
@@ -173,7 +173,7 @@
     errorMessage.value = '';
 
     try {
-      const { error } = await useFetch('/api/wheels/review/delete', {
+      const { error } = await useAdminFetch('/api/wheels/review/delete', {
         method: 'POST',
         body: {
           uuid: selectedItem.value.uuid,
