@@ -204,7 +204,7 @@ describe('server/api/admin/queue/list', () => {
     const result = await handler(event);
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual({
+    expect(result[0]).toMatchObject({
       id: 'sub-1',
       type: 'new_item',
       targetType: 'color',

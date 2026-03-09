@@ -208,16 +208,6 @@ export const ArchiveItems: ArchiveItem[] = [
       '<i class="fa-duotone fa-brush" style="--fa-primary-color: #431f23; --fa-secondary-color: #c3a166; --fa-secondary-opacity: 0.8;"></i>',
     to: '/archive/colors',
   },
-  {
-    title: 'Dimensions',
-    description: '',
-    image: '',
-    path: '/archive/dimensions',
-    iconHtml:
-      '<i class="fa-duotone fa-solid fa-ruler-combined" style="--fa-primary-color: #74C0FC; --fa-secondary-color: #74C0FC;"></i>',
-    to: '/archive/dimensions',
-    disabled: true,
-  },
 ];
 
 export const LandingPageToolboxItems = [

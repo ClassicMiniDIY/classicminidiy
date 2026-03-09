@@ -197,6 +197,11 @@
                     ]
                   : []),
                 {
+                  label: t('profile.dashboard'),
+                  icon: 'i-fa6-solid-gauge',
+                  to: '/dashboard',
+                },
+                {
                   label: t('profile.submissions'),
                   icon: 'i-heroicons-document-text',
                   to: '/submissions',
@@ -205,6 +210,11 @@
                   label: t('profile.edit_profile'),
                   icon: 'i-fa6-solid-user-pen',
                   to: '/profile/edit',
+                },
+                {
+                  label: t('profile.view_profile'),
+                  icon: 'i-fa6-solid-user',
+                  to: `/users/${user?.id}`,
                 },
                 {
                   label: t('profile.contribute'),
@@ -345,6 +355,17 @@
               {{ t('profile.admin') }}
             </UButton>
             <UButton
+              to="/dashboard"
+              variant="ghost"
+              color="neutral"
+              block
+              class="justify-start font-bold"
+              @click="isMobileMenuOpen = false"
+            >
+              <i class="fad fa-gauge mr-2"></i>
+              {{ t('profile.dashboard') }}
+            </UButton>
+            <UButton
               to="/submissions"
               variant="ghost"
               color="neutral"
@@ -365,6 +386,17 @@
             >
               <i class="fad fa-user-pen mr-2"></i>
               {{ t('profile.edit_profile') }}
+            </UButton>
+            <UButton
+              :to="`/users/${user?.id}`"
+              variant="ghost"
+              color="neutral"
+              block
+              class="justify-start font-bold"
+              @click="isMobileMenuOpen = false"
+            >
+              <i class="fad fa-user mr-2"></i>
+              {{ t('profile.view_profile') }}
             </UButton>
             <UButton
               to="/contribute"
@@ -415,6 +447,8 @@
       "admin": "Admin Dashboard",
       "submissions": "My Submissions",
       "edit_profile": "Edit Profile",
+      "view_profile": "View Profile",
+      "dashboard": "Dashboard",
       "contribute": "Contribute"
     },
     "language_label": "Language",
@@ -439,6 +473,8 @@
       "admin": "Panel de Admin",
       "submissions": "Mis envíos",
       "edit_profile": "Editar Perfil",
+      "view_profile": "Ver Perfil",
+      "dashboard": "Panel",
       "contribute": "Contribuir"
     },
     "language_label": "Idioma",
@@ -463,6 +499,8 @@
       "admin": "Tableau de bord Admin",
       "submissions": "Mes soumissions",
       "edit_profile": "Modifier le Profil",
+      "view_profile": "Voir le Profil",
+      "dashboard": "Tableau de Bord",
       "contribute": "Contribuer"
     },
     "language_label": "Langue",
@@ -487,6 +525,8 @@
       "admin": "Admin-Dashboard",
       "submissions": "Meine Einreichungen",
       "edit_profile": "Profil Bearbeiten",
+      "view_profile": "Profil Anzeigen",
+      "dashboard": "Dashboard",
       "contribute": "Beitragen"
     },
     "language_label": "Sprache",
@@ -511,6 +551,8 @@
       "admin": "Pannello Admin",
       "submissions": "I miei invii",
       "edit_profile": "Modifica Profilo",
+      "view_profile": "Visualizza Profilo",
+      "dashboard": "Dashboard",
       "contribute": "Contribuisci"
     },
     "language_label": "Lingua",
@@ -535,6 +577,8 @@
       "admin": "管理ダッシュボード",
       "submissions": "投稿一覧",
       "edit_profile": "プロフィール編集",
+      "view_profile": "プロフィール表示",
+      "dashboard": "ダッシュボード",
       "contribute": "コントリビュート"
     },
     "language_label": "言語",
@@ -559,6 +603,8 @@
       "admin": "관리자 대시보드",
       "submissions": "내 제출",
       "edit_profile": "프로필 편집",
+      "view_profile": "프로필 보기",
+      "dashboard": "대시보드",
       "contribute": "기여하기"
     },
     "language_label": "언어",
@@ -583,6 +629,8 @@
       "admin": "Painel Admin",
       "submissions": "Minhas submissões",
       "edit_profile": "Editar Perfil",
+      "view_profile": "Ver Perfil",
+      "dashboard": "Painel",
       "contribute": "Contribuir"
     },
     "language_label": "Idioma",
@@ -607,6 +655,8 @@
       "admin": "Панель администратора",
       "submissions": "Мои заявки",
       "edit_profile": "Редактировать Профиль",
+      "view_profile": "Просмотр Профиля",
+      "dashboard": "Панель управления",
       "contribute": "Внести вклад"
     },
     "language_label": "Язык",
@@ -631,6 +681,8 @@
       "admin": "管理面板",
       "submissions": "我的提交",
       "edit_profile": "编辑个人资料",
+      "view_profile": "查看个人资料",
+      "dashboard": "仪表板",
       "contribute": "贡献"
     },
     "language_label": "语言",

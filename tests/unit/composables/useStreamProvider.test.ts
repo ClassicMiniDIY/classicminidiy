@@ -611,24 +611,22 @@ describe('useStreamProvider', () => {
       it('updates existing message by ID when it already exists', async () => {
         vi.stubGlobal(
           'fetch',
-          vi
-            .fn()
-            .mockResolvedValue(
-              createMockFetchResponse([
-                'data: ' +
-                  JSON.stringify({
-                    event: 'messages/partial',
-                    data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1' }],
-                  }),
-                'data: ' +
-                  JSON.stringify({
-                    event: 'messages/partial',
-                    data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1 and Part 2' }],
-                  }),
-                'data: [DONE]',
-                '',
-              ])
-            )
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/partial',
+                  data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1' }],
+                }),
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/partial',
+                  data: [{ id: 'run-msg-1', type: 'ai', content: 'Part 1 and Part 2' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
         );
 
         const { createStreamSession } = await freshModule();
@@ -679,24 +677,22 @@ describe('useStreamProvider', () => {
       it('replaces existing message with completed version', async () => {
         vi.stubGlobal(
           'fetch',
-          vi
-            .fn()
-            .mockResolvedValue(
-              createMockFetchResponse([
-                'data: ' +
-                  JSON.stringify({
-                    event: 'messages/partial',
-                    data: [{ id: 'stream-1', type: 'ai', content: 'Partial...' }],
-                  }),
-                'data: ' +
-                  JSON.stringify({
-                    event: 'messages/complete',
-                    data: [{ id: 'stream-1', type: 'ai', content: 'Complete response' }],
-                  }),
-                'data: [DONE]',
-                '',
-              ])
-            )
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/partial',
+                  data: [{ id: 'stream-1', type: 'ai', content: 'Partial...' }],
+                }),
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'stream-1', type: 'ai', content: 'Complete response' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
         );
 
         const { createStreamSession } = await freshModule();
@@ -714,24 +710,22 @@ describe('useStreamProvider', () => {
       it('removes empty messages when complete event has no valid content', async () => {
         vi.stubGlobal(
           'fetch',
-          vi
-            .fn()
-            .mockResolvedValue(
-              createMockFetchResponse([
-                'data: ' +
-                  JSON.stringify({
-                    event: 'messages/partial',
-                    data: [{ id: 'will-be-empty', type: 'ai', content: 'temp' }],
-                  }),
-                'data: ' +
-                  JSON.stringify({
-                    event: 'messages/complete',
-                    data: [{ id: 'will-be-empty', type: 'ai', content: '' }],
-                  }),
-                'data: [DONE]',
-                '',
-              ])
-            )
+          vi.fn().mockResolvedValue(
+            createMockFetchResponse([
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/partial',
+                  data: [{ id: 'will-be-empty', type: 'ai', content: 'temp' }],
+                }),
+              'data: ' +
+                JSON.stringify({
+                  event: 'messages/complete',
+                  data: [{ id: 'will-be-empty', type: 'ai', content: '' }],
+                }),
+              'data: [DONE]',
+              '',
+            ])
+          )
         );
 
         const { createStreamSession } = await freshModule();
