@@ -14,10 +14,7 @@
       'Electrical Diagrams': 'archive_items.electrical_diagrams',
       'Wheel Library': 'archive_items.wheel_library',
       'Color Picker': 'archive_items.color_picker',
-      Adverts: 'archive_items.adverts',
-      'Vendor Catalogues': 'archive_items.vendor_catalogues',
-      'Tuning and Modifications': 'archive_items.tuning_modifications',
-      Dimensions: 'archive_items.dimensions',
+      Documents: 'archive_items.documents',
     };
     return t(titleMap[title] || title);
   };
@@ -207,10 +204,7 @@
       "electrical_diagrams": "Electrical Diagrams",
       "wheel_library": "Wheel Library",
       "color_picker": "Color Picker",
-      "adverts": "Adverts",
-      "vendor_catalogues": "Vendor Catalogues",
-      "tuning_modifications": "Tuning and Modifications",
-      "dimensions": "Dimensions"
+      "documents": "Documents"
     }
   },
   "es": {
@@ -249,10 +243,7 @@
       "electrical_diagrams": "Diagramas Eléctricos",
       "wheel_library": "Biblioteca de Ruedas",
       "color_picker": "Selector de Color",
-      "adverts": "Anuncios",
-      "vendor_catalogues": "Catálogos de Proveedores",
-      "tuning_modifications": "Ajustes y Modificaciones",
-      "dimensions": "Dimensiones"
+      "documents": "Documentos"
     }
   },
   "fr": {
@@ -291,10 +282,7 @@
       "electrical_diagrams": "Schémas Électriques",
       "wheel_library": "Bibliothèque de Roues",
       "color_picker": "Sélecteur de Couleur",
-      "adverts": "Publicités",
-      "vendor_catalogues": "Catalogues de Fournisseurs",
-      "tuning_modifications": "Réglages et Modifications",
-      "dimensions": "Dimensions"
+      "documents": "Documents"
     }
   },
   "it": {
@@ -333,10 +321,7 @@
       "electrical_diagrams": "Schemi Elettrici",
       "wheel_library": "Libreria Ruote",
       "color_picker": "Selettore Colore",
-      "adverts": "Pubblicità",
-      "vendor_catalogues": "Cataloghi Fornitori",
-      "tuning_modifications": "Messa a Punto e Modifiche",
-      "dimensions": "Dimensioni"
+      "documents": "Documenti"
     }
   },
   "de": {
@@ -375,10 +360,7 @@
       "electrical_diagrams": "Schaltpläne",
       "wheel_library": "Felgen-Bibliothek",
       "color_picker": "Farbwähler",
-      "adverts": "Werbeanzeigen",
-      "vendor_catalogues": "Lieferantenkataloge",
-      "tuning_modifications": "Tuning und Modifikationen",
-      "dimensions": "Abmessungen"
+      "documents": "Dokumente"
     }
   },
   "pt": {
@@ -417,10 +399,7 @@
       "electrical_diagrams": "Diagramas Elétricos",
       "wheel_library": "Biblioteca de Rodas",
       "color_picker": "Seletor de Cor",
-      "adverts": "Anúncios",
-      "vendor_catalogues": "Catálogos de Fornecedores",
-      "tuning_modifications": "Ajustes e Modificações",
-      "dimensions": "Dimensões"
+      "documents": "Documentos"
     }
   },
   "ru": {
@@ -459,10 +438,7 @@
       "electrical_diagrams": "Электрические Схемы",
       "wheel_library": "Библиотека Колес",
       "color_picker": "Выбор Цвета",
-      "adverts": "Реклама",
-      "vendor_catalogues": "Каталоги Поставщиков",
-      "tuning_modifications": "Тюнинг и Модификации",
-      "dimensions": "Размеры"
+      "documents": "Документы"
     }
   },
   "ja": {
@@ -501,10 +477,7 @@
       "electrical_diagrams": "電気配線図",
       "wheel_library": "ホイールライブラリ",
       "color_picker": "カラーピッカー",
-      "adverts": "広告",
-      "vendor_catalogues": "ベンダーカタログ",
-      "tuning_modifications": "チューニングと改造",
-      "dimensions": "寸法"
+      "documents": "ドキュメント"
     }
   },
   "zh": {
@@ -543,10 +516,7 @@
       "electrical_diagrams": "电路图",
       "wheel_library": "轮毂库",
       "color_picker": "颜色选择器",
-      "adverts": "广告",
-      "vendor_catalogues": "供应商目录",
-      "tuning_modifications": "调校和改装",
-      "dimensions": "尺寸"
+      "documents": "文档"
     }
   },
   "ko": {
@@ -585,10 +555,7 @@
       "electrical_diagrams": "전기 배선도",
       "wheel_library": "휠 라이브러리",
       "color_picker": "색상 선택기",
-      "adverts": "광고",
-      "vendor_catalogues": "공급업체 카탈로그",
-      "tuning_modifications": "튜닝 및 개조",
-      "dimensions": "치수"
+      "documents": "문서"
     }
   }
 }

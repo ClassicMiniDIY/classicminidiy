@@ -126,7 +126,8 @@ describe('useArchiveDocuments', () => {
       const result = await listByType('manual');
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
+      expect(result[0]).toMatchObject({
+        id: 'doc-1',
         title: 'Workshop Manual',
         description: 'A classic Mini workshop manual',
         image: 'https://test.supabase.co/storage/v1/object/public/archive-thumbnails/manuals/workshop-manual-thumb.jpg',
@@ -457,7 +458,9 @@ describe('useArchiveDocuments', () => {
       await getDocumentBySlug('workshop-manual');
 
       expect(mockSupabase.from).toHaveBeenCalledWith('archive_documents');
-      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('*');
+      expect(mockSupabase._mockSelect).toHaveBeenCalledWith(
+        '*, document_collections(id, slug, title, description, thumbnail_path)'
+      );
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('slug', 'workshop-manual');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('status', 'approved');
       expect(mockSupabase._mockMaybeSingle).toHaveBeenCalled();
@@ -486,15 +489,14 @@ describe('useArchiveDocuments', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null when Supabase returns an error', async () => {
+    it('throws when Supabase returns an error', async () => {
       const supabaseError = { message: 'Query failed', code: '500' };
       mockSupabase._mockMaybeSingle.mockResolvedValue({ data: null, error: supabaseError });
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { getDocumentBySlug } = useArchiveDocuments();
-      const result = await getDocumentBySlug('bad-slug');
 
-      expect(result).toBeNull();
+      await expect(getDocumentBySlug('bad-slug')).rejects.toEqual(supabaseError);
     });
   });
 
@@ -525,15 +527,14 @@ describe('useArchiveDocuments', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null when Supabase returns an error for collection', async () => {
+    it('throws when Supabase returns an error for collection', async () => {
       const supabaseError = { message: 'Query failed', code: '500' };
       mockSupabase._mockMaybeSingle.mockResolvedValue({ data: null, error: supabaseError });
 
       const { useArchiveDocuments } = await import('~/app/composables/useArchiveDocuments');
       const { getCollectionBySlug } = useArchiveDocuments();
-      const result = await getCollectionBySlug('bad-slug');
 
-      expect(result).toBeNull();
+      await expect(getCollectionBySlug('bad-slug')).rejects.toEqual(supabaseError);
     });
 
     it('fetches and returns documents for the collection', async () => {

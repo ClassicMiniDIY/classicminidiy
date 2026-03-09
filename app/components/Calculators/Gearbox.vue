@@ -1,114 +1,53 @@
 <script setup lang="ts">
-  const { t } = useI18n();
+  import { options, kphFactor, type TireValue } from '../../../data/models/gearing';
   import {
-    options,
-    tableHeaders,
-    chartOptions,
-    kphFactor,
-    type ISpeedometer,
-    type TireValue,
-  } from '../../../data/models/gearing';
+    calculateTire,
+    calculateGearingTable,
+    calculateSpeedoData,
+    calculateSpeedometerTable,
+    calculateChartData,
+    type ChartSeriesData,
+  } from '../../utils/gearingCalculations';
+  import type { GearConfig } from '../../types/gearing';
+  import type { SavedGearConfig } from '../../composables/useGearConfigs';
 
-  // Dark mode support
-  const colorMode = useColorMode();
-  const isDark = computed(() => colorMode.value === 'dark');
+  const { t } = useI18n();
+  const { capture } = usePostHog();
+  const { user, isAuthenticated } = useAuth();
+  const {
+    configs: savedConfigs,
+    loading: savedLoading,
+    fetchConfigs,
+    saveConfig,
+    deleteConfig: deleteSavedConfig,
+  } = useGearConfigs();
 
-  // Dark mode chart colors
-  const darkModeChartOptions = {
-    chart: {
-      backgroundColor: '#171717',
-    },
-    title: {
-      style: { color: '#e5e5e5' },
-    },
-    subtitle: {
-      style: { color: '#a3a3a3' },
-    },
-    xAxis: {
-      labels: { style: { color: '#a3a3a3' } },
-      title: { style: { color: '#e5e5e5' } },
-      gridLineColor: '#404040',
-      lineColor: '#404040',
-      tickColor: '#404040',
-    },
-    yAxis: {
-      labels: { style: { color: '#a3a3a3' } },
-      title: { style: { color: '#e5e5e5' } },
-      gridLineColor: '#404040',
-      lineColor: '#404040',
-      tickColor: '#404040',
-    },
-    legend: {
-      itemStyle: { color: '#e5e5e5' },
-      itemHoverStyle: { color: '#ffffff' },
-    },
-    tooltip: {
-      backgroundColor: '#262626',
-      style: { color: '#e5e5e5' },
-    },
-  };
+  const CONFIG_COLORS = ['#5b8a8a', '#c17f59', '#7a9a6d', '#8b6d8b', '#6b7fa0'];
+  const MAX_CONFIGS = 5;
 
-  // Light mode chart colors
-  const lightModeChartOptions = {
-    chart: {
-      backgroundColor: '#ffffff',
-    },
-    title: {
-      style: { color: '#171717' },
-    },
-    subtitle: {
-      style: { color: '#525252' },
-    },
-    xAxis: {
-      labels: { style: { color: '#525252' } },
-      title: { style: { color: '#171717' } },
-      gridLineColor: '#e5e5e5',
-      lineColor: '#d4d4d4',
-      tickColor: '#d4d4d4',
-    },
-    yAxis: {
-      labels: { style: { color: '#525252' } },
-      title: { style: { color: '#171717' } },
-      gridLineColor: '#e5e5e5',
-      lineColor: '#d4d4d4',
-      tickColor: '#d4d4d4',
-    },
-    legend: {
-      itemStyle: { color: '#171717' },
-      itemHoverStyle: { color: '#000000' },
-    },
-    tooltip: {
-      backgroundColor: '#ffffff',
-      style: { color: '#171717' },
-    },
-  };
-
-  // Default Values for form elements
+  // Shared settings
   const metric = ref(false);
-  const final_drive = ref(3.444);
-  const gear_ratios = ref([2.583, 1.644, 1.25, 1.0]);
-  const drop_gear = ref(1);
-  const speedo_drive = ref(0.3529);
-  const max_rpm = ref(6500);
-  const tire_type = ref<TireValue>({
-    width: 145,
-    profile: 80,
-    size: 10,
-  });
+  const tireType = ref<TireValue>({ width: 145, profile: 80, size: 10 });
+  const speedoDrive = ref(0.3529);
+  const maxRpm = ref(6500);
 
-  // Form Options
-  const tires = ref(options.tires);
-  const diffs = ref(options.diffs);
-  const speedosRatios = ref(options.speedosRatios);
-  const dropGears = ref(options.dropGears);
-  const gearRatios = ref(options.gearRatios);
-  const speedos = ref(options.speedos);
+  // Gear configurations (1-5)
+  const configs = ref<GearConfig[]>([
+    {
+      name: 'Minispares Evolution Helical Heavy... · 3.444:1 · 1:1',
+      gearset: [2.583, 1.644, 1.25, 1.0],
+      finalDrive: 3.444,
+      dropGear: 1,
+    },
+  ]);
+
+  // Save/load state
+  const showLoadModal = ref(false);
+  const savingIndex = ref<number | null>(null);
 
   // Debounced calculation trigger
   const debouncedUpdate = ref(0);
   let debounceTimer: NodeJS.Timeout | null = null;
-
-  const { capture } = usePostHog();
 
   const triggerDebouncedUpdate = () => {
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -116,272 +55,246 @@
       debouncedUpdate.value++;
       capture('calculator_used', {
         calculator: 'gearbox',
-        gearbox_type: gear_ratios.value.length === 4 ? '4-speed' : '5-speed',
-        final_drive: final_drive.value,
+        config_count: configs.value.length,
+        gearbox_type: configs.value[0]?.gearset.length === 4 ? '4-speed' : '5-speed',
+        final_drive: configs.value[0]?.finalDrive,
       });
-    }, 150); // 150ms debounce
+    }, 150);
   };
 
   onUnmounted(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
   });
 
-  // Section for Table Data - these will be computed now
-  // Use type assertion to fix TypeScript errors with Vuetify table headers
-  const tableHeadersGearing = tableHeaders.tableHeadersGearing as any[];
-  const tableHeadersSpeedos = tableHeaders.tableHeadersSpeedos as any[];
-
-  // Memoized chart options - avoiding expensive deep clone
-  const mapOptions = computed(() => {
-    const modeOptions = isDark.value ? darkModeChartOptions : lightModeChartOptions;
-    const options = {
-      ...chartOptions,
-      chart: { ...chartOptions.chart, ...modeOptions.chart },
-      title: { ...chartOptions.title, ...modeOptions.title },
-      subtitle: { ...chartOptions.subtitle, ...modeOptions.subtitle },
-      xAxis: { ...chartOptions.xAxis, ...modeOptions.xAxis },
-      yAxis: {
-        ...chartOptions.yAxis,
-        ...modeOptions.yAxis,
-        title: {
-          ...chartOptions.yAxis.title,
-          ...modeOptions.yAxis.title,
-          text: metric.value ? 'Speed (km/h)' : 'Speed (mph)',
-        },
-      },
-      legend: { ...chartOptions.legend, ...modeOptions.legend },
-      tooltip: { ...chartOptions.tooltip, ...modeOptions.tooltip },
-      series: chartData.value,
-    };
-    return options;
+  // Tire calculations (shared across all configs)
+  const tireCalcs = computed(() => {
+    debouncedUpdate.value;
+    return calculateTire(tireType.value);
   });
 
-  const YARDS_IN_MILE = 1760;
-  const MM_IN_YARD = 914.4;
+  // Per-config calculations
+  const configResults = computed(() => {
+    debouncedUpdate.value;
+    const tire = tireCalcs.value;
+    const speedometers = metric.value ? options.speedos.metric : options.speedos.imperial;
 
-  // Memoized calculations - only recalculate when inputs change
-  const tireCalculations = computed(() => {
-    // Watch for debounced updates
-    debouncedUpdate.value; // This makes the computed depend on debounced updates
+    return configs.value.map((config, index) => {
+      const gearingTable = calculateGearingTable(
+        config.gearset,
+        config.finalDrive,
+        config.dropGear,
+        maxRpm.value,
+        tire.typeCircInMiles,
+        metric.value
+      );
 
-    let diameter: number;
-    if (tire_type.value.diameter) {
-      diameter = tire_type.value.diameter;
-    } else {
-      diameter = Math.round(tire_type.value.width * (tire_type.value.profile / 100) * 2 + tire_type.value.size * 25.4);
-    }
+      const speedoData = calculateSpeedoData(
+        tire.tireTurnsPerMile,
+        config.finalDrive,
+        speedoDrive.value,
+        config.dropGear
+      );
 
-    const circ = Math.round(3.14159 * diameter);
-    const typeCircInMiles = circ / (YARDS_IN_MILE * MM_IN_YARD);
-    const tireTurnsPerMile = Math.round(YARDS_IN_MILE / (circ / MM_IN_YARD));
+      const speedoTable = calculateSpeedometerTable(
+        speedometers,
+        speedoData.turnsPerMile,
+        config.dropGear,
+        metric.value
+      );
 
-    return {
-      width: tire_type.value.width,
-      profile: tire_type.value.profile,
-      size: tire_type.value.size,
-      diameter,
-      circ,
-      tireTurnsPerMile,
-      typeCircInMiles,
-    };
-  });
+      // Find best speedo match
+      const bestMatch = speedoTable.find((s) => s.status === 'text-green');
+      const closestMatch = speedoTable.reduce((best, current) => {
+        const bestVar = Math.abs(parseInt(best.result.replace(/[^\d]/g, '')) || 100);
+        const currVar = Math.abs(parseInt(current.result.replace(/[^\d]/g, '')) || 100);
+        return currVar < bestVar ? current : best;
+      });
 
-  const speedoCalculations = computed(() => {
-    const tireCalcs = tireCalculations.value;
-    return {
-      turnsPerMile: Math.round(tireCalcs.tireTurnsPerMile * final_drive.value * speedo_drive.value),
-      engineRevsMile: Math.round(tireCalcs.tireTurnsPerMile * final_drive.value * drop_gear.value),
-    };
-  });
+      const speedoMatch = bestMatch ? bestMatch.speedometer : `${closestMatch.speedometer} (${closestMatch.result})`;
+      const speedoStatus = bestMatch ? 'text-green' : closestMatch.status;
 
-  const gearingTableData = computed(() => {
-    const tireCalcs = tireCalculations.value;
-    return gear_ratios.value.map((gear: number, index) => {
-      let maxSpeed = 0;
-      if (tireCalcs.typeCircInMiles !== null) {
-        maxSpeed = Math.round(
-          (max_rpm.value / drop_gear.value / gear / final_drive.value) * tireCalcs.typeCircInMiles * 60
-        );
-      }
-
-      const parsedMaxSpeed = metric.value ? `${Math.round(maxSpeed * kphFactor)}km/h` : `${maxSpeed}mph`;
+      const totalRatio4th = `${(config.finalDrive * (gearingTable[3]?.ratio || 1) * config.dropGear).toFixed(3)}:1`;
 
       return {
-        gear: index + 1,
-        ratio: gear,
-        maxSpeed: parsedMaxSpeed,
+        name: config.name,
+        colorIndex: index,
+        gearingTable,
+        speedoData,
+        speedoTable,
+        speedoMatch,
+        speedoStatus,
+        totalRatio4th,
       };
     });
   });
 
-  const speedometerTableData = computed(() => {
-    const speedometers = metric.value ? speedos.value.metric : speedos.value.imperial;
-    const factor = metric.value ? kphFactor : 1;
-    const speedoCalcs = speedoCalculations.value;
+  // Chart data for all gears view
+  const GEAR_MARKERS = ['circle', 'square', 'diamond', 'triangle'];
+  const GEAR_NAMES = ['1st', '2nd', '3rd', '4th'];
 
-    return speedometers.map((speedometer: ISpeedometer) => {
-      const turnsPer = speedoCalcs.turnsPerMile / factor;
-      const variation = Math.round((turnsPer / speedometer.turns) * 100 * drop_gear.value);
-      let result = '';
-      let status = '';
+  const allGearsSeries = computed((): ChartSeriesData[] => {
+    const tire = tireCalcs.value;
+    const series: ChartSeriesData[] = [];
 
-      if (variation > 100) {
-        status = 'text-red';
-        result = `Over ${variation - 100}%`;
-      } else if (variation === 100) {
-        status = 'text-green';
-        result = 'Reads correctly!';
-      } else {
-        status = 'text-primary';
-        result = `Under ${100 - variation}%`;
-      }
-
-      return {
-        status,
-        speedometer: speedometer.name,
-        turns: speedometer.turns,
-        speed: speedometer.speed,
-        result,
-      };
-    });
-  });
-
-  const chartData = computed(() => {
-    const tireCalcs = tireCalculations.value;
-    const data: Array<{ name: string; data: number[] }> = [];
-    const gearNames = ['1st Gear', '2nd Gear', '3rd Gear', '4th Gear'];
-
-    gear_ratios.value.forEach((gear, index) => {
-      const speedData: number[] = [];
-      for (let rpm = 1000; rpm <= max_rpm.value; rpm += 500) {
-        let speed = 0;
-        if (tireCalcs.typeCircInMiles !== null) {
-          speed = Math.round((rpm / drop_gear.value / gear / final_drive.value) * tireCalcs.typeCircInMiles * 60);
-          if (metric.value) {
-            speed = Math.round(speed * kphFactor);
-          }
+    configs.value.forEach((config, configIndex) => {
+      config.gearset.forEach((gear, gearIndex) => {
+        const speedData: number[] = [];
+        for (let rpm = 1000; rpm <= maxRpm.value; rpm += 500) {
+          let speed = Math.round((rpm / config.dropGear / gear / config.finalDrive) * tire.typeCircInMiles * 60);
+          if (metric.value) speed = Math.round(speed * kphFactor);
+          speedData.push(speed);
         }
-        speedData.push(speed);
-      }
-      data.push({
-        name: gearNames[index] || '',
-        data: speedData,
+        series.push({
+          name: `${config.name} - ${GEAR_NAMES[gearIndex]}`,
+          data: speedData,
+          color: CONFIG_COLORS[configIndex],
+          dashStyle: gearIndex === 3 ? 'Solid' : 'ShortDash',
+          marker: { symbol: GEAR_MARKERS[gearIndex], enabled: true },
+        });
       });
     });
 
-    return data;
+    return series;
   });
 
-  // Template-compatible computed properties
+  // Speedo details for the first config (used for the shared speedo info card)
+  const primarySpeedoData = computed(() => {
+    return configResults.value[0]?.speedoData || { turnsPerMile: 0, engineRevsMile: 0 };
+  });
+
+  const primarySpeedoTable = computed(() => {
+    return configResults.value[0]?.speedoTable || [];
+  });
+
+  // Top speed from first config
   const topSpeed = computed(() => {
-    const gearingData = gearingTableData.value;
-    return gearingData[3]?.maxSpeed || '---';
+    return configResults.value[0]?.gearingTable[3]?.maxSpeed || '---';
   });
 
-  const tireInfo = computed(() => tireCalculations.value);
-  const speedoDetails = computed(() => speedoCalculations.value);
-  const tableDataGearing = computed(() => gearingTableData.value);
-  const tableDataSpeedos = computed(() => speedometerTableData.value);
+  // Display values with unit conversion
+  const distanceUnit = computed(() => (metric.value ? 'Km' : 'Mile'));
 
-  // USelect options for form selects
-  const tireOptions = computed(() =>
-    tires.value.map((item: { label: string; value: TireValue }) => ({
-      label: item.label,
-      value: item.value,
-    }))
-  );
-
-  const speedoRatioOptions = computed(() =>
-    speedosRatios.value.map((item: { label: string; value: number }) => ({
-      label: item.label,
-      value: item.value,
-    }))
-  );
-
-  const dropGearOptions = computed(() =>
-    dropGears.value.map((item: { label: string; value: number }) => ({
-      label: item.label,
-      value: item.value,
-    }))
-  );
-
-  const gearRatioOptions = computed(() =>
-    gearRatios.value.map((item: { label: string; value: number[] }) => ({
-      label: item.label,
-      value: item.value,
-    }))
-  );
-
-  const diffOptions = computed(() =>
-    diffs.value.map((item: { label: string; value: number }) => ({
-      label: item.label,
-      value: item.value,
-    }))
-  );
-
-  const rpmOptions = [
-    { label: t('rpm_options.5000'), value: 5000 },
-    { label: t('rpm_options.5500'), value: 5500 },
-    { label: t('rpm_options.6000'), value: 6000 },
-    { label: t('rpm_options.6500'), value: 6500 },
-    { label: t('rpm_options.7000'), value: 7000 },
-    { label: t('rpm_options.7500'), value: 7500 },
-    { label: t('rpm_options.8000'), value: 8000 },
-    { label: t('rpm_options.8500'), value: 8500 },
-    { label: t('rpm_options.9000'), value: 9000 },
-  ];
-
-  // UTable column definitions
-  const speedoColumns = computed(() => [
-    { accessorKey: 'speedometer', header: tableHeadersSpeedos[0]?.title || 'Speedometer' },
-    { accessorKey: 'turns', header: tableHeadersSpeedos[1]?.title || 'Turns' },
-    { accessorKey: 'speed', header: tableHeadersSpeedos[2]?.title || 'Speed' },
-    { accessorKey: 'result', header: tableHeadersSpeedos[3]?.title || 'Result' },
-  ]);
-
-  const gearingColumns = computed(() => [
-    { accessorKey: 'gear', header: tableHeadersGearing[0]?.title || 'Gear' },
-    { accessorKey: 'ratio', header: tableHeadersGearing[1]?.title || 'Ratio' },
-    { accessorKey: 'maxSpeed', header: tableHeadersGearing[2]?.label || 'Max Speed' },
-  ]);
-
-  // Computed properties for metric conversion of "per Mile" values
   const displayEngineRevs = computed(() => {
-    if (!speedoDetails.value.engineRevsMile) return '---';
-    const value = metric.value
-      ? Math.round(speedoDetails.value.engineRevsMile / kphFactor)
-      : speedoDetails.value.engineRevsMile;
-    return value.toString();
+    const val = primarySpeedoData.value.engineRevsMile;
+    if (!val) return '---';
+    return (metric.value ? Math.round(val / kphFactor) : val).toString();
   });
 
   const displayGearTurns = computed(() => {
-    if (!speedoDetails.value.turnsPerMile) return '---';
-    const value = metric.value
-      ? Math.round(speedoDetails.value.turnsPerMile / kphFactor)
-      : speedoDetails.value.turnsPerMile;
-    return value.toString();
+    const val = primarySpeedoData.value.turnsPerMile;
+    if (!val) return '---';
+    return (metric.value ? Math.round(val / kphFactor) : val).toString();
   });
 
   const displayTireTurns = computed(() => {
-    if (!tireInfo.value.tireTurnsPerMile) return '---';
-    const value = metric.value
-      ? Math.round(tireInfo.value.tireTurnsPerMile / kphFactor)
-      : tireInfo.value.tireTurnsPerMile;
-    return value.toString();
+    const val = tireCalcs.value.tireTurnsPerMile;
+    if (!val) return '---';
+    return (metric.value ? Math.round(val / kphFactor) : val).toString();
   });
 
-  const distanceUnit = computed(() => (metric.value ? 'Km' : 'Mile'));
+  // Config management
+  function addConfig() {
+    if (configs.value.length >= MAX_CONFIGS) return;
+    const newConfig: GearConfig = {
+      name: `Config ${configs.value.length + 1}`,
+      gearset: [2.583, 1.644, 1.25, 1.0],
+      finalDrive: 3.444,
+      dropGear: 1,
+    };
+    configs.value.push(newConfig);
+    capture('gearbox_config_added', { config_count: configs.value.length });
+    triggerDebouncedUpdate();
+  }
 
-  // Update table headers reactively
-  watch(
-    metric,
-    () => {
-      tableHeadersGearing[2].label = metric.value ? 'Max Speed (km/h)' : 'Max Speed (mph)';
-    },
-    { immediate: true }
-  );
+  function removeConfig(index: number) {
+    if (configs.value.length <= 1) return;
+    configs.value.splice(index, 1);
+    capture('gearbox_config_removed', { config_count: configs.value.length });
+    triggerDebouncedUpdate();
+  }
 
-  // Initialize debounced update on mount
+  function updateConfig(index: number, updated: GearConfig) {
+    configs.value[index] = updated;
+    triggerDebouncedUpdate();
+  }
+
+  // Save/load functionality
+  async function handleSave(index: number) {
+    const config = configs.value[index];
+    savingIndex.value = index;
+
+    const tireLabel =
+      options.tires.find((t) => JSON.stringify(t.value) === JSON.stringify(tireType.value))?.label ||
+      JSON.stringify(tireType.value);
+
+    const gearsetLabel =
+      options.gearRatios.find((g) => JSON.stringify(g.value) === JSON.stringify(config.gearset))?.label ||
+      JSON.stringify(config.gearset);
+
+    const result = await saveConfig({
+      name: config.name,
+      tire: tireLabel,
+      gearset: gearsetLabel,
+      final_drive: String(config.finalDrive),
+      drop_gear: String(config.dropGear),
+      speedo_drive: String(speedoDrive.value),
+      max_rpm: maxRpm.value,
+    });
+
+    if (result) {
+      configs.value[index] = { ...config, savedId: result.id };
+      capture('gearbox_config_saved', { config_name: config.name });
+    }
+
+    savingIndex.value = null;
+  }
+
+  async function handleLoadConfig(saved: SavedGearConfig) {
+    if (configs.value.length >= MAX_CONFIGS) return;
+
+    // Find the matching gearset from options
+    const gearsetOption = options.gearRatios.find((g) => g.label === saved.gearset);
+    const diffOption = options.diffs.find((d) => String(d.value) === saved.final_drive);
+    const dropOption = options.dropGears.find((d) => String(d.value) === saved.drop_gear);
+
+    const newConfig: GearConfig = {
+      name: saved.name,
+      gearset: gearsetOption?.value || [2.583, 1.644, 1.25, 1.0],
+      finalDrive: diffOption?.value || parseFloat(saved.final_drive),
+      dropGear: dropOption?.value || parseFloat(saved.drop_gear),
+      savedId: saved.id,
+    };
+
+    configs.value.push(newConfig);
+    showLoadModal.value = false;
+    capture('gearbox_config_loaded', { config_name: saved.name });
+    triggerDebouncedUpdate();
+  }
+
+  async function handleDeleteSaved(id: string) {
+    await deleteSavedConfig(id);
+    // Also remove savedId from any active config
+    configs.value.forEach((config) => {
+      if (config.savedId === id) config.savedId = undefined;
+    });
+  }
+
+  function openLoadModal() {
+    if (isAuthenticated.value) {
+      fetchConfigs();
+    }
+    showLoadModal.value = true;
+  }
+
+  // Speedo table headers
+  const tableHeadersSpeedos = [
+    { key: 'speedometer', title: 'Speedometer' },
+    { key: 'turns', title: 'Turns' },
+    { key: 'speed', title: 'Speed' },
+    { key: 'result', title: 'Result' },
+  ];
+
+  // Initialize
   onMounted(() => {
     nextTick(() => {
       triggerDebouncedUpdate();
@@ -391,90 +304,75 @@
 
 <template>
   <div class="grid grid-cols-1 gap-6">
-    <div class="flex items-center justify-start gap-3">
-      <label class="text-sm font-medium">{{ t('form_labels.imperial_or_metric') }}</label>
-      <USwitch v-model="metric" color="primary" @update:model-value="triggerDebouncedUpdate" />
-    </div>
+    <!-- Shared Settings -->
+    <CalculatorsGearboxSharedSettings
+      :metric="metric"
+      :tire-type="tireType"
+      :speedo-drive="speedoDrive"
+      :max-rpm="maxRpm"
+      @update:metric="
+        metric = $event;
+        triggerDebouncedUpdate();
+      "
+      @update:tire-type="
+        tireType = $event;
+        triggerDebouncedUpdate();
+      "
+      @update:speedo-drive="
+        speedoDrive = $event;
+        triggerDebouncedUpdate();
+      "
+      @update:max-rpm="
+        maxRpm = $event;
+        triggerDebouncedUpdate();
+      "
+    />
 
-    <div class="grid grid-cols-12 gap-6">
-      <div class="col-span-12 md:col-span-6">
-        <label class="block text-sm font-medium mb-2">
-          {{ t('form_labels.tire_size') }} <i class="fad fa-tire"></i>
-        </label>
-        <USelect
-          v-model="tire_type"
-          :items="tireOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="triggerDebouncedUpdate"
-        />
+    <!-- Configuration Cards -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold"><i class="fad fa-gears mr-2"></i>{{ t('configurations') }}</h3>
+        <div class="flex items-center gap-2">
+          <UButton
+            v-if="isAuthenticated"
+            icon="i-fa6-solid-folder-open"
+            variant="outline"
+            size="sm"
+            @click="openLoadModal"
+          >
+            {{ t('load_saved') }}
+          </UButton>
+          <UButton
+            icon="i-fa6-solid-plus"
+            variant="outline"
+            size="sm"
+            :disabled="configs.length >= MAX_CONFIGS"
+            @click="addConfig"
+          >
+            {{ t('add_config') }}
+          </UButton>
+        </div>
       </div>
-      <div class="col-span-12 md:col-span-6">
-        <label class="block text-sm font-medium mb-2">
-          {{ t('form_labels.speedo_drive_ratio') }} <i class="fad fa-percent"></i>
-        </label>
-        <USelect
-          v-model="speedo_drive"
-          :items="speedoRatioOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="triggerDebouncedUpdate"
-        />
-      </div>
-      <div class="col-span-12 md:col-span-6">
-        <label class="block text-sm font-medium mb-2">
-          {{ t('form_labels.drop_gear_ratio') }} <i class="fad fa-gears"></i>
-        </label>
-        <USelect
-          v-model="drop_gear"
-          :items="dropGearOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="triggerDebouncedUpdate"
-        />
-      </div>
-      <div class="col-span-12 md:col-span-6">
-        <label class="block text-sm font-medium mb-2">
-          {{ t('form_labels.gearset') }} <i class="fad fa-gear"></i>
-        </label>
-        <USelect
-          v-model="gear_ratios"
-          :items="gearRatioOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="triggerDebouncedUpdate"
-        />
-      </div>
-      <div class="col-span-12 md:col-span-6">
-        <label class="block text-sm font-medium mb-2">
-          {{ t('form_labels.final_drive') }} <i class="fad fa-gears"></i>
-        </label>
-        <USelect
-          v-model="final_drive"
-          :items="diffOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="triggerDebouncedUpdate"
-        />
-      </div>
-      <div class="col-span-12 md:col-span-6">
-        <label class="block text-sm font-medium mb-2">
-          {{ t('form_labels.max_rpm') }} <i class="fad fa-tachometer-alt"></i>
-        </label>
-        <USelect
-          v-model="max_rpm"
-          :items="rpmOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="triggerDebouncedUpdate"
-        />
-      </div>
+
+      <CalculatorsGearboxConfigCard
+        v-for="(config, index) in configs"
+        :key="index"
+        :config="config"
+        :color-index="index"
+        :can-delete="configs.length > 1"
+        :is-authenticated="isAuthenticated"
+        :is-saving="savingIndex === index"
+        @update:config="updateConfig(index, $event)"
+        @delete="removeConfig(index)"
+        @save="handleSave(index)"
+      />
     </div>
 
     <USeparator class="my-4">
       <span class="text-sm text-muted">{{ t('results_divider') }}</span>
     </USeparator>
 
+    <!-- Quick Stats (from first config) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="rounded-lg bg-stone-400 shadow-sm p-6 text-center">
         <h3 class="text-lg text-white opacity-70">
@@ -498,41 +396,42 @@
       </div>
     </div>
 
+    <!-- Tire Info Cards -->
     <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mt-4">
       <div class="rounded-lg bg-muted shadow-sm p-4 text-center">
         <h3 class="text-sm opacity-70">
           <i class="fa-jelly-duo fa-regular fa-arrow-down-to-line"></i>
           {{ t('tire_info.tire_width') }}
         </h3>
-        <p class="text-lg font-bold">{{ tireInfo.width || '---' }}mm</p>
+        <p class="text-lg font-bold">{{ tireCalcs.width || '---' }}mm</p>
       </div>
       <div class="rounded-lg bg-muted shadow-sm p-4 text-center">
         <h3 class="text-sm opacity-70">
           <i class="fa-jelly fa-regular fa-circle"></i>
           {{ t('tire_info.tire_profile') }}
         </h3>
-        <p class="text-lg font-bold">{{ tireInfo.profile || '---' }}%</p>
+        <p class="text-lg font-bold">{{ tireCalcs.profile || '---' }}%</p>
       </div>
       <div class="rounded-lg bg-muted shadow-sm p-4 text-center">
         <h3 class="text-sm opacity-70">
           <i class="fa-jelly-duo fa-regular fa-expand"></i>
           {{ t('tire_info.tire_size') }}
         </h3>
-        <p class="text-lg font-bold">{{ tireInfo.size || '---' }}"</p>
+        <p class="text-lg font-bold">{{ tireCalcs.size || '---' }}"</p>
       </div>
       <div class="rounded-lg bg-muted shadow-sm p-4 text-center">
         <h3 class="text-sm opacity-70">
           <i class="fa-jelly-duo fa-regular fa-arrow-right-to-bracket"></i>
           {{ t('tire_info.tire_diameter') }}
         </h3>
-        <p class="text-lg font-bold">{{ tireInfo.diameter || '---' }}mm</p>
+        <p class="text-lg font-bold">{{ tireCalcs.diameter || '---' }}mm</p>
       </div>
       <div class="rounded-lg bg-muted shadow-sm p-4 text-center">
         <h3 class="text-sm opacity-70">
           <i class="fa-jelly-duo fa-regular fa-circle"></i>
           {{ t('tire_info.circumference') }}
         </h3>
-        <p class="text-lg font-bold">{{ tireInfo.circ || '---' }}mm</p>
+        <p class="text-lg font-bold">{{ tireCalcs.circ || '---' }}mm</p>
       </div>
       <div class="rounded-lg bg-muted shadow-sm p-4 text-center">
         <h3 class="text-sm opacity-70">
@@ -542,22 +441,24 @@
         <p class="text-lg font-bold">{{ displayTireTurns }}</p>
       </div>
     </div>
+
+    <!-- Chart -->
     <div class="mt-6">
-      <UCard>
-        <ClientOnly fallback-tag="span">
-          <highcharts
-            ref="gearSpeedChart"
-            :options="mapOptions"
-            :updateArgs="[true, true, true]"
-            :constructorType="'chart'"
-          ></highcharts>
-          <template #fallback>
-            <USkeleton class="h-96 w-full" />
-            <p class="py-10 text-center text-2xl">{{ t('chart.loading') }}</p>
-          </template>
-        </ClientOnly>
-      </UCard>
+      <CalculatorsGearboxComparisonChart
+        :all-gears-series="allGearsSeries"
+        :config-names="configs.map((c) => c.name)"
+        :config-colors="configs.map((_, i) => CONFIG_COLORS[i])"
+        :metric="metric"
+        :max-rpm="maxRpm"
+      />
     </div>
+
+    <!-- Comparison Table (shown when 2+ configs) -->
+    <div v-if="configs.length > 1" class="mt-6">
+      <CalculatorsGearboxComparisonTable :configs="configResults" :metric="metric" />
+    </div>
+
+    <!-- Speedo Table (from first config) -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mt-6">
       <div class="col-span-1 md:col-span-7">
         <UCard>
@@ -578,7 +479,7 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="(item, index) in tableDataSpeedos"
+                  v-for="(item, index) in primarySpeedoTable"
                   :key="index"
                   class="border-b border-default last:border-0"
                 >
@@ -594,6 +495,7 @@
       </div>
 
       <div class="col-span-1 md:col-span-5">
+        <!-- Gearing Table (from first config) -->
         <UCard>
           <template #header>
             <h2 class="font-semibold text-lg flex items-center">
@@ -605,14 +507,14 @@
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-default">
-                  <th v-for="header in tableHeadersGearing" :key="header.key" class="text-left p-2 font-medium">
-                    {{ header.title }}
-                  </th>
+                  <th class="text-left p-2 font-medium">Gear</th>
+                  <th class="text-left p-2 font-medium">Ratio</th>
+                  <th class="text-left p-2 font-medium">{{ metric ? 'Max Speed (km/h)' : 'Max Speed (mph)' }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="(item, index) in tableDataGearing"
+                  v-for="(item, index) in configResults[0]?.gearingTable || []"
                   :key="index"
                   class="border-b border-default last:border-0"
                 >
@@ -635,7 +537,7 @@
 
     <div class="mt-6 text-center max-w-3xl mx-auto">
       <p>
-        {{ t('disclaimer', { strong_start: '<strong>', strong_end: '</strong>' }) }}
+        <span v-html="t('disclaimer', { strong_start: '<strong>', strong_end: '</strong>' })"></span>
         <UButton
           variant="link"
           color="primary"
@@ -646,32 +548,26 @@
         </UButton>
       </p>
     </div>
+
+    <!-- Save/Load Modal -->
+    <CalculatorsGearboxSaveLoadModal
+      :open="showLoadModal"
+      :configs="savedConfigs"
+      :loading="savedLoading"
+      :slots-remaining="MAX_CONFIGS - configs.length"
+      @update:open="showLoadModal = $event"
+      @load="handleLoadConfig"
+      @delete="handleDeleteSaved"
+    />
   </div>
 </template>
 
 <i18n lang="json">
 {
   "en": {
-    "form_labels": {
-      "imperial_or_metric": "Imperial or Metric",
-      "tire_size": "Tire Size",
-      "speedo_drive_ratio": "Speedo Drive Ratio",
-      "drop_gear_ratio": "Drop Gear Ratio",
-      "gearset": "Gearset",
-      "final_drive": "Final Drive",
-      "max_rpm": "Max RPM"
-    },
-    "rpm_options": {
-      "5000": "5000 RPM",
-      "5500": "5500 RPM",
-      "6000": "6000 RPM",
-      "6500": "6500 RPM",
-      "7000": "7000 RPM",
-      "7500": "7500 RPM",
-      "8000": "8000 RPM",
-      "8500": "8500 RPM",
-      "9000": "9000 RPM"
-    },
+    "configurations": "Gear Configurations",
+    "add_config": "Add Configuration",
+    "load_saved": "Load Saved",
     "results_divider": "Results",
     "results": {
       "revolutions_per": "Revolutions per/{unit}",
@@ -690,34 +586,14 @@
       "speedo_information": "Speedo Information",
       "gearing_information": "Gearing Information"
     },
-    "chart": {
-      "loading": "Chart is loading"
-    },
     "support_divider": "Support",
     "disclaimer": "Please note the above figures are {strong_start}approximate values{strong_end}. Before purchasing parts and building your engine we recommend {strong_start}doublechecking{strong_end} your calculations multiple times using more than one source. The mathematical equations used in this tool can be found here:",
     "equation_source": "Equation Source Code"
   },
   "es": {
-    "form_labels": {
-      "imperial_or_metric": "Imperial o Métrico",
-      "tire_size": "Tamaño de Neumático",
-      "speedo_drive_ratio": "Relación de Transmisión del Velocímetro",
-      "drop_gear_ratio": "Relación de Engranaje de Caída",
-      "gearset": "Conjunto de Engranajes",
-      "final_drive": "Transmisión Final",
-      "max_rpm": "RPM Máximo"
-    },
-    "rpm_options": {
-      "5000": "5000 RPM",
-      "5500": "5500 RPM",
-      "6000": "6000 RPM",
-      "6500": "6500 RPM",
-      "7000": "7000 RPM",
-      "7500": "7500 RPM",
-      "8000": "8000 RPM",
-      "8500": "8500 RPM",
-      "9000": "9000 RPM"
-    },
+    "configurations": "Configuraciones de Engranajes",
+    "add_config": "Agregar Configuración",
+    "load_saved": "Cargar Guardada",
     "results_divider": "Resultados",
     "results": {
       "revolutions_per": "Revoluciones por/{unit}",
@@ -736,34 +612,14 @@
       "speedo_information": "Información del Velocímetro",
       "gearing_information": "Información de Engranajes"
     },
-    "chart": {
-      "loading": "El gráfico está cargando"
-    },
     "support_divider": "Apoyo",
     "disclaimer": "Ten en cuenta que las cifras anteriores son {strong_start}valores aproximados{strong_end}. Antes de comprar piezas y construir tu motor, recomendamos {strong_start}verificar{strong_end} tus cálculos múltiples veces usando más de una fuente. Las ecuaciones matemáticas usadas en esta herramienta se pueden encontrar aquí:",
     "equation_source": "Código Fuente de las Ecuaciones"
   },
   "fr": {
-    "form_labels": {
-      "imperial_or_metric": "Impérial ou métrique",
-      "tire_size": "Taille de pneu",
-      "speedo_drive_ratio": "Rapport d'entraînement compteur",
-      "drop_gear_ratio": "Rapport d'engrenage de chute",
-      "gearset": "Jeu d'engrenages",
-      "final_drive": "Transmission finale",
-      "max_rpm": "RPM maximum"
-    },
-    "rpm_options": {
-      "5000": "5000 RPM",
-      "5500": "5500 RPM",
-      "6000": "6000 RPM",
-      "6500": "6500 RPM",
-      "7000": "7000 RPM",
-      "7500": "7500 RPM",
-      "8000": "8000 RPM",
-      "8500": "8500 RPM",
-      "9000": "9000 RPM"
-    },
+    "configurations": "Configurations d'Engrenages",
+    "add_config": "Ajouter une Configuration",
+    "load_saved": "Charger Sauvegardée",
     "results_divider": "Résultats",
     "results": {
       "revolutions_per": "Révolutions par/{unit}",
@@ -782,34 +638,14 @@
       "speedo_information": "Informations compteur",
       "gearing_information": "Informations d'engrenage"
     },
-    "chart": {
-      "loading": "Le graphique se charge"
-    },
     "support_divider": "Support",
     "disclaimer": "Veuillez noter que les chiffres ci-dessus sont des {strong_start}valeurs approximatives{strong_end}. Avant d'acheter des pièces et de construire votre moteur, nous recommandons de {strong_start}revérifier{strong_end} vos calculs plusieurs fois en utilisant plus d'une source. Les équations mathématiques utilisées dans cet outil peuvent être trouvées ici :",
     "equation_source": "Code source des équations"
   },
   "de": {
-    "form_labels": {
-      "imperial_or_metric": "Imperial oder Metrisch",
-      "tire_size": "Reifengröße",
-      "speedo_drive_ratio": "Tacho-Antriebsverhältnis",
-      "drop_gear_ratio": "Drop-Gear-Verhältnis",
-      "gearset": "Getriebesatz",
-      "final_drive": "Achsantrieb",
-      "max_rpm": "Max. Drehzahl"
-    },
-    "rpm_options": {
-      "5000": "5000 U/min",
-      "5500": "5500 U/min",
-      "6000": "6000 U/min",
-      "6500": "6500 U/min",
-      "7000": "7000 U/min",
-      "7500": "7500 U/min",
-      "8000": "8000 U/min",
-      "8500": "8500 U/min",
-      "9000": "9000 U/min"
-    },
+    "configurations": "Getriebe-Konfigurationen",
+    "add_config": "Konfiguration hinzufügen",
+    "load_saved": "Gespeicherte laden",
     "results_divider": "Ergebnisse",
     "results": {
       "revolutions_per": "Umdrehungen pro/{unit}",
@@ -828,34 +664,14 @@
       "speedo_information": "Tacho-Informationen",
       "gearing_information": "Getriebe-Informationen"
     },
-    "chart": {
-      "loading": "Diagramm lädt"
-    },
     "support_divider": "Unterstützung",
     "disclaimer": "Bitte beachten Sie, dass die obigen Zahlen {strong_start}Näherungswerte{strong_end} sind. Vor dem Kauf von Teilen und dem Bau Ihres Motors empfehlen wir, Ihre Berechnungen mehrmals mit mehr als einer Quelle zu {strong_start}überprüfen{strong_end}. Die in diesem Tool verwendeten mathematischen Gleichungen finden Sie hier:",
     "equation_source": "Gleichungs-Quellcode"
   },
   "it": {
-    "form_labels": {
-      "imperial_or_metric": "Imperiale o Metrico",
-      "tire_size": "Dimensione pneumatici",
-      "speedo_drive_ratio": "Rapporto trasmissione tachimetro",
-      "drop_gear_ratio": "Rapporto ingranaggio di caduta",
-      "gearset": "Set ingranaggi",
-      "final_drive": "Trasmissione finale",
-      "max_rpm": "RPM massimi"
-    },
-    "rpm_options": {
-      "5000": "5000 RPM",
-      "5500": "5500 RPM",
-      "6000": "6000 RPM",
-      "6500": "6500 RPM",
-      "7000": "7000 RPM",
-      "7500": "7500 RPM",
-      "8000": "8000 RPM",
-      "8500": "8500 RPM",
-      "9000": "9000 RPM"
-    },
+    "configurations": "Configurazioni Ingranaggi",
+    "add_config": "Aggiungi Configurazione",
+    "load_saved": "Carica Salvata",
     "results_divider": "Risultati",
     "results": {
       "revolutions_per": "Giri per/{unit}",
@@ -874,34 +690,14 @@
       "speedo_information": "Informazioni tachimetro",
       "gearing_information": "Informazioni ingranaggi"
     },
-    "chart": {
-      "loading": "Il grafico si sta caricando"
-    },
     "support_divider": "Supporto",
     "disclaimer": "Si prega di notare che le cifre sopra sono {strong_start}valori approssimativi{strong_end}. Prima di acquistare parti e costruire il vostro motore raccomandiamo di {strong_start}ricontrollare{strong_end} i vostri calcoli più volte utilizzando più di una fonte. Le equazioni matematiche utilizzate in questo strumento possono essere trovate qui:",
     "equation_source": "Codice sorgente equazioni"
   },
   "ja": {
-    "form_labels": {
-      "imperial_or_metric": "ヤード・ポンド法またはメートル法",
-      "tire_size": "タイヤサイズ",
-      "speedo_drive_ratio": "スピードメーター駆動比",
-      "drop_gear_ratio": "ドロップギア比",
-      "gearset": "ギアセット",
-      "final_drive": "ファイナルドライブ",
-      "max_rpm": "最大回転数"
-    },
-    "rpm_options": {
-      "5000": "5000 RPM",
-      "5500": "5500 RPM",
-      "6000": "6000 RPM",
-      "6500": "6500 RPM",
-      "7000": "7000 RPM",
-      "7500": "7500 RPM",
-      "8000": "8000 RPM",
-      "8500": "8500 RPM",
-      "9000": "9000 RPM"
-    },
+    "configurations": "ギア構成",
+    "add_config": "構成を追加",
+    "load_saved": "保存済みを読み込む",
     "results_divider": "結果",
     "results": {
       "revolutions_per": "{unit}あたりの回転数",
@@ -920,34 +716,14 @@
       "speedo_information": "スピードメーター情報",
       "gearing_information": "ギア情報"
     },
-    "chart": {
-      "loading": "チャートを読み込み中"
-    },
     "support_divider": "サポート",
     "disclaimer": "上記の数値は{strong_start}概算値{strong_end}であることにご注意ください。部品を購入してエンジンを構築する前に、複数のソースを使用して計算を{strong_start}何度も再確認{strong_end}することをお勧めします。このツールで使用されている数学的方程式はこちらで見つけることができます：",
     "equation_source": "方程式ソースコード"
   },
   "ko": {
-    "form_labels": {
-      "imperial_or_metric": "야드파운드법 또는 미터법",
-      "tire_size": "타이어 크기",
-      "speedo_drive_ratio": "속도계 구동 비율",
-      "drop_gear_ratio": "드롭 기어 비율",
-      "gearset": "기어세트",
-      "final_drive": "파이널 드라이브",
-      "max_rpm": "최대 RPM"
-    },
-    "rpm_options": {
-      "5000": "5000 RPM",
-      "5500": "5500 RPM",
-      "6000": "6000 RPM",
-      "6500": "6500 RPM",
-      "7000": "7000 RPM",
-      "7500": "7500 RPM",
-      "8000": "8000 RPM",
-      "8500": "8500 RPM",
-      "9000": "9000 RPM"
-    },
+    "configurations": "기어 구성",
+    "add_config": "구성 추가",
+    "load_saved": "저장된 항목 불러오기",
     "results_divider": "결과",
     "results": {
       "revolutions_per": "{unit}당 회전수",
@@ -966,34 +742,14 @@
       "speedo_information": "속도계 정보",
       "gearing_information": "기어링 정보"
     },
-    "chart": {
-      "loading": "차트 로딩 중"
-    },
     "support_divider": "지원",
     "disclaimer": "위 수치들은 {strong_start}근사값{strong_end}임을 알려드립니다. 부품을 구매하고 엔진을 제작하기 전에 여러 소스를 사용하여 계산을 {strong_start}여러 번 재확인{strong_end}할 것을 권장합니다. 이 도구에 사용된 수학 공식은 여기에서 찾을 수 있습니다:",
     "equation_source": "공식 소스 코드"
   },
   "pt": {
-    "form_labels": {
-      "imperial_or_metric": "Imperial ou Métrico",
-      "tire_size": "Tamanho do Pneu",
-      "speedo_drive_ratio": "Relação de Transmissão do Velocímetro",
-      "drop_gear_ratio": "Relação de Engrenagem de Queda",
-      "gearset": "Conjunto de Engrenagens",
-      "final_drive": "Transmissão Final",
-      "max_rpm": "RPM Máximo"
-    },
-    "rpm_options": {
-      "5000": "5000 RPM",
-      "5500": "5500 RPM",
-      "6000": "6000 RPM",
-      "6500": "6500 RPM",
-      "7000": "7000 RPM",
-      "7500": "7500 RPM",
-      "8000": "8000 RPM",
-      "8500": "8500 RPM",
-      "9000": "9000 RPM"
-    },
+    "configurations": "Configurações de Engrenagens",
+    "add_config": "Adicionar Configuração",
+    "load_saved": "Carregar Salva",
     "results_divider": "Resultados",
     "results": {
       "revolutions_per": "Revoluções por/{unit}",
@@ -1012,34 +768,14 @@
       "speedo_information": "Informações do Velocímetro",
       "gearing_information": "Informações de Engrenagem"
     },
-    "chart": {
-      "loading": "O gráfico está carregando"
-    },
     "support_divider": "Suporte",
     "disclaimer": "Por favor, note que os números acima são {strong_start}valores aproximados{strong_end}. Antes de comprar peças e construir seu motor, recomendamos {strong_start}verificar novamente{strong_end} seus cálculos várias vezes usando mais de uma fonte. As equações matemáticas usadas nesta ferramenta podem ser encontradas aqui:",
     "equation_source": "Código Fonte da Equação"
   },
   "ru": {
-    "form_labels": {
-      "imperial_or_metric": "Имперская или метрическая",
-      "tire_size": "Размер шины",
-      "speedo_drive_ratio": "Передаточное число спидометра",
-      "drop_gear_ratio": "Передаточное число понижающей передачи",
-      "gearset": "Набор шестерен",
-      "final_drive": "Главная передача",
-      "max_rpm": "Макс. об/мин"
-    },
-    "rpm_options": {
-      "5000": "5000 об/мин",
-      "5500": "5500 об/мин",
-      "6000": "6000 об/мин",
-      "6500": "6500 об/мин",
-      "7000": "7000 об/мин",
-      "7500": "7500 об/мин",
-      "8000": "8000 об/мин",
-      "8500": "8500 об/мин",
-      "9000": "9000 об/мин"
-    },
+    "configurations": "Конфигурации передач",
+    "add_config": "Добавить конфигурацию",
+    "load_saved": "Загрузить сохранённую",
     "results_divider": "Результаты",
     "results": {
       "revolutions_per": "Оборотов на/{unit}",
@@ -1058,34 +794,14 @@
       "speedo_information": "Информация о спидометре",
       "gearing_information": "Информация о передачах"
     },
-    "chart": {
-      "loading": "График загружается"
-    },
     "support_divider": "Поддержка",
     "disclaimer": "Обратите внимание, что приведенные выше цифры являются {strong_start}приблизительными значениями{strong_end}. Перед покупкой деталей и сборкой двигателя мы рекомендуем {strong_start}перепроверить{strong_end} ваши расчеты несколько раз, используя более одного источника. Математические уравнения, используемые в этом инструменте, можно найти здесь:",
     "equation_source": "Исходный код уравнения"
   },
   "zh": {
-    "form_labels": {
-      "imperial_or_metric": "英制或公制",
-      "tire_size": "轮胎尺寸",
-      "speedo_drive_ratio": "速度表传动比",
-      "drop_gear_ratio": "降档比",
-      "gearset": "齿轮组",
-      "final_drive": "主减速器",
-      "max_rpm": "最大转速"
-    },
-    "rpm_options": {
-      "5000": "5000 转/分",
-      "5500": "5500 转/分",
-      "6000": "6000 转/分",
-      "6500": "6500 转/分",
-      "7000": "7000 转/分",
-      "7500": "7500 转/分",
-      "8000": "8000 转/分",
-      "8500": "8500 转/分",
-      "9000": "9000 转/分"
-    },
+    "configurations": "齿轮配置",
+    "add_config": "添加配置",
+    "load_saved": "加载已保存",
     "results_divider": "结果",
     "results": {
       "revolutions_per": "每{unit}转数",
@@ -1103,9 +819,6 @@
     "tables": {
       "speedo_information": "速度表信息",
       "gearing_information": "齿轮信息"
-    },
-    "chart": {
-      "loading": "图表加载中"
     },
     "support_divider": "支持",
     "disclaimer": "请注意上述数字是{strong_start}近似值{strong_end}。在购买零件和制造发动机之前，我们建议使用多个来源{strong_start}多次检查{strong_end}您的计算。此工具中使用的数学方程可以在这里找到：",

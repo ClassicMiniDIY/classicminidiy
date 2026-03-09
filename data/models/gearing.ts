@@ -293,6 +293,7 @@ export const options: GearingOptions = {
     { value: 0.9655, label: '0.9655:1', subtitle: '29/28 tooth' },
     { value: 0.967, label: 'Overdrive 0.9670:1', subtitle: '30 tooth' },
     { value: 1, label: 'Standard 1:1', subtitle: '29 tooth' },
+    { value: 1.04, label: '1.04:1', subtitle: 'Swiftune Roller Drop Gears' },
     { value: 1.0416, label: '1.0416:1', subtitle: '24/25 tooth' },
     { value: 1.0435, label: '1.0435:1', subtitle: '23/24 tooth' },
     { value: 1.045, label: '1.0450:1', subtitle: '22/23 tooth' },

@@ -311,17 +311,16 @@ describe('useWheels', () => {
       expect(result!.name).toBe('Minilite');
     });
 
-    it('does not filter by status', async () => {
-      const row = makeWheelRow({ id: 'wheel-pending', status: 'pending' });
+    it('filters by id and approved status', async () => {
+      const row = makeWheelRow({ id: 'wheel-42' });
       mockSupabase._mockSingle.mockResolvedValue({ data: row, error: null });
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();
-      const result = await getWheel('wheel-pending');
+      const result = await getWheel('wheel-42');
 
-      // eq should only be called with 'id', not 'status'
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledTimes(1);
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'wheel-pending');
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'wheel-42');
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('status', 'approved');
       expect(result).not.toBeNull();
     });
 
