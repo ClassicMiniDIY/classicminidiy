@@ -5,7 +5,6 @@
     calculateGearingTable,
     calculateSpeedoData,
     calculateSpeedometerTable,
-    calculateChartData,
     type ChartSeriesData,
   } from '../../utils/gearingCalculations';
   import type { GearConfig } from '../../types/gearing';
