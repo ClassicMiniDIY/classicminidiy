@@ -102,11 +102,15 @@
       );
 
       // Find best speedo match
+      const getSpeedoVariation = (result: string): number => {
+        if (result === 'Reads correctly!') return 0;
+        const digits = parseInt(result.replace(/[^\d]/g, ''));
+        return isNaN(digits) ? 100 : digits;
+      };
+
       const bestMatch = speedoTable.find((s) => s.status === 'text-green');
       const closestMatch = speedoTable.reduce((best, current) => {
-        const bestVar = Math.abs(parseInt(best.result.replace(/[^\d]/g, '')) || 100);
-        const currVar = Math.abs(parseInt(current.result.replace(/[^\d]/g, '')) || 100);
-        return currVar < bestVar ? current : best;
+        return getSpeedoVariation(current.result) < getSpeedoVariation(best.result) ? current : best;
       });
 
       const speedoMatch = bestMatch ? bestMatch.speedometer : `${closestMatch.speedometer} (${closestMatch.result})`;
@@ -223,12 +227,17 @@
     savingIndex.value = index;
 
     const tireLabel =
-      options.tires.find((t) => JSON.stringify(t.value) === JSON.stringify(tireType.value))?.label ||
-      JSON.stringify(tireType.value);
+      options.tires.find(
+        (t) =>
+          t.value.width === tireType.value.width &&
+          t.value.profile === tireType.value.profile &&
+          t.value.size === tireType.value.size
+      )?.label || `${tireType.value.width}/${tireType.value.profile}R${tireType.value.size}`;
 
     const gearsetLabel =
-      options.gearRatios.find((g) => JSON.stringify(g.value) === JSON.stringify(config.gearset))?.label ||
-      JSON.stringify(config.gearset);
+      options.gearRatios.find(
+        (g) => g.value.length === config.gearset.length && g.value.every((v, i) => v === config.gearset[i])
+      )?.label || config.gearset.join(', ');
 
     const result = await saveConfig({
       name: config.name,
