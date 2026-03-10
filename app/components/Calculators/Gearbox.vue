@@ -545,7 +545,14 @@
 
     <div class="mt-6 text-center max-w-3xl mx-auto">
       <p>
-        <span v-html="t('disclaimer', { strong_start: '<strong>', strong_end: '</strong>' })"></span>
+        <i18n-t keypath="disclaimer" tag="span">
+          <template #approximate
+            ><strong>{{ t('disclaimer_approximate') }}</strong></template
+          >
+          <template #doublecheck
+            ><strong>{{ t('disclaimer_doublecheck') }}</strong></template
+          >
+        </i18n-t>
         <UButton
           variant="link"
           color="primary"
@@ -595,7 +602,9 @@
       "gearing_information": "Gearing Information"
     },
     "support_divider": "Support",
-    "disclaimer": "Please note the above figures are {strong_start}approximate values{strong_end}. Before purchasing parts and building your engine we recommend {strong_start}doublechecking{strong_end} your calculations multiple times using more than one source. The mathematical equations used in this tool can be found here:",
+    "disclaimer": "Please note the above figures are {approximate}. Before purchasing parts and building your engine we recommend {doublecheck} your calculations multiple times using more than one source. The mathematical equations used in this tool can be found here:",
+    "disclaimer_approximate": "approximate values",
+    "disclaimer_doublecheck": "doublechecking",
     "equation_source": "Equation Source Code"
   },
   "es": {
@@ -621,7 +630,9 @@
       "gearing_information": "Información de Engranajes"
     },
     "support_divider": "Apoyo",
-    "disclaimer": "Ten en cuenta que las cifras anteriores son {strong_start}valores aproximados{strong_end}. Antes de comprar piezas y construir tu motor, recomendamos {strong_start}verificar{strong_end} tus cálculos múltiples veces usando más de una fuente. Las ecuaciones matemáticas usadas en esta herramienta se pueden encontrar aquí:",
+    "disclaimer": "Ten en cuenta que las cifras anteriores son {approximate}. Antes de comprar piezas y construir tu motor, recomendamos {doublecheck} tus cálculos múltiples veces usando más de una fuente. Las ecuaciones matemáticas usadas en esta herramienta se pueden encontrar aquí:",
+    "disclaimer_approximate": "valores aproximados",
+    "disclaimer_doublecheck": "verificar",
     "equation_source": "Código Fuente de las Ecuaciones"
   },
   "fr": {
@@ -647,7 +658,9 @@
       "gearing_information": "Informations d'engrenage"
     },
     "support_divider": "Support",
-    "disclaimer": "Veuillez noter que les chiffres ci-dessus sont des {strong_start}valeurs approximatives{strong_end}. Avant d'acheter des pièces et de construire votre moteur, nous recommandons de {strong_start}revérifier{strong_end} vos calculs plusieurs fois en utilisant plus d'une source. Les équations mathématiques utilisées dans cet outil peuvent être trouvées ici :",
+    "disclaimer": "Veuillez noter que les chiffres ci-dessus sont des {approximate}. Avant d'acheter des pièces et de construire votre moteur, nous recommandons de {doublecheck} vos calculs plusieurs fois en utilisant plus d'une source. Les équations mathématiques utilisées dans cet outil peuvent être trouvées ici :",
+    "disclaimer_approximate": "valeurs approximatives",
+    "disclaimer_doublecheck": "revérifier",
     "equation_source": "Code source des équations"
   },
   "de": {
@@ -673,7 +686,9 @@
       "gearing_information": "Getriebe-Informationen"
     },
     "support_divider": "Unterstützung",
-    "disclaimer": "Bitte beachten Sie, dass die obigen Zahlen {strong_start}Näherungswerte{strong_end} sind. Vor dem Kauf von Teilen und dem Bau Ihres Motors empfehlen wir, Ihre Berechnungen mehrmals mit mehr als einer Quelle zu {strong_start}überprüfen{strong_end}. Die in diesem Tool verwendeten mathematischen Gleichungen finden Sie hier:",
+    "disclaimer": "Bitte beachten Sie, dass die obigen Zahlen {approximate} sind. Vor dem Kauf von Teilen und dem Bau Ihres Motors empfehlen wir, Ihre Berechnungen mehrmals mit mehr als einer Quelle zu {doublecheck}. Die in diesem Tool verwendeten mathematischen Gleichungen finden Sie hier:",
+    "disclaimer_approximate": "Näherungswerte",
+    "disclaimer_doublecheck": "überprüfen",
     "equation_source": "Gleichungs-Quellcode"
   },
   "it": {
@@ -699,7 +714,9 @@
       "gearing_information": "Informazioni ingranaggi"
     },
     "support_divider": "Supporto",
-    "disclaimer": "Si prega di notare che le cifre sopra sono {strong_start}valori approssimativi{strong_end}. Prima di acquistare parti e costruire il vostro motore raccomandiamo di {strong_start}ricontrollare{strong_end} i vostri calcoli più volte utilizzando più di una fonte. Le equazioni matematiche utilizzate in questo strumento possono essere trovate qui:",
+    "disclaimer": "Si prega di notare che le cifre sopra sono {approximate}. Prima di acquistare parti e costruire il vostro motore raccomandiamo di {doublecheck} i vostri calcoli più volte utilizzando più di una fonte. Le equazioni matematiche utilizzate in questo strumento possono essere trovate qui:",
+    "disclaimer_approximate": "valori approssimativi",
+    "disclaimer_doublecheck": "ricontrollare",
     "equation_source": "Codice sorgente equazioni"
   },
   "ja": {
@@ -725,7 +742,9 @@
       "gearing_information": "ギア情報"
     },
     "support_divider": "サポート",
-    "disclaimer": "上記の数値は{strong_start}概算値{strong_end}であることにご注意ください。部品を購入してエンジンを構築する前に、複数のソースを使用して計算を{strong_start}何度も再確認{strong_end}することをお勧めします。このツールで使用されている数学的方程式はこちらで見つけることができます：",
+    "disclaimer": "上記の数値は{approximate}であることにご注意ください。部品を購入してエンジンを構築する前に、複数のソースを使用して計算を{doublecheck}することをお勧めします。このツールで使用されている数学的方程式はこちらで見つけることができます：",
+    "disclaimer_approximate": "概算値",
+    "disclaimer_doublecheck": "何度も再確認",
     "equation_source": "方程式ソースコード"
   },
   "ko": {
@@ -751,7 +770,9 @@
       "gearing_information": "기어링 정보"
     },
     "support_divider": "지원",
-    "disclaimer": "위 수치들은 {strong_start}근사값{strong_end}임을 알려드립니다. 부품을 구매하고 엔진을 제작하기 전에 여러 소스를 사용하여 계산을 {strong_start}여러 번 재확인{strong_end}할 것을 권장합니다. 이 도구에 사용된 수학 공식은 여기에서 찾을 수 있습니다:",
+    "disclaimer": "위 수치들은 {approximate}임을 알려드립니다. 부품을 구매하고 엔진을 제작하기 전에 여러 소스를 사용하여 계산을 {doublecheck}할 것을 권장합니다. 이 도구에 사용된 수학 공식은 여기에서 찾을 수 있습니다:",
+    "disclaimer_approximate": "근사값",
+    "disclaimer_doublecheck": "여러 번 재확인",
     "equation_source": "공식 소스 코드"
   },
   "pt": {
@@ -777,7 +798,9 @@
       "gearing_information": "Informações de Engrenagem"
     },
     "support_divider": "Suporte",
-    "disclaimer": "Por favor, note que os números acima são {strong_start}valores aproximados{strong_end}. Antes de comprar peças e construir seu motor, recomendamos {strong_start}verificar novamente{strong_end} seus cálculos várias vezes usando mais de uma fonte. As equações matemáticas usadas nesta ferramenta podem ser encontradas aqui:",
+    "disclaimer": "Por favor, note que os números acima são {approximate}. Antes de comprar peças e construir seu motor, recomendamos {doublecheck} seus cálculos várias vezes usando mais de uma fonte. As equações matemáticas usadas nesta ferramenta podem ser encontradas aqui:",
+    "disclaimer_approximate": "valores aproximados",
+    "disclaimer_doublecheck": "verificar novamente",
     "equation_source": "Código Fonte da Equação"
   },
   "ru": {
@@ -803,7 +826,9 @@
       "gearing_information": "Информация о передачах"
     },
     "support_divider": "Поддержка",
-    "disclaimer": "Обратите внимание, что приведенные выше цифры являются {strong_start}приблизительными значениями{strong_end}. Перед покупкой деталей и сборкой двигателя мы рекомендуем {strong_start}перепроверить{strong_end} ваши расчеты несколько раз, используя более одного источника. Математические уравнения, используемые в этом инструменте, можно найти здесь:",
+    "disclaimer": "Обратите внимание, что приведенные выше цифры являются {approximate}. Перед покупкой деталей и сборкой двигателя мы рекомендуем {doublecheck} ваши расчеты несколько раз, используя более одного источника. Математические уравнения, используемые в этом инструменте, можно найти здесь:",
+    "disclaimer_approximate": "приблизительными значениями",
+    "disclaimer_doublecheck": "перепроверить",
     "equation_source": "Исходный код уравнения"
   },
   "zh": {
@@ -829,7 +854,9 @@
       "gearing_information": "齿轮信息"
     },
     "support_divider": "支持",
-    "disclaimer": "请注意上述数字是{strong_start}近似值{strong_end}。在购买零件和制造发动机之前，我们建议使用多个来源{strong_start}多次检查{strong_end}您的计算。此工具中使用的数学方程可以在这里找到：",
+    "disclaimer": "请注意上述数字是{approximate}。在购买零件和制造发动机之前，我们建议使用多个来源{doublecheck}您的计算。此工具中使用的数学方程可以在这里找到：",
+    "disclaimer_approximate": "近似值",
+    "disclaimer_doublecheck": "多次检查",
     "equation_source": "方程源代码"
   }
 }

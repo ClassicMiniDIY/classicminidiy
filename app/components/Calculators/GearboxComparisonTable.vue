@@ -29,6 +29,12 @@
     { key: 'speedo', label: t('best_speedo_match') },
   ]);
 
+  const speedoStatusClass: Record<string, string> = {
+    'text-red': 'text-red-500 dark:text-red-400',
+    'text-green': 'text-green-600 dark:text-green-400',
+    'text-primary': 'text-blue-500 dark:text-blue-400',
+  };
+
   function getValue(config: ConfigResult, key: string): string {
     switch (key) {
       case '4th_speed':
@@ -106,7 +112,7 @@
               class="p-3 text-center"
               :class="{ 'font-bold text-green-600 dark:text-green-400': isBest(config, metric.key) }"
             >
-              <span v-if="metric.key === 'speedo'" :class="config.speedoStatus">
+              <span v-if="metric.key === 'speedo'" :class="speedoStatusClass[config.speedoStatus]">
                 {{ getValue(config, metric.key) }}
               </span>
               <span v-else>{{ getValue(config, metric.key) }}</span>
@@ -232,15 +238,3 @@
   }
 }
 </i18n>
-
-<style lang="scss">
-  .text-red {
-    color: #ff5252;
-  }
-  .text-green {
-    color: #4caf50;
-  }
-  .text-primary {
-    color: #2196f3;
-  }
-</style>
