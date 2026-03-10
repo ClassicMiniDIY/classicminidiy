@@ -268,18 +268,17 @@
                   </div>
                 </div>
                 <div class="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                  <a
+                  <button
                     v-for="(img, idx) in getColorImages(color)"
                     :key="'dot-' + idx"
-                    :href="`#color-${color.id}-slide-${idx}`"
+                    type="button"
                     class="w-2 h-2 rounded-full bg-base-100/60 hover:bg-base-100"
                     @click.stop.prevent="
-                      $event.currentTarget
-                        ?.closest('.carousel')
-                        ?.querySelector(`#color-${color.id}-slide-${idx}`)
+                      document
+                        .getElementById(`color-${color.id}-slide-${idx}`)
                         ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
                     "
-                  ></a>
+                  ></button>
                 </div>
               </template>
               <img
