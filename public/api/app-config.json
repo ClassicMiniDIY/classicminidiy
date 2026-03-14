@@ -1,0 +1,4 @@
+{
+  "backend": "supabase",
+  "rollout_percent": 100
+}
