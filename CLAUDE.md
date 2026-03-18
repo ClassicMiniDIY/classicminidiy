@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code when working with the Classic Mini DIY project.
 
+## CMDIY Ecosystem Context
+
+This repo is part of the Classic Mini DIY property ecosystem. See `/Users/colegentry/Development/CLAUDE.md` for the full cross-repo architecture. Key related repos:
+- **classicminidiy-supabase** — Shared Supabase backend (PostgreSQL, Auth, Edge Functions, RLS)
+- **TheMiniExchange** — Classic Mini marketplace (Nuxt 4, daisyUI, Stripe)
+- **Native CMDIY Apps** — iOS (Swift) and Android (Kotlin) mobile apps
+
+This site shares the Supabase auth and profiles with the other properties. Database schema lives in `classicminidiy-supabase`.
+
 ## Project Overview
 
 **Classic Mini DIY** is a comprehensive web application serving as both a toolkit and permanent archive for Classic Mini enthusiasts. It provides technical information, calculators, historical documents, and interactive tools for Classic Mini owners and mechanics.
