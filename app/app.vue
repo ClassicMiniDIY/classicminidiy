@@ -28,7 +28,6 @@
       </div>
       <Footer></Footer>
       <VitePwaManifest />
-      <AppPromoPopup />
     </div>
   </UApp>
 </template>

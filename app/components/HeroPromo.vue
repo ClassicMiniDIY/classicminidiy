@@ -2,6 +2,12 @@
   import { DateTime } from 'luxon';
   import { HERO_TYPES } from '../../data/models/generic';
 
+  interface PromoCta {
+    text: string;
+    url: string;
+    icon?: string;
+  }
+
   interface Promotion {
     id: string;
     title: string;
@@ -11,6 +17,8 @@
     backgroundImage: string;
     expiresAt: string;
     external?: boolean;
+    secondaryCtas?: PromoCta[];
+    mosaicImages?: string[];
   }
 
   const promotions: Promotion[] = [
@@ -25,15 +33,34 @@
       external: true,
     },
     {
-      id: 'turbo-engine-giveaway',
-      title: 'Win a Turbocharged A-Series Engine',
-      subtitle: 'Enter the Classic Mini DIY giveaway — drawing March 6th!',
-      ctaText: 'Enter the Giveaway',
-      ctaUrl:
-        'https://raffall.com/404519/enter-raffle-to-win-turbocharged-classic-mini-a-series-engine-hosted-by-cole-gentry',
-      backgroundImage: '/hero-promos/giveaway.png',
-      expiresAt: '2026-03-06',
+      id: 'classic-mini-toolbox-app',
+      title: 'Classic Mini Toolbox App is Here!',
+      subtitle: 'Take your favorite Classic Mini tools on the go — free on iOS and Android',
+      ctaText: '',
+      ctaUrl: '',
+      backgroundImage: '',
+      mosaicImages: [
+        '/app-promo/screenshot-home.jpeg',
+        '/app-promo/screenshot-maintenance.jpeg',
+        '/app-promo/screenshot-torque.jpeg',
+        '/app-promo/screenshot-needles.jpeg',
+        '/app-promo/screenshot-gearbox.jpeg',
+        '/app-promo/screenshot-compression.jpeg',
+      ],
+      expiresAt: '2027-01-01',
       external: true,
+      secondaryCtas: [
+        {
+          text: 'Download on App Store',
+          url: 'https://apps.apple.com/us/app/classic-mini-toolbox-cmdiy/id6751475172',
+          icon: 'fab fa-apple',
+        },
+        {
+          text: 'Get it on Google Play',
+          url: 'https://play.google.com/store/apps/details?id=com.classicminidiy.toolbox',
+          icon: 'fab fa-google-play',
+        },
+      ],
     },
   ];
 
@@ -102,7 +129,7 @@
   });
 
   const promoStyle = computed(() =>
-    selectedPromo.value
+    selectedPromo.value && !selectedPromo.value.mosaicImages?.length
       ? {
           backgroundImage: `url(${selectedPromo.value.backgroundImage})`,
           backgroundSize: 'cover',
@@ -120,7 +147,17 @@
     class="hero-section relative flex bg-[#242424] min-h-80 sm:min-h-96 md:min-h-144"
     :style="promoStyle"
   >
-    <div class="absolute inset-0 bg-black/40"></div>
+    <!-- Mosaic background -->
+    <div v-if="selectedPromo.mosaicImages?.length" class="absolute inset-0 mosaic-grid">
+      <img
+        v-for="(src, i) in selectedPromo.mosaicImages"
+        :key="i"
+        :src="src"
+        :alt="`App screenshot ${i + 1}`"
+        class="w-full h-full object-cover object-top"
+      />
+    </div>
+    <div class="absolute inset-0 bg-black/60"></div>
     <div class="hero-content relative flex flex-col items-start justify-center w-full">
       <div class="px-6 sm:px-12 md:pl-20 py-10">
         <p class="text-white text-sm uppercase tracking-wide">
@@ -129,7 +166,26 @@
         <h1 class="fancy-font-bold text-white text-4xl lg:text-5xl mt-2 special-title">
           {{ selectedPromo.title }}
         </h1>
+        <!-- Multiple CTAs (e.g. App Store + Google Play) -->
+        <div v-if="selectedPromo.secondaryCtas?.length" class="flex flex-col sm:flex-row gap-3 mt-6">
+          <UButton
+            v-for="cta in selectedPromo.secondaryCtas"
+            :key="cta.url"
+            :to="cta.url"
+            target="_blank"
+            external
+            color="primary"
+            size="lg"
+            @click="capture('promo_cta_clicked', { promo_id: selectedPromo.id, cta_url: cta.url })"
+          >
+            <i v-if="cta.icon" :class="cta.icon" class="text-xl mr-2"></i>
+            {{ cta.text }}
+          </UButton>
+        </div>
+
+        <!-- Single CTA -->
         <UButton
+          v-else
           :to="selectedPromo.ctaUrl"
           :target="selectedPromo.external ? '_blank' : undefined"
           :external="selectedPromo.external"
@@ -192,6 +248,17 @@
       .special-title {
         font-size: 2rem;
       }
+    }
+  }
+
+  .mosaic-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+    overflow: hidden;
+
+    @media screen and (max-width: 767px) {
+      grid-template-columns: repeat(3, 1fr);
     }
   }
 </style>
