@@ -151,7 +151,7 @@
     <div v-if="selectedPromo.mosaicImages?.length" class="absolute inset-0 mosaic-grid">
       <img
         v-for="(src, i) in selectedPromo.mosaicImages"
-        :key="i"
+        :key="src"
         :src="src"
         :alt="`App screenshot ${i + 1}`"
         class="w-full h-full object-cover object-top"
@@ -185,7 +185,7 @@
 
         <!-- Single CTA -->
         <UButton
-          v-else
+          v-else-if="selectedPromo.ctaUrl"
           :to="selectedPromo.ctaUrl"
           :target="selectedPromo.external ? '_blank' : undefined"
           :external="selectedPromo.external"
