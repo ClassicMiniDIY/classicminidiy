@@ -5,6 +5,7 @@ This file provides guidance to Claude Code when working with the Classic Mini DI
 ## CMDIY Ecosystem Context
 
 This repo is part of the Classic Mini DIY property ecosystem. See `/Users/colegentry/Development/CLAUDE.md` for the full cross-repo architecture. Key related repos:
+
 - **classicminidiy-supabase** — Shared Supabase backend (PostgreSQL, Auth, Edge Functions, RLS)
 - **TheMiniExchange** — Classic Mini marketplace (Nuxt 4, daisyUI, Stripe)
 - **Native CMDIY Apps** — iOS (Swift) and Android (Kotlin) mobile apps

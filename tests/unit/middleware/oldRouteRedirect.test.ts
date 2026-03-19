@@ -20,61 +20,61 @@ describe('oldRouteRedirect middleware', () => {
   // --- /technical/colors ---
   it('redirects /technical/colors to /archive/colors', () => {
     const result = middleware({ path: '/technical/colors' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/colors');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/colors', { redirectCode: 301 });
     expect(result).toBeDefined();
   });
 
   it('redirects /technical/colors/ (with trailing slash) to /archive/colors', () => {
     const result = middleware({ path: '/technical/colors/' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/colors');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/colors', { redirectCode: 301 });
   });
 
   // --- /technical/manuals ---
   it('redirects /technical/manuals to /archive/documents?type=manual', () => {
     middleware({ path: '/technical/manuals' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/documents?type=manual');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/documents?type=manual', { redirectCode: 301 });
   });
 
   // --- /technical/wheels ---
   it('redirects /technical/wheels to /archive/wheels', () => {
     middleware({ path: '/technical/wheels' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/wheels');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/wheels', { redirectCode: 301 });
   });
 
   // --- /technical/electrical ---
   it('redirects /technical/electrical to /archive/electrical', () => {
     middleware({ path: '/technical/electrical' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/electrical');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/electrical', { redirectCode: 301 });
   });
 
   // --- /technical/engines ---
   it('redirects /technical/engines to /archive/engines', () => {
     middleware({ path: '/technical/engines' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/engines');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/engines', { redirectCode: 301 });
   });
 
   // --- /technical/chassisDecoder ---
   it('redirects /technical/chassisDecoder to /technical/chassis-decoder', () => {
     middleware({ path: '/technical/chassisDecoder' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/technical/chassis-decoder');
+    expect(navigateTo).toHaveBeenCalledWith('/technical/chassis-decoder', { redirectCode: 301 });
   });
 
   // --- /technical/chasisDecoder (typo variant) ---
   it('redirects /technical/chasisDecoder (typo) to /technical/chassis-decoder', () => {
     middleware({ path: '/technical/chasisDecoder' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/technical/chassis-decoder');
+    expect(navigateTo).toHaveBeenCalledWith('/technical/chassis-decoder', { redirectCode: 301 });
   });
 
   // --- /technical/engineDecoder ---
   it('redirects /technical/engineDecoder to /technical/engine-decoder', () => {
     middleware({ path: '/technical/engineDecoder' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/technical/engine-decoder');
+    expect(navigateTo).toHaveBeenCalledWith('/technical/engine-decoder', { redirectCode: 301 });
   });
 
   // --- /registry ---
   it('redirects /registry to /archive/registry', () => {
     middleware({ path: '/registry' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/registry');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/registry', { redirectCode: 301 });
   });
 
   it('does NOT redirect /archive/registry (already in archive)', () => {
@@ -92,7 +92,7 @@ describe('oldRouteRedirect middleware', () => {
   // --- /archive/carbs ---
   it('redirects /archive/carbs to /archive/documents?type=tuning', () => {
     middleware({ path: '/archive/carbs' }, {});
-    expect(navigateTo).toHaveBeenCalledWith('/archive/documents?type=tuning');
+    expect(navigateTo).toHaveBeenCalledWith('/archive/documents?type=tuning', { redirectCode: 301 });
   });
 
   // --- Non-matching paths ---
