@@ -192,8 +192,8 @@ describe('ToolboxItems', () => {
 // ArchiveItems
 // ---------------------------------------------------------------------------
 describe('ArchiveItems', () => {
-  it('has 8 items', () => {
-    expect(ArchiveItems).toHaveLength(8);
+  it('has 7 items', () => {
+    expect(ArchiveItems).toHaveLength(7);
   });
 
   it('each item has title, path, iconHtml, to, description, and image', () => {
