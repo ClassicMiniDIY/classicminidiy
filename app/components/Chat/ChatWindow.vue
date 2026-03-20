@@ -32,15 +32,16 @@
                 v-model="input"
                 @keydown="handleInputKeyDown"
                 :placeholder="t('input_placeholder')"
+                :aria-label="t('input_placeholder')"
                 class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:text-muted py-2 leading-6"
                 rows="1"
               ></textarea>
 
-              <UButton v-if="isLoading" @click="stopGeneration" type="button" size="sm" color="error" square>
+              <UButton v-if="isLoading" @click="stopGeneration" type="button" size="sm" color="error" square aria-label="Stop generating">
                 <i class="fa-solid fa-stop"></i>
               </UButton>
 
-              <UButton v-else type="submit" size="sm" color="primary" square :disabled="!input.trim()">
+              <UButton v-else type="submit" size="sm" color="primary" square :disabled="!input.trim()" aria-label="Send message">
                 <i class="fa-solid fa-paper-plane"></i>
               </UButton>
             </div>
@@ -70,7 +71,8 @@
               </div>
             </template>
 
-            <div v-if="isLoading" class="flex h-8 items-center gap-1 rounded-2xl bg-muted px-4 py-2">
+            <div v-if="isLoading" class="flex h-8 items-center gap-1 rounded-2xl bg-muted px-4 py-2" role="status">
+              <span class="sr-only">Generating response...</span>
               <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-muted"></div>
               <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-muted animation-delay-500"></div>
               <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-muted animation-delay-1000"></div>
@@ -90,6 +92,7 @@
           color="neutral"
           square
           title="Scroll to bottom"
+          aria-label="Scroll to bottom"
         >
           <i class="fa-solid fa-chevron-down text-sm"></i>
         </UButton>
@@ -120,15 +123,16 @@
             v-model="input"
             @keydown="handleInputKeyDown"
             :placeholder="t('input_placeholder')"
+            :aria-label="t('input_placeholder')"
             class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:text-muted py-2 leading-6"
             rows="1"
           ></textarea>
 
-          <UButton v-if="isLoading" @click="stopGeneration" type="button" size="sm" color="error" square>
+          <UButton v-if="isLoading" @click="stopGeneration" type="button" size="sm" color="error" square aria-label="Stop generating">
             <i class="fa-solid fa-stop"></i>
           </UButton>
 
-          <UButton v-else type="submit" size="sm" color="primary" square :disabled="!input.trim()">
+          <UButton v-else type="submit" size="sm" color="primary" square :disabled="!input.trim()" aria-label="Send message">
             <i class="fa-solid fa-paper-plane"></i>
           </UButton>
         </div>

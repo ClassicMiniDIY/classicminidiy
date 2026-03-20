@@ -146,6 +146,9 @@
     v-if="selectedPromo"
     class="hero-section relative flex bg-[#242424] min-h-80 sm:min-h-96 md:min-h-144"
     :style="promoStyle"
+    role="region"
+    aria-roledescription="carousel"
+    aria-label="Promotions"
   >
     <!-- Mosaic background -->
     <div v-if="selectedPromo.mosaicImages?.length" class="absolute inset-0 mosaic-grid">
