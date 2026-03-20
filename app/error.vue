@@ -23,7 +23,7 @@
   <NuxtLoadingIndicator />
   <div class="grid grid-cols-12 gap-4">
     <div class="col-span-12 md:col-span-6 md:col-start-4">
-      <UCard class="mb-72 mt-10 text-center">
+      <UCard class="mb-72 mt-10 text-center" role="alert">
         <h2 class="text-6xl font-bold mb-4">{{ t('title') }}</h2>
         <h3 class="text-5xl mb-4">{{ t('heading', { statusCode: error?.statusCode }) }}</h3>
         <p>{{ t('message') }}</p>

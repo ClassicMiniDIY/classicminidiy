@@ -163,10 +163,14 @@
       v-if="!maxFilesReached"
       class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors duration-200"
       :class="isDragOver ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-primary/50'"
+      role="button"
+      tabindex="0"
       @drop="handleDrop"
       @dragover="handleDragOver"
       @dragleave="handleDragLeave"
       @click="openFilePicker"
+      @keydown.enter="openFilePicker"
+      @keydown.space.prevent="openFilePicker"
     >
       <i class="fad fa-cloud-arrow-up text-4xl opacity-40 mb-3 block"></i>
       <p class="font-medium">{{ t('drop_zone_text') }}</p>
@@ -204,7 +208,8 @@
         <!-- Remove button -->
         <button
           type="button"
-          class="btn btn-circle btn-xs btn-error absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          class="btn btn-circle btn-xs btn-error absolute top-1 right-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+          :aria-label="'Remove file ' + file.name"
           @click.stop="removeFile(index)"
         >
           <i class="fas fa-times"></i>

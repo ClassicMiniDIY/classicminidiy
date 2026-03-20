@@ -268,13 +268,14 @@
 
           <!-- Your Name -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-submitted-by" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium"
                 >{{ t('form_labels.your_name') }} <span class="text-error">*</span></span
               >
               <span class="text-sm text-muted"><i class="fad fa-user"></i></span>
             </label>
             <UInput
+              id="color-submitted-by"
               type="text"
               :placeholder="t('placeholders.name')"
               v-model="details.submittedBy"
@@ -289,13 +290,14 @@
 
           <!-- Your Email -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-submitted-email" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium"
                 >{{ t('form_labels.your_email') }} <span class="text-error">*</span></span
               >
               <span class="text-sm text-muted"><i class="fad fa-at"></i></span>
             </label>
             <UInput
+              id="color-submitted-email"
               type="email"
               :placeholder="t('placeholders.email')"
               v-model="details.submittedByEmail"
@@ -326,13 +328,14 @@
 
           <!-- Color Name -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-name" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium"
                 >{{ t('form_labels.color_name') }} <span class="text-error">*</span></span
               >
               <span class="text-sm text-muted"><i class="fad fa-palette"></i></span>
             </label>
             <UInput
+              id="color-name"
               type="text"
               :placeholder="t('placeholders.color_name')"
               v-model="details.name"
@@ -347,47 +350,47 @@
 
           <!-- BMC Code -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-bmc-code" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium">{{ t('form_labels.bmc_code') }}</span>
               <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
             </label>
-            <UInput type="text" :placeholder="t('placeholders.bmc_code')" v-model="details.code" />
+            <UInput id="color-bmc-code" type="text" :placeholder="t('placeholders.bmc_code')" v-model="details.code" />
           </div>
 
           <!-- Short Code -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-short-code" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium">{{ t('form_labels.short_code') }}</span>
               <span class="text-sm text-muted"><i class="fad fa-tag"></i></span>
             </label>
-            <UInput type="text" :placeholder="t('placeholders.short_code')" v-model="details.shortCode" />
+            <UInput id="color-short-code" type="text" :placeholder="t('placeholders.short_code')" v-model="details.shortCode" />
           </div>
 
           <!-- Ditzler/PPG Code -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-ditzler-code" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium">{{ t('form_labels.ditzler_ppg_code') }}</span>
               <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
             </label>
-            <UInput type="text" :placeholder="t('placeholders.ditzler_ppg_code')" v-model="details.ditzlerPpgCode" />
+            <UInput id="color-ditzler-code" type="text" :placeholder="t('placeholders.ditzler_ppg_code')" v-model="details.ditzlerPpgCode" />
           </div>
 
           <!-- Dulux Code -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-dulux-code" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium">{{ t('form_labels.dulux_code') }}</span>
               <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
             </label>
-            <UInput type="text" :placeholder="t('placeholders.dulux_code')" v-model="details.duluxCode" />
+            <UInput id="color-dulux-code" type="text" :placeholder="t('placeholders.dulux_code')" v-model="details.duluxCode" />
           </div>
 
           <!-- Years Used -->
           <div class="w-full">
-            <label class="flex justify-between items-center mb-1">
+            <label for="color-years-used" class="flex justify-between items-center mb-1">
               <span class="text-sm font-medium">{{ t('form_labels.years_used') }}</span>
               <span class="text-sm text-muted"><i class="fad fa-calendar"></i></span>
             </label>
-            <UInput type="text" :placeholder="t('placeholders.years_used')" v-model="details.years" />
+            <UInput id="color-years-used" type="text" :placeholder="t('placeholders.years_used')" v-model="details.years" />
           </div>
         </div>
 

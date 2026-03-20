@@ -337,8 +337,13 @@
             <UInput
               v-model="searchQuery"
               :placeholder="t('form.select_placeholder')"
+              :aria-label="t('form.select_placeholder')"
               class="w-full"
               autocomplete="off"
+              role="combobox"
+              :aria-expanded="isDropdownOpen"
+              aria-controls="needle-listbox"
+              aria-autocomplete="list"
               @focus="isDropdownOpen = true"
               @input="isDropdownOpen = true"
             />
@@ -348,6 +353,8 @@
               <div
                 v-if="isDropdownOpen && filteredResults.length > 0"
                 ref="dropdownRef"
+                id="needle-listbox"
+                role="listbox"
                 class="fixed bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg max-h-64 overflow-y-auto"
                 :style="dropdownStyle"
                 @scroll="onDropdownScroll"
@@ -356,6 +363,7 @@
                   v-for="name in displayedItems"
                   :key="name"
                   type="button"
+                  role="option"
                   class="w-full px-3 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-700 text-sm transition-colors"
                   :class="{
                     'text-neutral-400 dark:text-neutral-500': selectedNeedles.some((n) => n.name === name),
@@ -408,6 +416,7 @@
                 v-if="selectedNeedles.length > 1"
                 @click="removeArrayItem(selectedNeedles[index] as Needle)"
                 class="ml-1 hover:opacity-70"
+                :aria-label="'Remove needle ' + needle.name"
               >
                 <i class="fas fa-times text-xs"></i>
               </button>
