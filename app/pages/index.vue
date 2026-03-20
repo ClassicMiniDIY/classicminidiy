@@ -90,16 +90,16 @@
     <div class="grid grid-cols-12 gap-4 pb-5">
       <div class="col-span-12"></div>
       <div class="col-span-12 md:col-span-8">
-        <h2 class="fancy-font-book-oblique"><i class="fad fa-book"></i> {{ t('home.mission.title') }}</h2>
-        <h3 class="text-3xl font-bold pt-2 pb-3">{{ t('home.mission.heading') }}</h3>
+        <p class="fancy-font-book-oblique"><i class="fad fa-book"></i> {{ t('home.mission.title') }}</p>
+        <h2 class="text-3xl font-bold pt-2 pb-3">{{ t('home.mission.heading') }}</h2>
         <p class="text-lg pb-5">
           {{ t('home.mission.content') }}
         </p>
         <stats />
       </div>
       <div class="col-span-12 md:col-span-4">
-        <h3 class="fancy-font-book-oblique"><i class="fad fa-gift"></i> {{ t('home.support.title') }}</h3>
-        <h4 class="text-3xl font-bold pt-2 pb-3">{{ t('home.support.heading') }}</h4>
+        <p class="fancy-font-book-oblique"><i class="fad fa-gift"></i> {{ t('home.support.title') }}</p>
+        <h3 class="text-3xl font-bold pt-2 pb-3">{{ t('home.support.heading') }}</h3>
         <p class="text-lg pt-2 pb-3">
           {{ t('home.support.content') }}
         </p>
@@ -135,15 +135,16 @@
     <div class="container mx-auto px-4 pt-10">
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-5">
-          <video autoplay loop muted playsinline>
+          <video autoplay loop muted playsinline class="motion-safe:block motion-reduce:hidden">
             <source src="https://classicminidiy.s3.amazonaws.com/misc/grey-tool-animation.webm" type="video/webm" />
             <source src="https://classicminidiy.s3.amazonaws.com/misc/grey-tool-animation.mp4" type="video/mp4" />
+            Animated illustration of Classic Mini tools and parts
           </video>
         </div>
         <div class="col-span-12 md:col-span-7">
-          <h3 class="fancy-font-book-oblique"><i class="fad fa-handshake-alt"></i> {{ t('home.toolbox.title') }}</h3>
-          <h3 class="text-3xl font-bold">{{ t('home.toolbox.heading') }}</h3>
-          <h4 class="fancy-font-book-oblique pt-5 pb-5">{{ t('home.toolbox.subtitle') }}</h4>
+          <p class="fancy-font-book-oblique"><i class="fad fa-handshake-alt"></i> {{ t('home.toolbox.title') }}</p>
+          <h2 class="text-3xl font-bold">{{ t('home.toolbox.heading') }}</h2>
+          <p class="fancy-font-book-oblique pt-5 pb-5">{{ t('home.toolbox.subtitle') }}</p>
           <p class="pb-5 text-lg">
             {{ t('home.toolbox.content') }}
           </p>
@@ -152,8 +153,8 @@
       </div>
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-8 lg:col-span-6">
-          <h3 class="fancy-font-book-oblique pb-5"><i class="fad fa-hands-heart"></i> {{ t('home.patreon.title') }}</h3>
-          <h3 class="text-3xl font-bold pb-5">{{ t('home.patreon.heading') }}</h3>
+          <p class="fancy-font-book-oblique pb-5"><i class="fad fa-hands-heart"></i> {{ t('home.patreon.title') }}</p>
+          <h2 class="text-3xl font-bold pb-5">{{ t('home.patreon.heading') }}</h2>
           <p class="text-lg">
             {{ t('home.patreon.content') }}
           </p>
@@ -229,12 +230,13 @@
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-7 mb-5 pb-10">
-          <h3 class="fancy-font-bold text-2xl"><i class="fad fa-address-card"></i> {{ t('home.about.title') }}</h3>
-          <h4 class="fancy-font-book-oblique pt-5">{{ t('home.about.name') }}</h4>
+          <h2 class="fancy-font-bold text-2xl"><i class="fad fa-address-card"></i> {{ t('home.about.title') }}</h2>
+          <p class="fancy-font-book-oblique pt-5">{{ t('home.about.name') }}</p>
           <p>
             {{ t('home.about.bio', { age: age }) }}
           </p>
           <h3 class="fancy-font-book-oblique pt-10">{{ t('home.about.promise_title') }}</h3>
+
           <p>
             {{ t('home.about.promise') }}
           </p>

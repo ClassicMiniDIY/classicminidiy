@@ -256,7 +256,7 @@
         <!-- Mobile Menu Button -->
         <div class="lg:hidden flex items-center gap-2">
           <UColorModeButton size="sm" />
-          <UButton variant="ghost" color="neutral" size="sm" square @click="isMobileMenuOpen = true">
+          <UButton variant="ghost" color="neutral" size="sm" square @click="isMobileMenuOpen = true" aria-label="Open menu">
             <i class="fad fa-bars text-xl"></i>
           </UButton>
         </div>
@@ -297,6 +297,7 @@
             :key="link.to"
             :to="link.to"
             target="_blank"
+            rel="noopener noreferrer"
             variant="ghost"
             color="neutral"
             block

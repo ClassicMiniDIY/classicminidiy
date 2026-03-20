@@ -9,11 +9,12 @@
             v-model="input"
             @keydown="handleInputKeyDown"
             :placeholder="t('placeholder')"
+            :aria-label="t('placeholder')"
             class="flex-1 bg-transparent resize-none outline-none min-h-[1.5rem] max-h-32 placeholder:text-muted"
             rows="1"
           ></textarea>
 
-          <UButton type="submit" size="sm" color="primary" square :disabled="!input.trim()">
+          <UButton type="submit" size="sm" color="primary" square :disabled="!input.trim()" aria-label="Send message">
             <i class="fa-solid fa-paper-plane"></i>
           </UButton>
         </div>

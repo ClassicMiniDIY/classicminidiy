@@ -175,6 +175,7 @@
             size="lg"
             square
             :title="social.title"
+            :aria-label="social.title"
           >
             <i :class="social.icon" class="text-2xl"></i>
           </UButton>
