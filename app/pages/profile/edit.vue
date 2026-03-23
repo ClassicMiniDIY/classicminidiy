@@ -56,8 +56,8 @@
           }
         }
       }
-    } catch {
-      // Profile fetch failed — form stays empty
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
     } finally {
       profileLoading.value = false;
     }
@@ -73,7 +73,8 @@
       usernameChecking.value = true;
       try {
         usernameAvailable.value = await checkUsernameAvailability(val);
-      } catch {
+      } catch (error) {
+        console.error('Failed to check username availability:', error);
         usernameAvailable.value = null;
       } finally {
         usernameChecking.value = false;

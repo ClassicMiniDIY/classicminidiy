@@ -17,9 +17,25 @@
     bluesky: 'fab fa-bluesky',
   };
 
+  const platformBaseUrls: Record<string, string> = {
+    instagram: 'https://www.instagram.com/',
+    youtube: 'https://www.youtube.com/',
+    facebook: 'https://www.facebook.com/',
+    tiktok: 'https://www.tiktok.com/@',
+    x: 'https://x.com/',
+    bluesky: 'https://bsky.app/profile/',
+  };
+
   function normalizeUrl(platform: string, value: string): string {
     if (value.startsWith('http://') || value.startsWith('https://')) return value;
     if (platform === 'website') return `https://${value}`;
+
+    const baseUrl = platformBaseUrls[platform];
+    if (baseUrl) {
+      const handle = value.startsWith('@') ? value.substring(1) : value;
+      return `${baseUrl}${handle}`;
+    }
+
     return value;
   }
 </script>

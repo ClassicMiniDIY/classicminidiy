@@ -1,15 +1,17 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../data/models/generic';
-  import type { PublicProfile, Vehicle } from '~/composables/useProfile';
+  import type { OwnProfile, Vehicle } from '~/composables/useProfile';
+  import type { SavedGearConfig } from '~/composables/useGearConfigs';
 
   const { t } = useI18n();
-  const { isAuthenticated, user, userProfile } = useAuth();
-  const { fetchProfile, getPublicProfileVehicles } = useProfile();
+  const { isAuthenticated, user } = useAuth();
+  const { fetchProfile, getPublicProfile, getPublicProfileVehicles } = useProfile();
   const { fetchPublicConfigs } = useGearConfigs();
 
-  const profile = ref<any>(null);
+  const profile = ref<OwnProfile | null>(null);
   const vehicles = ref<Vehicle[]>([]);
-  const publicConfigs = ref<any[]>([]);
+  const publicConfigs = ref<SavedGearConfig[]>([]);
+  const isSustainingMember = ref(false);
   const loading = ref(true);
   const showShareModal = ref(false);
 
@@ -19,15 +21,23 @@
       return;
     }
     try {
-      const [profileData, configs] = await Promise.all([fetchProfile(), fetchPublicConfigs(user.value.id)]);
+      const [profileData, configs, publicResult] = await Promise.all([
+        fetchProfile(),
+        fetchPublicConfigs(user.value.id),
+        getPublicProfile(user.value.id),
+      ]);
       profile.value = profileData;
       publicConfigs.value = configs;
+
+      if (publicResult && 'profile' in publicResult) {
+        isSustainingMember.value = publicResult.profile.is_sustaining_member;
+      }
 
       if (profileData?.show_vehicles) {
         vehicles.value = await getPublicProfileVehicles(user.value.id);
       }
-    } catch {
-      // Failed to load
+    } catch (error) {
+      console.error('Failed to load profile data:', error);
     } finally {
       loading.value = false;
     }
@@ -115,7 +125,7 @@
               <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
                 <h2 class="text-xl font-bold">{{ displayName }}</h2>
                 <span v-if="profile?.username" class="text-sm opacity-60">@{{ profile.username }}</span>
-                <ProfileSustainingBadge v-if="userProfile?.is_sustaining_member" size="sm" />
+                <ProfileSustainingBadge v-if="isSustainingMember" size="sm" />
               </div>
 
               <p v-if="profile?.location" class="text-sm opacity-60 mt-1">
