@@ -2,59 +2,148 @@
   import { HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
-  const { isAuthenticated, userProfile, fetchUserProfile } = useAuth();
-  const supabase = useSupabase();
+  const { isAuthenticated, user, userProfile, fetchUserProfile } = useAuth();
+  const { fetchProfile, updateProfile, uploadAvatar, checkUsernameAvailability } = useProfile();
 
   const displayName = ref('');
   const bio = ref('');
+  const location = ref('');
+  const username = ref('');
+  const isPublic = ref(true);
+  const showVehicles = ref(false);
+  const socialLinks = ref<Record<string, string>>({
+    instagram: '',
+    youtube: '',
+    facebook: '',
+    website: '',
+    tiktok: '',
+    x: '',
+    bluesky: '',
+  });
+  const avatarUrl = ref<string | null>(null);
+  const avatarFile = ref<File | null>(null);
+
   const saving = ref(false);
   const saved = ref(false);
+  const saveError = ref('');
+  const profileLoading = ref(true);
 
-  // Pre-populate from profile
-  watch(
-    userProfile,
-    (profile) => {
+  // Username availability
+  const usernameAvailable = ref<boolean | null>(null);
+  const usernameChecking = ref(false);
+  let usernameDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  // Load full profile on mount
+  onMounted(async () => {
+    if (!user.value) {
+      profileLoading.value = false;
+      return;
+    }
+    try {
+      const profile = await fetchProfile();
       if (profile) {
         displayName.value = profile.display_name || '';
+        bio.value = profile.bio || '';
+        location.value = profile.location || '';
+        username.value = profile.username || '';
+        isPublic.value = profile.is_public ?? true;
+        showVehicles.value = profile.show_vehicles ?? false;
+        avatarUrl.value = profile.avatar_url || null;
+        if (profile.social_links && typeof profile.social_links === 'object') {
+          const links = profile.social_links as Record<string, string>;
+          for (const key of Object.keys(socialLinks.value)) {
+            socialLinks.value[key] = links[key] || '';
+          }
+        }
       }
-    },
-    { immediate: true }
-  );
+    } catch {
+      // Profile fetch failed — form stays empty
+    } finally {
+      profileLoading.value = false;
+    }
+  });
+
+  // Debounced username check
+  watch(username, (val) => {
+    usernameAvailable.value = null;
+    if (usernameDebounce) clearTimeout(usernameDebounce);
+    if (!val || val.length < 3) return;
+
+    usernameDebounce = setTimeout(async () => {
+      usernameChecking.value = true;
+      try {
+        usernameAvailable.value = await checkUsernameAvailability(val);
+      } catch {
+        usernameAvailable.value = null;
+      } finally {
+        usernameChecking.value = false;
+      }
+    }, 500);
+  });
+
+  function handleAvatarUpload(file: File) {
+    avatarFile.value = file;
+  }
 
   async function save() {
     saving.value = true;
     saved.value = false;
+    saveError.value = '';
+
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('profiles')
-          .update({
-            display_name: displayName.value.trim() || null,
-            bio: bio.value.trim() || null,
-          })
-          .eq('id', user.id);
-        await fetchUserProfile(user.id);
-        saved.value = true;
+      let newAvatarUrl = avatarUrl.value;
+
+      // Upload avatar if changed
+      if (avatarFile.value) {
+        newAvatarUrl = await uploadAvatar(avatarFile.value);
+        avatarFile.value = null;
       }
+
+      // Clean social links — only include non-empty values
+      const cleanedLinks: Record<string, string> = {};
+      for (const [key, val] of Object.entries(socialLinks.value)) {
+        if (val.trim()) cleanedLinks[key] = val.trim();
+      }
+
+      await updateProfile({
+        display_name: displayName.value.trim() || null,
+        bio: bio.value.trim() || null,
+        location: location.value.trim() || null,
+        username: username.value.trim() || null,
+        avatar_url: newAvatarUrl,
+        is_public: isPublic.value,
+        show_vehicles: showVehicles.value,
+        social_links: cleanedLinks,
+      });
+
+      if (user.value) {
+        await fetchUserProfile(user.value.id);
+      }
+
+      avatarUrl.value = newAvatarUrl;
+      saved.value = true;
+    } catch (err: any) {
+      saveError.value = err?.message || t('error_generic');
     } finally {
       saving.value = false;
     }
   }
 
+  const socialPlatforms = [
+    { key: 'instagram', icon: 'fab fa-instagram', label: 'Instagram' },
+    { key: 'youtube', icon: 'fab fa-youtube', label: 'YouTube' },
+    { key: 'facebook', icon: 'fab fa-facebook', label: 'Facebook' },
+    { key: 'website', icon: 'fas fa-globe', label: 'Website' },
+    { key: 'tiktok', icon: 'fab fa-tiktok', label: 'TikTok' },
+    { key: 'x', icon: 'fab fa-x-twitter', label: 'X' },
+    { key: 'bluesky', icon: 'fab fa-bluesky', label: 'Bluesky' },
+  ];
+
   useHead({
     title: t('title'),
     meta: [
-      {
-        name: 'description',
-        content: t('description'),
-      },
-      {
-        name: 'robots',
-        content: 'noindex, nofollow',
-      },
+      { name: 'description', content: t('description') },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
   });
 </script>
@@ -83,25 +172,41 @@
       </UCard>
     </div>
 
+    <!-- Loading -->
+    <div v-else-if="profileLoading" class="flex justify-center py-12">
+      <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+    </div>
+
     <!-- Authenticated content -->
-    <div v-else class="max-w-2xl mx-auto">
-      <UCard>
-        <template #header>
-          <div class="flex items-center bg-muted -m-4 p-4">
-            <i class="fad fa-user-pen mr-2"></i>
-            <h2 class="text-lg font-semibold">{{ t('card_title') }}</h2>
-          </div>
-        </template>
+    <div v-else class="max-w-2xl mx-auto space-y-6">
+      <!-- Success alert -->
+      <UAlert v-if="saved" color="success" :title="t('success_title')" :description="t('success_description')" />
 
-        <div class="p-4">
-          <!-- Success alert -->
-          <UAlert v-if="saved" color="success" class="mb-6">
-            <template #title>{{ t('success_title') }}</template>
-            <template #description>{{ t('success_description') }}</template>
-          </UAlert>
+      <!-- Error alert -->
+      <UAlert v-if="saveError" color="error" :title="t('error_title')" :description="saveError" />
 
-          <!-- Form -->
-          <form @submit.prevent="save" class="space-y-4">
+      <form @submit.prevent="save" class="space-y-6">
+        <!-- Avatar & Basic Info -->
+        <UCard>
+          <template #header>
+            <div class="flex items-center bg-muted -m-4 p-4">
+              <i class="fad fa-user-pen mr-2"></i>
+              <h2 class="text-lg font-semibold">{{ t('card_title') }}</h2>
+            </div>
+          </template>
+
+          <div class="p-4 space-y-4">
+            <!-- Avatar -->
+            <div class="flex justify-center">
+              <ProfileAvatarUpload
+                :current-url="avatarUrl ?? undefined"
+                :display-name="displayName"
+                :email="user?.email"
+                @upload="handleAvatarUpload"
+              />
+            </div>
+
+            <!-- Display Name -->
             <UFormField :label="t('form.display_name.label')">
               <UInput
                 v-model="displayName"
@@ -113,6 +218,19 @@
               />
             </UFormField>
 
+            <!-- Location -->
+            <UFormField :label="t('form.location.label')">
+              <UInput
+                v-model="location"
+                type="text"
+                :placeholder="t('form.location.placeholder')"
+                class="w-full"
+                maxlength="100"
+                icon="i-fa6-solid-location-dot"
+              />
+            </UFormField>
+
+            <!-- Bio -->
             <UFormField :label="t('form.bio.label')">
               <UTextarea
                 v-model="bio"
@@ -123,24 +241,107 @@
               />
             </UFormField>
 
-            <USeparator class="my-4" />
+            <!-- Username -->
+            <UFormField :label="t('form.username.label')">
+              <UInput
+                v-model="username"
+                type="text"
+                :placeholder="t('form.username.placeholder')"
+                class="w-full"
+                maxlength="30"
+              >
+                <template #leading>
+                  <span class="text-sm opacity-60 pl-1">@</span>
+                </template>
+              </UInput>
+              <template #help>
+                <span v-if="usernameChecking" class="text-xs opacity-50">
+                  <i class="fas fa-spinner fa-spin mr-1"></i>{{ t('form.username.checking') }}
+                </span>
+                <span v-else-if="usernameAvailable === true" class="text-xs text-green-600">
+                  <i class="fas fa-check mr-1"></i>{{ t('form.username.available') }}
+                </span>
+                <span v-else-if="usernameAvailable === false" class="text-xs text-red-500">
+                  <i class="fas fa-xmark mr-1"></i>{{ t('form.username.taken') }}
+                </span>
+                <span v-else-if="username" class="text-xs opacity-50">
+                  classicminidiy.com/users/{{ username }}
+                </span>
+              </template>
+            </UFormField>
+          </div>
+        </UCard>
 
-            <p class="text-sm opacity-60">
-              <i class="fad fa-circle-info mr-1"></i>
-              {{ t('shared_note') }}
-            </p>
-
-            <div class="flex gap-3 pt-2">
-              <UButton to="/" variant="ghost" color="neutral">
-                {{ t('form.cancel') }}
-              </UButton>
-              <UButton type="submit" color="primary" :loading="saving" :disabled="saving">
-                {{ t('form.save') }}
-              </UButton>
+        <!-- Privacy Settings -->
+        <UCard>
+          <template #header>
+            <div class="flex items-center bg-muted -m-4 p-4">
+              <i class="fad fa-shield-halved mr-2"></i>
+              <h2 class="text-lg font-semibold">{{ t('privacy.title') }}</h2>
             </div>
-          </form>
+          </template>
+
+          <div class="p-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-medium">{{ t('privacy.public_profile') }}</p>
+                <p class="text-sm opacity-60">{{ t('privacy.public_description') }}</p>
+              </div>
+              <UToggle v-model="isPublic" />
+            </div>
+
+            <div v-if="isPublic" class="flex items-center justify-between">
+              <div>
+                <p class="font-medium">{{ t('privacy.show_vehicles') }}</p>
+                <p class="text-sm opacity-60">{{ t('privacy.vehicles_description') }}</p>
+              </div>
+              <UToggle v-model="showVehicles" />
+            </div>
+          </div>
+        </UCard>
+
+        <!-- Social Links -->
+        <UCard>
+          <template #header>
+            <div class="flex items-center bg-muted -m-4 p-4">
+              <i class="fad fa-share-nodes mr-2"></i>
+              <h2 class="text-lg font-semibold">{{ t('social.title') }}</h2>
+            </div>
+          </template>
+
+          <div class="p-4 space-y-3">
+            <UFormField v-for="platform in socialPlatforms" :key="platform.key" :label="platform.label">
+              <UInput
+                v-model="socialLinks[platform.key]"
+                type="text"
+                :placeholder="t('social.placeholder', { platform: platform.label })"
+                class="w-full"
+              >
+                <template #leading>
+                  <i :class="platform.icon" class="pl-1 opacity-60"></i>
+                </template>
+              </UInput>
+            </UFormField>
+          </div>
+        </UCard>
+
+        <!-- Actions -->
+        <div>
+          <USeparator class="mb-4" />
+          <p class="text-sm opacity-60 mb-4">
+            <i class="fad fa-circle-info mr-1"></i>
+            {{ t('shared_note') }}
+          </p>
+          <div class="flex gap-3">
+            <UButton to="/profile" variant="ghost" color="neutral">
+              {{ t('form.cancel') }}
+            </UButton>
+            <UButton type="submit" color="primary" :loading="saving" :disabled="saving">
+              {{ t('form.save') }}
+            </UButton>
+          </div>
         </div>
-      </UCard>
+      </form>
     </div>
   </div>
 </template>
@@ -160,17 +361,41 @@
     },
     "success_title": "Profile Updated",
     "success_description": "Your profile has been saved successfully.",
+    "error_title": "Error",
+    "error_generic": "Something went wrong. Please try again.",
     "form": {
       "display_name": {
         "label": "Display Name",
         "placeholder": "Enter your display name"
       },
+      "location": {
+        "label": "Location",
+        "placeholder": "e.g. London, UK"
+      },
       "bio": {
         "label": "Bio",
         "placeholder": "Tell the community a bit about yourself and your Mini"
       },
+      "username": {
+        "label": "Username",
+        "placeholder": "your-username",
+        "checking": "Checking availability...",
+        "available": "Username is available",
+        "taken": "Username is taken or invalid"
+      },
       "cancel": "Cancel",
       "save": "Save Profile"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "public_profile": "Public Profile",
+      "public_description": "Allow others to see your profile",
+      "show_vehicles": "Show Vehicles",
+      "vehicles_description": "Display your Minis on your public profile"
+    },
+    "social": {
+      "title": "Social Links",
+      "placeholder": "{platform} URL or handle"
     },
     "shared_note": "Your profile is shared across classicminidiy.com and theminiexchange.com."
   },
@@ -181,23 +406,47 @@
     "breadcrumb_title": "Editar Perfil",
     "card_title": "Editar Perfil",
     "auth": {
-      "sign_in_title": "Inicia Sesi\u00f3n para Editar el Perfil",
-      "sign_in_description": "Debes iniciar sesi\u00f3n para editar tu perfil. Crea una cuenta gratuita para empezar.",
-      "sign_in_button": "Iniciar Sesi\u00f3n para Continuar"
+      "sign_in_title": "Inicia Sesión para Editar el Perfil",
+      "sign_in_description": "Debes iniciar sesión para editar tu perfil. Crea una cuenta gratuita para empezar.",
+      "sign_in_button": "Iniciar Sesión para Continuar"
     },
     "success_title": "Perfil Actualizado",
     "success_description": "Tu perfil se ha guardado correctamente.",
+    "error_title": "Error",
+    "error_generic": "Algo salió mal. Inténtalo de nuevo.",
     "form": {
       "display_name": {
         "label": "Nombre para Mostrar",
         "placeholder": "Introduce tu nombre para mostrar"
       },
+      "location": {
+        "label": "Ubicación",
+        "placeholder": "ej. Madrid, España"
+      },
       "bio": {
-        "label": "Biograf\u00eda",
-        "placeholder": "Cu\u00e9ntale a la comunidad un poco sobre ti y tu Mini"
+        "label": "Biografía",
+        "placeholder": "Cuéntale a la comunidad un poco sobre ti y tu Mini"
+      },
+      "username": {
+        "label": "Nombre de Usuario",
+        "placeholder": "tu-usuario",
+        "checking": "Comprobando disponibilidad...",
+        "available": "Nombre de usuario disponible",
+        "taken": "Nombre de usuario no disponible"
       },
       "cancel": "Cancelar",
       "save": "Guardar Perfil"
+    },
+    "privacy": {
+      "title": "Privacidad",
+      "public_profile": "Perfil Público",
+      "public_description": "Permitir que otros vean tu perfil",
+      "show_vehicles": "Mostrar Vehículos",
+      "vehicles_description": "Mostrar tus Minis en tu perfil público"
+    },
+    "social": {
+      "title": "Redes Sociales",
+      "placeholder": "URL o usuario de {platform}"
     },
     "shared_note": "Tu perfil se comparte entre classicminidiy.com y theminiexchange.com."
   },
@@ -209,24 +458,48 @@
     "card_title": "Modifier le Profil",
     "auth": {
       "sign_in_title": "Connectez-vous pour Modifier le Profil",
-      "sign_in_description": "Vous devez \u00eatre connect\u00e9 pour modifier votre profil. Cr\u00e9ez un compte gratuit pour commencer.",
+      "sign_in_description": "Vous devez être connecté pour modifier votre profil. Créez un compte gratuit pour commencer.",
       "sign_in_button": "Se Connecter pour Continuer"
     },
-    "success_title": "Profil Mis \u00e0 Jour",
-    "success_description": "Votre profil a \u00e9t\u00e9 enregistr\u00e9 avec succ\u00e8s.",
+    "success_title": "Profil Mis à Jour",
+    "success_description": "Votre profil a été enregistré avec succès.",
+    "error_title": "Erreur",
+    "error_generic": "Une erreur est survenue. Veuillez réessayer.",
     "form": {
       "display_name": {
         "label": "Nom d'Affichage",
         "placeholder": "Entrez votre nom d'affichage"
       },
+      "location": {
+        "label": "Localisation",
+        "placeholder": "ex. Paris, France"
+      },
       "bio": {
         "label": "Biographie",
-        "placeholder": "Pr\u00e9sentez-vous \u00e0 la communaut\u00e9 et parlez de votre Mini"
+        "placeholder": "Présentez-vous à la communauté et parlez de votre Mini"
+      },
+      "username": {
+        "label": "Nom d'Utilisateur",
+        "placeholder": "votre-pseudo",
+        "checking": "Vérification...",
+        "available": "Nom d'utilisateur disponible",
+        "taken": "Nom d'utilisateur indisponible"
       },
       "cancel": "Annuler",
       "save": "Enregistrer le Profil"
     },
-    "shared_note": "Votre profil est partag\u00e9 entre classicminidiy.com et theminiexchange.com."
+    "privacy": {
+      "title": "Confidentialité",
+      "public_profile": "Profil Public",
+      "public_description": "Permettre aux autres de voir votre profil",
+      "show_vehicles": "Afficher les Véhicules",
+      "vehicles_description": "Afficher vos Minis sur votre profil public"
+    },
+    "social": {
+      "title": "Liens Sociaux",
+      "placeholder": "URL ou identifiant {platform}"
+    },
+    "shared_note": "Votre profil est partagé entre classicminidiy.com et theminiexchange.com."
   },
   "it": {
     "title": "Modifica Profilo - Classic Mini DIY",
@@ -240,20 +513,44 @@
       "sign_in_button": "Accedi per Continuare"
     },
     "success_title": "Profilo Aggiornato",
-    "success_description": "Il tuo profilo \u00e8 stato salvato con successo.",
+    "success_description": "Il tuo profilo è stato salvato con successo.",
+    "error_title": "Errore",
+    "error_generic": "Qualcosa è andato storto. Riprova.",
     "form": {
       "display_name": {
         "label": "Nome Visualizzato",
         "placeholder": "Inserisci il tuo nome visualizzato"
       },
+      "location": {
+        "label": "Posizione",
+        "placeholder": "es. Roma, Italia"
+      },
       "bio": {
         "label": "Biografia",
-        "placeholder": "Racconta alla comunit\u00e0 qualcosa su di te e sulla tua Mini"
+        "placeholder": "Racconta alla comunità qualcosa su di te e sulla tua Mini"
+      },
+      "username": {
+        "label": "Nome Utente",
+        "placeholder": "tuo-nome-utente",
+        "checking": "Verifica in corso...",
+        "available": "Nome utente disponibile",
+        "taken": "Nome utente non disponibile"
       },
       "cancel": "Annulla",
       "save": "Salva Profilo"
     },
-    "shared_note": "Il tuo profilo \u00e8 condiviso tra classicminidiy.com e theminiexchange.com."
+    "privacy": {
+      "title": "Privacy",
+      "public_profile": "Profilo Pubblico",
+      "public_description": "Consenti agli altri di vedere il tuo profilo",
+      "show_vehicles": "Mostra Veicoli",
+      "vehicles_description": "Mostra le tue Mini sul tuo profilo pubblico"
+    },
+    "social": {
+      "title": "Link Social",
+      "placeholder": "URL o nome utente {platform}"
+    },
+    "shared_note": "Il tuo profilo è condiviso tra classicminidiy.com e theminiexchange.com."
   },
   "de": {
     "title": "Profil Bearbeiten - Classic Mini DIY",
@@ -263,22 +560,46 @@
     "card_title": "Profil Bearbeiten",
     "auth": {
       "sign_in_title": "Anmelden zum Bearbeiten des Profils",
-      "sign_in_description": "Sie m\u00fcssen angemeldet sein, um Ihr Profil zu bearbeiten. Erstellen Sie ein kostenloses Konto, um zu beginnen.",
+      "sign_in_description": "Sie müssen angemeldet sein, um Ihr Profil zu bearbeiten. Erstellen Sie ein kostenloses Konto, um zu beginnen.",
       "sign_in_button": "Anmelden und Fortfahren"
     },
     "success_title": "Profil Aktualisiert",
     "success_description": "Ihr Profil wurde erfolgreich gespeichert.",
+    "error_title": "Fehler",
+    "error_generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
     "form": {
       "display_name": {
         "label": "Anzeigename",
         "placeholder": "Geben Sie Ihren Anzeigenamen ein"
       },
+      "location": {
+        "label": "Standort",
+        "placeholder": "z.B. Berlin, Deutschland"
+      },
       "bio": {
         "label": "Biografie",
-        "placeholder": "Erz\u00e4hlen Sie der Community etwas \u00fcber sich und Ihren Mini"
+        "placeholder": "Erzählen Sie der Community etwas über sich und Ihren Mini"
+      },
+      "username": {
+        "label": "Benutzername",
+        "placeholder": "ihr-benutzername",
+        "checking": "Verfügbarkeit wird geprüft...",
+        "available": "Benutzername ist verfügbar",
+        "taken": "Benutzername ist nicht verfügbar"
       },
       "cancel": "Abbrechen",
       "save": "Profil Speichern"
+    },
+    "privacy": {
+      "title": "Datenschutz",
+      "public_profile": "Öffentliches Profil",
+      "public_description": "Anderen erlauben, Ihr Profil zu sehen",
+      "show_vehicles": "Fahrzeuge Anzeigen",
+      "vehicles_description": "Zeigen Sie Ihre Minis auf Ihrem öffentlichen Profil"
+    },
+    "social": {
+      "title": "Soziale Links",
+      "placeholder": "{platform} URL oder Handle"
     },
     "shared_note": "Ihr Profil wird zwischen classicminidiy.com und theminiexchange.com geteilt."
   },
@@ -290,132 +611,252 @@
     "card_title": "Editar Perfil",
     "auth": {
       "sign_in_title": "Entre para Editar o Perfil",
-      "sign_in_description": "Voc\u00ea precisa estar conectado para editar seu perfil. Crie uma conta gratuita para come\u00e7ar.",
+      "sign_in_description": "Você precisa estar conectado para editar seu perfil. Crie uma conta gratuita para começar.",
       "sign_in_button": "Entrar para Continuar"
     },
     "success_title": "Perfil Atualizado",
     "success_description": "Seu perfil foi salvo com sucesso.",
+    "error_title": "Erro",
+    "error_generic": "Algo deu errado. Tente novamente.",
     "form": {
       "display_name": {
-        "label": "Nome de Exibi\u00e7\u00e3o",
-        "placeholder": "Insira seu nome de exibi\u00e7\u00e3o"
+        "label": "Nome de Exibição",
+        "placeholder": "Insira seu nome de exibição"
+      },
+      "location": {
+        "label": "Localização",
+        "placeholder": "ex. Lisboa, Portugal"
       },
       "bio": {
         "label": "Biografia",
-        "placeholder": "Conte \u00e0 comunidade um pouco sobre voc\u00ea e seu Mini"
+        "placeholder": "Conte à comunidade um pouco sobre você e seu Mini"
+      },
+      "username": {
+        "label": "Nome de Usuário",
+        "placeholder": "seu-usuario",
+        "checking": "Verificando disponibilidade...",
+        "available": "Nome de usuário disponível",
+        "taken": "Nome de usuário indisponível"
       },
       "cancel": "Cancelar",
       "save": "Salvar Perfil"
     },
-    "shared_note": "Seu perfil \u00e9 compartilhado entre classicminidiy.com e theminiexchange.com."
+    "privacy": {
+      "title": "Privacidade",
+      "public_profile": "Perfil Público",
+      "public_description": "Permitir que outros vejam seu perfil",
+      "show_vehicles": "Mostrar Veículos",
+      "vehicles_description": "Exibir seus Minis em seu perfil público"
+    },
+    "social": {
+      "title": "Links Sociais",
+      "placeholder": "URL ou usuário {platform}"
+    },
+    "shared_note": "Seu perfil é compartilhado entre classicminidiy.com e theminiexchange.com."
   },
   "ru": {
-    "title": "\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u041f\u0440\u043e\u0444\u0438\u043b\u044c - Classic Mini DIY",
-    "description": "\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u0443\u0439\u0442\u0435 \u0441\u0432\u043e\u0439 \u043f\u0440\u043e\u0444\u0438\u043b\u044c Classic Mini DIY.",
-    "hero_title": "\u0410\u0440\u0445\u0438\u0432\u044b Classic Mini",
-    "breadcrumb_title": "\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u041f\u0440\u043e\u0444\u0438\u043b\u044c",
-    "card_title": "\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u041f\u0440\u043e\u0444\u0438\u043b\u044c",
+    "title": "Редактировать Профиль - Classic Mini DIY",
+    "description": "Редактируйте свой профиль Classic Mini DIY.",
+    "hero_title": "Архивы Classic Mini",
+    "breadcrumb_title": "Редактировать Профиль",
+    "card_title": "Редактировать Профиль",
     "auth": {
-      "sign_in_title": "\u0412\u043e\u0439\u0434\u0438\u0442\u0435 \u0434\u043b\u044f \u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u041f\u0440\u043e\u0444\u0438\u043b\u044f",
-      "sign_in_description": "\u0412\u044b \u0434\u043e\u043b\u0436\u043d\u044b \u0431\u044b\u0442\u044c \u0430\u0432\u0442\u043e\u0440\u0438\u0437\u043e\u0432\u0430\u043d\u044b \u0434\u043b\u044f \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u043f\u0440\u043e\u0444\u0438\u043b\u044f. \u0421\u043e\u0437\u0434\u0430\u0439\u0442\u0435 \u0431\u0435\u0441\u043f\u043b\u0430\u0442\u043d\u0443\u044e \u0443\u0447\u0451\u0442\u043d\u0443\u044e \u0437\u0430\u043f\u0438\u0441\u044c \u0434\u043b\u044f \u043d\u0430\u0447\u0430\u043b\u0430.",
-      "sign_in_button": "\u0412\u043e\u0439\u0442\u0438 \u0434\u043b\u044f \u041f\u0440\u043e\u0434\u043e\u043b\u0436\u0435\u043d\u0438\u044f"
+      "sign_in_title": "Войдите для Редактирования Профиля",
+      "sign_in_description": "Вы должны быть авторизованы для редактирования профиля. Создайте бесплатную учётную запись для начала.",
+      "sign_in_button": "Войти для Продолжения"
     },
-    "success_title": "\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u041e\u0431\u043d\u043e\u0432\u043b\u0451\u043d",
-    "success_description": "\u0412\u0430\u0448 \u043f\u0440\u043e\u0444\u0438\u043b\u044c \u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d.",
+    "success_title": "Профиль Обновлён",
+    "success_description": "Ваш профиль успешно сохранён.",
+    "error_title": "Ошибка",
+    "error_generic": "Что-то пошло не так. Попробуйте ещё раз.",
     "form": {
       "display_name": {
-        "label": "\u041e\u0442\u043e\u0431\u0440\u0430\u0436\u0430\u0435\u043c\u043e\u0435 \u0418\u043c\u044f",
-        "placeholder": "\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043e\u0442\u043e\u0431\u0440\u0430\u0436\u0430\u0435\u043c\u043e\u0435 \u0438\u043c\u044f"
+        "label": "Отображаемое Имя",
+        "placeholder": "Введите отображаемое имя"
+      },
+      "location": {
+        "label": "Местоположение",
+        "placeholder": "напр. Москва, Россия"
       },
       "bio": {
-        "label": "\u041e \u0441\u0435\u0431\u0435",
-        "placeholder": "\u0420\u0430\u0441\u0441\u043a\u0430\u0436\u0438\u0442\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u0441\u0442\u0432\u0443 \u043e \u0441\u0435\u0431\u0435 \u0438 \u0441\u0432\u043e\u0451\u043c Mini"
+        "label": "О себе",
+        "placeholder": "Расскажите сообществу о себе и своём Mini"
       },
-      "cancel": "\u041e\u0442\u043c\u0435\u043d\u0430",
-      "save": "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u041f\u0440\u043e\u0444\u0438\u043b\u044c"
+      "username": {
+        "label": "Имя пользователя",
+        "placeholder": "ваш-логин",
+        "checking": "Проверка доступности...",
+        "available": "Имя пользователя доступно",
+        "taken": "Имя пользователя занято"
+      },
+      "cancel": "Отмена",
+      "save": "Сохранить Профиль"
     },
-    "shared_note": "\u0412\u0430\u0448 \u043f\u0440\u043e\u0444\u0438\u043b\u044c \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0435\u0442\u0441\u044f \u043d\u0430 classicminidiy.com \u0438 theminiexchange.com."
+    "privacy": {
+      "title": "Конфиденциальность",
+      "public_profile": "Публичный Профиль",
+      "public_description": "Разрешить другим видеть ваш профиль",
+      "show_vehicles": "Показать Автомобили",
+      "vehicles_description": "Показывать ваши Mini в публичном профиле"
+    },
+    "social": {
+      "title": "Социальные Сети",
+      "placeholder": "URL или логин {platform}"
+    },
+    "shared_note": "Ваш профиль используется на classicminidiy.com и theminiexchange.com."
   },
   "ja": {
-    "title": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u7de8\u96c6 - Classic Mini DIY",
-    "description": "Classic Mini DIY\u306e\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u3092\u7de8\u96c6\u3057\u307e\u3059\u3002",
-    "hero_title": "Classic Mini \u30a2\u30fc\u30ab\u30a4\u30d6",
-    "breadcrumb_title": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u7de8\u96c6",
-    "card_title": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u7de8\u96c6",
+    "title": "プロフィール編集 - Classic Mini DIY",
+    "description": "Classic Mini DIYのプロフィールを編集します。",
+    "hero_title": "Classic Mini アーカイブ",
+    "breadcrumb_title": "プロフィール編集",
+    "card_title": "プロフィール編集",
     "auth": {
-      "sign_in_title": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u7de8\u96c6\u306b\u306f\u30ed\u30b0\u30a4\u30f3\u304c\u5fc5\u8981\u3067\u3059",
-      "sign_in_description": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u3092\u7de8\u96c6\u3059\u308b\u306b\u306f\u30ed\u30b0\u30a4\u30f3\u304c\u5fc5\u8981\u3067\u3059\u3002\u7121\u6599\u30a2\u30ab\u30a6\u30f3\u30c8\u3092\u4f5c\u6210\u3057\u3066\u59cb\u3081\u307e\u3057\u3087\u3046\u3002",
-      "sign_in_button": "\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u7d9a\u884c"
+      "sign_in_title": "プロフィール編集にはログインが必要です",
+      "sign_in_description": "プロフィールを編集するにはログインが必要です。無料アカウントを作成して始めましょう。",
+      "sign_in_button": "ログインして続行"
     },
-    "success_title": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u66f4\u65b0\u5b8c\u4e86",
-    "success_description": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u304c\u6b63\u5e38\u306b\u4fdd\u5b58\u3055\u308c\u307e\u3057\u305f\u3002",
+    "success_title": "プロフィール更新完了",
+    "success_description": "プロフィールが正常に保存されました。",
+    "error_title": "エラー",
+    "error_generic": "問題が発生しました。もう一度お試しください。",
     "form": {
       "display_name": {
-        "label": "\u8868\u793a\u540d",
-        "placeholder": "\u8868\u793a\u540d\u3092\u5165\u529b"
+        "label": "表示名",
+        "placeholder": "表示名を入力"
+      },
+      "location": {
+        "label": "場所",
+        "placeholder": "例：東京、日本"
       },
       "bio": {
-        "label": "\u81ea\u5df1\u7d39\u4ecb",
-        "placeholder": "\u3042\u306a\u305f\u3068\u3042\u306a\u305f\u306eMini\u306b\u3064\u3044\u3066\u30b3\u30df\u30e5\u30cb\u30c6\u30a3\u306b\u6559\u3048\u3066\u304f\u3060\u3055\u3044"
+        "label": "自己紹介",
+        "placeholder": "あなたとあなたのMiniについてコミュニティに教えてください"
       },
-      "cancel": "\u30ad\u30e3\u30f3\u30bb\u30eb",
-      "save": "\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u3092\u4fdd\u5b58"
+      "username": {
+        "label": "ユーザー名",
+        "placeholder": "your-username",
+        "checking": "確認中...",
+        "available": "利用可能です",
+        "taken": "利用できません"
+      },
+      "cancel": "キャンセル",
+      "save": "プロフィールを保存"
     },
-    "shared_note": "\u3042\u306a\u305f\u306e\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb\u306fclassicminidiy.com\u3068theminiexchange.com\u3067\u5171\u6709\u3055\u308c\u307e\u3059\u3002"
+    "privacy": {
+      "title": "プライバシー",
+      "public_profile": "公開プロフィール",
+      "public_description": "他のユーザーにプロフィールを公開する",
+      "show_vehicles": "車両を表示",
+      "vehicles_description": "公開プロフィールにMiniを表示する"
+    },
+    "social": {
+      "title": "ソーシャルリンク",
+      "placeholder": "{platform}のURLまたはハンドル"
+    },
+    "shared_note": "あなたのプロフィールはclassicminidiy.comとtheminiexchange.comで共有されます。"
   },
   "zh": {
-    "title": "\u7f16\u8f91\u4e2a\u4eba\u8d44\u6599 - Classic Mini DIY",
-    "description": "\u7f16\u8f91\u60a8\u7684Classic Mini DIY\u4e2a\u4eba\u8d44\u6599\u3002",
-    "hero_title": "Classic Mini \u6863\u6848",
-    "breadcrumb_title": "\u7f16\u8f91\u4e2a\u4eba\u8d44\u6599",
-    "card_title": "\u7f16\u8f91\u4e2a\u4eba\u8d44\u6599",
+    "title": "编辑个人资料 - Classic Mini DIY",
+    "description": "编辑您的Classic Mini DIY个人资料。",
+    "hero_title": "Classic Mini 档案",
+    "breadcrumb_title": "编辑个人资料",
+    "card_title": "编辑个人资料",
     "auth": {
-      "sign_in_title": "\u767b\u5f55\u4ee5\u7f16\u8f91\u4e2a\u4eba\u8d44\u6599",
-      "sign_in_description": "\u60a8\u9700\u8981\u767b\u5f55\u624d\u80fd\u7f16\u8f91\u4e2a\u4eba\u8d44\u6599\u3002\u521b\u5efa\u4e00\u4e2a\u514d\u8d39\u8d26\u6237\u5f00\u59cb\u4f7f\u7528\u3002",
-      "sign_in_button": "\u767b\u5f55\u4ee5\u7ee7\u7eed"
+      "sign_in_title": "登录以编辑个人资料",
+      "sign_in_description": "您需要登录才能编辑个人资料。创建一个免费账户开始使用。",
+      "sign_in_button": "登录以继续"
     },
-    "success_title": "\u4e2a\u4eba\u8d44\u6599\u5df2\u66f4\u65b0",
-    "success_description": "\u60a8\u7684\u4e2a\u4eba\u8d44\u6599\u5df2\u6210\u529f\u4fdd\u5b58\u3002",
+    "success_title": "个人资料已更新",
+    "success_description": "您的个人资料已成功保存。",
+    "error_title": "错误",
+    "error_generic": "出现问题，请重试。",
     "form": {
       "display_name": {
-        "label": "\u663e\u793a\u540d\u79f0",
-        "placeholder": "\u8f93\u5165\u60a8\u7684\u663e\u793a\u540d\u79f0"
+        "label": "显示名称",
+        "placeholder": "输入您的显示名称"
+      },
+      "location": {
+        "label": "位置",
+        "placeholder": "例如：北京，中国"
       },
       "bio": {
-        "label": "\u4e2a\u4eba\u7b80\u4ecb",
-        "placeholder": "\u5411\u793e\u533a\u4ecb\u7ecd\u4e00\u4e0b\u60a8\u548c\u60a8\u7684Mini"
+        "label": "个人简介",
+        "placeholder": "向社区介绍一下您和您的Mini"
       },
-      "cancel": "\u53d6\u6d88",
-      "save": "\u4fdd\u5b58\u4e2a\u4eba\u8d44\u6599"
+      "username": {
+        "label": "用户名",
+        "placeholder": "your-username",
+        "checking": "检查中...",
+        "available": "用户名可用",
+        "taken": "用户名不可用"
+      },
+      "cancel": "取消",
+      "save": "保存个人资料"
     },
-    "shared_note": "\u60a8\u7684\u4e2a\u4eba\u8d44\u6599\u5728classicminidiy.com\u548ctheminiexchange.com\u4e4b\u95f4\u5171\u4eab\u3002"
+    "privacy": {
+      "title": "隐私",
+      "public_profile": "公开资料",
+      "public_description": "允许他人查看您的资料",
+      "show_vehicles": "显示车辆",
+      "vehicles_description": "在公开资料中展示您的Mini"
+    },
+    "social": {
+      "title": "社交链接",
+      "placeholder": "{platform} URL或用户名"
+    },
+    "shared_note": "您的个人资料在classicminidiy.com和theminiexchange.com之间共享。"
   },
   "ko": {
-    "title": "\ud504\ub85c\ud544 \ud3b8\uc9d1 - Classic Mini DIY",
-    "description": "Classic Mini DIY \ud504\ub85c\ud544\uc744 \ud3b8\uc9d1\ud569\ub2c8\ub2e4.",
-    "hero_title": "Classic Mini \uc544\uce74\uc774\ube0c",
-    "breadcrumb_title": "\ud504\ub85c\ud544 \ud3b8\uc9d1",
-    "card_title": "\ud504\ub85c\ud544 \ud3b8\uc9d1",
+    "title": "프로필 편집 - Classic Mini DIY",
+    "description": "Classic Mini DIY 프로필을 편집합니다.",
+    "hero_title": "Classic Mini 아카이브",
+    "breadcrumb_title": "프로필 편집",
+    "card_title": "프로필 편집",
     "auth": {
-      "sign_in_title": "\ud504\ub85c\ud544 \ud3b8\uc9d1\uc744 \uc704\ud574 \ub85c\uadf8\uc778\ud558\uc138\uc694",
-      "sign_in_description": "\ud504\ub85c\ud544\uc744 \ud3b8\uc9d1\ud558\ub824\uba74 \ub85c\uadf8\uc778\ud574\uc57c \ud569\ub2c8\ub2e4. \ubb34\ub8cc \uacc4\uc815\uc744 \ub9cc\ub4e4\uc5b4 \uc2dc\uc791\ud558\uc138\uc694.",
-      "sign_in_button": "\ub85c\uadf8\uc778\ud558\uc5ec \uacc4\uc18d"
+      "sign_in_title": "프로필 편집을 위해 로그인하세요",
+      "sign_in_description": "프로필을 편집하려면 로그인해야 합니다. 무료 계정을 만들어 시작하세요.",
+      "sign_in_button": "로그인하여 계속"
     },
-    "success_title": "\ud504\ub85c\ud544 \uc5c5\ub370\uc774\ud2b8 \uc644\ub8cc",
-    "success_description": "\ud504\ub85c\ud544\uc774 \uc131\uacf5\uc801\uc73c\ub85c \uc800\uc7a5\ub418\uc5c8\uc2b5\ub2c8\ub2e4.",
+    "success_title": "프로필 업데이트 완료",
+    "success_description": "프로필이 성공적으로 저장되었습니다.",
+    "error_title": "오류",
+    "error_generic": "문제가 발생했습니다. 다시 시도해주세요.",
     "form": {
       "display_name": {
-        "label": "\ud45c\uc2dc \uc774\ub984",
-        "placeholder": "\ud45c\uc2dc \uc774\ub984\uc744 \uc785\ub825\ud558\uc138\uc694"
+        "label": "표시 이름",
+        "placeholder": "표시 이름을 입력하세요"
+      },
+      "location": {
+        "label": "위치",
+        "placeholder": "예: 서울, 한국"
       },
       "bio": {
-        "label": "\uc18c\uac1c",
-        "placeholder": "\ucee4\ubba4\ub2c8\ud2f0\uc5d0 \ub2f9\uc2e0\uacfc \ub2f9\uc2e0\uc758 Mini\uc5d0 \ub300\ud574 \uc54c\ub824\uc8fc\uc138\uc694"
+        "label": "소개",
+        "placeholder": "커뮤니티에 당신과 당신의 Mini에 대해 알려주세요"
       },
-      "cancel": "\ucde8\uc18c",
-      "save": "\ud504\ub85c\ud544 \uc800\uc7a5"
+      "username": {
+        "label": "사용자 이름",
+        "placeholder": "your-username",
+        "checking": "확인 중...",
+        "available": "사용 가능합니다",
+        "taken": "사용할 수 없습니다"
+      },
+      "cancel": "취소",
+      "save": "프로필 저장"
     },
-    "shared_note": "\ud504\ub85c\ud544\uc740 classicminidiy.com\uacfc theminiexchange.com\uc5d0\uc11c \uacf5\uc720\ub429\ub2c8\ub2e4."
+    "privacy": {
+      "title": "개인정보",
+      "public_profile": "공개 프로필",
+      "public_description": "다른 사용자가 프로필을 볼 수 있도록 허용",
+      "show_vehicles": "차량 표시",
+      "vehicles_description": "공개 프로필에 Mini를 표시"
+    },
+    "social": {
+      "title": "소셜 링크",
+      "placeholder": "{platform} URL 또는 핸들"
+    },
+    "shared_note": "프로필은 classicminidiy.com과 theminiexchange.com에서 공유됩니다."
   }
 }
 </i18n>
