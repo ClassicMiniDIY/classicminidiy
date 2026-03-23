@@ -1,40 +1,44 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../data/models/generic';
+  import type { PublicProfile, Vehicle } from '~/composables/useProfile';
 
   const { t } = useI18n();
   const route = useRoute();
-  const supabase = useSupabase();
+  const { getPublicProfile, getPublicProfileVehicles } = useProfile();
   const { fetchPublicConfigs } = useGearConfigs();
 
-  const userId = route.params.id as string;
+  const identifier = route.params.id as string;
 
-  const profile = ref<{
-    display_name: string | null;
-    avatar_url: string | null;
-    bio: string | null;
-    created_at: string | null;
-  } | null>(null);
-
+  const profile = ref<PublicProfile | null>(null);
+  const vehicles = ref<Vehicle[]>([]);
   const publicConfigs = ref<any[]>([]);
   const loading = ref(true);
   const notFound = ref(false);
+  const isPrivate = ref(false);
 
-  // Fetch profile and public configs
   onMounted(async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('display_name, avatar_url, bio, created_at')
-        .eq('id', userId)
-        .single();
+      const data = await getPublicProfile(identifier);
 
-      if (error || !data) {
+      if (!data) {
+        // Could be not found or private — we can't distinguish from null, so check if it looks like a valid identifier
         notFound.value = true;
         return;
       }
 
       profile.value = data;
-      publicConfigs.value = await fetchPublicConfigs(userId);
+
+      // Fetch gear configs and vehicles in parallel
+      const promises: Promise<any>[] = [fetchPublicConfigs(data.id)];
+      if (data.show_vehicles) {
+        promises.push(getPublicProfileVehicles(data.id));
+      }
+
+      const results = await Promise.all(promises);
+      publicConfigs.value = results[0];
+      if (data.show_vehicles && results[1]) {
+        vehicles.value = results[1];
+      }
     } catch {
       notFound.value = true;
     } finally {
@@ -50,14 +54,26 @@
       month: 'long',
     });
   });
-  const initials = computed(() => {
-    const name = displayName.value;
-    return name.charAt(0).toUpperCase();
+  const initials = computed(() => displayName.value.charAt(0).toUpperCase());
+  const hasSocialLinks = computed(() => {
+    if (!profile.value?.social_links) return false;
+    return Object.values(profile.value.social_links).some((v) => !!v);
   });
+  const hasUsername = computed(() => !!profile.value?.username);
 
   useHead({
     title: computed(() => `${displayName.value} - Classic Mini DIY`),
-    meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+    meta: [
+      {
+        name: 'robots',
+        content: computed(() => (hasUsername.value ? 'index, follow' : 'noindex, nofollow')),
+      },
+    ],
+    link: computed(() =>
+      hasUsername.value
+        ? [{ rel: 'canonical', href: `https://classicminidiy.com/users/${profile.value?.username}` }]
+        : []
+    ),
   });
 </script>
 
@@ -82,28 +98,65 @@
       <UButton to="/" color="primary">{{ t('not_found.go_home') }}</UButton>
     </div>
 
+    <!-- Private profile -->
+    <div v-else-if="isPrivate" class="max-w-lg mx-auto text-center py-12">
+      <i class="fas fa-lock text-5xl opacity-40 mb-4 block"></i>
+      <h2 class="text-xl font-bold mb-2">{{ t('private.title') }}</h2>
+      <p class="opacity-70 mb-6">{{ t('private.description') }}</p>
+      <UButton to="/" color="primary">{{ t('not_found.go_home') }}</UButton>
+    </div>
+
     <!-- Profile content -->
     <div v-else class="max-w-4xl mx-auto space-y-6">
       <!-- Profile Card -->
       <UCard>
-        <div class="flex items-center gap-4 p-2">
-          <div v-if="profile?.avatar_url" class="w-16 h-16 rounded-full overflow-hidden shrink-0">
-            <img :src="profile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
-          </div>
-          <div
-            v-else
-            class="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center text-2xl font-bold shrink-0"
-          >
-            {{ initials }}
-          </div>
-          <div class="min-w-0">
-            <h2 class="text-xl font-bold truncate">{{ displayName }}</h2>
-            <p v-if="profile?.bio" class="text-sm opacity-70 mt-1">{{ profile.bio }}</p>
-            <p v-if="memberSince" class="text-xs opacity-50 mt-1">
-              <i class="fad fa-calendar mr-1"></i>{{ t('member_since', { date: memberSince }) }}
-            </p>
+        <div class="p-2">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+            <div v-if="profile?.avatar_url" class="w-20 h-20 rounded-full overflow-hidden shrink-0">
+              <img :src="profile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
+            </div>
+            <div
+              v-else
+              class="w-20 h-20 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold shrink-0"
+            >
+              {{ initials }}
+            </div>
+
+            <div class="flex-1 text-center sm:text-left min-w-0">
+              <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                <h2 class="text-xl font-bold">{{ displayName }}</h2>
+                <span v-if="profile?.username" class="text-sm opacity-60">@{{ profile.username }}</span>
+                <ProfileSustainingBadge v-if="profile?.is_sustaining_member" size="sm" />
+              </div>
+
+              <p v-if="profile?.location" class="text-sm opacity-60 mt-1">
+                <i class="fas fa-location-dot mr-1"></i>{{ profile.location }}
+              </p>
+
+              <p v-if="profile?.bio" class="mt-2 opacity-80">{{ profile.bio }}</p>
+
+              <p v-if="memberSince" class="text-xs opacity-50 mt-2">
+                <i class="fad fa-calendar mr-1"></i>{{ t('member_since', { date: memberSince }) }}
+              </p>
+
+              <!-- Social Links -->
+              <div v-if="hasSocialLinks" class="mt-3">
+                <ProfileSocialLinks :links="profile!.social_links" size="sm" />
+              </div>
+            </div>
           </div>
         </div>
+      </UCard>
+
+      <!-- Vehicles -->
+      <UCard v-if="profile?.show_vehicles && vehicles.length > 0">
+        <template #header>
+          <div class="flex items-center">
+            <i class="fad fa-car mr-2"></i>
+            <h3 class="text-lg font-semibold">{{ t('vehicles.title') }}</h3>
+          </div>
+        </template>
+        <ProfileVehicleShowcase :vehicles="vehicles" />
       </UCard>
 
       <!-- Public Gear Configurations -->
@@ -148,6 +201,13 @@
       "description": "The user profile you're looking for doesn't exist or has been removed.",
       "go_home": "Go Home"
     },
+    "private": {
+      "title": "Private Profile",
+      "description": "This user's profile is set to private."
+    },
+    "vehicles": {
+      "title": "Their Minis"
+    },
     "gear_configs": {
       "title": "Gear Configurations",
       "empty": "No public configurations shared.",
@@ -164,6 +224,13 @@
       "title": "Usuario No Encontrado",
       "description": "El perfil de usuario que buscas no existe o ha sido eliminado.",
       "go_home": "Ir al Inicio"
+    },
+    "private": {
+      "title": "Perfil Privado",
+      "description": "El perfil de este usuario es privado."
+    },
+    "vehicles": {
+      "title": "Sus Minis"
     },
     "gear_configs": {
       "title": "Configuraciones de Engranajes",
@@ -182,6 +249,13 @@
       "description": "Le profil utilisateur que vous recherchez n'existe pas ou a été supprimé.",
       "go_home": "Retour à l'Accueil"
     },
+    "private": {
+      "title": "Profil Privé",
+      "description": "Le profil de cet utilisateur est défini comme privé."
+    },
+    "vehicles": {
+      "title": "Ses Minis"
+    },
     "gear_configs": {
       "title": "Configurations d'Engrenages",
       "empty": "Aucune configuration publique partagée.",
@@ -199,11 +273,162 @@
       "description": "Das gesuchte Benutzerprofil existiert nicht oder wurde entfernt.",
       "go_home": "Zur Startseite"
     },
+    "private": {
+      "title": "Privates Profil",
+      "description": "Dieses Benutzerprofil ist auf privat gesetzt."
+    },
+    "vehicles": {
+      "title": "Ihre Minis"
+    },
     "gear_configs": {
       "title": "Getriebe-Konfigurationen",
       "empty": "Keine öffentlichen Konfigurationen geteilt.",
       "tire": "Reifen",
       "rpm": "Max Drehzahl"
+    }
+  },
+  "it": {
+    "hero_title": "Archivi Classic Mini",
+    "breadcrumb_title": "Profilo Utente",
+    "anonymous": "Appassionato di Mini",
+    "member_since": "Membro dal {date}",
+    "not_found": {
+      "title": "Utente Non Trovato",
+      "description": "Il profilo utente che cerchi non esiste o è stato rimosso.",
+      "go_home": "Vai alla Home"
+    },
+    "private": {
+      "title": "Profilo Privato",
+      "description": "Il profilo di questo utente è impostato come privato."
+    },
+    "vehicles": {
+      "title": "Le Sue Mini"
+    },
+    "gear_configs": {
+      "title": "Configurazioni Ingranaggi",
+      "empty": "Nessuna configurazione pubblica condivisa.",
+      "tire": "Pneumatico",
+      "rpm": "RPM Max"
+    }
+  },
+  "pt": {
+    "hero_title": "Arquivos Classic Mini",
+    "breadcrumb_title": "Perfil do Usuário",
+    "anonymous": "Entusiasta do Mini",
+    "member_since": "Membro desde {date}",
+    "not_found": {
+      "title": "Usuário Não Encontrado",
+      "description": "O perfil que você procura não existe ou foi removido.",
+      "go_home": "Ir para Início"
+    },
+    "private": {
+      "title": "Perfil Privado",
+      "description": "O perfil deste usuário é privado."
+    },
+    "vehicles": {
+      "title": "Seus Minis"
+    },
+    "gear_configs": {
+      "title": "Configurações de Engrenagens",
+      "empty": "Nenhuma configuração pública compartilhada.",
+      "tire": "Pneu",
+      "rpm": "RPM Máx"
+    }
+  },
+  "ru": {
+    "hero_title": "Архивы Classic Mini",
+    "breadcrumb_title": "Профиль Пользователя",
+    "anonymous": "Энтузиаст Mini",
+    "member_since": "Участник с {date}",
+    "not_found": {
+      "title": "Пользователь Не Найден",
+      "description": "Профиль пользователя не существует или был удалён.",
+      "go_home": "На Главную"
+    },
+    "private": {
+      "title": "Закрытый Профиль",
+      "description": "Профиль этого пользователя является закрытым."
+    },
+    "vehicles": {
+      "title": "Автомобили"
+    },
+    "gear_configs": {
+      "title": "Конфигурации Передач",
+      "empty": "Нет публичных конфигураций.",
+      "tire": "Шина",
+      "rpm": "Макс. об/мин"
+    }
+  },
+  "ja": {
+    "hero_title": "Classic Mini アーカイブ",
+    "breadcrumb_title": "ユーザープロフィール",
+    "anonymous": "Miniエンスージアスト",
+    "member_since": "{date}から参加",
+    "not_found": {
+      "title": "ユーザーが見つかりません",
+      "description": "お探しのユーザープロフィールは存在しないか、削除されました。",
+      "go_home": "ホームへ"
+    },
+    "private": {
+      "title": "非公開プロフィール",
+      "description": "このユーザーのプロフィールは非公開です。"
+    },
+    "vehicles": {
+      "title": "所有車両"
+    },
+    "gear_configs": {
+      "title": "ギア設定",
+      "empty": "公開設定はありません。",
+      "tire": "タイヤ",
+      "rpm": "最大RPM"
+    }
+  },
+  "zh": {
+    "hero_title": "Classic Mini 档案",
+    "breadcrumb_title": "用户资料",
+    "anonymous": "Mini爱好者",
+    "member_since": "{date}加入",
+    "not_found": {
+      "title": "未找到用户",
+      "description": "您查找的用户资料不存在或已被删除。",
+      "go_home": "返回首页"
+    },
+    "private": {
+      "title": "私密资料",
+      "description": "此用户的资料已设为私密。"
+    },
+    "vehicles": {
+      "title": "TA的Mini"
+    },
+    "gear_configs": {
+      "title": "齿轮配置",
+      "empty": "暂无公开配置。",
+      "tire": "轮胎",
+      "rpm": "最大转速"
+    }
+  },
+  "ko": {
+    "hero_title": "Classic Mini 아카이브",
+    "breadcrumb_title": "사용자 프로필",
+    "anonymous": "Mini 애호가",
+    "member_since": "{date}부터 회원",
+    "not_found": {
+      "title": "사용자를 찾을 수 없습니다",
+      "description": "찾으시는 사용자 프로필이 존재하지 않거나 삭제되었습니다.",
+      "go_home": "홈으로"
+    },
+    "private": {
+      "title": "비공개 프로필",
+      "description": "이 사용자의 프로필은 비공개입니다."
+    },
+    "vehicles": {
+      "title": "보유 차량"
+    },
+    "gear_configs": {
+      "title": "기어 구성",
+      "empty": "공개된 구성이 없습니다.",
+      "tire": "타이어",
+      "rpm": "최대 RPM"
     }
   }
 }
