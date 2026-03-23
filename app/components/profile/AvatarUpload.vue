@@ -42,12 +42,21 @@
       return;
     }
 
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value);
+    }
     previewUrl.value = URL.createObjectURL(file);
     emit('upload', file);
 
     // Reset input so same file can be re-selected
     input.value = '';
   }
+
+  onUnmounted(() => {
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value);
+    }
+  });
 </script>
 
 <template>

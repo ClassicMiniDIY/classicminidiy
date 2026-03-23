@@ -11,6 +11,13 @@ export interface PublicProfile {
   created_at: string | null;
 }
 
+export interface OwnProfile extends PublicProfile {
+  is_public: boolean;
+  email: string;
+  is_admin: boolean;
+  profile_completed_at: string | null;
+}
+
 export interface Vehicle {
   id: string;
   name: string;
@@ -21,6 +28,7 @@ export interface Vehicle {
 }
 
 const USERNAME_REGEX = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
+const AVATAR_BUCKET = 'avatars';
 
 export const useProfile = () => {
   const supabase = useSupabase();
@@ -97,24 +105,24 @@ export const useProfile = () => {
       if (currentProfile?.avatar_url) {
         const url = new URL(currentProfile.avatar_url);
         const pathParts = url.pathname.split('/');
-        const avatarsIndex = pathParts.indexOf('avatars');
+        const avatarsIndex = pathParts.indexOf(AVATAR_BUCKET);
         if (avatarsIndex !== -1 && avatarsIndex < pathParts.length - 1) {
           const oldPath = pathParts.slice(avatarsIndex + 1).join('/');
-          await supabase.storage.from('avatars').remove([oldPath]);
+          await supabase.storage.from(AVATAR_BUCKET).remove([oldPath]);
         }
       }
     } catch {
       // Continue even if old avatar cleanup fails
     }
 
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(storagePath, file, {
+    const { error: uploadError } = await supabase.storage.from(AVATAR_BUCKET).upload(storagePath, file, {
       cacheControl: '3600',
       upsert: false,
     });
 
     if (uploadError) throw uploadError;
 
-    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(storagePath);
+    const { data: urlData } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(storagePath);
 
     capture('avatar_uploaded', {
       file_size_kb: Math.round(file.size / 1024),
@@ -136,9 +144,13 @@ export const useProfile = () => {
   };
 
   /**
-   * Get a public profile by UUID or username
+   * Get a public profile by UUID or username.
+   * Returns { profile } on success, { private: true } if user exists but is private,
+   * or null if user doesn't exist.
    */
-  const getPublicProfile = async (identifier: string): Promise<PublicProfile | null> => {
+  const getPublicProfile = async (
+    identifier: string
+  ): Promise<{ profile: PublicProfile } | { private: true } | null> => {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
 
     const rpcName = isUuid ? 'get_public_profile_by_id' : 'get_public_profile_by_username';
@@ -146,8 +158,20 @@ export const useProfile = () => {
 
     const { data, error } = await supabase.rpc(rpcName, param).single();
 
-    if (error) return null;
-    return data as PublicProfile;
+    if (error || !data) {
+      // Check if user exists but profile is private (UUID lookup only)
+      if (isUuid) {
+        const { data: exists } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', identifier)
+          .maybeSingle();
+        if (exists) return { private: true };
+      }
+      return null;
+    }
+
+    return { profile: data as PublicProfile };
   };
 
   /**

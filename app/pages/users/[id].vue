@@ -18,28 +18,32 @@
 
   onMounted(async () => {
     try {
-      const data = await getPublicProfile(identifier);
+      const result = await getPublicProfile(identifier);
 
-      if (!data) {
-        // Could be not found or private — we can't distinguish from null, so check if it looks like a valid identifier
+      if (!result) {
         notFound.value = true;
         return;
       }
 
-      profile.value = data;
+      if ('private' in result) {
+        isPrivate.value = true;
+        return;
+      }
+
+      profile.value = result.profile;
 
       // Fetch gear configs and vehicles in parallel
-      const promises: Promise<any>[] = [fetchPublicConfigs(data.id)];
-      if (data.show_vehicles) {
-        promises.push(getPublicProfileVehicles(data.id));
-      }
+      const [configs, vehiclesData] = await Promise.all([
+        fetchPublicConfigs(result.profile.id),
+        result.profile.show_vehicles
+          ? getPublicProfileVehicles(result.profile.id)
+          : Promise.resolve([] as Vehicle[]),
+      ]);
 
-      const results = await Promise.all(promises);
-      publicConfigs.value = results[0];
-      if (data.show_vehicles && results[1]) {
-        vehicles.value = results[1];
-      }
-    } catch {
+      publicConfigs.value = configs;
+      vehicles.value = vehiclesData;
+    } catch (error) {
+      console.error('Failed to load public profile:', error);
       notFound.value = true;
     } finally {
       loading.value = false;
