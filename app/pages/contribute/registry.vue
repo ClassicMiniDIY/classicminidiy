@@ -201,7 +201,7 @@
                   <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
                   {{ t('success.submit_another') }}
                 </UButton>
-                <UButton to="/submissions" color="neutral" variant="outline" class="w-full">
+                <UButton to="/dashboard" color="neutral" variant="outline" class="w-full">
                   {{ t('success.view_submissions') }}
                 </UButton>
               </div>

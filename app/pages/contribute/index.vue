@@ -121,7 +121,7 @@
               >
                 {{ userProfile.trust_level }}
               </UBadge>
-              <UButton to="/submissions" color="primary" variant="outline">
+              <UButton to="/dashboard" color="primary" variant="outline">
                 {{ t('view_all') }}
               </UButton>
             </div>

@@ -236,7 +236,7 @@
                     <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
                     {{ t('success.submit_another') }}
                   </UButton>
-                  <UButton to="/submissions" variant="outline">
+                  <UButton to="/dashboard" variant="outline">
                     <i class="fad fa-list mr-2"></i>
                     {{ t('success.view_submissions') }}
                   </UButton>
