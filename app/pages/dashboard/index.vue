@@ -22,8 +22,67 @@
     return result;
   });
 
-  function getSubmissionTitle(item: { data: Record<string, any> }): string {
-    return item.data.title || item.data.name || 'Untitled';
+  function getSubmissionTitle(item: { data: Record<string, any>; targetType: string; type: string }): string {
+    // For edit suggestions, data contains { changes, reason }
+    if (item.type === 'edit_suggestion') {
+      return item.data.reason || t('submissions.item.edit_suggestion');
+    }
+    // For collections, title may be nested under documents array
+    if (item.type === 'new_collection' && item.data.documents?.[0]?.title) {
+      return item.data.title || item.data.documents[0].title;
+    }
+    // Standard: check title, name, color_name, then fallback by type
+    return item.data.title || item.data.name || item.data.color_name || item.data.model || t('submissions.item.untitled');
+  }
+
+  // Get detailed info for the expanded view
+  function getSubmissionDetails(item: { data: Record<string, any>; targetType: string; type: string }): { label: string; value: string }[] {
+    const details: { label: string; value: string }[] = [];
+    const d = item.data;
+
+    if (item.type === 'edit_suggestion') {
+      if (d.reason) details.push({ label: t('submissions.detail.reason'), value: d.reason });
+      if (d.changes) {
+        Object.entries(d.changes as Record<string, { from: any; to: any }>).forEach(([field, change]) => {
+          details.push({ label: field, value: `${change.from} → ${change.to}` });
+        });
+      }
+      return details;
+    }
+
+    // Common fields
+    if (d.title) details.push({ label: t('submissions.detail.title'), value: d.title });
+    if (d.name) details.push({ label: t('submissions.detail.name'), value: d.name });
+    if (d.color_name) details.push({ label: t('submissions.detail.name'), value: d.color_name });
+    if (d.type) details.push({ label: t('submissions.detail.type'), value: d.type });
+    if (d.description) details.push({ label: t('submissions.detail.description'), value: d.description });
+
+    // Document-specific
+    if (d.author) details.push({ label: t('submissions.detail.author'), value: d.author });
+    if (d.code) details.push({ label: t('submissions.detail.code'), value: d.code });
+    if (d.year) details.push({ label: t('submissions.detail.year'), value: String(d.year) });
+
+    // Color-specific
+    if (d.primary_code) details.push({ label: t('submissions.detail.code'), value: d.primary_code });
+    if (d.hex) details.push({ label: t('submissions.detail.hex'), value: d.hex });
+
+    // Wheel-specific
+    if (d.size) details.push({ label: t('submissions.detail.size'), value: d.size });
+    if (d.width) details.push({ label: t('submissions.detail.width'), value: d.width });
+    if (d.offset) details.push({ label: t('submissions.detail.offset'), value: d.offset });
+
+    // Registry-specific
+    if (d.model) details.push({ label: t('submissions.detail.model'), value: d.model });
+    if (d.trim) details.push({ label: t('submissions.detail.trim'), value: d.trim });
+    if (d.chassis_number) details.push({ label: t('submissions.detail.chassis'), value: d.chassis_number });
+
+    return details;
+  }
+
+  const expandedSubmission = ref<string | null>(null);
+
+  function toggleSubmission(id: string) {
+    expandedSubmission.value = expandedSubmission.value === id ? null : id;
   }
 
   function formatDate(dateStr: string): string {
@@ -69,7 +128,7 @@
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :page="t('breadcrumb_title')" :version="BREADCRUMB_VERSIONS.PROFILE" />
+      <breadcrumb :version="BREADCRUMB_VERSIONS.PROFILE" root />
     </div>
 
     <!-- Auth gate -->
@@ -160,9 +219,16 @@
             <div class="flex items-center gap-2">
               <i class="fad fa-file-lines mr-2"></i>
               <h2 class="text-lg font-semibold">{{ t('submissions.title') }}</h2>
-              <UBadge v-if="submissions.length > 0" color="neutral" variant="soft" size="sm">
-                {{ submissions.length }}
-              </UBadge>
+            </div>
+            <div v-if="submissions.length > 0" class="flex items-center gap-3 text-sm">
+              <span v-if="submissions.filter(s => s.status === 'pending').length > 0" class="flex items-center gap-1">
+                <UBadge color="warning" variant="soft" size="sm">
+                  {{ submissions.filter(s => s.status === 'pending').length }} {{ t('submissions.filters.pending') }}
+                </UBadge>
+              </span>
+              <span class="opacity-60">
+                {{ t('submissions.total_count', { count: submissions.length }) }}
+              </span>
             </div>
           </div>
         </template>
@@ -264,82 +330,108 @@
 
           <!-- Submissions list -->
           <div v-if="filteredSubmissions.length > 0" class="space-y-3">
-            <UCard v-for="item in filteredSubmissions" :key="item.id">
-              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div
+              v-for="item in filteredSubmissions"
+              :key="item.id"
+              class="border rounded-lg overflow-hidden transition-colors hover:border-primary/40 cursor-pointer"
+              @click="toggleSubmission(item.id)"
+            >
+              <!-- Summary row (always visible) -->
+              <div class="flex items-center gap-3 p-4">
+                <i
+                  class="fas fa-chevron-right text-xs opacity-40 transition-transform"
+                  :class="{ 'rotate-90': expandedSubmission === item.id }"
+                ></i>
+
+                <!-- Type icon -->
+                <i
+                  class="fa-duotone text-base opacity-60"
+                  :class="{
+                    'fa-books': item.targetType === 'document',
+                    'fa-clipboard-list': item.targetType === 'registry',
+                    'fa-palette': item.targetType === 'color',
+                    'fa-tire': item.targetType === 'wheel',
+                    'fa-file': !['document', 'registry', 'color', 'wheel'].includes(item.targetType),
+                  }"
+                ></i>
+
+                <!-- Title & date -->
                 <div class="flex-1 min-w-0">
-                  <!-- Badge row -->
-                  <div class="flex flex-wrap gap-2 mb-2">
-                    <UBadge :color="item.type === 'new_item' ? 'neutral' : 'info'" variant="soft" size="sm">
-                      {{
-                        item.type === 'new_item'
-                          ? t('submissions.item.new_item')
-                          : item.type === 'edit_suggestion'
-                            ? t('submissions.item.edit_suggestion')
-                            : t('submissions.item.new_collection')
-                      }}
-                    </UBadge>
-                    <UBadge color="neutral" variant="outline" size="sm">
-                      <template v-if="item.targetType === 'document'">
-                        <i class="fa-duotone fa-books mr-1"></i>
-                      </template>
-                      <template v-else-if="item.targetType === 'registry'">
-                        <i class="fa-duotone fa-clipboard-list mr-1"></i>
-                      </template>
-                      <template v-else-if="item.targetType === 'color'">
-                        <i class="fa-duotone fa-palette mr-1"></i>
-                      </template>
-                      <template v-else-if="item.targetType === 'wheel'">
-                        <i class="fa-duotone fa-tire mr-1"></i>
-                      </template>
-                      <template v-else>
-                        <i class="fa-duotone fa-file mr-1"></i>
-                      </template>
-                      {{ item.targetType }}
-                    </UBadge>
-                  </div>
-
                   <h4 class="text-sm font-semibold truncate">{{ getSubmissionTitle(item) }}</h4>
-
-                  <div class="flex flex-wrap gap-4 mt-1.5 text-xs opacity-60">
-                    <span>
-                      <i class="fas fa-calendar-plus mr-1"></i>
-                      {{ t('submissions.item.submitted') }}: {{ formatDate(item.createdAt) }}
-                    </span>
-                    <span v-if="item.reviewedAt">
-                      <i class="fas fa-calendar-check mr-1"></i>
-                      {{ t('submissions.item.reviewed') }}: {{ formatDate(item.reviewedAt) }}
-                    </span>
-                  </div>
-
-                  <div
-                    v-if="item.reviewerNotes && (item.status === 'approved' || item.status === 'rejected')"
-                    class="mt-2"
-                  >
-                    <UAlert :color="item.status === 'approved' ? 'success' : 'error'" variant="soft" size="sm">
-                      <template #title>{{ t('submissions.item.reviewer_notes') }}</template>
-                      <template #description>{{ item.reviewerNotes }}</template>
-                    </UAlert>
-                  </div>
+                  <span class="text-xs opacity-50">{{ formatDate(item.createdAt) }}</span>
                 </div>
 
-                <div class="shrink-0">
-                  <UBadge
-                    :color="
-                      item.status === 'pending' ? 'warning' : item.status === 'approved' ? 'success' : 'error'
-                    "
-                    size="sm"
-                  >
+                <!-- Status badge -->
+                <UBadge
+                  :color="item.status === 'pending' ? 'warning' : item.status === 'approved' ? 'success' : 'error'"
+                  size="sm"
+                >
+                  {{
+                    item.status === 'pending'
+                      ? t('submissions.item.status.pending')
+                      : item.status === 'approved'
+                        ? t('submissions.item.status.approved')
+                        : t('submissions.item.status.rejected')
+                  }}
+                </UBadge>
+              </div>
+
+              <!-- Expanded details -->
+              <div v-if="expandedSubmission === item.id" class="border-t px-4 pb-4 pt-3 space-y-3">
+                <!-- Type badges -->
+                <div class="flex flex-wrap gap-2">
+                  <UBadge :color="item.type === 'new_item' ? 'neutral' : 'info'" variant="soft" size="sm">
                     {{
-                      item.status === 'pending'
-                        ? t('submissions.item.status.pending')
-                        : item.status === 'approved'
-                          ? t('submissions.item.status.approved')
-                          : t('submissions.item.status.rejected')
+                      item.type === 'new_item'
+                        ? t('submissions.item.new_item')
+                        : item.type === 'edit_suggestion'
+                          ? t('submissions.item.edit_suggestion')
+                          : t('submissions.item.new_collection')
                     }}
                   </UBadge>
+                  <UBadge color="neutral" variant="outline" size="sm">
+                    {{ item.targetType }}
+                  </UBadge>
+                </div>
+
+                <!-- Detail fields -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div
+                    v-for="detail in getSubmissionDetails(item)"
+                    :key="detail.label"
+                    class="text-sm"
+                  >
+                    <span class="opacity-50">{{ detail.label }}:</span>
+                    <span class="ml-1 font-medium">{{ detail.value }}</span>
+                  </div>
+                </div>
+
+                <!-- Dates -->
+                <div class="flex flex-wrap gap-4 text-xs opacity-60">
+                  <span>
+                    <i class="fas fa-calendar-plus mr-1"></i>
+                    {{ t('submissions.item.submitted') }}: {{ formatDate(item.createdAt) }}
+                  </span>
+                  <span v-if="item.reviewedAt">
+                    <i class="fas fa-calendar-check mr-1"></i>
+                    {{ t('submissions.item.reviewed') }}: {{ formatDate(item.reviewedAt) }}
+                  </span>
+                </div>
+
+                <!-- Submission ID -->
+                <p class="text-xs opacity-40 font-mono">ID: {{ item.id }}</p>
+
+                <!-- Reviewer notes -->
+                <div
+                  v-if="item.reviewerNotes && (item.status === 'approved' || item.status === 'rejected')"
+                >
+                  <UAlert :color="item.status === 'approved' ? 'success' : 'error'" variant="soft" size="sm">
+                    <template #title>{{ t('submissions.item.reviewer_notes') }}</template>
+                    <template #description>{{ item.reviewerNotes }}</template>
+                  </UAlert>
                 </div>
               </div>
-            </UCard>
+            </div>
           </div>
 
           <!-- Empty state -->
@@ -381,6 +473,7 @@
     },
     "submissions": {
       "title": "My Submissions",
+      "total_count": "{count} total",
       "filters": {
         "all": "All",
         "pending": "Pending",
@@ -393,8 +486,9 @@
       },
       "item": {
         "new_item": "New",
-        "edit_suggestion": "Edit",
+        "edit_suggestion": "Edit Suggestion",
         "new_collection": "Collection",
+        "untitled": "Untitled Submission",
         "status": {
           "pending": "Pending",
           "approved": "Approved",
@@ -403,6 +497,23 @@
         "reviewer_notes": "Reviewer Notes",
         "submitted": "Submitted",
         "reviewed": "Reviewed"
+      },
+      "detail": {
+        "title": "Title",
+        "name": "Name",
+        "type": "Type",
+        "description": "Description",
+        "author": "Author",
+        "code": "Code",
+        "year": "Year",
+        "hex": "Hex Color",
+        "size": "Size",
+        "width": "Width",
+        "offset": "Offset",
+        "model": "Model",
+        "trim": "Trim",
+        "chassis": "Chassis Number",
+        "reason": "Reason"
       },
       "empty": {
         "title": "No Submissions Yet",
@@ -433,6 +544,7 @@
     },
     "submissions": {
       "title": "Mis Envíos",
+      "total_count": "{count} en total",
       "filters": {
         "all": "Todos",
         "pending": "Pendiente",
@@ -445,8 +557,9 @@
       },
       "item": {
         "new_item": "Nuevo",
-        "edit_suggestion": "Edición",
+        "edit_suggestion": "Sugerencia de Edición",
         "new_collection": "Colección",
+        "untitled": "Envío sin título",
         "status": {
           "pending": "Pendiente",
           "approved": "Aprobado",
@@ -455,6 +568,23 @@
         "reviewer_notes": "Notas del Revisor",
         "submitted": "Enviado",
         "reviewed": "Revisado"
+      },
+      "detail": {
+        "title": "Título",
+        "name": "Nombre",
+        "type": "Tipo",
+        "description": "Descripción",
+        "author": "Autor",
+        "code": "Código",
+        "year": "Año",
+        "hex": "Color Hex",
+        "size": "Tamaño",
+        "width": "Ancho",
+        "offset": "Offset",
+        "model": "Modelo",
+        "trim": "Acabado",
+        "chassis": "Número de Chasis",
+        "reason": "Motivo"
       },
       "empty": {
         "title": "Sin Envíos Aún",
@@ -485,6 +615,7 @@
     },
     "submissions": {
       "title": "Mes Soumissions",
+      "total_count": "{count} au total",
       "filters": {
         "all": "Tous",
         "pending": "En attente",
@@ -497,8 +628,9 @@
       },
       "item": {
         "new_item": "Nouveau",
-        "edit_suggestion": "Modification",
+        "edit_suggestion": "Suggestion de Modification",
         "new_collection": "Collection",
+        "untitled": "Soumission sans titre",
         "status": {
           "pending": "En attente",
           "approved": "Approuvé",
@@ -507,6 +639,23 @@
         "reviewer_notes": "Notes du Réviseur",
         "submitted": "Soumis",
         "reviewed": "Révisé"
+      },
+      "detail": {
+        "title": "Titre",
+        "name": "Nom",
+        "type": "Type",
+        "description": "Description",
+        "author": "Auteur",
+        "code": "Code",
+        "year": "Année",
+        "hex": "Couleur Hex",
+        "size": "Taille",
+        "width": "Largeur",
+        "offset": "Décalage",
+        "model": "Modèle",
+        "trim": "Finition",
+        "chassis": "Numéro de Châssis",
+        "reason": "Raison"
       },
       "empty": {
         "title": "Aucune Soumission Pour l'Instant",
@@ -537,6 +686,7 @@
     },
     "submissions": {
       "title": "Meine Einreichungen",
+      "total_count": "{count} insgesamt",
       "filters": {
         "all": "Alle",
         "pending": "Ausstehend",
@@ -549,8 +699,9 @@
       },
       "item": {
         "new_item": "Neu",
-        "edit_suggestion": "Bearbeitung",
+        "edit_suggestion": "Bearbeitungsvorschlag",
         "new_collection": "Sammlung",
+        "untitled": "Unbenannte Einreichung",
         "status": {
           "pending": "Ausstehend",
           "approved": "Genehmigt",
@@ -559,6 +710,23 @@
         "reviewer_notes": "Prüfernotizen",
         "submitted": "Eingereicht",
         "reviewed": "Überprüft"
+      },
+      "detail": {
+        "title": "Titel",
+        "name": "Name",
+        "type": "Typ",
+        "description": "Beschreibung",
+        "author": "Autor",
+        "code": "Code",
+        "year": "Jahr",
+        "hex": "Hex-Farbe",
+        "size": "Größe",
+        "width": "Breite",
+        "offset": "Einpresstiefe",
+        "model": "Modell",
+        "trim": "Ausstattung",
+        "chassis": "Fahrgestellnummer",
+        "reason": "Grund"
       },
       "empty": {
         "title": "Noch keine Einreichungen",
@@ -589,6 +757,7 @@
     },
     "submissions": {
       "title": "Le Mie Proposte",
+      "total_count": "{count} in totale",
       "filters": {
         "all": "Tutti",
         "pending": "In attesa",
@@ -601,8 +770,9 @@
       },
       "item": {
         "new_item": "Nuovo",
-        "edit_suggestion": "Modifica",
+        "edit_suggestion": "Suggerimento di Modifica",
         "new_collection": "Raccolta",
+        "untitled": "Proposta senza titolo",
         "status": {
           "pending": "In attesa",
           "approved": "Approvato",
@@ -611,6 +781,23 @@
         "reviewer_notes": "Note del Revisore",
         "submitted": "Inviato",
         "reviewed": "Revisionato"
+      },
+      "detail": {
+        "title": "Titolo",
+        "name": "Nome",
+        "type": "Tipo",
+        "description": "Descrizione",
+        "author": "Autore",
+        "code": "Codice",
+        "year": "Anno",
+        "hex": "Colore Hex",
+        "size": "Dimensione",
+        "width": "Larghezza",
+        "offset": "Offset",
+        "model": "Modello",
+        "trim": "Allestimento",
+        "chassis": "Numero di Telaio",
+        "reason": "Motivo"
       },
       "empty": {
         "title": "Nessuna Proposta Ancora",
@@ -641,6 +828,7 @@
     },
     "submissions": {
       "title": "Meus Envios",
+      "total_count": "{count} no total",
       "filters": {
         "all": "Todos",
         "pending": "Pendente",
@@ -653,8 +841,9 @@
       },
       "item": {
         "new_item": "Novo",
-        "edit_suggestion": "Edição",
+        "edit_suggestion": "Sugestão de Edição",
         "new_collection": "Coleção",
+        "untitled": "Envio sem título",
         "status": {
           "pending": "Pendente",
           "approved": "Aprovado",
@@ -663,6 +852,23 @@
         "reviewer_notes": "Notas do Revisor",
         "submitted": "Enviado",
         "reviewed": "Revisado"
+      },
+      "detail": {
+        "title": "Título",
+        "name": "Nome",
+        "type": "Tipo",
+        "description": "Descrição",
+        "author": "Autor",
+        "code": "Código",
+        "year": "Ano",
+        "hex": "Cor Hex",
+        "size": "Tamanho",
+        "width": "Largura",
+        "offset": "Offset",
+        "model": "Modelo",
+        "trim": "Versão",
+        "chassis": "Número do Chassi",
+        "reason": "Motivo"
       },
       "empty": {
         "title": "Sem Envios Ainda",
@@ -693,6 +899,7 @@
     },
     "submissions": {
       "title": "Мои заявки",
+      "total_count": "{count} всего",
       "filters": {
         "all": "Все",
         "pending": "Ожидает",
@@ -705,8 +912,9 @@
       },
       "item": {
         "new_item": "Новый",
-        "edit_suggestion": "Правка",
+        "edit_suggestion": "Предложение правки",
         "new_collection": "Коллекция",
+        "untitled": "Заявка без названия",
         "status": {
           "pending": "Ожидает",
           "approved": "Одобрено",
@@ -715,6 +923,23 @@
         "reviewer_notes": "Заметки проверяющего",
         "submitted": "Отправлено",
         "reviewed": "Проверено"
+      },
+      "detail": {
+        "title": "Заголовок",
+        "name": "Название",
+        "type": "Тип",
+        "description": "Описание",
+        "author": "Автор",
+        "code": "Код",
+        "year": "Год",
+        "hex": "Цвет Hex",
+        "size": "Размер",
+        "width": "Ширина",
+        "offset": "Вылет",
+        "model": "Модель",
+        "trim": "Комплектация",
+        "chassis": "Номер шасси",
+        "reason": "Причина"
       },
       "empty": {
         "title": "Заявок пока нет",
@@ -745,6 +970,7 @@
     },
     "submissions": {
       "title": "私の申請",
+      "total_count": "{count} 件",
       "filters": {
         "all": "すべて",
         "pending": "審査中",
@@ -757,8 +983,9 @@
       },
       "item": {
         "new_item": "新規",
-        "edit_suggestion": "編集",
+        "edit_suggestion": "編集提案",
         "new_collection": "コレクション",
+        "untitled": "タイトルなしの申請",
         "status": {
           "pending": "審査中",
           "approved": "承認済み",
@@ -767,6 +994,23 @@
         "reviewer_notes": "レビュアーのメモ",
         "submitted": "提出日",
         "reviewed": "審査日"
+      },
+      "detail": {
+        "title": "タイトル",
+        "name": "名前",
+        "type": "タイプ",
+        "description": "説明",
+        "author": "著者",
+        "code": "コード",
+        "year": "年式",
+        "hex": "Hexカラー",
+        "size": "サイズ",
+        "width": "幅",
+        "offset": "オフセット",
+        "model": "モデル",
+        "trim": "グレード",
+        "chassis": "シャシー番号",
+        "reason": "理由"
       },
       "empty": {
         "title": "申請はまだありません",
@@ -797,6 +1041,7 @@
     },
     "submissions": {
       "title": "我的提交",
+      "total_count": "共 {count} 个",
       "filters": {
         "all": "全部",
         "pending": "待审核",
@@ -809,8 +1054,9 @@
       },
       "item": {
         "new_item": "新建",
-        "edit_suggestion": "编辑",
+        "edit_suggestion": "编辑建议",
         "new_collection": "集合",
+        "untitled": "未命名提交",
         "status": {
           "pending": "待审核",
           "approved": "已批准",
@@ -819,6 +1065,23 @@
         "reviewer_notes": "审核员备注",
         "submitted": "提交时间",
         "reviewed": "审核时间"
+      },
+      "detail": {
+        "title": "标题",
+        "name": "名称",
+        "type": "类型",
+        "description": "描述",
+        "author": "作者",
+        "code": "代码",
+        "year": "年份",
+        "hex": "Hex颜色",
+        "size": "尺寸",
+        "width": "宽度",
+        "offset": "偏距",
+        "model": "型号",
+        "trim": "配置",
+        "chassis": "底盘编号",
+        "reason": "原因"
       },
       "empty": {
         "title": "暂无提交",
@@ -849,6 +1112,7 @@
     },
     "submissions": {
       "title": "내 제출",
+      "total_count": "{count} 건",
       "filters": {
         "all": "전체",
         "pending": "대기 중",
@@ -861,8 +1125,9 @@
       },
       "item": {
         "new_item": "신규",
-        "edit_suggestion": "수정",
+        "edit_suggestion": "수정 제안",
         "new_collection": "컬렉션",
+        "untitled": "제목 없는 제출",
         "status": {
           "pending": "대기 중",
           "approved": "승인됨",
@@ -871,6 +1136,23 @@
         "reviewer_notes": "검토자 메모",
         "submitted": "제출일",
         "reviewed": "검토일"
+      },
+      "detail": {
+        "title": "제목",
+        "name": "이름",
+        "type": "유형",
+        "description": "설명",
+        "author": "저자",
+        "code": "코드",
+        "year": "연도",
+        "hex": "Hex 색상",
+        "size": "크기",
+        "width": "너비",
+        "offset": "오프셋",
+        "model": "모델",
+        "trim": "트림",
+        "chassis": "차대 번호",
+        "reason": "사유"
       },
       "empty": {
         "title": "제출이 아직 없습니다",
