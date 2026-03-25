@@ -27,6 +27,10 @@ describe('BREADCRUMB_VERSIONS', () => {
   it('ADMIN equals "admin"', () => {
     expect(BREADCRUMB_VERSIONS.ADMIN).toBe('admin');
   });
+
+  it('PROFILE equals "profile"', () => {
+    expect(BREADCRUMB_VERSIONS.PROFILE).toBe('profile');
+  });
 });
 
 // ---------------------------------------------------------------------------
