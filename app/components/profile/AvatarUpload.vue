@@ -80,7 +80,7 @@
       </div>
     </button>
 
-    <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="handleFileChange" />
+    <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" tabindex="-1" aria-hidden="true" @change="handleFileChange" />
 
     <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
   </div>

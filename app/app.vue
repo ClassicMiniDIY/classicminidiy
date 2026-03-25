@@ -16,7 +16,7 @@
 </script>
 
 <template>
-  <UApp>
+  <UApp :toaster="{ position: 'bottom-right' }">
     <div class="app-wrapper bg-white dark:bg-[#171717] text-neutral-900 dark:text-neutral-100">
       <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md focus:shadow-lg">
         Skip to main content

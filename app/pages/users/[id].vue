@@ -63,21 +63,14 @@
     if (!profile.value?.social_links) return false;
     return Object.values(profile.value.social_links).some((v) => !!v);
   });
-  const hasUsername = computed(() => !!profile.value?.username);
-
   useHead({
     title: computed(() => `${displayName.value} - Classic Mini DIY`),
     meta: [
       {
         name: 'robots',
-        content: computed(() => (hasUsername.value ? 'index, follow' : 'noindex, nofollow')),
+        content: 'noindex, nofollow',
       },
     ],
-    link: computed(() =>
-      hasUsername.value
-        ? [{ rel: 'canonical', href: `https://classicminidiy.com/users/${profile.value?.username}` }]
-        : []
-    ),
   });
 </script>
 
@@ -129,7 +122,6 @@
             <div class="flex-1 text-center sm:text-left min-w-0">
               <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
                 <h2 class="text-xl font-bold">{{ displayName }}</h2>
-                <span v-if="profile?.username" class="text-sm opacity-60">@{{ profile.username }}</span>
                 <ProfileSustainingBadge v-if="profile?.is_sustaining_member" size="sm" />
               </div>
 

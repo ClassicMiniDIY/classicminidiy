@@ -2,6 +2,7 @@ export enum BREADCRUMB_VERSIONS {
   TECH = 'technical',
   ARCHIVE = 'archive',
   ADMIN = 'admin',
+  PROFILE = 'profile',
 }
 export enum HERO_TYPES {
   HOME = 'home',

@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-  import { HERO_TYPES } from '../../../data/models/generic';
+  import { HERO_TYPES, BREADCRUMB_VERSIONS } from '../../../data/models/generic';
 
   const { t } = useI18n();
-  const { isAuthenticated, user, userProfile, fetchUserProfile } = useAuth();
-  const { fetchProfile, updateProfile, uploadAvatar, checkUsernameAvailability } = useProfile();
+  const toast = useToast();
+  const { isAuthenticated, user, userProfile, fetchUserProfile, waitForAuth } = useAuth();
+  const { fetchProfile, updateProfile, uploadAvatar } = useProfile();
 
   const displayName = ref('');
   const bio = ref('');
   const location = ref('');
-  const username = ref('');
   const isPublic = ref(true);
   const showVehicles = ref(false);
   const socialLinks = ref<Record<string, string>>({
@@ -24,28 +24,55 @@
   const avatarFile = ref<File | null>(null);
 
   const saving = ref(false);
-  const saved = ref(false);
-  const saveError = ref('');
   const profileLoading = ref(true);
+  const profileLoaded = ref(false);
+  const fetchError = ref(false);
 
-  // Username availability
-  const usernameAvailable = ref<boolean | null>(null);
-  const usernameChecking = ref(false);
-  let usernameDebounce: ReturnType<typeof setTimeout> | null = null;
+  // Snapshot of original profile values to diff against on save
+  const originalProfile = ref<{
+    display_name: string | null;
+    bio: string | null;
+    location: string | null;
+    avatar_url: string | null;
+    is_public: boolean;
+    show_vehicles: boolean;
+    social_links: Record<string, string>;
+  } | null>(null);
 
-  // Load full profile on mount
-  onMounted(async () => {
+  // Helper to snapshot current form state for dirty-checking
+  function snapshotCurrentState() {
+    const cleanedLinks: Record<string, string> = {};
+    for (const [key, val] of Object.entries(socialLinks.value)) {
+      if (val?.trim()) cleanedLinks[key] = val.trim();
+    }
+    originalProfile.value = {
+      display_name: displayName.value.trim() || null,
+      bio: bio.value.trim() || null,
+      location: location.value.trim() || null,
+      avatar_url: avatarUrl.value,
+      is_public: isPublic.value,
+      show_vehicles: showVehicles.value,
+      social_links: cleanedLinks,
+    };
+  }
+
+  // Load profile data
+  async function loadProfile() {
+    await waitForAuth();
     if (!user.value) {
       profileLoading.value = false;
       return;
     }
+    profileLoading.value = true;
+    fetchError.value = false;
+    profileLoaded.value = false;
+
     try {
       const profile = await fetchProfile();
       if (profile) {
         displayName.value = profile.display_name || '';
         bio.value = profile.bio || '';
         location.value = profile.location || '';
-        username.value = profile.username || '';
         isPublic.value = profile.is_public ?? true;
         showVehicles.value = profile.show_vehicles ?? false;
         avatarUrl.value = profile.avatar_url || null;
@@ -56,31 +83,17 @@
           }
         }
       }
+      snapshotCurrentState();
+      profileLoaded.value = true;
     } catch (error) {
       console.error('Failed to fetch profile:', error);
+      fetchError.value = true;
     } finally {
       profileLoading.value = false;
     }
-  });
+  }
 
-  // Debounced username check
-  watch(username, (val) => {
-    usernameAvailable.value = null;
-    if (usernameDebounce) clearTimeout(usernameDebounce);
-    if (!val || val.length < 3) return;
-
-    usernameDebounce = setTimeout(async () => {
-      usernameChecking.value = true;
-      try {
-        usernameAvailable.value = await checkUsernameAvailability(val);
-      } catch (error) {
-        console.error('Failed to check username availability:', error);
-        usernameAvailable.value = null;
-      } finally {
-        usernameChecking.value = false;
-      }
-    }, 500);
-  });
+  onMounted(loadProfile);
 
   function handleAvatarUpload(file: File) {
     avatarFile.value = file;
@@ -88,8 +101,6 @@
 
   async function save() {
     saving.value = true;
-    saved.value = false;
-    saveError.value = '';
 
     try {
       let newAvatarUrl = avatarUrl.value;
@@ -106,25 +117,62 @@
         if (val.trim()) cleanedLinks[key] = val.trim();
       }
 
-      await updateProfile({
-        display_name: displayName.value.trim() || null,
-        bio: bio.value.trim() || null,
-        location: location.value.trim() || null,
-        username: username.value.trim() || null,
-        avatar_url: newAvatarUrl,
-        is_public: isPublic.value,
-        show_vehicles: showVehicles.value,
-        social_links: cleanedLinks,
-      });
+      // Build updates — only include fields that differ from the original snapshot
+      const orig = originalProfile.value;
+      const currentDisplayName = displayName.value.trim() || null;
+      const currentBio = bio.value.trim() || null;
+      const currentLocation = location.value.trim() || null;
+
+      const updates: Record<string, any> = {};
+
+      if (!orig) {
+        // No snapshot (first save or fetch failed) — send all fields
+        updates.display_name = currentDisplayName;
+        updates.bio = currentBio;
+        updates.location = currentLocation;
+        updates.avatar_url = newAvatarUrl;
+        updates.is_public = isPublic.value;
+        updates.show_vehicles = showVehicles.value;
+        updates.social_links = cleanedLinks;
+      } else {
+        // Only send changed fields
+        if (currentDisplayName !== orig.display_name) updates.display_name = currentDisplayName;
+        if (currentBio !== orig.bio) updates.bio = currentBio;
+        if (currentLocation !== orig.location) updates.location = currentLocation;
+        if (newAvatarUrl !== orig.avatar_url) updates.avatar_url = newAvatarUrl;
+        if (isPublic.value !== orig.is_public) updates.is_public = isPublic.value;
+        if (showVehicles.value !== orig.show_vehicles) updates.show_vehicles = showVehicles.value;
+        if (JSON.stringify(cleanedLinks) !== JSON.stringify(orig.social_links)) {
+          updates.social_links = cleanedLinks;
+        }
+      }
+
+      // Only call updateProfile if there are changes to save
+      if (Object.keys(updates).length > 0) {
+        await updateProfile(updates);
+      }
+
+      // Update the snapshot to reflect saved state
+      snapshotCurrentState();
+      avatarUrl.value = newAvatarUrl;
 
       if (user.value) {
         await fetchUserProfile(user.value.id);
       }
 
-      avatarUrl.value = newAvatarUrl;
-      saved.value = true;
+      toast.add({
+        title: t('success_title'),
+        description: t('success_description'),
+        color: 'success',
+        icon: 'i-fa6-solid-circle-check',
+      });
     } catch (err: any) {
-      saveError.value = err?.message || t('error_generic');
+      toast.add({
+        title: t('error_title'),
+        description: err?.message || t('error_generic'),
+        color: 'error',
+        icon: 'i-fa6-solid-circle-xmark',
+      });
     } finally {
       saving.value = false;
     }
@@ -154,7 +202,7 @@
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :page="t('breadcrumb_title')" />
+      <breadcrumb :page="t('breadcrumb_title')" :version="BREADCRUMB_VERSIONS.PROFILE" />
     </div>
 
     <!-- Auth gate -->
@@ -178,171 +226,161 @@
       <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
     </div>
 
-    <!-- Authenticated content -->
-    <div v-else class="max-w-2xl mx-auto space-y-6">
-      <!-- Success alert -->
-      <UAlert v-if="saved" color="success" :title="t('success_title')" :description="t('success_description')" />
-
-      <!-- Error alert -->
-      <UAlert v-if="saveError" color="error" :title="t('error_title')" :description="saveError" />
-
-      <form @submit.prevent="save" class="space-y-6">
-        <!-- Avatar & Basic Info -->
-        <UCard>
-          <template #header>
-            <div class="flex items-center bg-muted -m-4 p-4">
-              <i class="fad fa-user-pen mr-2"></i>
-              <h2 class="text-lg font-semibold">{{ t('card_title') }}</h2>
-            </div>
-          </template>
-
-          <div class="p-4 space-y-4">
-            <!-- Avatar -->
-            <div class="flex justify-center">
-              <ProfileAvatarUpload
-                :current-url="avatarUrl ?? undefined"
-                :display-name="displayName"
-                :email="user?.email"
-                @upload="handleAvatarUpload"
-              />
-            </div>
-
-            <!-- Display Name -->
-            <UFormField :label="t('form.display_name.label')">
-              <UInput
-                v-model="displayName"
-                type="text"
-                :placeholder="t('form.display_name.placeholder')"
-                class="w-full"
-                maxlength="50"
-                icon="i-fa6-solid-user"
-              />
-            </UFormField>
-
-            <!-- Location -->
-            <UFormField :label="t('form.location.label')">
-              <UInput
-                v-model="location"
-                type="text"
-                :placeholder="t('form.location.placeholder')"
-                class="w-full"
-                maxlength="100"
-                icon="i-fa6-solid-location-dot"
-              />
-            </UFormField>
-
-            <!-- Bio -->
-            <UFormField :label="t('form.bio.label')">
-              <UTextarea
-                v-model="bio"
-                :placeholder="t('form.bio.placeholder')"
-                :rows="4"
-                class="w-full"
-                maxlength="500"
-              />
-            </UFormField>
-
-            <!-- Username -->
-            <UFormField :label="t('form.username.label')">
-              <UInput
-                v-model="username"
-                type="text"
-                :placeholder="t('form.username.placeholder')"
-                class="w-full"
-                maxlength="30"
-              >
-                <template #leading>
-                  <span class="text-sm opacity-60 pl-1">@</span>
-                </template>
-              </UInput>
-              <template #help>
-                <span v-if="usernameChecking" class="text-xs opacity-50">
-                  <i class="fas fa-spinner fa-spin mr-1"></i>{{ t('form.username.checking') }}
-                </span>
-                <span v-else-if="usernameAvailable === true" class="text-xs text-green-600">
-                  <i class="fas fa-check mr-1"></i>{{ t('form.username.available') }}
-                </span>
-                <span v-else-if="usernameAvailable === false" class="text-xs text-red-500">
-                  <i class="fas fa-xmark mr-1"></i>{{ t('form.username.taken') }}
-                </span>
-                <span v-else-if="username" class="text-xs opacity-50">
-                  classicminidiy.com/users/{{ username }}
-                </span>
-              </template>
-            </UFormField>
+    <!-- Fetch error -->
+    <div v-else-if="fetchError" class="max-w-lg mx-auto">
+      <UCard>
+        <div class="p-6 text-center">
+          <div class="mb-4">
+            <i class="fas fa-triangle-exclamation text-5xl text-warning"></i>
           </div>
-        </UCard>
-
-        <!-- Privacy Settings -->
-        <UCard>
-          <template #header>
-            <div class="flex items-center bg-muted -m-4 p-4">
-              <i class="fad fa-shield-halved mr-2"></i>
-              <h2 class="text-lg font-semibold">{{ t('privacy.title') }}</h2>
-            </div>
-          </template>
-
-          <div class="p-4 space-y-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="font-medium">{{ t('privacy.public_profile') }}</p>
-                <p class="text-sm opacity-60">{{ t('privacy.public_description') }}</p>
-              </div>
-              <UToggle v-model="isPublic" />
-            </div>
-
-            <div v-if="isPublic" class="flex items-center justify-between">
-              <div>
-                <p class="font-medium">{{ t('privacy.show_vehicles') }}</p>
-                <p class="text-sm opacity-60">{{ t('privacy.vehicles_description') }}</p>
-              </div>
-              <UToggle v-model="showVehicles" />
-            </div>
-          </div>
-        </UCard>
-
-        <!-- Social Links -->
-        <UCard>
-          <template #header>
-            <div class="flex items-center bg-muted -m-4 p-4">
-              <i class="fad fa-share-nodes mr-2"></i>
-              <h2 class="text-lg font-semibold">{{ t('social.title') }}</h2>
-            </div>
-          </template>
-
-          <div class="p-4 space-y-3">
-            <UFormField v-for="platform in socialPlatforms" :key="platform.key" :label="platform.label">
-              <UInput
-                v-model="socialLinks[platform.key]"
-                type="text"
-                :placeholder="t('social.placeholder', { platform: platform.label })"
-                class="w-full"
-              >
-                <template #leading>
-                  <i :class="platform.icon" class="pl-1 opacity-60"></i>
-                </template>
-              </UInput>
-            </UFormField>
-          </div>
-        </UCard>
-
-        <!-- Actions -->
-        <div>
-          <USeparator class="mb-4" />
-          <p class="text-sm opacity-60 mb-4">
-            <i class="fad fa-circle-info mr-1"></i>
-            {{ t('shared_note') }}
-          </p>
-          <div class="flex gap-3">
+          <h2 class="text-xl font-bold mb-2">{{ t('fetch_error.title') }}</h2>
+          <p class="text-base mb-6 opacity-70">{{ t('fetch_error.description') }}</p>
+          <div class="flex gap-3 justify-center">
             <UButton to="/profile" variant="ghost" color="neutral">
-              {{ t('form.cancel') }}
+              {{ t('fetch_error.back') }}
             </UButton>
-            <UButton type="submit" color="primary" :loading="saving" :disabled="saving">
-              {{ t('form.save') }}
+            <UButton color="primary" @click="loadProfile">
+              <i class="fas fa-arrow-rotate-right mr-1"></i>
+              {{ t('fetch_error.retry') }}
             </UButton>
           </div>
         </div>
-      </form>
+      </UCard>
+    </div>
+
+    <!-- Authenticated content -->
+    <div v-else class="max-w-5xl mx-auto space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left column: Avatar & Identity -->
+        <div class="lg:col-span-1 space-y-6">
+          <!-- Avatar & Name -->
+          <UCard :ui="{ header: 'bg-muted p-4' }">
+            <template #header>
+              <div class="flex items-center">
+                <i class="fad fa-user-pen mr-2"></i>
+                <h2 class="text-lg font-semibold">{{ t('card_title') }}</h2>
+              </div>
+            </template>
+
+            <div class="space-y-4">
+              <div class="flex justify-center">
+                <ProfileAvatarUpload
+                  :current-url="avatarUrl ?? undefined"
+                  :display-name="displayName"
+                  :email="user?.email"
+                  @upload="handleAvatarUpload"
+                />
+              </div>
+
+              <UFormField :label="t('form.display_name.label')">
+                <UInput
+                  v-model="displayName"
+                  type="text"
+                  :placeholder="t('form.display_name.placeholder')"
+                  class="w-full"
+                  maxlength="50"
+                  icon="i-fa6-solid-user"
+                />
+              </UFormField>
+
+              <UFormField :label="t('form.location.label')">
+                <ProfileLocationAutocomplete v-model="location" />
+              </UFormField>
+            </div>
+          </UCard>
+
+          <!-- Privacy Settings -->
+          <UCard :ui="{ header: 'bg-muted p-4' }">
+            <template #header>
+              <div class="flex items-center">
+                <i class="fad fa-shield-halved mr-2"></i>
+                <h2 class="text-lg font-semibold">{{ t('privacy.title') }}</h2>
+              </div>
+            </template>
+
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium">{{ t('privacy.public_profile') }}</p>
+                  <p class="text-sm opacity-60">{{ t('privacy.public_description') }}</p>
+                </div>
+                <USwitch v-model="isPublic" />
+              </div>
+
+              <div v-if="isPublic" class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium">{{ t('privacy.show_vehicles') }}</p>
+                  <p class="text-sm opacity-60">{{ t('privacy.vehicles_description') }}</p>
+                </div>
+                <USwitch v-model="showVehicles" />
+              </div>
+            </div>
+          </UCard>
+        </div>
+
+        <!-- Right column: Bio, Social -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Bio -->
+          <UCard :ui="{ header: 'bg-muted p-4' }">
+            <template #header>
+              <div class="flex items-center">
+                <i class="fad fa-pen-to-square mr-2"></i>
+                <h2 class="text-lg font-semibold">{{ t('form.bio.label') }}</h2>
+              </div>
+            </template>
+
+            <UTextarea
+              v-model="bio"
+              :placeholder="t('form.bio.placeholder')"
+              :rows="6"
+              class="w-full"
+              maxlength="500"
+            />
+          </UCard>
+
+          <!-- Social Links -->
+          <UCard :ui="{ header: 'bg-muted p-4' }">
+            <template #header>
+              <div class="flex items-center">
+                <i class="fad fa-share-nodes mr-2"></i>
+                <h2 class="text-lg font-semibold">{{ t('social.title') }}</h2>
+              </div>
+            </template>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <UFormField v-for="platform in socialPlatforms" :key="platform.key" :label="platform.label">
+                <UInput
+                  v-model="socialLinks[platform.key]"
+                  type="text"
+                  :placeholder="t('social.placeholder', { platform: platform.label })"
+                  class="w-full"
+                >
+                  <template #leading>
+                    <i :class="platform.icon" class="pl-1 opacity-60"></i>
+                  </template>
+                </UInput>
+              </UFormField>
+            </div>
+          </UCard>
+        </div>
+      </div>
+
+      <!-- Actions (full width below the grid) -->
+      <div>
+        <USeparator class="mb-4" />
+        <p class="text-sm opacity-60 mb-4">
+          <i class="fad fa-circle-info mr-1"></i>
+          {{ t('shared_note') }}
+        </p>
+        <div class="flex gap-3">
+          <UButton to="/profile" variant="ghost" color="neutral">
+            {{ t('form.cancel') }}
+          </UButton>
+          <UButton color="primary" :loading="saving" :disabled="saving || profileLoading" @click="save">
+            {{ t('form.save') }}
+          </UButton>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -364,6 +402,13 @@
     "success_description": "Your profile has been saved successfully.",
     "error_title": "Error",
     "error_generic": "Something went wrong. Please try again.",
+    "error_load": "Profile could not be loaded. Please refresh the page before saving.",
+    "fetch_error": {
+      "title": "Unable to Load Profile",
+      "description": "We couldn't load your profile data. This may be a temporary issue — please try again.",
+      "retry": "Try Again",
+      "back": "Back to Profile"
+    },
     "form": {
       "display_name": {
         "label": "Display Name",
@@ -376,13 +421,6 @@
       "bio": {
         "label": "Bio",
         "placeholder": "Tell the community a bit about yourself and your Mini"
-      },
-      "username": {
-        "label": "Username",
-        "placeholder": "your-username",
-        "checking": "Checking availability...",
-        "available": "Username is available",
-        "taken": "Username is taken or invalid"
       },
       "cancel": "Cancel",
       "save": "Save Profile"
@@ -415,6 +453,13 @@
     "success_description": "Tu perfil se ha guardado correctamente.",
     "error_title": "Error",
     "error_generic": "Algo salió mal. Inténtalo de nuevo.",
+    "error_load": "No se pudo cargar el perfil. Actualiza la página antes de guardar.",
+    "fetch_error": {
+      "title": "No se pudo cargar el perfil",
+      "description": "No pudimos cargar los datos de tu perfil. Puede ser un problema temporal, inténtalo de nuevo.",
+      "retry": "Intentar de nuevo",
+      "back": "Volver al perfil"
+    },
     "form": {
       "display_name": {
         "label": "Nombre para Mostrar",
@@ -427,13 +472,6 @@
       "bio": {
         "label": "Biografía",
         "placeholder": "Cuéntale a la comunidad un poco sobre ti y tu Mini"
-      },
-      "username": {
-        "label": "Nombre de Usuario",
-        "placeholder": "tu-usuario",
-        "checking": "Comprobando disponibilidad...",
-        "available": "Nombre de usuario disponible",
-        "taken": "Nombre de usuario no disponible"
       },
       "cancel": "Cancelar",
       "save": "Guardar Perfil"
@@ -466,6 +504,13 @@
     "success_description": "Votre profil a été enregistré avec succès.",
     "error_title": "Erreur",
     "error_generic": "Une erreur est survenue. Veuillez réessayer.",
+    "error_load": "Le profil n'a pas pu être chargé. Veuillez rafraîchir la page avant d'enregistrer.",
+    "fetch_error": {
+      "title": "Impossible de charger le profil",
+      "description": "Nous n'avons pas pu charger vos données de profil. Cela peut être un problème temporaire — veuillez réessayer.",
+      "retry": "Réessayer",
+      "back": "Retour au profil"
+    },
     "form": {
       "display_name": {
         "label": "Nom d'Affichage",
@@ -478,13 +523,6 @@
       "bio": {
         "label": "Biographie",
         "placeholder": "Présentez-vous à la communauté et parlez de votre Mini"
-      },
-      "username": {
-        "label": "Nom d'Utilisateur",
-        "placeholder": "votre-pseudo",
-        "checking": "Vérification...",
-        "available": "Nom d'utilisateur disponible",
-        "taken": "Nom d'utilisateur indisponible"
       },
       "cancel": "Annuler",
       "save": "Enregistrer le Profil"
@@ -517,6 +555,13 @@
     "success_description": "Il tuo profilo è stato salvato con successo.",
     "error_title": "Errore",
     "error_generic": "Qualcosa è andato storto. Riprova.",
+    "error_load": "Impossibile caricare il profilo. Aggiorna la pagina prima di salvare.",
+    "fetch_error": {
+      "title": "Impossibile caricare il profilo",
+      "description": "Non siamo riusciti a caricare i dati del tuo profilo. Potrebbe essere un problema temporaneo — riprova.",
+      "retry": "Riprova",
+      "back": "Torna al profilo"
+    },
     "form": {
       "display_name": {
         "label": "Nome Visualizzato",
@@ -529,13 +574,6 @@
       "bio": {
         "label": "Biografia",
         "placeholder": "Racconta alla comunità qualcosa su di te e sulla tua Mini"
-      },
-      "username": {
-        "label": "Nome Utente",
-        "placeholder": "tuo-nome-utente",
-        "checking": "Verifica in corso...",
-        "available": "Nome utente disponibile",
-        "taken": "Nome utente non disponibile"
       },
       "cancel": "Annulla",
       "save": "Salva Profilo"
@@ -568,6 +606,13 @@
     "success_description": "Ihr Profil wurde erfolgreich gespeichert.",
     "error_title": "Fehler",
     "error_generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "error_load": "Profil konnte nicht geladen werden. Bitte aktualisieren Sie die Seite vor dem Speichern.",
+    "fetch_error": {
+      "title": "Profil konnte nicht geladen werden",
+      "description": "Wir konnten Ihre Profildaten nicht laden. Dies kann ein vorübergehendes Problem sein — bitte versuchen Sie es erneut.",
+      "retry": "Erneut versuchen",
+      "back": "Zurück zum Profil"
+    },
     "form": {
       "display_name": {
         "label": "Anzeigename",
@@ -580,13 +625,6 @@
       "bio": {
         "label": "Biografie",
         "placeholder": "Erzählen Sie der Community etwas über sich und Ihren Mini"
-      },
-      "username": {
-        "label": "Benutzername",
-        "placeholder": "ihr-benutzername",
-        "checking": "Verfügbarkeit wird geprüft...",
-        "available": "Benutzername ist verfügbar",
-        "taken": "Benutzername ist nicht verfügbar"
       },
       "cancel": "Abbrechen",
       "save": "Profil Speichern"
@@ -619,6 +657,13 @@
     "success_description": "Seu perfil foi salvo com sucesso.",
     "error_title": "Erro",
     "error_generic": "Algo deu errado. Tente novamente.",
+    "error_load": "Não foi possível carregar o perfil. Atualize a página antes de salvar.",
+    "fetch_error": {
+      "title": "Não foi possível carregar o perfil",
+      "description": "Não conseguimos carregar os dados do seu perfil. Pode ser um problema temporário — tente novamente.",
+      "retry": "Tentar novamente",
+      "back": "Voltar ao perfil"
+    },
     "form": {
       "display_name": {
         "label": "Nome de Exibição",
@@ -631,13 +676,6 @@
       "bio": {
         "label": "Biografia",
         "placeholder": "Conte à comunidade um pouco sobre você e seu Mini"
-      },
-      "username": {
-        "label": "Nome de Usuário",
-        "placeholder": "seu-usuario",
-        "checking": "Verificando disponibilidade...",
-        "available": "Nome de usuário disponível",
-        "taken": "Nome de usuário indisponível"
       },
       "cancel": "Cancelar",
       "save": "Salvar Perfil"
@@ -670,6 +708,13 @@
     "success_description": "Ваш профиль успешно сохранён.",
     "error_title": "Ошибка",
     "error_generic": "Что-то пошло не так. Попробуйте ещё раз.",
+    "error_load": "Не удалось загрузить профиль. Обновите страницу перед сохранением.",
+    "fetch_error": {
+      "title": "Не удалось загрузить профиль",
+      "description": "Мы не смогли загрузить данные вашего профиля. Это может быть временная проблема — попробуйте ещё раз.",
+      "retry": "Попробовать снова",
+      "back": "Вернуться к профилю"
+    },
     "form": {
       "display_name": {
         "label": "Отображаемое Имя",
@@ -682,13 +727,6 @@
       "bio": {
         "label": "О себе",
         "placeholder": "Расскажите сообществу о себе и своём Mini"
-      },
-      "username": {
-        "label": "Имя пользователя",
-        "placeholder": "ваш-логин",
-        "checking": "Проверка доступности...",
-        "available": "Имя пользователя доступно",
-        "taken": "Имя пользователя занято"
       },
       "cancel": "Отмена",
       "save": "Сохранить Профиль"
@@ -721,6 +759,13 @@
     "success_description": "プロフィールが正常に保存されました。",
     "error_title": "エラー",
     "error_generic": "問題が発生しました。もう一度お試しください。",
+    "error_load": "プロフィールを読み込めませんでした。保存する前にページを更新してください。",
+    "fetch_error": {
+      "title": "プロフィールを読み込めませんでした",
+      "description": "プロフィールデータを読み込めませんでした。一時的な問題の可能性があります。もう一度お試しください。",
+      "retry": "もう一度試す",
+      "back": "プロフィールに戻る"
+    },
     "form": {
       "display_name": {
         "label": "表示名",
@@ -733,13 +778,6 @@
       "bio": {
         "label": "自己紹介",
         "placeholder": "あなたとあなたのMiniについてコミュニティに教えてください"
-      },
-      "username": {
-        "label": "ユーザー名",
-        "placeholder": "your-username",
-        "checking": "確認中...",
-        "available": "利用可能です",
-        "taken": "利用できません"
       },
       "cancel": "キャンセル",
       "save": "プロフィールを保存"
@@ -772,6 +810,13 @@
     "success_description": "您的个人资料已成功保存。",
     "error_title": "错误",
     "error_generic": "出现问题，请重试。",
+    "error_load": "无法加载个人资料。请在保存前刷新页面。",
+    "fetch_error": {
+      "title": "无法加载个人资料",
+      "description": "我们无法加载您的个人资料数据。这可能是一个临时问题——请重试。",
+      "retry": "重试",
+      "back": "返回个人资料"
+    },
     "form": {
       "display_name": {
         "label": "显示名称",
@@ -784,13 +829,6 @@
       "bio": {
         "label": "个人简介",
         "placeholder": "向社区介绍一下您和您的Mini"
-      },
-      "username": {
-        "label": "用户名",
-        "placeholder": "your-username",
-        "checking": "检查中...",
-        "available": "用户名可用",
-        "taken": "用户名不可用"
       },
       "cancel": "取消",
       "save": "保存个人资料"
@@ -823,6 +861,13 @@
     "success_description": "프로필이 성공적으로 저장되었습니다.",
     "error_title": "오류",
     "error_generic": "문제가 발생했습니다. 다시 시도해주세요.",
+    "error_load": "프로필을 불러올 수 없습니다. 저장하기 전에 페이지를 새로고침해주세요.",
+    "fetch_error": {
+      "title": "프로필을 불러올 수 없습니다",
+      "description": "프로필 데이터를 불러오지 못했습니다. 일시적인 문제일 수 있습니다. 다시 시도해주세요.",
+      "retry": "다시 시도",
+      "back": "프로필로 돌아가기"
+    },
     "form": {
       "display_name": {
         "label": "표시 이름",
@@ -835,13 +880,6 @@
       "bio": {
         "label": "소개",
         "placeholder": "커뮤니티에 당신과 당신의 Mini에 대해 알려주세요"
-      },
-      "username": {
-        "label": "사용자 이름",
-        "placeholder": "your-username",
-        "checking": "확인 중...",
-        "available": "사용 가능합니다",
-        "taken": "사용할 수 없습니다"
       },
       "cancel": "취소",
       "save": "프로필 저장"
