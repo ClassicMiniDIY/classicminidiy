@@ -364,6 +364,8 @@ export default defineNuxtConfig({
     '/archive/documents/submit': { redirect: { to: '/contribute/document', statusCode: 301 } },
     '/archive/colors/contribute': { redirect: { to: '/contribute/color', statusCode: 301 } },
     '/archive/wheels/submit': { redirect: { to: '/contribute/wheel', statusCode: 301 } },
+    '/submissions': { redirect: { to: '/dashboard', statusCode: 301 } },
+    '/submissions/**': { redirect: { to: '/dashboard', statusCode: 301 } },
   },
 
   robots: {
@@ -385,6 +387,7 @@ export default defineNuxtConfig({
       posthogUiHost: 'https://us.posthog.com',
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
       supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_KEY || '',
+      mapboxAccessToken: process.env.NUXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '',
     },
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
     githubAPIKey: process.env.githubAPIKey,
