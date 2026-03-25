@@ -38,19 +38,16 @@
     });
 
     // Determine section based on version
-    const sectionLabel =
-      props.version === BREADCRUMB_VERSIONS.TECH
-        ? t('technical')
-        : props.version === BREADCRUMB_VERSIONS.ADMIN
-          ? t('admin')
-          : t('archive');
+    const sectionMap: Record<string, { label: string; href: string }> = {
+      [BREADCRUMB_VERSIONS.TECH]: { label: t('technical'), href: '/technical' },
+      [BREADCRUMB_VERSIONS.ADMIN]: { label: t('admin'), href: '/admin' },
+      [BREADCRUMB_VERSIONS.PROFILE]: { label: t('profile'), href: '/profile' },
+      [BREADCRUMB_VERSIONS.ARCHIVE]: { label: t('archive'), href: '/archive' },
+    };
 
-    const sectionHref =
-      props.version === BREADCRUMB_VERSIONS.TECH
-        ? '/technical'
-        : props.version === BREADCRUMB_VERSIONS.ADMIN
-          ? '/admin'
-          : '/archive';
+    const section = sectionMap[props.version] || sectionMap[BREADCRUMB_VERSIONS.ARCHIVE];
+    const sectionLabel = section.label;
+    const sectionHref = section.href;
 
     if (props.root) {
       // Root page - section is current/disabled
@@ -105,61 +102,71 @@
     "home": "Home",
     "archive": "Archive",
     "technical": "Technical",
-    "admin": "Admin"
+    "admin": "Admin",
+    "profile": "Dashboard"
   },
   "de": {
     "home": "Startseite",
     "archive": "Archiv",
     "technical": "Technisch",
-    "admin": "Verwaltung"
+    "admin": "Verwaltung",
+    "profile": "Dashboard"
   },
   "es": {
     "home": "Inicio",
     "archive": "Archivo",
     "technical": "Técnico",
-    "admin": "Administración"
+    "admin": "Administración",
+    "profile": "Panel"
   },
   "fr": {
     "home": "Accueil",
     "archive": "Archive",
     "technical": "Technique",
-    "admin": "Administration"
+    "admin": "Administration",
+    "profile": "Tableau de bord"
   },
   "it": {
     "home": "Casa",
     "archive": "Archivio",
     "technical": "Tecnico",
-    "admin": "Amministrazione"
+    "admin": "Amministrazione",
+    "profile": "Dashboard"
   },
   "ja": {
     "home": "ホーム",
     "archive": "アーカイブ",
     "technical": "技術",
-    "admin": "管理"
+    "admin": "管理",
+    "profile": "ダッシュボード"
   },
   "ko": {
     "home": "홈",
     "archive": "아카이브",
     "technical": "기술 정보",
-    "admin": "관리"
+    "admin": "관리",
+    "profile": "대시보드"
   },
   "pt": {
     "home": "Início",
     "archive": "Arquivo",
     "technical": "Técnico",
-    "admin": "Administração"
+    "admin": "Administração",
+    "profile": "Painel"
   },
   "ru": {
     "home": "Главная",
     "archive": "Архив",
     "technical": "Техническая",
-    "admin": "Администрирование"
+    "admin": "Администрирование",
+    "profile": "Панель"
   },
   "zh": {
     "home": "主页",
     "archive": "档案库",
     "technical": "技术",
-    "admin": "管理"
+    "admin": "管理",
+    "profile": "仪表盘"
   }
 }
 </i18n>

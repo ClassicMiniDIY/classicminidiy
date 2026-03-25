@@ -204,17 +204,12 @@
                 {
                   label: t('profile.submissions'),
                   icon: 'i-heroicons-document-text',
-                  to: '/submissions',
+                  to: '/dashboard',
                 },
                 {
-                  label: t('profile.edit_profile'),
-                  icon: 'i-fa6-solid-user-pen',
-                  to: '/profile/edit',
-                },
-                {
-                  label: t('profile.view_profile'),
+                  label: t('profile.profile'),
                   icon: 'i-fa6-solid-user',
-                  to: `/users/${user?.id}`,
+                  to: '/profile',
                 },
                 {
                   label: t('profile.contribute'),
@@ -247,7 +242,7 @@
           </UDropdownMenu>
 
           <!-- Sign In Button (not authenticated) -->
-          <UButton v-else to="/login" variant="soft" color="primary" size="sm">
+          <UButton v-else to="/login" variant="solid" color="primary" size="sm">
             <i class="fad fa-right-to-bracket mr-1"></i>
             {{ t('profile.sign_in') }}
           </UButton>
@@ -367,7 +362,7 @@
               {{ t('profile.dashboard') }}
             </UButton>
             <UButton
-              to="/submissions"
+              to="/dashboard"
               variant="ghost"
               color="neutral"
               block
@@ -378,18 +373,7 @@
               {{ t('profile.submissions') }}
             </UButton>
             <UButton
-              to="/profile/edit"
-              variant="ghost"
-              color="neutral"
-              block
-              class="justify-start font-bold"
-              @click="isMobileMenuOpen = false"
-            >
-              <i class="fad fa-user-pen mr-2"></i>
-              {{ t('profile.edit_profile') }}
-            </UButton>
-            <UButton
-              :to="`/users/${user?.id}`"
+              to="/profile"
               variant="ghost"
               color="neutral"
               block
@@ -397,7 +381,7 @@
               @click="isMobileMenuOpen = false"
             >
               <i class="fad fa-user mr-2"></i>
-              {{ t('profile.view_profile') }}
+              {{ t('profile.profile') }}
             </UButton>
             <UButton
               to="/contribute"
@@ -416,7 +400,7 @@
             </UButton>
           </template>
           <template v-else>
-            <UButton to="/login" variant="soft" color="primary" block @click="isMobileMenuOpen = false">
+            <UButton to="/login" variant="solid" color="primary" block @click="isMobileMenuOpen = false">
               <i class="fad fa-right-to-bracket mr-2"></i>
               {{ t('profile.sign_in') }}
             </UButton>
@@ -447,8 +431,7 @@
       "account": "Account",
       "admin": "Admin Dashboard",
       "submissions": "My Submissions",
-      "edit_profile": "Edit Profile",
-      "view_profile": "View Profile",
+      "profile": "Profile",
       "dashboard": "Dashboard",
       "contribute": "Contribute"
     },
@@ -473,8 +456,7 @@
       "account": "Cuenta",
       "admin": "Panel de Admin",
       "submissions": "Mis envíos",
-      "edit_profile": "Editar Perfil",
-      "view_profile": "Ver Perfil",
+      "profile": "Perfil",
       "dashboard": "Panel",
       "contribute": "Contribuir"
     },
@@ -499,8 +481,7 @@
       "account": "Compte",
       "admin": "Tableau de bord Admin",
       "submissions": "Mes soumissions",
-      "edit_profile": "Modifier le Profil",
-      "view_profile": "Voir le Profil",
+      "profile": "Profil",
       "dashboard": "Tableau de Bord",
       "contribute": "Contribuer"
     },
@@ -525,8 +506,7 @@
       "account": "Konto",
       "admin": "Admin-Dashboard",
       "submissions": "Meine Einreichungen",
-      "edit_profile": "Profil Bearbeiten",
-      "view_profile": "Profil Anzeigen",
+      "profile": "Profil",
       "dashboard": "Dashboard",
       "contribute": "Beitragen"
     },
@@ -551,8 +531,7 @@
       "account": "Account",
       "admin": "Pannello Admin",
       "submissions": "I miei invii",
-      "edit_profile": "Modifica Profilo",
-      "view_profile": "Visualizza Profilo",
+      "profile": "Profilo",
       "dashboard": "Dashboard",
       "contribute": "Contribuisci"
     },
@@ -577,8 +556,7 @@
       "account": "アカウント",
       "admin": "管理ダッシュボード",
       "submissions": "投稿一覧",
-      "edit_profile": "プロフィール編集",
-      "view_profile": "プロフィール表示",
+      "profile": "プロフィール",
       "dashboard": "ダッシュボード",
       "contribute": "コントリビュート"
     },
@@ -603,8 +581,7 @@
       "account": "계정",
       "admin": "관리자 대시보드",
       "submissions": "내 제출",
-      "edit_profile": "프로필 편집",
-      "view_profile": "프로필 보기",
+      "profile": "프로필",
       "dashboard": "대시보드",
       "contribute": "기여하기"
     },
@@ -629,8 +606,7 @@
       "account": "Conta",
       "admin": "Painel Admin",
       "submissions": "Minhas submissões",
-      "edit_profile": "Editar Perfil",
-      "view_profile": "Ver Perfil",
+      "profile": "Perfil",
       "dashboard": "Painel",
       "contribute": "Contribuir"
     },
@@ -655,8 +631,7 @@
       "account": "Аккаунт",
       "admin": "Панель администратора",
       "submissions": "Мои заявки",
-      "edit_profile": "Редактировать Профиль",
-      "view_profile": "Просмотр Профиля",
+      "profile": "Профиль",
       "dashboard": "Панель управления",
       "contribute": "Внести вклад"
     },
@@ -681,8 +656,7 @@
       "account": "账户",
       "admin": "管理面板",
       "submissions": "我的提交",
-      "edit_profile": "编辑个人资料",
-      "view_profile": "查看个人资料",
+      "profile": "个人资料",
       "dashboard": "仪表板",
       "contribute": "贡献"
     },

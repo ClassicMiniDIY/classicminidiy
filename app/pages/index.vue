@@ -115,7 +115,8 @@
         </UButton>
         <UButton
           class="text-lg"
-          variant="outline"
+          variant="solid"
+          color="neutral"
           rel="noopener"
           to="https://github.com/somethingnew71/classicminidiy"
           target="_blank"

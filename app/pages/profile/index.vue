@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-  import { HERO_TYPES } from '../../../data/models/generic';
+  import { HERO_TYPES, BREADCRUMB_VERSIONS } from '../../../data/models/generic';
   import type { OwnProfile, Vehicle } from '~/composables/useProfile';
   import type { SavedGearConfig } from '~/composables/useGearConfigs';
 
   const { t } = useI18n();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, waitForAuth } = useAuth();
   const { fetchProfile, getPublicProfile, getPublicProfileVehicles } = useProfile();
   const { fetchPublicConfigs } = useGearConfigs();
 
@@ -16,6 +16,7 @@
   const showShareModal = ref(false);
 
   onMounted(async () => {
+    await waitForAuth();
     if (!user.value) {
       loading.value = false;
       return;
@@ -53,8 +54,7 @@
   });
   const initials = computed(() => displayName.value.charAt(0).toUpperCase());
   const shareUrl = computed(() => {
-    const base = 'https://classicminidiy.com/users/';
-    return profile.value?.username ? `${base}${profile.value.username}` : `${base}${user.value?.id}`;
+    return `https://classicminidiy.com/users/${user.value?.id}`;
   });
   const hasSocialLinks = computed(() => {
     if (!profile.value?.social_links) return false;
@@ -79,7 +79,7 @@
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :page="t('breadcrumb_title')" />
+      <breadcrumb :page="t('breadcrumb_title')" :version="BREADCRUMB_VERSIONS.PROFILE" />
     </div>
 
     <!-- Auth gate -->
@@ -124,7 +124,6 @@
             <div class="flex-1 text-center sm:text-left min-w-0">
               <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
                 <h2 class="text-xl font-bold">{{ displayName }}</h2>
-                <span v-if="profile?.username" class="text-sm opacity-60">@{{ profile.username }}</span>
                 <ProfileSustainingBadge v-if="isSustainingMember" size="sm" />
               </div>
 

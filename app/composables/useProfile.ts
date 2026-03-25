@@ -4,7 +4,6 @@ export interface PublicProfile {
   avatar_url: string | null;
   bio: string | null;
   location: string | null;
-  username: string | null;
   social_links: Record<string, string>;
   show_vehicles: boolean;
   is_sustaining_member: boolean;
@@ -27,7 +26,6 @@ export interface Vehicle {
   color: string | null;
 }
 
-const USERNAME_REGEX = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
 const AVATAR_BUCKET = 'avatars';
 
 export const useProfile = () => {
@@ -55,7 +53,6 @@ export const useProfile = () => {
     bio?: string | null;
     location?: string | null;
     avatar_url?: string | null;
-    username?: string | null;
     is_public?: boolean;
     show_vehicles?: boolean;
     social_links?: Record<string, string>;
@@ -132,42 +129,22 @@ export const useProfile = () => {
   };
 
   /**
-   * Check if a username is available via RPC
-   */
-  const checkUsernameAvailability = async (username: string): Promise<boolean> => {
-    if (!USERNAME_REGEX.test(username)) return false;
-
-    const { data, error } = await supabase.rpc('is_username_available', { p_username: username });
-
-    if (error) throw error;
-    return !!data;
-  };
-
-  /**
-   * Get a public profile by UUID or username.
+   * Get a public profile by UUID.
    * Returns { profile } on success, { private: true } if user exists but is private,
    * or null if user doesn't exist.
    */
   const getPublicProfile = async (
     identifier: string
   ): Promise<{ profile: PublicProfile } | { private: true } | null> => {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
-
-    const rpcName = isUuid ? 'get_public_profile_by_id' : 'get_public_profile_by_username';
-    const param = isUuid ? { p_user_id: identifier } : { p_username: identifier };
-
-    const { data, error } = await supabase.rpc(rpcName, param).single();
+    const { data, error } = await supabase.rpc('get_public_profile_by_id', { p_user_id: identifier }).single();
 
     if (error || !data) {
-      // Check if user exists but profile is private (UUID lookup only)
-      if (isUuid) {
-        const { data: exists } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', identifier)
-          .maybeSingle();
-        if (exists) return { private: true };
-      }
+      const { data: exists } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', identifier)
+        .maybeSingle();
+      if (exists) return { private: true };
       return null;
     }
 
@@ -192,7 +169,6 @@ export const useProfile = () => {
     fetchProfile,
     updateProfile,
     uploadAvatar,
-    checkUsernameAvailability,
     getPublicProfile,
     getPublicProfileVehicles,
   };
