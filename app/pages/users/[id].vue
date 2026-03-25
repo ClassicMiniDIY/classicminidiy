@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-  import { HERO_TYPES } from '../../../data/models/generic';
+  import { HERO_TYPES, BREADCRUMB_VERSIONS } from '../../../data/models/generic';
   import type { PublicProfile, Vehicle } from '~/composables/useProfile';
 
   const { t } = useI18n();
@@ -79,7 +79,7 @@
 
   <div class="container mx-auto px-4 py-6">
     <div class="mb-6">
-      <breadcrumb :page="t('breadcrumb_title')" />
+      <breadcrumb :page="t('breadcrumb_title')" :version="BREADCRUMB_VERSIONS.PROFILE" />
     </div>
 
     <!-- Loading -->

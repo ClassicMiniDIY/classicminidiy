@@ -41,7 +41,7 @@
     const sectionMap: Record<string, { label: string; href: string }> = {
       [BREADCRUMB_VERSIONS.TECH]: { label: t('technical'), href: '/technical' },
       [BREADCRUMB_VERSIONS.ADMIN]: { label: t('admin'), href: '/admin' },
-      [BREADCRUMB_VERSIONS.PROFILE]: { label: t('profile'), href: '/profile' },
+      [BREADCRUMB_VERSIONS.PROFILE]: { label: t('profile'), href: '/dashboard' },
       [BREADCRUMB_VERSIONS.ARCHIVE]: { label: t('archive'), href: '/archive' },
     };
 
