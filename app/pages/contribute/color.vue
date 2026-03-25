@@ -239,21 +239,16 @@
         <div class="col-span-12 md:col-span-8 md:col-start-3">
           <UCard>
             <!-- Success State -->
-            <div v-if="submissionSuccess" class="p-6 text-center">
-              <div class="mb-4">
-                <i class="fad fa-circle-check text-6xl text-success"></i>
-              </div>
-              <h1 class="text-2xl font-bold mb-2">{{ t('form.success.title') }}</h1>
-              <h2 class="text-xl mb-6">{{ t('form.success.subtitle') }}</h2>
-              <div class="space-y-4 text-left max-w-md mx-auto">
-                <div class="bg-muted p-4 rounded-lg">
-                  <p class="font-medium">{{ t('form.success.submission_id') }}{{ submissionId }}</p>
-                  <p class="text-sm opacity-70">{{ t('form.success.pending_review') }}</p>
-                </div>
-                <UButton @click="resetForm" color="primary" class="w-full">
+            <div v-if="submissionSuccess" class="text-center py-5">
+              <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
+              <h1 class="text-2xl font-bold mb-1">{{ t('form.success.title') }}</h1>
+              <h2 class="text-lg mb-4">{{ t('form.success.subtitle') }}</h2>
+              <div class="space-y-4 max-w-md mx-auto">
+                <UButton color="primary" @click="resetForm" class="w-full">
+                  <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
                   {{ t('form.success.make_another') }}
                 </UButton>
-                <UButton to="/submissions" color="neutral" variant="outline" class="w-full">
+                <UButton to="/dashboard" color="neutral" variant="outline" class="w-full">
                   {{ t('form.success.view_submissions') }}
                 </UButton>
               </div>
@@ -261,25 +256,8 @@
 
             <!-- Form Body -->
             <div v-else>
-              <div class="flex items-center bg-primary text-primary-content -m-4 mb-4 p-4 rounded-t-lg">
-                <i class="fad fa-palette mr-2"></i>
-                <h2 class="text-lg font-semibold">{{ t('form.title') }}</h2>
-              </div>
-
-              <div class="p-2">
-                <!-- Error Alert -->
-                <UAlert v-if="apiError" color="warning" class="mb-6">
-                  <template #icon>
-                    <i class="fas fa-exclamation-triangle"></i>
-                  </template>
-                  <template #title>{{ t('form.error.title') }}</template>
-                  <template #description>
-                    {{ apiMessage || t('form.error.default_message') }}
-                  </template>
-                </UAlert>
-
-                <!-- Form Fields -->
-                <form @submit.prevent="submit" class="space-y-4">
+              <!-- Form Fields -->
+              <form @submit.prevent="submit" class="space-y-4">
                   <!-- Color Name (required) -->
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
@@ -449,13 +427,28 @@
                     />
                   </div>
 
+                  <UAlert v-if="apiError" color="error" class="mb-4">
+                    <template #icon>
+                      <i class="fa-duotone fa-circle-exclamation"></i>
+                    </template>
+                    <template #title>{{ t('form.error.title') }}</template>
+                    <template #description>
+                      {{ apiMessage || t('form.error.default_message') }}
+                    </template>
+                    <template #actions>
+                      <UButton size="sm" variant="outline" @click="apiError = false">
+                        Dismiss
+                      </UButton>
+                    </template>
+                  </UAlert>
+
                   <div class="pt-4">
-                    <UButton type="submit" color="primary" class="w-full" :disabled="processing" :loading="processing">
+                    <UButton type="submit" color="primary" size="lg" class="w-full" :disabled="processing" :loading="processing">
+                      <i class="fad fa-paper-plane mr-2" v-if="!processing"></i>
                       {{ processing ? t('form.submit.submitting') : t('form.submit.button') }}
                     </UButton>
                   </div>
                 </form>
-              </div>
             </div>
           </UCard>
         </div>
