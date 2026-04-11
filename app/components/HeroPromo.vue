@@ -158,6 +158,10 @@
         :src="src"
         :alt="`App screenshot ${i + 1}`"
         class="w-full h-full object-cover object-top"
+        width="240"
+        height="520"
+        :loading="i < 3 ? 'eager' : 'lazy'"
+        :fetchpriority="i === 0 ? 'high' : undefined"
       />
     </div>
     <div class="absolute inset-0 bg-black/60"></div>

@@ -136,7 +136,7 @@
     <div class="container mx-auto px-4 pt-10">
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-5">
-          <video autoplay loop muted playsinline class="motion-safe:block motion-reduce:hidden" aria-label="Animated illustration of Classic Mini tools and parts">
+          <video autoplay loop muted playsinline preload="none" class="motion-safe:block motion-reduce:hidden" aria-label="Animated illustration of Classic Mini tools and parts">
             <source src="https://classicminidiy.s3.amazonaws.com/misc/grey-tool-animation.webm" type="video/webm" />
             <source src="https://classicminidiy.s3.amazonaws.com/misc/grey-tool-animation.mp4" type="video/mp4" />
             Animated illustration of Classic Mini tools and parts

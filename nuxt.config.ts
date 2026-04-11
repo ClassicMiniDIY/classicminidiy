@@ -119,6 +119,11 @@ export default defineNuxtConfig({
         { rel: 'dns-prefetch', href: 'https://use.typekit.net' },
         { rel: 'preconnect', href: 'https://classicminidiy.s3.us-east-1.amazonaws.com', crossorigin: '' },
         { rel: 'dns-prefetch', href: 'https://classicminidiy.s3.us-east-1.amazonaws.com' },
+        { rel: 'preconnect', href: 'https://kit.fontawesome.com', crossorigin: '' },
+        { rel: 'dns-prefetch', href: 'https://kit.fontawesome.com' },
+        { rel: 'preconnect', href: 'https://ka-f.fontawesome.com', crossorigin: '' },
+        { rel: 'dns-prefetch', href: 'https://ka-f.fontawesome.com' },
+        { rel: 'preconnect', href: 'https://us-assets.i.posthog.com', crossorigin: '' },
         {
           rel: 'stylesheet',
           href: 'https://use.typekit.net/fgm1hlg.css',
@@ -135,6 +140,7 @@ export default defineNuxtConfig({
         {
           src: 'https://kit.fontawesome.com/4e4435c885.js',
           crossorigin: 'anonymous',
+          defer: true,
         },
         // Structured data for better search results
         {
@@ -452,7 +458,6 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: [
         'luxon',
-        'lodash',
         'highcharts',
         'highcharts-vue',
         'highcharts/modules/exporting',
@@ -489,7 +494,7 @@ export default defineNuxtConfig({
             ],
 
             // Utility libraries
-            utilities: ['luxon', 'lodash'],
+            utilities: ['luxon'],
 
             // Analytics and tracking
             analytics: ['posthog-js'],
