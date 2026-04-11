@@ -7,6 +7,23 @@
   const today = DateTime.now();
   const age = ref<string | undefined>(today.diff(birthday, 'years').toObject().years?.toFixed(0));
 
+  // Lazy-load the below-fold video only when it enters the viewport
+  const videoContainer = ref<HTMLElement | null>(null);
+  const showVideo = ref(false);
+  onMounted(() => {
+    if (!videoContainer.value) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          showVideo.value = true;
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(videoContainer.value);
+  });
+
   useHead({
     title: t('home.title'),
     meta: [
@@ -135,8 +152,8 @@
   <div class="bg-[#f0f0f0] dark:bg-[#171717]">
     <div class="container mx-auto px-4 pt-10">
       <div class="grid grid-cols-12 gap-4">
-        <div class="col-span-12 md:col-span-5">
-          <video autoplay loop muted playsinline preload="none" class="motion-safe:block motion-reduce:hidden" aria-label="Animated illustration of Classic Mini tools and parts">
+        <div ref="videoContainer" class="col-span-12 md:col-span-5">
+          <video v-if="showVideo" autoplay loop muted playsinline class="motion-safe:block motion-reduce:hidden" aria-label="Animated illustration of Classic Mini tools and parts">
             <source src="https://classicminidiy.s3.amazonaws.com/misc/grey-tool-animation.webm" type="video/webm" />
             <source src="https://classicminidiy.s3.amazonaws.com/misc/grey-tool-animation.mp4" type="video/mp4" />
             Animated illustration of Classic Mini tools and parts

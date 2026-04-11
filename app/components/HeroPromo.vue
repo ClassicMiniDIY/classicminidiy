@@ -160,7 +160,7 @@
         class="w-full h-full object-cover object-top"
         width="240"
         height="520"
-        :loading="i < 3 ? 'eager' : 'lazy'"
+        loading="eager"
         :fetchpriority="i === 0 ? 'high' : undefined"
       />
     </div>
