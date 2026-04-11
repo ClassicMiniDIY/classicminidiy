@@ -16,7 +16,7 @@
   <template v-else-if="videos">
     <UCard v-for="video in videos" :key="video.videoUrl" class="col-span-12 md:col-span-4">
       <template #header>
-        <nuxt-picture :src="video.thumbnails.maxres" :alt="video.title" class="w-full" />
+        <nuxt-picture :src="video.thumbnails.maxres" :alt="video.title" class="w-full" loading="lazy" width="720" height="404" />
       </template>
       <h2 class="font-semibold text-lg">{{ video.title }}</h2>
       <p class="text-sm text-muted">{{ t('published_on') }} {{ video.publishedOn }}</p>

@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
-@import '@fontsource/outfit';
+@import '@fontsource/outfit/latin-400.css';
+@import '@fontsource/outfit/latin-600.css';
+@import '@fontsource/outfit/latin-700.css';
 
 @plugin '@tailwindcss/typography';
 
@@ -119,43 +121,8 @@
   }
 }
 
-/* Force brand colors to override Nuxt UI defaults */
+/* Nuxt UI color references and light mode overrides */
 :root {
-  /* Base color variables (required for bg-primary, text-secondary, etc.) */
-  --color-primary: #859369 !important;
-  --color-secondary: #ed7135 !important;
-  --color-success: #4a7023 !important;
-  --color-error: #b22222 !important;
-  --color-warning: #f59e0b !important;
-  --color-info: #3b82f6 !important;
-
-  /* Primary - Olive Green */
-  --color-primary-50: #f4f6f0 !important;
-  --color-primary-100: #e8ede1 !important;
-  --color-primary-200: #d1dbc3 !important;
-  --color-primary-300: #b3c49d !important;
-  --color-primary-400: #9aac7f !important;
-  --color-primary-500: #859369 !important;
-  --color-primary-600: #6b7a52 !important;
-  --color-primary-700: #566340 !important;
-  --color-primary-800: #444d33 !important;
-  --color-primary-900: #383f2c !important;
-  --color-primary-950: #1c2016 !important;
-
-  /* Secondary - Orange */
-  --color-secondary-50: #fef6f0 !important;
-  --color-secondary-100: #fdeadd !important;
-  --color-secondary-200: #fad2ba !important;
-  --color-secondary-300: #f5b28d !important;
-  --color-secondary-400: #f08a54 !important;
-  --color-secondary-500: #ed7135 !important;
-  --color-secondary-600: #d94410 !important;
-  --color-secondary-700: #b43410 !important;
-  --color-secondary-800: #902b14 !important;
-  --color-secondary-900: #742714 !important;
-  --color-secondary-950: #3f1107 !important;
-
-  /* Nuxt UI color references */
   --ui-primary: #859369;
   --ui-secondary: #ed7135;
   --ui-success: #4a7023;
@@ -182,14 +149,6 @@
 
 /* Dark mode overrides - Nuxt UI Neutral theme */
 .dark {
-  /* Base color variables (same in dark mode - colors don't change) */
-  --color-primary: #859369 !important;
-  --color-secondary: #ed7135 !important;
-  --color-success: #4a7023 !important;
-  --color-error: #b22222 !important;
-  --color-warning: #f59e0b !important;
-  --color-info: #3b82f6 !important;
-
   /* Override Nuxt UI color scale for neutral */
   --ui-color-neutral-50: #fafafa;
   --ui-color-neutral-100: #f5f5f5;
@@ -357,21 +316,25 @@ body {
 @font-face {
   font-family: discord;
   src: url('~/assets/fonts/discord-thin.otf') format('opentype');
+  font-display: swap;
 }
 
 @font-face {
   font-family: discord-bold;
   src: url('~/assets/fonts/discord-bold.otf') format('opentype');
+  font-display: swap;
 }
 
 @font-face {
   font-family: whitney-book;
   src: url('~/assets/fonts/whitneybook.woff') format('opentype');
+  font-display: swap;
 }
 
 @font-face {
   font-family: whitney-semibold;
   src: url('~/assets/fonts/whitneysemibold.woff') format('opentype');
+  font-display: swap;
 }
 
 /* ============================================

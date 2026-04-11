@@ -140,6 +140,10 @@
             :alt="t('logo_alt')"
             src="https://classicminidiy.s3.amazonaws.com/misc/Small-Black.png"
             class="w-32 dark:invert"
+            width="128"
+            height="37"
+            loading="eager"
+            fetchpriority="high"
           />
         </NuxtLink>
 
