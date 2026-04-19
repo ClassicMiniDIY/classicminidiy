@@ -50,7 +50,7 @@
               </button>
               <button
                 class="btn btn-sm btn-ghost text-error"
-                :aria-label="t('close')"
+                :aria-label="t('delete')"
                 @click="emit('delete', config.id)"
               >
                 <i class="fas fa-trash"></i>
@@ -81,6 +81,7 @@
     "title": "Load Saved Configuration",
     "no_configs": "No saved configurations yet. Save a configuration from the calculator to see it here.",
     "load": "Load",
+    "delete": "Delete configuration",
     "close": "Close",
     "slots_remaining": "{count} comparison slots remaining"
   },
@@ -88,6 +89,7 @@
     "title": "Cargar Configuración Guardada",
     "no_configs": "Aún no hay configuraciones guardadas. Guarda una configuración desde la calculadora para verla aquí.",
     "load": "Cargar",
+    "delete": "Eliminar configuración",
     "close": "Cerrar",
     "slots_remaining": "{count} espacios de comparación restantes"
   },
@@ -95,6 +97,7 @@
     "title": "Charger une Configuration Sauvegardée",
     "no_configs": "Aucune configuration sauvegardée. Sauvegardez une configuration depuis le calculateur pour la voir ici.",
     "load": "Charger",
+    "delete": "Supprimer la configuration",
     "close": "Fermer",
     "slots_remaining": "{count} emplacements de comparaison restants"
   },
@@ -102,6 +105,7 @@
     "title": "Gespeicherte Konfiguration Laden",
     "no_configs": "Noch keine gespeicherten Konfigurationen. Speichern Sie eine Konfiguration vom Rechner, um sie hier zu sehen.",
     "load": "Laden",
+    "delete": "Konfiguration löschen",
     "close": "Schließen",
     "slots_remaining": "{count} Vergleichsplätze übrig"
   },
@@ -109,6 +113,7 @@
     "title": "Carica Configurazione Salvata",
     "no_configs": "Nessuna configurazione salvata. Salva una configurazione dalla calcolatrice per vederla qui.",
     "load": "Carica",
+    "delete": "Elimina configurazione",
     "close": "Chiudi",
     "slots_remaining": "{count} slot di confronto rimanenti"
   },
@@ -116,6 +121,7 @@
     "title": "Carregar Configuração Guardada",
     "no_configs": "Nenhuma configuração guardada ainda. Guarde uma configuração da calculadora para a ver aqui.",
     "load": "Carregar",
+    "delete": "Eliminar configuração",
     "close": "Fechar",
     "slots_remaining": "{count} espaços de comparação restantes"
   },
@@ -123,6 +129,7 @@
     "title": "Загрузить сохранённую конфигурацию",
     "no_configs": "Сохранённых конфигураций пока нет. Сохраните конфигурацию в калькуляторе, чтобы увидеть её здесь.",
     "load": "Загрузить",
+    "delete": "Удалить конфигурацию",
     "close": "Закрыть",
     "slots_remaining": "Осталось {count} слотов для сравнения"
   },
@@ -130,6 +137,7 @@
     "title": "保存済み設定を読み込む",
     "no_configs": "保存された設定はまだありません。計算ツールで設定を保存するとここに表示されます。",
     "load": "読み込む",
+    "delete": "設定を削除",
     "close": "閉じる",
     "slots_remaining": "比較スロットの残り: {count}"
   },
@@ -137,6 +145,7 @@
     "title": "加载已保存的配置",
     "no_configs": "尚无已保存的配置。从计算器中保存一个配置即可在此显示。",
     "load": "加载",
+    "delete": "删除配置",
     "close": "关闭",
     "slots_remaining": "剩余 {count} 个对比槽位"
   },
@@ -144,6 +153,7 @@
     "title": "저장된 구성 불러오기",
     "no_configs": "저장된 구성이 없습니다. 계산기에서 구성을 저장하면 여기에 표시됩니다.",
     "load": "불러오기",
+    "delete": "구성 삭제",
     "close": "닫기",
     "slots_remaining": "비교 슬롯 {count}개 남음"
   }

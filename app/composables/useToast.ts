@@ -18,8 +18,6 @@ export interface ToastRecord {
   timeout: number;
 }
 
-const toasts = ref<ToastRecord[]>([]);
-
 function normalizeIcon(icon?: string): string {
   if (!icon) return '';
   if (icon.startsWith('i-fa6-solid-')) return `fas fa-${icon.replace('i-fa6-solid-', '')}`;
@@ -30,6 +28,8 @@ function normalizeIcon(icon?: string): string {
 }
 
 export function useToast() {
+  const toasts = useState<ToastRecord[]>('cmdiy:toasts', () => []);
+
   const add = (options: ToastOptions) => {
     const id = options.id ?? `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const record: ToastRecord = {
