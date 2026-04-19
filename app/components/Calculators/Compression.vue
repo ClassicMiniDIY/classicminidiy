@@ -57,149 +57,167 @@
 <template>
   <div class="grid grid-cols-1 gap-6">
     <div class="col-span-1">
-      <UButton color="primary" class="mb-5" @click="showHelpModal = true">
+      <button class="btn btn-primary mb-5" @click="showHelpModal = true">
         <i class="fad fa-question-circle mr-2"></i>
         {{ t('help_button') }}
-      </UButton>
+      </button>
 
       <!-- Help Modal -->
-      <UModal v-model:open="showHelpModal">
-        <template #content>
-          <UCard>
-            <template #header>
-              <h2 class="text-lg font-semibold">{{ t('help_modal.title') }}</h2>
-            </template>
-            <div class="aspect-video w-full">
-              <iframe
-                class="w-full h-full"
-                allowfullscreen
-                src="https://www.youtube.com/embed/GxlgkbrfK2Y"
-                title="YouTube video player"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              ></iframe>
-            </div>
-            <div class="mt-4">
-              <h3 class="text-xl font-bold">{{ t('help_modal.friend_title') }}</h3>
-              <p class="text-sm opacity-70">
-                <a href="https://www.youtube.com/watch?v=GxlgkbrfK2Y" class="text-primary hover:underline">@hreirl</a>
-                {{ t('help_modal.friend_description') }}
-              </p>
-              <p class="mt-2">
-                {{ t('help_modal.friend_text') }}
-              </p>
-            </div>
-            <template #footer>
-              <div class="flex justify-end">
-                <UButton color="primary" @click="showHelpModal = false">
-                  {{ t('help_modal.close_button') }}
-                </UButton>
-              </div>
-            </template>
-          </UCard>
-        </template>
-      </UModal>
+      <div class="modal" :class="{ 'modal-open': showHelpModal }">
+        <div class="modal-box max-w-3xl">
+          <h2 class="text-lg font-semibold">{{ t('help_modal.title') }}</h2>
+          <div class="aspect-video w-full mt-4">
+            <iframe
+              class="w-full h-full"
+              allowfullscreen
+              src="https://www.youtube.com/embed/GxlgkbrfK2Y"
+              title="YouTube video player"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            ></iframe>
+          </div>
+          <div class="mt-4">
+            <h3 class="text-xl font-bold">{{ t('help_modal.friend_title') }}</h3>
+            <p class="text-sm opacity-70">
+              <a href="https://www.youtube.com/watch?v=GxlgkbrfK2Y" class="text-primary hover:underline">@hreirl</a>
+              {{ t('help_modal.friend_description') }}
+            </p>
+            <p class="mt-2">
+              {{ t('help_modal.friend_text') }}
+            </p>
+          </div>
+          <div class="modal-action">
+            <button class="btn btn-primary" @click="showHelpModal = false">
+              {{ t('help_modal.close_button') }}
+            </button>
+          </div>
+        </div>
+        <div class="modal-backdrop" @click="showHelpModal = false"></div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Piston Size Select -->
-      <UFormField>
-        <template #label>
-          <span class="flex items-center gap-2">
-            <i class="fad fa-engine"></i>
-            {{ t('form_labels.piston_size') }}
-          </span>
-        </template>
-        <USelect v-model="bore" :items="reactiveFormOptions.pistonOptions" value-key="value" class="w-full" />
-      </UFormField>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend flex items-center gap-2">
+          <i class="fad fa-engine"></i>
+          {{ t('form_labels.piston_size') }}
+        </legend>
+        <select v-model="bore" class="select select-bordered w-full">
+          <option v-for="opt in reactiveFormOptions.pistonOptions" :key="opt.label" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+      </fieldset>
 
       <!-- Crankshaft Select -->
-      <UFormField>
-        <template #label>
-          <span class="flex items-center gap-2">
-            <i class="fad fa-arrows-rotate fa-spin"></i>
-            {{ t('form_labels.crankshaft') }}
-          </span>
-        </template>
-        <USelect v-model="stroke" :items="reactiveFormOptions.crankshaftOptions" value-key="value" class="w-full" />
-      </UFormField>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend flex items-center gap-2">
+          <i class="fad fa-arrows-rotate fa-spin"></i>
+          {{ t('form_labels.crankshaft') }}
+        </legend>
+        <select v-model="stroke" class="select select-bordered w-full">
+          <option v-for="opt in reactiveFormOptions.crankshaftOptions" :key="opt.label" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+      </fieldset>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Head Gasket Select -->
       <div>
-        <UFormField>
-          <template #label>
-            <span class="flex items-center gap-2">
-              <i class="fad fa-head-side-gear"></i>
-              {{ t('form_labels.head_gasket') }}
-            </span>
-          </template>
-          <USelect
-            v-model.number="gasket"
-            :items="reactiveFormOptions.headGasketOptions"
-            value-key="value"
-            class="w-full"
-          />
-        </UFormField>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend flex items-center gap-2">
+            <i class="fad fa-head-side-gear"></i>
+            {{ t('form_labels.head_gasket') }}
+          </legend>
+          <select v-model.number="gasket" class="select select-bordered w-full">
+            <option v-for="opt in reactiveFormOptions.headGasketOptions" :key="opt.label" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </fieldset>
         <div v-if="gasket === 0" class="mt-2">
-          <UFormField>
-            <template #label>
-              <span class="flex items-center gap-2">
-                <i class="fad fa-ruler"></i>
-                {{ t('form_labels.custom_gasket_size') }}
-              </span>
-            </template>
-            <UInput type="number" min="0.1" max="10" step="0.1" v-model.number="customGasket" class="w-full" />
-          </UFormField>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend flex items-center gap-2">
+              <i class="fad fa-ruler"></i>
+              {{ t('form_labels.custom_gasket_size') }}
+            </legend>
+            <input
+              type="number"
+              min="0.1"
+              max="10"
+              step="0.1"
+              v-model.number="customGasket"
+              class="input input-bordered w-full"
+            />
+          </fieldset>
         </div>
       </div>
 
       <!-- Decompression Plate Select -->
-      <UFormField>
-        <template #label>
-          <span class="flex items-center gap-2">
-            <i class="fad fa-arrow-down-to-line"></i>
-            {{ t('form_labels.decompression_plate') }}
-          </span>
-        </template>
-        <USelect v-model="decomp" :items="reactiveFormOptions.decompPlateOptions" value-key="value" class="w-full" />
-      </UFormField>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend flex items-center gap-2">
+          <i class="fad fa-arrow-down-to-line"></i>
+          {{ t('form_labels.decompression_plate') }}
+        </legend>
+        <select v-model="decomp" class="select select-bordered w-full">
+          <option v-for="opt in reactiveFormOptions.decompPlateOptions" :key="opt.label" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+      </fieldset>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- Piston Dish Size -->
-      <UFormField>
-        <template #label>
-          <span class="flex items-center gap-2">
-            <i class="fad fa-circle-half fa-rotate-270"></i>
-            {{ t('form_labels.piston_dish_size') }}
-          </span>
-        </template>
-        <UInput v-model.number="pistonDish" type="number" min="0" max="20" step="0.1" class="w-full" />
-      </UFormField>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend flex items-center gap-2">
+          <i class="fad fa-circle-half fa-rotate-270"></i>
+          {{ t('form_labels.piston_dish_size') }}
+        </legend>
+        <input
+          v-model.number="pistonDish"
+          type="number"
+          min="0"
+          max="20"
+          step="0.1"
+          class="input input-bordered w-full"
+        />
+      </fieldset>
 
       <!-- Cylinder Head Chamber Volume -->
-      <UFormField>
-        <template #label>
-          <span class="flex items-center gap-2">
-            <i class="fad fa-arrows-to-dot"></i>
-            {{ t('form_labels.cylinder_head_chamber_volume') }}
-          </span>
-        </template>
-        <UInput v-model.number="headVolume" type="number" min="15" max="35" step="0.1" class="w-full" />
-      </UFormField>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend flex items-center gap-2">
+          <i class="fad fa-arrows-to-dot"></i>
+          {{ t('form_labels.cylinder_head_chamber_volume') }}
+        </legend>
+        <input
+          v-model.number="headVolume"
+          type="number"
+          min="15"
+          max="35"
+          step="0.1"
+          class="input input-bordered w-full"
+        />
+      </fieldset>
 
       <!-- Piston Deck Height -->
-      <UFormField>
-        <template #label>
-          <span class="flex items-center gap-2">
-            <i class="fad fa-arrow-up-to-line"></i>
-            {{ t('form_labels.piston_deck_height') }}
-          </span>
-        </template>
-        <UInput v-model.number="deckHeight" type="number" min="0" max="80" step="1" class="w-full" />
-      </UFormField>
+      <fieldset class="fieldset">
+        <legend class="fieldset-legend flex items-center gap-2">
+          <i class="fad fa-arrow-up-to-line"></i>
+          {{ t('form_labels.piston_deck_height') }}
+        </legend>
+        <input
+          v-model.number="deckHeight"
+          type="number"
+          min="0"
+          max="80"
+          step="1"
+          class="input input-bordered w-full"
+        />
+      </fieldset>
     </div>
 
     <!-- Results Section -->

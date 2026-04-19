@@ -217,40 +217,40 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Registry Queue</h1>
-      <UButton color="primary" @click="refresh" :disabled="isLoading">
-        <span v-if="isLoading" class="fa-solid fa-refresh fa-spin"></span>
+      <button type="button" class="btn btn-primary" :disabled="isLoading" @click="refresh">
+        <i v-if="isLoading" class="fa-solid fa-refresh fa-spin"></i>
         <i v-else class="fa-solid fa-refresh mr-2"></i>
         {{ isLoading ? 'Loading...' : 'Refresh' }}
-      </UButton>
+      </button>
     </div>
 
     <!-- Admin authentication handled by login system -->
 
     <!-- Error Message -->
-    <UAlert v-if="errorMessage" color="error" icon="i-fa6-solid-circle-xmark" :title="errorMessage" class="mb-6" />
+    <div v-if="errorMessage" role="alert" class="alert alert-error mb-6">
+      <i class="fas fa-circle-xmark"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
 
     <!-- Loading State -->
     <div v-if="fetchStatus === 'pending'" class="flex justify-center my-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
     <!-- Empty State -->
-    <UAlert
-      v-else-if="!registryItems?.length"
-      color="info"
-      icon="i-fa6-solid-circle-info"
-      title="No registry items in the queue."
-    />
+    <div v-else-if="!registryItems?.length" role="alert" class="alert alert-info">
+      <i class="fas fa-circle-info"></i>
+      <span>No registry items in the queue.</span>
+    </div>
 
     <!-- Registry Items Table -->
     <div v-else class="overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="table table-zebra w-full text-sm">
         <thead>
-          <tr class="border-b border-default">
+          <tr>
             <th
               v-for="header in tableHeaders"
               :key="header.title"
-              class="text-left p-2 font-medium bg-muted"
               :class="{
                 'text-center': header.align === 'center',
                 'text-right': header.align === 'end',
@@ -262,145 +262,157 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="item in registryItems"
-            :key="item.uniqueId"
-            class="border-b border-default last:border-0 hover:bg-muted transition-colors"
-          >
+          <tr v-for="item in registryItems" :key="item.uniqueId">
             <!-- Model -->
-            <td class="p-2">
-              <UInput
+            <td>
+              <input
                 v-if="isEditing(item)"
                 type="text"
-                size="sm"
-                class="w-full"
-                :model-value="getEditedValue(item, 'model') as string"
-                @update:model-value="updateEditedValue(item, 'model', $event)"
+                class="input input-bordered input-sm w-full"
+                :value="getEditedValue(item, 'model') as string"
+                @input="updateEditedValue(item, 'model', ($event.target as HTMLInputElement).value)"
               />
               <span v-else>{{ item.model || '-' }}</span>
             </td>
 
             <!-- Body Number -->
-            <td class="p-2">
-              <UInput
+            <td>
+              <input
                 v-if="isEditing(item)"
                 type="text"
-                size="sm"
-                class="w-full"
-                :model-value="getEditedValue(item, 'bodyNum') as string"
-                @update:model-value="updateEditedValue(item, 'bodyNum', $event)"
+                class="input input-bordered input-sm w-full"
+                :value="getEditedValue(item, 'bodyNum') as string"
+                @input="updateEditedValue(item, 'bodyNum', ($event.target as HTMLInputElement).value)"
               />
               <span v-else>{{ item.bodyNum || '-' }}</span>
             </td>
 
             <!-- Trim -->
-            <td class="p-2">
-              <UInput
+            <td>
+              <input
                 v-if="isEditing(item)"
                 type="text"
-                size="sm"
-                class="w-full"
-                :model-value="getEditedValue(item, 'trim') as string"
-                @update:model-value="updateEditedValue(item, 'trim', $event)"
+                class="input input-bordered input-sm w-full"
+                :value="getEditedValue(item, 'trim') as string"
+                @input="updateEditedValue(item, 'trim', ($event.target as HTMLInputElement).value)"
               />
               <span v-else>{{ item.trim || '-' }}</span>
             </td>
 
             <!-- Name -->
-            <td class="p-2">
-              <UInput
+            <td>
+              <input
                 v-if="isEditing(item)"
                 type="text"
-                size="sm"
-                class="w-full"
-                :model-value="getEditedValue(item, 'submittedBy') as string"
-                @update:model-value="updateEditedValue(item, 'submittedBy', $event)"
+                class="input input-bordered input-sm w-full"
+                :value="getEditedValue(item, 'submittedBy') as string"
+                @input="updateEditedValue(item, 'submittedBy', ($event.target as HTMLInputElement).value)"
               />
               <span v-else>{{ item.submittedBy || '-' }}</span>
             </td>
 
             <!-- Email -->
-            <td class="p-2">
-              <UInput
+            <td>
+              <input
                 v-if="isEditing(item)"
                 type="email"
-                size="sm"
-                class="w-full"
-                :model-value="getEditedValue(item, 'submittedByEmail') as string"
-                @update:model-value="updateEditedValue(item, 'submittedByEmail', $event)"
+                class="input input-bordered input-sm w-full"
+                :value="getEditedValue(item, 'submittedByEmail') as string"
+                @input="updateEditedValue(item, 'submittedByEmail', ($event.target as HTMLInputElement).value)"
               />
               <span v-else>{{ item.submittedByEmail || '-' }}</span>
             </td>
 
             <!-- Year -->
-            <td class="p-2 text-center">
-              <UInput
+            <td class="text-center">
+              <input
                 v-if="isEditing(item)"
                 type="number"
-                size="sm"
-                class="w-20 text-center"
-                :model-value="getEditedValue(item, 'year') as number"
-                @update:model-value="updateEditedValue(item, 'year', parseInt($event) || 0)"
+                class="input input-bordered input-sm w-20 text-center"
+                :value="getEditedValue(item, 'year') as number"
                 min="1959"
                 max="2024"
+                @input="updateEditedValue(item, 'year', parseInt(($event.target as HTMLInputElement).value) || 0)"
               />
               <span v-else>{{ item.year || '-' }}</span>
             </td>
 
             <!-- Status -->
-            <td class="p-2 text-center">
-              <UBadge
-                :color="isPending(item) ? 'warning' : item.status === RegistryItemStatus.APPROVED ? 'success' : 'error'"
+            <td class="text-center">
+              <span
+                class="badge"
+                :class="`badge-${
+                  isPending(item) ? 'warning' : item.status === RegistryItemStatus.APPROVED ? 'success' : 'error'
+                }`"
               >
                 {{ getStatusDisplay(item) }}
-              </UBadge>
+              </span>
             </td>
 
             <!-- Actions -->
-            <td class="p-2 space-x-1">
+            <td class="space-x-1">
               <template v-if="isPending(item)">
                 <template v-if="isEditing(item)">
                   <!-- Edit mode buttons -->
-                  <UButton size="xs" color="success" @click="saveEditing(item)" :disabled="isProcessing">
-                    <i class="fa-solid fa-check"></i>
-                  </UButton>
-                  <UButton size="xs" variant="ghost" @click="cancelEditing(item)" :disabled="isProcessing">
-                    <i class="fa-solid fa-times"></i>
-                  </UButton>
-                  <UButton
-                    size="xs"
-                    color="primary"
-                    @click="approveItem(item)"
+                  <button
+                    type="button"
+                    class="btn btn-success btn-xs"
                     :disabled="isProcessing"
-                    :loading="processingItemId === item.uniqueId && isProcessing"
+                    @click="saveEditing(item)"
                   >
-                    <template #leading>
-                      <i
-                        v-if="!(processingItemId === item.uniqueId && isProcessing)"
-                        class="fa-solid fa-check-double"
-                      ></i>
-                    </template>
-                  </UButton>
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs"
+                    :disabled="isProcessing"
+                    @click="cancelEditing(item)"
+                  >
+                    <i class="fa-solid fa-times"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-xs"
+                    :disabled="isProcessing"
+                    @click="approveItem(item)"
+                  >
+                    <i
+                      v-if="processingItemId === item.uniqueId && isProcessing"
+                      class="fas fa-spinner fa-spin"
+                    ></i>
+                    <i v-else class="fa-solid fa-check-double"></i>
+                  </button>
                 </template>
                 <template v-else>
                   <!-- View mode buttons -->
-                  <UButton size="xs" color="info" @click="startEditing(item)" :disabled="isProcessing">
-                    <i class="fa-solid fa-edit"></i>
-                  </UButton>
-                  <UButton
-                    size="xs"
-                    color="success"
-                    @click="approveItem(item)"
+                  <button
+                    type="button"
+                    class="btn btn-info btn-xs"
                     :disabled="isProcessing"
-                    :loading="processingItemId === item.uniqueId && isProcessing"
+                    @click="startEditing(item)"
                   >
-                    <template #leading>
-                      <i v-if="!(processingItemId === item.uniqueId && isProcessing)" class="fa-solid fa-check"></i>
-                    </template>
-                  </UButton>
-                  <UButton size="xs" color="error" @click="confirmDelete(item)" :disabled="isProcessing">
+                    <i class="fa-solid fa-edit"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-success btn-xs"
+                    :disabled="isProcessing"
+                    @click="approveItem(item)"
+                  >
+                    <i
+                      v-if="processingItemId === item.uniqueId && isProcessing"
+                      class="fas fa-spinner fa-spin"
+                    ></i>
+                    <i v-else class="fa-solid fa-check"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-error btn-xs"
+                    :disabled="isProcessing"
+                    @click="confirmDelete(item)"
+                  >
                     <i class="fa-solid fa-times"></i>
-                  </UButton>
+                  </button>
                 </template>
               </template>
               <template v-else>
@@ -413,19 +425,21 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteDialog">
-      <template #content>
-        <div class="p-6">
-          <h3 class="font-bold text-lg mb-4">Confirm Rejection</h3>
-          <p class="mb-4">Are you sure you want to reject this registry item? This action cannot be undone.</p>
-          <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="showDeleteDialog = false" :disabled="isProcessing">Cancel</UButton>
-            <UButton color="error" @click="deleteItem" :disabled="isProcessing" :loading="isProcessing">
-              Reject Item
-            </UButton>
-          </div>
+    <dialog class="modal" :class="{ 'modal-open': showDeleteDialog }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Confirm Rejection</h3>
+        <p class="mb-4">Are you sure you want to reject this registry item? This action cannot be undone.</p>
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" :disabled="isProcessing" @click="showDeleteDialog = false">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-error" :disabled="isProcessing" @click="deleteItem">
+            <i v-if="isProcessing" class="fas fa-spinner fa-spin"></i>
+            Reject Item
+          </button>
         </div>
-      </template>
-    </UModal>
+      </div>
+      <div class="modal-backdrop" @click="showDeleteDialog = false"></div>
+    </dialog>
   </div>
 </template>

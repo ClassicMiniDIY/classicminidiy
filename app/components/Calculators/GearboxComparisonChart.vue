@@ -13,7 +13,7 @@
   }>();
 
   const colorMode = useColorMode();
-  const isDark = computed(() => colorMode.value === 'dark');
+  const isDark = computed(() => colorMode.isDark.value);
 
   const GEAR_SHAPES: { symbol: string; dash: string; label: string }[] = [
     { symbol: 'circle', dash: 'ShortDash', label: '1st Gear' },
@@ -116,62 +116,64 @@
 </script>
 
 <template>
-  <UCard>
-    <h3 class="text-lg font-semibold mb-4"><i class="fad fa-chart-line mr-2"></i>{{ t('chart_title') }}</h3>
-    <ClientOnly>
-      <highcharts :options="mapOptions" :updateArgs="[true, true, true]" constructorType="chart" />
-      <template #fallback>
-        <div>
-          <USkeleton class="h-96 w-full" />
-          <p class="py-10 text-center text-2xl">{{ t('loading') }}</p>
-        </div>
-      </template>
-    </ClientOnly>
+  <div class="card bg-base-100 shadow-md border border-base-300">
+    <div class="card-body">
+      <h3 class="text-lg font-semibold mb-4"><i class="fad fa-chart-line mr-2"></i>{{ t('chart_title') }}</h3>
+      <ClientOnly>
+        <highcharts :options="mapOptions" :updateArgs="[true, true, true]" constructorType="chart" />
+        <template #fallback>
+          <div>
+            <div class="skeleton h-96 w-full"></div>
+            <p class="py-10 text-center text-2xl">{{ t('loading') }}</p>
+          </div>
+        </template>
+      </ClientOnly>
 
-    <!-- Custom Legend -->
-    <div class="mt-4 pt-4 border-t border-default flex flex-wrap gap-x-8 gap-y-3 justify-center">
-      <!-- Gear shapes -->
-      <div class="flex items-center gap-4">
-        <span class="text-xs font-semibold uppercase opacity-60">{{ t('gears') }}</span>
-        <div v-for="gear in GEAR_SHAPES" :key="gear.label" class="flex items-center gap-1.5">
-          <svg width="24" height="12" viewBox="0 0 24 12">
-            <line
-              x1="0"
-              y1="6"
-              x2="24"
-              y2="6"
-              stroke="currentColor"
-              stroke-width="1.5"
-              :stroke-dasharray="gear.dash === 'ShortDash' ? '4,3' : 'none'"
-              class="opacity-40"
-            />
-            <template v-if="gear.symbol === 'circle'">
-              <circle cx="12" cy="6" r="3.5" fill="currentColor" class="opacity-60" />
-            </template>
-            <template v-else-if="gear.symbol === 'square'">
-              <rect x="8.5" y="2.5" width="7" height="7" fill="currentColor" class="opacity-60" />
-            </template>
-            <template v-else-if="gear.symbol === 'diamond'">
-              <polygon points="12,1.5 16.5,6 12,10.5 7.5,6" fill="currentColor" class="opacity-60" />
-            </template>
-            <template v-else-if="gear.symbol === 'triangle'">
-              <polygon points="12,1.5 17,10.5 7,10.5" fill="currentColor" class="opacity-60" />
-            </template>
-          </svg>
-          <span class="text-xs">{{ gear.label }}</span>
+      <!-- Custom Legend -->
+      <div class="mt-4 pt-4 border-t border-base-300 flex flex-wrap gap-x-8 gap-y-3 justify-center">
+        <!-- Gear shapes -->
+        <div class="flex items-center gap-4">
+          <span class="text-xs font-semibold uppercase opacity-60">{{ t('gears') }}</span>
+          <div v-for="gear in GEAR_SHAPES" :key="gear.label" class="flex items-center gap-1.5">
+            <svg width="24" height="12" viewBox="0 0 24 12">
+              <line
+                x1="0"
+                y1="6"
+                x2="24"
+                y2="6"
+                stroke="currentColor"
+                stroke-width="1.5"
+                :stroke-dasharray="gear.dash === 'ShortDash' ? '4,3' : 'none'"
+                class="opacity-40"
+              />
+              <template v-if="gear.symbol === 'circle'">
+                <circle cx="12" cy="6" r="3.5" fill="currentColor" class="opacity-60" />
+              </template>
+              <template v-else-if="gear.symbol === 'square'">
+                <rect x="8.5" y="2.5" width="7" height="7" fill="currentColor" class="opacity-60" />
+              </template>
+              <template v-else-if="gear.symbol === 'diamond'">
+                <polygon points="12,1.5 16.5,6 12,10.5 7.5,6" fill="currentColor" class="opacity-60" />
+              </template>
+              <template v-else-if="gear.symbol === 'triangle'">
+                <polygon points="12,1.5 17,10.5 7,10.5" fill="currentColor" class="opacity-60" />
+              </template>
+            </svg>
+            <span class="text-xs">{{ gear.label }}</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Config colors -->
-      <div v-if="configNames.length > 0" class="flex items-center gap-4">
-        <span class="text-xs font-semibold uppercase opacity-60">{{ t('configs') }}</span>
-        <div v-for="(name, i) in configNames" :key="i" class="flex items-center gap-1.5">
-          <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: configColors[i] }"></span>
-          <span class="text-xs truncate max-w-32">{{ name }}</span>
+        <!-- Config colors -->
+        <div v-if="configNames.length > 0" class="flex items-center gap-4">
+          <span class="text-xs font-semibold uppercase opacity-60">{{ t('configs') }}</span>
+          <div v-for="(name, i) in configNames" :key="i" class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: configColors[i] }"></span>
+            <span class="text-xs truncate max-w-32">{{ name }}</span>
+          </div>
         </div>
       </div>
     </div>
-  </UCard>
+  </div>
 </template>
 
 <i18n lang="json">

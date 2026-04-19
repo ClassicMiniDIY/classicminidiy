@@ -219,18 +219,18 @@
 
     <!-- Auth Gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
-          <UButton to="/login" color="primary" class="w-full">
+          <NuxtLink to="/login" class="btn btn-primary w-full">
             {{ t('sign_in_button') }}
-          </UButton>
+          </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Authenticated Content -->
@@ -240,50 +240,54 @@
         <div class="col-span-12 md:col-span-8 md:col-start-3">
           <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
           <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
-          <USeparator class="mb-6" />
+          <div class="divider mb-6"></div>
         </div>
 
         <!-- Form Card -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <UCard>
-            <!-- Success State -->
-            <div v-if="submissionSuccess" class="text-center py-5">
-              <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
-              <h1 class="text-2xl font-bold mb-1">{{ t('form.success.title') }}</h1>
-              <h2 class="text-lg mb-4">{{ t('form.success.subtitle') }}</h2>
-              <div class="space-y-4 max-w-md mx-auto">
-                <UButton color="primary" @click="resetForm" class="w-full">
-                  <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
-                  {{ t('form.success.make_another') }}
-                </UButton>
-                <UButton to="/dashboard" color="neutral" variant="outline" class="w-full">
-                  {{ t('form.success.view_submissions') }}
-                </UButton>
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <!-- Success State -->
+              <div v-if="submissionSuccess" class="text-center py-5">
+                <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
+                <h1 class="text-2xl font-bold mb-1">{{ t('form.success.title') }}</h1>
+                <h2 class="text-lg mb-4">{{ t('form.success.subtitle') }}</h2>
+                <div class="space-y-4 max-w-md mx-auto">
+                  <button type="button" class="btn btn-primary w-full" @click="resetForm">
+                    <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
+                    {{ t('form.success.make_another') }}
+                  </button>
+                  <NuxtLink to="/dashboard" class="btn btn-outline btn-neutral w-full">
+                    {{ t('form.success.view_submissions') }}
+                  </NuxtLink>
+                </div>
               </div>
-            </div>
 
-            <!-- Form Body -->
-            <div v-else>
-              <!-- Form Fields -->
-              <form @submit.prevent="submit" class="space-y-4">
+              <!-- Form Body -->
+              <div v-else>
+                <!-- Form Fields -->
+                <form @submit.prevent="submit" class="space-y-4">
                   <!-- Type -->
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
                       <span class="text-sm font-medium"
                         >{{ t('form.fields.type.label') }} <span class="text-error">*</span></span
                       >
-                      <span class="text-sm text-muted"><i class="fad fa-folder-open"></i></span>
+                      <span class="text-sm opacity-60"><i class="fad fa-folder-open"></i></span>
                     </label>
-                    <USelect
+                    <select
                       v-model="formData.type"
-                      :items="typeOptions"
-                      :placeholder="t('form.fields.type.placeholder')"
-                      class="w-full"
+                      class="select select-bordered w-full"
+                      :class="{ 'select-error': formData.type === '' && touchedFields.type }"
                       :disabled="processing"
-                      :color="formData.type === '' && touchedFields.type ? 'error' : undefined"
                       @blur="touchedFields.type = true"
                       @change="touchedFields.type = true"
-                    />
+                    >
+                      <option value="" disabled>{{ t('form.fields.type.placeholder') }}</option>
+                      <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">
+                        {{ opt.label }}
+                      </option>
+                    </select>
                     <p v-if="formData.type === '' && touchedFields.type" class="text-sm text-error mt-1">
                       {{ t('form.error.type_required') }}
                     </p>
@@ -295,15 +299,15 @@
                       <span class="text-sm font-medium"
                         >{{ t('form.fields.title.label') }} <span class="text-error">*</span></span
                       >
-                      <span class="text-sm text-muted"><i class="fad fa-heading"></i></span>
+                      <span class="text-sm opacity-60"><i class="fad fa-heading"></i></span>
                     </label>
-                    <UInput
+                    <input
                       type="text"
                       v-model="formData.title"
                       :placeholder="t('form.fields.title.placeholder')"
-                      class="w-full"
+                      class="input input-bordered w-full"
+                      :class="{ 'input-error': formData.title === '' && touchedFields.title }"
                       :disabled="processing"
-                      :color="formData.title === '' && touchedFields.title ? 'error' : undefined"
                       @blur="touchedFields.title = true"
                     />
                     <p v-if="formData.title === '' && touchedFields.title" class="text-sm text-error mt-1">
@@ -316,13 +320,13 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium">{{ t('form.fields.code.label') }}</span>
-                        <span class="text-sm text-muted"><i class="fad fa-barcode"></i></span>
+                        <span class="text-sm opacity-60"><i class="fad fa-barcode"></i></span>
                       </label>
-                      <UInput
+                      <input
                         type="text"
                         v-model="formData.code"
                         :placeholder="t('form.fields.code.placeholder')"
-                        class="w-full"
+                        class="input input-bordered w-full"
                         :disabled="processing"
                       />
                       <p class="text-xs opacity-50 mt-1">{{ t('form.fields.code.help') }}</p>
@@ -332,13 +336,13 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium">{{ t('form.fields.author.label') }}</span>
-                        <span class="text-sm text-muted"><i class="fad fa-user-pen"></i></span>
+                        <span class="text-sm opacity-60"><i class="fad fa-user-pen"></i></span>
                       </label>
-                      <UInput
+                      <input
                         type="text"
                         v-model="formData.author"
                         :placeholder="t('form.fields.author.placeholder')"
-                        class="w-full"
+                        class="input input-bordered w-full"
                         :disabled="processing"
                       />
                     </div>
@@ -348,13 +352,13 @@
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
                       <span class="text-sm font-medium">{{ t('form.fields.year.label') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-calendar"></i></span>
+                      <span class="text-sm opacity-60"><i class="fad fa-calendar"></i></span>
                     </label>
-                    <UInput
+                    <input
                       type="number"
                       v-model.number="formData.year"
                       :placeholder="t('form.fields.year.placeholder')"
-                      class="w-full"
+                      class="input input-bordered w-full"
                       :disabled="processing"
                       min="1959"
                       max="2000"
@@ -365,15 +369,15 @@
                   <div class="w-full">
                     <label class="flex justify-between items-center mb-1">
                       <span class="text-sm font-medium">{{ t('form.fields.description.label') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-align-left"></i></span>
+                      <span class="text-sm opacity-60"><i class="fad fa-align-left"></i></span>
                     </label>
-                    <UTextarea
+                    <textarea
                       v-model="formData.description"
                       :placeholder="t('form.fields.description.placeholder')"
-                      class="w-full"
+                      class="textarea textarea-bordered w-full"
                       :disabled="processing"
-                      :rows="4"
-                    />
+                      rows="4"
+                    ></textarea>
                   </div>
 
                   <!-- Document Files -->
@@ -404,7 +408,7 @@
                     <p class="text-xs opacity-50 mt-1">{{ t('form.fields.thumbnail.help') }}</p>
                   </div>
 
-                  <USeparator />
+                  <div class="divider"></div>
 
                   <!-- Collection Toggle -->
                   <div class="w-full">
@@ -435,19 +439,18 @@
                         <span class="text-sm font-medium"
                           >{{ t('form.collection.title_label') }} <span class="text-error">*</span></span
                         >
-                        <span class="text-sm text-muted"><i class="fad fa-bookmark"></i></span>
+                        <span class="text-sm opacity-60"><i class="fad fa-bookmark"></i></span>
                       </label>
-                      <UInput
+                      <input
                         type="text"
                         v-model="formData.collectionTitle"
                         :placeholder="t('form.collection.title_placeholder')"
-                        class="w-full"
+                        class="input input-bordered w-full"
+                        :class="{
+                          'input-error':
+                            isCollection && formData.collectionTitle === '' && touchedFields.collectionTitle,
+                        }"
                         :disabled="processing"
-                        :color="
-                          isCollection && formData.collectionTitle === '' && touchedFields.collectionTitle
-                            ? 'error'
-                            : undefined
-                        "
                         @blur="touchedFields.collectionTitle = true"
                       />
                       <p
@@ -462,51 +465,44 @@
                     <div class="w-full">
                       <label class="flex justify-between items-center mb-1">
                         <span class="text-sm font-medium">{{ t('form.collection.description_label') }}</span>
-                        <span class="text-sm text-muted"><i class="fad fa-align-left"></i></span>
+                        <span class="text-sm opacity-60"><i class="fad fa-align-left"></i></span>
                       </label>
-                      <UTextarea
+                      <textarea
                         v-model="formData.collectionDescription"
                         :placeholder="t('form.collection.description_placeholder')"
-                        class="w-full"
+                        class="textarea textarea-bordered w-full"
                         :disabled="processing"
-                        :rows="3"
-                      />
+                        rows="3"
+                      ></textarea>
                     </div>
                   </div>
 
-                  <UAlert v-if="apiError" color="error" class="mb-4">
-                    <template #icon>
-                      <i class="fa-duotone fa-circle-exclamation"></i>
-                    </template>
-                    <template #title>{{ t('form.error.title') }}</template>
-                    <template #description>
-                      {{ apiMessage || t('form.error.default_message') }}
-                    </template>
-                    <template #actions>
-                      <UButton size="sm" variant="outline" @click="apiError = false">
-                        Dismiss
-                      </UButton>
-                    </template>
-                  </UAlert>
+                  <div v-if="apiError" class="alert alert-error mb-4">
+                    <i class="fa-duotone fa-circle-exclamation"></i>
+                    <div>
+                      <h4 class="font-bold">{{ t('form.error.title') }}</h4>
+                      <div class="text-sm">{{ apiMessage || t('form.error.default_message') }}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline" @click="apiError = false">Dismiss</button>
+                  </div>
 
                   <!-- Submit Button -->
                   <div class="pt-4">
-                    <UButton
+                    <button
                       type="submit"
-                      color="primary"
-                      size="lg"
-                      class="w-full"
+                      class="btn btn-primary btn-lg w-full"
                       :disabled="!validateForm() || processing"
-                      :loading="processing"
                       @click="touchedFields.documentFiles = true"
                     >
+                      <span v-if="processing" class="loading loading-spinner"></span>
                       <i class="fad fa-paper-plane mr-2" v-if="!processing"></i>
                       {{ processing ? t('form.submit.submitting') : t('form.submit.button') }}
-                    </UButton>
+                    </button>
                   </div>
                 </form>
+              </div>
             </div>
-          </UCard>
+          </div>
         </div>
 
         <!-- Patreon Card -->

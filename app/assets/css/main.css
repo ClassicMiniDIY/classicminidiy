@@ -1,235 +1,136 @@
 @import 'tailwindcss';
-@import '@nuxt/ui';
 @import '@fontsource/outfit/latin-400.css';
 @import '@fontsource/outfit/latin-600.css';
 @import '@fontsource/outfit/latin-700.css';
 
 @plugin '@tailwindcss/typography';
 
-@theme {
-  /* ============================================
-     Base Color Variables for Nuxt UI
-     These are required for classes like bg-primary, text-secondary, etc.
-     ============================================ */
-  --color-primary: #859369;
-  --color-secondary: #ed7135;
-  --color-success: #4a7023;
-  --color-error: #b22222;
-  --color-warning: #f59e0b;
-  --color-info: #3b82f6;
-
-  /* Brand Colors - Primary (Olive Green #859369) */
-  --color-primary-50: #f4f6f0;
-  --color-primary-100: #e8ede1;
-  --color-primary-200: #d1dbc3;
-  --color-primary-300: #b3c49d;
-  --color-primary-400: #9aac7f;
-  --color-primary-500: #859369;
-  --color-primary-600: #6b7a52;
-  --color-primary-700: #566340;
-  --color-primary-800: #444d33;
-  --color-primary-900: #383f2c;
-  --color-primary-950: #1c2016;
-
-  /* Secondary (Orange #ed7135) */
-  --color-secondary-50: #fef6f0;
-  --color-secondary-100: #fdeadd;
-  --color-secondary-200: #fad2ba;
-  --color-secondary-300: #f5b28d;
-  --color-secondary-400: #f08a54;
-  --color-secondary-500: #ed7135;
-  --color-secondary-600: #d94410;
-  --color-secondary-700: #b43410;
-  --color-secondary-800: #902b14;
-  --color-secondary-900: #742714;
-  --color-secondary-950: #3f1107;
-
-  /* Success (Dark Green #4a7023) */
-  --color-success-50: #f3f7ed;
-  --color-success-100: #e4edd8;
-  --color-success-200: #cbddb5;
-  --color-success-300: #a9c788;
-  --color-success-400: #89b062;
-  --color-success-500: #4a7023;
-  --color-success-600: #3d5c1d;
-  --color-success-700: #32491a;
-  --color-success-800: #2a3b19;
-  --color-success-900: #253318;
-  --color-success-950: #111c09;
-
-  /* Error (Firebrick Red #b22222) */
-  --color-error-50: #fdf3f3;
-  --color-error-100: #fce4e4;
-  --color-error-200: #fbcdcd;
-  --color-error-300: #f6a8a8;
-  --color-error-400: #ef7676;
-  --color-error-500: #b22222;
-  --color-error-600: #9a1c1c;
-  --color-error-700: #811919;
-  --color-error-800: #6c1818;
-  --color-error-900: #5c1a1a;
-  --color-error-950: #320909;
-
-  /* Warning (Amber) */
-  --color-warning-50: #fffbeb;
-  --color-warning-100: #fef3c7;
-  --color-warning-200: #fde68a;
-  --color-warning-300: #fcd34d;
-  --color-warning-400: #fbbf24;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-warning-700: #b45309;
-  --color-warning-800: #92400e;
-  --color-warning-900: #78350f;
-  --color-warning-950: #451a03;
-
-  /* Info (Blue) */
-  --color-info-50: #eff6ff;
-  --color-info-100: #dbeafe;
-  --color-info-200: #bfdbfe;
-  --color-info-300: #93c5fd;
-  --color-info-400: #60a5fa;
-  --color-info-500: #3b82f6;
-  --color-info-600: #2563eb;
-  --color-info-700: #1d4ed8;
-  --color-info-800: #1e40af;
-  --color-info-900: #1e3a8a;
-  --color-info-950: #172554;
-
-  /* Neutral (True Neutral - no blue tint) */
-  --color-neutral-50: #fafafa;
-  --color-neutral-100: #f5f5f5;
-  --color-neutral-200: #e5e5e5;
-  --color-neutral-300: #d4d4d4;
-  --color-neutral-400: #a3a3a3;
-  --color-neutral-500: #737373;
-  --color-neutral-600: #525252;
-  --color-neutral-700: #404040;
-  --color-neutral-800: #262626;
-  --color-neutral-900: #171717;
-  --color-neutral-950: #0a0a0a;
-
-  /* Fonts */
-  --font-sans: 'Outfit', system-ui, sans-serif;
-}
-
-/* Apply font globally and override Nuxt UI color defaults */
-@layer base {
-  html,
-  body {
-    font-family: var(--font-sans);
-  }
-}
-
-/* Nuxt UI color references and light mode overrides */
-:root {
-  --ui-primary: #859369;
-  --ui-secondary: #ed7135;
-  --ui-success: #4a7023;
-  --ui-error: #b22222;
-
-  /* Light mode background colors */
-  --ui-bg: #ffffff;
-  --ui-bg-muted: #fafafa; /* neutral-50 */
-  --ui-bg-elevated: #ffffff;
-  --ui-bg-accented: #f5f5f5; /* neutral-100 */
-
-  /* Light mode text colors */
-  --ui-text-dimmed: #a3a3a3; /* neutral-400 */
-  --ui-text-muted: #737373; /* neutral-500 */
-  --ui-text-toned: #525252; /* neutral-600 */
-  --ui-text: #262626; /* neutral-800 */
-  --ui-text-highlighted: #171717; /* neutral-900 */
-
-  /* Light mode border colors */
-  --ui-border: #e5e5e5; /* neutral-200 */
-  --ui-border-muted: #e5e5e5; /* neutral-200 */
-  --ui-border-accented: #d4d4d4; /* neutral-300 */
-}
-
-/* Dark mode overrides - Nuxt UI Neutral theme */
-.dark {
-  /* Override Nuxt UI color scale for neutral */
-  --ui-color-neutral-50: #fafafa;
-  --ui-color-neutral-100: #f5f5f5;
-  --ui-color-neutral-200: #e5e5e5;
-  --ui-color-neutral-300: #d4d4d4;
-  --ui-color-neutral-400: #a3a3a3;
-  --ui-color-neutral-500: #737373;
-  --ui-color-neutral-600: #525252;
-  --ui-color-neutral-700: #404040;
-  --ui-color-neutral-800: #262626;
-  --ui-color-neutral-900: #171717;
-  --ui-color-neutral-950: #0a0a0a;
-
-  /* Background colors - matching Nuxt UI neutral theme */
-  --ui-bg: var(--ui-color-neutral-900); /* #171717 - main background */
-  --ui-bg-muted: var(--ui-color-neutral-800); /* #262626 - muted sections */
-  --ui-bg-elevated: var(--ui-color-neutral-800); /* #262626 - elevated surfaces */
-  --ui-bg-accented: var(--ui-color-neutral-700); /* #404040 - accented areas */
-  --ui-bg-inverted: #fafafa;
-
-  /* Text colors */
-  --ui-text-dimmed: #737373; /* neutral-500 */
-  --ui-text-muted: #a3a3a3; /* neutral-400 */
-  --ui-text-toned: #d4d4d4; /* neutral-300 */
-  --ui-text: #e5e5e5; /* neutral-200 */
-  --ui-text-highlighted: #ffffff;
-  --ui-text-inverted: #171717; /* neutral-900 */
-
-  /* Border colors */
-  --ui-border: #262626; /* neutral-800 */
-  --ui-border-muted: #404040; /* neutral-700 */
-  --ui-border-accented: #404040; /* neutral-700 */
-  --ui-border-inverted: #ffffff;
-
-  /* Ensure text is readable in dark mode */
-  color-scheme: dark;
-}
-
-/* Ensure proper backgrounds for light/dark modes */
-html {
-  background-color: var(--ui-bg, #ffffff);
-}
-
-html.dark {
-  background-color: #171717; /* neutral-900 */
-}
-
-body {
-  background-color: inherit;
-}
-
-/* Force dark backgrounds on main content in dark mode */
-.dark main,
-.dark .container {
-  background-color: transparent;
-}
-
-.dark section:not(.hero-section) {
-  background-color: transparent;
-}
-
-/* Ensure bg-muted works properly */
-.bg-muted {
-  background-color: #f5f5f5; /* neutral-100 */
-}
-
-.dark .bg-muted {
-  background-color: #262626; /* neutral-800 */
-}
-
-/* Text muted color */
-.text-muted {
-  color: #737373; /* neutral-500 */
-}
-
-.dark .text-muted {
-  color: #a3a3a3; /* neutral-400 */
+@plugin "daisyui" {
+  themes: cmdiy --default, cmdiy-dark --prefersdark;
+  root: ":root";
+  include: ;
+  exclude: ;
+  prefix: ;
+  logs: false;
 }
 
 /* ============================================
-   Custom Brand Styling (preserved from DaisyUI)
+   Classic Mini DIY - Light Theme
+   Brand: Olive Green #859369 + Orange #ed7135
+   ============================================ */
+@plugin "daisyui/theme" {
+  name: 'cmdiy';
+  default: true;
+  prefersdark: false;
+  color-scheme: 'light';
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98% 0 0);
+  --color-base-300: oklch(95% 0 0);
+  --color-base-content: oklch(21% 0.006 285.885);
+  --color-primary: #859369;
+  --color-primary-content: oklch(97% 0 0);
+  --color-secondary: #ed7135;
+  --color-secondary-content: oklch(97% 0 0);
+  --color-accent: #6b7a52;
+  --color-accent-content: oklch(97% 0 0);
+  --color-neutral: oklch(14% 0.005 285.823);
+  --color-neutral-content: oklch(92% 0.004 286.32);
+  --color-info: #3b82f6;
+  --color-info-content: oklch(97% 0 0);
+  --color-success: #4a7023;
+  --color-success-content: oklch(97% 0 0);
+  --color-warning: #f59e0b;
+  --color-warning-content: #2f2f2f;
+  --color-error: #b22222;
+  --color-error-content: oklch(97% 0 0);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* ============================================
+   Classic Mini DIY - Dark Theme
+   ============================================ */
+@plugin "daisyui/theme" {
+  name: 'cmdiy-dark';
+  default: false;
+  prefersdark: true;
+  color-scheme: 'dark';
+  --color-base-100: oklch(22% 0.01 285.885);
+  --color-base-200: oklch(18% 0.01 285.885);
+  --color-base-300: oklch(14% 0.01 285.885);
+  --color-base-content: oklch(92% 0.004 286.32);
+  --color-primary: #9aac7f;
+  --color-primary-content: oklch(97% 0 0);
+  --color-secondary: #f08a54;
+  --color-secondary-content: oklch(97% 0 0);
+  --color-accent: #7a8960;
+  --color-accent-content: oklch(97% 0 0);
+  --color-neutral: oklch(86% 0.004 286.32);
+  --color-neutral-content: oklch(22% 0.01 285.885);
+  --color-info: #60a5fa;
+  --color-info-content: oklch(14% 0.005 285.823);
+  --color-success: #89b062;
+  --color-success-content: oklch(14% 0.005 285.823);
+  --color-warning: #fbbf24;
+  --color-warning-content: oklch(14% 0.005 285.823);
+  --color-error: #ef7676;
+  --color-error-content: oklch(97% 0 0);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* ============================================
+   Typography - Outfit font
+   ============================================ */
+:root {
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+}
+
+body {
+  font-feature-settings:
+    'kern' 1,
+    'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Layout helpers
+   ============================================ */
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+#__nuxt {
+  height: 100%;
+}
+
+/* ============================================
+   Custom Brand Styling (preserved)
    ============================================ */
 
 /* Partner/Affiliate Button Styles */
@@ -291,21 +192,16 @@ body {
   background-image: url('https://classicminidiy.s3.us-east-1.amazonaws.com/misc/layer2.svg');
 }
 
-/* Dark mode spacer backgrounds - match dark theme background colors */
-/* Using partial invert: invert(0.91) on white ≈ #171717, invert(0.85) on white ≈ #262626 */
-
-/* layer: attaches to main content (#171717 / neutral-900) */
-.dark .spacer.layer {
+/* Dark mode spacer backgrounds */
+[data-theme='cmdiy-dark'] .spacer.layer {
   filter: invert(0.91);
 }
 
-/* layer1: attaches to muted section (#262626 / neutral-800) */
-.dark .spacer.layer1 {
+[data-theme='cmdiy-dark'] .spacer.layer1 {
   filter: invert(0.85);
 }
 
-/* layer2: attaches to muted section (#262626 / neutral-800) */
-.dark .spacer.layer2 {
+[data-theme='cmdiy-dark'] .spacer.layer2 {
   filter: invert(0.85);
 }
 
@@ -341,7 +237,6 @@ body {
    Futura PT Font Classes (Adobe Typekit)
    ============================================ */
 
-/* Futura PT Heavy */
 .fancy-font-heavy {
   font-family: futura-pt, sans-serif;
   font-weight: 800;
@@ -349,7 +244,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Heavy Oblique */
 .fancy-font-heavy-oblique {
   font-family: futura-pt, sans-serif;
   font-weight: 800;
@@ -357,7 +251,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Book */
 .fancy-font-book {
   font-family: futura-pt, sans-serif;
   font-weight: 400;
@@ -365,7 +258,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Book Oblique */
 .fancy-font-book-oblique {
   font-family: futura-pt, sans-serif;
   font-weight: 400;
@@ -373,7 +265,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Bold */
 .fancy-font-bold {
   font-family: futura-pt-bold, sans-serif;
   font-weight: 800;
@@ -381,7 +272,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Bold Oblique */
 .fancy-font-bold-oblique {
   font-family: futura-pt-bold, sans-serif;
   font-weight: 800;
@@ -389,7 +279,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Cond Book */
 .fancy-font-cond-book {
   font-family: futura-pt-condensed, sans-serif;
   font-weight: 400;
@@ -397,7 +286,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Cond Book Oblique */
 .fancy-font-cond-book-oblique {
   font-family: futura-pt-condensed, sans-serif;
   font-weight: 400;
@@ -405,7 +293,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Cond Bold */
 .fancy-font-cond-bold {
   font-family: futura-pt-condensed, sans-serif;
   font-weight: 800;
@@ -413,7 +300,6 @@ body {
   font-display: swap;
 }
 
-/* Futura PT Cond Bold Oblique */
 .fancy-font-cond-bold-oblique {
   font-family: futura-pt-condensed, sans-serif;
   font-weight: 800;
@@ -422,64 +308,56 @@ body {
 }
 
 /* ============================================
-   Dark Mode Icon Overrides
+   Dark Mode Icon Overrides (Font Awesome duotone)
    ============================================ */
 
-/* Override Font Awesome duotone icon colors in dark mode for better visibility */
-.dark .fa-duotone,
-.dark .fad {
+[data-theme='cmdiy-dark'] .fa-duotone,
+[data-theme='cmdiy-dark'] .fad {
   --fa-primary-color: #d1d5db !important;
   --fa-secondary-color: #9ca3af !important;
   --fa-primary-opacity: 1;
   --fa-secondary-opacity: 0.8;
 }
 
-/* Wheel Library - tire icon (was #242424/#242424) */
-.dark .fa-tire {
+[data-theme='cmdiy-dark'] .fa-tire {
   --fa-primary-color: #6b7280 !important;
   --fa-secondary-color: #9ca3af !important;
 }
 
-/* Adverts - tv-retro icon (was #2f2f2f/#554416) */
-.dark .fa-tv-retro {
+[data-theme='cmdiy-dark'] .fa-tv-retro {
   --fa-primary-color: #9ca3af !important;
   --fa-secondary-color: #d4a855 !important;
 }
 
-/* Engine Sizes - engine icon (was #59602e/#000000) */
-.dark .fa-engine {
+[data-theme='cmdiy-dark'] .fa-engine {
   --fa-primary-color: #9aac7f !important;
   --fa-secondary-color: #6b7280 !important;
   --fa-secondary-opacity: 0.8 !important;
 }
 
-/* Parts Equivalency - magnifying glass icon (was #080808/#f3b140) */
-.dark .fa-magnifying-glass {
+[data-theme='cmdiy-dark'] .fa-magnifying-glass {
   --fa-primary-color: #d1d5db !important;
   --fa-secondary-color: #f3b140 !important;
 }
 
-/* Preserve brand-colored icons (secondary/orange accents) */
-.dark .fa-duotone[style*='--fa-secondary-color: #f3b140'],
-.dark .fa-duotone[style*='--fa-secondary-color: #ed7135'],
-.dark .fa-duotone[style*='--fa-secondary-color: #ED7135'],
-.dark .fad[style*='--fa-secondary-color: #f3b140'],
-.dark .fad[style*='--fa-secondary-color: #ed7135'],
-.dark .fad[style*='--fa-secondary-color: #ED7135'] {
+[data-theme='cmdiy-dark'] .fa-duotone[style*='--fa-secondary-color: #f3b140'],
+[data-theme='cmdiy-dark'] .fa-duotone[style*='--fa-secondary-color: #ed7135'],
+[data-theme='cmdiy-dark'] .fa-duotone[style*='--fa-secondary-color: #ED7135'],
+[data-theme='cmdiy-dark'] .fad[style*='--fa-secondary-color: #f3b140'],
+[data-theme='cmdiy-dark'] .fad[style*='--fa-secondary-color: #ed7135'],
+[data-theme='cmdiy-dark'] .fad[style*='--fa-secondary-color: #ED7135'] {
   --fa-primary-color: #d1d5db !important;
   --fa-secondary-color: #f3b140 !important;
 }
 
-/* Preserve red accent colors */
-.dark .fa-duotone[style*='--fa-secondary-color: #ff424d'],
-.dark .fad[style*='--fa-secondary-color: #ff424d'] {
+[data-theme='cmdiy-dark'] .fa-duotone[style*='--fa-secondary-color: #ff424d'],
+[data-theme='cmdiy-dark'] .fad[style*='--fa-secondary-color: #ff424d'] {
   --fa-primary-color: #d1d5db !important;
   --fa-secondary-color: #ff424d !important;
 }
 
-/* Preserve primary brand color accents (olive green) */
-.dark .fa-duotone[style*='--fa-secondary-color: #859369'],
-.dark .fad[style*='--fa-secondary-color: #859369'] {
+[data-theme='cmdiy-dark'] .fa-duotone[style*='--fa-secondary-color: #859369'],
+[data-theme='cmdiy-dark'] .fad[style*='--fa-secondary-color: #859369'] {
   --fa-primary-color: #d1d5db !important;
   --fa-secondary-color: #9aac7f !important;
 }

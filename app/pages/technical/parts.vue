@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-  import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
@@ -27,39 +26,6 @@
   const togglePanel = (panel: string) => {
     activePanels.value[panel] = !activePanels.value[panel];
   };
-
-  // Column definitions for Nuxt UI table
-  const tableColumns = [
-    {
-      accessorKey: 'brand',
-      header: () => t('table_headers.brand'),
-      cell: ({ row }) =>
-        h(
-          'span',
-          {
-            class: 'px-2 py-1 rounded bg-primary/10 text-primary font-medium',
-          },
-          row.getValue('brand')
-        ),
-    },
-    {
-      accessorKey: 'part',
-      header: () => t('table_headers.part_number'),
-      cell: ({ row }) =>
-        h(
-          'span',
-          {
-            class: 'px-2 py-1 rounded bg-blue-100 text-blue-700 font-medium',
-          },
-          row.getValue('part')
-        ),
-    },
-    {
-      accessorKey: 'info',
-      header: () => t('table_headers.usage_info'),
-      cell: ({ row }) => row.getValue('info') || '',
-    },
-  ];
 
   // Function to filter items based on search
   const filterItems = (items: PartItem[]) => {
@@ -186,91 +152,123 @@
       </div>
       <div class="col-span-12 md:col-span-4">
         <a @click="scrollToSubmissions" :title="t('contact_card.link_title')" class="block cursor-pointer">
-          <UCard class="hover:shadow-lg transition-shadow">
-            <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0">
-                <div class="w-16 h-16 flex items-center justify-center">
-                  <i class="fas fa-envelope text-4xl text-primary"></i>
+          <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow">
+            <div class="card-body">
+              <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                  <div class="w-16 h-16 flex items-center justify-center">
+                    <i class="fas fa-envelope text-4xl text-primary"></i>
+                  </div>
+                </div>
+                <div>
+                  <h2 class="text-xl font-semibold">
+                    {{ t('contact_card.heading') }}
+                  </h2>
+                  <p class="mt-1">{{ t('contact_card.description') }}</p>
                 </div>
               </div>
-              <div>
-                <h2 class="text-xl font-semibold">
-                  {{ t('contact_card.heading') }}
-                </h2>
-                <p class="mt-1">{{ t('contact_card.description') }}</p>
-              </div>
             </div>
-          </UCard>
+          </div>
         </a>
       </div>
     </div>
 
     <div class="space-y-4">
-      <UCollapsible
+      <div
         v-for="(table, name, index) in tables"
         :key="`${name}-${index}`"
-        :default-open="activePanels[table.title]"
-        class="border border-muted rounded-lg overflow-hidden"
+        class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-lg overflow-hidden"
       >
-        <template #trigger>
-          <div
-            class="flex items-center justify-between w-full px-4 py-3 bg-primary text-primary-content font-semibold text-xl"
-          >
-            <span>{{ table.title }}</span>
-            <i class="fas fa-chevron-down transition-transform"></i>
-          </div>
-        </template>
-        <div class="p-4 bg-muted/50">
-          <!-- Search field -->
-          <div class="flex justify-end mb-4">
-            <UInput v-model="searchValue" :placeholder="t('ui.search_placeholder')" class="w-full max-w-xs" />
-          </div>
+        <input type="checkbox" :checked="activePanels[table.title]" @change="togglePanel(table.title)" />
+        <div class="collapse-title bg-primary text-primary-content font-semibold text-xl">
+          {{ table.title }}
+        </div>
+        <div class="collapse-content bg-base-200/50">
+          <div class="pt-4">
+            <!-- Search field -->
+            <div class="flex justify-end mb-4">
+              <label class="input input-bordered flex items-center gap-2 w-full max-w-xs">
+                <i class="fas fa-magnifying-glass text-base-content/60"></i>
+                <input
+                  v-model="searchValue"
+                  type="text"
+                  :placeholder="t('ui.search_placeholder')"
+                  class="grow"
+                />
+              </label>
+            </div>
 
-          <div class="w-full overflow-x-auto">
-            <UTable :data="filterItems(table.items)" :columns="tableColumns" class="w-full min-w-full" />
+            <div class="w-full overflow-x-auto">
+              <table class="table w-full min-w-full">
+                <thead>
+                  <tr>
+                    <th>{{ t('table_headers.brand') }}</th>
+                    <th>{{ t('table_headers.part_number') }}</th>
+                    <th>{{ t('table_headers.usage_info') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, idx) in filterItems(table.items)" :key="idx">
+                    <td>
+                      <span class="px-2 py-1 rounded bg-primary/10 text-primary font-medium">
+                        {{ row.brand }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="px-2 py-1 rounded bg-info/20 text-info font-medium">
+                        {{ row.part }}
+                      </span>
+                    </td>
+                    <td>{{ row.info || '' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </UCollapsible>
+      </div>
     </div>
 
     <!-- Contact Section for Submissions -->
-    <USeparator :label="t('ui.submissions_section')" class="my-12" />
+    <div class="divider my-12">{{ t('ui.submissions_section') }}</div>
     <div id="submissions-section" class="mb-8">
-      <UCard>
-        <div class="text-center">
-          <div class="mb-4">
-            <i class="fas fa-plus-circle text-6xl text-primary"></i>
-          </div>
-          <h2 class="text-2xl font-bold mb-4">{{ t('submissions.heading') }}</h2>
-          <p class="text-lg mb-6">{{ t('submissions.description') }}</p>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div class="text-left">
-              <h3 class="font-semibold text-lg mb-2">{{ t('submissions.what_to_include.heading') }}</h3>
-              <ul class="list-disc list-inside space-y-1">
-                <li>{{ t('submissions.what_to_include.brand') }}</li>
-                <li>{{ t('submissions.what_to_include.part_number') }}</li>
-                <li>{{ t('submissions.what_to_include.fits') }}</li>
-                <li>{{ t('submissions.what_to_include.store') }}</li>
-              </ul>
+      <div class="card bg-base-100 shadow-md border border-base-300">
+        <div class="card-body">
+          <div class="text-center">
+            <div class="mb-4">
+              <i class="fas fa-plus-circle text-6xl text-primary"></i>
             </div>
-            <div class="text-left">
-              <h3 class="font-semibold text-lg mb-2">{{ t('submissions.examples.heading') }}</h3>
-              <ul class="list-disc list-inside space-y-1">
-                <li>{{ t('submissions.examples.oil_filter') }}</li>
-                <li>{{ t('submissions.examples.spark_plug') }}</li>
-                <li>{{ t('submissions.examples.brake_pad') }}</li>
-              </ul>
+            <h2 class="text-2xl font-bold mb-4">{{ t('submissions.heading') }}</h2>
+            <p class="text-lg mb-6">{{ t('submissions.description') }}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div class="text-left">
+                <h3 class="font-semibold text-lg mb-2">{{ t('submissions.what_to_include.heading') }}</h3>
+                <ul class="list-disc list-inside space-y-1">
+                  <li>{{ t('submissions.what_to_include.brand') }}</li>
+                  <li>{{ t('submissions.what_to_include.part_number') }}</li>
+                  <li>{{ t('submissions.what_to_include.fits') }}</li>
+                  <li>{{ t('submissions.what_to_include.store') }}</li>
+                </ul>
+              </div>
+              <div class="text-left">
+                <h3 class="font-semibold text-lg mb-2">{{ t('submissions.examples.heading') }}</h3>
+                <ul class="list-disc list-inside space-y-1">
+                  <li>{{ t('submissions.examples.oil_filter') }}</li>
+                  <li>{{ t('submissions.examples.spark_plug') }}</li>
+                  <li>{{ t('submissions.examples.brake_pad') }}</li>
+                </ul>
+              </div>
             </div>
+            <NuxtLink :to="mailtoLink" class="btn btn-primary btn-lg">
+              <i class="fas fa-envelope mr-2"></i>
+              {{ t('submissions.submit_button') }}
+            </NuxtLink>
           </div>
-          <UButton :to="mailtoLink" color="primary" size="lg">
-            <i class="fas fa-envelope mr-2"></i>
-            {{ t('submissions.submit_button') }}
-          </UButton>
         </div>
-      </UCard>
+      </div>
     </div>
 
-    <USeparator :label="t('ui.support_section')" class="my-12" />
+    <div class="divider my-12">{{ t('ui.support_section') }}</div>
     <div class="mb-8">
       <patreon-card size="large" />
     </div>

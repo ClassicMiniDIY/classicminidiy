@@ -148,27 +148,27 @@
     <!-- Breadcrumb Navigation -->
     <div class="container mx-auto px-4 pt-10">
       <div class="flex justify-between items-center">
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', to: '/', icon: 'i-fa6-solid-house' },
-            { label: 'Admin', to: '/admin' },
-            { label: 'Chat Threads' },
-          ]"
-          :ui="{
-            item: 'text-primary-600 dark:text-primary-400',
-            link: 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300',
-            linkActive: 'text-neutral-500 dark:text-neutral-400 font-medium',
-            separator: 'text-neutral-400 dark:text-neutral-500',
-            icon: 'text-primary-600 dark:text-primary-400',
-          }"
-        />
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <NuxtLink to="/" class="link link-primary">
+                <i class="fas fa-house mr-1"></i>
+                Home
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/admin" class="link link-primary">Admin</NuxtLink>
+            </li>
+            <li><span>Chat Threads</span></li>
+          </ul>
+        </div>
 
         <div class="flex items-center gap-4">
           <span class="text-sm opacity-70"> Welcome, {{ userProfile?.display_name || userProfile?.email }} </span>
-          <UButton @click="handleLogout" variant="ghost" size="sm">
+          <button type="button" class="btn btn-ghost btn-sm" @click="handleLogout">
             <i class="fad fa-sign-out mr-2"></i>
             Logout
-          </UButton>
+          </button>
         </div>
       </div>
     </div>
@@ -176,101 +176,106 @@
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
       <!-- Stats and Controls -->
-      <UCard class="mb-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h2 class="text-2xl font-bold">Thread Overview</h2>
-            <p class="opacity-70">
-              Total threads: <span class="font-semibold">{{ threads.length }}</span> | Filtered:
-              <span class="font-semibold">{{ filteredThreads.length }}</span>
-            </p>
+      <div class="card bg-base-100 shadow-md border border-base-300 mb-8">
+        <div class="card-body">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 class="text-2xl font-bold">Thread Overview</h2>
+              <p class="opacity-70">
+                Total threads: <span class="font-semibold">{{ threads.length }}</span> | Filtered:
+                <span class="font-semibold">{{ filteredThreads.length }}</span>
+              </p>
+            </div>
+            <button type="button" class="btn btn-primary" :disabled="isLoading" @click="handleRefresh">
+              <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
+              <i v-else class="fad fa-refresh"></i>
+              {{ isLoading ? 'Refreshing...' : 'Refresh' }}
+            </button>
           </div>
-          <UButton @click="handleRefresh" :disabled="isLoading" :loading="isLoading" color="primary">
-            <template #leading>
-              <i v-if="!isLoading" class="fad fa-refresh"></i>
-            </template>
-            {{ isLoading ? 'Refreshing...' : 'Refresh' }}
-          </UButton>
-        </div>
 
-        <!-- Filters -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <UFormField label="Search threads">
-            <UInput
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search by thread ID or metadata..."
-              icon="i-fa6-solid-magnifying-glass"
-            />
-          </UFormField>
-          <UFormField label="Filter by status">
-            <USelect
-              v-model="filterStatus"
-              :items="[
-                { label: 'All statuses', value: '' },
-                { label: 'Idle', value: 'idle' },
-                { label: 'Busy', value: 'busy' },
-                { label: 'Interrupted', value: 'interrupted' },
-                { label: 'Error', value: 'error' },
-              ]"
-            />
-          </UFormField>
+          <!-- Filters -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text">Search threads</span>
+              </div>
+              <label class="input input-bordered flex items-center gap-2 w-full">
+                <i class="fas fa-magnifying-glass opacity-60"></i>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  class="grow"
+                  placeholder="Search by thread ID or metadata..."
+                />
+              </label>
+            </label>
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text">Filter by status</span>
+              </div>
+              <select v-model="filterStatus" class="select select-bordered w-full">
+                <option value="">All statuses</option>
+                <option value="idle">Idle</option>
+                <option value="busy">Busy</option>
+                <option value="interrupted">Interrupted</option>
+                <option value="error">Error</option>
+              </select>
+            </label>
+          </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Threads Table -->
-      <UCard>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-default">
-                <th class="text-left p-2 font-medium bg-muted">Thread ID</th>
-                <th class="text-left p-2 font-medium bg-muted">Status</th>
-                <th class="text-left p-2 font-medium bg-muted">Created</th>
-                <th class="text-left p-2 font-medium bg-muted">Updated</th>
-                <th class="text-left p-2 font-medium bg-muted">Metadata</th>
-                <th class="text-left p-2 font-medium bg-muted">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="filteredThreads.length === 0">
-                <td colspan="6" class="text-center py-8 opacity-50">
-                  <i class="fad fa-inbox text-4xl mb-2 block"></i>
-                  No threads found
-                </td>
-              </tr>
-              <tr
-                v-for="thread in filteredThreads"
-                :key="thread.thread_id"
-                class="border-b border-default last:border-0 hover:bg-muted transition-colors"
-              >
-                <td class="p-2">
-                  <code class="text-xs">{{ thread.thread_id }}</code>
-                </td>
-                <td class="p-2">
-                  <UBadge :color="getStatusColor(thread.status)">
-                    {{ thread.status || 'unknown' }}
-                  </UBadge>
-                </td>
-                <td class="p-2 text-sm">{{ formatDate(thread.created_at) }}</td>
-                <td class="p-2 text-sm">{{ formatDate(thread.updated_at) }}</td>
-                <td class="p-2 max-w-xs truncate">
-                  <span v-if="thread.metadata" class="text-xs opacity-70">
-                    {{ JSON.stringify(thread.metadata) }}
-                  </span>
-                  <span v-else class="text-xs opacity-50">No metadata</span>
-                </td>
-                <td class="p-2">
-                  <UButton @click="viewThread(thread)" size="sm" variant="ghost">
-                    <i class="fad fa-eye mr-1"></i>
-                    View
-                  </UButton>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="card bg-base-100 shadow-md border border-base-300">
+        <div class="card-body">
+          <div class="overflow-x-auto">
+            <table class="table table-zebra w-full text-sm">
+              <thead>
+                <tr>
+                  <th>Thread ID</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Updated</th>
+                  <th>Metadata</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="filteredThreads.length === 0">
+                  <td colspan="6" class="text-center py-8 opacity-50">
+                    <i class="fad fa-inbox text-4xl mb-2 block"></i>
+                    No threads found
+                  </td>
+                </tr>
+                <tr v-for="thread in filteredThreads" :key="thread.thread_id">
+                  <td>
+                    <code class="text-xs">{{ thread.thread_id }}</code>
+                  </td>
+                  <td>
+                    <span class="badge" :class="`badge-${getStatusColor(thread.status)}`">
+                      {{ thread.status || 'unknown' }}
+                    </span>
+                  </td>
+                  <td class="text-sm">{{ formatDate(thread.created_at) }}</td>
+                  <td class="text-sm">{{ formatDate(thread.updated_at) }}</td>
+                  <td class="max-w-xs truncate">
+                    <span v-if="thread.metadata" class="text-xs opacity-70">
+                      {{ JSON.stringify(thread.metadata) }}
+                    </span>
+                    <span v-else class="text-xs opacity-50">No metadata</span>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-ghost btn-sm" @click="viewThread(thread)">
+                      <i class="fad fa-eye mr-1"></i>
+                      View
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

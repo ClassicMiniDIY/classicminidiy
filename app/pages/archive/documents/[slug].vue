@@ -257,161 +257,165 @@
       </div>
 
       <!-- Error State -->
-      <UAlert v-else-if="error" color="error" class="max-w-2xl mx-auto" icon="i-fa6-solid-circle-exclamation">
-        <template #title>{{ t('loading_error') }}</template>
-      </UAlert>
+      <div v-else-if="error" role="alert" class="alert alert-error max-w-2xl mx-auto">
+        <i class="fas fa-circle-exclamation"></i>
+        <div>
+          <div class="font-semibold">{{ t('loading_error') }}</div>
+        </div>
+      </div>
 
       <!-- Not Found State -->
       <div v-else-if="!doc" class="text-center py-16">
         <i class="fas fa-file-circle-question text-6xl opacity-30 mb-4"></i>
         <h2 class="text-2xl font-bold mb-2">{{ t('not_found_title') }}</h2>
         <p class="opacity-70 mb-6">{{ t('not_found_text') }}</p>
-        <UButton to="/archive/documents" color="primary">
+        <NuxtLink to="/archive/documents" class="btn btn-primary">
           <i class="fas fa-arrow-left mr-2"></i>
           {{ t('back_to_documents') }}
-        </UButton>
+        </NuxtLink>
       </div>
 
       <!-- Document Content -->
       <template v-else>
-        <UCard class="mb-8">
-          <!-- Header: Info Left + Thumbnail Right -->
-          <div class="flex flex-col md:flex-row gap-6 items-center">
-            <!-- Document Info -->
-            <div class="flex-1 text-center md:text-left">
-              <UBadge
-                v-if="doc.type && typeConfig[doc.type]"
-                size="lg"
-                :color="typeConfig[doc.type].color as any"
-                class="mb-4"
-              >
-                <i :class="[typeConfig[doc.type].icon, 'mr-1']"></i>
-                {{ typeConfig[doc.type].label }}
-              </UBadge>
-
-              <h2 class="text-3xl font-bold mb-2">{{ doc.title }}</h2>
-
-              <p v-if="doc.author || doc.year" class="text-lg opacity-70 mb-4">
-                <span v-if="doc.author">{{ doc.author }}</span>
-                <span v-if="doc.author && doc.year"> &bull; </span>
-                <span v-if="doc.year">{{ doc.year }}</span>
-              </p>
-
-              <h3 v-if="doc.code" class="text-5xl font-bold text-primary">{{ doc.code }}</h3>
-            </div>
-
-            <!-- Thumbnail -->
-            <div class="w-full md:w-1/3 lg:w-1/4">
-              <figure class="relative aspect-4/3 rounded-xl overflow-hidden shadow-lg">
-                <img
-                  v-if="doc.image"
-                  :src="doc.image"
-                  :alt="t('alt.preview_image', { title: doc.title })"
-                  class="w-full h-full object-cover"
-                  loading="lazy"
-                  @error="handleImageError"
-                />
-                <div
-                  v-else
-                  class="w-full h-full bg-linear-to-br from-muted to-muted/50 flex items-center justify-center"
+        <div class="card bg-base-100 shadow-sm border border-base-300 mb-8">
+          <div class="card-body">
+            <!-- Header: Info Left + Thumbnail Right -->
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+              <!-- Document Info -->
+              <div class="flex-1 text-center md:text-left">
+                <span
+                  v-if="doc.type && typeConfig[doc.type]"
+                  class="badge badge-lg mb-4"
+                  :class="`badge-${typeConfig[doc.type].color}`"
                 >
-                  <i class="fas fa-file-lines text-6xl opacity-30"></i>
+                  <i :class="[typeConfig[doc.type].icon, 'mr-1']"></i>
+                  {{ typeConfig[doc.type].label }}
+                </span>
+
+                <h2 class="text-3xl font-bold mb-2">{{ doc.title }}</h2>
+
+                <p v-if="doc.author || doc.year" class="text-lg opacity-70 mb-4">
+                  <span v-if="doc.author">{{ doc.author }}</span>
+                  <span v-if="doc.author && doc.year"> &bull; </span>
+                  <span v-if="doc.year">{{ doc.year }}</span>
+                </p>
+
+                <h3 v-if="doc.code" class="text-5xl font-bold text-primary">{{ doc.code }}</h3>
+              </div>
+
+              <!-- Thumbnail -->
+              <div class="w-full md:w-1/3 lg:w-1/4">
+                <figure class="relative aspect-4/3 rounded-xl overflow-hidden shadow-lg">
+                  <img
+                    v-if="doc.image"
+                    :src="doc.image"
+                    :alt="t('alt.preview_image', { title: doc.title })"
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                    @error="handleImageError"
+                  />
+                  <div
+                    v-else
+                    class="w-full h-full bg-linear-to-br from-base-200 to-base-200/50 flex items-center justify-center"
+                  >
+                    <i class="fas fa-file-lines text-6xl opacity-30"></i>
+                  </div>
+                </figure>
+              </div>
+            </div>
+
+            <!-- Details Section -->
+            <div class="divider my-6">{{ t('section.details') }}</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div v-for="stat in stats" :key="stat.key" class="bg-base-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm opacity-70">{{ stat.label }}</span>
+                  <i :class="[stat.icon, 'text-xl text-primary']"></i>
                 </div>
-              </figure>
-            </div>
-          </div>
-
-          <!-- Details Section -->
-          <USeparator :label="t('section.details')" class="my-6" />
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div v-for="stat in stats" :key="stat.key" class="bg-muted rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{ stat.label }}</span>
-                <i :class="[stat.icon, 'text-xl text-primary']"></i>
-              </div>
-              <div class="text-lg font-semibold truncate" :class="{ 'text-error': !stat.value }">
-                {{ stat.value || t('stat.missing') }}
+                <div class="text-lg font-semibold truncate" :class="{ 'text-error': !stat.value }">
+                  {{ stat.value || t('stat.missing') }}
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Description Section -->
-          <USeparator :label="t('section.description')" class="my-6" />
-          <div class="prose max-w-none">
-            <p>{{ doc.description || t('no_description') }}</p>
-          </div>
+            <!-- Description Section -->
+            <div class="divider my-6">{{ t('section.description') }}</div>
+            <div class="prose max-w-none">
+              <p>{{ doc.description || t('no_description') }}</p>
+            </div>
 
-          <!-- Suggest Collection Callout (when doc has no collection) -->
-          <template v-if="!doc.collection && isAuthenticated">
-            <USeparator :label="t('section.suggest_collection')" class="my-6" />
-            <UAlert color="info" variant="soft">
-              <template #icon>
+            <!-- Suggest Collection Callout (when doc has no collection) -->
+            <template v-if="!doc.collection && isAuthenticated">
+              <div class="divider my-6">{{ t('section.suggest_collection') }}</div>
+              <div role="alert" class="alert alert-info alert-soft">
                 <i class="fad fa-folder-plus"></i>
-              </template>
-              <template #title>{{ t('suggest_collection.prompt_title') }}</template>
-              <template #description>{{ t('suggest_collection.prompt_description') }}</template>
-              <template #actions>
-                <UButton size="sm" color="info" variant="outline" @click="showSuggestEdit = true">
+                <div class="flex-1">
+                  <div class="font-semibold">{{ t('suggest_collection.prompt_title') }}</div>
+                  <div class="text-sm">{{ t('suggest_collection.prompt_description') }}</div>
+                </div>
+                <button type="button" class="btn btn-info btn-outline btn-sm" @click="showSuggestEdit = true">
                   <i class="fad fa-folder-plus mr-2"></i>
                   {{ t('suggest_collection.cta') }}
-                </UButton>
-              </template>
-            </UAlert>
-          </template>
+                </button>
+              </div>
+            </template>
 
-          <!-- Collection Section (conditional) -->
-          <template v-if="doc.collection">
-            <USeparator :label="t('section.collection')" class="my-6" />
-            <div class="mb-4">
-              <p class="text-lg">
-                {{ t('collection.part_of') }}
-                <NuxtLink
-                  :to="`/archive/documents/collection/${doc.collection.slug}`"
-                  class="font-semibold text-primary hover:underline"
-                >
-                  {{ doc.collection.title }}
-                </NuxtLink>
-              </p>
+            <!-- Collection Section (conditional) -->
+            <template v-if="doc.collection">
+              <div class="divider my-6">{{ t('section.collection') }}</div>
+              <div class="mb-4">
+                <p class="text-lg">
+                  {{ t('collection.part_of') }}
+                  <NuxtLink
+                    :to="`/archive/documents/collection/${doc.collection.slug}`"
+                    class="font-semibold text-primary hover:underline"
+                  >
+                    {{ doc.collection.title }}
+                  </NuxtLink>
+                </p>
+              </div>
+              <div
+                v-if="relatedDocs && relatedDocs.length > 0"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+              >
+                <archive-document-card v-for="related in relatedDocs.slice(0, 4)" :key="related.id" :item="related" />
+              </div>
+            </template>
+
+            <!-- Actions Section -->
+            <div class="divider my-6">{{ t('section.actions') }}</div>
+            <div class="flex flex-wrap gap-4 justify-center">
+              <NuxtLink v-if="doc.download" class="btn btn-primary" :to="doc.download" target="_blank">
+                <i class="fas fa-download mr-2"></i>
+                {{ t('action.download') }}
+              </NuxtLink>
+
+              <ClientOnly>
+                <button type="button" class="btn" :class="copied ? 'btn-success' : 'btn-neutral'" @click="copyUrl()">
+                  <i :class="[copied ? 'fas fa-check' : 'fas fa-link', 'mr-2']"></i>
+                  {{ copied ? t('action.copied') : t('action.copy_link') }}
+                </button>
+
+                <button type="button" class="btn btn-neutral" @click="shareDocument()">
+                  <i class="fas fa-share-nodes mr-2"></i>
+                  {{ t('action.share') }}
+                </button>
+              </ClientOnly>
+
+              <button v-if="isAuthenticated" type="button" class="btn btn-outline" @click="showSuggestEdit = true">
+                <i class="fad fa-pen-to-square mr-2"></i>
+                {{ t('action.suggest_edit') }}
+              </button>
             </div>
-            <div
-              v-if="relatedDocs && relatedDocs.length > 0"
-              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-            >
-              <archive-document-card v-for="related in relatedDocs.slice(0, 4)" :key="related.id" :item="related" />
-            </div>
-          </template>
-
-          <!-- Actions Section -->
-          <USeparator :label="t('section.actions')" class="my-6" />
-          <div class="flex flex-wrap gap-4 justify-center">
-            <UButton v-if="doc.download" color="primary" :to="doc.download" target="_blank">
-              <i class="fas fa-download mr-2"></i>
-              {{ t('action.download') }}
-            </UButton>
-
-            <ClientOnly>
-              <UButton :color="copied ? 'success' : 'neutral'" @click="copyUrl()">
-                <i :class="[copied ? 'fas fa-check' : 'fas fa-link', 'mr-2']"></i>
-                {{ copied ? t('action.copied') : t('action.copy_link') }}
-              </UButton>
-
-              <UButton color="neutral" @click="shareDocument()">
-                <i class="fas fa-share-nodes mr-2"></i>
-                {{ t('action.share') }}
-              </UButton>
-            </ClientOnly>
-
-            <UButton v-if="isAuthenticated" variant="outline" @click="showSuggestEdit = true">
-              <i class="fad fa-pen-to-square mr-2"></i>
-              {{ t('action.suggest_edit') }}
-            </UButton>
           </div>
-        </UCard>
+        </div>
 
         <!-- Patreon Support -->
-        <UCard>
-          <patreon-card size="large" />
-        </UCard>
+        <div class="card bg-base-100 shadow-sm border border-base-300">
+          <div class="card-body">
+            <patreon-card size="large" />
+          </div>
+        </div>
       </template>
     </div>
 

@@ -53,27 +53,26 @@
 </script>
 
 <template>
-  <UDropdownMenu
-    :items="
-      availableLocales.map((loc) => ({
-        label: getLanguageName(loc.code),
-        onSelect: () => handleLanguageChange(loc.code),
-      }))
-    "
-    :aria-label="t('language_menu_aria')"
-  >
-    <UButton
-      variant="ghost"
-      size="sm"
-      class="w-20"
+  <div class="dropdown dropdown-end" :aria-label="t('language_menu_aria')">
+    <div
+      tabindex="0"
+      role="button"
+      class="btn btn-ghost btn-sm w-20"
       :aria-label="t('language_button_aria')"
       :title="t('language_button_title')"
     >
       <i class="fad fa-globe shrink-0"></i>
       <span class="text-xs font-medium">{{ currentLocale?.code?.toUpperCase() || 'EN' }}</span>
       <i class="fad fa-chevron-down text-xs shrink-0"></i>
-    </UButton>
-  </UDropdownMenu>
+    </div>
+    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow">
+      <li v-for="loc in availableLocales" :key="loc.code">
+        <button type="button" @click="handleLanguageChange(loc.code); closeDropdown()">
+          {{ getLanguageName(loc.code) }}
+        </button>
+      </li>
+    </ul>
+  </div>
 </template>
 
 <i18n lang="json">

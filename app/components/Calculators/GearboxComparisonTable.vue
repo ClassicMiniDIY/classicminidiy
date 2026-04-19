@@ -30,9 +30,9 @@
   ]);
 
   const speedoStatusClass: Record<string, string> = {
-    'text-red': 'text-red-500 dark:text-red-400',
-    'text-green': 'text-green-600 dark:text-green-400',
-    'text-primary': 'text-blue-500 dark:text-blue-400',
+    'text-red': 'text-error',
+    'text-green': 'text-success',
+    'text-primary': 'text-info',
   };
 
   function getValue(config: ConfigResult, key: string): string {
@@ -80,48 +80,48 @@
 </script>
 
 <template>
-  <UCard v-if="configs.length > 0">
-    <template #header>
+  <div v-if="configs.length > 0" class="card bg-base-100 shadow-md border border-base-300">
+    <div class="card-body">
       <div class="flex items-center">
         <i class="fad fa-table-columns mr-2"></i>
         <h3 class="text-lg font-semibold">{{ t('title') }}</h3>
       </div>
-    </template>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-default">
-            <th class="text-left p-3 font-medium w-48">{{ t('metric') }}</th>
-            <th v-for="(config, idx) in configs" :key="idx" class="text-center p-3 font-medium">
-              <div class="flex items-center justify-center gap-2">
-                <span
-                  class="w-3 h-3 rounded-full shrink-0"
-                  :style="{ backgroundColor: CONFIG_COLORS[config.colorIndex] }"
-                ></span>
-                <span class="truncate max-w-32" :title="config.name">{{ config.name }}</span>
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="metric in metrics" :key="metric.key" class="border-b border-default last:border-0">
-            <td class="p-3 font-medium">{{ metric.label }}</td>
-            <td
-              v-for="(config, idx) in configs"
-              :key="idx"
-              class="p-3 text-center"
-              :class="{ 'font-bold text-green-600 dark:text-green-400': isBest(config, metric.key) }"
-            >
-              <span v-if="metric.key === 'speedo'" :class="speedoStatusClass[config.speedoStatus]">
-                {{ getValue(config, metric.key) }}
-              </span>
-              <span v-else>{{ getValue(config, metric.key) }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="table table-sm w-full">
+          <thead>
+            <tr>
+              <th class="text-left font-medium w-48">{{ t('metric') }}</th>
+              <th v-for="(config, idx) in configs" :key="idx" class="text-center font-medium">
+                <div class="flex items-center justify-center gap-2">
+                  <span
+                    class="w-3 h-3 rounded-full shrink-0"
+                    :style="{ backgroundColor: CONFIG_COLORS[config.colorIndex] }"
+                  ></span>
+                  <span class="truncate max-w-32" :title="config.name">{{ config.name }}</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="metric in metrics" :key="metric.key">
+              <td class="font-medium">{{ metric.label }}</td>
+              <td
+                v-for="(config, idx) in configs"
+                :key="idx"
+                class="text-center"
+                :class="{ 'font-bold text-success': isBest(config, metric.key) }"
+              >
+                <span v-if="metric.key === 'speedo'" :class="speedoStatusClass[config.speedoStatus]">
+                  {{ getValue(config, metric.key) }}
+                </span>
+                <span v-else>{{ getValue(config, metric.key) }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </UCard>
+  </div>
 </template>
 
 <i18n lang="json">

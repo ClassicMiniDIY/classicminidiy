@@ -111,7 +111,7 @@
         </ClientOnly>
       </div>
       <div class="col-span-12">
-        <USeparator :label="t('ui.needle_charts_section')" />
+        <div class="divider">{{ t('ui.needle_charts_section') }}</div>
       </div>
       <div class="col-span-12 text-center">
         <h2 class="fancy-font-book text-2xl">{{ t('ui.find_needle_heading') }}</h2>
@@ -129,7 +129,7 @@
         <NeedleTable />
       </div>
       <div class="col-span-12">
-        <USeparator :label="t('ui.support_section')" />
+        <div class="divider">{{ t('ui.support_section') }}</div>
       </div>
       <div class="col-span-12">
         <patreon-card size="large" />

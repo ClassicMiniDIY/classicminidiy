@@ -133,88 +133,89 @@
 
     <!-- Auth gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('auth.sign_in_title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('auth.sign_in_description') }}</p>
-          <UButton to="/login" color="primary" class="w-full">
+          <NuxtLink to="/login" class="btn btn-primary btn-block">
             {{ t('auth.sign_in_button') }}
-          </UButton>
+          </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Authenticated content -->
     <div v-else class="max-w-4xl mx-auto space-y-6">
       <!-- Saved Gear Configurations -->
-      <UCard>
-        <template #header>
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <i class="fad fa-gears mr-2"></i>
               <h2 class="text-lg font-semibold">{{ t('gear_configs.title') }}</h2>
             </div>
-            <UButton to="/technical/gearing" variant="outline" size="sm" icon="i-fa6-solid-calculator">
+            <NuxtLink to="/technical/gearing" class="btn btn-outline btn-sm">
+              <i class="fas fa-calculator"></i>
               {{ t('gear_configs.open_calculator') }}
-            </UButton>
+            </NuxtLink>
           </div>
-        </template>
 
-        <div v-if="loading" class="flex justify-center py-8">
-          <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
-        </div>
+          <div v-if="loading" class="flex justify-center py-8">
+            <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+          </div>
 
-        <div v-else-if="configs.length === 0" class="text-center py-8 opacity-60">
-          <i class="fas fa-inbox text-4xl mb-3 block"></i>
-          <p class="mb-4">{{ t('gear_configs.empty') }}</p>
-          <UButton to="/technical/gearing" color="primary" variant="soft">
-            {{ t('gear_configs.go_to_calculator') }}
-          </UButton>
-        </div>
+          <div v-else-if="configs.length === 0" class="text-center py-8 opacity-60">
+            <i class="fas fa-inbox text-4xl mb-3 block"></i>
+            <p class="mb-4">{{ t('gear_configs.empty') }}</p>
+            <NuxtLink to="/technical/gearing" class="btn btn-primary btn-soft">
+              {{ t('gear_configs.go_to_calculator') }}
+            </NuxtLink>
+          </div>
 
-        <div v-else class="space-y-3">
-          <div
-            v-for="config in configs"
-            :key="config.id"
-            class="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border gap-4"
-          >
-            <div class="min-w-0 flex-1">
-              <p class="font-medium truncate">{{ config.name }}</p>
-              <p class="text-xs opacity-60 mt-1">
-                {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
-              </p>
-              <p class="text-xs opacity-40 mt-1">
-                {{ t('gear_configs.tire') }}: {{ config.tire }} · {{ t('gear_configs.rpm') }}: {{ config.max_rpm }}
-              </p>
-            </div>
-            <div class="flex items-center gap-3 shrink-0">
-              <div class="flex items-center gap-2">
-                <label class="text-xs opacity-60">{{ t('gear_configs.public') }}</label>
-                <USwitch
-                  :model-value="config.is_public"
-                  size="sm"
-                  @update:model-value="togglePublic(config.id, config.is_public)"
-                />
+          <div v-else class="space-y-3">
+            <div
+              v-for="config in configs"
+              :key="config.id"
+              class="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border border-base-300 gap-4"
+            >
+              <div class="min-w-0 flex-1">
+                <p class="font-medium truncate">{{ config.name }}</p>
+                <p class="text-xs opacity-60 mt-1">
+                  {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
+                </p>
+                <p class="text-xs opacity-40 mt-1">
+                  {{ t('gear_configs.tire') }}: {{ config.tire }} · {{ t('gear_configs.rpm') }}: {{ config.max_rpm }}
+                </p>
               </div>
-              <UButton
-                size="sm"
-                variant="ghost"
-                color="error"
-                icon="i-fa6-solid-trash"
-                :title="t('gear_configs.delete')"
-                @click="handleDelete(config.id)"
-              />
+              <div class="flex items-center gap-3 shrink-0">
+                <div class="flex items-center gap-2">
+                  <label class="text-xs opacity-60">{{ t('gear_configs.public') }}</label>
+                  <input
+                    type="checkbox"
+                    class="toggle toggle-primary toggle-sm"
+                    :checked="config.is_public"
+                    @change="togglePublic(config.id, config.is_public)"
+                  />
+                </div>
+                <button
+                  class="btn btn-ghost btn-sm btn-square text-error"
+                  :title="t('gear_configs.delete')"
+                  @click="handleDelete(config.id)"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- My Submissions -->
-      <UCard>
-        <template #header>
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <i class="fad fa-file-lines mr-2"></i>
@@ -222,229 +223,229 @@
             </div>
             <div v-if="submissions.length > 0" class="flex items-center gap-3 text-sm">
               <span v-if="submissions.filter(s => s.status === 'pending').length > 0" class="flex items-center gap-1">
-                <UBadge color="warning" variant="soft" size="sm">
+                <span class="badge badge-warning badge-soft badge-sm">
                   {{ submissions.filter(s => s.status === 'pending').length }} {{ t('submissions.filters.pending') }}
-                </UBadge>
+                </span>
               </span>
               <span class="opacity-60">
                 {{ t('submissions.total_count', { count: submissions.length }) }}
               </span>
             </div>
           </div>
-        </template>
 
-        <!-- Loading state -->
-        <div v-if="submissionsLoading" class="flex justify-center py-10">
-          <span class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></span>
-        </div>
-
-        <div v-else>
-          <!-- Filter chips row -->
-          <div class="flex flex-wrap gap-4 mb-4">
-            <!-- Status filters -->
-            <div class="flex flex-wrap gap-1.5">
-              <UButton
-                size="xs"
-                :color="statusFilter === 'all' ? 'primary' : 'neutral'"
-                :variant="statusFilter === 'all' ? 'solid' : 'outline'"
-                @click="statusFilter = 'all'"
-              >
-                {{ t('submissions.filters.all') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :color="statusFilter === 'pending' ? 'warning' : 'neutral'"
-                :variant="statusFilter === 'pending' ? 'solid' : 'outline'"
-                @click="statusFilter = 'pending'"
-              >
-                {{ t('submissions.filters.pending') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :color="statusFilter === 'approved' ? 'success' : 'neutral'"
-                :variant="statusFilter === 'approved' ? 'solid' : 'outline'"
-                @click="statusFilter = 'approved'"
-              >
-                {{ t('submissions.filters.approved') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :color="statusFilter === 'rejected' ? 'error' : 'neutral'"
-                :variant="statusFilter === 'rejected' ? 'solid' : 'outline'"
-                @click="statusFilter = 'rejected'"
-              >
-                {{ t('submissions.filters.rejected') }}
-              </UButton>
-            </div>
-
-            <USeparator orientation="vertical" class="hidden sm:block h-6" />
-
-            <!-- Type filters -->
-            <div class="flex flex-wrap gap-1.5">
-              <UButton
-                size="xs"
-                :variant="typeFilter === 'all' ? 'solid' : 'outline'"
-                color="neutral"
-                @click="typeFilter = 'all'"
-              >
-                {{ t('submissions.filters.all') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :variant="typeFilter === 'document' ? 'solid' : 'outline'"
-                color="neutral"
-                @click="typeFilter = 'document'"
-              >
-                <i class="fa-duotone fa-books mr-1"></i>
-                {{ t('submissions.filters.documents') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :variant="typeFilter === 'registry' ? 'solid' : 'outline'"
-                color="neutral"
-                @click="typeFilter = 'registry'"
-              >
-                <i class="fa-duotone fa-clipboard-list mr-1"></i>
-                {{ t('submissions.filters.registry') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :variant="typeFilter === 'color' ? 'solid' : 'outline'"
-                color="neutral"
-                @click="typeFilter = 'color'"
-              >
-                <i class="fa-duotone fa-palette mr-1"></i>
-                {{ t('submissions.filters.colors') }}
-              </UButton>
-              <UButton
-                size="xs"
-                :variant="typeFilter === 'wheel' ? 'solid' : 'outline'"
-                color="neutral"
-                @click="typeFilter = 'wheel'"
-              >
-                <i class="fa-duotone fa-tire mr-1"></i>
-                {{ t('submissions.filters.wheels') }}
-              </UButton>
-            </div>
+          <!-- Loading state -->
+          <div v-if="submissionsLoading" class="flex justify-center py-10">
+            <span class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></span>
           </div>
 
-          <!-- Submissions list -->
-          <div v-if="filteredSubmissions.length > 0" class="space-y-3">
-            <div
-              v-for="item in filteredSubmissions"
-              :key="item.id"
-              class="border rounded-lg overflow-hidden transition-colors hover:border-primary/40 cursor-pointer"
-              @click="toggleSubmission(item.id)"
-            >
-              <!-- Summary row (always visible) -->
-              <div class="flex items-center gap-3 p-4">
-                <i
-                  class="fas fa-chevron-right text-xs opacity-40 transition-transform"
-                  :class="{ 'rotate-90': expandedSubmission === item.id }"
-                ></i>
-
-                <!-- Type icon -->
-                <i
-                  class="fa-duotone text-base opacity-60"
-                  :class="{
-                    'fa-books': item.targetType === 'document',
-                    'fa-clipboard-list': item.targetType === 'registry',
-                    'fa-palette': item.targetType === 'color',
-                    'fa-tire': item.targetType === 'wheel',
-                    'fa-file': !['document', 'registry', 'color', 'wheel'].includes(item.targetType),
-                  }"
-                ></i>
-
-                <!-- Title & date -->
-                <div class="flex-1 min-w-0">
-                  <h4 class="text-sm font-semibold truncate">{{ getSubmissionTitle(item) }}</h4>
-                  <span class="text-xs opacity-50">{{ formatDate(item.createdAt) }}</span>
-                </div>
-
-                <!-- Status badge -->
-                <UBadge
-                  :color="item.status === 'pending' ? 'warning' : item.status === 'approved' ? 'success' : 'error'"
-                  size="sm"
+          <div v-else>
+            <!-- Filter chips row -->
+            <div class="flex flex-wrap gap-4 mb-4">
+              <!-- Status filters -->
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  class="btn btn-xs"
+                  :class="statusFilter === 'all' ? 'btn-primary' : 'btn-outline'"
+                  @click="statusFilter = 'all'"
                 >
-                  {{
-                    item.status === 'pending'
-                      ? t('submissions.item.status.pending')
-                      : item.status === 'approved'
-                        ? t('submissions.item.status.approved')
-                        : t('submissions.item.status.rejected')
-                  }}
-                </UBadge>
+                  {{ t('submissions.filters.all') }}
+                </button>
+                <button
+                  class="btn btn-xs"
+                  :class="statusFilter === 'pending' ? 'btn-warning' : 'btn-outline'"
+                  @click="statusFilter = 'pending'"
+                >
+                  {{ t('submissions.filters.pending') }}
+                </button>
+                <button
+                  class="btn btn-xs"
+                  :class="statusFilter === 'approved' ? 'btn-success' : 'btn-outline'"
+                  @click="statusFilter = 'approved'"
+                >
+                  {{ t('submissions.filters.approved') }}
+                </button>
+                <button
+                  class="btn btn-xs"
+                  :class="statusFilter === 'rejected' ? 'btn-error' : 'btn-outline'"
+                  @click="statusFilter = 'rejected'"
+                >
+                  {{ t('submissions.filters.rejected') }}
+                </button>
               </div>
 
-              <!-- Expanded details -->
-              <div v-if="expandedSubmission === item.id" class="border-t px-4 pb-4 pt-3 space-y-3">
-                <!-- Type badges -->
-                <div class="flex flex-wrap gap-2">
-                  <UBadge :color="item.type === 'new_item' ? 'neutral' : 'info'" variant="soft" size="sm">
+              <div class="divider divider-horizontal hidden sm:flex"></div>
+
+              <!-- Type filters -->
+              <div class="flex flex-wrap gap-1.5">
+                <button
+                  class="btn btn-xs"
+                  :class="typeFilter === 'all' ? 'btn-neutral' : 'btn-outline'"
+                  @click="typeFilter = 'all'"
+                >
+                  {{ t('submissions.filters.all') }}
+                </button>
+                <button
+                  class="btn btn-xs"
+                  :class="typeFilter === 'document' ? 'btn-neutral' : 'btn-outline'"
+                  @click="typeFilter = 'document'"
+                >
+                  <i class="fa-duotone fa-books mr-1"></i>
+                  {{ t('submissions.filters.documents') }}
+                </button>
+                <button
+                  class="btn btn-xs"
+                  :class="typeFilter === 'registry' ? 'btn-neutral' : 'btn-outline'"
+                  @click="typeFilter = 'registry'"
+                >
+                  <i class="fa-duotone fa-clipboard-list mr-1"></i>
+                  {{ t('submissions.filters.registry') }}
+                </button>
+                <button
+                  class="btn btn-xs"
+                  :class="typeFilter === 'color' ? 'btn-neutral' : 'btn-outline'"
+                  @click="typeFilter = 'color'"
+                >
+                  <i class="fa-duotone fa-palette mr-1"></i>
+                  {{ t('submissions.filters.colors') }}
+                </button>
+                <button
+                  class="btn btn-xs"
+                  :class="typeFilter === 'wheel' ? 'btn-neutral' : 'btn-outline'"
+                  @click="typeFilter = 'wheel'"
+                >
+                  <i class="fa-duotone fa-tire mr-1"></i>
+                  {{ t('submissions.filters.wheels') }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Submissions list -->
+            <div v-if="filteredSubmissions.length > 0" class="space-y-3">
+              <div
+                v-for="item in filteredSubmissions"
+                :key="item.id"
+                class="border border-base-300 rounded-lg overflow-hidden transition-colors hover:border-primary/40 cursor-pointer"
+                @click="toggleSubmission(item.id)"
+              >
+                <!-- Summary row (always visible) -->
+                <div class="flex items-center gap-3 p-4">
+                  <i
+                    class="fas fa-chevron-right text-xs opacity-40 transition-transform"
+                    :class="{ 'rotate-90': expandedSubmission === item.id }"
+                  ></i>
+
+                  <!-- Type icon -->
+                  <i
+                    class="fa-duotone text-base opacity-60"
+                    :class="{
+                      'fa-books': item.targetType === 'document',
+                      'fa-clipboard-list': item.targetType === 'registry',
+                      'fa-palette': item.targetType === 'color',
+                      'fa-tire': item.targetType === 'wheel',
+                      'fa-file': !['document', 'registry', 'color', 'wheel'].includes(item.targetType),
+                    }"
+                  ></i>
+
+                  <!-- Title & date -->
+                  <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-semibold truncate">{{ getSubmissionTitle(item) }}</h4>
+                    <span class="text-xs opacity-50">{{ formatDate(item.createdAt) }}</span>
+                  </div>
+
+                  <!-- Status badge -->
+                  <span
+                    class="badge badge-sm"
+                    :class="item.status === 'pending' ? 'badge-warning' : item.status === 'approved' ? 'badge-success' : 'badge-error'"
+                  >
                     {{
-                      item.type === 'new_item'
-                        ? t('submissions.item.new_item')
-                        : item.type === 'edit_suggestion'
-                          ? t('submissions.item.edit_suggestion')
-                          : t('submissions.item.new_collection')
+                      item.status === 'pending'
+                        ? t('submissions.item.status.pending')
+                        : item.status === 'approved'
+                          ? t('submissions.item.status.approved')
+                          : t('submissions.item.status.rejected')
                     }}
-                  </UBadge>
-                  <UBadge color="neutral" variant="outline" size="sm">
-                    {{ item.targetType }}
-                  </UBadge>
+                  </span>
                 </div>
 
-                <!-- Detail fields -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <!-- Expanded details -->
+                <div v-if="expandedSubmission === item.id" class="border-t border-base-300 px-4 pb-4 pt-3 space-y-3">
+                  <!-- Type badges -->
+                  <div class="flex flex-wrap gap-2">
+                    <span
+                      class="badge badge-soft badge-sm"
+                      :class="item.type === 'new_item' ? 'badge-neutral' : 'badge-info'"
+                    >
+                      {{
+                        item.type === 'new_item'
+                          ? t('submissions.item.new_item')
+                          : item.type === 'edit_suggestion'
+                            ? t('submissions.item.edit_suggestion')
+                            : t('submissions.item.new_collection')
+                      }}
+                    </span>
+                    <span class="badge badge-neutral badge-outline badge-sm">
+                      {{ item.targetType }}
+                    </span>
+                  </div>
+
+                  <!-- Detail fields -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div
+                      v-for="detail in getSubmissionDetails(item)"
+                      :key="detail.label"
+                      class="text-sm"
+                    >
+                      <span class="opacity-50">{{ detail.label }}:</span>
+                      <span class="ml-1 font-medium">{{ detail.value }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Dates -->
+                  <div class="flex flex-wrap gap-4 text-xs opacity-60">
+                    <span>
+                      <i class="fas fa-calendar-plus mr-1"></i>
+                      {{ t('submissions.item.submitted') }}: {{ formatDate(item.createdAt) }}
+                    </span>
+                    <span v-if="item.reviewedAt">
+                      <i class="fas fa-calendar-check mr-1"></i>
+                      {{ t('submissions.item.reviewed') }}: {{ formatDate(item.reviewedAt) }}
+                    </span>
+                  </div>
+
+                  <!-- Submission ID -->
+                  <p class="text-xs opacity-40 font-mono">ID: {{ item.id }}</p>
+
+                  <!-- Reviewer notes -->
                   <div
-                    v-for="detail in getSubmissionDetails(item)"
-                    :key="detail.label"
-                    class="text-sm"
+                    v-if="item.reviewerNotes && (item.status === 'approved' || item.status === 'rejected')"
                   >
-                    <span class="opacity-50">{{ detail.label }}:</span>
-                    <span class="ml-1 font-medium">{{ detail.value }}</span>
+                    <div
+                      role="alert"
+                      class="alert alert-soft"
+                      :class="item.status === 'approved' ? 'alert-success' : 'alert-error'"
+                    >
+                      <div>
+                        <div class="font-semibold">{{ t('submissions.item.reviewer_notes') }}</div>
+                        <div class="text-sm">{{ item.reviewerNotes }}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <!-- Dates -->
-                <div class="flex flex-wrap gap-4 text-xs opacity-60">
-                  <span>
-                    <i class="fas fa-calendar-plus mr-1"></i>
-                    {{ t('submissions.item.submitted') }}: {{ formatDate(item.createdAt) }}
-                  </span>
-                  <span v-if="item.reviewedAt">
-                    <i class="fas fa-calendar-check mr-1"></i>
-                    {{ t('submissions.item.reviewed') }}: {{ formatDate(item.reviewedAt) }}
-                  </span>
-                </div>
-
-                <!-- Submission ID -->
-                <p class="text-xs opacity-40 font-mono">ID: {{ item.id }}</p>
-
-                <!-- Reviewer notes -->
-                <div
-                  v-if="item.reviewerNotes && (item.status === 'approved' || item.status === 'rejected')"
-                >
-                  <UAlert :color="item.status === 'approved' ? 'success' : 'error'" variant="soft" size="sm">
-                    <template #title>{{ t('submissions.item.reviewer_notes') }}</template>
-                    <template #description>{{ item.reviewerNotes }}</template>
-                  </UAlert>
-                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Empty state -->
-          <div v-else class="text-center py-10">
-            <i class="fa-duotone fa-inbox text-5xl opacity-30 block mb-3"></i>
-            <p class="font-semibold mb-1">{{ t('submissions.empty.title') }}</p>
-            <p class="text-sm opacity-60 mb-4 max-w-sm mx-auto">{{ t('submissions.empty.description') }}</p>
-            <UButton to="/contribute" color="primary" variant="outline" size="sm">
-              {{ t('submissions.empty.contribute_link') }}
-            </UButton>
+            <!-- Empty state -->
+            <div v-else class="text-center py-10">
+              <i class="fa-duotone fa-inbox text-5xl opacity-30 block mb-3"></i>
+              <p class="font-semibold mb-1">{{ t('submissions.empty.title') }}</p>
+              <p class="text-sm opacity-60 mb-4 max-w-sm mx-auto">{{ t('submissions.empty.description') }}</p>
+              <NuxtLink to="/contribute" class="btn btn-primary btn-outline btn-sm">
+                {{ t('submissions.empty.contribute_link') }}
+              </NuxtLink>
+            </div>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

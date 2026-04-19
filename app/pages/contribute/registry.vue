@@ -164,18 +164,18 @@
 
     <!-- Auth Gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
-            <i class="fas fa-lock text-5xl text-muted"></i>
+            <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
-          <UButton to="/login" color="primary" class="w-full">
+          <NuxtLink to="/login" class="btn btn-primary w-full">
             {{ t('sign_in_button') }}
-          </UButton>
+          </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Authenticated Content -->
@@ -185,245 +185,247 @@
         <div class="col-span-12 md:col-span-8 md:col-start-3">
           <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
           <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
-          <USeparator class="mb-6" />
+          <div class="divider mb-6"></div>
         </div>
 
         <!-- Form Card -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <UCard>
-            <!-- Success State -->
-            <div v-if="submissionSuccess" class="text-center py-5">
-              <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
-              <h1 class="text-2xl font-bold mb-1">{{ t('success.thank_you') }}</h1>
-              <h2 class="text-lg mb-4">{{ t('success.submitted_message') }}</h2>
-              <div class="space-y-4 max-w-md mx-auto">
-                <UButton color="primary" @click="resetForm" class="w-full">
-                  <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
-                  {{ t('success.submit_another') }}
-                </UButton>
-                <UButton to="/dashboard" color="neutral" variant="outline" class="w-full">
-                  {{ t('success.view_submissions') }}
-                </UButton>
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <!-- Success State -->
+              <div v-if="submissionSuccess" class="text-center py-5">
+                <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
+                <h1 class="text-2xl font-bold mb-1">{{ t('success.thank_you') }}</h1>
+                <h2 class="text-lg mb-4">{{ t('success.submitted_message') }}</h2>
+                <div class="space-y-4 max-w-md mx-auto">
+                  <button type="button" class="btn btn-primary w-full" @click="resetForm">
+                    <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
+                    {{ t('success.submit_another') }}
+                  </button>
+                  <NuxtLink to="/dashboard" class="btn btn-neutral btn-outline w-full">
+                    {{ t('success.view_submissions') }}
+                  </NuxtLink>
+                </div>
+              </div>
+
+              <!-- Form -->
+              <div v-else>
+                <form @submit.prevent="submit">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Left Column -->
+                    <div class="space-y-4">
+                      <!-- Model Year -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium"
+                            >{{ t('form_labels.model_year') }} <span class="text-error">*</span></span
+                          >
+                          <span class="text-sm opacity-70"><i class="fad fa-calendar"></i></span>
+                        </label>
+                        <input
+                          type="number"
+                          min="1959"
+                          max="2000"
+                          v-model.number="formData.year"
+                          class="input input-bordered w-full"
+                          :class="{ 'input-error': !formData.year && touchedFields.year }"
+                          :disabled="processing"
+                          @blur="touchedFields.year = true"
+                        />
+                        <p v-if="!formData.year && touchedFields.year" class="text-sm text-error mt-1">
+                          {{ t('validation.required') }}
+                        </p>
+                      </div>
+
+                      <!-- Model -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium"
+                            >{{ t('form_labels.model') }} <span class="text-error">*</span></span
+                          >
+                          <span class="text-sm opacity-70"><i class="fad fa-car"></i></span>
+                        </label>
+                        <input
+                          type="text"
+                          :placeholder="t('placeholders.model')"
+                          v-model="formData.model"
+                          class="input input-bordered w-full"
+                          :class="{ 'input-error': formData.model === '' && touchedFields.model }"
+                          :disabled="processing"
+                          @blur="touchedFields.model = true"
+                        />
+                        <p v-if="formData.model === '' && touchedFields.model" class="text-sm text-error mt-1">
+                          {{ t('validation.required') }}
+                        </p>
+                      </div>
+
+                      <!-- Trim -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium"
+                            >{{ t('form_labels.trim') }} <span class="text-error">*</span></span
+                          >
+                          <span class="text-sm opacity-70"><i class="fad fa-scissors"></i></span>
+                        </label>
+                        <input
+                          type="text"
+                          :placeholder="t('placeholders.trim')"
+                          v-model="formData.trim"
+                          class="input input-bordered w-full"
+                          :class="{ 'input-error': formData.trim === '' && touchedFields.trim }"
+                          :disabled="processing"
+                          @blur="touchedFields.trim = true"
+                        />
+                        <p v-if="formData.trim === '' && touchedFields.trim" class="text-sm text-error mt-1">
+                          {{ t('validation.required') }}
+                        </p>
+                      </div>
+
+                      <!-- Body Type -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium"
+                            >{{ t('form_labels.body_type') }} <span class="text-error">*</span></span
+                          >
+                          <span class="text-sm opacity-70"><i class="fad fa-cars"></i></span>
+                        </label>
+                        <select
+                          v-model="formData.bodyType"
+                          class="select select-bordered w-full"
+                          :class="{ 'select-error': formData.bodyType === '' && touchedFields.bodyType }"
+                          :disabled="processing"
+                          @blur="touchedFields.bodyType = true"
+                          @change="touchedFields.bodyType = true"
+                        >
+                          <option v-for="opt in bodyTypeOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </select>
+                        <p v-if="formData.bodyType === '' && touchedFields.bodyType" class="text-sm text-error mt-1">
+                          {{ t('validation.required') }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-4">
+                      <!-- Engine Size -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium"
+                            >{{ t('form_labels.original_engine_size') }} <span class="text-error">*</span></span
+                          >
+                          <span class="text-sm opacity-70"><i class="fad fa-engine"></i></span>
+                        </label>
+                        <select
+                          v-model.number="formData.engineSize"
+                          class="select select-bordered w-full"
+                          :class="{ 'select-error': !formData.engineSize && touchedFields.engineSize }"
+                          :disabled="processing"
+                          @blur="touchedFields.engineSize = true"
+                          @change="touchedFields.engineSize = true"
+                        >
+                          <option v-for="opt in engineSizeOptions" :key="opt.value" :value="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </select>
+                        <p v-if="!formData.engineSize && touchedFields.engineSize" class="text-sm text-error mt-1">
+                          {{ t('validation.required') }}
+                        </p>
+                      </div>
+
+                      <!-- Factory Color -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium">{{ t('form_labels.factory_color') }}</span>
+                          <span class="text-sm opacity-70"><i class="fad fa-palette"></i></span>
+                        </label>
+                        <input
+                          type="text"
+                          :placeholder="t('placeholders.color')"
+                          v-model="formData.color"
+                          class="input input-bordered w-full"
+                          :disabled="processing"
+                        />
+                      </div>
+
+                      <!-- Body Shell Number -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium">{{ t('form_labels.body_shell_number') }}</span>
+                          <span class="text-sm opacity-70"><i class="fad fa-hashtag"></i></span>
+                        </label>
+                        <input
+                          type="text"
+                          :placeholder="t('placeholders.body_number')"
+                          v-model="formData.bodyNum"
+                          class="input input-bordered w-full"
+                          :disabled="processing"
+                        />
+                      </div>
+
+                      <!-- Engine Plate Number -->
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium">{{ t('form_labels.engine_plate_number') }}</span>
+                          <span class="text-sm opacity-70"><i class="fad fa-hashtag"></i></span>
+                        </label>
+                        <input
+                          type="text"
+                          :placeholder="t('placeholders.engine_number')"
+                          v-model="formData.engineNum"
+                          class="input input-bordered w-full"
+                          :disabled="processing"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Special Notes (Full Width) -->
+                    <div class="col-span-1 md:col-span-2">
+                      <div class="w-full">
+                        <label class="flex justify-between items-center mb-1">
+                          <span class="text-sm font-medium">{{ t('form_labels.special_notes') }}</span>
+                          <span class="text-sm opacity-70"><i class="fad fa-note"></i></span>
+                        </label>
+                        <textarea
+                          :placeholder="t('placeholders.notes')"
+                          v-model="formData.notes"
+                          :rows="4"
+                          class="textarea textarea-bordered w-full"
+                          :disabled="processing"
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Error Alert & Submit Button -->
+                  <div class="mt-6">
+                    <div v-if="apiError" class="alert alert-error mb-4" role="alert">
+                      <i class="fa-duotone fa-circle-exclamation"></i>
+                      <div class="flex-1">
+                        <div class="font-semibold">{{ t('error.title') }}</div>
+                        <div class="text-sm">{{ apiMessage || t('error.message') }}</div>
+                        <p class="mt-2 text-sm">{{ t('error.check_entries') }}</p>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-outline" @click="apiError = false">
+                        {{ t('error.dismiss') }}
+                      </button>
+                    </div>
+
+                    <button
+                      type="submit"
+                      class="btn btn-primary btn-lg w-full"
+                      :disabled="!validateForm() || processing"
+                    >
+                      <span v-if="processing" class="loading loading-spinner loading-sm"></span>
+                      <i v-else class="fad fa-paper-plane mr-2"></i>
+                      {{ t('submit_button') }}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-
-            <!-- Form -->
-            <div v-else>
-              <form @submit.prevent="submit">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <!-- Left Column -->
-                  <div class="space-y-4">
-                    <!-- Model Year -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium"
-                          >{{ t('form_labels.model_year') }} <span class="text-error">*</span></span
-                        >
-                        <span class="text-sm text-muted"><i class="fad fa-calendar"></i></span>
-                      </label>
-                      <UInput
-                        type="number"
-                        min="1959"
-                        max="2000"
-                        v-model.number="formData.year"
-                        class="w-full"
-                        :color="!formData.year && touchedFields.year ? 'error' : undefined"
-                        :disabled="processing"
-                        @blur="touchedFields.year = true"
-                      />
-                      <p v-if="!formData.year && touchedFields.year" class="text-sm text-error mt-1">
-                        {{ t('validation.required') }}
-                      </p>
-                    </div>
-
-                    <!-- Model -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium"
-                          >{{ t('form_labels.model') }} <span class="text-error">*</span></span
-                        >
-                        <span class="text-sm text-muted"><i class="fad fa-car"></i></span>
-                      </label>
-                      <UInput
-                        type="text"
-                        :placeholder="t('placeholders.model')"
-                        v-model="formData.model"
-                        class="w-full"
-                        :color="formData.model === '' && touchedFields.model ? 'error' : undefined"
-                        :disabled="processing"
-                        @blur="touchedFields.model = true"
-                      />
-                      <p v-if="formData.model === '' && touchedFields.model" class="text-sm text-error mt-1">
-                        {{ t('validation.required') }}
-                      </p>
-                    </div>
-
-                    <!-- Trim -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium"
-                          >{{ t('form_labels.trim') }} <span class="text-error">*</span></span
-                        >
-                        <span class="text-sm text-muted"><i class="fad fa-scissors"></i></span>
-                      </label>
-                      <UInput
-                        type="text"
-                        :placeholder="t('placeholders.trim')"
-                        v-model="formData.trim"
-                        class="w-full"
-                        :color="formData.trim === '' && touchedFields.trim ? 'error' : undefined"
-                        :disabled="processing"
-                        @blur="touchedFields.trim = true"
-                      />
-                      <p v-if="formData.trim === '' && touchedFields.trim" class="text-sm text-error mt-1">
-                        {{ t('validation.required') }}
-                      </p>
-                    </div>
-
-                    <!-- Body Type -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium"
-                          >{{ t('form_labels.body_type') }} <span class="text-error">*</span></span
-                        >
-                        <span class="text-sm text-muted"><i class="fad fa-cars"></i></span>
-                      </label>
-                      <USelect
-                        v-model="formData.bodyType"
-                        :items="bodyTypeOptions"
-                        class="w-full"
-                        :color="formData.bodyType === '' && touchedFields.bodyType ? 'error' : undefined"
-                        :disabled="processing"
-                        @blur="touchedFields.bodyType = true"
-                        @change="touchedFields.bodyType = true"
-                      />
-                      <p v-if="formData.bodyType === '' && touchedFields.bodyType" class="text-sm text-error mt-1">
-                        {{ t('validation.required') }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Right Column -->
-                  <div class="space-y-4">
-                    <!-- Engine Size -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium"
-                          >{{ t('form_labels.original_engine_size') }} <span class="text-error">*</span></span
-                        >
-                        <span class="text-sm text-muted"><i class="fad fa-engine"></i></span>
-                      </label>
-                      <USelect
-                        v-model.number="formData.engineSize"
-                        :items="engineSizeOptions"
-                        class="w-full"
-                        :color="!formData.engineSize && touchedFields.engineSize ? 'error' : undefined"
-                        :disabled="processing"
-                        @blur="touchedFields.engineSize = true"
-                        @change="touchedFields.engineSize = true"
-                      />
-                      <p v-if="!formData.engineSize && touchedFields.engineSize" class="text-sm text-error mt-1">
-                        {{ t('validation.required') }}
-                      </p>
-                    </div>
-
-                    <!-- Factory Color -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ t('form_labels.factory_color') }}</span>
-                        <span class="text-sm text-muted"><i class="fad fa-palette"></i></span>
-                      </label>
-                      <UInput
-                        type="text"
-                        :placeholder="t('placeholders.color')"
-                        v-model="formData.color"
-                        class="w-full"
-                        :disabled="processing"
-                      />
-                    </div>
-
-                    <!-- Body Shell Number -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ t('form_labels.body_shell_number') }}</span>
-                        <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
-                      </label>
-                      <UInput
-                        type="text"
-                        :placeholder="t('placeholders.body_number')"
-                        v-model="formData.bodyNum"
-                        class="w-full"
-                        :disabled="processing"
-                      />
-                    </div>
-
-                    <!-- Engine Plate Number -->
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ t('form_labels.engine_plate_number') }}</span>
-                        <span class="text-sm text-muted"><i class="fad fa-hashtag"></i></span>
-                      </label>
-                      <UInput
-                        type="text"
-                        :placeholder="t('placeholders.engine_number')"
-                        v-model="formData.engineNum"
-                        class="w-full"
-                        :disabled="processing"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Special Notes (Full Width) -->
-                  <div class="col-span-1 md:col-span-2">
-                    <div class="w-full">
-                      <label class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium">{{ t('form_labels.special_notes') }}</span>
-                        <span class="text-sm text-muted"><i class="fad fa-note"></i></span>
-                      </label>
-                      <UTextarea
-                        :placeholder="t('placeholders.notes')"
-                        v-model="formData.notes"
-                        :rows="4"
-                        class="w-full"
-                        :disabled="processing"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Error Alert & Submit Button -->
-                <div class="mt-6">
-                  <UAlert v-if="apiError" color="error" class="mb-4">
-                    <template #icon>
-                      <i class="fa-duotone fa-circle-exclamation"></i>
-                    </template>
-                    <template #title>{{ t('error.title') }}</template>
-                    <template #description>
-                      {{ apiMessage || t('error.message') }}
-                      <p class="mt-2">{{ t('error.check_entries') }}</p>
-                    </template>
-                    <template #actions>
-                      <UButton size="sm" variant="outline" @click="apiError = false">
-                        {{ t('error.dismiss') }}
-                      </UButton>
-                    </template>
-                  </UAlert>
-
-                  <UButton
-                    type="submit"
-                    color="primary"
-                    size="lg"
-                    class="w-full"
-                    :disabled="!validateForm() || processing"
-                    :loading="processing"
-                  >
-                    <i class="fad fa-paper-plane mr-2" v-if="!processing"></i>
-                    {{ t('submit_button') }}
-                  </UButton>
-                </div>
-              </form>
-            </div>
-          </UCard>
+          </div>
         </div>
 
         <!-- Patreon Card -->

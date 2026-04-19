@@ -111,13 +111,12 @@
         <p class="text-lg pb-5">
           {{ t('maintenance_description') }}
         </p>
-        <UButton class="mr-3 text-lg" color="primary" to="/contribute">
+        <NuxtLink class="btn btn-primary mr-3 text-lg" to="/contribute">
           <i class="fa-duotone fa-paper-plane mr-2"></i>
           {{ t('contribute_to_archive') }}
-        </UButton>
-        <UButton
-          class="mr-3 text-lg"
-          color="secondary"
+        </NuxtLink>
+        <NuxtLink
+          class="btn btn-secondary mr-3 text-lg"
           to="https://buy.stripe.com/3cs8yWe1P1ER3Oo5kl"
           target="_blank"
           external
@@ -125,39 +124,45 @@
         >
           <i class="fa-duotone fa-hand-holding-circle-dollar mr-2"></i>
           {{ t('cover_server_costs') }}
-        </UButton>
+        </NuxtLink>
       </div>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-10">
       <div v-for="archive in ArchiveItems" :key="archive.to" class="col-span-1">
         <template v-if="archive.disabled">
-          <UCard class="text-center p-5 h-full opacity-50 cursor-not-allowed">
-            <p class="text-xs text-right">{{ t('coming_soon') }}</p>
-            <span class="text-4xl block" v-html="archive.iconHtml"> </span>
-            <p class="text-lg mt-2">{{ getArchiveItemTitle(archive.title) }}</p>
-          </UCard>
+          <div class="card bg-base-100 shadow-sm border border-base-300 text-center p-5 h-full opacity-50 cursor-not-allowed">
+            <div class="card-body">
+              <p class="text-xs text-right">{{ t('coming_soon') }}</p>
+              <span class="text-4xl block" v-html="archive.iconHtml"> </span>
+              <p class="text-lg mt-2">{{ getArchiveItemTitle(archive.title) }}</p>
+            </div>
+          </div>
         </template>
 
         <NuxtLink v-else :to="archive.to" class="block h-full">
-          <UCard class="text-center p-5 h-full hover:shadow-xl transition-shadow">
-            <span class="text-4xl block" v-html="archive.iconHtml"> </span>
-            <p class="text-lg mt-2">{{ getArchiveItemTitle(archive.title) }}</p>
-          </UCard>
+          <div class="card bg-base-100 shadow-sm border border-base-300 text-center p-5 h-full hover:shadow-xl transition-shadow">
+            <div class="card-body">
+              <span class="text-4xl block" v-html="archive.iconHtml"> </span>
+              <p class="text-lg mt-2">{{ getArchiveItemTitle(archive.title) }}</p>
+            </div>
+          </div>
         </NuxtLink>
       </div>
       <div class="col-span-1">
         <NuxtLink to="/contribute" class="block h-full">
-          <UCard class="text-center p-5 h-full hover:shadow-xl transition-shadow bg-primary/5">
-            <i class="fad fa-hand-holding-heart text-4xl text-primary"></i>
-            <p class="text-lg mt-2 font-semibold">{{ t('contribute') }}</p>
-            <p class="text-sm opacity-70 mt-1">{{ t('contribute_description') }}</p>
-          </UCard>
+          <div class="card bg-base-100 shadow-sm border border-base-300 text-center p-5 h-full hover:shadow-xl transition-shadow bg-primary/5">
+            <div class="card-body">
+              <i class="fad fa-hand-holding-heart text-4xl text-primary"></i>
+              <p class="text-lg mt-2 font-semibold">{{ t('contribute') }}</p>
+              <p class="text-sm opacity-70 mt-1">{{ t('contribute_description') }}</p>
+            </div>
+          </div>
         </NuxtLink>
       </div>
     </div>
     <div class="grid grid-cols-12 gap-4 mt-6">
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="t('support_divider')" />
+        <div class="divider">{{ t('support_divider') }}</div>
       </div>
       <div class="col-span-12">
         <patreon-card size="large" />

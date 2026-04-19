@@ -289,91 +289,78 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h1 class="text-2xl font-bold">User Management</h1>
-      <UButton color="primary" @click="refresh" :disabled="isLoading" :loading="isLoading">
-        <template #leading>
-          <i v-if="!isLoading" class="fa-solid fa-refresh"></i>
-        </template>
+      <button type="button" class="btn btn-primary" :disabled="isLoading" @click="refresh">
+        <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
+        <i v-else class="fa-solid fa-refresh"></i>
         Refresh
-      </UButton>
+      </button>
     </div>
 
     <!-- Search and Filter Bar -->
     <div class="space-y-4 mb-8">
       <!-- Search -->
       <div class="max-w-md">
-        <UInput
-          v-model="searchQuery"
-          placeholder="Search by name or email..."
-          icon="i-fa6-solid-magnifying-glass"
-          size="md"
-          class="w-full"
-        />
+        <label class="input input-bordered flex items-center gap-2 w-full">
+          <i class="fas fa-magnifying-glass opacity-60"></i>
+          <input v-model="searchQuery" type="text" class="grow" placeholder="Search by name or email..." />
+        </label>
       </div>
 
       <!-- Trust Level Filters -->
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-sm font-medium opacity-70 mr-1">Trust Level:</span>
-        <UButton
+        <button
           v-for="filter in trustLevelFilters"
           :key="filter.value"
-          size="sm"
-          :variant="activeTrustLevel === filter.value ? 'solid' : 'ghost'"
-          :color="activeTrustLevel === filter.value ? 'primary' : 'neutral'"
+          type="button"
+          class="btn btn-sm"
+          :class="activeTrustLevel === filter.value ? 'btn-primary' : 'btn-ghost'"
           @click="activeTrustLevel = filter.value"
         >
           {{ filter.label }}
-        </UButton>
+        </button>
       </div>
     </div>
 
     <!-- Error Messages -->
-    <UAlert v-if="errorMessage" color="error" icon="i-fa6-solid-circle-xmark" :title="errorMessage" class="mb-6" />
-    <UAlert
-      v-if="fetchError"
-      color="error"
-      icon="i-fa6-solid-circle-xmark"
-      :title="`Failed to load users: ${fetchError.data?.message || fetchError.message || 'Unknown error'}`"
-      class="mb-6"
-    >
-      <template #actions>
-        <UButton variant="outline" color="error" size="sm" @click="refreshData()"> Retry </UButton>
-      </template>
-    </UAlert>
+    <div v-if="errorMessage" role="alert" class="alert alert-error mb-6">
+      <i class="fas fa-circle-xmark"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+    <div v-if="fetchError" role="alert" class="alert alert-error mb-6">
+      <i class="fas fa-circle-xmark"></i>
+      <span>Failed to load users: {{ fetchError.data?.message || fetchError.message || 'Unknown error' }}</span>
+      <button type="button" class="btn btn-outline btn-error btn-sm" @click="refreshData()">Retry</button>
+    </div>
 
     <!-- Loading State -->
     <div v-if="fetchStatus === 'pending'" class="flex justify-center my-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
     <!-- Empty State -->
-    <UAlert
-      v-else-if="!fetchError && !users.length"
-      color="info"
-      icon="i-fa6-solid-circle-info"
-      title="No users found matching the current filters."
-    />
+    <div v-else-if="!fetchError && !users.length" role="alert" class="alert alert-info">
+      <i class="fas fa-circle-info"></i>
+      <span>No users found matching the current filters.</span>
+    </div>
 
     <!-- Users Table -->
     <div v-else class="overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="table table-zebra w-full text-sm">
         <thead>
-          <tr class="border-b border-default">
-            <th class="text-left p-2 font-medium bg-muted">User</th>
-            <th class="text-left p-2 font-medium bg-muted">Trust Level</th>
-            <th class="text-center p-2 font-medium bg-muted">Admin</th>
-            <th class="text-left p-2 font-medium bg-muted">Submissions</th>
-            <th class="text-left p-2 font-medium bg-muted">Joined</th>
-            <th class="text-center p-2 font-medium bg-muted w-48">Change Trust Level</th>
+          <tr>
+            <th>User</th>
+            <th>Trust Level</th>
+            <th class="text-center">Admin</th>
+            <th>Submissions</th>
+            <th>Joined</th>
+            <th class="text-center w-48">Change Trust Level</th>
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="userItem in users"
-            :key="userItem.id"
-            class="border-b border-default last:border-0 hover:bg-muted transition-colors"
-          >
+          <tr v-for="userItem in users" :key="userItem.id">
             <!-- Avatar + Name/Email -->
-            <td class="p-2">
+            <td>
               <div class="flex items-center gap-3">
                 <!-- Avatar -->
                 <div v-if="userItem.avatar_url" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
@@ -393,7 +380,7 @@
                 <div class="min-w-0">
                   <div class="font-medium truncate">
                     {{ userItem.display_name || 'No display name' }}
-                    <UBadge v-if="isSelf(userItem)" color="info" variant="subtle" size="xs" class="ml-1">You</UBadge>
+                    <span v-if="isSelf(userItem)" class="badge badge-soft badge-info badge-xs ml-1">You</span>
                   </div>
                   <div class="text-xs opacity-60 truncate">{{ userItem.email }}</div>
                 </div>
@@ -401,14 +388,14 @@
             </td>
 
             <!-- Trust Level -->
-            <td class="p-2">
-              <UBadge :color="getTrustLevelBadgeColor(userItem.trust_level)" size="sm">
+            <td>
+              <span class="badge badge-sm" :class="`badge-${getTrustLevelBadgeColor(userItem.trust_level)}`">
                 {{ getTrustLevelLabel(userItem.trust_level) }}
-              </UBadge>
+              </span>
             </td>
 
             <!-- Admin Toggle -->
-            <td class="p-2 text-center">
+            <td class="text-center">
               <input
                 type="checkbox"
                 class="toggle toggle-sm toggle-primary"
@@ -419,7 +406,7 @@
             </td>
 
             <!-- Submissions -->
-            <td class="p-2">
+            <td>
               <div class="text-xs space-y-0.5">
                 <div>{{ userItem.total_submissions }} total</div>
                 <div class="opacity-70">
@@ -431,18 +418,18 @@
             </td>
 
             <!-- Joined -->
-            <td class="p-2">
+            <td>
               <span class="text-xs opacity-70">{{ formatDate(userItem.created_at) }}</span>
             </td>
 
             <!-- Actions -->
-            <td class="p-2 text-center">
+            <td class="text-center">
               <template v-if="!isSelf(userItem)">
                 <select
                   :value="userItem.trust_level"
                   class="select select-bordered select-xs w-full max-w-36"
-                  @change="handleTrustLevelSelect(userItem, ($event.target as HTMLSelectElement).value)"
                   :disabled="isProcessing"
+                  @change="handleTrustLevelSelect(userItem, ($event.target as HTMLSelectElement).value)"
                 >
                   <option v-for="level in trustLevels" :key="level" :value="level">
                     {{ getTrustLevelLabel(level) }}
@@ -467,99 +454,111 @@
 
       <!-- Pagination -->
       <div v-if="totalPages > 1" class="flex justify-center items-center gap-2 mt-4">
-        <UButton size="sm" variant="ghost" :disabled="!hasPrevPage || isLoading" @click="goToPage(currentPage - 1)">
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          :disabled="!hasPrevPage || isLoading"
+          @click="goToPage(currentPage - 1)"
+        >
           <i class="fa-solid fa-chevron-left mr-1"></i>
           Previous
-        </UButton>
+        </button>
 
         <div class="flex items-center gap-1">
           <template v-for="page in totalPages" :key="page">
-            <UButton
+            <button
               v-if="page - 1 === 0 || page - 1 === totalPages - 1 || Math.abs(page - 1 - currentPage) <= 1"
-              size="xs"
-              :variant="currentPage === page - 1 ? 'solid' : 'ghost'"
-              :color="currentPage === page - 1 ? 'primary' : 'neutral'"
-              @click="goToPage(page - 1)"
+              type="button"
+              class="btn btn-xs"
+              :class="currentPage === page - 1 ? 'btn-primary' : 'btn-ghost'"
               :disabled="isLoading"
+              @click="goToPage(page - 1)"
             >
               {{ page }}
-            </UButton>
+            </button>
             <span v-else-if="Math.abs(page - 1 - currentPage) === 2" class="px-1 opacity-50">...</span>
           </template>
         </div>
 
-        <UButton size="sm" variant="ghost" :disabled="!hasNextPage || isLoading" @click="goToPage(currentPage + 1)">
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          :disabled="!hasNextPage || isLoading"
+          @click="goToPage(currentPage + 1)"
+        >
           Next
           <i class="fa-solid fa-chevron-right ml-1"></i>
-        </UButton>
+        </button>
       </div>
     </div>
 
     <!-- Trust Level Change Confirmation Modal -->
-    <UModal v-model:open="showTrustModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="font-bold text-lg mb-4">Confirm Trust Level Change</h3>
+    <dialog class="modal" :class="{ 'modal-open': showTrustModal }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Confirm Trust Level Change</h3>
 
-          <!-- User Summary -->
-          <div v-if="selectedUser" class="bg-muted p-4 rounded-lg mb-4">
-            <div class="flex items-center gap-3 mb-3">
-              <div v-if="selectedUser.avatar_url" class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                <img
-                  :src="selectedUser.avatar_url"
-                  :alt="selectedUser.display_name || selectedUser.email"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-              <div
-                v-else
-                class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0"
-              >
-                {{ getInitials(selectedUser.display_name) }}
-              </div>
-              <div>
-                <p class="font-medium">{{ selectedUser.display_name || 'No display name' }}</p>
-                <p class="text-sm opacity-60">{{ selectedUser.email }}</p>
-              </div>
+        <!-- User Summary -->
+        <div v-if="selectedUser" class="bg-base-200 p-4 rounded-lg mb-4">
+          <div class="flex items-center gap-3 mb-3">
+            <div v-if="selectedUser.avatar_url" class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+              <img
+                :src="selectedUser.avatar_url"
+                :alt="selectedUser.display_name || selectedUser.email"
+                class="w-full h-full object-cover"
+              />
             </div>
-
-            <div class="flex items-center gap-2 text-sm">
-              <UBadge :color="getTrustLevelBadgeColor(selectedUser.trust_level)" size="sm">
-                {{ getTrustLevelLabel(selectedUser.trust_level) }}
-              </UBadge>
-              <i class="fa-solid fa-arrow-right opacity-50"></i>
-              <UBadge :color="getTrustLevelBadgeColor(newTrustLevel)" size="sm">
-                {{ getTrustLevelLabel(newTrustLevel) }}
-              </UBadge>
+            <div
+              v-else
+              class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0"
+            >
+              {{ getInitials(selectedUser.display_name) }}
+            </div>
+            <div>
+              <p class="font-medium">{{ selectedUser.display_name || 'No display name' }}</p>
+              <p class="text-sm opacity-60">{{ selectedUser.email }}</p>
             </div>
           </div>
 
-          <!-- Danger Warning -->
-          <UAlert v-if="isDangerousChange" color="warning" icon="i-fa6-solid-triangle-exclamation" class="mb-4">
-            <template #title>
-              <span v-if="newTrustLevel === 'moderator'">
-                You are about to grant moderator status. This user will have elevated trust for content moderation.
-              </span>
-              <span v-else>
-                You are about to remove moderator status from this user. They will lose elevated moderation trust.
-              </span>
-            </template>
-          </UAlert>
-
-          <!-- Actions -->
-          <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="closeTrustModal" :disabled="isProcessing"> Cancel </UButton>
-            <UButton
-              :color="isDangerousChange ? 'warning' : 'primary'"
-              @click="confirmTrustLevelChange"
-              :disabled="isProcessing"
-              :loading="isProcessing"
-            >
-              Confirm Change
-            </UButton>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="badge badge-sm" :class="`badge-${getTrustLevelBadgeColor(selectedUser.trust_level)}`">
+              {{ getTrustLevelLabel(selectedUser.trust_level) }}
+            </span>
+            <i class="fa-solid fa-arrow-right opacity-50"></i>
+            <span class="badge badge-sm" :class="`badge-${getTrustLevelBadgeColor(newTrustLevel)}`">
+              {{ getTrustLevelLabel(newTrustLevel) }}
+            </span>
           </div>
         </div>
-      </template>
-    </UModal>
+
+        <!-- Danger Warning -->
+        <div v-if="isDangerousChange" role="alert" class="alert alert-warning mb-4">
+          <i class="fas fa-triangle-exclamation"></i>
+          <span v-if="newTrustLevel === 'moderator'">
+            You are about to grant moderator status. This user will have elevated trust for content moderation.
+          </span>
+          <span v-else>
+            You are about to remove moderator status from this user. They will lose elevated moderation trust.
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" :disabled="isProcessing" @click="closeTrustModal">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn"
+            :class="isDangerousChange ? 'btn-warning' : 'btn-primary'"
+            :disabled="isProcessing"
+            @click="confirmTrustLevelChange"
+          >
+            <i v-if="isProcessing" class="fas fa-spinner fa-spin"></i>
+            Confirm Change
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" @click="closeTrustModal"></div>
+    </dialog>
   </div>
 </template>

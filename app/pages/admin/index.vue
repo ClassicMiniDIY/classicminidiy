@@ -45,23 +45,24 @@
     <!-- Breadcrumb Navigation -->
     <div class="container mx-auto px-4 pt-10">
       <div class="flex justify-between items-center">
-        <UBreadcrumb
-          :items="[{ label: 'Home', to: '/', icon: 'i-fa6-solid-house' }, { label: 'Admin' }]"
-          :ui="{
-            item: 'text-primary-600 dark:text-primary-400',
-            link: 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300',
-            linkActive: 'text-neutral-500 dark:text-neutral-400 font-medium',
-            separator: 'text-neutral-400 dark:text-neutral-500',
-            icon: 'text-primary-600 dark:text-primary-400',
-          }"
-        />
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <NuxtLink to="/" class="link link-primary">
+                <i class="fas fa-house mr-1"></i>
+                Home
+              </NuxtLink>
+            </li>
+            <li><span>Admin</span></li>
+          </ul>
+        </div>
 
         <div class="flex items-center gap-4">
           <span class="text-sm opacity-70"> Welcome, {{ userProfile?.display_name || userProfile?.email }} </span>
-          <UButton @click="handleLogout" variant="ghost" size="sm">
+          <button type="button" class="btn btn-ghost btn-sm" @click="handleLogout">
             <i class="fad fa-sign-out mr-2"></i>
             Logout
-          </UButton>
+          </button>
         </div>
       </div>
     </div>
@@ -70,70 +71,76 @@
     <div class="container mx-auto px-4 py-8">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
         <!-- Moderation Queue Card -->
-        <UCard class="hover:shadow-2xl transition-shadow">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <i class="fad fa-inbox text-2xl text-primary"></i>
+        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                <i class="fad fa-inbox text-2xl text-primary"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold">Moderation Queue</h2>
+                <span v-if="totalPendingCount?.count" class="badge badge-primary badge-sm">
+                  {{ totalPendingCount.count }} pending
+                </span>
+              </div>
             </div>
-            <div>
-              <h2 class="text-xl font-bold">Moderation Queue</h2>
-              <span v-if="totalPendingCount?.count" class="badge badge-primary badge-sm">
-                {{ totalPendingCount.count }} pending
-              </span>
+
+            <p class="opacity-70 mb-6">
+              Review all community submissions — documents, registry, colors, wheels, and edit suggestions.
+            </p>
+
+            <div class="card-actions justify-end">
+              <NuxtLink to="/admin/queue" class="btn btn-primary">
+                <i class="fad fa-arrow-right mr-2"></i>
+                Open Queue
+              </NuxtLink>
             </div>
           </div>
-
-          <p class="opacity-70 mb-6">
-            Review all community submissions — documents, registry, colors, wheels, and edit suggestions.
-          </p>
-
-          <div class="flex justify-end">
-            <UButton to="/admin/queue" color="primary">
-              <i class="fad fa-arrow-right mr-2"></i>
-              Open Queue
-            </UButton>
-          </div>
-        </UCard>
+        </div>
 
         <!-- Chat Threads Card -->
-        <UCard class="hover:shadow-2xl transition-shadow">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
-              <i class="fad fa-messages text-2xl text-info"></i>
+        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
+                <i class="fad fa-messages text-2xl text-info"></i>
+              </div>
+              <h2 class="text-xl font-bold">Chat Threads</h2>
             </div>
-            <h2 class="text-xl font-bold">Chat Threads</h2>
-          </div>
 
-          <p class="opacity-70 mb-6">
-            View and manage LangGraph chat threads from users interacting with the AI assistant.
-          </p>
+            <p class="opacity-70 mb-6">
+              View and manage LangGraph chat threads from users interacting with the AI assistant.
+            </p>
 
-          <div class="flex justify-end">
-            <UButton to="/admin/threads" color="info">
-              <i class="fad fa-arrow-right mr-2"></i>
-              View Threads
-            </UButton>
+            <div class="card-actions justify-end">
+              <NuxtLink to="/admin/threads" class="btn btn-info">
+                <i class="fad fa-arrow-right mr-2"></i>
+                View Threads
+              </NuxtLink>
+            </div>
           </div>
-        </UCard>
+        </div>
 
         <!-- User Management Card -->
-        <UCard class="hover:shadow-2xl transition-shadow">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-              <i class="fad fa-users-cog text-2xl text-warning"></i>
+        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                <i class="fad fa-users-cog text-2xl text-warning"></i>
+              </div>
+              <h2 class="text-xl font-bold">User Management</h2>
             </div>
-            <h2 class="text-xl font-bold">User Management</h2>
-          </div>
 
-          <p class="opacity-70 mb-6">Manage users, trust levels, and permissions for the contributor system.</p>
+            <p class="opacity-70 mb-6">Manage users, trust levels, and permissions for the contributor system.</p>
 
-          <div class="flex justify-end">
-            <UButton to="/admin/users" color="warning">
-              <i class="fad fa-arrow-right mr-2"></i>
-              Manage Users
-            </UButton>
+            <div class="card-actions justify-end">
+              <NuxtLink to="/admin/users" class="btn btn-warning">
+                <i class="fad fa-arrow-right mr-2"></i>
+                Manage Users
+              </NuxtLink>
+            </div>
           </div>
-        </UCard>
+        </div>
       </div>
     </div>
   </div>

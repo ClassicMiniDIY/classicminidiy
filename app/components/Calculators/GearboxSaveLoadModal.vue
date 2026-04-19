@@ -18,60 +18,61 @@
 </script>
 
 <template>
-  <UModal :open="open" @update:open="emit('update:open', $event)">
-    <template #header>
+  <div class="modal" :class="{ 'modal-open': open }">
+    <div class="modal-box max-w-2xl">
       <h3 class="text-lg font-semibold"><i class="fad fa-folder-open mr-2"></i>{{ t('title') }}</h3>
-    </template>
 
-    <div class="p-4">
-      <div v-if="loading" class="flex justify-center py-8">
-        <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
-      </div>
+      <div class="py-4">
+        <div v-if="loading" class="flex justify-center py-8">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
 
-      <div v-else-if="configs.length === 0" class="text-center py-8 opacity-60">
-        <i class="fas fa-inbox text-4xl mb-3 block"></i>
-        <p>{{ t('no_configs') }}</p>
-      </div>
+        <div v-else-if="configs.length === 0" class="text-center py-8 opacity-60">
+          <i class="fas fa-inbox text-4xl mb-3 block"></i>
+          <p>{{ t('no_configs') }}</p>
+        </div>
 
-      <div v-else class="space-y-3 max-h-96 overflow-y-auto">
-        <div
-          v-for="config in configs"
-          :key="config.id"
-          class="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors"
-        >
-          <div class="min-w-0 flex-1">
-            <p class="font-medium truncate">{{ config.name }}</p>
-            <p class="text-xs opacity-60 mt-1">
-              {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
-            </p>
-          </div>
-          <div class="flex items-center gap-2 ml-4 shrink-0">
-            <UButton size="sm" color="primary" :disabled="slotsRemaining <= 0" @click="emit('load', config)">
-              {{ t('load') }}
-            </UButton>
-            <UButton
-              size="sm"
-              variant="ghost"
-              color="error"
-              icon="i-fa6-solid-trash"
-              @click="emit('delete', config.id)"
-            />
+        <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+          <div
+            v-for="config in configs"
+            :key="config.id"
+            class="flex items-center justify-between p-3 rounded-lg border border-base-300 hover:bg-base-200 transition-colors"
+          >
+            <div class="min-w-0 flex-1">
+              <p class="font-medium truncate">{{ config.name }}</p>
+              <p class="text-xs opacity-60 mt-1">
+                {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
+              </p>
+            </div>
+            <div class="flex items-center gap-2 ml-4 shrink-0">
+              <button class="btn btn-sm btn-primary" :disabled="slotsRemaining <= 0" @click="emit('load', config)">
+                {{ t('load') }}
+              </button>
+              <button
+                class="btn btn-sm btn-ghost text-error"
+                :aria-label="t('close')"
+                @click="emit('delete', config.id)"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <template #footer>
-      <div class="flex justify-between items-center w-full">
-        <span class="text-sm opacity-60">
-          {{ t('slots_remaining', { count: slotsRemaining }) }}
-        </span>
-        <UButton variant="ghost" @click="emit('update:open', false)">
-          {{ t('close') }}
-        </UButton>
+      <div class="modal-action">
+        <div class="flex justify-between items-center w-full">
+          <span class="text-sm opacity-60">
+            {{ t('slots_remaining', { count: slotsRemaining }) }}
+          </span>
+          <button class="btn btn-ghost" @click="emit('update:open', false)">
+            {{ t('close') }}
+          </button>
+        </div>
       </div>
-    </template>
-  </UModal>
+    </div>
+    <div class="modal-backdrop" @click="emit('update:open', false)"></div>
+  </div>
 </template>
 
 <i18n lang="json">

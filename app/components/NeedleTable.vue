@@ -4,7 +4,7 @@
   const { t } = useI18n();
   const { data: needlesTables, status } = await useFetch<SuggestedNeedles[]>(() => '/api/needles/suggested');
 
-  // UTable columns configuration
+  // Table columns configuration
   const tableColumns = computed(() => [
     {
       accessorKey: 'engineSize',
@@ -32,35 +32,50 @@
 <template>
   <div class="grid grid-cols-12 gap-6">
     <div v-for="(table, name) in needlesTables" :key="name" class="col-span-12 md:col-span-6">
-      <UCard :ui="{ body: 'p-0' }">
-        <template #header>
-          <div class="flex items-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-            <h2 class="font-semibold text-lg">{{ table.title }}</h2>
+      <div class="card bg-base-100 shadow-md border border-base-300">
+        <div class="card-body p-0">
+          <div class="card-title p-4 border-b border-base-300">
+            <div class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+              <h2 class="font-semibold text-lg">{{ table.title }}</h2>
+            </div>
           </div>
-        </template>
 
-        <!-- Table -->
-        <div class="overflow-x-auto p-4">
-          <div v-if="status === 'pending'" class="flex justify-center items-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <!-- Table -->
+          <div class="overflow-x-auto p-4">
+            <div v-if="status === 'pending'" class="flex justify-center items-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+            <table v-else class="table w-full">
+              <thead>
+                <tr>
+                  <th v-for="col in tableColumns" :key="col.accessorKey">{{ col.header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, i) in table.items" :key="i">
+                  <td v-for="col in tableColumns" :key="col.accessorKey">
+                    {{ (row as Record<string, any>)[col.accessorKey] }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <UTable v-else :data="table.items" :columns="tableColumns" class="w-full" />
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

@@ -293,94 +293,94 @@
         </div>
 
         <!-- Contribute Banner -->
-        <UCard class="mb-6 bg-primary/5">
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
-              <div>
-                <p class="font-medium">{{ t('contribute_banner_title') }}</p>
-                <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+        <div class="card bg-base-100 shadow-sm border border-base-300 mb-6 bg-primary/5">
+          <div class="card-body">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
+                <div>
+                  <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+                  <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+                </div>
               </div>
+              <NuxtLink to="/contribute/document" class="btn btn-primary btn-outline btn-sm">
+                {{ t('contribute_banner_button') }}
+              </NuxtLink>
             </div>
-            <UButton to="/contribute/document" color="primary" variant="outline" size="sm">
-              {{ t('contribute_banner_button') }}
-            </UButton>
           </div>
-        </UCard>
+        </div>
 
         <!-- Type Filter Chips -->
         <div class="flex flex-wrap gap-2 mb-6">
-          <UButton
+          <button
             v-for="filter in typeFilters"
             :key="filter.value"
-            :color="activeType === filter.value ? 'primary' : 'neutral'"
-            :variant="activeType === filter.value ? 'solid' : 'outline'"
-            size="sm"
+            type="button"
+            class="btn btn-sm"
+            :class="activeType === filter.value ? 'btn-primary' : 'btn-neutral btn-outline'"
             @click="activeType = filter.value"
           >
             {{ t(filter.labelKey) }} ({{ getFilterCount(filter.value) }})
-          </UButton>
+          </button>
         </div>
 
         <!-- Search + Sort + View Toggle -->
         <div class="flex flex-col lg:flex-row gap-4 lg:items-end mb-8">
           <div class="w-full lg:flex-1">
-            <UInput
-              v-model="search"
-              :placeholder="t('search_placeholder')"
-              icon="i-fa6-solid-magnifying-glass"
-              size="lg"
-              class="w-full"
-            />
+            <label class="input input-bordered input-lg flex items-center gap-2 w-full">
+              <i class="fas fa-magnifying-glass opacity-60"></i>
+              <input
+                v-model="search"
+                :placeholder="t('search_placeholder')"
+                class="grow"
+              />
+            </label>
           </div>
 
           <div class="flex gap-2">
             <!-- Sort Dropdown -->
-            <USelect
-              v-model="sortBy"
-              :items="[
-                { value: 'title', label: t('sort.title') },
-                { value: 'newest', label: t('sort.newest') },
-                { value: 'oldest', label: t('sort.oldest') },
-              ]"
-            />
+            <select v-model="sortBy" class="select select-bordered">
+              <option value="title">{{ t('sort.title') }}</option>
+              <option value="newest">{{ t('sort.newest') }}</option>
+              <option value="oldest">{{ t('sort.oldest') }}</option>
+            </select>
 
             <!-- View Mode Toggle -->
             <div class="join">
-              <UButton
-                class="join-item"
-                :color="viewMode === 'cards' ? 'primary' : 'neutral'"
-                :variant="viewMode === 'cards' ? 'solid' : 'outline'"
+              <button
+                type="button"
+                class="btn join-item"
+                :class="viewMode === 'cards' ? 'btn-primary' : 'btn-neutral btn-outline'"
                 @click="viewMode = 'cards'"
               >
                 <i class="fad fa-grid-2"></i>
-              </UButton>
-              <UButton
-                class="join-item"
-                :color="viewMode === 'table' ? 'primary' : 'neutral'"
-                :variant="viewMode === 'table' ? 'solid' : 'outline'"
+              </button>
+              <button
+                type="button"
+                class="btn join-item"
+                :class="viewMode === 'table' ? 'btn-primary' : 'btn-neutral btn-outline'"
                 @click="viewMode = 'table'"
               >
                 <i class="fad fa-table"></i>
-              </UButton>
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Results count -->
-        <p class="text-sm text-muted mb-4">
+        <p class="text-sm opacity-70 mb-4">
           {{ t('results_count', { count: filteredDocuments.length }) }}
         </p>
 
         <!-- Loading Skeleton -->
         <div v-if="status === 'pending'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <UCard v-for="k in 12" :key="k" class="animate-pulse">
-            <template #header>
-              <div class="h-[150px] bg-muted rounded-t-lg"></div>
-            </template>
-            <div class="h-4 bg-muted rounded w-3/4 mb-2"></div>
-            <div class="h-3 bg-muted rounded w-1/2"></div>
-          </UCard>
+          <div v-for="k in 12" :key="k" class="card bg-base-100 shadow-sm border border-base-300 animate-pulse">
+            <div class="h-[150px] bg-base-200 rounded-t-lg"></div>
+            <div class="card-body">
+              <div class="h-4 bg-base-200 rounded w-3/4 mb-2"></div>
+              <div class="h-3 bg-base-200 rounded w-1/2"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Content -->
@@ -390,9 +390,11 @@
             v-if="filteredDocuments.length === 0 && (!collections || collections.length === 0)"
             class="text-center py-8"
           >
-            <UCard>
-              <p class="text-muted">{{ t('empty_state') }}</p>
-            </UCard>
+            <div class="card bg-base-100 shadow-sm border border-base-300">
+              <div class="card-body">
+                <p class="opacity-70">{{ t('empty_state') }}</p>
+              </div>
+            </div>
           </div>
 
           <!-- Collections Row (cards view only, shown above documents) -->
@@ -409,130 +411,136 @@
           </div>
 
           <!-- Documents Table View -->
-          <div v-else>
-            <UTable :data="flatTableData" :columns="tableColumns" :get-row-id="(row: FlatTableRow) => row.id">
-              <!-- Image cell: expand toggle for collections, thumbnail for docs, hidden for children -->
-              <template #image-cell="{ row }">
-                <div v-if="row.original.depth === 0" class="flex items-center gap-2">
-                  <button
-                    v-if="row.original.canExpand"
-                    @click.stop.prevent="toggleCollection(row.original.collectionId!)"
-                    class="text-muted hover:text-primary transition-colors p-1"
-                  >
-                    <i
-                      :class="
-                        expandedCollections.has(row.original.collectionId!)
-                          ? 'fas fa-chevron-down'
-                          : 'fas fa-chevron-right'
-                      "
-                      class="text-xs"
-                    ></i>
-                  </button>
-                  <div class="hidden md:block h-12 w-12 rounded-lg overflow-hidden">
-                    <img
-                      v-if="row.original.image"
-                      :src="row.original.image"
-                      :alt="row.original.title"
-                      class="h-12 w-12 object-cover"
-                    />
-                    <div v-else class="flex justify-center items-center h-12 w-12 bg-muted">
-                      <i
-                        :class="
-                          row.original.isCollection
-                            ? 'fad fa-books text-lg text-muted'
-                            : 'fad fa-image-slash text-lg text-muted'
-                        "
-                      ></i>
+          <div v-else class="overflow-x-auto">
+            <table class="table w-full">
+              <thead>
+                <tr>
+                  <th v-for="col in tableColumns" :key="col.id" :class="col.meta?.class?.th">
+                    {{ col.header }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in flatTableData" :key="row.id" class="hover:bg-base-200">
+                  <!-- Image cell -->
+                  <td :class="tableColumns[0].meta?.class?.td">
+                    <div v-if="row.depth === 0" class="flex items-center gap-2">
+                      <button
+                        v-if="row.canExpand"
+                        type="button"
+                        class="opacity-70 hover:text-primary transition-colors p-1"
+                        @click.stop.prevent="toggleCollection(row.collectionId!)"
+                      >
+                        <i
+                          :class="
+                            expandedCollections.has(row.collectionId!)
+                              ? 'fas fa-chevron-down'
+                              : 'fas fa-chevron-right'
+                          "
+                          class="text-xs"
+                        ></i>
+                      </button>
+                      <div class="hidden md:block h-12 w-12 rounded-lg overflow-hidden">
+                        <img
+                          v-if="row.image"
+                          :src="row.image"
+                          :alt="row.title"
+                          class="h-12 w-12 object-cover"
+                        />
+                        <div v-else class="flex justify-center items-center h-12 w-12 bg-base-200">
+                          <i
+                            :class="
+                              row.isCollection
+                                ? 'fad fa-books text-lg opacity-70'
+                                : 'fad fa-image-slash text-lg opacity-70'
+                            "
+                          ></i>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </template>
+                  </td>
 
-              <!-- File type cell: hidden for nested child rows -->
-              <template #fileType-cell="{ row }">
-                <div v-if="row.original.depth === 0" class="hidden md:flex justify-center">
-                  <span v-if="row.original.isCollection" class="badge badge-primary badge-sm">{{
-                    row.original.childCount
-                  }}</span>
-                  <i
-                    v-else-if="row.original.download"
-                    :class="[
-                      'fad',
-                      'fa-file-' + (row.original.download.split('.').pop()?.toLowerCase() || ''),
-                      'text-2xl text-secondary',
-                    ]"
-                  ></i>
-                  <i v-else class="fad fa-question-circle text-2xl text-warning"></i>
-                </div>
-              </template>
+                  <!-- File type cell -->
+                  <td :class="tableColumns[1].meta?.class?.td">
+                    <div v-if="row.depth === 0" class="hidden md:flex justify-center">
+                      <span v-if="row.isCollection" class="badge badge-primary badge-sm">{{ row.childCount }}</span>
+                      <i
+                        v-else-if="row.download"
+                        :class="[
+                          'fad',
+                          'fa-file-' + (row.download.split('.').pop()?.toLowerCase() || ''),
+                          'text-2xl text-secondary',
+                        ]"
+                      ></i>
+                      <i v-else class="fad fa-question-circle text-2xl text-warning"></i>
+                    </div>
+                  </td>
 
-              <!-- Title cell: indented for children -->
-              <template #title-cell="{ row }">
-                <div :style="{ paddingLeft: `${row.original.depth * 1.5}rem` }">
-                  <NuxtLink :to="row.original.path" class="hover:underline">
-                    <span class="font-bold flex items-center gap-2">
-                      <i v-if="row.original.isCollection" class="fad fa-folder text-primary"></i>
-                      {{ row.original.title }}
-                    </span>
-                  </NuxtLink>
-                  <p v-if="row.original.description" class="text-sm text-muted line-clamp-1">
-                    {{ row.original.description }}
-                  </p>
-                </div>
-              </template>
+                  <!-- Title cell -->
+                  <td>
+                    <div :style="{ paddingLeft: `${row.depth * 1.5}rem` }">
+                      <NuxtLink :to="row.path" class="hover:underline">
+                        <span class="font-bold flex items-center gap-2">
+                          <i v-if="row.isCollection" class="fad fa-folder text-primary"></i>
+                          {{ row.title }}
+                        </span>
+                      </NuxtLink>
+                      <p v-if="row.description" class="text-sm opacity-70 line-clamp-1">
+                        {{ row.description }}
+                      </p>
+                    </div>
+                  </td>
 
-              <!-- Author cell -->
-              <template #author-cell="{ row }">
-                <span class="hidden lg:inline text-muted">{{ row.original.author || '\u2014' }}</span>
-              </template>
+                  <!-- Author cell -->
+                  <td>
+                    <span class="hidden lg:inline opacity-70">{{ row.author || '\u2014' }}</span>
+                  </td>
 
-              <!-- Actions cell -->
-              <template #actions-cell="{ row }">
-                <div class="flex gap-2 justify-end">
-                  <UButton
-                    v-if="row.original.isCollection"
-                    :to="row.original.path"
-                    variant="ghost"
-                    color="primary"
-                    size="sm"
-                  >
-                    {{ t('table_view_collection') }}
-                    <i class="fad fa-arrow-right ml-1"></i>
-                  </UButton>
-                  <UButton
-                    v-else-if="row.original.download"
-                    :to="row.original.download"
-                    target="_blank"
-                    variant="ghost"
-                    color="primary"
-                    square
-                  >
-                    <i class="fad fa-download"></i>
-                  </UButton>
-                </div>
-              </template>
-            </UTable>
+                  <!-- Actions cell -->
+                  <td>
+                    <div class="flex gap-2 justify-end">
+                      <NuxtLink
+                        v-if="row.isCollection"
+                        :to="row.path"
+                        class="btn btn-ghost btn-sm text-primary"
+                      >
+                        {{ t('table_view_collection') }}
+                        <i class="fad fa-arrow-right ml-1"></i>
+                      </NuxtLink>
+                      <NuxtLink
+                        v-else-if="row.download"
+                        :to="row.download"
+                        target="_blank"
+                        class="btn btn-ghost btn-square text-primary"
+                      >
+                        <i class="fad fa-download"></i>
+                      </NuxtLink>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <!-- Pagination -->
           <div v-if="pageCount > 1" class="flex justify-center items-center mt-8">
             <div class="join">
-              <UButton class="join-item" size="sm" :disabled="currentPage === 1" @click="prevPage" square>
+              <button type="button" class="btn btn-sm btn-square join-item" :disabled="currentPage === 1" @click="prevPage">
                 <i class="fad fa-arrow-left"></i>
-              </UButton>
-              <UButton class="join-item" size="sm" variant="ghost" color="neutral">
+              </button>
+              <button type="button" class="btn btn-sm btn-ghost join-item">
                 {{ t('pagination.page_text', { current: currentPage, total: pageCount }) }}
-              </UButton>
-              <UButton class="join-item" size="sm" :disabled="currentPage >= pageCount" @click="nextPage" square>
+              </button>
+              <button type="button" class="btn btn-sm btn-square join-item" :disabled="currentPage >= pageCount" @click="nextPage">
                 <i class="fad fa-arrow-right"></i>
-              </UButton>
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Support section -->
         <div class="mt-8 mb-10">
-          <USeparator :label="t('support_divider')" class="mb-6" />
+          <div class="divider mb-6">{{ t('support_divider') }}</div>
           <patreon-card size="large" />
         </div>
       </div>

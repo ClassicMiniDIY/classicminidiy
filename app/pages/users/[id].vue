@@ -92,7 +92,7 @@
       <i class="fas fa-user-slash text-5xl opacity-40 mb-4 block"></i>
       <h2 class="text-xl font-bold mb-2">{{ t('not_found.title') }}</h2>
       <p class="opacity-70 mb-6">{{ t('not_found.description') }}</p>
-      <UButton to="/" color="primary">{{ t('not_found.go_home') }}</UButton>
+      <NuxtLink to="/" class="btn btn-primary">{{ t('not_found.go_home') }}</NuxtLink>
     </div>
 
     <!-- Private profile -->
@@ -100,23 +100,24 @@
       <i class="fas fa-lock text-5xl opacity-40 mb-4 block"></i>
       <h2 class="text-xl font-bold mb-2">{{ t('private.title') }}</h2>
       <p class="opacity-70 mb-6">{{ t('private.description') }}</p>
-      <UButton to="/" color="primary">{{ t('not_found.go_home') }}</UButton>
+      <NuxtLink to="/" class="btn btn-primary">{{ t('not_found.go_home') }}</NuxtLink>
     </div>
 
     <!-- Profile content -->
     <div v-else class="max-w-4xl mx-auto space-y-6">
       <!-- Profile Card -->
-      <UCard>
-        <div class="p-2">
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body p-2">
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-            <div v-if="profile?.avatar_url" class="w-20 h-20 rounded-full overflow-hidden shrink-0">
-              <img :src="profile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
+            <div v-if="profile?.avatar_url" class="avatar">
+              <div class="w-20 rounded-full">
+                <img :src="profile.avatar_url" :alt="displayName" />
+              </div>
             </div>
-            <div
-              v-else
-              class="w-20 h-20 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold shrink-0"
-            >
-              {{ initials }}
+            <div v-else class="avatar avatar-placeholder">
+              <div class="w-20 rounded-full bg-primary text-primary-content">
+                <span class="text-3xl font-bold">{{ initials }}</span>
+              </div>
             </div>
 
             <div class="flex-1 text-center sm:text-left min-w-0">
@@ -142,45 +143,45 @@
             </div>
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Vehicles -->
-      <UCard v-if="profile?.show_vehicles && vehicles.length > 0">
-        <template #header>
+      <div v-if="profile?.show_vehicles && vehicles.length > 0" class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
           <div class="flex items-center">
             <i class="fad fa-car mr-2"></i>
             <h3 class="text-lg font-semibold">{{ t('vehicles.title') }}</h3>
           </div>
-        </template>
-        <ProfileVehicleShowcase :vehicles="vehicles" />
-      </UCard>
+          <ProfileVehicleShowcase :vehicles="vehicles" />
+        </div>
+      </div>
 
       <!-- Public Gear Configurations -->
-      <UCard>
-        <template #header>
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
           <div class="flex items-center">
             <i class="fad fa-gears mr-2"></i>
             <h3 class="text-lg font-semibold">{{ t('gear_configs.title') }}</h3>
           </div>
-        </template>
 
-        <div v-if="publicConfigs.length === 0" class="text-center py-8 opacity-60">
-          <i class="fas fa-inbox text-4xl mb-3 block"></i>
-          <p>{{ t('gear_configs.empty') }}</p>
-        </div>
+          <div v-if="publicConfigs.length === 0" class="text-center py-8 opacity-60">
+            <i class="fas fa-inbox text-4xl mb-3 block"></i>
+            <p>{{ t('gear_configs.empty') }}</p>
+          </div>
 
-        <div v-else class="space-y-3">
-          <div v-for="config in publicConfigs" :key="config.id" class="p-4 rounded-lg border">
-            <p class="font-medium">{{ config.name }}</p>
-            <p class="text-xs opacity-60 mt-1">
-              {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
-            </p>
-            <p class="text-xs opacity-40 mt-1">
-              {{ t('gear_configs.tire') }}: {{ config.tire }} · {{ t('gear_configs.rpm') }}: {{ config.max_rpm }}
-            </p>
+          <div v-else class="space-y-3">
+            <div v-for="config in publicConfigs" :key="config.id" class="p-4 rounded-lg border border-base-300">
+              <p class="font-medium">{{ config.name }}</p>
+              <p class="text-xs opacity-60 mt-1">
+                {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
+              </p>
+              <p class="text-xs opacity-40 mt-1">
+                {{ t('gear_configs.tire') }}: {{ config.tire }} · {{ t('gear_configs.rpm') }}: {{ config.max_rpm }}
+              </p>
+            </div>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

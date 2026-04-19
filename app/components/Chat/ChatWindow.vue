@@ -1,49 +1,63 @@
 <template>
   <!-- Chat Interface -->
-  <div class="flex flex-col h-full bg-default">
+  <div class="flex flex-col h-full bg-base-100">
     <!-- Experimental Disclaimer (always visible) -->
 
     <!-- Welcome Banner (shown when chat is empty) -->
     <div v-if="isChatEmpty && !isLoading" class="flex-1 flex items-center justify-center px-4">
       <div class="max-w-2xl mx-auto text-center space-y-6">
         <!-- Welcome Message -->
-        <UCard class="bg-primary/10 border border-primary/20">
-          <div class="flex flex-col items-center gap-4">
-            <i class="fa-solid fa-comments text-primary text-4xl"></i>
-            <div>
-              <h3 class="font-semibold text-xl mb-3 text-primary">
-                {{ t('welcome_title') }}
-              </h3>
-              <p class="text-base text-muted leading-relaxed">
-                I'm your Classic Mini DIY assistant, here to help you with technical questions, decode chassis numbers,
-                find parts information, navigate the archives, and provide guidance on Classic Mini restoration and
-                maintenance. Ask me anything about your Classic Mini project!
-              </p>
+        <div class="card bg-primary/10 border border-primary/20">
+          <div class="card-body">
+            <div class="flex flex-col items-center gap-4">
+              <i class="fa-solid fa-comments text-primary text-4xl"></i>
+              <div>
+                <h3 class="font-semibold text-xl mb-3 text-primary">
+                  {{ t('welcome_title') }}
+                </h3>
+                <p class="text-base opacity-70 leading-relaxed">
+                  I'm your Classic Mini DIY assistant, here to help you with technical questions, decode chassis numbers,
+                  find parts information, navigate the archives, and provide guidance on Classic Mini restoration and
+                  maintenance. Ask me anything about your Classic Mini project!
+                </p>
+              </div>
             </div>
           </div>
-        </UCard>
+        </div>
 
         <!-- Centered Input Area (when chat is empty) -->
         <div class="w-full max-w-2xl">
           <form @submit.prevent="handleSubmit" class="relative">
-            <div class="flex items-end gap-3 bg-muted rounded-2xl p-3 shadow-sm border border-default">
+            <div class="flex items-end gap-3 bg-base-200 rounded-2xl p-3 shadow-sm border border-base-300">
               <textarea
                 ref="inputRef"
                 v-model="input"
                 @keydown="handleInputKeyDown"
                 :placeholder="t('input_placeholder')"
                 :aria-label="t('input_placeholder')"
-                class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:text-muted py-2 leading-6"
+                class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:opacity-60 py-2 leading-6"
                 rows="1"
               ></textarea>
 
-              <UButton v-if="isLoading" @click="stopGeneration" type="button" size="sm" color="error" square aria-label="Stop generating">
+              <button
+                v-if="isLoading"
+                @click="stopGeneration"
+                type="button"
+                class="btn btn-sm btn-error btn-square"
+                aria-label="Stop generating"
+              >
                 <i class="fa-solid fa-stop"></i>
-              </UButton>
+              </button>
 
-              <UButton v-else type="submit" size="sm" color="primary" square :disabled="!input.trim()" aria-label="Send message">
+              <button
+                v-else
+                type="submit"
+                class="btn btn-sm btn-primary btn-square"
+                :disabled="!input.trim()"
+                aria-label="Send message"
+              >
                 <i class="fa-solid fa-paper-plane"></i>
-              </UButton>
+              </button>
             </div>
           </form>
 
@@ -71,11 +85,11 @@
               </div>
             </template>
 
-            <div v-if="isLoading" class="flex h-8 items-center gap-1 rounded-2xl bg-muted px-4 py-2" role="status">
+            <div v-if="isLoading" class="flex h-8 items-center gap-1 rounded-2xl bg-base-200 px-4 py-2" role="status">
               <span class="sr-only">Generating response...</span>
-              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-muted"></div>
-              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-muted animation-delay-500"></div>
-              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-muted animation-delay-1000"></div>
+              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-base-content/50"></div>
+              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-base-content/50 animation-delay-500"></div>
+              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-base-content/50 animation-delay-1000"></div>
             </div>
             <!-- Useful Links from Tavily Search Results (Mobile Only) -->
             <UsefulLinks v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" class="md:hidden" />
@@ -83,30 +97,26 @@
         </div>
 
         <!-- Floating Scroll to Bottom Button -->
-        <UButton
+        <button
           v-if="showScrollButton"
           @click="scrollToBottom"
-          class="absolute bottom-24 right-6 lg:right-80 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
-          size="sm"
-          variant="outline"
-          color="neutral"
-          square
+          class="btn btn-sm btn-outline btn-square absolute bottom-24 right-6 lg:right-80 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
           title="Scroll to bottom"
           aria-label="Scroll to bottom"
         >
           <i class="fa-solid fa-chevron-down text-sm"></i>
-        </UButton>
+        </button>
       </div>
 
       <!-- Right Sidebar for Useful Links (Desktop/Tablet Only) -->
-      <div class="hidden md:flex md:flex-col md:w-80 md:border-l md:border-default md:bg-muted/50">
+      <div class="hidden md:flex md:flex-col md:w-80 md:border-l md:border-base-300 md:bg-base-200/50">
         <div class="flex-1 overflow-y-auto p-4">
           <!-- Useful Links Sidebar -->
           <div v-if="!isLoading && usefulLinks.length > 0" class="sticky top-0">
             <UsefulLinksSidebar :links="usefulLinks" />
           </div>
           <!-- Placeholder when no links -->
-          <div v-else class="text-center text-muted mt-8">
+          <div v-else class="text-center opacity-70 mt-8">
             <i class="fa-solid fa-link text-2xl mb-2 block"></i>
             <p class="text-sm">{{ t('useful_links_placeholder') }}</p>
           </div>
@@ -115,35 +125,50 @@
     </div>
 
     <!-- Floating Input Area (when messages exist) -->
-    <div v-if="!isChatEmpty || isLoading" class="p-4 bg-default">
+    <div v-if="!isChatEmpty || isLoading" class="p-4 bg-base-100">
       <form @submit.prevent="handleSubmit" class="relative">
-        <div class="flex items-end gap-3 bg-muted rounded-2xl p-3 shadow-sm border border-default">
+        <div class="flex items-end gap-3 bg-base-200 rounded-2xl p-3 shadow-sm border border-base-300">
           <textarea
             ref="inputRef"
             v-model="input"
             @keydown="handleInputKeyDown"
             :placeholder="t('input_placeholder')"
             :aria-label="t('input_placeholder')"
-            class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:text-muted py-2 leading-6"
+            class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:opacity-60 py-2 leading-6"
             rows="1"
           ></textarea>
 
-          <UButton v-if="isLoading" @click="stopGeneration" type="button" size="sm" color="error" square aria-label="Stop generating">
+          <button
+            v-if="isLoading"
+            @click="stopGeneration"
+            type="button"
+            class="btn btn-sm btn-error btn-square"
+            aria-label="Stop generating"
+          >
             <i class="fa-solid fa-stop"></i>
-          </UButton>
+          </button>
 
-          <UButton v-else type="submit" size="sm" color="primary" square :disabled="!input.trim()" aria-label="Send message">
+          <button
+            v-else
+            type="submit"
+            class="btn btn-sm btn-primary btn-square"
+            :disabled="!input.trim()"
+            aria-label="Send message"
+          >
             <i class="fa-solid fa-paper-plane"></i>
-          </UButton>
+          </button>
         </div>
       </form>
-      <UAlert color="warning" class="mt-3" icon="i-fa6-solid-triangle-exclamation">
-        <template #title>{{ t('experimental_feature') }}</template>
-        <template #description>
-          {{ t('experimental_disclaimer') }} Always verify critical information with official documentation, qualified
-          mechanics, or experienced Classic Mini enthusiasts.
-        </template>
-      </UAlert>
+      <div role="alert" class="alert alert-warning mt-3">
+        <i class="fas fa-triangle-exclamation"></i>
+        <div>
+          <div class="font-semibold">{{ t('experimental_feature') }}</div>
+          <div class="text-sm">
+            {{ t('experimental_disclaimer') }} Always verify critical information with official documentation, qualified
+            mechanics, or experienced Classic Mini enthusiasts.
+          </div>
+        </div>
+      </div>
 
       <!-- Report Issue Link Below Chat -->
       <div class="flex justify-center mt-3">

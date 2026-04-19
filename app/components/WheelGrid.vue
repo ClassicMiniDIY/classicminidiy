@@ -86,90 +86,97 @@
 </script>
 
 <template>
-  <UCard>
-    <!-- Header section -->
-    <template #header>
-      <div class="flex items-center justify-between">
+  <div class="card bg-base-100 shadow-md border border-base-300">
+    <div class="card-body">
+      <!-- Header section -->
+      <div class="flex items-center justify-between border-b border-base-300 pb-3 mb-4">
         <h2 class="font-semibold text-lg"><i class="fad fa-tire fa-spin mr-2"></i> {{ t('title') }}</h2>
-        <UTooltip v-if="filtersActive" :text="t('clear_filters')">
-          <UButton variant="ghost" size="sm" @click="clearFilters">
-            <i class="fas fa-filter-circle-xmark mr-1"></i>
-            {{ t('clear_filters') }}
-          </UButton>
-        </UTooltip>
-      </div>
-    </template>
-
-    <div class="mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div class="col-span-1 md:col-span-1 mb-4">
-          <UButtonGroup>
-            <UButton
-              :color="size === 'list' ? 'primary' : 'neutral'"
-              :variant="size === 'list' ? 'solid' : 'outline'"
-              @click="size = 'list'"
-            >
-              {{ t('all_sizes') }}
-            </UButton>
-            <UButton
-              :color="size === 'ten' ? 'primary' : 'neutral'"
-              :variant="size === 'ten' ? 'solid' : 'outline'"
-              @click="size = 'ten'"
-            >
-              {{ t('ten_inch_wheels') }}
-            </UButton>
-            <UButton
-              :color="size === 'twelve' ? 'primary' : 'neutral'"
-              :variant="size === 'twelve' ? 'solid' : 'outline'"
-              @click="size = 'twelve'"
-            >
-              {{ t('twelve_inch_wheels') }}
-            </UButton>
-            <UButton
-              :color="size === 'thirteen' ? 'primary' : 'neutral'"
-              :variant="size === 'thirteen' ? 'solid' : 'outline'"
-              @click="size = 'thirteen'"
-            >
-              {{ t('thirteen_inch_wheels') }}
-            </UButton>
-          </UButtonGroup>
-        </div>
-      </div>
-
-      <UInput v-model="search" :placeholder="t('search_placeholder')" icon="i-fa6-solid-magnifying-glass" size="lg" />
-    </div>
-
-    <!-- Content section -->
-    <div>
-      <!-- Error state -->
-      <UAlert
-        v-if="error"
-        color="error"
-        :title="error.message || t('error_loading')"
-        icon="i-fa6-solid-circle-exclamation"
-      />
-
-      <!-- Loading state -->
-      <div v-else-if="status === 'pending'" class="flex justify-center p-8">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-
-      <!-- No results -->
-      <div v-else-if="filteredWheels.length === 0" class="text-center p-8">
-        <i class="fas fa-tire text-6xl text-muted mb-4"></i>
-        <h3 class="text-xl font-semibold mb-2">{{ t('no_results_title') }}</h3>
-        <p class="text-muted">{{ t('no_results_message') }}</p>
-      </div>
-
-      <!-- Grid of wheels -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <UCard
-          v-for="wheel in filteredWheels.slice((page - 1) * 12, page * 12)"
-          :key="wheel.uuid"
-          class="hover:shadow-lg transition-shadow duration-300"
+        <button
+          v-if="filtersActive"
+          type="button"
+          class="btn btn-ghost btn-sm tooltip"
+          :data-tip="t('clear_filters')"
+          @click="clearFilters"
         >
-          <template #header>
-            <figure class="relative pt-[100%] bg-muted rounded-t-lg">
+          <i class="fas fa-filter-circle-xmark mr-1"></i>
+          {{ t('clear_filters') }}
+        </button>
+      </div>
+
+      <div class="mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="col-span-1 md:col-span-1 mb-4">
+            <div class="join">
+              <button
+                type="button"
+                class="btn join-item"
+                :class="size === 'list' ? 'btn-primary' : 'btn-outline'"
+                @click="size = 'list'"
+              >
+                {{ t('all_sizes') }}
+              </button>
+              <button
+                type="button"
+                class="btn join-item"
+                :class="size === 'ten' ? 'btn-primary' : 'btn-outline'"
+                @click="size = 'ten'"
+              >
+                {{ t('ten_inch_wheels') }}
+              </button>
+              <button
+                type="button"
+                class="btn join-item"
+                :class="size === 'twelve' ? 'btn-primary' : 'btn-outline'"
+                @click="size = 'twelve'"
+              >
+                {{ t('twelve_inch_wheels') }}
+              </button>
+              <button
+                type="button"
+                class="btn join-item"
+                :class="size === 'thirteen' ? 'btn-primary' : 'btn-outline'"
+                @click="size = 'thirteen'"
+              >
+                {{ t('thirteen_inch_wheels') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <label class="input input-lg w-full">
+          <i class="fas fa-magnifying-glass opacity-60"></i>
+          <input v-model="search" type="text" :placeholder="t('search_placeholder')" />
+        </label>
+      </div>
+
+      <!-- Content section -->
+      <div>
+        <!-- Error state -->
+        <div v-if="error" role="alert" class="alert alert-error">
+          <i class="fas fa-circle-exclamation"></i>
+          <span>{{ error.message || t('error_loading') }}</span>
+        </div>
+
+        <!-- Loading state -->
+        <div v-else-if="status === 'pending'" class="flex justify-center p-8">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+
+        <!-- No results -->
+        <div v-else-if="filteredWheels.length === 0" class="text-center p-8">
+          <i class="fas fa-tire text-6xl text-base-content/70 mb-4"></i>
+          <h3 class="text-xl font-semibold mb-2">{{ t('no_results_title') }}</h3>
+          <p class="text-base-content/70">{{ t('no_results_message') }}</p>
+        </div>
+
+        <!-- Grid of wheels -->
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div
+            v-for="wheel in filteredWheels.slice((page - 1) * 12, page * 12)"
+            :key="wheel.uuid"
+            class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow duration-300"
+          >
+            <figure class="relative pt-[100%] bg-base-200 rounded-t-lg">
               <img
                 :src="getWheelImageUrl(wheel)"
                 :alt="wheel.name"
@@ -177,57 +184,64 @@
                 loading="lazy"
               />
             </figure>
-          </template>
-          <h3 class="font-semibold text-lg mb-2">{{ wheel.name }}</h3>
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <div class="text-muted">{{ t('size_label') }}</div>
-              <div class="font-medium">{{ wheel.size || t('not_available') }}</div>
-            </div>
-            <div>
-              <div class="text-muted">{{ t('width_label') }}</div>
-              <div class="font-medium">{{ wheel.width || t('not_available') }}</div>
-            </div>
-            <div>
-              <div class="text-muted">{{ t('offset_label') }}</div>
-              <div class="font-medium">{{ wheel.offset || t('not_available') }}</div>
-            </div>
-            <div>
-              <div class="text-muted">{{ t('material_label') }}</div>
-              <div class="font-medium">{{ wheel.type || t('not_available') }}</div>
+            <div class="card-body">
+              <h3 class="font-semibold text-lg mb-2">{{ wheel.name }}</h3>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <div class="text-base-content/70">{{ t('size_label') }}</div>
+                  <div class="font-medium">{{ wheel.size || t('not_available') }}</div>
+                </div>
+                <div>
+                  <div class="text-base-content/70">{{ t('width_label') }}</div>
+                  <div class="font-medium">{{ wheel.width || t('not_available') }}</div>
+                </div>
+                <div>
+                  <div class="text-base-content/70">{{ t('offset_label') }}</div>
+                  <div class="font-medium">{{ wheel.offset || t('not_available') }}</div>
+                </div>
+                <div>
+                  <div class="text-base-content/70">{{ t('material_label') }}</div>
+                  <div class="font-medium">{{ wheel.type || t('not_available') }}</div>
+                </div>
+              </div>
+              <div class="card-actions justify-end mt-4">
+                <NuxtLink :to="`/archive/wheels/${wheel.uuid}`" class="btn btn-sm btn-secondary">
+                  {{ t('view_details') }}
+                </NuxtLink>
+              </div>
             </div>
           </div>
-          <template #footer>
-            <div class="flex justify-end">
-              <UButton :to="`/archive/wheels/${wheel.uuid}`" size="sm" color="secondary">
-                {{ t('view_details') }}
-              </UButton>
-            </div>
-          </template>
-        </UCard>
+        </div>
+      </div>
+
+      <!-- Pagination footer -->
+      <div class="border-t border-base-300 pt-4 mt-4">
+        <div class="flex items-center justify-center">
+          <div class="join">
+            <button
+              type="button"
+              class="btn join-item"
+              :disabled="page === 1"
+              @click="page > 1 && page--"
+            >
+              <i class="fad fa-arrow-left"></i>
+            </button>
+            <button type="button" class="btn join-item btn-ghost pointer-events-none">
+              {{ t('page_info', { current: page, total: Math.ceil(filteredWheels.length / 12) }) }}
+            </button>
+            <button
+              type="button"
+              class="btn join-item"
+              :disabled="page >= Math.ceil(filteredWheels.length / 12)"
+              @click="page < Math.ceil(filteredWheels.length / 12) && page++"
+            >
+              <i class="fad fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- Pagination footer -->
-    <template #footer>
-      <div class="flex items-center justify-center">
-        <UButtonGroup>
-          <UButton :disabled="page === 1" @click="page > 1 && page--">
-            <i class="fad fa-arrow-left"></i>
-          </UButton>
-          <UButton variant="ghost" color="neutral">
-            {{ t('page_info', { current: page, total: Math.ceil(filteredWheels.length / 12) }) }}
-          </UButton>
-          <UButton
-            :disabled="page >= Math.ceil(filteredWheels.length / 12)"
-            @click="page < Math.ceil(filteredWheels.length / 12) && page++"
-          >
-            <i class="fad fa-arrow-right"></i>
-          </UButton>
-        </UButtonGroup>
-      </div>
-    </template>
-  </UCard>
+  </div>
 </template>
 
 <i18n lang="json">

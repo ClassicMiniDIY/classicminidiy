@@ -16,11 +16,11 @@
 
     <!-- Copy button (appears on hover) -->
     <div class="flex items-center gap-2 mt-2 opacity-0 transition-opacity group-hover:opacity-100">
-      <UButton @click="copyToClipboard(contentString)" size="xs" variant="ghost" color="neutral">
+      <button @click="copyToClipboard(contentString)" class="btn btn-xs btn-ghost">
         <i class="fa-solid fa-copy h-3 w-3 mr-1" />
         {{ t('copy_button') }}
-      </UButton>
-      <time v-if="message?.created_at" class="text-xs text-muted">{{ formatTime(message?.created_at) }}</time>
+      </button>
+      <time v-if="message?.created_at" class="text-xs opacity-70">{{ formatTime(message?.created_at) }}</time>
     </div>
   </div>
 </template>

@@ -1,4 +1,4 @@
-// TailwindCSS is now handled by @nuxt/ui module
+import tailwindcss from '@tailwindcss/vite';
 import { ArchiveItems, ToolboxItems } from './data/models/generic';
 
 const parsedArchive = ArchiveItems.map((item) => {
@@ -19,6 +19,7 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: 'en',
         prefix: 'og: https://ogp.me/ns#',
+        'data-theme': 'cmdiy',
       },
       meta: [
         { charset: 'utf-8' },
@@ -137,6 +138,12 @@ export default defineNuxtConfig({
         { rel: 'alternate', href: 'https://classicminidiy.com', hreflang: 'en' },
       ],
       script: [
+        // Set initial theme before hydration to prevent FOUC
+        {
+          innerHTML: `(function(){try{var t=localStorage.getItem('cmdiy-theme');var d=t==='cmdiy-dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'cmdiy-dark':'cmdiy')}catch(e){document.documentElement.setAttribute('data-theme','cmdiy')}})()`,
+          type: 'text/javascript',
+          tagPosition: 'head',
+        },
         {
           src: 'https://kit.fontawesome.com/4e4435c885.js',
           crossorigin: 'anonymous',
@@ -239,19 +246,10 @@ export default defineNuxtConfig({
     '@nuxtjs/sitemap',
     '@nuxtjs/robots',
     '@nuxt/image',
-    '@nuxt/ui',
     'nuxt-llms',
     '@nuxtjs/i18n',
     '@nuxtjs/mcp-toolkit',
   ],
-
-  // Nuxt UI Configuration
-  ui: {
-    colorMode: true, // Enable dark/light mode
-    theme: {
-      colors: ['primary', 'secondary', 'success', 'info', 'warning', 'error', 'neutral'],
-    },
-  },
 
   // MCP (Model Context Protocol) Configuration
   mcp: {
@@ -453,7 +451,7 @@ export default defineNuxtConfig({
     define: {
       'process.env.DEBUG': false,
     },
-    plugins: [],
+    plugins: [tailwindcss()],
     // Pre-optimize dependencies to prevent reloading on route changes
     optimizeDeps: {
       include: [

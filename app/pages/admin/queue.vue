@@ -462,10 +462,11 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <h1 class="text-2xl font-bold">Moderation Queue</h1>
-      <UButton color="primary" @click="refresh" :loading="isLoading">
-        <i class="fa-solid fa-refresh mr-2"></i>
+      <button type="button" class="btn btn-primary" :disabled="isLoading" @click="refresh">
+        <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
+        <i v-else class="fa-solid fa-refresh mr-2"></i>
         Refresh
-      </UButton>
+      </button>
     </div>
 
     <!-- Filter Bar -->
@@ -473,315 +474,344 @@
       <!-- Target Type Filters -->
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-sm font-medium opacity-70 mr-1">Type:</span>
-        <UButton
+        <button
           v-for="filter in targetTypeFilters"
           :key="filter.label"
-          size="sm"
-          :variant="activeTargetType === filter.value ? 'solid' : 'ghost'"
-          :color="activeTargetType === filter.value ? 'primary' : 'neutral'"
+          type="button"
+          class="btn btn-sm"
+          :class="activeTargetType === filter.value ? 'btn-primary' : 'btn-ghost'"
           @click="activeTargetType = filter.value"
         >
           <i :class="filter.icon" class="mr-1.5"></i>
           {{ filter.label }}
-        </UButton>
+        </button>
       </div>
 
       <!-- Status Filters -->
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-sm font-medium opacity-70 mr-1">Status:</span>
-        <UButton
+        <button
           v-for="filter in statusFilters"
           :key="filter.value"
-          size="xs"
-          :variant="activeStatus === filter.value ? 'solid' : 'soft'"
-          :color="activeStatus === filter.value ? 'primary' : 'neutral'"
+          type="button"
+          class="btn btn-xs"
+          :class="activeStatus === filter.value ? 'btn-primary' : 'btn-soft btn-neutral'"
           @click="activeStatus = filter.value"
         >
           {{ filter.label }}
-        </UButton>
+        </button>
       </div>
     </div>
 
     <!-- Error Message -->
-    <UAlert v-if="errorMessage" color="error" icon="i-fa6-solid-circle-xmark" :title="errorMessage" class="mb-6" />
+    <div v-if="errorMessage" role="alert" class="alert alert-error mb-6">
+      <i class="fas fa-circle-xmark"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
 
     <!-- Loading State -->
     <div v-if="fetchStatus === 'pending'" class="flex justify-center my-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
     <!-- Empty State -->
-    <UAlert
-      v-else-if="!items?.length"
-      color="info"
-      icon="i-fa6-solid-circle-info"
-      title="No submissions found matching the current filters."
-    />
+    <div v-else-if="!items?.length" role="alert" class="alert alert-info">
+      <i class="fas fa-circle-info"></i>
+      <span>No submissions found matching the current filters.</span>
+    </div>
 
     <!-- Submission Cards -->
     <div v-else class="space-y-4">
-      <UCard v-for="item in items" :key="item.id" class="hover:shadow-lg transition-shadow">
-        <!-- Card Header Row -->
-        <div class="flex flex-wrap items-center gap-2 mb-4">
-          <UBadge :color="getSubmissionTypeBadgeColor(item.type)" variant="subtle" size="sm">
-            {{ getSubmissionTypeLabel(item.type) }}
-          </UBadge>
-          <UBadge :color="getTargetTypeBadgeColor(item.targetType)" variant="subtle" size="sm">
-            {{ getTargetTypeLabel(item.targetType) }}
-          </UBadge>
-          <UBadge :color="getStatusBadgeColor(item.status)" size="sm">
-            {{ getStatusLabel(item.status) }}
-          </UBadge>
-        </div>
-
-        <!-- Submitter Info -->
-        <div class="flex items-center gap-3 mb-4">
-          <!-- Avatar -->
-          <div v-if="item.submitterAvatar" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-            <img :src="item.submitterAvatar" :alt="item.submitterName" class="w-full h-full object-cover" />
-          </div>
-          <div
-            v-else
-            class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0"
-          >
-            {{ getInitials(item.submitterName) }}
+      <div
+        v-for="item in items"
+        :key="item.id"
+        class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow"
+      >
+        <div class="card-body">
+          <!-- Card Header Row -->
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span class="badge badge-soft badge-sm" :class="`badge-${getSubmissionTypeBadgeColor(item.type)}`">
+              {{ getSubmissionTypeLabel(item.type) }}
+            </span>
+            <span class="badge badge-soft badge-sm" :class="`badge-${getTargetTypeBadgeColor(item.targetType)}`">
+              {{ getTargetTypeLabel(item.targetType) }}
+            </span>
+            <span class="badge badge-sm" :class="`badge-${getStatusBadgeColor(item.status)}`">
+              {{ getStatusLabel(item.status) }}
+            </span>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2 text-sm">
-            <span class="font-medium">{{ item.submitterName }}</span>
-            <UBadge :color="getTrustLevelBadgeColor(item.submitterTrustLevel)" variant="subtle" size="xs">
-              {{ getTrustLevelLabel(item.submitterTrustLevel) }}
-            </UBadge>
-            <span class="opacity-60">{{ formatDate(item.createdAt) }}</span>
-          </div>
-        </div>
-
-        <!-- Data Preview (for new_item and new_collection) -->
-        <div v-if="item.type !== 'edit_suggestion' && getPreviewFields(item).length > 0" class="mb-4">
-          <div class="bg-muted rounded-lg p-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
-              <div v-for="field in getPreviewFields(item)" :key="field.label" class="flex gap-2 text-sm py-0.5">
-                <span class="font-medium opacity-70 min-w-24">{{ field.label }}:</span>
-                <span>{{ field.value }}</span>
-              </div>
+          <!-- Submitter Info -->
+          <div class="flex items-center gap-3 mb-4">
+            <!-- Avatar -->
+            <div v-if="item.submitterAvatar" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+              <img :src="item.submitterAvatar" :alt="item.submitterName" class="w-full h-full object-cover" />
             </div>
-          </div>
-        </div>
+            <div
+              v-else
+              class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0"
+            >
+              {{ getInitials(item.submitterName) }}
+            </div>
 
-        <!-- Uploaded Images Preview -->
-        <div v-if="getUploadedImages(item).length > 0" class="mb-4">
-          <p class="text-sm font-medium opacity-70 mb-2">Uploaded Files</p>
-          <div class="flex flex-wrap gap-3">
-            <div v-for="(img, idx) in getUploadedImages(item)" :key="idx" class="relative">
-              <a :href="img.url" target="_blank" rel="noopener">
-                <img
-                  :src="img.url"
-                  :alt="`Upload ${idx + 1}`"
-                  class="h-24 w-24 object-cover rounded-lg border border-default hover:opacity-80 transition-opacity"
-                />
-              </a>
-              <UBadge
-                v-if="img.category !== 'general'"
-                color="neutral"
-                variant="subtle"
-                size="xs"
-                class="absolute bottom-1 left-1"
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+              <span class="font-medium">{{ item.submitterName }}</span>
+              <span
+                class="badge badge-soft badge-xs"
+                :class="`badge-${getTrustLevelBadgeColor(item.submitterTrustLevel)}`"
               >
-                {{ img.category }}
-              </UBadge>
+                {{ getTrustLevelLabel(item.submitterTrustLevel) }}
+              </span>
+              <span class="opacity-60">{{ formatDate(item.createdAt) }}</span>
             </div>
           </div>
-        </div>
 
-        <!-- Edit Suggestion Diff Table -->
-        <div v-if="item.type === 'edit_suggestion' && getEditChanges(item).length > 0" class="mb-4">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm border border-default rounded-lg overflow-hidden">
-              <thead>
-                <tr class="bg-muted">
-                  <th class="text-left p-2 font-medium">Field</th>
-                  <th class="text-left p-2 font-medium">Current</th>
-                  <th class="text-left p-2 font-medium">Proposed</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="change in getEditChanges(item)" :key="change.field" class="border-t border-default">
-                  <td class="p-2 font-medium">{{ formatFieldName(change.field) }}</td>
-                  <td class="p-2 bg-error/10 text-error-700 dark:text-error-300">
-                    {{ formatDiffValue(change.from, change.field, item) }}
-                  </td>
-                  <td class="p-2 bg-success/10 text-success-700 dark:text-success-300">
-                    {{ formatDiffValue(change.to, change.field, item) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Edit Suggestion Reason -->
-        <div v-if="item.type === 'edit_suggestion' && item.data?.reason" class="mb-4">
-          <div class="bg-info/5 border border-info/20 rounded-lg p-3">
-            <p class="text-sm font-medium opacity-70 mb-1">
-              <i class="fad fa-comment-dots mr-1"></i>
-              Reason for Change
-            </p>
-            <p class="text-sm">{{ item.data.reason }}</p>
-          </div>
-        </div>
-
-        <!-- Edit Suggestion with no changes but has preview fields -->
-        <div
-          v-if="
-            item.type === 'edit_suggestion' && getEditChanges(item).length === 0 && getPreviewFields(item).length > 0
-          "
-          class="mb-4"
-        >
-          <div class="bg-muted rounded-lg p-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
-              <div v-for="field in getPreviewFields(item)" :key="field.label" class="flex gap-2 text-sm py-0.5">
-                <span class="font-medium opacity-70 min-w-24">{{ field.label }}:</span>
-                <span>{{ field.value }}</span>
+          <!-- Data Preview (for new_item and new_collection) -->
+          <div v-if="item.type !== 'edit_suggestion' && getPreviewFields(item).length > 0" class="mb-4">
+            <div class="bg-base-200 rounded-lg p-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                <div v-for="field in getPreviewFields(item)" :key="field.label" class="flex gap-2 text-sm py-0.5">
+                  <span class="font-medium opacity-70 min-w-24">{{ field.label }}:</span>
+                  <span>{{ field.value }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Reviewer Notes (if already reviewed) -->
-        <div v-if="item.reviewerNotes" class="mb-4">
-          <UAlert color="info" icon="i-fa6-solid-circle-info" :title="`Reviewer Notes: ${item.reviewerNotes}`" />
-        </div>
+          <!-- Uploaded Images Preview -->
+          <div v-if="getUploadedImages(item).length > 0" class="mb-4">
+            <p class="text-sm font-medium opacity-70 mb-2">Uploaded Files</p>
+            <div class="flex flex-wrap gap-3">
+              <div v-for="(img, idx) in getUploadedImages(item)" :key="idx" class="relative">
+                <a :href="img.url" target="_blank" rel="noopener">
+                  <img
+                    :src="img.url"
+                    :alt="`Upload ${idx + 1}`"
+                    class="h-24 w-24 object-cover rounded-lg border border-base-300 hover:opacity-80 transition-opacity"
+                  />
+                </a>
+                <span
+                  v-if="img.category !== 'general'"
+                  class="badge badge-soft badge-neutral badge-xs absolute bottom-1 left-1"
+                >
+                  {{ img.category }}
+                </span>
+              </div>
+            </div>
+          </div>
 
-        <!-- Action Buttons (only for pending items) -->
-        <div v-if="item.status === 'pending'" class="flex justify-end gap-2 pt-2 border-t border-default">
-          <UButton color="success" size="sm" @click="openApproveModal(item)" :disabled="isProcessing">
-            <i class="fa-solid fa-check mr-1.5"></i>
-            Approve
-          </UButton>
-          <UButton color="error" size="sm" @click="openRejectModal(item)" :disabled="isProcessing">
-            <i class="fa-solid fa-times mr-1.5"></i>
-            Reject
-          </UButton>
+          <!-- Edit Suggestion Diff Table -->
+          <div v-if="item.type === 'edit_suggestion' && getEditChanges(item).length > 0" class="mb-4">
+            <div class="overflow-x-auto">
+              <table class="table table-sm w-full border border-base-300 rounded-lg overflow-hidden">
+                <thead>
+                  <tr class="bg-base-200">
+                    <th class="text-left p-2 font-medium">Field</th>
+                    <th class="text-left p-2 font-medium">Current</th>
+                    <th class="text-left p-2 font-medium">Proposed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="change in getEditChanges(item)" :key="change.field" class="border-t border-base-300">
+                    <td class="p-2 font-medium">{{ formatFieldName(change.field) }}</td>
+                    <td class="p-2 bg-error/10 text-error">
+                      {{ formatDiffValue(change.from, change.field, item) }}
+                    </td>
+                    <td class="p-2 bg-success/10 text-success">
+                      {{ formatDiffValue(change.to, change.field, item) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Edit Suggestion Reason -->
+          <div v-if="item.type === 'edit_suggestion' && item.data?.reason" class="mb-4">
+            <div class="bg-info/5 border border-info/20 rounded-lg p-3">
+              <p class="text-sm font-medium opacity-70 mb-1">
+                <i class="fad fa-comment-dots mr-1"></i>
+                Reason for Change
+              </p>
+              <p class="text-sm">{{ item.data.reason }}</p>
+            </div>
+          </div>
+
+          <!-- Edit Suggestion with no changes but has preview fields -->
+          <div
+            v-if="
+              item.type === 'edit_suggestion' && getEditChanges(item).length === 0 && getPreviewFields(item).length > 0
+            "
+            class="mb-4"
+          >
+            <div class="bg-base-200 rounded-lg p-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                <div v-for="field in getPreviewFields(item)" :key="field.label" class="flex gap-2 text-sm py-0.5">
+                  <span class="font-medium opacity-70 min-w-24">{{ field.label }}:</span>
+                  <span>{{ field.value }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reviewer Notes (if already reviewed) -->
+          <div v-if="item.reviewerNotes" class="mb-4">
+            <div role="alert" class="alert alert-info">
+              <i class="fas fa-circle-info"></i>
+              <span>Reviewer Notes: {{ item.reviewerNotes }}</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons (only for pending items) -->
+          <div v-if="item.status === 'pending'" class="card-actions justify-end pt-2 border-t border-base-300">
+            <button
+              type="button"
+              class="btn btn-success btn-sm"
+              :disabled="isProcessing"
+              @click="openApproveModal(item)"
+            >
+              <i class="fa-solid fa-check mr-1.5"></i>
+              Approve
+            </button>
+            <button type="button" class="btn btn-error btn-sm" :disabled="isProcessing" @click="openRejectModal(item)">
+              <i class="fa-solid fa-times mr-1.5"></i>
+              Reject
+            </button>
+          </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Approve Modal -->
-    <UModal v-model:open="showApproveModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="font-bold text-lg mb-4">Approve Submission</h3>
+    <dialog class="modal" :class="{ 'modal-open': showApproveModal }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Approve Submission</h3>
 
-          <!-- Submission Summary -->
-          <div v-if="selectedItem" class="bg-muted p-4 rounded-lg mb-4">
-            <div class="flex flex-wrap items-center gap-2 mb-2">
-              <UBadge :color="getSubmissionTypeBadgeColor(selectedItem.type)" variant="subtle" size="sm">
-                {{ getSubmissionTypeLabel(selectedItem.type) }}
-              </UBadge>
-              <UBadge :color="getTargetTypeBadgeColor(selectedItem.targetType)" variant="subtle" size="sm">
-                {{ getTargetTypeLabel(selectedItem.targetType) }}
-              </UBadge>
-            </div>
-            <p class="text-sm"><strong>Submitted by:</strong> {{ selectedItem.submitterName }}</p>
-            <p class="text-sm"><strong>Date:</strong> {{ formatDate(selectedItem.createdAt) }}</p>
-            <div v-if="getPreviewFields(selectedItem).length > 0" class="mt-2 pt-2 border-t border-default">
-              <div v-for="field in getPreviewFields(selectedItem)" :key="field.label" class="text-sm">
-                <strong>{{ field.label }}:</strong> {{ field.value }}
-              </div>
-            </div>
-            <div v-if="getUploadedImages(selectedItem).length > 0" class="mt-2 pt-2 border-t border-default">
-              <p class="text-xs font-medium opacity-70 mb-1">Uploaded Files</p>
-              <div class="flex flex-wrap gap-2">
-                <img
-                  v-for="(img, idx) in getUploadedImages(selectedItem)"
-                  :key="idx"
-                  :src="img.url"
-                  :alt="`Upload ${idx + 1}`"
-                  class="h-16 w-16 object-cover rounded border border-default"
-                />
-              </div>
+        <!-- Submission Summary -->
+        <div v-if="selectedItem" class="bg-base-200 p-4 rounded-lg mb-4">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="badge badge-soft badge-sm" :class="`badge-${getSubmissionTypeBadgeColor(selectedItem.type)}`">
+              {{ getSubmissionTypeLabel(selectedItem.type) }}
+            </span>
+            <span
+              class="badge badge-soft badge-sm"
+              :class="`badge-${getTargetTypeBadgeColor(selectedItem.targetType)}`"
+            >
+              {{ getTargetTypeLabel(selectedItem.targetType) }}
+            </span>
+          </div>
+          <p class="text-sm"><strong>Submitted by:</strong> {{ selectedItem.submitterName }}</p>
+          <p class="text-sm"><strong>Date:</strong> {{ formatDate(selectedItem.createdAt) }}</p>
+          <div v-if="getPreviewFields(selectedItem).length > 0" class="mt-2 pt-2 border-t border-base-300">
+            <div v-for="field in getPreviewFields(selectedItem)" :key="field.label" class="text-sm">
+              <strong>{{ field.label }}:</strong> {{ field.value }}
             </div>
           </div>
-
-          <!-- Reviewer Notes -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Reviewer Notes</label>
-            <UTextarea
-              v-model="reviewerNotes"
-              placeholder="Optional notes for the submitter..."
-              :rows="3"
-              class="w-full"
-            />
-          </div>
-
-          <!-- Actions -->
-          <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="closeApproveModal" :disabled="isProcessing"> Cancel </UButton>
-            <UButton color="success" @click="approveItem" :disabled="isProcessing" :loading="isProcessing">
-              Approve
-            </UButton>
+          <div v-if="getUploadedImages(selectedItem).length > 0" class="mt-2 pt-2 border-t border-base-300">
+            <p class="text-xs font-medium opacity-70 mb-1">Uploaded Files</p>
+            <div class="flex flex-wrap gap-2">
+              <img
+                v-for="(img, idx) in getUploadedImages(selectedItem)"
+                :key="idx"
+                :src="img.url"
+                :alt="`Upload ${idx + 1}`"
+                class="h-16 w-16 object-cover rounded border border-base-300"
+              />
+            </div>
           </div>
         </div>
-      </template>
-    </UModal>
+
+        <!-- Reviewer Notes -->
+        <label class="form-control w-full mb-4">
+          <div class="label">
+            <span class="label-text">Reviewer Notes</span>
+          </div>
+          <textarea
+            v-model="reviewerNotes"
+            class="textarea textarea-bordered w-full"
+            placeholder="Optional notes for the submitter..."
+            rows="3"
+          ></textarea>
+        </label>
+
+        <!-- Actions -->
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" :disabled="isProcessing" @click="closeApproveModal">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-success" :disabled="isProcessing" @click="approveItem">
+            <i v-if="isProcessing" class="fas fa-spinner fa-spin"></i>
+            Approve
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" @click="closeApproveModal"></div>
+    </dialog>
 
     <!-- Reject Modal -->
-    <UModal v-model:open="showRejectModal">
-      <template #content>
-        <div class="p-6">
-          <h3 class="font-bold text-lg mb-4">Reject Submission</h3>
+    <dialog class="modal" :class="{ 'modal-open': showRejectModal }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Reject Submission</h3>
 
-          <!-- Submission Summary -->
-          <div v-if="selectedItem" class="bg-muted p-4 rounded-lg mb-4">
-            <div class="flex flex-wrap items-center gap-2 mb-2">
-              <UBadge :color="getSubmissionTypeBadgeColor(selectedItem.type)" variant="subtle" size="sm">
-                {{ getSubmissionTypeLabel(selectedItem.type) }}
-              </UBadge>
-              <UBadge :color="getTargetTypeBadgeColor(selectedItem.targetType)" variant="subtle" size="sm">
-                {{ getTargetTypeLabel(selectedItem.targetType) }}
-              </UBadge>
-            </div>
-            <p class="text-sm"><strong>Submitted by:</strong> {{ selectedItem.submitterName }}</p>
-            <p class="text-sm"><strong>Date:</strong> {{ formatDate(selectedItem.createdAt) }}</p>
-            <div v-if="getPreviewFields(selectedItem).length > 0" class="mt-2 pt-2 border-t border-default">
-              <div v-for="field in getPreviewFields(selectedItem)" :key="field.label" class="text-sm">
-                <strong>{{ field.label }}:</strong> {{ field.value }}
-              </div>
-            </div>
-            <div v-if="getUploadedImages(selectedItem).length > 0" class="mt-2 pt-2 border-t border-default">
-              <p class="text-xs font-medium opacity-70 mb-1">Uploaded Files</p>
-              <div class="flex flex-wrap gap-2">
-                <img
-                  v-for="(img, idx) in getUploadedImages(selectedItem)"
-                  :key="idx"
-                  :src="img.url"
-                  :alt="`Upload ${idx + 1}`"
-                  class="h-16 w-16 object-cover rounded border border-default"
-                />
-              </div>
+        <!-- Submission Summary -->
+        <div v-if="selectedItem" class="bg-base-200 p-4 rounded-lg mb-4">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="badge badge-soft badge-sm" :class="`badge-${getSubmissionTypeBadgeColor(selectedItem.type)}`">
+              {{ getSubmissionTypeLabel(selectedItem.type) }}
+            </span>
+            <span
+              class="badge badge-soft badge-sm"
+              :class="`badge-${getTargetTypeBadgeColor(selectedItem.targetType)}`"
+            >
+              {{ getTargetTypeLabel(selectedItem.targetType) }}
+            </span>
+          </div>
+          <p class="text-sm"><strong>Submitted by:</strong> {{ selectedItem.submitterName }}</p>
+          <p class="text-sm"><strong>Date:</strong> {{ formatDate(selectedItem.createdAt) }}</p>
+          <div v-if="getPreviewFields(selectedItem).length > 0" class="mt-2 pt-2 border-t border-base-300">
+            <div v-for="field in getPreviewFields(selectedItem)" :key="field.label" class="text-sm">
+              <strong>{{ field.label }}:</strong> {{ field.value }}
             </div>
           </div>
-
-          <!-- Reviewer Notes -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">Reviewer Notes</label>
-            <UTextarea
-              v-model="reviewerNotes"
-              placeholder="Reason for rejection (visible to submitter)..."
-              :rows="3"
-              class="w-full"
-            />
-          </div>
-
-          <!-- Actions -->
-          <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="closeRejectModal" :disabled="isProcessing"> Cancel </UButton>
-            <UButton color="error" @click="rejectItem" :disabled="isProcessing" :loading="isProcessing">
-              Reject
-            </UButton>
+          <div v-if="getUploadedImages(selectedItem).length > 0" class="mt-2 pt-2 border-t border-base-300">
+            <p class="text-xs font-medium opacity-70 mb-1">Uploaded Files</p>
+            <div class="flex flex-wrap gap-2">
+              <img
+                v-for="(img, idx) in getUploadedImages(selectedItem)"
+                :key="idx"
+                :src="img.url"
+                :alt="`Upload ${idx + 1}`"
+                class="h-16 w-16 object-cover rounded border border-base-300"
+              />
+            </div>
           </div>
         </div>
-      </template>
-    </UModal>
+
+        <!-- Reviewer Notes -->
+        <label class="form-control w-full mb-4">
+          <div class="label">
+            <span class="label-text">Reviewer Notes</span>
+          </div>
+          <textarea
+            v-model="reviewerNotes"
+            class="textarea textarea-bordered w-full"
+            placeholder="Reason for rejection (visible to submitter)..."
+            rows="3"
+          ></textarea>
+        </label>
+
+        <!-- Actions -->
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" :disabled="isProcessing" @click="closeRejectModal">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-error" :disabled="isProcessing" @click="rejectItem">
+            <i v-if="isProcessing" class="fas fa-spinner fa-spin"></i>
+            Reject
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" @click="closeRejectModal"></div>
+    </dialog>
   </div>
 </template>

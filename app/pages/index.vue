@@ -120,28 +120,24 @@
         <p class="text-lg pt-2 pb-3">
           {{ t('home.support.content') }}
         </p>
-        <UButton
-          class="mr-3 text-lg is-patreon"
+        <a
+          class="btn is-patreon mr-3 text-lg"
           rel="noopener"
-          to="https://patreon.com/classicminidiy"
+          href="https://patreon.com/classicminidiy"
           target="_blank"
-          external
         >
           <i class="fab fa-patreon mr-2" />
           {{ t('common.donate') }}
-        </UButton>
-        <UButton
-          class="text-lg"
-          variant="solid"
-          color="neutral"
+        </a>
+        <a
+          class="btn btn-neutral text-lg"
           rel="noopener"
-          to="https://github.com/somethingnew71/classicminidiy"
+          href="https://github.com/somethingnew71/classicminidiy"
           target="_blank"
-          external
         >
           <i class="fab fa-github mr-2" />
           {{ t('common.contribute') }}
-        </UButton>
+        </a>
       </div>
       <div class="pt-20 pb-10 grid grid-cols-subgrid col-span-12 gap-4">
         <recent-videos></recent-videos>
@@ -149,7 +145,7 @@
     </div>
   </div>
   <div class="spacer layer1"></div>
-  <div class="bg-[#f0f0f0] dark:bg-[#171717]">
+  <div class="bg-base-200">
     <div class="container mx-auto px-4 pt-10">
       <div class="grid grid-cols-12 gap-4">
         <div ref="videoContainer" class="col-span-12 md:col-span-5">
@@ -166,7 +162,7 @@
           <p class="pb-5 text-lg">
             {{ t('home.toolbox.content') }}
           </p>
-          <UButton color="primary" class="text-lg" to="/technical"> {{ t('home.toolbox.button') }} </UButton>
+          <NuxtLink to="/technical" class="btn btn-primary text-lg">{{ t('home.toolbox.button') }}</NuxtLink>
         </div>
       </div>
       <div class="grid grid-cols-12 gap-4">
@@ -176,23 +172,21 @@
           <p class="text-lg">
             {{ t('home.patreon.content') }}
           </p>
-          <UButton
-            class="mt-5 mb-5 is-patreon"
+          <a
+            class="btn is-patreon mt-5 mb-5"
             rel="noopener"
-            to="https://patreon.com/classicminidiy"
+            href="https://patreon.com/classicminidiy"
             target="_blank"
-            external
           >
             <i class="fab fa-patreon mr-2" />
             {{ t('home.patreon.button') }}
-          </UButton>
+          </a>
 
           <div class="max-w-2xl mx-auto">
-            <UCard class="mt-5 max-w-md">
-              <template #header>
-                <h3 class="text-xl font-bold leading-none">{{ t('home.patreon.benefits.title') }}</h3>
-              </template>
-              <ul role="list" class="divide-y divide-default benefits-list">
+            <div class="card bg-base-100 shadow-md mt-5 max-w-md">
+              <div class="card-body">
+                <h3 class="text-xl font-bold leading-none mb-3">{{ t('home.patreon.benefits.title') }}</h3>
+                <ul role="list" class="divide-y divide-base-300 benefits-list">
                 <li class="py-3 sm:py-4">
                   <div class="flex items-center space-x-4">
                     <div class="shrink-0">
@@ -234,7 +228,8 @@
                   </div>
                 </li>
               </ul>
-            </UCard>
+              </div>
+            </div>
           </div>
         </div>
         <div class="col-span-12 md:col-span-6">

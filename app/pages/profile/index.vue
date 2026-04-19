@@ -84,18 +84,18 @@
 
     <!-- Auth gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
             <i class="fas fa-user text-5xl opacity-40"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('auth.sign_in_title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('auth.sign_in_description') }}</p>
-          <UButton to="/login" color="primary" class="w-full">
+          <NuxtLink to="/login" class="btn btn-primary btn-block">
             {{ t('auth.sign_in_button') }}
-          </UButton>
+          </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -106,18 +106,19 @@
     <!-- Profile content -->
     <div v-else class="max-w-4xl mx-auto space-y-6">
       <!-- Profile Header Card -->
-      <UCard>
-        <div class="p-2">
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body p-2">
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <!-- Avatar -->
-            <div v-if="profile?.avatar_url" class="w-20 h-20 rounded-full overflow-hidden shrink-0">
-              <img :src="profile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
+            <div v-if="profile?.avatar_url" class="avatar">
+              <div class="w-20 rounded-full">
+                <img :src="profile.avatar_url" :alt="displayName" />
+              </div>
             </div>
-            <div
-              v-else
-              class="w-20 h-20 rounded-full bg-primary text-primary-content flex items-center justify-center text-3xl font-bold shrink-0"
-            >
-              {{ initials }}
+            <div v-else class="avatar avatar-placeholder">
+              <div class="w-20 rounded-full bg-primary text-primary-content">
+                <span class="text-3xl font-bold">{{ initials }}</span>
+              </div>
             </div>
 
             <!-- Info -->
@@ -145,69 +146,72 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-            <UButton to="/profile/edit" variant="outline" color="primary" icon="i-fa6-solid-pen">
+          <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-base-300">
+            <NuxtLink to="/profile/edit" class="btn btn-outline btn-primary">
+              <i class="fas fa-pen"></i>
               {{ t('edit_profile') }}
-            </UButton>
-            <UButton variant="ghost" color="neutral" icon="i-fa6-solid-share-nodes" @click="showShareModal = true">
+            </NuxtLink>
+            <button class="btn btn-ghost" @click="showShareModal = true">
+              <i class="fas fa-share-nodes"></i>
               {{ t('share_profile') }}
-            </UButton>
+            </button>
           </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Share Modal -->
-      <UModal v-model:open="showShareModal">
-        <template #content>
-          <div class="p-6">
-            <h3 class="text-lg font-semibold mb-4">{{ t('share_modal.title') }}</h3>
-            <div class="flex gap-2">
-              <UInput :model-value="shareUrl" readonly class="flex-1" />
-              <UButton color="primary" @click="copyShareUrl">
-                {{ t('share_modal.copy') }}
-              </UButton>
-            </div>
+      <dialog :open="showShareModal" class="modal" @close="showShareModal = false">
+        <div class="modal-box">
+          <h3 class="text-lg font-semibold mb-4">{{ t('share_modal.title') }}</h3>
+          <div class="flex gap-2">
+            <input :value="shareUrl" readonly class="input input-bordered flex-1" />
+            <button class="btn btn-primary" @click="copyShareUrl">
+              {{ t('share_modal.copy') }}
+            </button>
           </div>
-        </template>
-      </UModal>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button @click="showShareModal = false">close</button>
+        </form>
+      </dialog>
 
       <!-- Vehicles -->
-      <UCard v-if="profile?.show_vehicles">
-        <template #header>
+      <div v-if="profile?.show_vehicles" class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
           <div class="flex items-center">
             <i class="fad fa-car mr-2"></i>
             <h3 class="text-lg font-semibold">{{ t('vehicles.title') }}</h3>
           </div>
-        </template>
-        <ProfileVehicleShowcase :vehicles="vehicles" />
-      </UCard>
+          <ProfileVehicleShowcase :vehicles="vehicles" />
+        </div>
+      </div>
 
       <!-- Gear Configurations -->
-      <UCard>
-        <template #header>
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
           <div class="flex items-center">
             <i class="fad fa-gears mr-2"></i>
             <h3 class="text-lg font-semibold">{{ t('gear_configs.title') }}</h3>
           </div>
-        </template>
 
-        <div v-if="publicConfigs.length === 0" class="text-center py-8 opacity-60">
-          <i class="fas fa-inbox text-4xl mb-3 block"></i>
-          <p>{{ t('gear_configs.empty') }}</p>
-        </div>
+          <div v-if="publicConfigs.length === 0" class="text-center py-8 opacity-60">
+            <i class="fas fa-inbox text-4xl mb-3 block"></i>
+            <p>{{ t('gear_configs.empty') }}</p>
+          </div>
 
-        <div v-else class="space-y-3">
-          <div v-for="config in publicConfigs" :key="config.id" class="p-4 rounded-lg border">
-            <p class="font-medium">{{ config.name }}</p>
-            <p class="text-xs opacity-60 mt-1">
-              {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
-            </p>
-            <p class="text-xs opacity-40 mt-1">
-              {{ t('gear_configs.tire') }}: {{ config.tire }} · {{ t('gear_configs.rpm') }}: {{ config.max_rpm }}
-            </p>
+          <div v-else class="space-y-3">
+            <div v-for="config in publicConfigs" :key="config.id" class="p-4 rounded-lg border border-base-300">
+              <p class="font-medium">{{ config.name }}</p>
+              <p class="text-xs opacity-60 mt-1">
+                {{ config.gearset }} · {{ config.final_drive }}:1 · {{ config.drop_gear }}:1
+              </p>
+              <p class="text-xs opacity-40 mt-1">
+                {{ t('gear_configs.tire') }}: {{ config.tire }} · {{ t('gear_configs.rpm') }}: {{ config.max_rpm }}
+              </p>
+            </div>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

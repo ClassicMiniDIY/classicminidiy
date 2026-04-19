@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-  import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
@@ -21,74 +20,15 @@
   const { data: tables } = await useFetch<Record<string, ClearanceTable>>('/api/clearance');
   const searchValue = ref('');
   const expandedRows = ref<Record<string, boolean>>({});
+  const expandedTables = ref<Record<string, boolean>>({});
 
   const toggleRow = (id: string) => {
     expandedRows.value[id] = !expandedRows.value[id];
   };
 
-  // Column definitions for Nuxt UI table
-  const tableColumns = [
-    {
-      accessorKey: 'name',
-      header: () => t('table.headers.part'),
-      cell: ({ row }) => row.getValue('name'),
-    },
-    {
-      accessorKey: 'thou',
-      header: () => t('table.headers.clearance_thou'),
-      cell: ({ row }) => {
-        const value = row.getValue('thou');
-        return value
-          ? h(
-              'span',
-              {
-                class: 'px-2 py-1 rounded bg-primary/10 text-primary font-medium',
-              },
-              value
-            )
-          : t('table.no_value');
-      },
-    },
-    {
-      accessorKey: 'mm',
-      header: () => t('table.headers.clearance_mm'),
-      cell: ({ row }) => {
-        const value = row.getValue('mm');
-        return value
-          ? h(
-              'span',
-              {
-                class: 'px-2 py-1 rounded bg-blue-100 text-blue-700 font-medium',
-              },
-              value
-            )
-          : t('table.no_value');
-      },
-    },
-    {
-      accessorKey: 'expand',
-      header: () => t('table.headers.expand'),
-      cell: ({ row }) => {
-        const hasNotes = row.original.notes;
-        const rowId = `${row.index}`;
-        return hasNotes
-          ? h(
-              'button',
-              {
-                class: 'text-right w-full hover:text-primary transition-colors',
-                onClick: () => toggleRow(rowId),
-              },
-              [
-                h('i', {
-                  class: `fas transition-transform duration-200 ${expandedRows.value[rowId] ? 'fa-chevron-up' : 'fa-chevron-down'}`,
-                }),
-              ]
-            )
-          : '';
-      },
-      enableSorting: false,
-    },
-  ];
+  const toggleTable = (id: string) => {
+    expandedTables.value[id] = !expandedTables.value[id];
+  };
 
   // Function to filter items based on search
   const filterItems = (items: ClearanceItem[], tableName: string) => {
@@ -98,6 +38,17 @@
       Object.values(item).some((val) => String(val).toLowerCase().includes(query))
     );
   };
+
+  // Default all tables to expanded (matching previous :default-value behavior)
+  watchEffect(() => {
+    if (tables.value) {
+      Object.keys(tables.value).forEach((name) => {
+        if (expandedTables.value[name] === undefined) {
+          expandedTables.value[name] = true;
+        }
+      });
+    }
+  });
 
   useHead({
     title: t('title'),
@@ -218,32 +169,34 @@
       <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')" />
     </div>
 
-    <div class="space-y-6">
-      <UAccordion
-        :items="Object.entries(tables || {}).map(([name, table]) => ({ label: table.title, value: name, table }))"
-        :default-value="Object.keys(tables || {})"
-        multiple
-        :ui="{
-          trigger: 'text-lg font-semibold py-4',
-        }"
+    <div class="join join-vertical w-full space-y-2">
+      <div
+        v-for="(table, name) in tables || {}"
+        :key="name"
+        class="collapse collapse-arrow join-item border border-base-300 bg-base-100"
       >
-        <template #body="{ item }">
+        <input
+          type="checkbox"
+          :checked="!!expandedTables[name]"
+          @change="toggleTable(name)"
+          :aria-label="table.title"
+        />
+        <div class="collapse-title text-lg font-semibold">{{ table.title }}</div>
+        <div class="collapse-content">
           <!-- Search field -->
           <div class="flex justify-end mb-4 mt-4">
             <div class="w-full max-w-xs">
-              <UInput
-                type="text"
-                v-model="searchValue"
-                :placeholder="t('search.placeholder')"
-                icon="i-fa6-solid-magnifying-glass"
-              />
+              <label class="input input-bordered flex items-center gap-2">
+                <i class="fas fa-magnifying-glass"></i>
+                <input v-model="searchValue" type="text" class="grow" :placeholder="t('search.placeholder')" />
+              </label>
             </div>
           </div>
 
           <div class="w-full overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="table w-full text-sm">
               <thead>
-                <tr class="border-b border-default">
+                <tr>
                   <th class="text-left p-2 font-medium">{{ t('table.headers.part') }}</th>
                   <th class="text-left p-2 font-medium">{{ t('table.headers.clearance_thou') }}</th>
                   <th class="text-left p-2 font-medium">{{ t('table.headers.clearance_mm') }}</th>
@@ -251,36 +204,33 @@
                 </tr>
               </thead>
               <tbody>
-                <template v-for="(tableItem, itemIndex) in filterItems(item.table.items, item.value)" :key="itemIndex">
+                <template v-for="(tableItem, itemIndex) in filterItems(table.items, name)" :key="itemIndex">
                   <tr
-                    class="border-b border-default last:border-0 hover:bg-muted cursor-pointer transition-colors"
-                    @click="toggleRow(`${item.value}-${itemIndex}`)"
+                    class="hover:bg-base-200 cursor-pointer transition-colors"
+                    @click="toggleRow(`${name}-${itemIndex}`)"
                   >
                     <td class="p-2">{{ tableItem.name }}</td>
                     <td class="p-2">
                       <span v-if="tableItem.thou" class="px-2 py-1 rounded bg-primary/10 text-primary font-medium">
                         {{ tableItem.thou }}
                       </span>
-                      <span v-else class="text-muted">{{ t('table.no_value') }}</span>
+                      <span v-else class="text-base-content/60">{{ t('table.no_value') }}</span>
                     </td>
                     <td class="p-2">
-                      <span
-                        v-if="tableItem.mm"
-                        class="px-2 py-1 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium"
-                      >
+                      <span v-if="tableItem.mm" class="badge badge-info">
                         {{ tableItem.mm }}
                       </span>
-                      <span v-else class="text-muted">{{ t('table.no_value') }}</span>
+                      <span v-else class="text-base-content/60">{{ t('table.no_value') }}</span>
                     </td>
                     <td class="p-2 text-right">
                       <i
                         v-if="tableItem.notes"
                         class="fas transition-transform duration-200"
-                        :class="expandedRows[`${item.value}-${itemIndex}`] ? 'fa-chevron-up' : 'fa-chevron-down'"
+                        :class="expandedRows[`${name}-${itemIndex}`] ? 'fa-chevron-up' : 'fa-chevron-down'"
                       ></i>
                     </td>
                   </tr>
-                  <tr v-if="expandedRows[`${item.value}-${itemIndex}`] && tableItem.notes" class="bg-muted">
+                  <tr v-if="expandedRows[`${name}-${itemIndex}`] && tableItem.notes" class="bg-base-200">
                     <td colspan="4" class="p-4">
                       <div class="font-semibold mb-2">
                         {{ t('table.extra_notes_title') }}
@@ -291,21 +241,21 @@
                     </td>
                   </tr>
                 </template>
-                <tr v-if="!filterItems(item.table.items, item.value).length">
-                  <td colspan="4" class="text-center py-4 text-muted">
+                <tr v-if="!filterItems(table.items, name).length">
+                  <td colspan="4" class="text-center py-4 text-base-content/60">
                     {{ t('table.no_items_found') }}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </template>
-      </UAccordion>
+        </div>
+      </div>
     </div>
 
-    <USeparator class="my-12">
-      <span class="text-sm text-muted">{{ t('ui.support_section') }}</span>
-    </USeparator>
+    <div class="divider my-12">
+      <span class="text-sm text-base-content/70">{{ t('ui.support_section') }}</span>
+    </div>
     <div class="mb-8">
       <patreon-card size="large" />
     </div>

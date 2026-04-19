@@ -1,87 +1,100 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-muted">
-    <UCard class="w-full max-w-md">
-      <div class="text-center mb-6">
-        <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
-        <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
-      </div>
-
-      <!-- Magic link sent success state -->
-      <div v-if="magicLinkSent" class="text-center space-y-4">
-        <div class="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto">
-          <i class="fad fa-envelope-circle-check text-3xl text-success"></i>
-        </div>
-        <h2 class="text-xl font-semibold">{{ t('magic_link_sent') }}</h2>
-        <p class="opacity-70">{{ t('magic_link_description') }}</p>
-        <UButton @click="resetForm" variant="ghost" size="sm">
-          {{ t('try_different_email') }}
-        </UButton>
-      </div>
-
-      <!-- OAuth + Email form -->
-      <div v-else class="space-y-4">
-        <!-- OAuth buttons -->
-        <div class="space-y-3">
-          <UButton class="w-full" color="neutral" variant="outline" :disabled="isLoading" @click="handleGoogleLogin">
-            <template #leading>
-              <i class="fab fa-google"></i>
-            </template>
-            {{ t('sign_in_google') }}
-          </UButton>
-
-          <UButton class="w-full" color="neutral" variant="outline" :disabled="isLoading" @click="handleAppleLogin">
-            <template #leading>
-              <i class="fab fa-apple"></i>
-            </template>
-            {{ t('sign_in_apple') }}
-          </UButton>
+  <div class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="card bg-base-100 shadow-md border border-base-300 w-full max-w-md">
+      <div class="card-body">
+        <div class="text-center mb-6">
+          <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
+          <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
         </div>
 
-        <USeparator :label="t('or_divider')" class="my-4" />
-
-        <!-- Email magic link form -->
-        <form @submit.prevent="handleLogin" class="space-y-4">
-          <UFormField :label="t('email_label')">
-            <UInput
-              v-model="email"
-              type="email"
-              :placeholder="t('email_placeholder')"
-              class="w-full"
-              :color="hasError ? 'error' : undefined"
-              required
-              :disabled="isLoading"
-            />
-          </UFormField>
-
-          <UAlert v-if="errorMessage" color="error" icon="i-fa6-solid-triangle-exclamation" :title="errorMessage" />
-
-          <div class="mt-6">
-            <UButton type="submit" color="primary" class="w-full" :disabled="isLoading" :loading="isLoading">
-              <template #leading>
-                <i v-if="!isLoading" class="fad fa-paper-plane"></i>
-              </template>
-              {{ isLoading ? t('sending') : t('send_magic_link') }}
-            </UButton>
+        <!-- Magic link sent success state -->
+        <div v-if="magicLinkSent" class="text-center space-y-4">
+          <div class="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto">
+            <i class="fad fa-envelope-circle-check text-3xl text-success"></i>
           </div>
-        </form>
-      </div>
+          <h2 class="text-xl font-semibold">{{ t('magic_link_sent') }}</h2>
+          <p class="opacity-70">{{ t('magic_link_description') }}</p>
+          <button type="button" class="btn btn-ghost btn-sm" @click="resetForm">
+            {{ t('try_different_email') }}
+          </button>
+        </div>
 
-      <USeparator class="my-4" />
+        <!-- OAuth + Email form -->
+        <div v-else class="space-y-4">
+          <!-- OAuth buttons -->
+          <div class="space-y-3">
+            <button
+              type="button"
+              class="btn btn-outline btn-neutral btn-block"
+              :disabled="isLoading"
+              @click="handleGoogleLogin"
+            >
+              <i class="fab fa-google"></i>
+              {{ t('sign_in_google') }}
+            </button>
 
-      <div class="text-center">
-        <UButton to="/" variant="ghost" size="sm">
-          <i class="fad fa-arrow-left mr-2"></i>
-          {{ t('back_to_site') }}
-        </UButton>
-      </div>
+            <button
+              type="button"
+              class="btn btn-outline btn-neutral btn-block"
+              :disabled="isLoading"
+              @click="handleAppleLogin"
+            >
+              <i class="fab fa-apple"></i>
+              {{ t('sign_in_apple') }}
+            </button>
+          </div>
 
-      <div class="text-center mt-2 p-3 bg-base-200 rounded-lg">
-        <p class="text-xs opacity-70">
-          <i class="fad fa-link mr-1"></i>
-          {{ t('unified_account_note') }}
-        </p>
+          <div class="divider my-4">{{ t('or_divider') }}</div>
+
+          <!-- Email magic link form -->
+          <form @submit.prevent="handleLogin" class="space-y-4">
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text">{{ t('email_label') }}</span>
+              </div>
+              <input
+                v-model="email"
+                type="email"
+                :placeholder="t('email_placeholder')"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': hasError }"
+                required
+                :disabled="isLoading"
+              />
+            </label>
+
+            <div v-if="errorMessage" role="alert" class="alert alert-error">
+              <i class="fas fa-triangle-exclamation"></i>
+              <span>{{ errorMessage }}</span>
+            </div>
+
+            <div class="mt-6">
+              <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
+                <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
+                <i v-else class="fad fa-paper-plane"></i>
+                {{ isLoading ? t('sending') : t('send_magic_link') }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <div class="text-center">
+          <NuxtLink to="/" class="btn btn-ghost btn-sm">
+            <i class="fad fa-arrow-left mr-2"></i>
+            {{ t('back_to_site') }}
+          </NuxtLink>
+        </div>
+
+        <div class="text-center mt-2 p-3 bg-base-200 rounded-lg">
+          <p class="text-xs opacity-70">
+            <i class="fad fa-link mr-1"></i>
+            {{ t('unified_account_note') }}
+          </p>
+        </div>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>
 

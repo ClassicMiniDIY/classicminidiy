@@ -98,14 +98,15 @@
     </div>
 
     <!-- Error State -->
-    <UAlert v-else-if="error" color="error" class="my-8" icon="i-fa6-solid-triangle-exclamation">
-      <template #title>{{ t('error_message') }}</template>
-      <template #actions>
-        <UButton to="/archive/wheels" size="sm" variant="ghost">
-          <i class="fas fa-arrow-left mr-2"></i> {{ t('back_to_wheels') }}
-        </UButton>
-      </template>
-    </UAlert>
+    <div v-else-if="error" role="alert" class="alert alert-error my-8">
+      <i class="fas fa-triangle-exclamation"></i>
+      <div class="flex-1">
+        <div class="font-semibold">{{ t('error_message') }}</div>
+      </div>
+      <NuxtLink to="/archive/wheels" class="btn btn-ghost btn-sm">
+        <i class="fas fa-arrow-left mr-2"></i> {{ t('back_to_wheels') }}
+      </NuxtLink>
+    </div>
 
     <!-- Content -->
     <div v-else>
@@ -121,8 +122,9 @@
       </div>
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12">
-          <UCard>
-            <div v-if="wheel">
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body">
+              <div v-if="wheel">
               <div class="flex flex-col md:flex-row gap-8">
                 <div class="flex-1">
                   <h1 class="text-3xl font-bold mb-4">{{ wheel.name }}</h1>
@@ -171,7 +173,7 @@
                 </div>
               </div>
 
-              <USeparator class="my-4" />
+              <div class="divider my-4"></div>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 py-4">
                 <div class="flex flex-col items-center text-center">
                   <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
@@ -210,36 +212,37 @@
                   </p>
                 </div>
               </div>
-              <USeparator class="my-4" />
+              <div class="divider my-4"></div>
               <div class="flex flex-wrap justify-center gap-3 pt-2">
-                <UButton v-if="copied" size="lg" color="neutral" disabled>
+                <button v-if="copied" type="button" class="btn btn-neutral btn-lg" disabled>
                   <i class="fad fa-check text-success mr-2"></i>
                   <span>{{ t('actions.copied') }}</span>
-                </UButton>
-                <UButton v-else size="lg" color="primary" @click="copyUrl">
+                </button>
+                <button v-else type="button" class="btn btn-primary btn-lg" @click="copyUrl">
                   <i class="fad fa-link mr-2"></i>
                   <span>{{ t('actions.copy_link') }}</span>
-                </UButton>
-                <UButton
+                </button>
+                <button
                   v-if="wheel.name && wheel.uuid"
-                  size="lg"
-                  color="secondary"
+                  type="button"
+                  class="btn btn-secondary btn-lg"
                   @click="shareWheelItem(wheel.name, wheel.uuid)"
                 >
                   <i class="fad fa-share mr-2"></i>
                   <span>{{ t('actions.share') }}</span>
-                </UButton>
-                <UButton v-if="wheel.uuid" :to="`/contribute/wheel?uuid=${wheel.uuid}`" size="lg" variant="outline">
+                </button>
+                <NuxtLink v-if="wheel.uuid" :to="`/contribute/wheel?uuid=${wheel.uuid}`" class="btn btn-outline btn-lg">
                   <i class="fad fa-edit mr-2"></i>
                   <span>{{ t('actions.contribute') }}</span>
-                </UButton>
-                <UButton v-if="isAuthenticated" variant="outline" size="sm" @click="showSuggestEdit = true">
+                </NuxtLink>
+                <button v-if="isAuthenticated" type="button" class="btn btn-outline btn-sm" @click="showSuggestEdit = true">
                   <i class="fad fa-pen-to-square mr-2"></i>
                   <span>{{ t('suggest_edit') }}</span>
-                </UButton>
+                </button>
               </div>
             </div>
-          </UCard>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,48 +1,9 @@
 <script lang="ts" setup>
-  import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
   const { data: engineCodes } = await useFetch('/api/decoders/engine');
   const search = ref('');
-
-  // Column definitions for Nuxt UI table
-  const tableColumns = [
-    {
-      accessorKey: 'color',
-      header: () => t('table.headers.color'),
-      cell: ({ row }) =>
-        h('i', {
-          class: `fas fa-circle pt-1 color-${row.getValue('size')}`,
-        }),
-      enableSorting: false,
-    },
-    {
-      accessorKey: 'code',
-      header: () => t('table.headers.code'),
-      cell: ({ row }) => row.getValue('code'),
-    },
-    {
-      accessorKey: 'size',
-      header: () => t('table.headers.engine_size'),
-      cell: ({ row }) => row.getValue('size'),
-    },
-    {
-      accessorKey: 'variant',
-      header: () => t('table.headers.engine_variant'),
-      cell: ({ row }) => row.getValue('variant'),
-    },
-    {
-      accessorKey: 'gearbox',
-      header: () => t('table.headers.gearbox_details'),
-      cell: ({ row }) => row.getValue('gearbox'),
-    },
-    {
-      accessorKey: 'description',
-      header: () => t('table.headers.details'),
-      cell: ({ row }) => row.getValue('description'),
-    },
-  ];
 
   const { capture } = usePostHog();
 
@@ -160,36 +121,38 @@
           </div>
           <div class="col-span-12 md:col-span-5">
             <NuxtLink :to="'/technical/chassis-decoder'" :title="t('chassis_decoder_card.link_title')" class="block">
-              <UCard class="hover:shadow-lg transition-shadow">
-                <div class="flex items-center">
-                  <div class="shrink-0">
-                    <picture>
-                      <source
-                        srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.webp"
-                        type="image/webp"
-                      />
-                      <source
-                        srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
-                        type="image/png"
-                      />
-                      <nuxt-img
-                        loading="lazy"
-                        src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
-                        :alt="t('chassis_decoder_card.alt_text')"
-                        class="w-16 h-16"
-                      />
-                    </picture>
-                  </div>
-                  <div class="ml-4">
-                    <h2 class="text-xl font-semibold mb-2">
-                      {{ t('chassis_decoder_card.heading') }}
-                    </h2>
-                    <p class="text-gray-600">
-                      {{ t('chassis_decoder_card.description') }}
-                    </p>
+              <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow">
+                <div class="card-body">
+                  <div class="flex items-center">
+                    <div class="shrink-0">
+                      <picture>
+                        <source
+                          srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.webp"
+                          type="image/webp"
+                        />
+                        <source
+                          srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
+                          type="image/png"
+                        />
+                        <nuxt-img
+                          loading="lazy"
+                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
+                          :alt="t('chassis_decoder_card.alt_text')"
+                          class="w-16 h-16"
+                        />
+                      </picture>
+                    </div>
+                    <div class="ml-4">
+                      <h2 class="text-xl font-semibold mb-2">
+                        {{ t('chassis_decoder_card.heading') }}
+                      </h2>
+                      <p class="text-base-content/70">
+                        {{ t('chassis_decoder_card.description') }}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </UCard>
+              </div>
             </NuxtLink>
           </div>
         </div>
@@ -213,34 +176,53 @@
         </div>
         <div class="col-span-12 md:col-span-6">
           <div class="pb-5">
-            <UInput v-model="search" :placeholder="t('search.placeholder')" class="w-full">
-              <template #leading>
-                <i class="fad fa-search"></i>
-              </template>
-            </UInput>
+            <label class="input input-bordered flex items-center gap-2 w-full">
+              <i class="fad fa-search"></i>
+              <input v-model="search" type="text" class="grow" :placeholder="t('search.placeholder')" />
+            </label>
           </div>
         </div>
         <div class="col-span-12">
-          <UCard>
-            <template #header>
-              <div class="flex items-center bg-muted -m-4 p-4 rounded-t-lg">
-                <div>
-                  <i class="fad fa-engine text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold ml-2">
-                  {{ t('table.title') }}
-                </h3>
+          <div class="card bg-base-100 shadow-md border border-base-300">
+            <div class="flex items-center bg-base-200 p-4 rounded-t-lg">
+              <div>
+                <i class="fad fa-engine text-2xl"></i>
               </div>
-            </template>
-
-            <div class="w-full overflow-x-auto">
-              <UTable :data="filteredEngineCodes" :columns="tableColumns" class="w-full min-w-full" />
+              <h3 class="text-xl font-semibold ml-2">
+                {{ t('table.title') }}
+              </h3>
             </div>
-          </UCard>
+            <div class="card-body">
+              <div class="w-full overflow-x-auto">
+                <table class="table w-full">
+                  <thead>
+                    <tr>
+                      <th>{{ t('table.headers.color') }}</th>
+                      <th>{{ t('table.headers.code') }}</th>
+                      <th>{{ t('table.headers.engine_size') }}</th>
+                      <th>{{ t('table.headers.engine_variant') }}</th>
+                      <th>{{ t('table.headers.gearbox_details') }}</th>
+                      <th>{{ t('table.headers.details') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, idx) in filteredEngineCodes" :key="idx">
+                      <td><i class="fas fa-circle pt-1" :class="`color-${row.size}`"></i></td>
+                      <td>{{ row.code }}</td>
+                      <td>{{ row.size }}</td>
+                      <td>{{ row.variant }}</td>
+                      <td>{{ row.gearbox }}</td>
+                      <td>{{ row.description }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="t('ui.support_section')" class="mb-4" />
+        <div class="divider mb-4">{{ t('ui.support_section') }}</div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10">
         <patreon-card size="large" />

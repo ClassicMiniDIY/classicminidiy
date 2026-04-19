@@ -159,26 +159,23 @@
 </script>
 
 <template>
-  <footer class="bg-neutral-100 dark:bg-[#171717] py-10 text-center">
+  <footer class="bg-base-200 py-10 text-center">
     <div class="container mx-auto px-4">
       <!-- Social Links -->
       <div class="pb-4">
         <div class="flex justify-center gap-2">
-          <UButton
+          <NuxtLink
             v-for="(social, i) in socials"
             :key="i"
             :to="social.href"
             target="_blank"
             rel="noopener noreferrer"
-            variant="ghost"
-            color="neutral"
-            size="lg"
-            square
+            class="btn btn-ghost btn-lg btn-square"
             :title="social.title"
             :aria-label="social.title"
           >
             <i :class="social.icon" class="text-2xl"></i>
-          </UButton>
+          </NuxtLink>
         </div>
       </div>
 
@@ -186,17 +183,17 @@
       <div class="pt-0">
         <h2 class="text-xl font-semibold">
           <strong class="text-primary">{{ t('brand_name') }}</strong> by
-          <ULink
+          <NuxtLink
             to="https://youtube.com/c/classicminidiy?sub_confirmation=1"
             target="_blank"
             rel="noopener"
             :aria-label="t('youtube_link_aria')"
-            class="hover:underline"
+            class="link hover:underline"
           >
-            {{ t('author_name') }}</ULink
+            {{ t('author_name') }}</NuxtLink
           >.
         </h2>
-        <p class="pb-3 max-w-3xl mx-auto mt-2 text-muted">
+        <p class="pb-3 max-w-3xl mx-auto mt-2 text-base-content/70">
           {{ t('description') }}
         </p>
       </div>
@@ -205,35 +202,35 @@
       <div>
         <div class="flex justify-center">
           <div class="w-10/12">
-            <p class="text-muted">
+            <p class="text-base-content/70">
               {{ new Date().getFullYear() }} — <strong>{{ t('company_name') }}</strong>
             </p>
 
-            <USeparator class="my-4" :label="t('links_divider')" />
+            <div class="divider my-4">{{ t('links_divider') }}</div>
 
             <div class="flex flex-wrap justify-center gap-3">
-              <ULink to="/contact" class="text-sm hover:underline">
+              <NuxtLink to="/contact" class="link text-sm hover:underline">
                 {{ t('contact_link') }}
-              </ULink>
-              <ULink to="/privacy" class="text-sm hover:underline">
+              </NuxtLink>
+              <NuxtLink to="/privacy" class="link text-sm hover:underline">
                 {{ t('privacy_links.cmdiy_privacy') }}
-              </ULink>
-              <ULink
+              </NuxtLink>
+              <NuxtLink
                 to="https://www.youtube.com/t/terms"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-sm hover:underline"
+                class="link text-sm hover:underline"
               >
                 {{ t('privacy_links.youtube_privacy') }}
-              </ULink>
-              <ULink
+              </NuxtLink>
+              <NuxtLink
                 to="http://www.google.com/policies/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-sm hover:underline"
+                class="link text-sm hover:underline"
               >
                 {{ t('privacy_links.google_privacy') }}
-              </ULink>
+              </NuxtLink>
             </div>
           </div>
         </div>

@@ -92,17 +92,16 @@
 
 <template>
   <div
-    class="rounded-lg border p-4 flex flex-col md:flex-row md:items-center gap-4"
+    class="rounded-lg border border-base-300 p-4 flex flex-col md:flex-row md:items-center gap-4"
     :style="{ borderLeftWidth: '4px', borderLeftColor: color }"
   >
     <!-- Name -->
     <div class="flex items-center gap-2 min-w-0 md:w-48">
       <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: color }"></span>
       <template v-if="isEditing">
-        <UInput
+        <input
           v-model="editName"
-          size="sm"
-          class="flex-1"
+          class="input input-sm input-bordered flex-1"
           maxlength="100"
           @keyup.enter="finishEditing"
           @blur="finishEditing"
@@ -122,52 +121,49 @@
 
     <!-- Dropdowns -->
     <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-      <USelect
-        :model-value="gearsetStringValue"
-        :items="gearRatioOptions"
-        value-key="value"
-        size="sm"
-        class="w-full"
-        @update:model-value="updateGearset"
-      />
-      <USelect
-        :model-value="String(config.finalDrive)"
-        :items="diffOptions"
-        value-key="value"
-        size="sm"
-        class="w-full"
-        @update:model-value="updateFinalDrive"
-      />
-      <USelect
-        :model-value="String(config.dropGear)"
-        :items="dropGearOptions"
-        value-key="value"
-        size="sm"
-        class="w-full"
-        @update:model-value="updateDropGear"
-      />
+      <select
+        :value="gearsetStringValue"
+        class="select select-sm select-bordered w-full"
+        @change="updateGearset(($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="opt in gearRatioOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
+      <select
+        :value="String(config.finalDrive)"
+        class="select select-sm select-bordered w-full"
+        @change="updateFinalDrive(($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="opt in diffOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
+      <select
+        :value="String(config.dropGear)"
+        class="select select-sm select-bordered w-full"
+        @change="updateDropGear(($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="opt in dropGearOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
     </div>
 
     <!-- Actions -->
     <div class="flex items-center gap-2 shrink-0">
-      <UButton
+      <button
         v-if="isAuthenticated"
-        :icon="config.savedId ? 'i-fa6-solid-bookmark' : 'i-fa6-regular-bookmark'"
-        variant="ghost"
-        size="sm"
-        :loading="isSaving"
+        class="btn btn-ghost btn-sm"
+        :disabled="isSaving"
         :title="config.savedId ? t('saved') : t('save')"
         @click="emit('save')"
-      />
-      <UButton
+      >
+        <span v-if="isSaving" class="loading loading-spinner loading-sm"></span>
+        <i v-else :class="config.savedId ? 'fas fa-bookmark' : 'far fa-bookmark'"></i>
+      </button>
+      <button
         v-if="canDelete"
-        icon="i-fa6-solid-xmark"
-        variant="ghost"
-        color="error"
-        size="sm"
+        class="btn btn-ghost btn-sm text-error"
         :title="t('remove')"
         @click="emit('delete')"
-      />
+      >
+        <i class="fas fa-xmark"></i>
+      </button>
     </div>
   </div>
 </template>

@@ -83,17 +83,20 @@
 </script>
 
 <template>
-  <UBreadcrumb
-    :items="breadcrumbItems"
-    class="text-base"
-    :ui="{
-      item: 'text-primary-600 dark:text-primary-400',
-      link: 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300',
-      linkActive: 'text-neutral-500 dark:text-neutral-400 font-medium',
-      separator: 'text-neutral-400 dark:text-neutral-500',
-      icon: 'text-primary-600 dark:text-primary-400',
-    }"
-  />
+  <div class="breadcrumbs text-base">
+    <ul>
+      <li v-for="(crumb, i) in breadcrumbItems" :key="i">
+        <NuxtLink v-if="crumb.to" :to="crumb.to" class="text-primary hover:text-primary/80 inline-flex items-center gap-1">
+          <i v-if="crumb.icon === 'i-fa6-solid-house'" class="fas fa-house"></i>
+          {{ crumb.label }}
+        </NuxtLink>
+        <span v-else class="text-base-content/60 font-medium inline-flex items-center gap-1">
+          <i v-if="crumb.icon === 'i-fa6-solid-house'" class="fas fa-house"></i>
+          {{ crumb.label }}
+        </span>
+      </li>
+    </ul>
+  </div>
 </template>
 
 <i18n lang="json">

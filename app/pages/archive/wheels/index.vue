@@ -81,20 +81,22 @@
       <breadcrumb :page="t('breadcrumb_title')" class="my-6"></breadcrumb>
 
       <!-- Contribute Banner -->
-      <UCard class="mb-6 bg-primary/5">
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
-            <div>
-              <p class="font-medium">{{ t('contribute_banner_title') }}</p>
-              <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+      <div class="card bg-base-100 shadow-sm border border-base-300 mb-6 bg-primary/5">
+        <div class="card-body">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
+              <div>
+                <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+                <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+              </div>
             </div>
+            <NuxtLink to="/contribute/wheel" class="btn btn-primary btn-outline btn-sm">
+              {{ t('contribute_banner_button') }}
+            </NuxtLink>
           </div>
-          <UButton to="/contribute/wheel" color="primary" variant="outline" size="sm">
-            {{ t('contribute_banner_button') }}
-          </UButton>
         </div>
-      </UCard>
+      </div>
 
       <div class="grid grid-cols-12 gap-4 items-center">
         <div class="col-span-12 md:col-span-8">
@@ -105,27 +107,29 @@
         </div>
         <div class="col-span-12 md:col-span-4">
           <NuxtLink :to="'/contribute/wheel?newWheel=true'" :title="t('add_wheel_card.link_title')">
-            <UCard class="hover:shadow-2xl transition-shadow">
-              <div class="flex items-start">
-                <div class="mr-4">
-                  <i class="fad fa-rectangle-history-circle-plus text-3xl"></i>
-                </div>
-                <div>
-                  <h2 class="text-lg font-semibold">{{ t('add_wheel_card.title') }}</h2>
-                  <p>{{ t('add_wheel_card.description') }}</p>
+            <div class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-2xl transition-shadow">
+              <div class="card-body">
+                <div class="flex items-start">
+                  <div class="mr-4">
+                    <i class="fad fa-rectangle-history-circle-plus text-3xl"></i>
+                  </div>
+                  <div>
+                    <h2 class="text-lg font-semibold">{{ t('add_wheel_card.title') }}</h2>
+                    <p>{{ t('add_wheel_card.description') }}</p>
+                  </div>
                 </div>
               </div>
-            </UCard>
+            </div>
           </NuxtLink>
         </div>
       </div>
-      <USeparator class="my-4" />
+      <div class="divider my-4"></div>
       <div class="grid grid-cols-12 gap-4 mb-4">
         <div class="col-span-12">
           <WheelGrid></WheelGrid>
         </div>
       </div>
-      <footer class="bg-muted text-center p-6 rounded-lg">
+      <footer class="bg-base-200 text-center p-6 rounded-lg">
         <div>
           <h2 class="text-xl font-bold mb-2">
             {{ t('footer.title') }}
@@ -143,7 +147,7 @@
           </p>
         </div>
       </footer>
-      <USeparator class="my-4" />
+      <div class="divider my-4"></div>
     </div>
   </div>
 </template>

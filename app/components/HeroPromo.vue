@@ -175,35 +175,32 @@
         </h1>
         <!-- Multiple CTAs (e.g. App Store + Google Play) -->
         <div v-if="selectedPromo.secondaryCtas?.length" class="flex flex-col sm:flex-row gap-3 mt-6">
-          <UButton
+          <NuxtLink
             v-for="cta in selectedPromo.secondaryCtas"
             :key="cta.url"
             :to="cta.url"
             target="_blank"
             external
-            color="primary"
-            size="lg"
+            class="btn btn-primary btn-lg"
             @click="capture('promo_cta_clicked', { promo_id: selectedPromo.id, cta_url: cta.url })"
           >
             <i v-if="cta.icon" :class="cta.icon" class="text-xl mr-2"></i>
             {{ cta.text }}
-          </UButton>
+          </NuxtLink>
         </div>
 
         <!-- Single CTA -->
-        <UButton
+        <NuxtLink
           v-else-if="selectedPromo.ctaUrl"
           :to="selectedPromo.ctaUrl"
           :target="selectedPromo.external ? '_blank' : undefined"
           :external="selectedPromo.external"
-          color="secondary"
-          size="lg"
-          class="mt-6"
+          class="btn btn-secondary btn-lg mt-6"
           @click="capture('promo_cta_clicked', { promo_id: selectedPromo.id, cta_url: selectedPromo.ctaUrl })"
         >
           {{ selectedPromo.ctaText }}
           <i v-if="selectedPromo.external" class="fas fa-external-link-alt ml-2 text-sm"></i>
-        </UButton>
+        </NuxtLink>
 
         <!-- Dot indicators + nav when multiple promos are active -->
         <div v-if="activePromos.length > 1" class="flex items-center gap-3 mt-6">
