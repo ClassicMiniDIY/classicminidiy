@@ -207,18 +207,18 @@
 
     <!-- Auth gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('auth.sign_in_title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('auth.sign_in_description') }}</p>
-          <UButton to="/login" color="primary" class="w-full">
+          <NuxtLink to="/login" class="btn btn-primary btn-block">
             {{ t('auth.sign_in_button') }}
-          </UButton>
+          </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -228,24 +228,24 @@
 
     <!-- Fetch error -->
     <div v-else-if="fetchError" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
             <i class="fas fa-triangle-exclamation text-5xl text-warning"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('fetch_error.title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('fetch_error.description') }}</p>
           <div class="flex gap-3 justify-center">
-            <UButton to="/profile" variant="ghost" color="neutral">
+            <NuxtLink to="/profile" class="btn btn-ghost">
               {{ t('fetch_error.back') }}
-            </UButton>
-            <UButton color="primary" @click="loadProfile">
+            </NuxtLink>
+            <button class="btn btn-primary" @click="loadProfile">
               <i class="fas fa-arrow-rotate-right mr-1"></i>
               {{ t('fetch_error.retry') }}
-            </UButton>
+            </button>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Authenticated content -->
@@ -254,131 +254,146 @@
         <!-- Left column: Avatar & Identity -->
         <div class="lg:col-span-1 space-y-6">
           <!-- Avatar & Name -->
-          <UCard :ui="{ header: 'bg-muted p-4' }">
-            <template #header>
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body">
               <div class="flex items-center">
                 <i class="fad fa-user-pen mr-2"></i>
                 <h2 class="text-lg font-semibold">{{ t('card_title') }}</h2>
               </div>
-            </template>
 
-            <div class="space-y-4">
-              <div class="flex justify-center">
-                <ProfileAvatarUpload
-                  :current-url="avatarUrl ?? undefined"
-                  :display-name="displayName"
-                  :email="user?.email"
-                  @upload="handleAvatarUpload"
-                />
+              <div class="space-y-4">
+                <div class="flex justify-center">
+                  <ProfileAvatarUpload
+                    :current-url="avatarUrl ?? undefined"
+                    :display-name="displayName"
+                    :email="user?.email"
+                    @upload="handleAvatarUpload"
+                  />
+                </div>
+
+                <label class="form-control w-full">
+                  <div class="label">
+                    <span class="label-text">{{ t('form.display_name.label') }}</span>
+                  </div>
+                  <label class="input input-bordered flex items-center gap-2 w-full">
+                    <i class="fas fa-user opacity-60"></i>
+                    <input
+                      v-model="displayName"
+                      type="text"
+                      :placeholder="t('form.display_name.placeholder')"
+                      maxlength="50"
+                      class="grow"
+                    />
+                  </label>
+                </label>
+
+                <label class="form-control w-full">
+                  <div class="label">
+                    <span class="label-text">{{ t('form.location.label') }}</span>
+                  </div>
+                  <ProfileLocationAutocomplete v-model="location" />
+                </label>
               </div>
-
-              <UFormField :label="t('form.display_name.label')">
-                <UInput
-                  v-model="displayName"
-                  type="text"
-                  :placeholder="t('form.display_name.placeholder')"
-                  class="w-full"
-                  maxlength="50"
-                  icon="i-fa6-solid-user"
-                />
-              </UFormField>
-
-              <UFormField :label="t('form.location.label')">
-                <ProfileLocationAutocomplete v-model="location" />
-              </UFormField>
             </div>
-          </UCard>
+          </div>
 
           <!-- Privacy Settings -->
-          <UCard :ui="{ header: 'bg-muted p-4' }">
-            <template #header>
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body">
               <div class="flex items-center">
                 <i class="fad fa-shield-halved mr-2"></i>
                 <h2 class="text-lg font-semibold">{{ t('privacy.title') }}</h2>
               </div>
-            </template>
 
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="font-medium">{{ t('privacy.public_profile') }}</p>
-                  <p class="text-sm opacity-60">{{ t('privacy.public_description') }}</p>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">{{ t('privacy.public_profile') }}</p>
+                    <p class="text-sm opacity-60">{{ t('privacy.public_description') }}</p>
+                  </div>
+                  <input type="checkbox" v-model="isPublic" class="toggle toggle-primary" />
                 </div>
-                <USwitch v-model="isPublic" />
-              </div>
 
-              <div v-if="isPublic" class="flex items-center justify-between">
-                <div>
-                  <p class="font-medium">{{ t('privacy.show_vehicles') }}</p>
-                  <p class="text-sm opacity-60">{{ t('privacy.vehicles_description') }}</p>
+                <div v-if="isPublic" class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">{{ t('privacy.show_vehicles') }}</p>
+                    <p class="text-sm opacity-60">{{ t('privacy.vehicles_description') }}</p>
+                  </div>
+                  <input type="checkbox" v-model="showVehicles" class="toggle toggle-primary" />
                 </div>
-                <USwitch v-model="showVehicles" />
               </div>
             </div>
-          </UCard>
+          </div>
         </div>
 
         <!-- Right column: Bio, Social -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Bio -->
-          <UCard :ui="{ header: 'bg-muted p-4' }">
-            <template #header>
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body">
               <div class="flex items-center">
                 <i class="fad fa-pen-to-square mr-2"></i>
                 <h2 class="text-lg font-semibold">{{ t('form.bio.label') }}</h2>
               </div>
-            </template>
 
-            <UTextarea
-              v-model="bio"
-              :placeholder="t('form.bio.placeholder')"
-              :rows="6"
-              class="w-full"
-              maxlength="500"
-            />
-          </UCard>
+              <textarea
+                v-model="bio"
+                :placeholder="t('form.bio.placeholder')"
+                rows="6"
+                maxlength="500"
+                class="textarea textarea-bordered w-full"
+              ></textarea>
+            </div>
+          </div>
 
           <!-- Social Links -->
-          <UCard :ui="{ header: 'bg-muted p-4' }">
-            <template #header>
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body">
               <div class="flex items-center">
                 <i class="fad fa-share-nodes mr-2"></i>
                 <h2 class="text-lg font-semibold">{{ t('social.title') }}</h2>
               </div>
-            </template>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <UFormField v-for="platform in socialPlatforms" :key="platform.key" :label="platform.label">
-                <UInput
-                  v-model="socialLinks[platform.key]"
-                  type="text"
-                  :placeholder="t('social.placeholder', { platform: platform.label })"
-                  class="w-full"
-                >
-                  <template #leading>
-                    <i :class="platform.icon" class="pl-1 opacity-60"></i>
-                  </template>
-                </UInput>
-              </UFormField>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label v-for="platform in socialPlatforms" :key="platform.key" class="form-control w-full">
+                  <div class="label">
+                    <span class="label-text">{{ platform.label }}</span>
+                  </div>
+                  <label class="input input-bordered flex items-center gap-2 w-full">
+                    <i :class="platform.icon" class="opacity-60"></i>
+                    <input
+                      v-model="socialLinks[platform.key]"
+                      type="text"
+                      :placeholder="t('social.placeholder', { platform: platform.label })"
+                      class="grow"
+                    />
+                  </label>
+                </label>
+              </div>
             </div>
-          </UCard>
+          </div>
         </div>
       </div>
 
       <!-- Actions (full width below the grid) -->
       <div>
-        <USeparator class="mb-4" />
+        <div class="divider"></div>
         <p class="text-sm opacity-60 mb-4">
           <i class="fad fa-circle-info mr-1"></i>
           {{ t('shared_note') }}
         </p>
         <div class="flex gap-3">
-          <UButton to="/profile" variant="ghost" color="neutral">
+          <NuxtLink to="/profile" class="btn btn-ghost">
             {{ t('form.cancel') }}
-          </UButton>
-          <UButton color="primary" :loading="saving" :disabled="saving || profileLoading" @click="save">
-            {{ t('form.save') }}
-          </UButton>
+          </NuxtLink>
+          <button
+            class="btn btn-primary"
+            :disabled="saving || profileLoading"
+            @click="save"
+          >
+            <span v-if="saving" class="loading loading-spinner loading-sm"></span>
+            <span v-else>{{ t('form.save') }}</span>
+          </button>
         </div>
       </div>
     </div>

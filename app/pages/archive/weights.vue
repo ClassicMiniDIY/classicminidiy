@@ -76,10 +76,10 @@
             <p class="mb-6">
               {{ t('description_text') }}
             </p>
-            <UButton to="/contact" variant="outline" class="mb-6">
+            <NuxtLink to="/contact" class="btn btn-outline mb-6">
               <i class="fas fa-paper-plane mr-2"></i>
               {{ t('contact_button') }}
-            </UButton>
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -87,62 +87,67 @@
       <div class="col-span-12">
         <!-- Loading state -->
         <div v-if="status === 'pending'" class="space-y-4">
-          <USkeleton class="h-12 w-full" />
-          <USkeleton class="h-12 w-full" />
-          <USkeleton class="h-12 w-full" />
+          <div class="skeleton h-12 w-full"></div>
+          <div class="skeleton h-12 w-full"></div>
+          <div class="skeleton h-12 w-full"></div>
         </div>
 
         <!-- Content when loaded -->
         <div v-if="tables && status !== 'pending'" class="space-y-6">
-          <UAccordion
-            :items="Object.entries(tables || {}).map(([name, table]) => ({ label: table.title, value: name, table }))"
-            multiple
-            :ui="{
-              trigger: 'text-lg font-semibold py-4',
-            }"
-          >
-            <template #body="{ item }">
-              <!-- Search field -->
-              <div class="flex justify-end mb-4 mt-4">
-                <div class="w-full max-w-xs">
-                  <UInput
-                    type="text"
-                    :placeholder="t('search_placeholder')"
-                    v-model="tableSearchQueries[item.value]"
-                    icon="i-fa6-solid-magnifying-glass"
-                  />
+          <div class="join join-vertical w-full">
+            <div
+              v-for="[name, table] in Object.entries(tables || {})"
+              :key="name"
+              class="collapse collapse-arrow join-item border border-base-300"
+            >
+              <input type="checkbox" />
+              <div class="collapse-title text-lg font-semibold">{{ table.title }}</div>
+              <div class="collapse-content">
+                <!-- Search field -->
+                <div class="flex justify-end mb-4 mt-4">
+                  <div class="w-full max-w-xs">
+                    <label class="input input-bordered flex items-center gap-2">
+                      <i class="fas fa-magnifying-glass opacity-60"></i>
+                      <input
+                        type="text"
+                        :placeholder="t('search_placeholder')"
+                        v-model="tableSearchQueries[name]"
+                        class="grow"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                  <table class="table w-full text-sm">
+                    <!-- Table header -->
+                    <thead>
+                      <tr class="border-b border-base-300">
+                        <th v-for="header in tableHeaders" :key="header.key" class="text-left p-2 font-medium">
+                          {{ header.title }}
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <!-- Table body -->
+                    <tbody>
+                      <template
+                        v-for="(tableItem, itemIndex) in filterItems(table.items, name)"
+                        :key="itemIndex"
+                      >
+                        <tr class="border-b border-base-300 last:border-0 hover:bg-base-200 transition-colors">
+                          <td class="p-2">{{ tableItem.item }}</td>
+                          <td class="p-2">{{ tableItem.weight || '---' }}</td>
+                          <td class="p-2">{{ convertKgToLbs(tableItem.weight) }}</td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-
-              <!-- Table -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                  <!-- Table header -->
-                  <thead>
-                    <tr class="border-b border-default">
-                      <th v-for="header in tableHeaders" :key="header.key" class="text-left p-2 font-medium">
-                        {{ header.title }}
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <!-- Table body -->
-                  <tbody>
-                    <template
-                      v-for="(tableItem, itemIndex) in filterItems(item.table.items, item.value)"
-                      :key="itemIndex"
-                    >
-                      <tr class="border-b border-default last:border-0 hover:bg-muted transition-colors">
-                        <td class="p-2">{{ tableItem.item }}</td>
-                        <td class="p-2">{{ tableItem.weight || '---' }}</td>
-                        <td class="p-2">{{ convertKgToLbs(tableItem.weight) }}</td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-            </template>
-          </UAccordion>
+            </div>
+          </div>
         </div>
       </div>
 

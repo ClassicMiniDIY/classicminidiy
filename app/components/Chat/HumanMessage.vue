@@ -9,10 +9,10 @@
 
     <!-- Action buttons (shown on hover) -->
     <div class="flex items-center gap-2 mt-2 opacity-0 transition-opacity group-hover:opacity-100 justify-end">
-      <UButton @click="copyToClipboard(contentString)" size="xs" variant="ghost" color="neutral">
+      <button @click="copyToClipboard(contentString)" class="btn btn-xs btn-ghost">
         <i class="fa-solid fa-copy h-3 w-3 mr-1" />
         {{ t('copy_button') }}
-      </UButton>
+      </button>
     </div>
   </div>
 </template>

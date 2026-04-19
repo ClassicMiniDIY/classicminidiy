@@ -28,6 +28,16 @@
     set: (value: boolean) => emit('update:modelValue', value),
   });
 
+  const dialogEl = ref<HTMLDialogElement | null>(null);
+  watch(isOpen, (open) => {
+    if (!dialogEl.value) return;
+    if (open && !dialogEl.value.open) {
+      dialogEl.value.showModal();
+    } else if (!open && dialogEl.value.open) {
+      dialogEl.value.close();
+    }
+  });
+
   const formData = reactive<Record<string, any>>({});
   const reason = ref('');
   const submitted = ref(false);
@@ -180,151 +190,161 @@
 </script>
 
 <template>
-  <UModal v-model:open="isOpen" :ui="{ width: 'max-w-2xl' }">
-    <template #content>
-      <div class="flex flex-col max-h-[90vh]">
-        <!-- Header (fixed) -->
-        <div class="flex items-center justify-between p-5 border-b border-base-content/10 shrink-0">
-          <h2 class="text-lg font-semibold">
-            <i class="fad fa-pen-to-square mr-2"></i>
-            {{ t('title') }}
-          </h2>
-          <UButton variant="ghost" color="neutral" square size="sm" @click="close">
-            <i class="i-fa6-solid-xmark"></i>
-          </UButton>
+  <dialog ref="dialogEl" class="modal" @close="isOpen = false">
+    <div class="modal-box max-w-2xl p-0 max-h-[90vh] flex flex-col">
+      <!-- Header (fixed) -->
+      <div class="flex items-center justify-between p-5 border-b border-base-content/10 shrink-0">
+        <h2 class="text-lg font-semibold">
+          <i class="fad fa-pen-to-square mr-2"></i>
+          {{ t('title') }}
+        </h2>
+        <button type="button" class="btn btn-ghost btn-sm btn-square" @click="close">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Scrollable body -->
+      <div class="overflow-y-auto flex-1 p-5">
+        <!-- Success State -->
+        <div v-if="submitted" class="text-center py-8">
+          <div class="mb-4">
+            <i class="fad fa-circle-check text-5xl text-success"></i>
+          </div>
+          <h3 class="text-2xl font-bold mb-2">{{ t('success.title') }}</h3>
+          <p class="opacity-70 mb-6">{{ t('success.description') }}</p>
+          <button type="button" class="btn btn-primary" @click="close">
+            {{ t('success.close') }}
+          </button>
         </div>
 
-        <!-- Scrollable body -->
-        <div class="overflow-y-auto flex-1 p-5">
-          <!-- Success State -->
-          <div v-if="submitted" class="text-center py-8">
-            <div class="mb-4">
-              <i class="fad fa-circle-check text-5xl text-success"></i>
-            </div>
-            <h3 class="text-2xl font-bold mb-2">{{ t('success.title') }}</h3>
-            <p class="opacity-70 mb-6">{{ t('success.description') }}</p>
-            <UButton color="primary" @click="close">
-              {{ t('success.close') }}
-            </UButton>
-          </div>
+        <!-- Form -->
+        <div v-else>
+          <p class="text-sm opacity-70 mb-6">{{ t('form.description') }}</p>
 
-          <!-- Form -->
-          <div v-else>
-            <p class="text-sm opacity-70 mb-6">{{ t('form.description') }}</p>
-
-            <form @submit.prevent="submit" class="space-y-4">
-              <!-- Editable fields -->
-              <div v-for="field in editableFields" :key="field.key">
-                <UFormField :label="field.label">
-                  <template #hint>
-                    <span class="text-xs opacity-60">
-                      {{ t('form.current_value') }}:
-                      <template v-if="field.type === 'select' && field.options">
-                        {{ field.options.find((o) => o.value === currentData[field.key])?.label || '—' }}
-                      </template>
-                      <template v-else>
-                        {{ currentData[field.key] || '—' }}
-                      </template>
-                    </span>
-                  </template>
-                  <UTextarea
-                    v-if="field.type === 'textarea'"
-                    v-model="formData[field.key]"
-                    class="w-full"
-                    :rows="3"
-                    :disabled="processing"
-                  />
-                  <USelect
-                    v-else-if="field.type === 'select'"
-                    v-model="formData[field.key]"
-                    :items="field.options ?? []"
-                    value-key="value"
-                    label-key="label"
-                    class="w-full"
-                    :disabled="processing"
-                  />
-                  <UInput
-                    v-else
-                    v-model="formData[field.key]"
-                    :type="field.type === 'number' ? 'number' : 'text'"
-                    class="w-full"
-                    :disabled="processing"
-                  />
-                </UFormField>
-
-                <!-- Conditional sub-fields for select fields -->
-                <template v-if="field.type === 'select' && field.conditionalFields?.[String(formData[field.key])]">
-                  <div
-                    v-for="cf in field.conditionalFields[String(formData[field.key])]"
-                    :key="cf.key"
-                    class="mt-3 pl-4 border-l-2 border-primary/30"
-                  >
-                    <UFormField :label="cf.label">
-                      <UTextarea
-                        v-if="cf.type === 'textarea'"
-                        v-model="formData[cf.key]"
-                        class="w-full"
-                        :rows="3"
-                        :disabled="processing"
-                      />
-                      <UInput v-else v-model="formData[cf.key]" type="text" class="w-full" :disabled="processing" />
-                    </UFormField>
-                  </div>
-                </template>
-              </div>
-
-              <USeparator />
-
-              <!-- Reason for change -->
-              <UFormField :label="`${t('form.reason.label')} *`" :help="t('form.reason.help')">
-                <UTextarea
-                  v-model="reason"
-                  :placeholder="t('form.reason.placeholder')"
-                  class="w-full"
+          <form @submit.prevent="submit" class="space-y-4">
+            <!-- Editable fields -->
+            <div v-for="field in editableFields" :key="field.key">
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">{{ field.label }}</legend>
+                <textarea
+                  v-if="field.type === 'textarea'"
+                  v-model="formData[field.key]"
+                  class="textarea textarea-bordered w-full"
                   :rows="3"
                   :disabled="processing"
-                  required
-                />
-              </UFormField>
-
-              <!-- Error alert -->
-              <UAlert v-if="error" color="error">
-                <template #icon>
-                  <i class="fad fa-circle-exclamation"></i>
-                </template>
-                <template #title>{{ t('error.title') }}</template>
-                <template #description>{{ error }}</template>
-              </UAlert>
-
-              <!-- No changes warning -->
-              <UAlert v-if="!hasChanges && !error" color="warning">
-                <template #icon>
-                  <i class="fad fa-triangle-exclamation"></i>
-                </template>
-                <template #title>{{ t('warning.no_changes') }}</template>
-              </UAlert>
-
-              <!-- Actions -->
-              <div class="flex justify-end gap-3 pt-2">
-                <UButton variant="outline" @click="close" :disabled="processing">
-                  {{ t('form.cancel') }}
-                </UButton>
-                <UButton
-                  type="submit"
-                  color="primary"
-                  :disabled="!hasChanges || !reason.trim() || processing"
-                  :loading="processing"
+                ></textarea>
+                <select
+                  v-else-if="field.type === 'select'"
+                  v-model="formData[field.key]"
+                  class="select select-bordered w-full"
+                  :disabled="processing"
                 >
-                  <i class="fad fa-paper-plane mr-2" v-if="!processing"></i>
-                  {{ processing ? t('form.submitting') : t('form.submit') }}
-                </UButton>
+                  <option v-for="opt in field.options ?? []" :key="String(opt.value)" :value="opt.value">
+                    {{ opt.label }}
+                  </option>
+                </select>
+                <input
+                  v-else
+                  v-model="formData[field.key]"
+                  :type="field.type === 'number' ? 'number' : 'text'"
+                  class="input input-bordered w-full"
+                  :disabled="processing"
+                />
+                <p class="label text-xs opacity-60">
+                  {{ t('form.current_value') }}:
+                  <template v-if="field.type === 'select' && field.options">
+                    {{ field.options.find((o) => o.value === currentData[field.key])?.label || '—' }}
+                  </template>
+                  <template v-else>
+                    {{ currentData[field.key] || '—' }}
+                  </template>
+                </p>
+              </fieldset>
+
+              <!-- Conditional sub-fields for select fields -->
+              <template v-if="field.type === 'select' && field.conditionalFields?.[String(formData[field.key])]">
+                <div
+                  v-for="cf in field.conditionalFields[String(formData[field.key])]"
+                  :key="cf.key"
+                  class="mt-3 pl-4 border-l-2 border-primary/30"
+                >
+                  <fieldset class="fieldset">
+                    <legend class="fieldset-legend">{{ cf.label }}</legend>
+                    <textarea
+                      v-if="cf.type === 'textarea'"
+                      v-model="formData[cf.key]"
+                      class="textarea textarea-bordered w-full"
+                      :rows="3"
+                      :disabled="processing"
+                    ></textarea>
+                    <input
+                      v-else
+                      v-model="formData[cf.key]"
+                      type="text"
+                      class="input input-bordered w-full"
+                      :disabled="processing"
+                    />
+                  </fieldset>
+                </div>
+              </template>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Reason for change -->
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('form.reason.label') }} *</legend>
+              <textarea
+                v-model="reason"
+                :placeholder="t('form.reason.placeholder')"
+                class="textarea textarea-bordered w-full"
+                :rows="3"
+                :disabled="processing"
+                required
+              ></textarea>
+              <p class="label">{{ t('form.reason.help') }}</p>
+            </fieldset>
+
+            <!-- Error alert -->
+            <div v-if="error" role="alert" class="alert alert-error">
+              <i class="fad fa-circle-exclamation"></i>
+              <div>
+                <div class="font-semibold">{{ t('error.title') }}</div>
+                <div class="text-sm">{{ error }}</div>
               </div>
-            </form>
-          </div>
+            </div>
+
+            <!-- No changes warning -->
+            <div v-if="!hasChanges && !error" role="alert" class="alert alert-warning">
+              <i class="fad fa-triangle-exclamation"></i>
+              <div>
+                <div class="font-semibold">{{ t('warning.no_changes') }}</div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-3 pt-2">
+              <button type="button" class="btn btn-outline" @click="close" :disabled="processing">
+                {{ t('form.cancel') }}
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="!hasChanges || !reason.trim() || processing"
+              >
+                <span v-if="processing" class="loading loading-spinner"></span>
+                <i class="fad fa-paper-plane mr-2" v-else></i>
+                {{ processing ? t('form.submitting') : t('form.submit') }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-    </template>
-  </UModal>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
 </template>
 
 <i18n lang="json">

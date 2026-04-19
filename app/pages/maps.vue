@@ -310,263 +310,274 @@
         </div>
 
         <div class="col-span-12 md:col-span-6 text-center">
-          <UCard>
-            <div class="text-center">
-              <i class="fad fa-credit-card text-3xl pb-3"></i>
-            </div>
-            <h3 class="fancy-font-bold text-2xl">{{ t('options.purchase.title') }}</h3>
-            <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
-            <p class="py-3">
-              {{ t('options.purchase.description') }}
-            </p>
-            <div class="flex justify-center">
-              <UButton
-                to="https://store.classicminidiy.com/collections/efi-base-maps"
-                color="primary"
-                target="_blank"
-                @click="capture('maps_cta_clicked', { action: 'purchase' })"
-              >
-                <i class="fad fa-credit-card mr-2"></i> {{ t('options.purchase.button') }}
-              </UButton>
-            </div>
-          </UCard>
-        </div>
-        <div class="col-span-12 md:col-span-6 text-center">
-          <UCard>
-            <div class="text-center">
-              <i class="fad fa-download text-3xl pb-3"></i>
-            </div>
-            <h3 class="fancy-font-bold text-2xl">{{ t('options.download.title') }}</h3>
-            <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
-            <p class="py-3">
-              {{ t('options.download.description') }}
-            </p>
-            <div class="flex justify-center gap-2">
-              <UButton
-                to="https://github.com/SomethingNew71/MiniECUMaps/archive/refs/heads/master.zip"
-                color="primary"
-                target="_blank"
-                @click="capture('maps_cta_clicked', { action: 'download' })"
-              >
-                <i class="fad fa-download mr-2"></i> {{ t('options.download.button') }}
-              </UButton>
-              <UButton
-                to="https://github.com/SomethingNew71/MiniECUMaps"
-                color="neutral"
-                target="_blank"
-                @click="capture('maps_cta_clicked', { action: 'source' })"
-              >
-                <i class="fad fa-code-branch mr-2"></i> {{ t('options.download.viewSource') }}
-              </UButton>
-            </div>
-          </UCard>
-        </div>
-        <div class="col-span-12 md:col-span-10 md:col-start-2">
-          <USeparator>
-            <span class="text-sm text-muted">{{ t('moreDetails') }}</span>
-          </USeparator>
-        </div>
-        <div class="col-span-12">
-          <UCard>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b border-default">
-                    <th class="text-left p-2 font-medium">{{ t('table.features') }}</th>
-                    <th class="text-center p-2 font-medium">Haltech</th>
-                    <th class="text-center p-2 font-medium">Speeduino</th>
-                    <th class="text-center p-2 font-medium">MegaSquirt</th>
-                    <th class="text-center p-2 font-medium">Emerald</th>
-                    <th class="text-center p-2 font-medium">ECUMaster</th>
-                    <th class="text-center p-2 font-medium">MaxxECU</th>
-                    <th class="text-center p-2 font-medium">DTAFast</th>
-                    <th class="text-center p-2 font-medium">MegaJolt</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="row in items"
-                    class="border-b border-default last:border-0 hover:bg-muted transition-colors"
-                  >
-                    <td class="text-center py-3 p-2" v-for="(ecu, index) in row" :key="ecu">
-                      <p class="text-left" v-if="index === 'features'">
-                        {{ ecu }}
-                      </p>
-                      <i v-if="ecu === 'yes'" class="text-lg fa-solid fa-check" style="color: #4a7023"></i>
-                      <i v-if="ecu === 'no'" class="text-lg fa-solid fa-xmark" style="color: #b22222"></i>
-                      <i
-                        v-if="ecu === 'wip'"
-                        class="text-h6 pr-3 fa-sharp-duotone fa-solid fa-road-barrier"
-                        style="--fa-primary-color: #562b00; --fa-secondary-color: #f5c147; --fa-secondary-opacity: 1"
-                      ></i>
-                      <i v-if="ecu === 'na'" class="text-lg fa-solid fa-dash"></i>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-5">
-              <div v-for="item in legend" class="flex items-center p-2">
-                <div class="mr-3">
-                  <i v-if="item.id === 'yes'" class="text-lg fa-solid fa-check" style="color: #4a7023"></i>
-                  <i v-if="item.id === 'no'" class="text-lg fa-solid fa-xmark" style="color: #b22222"></i>
-                  <i
-                    v-if="item.id === 'wip'"
-                    class="text-h6 pr-3 fa-sharp-duotone fa-solid fa-road-barrier"
-                    style="--fa-primary-color: #562b00; --fa-secondary-color: #f5c147; --fa-secondary-opacity: 1"
-                  ></i>
-                  <i v-if="item.id === 'na'" class="text-lg fa-solid fa-dash"></i>
-                </div>
-                <div>
-                  <div class="font-bold">{{ item.name }}</div>
-                  <div class="text-sm opacity-70">{{ item.description }}</div>
-                </div>
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <div class="text-center">
+                <i class="fad fa-credit-card text-3xl pb-3"></i>
               </div>
-            </div>
-          </UCard>
-        </div>
-        <div class="col-span-12 md:col-span-6">
-          <UCard :ui="{ body: 'p-0' }">
-            <template #header>
-              <div class="flex items-center">
-                <i class="fad fa-code-branch mr-2"></i>
-                <h5 class="font-bold text-lg">{{ t('updates.title') }}</h5>
-              </div>
-            </template>
-            <div class="p-2">
-              <div v-if="commitsLoading === 'pending' || releasesLoading === 'pending'" class="flex justify-center p-4">
-                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              </div>
-              <div v-else-if="mergedUpdates && mergedUpdates.length > 0">
+              <h3 class="fancy-font-bold text-2xl">{{ t('options.purchase.title') }}</h3>
+              <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
+              <p class="py-3">
+                {{ t('options.purchase.description') }}
+              </p>
+              <div class="flex justify-center">
                 <a
-                  v-for="(update, index) in mergedUpdates"
-                  :key="`update-${index}`"
-                  class="flex items-center p-3 hover:bg-muted border-b border-default transition-colors"
-                  :href="update.url"
+                  href="https://store.classicminidiy.com/collections/efi-base-maps"
+                  class="btn btn-primary"
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
+                  @click="capture('maps_cta_clicked', { action: 'purchase' })"
                 >
-                  <span class="mr-2">
-                    <i v-if="update.type === 'release'" class="fad fa-tag text-success" aria-hidden="true"></i>
-                    <i v-else class="fad fa-code-commit" aria-hidden="true"></i>
-                  </span>
-                  <span class="date pr-2 font-bold min-w-[15%]">
-                    {{ update.displayDate }}
-                  </span>
-                  <span class="flex-1">
-                    <UBadge v-if="update.type === 'release'" color="primary" size="sm" class="mr-2">Release</UBadge>
-                    <UBadge
-                      v-if="update.type === 'release' && update.tagName"
-                      color="secondary"
-                      size="sm"
-                      class="mr-2"
-                      >{{ update.tagName }}</UBadge
-                    >
-                    {{ update.message }}
-                  </span>
+                  <i class="fad fa-credit-card mr-2"></i> {{ t('options.purchase.button') }}
                 </a>
               </div>
-              <div v-else-if="commitError || releaseError">
-                <div class="flex items-center p-3 border-b border-default">
-                  <span class="mr-2">
-                    <i class="fad fa-exclamation-triangle text-warning" aria-hidden="true"></i>
-                  </span>
-                  <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
-                  <span>{{ t('updates.error') }}</span>
-                </div>
-                <div v-for="i in 10" :key="`error-${i}`" class="flex items-center p-3 border-b border-default">
-                  <span class="mr-2">
-                    <i class="fad fa-code-commit" aria-hidden="true"></i>
-                  </span>
-                  <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
-                  <span>---</span>
-                </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-span-12 md:col-span-6 text-center">
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <div class="text-center">
+                <i class="fad fa-download text-3xl pb-3"></i>
               </div>
-              <div v-else>
-                <div class="flex items-center p-3 border-b border-default">
-                  <span class="mr-2">
-                    <i class="fad fa-info-circle" aria-hidden="true"></i>
-                  </span>
-                  <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
-                  <span>{{ t('updates.noUpdates') }}</span>
-                </div>
-                <div v-for="i in 10" :key="`empty-${i}`" class="flex items-center p-3 border-b border-default">
-                  <span class="mr-2">
-                    <i class="fad fa-code-commit" aria-hidden="true"></i>
-                  </span>
-                  <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
-                  <span>---</span>
-                </div>
-              </div>
-              <div class="flex justify-center p-4">
-                <UButton
-                  to="https://github.com/SomethingNew71/MiniECUMaps"
-                  color="neutral"
-                  class="w-full"
+              <h3 class="fancy-font-bold text-2xl">{{ t('options.download.title') }}</h3>
+              <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
+              <p class="py-3">
+                {{ t('options.download.description') }}
+              </p>
+              <div class="flex justify-center gap-2">
+                <a
+                  href="https://github.com/SomethingNew71/MiniECUMaps/archive/refs/heads/master.zip"
+                  class="btn btn-primary"
                   target="_blank"
+                  rel="noopener"
+                  @click="capture('maps_cta_clicked', { action: 'download' })"
                 >
-                  <i class="fad fa-code-branch mr-2"></i> {{ t('updates.viewAllCommits') }}
-                </UButton>
+                  <i class="fad fa-download mr-2"></i> {{ t('options.download.button') }}
+                </a>
+                <a
+                  href="https://github.com/SomethingNew71/MiniECUMaps"
+                  class="btn btn-neutral"
+                  target="_blank"
+                  rel="noopener"
+                  @click="capture('maps_cta_clicked', { action: 'source' })"
+                >
+                  <i class="fad fa-code-branch mr-2"></i> {{ t('options.download.viewSource') }}
+                </a>
               </div>
             </div>
-          </UCard>
+          </div>
+        </div>
+        <div class="col-span-12 md:col-span-10 md:col-start-2">
+          <div class="divider">
+            <span class="text-sm opacity-70">{{ t('moreDetails') }}</span>
+          </div>
+        </div>
+        <div class="col-span-12">
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-base-300">
+                      <th class="text-left p-2 font-medium">{{ t('table.features') }}</th>
+                      <th class="text-center p-2 font-medium">Haltech</th>
+                      <th class="text-center p-2 font-medium">Speeduino</th>
+                      <th class="text-center p-2 font-medium">MegaSquirt</th>
+                      <th class="text-center p-2 font-medium">Emerald</th>
+                      <th class="text-center p-2 font-medium">ECUMaster</th>
+                      <th class="text-center p-2 font-medium">MaxxECU</th>
+                      <th class="text-center p-2 font-medium">DTAFast</th>
+                      <th class="text-center p-2 font-medium">MegaJolt</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="row in items"
+                      class="border-b border-base-300 last:border-0 hover:bg-base-200 transition-colors"
+                    >
+                      <td class="text-center py-3 p-2" v-for="(ecu, index) in row" :key="ecu">
+                        <p class="text-left" v-if="index === 'features'">
+                          {{ ecu }}
+                        </p>
+                        <i v-if="ecu === 'yes'" class="text-lg fa-solid fa-check" style="color: #4a7023"></i>
+                        <i v-if="ecu === 'no'" class="text-lg fa-solid fa-xmark" style="color: #b22222"></i>
+                        <i
+                          v-if="ecu === 'wip'"
+                          class="text-h6 pr-3 fa-sharp-duotone fa-solid fa-road-barrier"
+                          style="--fa-primary-color: #562b00; --fa-secondary-color: #f5c147; --fa-secondary-opacity: 1"
+                        ></i>
+                        <i v-if="ecu === 'na'" class="text-lg fa-solid fa-dash"></i>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-5">
+                <div v-for="item in legend" class="flex items-center p-2">
+                  <div class="mr-3">
+                    <i v-if="item.id === 'yes'" class="text-lg fa-solid fa-check" style="color: #4a7023"></i>
+                    <i v-if="item.id === 'no'" class="text-lg fa-solid fa-xmark" style="color: #b22222"></i>
+                    <i
+                      v-if="item.id === 'wip'"
+                      class="text-h6 pr-3 fa-sharp-duotone fa-solid fa-road-barrier"
+                      style="--fa-primary-color: #562b00; --fa-secondary-color: #f5c147; --fa-secondary-opacity: 1"
+                    ></i>
+                    <i v-if="item.id === 'na'" class="text-lg fa-solid fa-dash"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold">{{ item.name }}</div>
+                    <div class="text-sm opacity-70">{{ item.description }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-span-12 md:col-span-6">
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body p-0">
+              <div class="p-4 border-b border-base-300">
+                <div class="flex items-center">
+                  <i class="fad fa-code-branch mr-2"></i>
+                  <h5 class="font-bold text-lg">{{ t('updates.title') }}</h5>
+                </div>
+              </div>
+              <div class="p-2">
+                <div v-if="commitsLoading === 'pending' || releasesLoading === 'pending'" class="flex justify-center p-4">
+                  <div class="loading loading-spinner loading-md text-primary"></div>
+                </div>
+                <div v-else-if="mergedUpdates && mergedUpdates.length > 0">
+                  <a
+                    v-for="(update, index) in mergedUpdates"
+                    :key="`update-${index}`"
+                    class="flex items-center p-3 hover:bg-base-200 border-b border-base-300 transition-colors"
+                    :href="update.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span class="mr-2">
+                      <i v-if="update.type === 'release'" class="fad fa-tag text-success" aria-hidden="true"></i>
+                      <i v-else class="fad fa-code-commit" aria-hidden="true"></i>
+                    </span>
+                    <span class="date pr-2 font-bold min-w-[15%]">
+                      {{ update.displayDate }}
+                    </span>
+                    <span class="flex-1">
+                      <span v-if="update.type === 'release'" class="badge badge-primary badge-sm mr-2">Release</span>
+                      <span
+                        v-if="update.type === 'release' && update.tagName"
+                        class="badge badge-secondary badge-sm mr-2"
+                        >{{ update.tagName }}</span
+                      >
+                      {{ update.message }}
+                    </span>
+                  </a>
+                </div>
+                <div v-else-if="commitError || releaseError">
+                  <div class="flex items-center p-3 border-b border-base-300">
+                    <span class="mr-2">
+                      <i class="fad fa-exclamation-triangle text-warning" aria-hidden="true"></i>
+                    </span>
+                    <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
+                    <span>{{ t('updates.error') }}</span>
+                  </div>
+                  <div v-for="i in 10" :key="`error-${i}`" class="flex items-center p-3 border-b border-base-300">
+                    <span class="mr-2">
+                      <i class="fad fa-code-commit" aria-hidden="true"></i>
+                    </span>
+                    <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
+                    <span>---</span>
+                  </div>
+                </div>
+                <div v-else>
+                  <div class="flex items-center p-3 border-b border-base-300">
+                    <span class="mr-2">
+                      <i class="fad fa-info-circle" aria-hidden="true"></i>
+                    </span>
+                    <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
+                    <span>{{ t('updates.noUpdates') }}</span>
+                  </div>
+                  <div v-for="i in 10" :key="`empty-${i}`" class="flex items-center p-3 border-b border-base-300">
+                    <span class="mr-2">
+                      <i class="fad fa-code-commit" aria-hidden="true"></i>
+                    </span>
+                    <span class="date pr-2 font-bold min-w-[15%]"> --- </span>
+                    <span>---</span>
+                  </div>
+                </div>
+                <div class="flex justify-center p-4">
+                  <a
+                    href="https://github.com/SomethingNew71/MiniECUMaps"
+                    class="btn btn-neutral w-full"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <i class="fad fa-code-branch mr-2"></i> {{ t('updates.viewAllCommits') }}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="col-span-12 md:col-span-6">
           <h3 class="fancy-font-bold text-3xl text-center pb-5">{{ t('supportedEcus.title') }}</h3>
-          <UCard>
-            <USeparator class="mb-4">
-              <span class="text-sm text-muted">{{ t('supportedEcus.subtitle') }}</span>
-            </USeparator>
-            <div class="grid grid-cols-1 gap-6">
-              <div class="image">
-                <img
-                  class="mx-auto w-1/2"
-                  src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/haltech.jpg"
-                  alt="Haltech ECU"
-                />
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <div class="divider mb-4">
+                <span class="text-sm opacity-70">{{ t('supportedEcus.subtitle') }}</span>
               </div>
-              <div class="image">
-                <img
-                  class="mx-auto w-1/2"
-                  src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/speeduino.jpg"
-                  alt="Speeduino ECU"
-                />
-              </div>
-              <div class="image">
-                <img
-                  class="mx-auto w-1/2"
-                  src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/megasquirt.png"
-                  alt="MegaSquirt ECU"
-                />
-              </div>
-              <div class="image">
-                <img
-                  class="mx-auto w-1/2"
-                  src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/emerald.png"
-                  alt="Emerald ECU"
-                />
-              </div>
-              <div class="image">
-                <img
-                  class="mx-auto w-1/2"
-                  src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/megajolt.png"
-                  alt="MegaJolt ECU"
-                />
-              </div>
-              <div class="image">
-                <img
-                  class="mx-auto w-1/2"
-                  src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/dta.jpg"
-                  alt="DTA Fast ECU"
-                />
+              <div class="grid grid-cols-1 gap-6">
+                <div class="image">
+                  <img
+                    class="mx-auto w-1/2"
+                    src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/haltech.jpg"
+                    alt="Haltech ECU"
+                  />
+                </div>
+                <div class="image">
+                  <img
+                    class="mx-auto w-1/2"
+                    src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/speeduino.jpg"
+                    alt="Speeduino ECU"
+                  />
+                </div>
+                <div class="image">
+                  <img
+                    class="mx-auto w-1/2"
+                    src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/megasquirt.png"
+                    alt="MegaSquirt ECU"
+                  />
+                </div>
+                <div class="image">
+                  <img
+                    class="mx-auto w-1/2"
+                    src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/emerald.png"
+                    alt="Emerald ECU"
+                  />
+                </div>
+                <div class="image">
+                  <img
+                    class="mx-auto w-1/2"
+                    src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/megajolt.png"
+                    alt="MegaJolt ECU"
+                  />
+                </div>
+                <div class="image">
+                  <img
+                    class="mx-auto w-1/2"
+                    src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/dta.jpg"
+                    alt="DTA Fast ECU"
+                  />
+                </div>
               </div>
             </div>
-          </UCard>
+          </div>
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2">
-          <USeparator>
-            <span class="text-sm text-muted">{{ t('otherSupport') }}</span>
-          </USeparator>
+          <div class="divider">
+            <span class="text-sm opacity-70">{{ t('otherSupport') }}</span>
+          </div>
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10">
           <patreon-card size="large" />

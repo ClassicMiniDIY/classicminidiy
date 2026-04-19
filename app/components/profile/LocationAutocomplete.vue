@@ -166,17 +166,19 @@
 <template>
   <div class="space-y-2">
     <div ref="inputWrapper">
-      <UInput
-        v-model="searchQuery"
-        type="text"
-        :placeholder="t('placeholder')"
-        class="w-full"
-        icon="i-fa6-solid-location-dot"
-        :loading="isSearching"
-        @input="onInput"
-        @focus="onFocus"
-        @blur="onBlur"
-      />
+      <label class="input input-bordered w-full flex items-center gap-2">
+        <i class="fas fa-location-dot opacity-60"></i>
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="grow"
+          :placeholder="t('placeholder')"
+          @input="onInput"
+          @focus="onFocus"
+          @blur="onBlur"
+        />
+        <span v-if="isSearching" class="loading loading-spinner loading-xs"></span>
+      </label>
     </div>
 
     <!-- Teleport dropdown to body so it escapes card overflow-hidden -->
@@ -185,13 +187,13 @@
       <div
         v-if="showSuggestions && suggestions.length > 0"
         :style="dropdownStyle"
-        class="bg-default rounded-lg shadow-lg border border-default overflow-hidden"
+        class="bg-base-100 rounded-lg shadow-lg border border-base-300 overflow-hidden"
       >
         <button
           v-for="suggestion in suggestions"
           :key="suggestion.id"
           type="button"
-          class="w-full px-3 py-2.5 text-left hover:bg-muted flex items-start gap-2 transition-colors cursor-pointer"
+          class="w-full px-3 py-2.5 text-left hover:bg-base-200 flex items-start gap-2 transition-colors cursor-pointer"
           @mousedown.prevent="selectSuggestion(suggestion)"
         >
           <i class="fas fa-location-dot mt-0.5 opacity-40 shrink-0"></i>
@@ -206,23 +208,22 @@
       <div
         v-if="showSuggestions && searchQuery.length >= 2 && suggestions.length === 0 && !isSearching"
         :style="dropdownStyle"
-        class="p-3 bg-default rounded-lg shadow-lg border border-default"
+        class="p-3 bg-base-100 rounded-lg shadow-lg border border-base-300"
       >
         <p class="text-sm opacity-60">{{ t('no_results') }}</p>
       </div>
     </Teleport>
 
     <!-- Use current location button -->
-    <UButton
-      variant="ghost"
-      color="neutral"
-      size="xs"
-      :loading="isGettingLocation"
+    <button
+      class="btn btn-ghost btn-xs"
+      :disabled="isGettingLocation"
       @click="useCurrentLocation"
     >
-      <i class="fas fa-location-crosshairs mr-1"></i>
+      <span v-if="isGettingLocation" class="loading loading-spinner loading-xs mr-1"></span>
+      <i v-else class="fas fa-location-crosshairs mr-1"></i>
       {{ isGettingLocation ? t('getting_location') : t('use_current') }}
-    </UButton>
+    </button>
   </div>
 </template>
 

@@ -66,27 +66,31 @@
 
         <!-- Loading state -->
         <div v-if="status === 'pending'" class="space-y-4">
-          <USkeleton class="h-8 w-1/2" />
-          <USkeleton class="h-4 w-3/4" />
+          <div class="skeleton h-8 w-1/2"></div>
+          <div class="skeleton h-4 w-3/4"></div>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-            <UCard v-for="k in 6" :key="k" class="animate-pulse">
-              <template #header><div class="h-[150px] bg-muted rounded-t-lg"></div></template>
-              <div class="h-4 bg-muted rounded w-3/4 mb-2"></div>
-              <div class="h-3 bg-muted rounded w-1/2"></div>
-            </UCard>
+            <div v-for="k in 6" :key="k" class="card bg-base-100 shadow-sm border border-base-300 animate-pulse">
+              <div class="h-[150px] bg-base-200 rounded-t-lg"></div>
+              <div class="card-body">
+                <div class="h-4 bg-base-200 rounded w-3/4 mb-2"></div>
+                <div class="h-3 bg-base-200 rounded w-1/2"></div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Error state -->
         <div v-else-if="error || !collection" class="text-center py-12">
-          <UCard>
-            <div class="py-8">
-              <i class="fad fa-exclamation-triangle text-4xl text-warning mb-4"></i>
-              <h2 class="text-xl font-bold mb-2">{{ t('not_found_title') }}</h2>
-              <p class="text-muted mb-4">{{ t('not_found_text') }}</p>
-              <UButton to="/archive/documents" color="primary">{{ t('back_to_documents') }}</UButton>
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body">
+              <div class="py-8">
+                <i class="fad fa-exclamation-triangle text-4xl text-warning mb-4"></i>
+                <h2 class="text-xl font-bold mb-2">{{ t('not_found_title') }}</h2>
+                <p class="opacity-70 mb-4">{{ t('not_found_text') }}</p>
+                <NuxtLink to="/archive/documents" class="btn btn-primary">{{ t('back_to_documents') }}</NuxtLink>
+              </div>
             </div>
-          </UCard>
+          </div>
         </div>
 
         <!-- Collection content -->
@@ -98,17 +102,17 @@
             </div>
             <div :class="collection.image ? 'col-span-12 md:col-span-8' : 'col-span-12'">
               <div class="flex items-center gap-3 mb-2">
-                <UBadge
+                <span
                   v-if="collection.type && typeConfig[collection.type]"
-                  size="lg"
-                  :color="typeConfig[collection.type].color as any"
+                  class="badge badge-lg"
+                  :class="`badge-${typeConfig[collection.type].color}`"
                 >
                   <i :class="[typeConfig[collection.type].icon, 'mr-1']"></i>
                   {{ typeConfig[collection.type].label }}
-                </UBadge>
+                </span>
                 <h1 class="text-2xl font-bold">{{ collection.title }}</h1>
               </div>
-              <p v-if="collection.description" class="text-muted mb-4">{{ collection.description }}</p>
+              <p v-if="collection.description" class="opacity-70 mb-4">{{ collection.description }}</p>
               <div class="flex items-center gap-2">
                 <div class="badge badge-primary badge-lg">
                   {{ collection.itemCount }} {{ t('items_in_collection') }}
@@ -128,15 +132,17 @@
 
           <!-- Empty collection -->
           <div v-if="documents.length === 0" class="text-center py-8">
-            <UCard>
-              <p class="text-muted">{{ t('empty_collection') }}</p>
-            </UCard>
+            <div class="card bg-base-100 shadow-sm border border-base-300">
+              <div class="card-body">
+                <p class="opacity-70">{{ t('empty_collection') }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Support section -->
         <div class="mt-8 mb-10">
-          <USeparator :label="t('support_divider')" class="mb-6" />
+          <div class="divider mb-6">{{ t('support_divider') }}</div>
           <patreon-card size="large" />
         </div>
       </div>

@@ -166,20 +166,22 @@
         <breadcrumb class="my-6" :page="t('breadcrumb_title')"></breadcrumb>
 
         <!-- Contribute Banner -->
-        <UCard class="mb-6 bg-primary/5">
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
-              <div>
-                <p class="font-medium">{{ t('contribute_banner_title') }}</p>
-                <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+        <div class="card bg-base-100 shadow-sm border border-base-300 mb-6 bg-primary/5">
+          <div class="card-body">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
+                <div>
+                  <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+                  <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+                </div>
               </div>
+              <NuxtLink to="/contribute/color" class="btn btn-primary btn-outline btn-sm">
+                {{ t('contribute_banner_button') }}
+              </NuxtLink>
             </div>
-            <UButton to="/contribute/color" color="primary" variant="outline" size="sm">
-              {{ t('contribute_banner_button') }}
-            </UButton>
           </div>
-        </UCard>
+        </div>
 
         <h1 class="text-3xl font-bold">{{ t('main_heading') }}</h1>
         <h2 class="text-xl mt-4">
@@ -193,7 +195,7 @@
         </p>
       </div>
       <div class="col-span-12">
-        <USeparator class="my-4" />
+        <div class="divider my-4"></div>
       </div>
 
       <!-- Search -->
@@ -204,14 +206,16 @@
             <h2 class="text-2xl font-semibold">{{ t('search.card_title') }}</h2>
           </div>
           <div class="w-full md:w-96">
-            <UInput
-              v-model="search"
-              type="text"
-              :placeholder="t('search.placeholder')"
-              :aria-label="t('search.placeholder')"
-              icon="i-fa6-solid-magnifying-glass"
-              class="w-full"
-            />
+            <label class="input input-bordered flex items-center gap-2 w-full">
+              <i class="fas fa-magnifying-glass opacity-60"></i>
+              <input
+                v-model="search"
+                type="text"
+                :placeholder="t('search.placeholder')"
+                :aria-label="t('search.placeholder')"
+                class="grow"
+              />
+            </label>
           </div>
         </div>
         <p class="text-base mb-6">
@@ -224,12 +228,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div v-for="i in 8" :key="'skeleton-' + i" class="card bg-base-100 shadow-sm">
             <figure class="aspect-4/3">
-              <USkeleton class="w-full h-full" />
+              <div class="skeleton w-full h-full"></div>
             </figure>
             <div class="card-body p-4">
-              <USkeleton class="h-5 w-3/4" />
-              <USkeleton class="h-4 w-1/2 mt-2" />
-              <USkeleton class="h-4 w-2/3 mt-1" />
+              <div class="skeleton h-5 w-3/4"></div>
+              <div class="skeleton h-4 w-1/2 mt-2"></div>
+              <div class="skeleton h-4 w-2/3 mt-1"></div>
             </div>
           </div>
         </div>
@@ -237,7 +241,12 @@
 
       <!-- Empty State -->
       <div v-else-if="!filteredColors.length" class="col-span-12">
-        <UAlert color="info" icon="i-fa6-solid-circle-info" :title="t('states.no_colors')" />
+        <div role="alert" class="alert alert-info">
+          <i class="fas fa-circle-info"></i>
+          <div>
+            <div class="font-semibold">{{ t('states.no_colors') }}</div>
+          </div>
+        </div>
       </div>
 
       <!-- Color Cards Grid -->
@@ -299,17 +308,15 @@
                 {{ color.name || t('states.unnamed_color') }}
               </h3>
               <div class="flex flex-wrap gap-1.5 mt-1">
-                <UBadge v-if="color.code && color.code !== 'Unknown'" color="primary" variant="soft" size="xs">
+                <span v-if="color.code && color.code !== 'Unknown'" class="badge badge-primary badge-soft badge-xs">
                   {{ color.code }}
-                </UBadge>
-                <UBadge
+                </span>
+                <span
                   v-if="color.shortCode && color.shortCode !== 'Unknown'"
-                  color="neutral"
-                  variant="soft"
-                  size="xs"
+                  class="badge badge-neutral badge-soft badge-xs"
                 >
                   {{ color.shortCode }}
-                </UBadge>
+                </span>
               </div>
               <div class="text-xs text-muted mt-2 space-y-0.5">
                 <p v-if="color.years && color.years !== 'Unknown'">
@@ -327,26 +334,26 @@
 
         <!-- Pagination -->
         <div v-if="filteredColors.length > itemsPerPage" class="flex justify-center mt-8">
-          <div class="inline-flex rounded-md shadow-sm">
-            <UButton
+          <div class="join">
+            <button
+              type="button"
+              class="btn btn-outline join-item"
               :disabled="currentPage === 1"
               @click="currentPage = Math.max(1, currentPage - 1)"
-              variant="outline"
-              class="rounded-r-none"
             >
               «
-            </UButton>
-            <UButton variant="outline" class="rounded-none border-x-0" disabled>
+            </button>
+            <button type="button" class="btn btn-outline join-item" disabled>
               {{ t('pagination.page') }} {{ currentPage }} {{ t('pagination.of') }} {{ totalPages }}
-            </UButton>
-            <UButton
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline join-item"
               :disabled="currentPage >= totalPages"
               @click="currentPage = Math.min(totalPages, currentPage + 1)"
-              variant="outline"
-              class="rounded-l-none"
             >
               »
-            </UButton>
+            </button>
           </div>
         </div>
       </div>

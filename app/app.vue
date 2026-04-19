@@ -10,40 +10,36 @@
 
   // Initialize Supabase auth state on app mount
   const { initAuth } = useAuth();
+  // Initialize color mode on client
+  useColorMode();
+
   onMounted(() => {
     initAuth();
   });
 </script>
 
 <template>
-  <UApp :toaster="{ position: 'bottom-right' }">
-    <div class="app-wrapper bg-white dark:bg-[#171717] text-neutral-900 dark:text-neutral-100">
-      <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-md focus:shadow-lg">
-        Skip to main content
-      </a>
-      <div class="app-content">
-        <MainNav></MainNav>
-        <UToaster />
-        <NuxtLoadingIndicator />
-        <main id="main-content" class="bg-white dark:bg-[#171717]">
-          <NuxtPage />
-        </main>
-      </div>
-      <Footer></Footer>
-      <VitePwaManifest />
+  <div class="app-wrapper bg-base-100 text-base-content">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-content focus:rounded-md focus:shadow-lg"
+    >
+      Skip to main content
+    </a>
+    <div class="app-content">
+      <MainNav></MainNav>
+      <Toaster />
+      <NuxtLoadingIndicator />
+      <main id="main-content" class="bg-base-100">
+        <NuxtPage />
+      </main>
     </div>
-  </UApp>
+    <Footer></Footer>
+    <VitePwaManifest />
+  </div>
 </template>
 
 <style lang="scss">
-  .bg-color-section {
-    background-color: #f0f0f0;
-  }
-
-  :global(.dark) .bg-color-section {
-    background-color: #171717;
-  }
-
   html,
   body {
     height: 100%;

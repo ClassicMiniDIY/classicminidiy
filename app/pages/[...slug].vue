@@ -159,21 +159,23 @@
         </div>
       </div>
       <!-- Loading state with skeleton loader -->
-      <div v-if="status === 'pending'" class="mx-auto max-w-xs border p-4 rounded-lg">
-        <USkeleton class="h-32 w-full" />
-        <USkeleton class="h-4 w-28 mt-4" />
-        <USkeleton class="h-4 w-full mt-2" />
-        <USkeleton class="h-4 w-full mt-2" />
+      <div v-if="status === 'pending'" class="mx-auto max-w-xs border border-base-300 p-4 rounded-lg">
+        <div class="skeleton h-32 w-full"></div>
+        <div class="skeleton h-4 w-28 mt-4"></div>
+        <div class="skeleton h-4 w-full mt-2"></div>
+        <div class="skeleton h-4 w-full mt-2"></div>
       </div>
 
       <!-- Error state -->
-      <UAlert v-else-if="error" color="error" class="max-w-2xl mx-auto" icon="i-fa6-solid-circle-exclamation">
-        <template #title>{{ $t('loading_error') }}</template>
-      </UAlert>
+      <div v-else-if="error" class="alert alert-error max-w-2xl mx-auto" role="alert">
+        <i class="fas fa-circle-exclamation"></i>
+        <span>{{ $t('loading_error') }}</span>
+      </div>
       <!-- Content state - only show if we have data and no errors -->
       <div v-if="currentPostData && status !== 'pending' && !error" class="flex justify-center">
-        <UCard class="w-full max-w-4xl">
-          <div class="px-10 pt-4 pb-6 flex justify-center">
+        <div class="card bg-base-100 shadow-md w-full max-w-4xl">
+          <div class="card-body">
+            <div class="px-10 pt-4 pb-6 flex justify-center">
             <!-- No image case -->
             <i
               v-if="!currentPostData.image || currentPostData.image === ''"
@@ -212,83 +214,83 @@
               loading="lazy"
               @error="(e: Event) => handleImageError(e)"
             />
-          </div>
-          <div class="items-center text-center">
-            <!-- Title with fallback -->
-            <h2 class="text-2xl font-bold capitalize">
-              {{ currentPostData.title?.toLowerCase() || $t('fallback_title') }}
-            </h2>
+            </div>
+            <div class="items-center text-center">
+              <!-- Title with fallback -->
+              <h2 class="text-2xl font-bold capitalize">
+                {{ currentPostData.title?.toLowerCase() || $t('fallback_title') }}
+              </h2>
 
-            <div class="flex flex-wrap items-center justify-center gap-4 my-2">
-              <!-- Code/reference number if available -->
-              <div v-if="currentPostData.code" class="flex items-center">
-                <i class="fa-duotone fa-list-timeline text-primary mr-2"></i>
-                <span class="font-medium">{{ currentPostData.code }}</span>
+              <div class="flex flex-wrap items-center justify-center gap-4 my-2">
+                <!-- Code/reference number if available -->
+                <div v-if="currentPostData.code" class="flex items-center">
+                  <i class="fa-duotone fa-list-timeline text-primary mr-2"></i>
+                  <span class="font-medium">{{ currentPostData.code }}</span>
+                </div>
+
+                <!-- File type if available -->
+                <div v-if="currentPostData.download" class="flex items-center">
+                  <i class="fa-duotone fa-file text-secondary mr-2"></i>
+                  <span class="font-medium"
+                    >{{ $t('file_type_label') }} {{ currentPostData.download?.split('.')?.pop() || 'unknown' }}</span
+                  >
+                </div>
               </div>
 
-              <!-- File type if available -->
-              <div v-if="currentPostData.download" class="flex items-center">
-                <i class="fa-duotone fa-file text-secondary mr-2"></i>
-                <span class="font-medium"
-                  >{{ $t('file_type_label') }} {{ currentPostData.download?.split('.')?.pop() || 'unknown' }}</span
-                >
+              <!-- Description with fallback -->
+              <p class="my-4">{{ currentPostData.description || $t('no_description') }}</p>
+
+              <div class="flex flex-wrap justify-center mt-4 gap-2">
+                <ClientOnly>
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-info m-1"
+                    @click="shareArchiveItem(currentPostData.title, currentPostData.path)"
+                  >
+                    <i class="fa-duotone fa-solid fa-arrow-up-from-bracket mr-2"></i>
+                    {{ $t('share_button') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary m-1"
+                    @click="
+                      submitArchiveFile(
+                        archiveType,
+                        currentPostData.title,
+                        currentPostData.path,
+                        currentPostData.code,
+                        currentPostData.description
+                      )
+                    "
+                  >
+                    <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
+                    {{ $t('contribute_button') }}
+                  </button>
+                  <button
+                    v-if="
+                      (!currentPostData.download || currentPostData.download === '') &&
+                      !currentPostData.path?.includes('companies')
+                    "
+                    type="button"
+                    class="btn m-1 btn-disabled"
+                    disabled
+                  >
+                    <i class="fa-duotone fa-solid fa-question mr-2"></i>
+                    {{ $t('missing_file_button') }}
+                  </button>
+                  <a
+                    v-else-if="!currentPostData.path?.includes('companies')"
+                    :href="currentPostData.download"
+                    class="btn btn-primary m-1"
+                  >
+                    <i class="fa-duotone fa-solid fa-download mr-2"></i>
+                    {{ $t('download_button') }}
+                  </a>
+                </ClientOnly>
               </div>
             </div>
-
-            <!-- Description with fallback -->
-            <p class="my-4">{{ currentPostData.description || $t('no_description') }}</p>
-
-            <div class="flex flex-wrap justify-center mt-4 gap-2">
-              <ClientOnly>
-                <UButton
-                  variant="outline"
-                  color="info"
-                  class="m-1"
-                  @click="shareArchiveItem(currentPostData.title, currentPostData.path)"
-                >
-                  <i class="fa-duotone fa-solid fa-arrow-up-from-bracket mr-2"></i>
-                  {{ $t('share_button') }}
-                </UButton>
-                <UButton
-                  color="secondary"
-                  class="m-1"
-                  @click="
-                    submitArchiveFile(
-                      archiveType,
-                      currentPostData.title,
-                      currentPostData.path,
-                      currentPostData.code,
-                      currentPostData.description
-                    )
-                  "
-                >
-                  <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
-                  {{ $t('contribute_button') }}
-                </UButton>
-                <UButton
-                  v-if="
-                    (!currentPostData.download || currentPostData.download === '') &&
-                    !currentPostData.path?.includes('companies')
-                  "
-                  class="m-1"
-                  disabled
-                >
-                  <i class="fa-duotone fa-solid fa-question mr-2"></i>
-                  {{ $t('missing_file_button') }}
-                </UButton>
-                <UButton
-                  v-else-if="!currentPostData.path?.includes('companies')"
-                  color="primary"
-                  class="m-1"
-                  :to="currentPostData.download"
-                >
-                  <i class="fa-duotone fa-solid fa-download mr-2"></i>
-                  {{ $t('download_button') }}
-                </UButton>
-              </ClientOnly>
-            </div>
           </div>
-        </UCard>
+        </div>
       </div>
     </div>
   </div>

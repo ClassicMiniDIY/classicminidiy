@@ -192,18 +192,18 @@
 
     <!-- Auth Gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
-          <UButton to="/login" color="primary" class="w-full">
+          <NuxtLink to="/login" class="btn btn-primary w-full">
             {{ t('sign_in_button') }}
-          </UButton>
+          </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Authenticated Content -->
@@ -213,226 +213,227 @@
         <div class="col-span-12 md:col-span-8 md:col-start-3">
           <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
           <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
-          <USeparator class="mb-6" />
+          <div class="divider mb-6"></div>
         </div>
 
         <!-- Form Card -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <UCard>
-            <!-- Success State -->
-            <div v-if="!processing && submitted && submissionId && !apiError">
-              <div class="text-center py-5">
-                <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
-                <h1 class="text-2xl font-bold mb-1">{{ t('success.thank_you') }}</h1>
-                <h2 class="text-lg mb-4">{{ t('success.submitted_message') }}</h2>
-                <ul class="mb-5">
-                  <li class="mb-2">
-                    {{ t('success.submission_id') }}
-                    <strong>{{ submissionId }}</strong>
-                  </li>
-                </ul>
-                <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                  <UButton color="primary" @click="submitAnother()">
-                    <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
-                    {{ t('success.submit_another') }}
-                  </UButton>
-                  <UButton to="/dashboard" variant="outline">
-                    <i class="fad fa-list mr-2"></i>
-                    {{ t('success.view_submissions') }}
-                  </UButton>
+          <div class="card bg-base-100 shadow-md">
+            <div class="card-body">
+              <!-- Success State -->
+              <div v-if="!processing && submitted && submissionId && !apiError">
+                <div class="text-center py-5">
+                  <i class="text-4xl text-success fa-duotone fa-box-check fa-beat py-5"></i>
+                  <h1 class="text-2xl font-bold mb-1">{{ t('success.thank_you') }}</h1>
+                  <h2 class="text-lg mb-4">{{ t('success.submitted_message') }}</h2>
+                  <ul class="mb-5">
+                    <li class="mb-2">
+                      {{ t('success.submission_id') }}
+                      <strong>{{ submissionId }}</strong>
+                    </li>
+                  </ul>
+                  <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button type="button" class="btn btn-primary" @click="submitAnother()">
+                      <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
+                      {{ t('success.submit_another') }}
+                    </button>
+                    <NuxtLink to="/dashboard" class="btn btn-outline">
+                      <i class="fad fa-list mr-2"></i>
+                      {{ t('success.view_submissions') }}
+                    </NuxtLink>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Form -->
-            <div v-if="!submitted">
-              <form @submit.prevent="submit">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
-                  <!-- Wheel Name -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.name') }} <span class="text-error">*</span></span>
-                      <span class="text-sm text-muted"><i class="fad fa-tire"></i></span>
-                    </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.name')"
-                      v-model="name"
-                      class="w-full"
-                      :color="name.trim() === '' && touchedFields.name ? 'error' : undefined"
-                      @blur="touchedFields.name = true"
-                    />
-                    <p v-if="name.trim() === '' && touchedFields.name" class="text-sm text-error mt-1">
-                      {{ t('validation.required') }}
-                    </p>
+              <!-- Form -->
+              <div v-if="!submitted">
+                <form @submit.prevent="submit">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                    <!-- Wheel Name -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.name') }} <span class="text-error">*</span></span>
+                        <span class="text-sm opacity-70"><i class="fad fa-tire"></i></span>
+                      </label>
+                      <input
+                        type="text"
+                        :placeholder="t('placeholders.name')"
+                        v-model="name"
+                        class="input input-bordered w-full"
+                        :class="{ 'input-error': name.trim() === '' && touchedFields.name }"
+                        @blur="touchedFields.name = true"
+                      />
+                      <p v-if="name.trim() === '' && touchedFields.name" class="text-sm text-error mt-1">
+                        {{ t('validation.required') }}
+                      </p>
+                    </div>
+
+                    <!-- Type -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.type') }}</span>
+                        <span class="text-sm opacity-70"><i class="fad fa-shapes"></i></span>
+                      </label>
+                      <input type="text" :placeholder="t('placeholders.type')" v-model="type" class="input input-bordered w-full" />
+                    </div>
+
+                    <!-- Size -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.size') }} <span class="text-error">*</span></span>
+                        <span class="text-sm opacity-70"><i class="fad fa-ruler"></i></span>
+                      </label>
+                      <select
+                        v-model="size"
+                        class="select select-bordered w-full"
+                        :class="{ 'select-error': size === '' && touchedFields.size }"
+                        @blur="touchedFields.size = true"
+                        @change="touchedFields.size = true"
+                      >
+                        <option value="" disabled>{{ t('placeholders.size') }}</option>
+                        <option v-for="opt in sizeOptions" :key="opt.value" :value="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                      <p v-if="size === '' && touchedFields.size" class="text-sm text-error mt-1">
+                        {{ t('validation.required') }}
+                      </p>
+                    </div>
+
+                    <!-- Width -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.width') }} <span class="text-error">*</span></span>
+                        <span class="text-sm opacity-70"><i class="fad fa-arrows-left-right"></i></span>
+                      </label>
+                      <input
+                        type="text"
+                        :placeholder="t('placeholders.width')"
+                        v-model="width"
+                        class="input input-bordered w-full"
+                        :class="{ 'input-error': width.trim() === '' && touchedFields.width }"
+                        @blur="touchedFields.width = true"
+                      />
+                      <p v-if="width.trim() === '' && touchedFields.width" class="text-sm text-error mt-1">
+                        {{ t('validation.required') }}
+                      </p>
+                    </div>
+
+                    <!-- Offset -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.offset') }}</span>
+                        <span class="text-sm opacity-70"><i class="fad fa-arrows-up-down"></i></span>
+                      </label>
+                      <input type="text" :placeholder="t('placeholders.offset')" v-model="offset" class="input input-bordered w-full" />
+                    </div>
+
+                    <!-- Manufacturer -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.manufacturer') }}</span>
+                        <span class="text-sm opacity-70"><i class="fad fa-industry"></i></span>
+                      </label>
+                      <input
+                        type="text"
+                        :placeholder="t('placeholders.manufacturer')"
+                        v-model="manufacturer"
+                        class="input input-bordered w-full"
+                      />
+                    </div>
+
+                    <!-- Bolt Pattern -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.bolt_pattern') }}</span>
+                        <span class="text-sm opacity-70"><i class="fad fa-circle-bolt"></i></span>
+                      </label>
+                      <input
+                        type="text"
+                        :placeholder="t('placeholders.bolt_pattern')"
+                        v-model="boltPattern"
+                        class="input input-bordered w-full"
+                      />
+                    </div>
+
+                    <!-- Center Bore -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.center_bore') }}</span>
+                        <span class="text-sm opacity-70"><i class="fad fa-bullseye"></i></span>
+                      </label>
+                      <input
+                        type="text"
+                        :placeholder="t('placeholders.center_bore')"
+                        v-model="centerBore"
+                        class="input input-bordered w-full"
+                      />
+                    </div>
+
+                    <!-- Weight -->
+                    <div class="w-full">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.weight') }}</span>
+                        <span class="text-sm opacity-70"><i class="fad fa-weight-hanging"></i></span>
+                      </label>
+                      <input type="text" :placeholder="t('placeholders.weight')" v-model="weight" class="input input-bordered w-full" />
+                    </div>
+
+                    <!-- Notes (full width) -->
+                    <div class="col-span-1 md:col-span-2">
+                      <label class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium">{{ t('form.notes') }}</span>
+                        <span class="text-sm opacity-70"><i class="fad fa-note"></i></span>
+                      </label>
+                      <textarea :placeholder="t('placeholders.notes')" v-model="notes" :rows="4" class="textarea textarea-bordered w-full"></textarea>
+                    </div>
+
+                    <!-- Photos (full width) -->
+                    <div class="col-span-1 md:col-span-2">
+                      <ContributeFileUpload
+                        accept="image/jpeg,image/png"
+                        :maxFiles="5"
+                        :maxSizeMb="3"
+                        :required="true"
+                        :label="t('form.photos')"
+                        @update:files="photoFiles = $event"
+                      />
+                      <p v-if="photoError" class="text-sm text-error mt-1">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ photoError }}
+                      </p>
+                    </div>
                   </div>
 
-                  <!-- Type -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.type') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-shapes"></i></span>
-                    </label>
-                    <UInput type="text" :placeholder="t('placeholders.type')" v-model="type" class="w-full" />
-                  </div>
-
-                  <!-- Size -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.size') }} <span class="text-error">*</span></span>
-                      <span class="text-sm text-muted"><i class="fad fa-ruler"></i></span>
-                    </label>
-                    <USelect
-                      v-model="size"
-                      :items="sizeOptions"
-                      :placeholder="t('placeholders.size')"
-                      class="w-full"
-                      :color="size === '' && touchedFields.size ? 'error' : undefined"
-                      @blur="touchedFields.size = true"
-                      @change="touchedFields.size = true"
-                    />
-                    <p v-if="size === '' && touchedFields.size" class="text-sm text-error mt-1">
-                      {{ t('validation.required') }}
-                    </p>
-                  </div>
-
-                  <!-- Width -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.width') }} <span class="text-error">*</span></span>
-                      <span class="text-sm text-muted"><i class="fad fa-arrows-left-right"></i></span>
-                    </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.width')"
-                      v-model="width"
-                      class="w-full"
-                      :color="width.trim() === '' && touchedFields.width ? 'error' : undefined"
-                      @blur="touchedFields.width = true"
-                    />
-                    <p v-if="width.trim() === '' && touchedFields.width" class="text-sm text-error mt-1">
-                      {{ t('validation.required') }}
-                    </p>
-                  </div>
-
-                  <!-- Offset -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.offset') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-arrows-up-down"></i></span>
-                    </label>
-                    <UInput type="text" :placeholder="t('placeholders.offset')" v-model="offset" class="w-full" />
-                  </div>
-
-                  <!-- Manufacturer -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.manufacturer') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-industry"></i></span>
-                    </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.manufacturer')"
-                      v-model="manufacturer"
-                      class="w-full"
-                    />
-                  </div>
-
-                  <!-- Bolt Pattern -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.bolt_pattern') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-circle-bolt"></i></span>
-                    </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.bolt_pattern')"
-                      v-model="boltPattern"
-                      class="w-full"
-                    />
-                  </div>
-
-                  <!-- Center Bore -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.center_bore') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-bullseye"></i></span>
-                    </label>
-                    <UInput
-                      type="text"
-                      :placeholder="t('placeholders.center_bore')"
-                      v-model="centerBore"
-                      class="w-full"
-                    />
-                  </div>
-
-                  <!-- Weight -->
-                  <div class="w-full">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.weight') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-weight-hanging"></i></span>
-                    </label>
-                    <UInput type="text" :placeholder="t('placeholders.weight')" v-model="weight" class="w-full" />
-                  </div>
-
-                  <!-- Notes (full width) -->
-                  <div class="col-span-1 md:col-span-2">
-                    <label class="flex justify-between items-center mb-1">
-                      <span class="text-sm font-medium">{{ t('form.notes') }}</span>
-                      <span class="text-sm text-muted"><i class="fad fa-note"></i></span>
-                    </label>
-                    <UTextarea :placeholder="t('placeholders.notes')" v-model="notes" :rows="4" class="w-full" />
-                  </div>
-
-                  <!-- Photos (full width) -->
-                  <div class="col-span-1 md:col-span-2">
-                    <ContributeFileUpload
-                      accept="image/jpeg,image/png"
-                      :maxFiles="5"
-                      :maxSizeMb="3"
-                      :required="true"
-                      :label="t('form.photos')"
-                      @update:files="photoFiles = $event"
-                    />
-                    <p v-if="photoError" class="text-sm text-error mt-1">
-                      <i class="fas fa-exclamation-circle mr-1"></i>
-                      {{ photoError }}
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Error Alert & Submit Button -->
-                <div class="mt-6">
-                  <UAlert v-if="apiError" color="error" class="mb-4">
-                    <template #icon>
+                  <!-- Error Alert & Submit Button -->
+                  <div class="mt-6">
+                    <div v-if="apiError" class="alert alert-error mb-4" role="alert">
                       <i class="fa-duotone fa-circle-exclamation"></i>
-                    </template>
-                    <template #title>{{ t('error.title') }}</template>
-                    <template #description>
-                      {{ t('error.message') }}
-                      <p class="mt-2">{{ t('error.check_entries') }}</p>
-                    </template>
-                    <template #actions>
-                      <UButton size="sm" variant="outline" @click="apiError = false">
+                      <div class="flex-1">
+                        <div class="font-semibold">{{ t('error.title') }}</div>
+                        <div class="text-sm">{{ t('error.message') }}</div>
+                        <p class="mt-2 text-sm">{{ t('error.check_entries') }}</p>
+                      </div>
+                      <button type="button" class="btn btn-sm btn-outline" @click="apiError = false">
                         {{ t('error.dismiss') }}
-                      </UButton>
-                    </template>
-                  </UAlert>
+                      </button>
+                    </div>
 
-                  <UButton
-                    color="primary"
-                    size="lg"
-                    :disabled="processing"
-                    :loading="processing"
-                    @click="debouncedSubmit()"
-                  >
-                    <i class="fad fa-paper-plane mr-2" v-if="!processing"></i>
-                    {{ t('submit_button') }}
-                  </UButton>
-                </div>
-              </form>
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-lg"
+                      :disabled="processing"
+                      @click="debouncedSubmit()"
+                    >
+                      <span v-if="processing" class="loading loading-spinner loading-sm"></span>
+                      <i v-else class="fad fa-paper-plane mr-2"></i>
+                      {{ t('submit_button') }}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-          </UCard>
+          </div>
         </div>
 
         <!-- Patreon Card -->

@@ -1,100 +1,122 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-muted">
-    <UCard class="w-full max-w-lg">
-      <!-- Welcome Header -->
-      <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="fad fa-hand-wave text-3xl text-primary"></i>
+  <div class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="card bg-base-100 shadow-md w-full max-w-lg">
+      <div class="card-body">
+        <!-- Welcome Header -->
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fad fa-hand-wave text-3xl text-primary"></i>
+          </div>
+          <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
+          <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
         </div>
-        <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
-        <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
-      </div>
 
-      <!-- One Account, Two Sites Explanation -->
-      <UAlert
-        color="info"
-        icon="i-fa6-solid-circle-info"
-        :title="t('unified_title')"
-        :description="t('unified_description')"
-        class="mb-6"
-      />
+        <!-- One Account, Two Sites Explanation -->
+        <div class="alert alert-info mb-6" role="alert">
+          <i class="fas fa-circle-info"></i>
+          <div>
+            <div class="font-semibold">{{ t('unified_title') }}</div>
+            <div class="text-sm opacity-90">{{ t('unified_description') }}</div>
+          </div>
+        </div>
 
-      <USeparator class="my-4" />
+        <div class="divider my-4"></div>
 
-      <!-- Optional Profile Setup Form -->
-      <div class="space-y-4 mb-6">
-        <h2 class="text-lg font-semibold">{{ t('profile_heading') }}</h2>
-        <p class="text-sm opacity-70">{{ t('profile_subheading') }}</p>
+        <!-- Optional Profile Setup Form -->
+        <div class="space-y-4 mb-6">
+          <h2 class="text-lg font-semibold">{{ t('profile_heading') }}</h2>
+          <p class="text-sm opacity-70">{{ t('profile_subheading') }}</p>
 
-        <UFormField :label="t('display_name_label')">
-          <UInput
-            v-model="displayName"
-            :placeholder="t('display_name_placeholder')"
-            class="w-full"
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">{{ t('display_name_label') }}</legend>
+            <input
+              v-model="displayName"
+              type="text"
+              :placeholder="t('display_name_placeholder')"
+              class="input input-bordered w-full"
+              :disabled="isSaving"
+            />
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">{{ t('bio_label') }}</legend>
+            <textarea
+              v-model="bio"
+              :placeholder="t('bio_placeholder')"
+              class="textarea textarea-bordered w-full"
+              :rows="3"
+              :disabled="isSaving"
+            ></textarea>
+          </fieldset>
+
+          <div v-if="saveError" class="alert alert-error" role="alert">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>{{ saveError }}</span>
+          </div>
+          <div v-if="saveSuccess" class="alert alert-success" role="alert">
+            <i class="fas fa-circle-check"></i>
+            <span>{{ t('save_success') }}</span>
+          </div>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <!-- What You Can Do Section -->
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold mb-3">{{ t('what_you_can_do') }}</h2>
+          <ul class="space-y-3">
+            <li class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                <i class="fad fa-books text-primary text-sm"></i>
+              </div>
+              <div>
+                <p class="font-medium">{{ t('feature_archive_title') }}</p>
+                <p class="text-sm opacity-70">{{ t('feature_archive_desc') }}</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                <i class="fad fa-wrench text-primary text-sm"></i>
+              </div>
+              <div>
+                <p class="font-medium">{{ t('feature_tools_title') }}</p>
+                <p class="text-sm opacity-70">{{ t('feature_tools_desc') }}</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                <i class="fad fa-users text-primary text-sm"></i>
+              </div>
+              <div>
+                <p class="font-medium">{{ t('feature_contribute_title') }}</p>
+                <p class="text-sm opacity-70">{{ t('feature_contribute_desc') }}</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="divider my-4"></div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col gap-3">
+          <button
+            type="button"
+            class="btn btn-primary w-full"
             :disabled="isSaving"
-          />
-        </UFormField>
+            :class="{ 'btn-disabled': isSaving }"
+            @click="handleGetStarted"
+          >
+            <span v-if="isSaving" class="loading loading-spinner loading-sm"></span>
+            <i v-else class="fad fa-rocket"></i>
+            {{ t('get_started') }}
+          </button>
 
-        <UFormField :label="t('bio_label')">
-          <UTextarea v-model="bio" :placeholder="t('bio_placeholder')" class="w-full" :rows="3" :disabled="isSaving" />
-        </UFormField>
-
-        <UAlert v-if="saveError" color="error" icon="i-fa6-solid-triangle-exclamation" :title="saveError" />
-        <UAlert v-if="saveSuccess" color="success" icon="i-fa6-solid-circle-check" :title="t('save_success')" />
+          <button type="button" class="btn btn-ghost w-full" :disabled="isSaving" @click="handleSkip">
+            {{ t('skip_for_now') }}
+          </button>
+        </div>
       </div>
-
-      <USeparator class="my-4" />
-
-      <!-- What You Can Do Section -->
-      <div class="mb-6">
-        <h2 class="text-lg font-semibold mb-3">{{ t('what_you_can_do') }}</h2>
-        <ul class="space-y-3">
-          <li class="flex items-start gap-3">
-            <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-              <i class="fad fa-books text-primary text-sm"></i>
-            </div>
-            <div>
-              <p class="font-medium">{{ t('feature_archive_title') }}</p>
-              <p class="text-sm opacity-70">{{ t('feature_archive_desc') }}</p>
-            </div>
-          </li>
-          <li class="flex items-start gap-3">
-            <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-              <i class="fad fa-wrench text-primary text-sm"></i>
-            </div>
-            <div>
-              <p class="font-medium">{{ t('feature_tools_title') }}</p>
-              <p class="text-sm opacity-70">{{ t('feature_tools_desc') }}</p>
-            </div>
-          </li>
-          <li class="flex items-start gap-3">
-            <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-              <i class="fad fa-users text-primary text-sm"></i>
-            </div>
-            <div>
-              <p class="font-medium">{{ t('feature_contribute_title') }}</p>
-              <p class="text-sm opacity-70">{{ t('feature_contribute_desc') }}</p>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <USeparator class="my-4" />
-
-      <!-- Action Buttons -->
-      <div class="flex flex-col gap-3">
-        <UButton color="primary" class="w-full" :disabled="isSaving" :loading="isSaving" @click="handleGetStarted">
-          <template #leading>
-            <i v-if="!isSaving" class="fad fa-rocket"></i>
-          </template>
-          {{ t('get_started') }}
-        </UButton>
-
-        <UButton variant="ghost" class="w-full" :disabled="isSaving" @click="handleSkip">
-          {{ t('skip_for_now') }}
-        </UButton>
-      </div>
-    </UCard>
+    </div>
   </div>
 </template>
 

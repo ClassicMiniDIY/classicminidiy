@@ -1,28 +1,33 @@
 <template>
   <!-- Floating Chat Input -->
   <div class="fixed bottom-6 right-6 z-50 max-w-md w-full px-4">
-    <div class="bg-default rounded-2xl shadow-xl border border-default p-4">
+    <div class="bg-base-100 rounded-2xl shadow-xl border border-base-300 p-4">
       <form @submit.prevent="handleSubmit" class="relative">
-        <div class="flex items-end gap-3 bg-muted rounded-2xl p-3 shadow-sm border border-default">
+        <div class="flex items-end gap-3 bg-base-200 rounded-2xl p-3 shadow-sm border border-base-300">
           <textarea
             ref="inputRef"
             v-model="input"
             @keydown="handleInputKeyDown"
             :placeholder="t('placeholder')"
             :aria-label="t('placeholder')"
-            class="flex-1 bg-transparent resize-none outline-none min-h-[1.5rem] max-h-32 placeholder:text-muted"
+            class="flex-1 bg-transparent resize-none outline-none min-h-[1.5rem] max-h-32 placeholder:text-base-content/60"
             rows="1"
           ></textarea>
 
-          <UButton type="submit" size="sm" color="primary" square :disabled="!input.trim()" aria-label="Send message">
+          <button
+            type="submit"
+            class="btn btn-sm btn-primary btn-square"
+            :disabled="!input.trim()"
+            aria-label="Send message"
+          >
             <i class="fa-solid fa-paper-plane"></i>
-          </UButton>
+          </button>
         </div>
       </form>
 
       <!-- Small helper text -->
       <div class="flex justify-center mt-2">
-        <span class="text-xs text-muted">
+        <span class="text-xs text-base-content/70">
           <i class="fa-solid fa-comments text-xs mr-1"></i>
           {{ t('helper_text') }}
         </span>

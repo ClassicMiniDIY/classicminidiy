@@ -15,39 +15,43 @@
       <div class="absolute inset-0 translate-x-1 translate-y-1 bg-base-300 rounded-lg"></div>
       <div class="absolute inset-0 translate-x-0.5 translate-y-0.5 bg-base-200 rounded-lg"></div>
 
-      <UCard class="relative h-full">
-        <template #header>
-          <figure v-if="collection.image" class="relative">
-            <img
-              :src="collection.image"
-              :alt="collection.title"
-              class="h-[150px] w-full object-cover rounded-t-lg group-hover:opacity-90 transition-opacity"
-            />
-          </figure>
-          <div v-else class="flex justify-center items-center h-[150px] bg-muted rounded-t-lg">
-            <i class="fad fa-books text-4xl text-muted"></i>
-          </div>
+      <div class="card bg-base-100 shadow-md border border-base-300 relative h-full">
+        <figure v-if="collection.image" class="relative">
+          <img
+            :src="collection.image"
+            :alt="collection.title"
+            class="h-[150px] w-full object-cover rounded-t-lg group-hover:opacity-90 transition-opacity"
+          />
           <!-- Item count badge -->
           <div class="absolute top-2 right-2">
             <span class="badge badge-primary badge-lg font-bold">
               {{ collection.itemCount }} {{ t('items_label') }}
             </span>
           </div>
-        </template>
+        </figure>
+        <div v-else class="flex justify-center items-center h-[150px] bg-base-200 rounded-t-lg relative">
+          <i class="fad fa-books text-4xl opacity-70"></i>
+          <!-- Item count badge -->
+          <div class="absolute top-2 right-2">
+            <span class="badge badge-primary badge-lg font-bold">
+              {{ collection.itemCount }} {{ t('items_label') }}
+            </span>
+          </div>
+        </div>
 
-        <h2 class="font-bold text-lg group-hover:underline">{{ collection.title }}</h2>
-        <p v-if="collection.description" class="text-sm my-2 line-clamp-2 text-muted">
-          {{ collection.description }}
-        </p>
+        <div class="card-body">
+          <h2 class="font-bold text-lg group-hover:underline">{{ collection.title }}</h2>
+          <p v-if="collection.description" class="text-sm my-2 line-clamp-2 opacity-70">
+            {{ collection.description }}
+          </p>
 
-        <template #footer>
-          <div class="flex justify-end">
+          <div class="card-actions justify-end">
             <span class="text-sm text-primary font-medium">
               {{ t('view_collection') }} <i class="fad fa-arrow-right ml-1"></i>
             </span>
           </div>
-        </template>
-      </UCard>
+        </div>
+      </div>
     </div>
   </NuxtLink>
 </template>

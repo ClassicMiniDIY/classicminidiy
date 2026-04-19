@@ -217,200 +217,205 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Wheels Review Queue</h1>
-      <UButton color="primary" @click="() => refreshData()" :disabled="fetchStatus === 'pending'">
+      <button type="button" class="btn btn-primary" :disabled="fetchStatus === 'pending'" @click="() => refreshData()">
         <i class="fas fa-sync-alt" :class="{ 'fa-spin': fetchStatus === 'pending' }"></i>
         {{ fetchStatus === 'pending' ? 'Loading...' : 'Refresh' }}
-      </UButton>
+      </button>
     </div>
 
     <!-- Admin authentication handled by login system -->
 
     <!-- Error Message -->
-    <UAlert v-if="errorMessage" color="error" icon="i-fa6-solid-circle-xmark" :title="errorMessage" class="mb-6" />
+    <div v-if="errorMessage" role="alert" class="alert alert-error mb-6">
+      <i class="fas fa-circle-xmark"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
 
     <!-- Loading State -->
     <div v-if="fetchStatus === 'pending'" class="flex justify-center my-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
     <!-- Empty State -->
-    <UAlert
-      v-else-if="!wheelsToReview?.length"
-      color="info"
-      icon="i-fa6-solid-circle-info"
-      title="No wheels in the review queue."
-    />
+    <div v-else-if="!wheelsToReview?.length" role="alert" class="alert alert-info">
+      <i class="fas fa-circle-info"></i>
+      <span>No wheels in the review queue.</span>
+    </div>
 
     <!-- Wheels Table -->
     <div v-else class="overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="table table-zebra w-full text-sm">
         <thead>
-          <tr class="border-b border-default">
-            <th class="text-left p-2 font-medium bg-muted">Name</th>
-            <th class="text-left p-2 font-medium bg-muted">Type</th>
-            <th class="text-left p-2 font-medium bg-muted">Size</th>
-            <th class="text-left p-2 font-medium bg-muted">Width</th>
-            <th class="text-left p-2 font-medium bg-muted">Offset</th>
-            <th class="text-left p-2 font-medium bg-muted">Submitted By</th>
-            <th class="text-left p-2 font-medium bg-muted">Email</th>
-            <th class="text-left p-2 font-medium bg-muted">Status</th>
-            <th class="text-center p-2 font-medium bg-muted">Actions</th>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Size</th>
+            <th>Width</th>
+            <th>Offset</th>
+            <th>Submitted By</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           <template v-for="item in wheelsToReview" :key="item.uuid">
-            <tr class="border-b border-default last:border-0 hover:bg-muted transition-colors">
+            <tr>
               <!-- Name -->
-              <td class="p-2">
-                <UInput
+              <td>
+                <input
                   v-if="editingItems.has(item.uuid)"
                   type="text"
-                  size="sm"
-                  class="w-full"
-                  :model-value="getDisplayValue(item, 'name') as string"
-                  @update:model-value="updateEditedField(item.uuid, 'name', $event)"
+                  class="input input-bordered input-sm w-full"
+                  :value="getDisplayValue(item, 'name') as string"
+                  @input="updateEditedField(item.uuid, 'name', ($event.target as HTMLInputElement).value)"
                 />
                 <span v-else>{{ item.name || '-' }}</span>
               </td>
 
               <!-- Type -->
-              <td class="p-2">
-                <UInput
+              <td>
+                <input
                   v-if="editingItems.has(item.uuid)"
                   type="text"
-                  size="sm"
-                  class="w-full"
-                  :model-value="getDisplayValue(item, 'type') as string"
-                  @update:model-value="updateEditedField(item.uuid, 'type', $event)"
+                  class="input input-bordered input-sm w-full"
+                  :value="getDisplayValue(item, 'type') as string"
+                  @input="updateEditedField(item.uuid, 'type', ($event.target as HTMLInputElement).value)"
                 />
                 <span v-else>{{ item.type || '-' }}</span>
               </td>
 
               <!-- Size -->
-              <td class="p-2">
-                <UInput
+              <td>
+                <input
                   v-if="editingItems.has(item.uuid)"
                   type="text"
-                  size="sm"
-                  class="w-full"
-                  :model-value="getDisplayValue(item, 'size') as string"
-                  @update:model-value="updateEditedField(item.uuid, 'size', $event)"
+                  class="input input-bordered input-sm w-full"
+                  :value="getDisplayValue(item, 'size') as string"
+                  @input="updateEditedField(item.uuid, 'size', ($event.target as HTMLInputElement).value)"
                 />
                 <span v-else>{{ item.size || '-' }}</span>
               </td>
 
               <!-- Width -->
-              <td class="p-2">
-                <UInput
+              <td>
+                <input
                   v-if="editingItems.has(item.uuid)"
                   type="text"
-                  size="sm"
-                  class="w-full"
-                  :model-value="getDisplayValue(item, 'width') as string"
-                  @update:model-value="updateEditedField(item.uuid, 'width', $event)"
+                  class="input input-bordered input-sm w-full"
+                  :value="getDisplayValue(item, 'width') as string"
+                  @input="updateEditedField(item.uuid, 'width', ($event.target as HTMLInputElement).value)"
                 />
                 <span v-else>{{ item.width || '-' }}</span>
               </td>
 
               <!-- Offset -->
-              <td class="p-2">
-                <UInput
+              <td>
+                <input
                   v-if="editingItems.has(item.uuid)"
                   type="text"
-                  size="sm"
-                  class="w-full"
-                  :model-value="getDisplayValue(item, 'offset') as string"
-                  @update:model-value="updateEditedField(item.uuid, 'offset', $event)"
+                  class="input input-bordered input-sm w-full"
+                  :value="getDisplayValue(item, 'offset') as string"
+                  @input="updateEditedField(item.uuid, 'offset', ($event.target as HTMLInputElement).value)"
                 />
                 <span v-else>{{ item.offset || '-' }}</span>
               </td>
 
               <!-- Submitted By -->
-              <td class="p-2">
-                <UInput
+              <td>
+                <input
                   v-if="editingItems.has(item.uuid)"
                   type="text"
-                  size="sm"
-                  class="w-full"
-                  :model-value="getDisplayValue(item, 'userName') as string"
-                  @update:model-value="updateEditedField(item.uuid, 'userName', $event)"
+                  class="input input-bordered input-sm w-full"
+                  :value="getDisplayValue(item, 'userName') as string"
+                  @input="updateEditedField(item.uuid, 'userName', ($event.target as HTMLInputElement).value)"
                 />
                 <span v-else>{{ item.userName || '-' }}</span>
               </td>
 
               <!-- Email -->
-              <td class="p-2">
-                <UInput
+              <td>
+                <input
                   v-if="editingItems.has(item.uuid)"
                   type="email"
-                  size="sm"
-                  class="w-full"
-                  :model-value="getDisplayValue(item, 'emailAddress') as string"
-                  @update:model-value="updateEditedField(item.uuid, 'emailAddress', $event)"
+                  class="input input-bordered input-sm w-full"
+                  :value="getDisplayValue(item, 'emailAddress') as string"
+                  @input="updateEditedField(item.uuid, 'emailAddress', ($event.target as HTMLInputElement).value)"
                 />
                 <span v-else>{{ item.emailAddress || '-' }}</span>
               </td>
 
               <!-- Status -->
-              <td class="p-2">
-                <UBadge :color="getStatusBadgeColor(item.status)">
+              <td>
+                <span class="badge" :class="`badge-${getStatusBadgeColor(item.status)}`">
                   {{ getStatusText(item.status) }}
-                </UBadge>
+                </span>
               </td>
 
               <!-- Actions -->
-              <td class="p-2 text-center">
+              <td class="text-center">
                 <div class="flex gap-1 justify-center">
                   <!-- Edit Mode Actions -->
                   <template v-if="editingItems.has(item.uuid)">
-                    <UButton size="xs" color="success" @click="saveEditing(item)" title="Save changes">
+                    <button
+                      type="button"
+                      class="btn btn-success btn-xs"
+                      title="Save changes"
+                      @click="saveEditing(item)"
+                    >
                       <i class="fas fa-save"></i>
-                    </UButton>
-                    <UButton size="xs" variant="ghost" @click="cancelEditing(item)" title="Cancel editing">
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs"
+                      title="Cancel editing"
+                      @click="cancelEditing(item)"
+                    >
                       <i class="fas fa-times"></i>
-                    </UButton>
+                    </button>
                   </template>
 
                   <!-- View Mode Actions -->
                   <template v-else>
-                    <UButton
-                      size="xs"
-                      variant="ghost"
-                      @click="startEditing(item)"
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs"
                       title="Edit item"
                       :disabled="isProcessing"
+                      @click="startEditing(item)"
                     >
                       <i class="fas fa-edit"></i>
-                    </UButton>
-                    <UButton
-                      size="xs"
-                      color="success"
-                      @click="approveItem(item)"
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-success btn-xs"
                       :disabled="isProcessing"
-                      :loading="isProcessing && processingItemId === item.uuid"
                       title="Approve item"
+                      @click="approveItem(item)"
                     >
-                      <template #leading>
-                        <i v-if="!(isProcessing && processingItemId === item.uuid)" class="fas fa-check"></i>
-                      </template>
-                    </UButton>
-                    <UButton
-                      size="xs"
-                      color="error"
-                      @click="openDeleteDialog(item)"
+                      <i
+                        v-if="isProcessing && processingItemId === item.uuid"
+                        class="fas fa-spinner fa-spin"
+                      ></i>
+                      <i v-else class="fas fa-check"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-error btn-xs"
                       :disabled="isProcessing"
                       title="Reject item"
+                      @click="openDeleteDialog(item)"
                     >
                       <i class="fas fa-times"></i>
-                    </UButton>
+                    </button>
                   </template>
                 </div>
               </td>
             </tr>
 
             <!-- Additional Details Row (expandable) -->
-            <tr v-if="item.notes || item.referral" class="bg-muted/50">
-              <td colspan="9" class="py-2 px-4 border-t border-default">
+            <tr v-if="item.notes || item.referral" class="bg-base-200/50">
+              <td colspan="9" class="py-2 px-4 border-t border-base-300">
                 <div class="text-sm opacity-70">
                   <div v-if="item.notes" class="mb-1"><strong>Notes:</strong> {{ item.notes }}</div>
                   <div v-if="item.referral"><strong>Referral:</strong> {{ item.referral }}</div>
@@ -423,24 +428,26 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteDialog">
-      <template #content>
-        <div class="p-6">
-          <h3 class="font-bold text-lg mb-4">Confirm Rejection</h3>
-          <p class="mb-4">Are you sure you want to reject this wheel submission? This action cannot be undone.</p>
-          <div v-if="selectedItem" class="bg-muted p-4 rounded-lg mb-4">
-            <p><strong>Wheel:</strong> {{ selectedItem.oldWheel?.name || 'Unknown' }}</p>
-            <p><strong>Submitted by:</strong> {{ selectedItem.userName || 'Unknown' }}</p>
-            <p><strong>Email:</strong> {{ selectedItem.emailAddress || 'No email provided' }}</p>
-          </div>
-          <div class="flex justify-end gap-2">
-            <UButton variant="outline" @click="showDeleteDialog = false" :disabled="isProcessing">Cancel</UButton>
-            <UButton color="error" @click="deleteItem" :disabled="isProcessing" :loading="isProcessing">
-              Reject Submission
-            </UButton>
-          </div>
+    <dialog class="modal" :class="{ 'modal-open': showDeleteDialog }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Confirm Rejection</h3>
+        <p class="mb-4">Are you sure you want to reject this wheel submission? This action cannot be undone.</p>
+        <div v-if="selectedItem" class="bg-base-200 p-4 rounded-lg mb-4">
+          <p><strong>Wheel:</strong> {{ selectedItem.oldWheel?.name || 'Unknown' }}</p>
+          <p><strong>Submitted by:</strong> {{ selectedItem.userName || 'Unknown' }}</p>
+          <p><strong>Email:</strong> {{ selectedItem.emailAddress || 'No email provided' }}</p>
         </div>
-      </template>
-    </UModal>
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" :disabled="isProcessing" @click="showDeleteDialog = false">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-error" :disabled="isProcessing" @click="deleteItem">
+            <i v-if="isProcessing" class="fas fa-spinner fa-spin"></i>
+            Reject Submission
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" @click="showDeleteDialog = false"></div>
+    </dialog>
   </div>
 </template>

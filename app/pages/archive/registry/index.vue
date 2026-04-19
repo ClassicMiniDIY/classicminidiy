@@ -89,20 +89,22 @@
         <breadcrumb class="my-6" :page="t('breadcrumb_title')"></breadcrumb>
 
         <!-- Contribute Banner -->
-        <UCard class="mb-6 bg-primary/5">
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
-              <div>
-                <p class="font-medium">{{ t('contribute_banner_title') }}</p>
-                <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+        <div class="card bg-base-100 shadow-sm border border-base-300 mb-6 bg-primary/5">
+          <div class="card-body">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <i class="fad fa-hand-holding-heart text-xl text-primary"></i>
+                <div>
+                  <p class="font-medium">{{ t('contribute_banner_title') }}</p>
+                  <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
+                </div>
               </div>
+              <NuxtLink to="/contribute/registry" class="btn btn-primary btn-outline btn-sm">
+                {{ t('contribute_banner_button') }}
+              </NuxtLink>
             </div>
-            <UButton to="/contribute/registry" color="primary" variant="outline" size="sm">
-              {{ t('contribute_banner_button') }}
-            </UButton>
           </div>
-        </UCard>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
@@ -115,43 +117,45 @@
               {{ t('description_text') }}
             </p>
             <p class="font-bold mt-4 mb-5">{{ t('submission_status_text') }}</p>
-            <UButton to="/archive/registry/pending" color="primary">
+            <NuxtLink to="/archive/registry/pending" class="btn btn-primary">
               <i class="fa-duotone fa-clipboard-question mr-2"></i>
               {{ t('track_submission_button') }}
-            </UButton>
+            </NuxtLink>
           </div>
           <div class="col-span-12 md:col-span-4">
             <a href="#submitAnchor" class="block">
-              <UCard class="hover:shadow-2xl transition-shadow duration-300">
-                <div class="flex items-start space-x-4">
-                  <div class="flex-shrink-0">
-                    <figure class="w-16 h-16">
-                      <picture>
-                        <source
-                          srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.webp"
-                          type="image/webp"
-                        />
-                        <source
-                          srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
-                          type="image/png"
-                        />
-                        <nuxt-img
-                          loading="lazy"
-                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
-                          :alt="t('submit_card.alt_text')"
-                          class="w-16 h-16"
-                        />
-                      </picture>
-                    </figure>
-                  </div>
-                  <div>
-                    <h2 class="text-lg font-semibold">{{ t('submit_card.title') }}</h2>
-                    <p>
-                      {{ t('submit_card.description') }}
-                    </p>
+              <div class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-2xl transition-shadow duration-300">
+                <div class="card-body">
+                  <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0">
+                      <figure class="w-16 h-16">
+                        <picture>
+                          <source
+                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.webp"
+                            type="image/webp"
+                          />
+                          <source
+                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
+                            type="image/png"
+                          />
+                          <nuxt-img
+                            loading="lazy"
+                            src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
+                            :alt="t('submit_card.alt_text')"
+                            class="w-16 h-16"
+                          />
+                        </picture>
+                      </figure>
+                    </div>
+                    <div>
+                      <h2 class="text-lg font-semibold">{{ t('submit_card.title') }}</h2>
+                      <p>
+                        {{ t('submit_card.description') }}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </UCard>
+              </div>
             </a>
           </div>
         </div>
@@ -165,13 +169,13 @@
         />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator id="submitAnchor" :label="t('submit_divider')" />
+        <div id="submitAnchor" class="divider">{{ t('submit_divider') }}</div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <RegistrySubmission></RegistrySubmission>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="t('support_divider')" />
+        <div class="divider">{{ t('support_divider') }}</div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <patreon-card size="large" />

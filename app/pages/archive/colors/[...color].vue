@@ -97,126 +97,128 @@
 
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8">
-      <UCard>
-        <div v-if="status === 'pending'" class="flex justify-center p-8">
-          <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
-        </div>
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
+          <div v-if="status === 'pending'" class="flex justify-center p-8">
+            <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+          </div>
 
-        <div v-else-if="color">
-          <!-- Color Header -->
-          <div class="flex flex-col md:flex-row gap-6 items-center">
-            <!-- Color Info -->
-            <div class="flex-1 text-center md:text-left">
-              <h2 class="text-3xl font-bold mb-2">{{ color.pretty.Name }}</h2>
-              <UBadge size="lg" color="primary" class="mb-4">
-                <i class="fas fa-palette mr-1"></i>
-                {{ t('primary_color_badge') }}
-              </UBadge>
-              <h3 class="text-5xl font-bold text-primary mb-6">{{ color.pretty.Code }}</h3>
+          <div v-else-if="color">
+            <!-- Color Header -->
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+              <!-- Color Info -->
+              <div class="flex-1 text-center md:text-left">
+                <h2 class="text-3xl font-bold mb-2">{{ color.pretty.Name }}</h2>
+                <span class="badge badge-primary badge-lg mb-4">
+                  <i class="fas fa-palette mr-1"></i>
+                  {{ t('primary_color_badge') }}
+                </span>
+                <h3 class="text-5xl font-bold text-primary mb-6">{{ color.pretty.Code }}</h3>
+              </div>
+
+              <!-- Color Swatch -->
+              <div class="w-full md:w-1/3 lg:w-1/4">
+                <figure class="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
+                  <img
+                    v-if="color.raw.hasSwatch && color.raw.imageSwatch"
+                    :src="color.raw.imageSwatch"
+                    :alt="t('alt_text', { name: color.pretty.Name })"
+                    class="w-full h-full object-cover"
+                  />
+                  <div
+                    v-else
+                    class="w-full h-full bg-linear-to-br from-base-200 to-base-200/50 flex items-center justify-center"
+                  >
+                    <i class="fas fa-paint-roller text-6xl opacity-30"></i>
+                  </div>
+                </figure>
+              </div>
             </div>
 
-            <!-- Color Swatch -->
-            <div class="w-full md:w-1/3 lg:w-1/4">
-              <figure class="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
-                <img
-                  v-if="color.raw.hasSwatch && color.raw.imageSwatch"
-                  :src="color.raw.imageSwatch"
-                  :alt="t('alt_text', { name: color.pretty.Name })"
-                  class="w-full h-full object-cover"
-                />
-                <div
-                  v-else
-                  class="w-full h-full bg-linear-to-br from-muted to-muted/50 flex items-center justify-center"
-                >
-                  <i class="fas fa-paint-roller text-6xl opacity-30"></i>
+            <!-- Color Details -->
+            <div class="divider my-6">{{ t('details_divider') }}</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-base-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm opacity-70">{{ t('stats.years') }}</span>
+                  <i class="fas fa-calendar-days text-xl text-primary"></i>
                 </div>
-              </figure>
-            </div>
-          </div>
+                <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty.Years }">
+                  {{ color.pretty.Years || t('stats.missing') }}
+                </div>
+              </div>
 
-          <!-- Color Details -->
-          <USeparator :label="t('details_divider')" class="my-6" />
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-muted rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{ t('stats.years') }}</span>
-                <i class="fas fa-calendar-days text-xl text-primary"></i>
+              <div class="bg-base-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm opacity-70">{{ t('stats.short_code') }}</span>
+                  <i class="fas fa-code text-xl text-primary"></i>
+                </div>
+                <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Short Code'] }">
+                  {{ color.pretty['Short Code'] || t('stats.missing') }}
+                </div>
               </div>
-              <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty.Years }">
-                {{ color.pretty.Years || t('stats.missing') }}
-              </div>
-            </div>
 
-            <div class="bg-muted rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{ t('stats.short_code') }}</span>
-                <i class="fas fa-code text-xl text-primary"></i>
+              <div class="bg-base-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm opacity-70">{{ t('stats.ditzler_ppg_code') }}</span>
+                  <i class="fas fa-barcode text-xl text-primary"></i>
+                </div>
+                <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Ditzler PPG Code'] }">
+                  {{ color.pretty['Ditzler PPG Code'] || t('stats.missing') }}
+                </div>
               </div>
-              <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Short Code'] }">
-                {{ color.pretty['Short Code'] || t('stats.missing') }}
-              </div>
-            </div>
 
-            <div class="bg-muted rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{ t('stats.ditzler_ppg_code') }}</span>
-                <i class="fas fa-barcode text-xl text-primary"></i>
-              </div>
-              <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Ditzler PPG Code'] }">
-                {{ color.pretty['Ditzler PPG Code'] || t('stats.missing') }}
-              </div>
-            </div>
-
-            <div class="bg-muted rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm opacity-70">{{ t('stats.dulux_code') }}</span>
-                <i class="fas fa-barcode text-xl text-primary"></i>
-              </div>
-              <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Dulux Code'] }">
-                {{ color.pretty['Dulux Code'] || t('stats.missing') }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Community Photos -->
-          <template v-if="color.raw.images && color.raw.images.length > 0">
-            <USeparator :label="t('community_photos_divider')" class="my-6" />
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div v-for="(photo, idx) in color.raw.images" :key="idx" class="rounded-xl overflow-hidden shadow-md">
-                <img
-                  :src="photo.url"
-                  :alt="`${color.pretty.Name} - ${t('community_photo_alt', { contributor: photo.contributor || t('community_photo_anonymous') })}`"
-                  loading="lazy"
-                  class="w-full aspect-4/3 object-cover"
-                />
-                <div v-if="photo.contributor" class="p-2 bg-muted text-xs text-center">
-                  <i class="fas fa-camera mr-1"></i>
-                  {{ t('community_photo_by', { name: photo.contributor }) }}
+              <div class="bg-base-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm opacity-70">{{ t('stats.dulux_code') }}</span>
+                  <i class="fas fa-barcode text-xl text-primary"></i>
+                </div>
+                <div class="text-lg font-semibold truncate" :class="{ 'text-error': !color.pretty['Dulux Code'] }">
+                  {{ color.pretty['Dulux Code'] || t('stats.missing') }}
                 </div>
               </div>
             </div>
-          </template>
 
-          <!-- Action Buttons -->
-          <USeparator :label="t('share_divider')" class="my-6" />
-          <div class="flex flex-wrap gap-4 justify-center">
-            <UButton @click="copyUrl()" :color="copied ? 'success' : 'primary'">
-              <i class="fas fa-link mr-2"></i>
-              {{ copied ? t('actions.copied') : t('actions.copy_link') }}
-            </UButton>
+            <!-- Community Photos -->
+            <template v-if="color.raw.images && color.raw.images.length > 0">
+              <div class="divider my-6">{{ t('community_photos_divider') }}</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div v-for="(photo, idx) in color.raw.images" :key="idx" class="rounded-xl overflow-hidden shadow-md">
+                  <img
+                    :src="photo.url"
+                    :alt="`${color.pretty.Name} - ${t('community_photo_alt', { contributor: photo.contributor || t('community_photo_anonymous') })}`"
+                    loading="lazy"
+                    class="w-full aspect-4/3 object-cover"
+                  />
+                  <div v-if="photo.contributor" class="p-2 bg-base-200 text-xs text-center">
+                    <i class="fas fa-camera mr-1"></i>
+                    {{ t('community_photo_by', { name: photo.contributor }) }}
+                  </div>
+                </div>
+              </div>
+            </template>
 
-            <UButton @click="shareColorItem(color.pretty.Name, color.pretty.ID)" color="neutral">
-              <i class="fas fa-share-nodes mr-2"></i>
-              {{ t('actions.share') }}
-            </UButton>
+            <!-- Action Buttons -->
+            <div class="divider my-6">{{ t('share_divider') }}</div>
+            <div class="flex flex-wrap gap-4 justify-center">
+              <button type="button" class="btn" :class="copied ? 'btn-success' : 'btn-primary'" @click="copyUrl()">
+                <i class="fas fa-link mr-2"></i>
+                {{ copied ? t('actions.copied') : t('actions.copy_link') }}
+              </button>
 
-            <UButton :to="`/contribute/color?color=${color.raw.id}`" variant="outline">
-              <i class="fas fa-edit mr-2"></i>
-              {{ t('actions.contribute') }}
-            </UButton>
+              <button type="button" class="btn btn-neutral" @click="shareColorItem(color.pretty.Name, color.pretty.ID)">
+                <i class="fas fa-share-nodes mr-2"></i>
+                {{ t('actions.share') }}
+              </button>
+
+              <NuxtLink :to="`/contribute/color?color=${color.raw.id}`" class="btn btn-outline">
+                <i class="fas fa-edit mr-2"></i>
+                {{ t('actions.contribute') }}
+              </NuxtLink>
+            </div>
           </div>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
 </template>

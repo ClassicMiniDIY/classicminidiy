@@ -5,7 +5,7 @@
 
   // Dark mode support
   const colorMode = useColorMode();
-  const isDark = computed(() => colorMode.value === 'dark');
+  const isDark = computed(() => colorMode.isDark.value);
 
   // Dark mode chart colors
   const darkModeChartOptions = {
@@ -293,147 +293,143 @@
 <template>
   <div class="grid grid-cols-12 gap-3 configurator-component">
     <div class="col-span-12 md:col-span-4">
-      <UCard>
-        <h3 class="fancy-font-bold text-xl pb-3">{{ t('title') }}</h3>
-        <p class="pb-3">
-          {{ t('description') }}
-        </p>
-        <!-- Modal dialog for diagram -->
-        <div>
-          <UButton size="sm" color="neutral" class="mb-5" @click="showDiagramModal = true">
-            {{ t('diagram_button') }}
-          </UButton>
-          <UModal v-model:open="showDiagramModal">
-            <template #content>
-              <UCard>
-                <template #header>
-                  <h3 class="font-bold text-lg">{{ t('diagram_modal.title') }}</h3>
-                </template>
+      <div class="card bg-base-100 shadow-md border border-base-300">
+        <div class="card-body">
+          <h3 class="fancy-font-bold text-xl pb-3">{{ t('title') }}</h3>
+          <p class="pb-3">
+            {{ t('description') }}
+          </p>
+          <!-- Modal dialog for diagram -->
+          <div>
+            <button class="btn btn-sm btn-neutral mb-5" @click="showDiagramModal = true">
+              {{ t('diagram_button') }}
+            </button>
+            <div class="modal" :class="{ 'modal-open': showDiagramModal }">
+              <div class="modal-box max-w-3xl">
+                <h3 class="font-bold text-lg">{{ t('diagram_modal.title') }}</h3>
                 <img
                   loading="lazy"
                   class="diagram mx-auto"
                   src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/diagram.jpg"
                   :alt="t('diagram_modal.alt_text')"
                 />
-                <template #footer>
-                  <div class="flex justify-end">
-                    <UButton color="primary" @click="showDiagramModal = false">
-                      {{ t('diagram_modal.close_button') }}
-                    </UButton>
-                  </div>
-                </template>
-              </UCard>
-            </template>
-          </UModal>
-        </div>
-
-        <template v-if="pending">
-          <!-- Loading state -->
-          <USkeleton class="h-32 w-full" />
-        </template>
-        <template v-else-if="needles && selectedNeedles">
-          <!-- Custom needle autocomplete -->
-          <div class="needle-autocomplete relative" ref="inputContainerRef">
-            <UInput
-              v-model="searchQuery"
-              :placeholder="t('form.select_placeholder')"
-              :aria-label="t('form.select_placeholder')"
-              class="w-full"
-              autocomplete="off"
-              role="combobox"
-              :aria-expanded="isDropdownOpen"
-              aria-controls="needle-listbox"
-              aria-autocomplete="list"
-              @focus="isDropdownOpen = true"
-              @input="isDropdownOpen = true"
-            />
-
-            <!-- Dropdown results - teleported to body to avoid overflow clipping -->
-            <Teleport to="body">
-              <div
-                v-if="isDropdownOpen && filteredResults.length > 0"
-                ref="dropdownRef"
-                id="needle-listbox"
-                role="listbox"
-                class="fixed bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg max-h-64 overflow-y-auto"
-                :style="dropdownStyle"
-                @scroll="onDropdownScroll"
-              >
-                <button
-                  v-for="name in displayedItems"
-                  :key="name"
-                  type="button"
-                  role="option"
-                  class="w-full px-3 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-700 text-sm transition-colors"
-                  :class="{
-                    'text-neutral-400 dark:text-neutral-500': selectedNeedles.some((n) => n.name === name),
-                  }"
-                  @click="selectNeedle(name)"
-                >
-                  {{ name }}
-                  <span v-if="selectedNeedles.some((n) => n.name === name)" class="text-xs ml-2">(added)</span>
-                </button>
-
-                <!-- Load more indicator -->
-                <div v-if="hasMoreItems" class="px-3 py-2 text-center text-xs text-neutral-500">
-                  Scroll for more ({{ filteredResults.length - displayLimit }} remaining)
+                <div class="modal-action">
+                  <button class="btn btn-primary" @click="showDiagramModal = false">
+                    {{ t('diagram_modal.close_button') }}
+                  </button>
                 </div>
               </div>
-
-              <!-- No results -->
-              <div
-                v-if="isDropdownOpen && searchQuery && filteredResults.length === 0"
-                class="fixed bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg px-3 py-2 text-sm text-neutral-500"
-                :style="dropdownStyle"
-              >
-                No needles found
-              </div>
-            </Teleport>
+              <div class="modal-backdrop" @click="showDiagramModal = false"></div>
+            </div>
           </div>
 
-          <!-- Alerts -->
-          <UAlert
-            v-if="alreadyExistsError"
-            color="info"
-            class="mt-4"
-            icon="i-fa6-solid-circle-info"
-            :title="t('alerts.already_exists')"
-          />
+          <template v-if="pending">
+            <!-- Loading state -->
+            <div class="skeleton h-32 w-full"></div>
+          </template>
+          <template v-else-if="needles && selectedNeedles">
+            <!-- Custom needle autocomplete -->
+            <div class="needle-autocomplete relative" ref="inputContainerRef">
+              <input
+                v-model="searchQuery"
+                type="text"
+                class="input input-bordered w-full"
+                :placeholder="t('form.select_placeholder')"
+                :aria-label="t('form.select_placeholder')"
+                autocomplete="off"
+                role="combobox"
+                :aria-expanded="isDropdownOpen"
+                aria-controls="needle-listbox"
+                aria-autocomplete="list"
+                @focus="isDropdownOpen = true"
+                @input="isDropdownOpen = true"
+              />
 
-          <USeparator class="my-4" />
+              <!-- Dropdown results - teleported to body to avoid overflow clipping -->
+              <Teleport to="body">
+                <div
+                  v-if="isDropdownOpen && filteredResults.length > 0"
+                  ref="dropdownRef"
+                  id="needle-listbox"
+                  role="listbox"
+                  class="fixed bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-64 overflow-y-auto"
+                  :style="dropdownStyle"
+                  @scroll="onDropdownScroll"
+                >
+                  <button
+                    v-for="name in displayedItems"
+                    :key="name"
+                    type="button"
+                    role="option"
+                    class="w-full px-3 py-2 text-left hover:bg-base-200 text-sm transition-colors"
+                    :class="{
+                      'opacity-50': selectedNeedles.some((n) => n.name === name),
+                    }"
+                    @click="selectNeedle(name)"
+                  >
+                    {{ name }}
+                    <span v-if="selectedNeedles.some((n) => n.name === name)" class="text-xs ml-2">(added)</span>
+                  </button>
 
-          <h3 class="text-lg font-medium">{{ t('selected_needles_title') }}</h3>
-          <div v-if="selectedNeedles" class="flex flex-wrap gap-2 mt-3">
-            <UBadge
-              v-for="(needle, index) in selectedNeedles"
-              :key="index"
-              size="lg"
-              :color="selectedNeedles.length === 1 ? 'neutral' : 'primary'"
-              class="gap-1"
-            >
-              <span>{{ needle.name }}</span>
-              <button
-                v-if="selectedNeedles.length > 1"
-                @click="removeArrayItem(selectedNeedles[index] as Needle)"
-                class="ml-1 hover:opacity-70"
-                :aria-label="'Remove needle ' + needle.name"
+                  <!-- Load more indicator -->
+                  <div v-if="hasMoreItems" class="px-3 py-2 text-center text-xs opacity-60">
+                    Scroll for more ({{ filteredResults.length - displayLimit }} remaining)
+                  </div>
+                </div>
+
+                <!-- No results -->
+                <div
+                  v-if="isDropdownOpen && searchQuery && filteredResults.length === 0"
+                  class="fixed bg-base-100 border border-base-300 rounded-lg shadow-lg px-3 py-2 text-sm opacity-70"
+                  :style="dropdownStyle"
+                >
+                  No needles found
+                </div>
+              </Teleport>
+            </div>
+
+            <!-- Alerts -->
+            <div v-if="alreadyExistsError" role="alert" class="alert alert-info mt-4">
+              <i class="fas fa-circle-info"></i>
+              <span>{{ t('alerts.already_exists') }}</span>
+            </div>
+
+            <div class="divider my-4"></div>
+
+            <h3 class="text-lg font-medium">{{ t('selected_needles_title') }}</h3>
+            <div v-if="selectedNeedles" class="flex flex-wrap gap-2 mt-3">
+              <span
+                v-for="(needle, index) in selectedNeedles"
+                :key="index"
+                class="badge badge-lg gap-1"
+                :class="selectedNeedles.length === 1 ? 'badge-neutral' : 'badge-primary'"
               >
-                <i class="fas fa-times text-xs"></i>
-              </button>
-            </UBadge>
-          </div>
-        </template>
-      </UCard>
+                <span>{{ needle.name }}</span>
+                <button
+                  v-if="selectedNeedles.length > 1"
+                  @click="removeArrayItem(selectedNeedles[index] as Needle)"
+                  class="ml-1 hover:opacity-70"
+                  :aria-label="'Remove needle ' + needle.name"
+                >
+                  <i class="fas fa-times text-xs"></i>
+                </button>
+              </span>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
     <div class="col-span-12 md:col-span-8">
-      <UCard class="p-2">
-        <ClientOnly fallback-tag="span">
-          <highcharts ref="needlesChart" :options="reactiveChartOptions"></highcharts>
-          <template #fallback>
-            <p class="p-10 text-center text-xl">{{ t('chart.loading') }}</p>
-          </template>
-        </ClientOnly>
-      </UCard>
+      <div class="card bg-base-100 shadow-md border border-base-300">
+        <div class="card-body p-2">
+          <ClientOnly fallback-tag="span">
+            <highcharts ref="needlesChart" :options="reactiveChartOptions"></highcharts>
+            <template #fallback>
+              <p class="p-10 text-center text-xl">{{ t('chart.loading') }}</p>
+            </template>
+          </ClientOnly>
+        </div>
+      </div>
     </div>
   </div>
 </template>

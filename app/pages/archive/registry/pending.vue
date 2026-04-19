@@ -72,32 +72,34 @@
             </p>
             <p class="my-4">
               {{ t('contact_text') }}
-              <ULink to="/contact" class="text-primary hover:underline">{{ t('contact_link') }}</ULink
+              <NuxtLink to="/contact" class="link link-primary">{{ t('contact_link') }}</NuxtLink
               >.
             </p>
           </div>
           <div class="col-span-12 md:col-span-4">
-            <UCard>
-              <h2 class="text-lg font-semibold mb-4">{{ t('status_card.title') }}</h2>
-              <div class="flex items-center gap-2 mb-2">
-                <UBadge color="primary">
-                  {{ t('status_card.pending') }}
-                </UBadge>
-                <span>{{ t('status_card.pending_description') }}</span>
+            <div class="card bg-base-100 shadow-sm border border-base-300">
+              <div class="card-body">
+                <h2 class="text-lg font-semibold mb-4">{{ t('status_card.title') }}</h2>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="badge badge-primary">
+                    {{ t('status_card.pending') }}
+                  </span>
+                  <span>{{ t('status_card.pending_description') }}</span>
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="badge badge-success">
+                    {{ t('status_card.approved') }}
+                  </span>
+                  <span>{{ t('status_card.approved_description') }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge badge-error">
+                    {{ t('status_card.rejected') }}
+                  </span>
+                  <span>{{ t('status_card.rejected_description') }}</span>
+                </div>
               </div>
-              <div class="flex items-center gap-2 mb-2">
-                <UBadge color="success">
-                  {{ t('status_card.approved') }}
-                </UBadge>
-                <span>{{ t('status_card.approved_description') }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <UBadge color="error">
-                  {{ t('status_card.rejected') }}
-                </UBadge>
-                <span>{{ t('status_card.rejected_description') }}</span>
-              </div>
-            </UCard>
+            </div>
           </div>
         </div>
       </div>
@@ -110,7 +112,7 @@
         />
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <USeparator :label="t('submit_divider')" />
+        <div class="divider">{{ t('submit_divider') }}</div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-15">
         <RegistrySubmission />

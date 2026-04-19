@@ -1,48 +1,14 @@
 <script lang="ts" setup>
-  import { h } from 'vue';
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
   const { data: tables, status } = await useFetch('/api/torque');
   const tableSearchQueries = ref<Record<string, string>>({});
+  const expandedTables = ref<Record<string, boolean>>({});
 
-  const tableColumns = [
-    {
-      accessorKey: 'name',
-      header: () => t('table_headers.fastener'),
-      cell: ({ row }) => row.getValue('name'),
-    },
-    {
-      accessorKey: 'lbft',
-      header: () => t('table_headers.torque_lbft'),
-      cell: ({ row }) =>
-        h(
-          'span',
-          {
-            class: 'px-2 py-1 rounded bg-primary/10 text-primary font-medium',
-          },
-          row.getValue('lbft')
-        ),
-    },
-    {
-      accessorKey: 'nm',
-      header: () => t('table_headers.torque_nm'),
-      cell: ({ row }) =>
-        h(
-          'span',
-          {
-            class: 'px-2 py-1 rounded bg-blue-100 text-blue-700 font-medium',
-          },
-          row.getValue('nm')
-        ),
-    },
-    {
-      accessorKey: 'notes',
-      header: () => t('table_headers.notes'),
-      cell: ({ row }) => row.getValue('notes') || t('ui.no_notes'),
-    },
-  ];
-  const activePanel = ref<string | null>(null);
+  const toggleTable = (key: string) => {
+    expandedTables.value[key] = !expandedTables.value[key];
+  };
 
   useHead({
     title: t('title'),
@@ -150,53 +116,75 @@
       <div class="col-span-12">
         <!-- Loading state -->
         <div v-if="status === 'pending'" class="space-y-4">
-          <USkeleton class="h-12 w-full" />
-          <USkeleton class="h-12 w-full" />
-          <USkeleton class="h-12 w-full" />
+          <div class="skeleton h-12 w-full"></div>
+          <div class="skeleton h-12 w-full"></div>
+          <div class="skeleton h-12 w-full"></div>
         </div>
 
         <!-- Content when loaded -->
         <div v-if="tables && status !== 'pending'" class="space-y-4">
-          <UAccordion
-            :items="
-              Object.entries(tables).map(([key, table]) => ({
-                label: table.title,
-                value: key,
-                table,
-              }))
-            "
-            :ui="{
-              trigger: 'text-lg font-semibold py-4',
-            }"
+          <div
+            v-for="(table, key) in tables"
+            :key="key"
+            class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-lg"
           >
-            <template #body="{ item }">
-              <!-- Search field -->
-              <div class="flex justify-end mb-4">
-                <UInput
-                  type="text"
-                  :placeholder="t('ui.search_placeholder')"
-                  v-model="tableSearchQueries[item.value]"
-                  class="w-full max-w-xs"
-                  icon="i-fa6-solid-magnifying-glass"
-                />
-              </div>
+            <input type="checkbox" :checked="expandedTables[key]" @change="toggleTable(key)" />
+            <div class="collapse-title text-lg font-semibold py-4">
+              {{ table.title }}
+            </div>
+            <div class="collapse-content">
+              <div class="pt-2">
+                <!-- Search field -->
+                <div class="flex justify-end mb-4">
+                  <label class="input input-bordered flex items-center gap-2 w-full max-w-xs">
+                    <i class="fas fa-magnifying-glass text-base-content/60"></i>
+                    <input
+                      v-model="tableSearchQueries[key]"
+                      type="text"
+                      :placeholder="t('ui.search_placeholder')"
+                      class="grow"
+                    />
+                  </label>
+                </div>
 
-              <!-- Table -->
-              <div class="w-full overflow-x-auto">
-                <UTable
-                  :data="filterItems(item.table.items, item.value)"
-                  :columns="tableColumns"
-                  class="w-full min-w-full"
-                />
+                <!-- Table -->
+                <div class="w-full overflow-x-auto">
+                  <table class="table w-full min-w-full">
+                    <thead>
+                      <tr>
+                        <th>{{ t('table_headers.fastener') }}</th>
+                        <th>{{ t('table_headers.torque_lbft') }}</th>
+                        <th>{{ t('table_headers.torque_nm') }}</th>
+                        <th>{{ t('table_headers.notes') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(row, idx) in filterItems(table.items, key)" :key="idx">
+                        <td>{{ row.name }}</td>
+                        <td>
+                          <span class="px-2 py-1 rounded bg-primary/10 text-primary font-medium">
+                            {{ row.lbft }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="px-2 py-1 rounded bg-info/20 text-info font-medium">
+                            {{ row.nm }}
+                          </span>
+                        </td>
+                        <td>{{ row.notes || t('ui.no_notes') }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </template>
-          </UAccordion>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Support section -->
       <div class="col-span-12 mt-8 mb-10">
-        <USeparator :label="t('support_divider')" class="mb-6" />
+        <div class="divider mb-6">{{ t('support_divider') }}</div>
         <patreon-card size="large" />
       </div>
     </div>

@@ -16,14 +16,13 @@
     return name.charAt(0).toUpperCase();
   });
 
+  const isMobileMenuOpen = ref(false);
+
   const handleSignOut = async () => {
     isMobileMenuOpen.value = false;
     await signOut();
     router.push('/');
   };
-
-  // Drawer state for mobile menu
-  const isMobileMenuOpen = ref(false);
 
   // Top-level navigation items (on-site pages)
   const navigationItems = computed(() => [
@@ -53,46 +52,29 @@
   const communityLinks = computed(() => [
     {
       label: t('navigation.exchange'),
-      icon: 'i-heroicons-building-storefront',
       faIcon: 'fa-shop',
       to: 'https://theminiexchange.com',
     },
     {
       label: t('navigation.blog'),
-      icon: 'i-heroicons-pencil-square',
       faIcon: 'fa-pencil',
       to: 'https://classicminidiy.substack.com/',
     },
     {
       label: t('navigation.store'),
-      icon: 'i-heroicons-shopping-bag',
       faIcon: 'fa-store',
       to: 'https://store.classicminidiy.com/',
     },
   ]);
 
-  // Desktop dropdown format (nested array for UDropdownMenu)
-  const communityItems = computed(() => [communityLinks.value]);
-
-  // Get current locale info
   const currentLocale = computed(() => {
     return locales.value.find((i) => i.code === locale.value);
   });
 
-  // Get available locales (excluding current)
   const availableLocales = computed(() => {
     return locales.value.filter((i) => i.code !== locale.value);
   });
 
-  // Language dropdown items
-  const languageItems = computed(() => {
-    return availableLocales.value.map((loc) => ({
-      label: getLanguageName(loc.code),
-      onSelect: () => handleLanguageChange(loc.code),
-    }));
-  });
-
-  // Language names in their native languages for better UX
   const getLanguageName = (localeCode: string): string => {
     const nativeNames: Record<string, string> = {
       en: 'English',
@@ -109,29 +91,40 @@
     return nativeNames[localeCode] || localeCode;
   };
 
-  // Function to handle language change
   const handleLanguageChange = async (localeCode: string) => {
     await setLocale(localeCode as any);
     await navigateTo(switchLocalePath(localeCode as any));
     isMobileMenuOpen.value = false;
+    closeDropdowns();
   };
 
-  // Function to check if a route is active
   const isActive = (path: string): boolean => {
     if (path.startsWith('http')) return false;
     return route.path === path || route.path.startsWith(path + '/');
   };
 
-  // Close mobile menu when navigating
   const handleNavClick = (item: any) => {
     if (!item.to?.startsWith('http')) {
       isMobileMenuOpen.value = false;
     }
   };
+
+  // DaisyUI dropdowns using `tabindex` + focus close via blur helper
+  const closeDropdowns = () => {
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  };
+
+  // Lock body scroll when mobile menu open
+  watch(isMobileMenuOpen, (open) => {
+    if (typeof document === 'undefined') return;
+    document.body.style.overflow = open ? 'hidden' : '';
+  });
 </script>
 
 <template>
-  <header class="bg-white dark:bg-[#171717] border-b border-neutral-200 dark:border-neutral-800">
+  <header class="bg-base-100 border-b border-base-300">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between py-3">
         <!-- Logo -->
@@ -139,7 +132,7 @@
           <nuxt-img
             :alt="t('logo_alt')"
             src="https://classicminidiy.s3.amazonaws.com/misc/Small-Black.png"
-            class="w-32 dark:invert"
+            class="w-32 logo-image"
             width="128"
             height="37"
             loading="eager"
@@ -149,88 +142,67 @@
 
         <!-- Desktop Navigation -->
         <nav class="hidden lg:flex items-center gap-1">
-          <UButton
+          <NuxtLink
             v-for="item in navigationItems"
             :key="item.label"
             :to="item.to"
-            variant="ghost"
-            :color="isActive(item.to as string) ? 'primary' : 'neutral'"
-            size="md"
-            class="font-bold"
+            :class="[
+              'btn btn-ghost btn-md font-bold',
+              isActive(item.to as string) ? 'text-primary' : '',
+            ]"
           >
             <i :class="['fad', item.icon, 'mr-1']"></i>
             {{ item.label }}
-          </UButton>
+          </NuxtLink>
 
           <!-- Community dropdown -->
-          <UDropdownMenu :items="communityItems">
-            <UButton variant="ghost" color="neutral" size="md" class="font-bold">
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-md font-bold">
               <i class="fad fa-users mr-1"></i>
               {{ t('navigation.community') }}
               <i class="fad fa-chevron-down text-xs ml-1"></i>
-            </UButton>
-          </UDropdownMenu>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-56 p-2 border border-base-300"
+            >
+              <li v-for="link in communityLinks" :key="link.to">
+                <a :href="link.to" target="_blank" rel="noopener noreferrer" @click="closeDropdowns">
+                  <i :class="['fad', link.faIcon]"></i>
+                  {{ link.label }}
+                </a>
+              </li>
+            </ul>
+          </div>
         </nav>
 
         <!-- Desktop Right Side Actions -->
         <div class="hidden lg:flex items-center gap-2">
           <!-- Language Switcher -->
-          <UDropdownMenu :items="[languageItems]">
-            <UButton variant="ghost" color="neutral" size="sm">
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
               <i class="fad fa-globe mr-1"></i>
               <span class="text-xs font-medium">{{ currentLocale?.code?.toUpperCase() || 'EN' }}</span>
               <i class="fad fa-chevron-down text-xs ml-1"></i>
-            </UButton>
-          </UDropdownMenu>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-48 p-2 border border-base-300 max-h-80 overflow-y-auto"
+            >
+              <li v-for="loc in availableLocales" :key="loc.code">
+                <button type="button" @click="handleLanguageChange(loc.code)">
+                  {{ getLanguageName(loc.code) }}
+                </button>
+              </li>
+            </ul>
+          </div>
 
           <!-- Color Mode Toggle -->
-          <UColorModeButton />
+          <ColorModeButton />
 
           <!-- Profile Dropdown (authenticated) -->
-          <UDropdownMenu
-            v-if="isAuthenticated"
-            :items="[
-              [
-                ...(isAdmin
-                  ? [
-                      {
-                        label: t('profile.admin'),
-                        icon: 'i-heroicons-shield-check',
-                        to: '/admin',
-                      },
-                    ]
-                  : []),
-                {
-                  label: t('profile.dashboard'),
-                  icon: 'i-fa6-solid-gauge',
-                  to: '/dashboard',
-                },
-                {
-                  label: t('profile.submissions'),
-                  icon: 'i-heroicons-document-text',
-                  to: '/dashboard',
-                },
-                {
-                  label: t('profile.profile'),
-                  icon: 'i-fa6-solid-user',
-                  to: '/profile',
-                },
-                {
-                  label: t('profile.contribute'),
-                  icon: 'i-fa6-solid-paper-plane',
-                  to: '/contribute',
-                },
-              ],
-              [
-                {
-                  label: t('profile.sign_out'),
-                  icon: 'i-heroicons-arrow-right-on-rectangle',
-                  onSelect: handleSignOut,
-                },
-              ],
-            ]"
-          >
-            <UButton variant="ghost" color="neutral" size="sm" class="gap-2">
+          <div v-if="isAuthenticated" class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-2">
               <div v-if="userProfile?.avatar_url" class="w-6 h-6 rounded-full overflow-hidden">
                 <img :src="userProfile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
               </div>
@@ -242,178 +214,257 @@
               </div>
               <span class="hidden xl:inline text-sm">{{ displayName }}</span>
               <i class="fad fa-chevron-down text-xs"></i>
-            </UButton>
-          </UDropdownMenu>
+            </div>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-56 p-2 border border-base-300"
+            >
+              <li v-if="isAdmin">
+                <NuxtLink to="/admin" @click="closeDropdowns">
+                  <i class="fas fa-shield-check"></i>
+                  {{ t('profile.admin') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/dashboard" @click="closeDropdowns">
+                  <i class="fas fa-gauge"></i>
+                  {{ t('profile.dashboard') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/dashboard" @click="closeDropdowns">
+                  <i class="fas fa-file-lines"></i>
+                  {{ t('profile.submissions') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/profile" @click="closeDropdowns">
+                  <i class="fas fa-user"></i>
+                  {{ t('profile.profile') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/contribute" @click="closeDropdowns">
+                  <i class="fas fa-paper-plane"></i>
+                  {{ t('profile.contribute') }}
+                </NuxtLink>
+              </li>
+              <li class="menu-title mt-1"><span class="sr-only">Session</span></li>
+              <li>
+                <button type="button" @click="handleSignOut">
+                  <i class="fas fa-arrow-right-from-bracket"></i>
+                  {{ t('profile.sign_out') }}
+                </button>
+              </li>
+            </ul>
+          </div>
 
           <!-- Sign In Button (not authenticated) -->
-          <UButton v-else to="/login" variant="solid" color="primary" size="sm">
+          <NuxtLink v-else to="/login" class="btn btn-primary btn-sm">
             <i class="fad fa-right-to-bracket mr-1"></i>
             {{ t('profile.sign_in') }}
-          </UButton>
+          </NuxtLink>
         </div>
 
         <!-- Mobile Menu Button -->
         <div class="lg:hidden flex items-center gap-2">
-          <UColorModeButton size="sm" />
-          <UButton variant="ghost" color="neutral" size="sm" square @click="isMobileMenuOpen = true" aria-label="Open menu">
+          <ColorModeButton size="sm" />
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-square"
+            :aria-label="t('mobile_menu_title')"
+            @click="isMobileMenuOpen = true"
+          >
             <i class="fad fa-bars text-xl"></i>
-          </UButton>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Mobile Drawer -->
-    <USlideover v-model:open="isMobileMenuOpen" side="right">
-      <template #header>
-        <div class="flex items-center justify-between">
-          <span class="font-semibold">{{ t('mobile_menu_title') }}</span>
-        </div>
-      </template>
+    <!-- Mobile Drawer (DaisyUI overlay + slide-in panel) -->
+    <Teleport to="body">
+      <Transition name="mobile-drawer">
+        <div v-if="isMobileMenuOpen" class="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true">
+          <!-- Backdrop -->
+          <div
+            class="absolute inset-0 bg-black/50"
+            aria-hidden="true"
+            @click="isMobileMenuOpen = false"
+          ></div>
 
-      <template #body>
-        <div class="flex flex-col gap-2">
-          <!-- Navigation Links -->
-          <UButton
-            v-for="item in navigationItems"
-            :key="item.label"
-            :to="item.to"
-            variant="ghost"
-            :color="isActive(item.to as string) ? 'primary' : 'neutral'"
-            block
-            class="justify-start font-bold"
-            @click="handleNavClick(item)"
+          <!-- Panel -->
+          <aside
+            class="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-base-100 shadow-xl overflow-y-auto flex flex-col"
           >
-            <i :class="['fad', item.icon, 'mr-2']"></i>
-            {{ item.label }}
-          </UButton>
-
-          <USeparator class="my-2" />
-
-          <!-- Community Links -->
-          <p class="text-sm text-muted px-2">{{ t('navigation.community') }}</p>
-          <UButton
-            v-for="link in communityLinks"
-            :key="link.to"
-            :to="link.to"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="ghost"
-            color="neutral"
-            block
-            class="justify-start font-bold"
-          >
-            <i :class="['fad', link.faIcon, 'mr-2']"></i>
-            {{ link.label }}
-          </UButton>
-
-          <USeparator class="my-2" />
-
-          <!-- Language Selection -->
-          <div class="px-2">
-            <p class="text-sm text-muted mb-2">{{ t('language_label') }}</p>
-            <div class="flex flex-wrap gap-2">
-              <UButton
-                v-for="loc in availableLocales"
-                :key="loc.code"
-                variant="outline"
-                color="neutral"
-                size="xs"
-                @click="handleLanguageChange(loc.code)"
+            <div class="flex items-center justify-between p-4 border-b border-base-300">
+              <span class="font-semibold">{{ t('mobile_menu_title') }}</span>
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm btn-square"
+                aria-label="Close menu"
+                @click="isMobileMenuOpen = false"
               >
-                {{ getLanguageName(loc.code) }}
-              </UButton>
+                <i class="fas fa-xmark text-lg"></i>
+              </button>
             </div>
-          </div>
 
-          <USeparator class="my-2" />
-
-          <!-- Account Section -->
-          <template v-if="isAuthenticated">
-            <p class="text-sm text-muted px-2">{{ t('profile.account') }}</p>
-            <div class="flex items-center gap-2 px-2 py-1">
-              <div v-if="userProfile?.avatar_url" class="w-8 h-8 rounded-full overflow-hidden shrink-0">
-                <img :src="userProfile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
-              </div>
-              <div
-                v-else
-                class="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold shrink-0"
+            <div class="flex-1 p-4 flex flex-col gap-2">
+              <!-- Navigation Links -->
+              <NuxtLink
+                v-for="item in navigationItems"
+                :key="item.label"
+                :to="item.to"
+                :class="[
+                  'btn btn-ghost btn-block justify-start font-bold',
+                  isActive(item.to as string) ? 'text-primary' : '',
+                ]"
+                @click="handleNavClick(item)"
               >
-                {{ initials }}
+                <i :class="['fad', item.icon, 'mr-2']"></i>
+                {{ item.label }}
+              </NuxtLink>
+
+              <div class="divider my-2"></div>
+
+              <!-- Community Links -->
+              <p class="text-sm opacity-70 px-2">{{ t('navigation.community') }}</p>
+              <a
+                v-for="link in communityLinks"
+                :key="link.to"
+                :href="link.to"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-ghost btn-block justify-start font-bold"
+              >
+                <i :class="['fad', link.faIcon, 'mr-2']"></i>
+                {{ link.label }}
+              </a>
+
+              <div class="divider my-2"></div>
+
+              <!-- Language Selection -->
+              <div class="px-2">
+                <p class="text-sm opacity-70 mb-2">{{ t('language_label') }}</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="loc in availableLocales"
+                    :key="loc.code"
+                    type="button"
+                    class="btn btn-outline btn-xs"
+                    @click="handleLanguageChange(loc.code)"
+                  >
+                    {{ getLanguageName(loc.code) }}
+                  </button>
+                </div>
               </div>
-              <span class="text-sm font-medium truncate">{{ displayName }}</span>
+
+              <div class="divider my-2"></div>
+
+              <!-- Account Section -->
+              <template v-if="isAuthenticated">
+                <p class="text-sm opacity-70 px-2">{{ t('profile.account') }}</p>
+                <div class="flex items-center gap-2 px-2 py-1">
+                  <div v-if="userProfile?.avatar_url" class="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                    <img :src="userProfile.avatar_url" :alt="displayName" class="w-full h-full object-cover" />
+                  </div>
+                  <div
+                    v-else
+                    class="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold shrink-0"
+                  >
+                    {{ initials }}
+                  </div>
+                  <span class="text-sm font-medium truncate">{{ displayName }}</span>
+                </div>
+                <NuxtLink
+                  v-if="isAdmin"
+                  to="/admin"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i class="fad fa-shield-check mr-2"></i>
+                  {{ t('profile.admin') }}
+                </NuxtLink>
+                <NuxtLink
+                  to="/dashboard"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i class="fad fa-gauge mr-2"></i>
+                  {{ t('profile.dashboard') }}
+                </NuxtLink>
+                <NuxtLink
+                  to="/dashboard"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i class="fad fa-file-lines mr-2"></i>
+                  {{ t('profile.submissions') }}
+                </NuxtLink>
+                <NuxtLink
+                  to="/profile"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i class="fad fa-user mr-2"></i>
+                  {{ t('profile.profile') }}
+                </NuxtLink>
+                <NuxtLink
+                  to="/contribute"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i class="fad fa-paper-plane mr-2"></i>
+                  {{ t('profile.contribute') }}
+                </NuxtLink>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-block justify-start font-bold text-error"
+                  @click="handleSignOut"
+                >
+                  <i class="fad fa-right-from-bracket mr-2"></i>
+                  {{ t('profile.sign_out') }}
+                </button>
+              </template>
+              <template v-else>
+                <NuxtLink
+                  to="/login"
+                  class="btn btn-primary btn-block"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i class="fad fa-right-to-bracket mr-2"></i>
+                  {{ t('profile.sign_in') }}
+                </NuxtLink>
+              </template>
             </div>
-            <UButton
-              v-if="isAdmin"
-              to="/admin"
-              variant="ghost"
-              color="neutral"
-              block
-              class="justify-start font-bold"
-              @click="isMobileMenuOpen = false"
-            >
-              <i class="fad fa-shield-check mr-2"></i>
-              {{ t('profile.admin') }}
-            </UButton>
-            <UButton
-              to="/dashboard"
-              variant="ghost"
-              color="neutral"
-              block
-              class="justify-start font-bold"
-              @click="isMobileMenuOpen = false"
-            >
-              <i class="fad fa-gauge mr-2"></i>
-              {{ t('profile.dashboard') }}
-            </UButton>
-            <UButton
-              to="/dashboard"
-              variant="ghost"
-              color="neutral"
-              block
-              class="justify-start font-bold"
-              @click="isMobileMenuOpen = false"
-            >
-              <i class="fad fa-file-lines mr-2"></i>
-              {{ t('profile.submissions') }}
-            </UButton>
-            <UButton
-              to="/profile"
-              variant="ghost"
-              color="neutral"
-              block
-              class="justify-start font-bold"
-              @click="isMobileMenuOpen = false"
-            >
-              <i class="fad fa-user mr-2"></i>
-              {{ t('profile.profile') }}
-            </UButton>
-            <UButton
-              to="/contribute"
-              variant="ghost"
-              color="neutral"
-              block
-              class="justify-start font-bold"
-              @click="isMobileMenuOpen = false"
-            >
-              <i class="fad fa-paper-plane mr-2"></i>
-              {{ t('profile.contribute') }}
-            </UButton>
-            <UButton variant="ghost" color="error" block class="justify-start font-bold" @click="handleSignOut">
-              <i class="fad fa-right-from-bracket mr-2"></i>
-              {{ t('profile.sign_out') }}
-            </UButton>
-          </template>
-          <template v-else>
-            <UButton to="/login" variant="solid" color="primary" block @click="isMobileMenuOpen = false">
-              <i class="fad fa-right-to-bracket mr-2"></i>
-              {{ t('profile.sign_in') }}
-            </UButton>
-          </template>
+          </aside>
         </div>
-      </template>
-    </USlideover>
+      </Transition>
+    </Teleport>
   </header>
 </template>
+
+<style scoped>
+  [data-theme='cmdiy-dark'] .logo-image {
+    filter: invert(1);
+  }
+
+  .mobile-drawer-enter-active,
+  .mobile-drawer-leave-active {
+    transition: opacity 0.2s ease;
+  }
+  .mobile-drawer-enter-active aside,
+  .mobile-drawer-leave-active aside {
+    transition: transform 0.25s ease;
+  }
+  .mobile-drawer-enter-from,
+  .mobile-drawer-leave-to {
+    opacity: 0;
+  }
+  .mobile-drawer-enter-from aside,
+  .mobile-drawer-leave-to aside {
+    transform: translateX(100%);
+  }
+</style>
 
 <i18n lang="json">
 {

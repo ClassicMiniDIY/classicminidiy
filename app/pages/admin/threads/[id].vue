@@ -194,28 +194,30 @@
     <!-- Breadcrumb Navigation -->
     <div class="container mx-auto px-4 pt-10">
       <div class="flex justify-between items-center">
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', to: '/', icon: 'i-fa6-solid-house' },
-            { label: 'Admin', to: '/admin' },
-            { label: 'Chat Threads', to: '/admin/threads' },
-            { label: 'Thread Details' },
-          ]"
-          :ui="{
-            item: 'text-primary-600 dark:text-primary-400',
-            link: 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300',
-            linkActive: 'text-neutral-500 dark:text-neutral-400 font-medium',
-            separator: 'text-neutral-400 dark:text-neutral-500',
-            icon: 'text-primary-600 dark:text-primary-400',
-          }"
-        />
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <NuxtLink to="/" class="link link-primary">
+                <i class="fas fa-house mr-1"></i>
+                Home
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/admin" class="link link-primary">Admin</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/admin/threads" class="link link-primary">Chat Threads</NuxtLink>
+            </li>
+            <li><span>Thread Details</span></li>
+          </ul>
+        </div>
 
         <div class="flex items-center gap-4">
           <span class="text-sm opacity-70"> Welcome, {{ userProfile?.display_name || userProfile?.email }} </span>
-          <UButton @click="handleLogout" variant="ghost" size="sm">
+          <button type="button" class="btn btn-ghost btn-sm" @click="handleLogout">
             <i class="fad fa-sign-out mr-2"></i>
             Logout
-          </UButton>
+          </button>
         </div>
       </div>
     </div>
@@ -224,150 +226,161 @@
     <div class="container mx-auto px-4 py-8">
       <!-- Loading State -->
       <div v-if="pending" class="flex items-center justify-center py-12">
-        <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+        <span class="loading loading-spinner loading-lg text-primary"></span>
       </div>
 
       <!-- Error State -->
-      <UCard v-else-if="error">
-        <UAlert color="error" icon="i-fa6-solid-triangle-exclamation" class="mb-4">
-          <template #title>Error Loading Thread</template>
-          <template #description>{{ error.message || 'Failed to load thread details' }}</template>
-        </UAlert>
-        <div class="flex justify-end">
-          <UButton to="/admin/threads" color="primary">
-            <i class="fad fa-arrow-left mr-2"></i>
-            Back to Threads
-          </UButton>
+      <div v-else-if="error" class="card bg-base-100 shadow-md border border-base-300">
+        <div class="card-body">
+          <div role="alert" class="alert alert-error mb-4">
+            <i class="fas fa-triangle-exclamation"></i>
+            <div>
+              <div class="font-semibold">Error Loading Thread</div>
+              <div class="text-sm">{{ error.message || 'Failed to load thread details' }}</div>
+            </div>
+          </div>
+          <div class="card-actions justify-end">
+            <NuxtLink to="/admin/threads" class="btn btn-primary">
+              <i class="fad fa-arrow-left mr-2"></i>
+              Back to Threads
+            </NuxtLink>
+          </div>
         </div>
-      </UCard>
+      </div>
 
       <!-- Thread Details -->
       <div v-else-if="threadData" class="space-y-6">
         <!-- Back Button -->
         <div>
-          <UButton to="/admin/threads" variant="ghost" size="sm">
+          <NuxtLink to="/admin/threads" class="btn btn-ghost btn-sm">
             <i class="fad fa-arrow-left mr-2"></i>
             Back to Threads
-          </UButton>
+          </NuxtLink>
         </div>
 
         <!-- Thread Information -->
-        <UCard class="bg-muted">
-          <h2 class="text-2xl font-bold mb-4">Thread Information</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="opacity-70">Thread ID:</span>
-              <code class="ml-2">{{ threadData.thread.thread_id }}</code>
+        <div class="card bg-base-200 shadow-md border border-base-300">
+          <div class="card-body">
+            <h2 class="text-2xl font-bold mb-4">Thread Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="opacity-70">Thread ID:</span>
+                <code class="ml-2">{{ threadData.thread.thread_id }}</code>
+              </div>
+              <div>
+                <span class="opacity-70">Status:</span>
+                <span class="badge ml-2" :class="`badge-${getStatusColor(threadData.thread.status)}`">
+                  {{ threadData.thread.status || 'unknown' }}
+                </span>
+              </div>
+              <div>
+                <span class="opacity-70">Created:</span>
+                <span class="ml-2">{{ formatDate(threadData.thread.created_at) }}</span>
+              </div>
+              <div>
+                <span class="opacity-70">Updated:</span>
+                <span class="ml-2">{{ formatDate(threadData.thread.updated_at) }}</span>
+              </div>
             </div>
-            <div>
-              <span class="opacity-70">Status:</span>
-              <UBadge :color="getStatusColor(threadData.thread.status)" class="ml-2">
-                {{ threadData.thread.status || 'unknown' }}
-              </UBadge>
-            </div>
-            <div>
-              <span class="opacity-70">Created:</span>
-              <span class="ml-2">{{ formatDate(threadData.thread.created_at) }}</span>
-            </div>
-            <div>
-              <span class="opacity-70">Updated:</span>
-              <span class="ml-2">{{ formatDate(threadData.thread.updated_at) }}</span>
+            <div v-if="threadData.thread.metadata" class="mt-4">
+              <span class="opacity-70 block mb-2">Metadata:</span>
+              <pre class="bg-base-300/50 p-3 rounded text-xs overflow-auto max-h-40">{{
+                JSON.stringify(threadData.thread.metadata, null, 2)
+              }}</pre>
             </div>
           </div>
-          <div v-if="threadData.thread.metadata" class="mt-4">
-            <span class="opacity-70 block mb-2">Metadata:</span>
-            <pre class="bg-muted/50 p-3 rounded text-xs overflow-auto max-h-40">{{
-              JSON.stringify(threadData.thread.metadata, null, 2)
-            }}</pre>
-          </div>
-        </UCard>
+        </div>
 
         <!-- Chat Messages -->
-        <UCard v-if="chatMessages.length > 0" class="bg-muted">
-          <h2 class="text-2xl font-bold mb-4">Chat Messages ({{ chatMessages.length }})</h2>
-          <div class="space-y-4 mt-4">
-            <div
-              v-for="message in chatMessages"
-              :key="message.index"
-              class="rounded-lg p-4 border-l-4"
-              :class="{
-                'border-primary bg-primary/5':
-                  message.role.toLowerCase().includes('human') || message.role.toLowerCase().includes('user'),
-                'border-secondary bg-secondary/5':
-                  message.role.toLowerCase().includes('ai') || message.role.toLowerCase().includes('assistant'),
-                'border-info bg-info/5': message.role.toLowerCase().includes('system'),
-                'border-warning bg-warning/5': message.role.toLowerCase().includes('tool'),
-              }"
-            >
-              <div class="flex items-center gap-2 mb-2">
-                <UBadge :color="getRoleBadgeColor(message.role)">{{ message.role }}</UBadge>
-                <span v-if="message.name" class="text-xs opacity-70">{{ message.name }}</span>
-                <span class="text-xs opacity-50 ml-auto">#{{ message.index }}</span>
+        <div v-if="chatMessages.length > 0" class="card bg-base-200 shadow-md border border-base-300">
+          <div class="card-body">
+            <h2 class="text-2xl font-bold mb-4">Chat Messages ({{ chatMessages.length }})</h2>
+            <div class="space-y-4 mt-4">
+              <div
+                v-for="message in chatMessages"
+                :key="message.index"
+                class="rounded-lg p-4 border-l-4"
+                :class="{
+                  'border-primary bg-primary/5':
+                    message.role.toLowerCase().includes('human') || message.role.toLowerCase().includes('user'),
+                  'border-secondary bg-secondary/5':
+                    message.role.toLowerCase().includes('ai') || message.role.toLowerCase().includes('assistant'),
+                  'border-info bg-info/5': message.role.toLowerCase().includes('system'),
+                  'border-warning bg-warning/5': message.role.toLowerCase().includes('tool'),
+                }"
+              >
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="badge" :class="`badge-${getRoleBadgeColor(message.role)}`">{{ message.role }}</span>
+                  <span v-if="message.name" class="text-xs opacity-70">{{ message.name }}</span>
+                  <span class="text-xs opacity-50 ml-auto">#{{ message.index }}</span>
+                </div>
+
+                <!-- Display formatted content -->
+                <div class="prose prose-sm max-w-none mb-3">
+                  <div class="whitespace-pre-wrap">{{ message.displayContent }}</div>
+                </div>
+
+                <!-- Tool Calls -->
+                <div v-if="message.toolCalls" class="collapse collapse-arrow bg-base-100 border border-base-300 mt-3">
+                  <input type="checkbox" />
+                  <div class="collapse-title font-medium">Tool Calls</div>
+                  <div class="collapse-content">
+                    <pre class="bg-black text-green-400 p-3 rounded text-xs overflow-auto">{{
+                      JSON.stringify(message.toolCalls, null, 2)
+                    }}</pre>
+                  </div>
+                </div>
+
+                <!-- Tool Results -->
+                <div v-if="message.toolResults" class="collapse collapse-arrow bg-base-100 border border-base-300 mt-3">
+                  <input type="checkbox" />
+                  <div class="collapse-title font-medium">Tool Results</div>
+                  <div class="collapse-content">
+                    <pre class="bg-black text-green-400 p-3 rounded text-xs overflow-auto">{{
+                      JSON.stringify(message.toolResults, null, 2)
+                    }}</pre>
+                  </div>
+                </div>
+
+                <!-- Raw Message JSON -->
+                <div class="collapse collapse-arrow bg-base-100 border border-base-300 mt-3">
+                  <input type="checkbox" />
+                  <div class="collapse-title font-medium">Raw Message Data</div>
+                  <div class="collapse-content">
+                    <pre class="bg-black text-green-400 p-3 rounded text-xs overflow-auto">{{
+                      JSON.stringify(message.rawContent, null, 2)
+                    }}</pre>
+                  </div>
+                </div>
               </div>
-
-              <!-- Display formatted content -->
-              <div class="prose prose-sm max-w-none mb-3">
-                <div class="whitespace-pre-wrap">{{ message.displayContent }}</div>
-              </div>
-
-              <!-- Tool Calls -->
-              <UAccordion
-                v-if="message.toolCalls"
-                :items="[{ label: 'Tool Calls', value: 'tool-calls', data: message.toolCalls }]"
-                class="mt-3"
-              >
-                <template #body="{ item }">
-                  <pre class="bg-black text-green-400 p-3 rounded text-xs overflow-auto">{{
-                    JSON.stringify(item.data, null, 2)
-                  }}</pre>
-                </template>
-              </UAccordion>
-
-              <!-- Tool Results -->
-              <UAccordion
-                v-if="message.toolResults"
-                :items="[{ label: 'Tool Results', value: 'tool-results', data: message.toolResults }]"
-                class="mt-3"
-              >
-                <template #body="{ item }">
-                  <pre class="bg-black text-green-400 p-3 rounded text-xs overflow-auto">{{
-                    JSON.stringify(item.data, null, 2)
-                  }}</pre>
-                </template>
-              </UAccordion>
-
-              <!-- Raw Message JSON -->
-              <UAccordion
-                :items="[{ label: 'Raw Message Data', value: 'raw-data', data: message.rawContent }]"
-                class="mt-3"
-              >
-                <template #body="{ item }">
-                  <pre class="bg-black text-green-400 p-3 rounded text-xs overflow-auto">{{
-                    JSON.stringify(item.data, null, 2)
-                  }}</pre>
-                </template>
-              </UAccordion>
             </div>
           </div>
-        </UCard>
+        </div>
 
         <!-- Thread State (Raw JSON) -->
-        <UCard v-if="threadData.state" class="bg-muted">
-          <h2 class="text-2xl font-bold mb-4">Thread State (Raw JSON)</h2>
-          <pre class="bg-muted/50 p-3 rounded text-xs overflow-auto max-h-96">{{
-            JSON.stringify(threadData.state, null, 2)
-          }}</pre>
-        </UCard>
-
-        <!-- Thread History (Raw JSON) -->
-        <UCard v-if="threadData.history && threadData.history.length > 0" class="bg-muted">
-          <h2 class="text-2xl font-bold mb-4">Run History ({{ threadData.history.length }} runs)</h2>
-          <div class="overflow-x-auto">
-            <pre class="bg-muted/50 p-3 rounded text-xs max-h-96 overflow-auto">{{
-              JSON.stringify(threadData.history, null, 2)
+        <div v-if="threadData.state" class="card bg-base-200 shadow-md border border-base-300">
+          <div class="card-body">
+            <h2 class="text-2xl font-bold mb-4">Thread State (Raw JSON)</h2>
+            <pre class="bg-base-300/50 p-3 rounded text-xs overflow-auto max-h-96">{{
+              JSON.stringify(threadData.state, null, 2)
             }}</pre>
           </div>
-        </UCard>
+        </div>
+
+        <!-- Thread History (Raw JSON) -->
+        <div
+          v-if="threadData.history && threadData.history.length > 0"
+          class="card bg-base-200 shadow-md border border-base-300"
+        >
+          <div class="card-body">
+            <h2 class="text-2xl font-bold mb-4">Run History ({{ threadData.history.length }} runs)</h2>
+            <div class="overflow-x-auto">
+              <pre class="bg-base-300/50 p-3 rounded text-xs max-h-96 overflow-auto">{{
+                JSON.stringify(threadData.history, null, 2)
+              }}</pre>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

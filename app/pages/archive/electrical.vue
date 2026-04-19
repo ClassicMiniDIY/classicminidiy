@@ -146,118 +146,117 @@
       <!-- Global Search -->
       <div v-if="diagrams && status !== 'pending'" class="col-span-12 mb-6">
         <div class="w-full max-w-md">
-          <UInput
-            v-model="searchQuery"
-            :placeholder="t('search_placeholder')"
-            type="search"
-            class="w-full"
-            icon="i-fa6-solid-magnifying-glass"
-          />
+          <label class="input input-bordered flex items-center gap-2 w-full">
+            <i class="fas fa-magnifying-glass opacity-60"></i>
+            <input
+              v-model="searchQuery"
+              :placeholder="t('search_placeholder')"
+              type="search"
+              class="grow"
+            />
+          </label>
         </div>
       </div>
 
       <div class="col-span-12">
         <!-- Search Results Pane -->
         <div v-if="searchQuery && filteredResults.length > 0" class="mb-6">
-          <UCard>
-            <template #header>
-              <div class="bg-primary text-primary-content -m-4 p-4 rounded-t-lg">
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body p-0">
+              <div class="bg-primary text-primary-content p-4 rounded-t-lg">
                 <h3 class="text-lg font-semibold">{{ t('search_results_title') }} ({{ filteredResults.length }})</h3>
               </div>
-            </template>
-            <ul class="divide-y divide-default">
-              <li v-for="(result, index) in filteredResults" :key="`search-${index}-${result.name}`">
-                <a
-                  :href="result.link"
-                  target="_blank"
-                  class="flex justify-between py-4 hover:bg-muted rounded px-2 transition-colors"
-                >
-                  <div>
-                    <div class="text-lg">{{ result.name }}</div>
-                    <div class="text-sm opacity-70 flex items-center mt-1">
-                      <i class="fa-solid fa-folder mr-2"></i>
-                      <span>{{ result.category }}</span>
-                    </div>
-                    <div class="text-sm opacity-70 flex items-center mt-1">
-                      <i class="fa-solid fa-calendar mr-2"></i>
-                      <span v-if="result.from || result.to"
-                        >{{ result.from || t('date_range.unknown_placeholder') }}{{ t('date_range.separator')
-                        }}{{ result.to || t('date_range.unknown_placeholder') }}</span
-                      >
-                      <span v-else>{{ t('date_range.unknown') }}</span>
-                    </div>
-                  </div>
-                  <UButton variant="ghost" size="lg" :aria-label="t('download_button_aria')">
-                    <i class="fa-solid fa-download"></i>
-                  </UButton>
-                </a>
-              </li>
-            </ul>
-          </UCard>
-        </div>
-
-        <!-- No Results Message -->
-        <UAlert v-if="searchQuery && filteredResults.length === 0" color="info" class="mb-6">
-          <template #icon>
-            <i class="fa-solid fa-info-circle"></i>
-          </template>
-          <template #title>{{ t('no_results_message') }}</template>
-        </UAlert>
-
-        <!-- Loading state -->
-        <div v-if="status === 'pending'" class="space-y-4">
-          <USkeleton class="h-12 w-full" />
-          <USkeleton class="h-12 w-full" />
-          <USkeleton class="h-12 w-full" />
-        </div>
-
-        <!-- Content when loaded (hidden during search) -->
-        <div v-if="diagrams && status !== 'pending' && !searchQuery" class="space-y-4">
-          <UAccordion
-            :items="
-              Object.entries(diagrams).map(([key, diagram]) => ({
-                label: diagram.title,
-                value: key,
-                diagram,
-              }))
-            "
-            :ui="{
-              trigger: 'text-lg font-semibold py-4',
-            }"
-          >
-            <template #body="{ item }">
-              <ul class="divide-y divide-default">
-                <li v-for="(diagramItem, idx) in item.diagram.items" :key="`${idx}-${diagramItem.name}`">
+              <ul class="divide-y divide-base-300">
+                <li v-for="(result, index) in filteredResults" :key="`search-${index}-${result.name}`">
                   <a
-                    :href="diagramItem.link"
+                    :href="result.link"
                     target="_blank"
-                    class="flex justify-between py-4 hover:bg-muted px-4 transition-colors"
+                    class="flex justify-between py-4 hover:bg-base-200 rounded px-2 transition-colors"
                   >
                     <div>
-                      <div class="text-lg">{{ diagramItem.name }}</div>
-                      <div class="text-lg opacity-70 flex items-center mt-1">
+                      <div class="text-lg">{{ result.name }}</div>
+                      <div class="text-sm opacity-70 flex items-center mt-1">
+                        <i class="fa-solid fa-folder mr-2"></i>
+                        <span>{{ result.category }}</span>
+                      </div>
+                      <div class="text-sm opacity-70 flex items-center mt-1">
                         <i class="fa-solid fa-calendar mr-2"></i>
-                        <span v-if="diagramItem.from || diagramItem.to"
-                          >{{ diagramItem.from || t('date_range.unknown_placeholder') }}{{ t('date_range.separator')
-                          }}{{ diagramItem.to || t('date_range.unknown_placeholder') }}</span
+                        <span v-if="result.from || result.to"
+                          >{{ result.from || t('date_range.unknown_placeholder') }}{{ t('date_range.separator')
+                          }}{{ result.to || t('date_range.unknown_placeholder') }}</span
                         >
                         <span v-else>{{ t('date_range.unknown') }}</span>
                       </div>
                     </div>
-                    <UButton variant="ghost" size="lg" :aria-label="t('download_button_aria')">
+                    <button type="button" class="btn btn-ghost btn-lg" :aria-label="t('download_button_aria')">
                       <i class="fa-solid fa-download"></i>
-                    </UButton>
+                    </button>
                   </a>
                 </li>
               </ul>
-            </template>
-          </UAccordion>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div v-if="searchQuery && filteredResults.length === 0" role="alert" class="alert alert-info mb-6">
+          <i class="fa-solid fa-info-circle"></i>
+          <div>
+            <div class="font-semibold">{{ t('no_results_message') }}</div>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div v-if="status === 'pending'" class="space-y-4">
+          <div class="skeleton h-12 w-full"></div>
+          <div class="skeleton h-12 w-full"></div>
+          <div class="skeleton h-12 w-full"></div>
+        </div>
+
+        <!-- Content when loaded (hidden during search) -->
+        <div v-if="diagrams && status !== 'pending' && !searchQuery" class="space-y-4">
+          <div class="join join-vertical w-full">
+            <div
+              v-for="[key, diagram] in Object.entries(diagrams)"
+              :key="key"
+              class="collapse collapse-arrow join-item border border-base-300"
+            >
+              <input type="checkbox" />
+              <div class="collapse-title text-lg font-semibold">{{ diagram.title }}</div>
+              <div class="collapse-content p-0">
+                <ul class="divide-y divide-base-300">
+                  <li v-for="(diagramItem, idx) in diagram.items" :key="`${idx}-${diagramItem.name}`">
+                    <a
+                      :href="diagramItem.link"
+                      target="_blank"
+                      class="flex justify-between py-4 hover:bg-base-200 px-4 transition-colors"
+                    >
+                      <div>
+                        <div class="text-lg">{{ diagramItem.name }}</div>
+                        <div class="text-lg opacity-70 flex items-center mt-1">
+                          <i class="fa-solid fa-calendar mr-2"></i>
+                          <span v-if="diagramItem.from || diagramItem.to"
+                            >{{ diagramItem.from || t('date_range.unknown_placeholder') }}{{ t('date_range.separator')
+                            }}{{ diagramItem.to || t('date_range.unknown_placeholder') }}</span
+                          >
+                          <span v-else>{{ t('date_range.unknown') }}</span>
+                        </div>
+                      </div>
+                      <button type="button" class="btn btn-ghost btn-lg" :aria-label="t('download_button_aria')">
+                        <i class="fa-solid fa-download"></i>
+                      </button>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Support section -->
       <div class="col-span-12 mt-8 mb-10">
-        <USeparator :label="t('support_divider')" class="mb-6" />
+        <div class="divider mb-6">{{ t('support_divider') }}</div>
         <patreon-card size="large" />
       </div>
     </div>

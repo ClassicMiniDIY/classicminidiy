@@ -49,52 +49,59 @@
 </script>
 
 <template>
-  <UCard>
-    <template #header>
+  <div class="card bg-base-100 shadow-md border border-base-300">
+    <div class="card-body">
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold"><i class="fad fa-sliders mr-2"></i>{{ t('title') }}</h3>
         <div class="flex items-center gap-3">
           <label class="text-sm font-medium">{{ t('imperial_or_metric') }}</label>
-          <USwitch :model-value="metric" color="primary" @update:model-value="emit('update:metric', $event)" />
+          <input
+            type="checkbox"
+            class="toggle toggle-primary"
+            :checked="metric"
+            @change="emit('update:metric', ($event.target as HTMLInputElement).checked)"
+          />
         </div>
       </div>
-    </template>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <label class="block text-sm font-medium mb-2"> {{ t('tire_size') }} <i class="fad fa-tire"></i> </label>
-        <USelect
-          :model-value="tireStringValue"
-          :items="tireOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="emit('update:tireType', JSON.parse($event))"
-        />
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-2">
-          {{ t('speedo_drive_ratio') }} <i class="fad fa-percent"></i>
-        </label>
-        <USelect
-          :model-value="String(speedoDrive)"
-          :items="speedoRatioOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="emit('update:speedoDrive', parseFloat($event))"
-        />
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-2"> {{ t('max_rpm') }} <i class="fad fa-tachometer-alt"></i> </label>
-        <USelect
-          :model-value="String(maxRpm)"
-          :items="rpmOptions"
-          value-key="value"
-          class="w-full"
-          @update:model-value="emit('update:maxRpm', parseInt($event))"
-        />
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-2"> {{ t('tire_size') }} <i class="fad fa-tire"></i> </label>
+          <select
+            :value="tireStringValue"
+            class="select select-bordered w-full"
+            @change="emit('update:tireType', JSON.parse(($event.target as HTMLSelectElement).value))"
+          >
+            <option v-for="opt in tireOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">
+            {{ t('speedo_drive_ratio') }} <i class="fad fa-percent"></i>
+          </label>
+          <select
+            :value="String(speedoDrive)"
+            class="select select-bordered w-full"
+            @change="emit('update:speedoDrive', parseFloat(($event.target as HTMLSelectElement).value))"
+          >
+            <option v-for="opt in speedoRatioOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">
+            {{ t('max_rpm') }} <i class="fad fa-tachometer-alt"></i>
+          </label>
+          <select
+            :value="String(maxRpm)"
+            class="select select-bordered w-full"
+            @change="emit('update:maxRpm', parseInt(($event.target as HTMLSelectElement).value))"
+          >
+            <option v-for="opt in rpmOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
       </div>
     </div>
-  </UCard>
+  </div>
 </template>
 
 <i18n lang="json">

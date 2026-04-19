@@ -23,18 +23,20 @@
   <NuxtLoadingIndicator />
   <div class="grid grid-cols-12 gap-4">
     <div class="col-span-12 md:col-span-6 md:col-start-4">
-      <UCard class="mb-72 mt-10 text-center" role="alert">
-        <h2 class="text-6xl font-bold mb-4">{{ t('title') }}</h2>
-        <h3 class="text-5xl mb-4">{{ t('heading', { statusCode: error?.statusCode }) }}</h3>
-        <p>{{ t('message') }}</p>
-        <p>{{ t('url_label') }} {{ route.fullPath }}</p>
-        <p>{{ error?.message }}</p>
-        <div class="flex justify-center gap-2 mt-10">
-          <UButton to="/archive" color="primary">{{ t('actions.archives') }}</UButton>
-          <UButton to="/technical" color="secondary">{{ t('actions.toolbox') }}</UButton>
-          <UButton to="/" color="secondary">{{ t('actions.home') }}</UButton>
+      <div class="card bg-base-100 shadow-md mb-72 mt-10" role="alert">
+        <div class="card-body text-center">
+          <h2 class="text-6xl font-bold mb-4">{{ t('title') }}</h2>
+          <h3 class="text-5xl mb-4">{{ t('heading', { statusCode: error?.statusCode }) }}</h3>
+          <p>{{ t('message') }}</p>
+          <p>{{ t('url_label') }} {{ route.fullPath }}</p>
+          <p>{{ error?.message }}</p>
+          <div class="flex flex-wrap justify-center gap-2 mt-10">
+            <NuxtLink to="/archive" class="btn btn-primary">{{ t('actions.archives') }}</NuxtLink>
+            <NuxtLink to="/technical" class="btn btn-secondary">{{ t('actions.toolbox') }}</NuxtLink>
+            <NuxtLink to="/" class="btn btn-secondary">{{ t('actions.home') }}</NuxtLink>
+          </div>
         </div>
-      </UCard>
+      </div>
     </div>
   </div>
   <Footer></Footer>

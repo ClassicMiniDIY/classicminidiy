@@ -122,144 +122,156 @@
 
       <!-- Not found state -->
       <div v-if="!profile" class="flex flex-col items-center justify-center py-16 text-center">
-        <UCard class="max-w-md w-full">
-          <div class="py-6">
+        <div class="card bg-base-100 shadow-sm border border-base-300 max-w-md w-full">
+          <div class="card-body py-6">
             <i class="fa-duotone fa-user-slash text-6xl text-base-content/30 mb-4"></i>
             <h1 class="text-2xl font-bold mb-2">{{ t('not_found.title') }}</h1>
             <p class="text-base-content/60 mb-6">{{ t('not_found.description') }}</p>
-            <UButton color="primary" to="/contributors">
+            <NuxtLink class="btn btn-primary" to="/contributors">
               <i class="fa-duotone fa-arrow-left mr-2"></i>
               {{ t('not_found.back') }}
-            </UButton>
+            </NuxtLink>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <!-- Profile found -->
       <div v-else class="max-w-4xl mx-auto space-y-6 pb-12">
         <!-- Profile Card -->
-        <UCard>
-          <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-2">
-            <UAvatar
-              :src="profile.avatarUrl || undefined"
-              :alt="displayName"
-              :text="!profile.avatarUrl ? initials : undefined"
-              size="3xl"
-            />
-            <div class="flex-1 text-center sm:text-left">
-              <h1 class="text-3xl font-bold mb-2">{{ displayName }}</h1>
-              <div class="mb-3">
-                <UBadge :color="trustLevelConfig.color as any" variant="subtle" size="md">
-                  {{ trustLevelConfig.label }}
-                </UBadge>
+        <div class="card bg-base-100 shadow-sm border border-base-300">
+          <div class="card-body">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-2">
+              <div v-if="profile.avatarUrl" class="avatar">
+                <div class="w-32 rounded-full">
+                  <img :src="profile.avatarUrl" :alt="displayName" />
+                </div>
               </div>
-              <p v-if="profile.bio" class="text-base-content/70 max-w-prose">
-                {{ profile.bio }}
-              </p>
-              <p v-if="memberSince" class="text-sm text-base-content/50 mt-2">
-                <i class="fa-duotone fa-calendar mr-1"></i>
-                {{ t('profile.member_since') }}: {{ memberSince }}
-              </p>
+              <div v-else class="avatar avatar-placeholder">
+                <div class="w-32 rounded-full bg-neutral text-neutral-content">
+                  <span class="text-4xl font-bold">{{ initials }}</span>
+                </div>
+              </div>
+              <div class="flex-1 text-center sm:text-left">
+                <h1 class="text-3xl font-bold mb-2">{{ displayName }}</h1>
+                <div class="mb-3">
+                  <span
+                    class="badge badge-soft"
+                    :class="`badge-${trustLevelConfig.color}`"
+                  >
+                    {{ trustLevelConfig.label }}
+                  </span>
+                </div>
+                <p v-if="profile.bio" class="text-base-content/70 max-w-prose">
+                  {{ profile.bio }}
+                </p>
+                <p v-if="memberSince" class="text-sm text-base-content/50 mt-2">
+                  <i class="fa-duotone fa-calendar mr-1"></i>
+                  {{ t('profile.member_since') }}: {{ memberSince }}
+                </p>
+              </div>
             </div>
           </div>
-        </UCard>
+        </div>
 
         <!-- Stats Row -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <UCard>
-            <div class="text-center py-4">
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body text-center py-4">
               <p class="text-4xl font-bold text-primary">{{ profile.totalSubmissions }}</p>
               <p class="text-sm text-base-content/60 mt-1">{{ t('stats.total_submissions') }}</p>
             </div>
-          </UCard>
-          <UCard>
-            <div class="text-center py-4">
+          </div>
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body text-center py-4">
               <p class="text-4xl font-bold text-success">{{ profile.approvedSubmissions }}</p>
               <p class="text-sm text-base-content/60 mt-1">{{ t('stats.approved') }}</p>
             </div>
-          </UCard>
-          <UCard>
-            <div class="text-center py-4">
+          </div>
+          <div class="card bg-base-100 shadow-sm border border-base-300">
+            <div class="card-body text-center py-4">
               <p class="text-lg font-semibold">{{ memberSince }}</p>
               <p class="text-sm text-base-content/60 mt-1">{{ t('stats.member_since') }}</p>
             </div>
-          </UCard>
+          </div>
         </div>
 
         <!-- Contribution Type Breakdown -->
-        <UCard v-if="hasStats">
-          <template #header>
+        <div v-if="hasStats" class="card bg-base-100 shadow-sm border border-base-300">
+          <div class="card-body">
             <h2 class="text-lg font-semibold">{{ t('stats_breakdown.title') }}</h2>
-          </template>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2">
-            <div v-if="stats!['document'] || stats!['collection']" class="flex items-center gap-3">
-              <i class="fa-duotone fa-books text-2xl text-secondary"></i>
-              <div>
-                <p class="font-bold text-xl">{{ (stats!['document'] || 0) + (stats!['collection'] || 0) }}</p>
-                <p class="text-xs text-base-content/60">{{ t('stats_breakdown.documents') }}</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2">
+              <div v-if="stats!['document'] || stats!['collection']" class="flex items-center gap-3">
+                <i class="fa-duotone fa-books text-2xl text-secondary"></i>
+                <div>
+                  <p class="font-bold text-xl">{{ (stats!['document'] || 0) + (stats!['collection'] || 0) }}</p>
+                  <p class="text-xs text-base-content/60">{{ t('stats_breakdown.documents') }}</p>
+                </div>
               </div>
-            </div>
-            <div v-if="stats!['registry']" class="flex items-center gap-3">
-              <i class="fa-duotone fa-clipboard-list text-2xl text-info"></i>
-              <div>
-                <p class="font-bold text-xl">{{ stats!['registry'] }}</p>
-                <p class="text-xs text-base-content/60">{{ t('stats_breakdown.registry') }}</p>
+              <div v-if="stats!['registry']" class="flex items-center gap-3">
+                <i class="fa-duotone fa-clipboard-list text-2xl text-info"></i>
+                <div>
+                  <p class="font-bold text-xl">{{ stats!['registry'] }}</p>
+                  <p class="text-xs text-base-content/60">{{ t('stats_breakdown.registry') }}</p>
+                </div>
               </div>
-            </div>
-            <div v-if="stats!['color']" class="flex items-center gap-3">
-              <i class="fa-duotone fa-palette text-2xl text-warning"></i>
-              <div>
-                <p class="font-bold text-xl">{{ stats!['color'] }}</p>
-                <p class="text-xs text-base-content/60">{{ t('stats_breakdown.colors') }}</p>
+              <div v-if="stats!['color']" class="flex items-center gap-3">
+                <i class="fa-duotone fa-palette text-2xl text-warning"></i>
+                <div>
+                  <p class="font-bold text-xl">{{ stats!['color'] }}</p>
+                  <p class="text-xs text-base-content/60">{{ t('stats_breakdown.colors') }}</p>
+                </div>
               </div>
-            </div>
-            <div v-if="stats!['wheel']" class="flex items-center gap-3">
-              <i class="fa-duotone fa-tire text-2xl text-primary"></i>
-              <div>
-                <p class="font-bold text-xl">{{ stats!['wheel'] }}</p>
-                <p class="text-xs text-base-content/60">{{ t('stats_breakdown.wheels') }}</p>
+              <div v-if="stats!['wheel']" class="flex items-center gap-3">
+                <i class="fa-duotone fa-tire text-2xl text-primary"></i>
+                <div>
+                  <p class="font-bold text-xl">{{ stats!['wheel'] }}</p>
+                  <p class="text-xs text-base-content/60">{{ t('stats_breakdown.wheels') }}</p>
+                </div>
               </div>
             </div>
           </div>
-        </UCard>
+        </div>
 
         <!-- Recent Contributions -->
-        <UCard>
-          <template #header>
+        <div class="card bg-base-100 shadow-sm border border-base-300">
+          <div class="card-body">
             <h2 class="text-lg font-semibold">{{ t('contributions.title') }}</h2>
-          </template>
 
-          <!-- Empty state -->
-          <div v-if="!contributions || contributions.length === 0" class="text-center py-10">
-            <i class="fa-duotone fa-inbox text-5xl text-base-content/20 mb-3"></i>
-            <p class="text-base-content/50">{{ t('contributions.empty') }}</p>
+            <!-- Empty state -->
+            <div v-if="!contributions || contributions.length === 0" class="text-center py-10">
+              <i class="fa-duotone fa-inbox text-5xl text-base-content/20 mb-3"></i>
+              <p class="text-base-content/50">{{ t('contributions.empty') }}</p>
+            </div>
+
+            <!-- Contribution list -->
+            <ul v-else class="divide-y divide-base-200">
+              <li v-for="item in contributions" :key="item.id" class="flex items-center gap-3 py-3 px-1">
+                <i
+                  :class="`fa-duotone fa-${targetTypeIcon(item.targetType)} text-xl text-base-content/40 shrink-0 w-6 text-center`"
+                ></i>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium truncate">
+                    {{ item.targetTitle || t('contributions.untitled') }}
+                  </p>
+                  <p class="text-xs text-base-content/50 capitalize">
+                    {{ t(`contributions.target.${item.targetType}`) }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span
+                    class="badge badge-soft badge-sm"
+                    :class="`badge-${actionBadgeColor(item.action)}`"
+                  >
+                    {{ t(`contributions.action.${item.action}`) }}
+                  </span>
+                  <span class="text-xs text-base-content/40 hidden sm:inline">
+                    {{ relativeDate(item.createdAt) }}
+                  </span>
+                </div>
+              </li>
+            </ul>
           </div>
-
-          <!-- Contribution list -->
-          <ul v-else class="divide-y divide-base-200">
-            <li v-for="item in contributions" :key="item.id" class="flex items-center gap-3 py-3 px-1">
-              <i
-                :class="`fa-duotone fa-${targetTypeIcon(item.targetType)} text-xl text-base-content/40 shrink-0 w-6 text-center`"
-              ></i>
-              <div class="flex-1 min-w-0">
-                <p class="font-medium truncate">
-                  {{ item.targetTitle || t('contributions.untitled') }}
-                </p>
-                <p class="text-xs text-base-content/50 capitalize">
-                  {{ t(`contributions.target.${item.targetType}`) }}
-                </p>
-              </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <UBadge :color="actionBadgeColor(item.action) as any" variant="subtle" size="sm">
-                  {{ t(`contributions.action.${item.action}`) }}
-                </UBadge>
-                <span class="text-xs text-base-content/40 hidden sm:inline">
-                  {{ relativeDate(item.createdAt) }}
-                </span>
-              </div>
-            </li>
-          </ul>
-        </UCard>
+        </div>
       </div>
     </div>
   </div>

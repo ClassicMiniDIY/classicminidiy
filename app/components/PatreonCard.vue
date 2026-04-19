@@ -41,16 +41,16 @@
             <strong>{{ t('membership_benefits') }}</strong>
           </p>
           <p class="mt-4">
-            <UButton
+            <NuxtLink
               to="https://patreon.com/classicminidiy"
               target="_blank"
               rel="noopener"
-              class="is-patreon"
+              class="btn is-patreon"
               @click="handlePatreonClick"
             >
               <i class="fab fa-patreon mr-2"></i>
               <span>{{ t('button_text') }}</span>
-            </UButton>
+            </NuxtLink>
           </p>
         </div>
       </div>
@@ -69,17 +69,16 @@
           <p class="pt-3">
             <strong>{{ t('membership_benefits') }}</strong>
           </p>
-          <UButton
+          <NuxtLink
             to="https://patreon.com/classicminidiy"
             target="_blank"
             rel="noopener"
-            size="sm"
-            class="is-patreon mt-4"
+            class="btn btn-sm is-patreon mt-4"
             @click="handlePatreonClick"
           >
             <i class="fab fa-patreon mr-2"></i>
             <span>{{ t('button_text') }}</span>
-          </UButton>
+          </NuxtLink>
         </div>
       </div>
     </template>

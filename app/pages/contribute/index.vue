@@ -56,18 +56,18 @@
 
     <!-- Auth Gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
-      <UCard>
-        <div class="p-6 text-center">
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-6 text-center">
           <div class="mb-4">
             <i class="fas fa-lock text-5xl opacity-40"></i>
           </div>
           <h2 class="text-xl font-bold mb-2">{{ t('sign_in_title') }}</h2>
           <p class="text-base mb-6 opacity-70">{{ t('sign_in_description') }}</p>
-          <UButton to="/login" color="primary" class="w-full">
+          <NuxtLink to="/login" class="btn btn-primary w-full">
             {{ t('sign_in_button') }}
-          </UButton>
+          </NuxtLink>
         </div>
-      </UCard>
+      </div>
     </div>
 
     <!-- Authenticated Content -->
@@ -81,52 +81,56 @@
       <!-- 2x2 Contribution Type Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
         <NuxtLink v-for="item in contributionTypes" :key="item.to" :to="item.to">
-          <UCard class="h-full hover:shadow-xl transition-shadow">
-            <div class="text-center p-6">
+          <div class="card bg-base-100 shadow-md h-full hover:shadow-xl transition-shadow">
+            <div class="card-body text-center p-6">
               <i :class="item.icon" class="text-4xl text-primary mb-4 block"></i>
               <h2 class="text-lg font-bold mb-2">{{ t(item.titleKey) }}</h2>
               <p class="text-sm opacity-70">{{ t(item.descriptionKey) }}</p>
             </div>
-          </UCard>
+          </div>
         </NuxtLink>
       </div>
 
       <!-- User Stats Card -->
       <div v-if="userProfile" class="max-w-3xl mx-auto mt-8">
-        <UCard>
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
-            <div>
-              <h3 class="text-lg font-bold mb-1">{{ t('stats_title') }}</h3>
-              <p class="text-sm opacity-70">
-                {{
-                  t('stats_description', {
-                    total: userProfile.total_submissions,
-                    approved: userProfile.approved_submissions,
-                  })
-                }}
-              </p>
-            </div>
-            <div class="flex items-center gap-3">
-              <UBadge
-                :color="
-                  userProfile.trust_level === 'admin' || userProfile.trust_level === 'moderator'
-                    ? 'primary'
-                    : userProfile.trust_level === 'trusted'
-                      ? 'success'
-                      : userProfile.trust_level === 'contributor'
-                        ? 'info'
-                        : 'neutral'
-                "
-                variant="soft"
-              >
-                {{ userProfile.trust_level }}
-              </UBadge>
-              <UButton to="/dashboard" color="primary" variant="outline">
-                {{ t('view_all') }}
-              </UButton>
+        <div class="card bg-base-100 shadow-md">
+          <div class="card-body">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+              <div>
+                <h3 class="text-lg font-bold mb-1">{{ t('stats_title') }}</h3>
+                <p class="text-sm opacity-70">
+                  {{
+                    t('stats_description', {
+                      total: userProfile.total_submissions,
+                      approved: userProfile.approved_submissions,
+                    })
+                  }}
+                </p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span
+                  class="badge"
+                  :class="{
+                    'badge-primary':
+                      userProfile.trust_level === 'admin' || userProfile.trust_level === 'moderator',
+                    'badge-success': userProfile.trust_level === 'trusted',
+                    'badge-info': userProfile.trust_level === 'contributor',
+                    'badge-neutral':
+                      userProfile.trust_level !== 'admin' &&
+                      userProfile.trust_level !== 'moderator' &&
+                      userProfile.trust_level !== 'trusted' &&
+                      userProfile.trust_level !== 'contributor',
+                  }"
+                >
+                  {{ userProfile.trust_level }}
+                </span>
+                <NuxtLink to="/dashboard" class="btn btn-primary btn-outline">
+                  {{ t('view_all') }}
+                </NuxtLink>
+              </div>
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
     </div>
     <div class="max-w-3xl mx-auto mt-8 mb-10">

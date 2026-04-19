@@ -2,12 +2,18 @@
   <div class="min-h-screen flex items-center justify-center">
     <div class="text-center">
       <div v-if="errorMessage">
-        <UAlert color="error" :title="t('auth_error')" :description="errorMessage" />
-        <UButton to="/login" class="mt-4">{{ t('back_to_login') }}</UButton>
+        <div role="alert" class="alert alert-error">
+          <i class="fas fa-circle-xmark"></i>
+          <div>
+            <div class="font-semibold">{{ t('auth_error') }}</div>
+            <div class="text-sm">{{ errorMessage }}</div>
+          </div>
+        </div>
+        <NuxtLink to="/login" class="btn btn-primary mt-4">{{ t('back_to_login') }}</NuxtLink>
       </div>
       <div v-else class="space-y-4">
         <div class="flex justify-center">
-          <UButton loading variant="ghost" size="xl" />
+          <span class="loading loading-spinner loading-lg"></span>
         </div>
         <p class="opacity-70">{{ t('verifying') }}</p>
       </div>

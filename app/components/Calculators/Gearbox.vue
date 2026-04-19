@@ -341,24 +341,22 @@
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold"><i class="fad fa-gears mr-2"></i>{{ t('configurations') }}</h3>
         <div class="flex items-center gap-2">
-          <UButton
+          <button
             v-if="isAuthenticated"
-            icon="i-fa6-solid-folder-open"
-            variant="outline"
-            size="sm"
+            class="btn btn-outline btn-sm"
             @click="openLoadModal"
           >
+            <i class="fas fa-folder-open"></i>
             {{ t('load_saved') }}
-          </UButton>
-          <UButton
-            icon="i-fa6-solid-plus"
-            variant="outline"
-            size="sm"
+          </button>
+          <button
+            class="btn btn-outline btn-sm"
             :disabled="configs.length >= MAX_CONFIGS"
             @click="addConfig"
           >
+            <i class="fas fa-plus"></i>
             {{ t('add_config') }}
-          </UButton>
+          </button>
         </div>
       </div>
 
@@ -376,9 +374,7 @@
       />
     </div>
 
-    <USeparator class="my-4">
-      <span class="text-sm text-muted">{{ t('results_divider') }}</span>
-    </USeparator>
+    <div class="divider my-4"><span class="text-sm opacity-70">{{ t('results_divider') }}</span></div>
 
     <!-- Quick Stats (from first config) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -469,75 +465,65 @@
     <!-- Speedo Table (from first config) -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mt-6">
       <div class="col-span-1 md:col-span-7">
-        <UCard>
-          <template #header>
+        <div class="card bg-base-100 shadow-md border border-base-300">
+          <div class="card-body">
             <h2 class="font-semibold text-lg flex items-center">
               <i class="fa-duotone fa-gauge mr-2"></i>
               {{ t('tables.speedo_information') }}
             </h2>
-          </template>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-default">
-                  <th v-for="header in tableHeadersSpeedos" :key="header.key" class="text-left p-2 font-medium">
-                    {{ header.title }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(item, index) in primarySpeedoTable"
-                  :key="index"
-                  class="border-b border-default last:border-0"
-                >
-                  <td class="p-2 font-bold">{{ item.speedometer }}</td>
-                  <td class="p-2">{{ item.turns }}</td>
-                  <td class="p-2">{{ item.speed }}{{ metric ? 'kph' : 'mph' }}</td>
-                  <td class="p-2" :class="item.status">{{ item.result }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="overflow-x-auto">
+              <table class="table table-sm w-full">
+                <thead>
+                  <tr>
+                    <th v-for="header in tableHeadersSpeedos" :key="header.key" class="text-left font-medium">
+                      {{ header.title }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in primarySpeedoTable" :key="index">
+                    <td class="font-bold">{{ item.speedometer }}</td>
+                    <td>{{ item.turns }}</td>
+                    <td>{{ item.speed }}{{ metric ? 'kph' : 'mph' }}</td>
+                    <td :class="item.status">{{ item.result }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <div class="col-span-1 md:col-span-5">
         <!-- Gearing Table (from first config) -->
-        <UCard>
-          <template #header>
+        <div class="card bg-base-100 shadow-md border border-base-300">
+          <div class="card-body">
             <h2 class="font-semibold text-lg flex items-center">
               <i class="fa-duotone fa-gear fa-spin mr-2"></i>
               {{ t('tables.gearing_information') }}
             </h2>
-          </template>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-default">
-                  <th class="text-left p-2 font-medium">Gear</th>
-                  <th class="text-left p-2 font-medium">Ratio</th>
-                  <th class="text-left p-2 font-medium">{{ metric ? 'Max Speed (km/h)' : 'Max Speed (mph)' }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(item, index) in configResults[0]?.gearingTable || []"
-                  :key="index"
-                  class="border-b border-default last:border-0"
-                >
-                  <td class="p-2">{{ item.gear }}</td>
-                  <td class="p-2">{{ item.ratio }}</td>
-                  <td class="p-2">{{ item.maxSpeed }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="overflow-x-auto">
+              <table class="table table-sm w-full">
+                <thead>
+                  <tr>
+                    <th class="text-left font-medium">Gear</th>
+                    <th class="text-left font-medium">Ratio</th>
+                    <th class="text-left font-medium">{{ metric ? 'Max Speed (km/h)' : 'Max Speed (mph)' }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(item, index) in configResults[0]?.gearingTable || []" :key="index">
+                    <td>{{ item.gear }}</td>
+                    <td>{{ item.ratio }}</td>
+                    <td>{{ item.maxSpeed }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </UCard>
+        </div>
         <div class="mt-6">
-          <USeparator class="my-4">
-            <span class="text-sm text-muted">{{ t('support_divider') }}</span>
-          </USeparator>
+          <div class="divider my-4"><span class="text-sm opacity-70">{{ t('support_divider') }}</span></div>
           <patreon-card size="large" />
         </div>
       </div>
@@ -553,14 +539,13 @@
             ><strong>{{ t('disclaimer_doublecheck') }}</strong></template
           >
         </i18n-t>
-        <UButton
-          variant="link"
-          color="primary"
+        <NuxtLink
+          class="link link-primary"
           to="https://github.com/SomethingNew71/classicminidiy/blob/dev/components/SpeedoDriveCalculator.vue#L512"
           target="_blank"
         >
           {{ t('equation_source') }}
-        </UButton>
+        </NuxtLink>
       </p>
     </div>
 
