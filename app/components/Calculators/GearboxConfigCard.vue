@@ -33,9 +33,6 @@
     }))
   );
 
-  // Current gearset as a JSON string for USelect model-value
-  const gearsetStringValue = computed(() => JSON.stringify(props.config.gearset));
-
   const diffOptions = computed(() =>
     options.diffs.map((item) => ({
       label: item.label,
@@ -50,12 +47,26 @@
     }))
   );
 
+  const gearsetModel = computed({
+    get: () => JSON.stringify(props.config.gearset),
+    set: (value: string) => updateGearset(value),
+  });
+
+  const finalDriveModel = computed({
+    get: () => String(props.config.finalDrive),
+    set: (value: string) => updateFinalDrive(value),
+  });
+
+  const dropGearModel = computed({
+    get: () => String(props.config.dropGear),
+    set: (value: string) => updateDropGear(value),
+  });
+
   function getAutoName(): string {
     const gearLabel =
       options.gearRatios.find((g) => JSON.stringify(g.value) === JSON.stringify(props.config.gearset))?.label ||
       'Custom';
-    const shortGear = gearLabel.length > 30 ? gearLabel.substring(0, 30) + '...' : gearLabel;
-    return `${shortGear} · ${props.config.finalDrive}:1 · ${props.config.dropGear}:1`;
+    return `${gearLabel} · ${props.config.finalDrive}:1 · ${props.config.dropGear}:1`;
   }
 
   function startEditing() {
@@ -92,11 +103,11 @@
 
 <template>
   <div
-    class="rounded-lg border border-base-300 p-4 flex flex-col md:flex-row md:items-center gap-4"
+    class="rounded-lg border border-base-300 p-4 flex flex-col gap-3"
     :style="{ borderLeftWidth: '4px', borderLeftColor: color }"
   >
     <!-- Name -->
-    <div class="flex items-center gap-2 min-w-0 md:w-48">
+    <div class="flex items-center gap-2 min-w-0">
       <span class="w-3 h-3 rounded-full shrink-0" :style="{ backgroundColor: color }"></span>
       <template v-if="isEditing">
         <input
@@ -110,8 +121,8 @@
       </template>
       <template v-else>
         <span
-          class="text-sm font-medium truncate cursor-pointer hover:underline"
-          :title="config.name"
+          class="text-base font-semibold cursor-pointer hover:underline break-words"
+          :title="t('edit_name')"
           @click="startEditing"
         >
           {{ config.name }}
@@ -119,30 +130,19 @@
       </template>
     </div>
 
-    <!-- Dropdowns -->
-    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-      <select
-        :value="gearsetStringValue"
-        class="select select-sm select-bordered w-full"
-        @change="updateGearset(($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="opt in gearRatioOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-      <select
-        :value="String(config.finalDrive)"
-        class="select select-sm select-bordered w-full"
-        @change="updateFinalDrive(($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="opt in diffOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-      <select
-        :value="String(config.dropGear)"
-        class="select select-sm select-bordered w-full"
-        @change="updateDropGear(($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="opt in dropGearOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
-    </div>
+    <!-- Dropdowns + Actions -->
+    <div class="flex flex-col md:flex-row md:items-center gap-3">
+      <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <select v-model="gearsetModel" class="select select-sm select-bordered w-full">
+          <option v-for="opt in gearRatioOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <select v-model="finalDriveModel" class="select select-sm select-bordered w-full">
+          <option v-for="opt in diffOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <select v-model="dropGearModel" class="select select-sm select-bordered w-full">
+          <option v-for="opt in dropGearOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
 
     <!-- Actions -->
     <div class="flex items-center gap-2 shrink-0">
@@ -165,6 +165,7 @@
         <i class="fas fa-xmark"></i>
       </button>
     </div>
+    </div>
   </div>
 </template>
 
@@ -173,52 +174,62 @@
   "en": {
     "save": "Save configuration",
     "saved": "Configuration saved",
-    "remove": "Remove configuration"
+    "remove": "Remove configuration",
+    "edit_name": "Click to rename"
   },
   "es": {
     "save": "Guardar configuración",
     "saved": "Configuración guardada",
-    "remove": "Eliminar configuración"
+    "remove": "Eliminar configuración",
+    "edit_name": "Haz clic para renombrar"
   },
   "fr": {
     "save": "Sauvegarder la configuration",
     "saved": "Configuration sauvegardée",
-    "remove": "Supprimer la configuration"
+    "remove": "Supprimer la configuration",
+    "edit_name": "Cliquer pour renommer"
   },
   "de": {
     "save": "Konfiguration speichern",
     "saved": "Konfiguration gespeichert",
-    "remove": "Konfiguration entfernen"
+    "remove": "Konfiguration entfernen",
+    "edit_name": "Zum Umbenennen klicken"
   },
   "it": {
     "save": "Salva configurazione",
     "saved": "Configurazione salvata",
-    "remove": "Rimuovi configurazione"
+    "remove": "Rimuovi configurazione",
+    "edit_name": "Clicca per rinominare"
   },
   "pt": {
     "save": "Salvar configuração",
     "saved": "Configuração salva",
-    "remove": "Remover configuração"
+    "remove": "Remover configuração",
+    "edit_name": "Clique para renomear"
   },
   "ru": {
     "save": "Сохранить конфигурацию",
     "saved": "Конфигурация сохранена",
-    "remove": "Удалить конфигурацию"
+    "remove": "Удалить конфигурацию",
+    "edit_name": "Нажмите, чтобы переименовать"
   },
   "ja": {
     "save": "設定を保存",
     "saved": "設定が保存されました",
-    "remove": "設定を削除"
+    "remove": "設定を削除",
+    "edit_name": "クリックして名前変更"
   },
   "zh": {
     "save": "保存配置",
     "saved": "配置已保存",
-    "remove": "删除配置"
+    "remove": "删除配置",
+    "edit_name": "点击重命名"
   },
   "ko": {
     "save": "구성 저장",
     "saved": "구성이 저장되었습니다",
-    "remove": "구성 제거"
+    "remove": "구성 제거",
+    "edit_name": "클릭하여 이름 변경"
   }
 }
 </i18n>

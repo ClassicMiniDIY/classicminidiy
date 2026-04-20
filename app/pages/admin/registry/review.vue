@@ -107,6 +107,9 @@
     }
   };
 
+  const inputValue = (event: Event): string => (event.target as HTMLInputElement).value;
+  const inputValueInt = (event: Event): number => parseInt(inputValue(event)) || 0;
+
   // Methods
   async function refresh() {
     if (isLoading.value) return;
@@ -270,7 +273,7 @@
                 type="text"
                 class="input input-bordered input-sm w-full"
                 :value="getEditedValue(item, 'model') as string"
-                @input="updateEditedValue(item, 'model', ($event.target as HTMLInputElement).value)"
+                @input="updateEditedValue(item, 'model', inputValue($event))"
               />
               <span v-else>{{ item.model || '-' }}</span>
             </td>
@@ -282,7 +285,7 @@
                 type="text"
                 class="input input-bordered input-sm w-full"
                 :value="getEditedValue(item, 'bodyNum') as string"
-                @input="updateEditedValue(item, 'bodyNum', ($event.target as HTMLInputElement).value)"
+                @input="updateEditedValue(item, 'bodyNum', inputValue($event))"
               />
               <span v-else>{{ item.bodyNum || '-' }}</span>
             </td>
@@ -294,7 +297,7 @@
                 type="text"
                 class="input input-bordered input-sm w-full"
                 :value="getEditedValue(item, 'trim') as string"
-                @input="updateEditedValue(item, 'trim', ($event.target as HTMLInputElement).value)"
+                @input="updateEditedValue(item, 'trim', inputValue($event))"
               />
               <span v-else>{{ item.trim || '-' }}</span>
             </td>
@@ -306,7 +309,7 @@
                 type="text"
                 class="input input-bordered input-sm w-full"
                 :value="getEditedValue(item, 'submittedBy') as string"
-                @input="updateEditedValue(item, 'submittedBy', ($event.target as HTMLInputElement).value)"
+                @input="updateEditedValue(item, 'submittedBy', inputValue($event))"
               />
               <span v-else>{{ item.submittedBy || '-' }}</span>
             </td>
@@ -318,7 +321,7 @@
                 type="email"
                 class="input input-bordered input-sm w-full"
                 :value="getEditedValue(item, 'submittedByEmail') as string"
-                @input="updateEditedValue(item, 'submittedByEmail', ($event.target as HTMLInputElement).value)"
+                @input="updateEditedValue(item, 'submittedByEmail', inputValue($event))"
               />
               <span v-else>{{ item.submittedByEmail || '-' }}</span>
             </td>
@@ -332,7 +335,7 @@
                 :value="getEditedValue(item, 'year') as number"
                 min="1959"
                 max="2024"
-                @input="updateEditedValue(item, 'year', parseInt(($event.target as HTMLInputElement).value) || 0)"
+                @input="updateEditedValue(item, 'year', inputValueInt($event))"
               />
               <span v-else>{{ item.year || '-' }}</span>
             </td>

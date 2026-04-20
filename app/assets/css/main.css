@@ -204,6 +204,7 @@ body {
   mask-image: url('/spacers/layer2.svg');
   -webkit-mask-image: url('/spacers/layer2.svg');
   background-color: var(--color-base-100);
+  transform: scaleY(-1);
 }
 
 /* ============================================
