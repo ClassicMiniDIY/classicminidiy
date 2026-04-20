@@ -820,14 +820,6 @@
     }
   }
 
-  .bg-color-section {
-    background-color: #f0f0f0;
-  }
-
-  :global(.dark) .bg-color-section {
-    background-color: #171717;
-  }
-
   .phone {
     z-index: 2;
     position: relative;
