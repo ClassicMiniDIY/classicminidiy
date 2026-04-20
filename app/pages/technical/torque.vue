@@ -86,6 +86,14 @@
     ],
   });
 
+  // Imperial torque column header depends on whether a table uses lb-ft or lb-in
+  const imperialHeader = (items: any[]) => {
+    const first = items?.[0];
+    return first && first.lbin != null && first.lbft == null
+      ? t('table_headers.torque_lbin')
+      : t('table_headers.torque_lbft');
+  };
+
   // Filter function for table items
   const filterItems = (items: any[], tableName: string) => {
     const query = tableSearchQueries.value[tableName];
@@ -153,7 +161,7 @@
                     <thead>
                       <tr>
                         <th>{{ t('table_headers.fastener') }}</th>
-                        <th>{{ t('table_headers.torque_lbft') }}</th>
+                        <th>{{ imperialHeader(table.items) }}</th>
                         <th>{{ t('table_headers.torque_nm') }}</th>
                         <th>{{ t('table_headers.notes') }}</th>
                       </tr>
@@ -162,8 +170,11 @@
                       <tr v-for="(row, idx) in filterItems(table.items, key)" :key="idx">
                         <td>{{ row.name }}</td>
                         <td>
-                          <span class="px-2 py-1 rounded bg-primary/10 text-primary font-medium">
-                            {{ row.lbft }}
+                          <span
+                            v-if="row.lbft != null || row.lbin != null"
+                            class="px-2 py-1 rounded bg-primary/10 text-primary font-medium"
+                          >
+                            {{ row.lbft ?? row.lbin }}
                           </span>
                         </td>
                         <td>
@@ -216,6 +227,7 @@
     "table_headers": {
       "fastener": "Fastener",
       "torque_lbft": "Torque (lb/ft)",
+      "torque_lbin": "Torque (lb/in)",
       "torque_nm": "Torque (Nm)",
       "notes": "Notes"
     },
@@ -247,6 +259,7 @@
     "table_headers": {
       "fastener": "Sujetador",
       "torque_lbft": "Torque (lb/ft)",
+      "torque_lbin": "Torque (lb/in)",
       "torque_nm": "Torque (Nm)",
       "notes": "Notas"
     },
@@ -278,6 +291,7 @@
     "table_headers": {
       "fastener": "Fixation",
       "torque_lbft": "Couple (lb/ft)",
+      "torque_lbin": "Couple (lb/in)",
       "torque_nm": "Couple (Nm)",
       "notes": "Notes"
     },
@@ -309,6 +323,7 @@
     "table_headers": {
       "fastener": "Elemento di Fissaggio",
       "torque_lbft": "Coppia (lb/ft)",
+      "torque_lbin": "Coppia (lb/in)",
       "torque_nm": "Coppia (Nm)",
       "notes": "Note"
     },
@@ -340,6 +355,7 @@
     "table_headers": {
       "fastener": "Befestigung",
       "torque_lbft": "Drehmoment (lb/ft)",
+      "torque_lbin": "Drehmoment (lb/in)",
       "torque_nm": "Drehmoment (Nm)",
       "notes": "Hinweise"
     },
@@ -371,6 +387,7 @@
     "table_headers": {
       "fastener": "Fixador",
       "torque_lbft": "Torque (lb/ft)",
+      "torque_lbin": "Torque (lb/in)",
       "torque_nm": "Torque (Nm)",
       "notes": "Notas"
     },
@@ -402,6 +419,7 @@
     "table_headers": {
       "fastener": "Крепежный Элемент",
       "torque_lbft": "Крутящий Момент (lb/ft)",
+      "torque_lbin": "Крутящий Момент (lb/in)",
       "torque_nm": "Крутящий Момент (Nm)",
       "notes": "Примечания"
     },
@@ -433,6 +451,7 @@
     "table_headers": {
       "fastener": "締結具",
       "torque_lbft": "トルク (lb/ft)",
+      "torque_lbin": "トルク (lb/in)",
       "torque_nm": "トルク (Nm)",
       "notes": "注記"
     },
@@ -464,6 +483,7 @@
     "table_headers": {
       "fastener": "紧固件",
       "torque_lbft": "扭矩 (lb/ft)",
+      "torque_lbin": "扭矩 (lb/in)",
       "torque_nm": "扭矩 (Nm)",
       "notes": "说明"
     },
@@ -495,6 +515,7 @@
     "table_headers": {
       "fastener": "체결구",
       "torque_lbft": "토크 (lb/ft)",
+      "torque_lbin": "토크 (lb/in)",
       "torque_nm": "토크 (Nm)",
       "notes": "참고사항"
     },

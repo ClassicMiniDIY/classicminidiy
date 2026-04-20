@@ -144,6 +144,15 @@ export default defineNuxtConfig({
           type: 'text/javascript',
           tagPosition: 'head',
         },
+        // Disable FA auto-SVG-replace BEFORE the kit loads. Replacing <i>→<svg>
+        // during/before Vue hydration produces mismatches that cause Vue to tear
+        // down and re-patch the affected subtrees (visible as page "flashing").
+        // A client plugin triggers replacement after hydration is complete.
+        {
+          innerHTML: `window.FontAwesomeConfig={autoReplaceSvg:false,observeMutations:false};`,
+          type: 'text/javascript',
+          tagPosition: 'head',
+        },
         {
           src: 'https://kit.fontawesome.com/4e4435c885.js',
           crossorigin: 'anonymous',

@@ -17,6 +17,11 @@
     'update:maxRpm': [value: number];
   }>();
 
+  const metricModel = computed({
+    get: () => props.metric,
+    set: (value: boolean) => emit('update:metric', value),
+  });
+
   // USelect requires string values - serialize objects to JSON strings
   const tireOptions = computed(() =>
     options.tires.map((item) => ({
@@ -25,8 +30,20 @@
     }))
   );
 
-  // Current tire type as a JSON string for USelect model-value
-  const tireStringValue = computed(() => JSON.stringify(props.tireType));
+  const tireModel = computed({
+    get: () => JSON.stringify(props.tireType),
+    set: (value: string) => emit('update:tireType', JSON.parse(value)),
+  });
+
+  const speedoDriveModel = computed({
+    get: () => String(props.speedoDrive),
+    set: (value: string) => emit('update:speedoDrive', parseFloat(value)),
+  });
+
+  const maxRpmModel = computed({
+    get: () => String(props.maxRpm),
+    set: (value: string) => emit('update:maxRpm', parseInt(value)),
+  });
 
   const speedoRatioOptions = computed(() =>
     options.speedosRatios.map((item) => ({
@@ -55,23 +72,14 @@
         <h3 class="text-lg font-semibold"><i class="fad fa-sliders mr-2"></i>{{ t('title') }}</h3>
         <div class="flex items-center gap-3">
           <label class="text-sm font-medium">{{ t('imperial_or_metric') }}</label>
-          <input
-            type="checkbox"
-            class="toggle toggle-primary"
-            :checked="metric"
-            @change="emit('update:metric', ($event.target as HTMLInputElement).checked)"
-          />
+          <input type="checkbox" class="toggle toggle-primary" v-model="metricModel" />
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-medium mb-2"> {{ t('tire_size') }} <i class="fad fa-tire"></i> </label>
-          <select
-            :value="tireStringValue"
-            class="select select-bordered w-full"
-            @change="emit('update:tireType', JSON.parse(($event.target as HTMLSelectElement).value))"
-          >
+          <select v-model="tireModel" class="select select-bordered w-full">
             <option v-for="opt in tireOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </div>
@@ -79,11 +87,7 @@
           <label class="block text-sm font-medium mb-2">
             {{ t('speedo_drive_ratio') }} <i class="fad fa-percent"></i>
           </label>
-          <select
-            :value="String(speedoDrive)"
-            class="select select-bordered w-full"
-            @change="emit('update:speedoDrive', parseFloat(($event.target as HTMLSelectElement).value))"
-          >
+          <select v-model="speedoDriveModel" class="select select-bordered w-full">
             <option v-for="opt in speedoRatioOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </div>
@@ -91,11 +95,7 @@
           <label class="block text-sm font-medium mb-2">
             {{ t('max_rpm') }} <i class="fad fa-tachometer-alt"></i>
           </label>
-          <select
-            :value="String(maxRpm)"
-            class="select select-bordered w-full"
-            @change="emit('update:maxRpm', parseInt(($event.target as HTMLSelectElement).value))"
-          >
+          <select v-model="maxRpmModel" class="select select-bordered w-full">
             <option v-for="opt in rpmOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </div>

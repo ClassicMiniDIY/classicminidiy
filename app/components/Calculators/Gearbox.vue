@@ -377,7 +377,10 @@
     <div class="divider my-4"><span class="text-sm opacity-70">{{ t('results_divider') }}</span></div>
 
     <!-- Quick Stats (from first config) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div
+      class="grid grid-cols-1 gap-6"
+      :class="configs.length === 1 ? 'md:grid-cols-4' : 'md:grid-cols-3'"
+    >
       <div class="rounded-lg bg-stone-400 shadow-sm p-6 text-center">
         <h3 class="text-lg text-white opacity-70">
           <i class="fa-jelly-duo fa-regular fa-arrows-rotate fa-spin text-white"></i>
@@ -397,6 +400,12 @@
           <i class="fa-jelly-duo fa-regular fa-gauge"></i> {{ t('results.top_speed') }}
         </h3>
         <p class="text-3xl text-white font-bold">{{ topSpeed || '---' }}</p>
+      </div>
+      <div v-if="configs.length === 1" class="rounded-lg bg-accent shadow-sm p-6 text-center">
+        <h3 class="text-lg text-white opacity-70">
+          <i class="fa-jelly-duo fa-regular fa-percent"></i> {{ t('results.total_ratio') }}
+        </h3>
+        <p class="text-3xl text-white font-bold">{{ configResults[0]?.totalRatio4th || '---' }}</p>
       </div>
     </div>
 
@@ -572,7 +581,8 @@
     "results": {
       "revolutions_per": "Revolutions per/{unit}",
       "gear_turns_per": "Gear Turns per/{unit}",
-      "top_speed": "Top Speed"
+      "top_speed": "Top Speed",
+      "total_ratio": "Total Ratio"
     },
     "tire_info": {
       "tire_width": "Tire Width",
@@ -600,7 +610,8 @@
     "results": {
       "revolutions_per": "Revoluciones por/{unit}",
       "gear_turns_per": "Vueltas de Engranaje por/{unit}",
-      "top_speed": "Velocidad Máxima"
+      "top_speed": "Velocidad Máxima",
+      "total_ratio": "Relación Total"
     },
     "tire_info": {
       "tire_width": "Ancho del Neumático",
@@ -628,7 +639,8 @@
     "results": {
       "revolutions_per": "Révolutions par/{unit}",
       "gear_turns_per": "Tours d'engrenage par/{unit}",
-      "top_speed": "Vitesse maximale"
+      "top_speed": "Vitesse maximale",
+      "total_ratio": "Rapport total"
     },
     "tire_info": {
       "tire_width": "Largeur de pneu",
@@ -656,7 +668,8 @@
     "results": {
       "revolutions_per": "Umdrehungen pro/{unit}",
       "gear_turns_per": "Gang-Umdrehungen pro/{unit}",
-      "top_speed": "Höchstgeschwindigkeit"
+      "top_speed": "Höchstgeschwindigkeit",
+      "total_ratio": "Gesamtübersetzung"
     },
     "tire_info": {
       "tire_width": "Reifenbreite",
@@ -684,7 +697,8 @@
     "results": {
       "revolutions_per": "Giri per/{unit}",
       "gear_turns_per": "Giri ingranaggio per/{unit}",
-      "top_speed": "Velocità massima"
+      "top_speed": "Velocità massima",
+      "total_ratio": "Rapporto totale"
     },
     "tire_info": {
       "tire_width": "Larghezza pneumatico",
@@ -712,7 +726,8 @@
     "results": {
       "revolutions_per": "{unit}あたりの回転数",
       "gear_turns_per": "{unit}あたりのギア回転数",
-      "top_speed": "最高速度"
+      "top_speed": "最高速度",
+      "total_ratio": "総減速比"
     },
     "tire_info": {
       "tire_width": "タイヤ幅",
@@ -740,7 +755,8 @@
     "results": {
       "revolutions_per": "{unit}당 회전수",
       "gear_turns_per": "{unit}당 기어 회전수",
-      "top_speed": "최고 속도"
+      "top_speed": "최고 속도",
+      "total_ratio": "총 기어비"
     },
     "tire_info": {
       "tire_width": "타이어 폭",
@@ -768,7 +784,8 @@
     "results": {
       "revolutions_per": "Revoluções por/{unit}",
       "gear_turns_per": "Voltas da Engrenagem por/{unit}",
-      "top_speed": "Velocidade Máxima"
+      "top_speed": "Velocidade Máxima",
+      "total_ratio": "Relação Total"
     },
     "tire_info": {
       "tire_width": "Largura do Pneu",
@@ -796,7 +813,8 @@
     "results": {
       "revolutions_per": "Оборотов на/{unit}",
       "gear_turns_per": "Оборотов шестерни на/{unit}",
-      "top_speed": "Максимальная скорость"
+      "top_speed": "Максимальная скорость",
+      "total_ratio": "Общее передаточное число"
     },
     "tire_info": {
       "tire_width": "Ширина шины",
@@ -824,7 +842,8 @@
     "results": {
       "revolutions_per": "每{unit}转数",
       "gear_turns_per": "每{unit}齿轮转数",
-      "top_speed": "最高速度"
+      "top_speed": "最高速度",
+      "total_ratio": "总传动比"
     },
     "tire_info": {
       "tire_width": "轮胎宽度",

@@ -111,20 +111,22 @@
         <p class="text-lg pb-5">
           {{ t('maintenance_description') }}
         </p>
-        <NuxtLink class="btn btn-primary mr-3 text-lg" to="/contribute">
-          <i class="fa-duotone fa-paper-plane mr-2"></i>
-          {{ t('contribute_to_archive') }}
-        </NuxtLink>
-        <NuxtLink
-          class="btn btn-secondary mr-3 text-lg"
-          to="https://buy.stripe.com/3cs8yWe1P1ER3Oo5kl"
-          target="_blank"
-          external
-          @click="capture('support_cta_clicked', { type: 'server_cost', location: path })"
-        >
-          <i class="fa-duotone fa-hand-holding-circle-dollar mr-2"></i>
-          {{ t('cover_server_costs') }}
-        </NuxtLink>
+        <div class="flex flex-wrap justify-center gap-3">
+          <NuxtLink class="btn btn-primary text-lg" to="/contribute">
+            <i class="fa-duotone fa-paper-plane mr-2"></i>
+            {{ t('contribute_to_archive') }}
+          </NuxtLink>
+          <NuxtLink
+            class="btn btn-secondary text-lg"
+            to="https://buy.stripe.com/3cs8yWe1P1ER3Oo5kl"
+            target="_blank"
+            external
+            @click="capture('support_cta_clicked', { type: 'server_cost', location: path })"
+          >
+            <i class="fa-duotone fa-hand-holding-circle-dollar mr-2"></i>
+            {{ t('cover_server_costs') }}
+          </NuxtLink>
+        </div>
       </div>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-10">
