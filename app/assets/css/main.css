@@ -200,7 +200,7 @@ body {
 }
 
 .spacer.layer2 {
-  margin-top: -5%;
+  margin-top: -7%;
   mask-image: url('/spacers/layer2.svg');
   -webkit-mask-image: url('/spacers/layer2.svg');
   background-color: var(--color-base-100);
