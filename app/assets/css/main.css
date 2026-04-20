@@ -187,22 +187,22 @@ body {
 
 .spacer.layer {
   margin-top: -10%;
-  mask-image: url('https://classicminidiy.s3.us-east-1.amazonaws.com/misc/layer.svg');
-  -webkit-mask-image: url('https://classicminidiy.s3.us-east-1.amazonaws.com/misc/layer.svg');
+  mask-image: url('/spacers/layer.svg');
+  -webkit-mask-image: url('/spacers/layer.svg');
   background-color: var(--color-base-100);
 }
 
 .spacer.layer1 {
   margin-top: -5%;
-  mask-image: url('https://classicminidiy.s3.us-east-1.amazonaws.com/misc/layer1.svg');
-  -webkit-mask-image: url('https://classicminidiy.s3.us-east-1.amazonaws.com/misc/layer1.svg');
+  mask-image: url('/spacers/layer1.svg');
+  -webkit-mask-image: url('/spacers/layer1.svg');
   background-color: var(--color-base-200);
 }
 
 .spacer.layer2 {
   margin-top: -5%;
-  mask-image: url('https://classicminidiy.s3.us-east-1.amazonaws.com/misc/layer2.svg');
-  -webkit-mask-image: url('https://classicminidiy.s3.us-east-1.amazonaws.com/misc/layer2.svg');
+  mask-image: url('/spacers/layer2.svg');
+  -webkit-mask-image: url('/spacers/layer2.svg');
   background-color: var(--color-base-100);
 }
 
