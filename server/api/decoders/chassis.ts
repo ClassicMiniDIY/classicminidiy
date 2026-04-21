@@ -520,10 +520,10 @@ export default defineEventHandler(async (event): Promise<ChassisDecoderResponse>
       });
     }
 
-    if (body.yearRange.length > 20) {
+    if (body.yearRange.length > 30) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Year range too long (maximum 20 characters)',
+        statusMessage: 'Year range too long (maximum 30 characters)',
       });
     }
 
