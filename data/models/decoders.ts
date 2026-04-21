@@ -3,6 +3,11 @@
   Metro Engine ID Info: https://www.minimania.com/Engine___Metro_engine_identification_data
   Chassis Info: https://www.minimania.com/Mini_Chassis_VIN_and_Commission_Numbers__Part_I__Revised_
   Chassis Info 2: https://www.minimania.com/Mini_Chassis_VIN_and_Commission_Numbers__Part_II
+  Production History: https://www.somerfordmini.co.uk/mini-production-history
+  JoltFreak VIN Guide: https://joltfreak.tripod.com/id13.html
+  Australian Minis: https://eight-fifty.com/identification/australian-minis/
+  Australian ID Plate: https://eight-fifty.com/identification/identification-plate/
+  Victorian Mini Club ID Guide: https://www.mini.org.au/identify-a-classic-mini
 */
 export interface ChassisRange {
   title: string;
@@ -140,19 +145,20 @@ export const chassisRanges: ChassisRange[] = [
       options: {
         1: [{ value: 'X', name: 'This is simply dismissed by the factory as "non-significant"!' }],
         2: [
-          { value: 'A', name: '848cc engine' },
-          { value: 'A', name: '998cc engine' },
-          { value: 'A', name: '1275cc Cooper S and 1275 GT engine' },
+          {
+            value: 'A',
+            name: 'A-series engine (848cc Mini 850, 998cc Mini 1000, or 1275cc Cooper S Mk3 / 1275GT)',
+          },
         ],
         3: [
           {
             value: '2S',
             name: '2-door Saloon (except Mk3 Cooper S and 1275GT). Caution: bureaucratic bungles often misinterpret this as 25',
           },
-          { value: '2W', name: 'Estate (“2-door Dual Purpose”)' },
-          { value: 'D', name: '2-door saloon (Mk3 Cooper S and 1275GT only)' },
-          { value: 'U', name: 'Pick-up. Caution: "U" and "V" can be mistaken one for the other' },
-          { value: 'V', name: 'Panel van. Caution: "U" and "V" can be mistaken one for the other' },
+          { value: '2W', name: 'Estate (“2-door Dual Purpose”). Used on X-A2W2 / X-L2W2 Clubman Estate prefixes' },
+          { value: 'D', name: '2-door saloon (Mk3 Cooper S X-AD1 and 1275GT X-AD2 only)' },
+          { value: 'U', name: 'Pick-up (e.g. X-AU1). Caution: "U" and "V" can be mistaken one for the other' },
+          { value: 'V', name: 'Panel van (e.g. X-AV1). Caution: "U" and "V" can be mistaken one for the other' },
         ],
         4: [
           { value: '', name: 'Mini 850. Produced only in the "round nose" style' },
@@ -215,15 +221,15 @@ export const chassisRanges: ChassisRange[] = [
         3: [
           {
             value: '2D',
-            name: 'Unclear if this was used for chassis numbers in this generation',
+            name: '1275GT 2-door saloon (e.g. X-E2D2 prefix, 1974-1980)',
           },
           {
             value: '2S',
             name: '2-door Saloon (except 1275GT). Bureaucratic bungles often interpret this as 25',
           },
-          { value: '2W', name: 'Estate (“2-door Dual Purpose”)' },
-          { value: 'U', name: 'Pick-up. "U" and "V" can be mistaken one for the other' },
-          { value: 'V', name: 'Panel van. "U" and "V" can be mistaken one for the other' },
+          { value: '2W', name: 'Estate (“2-door Dual Purpose”). Used on X-L2W2 / X-C2W2 Clubman Estate' },
+          { value: 'U', name: 'Pick-up (e.g. X-KU1, X-LU1). "U" and "V" can be mistaken one for the other' },
+          { value: 'V', name: 'Panel van (e.g. X-KV1, X-LV1). "U" and "V" can be mistaken one for the other' },
         ],
         4: [
           {
@@ -236,16 +242,20 @@ export const chassisRanges: ChassisRange[] = [
           },
         ],
         5: [
-          { value: 'A', name: '1970' },
-          { value: 'B', name: '1971' },
-          { value: 'C', name: '1972' },
-          { value: 'D', name: '1973' },
-          { value: 'E', name: '1974' },
-          { value: 'F', name: '1975' },
-          { value: 'G', name: '1976' },
-          { value: 'H', name: '1977' },
-          { value: 'J', name: '1978' },
-          { value: 'L', name: '1979' },
+          {
+            value: 'N',
+            name: 'Standard/Special Deluxe trim (non-North America markets). Most common Rest-of-World value.',
+          },
+          { value: 'A', name: '1970 model year (North America)' },
+          { value: 'B', name: '1971 model year (North America)' },
+          { value: 'C', name: '1972 model year (North America)' },
+          { value: 'D', name: '1973 model year (North America)' },
+          { value: 'E', name: '1974 model year (North America)' },
+          { value: 'F', name: '1975 model year (North America)' },
+          { value: 'G', name: '1976 model year (North America)' },
+          { value: 'H', name: '1977 model year (North America)' },
+          { value: 'J', name: '1978 model year (North America)' },
+          { value: 'L', name: '1979 model year (North America)' },
         ],
         6: [],
         7: [],
@@ -399,11 +409,14 @@ export const chassisRanges: ChassisRange[] = [
           },
         ],
         7: [],
-        8: [{ value: '1', name: 'Round nose, traditional Mini body style.' }],
+        8: [
+          { value: '1', name: 'Round nose, traditional Mini body style (non-catalyst)' },
+          { value: '3', name: 'Round nose, catalyst-equipped (1989+ emissions spec, e.g. X-L2S3N/O/S)' },
+        ],
         9: [
           { value: 'N', name: 'HLE, or Mayfair (right-hand drive)' },
-          { value: 'O', name: 'E, City E' },
-          { value: 'S', name: 'Mayfair (left-hand drive)' },
+          { value: 'O', name: 'E, City, or City E' },
+          { value: 'S', name: 'Mayfair (left-hand drive, Europe)' },
         ],
         10: [
           {
@@ -446,10 +459,11 @@ export const chassisRanges: ChassisRange[] = [
         4: [{ value: 'XN', name: 'Mini 1300' }],
         5: [],
         6: [
-          { value: 'N', name: 'Sport, Cooper, Cabriolet' },
+          { value: 'C', name: 'Cooper / Cooper 1.3i / Cooper MPi (XN-CA prefix, 1990-2000)' },
+          { value: 'N', name: 'Sport, Cabriolet, or similar performance/limited-edition trim' },
           { value: 'V', name: 'Kensington' },
-          { value: 'W', name: 'HLS, Mayfair' },
-          { value: 'Y', name: 'City, Sprite' },
+          { value: 'W', name: 'HLS, Mayfair, Mayfair 1.3i, MPi (XN-WA prefix)' },
+          { value: 'Y', name: 'City, Sprite (XN-YA prefix)' },
         ],
         7: [
           { value: 'A', name: '2-door Saloon' },
@@ -479,6 +493,64 @@ export const chassisRanges: ChassisRange[] = [
         11: [{ value: 'D', name: 'Longbridge' }],
       },
       number: '######',
+      last: [],
+    },
+  },
+  {
+    // Australian-built Minis (BMC / Leyland Australia, Zetland/Enfield, NSW).
+    // Primary 6-character body/type code used on the ID plate, e.g. YMA2S1-####.
+    // References: eight-fifty.com, mini.org.au. Note that later Leyland-era cars
+    // (Mini K, 1100, Clubman GT) dropped the make letter and used a 5-char code
+    // like YG2S1 — that shorter variant is not yet handled here.
+    title: '1961-1978 (Australia)',
+    value: {
+      // YMA2S1-####
+      PrimaryExample: {
+        1: 'Y',
+        2: 'M',
+        3: 'A',
+        4: '2',
+        5: 'S',
+        6: '1',
+        7: '',
+        8: '',
+        9: '',
+        10: '',
+        11: '',
+        numbers: '####',
+        last: '',
+      },
+      options: {
+        1: [{ value: 'Y', name: 'Origin of manufacture: Australia (BMC / Leyland Australia, Zetland NSW)' }],
+        2: [
+          { value: 'M', name: 'Morris (Morris 850, Mini Deluxe, Mini Minor, Mini-Matic Mk1)' },
+          { value: 'K', name: 'Morris Cooper / Cooper S (997cc, 998cc, or 1275cc engines)' },
+          { value: 'J', name: 'Commercial — Van or Utility body (e.g. YJBAV1R)' },
+        ],
+        3: [
+          { value: 'A', name: 'A-series engine, 800–999cc (848cc or 998cc)' },
+          { value: 'G', name: 'A-series engine, 1275cc (Cooper S Mk1, typically YKG2S2)' },
+        ],
+        4: [{ value: '2', name: '2-door body' }],
+        5: [
+          { value: 'S', name: 'Saloon (Sedan)' },
+          { value: 'V', name: 'Van / Commercial body' },
+        ],
+        6: [
+          { value: '1', name: 'Mk1: Morris 850 (YMA2S1) or Morris Cooper (YKA2S1), 1961–1966' },
+          { value: '2', name: 'Mk2: Morris Mini Deluxe (YMA2S2) or Cooper S Mk1 (YKG2S2), 1966–1969' },
+          { value: '3', name: 'Mini Minor / Mini 1100 / Deluxe update (YMA2S3), 1969+' },
+          { value: '4', name: 'Mini-Matic Mk1 (YMA2S4) or Cooper S Mk2, 1967–1969' },
+          { value: '5', name: 'Mini-Matic Mk2 (YA2S5)' },
+          { value: '8', name: 'Clubman GT (YG2S8)' },
+        ],
+        7: [],
+        8: [],
+        9: [],
+        10: [],
+        11: [],
+      },
+      number: '####',
       last: [],
     },
   },

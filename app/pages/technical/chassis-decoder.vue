@@ -32,7 +32,16 @@
   // Template ref for smooth scrolling to results
   const decodedResultsSection = ref<HTMLElement>();
 
-  const yearRangeOptions = ['1959-1969', '1969-1974', '1974-1980', '1980', '1980-1985', '1985-1990', '1990-on'];
+  const yearRangeOptions = [
+    '1959-1969',
+    '1969-1974',
+    '1974-1980',
+    '1980',
+    '1980-1985',
+    '1985-1990',
+    '1990-on',
+    '1961-1978 (Australia)',
+  ];
 
   // Get example chassis number for selected year range
   const exampleChassisNumber = computed(() => {

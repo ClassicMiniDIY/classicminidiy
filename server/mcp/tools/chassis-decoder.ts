@@ -7,19 +7,19 @@ import { chassisRanges } from '../../../data/models/decoders';
  */
 export default defineMcpTool({
   description:
-    'Decode and validate Classic Mini chassis numbers based on year range. Supports chassis formats from 1959-1969, 1969-1974, 1974-1980, 1980, 1980-1985, 1985-1990, and 1990-on. Provides position-by-position breakdown of chassis number components.',
+    'Decode and validate Classic Mini chassis numbers based on year range. Supports UK chassis formats from 1959-1969, 1969-1974, 1974-1980, 1980, 1980-1985, 1985-1990, and 1990-on, plus Australian-built Minis (1961-1978) using the 6-character YMA2S1-style body/type code. Provides position-by-position breakdown of chassis number components.',
 
   inputSchema: {
     yearRange: z
-      .enum(['1959-1969', '1969-1974', '1974-1980', '1980', '1980-1985', '1985-1990', '1990-on'])
+      .enum(['1959-1969', '1969-1974', '1974-1980', '1980', '1980-1985', '1985-1990', '1990-on', '1961-1978 (Australia)'])
       .describe(
-        'Year range for chassis number format. Each era has a different chassis number structure and decoding rules.'
+        'Year range for chassis number format. Each era has a different chassis number structure and decoding rules. Use "1961-1978 (Australia)" for Australian-built Morris / Cooper Minis.'
       ),
     chassisNumber: z
       .string()
       .min(1)
       .max(50)
-      .describe('Classic Mini chassis number to decode (e.g., "A-A2S7L-123A" for 1959-1969)'),
+      .describe('Classic Mini chassis number to decode (e.g., "A-A2S7L-123A" for 1959-1969, or "YMA2S1-12345" for Australian Morris 850)'),
   },
 
   async handler({ yearRange, chassisNumber }) {
