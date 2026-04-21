@@ -525,7 +525,7 @@ export const chassisRanges: ChassisRange[] = [
         2: [
           { value: 'M', name: 'Morris (Morris 850, Mini Deluxe, Mini Minor, Mini-Matic Mk1)' },
           { value: 'K', name: 'Morris Cooper / Cooper S (997cc, 998cc, or 1275cc engines)' },
-          { value: 'J', name: 'Commercial — Van or Utility body (e.g. YJBAV1R)' },
+          { value: 'J', name: 'Commercial — Van or Utility body' },
         ],
         3: [
           { value: 'A', name: 'A-series engine, 800–999cc (848cc or 998cc)' },
@@ -541,8 +541,8 @@ export const chassisRanges: ChassisRange[] = [
           { value: '2', name: 'Mk2: Morris Mini Deluxe (YMA2S2) or Cooper S Mk1 (YKG2S2), 1966–1969' },
           { value: '3', name: 'Mini Minor / Mini 1100 / Deluxe update (YMA2S3), 1969+' },
           { value: '4', name: 'Mini-Matic Mk1 (YMA2S4) or Cooper S Mk2, 1967–1969' },
-          { value: '5', name: 'Mini-Matic Mk2 (YA2S5)' },
-          { value: '8', name: 'Clubman GT (YG2S8)' },
+          { value: '5', name: 'Mini-Matic Mk2' },
+          { value: '8', name: 'Clubman GT' },
         ],
         7: [],
         8: [],
