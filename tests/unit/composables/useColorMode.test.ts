@@ -18,7 +18,7 @@ function stubMatchMedia(initialMatches: boolean) {
     dispatchEvent: vi.fn(),
   };
   const impl = vi.fn().mockReturnValue(mqList);
-  Object.defineProperty(window, 'matchMedia', { writable: true, configurable: true, value: impl });
+  vi.stubGlobal('matchMedia', impl);
 
   return {
     impl,
@@ -46,7 +46,7 @@ function stubLocalStorage(initial: Record<string, string> = {}) {
     length: 0,
     key: vi.fn(),
   };
-  Object.defineProperty(window, 'localStorage', { writable: true, configurable: true, value: mock });
+  vi.stubGlobal('localStorage', mock);
   return { mock, store };
 }
 
@@ -58,6 +58,7 @@ describe('useColorMode', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   describe('initial state', () => {
