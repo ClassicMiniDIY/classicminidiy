@@ -143,6 +143,19 @@
     return selectedNeedles.value.find((n) => n.name === referenceNeedleName.value) ?? null;
   });
 
+  // The site-wide FA Kit is configured with autoReplaceSvg:false +
+  // observeMutations:false (see nuxt.config.ts) and only re-runs i2svg on
+  // app:suspense:resolve and page:finish. Any <i> tag this component renders
+  // reactively (the result list, the toggle-button icons) therefore never
+  // gets converted to SVG. Call i2svg() ourselves after updates.
+  function refreshFaIcons() {
+    if (typeof window === 'undefined') return;
+    const FA = (window as any).FontAwesome;
+    if (FA?.dom?.i2svg) {
+      nextTick(() => FA.dom.i2svg());
+    }
+  }
+
   const relativeResults = computed<RankedNeedle[]>(() => {
     const ref = referenceNeedle.value;
     const pool = needles.value?.all;
@@ -294,6 +307,10 @@
       source,
     });
   };
+
+  // Re-run FA SVG replacement whenever the result list or selection changes,
+  // so the plus/minus icons on freshly-rendered rows actually appear.
+  watch([relativeResults, selectedNeedles], () => refreshFaIcons(), { deep: true, flush: 'post' });
 
   // Toggle a needle in/out of the chart from the relative-search result list.
   // Add-icon → present, minus-icon → present & will be removed.
@@ -706,13 +723,35 @@
                     : t('relative.add_aria', { name: result.candidate.name })
                 "
               >
-                <i
-                  :class="
-                    selectedNeedles.some((n) => n.name === result.candidate.name)
-                      ? 'fas fa-minus text-xs'
-                      : 'fas fa-plus text-xs'
-                  "
-                ></i>
+                <!--
+                  Inline SVG instead of <i class="fas fa-*"> here because FA
+                  Kit replaces <i> with <svg> on initial render, after which
+                  Vue's v-if/v-else patches can't reliably update the DOM
+                  (the template node is an <i>, the live node is an <svg>).
+                  The glyph paths match Font Awesome 6 Solid plus/minus.
+                -->
+                <svg
+                  v-if="selectedNeedles.some((n) => n.name === result.candidate.name)"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 448 512"
+                  class="h-3 w-3 fill-current"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M432 256c0 17.7-14.3 32-32 32L48 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z"
+                  />
+                </svg>
+                <svg
+                  v-else
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 448 512"
+                  class="h-3 w-3 fill-current"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"
+                  />
+                </svg>
               </button>
             </li>
           </ul>
