@@ -466,6 +466,7 @@ export default defineNuxtConfig({
       include: [
         'luxon',
         'highcharts',
+        'highcharts/highcharts-more',
         'highcharts-vue',
         'highcharts/modules/exporting',
         'highcharts/modules/export-data',
@@ -497,6 +498,7 @@ export default defineNuxtConfig({
             // Chart libraries (tend to be large)
             highcharts: [
               'highcharts',
+              'highcharts/highcharts-more',
               'highcharts-vue',
               'highcharts/modules/exporting',
               'highcharts/modules/export-data',

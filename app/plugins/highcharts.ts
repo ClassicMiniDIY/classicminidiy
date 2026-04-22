@@ -1,4 +1,5 @@
 import Highcharts from 'highcharts';
+import 'highcharts/highcharts-more';
 import 'highcharts/modules/exporting';
 import 'highcharts/modules/offline-exporting';
 import 'highcharts/modules/accessibility';
