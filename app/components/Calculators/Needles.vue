@@ -295,6 +295,17 @@
     });
   };
 
+  // Toggle a needle in/out of the chart from the relative-search result list.
+  // Add-icon → present, minus-icon → present & will be removed.
+  function toggleNeedleInChart(name: string) {
+    const existing = selectedNeedles.value.find((n) => n.name === name);
+    if (existing) {
+      removeArrayItem(existing);
+      return;
+    }
+    selectNeedle(name, 'relative_search');
+  }
+
   function trackRelativeSearch() {
     capture('relative_needle_search', {
       reference: referenceNeedleName.value,
@@ -435,8 +446,8 @@
 
 <template>
   <div class="grid grid-cols-12 gap-3 configurator-component">
-    <div class="col-span-12 md:col-span-4">
-      <div class="card bg-base-100 shadow-md border border-base-300">
+    <div class="col-span-12 md:col-span-6">
+      <div class="card bg-base-100 shadow-md border border-base-300 h-full">
         <div class="card-body">
           <h3 class="fancy-font-bold text-xl pb-3">{{ t('title') }}</h3>
           <p class="pb-3">
@@ -589,10 +600,13 @@
         </div>
       </div>
 
-      <!-- Relative Search -->
+    </div>
+
+    <!-- Relative Search (top-right column on desktop) -->
+    <div class="col-span-12 md:col-span-6">
       <div
         v-if="selectedNeedles.length && !pending"
-        class="card bg-base-100 shadow-md border border-base-300 mt-4"
+        class="card bg-base-100 shadow-md border border-base-300 h-full"
       >
         <div class="card-body">
           <h3 class="fancy-font-bold text-lg">{{ t('relative.title') }}</h3>
@@ -683,12 +697,22 @@
               </div>
               <button
                 type="button"
-                class="btn btn-xs btn-primary"
-                :disabled="selectedNeedles.some((n) => n.name === result.candidate.name)"
-                @click="selectNeedle(result.candidate.name, 'relative_search')"
-                :aria-label="t('relative.add_aria', { name: result.candidate.name })"
+                class="btn btn-xs btn-square"
+                :class="selectedNeedles.some((n) => n.name === result.candidate.name) ? 'btn-error' : 'btn-primary'"
+                @click="toggleNeedleInChart(result.candidate.name)"
+                :aria-label="
+                  selectedNeedles.some((n) => n.name === result.candidate.name)
+                    ? t('remove_aria', { name: result.candidate.name })
+                    : t('relative.add_aria', { name: result.candidate.name })
+                "
               >
-                <i class="fas fa-plus text-xs"></i>
+                <i
+                  :class="
+                    selectedNeedles.some((n) => n.name === result.candidate.name)
+                      ? 'fas fa-minus text-xs'
+                      : 'fas fa-plus text-xs'
+                  "
+                ></i>
               </button>
             </li>
           </ul>
@@ -696,7 +720,7 @@
         </div>
       </div>
     </div>
-    <div class="col-span-12 md:col-span-8">
+    <div class="col-span-12">
       <div class="card bg-base-100 shadow-md border border-base-300">
         <div class="card-body p-2">
           <ClientOnly fallback-tag="span">
