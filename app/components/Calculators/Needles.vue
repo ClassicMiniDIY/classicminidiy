@@ -104,8 +104,6 @@
     };
   };
 
-  // Reactive chart options
-  const reactiveChartOptions = ref(getChartOptionsForMode());
   const selectedNeedles = ref<Needle[]>(needles?.value?.initial ? [...needles.value.initial] : []);
   const alreadyExistsError = ref(false);
 
@@ -142,19 +140,6 @@
     if (!referenceNeedleName.value) return null;
     return selectedNeedles.value.find((n) => n.name === referenceNeedleName.value) ?? null;
   });
-
-  // The site-wide FA Kit is configured with autoReplaceSvg:false +
-  // observeMutations:false (see nuxt.config.ts) and only re-runs i2svg on
-  // app:suspense:resolve and page:finish. Any <i> tag this component renders
-  // reactively (the result list, the toggle-button icons) therefore never
-  // gets converted to SVG. Call i2svg() ourselves after updates.
-  function refreshFaIcons() {
-    if (typeof window === 'undefined') return;
-    const FA = (window as any).FontAwesome;
-    if (FA?.dom?.i2svg) {
-      nextTick(() => FA.dom.i2svg());
-    }
-  }
 
   const relativeResults = computed<RankedNeedle[]>(() => {
     const ref = referenceNeedle.value;
@@ -298,7 +283,6 @@
     searchQuery.value = '';
     isDropdownOpen.value = false;
     displayLimit.value = 50;
-    updateArrayItem();
 
     capture('calculator_used', {
       calculator: 'needles',
@@ -307,10 +291,6 @@
       source,
     });
   };
-
-  // Re-run FA SVG replacement whenever the result list or selection changes,
-  // so the plus/minus icons on freshly-rendered rows actually appear.
-  watch([relativeResults, selectedNeedles], () => refreshFaIcons(), { deep: true, flush: 'post' });
 
   // Toggle a needle in/out of the chart from the relative-search result list.
   // Add-icon → present, minus-icon → present & will be removed.
@@ -374,11 +354,6 @@
     window.removeEventListener('resize', onScrollOrResize);
   });
 
-  // Watch for color mode changes
-  watch(isDark, () => {
-    updateArrayItem();
-  });
-
   // ---------------------------------------------------------------------------
   // Chart series construction
   // ---------------------------------------------------------------------------
@@ -435,29 +410,61 @@
     return [...diffSeries, ...lineSeries];
   }
 
-  function updateArrayItem() {
-    const newOptions = getChartOptionsForMode();
-    reactiveChartOptions.value = {
-      ...newOptions,
-      series: buildSeries(),
-    };
-  }
+  // Single source of truth for the chart — a computed that folds in mode
+  // colors, reference/diff state, and selected needles. Using a computed
+  // (rather than a ref patched by imperative updates) keeps the chart's
+  // options object synchronously consistent with isDark, showDiff, and the
+  // selected needle list.
+  const reactiveChartOptions = computed(() => ({
+    ...getChartOptionsForMode(),
+    series: buildSeries(),
+  }));
 
-  // Rebuild series whenever reference selection or diff toggle changes.
-  watch([referenceNeedleName, showDiff], () => updateArrayItem());
+  // highcharts-vue's built-in watcher updates `series` in place but does not
+  // deeply diff chart/axis/legend/tooltip color options when the computed
+  // changes — so a color-mode flip would leave stale background/axis colors
+  // on the live chart. Watch the DOM's data-theme attribute (the ground
+  // truth for color mode on this site) and re-theme every live Highcharts
+  // chart when it changes. Using a MutationObserver on documentElement
+  // bypasses Vue template-ref + ClientOnly plumbing that prevented the
+  // reactive approach from working in practice.
+  const needlesChart = ref<any>(null);
+  let themeObserver: MutationObserver | null = null;
+  onMounted(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const applyTheme = () => {
+      const chart =
+        needlesChart.value?.chart ??
+        ((window as any).Highcharts?.charts ?? []).find(
+          (c: any) => c && c.title?.textStr === chartOptions.title.text
+        );
+      if (chart?.update) {
+        chart.update(getChartOptionsForMode(), true, true);
+      }
+    };
+    themeObserver = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'data-theme') {
+          applyTheme();
+          break;
+        }
+      }
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  });
+  onBeforeUnmount(() => {
+    themeObserver?.disconnect();
+    themeObserver = null;
+  });
 
   function removeArrayItem(currentItem: Needle) {
-    // Find the index of the item you want to remove
     const itemIndex = selectedNeedles.value.indexOf(currentItem);
-    // Remove the specific needle value which automatically triggers a redraw
-    selectedNeedles.value.splice(itemIndex, 1);
-    updateArrayItem();
+    if (itemIndex >= 0) selectedNeedles.value.splice(itemIndex, 1);
   }
 
-  // Watch for changes in needles data and update selectedNeedles
+  // Re-seed selection when the underlying needle API data arrives.
   watch(needles, (newNeedles) => {
     selectedNeedles.value = newNeedles?.initial ? [...newNeedles.initial] : [];
-    updateArrayItem();
   });
 </script>
 
@@ -561,7 +568,16 @@
 
             <!-- Alerts -->
             <div v-if="alreadyExistsError" role="alert" class="alert alert-info mt-4">
-              <i class="fas fa-circle-info"></i>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 512 512"
+                class="h-4 w-4 fill-current"
+                aria-hidden="true"
+              >
+                <path
+                  d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336l24 0 0-64-24 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l48 0c13.3 0 24 10.7 24 24l0 88 8 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-80 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
+                />
+              </svg>
               <span>{{ t('alerts.already_exists') }}</span>
             </div>
 
@@ -592,11 +608,23 @@
                 <button
                   v-if="selectedNeedles.length > 1"
                   type="button"
-                  class="btn btn-ghost btn-xs"
+                  class="btn btn-ghost btn-xs btn-square"
                   @click="removeArrayItem(selectedNeedles[index] as Needle)"
                   :aria-label="t('remove_aria', { name: needle.name })"
                 >
-                  <i class="fas fa-times text-xs"></i>
+                  <!-- Inline SVG (FA 6 solid xmark) so the icon stays visible
+                       when the <li> is reactively added — FA Kit's i2svg
+                       only runs on page:finish and doesn't catch these. -->
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 384 512"
+                    class="h-3 w-3 fill-current"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
+                    />
+                  </svg>
                 </button>
               </li>
             </ul>
@@ -629,9 +657,9 @@
           <h3 class="fancy-font-bold text-lg">{{ t('relative.title') }}</h3>
           <p class="text-sm opacity-70">{{ t('relative.description') }}</p>
 
-          <div class="form-control w-full mt-3">
-            <label class="label py-1"><span class="label-text text-sm">{{ t('relative.band_label') }}</span></label>
-            <select v-model="relativeBand" class="select select-bordered select-sm">
+          <div class="w-full mt-4">
+            <label class="block text-sm font-semibold mb-2">{{ t('relative.band_label') }}</label>
+            <select v-model="relativeBand" class="select select-bordered select-sm w-full">
               <option value="low">{{ t('relative.band_low') }}</option>
               <option value="mid">{{ t('relative.band_mid') }}</option>
               <option value="high">{{ t('relative.band_high') }}</option>
@@ -639,8 +667,8 @@
             </select>
           </div>
 
-          <div class="form-control w-full mt-2">
-            <label class="label py-1"><span class="label-text text-sm">{{ t('relative.direction_label') }}</span></label>
+          <div class="w-full mt-4">
+            <label class="block text-sm font-semibold mb-2">{{ t('relative.direction_label') }}</label>
             <div class="join w-full">
               <button
                 type="button"
@@ -698,7 +726,17 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="font-semibold text-sm">{{ result.candidate.name }}</span>
-                  <span class="text-xs opacity-50">{{ result.candidate.size }}</span>
+                  <span
+                    class="badge badge-xs"
+                    :class="referenceNeedle && result.candidate.size === referenceNeedle.size ? 'badge-neutral' : 'badge-warning'"
+                    :title="
+                      referenceNeedle && result.candidate.size === referenceNeedle.size
+                        ? t('relative.size_match')
+                        : t('relative.size_mismatch')
+                    "
+                  >
+                    {{ result.candidate.size }}
+                  </span>
                 </div>
                 <div class="text-xs mt-1 grid grid-cols-3 gap-1">
                   <span :class="richnessClass(result.bands.low.richnessPct)">
@@ -763,7 +801,19 @@
       <div class="card bg-base-100 shadow-md border border-base-300">
         <div class="card-body p-2">
           <ClientOnly fallback-tag="span">
-            <highcharts ref="needlesChart" :options="reactiveChartOptions"></highcharts>
+            <!--
+              :key bound to `showDiff` forces a full chart remount when the
+              user toggles diff mode, avoiding arearange series state
+              leaking into the line-only view. Color-mode changes are
+              handled by a chart.update() watcher in <script setup> because
+              a key remount there can't be made to react through the
+              ClientOnly boundary reliably.
+            -->
+            <highcharts
+              ref="needlesChart"
+              :key="showDiff ? 'needle-chart-diff' : 'needle-chart-plain'"
+              :options="reactiveChartOptions"
+            ></highcharts>
             <template #fallback>
               <p class="p-10 text-center text-xl">{{ t('chart.loading') }}</p>
             </template>
@@ -823,6 +873,8 @@
       "cell_mid": "Mid",
       "cell_high": "High",
       "add_aria": "Add {name} to chart",
+      "size_match": "Matches your reference carb size",
+      "size_mismatch": "Different carb size from your reference",
       "caveat": "Station → RPM mapping is approximate and depends on carb size and spring. Percentages are candidate richness relative to your reference."
     },
     "chart": {
