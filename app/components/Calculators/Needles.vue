@@ -875,7 +875,7 @@
       "add_aria": "Add {name} to chart",
       "size_match": "Matches your reference carb size",
       "size_mismatch": "Different carb size from your reference",
-      "caveat": "Station → RPM mapping is approximate and depends on carb size and spring. Percentages are candidate richness relative to your reference."
+      "caveat": "Percentages compare fuel-flow area (jet area minus needle cross-section) to your reference needle at the same band. Station → RPM mapping is approximate and depends on carb size and spring."
     },
     "chart": {
       "loading": "Chart is loading"

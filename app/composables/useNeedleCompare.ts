@@ -47,7 +47,41 @@ export type NeedleBand = keyof typeof NEEDLE_BANDS;
 
 export type NeedleDirection = 'richer' | 'leaner' | 'similar';
 
-/** Per-band average diameter and per-station samples used for ranking. */
+/**
+ * Fuel-flow model
+ * ---------------
+ * The physically-meaningful quantity for "how rich is this needle at this
+ * station" is the annular area the fuel flows through:
+ *
+ *   fuelArea(station) = π·(jet_diameter/2)² − π·(needle_diameter/2)²
+ *
+ * The `size` field on a Needle is the SU jet diameter in *inches* (e.g.
+ * 0.090", 0.100"), while `data[i]` is the needle diameter at station `i` in
+ * *millimetres*. We convert the jet to mm before computing the area so
+ * everything lives in mm². Using fuel area rather than raw diameter matters
+ * because a 0.1mm diameter change on a thin needle moves materially more
+ * fuel than the same change on a fat needle, and different jet sizes bias
+ * the baseline.
+ */
+export const INCHES_TO_MM = 25.4;
+
+/** Jet flow area (mm²) for a given SU jet diameter in inches. */
+export function jetAreaMm2(sizeInches: number): number {
+  const radiusMm = (sizeInches * INCHES_TO_MM) / 2;
+  return Math.PI * radiusMm * radiusMm;
+}
+
+/** Effective annular fuel-flow area (mm²) at a single station. */
+export function fuelAreaMm2(jetAreaMm2Val: number, needleDiameterMm: number): number {
+  const needleRadiusMm = needleDiameterMm / 2;
+  return jetAreaMm2Val - Math.PI * needleRadiusMm * needleRadiusMm;
+}
+
+/**
+ * Per-band mean of the effective fuel-flow area (mm²). Larger number means
+ * more fuel passes through that band of the needle, i.e. *richer*. Null when
+ * the band has no valid (non-zero) station data for this needle.
+ */
 export interface BandAverages {
   low: number | null;
   mid: number | null;
@@ -60,9 +94,12 @@ export interface BandAverages {
  *   - `richness` > 0  → candidate is RICHER than reference in that band
  *   - `richness` < 0  → candidate is LEANER than reference in that band
  *
- * `richness` is in absolute mm (reference.diameter - candidate.diameter).
+ * `reference` and `candidate` hold the band-mean fuel-flow area (mm²).
+ * `richness` is the absolute difference `candidate − reference` in mm².
  * `richnessPct` is the same quantity expressed as a percentage of the
- * reference band average, which is easier to surface in the UI.
+ * reference band fuel area — this is the number we surface in the UI
+ * because it's scale-independent (same meaning across 0.090" and 0.100"
+ * jets, and across low-vs-high bands that have different baselines).
  */
 export interface BandDelta {
   reference: number | null;
@@ -92,22 +129,27 @@ export interface FindRelativeOptions {
   /** Only return candidates whose `size` equals the reference `size`. Default true. */
   sameSizeOnly?: boolean;
   /**
-   * For `direction === 'similar'`: maximum mean |richness| across bands to
-   * qualify (mm). Default 0.02mm (~1% of typical diameter).
+   * All tolerances are in **mm² of fuel-flow area**. Typical per-band fuel
+   * areas for an A-series needle range from ~0.3 mm² (very rich positions)
+   * to ~2.0 mm² (leaner positions), so these defaults roughly translate to:
    *
-   * For `direction === 'richer' | 'leaner'`: the minimum magnitude the
-   * candidate must differ by in the target band. Default 0.005mm.
+   *   `similar`:                max mean |Δarea| = 0.04 mm²  (~2–5%)
+   *   `richer` / `leaner`:      min |Δarea| in target band = 0.01 mm² (~1%)
+   *   `isolationTolerance`:     allowed drift in non-target bands = 0.04 mm²
+   *
+   * These were chosen to match the perceived magnitude of the previous
+   * diameter-based defaults (~0.02mm / ~0.005mm / ~0.015mm) after
+   * converting to the area domain on a representative A-series needle.
    */
   tolerance?: number;
   /**
    * When true (default) for 'richer'/'leaner' with a specific band, candidates
-   * must be *approximately unchanged* in the other two bands — within
-   * `isolationTolerance` mm. This surfaces the "richer only in the low range"
-   * use-case Matt asked for (TR6 needed more low-end richness with mid & top
-   * roughly preserved).
+   * must be *approximately unchanged* in the other two bands. This surfaces
+   * the "richer only in the low range" use-case Matt asked for (TR6 needed
+   * more low-end richness with mid & top roughly preserved).
    */
   isolateBand?: boolean;
-  /** mm tolerance for the non-target bands when `isolateBand` is true. Default 0.015mm. */
+  /** mm² tolerance for the non-target bands when `isolateBand` is true. */
   isolationTolerance?: number;
   /** Limit on returned results after ranking. Default 10. */
   limit?: number;
@@ -135,15 +177,23 @@ function mean(values: number[]): number | null {
   return sum / values.length;
 }
 
-/** Return the average diameter for a needle in each of the three bands. */
+/**
+ * Return the mean effective fuel-flow area (mm²) for each of the three
+ * bands. Per-station fuel areas are computed first and *then* averaged —
+ * averaging the diameters first and converting would throw away the
+ * non-linear area response.
+ */
 export function bandAverages(needle: Needle): BandAverages {
   const out: BandAverages = { low: null, mid: null, high: null };
+  const jetArea = jetAreaMm2(needle.size);
   (Object.keys(NEEDLE_BANDS) as NeedleBand[]).forEach((band) => {
     const { start, end } = NEEDLE_BANDS[band];
     const samples: number[] = [];
     for (let i = start; i <= end; i += 1) {
-      const v = needle.data[i];
-      if (typeof v === 'number' && v > 0) samples.push(v);
+      const diameter = needle.data[i];
+      if (typeof diameter === 'number' && diameter > 0) {
+        samples.push(fuelAreaMm2(jetArea, diameter));
+      }
     }
     out[band] = mean(samples);
   });
@@ -163,7 +213,9 @@ export function compareNeedles(reference: Needle, candidate: Needle): NeedleComp
     let richness: number | null = null;
     let richnessPct: number | null = null;
     if (r !== null && c !== null) {
-      richness = r - c;
+      // Fuel-area delta. Positive means candidate has more fuel-flow area
+      // than reference in this band, i.e. the candidate is richer here.
+      richness = c - r;
       richnessPct = r !== 0 ? (richness / r) * 100 : null;
       richnessValues.push(Math.abs(richness));
     }
@@ -217,9 +269,9 @@ export function findRelativeNeedles(
     band,
     direction,
     sameSizeOnly = true,
-    tolerance = direction === 'similar' ? 0.02 : 0.005,
+    tolerance = direction === 'similar' ? 0.04 : 0.01,
     isolateBand = true,
-    isolationTolerance = 0.015,
+    isolationTolerance = 0.04,
     limit = 10,
   } = options;
 
