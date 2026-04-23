@@ -175,30 +175,68 @@ export function effectiveStations(needle: Needle): number[] {
 }
 ```
 
-### 4.2 `bandAverages(needle)`
+### 4.2 Fuel-flow area model (`jetAreaMm2`, `fuelAreaMm2`)
 
-For each band, computes the arithmetic mean of the diameter samples
-within `[start, end]` inclusive, **excluding stations with value `0`** and
-**excluding station `0`** (which is outside every band's range anyway).
+Earlier versions of this algorithm ranked needles by raw **diameter**
+deltas. That's the wrong physics: the quantity the engine actually sees is
+the **annular flow area** around the needle inside the jet — and a 0.1 mm
+diameter change on a thin needle moves materially more fuel than the same
+0.1 mm on a fat needle. A 0.090" jet also has a different baseline from a
+0.100" jet. Using area instead of diameter makes the percentages
+scale-independent and physically meaningful.
+
+```ts
+export const INCHES_TO_MM = 25.4;
+
+/** Jet flow area (mm²) for an SU jet size given in inches. */
+export function jetAreaMm2(sizeInches: number): number {
+  const radiusMm = (sizeInches * INCHES_TO_MM) / 2;
+  return Math.PI * radiusMm * radiusMm;
+}
+
+/** Effective annular fuel-flow area (mm²) at a single station. */
+export function fuelAreaMm2(jetArea: number, needleDiameterMm: number): number {
+  const needleRadiusMm = needleDiameterMm / 2;
+  return jetArea - Math.PI * needleRadiusMm * needleRadiusMm;
+}
+```
+
+**Units gotcha.** `Needle.size` is in **inches** (it's the SU jet
+designation — 0.090", 0.100"), while `Needle.data[i]` is in
+**millimetres**. The helpers convert the jet size to mm before computing
+π·r², so everything downstream lives in mm². The mobile ports must respect
+this mismatch.
+
+### 4.3 `bandAverages(needle)`
+
+For each band, computes the arithmetic mean of the **per-station
+fuel-flow area (mm²)** within `[start, end]` inclusive, **excluding
+stations with value `0`** and **excluding station `0`** (which is outside
+every band's range anyway).
+
+Critically, areas are computed *per station first, then averaged* — not
+diameters averaged then converted, which would discard the non-linear area
+response and produce the wrong answer on uneven profiles.
 
 If a band has no real samples at all — common for short needles in the High
 band — that band returns `null` rather than `0` or `NaN`.
 
 ```ts
 export interface BandAverages {
-  low:  number | null;
+  low:  number | null;  // mean fuel-flow area in this band, mm²
   mid:  number | null;
   high: number | null;
 }
 
 export function bandAverages(needle: Needle): BandAverages {
   const out: BandAverages = { low: null, mid: null, high: null };
+  const jetArea = jetAreaMm2(needle.size);
   (Object.keys(NEEDLE_BANDS) as NeedleBand[]).forEach((band) => {
     const { start, end } = NEEDLE_BANDS[band];
     const samples: number[] = [];
     for (let i = start; i <= end; i += 1) {
-      const v = needle.data[i];
-      if (typeof v === 'number' && v > 0) samples.push(v);
+      const d = needle.data[i];
+      if (typeof d === 'number' && d > 0) samples.push(fuelAreaMm2(jetArea, d));
     }
     out[band] = samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : null;
   });
@@ -206,25 +244,33 @@ export function bandAverages(needle: Needle): BandAverages {
 }
 ```
 
-### 4.3 `compareNeedles(reference, candidate)`
+### 4.4 `compareNeedles(reference, candidate)`
 
 Produces a full per-band delta report of candidate vs reference.
 
-All deltas are expressed **from the candidate's perspective**:
+All deltas are expressed **from the candidate's perspective** and in
+**fuel-flow area (mm²)**:
 
-- `richness = reference.diameter - candidate.diameter`
-  - positive → candidate is **richer** than reference in that band
-  - negative → candidate is **leaner** than reference in that band
+- `richness = candidate.fuelArea - reference.fuelArea`
+  - positive → candidate has MORE fuel-flow area → **richer** than reference
+  - negative → candidate has LESS fuel-flow area → **leaner** than reference
 - `richnessPct = (richness / reference) * 100`
-  - same quantity normalised to a percentage of the reference band average.
-    This is what surfaces in the UI; mm deltas are small numbers that don't
-    read well in text.
+  - the same quantity normalised to a percentage of the reference band's
+    fuel area. This is what surfaces in the UI — mm² deltas are small
+    numbers that don't read well in text, but a percentage is the same
+    meaningful metric at any band or jet size.
+
+Note the **sign-convention flip from the diameter-era algorithm**: we used
+to compute `ref - cand` because *smaller diameter* meant richer. In
+area space, *larger area* means richer, so the natural subtraction is
+`cand - ref`. The external semantics (positive → candidate richer) are
+preserved; the math under them changed.
 
 Flags on the full comparison:
 
 - `uniformlyRicher` — richness > 0 in every band that has data
 - `uniformlyLeaner` — richness < 0 in every band that has data
-- `overallDistance` — mean absolute richness across bands, in mm. Smaller =
+- `overallDistance` — mean absolute richness across bands, in mm². Smaller =
   more similar overall.
 
 ```ts
@@ -257,7 +303,7 @@ export function compareNeedles(reference: Needle, candidate: Needle): NeedleComp
     let richness:    number | null = null;
     let richnessPct: number | null = null;
     if (r !== null && c !== null) {
-      richness    = r - c;
+      richness    = c - r; // area-based: positive → candidate richer
       richnessPct = r !== 0 ? (richness / r) * 100 : null;
       richnessValues.push(Math.abs(richness));
     }
@@ -284,7 +330,7 @@ export function compareNeedles(reference: Needle, candidate: Needle): NeedleComp
 }
 ```
 
-### 4.4 `findRelativeNeedles(reference, pool, options)`
+### 4.5 `findRelativeNeedles(reference, pool, options)`
 
 The public entry point. Given a reference needle and a pool of candidates,
 returns a ranked `RankedNeedle[]` (each is a `NeedleComparison` with an
@@ -297,16 +343,26 @@ export interface FindRelativeOptions {
   band:                NeedleBand | 'any'; // 'low' | 'mid' | 'high' | 'any'
   direction:           'richer' | 'leaner' | 'similar';
   sameSizeOnly?:       boolean;  // default true
-  tolerance?:          number;   // default 0.02 for 'similar', 0.005 for 'richer'/'leaner'
+  tolerance?:          number;   // default 0.04 for 'similar', 0.01 for 'richer'/'leaner'
   isolateBand?:        boolean;  // default true
-  isolationTolerance?: number;   // default 0.015 mm
+  isolationTolerance?: number;   // default 0.04 (mm²)
   limit?:              number;   // default 10
 }
 ```
 
-All tolerance values are in **millimetres of needle diameter**. `0.005 mm` is
-roughly 0.25% of a typical 1.9 mm mid-band diameter — enough to matter, small
-enough that not every needle in the catalogue qualifies.
+All tolerance values are in **mm² of fuel-flow area**. Typical A-series
+per-band fuel areas land between ~0.3 mm² (very rich positions) and
+~2.0 mm² (leaner positions), so these defaults translate to:
+
+- `similar`: max mean |Δarea| across bands = 0.04 mm² (~2–5%)
+- `richer` / `leaner` in-band: min |Δarea| in target band = 0.01 mm² (~1%)
+- `isolationTolerance`: allowed drift in non-target bands = 0.04 mm²
+
+The numeric values were chosen so that, after converting to the area
+domain on a representative A-series needle, they produce roughly the same
+set of qualifying candidates as the previous diameter-based defaults
+(`0.02`, `0.005`, `0.015` mm). Existing queries therefore behave
+equivalently; the reported percentages are just now physically meaningful.
 
 #### Pre-filters
 
@@ -326,7 +382,7 @@ Goal: find needles that are as close to the reference as possible, across all
 three bands, regardless of direction.
 
 ```ts
-if (cmp.overallDistance > tolerance) continue; // tolerance default 0.02mm
+if (cmp.overallDistance > tolerance) continue; // tolerance default 0.04 mm²
 ranked.push({ ...cmp, score: cmp.overallDistance });
 ```
 
@@ -356,7 +412,7 @@ if (isolateBand) {
   for (const b of otherBands) {
     const d = cmp.bands[b].richness;
     if (d === null) continue;
-    const overflow = Math.abs(d) - isolationTolerance; // default 0.015 mm
+    const overflow = Math.abs(d) - isolationTolerance; // default 0.04 mm²
     if (overflow > 0) {
       // Soft penalty (×5 weight) so we still return *something* when no
       // perfectly-isolated match exists in the catalogue.
@@ -400,7 +456,7 @@ const movement = meanAbs([
   cmp.bands.high.richness,
 ]);
 
-if (movement < tolerance) continue; // default 0.005 mm
+if (movement < tolerance) continue; // default 0.01 mm²
 ranked.push({ ...cmp, score: -movement }); // biggest mover wins
 ```
 
@@ -424,6 +480,15 @@ The mobile apps should mirror the web's chart affordance: when a user picks
 a reference needle and layers a candidate on top, the region between the two
 curves is shaded to show **where** the candidate is richer and **where** it is
 leaner.
+
+> **Important split**: the ranking math (§4) operates in *fuel-flow area*
+> (mm²), but the diff overlay operates in *diameter* (mm). The chart's Y
+> axis is literally labelled "Needle Diameter (mm)", so the overlay shades
+> the area between two diameter curves — not between two fuel-area curves.
+> Both are correct; they are two views onto the same physical change. The
+> richness labels in the result list are what the user reads for
+> "how much richer/leaner"; the chart overlay is what they read for
+> "in what shape of the range."
 
 ### Web implementation shape
 
@@ -507,8 +572,22 @@ import Foundation
 
 struct Needle: Hashable {
     let name: String
-    let size: Double       // 0.09 or 0.1
-    let data: [Double]     // diameter mm; 0 = no data at that station
+    let size: Double       // SU jet size in INCHES (0.09 or 0.1)
+    let data: [Double]     // needle diameter in MM per station; 0 = no data
+}
+
+// MARK: - Fuel-flow area helpers (physics)
+
+let INCHES_TO_MM: Double = 25.4
+
+func jetAreaMm2(_ sizeInches: Double) -> Double {
+    let radiusMm = (sizeInches * INCHES_TO_MM) / 2
+    return .pi * radiusMm * radiusMm
+}
+
+func fuelAreaMm2(jetArea: Double, needleDiameterMm: Double) -> Double {
+    let needleRadiusMm = needleDiameterMm / 2
+    return jetArea - .pi * needleRadiusMm * needleRadiusMm
 }
 
 enum NeedleBand: String, CaseIterable {
@@ -554,11 +633,12 @@ struct BandAverages {
 
 func bandAverages(_ needle: Needle) -> BandAverages {
     var out = BandAverages()
+    let jet = jetAreaMm2(needle.size)
     for band in NeedleBand.allCases {
         let samples = band.range.compactMap { i -> Double? in
             guard i < needle.data.count else { return nil }
-            let v = needle.data[i]
-            return v > 0 ? v : nil
+            let d = needle.data[i]
+            return d > 0 ? fuelAreaMm2(jetArea: jet, needleDiameterMm: d) : nil
         }
         out[band] = samples.isEmpty ? nil : samples.reduce(0, +) / Double(samples.count)
     }
@@ -568,9 +648,9 @@ func bandAverages(_ needle: Needle) -> BandAverages {
 // MARK: - Compare
 
 struct BandDelta {
-    let reference:   Double?
-    let candidate:   Double?
-    let richness:    Double?    // reference - candidate; positive = cand richer
+    let reference:   Double?    // reference band mean fuel area, mm²
+    let candidate:   Double?    // candidate band mean fuel area, mm²
+    let richness:    Double?    // candidate - reference; positive = cand richer
     let richnessPct: Double?    // richness / reference * 100
 }
 
@@ -598,7 +678,7 @@ func compareNeedles(reference: Needle, candidate: Needle) -> NeedleComparison {
         var richness: Double? = nil
         var richnessPct: Double? = nil
         if let r, let c {
-            richness = r - c
+            richness = c - r   // area: positive → candidate richer
             richnessPct = r != 0 ? (richness! / r) * 100 : nil
             absRichness.append(abs(richness!))
             signedRichness.append(richness!)
@@ -629,7 +709,7 @@ struct FindRelativeOptions {
     var sameSizeOnly: Bool       = true
     var tolerance: Double?       = nil  // defaults applied at call site
     var isolateBand: Bool        = true
-    var isolationTolerance: Double = 0.015
+    var isolationTolerance: Double = 0.04   // mm² of fuel-flow area
     var limit: Int               = 10
 }
 
@@ -642,7 +722,7 @@ func findRelativeNeedles(reference: Needle,
                          pool: [Needle],
                          options: FindRelativeOptions) -> [RankedNeedle] {
     let tolerance = options.tolerance
-        ?? (options.direction == .similar ? 0.02 : 0.005)
+        ?? (options.direction == .similar ? 0.04 : 0.01)   // mm²
 
     var ranked: [RankedNeedle] = []
 
@@ -721,9 +801,23 @@ Notes for the iOS port:
 
 data class Needle(
     val name: String,
-    val size: Double,       // 0.09 or 0.1
-    val data: List<Double>  // diameter mm; 0.0 = no data at that station
+    val size: Double,       // SU jet size in INCHES (0.09 or 0.1)
+    val data: List<Double>  // needle diameter in MM per station; 0.0 = no data
 )
+
+// Fuel-flow area helpers (physics)
+
+const val INCHES_TO_MM: Double = 25.4
+
+fun jetAreaMm2(sizeInches: Double): Double {
+    val radiusMm = (sizeInches * INCHES_TO_MM) / 2.0
+    return Math.PI * radiusMm * radiusMm
+}
+
+fun fuelAreaMm2(jetArea: Double, needleDiameterMm: Double): Double {
+    val needleRadiusMm = needleDiameterMm / 2.0
+    return jetArea - Math.PI * needleRadiusMm * needleRadiusMm
+}
 
 enum class NeedleBand(val range: IntRange) {
     LOW(1..4),
@@ -748,10 +842,11 @@ data class BandAverages(
 }
 
 fun bandAverages(needle: Needle): BandAverages {
+    val jet = jetAreaMm2(needle.size)
     fun avgFor(band: NeedleBand): Double? {
         val samples = band.range
             .filter { it < needle.data.size && needle.data[it] > 0.0 }
-            .map { needle.data[it] }
+            .map { fuelAreaMm2(jet, needle.data[it]) }
         return if (samples.isEmpty()) null else samples.average()
     }
     return BandAverages(
@@ -764,9 +859,9 @@ fun bandAverages(needle: Needle): BandAverages {
 // Compare
 
 data class BandDelta(
-    val reference:   Double?,
-    val candidate:   Double?,
-    val richness:    Double?,   // ref - candidate; >0 = cand richer
+    val reference:   Double?,   // reference band mean fuel area, mm²
+    val candidate:   Double?,   // candidate band mean fuel area, mm²
+    val richness:    Double?,   // candidate - reference; >0 = cand richer
     val richnessPct: Double?,
 )
 
@@ -794,7 +889,7 @@ fun compareNeedles(reference: Needle, candidate: Needle): NeedleComparison {
         var richness: Double? = null
         var pct: Double? = null
         if (r != null && c != null) {
-            richness = r - c
+            richness = c - r   // area: positive → candidate richer
             pct = if (r != 0.0) (richness / r) * 100 else null
             signed += richness
             absVals += kotlin.math.abs(richness)
@@ -823,7 +918,7 @@ data class FindRelativeOptions(
     val sameSizeOnly: Boolean = true,
     val tolerance: Double? = null,         // default computed per-direction
     val isolateBand: Boolean = true,
-    val isolationTolerance: Double = 0.015,
+    val isolationTolerance: Double = 0.04,   // mm² of fuel-flow area
     val limit: Int = 10,
 )
 
@@ -835,7 +930,7 @@ fun findRelativeNeedles(
     options: FindRelativeOptions,
 ): List<RankedNeedle> {
     val tolerance = options.tolerance
-        ?: if (options.direction == NeedleDirection.SIMILAR) 0.02 else 0.005
+        ?: if (options.direction == NeedleDirection.SIMILAR) 0.04 else 0.01   // mm²
 
     val ranked = mutableListOf<RankedNeedle>()
 
@@ -1009,52 +1104,61 @@ stub the event emitter; the property shape must still match.
 
 ## Appendix A — Worked example
 
-Reference needle: **"6"** (size 0.09)
+All values below are in **mm² of fuel-flow area**. Jet area for a 0.090"
+jet: `π × (0.09 × 25.4 / 2)² ≈ 4.10435 mm²`.
+
+Reference needle: **"6"** (size 0.09")
 ```
 data = [2.261, 2.159, 2.068, 1.994, 1.918, 1.842, 1.768, 1.692, 1.615, 1.539, 1.466, 1.397, 1.321, 0, 0, 0]
 ```
 
-Band averages:
+Band averages (mean of per-station fuel areas):
 
-- Low  (stations 1..4):   mean(2.159, 2.068, 1.994, 1.918) = **2.03475 mm**
-- Mid  (stations 5..9):   mean(1.842, 1.768, 1.692, 1.615, 1.539) = **1.6912 mm**
-- High (stations 10..15): mean(1.466, 1.397, 1.321) = **1.39467 mm**
+- Low  (stations 1..4):   **0.84642 mm²**
+- Mid  (stations 5..9):   **1.84886 mm²**
+- High (stations 10..12): **2.57427 mm²**
 
-Candidate needle: **"7"** (size 0.09)
+Candidate needle: **"7"** (size 0.09")
 ```
 data = [2.261, 2.159, 2.068, 1.994, 1.918, 1.829, 1.742, 1.651, 1.575, 1.491, 1.405, 1.321, 1.245, 0, 0, 0]
 ```
 
 Band averages:
 
-- Low:  mean(2.159, 2.068, 1.994, 1.918) = **2.03475 mm**
-- Mid:  mean(1.829, 1.742, 1.651, 1.575, 1.491) = **1.6576 mm**
-- High: mean(1.405, 1.321, 1.245) = **1.32367 mm**
+- Low:  **0.84642 mm²** (stations 1..4 are identical to needle "6")
+- Mid:  **1.93522 mm²**
+- High: **2.72526 mm²**
 
-Richness (ref - candidate):
+Richness (candidate − reference):
 
-- Low:  2.03475 − 2.03475 = **0.000 mm** → 0.0%
-- Mid:  1.6912  − 1.6576  = **+0.0336 mm** → +1.99% (candidate slightly richer)
-- High: 1.39467 − 1.32367 = **+0.071 mm** → +5.09% (candidate meaningfully richer)
+- Low:  0.84642 − 0.84642 = **0.000 mm²** → 0.0%
+- Mid:  1.93522 − 1.84886 = **+0.0864 mm²** → +4.67% (candidate richer)
+- High: 2.72526 − 2.57427 = **+0.1510 mm²** → +5.87% (candidate clearly richer)
 
-Overall distance: mean(|0|, |0.0336|, |0.071|) = **0.0349 mm**.
+Overall distance: mean(|0|, |0.0864|, |0.1510|) = **0.0791 mm²**.
 
 Interpreting this against the TR6 use-case ("richer low, same mid, more up top"):
 
 - Candidate "7" against reference "6" with `band = high, direction = richer,
-  isolateBand = true, isolationTolerance = 0.015`:
-  - Low overflow: |0.000| − 0.015 = −0.015 → no penalty
-  - Mid overflow: |0.0336| − 0.015 = 0.0186 → penalty = 0.0186 × 5 = 0.093; *and*
-    0.0186 > 2 × 0.015 = 0.030? No (0.0186 < 0.030) — not disqualified.
-  - Target delta (High) = +0.071 mm, passes `>= 0.005` threshold.
-  - Score = −|0.071| + 0.093 = **+0.022** (higher = worse; this candidate
+  isolateBand = true, isolationTolerance = 0.04`:
+  - Low overflow: |0.000| − 0.04 = −0.04 → no penalty
+  - Mid overflow: |0.0864| − 0.04 = 0.0464 → penalty = 0.0464 × 5 = 0.232; *and*
+    0.0464 > 2 × 0.04 = 0.08? No (0.0464 < 0.08) — not disqualified.
+  - Target delta (High) = +0.1510 mm², passes `>= 0.01` threshold.
+  - Score = −|0.1510| + 0.232 = **+0.081** (higher = worse; this candidate
     isn't great because mid drifted a bit).
 
 - Candidate "7" against reference "6" with `band = high, direction = richer,
   isolateBand = false`:
-  - Score = −|0.071| = **−0.071** (much better ranking).
+  - Score = −|0.1510| = **−0.151** (much better ranking).
 
 This illustrates the value of `isolateBand`: with it on, needle "7" is visibly
 penalised for also shifting mid, even though it isn't outright disqualified.
 A user looking for "only high-band richness" would rightly see other
 candidates ranked above it.
+
+**Port parity check.** A correct Swift or Kotlin implementation of
+`compareNeedles("6", "7")` must produce these six band numbers — the
+reference means, the candidate means, and the three richness values —
+within floating-point rounding. If any of them disagree, the port has a
+bug; this is the single cheapest parity test to run first.

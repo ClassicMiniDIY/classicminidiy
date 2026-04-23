@@ -7,6 +7,8 @@ import {
   compareNeedles,
   effectiveStations,
   findRelativeNeedles,
+  fuelAreaMm2,
+  jetAreaMm2,
 } from '~/app/composables/useNeedleCompare';
 
 // Synthetic needles used throughout the suite.
@@ -62,25 +64,50 @@ describe('effectiveStations', () => {
   });
 });
 
+// Helper used by the test suite to compute expected band averages in the
+// same fuel-area space the composable uses, without duplicating formulas.
+const expectedBandMean = (size: number, diameters: number[]) => {
+  const jet = jetAreaMm2(size);
+  const areas = diameters.map((d) => fuelAreaMm2(jet, d));
+  return areas.reduce((a, b) => a + b, 0) / areas.length;
+};
+
+describe('jetAreaMm2 / fuelAreaMm2', () => {
+  it('computes jet area from size in inches', () => {
+    // 0.090" jet → 2.286 mm diameter → radius 1.143 mm → π × 1.143² ≈ 4.1043
+    expect(jetAreaMm2(0.09)).toBeCloseTo(Math.PI * 1.143 * 1.143, 4);
+  });
+
+  it('computes fuel area as jet minus needle cross-section', () => {
+    const jet = jetAreaMm2(0.09);
+    const needleDiam = 2.0;
+    // Needle area = π × (1.0)² = π
+    expect(fuelAreaMm2(jet, needleDiam)).toBeCloseTo(jet - Math.PI * 1.0 * 1.0, 6);
+  });
+
+  it('returns a larger fuel area for a thinner (richer) needle', () => {
+    const jet = jetAreaMm2(0.09);
+    expect(fuelAreaMm2(jet, 1.5)).toBeGreaterThan(fuelAreaMm2(jet, 2.0));
+  });
+});
+
 describe('bandAverages', () => {
   it('excludes station 0 from the low band', () => {
     const avg = bandAverages(reference);
-    // Low band is stations 1..4 = (2.15 + 2.05 + 1.95 + 1.85) / 4 = 2.0
-    expect(avg.low).toBeCloseTo(2.0, 4);
+    // Low band averages fuel-flow area (mm²) across stations 1..4
+    expect(avg.low).toBeCloseTo(expectedBandMean(0.09, [2.15, 2.05, 1.95, 1.85]), 4);
   });
 
   it('computes mid and high correctly', () => {
     const avg = bandAverages(reference);
-    // Mid 5..9 = (1.8 + 1.75 + 1.7 + 1.65 + 1.6) / 5 = 1.7
-    expect(avg.mid).toBeCloseTo(1.7, 4);
-    // High 10..15 = (1.55 + 1.5 + 1.45 + 1.4 + 1.35 + 1.3) / 6 = 1.425
-    expect(avg.high).toBeCloseTo(1.425, 4);
+    expect(avg.mid).toBeCloseTo(expectedBandMean(0.09, [1.8, 1.75, 1.7, 1.65, 1.6]), 4);
+    expect(avg.high).toBeCloseTo(expectedBandMean(0.09, [1.55, 1.5, 1.45, 1.4, 1.35, 1.3]), 4);
   });
 
-  it('returns null for bands with no real station data', () => {
+  it('skips zero-valued trailing stations when averaging', () => {
     // shortNeedle has zeros at stations 13..15; high band (10..15) still has 10,11,12
     const avg = bandAverages(shortNeedle);
-    expect(avg.high).toBeCloseTo((1.55 + 1.5 + 1.45) / 3, 4);
+    expect(avg.high).toBeCloseTo(expectedBandMean(0.09, [1.55, 1.5, 1.45]), 4);
   });
 
   it('exposes canonical band ranges', () => {
@@ -91,7 +118,7 @@ describe('bandAverages', () => {
 });
 
 describe('compareNeedles', () => {
-  it('reports positive richness where candidate is smaller diameter', () => {
+  it('reports positive richness where candidate has more fuel-flow area', () => {
     const cmp = compareNeedles(reference, richerLow);
     expect(cmp.bands.low.richness).not.toBeNull();
     expect(cmp.bands.low.richness!).toBeGreaterThan(0);
@@ -100,7 +127,7 @@ describe('compareNeedles', () => {
     expect(Math.abs(cmp.bands.high.richness!)).toBeLessThan(1e-9);
   });
 
-  it('reports negative richness where candidate is larger diameter', () => {
+  it('reports negative richness where candidate has less fuel-flow area', () => {
     const cmp = compareNeedles(reference, leanerHigh);
     expect(cmp.bands.high.richness!).toBeLessThan(0);
   });
@@ -111,11 +138,14 @@ describe('compareNeedles', () => {
     expect(cmp.uniformlyLeaner).toBe(false);
   });
 
-  it('computes richnessPct relative to reference band average', () => {
+  it('computes richness as candidate.area − reference.area (mm²)', () => {
     const cmp = compareNeedles(reference, richerLow);
-    // low: ref=2.0, cand=(2.0+1.9+1.85+1.75)/4=1.875 → richness=0.125 → pct=6.25%
-    expect(cmp.bands.low.richness!).toBeCloseTo(0.125, 4);
-    expect(cmp.bands.low.richnessPct!).toBeCloseTo(6.25, 2);
+    const refMean = expectedBandMean(0.09, [2.15, 2.05, 1.95, 1.85]);
+    const candMean = expectedBandMean(0.09, [2.0, 1.9, 1.85, 1.75]);
+    expect(cmp.bands.low.reference!).toBeCloseTo(refMean, 4);
+    expect(cmp.bands.low.candidate!).toBeCloseTo(candMean, 4);
+    expect(cmp.bands.low.richness!).toBeCloseTo(candMean - refMean, 4);
+    expect(cmp.bands.low.richnessPct!).toBeCloseTo(((candMean - refMean) / refMean) * 100, 3);
   });
 
   it('flags different size needles via sameSize=false', () => {
