@@ -154,16 +154,27 @@
     });
   });
 
+  // Threshold at which a per-band % is considered meaningful enough to
+  // colour. Matches the ±0.5% neutral band documented in
+  // docs/needle-relative-search.md §8 — anything tighter than that is
+  // measurement noise once you account for the station→RPM mapping
+  // approximation, so we treat it as "no change" in the UI.
+  const RICHNESS_NEUTRAL_PCT = 0.5;
+
   function formatPct(value: number | null): string {
     if (value === null || Number.isNaN(value)) return '—';
+    const formatted = value.toFixed(1);
+    // Avoid the ugly "+0.0%" / "-0.0%" output when a tiny non-zero value
+    // rounds to zero at one decimal place — display unsigned in that case.
+    if (formatted === '0.0' || formatted === '-0.0') return '0.0%';
     const sign = value > 0 ? '+' : '';
-    return `${sign}${value.toFixed(1)}%`;
+    return `${sign}${formatted}%`;
   }
 
   function richnessClass(value: number | null): string {
     if (value === null) return 'opacity-50';
-    if (value > 0.01) return 'text-success font-semibold';
-    if (value < -0.01) return 'text-error font-semibold';
+    if (value > RICHNESS_NEUTRAL_PCT) return 'text-success font-semibold';
+    if (value < -RICHNESS_NEUTRAL_PCT) return 'text-error font-semibold';
     return 'opacity-70';
   }
 
@@ -352,6 +363,12 @@
     document.removeEventListener('click', onClickOutside);
     window.removeEventListener('scroll', onScrollOrResize, true);
     window.removeEventListener('resize', onScrollOrResize);
+    // Cancel any pending PostHog relative-search analytics ping so it
+    // can't fire after the component has been torn down.
+    if (relativeSearchDebounce) {
+      clearTimeout(relativeSearchDebounce);
+      relativeSearchDebounce = null;
+    }
   });
 
   // ---------------------------------------------------------------------------
