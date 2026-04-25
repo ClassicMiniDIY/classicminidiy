@@ -45,6 +45,12 @@ export const NEEDLE_BANDS = {
 
 export type NeedleBand = keyof typeof NEEDLE_BANDS;
 
+/**
+ * Cached at module scope so we don't reallocate the keys array (and pay an
+ * `Object.keys` call) for every needle in the pool during a relative search.
+ */
+const BAND_KEYS = Object.keys(NEEDLE_BANDS) as NeedleBand[];
+
 export type NeedleDirection = 'richer' | 'leaner' | 'similar';
 
 /**
@@ -113,7 +119,7 @@ export interface NeedleComparison {
   reference: Needle;
   sameSize: boolean;
   bands: Record<NeedleBand, BandDelta>;
-  /** Mean absolute richness across all three bands, in mm. */
+  /** Mean absolute richness across all three bands, in mm². */
   overallDistance: number;
   /** True if candidate is richer than reference in every band. */
   uniformlyRicher: boolean;
@@ -186,7 +192,7 @@ function mean(values: number[]): number | null {
 export function bandAverages(needle: Needle): BandAverages {
   const out: BandAverages = { low: null, mid: null, high: null };
   const jetArea = jetAreaMm2(needle.size);
-  (Object.keys(NEEDLE_BANDS) as NeedleBand[]).forEach((band) => {
+  BAND_KEYS.forEach((band) => {
     const { start, end } = NEEDLE_BANDS[band];
     const samples: number[] = [];
     for (let i = start; i <= end; i += 1) {
@@ -207,7 +213,7 @@ export function compareNeedles(reference: Needle, candidate: Needle): NeedleComp
   const bands = {} as Record<NeedleBand, BandDelta>;
   const richnessValues: number[] = [];
 
-  (Object.keys(NEEDLE_BANDS) as NeedleBand[]).forEach((band) => {
+  BAND_KEYS.forEach((band) => {
     const r = refBands[band];
     const c = candBands[band];
     let richness: number | null = null;
@@ -309,7 +315,7 @@ export function findRelativeNeedles(
     let isolationPenalty = 0;
     if (isolateBand) {
       let disqualified = false;
-      (Object.keys(NEEDLE_BANDS) as NeedleBand[]).forEach((b) => {
+      BAND_KEYS.forEach((b) => {
         if (b === band) return;
         const d = cmp.bands[b].richness;
         if (d === null) return;
