@@ -37,13 +37,15 @@
     try {
       // Explicit PKCE code exchange — supabase-js's detectSessionInUrl auto-magic
       // is racy with our custom lock implementation, so do it manually.
+      // If detectSessionInUrl happens to win the race, our manual call will
+      // return "code already used"; in that case initAuth() below will still
+      // pick up the session, so we don't surface the error unless we end up
+      // genuinely unauthenticated.
       const code = new URLSearchParams(window.location.search).get('code');
+      let exchangeError: { message?: string } | null = null;
       if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
-        if (exchangeError) {
-          errorMessage.value = exchangeError.message || 'Authentication failed. Please try again.';
-          return;
-        }
+        const result = await supabase.auth.exchangeCodeForSession(window.location.href);
+        exchangeError = result.error;
       }
 
       await initAuth();
@@ -64,7 +66,7 @@
           navigateTo('/', { replace: true });
         }
       } else {
-        errorMessage.value = 'Authentication failed. Please try again.';
+        errorMessage.value = exchangeError?.message || 'Authentication failed. Please try again.';
       }
     } catch (e: any) {
       errorMessage.value = e.message || 'Authentication failed';
