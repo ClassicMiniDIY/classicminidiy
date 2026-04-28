@@ -29,11 +29,23 @@
     meta: [{ name: 'robots', content: 'noindex, nofollow' }],
   });
 
+  const supabase = useSupabase();
   const { initAuth, isAuthenticated, isAdmin, userProfile, waitForAuth } = useAuth();
   const errorMessage = ref('');
 
   onMounted(async () => {
     try {
+      // Explicit PKCE code exchange — supabase-js's detectSessionInUrl auto-magic
+      // is racy with our custom lock implementation, so do it manually.
+      const code = new URLSearchParams(window.location.search).get('code');
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        if (exchangeError) {
+          errorMessage.value = exchangeError.message || 'Authentication failed. Please try again.';
+          return;
+        }
+      }
+
       await initAuth();
       // Wait briefly for session to be detected from URL
       await new Promise((resolve) => setTimeout(resolve, 500));
