@@ -44,7 +44,9 @@
       const code = new URLSearchParams(window.location.search).get('code');
       let exchangeError: { message?: string } | null = null;
       if (code) {
-        const result = await supabase.auth.exchangeCodeForSession(window.location.href);
+        // Pass the code string only, NOT window.location.href — supabase-js
+        // puts this value directly into the /token POST body's auth_code field.
+        const result = await supabase.auth.exchangeCodeForSession(code);
         exchangeError = result.error;
       }
 
