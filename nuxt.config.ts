@@ -477,6 +477,8 @@ export default defineNuxtConfig({
         'marked',
         'marked-highlight',
         'highlight.js',
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
       ],
       exclude: [],
     },
