@@ -12,6 +12,30 @@ This repo is part of the Classic Mini DIY property ecosystem. For the full cross
 
 This site shares the Supabase auth and profiles with the other properties. Database schema lives in `classicminidiy-supabase`.
 
+## Cross-Property Feature Tracking
+
+Features that span multiple CMDIY properties (Web / Supabase / iOS / Android / TME) are tracked in the org-level GitHub Project: **[CMDIY Platform #9](https://github.com/orgs/ClassicMiniDIY/projects/9)**.
+
+**Before starting work on a new feature, check if it has a card on the board.** If not, create one:
+
+```bash
+gh project item-create 9 --owner ClassicMiniDIY \
+  --title "<feature name>" \
+  --body "<short description>"
+```
+
+Then set the per-property status fields via the project UI or `gh project item-edit`:
+- **Not Started** — feature could exist here but hasn't shipped
+- **In Progress** — actively being built
+- **Shipped** — live in production
+- **N/A** — feature doesn't apply to this property
+
+Also set **Priority** (Low/Medium/High) and **Cascade Notes** for porting reminders.
+
+**Skip card creation for:** bug fixes, refactors, dependency bumps, or work scoped to one repo with no cross-property cascade potential.
+
+A weekly remote agent updates the rolling [Weekly Cascade Report](https://github.com/ClassicMiniDIY/classicminidiy-supabase/issues?q=Weekly+Cascade+Report) issue listing features shipped on one property but not yet ported elsewhere.
+
 ## Project Overview
 
 **Classic Mini DIY** is a comprehensive web application serving as both a toolkit and permanent archive for Classic Mini enthusiasts. It provides technical information, calculators, historical documents, and interactive tools for Classic Mini owners and mechanics.
