@@ -391,7 +391,17 @@
     const sanitize = (data: number[]): (number | null)[] =>
       data.map((v) => (typeof v === 'number' && v > 0 ? v : null));
 
+    // Stable per-series `id` is critical: without it Highcharts diffs the
+    // series array by INDEX when options change. Removing one needle then
+    // shifts every subsequent series up one slot, and Highcharts in-place
+    // updates each old slot with new data — but only overwrites overlapping
+    // station points. If the new occupant of a slot has fewer stations
+    // than the old one (e.g. swapping a 16-station needle in for a
+    // 13-station "20"), the trailing points from the previous occupant
+    // survive as ghosts on the wrong line. Identifying by `id` makes
+    // Highcharts properly remove the dropped series and shift the rest.
     const lineSeries = selectedNeedles.value.map((needle) => ({
+      id: `line-${needle.name}`,
       name: needle.name,
       data: sanitize(needle.data),
       type: 'spline',
@@ -410,6 +420,7 @@
       const { richer, leaner } = buildDiffSeriesData(reference, candidate);
       diffSeries.push(
         {
+          id: `diff-richer-${candidate.name}-vs-${reference.name}`,
           type: 'arearange',
           name: `${candidate.name} richer vs ${reference.name}`,
           data: richer,
@@ -422,6 +433,7 @@
           marker: { enabled: false },
         },
         {
+          id: `diff-leaner-${candidate.name}-vs-${reference.name}`,
           type: 'arearange',
           name: `${candidate.name} leaner vs ${reference.name}`,
           data: leaner,

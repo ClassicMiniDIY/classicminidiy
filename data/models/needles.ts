@@ -1,6 +1,28 @@
 import StarterNeedles from '../../data/default-needles.json';
 export const chartOptions = {
-  chart: { zoomType: 'x' },
+  chart: {
+    // `zooming.*` is the modern Highcharts ≥11 config block; `zoomType` is
+    // kept as the legacy fallback. Pinch on touch + drag-to-select on
+    // desktop both zoom horizontally only — vertical zoom is irrelevant
+    // for needle profile comparison.
+    //
+    // Why not a scrollbar: Highcharts' axis scrollbar lives in the Stock
+    // build, which is ~50KB+ of features (navigator, candlestick, OHLC)
+    // we don't need. Mouse-wheel zoom + click-and-drag panning + the
+    // auto-rendered "Reset Zoom" button cover the same UX without the
+    // bundle hit.
+    zoomType: 'x',
+    zooming: {
+      type: 'x',
+      pinchType: 'x',
+      mouseWheel: { enabled: true, type: 'x' },
+      resetButton: { position: { align: 'right', verticalAlign: 'top', x: -10, y: 10 } },
+    },
+    // Click-and-drag panning is always available; once zoomed it pans
+    // through the stations, while not-zoomed it's effectively a no-op.
+    panning: { enabled: true, type: 'x' },
+    panKey: 'shift',
+  },
   title: { text: 'Needle Comparison Chart' },
   exporting: {
     buttons: {
