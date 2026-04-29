@@ -382,12 +382,23 @@
     const refName = referenceNeedleName.value;
     const diffEnabled = showDiff.value && selectedNeedles.value.length >= 2 && referenceNeedle.value !== null;
 
+    // Convert `0` station values (which mean "needle is shorter, no real
+    // diameter at this station" — see buildDiffSeriesData docstring) to
+    // `null` so Highcharts draws a gap instead of plotting them as actual
+    // y=0 points. Without this, shorter needles like "20" (13 real values
+    // + 3 trailing zeros) draw a dramatic spike up to the top of the
+    // reversed Y axis at the end of the chart.
+    const sanitize = (data: number[]): (number | null)[] =>
+      data.map((v) => (typeof v === 'number' && v > 0 ? v : null));
+
     const lineSeries = selectedNeedles.value.map((needle) => ({
-      ...needle,
+      name: needle.name,
+      data: sanitize(needle.data),
       type: 'spline',
       lineWidth: diffEnabled && needle.name === refName ? 3 : 2,
       dashStyle: diffEnabled && needle.name === refName ? 'ShortDash' : 'Solid',
       zIndex: diffEnabled && needle.name === refName ? 5 : 4,
+      connectNulls: false,
     }));
 
     if (!diffEnabled) return lineSeries;
