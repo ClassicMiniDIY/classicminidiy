@@ -222,7 +222,11 @@ export function compareNeedles(reference: Needle, candidate: Needle): NeedleComp
       // Fuel-area delta. Positive means candidate has more fuel-flow area
       // than reference in this band, i.e. the candidate is richer here.
       richness = c - r;
-      richnessPct = r !== 0 ? (richness / r) * 100 : null;
+      // Belt-and-suspenders null check — the outer `if` already guarantees
+      // `r !== null`, but writing it explicitly here keeps the line
+      // self-documenting and won't silently produce NaN if a future
+      // refactor narrows the outer guard.
+      richnessPct = r !== null && r !== 0 ? (richness / r) * 100 : null;
       richnessValues.push(Math.abs(richness));
     }
     bands[band] = { reference: r, candidate: c, richness, richnessPct };

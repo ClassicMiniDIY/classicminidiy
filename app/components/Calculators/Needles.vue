@@ -460,32 +460,39 @@
     series: buildSeries(),
   }));
 
-  // highcharts-vue's built-in watcher updates `series` in place but does not
-  // deeply diff chart/axis/legend/tooltip color options when the computed
-  // changes — so a color-mode flip would leave stale background/axis colors
-  // on the live chart. Watch the DOM's data-theme attribute (the ground
-  // truth for color mode on this site) and re-theme every live Highcharts
-  // chart when it changes. Using a MutationObserver on documentElement
-  // bypasses Vue template-ref + ClientOnly plumbing that prevented the
-  // reactive approach from working in practice.
+  // highcharts-vue's :options prop watcher patches `series` in place but
+  // in practice does not re-apply chart/axis/legend/tooltip color options
+  // when the computed updates — the chart background stays stuck at the
+  // previous theme until the chart is re-mounted. Watch the documentElement
+  // `data-theme` attribute (the canonical color-mode signal on this site,
+  // set by the daisyUI theme switcher in useColorMode) and imperatively
+  // re-theme the live chart when it changes.
+  //
+  // Two PR-review-driven details on the chart.update() call:
+  //
+  //   1. Pass `reactiveChartOptions.value` rather than the raw
+  //      `getChartOptionsForMode()` return. The latter spreads the base
+  //      chartOptions which still carries `series: StarterNeedles`, and
+  //      combined with `oneToOne: true` it would wipe every selected
+  //      needle on each theme toggle. `reactiveChartOptions.value` already
+  //      contains the current series via buildSeries().
+  //   2. Use `oneToOne: false` so existing series are diffed by their
+  //      stable `id` (line-<name>, diff-richer-..., diff-leaner-...)
+  //      rather than being wholesale replaced.
+  //
+  // If the template ref isn't populated yet, skip — the chart will mount
+  // with the correct theme on its next render via the reactive computed.
   const needlesChart = ref<any>(null);
   let themeObserver: MutationObserver | null = null;
   onMounted(() => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    const applyTheme = () => {
-      const chart =
-        needlesChart.value?.chart ??
-        ((window as any).Highcharts?.charts ?? []).find(
-          (c: any) => c && c.title?.textStr === chartOptions.title.text
-        );
-      if (chart?.update) {
-        chart.update(getChartOptionsForMode(), true, true);
-      }
-    };
+    if (typeof document === 'undefined') return;
     themeObserver = new MutationObserver((mutations) => {
       for (const m of mutations) {
         if (m.type === 'attributes' && m.attributeName === 'data-theme') {
-          applyTheme();
+          const chart = needlesChart.value?.chart;
+          if (chart?.update) {
+            chart.update(reactiveChartOptions.value, true, false);
+          }
           break;
         }
       }
