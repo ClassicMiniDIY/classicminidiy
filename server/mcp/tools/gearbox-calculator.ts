@@ -17,8 +17,8 @@ export default defineMcpTool({
       .describe('Final drive ratio (e.g., 3.444 for standard). Range: 2.76 to 4.571'),
     gear_ratios: z
       .array(z.number())
-      .min(3)
-      .max(6)
+      .min(4)
+      .max(5)
       .default([2.583, 1.644, 1.25, 1.0])
       .describe(
         'Gear ratios in order [1st, 2nd, 3rd, 4th, optional 5th]. Length 4 for 4-speed (e.g., [2.583, 1.644, 1.25, 1.0]) or 5 for 5-speed (e.g., [2.583, 1.644, 1.25, 1.0, 0.865]).'
