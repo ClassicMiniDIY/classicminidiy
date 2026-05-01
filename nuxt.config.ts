@@ -479,6 +479,7 @@ export default defineNuxtConfig({
         'highlight.js',
         '@vue/devtools-core',
         '@vue/devtools-kit',
+        'fuse.js',
       ],
       exclude: [],
     },
