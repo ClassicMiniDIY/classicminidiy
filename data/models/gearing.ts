@@ -36,7 +36,7 @@ export interface DropGearOption {
 
 // Gear ratio option types
 export interface GearRatioOption {
-  value: [number, number, number, number]; // Array of 4 gear ratios
+  value: number[]; // 4 ratios for 4-speed, 5 for 5-speed (1st, 2nd, 3rd, 4th, [5th])
   label: string;
 }
 
@@ -334,6 +334,10 @@ export const options: GearingOptions = {
     {
       value: [2.583, 1.644, 1.25, 1.0],
       label: 'Minispares Evolution Helical Heavy Duty Kit - C-STN48',
+    },
+    {
+      value: [2.583, 1.644, 1.25, 1.0, 0.865],
+      label: 'Minispares Evolution 5-Speed',
     },
     {
       value: [2.583, 1.711, 1.25, 1.0],

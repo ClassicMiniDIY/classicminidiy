@@ -101,11 +101,12 @@ describe('options.gearRatios', () => {
     expect(options.gearRatios.length).toBeGreaterThan(0);
   });
 
-  it('each gear ratio set has a label and a 4-element value array', () => {
+  it('each gear ratio set has a label and a 4- or 5-element value array', () => {
     for (const gr of options.gearRatios) {
       expect(typeof gr.label).toBe('string');
       expect(Array.isArray(gr.value)).toBe(true);
-      expect(gr.value).toHaveLength(4);
+      expect(gr.value.length).toBeGreaterThanOrEqual(4);
+      expect(gr.value.length).toBeLessThanOrEqual(5);
     }
   });
 
@@ -128,6 +129,21 @@ describe('options.gearRatios', () => {
   it('includes the Magic Wand gear set', () => {
     const found = options.gearRatios.find((gr) => gr.label.includes('Magic Wand'));
     expect(found).toBeDefined();
+  });
+
+  it('includes the Minispares Evolution 5-Speed gearset with an overdrive 5th gear', () => {
+    const found = options.gearRatios.find((gr) => gr.label === 'Minispares Evolution 5-Speed');
+    expect(found).toBeDefined();
+    expect(found!.value).toHaveLength(5);
+    // 5th gear is overdrive (< 1.0)
+    expect(found!.value[4]).toBeLessThan(1.0);
+    // Specifically 0.865:1 per Minispares spec
+    expect(found!.value[4]).toBeCloseTo(0.865, 3);
+    // 4th gear is still 1:1 direct drive
+    expect(found!.value[3]).toBe(1.0);
+    // 1st and 3rd shared with the Clubman set
+    expect(found!.value[0]).toBeCloseTo(2.583, 3);
+    expect(found!.value[2]).toBeCloseTo(1.25, 3);
   });
 });
 

@@ -7,7 +7,7 @@ import { options, kphFactor } from '../../../data/models/gearing';
  */
 export default defineMcpTool({
   description:
-    'Calculate gear ratios, top speed, and speedometer compatibility for Classic Mini gearboxes. Supports various final drives (2.76:1 to 4.571:1), gear ratios (Pre-64 Magic Wand to modern dog engagement kits), tire sizes (145/80r10 to 195/50r13), and speedometer drives.',
+    'Calculate gear ratios, top speed, and speedometer compatibility for Classic Mini gearboxes. Supports both 4-speed and 5-speed gearboxes (including the Minispares Evolution 5-Speed with overdrive 5th), various final drives (2.76:1 to 4.571:1), gear ratios (Pre-64 Magic Wand to modern dog engagement kits), tire sizes (145/80r10 to 195/50r13), and speedometer drives.',
 
   inputSchema: {
     metric: z.boolean().default(false).describe('Use metric units (true for km/h, false for mph)'),
@@ -17,9 +17,12 @@ export default defineMcpTool({
       .describe('Final drive ratio (e.g., 3.444 for standard). Range: 2.76 to 4.571'),
     gear_ratios: z
       .array(z.number())
-      .length(4)
+      .min(3)
+      .max(6)
       .default([2.583, 1.644, 1.25, 1.0])
-      .describe('Array of 4 gear ratios [1st, 2nd, 3rd, 4th]. Example: [2.583, 1.644, 1.25, 1.0]'),
+      .describe(
+        'Gear ratios in order [1st, 2nd, 3rd, 4th, optional 5th]. Length 4 for 4-speed (e.g., [2.583, 1.644, 1.25, 1.0]) or 5 for 5-speed (e.g., [2.583, 1.644, 1.25, 1.0, 0.865]).'
+      ),
     drop_gear: z.number().default(1).describe('Drop gear ratio. Standard: 1.0'),
     speedo_drive: z.number().default(0.3529).describe('Speedometer drive ratio. Common: 0.3529 (5/18)'),
     max_rpm: z.number().default(6500).describe('Maximum engine RPM. Typical: 6000-7000 RPM'),
@@ -74,8 +77,8 @@ export default defineMcpTool({
       };
     });
 
-    // Calculate top speed (4th gear)
-    const topSpeedGear = gearingData[3]; // 4th gear
+    // Calculate top speed from the highest gear (last entry — 4th for 4-speed, 5th for 5-speed)
+    const topSpeedGear = gearingData[gearingData.length - 1];
     const topSpeed = topSpeedGear?.maxSpeed || 0;
 
     // Calculate speedometer compatibility

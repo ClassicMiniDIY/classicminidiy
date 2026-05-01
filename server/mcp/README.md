@@ -87,7 +87,7 @@ Calculate gear ratios, top speed, and speedometer compatibility.
 
 - `metric` (boolean): Use metric units (true for km/h, false for mph)
 - `final_drive` (number): Final drive ratio (e.g., 3.444)
-- `gear_ratios` (array): Array of 4 gear ratios [1st, 2nd, 3rd, 4th]
+- `gear_ratios` (array): Gear ratios in order [1st, 2nd, 3rd, 4th, optional 5th]. Length 4 for 4-speed gearboxes, length 5 for 5-speed (e.g., Minispares Evolution 5-Speed with overdrive)
 - `drop_gear` (number): Drop gear ratio
 - `speedo_drive` (number): Speedometer drive ratio
 - `max_rpm` (number): Maximum engine RPM
