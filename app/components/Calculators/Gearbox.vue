@@ -116,7 +116,8 @@
       const speedoMatch = bestMatch ? bestMatch.speedometer : `${closestMatch.speedometer} (${closestMatch.result})`;
       const speedoStatus = bestMatch ? 'text-green' : closestMatch.status;
 
-      const totalRatio4th = `${(config.finalDrive * (gearingTable[3]?.ratio || 1) * config.dropGear).toFixed(3)}:1`;
+      const topGearRow = gearingTable[gearingTable.length - 1];
+      const totalRatioTop = `${(config.finalDrive * (topGearRow?.ratio || 1) * config.dropGear).toFixed(3)}:1`;
 
       return {
         name: config.name,
@@ -126,14 +127,16 @@
         speedoTable,
         speedoMatch,
         speedoStatus,
-        totalRatio4th,
+        totalRatioTop,
       };
     });
   });
 
   // Chart data for all gears view
-  const GEAR_MARKERS = ['circle', 'square', 'diamond', 'triangle'];
-  const GEAR_NAMES = ['1st', '2nd', '3rd', '4th'];
+  const GEAR_MARKERS = ['circle', 'square', 'diamond', 'triangle', 'triangle-down'];
+  const GEAR_NAMES = ['1st', '2nd', '3rd', '4th', '5th'];
+
+  const maxGearCount = computed(() => Math.max(...configs.value.map((c) => c.gearset.length)));
 
   const allGearsSeries = computed((): ChartSeriesData[] => {
     const tire = tireCalcs.value;
@@ -160,18 +163,42 @@
     return series;
   });
 
-  // Speedo details for the first config (used for the shared speedo info card)
+  // Pick the config with the most gears for the "primary" side panels so a
+  // 5-speed in config 1 still surfaces its 5th gear when config 0 is 4-speed.
+  // Ties go to the lowest index (preserves config-0-first behavior for equal-length sets).
+  const primaryConfigIndex = computed(() => {
+    const list = configResults.value;
+    if (list.length === 0) return 0;
+    let idx = 0;
+    let max = list[0]?.gearingTable.length ?? 0;
+    for (let i = 1; i < list.length; i++) {
+      const len = list[i]?.gearingTable.length ?? 0;
+      if (len > max) {
+        max = len;
+        idx = i;
+      }
+    }
+    return idx;
+  });
+
+  // Speedo + gearing details from the primary config (defined above)
   const primarySpeedoData = computed(() => {
-    return configResults.value[0]?.speedoData || { turnsPerMile: 0, engineRevsMile: 0 };
+    return configResults.value[primaryConfigIndex.value]?.speedoData || { turnsPerMile: 0, engineRevsMile: 0 };
   });
 
   const primarySpeedoTable = computed(() => {
-    return configResults.value[0]?.speedoTable || [];
+    return configResults.value[primaryConfigIndex.value]?.speedoTable || [];
   });
 
-  // Top speed from first config
+  const primaryGearingTable = computed(() => {
+    return configResults.value[primaryConfigIndex.value]?.gearingTable || [];
+  });
+
+  // Top speed from primary config (last gear = highest top speed)
   const topSpeed = computed(() => {
-    return configResults.value[0]?.gearingTable[3]?.maxSpeed || '---';
+    const table = primaryGearingTable.value;
+    if (table.length === 0) return '---';
+    return table[table.length - 1]?.maxSpeed || '---';
   });
 
   // Display values with unit conversion
@@ -405,7 +432,7 @@
         <h3 class="text-lg text-white opacity-70">
           <i class="fa-jelly-duo fa-regular fa-percent"></i> {{ t('results.total_ratio') }}
         </h3>
-        <p class="text-3xl text-white font-bold">{{ configResults[0]?.totalRatio4th || '---' }}</p>
+        <p class="text-3xl text-white font-bold">{{ configResults[primaryConfigIndex]?.totalRatioTop || '---' }}</p>
       </div>
     </div>
 
@@ -463,6 +490,7 @@
         :config-colors="configs.map((_, i) => CONFIG_COLORS[i])"
         :metric="metric"
         :max-rpm="maxRpm"
+        :max-gear-count="maxGearCount"
       />
     </div>
 
@@ -521,7 +549,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(item, index) in configResults[0]?.gearingTable || []" :key="index">
+                  <tr v-for="(item, index) in primaryGearingTable" :key="index">
                     <td>{{ item.gear }}</td>
                     <td>{{ item.ratio }}</td>
                     <td>{{ item.maxSpeed }}</td>

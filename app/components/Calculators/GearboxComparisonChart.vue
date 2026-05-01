@@ -4,23 +4,30 @@
 
   const { t } = useI18n();
 
-  const props = defineProps<{
-    allGearsSeries: ChartSeriesData[];
-    configNames: string[];
-    configColors: string[];
-    metric: boolean;
-    maxRpm: number;
-  }>();
+  const props = withDefaults(
+    defineProps<{
+      allGearsSeries: ChartSeriesData[];
+      configNames: string[];
+      configColors: string[];
+      metric: boolean;
+      maxRpm: number;
+      maxGearCount?: number;
+    }>(),
+    { maxGearCount: 4 }
+  );
 
   const colorMode = useColorMode();
   const isDark = computed(() => colorMode.isDark.value);
 
-  const GEAR_SHAPES: { symbol: string; dash: string; label: string }[] = [
+  const ALL_GEAR_SHAPES: { symbol: string; dash: string; label: string }[] = [
     { symbol: 'circle', dash: 'ShortDash', label: '1st Gear' },
     { symbol: 'square', dash: 'ShortDash', label: '2nd Gear' },
     { symbol: 'diamond', dash: 'ShortDash', label: '3rd Gear' },
     { symbol: 'triangle', dash: 'Solid', label: '4th Gear' },
+    { symbol: 'triangle-down', dash: 'ShortDash', label: '5th Gear' },
   ];
+
+  const GEAR_SHAPES = computed(() => ALL_GEAR_SHAPES.slice(0, props.maxGearCount));
 
   const darkModeChartOptions = {
     chart: { backgroundColor: '#171717' },
@@ -100,6 +107,7 @@
             square: '\u25A0',
             diamond: '\u25C6',
             triangle: '\u25B2',
+            'triangle-down': '\u25BC',
           };
           let html = `<b>${this.x} RPM</b><br/>`;
           for (const point of this.points) {
@@ -157,6 +165,9 @@
               </template>
               <template v-else-if="gear.symbol === 'triangle'">
                 <polygon points="12,1.5 17,10.5 7,10.5" fill="currentColor" class="opacity-60" />
+              </template>
+              <template v-else-if="gear.symbol === 'triangle-down'">
+                <polygon points="12,10.5 7,1.5 17,1.5" fill="currentColor" class="opacity-60" />
               </template>
             </svg>
             <span class="text-xs">{{ gear.label }}</span>

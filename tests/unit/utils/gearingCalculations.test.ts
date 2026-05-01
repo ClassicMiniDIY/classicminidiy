@@ -337,6 +337,110 @@ describe('calculateGearingTable', () => {
       expect(high[0].maxSpeedRaw).toBeGreaterThan(low[0].maxSpeedRaw);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // 5-speed gearset (Minispares Evolution 5-Speed)
+  // -------------------------------------------------------------------------
+  describe('5-speed gearset (Minispares Evolution 5-Speed)', () => {
+    const FIVE_SPEED = [2.583, 1.644, 1.25, 1.0, 0.865];
+
+    it('produces a row for each of the 5 gears, numbered 1-5', () => {
+      const rows = calculateGearingTable(
+        FIVE_SPEED,
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        false
+      );
+      expect(rows).toHaveLength(5);
+      expect(rows.map((r) => r.gear)).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('preserves each gear ratio on its row', () => {
+      const rows = calculateGearingTable(
+        FIVE_SPEED,
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        false
+      );
+      rows.forEach((row, i) => expect(row.ratio).toBe(FIVE_SPEED[i]));
+    });
+
+    it('5th gear (overdrive 0.865) produces a HIGHER top speed than 4th gear (1.0)', () => {
+      const rows = calculateGearingTable(
+        FIVE_SPEED,
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        false
+      );
+      // Overdrive means the output spins faster than the input — higher speed at the same RPM
+      expect(rows[4].maxSpeedRaw).toBeGreaterThan(rows[3].maxSpeedRaw);
+    });
+
+    it('top speeds are monotonically increasing through all 5 gears', () => {
+      const rows = calculateGearingTable(
+        FIVE_SPEED,
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        false
+      );
+      for (let i = 1; i < rows.length; i++) {
+        expect(rows[i].maxSpeedRaw).toBeGreaterThan(rows[i - 1].maxSpeedRaw);
+      }
+    });
+
+    it('1st-4th gear speeds match the Clubman 4-speed (shared 1st/3rd/4th ratios)', () => {
+      // The 5-speed shares 1st (2.583), 3rd (1.25), and 4th (1.0) with the Clubman set.
+      // 2nd differs: Clubman is 1.711, 5-speed is 1.644.
+      const fiveSpeed = calculateGearingTable(
+        FIVE_SPEED,
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        false
+      );
+      const clubman = calculateGearingTable(
+        [2.583, 1.711, 1.25, 1.0],
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        false
+      );
+      expect(fiveSpeed[0].maxSpeedRaw).toBe(clubman[0].maxSpeedRaw); // 1st
+      expect(fiveSpeed[2].maxSpeedRaw).toBe(clubman[2].maxSpeedRaw); // 3rd
+      expect(fiveSpeed[3].maxSpeedRaw).toBe(clubman[3].maxSpeedRaw); // 4th
+    });
+
+    it('formats 5th gear maxSpeed with the correct unit suffix', () => {
+      const imperial = calculateGearingTable(
+        FIVE_SPEED,
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        false
+      );
+      const metric = calculateGearingTable(
+        FIVE_SPEED,
+        FINAL_DRIVE,
+        DROP_GEAR_STANDARD,
+        MAX_RPM,
+        STANDARD_TIRE_CIRC_IN_MILES,
+        true
+      );
+      expect(imperial[4].maxSpeed).toMatch(/^\d+mph$/);
+      expect(metric[4].maxSpeed).toMatch(/^\d+km\/h$/);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

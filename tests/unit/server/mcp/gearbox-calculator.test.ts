@@ -116,20 +116,20 @@ describe('Gearbox Calculator MCP Tool', () => {
 
   // ---- Gear output structure ----
   describe('gearing output', () => {
-    it('produces exactly 4 gears', async () => {
+    it('produces gears matching the input length (4 by default)', async () => {
       const result = await toolConfig.handler(defaultInputs);
-      expect(result.gearing).toHaveLength(4);
+      expect(result.gearing).toHaveLength(defaultInputs.gear_ratios.length);
     });
 
-    it('gears are numbered 1 through 4', async () => {
+    it('gears are numbered 1 through N (default 4)', async () => {
       const result = await toolConfig.handler(defaultInputs);
       expect(result.gearing.map((g: any) => g.gear)).toEqual([1, 2, 3, 4]);
     });
 
-    it('4th gear is used for top speed', async () => {
+    it('the highest gear is used for top speed', async () => {
       const result = await toolConfig.handler(defaultInputs);
-      const fourthGear = result.gearing.find((g: any) => g.gear === 4);
-      expect(result.results.topSpeed).toBe(fourthGear.maxSpeed);
+      const topGear = result.gearing[result.gearing.length - 1];
+      expect(result.results.topSpeed).toBe(topGear.maxSpeed);
     });
 
     it('each gear has ratio, totalRatio, maxSpeed, and unit', async () => {
@@ -369,6 +369,53 @@ describe('Gearbox Calculator MCP Tool', () => {
     it('calls jsonResult exactly once', async () => {
       await toolConfig.handler(defaultInputs);
       expect(mockJsonResult).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ---- 5-speed gearbox support ----
+  describe('5-speed gearbox (Minispares Evolution 5-Speed)', () => {
+    const fiveSpeedInputs = {
+      ...defaultInputs,
+      gear_ratios: [2.583, 1.644, 1.25, 1.0, 0.865],
+    };
+
+    it('accepts a 5-element gear_ratios array', async () => {
+      const result = await toolConfig.handler(fiveSpeedInputs);
+      expect(result.gearing).toHaveLength(5);
+    });
+
+    it('numbers gears 1 through 5', async () => {
+      const result = await toolConfig.handler(fiveSpeedInputs);
+      expect(result.gearing.map((g: any) => g.gear)).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('uses 5th gear for top speed (overdrive produces highest speed)', async () => {
+      const result = await toolConfig.handler(fiveSpeedInputs);
+      const fifthGear = result.gearing[4];
+      const fourthGear = result.gearing[3];
+      expect(result.results.topSpeed).toBe(fifthGear.maxSpeed);
+      // 5th (0.865) is overdrive — higher top speed than 4th (1.0)
+      expect(fifthGear.maxSpeed).toBeGreaterThan(fourthGear.maxSpeed);
+    });
+
+    it('top speed of 5-speed exceeds 4-speed at the same RPM and final drive', async () => {
+      const fourSpeed = await toolConfig.handler(defaultInputs);
+      const fiveSpeed = await toolConfig.handler(fiveSpeedInputs);
+      // Overdrive 5th means higher top speed
+      expect(fiveSpeed.results.topSpeed).toBeGreaterThan(fourSpeed.results.topSpeed);
+    });
+
+    it('matches the Minispares Evolution 5-Speed entry by label', async () => {
+      const result = await toolConfig.handler(fiveSpeedInputs);
+      expect(result.context.gearRatios).toBe('Minispares Evolution 5-Speed');
+    });
+
+    it('total ratio for 5th gear factors in the overdrive ratio', async () => {
+      const result = await toolConfig.handler(fiveSpeedInputs);
+      const fifthGear = result.gearing[4];
+      const expected =
+        Math.round((0.865 * fiveSpeedInputs.final_drive * fiveSpeedInputs.drop_gear + Number.EPSILON) * 1000) / 1000;
+      expect(fifthGear.totalRatio).toBe(expected);
     });
   });
 });
