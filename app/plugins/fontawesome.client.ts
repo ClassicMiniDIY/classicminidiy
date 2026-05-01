@@ -23,6 +23,13 @@
 // handled automatically.
 export default defineNuxtPlugin((nuxtApp) => {
   let enabled = false;
+  // `arming` tracks whether we're already in the "waiting for the kit to
+  // load" phase. Without it, a `page:finish` hook firing during rapid
+  // navigation (while the kit is still loading on a slow connection)
+  // would attach a second `script` load listener and start a parallel
+  // polling interval — wasteful, and a small leak until the kit finally
+  // resolves and both copies fire enableFa().
+  let arming = false;
 
   const enableFa = (): boolean => {
     if (enabled) return true;
@@ -50,14 +57,28 @@ export default defineNuxtPlugin((nuxtApp) => {
   };
 
   const armEnable = () => {
+    if (enabled || arming) return;
     if (enableFa()) return;
+
+    arming = true;
+
+    const finish = () => {
+      arming = false;
+    };
 
     // Deterministic path: react when the kit script finishes loading.
     const script = document.querySelector(
       'script[src*="kit.fontawesome.com"], script[src*="ka-f.fontawesome.com"]'
     ) as HTMLScriptElement | null;
     if (script) {
-      script.addEventListener('load', () => enableFa(), { once: true });
+      script.addEventListener(
+        'load',
+        () => {
+          enableFa();
+          finish();
+        },
+        { once: true }
+      );
     }
 
     // Defensive fallback: if the load event already fired (script may have
@@ -70,6 +91,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       attempts += 1;
       if (enableFa() || attempts >= MAX_ATTEMPTS) {
         window.clearInterval(interval);
+        finish();
       }
     }, 100);
   };
