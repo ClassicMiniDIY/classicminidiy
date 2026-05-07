@@ -58,7 +58,7 @@
     {
       label: t('navigation.blog'),
       faIcon: 'fa-pencil',
-      to: 'https://classicminidiy.substack.com/',
+      to: 'https://news.classicminidiy.com/',
     },
     {
       label: t('navigation.store'),

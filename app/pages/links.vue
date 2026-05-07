@@ -24,7 +24,7 @@
       id: 'newsletter',
       label: t('links.newsletter.label'),
       sub: t('links.newsletter.sub'),
-      href: 'https://classicminidiy.substack.com/',
+      href: 'https://news.classicminidiy.com/',
       icon: 'fad fa-envelope-open-text',
       btnClass: 'btn-primary',
     },
