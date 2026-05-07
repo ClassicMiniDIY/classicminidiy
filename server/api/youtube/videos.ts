@@ -8,7 +8,11 @@ export default defineEventHandler(async (event) => {
   const baseURL = 'https://www.googleapis.com/youtube/v3/playlistItems';
   const id = 'UUZIUfOFhrQ9nrR06IOoAJ2Q';
   const details = 'snippet';
-  const feed = `${baseURL}?key=${config.youtubeAPIKey}&playlistId=${id}&part=${details}`;
+  const query = getQuery(event);
+  const requestedLimit = Number(query.limit);
+  const limit =
+    Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(Math.trunc(requestedLimit), 50) : 3;
+  const feed = `${baseURL}?key=${config.youtubeAPIKey}&playlistId=${id}&part=${details}&maxResults=${limit}`;
 
   // Set cache headers - cache for 1 hour since YouTube content changes more frequently
   setResponseHeaders(event, {
@@ -51,7 +55,7 @@ export default defineEventHandler(async (event) => {
       publishedOn: DateTime.fromISO(item.snippet.publishedAt).toFormat('LLL dd, yyyy'),
       videoUrl: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
     }));
-    return items.slice(0, 3);
+    return items.slice(0, limit);
   } catch (error: any) {
     console.error('YouTube API error:', error);
     // Return a fallback or cached response if available
