@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const requestedLimit = Number(query.limit);
   const limit =
-    Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(Math.trunc(requestedLimit), 50) : 3;
+    Number.isFinite(requestedLimit) && requestedLimit >= 1 ? Math.min(Math.trunc(requestedLimit), 50) : 3;
   const feed = `${baseURL}?key=${config.youtubeAPIKey}&playlistId=${id}&part=${details}&maxResults=${limit}`;
 
   // Set cache headers - cache for 1 hour since YouTube content changes more frequently

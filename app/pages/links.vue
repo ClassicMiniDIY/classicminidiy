@@ -69,7 +69,7 @@
     key: 'links-page-videos',
   });
 
-  useHead({
+  useHead(() => ({
     title: t('links.seo.title'),
     meta: [
       { name: 'description', content: t('links.seo.description') },
@@ -79,17 +79,17 @@
       { rel: 'canonical', href: 'https://classicminidiy.com/links' },
       { rel: 'preconnect', href: 'https://classicminidiy.s3.amazonaws.com' },
     ],
-  });
+  }));
 
   useSeoMeta({
-    ogTitle: t('links.seo.title'),
-    ogDescription: t('links.seo.description'),
+    ogTitle: () => t('links.seo.title'),
+    ogDescription: () => t('links.seo.description'),
     ogUrl: 'https://classicminidiy.com/links',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
     ogType: 'website',
     twitterCard: 'summary_large_image',
-    twitterTitle: t('links.seo.title'),
-    twitterDescription: t('links.seo.description'),
+    twitterTitle: () => t('links.seo.title'),
+    twitterDescription: () => t('links.seo.description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
   });
 
@@ -111,14 +111,14 @@
     },
   }));
 
-  useHead({
+  useHead(() => ({
     script: [
       {
         type: 'application/ld+json',
         innerHTML: JSON.stringify(linksJsonLd.value),
       },
     ],
-  });
+  }));
 </script>
 
 <template>
@@ -158,12 +158,10 @@
         </div>
 
         <div class="flex flex-col gap-2">
-          <component
-            :is="link.href.startsWith('/') ? 'NuxtLink' : 'a'"
+          <NuxtLink
             v-for="link in secondaryLinks"
             :key="link.id"
-            :to="link.href.startsWith('/') ? link.href : undefined"
-            :href="link.href.startsWith('/') ? undefined : link.href"
+            :to="link.href"
             :target="link.href.startsWith('/') ? undefined : '_blank'"
             :rel="link.href.startsWith('/') ? undefined : 'noopener'"
             :class="['btn', 'btn-block', 'btn-md', 'justify-start', 'btn-outline']"
@@ -171,7 +169,7 @@
           >
             <i :class="[link.icon, 'text-lg', 'w-6']"></i>
             <span class="font-medium">{{ link.label }}</span>
-          </component>
+          </NuxtLink>
         </div>
       </div>
     </div>
