@@ -53,38 +53,7 @@
       icon: 'fad fa-map',
       btnClass: 'btn-neutral',
     },
-    {
-      id: 'contact',
-      label: t('links.contact.label'),
-      href: '/contact',
-      icon: 'fad fa-envelope',
-      btnClass: 'btn-neutral',
-    },
   ]);
-
-  const socialLinks = [
-    {
-      id: 'youtube',
-      label: 'YouTube',
-      href: 'https://www.youtube.com/c/ClassicMiniDIY',
-      icon: 'fab fa-youtube',
-      colorClass: 'text-red-600',
-    },
-    {
-      id: 'instagram',
-      label: 'Instagram',
-      href: 'https://www.instagram.com/classicminidiy/',
-      icon: 'fab fa-instagram',
-      colorClass: 'text-pink-500',
-    },
-    {
-      id: 'facebook',
-      label: 'Facebook',
-      href: 'https://www.facebook.com/classicminidiy',
-      icon: 'fab fa-facebook',
-      colorClass: 'text-blue-600',
-    },
-  ];
 
   function trackClick(link: { id: string; label: string; href: string }, group: string) {
     capture('links_page_click', {
@@ -96,7 +65,7 @@
   }
 
   const { data: videos, status, error } = await useFetch('/api/youtube/videos', {
-    query: { limit: 50 },
+    query: { limit: 10 },
     key: 'links-page-videos',
   });
 
@@ -124,7 +93,7 @@
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
   });
 
-  const allLinks = computed(() => [...primaryLinks.value, ...secondaryLinks.value, ...socialLinks]);
+  const allLinks = computed(() => [...primaryLinks.value, ...secondaryLinks.value]);
   const linksJsonLd = computed(() => ({
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -165,8 +134,8 @@
             loading="eager"
             class="rounded-full shadow-lg ring-4 ring-base-100 mb-4"
           />
-          <h1 class="fancy-font-bold text-3xl md:text-4xl">{{ $t('links.heading') }}</h1>
-          <p class="fancy-font-book-oblique text-base-content/70 mt-2">{{ $t('links.tagline') }}</p>
+          <h1 class="fancy-font-bold text-3xl md:text-4xl">{{ t('links.heading') }}</h1>
+          <p class="fancy-font-book-oblique text-base-content/70 mt-2">{{ t('links.tagline') }}</p>
         </div>
 
         <div class="flex flex-col gap-3 mb-6">
@@ -188,7 +157,7 @@
           </a>
         </div>
 
-        <div class="flex flex-col gap-2 mb-8">
+        <div class="flex flex-col gap-2">
           <component
             :is="link.href.startsWith('/') ? 'NuxtLink' : 'a'"
             v-for="link in secondaryLinks"
@@ -204,21 +173,6 @@
             <span class="font-medium">{{ link.label }}</span>
           </component>
         </div>
-
-        <div class="flex justify-center items-center gap-6 mb-2">
-          <a
-            v-for="link in socialLinks"
-            :key="link.id"
-            :href="link.href"
-            target="_blank"
-            rel="noopener"
-            :aria-label="link.label"
-            class="grow-icon"
-            @click="trackClick(link, 'social')"
-          >
-            <i :class="[link.icon, 'text-3xl', link.colorClass]"></i>
-          </a>
-        </div>
       </div>
     </div>
   </div>
@@ -226,8 +180,8 @@
   <div class="container mx-auto px-4 py-12">
     <div class="max-w-5xl mx-auto">
       <div class="text-center mb-8">
-        <p class="fancy-font-book-oblique"><i class="fab fa-youtube text-red-600"></i> {{ $t('links.videos.eyebrow') }}</p>
-        <h2 class="text-3xl font-bold pt-2">{{ $t('links.videos.heading') }}</h2>
+        <p class="fancy-font-book-oblique"><i class="fab fa-youtube text-red-600"></i> {{ t('links.videos.eyebrow') }}</p>
+        <h2 class="text-3xl font-bold pt-2">{{ t('links.videos.heading') }}</h2>
       </div>
 
       <div v-if="status === 'pending'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -236,7 +190,7 @@
 
       <div v-else-if="error" class="alert alert-warning">
         <i class="fas fa-triangle-exclamation"></i>
-        <span>{{ $t('links.videos.error') }}</span>
+        <span>{{ t('links.videos.error') }}</span>
       </div>
 
       <div v-else-if="videos && videos.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -266,7 +220,7 @@
           </figure>
           <div class="card-body p-4">
             <h3 class="card-title text-base font-semibold line-clamp-2">{{ video.title }}</h3>
-            <p class="text-xs text-base-content/60">{{ $t('links.videos.published_on') }} {{ video.publishedOn }}</p>
+            <p class="text-xs text-base-content/60">{{ t('links.videos.published_on') }} {{ video.publishedOn }}</p>
           </div>
         </a>
       </div>
@@ -275,12 +229,6 @@
 </template>
 
 <style lang="scss" scoped>
-  .grow-icon {
-    transition: transform 0.2s ease-in-out;
-  }
-  .grow-icon:hover {
-    transform: scale(1.15);
-  }
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -309,7 +257,6 @@
       },
       "toolbox": { "label": "Online Toolbox" },
       "maps": { "label": "ECU Maps" },
-      "contact": { "label": "Email Cole" },
       "videos": {
         "eyebrow": "FROM THE CHANNEL",
         "heading": "Latest YouTube Videos",
@@ -318,8 +265,287 @@
       },
       "seo": {
         "title": "Links | Classic Mini DIY",
-        "description": "Every Classic Mini DIY link in one place — Patreon, newsletter, store, toolbox, ECU maps, social channels, and the latest YouTube videos.",
+        "description": "Every Classic Mini DIY link in one place — Patreon, newsletter, store, toolbox, ECU maps, and the latest YouTube videos.",
         "keywords": "classic mini diy, links, patreon, newsletter, store, youtube, classic mini cooper"
+      }
+    }
+  },
+  "es": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "Tu recurso amigable de Classic Mini",
+      "patreon": {
+        "label": "Apoya en Patreon",
+        "sub": "Ayuda a mantener el canal en marcha"
+      },
+      "newsletter": {
+        "label": "Suscríbete al boletín",
+        "sub": "Actualizaciones, análisis y notas de proyectos"
+      },
+      "store": {
+        "label": "Tienda CMDIY",
+        "sub": "Mercancía, herramientas y artículos Mini"
+      },
+      "toolbox": { "label": "Caja de herramientas en línea" },
+      "maps": { "label": "Mapas ECU" },
+      "videos": {
+        "eyebrow": "DEL CANAL",
+        "heading": "Últimos videos de YouTube",
+        "published_on": "Publicado",
+        "error": "No se pudieron cargar los videos — visita el canal de YouTube directamente."
+      },
+      "seo": {
+        "title": "Enlaces | Classic Mini DIY",
+        "description": "Todos los enlaces de Classic Mini DIY en un solo lugar: Patreon, boletín, tienda, caja de herramientas, mapas ECU y los últimos videos.",
+        "keywords": "classic mini diy, enlaces, patreon, boletín, tienda, youtube, classic mini cooper"
+      }
+    }
+  },
+  "fr": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "Votre ressource amicale Classic Mini",
+      "patreon": {
+        "label": "Soutenir sur Patreon",
+        "sub": "Aidez à faire vivre la chaîne"
+      },
+      "newsletter": {
+        "label": "S'abonner à la newsletter",
+        "sub": "Mises à jour, analyses et notes de projet"
+      },
+      "store": {
+        "label": "Boutique CMDIY",
+        "sub": "Produits, outils et accessoires Mini"
+      },
+      "toolbox": { "label": "Boîte à outils en ligne" },
+      "maps": { "label": "Cartes ECU" },
+      "videos": {
+        "eyebrow": "DE LA CHAÎNE",
+        "heading": "Dernières vidéos YouTube",
+        "published_on": "Publié",
+        "error": "Impossible de charger les vidéos — visitez la chaîne YouTube directement."
+      },
+      "seo": {
+        "title": "Liens | Classic Mini DIY",
+        "description": "Tous les liens Classic Mini DIY en un seul endroit : Patreon, newsletter, boutique, boîte à outils, cartes ECU et dernières vidéos.",
+        "keywords": "classic mini diy, liens, patreon, newsletter, boutique, youtube, classic mini cooper"
+      }
+    }
+  },
+  "it": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "La tua risorsa amichevole Classic Mini",
+      "patreon": {
+        "label": "Supporta su Patreon",
+        "sub": "Aiuta a mantenere vivo il canale"
+      },
+      "newsletter": {
+        "label": "Iscriviti alla newsletter",
+        "sub": "Aggiornamenti, approfondimenti e note di progetto"
+      },
+      "store": {
+        "label": "Negozio CMDIY",
+        "sub": "Merch, strumenti e articoli Mini"
+      },
+      "toolbox": { "label": "Cassetta degli attrezzi online" },
+      "maps": { "label": "Mappe ECU" },
+      "videos": {
+        "eyebrow": "DAL CANALE",
+        "heading": "Ultimi video YouTube",
+        "published_on": "Pubblicato",
+        "error": "Impossibile caricare i video — visita il canale YouTube direttamente."
+      },
+      "seo": {
+        "title": "Link | Classic Mini DIY",
+        "description": "Tutti i link Classic Mini DIY in un unico posto: Patreon, newsletter, negozio, cassetta degli attrezzi, mappe ECU e ultimi video.",
+        "keywords": "classic mini diy, link, patreon, newsletter, negozio, youtube, classic mini cooper"
+      }
+    }
+  },
+  "de": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "Ihre freundliche Classic Mini Ressource",
+      "patreon": {
+        "label": "Auf Patreon unterstützen",
+        "sub": "Hilf, den Kanal am Leben zu halten"
+      },
+      "newsletter": {
+        "label": "Newsletter abonnieren",
+        "sub": "Updates, Analysen und Projektnotizen"
+      },
+      "store": {
+        "label": "CMDIY Shop",
+        "sub": "Merch, Werkzeuge und Mini-Zubehör"
+      },
+      "toolbox": { "label": "Online-Werkzeugkasten" },
+      "maps": { "label": "ECU-Maps" },
+      "videos": {
+        "eyebrow": "VOM KANAL",
+        "heading": "Neueste YouTube-Videos",
+        "published_on": "Veröffentlicht",
+        "error": "Videos konnten nicht geladen werden — besuche den YouTube-Kanal direkt."
+      },
+      "seo": {
+        "title": "Links | Classic Mini DIY",
+        "description": "Alle Classic Mini DIY Links an einem Ort: Patreon, Newsletter, Shop, Werkzeugkasten, ECU-Maps und neueste Videos.",
+        "keywords": "classic mini diy, links, patreon, newsletter, shop, youtube, classic mini cooper"
+      }
+    }
+  },
+  "pt": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "Seu recurso amigável Classic Mini",
+      "patreon": {
+        "label": "Apoie no Patreon",
+        "sub": "Ajude a manter o canal funcionando"
+      },
+      "newsletter": {
+        "label": "Assine a newsletter",
+        "sub": "Atualizações, análises e notas de projeto"
+      },
+      "store": {
+        "label": "Loja CMDIY",
+        "sub": "Mercadorias, ferramentas e itens Mini"
+      },
+      "toolbox": { "label": "Caixa de ferramentas online" },
+      "maps": { "label": "Mapas ECU" },
+      "videos": {
+        "eyebrow": "DO CANAL",
+        "heading": "Vídeos recentes do YouTube",
+        "published_on": "Publicado",
+        "error": "Não foi possível carregar os vídeos — visite o canal do YouTube diretamente."
+      },
+      "seo": {
+        "title": "Links | Classic Mini DIY",
+        "description": "Todos os links Classic Mini DIY em um só lugar: Patreon, newsletter, loja, caixa de ferramentas, mapas ECU e vídeos recentes.",
+        "keywords": "classic mini diy, links, patreon, newsletter, loja, youtube, classic mini cooper"
+      }
+    }
+  },
+  "ru": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "Ваш дружелюбный ресурс Classic Mini",
+      "patreon": {
+        "label": "Поддержать на Patreon",
+        "sub": "Помогите сохранить канал"
+      },
+      "newsletter": {
+        "label": "Подписаться на рассылку",
+        "sub": "Обновления, разборы и заметки о проектах"
+      },
+      "store": {
+        "label": "Магазин CMDIY",
+        "sub": "Товары, инструменты и аксессуары Mini"
+      },
+      "toolbox": { "label": "Онлайн-инструменты" },
+      "maps": { "label": "Карты ECU" },
+      "videos": {
+        "eyebrow": "С КАНАЛА",
+        "heading": "Последние видео YouTube",
+        "published_on": "Опубликовано",
+        "error": "Не удалось загрузить видео — посетите канал YouTube напрямую."
+      },
+      "seo": {
+        "title": "Ссылки | Classic Mini DIY",
+        "description": "Все ссылки Classic Mini DIY в одном месте: Patreon, рассылка, магазин, инструменты, карты ECU и последние видео.",
+        "keywords": "classic mini diy, ссылки, patreon, рассылка, магазин, youtube, classic mini cooper"
+      }
+    }
+  },
+  "ja": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "あなたの親しみやすいClassic Miniリソース",
+      "patreon": {
+        "label": "Patreonでサポート",
+        "sub": "チャンネルの運営を支援"
+      },
+      "newsletter": {
+        "label": "ニュースレターを購読",
+        "sub": "アップデート、詳細解説、プロジェクトノート"
+      },
+      "store": {
+        "label": "CMDIYストア",
+        "sub": "グッズ、ツール、Miniアイテム"
+      },
+      "toolbox": { "label": "オンラインツールボックス" },
+      "maps": { "label": "ECUマップ" },
+      "videos": {
+        "eyebrow": "チャンネルから",
+        "heading": "最新のYouTube動画",
+        "published_on": "公開日",
+        "error": "動画を読み込めませんでした — YouTubeチャンネルを直接ご確認ください。"
+      },
+      "seo": {
+        "title": "リンク | Classic Mini DIY",
+        "description": "Classic Mini DIYのすべてのリンクを一箇所に：Patreon、ニュースレター、ストア、ツールボックス、ECUマップ、最新動画。",
+        "keywords": "classic mini diy, リンク, patreon, ニュースレター, ストア, youtube, classic mini cooper"
+      }
+    }
+  },
+  "zh": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "您友好的 Classic Mini 资源",
+      "patreon": {
+        "label": "在 Patreon 上支持",
+        "sub": "帮助维持频道运营"
+      },
+      "newsletter": {
+        "label": "订阅时事通讯",
+        "sub": "更新、深度解析和项目笔记"
+      },
+      "store": {
+        "label": "CMDIY 商店",
+        "sub": "商品、工具和 Mini 配件"
+      },
+      "toolbox": { "label": "在线工具箱" },
+      "maps": { "label": "ECU 地图" },
+      "videos": {
+        "eyebrow": "来自频道",
+        "heading": "最新 YouTube 视频",
+        "published_on": "发布于",
+        "error": "暂时无法加载视频 — 请直接访问 YouTube 频道。"
+      },
+      "seo": {
+        "title": "链接 | Classic Mini DIY",
+        "description": "所有 Classic Mini DIY 链接集中一处：Patreon、时事通讯、商店、工具箱、ECU 地图和最新视频。",
+        "keywords": "classic mini diy, 链接, patreon, 时事通讯, 商店, youtube, classic mini cooper"
+      }
+    }
+  },
+  "ko": {
+    "links": {
+      "heading": "Classic Mini DIY",
+      "tagline": "당신의 친근한 Classic Mini 리소스",
+      "patreon": {
+        "label": "Patreon에서 지원",
+        "sub": "채널 운영을 도와주세요"
+      },
+      "newsletter": {
+        "label": "뉴스레터 구독",
+        "sub": "업데이트, 심층 분석, 프로젝트 노트"
+      },
+      "store": {
+        "label": "CMDIY 스토어",
+        "sub": "상품, 도구 및 Mini 용품"
+      },
+      "toolbox": { "label": "온라인 도구상자" },
+      "maps": { "label": "ECU 맵" },
+      "videos": {
+        "eyebrow": "채널에서",
+        "heading": "최신 YouTube 동영상",
+        "published_on": "게시일",
+        "error": "동영상을 불러올 수 없습니다 — YouTube 채널을 직접 방문하세요."
+      },
+      "seo": {
+        "title": "링크 | Classic Mini DIY",
+        "description": "Classic Mini DIY의 모든 링크를 한곳에: Patreon, 뉴스레터, 스토어, 도구상자, ECU 맵, 최신 동영상.",
+        "keywords": "classic mini diy, 링크, patreon, 뉴스레터, 스토어, youtube, classic mini cooper"
       }
     }
   }
