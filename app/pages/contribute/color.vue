@@ -121,7 +121,7 @@
         const uploadData = new FormData();
         swatchFiles.value.forEach((file, i) => uploadData.append(`file${i}`, file));
 
-        const { error: uploadError } = await useFetch('/api/archive/upload', {
+        const { error: uploadError } = await useAuthFetch('/api/archive/upload', {
           method: 'POST',
           body: uploadData,
           query: { bucket: 'archive-colors', submissionId: submission.id, category: 'swatch' },
@@ -137,7 +137,7 @@
         const uploadData = new FormData();
         carPhotoFiles.value.forEach((file, i) => uploadData.append(`file${i}`, file));
 
-        const { error: uploadError } = await useFetch('/api/archive/upload', {
+        const { error: uploadError } = await useAuthFetch('/api/archive/upload', {
           method: 'POST',
           body: uploadData,
           query: { bucket: 'archive-colors', submissionId: submission.id, category: 'car-photos' },

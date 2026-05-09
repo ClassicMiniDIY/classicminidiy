@@ -136,7 +136,7 @@
       // Upload document files
       const docFormData = new FormData();
       documentFiles.value.forEach((file, i) => docFormData.append(`file${i}`, file));
-      const { error: docUploadError } = await useFetch('/api/archive/upload', {
+      const { error: docUploadError } = await useAuthFetch('/api/archive/upload', {
         method: 'POST',
         body: docFormData,
         query: { bucket: 'archive-documents', submissionId: response.id },
@@ -150,7 +150,7 @@
       if (thumbnailFiles.value.length > 0) {
         const thumbFormData = new FormData();
         thumbnailFiles.value.forEach((file, i) => thumbFormData.append(`file${i}`, file));
-        const { error: thumbUploadError } = await useFetch('/api/archive/upload', {
+        const { error: thumbUploadError } = await useAuthFetch('/api/archive/upload', {
           method: 'POST',
           body: thumbFormData,
           query: { bucket: 'archive-thumbnails', submissionId: response.id },

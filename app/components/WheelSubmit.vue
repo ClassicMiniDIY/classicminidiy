@@ -195,7 +195,7 @@
       formData.append(`file${i}`, file);
     });
 
-    return await useFetch('/api/wheels/save/images', {
+    return await useAuthFetch('/api/wheels/save/images', {
       method: 'POST',
       body: formData,
       query: { uuid },
