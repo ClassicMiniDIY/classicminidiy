@@ -1,33 +1,37 @@
 import { getServiceClient } from '../../utils/supabase';
+import { requireUserAuth } from '../../utils/userAuth';
+import { detectMimeFromMagic, generateSafeFilename, type DetectedMime } from '../../utils/uploadValidation';
 
 const ALLOWED_BUCKETS = ['archive-documents', 'archive-thumbnails', 'archive-colors', 'archive-wheels'] as const;
 type AllowedBucket = (typeof ALLOWED_BUCKETS)[number];
 
 interface BucketConfig {
-  allowedTypes: string[];
+  allowedTypes: DetectedMime[];
   maxSizeBytes: number;
 }
 
 const BUCKET_CONFIGS: Record<AllowedBucket, BucketConfig> = {
   'archive-documents': {
     allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
-    maxSizeBytes: 10 * 1024 * 1024, // 10MB
+    maxSizeBytes: 10 * 1024 * 1024,
   },
   'archive-thumbnails': {
     allowedTypes: ['image/jpeg', 'image/png'],
-    maxSizeBytes: 5 * 1024 * 1024, // 5MB
+    maxSizeBytes: 5 * 1024 * 1024,
   },
   'archive-colors': {
     allowedTypes: ['image/jpeg', 'image/png'],
-    maxSizeBytes: 5 * 1024 * 1024, // 5MB
+    maxSizeBytes: 5 * 1024 * 1024,
   },
   'archive-wheels': {
     allowedTypes: ['image/jpeg', 'image/png'],
-    maxSizeBytes: 3 * 1024 * 1024, // 3MB
+    maxSizeBytes: 3 * 1024 * 1024,
   },
 };
 
 export default defineEventHandler(async (event) => {
+  const { user } = await requireUserAuth(event);
+
   const params = getQuery(event);
   const bucket = params.bucket?.toString();
   const submissionId = params.submissionId?.toString();
@@ -51,6 +55,24 @@ export default defineEventHandler(async (event) => {
   const config = BUCKET_CONFIGS[bucket as AllowedBucket];
   const supabase = getServiceClient();
 
+  const { data: submission, error: submissionError } = await supabase
+    .from('submission_queue')
+    .select('id, submitted_by, status')
+    .eq('id', submissionId)
+    .single();
+
+  if (submissionError || !submission) {
+    throw createError({ statusCode: 404, statusMessage: 'Submission not found' });
+  }
+
+  if (submission.submitted_by !== user.id) {
+    throw createError({ statusCode: 403, statusMessage: 'Not authorized to upload to this submission' });
+  }
+
+  if (submission.status !== 'pending') {
+    throw createError({ statusCode: 409, statusMessage: 'Submission is no longer accepting uploads' });
+  }
+
   try {
     const formData = await readMultipartFormData(event);
 
@@ -63,33 +85,32 @@ export default defineEventHandler(async (event) => {
     for (const file of formData) {
       if (!file.data || !file.filename) continue;
 
-      // Validate file type
-      const fileType = file.type || 'application/octet-stream';
-      if (!config.allowedTypes.includes(fileType)) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: `File type "${fileType}" is not allowed for bucket "${bucket}". Allowed types: ${config.allowedTypes.join(', ')}`,
-        });
-      }
-
-      // Validate file size
       if (file.data.length > config.maxSizeBytes) {
         const maxMB = config.maxSizeBytes / (1024 * 1024);
         throw createError({
           statusCode: 400,
-          statusMessage: `File "${file.filename}" exceeds the maximum size of ${maxMB}MB for bucket "${bucket}"`,
+          statusMessage: `File exceeds the maximum size of ${maxMB}MB for bucket "${bucket}"`,
         });
       }
 
-      const storagePath = `uploads/${submissionId}/${file.filename}`;
+      const detectedMime = detectMimeFromMagic(file.data);
+      if (!detectedMime || !config.allowedTypes.includes(detectedMime)) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: `File content is not an allowed type for bucket "${bucket}". Allowed types: ${config.allowedTypes.join(', ')}`,
+        });
+      }
+
+      const safeName = generateSafeFilename(detectedMime);
+      const storagePath = `uploads/${submissionId}/${safeName}`;
 
       const { error } = await supabase.storage.from(bucket).upload(storagePath, file.data, {
-        contentType: fileType,
-        upsert: true,
+        contentType: detectedMime,
+        upsert: false,
       });
 
       if (error) {
-        console.error(`Error uploading file ${file.filename}:`, error);
+        console.error(`Error uploading file:`, error);
         throw createError({ statusCode: 500, statusMessage: `Upload failed: ${error.message}` });
       }
 
@@ -98,9 +119,16 @@ export default defineEventHandler(async (event) => {
       uploadedPaths.push(urlData.publicUrl);
     }
 
-    // Update the submission queue entry with new file paths
     if (uploadedPaths.length > 0) {
-      const { data: existing } = await supabase.from('submission_queue').select('data').eq('id', submissionId).single();
+      const { data: existing } = await supabase
+        .from('submission_queue')
+        .select('data, submitted_by, status')
+        .eq('id', submissionId)
+        .single();
+
+      if (!existing || existing.submitted_by !== user.id || existing.status !== 'pending') {
+        throw createError({ statusCode: 409, statusMessage: 'Submission state changed during upload' });
+      }
 
       const currentData = (existing?.data as Record<string, unknown>) || {};
       const currentFiles = (currentData.uploadedFiles as any[]) || [];
@@ -114,7 +142,9 @@ export default defineEventHandler(async (event) => {
             uploadedFiles: [...currentFiles, ...newFiles],
           },
         })
-        .eq('id', submissionId);
+        .eq('id', submissionId)
+        .eq('submitted_by', user.id)
+        .eq('status', 'pending');
     }
 
     return { ok: true, paths: uploadedPaths };

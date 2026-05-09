@@ -1,6 +1,13 @@
 import { getServiceClient } from '../../../utils/supabase';
+import { requireUserAuth } from '../../../utils/userAuth';
+import { detectMimeFromMagic, generateSafeFilename, type DetectedMime } from '../../../utils/uploadValidation';
+
+const ALLOWED_TYPES: DetectedMime[] = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_SIZE_BYTES = 3 * 1024 * 1024;
 
 export default defineEventHandler(async (event) => {
+  const { user } = await requireUserAuth(event);
+
   const params = getQuery(event);
   const uuid = params.uuid?.toString();
 
@@ -10,8 +17,25 @@ export default defineEventHandler(async (event) => {
 
   const supabase = getServiceClient();
 
+  const { data: submission, error: submissionError } = await supabase
+    .from('submission_queue')
+    .select('id, submitted_by, status')
+    .eq('id', uuid)
+    .single();
+
+  if (submissionError || !submission) {
+    throw createError({ statusCode: 404, statusMessage: 'Submission not found' });
+  }
+
+  if (submission.submitted_by !== user.id) {
+    throw createError({ statusCode: 403, statusMessage: 'Not authorized to upload to this submission' });
+  }
+
+  if (submission.status !== 'pending') {
+    throw createError({ statusCode: 409, statusMessage: 'Submission is no longer accepting uploads' });
+  }
+
   try {
-    // Use h3's built-in multipart form data parser
     const formData = await readMultipartFormData(event);
 
     if (!formData || formData.length === 0) {
@@ -23,30 +47,52 @@ export default defineEventHandler(async (event) => {
     for (const file of formData) {
       if (!file.data || !file.filename) continue;
 
-      const storagePath = `uploads/${uuid}/${file.filename}`;
+      if (file.data.length > MAX_SIZE_BYTES) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: `File exceeds the maximum size of ${MAX_SIZE_BYTES / (1024 * 1024)}MB`,
+        });
+      }
+
+      const detectedMime = detectMimeFromMagic(file.data);
+      if (!detectedMime || !ALLOWED_TYPES.includes(detectedMime)) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: `File content is not an allowed image type. Allowed: ${ALLOWED_TYPES.join(', ')}`,
+        });
+      }
+
+      const safeName = generateSafeFilename(detectedMime);
+      const storagePath = `uploads/${uuid}/${safeName}`;
 
       const { error } = await supabase.storage.from('archive-wheels').upload(storagePath, file.data, {
-        contentType: file.type || 'application/octet-stream',
-        upsert: true,
+        contentType: detectedMime,
+        upsert: false,
       });
 
       if (error) {
-        console.error(`Error uploading file ${file.filename}:`, error);
+        console.error(`Error uploading file:`, error);
         throw createError({ statusCode: 500, statusMessage: `Upload failed: ${error.message}` });
       }
 
-      // Get the public URL for the uploaded file
       const { data: urlData } = supabase.storage.from('archive-wheels').getPublicUrl(storagePath);
 
       uploadedPaths.push(urlData.publicUrl);
     }
 
-    // Update the submission queue entry with new photo paths
     if (uploadedPaths.length > 0) {
-      const { data: existing } = await supabase.from('submission_queue').select('data').eq('id', uuid).single();
+      const { data: existing } = await supabase
+        .from('submission_queue')
+        .select('data, submitted_by, status')
+        .eq('id', uuid)
+        .single();
 
-      const currentData = existing?.data || {};
-      const currentPhotos = currentData.images || currentData.photos || [];
+      if (!existing || existing.submitted_by !== user.id || existing.status !== 'pending') {
+        throw createError({ statusCode: 409, statusMessage: 'Submission state changed during upload' });
+      }
+
+      const currentData = (existing?.data as Record<string, any>) || {};
+      const currentPhotos = (currentData.images as any[]) || (currentData.photos as any[]) || [];
 
       await supabase
         .from('submission_queue')
@@ -56,7 +102,9 @@ export default defineEventHandler(async (event) => {
             images: [...currentPhotos, ...uploadedPaths],
           },
         })
-        .eq('id', uuid);
+        .eq('id', uuid)
+        .eq('submitted_by', user.id)
+        .eq('status', 'pending');
     }
 
     return { ok: true };

@@ -115,7 +115,7 @@
       // 2. Upload photos
       const formData = new FormData();
       photoFiles.value.forEach((file, i) => formData.append(`file${i}`, file));
-      await useFetch('/api/archive/upload', {
+      await useAuthFetch('/api/archive/upload', {
         method: 'POST',
         body: formData,
         query: { bucket: 'archive-wheels', submissionId: submission.id },
