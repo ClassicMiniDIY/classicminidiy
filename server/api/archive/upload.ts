@@ -12,19 +12,19 @@ interface BucketConfig {
 
 const BUCKET_CONFIGS: Record<AllowedBucket, BucketConfig> = {
   'archive-documents': {
-    allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+    allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
     maxSizeBytes: 10 * 1024 * 1024,
   },
   'archive-thumbnails': {
-    allowedTypes: ['image/jpeg', 'image/png'],
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
     maxSizeBytes: 5 * 1024 * 1024,
   },
   'archive-colors': {
-    allowedTypes: ['image/jpeg', 'image/png'],
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
     maxSizeBytes: 5 * 1024 * 1024,
   },
   'archive-wheels': {
-    allowedTypes: ['image/jpeg', 'image/png'],
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
     maxSizeBytes: 3 * 1024 * 1024,
   },
 };

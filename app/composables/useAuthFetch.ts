@@ -32,11 +32,13 @@ export const $authFetch = async <T>(url: string, opts: Record<string, any> = {})
     data: { session },
   } = await supabase.auth.getSession();
 
+  const headers = new Headers(opts.headers);
+  if (session?.access_token) {
+    headers.set('Authorization', `Bearer ${session.access_token}`);
+  }
+
   return $fetch<T>(url, {
     ...opts,
-    headers: {
-      ...opts.headers,
-      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-    },
+    headers,
   });
 };
