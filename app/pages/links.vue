@@ -135,7 +135,7 @@
             class="rounded-full shadow-lg ring-4 ring-base-100 mb-4"
           />
           <h1 class="fancy-font-bold text-3xl md:text-4xl">{{ t('links.heading') }}</h1>
-          <p class="fancy-font-book-oblique text-base-content/70 mt-2">{{ t('links.tagline') }}</p>
+          <p class="lead mt-2">{{ t('links.tagline') }}</p>
         </div>
 
         <div class="flex flex-col gap-3 mb-6">
@@ -178,7 +178,7 @@
   <div class="container mx-auto px-4 py-12">
     <div class="max-w-5xl mx-auto">
       <div class="text-center mb-8">
-        <p class="fancy-font-book-oblique"><i class="fab fa-youtube text-red-600"></i> {{ t('links.videos.eyebrow') }}</p>
+        <p class="eyebrow"><i class="fab fa-youtube text-red-600 mr-1"></i>{{ t('links.videos.eyebrow') }}</p>
         <h2 class="text-3xl font-bold pt-2">{{ t('links.videos.heading') }}</h2>
       </div>
 
