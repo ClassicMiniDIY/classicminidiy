@@ -240,7 +240,7 @@
     <div class="grid grid-cols-12 gap-4 pb-5">
       <div class="col-span-12"></div>
       <div class="col-span-12 md:col-span-8">
-        <p class="fancy-font-book-oblique"><i class="fad fa-book"></i> {{ t('home.mission.title') }}</p>
+        <p class="eyebrow"><i class="fad fa-book mr-1"></i>{{ t('home.mission.title') }}</p>
         <h2 class="text-3xl font-bold pt-2 pb-3">{{ t('home.mission.heading') }}</h2>
         <p class="text-lg pb-5">
           {{ t('home.mission.content') }}
@@ -248,7 +248,7 @@
         <stats />
       </div>
       <div class="col-span-12 md:col-span-4">
-        <p class="fancy-font-book-oblique"><i class="fad fa-gift"></i> {{ t('home.support.title') }}</p>
+        <p class="eyebrow"><i class="fad fa-gift mr-1"></i>{{ t('home.support.title') }}</p>
         <h3 class="text-3xl font-bold pt-2 pb-3">{{ t('home.support.heading') }}</h3>
         <p class="text-lg pt-2 pb-3">
           {{ t('home.support.content') }}

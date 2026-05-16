@@ -31,9 +31,9 @@
           />
         </div>
         <div class="col-span-9">
-          <h3 class="fancy-font-book-oblique text-lg font-semibold">
-            <i class="fad fa-hands-heart"></i> {{ t('title') }}
-          </h3>
+          <p class="eyebrow">
+            <i class="fad fa-hands-heart mr-1"></i>{{ t('title') }}
+          </p>
           <p class="text-lg py-5">
             {{ t('description') }}
           </p>
@@ -58,9 +58,9 @@
     <template v-if="size === 'small'">
       <div class="grid grid-cols-1 gap-2">
         <div>
-          <h3 class="fancy-font-book-oblique text-lg font-semibold pt-2">
-            <i class="fad fa-hands-heart"></i> {{ t('title') }}
-          </h3>
+          <p class="eyebrow pt-2">
+            <i class="fad fa-hands-heart mr-1"></i>{{ t('title') }}
+          </p>
         </div>
         <div>
           <p class="text-sm">

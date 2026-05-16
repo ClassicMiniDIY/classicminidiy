@@ -283,10 +283,10 @@
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-12 gap-4">
         <div class="col-span-12 md:col-span-6 md:col-start-4">
-          <h1 class="fancy-font-bold text-2xl text-center pt-10 pb-5">{{ t('mainTitle') }}</h1>
-          <h2 class="fancy-font-book-oblique text-center text-xl">
+          <h1 class="fancy-font-bold text-2xl md:text-3xl text-center pt-10 pb-3">{{ t('mainTitle') }}</h1>
+          <p class="lead text-center">
             {{ t('description') }}
-          </h2>
+          </p>
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2 py-10">
           <div class="flex flex-wrap justify-center gap-8">

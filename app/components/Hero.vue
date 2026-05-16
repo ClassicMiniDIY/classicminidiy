@@ -101,6 +101,7 @@
     class="hero-section relative flex bg-[#242424] bg-cover bg-center bg-no-repeat"
     :class="{
       [textSize]: textSize,
+      'hero-section--scrim': displayTitle || displaySubtitle,
       'md:h-144 sm:h-96': heroType === HERO_TYPES.HOME,
       'md:h-60 sm:h-48': heroType === HERO_TYPES.TECH || heroType === HERO_TYPES.ARCHIVE,
       'md:h-112 sm:h-96': heroType === HERO_TYPES.BLOG || heroType === HERO_TYPES.MAPS,
@@ -149,8 +150,10 @@
   .hero-section {
     /* Text-protection scrim — sits between the bg image and content
        so white titles and the orange eyebrow stay legible on busy
-       photographic backgrounds. Tweak the alpha to taste. */
-    &::before {
+       photographic backgrounds. Only applied when the hero has text
+       to protect (.hero-section--scrim); otherwise the decorative
+       photo shows clean. Tweak the alpha to taste. */
+    &.hero-section--scrim::before {
       content: '';
       position: absolute;
       inset: 0;
