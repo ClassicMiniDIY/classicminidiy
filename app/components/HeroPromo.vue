@@ -167,7 +167,7 @@
     <div class="absolute inset-0 bg-black/60"></div>
     <div class="hero-content relative flex flex-col items-start justify-center w-full">
       <div class="px-6 sm:px-12 md:pl-20 py-10">
-        <p class="text-white text-sm uppercase tracking-wide">
+        <p class="eyebrow">
           {{ selectedPromo.subtitle }}
         </p>
         <h1 class="fancy-font-bold text-white text-4xl lg:text-5xl mt-2 special-title">

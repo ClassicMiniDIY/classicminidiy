@@ -1,7 +1,8 @@
 <script lang="ts" setup>
   import { DateTime } from 'luxon';
 
-  const { t } = useI18n();
+  const { t, tm, rt } = useI18n();
+  const archiveFeatureItems = computed(() => (tm('home.archive_feature.items') as any[]).map((i) => rt(i)));
 
   const birthday = DateTime.local(1989, 5, 11);
   const today = DateTime.now();
@@ -103,6 +104,115 @@
 <template>
   <HeroPromo />
   <div class="spacer layer"></div>
+
+  <!-- Toolbox: 4-up tool card grid (design system) -->
+  <section class="container mx-auto px-4 pt-10 pb-14">
+    <div class="section-head">
+      <div class="meta">
+        <span class="eyebrow">{{ t('home.toolgrid.eyebrow') }}</span>
+        <h2 class="text-3xl md:text-4xl">{{ t('home.toolgrid.heading') }}</h2>
+        <p>{{ t('home.toolgrid.subheading') }}</p>
+      </div>
+      <NuxtLink to="/technical" class="btn btn-outline btn-sm">
+        <i class="fad fa-table-cells mr-1"></i>{{ t('home.toolgrid.all_tools') }}
+      </NuxtLink>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <HomeToolCard
+        to="/technical/compression"
+        icon="fa-gauge"
+        :title="t('home.toolgrid.cards.compression.title')"
+        :description="t('home.toolgrid.cards.compression.desc')"
+        :kind="t('home.toolgrid.kind.calculator')"
+      />
+      <HomeToolCard
+        to="/technical/gearing"
+        icon="fa-cogs"
+        :title="t('home.toolgrid.cards.gearing.title')"
+        :description="t('home.toolgrid.cards.gearing.desc')"
+        :kind="t('home.toolgrid.kind.calculator')"
+      />
+      <HomeToolCard
+        to="/technical/chassis-decoder"
+        icon="fa-id-card"
+        :title="t('home.toolgrid.cards.chassis.title')"
+        :description="t('home.toolgrid.cards.chassis.desc')"
+        :kind="t('home.toolgrid.kind.decoder')"
+      />
+      <HomeToolCard
+        to="/archive/wheels"
+        icon="fa-ruler-combined"
+        :title="t('home.toolgrid.cards.wheels.title')"
+        :description="t('home.toolgrid.cards.wheels.desc')"
+        :kind="t('home.toolgrid.kind.reference')"
+      />
+    </div>
+  </section>
+
+  <!-- Archive feature row (design system) -->
+  <section class="bg-base-200">
+    <div class="container mx-auto px-4 py-14">
+      <div class="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 items-center">
+        <div class="archive-feature__img"></div>
+        <div>
+          <span class="biglabel">{{ t('home.archive_feature.kicker') }}</span>
+          <h3 class="text-2xl md:text-3xl font-bold mt-2 mb-3 leading-tight">
+            {{ t('home.archive_feature.heading') }}
+          </h3>
+          <p class="lead mb-4">{{ t('home.archive_feature.body') }}</p>
+          <ul class="list-none p-0 m-0 mb-5 flex flex-col gap-2">
+            <li v-for="item in archiveFeatureItems" :key="item" class="flex gap-2.5 items-start text-sm">
+              <i class="fad fa-circle-check text-secondary mt-1"></i>
+              <span>{{ item }}</span>
+            </li>
+          </ul>
+          <NuxtLink to="/archive" class="btn btn-primary">
+            <i class="fad fa-books mr-2"></i>{{ t('home.archive_feature.cta') }}
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Wheel registry preview (design system) -->
+  <section class="container mx-auto px-4 py-14">
+    <div class="section-head">
+      <div class="meta">
+        <span class="eyebrow">{{ t('home.wheel_preview.eyebrow') }}</span>
+        <h2 class="text-3xl md:text-4xl">{{ t('home.wheel_preview.heading') }}</h2>
+        <p>{{ t('home.wheel_preview.subheading') }}</p>
+      </div>
+      <NuxtLink to="/contribute/wheels" class="btn btn-secondary btn-sm">
+        <i class="fad fa-paper-plane mr-1"></i>{{ t('home.wheel_preview.cta') }}
+      </NuxtLink>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <NuxtLink
+        v-for="(w, i) in [
+          { name: 'Minilite Replica', size: '10×5', offset: 'ET-25', photos: 3, grad: 'wheel-1' },
+          { name: 'Cosmic Mk II', size: '12×6', offset: 'ET-7', photos: 5, grad: 'wheel-2' },
+          { name: 'Revolution 4-spoke', size: '13×7', offset: 'ET+15', photos: 2, grad: 'wheel-3' },
+          { name: 'Rover Sportpack', size: '13×6', offset: 'ET+10', photos: 9, grad: 'wheel-4' },
+          { name: 'Mamba 8-spoke', size: '10×6', offset: 'ET-15', photos: 4, grad: 'wheel-5' },
+          { name: 'Wolfrace Slot Mag', size: '12×5', offset: 'ET-12', photos: 6, grad: 'wheel-6' },
+        ]"
+        :key="i"
+        to="/archive/wheels"
+        class="wheel-card"
+      >
+        <div class="wheel-card__ph" :class="w.grad">{{ w.name }} · {{ w.size }}</div>
+        <div class="wheel-card__body">
+          <h4>{{ w.name }}</h4>
+          <div class="wheel-card__meta">
+            <span>{{ w.size }}</span><span class="pip"></span>
+            <span>{{ w.offset }}</span><span class="pip"></span>
+            <span>{{ w.photos }} {{ t('home.wheel_preview.photos') }}</span>
+          </div>
+        </div>
+      </NuxtLink>
+    </div>
+  </section>
+
   <div class="container mx-auto px-4 pt-10">
     <div class="grid grid-cols-12 gap-4 pb-5">
       <div class="col-span-12"></div>
@@ -277,6 +387,79 @@
     display: block;
     border-radius: 50px;
   }
+
+  /* === Archive feature row image — flat green background w/ mascot illustration === */
+  .archive-feature__img {
+    aspect-ratio: 4 / 3;
+    border-radius: 1rem;
+    background-color: var(--cm-primary);
+    background-image: url('https://classicminidiy.s3.amazonaws.com/misc/about-me.webp');
+    background-size: cover;
+    background-position: center;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* === Wheel registry preview cards === */
+  .wheel-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border-1);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    color: var(--fg-1);
+    text-decoration: none;
+    transition: transform var(--t-base) var(--ease-out), box-shadow var(--t-base) var(--ease-out);
+  }
+  .wheel-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+  .wheel-card__ph {
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.625rem;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .wheel-card__ph.wheel-1 { background: linear-gradient(135deg, #5b6b48, #859369); }
+  .wheel-card__ph.wheel-2 { background: linear-gradient(135deg, #b15a26, #ed7135); }
+  .wheel-card__ph.wheel-3 { background: linear-gradient(135deg, #4a4a4f, #76767c); }
+  .wheel-card__ph.wheel-4 { background: linear-gradient(135deg, #2d3a52, #5d7194); }
+  .wheel-card__ph.wheel-5 { background: linear-gradient(135deg, #6b3522, #aa6e4a); }
+  .wheel-card__ph.wheel-6 { background: linear-gradient(135deg, #3d2d52, #7a5d94); }
+  .wheel-card__body {
+    padding: 0.75rem 0.875rem 0.875rem;
+  }
+  .wheel-card__body h4 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+  .wheel-card__meta {
+    font-size: 0.6875rem;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    margin-top: 0.25rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .wheel-card__meta .pip {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--fg-3);
+    display: inline-block;
+  }
 </style>
 
 <i18n lang="json">
@@ -323,6 +506,54 @@
           "gifts": "Free gifts and merch",
           "insider": "Insider information and much more..."
         }
+      },
+      "toolgrid": {
+        "eyebrow": "TOOLBOX",
+        "heading": "Pop the bonnet, do the math.",
+        "subheading": "A growing kit of calculators and decoders. No accounts, no ads, no nonsense.",
+        "all_tools": "All tools",
+        "kind": {
+          "calculator": "Calculator",
+          "decoder": "Decoder",
+          "reference": "Reference"
+        },
+        "cards": {
+          "compression": {
+            "title": "Compression Ratio",
+            "desc": "CR for any combo of bore, stroke, head cc and deck height."
+          },
+          "gearing": {
+            "title": "Gear Ratio",
+            "desc": "Final-drive math across SPi, MPi, and pre-Verto cars."
+          },
+          "chassis": {
+            "title": "Chassis Decoder",
+            "desc": "Year, plant, and trim from your VIN/chassis number."
+          },
+          "wheels": {
+            "title": "Wheel Fitment",
+            "desc": "Offset/backspace lookup from the community registry."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "ARCHIVE",
+        "heading": "The technical reference, kept alive.",
+        "body": "Common clearances, tappet gaps, torque specs, electrical diagrams — the kind of dog-eared workshop manual content that's slowly disappearing from the internet, all free and searchable.",
+        "items": [
+          "Common clearances reference",
+          "Engine block & head identification",
+          "Wiring diagrams by year & model",
+          "Carburettor needle library (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "Browse the archive"
+      },
+      "wheel_preview": {
+        "eyebrow": "WHEEL REGISTRY",
+        "heading": "Community-fed library.",
+        "subheading": "Every wheel ever fitted to a Classic Mini, photographed and spec'd by the people who own them.",
+        "cta": "Submit yours",
+        "photos": "photos"
       },
       "about": {
         "title": "About Me",

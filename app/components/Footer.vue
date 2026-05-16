@@ -158,6 +158,25 @@
   const socials = ref(SocialItems);
 </script>
 
+<style scoped>
+  .social-pill {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    background-color: var(--bg-1);
+    color: var(--fg-1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
+  }
+  .social-pill:hover {
+    color: var(--cm-secondary);
+    transform: translateY(-1px);
+  }
+</style>
+
 <template>
   <footer class="bg-base-200 py-10 text-center">
     <div class="container mx-auto px-4">
@@ -170,11 +189,11 @@
             :to="social.href"
             target="_blank"
             rel="noopener noreferrer"
-            class="btn btn-ghost btn-lg btn-square"
+            class="social-pill"
             :title="social.title"
             :aria-label="social.title"
           >
-            <i :class="social.icon" class="text-2xl"></i>
+            <i :class="social.icon" class="text-xl"></i>
           </NuxtLink>
         </div>
       </div>
