@@ -6,10 +6,40 @@
     description: string;
     /** Short tag shown bottom-left (e.g. "Calculator", "Decoder", "Reference"). */
     kind?: string;
+    /** Duotone primary color (matches the tool's icon in /technical). */
+    iconPrimary?: string;
+    /** Duotone secondary color. Defaults to iconPrimary (monochrome look). */
+    iconSecondary?: string;
+    /** Secondary opacity 0–1. */
+    iconSecondaryOpacity?: number | string;
   }
 
   const props = withDefaults(defineProps<Props>(), {
     kind: '',
+    iconPrimary: undefined,
+    iconSecondary: undefined,
+    iconSecondaryOpacity: 1,
+  });
+
+  // The icn surface tints to match the icon's primary color so each card
+  // reads as visually unified — falls back to the olive brand primary.
+  const iconStyle = computed(() => {
+    const primary = props.iconPrimary ?? 'var(--cm-primary)';
+    const secondary = props.iconSecondary ?? props.iconPrimary ?? 'var(--cm-secondary)';
+    return {
+      '--fa-primary-color': primary,
+      '--fa-secondary-color': secondary,
+      '--fa-secondary-opacity': String(props.iconSecondaryOpacity),
+    } as Record<string, string>;
+  });
+
+  // Tint the icn surface 14% of the primary so the card reads coherently.
+  const surfaceStyle = computed(() => {
+    if (!props.iconPrimary) return {};
+    return {
+      backgroundColor: `color-mix(in srgb, ${props.iconPrimary} 14%, transparent)`,
+      color: props.iconPrimary,
+    };
   });
 
   const { t } = useI18n({
@@ -38,8 +68,8 @@
     :external="isExternal || undefined"
     class="tool-card"
   >
-    <span class="tool-card__icn">
-      <i :class="['fad', icon]" aria-hidden="true"></i>
+    <span class="tool-card__icn" :style="surfaceStyle">
+      <i :class="['fad', icon]" :style="iconStyle" aria-hidden="true"></i>
     </span>
     <h4 class="tool-card__title">{{ title }}</h4>
     <p class="tool-card__desc">{{ description }}</p>
@@ -75,16 +105,13 @@
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 0.6rem;
+    /* Default surface (overridable inline per-card). */
     background: color-mix(in srgb, var(--cm-primary) 14%, transparent);
     color: var(--cm-primary);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
-  }
-  .tool-card__icn i {
-    --fa-primary-color: var(--cm-primary);
-    --fa-secondary-color: var(--cm-secondary);
   }
 
   .tool-card__title {
