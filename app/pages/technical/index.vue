@@ -76,31 +76,33 @@
     :heroType="HERO_TYPES.TECH"
   />
   <div class="container mx-auto px-4 pb-15 pt-6">
-    <div class="grid grid-cols-1 gap-4">
-      <div class="col-span-1 text-center">
-        <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" root></breadcrumb>
-        <h2 class="fancy-font-book-oblique">{{ t('breadcrumb_subtitle') }}</h2>
-        <h3 class="fancy-font-bold text-2xl">{{ t('main_heading') }}</h3>
+    <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" root></breadcrumb>
+
+    <section class="pt-8">
+      <div class="section-head">
+        <div class="meta">
+          <span class="eyebrow">{{ t('breadcrumb_subtitle') }}</span>
+          <h2 class="text-3xl md:text-4xl">{{ t('main_heading') }}</h2>
+          <p>{{ t('description_text') }}</p>
+        </div>
       </div>
-      <div class="col-span-1 text-center">
-        <p class="text-lg py-5">
-          {{ t('description_text') }}
-        </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <HomeToolCard
+          v-for="tool in ToolboxItems"
+          :key="tool.to"
+          :to="tool.to"
+          :icon="tool.iconName || 'fa-toolbox'"
+          :icon-primary="tool.iconPrimary"
+          :icon-secondary="tool.iconSecondary"
+          :icon-secondary-opacity="tool.iconSecondaryOpacity"
+          :title="t(tool.titleKey)"
+          :description="tool.descKey ? t(tool.descKey) : ''"
+          :kind="tool.kindKey ? t(tool.kindKey) : ''"
+        />
       </div>
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-10">
-      <div v-for="tool in ToolboxItems" :key="tool.to" class="col-span-1">
-        <NuxtLink :to="tool.to" class="block h-full">
-          <div class="card bg-base-100 shadow-md border border-base-300 text-center h-full hover:shadow-xl transition-shadow">
-            <div class="card-body p-5">
-              <span class="text-4xl block" v-html="tool.iconHtml"> </span>
-              <p class="text-lg mt-2">{{ t(tool.titleKey) }}</p>
-            </div>
-          </div>
-        </NuxtLink>
-      </div>
-    </div>
-    <div class="grid grid-cols-12 gap-4 mt-6">
+    </section>
+
+    <div class="grid grid-cols-12 gap-4 mt-12">
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <div class="divider">{{ t('support_section') }}</div>
       </div>
@@ -142,7 +144,20 @@
       "gearbox_calculator": "Gearbox Calculator",
       "compression_calculator": "Compression Ratio Calculator",
       "parts_equivalency": "Parts Equivalency",
-      "common_clearances": "Common Clearances"
+      "common_clearances": "Common Clearances",
+      "kind": {
+        "calculator": "Calculator",
+        "decoder": "Decoder",
+        "reference": "Reference"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     }
   },
   "es": {
@@ -174,7 +189,20 @@
       "gearbox_calculator": "Calculadora de Caja de Cambios",
       "compression_calculator": "Calculadora de Relación de Compresión",
       "parts_equivalency": "Equivalencia de Piezas",
-      "common_clearances": "Holguras Comunes"
+      "common_clearances": "Holguras Comunes",
+      "kind": {
+        "calculator": "Calculadora",
+        "decoder": "Decodificador",
+        "reference": "Referencia"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "Inicio",
     "breadcrumb_technical": "Técnico",
@@ -223,7 +251,20 @@
       "gearbox_calculator": "Calculatrice de Boîte de Vitesses",
       "compression_calculator": "Calculatrice de Rapport de Compression",
       "parts_equivalency": "Équivalence des Pièces",
-      "common_clearances": "Jeux Communs"
+      "common_clearances": "Jeux Communs",
+      "kind": {
+        "calculator": "Calculatrice",
+        "decoder": "Décodeur",
+        "reference": "Référence"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "Accueil",
     "breadcrumb_technical": "Technique",
@@ -272,7 +313,20 @@
       "gearbox_calculator": "Calcolatrice Cambio",
       "compression_calculator": "Calcolatrice Rapporto Compressione",
       "parts_equivalency": "Equivalenza Parti",
-      "common_clearances": "Giochi Comuni"
+      "common_clearances": "Giochi Comuni",
+      "kind": {
+        "calculator": "Calcolatrice",
+        "decoder": "Decodificatore",
+        "reference": "Riferimento"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "Home",
     "breadcrumb_technical": "Tecnico",
@@ -321,7 +375,20 @@
       "gearbox_calculator": "Getrieberechner",
       "compression_calculator": "Kompressionsverhältnis-Rechner",
       "parts_equivalency": "Teileäquivalenz",
-      "common_clearances": "Übliche Spiele"
+      "common_clearances": "Übliche Spiele",
+      "kind": {
+        "calculator": "Rechner",
+        "decoder": "Dekoder",
+        "reference": "Referenz"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "Startseite",
     "breadcrumb_technical": "Technisch",
@@ -370,7 +437,20 @@
       "gearbox_calculator": "Calculadora de Câmbio",
       "compression_calculator": "Calculadora de Razão de Compressão",
       "parts_equivalency": "Equivalência de Peças",
-      "common_clearances": "Folgas Comuns"
+      "common_clearances": "Folgas Comuns",
+      "kind": {
+        "calculator": "Calculadora",
+        "decoder": "Decodificador",
+        "reference": "Referência"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "Início",
     "breadcrumb_technical": "Técnico",
@@ -419,7 +499,20 @@
       "gearbox_calculator": "Калькулятор Коробки Передач",
       "compression_calculator": "Калькулятор Степени Сжатия",
       "parts_equivalency": "Эквивалентность Деталей",
-      "common_clearances": "Общие Зазоры"
+      "common_clearances": "Общие Зазоры",
+      "kind": {
+        "calculator": "Калькулятор",
+        "decoder": "Декодер",
+        "reference": "Справочник"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "Главная",
     "breadcrumb_technical": "Техническое",
@@ -470,7 +563,20 @@
       "gearbox_calculator": "ギアボックス計算機",
       "compression_calculator": "圧縮比計算機",
       "parts_equivalency": "部品等価性",
-      "common_clearances": "一般的なクリアランス"
+      "common_clearances": "一般的なクリアランス",
+      "kind": {
+        "calculator": "計算機",
+        "decoder": "デコーダー",
+        "reference": "リファレンス"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "ホーム",
     "breadcrumb_technical": "テクニカル",
@@ -519,7 +625,20 @@
       "gearbox_calculator": "变速箱计算器",
       "compression_calculator": "压缩比计算器",
       "parts_equivalency": "零件等效性",
-      "common_clearances": "常见间隙"
+      "common_clearances": "常见间隙",
+      "kind": {
+        "calculator": "计算器",
+        "decoder": "解码器",
+        "reference": "参考"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "首页",
     "breadcrumb_technical": "技术",
@@ -568,7 +687,20 @@
       "gearbox_calculator": "기어박스 계산기",
       "compression_calculator": "압축비 계산기",
       "parts_equivalency": "부품 등가성",
-      "common_clearances": "일반적인 클리어런스"
+      "common_clearances": "일반적인 클리어런스",
+      "kind": {
+        "calculator": "계산기",
+        "decoder": "디코더",
+        "reference": "참조"
+      },
+      "torque_specs_desc": "Every torque value for the A-series and aux components, in one searchable chart.",
+      "chassis_decoder_desc": "Year, plant, and trim from your VIN/chassis number.",
+      "engine_decoder_desc": "Decode A-series engine codes, displacement, and date stamps.",
+      "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
+      "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
+      "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
+      "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     },
     "breadcrumb_home": "홈",
     "breadcrumb_technical": "기술",
