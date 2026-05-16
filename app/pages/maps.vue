@@ -282,9 +282,10 @@
     />
     <div class="container mx-auto px-4">
       <div class="grid grid-cols-12 gap-4">
-        <div class="col-span-12 md:col-span-6 md:col-start-4">
-          <h1 class="fancy-font-bold text-2xl md:text-3xl text-center pt-10 pb-3">{{ t('mainTitle') }}</h1>
-          <p class="lead text-center">
+        <div class="col-span-12 md:col-span-8 md:col-start-3 text-center pt-10">
+          <span class="eyebrow">{{ t('eyebrow') }}</span>
+          <h1 class="fancy-font-bold text-2xl md:text-3xl pt-2 pb-3">{{ t('mainTitle') }}</h1>
+          <p class="lead">
             {{ t('description') }}
           </p>
         </div>
@@ -666,7 +667,8 @@
       "title": "Supported ECU's",
       "subtitle": "Support for the ecu you need"
     },
-    "otherSupport": "Other ways to support"
+    "otherSupport": "Other ways to support",
+    "eyebrow": "ECU MAPS STORE"
   },
   "es": {
     "seo": {
@@ -745,7 +747,8 @@
       "title": "ECUs Soportadas",
       "subtitle": "Soporte para la ECU que necesitas"
     },
-    "otherSupport": "Otras formas de apoyar"
+    "otherSupport": "Otras formas de apoyar",
+    "eyebrow": "TIENDA DE MAPAS ECU"
   },
   "fr": {
     "seo": {
@@ -824,7 +827,8 @@
       "title": "ECUs supportés",
       "subtitle": "Support pour l'ECU dont vous avez besoin"
     },
-    "otherSupport": "Autres moyens de soutenir"
+    "otherSupport": "Autres moyens de soutenir",
+    "eyebrow": "BOUTIQUE DE MAPPING ECU"
   },
   "de": {
     "seo": {
@@ -903,7 +907,8 @@
       "title": "Unterstützte ECUs",
       "subtitle": "Unterstützung für die ECU, die Sie brauchen"
     },
-    "otherSupport": "Andere Wege zu unterstützen"
+    "otherSupport": "Andere Wege zu unterstützen",
+    "eyebrow": "ECU-MAPPING-SHOP"
   },
   "it": {
     "seo": {
@@ -982,7 +987,8 @@
       "title": "ECU supportate",
       "subtitle": "Supporto per l'ECU di cui hai bisogno"
     },
-    "otherSupport": "Altri modi per supportare"
+    "otherSupport": "Altri modi per supportare",
+    "eyebrow": "STORE MAPPATURA ECU"
   },
   "ja": {
     "seo": {
@@ -1061,7 +1067,8 @@
       "title": "サポートされているECU",
       "subtitle": "必要なecuをサポート"
     },
-    "otherSupport": "サポートする他の方法"
+    "otherSupport": "サポートする他の方法",
+    "eyebrow": "ECUマップストア"
   },
   "ko": {
     "seo": {
@@ -1140,7 +1147,8 @@
       "title": "지원되는 ECU",
       "subtitle": "필요한 ECU 지원"
     },
-    "otherSupport": "다른 지원 방법"
+    "otherSupport": "다른 지원 방법",
+    "eyebrow": "ECU 맵 스토어"
   },
   "pt": {
     "seo": {
@@ -1219,7 +1227,8 @@
       "title": "ECUs Suportadas",
       "subtitle": "Suporte para a ECU que você precisa"
     },
-    "otherSupport": "Outras maneiras de apoiar"
+    "otherSupport": "Outras maneiras de apoiar",
+    "eyebrow": "LOJA DE MAPAS ECU"
   },
   "ru": {
     "seo": {
@@ -1298,7 +1307,8 @@
       "title": "Поддерживаемые ECU",
       "subtitle": "Поддержка для нужного вам ECU"
     },
-    "otherSupport": "Другие способы поддержки"
+    "otherSupport": "Другие способы поддержки",
+    "eyebrow": "МАГАЗИН ECU-КАРТ"
   },
   "zh": {
     "seo": {
@@ -1377,7 +1387,8 @@
       "title": "支持的ECU",
       "subtitle": "为您需要的ECU提供支持"
     },
-    "otherSupport": "其他支持方式"
+    "otherSupport": "其他支持方式",
+    "eyebrow": "ECU 调校店"
   }
 }
 </i18n>
