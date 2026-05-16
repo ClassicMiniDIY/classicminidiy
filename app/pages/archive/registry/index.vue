@@ -108,7 +108,10 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-3xl font-bold">{{ t('main_heading') }}</h1>
+            <PageIntro
+              eyebrow="REGISTRY"
+              :title="t('main_heading')"
+            />
             <h2 class="text-xl mt-4">
               <strong>{{ registryItems?.length || t('subtitle_count') }}</strong>
               {{ t('subtitle') }}

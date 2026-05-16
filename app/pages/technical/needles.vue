@@ -93,10 +93,11 @@
         <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
       </div>
       <div class="col-span-12">
-        <h1 class="fancy-font-bold text-2xl">{{ t('main_heading') }}</h1>
-        <p class="text-lg pt-5">
-          {{ t('description_text') }}
-        </p>
+        <PageIntro
+              eyebrow="CALCULATOR"
+              :title="t('main_heading')"
+              :description="t('description_text')"
+            />
       </div>
       <div class="col-span-12 border-t border-base-300 mt-5"></div>
       <div class="col-span-12">

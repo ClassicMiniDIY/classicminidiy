@@ -100,10 +100,11 @@
 
       <div class="grid grid-cols-12 gap-4 items-center">
         <div class="col-span-12 md:col-span-8">
-          <h1 class="text-3xl font-bold mb-2">{{ t('main_heading') }}</h1>
-          <p class="pb-5">
-            {{ t('description_text') }}
-          </p>
+          <PageIntro
+              eyebrow="WHEEL LIBRARY"
+              :title="t('main_heading')"
+              :description="t('description_text')"
+            />
         </div>
         <div class="col-span-12 md:col-span-4">
           <NuxtLink :to="'/contribute/wheel?newWheel=true'" :title="t('add_wheel_card.link_title')">
