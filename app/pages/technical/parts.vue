@@ -147,8 +147,11 @@
     <!-- Description and Contact Card Section -->
     <div class="grid grid-cols-12 gap-6 mb-8">
       <div class="col-span-12 md:col-span-8">
-        <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
-        <p class="mb-4">{{ t('description_text') }}</p>
+        <PageIntro
+              eyebrow="REFERENCE"
+              :title="t('main_heading')"
+              :description="t('description_text')"
+            />
       </div>
       <div class="col-span-12 md:col-span-4">
         <a @click="scrollToSubmissions" :title="t('contact_card.link_title')" class="block cursor-pointer">

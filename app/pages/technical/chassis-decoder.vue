@@ -199,10 +199,11 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-7">
-            <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
-            <p class="mb-4">
-              {{ t('description_text') }}
-            </p>
+            <PageIntro
+              eyebrow="DECODER"
+              :title="t('main_heading')"
+              :description="t('description_text')"
+            />
           </div>
           <div class="col-span-12 md:col-span-5">
             <NuxtLink :to="'/technical/engine-decoder'" :title="t('engine_decoder_card.link_title')" class="block">

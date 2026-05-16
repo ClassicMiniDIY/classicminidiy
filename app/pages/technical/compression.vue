@@ -120,10 +120,11 @@
         <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
         <div class="grid grid-cols-11 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-3xl font-bold mb-4">{{ t('main_heading') }}</h1>
-            <p class="mb-4">
-              {{ t('description_text') }}
-            </p>
+            <PageIntro
+              eyebrow="CALCULATOR"
+              :title="t('main_heading')"
+              :description="t('description_text')"
+            />
           </div>
           <div class="col-span-12 md:col-span-4">
             <NuxtLink :to="'/archive/engines'" :title="t('engine_sizes_card.link_title')" class="block">
