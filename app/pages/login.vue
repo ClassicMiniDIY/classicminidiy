@@ -69,7 +69,11 @@
             </div>
 
             <div class="flex justify-center">
-              <NuxtTurnstile v-model="turnstileToken" :options="{ theme: 'auto' }" />
+              <NuxtTurnstile
+                ref="turnstileRef"
+                v-model="turnstileToken"
+                :options="{ theme: 'auto' }"
+              />
             </div>
 
             <div class="mt-6">
@@ -132,6 +136,7 @@
   const errorMessage = ref('');
   const magicLinkSent = ref(false);
   const turnstileToken = ref('');
+  const turnstileRef = ref<{ reset: () => void } | null>(null);
   const hasError = computed(() => !!errorMessage.value);
 
   // Redirect if already authenticated
@@ -164,8 +169,9 @@
     } catch (error: any) {
       console.error('Login error:', error);
       errorMessage.value = error.message || t('login_error');
-      // Reset the widget so the user gets a fresh token on retry
+      // Tokens are single-use. Reset the widget so the next attempt gets a fresh challenge.
       turnstileToken.value = '';
+      turnstileRef.value?.reset();
     } finally {
       isLoading.value = false;
     }
@@ -203,6 +209,7 @@
     email.value = '';
     errorMessage.value = '';
     turnstileToken.value = '';
+    turnstileRef.value?.reset();
   };
 
   // Clear error when user starts typing
