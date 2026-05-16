@@ -120,31 +120,36 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <HomeToolCard
         to="/technical/compression"
-        icon="fa-gauge"
+        icon="fa-calculator"
+        icon-primary="#859369"
         :title="t('home.toolgrid.cards.compression.title')"
         :description="t('home.toolgrid.cards.compression.desc')"
         :kind="t('home.toolgrid.kind.calculator')"
       />
       <HomeToolCard
         to="/technical/gearing"
-        icon="fa-cogs"
+        icon="fa-gears"
+        icon-primary="#c49031"
         :title="t('home.toolgrid.cards.gearing.title')"
         :description="t('home.toolgrid.cards.gearing.desc')"
         :kind="t('home.toolgrid.kind.calculator')"
       />
       <HomeToolCard
         to="/technical/chassis-decoder"
-        icon="fa-id-card"
+        icon="fa-hashtag"
         :title="t('home.toolgrid.cards.chassis.title')"
         :description="t('home.toolgrid.cards.chassis.desc')"
         :kind="t('home.toolgrid.kind.decoder')"
       />
       <HomeToolCard
-        to="/archive/wheels"
-        icon="fa-ruler-combined"
-        :title="t('home.toolgrid.cards.wheels.title')"
-        :description="t('home.toolgrid.cards.wheels.desc')"
-        :kind="t('home.toolgrid.kind.reference')"
+        to="/technical/needles"
+        icon="fa-chart-line"
+        icon-primary="#b74d36"
+        icon-secondary="#417bbd"
+        :icon-secondary-opacity="0.8"
+        :title="t('home.toolgrid.cards.needles.title')"
+        :description="t('home.toolgrid.cards.needles.desc')"
+        :kind="t('home.toolgrid.kind.calculator')"
       />
     </div>
   </section>
@@ -530,9 +535,9 @@
             "title": "Chassis Decoder",
             "desc": "Year, plant, and trim from your VIN/chassis number."
           },
-          "wheels": {
-            "title": "Wheel Fitment",
-            "desc": "Offset/backspace lookup from the community registry."
+          "needles": {
+            "title": "Carb Needle Configurator",
+            "desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays."
           }
         }
       },
