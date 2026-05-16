@@ -98,7 +98,7 @@
 
 <template>
   <section
-    class="hero-section flex bg-[#242424] bg-cover bg-center bg-no-repeat"
+    class="hero-section relative flex bg-[#242424] bg-cover bg-center bg-no-repeat"
     :class="{
       [textSize]: textSize,
       'md:h-144 sm:h-96': heroType === HERO_TYPES.HOME,
@@ -108,7 +108,7 @@
     :style="[!showImage ? { backgroundImage: 'none' } : styleObject]"
   >
     <div
-      class="hero-content flex flex-col items-start justify-center"
+      class="hero-content relative z-10 flex flex-col items-start justify-center"
       :style="[blog ? { paddingTop: '4rem', paddingBottom: '4rem' } : {}]"
     >
       <div class="pl-20" :class="{ 'text-center': centered }">
@@ -147,6 +147,17 @@
 
 <style lang="scss">
   .hero-section {
+    /* Text-protection scrim — sits between the bg image and content
+       so white titles and the orange eyebrow stay legible on busy
+       photographic backgrounds. Tweak the alpha to taste. */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: rgba(47, 47, 47, 0.55);
+      pointer-events: none;
+    }
+
     .special-title {
       font-size: 100px;
     }
