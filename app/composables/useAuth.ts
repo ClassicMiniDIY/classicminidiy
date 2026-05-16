@@ -141,7 +141,7 @@ export const useAuth = () => {
   };
 
   // Sign in with magic link
-  const signInWithEmail = async (email: string) => {
+  const signInWithEmail = async (email: string, captchaToken?: string) => {
     const redirectUrl = import.meta.client
       ? `${window.location.origin}/auth/callback`
       : `${config.public.siteUrl}/auth/callback`;
@@ -150,6 +150,7 @@ export const useAuth = () => {
       email,
       options: {
         emailRedirectTo: redirectUrl,
+        captchaToken,
       },
     });
 

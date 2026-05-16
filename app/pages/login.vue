@@ -68,8 +68,16 @@
               <span>{{ errorMessage }}</span>
             </div>
 
+            <div class="flex justify-center">
+              <NuxtTurnstile v-model="turnstileToken" :options="{ theme: 'auto' }" />
+            </div>
+
             <div class="mt-6">
-              <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
+              <button
+                type="submit"
+                class="btn btn-primary btn-block"
+                :disabled="isLoading || !turnstileToken"
+              >
                 <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
                 <i v-else class="fad fa-paper-plane"></i>
                 {{ isLoading ? t('sending') : t('send_magic_link') }}
@@ -123,6 +131,7 @@
   const isLoading = ref(false);
   const errorMessage = ref('');
   const magicLinkSent = ref(false);
+  const turnstileToken = ref('');
   const hasError = computed(() => !!errorMessage.value);
 
   // Redirect if already authenticated
@@ -141,15 +150,22 @@
       return;
     }
 
+    if (!turnstileToken.value) {
+      errorMessage.value = t('captcha_error');
+      return;
+    }
+
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      await signInWithEmail(email.value);
+      await signInWithEmail(email.value, turnstileToken.value);
       magicLinkSent.value = true;
     } catch (error: any) {
       console.error('Login error:', error);
       errorMessage.value = error.message || t('login_error');
+      // Reset the widget so the user gets a fresh token on retry
+      turnstileToken.value = '';
     } finally {
       isLoading.value = false;
     }
@@ -186,6 +202,7 @@
     magicLinkSent.value = false;
     email.value = '';
     errorMessage.value = '';
+    turnstileToken.value = '';
   };
 
   // Clear error when user starts typing
@@ -217,6 +234,7 @@
     "oauth_error": "Sign in failed. Please try again.",
     "validation_error": "Please enter a valid email address",
     "login_error": "Failed to send magic link. Please try again.",
+    "captcha_error": "Please complete the security check",
     "unified_account_note": "Your account works on both classicminidiy.com and theminiexchange.com"
   },
   "es": {
@@ -238,6 +256,7 @@
     "oauth_error": "Error al iniciar sesión. Inténtalo de nuevo.",
     "validation_error": "Por favor ingresa un correo electrónico válido",
     "login_error": "Error al enviar el enlace mágico. Inténtalo de nuevo.",
+    "captcha_error": "Por favor completa la verificación de seguridad",
     "unified_account_note": "Tu cuenta funciona tanto en classicminidiy.com como en theminiexchange.com"
   },
   "fr": {
@@ -259,6 +278,7 @@
     "oauth_error": "Échec de la connexion. Veuillez réessayer.",
     "validation_error": "Veuillez entrer une adresse email valide",
     "login_error": "Échec de l'envoi du lien magique. Veuillez réessayer.",
+    "captcha_error": "Veuillez compléter la vérification de sécurité",
     "unified_account_note": "Votre compte fonctionne sur classicminidiy.com et theminiexchange.com"
   },
   "it": {
@@ -280,6 +300,7 @@
     "oauth_error": "Accesso fallito. Riprova.",
     "validation_error": "Inserisci un indirizzo email valido",
     "login_error": "Invio del link magico fallito. Riprova.",
+    "captcha_error": "Completa la verifica di sicurezza",
     "unified_account_note": "Il tuo account funziona sia su classicminidiy.com che su theminiexchange.com"
   },
   "de": {
@@ -301,6 +322,7 @@
     "oauth_error": "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "validation_error": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "login_error": "Magic Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "captcha_error": "Bitte schließen Sie die Sicherheitsprüfung ab",
     "unified_account_note": "Ihr Konto funktioniert sowohl auf classicminidiy.com als auch auf theminiexchange.com"
   },
   "pt": {
@@ -322,6 +344,7 @@
     "oauth_error": "Falha ao entrar. Tente novamente.",
     "validation_error": "Por favor, digite um endereço de email válido",
     "login_error": "Falha ao enviar o link mágico. Tente novamente.",
+    "captcha_error": "Por favor, complete a verificação de segurança",
     "unified_account_note": "Sua conta funciona tanto em classicminidiy.com quanto em theminiexchange.com"
   },
   "ru": {
@@ -343,6 +366,7 @@
     "oauth_error": "Ошибка входа. Попробуйте снова.",
     "validation_error": "Пожалуйста, введите действительный email адрес",
     "login_error": "Не удалось отправить ссылку для входа. Попробуйте снова.",
+    "captcha_error": "Пожалуйста, пройдите проверку безопасности",
     "unified_account_note": "Ваш аккаунт работает как на classicminidiy.com, так и на theminiexchange.com"
   },
   "ja": {
@@ -364,6 +388,7 @@
     "oauth_error": "サインインに失敗しました。もう一度お試しください。",
     "validation_error": "有効なメールアドレスを入力してください",
     "login_error": "マジックリンクの送信に失敗しました。もう一度お試しください。",
+    "captcha_error": "セキュリティチェックを完了してください",
     "unified_account_note": "あなたのアカウントはclassicminidiy.comとtheminiexchange.comの両方で使えます"
   },
   "zh": {
@@ -385,6 +410,7 @@
     "oauth_error": "登录失败。请重试。",
     "validation_error": "请输入有效的邮箱地址",
     "login_error": "发送魔法链接失败。请重试。",
+    "captcha_error": "请完成安全验证",
     "unified_account_note": "您的账户可在classicminidiy.com和theminiexchange.com上使用"
   },
   "ko": {
@@ -406,6 +432,7 @@
     "oauth_error": "로그인에 실패했습니다. 다시 시도해주세요.",
     "validation_error": "유효한 이메일 주소를 입력해주세요",
     "login_error": "매직 링크 전송에 실패했습니다. 다시 시도해주세요.",
+    "captcha_error": "보안 확인을 완료해주세요",
     "unified_account_note": "계정은 classicminidiy.com과 theminiexchange.com 모두에서 사용할 수 있습니다"
   }
 }

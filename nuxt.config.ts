@@ -258,7 +258,12 @@ export default defineNuxtConfig({
     'nuxt-llms',
     '@nuxtjs/i18n',
     '@nuxtjs/mcp-toolkit',
+    '@nuxtjs/turnstile',
   ],
+
+  turnstile: {
+    siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
+  },
 
   // MCP (Model Context Protocol) Configuration
   mcp: {
