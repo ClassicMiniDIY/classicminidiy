@@ -183,16 +183,19 @@
           </div>
         </div>
 
-        <h1 class="text-3xl font-bold">{{ t('main_heading') }}</h1>
-        <h2 class="text-xl mt-4">
-          <strong>{{ colors?.length || '0' }}</strong>
-          {{ t('subtitle') }}
-        </h2>
-        <p class="my-4">
-          {{ t('description_text') }}
-          <a href="http://mini-colours.co.uk" class="text-primary hover:underline">{{ t('partner_link') }}</a>
-          {{ t('description_text_2') }}
-        </p>
+        <PageIntro eyebrow="COLOR LIBRARY" :title="t('main_heading')">
+          <template #meta>
+            <p class="lead text-xl mt-2">
+              <strong>{{ colors?.length || '0' }}</strong>
+              {{ t('subtitle') }}
+            </p>
+            <p>
+              {{ t('description_text') }}
+              <a href="http://mini-colours.co.uk" class="link link-primary">{{ t('partner_link') }}</a>
+              {{ t('description_text_2') }}
+            </p>
+          </template>
+        </PageIntro>
       </div>
       <div class="col-span-12">
         <div class="divider my-4"></div>
