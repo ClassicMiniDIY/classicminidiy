@@ -29,6 +29,13 @@ export interface ToolboxItem {
   path: string;
   iconHtml: string;
   to: string;
+  /** Design-system structured fields (used by HomeToolCard). */
+  descKey?: string;
+  kindKey?: string;
+  iconName?: string;
+  iconPrimary?: string;
+  iconSecondary?: string;
+  iconSecondaryOpacity?: number;
 }
 export interface MobileMenuItem {
   title: string;
@@ -90,57 +97,96 @@ export const MobileMenuItems: MobileMenuItem[] = [
 export const ToolboxItems: ToolboxItem[] = [
   {
     titleKey: 'toolbox.torque_specs',
+    descKey: 'toolbox.torque_specs_desc',
+    kindKey: 'toolbox.kind.reference',
     path: '/technical/torque',
+    to: '/technical/torque',
+    iconName: 'fa-screwdriver-wrench',
+    iconPrimary: '#ed7135',
     iconHtml:
       '<i class="fa-duotone fa-screwdriver-wrench" style="--fa-primary-color: #ed7135; --fa-secondary-color: #ed7135;"></i>',
-    to: '/technical/torque',
   },
   {
     titleKey: 'toolbox.chassis_decoder',
+    descKey: 'toolbox.chassis_decoder_desc',
+    kindKey: 'toolbox.kind.decoder',
     path: '/technical/chassis-decoder',
-    iconHtml: '<i class="fa-duotone fa-hashtag" ></i>',
     to: '/technical/chassis-decoder',
+    iconName: 'fa-hashtag',
+    iconHtml: '<i class="fa-duotone fa-hashtag" ></i>',
   },
   {
     titleKey: 'toolbox.engine_decoder',
+    descKey: 'toolbox.engine_decoder_desc',
+    kindKey: 'toolbox.kind.decoder',
     path: '/technical/engine-decoder',
+    to: '/technical/engine-decoder',
+    iconName: 'fa-engine',
+    iconPrimary: '#A49966',
+    iconSecondary: '#000000',
+    iconSecondaryOpacity: 0.6,
     iconHtml:
       '<i class="fa-duotone fa-engine" style="--fa-primary-color: #A49966; --fa-secondary-color: #000000; --fa-secondary-opacity: 0.6;"></i>',
-    to: '/technical/engine-decoder',
   },
   {
     titleKey: 'toolbox.needle_configurator',
+    descKey: 'toolbox.needle_configurator_desc',
+    kindKey: 'toolbox.kind.calculator',
     path: '/technical/needles',
+    to: '/technical/needles',
+    iconName: 'fa-chart-line',
+    iconPrimary: '#b74d36',
+    iconSecondary: '#417bbd',
+    iconSecondaryOpacity: 0.8,
     iconHtml:
       '<i class="fa-duotone fa-chart-line" style="--fa-primary-color: #b74d36; --fa-secondary-color: #417bbd; --fa-secondary-opacity: 0.8;"></i>',
-    to: '/technical/needles',
   },
   {
     titleKey: 'toolbox.gearbox_calculator',
+    descKey: 'toolbox.gearbox_calculator_desc',
+    kindKey: 'toolbox.kind.calculator',
     path: '/technical/gearing',
-    iconHtml: '<i class="fa-duotone fa-gears" style="--fa-primary-color: #c49031; --fa-secondary-color: #c49031;"></i>',
     to: '/technical/gearing',
+    iconName: 'fa-gears',
+    iconPrimary: '#c49031',
+    iconHtml: '<i class="fa-duotone fa-gears" style="--fa-primary-color: #c49031; --fa-secondary-color: #c49031;"></i>',
   },
   {
     titleKey: 'toolbox.compression_calculator',
+    descKey: 'toolbox.compression_calculator_desc',
+    kindKey: 'toolbox.kind.calculator',
     path: '/technical/compression',
+    to: '/technical/compression',
+    iconName: 'fa-calculator',
+    iconPrimary: '#859369',
     iconHtml:
       '<i class="fa-duotone fa-calculator" style="--fa-primary-color: #859369; --fa-secondary-color: #859369;"></i>',
-    to: '/technical/compression',
   },
   {
     titleKey: 'toolbox.parts_equivalency',
+    descKey: 'toolbox.parts_equivalency_desc',
+    kindKey: 'toolbox.kind.reference',
     path: '/technical/parts',
+    to: '/technical/parts',
+    iconName: 'fa-magnifying-glass',
+    iconPrimary: '#080808',
+    iconSecondary: '#f3b140',
+    iconSecondaryOpacity: 0.9,
     iconHtml:
       '<i class="fa-duotone fa-magnifying-glass" style="--fa-primary-color: #080808; --fa-secondary-color: #f3b140; --fa-secondary-opacity: .9;"></i>',
-    to: '/technical/parts',
   },
   {
     titleKey: 'toolbox.common_clearances',
+    descKey: 'toolbox.common_clearances_desc',
+    kindKey: 'toolbox.kind.reference',
     path: '/technical/clearance',
+    to: '/technical/clearance',
+    iconName: 'fa-ruler-triangle',
+    iconPrimary: '#433016',
+    iconSecondary: '#ddbd8d',
+    iconSecondaryOpacity: 1,
     iconHtml:
       '<i class="fa-duotone fa-ruler-triangle" style="--fa-primary-color: #433016; --fa-secondary-color: #ddbd8d; --fa-secondary-opacity: 1;"></i>',
-    to: '/technical/clearance',
   },
 ];
 
