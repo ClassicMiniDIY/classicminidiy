@@ -112,7 +112,7 @@
       :style="[blog ? { paddingTop: '4rem', paddingBottom: '4rem' } : {}]"
     >
       <div class="pl-20" :class="{ 'text-center': centered }">
-        <p class="text-white text-sm uppercase tracking-wide" :class="{ 'text-center': blog }">
+        <p class="eyebrow" :class="{ 'text-center': blog }">
           {{ displaySubtitle }}
         </p>
         <h1
@@ -127,6 +127,19 @@
             {{ displayTitle }}
           </span>
         </h1>
+        <div v-if="heroType === HERO_TYPES.HOME" class="mt-6 flex flex-wrap gap-2">
+          <NuxtLink to="/technical" class="btn btn-secondary">
+            <i class="fad fa-toolbox mr-2"></i>{{ t('cta_open_toolbox') }}
+          </NuxtLink>
+          <a
+            href="https://youtube.com/c/classicminidiy?sub_confirmation=1"
+            target="_blank"
+            rel="noopener"
+            class="btn btn-outline text-white border-white/50 hover:bg-white/10 hover:border-white"
+          >
+            <i class="fab fa-youtube mr-2"></i>{{ t('cta_watch_channel') }}
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -150,43 +163,63 @@
 {
   "en": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "YOUR FRIENDLY NEIGHBORHOOD"
+    "home_subtitle": "YOUR FRIENDLY NEIGHBORHOOD",
+    "cta_open_toolbox": "Open the Toolbox",
+    "cta_watch_channel": "Watch the channel"
   },
   "es": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "TU RECURSO AMIGABLE DEL BARRIO"
+    "home_subtitle": "TU RECURSO AMIGABLE DEL BARRIO",
+    "cta_open_toolbox": "Abrir la caja de herramientas",
+    "cta_watch_channel": "Ver el canal"
   },
   "fr": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "VOTRE RESSOURCE AMICALE DE QUARTIER"
+    "home_subtitle": "VOTRE RESSOURCE AMICALE DE QUARTIER",
+    "cta_open_toolbox": "Ouvrir la boîte à outils",
+    "cta_watch_channel": "Voir la chaîne"
   },
   "de": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "IHRE FREUNDLICHE NACHBARSCHAFTSRESSOURCE"
+    "home_subtitle": "IHRE FREUNDLICHE NACHBARSCHAFTSRESSOURCE",
+    "cta_open_toolbox": "Werkzeugkasten öffnen",
+    "cta_watch_channel": "Kanal ansehen"
   },
   "it": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "LA TUA RISORSA AMICHEVOLE DI QUARTIERE"
+    "home_subtitle": "LA TUA RISORSA AMICHEVOLE DI QUARTIERE",
+    "cta_open_toolbox": "Apri la cassetta degli attrezzi",
+    "cta_watch_channel": "Guarda il canale"
   },
   "ja": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "あなたの親しみやすい近所のリソース"
+    "home_subtitle": "あなたの親しみやすい近所のリソース",
+    "cta_open_toolbox": "ツールボックスを開く",
+    "cta_watch_channel": "チャンネルを見る"
   },
   "ko": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "당신의 친근한 동네 리소스"
+    "home_subtitle": "당신의 친근한 동네 리소스",
+    "cta_open_toolbox": "도구상자 열기",
+    "cta_watch_channel": "채널 보기"
   },
   "pt": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "SEU RECURSO AMIGÁVEL DA VIZINHANÇA"
+    "home_subtitle": "SEU RECURSO AMIGÁVEL DA VIZINHANÇA",
+    "cta_open_toolbox": "Abrir a caixa de ferramentas",
+    "cta_watch_channel": "Ver o canal"
   },
   "ru": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "ВАШ ДРУЖЕЛЮБНЫЙ СОСЕДСКИЙ РЕСУРС"
+    "home_subtitle": "ВАШ ДРУЖЕЛЮБНЫЙ СОСЕДСКИЙ РЕСУРС",
+    "cta_open_toolbox": "Открыть набор инструментов",
+    "cta_watch_channel": "Смотреть канал"
   },
   "zh": {
     "home_title": "Classic Mini DIY",
-    "home_subtitle": "您友好的邻里资源"
+    "home_subtitle": "您友好的邻里资源",
+    "cta_open_toolbox": "打开工具箱",
+    "cta_watch_channel": "观看频道"
   }
 }
 </i18n>

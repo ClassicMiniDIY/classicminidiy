@@ -92,11 +92,111 @@
 }
 
 /* ============================================
-   Typography - Outfit font
+   Design System Tokens
+   Mirrors classic-mini-diy-design-system/colors_and_type.css
+   so brand utilities and components can reference brand
+   tokens without depending on the daisyUI internals.
+   ============================================ */
+:root,
+[data-theme='cmdiy'] {
+  /* Brand */
+  --cm-primary: #859369;
+  --cm-primary-content: #fafafa;
+  --cm-secondary: #ed7135;
+  --cm-secondary-content: #fafafa;
+  --cm-accent: #6b7a52;
+  --cm-fa-orange: #f3b140;
+
+  /* Foreground/background semantic aliases */
+  --fg-1: #1c1c20;
+  --fg-2: #4a4a4f;
+  --fg-3: #76767c;
+  --bg-1: #ffffff;
+  --bg-2: #f3f3f3;
+  --bg-3: #e6e6e6;
+
+  --border-1: rgba(0, 0, 0, 0.08);
+  --border-2: rgba(0, 0, 0, 0.14);
+
+  /* Spacing scale (4px base, 8pt-friendly) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Shadow scale — daisyUI depth 1 ≈ low subtle elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.14);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 120ms;
+  --t-base: 200ms;
+  --t-slow: 320ms;
+}
+
+[data-theme='cmdiy-dark'] {
+  --cm-primary: #9aac7f;
+  --cm-secondary: #f08a54;
+  --cm-accent: #7a8960;
+
+  --fg-1: #e7e7e9;
+  --fg-2: #b6b6bc;
+  --fg-3: #898990;
+  --bg-1: #2c2c30;
+  --bg-2: #232327;
+  --bg-3: #1a1a1d;
+
+  --border-1: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.14);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55), 0 4px 8px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================
+   Typography - Outfit font + Futura PT display
    ============================================ */
 :root {
   --font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-display: futura-pt, 'Futura PT', 'Bahnschrift', 'Trebuchet MS', 'Avenir Next', 'Avenir', system-ui,
+    sans-serif;
+
+  /* Type scale (1.250 ratio, compressed at small sizes) */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 1.875rem;
+  --fs-3xl: 2.25rem;
+  --fs-4xl: 3rem;
+  --fs-5xl: 3.75rem;
+  --fs-hero: 6.25rem;
+
+  /* Line heights + tracking */
+  --lh-tight: 1.1;
+  --lh-snug: 1.25;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+  --tracking-tight: -0.01em;
+  --tracking-wide: 0.04em;
+  --tracking-caps: 0.08em;
 }
 
 html,
@@ -150,6 +250,92 @@ body {
   background-color: #febd69 !important;
   border-color: #febd69 !important;
   color: white !important;
+}
+
+/* ============================================
+   Brand Utility Classes (from design system)
+   Reusable across pages — keep these stable.
+   ============================================ */
+
+/* Short, ALL-CAPS, tracked eyebrows in brand orange.
+   Use above section headings and hero titles. */
+.eyebrow {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--cm-secondary);
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Display-font ALL-CAPS muted label — companion to .eyebrow
+   for secondary section kickers. */
+.biglabel {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.8125rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* Section-head pattern: eyebrow + display heading + meta + optional CTA.
+   Apply to a wrapper that holds .meta + an action element. */
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+.section-head .meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.section-head h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+}
+.section-head p {
+  color: var(--fg-2);
+  margin: 0.375rem 0 0;
+  max-width: 35rem;
+  line-height: var(--lh-normal);
+}
+
+/* Lead paragraph — slightly larger, muted-text follow-up to headings. */
+.lead {
+  font-size: var(--fs-md);
+  line-height: var(--lh-relaxed);
+  color: var(--fg-2);
+}
+
+/* Metadata caption — tiny, tracked uppercase tag for card meta rows. */
+.text-meta {
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  font-weight: 600;
+}
+
+/* Hero display title — Futura PT at 100px desktop / 32px mobile. */
+.special-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-hero);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+}
+@media (max-width: 1023px) {
+  .special-title {
+    font-size: 2rem;
+  }
 }
 
 /* Text Utilities */

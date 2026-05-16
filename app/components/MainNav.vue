@@ -448,6 +448,19 @@
     filter: invert(1);
   }
 
+  /* Brand-orange duotone icons in the top nav (design system). */
+  header nav :deep(.fad),
+  header nav :deep(.fa-duotone) {
+    --fa-secondary-color: var(--cm-secondary);
+    --fa-secondary-opacity: 1;
+  }
+  /* Active link: primary olive carries the icon primary so the
+     whole link reads as the active brand color. */
+  header nav a.router-link-active :deep(.fad),
+  header nav a.router-link-active :deep(.fa-duotone) {
+    --fa-primary-color: var(--cm-primary);
+  }
+
   .mobile-drawer-enter-active,
   .mobile-drawer-leave-active {
     transition: opacity 0.2s ease;
