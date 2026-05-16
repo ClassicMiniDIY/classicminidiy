@@ -4,6 +4,39 @@
   const { t, tm, rt } = useI18n();
   const archiveFeatureItems = computed(() => (tm('home.archive_feature.items') as any[]).map((i) => rt(i)));
 
+  // Normalize offset strings — some entries have "ET" baked in, some don't.
+  const formatOffset = (raw: string | undefined): string => {
+    if (!raw) return '';
+    const trimmed = String(raw).trim();
+    return /^ET/i.test(trimmed) ? trimmed : `ET${trimmed}`;
+  };
+
+  // Pull the registry's prettiest 6 wheels for the home preview — rank by photo
+  // count, break ties alphabetically. Skip placeholder/unnamed entries.
+  // Cached server-side via useAsyncData.
+  const { listAll } = useWheels();
+  const { data: featuredWheels } = await useAsyncData('home-featured-wheels', async () => {
+    try {
+      const all = await listAll();
+      const PLACEHOLDER_NAMES = /^(\(unnamed\)|unnamed|untitled|tbd|n\/a)$/i;
+      return all
+        .filter((w) => {
+          if (!(w.images && w.images.length > 0)) return false;
+          if (!w.name || w.name.trim().length < 3) return false;
+          if (PLACEHOLDER_NAMES.test(w.name.trim())) return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const photoDiff = (b.images?.length || 0) - (a.images?.length || 0);
+          if (photoDiff !== 0) return photoDiff;
+          return a.name.localeCompare(b.name);
+        })
+        .slice(0, 6);
+    } catch {
+      return [];
+    }
+  });
+
   const birthday = DateTime.local(1989, 5, 11);
   const today = DateTime.now();
   const age = ref<string | undefined>(today.diff(birthday, 'years').toObject().years?.toFixed(0));
@@ -191,31 +224,39 @@
         <i class="fad fa-paper-plane mr-1"></i>{{ t('home.wheel_preview.cta') }}
       </NuxtLink>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div v-if="featuredWheels?.length" class="grid grid-cols-2 md:grid-cols-3 gap-4">
       <NuxtLink
-        v-for="(w, i) in [
-          { name: 'Minilite Replica', size: '10×5', offset: 'ET-25', photos: 3, grad: 'wheel-1' },
-          { name: 'Cosmic Mk II', size: '12×6', offset: 'ET-7', photos: 5, grad: 'wheel-2' },
-          { name: 'Revolution 4-spoke', size: '13×7', offset: 'ET+15', photos: 2, grad: 'wheel-3' },
-          { name: 'Rover Sportpack', size: '13×6', offset: 'ET+10', photos: 9, grad: 'wheel-4' },
-          { name: 'Mamba 8-spoke', size: '10×6', offset: 'ET-15', photos: 4, grad: 'wheel-5' },
-          { name: 'Wolfrace Slot Mag', size: '12×5', offset: 'ET-12', photos: 6, grad: 'wheel-6' },
-        ]"
-        :key="i"
-        to="/archive/wheels"
+        v-for="wheel in featuredWheels"
+        :key="wheel.uuid"
+        :to="`/archive/wheels/${wheel.uuid}`"
         class="wheel-card"
       >
-        <div class="wheel-card__ph" :class="w.grad">{{ w.name }} · {{ w.size }}</div>
+        <div
+          class="wheel-card__ph"
+          :style="{ backgroundImage: `url(${wheel.images?.[0]?.src})` }"
+          :aria-label="wheel.name"
+        ></div>
         <div class="wheel-card__body">
-          <h4>{{ w.name }}</h4>
+          <h4>{{ wheel.name }}</h4>
           <div class="wheel-card__meta">
-            <span>{{ w.size }}</span><span class="pip"></span>
-            <span>{{ w.offset }}</span><span class="pip"></span>
-            <span>{{ w.photos }} {{ t('home.wheel_preview.photos') }}</span>
+            <span v-if="wheel.size && wheel.width">{{ wheel.size }}×{{ wheel.width }}</span>
+            <span v-else-if="wheel.size">{{ wheel.size }}"</span>
+            <template v-if="wheel.offset">
+              <span class="pip"></span>
+              <span>{{ formatOffset(wheel.offset) }}</span>
+            </template>
+            <span class="pip"></span>
+            <span>
+              {{ wheel.images?.length || 0 }}
+              {{ (wheel.images?.length || 0) === 1 ? t('home.wheel_preview.photo_one') : t('home.wheel_preview.photos') }}
+            </span>
           </div>
         </div>
       </NuxtLink>
     </div>
+    <p v-else class="text-center py-10 text-base-content/60">
+      {{ t('home.wheel_preview.empty') }}
+    </p>
   </section>
 
   <div class="container mx-auto px-4 pt-10">
@@ -423,21 +464,11 @@
   }
   .wheel-card__ph {
     aspect-ratio: 16 / 10;
-    display: flex;
-    align-items: flex-end;
-    padding: 0.625rem;
-    color: #fff;
-    font-weight: 700;
-    font-size: 0.8125rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    background-color: var(--bg-3);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
-  .wheel-card__ph.wheel-1 { background: linear-gradient(135deg, #5b6b48, #859369); }
-  .wheel-card__ph.wheel-2 { background: linear-gradient(135deg, #b15a26, #ed7135); }
-  .wheel-card__ph.wheel-3 { background: linear-gradient(135deg, #4a4a4f, #76767c); }
-  .wheel-card__ph.wheel-4 { background: linear-gradient(135deg, #2d3a52, #5d7194); }
-  .wheel-card__ph.wheel-5 { background: linear-gradient(135deg, #6b3522, #aa6e4a); }
-  .wheel-card__ph.wheel-6 { background: linear-gradient(135deg, #3d2d52, #7a5d94); }
   .wheel-card__body {
     padding: 0.75rem 0.875rem 0.875rem;
   }
@@ -558,7 +589,9 @@
         "heading": "Community-fed library.",
         "subheading": "Every wheel ever fitted to a Classic Mini, photographed and spec'd by the people who own them.",
         "cta": "Submit yours",
-        "photos": "photos"
+        "photo_one": "photo",
+        "photos": "photos",
+        "empty": "No wheels in the registry yet. Be the first — send yours in."
       },
       "about": {
         "title": "About Me",
