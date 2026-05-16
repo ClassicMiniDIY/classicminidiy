@@ -2,6 +2,13 @@
   import { DateTime } from 'luxon';
   import { HERO_TYPES } from '../../data/models/generic';
 
+  // Master switch for the hero promo carousel.
+  // Flip to `true` to re-enable rotating banners — all promo data,
+  // analytics, auto-rotate, and dot-indicator code below stays intact
+  // and untouched. When false, the home hero falls back to the static
+  // car-photo <hero> with the YOUR FRIENDLY NEIGHBORHOOD eyebrow.
+  const ENABLE_PROMOS = false;
+
   interface PromoCta {
     text: string;
     url: string;
@@ -67,7 +74,12 @@
   const { capture } = usePostHog();
 
   const today = DateTime.now();
-  const activePromos = promotions.filter((p) => DateTime.fromISO(p.expiresAt) > today);
+  // When the feature flag is off, treat the active list as empty so the
+  // template falls through to the static <hero>. All downstream code
+  // (auto-rotate, analytics, dot indicators) becomes a no-op naturally.
+  const activePromos = ENABLE_PROMOS
+    ? promotions.filter((p) => DateTime.fromISO(p.expiresAt) > today)
+    : [];
 
   // Default to first promo during SSR, randomize starting index on client
   const currentIndex = ref(0);
