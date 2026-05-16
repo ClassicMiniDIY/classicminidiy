@@ -56,6 +56,14 @@ export interface ArchiveItem {
   description: string;
   image: string;
   disabled?: boolean;
+  /** Design-system structured fields (used by HomeToolCard). */
+  titleKey?: string;
+  descKey?: string;
+  kindKey?: string;
+  iconName?: string;
+  iconPrimary?: string;
+  iconSecondary?: string;
+  iconSecondaryOpacity?: number;
 }
 export interface SocialItem {
   title: string;
@@ -193,67 +201,113 @@ export const ToolboxItems: ToolboxItem[] = [
 export const ArchiveItems: ArchiveItem[] = [
   {
     title: 'Mini Registry',
+    titleKey: 'archive_items.mini_registry',
+    descKey: 'archive_items.mini_registry_desc',
+    kindKey: 'archive_items.kind.database',
     description: '',
     image: 'https://cmdiy-archive.s3.us-east-1.amazonaws.com/manuals/images/registry.jpg',
     path: '/archive/registry',
+    to: '/archive/registry',
+    iconName: 'fa-book-circle-arrow-up',
+    iconSecondary: '#ED7135',
+    iconSecondaryOpacity: 0.9,
     iconHtml:
       '<i class="fa-duotone fa-book-circle-arrow-up" style="--fa-secondary-color: #ED7135; --fa-secondary-opacity: 0.9;"></i>',
-    to: '/archive/registry',
   },
   {
     title: 'Engine Sizes',
+    titleKey: 'archive_items.engine_sizes',
+    descKey: 'archive_items.engine_sizes_desc',
+    kindKey: 'archive_items.kind.reference',
     description: '',
     image: 'https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png',
     path: '/archive/engines',
+    to: '/archive/engines',
+    iconName: 'fa-engine',
+    iconPrimary: '#59602e',
+    iconSecondary: '#000000',
+    iconSecondaryOpacity: 0.6,
     iconHtml:
       '<i class="fa-duotone fa-engine" style="--fa-primary-color: #59602e; --fa-secondary-color: #000000; --fa-secondary-opacity: 0.6;"></i>',
-    to: '/archive/engines',
   },
   {
     title: 'Mini Weights',
+    titleKey: 'archive_items.mini_weights',
+    descKey: 'archive_items.mini_weights_desc',
+    kindKey: 'archive_items.kind.reference',
     description: '',
     image: 'https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png',
     path: '/archive/weights',
+    to: '/archive/weights',
+    iconName: 'fa-weight-hanging',
+    iconPrimary: '#7dc978',
+    iconSecondary: '#1f291f',
+    iconSecondaryOpacity: 0.6,
     iconHtml:
       '<i class="fa-duotone fa-solid fa-weight-hanging" style="--fa-primary-color: #7dc978; --fa-secondary-color: #1f291f; --fa-secondary-opacity: 0.6;"></i>',
-    to: '/archive/weights',
   },
   {
     title: 'Documents',
+    titleKey: 'archive_items.documents',
+    descKey: 'archive_items.documents_desc',
+    kindKey: 'archive_items.kind.library',
     description: '',
     image: 'https://cmdiy-archive.s3.us-east-1.amazonaws.com/manuals/images/manuals.jpg',
     path: '/archive/documents',
+    to: '/archive/documents',
+    iconName: 'fa-books',
+    iconPrimary: '#71784e',
+    iconSecondary: '#af6946',
+    iconSecondaryOpacity: 0.7,
     iconHtml:
       '<i class="fa-duotone fa-books" style="--fa-primary-color: #71784e; --fa-secondary-color: #af6946; --fa-secondary-opacity: 0.7;"></i>',
-    to: '/archive/documents',
   },
   {
     title: 'Electrical Diagrams',
+    titleKey: 'archive_items.electrical_diagrams',
+    descKey: 'archive_items.electrical_diagrams_desc',
+    kindKey: 'archive_items.kind.library',
     description: '',
     image: 'https://cmdiy-archive.s3.us-east-1.amazonaws.com/manuals/images/wiringDiagrams+copy.jpg',
     path: '/archive/electrical',
+    to: '/archive/electrical',
+    iconName: 'fa-car-battery',
+    iconSecondary: '#ff424d',
+    iconSecondaryOpacity: 0.9,
     iconHtml:
       '<i class="fa-duotone fa-car-battery" style="--fa-secondary-color: #ff424d; --fa-secondary-opacity: 0.9;"></i>',
-    to: '/archive/electrical',
   },
   {
     title: 'Wheel Library',
+    titleKey: 'archive_items.wheel_library',
+    descKey: 'archive_items.wheel_library_desc',
+    kindKey: 'archive_items.kind.library',
     description: '',
     image:
       'https://classicminidiy.s3.us-east-1.amazonaws.com/wheels/uploads/1fbb6499-c021-5c93-8030-76aeb04b5400/IMG_4568.jpeg',
     path: '/archive/wheels',
+    to: '/archive/wheels',
+    iconName: 'fa-tire',
+    iconPrimary: '#242424',
+    iconSecondary: '#242424',
     iconHtml:
       '<i class="fa-duotone fa-tire fa-spin" style="--fa-primary-color: #242424; --fa-secondary-color: #242424;"></i>',
-    to: '/archive/wheels',
   },
   {
     title: 'Color Picker',
+    titleKey: 'archive_items.color_picker',
+    descKey: 'archive_items.color_picker_desc',
+    kindKey: 'archive_items.kind.tool',
     description: '',
     image: '',
     path: '/archive/colors',
+    to: '/archive/colors',
+    iconName: 'fa-brush',
+    iconPrimary: '#431f23',
+    iconSecondary: '#c3a166',
+    iconSecondaryOpacity: 0.8,
     iconHtml:
       '<i class="fa-duotone fa-brush" style="--fa-primary-color: #431f23; --fa-secondary-color: #c3a166; --fa-secondary-opacity: 0.8;"></i>',
-    to: '/archive/colors',
   },
 ];
 

@@ -99,70 +99,49 @@
 <template>
   <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4 pb-15 pt-6">
-    <div class="grid grid-cols-1 gap-4">
-      <div class="col-span-1 text-center">
-        <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" root></breadcrumb>
-        <h1 class="text-2xl font-bold mb-4">{{ t('main_heading') }}</h1>
-      </div>
-      <div class="col-span-1 text-center">
-        <p class="text-lg py-5">
-          {{ t('description_text') }}
-        </p>
-        <p class="text-lg pb-5">
-          {{ t('maintenance_description') }}
-        </p>
-        <div class="flex flex-wrap justify-center gap-3">
-          <NuxtLink class="btn btn-primary text-lg" to="/contribute">
-            <i class="fa-duotone fa-paper-plane mr-2"></i>
+    <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" root></breadcrumb>
+
+    <section class="pt-8">
+      <div class="section-head">
+        <div class="meta">
+          <span class="eyebrow">{{ t('eyebrow') }}</span>
+          <h2 class="text-3xl md:text-4xl">{{ t('main_heading') }}</h2>
+          <p>{{ t('description_text') }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <NuxtLink class="btn btn-primary btn-sm" to="/contribute">
+            <i class="fad fa-paper-plane mr-1"></i>
             {{ t('contribute_to_archive') }}
           </NuxtLink>
           <NuxtLink
-            class="btn btn-secondary text-lg"
+            class="btn btn-secondary btn-sm"
             to="https://buy.stripe.com/3cs8yWe1P1ER3Oo5kl"
             target="_blank"
             external
             @click="capture('support_cta_clicked', { type: 'server_cost', location: path })"
           >
-            <i class="fa-duotone fa-hand-holding-circle-dollar mr-2"></i>
+            <i class="fad fa-hand-holding-circle-dollar mr-1"></i>
             {{ t('cover_server_costs') }}
           </NuxtLink>
         </div>
       </div>
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-10">
-      <div v-for="archive in ArchiveItems" :key="archive.to" class="col-span-1">
-        <template v-if="archive.disabled">
-          <div class="card bg-base-100 shadow-sm border border-base-300 text-center p-5 h-full opacity-50 cursor-not-allowed">
-            <div class="card-body">
-              <p class="text-xs text-right">{{ t('coming_soon') }}</p>
-              <span class="text-4xl block" v-html="archive.iconHtml"> </span>
-              <p class="text-lg mt-2">{{ getArchiveItemTitle(archive.title) }}</p>
-            </div>
-          </div>
-        </template>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <HomeToolCard
+          v-for="archive in ArchiveItems"
+          :key="archive.to"
+          :to="archive.disabled ? '#' : archive.to"
+          :icon="archive.iconName || 'fa-books'"
+          :icon-primary="archive.iconPrimary"
+          :icon-secondary="archive.iconSecondary"
+          :icon-secondary-opacity="archive.iconSecondaryOpacity"
+          :title="archive.titleKey ? t(archive.titleKey) : archive.title"
+          :description="archive.descKey ? t(archive.descKey) : archive.description"
+          :kind="archive.disabled ? t('coming_soon') : archive.kindKey ? t(archive.kindKey) : ''"
+        />
+      </div>
+    </section>
 
-        <NuxtLink v-else :to="archive.to" class="block h-full">
-          <div class="card bg-base-100 shadow-sm border border-base-300 text-center p-5 h-full hover:shadow-xl transition-shadow">
-            <div class="card-body">
-              <span class="text-4xl block" v-html="archive.iconHtml"> </span>
-              <p class="text-lg mt-2">{{ getArchiveItemTitle(archive.title) }}</p>
-            </div>
-          </div>
-        </NuxtLink>
-      </div>
-      <div class="col-span-1">
-        <NuxtLink to="/contribute" class="block h-full">
-          <div class="card bg-base-100 shadow-sm border border-base-300 text-center p-5 h-full hover:shadow-xl transition-shadow bg-primary/5">
-            <div class="card-body">
-              <i class="fad fa-hand-holding-heart text-4xl text-primary"></i>
-              <p class="text-lg mt-2 font-semibold">{{ t('contribute') }}</p>
-              <p class="text-sm opacity-70 mt-1">{{ t('contribute_description') }}</p>
-            </div>
-          </div>
-        </NuxtLink>
-      </div>
-    </div>
-    <div class="grid grid-cols-12 gap-4 mt-6">
+    <div class="grid grid-cols-12 gap-4 mt-12">
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <div class="divider">{{ t('support_divider') }}</div>
       </div>
@@ -211,8 +190,22 @@
       "electrical_diagrams": "Electrical Diagrams",
       "wheel_library": "Wheel Library",
       "color_picker": "Color Picker",
-      "documents": "Documents"
-    }
+      "documents": "Documents",
+      "kind": {
+        "database": "Database",
+        "library": "Library",
+        "reference": "Reference",
+        "tool": "Tool"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "THE ARCHIVE"
   },
   "es": {
     "title": "Archivo Classic Mini DIY - Documentos Históricos y Recursos",
@@ -250,8 +243,22 @@
       "electrical_diagrams": "Diagramas Eléctricos",
       "wheel_library": "Biblioteca de Ruedas",
       "color_picker": "Selector de Color",
-      "documents": "Documentos"
-    }
+      "documents": "Documentos",
+      "kind": {
+        "database": "Base de datos",
+        "library": "Biblioteca",
+        "reference": "Referencia",
+        "tool": "Herramienta"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "EL ARCHIVO"
   },
   "fr": {
     "title": "Archive Classic Mini DIY - Documents Historiques et Ressources",
@@ -289,8 +296,22 @@
       "electrical_diagrams": "Schémas Électriques",
       "wheel_library": "Bibliothèque de Roues",
       "color_picker": "Sélecteur de Couleur",
-      "documents": "Documents"
-    }
+      "documents": "Documents",
+      "kind": {
+        "database": "Base de données",
+        "library": "Bibliothèque",
+        "reference": "Référence",
+        "tool": "Outil"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "LES ARCHIVES"
   },
   "it": {
     "title": "Archivio Classic Mini DIY - Documenti Storici e Risorse",
@@ -328,8 +349,22 @@
       "electrical_diagrams": "Schemi Elettrici",
       "wheel_library": "Libreria Ruote",
       "color_picker": "Selettore Colore",
-      "documents": "Documenti"
-    }
+      "documents": "Documenti",
+      "kind": {
+        "database": "Database",
+        "library": "Biblioteca",
+        "reference": "Riferimento",
+        "tool": "Strumento"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "L'ARCHIVIO"
   },
   "de": {
     "title": "Classic Mini DIY Archiv - Historische Dokumente und Ressourcen",
@@ -367,8 +402,22 @@
       "electrical_diagrams": "Schaltpläne",
       "wheel_library": "Felgen-Bibliothek",
       "color_picker": "Farbwähler",
-      "documents": "Dokumente"
-    }
+      "documents": "Dokumente",
+      "kind": {
+        "database": "Datenbank",
+        "library": "Bibliothek",
+        "reference": "Referenz",
+        "tool": "Werkzeug"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "DAS ARCHIV"
   },
   "pt": {
     "title": "Arquivo Classic Mini DIY - Documentos Históricos e Recursos",
@@ -406,8 +455,22 @@
       "electrical_diagrams": "Diagramas Elétricos",
       "wheel_library": "Biblioteca de Rodas",
       "color_picker": "Seletor de Cor",
-      "documents": "Documentos"
-    }
+      "documents": "Documentos",
+      "kind": {
+        "database": "Base de dados",
+        "library": "Biblioteca",
+        "reference": "Referência",
+        "tool": "Ferramenta"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "O ARQUIVO"
   },
   "ru": {
     "title": "Архив Classic Mini DIY - Исторические Документы и Ресурсы",
@@ -445,8 +508,22 @@
       "electrical_diagrams": "Электрические Схемы",
       "wheel_library": "Библиотека Колес",
       "color_picker": "Выбор Цвета",
-      "documents": "Документы"
-    }
+      "documents": "Документы",
+      "kind": {
+        "database": "База данных",
+        "library": "Библиотека",
+        "reference": "Справочник",
+        "tool": "Инструмент"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "АРХИВ"
   },
   "ja": {
     "title": "Classic Mini DIY アーカイブ - 歴史的文書とリソース",
@@ -484,8 +561,22 @@
       "electrical_diagrams": "電気配線図",
       "wheel_library": "ホイールライブラリ",
       "color_picker": "カラーピッカー",
-      "documents": "ドキュメント"
-    }
+      "documents": "ドキュメント",
+      "kind": {
+        "database": "データベース",
+        "library": "ライブラリ",
+        "reference": "リファレンス",
+        "tool": "ツール"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "アーカイブ"
   },
   "zh": {
     "title": "Classic Mini DIY 档案 - 历史文档和资源",
@@ -523,8 +614,22 @@
       "electrical_diagrams": "电路图",
       "wheel_library": "轮毂库",
       "color_picker": "颜色选择器",
-      "documents": "文档"
-    }
+      "documents": "文档",
+      "kind": {
+        "database": "数据库",
+        "library": "图书馆",
+        "reference": "参考",
+        "tool": "工具"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "档案"
   },
   "ko": {
     "title": "Classic Mini DIY 아카이브 - 역사적 문서와 자료",
@@ -562,8 +667,22 @@
       "electrical_diagrams": "전기 배선도",
       "wheel_library": "휠 라이브러리",
       "color_picker": "색상 선택기",
-      "documents": "문서"
-    }
+      "documents": "문서",
+      "kind": {
+        "database": "데이터베이스",
+        "library": "라이브러리",
+        "reference": "참조",
+        "tool": "도구"
+      },
+      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
+      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
+      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
+      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
+      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
+      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
+      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+    },
+    "eyebrow": "아카이브"
   }
 }
 </i18n>
