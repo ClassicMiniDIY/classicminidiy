@@ -108,17 +108,14 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <PageIntro
-              eyebrow="REGISTRY"
-              :title="t('main_heading')"
-            />
-            <h2 class="text-xl mt-4">
-              <strong>{{ registryItems?.length || t('subtitle_count') }}</strong>
-              {{ t('subtitle') }}
-            </h2>
-            <p class="my-4">
-              {{ t('description_text') }}
-            </p>
+            <PageIntro eyebrow="REGISTRY" :title="t('main_heading')" :description="t('description_text')">
+              <template #meta>
+                <p class="text-xl mt-2">
+                  <strong>{{ registryItems?.length || t('subtitle_count') }}</strong>
+                  {{ t('subtitle') }}
+                </p>
+              </template>
+            </PageIntro>
             <p class="font-bold mt-4 mb-5">{{ t('submission_status_text') }}</p>
             <NuxtLink to="/archive/registry/pending" class="btn btn-primary">
               <i class="fa-duotone fa-clipboard-question mr-2"></i>
