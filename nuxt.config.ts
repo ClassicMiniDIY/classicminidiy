@@ -261,9 +261,10 @@ export default defineNuxtConfig({
     '@nuxtjs/turnstile',
   ],
 
-  turnstile: {
-    siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
-  },
+  // @nuxtjs/turnstile auto-populates runtimeConfig.public.turnstile.siteKey.
+  // Dev mode uses Cloudflare's always-pass test key by default. In production,
+  // set NUXT_PUBLIC_TURNSTILE_SITE_KEY — Nuxt env-overrides the runtimeConfig
+  // entry at runtime, so the same build artifact works across Preview and Prod.
 
   // MCP (Model Context Protocol) Configuration
   mcp: {
