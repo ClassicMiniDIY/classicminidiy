@@ -18,7 +18,7 @@
             type="submit"
             class="btn btn-sm btn-primary btn-square"
             :disabled="!input.trim()"
-            aria-label="Send message"
+            :aria-label="t('send_message')"
           >
             <i class="fa-solid fa-paper-plane"></i>
           </button>
@@ -106,43 +106,53 @@
 {
   "en": {
     "placeholder": "Ask me anything about your Classic Mini...",
-    "helper_text": "Chat with CMDIY Assistant"
+    "helper_text": "Chat with CMDIY Assistant",
+    "send_message": "Send message"
   },
   "de": {
     "placeholder": "Fragen Sie mich alles über Ihren Classic Mini...",
-    "helper_text": "Chatten Sie mit dem CMDIY Assistenten"
+    "helper_text": "Chatten Sie mit dem CMDIY Assistenten",
+    "send_message": "Nachricht senden"
   },
   "es": {
     "placeholder": "Pregúntame cualquier cosa sobre tu Classic Mini...",
-    "helper_text": "Chatea con el Asistente CMDIY"
+    "helper_text": "Chatea con el Asistente CMDIY",
+    "send_message": "Enviar mensaje"
   },
   "fr": {
     "placeholder": "Demandez-moi n'importe quoi sur votre Classic Mini...",
-    "helper_text": "Chattez avec l'assistant CMDIY"
+    "helper_text": "Chattez avec l'assistant CMDIY",
+    "send_message": "Envoyer le message"
   },
   "it": {
     "placeholder": "Chiedimi qualsiasi cosa sulla tua Classic Mini...",
-    "helper_text": "Chatta con l'assistente CMDIY"
+    "helper_text": "Chatta con l'assistente CMDIY",
+    "send_message": "Invia messaggio"
   },
   "pt": {
     "placeholder": "Pergunte-me qualquer coisa sobre seu Classic Mini...",
-    "helper_text": "Converse com o Assistente CMDIY"
+    "helper_text": "Converse com o Assistente CMDIY",
+    "send_message": "Enviar mensagem"
   },
   "ru": {
     "placeholder": "Спросите меня что-нибудь о вашем Classic Mini...",
-    "helper_text": "Чат с помощником CMDIY"
+    "helper_text": "Чат с помощником CMDIY",
+    "send_message": "Отправить сообщение"
   },
   "ja": {
     "placeholder": "あなたのClassic Miniについて何でも聞いてください...",
-    "helper_text": "CMDIYアシスタントとチャット"
+    "helper_text": "CMDIYアシスタントとチャット",
+    "send_message": "メッセージを送信"
   },
   "zh": {
     "placeholder": "询问任何关于您的Classic Mini的问题...",
-    "helper_text": "与CMDIY助手聊天"
+    "helper_text": "与CMDIY助手聊天",
+    "send_message": "发送消息"
   },
   "ko": {
     "placeholder": "Classic Mini에 대해 무엇이든 물어보세요...",
-    "helper_text": "CMDIY 어시스턴트와 채팅"
+    "helper_text": "CMDIY 어시스턴트와 채팅",
+    "send_message": "메시지 보내기"
   }
 }
 </i18n>
