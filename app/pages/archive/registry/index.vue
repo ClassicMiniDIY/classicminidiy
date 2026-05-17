@@ -108,7 +108,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <PageIntro eyebrow="REGISTRY" :title="t('main_heading')" :description="t('description_text')">
+            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')">
               <template #meta>
                 <p class="text-xl mt-2">
                   <strong>{{ registryItems?.length || t('subtitle_count') }}</strong>
@@ -219,7 +219,8 @@
       "og_description": "Browse and contribute to the Classic Mini registry database",
       "twitter_title": "Classic Mini Registry - Classic Mini DIY",
       "twitter_description": "Browse and contribute to the Classic Mini registry database"
-    }
+    },
+    "eyebrow": "REGISTRY"
   },
   "de": {
     "title": "Classic Mini Registry - Classic Mini DIY",
@@ -254,7 +255,8 @@
       "og_description": "Durchsuchen und beitragen zur Classic Mini Registry-Datenbank",
       "twitter_title": "Classic Mini Registry - Classic Mini DIY",
       "twitter_description": "Durchsuchen und beitragen zur Classic Mini Registry-Datenbank"
-    }
+    },
+    "eyebrow": "REGISTER"
   },
   "es": {
     "title": "Registro Classic Mini - Classic Mini DIY",
@@ -289,7 +291,8 @@
       "og_description": "Navega y contribuye a la base de datos del registro Classic Mini",
       "twitter_title": "Registro Classic Mini - Classic Mini DIY",
       "twitter_description": "Navega y contribuye a la base de datos del registro Classic Mini"
-    }
+    },
+    "eyebrow": "REGISTRO"
   },
   "fr": {
     "title": "Registre Classic Mini - Classic Mini DIY",
@@ -324,7 +327,8 @@
       "og_description": "Parcourez et contribuez à la base de données du registre Classic Mini",
       "twitter_title": "Registre Classic Mini - Classic Mini DIY",
       "twitter_description": "Parcourez et contribuez à la base de données du registre Classic Mini"
-    }
+    },
+    "eyebrow": "REGISTRE"
   },
   "it": {
     "title": "Registro Classic Mini - Classic Mini DIY",
@@ -359,7 +363,8 @@
       "og_description": "Sfoglia e contribuisci al database del registro Classic Mini",
       "twitter_title": "Registro Classic Mini - Classic Mini DIY",
       "twitter_description": "Sfoglia e contribuisci al database del registro Classic Mini"
-    }
+    },
+    "eyebrow": "REGISTRO"
   },
   "pt": {
     "title": "Registro Classic Mini - Classic Mini DIY",
@@ -394,7 +399,8 @@
       "og_description": "Navegue e contribua para o banco de dados do registro Classic Mini",
       "twitter_title": "Registro Classic Mini - Classic Mini DIY",
       "twitter_description": "Navegue e contribua para o banco de dados do registro Classic Mini"
-    }
+    },
+    "eyebrow": "REGISTRO"
   },
   "ru": {
     "title": "Реестр Classic Mini - Classic Mini DIY",
@@ -429,7 +435,8 @@
       "og_description": "Просматривайте и вносите вклад в базу данных реестра Classic Mini",
       "twitter_title": "Реестр Classic Mini - Classic Mini DIY",
       "twitter_description": "Просматривайте и вносите вклад в базу данных реестра Classic Mini"
-    }
+    },
+    "eyebrow": "РЕЕСТР"
   },
   "ja": {
     "title": "クラシックミニ レジストリ - Classic Mini DIY",
@@ -464,7 +471,8 @@
       "og_description": "クラシックミニ レジストリ データベースを閲覧・投稿する",
       "twitter_title": "クラシックミニ レジストリ - Classic Mini DIY",
       "twitter_description": "クラシックミニ レジストリ データベースを閲覧・投稿する"
-    }
+    },
+    "eyebrow": "レジストリ"
   },
   "zh": {
     "title": "经典迷你注册表 - Classic Mini DIY",
@@ -499,7 +507,8 @@
       "og_description": "浏览并为经典迷你注册数据库做出贡献",
       "twitter_title": "经典迷你注册表 - Classic Mini DIY",
       "twitter_description": "浏览并为经典迷你注册数据库做出贡献"
-    }
+    },
+    "eyebrow": "注册库"
   },
   "ko": {
     "title": "클래식 미니 레지스트리 - Classic Mini DIY",
@@ -534,7 +543,8 @@
       "og_description": "클래식 미니 레지스트리 데이터베이스 탐색 및 기여",
       "twitter_title": "클래식 미니 레지스트리 - Classic Mini DIY",
       "twitter_description": "클래식 미니 레지스트리 데이터베이스 탐색 및 기여"
-    }
+    },
+    "eyebrow": "등록부"
   }
 }
 </i18n>

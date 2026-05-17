@@ -89,7 +89,7 @@
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
             <PageIntro
-              eyebrow="REFERENCE"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -253,7 +253,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini Engine Specifications",
       "dataset_description": "Comprehensive database of Classic Mini engine specifications and technical data"
-    }
+    },
+    "eyebrow": "REFERENCE"
   },
   "es": {
     "title": "Archivo - Motores | Classic Mini DIY",
@@ -300,7 +301,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Especificaciones de Motor Classic Mini",
       "dataset_description": "Base de datos completa de especificaciones de motores Classic Mini y datos técnicos"
-    }
+    },
+    "eyebrow": "REFERENCIA"
   },
   "fr": {
     "title": "Archive - Moteurs | Classic Mini DIY",
@@ -347,7 +349,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Spécifications de Moteur Classic Mini",
       "dataset_description": "Base de données complète des spécifications de moteurs Classic Mini et données techniques"
-    }
+    },
+    "eyebrow": "RÉFÉRENCE"
   },
   "it": {
     "title": "Archivio - Motori | Classic Mini DIY",
@@ -394,7 +397,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Specifiche Motore Classic Mini",
       "dataset_description": "Database completo delle specifiche dei motori Classic Mini e dati tecnici"
-    }
+    },
+    "eyebrow": "RIFERIMENTO"
   },
   "de": {
     "title": "Archiv - Motoren | Classic Mini DIY",
@@ -441,7 +445,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini Motorspezifikationen",
       "dataset_description": "Umfassende Datenbank mit Classic Mini Motorspezifikationen und technischen Daten"
-    }
+    },
+    "eyebrow": "REFERENZ"
   },
   "pt": {
     "title": "Arquivo - Motores | Classic Mini DIY",
@@ -488,7 +493,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Especificações de Motor Classic Mini",
       "dataset_description": "Base de dados abrangente de especificações de motores Classic Mini e dados técnicos"
-    }
+    },
+    "eyebrow": "REFERÊNCIA"
   },
   "ru": {
     "title": "Архив - Двигатели | Classic Mini DIY",
@@ -535,7 +541,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Спецификации Двигателя Classic Mini",
       "dataset_description": "Комплексная база данных спецификаций двигателей Classic Mini и технических данных"
-    }
+    },
+    "eyebrow": "СПРАВОЧНИК"
   },
   "ja": {
     "title": "アーカイブ - エンジン | Classic Mini DIY",
@@ -582,7 +589,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini エンジン仕様",
       "dataset_description": "Classic Miniエンジン仕様と技術データの包括的なデータベース"
-    }
+    },
+    "eyebrow": "リファレンス"
   },
   "zh": {
     "title": "存档 - 发动机 | Classic Mini DIY",
@@ -629,7 +637,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini 发动机规格",
       "dataset_description": "Classic Mini发动机规格和技术数据的综合数据库"
-    }
+    },
+    "eyebrow": "参考"
   },
   "ko": {
     "title": "아카이브 - 엔진 | Classic Mini DIY",
@@ -676,7 +685,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini 엔진 사양",
       "dataset_description": "Classic Mini 엔진 사양 및 기술 데이터의 포괄적인 데이터베이스"
-    }
+    },
+    "eyebrow": "참조"
   }
 }
 </i18n>

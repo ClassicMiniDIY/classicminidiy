@@ -121,7 +121,7 @@
         <div class="grid grid-cols-11 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
             <PageIntro
-              eyebrow="CALCULATOR"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -231,7 +231,8 @@
     },
     "ui": {
       "more_section": "More"
-    }
+    },
+    "eyebrow": "CALCULATOR"
   },
   "es": {
     "title": "Calculadora de Relación de Compresión para Motores Classic Mini | Classic Mini DIY",
@@ -285,7 +286,8 @@
     },
     "ui": {
       "more_section": "Más"
-    }
+    },
+    "eyebrow": "CALCULADORA"
   },
   "fr": {
     "title": "Calculateur de Taux de Compression pour Moteurs Classic Mini | Classic Mini DIY",
@@ -339,7 +341,8 @@
     },
     "ui": {
       "more_section": "Plus"
-    }
+    },
+    "eyebrow": "CALCULATRICE"
   },
   "it": {
     "title": "Calcolatore Rapporto di Compressione per Motori Classic Mini | Classic Mini DIY",
@@ -393,7 +396,8 @@
     },
     "ui": {
       "more_section": "Altro"
-    }
+    },
+    "eyebrow": "CALCOLATRICE"
   },
   "de": {
     "title": "Verdichtungsverhältnis-Rechner für Classic Mini Motoren | Classic Mini DIY",
@@ -447,7 +451,8 @@
     },
     "ui": {
       "more_section": "Mehr"
-    }
+    },
+    "eyebrow": "RECHNER"
   },
   "pt": {
     "title": "Calculadora de Taxa de Compressão para Motores Classic Mini | Classic Mini DIY",
@@ -501,7 +506,8 @@
     },
     "ui": {
       "more_section": "Mais"
-    }
+    },
+    "eyebrow": "CALCULADORA"
   },
   "ru": {
     "title": "Калькулятор Степени Сжатия для Двигателей Classic Mini | Classic Mini DIY",
@@ -555,7 +561,8 @@
     },
     "ui": {
       "more_section": "Больше"
-    }
+    },
+    "eyebrow": "КАЛЬКУЛЯТОР"
   },
   "ja": {
     "title": "クラシックミニエンジン用圧縮比計算機 | Classic Mini DIY",
@@ -609,7 +616,8 @@
     },
     "ui": {
       "more_section": "その他"
-    }
+    },
+    "eyebrow": "計算機"
   },
   "zh": {
     "title": "经典迷你发动机压缩比计算器 | Classic Mini DIY",
@@ -663,7 +671,8 @@
     },
     "ui": {
       "more_section": "更多"
-    }
+    },
+    "eyebrow": "计算器"
   },
   "ko": {
     "title": "클래식 미니 엔진용 압축비 계산기 | Classic Mini DIY",
@@ -717,7 +726,8 @@
     },
     "ui": {
       "more_section": "더보기"
-    }
+    },
+    "eyebrow": "계산기"
   }
 }
 </i18n>

@@ -94,7 +94,7 @@
       </div>
       <div class="col-span-12">
         <PageIntro
-              eyebrow="CALCULATOR"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -180,7 +180,8 @@
       "information_provided_by": "Information provided by",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "CALCULATOR"
   },
   "es": {
     "title": "Gráfico de Agujas SU y Herramienta de Comparación | Classic Mini DIY",
@@ -221,7 +222,8 @@
       "information_provided_by": "Información proporcionada por",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "Soporte"
-    }
+    },
+    "eyebrow": "CALCULADORA"
   },
   "fr": {
     "title": "Graphique des Aiguilles SU et Outil de Comparaison | Classic Mini DIY",
@@ -262,7 +264,8 @@
       "information_provided_by": "Informations fournies par",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "CALCULATRICE"
   },
   "it": {
     "title": "Grafico Aghi SU e Strumento di Confronto | Classic Mini DIY",
@@ -303,7 +306,8 @@
       "information_provided_by": "Informazioni fornite da",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "Supporto"
-    }
+    },
+    "eyebrow": "CALCOLATRICE"
   },
   "de": {
     "title": "SU Nadeln Diagramm & Vergleichstool | Classic Mini DIY",
@@ -344,7 +348,8 @@
       "information_provided_by": "Informationen bereitgestellt von",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "RECHNER"
   },
   "pt": {
     "title": "Gráfico de Agulhas SU e Ferramenta de Comparação | Classic Mini DIY",
@@ -385,7 +390,8 @@
       "information_provided_by": "Informações fornecidas por",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "Suporte"
-    }
+    },
+    "eyebrow": "CALCULADORA"
   },
   "ru": {
     "title": "Схема игл SU и инструмент сравнения | Classic Mini DIY",
@@ -426,7 +432,8 @@
       "information_provided_by": "Информация предоставлена",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "Поддержка"
-    }
+    },
+    "eyebrow": "КАЛЬКУЛЯТОР"
   },
   "ja": {
     "title": "SUニードルチャート＆比較ツール | Classic Mini DIY",
@@ -467,7 +474,8 @@
       "information_provided_by": "情報提供",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "サポート"
-    }
+    },
+    "eyebrow": "計算機"
   },
   "zh": {
     "title": "SU针阀图表和比较工具 | Classic Mini DIY",
@@ -508,7 +516,8 @@
       "information_provided_by": "信息提供方",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "支持"
-    }
+    },
+    "eyebrow": "计算器"
   },
   "ko": {
     "title": "SU 니들 차트 및 비교 도구 | Classic Mini DIY",
@@ -549,7 +558,8 @@
       "information_provided_by": "정보 제공",
       "seven_mini_parts_link": "Seven Mini Parts",
       "support_section": "지원"
-    }
+    },
+    "eyebrow": "계산기"
   }
 }
 </i18n>

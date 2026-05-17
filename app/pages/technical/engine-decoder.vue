@@ -114,7 +114,7 @@
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
           <div class="col-span-12 md:col-span-7">
             <PageIntro
-              eyebrow="DECODER"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -279,7 +279,8 @@
     },
     "ui": {
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "DECODER"
   },
   "es": {
     "title": "Técnico - Decodificador de Placa del Motor Mini",
@@ -326,7 +327,8 @@
     },
     "ui": {
       "support_section": "Soporte"
-    }
+    },
+    "eyebrow": "DECODIFICADOR"
   },
   "fr": {
     "title": "Technique - Décodeur de Plaque Moteur Mini",
@@ -373,7 +375,8 @@
     },
     "ui": {
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "DÉCODEUR"
   },
   "it": {
     "title": "Tecnico - Decodificatore Piastra Motore Mini",
@@ -420,7 +423,8 @@
     },
     "ui": {
       "support_section": "Supporto"
-    }
+    },
+    "eyebrow": "DECODIFICATORE"
   },
   "de": {
     "title": "Technik - Mini Motorplaketten-Decoder",
@@ -467,7 +471,8 @@
     },
     "ui": {
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "DEKODER"
   },
   "pt": {
     "title": "Técnico - Decodificador de Placa do Motor Mini",
@@ -514,7 +519,8 @@
     },
     "ui": {
       "support_section": "Suporte"
-    }
+    },
+    "eyebrow": "DECODIFICADOR"
   },
   "ru": {
     "title": "Техника - Декодер Табличек Двигателя Mini",
@@ -561,7 +567,8 @@
     },
     "ui": {
       "support_section": "Поддержка"
-    }
+    },
+    "eyebrow": "ДЕКОДЕР"
   },
   "ja": {
     "title": "技術 - ミニエンジンプレートデコーダー",
@@ -608,7 +615,8 @@
     },
     "ui": {
       "support_section": "サポート"
-    }
+    },
+    "eyebrow": "デコーダー"
   },
   "zh": {
     "title": "技术 - 迷你发动机铭牌解码器",
@@ -655,7 +663,8 @@
     },
     "ui": {
       "support_section": "支持"
-    }
+    },
+    "eyebrow": "解码器"
   },
   "ko": {
     "title": "기술 - 미니 엔진 플레이트 디코더",
@@ -702,7 +711,8 @@
     },
     "ui": {
       "support_section": "지원"
-    }
+    },
+    "eyebrow": "디코더"
   }
 }
 </i18n>

@@ -115,7 +115,7 @@
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
             <PageIntro
-              eyebrow="REFERENCE"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -235,7 +235,8 @@
     "ui": {
       "search_placeholder": "Search this table",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "REFERENCE"
   },
   "es": {
     "title": "Tabla de Especificaciones de Torque Classic Mini | Classic Mini DIY",
@@ -267,7 +268,8 @@
     "ui": {
       "search_placeholder": "Buscar en esta tabla",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "REFERENCIA"
   },
   "fr": {
     "title": "Tableau des Spécifications de Couple Classic Mini | Classic Mini DIY",
@@ -299,7 +301,8 @@
     "ui": {
       "search_placeholder": "Rechercher dans ce tableau",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "RÉFÉRENCE"
   },
   "it": {
     "title": "Tabella Specifiche di Coppia Classic Mini | Classic Mini DIY",
@@ -331,7 +334,8 @@
     "ui": {
       "search_placeholder": "Cerca in questa tabella",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "RIFERIMENTO"
   },
   "de": {
     "title": "Classic Mini Drehmoment-Spezifikationstabelle | Classic Mini DIY",
@@ -363,7 +367,8 @@
     "ui": {
       "search_placeholder": "Diese Tabelle durchsuchen",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "REFERENZ"
   },
   "pt": {
     "title": "Tabela de Especificações de Torque Classic Mini | Classic Mini DIY",
@@ -395,7 +400,8 @@
     "ui": {
       "search_placeholder": "Pesquisar nesta tabela",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "REFERÊNCIA"
   },
   "ru": {
     "title": "Таблица Спецификаций Крутящего Момента Classic Mini | Classic Mini DIY",
@@ -427,7 +433,8 @@
     "ui": {
       "search_placeholder": "Поиск в этой таблице",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "СПРАВОЧНИК"
   },
   "ja": {
     "title": "クラシック・ミニ トルク仕様表 | Classic Mini DIY",
@@ -459,7 +466,8 @@
     "ui": {
       "search_placeholder": "この表を検索",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "リファレンス"
   },
   "zh": {
     "title": "经典迷你扭矩规格表 | Classic Mini DIY",
@@ -491,7 +499,8 @@
     "ui": {
       "search_placeholder": "搜索此表",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "参考"
   },
   "ko": {
     "title": "클래식 미니 토크 사양표 | Classic Mini DIY",
@@ -523,7 +532,8 @@
     "ui": {
       "search_placeholder": "이 표 검색",
       "no_notes": "---"
-    }
+    },
+    "eyebrow": "참조"
   }
 }
 </i18n>

@@ -101,7 +101,7 @@
       <div class="grid grid-cols-12 gap-4 items-center">
         <div class="col-span-12 md:col-span-8">
           <PageIntro
-              eyebrow="WHEEL LIBRARY"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -180,7 +180,8 @@
       "og_description": "Browse and contribute to the Classic Mini wheels database",
       "twitter_title": "Classic Mini Wheels Archive - Classic Mini DIY",
       "twitter_description": "Browse and contribute to the Classic Mini wheels database"
-    }
+    },
+    "eyebrow": "WHEEL LIBRARY"
   },
   "es": {
     "title": "Archivo de Llantas Classic Mini - Classic Mini DIY",
@@ -207,7 +208,8 @@
       "og_description": "Explora y contribuye a la base de datos de llantas del Classic Mini",
       "twitter_title": "Archivo de Llantas Classic Mini - Classic Mini DIY",
       "twitter_description": "Explora y contribuye a la base de datos de llantas del Classic Mini"
-    }
+    },
+    "eyebrow": "BIBLIOTECA DE RUEDAS"
   },
   "fr": {
     "title": "Archive des Jantes Classic Mini - Classic Mini DIY",
@@ -234,7 +236,8 @@
       "og_description": "Parcourez et contribuez à la base de données des jantes Classic Mini",
       "twitter_title": "Archive des Jantes Classic Mini - Classic Mini DIY",
       "twitter_description": "Parcourez et contribuez à la base de données des jantes Classic Mini"
-    }
+    },
+    "eyebrow": "BIBLIOTHÈQUE DE JANTES"
   },
   "it": {
     "title": "Archivio Cerchi Classic Mini - Classic Mini DIY",
@@ -261,7 +264,8 @@
       "og_description": "Sfoglia e contribuisci al database dei cerchi Classic Mini",
       "twitter_title": "Archivio Cerchi Classic Mini - Classic Mini DIY",
       "twitter_description": "Sfoglia e contribuisci al database dei cerchi Classic Mini"
-    }
+    },
+    "eyebrow": "LIBRERIA CERCHI"
   },
   "de": {
     "title": "Classic Mini Felgen-Archiv - Classic Mini DIY",
@@ -288,7 +292,8 @@
       "og_description": "Durchsuchen und erweitern Sie die Classic Mini Felgen-Datenbank",
       "twitter_title": "Classic Mini Felgen-Archiv - Classic Mini DIY",
       "twitter_description": "Durchsuchen und erweitern Sie die Classic Mini Felgen-Datenbank"
-    }
+    },
+    "eyebrow": "RAD-BIBLIOTHEK"
   },
   "pt": {
     "title": "Arquivo de Rodas Classic Mini - Classic Mini DIY",
@@ -315,7 +320,8 @@
       "og_description": "Navegue e contribua para a base de dados de rodas do Classic Mini",
       "twitter_title": "Arquivo de Rodas Classic Mini - Classic Mini DIY",
       "twitter_description": "Navegue e contribua para a base de dados de rodas do Classic Mini"
-    }
+    },
+    "eyebrow": "BIBLIOTECA DE RODAS"
   },
   "ru": {
     "title": "Архив дисков Classic Mini - Classic Mini DIY",
@@ -342,7 +348,8 @@
       "og_description": "Просматривайте и пополняйте базу данных дисков Classic Mini",
       "twitter_title": "Архив дисков Classic Mini - Classic Mini DIY",
       "twitter_description": "Просматривайте и пополняйте базу данных дисков Classic Mini"
-    }
+    },
+    "eyebrow": "БИБЛИОТЕКА КОЛЁС"
   },
   "ja": {
     "title": "クラシックミニ ホイール アーカイブ - Classic Mini DIY",
@@ -369,7 +376,8 @@
       "og_description": "クラシックミニのホイールデータベースを閲覧・投稿する",
       "twitter_title": "クラシックミニ ホイール アーカイブ - Classic Mini DIY",
       "twitter_description": "クラシックミニのホイールデータベースを閲覧・投稿する"
-    }
+    },
+    "eyebrow": "ホイールライブラリ"
   },
   "zh": {
     "title": "经典迷你轮毂档案 - Classic Mini DIY",
@@ -396,7 +404,8 @@
       "og_description": "浏览并为经典迷你轮毂数据库做出贡献",
       "twitter_title": "经典迷你轮毂档案 - Classic Mini DIY",
       "twitter_description": "浏览并为经典迷你轮毂数据库做出贡献"
-    }
+    },
+    "eyebrow": "车轮库"
   },
   "ko": {
     "title": "클래식 미니 휠 아카이브 - Classic Mini DIY",
@@ -423,7 +432,8 @@
       "og_description": "클래식 미니 휠 데이터베이스를 탐색하고 기여하세요",
       "twitter_title": "클래식 미니 휠 아카이브 - Classic Mini DIY",
       "twitter_description": "클래식 미니 휠 데이터베이스를 탐색하고 기여하세요"
-    }
+    },
+    "eyebrow": "휠 라이브러리"
   }
 }
 </i18n>

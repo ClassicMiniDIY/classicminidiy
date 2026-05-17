@@ -200,7 +200,7 @@
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-7">
             <PageIntro
-              eyebrow="DECODER"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -506,7 +506,8 @@
     },
     "ui": {
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "DECODER"
   },
   "es": {
     "title": "Tech - Decodificador de Placa de Chasis Mini",
@@ -565,7 +566,8 @@
     },
     "ui": {
       "support_section": "Soporte"
-    }
+    },
+    "eyebrow": "DECODIFICADOR"
   },
   "fr": {
     "title": "Tech - Décodeur de Plaque de Châssis Mini",
@@ -624,7 +626,8 @@
     },
     "ui": {
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "DÉCODEUR"
   },
   "it": {
     "title": "Tech - Decodificatore Piastra Telaio Mini",
@@ -683,7 +686,8 @@
     },
     "ui": {
       "support_section": "Supporto"
-    }
+    },
+    "eyebrow": "DECODIFICATORE"
   },
   "de": {
     "title": "Tech - Mini Fahrgestellplatte Decoder",
@@ -742,7 +746,8 @@
     },
     "ui": {
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "DEKODER"
   },
   "pt": {
     "title": "Tech - Decodificador de Placa de Chassi Mini",
@@ -801,7 +806,8 @@
     },
     "ui": {
       "support_section": "Suporte"
-    }
+    },
+    "eyebrow": "DECODIFICADOR"
   },
   "ru": {
     "title": "Tech - Декодер таблички шасси Mini",
@@ -860,7 +866,8 @@
     },
     "ui": {
       "support_section": "Поддержка"
-    }
+    },
+    "eyebrow": "ДЕКОДЕР"
   },
   "ja": {
     "title": "Tech - ミニ シャシープレート デコーダー",
@@ -919,7 +926,8 @@
     },
     "ui": {
       "support_section": "サポート"
-    }
+    },
+    "eyebrow": "デコーダー"
   },
   "zh": {
     "title": "Tech - 迷你底盘铭牌解码器",
@@ -978,7 +986,8 @@
     },
     "ui": {
       "support_section": "支持"
-    }
+    },
+    "eyebrow": "解码器"
   },
   "ko": {
     "title": "Tech - 미니 섀시 플레이트 디코더",
@@ -1037,7 +1046,8 @@
     },
     "ui": {
       "support_section": "지원"
-    }
+    },
+    "eyebrow": "디코더"
   }
 }
 </i18n>
