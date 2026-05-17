@@ -138,6 +138,17 @@
   --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.14);
 
+  /* Scrim — translucent text-protection layer over photographic heroes. */
+  --cm-scrim-bg: rgba(47, 47, 47, 0.55);
+
+  /* Responsive breakpoints (mirror Tailwind's defaults so utility classes
+     stay aligned with the theme). */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+
   /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -160,6 +171,9 @@
 
   --border-1: rgba(255, 255, 255, 0.08);
   --border-2: rgba(255, 255, 255, 0.14);
+
+  /* Darker scrim works better over the deep-grey base. */
+  --cm-scrim-bg: rgba(20, 20, 22, 0.65);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -332,7 +346,10 @@ body {
   line-height: 1;
   letter-spacing: var(--tracking-tight);
 }
-@media (max-width: 1023px) {
+/* Mirrors the --bp-lg token (1024px). CSS custom properties don't work
+   inside @media queries, so the literal is unavoidable — keep these
+   two values in sync if --bp-lg ever changes. */
+@media (max-width: 1023.98px) {
   .special-title {
     font-size: 2rem;
   }

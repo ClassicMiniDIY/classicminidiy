@@ -1,6 +1,12 @@
 <script lang="ts" setup>
   const { t, tm, rt } = useI18n();
-  const archiveFeatureItems = computed(() => (tm('home.archive_feature.items') as any[]).map((i) => rt(i)));
+  // tm() returns the raw structure for translation arrays/objects. Guard
+  // against a missing key or unexpected shape so an i18n drift never
+  // crashes the home page.
+  const archiveFeatureItems = computed(() => {
+    const items = tm('home.archive_feature.items');
+    return Array.isArray(items) ? items.map((i) => rt(i)) : [];
+  });
 
   // Normalize offset strings — some entries have "ET" baked in, some don't.
   const formatOffset = (raw: string | undefined): string => {
@@ -9,15 +15,17 @@
     return /^ET/i.test(trimmed) ? trimmed : `ET${trimmed}`;
   };
 
-  // Pull the registry's prettiest 6 wheels for the home preview — rank by photo
-  // count, break ties alphabetically. Skip placeholder/unnamed entries.
+  // Pull the registry's prettiest 6 wheels for the home preview. The DB
+  // query filters to approved + non-null name + non-null photos and caps
+  // the pool to 100 candidates server-side; in-memory we drop placeholder
+  // names + zero-photo rows and pick the top 6 by photo count.
   // Cached server-side via useAsyncData.
-  const { listAll } = useWheels();
+  const { listFeaturedCandidates } = useWheels();
   const { data: featuredWheels } = await useAsyncData('home-featured-wheels', async () => {
     try {
-      const all = await listAll();
+      const candidates = await listFeaturedCandidates(100);
       const PLACEHOLDER_NAMES = /^(\(unnamed\)|unnamed|untitled|tbd|n\/a)$/i;
-      return all
+      return candidates
         .filter((w) => {
           if (!(w.images && w.images.length > 0)) return false;
           if (!w.name || w.name.trim().length < 3) return false;
@@ -168,7 +176,15 @@
   <section class="bg-base-200">
     <div class="container mx-auto px-4 py-14">
       <div class="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 items-center">
-        <div class="archive-feature__img"></div>
+        <nuxt-img
+          src="/brand/mascot-mini.jpg"
+          format="webp"
+          loading="lazy"
+          :alt="t('home.archive_feature.image_alt')"
+          width="600"
+          height="450"
+          class="archive-feature__img"
+        />
         <div>
           <span class="biglabel">{{ t('home.archive_feature.kicker') }}</span>
           <h3 class="text-2xl md:text-3xl font-bold mt-2 mb-3 leading-tight">
@@ -283,14 +299,14 @@
 </template>
 
 <style lang="scss">
-  /* === Archive feature row image — flat green background w/ mascot illustration === */
+  /* === Archive feature row image — BAD WOLF mascot illustration === */
   .archive-feature__img {
     aspect-ratio: 4 / 3;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
     border-radius: 1rem;
-    background-color: var(--cm-primary);
-    background-image: url('https://classicminidiy.s3.amazonaws.com/misc/about-me.webp');
-    background-size: cover;
-    background-position: center;
+    background-color: var(--cm-primary); /* paint behind the JPG while it loads */
     box-shadow: var(--shadow-lg);
   }
 
@@ -411,7 +427,8 @@
           "Wiring diagrams by year & model",
           "Carburettor needle library (SU HS2/HS4/HIF44)"
         ],
-        "cta": "Browse the archive"
+        "cta": "Browse the archive",
+        "image_alt": "BAD WOLF — the Classic Mini DIY mascot Mini in olive green"
       },
       "wheel_preview": {
         "eyebrow": "WHEEL REGISTRY",
@@ -486,7 +503,8 @@
           "Diagramas de cableado por año y modelo",
           "Biblioteca de agujas de carburador (SU HS2/HS4/HIF44)"
         ],
-        "cta": "Explorar el archivo"
+        "cta": "Explorar el archivo",
+        "image_alt": "BAD WOLF — el Classic Mini mascota de Classic Mini DIY en verde oliva"
       },
       "wheel_preview": {
         "eyebrow": "REGISTRO DE RUEDAS",
@@ -561,7 +579,8 @@
           "Schémas de câblage par année et modèle",
           "Bibliothèque d'aiguilles de carburateur (SU HS2/HS4/HIF44)"
         ],
-        "cta": "Parcourir les archives"
+        "cta": "Parcourir les archives",
+        "image_alt": "BAD WOLF — la Classic Mini mascotte de Classic Mini DIY en vert olive"
       },
       "wheel_preview": {
         "eyebrow": "REGISTRE DES JANTES",
@@ -636,7 +655,8 @@
           "Schemi di cablaggio per anno e modello",
           "Libreria degli aghi del carburatore (SU HS2/HS4/HIF44)"
         ],
-        "cta": "Esplora l'archivio"
+        "cta": "Esplora l'archivio",
+        "image_alt": "BAD WOLF — la Classic Mini mascotte di Classic Mini DIY in verde oliva"
       },
       "wheel_preview": {
         "eyebrow": "REGISTRO CERCHI",
@@ -711,7 +731,8 @@
           "Schaltpläne nach Baujahr und Modell",
           "Vergaser-Nadelbibliothek (SU HS2/HS4/HIF44)"
         ],
-        "cta": "Archiv durchsuchen"
+        "cta": "Archiv durchsuchen",
+        "image_alt": "BAD WOLF — das Classic Mini DIY Maskottchen-Mini in Olivgrün"
       },
       "wheel_preview": {
         "eyebrow": "RADREGISTER",
@@ -786,7 +807,8 @@
           "Diagramas de fiação por ano e modelo",
           "Biblioteca de agulhas de carburador (SU HS2/HS4/HIF44)"
         ],
-        "cta": "Explorar o arquivo"
+        "cta": "Explorar o arquivo",
+        "image_alt": "BAD WOLF — o Classic Mini mascote do Classic Mini DIY em verde oliva"
       },
       "wheel_preview": {
         "eyebrow": "REGISTRO DE RODAS",
@@ -861,7 +883,8 @@
           "Электрические схемы по годам и моделям",
           "Библиотека игл карбюратора (SU HS2/HS4/HIF44)"
         ],
-        "cta": "Перейти в архив"
+        "cta": "Перейти в архив",
+        "image_alt": "BAD WOLF — Classic Mini-талисман Classic Mini DIY в оливково-зелёном цвете"
       },
       "wheel_preview": {
         "eyebrow": "РЕЕСТР КОЛЁС",
@@ -936,7 +959,8 @@
           "年式とモデル別の配線図",
           "キャブレターニードルライブラリ（SU HS2/HS4/HIF44）"
         ],
-        "cta": "アーカイブを見る"
+        "cta": "アーカイブを見る",
+        "image_alt": "BAD WOLF — オリーブグリーンの Classic Mini DIY マスコット Mini"
       },
       "wheel_preview": {
         "eyebrow": "ホイールレジストリ",
@@ -1011,7 +1035,8 @@
           "按年份和车型的接线图",
           "化油器针型库（SU HS2/HS4/HIF44）"
         ],
-        "cta": "浏览档案"
+        "cta": "浏览档案",
+        "image_alt": "BAD WOLF — Classic Mini DIY 的橄榄绿吉祥物 Mini"
       },
       "wheel_preview": {
         "eyebrow": "车轮注册库",
@@ -1086,7 +1111,8 @@
           "연도와 모델별 배선도",
           "카뷰레터 니들 라이브러리 (SU HS2/HS4/HIF44)"
         ],
-        "cta": "아카이브 둘러보기"
+        "cta": "아카이브 둘러보기",
+        "image_alt": "BAD WOLF — 올리브 그린 색상의 Classic Mini DIY 마스코트 Mini"
       },
       "wheel_preview": {
         "eyebrow": "휠 등록부",

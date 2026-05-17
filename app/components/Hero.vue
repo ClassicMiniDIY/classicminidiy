@@ -152,12 +152,13 @@
        so white titles and the orange eyebrow stay legible on busy
        photographic backgrounds. Only applied when the hero has text
        to protect (.hero-section--scrim); otherwise the decorative
-       photo shows clean. Tweak the alpha to taste. */
+       photo shows clean. Tone is driven by --cm-scrim-bg so the dark
+       theme can supply a deeper alpha. */
     &.hero-section--scrim::before {
       content: '';
       position: absolute;
       inset: 0;
-      background-color: rgba(47, 47, 47, 0.55);
+      background-color: var(--cm-scrim-bg);
       pointer-events: none;
     }
 
