@@ -112,7 +112,7 @@
         <div class="grid grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
             <PageIntro
-              eyebrow="CALCULATOR"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -226,7 +226,8 @@
       "loading_fallback": "Loading gearbox calculator...",
       "loading_text": "Loading gearbox calculator...",
       "more_section": "More"
-    }
+    },
+    "eyebrow": "CALCULATOR"
   },
   "es": {
     "title": "Técnico - Calculadora de Engranajes",
@@ -274,7 +275,8 @@
       "loading_fallback": "Cargando calculadora de caja de cambios...",
       "loading_text": "Cargando calculadora de caja de cambios...",
       "more_section": "Más"
-    }
+    },
+    "eyebrow": "CALCULADORA"
   },
   "fr": {
     "title": "Technique - Calculateur d'Engrenages",
@@ -322,7 +324,8 @@
       "loading_fallback": "Chargement du calculateur de boîte de vitesses...",
       "loading_text": "Chargement du calculateur de boîte de vitesses...",
       "more_section": "Plus"
-    }
+    },
+    "eyebrow": "CALCULATRICE"
   },
   "it": {
     "title": "Tecnico - Calcolatore Ingranaggi",
@@ -370,7 +373,8 @@
       "loading_fallback": "Caricamento calcolatore cambio...",
       "loading_text": "Caricamento calcolatore cambio...",
       "more_section": "Altro"
-    }
+    },
+    "eyebrow": "CALCOLATRICE"
   },
   "de": {
     "title": "Technik - Übersetzungsrechner",
@@ -418,7 +422,8 @@
       "loading_fallback": "Lade Getriebe-Rechner...",
       "loading_text": "Lade Getriebe-Rechner...",
       "more_section": "Mehr"
-    }
+    },
+    "eyebrow": "RECHNER"
   },
   "pt": {
     "title": "Técnico - Calculadora de Engrenagens",
@@ -466,7 +471,8 @@
       "loading_fallback": "Carregando calculadora de caixa de câmbio...",
       "loading_text": "Carregando calculadora de caixa de câmbio...",
       "more_section": "Mais"
-    }
+    },
+    "eyebrow": "CALCULADORA"
   },
   "ru": {
     "title": "Техника - Калькулятор Передач",
@@ -514,7 +520,8 @@
       "loading_fallback": "Загрузка калькулятора коробки передач...",
       "loading_text": "Загрузка калькулятора коробки передач...",
       "more_section": "Больше"
-    }
+    },
+    "eyebrow": "КАЛЬКУЛЯТОР"
   },
   "ja": {
     "title": "技術 - ギア計算機",
@@ -562,7 +569,8 @@
       "loading_fallback": "ギアボックス計算機を読み込み中...",
       "loading_text": "ギアボックス計算機を読み込み中...",
       "more_section": "その他"
-    }
+    },
+    "eyebrow": "計算機"
   },
   "zh": {
     "title": "技术 - 齿轮计算器",
@@ -610,7 +618,8 @@
       "loading_fallback": "正在加载变速箱计算器...",
       "loading_text": "正在加载变速箱计算器...",
       "more_section": "更多"
-    }
+    },
+    "eyebrow": "计算器"
   },
   "ko": {
     "title": "기술 - 기어 계산기",
@@ -658,7 +667,8 @@
       "loading_fallback": "기어박스 계산기 로딩 중...",
       "loading_text": "기어박스 계산기 로딩 중...",
       "more_section": "더보기"
-    }
+    },
+    "eyebrow": "계산기"
   }
 }
 </i18n>

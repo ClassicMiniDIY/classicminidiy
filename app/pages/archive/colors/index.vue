@@ -183,7 +183,7 @@
           </div>
         </div>
 
-        <PageIntro eyebrow="COLOR LIBRARY" :title="t('main_heading')">
+        <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')">
           <template #meta>
             <p class="lead text-xl mt-2">
               <strong>{{ colors?.length || '0' }}</strong>
@@ -404,7 +404,8 @@
       "og_description": "Find the perfect color for your Classic Mini with our comprehensive color picker and paint code reference.",
       "twitter_title": "Classic Mini Color Picker | Classic Mini DIY",
       "twitter_description": "Find the perfect color for your Classic Mini with our comprehensive color picker and paint code reference."
-    }
+    },
+    "eyebrow": "COLOR LIBRARY"
   },
   "es": {
     "title": "Selector de Color",
@@ -444,7 +445,8 @@
       "og_description": "Encuentra el color perfecto para tu Classic Mini con nuestro completo selector de colores y referencia de códigos de pintura.",
       "twitter_title": "Selector de Color Classic Mini | Classic Mini DIY",
       "twitter_description": "Encuentra el color perfecto para tu Classic Mini con nuestro completo selector de colores y referencia de códigos de pintura."
-    }
+    },
+    "eyebrow": "BIBLIOTECA DE COLORES"
   },
   "fr": {
     "title": "Sélecteur de Couleur",
@@ -484,7 +486,8 @@
       "og_description": "Trouvez la couleur parfaite pour votre Classic Mini avec notre sélecteur de couleurs complet et la référence des codes peinture.",
       "twitter_title": "Sélecteur de Couleur Classic Mini | Classic Mini DIY",
       "twitter_description": "Trouvez la couleur parfaite pour votre Classic Mini avec notre sélecteur de couleurs complet et la référence des codes peinture."
-    }
+    },
+    "eyebrow": "BIBLIOTHÈQUE DE COULEURS"
   },
   "it": {
     "title": "Selettore Colore",
@@ -524,7 +527,8 @@
       "og_description": "Trova il colore perfetto per la tua Classic Mini con il nostro selettore colori completo e la guida ai codici vernice.",
       "twitter_title": "Selettore Colore Classic Mini | Classic Mini DIY",
       "twitter_description": "Trova il colore perfetto per la tua Classic Mini con il nostro selettore colori completo e la guida ai codici vernice."
-    }
+    },
+    "eyebrow": "LIBRERIA COLORI"
   },
   "de": {
     "title": "Farbauswahl",
@@ -564,7 +568,8 @@
       "og_description": "Finden Sie die perfekte Farbe für Ihren Classic Mini mit unserem umfassenden Farbwähler und der Lackcodes-Referenz.",
       "twitter_title": "Classic Mini Farbauswahl | Classic Mini DIY",
       "twitter_description": "Finden Sie die perfekte Farbe für Ihren Classic Mini mit unserem umfassenden Farbwähler und der Lackcodes-Referenz."
-    }
+    },
+    "eyebrow": "FARB-BIBLIOTHEK"
   },
   "pt": {
     "title": "Seletor de Cor",
@@ -604,7 +609,8 @@
       "og_description": "Encontre a cor perfeita para o seu Classic Mini com o nosso seletor de cores abrangente e referência de códigos de tinta.",
       "twitter_title": "Seletor de Cor Classic Mini | Classic Mini DIY",
       "twitter_description": "Encontre a cor perfeita para o seu Classic Mini com o nosso seletor de cores abrangente e referência de códigos de tinta."
-    }
+    },
+    "eyebrow": "BIBLIOTECA DE CORES"
   },
   "ru": {
     "title": "Выбор цвета",
@@ -644,7 +650,8 @@
       "og_description": "Найдите идеальный цвет для вашего Classic Mini с нашим полным подборщиком цветов и справочником кодов краски.",
       "twitter_title": "Подборщик цветов Classic Mini | Classic Mini DIY",
       "twitter_description": "Найдите идеальный цвет для вашего Classic Mini с нашим полным подборщиком цветов и справочником кодов краски."
-    }
+    },
+    "eyebrow": "БИБЛИОТЕКА ЦВЕТОВ"
   },
   "ja": {
     "title": "カラーピッカー",
@@ -684,7 +691,8 @@
       "og_description": "充実したカラーピッカーとペイントコード参照で、あなたのClassic Miniに最適な色を見つけましょう。",
       "twitter_title": "Classic Mini カラーピッカー | Classic Mini DIY",
       "twitter_description": "充実したカラーピッカーとペイントコード参照で、あなたのClassic Miniに最適な色を見つけましょう。"
-    }
+    },
+    "eyebrow": "カラーライブラリ"
   },
   "zh": {
     "title": "颜色选择器",
@@ -724,7 +732,8 @@
       "og_description": "使用我们全面的颜色选择器和油漆代码参考，为您的Classic Mini找到完美的颜色。",
       "twitter_title": "Classic Mini 颜色选择器 | Classic Mini DIY",
       "twitter_description": "使用我们全面的颜色选择器和油漆代码参考，为您的Classic Mini找到完美的颜色。"
-    }
+    },
+    "eyebrow": "颜色库"
   },
   "ko": {
     "title": "컬러 피커",
@@ -764,7 +773,8 @@
       "og_description": "종합적인 컬러 피커와 도료 코드 참조로 Classic Mini에 딱 맞는 색상을 찾아보세요.",
       "twitter_title": "Classic Mini 컬러 피커 | Classic Mini DIY",
       "twitter_description": "종합적인 컬러 피커와 도료 코드 참조로 Classic Mini에 딱 맞는 색상을 찾아보세요."
-    }
+    },
+    "eyebrow": "색상 라이브러리"
   }
 }
 </i18n>

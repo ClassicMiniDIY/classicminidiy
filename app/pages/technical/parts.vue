@@ -148,7 +148,7 @@
     <div class="grid grid-cols-12 gap-6 mb-8">
       <div class="col-span-12 md:col-span-8">
         <PageIntro
-              eyebrow="REFERENCE"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -330,7 +330,8 @@
       "no_items_found": "No items found",
       "submissions_section": "Submit Parts",
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "REFERENCE"
   },
   "es": {
     "title": "Tech - Equivalencia de Piezas",
@@ -382,7 +383,8 @@
       "no_items_found": "No se encontraron elementos",
       "submissions_section": "Enviar Piezas",
       "support_section": "Soporte"
-    }
+    },
+    "eyebrow": "REFERENCIA"
   },
   "fr": {
     "title": "Tech - Équivalence des Pièces",
@@ -434,7 +436,8 @@
       "no_items_found": "Aucun élément trouvé",
       "submissions_section": "Soumettre Pièces",
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "RÉFÉRENCE"
   },
   "it": {
     "title": "Tech - Equivalenza Parti",
@@ -486,7 +489,8 @@
       "no_items_found": "Nessun elemento trovato",
       "submissions_section": "Invia Parti",
       "support_section": "Supporto"
-    }
+    },
+    "eyebrow": "RIFERIMENTO"
   },
   "de": {
     "title": "Tech - Teileäquivalenz",
@@ -538,7 +542,8 @@
       "no_items_found": "Keine Elemente gefunden",
       "submissions_section": "Teile Einreichen",
       "support_section": "Support"
-    }
+    },
+    "eyebrow": "REFERENZ"
   },
   "pt": {
     "title": "Tech - Equivalência de Peças",
@@ -590,7 +595,8 @@
       "no_items_found": "Nenhum item encontrado",
       "submissions_section": "Enviar Peças",
       "support_section": "Suporte"
-    }
+    },
+    "eyebrow": "REFERÊNCIA"
   },
   "ru": {
     "title": "Tech - Эквивалентность деталей",
@@ -642,7 +648,8 @@
       "no_items_found": "Элементы не найдены",
       "submissions_section": "Отправить Детали",
       "support_section": "Поддержка"
-    }
+    },
+    "eyebrow": "СПРАВОЧНИК"
   },
   "ja": {
     "title": "Tech - パーツ互換性",
@@ -694,7 +701,8 @@
       "no_items_found": "アイテムが見つかりません",
       "submissions_section": "パーツ送信",
       "support_section": "サポート"
-    }
+    },
+    "eyebrow": "リファレンス"
   },
   "zh": {
     "title": "Tech - 零件等效性",
@@ -746,7 +754,8 @@
       "no_items_found": "未找到项目",
       "submissions_section": "提交零件",
       "support_section": "支持"
-    }
+    },
+    "eyebrow": "参考"
   },
   "ko": {
     "title": "Tech - 부품 등가성",
@@ -798,7 +807,8 @@
       "no_items_found": "항목을 찾을 수 없음",
       "submissions_section": "부품 제출",
       "support_section": "지원"
-    }
+    },
+    "eyebrow": "참조"
   }
 }
 </i18n>

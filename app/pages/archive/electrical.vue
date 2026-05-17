@@ -136,7 +136,7 @@
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
             <PageIntro
-              eyebrow="WIRING LIBRARY"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -298,7 +298,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini Electrical Diagrams",
       "dataset_description": "Collection of digitized electrical diagrams for Classic Mini vehicles"
-    }
+    },
+    "eyebrow": "WIRING LIBRARY"
   },
   "es": {
     "title": "Archivo - Diagramas Eléctricos | Classic Mini DIY",
@@ -332,7 +333,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Diagramas Eléctricos Classic Mini",
       "dataset_description": "Colección de diagramas eléctricos digitalizados para vehículos Classic Mini"
-    }
+    },
+    "eyebrow": "BIBLIOTECA DE CABLEADO"
   },
   "fr": {
     "title": "Archive - Schémas Électriques | Classic Mini DIY",
@@ -366,7 +368,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Schémas Électriques Classic Mini",
       "dataset_description": "Collection de schémas électriques numérisés pour véhicules Classic Mini"
-    }
+    },
+    "eyebrow": "BIBLIOTHÈQUE DE CÂBLAGE"
   },
   "it": {
     "title": "Archivio - Schemi Elettrici | Classic Mini DIY",
@@ -400,7 +403,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Schemi Elettrici Classic Mini",
       "dataset_description": "Collezione di schemi elettrici digitalizzati per veicoli Classic Mini"
-    }
+    },
+    "eyebrow": "LIBRERIA CABLAGGI"
   },
   "de": {
     "title": "Archiv - Elektrische Schaltpläne | Classic Mini DIY",
@@ -434,7 +438,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini Elektrische Schaltpläne",
       "dataset_description": "Sammlung digitalisierter elektrischer Schaltpläne für Classic Mini Fahrzeuge"
-    }
+    },
+    "eyebrow": "VERKABELUNGS-BIBLIOTHEK"
   },
   "pt": {
     "title": "Arquivo - Diagramas Elétricos | Classic Mini DIY",
@@ -468,7 +473,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Diagramas Elétricos Classic Mini",
       "dataset_description": "Coleção de diagramas elétricos digitalizados para veículos Classic Mini"
-    }
+    },
+    "eyebrow": "BIBLIOTECA DE FIAÇÃO"
   },
   "ru": {
     "title": "Архив - Электрические Схемы | Classic Mini DIY",
@@ -502,7 +508,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Электрические Схемы Classic Mini",
       "dataset_description": "Коллекция оцифрованных электрических схем для автомобилей Classic Mini"
-    }
+    },
+    "eyebrow": "БИБЛИОТЕКА ПРОВОДКИ"
   },
   "ja": {
     "title": "アーカイブ - 電気図面 | Classic Mini DIY",
@@ -536,7 +543,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini 電気図面",
       "dataset_description": "Classic Mini車両用デジタル化電気図面のコレクション"
-    }
+    },
+    "eyebrow": "配線ライブラリ"
   },
   "zh": {
     "title": "存档 - 电气图表 | Classic Mini DIY",
@@ -570,7 +578,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini 电气图表",
       "dataset_description": "Classic Mini车辆数字化电气图表集合"
-    }
+    },
+    "eyebrow": "接线库"
   },
   "ko": {
     "title": "아카이브 - 전기 도면 | Classic Mini DIY",
@@ -604,7 +613,8 @@
       "publisher_name": "Classic Mini DIY",
       "dataset_name": "Classic Mini 전기 도면",
       "dataset_description": "Classic Mini 차량용 디지털화된 전기 도면 컬렉션"
-    }
+    },
+    "eyebrow": "배선 라이브러리"
   }
 }
 </i18n>

@@ -73,7 +73,7 @@
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
             <PageIntro
-              eyebrow="REFERENCE"
+              :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
             />
@@ -183,7 +183,8 @@
       "og_description": "Detailed weights & measurements for the Classic Mini can be found online right here at Classic Mini DIY.",
       "twitter_title": "Classic Mini Weights & Measurements",
       "twitter_description": "Detailed weights & measurements for the Classic Mini."
-    }
+    },
+    "eyebrow": "REFERENCE"
   },
   "es": {
     "title": "Pesos y Medidas del Classic Mini | Classic Mini DIY",
@@ -206,7 +207,8 @@
       "og_description": "Pesos y medidas detallados para el Classic Mini se pueden encontrar en línea aquí mismo en Classic Mini DIY.",
       "twitter_title": "Pesos y Medidas del Classic Mini",
       "twitter_description": "Pesos y medidas detallados para el Classic Mini."
-    }
+    },
+    "eyebrow": "REFERENCIA"
   },
   "fr": {
     "title": "Poids et Mesures du Classic Mini | Classic Mini DIY",
@@ -229,7 +231,8 @@
       "og_description": "Les poids et mesures détaillés pour le Classic Mini peuvent être trouvés en ligne ici même sur Classic Mini DIY.",
       "twitter_title": "Poids et Mesures du Classic Mini",
       "twitter_description": "Poids et mesures détaillés pour le Classic Mini."
-    }
+    },
+    "eyebrow": "RÉFÉRENCE"
   },
   "it": {
     "title": "Pesi e Misure del Classic Mini | Classic Mini DIY",
@@ -252,7 +255,8 @@
       "og_description": "Pesi e misure dettagliati per il Classic Mini possono essere trovati online proprio qui su Classic Mini DIY.",
       "twitter_title": "Pesi e Misure del Classic Mini",
       "twitter_description": "Pesi e misure dettagliati per il Classic Mini."
-    }
+    },
+    "eyebrow": "RIFERIMENTO"
   },
   "de": {
     "title": "Classic Mini Gewichte & Maße | Classic Mini DIY",
@@ -275,7 +279,8 @@
       "og_description": "Detaillierte Gewichte & Maße für den Classic Mini können online hier bei Classic Mini DIY gefunden werden.",
       "twitter_title": "Classic Mini Gewichte & Maße",
       "twitter_description": "Detaillierte Gewichte & Maße für den Classic Mini."
-    }
+    },
+    "eyebrow": "REFERENZ"
   },
   "pt": {
     "title": "Pesos e Medidas do Classic Mini | Classic Mini DIY",
@@ -298,7 +303,8 @@
       "og_description": "Pesos e medidas detalhados para o Classic Mini podem ser encontrados online aqui mesmo no Classic Mini DIY.",
       "twitter_title": "Pesos e Medidas do Classic Mini",
       "twitter_description": "Pesos e medidas detalhados para o Classic Mini."
-    }
+    },
+    "eyebrow": "REFERÊNCIA"
   },
   "ru": {
     "title": "Веса и Размеры Classic Mini | Classic Mini DIY",
@@ -321,7 +327,8 @@
       "og_description": "Подробные веса и размеры для Classic Mini можно найти онлайн прямо здесь на Classic Mini DIY.",
       "twitter_title": "Веса и Размеры Classic Mini",
       "twitter_description": "Подробные веса и размеры для Classic Mini."
-    }
+    },
+    "eyebrow": "СПРАВОЧНИК"
   },
   "ja": {
     "title": "Classic Mini 重量・寸法 | Classic Mini DIY",
@@ -344,7 +351,8 @@
       "og_description": "Classic Miniの詳細な重量・寸法は、Classic Mini DIYでオンラインで見つけることができます。",
       "twitter_title": "Classic Mini 重量・寸法",
       "twitter_description": "Classic Miniの詳細な重量・寸法。"
-    }
+    },
+    "eyebrow": "リファレンス"
   },
   "zh": {
     "title": "Classic Mini 重量和尺寸 | Classic Mini DIY",
@@ -367,7 +375,8 @@
       "og_description": "Classic Mini的详细重量和尺寸可以在Classic Mini DIY在线找到。",
       "twitter_title": "Classic Mini 重量和尺寸",
       "twitter_description": "Classic Mini的详细重量和尺寸。"
-    }
+    },
+    "eyebrow": "参考"
   },
   "ko": {
     "title": "Classic Mini 무게 및 치수 | Classic Mini DIY",
@@ -390,7 +399,8 @@
       "og_description": "Classic Mini의 상세한 무게 및 치수는 Classic Mini DIY에서 온라인으로 찾을 수 있습니다.",
       "twitter_title": "Classic Mini 무게 및 치수",
       "twitter_description": "Classic Mini의 상세한 무게 및 치수."
-    }
+    },
+    "eyebrow": "참조"
   }
 }
 </i18n>
