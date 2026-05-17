@@ -249,7 +249,7 @@
                   {{ t('profile.contribute') }}
                 </NuxtLink>
               </li>
-              <li class="menu-title mt-1"><span class="sr-only">Session</span></li>
+              <li class="menu-title mt-1"><span class="sr-only">{{ t('session_label') }}</span></li>
               <li>
                 <button type="button" @click="handleSignOut">
                   <i class="fas fa-arrow-right-from-bracket"></i>
@@ -301,7 +301,7 @@
               <button
                 type="button"
                 class="btn btn-ghost btn-sm btn-square"
-                aria-label="Close menu"
+                :aria-label="t('close_menu')"
                 @click="isMobileMenuOpen = false"
               >
                 <i class="fas fa-xmark text-lg"></i>
@@ -504,7 +504,9 @@
       "contribute": "Contribute"
     },
     "language_label": "Language",
-    "mobile_menu_title": "Menu"
+    "mobile_menu_title": "Menu",
+    "close_menu": "Close menu",
+    "session_label": "Session"
   },
   "es": {
     "logo_alt": "Logo de Classic Mini DIY",
@@ -529,7 +531,9 @@
       "contribute": "Contribuir"
     },
     "language_label": "Idioma",
-    "mobile_menu_title": "Menú"
+    "mobile_menu_title": "Menú",
+    "close_menu": "Cerrar menú",
+    "session_label": "Sesión"
   },
   "fr": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -554,7 +558,9 @@
       "contribute": "Contribuer"
     },
     "language_label": "Langue",
-    "mobile_menu_title": "Menu"
+    "mobile_menu_title": "Menu",
+    "close_menu": "Fermer le menu",
+    "session_label": "Session"
   },
   "de": {
     "logo_alt": "Classic Mini DIY Logo",
@@ -579,7 +585,9 @@
       "contribute": "Beitragen"
     },
     "language_label": "Sprache",
-    "mobile_menu_title": "Menü"
+    "mobile_menu_title": "Menü",
+    "close_menu": "Menü schließen",
+    "session_label": "Sitzung"
   },
   "it": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -604,7 +612,9 @@
       "contribute": "Contribuisci"
     },
     "language_label": "Lingua",
-    "mobile_menu_title": "Menu"
+    "mobile_menu_title": "Menu",
+    "close_menu": "Chiudi menu",
+    "session_label": "Sessione"
   },
   "ja": {
     "logo_alt": "Classic Mini DIY ロゴ",
@@ -629,7 +639,9 @@
       "contribute": "コントリビュート"
     },
     "language_label": "言語",
-    "mobile_menu_title": "メニュー"
+    "mobile_menu_title": "メニュー",
+    "close_menu": "メニューを閉じる",
+    "session_label": "セッション"
   },
   "ko": {
     "logo_alt": "Classic Mini DIY 로고",
@@ -654,7 +666,9 @@
       "contribute": "기여하기"
     },
     "language_label": "언어",
-    "mobile_menu_title": "메뉴"
+    "mobile_menu_title": "메뉴",
+    "close_menu": "메뉴 닫기",
+    "session_label": "세션"
   },
   "pt": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -679,7 +693,9 @@
       "contribute": "Contribuir"
     },
     "language_label": "Idioma",
-    "mobile_menu_title": "Menu"
+    "mobile_menu_title": "Menu",
+    "close_menu": "Fechar menu",
+    "session_label": "Sessão"
   },
   "ru": {
     "logo_alt": "Логотип Classic Mini DIY",
@@ -704,7 +720,9 @@
       "contribute": "Внести вклад"
     },
     "language_label": "Язык",
-    "mobile_menu_title": "Меню"
+    "mobile_menu_title": "Меню",
+    "close_menu": "Закрыть меню",
+    "session_label": "Сеанс"
   },
   "zh": {
     "logo_alt": "Classic Mini DIY 徽标",
@@ -729,7 +747,9 @@
       "contribute": "贡献"
     },
     "language_label": "语言",
-    "mobile_menu_title": "菜单"
+    "mobile_menu_title": "菜单",
+    "close_menu": "关闭菜单",
+    "session_label": "会话"
   }
 }
 </i18n>

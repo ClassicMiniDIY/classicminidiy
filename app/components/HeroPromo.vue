@@ -2,6 +2,8 @@
   import { DateTime } from 'luxon';
   import { HERO_TYPES } from '../../data/models/generic';
 
+  const { t } = useI18n();
+
   // Master switch for the hero promo carousel.
   // Flip to `true` to re-enable rotating banners — all promo data,
   // analytics, auto-rotate, and dot-indicator code below stays intact
@@ -160,7 +162,7 @@
     :style="promoStyle"
     role="region"
     aria-roledescription="carousel"
-    aria-label="Promotions"
+    :aria-label="t('aria.carousel')"
   >
     <!-- Mosaic background -->
     <div v-if="selectedPromo.mosaicImages?.length" class="absolute inset-0 mosaic-grid">
@@ -168,7 +170,7 @@
         v-for="(src, i) in selectedPromo.mosaicImages"
         :key="src"
         :src="src"
-        :alt="`App screenshot ${i + 1}`"
+        :alt="t('aria.screenshot', { n: i + 1 })"
         class="w-full h-full object-cover object-top"
         width="240"
         height="520"
@@ -218,7 +220,7 @@
         <div v-if="activePromos.length > 1" class="flex items-center gap-3 mt-6">
           <button
             class="text-white/60 hover:text-white transition-colors"
-            aria-label="Previous promotion"
+            :aria-label="t('aria.previous')"
             @click="handlePrevClick"
           >
             <i class="fas fa-chevron-left"></i>
@@ -228,12 +230,12 @@
             :key="promo.id"
             class="w-2.5 h-2.5 rounded-full transition-colors cursor-pointer"
             :class="promo.id === selectedPromo?.id ? 'bg-white' : 'bg-white/40 hover:bg-white/60'"
-            :aria-label="`Go to promotion ${index + 1}`"
+            :aria-label="t('aria.go_to', { n: index + 1 })"
             @click="goToPromo(index)"
           />
           <button
             class="text-white/60 hover:text-white transition-colors"
-            aria-label="Next promotion"
+            :aria-label="t('aria.next')"
             @click="handleNextClick"
           >
             <i class="fas fa-chevron-right"></i>
@@ -278,3 +280,98 @@
     }
   }
 </style>
+
+<i18n lang="json">
+{
+  "en": {
+    "aria": {
+      "carousel": "Promotions",
+      "screenshot": "App screenshot {n}",
+      "previous": "Previous promotion",
+      "next": "Next promotion",
+      "go_to": "Go to promotion {n}"
+    }
+  },
+  "es": {
+    "aria": {
+      "carousel": "Promociones",
+      "screenshot": "Captura de pantalla {n}",
+      "previous": "Promoción anterior",
+      "next": "Promoción siguiente",
+      "go_to": "Ir a la promoción {n}"
+    }
+  },
+  "fr": {
+    "aria": {
+      "carousel": "Promotions",
+      "screenshot": "Capture d'écran {n}",
+      "previous": "Promotion précédente",
+      "next": "Promotion suivante",
+      "go_to": "Aller à la promotion {n}"
+    }
+  },
+  "de": {
+    "aria": {
+      "carousel": "Aktionen",
+      "screenshot": "App-Screenshot {n}",
+      "previous": "Vorherige Aktion",
+      "next": "Nächste Aktion",
+      "go_to": "Zur Aktion {n}"
+    }
+  },
+  "it": {
+    "aria": {
+      "carousel": "Promozioni",
+      "screenshot": "Schermata {n}",
+      "previous": "Promozione precedente",
+      "next": "Promozione successiva",
+      "go_to": "Vai alla promozione {n}"
+    }
+  },
+  "pt": {
+    "aria": {
+      "carousel": "Promoções",
+      "screenshot": "Captura de tela {n}",
+      "previous": "Promoção anterior",
+      "next": "Próxima promoção",
+      "go_to": "Ir para promoção {n}"
+    }
+  },
+  "ru": {
+    "aria": {
+      "carousel": "Промоакции",
+      "screenshot": "Скриншот приложения {n}",
+      "previous": "Предыдущая промоакция",
+      "next": "Следующая промоакция",
+      "go_to": "Перейти к промоакции {n}"
+    }
+  },
+  "ja": {
+    "aria": {
+      "carousel": "プロモーション",
+      "screenshot": "アプリのスクリーンショット {n}",
+      "previous": "前のプロモーション",
+      "next": "次のプロモーション",
+      "go_to": "プロモーション {n} へ"
+    }
+  },
+  "zh": {
+    "aria": {
+      "carousel": "促销活动",
+      "screenshot": "应用截图 {n}",
+      "previous": "上一个促销",
+      "next": "下一个促销",
+      "go_to": "前往促销 {n}"
+    }
+  },
+  "ko": {
+    "aria": {
+      "carousel": "프로모션",
+      "screenshot": "앱 스크린샷 {n}",
+      "previous": "이전 프로모션",
+      "next": "다음 프로모션",
+      "go_to": "프로모션 {n}으로 이동"
+    }
+  }
+}
+</i18n>
