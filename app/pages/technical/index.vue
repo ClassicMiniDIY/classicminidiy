@@ -203,24 +203,7 @@
       "compression_calculator_desc": "CR para cualquier combinación de diámetro, carrera, cc de culata y altura de cubierta.",
       "parts_equivalency_desc": "Referencias cruzadas de números de pieza entre proveedores y marcas.",
       "common_clearances_desc": "Ajustes de taqués, tolerancias de cojinetes y holguras de montaje."
-    },
-    "breadcrumb_home": "Inicio",
-    "breadcrumb_technical": "Técnico",
-    "compression_calculator_title": "Calculadora de Compresión",
-    "compression_calculator_description": "Calcula la relación de compresión para tu motor Classic Mini",
-    "gearbox_calculator_title": "Calculadora de Caja de Cambios",
-    "gearbox_calculator_description": "Analiza las relaciones de marchas y velocidades máximas",
-    "needles_configurator_title": "Configurador de Agujas",
-    "needles_configurator_description": "Encuentra las agujas de carburador perfectas para tu configuración",
-    "chassis_decoder_title": "Decodificador de Chasis",
-    "chassis_decoder_description": "Decodifica el número de chasis de tu Classic Mini",
-    "engine_decoder_title": "Decodificador de Motor",
-    "engine_decoder_description": "Identifica las especificaciones de tu motor por el código",
-    "color_decoder_title": "Decodificador de Color",
-    "color_decoder_description": "Encuentra el color original de tu Mini por el código",
-    "support_title": "Apoya Nuestro Trabajo",
-    "support_description": "Si estas herramientas te han sido útiles, considera apoyarnos en Patreon para ayudar a mantener y mejorar el sitio.",
-    "support_button": "Apoyar en Patreon"
+    }
   },
   "fr": {
     "title": "Boîte à Outils Technique Classic Mini DIY - Calculatrices et Outils",
@@ -265,24 +248,7 @@
       "compression_calculator_desc": "CR pour n'importe quelle combinaison d'alésage, course, cc de culasse et hauteur de pont.",
       "parts_equivalency_desc": "Recoupement des numéros de pièces entre fournisseurs et marques.",
       "common_clearances_desc": "Calage de soupapes, tolérances de paliers et jeux de montage."
-    },
-    "breadcrumb_home": "Accueil",
-    "breadcrumb_technical": "Technique",
-    "compression_calculator_title": "Calculatrice de Compression",
-    "compression_calculator_description": "Calculez le taux de compression pour votre moteur Classic Mini",
-    "gearbox_calculator_title": "Calculatrice de Boîte de Vitesses",
-    "gearbox_calculator_description": "Analysez les rapports de vitesse et les vitesses maximales",
-    "needles_configurator_title": "Configurateur d'Aiguilles",
-    "needles_configurator_description": "Trouvez les aiguilles de carburateur parfaites pour votre configuration",
-    "chassis_decoder_title": "Décodeur de Châssis",
-    "chassis_decoder_description": "Décodez le numéro de châssis de votre Classic Mini",
-    "engine_decoder_title": "Décodeur de Moteur",
-    "engine_decoder_description": "Identifiez les spécifications de votre moteur par le code",
-    "color_decoder_title": "Décodeur de Couleur",
-    "color_decoder_description": "Trouvez la couleur d'origine de votre Mini par le code",
-    "support_title": "Soutenez Notre Travail",
-    "support_description": "Si ces outils vous ont été utiles, envisagez de nous soutenir sur Patreon pour aider à maintenir et améliorer le site.",
-    "support_button": "Soutenir sur Patreon"
+    }
   },
   "it": {
     "title": "Cassetta degli Attrezzi Tecnica Classic Mini DIY - Calcolatrici e Strumenti",
@@ -327,24 +293,7 @@
       "compression_calculator_desc": "CR per qualsiasi combinazione di alesaggio, corsa, cc della testata e altezza piano.",
       "parts_equivalency_desc": "Tabelle di corrispondenza dei codici ricambio tra fornitori e marchi.",
       "common_clearances_desc": "Gioco delle punterie, tolleranze dei cuscinetti e giochi di assemblaggio."
-    },
-    "breadcrumb_home": "Home",
-    "breadcrumb_technical": "Tecnico",
-    "compression_calculator_title": "Calcolatrice di Compressione",
-    "compression_calculator_description": "Calcola il rapporto di compressione per il tuo motore Classic Mini",
-    "gearbox_calculator_title": "Calcolatrice del Cambio",
-    "gearbox_calculator_description": "Analizza i rapporti delle marce e le velocità massime",
-    "needles_configurator_title": "Configuratore Aghi",
-    "needles_configurator_description": "Trova gli aghi del carburatore perfetti per la tua configurazione",
-    "chassis_decoder_title": "Decodificatore Telaio",
-    "chassis_decoder_description": "Decodifica il numero di telaio della tua Classic Mini",
-    "engine_decoder_title": "Decodificatore Motore",
-    "engine_decoder_description": "Identifica le specifiche del tuo motore tramite il codice",
-    "color_decoder_title": "Decodificatore Colore",
-    "color_decoder_description": "Trova il colore originale della tua Mini tramite il codice",
-    "support_title": "Supporta il Nostro Lavoro",
-    "support_description": "Se questi strumenti ti sono stati utili, considera di supportarci su Patreon per aiutare a mantenere e migliorare il sito.",
-    "support_button": "Supporta su Patreon"
+    }
   },
   "de": {
     "title": "Classic Mini DIY Technischer Werkzeugkasten - Rechner und Werkzeuge",
@@ -389,24 +338,7 @@
       "compression_calculator_desc": "CR für jede Kombination aus Bohrung, Hub, Brennraumvolumen und Decköhe.",
       "parts_equivalency_desc": "Querverweise von Teilenummern über Lieferanten und Marken hinweg.",
       "common_clearances_desc": "Ventilspiele, Lagertoleranzen und Montagespielmaße."
-    },
-    "breadcrumb_home": "Startseite",
-    "breadcrumb_technical": "Technisch",
-    "compression_calculator_title": "Kompressionsrechner",
-    "compression_calculator_description": "Berechnen Sie das Kompressionsverhältnis für Ihren Classic Mini Motor",
-    "gearbox_calculator_title": "Getrieberechner",
-    "gearbox_calculator_description": "Analysieren Sie Getriebeübersetzungen und Höchstgeschwindigkeiten",
-    "needles_configurator_title": "Düsen-Konfigurator",
-    "needles_configurator_description": "Finden Sie die perfekten Vergaserdüsen für Ihre Konfiguration",
-    "chassis_decoder_title": "Fahrgestell-Decoder",
-    "chassis_decoder_description": "Entschlüsseln Sie die Fahrgestellnummer Ihres Classic Mini",
-    "engine_decoder_title": "Motor-Decoder",
-    "engine_decoder_description": "Identifizieren Sie die Spezifikationen Ihres Motors anhand des Codes",
-    "color_decoder_title": "Farb-Decoder",
-    "color_decoder_description": "Finden Sie die ursprüngliche Farbe Ihres Mini anhand des Codes",
-    "support_title": "Unterstützen Sie Unsere Arbeit",
-    "support_description": "Wenn diese Werkzeuge für Sie nützlich waren, erwägen Sie, uns auf Patreon zu unterstützen, um die Website zu erhalten und zu verbessern.",
-    "support_button": "Auf Patreon Unterstützen"
+    }
   },
   "pt": {
     "title": "Caixa de Ferramentas Técnica Classic Mini DIY - Calculadoras e Ferramentas",
@@ -451,24 +383,7 @@
       "compression_calculator_desc": "CR para qualquer combinação de diâmetro, curso, cc do cabeçote e altura do platô.",
       "parts_equivalency_desc": "Referência cruzada de números de peças entre fornecedores e marcas.",
       "common_clearances_desc": "Ajustes de tuchos, tolerâncias de mancais e folgas de montagem."
-    },
-    "breadcrumb_home": "Início",
-    "breadcrumb_technical": "Técnico",
-    "compression_calculator_title": "Calculadora de Compressão",
-    "compression_calculator_description": "Calcule a taxa de compressão para seu motor Classic Mini",
-    "gearbox_calculator_title": "Calculadora de Câmbio",
-    "gearbox_calculator_description": "Analise as relações de marcha e velocidades máximas",
-    "needles_configurator_title": "Configurador de Agulhas",
-    "needles_configurator_description": "Encontre as agulhas de carburador perfeitas para sua configuração",
-    "chassis_decoder_title": "Decodificador de Chassi",
-    "chassis_decoder_description": "Decodifique o número do chassi do seu Classic Mini",
-    "engine_decoder_title": "Decodificador de Motor",
-    "engine_decoder_description": "Identifique as especificações do seu motor pelo código",
-    "color_decoder_title": "Decodificador de Cor",
-    "color_decoder_description": "Encontre a cor original do seu Mini pelo código",
-    "support_title": "Apoie Nosso Trabalho",
-    "support_description": "Se essas ferramentas foram úteis para você, considere nos apoiar no Patreon para ajudar a manter e melhorar o site.",
-    "support_button": "Apoiar no Patreon"
+    }
   },
   "ru": {
     "title": "Технический Набор Инструментов Classic Mini DIY - Калькуляторы и Инструменты",
@@ -513,26 +428,7 @@
       "compression_calculator_desc": "CR для любого сочетания диаметра цилиндра, хода поршня, объёма ГБЦ и высоты деки.",
       "parts_equivalency_desc": "Перекрёстная справка номеров деталей между поставщиками и брендами.",
       "common_clearances_desc": "Регулировки клапанов, допуски подшипников и сборочные зазоры."
-    },
-    "breadcrumb_home": "Главная",
-    "breadcrumb_technical": "Техническое",
-    "compression_calculator_title": "Калькулятор Сжатия",
-    "compression_calculator_description": "Рассчитайте степень сжатия для вашего двигателя Classic Mini",
-    "gearbox_calculator_title": "Калькулятор Коробки Передач",
-    "gearbox_calculator_description": "Анализируйте передаточные числа и максимальные скорости",
-    "needles_configurator_title": "Конфигуратор Игл",
-    "needles_configurator_description": "Найдите идеальные иглы карбюратора для вашей конфигурации",
-    "chassis_decoder_title": "Декодер Шасси",
-    "chassis_decoder_description": "Расшифруйте номер шасси вашего Classic Mini",
-    "engine_decoder_title": "Декодер Двигателя",
-    "engine_decoder_description": "Определите характеристики вашего двигателя по коду",
-    "color_decoder_title": "Декодер Цвета",
-    "color_decoder_description": "Найдите оригинальный цвет вашего Mini по коду",
-    "support_title": "Поддержите Нашу Работу",
-    "support_description": "Если эти инструменты были полезны для вас, рассмотрите возможность поддержки нас на Patreon, чтобы помочь поддерживать и улучшать сайт.",
-    "support_button": "Поддержать на Patreon",
-    "Основные инструменты для владельцев Classic Mini": "Основные инструменты для владельцев Classic Mini",
-    "Технический Набор Инструментов": "Технический Набор Инструментов"
+    }
   },
   "ja": {
     "title": "Classic Mini DIY テクニカルツールボックス - 計算機とツール",
@@ -577,24 +473,7 @@
       "compression_calculator_desc": "ボア、ストローク、ヘッドcc、デッキ高さの任意の組み合わせのCR。",
       "parts_equivalency_desc": "ベンダーとブランド間の部品番号のクロスリファレンス。",
       "common_clearances_desc": "タペット隙間、ベアリング公差、組立クリアランス。"
-    },
-    "breadcrumb_home": "ホーム",
-    "breadcrumb_technical": "テクニカル",
-    "compression_calculator_title": "圧縮比計算機",
-    "compression_calculator_description": "あなたのClassic Miniエンジンの圧縮比を計算",
-    "gearbox_calculator_title": "ギアボックス計算機",
-    "gearbox_calculator_description": "ギア比と最高速度を分析",
-    "needles_configurator_title": "ニードル設定ツール",
-    "needles_configurator_description": "あなたの設定に最適なキャブレターニードルを見つける",
-    "chassis_decoder_title": "シャシーデコーダー",
-    "chassis_decoder_description": "あなたのClassic Miniのシャシー番号をデコード",
-    "engine_decoder_title": "エンジンデコーダー",
-    "engine_decoder_description": "コードからあなたのエンジン仕様を特定",
-    "color_decoder_title": "カラーデコーダー",
-    "color_decoder_description": "コードからあなたのMiniの元の色を見つける",
-    "support_title": "私たちの活動をサポート",
-    "support_description": "これらのツールがお役に立った場合は、Patreonで私たちをサポートして、サイトの維持と改善にご協力ください。",
-    "support_button": "Patreonでサポート"
+    }
   },
   "zh": {
     "title": "Classic Mini DIY 技术工具箱 - 计算器和工具",
@@ -639,24 +518,7 @@
       "compression_calculator_desc": "适用于任意缸径、行程、燃烧室容积和甲板高度组合的CR计算。",
       "parts_equivalency_desc": "跨供应商和品牌的零件号交叉参考。",
       "common_clearances_desc": "气门间隙、轴承公差和装配间隙。"
-    },
-    "breadcrumb_home": "首页",
-    "breadcrumb_technical": "技术",
-    "compression_calculator_title": "压缩比计算器",
-    "compression_calculator_description": "计算您的Classic Mini发动机的压缩比",
-    "gearbox_calculator_title": "变速箱计算器",
-    "gearbox_calculator_description": "分析齿轮比和最高速度",
-    "needles_configurator_title": "针配置器",
-    "needles_configurator_description": "为您的配置找到完美的化油器针",
-    "chassis_decoder_title": "底盘解码器",
-    "chassis_decoder_description": "解码您的Classic Mini底盘号码",
-    "engine_decoder_title": "发动机解码器",
-    "engine_decoder_description": "通过代码识别您的发动机规格",
-    "color_decoder_title": "颜色解码器",
-    "color_decoder_description": "通过代码找到您的Mini原始颜色",
-    "support_title": "支持我们的工作",
-    "support_description": "如果这些工具对您有用，请考虑在Patreon上支持我们，帮助维护和改进网站。",
-    "support_button": "在Patreon支持"
+    }
   },
   "ko": {
     "title": "Classic Mini DIY 기술 도구상자 - 계산기와 도구",
@@ -701,24 +563,7 @@
       "compression_calculator_desc": "보어, 스트로크, 헤드 cc, 데크 높이의 모든 조합에 대한 CR.",
       "parts_equivalency_desc": "공급업체와 브랜드 간 부품 번호 교차 참조.",
       "common_clearances_desc": "태핏 갭, 베어링 공차, 조립 간극."
-    },
-    "breadcrumb_home": "홈",
-    "breadcrumb_technical": "기술",
-    "compression_calculator_title": "압축비 계산기",
-    "compression_calculator_description": "당신의 Classic Mini 엔진의 압축비를 계산하세요",
-    "gearbox_calculator_title": "기어박스 계산기",
-    "gearbox_calculator_description": "기어비와 최고 속도를 분석하세요",
-    "needles_configurator_title": "니들 구성기",
-    "needles_configurator_description": "당신의 구성에 완벽한 카뷰레터 니들을 찾으세요",
-    "chassis_decoder_title": "섀시 디코더",
-    "chassis_decoder_description": "당신의 Classic Mini 섀시 번호를 디코드하세요",
-    "engine_decoder_title": "엔진 디코더",
-    "engine_decoder_description": "코드로 당신의 엔진 사양을 식별하세요",
-    "color_decoder_title": "색상 디코더",
-    "color_decoder_description": "코드로 당신의 Mini 원래 색상을 찾으세요",
-    "support_title": "우리의 작업을 지원하세요",
-    "support_description": "이 도구들이 유용했다면, Patreon에서 우리를 지원하여 사이트 유지와 개선에 도움을 주세요.",
-    "support_button": "Patreon에서 지원"
+    }
   }
 }
 </i18n>
