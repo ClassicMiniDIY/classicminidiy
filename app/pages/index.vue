@@ -446,6 +446,56 @@
         "title": "APOYA LA MISIÓN",
         "heading": "Apoyo",
         "content": "Classic Mini DIY es apoyado por nuestros espectadores. Si estás interesado en ayudar a mantener el canal vivo, considera apoyar en Patreon o si tienes habilidades en JS y tecnologías web modernas, por favor considera apoyar la base de código de código abierto en github."
+      },
+      "toolgrid": {
+        "eyebrow": "CAJA DE HERRAMIENTAS",
+        "heading": "Abre el capó, haz los cálculos.",
+        "subheading": "Un kit creciente de calculadoras y decodificadores. Sin cuentas, sin anuncios, sin tonterías.",
+        "all_tools": "Todas las herramientas",
+        "kind": {
+          "calculator": "Calculadora",
+          "decoder": "Decodificador",
+          "reference": "Referencia"
+        },
+        "cards": {
+          "compression": {
+            "title": "Relación de compresión",
+            "desc": "CR para cualquier combinación de diámetro, carrera, cc de culata y altura de cubierta."
+          },
+          "gearing": {
+            "title": "Relación de marchas",
+            "desc": "Cálculos de transmisión final para SPi, MPi y coches pre-Verto."
+          },
+          "chassis": {
+            "title": "Decodificador de chasis",
+            "desc": "Año, planta y acabado a partir de tu número VIN/chasis."
+          },
+          "needles": {
+            "title": "Configurador de agujas",
+            "desc": "Compara perfiles de agujas SU HS2/HS4/HIF44 lado a lado con superposiciones gráficas."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "ARCHIVO",
+        "heading": "La referencia técnica, mantenida viva.",
+        "body": "Holguras comunes, ajustes de taqués, especificaciones de par, diagramas eléctricos — el tipo de contenido de manual de taller bien usado que está desapareciendo lentamente de internet, todo gratis y consultable.",
+        "items": [
+          "Referencia de holguras comunes",
+          "Identificación de bloques y culatas",
+          "Diagramas de cableado por año y modelo",
+          "Biblioteca de agujas de carburador (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "Explorar el archivo"
+      },
+      "wheel_preview": {
+        "eyebrow": "REGISTRO DE RUEDAS",
+        "heading": "Biblioteca alimentada por la comunidad.",
+        "subheading": "Cada rueda que se ha montado en un Classic Mini, fotografiada y especificada por sus dueños.",
+        "cta": "Envía la tuya",
+        "photo_one": "foto",
+        "photos": "fotos",
+        "empty": "Aún no hay ruedas en el registro. Sé el primero — envía la tuya."
       }
     }
   },
@@ -471,6 +521,56 @@
         "title": "SOUTENIR LA MISSION",
         "heading": "Soutien",
         "content": "Classic Mini DIY est soutenu par nos spectateurs. Si vous êtes intéressé à aider à maintenir la chaîne en vie, considérez soutenir sur Patreon ou si vous avez des compétences en JS et technologies web modernes, veuillez considérer soutenir la base de code open source sur github."
+      },
+      "toolgrid": {
+        "eyebrow": "BOÎTE À OUTILS",
+        "heading": "Ouvre le capot, fais les calculs.",
+        "subheading": "Un kit grandissant de calculatrices et décodeurs. Pas de compte, pas de pub, pas de blabla.",
+        "all_tools": "Tous les outils",
+        "kind": {
+          "calculator": "Calculatrice",
+          "decoder": "Décodeur",
+          "reference": "Référence"
+        },
+        "cards": {
+          "compression": {
+            "title": "Rapport de compression",
+            "desc": "CR pour n'importe quelle combinaison d'alésage, course, cc de culasse et hauteur de pont."
+          },
+          "gearing": {
+            "title": "Rapport de boîte",
+            "desc": "Calculs de réduction finale pour SPi, MPi et voitures pré-Verto."
+          },
+          "chassis": {
+            "title": "Décodeur de châssis",
+            "desc": "Année, usine et finition à partir de ton numéro VIN/châssis."
+          },
+          "needles": {
+            "title": "Configurateur d'aiguilles",
+            "desc": "Compare des profils d'aiguilles SU HS2/HS4/HIF44 côte à côte avec superpositions graphiques."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "ARCHIVES",
+        "heading": "La référence technique, maintenue vivante.",
+        "body": "Jeux courants, calage de soupapes, couples de serrage, schémas électriques — le genre de contenu de manuel d'atelier corné qui disparaît lentement d'internet, le tout gratuit et consultable.",
+        "items": [
+          "Référence des jeux courants",
+          "Identification des blocs et culasses",
+          "Schémas de câblage par année et modèle",
+          "Bibliothèque d'aiguilles de carburateur (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "Parcourir les archives"
+      },
+      "wheel_preview": {
+        "eyebrow": "REGISTRE DES JANTES",
+        "heading": "Bibliothèque communautaire.",
+        "subheading": "Chaque jante jamais montée sur une Classic Mini, photographiée et caractérisée par ses propriétaires.",
+        "cta": "Envoie les tiennes",
+        "photo_one": "photo",
+        "photos": "photos",
+        "empty": "Pas encore de jantes dans le registre. Sois le premier — envoie les tiennes."
       }
     }
   },
@@ -496,6 +596,56 @@
         "title": "SOSTIENI LA MISSIONE",
         "heading": "Supporto",
         "content": "Classic Mini DIY è supportato dai nostri spettatori. Se sei interessato ad aiutare a mantenere vivo il canale, considera di supportare su Patreon o se hai competenze in JS e tecnologie web moderne, considera di supportare la base di codice open source su github."
+      },
+      "toolgrid": {
+        "eyebrow": "CASSETTA ATTREZZI",
+        "heading": "Apri il cofano, fai i conti.",
+        "subheading": "Una collezione crescente di calcolatori e decodificatori. Niente account, niente pubblicità, niente sciocchezze.",
+        "all_tools": "Tutti gli strumenti",
+        "kind": {
+          "calculator": "Calcolatrice",
+          "decoder": "Decodificatore",
+          "reference": "Riferimento"
+        },
+        "cards": {
+          "compression": {
+            "title": "Rapporto di compressione",
+            "desc": "CR per qualsiasi combinazione di alesaggio, corsa, cc della testata e altezza piano."
+          },
+          "gearing": {
+            "title": "Rapporto del cambio",
+            "desc": "Calcoli di trasmissione finale per SPi, MPi e auto pre-Verto."
+          },
+          "chassis": {
+            "title": "Decodificatore telaio",
+            "desc": "Anno, stabilimento e allestimento dal tuo numero VIN/telaio."
+          },
+          "needles": {
+            "title": "Configuratore aghi",
+            "desc": "Confronta i profili degli aghi SU HS2/HS4/HIF44 fianco a fianco con overlay grafici."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "ARCHIVIO",
+        "heading": "Il riferimento tecnico, tenuto in vita.",
+        "body": "Tolleranze comuni, gioco delle punterie, coppie di serraggio, schemi elettrici — il tipo di contenuto da manuale d'officina sgualcito che sta lentamente sparendo da internet, tutto gratuito e ricercabile.",
+        "items": [
+          "Riferimento tolleranze comuni",
+          "Identificazione blocco motore e testata",
+          "Schemi di cablaggio per anno e modello",
+          "Libreria degli aghi del carburatore (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "Esplora l'archivio"
+      },
+      "wheel_preview": {
+        "eyebrow": "REGISTRO CERCHI",
+        "heading": "Biblioteca alimentata dalla comunità.",
+        "subheading": "Ogni cerchio mai montato su una Classic Mini, fotografato e descritto dai proprietari stessi.",
+        "cta": "Invia il tuo",
+        "photo_one": "foto",
+        "photos": "foto",
+        "empty": "Non ci sono ancora cerchi nel registro. Sii il primo — invia il tuo."
       }
     }
   },
@@ -521,6 +671,56 @@
         "title": "UNTERSTÜTZEN SIE DIE MISSION",
         "heading": "Unterstützung",
         "content": "Classic Mini DIY wird von unseren Zuschauern unterstützt. Wenn Sie daran interessiert sind, den Kanal am Leben zu erhalten, ziehen Sie in Betracht, auf Patreon zu unterstützen, oder wenn Sie Fähigkeiten in JS und modernen Web-Technologien haben, ziehen Sie bitte in Betracht, die Open-Source-Codebasis auf GitHub zu unterstützen."
+      },
+      "toolgrid": {
+        "eyebrow": "WERKZEUGKASTEN",
+        "heading": "Motorhaube auf, rechne nach.",
+        "subheading": "Eine wachsende Sammlung von Rechnern und Dekodern. Keine Konten, keine Werbung, kein Unsinn.",
+        "all_tools": "Alle Werkzeuge",
+        "kind": {
+          "calculator": "Rechner",
+          "decoder": "Dekoder",
+          "reference": "Referenz"
+        },
+        "cards": {
+          "compression": {
+            "title": "Verdichtungsverhältnis",
+            "desc": "CR für jede Kombination aus Bohrung, Hub, Brennraumvolumen und Decköhe."
+          },
+          "gearing": {
+            "title": "Übersetzungsverhältnis",
+            "desc": "Achsantriebsmathematik für SPi, MPi und Pre-Verto-Fahrzeuge."
+          },
+          "chassis": {
+            "title": "Fahrgestelldekoder",
+            "desc": "Jahr, Werk und Ausstattung aus deiner VIN/Fahrgestellnummer."
+          },
+          "needles": {
+            "title": "Nadel-Konfigurator",
+            "desc": "Vergleiche SU HS2/HS4/HIF44 Nadelprofile nebeneinander mit Diagramm-Overlays."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "ARCHIV",
+        "heading": "Die technische Referenz, am Leben gehalten.",
+        "body": "Gängige Spielmaße, Ventilspiele, Drehmomentwerte, Schaltpläne — die Art von eseligen Werkstatthandbuch-Inhalten, die langsam aus dem Internet verschwinden, alles kostenlos und durchsuchbar.",
+        "items": [
+          "Referenz gängiger Spielmaße",
+          "Identifikation von Motorblock und Zylinderkopf",
+          "Schaltpläne nach Baujahr und Modell",
+          "Vergaser-Nadelbibliothek (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "Archiv durchsuchen"
+      },
+      "wheel_preview": {
+        "eyebrow": "RADREGISTER",
+        "heading": "Community-gepflegte Bibliothek.",
+        "subheading": "Jedes jemals an einem Classic Mini montierte Rad, fotografiert und spezifiziert von seinen Besitzern.",
+        "cta": "Schick deins ein",
+        "photo_one": "Foto",
+        "photos": "Fotos",
+        "empty": "Noch keine Räder im Register. Sei der Erste — schick deins ein."
       }
     }
   },
@@ -546,6 +746,56 @@
         "title": "APOIE A MISSÃO",
         "heading": "Apoio",
         "content": "Classic Mini DIY é apoiado pelos nossos espectadores. Se você está interessado em ajudar a manter o canal vivo, considere apoiar no Patreon ou se você tem habilidades em JS e tecnologias web modernas, por favor considere apoiar a base de código open source no github."
+      },
+      "toolgrid": {
+        "eyebrow": "CAIXA DE FERRAMENTAS",
+        "heading": "Abre o capô, faz as contas.",
+        "subheading": "Um kit crescente de calculadoras e decodificadores. Sem contas, sem anúncios, sem rodeios.",
+        "all_tools": "Todas as ferramentas",
+        "kind": {
+          "calculator": "Calculadora",
+          "decoder": "Decodificador",
+          "reference": "Referência"
+        },
+        "cards": {
+          "compression": {
+            "title": "Taxa de compressão",
+            "desc": "CR para qualquer combinação de diâmetro, curso, cc do cabeçote e altura do platô."
+          },
+          "gearing": {
+            "title": "Relação de marchas",
+            "desc": "Cálculos de transmissão final para SPi, MPi e carros pré-Verto."
+          },
+          "chassis": {
+            "title": "Decodificador de chassi",
+            "desc": "Ano, fábrica e acabamento a partir do seu número VIN/chassi."
+          },
+          "needles": {
+            "title": "Configurador de agulhas",
+            "desc": "Compara perfis de agulhas SU HS2/HS4/HIF44 lado a lado com sobreposições gráficas."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "ARQUIVO",
+        "heading": "A referência técnica, mantida viva.",
+        "body": "Folgas comuns, ajustes de tuchos, especificações de torque, diagramas elétricos — o tipo de conteúdo de manual de oficina gasto que está lentamente desaparecendo da internet, tudo gratuito e pesquisável.",
+        "items": [
+          "Referência de folgas comuns",
+          "Identificação de bloco e cabeçote",
+          "Diagramas de fiação por ano e modelo",
+          "Biblioteca de agulhas de carburador (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "Explorar o arquivo"
+      },
+      "wheel_preview": {
+        "eyebrow": "REGISTRO DE RODAS",
+        "heading": "Biblioteca alimentada pela comunidade.",
+        "subheading": "Cada roda já montada em um Classic Mini, fotografada e especificada pelos próprios donos.",
+        "cta": "Envia a tua",
+        "photo_one": "foto",
+        "photos": "fotos",
+        "empty": "Ainda não há rodas no registro. Sê o primeiro — envia a tua."
       }
     }
   },
@@ -571,6 +821,56 @@
         "title": "ПОДДЕРЖИТЕ МИССИЮ",
         "heading": "Поддержка",
         "content": "Classic Mini DIY поддерживается нашими зрителями. Если вы заинтересованы в том, чтобы помочь сохранить канал живым, рассмотрите поддержку на Patreon или если у вас есть навыки в JS и современных веб-технологиях, пожалуйста, рассмотрите поддержку базы кода с открытым исходным кодом на github."
+      },
+      "toolgrid": {
+        "eyebrow": "ИНСТРУМЕНТЫ",
+        "heading": "Открой капот, посчитай.",
+        "subheading": "Растущий набор калькуляторов и декодеров. Без аккаунтов, без рекламы, без лишнего.",
+        "all_tools": "Все инструменты",
+        "kind": {
+          "calculator": "Калькулятор",
+          "decoder": "Декодер",
+          "reference": "Справочник"
+        },
+        "cards": {
+          "compression": {
+            "title": "Степень сжатия",
+            "desc": "CR для любого сочетания диаметра цилиндра, хода поршня, объёма ГБЦ и высоты деки."
+          },
+          "gearing": {
+            "title": "Передаточное число",
+            "desc": "Математика главной передачи для SPi, MPi и до-Verto автомобилей."
+          },
+          "chassis": {
+            "title": "Декодер VIN/шасси",
+            "desc": "Год, завод и комплектация из вашего VIN/номера шасси."
+          },
+          "needles": {
+            "title": "Конфигуратор игл",
+            "desc": "Сравните профили игл SU HS2/HS4/HIF44 параллельно с наложением графиков."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "АРХИВ",
+        "heading": "Технический справочник, сохранённый живым.",
+        "body": "Общие зазоры, регулировки клапанов, моменты затяжки, электрические схемы — тот тип содержания зачитанных мастерских мануалов, который медленно исчезает из интернета, всё бесплатно и с поиском.",
+        "items": [
+          "Справочник общих зазоров",
+          "Идентификация блока цилиндров и ГБЦ",
+          "Электрические схемы по годам и моделям",
+          "Библиотека игл карбюратора (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "Перейти в архив"
+      },
+      "wheel_preview": {
+        "eyebrow": "РЕЕСТР КОЛЁС",
+        "heading": "Библиотека, наполненная сообществом.",
+        "subheading": "Каждое колесо, когда-либо устанавливавшееся на Classic Mini, сфотографированное и описанное его владельцами.",
+        "cta": "Отправь своё",
+        "photo_one": "фото",
+        "photos": "фото",
+        "empty": "Пока нет колёс в реестре. Будь первым — отправь своё."
       }
     }
   },
@@ -596,6 +896,56 @@
         "title": "ミッションをサポート",
         "heading": "サポート",
         "content": "Classic Mini DIYは視聴者によってサポートされています。チャンネルを生き続けるのを手伝うことに興味がある場合は、Patreonでのサポートを検討するか、JSと現代のウェブ技術のスキルがある場合は、githubでオープンソースコードベースのサポートを検討してください。"
+      },
+      "toolgrid": {
+        "eyebrow": "ツールボックス",
+        "heading": "ボンネットを開けて、計算しよう。",
+        "subheading": "電卓とデコーダーの拡大するセット。アカウント不要、広告なし、無駄なし。",
+        "all_tools": "すべてのツール",
+        "kind": {
+          "calculator": "計算機",
+          "decoder": "デコーダー",
+          "reference": "リファレンス"
+        },
+        "cards": {
+          "compression": {
+            "title": "圧縮比計算機",
+            "desc": "ボア、ストローク、ヘッドcc、デッキ高さの任意の組み合わせのCR。"
+          },
+          "gearing": {
+            "title": "ギア比計算機",
+            "desc": "SPi、MPi、Verto以前の車のファイナルドライブ計算。"
+          },
+          "chassis": {
+            "title": "シャシーデコーダー",
+            "desc": "VIN/シャシー番号から年式、工場、グレードを解析。"
+          },
+          "needles": {
+            "title": "ニードル比較ツール",
+            "desc": "SU HS2/HS4/HIF44のニードルプロファイルをグラフ重ね表示で並べて比較。"
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "アーカイブ",
+        "heading": "テクニカルリファレンス、生き続ける。",
+        "body": "一般的なクリアランス、タペット隙間、トルク値、電気配線図——インターネットから少しずつ消えていく、よく使い込まれたワークショップマニュアルの内容を、すべて無料で検索可能に。",
+        "items": [
+          "一般的なクリアランスリファレンス",
+          "エンジンブロックとヘッドの識別",
+          "年式とモデル別の配線図",
+          "キャブレターニードルライブラリ（SU HS2/HS4/HIF44）"
+        ],
+        "cta": "アーカイブを見る"
+      },
+      "wheel_preview": {
+        "eyebrow": "ホイールレジストリ",
+        "heading": "コミュニティが育てるライブラリ。",
+        "subheading": "Classic Miniに装着されたすべてのホイールを、所有者自身が撮影してスペックを記録。",
+        "cta": "送ってください",
+        "photo_one": "枚の写真",
+        "photos": "枚の写真",
+        "empty": "まだレジストリにホイールがありません。最初の一人になって、ホイールを送ってください。"
       }
     }
   },
@@ -621,6 +971,56 @@
         "title": "支持使命",
         "heading": "支持",
         "content": "Classic Mini DIY由我们的观众支持。如果您有兴趣帮助保持频道活跃，请考虑在Patreon上支持，或者如果您有JS和现代网络技术技能，请考虑在github上支持开源代码库。"
+      },
+      "toolgrid": {
+        "eyebrow": "工具箱",
+        "heading": "打开引擎盖，做做计算。",
+        "subheading": "不断扩展的计算器和解码器套件。无需账号，没有广告，绝无废话。",
+        "all_tools": "所有工具",
+        "kind": {
+          "calculator": "计算器",
+          "decoder": "解码器",
+          "reference": "参考"
+        },
+        "cards": {
+          "compression": {
+            "title": "压缩比计算器",
+            "desc": "适用于任意缸径、行程、燃烧室容积和甲板高度组合的CR计算。"
+          },
+          "gearing": {
+            "title": "齿轮比计算器",
+            "desc": "适用于 SPi、MPi 和 Verto 之前车型的主减速比计算。"
+          },
+          "chassis": {
+            "title": "车架号解码器",
+            "desc": "从你的VIN/车架号解析年份、工厂和配置。"
+          },
+          "needles": {
+            "title": "化油器针配置器",
+            "desc": "通过图表叠加并排比较 SU HS2/HS4/HIF44 化油器针型。"
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "档案",
+        "heading": "技术资料，长久保存。",
+        "body": "常用间隙、气门间隙、扭矩值、电路图——那些被翻得卷边的车间手册内容正在从互联网上慢慢消失，全部免费可搜索。",
+        "items": [
+          "常用间隙参考",
+          "发动机缸体和缸盖识别",
+          "按年份和车型的接线图",
+          "化油器针型库（SU HS2/HS4/HIF44）"
+        ],
+        "cta": "浏览档案"
+      },
+      "wheel_preview": {
+        "eyebrow": "车轮注册库",
+        "heading": "社区共建的资料库。",
+        "subheading": "每一只装在 Classic Mini 上的车轮，都由车主亲自拍照并记录规格。",
+        "cta": "提交你的",
+        "photo_one": "张照片",
+        "photos": "张照片",
+        "empty": "注册库里还没有车轮。成为第一个 —— 提交你的。"
       }
     }
   },
@@ -646,6 +1046,56 @@
         "title": "미션 지원",
         "heading": "지원",
         "content": "Classic Mini DIY는 시청자들의 지원을 받습니다. 채널을 살려두는 데 도움을 주는 데 관심이 있으시면 Patreon에서 지원을 고려해 주시거나, JS와 현대 웹 기술에 기술이 있으시면 github에서 오픈 소스 코드베이스 지원을 고려해 주세요."
+      },
+      "toolgrid": {
+        "eyebrow": "도구상자",
+        "heading": "보닛을 열고, 계산해보세요.",
+        "subheading": "점점 커지는 계산기와 디코더 세트. 계정 없이, 광고 없이, 군더더기 없이.",
+        "all_tools": "모든 도구",
+        "kind": {
+          "calculator": "계산기",
+          "decoder": "디코더",
+          "reference": "참조"
+        },
+        "cards": {
+          "compression": {
+            "title": "압축비 계산기",
+            "desc": "보어, 스트로크, 헤드 cc, 데크 높이의 모든 조합에 대한 CR."
+          },
+          "gearing": {
+            "title": "기어비 계산기",
+            "desc": "SPi, MPi, Verto 이전 차량을 위한 최종 감속비 계산."
+          },
+          "chassis": {
+            "title": "섀시 디코더",
+            "desc": "VIN/섀시 번호로 연도, 공장, 트림 정보를 파악."
+          },
+          "needles": {
+            "title": "니들 비교 도구",
+            "desc": "차트 오버레이로 SU HS2/HS4/HIF44 니들 프로파일을 나란히 비교."
+          }
+        }
+      },
+      "archive_feature": {
+        "kicker": "아카이브",
+        "heading": "기술 자료, 살아있게 유지합니다.",
+        "body": "일반적인 간극, 태핏 갭, 토크 값, 전기 회로도 — 인터넷에서 천천히 사라지고 있는, 손때 묻은 워크숍 매뉴얼 콘텐츠, 모두 무료이며 검색 가능합니다.",
+        "items": [
+          "일반적인 간극 참조",
+          "엔진 블록 및 헤드 식별",
+          "연도와 모델별 배선도",
+          "카뷰레터 니들 라이브러리 (SU HS2/HS4/HIF44)"
+        ],
+        "cta": "아카이브 둘러보기"
+      },
+      "wheel_preview": {
+        "eyebrow": "휠 등록부",
+        "heading": "커뮤니티가 만드는 라이브러리.",
+        "subheading": "Classic Mini에 장착된 모든 휠을, 소유자들이 직접 사진 찍고 사양을 기록했습니다.",
+        "cta": "당신의 휠 등록하기",
+        "photo_one": "장의 사진",
+        "photos": "장의 사진",
+        "empty": "아직 등록부에 휠이 없습니다. 첫 번째가 되어 — 당신의 휠을 보내주세요."
       }
     }
   }

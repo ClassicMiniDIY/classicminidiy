@@ -250,13 +250,13 @@
         "reference": "Referencia",
         "tool": "Herramienta"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "Envía tu Classic Mini y busca en el registro creado por la comunidad.",
+      "engine_sizes_desc": "Diámetro, carrera y cilindrada para cada variante del A-series.",
+      "mini_weights_desc": "Pesos en orden de marcha y máximos por modelo y año.",
+      "documents_desc": "Manuales de taller digitalizados, catálogos de piezas y folletos.",
+      "electrical_diagrams_desc": "Diagramas de cableado por año y circuito, masa positiva y negativa.",
+      "wheel_library_desc": "Cada rueda montada en un Classic Mini, con offsets y fotos.",
+      "color_picker_desc": "Códigos de pintura y muestras originales del archivo de fábrica."
     },
     "eyebrow": "EL ARCHIVO"
   },
@@ -303,13 +303,13 @@
         "reference": "Référence",
         "tool": "Outil"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "Soumets ta Classic Mini et explore le registre construit par la communauté.",
+      "engine_sizes_desc": "Alésage, course et cylindrée pour chaque variante du A-series.",
+      "mini_weights_desc": "Poids à vide et PTAC par modèle et par année.",
+      "documents_desc": "Manuels d'atelier numérisés, catalogues de pièces et brochures.",
+      "electrical_diagrams_desc": "Schémas de câblage par année et par circuit, masse positive et négative.",
+      "wheel_library_desc": "Chaque jante jamais montée sur une Classic Mini, avec offsets et photos.",
+      "color_picker_desc": "Codes de peinture et nuanciers originaux des archives d'usine."
     },
     "eyebrow": "LES ARCHIVES"
   },
@@ -356,13 +356,13 @@
         "reference": "Riferimento",
         "tool": "Strumento"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "Invia la tua Classic Mini e cerca nel registro costruito dalla comunità.",
+      "engine_sizes_desc": "Alesaggio, corsa e cilindrata per ogni variante del A-series.",
+      "mini_weights_desc": "Pesi a vuoto e massa totale per modello e anno.",
+      "documents_desc": "Manuali d'officina digitalizzati, cataloghi ricambi e brochure.",
+      "electrical_diagrams_desc": "Schemi di cablaggio per anno e circuito, massa positiva e negativa.",
+      "wheel_library_desc": "Ogni cerchio mai montato su una Classic Mini, con offset e foto.",
+      "color_picker_desc": "Codici colore e campioni originali dagli archivi di fabbrica."
     },
     "eyebrow": "L'ARCHIVIO"
   },
@@ -409,13 +409,13 @@
         "reference": "Referenz",
         "tool": "Werkzeug"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "Reiche deinen Classic Mini ein und durchsuche das von der Community aufgebaute Register.",
+      "engine_sizes_desc": "Bohrung, Hub und Hubraum für jede A-Series Variante.",
+      "mini_weights_desc": "Leergewichte und zulässige Gesamtgewichte nach Modell und Baujahr.",
+      "documents_desc": "Digitalisierte Werkstatthandbücher, Teilekataloge und Broschüren.",
+      "electrical_diagrams_desc": "Schaltpläne nach Baujahr und Stromkreis, Plus- und Minus-Masse.",
+      "wheel_library_desc": "Jedes jemals an einem Classic Mini montierte Rad, mit Offsets und Fotos.",
+      "color_picker_desc": "Lackcodes und Originalmuster aus dem Werksarchiv."
     },
     "eyebrow": "DAS ARCHIV"
   },
@@ -462,13 +462,13 @@
         "reference": "Referência",
         "tool": "Ferramenta"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "Submete a tua Classic Mini e pesquisa no registro construído pela comunidade.",
+      "engine_sizes_desc": "Diâmetro, curso e cilindrada para cada variante do A-series.",
+      "mini_weights_desc": "Pesos em ordem de marcha e brutos por modelo e ano.",
+      "documents_desc": "Manuais de oficina digitalizados, catálogos de peças e brochuras.",
+      "electrical_diagrams_desc": "Diagramas de fiação por ano e circuito, massa positiva e negativa.",
+      "wheel_library_desc": "Cada roda já montada num Classic Mini, com offsets e fotos.",
+      "color_picker_desc": "Códigos de pintura e amostras originais do arquivo de fábrica."
     },
     "eyebrow": "O ARQUIVO"
   },
@@ -515,13 +515,13 @@
         "reference": "Справочник",
         "tool": "Инструмент"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "Зарегистрируйте свой Classic Mini и ищите в созданном сообществом реестре.",
+      "engine_sizes_desc": "Диаметр цилиндра, ход поршня и рабочий объём для каждого варианта A-series.",
+      "mini_weights_desc": "Снаряжённая и полная масса по моделям и годам.",
+      "documents_desc": "Оцифрованные мастерские руководства, каталоги запчастей и брошюры.",
+      "electrical_diagrams_desc": "Электрические схемы по годам и контурам, плюс- и минус-масса.",
+      "wheel_library_desc": "Каждое колесо, когда-либо устанавливавшееся на Classic Mini, с вылетами и фото.",
+      "color_picker_desc": "Цветовые коды и оригинальные образцы из заводского архива."
     },
     "eyebrow": "АРХИВ"
   },
@@ -568,13 +568,13 @@
         "reference": "リファレンス",
         "tool": "ツール"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "あなたの Classic Mini を登録し、コミュニティが作ったレジストリを検索しましょう。",
+      "engine_sizes_desc": "A-シリーズの各バリアントのボア、ストローク、排気量。",
+      "mini_weights_desc": "モデルと年式ごとの車両重量と総重量仕様。",
+      "documents_desc": "デジタル化されたワークショップマニュアル、パーツカタログ、ブローシャー。",
+      "electrical_diagrams_desc": "年式と回路別の配線図、プラスアースとマイナスアース。",
+      "wheel_library_desc": "Classic Miniに装着された全てのホイール、オフセットと写真付き。",
+      "color_picker_desc": "工場アーカイブからの塗装コードとオリジナルスウォッチ。"
     },
     "eyebrow": "アーカイブ"
   },
@@ -621,13 +621,13 @@
         "reference": "参考",
         "tool": "工具"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "提交你的 Classic Mini，搜索由社区共建的注册库。",
+      "engine_sizes_desc": "每种 A-Series 变体的缸径、行程和排量。",
+      "mini_weights_desc": "按车型和年份的整备质量与总重量规格。",
+      "documents_desc": "数字化的车间手册、零件目录和宣传册。",
+      "electrical_diagrams_desc": "按年份和电路划分的接线图，正极搭铁与负极搭铁。",
+      "wheel_library_desc": "每一只装在 Classic Mini 上的车轮，附带偏距和照片。",
+      "color_picker_desc": "来自工厂档案的漆色代码和原始色板。"
     },
     "eyebrow": "档案"
   },
@@ -674,13 +674,13 @@
         "reference": "참조",
         "tool": "도구"
       },
-      "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
-      "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
-      "mini_weights_desc": "Curb weights and gross-weight specs by model and year.",
-      "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
-      "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
-      "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "mini_registry_desc": "Classic Mini를 등록하고 커뮤니티가 만든 등록부를 검색하세요.",
+      "engine_sizes_desc": "모든 A-시리즈 변형의 보어, 스트로크, 배기량.",
+      "mini_weights_desc": "모델과 연도별 차량 중량 및 총중량 사양.",
+      "documents_desc": "디지털화된 워크숍 매뉴얼, 부품 카탈로그, 브로슈어.",
+      "electrical_diagrams_desc": "연도와 회로별 배선도, 양극 접지와 음극 접지.",
+      "wheel_library_desc": "Classic Mini에 장착된 모든 휠, 오프셋과 사진 포함.",
+      "color_picker_desc": "공장 아카이브의 도색 코드와 원본 스와치."
     },
     "eyebrow": "아카이브"
   }
