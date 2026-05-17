@@ -35,6 +35,32 @@ export const useWheels = () => {
     return (data || []).map(mapToWheel);
   };
 
+  /**
+   * Returns a candidate pool of approved wheels suitable for the home-page
+   * "featured" preview. Pushes status + name filters to the DB and caps the
+   * pool size server-side; the caller then ranks by photo count in memory
+   * to pick the final N. Avoids fetching the entire registry on every SSR.
+   *
+   * Pragmatic compromise: a true "top N by photo count" ordering would need
+   * either a stored Postgres function or a generated photo_count column,
+   * both of which require a migration in classicminidiy-supabase. A 100-row
+   * alphabetical candidate pool gives us enough headroom to pick a quality
+   * preview without unbounded growth as the registry scales.
+   */
+  const listFeaturedCandidates = async (poolSize = 100): Promise<IWheelsData[]> => {
+    const { data, error } = await supabase
+      .from('wheels')
+      .select('*')
+      .eq('status', 'approved')
+      .not('name', 'is', null)
+      .not('photos', 'is', null)
+      .order('name')
+      .limit(poolSize);
+
+    if (error) throw error;
+    return (data || []).map(mapToWheel);
+  };
+
   const listBySize = async (wheelSize: number): Promise<IWheelsData[]> => {
     const { data, error } = await supabase
       .from('wheels')
@@ -82,5 +108,5 @@ export const useWheels = () => {
     return data;
   };
 
-  return { listAll, listBySize, listBySizeName, getWheel, submitWheel, getPhotoUrl };
+  return { listAll, listBySize, listBySizeName, listFeaturedCandidates, getWheel, submitWheel, getPhotoUrl };
 };
