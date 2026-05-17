@@ -71,7 +71,7 @@
               class="w-full h-full"
               allowfullscreen
               src="https://www.youtube.com/embed/GxlgkbrfK2Y"
-              title="YouTube video player"
+              :title="t('youtube_player_title')"
               frameborder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             ></iframe>
@@ -311,7 +311,8 @@
       "alternate_source": "Alternate Source:",
       "calver_link": "Calver Compression Ratio",
       "je_pistons_link": "JE Pistons Compression Ratio"
-    }
+    },
+    "youtube_player_title": "YouTube video player"
   },
   "es": {
     "help_button": "¿Cómo mido estos valores?",
@@ -343,7 +344,8 @@
       "alternate_source": "Fuente Alternativa:",
       "calver_link": "Relación de Compresión Calver",
       "je_pistons_link": "Relación de Compresión JE Pistons"
-    }
+    },
+    "youtube_player_title": "Reproductor de video de YouTube"
   },
   "fr": {
     "help_button": "Comment mesurer ces valeurs ?",
@@ -375,7 +377,8 @@
       "alternate_source": "Source alternative :",
       "calver_link": "Taux de compression Calver",
       "je_pistons_link": "Taux de compression JE Pistons"
-    }
+    },
+    "youtube_player_title": "Lecteur vidéo YouTube"
   },
   "de": {
     "help_button": "Wie messe ich diese Werte?",
@@ -407,7 +410,8 @@
       "alternate_source": "Alternative Quelle:",
       "calver_link": "Calver Verdichtungsverhältnis",
       "je_pistons_link": "JE Pistons Verdichtungsverhältnis"
-    }
+    },
+    "youtube_player_title": "YouTube-Videoplayer"
   },
   "it": {
     "help_button": "Come misuro questi valori?",
@@ -439,7 +443,8 @@
       "alternate_source": "Fonte alternativa:",
       "calver_link": "Rapporto di compressione Calver",
       "je_pistons_link": "Rapporto di compressione JE Pistons"
-    }
+    },
+    "youtube_player_title": "Lettore video YouTube"
   },
   "ja": {
     "help_button": "これらの値はどのように測定しますか？",
@@ -471,7 +476,8 @@
       "alternate_source": "代替ソース:",
       "calver_link": "Calver圧縮比",
       "je_pistons_link": "JEピストン圧縮比"
-    }
+    },
+    "youtube_player_title": "YouTube動画プレーヤー"
   },
   "ko": {
     "help_button": "이 값들을 어떻게 측정하나요?",
@@ -503,7 +509,8 @@
       "alternate_source": "대안 소스:",
       "calver_link": "Calver 압축비",
       "je_pistons_link": "JE Pistons 압축비"
-    }
+    },
+    "youtube_player_title": "YouTube 비디오 플레이어"
   },
   "pt": {
     "help_button": "Como meço esses valores?",
@@ -535,7 +542,8 @@
       "alternate_source": "Fonte Alternativa:",
       "calver_link": "Taxa de Compressão Calver",
       "je_pistons_link": "Taxa de Compressão JE Pistons"
-    }
+    },
+    "youtube_player_title": "Reprodutor de vídeo do YouTube"
   },
   "ru": {
     "help_button": "Как измерить эти значения?",
@@ -567,7 +575,8 @@
       "alternate_source": "Альтернативный источник:",
       "calver_link": "Calver степень сжатия",
       "je_pistons_link": "JE Pistons степень сжатия"
-    }
+    },
+    "youtube_player_title": "Видеоплеер YouTube"
   },
   "zh": {
     "help_button": "如何测量这些数值？",
@@ -599,7 +608,8 @@
       "alternate_source": "备选来源：",
       "calver_link": "Calver压缩比",
       "je_pistons_link": "JE活塞压缩比"
-    }
+    },
+    "youtube_player_title": "YouTube 视频播放器"
   }
 }
 </i18n>

@@ -31,7 +31,7 @@ const alertClass = (color: string) => {
           <div v-if="t.title" class="font-semibold">{{ t.title }}</div>
           <div v-if="t.description" class="text-sm opacity-90">{{ t.description }}</div>
         </div>
-        <button class="btn btn-sm btn-ghost btn-circle" aria-label="Dismiss" @click="remove(t.id)">
+        <button class="btn btn-sm btn-ghost btn-circle" :aria-label="$t('dismiss')" @click="remove(t.id)">
           <i class="fas fa-xmark"></i>
         </button>
       </div>
@@ -53,3 +53,18 @@ const alertClass = (color: string) => {
   transform: translateX(16px);
 }
 </style>
+
+<i18n lang="json">
+{
+  "en": { "dismiss": "Dismiss" },
+  "es": { "dismiss": "Descartar" },
+  "fr": { "dismiss": "Ignorer" },
+  "de": { "dismiss": "Schließen" },
+  "it": { "dismiss": "Ignora" },
+  "pt": { "dismiss": "Dispensar" },
+  "ru": { "dismiss": "Закрыть" },
+  "ja": { "dismiss": "閉じる" },
+  "zh": { "dismiss": "关闭" },
+  "ko": { "dismiss": "닫기" }
+}
+</i18n>

@@ -44,7 +44,7 @@
                 @click="stopGeneration"
                 type="button"
                 class="btn btn-sm btn-error btn-square"
-                aria-label="Stop generating"
+                :aria-label="t('stop_generating')"
               >
                 <i class="fa-solid fa-stop"></i>
               </button>
@@ -54,7 +54,7 @@
                 type="submit"
                 class="btn btn-sm btn-primary btn-square"
                 :disabled="!input.trim()"
-                aria-label="Send message"
+                :aria-label="t('send_message')"
               >
                 <i class="fa-solid fa-paper-plane"></i>
               </button>
@@ -101,8 +101,8 @@
           v-if="showScrollButton"
           @click="scrollToBottom"
           class="btn btn-sm btn-outline btn-square absolute bottom-24 right-6 lg:right-80 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
-          title="Scroll to bottom"
-          aria-label="Scroll to bottom"
+          :title="t('scroll_to_bottom')"
+          :aria-label="t('scroll_to_bottom')"
         >
           <i class="fa-solid fa-chevron-down text-sm"></i>
         </button>
@@ -143,7 +143,7 @@
             @click="stopGeneration"
             type="button"
             class="btn btn-sm btn-error btn-square"
-            aria-label="Stop generating"
+            :aria-label="t('stop_generating')"
           >
             <i class="fa-solid fa-stop"></i>
           </button>
@@ -153,7 +153,7 @@
             type="submit"
             class="btn btn-sm btn-primary btn-square"
             :disabled="!input.trim()"
-            aria-label="Send message"
+            :aria-label="t('send_message')"
           >
             <i class="fa-solid fa-paper-plane"></i>
           </button>
@@ -459,7 +459,10 @@
     "input_placeholder": "Ask me anything about your Classic Mini...",
     "report_issue": "Report an issue with the chat",
     "useful_links_placeholder": "Useful links will appear here after I search for information",
-    "loading_chat": "Loading chat..."
+    "loading_chat": "Loading chat...",
+    "send_message": "Send message",
+    "stop_generating": "Stop generating",
+    "scroll_to_bottom": "Scroll to bottom"
   },
   "es": {
     "experimental_feature": "Función Experimental:",
@@ -468,7 +471,10 @@
     "input_placeholder": "Pregúntame cualquier cosa sobre tu Classic Mini...",
     "report_issue": "Reportar un problema con el chat",
     "useful_links_placeholder": "Los enlaces útiles aparecerán aquí después de que busque información",
-    "loading_chat": "Cargando chat..."
+    "loading_chat": "Cargando chat...",
+    "send_message": "Enviar mensaje",
+    "stop_generating": "Detener generación",
+    "scroll_to_bottom": "Desplazar al final"
   },
   "fr": {
     "experimental_feature": "Fonctionnalité Expérimentale:",
@@ -477,7 +483,10 @@
     "input_placeholder": "Demandez-moi n'importe quoi sur votre Classic Mini...",
     "report_issue": "Signaler un problème avec le chat",
     "useful_links_placeholder": "Les liens utiles apparaîtront ici après que j'aie recherché des informations",
-    "loading_chat": "Chargement du chat..."
+    "loading_chat": "Chargement du chat...",
+    "send_message": "Envoyer le message",
+    "stop_generating": "Arrêter la génération",
+    "scroll_to_bottom": "Défiler vers le bas"
   },
   "de": {
     "experimental_feature": "Experimentelle Funktion:",
@@ -486,7 +495,10 @@
     "input_placeholder": "Fragen Sie mich alles über Ihren Classic Mini...",
     "report_issue": "Ein Problem mit dem Chat melden",
     "useful_links_placeholder": "Nützliche Links erscheinen hier, nachdem ich nach Informationen gesucht habe",
-    "loading_chat": "Chat wird geladen..."
+    "loading_chat": "Chat wird geladen...",
+    "send_message": "Nachricht senden",
+    "stop_generating": "Generierung stoppen",
+    "scroll_to_bottom": "Nach unten scrollen"
   },
   "it": {
     "experimental_feature": "Funzione Sperimentale:",
@@ -495,7 +507,10 @@
     "input_placeholder": "Chiedimi qualsiasi cosa sul tuo Classic Mini...",
     "report_issue": "Segnala un problema con la chat",
     "useful_links_placeholder": "I link utili appariranno qui dopo che avrò cercato informazioni",
-    "loading_chat": "Caricamento chat..."
+    "loading_chat": "Caricamento chat...",
+    "send_message": "Invia messaggio",
+    "stop_generating": "Interrompi generazione",
+    "scroll_to_bottom": "Scorri in basso"
   },
   "ja": {
     "experimental_feature": "実験的機能:",
@@ -504,7 +519,10 @@
     "input_placeholder": "あなたのClassic Miniについて何でもお聞きください...",
     "report_issue": "チャットの問題を報告する",
     "useful_links_placeholder": "情報を検索した後、有用なリンクがここに表示されます",
-    "loading_chat": "チャットを読み込んでいます..."
+    "loading_chat": "チャットを読み込んでいます...",
+    "send_message": "メッセージを送信",
+    "stop_generating": "生成を停止",
+    "scroll_to_bottom": "下までスクロール"
   },
   "ko": {
     "experimental_feature": "실험적 기능:",
@@ -513,7 +531,10 @@
     "input_placeholder": "당신의 Classic Mini에 대해 무엇이든 물어보세요...",
     "report_issue": "채팅 문제 신고",
     "useful_links_placeholder": "정보를 검색한 후 유용한 링크가 여기에 나타납니다",
-    "loading_chat": "채팅 로딩 중..."
+    "loading_chat": "채팅 로딩 중...",
+    "send_message": "메시지 보내기",
+    "stop_generating": "생성 중단",
+    "scroll_to_bottom": "맨 아래로 스크롤"
   },
   "pt": {
     "experimental_feature": "Recurso Experimental:",
@@ -522,7 +543,10 @@
     "input_placeholder": "Pergunte-me qualquer coisa sobre seu Classic Mini...",
     "report_issue": "Relatar um problema com o chat",
     "useful_links_placeholder": "Links úteis aparecerão aqui depois que eu pesquisar informações",
-    "loading_chat": "Carregando chat..."
+    "loading_chat": "Carregando chat...",
+    "send_message": "Enviar mensagem",
+    "stop_generating": "Parar geração",
+    "scroll_to_bottom": "Rolar para baixo"
   },
   "ru": {
     "experimental_feature": "Экспериментальная функция:",
@@ -531,7 +555,10 @@
     "input_placeholder": "Спросите меня что-нибудь о вашем Classic Mini...",
     "report_issue": "Сообщить о проблеме с чатом",
     "useful_links_placeholder": "Полезные ссылки появятся здесь после того, как я найду информацию",
-    "loading_chat": "Загрузка чата..."
+    "loading_chat": "Загрузка чата...",
+    "send_message": "Отправить сообщение",
+    "stop_generating": "Остановить генерацию",
+    "scroll_to_bottom": "Прокрутить вниз"
   },
   "zh": {
     "experimental_feature": "实验性功能：",
@@ -540,7 +567,10 @@
     "input_placeholder": "询问我关于您的Classic Mini的任何问题...",
     "report_issue": "报告聊天问题",
     "useful_links_placeholder": "在我搜索信息后，有用的链接将出现在这里",
-    "loading_chat": "加载聊天中..."
+    "loading_chat": "加载聊天中...",
+    "send_message": "发送消息",
+    "stop_generating": "停止生成",
+    "scroll_to_bottom": "滚动到底部"
   }
 }
 </i18n>
