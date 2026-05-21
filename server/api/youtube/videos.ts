@@ -49,12 +49,17 @@ export default defineEventHandler(async (event) => {
       throw new Error('Invalid response from YouTube API');
     }
 
-    const items = response.data.items.map((item) => ({
-      title: item.snippet.title,
-      thumbnails: organizeThumbnails(item.snippet.thumbnails),
-      publishedOn: DateTime.fromISO(item.snippet.publishedAt).toFormat('LLL dd, yyyy'),
-      videoUrl: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
-    }));
+    const items = response.data.items
+      .map((item) => ({
+        title: item.snippet.title,
+        thumbnails: organizeThumbnails(item.snippet.thumbnails),
+        publishedAt: item.snippet.publishedAt,
+        publishedOn: DateTime.fromISO(item.snippet.publishedAt).toFormat('LLL dd, yyyy'),
+        videoUrl: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
+      }))
+      // YouTube's uploads playlist isn't guaranteed to be returned newest-first,
+      // so sort explicitly to keep the most recent upload at index 0.
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     return items.slice(0, limit);
   } catch (error: any) {
     console.error('YouTube API error:', error);
