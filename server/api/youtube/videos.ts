@@ -12,7 +12,11 @@ export default defineEventHandler(async (event) => {
   const requestedLimit = Number(query.limit);
   const limit =
     Number.isFinite(requestedLimit) && requestedLimit >= 1 ? Math.min(Math.trunc(requestedLimit), 50) : 3;
-  const feed = `${baseURL}?key=${config.youtubeAPIKey}&playlistId=${id}&part=${details}&maxResults=${limit}`;
+  // Fetch a buffer beyond the requested limit: the uploads playlist isn't
+  // guaranteed to be returned newest-first, so the latest upload could fall
+  // outside the first `limit` results. Sort the full buffer, then slice.
+  const fetchCount = Math.min(Math.max(limit, 20), 50);
+  const feed = `${baseURL}?key=${config.youtubeAPIKey}&playlistId=${id}&part=${details}&maxResults=${fetchCount}`;
 
   // Set cache headers - cache for 1 hour since YouTube content changes more frequently
   setResponseHeaders(event, {
@@ -50,16 +54,14 @@ export default defineEventHandler(async (event) => {
     }
 
     const items = response.data.items
+      // ISO 8601 timestamps sort lexicographically, so localeCompare orders newest-first.
+      .sort((a, b) => b.snippet.publishedAt.localeCompare(a.snippet.publishedAt))
       .map((item) => ({
         title: item.snippet.title,
         thumbnails: organizeThumbnails(item.snippet.thumbnails),
-        publishedAt: item.snippet.publishedAt,
         publishedOn: DateTime.fromISO(item.snippet.publishedAt).toFormat('LLL dd, yyyy'),
         videoUrl: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
-      }))
-      // YouTube's uploads playlist isn't guaranteed to be returned newest-first,
-      // so sort explicitly to keep the most recent upload at index 0.
-      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+      }));
     return items.slice(0, limit);
   } catch (error: any) {
     console.error('YouTube API error:', error);
