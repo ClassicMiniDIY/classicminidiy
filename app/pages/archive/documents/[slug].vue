@@ -231,7 +231,7 @@
       <div class="container mx-auto px-4">
         <div class="flex items-center gap-2 mb-4">
           <i class="fas fa-file-lines text-3xl"></i>
-          <h1 class="text-3xl font-bold">{{ t('hero_title') }}</h1>
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" />
         </div>
         <div class="text-sm">
           <ul class="flex items-center gap-2">
@@ -481,6 +481,7 @@
 <i18n lang="json">
 {
   "en": {
+    "eyebrow": "DOCUMENT ARCHIVE",
     "hero_title": "Classic Mini Archives",
     "breadcrumb_home": "Home",
     "breadcrumb_documents": "Documents",
@@ -565,6 +566,7 @@
     }
   },
   "es": {
+    "eyebrow": "ARCHIVO DE DOCUMENTOS",
     "hero_title": "Archivos Classic Mini",
     "breadcrumb_home": "Inicio",
     "breadcrumb_documents": "Documentos",
@@ -649,6 +651,7 @@
     }
   },
   "fr": {
+    "eyebrow": "ARCHIVES DOCUMENTAIRES",
     "hero_title": "Archives Classic Mini",
     "breadcrumb_home": "Accueil",
     "breadcrumb_documents": "Documents",
@@ -733,6 +736,7 @@
     }
   },
   "it": {
+    "eyebrow": "ARCHIVIO DOCUMENTI",
     "hero_title": "Archivi Classic Mini",
     "breadcrumb_home": "Home",
     "breadcrumb_documents": "Documenti",
@@ -817,6 +821,7 @@
     }
   },
   "de": {
+    "eyebrow": "DOKUMENTENARCHIV",
     "hero_title": "Classic Mini Archive",
     "breadcrumb_home": "Startseite",
     "breadcrumb_documents": "Dokumente",
@@ -901,6 +906,7 @@
     }
   },
   "pt": {
+    "eyebrow": "ARQUIVO DE DOCUMENTOS",
     "hero_title": "Arquivos Classic Mini",
     "breadcrumb_home": "Início",
     "breadcrumb_documents": "Documentos",
@@ -985,6 +991,7 @@
     }
   },
   "ru": {
+    "eyebrow": "АРХИВ ДОКУМЕНТОВ",
     "hero_title": "Архивы Classic Mini",
     "breadcrumb_home": "Главная",
     "breadcrumb_documents": "Документы",
@@ -1069,6 +1076,7 @@
     }
   },
   "ja": {
+    "eyebrow": "ドキュメントアーカイブ",
     "hero_title": "Classic Mini アーカイブ",
     "breadcrumb_home": "ホーム",
     "breadcrumb_documents": "ドキュメント",
@@ -1153,6 +1161,7 @@
     }
   },
   "zh": {
+    "eyebrow": "文档档案",
     "hero_title": "Classic Mini 档案",
     "breadcrumb_home": "首页",
     "breadcrumb_documents": "文档",
@@ -1237,6 +1246,7 @@
     }
   },
   "ko": {
+    "eyebrow": "문서 아카이브",
     "hero_title": "Classic Mini 아카이브",
     "breadcrumb_home": "홈",
     "breadcrumb_documents": "문서",

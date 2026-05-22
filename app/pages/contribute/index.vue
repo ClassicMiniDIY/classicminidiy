@@ -73,9 +73,8 @@
     <!-- Authenticated Content -->
     <div v-else>
       <!-- Heading -->
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
-        <p class="text-base opacity-70">{{ t('subtitle') }}</p>
+      <div class="mb-8">
+        <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" />
       </div>
 
       <!-- 2x2 Contribution Type Grid -->
@@ -144,6 +143,7 @@
   "en": {
     "page_title": "Contribute - Classic Mini DIY",
     "hero_title": "Classic Mini Archives",
+    "eyebrow": "CONTRIBUTE",
     "breadcrumb_title": "Contribute",
     "sign_in_title": "Sign In to Contribute",
     "sign_in_description": "You need to be signed in to contribute to the archive. Create a free account to get started.",
@@ -165,6 +165,7 @@
   "es": {
     "page_title": "Contribuir - Classic Mini DIY",
     "hero_title": "Archivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Contribuir",
     "sign_in_title": "Inicia Sesion para Contribuir",
     "sign_in_description": "Debes iniciar sesion para contribuir al archivo. Crea una cuenta gratuita para empezar.",
@@ -186,6 +187,7 @@
   "fr": {
     "page_title": "Contribuer - Classic Mini DIY",
     "hero_title": "Archives Classic Mini",
+    "eyebrow": "CONTRIBUER",
     "breadcrumb_title": "Contribuer",
     "sign_in_title": "Connectez-vous pour Contribuer",
     "sign_in_description": "Vous devez etre connecte pour contribuer aux archives. Creez un compte gratuit pour commencer.",
@@ -207,6 +209,7 @@
   "it": {
     "page_title": "Contribuisci - Classic Mini DIY",
     "hero_title": "Archivi Classic Mini",
+    "eyebrow": "CONTRIBUISCI",
     "breadcrumb_title": "Contribuisci",
     "sign_in_title": "Accedi per Contribuire",
     "sign_in_description": "Devi essere connesso per contribuire all'archivio. Crea un account gratuito per iniziare.",
@@ -228,6 +231,7 @@
   "de": {
     "page_title": "Beitragen - Classic Mini DIY",
     "hero_title": "Classic Mini Archive",
+    "eyebrow": "BEITRAGEN",
     "breadcrumb_title": "Beitragen",
     "sign_in_title": "Anmelden zum Beitragen",
     "sign_in_description": "Sie muessen angemeldet sein, um zum Archiv beizutragen. Erstellen Sie ein kostenloses Konto, um zu beginnen.",
@@ -249,6 +253,7 @@
   "pt": {
     "page_title": "Contribuir - Classic Mini DIY",
     "hero_title": "Arquivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Contribuir",
     "sign_in_title": "Entre para Contribuir",
     "sign_in_description": "Voce precisa estar conectado para contribuir ao arquivo. Crie uma conta gratuita para comecar.",
@@ -270,6 +275,7 @@
   "ru": {
     "page_title": "Вклад - Classic Mini DIY",
     "hero_title": "Архивы Classic Mini",
+    "eyebrow": "ВНЕСТИ ВКЛАД",
     "breadcrumb_title": "Вклад",
     "sign_in_title": "Войдите, чтобы внести вклад",
     "sign_in_description": "Вам нужно войти в систему, чтобы внести вклад в архив. Создайте бесплатную учетную запись, чтобы начать.",
@@ -291,6 +297,7 @@
   "ja": {
     "page_title": "貢献 - Classic Mini DIY",
     "hero_title": "クラシックミニアーカイブ",
+    "eyebrow": "投稿",
     "breadcrumb_title": "貢献",
     "sign_in_title": "貢献するにはサインインしてください",
     "sign_in_description": "アーカイブに貢献するにはサインインが必要です。無料アカウントを作成して始めましょう。",
@@ -312,6 +319,7 @@
   "zh": {
     "page_title": "贡献 - Classic Mini DIY",
     "hero_title": "经典迷你档案馆",
+    "eyebrow": "贡献",
     "breadcrumb_title": "贡献",
     "sign_in_title": "登录以贡献",
     "sign_in_description": "您需要登录才能为档案馆做出贡献。创建免费帐户以开始。",
@@ -333,6 +341,7 @@
   "ko": {
     "page_title": "기여 - Classic Mini DIY",
     "hero_title": "클래식 미니 아카이브",
+    "eyebrow": "기여",
     "breadcrumb_title": "기여",
     "sign_in_title": "기여하려면 로그인하세요",
     "sign_in_description": "아카이브에 기여하려면 로그인이 필요합니다. 무료 계정을 만들어 시작하세요.",

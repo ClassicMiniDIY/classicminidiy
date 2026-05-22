@@ -77,7 +77,7 @@
       <div class="container mx-auto px-4">
         <div class="flex items-center gap-2 mb-4">
           <i class="fas fa-palette text-3xl"></i>
-          <h1 class="text-3xl font-bold">{{ t('hero_title') }}</h1>
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" :description="t('description')" />
         </div>
         <div class="text-sm">
           <ul class="flex items-center gap-2">
@@ -242,6 +242,7 @@
     "community_photo_by": "Photo by {name}",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Classic Mini paint color details and codes",
+    "eyebrow": "COLOR LIBRARY",
     "hero_title": "Classic Mini Archives",
     "breadcrumb": {
       "home": "Home",
@@ -278,6 +279,7 @@
     "community_photo_by": "Foto von {name}",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Classic Mini Lackfarben-Details und Codes",
+    "eyebrow": "FARB-BIBLIOTHEK",
     "hero_title": "Classic Mini Archive",
     "breadcrumb": {
       "home": "Startseite",
@@ -314,6 +316,7 @@
     "community_photo_by": "Foto de {name}",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Detalles y c\u00f3digos de pintura Classic Mini",
+    "eyebrow": "BIBLIOTECA DE COLORES",
     "hero_title": "Archivos Classic Mini",
     "breadcrumb": {
       "home": "Inicio",
@@ -350,6 +353,7 @@
     "community_photo_by": "Photo de {name}",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "D\u00e9tails et codes de peinture Classic Mini",
+    "eyebrow": "BIBLIOTHÈQUE DE COULEURS",
     "hero_title": "Archives Classic Mini",
     "breadcrumb": {
       "home": "Accueil",
@@ -386,6 +390,7 @@
     "community_photo_by": "Foto di {name}",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Dettagli e codici di vernice Classic Mini",
+    "eyebrow": "LIBRERIA COLORI",
     "hero_title": "Archivi Classic Mini",
     "breadcrumb": {
       "home": "Home",
@@ -422,6 +427,7 @@
     "community_photo_by": "Foto de {name}",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Detalhes e c\u00f3digos de tinta Classic Mini",
+    "eyebrow": "BIBLIOTECA DE CORES",
     "hero_title": "Arquivos Classic Mini",
     "breadcrumb": {
       "home": "In\u00edcio",
@@ -458,6 +464,7 @@
     "community_photo_by": "\u0424\u043e\u0442\u043e \u043e\u0442 {name}",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "\u0414\u0435\u0442\u0430\u043b\u0438 \u0438 \u043a\u043e\u0434\u044b \u0446\u0432\u0435\u0442\u0430 \u043a\u0443\u0437\u043e\u0432\u0430 Classic Mini",
+    "eyebrow": "\u0411\u0418\u0411\u041b\u0418\u041e\u0422\u0415\u041a\u0410 \u0426\u0412\u0415\u0422\u041e\u0412",
     "hero_title": "\u0410\u0440\u0445\u0438\u0432\u044b Classic Mini",
     "breadcrumb": {
       "home": "\u0413\u043b\u0430\u0432\u043d\u0430\u044f",
@@ -494,6 +501,7 @@
     "community_photo_by": "{name}\u306e\u5199\u771f",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Classic Mini\u30da\u30a4\u30f3\u30c8\u30ab\u30e9\u30fc\u306e\u8a73\u7d30\u3068\u30b3\u30fc\u30c9",
+    "eyebrow": "\u30ab\u30e9\u30fc\u30e9\u30a4\u30d6\u30e9\u30ea",
     "hero_title": "Classic Mini\u30a2\u30fc\u30ab\u30a4\u30d6",
     "breadcrumb": {
       "home": "\u30db\u30fc\u30e0",
@@ -530,6 +538,7 @@
     "community_photo_by": "{name}\u7684\u7167\u7247",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Classic Mini\u6c46\u6f06\u989c\u8272\u8be6\u60c5\u548c\u4ee3\u7801",
+    "eyebrow": "\u989c\u8272\u5e93",
     "hero_title": "Classic Mini\u6863\u6848\u9986",
     "breadcrumb": {
       "home": "\u9996\u9875",
@@ -566,6 +575,7 @@
     "community_photo_by": "{name}\uc758 \uc0ac\uc9c4",
     "title_template": "{name} - {code} | Classic Mini DIY",
     "description": "Classic Mini \ub3c4\ub8cc \uc0c9\uc0c1 \uc138\ubd80 \uc815\ubcf4 \ubc0f \ucf54\ub4dc",
+    "eyebrow": "\uc0c9\uc0c1 \ub77c\uc774\ube0c\ub7ec\ub9ac",
     "hero_title": "Classic Mini \uc544\uce74\uc774\ube0c",
     "breadcrumb": {
       "home": "\ud648",

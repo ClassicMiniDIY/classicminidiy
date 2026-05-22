@@ -101,6 +101,7 @@
               <img :src="collection.image" :alt="collection.title" class="w-full rounded-lg shadow-md" />
             </div>
             <div :class="collection.image ? 'col-span-12 md:col-span-8' : 'col-span-12'">
+              <span class="eyebrow">{{ t('eyebrow') }}</span>
               <div class="flex items-center gap-3 mb-2">
                 <span
                   v-if="collection.type && typeConfig[collection.type]"
@@ -155,6 +156,7 @@
   "en": {
     "title": "Collection | Classic Mini DIY",
     "description": "Browse a collection of related Classic Mini documents.",
+    "eyebrow": "DOCUMENT ARCHIVE",
     "hero_title": "Document Collection",
     "breadcrumb_archive": "Archive",
     "breadcrumb_documents": "Documents",
@@ -177,6 +179,7 @@
   "de": {
     "title": "Sammlung | Classic Mini DIY",
     "description": "Durchsuchen Sie eine Sammlung verwandter Classic Mini Dokumente.",
+    "eyebrow": "DOKUMENTENARCHIV",
     "hero_title": "Dokumentensammlung",
     "breadcrumb_archive": "Archiv",
     "breadcrumb_documents": "Dokumente",
@@ -199,6 +202,7 @@
   "es": {
     "title": "Colección | Classic Mini DIY",
     "description": "Explore una colección de documentos relacionados del Classic Mini.",
+    "eyebrow": "ARCHIVO DE DOCUMENTOS",
     "hero_title": "Colección de Documentos",
     "breadcrumb_archive": "Archivo",
     "breadcrumb_documents": "Documentos",
@@ -221,6 +225,7 @@
   "fr": {
     "title": "Collection | Classic Mini DIY",
     "description": "Parcourez une collection de documents Classic Mini associés.",
+    "eyebrow": "ARCHIVES DOCUMENTAIRES",
     "hero_title": "Collection de Documents",
     "breadcrumb_archive": "Archive",
     "breadcrumb_documents": "Documents",
@@ -243,6 +248,7 @@
   "it": {
     "title": "Collezione | Classic Mini DIY",
     "description": "Sfoglia una collezione di documenti Classic Mini correlati.",
+    "eyebrow": "ARCHIVIO DOCUMENTI",
     "hero_title": "Collezione di Documenti",
     "breadcrumb_archive": "Archivio",
     "breadcrumb_documents": "Documenti",
@@ -265,6 +271,7 @@
   "pt": {
     "title": "Coleção | Classic Mini DIY",
     "description": "Navegue por uma coleção de documentos Classic Mini relacionados.",
+    "eyebrow": "ARQUIVO DE DOCUMENTOS",
     "hero_title": "Coleção de Documentos",
     "breadcrumb_archive": "Arquivo",
     "breadcrumb_documents": "Documentos",
@@ -287,6 +294,7 @@
   "ru": {
     "title": "Коллекция | Classic Mini DIY",
     "description": "Просматривайте коллекцию связанных документов Classic Mini.",
+    "eyebrow": "АРХИВ ДОКУМЕНТОВ",
     "hero_title": "Коллекция Документов",
     "breadcrumb_archive": "Архив",
     "breadcrumb_documents": "Документы",
@@ -309,6 +317,7 @@
   "ja": {
     "title": "コレクション | Classic Mini DIY",
     "description": "関連するClassic Miniドキュメントのコレクションを閲覧。",
+    "eyebrow": "ドキュメントアーカイブ",
     "hero_title": "ドキュメントコレクション",
     "breadcrumb_archive": "アーカイブ",
     "breadcrumb_documents": "ドキュメント",
@@ -331,6 +340,7 @@
   "zh": {
     "title": "合集 | Classic Mini DIY",
     "description": "浏览相关的Classic Mini文件合集。",
+    "eyebrow": "文档档案",
     "hero_title": "文件合集",
     "breadcrumb_archive": "存档",
     "breadcrumb_documents": "文件",
@@ -353,6 +363,7 @@
   "ko": {
     "title": "컬렉션 | Classic Mini DIY",
     "description": "관련 Classic Mini 문서 컬렉션을 찾아보세요.",
+    "eyebrow": "문서 아카이브",
     "hero_title": "문서 컬렉션",
     "breadcrumb_archive": "아카이브",
     "breadcrumb_documents": "문서",
