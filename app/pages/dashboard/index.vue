@@ -131,6 +131,10 @@
       <breadcrumb :version="BREADCRUMB_VERSIONS.PROFILE" root />
     </div>
 
+    <div class="mb-8">
+      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" />
+    </div>
+
     <!-- Auth gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
       <div class="card bg-base-100 shadow-sm border border-base-300">
@@ -457,6 +461,7 @@
     "description": "Manage your saved gear configurations and account settings.",
     "hero_title": "Classic Mini Archives",
     "breadcrumb_title": "Dashboard",
+    "eyebrow": "ACCOUNT",
     "auth": {
       "sign_in_title": "Sign In to View Dashboard",
       "sign_in_description": "You need to be signed in to access your dashboard. Create a free account to get started.",
@@ -528,6 +533,7 @@
     "description": "Administra tus configuraciones de engranajes guardadas.",
     "hero_title": "Archivos Classic Mini",
     "breadcrumb_title": "Panel",
+    "eyebrow": "CUENTA",
     "auth": {
       "sign_in_title": "Inicia Sesión para Ver el Panel",
       "sign_in_description": "Debes iniciar sesión para acceder a tu panel. Crea una cuenta gratuita para empezar.",
@@ -599,6 +605,7 @@
     "description": "Gérez vos configurations d'engrenages sauvegardées.",
     "hero_title": "Archives Classic Mini",
     "breadcrumb_title": "Tableau de Bord",
+    "eyebrow": "COMPTE",
     "auth": {
       "sign_in_title": "Connectez-vous pour Voir le Tableau de Bord",
       "sign_in_description": "Vous devez être connecté pour accéder à votre tableau de bord. Créez un compte gratuit pour commencer.",
@@ -670,6 +677,7 @@
     "description": "Verwalten Sie Ihre gespeicherten Getriebe-Konfigurationen.",
     "hero_title": "Classic Mini Archive",
     "breadcrumb_title": "Dashboard",
+    "eyebrow": "KONTO",
     "auth": {
       "sign_in_title": "Anmelden zum Dashboard",
       "sign_in_description": "Sie müssen angemeldet sein, um auf Ihr Dashboard zuzugreifen. Erstellen Sie ein kostenloses Konto.",
@@ -741,6 +749,7 @@
     "description": "Gestisci le tue configurazioni ingranaggi salvate.",
     "hero_title": "Archivi Classic Mini",
     "breadcrumb_title": "Dashboard",
+    "eyebrow": "ACCOUNT",
     "auth": {
       "sign_in_title": "Accedi per Vedere la Dashboard",
       "sign_in_description": "Devi essere connesso per accedere alla tua dashboard. Crea un account gratuito per iniziare.",
@@ -812,6 +821,7 @@
     "description": "Gerencie suas configurações de engrenagens salvas.",
     "hero_title": "Arquivos Classic Mini",
     "breadcrumb_title": "Painel",
+    "eyebrow": "CONTA",
     "auth": {
       "sign_in_title": "Entre para Ver o Painel",
       "sign_in_description": "Você precisa estar conectado para acessar seu painel. Crie uma conta gratuita para começar.",
@@ -883,6 +893,7 @@
     "description": "Управляйте сохранёнными конфигурациями передач.",
     "hero_title": "Архивы Classic Mini",
     "breadcrumb_title": "Панель управления",
+    "eyebrow": "АККАУНТ",
     "auth": {
       "sign_in_title": "Войдите для Доступа к Панели",
       "sign_in_description": "Вы должны быть авторизованы для доступа к панели управления. Создайте бесплатную учётную запись.",
@@ -954,6 +965,7 @@
     "description": "保存したギア設定を管理します。",
     "hero_title": "Classic Mini アーカイブ",
     "breadcrumb_title": "ダッシュボード",
+    "eyebrow": "アカウント",
     "auth": {
       "sign_in_title": "ダッシュボード表示にはログインが必要です",
       "sign_in_description": "ダッシュボードにアクセスするにはログインが必要です。無料アカウントを作成して始めましょう。",
@@ -1025,6 +1037,7 @@
     "description": "管理您保存的齿轮配置。",
     "hero_title": "Classic Mini 档案",
     "breadcrumb_title": "仪表板",
+    "eyebrow": "账户",
     "auth": {
       "sign_in_title": "登录以查看仪表板",
       "sign_in_description": "您需要登录才能访问您的仪表板。创建免费账户即可开始。",
@@ -1096,6 +1109,7 @@
     "description": "저장된 기어 구성을 관리하세요.",
     "hero_title": "Classic Mini 아카이브",
     "breadcrumb_title": "대시보드",
+    "eyebrow": "계정",
     "auth": {
       "sign_in_title": "대시보드 보기를 위해 로그인하세요",
       "sign_in_description": "대시보드에 접근하려면 로그인해야 합니다. 무료 계정을 만들어 시작하세요.",

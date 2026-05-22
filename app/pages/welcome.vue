@@ -7,6 +7,7 @@
           <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="fad fa-hand-wave text-3xl text-primary"></i>
           </div>
+          <span class="eyebrow mb-1">{{ t('eyebrow') }}</span>
           <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
           <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
         </div>
@@ -221,6 +222,7 @@
   "en": {
     "page_title": "Welcome - Classic Mini DIY",
     "page_description": "Welcome to Classic Mini DIY. Set up your profile and get started.",
+    "eyebrow": "WELCOME",
     "title": "Welcome!",
     "subtitle": "We're glad you're here. Let's get you set up.",
     "unified_title": "One Account, Two Sites",
@@ -246,6 +248,7 @@
   "es": {
     "page_title": "Bienvenido - Classic Mini DIY",
     "page_description": "Bienvenido a Classic Mini DIY. Configura tu perfil y comienza.",
+    "eyebrow": "BIENVENIDO",
     "title": "Bienvenido!",
     "subtitle": "Nos alegra que estes aqui. Vamos a configurarte.",
     "unified_title": "Una Cuenta, Dos Sitios",
@@ -271,6 +274,7 @@
   "fr": {
     "page_title": "Bienvenue - Classic Mini DIY",
     "page_description": "Bienvenue sur Classic Mini DIY. Configurez votre profil et commencez.",
+    "eyebrow": "BIENVENUE",
     "title": "Bienvenue !",
     "subtitle": "Nous sommes ravis de vous voir. Configurons votre compte.",
     "unified_title": "Un Compte, Deux Sites",
@@ -296,6 +300,7 @@
   "it": {
     "page_title": "Benvenuto - Classic Mini DIY",
     "page_description": "Benvenuto su Classic Mini DIY. Configura il tuo profilo e inizia.",
+    "eyebrow": "BENVENUTO",
     "title": "Benvenuto!",
     "subtitle": "Siamo felici che tu sia qui. Configuriamo il tuo account.",
     "unified_title": "Un Account, Due Siti",
@@ -321,6 +326,7 @@
   "de": {
     "page_title": "Willkommen - Classic Mini DIY",
     "page_description": "Willkommen bei Classic Mini DIY. Richten Sie Ihr Profil ein und legen Sie los.",
+    "eyebrow": "WILLKOMMEN",
     "title": "Willkommen!",
     "subtitle": "Wir freuen uns, dass Sie hier sind. Lassen Sie uns Ihr Konto einrichten.",
     "unified_title": "Ein Konto, Zwei Seiten",
@@ -346,6 +352,7 @@
   "pt": {
     "page_title": "Bem-vindo - Classic Mini DIY",
     "page_description": "Bem-vindo ao Classic Mini DIY. Configure seu perfil e comece.",
+    "eyebrow": "BEM-VINDO",
     "title": "Bem-vindo!",
     "subtitle": "Estamos felizes que voce esta aqui. Vamos configurar sua conta.",
     "unified_title": "Uma Conta, Dois Sites",
@@ -371,6 +378,7 @@
   "ru": {
     "page_title": "Dobro pozhalovat - Classic Mini DIY",
     "page_description": "Dobro pozhalovat v Classic Mini DIY. Nastroyte svoy profil i nachnite.",
+    "eyebrow": "ДОБРО ПОЖАЛОВАТЬ",
     "title": "Dobro pozhalovat!",
     "subtitle": "My rady, chto vy zdes. Davayte nastroim vash akkaunt.",
     "unified_title": "Odin Akkaunt, Dva Sayta",
@@ -396,6 +404,7 @@
   "ja": {
     "page_title": "ようこそ - Classic Mini DIY",
     "page_description": "Classic Mini DIYへようこそ。プロフィールを設定して始めましょう。",
+    "eyebrow": "ようこそ",
     "title": "ようこそ!",
     "subtitle": "ご参加いただきありがとうございます。アカウントを設定しましょう。",
     "unified_title": "1つのアカウント、2つのサイト",
@@ -421,6 +430,7 @@
   "zh": {
     "page_title": "欢迎 - Classic Mini DIY",
     "page_description": "欢迎来到Classic Mini DIY。设置您的个人资料并开始使用。",
+    "eyebrow": "欢迎",
     "title": "欢迎!",
     "subtitle": "很高兴您的加入。让我们为您设置账户。",
     "unified_title": "一个账户，两个网站",
@@ -446,6 +456,7 @@
   "ko": {
     "page_title": "환영합니다 - Classic Mini DIY",
     "page_description": "Classic Mini DIY에 오신 것을 환영합니다. 프로필을 설정하고 시작하세요.",
+    "eyebrow": "환영합니다",
     "title": "환영합니다!",
     "subtitle": "함께해 주셔서 기쁩니다. 계정을 설정해 봅시다.",
     "unified_title": "하나의 계정, 두 개의 사이트",

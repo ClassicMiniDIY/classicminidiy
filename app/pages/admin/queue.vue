@@ -461,7 +461,10 @@
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <h1 class="text-2xl font-bold">Moderation Queue</h1>
+      <div>
+        <span class="eyebrow">ADMIN</span>
+        <h1 class="text-2xl font-bold">Moderation Queue</h1>
+      </div>
       <button type="button" class="btn btn-primary" :disabled="isLoading" @click="refresh">
         <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
         <i v-else class="fa-solid fa-refresh mr-2"></i>

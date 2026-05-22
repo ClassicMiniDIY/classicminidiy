@@ -152,6 +152,7 @@
                 </div>
               </div>
               <div class="flex-1 text-center sm:text-left">
+                <span class="eyebrow">{{ t('eyebrow') }}</span>
                 <h1 class="text-3xl font-bold mb-2">{{ displayName }}</h1>
                 <div class="mb-3">
                   <span
@@ -284,6 +285,7 @@
     "description": "View {name}'s contributor profile, trust level, and contribution history on Classic Mini DIY.",
     "hero_title": "Contributor Profile",
     "breadcrumb_title": "Contributor",
+    "eyebrow": "CONTRIBUTOR",
     "not_found": {
       "title": "Contributor Not Found",
       "description": "This contributor profile does not exist or has been removed.",
@@ -337,6 +339,7 @@
     "description": "Zeigen Sie das Beitragsprofil, das Vertrauenslevel und den Beitragsverlauf von {name} auf Classic Mini DIY an.",
     "hero_title": "Beitragsprofil",
     "breadcrumb_title": "Beitragende",
+    "eyebrow": "MITWIRKENDER",
     "not_found": {
       "title": "Beitragende nicht gefunden",
       "description": "Dieses Beitragsprofil existiert nicht oder wurde entfernt.",
@@ -390,6 +393,7 @@
     "description": "Ver el perfil de colaborador, nivel de confianza e historial de contribuciones de {name} en Classic Mini DIY.",
     "hero_title": "Perfil de Colaborador",
     "breadcrumb_title": "Colaborador",
+    "eyebrow": "COLABORADOR",
     "not_found": {
       "title": "Colaborador No Encontrado",
       "description": "Este perfil de colaborador no existe o ha sido eliminado.",
@@ -443,6 +447,7 @@
     "description": "Consultez le profil contributeur, le niveau de confiance et l'historique des contributions de {name} sur Classic Mini DIY.",
     "hero_title": "Profil du Contributeur",
     "breadcrumb_title": "Contributeur",
+    "eyebrow": "CONTRIBUTEUR",
     "not_found": {
       "title": "Contributeur Introuvable",
       "description": "Ce profil de contributeur n'existe pas ou a été supprimé.",
@@ -496,6 +501,7 @@
     "description": "Visualizza il profilo collaboratore, il livello di fiducia e la cronologia dei contributi di {name} su Classic Mini DIY.",
     "hero_title": "Profilo Collaboratore",
     "breadcrumb_title": "Collaboratore",
+    "eyebrow": "COLLABORATORE",
     "not_found": {
       "title": "Collaboratore Non Trovato",
       "description": "Questo profilo collaboratore non esiste o è stato rimosso.",
@@ -549,6 +555,7 @@
     "description": "Veja o perfil do colaborador, nível de confiança e histórico de contribuições de {name} no Classic Mini DIY.",
     "hero_title": "Perfil do Colaborador",
     "breadcrumb_title": "Colaborador",
+    "eyebrow": "COLABORADOR",
     "not_found": {
       "title": "Colaborador Não Encontrado",
       "description": "Este perfil de colaborador não existe ou foi removido.",
@@ -602,6 +609,7 @@
     "description": "Просматривайте профиль участника, уровень доверия и историю вкладов {name} на Classic Mini DIY.",
     "hero_title": "Профиль участника",
     "breadcrumb_title": "Участник",
+    "eyebrow": "УЧАСТНИК",
     "not_found": {
       "title": "Участник не найден",
       "description": "Этот профиль участника не существует или был удалён.",
@@ -655,6 +663,7 @@
     "description": "Classic Mini DIY での {name} の投稿者プロフィール、信頼レベル、貢献履歴を確認する。",
     "hero_title": "投稿者プロフィール",
     "breadcrumb_title": "投稿者",
+    "eyebrow": "投稿者",
     "not_found": {
       "title": "投稿者が見つかりません",
       "description": "この投稿者プロフィールは存在しないか、削除されました。",
@@ -708,6 +717,7 @@
     "description": "查看 {name} 在 Classic Mini DIY 上的贡献者资料、信任等级和贡献历史。",
     "hero_title": "贡献者资料",
     "breadcrumb_title": "贡献者",
+    "eyebrow": "贡献者",
     "not_found": {
       "title": "未找到贡献者",
       "description": "此贡献者资料不存在或已被删除。",
@@ -761,6 +771,7 @@
     "description": "Classic Mini DIY에서 {name}의 기여자 프로필, 신뢰 수준 및 기여 내역을 확인하세요.",
     "hero_title": "기여자 프로필",
     "breadcrumb_title": "기여자",
+    "eyebrow": "기여자",
     "not_found": {
       "title": "기여자를 찾을 수 없습니다",
       "description": "이 기여자 프로필이 존재하지 않거나 삭제되었습니다.",
