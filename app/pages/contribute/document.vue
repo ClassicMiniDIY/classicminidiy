@@ -238,8 +238,7 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" />
           <div class="divider mb-6"></div>
         </div>
 
@@ -520,6 +519,7 @@
     "page_title": "Submit a Document - Classic Mini DIY Archive",
     "description": "Submit a new document to the Classic Mini DIY archive for review and inclusion in the community database.",
     "hero_title": "Classic Mini Archives",
+    "eyebrow": "CONTRIBUTE",
     "breadcrumb_title": "Submit Document",
     "sign_in_title": "Sign In to Contribute",
     "sign_in_description": "You need to be signed in to submit documents to the archive. Create a free account to get started.",
@@ -610,6 +610,7 @@
     "page_title": "Enviar un documento - Archivo Classic Mini DIY",
     "description": "Envie un nuevo documento para su revision e inclusion en la base de datos comunitaria de Classic Mini DIY.",
     "hero_title": "Archivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Enviar documento",
     "sign_in_title": "Inicia sesion para contribuir",
     "sign_in_description": "Debes iniciar sesion para enviar documentos al archivo. Crea una cuenta gratuita para empezar.",
@@ -700,6 +701,7 @@
     "page_title": "Soumettre un document - Archives Classic Mini DIY",
     "description": "Soumettez un nouveau document pour examen et inclusion dans la base de donnees communautaire Classic Mini DIY.",
     "hero_title": "Archives Classic Mini",
+    "eyebrow": "CONTRIBUER",
     "breadcrumb_title": "Soumettre un document",
     "sign_in_title": "Connectez-vous pour contribuer",
     "sign_in_description": "Vous devez etre connecte pour soumettre des documents aux archives. Creez un compte gratuit pour commencer.",
@@ -790,6 +792,7 @@
     "page_title": "Invia un documento - Archivio Classic Mini DIY",
     "description": "Invia un nuovo documento per la revisione e l'inclusione nel database della comunita Classic Mini DIY.",
     "hero_title": "Archivi Classic Mini",
+    "eyebrow": "CONTRIBUISCI",
     "breadcrumb_title": "Invia documento",
     "sign_in_title": "Accedi per contribuire",
     "sign_in_description": "Devi essere connesso per inviare documenti all'archivio. Crea un account gratuito per iniziare.",
@@ -880,6 +883,7 @@
     "page_title": "Dokument einreichen - Classic Mini DIY Archiv",
     "description": "Reichen Sie ein neues Dokument zur Ueberpruefung und Aufnahme in das Classic Mini DIY Archiv ein.",
     "hero_title": "Classic Mini Archive",
+    "eyebrow": "BEITRAGEN",
     "breadcrumb_title": "Dokument einreichen",
     "sign_in_title": "Anmelden zum Beitragen",
     "sign_in_description": "Sie muessen angemeldet sein, um Dokumente zum Archiv beizutragen. Erstellen Sie ein kostenloses Konto, um zu beginnen.",
@@ -970,6 +974,7 @@
     "page_title": "Enviar um documento - Arquivo Classic Mini DIY",
     "description": "Envie um novo documento para revisao e inclusao no banco de dados comunitario do Classic Mini DIY.",
     "hero_title": "Arquivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Enviar documento",
     "sign_in_title": "Entre para contribuir",
     "sign_in_description": "Voce precisa estar conectado para enviar documentos ao arquivo. Crie uma conta gratuita para comecar.",
@@ -1060,6 +1065,7 @@
     "page_title": "Отправить документ - Архив Classic Mini DIY",
     "description": "Отправьте новый документ на проверку и включение в базу данных сообщества Classic Mini DIY.",
     "hero_title": "Архивы Classic Mini",
+    "eyebrow": "ВНЕСТИ ВКЛАД",
     "breadcrumb_title": "Отправить документ",
     "sign_in_title": "Войдите, чтобы внести вклад",
     "sign_in_description": "Вам нужно войти в систему, чтобы отправлять документы в архив. Создайте бесплатную учетную запись, чтобы начать.",
@@ -1150,6 +1156,7 @@
     "page_title": "ドキュメントを提出 - Classic Mini DIY アーカイブ",
     "description": "Classic Mini DIY アーカイブに新しいドキュメントを提出して、レビューとコミュニティデータベースへの掲載を依頼します。",
     "hero_title": "クラシックミニアーカイブ",
+    "eyebrow": "投稿",
     "breadcrumb_title": "ドキュメント提出",
     "sign_in_title": "貢献するにはサインインしてください",
     "sign_in_description": "アーカイブにドキュメントを提出するにはサインインが必要です。無料アカウントを作成して始めましょう。",
@@ -1240,6 +1247,7 @@
     "page_title": "提交文档 - Classic Mini DIY 档案馆",
     "description": "提交新文档到 Classic Mini DIY 档案馆，经审核后纳入社区数据库。",
     "hero_title": "经典迷你档案馆",
+    "eyebrow": "贡献",
     "breadcrumb_title": "提交文档",
     "sign_in_title": "登录以贡献",
     "sign_in_description": "您需要登录才能向档案馆提交文档。创建免费帐户以开始。",
@@ -1330,6 +1338,7 @@
     "page_title": "문서 제출 - Classic Mini DIY 아카이브",
     "description": "Classic Mini DIY 아카이브에 새 문서를 제출하여 검토 및 커뮤니티 데이터베이스에 포함시킵니다.",
     "hero_title": "클래식 미니 아카이브",
+    "eyebrow": "기여",
     "breadcrumb_title": "문서 제출",
     "sign_in_title": "기여하려면 로그인하세요",
     "sign_in_description": "아카이브에 문서를 제출하려면 로그인이 필요합니다. 무료 계정을 만들어 시작하세요.",

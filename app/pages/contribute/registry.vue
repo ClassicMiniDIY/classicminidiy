@@ -183,8 +183,7 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" />
           <div class="divider mb-6"></div>
         </div>
 
@@ -447,6 +446,7 @@
       "og_description": "Submit your Classic Mini to the community registry database."
     },
     "hero_title": "Classic Mini Archives",
+    "eyebrow": "CONTRIBUTE",
     "breadcrumb_title": "Registry",
     "sign_in_title": "Sign In to Contribute",
     "sign_in_description": "You need to be signed in to submit your Mini to the registry. Create a free account to get started.",
@@ -507,6 +507,7 @@
       "og_description": "Envie su Classic Mini a la base de datos del registro de la comunidad."
     },
     "hero_title": "Archivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Registro",
     "sign_in_title": "Inicia Sesion para Contribuir",
     "sign_in_description": "Debes iniciar sesion para enviar tu Mini al registro. Crea una cuenta gratuita para empezar.",
@@ -567,6 +568,7 @@
       "og_description": "Soumettez votre Classic Mini a la base de donnees du registre communautaire."
     },
     "hero_title": "Archives Classic Mini",
+    "eyebrow": "CONTRIBUER",
     "breadcrumb_title": "Registre",
     "sign_in_title": "Connectez-vous pour Contribuer",
     "sign_in_description": "Vous devez etre connecte pour soumettre votre Mini au registre. Creez un compte gratuit pour commencer.",
@@ -627,6 +629,7 @@
       "og_description": "Invia la tua Classic Mini al database del registro della comunita."
     },
     "hero_title": "Archivi Classic Mini",
+    "eyebrow": "CONTRIBUISCI",
     "breadcrumb_title": "Registro",
     "sign_in_title": "Accedi per Contribuire",
     "sign_in_description": "Devi essere connesso per inviare la tua Mini al registro. Crea un account gratuito per iniziare.",
@@ -687,6 +690,7 @@
       "og_description": "Reichen Sie Ihren Classic Mini in der Community-Register-Datenbank ein."
     },
     "hero_title": "Classic Mini Archive",
+    "eyebrow": "BEITRAGEN",
     "breadcrumb_title": "Register",
     "sign_in_title": "Anmelden zum Beitragen",
     "sign_in_description": "Sie muessen angemeldet sein, um Ihren Mini im Register einzureichen. Erstellen Sie ein kostenloses Konto, um zu beginnen.",
@@ -747,6 +751,7 @@
       "og_description": "Envie seu Classic Mini para o banco de dados do registro da comunidade."
     },
     "hero_title": "Arquivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Registro",
     "sign_in_title": "Entre para Contribuir",
     "sign_in_description": "Voce precisa estar conectado para enviar seu Mini ao registro. Crie uma conta gratuita para comecar.",
@@ -807,6 +812,7 @@
       "og_description": "Отправьте свой Classic Mini в базу данных общественного реестра."
     },
     "hero_title": "Архивы Classic Mini",
+    "eyebrow": "ВНЕСТИ ВКЛАД",
     "breadcrumb_title": "Реестр",
     "sign_in_title": "Войдите, чтобы внести вклад",
     "sign_in_description": "Вам нужно войти в систему, чтобы отправить свой Mini в реестр. Создайте бесплатную учетную запись, чтобы начать.",
@@ -867,6 +873,7 @@
       "og_description": "あなたのクラシックミニをコミュニティレジストリデータベースに登録してください。"
     },
     "hero_title": "クラシックミニアーカイブ",
+    "eyebrow": "投稿",
     "breadcrumb_title": "レジストリ",
     "sign_in_title": "貢献するにはサインインしてください",
     "sign_in_description": "レジストリにミニを登録するにはサインインが必要です。無料アカウントを作成して始めましょう。",
@@ -927,6 +934,7 @@
       "og_description": "将您的经典迷你提交到社区注册数据库。"
     },
     "hero_title": "经典迷你档案馆",
+    "eyebrow": "贡献",
     "breadcrumb_title": "注册",
     "sign_in_title": "登录以贡献",
     "sign_in_description": "您需要登录才能将您的迷你提交到注册表。创建免费帐户以开始。",
@@ -987,6 +995,7 @@
       "og_description": "커뮤니티 레지스트리 데이터베이스에 클래식 미니를 등록하세요."
     },
     "hero_title": "클래식 미니 아카이브",
+    "eyebrow": "기여",
     "breadcrumb_title": "레지스트리",
     "sign_in_title": "기여하려면 로그인하세요",
     "sign_in_description": "레지스트리에 미니를 등록하려면 로그인이 필요합니다. 무료 계정을 만들어 시작하세요.",

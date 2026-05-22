@@ -211,8 +211,7 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" />
           <div class="divider mb-6"></div>
         </div>
 
@@ -451,6 +450,7 @@
     "page_title": "Submit Wheel - Classic Mini DIY",
     "description": "Submit a wheel to the Classic Mini wheels database",
     "hero_title": "Classic Mini Archives",
+    "eyebrow": "CONTRIBUTE",
     "breadcrumb_title": "Submit Wheel",
     "sign_in_title": "Sign In to Contribute",
     "sign_in_description": "You need to be signed in to submit wheels to the archive. Create a free account to get started.",
@@ -511,6 +511,7 @@
     "page_title": "Enviar Rueda - Classic Mini DIY",
     "description": "Envia una rueda a la base de datos de ruedas Classic Mini",
     "hero_title": "Archivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Enviar Rueda",
     "sign_in_title": "Inicia Sesion para Contribuir",
     "sign_in_description": "Debes iniciar sesion para enviar ruedas al archivo. Crea una cuenta gratuita para empezar.",
@@ -571,6 +572,7 @@
     "page_title": "Soumettre une Roue - Classic Mini DIY",
     "description": "Soumettez une roue a la base de donnees de roues Classic Mini",
     "hero_title": "Archives Classic Mini",
+    "eyebrow": "CONTRIBUER",
     "breadcrumb_title": "Soumettre une Roue",
     "sign_in_title": "Connectez-vous pour Contribuer",
     "sign_in_description": "Vous devez etre connecte pour soumettre des roues aux archives. Creez un compte gratuit pour commencer.",
@@ -631,6 +633,7 @@
     "page_title": "Invia Ruota - Classic Mini DIY",
     "description": "Invia una ruota al database delle ruote Classic Mini",
     "hero_title": "Archivi Classic Mini",
+    "eyebrow": "CONTRIBUISCI",
     "breadcrumb_title": "Invia Ruota",
     "sign_in_title": "Accedi per Contribuire",
     "sign_in_description": "Devi essere connesso per inviare ruote all'archivio. Crea un account gratuito per iniziare.",
@@ -691,6 +694,7 @@
     "page_title": "Rad Einreichen - Classic Mini DIY",
     "description": "Reichen Sie ein Rad in der Classic Mini Raddatenbank ein",
     "hero_title": "Classic Mini Archive",
+    "eyebrow": "BEITRAGEN",
     "breadcrumb_title": "Rad Einreichen",
     "sign_in_title": "Anmelden zum Beitragen",
     "sign_in_description": "Sie muessen angemeldet sein, um Raeder ins Archiv einzureichen. Erstellen Sie ein kostenloses Konto, um zu beginnen.",
@@ -751,6 +755,7 @@
     "page_title": "Enviar Roda - Classic Mini DIY",
     "description": "Envie uma roda para o banco de dados de rodas Classic Mini",
     "hero_title": "Arquivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Enviar Roda",
     "sign_in_title": "Entre para Contribuir",
     "sign_in_description": "Voce precisa estar conectado para enviar rodas ao arquivo. Crie uma conta gratuita para comecar.",
@@ -811,6 +816,7 @@
     "page_title": "Отправить колесо - Classic Mini DIY",
     "description": "Отправьте колесо в базу данных колес Classic Mini",
     "hero_title": "Архивы Classic Mini",
+    "eyebrow": "ВНЕСТИ ВКЛАД",
     "breadcrumb_title": "Отправить колесо",
     "sign_in_title": "Войдите, чтобы внести вклад",
     "sign_in_description": "Вам нужно войти в систему, чтобы отправить колеса в архив. Создайте бесплатную учетную запись, чтобы начать.",
@@ -871,6 +877,7 @@
     "page_title": "ホイールを提出 - Classic Mini DIY",
     "description": "クラシックミニのホイールデータベースにホイールを提出する",
     "hero_title": "クラシックミニアーカイブ",
+    "eyebrow": "投稿",
     "breadcrumb_title": "ホイールを提出",
     "sign_in_title": "貢献するにはサインインしてください",
     "sign_in_description": "アーカイブにホイールを提出するにはサインインが必要です。無料アカウントを作成して始めましょう。",
@@ -931,6 +938,7 @@
     "page_title": "提交轮毂 - Classic Mini DIY",
     "description": "向经典迷你轮毂数据库提交轮毂",
     "hero_title": "经典迷你档案馆",
+    "eyebrow": "贡献",
     "breadcrumb_title": "提交轮毂",
     "sign_in_title": "登录以贡献",
     "sign_in_description": "您需要登录才能向档案馆提交轮毂。创建免费帐户以开始。",
@@ -991,6 +999,7 @@
     "page_title": "휠 제출 - Classic Mini DIY",
     "description": "클래식 미니 휠 데이터베이스에 휠을 제출하세요",
     "hero_title": "클래식 미니 아카이브",
+    "eyebrow": "기여",
     "breadcrumb_title": "휠 제출",
     "sign_in_title": "기여하려면 로그인하세요",
     "sign_in_description": "아카이브에 휠을 제출하려면 로그인이 필요합니다. 무료 계정을 만들어 시작하세요.",

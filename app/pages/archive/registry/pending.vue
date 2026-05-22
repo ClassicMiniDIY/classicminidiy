@@ -62,7 +62,7 @@
         </breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <h1 class="text-3xl font-bold">{{ t('main_heading') }}</h1>
+            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description')" class="mb-6" />
             <h2 class="text-xl mt-4">
               <strong>{{ pendingItems?.length || '0' }}</strong>
               {{ t('subtitle') }}
@@ -130,6 +130,7 @@
     "breadcrumb_title": "Pending Submissions",
     "breadcrumb_parent": "Registry",
     "main_heading": "Pending Registry Submissions",
+    "eyebrow": "REGISTRY",
     "subtitle": "submissions pending review",
     "description_text": "Below you can see all pending registry submissions that are currently being reviewed. Submissions are typically processed within 7-14 days.",
     "contact_text": "If you have questions about your submission, please",
@@ -165,6 +166,7 @@
     "breadcrumb_title": "Ausstehende Einreichungen",
     "breadcrumb_parent": "Registry",
     "main_heading": "Ausstehende Registry-Einreichungen",
+    "eyebrow": "REGISTER",
     "subtitle": "Einreichungen warten auf Überprüfung",
     "description_text": "Unten können Sie alle ausstehenden Registry-Einreichungen sehen, die derzeit überprüft werden. Einreichungen werden normalerweise innerhalb von 7-14 Tagen bearbeitet.",
     "contact_text": "Wenn Sie Fragen zu Ihrer Einreichung haben, bitte",
@@ -200,6 +202,7 @@
     "breadcrumb_title": "Envíos Pendientes",
     "breadcrumb_parent": "Registro",
     "main_heading": "Envíos de Registro Pendientes",
+    "eyebrow": "REGISTRO",
     "subtitle": "envíos pendientes de revisión",
     "description_text": "A continuación puedes ver todos los envíos de registro pendientes que están siendo revisados actualmente. Los envíos se procesan típicamente dentro de 7-14 días.",
     "contact_text": "Si tienes preguntas sobre tu envío, por favor",
@@ -235,6 +238,7 @@
     "breadcrumb_title": "Soumissions en Attente",
     "breadcrumb_parent": "Registre",
     "main_heading": "Soumissions de Registre en Attente",
+    "eyebrow": "REGISTRE",
     "subtitle": "soumissions en attente de révision",
     "description_text": "Ci-dessous, vous pouvez voir toutes les soumissions de registre en attente qui sont actuellement en cours de révision. Les soumissions sont généralement traitées dans les 7-14 jours.",
     "contact_text": "Si vous avez des questions sur votre soumission, veuillez",
@@ -270,6 +274,7 @@
     "breadcrumb_title": "Invii in Sospeso",
     "breadcrumb_parent": "Registro",
     "main_heading": "Invii di Registro in Sospeso",
+    "eyebrow": "REGISTRO",
     "subtitle": "invii in attesa di revisione",
     "description_text": "Di seguito puoi vedere tutti gli invii di registro in sospeso che sono attualmente in fase di revisione. Gli invii vengono generalmente elaborati entro 7-14 giorni.",
     "contact_text": "Se hai domande sul tuo invio, per favore",
@@ -305,6 +310,7 @@
     "breadcrumb_title": "Submissões Pendentes",
     "breadcrumb_parent": "Registro",
     "main_heading": "Submissões de Registro Pendentes",
+    "eyebrow": "REGISTRO",
     "subtitle": "submissões aguardando revisão",
     "description_text": "Abaixo você pode ver todas as submissões de registro pendentes que estão sendo revisadas atualmente. As submissões são normalmente processadas dentro de 7-14 dias.",
     "contact_text": "Se você tem perguntas sobre sua submissão, por favor",
@@ -340,6 +346,7 @@
     "breadcrumb_title": "Ожидающие заявки",
     "breadcrumb_parent": "Реестр",
     "main_heading": "Ожидающие заявки в реестр",
+    "eyebrow": "РЕЕСТР",
     "subtitle": "заявок ожидают проверки",
     "description_text": "Ниже вы можете видеть все ожидающие заявки в реестр, которые в данный момент проходят проверку. Заявки обычно обрабатываются в течение 7-14 дней.",
     "contact_text": "Если у вас есть вопросы по вашей заявке, пожалуйста",
@@ -375,6 +382,7 @@
     "breadcrumb_title": "審査中の申請",
     "breadcrumb_parent": "レジストリ",
     "main_heading": "審査中のレジストリ申請",
+    "eyebrow": "レジストリ",
     "subtitle": "件の申請が審査待ち",
     "description_text": "現在審査中のすべてのレジストリ申請を以下でご確認いただけます。申請は通常7〜14日以内に処理されます。",
     "contact_text": "申請についてご質問がある場合は、",
@@ -410,6 +418,7 @@
     "breadcrumb_title": "待审核提交",
     "breadcrumb_parent": "注册表",
     "main_heading": "待审核的注册表提交",
+    "eyebrow": "注册库",
     "subtitle": "条提交待审核",
     "description_text": "以下您可以查看所有正在审核中的待处理注册表提交。提交通常在7-14天内处理完成。",
     "contact_text": "如果您对提交有疑问，请",
@@ -445,6 +454,7 @@
     "breadcrumb_title": "대기 중인 제출",
     "breadcrumb_parent": "레지스트리",
     "main_heading": "대기 중인 레지스트리 제출",
+    "eyebrow": "등록부",
     "subtitle": "건의 제출이 검토 대기 중",
     "description_text": "아래에서 현재 검토 중인 모든 대기 중인 레지스트리 제출을 확인할 수 있습니다. 제출은 보통 7-14일 이내에 처리됩니다.",
     "contact_text": "제출에 대한 질문이 있으시면",

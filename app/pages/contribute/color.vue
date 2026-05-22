@@ -223,8 +223,7 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <h1 class="text-3xl font-bold mb-2">{{ t('heading') }}</h1>
-          <p class="text-base opacity-70 mb-6">{{ t('subtitle') }}</p>
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" />
           <div class="divider mb-6"></div>
         </div>
 
@@ -466,6 +465,7 @@
     "page_title": "Contribute Color - Classic Mini DIY Archive",
     "description": "Submit a new color or additional color information to the Classic Mini color archive.",
     "hero_title": "Classic Mini Archives",
+    "eyebrow": "CONTRIBUTE",
     "breadcrumb_title": "Color",
     "sign_in_title": "Sign In to Contribute",
     "sign_in_description": "You need to be signed in to submit colors to the archive. Create a free account to get started.",
@@ -549,6 +549,7 @@
     "page_title": "Contribuir Color - Archivo Classic Mini DIY",
     "description": "Envie un nuevo color o informacion adicional al archivo de colores Classic Mini.",
     "hero_title": "Archivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Color",
     "sign_in_title": "Inicia Sesion para Contribuir",
     "sign_in_description": "Debes iniciar sesion para enviar colores al archivo. Crea una cuenta gratuita para empezar.",
@@ -632,6 +633,7 @@
     "page_title": "Contribuer Couleur - Archives Classic Mini DIY",
     "description": "Soumettez une nouvelle couleur ou des informations supplementaires aux archives de couleurs Classic Mini.",
     "hero_title": "Archives Classic Mini",
+    "eyebrow": "CONTRIBUER",
     "breadcrumb_title": "Couleur",
     "sign_in_title": "Connectez-vous pour Contribuer",
     "sign_in_description": "Vous devez etre connecte pour soumettre des couleurs aux archives. Creez un compte gratuit pour commencer.",
@@ -715,6 +717,7 @@
     "page_title": "Contribuisci Colore - Archivio Classic Mini DIY",
     "description": "Invia un nuovo colore o informazioni aggiuntive all'archivio colori Classic Mini.",
     "hero_title": "Archivi Classic Mini",
+    "eyebrow": "CONTRIBUISCI",
     "breadcrumb_title": "Colore",
     "sign_in_title": "Accedi per Contribuire",
     "sign_in_description": "Devi essere connesso per inviare colori all'archivio. Crea un account gratuito per iniziare.",
@@ -798,6 +801,7 @@
     "page_title": "Farbe Beitragen - Classic Mini DIY Archiv",
     "description": "Reichen Sie eine neue Farbe oder zusaetzliche Farbinformationen zum Classic Mini Farbarchiv ein.",
     "hero_title": "Classic Mini Archive",
+    "eyebrow": "BEITRAGEN",
     "breadcrumb_title": "Farbe",
     "sign_in_title": "Anmelden zum Beitragen",
     "sign_in_description": "Sie muessen angemeldet sein, um Farben zum Archiv beizutragen. Erstellen Sie ein kostenloses Konto, um zu beginnen.",
@@ -881,6 +885,7 @@
     "page_title": "Contribuir Cor - Arquivo Classic Mini DIY",
     "description": "Envie uma nova cor ou informacoes adicionais ao arquivo de cores Classic Mini.",
     "hero_title": "Arquivos Classic Mini",
+    "eyebrow": "CONTRIBUIR",
     "breadcrumb_title": "Cor",
     "sign_in_title": "Entre para Contribuir",
     "sign_in_description": "Voce precisa estar conectado para enviar cores ao arquivo. Crie uma conta gratuita para comecar.",
@@ -964,6 +969,7 @@
     "page_title": "Добавить цвет - Архив Classic Mini DIY",
     "description": "Отправьте новый цвет или дополнительную информацию о цвете в архив цветов Classic Mini.",
     "hero_title": "Архивы Classic Mini",
+    "eyebrow": "ВНЕСТИ ВКЛАД",
     "breadcrumb_title": "Цвет",
     "sign_in_title": "Войдите, чтобы внести вклад",
     "sign_in_description": "Вам нужно войти в систему, чтобы отправлять цвета в архив. Создайте бесплатную учетную запись, чтобы начать.",
@@ -1047,6 +1053,7 @@
     "page_title": "カラーを投稿 - Classic Mini DIY アーカイブ",
     "description": "Classic Miniカラーアーカイブに新しいカラーまたは追加情報を送信してください。",
     "hero_title": "クラシックミニアーカイブ",
+    "eyebrow": "投稿",
     "breadcrumb_title": "カラー",
     "sign_in_title": "投稿するにはサインインしてください",
     "sign_in_description": "アーカイブにカラーを送信するにはサインインが必要です。無料アカウントを作成して始めましょう。",
@@ -1130,6 +1137,7 @@
     "page_title": "贡献颜色 - Classic Mini DIY 档案馆",
     "description": "向Classic Mini颜色档案馆提交新颜色或额外颜色信息。",
     "hero_title": "经典迷你档案馆",
+    "eyebrow": "贡献",
     "breadcrumb_title": "颜色",
     "sign_in_title": "登录以贡献",
     "sign_in_description": "您需要登录才能向档案馆提交颜色。创建免费帐户以开始。",
@@ -1213,6 +1221,7 @@
     "page_title": "색상 기여 - Classic Mini DIY 아카이브",
     "description": "Classic Mini 색상 아카이브에 새 색상 또는 추가 색상 정보를 제출하세요.",
     "hero_title": "클래식 미니 아카이브",
+    "eyebrow": "기여",
     "breadcrumb_title": "색상",
     "sign_in_title": "기여하려면 로그인하세요",
     "sign_in_description": "아카이브에 색상을 제출하려면 로그인이 필요합니다. 무료 계정을 만들어 시작하세요.",

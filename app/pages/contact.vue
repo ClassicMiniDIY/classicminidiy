@@ -20,6 +20,11 @@
       </div>
     </div>
 
+    <!-- Page Intro -->
+    <div class="container mx-auto px-4 pt-8">
+      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" :description="t('description')" />
+    </div>
+
     <!-- Contact Cards Grid -->
     <div class="container mx-auto px-4 py-8">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -283,6 +288,7 @@
     "title": "Contact Classic Mini DIY - Get Help & Submit Content",
     "description": "Contact Classic Mini DIY for general inquiries, archive submissions, technical contributions, or bug reports. Multiple ways to get in touch with our community.",
     "hero_title": "Get in Touch",
+    "eyebrow": "CONTACT",
     "breadcrumb_home": "Home",
     "breadcrumb_contact": "Contact",
     "general_inquiries_title": "General Inquiries",
@@ -321,6 +327,7 @@
     "title": "Contactar Classic Mini DIY - Obtener Ayuda y Enviar Contenido",
     "description": "Contacta Classic Mini DIY para consultas generales, envíos de archivo, contribuciones técnicas o reportes de errores. Múltiples formas de ponerse en contacto con nuestra comunidad.",
     "hero_title": "Ponte en Contacto",
+    "eyebrow": "CONTACTO",
     "breadcrumb_home": "Inicio",
     "breadcrumb_contact": "Contacto",
     "general_inquiries_title": "Consultas Generales",
@@ -359,6 +366,7 @@
     "title": "Contacter Classic Mini DIY - Obtenir de l'Aide et Soumettre du Contenu",
     "description": "Contactez Classic Mini DIY pour des demandes générales, soumissions d'archives, contributions techniques ou rapports de bogues. Plusieurs façons de contacter notre communauté.",
     "hero_title": "Entrer en Contact",
+    "eyebrow": "CONTACT",
     "breadcrumb_home": "Accueil",
     "breadcrumb_contact": "Contact",
     "general_inquiries_title": "Demandes Générales",
@@ -397,6 +405,7 @@
     "title": "Contattare Classic Mini DIY - Ottenere Aiuto e Inviare Contenuti",
     "description": "Contatta Classic Mini DIY per richieste generali, invii di archivio, contributi tecnici o segnalazioni di bug. Diversi modi per contattare la nostra comunità.",
     "hero_title": "Mettiti in Contatto",
+    "eyebrow": "CONTATTO",
     "breadcrumb_home": "Home",
     "breadcrumb_contact": "Contatto",
     "general_inquiries_title": "Richieste Generali",
@@ -435,6 +444,7 @@
     "title": "Classic Mini DIY Kontaktieren - Hilfe Erhalten und Inhalte Einreichen",
     "description": "Kontaktieren Sie Classic Mini DIY für allgemeine Anfragen, Archiv-Einreichungen, technische Beiträge oder Fehlermeldungen. Mehrere Wege, unsere Community zu kontaktieren.",
     "hero_title": "Kontakt Aufnehmen",
+    "eyebrow": "KONTAKT",
     "breadcrumb_home": "Startseite",
     "breadcrumb_contact": "Kontakt",
     "general_inquiries_title": "Allgemeine Anfragen",
@@ -473,6 +483,7 @@
     "title": "Contatar Classic Mini DIY - Obter Ajuda e Enviar Conteúdo",
     "description": "Entre em contato com Classic Mini DIY para consultas gerais, envios de arquivo, contribuições técnicas ou relatórios de bugs. Várias maneiras de contatar nossa comunidade.",
     "hero_title": "Entre em Contato",
+    "eyebrow": "CONTATO",
     "breadcrumb_home": "Início",
     "breadcrumb_contact": "Contato",
     "general_inquiries_title": "Consultas Gerais",
@@ -511,6 +522,7 @@
     "title": "Связаться с Classic Mini DIY - Получить Помощь и Отправить Контент",
     "description": "Свяжитесь с Classic Mini DIY для общих запросов, отправки архивов, технических материалов или сообщений об ошибках. Несколько способов связаться с нашим сообществом.",
     "hero_title": "Связаться с Нами",
+    "eyebrow": "КОНТАКТ",
     "breadcrumb_home": "Главная",
     "breadcrumb_contact": "Контакты",
     "general_inquiries_title": "Общие Запросы",
@@ -549,6 +561,7 @@
     "title": "Classic Mini DIYにお問い合わせ - ヘルプの取得とコンテンツの投稿",
     "description": "一般的なお問い合わせ、アーカイブの投稿、技術的な投稿、バグレポートについてはClassic Mini DIYにお問い合わせください。コミュニティに連絡する複数の方法があります。",
     "hero_title": "お問い合わせ",
+    "eyebrow": "お問い合わせ",
     "breadcrumb_home": "ホーム",
     "breadcrumb_contact": "お問い合わせ",
     "general_inquiries_title": "一般的なお問い合わせ",
@@ -587,6 +600,7 @@
     "title": "联系Classic Mini DIY - 获取帮助和提交内容",
     "description": "就一般咨询、档案提交、技术贡献或错误报告联系Classic Mini DIY。多种方式联系我们的社区。",
     "hero_title": "联系我们",
+    "eyebrow": "联系",
     "breadcrumb_home": "首页",
     "breadcrumb_contact": "联系",
     "general_inquiries_title": "一般咨询",
@@ -625,6 +639,7 @@
     "title": "Classic Mini DIY 연락하기 - 도움 받기 및 콘텐츠 제출",
     "description": "일반 문의, 아카이브 제출, 기술 기여 또는 버그 신고를 위해 Classic Mini DIY에 연락하세요. 커뮤니티에 연락하는 여러 방법이 있습니다.",
     "hero_title": "연락하기",
+    "eyebrow": "문의",
     "breadcrumb_home": "홈",
     "breadcrumb_contact": "연락처",
     "general_inquiries_title": "일반 문의",

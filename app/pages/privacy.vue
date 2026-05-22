@@ -83,7 +83,7 @@
   <div class="container mx-auto px-4 py-8">
     <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12">
-        <h1 class="text-3xl font-medium">{{ t('heading') }}</h1>
+        <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" class="mb-6" />
 
         <ol class="list-decimal pl-5 pt-5">
           <li>
@@ -159,6 +159,7 @@
     "hero_title": "Privacy Policy",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "Privacy Policy",
+    "eyebrow": "LEGAL",
     "acceptance_title": "Acceptance of Terms",
     "acceptance_content": "By using our API client, you agree to be bound by the",
     "youtube_privacy_link": "Youtube Privacy Policy",
@@ -182,6 +183,7 @@
     "hero_title": "Datenschutzrichtlinie",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "Datenschutzrichtlinie",
+    "eyebrow": "RECHTLICHES",
     "acceptance_title": "Akzeptanz der Bedingungen",
     "acceptance_content": "Durch die Nutzung unseres API-Clients stimmen Sie zu, an die",
     "youtube_privacy_link": "YouTube Datenschutzrichtlinie",
@@ -205,6 +207,7 @@
     "hero_title": "Política de Privacidad",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "Política de Privacidad",
+    "eyebrow": "LEGAL",
     "acceptance_title": "Aceptación de Términos",
     "acceptance_content": "Al usar nuestro cliente API, aceptas estar sujeto a la",
     "youtube_privacy_link": "Política de Privacidad de Youtube",
@@ -228,6 +231,7 @@
     "hero_title": "Politique de confidentialité",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "Politique de confidentialité",
+    "eyebrow": "MENTIONS LÉGALES",
     "acceptance_title": "Acceptation des conditions",
     "acceptance_content": "En utilisant notre client API, vous acceptez d'être lié par la",
     "youtube_privacy_link": "Politique de confidentialité Youtube",
@@ -251,6 +255,7 @@
     "hero_title": "Politica sulla privacy",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "Politica sulla privacy",
+    "eyebrow": "LEGALE",
     "acceptance_title": "Accettazione dei termini",
     "acceptance_content": "Utilizzando il nostro client API, accetti di essere vincolato dalla",
     "youtube_privacy_link": "Politica sulla privacy di YouTube",
@@ -274,6 +279,7 @@
     "hero_title": "プライバシーポリシー",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "プライバシーポリシー",
+    "eyebrow": "法的事項",
     "acceptance_title": "利用規約の承認",
     "acceptance_content": "私たちのAPIクライアントを使用することにより、あなたは拘束されることに同意します",
     "youtube_privacy_link": "YouTubeプライバシーポリシー",
@@ -297,6 +303,7 @@
     "hero_title": "개인정보 보호정책",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "개인정보 보호정책",
+    "eyebrow": "법적 고지",
     "acceptance_title": "약관 동의",
     "acceptance_content": "저희 API 클라이언트를 사용함으로써, 귀하는 다음에 구속되는데 동의합니다",
     "youtube_privacy_link": "YouTube 개인정보 보호정책",
@@ -320,6 +327,7 @@
     "hero_title": "Política de Privacidade",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "Política de Privacidade",
+    "eyebrow": "LEGAL",
     "acceptance_title": "Aceitação dos Termos",
     "acceptance_content": "Ao usar nosso cliente API, você concorda em estar vinculado pela",
     "youtube_privacy_link": "Política de Privacidade do Youtube",
@@ -343,6 +351,7 @@
     "hero_title": "Политика конфиденциальности",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "Политика конфиденциальности",
+    "eyebrow": "ПРАВОВАЯ ИНФОРМАЦИЯ",
     "acceptance_title": "Принятие условий",
     "acceptance_content": "Используя наш API клиент, вы соглашаетесь соблюдать",
     "youtube_privacy_link": "Политику конфиденциальности YouTube",
@@ -366,6 +375,7 @@
     "hero_title": "隐私政策",
     "hero_subtitle": "Classic Mini DIY",
     "heading": "隐私政策",
+    "eyebrow": "法律",
     "acceptance_title": "条款接受",
     "acceptance_content": "通过使用我们的API客户端，您同意受",
     "youtube_privacy_link": "YouTube隐私政策",

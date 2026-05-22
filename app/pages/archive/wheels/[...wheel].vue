@@ -127,6 +127,7 @@
               <div v-if="wheel">
               <div class="flex flex-col md:flex-row gap-8">
                 <div class="flex-1">
+                  <span class="eyebrow">{{ t('eyebrow') }}</span>
                   <h1 class="text-3xl font-bold mb-4">{{ wheel.name }}</h1>
                   <p v-if="wheel.notes" class="text-gray-600 text-lg">{{ wheel.notes }}</p>
                 </div>
@@ -283,6 +284,7 @@
 <i18n lang="json">
 {
   "en": {
+    "eyebrow": "WHEEL LIBRARY",
     "hero_title": "Classic Mini Wheels",
     "loading_text": "Loading wheel details...",
     "error_message": "Failed to load wheel details. Please try again later.",
@@ -315,6 +317,7 @@
     }
   },
   "es": {
+    "eyebrow": "BIBLIOTECA DE RUEDAS",
     "hero_title": "Llantas Classic Mini",
     "loading_text": "Cargando detalles de la llanta...",
     "error_message": "Error al cargar los detalles de la llanta. Por favor, inténtalo más tarde.",
@@ -347,6 +350,7 @@
     }
   },
   "fr": {
+    "eyebrow": "BIBLIOTHÈQUE DE JANTES",
     "hero_title": "Jantes Classic Mini",
     "loading_text": "Chargement des détails de la jante...",
     "error_message": "Échec du chargement des détails de la jante. Veuillez réessayer plus tard.",
@@ -379,6 +383,7 @@
     }
   },
   "it": {
+    "eyebrow": "LIBRERIA CERCHI",
     "hero_title": "Cerchi Classic Mini",
     "loading_text": "Caricamento dettagli cerchio...",
     "error_message": "Impossibile caricare i dettagli del cerchio. Riprova più tardi.",
@@ -411,6 +416,7 @@
     }
   },
   "de": {
+    "eyebrow": "RAD-BIBLIOTHEK",
     "hero_title": "Classic Mini Felgen",
     "loading_text": "Felgendetails werden geladen...",
     "error_message": "Felgendetails konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
@@ -443,6 +449,7 @@
     }
   },
   "pt": {
+    "eyebrow": "BIBLIOTECA DE RODAS",
     "hero_title": "Rodas Classic Mini",
     "loading_text": "A carregar detalhes da roda...",
     "error_message": "Falha ao carregar os detalhes da roda. Por favor, tente novamente mais tarde.",
@@ -475,6 +482,7 @@
     }
   },
   "ru": {
+    "eyebrow": "БИБЛИОТЕКА КОЛЁС",
     "hero_title": "Диски Classic Mini",
     "loading_text": "Загрузка информации о диске...",
     "error_message": "Не удалось загрузить информацию о диске. Пожалуйста, повторите попытку позже.",
@@ -507,6 +515,7 @@
     }
   },
   "ja": {
+    "eyebrow": "ホイールライブラリ",
     "hero_title": "クラシックミニ ホイール",
     "loading_text": "ホイールの詳細を読み込んでいます...",
     "error_message": "ホイールの詳細の読み込みに失敗しました。後でもう一度お試しください。",
@@ -539,6 +548,7 @@
     }
   },
   "zh": {
+    "eyebrow": "车轮库",
     "hero_title": "经典迷你轮毂",
     "loading_text": "正在加载轮毂详情...",
     "error_message": "加载轮毂详情失败。请稍后重试。",
@@ -571,6 +581,7 @@
     }
   },
   "ko": {
+    "eyebrow": "휠 라이브러리",
     "hero_title": "클래식 미니 휠",
     "loading_text": "휠 상세 정보를 불러오는 중...",
     "error_message": "휠 상세 정보를 불러오지 못했습니다. 나중에 다시 시도해 주세요.",
