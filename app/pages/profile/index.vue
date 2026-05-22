@@ -82,6 +82,10 @@
       <breadcrumb :page="t('breadcrumb_title')" :version="BREADCRUMB_VERSIONS.PROFILE" />
     </div>
 
+    <div class="mb-8">
+      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" />
+    </div>
+
     <!-- Auth gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
       <div class="card bg-base-100 shadow-sm border border-base-300">
@@ -223,6 +227,7 @@
     "description": "View your Classic Mini DIY profile.",
     "hero_title": "Classic Mini Archives",
     "breadcrumb_title": "My Profile",
+    "eyebrow": "ACCOUNT",
     "anonymous": "Mini Enthusiast",
     "member_since": "Member since {date}",
     "edit_profile": "Edit Profile",
@@ -251,6 +256,7 @@
     "description": "Ve tu perfil de Classic Mini DIY.",
     "hero_title": "Archivos Classic Mini",
     "breadcrumb_title": "Mi Perfil",
+    "eyebrow": "CUENTA",
     "anonymous": "Entusiasta del Mini",
     "member_since": "Miembro desde {date}",
     "edit_profile": "Editar Perfil",
@@ -279,6 +285,7 @@
     "description": "Voir votre profil Classic Mini DIY.",
     "hero_title": "Archives Classic Mini",
     "breadcrumb_title": "Mon Profil",
+    "eyebrow": "COMPTE",
     "anonymous": "Passionné de Mini",
     "member_since": "Membre depuis {date}",
     "edit_profile": "Modifier le Profil",
@@ -307,6 +314,7 @@
     "description": "Sehen Sie Ihr Classic Mini DIY Profil.",
     "hero_title": "Classic Mini Archive",
     "breadcrumb_title": "Mein Profil",
+    "eyebrow": "KONTO",
     "anonymous": "Mini-Enthusiast",
     "member_since": "Mitglied seit {date}",
     "edit_profile": "Profil Bearbeiten",
@@ -335,6 +343,7 @@
     "description": "Visualizza il tuo profilo Classic Mini DIY.",
     "hero_title": "Archivi Classic Mini",
     "breadcrumb_title": "Il Mio Profilo",
+    "eyebrow": "ACCOUNT",
     "anonymous": "Appassionato di Mini",
     "member_since": "Membro dal {date}",
     "edit_profile": "Modifica Profilo",
@@ -363,6 +372,7 @@
     "description": "Veja seu perfil Classic Mini DIY.",
     "hero_title": "Arquivos Classic Mini",
     "breadcrumb_title": "Meu Perfil",
+    "eyebrow": "CONTA",
     "anonymous": "Entusiasta do Mini",
     "member_since": "Membro desde {date}",
     "edit_profile": "Editar Perfil",
@@ -391,6 +401,7 @@
     "description": "Просмотрите свой профиль Classic Mini DIY.",
     "hero_title": "Архивы Classic Mini",
     "breadcrumb_title": "Мой Профиль",
+    "eyebrow": "АККАУНТ",
     "anonymous": "Энтузиаст Mini",
     "member_since": "Участник с {date}",
     "edit_profile": "Редактировать Профиль",
@@ -419,6 +430,7 @@
     "description": "Classic Mini DIYプロフィールを表示します。",
     "hero_title": "Classic Mini アーカイブ",
     "breadcrumb_title": "マイプロフィール",
+    "eyebrow": "アカウント",
     "anonymous": "Miniエンスージアスト",
     "member_since": "{date}から参加",
     "edit_profile": "プロフィール編集",
@@ -447,6 +459,7 @@
     "description": "查看您的Classic Mini DIY个人资料。",
     "hero_title": "Classic Mini 档案",
     "breadcrumb_title": "我的资料",
+    "eyebrow": "账户",
     "anonymous": "Mini爱好者",
     "member_since": "{date}加入",
     "edit_profile": "编辑资料",
@@ -475,6 +488,7 @@
     "description": "Classic Mini DIY 프로필을 봅니다.",
     "hero_title": "Classic Mini 아카이브",
     "breadcrumb_title": "내 프로필",
+    "eyebrow": "계정",
     "anonymous": "Mini 애호가",
     "member_since": "{date}부터 회원",
     "edit_profile": "프로필 편집",

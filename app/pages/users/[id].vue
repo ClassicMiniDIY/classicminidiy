@@ -82,6 +82,10 @@
       <breadcrumb :page="t('breadcrumb_title')" :version="BREADCRUMB_VERSIONS.PROFILE" />
     </div>
 
+    <div class="mb-8">
+      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" />
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-12">
       <span class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
@@ -191,6 +195,7 @@
   "en": {
     "hero_title": "Classic Mini Archives",
     "breadcrumb_title": "User Profile",
+    "eyebrow": "MEMBER",
     "anonymous": "Mini Enthusiast",
     "member_since": "Member since {date}",
     "not_found": {
@@ -215,6 +220,7 @@
   "es": {
     "hero_title": "Archivos Classic Mini",
     "breadcrumb_title": "Perfil de Usuario",
+    "eyebrow": "MIEMBRO",
     "anonymous": "Entusiasta del Mini",
     "member_since": "Miembro desde {date}",
     "not_found": {
@@ -239,6 +245,7 @@
   "fr": {
     "hero_title": "Archives Classic Mini",
     "breadcrumb_title": "Profil Utilisateur",
+    "eyebrow": "MEMBRE",
     "anonymous": "Passionné de Mini",
     "member_since": "Membre depuis {date}",
     "not_found": {
@@ -263,6 +270,7 @@
   "de": {
     "hero_title": "Classic Mini Archive",
     "breadcrumb_title": "Benutzerprofil",
+    "eyebrow": "MITGLIED",
     "anonymous": "Mini-Enthusiast",
     "member_since": "Mitglied seit {date}",
     "not_found": {
@@ -287,6 +295,7 @@
   "it": {
     "hero_title": "Archivi Classic Mini",
     "breadcrumb_title": "Profilo Utente",
+    "eyebrow": "MEMBRO",
     "anonymous": "Appassionato di Mini",
     "member_since": "Membro dal {date}",
     "not_found": {
@@ -311,6 +320,7 @@
   "pt": {
     "hero_title": "Arquivos Classic Mini",
     "breadcrumb_title": "Perfil do Usuário",
+    "eyebrow": "MEMBRO",
     "anonymous": "Entusiasta do Mini",
     "member_since": "Membro desde {date}",
     "not_found": {
@@ -335,6 +345,7 @@
   "ru": {
     "hero_title": "Архивы Classic Mini",
     "breadcrumb_title": "Профиль Пользователя",
+    "eyebrow": "УЧАСТНИК",
     "anonymous": "Энтузиаст Mini",
     "member_since": "Участник с {date}",
     "not_found": {
@@ -359,6 +370,7 @@
   "ja": {
     "hero_title": "Classic Mini アーカイブ",
     "breadcrumb_title": "ユーザープロフィール",
+    "eyebrow": "メンバー",
     "anonymous": "Miniエンスージアスト",
     "member_since": "{date}から参加",
     "not_found": {
@@ -383,6 +395,7 @@
   "zh": {
     "hero_title": "Classic Mini 档案",
     "breadcrumb_title": "用户资料",
+    "eyebrow": "会员",
     "anonymous": "Mini爱好者",
     "member_since": "{date}加入",
     "not_found": {
@@ -407,6 +420,7 @@
   "ko": {
     "hero_title": "Classic Mini 아카이브",
     "breadcrumb_title": "사용자 프로필",
+    "eyebrow": "회원",
     "anonymous": "Mini 애호가",
     "member_since": "{date}부터 회원",
     "not_found": {

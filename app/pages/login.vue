@@ -3,6 +3,7 @@
     <div class="card bg-base-100 shadow-md border border-base-300 w-full max-w-md">
       <div class="card-body">
         <div class="text-center mb-6">
+          <span class="eyebrow mb-1">{{ t('eyebrow') }}</span>
           <h1 class="text-3xl font-bold">{{ t('title') }}</h1>
           <p class="opacity-70 mt-2">{{ t('subtitle') }}</p>
         </div>
@@ -225,6 +226,7 @@
   "en": {
     "page_title": "Sign In - Classic Mini DIY",
     "page_description": "Sign in to contribute, track submissions, and more.",
+    "eyebrow": "SIGN IN",
     "title": "Sign In",
     "subtitle": "Sign in to contribute, track submissions, and more",
     "email_label": "Email Address",
@@ -247,6 +249,7 @@
   "es": {
     "page_title": "Iniciar Sesión - Classic Mini DIY",
     "page_description": "Inicia sesión para contribuir, seguir tus envíos y más.",
+    "eyebrow": "INICIAR SESIÓN",
     "title": "Iniciar Sesión",
     "subtitle": "Inicia sesión para contribuir, seguir tus envíos y más",
     "email_label": "Correo Electrónico",
@@ -269,6 +272,7 @@
   "fr": {
     "page_title": "Connexion - Classic Mini DIY",
     "page_description": "Connectez-vous pour contribuer, suivre vos soumissions et plus encore.",
+    "eyebrow": "CONNEXION",
     "title": "Connexion",
     "subtitle": "Connectez-vous pour contribuer, suivre vos soumissions et plus",
     "email_label": "Adresse Email",
@@ -291,6 +295,7 @@
   "it": {
     "page_title": "Accedi - Classic Mini DIY",
     "page_description": "Accedi per contribuire, seguire le tue proposte e altro.",
+    "eyebrow": "ACCEDI",
     "title": "Accedi",
     "subtitle": "Accedi per contribuire, seguire le tue proposte e altro",
     "email_label": "Indirizzo Email",
@@ -313,6 +318,7 @@
   "de": {
     "page_title": "Anmelden - Classic Mini DIY",
     "page_description": "Melden Sie sich an, um beizutragen, Einreichungen zu verfolgen und mehr.",
+    "eyebrow": "ANMELDEN",
     "title": "Anmelden",
     "subtitle": "Anmelden, um beizutragen, Einreichungen zu verfolgen und mehr",
     "email_label": "E-Mail-Adresse",
@@ -335,6 +341,7 @@
   "pt": {
     "page_title": "Entrar - Classic Mini DIY",
     "page_description": "Entre para contribuir, acompanhar suas submissões e mais.",
+    "eyebrow": "ENTRAR",
     "title": "Entrar",
     "subtitle": "Entre para contribuir, acompanhar suas submissões e mais",
     "email_label": "Endereço de Email",
@@ -357,6 +364,7 @@
   "ru": {
     "page_title": "Вход - Classic Mini DIY",
     "page_description": "Войдите, чтобы вносить вклад, отслеживать заявки и многое другое.",
+    "eyebrow": "ВХОД",
     "title": "Вход",
     "subtitle": "Войдите, чтобы вносить вклад, отслеживать заявки и многое другое",
     "email_label": "Электронная Почта",
@@ -379,6 +387,7 @@
   "ja": {
     "page_title": "サインイン - Classic Mini DIY",
     "page_description": "サインインして投稿、提出物の追跡などを行いましょう。",
+    "eyebrow": "サインイン",
     "title": "サインイン",
     "subtitle": "サインインして投稿、提出物の追跡などを行う",
     "email_label": "メールアドレス",
@@ -401,6 +410,7 @@
   "zh": {
     "page_title": "登录 - Classic Mini DIY",
     "page_description": "登录以贡献内容、跟踪提交等。",
+    "eyebrow": "登录",
     "title": "登录",
     "subtitle": "登录以贡献内容、跟踪提交等",
     "email_label": "邮箱地址",
@@ -423,6 +433,7 @@
   "ko": {
     "page_title": "로그인 - Classic Mini DIY",
     "page_description": "로그인하여 기여하고, 제출물을 추적하고, 더 많은 것을 하세요.",
+    "eyebrow": "로그인",
     "title": "로그인",
     "subtitle": "로그인하여 기여하고, 제출물을 추적하세요",
     "email_label": "이메일 주소",

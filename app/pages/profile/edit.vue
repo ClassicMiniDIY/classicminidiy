@@ -205,6 +205,10 @@
       <breadcrumb :page="t('breadcrumb_title')" :version="BREADCRUMB_VERSIONS.PROFILE" />
     </div>
 
+    <div class="mb-8">
+      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" />
+    </div>
+
     <!-- Auth gate -->
     <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
       <div class="card bg-base-100 shadow-sm border border-base-300">
@@ -407,6 +411,7 @@
     "description": "Edit your Classic Mini DIY profile.",
     "hero_title": "Classic Mini Archives",
     "breadcrumb_title": "Edit Profile",
+    "eyebrow": "ACCOUNT",
     "card_title": "Edit Profile",
     "auth": {
       "sign_in_title": "Sign In to Edit Profile",
@@ -458,6 +463,7 @@
     "description": "Edita tu perfil de Classic Mini DIY.",
     "hero_title": "Archivos Classic Mini",
     "breadcrumb_title": "Editar Perfil",
+    "eyebrow": "CUENTA",
     "card_title": "Editar Perfil",
     "auth": {
       "sign_in_title": "Inicia Sesión para Editar el Perfil",
@@ -509,6 +515,7 @@
     "description": "Modifiez votre profil Classic Mini DIY.",
     "hero_title": "Archives Classic Mini",
     "breadcrumb_title": "Modifier le Profil",
+    "eyebrow": "COMPTE",
     "card_title": "Modifier le Profil",
     "auth": {
       "sign_in_title": "Connectez-vous pour Modifier le Profil",
@@ -560,6 +567,7 @@
     "description": "Modifica il tuo profilo Classic Mini DIY.",
     "hero_title": "Archivi Classic Mini",
     "breadcrumb_title": "Modifica Profilo",
+    "eyebrow": "ACCOUNT",
     "card_title": "Modifica Profilo",
     "auth": {
       "sign_in_title": "Accedi per Modificare il Profilo",
@@ -611,6 +619,7 @@
     "description": "Bearbeiten Sie Ihr Classic Mini DIY Profil.",
     "hero_title": "Classic Mini Archive",
     "breadcrumb_title": "Profil Bearbeiten",
+    "eyebrow": "KONTO",
     "card_title": "Profil Bearbeiten",
     "auth": {
       "sign_in_title": "Anmelden zum Bearbeiten des Profils",
@@ -662,6 +671,7 @@
     "description": "Edite seu perfil Classic Mini DIY.",
     "hero_title": "Arquivos Classic Mini",
     "breadcrumb_title": "Editar Perfil",
+    "eyebrow": "CONTA",
     "card_title": "Editar Perfil",
     "auth": {
       "sign_in_title": "Entre para Editar o Perfil",
@@ -713,6 +723,7 @@
     "description": "Редактируйте свой профиль Classic Mini DIY.",
     "hero_title": "Архивы Classic Mini",
     "breadcrumb_title": "Редактировать Профиль",
+    "eyebrow": "АККАУНТ",
     "card_title": "Редактировать Профиль",
     "auth": {
       "sign_in_title": "Войдите для Редактирования Профиля",
@@ -764,6 +775,7 @@
     "description": "Classic Mini DIYのプロフィールを編集します。",
     "hero_title": "Classic Mini アーカイブ",
     "breadcrumb_title": "プロフィール編集",
+    "eyebrow": "アカウント",
     "card_title": "プロフィール編集",
     "auth": {
       "sign_in_title": "プロフィール編集にはログインが必要です",
@@ -815,6 +827,7 @@
     "description": "编辑您的Classic Mini DIY个人资料。",
     "hero_title": "Classic Mini 档案",
     "breadcrumb_title": "编辑个人资料",
+    "eyebrow": "账户",
     "card_title": "编辑个人资料",
     "auth": {
       "sign_in_title": "登录以编辑个人资料",
@@ -866,6 +879,7 @@
     "description": "Classic Mini DIY 프로필을 편집합니다.",
     "hero_title": "Classic Mini 아카이브",
     "breadcrumb_title": "프로필 편집",
+    "eyebrow": "계정",
     "card_title": "프로필 편집",
     "auth": {
       "sign_in_title": "프로필 편집을 위해 로그인하세요",

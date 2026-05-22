@@ -219,7 +219,10 @@
 
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Registry Queue</h1>
+      <div>
+        <span class="eyebrow">ADMIN</span>
+        <h1 class="text-2xl font-bold">Registry Queue</h1>
+      </div>
       <button type="button" class="btn btn-primary" :disabled="isLoading" @click="refresh">
         <i v-if="isLoading" class="fa-solid fa-refresh fa-spin"></i>
         <i v-else class="fa-solid fa-refresh mr-2"></i>

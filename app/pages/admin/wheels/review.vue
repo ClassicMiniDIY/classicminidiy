@@ -216,7 +216,10 @@
 
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Wheels Review Queue</h1>
+      <div>
+        <span class="eyebrow">ADMIN</span>
+        <h1 class="text-2xl font-bold">Wheels Review Queue</h1>
+      </div>
       <button type="button" class="btn btn-primary" :disabled="fetchStatus === 'pending'" @click="() => refreshData()">
         <i class="fas fa-sync-alt" :class="{ 'fa-spin': fetchStatus === 'pending' }"></i>
         {{ fetchStatus === 'pending' ? 'Loading...' : 'Refresh' }}

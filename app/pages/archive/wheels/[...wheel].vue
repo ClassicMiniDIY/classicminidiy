@@ -20,6 +20,8 @@
 
   const copied = ref<boolean>(false);
   const showSuggestEdit = ref(false);
+  // Legacy notes may contain embedded HTML; strip tags so they render as plain text rather than escaped markup.
+  const wheelNotes = computed(() => (wheel.value?.notes || '').replace(/<[^>]*>/g, '').trim());
   const shareImage = computed(() => {
     if (!wheel.value?.images?.length) return 'no-image';
     return wheel.value.images[0].src;
@@ -129,7 +131,7 @@
                 <div class="flex-1">
                   <span class="eyebrow">{{ t('eyebrow') }}</span>
                   <h1 class="text-3xl font-bold mb-4">{{ wheel.name }}</h1>
-                  <p v-if="wheel.notes" class="text-gray-600 text-lg">{{ wheel.notes }}</p>
+                  <p v-if="wheelNotes" class="text-gray-600 text-lg">{{ wheelNotes }}</p>
                 </div>
 
                 <div class="w-full md:w-1/3 flex justify-center">
