@@ -238,7 +238,7 @@
       <div class="grid grid-cols-12 gap-6">
         <!-- Heading -->
         <div class="col-span-12 md:col-span-8 md:col-start-3">
-          <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" />
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" as="h2" />
           <div class="divider mb-6"></div>
         </div>
 

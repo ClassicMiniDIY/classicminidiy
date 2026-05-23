@@ -74,7 +74,7 @@
     <div v-else>
       <!-- Heading -->
       <div class="mb-8">
-        <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" />
+        <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" :description="t('subtitle')" class="mb-6" as="h2" />
       </div>
 
       <!-- 2x2 Contribution Type Grid -->

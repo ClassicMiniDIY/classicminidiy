@@ -83,7 +83,7 @@
   <div class="container mx-auto px-4 py-8">
     <div class="grid grid-cols-12 gap-4">
       <div class="col-span-12">
-        <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" class="mb-6" />
+        <PageIntro :eyebrow="t('eyebrow')" :title="t('heading')" class="mb-6" as="h2" />
 
         <ol class="list-decimal pl-5 pt-5">
           <li>

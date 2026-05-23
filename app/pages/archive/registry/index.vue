@@ -108,7 +108,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')">
+            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')" as="h2">
               <template #meta>
                 <p class="text-xl mt-2">
                   <strong>{{ registryItems?.length || t('subtitle_count') }}</strong>

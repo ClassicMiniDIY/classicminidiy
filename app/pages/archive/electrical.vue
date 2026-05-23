@@ -139,6 +139,7 @@
               :eyebrow="t('eyebrow')"
               :title="t('main_heading')"
               :description="t('description_text')"
+              as="h2"
             />
           </div>
         </div>

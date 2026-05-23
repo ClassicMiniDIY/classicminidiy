@@ -62,7 +62,7 @@
         </breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description')" class="mb-6" />
+            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description')" class="mb-6" as="h2" />
             <h2 class="text-xl mt-4">
               <strong>{{ pendingItems?.length || '0' }}</strong>
               {{ t('subtitle') }}
