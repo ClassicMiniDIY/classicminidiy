@@ -10,7 +10,15 @@ export const useSupabase = () => {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true,
+          // Auto-detect is disabled: app/pages/auth/callback.vue calls
+          // supabase.auth.exchangeCodeForSession() manually for both OAuth and
+          // magic-link PKCE callbacks. Leaving auto-detect on creates a race
+          // — both calls compete for the same single-use auth code, the
+          // verifier can be consumed/cleared before either succeeds, and the
+          // flow_state row is left orphaned in the DB. See investigation in
+          // commit message for symptoms (production OAuth failures on
+          // 2026-05-23 with classicminidiy@gmail.com).
+          detectSessionInUrl: false,
           storage: window.localStorage,
           flowType: 'pkce',
           // In-memory mutex to replace Web Locks API, which causes AbortError
