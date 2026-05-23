@@ -153,7 +153,7 @@
               </div>
               <div class="flex-1 text-center sm:text-left">
                 <span class="eyebrow">{{ t('eyebrow') }}</span>
-                <h1 class="text-3xl font-bold mb-2">{{ displayName }}</h1>
+                <h2 class="text-3xl font-bold mb-2">{{ displayName }}</h2>
                 <div class="mb-3">
                   <span
                     class="badge badge-soft"

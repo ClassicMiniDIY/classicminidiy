@@ -130,7 +130,7 @@
               <div class="flex flex-col md:flex-row gap-8">
                 <div class="flex-1">
                   <span class="eyebrow">{{ t('eyebrow') }}</span>
-                  <h1 class="text-3xl font-bold mb-4">{{ wheel.name }}</h1>
+                  <h2 class="text-3xl font-bold mb-4">{{ wheel.name }}</h2>
                   <p v-if="wheelNotes" class="text-gray-600 text-lg">{{ wheelNotes }}</p>
                 </div>
 

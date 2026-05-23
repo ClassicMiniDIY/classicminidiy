@@ -183,7 +183,7 @@
           </div>
         </div>
 
-        <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')">
+        <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" as="h2">
           <template #meta>
             <p class="lead text-xl mt-2">
               <strong>{{ colors?.length || '0' }}</strong>

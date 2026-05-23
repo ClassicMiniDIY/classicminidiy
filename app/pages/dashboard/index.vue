@@ -132,7 +132,7 @@
     </div>
 
     <div class="mb-8">
-      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" />
+      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" as="h2" />
     </div>
 
     <!-- Auth gate -->

@@ -111,7 +111,7 @@
                   <i :class="[typeConfig[collection.type].icon, 'mr-1']"></i>
                   {{ typeConfig[collection.type].label }}
                 </span>
-                <h1 class="text-2xl font-bold">{{ collection.title }}</h1>
+                <h2 class="text-2xl font-bold">{{ collection.title }}</h2>
               </div>
               <p v-if="collection.description" class="opacity-70 mb-4">{{ collection.description }}</p>
               <div class="flex items-center gap-2">

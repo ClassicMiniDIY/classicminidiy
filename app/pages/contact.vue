@@ -22,7 +22,7 @@
 
     <!-- Page Intro -->
     <div class="container mx-auto px-4 pt-8">
-      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" :description="t('description')" />
+      <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" :description="t('description')" as="h2" />
     </div>
 
     <!-- Contact Cards Grid -->
