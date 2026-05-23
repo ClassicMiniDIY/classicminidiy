@@ -35,24 +35,55 @@
 
   onMounted(async () => {
     try {
-      // Explicit PKCE code exchange — supabase-js's detectSessionInUrl auto-magic
-      // is racy with our custom lock implementation, so do it manually.
-      // If detectSessionInUrl happens to win the race, our manual call will
-      // return "code already used"; in that case initAuth() below will still
-      // pick up the session, so we don't surface the error unless we end up
-      // genuinely unauthenticated.
+      // Manual PKCE code exchange. useSupabase has detectSessionInUrl: false,
+      // so supabase-js will not auto-process the ?code= param — this call is
+      // the only thing that completes the OAuth / magic-link flow.
       const code = new URLSearchParams(window.location.search).get('code');
-      let exchangeError: { message?: string } | null = null;
+
+      // --- DIAGNOSTICS (temporary) ---------------------------------------
+      // Tracking a production sign-in failure where flow_state rows are
+      // created server-side but no auth.sessions row appears. We need to
+      // see the actual error the client surfaces, the storage state at the
+      // time of the exchange, and whether getSession sees a session after.
+      // Remove this block once the regression is identified.
+      const sbStorageKeys = Object.keys(window.localStorage).filter((k) => k.startsWith('sb-'));
+      console.log('[auth/callback] sb-* localStorage keys before exchange:', sbStorageKeys);
+      console.log('[auth/callback] code present:', !!code);
+      // -------------------------------------------------------------------
+
+      let exchangeError: { message?: string; code?: string; status?: number; name?: string } | null = null;
+      let exchangeReturnedSession = false;
       if (code) {
         // Pass the code string only, NOT window.location.href — supabase-js
         // puts this value directly into the /token POST body's auth_code field.
         const result = await supabase.auth.exchangeCodeForSession(code);
-        exchangeError = result.error;
+        exchangeError = result.error as typeof exchangeError;
+        exchangeReturnedSession = !!result.data?.session;
+        console.log('[auth/callback] exchange result:', {
+          hasSession: exchangeReturnedSession,
+          error: result.error
+            ? {
+                name: (result.error as any).name,
+                code: (result.error as any).code,
+                status: (result.error as any).status,
+                message: result.error.message,
+              }
+            : null,
+        });
       }
 
       await initAuth();
       // Wait briefly for session to be detected from URL
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // --- DIAGNOSTICS (temporary) ---------------------------------------
+      const { data: sessionCheck } = await supabase.auth.getSession();
+      console.log('[auth/callback] post-init getSession:', {
+        hasSession: !!sessionCheck.session,
+        userId: sessionCheck.session?.user?.id ?? null,
+        isAuthenticatedFlag: isAuthenticated.value,
+      });
+      // -------------------------------------------------------------------
 
       if (isAuthenticated.value) {
         // Wait for profile to be fetched
@@ -68,10 +99,26 @@
           navigateTo('/', { replace: true });
         }
       } else {
-        errorMessage.value = exchangeError?.message || 'Authentication failed. Please try again.';
+        // Surface every signal the exchange gave us so we can diagnose
+        // failures from a screenshot alone instead of needing console logs.
+        const parts: string[] = [];
+        if (exchangeError) {
+          if (exchangeError.code) parts.push(`code=${exchangeError.code}`);
+          if (exchangeError.status) parts.push(`status=${exchangeError.status}`);
+          if (exchangeError.message) parts.push(exchangeError.message);
+        }
+        if (code && !exchangeError && !exchangeReturnedSession) {
+          parts.push('exchange returned no session and no error');
+        }
+        if (!code) {
+          parts.push('no auth code in callback URL');
+        }
+        errorMessage.value = parts.length ? parts.join(' | ') : 'Authentication failed. Please try again.';
       }
     } catch (e: any) {
-      errorMessage.value = e.message || 'Authentication failed';
+      console.error('[auth/callback] thrown:', e);
+      const label = [e.name, e.code, e.message].filter(Boolean).join(' | ');
+      errorMessage.value = label || 'Authentication failed';
     }
   });
 </script>
