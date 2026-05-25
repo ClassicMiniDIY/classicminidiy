@@ -31,6 +31,7 @@
 
   const supabase = useSupabase();
   const { initAuth, isAuthenticated, isAdmin, userProfile, waitForAuth } = useAuth();
+  const route = useRoute();
   const errorMessage = ref('');
 
   onMounted(async () => {
@@ -38,17 +39,32 @@
       // Manual PKCE code exchange. useSupabase has detectSessionInUrl: false,
       // so supabase-js will not auto-process the ?code= param — this call is
       // the only thing that completes the OAuth / magic-link flow.
-      const code = new URLSearchParams(window.location.search).get('code');
+      //
+      // Prefer Vue Router's parsed route.query over window.location.search:
+      // when the page is served from a stale CDN/static cache or PWA
+      // navigateFallback, window.location.search has been observed empty even
+      // though Supabase redirected with ?code=. route.query reflects the
+      // navigation Nuxt routed to, which preserves the real query.
+      const routeCode = typeof route.query.code === 'string' ? route.query.code : null;
+      const winCode = new URLSearchParams(window.location.search).get('code');
+      const code = routeCode || winCode;
 
       // --- DIAGNOSTICS (temporary) ---------------------------------------
       // Tracking a production sign-in failure where flow_state rows are
-      // created server-side but no auth.sessions row appears. We need to
-      // see the actual error the client surfaces, the storage state at the
-      // time of the exchange, and whether getSession sees a session after.
-      // Remove this block once the regression is identified.
+      // created server-side but no auth.sessions row appears. Capture every
+      // URL/storage signal so the next failed attempt is fully diagnosed.
       const sbStorageKeys = Object.keys(window.localStorage).filter((k) => k.startsWith('sb-'));
+      console.log('[auth/callback] url state:', {
+        href: window.location.href,
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash,
+        referrer: document.referrer,
+        routeQueryCode: routeCode,
+        winLocationCode: winCode,
+        codeSourceUsed: routeCode ? 'route.query' : winCode ? 'window.location.search' : 'none',
+      });
       console.log('[auth/callback] sb-* localStorage keys before exchange:', sbStorageKeys);
-      console.log('[auth/callback] code present:', !!code);
       // -------------------------------------------------------------------
 
       let exchangeError: { message?: string; code?: string; status?: number; name?: string } | null = null;
@@ -111,7 +127,14 @@
           parts.push('exchange returned no session and no error');
         }
         if (!code) {
+          // Surface enough URL state to distinguish stripped-by-cache vs
+          // never-arrived-from-Supabase. routeQueryHasCode false + winSearch
+          // empty = something served the page without the ?code= (stale CDN,
+          // PWA fallback). routeQueryHasCode true would mean code IS there
+          // but our extraction missed it — would indicate a code bug.
           parts.push('no auth code in callback URL');
+          parts.push(`routeQueryHasCode=${typeof route.query.code === 'string'}`);
+          parts.push(`winSearchLen=${window.location.search.length}`);
         }
         errorMessage.value = parts.length ? parts.join(' | ') : 'Authentication failed. Please try again.';
       }

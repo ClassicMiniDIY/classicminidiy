@@ -376,6 +376,15 @@ export default defineNuxtConfig({
     '/technical/calculators/needles': { prerender: false },
     '/technical/calculators/gearbox': { prerender: false },
     '/admin/**': { prerender: false },
+    // /auth/callback must never be prerendered or CDN-cached: each request
+    // carries a single-use ?code= that the page reads on mount. If the page
+    // is served from a static file or stale CDN cache, the JS bundle may run
+    // with no code in the URL (Supabase 302 → query loss in static handling
+    // edge cases, or PWA navigateFallback serving '/' shell).
+    '/auth/callback': {
+      prerender: false,
+      headers: { 'cache-control': 'no-store, must-revalidate' },
+    },
     '/archive/manuals': { redirect: { to: '/archive/documents?type=manual', statusCode: 301 } },
     '/archive/adverts': { redirect: { to: '/archive/documents?type=advert', statusCode: 301 } },
     '/archive/catalogues': { redirect: { to: '/archive/documents?type=catalogue', statusCode: 301 } },
@@ -570,7 +579,15 @@ export default defineNuxtConfig({
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
       // Exclude Highcharts routes from service worker caching
       // to prevent issues with client-side rendering
-      navigateFallbackDenylist: [/\/technical\/calculators\/needles/, /\/technical\/calculators\/gearbox/, /^\/t\//],
+      // /auth/callback is denylisted so the SW never serves the precached '/'
+      // shell when Supabase redirects there with a single-use ?code= — the
+      // shell HTML has no callback markup and the URL/code can be lost.
+      navigateFallbackDenylist: [
+        /\/technical\/calculators\/needles/,
+        /\/technical\/calculators\/gearbox/,
+        /^\/t\//,
+        /^\/auth\/callback/,
+      ],
       // Customize caching strategies
       runtimeCaching: [
         {
