@@ -50,18 +50,24 @@
       const code = routeCode || winCode;
 
       // --- DIAGNOSTICS (temporary) ---------------------------------------
-      // Tracking a production sign-in failure where flow_state rows are
-      // created server-side but no auth.sessions row appears. Capture every
-      // URL/storage signal so the next failed attempt is fully diagnosed.
+      // Tracking the production OAuth-callback regression. These logs are
+      // stripped from production by terser's drop_console: true and are only
+      // useful in dev / preview — the user-facing error card below is what
+      // carries the actionable signal in prod. Redact the raw auth code
+      // even from dev logs: it's a single-use credential and extensions or
+      // screen recordings could pick it up.
+      // TODO: remove this whole block once prerender:false has been verified
+      //       to resolve the regression in prod.
+      const REDACT = (u: string) => u.replace(/(code=)[^&#]+/gi, '$1[REDACTED]');
       const sbStorageKeys = Object.keys(window.localStorage).filter((k) => k.startsWith('sb-'));
       console.log('[auth/callback] url state:', {
-        href: window.location.href,
+        href: REDACT(window.location.href),
         pathname: window.location.pathname,
-        search: window.location.search,
+        search: REDACT(window.location.search),
         hash: window.location.hash,
-        referrer: document.referrer,
-        routeQueryCode: routeCode,
-        winLocationCode: winCode,
+        referrer: REDACT(document.referrer),
+        routeQueryHasCode: typeof routeCode === 'string',
+        winLocationHasCode: typeof winCode === 'string',
         codeSourceUsed: routeCode ? 'route.query' : winCode ? 'window.location.search' : 'none',
       });
       console.log('[auth/callback] sb-* localStorage keys before exchange:', sbStorageKeys);
@@ -127,11 +133,12 @@
           parts.push('exchange returned no session and no error');
         }
         if (!code) {
-          // Surface enough URL state to distinguish stripped-by-cache vs
-          // never-arrived-from-Supabase. routeQueryHasCode false + winSearch
-          // empty = something served the page without the ?code= (stale CDN,
-          // PWA fallback). routeQueryHasCode true would mean code IS there
-          // but our extraction missed it — would indicate a code bug.
+          // Temporary technical detail rendered to the UI on purpose: once
+          // prerender:false is live this branch should never fire, and on
+          // the next failure (if any) the screenshot alone tells us whether
+          // the router saw the code at all. To be removed in the cleanup
+          // PR that strips the diagnostics block once auth is verified
+          // stable in prod. (Intentionally not i18n'd — temp.)
           parts.push('no auth code in callback URL');
           parts.push(`routeQueryHasCode=${typeof route.query.code === 'string'}`);
           parts.push(`winSearchLen=${window.location.search.length}`);
