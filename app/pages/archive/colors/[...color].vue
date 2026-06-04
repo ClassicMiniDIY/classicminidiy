@@ -32,6 +32,14 @@
     }
   }
 
+  function shareColor() {
+    const c = color?.value;
+    if (!c) return;
+    shareColorItem(c.pretty.Name, c.pretty.ID);
+    const method = typeof navigator !== 'undefined' && navigator.share ? 'web_share' : 'clipboard';
+    track('color_shared', { color_id: c.raw.id, method });
+  }
+
   useHead({
     title: t('title_template', {
       name: color.value?.pretty.Name,
@@ -208,7 +216,7 @@
                 {{ copied ? t('actions.copied') : t('actions.copy_link') }}
               </button>
 
-              <button type="button" class="btn btn-neutral" @click="() => { shareColorItem(color.pretty.Name, color.pretty.ID); track('color_shared', { color_id: color.raw.id, method: navigator.share ? 'web_share' : 'clipboard' }); }">
+              <button type="button" class="btn btn-neutral" @click="shareColor">
                 <i class="fas fa-share-nodes mr-2"></i>
                 {{ t('actions.share') }}
               </button>

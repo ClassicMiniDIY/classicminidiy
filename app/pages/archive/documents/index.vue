@@ -142,6 +142,10 @@
     }, 400);
   });
 
+  onUnmounted(() => {
+    if (searchTrackTimeout) clearTimeout(searchTrackTimeout);
+  });
+
   function prevPage() {
     if (currentPage.value > 1) {
       currentPage.value--;

@@ -72,11 +72,20 @@
     track('wheel_filters_cleared');
   }
 
-  // Track search after filteredWheels settles
+  // Track search after filteredWheels settles (debounced to avoid flooding
+  // analytics with partial queries on every keystroke)
+  let wheelSearchTimer: ReturnType<typeof setTimeout> | null = null;
   watch(filteredWheels, (results) => {
+    if (wheelSearchTimer) clearTimeout(wheelSearchTimer);
     if (search.value) {
-      trackSearch('wheels', search.value, results.length);
+      wheelSearchTimer = setTimeout(() => {
+        trackSearch('wheels', search.value, results.length);
+      }, 400);
     }
+  });
+
+  onUnmounted(() => {
+    if (wheelSearchTimer) clearTimeout(wheelSearchTimer);
   });
 
   // Track pagination
