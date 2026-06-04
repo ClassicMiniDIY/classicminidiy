@@ -91,12 +91,14 @@ describe('useSupabase', () => {
       expect(options.auth.autoRefreshToken).toBe(true);
     });
 
-    it('sets detectSessionInUrl to true', async () => {
+    it('sets detectSessionInUrl to false', async () => {
       const useSupabase = await freshComposable();
       useSupabase();
 
       const options = mockCreateClient.mock.calls[0][2];
-      expect(options.auth.detectSessionInUrl).toBe(true);
+      // Intentionally false: /auth/callback does a manual PKCE code exchange,
+      // so supabase-js must not auto-process the ?code= param in the URL.
+      expect(options.auth.detectSessionInUrl).toBe(false);
     });
 
     it('sets flowType to pkce', async () => {

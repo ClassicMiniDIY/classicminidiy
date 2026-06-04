@@ -119,7 +119,7 @@ describe('SocialItems', () => {
 
   it('includes YouTube, Patreon, Instagram, and Facebook entries', () => {
     const titles = SocialItems.map((i) => i.title);
-    expect(titles.some((t) => t.includes('Youtube'))).toBe(true);
+    expect(titles.some((t) => t.includes('YouTube'))).toBe(true);
     expect(titles.some((t) => t.includes('Patreon'))).toBe(true);
     expect(titles.some((t) => t.includes('Instagram'))).toBe(true);
     expect(titles.some((t) => t.includes('Facebook'))).toBe(true);

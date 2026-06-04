@@ -17,6 +17,7 @@ const { mockAxiosGet } = vi.hoisted(() => {
     youtubeAPIKey: 'test-yt-key',
   });
   (globalThis as any).setResponseHeaders = vi.fn();
+  (globalThis as any).getQuery = (event: any) => (event && event.query) || {};
 
   return { mockAxiosGet };
 });
