@@ -64,19 +64,28 @@
     return items.filter((item: any) => item.item.toLowerCase().includes(queryLower));
   };
 
-  // Track per-table searches
+  // Track per-table searches (debounced per table so we don't flood analytics
+  // with partial queries on every keystroke)
+  const weightsSearchTimers: Record<string, ReturnType<typeof setTimeout>> = {};
   watch(
     tableSearchQueries,
     (queries) => {
       Object.entries(queries).forEach(([tableName, query]) => {
+        if (weightsSearchTimers[tableName]) clearTimeout(weightsSearchTimers[tableName]);
         if (!query) return;
-        const tableData = tables.value?.[tableName as keyof typeof tables.value] as any;
-        const results = tableData ? filterItems(tableData.items ?? [], tableName) : [];
-        trackSearch('weights', query, results.length, { table_name: tableName });
+        weightsSearchTimers[tableName] = setTimeout(() => {
+          const tableData = tables.value?.[tableName as keyof typeof tables.value] as any;
+          const results = tableData ? filterItems(tableData.items ?? [], tableName) : [];
+          trackSearch('weights', query, results.length, { table_name: tableName });
+        }, 400);
       });
     },
     { deep: true }
   );
+
+  onUnmounted(() => {
+    Object.values(weightsSearchTimers).forEach(clearTimeout);
+  });
 </script>
 
 <template>

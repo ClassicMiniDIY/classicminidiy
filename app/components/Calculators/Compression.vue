@@ -39,6 +39,15 @@
   const { capture } = usePostHog();
   const { track } = useAnalytics();
   let captureTimer: ReturnType<typeof setTimeout> | null = null;
+  // Debounced field-change tracking (signal only — no values)
+  let fieldChangeTimer: ReturnType<typeof setTimeout> | null = null;
+  function trackFieldChange(field: string) {
+    if (fieldChangeTimer) clearTimeout(fieldChangeTimer);
+    fieldChangeTimer = setTimeout(() => {
+      track('compression_input_changed', { field });
+    }, 600);
+  }
+
   watch([ratio, capacity], () => {
     if (captureTimer) clearTimeout(captureTimer);
     captureTimer = setTimeout(() => {
@@ -52,16 +61,8 @@
 
   onUnmounted(() => {
     if (captureTimer) clearTimeout(captureTimer);
-  });
-
-  // Debounced field-change tracking (signal only — no values)
-  let fieldChangeTimer: ReturnType<typeof setTimeout> | null = null;
-  function trackFieldChange(field: string) {
     if (fieldChangeTimer) clearTimeout(fieldChangeTimer);
-    fieldChangeTimer = setTimeout(() => {
-      track('compression_input_changed', { field });
-    }, 600);
-  }
+  });
 </script>
 
 <template>

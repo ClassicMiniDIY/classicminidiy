@@ -8,6 +8,12 @@
   defineProps<{
     item: ArchiveDocumentItem;
   }>();
+
+  function handleShare(item: ArchiveDocumentItem) {
+    shareArchiveItem(item.title, item.path);
+    const method = typeof navigator !== 'undefined' && navigator.share ? 'web_share' : 'clipboard';
+    track('document_shared', { document_id: item.id, method, location: 'card' });
+  }
 </script>
 
 <template>
@@ -60,7 +66,7 @@
       <p v-if="item.description" class="text-sm my-2 line-clamp-2">{{ item.description }}</p>
 
       <div class="card-actions justify-between gap-2 mt-auto">
-        <button class="btn btn-outline btn-sm" @click="() => { shareArchiveItem(item.title, item.path); track('document_shared', { document_id: item.id, method: navigator.share ? 'web_share' : 'clipboard', location: 'card' }); }">
+        <button class="btn btn-outline btn-sm" @click="handleShare(item)">
           <i class="fad fa-arrow-up-from-bracket mr-1"></i>
           {{ t('actions.share') }}
         </button>
