@@ -17,7 +17,6 @@ const { mockAxiosGet } = vi.hoisted(() => {
     youtubeAPIKey: 'test-yt-key',
   });
   (globalThis as any).setResponseHeaders = vi.fn();
-  (globalThis as any).getQuery = (event: any) => (event && event.query) || {};
 
   return { mockAxiosGet };
 });
@@ -233,6 +232,9 @@ describe('server/api/youtube/videos', () => {
     patchSetTimeout();
     mockAxiosGet.mockReset();
     (globalThis as any).setResponseHeaders = vi.fn();
+    // videos.ts reads ?limit via getQuery. Stub it (auto-cleaned by
+    // vi.unstubAllGlobals in afterEach) rather than leaking onto globalThis.
+    vi.stubGlobal('getQuery', (event: any) => (event && event.query) || {});
 
     const mod = await import('~/server/api/youtube/videos');
     handler = mod.default;
@@ -241,6 +243,7 @@ describe('server/api/youtube/videos', () => {
   afterEach(() => {
     restoreSetTimeout();
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   function makeVideoItem(title: string, videoId: string, publishedAt: string, thumbnails?: any) {
