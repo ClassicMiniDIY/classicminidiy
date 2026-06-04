@@ -2,6 +2,7 @@
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
+  const { trackOutbound } = useAnalytics();
   // Track calculator loading state
   const isCalculatorLoaded = ref(false);
 
@@ -123,6 +124,7 @@
             href="https://www.7ent.com/pages/articles-tech-tips/chart-carburetor-needle.html"
             target="_blank"
             class="link link-primary"
+            @click="trackOutbound({ destination: 'https://www.7ent.com/pages/articles-tech-tips/chart-carburetor-needle.html', group: 'reference', label: 'seven_mini_parts' })"
             >{{ t('ui.seven_mini_parts_link') }}</a
           >
         </h3>

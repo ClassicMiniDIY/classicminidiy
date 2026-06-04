@@ -2,6 +2,7 @@
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
+  const { trackSearch, trackOutbound, track } = useAnalytics();
 
   interface PartItem {
     brand: string;
@@ -25,7 +26,32 @@
 
   const togglePanel = (panel: string) => {
     activePanels.value[panel] = !activePanels.value[panel];
+    track('reference_table_toggled', { surface: 'parts', table_name: panel });
   };
+
+  // Debounced search tracking
+  let partsSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  watch(searchValue, (val) => {
+    if (partsSearchTimer) clearTimeout(partsSearchTimer);
+    partsSearchTimer = setTimeout(() => {
+      const query = val.toLowerCase();
+      const totalResults = tables.value
+        ? Object.values(tables.value).reduce(
+            (sum, table) =>
+              sum +
+              table.items.filter((item: PartItem) =>
+                Object.values(item).some((v) => String(v).toLowerCase().includes(query))
+              ).length,
+            0
+          )
+        : 0;
+      trackSearch('parts', val, totalResults);
+    }, 400);
+  });
+
+  onUnmounted(() => {
+    if (partsSearchTimer) clearTimeout(partsSearchTimer);
+  });
 
   // Function to filter items based on search
   const filterItems = (items: PartItem[]) => {
@@ -263,7 +289,7 @@
                 </ul>
               </div>
             </div>
-            <NuxtLink :to="mailtoLink" class="btn btn-primary btn-lg">
+            <NuxtLink :to="mailtoLink" class="btn btn-primary btn-lg" @click="trackOutbound({ destination: mailtoLink, group: 'parts_submit', label: 'email' })">
               <i class="fas fa-envelope mr-2"></i>
               {{ t('submissions.submit_button') }}
             </NuxtLink>

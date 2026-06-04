@@ -3,6 +3,7 @@
   import type { PrettyColor } from '../../../../data/models/colors';
 
   const { t } = useI18n();
+  const { track } = useAnalytics();
   const { params } = useRoute();
   const colorId = Array.isArray(params.color) ? params.color[0] : params.color;
   const { getColor } = useColors();
@@ -25,6 +26,7 @@
       await navigator.clipboard.writeText(url);
       copied.value = true;
       setTimeout(() => (copied.value = false), 1000);
+      track('color_link_copied', { color_id: color?.value?.raw.id, color_name: color?.value?.pretty.Name });
     } catch ($e) {
       copied.value = false;
     }
@@ -206,12 +208,12 @@
                 {{ copied ? t('actions.copied') : t('actions.copy_link') }}
               </button>
 
-              <button type="button" class="btn btn-neutral" @click="shareColorItem(color.pretty.Name, color.pretty.ID)">
+              <button type="button" class="btn btn-neutral" @click="() => { shareColorItem(color.pretty.Name, color.pretty.ID); track('color_shared', { color_id: color.raw.id, method: navigator.share ? 'web_share' : 'clipboard' }); }">
                 <i class="fas fa-share-nodes mr-2"></i>
                 {{ t('actions.share') }}
               </button>
 
-              <NuxtLink :to="`/contribute/color?color=${color.raw.id}`" class="btn btn-outline">
+              <NuxtLink :to="`/contribute/color?color=${color.raw.id}`" class="btn btn-outline" @click="track('contribute_cta_clicked', { type: 'color', location: 'color_detail' })">
                 <i class="fas fa-edit mr-2"></i>
                 {{ t('actions.contribute') }}
               </NuxtLink>

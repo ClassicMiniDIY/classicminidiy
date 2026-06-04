@@ -2,6 +2,7 @@
   import { HERO_TYPES } from '../../../../data/models/generic';
 
   const { t } = useI18n();
+  const { track } = useAnalytics();
   const { listApproved } = useRegistry();
 
   // Define table columns
@@ -99,7 +100,11 @@
                   <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
                 </div>
               </div>
-              <NuxtLink to="/contribute/registry" class="btn btn-primary btn-outline btn-sm">
+              <NuxtLink
+                to="/contribute/registry"
+                class="btn btn-primary btn-outline btn-sm"
+                @click="track('contribute_cta_clicked', { type: 'registry', location: 'archive_registry' })"
+              >
                 {{ t('contribute_banner_button') }}
               </NuxtLink>
             </div>
@@ -117,13 +122,21 @@
               </template>
             </PageIntro>
             <p class="font-bold mt-4 mb-5">{{ t('submission_status_text') }}</p>
-            <NuxtLink to="/archive/registry/pending" class="btn btn-primary">
+            <NuxtLink
+              to="/archive/registry/pending"
+              class="btn btn-primary"
+              @click="track('contribute_cta_clicked', { type: 'registry', location: 'archive_registry' })"
+            >
               <i class="fa-duotone fa-clipboard-question mr-2"></i>
               {{ t('track_submission_button') }}
             </NuxtLink>
           </div>
           <div class="col-span-12 md:col-span-4">
-            <a href="#submitAnchor" class="block">
+            <a
+              href="#submitAnchor"
+              class="block"
+              @click="track('contribute_cta_clicked', { type: 'registry', location: 'archive_registry' })"
+            >
               <div class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-2xl transition-shadow duration-300">
                 <div class="card-body">
                   <div class="flex items-start space-x-4">

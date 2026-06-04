@@ -130,6 +130,9 @@
   });
 
   const { signInWithEmail, signInWithGoogle, signInWithApple, isAuthenticated } = useAuth();
+  const { track } = useAnalytics();
+
+  const emailDomain = (addr: string) => (addr.includes('@') ? addr.split('@')[1] : undefined);
 
   // Reactive state
   const email = ref('');
@@ -167,9 +170,11 @@
     try {
       await signInWithEmail(email.value, turnstileToken.value);
       magicLinkSent.value = true;
+      track('magic_link_sent', { email_domain: emailDomain(email.value) });
     } catch (error: any) {
       console.error('Login error:', error);
       errorMessage.value = error.message || t('login_error');
+      track('auth_failed', { method: 'magic_link', error_message: error.message });
       // Tokens are single-use. Reset the widget so the next attempt gets a fresh challenge.
       turnstileToken.value = '';
       turnstileRef.value?.reset();
@@ -182,11 +187,13 @@
   const handleGoogleLogin = async () => {
     isLoading.value = true;
     errorMessage.value = '';
+    track('oauth_initiated', { provider: 'google' });
     try {
       await signInWithGoogle();
     } catch (error: any) {
       console.error('Google login error:', error);
       errorMessage.value = error.message || t('oauth_error');
+      track('auth_failed', { method: 'oauth', provider: 'google', error_message: error.message });
       isLoading.value = false;
     }
   };
@@ -195,11 +202,13 @@
   const handleAppleLogin = async () => {
     isLoading.value = true;
     errorMessage.value = '';
+    track('oauth_initiated', { provider: 'apple' });
     try {
       await signInWithApple();
     } catch (error: any) {
       console.error('Apple login error:', error);
       errorMessage.value = error.message || t('oauth_error');
+      track('auth_failed', { method: 'oauth', provider: 'apple', error_message: error.message });
       isLoading.value = false;
     }
   };

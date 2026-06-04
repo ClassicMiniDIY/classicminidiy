@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
   const { t } = useI18n();
+  const { track } = useAnalytics();
   const input = ref('');
   const inputRef = ref<HTMLTextAreaElement>();
   const router = useRouter();
@@ -64,6 +65,7 @@
     if (!input.value.trim()) return;
 
     const message = input.value.trim();
+    track('floating_chat_submitted', { message_length: message.length });
 
     // Navigate to chat page with the input as a query parameter
     await router.push({

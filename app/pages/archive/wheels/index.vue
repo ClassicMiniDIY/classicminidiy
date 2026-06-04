@@ -2,6 +2,7 @@
   import { HERO_TYPES } from '../../../../data/models/generic';
 
   const { t } = useI18n();
+  const { track } = useAnalytics();
 
   useHead({
     title: t('title'),
@@ -91,7 +92,11 @@
                 <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
               </div>
             </div>
-            <NuxtLink to="/contribute/wheel" class="btn btn-primary btn-outline btn-sm">
+            <NuxtLink
+              to="/contribute/wheel"
+              class="btn btn-primary btn-outline btn-sm"
+              @click="track('contribute_cta_clicked', { type: 'wheel', location: 'archive_wheels' })"
+            >
               {{ t('contribute_banner_button') }}
             </NuxtLink>
           </div>
@@ -108,7 +113,11 @@
             />
         </div>
         <div class="col-span-12 md:col-span-4">
-          <NuxtLink :to="'/contribute/wheel?newWheel=true'" :title="t('add_wheel_card.link_title')">
+          <NuxtLink
+            :to="'/contribute/wheel?newWheel=true'"
+            :title="t('add_wheel_card.link_title')"
+            @click="track('contribute_cta_clicked', { type: 'wheel', location: 'archive_wheels_sidebar' })"
+          >
             <div class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-2xl transition-shadow">
               <div class="card-body">
                 <div class="flex items-start">

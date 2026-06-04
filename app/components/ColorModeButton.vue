@@ -7,6 +7,12 @@ const props = withDefaults(
 );
 
 const { isDark, toggle } = useColorMode();
+const { track } = useAnalytics();
+
+function handleToggle() {
+  toggle();
+  track('color_mode_toggled', { new_mode: isDark.value ? 'light' : 'dark' });
+}
 
 const sizeClass = computed(() => {
   switch (props.size) {
@@ -26,7 +32,7 @@ const sizeClass = computed(() => {
   <button
     :class="['btn btn-ghost btn-circle', sizeClass]"
     :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-    @click="toggle"
+    @click="handleToggle"
   >
     <i v-if="isDark" class="fas fa-sun" aria-hidden="true"></i>
     <i v-else class="fas fa-moon" aria-hidden="true"></i>

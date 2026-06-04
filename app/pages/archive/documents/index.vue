@@ -3,6 +3,7 @@
   import type { ArchiveDocumentItem } from '../../../composables/useArchiveDocuments';
 
   const { t } = useI18n();
+  const { track, trackSearch } = useAnalytics();
   const route = useRoute();
   const router = useRouter();
 
@@ -132,16 +133,27 @@
     });
   });
 
-  watch(search, () => {
+  let searchTrackTimeout: ReturnType<typeof setTimeout> | null = null;
+  watch(search, (query) => {
     currentPage.value = 1;
+    if (searchTrackTimeout) clearTimeout(searchTrackTimeout);
+    searchTrackTimeout = setTimeout(() => {
+      trackSearch('documents', query, filteredDocuments.value.length);
+    }, 400);
   });
 
   function prevPage() {
-    if (currentPage.value > 1) currentPage.value--;
+    if (currentPage.value > 1) {
+      currentPage.value--;
+      track('list_paginated', { surface: 'documents', page: currentPage.value });
+    }
   }
 
   function nextPage() {
-    if (currentPage.value < pageCount.value) currentPage.value++;
+    if (currentPage.value < pageCount.value) {
+      currentPage.value++;
+      track('list_paginated', { surface: 'documents', page: currentPage.value });
+    }
   }
 
   // Flat table data with manual expand/collapse (avoids UTable tree DOM patching bug)
@@ -165,12 +177,14 @@
 
   function toggleCollection(collectionId: string) {
     const next = new Set(expandedCollections.value);
+    const isExpanding = !next.has(collectionId);
     if (next.has(collectionId)) {
       next.delete(collectionId);
     } else {
       next.add(collectionId);
     }
     expandedCollections.value = next;
+    track('collection_row_expanded', { collection_id: collectionId, is_expanded: isExpanding });
   }
 
   const flatTableData = computed<FlatTableRow[]>(() => {
@@ -302,7 +316,7 @@
                   <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
                 </div>
               </div>
-              <NuxtLink to="/contribute/document" class="btn btn-primary btn-outline btn-sm">
+              <NuxtLink to="/contribute/document" class="btn btn-primary btn-outline btn-sm" @click="track('contribute_cta_clicked', { type: 'document', location: 'archive_documents' })">
                 {{ t('contribute_banner_button') }}
               </NuxtLink>
             </div>
@@ -317,7 +331,7 @@
             type="button"
             class="btn btn-sm"
             :class="activeType === filter.value ? 'btn-primary' : 'btn-neutral btn-outline'"
-            @click="activeType = filter.value"
+            @click="() => { const prev = activeType; activeType = filter.value; track('document_filter_changed', { filter_type: filter.value, is_active: filter.value !== prev }); }"
           >
             {{ t(filter.labelKey) }} ({{ getFilterCount(filter.value) }})
           </button>
@@ -338,7 +352,7 @@
 
           <div class="flex gap-2">
             <!-- Sort Dropdown -->
-            <select v-model="sortBy" class="select select-bordered">
+            <select v-model="sortBy" class="select select-bordered" @change="track('document_list_changed', { sort_by: sortBy })">
               <option value="title">{{ t('sort.title') }}</option>
               <option value="newest">{{ t('sort.newest') }}</option>
               <option value="oldest">{{ t('sort.oldest') }}</option>
@@ -350,7 +364,7 @@
                 type="button"
                 class="btn join-item"
                 :class="viewMode === 'cards' ? 'btn-primary' : 'btn-neutral btn-outline'"
-                @click="viewMode = 'cards'"
+                @click="() => { viewMode = 'cards'; track('document_list_changed', { view_mode: 'cards' }); }"
               >
                 <i class="fad fa-grid-2"></i>
               </button>
@@ -358,7 +372,7 @@
                 type="button"
                 class="btn join-item"
                 :class="viewMode === 'table' ? 'btn-primary' : 'btn-neutral btn-outline'"
-                @click="viewMode = 'table'"
+                @click="() => { viewMode = 'table'; track('document_list_changed', { view_mode: 'table' }); }"
               >
                 <i class="fad fa-table"></i>
               </button>

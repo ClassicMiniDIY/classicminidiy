@@ -37,6 +37,8 @@
     value: string;
   }
 
+  const { track } = useAnalytics();
+
   // Current user
   const { user: currentUser } = useAuth();
 
@@ -218,6 +220,8 @@
         },
       });
 
+      track('admin_action', { item_type: 'user', action: 'trust_level_changed' });
+
       // Update trust level locally — is_admin is independent and not changed here
       if (response.value?.users) {
         const index = response.value.users.findIndex((u) => u.id === userToUpdate.id);
@@ -257,6 +261,8 @@
           isAdmin: newValue,
         },
       });
+
+      track('admin_action', { item_type: 'user', action: newValue ? 'admin_granted' : 'admin_revoked' });
 
       // Update locally
       if (response.value?.users) {

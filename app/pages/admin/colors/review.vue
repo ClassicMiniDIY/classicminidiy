@@ -27,6 +27,8 @@
     width?: string;
   }
 
+  const { track } = useAnalytics();
+
   // State
   const errorMessage = ref('');
   const isProcessing = ref(false);
@@ -168,6 +170,8 @@
       delete editingItems[item.id];
       delete editedData[item.id];
 
+      track('admin_action', { item_type: 'color', action: 'approve' });
+
       // Update item status to approved
       if (colorItems.value) {
         const index = colorItems.value.findIndex((i) => i.id === item.id);
@@ -213,6 +217,8 @@
           details: itemToReject,
         },
       });
+
+      track('admin_action', { item_type: 'color', action: 'reject' });
 
       // Update item status to rejected
       if (colorItems.value) {

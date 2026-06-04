@@ -16,6 +16,7 @@
         target="_blank"
         rel="noopener noreferrer"
         class="block p-3 rounded-lg bg-default hover:bg-muted transition-colors border border-default hover:border-muted group"
+        @click="trackOutbound({ destination: link.url, label: link.title, group: 'chat_useful_link' })"
       >
         <div class="space-y-2">
           <!-- Title and Score -->
@@ -64,6 +65,7 @@
   }
 
   const { t } = useI18n();
+  const { trackOutbound } = useAnalytics();
 
   defineProps<Props>();
 

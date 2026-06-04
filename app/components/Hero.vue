@@ -2,6 +2,7 @@
   import { HERO_TYPES } from '../../data/models/generic';
 
   const { t } = useI18n();
+  const { track, trackOutbound } = useAnalytics();
   let styleObject: any;
 
   const props = defineProps({
@@ -129,7 +130,7 @@
           </span>
         </h1>
         <div v-if="heroType === HERO_TYPES.HOME" class="mt-6 flex flex-wrap gap-2">
-          <NuxtLink to="/technical" class="btn btn-secondary">
+          <NuxtLink to="/technical" class="btn btn-secondary" @click="track('home_cta_clicked', { cta: 'toolbox', location: 'hero' })">
             <i class="fad fa-toolbox mr-2"></i>{{ t('cta_open_toolbox') }}
           </NuxtLink>
           <a
@@ -137,6 +138,7 @@
             target="_blank"
             rel="noopener"
             class="btn btn-outline text-white border-white/50 hover:bg-white/10 hover:border-white"
+            @click="trackOutbound({ destination: 'https://youtube.com/c/classicminidiy?sub_confirmation=1', group: 'youtube_channel', location: 'hero' })"
           >
             <i class="fab fa-youtube mr-2"></i>{{ t('cta_watch_channel') }}
           </a>

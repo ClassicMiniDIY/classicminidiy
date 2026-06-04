@@ -1,5 +1,6 @@
 <script lang="ts" setup>
   const { t, tm, rt } = useI18n();
+  const { track, trackOutbound } = useAnalytics();
   // tm() returns the raw structure for translation arrays/objects. Guard
   // against a missing key or unexpected shape so an i18n drift never
   // crashes the home page.
@@ -131,7 +132,7 @@
         <h2 class="text-3xl md:text-4xl">{{ t('home.toolgrid.heading') }}</h2>
         <p>{{ t('home.toolgrid.subheading') }}</p>
       </div>
-      <NuxtLink to="/technical" class="btn btn-outline btn-sm">
+      <NuxtLink to="/technical" class="btn btn-outline btn-sm" @click="track('home_cta_clicked', { cta: 'all_tools' })">
         <i class="fad fa-table-cells mr-1"></i>{{ t('home.toolgrid.all_tools') }}
       </NuxtLink>
     </div>
@@ -197,7 +198,7 @@
               <span>{{ item }}</span>
             </li>
           </ul>
-          <NuxtLink to="/archive" class="btn btn-primary">
+          <NuxtLink to="/archive" class="btn btn-primary" @click="track('home_cta_clicked', { cta: 'archive' })">
             <i class="fad fa-books mr-2"></i>{{ t('home.archive_feature.cta') }}
           </NuxtLink>
         </div>
@@ -213,7 +214,7 @@
         <h2 class="text-3xl md:text-4xl">{{ t('home.wheel_preview.heading') }}</h2>
         <p>{{ t('home.wheel_preview.subheading') }}</p>
       </div>
-      <NuxtLink to="/contribute/wheels" class="btn btn-secondary btn-sm">
+      <NuxtLink to="/contribute/wheels" class="btn btn-secondary btn-sm" @click="track('home_cta_clicked', { cta: 'wheel_registry' })">
         <i class="fad fa-paper-plane mr-1"></i>{{ t('home.wheel_preview.cta') }}
       </NuxtLink>
     </div>
@@ -223,6 +224,7 @@
         :key="wheel.uuid"
         :to="`/archive/wheels/${wheel.uuid}`"
         class="wheel-card"
+        @click="track('wheel_card_clicked', { wheel_uuid: wheel.uuid, wheel_name: wheel.name })"
       >
         <div
           class="wheel-card__ph"
@@ -274,6 +276,7 @@
           rel="noopener"
           href="https://patreon.com/classicminidiy"
           target="_blank"
+          @click="trackOutbound({ destination: 'https://patreon.com/classicminidiy', group: 'support', label: 'patreon' })"
         >
           <i class="fab fa-patreon mr-2" />
           {{ t('common.donate') }}
@@ -283,6 +286,7 @@
           rel="noopener"
           href="https://github.com/somethingnew71/classicminidiy"
           target="_blank"
+          @click="trackOutbound({ destination: 'https://github.com/somethingnew71/classicminidiy', group: 'support', label: 'github' })"
         >
           <i class="fab fa-github mr-2" />
           {{ t('common.contribute') }}

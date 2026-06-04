@@ -4,6 +4,7 @@
 
   const { t } = useI18n();
   const { capture } = usePostHog();
+  const { track, trackOutbound } = useAnalytics();
 
   interface ChassisPosition {
     position: number;
@@ -113,11 +114,16 @@
     }
   }
 
+  watch(yearRange, (val) => {
+    track('chassis_year_range_changed', { year_range: val });
+  });
+
   function resetForm() {
     chassisNumber.value = '';
     yearRange.value = yearRangeOptions[0] || '';
     decodedResult.value = null;
     errorMessage.value = '';
+    track('chassis_decoder_reset');
   }
 
   function getPositionColorClass(position: number): string {
@@ -430,6 +436,7 @@
               target="_blank"
               rel="noopener noreferrer"
               class="link link-primary"
+              @click="trackOutbound({ destination: 'https://www.minimania.com/Mini_Chassis_VIN_and_Commission_Numbers__Part_I__Revised_', group: 'reference', label: 'mini_mania' })"
             >
               {{ t('attribution.link_text') }}</a
             >

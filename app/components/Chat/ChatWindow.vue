@@ -99,7 +99,7 @@
         <!-- Floating Scroll to Bottom Button -->
         <button
           v-if="showScrollButton"
-          @click="scrollToBottom"
+          @click="scrollToBottom(true)"
           class="btn btn-sm btn-outline btn-square absolute bottom-24 right-6 lg:right-80 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
           :title="t('scroll_to_bottom')"
           :aria-label="t('scroll_to_bottom')"
@@ -310,6 +310,7 @@
   const isLoading = computed(() => streamContext?.isLoading.value || false);
 
   const { capture } = usePostHog();
+  const { track } = useAnalytics();
 
   async function handleSubmit() {
     if (!input.value.trim() || !streamContext || isLoading.value) return;
@@ -378,7 +379,10 @@
   });
 
   // Scroll to bottom function
-  function scrollToBottom() {
+  function scrollToBottom(fromButton = false) {
+    if (fromButton) {
+      track('chat_scroll_to_bottom');
+    }
     if (messagesContainer.value) {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
@@ -399,7 +403,7 @@
     () => {
       nextTick(() => {
         if (messagesContainer.value && !showScrollButton.value) {
-          scrollToBottom();
+          scrollToBottom(false);
         }
       });
     },
@@ -445,7 +449,7 @@
         inputRef.value.focus();
       }
       // Initial scroll to bottom
-      scrollToBottom();
+      scrollToBottom(false);
     });
   });
 </script>

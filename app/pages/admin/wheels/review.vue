@@ -17,6 +17,8 @@
     ],
   });
 
+  const { track } = useAnalytics();
+
   // State
   const errorMessage = ref('');
   const isProcessing = ref(false);
@@ -81,6 +83,8 @@
       // Clean up editing state
       editingItems.value.delete(item.uuid);
       editedData.value.delete(item.uuid);
+
+      track('admin_action', { item_type: 'wheel', action: 'approve' });
 
       // Update status in place instead of removing
       if (wheelsToReview.value) {
@@ -184,6 +188,8 @@
       if (error.value) {
         throw new Error(error.value.data?.message || 'Failed to delete item');
       }
+
+      track('admin_action', { item_type: 'wheel', action: 'reject' });
 
       // Update status to rejected instead of removing
       if (wheelsToReview.value && selectedItem.value) {

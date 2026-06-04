@@ -3,6 +3,7 @@
 
   const { t } = useI18n();
   const { isAuthenticated, userProfile } = useAuth();
+  const { track } = useAnalytics();
 
   useHead({
     title: t('page_title'),
@@ -79,7 +80,7 @@
 
       <!-- 2x2 Contribution Type Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-        <NuxtLink v-for="item in contributionTypes" :key="item.to" :to="item.to">
+        <NuxtLink v-for="item in contributionTypes" :key="item.to" :to="item.to" @click="track('contribute_type_selected', { type: item.to.split('/').pop() })">
           <div class="card bg-base-100 shadow-md h-full hover:shadow-xl transition-shadow">
             <div class="card-body text-center p-6">
               <i :class="item.icon" class="text-4xl text-primary mb-4 block"></i>

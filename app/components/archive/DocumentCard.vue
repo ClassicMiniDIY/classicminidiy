@@ -3,6 +3,7 @@
   import { shareArchiveItem } from '../../../data/models/helper-utils';
 
   const { t } = useI18n();
+  const { track, trackDownload } = useAnalytics();
 
   defineProps<{
     item: ArchiveDocumentItem;
@@ -59,7 +60,7 @@
       <p v-if="item.description" class="text-sm my-2 line-clamp-2">{{ item.description }}</p>
 
       <div class="card-actions justify-between gap-2 mt-auto">
-        <button class="btn btn-outline btn-sm" @click="shareArchiveItem(item.title, item.path)">
+        <button class="btn btn-outline btn-sm" @click="() => { shareArchiveItem(item.title, item.path); track('document_shared', { document_id: item.id, method: navigator.share ? 'web_share' : 'clipboard', location: 'card' }); }">
           <i class="fad fa-arrow-up-from-bracket mr-1"></i>
           {{ t('actions.share') }}
         </button>
@@ -69,6 +70,7 @@
           :to="item.download"
           target="_blank"
           class="btn btn-sm btn-primary"
+          @click="trackDownload({ document_id: item.id, file_type: item.download.split('.').pop()?.toUpperCase(), location: 'card', name: item.title })"
         >
           <i class="fad fa-download mr-1"></i> {{ t('actions.download') }}
         </NuxtLink>

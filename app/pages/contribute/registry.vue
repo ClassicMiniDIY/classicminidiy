@@ -3,6 +3,14 @@
 
   const { t } = useI18n();
   const { capture } = usePostHog();
+  const { trackFormStarted } = useAnalytics();
+  const hasStarted = ref(false);
+
+  function onFormStart() {
+    if (hasStarted.value) return;
+    hasStarted.value = true;
+    trackFormStarted('registry');
+  }
   const { isAuthenticated } = useAuth();
   const { submitNewItem } = useSubmissions();
 
@@ -229,6 +237,7 @@
                           class="input input-bordered w-full"
                           :class="{ 'input-error': !formData.year && touchedFields.year }"
                           :disabled="processing"
+                          @change="onFormStart"
                           @blur="touchedFields.year = true"
                         />
                         <p v-if="!formData.year && touchedFields.year" class="text-sm text-error mt-1">
@@ -251,6 +260,7 @@
                           class="input input-bordered w-full"
                           :class="{ 'input-error': formData.model === '' && touchedFields.model }"
                           :disabled="processing"
+                          @focus="onFormStart"
                           @blur="touchedFields.model = true"
                         />
                         <p v-if="formData.model === '' && touchedFields.model" class="text-sm text-error mt-1">

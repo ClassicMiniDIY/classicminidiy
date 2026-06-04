@@ -4,6 +4,7 @@
   const switchLocalePath = useSwitchLocalePath();
   const { t, locale, locales, setLocale } = useI18n();
   const { user, userProfile, isAuthenticated, isAdmin, signOut } = useAuth();
+  const { track, trackOutbound } = useAnalytics();
 
   const displayName = computed(() => {
     if (!user.value) return '';
@@ -104,6 +105,7 @@
   };
 
   const handleNavClick = (item: any) => {
+    track('nav_item_clicked', { label: item.label, surface: 'mobile' });
     if (!item.to?.startsWith('http')) {
       isMobileMenuOpen.value = false;
     }
@@ -150,6 +152,7 @@
               'btn btn-ghost btn-md font-bold',
               isActive(item.to as string) ? 'text-primary' : '',
             ]"
+            @click="track('nav_item_clicked', { label: item.label, surface: 'desktop' })"
           >
             <i :class="['fad', item.icon, 'mr-1']"></i>
             {{ item.label }}
@@ -167,7 +170,7 @@
               class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-56 p-2 border border-base-300"
             >
               <li v-for="link in communityLinks" :key="link.to">
-                <a :href="link.to" target="_blank" rel="noopener noreferrer" @click="closeDropdowns">
+                <a :href="link.to" target="_blank" rel="noopener noreferrer" @click="closeDropdowns(); trackOutbound({ destination: link.to, label: link.label, group: 'community_nav' })">
                   <i :class="['fad', link.faIcon]"></i>
                   {{ link.label }}
                 </a>
@@ -220,31 +223,31 @@
               class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-56 p-2 border border-base-300"
             >
               <li v-if="isAdmin">
-                <NuxtLink to="/admin" @click="closeDropdowns">
+                <NuxtLink to="/admin" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.admin') })">
                   <i class="fas fa-shield-check"></i>
                   {{ t('profile.admin') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/dashboard" @click="closeDropdowns">
+                <NuxtLink to="/dashboard" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.dashboard') })">
                   <i class="fas fa-gauge"></i>
                   {{ t('profile.dashboard') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/dashboard" @click="closeDropdowns">
+                <NuxtLink to="/dashboard" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.submissions') })">
                   <i class="fas fa-file-lines"></i>
                   {{ t('profile.submissions') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/profile" @click="closeDropdowns">
+                <NuxtLink to="/profile" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.profile') })">
                   <i class="fas fa-user"></i>
                   {{ t('profile.profile') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/contribute" @click="closeDropdowns">
+                <NuxtLink to="/contribute" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.contribute') })">
                   <i class="fas fa-paper-plane"></i>
                   {{ t('profile.contribute') }}
                 </NuxtLink>
@@ -273,7 +276,7 @@
             type="button"
             class="btn btn-ghost btn-sm btn-square"
             :aria-label="t('mobile_menu_title')"
-            @click="isMobileMenuOpen = true"
+            @click="isMobileMenuOpen = true; track('mobile_menu_toggled', { state: 'open' })"
           >
             <i class="fad fa-bars text-xl"></i>
           </button>
@@ -302,7 +305,7 @@
                 type="button"
                 class="btn btn-ghost btn-sm btn-square"
                 :aria-label="t('close_menu')"
-                @click="isMobileMenuOpen = false"
+                @click="isMobileMenuOpen = false; track('mobile_menu_toggled', { state: 'closed' })"
               >
                 <i class="fas fa-xmark text-lg"></i>
               </button>
@@ -335,6 +338,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 class="btn btn-ghost btn-block justify-start font-bold"
+                @click="trackOutbound({ destination: link.to, label: link.label, group: 'community_nav' })"
               >
                 <i :class="['fad', link.faIcon, 'mr-2']"></i>
                 {{ link.label }}

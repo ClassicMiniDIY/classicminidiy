@@ -5,6 +5,7 @@
 
   const { t } = useI18n();
   const { isAuthenticated, user, waitForAuth } = useAuth();
+  const { track } = useAnalytics();
   const { fetchProfile, getPublicProfile, getPublicProfileVehicles } = useProfile();
   const { fetchPublicConfigs } = useGearConfigs();
 
@@ -63,6 +64,7 @@
 
   function copyShareUrl() {
     navigator.clipboard.writeText(shareUrl.value);
+    track('profile_share_url_copied');
   }
 
   useHead({

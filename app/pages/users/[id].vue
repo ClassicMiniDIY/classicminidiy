@@ -5,6 +5,7 @@
   const { t } = useI18n();
   const route = useRoute();
   const { getPublicProfile, getPublicProfileVehicles } = useProfile();
+  const { track } = useAnalytics();
   const { fetchPublicConfigs } = useGearConfigs();
 
   const identifier = route.params.id as string;
@@ -31,6 +32,7 @@
       }
 
       profile.value = result.profile;
+      track('public_profile_viewed', { target_user_id: result.profile.id });
 
       // Fetch gear configs and vehicles in parallel
       const [configs, vehiclesData] = await Promise.all([

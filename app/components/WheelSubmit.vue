@@ -20,6 +20,14 @@
 
   const { t } = useI18n();
   const { getWheel: fetchWheel, submitWheel } = useWheels();
+  const { trackFormStarted } = useAnalytics();
+  const hasStarted = ref(false);
+
+  function onFormStart() {
+    if (hasStarted.value) return;
+    hasStarted.value = true;
+    trackFormStarted('wheel');
+  }
 
   // Reactive state
   const wheel = ref();
@@ -364,6 +372,7 @@
                   v-model="name"
                   type="text"
                   :placeholder="t('step1.wheel_name_placeholder')"
+                  @focus="onFormStart"
                   @blur="markFieldAsTouched('name')"
                 />
               </label>

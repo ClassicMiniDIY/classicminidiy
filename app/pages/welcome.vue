@@ -140,6 +140,7 @@
   });
 
   const { isAuthenticated, userProfile, initAuth, fetchUserProfile, user } = useAuth();
+  const { track } = useAnalytics();
   const supabase = useSupabase();
   const route = useRoute();
 
@@ -202,6 +203,10 @@
         await fetchUserProfile(user.value!.id);
       }
 
+      track('profile_setup_completed', {
+        filled_display_name: !!displayName.value.trim(),
+        filled_bio: !!bio.value.trim(),
+      });
       navigateTo(redirectTo.value, { replace: true });
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -213,6 +218,7 @@
 
   // Skip profile setup and navigate
   const handleSkip = () => {
+    track('profile_setup_skipped');
     navigateTo(redirectTo.value, { replace: true });
   };
 </script>

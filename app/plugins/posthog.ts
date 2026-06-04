@@ -24,12 +24,19 @@ export default defineNuxtPlugin({
       },
     });
 
+    // Manual SPA pageviews. router.afterEach does not fire for the initial
+    // (hydrated) navigation, so capture the entry route explicitly. The
+    // last-path guard prevents double-counting if afterEach also fires for it.
+    let lastTrackedPath = '';
+    const trackPageview = (fullPath: string) => {
+      if (fullPath === lastTrackedPath) return;
+      lastTrackedPath = fullPath;
+      posthog.capture('$pageview', { current_url: fullPath });
+    };
+
+    nextTick(() => trackPageview(router.currentRoute.value.fullPath));
     router.afterEach((to) => {
-      nextTick(() => {
-        posthog.capture('$pageview', {
-          current_url: to.fullPath,
-        });
-      });
+      nextTick(() => trackPageview(to.fullPath));
     });
 
     return {

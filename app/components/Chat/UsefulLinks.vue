@@ -12,6 +12,7 @@
         target="_blank"
         rel="noopener noreferrer"
         class="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-default hover:border-muted"
+        @click="trackOutbound({ destination: link.url, label: link.title, group: 'chat_useful_link' })"
       >
         <div class="flex items-start justify-between gap-2">
           <div class="flex-1 min-w-0">
@@ -36,6 +37,7 @@
 
 <script setup lang="ts">
   const { t } = useI18n();
+  const { trackOutbound } = useAnalytics();
 
   interface UsefulLink {
     url: string;

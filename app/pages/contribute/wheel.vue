@@ -5,6 +5,14 @@
   const { isAuthenticated } = useAuth();
   const { submitNewItem } = useSubmissions();
   const { capture } = usePostHog();
+  const { trackFormStarted } = useAnalytics();
+  const hasStarted = ref(false);
+
+  function onFormStart() {
+    if (hasStarted.value) return;
+    hasStarted.value = true;
+    trackFormStarted('wheel');
+  }
 
   useHead({
     title: t('page_title'),
@@ -260,6 +268,7 @@
                         v-model="name"
                         class="input input-bordered w-full"
                         :class="{ 'input-error': name.trim() === '' && touchedFields.name }"
+                        @focus="onFormStart"
                         @blur="touchedFields.name = true"
                       />
                       <p v-if="name.trim() === '' && touchedFields.name" class="text-sm text-error mt-1">

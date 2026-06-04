@@ -12,6 +12,7 @@
 
   const { t } = useI18n();
   const { capture } = usePostHog();
+  const { track } = useAnalytics();
   const { user, isAuthenticated } = useAuth();
   const {
     configs: savedConfigs,
@@ -319,7 +320,21 @@
       fetchConfigs();
     }
     showLoadModal.value = true;
+    track('gearbox_load_modal_opened');
   }
+
+  // Debounced input field tracking
+  let gearboxFieldTimer: ReturnType<typeof setTimeout> | null = null;
+  function trackGearboxField(field: string) {
+    if (gearboxFieldTimer) clearTimeout(gearboxFieldTimer);
+    gearboxFieldTimer = setTimeout(() => {
+      track('gearbox_input_changed', { field });
+    }, 600);
+  }
+
+  onUnmounted(() => {
+    if (gearboxFieldTimer) clearTimeout(gearboxFieldTimer);
+  });
 
   // Speedo table headers
   const tableHeadersSpeedos = [
@@ -347,18 +362,22 @@
       :max-rpm="maxRpm"
       @update:metric="
         metric = $event;
+        track('gearbox_input_changed', { field: 'metric', value: $event });
         triggerDebouncedUpdate();
       "
       @update:tire-type="
         tireType = $event;
+        trackGearboxField('tire_dimensions');
         triggerDebouncedUpdate();
       "
       @update:speedo-drive="
         speedoDrive = $event;
+        trackGearboxField('speedo_drive');
         triggerDebouncedUpdate();
       "
       @update:max-rpm="
         maxRpm = $event;
+        trackGearboxField('max_rpm');
         triggerDebouncedUpdate();
       "
     />
