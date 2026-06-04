@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, configDefaults } from 'vitest/config';
 import { fileURLToPath } from 'node:url';
 import vue from '@vitejs/plugin-vue';
 
@@ -23,6 +23,10 @@ export default defineConfig({
     setupFiles: ['./tests/setup/vitest.setup.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
+    // Keep vitest's defaults but also ignore local git worktrees under
+    // .claude/ (past sessions leave full repo copies whose duplicate test
+    // files would otherwise be discovered and run) and the Nuxt build dir.
+    exclude: [...configDefaults.exclude, '**/.claude/**', '**/.nuxt/**'],
     fileParallelism: false,
     sequence: { shuffle: false },
     coverage: {
