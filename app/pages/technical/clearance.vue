@@ -2,6 +2,7 @@
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
+  const { trackSearch, track } = useAnalytics();
 
   interface ClearanceItem {
     name: string;
@@ -26,9 +27,34 @@
     expandedRows.value[id] = !expandedRows.value[id];
   };
 
-  const toggleTable = (id: string) => {
+  const toggleTable = (id: string, tableName: string) => {
     expandedTables.value[id] = !expandedTables.value[id];
+    track('reference_table_toggled', { surface: 'clearance', table_name: tableName });
   };
+
+  // Debounced search tracking
+  let clearanceSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  watch(searchValue, (val) => {
+    if (clearanceSearchTimer) clearTimeout(clearanceSearchTimer);
+    clearanceSearchTimer = setTimeout(() => {
+      const query = val.toLowerCase();
+      const totalResults = tables.value
+        ? Object.values(tables.value).reduce(
+            (sum, table) =>
+              sum +
+              table.items.filter((item: ClearanceItem) =>
+                Object.values(item).some((v) => String(v).toLowerCase().includes(query))
+              ).length,
+            0
+          )
+        : 0;
+      trackSearch('clearance', val, totalResults);
+    }, 400);
+  });
+
+  onUnmounted(() => {
+    if (clearanceSearchTimer) clearTimeout(clearanceSearchTimer);
+  });
 
   // Function to filter items based on search
   const filterItems = (items: ClearanceItem[], tableName: string) => {
@@ -182,7 +208,7 @@
         <input
           type="checkbox"
           :checked="!!expandedTables[name]"
-          @change="toggleTable(name)"
+          @change="toggleTable(name, table.title)"
           :aria-label="table.title"
         />
         <div class="collapse-title text-lg font-semibold">{{ table.title }}</div>

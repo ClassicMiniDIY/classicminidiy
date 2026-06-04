@@ -2,6 +2,7 @@
   import { HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
+  const { track } = useAnalytics();
 
   const { data, status } = await useFetch('/api/engines');
   const tableHeaders: any[] = [
@@ -96,7 +97,11 @@
             />
           </div>
           <div class="col-span-12 md:col-span-4">
-            <NuxtLink :to="'/technical/compression'" :title="t('compression_card.link_title')">
+            <NuxtLink
+              :to="'/technical/compression'"
+              :title="t('compression_card.link_title')"
+              @click="track('tool_card_clicked', { tool_name: 'compression', location: 'archive_engines' })"
+            >
               <div class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-xl transition-shadow duration-300">
                 <div class="card-body">
                   <div class="flex items-start">

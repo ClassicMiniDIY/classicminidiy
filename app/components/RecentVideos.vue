@@ -1,5 +1,6 @@
 <script setup lang="ts">
   const { t } = useI18n();
+  const { trackOutbound } = useAnalytics();
   const { data: videos, status, error } = await useFetch('/api/youtube/videos');
 </script>
 
@@ -26,7 +27,7 @@
         <h2 class="card-title font-semibold text-lg">{{ video.title }}</h2>
         <p class="text-sm text-base-content/70">{{ t('published_on') }} {{ video.publishedOn }}</p>
         <div class="card-actions justify-end">
-          <NuxtLink :to="video.videoUrl" target="_blank" class="btn btn-primary">{{ t('watch_button') }}</NuxtLink>
+          <NuxtLink :to="video.videoUrl" target="_blank" class="btn btn-primary" @click="trackOutbound({ destination: video.videoUrl, label: video.title, group: 'youtube_video' })">{{ t('watch_button') }}</NuxtLink>
         </div>
       </div>
     </div>

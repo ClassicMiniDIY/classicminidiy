@@ -3,6 +3,7 @@
 
   const { t } = useI18n();
   const toast = useToast();
+  const { track } = useAnalytics();
   const { isAuthenticated, user, userProfile, fetchUserProfile, waitForAuth } = useAuth();
   const { fetchProfile, updateProfile, uploadAvatar } = useProfile();
 
@@ -150,6 +151,7 @@
       // Only call updateProfile if there are changes to save
       if (Object.keys(updates).length > 0) {
         await updateProfile(updates);
+        track('profile_updated', { fields_changed: Object.keys(updates) });
       }
 
       // Update the snapshot to reflect saved state
@@ -315,7 +317,7 @@
                     <p class="font-medium">{{ t('privacy.public_profile') }}</p>
                     <p class="text-sm opacity-60">{{ t('privacy.public_description') }}</p>
                   </div>
-                  <input type="checkbox" v-model="isPublic" class="toggle toggle-primary" />
+                  <input type="checkbox" v-model="isPublic" class="toggle toggle-primary" @change="track('privacy_setting_changed', { field: 'is_public', value: isPublic })" />
                 </div>
 
                 <div v-if="isPublic" class="flex items-center justify-between">
@@ -323,7 +325,7 @@
                     <p class="font-medium">{{ t('privacy.show_vehicles') }}</p>
                     <p class="text-sm opacity-60">{{ t('privacy.vehicles_description') }}</p>
                   </div>
-                  <input type="checkbox" v-model="showVehicles" class="toggle toggle-primary" />
+                  <input type="checkbox" v-model="showVehicles" class="toggle toggle-primary" @change="track('privacy_setting_changed', { field: 'show_vehicles', value: showVehicles })" />
                 </div>
               </div>
             </div>

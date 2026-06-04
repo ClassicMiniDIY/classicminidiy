@@ -2,13 +2,37 @@
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
+  const { trackSearch, track } = useAnalytics();
   const { data: tables, status } = await useFetch('/api/torque');
   const tableSearchQueries = ref<Record<string, string>>({});
   const expandedTables = ref<Record<string, boolean>>({});
 
-  const toggleTable = (key: string) => {
+  const toggleTable = (key: string, tableName: string) => {
     expandedTables.value[key] = !expandedTables.value[key];
+    track('reference_table_toggled', { surface: 'torque', table_name: tableName });
   };
+
+  // Per-table debounced search tracking
+  const torqueSearchTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+  watch(
+    tableSearchQueries,
+    (queries) => {
+      for (const [key, val] of Object.entries(queries)) {
+        if (torqueSearchTimers[key]) clearTimeout(torqueSearchTimers[key]);
+        torqueSearchTimers[key] = setTimeout(() => {
+          const tableData = (tables.value as any)?.[key];
+          const tableName = tableData?.title || key;
+          const resultsCount = tableData ? filterItems(tableData.items, key).length : 0;
+          trackSearch('torque', val, resultsCount, { table_name: tableName });
+        }, 400);
+      }
+    },
+    { deep: true }
+  );
+
+  onUnmounted(() => {
+    Object.values(torqueSearchTimers).forEach(clearTimeout);
+  });
 
   useHead({
     title: t('title'),
@@ -138,7 +162,7 @@
             :key="key"
             class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-lg"
           >
-            <input type="checkbox" :checked="expandedTables[key]" @change="toggleTable(key)" />
+            <input type="checkbox" :checked="expandedTables[key]" @change="toggleTable(key, table.title)" />
             <div class="collapse-title text-lg font-semibold py-4">
               {{ table.title }}
             </div>

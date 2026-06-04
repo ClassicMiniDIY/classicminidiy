@@ -2,6 +2,7 @@
   import { ArchiveItems, BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
   const { path } = useRoute();
   const { capture } = usePostHog();
+  const { track } = useAnalytics();
   const { t } = useI18n();
 
   // Function to get translated archive item title
@@ -109,7 +110,11 @@
           <p>{{ t('description_text') }}</p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <NuxtLink class="btn btn-primary btn-sm" to="/contribute">
+          <NuxtLink
+            class="btn btn-primary btn-sm"
+            to="/contribute"
+            @click="track('contribute_cta_clicked', { type: 'archive', location: 'archive_home' })"
+          >
             <i class="fad fa-paper-plane mr-1"></i>
             {{ t('contribute_to_archive') }}
           </NuxtLink>

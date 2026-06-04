@@ -1,5 +1,6 @@
 <script setup lang="ts">
   const { t } = useI18n();
+  const { track, trackDownload } = useAnalytics();
   const { isAuthenticated } = useAuth();
   const route = useRoute();
   const slug = route.params.slug as string;
@@ -117,6 +118,7 @@
       await navigator.clipboard.writeText(url);
       copied.value = true;
       setTimeout(() => (copied.value = false), 2000);
+      track('document_shared', { document_id: doc.value?.id, method: 'clipboard' });
     } catch {
       copied.value = false;
     }
@@ -131,6 +133,7 @@
         text: doc.value.description || t('seo.description_fallback', { title: doc.value.title }),
         url: `https://classicminidiy.com/archive/documents/${slug}`,
       });
+      track('document_shared', { document_id: doc.value.id, method: 'web_share' });
     } catch {
       // User cancelled or API not available — fall back to copy
       copyUrl();
@@ -353,7 +356,7 @@
                   <div class="font-semibold">{{ t('suggest_collection.prompt_title') }}</div>
                   <div class="text-sm">{{ t('suggest_collection.prompt_description') }}</div>
                 </div>
-                <button type="button" class="btn btn-info btn-outline btn-sm" @click="showSuggestEdit = true">
+                <button type="button" class="btn btn-info btn-outline btn-sm" @click="() => { showSuggestEdit = true; track('suggest_collection_opened', { document_id: doc.id }); }">
                   <i class="fad fa-folder-plus mr-2"></i>
                   {{ t('suggest_collection.cta') }}
                 </button>
@@ -385,7 +388,7 @@
             <!-- Actions Section -->
             <div class="divider my-6">{{ t('section.actions') }}</div>
             <div class="flex flex-wrap gap-4 justify-center">
-              <NuxtLink v-if="doc.download" class="btn btn-primary" :to="doc.download" target="_blank">
+              <NuxtLink v-if="doc.download" class="btn btn-primary" :to="doc.download" target="_blank" @click="trackDownload({ document_id: doc.id, slug, file_type: fileType || undefined, location: 'document_detail' })">
                 <i class="fas fa-download mr-2"></i>
                 {{ t('action.download') }}
               </NuxtLink>
@@ -402,7 +405,7 @@
                 </button>
               </ClientOnly>
 
-              <button v-if="isAuthenticated" type="button" class="btn btn-outline" @click="showSuggestEdit = true">
+              <button v-if="isAuthenticated" type="button" class="btn btn-outline" @click="() => { showSuggestEdit = true; track('suggest_edit_opened', { document_id: doc.id }); }">
                 <i class="fad fa-pen-to-square mr-2"></i>
                 {{ t('action.suggest_edit') }}
               </button>

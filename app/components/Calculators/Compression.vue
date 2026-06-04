@@ -37,6 +37,7 @@
   });
 
   const { capture } = usePostHog();
+  const { track } = useAnalytics();
   let captureTimer: ReturnType<typeof setTimeout> | null = null;
   watch([ratio, capacity], () => {
     if (captureTimer) clearTimeout(captureTimer);
@@ -52,12 +53,21 @@
   onUnmounted(() => {
     if (captureTimer) clearTimeout(captureTimer);
   });
+
+  // Debounced field-change tracking (signal only — no values)
+  let fieldChangeTimer: ReturnType<typeof setTimeout> | null = null;
+  function trackFieldChange(field: string) {
+    if (fieldChangeTimer) clearTimeout(fieldChangeTimer);
+    fieldChangeTimer = setTimeout(() => {
+      track('compression_input_changed', { field });
+    }, 600);
+  }
 </script>
 
 <template>
   <div class="grid grid-cols-1 gap-6">
     <div class="col-span-1">
-      <button class="btn btn-primary mb-5" @click="showHelpModal = true">
+      <button class="btn btn-primary mb-5" @click="showHelpModal = true; track('help_opened', { tool: 'compression' })">
         <i class="fad fa-question-circle mr-2"></i>
         {{ t('help_button') }}
       </button>
@@ -103,7 +113,7 @@
           <i class="fad fa-engine"></i>
           {{ t('form_labels.piston_size') }}
         </legend>
-        <select v-model="bore" class="select select-bordered w-full">
+        <select v-model="bore" class="select select-bordered w-full" @change="trackFieldChange('piston_size')">
           <option v-for="opt in reactiveFormOptions.pistonOptions" :key="opt.label" :value="opt.value">
             {{ opt.label }}
           </option>
@@ -116,7 +126,7 @@
           <i class="fad fa-arrows-rotate fa-spin"></i>
           {{ t('form_labels.crankshaft') }}
         </legend>
-        <select v-model="stroke" class="select select-bordered w-full">
+        <select v-model="stroke" class="select select-bordered w-full" @change="trackFieldChange('crankshaft')">
           <option v-for="opt in reactiveFormOptions.crankshaftOptions" :key="opt.label" :value="opt.value">
             {{ opt.label }}
           </option>
@@ -132,7 +142,7 @@
             <i class="fad fa-head-side-gear"></i>
             {{ t('form_labels.head_gasket') }}
           </legend>
-          <select v-model.number="gasket" class="select select-bordered w-full">
+          <select v-model.number="gasket" class="select select-bordered w-full" @change="trackFieldChange('head_gasket')">
             <option v-for="opt in reactiveFormOptions.headGasketOptions" :key="opt.label" :value="opt.value">
               {{ opt.label }}
             </option>
@@ -151,6 +161,7 @@
               step="0.1"
               v-model.number="customGasket"
               class="input input-bordered w-full"
+              @change="trackFieldChange('custom_gasket')"
             />
           </fieldset>
         </div>
@@ -162,7 +173,7 @@
           <i class="fad fa-arrow-down-to-line"></i>
           {{ t('form_labels.decompression_plate') }}
         </legend>
-        <select v-model="decomp" class="select select-bordered w-full">
+        <select v-model="decomp" class="select select-bordered w-full" @change="trackFieldChange('decompression_plate')">
           <option v-for="opt in reactiveFormOptions.decompPlateOptions" :key="opt.label" :value="opt.value">
             {{ opt.label }}
           </option>
@@ -184,6 +195,7 @@
           max="20"
           step="0.1"
           class="input input-bordered w-full"
+          @change="trackFieldChange('piston_dish')"
         />
       </fieldset>
 
@@ -200,6 +212,7 @@
           max="35"
           step="0.1"
           class="input input-bordered w-full"
+          @change="trackFieldChange('head_volume')"
         />
       </fieldset>
 
@@ -216,6 +229,7 @@
           max="80"
           step="1"
           class="input input-bordered w-full"
+          @change="trackFieldChange('deck_height')"
         />
       </fieldset>
     </div>

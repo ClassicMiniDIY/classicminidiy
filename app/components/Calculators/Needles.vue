@@ -278,6 +278,7 @@
   });
 
   const { capture } = usePostHog();
+  const { track } = useAnalytics();
 
   // Select a needle from dropdown
   const selectNeedle = (name: string, source: 'search' | 'relative_search' = 'search') => {
@@ -295,6 +296,7 @@
     isDropdownOpen.value = false;
     displayLimit.value = 50;
 
+    track('needle_added', { needle_name: name });
     capture('calculator_used', {
       calculator: 'needles',
       needle_count: selectedNeedles.value.length,
@@ -324,6 +326,23 @@
       result_count: relativeResults.value.length,
     });
   }
+
+  // needle_filter_changed tracking (debounced per field)
+  let needleFilterTimer: ReturnType<typeof setTimeout> | null = null;
+  function trackNeedleFilter(field: string, value: unknown) {
+    if (needleFilterTimer) clearTimeout(needleFilterTimer);
+    needleFilterTimer = setTimeout(() => {
+      track('needle_filter_changed', { field, value });
+    }, 400);
+  }
+
+  watch(referenceNeedleName, (val) => {
+    if (val) track('needle_filter_changed', { field: 'reference', value: val });
+  });
+  watch(showDiff, (val) => trackNeedleFilter('show_diff', val));
+  watch(relativeBand, (val) => trackNeedleFilter('band', val));
+  watch(relativeDirection, (val) => trackNeedleFilter('direction', val));
+  watch(relativeSameSize, (val) => trackNeedleFilter('same_size', val));
 
   // Fire one tracking event per unique (reference, band, direction) combo the
   // user settles on so we capture real queries but avoid spamming analytics
@@ -368,6 +387,10 @@
     if (relativeSearchDebounce) {
       clearTimeout(relativeSearchDebounce);
       relativeSearchDebounce = null;
+    }
+    if (needleFilterTimer) {
+      clearTimeout(needleFilterTimer);
+      needleFilterTimer = null;
     }
   });
 
@@ -506,7 +529,10 @@
 
   function removeArrayItem(currentItem: Needle) {
     const itemIndex = selectedNeedles.value.indexOf(currentItem);
-    if (itemIndex >= 0) selectedNeedles.value.splice(itemIndex, 1);
+    if (itemIndex >= 0) {
+      track('needle_removed', { needle_name: currentItem.name });
+      selectedNeedles.value.splice(itemIndex, 1);
+    }
   }
 
   // Re-seed selection when the underlying needle API data arrives.

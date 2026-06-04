@@ -1,5 +1,6 @@
 <script setup lang="ts">
   const { t } = useI18n();
+  const { track, trackSearch } = useAnalytics();
   import type { RegistryItem } from '../../data/models/registry';
   import { RegistryItemStatus } from '../../data/models/registry';
   import { useDebounce } from '../composables/useDebounce';
@@ -39,9 +40,12 @@
   // Debounced search to avoid excessive filtering
   const debouncedSearch = useDebounce(searchValue, 300);
 
-  // Reset to first page when search changes
-  watch(debouncedSearch, () => {
+  // Reset to first page when search changes, and track the search
+  watch(debouncedSearch, (query) => {
     currentPage.value = 1;
+    if (query) {
+      trackSearch('registry', query, filteredItems.value?.length);
+    }
   });
 
   // Helper function to get status priority for sorting
@@ -93,13 +97,20 @@
     return filteredItems.value.slice(startIndex, startIndex + pageSize.value);
   });
 
+  // Track page size changes
+  watch(pageSize, (newSize) => {
+    track('list_page_size_changed', { surface: 'registry', page_size: newSize });
+  });
+
   // Toggle expanded row
   const toggleExpanded = (id: string) => {
     const index = expanded.value.indexOf(id);
     if (index === -1) {
       expanded.value.push(id);
+      track('registry_row_expanded', { item_id: id, is_expanded: true });
     } else {
       expanded.value.splice(index, 1);
+      track('registry_row_expanded', { item_id: id, is_expanded: false });
     }
   };
 
@@ -108,6 +119,7 @@
     currentPage.value = page;
     // Reset expanded rows when changing pages
     expanded.value = [];
+    track('list_paginated', { surface: 'registry', page });
   };
 
   // Define type for pagination items

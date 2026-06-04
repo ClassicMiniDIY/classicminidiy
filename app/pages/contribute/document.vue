@@ -3,6 +3,14 @@
 
   const { t } = useI18n();
   const { capture } = usePostHog();
+  const { trackFormStarted, track } = useAnalytics();
+  const hasStarted = ref(false);
+
+  function onFormStart() {
+    if (hasStarted.value) return;
+    hasStarted.value = true;
+    trackFormStarted('document');
+  }
   const { isAuthenticated } = useAuth();
   const { submitNewItem } = useSubmissions();
 
@@ -280,7 +288,7 @@
                       :class="{ 'select-error': formData.type === '' && touchedFields.type }"
                       :disabled="processing"
                       @blur="touchedFields.type = true"
-                      @change="touchedFields.type = true"
+                      @change="touchedFields.type = true; onFormStart()"
                     >
                       <option value="" disabled>{{ t('form.fields.type.placeholder') }}</option>
                       <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">
@@ -417,6 +425,7 @@
                         class="toggle toggle-primary"
                         v-model="isCollection"
                         :disabled="processing"
+                        @change="track('contribute_collection_toggled', { enabled: isCollection })"
                       />
                       <div>
                         <span class="text-sm font-medium">{{ t('form.collection.toggle') }}</span>

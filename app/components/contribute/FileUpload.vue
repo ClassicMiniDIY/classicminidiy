@@ -7,6 +7,7 @@
   import { humanFileSize } from '../../../data/models/helper-utils';
 
   const { t } = useI18n();
+  const { track, trackFormError } = useAnalytics();
 
   const props = withDefaults(
     defineProps<{
@@ -76,18 +77,21 @@
       // Check file count limit
       if (files.value.length + validFiles.length >= props.maxFiles) {
         error.value = t('max_files_reached', { max: props.maxFiles });
+        trackFormError('file_upload', 'too_many_files');
         break;
       }
 
       // Check file type
       if (!allowedTypes.value.includes(file.type)) {
         error.value = t('invalid_type', { name: file.name });
+        trackFormError('file_upload', 'invalid_type');
         continue;
       }
 
       // Check file size
       if (file.size > maxBytes) {
         error.value = t('file_too_large', { name: file.name, max: props.maxSizeMb });
+        trackFormError('file_upload', 'file_too_large');
         continue;
       }
 
@@ -97,6 +101,7 @@
     if (validFiles.length > 0) {
       files.value = [...files.value, ...validFiles];
       emit('update:files', files.value);
+      track('file_upload_started', { file_count: validFiles.length });
     }
   }
 

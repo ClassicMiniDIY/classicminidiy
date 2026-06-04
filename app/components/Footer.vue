@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   import { SocialItems } from '../../data/models/generic';
 
+  const { track, trackOutbound } = useAnalytics();
   const { t } = useI18n({
     messages: {
       en: {
@@ -203,6 +204,7 @@
             class="social-pill"
             :title="t('social_link_aria', { platform: social.title })"
             :aria-label="t('social_link_aria', { platform: social.title })"
+            @click="trackOutbound({ destination: social.href, label: social.title, group: 'footer_social' })"
           >
             <i :class="social.icon" class="text-xl"></i>
           </NuxtLink>
@@ -219,6 +221,7 @@
             rel="noopener"
             :aria-label="t('youtube_link_aria')"
             class="link hover:underline"
+            @click="trackOutbound({ destination: 'https://youtube.com/c/classicminidiy?sub_confirmation=1', label: 'YouTube', group: 'footer_social' })"
           >
             {{ t('author_name') }}</NuxtLink
           >.
@@ -239,7 +242,7 @@
             <div class="divider my-4">{{ t('links_divider') }}</div>
 
             <div class="flex flex-wrap justify-center gap-3">
-              <NuxtLink to="/contact" class="link text-sm hover:underline">
+              <NuxtLink to="/contact" class="link text-sm hover:underline" @click="track('contact_cta_clicked', { location: 'footer' })">
                 {{ t('contact_link') }}
               </NuxtLink>
               <NuxtLink to="/privacy" class="link text-sm hover:underline">
@@ -250,6 +253,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 class="link text-sm hover:underline"
+                @click="trackOutbound({ destination: 'https://www.youtube.com/t/terms', label: 'YouTube Privacy Policy', group: 'footer' })"
               >
                 {{ t('privacy_links.youtube_privacy') }}
               </NuxtLink>
@@ -258,6 +262,7 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 class="link text-sm hover:underline"
+                @click="trackOutbound({ destination: 'http://www.google.com/policies/privacy', label: 'Google Privacy Policy', group: 'footer' })"
               >
                 {{ t('privacy_links.google_privacy') }}
               </NuxtLink>

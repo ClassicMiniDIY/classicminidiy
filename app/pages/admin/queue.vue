@@ -85,6 +85,8 @@
     default: () => [],
   });
 
+  const { track } = useAnalytics();
+
   // State
   const errorMessage = ref('');
   const isProcessing = ref(false);
@@ -390,6 +392,8 @@
         },
       });
 
+      track('admin_action', { item_type: 'queue', action: 'approve' });
+
       // Update item status locally
       if (items.value) {
         const index = items.value.findIndex((i) => i.id === itemToApprove.id);
@@ -429,6 +433,8 @@
           reviewerNotes: reviewerNotes.value || null,
         },
       });
+
+      track('admin_action', { item_type: 'queue', action: 'reject' });
 
       // Update item status locally
       if (items.value) {

@@ -4,6 +4,7 @@
   import type { IWheelsData } from '../../../../data/models/wheels';
 
   const { t } = useI18n();
+  const { track } = useAnalytics();
 
   const { isAuthenticated } = useAuth();
   const route = useRoute();
@@ -32,6 +33,7 @@
     try {
       await navigator.clipboard.writeText(url);
       copied.value = true;
+      track('wheel_link_copied', { wheel_id: wheel.value?.uuid });
       setTimeout(() => (copied.value = false), 1000);
     } catch ($e) {
       copied.value = false;
@@ -229,16 +231,26 @@
                   v-if="wheel.name && wheel.uuid"
                   type="button"
                   class="btn btn-secondary btn-lg"
-                  @click="shareWheelItem(wheel.name, wheel.uuid)"
+                  @click="shareWheelItem(wheel.name, wheel.uuid); track('wheel_shared', { wheel_id: wheel.uuid, method: 'native_share' })"
                 >
                   <i class="fad fa-share mr-2"></i>
                   <span>{{ t('actions.share') }}</span>
                 </button>
-                <NuxtLink v-if="wheel.uuid" :to="`/contribute/wheel?uuid=${wheel.uuid}`" class="btn btn-outline btn-lg">
+                <NuxtLink
+                  v-if="wheel.uuid"
+                  :to="`/contribute/wheel?uuid=${wheel.uuid}`"
+                  class="btn btn-outline btn-lg"
+                  @click="track('contribute_cta_clicked', { type: 'wheel', location: 'wheel_detail' })"
+                >
                   <i class="fad fa-edit mr-2"></i>
                   <span>{{ t('actions.contribute') }}</span>
                 </NuxtLink>
-                <button v-if="isAuthenticated" type="button" class="btn btn-outline btn-sm" @click="showSuggestEdit = true">
+                <button
+                  v-if="isAuthenticated"
+                  type="button"
+                  class="btn btn-outline btn-sm"
+                  @click="showSuggestEdit = true; track('suggest_edit_opened', { wheel_id: wheel.uuid })"
+                >
                   <i class="fad fa-pen-to-square mr-2"></i>
                   <span>{{ t('suggest_edit') }}</span>
                 </button>

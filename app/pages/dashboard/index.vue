@@ -3,6 +3,7 @@
 
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
+  const { track } = useAnalytics();
   const { configs, loading, fetchConfigs, updateConfig, deleteConfig } = useGearConfigs();
   const { listMySubmissions } = useSubmissions();
 
@@ -108,10 +109,12 @@
 
   async function togglePublic(id: string, isPublic: boolean) {
     await updateConfig(id, { is_public: !isPublic });
+    track('gear_config_visibility_toggled', { config_id: id, is_public: !isPublic });
   }
 
   async function handleDelete(id: string) {
     await deleteConfig(id);
+    track('gear_config_deleted', { config_id: id });
   }
 
   useHead({

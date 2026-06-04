@@ -3,6 +3,7 @@
   import { HERO_TYPES } from '../../../../data/models/generic';
 
   const { t } = useI18n();
+  const { track, trackSearch, trackOutbound } = useAnalytics();
   const { listColors } = useColors();
   const { data: colors, status } = await useAsyncData('colors-list', () => listColors());
   const pending = computed(() => status.value === 'pending');
@@ -79,9 +80,10 @@
     }
   };
 
-  // Reset to first page when debounced search changes
-  watch(debouncedSearch, () => {
+  // Reset to first page when debounced search changes; fire search analytics
+  watch(debouncedSearch, (query) => {
     currentPage.value = 1;
+    trackSearch('colors', query, filteredColors.value.length);
   });
 
   useHead({
@@ -176,7 +178,7 @@
                   <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
                 </div>
               </div>
-              <NuxtLink to="/contribute/color" class="btn btn-primary btn-outline btn-sm">
+              <NuxtLink to="/contribute/color" class="btn btn-primary btn-outline btn-sm" @click="track('contribute_cta_clicked', { type: 'color', location: 'archive_colors' })">
                 {{ t('contribute_banner_button') }}
               </NuxtLink>
             </div>
@@ -191,7 +193,7 @@
             </p>
             <p>
               {{ t('description_text') }}
-              <a href="http://mini-colours.co.uk" class="link link-primary">{{ t('partner_link') }}</a>
+              <a href="http://mini-colours.co.uk" class="link link-primary" @click="trackOutbound({ destination: 'http://mini-colours.co.uk', group: 'partner', label: 'mini-colours' })">{{ t('partner_link') }}</a>
               {{ t('description_text_2') }}
             </p>
           </template>
@@ -342,7 +344,7 @@
               type="button"
               class="btn btn-outline join-item"
               :disabled="currentPage === 1"
-              @click="currentPage = Math.max(1, currentPage - 1)"
+              @click="() => { currentPage = Math.max(1, currentPage - 1); track('list_paginated', { surface: 'colors', page: currentPage }); }"
             >
               «
             </button>
@@ -353,7 +355,7 @@
               type="button"
               class="btn btn-outline join-item"
               :disabled="currentPage >= totalPages"
-              @click="currentPage = Math.min(totalPages, currentPage + 1)"
+              @click="() => { currentPage = Math.min(totalPages, currentPage + 1); track('list_paginated', { surface: 'colors', page: currentPage }); }"
             >
               »
             </button>

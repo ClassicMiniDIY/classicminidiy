@@ -7,6 +7,8 @@
     { size: 'md' }
   );
 
+  const { trackOutbound } = useAnalytics();
+
   const platformIcons: Record<string, string> = {
     instagram: 'fab fa-instagram',
     youtube: 'fab fa-youtube',
@@ -51,6 +53,7 @@
         class="inline-flex items-center justify-center rounded-full bg-muted hover:bg-primary hover:text-primary-content transition-colors"
         :class="size === 'sm' ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-base'"
         :aria-label="platform as string"
+        @click="trackOutbound({ destination: normalizeUrl(platform as string, url), label: platform as string, group: 'profile_social' })"
       >
         <i :class="platformIcons[platform as string] || 'fas fa-link'"></i>
       </a>

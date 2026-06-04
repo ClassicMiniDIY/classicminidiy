@@ -31,6 +31,7 @@
 
   import MarkdownText from './MarkdownText.vue';
   const { t } = useI18n();
+  const { track } = useAnalytics();
   const props = defineProps<AssistantMessageProps>();
 
   useStreamContext();
@@ -72,7 +73,7 @@
 
     try {
       await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
+      track('assistant_message_copied', { message_length: text.length });
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
     }

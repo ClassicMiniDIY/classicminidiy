@@ -3,6 +3,14 @@
 
   const { t } = useI18n();
   const { capture } = usePostHog();
+  const { trackFormStarted, trackFormError } = useAnalytics();
+  const hasStarted = ref(false);
+
+  function onFormStart() {
+    if (hasStarted.value) return;
+    hasStarted.value = true;
+    trackFormStarted('color');
+  }
   const { query } = useRoute();
   const { isAuthenticated } = useAuth();
   const { getColor } = useColors();
@@ -94,6 +102,9 @@
     if (!isFormValid.value) {
       apiError.value = true;
       apiMessage.value = t('form.error.validation_failed');
+      if (!formData.name.trim()) trackFormError('color', 'name');
+      if (!formData.code.trim()) trackFormError('color', 'code');
+      if (formData.hexValue && !isValidHex.value) trackFormError('color', 'hex_value');
       return;
     }
 
@@ -275,6 +286,7 @@
                       :class="{ 'input-error': touched.name && !formData.name.trim() }"
                       maxlength="100"
                       :disabled="processing"
+                      @focus="onFormStart"
                       @blur="touched.name = true"
                     />
                     <p v-if="touched.name && !formData.name.trim()" class="text-sm text-error mt-1">

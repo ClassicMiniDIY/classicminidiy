@@ -59,6 +59,8 @@
   });
 
   const isExternal = computed(() => props.to.startsWith('http'));
+
+  const { track } = useAnalytics();
 </script>
 
 <template>
@@ -67,6 +69,7 @@
     :target="isExternal ? '_blank' : undefined"
     :external="isExternal || undefined"
     class="tool-card"
+    @click="track('tool_card_clicked', { tool_name: title, location: 'home' })"
   >
     <span class="tool-card__icn" :style="surfaceStyle">
       <i :class="['fad', icon]" :style="iconStyle" aria-hidden="true"></i>

@@ -3,6 +3,7 @@
   import Fuse from 'fuse.js';
 
   const { t } = useI18n();
+  const { track, trackSearch } = useAnalytics();
 
   // State management with proper typing
   const search = ref('');
@@ -68,7 +69,20 @@
     search.value = '';
     selectedOffsets.value = [];
     selectedMaterials.value = [];
+    track('wheel_filters_cleared');
   }
+
+  // Track search after filteredWheels settles
+  watch(filteredWheels, (results) => {
+    if (search.value) {
+      trackSearch('wheels', search.value, results.length);
+    }
+  });
+
+  // Track pagination
+  watch(page, (newPage) => {
+    track('list_paginated', { surface: 'wheels', page: newPage });
+  });
 
   // Default fallback image URL for reuse
   const DEFAULT_WHEEL_IMAGE = 'https://classicminidiy.s3.us-east-1.amazonaws.com/wheels/missing-wheel-image.png';
@@ -111,7 +125,7 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'list' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'list'"
+                @click="size = 'list'; track('wheel_filter_changed', { size_selected: 'list' })"
               >
                 {{ t('all_sizes') }}
               </button>
@@ -119,7 +133,7 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'ten' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'ten'"
+                @click="size = 'ten'; track('wheel_filter_changed', { size_selected: 'ten' })"
               >
                 {{ t('ten_inch_wheels') }}
               </button>
@@ -127,7 +141,7 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'twelve' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'twelve'"
+                @click="size = 'twelve'; track('wheel_filter_changed', { size_selected: 'twelve' })"
               >
                 {{ t('twelve_inch_wheels') }}
               </button>
@@ -135,7 +149,7 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'thirteen' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'thirteen'"
+                @click="size = 'thirteen'; track('wheel_filter_changed', { size_selected: 'thirteen' })"
               >
                 {{ t('thirteen_inch_wheels') }}
               </button>

@@ -19,9 +19,22 @@ let clientInitialized = false;
 export const useAuth = () => {
   const supabase = useSupabase();
   const config = useRuntimeConfig();
+  const { identifyUser, resetIdentity } = useAnalytics();
   const user = useState<User | null>('user', () => null);
   const userProfile = useState<UserProfile | null>('user-profile', () => null);
   const loading = useState<boolean>('auth-loading', () => true);
+
+  // Tie PostHog's distinct_id to the authenticated user so all subsequent
+  // events are attributable. Reads from userProfile, so call AFTER
+  // fetchUserProfile has resolved. No-op on SSR ($posthog is client-only).
+  const syncPostHogIdentity = (userId: string) => {
+    const p = userProfile.value;
+    identifyUser(userId, {
+      email_domain: p?.email ? p.email.split('@')[1] : undefined,
+      trust_level: p?.trust_level,
+      is_admin: p?.is_admin,
+    });
+  };
 
   // Fetch user profile including admin status
   const fetchUserProfile = async (userId: string) => {
@@ -75,6 +88,7 @@ export const useAuth = () => {
         // Fetch profile if user is authenticated
         if (session?.user) {
           await fetchUserProfile(session.user.id);
+          syncPostHogIdentity(session.user.id);
         }
       } catch (error) {
         console.error('[initAuth] Error initializing auth:', error);
@@ -92,10 +106,15 @@ export const useAuth = () => {
         user.value = session?.user ?? null;
 
         if (session?.user) {
-          // Defer profile fetch to avoid auth lock deadlock
-          setTimeout(() => fetchUserProfile(session.user.id), 0);
+          // Defer profile fetch to avoid auth lock deadlock, then attach
+          // the PostHog identity once profile props are available.
+          setTimeout(() => {
+            fetchUserProfile(session.user.id).then(() => syncPostHogIdentity(session.user.id));
+          }, 0);
         } else {
           userProfile.value = null;
+          // Signed out — clear identity so the next session isn't merged in.
+          resetIdentity();
         }
       });
 

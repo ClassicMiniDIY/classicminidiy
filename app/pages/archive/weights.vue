@@ -2,6 +2,7 @@
   import { HERO_TYPES } from '../../../data/models/generic';
 
   const { t } = useI18n();
+  const { track, trackSearch } = useAnalytics();
 
   const { data: tables, status } = await useFetch('/api/weights');
   const activePanel = ref<string | null>(null);
@@ -62,6 +63,20 @@
     const queryLower = query.toLowerCase();
     return items.filter((item: any) => item.item.toLowerCase().includes(queryLower));
   };
+
+  // Track per-table searches
+  watch(
+    tableSearchQueries,
+    (queries) => {
+      Object.entries(queries).forEach(([tableName, query]) => {
+        if (!query) return;
+        const tableData = tables.value?.[tableName as keyof typeof tables.value] as any;
+        const results = tableData ? filterItems(tableData.items ?? [], tableName) : [];
+        trackSearch('weights', query, results.length, { table_name: tableName });
+      });
+    },
+    { deep: true }
+  );
 </script>
 
 <template>
@@ -78,7 +93,11 @@
               :description="t('description_text')"
               as="h2"
             />
-            <NuxtLink to="/contact" class="btn btn-outline mb-6">
+            <NuxtLink
+              to="/contact"
+              class="btn btn-outline mb-6"
+              @click="track('contact_cta_clicked', { location: 'archive_weights' })"
+            >
               <i class="fas fa-paper-plane mr-2"></i>
               {{ t('contact_button') }}
             </NuxtLink>

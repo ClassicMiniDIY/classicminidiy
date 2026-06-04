@@ -26,6 +26,8 @@
     width?: string;
   }
 
+  const { track } = useAnalytics();
+
   // State
   const errorMessage = ref('');
   const isProcessing = ref(false);
@@ -147,6 +149,8 @@
       editingItems.value.delete(item.uniqueId);
       editedData.value.delete(item.uniqueId);
 
+      track('admin_action', { item_type: 'registry', action: 'approve' });
+
       // Update item status to approved
       if (registryItems.value) {
         const index = registryItems.value.findIndex((i) => i.uniqueId === item.uniqueId);
@@ -190,6 +194,8 @@
       if (error.value) {
         throw new Error(error.value.data?.message || 'Failed to delete item');
       }
+
+      track('admin_action', { item_type: 'registry', action: 'reject' });
 
       // Update item status to rejected
       if (registryItems.value && selectedItem.value) {

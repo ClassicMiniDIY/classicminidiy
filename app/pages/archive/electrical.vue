@@ -3,6 +3,7 @@
   import Fuse from 'fuse.js';
 
   const { t } = useI18n();
+  const { trackSearch, trackDownload } = useAnalytics();
 
   const { data: diagrams, status } = await useFetch('/api/diagrams');
   const activePanel = ref<string | null>(null);
@@ -49,6 +50,11 @@
 
     // Return just the items (without Fuse.js metadata) sorted by score
     return searchResults.map((result) => result.item);
+  });
+
+  // Track search after results are computed (fires once per debounced result set)
+  watch(filteredResults, (results) => {
+    trackSearch('electrical', searchQuery.value, results.length);
   });
 
   useHead({
@@ -174,6 +180,7 @@
                     :href="result.link"
                     target="_blank"
                     class="flex justify-between py-4 hover:bg-base-200 rounded px-2 transition-colors"
+                    @click="trackDownload({ name: result.name, file_type: 'diagram', group: 'electrical', location: result.category })"
                   >
                     <div>
                       <div class="text-lg">{{ result.name }}</div>
@@ -232,6 +239,7 @@
                       :href="diagramItem.link"
                       target="_blank"
                       class="flex justify-between py-4 hover:bg-base-200 px-4 transition-colors"
+                      @click="trackDownload({ name: diagramItem.name, file_type: 'diagram', group: 'electrical', location: diagram.title })"
                     >
                       <div>
                         <div class="text-lg">{{ diagramItem.name }}</div>

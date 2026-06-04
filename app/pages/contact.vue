@@ -235,6 +235,7 @@
                 target="_blank"
                 rel="noopener"
                 class="btn btn-primary btn-lg"
+                @click="trackOutbound({ destination: 'https://www.patreon.com/classicminidiy', label: 'patreon', group: 'contact_support' })"
               >
                 <i class="fab fa-patreon mr-2"></i>
                 {{ t('support_patreon_button') }}
@@ -251,6 +252,7 @@
   import { HERO_TYPES } from '../../data/models/generic';
 
   const { t } = useI18n();
+  const { trackOutbound } = useAnalytics();
 
   // SEO and meta using proper Nuxt patterns
   useHead({

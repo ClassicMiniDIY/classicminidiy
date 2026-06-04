@@ -4,6 +4,7 @@
   const { t } = useI18n();
   const route = useRoute();
   const userId = route.params.id as string;
+  const { track } = useAnalytics();
 
   const { getContributorProfile, listContributions, getContributionStats } = useContributions();
 
@@ -16,6 +17,10 @@
   const profile = profileResult.data;
   const contributions = contributionsResult.data;
   const stats = statsResult.data;
+
+  if (profile.value) {
+    track('contributor_profile_viewed', { contributor_user_id: userId });
+  }
 
   const displayName = computed(() => profile.value?.displayName || t('profile.unknown'));
 

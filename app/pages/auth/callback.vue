@@ -30,7 +30,8 @@
   });
 
   const supabase = useSupabase();
-  const { initAuth, isAuthenticated, isAdmin, userProfile, waitForAuth } = useAuth();
+  const { initAuth, isAuthenticated, isAdmin, userProfile, waitForAuth, user } = useAuth();
+  const { track } = useAnalytics();
   const route = useRoute();
   const errorMessage = ref('');
 
@@ -112,7 +113,13 @@
         await waitForAuth();
 
         // First-time user: null display_name means they haven't onboarded
-        if (!userProfile.value?.display_name) {
+        const isFirstTime = !userProfile.value?.display_name;
+        track('login_success', {
+          is_first_time: isFirstTime,
+          email_domain: user.value?.email ? user.value.email.split('@')[1] : undefined,
+        });
+
+        if (isFirstTime) {
           const redirect = isAdmin.value ? '/admin' : '/';
           navigateTo(`/welcome?redirect=${encodeURIComponent(redirect)}`, { replace: true });
         } else if (isAdmin.value) {
@@ -144,11 +151,17 @@
           parts.push(`winSearchLen=${window.location.search.length}`);
         }
         errorMessage.value = parts.length ? parts.join(' | ') : 'Authentication failed. Please try again.';
+        track('login_failed', {
+          code_present: !!code,
+          error_code: exchangeError?.code,
+          error_status: exchangeError?.status,
+        });
       }
     } catch (e: any) {
       console.error('[auth/callback] thrown:', e);
       const label = [e.name, e.code, e.message].filter(Boolean).join(' | ');
       errorMessage.value = label || 'Authentication failed';
+      track('login_failed', { error_code: e.code, error_message: e.message, threw: true });
     }
   });
 </script>
