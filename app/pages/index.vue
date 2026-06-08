@@ -1,6 +1,27 @@
 <script lang="ts" setup>
   const { t, tm, rt } = useI18n();
   const { track, trackOutbound } = useAnalytics();
+  const route = useRoute();
+
+  // The discord-claim Edge Function 302-redirects failed claims to
+  // `/?discord_error=<code>` (keystone §12). Surface a friendly, dismissible
+  // banner on the home page for the known codes; anything else gets a generic
+  // message rather than leaking the raw code.
+  const DISCORD_ERROR_CODES = ['missing_token', 'expired_link', 'link_not_found', 'link_superseded', 'not_active'];
+  const discordError = ref<string | null>(null);
+  const discordErrorMessage = computed(() => {
+    if (!discordError.value) return '';
+    const key = DISCORD_ERROR_CODES.includes(discordError.value) ? discordError.value : 'generic';
+    return t(`discord_errors.${key}`);
+  });
+  onMounted(() => {
+    const code = route.query.discord_error;
+    if (typeof code === 'string' && code) {
+      discordError.value = code;
+      track('discord_claim_error_shown', { code });
+    }
+  });
+
   // tm() returns the raw structure for translation arrays/objects. Guard
   // against a missing key or unexpected shape so an i18n drift never
   // crashes the home page.
@@ -122,6 +143,18 @@
 
 <template>
   <HeroPromo />
+
+  <ClientOnly>
+    <div v-if="discordError" class="container mx-auto px-4 pt-4">
+      <div role="alert" class="alert alert-error">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span class="flex-1">{{ discordErrorMessage }}</span>
+        <button type="button" class="btn btn-sm btn-ghost" :aria-label="t('common.dismiss')" @click="discordError = null">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+  </ClientOnly>
   <div class="spacer layer"></div>
 
   <!-- Toolbox: 4-up tool card grid (design system) -->
@@ -291,6 +324,12 @@
           <i class="fab fa-github mr-2" />
           {{ t('common.contribute') }}
         </a>
+        <p class="pt-4">
+          <NuxtLink to="/membership" class="link link-primary font-semibold">
+            {{ t('home.support.member_cta') }}
+            <i class="fas fa-arrow-right ml-1"></i>
+          </NuxtLink>
+        </p>
       </div>
       <div class="pt-20 pb-10 grid grid-cols-subgrid col-span-12 gap-4">
         <recent-videos></recent-videos>
@@ -376,7 +415,16 @@
     },
     "common": {
       "donate": "Donate",
-      "contribute": "Contribute"
+      "contribute": "Contribute",
+      "dismiss": "Dismiss"
+    },
+    "discord_errors": {
+      "missing_token": "This Discord invite link is incomplete. Open the Classic Mini DIY app to request a fresh one.",
+      "expired_link": "This Discord invite link has expired. Open the Classic Mini DIY app to request a new one.",
+      "link_not_found": "We couldn't find a Discord invite for your account. Make sure your Sustaining Membership is active, then try again.",
+      "link_superseded": "A newer Discord invite was issued. Use the most recent link from your email or the app.",
+      "not_active": "Your Discord access isn't active. An active Sustaining Membership is required to join the members-only Discord.",
+      "generic": "We couldn't complete your Discord invite. Please try again from the most recent link."
     },
     "home": {
       "title": "Classic Mini DIY | Your Friendly Neighborhood Classic Mini Resource",
@@ -390,7 +438,8 @@
       "support": {
         "title": "SUPPORT THE MISSION",
         "heading": "Support",
-        "content": "Classic Mini DIY is supported by our viewers. If you are interested in helping to keep the channel alive, consider supporting on Patreon or if you have skills in JS and modern web technologies, please consider supporting the open source codebase on github."
+        "content": "Classic Mini DIY is supported by our viewers. If you are interested in helping to keep the channel alive, consider supporting on Patreon or if you have skills in JS and modern web technologies, please consider supporting the open source codebase on github.",
+        "member_cta": "Become a Sustaining Member"
       },
       "toolgrid": {
         "eyebrow": "TOOLBOX",
@@ -1133,21 +1182,6 @@
 </i18n>
 
 <style lang="scss" scoped>
-  .benefits-list {
-    .fa-discord {
-      color: #7289da;
-    }
-    .fa-video {
-      color: #ff5500;
-    }
-    .fa-gift {
-      color: #45a65e;
-    }
-    .fa-circle-info {
-      color: #ff9900;
-    }
-  }
-
   .phone {
     z-index: 2;
     position: relative;
