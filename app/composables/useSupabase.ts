@@ -1,12 +1,13 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '~~/types/database';
 
 export const useSupabase = () => {
   const config = useRuntimeConfig();
 
   // Client-side: use useState for singleton with automatic hydration
   if (import.meta.client) {
-    const client = useState<SupabaseClient>('supabase-client', () => {
-      return createClient(config.public.supabaseUrl as string, config.public.supabaseKey as string, {
+    const client = useState<SupabaseClient<Database>>('supabase-client', () => {
+      return createClient<Database>(config.public.supabaseUrl as string, config.public.supabaseKey as string, {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
@@ -45,7 +46,7 @@ export const useSupabase = () => {
   }
 
   // Server-side: create new instance per request (no session sharing)
-  return createClient(config.public.supabaseUrl as string, config.public.supabaseKey as string, {
+  return createClient<Database>(config.public.supabaseUrl as string, config.public.supabaseKey as string, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,

@@ -31,6 +31,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "gen:types": "supabase gen types typescript --project-id psoqirvbujwohemmwplv > types/database.ts",
     "postinstall": "cd node_modules/better-sqlite3 && npx --yes prebuild-install || npx --yes node-gyp rebuild --release"
   },
   "dependencies": {
