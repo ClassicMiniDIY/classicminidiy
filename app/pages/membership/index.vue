@@ -128,6 +128,7 @@
     }
   });
   const discordStatusLabel = computed(() => t(`member.discord_status.${discordStatusKey.value}`));
+  const discordGuidance = computed(() => t(`member.discord_guidance.${discordStatusKey.value}`));
   const discordBadgeClass = computed(() => {
     switch (discordStatus.value) {
       case 'active':
@@ -225,8 +226,17 @@
 
       <!-- CTA / management (client-reactive on auth + membership state) -->
       <ClientOnly>
+        <!-- Resolving auth + membership: show a spinner so members never flash
+             the sign-in CTA before the Discord/benefits area appears. -->
+        <section v-if="!authReady" class="card bg-base-100 border border-base-300 shadow-md">
+          <div class="card-body items-center text-center py-12">
+            <i class="fas fa-spinner fa-spin text-3xl text-primary"></i>
+            <p class="opacity-60 mt-3">{{ t('cta.checking') }}</p>
+          </div>
+        </section>
+
         <!-- Active member: management + your-benefits area -->
-        <section v-if="authReady && isSustainingMember" class="card bg-base-100 border border-primary/40 shadow-md">
+        <section v-else-if="isSustainingMember" class="card bg-base-100 border border-primary/40 shadow-md">
           <div class="card-body">
             <div class="flex flex-wrap items-center gap-3">
               <ProfileSustainingBadge size="md" />
@@ -242,7 +252,7 @@
                   <i class="fab fa-discord mr-2 text-primary"></i>{{ t('member.discord_title') }}
                   <span class="badge badge-sm ml-1" :class="discordBadgeClass">{{ discordStatusLabel }}</span>
                 </p>
-                <p class="text-sm opacity-70 mt-1">{{ t('member.discord_desc') }}</p>
+                <p class="text-sm opacity-70 mt-1">{{ discordGuidance }}</p>
               </div>
               <!-- Pro blog access -->
               <div class="rounded-box border border-base-300 p-4">
@@ -279,7 +289,7 @@
 
             <div class="mt-4">
               <button
-                v-if="authReady && isAuthenticated"
+                v-if="isAuthenticated"
                 class="btn btn-primary btn-lg"
                 :disabled="checkoutLoading"
                 @click="subscribe"
@@ -301,17 +311,12 @@
         </section>
 
         <template #fallback>
+          <!-- SSR / pre-hydration: spinner matching the !authReady state so there
+               is no flash between server render and the resolved client state. -->
           <section class="card bg-base-100 border border-base-300 shadow-md">
-            <div class="card-body items-center text-center">
-              <h2 class="text-2xl font-bold">{{ t('cta.title') }}</h2>
-              <p class="opacity-70 max-w-lg">{{ t('cta.subtitle') }}</p>
-              <NuxtLink to="/login" class="btn btn-primary btn-lg mt-4">
-                <i class="fas fa-star"></i>
-                {{ t('cta.signin') }}
-              </NuxtLink>
-              <p class="text-sm opacity-60 mt-3">
-                <i class="fas fa-mobile-screen mr-1"></i>{{ t('cta.also_apps') }}
-              </p>
+            <div class="card-body items-center text-center py-12">
+              <i class="fas fa-spinner fa-spin text-3xl text-primary"></i>
+              <p class="opacity-60 mt-3">{{ t('cta.checking') }}</p>
             </div>
           </section>
         </template>
@@ -372,6 +377,7 @@
     "cta": {
       "title": "Become a Sustaining Member",
       "subtitle": "$1.99/month, cancel anytime. Your membership unlocks benefits across every Classic Mini DIY property.",
+      "checking": "Checking your membership…",
       "subscribe": "Become a Sustaining Member — $1.99/mo",
       "signin": "Sign in to become a member",
       "also_apps": "Also available in the iOS and Android apps."
@@ -380,13 +386,19 @@
       "title": "You're a Sustaining Member",
       "subtitle": "Thanks for keeping the Classic Mini community running. Here's what your membership unlocks.",
       "discord_title": "Members-only Discord",
-      "discord_desc": "Watch for your private invite by email, or request one from the Classic Mini DIY app.",
       "discord_status": {
         "connected": "Connected",
         "pending": "Invite sent",
         "revoked": "Revoked",
         "failed": "Needs attention",
         "not_connected": "Not connected"
+      },
+      "discord_guidance": {
+        "connected": "You're in the members-only Discord — see you there!",
+        "pending": "Your private invite was emailed to you — check your inbox (and spam) to finish joining.",
+        "not_connected": "We email your private Discord invite once your membership is active. It can take a few minutes — watch your inbox (and spam).",
+        "revoked": "Your Discord access was removed. Reactivate your membership to rejoin.",
+        "failed": "We hit a snag issuing your Discord invite. Reach out via the contact page and we'll sort it out."
       },
       "blog_title": "Pro access to the blog",
       "blog_desc": "Complimentary access to subscriber content on the Classic Mini DIY blog.",
