@@ -3,7 +3,7 @@
   const route = useRoute();
   const config = useRuntimeConfig();
   const supabase = useSupabase();
-  const { capture } = usePostHog();
+  const { track } = useAnalytics();
   const { add: addToast } = useToast();
   const { isAuthenticated, isSustainingMember, user, waitForAuth } = useAuth();
 
@@ -40,7 +40,7 @@
       return;
     }
     checkoutLoading.value = true;
-    capture('membership_checkout_started', { source: 'web' });
+    track('membership_checkout_started', { source: 'web' });
     try {
       const token = await getAccessToken();
       if (!token) {
@@ -69,7 +69,7 @@
   // Existing web members self-manage through the Stripe Billing Portal.
   async function manageMembership() {
     portalLoading.value = true;
-    capture('membership_portal_opened', { source: 'web' });
+    track('membership_portal_opened', { source: 'web' });
     try {
       const token = await getAccessToken();
       if (!token) {
@@ -95,13 +95,61 @@
     }
   }
 
+  // Live Discord connection status for members. Reads the user's own
+  // discord_links row via the SELECT-own RLS policy (keystone §6.2). null = no
+  // link yet; otherwise 'pending' | 'active' | 'revoked' | 'failed'.
+  const discordStatus = ref<string | null>(null);
+  async function loadDiscordStatus() {
+    if (!user.value) return;
+    try {
+      const { data } = await supabase
+        .from('discord_links')
+        .select('status')
+        .eq('user_id', user.value.id)
+        .maybeSingle();
+      discordStatus.value = data?.status ?? null;
+    } catch {
+      discordStatus.value = null;
+    }
+  }
+
+  const discordStatusKey = computed(() => {
+    switch (discordStatus.value) {
+      case 'active':
+        return 'connected';
+      case 'pending':
+        return 'pending';
+      case 'revoked':
+        return 'revoked';
+      case 'failed':
+        return 'failed';
+      default:
+        return 'not_connected';
+    }
+  });
+  const discordStatusLabel = computed(() => t(`member.discord_status.${discordStatusKey.value}`));
+  const discordBadgeClass = computed(() => {
+    switch (discordStatus.value) {
+      case 'active':
+        return 'badge-success';
+      case 'pending':
+        return 'badge-warning';
+      case 'revoked':
+      case 'failed':
+        return 'badge-error';
+      default:
+        return 'badge-ghost';
+    }
+  });
+
   onMounted(async () => {
     await waitForAuth();
     authReady.value = true;
+    if (isSustainingMember.value) loadDiscordStatus();
 
     // Stripe returns to /membership?subscribed=1 or ?canceled=1.
     if (route.query.subscribed) {
-      capture('membership_checkout_succeeded', { source: 'web' });
+      track('membership_checkout_succeeded', { source: 'web' });
       addToast({
         title: t('toasts.subscribed_title'),
         description: t('toasts.subscribed_body'),
@@ -187,10 +235,13 @@
             <p class="opacity-70">{{ t('member.subtitle') }}</p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              <!-- Discord entry point (static; live connect-status pending the
-                   discord_links SELECT-own RLS policy, keystone §6.2) -->
+              <!-- Discord connection status (live via discord_links SELECT-own
+                   RLS policy, keystone §6.2) -->
               <div class="rounded-box border border-base-300 p-4">
-                <p class="font-semibold"><i class="fab fa-discord mr-2 text-primary"></i>{{ t('member.discord_title') }}</p>
+                <p class="font-semibold">
+                  <i class="fab fa-discord mr-2 text-primary"></i>{{ t('member.discord_title') }}
+                  <span class="badge badge-sm ml-1" :class="discordBadgeClass">{{ discordStatusLabel }}</span>
+                </p>
                 <p class="text-sm opacity-70 mt-1">{{ t('member.discord_desc') }}</p>
               </div>
               <!-- Pro blog access -->
@@ -330,6 +381,13 @@
       "subtitle": "Thanks for keeping the Classic Mini community running. Here's what your membership unlocks.",
       "discord_title": "Members-only Discord",
       "discord_desc": "Watch for your private invite by email, or request one from the Classic Mini DIY app.",
+      "discord_status": {
+        "connected": "Connected",
+        "pending": "Invite sent",
+        "revoked": "Revoked",
+        "failed": "Needs attention",
+        "not_connected": "Not connected"
+      },
       "blog_title": "Pro access to the blog",
       "blog_desc": "Complimentary access to subscriber content on the Classic Mini DIY blog.",
       "blog_cta": "Open the blog",
