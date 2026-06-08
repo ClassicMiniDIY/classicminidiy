@@ -416,6 +416,10 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
       supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_KEY || '',
       mapboxAccessToken: process.env.NUXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '',
+      // Ghost "Pro access to the blog" target for Sustaining Members. Empty
+      // until the Substack -> Ghost migration finalizes the URL (web design
+      // doc open question 3); the /membership member area hides the link when unset.
+      blogUrl: process.env.NUXT_PUBLIC_BLOG_URL || '',
     },
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
     githubAPIKey: process.env.githubAPIKey,
