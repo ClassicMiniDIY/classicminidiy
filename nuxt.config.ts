@@ -420,6 +420,10 @@ export default defineNuxtConfig({
       // until the Substack -> Ghost migration finalizes the URL (web design
       // doc open question 3); the /membership member area hides the link when unset.
       blogUrl: process.env.NUXT_PUBLIC_BLOG_URL || '',
+      // Stripe Customer Portal no-code login link for membership self-management.
+      // The /membership "Manage membership" button links here (with the member's
+      // email pre-filled). Hidden when unset.
+      stripePortalUrl: process.env.NUXT_PUBLIC_STRIPE_PORTAL_URL || '',
     },
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
     githubAPIKey: process.env.githubAPIKey,

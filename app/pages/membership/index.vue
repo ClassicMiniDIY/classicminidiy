@@ -22,7 +22,6 @@
 
   const authReady = ref(false);
   const checkoutLoading = ref(false);
-  const portalLoading = ref(false);
 
   async function getAccessToken(): Promise<string | null> {
     const {
@@ -66,34 +65,16 @@
     }
   }
 
-  // Existing web members self-manage through the Stripe Billing Portal.
-  async function manageMembership() {
-    portalLoading.value = true;
-    track('membership_portal_opened', { source: 'web' });
-    try {
-      const token = await getAccessToken();
-      if (!token) {
-        navigateTo('/login');
-        return;
-      }
-      const res = await $fetch<{ url?: string }>('/api/membership/portal', {
-        method: 'POST',
-        headers: { authorization: `Bearer ${token}` },
-      });
-      if (!res?.url) throw new Error('Missing portal URL');
-      await navigateTo(res.url, { external: true });
-    } catch (error) {
-      console.error('Billing portal failed:', error);
-      addToast({
-        title: t('errors.portal_title'),
-        description: t('errors.portal_body'),
-        color: 'error',
-        icon: 'i-fa6-solid-triangle-exclamation',
-      });
-    } finally {
-      portalLoading.value = false;
-    }
-  }
+  // Existing web members self-manage through the Stripe Customer Portal (no-code
+  // login link, NUXT_PUBLIC_STRIPE_PORTAL_URL). Pre-fill the member's email so
+  // they skip a step. Members who subscribed in the iOS/Android apps manage
+  // through the App Store / Google Play instead.
+  const portalHref = computed(() => {
+    const base = (config.public.stripePortalUrl as string) || '';
+    if (!base) return '';
+    const email = user.value?.email;
+    return email ? `${base}?prefilled_email=${encodeURIComponent(email)}` : base;
+  });
 
   // Live Discord connection status for members. Reads the user's own
   // discord_links row via the SELECT-own RLS policy (keystone §6.2). null = no
@@ -270,12 +251,17 @@
               </div>
             </div>
 
-            <div class="card-actions mt-4">
-              <button class="btn btn-outline btn-primary" :disabled="portalLoading" @click="manageMembership">
-                <i v-if="portalLoading" class="fas fa-spinner fa-spin"></i>
-                <i v-else class="fas fa-gear"></i>
+            <div v-if="portalHref" class="card-actions mt-4">
+              <a
+                :href="portalHref"
+                target="_blank"
+                rel="noopener"
+                class="btn btn-outline btn-primary"
+                @click="track('membership_portal_opened', { source: 'web' })"
+              >
+                <i class="fas fa-gear"></i>
                 {{ t('member.manage') }}
-              </button>
+              </a>
             </div>
             <p class="text-xs opacity-60 mt-2">{{ t('member.manage_note') }}</p>
           </div>
@@ -408,9 +394,7 @@
     },
     "errors": {
       "checkout_title": "Checkout unavailable",
-      "checkout_body": "We couldn't start your membership checkout. Please try again in a moment.",
-      "portal_title": "Billing portal unavailable",
-      "portal_body": "We couldn't open the billing portal. Please try again in a moment."
+      "checkout_body": "We couldn't start your membership checkout. Please try again in a moment."
     },
     "toasts": {
       "subscribed_title": "Welcome, Sustaining Member!",
