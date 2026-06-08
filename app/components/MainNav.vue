@@ -222,28 +222,24 @@
               tabindex="0"
               class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-56 p-2 border border-base-300"
             >
-              <li v-if="isAdmin">
-                <NuxtLink to="/admin" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.admin') })">
-                  <i class="fas fa-shield-check"></i>
-                  {{ t('profile.admin') }}
-                </NuxtLink>
-              </li>
-              <li>
-                <NuxtLink to="/dashboard" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.dashboard') })">
-                  <i class="fas fa-gauge"></i>
-                  {{ t('profile.dashboard') }}
-                </NuxtLink>
-              </li>
-              <li>
-                <NuxtLink to="/dashboard" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.submissions') })">
-                  <i class="fas fa-file-lines"></i>
-                  {{ t('profile.submissions') }}
-                </NuxtLink>
-              </li>
+              <li class="menu-title">{{ t('profile.account') }}</li>
               <li>
                 <NuxtLink to="/profile" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.profile') })">
                   <i class="fas fa-user"></i>
                   {{ t('profile.profile') }}
+                </NuxtLink>
+              </li>
+              <li>
+                <NuxtLink to="/membership" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.membership') })">
+                  <i class="fas fa-star"></i>
+                  {{ t('profile.membership') }}
+                </NuxtLink>
+              </li>
+              <li class="menu-title mt-1">{{ t('profile.activity') }}</li>
+              <li>
+                <NuxtLink to="/dashboard" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.submissions') })">
+                  <i class="fas fa-file-lines"></i>
+                  {{ t('profile.submissions') }}
                 </NuxtLink>
               </li>
               <li>
@@ -253,6 +249,12 @@
                 </NuxtLink>
               </li>
               <li class="menu-title mt-1"><span class="sr-only">{{ t('session_label') }}</span></li>
+              <li v-if="isAdmin">
+                <NuxtLink to="/admin" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.admin') })">
+                  <i class="fas fa-shield-check"></i>
+                  {{ t('profile.admin') }}
+                </NuxtLink>
+              </li>
               <li>
                 <button type="button" @click="handleSignOut">
                   <i class="fas fa-arrow-right-from-bracket"></i>
@@ -380,22 +382,22 @@
                   <span class="text-sm font-medium truncate">{{ displayName }}</span>
                 </div>
                 <NuxtLink
-                  v-if="isAdmin"
-                  to="/admin"
+                  to="/profile"
                   class="btn btn-ghost btn-block justify-start font-bold"
                   @click="isMobileMenuOpen = false"
                 >
-                  <i class="fad fa-shield-check mr-2"></i>
-                  {{ t('profile.admin') }}
+                  <i class="fad fa-user mr-2"></i>
+                  {{ t('profile.profile') }}
                 </NuxtLink>
                 <NuxtLink
-                  to="/dashboard"
+                  to="/membership"
                   class="btn btn-ghost btn-block justify-start font-bold"
                   @click="isMobileMenuOpen = false"
                 >
-                  <i class="fad fa-gauge mr-2"></i>
-                  {{ t('profile.dashboard') }}
+                  <i class="fad fa-star mr-2"></i>
+                  {{ t('profile.membership') }}
                 </NuxtLink>
+                <p class="text-sm opacity-70 px-2 mt-2">{{ t('profile.activity') }}</p>
                 <NuxtLink
                   to="/dashboard"
                   class="btn btn-ghost btn-block justify-start font-bold"
@@ -405,20 +407,21 @@
                   {{ t('profile.submissions') }}
                 </NuxtLink>
                 <NuxtLink
-                  to="/profile"
-                  class="btn btn-ghost btn-block justify-start font-bold"
-                  @click="isMobileMenuOpen = false"
-                >
-                  <i class="fad fa-user mr-2"></i>
-                  {{ t('profile.profile') }}
-                </NuxtLink>
-                <NuxtLink
                   to="/contribute"
                   class="btn btn-ghost btn-block justify-start font-bold"
                   @click="isMobileMenuOpen = false"
                 >
                   <i class="fad fa-paper-plane mr-2"></i>
                   {{ t('profile.contribute') }}
+                </NuxtLink>
+                <NuxtLink
+                  v-if="isAdmin"
+                  to="/admin"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i class="fad fa-shield-check mr-2"></i>
+                  {{ t('profile.admin') }}
                 </NuxtLink>
                 <button
                   type="button"
@@ -501,9 +504,11 @@
       "sign_in": "Sign In",
       "sign_out": "Sign Out",
       "account": "Account",
+      "activity": "Activity",
       "admin": "Admin Dashboard",
       "submissions": "My Submissions",
       "profile": "Profile",
+      "membership": "Membership",
       "dashboard": "Dashboard",
       "contribute": "Contribute"
     },
