@@ -132,7 +132,7 @@ Classic Mini DIY is part of a broader ecosystem of applications sharing a single
 | **The Mini Exchange** | Classic Mini parts/vehicles marketplace | [theminiexchange.com](https://theminiexchange.com) |
 | **Classic Mini Toolbox** | iOS and Android mobile apps | App Store / Google Play |
 
-All properties share authentication via Supabase with custom domain `auth.classicminidiy.com`. Users sign in once and their profile, avatar, and preferences carry across all platforms. Sustaining Members ($1.99/mo via App Store / Google Play) receive premium features across all properties.
+All properties share authentication via Supabase with custom domain `auth.classicminidiy.com`. Users sign in once and their profile, avatar, and preferences carry across all platforms. Sustaining Members ($1.99/mo via the App Store, Google Play, or classicminidiy.com) unlock a unified set of benefits across all properties.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
