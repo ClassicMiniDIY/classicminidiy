@@ -9,6 +9,10 @@ interface UserProfile {
   total_submissions: number;
   approved_submissions: number;
   rejected_submissions: number;
+  // Sustaining Member status. NOT a `profiles` column — it is computed by
+  // user_has_subscription() and folded in here so the badge + benefits area
+  // can gate on shared auth state (keystone §9). See fetchMembership below.
+  is_sustaining_member: boolean;
 }
 
 // Store auth subscription and init promise outside of useState to avoid SSR serialization issues
@@ -33,10 +37,29 @@ export const useAuth = () => {
       email_domain: p?.email ? p.email.split('@')[1] : undefined,
       trust_level: p?.trust_level,
       is_admin: p?.is_admin,
+      is_sustaining_member: p?.is_sustaining_member,
     });
   };
 
-  // Fetch user profile including admin status
+  // Read Sustaining Member status through the canonical gate (keystone §9).
+  // This is the ONLY contract-approved way to read own membership — never query
+  // the `subscriptions` table directly. Defaults to false on any error so the
+  // profile still loads.
+  const fetchMembership = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.rpc('user_has_subscription', { p_user_id: userId });
+      if (error) {
+        console.error('Error checking sustaining membership:', error);
+        return false;
+      }
+      return data ?? false;
+    } catch (error) {
+      console.error('Error checking sustaining membership:', error);
+      return false;
+    }
+  };
+
+  // Fetch user profile including admin status + Sustaining Member status
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -53,7 +76,9 @@ export const useAuth = () => {
         return;
       }
 
-      userProfile.value = data;
+      // Membership is computed, not a profiles column — fold it into shared state.
+      const isSustaining = await fetchMembership(userId);
+      userProfile.value = { ...data, is_sustaining_member: isSustaining } as UserProfile;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       userProfile.value = null;
@@ -211,12 +236,16 @@ export const useAuth = () => {
   // Check if user is admin
   const isAdmin = computed(() => userProfile.value?.is_admin ?? false);
 
+  // Single source of truth for Sustaining Member gating across pages/components.
+  const isSustainingMember = computed(() => userProfile.value?.is_sustaining_member ?? false);
+
   return {
     user,
     userProfile,
     loading,
     isAuthenticated,
     isAdmin,
+    isSustainingMember,
     initAuth,
     waitForAuth,
     cleanup,
