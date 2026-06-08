@@ -23,7 +23,7 @@
     "node": "^24"
   },
   "scripts": {
-    "dev": "nuxi dev",
+    "dev": "TMPDIR=/tmp nuxi dev",
     "build": "nuxi build",
     "start": "nuxi preview",
     "format": "prettier --write .",
