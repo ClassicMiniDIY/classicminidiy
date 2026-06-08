@@ -49,7 +49,7 @@ describe('useAuth', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', mockSession.user.id);
-      expect(auth.userProfile.value).toEqual(mockProfile);
+      expect(auth.userProfile.value).toEqual({ ...mockProfile, is_sustaining_member: false });
     });
 
     it('sets user to null when no session exists', async () => {
@@ -168,7 +168,7 @@ describe('useAuth', () => {
       await auth.initAuth();
 
       // Verify we have a profile initially
-      expect(auth.userProfile.value).toEqual(mockProfile);
+      expect(auth.userProfile.value).toEqual({ ...mockProfile, is_sustaining_member: false });
 
       // Simulate sign out via auth state change
       authChangeCallback!('SIGNED_OUT', null);
@@ -456,7 +456,7 @@ describe('useAuth', () => {
 
       await auth.fetchUserProfile('user-123');
 
-      expect(auth.userProfile.value).toEqual(mockProfile);
+      expect(auth.userProfile.value).toEqual({ ...mockProfile, is_sustaining_member: false });
     });
 
     it('sets userProfile to null when supabase returns an error', async () => {
@@ -491,6 +491,93 @@ describe('useAuth', () => {
 
       expect(auth.userProfile.value).toBeNull();
       expect(consoleError).toHaveBeenCalled();
+
+      consoleError.mockRestore();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // isSustainingMember computed + membership read path (keystone §9)
+  // ---------------------------------------------------------------------------
+  describe('isSustainingMember', () => {
+    it('returns false before any profile is loaded', async () => {
+      const { useAuth } = await import('~/app/composables/useAuth');
+      const auth = useAuth();
+      expect(auth.isSustainingMember.value).toBe(false);
+    });
+
+    it('reads membership through the user_has_subscription RPC, not the profiles select', async () => {
+      mockSupabase._mockSingle.mockResolvedValue({ data: mockProfile, error: null });
+      mockSupabase._mockRpc.mockResolvedValue({ data: true, error: null });
+
+      const { useAuth } = await import('~/app/composables/useAuth');
+      const auth = useAuth();
+
+      await auth.fetchUserProfile('user-123');
+
+      // Canonical gate: RPC called with the user id (keystone §9).
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('user_has_subscription', { p_user_id: 'user-123' });
+
+      // Regression guard: is_sustaining_member is NOT a profiles column.
+      const selectArg = mockSupabase._mockSelect.mock.calls[0][0] as string;
+      expect(selectArg).toContain('is_admin');
+      expect(selectArg).not.toContain('is_sustaining_member');
+    });
+
+    it('is true when the gate RPC returns true', async () => {
+      mockSupabase._mockSingle.mockResolvedValue({ data: mockProfile, error: null });
+      mockSupabase._mockRpc.mockResolvedValue({ data: true, error: null });
+
+      const { useAuth } = await import('~/app/composables/useAuth');
+      const auth = useAuth();
+
+      await auth.fetchUserProfile('user-123');
+
+      expect(auth.userProfile.value?.is_sustaining_member).toBe(true);
+      expect(auth.isSustainingMember.value).toBe(true);
+    });
+
+    it('is false when the gate RPC returns false', async () => {
+      mockSupabase._mockSingle.mockResolvedValue({ data: mockProfile, error: null });
+      mockSupabase._mockRpc.mockResolvedValue({ data: false, error: null });
+
+      const { useAuth } = await import('~/app/composables/useAuth');
+      const auth = useAuth();
+
+      await auth.fetchUserProfile('user-123');
+
+      expect(auth.isSustainingMember.value).toBe(false);
+    });
+
+    it('defaults to false when the gate RPC errors (degrades gracefully)', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockSupabase._mockSingle.mockResolvedValue({ data: mockProfile, error: null });
+      mockSupabase._mockRpc.mockResolvedValue({ data: null, error: { message: 'function does not exist' } });
+
+      const { useAuth } = await import('~/app/composables/useAuth');
+      const auth = useAuth();
+
+      await auth.fetchUserProfile('user-123');
+
+      // Profile still loads; membership just falls back to false.
+      expect(auth.userProfile.value).not.toBeNull();
+      expect(auth.isSustainingMember.value).toBe(false);
+
+      consoleError.mockRestore();
+    });
+
+    it('does not call the membership RPC when the profile fetch fails', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockSupabase._mockSingle.mockResolvedValue({ data: null, error: { message: 'Not found' } });
+
+      const { useAuth } = await import('~/app/composables/useAuth');
+      const auth = useAuth();
+
+      await auth.fetchUserProfile('user-123');
+
+      expect(auth.userProfile.value).toBeNull();
+      expect(auth.isSustainingMember.value).toBe(false);
+      expect(mockSupabase.rpc).not.toHaveBeenCalled();
 
       consoleError.mockRestore();
     });
@@ -580,6 +667,7 @@ describe('useAuth', () => {
       expect(auth).toHaveProperty('loading');
       expect(auth).toHaveProperty('isAuthenticated');
       expect(auth).toHaveProperty('isAdmin');
+      expect(auth).toHaveProperty('isSustainingMember');
       expect(auth).toHaveProperty('initAuth');
       expect(auth).toHaveProperty('waitForAuth');
       expect(auth).toHaveProperty('cleanup');

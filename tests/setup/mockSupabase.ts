@@ -44,6 +44,10 @@ export const createMockSupabaseClient = () => {
   const mockRange = vi.fn().mockReturnThis();
   const mockSingle = vi.fn().mockResolvedValue({ data: null, error: null });
   const mockMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+  // RPC gate (e.g. user_has_subscription). Resolves directly by default so
+  // consumers that `await supabase.rpc(...)` get a value; tests that chain
+  // `.single()` (e.g. useProfile) reassign mockSupabase.rpc themselves.
+  const mockRpc = vi.fn().mockResolvedValue({ data: false, error: null });
 
   const queryBuilder: any = {
     select: mockSelect,
@@ -75,6 +79,7 @@ export const createMockSupabaseClient = () => {
       getUser: vi.fn().mockResolvedValue({ data: { user: mockSession.user }, error: null }),
     },
     from: mockFrom,
+    rpc: mockRpc,
     storage: {
       from: vi.fn(() => ({
         upload: vi.fn().mockResolvedValue({ data: { path: 'mock-path' }, error: null }),
@@ -83,6 +88,7 @@ export const createMockSupabaseClient = () => {
       })),
     },
     _queryBuilder: queryBuilder,
+    _mockRpc: mockRpc,
     _mockSelect: mockSelect,
     _mockInsert: mockInsert,
     _mockUpdate: mockUpdate,
