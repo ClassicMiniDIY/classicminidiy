@@ -104,6 +104,24 @@ const __nuxtStateStore: Record<string, ReturnType<typeof ref>> = {};
   reset: vi.fn(),
 }));
 
+// useAnalytics mock — typed helpers over usePostHog; consumed by useAuth and
+// many pages/components. No-op in unit tests, mirroring the usePostHog stub.
+(global as any).useAnalytics = vi.fn(() => ({
+  capture: vi.fn(),
+  identify: vi.fn(),
+  reset: vi.fn(),
+  track: vi.fn(),
+  identifyUser: vi.fn(),
+  resetIdentity: vi.fn(),
+  trackOutbound: vi.fn(),
+  trackSearch: vi.fn(),
+  trackDownload: vi.fn(),
+  trackFormStarted: vi.fn(),
+  trackFormStep: vi.fn(),
+  trackFormSubmitted: vi.fn(),
+  trackFormError: vi.fn(),
+}));
+
 // ===== Vue APIs as globals (Nuxt auto-imports) =====
 (global as any).computed = computed;
 (global as any).watch = watch;
