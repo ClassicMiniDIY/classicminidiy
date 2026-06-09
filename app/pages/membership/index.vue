@@ -153,13 +153,23 @@
     }
   });
 
+  // Load Discord + platform whenever membership is active — covers both an
+  // existing member on mount and a user whose status flips true after the
+  // checkout webhook resolves (immediate runs once with the current value).
+  watch(
+    isSustainingMember,
+    (active) => {
+      if (active) {
+        loadDiscordStatus();
+        loadMembershipPlatform();
+      }
+    },
+    { immediate: true }
+  );
+
   onMounted(async () => {
     await waitForAuth();
     authReady.value = true;
-    if (isSustainingMember.value) {
-      loadDiscordStatus();
-      loadMembershipPlatform();
-    }
 
     // Stripe returns to /membership?subscribed=1 or ?canceled=1. Process once,
     // then strip the params so a refresh doesn't replay the toast.
