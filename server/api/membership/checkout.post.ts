@@ -51,10 +51,13 @@ export default defineEventHandler(async (event) => {
 
     return { url: res.url };
   } catch (error: any) {
-    if (error?.statusCode === 502) throw error;
+    // Always wrap in createError so $fetch FetchErrors become a clean JSON
+    // response with the right status (not an opaque 500). Preserve our own
+    // statusMessage (e.g. the missing-URL 502) when present.
     const status = error?.statusCode || error?.response?.status || 502;
+    const message = error?.statusMessage || 'Could not start membership checkout';
     // Keep the raw Edge Function / Stripe error in the log only.
     console.error('[membership/checkout] edge function error:', error?.data || error?.message || error);
-    throw createError({ statusCode: status, statusMessage: 'Could not start membership checkout' });
+    throw createError({ statusCode: status, statusMessage: message });
   }
 });
