@@ -5,8 +5,13 @@
  * Vercel (Fluid Compute) the counter lives per warm function instance rather
  * than in shared storage, so it is an abuse *dampener*, not a hard global
  * quota — enough to stop a single client scripting thousands of requests/min
- * without standing up Redis/KV. Buckets self-expire and are swept lazily so
- * the map cannot grow unbounded under a flood of unique keys.
+ * without standing up Redis/KV.
+ *
+ * Memory is strictly bounded: the map never exceeds MAX_TRACKED_KEYS. Expired
+ * buckets are swept lazily (throttled to avoid an O(N) scan on every request),
+ * and if the map is still at capacity we evict the oldest entries in O(1) via
+ * Map insertion order. This prevents a flood of unique keys (e.g. spoofed IPs)
+ * from either leaking memory or blocking the event loop.
  */
 
 interface Bucket {
@@ -16,9 +21,13 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
-// Hard cap so a flood of distinct keys (e.g. spoofed IPs) cannot grow the map
-// without bound; we sweep expired entries before inserting past this size.
+// Hard ceiling on tracked keys; we never let the map grow past this.
 const MAX_TRACKED_KEYS = 50_000;
+
+// Throttle full sweeps so a saturated map can't trigger an O(N) scan on every
+// request (a self-inflicted DoS vector).
+const SWEEP_INTERVAL_MS = 10_000;
+let lastSweep = 0;
 
 export interface RateLimitOptions {
   /** Max requests allowed within the window. */
@@ -37,9 +46,25 @@ export interface RateLimitResult {
   retryAfter: number;
 }
 
+/** Remove expired buckets, at most once per SWEEP_INTERVAL_MS. */
 function sweepExpired(now: number): void {
+  if (now - lastSweep < SWEEP_INTERVAL_MS) return;
+  lastSweep = now;
   for (const [key, bucket] of buckets) {
     if (bucket.resetAt <= now) buckets.delete(key);
+  }
+}
+
+/** Strictly bound the map before inserting a new key. */
+function makeRoomForNewKey(now: number): void {
+  if (buckets.size < MAX_TRACKED_KEYS) return;
+  sweepExpired(now);
+  // If the (possibly throttled) sweep didn't free enough, evict oldest-inserted
+  // entries in O(1) until under the cap — never an O(N) search.
+  while (buckets.size >= MAX_TRACKED_KEYS) {
+    const oldestKey = buckets.keys().next().value;
+    if (oldestKey === undefined) break;
+    buckets.delete(oldestKey);
   }
 }
 
@@ -50,11 +75,10 @@ function sweepExpired(now: number): void {
 export function consumeRateLimit(key: string, opts: RateLimitOptions): RateLimitResult {
   const now = Date.now();
 
-  // Opportunistic cleanup before we risk inserting a brand-new key past the cap.
-  if (buckets.size >= MAX_TRACKED_KEYS) sweepExpired(now);
-
   let bucket = buckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
+    // Only bound the map when we're about to add a genuinely new key.
+    if (bucket === undefined) makeRoomForNewKey(now);
     bucket = { count: 0, resetAt: now + opts.windowMs };
     buckets.set(key, bucket);
   }
@@ -68,7 +92,8 @@ export function consumeRateLimit(key: string, opts: RateLimitOptions): RateLimit
   return { limited, remaining, resetAt: bucket.resetAt, retryAfter };
 }
 
-/** Test/maintenance helper: clear all tracked buckets. */
+/** Test/maintenance helper: clear all tracked buckets and sweep state. */
 export function _resetRateLimitStore(): void {
   buckets.clear();
+  lastSweep = 0;
 }
