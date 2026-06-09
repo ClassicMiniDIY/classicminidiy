@@ -302,7 +302,17 @@
     membershipLoading.value = true;
     membershipError.value = '';
     try {
-      membershipData.value = await getMembership(userId);
+      const data = await getMembership(userId);
+      membershipData.value = data;
+      // Pre-populate the form from the existing comp so an update of one field
+      // doesn't blank the other (note vs expiry).
+      if (data.has_active_comp) {
+        compNote.value = data.comp_note || '';
+        compExpiry.value = data.comp_expires_at ? data.comp_expires_at.slice(0, 10) : '';
+      } else {
+        compNote.value = '';
+        compExpiry.value = '';
+      }
     } catch (error: any) {
       membershipError.value = error?.message || 'Failed to load membership';
     } finally {
@@ -331,12 +341,13 @@
     membershipLoading.value = true;
     membershipError.value = '';
     try {
-      const expiresAt = compExpiry.value ? new Date(`${compExpiry.value}T23:59:59`).toISOString() : null;
+      const expiresAt = compExpiry.value ? new Date(`${compExpiry.value}T23:59:59Z`).toISOString() : null;
       await grantComp(membershipUser.value.id, compNote.value.trim() || null, expiresAt);
       track('admin_action', { item_type: 'user', action: 'comp_granted' });
       await loadMembership(membershipUser.value.id);
     } catch (error: any) {
       membershipError.value = error?.message || 'Failed to grant comp membership';
+    } finally {
       membershipLoading.value = false;
     }
   }
@@ -351,6 +362,7 @@
       await loadMembership(membershipUser.value.id);
     } catch (error: any) {
       membershipError.value = error?.message || 'Failed to revoke comp membership';
+    } finally {
       membershipLoading.value = false;
     }
   }
@@ -358,7 +370,14 @@
   const compExpiryLabel = computed(() => {
     const exp = membershipData.value?.comp_expires_at;
     if (!exp) return null;
-    return new Date(exp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    // expiry is stored UTC; format in UTC so the displayed calendar date matches
+    // what was entered (no off-by-one in non-UTC timezones).
+    return new Date(exp).toLocaleDateString('en-US', {
+      timeZone: 'UTC',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   });
 </script>
 
