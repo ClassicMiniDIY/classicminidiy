@@ -34,6 +34,18 @@
     "gen:types": "supabase gen types typescript --project-id psoqirvbujwohemmwplv > types/database.ts",
     "postinstall": "cd node_modules/better-sqlite3 && npx --yes prebuild-install || npx --yes node-gyp rebuild --release"
   },
+  "overrides": {
+    "vue": "3.5.35",
+    "@vue/compiler-core": "3.5.35",
+    "@vue/compiler-dom": "3.5.35",
+    "@vue/compiler-sfc": "3.5.35",
+    "@vue/compiler-ssr": "3.5.35",
+    "@vue/reactivity": "3.5.35",
+    "@vue/runtime-core": "3.5.35",
+    "@vue/runtime-dom": "3.5.35",
+    "@vue/server-renderer": "3.5.35",
+    "@vue/shared": "3.5.35"
+  },
   "dependencies": {
     "@fontsource/outfit": "^5.2.8",
     "@langchain/langgraph-sdk": "^1.9.15",
