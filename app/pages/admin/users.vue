@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { nextTick } from 'vue';
   import { BREADCRUMB_VERSIONS } from '../../../data/models/generic';
+  import type { AdminMembership } from '~/composables/useAdminMembership';
 
   definePageMeta({
     layout: 'admin',
@@ -283,6 +284,82 @@
       currentPage.value = page;
     }
   }
+
+  // --- Comp membership (admin-granted Sustaining Member) ---
+  // Calls the is_admin()-gated RPCs directly with the admin's client (shared
+  // contract with TheMiniExchange). Granting a comp fans out the badge, Ghost
+  // Pro, Discord, and free TME listings via the subscriptions trigger.
+  const { getMembership, grantComp, revokeComp } = useAdminMembership();
+  const showMembershipModal = ref(false);
+  const membershipUser = ref<UserItem | null>(null);
+  const membershipData = ref<AdminMembership | null>(null);
+  const membershipLoading = ref(false);
+  const membershipError = ref('');
+  const compNote = ref('');
+  const compExpiry = ref(''); // YYYY-MM-DD, '' = permanent
+
+  async function loadMembership(userId: string) {
+    membershipLoading.value = true;
+    membershipError.value = '';
+    try {
+      membershipData.value = await getMembership(userId);
+    } catch (error: any) {
+      membershipError.value = error?.message || 'Failed to load membership';
+    } finally {
+      membershipLoading.value = false;
+    }
+  }
+
+  async function openMembershipModal(userItem: UserItem) {
+    membershipUser.value = userItem;
+    membershipData.value = null;
+    compNote.value = '';
+    compExpiry.value = '';
+    showMembershipModal.value = true;
+    await loadMembership(userItem.id);
+  }
+
+  async function closeMembershipModal() {
+    showMembershipModal.value = false;
+    await nextTick();
+    membershipUser.value = null;
+    membershipData.value = null;
+  }
+
+  async function submitGrantComp() {
+    if (!membershipUser.value) return;
+    membershipLoading.value = true;
+    membershipError.value = '';
+    try {
+      const expiresAt = compExpiry.value ? new Date(`${compExpiry.value}T23:59:59`).toISOString() : null;
+      await grantComp(membershipUser.value.id, compNote.value.trim() || null, expiresAt);
+      track('admin_action', { item_type: 'user', action: 'comp_granted' });
+      await loadMembership(membershipUser.value.id);
+    } catch (error: any) {
+      membershipError.value = error?.message || 'Failed to grant comp membership';
+      membershipLoading.value = false;
+    }
+  }
+
+  async function submitRevokeComp() {
+    if (!membershipUser.value) return;
+    membershipLoading.value = true;
+    membershipError.value = '';
+    try {
+      await revokeComp(membershipUser.value.id);
+      track('admin_action', { item_type: 'user', action: 'comp_revoked' });
+      await loadMembership(membershipUser.value.id);
+    } catch (error: any) {
+      membershipError.value = error?.message || 'Failed to revoke comp membership';
+      membershipLoading.value = false;
+    }
+  }
+
+  const compExpiryLabel = computed(() => {
+    const exp = membershipData.value?.comp_expires_at;
+    if (!exp) return null;
+    return new Date(exp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  });
 </script>
 
 <template>
@@ -363,6 +440,7 @@
             <th class="text-center">Admin</th>
             <th>Submissions</th>
             <th>Joined</th>
+            <th class="text-center">Membership</th>
             <th class="text-center w-48">Change Trust Level</th>
           </tr>
         </thead>
@@ -429,6 +507,19 @@
             <!-- Joined -->
             <td>
               <span class="text-xs opacity-70">{{ formatDate(userItem.created_at) }}</span>
+            </td>
+
+            <!-- Membership / Comp -->
+            <td class="text-center">
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs"
+                :disabled="isProcessing"
+                @click="openMembershipModal(userItem)"
+              >
+                <i class="fas fa-star opacity-70"></i>
+                Manage
+              </button>
             </td>
 
             <!-- Actions -->
@@ -568,6 +659,124 @@
         </div>
       </div>
       <div class="modal-backdrop" @click="closeTrustModal"></div>
+    </dialog>
+
+    <!-- Comp Membership Modal -->
+    <dialog class="modal" :class="{ 'modal-open': showMembershipModal }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Manage Membership</h3>
+
+        <!-- User summary -->
+        <div v-if="membershipUser" class="bg-base-200 p-4 rounded-lg mb-4">
+          <div class="flex items-center gap-3">
+            <div v-if="membershipUser.avatar_url" class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+              <img
+                :src="membershipUser.avatar_url"
+                :alt="membershipUser.display_name || membershipUser.email"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div
+              v-else
+              class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0"
+            >
+              {{ getInitials(membershipUser.display_name) }}
+            </div>
+            <div>
+              <p class="font-medium">{{ membershipUser.display_name || 'No display name' }}</p>
+              <p class="text-sm opacity-60">{{ membershipUser.email }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading (initial) -->
+        <div v-if="membershipLoading && !membershipData" class="flex justify-center py-6">
+          <i class="fas fa-spinner fa-spin text-2xl text-primary"></i>
+        </div>
+
+        <!-- Error -->
+        <div v-if="membershipError" role="alert" class="alert alert-error mb-4">
+          <i class="fas fa-triangle-exclamation"></i>
+          <span>{{ membershipError }}</span>
+        </div>
+
+        <!-- Status + actions -->
+        <template v-if="membershipData">
+          <div class="mb-4 text-sm space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="opacity-70">Status:</span>
+              <span v-if="membershipData.is_member" class="badge badge-success badge-sm">Sustaining Member</span>
+              <span v-else class="badge badge-ghost badge-sm">Not a member</span>
+              <span v-if="membershipData.active_platform" class="badge badge-outline badge-sm">
+                via {{ membershipData.active_platform }}
+              </span>
+            </div>
+            <div v-if="membershipData.has_active_comp" class="opacity-70">
+              Comp {{ compExpiryLabel ? `expires ${compExpiryLabel}` : 'is permanent' }}
+              <span v-if="membershipData.comp_note">&mdash; &ldquo;{{ membershipData.comp_note }}&rdquo;</span>
+            </div>
+          </div>
+
+          <!-- Revoke (only when an active comp exists) -->
+          <div v-if="membershipData.has_active_comp" class="mb-4">
+            <button
+              type="button"
+              class="btn btn-outline btn-error btn-sm"
+              :disabled="membershipLoading"
+              @click="submitRevokeComp"
+            >
+              <i class="fas fa-xmark"></i>
+              Revoke comp
+            </button>
+          </div>
+
+          <!-- Grant / update comp -->
+          <div class="border-t border-base-300 pt-4">
+            <p class="font-semibold text-sm mb-2">
+              {{ membershipData.has_active_comp ? 'Update comp' : 'Grant comp membership' }}
+            </p>
+            <label class="form-control mb-2">
+              <div class="label py-1"><span class="label-text text-xs">Reason / note (optional)</span></div>
+              <input
+                v-model="compNote"
+                type="text"
+                placeholder="e.g. Press, partner, giveaway"
+                class="input input-bordered input-sm w-full"
+                :disabled="membershipLoading"
+              />
+            </label>
+            <label class="form-control mb-3">
+              <div class="label py-1">
+                <span class="label-text text-xs">Expires (optional &mdash; blank = permanent)</span>
+              </div>
+              <input
+                v-model="compExpiry"
+                type="date"
+                class="input input-bordered input-sm w-full"
+                :disabled="membershipLoading"
+              />
+            </label>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm btn-block"
+              :disabled="membershipLoading"
+              @click="submitGrantComp"
+            >
+              <i v-if="membershipLoading" class="fas fa-spinner fa-spin"></i>
+              <i v-else class="fas fa-star"></i>
+              {{ membershipData.has_active_comp ? 'Update comp' : 'Grant comp' }}
+            </button>
+          </div>
+        </template>
+
+        <!-- Actions -->
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" :disabled="membershipLoading" @click="closeMembershipModal">
+            Close
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" @click="closeMembershipModal"></div>
     </dialog>
   </div>
 </template>
