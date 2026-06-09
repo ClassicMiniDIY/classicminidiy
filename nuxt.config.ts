@@ -432,8 +432,10 @@ export default defineNuxtConfig({
     validation_key: process.env.validation_key,
     NUXT_LANGGRAPH_API_URL: process.env.NUXT_LANGGRAPH_API_URL,
     NUXT_LANGSMITH_API_KEY: process.env.NUXT_LANGSMITH_API_KEY,
-    // MCP API Keys
-    MCP_API_KEY: process.env.MCP_API_KEY || 'dev-mcp-key-classic-mini-diy',
+    // MCP API Keys — no hardcoded fallback: an unset MCP_API_KEY must resolve to
+    // empty so the /mcp middleware fails closed rather than accepting a baked-in
+    // default. Set MCP_API_KEY (or MCP_API_KEYS) in .env for local development.
+    MCP_API_KEY: process.env.MCP_API_KEY || '',
     MCP_API_KEYS: process.env.MCP_API_KEYS || '',
     NODE_ENV: process.env.NODE_ENV || 'development',
   },
