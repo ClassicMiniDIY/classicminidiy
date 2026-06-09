@@ -59,7 +59,7 @@
     color: '',
     bodyNum: '',
     engineNum: '',
-    buildDate: [],
+    buildDate: null,
     notes: '',
     submittedBy: '',
     submittedByEmail: '',

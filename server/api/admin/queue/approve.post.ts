@@ -1,5 +1,6 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
+import { toDateOrNull } from '../../../utils/sanitize';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -128,7 +129,7 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
         body_type: data.bodyType || data.body_type || null,
         color: data.color || null,
         trim: data.trim || null,
-        build_date: data.buildDate || data.build_date || null,
+        build_date: toDateOrNull(data.buildDate) ?? toDateOrNull(data.build_date),
         owner: data.owner || null,
         location: data.location || null,
         notes: data.notes || null,
