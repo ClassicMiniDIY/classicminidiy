@@ -2289,6 +2289,8 @@ export type Database = {
           apple_original_transaction_id: string | null
           apple_product_id: string | null
           cancelled_at: string | null
+          comp_granted_by: string | null
+          comp_note: string | null
           created_at: string
           expires_at: string | null
           google_order_id: string | null
@@ -2309,6 +2311,8 @@ export type Database = {
           apple_original_transaction_id?: string | null
           apple_product_id?: string | null
           cancelled_at?: string | null
+          comp_granted_by?: string | null
+          comp_note?: string | null
           created_at?: string
           expires_at?: string | null
           google_order_id?: string | null
@@ -2329,6 +2333,8 @@ export type Database = {
           apple_original_transaction_id?: string | null
           apple_product_id?: string | null
           cancelled_at?: string | null
+          comp_granted_by?: string | null
+          comp_note?: string | null
           created_at?: string
           expires_at?: string | null
           google_order_id?: string | null
@@ -2711,6 +2717,16 @@ export type Database = {
       }
     }
     Functions: {
+      admin_get_membership: {
+        Args: { p_user_id: string }
+        Returns: {
+          active_platform: string
+          comp_expires_at: string
+          comp_note: string
+          has_active_comp: boolean
+          is_member: boolean
+        }[]
+      }
       admin_increment_warning_count: {
         Args: { p_user_id: string }
         Returns: number
@@ -2869,6 +2885,37 @@ export type Database = {
           user_id: string
         }[]
       }
+      grant_comp_membership: {
+        Args: { p_expires_at?: string; p_note?: string; p_user_id: string }
+        Returns: {
+          apple_original_transaction_id: string | null
+          apple_product_id: string | null
+          cancelled_at: string | null
+          comp_granted_by: string | null
+          comp_note: string | null
+          created_at: string
+          expires_at: string | null
+          google_order_id: string | null
+          google_purchase_token: string | null
+          id: string
+          last_verified_at: string | null
+          platform: string
+          product_id: string
+          raw_receipt: Json | null
+          starts_at: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       increment_listing_views: {
         Args: { listing_id_param: string }
         Returns: undefined
@@ -2891,6 +2938,37 @@ export type Database = {
       report_message: {
         Args: { p_message_id: string; p_reason: string }
         Returns: undefined
+      }
+      revoke_comp_membership: {
+        Args: { p_user_id: string }
+        Returns: {
+          apple_original_transaction_id: string | null
+          apple_product_id: string | null
+          cancelled_at: string | null
+          comp_granted_by: string | null
+          comp_note: string | null
+          created_at: string
+          expires_at: string | null
+          google_order_id: string | null
+          google_purchase_token: string | null
+          id: string
+          last_verified_at: string | null
+          platform: string
+          product_id: string
+          raw_receipt: Json | null
+          starts_at: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       sync_instances: {
         Args: { p_last_sync: string; p_vehicle_id: string }
