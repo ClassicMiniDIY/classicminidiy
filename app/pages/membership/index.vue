@@ -102,6 +102,27 @@
     }
   }
 
+  // Which channel grants this member's entitlement (apple/google/stripe/comp),
+  // via get_my_membership(). Drives the management UI so non-Stripe members
+  // aren't shown the Stripe portal link. null while loading or if the RPC isn't
+  // deployed yet — in which case we hide the Stripe link (the safe default for
+  // comp/Apple/Google members).
+  const membershipPlatform = ref<string | null>(null);
+  async function loadMembershipPlatform() {
+    if (!user.value) return;
+    try {
+      // Cast the RPC name until types/database.ts is regenerated post-deploy.
+      const { data, error } = await supabase.rpc('get_my_membership' as any).single();
+      if (error) {
+        console.error('Error loading membership platform:', error);
+        return;
+      }
+      membershipPlatform.value = (data as { platform?: string | null })?.platform ?? null;
+    } catch (err) {
+      console.error('Error loading membership platform:', err);
+    }
+  }
+
   const discordStatusKey = computed(() => {
     switch (discordStatus.value) {
       case 'active':
@@ -135,7 +156,10 @@
   onMounted(async () => {
     await waitForAuth();
     authReady.value = true;
-    if (isSustainingMember.value) loadDiscordStatus();
+    if (isSustainingMember.value) {
+      loadDiscordStatus();
+      loadMembershipPlatform();
+    }
 
     // Stripe returns to /membership?subscribed=1 or ?canceled=1. Process once,
     // then strip the params so a refresh doesn't replay the toast.
@@ -261,19 +285,32 @@
               </div>
             </div>
 
-            <div v-if="portalHref" class="card-actions mt-4">
-              <a
-                :href="portalHref"
-                target="_blank"
-                rel="noopener"
-                class="btn btn-outline btn-primary"
-                @click="track('membership_portal_opened', { source: 'web' })"
-              >
-                <i class="fas fa-gear"></i>
-                {{ t('member.manage') }}
-              </a>
-            </div>
-            <p class="text-xs opacity-60 mt-2">{{ t('member.manage_note') }}</p>
+            <!-- Management action is per-channel: only Stripe members have a
+                 billing portal; comp/Apple/Google members must not see it. -->
+            <template v-if="membershipPlatform === 'stripe'">
+              <div v-if="portalHref" class="card-actions mt-4">
+                <a
+                  :href="portalHref"
+                  target="_blank"
+                  rel="noopener"
+                  class="btn btn-outline btn-primary"
+                  @click="track('membership_portal_opened', { source: 'web' })"
+                >
+                  <i class="fas fa-gear"></i>
+                  {{ t('member.manage') }}
+                </a>
+              </div>
+              <p class="text-xs opacity-60 mt-2">{{ t('member.manage_note_stripe') }}</p>
+            </template>
+            <p v-else-if="membershipPlatform === 'comp'" class="text-sm opacity-70 mt-4">
+              <i class="fas fa-gift mr-2 text-primary"></i>{{ t('member.comp_note') }}
+            </p>
+            <p
+              v-else-if="membershipPlatform === 'apple' || membershipPlatform === 'google'"
+              class="text-sm opacity-70 mt-4"
+            >
+              <i class="fas fa-mobile-screen mr-2 text-primary"></i>{{ t('member.manage_note_store') }}
+            </p>
           </div>
         </section>
 
@@ -400,7 +437,9 @@
       "blog_desc": "Complimentary access to subscriber content on the Classic Mini DIY blog.",
       "blog_cta": "Open the blog",
       "manage": "Manage membership",
-      "manage_note": "Manage or cancel your membership through Stripe. Members who subscribed in the iOS or Android apps manage through the App Store or Google Play."
+      "manage_note_stripe": "Manage or cancel your membership any time through Stripe.",
+      "comp_note": "Your membership is complimentary — enjoy all the benefits, on us. There's nothing to manage.",
+      "manage_note_store": "Manage or cancel your subscription in the App Store or Google Play, wherever you subscribed."
     },
     "errors": {
       "checkout_title": "Checkout unavailable",
