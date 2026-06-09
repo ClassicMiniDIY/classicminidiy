@@ -2,6 +2,7 @@
   const { t, tm, rt } = useI18n();
   const { track, trackOutbound } = useAnalytics();
   const route = useRoute();
+  const router = useRouter();
 
   // The discord-claim Edge Function 302-redirects failed claims to
   // `/?discord_error=<code>` (keystone §12). Surface a friendly, dismissible
@@ -19,6 +20,9 @@
     if (typeof code === 'string' && code) {
       discordError.value = code;
       track('discord_claim_error_shown', { code });
+      // Strip the param so a refresh doesn't replay the banner.
+      const { discord_error: _discordError, ...rest } = route.query;
+      router.replace({ query: rest });
     }
   });
 

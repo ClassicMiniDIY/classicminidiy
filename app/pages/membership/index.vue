@@ -1,11 +1,12 @@
 <script lang="ts" setup>
   const { t } = useI18n();
   const route = useRoute();
+  const router = useRouter();
   const config = useRuntimeConfig();
   const supabase = useSupabase();
   const { track } = useAnalytics();
   const { add: addToast } = useToast();
-  const { isAuthenticated, isSustainingMember, user, waitForAuth } = useAuth();
+  const { isAuthenticated, isSustainingMember, user, waitForAuth, fetchUserProfile } = useAuth();
 
   // Canonical 6-benefit list (keystone §4). Order is part of the contract — do
   // not reorder. Copy lives in the i18n block below, verbatim from the keystone.
@@ -83,13 +84,20 @@
   async function loadDiscordStatus() {
     if (!user.value) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('discord_links')
         .select('status')
         .eq('user_id', user.value.id)
         .maybeSingle();
+      if (error) {
+        // PostgREST errors don't throw — surface them explicitly (RLS/db issues).
+        console.error('Error loading Discord status:', error);
+        discordStatus.value = null;
+        return;
+      }
       discordStatus.value = data?.status ?? null;
-    } catch {
+    } catch (err) {
+      console.error('Error loading Discord status:', err);
       discordStatus.value = null;
     }
   }
@@ -129,29 +137,31 @@
     authReady.value = true;
     if (isSustainingMember.value) loadDiscordStatus();
 
-    // Stripe returns to /membership?subscribed=1 or ?canceled=1.
-    if (route.query.subscribed) {
-      track('membership_checkout_succeeded', { source: 'web' });
-      addToast({
-        title: t('toasts.subscribed_title'),
-        description: t('toasts.subscribed_body'),
-        color: 'success',
-        icon: 'i-fa6-solid-circle-check',
-        timeout: 8000,
-      });
-      // The subscriptions row is written asynchronously by the webhook; re-pull
-      // profile + membership so the badge/management area reflects it soon.
-      if (user.value) {
-        const { fetchUserProfile } = useAuth();
-        fetchUserProfile(user.value.id);
+    // Stripe returns to /membership?subscribed=1 or ?canceled=1. Process once,
+    // then strip the params so a refresh doesn't replay the toast.
+    if (route.query.subscribed || route.query.canceled) {
+      if (route.query.subscribed) {
+        track('membership_checkout_succeeded', { source: 'web' });
+        addToast({
+          title: t('toasts.subscribed_title'),
+          description: t('toasts.subscribed_body'),
+          color: 'success',
+          icon: 'i-fa6-solid-circle-check',
+          timeout: 8000,
+        });
+        // The subscriptions row is written asynchronously by the webhook; re-pull
+        // profile + membership so the badge/management area reflects it soon.
+        if (user.value) fetchUserProfile(user.value.id);
+      } else {
+        addToast({
+          title: t('toasts.canceled_title'),
+          description: t('toasts.canceled_body'),
+          color: 'info',
+          icon: 'i-fa6-solid-circle-info',
+        });
       }
-    } else if (route.query.canceled) {
-      addToast({
-        title: t('toasts.canceled_title'),
-        description: t('toasts.canceled_body'),
-        color: 'info',
-        icon: 'i-fa6-solid-circle-info',
-      });
+      const { subscribed: _subscribed, canceled: _canceled, ...rest } = route.query;
+      router.replace({ query: rest });
     }
   });
 
