@@ -296,6 +296,14 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 - **CDN Integration**: S3 static assets with intelligent tiering
 - **Bundle Optimization**: Tree shaking and dependency optimization
 
+### Security Invariants
+
+Load-bearing contracts — don't "fix" these without understanding why they're this way:
+
+- **`/api/langgraph/**` is intentionally UNAUTHENTICATED.** The AI chat must work for every anonymous site visitor (no login). Do NOT add `requireUserAuth`/login to this proxy — it would break public chat. Abuse is mitigated by per-IP rate limiting in `server/middleware/rate-limit.ts` (default 40 req/60s, tune via `LANGGRAPH_RATELIMIT_MAX` / `LANGGRAPH_RATELIMIT_WINDOW_MS`), not by auth. The privileged `NUXT_LANGSMITH_API_KEY` stays server-only (private `runtimeConfig`).
+- **`/mcp` auth fails closed.** Valid keys come ONLY from `MCP_API_KEY` / `MCP_API_KEYS` env vars — there is no hardcoded/default key. The old `dev-mcp-key-classic-mini-diy` default is in public git history and must never be re-accepted in any environment. For local dev, set `MCP_API_KEY` in `.env`.
+- **`SUPABASE_SERVICE_KEY` is server-only.** It lives in private `runtimeConfig` and is read only via `server/utils/supabase.ts#getServiceClient`. Never import that into `app/` or move the key to `runtimeConfig.public`.
+
 ## Environment Variables
 
 ### Required Runtime Config
