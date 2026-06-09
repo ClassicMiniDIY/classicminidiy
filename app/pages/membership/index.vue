@@ -183,7 +183,7 @@
         <div class="max-w-2xl">
           <span class="eyebrow"><i class="fas fa-star mr-1 text-warning"></i>{{ t('hero.eyebrow') }}</span>
           <h1 class="text-4xl sm:text-5xl font-bold pt-2 pb-4">{{ t('hero.title') }}</h1>
-          <div class="badge badge-warning badge-lg font-semibold gap-1 mb-4">
+          <div v-if="!isSustainingMember" class="badge badge-warning badge-lg font-semibold gap-1 mb-4">
             <i class="fas fa-tag"></i> {{ t('hero.price') }}
           </div>
           <p class="text-lg opacity-80">{{ t('hero.subtitle') }}</p>
