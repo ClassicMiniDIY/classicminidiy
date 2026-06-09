@@ -39,7 +39,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Get valid API keys from environment
+  // Build the set of accepted API keys strictly from configured env values.
+  // No hardcoded/default key is ever accepted: the former dev fallback
+  // ('dev-mcp-key-classic-mini-diy') is published in this repo's git history and
+  // is treated as permanently burned. If nothing is configured, validKeys stays
+  // empty and every request is rejected below — fail closed in ALL environments,
+  // including when NODE_ENV is unset. For local development, set MCP_API_KEY
+  // (or MCP_API_KEYS) in your .env.
   const validKeys: string[] = [];
 
   // Check for comma-separated API keys
@@ -55,12 +61,7 @@ export default defineEventHandler(async (event) => {
     validKeys.push(config.MCP_API_KEY);
   }
 
-  // In development, allow default dev key (always include it in dev mode)
-  if (config.NODE_ENV === 'development' || process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-    validKeys.push('dev-mcp-key-classic-mini-diy');
-  }
-
-  // Validate the provided API key
+  // Validate the provided API key (fail closed: empty validKeys -> always 403)
   if (!validKeys.includes(providedKey)) {
     console.error(
       `[MCP Auth] Invalid API key. Provided key does not match any valid keys. Valid keys count: ${validKeys.length}`

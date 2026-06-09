@@ -28,11 +28,9 @@ MCP_API_KEYS=key1,key2,key3
 
 ### Development Mode
 
-In development, a default key is available:
-
-```
-dev-mcp-key-classic-mini-diy
-```
+There is no built-in default key — authentication fails closed in every
+environment. For local development, set `MCP_API_KEY` (or `MCP_API_KEYS`) in your
+`.env` and send that value as the Bearer token.
 
 ### Providing API Keys
 

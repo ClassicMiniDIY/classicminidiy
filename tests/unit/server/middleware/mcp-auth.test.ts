@@ -137,8 +137,11 @@ describe('server/middleware/mcp-auth', () => {
     });
   });
 
-  // ---------- 6. Accept dev key in development mode ----------
-  it('accepts the dev key when NODE_ENV is development (via config)', async () => {
+  // ---------- 6. Fail closed: no hardcoded/burned key is ever accepted ----------
+  // 'dev-mcp-key-classic-mini-diy' is published in this repo's git history. The
+  // middleware must reject it in EVERY environment, and with no keys configured
+  // every request is rejected (no fail-open when NODE_ENV is unset).
+  it('rejects the burned dev key in development when no key is configured (403)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
     mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
 
@@ -148,25 +151,12 @@ describe('server/middleware/mcp-auth', () => {
       NODE_ENV: 'development',
     });
 
-    await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
-  });
-
-  it('accepts the dev key when process.env.NODE_ENV is development', async () => {
-    process.env.NODE_ENV = 'development';
-
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
-    mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
-
-    mockUseRuntimeConfig.mockReturnValue({
-      MCP_API_KEY: '',
-      MCP_API_KEYS: '',
-      NODE_ENV: 'test', // config says test, but process.env says development
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
+      statusCode: 403,
     });
-
-    await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
   });
 
-  it('accepts the dev key when NODE_ENV is not set at all', async () => {
+  it('rejects the burned dev key when NODE_ENV is unset — no fail-open (403)', async () => {
     const originalEnv = process.env.NODE_ENV;
     delete process.env.NODE_ENV;
 
@@ -179,13 +169,15 @@ describe('server/middleware/mcp-auth', () => {
       NODE_ENV: undefined,
     });
 
-    await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
+      statusCode: 403,
+    });
 
     // Restore
     process.env.NODE_ENV = originalEnv;
   });
 
-  it('rejects the dev key in production mode', async () => {
+  it('rejects the burned dev key in production (403)', async () => {
     process.env.NODE_ENV = 'production';
 
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
@@ -200,6 +192,34 @@ describe('server/middleware/mcp-auth', () => {
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
       statusCode: 403,
     });
+  });
+
+  it('rejects ALL requests when no API keys are configured — fail closed (403)', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetHeader.mockReturnValue('Bearer any-key-at-all');
+
+    mockUseRuntimeConfig.mockReturnValue({
+      MCP_API_KEY: '',
+      MCP_API_KEYS: '',
+      NODE_ENV: 'development',
+    });
+
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
+      statusCode: 403,
+    });
+  });
+
+  it('still accepts a real configured key in development (dev works via env key)', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetHeader.mockReturnValue('Bearer my-local-dev-key');
+
+    mockUseRuntimeConfig.mockReturnValue({
+      MCP_API_KEY: 'my-local-dev-key',
+      MCP_API_KEYS: '',
+      NODE_ENV: 'development',
+    });
+
+    await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
   });
 
   // ---------- 7. Case-insensitive bearer prefix ----------
