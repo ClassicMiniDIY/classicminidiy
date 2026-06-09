@@ -2,18 +2,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---- Nitro global stubs + small limit (must be hoisted before source import) ----
-const { mockGetRequestURL, mockGetRequestIP, mockSetHeader } = vi.hoisted(() => {
+const { mockGetRequestURL, mockGetRequestIP, mockGetHeader, mockSetHeader } = vi.hoisted(() => {
   // Force a tiny limit so we can drive the 429 path in a couple of calls.
   process.env.LANGGRAPH_RATELIMIT_MAX = '3';
   process.env.LANGGRAPH_RATELIMIT_WINDOW_MS = '60000';
 
   const mockGetRequestURL = vi.fn();
   const mockGetRequestIP = vi.fn();
+  const mockGetHeader = vi.fn();
   const mockSetHeader = vi.fn();
 
   (globalThis as any).defineEventHandler = (handler: Function) => handler;
   (globalThis as any).getRequestURL = mockGetRequestURL;
   (globalThis as any).getRequestIP = mockGetRequestIP;
+  (globalThis as any).getHeader = mockGetHeader;
   (globalThis as any).setHeader = mockSetHeader;
   (globalThis as any).createError = (opts: { statusCode: number; statusMessage?: string; message?: string }) => {
     const e = new Error(opts.message || opts.statusMessage) as Error & { statusCode: number };
@@ -21,7 +23,7 @@ const { mockGetRequestURL, mockGetRequestIP, mockSetHeader } = vi.hoisted(() => 
     return e;
   };
 
-  return { mockGetRequestURL, mockGetRequestIP, mockSetHeader };
+  return { mockGetRequestURL, mockGetRequestIP, mockGetHeader, mockSetHeader };
 });
 
 import handler from '~/server/middleware/rate-limit';
@@ -33,6 +35,8 @@ describe('server/middleware/rate-limit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     _resetRateLimitStore();
+    // Default: no x-real-ip header, so keying falls back to getRequestIP.
+    mockGetHeader.mockReturnValue(undefined);
     mockGetRequestIP.mockReturnValue('203.0.113.7');
   });
 
@@ -89,5 +93,19 @@ describe('server/middleware/rate-limit', () => {
     // A different IP still has a fresh budget.
     mockGetRequestIP.mockReturnValue('198.51.100.2');
     expect(call()).toBeUndefined();
+  });
+
+  it('keys on the unspoofable x-real-ip when present, ignoring x-forwarded-for', () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+
+    // Attacker rotates the spoofable getRequestIP value each request, but the
+    // edge-set x-real-ip stays constant — so the limit must still bind.
+    mockGetHeader.mockReturnValue('192.0.2.50'); // x-real-ip (constant, trusted)
+    mockGetRequestIP.mockReturnValueOnce('1.1.1.1').mockReturnValueOnce('2.2.2.2').mockReturnValueOnce('3.3.3.3');
+
+    call();
+    call();
+    call();
+    expect(callCatching()).toMatchObject({ statusCode: 429 });
   });
 });

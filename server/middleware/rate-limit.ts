@@ -21,9 +21,12 @@ export default defineEventHandler((event) => {
   const { pathname } = getRequestURL(event);
   if (!pathname.startsWith('/api/langgraph')) return;
 
-  // Vercel terminates TLS upstream, so the real client IP is the left-most
-  // x-forwarded-for entry — getRequestIP returns it when xForwardedFor is on.
-  const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown';
+  // Resolve the client IP for keying. On Vercel, 'x-real-ip' is set by the edge
+  // proxy and cannot be spoofed by the client, so it is preferred. The left-most
+  // 'x-forwarded-for' entry (what getRequestIP returns) IS client-controllable
+  // and would otherwise let an attacker rotate the header to dodge the limit;
+  // it is only the fallback for non-Vercel/local environments.
+  const ip = getHeader(event, 'x-real-ip') || getRequestIP(event, { xForwardedFor: true }) || 'unknown';
 
   const result = consumeRateLimit(`langgraph:${ip}`, { max: MAX, windowMs: WINDOW_MS });
 
