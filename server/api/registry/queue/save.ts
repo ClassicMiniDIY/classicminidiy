@@ -1,5 +1,6 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
+import { toDateOrNull } from '../../../utils/sanitize';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
       body_type: details.bodyType || null,
       color: details.color || null,
       trim: details.trim || null,
-      build_date: details.buildDate || null,
+      build_date: toDateOrNull(details.buildDate),
       owner: details.submittedBy || null,
       location: details.location || null,
       notes: details.notes || null,

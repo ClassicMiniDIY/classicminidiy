@@ -1,5 +1,6 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
+import { toDateOrNull } from '../../../utils/sanitize';
 import type { RegistryItem } from '../../../../data/models/registry';
 
 export default defineEventHandler(async (event): Promise<RegistryItem[]> => {
@@ -36,7 +37,7 @@ export default defineEventHandler(async (event): Promise<RegistryItem[]> => {
         bodyType: regData.bodyType || regData.body_type || '',
         color: regData.color || '',
         trim: regData.trim || '',
-        buildDate: regData.buildDate || regData.build_date || null,
+        buildDate: toDateOrNull(regData.buildDate) ?? toDateOrNull(regData.build_date),
         notes: regData.notes || '',
         submittedBy: regData.submittedBy || regData.legacy_submitted_by || '',
         submittedByEmail: regData.submittedByEmail || regData.legacy_submitted_by_email || '',
