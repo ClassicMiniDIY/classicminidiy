@@ -423,12 +423,12 @@
       "dismiss": "Dismiss"
     },
     "discord_errors": {
-      "missing_token": "This Discord invite link is incomplete. Open the Classic Mini DIY app to request a fresh one.",
-      "expired_link": "This Discord invite link has expired. Open the Classic Mini DIY app to request a new one.",
-      "link_not_found": "We couldn't find a Discord invite for your account. Make sure your Sustaining Membership is active, then try again.",
-      "link_superseded": "A newer Discord invite was issued. Use the most recent link from your email or the app.",
-      "not_active": "Your Discord access isn't active. An active Sustaining Membership is required to join the members-only Discord.",
-      "generic": "We couldn't complete your Discord invite. Please try again from the most recent link."
+      "missing_token": "This Discord invite link is incomplete. Use the most recent invite email, or reach out via the contact page and we'll send you a fresh one.",
+      "expired_link": "This Discord invite link has expired. Reach out via the contact page and we'll send you a new one.",
+      "link_not_found": "We couldn't find a Discord invite for your account. Check that your Sustaining Membership is active on the membership page, then reach out via the contact page if you still need an invite.",
+      "link_superseded": "A newer Discord invite was issued. Use the most recent link from your email, or reach out via the contact page if you can't find it.",
+      "not_active": "Your Discord access isn't active. An active Sustaining Membership is required to join the members-only Discord — check yours on the membership page.",
+      "generic": "We couldn't complete your Discord invite. Try the most recent link from your email, or reach out via the contact page and we'll sort it out."
     },
     "home": {
       "title": "Classic Mini DIY | Your Friendly Neighborhood Classic Mini Resource",
