@@ -1,4 +1,5 @@
 {
   "backend": "supabase",
-  "rollout_percent": 100
+  "rollout_percent": 100,
+  "tme_free_listings": true
 }
