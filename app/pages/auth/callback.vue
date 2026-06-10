@@ -35,6 +35,20 @@
   const route = useRoute();
   const errorMessage = ref('');
 
+  // Post-auth redirect intent stashed by /login (?redirect=<internal path>).
+  // Consumed (read + cleared) only on a successful sign-in; re-validated here
+  // so a tampered localStorage value can't become an open redirect.
+  const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
+  function consumeStoredRedirect(): string | null {
+    try {
+      const value = window.localStorage.getItem(POST_AUTH_REDIRECT_KEY);
+      if (value !== null) window.localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+      return value && value.startsWith('/') && !value.startsWith('//') ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
   onMounted(async () => {
     try {
       // Manual PKCE code exchange. useSupabase has detectSessionInUrl: false,
@@ -119,9 +133,15 @@
           email_domain: user.value?.email ? user.value.email.split('@')[1] : undefined,
         });
 
+        // A preserved intent (e.g. /membership?subscribe=1) wins over the
+        // default admin/home destinations; first-timers carry it through the
+        // welcome page's existing ?redirect= mechanism.
+        const storedRedirect = consumeStoredRedirect();
         if (isFirstTime) {
-          const redirect = isAdmin.value ? '/admin' : '/';
+          const redirect = storedRedirect || (isAdmin.value ? '/admin' : '/');
           navigateTo(`/welcome?redirect=${encodeURIComponent(redirect)}`, { replace: true });
+        } else if (storedRedirect) {
+          navigateTo(storedRedirect, { replace: true });
         } else if (isAdmin.value) {
           navigateTo('/admin', { replace: true });
         } else {
