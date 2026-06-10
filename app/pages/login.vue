@@ -131,8 +131,18 @@
 
   const { signInWithEmail, signInWithGoogle, signInWithApple, isAuthenticated } = useAuth();
   const { track } = useAnalytics();
+  const route = useRoute();
 
   const emailDomain = (addr: string) => (addr.includes('@') ? addr.split('@')[1] : undefined);
+
+  // Post-auth redirect intent (e.g. /login?redirect=%2Fmembership%3Fsubscribe%3D1
+  // from the membership page). Internal paths only — never an absolute URL or
+  // protocol-relative //host, so the param can't be abused as an open redirect.
+  const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
+  const requestedRedirect = computed(() => {
+    const r = route.query.redirect;
+    return typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') ? r : null;
+  });
 
   // Reactive state
   const email = ref('');
@@ -143,12 +153,28 @@
   const turnstileRef = ref<{ reset: () => void } | null>(null);
   const hasError = computed(() => !!errorMessage.value);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated; otherwise stash the redirect intent so
+  // /auth/callback can honor it after the OAuth / magic-link round trip (the
+  // Supabase redirect lands on /auth/callback with no room for extra params).
   onMounted(async () => {
     const { initAuth } = useAuth();
     await initAuth();
     if (isAuthenticated.value) {
-      navigateTo('/admin', { replace: true });
+      try {
+        window.localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+      } catch {
+        // localStorage unavailable (private mode) — nothing to clear.
+      }
+      navigateTo(requestedRedirect.value || '/admin', { replace: true });
+      return;
+    }
+    if (requestedRedirect.value) {
+      try {
+        window.localStorage.setItem(POST_AUTH_REDIRECT_KEY, requestedRedirect.value);
+      } catch {
+        // localStorage unavailable — the user still lands on the site after
+        // auth, just without the preserved intent.
+      }
     }
   });
 
