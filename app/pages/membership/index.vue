@@ -24,6 +24,50 @@
   const authReady = ref(false);
   const checkoutLoading = ref(false);
 
+  // Logged-out subscribe intent (pre-launch punch list D1): route the visitor
+  // through sign-in with the intent preserved as ?subscribe=1, so after auth
+  // they land back here and checkout auto-starts (see onMounted). The login
+  // page persists the redirect across the OAuth/magic-link round trip.
+  const SUBSCRIBE_INTENT_PATH = '/membership?subscribe=1';
+  const loginWithIntentHref = `/login?redirect=${encodeURIComponent(SUBSCRIBE_INTENT_PATH)}`;
+
+  // Post-checkout activation poll (punch list D1): on return with ?subscribed=1
+  // the Stripe webhook may not have written the subscriptions row yet, so a
+  // single re-pull can still show the subscribe CTA to the user who just paid.
+  // Poll the membership gate every ~2s for up to ~30s, showing "Activating…"
+  // instead of the CTA; on timeout show a gentle refresh note. (The server-side
+  // double-billing guard is the backend half — punch list B1.)
+  const ACTIVATION_POLL_INTERVAL_MS = 2000;
+  const ACTIVATION_POLL_MAX_ATTEMPTS = 15; // ~30s total
+  const activationState = ref<'idle' | 'polling' | 'timeout'>('idle');
+  let activationStopped = false;
+  onUnmounted(() => {
+    activationStopped = true;
+  });
+
+  async function pollMembershipActivation() {
+    if (!user.value || isSustainingMember.value) return;
+    activationState.value = 'polling';
+    for (let attempt = 0; attempt < ACTIVATION_POLL_MAX_ATTEMPTS; attempt++) {
+      await fetchUserProfile(user.value.id);
+      if (activationStopped) return;
+      if (isSustainingMember.value) {
+        activationState.value = 'idle';
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, ACTIVATION_POLL_INTERVAL_MS));
+      if (activationStopped) return;
+    }
+    activationState.value = 'timeout';
+  }
+
+  // Hero price badge: gate on resolved auth so members never see a
+  // "$1.99/month" flash before membership resolves; also hidden while the
+  // activation poll runs (the user just paid).
+  const showPriceBadge = computed(
+    () => authReady.value && !isSustainingMember.value && activationState.value === 'idle'
+  );
+
   async function getAccessToken(): Promise<string | null> {
     const {
       data: { session },
@@ -36,7 +80,7 @@
   // users are routed through sign-in first so the webhook can attribute the row.
   async function subscribe() {
     if (!isAuthenticated.value) {
-      navigateTo('/login');
+      navigateTo(loginWithIntentHref);
       return;
     }
     checkoutLoading.value = true;
@@ -171,9 +215,10 @@
     await waitForAuth();
     authReady.value = true;
 
-    // Stripe returns to /membership?subscribed=1 or ?canceled=1. Process once,
-    // then strip the params so a refresh doesn't replay the toast.
-    if (route.query.subscribed || route.query.canceled) {
+    // Stripe returns to /membership?subscribed=1 or ?canceled=1; sign-in
+    // returns with ?subscribe=1 (preserved intent). Process once, then strip
+    // the params so a refresh doesn't replay the toast / checkout.
+    if (route.query.subscribed || route.query.canceled || route.query.subscribe) {
       if (route.query.subscribed) {
         track('membership_checkout_succeeded', { source: 'web' });
         addToast({
@@ -183,10 +228,11 @@
           icon: 'i-fa6-solid-circle-check',
           timeout: 8000,
         });
-        // The subscriptions row is written asynchronously by the webhook; re-pull
-        // profile + membership so the badge/management area reflects it soon.
-        if (user.value) fetchUserProfile(user.value.id);
-      } else {
+        // The subscriptions row is written asynchronously by the webhook; poll
+        // the membership gate until it flips (or gently time out) so the payer
+        // never sees the subscribe CTA again during the race window.
+        pollMembershipActivation();
+      } else if (route.query.canceled) {
         addToast({
           title: t('toasts.canceled_title'),
           description: t('toasts.canceled_body'),
@@ -194,8 +240,17 @@
           icon: 'i-fa6-solid-circle-info',
         });
       }
-      const { subscribed: _subscribed, canceled: _canceled, ...rest } = route.query;
+      // Restored sign-in intent: auto-start checkout for an authenticated
+      // non-member. Members and logged-out visitors just see the page.
+      const shouldAutoSubscribe =
+        route.query.subscribe === '1' &&
+        !route.query.subscribed &&
+        !route.query.canceled &&
+        isAuthenticated.value &&
+        !isSustainingMember.value;
+      const { subscribed: _subscribed, canceled: _canceled, subscribe: _subscribe, ...rest } = route.query;
       router.replace({ query: rest });
+      if (shouldAutoSubscribe) subscribe();
     }
   });
 
@@ -217,7 +272,7 @@
         <div class="max-w-2xl">
           <span class="eyebrow"><i class="fas fa-star mr-1 text-warning"></i>{{ t('hero.eyebrow') }}</span>
           <h1 class="text-4xl sm:text-5xl font-bold pt-2 pb-4">{{ t('hero.title') }}</h1>
-          <div v-if="!isSustainingMember" class="badge badge-warning badge-lg font-semibold gap-1 mb-4">
+          <div v-if="showPriceBadge" class="badge badge-warning badge-lg font-semibold gap-1 mb-4">
             <i class="fas fa-tag"></i> {{ t('hero.price') }}
           </div>
           <p class="text-lg opacity-80">{{ t('hero.subtitle') }}</p>
@@ -278,6 +333,15 @@
                   <span class="badge badge-sm ml-1" :class="discordBadgeClass">{{ discordStatusLabel }}</span>
                 </p>
                 <p class="text-sm opacity-70 mt-1">{{ discordGuidance }}</p>
+                <!-- No self-serve re-issue endpoint exists yet (backend
+                     follow-up); until then, support re-sends invites manually. -->
+                <p
+                  v-if="discordStatusKey === 'pending' || discordStatusKey === 'not_connected'"
+                  class="text-xs opacity-60 mt-2"
+                >
+                  {{ t('member.discord_lost_email') }}
+                  <NuxtLink to="/contact" class="link link-primary">{{ t('member.discord_contact_cta') }}</NuxtLink>
+                </p>
               </div>
               <!-- Pro blog access -->
               <div class="rounded-box border border-base-300 p-4">
@@ -321,6 +385,42 @@
             >
               <i class="fas fa-mobile-screen mr-2 text-primary"></i>{{ t('member.manage_note_store') }}
             </p>
+            <p v-else-if="membershipPlatform === 'ghost'" class="text-sm opacity-70 mt-4">
+              <i class="fas fa-book-open mr-2 text-primary"></i>{{ t('member.manage_note_ghost') }}
+            </p>
+            <p v-else-if="membershipPlatform === 'patreon'" class="text-sm opacity-70 mt-4">
+              <i class="fab fa-patreon mr-2 text-primary"></i>
+              <a
+                href="https://www.patreon.com/settings/memberships"
+                target="_blank"
+                rel="noopener"
+                class="link link-primary"
+                >{{ t('member.manage_note_patreon') }}</a
+              >
+            </p>
+            <!-- Unknown/null platform on an active member: never render an
+                 empty manage area (parity with TME). -->
+            <p v-else class="text-sm opacity-70 mt-4">
+              <i class="fas fa-circle-check mr-2 text-success"></i>{{ t('member.active_fallback') }}
+            </p>
+          </div>
+        </section>
+
+        <!-- Post-checkout webhook race window: "Activating…" instead of the
+             subscribe CTA while the membership gate is polled (punch list D1). -->
+        <section v-else-if="activationState === 'polling'" class="card bg-base-100 border border-base-300 shadow-md">
+          <div class="card-body items-center text-center py-12">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <h2 class="text-xl font-bold mt-3">{{ t('cta.activating_title') }}</h2>
+            <p class="opacity-60 max-w-lg">{{ t('cta.activating_body') }}</p>
+          </div>
+        </section>
+
+        <section v-else-if="activationState === 'timeout'" class="card bg-base-100 border border-base-300 shadow-md">
+          <div class="card-body items-center text-center py-12">
+            <i class="fas fa-hourglass-half text-3xl text-warning"></i>
+            <h2 class="text-xl font-bold mt-3">{{ t('cta.activation_timeout_title') }}</h2>
+            <p class="opacity-60 max-w-lg">{{ t('cta.activation_timeout_body') }}</p>
           </div>
         </section>
 
@@ -341,7 +441,7 @@
                 <i v-else class="fas fa-star"></i>
                 {{ t('cta.subscribe') }}
               </button>
-              <NuxtLink v-else to="/login" class="btn btn-primary btn-lg">
+              <NuxtLink v-else :to="loginWithIntentHref" class="btn btn-primary btn-lg">
                 <i class="fas fa-right-to-bracket"></i>
                 {{ t('cta.signin') }}
               </NuxtLink>
@@ -421,6 +521,10 @@
       "title": "Become a Sustaining Member",
       "subtitle": "$1.99/month, cancel anytime. Your membership unlocks benefits across every Classic Mini DIY property.",
       "checking": "Checking your membership…",
+      "activating_title": "Activating your membership…",
+      "activating_body": "Payment received — we're switching on your benefits. This usually takes a few seconds.",
+      "activation_timeout_title": "Taking longer than expected",
+      "activation_timeout_body": "Your payment went through, but activation is taking a little longer than usual. Refresh this page in a minute — if your membership still isn't active, reach out via the contact page and we'll sort it out.",
       "subscribe": "Become a Sustaining Member — $1.99/mo",
       "signin": "Sign in to become a member",
       "also_apps": "Also available in the iOS and Android apps."
@@ -446,10 +550,15 @@
       "blog_title": "Pro access to the blog",
       "blog_desc": "Complimentary access to subscriber content on the Classic Mini DIY blog.",
       "blog_cta": "Open the blog",
+      "discord_lost_email": "Lost the invite email?",
+      "discord_contact_cta": "Contact us and we'll resend it.",
       "manage": "Manage membership",
       "manage_note_stripe": "Manage or cancel your membership any time through Stripe.",
       "comp_note": "Your membership is complimentary — enjoy all the benefits, on us. There's nothing to manage.",
-      "manage_note_store": "Manage or cancel your subscription in the App Store or Google Play, wherever you subscribed."
+      "manage_note_store": "Manage or cancel your subscription in the App Store or Google Play, wherever you subscribed.",
+      "manage_note_ghost": "Manage your membership through your Ghost account billing email.",
+      "manage_note_patreon": "Manage your pledge on Patreon.",
+      "active_fallback": "Your membership is active."
     },
     "errors": {
       "checkout_title": "Checkout unavailable",
