@@ -12,32 +12,36 @@
   if (error.value) {
     throw createError({ statusCode: error.value.statusCode || 404, statusMessage: 'Model not found', fatal: true });
   }
-  const model = computed(() => data.value!);
+  const model = computed(() => data.value);
 
-  const renderableFiles = computed(() => model.value.files.filter((f) => f.isRenderable));
-  const isFree = computed(() => ['free', 'tips'].includes(model.value.pricingMode));
-  const price = computed(() => priceLabel(model.value));
+  const renderableFiles = computed(() => model.value?.files.filter((f) => f.isRenderable) ?? []);
+  const isFree = computed(() => (model.value ? ['free', 'tips'].includes(model.value.pricingMode) : false));
+  const price = computed(() => (model.value ? priceLabel(model.value) : ''));
   const licenseTxtUrl = computed(() =>
-    model.value.version ? `/api/models/${model.value.id}/versions/${model.value.version.id}/license.txt` : null
+    model.value?.version ? `/api/models/${model.value.id}/versions/${model.value.version.id}/license.txt` : null
   );
 
   function downloadUrl(fileId: string) {
-    return `/api/models/${model.value.id}/files/${fileId}/download`;
+    return `/api/models/${model.value?.id}/files/${fileId}/download`;
   }
 
-  // Media area: a renderable file (3D) or a gallery image.
+  // Media area: a renderable file (3D) or a gallery image. Driven by a watcher so
+  // it re-initializes if the page component is reused across /models/[slug]
+  // navigations (the model data changes but setup runs only once).
   type Media = { kind: '3d'; file: ModelFileInfo } | { kind: 'image'; url: string; alt: string };
   const activeMedia = ref<Media | null>(null);
   function initMedia() {
+    const m = model.value;
+    if (!m) {
+      activeMedia.value = null;
+      return;
+    }
     if (renderableFiles.value.length) activeMedia.value = { kind: '3d', file: renderableFiles.value[0]! };
-    else if (model.value.images.length)
-      activeMedia.value = {
-        kind: 'image',
-        url: model.value.images[0]!.url,
-        alt: model.value.images[0]!.altText || model.value.title,
-      };
+    else if (m.images.length)
+      activeMedia.value = { kind: 'image', url: m.images[0]!.url, alt: m.images[0]!.altText || m.title };
+    else activeMedia.value = null;
   }
-  initMedia();
+  watch(model, initMedia, { immediate: true });
 
   const fileExtIcon: Record<string, string> = {
     stl: 'fa-cube',
