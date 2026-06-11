@@ -83,8 +83,21 @@ aws s3api put-bucket-cors --bucket "$B" --cors-configuration '{
 
 ## 2. TODO (Cole) — dedicated IAM user, scoped to this bucket only
 
-The CLI identity (`cmdiy-s3`) is not allowed `iam:*`, so this must be run with an
-**IAM-capable identity** (root or an admin profile):
+**Do not grant the runtime S3 user (`cmdiy-models-s3` or `cmdiy-s3`) any `iam:*`
+permissions.** Those are data-plane credentials that live in Vercel env and run
+on every request — adding IAM rights there means a leaked key could mint users
+and privilege-escalate. Creating the user is a **one-time admin act**, so use an
+identity you already have rather than a new long-lived privileged one:
+
+- **AWS Console** (simplest, no CLI privileges at all): IAM → Create user
+  `cmdiy-models-s3` → attach the inline policy below → create an access key.
+- Or run the commands below once via **CloudShell**, a local **admin/SSO profile**
+  (`aws --profile <admin> iam …`), or root.
+
+The CLI identity used to provision the bucket (`cmdiy-s3`) is **not** allowed
+`iam:*` (verified: AccessDenied), which is correct — it should stay S3-only. The
+end result is the same least-privilege, bucket-scoped `cmdiy-models-s3` user; no
+persistent identity gains IAM rights.
 
 ```bash
 # 1. Create the user
@@ -98,6 +111,11 @@ aws iam put-user-policy --user-name cmdiy-models-s3 \
 # 3. Mint an access key — capture AccessKeyId + SecretAccessKey from the output
 aws iam create-access-key --user-name cmdiy-models-s3
 ```
+
+> Future hardening (optional, out of scope for v1): replace the static access
+> key with **Vercel OIDC → AWS IAM role** federation (web-identity) so there is
+> no long-lived secret to rotate. The keystone specified static `S3_MODELS_*`
+> keys for v1, so that swap is a later change.
 
 `models-iam-policy.json` (least-privilege — this bucket only):
 
