@@ -3,7 +3,7 @@
 **Date:** 2026-06-11
 **Feature:** 3D Model Library (PR 5 — S3 plumbing)
 **Keystone:** `classicminidiy-supabase/docs/plans/2026-06-11-3d-model-library.md` §5, §10
-**Account:** `938808401967`
+**Account:** _the CMDIY AWS account — confirm with `aws sts get-caller-identity`_
 **Bucket:** `classicminidiy-models` (us-east-1, private)
 
 This bucket holds **model file bytes only**. It is intentionally separate from
