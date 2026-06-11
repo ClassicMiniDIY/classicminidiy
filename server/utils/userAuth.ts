@@ -1,36 +1,43 @@
 // server/utils/userAuth.ts
-import { getServiceClient } from './supabase';
+import { getServiceClient, getUserClient } from './supabase';
 
-export async function requireUserAuth(event: any) {
+/**
+ * Pull a Supabase access token off the request — prefers the `Authorization:
+ * Bearer` header, falls back to the `sb-<ref>-auth-token` cookie (object or
+ * array form). Returns undefined when none is present/parseable.
+ */
+export function extractAccessToken(event: any): string | undefined {
   const authHeader = getHeader(event, 'authorization');
-  let accessToken: string | undefined;
-
   if (authHeader?.startsWith('Bearer ')) {
-    accessToken = authHeader.slice(7);
+    return authHeader.slice(7);
   }
 
-  if (!accessToken) {
-    const cookieHeader = getHeader(event, 'cookie') || '';
-    const cookies = Object.fromEntries(
-      cookieHeader
-        .split(';')
-        .filter((c: string) => c.trim())
-        .map((c: string) => {
-          const [key, ...val] = c.trim().split('=');
-          return [key, val.join('=')];
-        })
-    );
+  const cookieHeader = getHeader(event, 'cookie') || '';
+  const cookies = Object.fromEntries(
+    cookieHeader
+      .split(';')
+      .filter((c: string) => c.trim())
+      .map((c: string) => {
+        const [key, ...val] = c.trim().split('=');
+        return [key, val.join('=')];
+      })
+  );
 
-    const authCookieKey = Object.keys(cookies).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
-    if (authCookieKey) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(cookies[authCookieKey]));
-        accessToken = decoded?.access_token || decoded?.[0];
-      } catch {
-        // Not valid JSON, skip
-      }
+  const authCookieKey = Object.keys(cookies).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
+  if (authCookieKey) {
+    try {
+      const decoded = JSON.parse(decodeURIComponent(cookies[authCookieKey]));
+      return decoded?.access_token || decoded?.[0];
+    } catch {
+      // Not valid JSON, skip
     }
   }
+
+  return undefined;
+}
+
+export async function requireUserAuth(event: any) {
+  const accessToken = extractAccessToken(event);
 
   if (!accessToken) {
     throw createError({
@@ -53,4 +60,17 @@ export async function requireUserAuth(event: any) {
   }
 
   return { user };
+}
+
+/**
+ * Like requireUserAuth, but also returns the verified access token and a
+ * Supabase client bound to it. Use when a route needs to perform writes UNDER
+ * the caller's RLS identity (not the service role) — e.g. the model-upload
+ * presign route, which relies on `model_files` INSERT policy to confirm the
+ * caller owns the draft version it is attaching a file to.
+ */
+export async function requireUserClient(event: any) {
+  const { user } = await requireUserAuth(event);
+  const accessToken = extractAccessToken(event)!; // present: requireUserAuth would have thrown otherwise
+  return { user, accessToken, supabase: getUserClient(accessToken) };
 }
