@@ -210,6 +210,32 @@ describe('activation poll on ?subscribed=1', () => {
     expect(wrapper.html()).toContain('member.title');
   });
 
+  it('stops polling quietly (no crash) when the user signs out mid-poll', async () => {
+    vi.useFakeTimers();
+    const auth = makeAuthStub({ member: false });
+    // Session disappears right after the first gate re-pull.
+    auth.fetchUserProfile.mockImplementation(async () => {
+      auth.userRef.value = null;
+    });
+    stubEnvironment({ query: { subscribed: '1' }, auth });
+
+    const wrapper = mountPage();
+    await vi.advanceTimersByTimeAsync(1);
+    await flushMicrotasks();
+    expect(auth.fetchUserProfile).toHaveBeenCalledTimes(1);
+
+    // Next tick of the loop sees the null user and bails to idle — previously
+    // this dereferenced user.value.id and threw (PR #608 review feedback).
+    await vi.advanceTimersByTimeAsync(2000);
+    await flushMicrotasks();
+
+    expect(auth.fetchUserProfile).toHaveBeenCalledTimes(1);
+    expect(wrapper.html()).not.toContain('cta.activating_title');
+    expect(wrapper.html()).not.toContain('cta.activation_timeout_title');
+    // Logged-out CTA (sign-in) renders instead of a dead activating card.
+    expect(wrapper.html()).toContain('cta.signin');
+  });
+
   it('shows the gentle timeout note after ~30s without activation', async () => {
     vi.useFakeTimers();
     const auth = makeAuthStub({ member: false });

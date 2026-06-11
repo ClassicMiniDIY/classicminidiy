@@ -49,6 +49,13 @@
     if (!user.value || isSustainingMember.value) return;
     activationState.value = 'polling';
     for (let attempt = 0; attempt < ACTIVATION_POLL_MAX_ATTEMPTS; attempt++) {
+      // Signed out (or session expired) mid-poll: there's nothing to activate
+      // for this browser anymore — stop quietly instead of crashing on a null
+      // user.
+      if (!user.value) {
+        activationState.value = 'idle';
+        return;
+      }
       await fetchUserProfile(user.value.id);
       if (activationStopped) return;
       if (isSustainingMember.value) {
@@ -88,7 +95,9 @@
     try {
       const token = await getAccessToken();
       if (!token) {
-        navigateTo('/login');
+        // Session evaporated between the auth check and checkout — send them
+        // back through sign-in with the subscribe intent preserved.
+        navigateTo(loginWithIntentHref);
         return;
       }
       const res = await $fetch<{ url?: string }>('/api/membership/checkout', {
@@ -286,11 +295,7 @@
         <p class="eyebrow text-center"><i class="fas fa-list-check mr-1"></i>{{ t('benefits.eyebrow') }}</p>
         <h2 class="text-3xl font-bold text-center pt-2 pb-8">{{ t('benefits.title') }}</h2>
         <ul class="benefits-list grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <li
-            v-for="benefit in benefits"
-            :key="benefit.key"
-            class="card bg-base-100 border border-base-300 shadow-sm"
-          >
+          <li v-for="benefit in benefits" :key="benefit.key" class="card bg-base-100 border border-base-300 shadow-sm">
             <div class="card-body p-5 flex-row items-start gap-4">
               <span class="text-2xl text-primary shrink-0 mt-1">
                 <i :class="benefit.icon"></i>
@@ -345,7 +350,9 @@
               </div>
               <!-- Pro blog access -->
               <div class="rounded-box border border-base-300 p-4">
-                <p class="font-semibold"><i class="fas fa-book-open mr-2 text-primary"></i>{{ t('member.blog_title') }}</p>
+                <p class="font-semibold">
+                  <i class="fas fa-book-open mr-2 text-primary"></i>{{ t('member.blog_title') }}
+                </p>
                 <p class="text-sm opacity-70 mt-1">{{ t('member.blog_desc') }}</p>
                 <a
                   v-if="blogUrl"
@@ -447,9 +454,7 @@
               </NuxtLink>
             </div>
 
-            <p class="text-sm opacity-60 mt-3">
-              <i class="fas fa-mobile-screen mr-1"></i>{{ t('cta.also_apps') }}
-            </p>
+            <p class="text-sm opacity-60 mt-3"><i class="fas fa-mobile-screen mr-1"></i>{{ t('cta.also_apps') }}</p>
           </div>
         </section>
 
