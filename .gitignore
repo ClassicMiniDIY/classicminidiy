@@ -92,3 +92,6 @@ sw.*
 
 # Nuxt Content
 .data/
+
+# Supabase CLI scratch (created by `bun run gen:types`; this repo holds no migrations)
+supabase/.temp/

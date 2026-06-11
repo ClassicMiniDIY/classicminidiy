@@ -47,6 +47,9 @@
     "@vue/shared": "3.5.35"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1067.0",
+    "@aws-sdk/s3-presigned-post": "^3.1067.0",
+    "@aws-sdk/s3-request-presigner": "^3.1067.0",
     "@fontsource/outfit": "^5.2.8",
     "@langchain/langgraph-sdk": "^1.9.15",
     "@nuxt/scripts": "^1.2.1",
