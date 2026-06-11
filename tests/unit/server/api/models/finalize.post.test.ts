@@ -93,6 +93,14 @@ describe('server/api/models/uploads/finalize.post', () => {
     await expect(handler({})).rejects.toMatchObject({ statusCode: 409 });
   });
 
+  it('skips the ranged GET for a 0-byte object (avoids an S3 416) and fails the sniff', async () => {
+    mockHeadObject.mockResolvedValue({ exists: true, size: 0 });
+    mockSniff.mockReturnValue({ ok: false, reason: 'empty' });
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 422 });
+    expect(mockGetHead).not.toHaveBeenCalled();
+    expect(mockSniff).toHaveBeenCalledWith(expect.objectContaining({ size: 0 }));
+  });
+
   it('marks failed and 422s when the sniff fails', async () => {
     mockSniff.mockReturnValue({ ok: false, reason: 'expected-pdf-magic' });
     await expect(handler({})).rejects.toMatchObject({ statusCode: 422 });

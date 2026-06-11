@@ -79,6 +79,8 @@ export function sanitizeModelFilename(original: string, ext: string): string {
   const cleaned =
     stem
       .normalize('NFKD')
+      // Drop combining diacritical marks so "café" -> "cafe", not "caf-".
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9._-]+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^[-.]+|[-.]+$/g, '')

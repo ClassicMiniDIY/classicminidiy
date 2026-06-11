@@ -12,21 +12,15 @@ export function extractAccessToken(event: any): string | undefined {
     return authHeader.slice(7);
   }
 
-  const cookieHeader = getHeader(event, 'cookie') || '';
-  const cookies = Object.fromEntries(
-    cookieHeader
-      .split(';')
-      .filter((c: string) => c.trim())
-      .map((c: string) => {
-        const [key, ...val] = c.trim().split('=');
-        return [key, val.join('=')];
-      })
-  );
-
+  // Fall back to the Supabase auth cookie (sb-<ref>-auth-token). h3's parseCookies
+  // (auto-imported in Nitro) handles quoting/decoding more robustly than splitting
+  // the raw header by hand, and returns already URI-decoded values.
+  const cookies = parseCookies(event);
   const authCookieKey = Object.keys(cookies).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
-  if (authCookieKey) {
+  const rawCookie = authCookieKey ? cookies[authCookieKey] : undefined;
+  if (rawCookie) {
     try {
-      const decoded = JSON.parse(decodeURIComponent(cookies[authCookieKey]));
+      const decoded = JSON.parse(rawCookie);
       return decoded?.access_token || decoded?.[0];
     } catch {
       // Not valid JSON, skip

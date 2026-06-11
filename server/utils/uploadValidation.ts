@@ -87,7 +87,8 @@ export function isStepHeader(buf: Uint8Array): boolean {
   // Skip a leading UTF-8 BOM (EF BB BF) at the byte level - decoded as latin1 it
   // would otherwise read as three non-whitespace chars and miss the token.
   const start = buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf ? 3 : 0;
-  const text = Buffer.from(buf.slice(start, start + 64)).toString('latin1');
+  // subarray returns a view (no copy) of the TypedArray, unlike slice.
+  const text = Buffer.from(buf.subarray(start, start + 64)).toString('latin1');
   // Tolerate any leading whitespace before the token.
   return /^\s*ISO-10303-21/.test(text);
 }
@@ -112,7 +113,7 @@ export function isStlAsciiPrefix(buf: Uint8Array): boolean {
  */
 export function isStlBinarySizeMatch(buf: Uint8Array, size: number): boolean {
   if (buf.length < 84) return false;
-  const count = Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength).readUInt32LE(80);
+  const count = Buffer.from(buf).readUInt32LE(80);
   if (count < 1) return false;
   return size === 84 + 50 * count;
 }

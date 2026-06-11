@@ -127,6 +127,21 @@ describe('server/api/models/[modelId]/files/[fileId]/download.get', () => {
     await expect(handler({})).rejects.toMatchObject({ statusCode: 403 });
   });
 
+  it('short-circuits the entitlement RPC for the owner', async () => {
+    modelSingle.mockResolvedValue({ data: { id: 'm1', owner_id: 'u1', status: 'draft' }, error: null });
+    const res = await handler({});
+    expect(rpc).not.toHaveBeenCalled();
+    expect(res).toBe('REDIRECTED');
+  });
+
+  it('short-circuits the entitlement RPC for an admin', async () => {
+    mockIsAdmin.mockResolvedValue(true);
+    rpc.mockResolvedValue({ data: false, error: null }); // would deny if consulted
+    const res = await handler({});
+    expect(rpc).not.toHaveBeenCalled();
+    expect(res).toBe('REDIRECTED');
+  });
+
   it('500s when the entitlement RPC errors', async () => {
     rpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
     await expect(handler({})).rejects.toMatchObject({ statusCode: 500 });
