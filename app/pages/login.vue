@@ -70,19 +70,11 @@
             </div>
 
             <div class="flex justify-center">
-              <NuxtTurnstile
-                ref="turnstileRef"
-                v-model="turnstileToken"
-                :options="{ theme: 'auto' }"
-              />
+              <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" :options="{ theme: 'auto' }" />
             </div>
 
             <div class="mt-6">
-              <button
-                type="submit"
-                class="btn btn-primary btn-block"
-                :disabled="isLoading || !turnstileToken"
-              >
+              <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading || !turnstileToken">
                 <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
                 <i v-else class="fad fa-paper-plane"></i>
                 {{ isLoading ? t('sending') : t('send_magic_link') }}
@@ -112,6 +104,8 @@
 </template>
 
 <script setup lang="ts">
+  import { sanitizeRedirectPath } from '../utils/redirect';
+
   const { t } = useI18n();
 
   // SEO and meta
@@ -136,13 +130,12 @@
   const emailDomain = (addr: string) => (addr.includes('@') ? addr.split('@')[1] : undefined);
 
   // Post-auth redirect intent (e.g. /login?redirect=%2Fmembership%3Fsubscribe%3D1
-  // from the membership page). Internal paths only — never an absolute URL or
-  // protocol-relative //host, so the param can't be abused as an open redirect.
+  // from the membership page). Internal paths only — the shared validator
+  // rejects absolute URLs, protocol-relative //host, backslash variants
+  // (browsers normalize \ to /), and control characters, so the param can't
+  // be abused as an open redirect.
   const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
-  const requestedRedirect = computed(() => {
-    const r = route.query.redirect;
-    return typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') ? r : null;
-  });
+  const requestedRedirect = computed(() => sanitizeRedirectPath(route.query.redirect));
 
   // Reactive state
   const email = ref('');
@@ -168,13 +161,18 @@
       navigateTo(requestedRedirect.value || '/admin', { replace: true });
       return;
     }
-    if (requestedRedirect.value) {
-      try {
+    try {
+      if (requestedRedirect.value) {
         window.localStorage.setItem(POST_AUTH_REDIRECT_KEY, requestedRedirect.value);
-      } catch {
-        // localStorage unavailable — the user still lands on the site after
-        // auth, just without the preserved intent.
+      } else {
+        // No intent on this visit: clear any stale stash from an abandoned
+        // earlier attempt so a later unrelated sign-in can't replay it (e.g.
+        // surprise-launching a Stripe checkout).
+        window.localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
       }
+    } catch {
+      // localStorage unavailable — the user still lands on the site after
+      // auth, just without the preserved intent.
     }
   });
 

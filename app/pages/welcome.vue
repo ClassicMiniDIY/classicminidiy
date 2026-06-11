@@ -122,6 +122,8 @@
 </template>
 
 <script setup lang="ts">
+  import { sanitizeRedirectPath } from '../utils/redirect';
+
   const { t } = useI18n();
 
   // SEO and meta
@@ -151,14 +153,11 @@
   const saveError = ref('');
   const saveSuccess = ref(false);
 
-  // Redirect target from query param or default to home
-  const redirectTo = computed(() => {
-    const redirect = route.query.redirect;
-    if (typeof redirect === 'string' && redirect.startsWith('/')) {
-      return redirect;
-    }
-    return '/';
-  });
+  // Redirect target from query param or default to home. Validated with the
+  // shared internal-path validator — this page is directly linkable, so the
+  // param must never become an open redirect (rejects //host, backslashes,
+  // control characters, absolute URLs).
+  const redirectTo = computed(() => sanitizeRedirectPath(route.query.redirect) ?? '/');
 
   // Auth check on mount
   onMounted(async () => {

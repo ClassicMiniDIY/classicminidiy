@@ -22,6 +22,8 @@
 </template>
 
 <script setup lang="ts">
+  import { sanitizeRedirectPath } from '../../utils/redirect';
+
   const { t } = useI18n();
 
   useHead({
@@ -43,7 +45,9 @@
     try {
       const value = window.localStorage.getItem(POST_AUTH_REDIRECT_KEY);
       if (value !== null) window.localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
-      return value && value.startsWith('/') && !value.startsWith('//') ? value : null;
+      // Shared validator: rejects absolute URLs, //host, backslash variants,
+      // and control characters (see app/utils/redirect.ts).
+      return sanitizeRedirectPath(value);
     } catch {
       return null;
     }
