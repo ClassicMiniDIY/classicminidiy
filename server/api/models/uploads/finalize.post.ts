@@ -61,8 +61,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, statusMessage: 'Upload not found in storage' });
   }
 
-  // Sniff the first bytes against the declared extension.
-  const headBytes = await getModelObjectHead(file.s3_key, 512);
+  // Sniff the first bytes against the declared extension. Skip the ranged GET
+  // for a 0-byte object — `bytes=0-511` on an empty object is a 416 from S3; an
+  // empty buffer simply fails the sniff below (presign's content-length-range
+  // min of 1 should already prevent this, but guard defensively).
+  const headBytes = head.size > 0 ? await getModelObjectHead(file.s3_key, 512) : Buffer.alloc(0);
   const sniff = sniffModelFile({ ext: file.file_ext, head: headBytes, size: head.size });
 
   if (!sniff.ok) {

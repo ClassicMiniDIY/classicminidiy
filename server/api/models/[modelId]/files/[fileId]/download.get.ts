@@ -68,14 +68,19 @@ export default defineEventHandler(async (event) => {
   }
 
   // Entitlement gate: owner/admin always; free/tips always; paid needs a
-  // purchase; removed/flagged is false for everyone but owner/admin.
-  const { data: entitled, error: entError } = await service.rpc('has_model_entitlement', {
-    p_model_id: modelId,
-    p_user_id: user.id,
-  });
-
-  if (entError) {
-    throw createError({ statusCode: 500, statusMessage: 'Could not verify download entitlement' });
+  // purchase; removed/flagged is false for everyone but owner/admin. Owner/admin
+  // are already established above, so short-circuit the RPC roundtrip for them
+  // (has_model_entitlement returns true for them anyway).
+  let entitled = isOwner || isAdmin;
+  if (!entitled) {
+    const { data, error: entError } = await service.rpc('has_model_entitlement', {
+      p_model_id: modelId,
+      p_user_id: user.id,
+    });
+    if (entError) {
+      throw createError({ statusCode: 500, statusMessage: 'Could not verify download entitlement' });
+    }
+    entitled = !!data;
   }
   if (!entitled) {
     throw createError({ statusCode: 403, statusMessage: 'Purchase required to download this model' });

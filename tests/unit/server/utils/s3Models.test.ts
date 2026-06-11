@@ -32,6 +32,11 @@ describe('server/utils/s3Models — sanitizeModelFilename', () => {
     expect(sanitizeModelFilename('***.stl', 'stl')).toBe('file.stl');
   });
 
+  it('strips combining diacritics instead of hyphenating them', () => {
+    expect(sanitizeModelFilename('café.stl', 'stl')).toBe('cafe.stl');
+    expect(sanitizeModelFilename('pièce-moteur.obj', 'obj')).toBe('piece-moteur.obj');
+  });
+
   it('bounds the stem length to 80 chars', () => {
     const long = 'a'.repeat(200);
     const out = sanitizeModelFilename(`${long}.stl`, 'stl');

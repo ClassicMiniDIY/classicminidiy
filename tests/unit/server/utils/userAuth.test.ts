@@ -11,10 +11,14 @@ const mockSupabaseClient = {
 // Mock the supabase module before importing the module under test
 vi.mock('~/server/utils/supabase', () => ({
   getServiceClient: vi.fn(() => mockSupabaseClient),
+  getUserClient: vi.fn(() => mockSupabaseClient),
 }));
 
-// Mock Nitro/H3 globals
+// Mock Nitro/H3 globals. Cookie parsing now goes through h3's parseCookies
+// (auto-imported in Nitro), so the cookie cases stub that instead of the raw header.
 vi.stubGlobal('getHeader', vi.fn());
+const mockParseCookies = vi.fn(() => ({}) as Record<string, string>);
+vi.stubGlobal('parseCookies', mockParseCookies);
 vi.stubGlobal('createError', (opts: any) => {
   const e = new Error(opts.statusMessage || opts.message);
   (e as any).statusCode = opts.statusCode;
@@ -39,6 +43,7 @@ function createMockEvent() {
 describe('server/utils/userAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockParseCookies.mockReturnValue({});
   });
 
   describe('requireUserAuth', () => {
@@ -65,13 +70,10 @@ describe('server/utils/userAuth', () => {
     it('extracts token from Supabase auth cookie (JSON object with access_token)', async () => {
       const event = createMockEvent();
       const token = 'cookie-token-obj';
-      const cookieValue = encodeURIComponent(JSON.stringify({ access_token: token }));
 
-      (getHeader as any).mockImplementation((_e: any, name: string) => {
-        if (name === 'authorization') return undefined;
-        if (name === 'cookie') return `sb-testref-auth-token=${cookieValue}; other=value`;
-        return undefined;
-      });
+      (getHeader as any).mockReturnValue(undefined);
+      // parseCookies returns already URI-decoded values.
+      mockParseCookies.mockReturnValue({ 'sb-testref-auth-token': JSON.stringify({ access_token: token }) });
 
       mockGetUser.mockResolvedValue({
         data: { user: { id: 'user-2' } },
@@ -87,13 +89,9 @@ describe('server/utils/userAuth', () => {
     it('extracts token from Supabase auth cookie (JSON array format)', async () => {
       const event = createMockEvent();
       const token = 'cookie-token-arr';
-      const cookieValue = encodeURIComponent(JSON.stringify([token, 'refresh-token', null]));
 
-      (getHeader as any).mockImplementation((_e: any, name: string) => {
-        if (name === 'authorization') return undefined;
-        if (name === 'cookie') return `sb-proj-auth-token=${cookieValue}`;
-        return undefined;
-      });
+      (getHeader as any).mockReturnValue(undefined);
+      mockParseCookies.mockReturnValue({ 'sb-proj-auth-token': JSON.stringify([token, 'refresh-token', null]) });
 
       mockGetUser.mockResolvedValue({
         data: { user: { id: 'user-3' } },
@@ -109,13 +107,12 @@ describe('server/utils/userAuth', () => {
     it('prefers Bearer token over cookie when both are present', async () => {
       const event = createMockEvent();
       const bearerToken = 'bearer-wins';
-      const cookieValue = encodeURIComponent(JSON.stringify({ access_token: 'cookie-loses' }));
 
       (getHeader as any).mockImplementation((_e: any, name: string) => {
         if (name === 'authorization') return `Bearer ${bearerToken}`;
-        if (name === 'cookie') return `sb-ref-auth-token=${cookieValue}`;
         return undefined;
       });
+      mockParseCookies.mockReturnValue({ 'sb-ref-auth-token': JSON.stringify({ access_token: 'cookie-loses' }) });
 
       mockGetUser.mockResolvedValue({
         data: { user: { id: 'user-bearer' } },
@@ -130,24 +127,8 @@ describe('server/utils/userAuth', () => {
     it('throws 401 when no token is found (no header, no cookie)', async () => {
       const event = createMockEvent();
 
-      (getHeader as any).mockImplementation(() => undefined);
-
-      await expect(requireUserAuth(event)).rejects.toMatchObject({
-        statusCode: 401,
-        message: 'Authentication required',
-      });
-
-      expect(mockGetUser).not.toHaveBeenCalled();
-    });
-
-    it('throws 401 when no Authorization header and empty cookie header', async () => {
-      const event = createMockEvent();
-
-      (getHeader as any).mockImplementation((_e: any, name: string) => {
-        if (name === 'authorization') return undefined;
-        if (name === 'cookie') return '';
-        return undefined;
-      });
+      (getHeader as any).mockReturnValue(undefined);
+      mockParseCookies.mockReturnValue({});
 
       await expect(requireUserAuth(event)).rejects.toMatchObject({
         statusCode: 401,
@@ -160,11 +141,8 @@ describe('server/utils/userAuth', () => {
     it('throws 401 when cookie contains invalid JSON', async () => {
       const event = createMockEvent();
 
-      (getHeader as any).mockImplementation((_e: any, name: string) => {
-        if (name === 'authorization') return undefined;
-        if (name === 'cookie') return 'sb-ref-auth-token=not-valid-json';
-        return undefined;
-      });
+      (getHeader as any).mockReturnValue(undefined);
+      mockParseCookies.mockReturnValue({ 'sb-ref-auth-token': 'not-valid-json' });
 
       await expect(requireUserAuth(event)).rejects.toMatchObject({
         statusCode: 401,
@@ -177,11 +155,8 @@ describe('server/utils/userAuth', () => {
     it('throws 401 when cookie has no matching sb- auth-token key', async () => {
       const event = createMockEvent();
 
-      (getHeader as any).mockImplementation((_e: any, name: string) => {
-        if (name === 'authorization') return undefined;
-        if (name === 'cookie') return 'some-other-cookie=some-value; another=foo';
-        return undefined;
-      });
+      (getHeader as any).mockReturnValue(undefined);
+      mockParseCookies.mockReturnValue({ 'some-other-cookie': 'some-value', another: 'foo' });
 
       await expect(requireUserAuth(event)).rejects.toMatchObject({
         statusCode: 401,
@@ -247,15 +222,16 @@ describe('server/utils/userAuth', () => {
       expect(mockGetUser).toHaveBeenCalledWith('good-token');
     });
 
-    it('handles cookie with multiple entries and picks the sb- auth-token key', async () => {
+    it('picks the sb- auth-token key out of multiple cookies', async () => {
       const event = createMockEvent();
       const token = 'multi-cookie-token';
-      const cookieValue = encodeURIComponent(JSON.stringify({ access_token: token }));
 
-      (getHeader as any).mockImplementation((_e: any, name: string) => {
-        if (name === 'authorization') return undefined;
-        if (name === 'cookie') return `session=abc123; csrf=xyz; sb-myproject-auth-token=${cookieValue}; theme=dark`;
-        return undefined;
+      (getHeader as any).mockReturnValue(undefined);
+      mockParseCookies.mockReturnValue({
+        session: 'abc123',
+        csrf: 'xyz',
+        'sb-myproject-auth-token': JSON.stringify({ access_token: token }),
+        theme: 'dark',
       });
 
       mockGetUser.mockResolvedValue({
