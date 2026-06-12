@@ -259,7 +259,7 @@
                     <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
                     {{ t('form.success.make_another') }}
                   </button>
-                  <NuxtLink to="/dashboard" class="btn btn-neutral btn-outline w-full">
+                  <NuxtLink to="/dashboard/submissions" class="btn btn-neutral btn-outline w-full">
                     {{ t('form.success.view_submissions') }}
                   </NuxtLink>
                 </div>
