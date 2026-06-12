@@ -108,18 +108,25 @@
     }
   }
 
+  const pricingChoices = [
+    { value: 'free', label: 'Free' },
+    { value: 'tips', label: 'Free + tips' },
+    { value: 'pwyw', label: 'Pay what you want' },
+    { value: 'fixed', label: 'Fixed price' },
+  ] as const;
+
   useHead({ title: 'Upload a model | Classic Mini DIY' });
   definePageMeta({ key: 'models-upload' });
 </script>
 
 <template>
   <hero :navigation="true" title="Share a 3D Model" :heroType="HERO_TYPES.ARCHIVE" />
-  <div class="container mx-auto px-4 max-w-4xl">
+  <div class="container mx-auto px-4 max-w-3xl pb-16">
     <breadcrumb class="my-6" page="Upload" subpage="3D Models" subpageHref="/models" />
 
     <!-- Not signed in -->
     <div v-if="!isAuthenticated" class="card bg-base-100 border border-base-300 shadow-sm my-10">
-      <div class="card-body items-center text-center">
+      <div class="card-body items-center text-center gap-3">
         <i class="fas fa-right-to-bracket text-4xl text-primary"></i>
         <h2 class="card-title">Sign in to share a model</h2>
         <p class="opacity-70">You need an account to contribute models to the library.</p>
@@ -131,9 +138,7 @@
     <div v-else-if="submitted" class="card bg-base-100 border border-base-300 shadow-sm my-10">
       <div class="card-body items-center text-center gap-3">
         <i class="fas fa-circle-check text-5xl text-success"></i>
-        <h2 class="card-title">
-          {{ submitted.status === 'published' ? 'Published!' : 'Submitted for review' }}
-        </h2>
+        <h2 class="card-title">{{ submitted.status === 'published' ? 'Published!' : 'Submitted for review' }}</h2>
         <p class="opacity-70">
           {{
             submitted.status === 'published'
@@ -169,65 +174,69 @@
       </div>
 
       <div class="card bg-base-100 border border-base-300 shadow-sm">
-        <div class="card-body gap-4">
+        <div class="card-body gap-2">
           <!-- STEP 1: BASICS -->
-          <div v-show="w.step.value === 1" class="space-y-4">
-            <h2 class="card-title">The basics</h2>
-            <label class="form-control">
-              <span class="label-text font-semibold">Title *</span>
+          <div v-show="w.step.value === 1" class="space-y-2">
+            <h2 class="card-title mb-2">The basics</h2>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Title</legend>
               <input
                 v-model="w.title.value"
                 type="text"
                 maxlength="120"
-                class="input input-bordered"
+                class="input w-full"
                 placeholder="e.g. Smiths gauge pod (52 mm)"
               />
-            </label>
-            <label class="form-control">
-              <span class="label-text font-semibold">Summary</span>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Summary</legend>
               <input
                 v-model="w.summary.value"
                 type="text"
                 maxlength="280"
-                class="input input-bordered"
+                class="input w-full"
                 placeholder="One-line description"
               />
-            </label>
-            <label class="form-control">
-              <span class="label-text font-semibold">Description</span>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Description</legend>
               <textarea
                 v-model="w.description.value"
                 rows="4"
                 maxlength="20000"
-                class="textarea textarea-bordered"
+                class="textarea w-full"
                 placeholder="What it is, how it prints, what it fits…"
               ></textarea>
-            </label>
-            <div class="grid sm:grid-cols-2 gap-4">
-              <label class="form-control">
-                <span class="label-text font-semibold">Category *</span>
-                <select v-model="w.categorySlug.value" class="select select-bordered">
+            </fieldset>
+
+            <div class="grid sm:grid-cols-2 gap-x-4">
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Category</legend>
+                <select v-model="w.categorySlug.value" class="select w-full">
                   <option value="" disabled>Choose a category</option>
                   <option v-for="c in categories" :key="c.slug" :value="c.slug">{{ c.name }}</option>
                 </select>
-              </label>
-              <label class="form-control">
-                <span class="label-text font-semibold">Source URL</span>
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Source URL</legend>
                 <input
                   v-model="w.sourceUrl.value"
                   type="url"
-                  class="input input-bordered"
+                  class="input w-full"
                   placeholder="Original design (optional)"
                 />
-              </label>
+              </fieldset>
             </div>
 
-            <label class="form-control">
-              <span class="label-text font-semibold">Tags</span>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Tags</legend>
               <input
                 v-model="tagInput"
                 type="text"
-                class="input input-bordered"
+                class="input w-full"
                 placeholder="Comma-separated, press Enter"
                 @keydown.enter.prevent="commitTags"
                 @blur="commitTags"
@@ -240,67 +249,68 @@
                   </button>
                 </span>
               </div>
-            </label>
+            </fieldset>
 
-            <div class="divider my-1">Pricing & license</div>
-            <div class="flex flex-wrap gap-2">
-              <label
-                v-for="m in ['free', 'tips', 'pwyw', 'fixed'] as const"
-                :key="m"
-                class="btn btn-sm"
-                :class="w.pricingMode.value === m ? 'btn-primary' : 'btn-outline'"
-              >
-                <input type="radio" :value="m" v-model="w.pricingMode.value" class="hidden" />
-                {{ { free: 'Free', tips: 'Free + tips', pwyw: 'Pay what you want', fixed: 'Fixed price' }[m] }}
-              </label>
-            </div>
-            <div v-if="w.pricingMode.value === 'fixed'" class="grid grid-cols-2 gap-4">
-              <label class="form-control">
-                <span class="label-text">Price (USD)</span>
+            <div class="divider text-sm">Pricing &amp; license</div>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Pricing</legend>
+              <div class="join">
+                <button
+                  v-for="p in pricingChoices"
+                  :key="p.value"
+                  type="button"
+                  class="btn join-item btn-sm"
+                  :class="w.pricingMode.value === p.value ? 'btn-primary' : 'btn-outline'"
+                  @click="w.pricingMode.value = p.value"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
+            </fieldset>
+
+            <div v-if="w.pricingMode.value === 'fixed'" class="grid grid-cols-2 gap-x-4">
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Price (USD)</legend>
                 <input
                   v-model="priceDollars"
                   type="number"
                   min="1"
                   step="0.50"
-                  class="input input-bordered"
+                  class="input w-full"
                   placeholder="9.99"
                 />
-              </label>
+              </fieldset>
             </div>
-            <div v-else-if="w.pricingMode.value === 'pwyw'" class="grid grid-cols-2 gap-4">
-              <label class="form-control">
-                <span class="label-text">Minimum (USD)</span>
-                <input
-                  v-model="minDollars"
-                  type="number"
-                  min="1"
-                  step="0.50"
-                  class="input input-bordered"
-                  placeholder="1.00"
-                />
-              </label>
-              <label class="form-control">
-                <span class="label-text">Suggested (USD)</span>
+            <div v-else-if="w.pricingMode.value === 'pwyw'" class="grid grid-cols-2 gap-x-4">
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Minimum (USD)</legend>
+                <input v-model="minDollars" type="number" min="1" step="0.50" class="input w-full" placeholder="1.00" />
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Suggested (USD)</legend>
                 <input
                   v-model="suggestedDollars"
                   type="number"
                   min="1"
                   step="0.50"
-                  class="input input-bordered"
+                  class="input w-full"
                   placeholder="5.00"
                 />
-              </label>
+              </fieldset>
             </div>
-            <label class="form-control">
-              <span class="label-text font-semibold">License *</span>
-              <select v-model="w.licenseCode.value" class="select select-bordered">
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">License</legend>
+              <select v-model="w.licenseCode.value" class="select w-full">
                 <option value="" disabled>Choose a license</option>
                 <option v-for="l in licenseOptions" :key="l.code" :value="l.code">{{ l.name }}</option>
               </select>
-            </label>
-            <label class="label cursor-pointer justify-start gap-3">
-              <input v-model="w.safetyCritical.value" type="checkbox" class="checkbox checkbox-warning" />
-              <span class="label-text">This is a safety-critical part (structural, braking, steering, fuel)</span>
+            </fieldset>
+
+            <label class="flex items-start gap-3 cursor-pointer mt-2">
+              <input v-model="w.safetyCritical.value" type="checkbox" class="checkbox checkbox-warning mt-0.5" />
+              <span class="text-sm">This is a safety-critical part (structural, braking, steering, fuel)</span>
             </label>
           </div>
 
@@ -320,7 +330,7 @@
               <p class="mt-2 text-sm">Drag files here or click to browse</p>
               <input ref="fileInput" type="file" multiple class="hidden" @change="onFilePick" />
             </div>
-            <ul class="space-y-2">
+            <ul v-if="w.files.value.length" class="space-y-2">
               <li
                 v-for="f in w.files.value"
                 :key="f.name + f.sizeBytes"
@@ -333,7 +343,7 @@
                   </p>
                   <progress
                     v-if="f.status === 'uploading'"
-                    class="progress progress-primary h-1"
+                    class="progress progress-primary h-1.5 w-full"
                     :value="f.progress"
                     max="100"
                   ></progress>
@@ -343,7 +353,7 @@
                     :class="{
                       'text-success': f.status === 'uploaded',
                       'text-error': f.status === 'error',
-                      'opacity-60': f.status === 'verifying',
+                      'opacity-60': f.status === 'verifying' || f.status === 'pending',
                     }"
                   >
                     {{
@@ -357,7 +367,7 @@
                     }}
                   </p>
                 </div>
-                <button type="button" class="btn btn-ghost btn-xs" @click="w.removeFile(f.fileId)">
+                <button type="button" class="btn btn-ghost btn-xs btn-square" @click="w.removeFile(f.fileId)">
                   <i class="fas fa-trash"></i>
                 </button>
               </li>
@@ -409,62 +419,62 @@
           </div>
 
           <!-- STEP 4: PRINT SETTINGS -->
-          <div v-show="w.step.value === 4" class="space-y-4">
-            <h2 class="card-title">Print settings</h2>
-            <div class="grid sm:grid-cols-2 gap-4">
-              <label class="form-control"
-                ><span class="label-text">Recommended material</span
-                ><input
-                  v-model="w.printSettings.value.recommendedMaterial"
-                  class="input input-bordered"
-                  placeholder="PLA"
-              /></label>
-              <label class="form-control"
-                ><span class="label-text">Layer height (mm)</span
-                ><input
+          <div v-show="w.step.value === 4" class="space-y-2">
+            <h2 class="card-title mb-2">Print settings</h2>
+            <div class="grid sm:grid-cols-2 gap-x-4">
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Recommended material</legend>
+                <input v-model="w.printSettings.value.recommendedMaterial" class="input w-full" placeholder="PLA" />
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Layer height (mm)</legend>
+                <input
                   v-model.number="w.printSettings.value.layerHeight"
                   type="number"
                   step="0.04"
-                  class="input input-bordered"
-              /></label>
-              <label class="form-control"
-                ><span class="label-text">Infill (%)</span
-                ><input v-model.number="w.printSettings.value.infillPercent" type="number" class="input input-bordered"
-              /></label>
-              <label class="form-control"
-                ><span class="label-text">Walls</span
-                ><input v-model.number="w.printSettings.value.wallCount" type="number" class="input input-bordered"
-              /></label>
-              <label class="form-control"
-                ><span class="label-text">Nozzle (mm)</span
-                ><input
+                  class="input w-full"
+                />
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Infill (%)</legend>
+                <input v-model.number="w.printSettings.value.infillPercent" type="number" class="input w-full" />
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Walls</legend>
+                <input v-model.number="w.printSettings.value.wallCount" type="number" class="input w-full" />
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Nozzle (mm)</legend>
+                <input
                   v-model.number="w.printSettings.value.nozzleSize"
                   type="number"
                   step="0.1"
-                  class="input input-bordered"
-              /></label>
-              <label class="form-control"
-                ><span class="label-text">Est. time (hours)</span
-                ><input
+                  class="input w-full"
+                />
+              </fieldset>
+              <fieldset class="fieldset">
+                <legend class="fieldset-legend">Est. time (hours)</legend>
+                <input
                   v-model.number="w.printSettings.value.estimatedTimeHours"
                   type="number"
                   step="0.5"
-                  class="input input-bordered"
-              /></label>
+                  class="input w-full"
+                />
+              </fieldset>
             </div>
-            <label class="label cursor-pointer justify-start gap-3">
+            <label class="flex items-center gap-3 cursor-pointer">
               <input v-model="w.printSettings.value.supportsRequired" type="checkbox" class="checkbox" />
-              <span class="label-text">Supports required</span>
+              <span class="text-sm">Supports required</span>
             </label>
-            <label class="form-control"
-              ><span class="label-text">Notes</span
-              ><textarea
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Notes</legend>
+              <textarea
                 v-model="w.printSettings.value.notes"
                 rows="2"
-                class="textarea textarea-bordered"
+                class="textarea w-full"
                 placeholder="Orientation tips, post-processing…"
               ></textarea>
-            </label>
+            </fieldset>
           </div>
 
           <!-- STEP 5: HARDWARE + ASSEMBLY -->
@@ -477,62 +487,64 @@
                 </button>
               </div>
               <div v-for="(h, i) in w.hardwareBom.value" :key="i" class="flex gap-2 mt-2 items-center">
-                <input v-model="h.item" class="input input-bordered input-sm flex-1" placeholder="M3×10 bolt" />
-                <input v-model.number="h.quantity" type="number" min="1" class="input input-bordered input-sm w-20" />
-                <button type="button" class="btn btn-ghost btn-sm" @click="w.hardwareBom.value.splice(i, 1)">
+                <input v-model="h.item" class="input input-sm flex-1" placeholder="M3×10 bolt" />
+                <input v-model.number="h.quantity" type="number" min="1" class="input input-sm w-20" />
+                <button type="button" class="btn btn-ghost btn-sm btn-square" @click="w.hardwareBom.value.splice(i, 1)">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
             </div>
             <div>
               <h2 class="card-title">Assembly</h2>
-              <div class="grid sm:grid-cols-2 gap-4 mt-2">
-                <label class="form-control">
-                  <span class="label-text">Difficulty</span>
-                  <select v-model="w.assembly.value.difficulty" class="select select-bordered select-sm">
+              <div class="grid sm:grid-cols-2 gap-x-4 mt-2">
+                <fieldset class="fieldset">
+                  <legend class="fieldset-legend">Difficulty</legend>
+                  <select v-model="w.assembly.value.difficulty" class="select select-sm w-full">
                     <option value="easy">Easy</option>
                     <option value="moderate">Moderate</option>
                     <option value="advanced">Advanced</option>
                   </select>
-                </label>
-                <label class="form-control"
-                  ><span class="label-text">Est. time (min)</span
-                  ><input
+                </fieldset>
+                <fieldset class="fieldset">
+                  <legend class="fieldset-legend">Est. time (min)</legend>
+                  <input
                     v-model.number="w.assembly.value.estimatedTimeMinutes"
                     type="number"
-                    class="input input-bordered input-sm"
-                /></label>
+                    class="input input-sm w-full"
+                  />
+                </fieldset>
               </div>
-              <label class="form-control mt-2">
-                <span class="label-text">Tools</span>
+              <fieldset class="fieldset mt-1">
+                <legend class="fieldset-legend">Tools</legend>
                 <input
                   v-model="toolInput"
-                  class="input input-bordered input-sm"
+                  class="input input-sm w-full"
                   placeholder="Add a tool, press Enter"
                   @keydown.enter.prevent="commitTool"
                 />
                 <div v-if="w.assembly.value.toolsRequired?.length" class="flex flex-wrap gap-1.5 mt-2">
-                  <span v-for="(t, i) in w.assembly.value.toolsRequired" :key="t" class="badge badge-ghost gap-1"
-                    >{{ t }}
+                  <span v-for="(t, i) in w.assembly.value.toolsRequired" :key="t" class="badge badge-ghost gap-1">
+                    {{ t }}
                     <button type="button" @click="w.assembly.value.toolsRequired!.splice(i, 1)">
-                      <i class="fas fa-xmark text-[0.6rem]"></i></button
-                  ></span>
+                      <i class="fas fa-xmark text-[0.6rem]"></i>
+                    </button>
+                  </span>
                 </div>
-              </label>
-              <div class="flex items-center justify-between mt-2">
-                <span class="label-text">Steps</span>
+              </fieldset>
+              <div class="flex items-center justify-between mt-3">
+                <span class="fieldset-legend">Steps</span>
                 <button type="button" class="btn btn-ghost btn-sm" @click="addStep">
                   <i class="fas fa-plus mr-1"></i> Add step
                 </button>
               </div>
               <div v-for="(s, i) in w.assembly.value.steps || []" :key="i" class="flex gap-2 mt-2 items-start">
                 <span class="badge badge-primary badge-sm mt-2">{{ i + 1 }}</span>
-                <textarea
-                  v-model="w.assembly.value.steps![i]"
-                  rows="1"
-                  class="textarea textarea-bordered textarea-sm flex-1"
-                ></textarea>
-                <button type="button" class="btn btn-ghost btn-sm" @click="w.assembly.value.steps!.splice(i, 1)">
+                <textarea v-model="w.assembly.value.steps![i]" rows="1" class="textarea textarea-sm flex-1"></textarea>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm btn-square"
+                  @click="w.assembly.value.steps!.splice(i, 1)"
+                >
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
@@ -541,8 +553,8 @@
 
           <!-- STEP 6: REVIEW -->
           <div v-show="w.step.value === 6" class="space-y-4">
-            <h2 class="card-title">Review & submit</h2>
-            <dl class="grid grid-cols-2 gap-2 text-sm">
+            <h2 class="card-title">Review &amp; submit</h2>
+            <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
               <dt class="opacity-60">Title</dt>
               <dd>{{ w.title.value }}</dd>
               <dt class="opacity-60">Category</dt>
@@ -557,16 +569,16 @@
               <dd>{{ w.images.value.length }}</dd>
             </dl>
             <ModelsSafetyDisclaimer :safety-critical="w.safetyCritical.value" />
-            <label class="label cursor-pointer justify-start gap-3 items-start">
-              <input v-model="w.safetyAck.value" type="checkbox" class="checkbox checkbox-primary mt-1" />
-              <span class="label-text"
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input v-model="w.safetyAck.value" type="checkbox" class="checkbox checkbox-primary mt-0.5" />
+              <span class="text-sm"
                 >I confirm these files are mine to share, are provided as-is, and are not certified for road use.</span
               >
             </label>
           </div>
 
           <!-- NAV -->
-          <div class="flex justify-between items-center pt-2 border-t border-base-300">
+          <div class="flex justify-between items-center pt-4 mt-2 border-t border-base-300">
             <button
               type="button"
               class="btn btn-ghost"
@@ -586,6 +598,7 @@
               "
               @click="onNext"
             >
+              <span v-if="w.saving.value" class="loading loading-spinner loading-sm"></span>
               Next <i class="fas fa-arrow-right ml-1"></i>
             </button>
             <button

@@ -72,23 +72,23 @@
         <button class="btn btn-primary btn-sm mt-4" @click="open = false">Close</button>
       </div>
 
-      <div v-else class="py-2 space-y-3">
-        <label class="form-control">
-          <span class="label-text">Reason</span>
-          <select v-model="reason" class="select select-bordered">
+      <div v-else class="py-2 space-y-2">
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Reason</legend>
+          <select v-model="reason" class="select w-full">
             <option v-for="r in reasons" :key="r.value" :value="r.value">{{ r.label }}</option>
           </select>
-        </label>
-        <label class="form-control">
-          <span class="label-text">Details</span>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Details</legend>
           <textarea
             v-model="details"
             rows="4"
             maxlength="5000"
-            class="textarea textarea-bordered"
+            class="textarea w-full"
             placeholder="What's the issue? Include links/evidence for copyright claims."
           ></textarea>
-        </label>
+        </fieldset>
         <p v-if="error" class="text-error text-sm">{{ error }}</p>
         <div class="modal-action">
           <button type="button" class="btn btn-ghost" @click="open = false">Cancel</button>
