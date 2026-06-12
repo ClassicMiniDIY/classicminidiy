@@ -286,6 +286,9 @@ export default defineNuxtConfig({
       { code: 'zh', name: 'Chinese' },
       { code: 'ko', name: 'Korean' },
     ],
+    // Keep i18n.config.ts at the project root (legacy layout) rather than the
+    // v10 default i18n/ dir, so the vueI18n path resolves without a warning.
+    restructureDir: '.',
     vueI18n: './i18n.config.ts',
     detectBrowserLanguage: {
       useCookie: true,
