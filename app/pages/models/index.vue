@@ -196,12 +196,12 @@
         </div>
       </div>
 
-      <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10 pt-4">
-        <patreon-card size="large" />
+      <div class="col-span-12">
+        <div class="divider mt-2 mb-0"></div>
       </div>
 
-      <div class="col-span-12">
-        <div class="divider mb-0"></div>
+      <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10 pt-4">
+        <patreon-card size="large" />
       </div>
     </div>
   </div>

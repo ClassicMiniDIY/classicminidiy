@@ -42,12 +42,15 @@
     }
   }
 
-  async function deleteDraft(id: string) {
-    if (!confirm('Delete this draft? This cannot be undone.')) return;
-    busy.value = id;
+  const deleteTarget = ref<any | null>(null);
+  async function confirmDelete() {
+    const m = deleteTarget.value;
+    if (!m) return;
+    busy.value = m.id;
     const headers = await authHeaders();
-    await $fetch(`/api/models/${id}` as string, { method: 'DELETE', headers }).catch(() => {});
+    await $fetch(`/api/models/${m.id}` as string, { method: 'DELETE', headers }).catch(() => {});
     busy.value = null;
+    deleteTarget.value = null;
     await refresh();
   }
 
@@ -136,7 +139,7 @@
               type="button"
               class="btn btn-ghost btn-xs text-error"
               :disabled="busy === m.id"
-              @click="deleteDraft(m.id)"
+              @click="deleteTarget = m"
             >
               <i class="fas fa-trash"></i>
             </button>
@@ -145,5 +148,24 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete confirmation -->
+    <dialog class="modal" :class="{ 'modal-open': !!deleteTarget }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg"><i class="fas fa-trash text-error mr-1"></i> Delete draft?</h3>
+        <p class="py-3 text-sm">
+          Delete <strong>{{ deleteTarget?.title }}</strong
+          >? This permanently removes the draft and its uploaded files. This can't be undone.
+        </p>
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" @click="deleteTarget = null">Cancel</button>
+          <button type="button" class="btn btn-error" :disabled="busy === deleteTarget?.id" @click="confirmDelete">
+            <span v-if="busy === deleteTarget?.id" class="loading loading-spinner loading-sm"></span>
+            <i v-else class="fas fa-trash mr-1"></i> Delete
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="deleteTarget = null"><button>close</button></form>
+    </dialog>
   </div>
 </template>

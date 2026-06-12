@@ -128,6 +128,11 @@
     }
   });
 
+  // A new draft version on an already-published model (vs resuming a first draft).
+  const isNewVersion = computed(
+    () => w.isEditing.value && w.modelStatus.value === 'published' && (w.versionNumber.value ?? 1) > 1
+  );
+
   // Content-only edit (published model, no open draft): just save the basics.
   async function onSaveContent() {
     const ok = await w.ensureDraft();
@@ -209,6 +214,24 @@
 
       <div v-if="w.error.value" class="alert alert-error mb-4">
         <i class="fas fa-circle-exclamation"></i> <span>{{ w.error.value }}</span>
+      </div>
+
+      <!-- Contextual guidance for the edit / new-version flows -->
+      <div v-if="w.contentOnly.value" class="alert alert-info alert-soft mb-4 items-start">
+        <i class="fas fa-circle-info mt-0.5"></i>
+        <span class="text-sm">
+          You're editing the <strong>currently published version</strong>. These details update live for everyone. The
+          model files can't be changed here — to publish different files, start a <strong>new version</strong> from My
+          Models instead.
+        </span>
+      </div>
+      <div v-else-if="isNewVersion" class="alert alert-info alert-soft mb-4 items-start">
+        <i class="fas fa-code-branch mt-0.5"></i>
+        <span class="text-sm">
+          You're creating <strong>version {{ w.versionNumber.value }}</strong
+          >. Your previous versions stay available — buyers and anyone who's downloaded the model keep access to every
+          version, past and future.
+        </span>
       </div>
 
       <div class="card bg-base-100 border border-base-300 shadow-sm">

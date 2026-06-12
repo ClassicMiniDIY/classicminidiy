@@ -59,6 +59,8 @@ export function useModelUpload() {
   // Editing an existing model (resume draft / new version / content edit).
   const isEditing = ref(false);
   const contentOnly = ref(false);
+  const modelStatus = ref<string | null>(null);
+  const versionNumber = ref<number | null>(null);
 
   // Step 1 — basics + pricing
   const title = ref('');
@@ -358,6 +360,7 @@ export function useModelUpload() {
       const m = res.model;
       modelId.value = m.id;
       slug.value = m.slug;
+      modelStatus.value = m.status || null;
       title.value = m.title || '';
       summary.value = m.summary || '';
       description.value = m.description || '';
@@ -373,6 +376,7 @@ export function useModelUpload() {
 
       if (res.version) {
         versionId.value = res.version.id;
+        versionNumber.value = res.version.versionNumber ?? null;
         if (res.version.printSettings) printSettings.value = res.version.printSettings;
         if (Array.isArray(res.version.hardwareBom)) hardwareBom.value = res.version.hardwareBom;
         if (res.version.assembly) assembly.value = res.version.assembly;
@@ -412,6 +416,8 @@ export function useModelUpload() {
     versionId,
     isEditing,
     contentOnly,
+    modelStatus,
+    versionNumber,
     // fields
     title,
     summary,
