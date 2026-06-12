@@ -248,6 +248,9 @@
               <NuxtLink to="/privacy" class="link text-sm hover:underline">
                 {{ t('privacy_links.cmdiy_privacy') }}
               </NuxtLink>
+              <NuxtLink to="/legal/model-terms" class="link text-sm hover:underline"> Model Library Terms </NuxtLink>
+              <NuxtLink to="/legal/paid-file-license" class="link text-sm hover:underline"> Paid File License </NuxtLink>
+              <NuxtLink to="/legal/dmca" class="link text-sm hover:underline"> DMCA </NuxtLink>
               <NuxtLink
                 to="https://www.youtube.com/t/terms"
                 target="_blank"
