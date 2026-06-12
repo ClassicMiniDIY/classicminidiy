@@ -147,6 +147,26 @@ export interface ModelDetail {
 export const MODEL_VIEWER_MAX_BYTES = 50 * 1024 * 1024; // 50 MB (keystone PR 6)
 export const VIEWER_EXTS = new Set(['stl', '3mf', 'obj']);
 
+/**
+ * Allowed upload extensions (lowercase) — client-side mirror of the server
+ * `MODEL_FILE_EXTS` / DB `file_ext` constraint (keystone §4). Used by the upload
+ * wizard for pre-flight validation; the server + DB stay the hard gate.
+ */
+export const MODEL_FILE_EXTS = [
+  'stl',
+  '3mf',
+  'obj',
+  'step',
+  'stp',
+  'iges',
+  'igs',
+  'f3d',
+  'f3z',
+  'scad',
+  'dxf',
+  'pdf',
+] as const;
+
 export function formatBytes(bytes: number): string {
   if (!bytes || bytes < 1024) return `${bytes || 0} B`;
   const units = ['KB', 'MB', 'GB'];
