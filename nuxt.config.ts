@@ -385,6 +385,19 @@ export default defineNuxtConfig({
       prerender: false,
       headers: { 'cache-control': 'no-store, must-revalidate' },
     },
+    // Same single-use-?code= contract as /auth/callback: the membership claim
+    // page and the Discord claim proxy are reached from emailed one-time
+    // links. Prerendering/CDN-caching them serves a static copy whose JS can
+    // boot with no code in the URL ("That link is missing its claim code"
+    // for every recipient — 2026-06-12 incident).
+    '/membership/claim': {
+      prerender: false,
+      headers: { 'cache-control': 'no-store, must-revalidate' },
+    },
+    '/discord/claim': {
+      prerender: false,
+      headers: { 'cache-control': 'no-store, must-revalidate' },
+    },
     '/archive/manuals': { redirect: { to: '/archive/documents?type=manual', statusCode: 301 } },
     '/archive/adverts': { redirect: { to: '/archive/documents?type=advert', statusCode: 301 } },
     '/archive/catalogues': { redirect: { to: '/archive/documents?type=catalogue', statusCode: 301 } },
@@ -609,6 +622,10 @@ export default defineNuxtConfig({
         /\/technical\/calculators\/gearbox/,
         /^\/t\//,
         /^\/auth\/callback/,
+        // Single-use emailed claim links — the precached '/' shell must never
+        // swallow their ?code=/?token= (see /auth/callback note above).
+        /^\/membership\/claim/,
+        /^\/discord\/claim/,
       ],
       // Customize caching strategies
       runtimeCaching: [
