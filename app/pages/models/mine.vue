@@ -24,6 +24,33 @@
     removed: 'badge-error',
   };
 
+  const busy = ref<string | null>(null);
+  async function authHeaders(): Promise<Record<string, string>> {
+    const { data: s } = await supabase.auth.getSession();
+    return s.session?.access_token ? { Authorization: `Bearer ${s.session.access_token}` } : {};
+  }
+
+  // Start a new draft version on a published model, then open the wizard for it.
+  async function newVersion(id: string) {
+    busy.value = id;
+    try {
+      const headers = await authHeaders();
+      await $fetch(`/api/models/${id}/versions`, { method: 'POST', headers });
+      await navigateTo(`/models/upload?model=${id}`);
+    } catch {
+      busy.value = null;
+    }
+  }
+
+  async function deleteDraft(id: string) {
+    if (!confirm('Delete this draft? This cannot be undone.')) return;
+    busy.value = id;
+    const headers = await authHeaders();
+    await $fetch(`/api/models/${id}` as string, { method: 'DELETE', headers }).catch(() => {});
+    busy.value = null;
+    await refresh();
+  }
+
   useHead({ title: 'My Models | Classic Mini DIY' });
 </script>
 
@@ -81,13 +108,39 @@
             v{{ m.versionCount }} · <i class="fas fa-download"></i> {{ m.downloadCount }} · <i class="fas fa-heart"></i>
             {{ m.likeCount }}
           </p>
-          <div class="flex gap-2 mt-1">
-            <NuxtLink v-if="m.status === 'published'" :to="`/models/${m.slug}`" class="btn btn-ghost btn-xs"
-              ><i class="fas fa-eye mr-1"></i> View</NuxtLink
+          <div class="flex gap-1.5 mt-1 flex-wrap">
+            <NuxtLink v-if="m.status === 'published'" :to="`/models/${m.slug}`" class="btn btn-ghost btn-xs">
+              <i class="fas fa-eye mr-1"></i> View
+            </NuxtLink>
+            <NuxtLink
+              v-if="['draft', 'rejected'].includes(m.status)"
+              :to="`/models/upload?model=${m.id}`"
+              class="btn btn-primary btn-xs"
             >
-            <span v-else class="text-xs opacity-50 self-center">{{
-              m.status === 'pending' ? 'Awaiting review' : 'Draft'
-            }}</span>
+              <i class="fas fa-pen mr-1"></i> Continue
+            </NuxtLink>
+            <NuxtLink v-if="m.status === 'published'" :to="`/models/upload?model=${m.id}`" class="btn btn-ghost btn-xs">
+              <i class="fas fa-pen mr-1"></i> Edit
+            </NuxtLink>
+            <button
+              v-if="m.status === 'published'"
+              type="button"
+              class="btn btn-ghost btn-xs"
+              :disabled="busy === m.id"
+              @click="newVersion(m.id)"
+            >
+              <i class="fas fa-code-branch mr-1"></i> New version
+            </button>
+            <button
+              v-if="['draft', 'rejected'].includes(m.status)"
+              type="button"
+              class="btn btn-ghost btn-xs text-error"
+              :disabled="busy === m.id"
+              @click="deleteDraft(m.id)"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+            <span v-if="m.status === 'pending'" class="text-xs opacity-50 self-center">Awaiting review</span>
           </div>
         </div>
       </div>

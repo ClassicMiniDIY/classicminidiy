@@ -101,19 +101,21 @@
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
         <breadcrumb class="my-6" page="3D Models" />
-        <PageIntro
-          eyebrow="MAKE"
-          title="3D Model Library"
-          description="Mini-specific 3D-printable parts — interior trim, brackets, gauge pods, tools and jigs — with full print settings, hardware lists, and assembly guides. Contributed by the community."
-          as="h2"
-        />
-        <div class="flex flex-wrap gap-2 mt-4">
-          <NuxtLink to="/models/upload" class="btn btn-primary btn-sm"
-            ><i class="fas fa-plus mr-1"></i> Share a model</NuxtLink
-          >
-          <NuxtLink to="/models/mine" class="btn btn-ghost btn-sm"
-            ><i class="fas fa-folder mr-1"></i> My models</NuxtLink
-          >
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div class="flex-1">
+            <PageIntro
+              eyebrow="MAKE"
+              title="3D Model Library"
+              description="Mini-specific 3D-printable parts — interior trim, brackets, gauge pods, tools and jigs — with full print settings, hardware lists, and assembly guides. Contributed by the community."
+              as="h2"
+            />
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <NuxtLink to="/models/upload" class="btn btn-primary"
+              ><i class="fas fa-plus mr-1"></i> Share a model</NuxtLink
+            >
+            <NuxtLink to="/models/mine" class="btn btn-ghost"><i class="fas fa-folder mr-1"></i> My models</NuxtLink>
+          </div>
         </div>
       </div>
 
@@ -196,6 +198,10 @@
 
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10 pt-4">
         <patreon-card size="large" />
+      </div>
+
+      <div class="col-span-12">
+        <div class="divider mb-0"></div>
       </div>
     </div>
   </div>
