@@ -56,6 +56,9 @@ export function useModelUpload() {
   const modelId = ref<string | null>(null);
   const slug = ref<string | null>(null);
   const versionId = ref<string | null>(null);
+  // Editing an existing model (resume draft / new version / content edit).
+  const isEditing = ref(false);
+  const contentOnly = ref(false);
 
   // Step 1 — basics + pricing
   const title = ref('');
@@ -342,6 +345,63 @@ export function useModelUpload() {
     if (step.value > 1) step.value--;
   }
 
+  /**
+   * Load an existing model into the wizard (resume a draft, add a new version,
+   * or edit a published model's content). Sets `isEditing`; sets `contentOnly`
+   * when the model is published with no open draft version (content edits only).
+   */
+  async function loadExisting(id: string): Promise<boolean> {
+    error.value = null;
+    try {
+      const headers = await authHeaders();
+      const res = await $fetch<any>(`/api/models/${id}/edit`, { headers });
+      const m = res.model;
+      modelId.value = m.id;
+      slug.value = m.slug;
+      title.value = m.title || '';
+      summary.value = m.summary || '';
+      description.value = m.description || '';
+      categorySlug.value = m.categorySlug || '';
+      tags.value = m.tags || [];
+      licenseCode.value = m.licenseCode || '';
+      pricingMode.value = (m.pricingMode || 'free') as PricingMode;
+      priceCents.value = m.priceCents ?? null;
+      minPriceCents.value = m.minPriceCents ?? null;
+      suggestedPriceCents.value = m.suggestedPriceCents ?? null;
+      sourceUrl.value = m.sourceUrl || '';
+      safetyCritical.value = !!m.safetyCritical;
+
+      if (res.version) {
+        versionId.value = res.version.id;
+        if (res.version.printSettings) printSettings.value = res.version.printSettings;
+        if (Array.isArray(res.version.hardwareBom)) hardwareBom.value = res.version.hardwareBom;
+        if (res.version.assembly) assembly.value = res.version.assembly;
+        files.value = (res.files || []).map((f: any) =>
+          reactive<WizardFile>({
+            fileId: f.fileId,
+            name: f.name,
+            ext: f.ext,
+            sizeBytes: f.sizeBytes,
+            isRenderable: f.isRenderable,
+            status: 'uploaded',
+            progress: 100,
+          })
+        );
+      } else {
+        // Published model with no open draft — only the content is editable.
+        contentOnly.value = true;
+      }
+      images.value = (res.images || []).map((img: any) =>
+        reactive<WizardImage>({ id: img.id, url: img.url, isPrimary: img.isPrimary, status: 'uploaded' })
+      );
+      isEditing.value = true;
+      return true;
+    } catch (e: any) {
+      error.value = e?.data?.statusMessage || e?.statusMessage || 'Could not load this model';
+      return false;
+    }
+  }
+
   return {
     step,
     totalSteps,
@@ -350,6 +410,8 @@ export function useModelUpload() {
     modelId,
     slug,
     versionId,
+    isEditing,
+    contentOnly,
     // fields
     title,
     summary,
@@ -383,6 +445,7 @@ export function useModelUpload() {
     removeImage,
     saveVersionMeta,
     submit,
+    loadExisting,
     next,
     prev,
     // constants

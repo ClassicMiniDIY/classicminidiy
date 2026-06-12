@@ -115,14 +115,37 @@
     { value: 'fixed', label: 'Fixed price' },
   ] as const;
 
-  useHead({ title: 'Upload a model | Classic Mini DIY' });
+  // Resume/edit: ?model=<id> loads an existing model client-side (needs the
+  // session token, which lives in localStorage).
+  const route = useRoute();
+  const loadingExisting = ref(false);
+  onMounted(async () => {
+    const id = route.query.model;
+    if (typeof id === 'string' && id) {
+      loadingExisting.value = true;
+      await w.loadExisting(id);
+      loadingExisting.value = false;
+    }
+  });
+
+  // Content-only edit (published model, no open draft): just save the basics.
+  async function onSaveContent() {
+    const ok = await w.ensureDraft();
+    if (ok) submitted.value = { status: 'saved', slug: w.slug.value || '' };
+  }
+
+  useHead(() => ({ title: w.isEditing.value ? 'Edit model | Classic Mini DIY' : 'Upload a model | Classic Mini DIY' }));
   definePageMeta({ key: 'models-upload' });
 </script>
 
 <template>
-  <hero :navigation="true" title="Share a 3D Model" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero
+    :navigation="true"
+    :title="w.isEditing.value ? 'Edit a 3D Model' : 'Share a 3D Model'"
+    :heroType="HERO_TYPES.ARCHIVE"
+  />
   <div class="container mx-auto px-4 max-w-3xl pb-16">
-    <breadcrumb class="my-6" page="Upload" subpage="3D Models" subpageHref="/models" />
+    <breadcrumb class="my-6" :page="w.isEditing.value ? 'Edit' : 'Upload'" subpage="3D Models" subpageHref="/models" />
 
     <!-- Not signed in -->
     <div v-if="!isAuthenticated" class="card bg-base-100 border border-base-300 shadow-sm my-10">
@@ -134,16 +157,31 @@
       </div>
     </div>
 
+    <!-- Loading an existing model -->
+    <div v-else-if="loadingExisting" class="flex justify-center py-20">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+    </div>
+
     <!-- Success -->
     <div v-else-if="submitted" class="card bg-base-100 border border-base-300 shadow-sm my-10">
       <div class="card-body items-center text-center gap-3">
         <i class="fas fa-circle-check text-5xl text-success"></i>
-        <h2 class="card-title">{{ submitted.status === 'published' ? 'Published!' : 'Submitted for review' }}</h2>
+        <h2 class="card-title">
+          {{
+            submitted.status === 'saved'
+              ? 'Changes saved'
+              : submitted.status === 'published'
+                ? 'Published!'
+                : 'Submitted for review'
+          }}
+        </h2>
         <p class="opacity-70">
           {{
-            submitted.status === 'published'
-              ? 'Your model is live — taking you there…'
-              : 'Thanks! Our moderators will review it shortly. You can track it under My Models.'
+            submitted.status === 'saved'
+              ? 'Your model details have been updated.'
+              : submitted.status === 'published'
+                ? 'Your model is live — taking you there…'
+                : 'Thanks! Our moderators will review it shortly. You can track it under My Models.'
           }}
         </p>
         <div class="flex gap-2">
@@ -160,7 +198,7 @@
 
     <template v-else>
       <!-- Steps indicator -->
-      <ul class="steps steps-horizontal w-full mb-6 text-xs">
+      <ul v-if="!w.contentOnly.value" class="steps steps-horizontal w-full mb-6 text-xs">
         <li class="step" :class="{ 'step-primary': w.step.value >= 1 }">Basics</li>
         <li class="step" :class="{ 'step-primary': w.step.value >= 2 }">Files</li>
         <li class="step" :class="{ 'step-primary': w.step.value >= 3 }">Images</li>
@@ -579,7 +617,22 @@
 
           <!-- NAV -->
           <div class="flex justify-between items-center pt-4 mt-2 border-t border-base-300">
+            <!-- Content-only edit (published model): just save the basics -->
+            <template v-if="w.contentOnly.value">
+              <NuxtLink to="/models/mine" class="btn btn-ghost">Cancel</NuxtLink>
+              <button
+                type="button"
+                class="btn btn-primary"
+                :disabled="!w.canProceedStep1.value || w.saving.value"
+                @click="onSaveContent"
+              >
+                <span v-if="w.saving.value" class="loading loading-spinner loading-sm"></span>
+                <i v-else class="fas fa-floppy-disk mr-1"></i> Save changes
+              </button>
+            </template>
+
             <button
+              v-if="!w.contentOnly.value"
               type="button"
               class="btn btn-ghost"
               :disabled="w.step.value === 1 || w.saving.value"
@@ -588,7 +641,7 @@
               <i class="fas fa-arrow-left mr-1"></i> Back
             </button>
             <button
-              v-if="w.step.value < 6"
+              v-if="!w.contentOnly.value && w.step.value < 6"
               type="button"
               class="btn btn-primary"
               :disabled="
@@ -602,7 +655,7 @@
               Next <i class="fas fa-arrow-right ml-1"></i>
             </button>
             <button
-              v-else
+              v-if="!w.contentOnly.value && w.step.value >= 6"
               type="button"
               class="btn btn-primary"
               :disabled="!w.canSubmit.value || w.saving.value"
