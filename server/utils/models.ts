@@ -65,3 +65,37 @@ export function inferKind(ext: ModelFileExt): ModelFileKind {
   if (RENDERABLE_EXTS.has(ext)) return 'model';
   return 'source';
 }
+
+// --- Model metadata (used by the upload wizard's draft-CRUD routes) ----------
+
+export const MODEL_PRICING_MODES = ['free', 'tips', 'pwyw', 'fixed'] as const;
+export type ModelPricingMode = (typeof MODEL_PRICING_MODES)[number];
+
+export function isPricingMode(v: unknown): v is ModelPricingMode {
+  return typeof v === 'string' && (MODEL_PRICING_MODES as readonly string[]).includes(v);
+}
+
+/** Min price/tip floor in cents (Stripe economics; keystone §6). */
+export const MODEL_MIN_PRICE_CENTS = 100;
+
+export const MODEL_TITLE_MIN = 3;
+export const MODEL_TITLE_MAX = 120;
+export const MODEL_SUMMARY_MAX = 280;
+export const MODEL_DESCRIPTION_MAX = 20000;
+export const MODEL_MAX_TAGS = 10;
+
+/** URL-safe slug from a title: lowercase, de-accented, hyphenated, ≤90 chars. */
+export function slugifyModelTitle(title: string): string {
+  return (
+    String(title || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 90) || 'model'
+  );
+}
