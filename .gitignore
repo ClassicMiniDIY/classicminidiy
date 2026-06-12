@@ -95,3 +95,7 @@ sw.*
 
 # Supabase CLI scratch (created by `bun run gen:types`; this repo holds no migrations)
 supabase/.temp/
+
+# Claude Code local state (never commit — worktrees contain full repo copies)
+.claude/launch.json
+.claude/worktrees/
