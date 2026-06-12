@@ -22,8 +22,8 @@ export default defineEventHandler(async (event) => {
 
   const supabaseUrl = (config.public.supabaseUrl as string)?.replace(/\/$/, '');
   const supabaseKey = config.public.supabaseKey as string;
-  if (!supabaseUrl) {
-    throw createError({ statusCode: 500, statusMessage: 'Supabase URL not configured' });
+  if (!supabaseUrl || !supabaseKey) {
+    throw createError({ statusCode: 500, statusMessage: 'Supabase configuration is incomplete' });
   }
 
   try {
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     // Preserve the Edge Function's status (403 not_active drives the page's
     // membership upsell state) but never leak its raw error body.
-    const status = error?.statusCode || error?.response?.status || 502;
+    const status = error?.statusCode || error?.status || error?.response?.status || 502;
     const message =
       status === 403
         ? 'An active Sustaining Membership is required to join the members-only Discord'

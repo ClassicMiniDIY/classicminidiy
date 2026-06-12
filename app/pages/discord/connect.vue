@@ -41,7 +41,7 @@
       if (!token) {
         // Session evaporated between the auth check and the claim — send them
         // back through sign-in with the connect intent preserved.
-        navigateTo(loginWithIntentHref);
+        await navigateTo(loginWithIntentHref);
         return;
       }
       const res = await $fetch<{ status?: string; claim_url?: string; discord_url?: string }>(
@@ -66,7 +66,7 @@
       }
       throw new Error('Unexpected reissue response shape');
     } catch (err: any) {
-      const status = err?.statusCode ?? err?.response?.status;
+      const status = err?.statusCode ?? err?.status ?? err?.response?.status;
       if (status === 403) {
         state.value = 'not_member';
         track('discord_claim_reissue_failed', { source: 'web', reason: 'not_member' });
@@ -77,7 +77,7 @@
         // (deleted user, auth incident). Clear it first — otherwise /login
         // sees isAuthenticated, bounces straight back here, and we loop.
         await supabase.auth.signOut().catch(() => {});
-        navigateTo(loginWithIntentHref);
+        await navigateTo(loginWithIntentHref);
         return;
       }
       console.error('Discord claim reissue failed:', err);
