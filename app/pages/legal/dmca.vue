@@ -1,8 +1,10 @@
 <script setup lang="ts">
   // DMCA policy (keystone §12). Notice → takedown → counter-notice → repeat-
   // infringer. DRAFT pending legal review. The designated-agent block below is a
-  // PLACEHOLDER — it must be completed with the agent registered with the U.S.
-  // Copyright Office (DMCA Designated Agent Directory) before launch.
+  // PLACEHOLDER — before launch, register the agent in the U.S. Copyright Office
+  // DMCA Designated Agent Directory and fill in the bracketed fields so they
+  // match the Directory entry EXACTLY. 17 U.S.C. § 512(c)(2) requires the
+  // agent's name, address, phone, and email on this page itself.
   import { HERO_TYPES } from '~~/data/models/generic';
 
   const effectiveDate = 'June 12, 2026';
@@ -29,9 +31,9 @@
     <p class="text-sm opacity-60 mb-6">Effective {{ effectiveDate }}</p>
 
     <p class="mb-4">
-      Classic Mini DIY respects the intellectual property of others and complies with the Digital Millennium Copyright
-      Act (17 U.S.C. § 512). We respond to valid notices of claimed copyright infringement relating to material in the
-      3D model library, and we terminate the accounts of repeat infringers.
+      Classic Mini DIY LLC ("Classic Mini DIY") respects the intellectual property of others and complies with the
+      Digital Millennium Copyright Act (17 U.S.C. § 512). We respond to valid notices of claimed copyright infringement
+      relating to material in the 3D model library, and we terminate the accounts of repeat infringers.
     </p>
 
     <!-- DESIGNATED AGENT -->
@@ -41,9 +43,11 @@
         <div class="card-body p-4 text-sm">
           <p>Send copyright notices to our designated agent:</p>
           <p class="mt-2">
-            <strong>Classic Mini DIY — DMCA Agent</strong><br />
-            Email: <a :href="`mailto:${agentEmail}`" class="link link-primary">{{ agentEmail }}</a><br />
-            <span class="opacity-60">Mailing address on file with the U.S. Copyright Office DMCA Designated Agent Directory.</span>
+            <strong>Classic Mini DIY LLC — DMCA Designated Agent</strong><br />
+            [Agent name — must match the U.S. Copyright Office DMCA Designated Agent Directory entry]<br />
+            [Mailing address]<br />
+            [Telephone number]<br />
+            Email: <a :href="`mailto:${agentEmail}`" class="link link-primary">{{ agentEmail }}</a>
           </p>
         </div>
       </div>
@@ -91,11 +95,18 @@
           result of mistake or misidentification.</li>
         <li>Your name, mailing address, and telephone number, and a statement that you consent to the jurisdiction of
           the federal court for your district (or, if outside the U.S., any district in which we may be found) and that
-          you will accept service of process from the party who filed the original notice.</li>
+          you will accept service of process from the party who filed the original notice or an agent of that party.</li>
       </ol>
-      <p>
-        If we receive a valid counter-notice, we may restore the material in 10–14 business days unless the original
-        complainant notifies us that they have filed a court action to restrain the allegedly infringing activity.
+      <p class="mb-3">
+        If we receive a valid counter-notice, we will promptly provide a copy of it — including your name and contact
+        information — to the party who filed the original takedown notice, and inform them that we will restore the
+        material in 10 business days. We will restore the material between 10 and 14 business days after receiving the
+        counter-notice, unless our designated agent first receives notice from that party that they have filed a court
+        action seeking to restrain the allegedly infringing activity.
+      </p>
+      <p class="text-sm opacity-70">
+        By filing a counter-notice you agree that we will share it, including your contact information, with the
+        original claimant.
       </p>
     </section>
 

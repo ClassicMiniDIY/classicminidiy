@@ -28,8 +28,9 @@
     <p class="text-sm opacity-60 mb-6">Effective {{ effectiveDate }}</p>
 
     <p class="mb-6">
-      These terms govern your use of the Classic Mini DIY 3D model library, including downloading, uploading, buying,
-      and selling 3D-printable models. By using the model library you agree to these terms, our
+      These terms are an agreement between you and Classic Mini DIY LLC ("Classic Mini DIY", "we") and govern your use
+      of the Classic Mini DIY 3D model library, including downloading, uploading, buying, and selling 3D-printable
+      models. By using the model library you agree to these terms, our
       <NuxtLink to="/privacy" class="link link-primary">Privacy Policy</NuxtLink>, and our
       <NuxtLink to="/legal/dmca" class="link link-primary">DMCA Policy</NuxtLink>.
     </p>
@@ -54,9 +55,9 @@
         inspection requirements.
       </p>
       <p>
-        Models flagged as <strong>safety-critical</strong> carry additional caution and require you to acknowledge this
-        notice before downloading. Classic Mini DIY and the model's creator are not liable for any loss, injury, or
-        damage resulting from the use of any model or print.
+        Models flagged as <strong>safety-critical</strong> carry an additional warning on the model page. To the
+        fullest extent permitted by applicable law, Classic Mini DIY and the model's creator are not liable for any
+        loss or damage resulting from the use of any model or print.
       </p>
     </section>
 
@@ -93,7 +94,8 @@
           Stripe account; Classic Mini DIY retains a platform commission on each sale.</li>
         <li>When you buy a paid model you receive a license to the files under the
           <NuxtLink to="/legal/paid-file-license" class="link link-primary">Paid File License</NuxtLink>; you do not
-          acquire ownership or copyright. A purchase entitles you to every version of that model.</li>
+          acquire ownership or copyright. A purchase entitles you to every version of that model, subject to Section 5
+          (Moderation &amp; takedowns).</li>
         <li>Refund requests are handled by the seller through Stripe. The platform commission is not automatically
           refunded.</li>
         <li>Free and tip-supported models are offered under the Creative Commons license shown on each model.</li>
@@ -108,8 +110,11 @@
       <p>
         We may review, remove, or disable access to any model, and suspend or disable selling for any account, where we
         believe these terms or the law have been violated — including in response to a valid
-        <NuxtLink to="/legal/dmca" class="link link-primary">DMCA notice</NuxtLink>. If a model is taken down, it stops
-        being distributed to everyone. We may report a model using the in-app report tool on each model page.
+        <NuxtLink to="/legal/dmca" class="link link-primary">DMCA notice</NuxtLink>. If a model is taken down,
+        distribution stops for everyone, including re-downloads by buyers who previously purchased it; physical prints
+        you have already made under a valid license are not affected. Files you have already downloaded remain subject
+        to your license, except that if a model was removed because it infringes third-party rights you must stop
+        making new prints from it. You may report a model using the in-app report tool on each model page.
       </p>
     </section>
 
@@ -119,11 +124,16 @@
       <p class="mb-3">
         The model library is provided on an "as is" and "as available" basis. To the fullest extent permitted by law,
         Classic Mini DIY disclaims all warranties and is not liable for any indirect, incidental, special, or
-        consequential damages, or for any loss, injury, or damage arising from your use of any model or print.
+        consequential damages, or for any loss or damage arising from your use of any model or print.
+      </p>
+      <p class="mb-3">
+        You agree to indemnify Classic Mini DIY and model creators against claims arising from your uploads, your
+        sales, or your use of models in violation of these terms.
       </p>
       <p>
-        You agree to indemnify Classic Mini DIY and its creators against claims arising from your uploads, your sales,
-        or your use of models in violation of these terms.
+        Nothing in these terms excludes or limits any liability that cannot be excluded or limited under applicable
+        law, or affects statutory consumer rights that cannot be waived. If any part of these terms is found
+        unenforceable, the remainder continues in effect.
       </p>
     </section>
 
