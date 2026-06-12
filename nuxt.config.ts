@@ -398,6 +398,12 @@ export default defineNuxtConfig({
       prerender: false,
       headers: { 'cache-control': 'no-store, must-revalidate' },
     },
+    // Session-dependent claim-chain page (self-serve Discord connect for the
+    // mobile apps' bare /discord/claim hits) — same no-static treatment.
+    '/discord/connect': {
+      prerender: false,
+      headers: { 'cache-control': 'no-store, must-revalidate' },
+    },
     '/archive/manuals': { redirect: { to: '/archive/documents?type=manual', statusCode: 301 } },
     '/archive/adverts': { redirect: { to: '/archive/documents?type=advert', statusCode: 301 } },
     '/archive/catalogues': { redirect: { to: '/archive/documents?type=catalogue', statusCode: 301 } },
@@ -625,7 +631,9 @@ export default defineNuxtConfig({
         // Single-use emailed claim links — the precached '/' shell must never
         // swallow their ?code=/?token= (see /auth/callback note above).
         /^\/membership\/claim/,
-        /^\/discord\/claim/,
+        // Also covers /discord/connect (the session-dependent self-serve page
+        // bare app hits redirect to) — keep the whole claim chain SW-free.
+        /^\/discord\//,
       ],
       // Customize caching strategies
       runtimeCaching: [
