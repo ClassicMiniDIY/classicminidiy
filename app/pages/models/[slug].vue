@@ -230,10 +230,17 @@
             :href="licenseTxtUrl"
             target="_blank"
             rel="noopener"
-            class="text-xs link link-hover opacity-70"
+            class="text-xs link link-hover opacity-70 block"
           >
             <i class="fas fa-file-lines mr-1"></i> View LICENSE.txt
           </a>
+          <NuxtLink
+            v-if="model.license.isPaid"
+            to="/legal/paid-file-license"
+            class="text-xs link link-hover opacity-70 block"
+          >
+            <i class="fas fa-scale-balanced mr-1"></i> Paid File License terms
+          </NuxtLink>
         </div>
 
         <!-- Pricing + download -->

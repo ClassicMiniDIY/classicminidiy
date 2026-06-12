@@ -367,6 +367,19 @@
                 <option value="" disabled>Choose a license</option>
                 <option v-for="l in licenseOptions" :key="l.code" :value="l.code">{{ l.name }}</option>
               </select>
+              <p class="label">
+                <NuxtLink
+                  v-if="w.isPaid.value"
+                  to="/legal/paid-file-license"
+                  target="_blank"
+                  class="link link-primary"
+                >
+                  Read the Paid File License terms
+                </NuxtLink>
+                <a v-else href="https://creativecommons.org/licenses/" target="_blank" rel="noopener" class="link link-primary">
+                  About Creative Commons licenses
+                </a>
+              </p>
             </fieldset>
 
             <label class="flex items-start gap-3 cursor-pointer mt-2">
@@ -636,6 +649,10 @@
                 >I confirm these files are mine to share, are provided as-is, and are not certified for road use.</span
               >
             </label>
+            <p class="text-xs opacity-60">
+              By submitting you agree to the
+              <NuxtLink to="/legal/model-terms" target="_blank" class="link link-primary">Model Library Terms &amp; Safety</NuxtLink>.
+            </p>
           </div>
 
           <!-- NAV -->
