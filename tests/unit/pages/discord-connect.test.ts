@@ -37,6 +37,7 @@ function makeSupabaseStub(accessToken: string | null = 'access-token') {
       getSession: vi
         .fn()
         .mockResolvedValue({ data: { session: accessToken ? { access_token: accessToken } : null } }),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   };
 }
@@ -158,6 +159,21 @@ describe('signed in', () => {
     expect(wrapper.text()).toContain('not_member.title');
     expect(wrapper.find('a[href="/membership"]').exists()).toBe(true);
     expect(trackMock).toHaveBeenCalledWith('discord_claim_reissue_failed', { source: 'web', reason: 'not_member' });
+  });
+
+  it('401 from the proxy → clears the stale session before the sign-in round trip (no loop)', async () => {
+    const auth = makeAuthStub();
+    const supabase = makeSupabaseStub('stale-token');
+    stubEnvironment({
+      auth,
+      supabase,
+      fetchImpl: () => Promise.reject(Object.assign(new Error('unauthorized'), { statusCode: 401 })),
+    });
+    mountPage();
+    await flushPromises();
+
+    expect(supabase.auth.signOut).toHaveBeenCalled();
+    expect(navigateToMock).toHaveBeenCalledWith(`/login?redirect=${encodeURIComponent('/discord/connect')}`);
   });
 
   it('transient failure → error card whose retry re-calls the proxy', async () => {

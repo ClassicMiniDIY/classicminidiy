@@ -223,6 +223,10 @@ export default defineNuxtConfig({
       '/contribute/**',
       '/welcome',
       '/profile/**',
+      // Transient claim-chain pages (noindex via useHead, which the sitemap
+      // module can't see — exclude them here too to avoid mixed signals).
+      '/membership/claim',
+      '/discord/connect',
     ],
   },
 

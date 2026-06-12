@@ -73,6 +73,10 @@
         return;
       }
       if (status === 401) {
+        // The local session looked valid but the server rejected the token
+        // (deleted user, auth incident). Clear it first — otherwise /login
+        // sees isAuthenticated, bounces straight back here, and we loop.
+        await supabase.auth.signOut().catch(() => {});
         navigateTo(loginWithIntentHref);
         return;
       }
