@@ -31,11 +31,14 @@
       These terms govern the digital 3D model files ("Files") you purchase through the Classic Mini DIY model library.
       When you buy a paid model you receive a <strong>license to use the Files</strong> — you do not acquire ownership
       of, or copyright in, the Files. All intellectual-property rights remain with the creator who published them
-      ("Creator"). Classic Mini DIY operates the marketplace; the Creator is the seller and merchant of record.
+      ("Creator"). Classic Mini DIY LLC ("Classic Mini DIY") operates the marketplace; the Creator is the seller and
+      merchant of record.
     </p>
     <p class="mb-8">
-      Each model version is licensed separately. The license that applied to a version at the time you purchased it
-      attaches to that version permanently, even if the Creator changes the license on future versions.
+      A purchase grants you access to every version of the model, including versions published later, for as long as
+      the model remains available in the library (see Termination below). Each version is governed by the license that
+      was in effect when that version was published — if the Creator changes the license, the new license applies only
+      to versions published after the change.
     </p>
 
     <!-- PERSONAL -->
@@ -47,12 +50,16 @@
       <ul class="list-disc pl-6 space-y-1 mb-4">
         <li>Download the purchased Files to devices you control.</li>
         <li>Produce an unlimited number of physical prints of the Files for your own personal, non-commercial use.</li>
-        <li>Re-download every version of the model you purchased, including versions published later.</li>
+        <li>Provide the Files to a third-party print service solely to produce prints for your own personal use,
+          provided the service does not retain, reuse, or share the Files beyond your print job.</li>
+        <li>Re-download every version of the model you purchased, including versions published later, while the model
+          remains available in the library.</li>
       </ul>
 
       <h3 class="text-lg font-semibold mb-2">You may not</h3>
       <ul class="list-disc pl-6 space-y-1 mb-4">
-        <li>Redistribute, resell, sublicense, share, publish, or upload the Files anywhere, in whole or in part.</li>
+        <li>Redistribute, resell, sublicense, share, publish, or upload the Files anywhere, in whole or in part,
+          except as expressly permitted above for print services.</li>
         <li>Sell, trade, or commercially distribute physical prints made from the Files.</li>
         <li>Create and distribute derivative or remixed versions of the Files.</li>
         <li>Remove or alter any attribution, credit, or notices included with the model.</li>
@@ -73,14 +80,18 @@
       <ul class="list-disc pl-6 space-y-1 mb-4">
         <li>Produce unlimited physical prints of the Files.</li>
         <li>Sell those physical prints, including in the course of a business.</li>
+        <li>Provide the Files to a third-party print service to produce prints, including prints for sale, provided
+          the service does not retain, reuse, or share the Files beyond your print job.</li>
       </ul>
 
       <h3 class="text-lg font-semibold mb-2">You may not</h3>
       <ul class="list-disc pl-6 space-y-1 mb-4">
-        <li>Redistribute, resell, sublicense, share, publish, or upload the digital Files in any form.</li>
+        <li>Redistribute, resell, sublicense, share, publish, or upload the digital Files in any form, except as
+          expressly permitted above for print services.</li>
         <li>Provide the Files to a third party to print on your behalf in a way that gives them access to the Files
           beyond the single print job.</li>
         <li>Create and distribute derivative or remixed versions of the Files.</li>
+        <li>Remove or alter any attribution, credit, or notices included with the model.</li>
       </ul>
     </section>
 
@@ -112,8 +123,9 @@
       <h3 class="text-lg font-semibold mb-1">Termination</h3>
       <p class="mb-4">
         This license terminates automatically if you breach it. If a model is removed for an intellectual-property or
-        policy violation, distribution stops for everyone; existing buyers' rights to versions they already purchased
-        are addressed in the Model Library Terms.
+        policy violation, distribution stops for everyone; the rights of buyers who previously purchased the model are
+        addressed in the Model Library Terms. The "You may not" restrictions of each license, the Creator rights
+        section, and the No warranty &amp; safety section survive termination.
       </p>
 
       <h3 class="text-lg font-semibold mb-1">Free models</h3>
