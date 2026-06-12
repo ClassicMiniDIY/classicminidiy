@@ -2,8 +2,6 @@
   import { HERO_TYPES } from '~~/data/models/generic';
   import type { ModelCard as ModelCardType } from '~~/data/models/model-library';
 
-  definePageMeta({ middleware: 'models-enabled' });
-
   const route = useRoute();
   const router = useRouter();
 

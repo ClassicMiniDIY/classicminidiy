@@ -17,7 +17,6 @@
 import { randomUUID } from 'node:crypto';
 import { requireUserClient } from '../../../utils/userAuth';
 import {
-  assertModelsEnabled,
   MODEL_FILE_MAX_BYTES,
   MODEL_VERSION_MAX_FILES,
   MODEL_VERSION_MAX_TOTAL_BYTES,
@@ -31,8 +30,6 @@ import {
 import { buildModelKey, sanitizeModelFilename, createModelUploadPost } from '../../../utils/s3Models';
 
 export default defineEventHandler(async (event) => {
-  assertModelsEnabled();
-
   const { user, supabase } = await requireUserClient(event);
   const body = await readBody(event);
 

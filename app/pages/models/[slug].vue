@@ -2,8 +2,6 @@
   import { HERO_TYPES } from '~~/data/models/generic';
   import { type ModelDetail, type ModelFileInfo, priceLabel, formatBytes } from '~~/data/models/model-library';
 
-  definePageMeta({ middleware: 'models-enabled' });
-
   const route = useRoute();
   const slug = computed(() => String(route.params.slug));
   const { isAuthenticated } = useAuth();

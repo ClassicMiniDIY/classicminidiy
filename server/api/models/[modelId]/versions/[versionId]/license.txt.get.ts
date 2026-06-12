@@ -10,11 +10,8 @@
 import { extractAccessToken } from '../../../../../utils/userAuth';
 import { isAdminAuthenticated } from '../../../../../utils/adminAuth';
 import { getServiceClient } from '../../../../../utils/supabase';
-import { assertModelsEnabled } from '../../../../../utils/models';
 
 export default defineEventHandler(async (event) => {
-  assertModelsEnabled();
-
   const modelId = getRouterParam(event, 'modelId');
   const versionId = getRouterParam(event, 'versionId');
   if (!modelId || !versionId) {

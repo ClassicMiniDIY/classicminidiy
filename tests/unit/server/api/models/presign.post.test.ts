@@ -42,7 +42,7 @@ describe('server/api/models/uploads/presign.post', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    runtimeConfig.mockReturnValue({ public: { modelsEnabled: true } });
+    runtimeConfig.mockReturnValue({ public: {} });
     mockRequireUserClient.mockResolvedValue({ user: { id: 'u1' }, accessToken: 't', supabase: mockSupabase });
     (readBody as any).mockResolvedValue({ ...validBody });
     versionSingle.mockResolvedValue({
@@ -54,11 +54,6 @@ describe('server/api/models/uploads/presign.post', () => {
     mockCreateUploadPost.mockResolvedValue({ url: 'https://s3.example/upload', fields: { key: 'k', policy: 'p' } });
 
     if (!handler) handler = (await import('~/server/api/models/uploads/presign.post')).default;
-  });
-
-  it('404s when the feature flag is off', async () => {
-    runtimeConfig.mockReturnValue({ public: { modelsEnabled: false } });
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 404 });
   });
 
   it('400s when versionId is missing', async () => {

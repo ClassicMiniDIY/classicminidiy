@@ -9,7 +9,6 @@
  * unpublished models is deferred to the upload-wizard PR.
  */
 import { getServiceClient } from '../../utils/supabase';
-import { assertModelsEnabled } from '../../utils/models';
 import type {
   ModelDetail,
   PricingMode,
@@ -21,8 +20,6 @@ import type {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default defineEventHandler(async (event): Promise<ModelDetail> => {
-  assertModelsEnabled();
-
   const idOrSlug = getRouterParam(event, 'modelId');
   if (!idOrSlug) {
     throw createError({ statusCode: 400, statusMessage: 'Missing model identifier' });

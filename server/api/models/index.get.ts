@@ -8,7 +8,6 @@
  * profiles are batch-fetched for the page of results.
  */
 import { getServiceClient } from '../../utils/supabase';
-import { assertModelsEnabled } from '../../utils/models';
 import type { ModelCard, PricingMode } from '../../../data/models/model-library';
 
 const PRICING_MODES = ['free', 'tips', 'pwyw', 'fixed'];
@@ -17,8 +16,6 @@ const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 48;
 
 export default defineEventHandler(async (event) => {
-  assertModelsEnabled();
-
   const query = getQuery(event);
   const q = typeof query.q === 'string' ? query.q.trim().slice(0, 120) : '';
   const category = typeof query.category === 'string' ? query.category.trim() : '';

@@ -48,7 +48,7 @@ describe('server/api/models/uploads/finalize.post', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    runtimeConfig.mockReturnValue({ public: { modelsEnabled: true } });
+    runtimeConfig.mockReturnValue({ public: {} });
     mockRequireUserAuth.mockResolvedValue({ user: { id: 'u1' } });
     (readBody as any).mockResolvedValue({ fileId: 'f1' });
     fileSingle.mockResolvedValue({ data: { ...baseFile }, error: null });
@@ -59,11 +59,6 @@ describe('server/api/models/uploads/finalize.post', () => {
     mockSniff.mockReturnValue({ ok: true });
 
     if (!handler) handler = (await import('~/server/api/models/uploads/finalize.post')).default;
-  });
-
-  it('404s when the feature flag is off', async () => {
-    runtimeConfig.mockReturnValue({ public: { modelsEnabled: false } });
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 404 });
   });
 
   it('400s when fileId is missing', async () => {

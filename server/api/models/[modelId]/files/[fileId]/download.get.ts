@@ -13,7 +13,6 @@
 import { requireUserAuth } from '../../../../../utils/userAuth';
 import { isAdminAuthenticated } from '../../../../../utils/adminAuth';
 import { getServiceClient } from '../../../../../utils/supabase';
-import { assertModelsEnabled } from '../../../../../utils/models';
 import { consumeRateLimit } from '../../../../../utils/rateLimit';
 import { createModelDownloadUrl } from '../../../../../utils/s3Models';
 
@@ -21,8 +20,6 @@ const DOWNLOADS_PER_HOUR = 60;
 const HOUR_MS = 3_600_000;
 
 export default defineEventHandler(async (event) => {
-  assertModelsEnabled();
-
   // Downloads require a logged-in account (keystone §2.7).
   const { user } = await requireUserAuth(event);
 

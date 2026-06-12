@@ -52,7 +52,7 @@ describe('server/api/models/[modelId]/files/[fileId]/download.get', () => {
     vi.clearAllMocks();
     params = { modelId: 'm1', fileId: 'f1' };
     query = {};
-    runtimeConfig.mockReturnValue({ public: { modelsEnabled: true } });
+    runtimeConfig.mockReturnValue({ public: {} });
     mockRequireUserAuth.mockResolvedValue({ user: { id: 'u1' } });
     fileSingle.mockResolvedValue({
       data: {
@@ -73,11 +73,6 @@ describe('server/api/models/[modelId]/files/[fileId]/download.get', () => {
     mockDownloadUrl.mockResolvedValue('https://s3.example/get?sig=abc');
 
     if (!handler) handler = (await import('~/server/api/models/[modelId]/files/[fileId]/download.get')).default;
-  });
-
-  it('404s when the feature flag is off', async () => {
-    runtimeConfig.mockReturnValue({ public: { modelsEnabled: false } });
-    await expect(handler({})).rejects.toMatchObject({ statusCode: 404 });
   });
 
   it('propagates 401 when unauthenticated', async () => {
