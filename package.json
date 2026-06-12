@@ -78,6 +78,7 @@
     "posthog-js": "^1.379.2",
     "sass": "^1.100.0",
     "tailwindcss": "^4.3.0",
+    "three": "^0.184.0",
     "uuid": "^14.0.0",
     "vue-cookie-law": "^1.13.3"
   },
@@ -93,6 +94,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/lodash": "^4.17.24",
     "@types/luxon": "^3.7.1",
+    "@types/three": "^0.184.1",
     "@types/uuid": "^11.0.0",
     "@vite-pwa/nuxt": "^1.1.1",
     "@vitejs/plugin-vue": "^6.0.7",
