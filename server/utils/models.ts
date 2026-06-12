@@ -1,20 +1,8 @@
 /**
  * Shared constants and guards for the 3D Model Library server routes
  * (keystone `2026-06-11-3d-model-library.md`). Kept util-level so the presign,
- * finalize, and download routes agree on limits and the launch gate.
+ * finalize, and download routes agree on limits.
  */
-
-/**
- * Launch gate. The whole feature ships dark behind `public.modelsEnabled`
- * (keystone §10/§13): until Cole flips it, every models route 404s so nothing
- * is reachable in production. Call first in each handler, before any work.
- */
-export function assertModelsEnabled(): void {
-  const config = useRuntimeConfig();
-  if (!config.public.modelsEnabled) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found' });
-  }
-}
 
 // --- File limits (mirror marketplace_config seeds; keystone §4/§5) -----------
 

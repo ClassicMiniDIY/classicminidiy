@@ -12,13 +12,10 @@
  */
 import { requireUserAuth } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
-import { assertModelsEnabled } from '../../../utils/models';
 import { headModelObject, getModelObjectHead } from '../../../utils/s3Models';
 import { sniffModelFile } from '../../../utils/uploadValidation';
 
 export default defineEventHandler(async (event) => {
-  assertModelsEnabled();
-
   const { user } = await requireUserAuth(event);
   const body = await readBody(event);
   const fileId = typeof body?.fileId === 'string' ? body.fileId.trim() : '';

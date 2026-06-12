@@ -38,6 +38,11 @@
       to: '/archive',
     },
     {
+      label: t('navigation.models'),
+      icon: 'fa-cube',
+      to: '/models',
+    },
+    {
       label: t('navigation.maps'),
       icon: 'fa-computer-classic',
       to: '/maps',
@@ -148,10 +153,7 @@
             v-for="item in navigationItems"
             :key="item.label"
             :to="item.to"
-            :class="[
-              'btn btn-ghost btn-md font-bold',
-              isActive(item.to as string) ? 'text-primary' : '',
-            ]"
+            :class="['btn btn-ghost btn-md font-bold', isActive(item.to as string) ? 'text-primary' : '']"
             @click="track('nav_item_clicked', { label: item.label, surface: 'desktop' })"
           >
             <i :class="['fad', item.icon, 'mr-1']"></i>
@@ -170,7 +172,15 @@
               class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-56 p-2 border border-base-300"
             >
               <li v-for="link in communityLinks" :key="link.to">
-                <a :href="link.to" target="_blank" rel="noopener noreferrer" @click="closeDropdowns(); trackOutbound({ destination: link.to, label: link.label, group: 'community_nav' })">
+                <a
+                  :href="link.to"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  @click="
+                    closeDropdowns();
+                    trackOutbound({ destination: link.to, label: link.label, group: 'community_nav' });
+                  "
+                >
                   <i :class="['fad', link.faIcon]"></i>
                   {{ link.label }}
                 </a>
@@ -224,33 +234,65 @@
             >
               <li class="menu-title">{{ t('profile.account') }}</li>
               <li>
-                <NuxtLink to="/profile" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.profile') })">
+                <NuxtLink
+                  to="/profile"
+                  @click="
+                    closeDropdowns();
+                    track('nav_item_clicked', { label: t('profile.profile') });
+                  "
+                >
                   <i class="fas fa-user"></i>
                   {{ t('profile.profile') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/membership" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.membership') })">
+                <NuxtLink
+                  to="/membership"
+                  @click="
+                    closeDropdowns();
+                    track('nav_item_clicked', { label: t('profile.membership') });
+                  "
+                >
                   <i class="fas fa-star"></i>
                   {{ t('profile.membership') }}
                 </NuxtLink>
               </li>
               <li class="menu-title mt-1">{{ t('profile.activity') }}</li>
               <li>
-                <NuxtLink to="/dashboard" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.submissions') })">
+                <NuxtLink
+                  to="/dashboard"
+                  @click="
+                    closeDropdowns();
+                    track('nav_item_clicked', { label: t('profile.submissions') });
+                  "
+                >
                   <i class="fas fa-file-lines"></i>
                   {{ t('profile.submissions') }}
                 </NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/contribute" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.contribute') })">
+                <NuxtLink
+                  to="/contribute"
+                  @click="
+                    closeDropdowns();
+                    track('nav_item_clicked', { label: t('profile.contribute') });
+                  "
+                >
                   <i class="fas fa-paper-plane"></i>
                   {{ t('profile.contribute') }}
                 </NuxtLink>
               </li>
-              <li class="menu-title mt-1"><span class="sr-only">{{ t('session_label') }}</span></li>
+              <li class="menu-title mt-1">
+                <span class="sr-only">{{ t('session_label') }}</span>
+              </li>
               <li v-if="isAdmin">
-                <NuxtLink to="/admin" @click="closeDropdowns(); track('nav_item_clicked', { label: t('profile.admin') })">
+                <NuxtLink
+                  to="/admin"
+                  @click="
+                    closeDropdowns();
+                    track('nav_item_clicked', { label: t('profile.admin') });
+                  "
+                >
                   <i class="fas fa-shield-check"></i>
                   {{ t('profile.admin') }}
                 </NuxtLink>
@@ -278,7 +320,10 @@
             type="button"
             class="btn btn-ghost btn-sm btn-square"
             :aria-label="t('mobile_menu_title')"
-            @click="isMobileMenuOpen = true; track('mobile_menu_toggled', { state: 'open' })"
+            @click="
+              isMobileMenuOpen = true;
+              track('mobile_menu_toggled', { state: 'open' });
+            "
           >
             <i class="fad fa-bars text-xl"></i>
           </button>
@@ -291,11 +336,7 @@
       <Transition name="mobile-drawer">
         <div v-if="isMobileMenuOpen" class="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true">
           <!-- Backdrop -->
-          <div
-            class="absolute inset-0 bg-black/50"
-            aria-hidden="true"
-            @click="isMobileMenuOpen = false"
-          ></div>
+          <div class="absolute inset-0 bg-black/50" aria-hidden="true" @click="isMobileMenuOpen = false"></div>
 
           <!-- Panel -->
           <aside
@@ -307,7 +348,10 @@
                 type="button"
                 class="btn btn-ghost btn-sm btn-square"
                 :aria-label="t('close_menu')"
-                @click="isMobileMenuOpen = false; track('mobile_menu_toggled', { state: 'closed' })"
+                @click="
+                  isMobileMenuOpen = false;
+                  track('mobile_menu_toggled', { state: 'closed' });
+                "
               >
                 <i class="fas fa-xmark text-lg"></i>
               </button>
@@ -433,11 +477,7 @@
                 </button>
               </template>
               <template v-else>
-                <NuxtLink
-                  to="/login"
-                  class="btn btn-primary btn-block"
-                  @click="isMobileMenuOpen = false"
-                >
+                <NuxtLink to="/login" class="btn btn-primary btn-block" @click="isMobileMenuOpen = false">
                   <i class="fad fa-right-to-bracket mr-2"></i>
                   {{ t('profile.sign_in') }}
                 </NuxtLink>
@@ -493,6 +533,7 @@
     "navigation": {
       "toolbox": "Toolbox",
       "archive": "Archive",
+      "models": "Models",
       "maps": "Maps",
       "chat": "Chat",
       "community": "Community",
@@ -522,6 +563,7 @@
     "navigation": {
       "toolbox": "Herramientas",
       "archive": "Archivo",
+      "models": "Modelos",
       "maps": "Mapas",
       "chat": "Chat",
       "community": "Comunidad",
@@ -549,6 +591,7 @@
     "navigation": {
       "toolbox": "Outils",
       "archive": "Archive",
+      "models": "Modèles",
       "maps": "Cartes",
       "chat": "Chat",
       "community": "Communauté",
@@ -576,6 +619,7 @@
     "navigation": {
       "toolbox": "Werkzeuge",
       "archive": "Archiv",
+      "models": "Modelle",
       "maps": "Karten",
       "chat": "Chat",
       "community": "Gemeinschaft",
@@ -603,6 +647,7 @@
     "navigation": {
       "toolbox": "Strumenti",
       "archive": "Archivio",
+      "models": "Modelli",
       "maps": "Mappe",
       "chat": "Chat",
       "community": "Comunità",
@@ -630,6 +675,7 @@
     "navigation": {
       "toolbox": "ツールボックス",
       "archive": "アーカイブ",
+      "models": "モデル",
       "maps": "マップ",
       "chat": "チャット",
       "community": "コミュニティ",
@@ -657,6 +703,7 @@
     "navigation": {
       "toolbox": "도구상자",
       "archive": "아카이브",
+      "models": "모델",
       "maps": "맵",
       "chat": "채팅",
       "community": "커뮤니티",
@@ -684,6 +731,7 @@
     "navigation": {
       "toolbox": "Ferramentas",
       "archive": "Arquivo",
+      "models": "Modelos",
       "maps": "Mapas",
       "chat": "Chat",
       "community": "Comunidade",
@@ -711,6 +759,7 @@
     "navigation": {
       "toolbox": "Инструменты",
       "archive": "Архив",
+      "models": "Модели",
       "maps": "Карты",
       "chat": "Чат",
       "community": "Сообщество",
@@ -738,6 +787,7 @@
     "navigation": {
       "toolbox": "工具箱",
       "archive": "档案",
+      "models": "模型",
       "maps": "地图",
       "chat": "聊天",
       "community": "社区",

@@ -424,10 +424,6 @@ export default defineNuxtConfig({
       // The /membership "Manage membership" button links here (with the member's
       // email pre-filled). Hidden when unset.
       stripePortalUrl: process.env.NUXT_PUBLIC_STRIPE_PORTAL_URL || '',
-      // 3D Model Library launch gate (keystone §10). The whole feature ships
-      // dark: every models route/page checks this and 404s while it is false.
-      // Flip via NUXT_PUBLIC_MODELS_ENABLED=true at launch. Default false.
-      modelsEnabled: process.env.NUXT_PUBLIC_MODELS_ENABLED === 'true',
     },
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
     // 3D Model Library private S3 bucket (keystone §5/§10). Dedicated IAM user

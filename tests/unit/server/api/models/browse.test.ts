@@ -55,18 +55,13 @@ describe('server/api/models browse + detail routes', () => {
     vi.clearAllMocks();
     resultByTable = {};
     singleByTable = {};
-    runtimeConfig.mockReturnValue({ public: { modelsEnabled: true, supabaseUrl: 'https://x.supabase.co' } });
+    runtimeConfig.mockReturnValue({ public: { supabaseUrl: 'https://x.supabase.co' } });
     (getQuery as any).mockReturnValue({});
     if (!listHandler) listHandler = (await import('~/server/api/models/index.get')).default;
     if (!detailHandler) detailHandler = (await import('~/server/api/models/[modelId].get')).default;
   });
 
   describe('GET /api/models (browse)', () => {
-    it('404s when the feature flag is off', async () => {
-      runtimeConfig.mockReturnValue({ public: { modelsEnabled: false } });
-      await expect(listHandler({})).rejects.toMatchObject({ statusCode: 404 });
-    });
-
     it('only ever queries published models', async () => {
       resultByTable['models'] = { data: [], count: 0, error: null };
       await listHandler({});
@@ -125,12 +120,6 @@ describe('server/api/models browse + detail routes', () => {
   });
 
   describe('GET /api/models/[modelId] (detail)', () => {
-    it('404s when the feature flag is off', async () => {
-      runtimeConfig.mockReturnValue({ public: { modelsEnabled: false } });
-      (getRouterParam as any).mockReturnValue('gauge-pod');
-      await expect(detailHandler({})).rejects.toMatchObject({ statusCode: 404 });
-    });
-
     it('resolves by slug for a non-uuid param', async () => {
       (getRouterParam as any).mockReturnValue('gauge-pod');
       singleByTable['models'] = { data: null, error: null }; // 404, but the eq spy still records the resolution column

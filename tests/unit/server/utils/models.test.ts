@@ -9,33 +9,7 @@ vi.stubGlobal('createError', (opts: any) => {
   return e;
 });
 
-import {
-  assertModelsEnabled,
-  normalizeExt,
-  isAllowedExt,
-  inferKind,
-  RENDERABLE_EXTS,
-  MODEL_FILE_EXTS,
-} from '~/server/utils/models';
-
-describe('server/utils/models — assertModelsEnabled', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('throws 404 when the flag is off', () => {
-    mockRuntimeConfig.mockReturnValue({ public: { modelsEnabled: false } });
-    expect(() => assertModelsEnabled()).toThrow();
-    try {
-      assertModelsEnabled();
-    } catch (e: any) {
-      expect(e.statusCode).toBe(404);
-    }
-  });
-
-  it('does not throw when the flag is on', () => {
-    mockRuntimeConfig.mockReturnValue({ public: { modelsEnabled: true } });
-    expect(() => assertModelsEnabled()).not.toThrow();
-  });
-});
+import { normalizeExt, isAllowedExt, inferKind, RENDERABLE_EXTS, MODEL_FILE_EXTS } from '~/server/utils/models';
 
 describe('server/utils/models — extension helpers', () => {
   it('normalizeExt strips a dot, lowercases, and trims', () => {

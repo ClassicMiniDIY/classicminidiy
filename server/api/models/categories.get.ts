@@ -5,11 +5,8 @@
  * it never collides with the `[modelId]` param route.
  */
 import { getServiceClient } from '../../utils/supabase';
-import { assertModelsEnabled } from '../../utils/models';
 
 export default defineEventHandler(async (event) => {
-  assertModelsEnabled();
-
   const service = getServiceClient();
   const { data, error } = await service
     .from('model_categories')
