@@ -17,7 +17,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, reactive } from 'vue';
 import ClaimPage from '~/app/pages/membership/claim.vue';
 import { sanitizeRedirectPath } from '~/app/utils/redirect';
 
@@ -57,6 +57,7 @@ const mountStubs = {
 let toastAdd: ReturnType<typeof vi.fn>;
 let navigateToMock: ReturnType<typeof vi.fn>;
 let trackMock: ReturnType<typeof vi.fn>;
+let routerReplaceMock: ReturnType<typeof vi.fn>;
 
 function stubEnvironment({
   query = {} as Record<string, string>,
@@ -76,15 +77,24 @@ function stubEnvironment({
   vi.stubGlobal('useToast', () => ({ add: toastAdd }));
   vi.stubGlobal('useAnalytics', () => ({ track: trackMock }));
   vi.stubGlobal('navigateTo', navigateToMock);
-  vi.stubGlobal('useRoute', () => ({
+  const routeObj = reactive({
     path: '/membership/claim',
     fullPath: '/membership/claim',
     name: 'membership-claim',
     params: {},
     meta: {},
     matched: [],
-    query,
-  }));
+    query: { ...query } as Record<string, string>,
+  });
+  vi.stubGlobal('useRoute', () => routeObj);
+  // The page re-syncs a router-lost code via router.replace; mimic the real
+  // router by applying the new query to the (reactive) route.
+  routerReplaceMock = vi.fn((to: { query?: Record<string, string> }) => {
+    if (to?.query) routeObj.query = { ...to.query };
+    return Promise.resolve();
+  });
+  vi.stubGlobal('useRouter', () => ({ replace: routerReplaceMock }));
+  return { route: routeObj };
 }
 
 function mountPage() {
@@ -95,6 +105,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
+  window.history.replaceState({}, '', '/');
   (global as any).__resetNuxtState?.();
 });
 
@@ -288,5 +299,61 @@ describe('claim error states', () => {
       'membership_claim_redeemed',
       expect.objectContaining({ source: 'web', platform: 'ghost' })
     );
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// Query-loss resilience — the PWA '/' shell / statically-served copy can boot
+// the app with the router briefly missing the ?code= even though the address
+// bar has it (the /auth/callback failure mode; 2026-06-12 incident: every
+// claim email recipient saw "missing its claim code").
+// ---------------------------------------------------------------------------
+describe('query-loss resilience (PWA shell / static serve)', () => {
+  it('falls back to window.location.search when the router lost the code, re-syncs, and redeems', async () => {
+    const auth = makeAuthStub();
+    const supabase = makeSupabaseStub([{ data: [{ platform: 'patreon' }] }]);
+    window.history.replaceState({}, '', `/membership/claim?code=${CODE}`);
+    stubEnvironment({ query: {}, auth, supabase });
+
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(routerReplaceMock).toHaveBeenCalledWith(expect.objectContaining({ query: expect.objectContaining({ code: CODE }) }));
+    expect(supabase.rpc).toHaveBeenCalledWith('claim_external_membership', { p_code: CODE });
+    expect(wrapper.html()).not.toContain('missing_code.title');
+  });
+
+  it('recovers from missing_code when the router syncs the code in late', async () => {
+    const auth = makeAuthStub();
+    const supabase = makeSupabaseStub([{ data: [{ platform: 'ghost' }] }]);
+    const { route } = stubEnvironment({ query: {}, auth, supabase });
+
+    const wrapper = mountPage();
+    await flushPromises();
+    expect(wrapper.html()).toContain('missing_code.title');
+    expect(supabase.rpc).not.toHaveBeenCalled();
+
+    route.query = { code: CODE };
+    await nextTick();
+    await flushPromises();
+
+    expect(supabase.rpc).toHaveBeenCalledWith('claim_external_membership', { p_code: CODE });
+    expect(wrapper.html()).not.toContain('missing_code.title');
+  });
+
+  it('begins exactly once even if the code arrives via both location fallback and a late router sync', async () => {
+    const auth = makeAuthStub();
+    const supabase = makeSupabaseStub([{ data: [{ platform: 'patreon' }] }]);
+    window.history.replaceState({}, '', `/membership/claim?code=${CODE}`);
+    const { route } = stubEnvironment({ query: {}, auth, supabase });
+
+    mountPage();
+    await flushPromises();
+    route.query = { code: CODE };
+    await nextTick();
+    await flushPromises();
+
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
   });
 });

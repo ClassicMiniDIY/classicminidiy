@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   const { t } = useI18n();
   const route = useRoute();
+  const router = useRouter();
   const supabase = useSupabase();
   const { track } = useAnalytics();
   const { add: addToast } = useToast();
@@ -98,18 +99,43 @@
     }
   }
 
-  onMounted(async () => {
-    if (!code.value) {
-      state.value = 'missing_code';
-      track('membership_claim_failed', { source: 'web', reason: 'missing_code' });
-      return;
-    }
+  async function begin() {
+    state.value = 'checking';
     await waitForAuth();
     if (!isAuthenticated.value) {
       state.value = 'signin';
       return;
     }
     await redeem();
+  }
+
+  // Run exactly once, as soon as a code is available. The code can arrive
+  // late: when the PWA service worker serves the precached '/' shell (or a
+  // statically-served copy boots the app), the router can briefly disagree
+  // with the address bar — the same failure mode the /auth/callback
+  // routeRules entry documents. So: route.query first, location.search as
+  // the fallback, and a watcher to catch the router syncing up after mount.
+  let begun = false;
+  function tryBegin(): boolean {
+    if (begun || !code.value) return begun;
+    begun = true;
+    void begin();
+    return true;
+  }
+  watch(code, () => {
+    tryBegin();
+  });
+  onMounted(() => {
+    if (tryBegin()) return;
+    const locCode = (new URLSearchParams(window.location.search).get('code') ?? '').trim();
+    if (locCode) {
+      // The address bar has the code but the router lost it — re-sync the
+      // route (keeps `code`/`claimIntentPath` consistent); the watcher begins.
+      void router.replace({ query: { ...route.query, code: locCode } });
+      return;
+    }
+    state.value = 'missing_code';
+    track('membership_claim_failed', { source: 'web', reason: 'missing_code' });
   });
 
   // Transient page reached from a single-use emailed link — never index it.
