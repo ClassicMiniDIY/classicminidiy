@@ -418,191 +418,95 @@ s3Base=
 
 ## Internationalization (i18n)
 
-### Nuxt i18n Configuration
+**@nuxtjs/i18n v10**, `strategy: 'no_prefix'` (clean URLs — no `/de/` path prefix),
+`defaultLocale: 'en'`, 10 locales: `en, es, fr, de, it, pt, ru, ja, zh, ko`. Locale
+is chosen by the `i18n_redirected` cookie (browser detection on root only); SSR
+honors the cookie.
 
-The project uses **@nuxtjs/i18n** module for comprehensive internationalization support with the following configuration:
+### How translations actually work (read this before touching i18n)
 
-```typescript
-// nuxt.config.ts
-i18n: {
-  defaultLocale: 'en',
-  locales: [
-    { code: 'en', name: 'English', file: 'en.json' },
-    { code: 'es', name: 'Spanish', file: 'es.json' },
-    { code: 'fr', name: 'French', file: 'fr.json' },
-    { code: 'de', name: 'German', file: 'de.json' },
-    { code: 'it', name: 'Italian', file: 'it.json' },
-    { code: 'pt', name: 'Portuguese', file: 'pt.json' },
-    { code: 'ru', name: 'Russian', file: 'ru.json' },
-    { code: 'ja', name: 'Japanese', file: 'ja.json' },
-    { code: 'zh', name: 'Chinese', file: 'zh.json' },
-    { code: 'ko', name: 'Korean', file: 'ko.json' },
-  ],
-  detectBrowserLanguage: {
-    useCookie: true,
-    cookieKey: 'i18n_redirected',
-    redirectOn: 'root',
-    alwaysRedirect: false,
-    fallbackLocale: 'en',
-  },
-}
-```
-
-### Locale Files Structure
-
-All translation files are located in `/i18n/locales/` directory:
-
-```
-i18n/
-└── locales/
-    ├── en.json (240 lines - Master/Reference)
-    ├── de.json (348 lines - Most Complete)
-    ├── es.json (224 lines)
-    ├── fr.json (178 lines)
-    ├── it.json (179 lines)
-    ├── ja.json (179 lines)
-    ├── ko.json (179 lines)
-    ├── pt.json (179 lines)
-    ├── ru.json (179 lines)
-    └── zh.json (179 lines)
-```
-
-### Translation Structure
-
-Each locale file follows a hierarchical JSON structure:
-
-```json
-{
-  "common": {
-    "home": "Home",
-    "archive": "Archive",
-    "technical": "Technical"
-    // ... common UI elements
-  },
-  "navigation": {
-    "main_menu": "Main Menu",
-    "breadcrumb": "Breadcrumb"
-  },
-  "hero": {
-    "home_title": "Classic Mini DIY",
-    "home_subtitle": "YOUR FRIENDLY NEIGHBORHOOD"
-  },
-  "components": {
-    "stats": {
-      /* ... */
-    },
-    "recent_videos": {
-      /* ... */
-    }
-  },
-  "pages": {
-    "home": {
-      /* ... */
-    },
-    "about": {
-      /* ... */
-    },
-    "error": {
-      /* ... */
-    }
-    // ... page-specific translations
-  }
-}
-```
-
-### Usage in Components
-
-#### Composition API (Recommended)
+Translations live in **per-component `<i18n lang="json">` SFC blocks** — each page or
+component carries its own block with all 10 locales inline. There are **NO global
+locale JSON files** (`i18n/locales/*.json` does not exist) and no `langDir`. The root
+`i18n.config.ts` is plumbing only (`legacy: false`, empty `messages`); it does not
+hold strings. `nuxt.config.ts` sets `i18n.restructureDir: '.'` so the root
+`i18n.config.ts` resolves without a warning (v10 defaults the i18n dir to `i18n/`).
 
 ```vue
-<script setup>
-  const { t, locale, locales } = useI18n();
-
-  // Use translations
-  const title = $t('pages.home.title');
-  const description = $t('pages.home.description');
+<script setup lang="ts">
+  const { t } = useI18n(); // auto-imported — no import statement
 </script>
 
 <template>
-  <h1>{{ $t('pages.home.title') }}</h1>
-  <p>{{ $t('pages.home.description') }}</p>
+  <h1>{{ t('hero.title') }}</h1>
+  <p>{{ t('intro.body', { count }) }}</p>
 </template>
+
+<i18n lang="json">
+{
+  "en": { "hero": { "title": "..." }, "intro": { "body": "{count} models" } },
+  "es": { "hero": { "title": "..." }, "intro": { "body": "{count} modelos" } }
+  // ...fr, de, it, pt, ru, ja, zh, ko — all 10 required
+}
+</i18n>
 ```
 
-#### Language Switcher Component
+### Rules
 
-The `LanguageSwitcher.vue` component (`/app/components/LanguageSwitcher.vue`) provides:
+- **Add a new translatable surface** by adding `const { t } = useI18n()`, using `t('key')`
+  in template/script, and appending an `<i18n lang="json">` block with **all 10 locales**.
+  Do not create files under `i18n/locales/` — that pattern is not used here.
+- **No HTML inside message values.** `unplugin-vue-i18n` hard-fails the build with
+  "Detected HTML in '…' message" if a string contains tags like `<strong>`. Keep markup
+  in the template wrapping `{{ t() }}`, or split the sentence into keyed segments. Do not
+  put HTML in messages + render with `v-html`.
+- Use named interpolation params (`t('x', { count })` ↔ `"{count} models"`) for dynamic text.
+- The block is parsed at build time — invalid JSON breaks the build.
+- `LanguageSwitcher.vue` (`/app/components/LanguageSwitcher.vue`) is the locale dropdown
+  (persists the cookie; no route switching needed under `no_prefix`).
 
-- Dropdown interface for language selection
-- Persistent language preference via cookies
-- Automatic route switching with `switchLocalePath()`
-- Mobile-friendly design with responsive labels
+### Localization coverage
 
-### Browser Language Detection
+Most of the site is localized via these blocks. The **3D Model Library** user-facing UI
+(browse, detail, the upload wizard, the dashboard `models`/`selling`/`purchases` tabs, and
+the `app/components/models/*` components) is fully translated. **`/legal/*` and
+`/admin/models` are intentionally English-only** — legal text is kept authoritative in one
+language (translating it creates per-language liability), and admin is internal tooling.
 
-**Automatic Detection Features:**
+## 3D Model Library (marketplace)
 
-- **Cookie Persistence**: User language preference stored in `i18n_redirected` cookie
-- **Fallback Logic**: Defaults to English (`en`) if browser language not supported
-- **Root Redirect**: Only redirects on root path to avoid breaking deep links
-- **Smart Redirect**: Avoids infinite redirect loops with `alwaysRedirect: false`
+A community 3D-printable parts library with a Stripe Connect marketplace. Backend lives in
+`classicminidiy-supabase` (migrations `20260611*`, edge functions, RLS). Keystone contract:
+`classicminidiy-supabase/docs/plans/2026-06-11-3d-model-library.md`. Built on the long-lived
+`feature/3d-models` branch (no `modelsEnabled` flag — "launch" = merge to main).
 
-### SEO & Multi-Language Support
+**Load-bearing contracts:**
 
-**SEO Optimization:**
-
-- Language-specific meta tags and content
-- Automatic `hreflang` attribute generation
-- Localized URLs and routing
-- Social media meta tags in appropriate languages
-
-### Implementation Guidelines
-
-#### Adding New Translations
-
-1. **Add new locale** to `nuxt.config.ts` locales array
-2. **Create new JSON file** in `/i18n/locales/` directory
-3. **Copy structure** from `en.json` as template
-4. **Translate all keys** maintaining JSON hierarchy
-5. **Test language switcher** functionality
-
-#### Translation Key Naming Convention
-
-- Use **nested structure** for organization (`pages.home.title`)
-- **Descriptive keys** rather than generic ones
-- **Consistent naming** across all locale files
-- **Group by feature/page** for better maintenance
-
-#### Components Using i18n
-
-Current implementation includes:
-
-- `LanguageSwitcher.vue` - Language selection dropdown
-- `Hero.vue` - Home page hero section
-- `Stats.vue` - YouTube statistics
-- `RecentVideos.vue` - Video listings
-- `error.vue` - Error pages
-- `index.vue` - Home page
-- `contact.vue` - Contact page
-- `privacy.vue` - Privacy policy
-- `maps.vue` - ECU maps page
-
-### Translation Status
-
-- **English (en)**: Complete reference (240 lines)
-- **German (de)**: Most comprehensive (348 lines)
-- **Spanish (es)**: Well-developed (224 lines)
-- **Other Languages**: Basic coverage (178-179 lines each)
-
-### Development Notes
-
-**Important Considerations:**
-
-- **German locale** appears to have the most complete translations
-- **English** serves as the master reference for new keys
-- **Consistent structure** maintained across all locale files
-- **Browser detection** configured for optimal UX without being intrusive
-- **No routing prefixes** - clean URLs maintained across all languages
+- **Supabase session is in localStorage, not a cookie.** Any `/api/*` route that needs the
+  user must receive an explicit `Authorization: Bearer <access_token>` header (get it from
+  `supabase.auth.getSession()`). Direct `useSupabase()` → PostgREST/RPC calls are auto-authed
+  and need no Bearer.
+- **Payments are thin web proxies → edge functions.** `POST /api/models/[id]/checkout`,
+  `/verify-purchase`, and `/api/models/seller/onboard` forward the Bearer token to
+  `create-model-checkout` / `verify-model-purchase` / `create-seller-onboarding`. The web
+  never calls Stripe directly. Redirect URLs are built from the browser origin and validated
+  by the edge functions' allowlist (localhost is allowed for dev).
+- **Stripe Connect (model sales) is separate from membership Stripe.** Direct charges on the
+  seller's Standard connected account + platform commission via `application_fee_amount`;
+  metadata `cmdiy_kind` starts `model_`. Its webhook endpoint + `STRIPE_CONNECT_WEBHOOK_SECRET`
+  are distinct from the membership webhook. Do not conflate with the `$1.99/mo` membership.
+- **Entitlement is the download gate.** `has_model_entitlement(model_id)` RPC: free/tips and
+  owner/admin always true; paid needs a purchase row; `removed`/`flagged` revokes everyone.
+  The download route (`/api/models/[modelId]/files/[fileId]/download`) enforces it server-side;
+  the detail page reads the RPC client-side to choose download vs. PriceBox.
+- **Admin moderation** (`/admin/models`): approve/reject call the `is_admin()`-guarded RPCs
+  client-side (admin JWT). Report-resolution (takedown + reporter notification + audit) and
+  the seller kill-switch are service-role routes under `server/api/admin/models/`.
+- **Contribution management is unified under `/dashboard`** (tabbed: models, gear-configs,
+  submissions, selling, purchases). `/models/mine` redirects to `/dashboard/models`.
+- New web env: `S3_MODELS_BUCKET`, `S3_MODELS_ACCESS_KEY_ID`, `S3_MODELS_SECRET_ACCESS_KEY`
+  (dedicated IAM user, separate bucket from static assets). Launch steps:
+  `docs/runbooks/2026-06-12-model-library-launch-checklist.md`.
 
 ## Advanced Features
 
