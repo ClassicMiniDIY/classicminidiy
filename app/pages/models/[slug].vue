@@ -3,8 +3,11 @@
   import { type ModelDetail, type ModelFileInfo, priceLabel, formatBytes } from '~~/data/models/model-library';
 
   const route = useRoute();
+  const router = useRouter();
   const slug = computed(() => String(route.params.slug));
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const supabase = useSupabase();
+  const { verifyPurchase } = useModelCheckout();
 
   const { data, error } = await useFetch<ModelDetail>(() => `/api/models/${slug.value}`);
   if (error.value) {
@@ -22,6 +25,64 @@
   function downloadUrl(fileId: string) {
     return `/api/models/${model.value?.id}/files/${fileId}/download`;
   }
+
+  const isOwner = computed(() => !!user.value && model.value?.author?.id === user.value.id);
+  const acceptsTips = computed(() => !!model.value && model.value.pricingMode !== 'free');
+
+  // Whether the viewer may download. Free/tips and the owner are always allowed;
+  // paid models need a purchase, confirmed by the has_model_entitlement RPC
+  // (auto-authed via PostgREST). Seeded so free models show downloads on SSR.
+  const entitled = ref(isFree.value);
+  async function refreshEntitlement() {
+    if (!model.value) return;
+    if (isFree.value || isOwner.value) {
+      entitled.value = true;
+      return;
+    }
+    if (!isAuthenticated.value) {
+      entitled.value = false;
+      return;
+    }
+    const { data } = await supabase.rpc('has_model_entitlement', { p_model_id: model.value.id });
+    entitled.value = !!data;
+  }
+
+  // Success-page handling: the Stripe redirect lands back here with
+  // ?purchase=success&session_id=… — verify (webhook-lag fallback) then unlock.
+  const purchaseNotice = ref<{ type: 'success' | 'info'; text: string } | null>(null);
+  async function handlePurchaseReturn() {
+    const q = route.query;
+    if (q.purchase === 'success') {
+      const sid = typeof q.session_id === 'string' ? q.session_id : '';
+      if (sid && model.value) {
+        const res = await verifyPurchase(model.value.id, sid);
+        if (res.verified) {
+          purchaseNotice.value = {
+            type: 'success',
+            text: res.kind === 'tip' ? 'Thank you for the tip!' : 'Purchase complete — your files are unlocked below.',
+          };
+          await refreshEntitlement();
+        } else {
+          purchaseNotice.value = {
+            type: 'info',
+            text: "Payment received — we're finalizing it. If your files aren't unlocked, refresh in a moment.",
+          };
+        }
+      } else {
+        purchaseNotice.value = { type: 'success', text: 'Thanks for your support!' };
+      }
+      router.replace({ query: {} });
+    } else if (q.purchase === 'cancelled') {
+      purchaseNotice.value = { type: 'info', text: 'Checkout cancelled.' };
+      router.replace({ query: {} });
+    }
+  }
+
+  onMounted(async () => {
+    await refreshEntitlement();
+    await handlePurchaseReturn();
+  });
+  watch(isAuthenticated, () => refreshEntitlement());
 
   // Media area: a renderable file (3D) or a gallery image. Driven by a watcher so
   // it re-initializes if the page component is reused across /models/[slug]
@@ -178,12 +239,26 @@
         <!-- Pricing + download -->
         <div class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body p-4 gap-3">
-            <div class="flex items-baseline justify-between">
+            <div class="flex items-baseline justify-between gap-2">
               <span class="text-2xl font-bold" :class="isFree ? 'text-success' : 'text-primary'">{{ price }}</span>
-              <span class="text-xs opacity-60">buyers get every version</span>
+              <span v-if="isOwner" class="badge badge-neutral badge-sm">Your model</span>
+              <span v-else-if="entitled && !isFree" class="badge badge-success badge-sm">
+                <i class="fas fa-check mr-1"></i> Purchased
+              </span>
+              <span v-else class="text-xs opacity-60">buyers get every version</span>
             </div>
 
-            <template v-if="isFree">
+            <div
+              v-if="purchaseNotice"
+              role="alert"
+              class="alert alert-soft py-2 text-sm"
+              :class="purchaseNotice.type === 'success' ? 'alert-success' : 'alert-info'"
+            >
+              <i class="fas" :class="purchaseNotice.type === 'success' ? 'fa-circle-check' : 'fa-circle-info'"></i>
+              <span>{{ purchaseNotice.text }}</span>
+            </div>
+
+            <template v-if="entitled">
               <a
                 v-for="file in model.files"
                 :key="file.id"
@@ -200,14 +275,12 @@
               </p>
             </template>
 
-            <template v-else>
-              <button class="btn btn-primary btn-sm" disabled title="Checkout arrives with the payments release">
-                <i class="fas fa-cart-shopping mr-1"></i> Purchase
-              </button>
-              <p class="text-xs opacity-60"><i class="fas fa-lock mr-1"></i> Files unlock after purchase.</p>
-            </template>
+            <ModelsPriceBox v-else :model="model" />
           </div>
         </div>
+
+        <!-- Tips -->
+        <ModelsTipPicker v-if="acceptsTips && !isOwner" :model-id="model.id" :currency="model.currency" />
 
         <!-- Tags -->
         <div v-if="model.tags.length" class="flex flex-wrap gap-1.5">
