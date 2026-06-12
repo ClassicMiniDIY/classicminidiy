@@ -190,7 +190,7 @@
           }}
         </p>
         <div class="flex gap-2">
-          <NuxtLink to="/models/mine" class="btn btn-primary">My Models</NuxtLink>
+          <NuxtLink to="/dashboard/models" class="btn btn-primary">My Models</NuxtLink>
           <NuxtLink
             v-if="submitted.slug && submitted.status === 'published'"
             :to="`/models/${submitted.slug}`"
@@ -642,7 +642,7 @@
           <div class="flex justify-between items-center pt-4 mt-2 border-t border-base-300">
             <!-- Content-only edit (published model): just save the basics -->
             <template v-if="w.contentOnly.value">
-              <NuxtLink to="/models/mine" class="btn btn-ghost">Cancel</NuxtLink>
+              <NuxtLink to="/dashboard/models" class="btn btn-ghost">Cancel</NuxtLink>
               <button
                 type="button"
                 class="btn btn-primary"

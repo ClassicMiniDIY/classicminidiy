@@ -114,7 +114,7 @@
             <NuxtLink to="/models/upload" class="btn btn-primary"
               ><i class="fas fa-plus mr-1"></i> Share a model</NuxtLink
             >
-            <NuxtLink to="/models/mine" class="btn btn-ghost"><i class="fas fa-folder mr-1"></i> My models</NuxtLink>
+            <NuxtLink to="/dashboard/models" class="btn btn-ghost"><i class="fas fa-folder mr-1"></i> My models</NuxtLink>
           </div>
         </div>
       </div>

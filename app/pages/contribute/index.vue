@@ -124,7 +124,7 @@
                 >
                   {{ userProfile.trust_level }}
                 </span>
-                <NuxtLink to="/dashboard" class="btn btn-primary btn-outline">
+                <NuxtLink to="/dashboard/submissions" class="btn btn-primary btn-outline">
                   {{ t('view_all') }}
                 </NuxtLink>
               </div>

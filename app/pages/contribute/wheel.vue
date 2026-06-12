@@ -244,7 +244,7 @@
                       <i class="fa-duotone fa-solid fa-plus-large mr-2"></i>
                       {{ t('success.submit_another') }}
                     </button>
-                    <NuxtLink to="/dashboard" class="btn btn-outline">
+                    <NuxtLink to="/dashboard/submissions" class="btn btn-outline">
                       <i class="fad fa-list mr-2"></i>
                       {{ t('success.view_submissions') }}
                     </NuxtLink>
