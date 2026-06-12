@@ -148,14 +148,15 @@
           >
         </div>
 
-        <!-- Stats -->
-        <div class="flex items-center gap-4 text-sm opacity-70">
-          <span><i class="fas fa-heart mr-1"></i>{{ model.likeCount }}</span>
-          <span><i class="fas fa-comment mr-1"></i>{{ model.commentCount }}</span>
-          <span><i class="fas fa-download mr-1"></i>{{ model.downloadCount }}</span>
-          <span v-if="model.versionCount > 1"
-            ><i class="fas fa-code-branch mr-1"></i>v{{ model.version?.versionNumber }}</span
-          >
+        <!-- Stats + actions -->
+        <div class="flex items-center gap-3 flex-wrap">
+          <ModelsModelLikeButton :model-id="model.id" :initial-count="model.likeCount" />
+          <span class="text-sm opacity-70"><i class="fas fa-comment mr-1"></i>{{ model.commentCount }}</span>
+          <span class="text-sm opacity-70"><i class="fas fa-download mr-1"></i>{{ model.downloadCount }}</span>
+          <span v-if="model.versionCount > 1" class="text-sm opacity-70">
+            <i class="fas fa-code-branch mr-1"></i>v{{ model.version?.versionNumber }}
+          </span>
+          <ModelsModelReportModal :model-id="model.id" class="ml-auto" />
         </div>
 
         <ModelsSafetyDisclaimer :safety-critical="model.safetyCritical" />
@@ -253,6 +254,11 @@
             <p class="whitespace-pre-line text-sm opacity-80">{{ model.version.changelog }}</p>
           </div>
         </div>
+      </div>
+
+      <!-- Comments -->
+      <div class="col-span-12 lg:col-span-8">
+        <ModelsModelComments :model-id="model.id" />
       </div>
 
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10 pt-4">
