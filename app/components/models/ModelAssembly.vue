@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import type { AssemblyInstructions } from '~~/data/models/model-library';
 
+  const { t } = useI18n();
   const props = defineProps<{ assembly: AssemblyInstructions | null }>();
 
   const difficultyTone: Record<string, string> = {
@@ -25,7 +26,7 @@
 <template>
   <div v-if="hasContent" class="card bg-base-100 shadow-sm border border-base-300">
     <div class="card-body">
-      <h3 class="card-title text-lg"><i class="fas fa-list-check text-primary mr-1"></i> Assembly</h3>
+      <h3 class="card-title text-lg"><i class="fas fa-list-check text-primary mr-1"></i> {{ t('title') }}</h3>
 
       <div class="flex flex-wrap items-center gap-2">
         <span
@@ -41,7 +42,7 @@
       </div>
 
       <div v-if="(assembly?.toolsRequired?.length ?? 0) > 0" class="mt-1">
-        <p class="text-xs opacity-60 mb-1"><i class="fas fa-toolbox mr-1"></i> Tools required</p>
+        <p class="text-xs opacity-60 mb-1"><i class="fas fa-toolbox mr-1"></i> {{ t('toolsRequired') }}</p>
         <div class="flex flex-wrap gap-1.5">
           <span v-for="tool in assembly?.toolsRequired" :key="tool" class="badge badge-ghost badge-sm">{{ tool }}</span>
         </div>
@@ -63,3 +64,48 @@
     </div>
   </div>
 </template>
+
+<i18n lang="json">
+{
+  "en": {
+    "title": "Assembly",
+    "toolsRequired": "Tools required"
+  },
+  "es": {
+    "title": "Ensamblaje",
+    "toolsRequired": "Herramientas necesarias"
+  },
+  "fr": {
+    "title": "Assemblage",
+    "toolsRequired": "Outils nécessaires"
+  },
+  "de": {
+    "title": "Montage",
+    "toolsRequired": "Benötigte Werkzeuge"
+  },
+  "it": {
+    "title": "Assemblaggio",
+    "toolsRequired": "Strumenti necessari"
+  },
+  "pt": {
+    "title": "Montagem",
+    "toolsRequired": "Ferramentas necessárias"
+  },
+  "ru": {
+    "title": "Сборка",
+    "toolsRequired": "Необходимые инструменты"
+  },
+  "ja": {
+    "title": "組み立て",
+    "toolsRequired": "必要な工具"
+  },
+  "zh": {
+    "title": "组装",
+    "toolsRequired": "所需工具"
+  },
+  "ko": {
+    "title": "조립",
+    "toolsRequired": "필요 공구"
+  }
+}
+</i18n>
