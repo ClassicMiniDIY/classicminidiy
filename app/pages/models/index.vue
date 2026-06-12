@@ -75,6 +75,16 @@
     page.value = 1;
   }
 
+  // Categories store icons in Iconify form (e.g. "i-fa6-solid-couch"); the rest
+  // of the site renders Font Awesome via class names, so convert.
+  function faIcon(iconify?: string | null): string {
+    if (!iconify) return 'fas fa-cube';
+    const m = iconify.match(/^i-fa6-(solid|regular|brands)-(.+)$/);
+    if (!m) return iconify.startsWith('fa-') ? `fas ${iconify}` : `fas fa-${iconify}`;
+    const style = m[1] === 'solid' ? 'fas' : m[1] === 'regular' ? 'far' : 'fab';
+    return `${style} fa-${m[2]}`;
+  }
+
   useHead({ title: '3D Model Library | Classic Mini DIY' });
   useSeoMeta({
     description:
@@ -112,14 +122,14 @@
         <div class="card bg-base-100 shadow-sm border border-base-300">
           <div class="card-body p-4 gap-4">
             <div class="flex flex-col md:flex-row gap-3">
-              <label class="input input-bordered flex items-center gap-2 flex-1">
+              <label class="input w-full md:flex-1">
                 <i class="fas fa-magnifying-glass opacity-50"></i>
-                <input v-model="q" type="search" class="grow" placeholder="Search models…" aria-label="Search models" />
+                <input v-model="q" type="search" placeholder="Search models…" aria-label="Search models" />
               </label>
-              <select v-model="pricing" class="select select-bordered" aria-label="Filter by pricing">
+              <select v-model="pricing" class="select w-full md:w-auto" aria-label="Filter by pricing">
                 <option v-for="opt in pricingOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
-              <select v-model="sort" class="select select-bordered" aria-label="Sort">
+              <select v-model="sort" class="select w-full md:w-auto" aria-label="Sort">
                 <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
             </div>
@@ -135,7 +145,7 @@
                 :class="category === cat.slug ? 'btn-primary' : 'btn-ghost'"
                 @click="category = cat.slug"
               >
-                <i v-if="cat.icon" class="fas" :class="`fa-${cat.icon}`"></i>
+                <i :class="faIcon(cat.icon)"></i>
                 {{ cat.name }}
               </button>
             </div>
