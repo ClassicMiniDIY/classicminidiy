@@ -98,6 +98,29 @@
           </div>
         </div>
 
+        <!-- 3D Models Card -->
+        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                <i class="fad fa-cube text-2xl text-secondary"></i>
+              </div>
+              <h2 class="text-xl font-bold">3D Models</h2>
+            </div>
+
+            <p class="opacity-70 mb-6">
+              Review the model library queue, handle reports and takedowns, manage sellers, and track sales.
+            </p>
+
+            <div class="card-actions justify-end">
+              <NuxtLink to="/admin/models" class="btn btn-secondary">
+                <i class="fad fa-arrow-right mr-2"></i>
+                Open Models
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
         <!-- Chat Threads Card -->
         <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
           <div class="card-body">
