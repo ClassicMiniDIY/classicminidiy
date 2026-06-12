@@ -2,6 +2,7 @@
   import { HERO_TYPES } from '~~/data/models/generic';
   import type { ModelCard as ModelCardType } from '~~/data/models/model-library';
 
+  const { t } = useI18n();
   const route = useRoute();
   const router = useRouter();
 
@@ -52,19 +53,19 @@
     });
   });
 
-  const pricingOptions = [
-    { value: '', label: 'All pricing' },
-    { value: 'free', label: 'Free' },
-    { value: 'tips', label: 'Free + tips' },
-    { value: 'pwyw', label: 'Pay what you want' },
-    { value: 'fixed', label: 'Paid' },
-  ];
-  const sortOptions = [
-    { value: 'newest', label: 'Newest' },
-    { value: 'popular', label: 'Most downloaded' },
-    { value: 'likes', label: 'Most liked' },
-    { value: 'featured', label: 'Featured' },
-  ];
+  const pricingOptions = computed(() => [
+    { value: '', label: t('filters.pricing.all') },
+    { value: 'free', label: t('filters.pricing.free') },
+    { value: 'tips', label: t('filters.pricing.tips') },
+    { value: 'pwyw', label: t('filters.pricing.pwyw') },
+    { value: 'fixed', label: t('filters.pricing.fixed') },
+  ]);
+  const sortOptions = computed(() => [
+    { value: 'newest', label: t('filters.sort.newest') },
+    { value: 'popular', label: t('filters.sort.popular') },
+    { value: 'likes', label: t('filters.sort.likes') },
+    { value: 'featured', label: t('filters.sort.featured') },
+  ]);
 
   function clearFilters() {
     q.value = '';
@@ -96,25 +97,25 @@
 </script>
 
 <template>
-  <hero :navigation="true" title="3D Model Library" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero.title')" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
-        <breadcrumb class="my-6" page="3D Models" />
+        <breadcrumb class="my-6" :page="t('breadcrumb')" />
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div class="flex-1">
             <PageIntro
-              eyebrow="MAKE"
-              title="3D Model Library"
-              description="Mini-specific 3D-printable parts — interior trim, brackets, gauge pods, tools and jigs — with full print settings, hardware lists, and assembly guides. Contributed by the community."
+              :eyebrow="t('intro.eyebrow')"
+              :title="t('intro.title')"
+              :description="t('intro.description')"
               as="h2"
             />
           </div>
           <div class="flex gap-2 shrink-0">
             <NuxtLink to="/models/upload" class="btn btn-primary"
-              ><i class="fas fa-plus mr-1"></i> Share a model</NuxtLink
+              ><i class="fas fa-plus mr-1"></i> {{ t('actions.share') }}</NuxtLink
             >
-            <NuxtLink to="/dashboard/models" class="btn btn-ghost"><i class="fas fa-folder mr-1"></i> My models</NuxtLink>
+            <NuxtLink to="/dashboard/models" class="btn btn-ghost"><i class="fas fa-folder mr-1"></i> {{ t('actions.myModels') }}</NuxtLink>
           </div>
         </div>
       </div>
@@ -126,19 +127,19 @@
             <div class="flex flex-col md:flex-row gap-3">
               <label class="input w-full md:flex-1">
                 <i class="fas fa-magnifying-glass opacity-50"></i>
-                <input v-model="q" type="search" placeholder="Search models…" aria-label="Search models" />
+                <input v-model="q" type="search" :placeholder="t('filters.searchPlaceholder')" :aria-label="t('filters.searchLabel')" />
               </label>
-              <select v-model="pricing" class="select w-full md:w-auto" aria-label="Filter by pricing">
+              <select v-model="pricing" class="select w-full md:w-auto" :aria-label="t('filters.pricingLabel')">
                 <option v-for="opt in pricingOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
-              <select v-model="sort" class="select w-full md:w-auto" aria-label="Sort">
+              <select v-model="sort" class="select w-full md:w-auto" :aria-label="t('filters.sortLabel')">
                 <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
             </div>
 
             <div v-if="categories.length" class="flex flex-wrap gap-2">
               <button class="btn btn-sm" :class="category === '' ? 'btn-primary' : 'btn-ghost'" @click="category = ''">
-                All
+                {{ t('filters.allCategories') }}
               </button>
               <button
                 v-for="cat in categories"
@@ -158,13 +159,13 @@
       <!-- Results -->
       <div class="col-span-12">
         <div class="flex items-center justify-between mb-4 text-sm opacity-70">
-          <span>{{ total }} model{{ total === 1 ? '' : 's' }}</span>
+          <span>{{ t('results.count', { count: total }) }}</span>
           <button
             v-if="q || category || pricing || sort !== 'newest'"
             class="btn btn-ghost btn-xs"
             @click="clearFilters"
           >
-            <i class="fas fa-xmark mr-1"></i> Clear filters
+            <i class="fas fa-xmark mr-1"></i> {{ t('results.clearFilters') }}
           </button>
         </div>
 
@@ -174,8 +175,8 @@
 
         <div v-else-if="models.length === 0" class="text-center py-16">
           <i class="fas fa-cube text-5xl opacity-20"></i>
-          <p class="mt-4 text-lg font-semibold">No models found</p>
-          <p class="opacity-60">Try a different search or clear your filters.</p>
+          <p class="mt-4 text-lg font-semibold">{{ t('empty.title') }}</p>
+          <p class="opacity-60">{{ t('empty.hint') }}</p>
         </div>
 
         <div v-else class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -188,7 +189,7 @@
             <button class="join-item btn" :disabled="page <= 1" @click="page--">
               <i class="fas fa-chevron-left"></i>
             </button>
-            <button class="join-item btn btn-disabled">Page {{ page }}</button>
+            <button class="join-item btn btn-disabled">{{ t('pagination.page', { page }) }}</button>
             <button class="join-item btn" :disabled="!hasMore" @click="page++">
               <i class="fas fa-chevron-right"></i>
             </button>
@@ -206,3 +207,448 @@
     </div>
   </div>
 </template>
+
+<i18n lang="json">
+{
+  "en": {
+    "hero": { "title": "3D Model Library" },
+    "breadcrumb": "3D Models",
+    "intro": {
+      "eyebrow": "MAKE",
+      "title": "3D Model Library",
+      "description": "Mini-specific 3D-printable parts — interior trim, brackets, gauge pods, tools and jigs — with full print settings, hardware lists, and assembly guides. Contributed by the community."
+    },
+    "actions": {
+      "share": "Share a model",
+      "myModels": "My models"
+    },
+    "filters": {
+      "searchPlaceholder": "Search models…",
+      "searchLabel": "Search models",
+      "pricingLabel": "Filter by pricing",
+      "sortLabel": "Sort",
+      "allCategories": "All",
+      "pricing": {
+        "all": "All pricing",
+        "free": "Free",
+        "tips": "Free + tips",
+        "pwyw": "Pay what you want",
+        "fixed": "Paid"
+      },
+      "sort": {
+        "newest": "Newest",
+        "popular": "Most downloaded",
+        "likes": "Most liked",
+        "featured": "Featured"
+      }
+    },
+    "results": {
+      "count": "{count} models",
+      "clearFilters": "Clear filters"
+    },
+    "empty": {
+      "title": "No models found",
+      "hint": "Try a different search or clear your filters."
+    },
+    "pagination": {
+      "page": "Page {page}"
+    }
+  },
+  "es": {
+    "hero": { "title": "Biblioteca de modelos 3D" },
+    "breadcrumb": "Modelos 3D",
+    "intro": {
+      "eyebrow": "CREAR",
+      "title": "Biblioteca de modelos 3D",
+      "description": "Piezas imprimibles en 3D específicas para el Mini — tapicería interior, soportes, cápsulas de instrumentos, herramientas y plantillas — con ajustes de impresión, listas de hardware y guías de montaje. Aportadas por la comunidad."
+    },
+    "actions": {
+      "share": "Compartir modelo",
+      "myModels": "Mis modelos"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar modelos…",
+      "searchLabel": "Buscar modelos",
+      "pricingLabel": "Filtrar por precio",
+      "sortLabel": "Ordenar",
+      "allCategories": "Todos",
+      "pricing": {
+        "all": "Todos los precios",
+        "free": "Gratis",
+        "tips": "Gratis + propinas",
+        "pwyw": "Paga lo que quieras",
+        "fixed": "De pago"
+      },
+      "sort": {
+        "newest": "Más recientes",
+        "popular": "Más descargados",
+        "likes": "Más valorados",
+        "featured": "Destacados"
+      }
+    },
+    "results": {
+      "count": "{count} modelos",
+      "clearFilters": "Limpiar filtros"
+    },
+    "empty": {
+      "title": "No se encontraron modelos",
+      "hint": "Prueba otra búsqueda o elimina los filtros."
+    },
+    "pagination": {
+      "page": "Página {page}"
+    }
+  },
+  "fr": {
+    "hero": { "title": "Bibliothèque de modèles 3D" },
+    "breadcrumb": "Modèles 3D",
+    "intro": {
+      "eyebrow": "CRÉER",
+      "title": "Bibliothèque de modèles 3D",
+      "description": "Pièces imprimables en 3D spécifiques à la Mini — garnitures intérieures, supports, pods de jauges, outils et gabarits — avec réglages d'impression complets, listes de matériel et guides d'assemblage. Contribué par la communauté."
+    },
+    "actions": {
+      "share": "Partager un modèle",
+      "myModels": "Mes modèles"
+    },
+    "filters": {
+      "searchPlaceholder": "Rechercher des modèles…",
+      "searchLabel": "Rechercher des modèles",
+      "pricingLabel": "Filtrer par tarif",
+      "sortLabel": "Trier",
+      "allCategories": "Tous",
+      "pricing": {
+        "all": "Tous les tarifs",
+        "free": "Gratuit",
+        "tips": "Gratuit + pourboires",
+        "pwyw": "Prix libre",
+        "fixed": "Payant"
+      },
+      "sort": {
+        "newest": "Les plus récents",
+        "popular": "Les plus téléchargés",
+        "likes": "Les plus aimés",
+        "featured": "En vedette"
+      }
+    },
+    "results": {
+      "count": "{count} modèles",
+      "clearFilters": "Effacer les filtres"
+    },
+    "empty": {
+      "title": "Aucun modèle trouvé",
+      "hint": "Essayez une autre recherche ou effacez vos filtres."
+    },
+    "pagination": {
+      "page": "Page {page}"
+    }
+  },
+  "de": {
+    "hero": { "title": "3D-Modellbibliothek" },
+    "breadcrumb": "3D-Modelle",
+    "intro": {
+      "eyebrow": "ERSTELLEN",
+      "title": "3D-Modellbibliothek",
+      "description": "Mini-spezifische 3D-druckbare Teile — Innenverkleidungen, Halterungen, Instrumentengehäuse, Werkzeuge und Schablonen — mit vollständigen Druckeinstellungen, Teilelistenund Montageanleitung. Von der Community beigesteuert."
+    },
+    "actions": {
+      "share": "Modell teilen",
+      "myModels": "Meine Modelle"
+    },
+    "filters": {
+      "searchPlaceholder": "Modelle suchen…",
+      "searchLabel": "Modelle suchen",
+      "pricingLabel": "Nach Preis filtern",
+      "sortLabel": "Sortieren",
+      "allCategories": "Alle",
+      "pricing": {
+        "all": "Alle Preise",
+        "free": "Kostenlos",
+        "tips": "Kostenlos + Trinkgeld",
+        "pwyw": "Zahle was du willst",
+        "fixed": "Kostenpflichtig"
+      },
+      "sort": {
+        "newest": "Neueste",
+        "popular": "Meiste Downloads",
+        "likes": "Meiste Likes",
+        "featured": "Empfohlen"
+      }
+    },
+    "results": {
+      "count": "{count} Modelle",
+      "clearFilters": "Filter zurücksetzen"
+    },
+    "empty": {
+      "title": "Keine Modelle gefunden",
+      "hint": "Versuche eine andere Suche oder setze die Filter zurück."
+    },
+    "pagination": {
+      "page": "Seite {page}"
+    }
+  },
+  "it": {
+    "hero": { "title": "Libreria modelli 3D" },
+    "breadcrumb": "Modelli 3D",
+    "intro": {
+      "eyebrow": "CREA",
+      "title": "Libreria modelli 3D",
+      "description": "Pezzi stampabili in 3D specifici per la Mini — rivestimenti interni, staffe, pod per strumenti, utensili e dime — con impostazioni di stampa complete, liste hardware e guide al montaggio. Contribuiti dalla community."
+    },
+    "actions": {
+      "share": "Condividi un modello",
+      "myModels": "I miei modelli"
+    },
+    "filters": {
+      "searchPlaceholder": "Cerca modelli…",
+      "searchLabel": "Cerca modelli",
+      "pricingLabel": "Filtra per prezzo",
+      "sortLabel": "Ordina",
+      "allCategories": "Tutti",
+      "pricing": {
+        "all": "Tutti i prezzi",
+        "free": "Gratuito",
+        "tips": "Gratuito + mance",
+        "pwyw": "Paghi quanto vuoi",
+        "fixed": "A pagamento"
+      },
+      "sort": {
+        "newest": "Più recenti",
+        "popular": "Più scaricati",
+        "likes": "Più apprezzati",
+        "featured": "In evidenza"
+      }
+    },
+    "results": {
+      "count": "{count} modelli",
+      "clearFilters": "Cancella filtri"
+    },
+    "empty": {
+      "title": "Nessun modello trovato",
+      "hint": "Prova una ricerca diversa o cancella i filtri."
+    },
+    "pagination": {
+      "page": "Pagina {page}"
+    }
+  },
+  "pt": {
+    "hero": { "title": "Biblioteca de modelos 3D" },
+    "breadcrumb": "Modelos 3D",
+    "intro": {
+      "eyebrow": "CRIAR",
+      "title": "Biblioteca de modelos 3D",
+      "description": "Peças imprimíveis em 3D específicas para o Mini — acabamentos interiores, suportes, cápsulas de instrumentos, ferramentas e gabaritos — com configurações de impressão completas, listas de hardware e guias de montagem. Contribuídas pela comunidade."
+    },
+    "actions": {
+      "share": "Partilhar modelo",
+      "myModels": "Os meus modelos"
+    },
+    "filters": {
+      "searchPlaceholder": "Pesquisar modelos…",
+      "searchLabel": "Pesquisar modelos",
+      "pricingLabel": "Filtrar por preço",
+      "sortLabel": "Ordenar",
+      "allCategories": "Todos",
+      "pricing": {
+        "all": "Todos os preços",
+        "free": "Grátis",
+        "tips": "Grátis + gorjetas",
+        "pwyw": "Pague o que quiser",
+        "fixed": "Pago"
+      },
+      "sort": {
+        "newest": "Mais recentes",
+        "popular": "Mais descarregados",
+        "likes": "Mais apreciados",
+        "featured": "Em destaque"
+      }
+    },
+    "results": {
+      "count": "{count} modelos",
+      "clearFilters": "Limpar filtros"
+    },
+    "empty": {
+      "title": "Nenhum modelo encontrado",
+      "hint": "Tente outra pesquisa ou limpe os filtros."
+    },
+    "pagination": {
+      "page": "Página {page}"
+    }
+  },
+  "ru": {
+    "hero": { "title": "Библиотека 3D-моделей" },
+    "breadcrumb": "3D-модели",
+    "intro": {
+      "eyebrow": "СОЗДАТЬ",
+      "title": "Библиотека 3D-моделей",
+      "description": "3D-печатные детали для Mini — отделка салона, кронштейны, корпуса приборов, инструменты и шаблоны — с полными настройками печати, списками фурнитуры и инструкциями по сборке. Предоставлено сообществом."
+    },
+    "actions": {
+      "share": "Поделиться моделью",
+      "myModels": "Мои модели"
+    },
+    "filters": {
+      "searchPlaceholder": "Поиск моделей…",
+      "searchLabel": "Поиск моделей",
+      "pricingLabel": "Фильтр по цене",
+      "sortLabel": "Сортировка",
+      "allCategories": "Все",
+      "pricing": {
+        "all": "Любая цена",
+        "free": "Бесплатно",
+        "tips": "Бесплатно + чаевые",
+        "pwyw": "Платите сколько хотите",
+        "fixed": "Платно"
+      },
+      "sort": {
+        "newest": "Новые",
+        "popular": "Популярные",
+        "likes": "Понравившиеся",
+        "featured": "Рекомендуемые"
+      }
+    },
+    "results": {
+      "count": "{count} моделей",
+      "clearFilters": "Сбросить фильтры"
+    },
+    "empty": {
+      "title": "Модели не найдены",
+      "hint": "Попробуйте другой запрос или сбросьте фильтры."
+    },
+    "pagination": {
+      "page": "Страница {page}"
+    }
+  },
+  "ja": {
+    "hero": { "title": "3Dモデルライブラリ" },
+    "breadcrumb": "3Dモデル",
+    "intro": {
+      "eyebrow": "制作",
+      "title": "3Dモデルライブラリ",
+      "description": "Mini専用の3Dプリント部品 — インテリアトリム、ブラケット、ゲージポッド、ツールとジグ — 印刷設定、パーツリスト、組み立てガイド付き。コミュニティが提供。"
+    },
+    "actions": {
+      "share": "モデルを共有",
+      "myModels": "マイモデル"
+    },
+    "filters": {
+      "searchPlaceholder": "モデルを検索…",
+      "searchLabel": "モデルを検索",
+      "pricingLabel": "価格でフィルター",
+      "sortLabel": "並び替え",
+      "allCategories": "すべて",
+      "pricing": {
+        "all": "すべての価格",
+        "free": "無料",
+        "tips": "無料＋チップ",
+        "pwyw": "自由価格",
+        "fixed": "有料"
+      },
+      "sort": {
+        "newest": "新着順",
+        "popular": "ダウンロード数順",
+        "likes": "いいね順",
+        "featured": "おすすめ"
+      }
+    },
+    "results": {
+      "count": "{count}件のモデル",
+      "clearFilters": "フィルターをクリア"
+    },
+    "empty": {
+      "title": "モデルが見つかりません",
+      "hint": "別のキーワードで検索するか、フィルターをクリアしてください。"
+    },
+    "pagination": {
+      "page": "{page}ページ"
+    }
+  },
+  "zh": {
+    "hero": { "title": "3D模型库" },
+    "breadcrumb": "3D模型",
+    "intro": {
+      "eyebrow": "制作",
+      "title": "3D模型库",
+      "description": "Mini专属3D打印零件 — 内饰装饰、支架、仪表舱、工具和夹具 — 附完整打印设置、配件清单和组装指南。由社区贡献。"
+    },
+    "actions": {
+      "share": "分享模型",
+      "myModels": "我的模型"
+    },
+    "filters": {
+      "searchPlaceholder": "搜索模型…",
+      "searchLabel": "搜索模型",
+      "pricingLabel": "按价格筛选",
+      "sortLabel": "排序",
+      "allCategories": "全部",
+      "pricing": {
+        "all": "全部价格",
+        "free": "免费",
+        "tips": "免费 + 打赏",
+        "pwyw": "随心付",
+        "fixed": "付费"
+      },
+      "sort": {
+        "newest": "最新",
+        "popular": "下载最多",
+        "likes": "最多点赞",
+        "featured": "精选"
+      }
+    },
+    "results": {
+      "count": "{count} 个模型",
+      "clearFilters": "清除筛选"
+    },
+    "empty": {
+      "title": "未找到模型",
+      "hint": "请尝试其他搜索词或清除筛选条件。"
+    },
+    "pagination": {
+      "page": "第 {page} 页"
+    }
+  },
+  "ko": {
+    "hero": { "title": "3D 모델 라이브러리" },
+    "breadcrumb": "3D 모델",
+    "intro": {
+      "eyebrow": "제작",
+      "title": "3D 모델 라이브러리",
+      "description": "Mini 전용 3D 프린팅 부품 — 인테리어 트림, 브라켓, 게이지 포드, 툴 및 지그 — 완전한 출력 설정, 하드웨어 목록, 조립 가이드 포함. 커뮤니티가 기여."
+    },
+    "actions": {
+      "share": "모델 공유",
+      "myModels": "내 모델"
+    },
+    "filters": {
+      "searchPlaceholder": "모델 검색…",
+      "searchLabel": "모델 검색",
+      "pricingLabel": "가격으로 필터",
+      "sortLabel": "정렬",
+      "allCategories": "전체",
+      "pricing": {
+        "all": "모든 가격",
+        "free": "무료",
+        "tips": "무료 + 후원",
+        "pwyw": "자유 가격",
+        "fixed": "유료"
+      },
+      "sort": {
+        "newest": "최신순",
+        "popular": "다운로드순",
+        "likes": "좋아요순",
+        "featured": "추천"
+      }
+    },
+    "results": {
+      "count": "모델 {count}개",
+      "clearFilters": "필터 초기화"
+    },
+    "empty": {
+      "title": "모델을 찾을 수 없습니다",
+      "hint": "다른 검색어를 사용하거나 필터를 초기화하세요."
+    },
+    "pagination": {
+      "page": "{page}페이지"
+    }
+  }
+}
+</i18n>
