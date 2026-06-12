@@ -8,21 +8,29 @@
  * preserves clean 302 semantics with no client flash and keeps the proxy hop off
  * client JS.
  *
- * A missing token is forwarded as an empty token so the Edge Function remains the
- * single source of truth for the error copy (it redirects to
- * /?discord_error=missing_token).
+ * A bare hit with no token is NOT an email link — it's the mobile apps'
+ * hardcoded "Claim Discord Access" URL (iOS AppConstants.URLs.discordClaim,
+ * Android SustainingMemberCopy.DISCORD_CLAIM_URL) or a bookmark. Those go to
+ * the self-serve connect page, which mints a fresh claim token for the
+ * signed-in member (discord-claim-reissue) and re-enters this proxy with it.
+ * Forwarding an empty token instead would dead-end every app user at
+ * /?discord_error=missing_token.
  */
 export default defineEventHandler((event) => {
   const config = useRuntimeConfig();
   const supabaseUrl = (config.public.supabaseUrl as string)?.replace(/\/$/, '');
 
+  const token = getQuery(event).token;
+  const tokenParam = typeof token === 'string' ? token : '';
+
+  if (!tokenParam) {
+    return sendRedirect(event, '/discord/connect', 302);
+  }
+
   if (!supabaseUrl) {
     // Fall back to the home page's generic Discord error rather than 500.
     return sendRedirect(event, '/?discord_error=generic', 302);
   }
-
-  const token = getQuery(event).token;
-  const tokenParam = typeof token === 'string' ? token : '';
 
   // Transient redirect page — keep it out of search indexes.
   setHeader(event, 'X-Robots-Tag', 'noindex');
