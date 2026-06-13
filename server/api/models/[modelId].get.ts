@@ -76,7 +76,7 @@ export default defineEventHandler(async (event): Promise<ModelDetail> => {
   const { data: lic } = await service
     .from('model_licenses')
     .select(
-      'code, name, url, is_paid_license, allows_commercial_use, allows_derivatives, requires_attribution, requires_share_alike, allows_file_redistribution'
+      'code, name, url, is_paid_license, allows_commercial_use, allows_derivatives, requires_attribution, requires_share_alike, allows_file_redistribution, license_text'
     )
     .eq('code', licenseCode)
     .maybeSingle();
@@ -164,6 +164,7 @@ export default defineEventHandler(async (event): Promise<ModelDetail> => {
       requiresAttribution: lic?.requires_attribution ?? false,
       requiresShareAlike: lic?.requires_share_alike ?? false,
       allowsFileRedistribution: lic?.allows_file_redistribution ?? false,
+      text: lic?.license_text ?? null,
     },
     version,
     files,
