@@ -19,9 +19,6 @@
   const renderableFiles = computed(() => model.value?.files.filter((f) => f.isRenderable) ?? []);
   const isFree = computed(() => (model.value ? ['free', 'tips'].includes(model.value.pricingMode) : false));
   const price = computed(() => (model.value ? priceLabel(model.value) : ''));
-  const licenseTxtUrl = computed(() =>
-    model.value?.version ? `/api/models/${model.value.id}/versions/${model.value.version.id}/license.txt` : null
-  );
 
   // Downloads go through an authed fetch (the session is in localStorage, so a
   // bare <a href> can't carry the token) → presigned URL → browser download.
@@ -356,24 +353,16 @@
             <div class="card-body p-4 gap-3">
               <h3 class="text-xs font-semibold uppercase tracking-wide opacity-50">{{ t('license.heading') }}</h3>
               <ModelsLicenseBadge :license="model.license" />
-              <div class="flex flex-col gap-1">
-                <a
-                  v-if="licenseTxtUrl"
-                  :href="licenseTxtUrl"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-xs link link-hover opacity-70"
-                >
-                  <i class="fas fa-file-lines mr-1"></i> {{ t('license.viewTxt') }}
-                </a>
-                <NuxtLink
-                  v-if="model.license.isPaid"
-                  to="/legal/paid-file-license"
-                  class="text-xs link link-hover opacity-70"
-                >
-                  <i class="fas fa-scale-balanced mr-1"></i> {{ t('license.paidTerms') }}
-                </NuxtLink>
-              </div>
+              <p v-if="model.license.text" class="text-xs leading-relaxed opacity-70 whitespace-pre-line">
+                {{ model.license.text }}
+              </p>
+              <NuxtLink
+                v-if="model.license.isPaid"
+                to="/legal/paid-file-license"
+                class="text-xs link link-hover opacity-70"
+              >
+                <i class="fas fa-scale-balanced mr-1"></i> {{ t('license.paidTerms') }}
+              </NuxtLink>
             </div>
           </div>
 

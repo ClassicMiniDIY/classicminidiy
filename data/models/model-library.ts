@@ -65,6 +65,8 @@ export interface ModelLicenseInfo {
   requiresAttribution: boolean;
   requiresShareAlike: boolean;
   allowsFileRedistribution: boolean;
+  /** Full license terms (paid licenses); null for CC licenses (text lives at `url`). */
+  text: string | null;
 }
 
 export interface ModelImageInfo {
