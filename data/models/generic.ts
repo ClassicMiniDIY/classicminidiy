@@ -309,6 +309,22 @@ export const ArchiveItems: ArchiveItem[] = [
     iconHtml:
       '<i class="fa-duotone fa-brush" style="--fa-primary-color: #431f23; --fa-secondary-color: #c3a166; --fa-secondary-opacity: 0.8;"></i>',
   },
+  {
+    title: '3D Models',
+    titleKey: 'archive_items.models',
+    descKey: 'archive_items.models_desc',
+    kindKey: 'archive_items.kind.library',
+    description: '',
+    image: '',
+    path: '/models',
+    to: '/models',
+    iconName: 'fa-cube',
+    iconPrimary: '#5c7a3a',
+    iconSecondary: '#2b2b2b',
+    iconSecondaryOpacity: 0.6,
+    iconHtml:
+      '<i class="fa-duotone fa-cube" style="--fa-primary-color: #5c7a3a; --fa-secondary-color: #2b2b2b; --fa-secondary-opacity: 0.6;"></i>',
+  },
 ];
 
 export const LandingPageToolboxItems = [

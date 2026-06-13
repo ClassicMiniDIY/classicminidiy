@@ -130,7 +130,16 @@
           </div>
 
           <div>
-            <button class="btn btn-primary" :disabled="!trustOk || onboarding" @click="onboard">
+            <button
+              class="btn"
+              :class="
+                !trustOk || onboarding
+                  ? ''
+                  : 'bg-[#635BFF] hover:bg-[#534ce0] text-white border-[#635BFF] hover:border-[#534ce0]'
+              "
+              :disabled="!trustOk || onboarding"
+              @click="onboard"
+            >
               <span v-if="onboarding" class="loading loading-spinner loading-sm"></span>
               <i v-else class="fab fa-stripe-s mr-1"></i>
               {{ seller ? t('onboarding.continueBtn') : t('onboarding.startBtn') }}
@@ -154,7 +163,7 @@
                 href="https://dashboard.stripe.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="btn btn-outline btn-sm"
+                class="btn btn-sm bg-[#635BFF] hover:bg-[#534ce0] text-white border-[#635BFF] hover:border-[#534ce0]"
               >
                 <i class="fab fa-stripe-s mr-1"></i> {{ t('console.managePayouts') }}
               </a>

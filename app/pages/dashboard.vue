@@ -77,7 +77,7 @@
   "en": {
     "title": "Dashboard - Classic Mini DIY",
     "description": "Manage your 3D models, saved gear configurations, and archive submissions.",
-    "hero_title": "Your Dashboard",
+    "hero_title": "Dashboard",
     "breadcrumb_title": "Dashboard",
     "eyebrow": "ACCOUNT",
     "tabs": { "models": "3D Models", "gear_configs": "Gear Configs", "submissions": "Submissions", "selling": "Selling", "purchases": "Purchases" },
@@ -90,7 +90,7 @@
   "es": {
     "title": "Panel - Classic Mini DIY",
     "description": "Administra tus modelos 3D, configuraciones de engranajes y envíos al archivo.",
-    "hero_title": "Tu Panel",
+    "hero_title": "Panel",
     "breadcrumb_title": "Panel",
     "eyebrow": "CUENTA",
     "tabs": { "models": "Modelos 3D", "gear_configs": "Engranajes", "submissions": "Envíos", "selling": "Ventas", "purchases": "Compras" },
@@ -103,7 +103,7 @@
   "fr": {
     "title": "Tableau de Bord - Classic Mini DIY",
     "description": "Gérez vos modèles 3D, configurations d'engrenages et soumissions à l'archive.",
-    "hero_title": "Votre Tableau de Bord",
+    "hero_title": "Tableau de Bord",
     "breadcrumb_title": "Tableau de Bord",
     "eyebrow": "COMPTE",
     "tabs": { "models": "Modèles 3D", "gear_configs": "Engrenages", "submissions": "Soumissions", "selling": "Ventes", "purchases": "Achats" },
@@ -116,7 +116,7 @@
   "de": {
     "title": "Dashboard - Classic Mini DIY",
     "description": "Verwalten Sie Ihre 3D-Modelle, Getriebe-Konfigurationen und Archiv-Einreichungen.",
-    "hero_title": "Ihr Dashboard",
+    "hero_title": "Dashboard",
     "breadcrumb_title": "Dashboard",
     "eyebrow": "KONTO",
     "tabs": { "models": "3D-Modelle", "gear_configs": "Getriebe", "submissions": "Einreichungen", "selling": "Verkauf", "purchases": "Käufe" },
@@ -129,7 +129,7 @@
   "it": {
     "title": "Dashboard - Classic Mini DIY",
     "description": "Gestisci i tuoi modelli 3D, configurazioni ingranaggi e proposte all'archivio.",
-    "hero_title": "La Tua Dashboard",
+    "hero_title": "Dashboard",
     "breadcrumb_title": "Dashboard",
     "eyebrow": "ACCOUNT",
     "tabs": { "models": "Modelli 3D", "gear_configs": "Ingranaggi", "submissions": "Proposte", "selling": "Vendite", "purchases": "Acquisti" },
@@ -142,7 +142,7 @@
   "pt": {
     "title": "Painel - Classic Mini DIY",
     "description": "Gerencie seus modelos 3D, configurações de engrenagens e envios ao arquivo.",
-    "hero_title": "Seu Painel",
+    "hero_title": "Painel",
     "breadcrumb_title": "Painel",
     "eyebrow": "CONTA",
     "tabs": { "models": "Modelos 3D", "gear_configs": "Engrenagens", "submissions": "Envios", "selling": "Vendas", "purchases": "Compras" },
@@ -155,7 +155,7 @@
   "ru": {
     "title": "Панель управления - Classic Mini DIY",
     "description": "Управляйте 3D-моделями, конфигурациями передач и заявками в архив.",
-    "hero_title": "Ваша панель управления",
+    "hero_title": "Панель управления",
     "breadcrumb_title": "Панель управления",
     "eyebrow": "АККАУНТ",
     "tabs": { "models": "3D-модели", "gear_configs": "Передачи", "submissions": "Заявки", "selling": "Продажи", "purchases": "Покупки" },
@@ -181,7 +181,7 @@
   "zh": {
     "title": "仪表板 - Classic Mini DIY",
     "description": "管理您的 3D 模型、已保存的齿轮配置和档案提交。",
-    "hero_title": "您的仪表板",
+    "hero_title": "仪表板",
     "breadcrumb_title": "仪表板",
     "eyebrow": "账户",
     "tabs": { "models": "3D模型", "gear_configs": "齿轮配置", "submissions": "提交", "selling": "销售", "purchases": "购买" },
@@ -194,7 +194,7 @@
   "ko": {
     "title": "대시보드 - Classic Mini DIY",
     "description": "3D 모델, 저장된 기어 구성, 아카이브 제출을 관리하세요.",
-    "hero_title": "내 대시보드",
+    "hero_title": "대시보드",
     "breadcrumb_title": "대시보드",
     "eyebrow": "계정",
     "tabs": { "models": "3D 모델", "gear_configs": "기어 구성", "submissions": "제출", "selling": "판매", "purchases": "구매" },
