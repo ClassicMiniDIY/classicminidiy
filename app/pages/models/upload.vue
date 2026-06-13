@@ -1,5 +1,11 @@
 <script setup lang="ts">
   import { HERO_TYPES } from '~~/data/models/generic';
+  import { MODEL_FILE_EXTS } from '~~/data/models/model-library';
+
+  // Restrict the native file picker to supported model formats (derived from the
+  // canonical list). addFiles() still re-validates for drag-drop / "All files".
+  const FILE_ACCEPT = MODEL_FILE_EXTS.map((e) => `.${e}`).join(',');
+  const SUPPORTED_FORMATS = MODEL_FILE_EXTS.map((e) => e.toUpperCase()).join(' · ');
 
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
@@ -402,7 +408,8 @@
             >
               <i class="fas fa-cloud-arrow-up text-3xl opacity-50"></i>
               <p class="mt-2 text-sm">{{ t('step2.dropzone') }}</p>
-              <input ref="fileInput" type="file" multiple class="hidden" @change="onFilePick" />
+              <p class="mt-1 text-xs opacity-50">{{ SUPPORTED_FORMATS }}</p>
+              <input ref="fileInput" type="file" :accept="FILE_ACCEPT" multiple class="hidden" @change="onFilePick" />
             </div>
             <ul v-if="w.files.value.length" class="space-y-2">
               <li
