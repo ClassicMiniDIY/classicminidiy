@@ -208,7 +208,9 @@
       "documents_desc": "Digitised workshop manuals, parts catalogues, and brochures.",
       "electrical_diagrams_desc": "Wiring diagrams by year and circuit, positive and negative earth.",
       "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
-      "color_picker_desc": "Paint codes and original swatches from the factory archive."
+      "color_picker_desc": "Paint codes and original swatches from the factory archive.",
+      "models": "3D Models",
+      "models_desc": "Community 3D-printable parts with print settings and assembly guides."
     },
     "eyebrow": "THE ARCHIVE"
   },
@@ -261,7 +263,9 @@
       "documents_desc": "Manuales de taller digitalizados, catálogos de piezas y folletos.",
       "electrical_diagrams_desc": "Diagramas de cableado por año y circuito, masa positiva y negativa.",
       "wheel_library_desc": "Cada rueda montada en un Classic Mini, con offsets y fotos.",
-      "color_picker_desc": "Códigos de pintura y muestras originales del archivo de fábrica."
+      "color_picker_desc": "Códigos de pintura y muestras originales del archivo de fábrica.",
+      "models": "Modelos 3D",
+      "models_desc": "Piezas imprimibles en 3D de la comunidad con ajustes de impresión y guías de montaje."
     },
     "eyebrow": "EL ARCHIVO"
   },
@@ -314,7 +318,9 @@
       "documents_desc": "Manuels d'atelier numérisés, catalogues de pièces et brochures.",
       "electrical_diagrams_desc": "Schémas de câblage par année et par circuit, masse positive et négative.",
       "wheel_library_desc": "Chaque jante jamais montée sur une Classic Mini, avec offsets et photos.",
-      "color_picker_desc": "Codes de peinture et nuanciers originaux des archives d'usine."
+      "color_picker_desc": "Codes de peinture et nuanciers originaux des archives d'usine.",
+      "models": "Modèles 3D",
+      "models_desc": "Pièces imprimables en 3D de la communauté avec réglages d'impression et guides de montage."
     },
     "eyebrow": "LES ARCHIVES"
   },
@@ -367,7 +373,9 @@
       "documents_desc": "Manuali d'officina digitalizzati, cataloghi ricambi e brochure.",
       "electrical_diagrams_desc": "Schemi di cablaggio per anno e circuito, massa positiva e negativa.",
       "wheel_library_desc": "Ogni cerchio mai montato su una Classic Mini, con offset e foto.",
-      "color_picker_desc": "Codici colore e campioni originali dagli archivi di fabbrica."
+      "color_picker_desc": "Codici colore e campioni originali dagli archivi di fabbrica.",
+      "models": "Modelli 3D",
+      "models_desc": "Parti stampabili in 3D della comunità con impostazioni di stampa e guide di montaggio."
     },
     "eyebrow": "L'ARCHIVIO"
   },
@@ -420,7 +428,9 @@
       "documents_desc": "Digitalisierte Werkstatthandbücher, Teilekataloge und Broschüren.",
       "electrical_diagrams_desc": "Schaltpläne nach Baujahr und Stromkreis, Plus- und Minus-Masse.",
       "wheel_library_desc": "Jedes jemals an einem Classic Mini montierte Rad, mit Offsets und Fotos.",
-      "color_picker_desc": "Lackcodes und Originalmuster aus dem Werksarchiv."
+      "color_picker_desc": "Lackcodes und Originalmuster aus dem Werksarchiv.",
+      "models": "3D-Modelle",
+      "models_desc": "3D-druckbare Teile aus der Community mit Druckeinstellungen und Montageanleitungen."
     },
     "eyebrow": "DAS ARCHIV"
   },
@@ -473,7 +483,9 @@
       "documents_desc": "Manuais de oficina digitalizados, catálogos de peças e brochuras.",
       "electrical_diagrams_desc": "Diagramas de fiação por ano e circuito, massa positiva e negativa.",
       "wheel_library_desc": "Cada roda já montada num Classic Mini, com offsets e fotos.",
-      "color_picker_desc": "Códigos de pintura e amostras originais do arquivo de fábrica."
+      "color_picker_desc": "Códigos de pintura e amostras originais do arquivo de fábrica.",
+      "models": "Modelos 3D",
+      "models_desc": "Peças imprimíveis em 3D da comunidade com configurações de impressão e guias de montagem."
     },
     "eyebrow": "O ARQUIVO"
   },
@@ -526,7 +538,9 @@
       "documents_desc": "Оцифрованные мастерские руководства, каталоги запчастей и брошюры.",
       "electrical_diagrams_desc": "Электрические схемы по годам и контурам, плюс- и минус-масса.",
       "wheel_library_desc": "Каждое колесо, когда-либо устанавливавшееся на Classic Mini, с вылетами и фото.",
-      "color_picker_desc": "Цветовые коды и оригинальные образцы из заводского архива."
+      "color_picker_desc": "Цветовые коды и оригинальные образцы из заводского архива.",
+      "models": "3D-модели",
+      "models_desc": "Печатаемые на 3D-принтере детали от сообщества с настройками печати и руководствами по сборке."
     },
     "eyebrow": "АРХИВ"
   },
@@ -579,7 +593,9 @@
       "documents_desc": "デジタル化されたワークショップマニュアル、パーツカタログ、ブローシャー。",
       "electrical_diagrams_desc": "年式と回路別の配線図、プラスアースとマイナスアース。",
       "wheel_library_desc": "Classic Miniに装着された全てのホイール、オフセットと写真付き。",
-      "color_picker_desc": "工場アーカイブからの塗装コードとオリジナルスウォッチ。"
+      "color_picker_desc": "工場アーカイブからの塗装コードとオリジナルスウォッチ。",
+      "models": "3Dモデル",
+      "models_desc": "印刷設定と組み立てガイド付きの、コミュニティによる3Dプリント部品。"
     },
     "eyebrow": "アーカイブ"
   },
@@ -632,7 +648,9 @@
       "documents_desc": "数字化的车间手册、零件目录和宣传册。",
       "electrical_diagrams_desc": "按年份和电路划分的接线图，正极搭铁与负极搭铁。",
       "wheel_library_desc": "每一只装在 Classic Mini 上的车轮，附带偏距和照片。",
-      "color_picker_desc": "来自工厂档案的漆色代码和原始色板。"
+      "color_picker_desc": "来自工厂档案的漆色代码和原始色板。",
+      "models": "3D模型",
+      "models_desc": "社区贡献的可3D打印零件，附打印设置和组装指南。"
     },
     "eyebrow": "档案"
   },
@@ -685,7 +703,9 @@
       "documents_desc": "디지털화된 워크숍 매뉴얼, 부품 카탈로그, 브로슈어.",
       "electrical_diagrams_desc": "연도와 회로별 배선도, 양극 접지와 음극 접지.",
       "wheel_library_desc": "Classic Mini에 장착된 모든 휠, 오프셋과 사진 포함.",
-      "color_picker_desc": "공장 아카이브의 도색 코드와 원본 스와치."
+      "color_picker_desc": "공장 아카이브의 도색 코드와 원본 스와치.",
+      "models": "3D 모델",
+      "models_desc": "인쇄 설정과 조립 가이드가 포함된 커뮤니티 3D 프린트 부품."
     },
     "eyebrow": "아카이브"
   }

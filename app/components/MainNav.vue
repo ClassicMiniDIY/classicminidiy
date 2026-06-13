@@ -263,11 +263,11 @@
                   to="/dashboard"
                   @click="
                     closeDropdowns();
-                    track('nav_item_clicked', { label: t('profile.submissions') });
+                    track('nav_item_clicked', { label: t('profile.dashboard') });
                   "
                 >
                   <i class="fas fa-file-lines"></i>
-                  {{ t('profile.submissions') }}
+                  {{ t('profile.dashboard') }}
                 </NuxtLink>
               </li>
               <li>
@@ -448,7 +448,7 @@
                   @click="isMobileMenuOpen = false"
                 >
                   <i class="fad fa-file-lines mr-2"></i>
-                  {{ t('profile.submissions') }}
+                  {{ t('profile.dashboard') }}
                 </NuxtLink>
                 <NuxtLink
                   to="/contribute"
