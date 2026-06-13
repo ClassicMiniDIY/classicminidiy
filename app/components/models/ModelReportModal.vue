@@ -5,6 +5,10 @@
    */
   const props = defineProps<{ modelId: string }>();
 
+  // Root is a fragment (trigger button + dialog), so attrs like `class` can't be
+  // auto-inherited — forward them to the trigger button explicitly.
+  defineOptions({ inheritAttrs: false });
+
   const { t } = useI18n();
   const supabase = useSupabase();
   const { isAuthenticated, user } = useAuth();
@@ -59,7 +63,7 @@
 </script>
 
 <template>
-  <button type="button" class="btn btn-ghost btn-xs gap-1 opacity-70" @click="openModal">
+  <button type="button" class="btn btn-ghost btn-xs gap-1 opacity-70" v-bind="$attrs" @click="openModal">
     <i class="fas fa-flag"></i> {{ t('reportButton') }}
   </button>
 
