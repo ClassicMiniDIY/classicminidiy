@@ -232,7 +232,7 @@
       "readyLabel": "You're set up to sell",
       "payoutsPending": "Payouts pending",
       "managePayouts": "Manage payouts on Stripe",
-      "refundNote": "Refunds and disputes are handled from your Stripe dashboard. The platform commission is not automatically refunded on a refund."
+      "refundNote": "Digital sales are final. Any goodwill refund is at your discretion via your Stripe dashboard — the buyer loses access and the platform commission is not returned. Disputes are also handled in Stripe."
     },
     "summary": {
       "title": "Sales summary",
@@ -265,7 +265,7 @@
       "readyLabel": "Estás listo para vender",
       "payoutsPending": "Pagos pendientes",
       "managePayouts": "Gestionar pagos en Stripe",
-      "refundNote": "Los reembolsos y disputas se gestionan desde tu panel de Stripe. La comisión de la plataforma no se reembolsa automáticamente."
+      "refundNote": "Las ventas digitales son definitivas. Cualquier reembolso por buena voluntad queda a tu discreción desde tu panel de Stripe: el comprador pierde el acceso y la comisión de la plataforma no se devuelve. Las disputas también se gestionan en Stripe."
     },
     "summary": {
       "title": "Resumen de ventas",
@@ -298,7 +298,7 @@
       "readyLabel": "Vous êtes prêt à vendre",
       "payoutsPending": "Paiements en attente",
       "managePayouts": "Gérer les paiements sur Stripe",
-      "refundNote": "Les remboursements et litiges sont gérés depuis votre tableau de bord Stripe. La commission de la plateforme n'est pas automatiquement remboursée en cas de remboursement."
+      "refundNote": "Les ventes numériques sont définitives. Tout remboursement commercial est à votre discrétion depuis votre tableau de bord Stripe : l'acheteur perd l'accès et la commission de la plateforme n'est pas restituée. Les litiges sont également gérés dans Stripe."
     },
     "summary": {
       "title": "Résumé des ventes",
@@ -331,7 +331,7 @@
       "readyLabel": "Du bist bereit zu verkaufen",
       "payoutsPending": "Auszahlungen ausstehend",
       "managePayouts": "Auszahlungen auf Stripe verwalten",
-      "refundNote": "Rückerstattungen und Streitigkeiten werden über dein Stripe-Dashboard abgewickelt. Die Plattformprovision wird bei einer Rückerstattung nicht automatisch zurückerstattet."
+      "refundNote": "Digitale Verkäufe sind endgültig. Eine Kulanz-Rückerstattung liegt in deinem Ermessen über dein Stripe-Dashboard – der Käufer verliert den Zugriff und die Plattformprovision wird nicht zurückerstattet. Streitigkeiten werden ebenfalls in Stripe bearbeitet."
     },
     "summary": {
       "title": "Verkaufsübersicht",
@@ -364,7 +364,7 @@
       "readyLabel": "Sei pronto a vendere",
       "payoutsPending": "Pagamenti in attesa",
       "managePayouts": "Gestisci i pagamenti su Stripe",
-      "refundNote": "I rimborsi e le controversie vengono gestiti dalla tua dashboard Stripe. La commissione della piattaforma non viene rimborsata automaticamente in caso di rimborso."
+      "refundNote": "Le vendite digitali sono definitive. Qualsiasi rimborso a tua discrezione avviene dalla tua dashboard Stripe: l'acquirente perde l'accesso e la commissione della piattaforma non viene restituita. Anche le controversie vengono gestite in Stripe."
     },
     "summary": {
       "title": "Riepilogo vendite",
@@ -397,7 +397,7 @@
       "readyLabel": "Você está pronto para vender",
       "payoutsPending": "Pagamentos pendentes",
       "managePayouts": "Gerenciar pagamentos no Stripe",
-      "refundNote": "Reembolsos e disputas são tratados no seu painel do Stripe. A comissão da plataforma não é reembolsada automaticamente em caso de reembolso."
+      "refundNote": "As vendas digitais são definitivas. Qualquer reembolso por cortesia fica a seu critério no painel do Stripe — o comprador perde o acesso e a comissão da plataforma não é devolvida. As disputas também são tratadas no Stripe."
     },
     "summary": {
       "title": "Resumo de vendas",
@@ -430,7 +430,7 @@
       "readyLabel": "Вы готовы к продажам",
       "payoutsPending": "Выплаты на рассмотрении",
       "managePayouts": "Управлять выплатами в Stripe",
-      "refundNote": "Возвраты и споры обрабатываются через ваш дашборд Stripe. Комиссия платформы не возвращается автоматически при возврате средств."
+      "refundNote": "Цифровые продажи являются окончательными. Любой возврат по доброй воле — на ваше усмотрение через дашборд Stripe: покупатель теряет доступ, а комиссия платформы не возвращается. Споры также обрабатываются в Stripe."
     },
     "summary": {
       "title": "Сводка продаж",
@@ -463,7 +463,7 @@
       "readyLabel": "販売の準備ができています",
       "payoutsPending": "支払い処理中",
       "managePayouts": "Stripeで支払いを管理",
-      "refundNote": "返金や紛争はStripeダッシュボードから処理されます。返金時にプラットフォーム手数料は自動的に返金されません。"
+      "refundNote": "デジタル販売は最終確定です。任意の返金はStripeダッシュボードからあなたの裁量で行えますが、購入者はアクセスを失い、プラットフォーム手数料は返金されません。紛争もStripeで処理されます。"
     },
     "summary": {
       "title": "販売サマリー",
@@ -496,7 +496,7 @@
       "readyLabel": "您已准备好销售",
       "payoutsPending": "付款待处理",
       "managePayouts": "在Stripe上管理付款",
-      "refundNote": "退款和争议从您的Stripe仪表板处理。退款时平台佣金不会自动退还。"
+      "refundNote": "数字销售为最终交易。任何善意退款由您自行通过 Stripe 仪表板处理——买家将失去访问权限，且平台佣金不予退还。争议同样在 Stripe 中处理。"
     },
     "summary": {
       "title": "销售摘要",
@@ -529,7 +529,7 @@
       "readyLabel": "판매 준비가 되었습니다",
       "payoutsPending": "지급 대기 중",
       "managePayouts": "Stripe에서 지급 관리",
-      "refundNote": "환불 및 분쟁은 Stripe 대시보드에서 처리됩니다. 환불 시 플랫폼 수수료는 자동으로 환불되지 않습니다."
+      "refundNote": "디지털 판매는 최종 확정입니다. 선의의 환불은 Stripe 대시보드에서 재량껏 처리할 수 있으며, 구매자는 접근 권한을 잃고 플랫폼 수수료는 반환되지 않습니다. 분쟁도 Stripe에서 처리됩니다."
     },
     "summary": {
       "title": "판매 요약",
