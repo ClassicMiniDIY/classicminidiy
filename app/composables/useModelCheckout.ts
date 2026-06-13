@@ -128,5 +128,47 @@ export function useModelCheckout() {
     }
   }
 
-  return { startCheckout, startSellerOnboarding, verifyPurchase, downloadFile };
+  /**
+   * Download every file as a single zip. There's no server-side bundling (zip
+   * bombs / egress), so we fetch each entitlement-gated file in the browser and
+   * zip them client-side with the lazily-imported client-zip. Each file still
+   * goes through the gated download route (auth + entitlement + count); the
+   * cross-origin S3 fetch that follows the 302 works because S3 CORS allows the
+   * site origin (same path the 3D viewer uses).
+   */
+  async function downloadAll(
+    modelId: string,
+    files: { id: string; fileName: string }[],
+    zipName: string
+  ): Promise<string | null> {
+    const headers = await authHeader();
+    if (!headers.Authorization) {
+      await navigateTo('/login');
+      return null;
+    }
+    if (!files.length) return null;
+    try {
+      const { downloadZip } = await import('client-zip');
+      const entries: { name: string; input: Blob }[] = [];
+      for (const f of files) {
+        const res = await fetch(`/api/models/${modelId}/files/${f.id}/download`, { headers });
+        if (!res.ok) throw new Error(`Failed to fetch ${f.fileName}`);
+        entries.push({ name: f.fileName, input: await res.blob() });
+      }
+      const zipBlob = await downloadZip(entries).blob();
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = zipName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      return null;
+    } catch (e: any) {
+      return errMessage(e, 'Could not download all files. Try downloading them individually.');
+    }
+  }
+
+  return { startCheckout, startSellerOnboarding, verifyPurchase, downloadFile, downloadAll };
 }
