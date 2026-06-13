@@ -63,6 +63,7 @@
     "@types/youtube": "^0.2.0",
     "axios": "^1.17.0",
     "better-sqlite3": "^12.10.0",
+    "client-zip": "^2.5.0",
     "core-js": "^3.49.0",
     "daisyui": "^5.5.20",
     "fuse.js": "^7.4.1",
