@@ -130,9 +130,12 @@
   <div class="container mx-auto px-4" v-if="model">
     <breadcrumb class="my-6" :page="model.title" :subpage="t('breadcrumb.subpage')" subpageHref="/models" />
 
-    <div class="grid grid-cols-12 gap-6">
-      <!-- Media column -->
-      <div class="col-span-12 lg:col-span-7 space-y-3">
+    <!-- MakerWorld-style layout: media + content on the left, a sticky action
+         panel on the right. On mobile the action panel sits right under the
+         media (explicit grid row placement) so Download is never buried. -->
+    <div class="grid grid-cols-12 gap-6 items-start">
+      <!-- MEDIA (mobile: first; desktop: top-left) -->
+      <div class="col-span-12 lg:col-span-8 lg:col-start-1 lg:row-start-1 space-y-3">
         <div v-if="activeMedia?.kind === '3d'">
           <ModelsModelViewer3D
             :key="activeMedia.file.id"
@@ -190,115 +193,141 @@
         </div>
       </div>
 
-      <!-- Info column -->
-      <div class="col-span-12 lg:col-span-5 space-y-4">
-        <div>
-          <h1 class="text-3xl font-bold leading-tight">{{ model.title }}</h1>
-          <p v-if="model.summary" class="mt-1 opacity-70">{{ model.summary }}</p>
-        </div>
-
-        <div v-if="model.author" class="flex items-center gap-2">
-          <img
-            v-if="model.author.avatarUrl"
-            :src="model.author.avatarUrl"
-            class="w-8 h-8 rounded-full object-cover"
-            :alt="model.author.displayName || t('author.fallback')"
-          />
-          <i v-else class="fas fa-circle-user text-2xl opacity-60"></i>
-          <span class="text-sm"
-            >{{ t('author.by') }} <strong>{{ model.author.displayName || model.author.username || t('author.anonymous') }}</strong></span
-          >
-        </div>
-
-        <!-- Stats + actions -->
-        <div class="flex items-center gap-3 flex-wrap">
-          <ModelsModelLikeButton :model-id="model.id" :initial-count="model.likeCount" />
-          <span class="text-sm opacity-70"><i class="fas fa-comment mr-1"></i>{{ model.commentCount }}</span>
-          <span class="text-sm opacity-70"><i class="fas fa-download mr-1"></i>{{ model.downloadCount }}</span>
-          <span v-if="model.versionCount > 1" class="text-sm opacity-70">
-            <i class="fas fa-code-branch mr-1"></i>v{{ model.version?.versionNumber }}
-          </span>
-          <ModelsModelReportModal :model-id="model.id" class="ml-auto" />
-        </div>
-
-        <ModelsSafetyDisclaimer :safety-critical="model.safetyCritical" />
-
-        <!-- License -->
-        <div class="space-y-2">
-          <ModelsLicenseBadge :license="model.license" />
-          <a
-            v-if="licenseTxtUrl"
-            :href="licenseTxtUrl"
-            target="_blank"
-            rel="noopener"
-            class="text-xs link link-hover opacity-70 block"
-          >
-            <i class="fas fa-file-lines mr-1"></i> {{ t('license.viewTxt') }}
-          </a>
-          <NuxtLink
-            v-if="model.license.isPaid"
-            to="/legal/paid-file-license"
-            class="text-xs link link-hover opacity-70 block"
-          >
-            <i class="fas fa-scale-balanced mr-1"></i> {{ t('license.paidTerms') }}
-          </NuxtLink>
-        </div>
-
-        <!-- Pricing + download -->
-        <div class="card bg-base-100 border border-base-300 shadow-sm">
-          <div class="card-body p-4 gap-3">
-            <div class="flex items-baseline justify-between gap-2">
-              <span class="text-2xl font-bold" :class="isFree ? 'text-success' : 'text-primary'">{{ price }}</span>
-              <span v-if="isOwner" class="badge badge-neutral badge-sm">{{ t('pricing.yourModel') }}</span>
-              <span v-else-if="entitled && !isFree" class="badge badge-success badge-sm">
-                <i class="fas fa-check mr-1"></i> {{ t('pricing.purchased') }}
-              </span>
-              <span v-else class="text-xs opacity-60">{{ t('pricing.buyersGetAllVersions') }}</span>
-            </div>
-
-            <div
-              v-if="purchaseNotice"
-              role="alert"
-              class="alert alert-soft py-2 text-sm"
-              :class="purchaseNotice.type === 'success' ? 'alert-success' : 'alert-info'"
-            >
-              <i class="fas" :class="purchaseNotice.type === 'success' ? 'fa-circle-check' : 'fa-circle-info'"></i>
-              <span>{{ purchaseNotice.text }}</span>
-            </div>
-
-            <template v-if="entitled">
-              <a
-                v-for="file in model.files"
-                :key="file.id"
-                :href="downloadUrl(file.id)"
-                class="btn btn-sm justify-start gap-2"
-                :class="file.isRenderable ? 'btn-primary' : 'btn-outline'"
-              >
-                <i class="fas" :class="fileExtIcon[file.fileExt] || 'fa-file'"></i>
-                <span class="truncate flex-1 text-left">{{ file.fileName }}</span>
-                <span class="text-xs opacity-70">{{ formatBytes(file.sizeBytes) }}</span>
-              </a>
-              <p v-if="!isAuthenticated" class="text-xs opacity-60">
-                <i class="fas fa-circle-info mr-1"></i> {{ t('download.signInRequired') }}
-              </p>
-            </template>
-
-            <ModelsPriceBox v-else :model="model" />
+      <!-- ACTION PANEL (mobile: right after media; desktop: right column, sticky,
+           spanning both rows so it stays beside the content below) -->
+      <div class="col-span-12 lg:col-span-4 lg:col-start-9 lg:row-start-1 lg:row-span-2">
+        <div class="lg:sticky lg:top-4 space-y-4">
+          <!-- Title + summary -->
+          <div>
+            <h1 class="text-2xl font-bold leading-tight">{{ model.title }}</h1>
+            <p v-if="model.summary" class="mt-1 text-sm opacity-70">{{ model.summary }}</p>
           </div>
-        </div>
 
-        <!-- Tips -->
-        <ModelsTipPicker v-if="acceptsTips && !isOwner" :model-id="model.id" :currency="model.currency" />
+          <!-- Author -->
+          <div v-if="model.author" class="flex items-center gap-2">
+            <img
+              v-if="model.author.avatarUrl"
+              :src="model.author.avatarUrl"
+              class="w-8 h-8 rounded-full object-cover"
+              :alt="model.author.displayName || t('author.fallback')"
+            />
+            <i v-else class="fas fa-circle-user text-2xl opacity-60"></i>
+            <span class="text-sm"
+              >{{ t('author.by') }} <strong>{{ model.author.displayName || model.author.username || t('author.anonymous') }}</strong></span
+            >
+          </div>
 
-        <!-- Tags -->
-        <div v-if="model.tags.length" class="flex flex-wrap gap-1.5">
-          <span v-for="tag in model.tags" :key="tag" class="badge badge-ghost badge-sm">#{{ tag }}</span>
+          <!-- Stats + report -->
+          <div class="flex items-center gap-3 flex-wrap text-sm">
+            <ModelsModelLikeButton :model-id="model.id" :initial-count="model.likeCount" />
+            <span class="opacity-70"><i class="fas fa-comment mr-1"></i>{{ model.commentCount }}</span>
+            <span class="opacity-70"><i class="fas fa-download mr-1"></i>{{ model.downloadCount }}</span>
+            <span v-if="model.versionCount > 1" class="opacity-70">
+              <i class="fas fa-code-branch mr-1"></i>v{{ model.version?.versionNumber }}
+            </span>
+            <ModelsModelReportModal :model-id="model.id" class="ml-auto" />
+          </div>
+
+          <!-- ACTION CARD: price + the hero Download / Buy CTA -->
+          <div class="card bg-base-100 border border-base-300 shadow-md">
+            <div class="card-body p-5 gap-4">
+              <div class="flex items-baseline justify-between gap-2">
+                <span class="text-3xl font-bold" :class="isFree ? 'text-success' : 'text-primary'">{{ price }}</span>
+                <span v-if="isOwner" class="badge badge-neutral badge-sm">{{ t('pricing.yourModel') }}</span>
+                <span v-else-if="entitled && !isFree" class="badge badge-success badge-sm">
+                  <i class="fas fa-check mr-1"></i> {{ t('pricing.purchased') }}
+                </span>
+                <span v-else class="text-xs opacity-60">{{ t('pricing.buyersGetAllVersions') }}</span>
+              </div>
+
+              <div
+                v-if="purchaseNotice"
+                role="alert"
+                class="alert alert-soft py-2 text-sm"
+                :class="purchaseNotice.type === 'success' ? 'alert-success' : 'alert-info'"
+              >
+                <i class="fas" :class="purchaseNotice.type === 'success' ? 'fa-circle-check' : 'fa-circle-info'"></i>
+                <span>{{ purchaseNotice.text }}</span>
+              </div>
+
+              <template v-if="entitled">
+                <template v-if="isAuthenticated">
+                  <!-- Single file: one big direct download button -->
+                  <a
+                    v-if="model.files.length === 1 && model.files[0]"
+                    :href="downloadUrl(model.files[0].id)"
+                    class="btn btn-primary btn-lg btn-block gap-2"
+                  >
+                    <i class="fas fa-download"></i> {{ t('download.cta') }}
+                  </a>
+                  <!-- Multiple files: a clear, full-width row per file -->
+                  <template v-else>
+                    <p class="text-xs font-semibold uppercase tracking-wide opacity-50">
+                      {{ t('download.filesHeading', { count: model.files.length }) }}
+                    </p>
+                    <a
+                      v-for="file in model.files"
+                      :key="file.id"
+                      :href="downloadUrl(file.id)"
+                      class="btn btn-block justify-between gap-2"
+                      :class="file.isRenderable ? 'btn-primary' : 'btn-outline'"
+                    >
+                      <span class="flex items-center gap-2 min-w-0">
+                        <i class="fas" :class="fileExtIcon[file.fileExt] || 'fa-file'"></i>
+                        <span class="truncate">{{ file.fileName }}</span>
+                      </span>
+                      <span class="flex items-center gap-2 shrink-0 text-xs opacity-70">
+                        {{ formatBytes(file.sizeBytes) }} <i class="fas fa-download"></i>
+                      </span>
+                    </a>
+                  </template>
+                </template>
+                <!-- Free model, not signed in: route to login instead of a raw 401 -->
+                <NuxtLink v-else to="/login" class="btn btn-primary btn-lg btn-block gap-2">
+                  <i class="fas fa-right-to-bracket"></i> {{ t('download.signInCta') }}
+                </NuxtLink>
+              </template>
+
+              <ModelsPriceBox v-else :model="model" />
+            </div>
+          </div>
+
+          <!-- Safety + license -->
+          <ModelsSafetyDisclaimer :safety-critical="model.safetyCritical" />
+          <div class="space-y-2">
+            <ModelsLicenseBadge :license="model.license" />
+            <a
+              v-if="licenseTxtUrl"
+              :href="licenseTxtUrl"
+              target="_blank"
+              rel="noopener"
+              class="text-xs link link-hover opacity-70 block"
+            >
+              <i class="fas fa-file-lines mr-1"></i> {{ t('license.viewTxt') }}
+            </a>
+            <NuxtLink
+              v-if="model.license.isPaid"
+              to="/legal/paid-file-license"
+              class="text-xs link link-hover opacity-70 block"
+            >
+              <i class="fas fa-scale-balanced mr-1"></i> {{ t('license.paidTerms') }}
+            </NuxtLink>
+          </div>
+
+          <!-- Tips -->
+          <ModelsTipPicker v-if="acceptsTips && !isOwner" :model-id="model.id" :currency="model.currency" />
+
+          <!-- Tags -->
+          <div v-if="model.tags.length" class="flex flex-wrap gap-1.5">
+            <span v-for="tag in model.tags" :key="tag" class="badge badge-ghost badge-sm">#{{ tag }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Description -->
-      <div v-if="model.description" class="col-span-12 lg:col-span-7">
-        <div class="card bg-base-100 shadow-sm border border-base-300">
+      <!-- CONTENT (below the media on the left column) -->
+      <div class="col-span-12 lg:col-span-8 lg:col-start-1 lg:row-start-2 space-y-6">
+        <!-- Description -->
+        <div v-if="model.description" class="card bg-base-100 shadow-sm border border-base-300">
           <div class="card-body">
             <h2 class="card-title text-lg"><i class="fas fa-align-left text-primary mr-1"></i> {{ t('about.heading') }}</h2>
             <p class="whitespace-pre-line text-sm leading-relaxed">{{ model.description }}</p>
@@ -313,21 +342,13 @@
             </a>
           </div>
         </div>
-      </div>
 
-      <!-- Spec sidebar -->
-      <div class="col-span-12 lg:col-span-5 space-y-6">
         <ModelsModelPrintSettings :settings="model.version?.printSettings ?? null" />
-      </div>
-
-      <div class="col-span-12 lg:col-span-7 space-y-6">
         <ModelsModelHardwareBom :items="model.version?.hardwareBom ?? []" />
         <ModelsModelAssembly :assembly="model.version?.assembly ?? null" />
-      </div>
 
-      <!-- Changelog -->
-      <div v-if="model.version?.changelog" class="col-span-12 lg:col-span-5">
-        <div class="card bg-base-100 shadow-sm border border-base-300">
+        <!-- Changelog -->
+        <div v-if="model.version?.changelog" class="card bg-base-100 shadow-sm border border-base-300">
           <div class="card-body">
             <h3 class="card-title text-lg">
               <i class="fas fa-code-branch text-primary mr-1"></i> {{ t('changelog.heading', { version: model.version.versionNumber }) }}
@@ -335,16 +356,15 @@
             <p class="whitespace-pre-line text-sm opacity-80">{{ model.version.changelog }}</p>
           </div>
         </div>
-      </div>
 
-      <!-- Comments -->
-      <div class="col-span-12 lg:col-span-8">
+        <!-- Comments -->
         <ModelsModelComments :model-id="model.id" />
       </div>
+    </div>
 
-      <div class="col-span-12 md:col-span-10 md:col-start-2 pb-10 pt-4">
-        <patreon-card size="large" />
-      </div>
+    <!-- Support -->
+    <div class="md:w-10/12 md:mx-auto pb-10 pt-6">
+      <patreon-card size="large" />
     </div>
   </div>
 </template>
@@ -369,7 +389,9 @@
       "buyersGetAllVersions": "buyers get every version"
     },
     "download": {
-      "signInRequired": "You'll need to sign in to download."
+      "cta": "Download",
+      "signInCta": "Sign in to download",
+      "filesHeading": "Files ({count})"
     },
     "notice": {
       "purchaseComplete": "Purchase complete — your files are unlocked below.",
@@ -408,7 +430,9 @@
       "buyersGetAllVersions": "los compradores obtienen todas las versiones"
     },
     "download": {
-      "signInRequired": "Debes iniciar sesión para descargar."
+      "cta": "Descargar",
+      "signInCta": "Inicia sesión para descargar",
+      "filesHeading": "Archivos ({count})"
     },
     "notice": {
       "purchaseComplete": "Compra completada — tus archivos están desbloqueados abajo.",
@@ -447,7 +471,9 @@
       "buyersGetAllVersions": "les acheteurs obtiennent toutes les versions"
     },
     "download": {
-      "signInRequired": "Vous devez vous connecter pour télécharger."
+      "cta": "Télécharger",
+      "signInCta": "Connectez-vous pour télécharger",
+      "filesHeading": "Fichiers ({count})"
     },
     "notice": {
       "purchaseComplete": "Achat effectué — vos fichiers sont déverrouillés ci-dessous.",
@@ -486,7 +512,9 @@
       "buyersGetAllVersions": "Käufer erhalten alle Versionen"
     },
     "download": {
-      "signInRequired": "Zum Herunterladen musst du dich anmelden."
+      "cta": "Herunterladen",
+      "signInCta": "Zum Herunterladen anmelden",
+      "filesHeading": "Dateien ({count})"
     },
     "notice": {
       "purchaseComplete": "Kauf abgeschlossen — deine Dateien sind unten freigeschaltet.",
@@ -525,7 +553,9 @@
       "buyersGetAllVersions": "gli acquirenti ricevono ogni versione"
     },
     "download": {
-      "signInRequired": "Devi accedere per scaricare."
+      "cta": "Scarica",
+      "signInCta": "Accedi per scaricare",
+      "filesHeading": "File ({count})"
     },
     "notice": {
       "purchaseComplete": "Acquisto completato — i tuoi file sono sbloccati qui sotto.",
@@ -564,7 +594,9 @@
       "buyersGetAllVersions": "compradores recebem todas as versões"
     },
     "download": {
-      "signInRequired": "Você precisa fazer login para baixar."
+      "cta": "Baixar",
+      "signInCta": "Entre para baixar",
+      "filesHeading": "Arquivos ({count})"
     },
     "notice": {
       "purchaseComplete": "Compra concluída — seus arquivos estão desbloqueados abaixo.",
@@ -603,7 +635,9 @@
       "buyersGetAllVersions": "покупатели получают все версии"
     },
     "download": {
-      "signInRequired": "Для загрузки необходимо войти в аккаунт."
+      "cta": "Скачать",
+      "signInCta": "Войдите, чтобы скачать",
+      "filesHeading": "Файлы ({count})"
     },
     "notice": {
       "purchaseComplete": "Покупка завершена — ваши файлы разблокированы ниже.",
@@ -642,7 +676,9 @@
       "buyersGetAllVersions": "購入者はすべてのバージョンを取得できます"
     },
     "download": {
-      "signInRequired": "ダウンロードにはサインインが必要です。"
+      "cta": "ダウンロード",
+      "signInCta": "ダウンロードするにはサインイン",
+      "filesHeading": "ファイル ({count})"
     },
     "notice": {
       "purchaseComplete": "購入完了 — ファイルは以下でダウンロードできます。",
@@ -681,7 +717,9 @@
       "buyersGetAllVersions": "购买者可获得所有版本"
     },
     "download": {
-      "signInRequired": "下载需要登录。"
+      "cta": "下载",
+      "signInCta": "登录以下载",
+      "filesHeading": "文件 ({count})"
     },
     "notice": {
       "purchaseComplete": "购买完成 — 您的文件已在下方解锁。",
@@ -720,7 +758,9 @@
       "buyersGetAllVersions": "구매자는 모든 버전을 받습니다"
     },
     "download": {
-      "signInRequired": "다운로드하려면 로그인이 필요합니다."
+      "cta": "다운로드",
+      "signInCta": "다운로드하려면 로그인",
+      "filesHeading": "파일 ({count})"
     },
     "notice": {
       "purchaseComplete": "구매 완료 — 파일이 아래에서 잠금 해제되었습니다.",
