@@ -97,5 +97,36 @@ export function useModelCheckout() {
     }
   }
 
-  return { startCheckout, startSellerOnboarding, verifyPurchase };
+  /**
+   * Download a model file. A plain <a href> can't authenticate (the Supabase
+   * session is in localStorage, not a cookie), so fetch the route with the
+   * Bearer header, get the short-lived presigned URL, and trigger the download
+   * from JS. Returns an error message on failure, or null on success.
+   */
+  async function downloadFile(modelId: string, fileId: string): Promise<string | null> {
+    const headers = await authHeader();
+    if (!headers.Authorization) {
+      await navigateTo('/login');
+      return null;
+    }
+    try {
+      const res = await $fetch<{ url?: string }>(`/api/models/${modelId}/files/${fileId}/download?json=1`, {
+        headers,
+      });
+      if (!res?.url) return 'Could not start the download. Please try again.';
+      // The presigned URL carries Content-Disposition: attachment, so a click on
+      // a transient anchor downloads it without navigating away from the page.
+      const a = document.createElement('a');
+      a.href = res.url;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return null;
+    } catch (e: any) {
+      return errMessage(e, 'Could not start the download. Please try again.');
+    }
+  }
+
+  return { startCheckout, startSellerOnboarding, verifyPurchase, downloadFile };
 }

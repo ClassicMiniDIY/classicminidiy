@@ -110,13 +110,23 @@ export default defineEventHandler(async (event) => {
     console.error('[models/download] failed to record download:', dlError.message);
   }
 
-  const disposition = getQuery(event).disposition === 'inline' ? 'inline' : 'attachment';
+  const query = getQuery(event);
+  const disposition = query.disposition === 'inline' ? 'inline' : 'attachment';
   const url = await createModelDownloadUrl({
     key: file.s3_key,
     fileName: file.file_name,
     disposition,
     expiresInSeconds: 60,
   });
+
+  // The Supabase session lives in localStorage, so a plain <a href> navigation
+  // can't carry the Bearer token (it 401s). `?json=1` lets the client fetch this
+  // route WITH the Authorization header and receive the short-lived presigned URL
+  // to trigger the download from JS. The default 302 stays for the 3D viewer,
+  // which fetches with the header and follows the redirect.
+  if (query.json) {
+    return { url, fileName: file.file_name };
+  }
 
   return sendRedirect(event, url, 302);
 });

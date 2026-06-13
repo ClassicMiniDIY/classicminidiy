@@ -26,7 +26,12 @@
 
   const ext = computed(() => props.fileExt.toLowerCase());
   const inlineUrl = computed(() => `/api/models/${props.modelId}/files/${props.fileId}/download?disposition=inline`);
-  const downloadUrl = computed(() => `/api/models/${props.modelId}/files/${props.fileId}/download`);
+
+  const supabase = useSupabase();
+  const { downloadFile } = useModelCheckout();
+  function triggerDownload() {
+    return downloadFile(props.modelId, props.fileId);
+  }
 
   // three.js handles kept outside reactivity to avoid proxying the WebGL graph.
   let cleanup: (() => void) | null = null;
@@ -46,7 +51,14 @@
       const THREE = await import('three');
       const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js');
 
-      const res = await fetch(inlineUrl.value, { credentials: 'include' });
+      // Session is in localStorage, so send the access token explicitly (a bare
+      // fetch wouldn't authenticate and the route would 401).
+      const { data: s } = await supabase.auth.getSession();
+      const token = s.session?.access_token;
+      const res = await fetch(inlineUrl.value, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
+      });
       if (!res.ok) {
         if (res.status === 401) throw new Error(t('errSignIn'));
         if (res.status === 403) throw new Error(t('errPurchase'));
@@ -179,7 +191,7 @@
       <p class="text-sm opacity-70">
         {{ t('tooLarge', { size: formatBytes(sizeBytes) }) }}
       </p>
-      <a :href="downloadUrl" class="btn btn-primary btn-sm"><i class="fas fa-download mr-1"></i> {{ t('downloadToView') }}</a>
+      <button type="button" class="btn btn-primary btn-sm" @click="triggerDownload"><i class="fas fa-download mr-1"></i> {{ t('downloadToView') }}</button>
     </div>
 
     <!-- Unsupported -->
@@ -191,7 +203,7 @@
       <p class="text-sm opacity-70">
         {{ t('unsupported', { ext }) }}
       </p>
-      <a :href="downloadUrl" class="btn btn-primary btn-sm"><i class="fas fa-download mr-1"></i> {{ t('download') }}</a>
+      <button type="button" class="btn btn-primary btn-sm" @click="triggerDownload"><i class="fas fa-download mr-1"></i> {{ t('download') }}</button>
     </div>
 
     <!-- Error -->
@@ -201,7 +213,7 @@
     >
       <i class="fas fa-triangle-exclamation text-3xl text-warning"></i>
       <p class="text-sm opacity-80">{{ errorMsg }}</p>
-      <a :href="downloadUrl" class="btn btn-ghost btn-sm"><i class="fas fa-download mr-1"></i> {{ t('downloadInstead') }}</a>
+      <button type="button" class="btn btn-ghost btn-sm" @click="triggerDownload"><i class="fas fa-download mr-1"></i> {{ t('downloadInstead') }}</button>
     </div>
 
     <!-- Controls hint -->
