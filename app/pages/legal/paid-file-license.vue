@@ -116,8 +116,11 @@
       <h3 class="text-lg font-semibold mb-1">Payments &amp; refunds</h3>
       <p class="mb-4">
         Payment is processed by Stripe directly to the Creator, who is the merchant of record. Classic Mini DIY retains
-        a platform commission on each sale. Refund requests are handled by the Creator through Stripe; the platform
-        commission is not automatically refunded.
+        a platform commission on each sale. <strong>Digital files are delivered immediately, so all sales are final and
+        non-refundable except where a refund is required by law.</strong> By purchasing, you confirm that you want the
+        files made available immediately and, to the extent permitted by law, you waive any right of cancellation or
+        withdrawal. Any refund a Creator chooses to grant is at their sole discretion; the platform commission is not
+        refunded.
       </p>
 
       <h3 class="text-lg font-semibold mb-1">Termination</h3>

@@ -96,8 +96,11 @@
           <NuxtLink to="/legal/paid-file-license" class="link link-primary">Paid File License</NuxtLink>; you do not
           acquire ownership or copyright. A purchase entitles you to every version of that model, subject to Section 5
           (Moderation &amp; takedowns).</li>
-        <li>Refund requests are handled by the seller through Stripe. The platform commission is not automatically
-          refunded.</li>
+        <li><strong>All sales are final.</strong> Because models are digital files delivered immediately on purchase,
+          purchases are non-refundable except where a refund is required by law. By purchasing, you confirm that you
+          want the files made available to you immediately and, to the extent permitted by law, you waive any right of
+          cancellation or withdrawal. If a seller chooses to grant a refund at their sole discretion, they do so through
+          Stripe; the platform commission is not refunded.</li>
         <li>Free and tip-supported models are offered under the Creative Commons license shown on each model.</li>
         <li>You may not buy or sell content that you are not entitled to distribute, or use the marketplace for unlawful
           purposes.</li>

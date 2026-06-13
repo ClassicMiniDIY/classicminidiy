@@ -15,6 +15,10 @@
 
   const loading = ref(false);
   const error = ref<string | null>(null);
+  // Buyer must acknowledge that digital sales are final before purchasing — sets
+  // expectations and provides consent evidence for chargeback defense / the
+  // EU/UK immediate-delivery withdrawal waiver.
+  const acked = ref(false);
 
   function fmt(cents: number) {
     return new Intl.NumberFormat('en-US', {
@@ -58,7 +62,12 @@
       <p class="label">{{ t('pwyw.hint', { price: fmt(minCents) }) }}</p>
     </fieldset>
 
-    <button class="btn btn-primary w-full" :disabled="loading" @click="buy">
+    <label class="flex items-start gap-2 cursor-pointer text-xs opacity-80">
+      <input v-model="acked" type="checkbox" class="checkbox checkbox-xs checkbox-primary mt-0.5" />
+      <span>{{ t('finalSale') }}</span>
+    </label>
+
+    <button class="btn btn-primary w-full" :disabled="loading || !acked" @click="buy">
       <span v-if="loading" class="loading loading-spinner loading-sm"></span>
       <i v-else class="fas fa-cart-shopping mr-1"></i>
       <template v-if="model.pricingMode === 'fixed'">{{ t('buy.fixed', { price: fmt(model.priceCents ?? 0) }) }}</template>
@@ -88,7 +97,8 @@
     "error": {
       "minimum": "Minimum is {price}."
     },
-    "secure": "Secure checkout via Stripe. Files unlock instantly."
+    "secure": "Secure checkout via Stripe. Files unlock instantly.",
+    "finalSale": "I understand this is a digital download and that all sales are final."
   },
   "es": {
     "pwyw": {
@@ -102,7 +112,8 @@
     "error": {
       "minimum": "El mínimo es {price}."
     },
-    "secure": "Pago seguro a través de Stripe. Los archivos se desbloquean al instante."
+    "secure": "Pago seguro a través de Stripe. Los archivos se desbloquean al instante.",
+    "finalSale": "Entiendo que esta es una descarga digital y que todas las ventas son definitivas."
   },
   "fr": {
     "pwyw": {
@@ -116,7 +127,8 @@
     "error": {
       "minimum": "Le minimum est {price}."
     },
-    "secure": "Paiement sécurisé via Stripe. Les fichiers se déverrouillent instantanément."
+    "secure": "Paiement sécurisé via Stripe. Les fichiers se déverrouillent instantanément.",
+    "finalSale": "Je comprends qu'il s'agit d'un téléchargement numérique et que toutes les ventes sont définitives."
   },
   "de": {
     "pwyw": {
@@ -130,7 +142,8 @@
     "error": {
       "minimum": "Mindestbetrag ist {price}."
     },
-    "secure": "Sicherer Checkout über Stripe. Dateien werden sofort freigeschaltet."
+    "secure": "Sicherer Checkout über Stripe. Dateien werden sofort freigeschaltet.",
+    "finalSale": "Mir ist bewusst, dass dies ein digitaler Download ist und alle Verkäufe endgültig sind."
   },
   "it": {
     "pwyw": {
@@ -144,7 +157,8 @@
     "error": {
       "minimum": "Il minimo è {price}."
     },
-    "secure": "Pagamento sicuro tramite Stripe. I file si sbloccano immediatamente."
+    "secure": "Pagamento sicuro tramite Stripe. I file si sbloccano immediatamente.",
+    "finalSale": "Capisco che questo è un download digitale e che tutte le vendite sono definitive."
   },
   "pt": {
     "pwyw": {
@@ -158,7 +172,8 @@
     "error": {
       "minimum": "O mínimo é {price}."
     },
-    "secure": "Pagamento seguro via Stripe. Os arquivos são desbloqueados instantaneamente."
+    "secure": "Pagamento seguro via Stripe. Os arquivos são desbloqueados instantaneamente.",
+    "finalSale": "Entendo que este é um download digital e que todas as vendas são definitivas."
   },
   "ru": {
     "pwyw": {
@@ -172,7 +187,8 @@
     "error": {
       "minimum": "Минимальная сумма — {price}."
     },
-    "secure": "Безопасная оплата через Stripe. Файлы открываются мгновенно."
+    "secure": "Безопасная оплата через Stripe. Файлы открываются мгновенно.",
+    "finalSale": "Я понимаю, что это цифровая загрузка и все продажи окончательны, возврату не подлежат."
   },
   "ja": {
     "pwyw": {
@@ -186,7 +202,8 @@
     "error": {
       "minimum": "最低金額は{price}です。"
     },
-    "secure": "Stripeによる安全な決済。ファイルはすぐにアンロックされます。"
+    "secure": "Stripeによる安全な決済。ファイルはすぐにアンロックされます。",
+    "finalSale": "これはデジタルダウンロードであり、すべての販売は返金不可（最終確定）であることを理解しています。"
   },
   "zh": {
     "pwyw": {
@@ -200,7 +217,8 @@
     "error": {
       "minimum": "最低金额为 {price}。"
     },
-    "secure": "通过 Stripe 安全结账。文件立即解锁。"
+    "secure": "通过 Stripe 安全结账。文件立即解锁。",
+    "finalSale": "我了解这是数字下载商品，所有销售均为最终交易，恕不退款。"
   },
   "ko": {
     "pwyw": {
@@ -214,7 +232,8 @@
     "error": {
       "minimum": "최소 금액은 {price}입니다."
     },
-    "secure": "Stripe를 통한 안전한 결제. 파일이 즉시 잠금 해제됩니다."
+    "secure": "Stripe를 통한 안전한 결제. 파일이 즉시 잠금 해제됩니다.",
+    "finalSale": "이것이 디지털 다운로드이며 모든 판매가 환불 불가(최종)임을 이해합니다."
   }
 }
 </i18n>
