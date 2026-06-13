@@ -266,7 +266,7 @@
                     track('nav_item_clicked', { label: t('profile.dashboard') });
                   "
                 >
-                  <i class="fas fa-file-lines"></i>
+                  <i class="fas fa-gauge"></i>
                   {{ t('profile.dashboard') }}
                 </NuxtLink>
               </li>
@@ -447,7 +447,7 @@
                   class="btn btn-ghost btn-block justify-start font-bold"
                   @click="isMobileMenuOpen = false"
                 >
-                  <i class="fad fa-file-lines mr-2"></i>
+                  <i class="fad fa-gauge mr-2"></i>
                   {{ t('profile.dashboard') }}
                 </NuxtLink>
                 <NuxtLink
