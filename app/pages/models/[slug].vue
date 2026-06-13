@@ -8,7 +8,7 @@
   const slug = computed(() => String(route.params.slug));
   const { isAuthenticated, user } = useAuth();
   const supabase = useSupabase();
-  const { verifyPurchase, downloadFile } = useModelCheckout();
+  const { verifyPurchase, downloadFile, downloadAll } = useModelCheckout();
 
   const { data, error } = await useFetch<ModelDetail>(() => `/api/models/${slug.value}`);
   if (error.value) {
@@ -34,6 +34,29 @@
     const msg = await downloadFile(model.value.id, file.id);
     if (msg) downloadError.value = msg;
     downloading.value = null;
+  }
+
+  // Group the file list by kind (model | source | document) — Print files first,
+  // then Source & CAD, then Documents — so a multi-file model reads cleanly.
+  const FILE_GROUP_ORDER = ['model', 'source', 'document'] as const;
+  const fileGroups = computed(() => {
+    const files = model.value?.files ?? [];
+    const known = new Set<string>(FILE_GROUP_ORDER);
+    const groups = FILE_GROUP_ORDER.map((kind) => ({ kind, files: files.filter((f) => f.kind === kind) }));
+    const other = files.filter((f) => !known.has(f.kind));
+    if (other.length) groups.push({ kind: 'other' as any, files: other });
+    return groups.filter((g) => g.files.length > 0);
+  });
+
+  const downloadingAll = ref(false);
+  async function onDownloadAll() {
+    if (!model.value) return;
+    downloadError.value = null;
+    downloadingAll.value = true;
+    const files = model.value.files.map((f) => ({ id: f.id, fileName: f.fileName }));
+    const msg = await downloadAll(model.value.id, files, `${model.value.slug || 'model'}.zip`);
+    if (msg) downloadError.value = msg;
+    downloadingAll.value = false;
   }
 
   const isOwner = computed(() => !!user.value && model.value?.author?.id === user.value.id);
@@ -273,30 +296,43 @@
                     <i v-else class="fas fa-download"></i>
                     {{ t('download.cta') }} {{ model.files[0].fileExt.toUpperCase() }}
                   </button>
-                  <!-- Multiple files: a clear, full-width row per file -->
+                  <!-- Multiple files: one-click "Download all" zip + per-kind groups -->
                   <template v-else>
-                    <p class="text-xs font-semibold uppercase tracking-wide opacity-50">
-                      {{ t('download.filesHeading', { count: model.files.length }) }}
-                    </p>
                     <button
-                      v-for="file in model.files"
-                      :key="file.id"
                       type="button"
-                      class="btn btn-block justify-between gap-2"
-                      :class="file.isRenderable ? 'btn-primary' : 'btn-outline'"
-                      :disabled="downloading === file.id"
-                      @click="onDownload(file)"
+                      class="btn btn-primary btn-lg btn-block gap-2"
+                      :disabled="downloadingAll || downloading !== null"
+                      @click="onDownloadAll"
                     >
-                      <span class="flex items-center gap-2 min-w-0">
-                        <i class="fas" :class="fileExtIcon[file.fileExt] || 'fa-file'"></i>
-                        <span class="truncate">{{ file.fileName }}</span>
-                      </span>
-                      <span class="flex items-center gap-2 shrink-0 text-xs opacity-70">
-                        {{ formatBytes(file.sizeBytes) }}
-                        <span v-if="downloading === file.id" class="loading loading-spinner loading-xs"></span>
-                        <i v-else class="fas fa-download"></i>
-                      </span>
+                      <span v-if="downloadingAll" class="loading loading-spinner loading-sm"></span>
+                      <i v-else class="fas fa-file-zipper"></i>
+                      {{ t('download.all') }}
+                      <span class="text-sm font-normal opacity-70">· {{ model.files.length }}</span>
                     </button>
+
+                    <div v-for="group in fileGroups" :key="group.kind" class="space-y-1.5">
+                      <p class="text-xs font-semibold uppercase tracking-wide opacity-50">
+                        {{ t(`download.group.${group.kind}`) }}
+                      </p>
+                      <button
+                        v-for="file in group.files"
+                        :key="file.id"
+                        type="button"
+                        class="btn btn-outline btn-block justify-between gap-2"
+                        :disabled="downloading === file.id || downloadingAll"
+                        @click="onDownload(file)"
+                      >
+                        <span class="flex items-center gap-2 min-w-0">
+                          <i class="fas" :class="fileExtIcon[file.fileExt] || 'fa-file'"></i>
+                          <span class="truncate">{{ file.fileName }}</span>
+                        </span>
+                        <span class="flex items-center gap-2 shrink-0 text-xs opacity-70">
+                          {{ formatBytes(file.sizeBytes) }}
+                          <span v-if="downloading === file.id" class="loading loading-spinner loading-xs"></span>
+                          <i v-else class="fas fa-download"></i>
+                        </span>
+                      </button>
+                    </div>
                   </template>
                   <div v-if="downloadError" role="alert" class="alert alert-error alert-soft py-2 text-sm">
                     <i class="fas fa-circle-exclamation"></i><span>{{ downloadError }}</span>
@@ -418,7 +454,9 @@
     "download": {
       "cta": "Download",
       "signInCta": "Sign in to download",
-      "filesHeading": "Files ({count})"
+      "filesHeading": "Files ({count})",
+      "all": "Download all",
+      "group": { "model": "Print files", "source": "Source & CAD", "document": "Documents", "other": "Other files" }
     },
     "notice": {
       "purchaseComplete": "Purchase complete — your files are unlocked below.",
@@ -460,7 +498,9 @@
     "download": {
       "cta": "Descargar",
       "signInCta": "Inicia sesión para descargar",
-      "filesHeading": "Archivos ({count})"
+      "filesHeading": "Archivos ({count})",
+      "all": "Descargar todo",
+      "group": { "model": "Archivos de impresión", "source": "Fuente y CAD", "document": "Documentos", "other": "Otros archivos" }
     },
     "notice": {
       "purchaseComplete": "Compra completada — tus archivos están desbloqueados abajo.",
@@ -502,7 +542,9 @@
     "download": {
       "cta": "Télécharger",
       "signInCta": "Connectez-vous pour télécharger",
-      "filesHeading": "Fichiers ({count})"
+      "filesHeading": "Fichiers ({count})",
+      "all": "Tout télécharger",
+      "group": { "model": "Fichiers d'impression", "source": "Source et CAO", "document": "Documents", "other": "Autres fichiers" }
     },
     "notice": {
       "purchaseComplete": "Achat effectué — vos fichiers sont déverrouillés ci-dessous.",
@@ -544,7 +586,9 @@
     "download": {
       "cta": "Herunterladen",
       "signInCta": "Zum Herunterladen anmelden",
-      "filesHeading": "Dateien ({count})"
+      "filesHeading": "Dateien ({count})",
+      "all": "Alle herunterladen",
+      "group": { "model": "Druckdateien", "source": "Quelle & CAD", "document": "Dokumente", "other": "Weitere Dateien" }
     },
     "notice": {
       "purchaseComplete": "Kauf abgeschlossen — deine Dateien sind unten freigeschaltet.",
@@ -586,7 +630,9 @@
     "download": {
       "cta": "Scarica",
       "signInCta": "Accedi per scaricare",
-      "filesHeading": "File ({count})"
+      "filesHeading": "File ({count})",
+      "all": "Scarica tutto",
+      "group": { "model": "File di stampa", "source": "Sorgente e CAD", "document": "Documenti", "other": "Altri file" }
     },
     "notice": {
       "purchaseComplete": "Acquisto completato — i tuoi file sono sbloccati qui sotto.",
@@ -628,7 +674,9 @@
     "download": {
       "cta": "Baixar",
       "signInCta": "Entre para baixar",
-      "filesHeading": "Arquivos ({count})"
+      "filesHeading": "Arquivos ({count})",
+      "all": "Baixar tudo",
+      "group": { "model": "Arquivos de impressão", "source": "Fonte e CAD", "document": "Documentos", "other": "Outros arquivos" }
     },
     "notice": {
       "purchaseComplete": "Compra concluída — seus arquivos estão desbloqueados abaixo.",
@@ -670,7 +718,9 @@
     "download": {
       "cta": "Скачать",
       "signInCta": "Войдите, чтобы скачать",
-      "filesHeading": "Файлы ({count})"
+      "filesHeading": "Файлы ({count})",
+      "all": "Скачать всё",
+      "group": { "model": "Файлы для печати", "source": "Исходники и CAD", "document": "Документы", "other": "Другие файлы" }
     },
     "notice": {
       "purchaseComplete": "Покупка завершена — ваши файлы разблокированы ниже.",
@@ -712,7 +762,9 @@
     "download": {
       "cta": "ダウンロード",
       "signInCta": "ダウンロードするにはサインイン",
-      "filesHeading": "ファイル ({count})"
+      "filesHeading": "ファイル ({count})",
+      "all": "すべてダウンロード",
+      "group": { "model": "印刷ファイル", "source": "ソース・CAD", "document": "ドキュメント", "other": "その他のファイル" }
     },
     "notice": {
       "purchaseComplete": "購入完了 — ファイルは以下でダウンロードできます。",
@@ -754,7 +806,9 @@
     "download": {
       "cta": "下载",
       "signInCta": "登录以下载",
-      "filesHeading": "文件 ({count})"
+      "filesHeading": "文件 ({count})",
+      "all": "全部下载",
+      "group": { "model": "打印文件", "source": "源文件与CAD", "document": "文档", "other": "其他文件" }
     },
     "notice": {
       "purchaseComplete": "购买完成 — 您的文件已在下方解锁。",
@@ -796,7 +850,9 @@
     "download": {
       "cta": "다운로드",
       "signInCta": "다운로드하려면 로그인",
-      "filesHeading": "파일 ({count})"
+      "filesHeading": "파일 ({count})",
+      "all": "모두 다운로드",
+      "group": { "model": "프린트 파일", "source": "소스 및 CAD", "document": "문서", "other": "기타 파일" }
     },
     "notice": {
       "purchaseComplete": "구매 완료 — 파일이 아래에서 잠금 해제되었습니다.",
