@@ -8,7 +8,7 @@
   const slug = computed(() => String(route.params.slug));
   const { isAuthenticated, user } = useAuth();
   const supabase = useSupabase();
-  const { verifyPurchase } = useModelCheckout();
+  const { verifyPurchase, downloadFile } = useModelCheckout();
 
   const { data, error } = await useFetch<ModelDetail>(() => `/api/models/${slug.value}`);
   if (error.value) {
@@ -23,8 +23,17 @@
     model.value?.version ? `/api/models/${model.value.id}/versions/${model.value.version.id}/license.txt` : null
   );
 
-  function downloadUrl(fileId: string) {
-    return `/api/models/${model.value?.id}/files/${fileId}/download`;
+  // Downloads go through an authed fetch (the session is in localStorage, so a
+  // bare <a href> can't carry the token) → presigned URL → browser download.
+  const downloadError = ref<string | null>(null);
+  const downloading = ref<string | null>(null);
+  async function onDownload(file: ModelFileInfo) {
+    if (!model.value) return;
+    downloadError.value = null;
+    downloading.value = file.id;
+    const msg = await downloadFile(model.value.id, file.id);
+    if (msg) downloadError.value = msg;
+    downloading.value = null;
   }
 
   const isOwner = computed(() => !!user.value && model.value?.author?.id === user.value.id);
@@ -252,35 +261,46 @@
 
               <template v-if="entitled">
                 <template v-if="isAuthenticated">
-                  <!-- Single file: one big direct download button -->
-                  <a
+                  <!-- Single file: one big "Download <FORMAT>" button -->
+                  <button
                     v-if="model.files.length === 1 && model.files[0]"
-                    :href="downloadUrl(model.files[0].id)"
+                    type="button"
                     class="btn btn-primary btn-lg btn-block gap-2"
+                    :disabled="downloading === model.files[0].id"
+                    @click="onDownload(model.files[0])"
                   >
-                    <i class="fas fa-download"></i> {{ t('download.cta') }}
-                  </a>
+                    <span v-if="downloading === model.files[0].id" class="loading loading-spinner loading-sm"></span>
+                    <i v-else class="fas fa-download"></i>
+                    {{ t('download.cta') }} {{ model.files[0].fileExt.toUpperCase() }}
+                  </button>
                   <!-- Multiple files: a clear, full-width row per file -->
                   <template v-else>
                     <p class="text-xs font-semibold uppercase tracking-wide opacity-50">
                       {{ t('download.filesHeading', { count: model.files.length }) }}
                     </p>
-                    <a
+                    <button
                       v-for="file in model.files"
                       :key="file.id"
-                      :href="downloadUrl(file.id)"
+                      type="button"
                       class="btn btn-block justify-between gap-2"
                       :class="file.isRenderable ? 'btn-primary' : 'btn-outline'"
+                      :disabled="downloading === file.id"
+                      @click="onDownload(file)"
                     >
                       <span class="flex items-center gap-2 min-w-0">
                         <i class="fas" :class="fileExtIcon[file.fileExt] || 'fa-file'"></i>
                         <span class="truncate">{{ file.fileName }}</span>
                       </span>
                       <span class="flex items-center gap-2 shrink-0 text-xs opacity-70">
-                        {{ formatBytes(file.sizeBytes) }} <i class="fas fa-download"></i>
+                        {{ formatBytes(file.sizeBytes) }}
+                        <span v-if="downloading === file.id" class="loading loading-spinner loading-xs"></span>
+                        <i v-else class="fas fa-download"></i>
                       </span>
-                    </a>
+                    </button>
                   </template>
+                  <div v-if="downloadError" role="alert" class="alert alert-error alert-soft py-2 text-sm">
+                    <i class="fas fa-circle-exclamation"></i><span>{{ downloadError }}</span>
+                  </div>
                 </template>
                 <!-- Free model, not signed in: route to login instead of a raw 401 -->
                 <NuxtLink v-else to="/login" class="btn btn-primary btn-lg btn-block gap-2">
@@ -292,26 +312,33 @@
             </div>
           </div>
 
-          <!-- Safety + license -->
+          <!-- Safety -->
           <ModelsSafetyDisclaimer :safety-critical="model.safetyCritical" />
-          <div class="space-y-2">
-            <ModelsLicenseBadge :license="model.license" />
-            <a
-              v-if="licenseTxtUrl"
-              :href="licenseTxtUrl"
-              target="_blank"
-              rel="noopener"
-              class="text-xs link link-hover opacity-70 block"
-            >
-              <i class="fas fa-file-lines mr-1"></i> {{ t('license.viewTxt') }}
-            </a>
-            <NuxtLink
-              v-if="model.license.isPaid"
-              to="/legal/paid-file-license"
-              class="text-xs link link-hover opacity-70 block"
-            >
-              <i class="fas fa-scale-balanced mr-1"></i> {{ t('license.paidTerms') }}
-            </NuxtLink>
+
+          <!-- License summary (MakerWorld-style: see the terms before downloading) -->
+          <div class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body p-4 gap-3">
+              <h3 class="text-xs font-semibold uppercase tracking-wide opacity-50">{{ t('license.heading') }}</h3>
+              <ModelsLicenseBadge :license="model.license" />
+              <div class="flex flex-col gap-1">
+                <a
+                  v-if="licenseTxtUrl"
+                  :href="licenseTxtUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-xs link link-hover opacity-70"
+                >
+                  <i class="fas fa-file-lines mr-1"></i> {{ t('license.viewTxt') }}
+                </a>
+                <NuxtLink
+                  v-if="model.license.isPaid"
+                  to="/legal/paid-file-license"
+                  class="text-xs link link-hover opacity-70"
+                >
+                  <i class="fas fa-scale-balanced mr-1"></i> {{ t('license.paidTerms') }}
+                </NuxtLink>
+              </div>
+            </div>
           </div>
 
           <!-- Tips -->
@@ -401,6 +428,7 @@
       "checkoutCancelled": "Checkout cancelled."
     },
     "license": {
+      "heading": "License",
       "viewTxt": "View LICENSE.txt",
       "paidTerms": "Paid File License terms"
     },
@@ -442,6 +470,7 @@
       "checkoutCancelled": "Pago cancelado."
     },
     "license": {
+      "heading": "Licencia",
       "viewTxt": "Ver LICENSE.txt",
       "paidTerms": "Términos de licencia de archivo de pago"
     },
@@ -483,6 +512,7 @@
       "checkoutCancelled": "Paiement annulé."
     },
     "license": {
+      "heading": "Licence",
       "viewTxt": "Voir LICENSE.txt",
       "paidTerms": "Conditions de licence fichier payant"
     },
@@ -524,6 +554,7 @@
       "checkoutCancelled": "Checkout abgebrochen."
     },
     "license": {
+      "heading": "Lizenz",
       "viewTxt": "LICENSE.txt ansehen",
       "paidTerms": "Lizenzbedingungen für kostenpflichtige Dateien"
     },
@@ -565,6 +596,7 @@
       "checkoutCancelled": "Checkout annullato."
     },
     "license": {
+      "heading": "Licenza",
       "viewTxt": "Visualizza LICENSE.txt",
       "paidTerms": "Termini della licenza file a pagamento"
     },
@@ -606,6 +638,7 @@
       "checkoutCancelled": "Checkout cancelado."
     },
     "license": {
+      "heading": "Licença",
       "viewTxt": "Ver LICENSE.txt",
       "paidTerms": "Termos da licença de arquivo pago"
     },
@@ -647,6 +680,7 @@
       "checkoutCancelled": "Оформление заказа отменено."
     },
     "license": {
+      "heading": "Лицензия",
       "viewTxt": "Просмотреть LICENSE.txt",
       "paidTerms": "Условия лицензии на платный файл"
     },
@@ -688,6 +722,7 @@
       "checkoutCancelled": "チェックアウトがキャンセルされました。"
     },
     "license": {
+      "heading": "ライセンス",
       "viewTxt": "LICENSE.txtを表示",
       "paidTerms": "有料ファイルライセンス条項"
     },
@@ -729,6 +764,7 @@
       "checkoutCancelled": "结账已取消。"
     },
     "license": {
+      "heading": "许可证",
       "viewTxt": "查看 LICENSE.txt",
       "paidTerms": "付费文件许可条款"
     },
@@ -770,6 +806,7 @@
       "checkoutCancelled": "결제가 취소되었습니다."
     },
     "license": {
+      "heading": "라이선스",
       "viewTxt": "LICENSE.txt 보기",
       "paidTerms": "유료 파일 라이선스 조항"
     },
