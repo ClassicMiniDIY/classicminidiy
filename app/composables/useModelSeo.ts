@@ -81,7 +81,7 @@ export function useModelSeo(opts: {
     const currency = (m.currency || 'usd').toUpperCase();
     const priceFor = () => {
       if (m.pricingMode === 'fixed' && m.priceCents != null) return (m.priceCents / 100).toFixed(2);
-      if (m.pricingMode === 'pwyw') return ((m.minPriceCents ?? 100) / 100).toFixed(2);
+      if (m.pricingMode === 'pwyw') return ((m.minPriceCents ?? 0) / 100).toFixed(2);
       return '0.00'; // free / tips
     };
     const authorName = m.author?.displayName || m.author?.username || null;
@@ -111,7 +111,9 @@ export function useModelSeo(opts: {
     link: [{ rel: 'canonical', href: canonical.value }],
     meta: tags.value.map((tag) => ({ property: 'article:tag', content: tag })),
     script: jsonLd.value
-      ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(jsonLd.value) }]
+      ? // Escape `<` so a title/description containing `</script>` can't break out
+        // of the JSON-LD block (XSS).
+        [{ type: 'application/ld+json', innerHTML: JSON.stringify(jsonLd.value).replace(/</g, '\\u003c') }]
       : [],
   }));
 

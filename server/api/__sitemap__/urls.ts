@@ -22,10 +22,12 @@ export default defineSitemapEventHandler(async () => {
     return [];
   }
 
-  return (data ?? []).map((m) => ({
-    loc: `/models/${m.slug}`,
-    lastmod: m.updated_at,
-    changefreq: 'weekly' as const,
-    priority: 0.7,
-  }));
+  return (data ?? [])
+    .filter((m) => m.slug)
+    .map((m) => ({
+      loc: `/models/${m.slug}`,
+      lastmod: m.updated_at,
+      changefreq: 'weekly' as const,
+      priority: 0.7,
+    }));
 });
