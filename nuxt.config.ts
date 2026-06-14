@@ -199,6 +199,9 @@ export default defineNuxtConfig({
   },
 
   sitemap: {
+    // Dynamic source: published 3D Model Library listings (SSR routes the module
+    // can't auto-discover). See server/api/__sitemap__/urls.ts.
+    sources: ['/api/__sitemap__/urls'],
     xslColumns: [
       { label: 'URL', width: '50%' },
       { label: 'Last Modified', width: '25%' },
@@ -258,6 +261,7 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt',
     '@nuxtjs/sitemap',
     '@nuxtjs/robots',
+    'nuxt-og-image',
     '@nuxt/image',
     'nuxt-llms',
     '@nuxtjs/i18n',
