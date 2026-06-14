@@ -37,6 +37,9 @@
 
   async function load() {
     if (!import.meta.client || !user.value) {
+      // Clear on logout so the previous user's seller/sales state never lingers.
+      seller.value = null;
+      summary.value = [];
       loading.value = false;
       return;
     }

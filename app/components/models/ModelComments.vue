@@ -34,6 +34,7 @@
     if (!text || !user.value) return;
     posting.value = true;
     error.value = '';
+    pendingNote.value = false;
     try {
       const { data: row, error: e } = await supabase
         .from('model_comments')

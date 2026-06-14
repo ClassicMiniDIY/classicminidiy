@@ -13,14 +13,26 @@
   const liked = ref(false);
   const busy = ref(false);
 
-  onMounted(async () => {
-    if (!user.value) return;
-    const { count: c } = await supabase
-      .from('model_likes')
-      .select('id', { count: 'exact', head: true })
-      .eq('model_id', props.modelId)
-      .eq('user_id', user.value.id);
-    liked.value = (c ?? 0) > 0;
+  // The session restores asynchronously from localStorage, so user.value can be
+  // null at mount. Watch the id (client-only, via onMounted) so the liked state
+  // is fetched as soon as the session lands.
+  onMounted(() => {
+    watch(
+      () => user.value?.id,
+      async (userId) => {
+        if (!userId) {
+          liked.value = false;
+          return;
+        }
+        const { count: c } = await supabase
+          .from('model_likes')
+          .select('id', { count: 'exact', head: true })
+          .eq('model_id', props.modelId)
+          .eq('user_id', userId);
+        liked.value = (c ?? 0) > 0;
+      },
+      { immediate: true }
+    );
   });
 
   async function toggle() {
