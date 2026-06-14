@@ -75,6 +75,24 @@ export function isPricingMode(v: unknown): v is ModelPricingMode {
   return typeof v === 'string' && (MODEL_PRICING_MODES as readonly string[]).includes(v);
 }
 
+/**
+ * Force the price columns to match the pricing_mode so the DB's
+ * `valid_pricing_shape` check always holds, regardless of leftover client
+ * values: fixed → price only; pwyw → min (+ optional suggested); free/tips → none.
+ */
+export function normalizePricing(
+  mode: ModelPricingMode,
+  vals: { priceCents: number | null; minPriceCents: number | null; suggestedPriceCents: number | null }
+): { price_cents: number | null; min_price_cents: number | null; suggested_price_cents: number | null } {
+  if (mode === 'fixed') {
+    return { price_cents: vals.priceCents, min_price_cents: null, suggested_price_cents: null };
+  }
+  if (mode === 'pwyw') {
+    return { price_cents: null, min_price_cents: vals.minPriceCents, suggested_price_cents: vals.suggestedPriceCents };
+  }
+  return { price_cents: null, min_price_cents: null, suggested_price_cents: null };
+}
+
 /** Min price/tip floor in cents (Stripe economics; keystone §6). */
 export const MODEL_MIN_PRICE_CENTS = 100;
 

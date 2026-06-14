@@ -16,6 +16,7 @@ import { getServiceClient } from '../../utils/supabase';
 import {
   slugifyModelTitle,
   isPricingMode,
+  normalizePricing,
   MODEL_TITLE_MIN,
   MODEL_TITLE_MAX,
   MODEL_SUMMARY_MAX,
@@ -80,9 +81,11 @@ export default defineEventHandler(async (event) => {
       tags: cleanTags(body?.tags),
       license_code: licenseCode,
       pricing_mode: pricingMode,
-      price_cents: intOrNull(body?.priceCents),
-      min_price_cents: intOrNull(body?.minPriceCents),
-      suggested_price_cents: intOrNull(body?.suggestedPriceCents),
+      ...normalizePricing(pricingMode, {
+        priceCents: intOrNull(body?.priceCents),
+        minPriceCents: intOrNull(body?.minPriceCents),
+        suggestedPriceCents: intOrNull(body?.suggestedPriceCents),
+      }),
       safety_critical: body?.safetyCritical === true,
       source_url: sourceUrl,
       remix_of_model_id: remixOfModelId,
