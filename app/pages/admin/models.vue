@@ -3,7 +3,7 @@
 
   const supabase = useSupabase();
 
-  type Tab = 'queue' | 'reports' | 'sellers' | 'sales';
+  type Tab = 'queue' | 'library' | 'reports' | 'sellers' | 'sales';
   const tab = ref<Tab>('queue');
 
   const busy = ref<string | null>(null);
@@ -259,12 +259,100 @@
     disputed: 'badge-error',
   };
 
+  // ===================== ALL MODELS (library) =====================
+  const modelStatusTone: Record<string, string> = {
+    draft: 'badge-ghost',
+    pending: 'badge-warning',
+    published: 'badge-success',
+    rejected: 'badge-error',
+    flagged: 'badge-warning',
+    archived: 'badge-neutral',
+    removed: 'badge-error',
+  };
+  const LIBRARY_PAGE_SIZE = 20;
+  const library = ref<any[]>([]);
+  const libraryLoading = ref(false);
+  const libraryPage = ref(1);
+  const libraryTotal = ref(0);
+  const libraryStatus = ref('all');
+  const librarySearch = ref('');
+  const libraryPages = computed(() => Math.max(1, Math.ceil(libraryTotal.value / LIBRARY_PAGE_SIZE)));
+
+  async function loadLibrary() {
+    libraryLoading.value = true;
+    const from = (libraryPage.value - 1) * LIBRARY_PAGE_SIZE;
+    let q = supabase
+      .from('models')
+      .select(
+        'id, title, slug, status, pricing_mode, owner_id, current_version_id, download_count, like_count, purchase_count, created_at',
+        { count: 'exact' }
+      )
+      .order('created_at', { ascending: false })
+      .range(from, from + LIBRARY_PAGE_SIZE - 1);
+    if (libraryStatus.value !== 'all') q = q.eq('status', libraryStatus.value);
+    if (librarySearch.value.trim()) q = q.ilike('title', `%${librarySearch.value.trim()}%`);
+    const { data, count } = await q;
+    const rows = (data ?? []) as any[];
+    libraryTotal.value = count ?? 0;
+    const ownerIds = [...new Set(rows.map((r) => r.owner_id).filter(Boolean))];
+    const profiles: Record<string, any> = {};
+    if (ownerIds.length) {
+      const { data: profs } = await supabase.from('profiles').select('id, username, display_name').in('id', ownerIds);
+      for (const p of (profs ?? []) as any[]) profiles[p.id] = p;
+    }
+    library.value = rows.map((r) => ({ ...r, owner: profiles[r.owner_id] || null }));
+    libraryLoading.value = false;
+  }
+
+  function goLibraryPage(p: number) {
+    libraryPage.value = Math.min(Math.max(1, p), libraryPages.value);
+    loadLibrary();
+  }
+  watch(libraryStatus, () => {
+    libraryPage.value = 1;
+    if (loaded.library) loadLibrary();
+  });
+  let librarySearchTimer: ReturnType<typeof setTimeout> | null = null;
+  watch(librarySearch, () => {
+    if (librarySearchTimer) clearTimeout(librarySearchTimer);
+    librarySearchTimer = setTimeout(() => {
+      libraryPage.value = 1;
+      if (loaded.library) loadLibrary();
+    }, 350);
+  });
+
+  async function setStatus(m: any, status: 'published' | 'archived' | 'removed') {
+    busy.value = m.id;
+    try {
+      await $adminFetch('/api/admin/models/set-status', { method: 'POST', body: { modelId: m.id, status } });
+      m.status = status;
+      flash('success', status === 'published' ? 'Model shown' : status === 'archived' ? 'Model hidden' : 'Model removed');
+    } catch (e: any) {
+      flash('error', e?.data?.statusMessage || e?.statusMessage || 'Failed to update model');
+    }
+    busy.value = null;
+  }
+  const confirmRemove = ref<any | null>(null);
+  async function doRemove() {
+    const m = confirmRemove.value;
+    if (!m) return;
+    await setStatus(m, 'removed');
+    confirmRemove.value = null;
+  }
+
   // ----- lazy per-tab load -----
-  const loaded = reactive<Record<Tab, boolean>>({ queue: false, reports: false, sellers: false, sales: false });
+  const loaded = reactive<Record<Tab, boolean>>({
+    queue: false,
+    library: false,
+    reports: false,
+    sellers: false,
+    sales: false,
+  });
   async function ensureLoaded(t: Tab) {
     if (loaded[t]) return;
     loaded[t] = true;
     if (t === 'queue') await loadQueue();
+    else if (t === 'library') await loadLibrary();
     else if (t === 'reports') await loadReports();
     else if (t === 'sellers') await loadSellers();
     else await loadSales();
@@ -299,6 +387,9 @@
         <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'queue' }" @click="tab = 'queue'">
           <i class="fas fa-inbox"></i> Queue
           <span v-if="loaded.queue && queue.length" class="badge badge-warning badge-sm">{{ queue.length }}</span>
+        </button>
+        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'library' }" @click="tab = 'library'">
+          <i class="fas fa-cubes"></i> All models
         </button>
         <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'reports' }" @click="tab = 'reports'">
           <i class="fas fa-flag"></i> Reports
@@ -391,6 +482,121 @@
                   <i v-else class="fas fa-check mr-1"></i> Approve &amp; publish
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= ALL MODELS (library) ================= -->
+      <div v-show="tab === 'library'">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <label class="input input-sm">
+            <i class="fas fa-magnifying-glass opacity-50"></i>
+            <input v-model="librarySearch" type="search" placeholder="Search title…" aria-label="Search models" />
+          </label>
+          <select v-model="libraryStatus" class="select select-sm w-auto" aria-label="Filter by status">
+            <option value="all">All statuses</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived (hidden)</option>
+            <option value="pending">Pending</option>
+            <option value="draft">Draft</option>
+            <option value="rejected">Rejected</option>
+            <option value="flagged">Flagged</option>
+            <option value="removed">Removed</option>
+          </select>
+          <span class="text-sm opacity-60 ml-auto">{{ libraryTotal }} total</span>
+        </div>
+
+        <div v-if="libraryLoading" class="flex justify-center py-16">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+        <div v-else-if="library.length === 0" class="text-center py-16 opacity-60">
+          <i class="fas fa-cube text-5xl mb-3 block"></i>
+          <p class="font-semibold">No models match</p>
+        </div>
+        <div v-else class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Owner</th>
+                <th>Pricing</th>
+                <th>Status</th>
+                <th class="text-right">DL / ♥</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="m in library" :key="m.id" :class="{ 'opacity-50': m.status === 'removed' }">
+                <td>
+                  <div class="font-medium">{{ m.title }}</div>
+                  <NuxtLink
+                    v-if="m.status === 'published'"
+                    :to="`/models/${m.slug}`"
+                    target="_blank"
+                    class="text-xs link link-hover opacity-60"
+                  >
+                    /models/{{ m.slug }}
+                  </NuxtLink>
+                  <div v-else class="text-xs opacity-40 font-mono">{{ m.slug }}</div>
+                </td>
+                <td class="text-sm whitespace-nowrap">
+                  {{ m.owner?.display_name || m.owner?.username || m.owner_id.slice(0, 8) }}
+                </td>
+                <td><span class="badge badge-ghost badge-sm capitalize">{{ m.pricing_mode }}</span></td>
+                <td>
+                  <span class="badge badge-sm capitalize" :class="modelStatusTone[m.status] || 'badge-ghost'">{{ m.status }}</span>
+                </td>
+                <td class="text-right text-xs opacity-70 whitespace-nowrap">{{ m.download_count }} / {{ m.like_count }}</td>
+                <td class="text-right">
+                  <div class="flex justify-end items-center gap-1.5">
+                    <button
+                      v-if="m.status === 'published'"
+                      class="btn btn-xs btn-outline"
+                      :disabled="busy === m.id"
+                      title="Hide from the library (keeps buyer access)"
+                      @click="setStatus(m, 'archived')"
+                    >
+                      <i class="fas fa-eye-slash"></i> Hide
+                    </button>
+                    <button
+                      v-if="['archived', 'removed', 'flagged'].includes(m.status) && m.current_version_id"
+                      class="btn btn-xs btn-success btn-outline"
+                      :disabled="busy === m.id"
+                      title="Re-publish to the library"
+                      @click="setStatus(m, 'published')"
+                    >
+                      <i class="fas fa-eye"></i> Show
+                    </button>
+                    <button
+                      v-if="m.status !== 'removed'"
+                      class="btn btn-xs btn-error btn-outline"
+                      :disabled="busy === m.id"
+                      title="Remove (takedown — revokes all access, including buyers)"
+                      @click="confirmRemove = m"
+                    >
+                      <i class="fas fa-trash"></i> Remove
+                    </button>
+                    <span v-if="busy === m.id" class="loading loading-spinner loading-xs"></span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div v-if="libraryPages > 1" class="flex justify-center mt-6">
+            <div class="join">
+              <button class="join-item btn btn-sm" :disabled="libraryPage <= 1" @click="goLibraryPage(libraryPage - 1)">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="join-item btn btn-sm btn-disabled">Page {{ libraryPage }} / {{ libraryPages }}</button>
+              <button
+                class="join-item btn btn-sm"
+                :disabled="libraryPage >= libraryPages"
+                @click="goLibraryPage(libraryPage + 1)"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -641,6 +847,26 @@
         </div>
       </div>
       <form method="dialog" class="modal-backdrop" @click="resolveTarget = null"><button>close</button></form>
+    </dialog>
+
+    <!-- Remove (takedown) confirmation -->
+    <dialog class="modal" :class="{ 'modal-open': !!confirmRemove }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg"><i class="fas fa-trash text-error mr-1"></i> Remove model?</h3>
+        <p class="py-3 text-sm">
+          Remove <strong>{{ confirmRemove?.title }}</strong
+          >? This takes it down — it stops being distributed to everyone, including buyers who previously purchased it.
+          You can re-show it later (the S3 files are retained).
+        </p>
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" @click="confirmRemove = null">Cancel</button>
+          <button type="button" class="btn btn-error" :disabled="busy === confirmRemove?.id" @click="doRemove">
+            <span v-if="busy === confirmRemove?.id" class="loading loading-spinner loading-sm"></span>
+            <i v-else class="fas fa-trash mr-1"></i> Remove
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="confirmRemove = null"><button>close</button></form>
     </dialog>
 
     <!-- Toast -->
