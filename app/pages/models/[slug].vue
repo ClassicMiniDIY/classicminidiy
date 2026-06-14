@@ -183,14 +183,11 @@
     pdf: 'fa-file-pdf',
   };
 
-  useHead(() => ({ title: `${model.value?.title ?? t('meta.defaultTitle')} | Classic Mini DIY` }));
-  useSeoMeta({
-    title: () => `${model.value?.title ?? t('meta.defaultTitle')} | Classic Mini DIY`,
-    description: () => model.value?.summary || t('meta.defaultDescription'),
-    ogTitle: () => model.value?.title,
-    ogDescription: () => model.value?.summary || '',
-    ogImage: () => model.value?.images?.[0]?.url || '',
-    ogType: 'article',
+  useModelSeo({
+    model,
+    slug,
+    fallbackTitle: t('meta.defaultTitle'),
+    fallbackDescription: t('meta.defaultDescription'),
   });
 </script>
 
