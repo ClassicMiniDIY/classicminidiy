@@ -132,7 +132,9 @@
 
   const pricingChoices = computed(() => [
     { value: 'free', label: t('step1.pricingFree'), paid: false },
-    { value: 'tips', label: t('step1.pricingTips'), paid: false },
+    // Tips, pwyw, and fixed all move money through the seller's Stripe account,
+    // so all three are gated behind seller onboarding — only Free is ungated.
+    { value: 'tips', label: t('step1.pricingTips'), paid: true },
     { value: 'pwyw', label: t('step1.pricingPwyw'), paid: true },
     { value: 'fixed', label: t('step1.pricingFixed'), paid: true },
   ]);
