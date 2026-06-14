@@ -260,13 +260,13 @@
           <!-- ACTION CARD: price + the hero Download / Buy CTA -->
           <div class="card bg-base-100 border border-base-300 shadow-md">
             <div class="card-body p-5 gap-4">
-              <div class="flex items-baseline justify-between gap-2">
+              <div class="flex items-start justify-between gap-2">
                 <span class="text-3xl font-bold" :class="isFree ? 'text-success' : 'text-primary'">{{ price }}</span>
-                <span v-if="isOwner" class="badge badge-neutral badge-sm">{{ t('pricing.yourModel') }}</span>
-                <span v-else-if="entitled && !isFree" class="badge badge-success badge-sm">
+                <span v-if="isOwner" class="badge badge-neutral badge-sm shrink-0 whitespace-nowrap">{{ t('pricing.yourModel') }}</span>
+                <span v-else-if="entitled && !isFree" class="badge badge-success badge-sm shrink-0 whitespace-nowrap">
                   <i class="fas fa-check mr-1"></i> {{ t('pricing.purchased') }}
                 </span>
-                <span v-else class="text-xs opacity-60">{{ t('pricing.buyersGetAllVersions') }}</span>
+                <span v-else class="text-xs opacity-60 text-right">{{ t('pricing.buyersGetAllVersions') }}</span>
               </div>
 
               <div
