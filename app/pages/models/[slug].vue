@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { HERO_TYPES } from '~~/data/models/generic';
-  import { type ModelDetail, type ModelFileInfo, priceLabel, formatBytes } from '~~/data/models/model-library';
+  import { type ModelDetail, type ModelFileInfo, formatBytes } from '~~/data/models/model-library';
 
   const { t } = useI18n();
   const route = useRoute();
@@ -18,7 +18,47 @@
 
   const renderableFiles = computed(() => model.value?.files.filter((f) => f.isRenderable) ?? []);
   const isFree = computed(() => (model.value ? ['free', 'tips'].includes(model.value.pricingMode) : false));
-  const price = computed(() => (model.value ? priceLabel(model.value) : ''));
+
+  function fmtCurrency(cents: number) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: (model.value?.currency || 'usd').toUpperCase(),
+    }).format(cents / 100);
+  }
+
+  // Hero price — the brand-green headline. pwyw shows its floor as e.g. "$1.00+".
+  const priceMain = computed<string>(() => {
+    const m = model.value;
+    if (!m) return '';
+    switch (m.pricingMode) {
+      case 'free':
+      case 'tips':
+        return t('pricing.free');
+      case 'pwyw':
+        return m.minPriceCents != null ? `${fmtCurrency(m.minPriceCents)}+` : t('pricing.payWhatYouWant');
+      case 'fixed':
+        return m.priceCents != null ? fmtCurrency(m.priceCents) : '';
+      default:
+        return '';
+    }
+  });
+
+  // Sub-caption under the price. Brand-orange accent for the "you can pay/tip"
+  // modes; muted for the neutral reassurance on fixed-price. Null = nothing.
+  const priceAside = computed<{ text: string; accent: boolean } | null>(() => {
+    const m = model.value;
+    if (!m) return null;
+    switch (m.pricingMode) {
+      case 'tips':
+        return { text: t('pricing.tipsWelcome'), accent: true };
+      case 'pwyw':
+        return m.minPriceCents != null ? { text: t('pricing.payWhatYouWant'), accent: true } : null;
+      case 'fixed':
+        return { text: t('pricing.buyersGetAllVersions'), accent: false };
+      default:
+        return null; // free
+    }
+  });
 
   // Downloads go through an authed fetch (the session is in localStorage, so a
   // bare <a href> can't carry the token) → presigned URL → browser download.
@@ -261,12 +301,20 @@
           <div class="card bg-base-100 border border-base-300 shadow-md">
             <div class="card-body p-5 gap-4">
               <div class="flex items-start justify-between gap-2">
-                <span class="text-3xl font-bold" :class="isFree ? 'text-success' : 'text-primary'">{{ price }}</span>
+                <div class="min-w-0">
+                  <div class="text-3xl font-bold leading-tight text-primary">{{ priceMain }}</div>
+                  <div
+                    v-if="priceAside"
+                    class="text-sm font-semibold mt-0.5"
+                    :class="priceAside.accent ? 'text-secondary' : 'opacity-60'"
+                  >
+                    {{ priceAside.text }}
+                  </div>
+                </div>
                 <span v-if="isOwner" class="badge badge-neutral badge-sm shrink-0 whitespace-nowrap">{{ t('pricing.yourModel') }}</span>
                 <span v-else-if="entitled && !isFree" class="badge badge-success badge-sm shrink-0 whitespace-nowrap">
                   <i class="fas fa-check mr-1"></i> {{ t('pricing.purchased') }}
                 </span>
-                <span v-else class="text-xs opacity-60 text-right">{{ t('pricing.buyersGetAllVersions') }}</span>
               </div>
 
               <div
@@ -438,7 +486,10 @@
     "pricing": {
       "yourModel": "Your model",
       "purchased": "Purchased",
-      "buyersGetAllVersions": "buyers get every version"
+      "buyersGetAllVersions": "buyers get every version",
+      "free": "Free",
+      "tipsWelcome": "Tips welcome",
+      "payWhatYouWant": "Pay what you want"
     },
     "download": {
       "cta": "Download",
@@ -482,7 +533,10 @@
     "pricing": {
       "yourModel": "Tu modelo",
       "purchased": "Comprado",
-      "buyersGetAllVersions": "los compradores obtienen todas las versiones"
+      "buyersGetAllVersions": "los compradores obtienen todas las versiones",
+      "free": "Gratis",
+      "tipsWelcome": "Propinas bienvenidas",
+      "payWhatYouWant": "Paga lo que quieras"
     },
     "download": {
       "cta": "Descargar",
@@ -526,7 +580,10 @@
     "pricing": {
       "yourModel": "Votre modèle",
       "purchased": "Acheté",
-      "buyersGetAllVersions": "les acheteurs obtiennent toutes les versions"
+      "buyersGetAllVersions": "les acheteurs obtiennent toutes les versions",
+      "free": "Gratuit",
+      "tipsWelcome": "Pourboires bienvenus",
+      "payWhatYouWant": "Payez ce que vous voulez"
     },
     "download": {
       "cta": "Télécharger",
@@ -570,7 +627,10 @@
     "pricing": {
       "yourModel": "Dein Modell",
       "purchased": "Gekauft",
-      "buyersGetAllVersions": "Käufer erhalten alle Versionen"
+      "buyersGetAllVersions": "Käufer erhalten alle Versionen",
+      "free": "Kostenlos",
+      "tipsWelcome": "Trinkgeld willkommen",
+      "payWhatYouWant": "Zahle, was du möchtest"
     },
     "download": {
       "cta": "Herunterladen",
@@ -614,7 +674,10 @@
     "pricing": {
       "yourModel": "Il tuo modello",
       "purchased": "Acquistato",
-      "buyersGetAllVersions": "gli acquirenti ricevono ogni versione"
+      "buyersGetAllVersions": "gli acquirenti ricevono ogni versione",
+      "free": "Gratis",
+      "tipsWelcome": "Mance benvenute",
+      "payWhatYouWant": "Paga quanto vuoi"
     },
     "download": {
       "cta": "Scarica",
@@ -658,7 +721,10 @@
     "pricing": {
       "yourModel": "Seu modelo",
       "purchased": "Comprado",
-      "buyersGetAllVersions": "compradores recebem todas as versões"
+      "buyersGetAllVersions": "compradores recebem todas as versões",
+      "free": "Grátis",
+      "tipsWelcome": "Gorjetas bem-vindas",
+      "payWhatYouWant": "Pague o que quiser"
     },
     "download": {
       "cta": "Baixar",
@@ -702,7 +768,10 @@
     "pricing": {
       "yourModel": "Ваша модель",
       "purchased": "Куплено",
-      "buyersGetAllVersions": "покупатели получают все версии"
+      "buyersGetAllVersions": "покупатели получают все версии",
+      "free": "Бесплатно",
+      "tipsWelcome": "Чаевые приветствуются",
+      "payWhatYouWant": "Платите сколько хотите"
     },
     "download": {
       "cta": "Скачать",
@@ -746,7 +815,10 @@
     "pricing": {
       "yourModel": "あなたのモデル",
       "purchased": "購入済み",
-      "buyersGetAllVersions": "購入者はすべてのバージョンを取得できます"
+      "buyersGetAllVersions": "購入者はすべてのバージョンを取得できます",
+      "free": "無料",
+      "tipsWelcome": "投げ銭歓迎",
+      "payWhatYouWant": "好きな金額で"
     },
     "download": {
       "cta": "ダウンロード",
@@ -790,7 +862,10 @@
     "pricing": {
       "yourModel": "您的模型",
       "purchased": "已购买",
-      "buyersGetAllVersions": "购买者可获得所有版本"
+      "buyersGetAllVersions": "购买者可获得所有版本",
+      "free": "免费",
+      "tipsWelcome": "欢迎打赏",
+      "payWhatYouWant": "随心付费"
     },
     "download": {
       "cta": "下载",
@@ -834,7 +909,10 @@
     "pricing": {
       "yourModel": "내 모델",
       "purchased": "구매 완료",
-      "buyersGetAllVersions": "구매자는 모든 버전을 받습니다"
+      "buyersGetAllVersions": "구매자는 모든 버전을 받습니다",
+      "free": "무료",
+      "tipsWelcome": "팁 환영",
+      "payWhatYouWant": "원하는 만큼 지불"
     },
     "download": {
       "cta": "다운로드",
