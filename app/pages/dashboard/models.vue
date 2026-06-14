@@ -1,14 +1,22 @@
 <script setup lang="ts">
   const { t } = useI18n();
   const supabase = useSupabase();
+  const { user } = useAuth();
 
-  const { data, pending, refresh } = await useAsyncData('models-mine', async () => {
-    if (!import.meta.client) return { models: [] as any[] };
-    const { data: s } = await supabase.auth.getSession();
-    const token = s.session?.access_token;
-    if (!token) return { models: [] as any[] };
-    return await $fetch<{ models: any[] }>('/api/models/mine', { headers: { Authorization: `Bearer ${token}` } });
-  });
+  // The Supabase session is restored asynchronously from localStorage, so on first
+  // client render user/token are null. Watch `user` so the fetch re-runs once the
+  // session lands — otherwise the tab is permanently empty for logged-in users.
+  const { data, pending, refresh } = await useAsyncData(
+    'models-mine',
+    async () => {
+      if (!import.meta.client) return { models: [] as any[] };
+      const { data: s } = await supabase.auth.getSession();
+      const token = s.session?.access_token;
+      if (!token) return { models: [] as any[] };
+      return await $fetch<{ models: any[] }>('/api/models/mine', { headers: { Authorization: `Bearer ${token}` } });
+    },
+    { watch: [user] }
+  );
 
   const models = computed(() => data.value?.models ?? []);
 

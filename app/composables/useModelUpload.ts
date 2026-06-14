@@ -282,11 +282,18 @@ export function useModelUpload() {
     }
   }
 
-  async function removeImage(id: string) {
-    const idx = images.value.findIndex((i) => i.id === id || i.url.startsWith('blob:'));
+  // The caller passes `img.id || img.url`: a real id for uploaded images, the
+  // object URL for ones still uploading or failed (which have no id yet). Match
+  // that exact value — never `startsWith('blob:')`, which would hit whichever
+  // blob is first in the array rather than the one being removed.
+  async function removeImage(idOrUrl: string) {
+    const idx = images.value.findIndex((i) => (i.id && i.id === idOrUrl) || i.url === idOrUrl);
     if (idx === -1) return;
     const img = images.value[idx]!;
     images.value.splice(idx, 1);
+    // Failed/pending images never reached the success path that revokes their
+    // object URL, so free it here to avoid leaking the blob.
+    if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
     if (img.id && modelId.value) {
       const headers = await authHeaders();
       await $fetch(`/api/models/${modelId.value}/images/${img.id}`, { method: 'DELETE', headers }).catch(() => {});
@@ -405,6 +412,14 @@ export function useModelUpload() {
       return false;
     }
   }
+
+  // If the wizard is abandoned with images still uploading or failed, their
+  // object URLs were never revoked — release them when this scope tears down.
+  onScopeDispose(() => {
+    for (const img of images.value) {
+      if (img.url.startsWith('blob:')) URL.revokeObjectURL(img.url);
+    }
+  });
 
   return {
     step,
