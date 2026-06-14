@@ -24,15 +24,16 @@ Branch: `feature/3d-models` → merges to `main` once this checklist is green.
 
 ## 2. Stripe — Connect (model marketplace)
 
-- [ ] **Connect webhook endpoint** created in the Stripe Dashboard, pointing at the
+- [x] **Connect webhook endpoint** created in the Stripe Dashboard, pointing at the
       deployed `stripe-connect-webhook` function URL, with **"Listen to events on
       Connected accounts" enabled**. This is SEPARATE from the membership webhook
-      endpoint.
-- [ ] Events selected: `checkout.session.completed`, `charge.refunded`,
+      endpoint. _(Done — endpoint created.)_
+- [x] Events selected: `checkout.session.completed`, `charge.refunded`,
       `charge.dispute.created`, `charge.dispute.closed`, `account.updated`.
-- [ ] `STRIPE_CONNECT_WEBHOOK_SECRET` set as a Supabase function secret (distinct
-      from the membership webhook secret).
-- [ ] `STRIPE_SECRET_KEY` present (shared with membership — already set).
+- [x] `STRIPE_CONNECT_WEBHOOK_SECRET` set as a Supabase function secret (distinct
+      from the membership webhook secret). _(Set 2026-06-11; verified via
+      `supabase secrets list`.)_
+- [x] `STRIPE_SECRET_KEY` present (shared with membership — already set).
 - [ ] Optional: `MODELS_ALLOWED_ORIGINS` if testing redirects from a non-prod origin
       other than localhost.
 
