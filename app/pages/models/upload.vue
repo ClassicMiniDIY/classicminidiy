@@ -8,7 +8,23 @@
   const SUPPORTED_FORMATS = MODEL_FILE_EXTS.map((e) => e.toUpperCase()).join(' · ');
 
   const { t } = useI18n();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const supabase = useSupabase();
+
+  // Paid pricing requires a connected Stripe seller (trust ≥ contributor +
+  // charges_enabled). seller_can_sell is the same gate submit/checkout enforce —
+  // so we disable the paid options up front rather than failing at submit.
+  const canSell = ref(false);
+  async function refreshCanSell() {
+    if (!user.value) {
+      canSell.value = false;
+      return;
+    }
+    const { data } = await supabase.rpc('seller_can_sell', { p_user_id: user.value.id });
+    canSell.value = !!data;
+  }
+  onMounted(refreshCanSell);
+  watch(user, refreshCanSell);
   const router = useRouter();
 
   const w = useModelUpload();
@@ -116,10 +132,10 @@
   }
 
   const pricingChoices = computed(() => [
-    { value: 'free', label: t('step1.pricingFree') },
-    { value: 'tips', label: t('step1.pricingTips') },
-    { value: 'pwyw', label: t('step1.pricingPwyw') },
-    { value: 'fixed', label: t('step1.pricingFixed') },
+    { value: 'free', label: t('step1.pricingFree'), paid: false },
+    { value: 'tips', label: t('step1.pricingTips'), paid: false },
+    { value: 'pwyw', label: t('step1.pricingPwyw'), paid: true },
+    { value: 'fixed', label: t('step1.pricingFixed'), paid: true },
   ]);
 
   // Resume/edit: ?model=<id> loads an existing model client-side (needs the
@@ -329,11 +345,16 @@
                   type="button"
                   class="btn join-item btn-sm"
                   :class="w.pricingMode.value === p.value ? 'btn-primary' : 'btn-outline'"
+                  :disabled="p.paid && !canSell"
                   @click="w.pricingMode.value = p.value"
                 >
                   {{ p.label }}
                 </button>
               </div>
+              <p v-if="!canSell" class="label">
+                <i class="fas fa-circle-info mr-1"></i> {{ t('step1.sellGate') }}
+                <NuxtLink to="/dashboard/selling" class="link link-primary ml-1">{{ t('step1.sellGateCta') }}</NuxtLink>
+              </p>
             </fieldset>
 
             <div v-if="w.pricingMode.value === 'fixed'" class="grid grid-cols-2 gap-x-4">
@@ -778,6 +799,8 @@
       "pricingTips": "Free + tips",
       "pricingPwyw": "Pay what you want",
       "pricingFixed": "Fixed price",
+      "sellGate": "Selling needs a connected Stripe account.",
+      "sellGateCta": "Set up selling",
       "priceUsd": "Price (USD)",
       "minimumUsd": "Minimum (USD)",
       "suggestedUsd": "Suggested (USD)",
@@ -914,6 +937,8 @@
       "pricingTips": "Gratis + propinas",
       "pricingPwyw": "Paga lo que quieras",
       "pricingFixed": "Precio fijo",
+      "sellGate": "Vender requiere una cuenta de Stripe conectada.",
+      "sellGateCta": "Configurar ventas",
       "priceUsd": "Precio (USD)",
       "minimumUsd": "Mínimo (USD)",
       "suggestedUsd": "Sugerido (USD)",
@@ -1050,6 +1075,8 @@
       "pricingTips": "Gratuit + pourboires",
       "pricingPwyw": "Prix libre",
       "pricingFixed": "Prix fixe",
+      "sellGate": "La vente nécessite un compte Stripe connecté.",
+      "sellGateCta": "Configurer la vente",
       "priceUsd": "Prix (USD)",
       "minimumUsd": "Minimum (USD)",
       "suggestedUsd": "Suggéré (USD)",
@@ -1186,6 +1213,8 @@
       "pricingTips": "Kostenlos + Trinkgeld",
       "pricingPwyw": "Zahle was du willst",
       "pricingFixed": "Festpreis",
+      "sellGate": "Verkaufen erfordert ein verbundenes Stripe-Konto.",
+      "sellGateCta": "Verkauf einrichten",
       "priceUsd": "Preis (USD)",
       "minimumUsd": "Mindestpreis (USD)",
       "suggestedUsd": "Empfohlener Preis (USD)",
@@ -1322,6 +1351,8 @@
       "pricingTips": "Gratuito + mance",
       "pricingPwyw": "Paga quanto vuoi",
       "pricingFixed": "Prezzo fisso",
+      "sellGate": "Vendere richiede un account Stripe collegato.",
+      "sellGateCta": "Configura la vendita",
       "priceUsd": "Prezzo (USD)",
       "minimumUsd": "Minimo (USD)",
       "suggestedUsd": "Suggerito (USD)",
@@ -1458,6 +1489,8 @@
       "pricingTips": "Grátis + gorjetas",
       "pricingPwyw": "Paga o que quiseres",
       "pricingFixed": "Preço fixo",
+      "sellGate": "Vender exige uma conta Stripe conectada.",
+      "sellGateCta": "Configurar vendas",
       "priceUsd": "Preço (USD)",
       "minimumUsd": "Mínimo (USD)",
       "suggestedUsd": "Sugerido (USD)",
@@ -1594,6 +1627,8 @@
       "pricingTips": "Бесплатно + чаевые",
       "pricingPwyw": "Плати сколько хочешь",
       "pricingFixed": "Фиксированная цена",
+      "sellGate": "Для продажи нужен подключённый аккаунт Stripe.",
+      "sellGateCta": "Настроить продажи",
       "priceUsd": "Цена (USD)",
       "minimumUsd": "Минимум (USD)",
       "suggestedUsd": "Рекомендуемая (USD)",
@@ -1730,6 +1765,8 @@
       "pricingTips": "無料 + チップ",
       "pricingPwyw": "お好きな価格で",
       "pricingFixed": "固定価格",
+      "sellGate": "販売にはStripeアカウントの連携が必要です。",
+      "sellGateCta": "販売を設定",
       "priceUsd": "価格（USD）",
       "minimumUsd": "最低価格（USD）",
       "suggestedUsd": "推奨価格（USD）",
@@ -1866,6 +1903,8 @@
       "pricingTips": "免费 + 打赏",
       "pricingPwyw": "随意付费",
       "pricingFixed": "固定价格",
+      "sellGate": "销售需要关联 Stripe 账户。",
+      "sellGateCta": "设置销售",
       "priceUsd": "价格（USD）",
       "minimumUsd": "最低价（USD）",
       "suggestedUsd": "建议价（USD）",
@@ -2002,6 +2041,8 @@
       "pricingTips": "무료 + 팁",
       "pricingPwyw": "원하는 만큼 지불",
       "pricingFixed": "고정 가격",
+      "sellGate": "판매하려면 Stripe 계정 연결이 필요합니다.",
+      "sellGateCta": "판매 설정",
       "priceUsd": "가격 (USD)",
       "minimumUsd": "최소 가격 (USD)",
       "suggestedUsd": "제안 가격 (USD)",

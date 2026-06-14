@@ -10,6 +10,7 @@ import type { Database } from '~~/types/database';
 import { requireUserClient } from '../../utils/userAuth';
 import {
   isPricingMode,
+  normalizePricing,
   MODEL_TITLE_MIN,
   MODEL_TITLE_MAX,
   MODEL_SUMMARY_MAX,
@@ -53,10 +54,23 @@ export default defineEventHandler(async (event) => {
       .filter(Boolean)
       .slice(0, MODEL_MAX_TAGS);
   if (typeof body?.licenseCode === 'string') update.license_code = body.licenseCode.trim();
-  if (isPricingMode(body?.pricingMode)) update.pricing_mode = body.pricingMode;
-  if ('priceCents' in body) update.price_cents = intOrNull(body.priceCents);
-  if ('minPriceCents' in body) update.min_price_cents = intOrNull(body.minPriceCents);
-  if ('suggestedPriceCents' in body) update.suggested_price_cents = intOrNull(body.suggestedPriceCents);
+  if (isPricingMode(body?.pricingMode)) {
+    update.pricing_mode = body.pricingMode;
+    // Re-shape the price columns to the new mode so valid_pricing_shape holds
+    // even if the client still carries values from a previously-selected mode.
+    Object.assign(
+      update,
+      normalizePricing(body.pricingMode, {
+        priceCents: intOrNull(body.priceCents),
+        minPriceCents: intOrNull(body.minPriceCents),
+        suggestedPriceCents: intOrNull(body.suggestedPriceCents),
+      })
+    );
+  } else {
+    if ('priceCents' in body) update.price_cents = intOrNull(body.priceCents);
+    if ('minPriceCents' in body) update.min_price_cents = intOrNull(body.minPriceCents);
+    if ('suggestedPriceCents' in body) update.suggested_price_cents = intOrNull(body.suggestedPriceCents);
+  }
   if (typeof body?.safetyCritical === 'boolean') update.safety_critical = body.safetyCritical;
   if (typeof body?.safetyAck === 'boolean') update.safety_ack = body.safetyAck;
   if ('sourceUrl' in body)
