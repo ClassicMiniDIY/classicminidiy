@@ -8,6 +8,14 @@
  * classicminidiy.com — the edge functions validate the origin against their
  * allowlist either way.
  */
+export interface SellerStatus {
+  hasAccount: boolean;
+  charges_enabled?: boolean;
+  payouts_enabled?: boolean;
+  details_submitted?: boolean;
+  selling_disabled?: boolean;
+}
+
 export function useModelCheckout() {
   const supabase = useSupabase();
 
@@ -76,6 +84,22 @@ export function useModelCheckout() {
       return 'Could not start onboarding. Please try again.';
     } catch (e: any) {
       return errMessage(e, 'Could not start onboarding. Please try again.');
+    }
+  }
+
+  /**
+   * Re-sync the seller's Stripe account onto seller_accounts and return the
+   * fresh flags. This is the webhook-lag fallback: the selling page calls it so
+   * a just-onboarded seller flips to enabled without waiting on the
+   * account.updated webhook. Returns null on failure (caller keeps prior state).
+   */
+  async function refreshSellerStatus(): Promise<SellerStatus | null> {
+    const headers = await authHeader();
+    if (!headers.Authorization) return null;
+    try {
+      return await $fetch<SellerStatus>('/api/models/seller/status', { method: 'POST', headers });
+    } catch {
+      return null;
     }
   }
 
@@ -170,5 +194,5 @@ export function useModelCheckout() {
     }
   }
 
-  return { startCheckout, startSellerOnboarding, verifyPurchase, downloadFile, downloadAll };
+  return { startCheckout, startSellerOnboarding, refreshSellerStatus, verifyPurchase, downloadFile, downloadAll };
 }

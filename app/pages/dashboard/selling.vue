@@ -1,9 +1,8 @@
 <script setup lang="ts">
   const { t } = useI18n();
   const supabase = useSupabase();
-  const route = useRoute();
   const { user, userProfile } = useAuth();
-  const { startSellerOnboarding } = useModelCheckout();
+  const { startSellerOnboarding, refreshSellerStatus } = useModelCheckout();
 
   type Seller = {
     stripe_account_id: string;
@@ -32,8 +31,40 @@
   const trustLevel = computed(() => userProfile.value?.trust_level ?? 'new');
   const trustOk = computed(() => ['contributor', 'trusted', 'moderator', 'admin'].includes(trustLevel.value));
   const canSell = computed(() => !!seller.value?.charges_enabled && !seller.value?.selling_disabled);
-  const needsOnboarding = computed(() => !canSell.value && !seller.value?.selling_disabled);
-  const justOnboarded = computed(() => route.query.onboarded === '1');
+  // Account exists but isn't usable yet — created and awaiting Stripe details/review.
+  const pendingVerification = computed(() => !!seller.value && !canSell.value && !seller.value?.selling_disabled);
+  const refreshing = ref(false);
+
+  async function loadSummary() {
+    if (!seller.value?.charges_enabled) return;
+    const { data: sum } = await supabase.rpc('get_model_sales_summary');
+    summary.value = (sum as SalesRow[]) ?? [];
+  }
+
+  /**
+   * Reconcile the seller's capability flags from Stripe — the webhook-lag
+   * fallback so a just-onboarded seller flips to enabled without depending on
+   * the account.updated webhook (which may lag or be misconfigured). Merges the
+   * fresh flags onto the local row; safe to call repeatedly.
+   */
+  async function syncStatus() {
+    if (!seller.value) return;
+    refreshing.value = true;
+    try {
+      const s = await refreshSellerStatus();
+      if (s?.hasAccount) {
+        seller.value = {
+          ...seller.value,
+          charges_enabled: !!s.charges_enabled,
+          payouts_enabled: !!s.payouts_enabled,
+          details_submitted: !!s.details_submitted,
+          selling_disabled: !!s.selling_disabled,
+        };
+      }
+    } finally {
+      refreshing.value = false;
+    }
+  }
 
   async function load() {
     if (!import.meta.client || !user.value) {
@@ -50,11 +81,19 @@
       .eq('user_id', user.value.id)
       .maybeSingle();
     seller.value = (s as Seller) ?? null;
-    if (seller.value?.charges_enabled) {
-      const { data: sum } = await supabase.rpc('get_model_sales_summary');
-      summary.value = (sum as SalesRow[]) ?? [];
+    // Account exists but not enabled yet → pull live status from Stripe now
+    // instead of waiting on the webhook.
+    if (seller.value && !seller.value.charges_enabled && !seller.value.selling_disabled) {
+      await syncStatus();
     }
+    await loadSummary();
     loading.value = false;
+  }
+
+  /** Manual "Refresh status" — re-sync from Stripe without blanking the page. */
+  async function onRefresh() {
+    await syncStatus();
+    await loadSummary();
   }
 
   async function onboard() {
@@ -106,14 +145,8 @@
         <span>{{ t('disabledAlert') }}</span>
       </div>
 
-      <!-- Webhook-lag confirmation right after returning from Stripe -->
-      <div v-else-if="justOnboarded && !canSell" role="alert" class="alert alert-info alert-soft">
-        <i class="fas fa-circle-info"></i>
-        <span>{{ t('confirmingAlert') }}</span>
-      </div>
-
-      <!-- Onboarding pitch -->
-      <div v-else-if="needsOnboarding" class="card bg-base-100 border border-base-300 shadow-sm">
+      <!-- No connected account yet: onboarding pitch -->
+      <div v-else-if="!seller" class="card bg-base-100 border border-base-300 shadow-sm">
         <div class="card-body gap-4">
           <h3 class="card-title">{{ t('onboarding.title') }}</h3>
           <p class="text-sm opacity-80">{{ t('onboarding.pitch') }}</p>
@@ -145,10 +178,46 @@
             >
               <span v-if="onboarding" class="loading loading-spinner loading-sm"></span>
               <i v-else class="fab fa-stripe-s mr-1"></i>
-              {{ seller ? t('onboarding.continueBtn') : t('onboarding.startBtn') }}
+              {{ t('onboarding.startBtn') }}
             </button>
           </div>
           <p class="text-xs opacity-50">{{ t('onboarding.redirectNote') }}</p>
+        </div>
+      </div>
+
+      <!-- Account created but not usable yet: finish or wait for Stripe review.
+           State is read from the seller row (not a URL param), and refreshed
+           live from Stripe so completion doesn't depend on the webhook. -->
+      <div v-else-if="pendingVerification" class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body gap-4">
+          <div class="flex items-center gap-2">
+            <i class="fad fa-hourglass-half text-warning"></i>
+            <h3 class="card-title">{{ t('pending.title') }}</h3>
+          </div>
+          <p class="text-sm opacity-80">
+            {{ seller?.details_submitted ? t('pending.verifying') : t('pending.incomplete') }}
+          </p>
+
+          <div v-if="onboardError" role="alert" class="alert alert-error alert-soft text-sm">
+            <i class="fas fa-circle-exclamation"></i><span>{{ onboardError }}</span>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-sm" :disabled="refreshing" @click="onRefresh">
+              <span v-if="refreshing" class="loading loading-spinner loading-xs"></span>
+              <i v-else class="fas fa-rotate mr-1"></i>
+              {{ refreshing ? t('pending.checking') : t('pending.refreshBtn') }}
+            </button>
+            <button
+              class="btn btn-sm bg-[#635BFF] hover:bg-[#534ce0] text-white border-[#635BFF] hover:border-[#534ce0]"
+              :disabled="onboarding"
+              @click="onboard"
+            >
+              <span v-if="onboarding" class="loading loading-spinner loading-xs"></span>
+              <i v-else class="fab fa-stripe-s mr-1"></i>
+              {{ t('onboarding.continueBtn') }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -229,6 +298,13 @@
     "heading": "Selling",
     "disabledAlert": "Selling is disabled for your account. Contact support if you believe this is a mistake.",
     "confirmingAlert": "Thanks! We're confirming your Stripe details — this can take a moment. Refresh this page shortly.",
+    "pending": {
+      "title": "Almost ready to sell",
+      "verifying": "Stripe is reviewing your details. This usually only takes a few minutes — check again below.",
+      "incomplete": "You started Stripe setup but haven't finished it yet. Pick up where you left off to start selling.",
+      "refreshBtn": "Refresh status",
+      "checking": "Checking…"
+    },
     "onboarding": {
       "title": "Sell your 3D models",
       "pitch": "Charge a fixed price, let buyers pay what they want, or just accept tips. Payments run through your own Stripe account — you're the merchant of record and get paid directly. Classic Mini DIY keeps a 15% commission per sale.",
@@ -262,6 +338,13 @@
     "heading": "Ventas",
     "disabledAlert": "Las ventas están desactivadas en tu cuenta. Contacta con soporte si crees que es un error.",
     "confirmingAlert": "¡Gracias! Estamos confirmando tus datos de Stripe, puede tardar un momento. Actualiza esta página en breve.",
+    "pending": {
+      "title": "Casi listo para vender",
+      "verifying": "Stripe está revisando tus datos. Suele tardar solo unos minutos; vuelve a comprobarlo abajo.",
+      "incomplete": "Empezaste la configuración de Stripe pero aún no la has terminado. Retoma donde lo dejaste para empezar a vender.",
+      "refreshBtn": "Actualizar estado",
+      "checking": "Comprobando…"
+    },
     "onboarding": {
       "title": "Vende tus modelos 3D",
       "pitch": "Fija un precio, deja que los compradores paguen lo que quieran, o simplemente acepta propinas. Los pagos se procesan a través de tu propia cuenta de Stripe — eres el comerciante registrado y cobras directamente. Classic Mini DIY retiene una comisión del 15% por venta.",
@@ -295,6 +378,13 @@
     "heading": "Ventes",
     "disabledAlert": "Les ventes sont désactivées sur votre compte. Contactez le support si vous pensez qu'il s'agit d'une erreur.",
     "confirmingAlert": "Merci ! Nous confirmons vos informations Stripe — cela peut prendre un moment. Actualisez cette page dans peu de temps.",
+    "pending": {
+      "title": "Presque prêt à vendre",
+      "verifying": "Stripe vérifie vos informations. Cela ne prend généralement que quelques minutes — vérifiez à nouveau ci-dessous.",
+      "incomplete": "Vous avez commencé la configuration de Stripe mais ne l'avez pas encore terminée. Reprenez là où vous vous êtes arrêté pour commencer à vendre.",
+      "refreshBtn": "Actualiser le statut",
+      "checking": "Vérification…"
+    },
     "onboarding": {
       "title": "Vendez vos modèles 3D",
       "pitch": "Fixez un prix, laissez les acheteurs payer ce qu'ils veulent, ou acceptez simplement des pourboires. Les paiements transitent par votre propre compte Stripe — vous êtes le marchand de référence et êtes payé directement. Classic Mini DIY prélève une commission de 15 % par vente.",
@@ -328,6 +418,13 @@
     "heading": "Verkaufen",
     "disabledAlert": "Das Verkaufen ist für dein Konto deaktiviert. Kontaktiere den Support, wenn du glaubst, dass dies ein Fehler ist.",
     "confirmingAlert": "Danke! Wir bestätigen deine Stripe-Daten — das kann einen Moment dauern. Lade diese Seite bald neu.",
+    "pending": {
+      "title": "Fast bereit zum Verkaufen",
+      "verifying": "Stripe prüft deine Angaben. Das dauert normalerweise nur wenige Minuten — prüfe es unten erneut.",
+      "incomplete": "Du hast die Stripe-Einrichtung begonnen, aber noch nicht abgeschlossen. Mach dort weiter, wo du aufgehört hast, um mit dem Verkaufen zu beginnen.",
+      "refreshBtn": "Status aktualisieren",
+      "checking": "Wird geprüft…"
+    },
     "onboarding": {
       "title": "Verkaufe deine 3D-Modelle",
       "pitch": "Lege einen Festpreis fest, lass Käufer zahlen, was sie möchten, oder akzeptiere einfach Trinkgelder. Zahlungen laufen über dein eigenes Stripe-Konto — du bist der Händler und wirst direkt bezahlt. Classic Mini DIY behält eine Provision von 15 % pro Verkauf.",
@@ -361,6 +458,13 @@
     "heading": "Vendite",
     "disabledAlert": "Le vendite sono disabilitate per il tuo account. Contatta il supporto se ritieni si tratti di un errore.",
     "confirmingAlert": "Grazie! Stiamo confermando i tuoi dati Stripe — potrebbe richiedere un momento. Aggiorna questa pagina a breve.",
+    "pending": {
+      "title": "Quasi pronto a vendere",
+      "verifying": "Stripe sta verificando i tuoi dati. Di solito richiede solo pochi minuti — controlla di nuovo qui sotto.",
+      "incomplete": "Hai iniziato la configurazione di Stripe ma non l'hai ancora completata. Riprendi da dove eri rimasto per iniziare a vendere.",
+      "refreshBtn": "Aggiorna stato",
+      "checking": "Verifica in corso…"
+    },
     "onboarding": {
       "title": "Vendi i tuoi modelli 3D",
       "pitch": "Fissa un prezzo fisso, lascia che gli acquirenti paghino quanto vogliono, o accetta semplicemente mance. I pagamenti transitano tramite il tuo account Stripe — sei il commerciante e vieni pagato direttamente. Classic Mini DIY trattiene una commissione del 15% per vendita.",
@@ -394,6 +498,13 @@
     "heading": "Vendas",
     "disabledAlert": "As vendas estão desativadas na sua conta. Entre em contato com o suporte se acreditar que isso é um erro.",
     "confirmingAlert": "Obrigado! Estamos confirmando seus dados do Stripe — isso pode levar um momento. Atualize esta página em breve.",
+    "pending": {
+      "title": "Quase pronto para vender",
+      "verifying": "A Stripe está analisando seus dados. Normalmente leva apenas alguns minutos — verifique novamente abaixo.",
+      "incomplete": "Você começou a configuração da Stripe, mas ainda não a concluiu. Continue de onde parou para começar a vender.",
+      "refreshBtn": "Atualizar status",
+      "checking": "Verificando…"
+    },
     "onboarding": {
       "title": "Venda seus modelos 3D",
       "pitch": "Defina um preço fixo, deixe os compradores pagar o que quiserem, ou apenas aceite gorjetas. Os pagamentos são processados pela sua própria conta Stripe — você é o comerciante e recebe diretamente. Classic Mini DIY retém uma comissão de 15% por venda.",
@@ -427,6 +538,13 @@
     "heading": "Продажи",
     "disabledAlert": "Продажи отключены для вашего аккаунта. Обратитесь в поддержку, если считаете это ошибкой.",
     "confirmingAlert": "Спасибо! Мы подтверждаем ваши данные Stripe — это может занять момент. Обновите эту страницу через минуту.",
+    "pending": {
+      "title": "Почти готово к продаже",
+      "verifying": "Stripe проверяет ваши данные. Обычно это занимает всего несколько минут — проверьте ещё раз ниже.",
+      "incomplete": "Вы начали настройку Stripe, но ещё не завершили её. Продолжите с того места, где остановились, чтобы начать продавать.",
+      "refreshBtn": "Обновить статус",
+      "checking": "Проверка…"
+    },
     "onboarding": {
       "title": "Продавайте свои 3D-модели",
       "pitch": "Установите фиксированную цену, позвольте покупателям платить столько, сколько они хотят, или просто принимайте чаевые. Платежи проходят через ваш собственный аккаунт Stripe — вы являетесь продавцом и получаете деньги напрямую. Classic Mini DIY берёт комиссию 15% с каждой продажи.",
@@ -460,6 +578,13 @@
     "heading": "販売",
     "disabledAlert": "アカウントの販売が無効になっています。誤りだと思われる場合はサポートにお問い合わせください。",
     "confirmingAlert": "ありがとうございます！Stripeの詳細を確認しています — 少し時間がかかる場合があります。しばらくしてからページを更新してください。",
+    "pending": {
+      "title": "まもなく販売を開始できます",
+      "verifying": "Stripeが情報を確認しています。通常は数分で完了します。下のボタンで再度ご確認ください。",
+      "incomplete": "Stripeの設定を開始しましたが、まだ完了していません。続きから設定して販売を始めましょう。",
+      "refreshBtn": "ステータスを更新",
+      "checking": "確認中…"
+    },
     "onboarding": {
       "title": "3Dモデルを販売する",
       "pitch": "固定価格を設定したり、購入者が好きな金額を払えるようにしたり、チップだけ受け付けたりできます。支払いはあなた自身のStripeアカウントを通じて処理され、あなたが販売者として直接支払いを受け取ります。Classic Mini DIYは販売ごとに15%の手数料を受け取ります。",
@@ -493,6 +618,13 @@
     "heading": "销售",
     "disabledAlert": "您的账户销售功能已被禁用。如果您认为这是错误，请联系支持团队。",
     "confirmingAlert": "感谢！我们正在确认您的Stripe详情——这可能需要片刻。请稍后刷新此页面。",
+    "pending": {
+      "title": "即将可以开始销售",
+      "verifying": "Stripe 正在审核你的信息，通常只需几分钟——请在下方重新检查。",
+      "incomplete": "你已开始 Stripe 设置但尚未完成。从上次中断处继续即可开始销售。",
+      "refreshBtn": "刷新状态",
+      "checking": "检查中…"
+    },
     "onboarding": {
       "title": "销售您的3D模型",
       "pitch": "设置固定价格、让买家随意付款，或仅接受小费。付款通过您自己的Stripe账户处理——您是商户，直接收款。Classic Mini DIY每笔销售收取15%佣金。",
@@ -526,6 +658,13 @@
     "heading": "판매",
     "disabledAlert": "계정의 판매 기능이 비활성화되어 있습니다. 오류라고 생각되면 지원팀에 문의하세요.",
     "confirmingAlert": "감사합니다! Stripe 세부 정보를 확인 중입니다 — 잠시 시간이 걸릴 수 있습니다. 잠시 후 페이지를 새로 고쳐 주세요.",
+    "pending": {
+      "title": "판매 준비가 거의 끝났어요",
+      "verifying": "Stripe가 정보를 확인하고 있습니다. 보통 몇 분이면 완료됩니다 — 아래에서 다시 확인하세요.",
+      "incomplete": "Stripe 설정을 시작했지만 아직 끝내지 않았습니다. 중단한 부분부터 이어서 판매를 시작하세요.",
+      "refreshBtn": "상태 새로고침",
+      "checking": "확인 중…"
+    },
     "onboarding": {
       "title": "3D 모델을 판매하세요",
       "pitch": "고정 가격을 설정하거나, 구매자가 원하는 금액을 내도록 하거나, 팁만 받을 수도 있습니다. 결제는 본인의 Stripe 계정을 통해 처리되며 — 귀하가 판매자로서 직접 지급받습니다. Classic Mini DIY는 판매당 15% 수수료를 가져갑니다.",
