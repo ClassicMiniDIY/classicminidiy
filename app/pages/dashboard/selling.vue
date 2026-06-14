@@ -75,19 +75,24 @@
       return;
     }
     loading.value = true;
-    const { data: s } = await supabase
-      .from('seller_accounts')
-      .select('stripe_account_id, charges_enabled, payouts_enabled, details_submitted, selling_disabled')
-      .eq('user_id', user.value.id)
-      .maybeSingle();
-    seller.value = (s as Seller) ?? null;
-    // Account exists but not enabled yet → pull live status from Stripe now
-    // instead of waiting on the webhook.
-    if (seller.value && !seller.value.charges_enabled && !seller.value.selling_disabled) {
-      await syncStatus();
+    try {
+      const { data: s } = await supabase
+        .from('seller_accounts')
+        .select('stripe_account_id, charges_enabled, payouts_enabled, details_submitted, selling_disabled')
+        .eq('user_id', user.value.id)
+        .maybeSingle();
+      seller.value = (s as Seller) ?? null;
+      // Account exists but not enabled yet → pull live status from Stripe now
+      // instead of waiting on the webhook.
+      if (seller.value && !seller.value.charges_enabled && !seller.value.selling_disabled) {
+        await syncStatus();
+      }
+      await loadSummary();
+    } catch (err) {
+      console.error('selling: failed to load seller status/summary:', err);
+    } finally {
+      loading.value = false;
     }
-    await loadSummary();
-    loading.value = false;
   }
 
   /** Manual "Refresh status" — re-sync from Stripe without blanking the page. */
@@ -203,14 +208,14 @@
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <button class="btn btn-sm" :disabled="refreshing" @click="onRefresh">
+            <button class="btn btn-sm" :disabled="refreshing || onboarding" @click="onRefresh">
               <span v-if="refreshing" class="loading loading-spinner loading-xs"></span>
               <i v-else class="fas fa-rotate mr-1"></i>
               {{ refreshing ? t('pending.checking') : t('pending.refreshBtn') }}
             </button>
             <button
               class="btn btn-sm bg-[#635BFF] hover:bg-[#534ce0] text-white border-[#635BFF] hover:border-[#534ce0]"
-              :disabled="onboarding"
+              :disabled="onboarding || refreshing"
               @click="onboard"
             >
               <span v-if="onboarding" class="loading loading-spinner loading-xs"></span>

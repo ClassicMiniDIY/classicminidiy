@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
 
   const supabaseUrl = (config.public.supabaseUrl as string)?.replace(/\/$/, '');
   const supabaseKey = config.public.supabaseKey as string;
-  if (!supabaseUrl) {
-    throw createError({ statusCode: 500, statusMessage: 'Supabase URL not configured' });
+  if (!supabaseUrl || !supabaseKey) {
+    throw createError({ statusCode: 500, statusMessage: 'Supabase URL or key not configured' });
   }
 
   try {

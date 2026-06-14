@@ -94,9 +94,9 @@ export function useModelCheckout() {
    * account.updated webhook. Returns null on failure (caller keeps prior state).
    */
   async function refreshSellerStatus(): Promise<SellerStatus | null> {
-    const headers = await authHeader();
-    if (!headers.Authorization) return null;
     try {
+      const headers = await authHeader();
+      if (!headers.Authorization) return null;
       return await $fetch<SellerStatus>('/api/models/seller/status', { method: 'POST', headers });
     } catch {
       return null;
