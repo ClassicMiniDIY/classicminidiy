@@ -56,7 +56,6 @@
     });
   }
   const priceDollars = dollars(w.priceCents);
-  const minDollars = dollars(w.minPriceCents);
   const suggestedDollars = dollars(w.suggestedPriceCents);
 
   const tagInput = ref('');
@@ -372,10 +371,6 @@
             </div>
             <div v-else-if="w.pricingMode.value === 'pwyw'" class="grid grid-cols-2 gap-x-4">
               <fieldset class="fieldset">
-                <legend class="fieldset-legend">{{ t('step1.minimumUsd') }}</legend>
-                <input v-model="minDollars" type="number" min="1" step="0.50" class="input w-full" placeholder="1.00" />
-              </fieldset>
-              <fieldset class="fieldset">
                 <legend class="fieldset-legend">{{ t('step1.suggestedUsd') }}</legend>
                 <input
                   v-model="suggestedDollars"
@@ -385,6 +380,7 @@
                   class="input w-full"
                   placeholder="5.00"
                 />
+                <p class="label">{{ t('step1.pwywHint') }}</p>
               </fieldset>
             </div>
 
@@ -801,6 +797,7 @@
       "pricingFixed": "Fixed price",
       "sellGate": "Selling needs a connected Stripe account.",
       "sellGateCta": "Set up selling",
+      "pwywHint": "Buyers pay what they want — you only set a suggested amount.",
       "priceUsd": "Price (USD)",
       "minimumUsd": "Minimum (USD)",
       "suggestedUsd": "Suggested (USD)",
@@ -939,6 +936,7 @@
       "pricingFixed": "Precio fijo",
       "sellGate": "Vender requiere una cuenta de Stripe conectada.",
       "sellGateCta": "Configurar ventas",
+      "pwywHint": "Los compradores pagan lo que quieran — solo defines un precio sugerido.",
       "priceUsd": "Precio (USD)",
       "minimumUsd": "Mínimo (USD)",
       "suggestedUsd": "Sugerido (USD)",
@@ -1077,6 +1075,7 @@
       "pricingFixed": "Prix fixe",
       "sellGate": "La vente nécessite un compte Stripe connecté.",
       "sellGateCta": "Configurer la vente",
+      "pwywHint": "Les acheteurs paient ce qu'ils veulent — vous ne définissez qu'un prix suggéré.",
       "priceUsd": "Prix (USD)",
       "minimumUsd": "Minimum (USD)",
       "suggestedUsd": "Suggéré (USD)",
@@ -1215,6 +1214,7 @@
       "pricingFixed": "Festpreis",
       "sellGate": "Verkaufen erfordert ein verbundenes Stripe-Konto.",
       "sellGateCta": "Verkauf einrichten",
+      "pwywHint": "Käufer zahlen, was sie möchten — du legst nur einen Vorschlagspreis fest.",
       "priceUsd": "Preis (USD)",
       "minimumUsd": "Mindestpreis (USD)",
       "suggestedUsd": "Empfohlener Preis (USD)",
@@ -1353,6 +1353,7 @@
       "pricingFixed": "Prezzo fisso",
       "sellGate": "Vendere richiede un account Stripe collegato.",
       "sellGateCta": "Configura la vendita",
+      "pwywHint": "Gli acquirenti pagano quanto vogliono — imposti solo un prezzo suggerito.",
       "priceUsd": "Prezzo (USD)",
       "minimumUsd": "Minimo (USD)",
       "suggestedUsd": "Suggerito (USD)",
@@ -1491,6 +1492,7 @@
       "pricingFixed": "Preço fixo",
       "sellGate": "Vender exige uma conta Stripe conectada.",
       "sellGateCta": "Configurar vendas",
+      "pwywHint": "Os compradores pagam o que quiserem — você só define um preço sugerido.",
       "priceUsd": "Preço (USD)",
       "minimumUsd": "Mínimo (USD)",
       "suggestedUsd": "Sugerido (USD)",
@@ -1629,6 +1631,7 @@
       "pricingFixed": "Фиксированная цена",
       "sellGate": "Для продажи нужен подключённый аккаунт Stripe.",
       "sellGateCta": "Настроить продажи",
+      "pwywHint": "Покупатели платят сколько хотят — вы задаёте только рекомендуемую цену.",
       "priceUsd": "Цена (USD)",
       "minimumUsd": "Минимум (USD)",
       "suggestedUsd": "Рекомендуемая (USD)",
@@ -1767,6 +1770,7 @@
       "pricingFixed": "固定価格",
       "sellGate": "販売にはStripeアカウントの連携が必要です。",
       "sellGateCta": "販売を設定",
+      "pwywHint": "購入者は好きな金額を支払えます — あなたは推奨価格のみ設定します。",
       "priceUsd": "価格（USD）",
       "minimumUsd": "最低価格（USD）",
       "suggestedUsd": "推奨価格（USD）",
@@ -1905,6 +1909,7 @@
       "pricingFixed": "固定价格",
       "sellGate": "销售需要关联 Stripe 账户。",
       "sellGateCta": "设置销售",
+      "pwywHint": "买家自行决定支付金额 — 您只需设置一个建议价格。",
       "priceUsd": "价格（USD）",
       "minimumUsd": "最低价（USD）",
       "suggestedUsd": "建议价（USD）",
@@ -2043,6 +2048,7 @@
       "pricingFixed": "고정 가격",
       "sellGate": "판매하려면 Stripe 계정 연결이 필요합니다.",
       "sellGateCta": "판매 설정",
+      "pwywHint": "구매자가 원하는 만큼 지불합니다 — 제안 가격만 설정하면 됩니다.",
       "priceUsd": "가격 (USD)",
       "minimumUsd": "최소 가격 (USD)",
       "suggestedUsd": "제안 가격 (USD)",

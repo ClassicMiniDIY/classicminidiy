@@ -88,7 +88,7 @@
   "en": {
     "pwyw": {
       "legend": "Name your price",
-      "hint": "Minimum {price} · buyers get every version"
+      "hint": "Pay what you want · buyers get every version"
     },
     "buy": {
       "fixed": "Buy · {price}",
@@ -103,7 +103,7 @@
   "es": {
     "pwyw": {
       "legend": "Elige tu precio",
-      "hint": "Mínimo {price} · los compradores obtienen todas las versiones"
+      "hint": "Paga lo que quieras · los compradores obtienen todas las versiones"
     },
     "buy": {
       "fixed": "Comprar · {price}",
@@ -118,7 +118,7 @@
   "fr": {
     "pwyw": {
       "legend": "Fixez votre prix",
-      "hint": "Minimum {price} · les acheteurs reçoivent toutes les versions"
+      "hint": "Payez ce que vous voulez · les acheteurs reçoivent toutes les versions"
     },
     "buy": {
       "fixed": "Acheter · {price}",
@@ -133,7 +133,7 @@
   "de": {
     "pwyw": {
       "legend": "Preis selbst bestimmen",
-      "hint": "Mindestens {price} · Käufer erhalten jede Version"
+      "hint": "Zahle, was du möchtest · Käufer erhalten jede Version"
     },
     "buy": {
       "fixed": "Kaufen · {price}",
@@ -148,7 +148,7 @@
   "it": {
     "pwyw": {
       "legend": "Scegli il tuo prezzo",
-      "hint": "Minimo {price} · gli acquirenti ricevono ogni versione"
+      "hint": "Paga quanto vuoi · gli acquirenti ricevono ogni versione"
     },
     "buy": {
       "fixed": "Acquista · {price}",
@@ -163,7 +163,7 @@
   "pt": {
     "pwyw": {
       "legend": "Defina seu preço",
-      "hint": "Mínimo {price} · compradores recebem todas as versões"
+      "hint": "Pague o que quiser · compradores recebem todas as versões"
     },
     "buy": {
       "fixed": "Comprar · {price}",
@@ -178,7 +178,7 @@
   "ru": {
     "pwyw": {
       "legend": "Назначьте свою цену",
-      "hint": "Минимум {price} · покупатели получают все версии"
+      "hint": "Платите сколько хотите · покупатели получают все версии"
     },
     "buy": {
       "fixed": "Купить · {price}",
@@ -193,7 +193,7 @@
   "ja": {
     "pwyw": {
       "legend": "価格を設定する",
-      "hint": "最低{price} · 購入者はすべてのバージョンを入手できます"
+      "hint": "好きな金額を支払う · 購入者はすべてのバージョンを入手できます"
     },
     "buy": {
       "fixed": "購入 · {price}",
@@ -208,7 +208,7 @@
   "zh": {
     "pwyw": {
       "legend": "自定义价格",
-      "hint": "最低 {price} · 买家获得所有版本"
+      "hint": "随心付费 · 买家获得所有版本"
     },
     "buy": {
       "fixed": "购买 · {price}",
@@ -223,7 +223,7 @@
   "ko": {
     "pwyw": {
       "legend": "가격을 직접 정하세요",
-      "hint": "최소 {price} · 구매자는 모든 버전을 받습니다"
+      "hint": "원하는 만큼 지불 · 구매자는 모든 버전을 받습니다"
     },
     "buy": {
       "fixed": "구매 · {price}",

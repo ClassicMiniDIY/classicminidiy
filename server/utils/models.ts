@@ -88,7 +88,13 @@ export function normalizePricing(
     return { price_cents: vals.priceCents, min_price_cents: null, suggested_price_cents: null };
   }
   if (mode === 'pwyw') {
-    return { price_cents: null, min_price_cents: vals.minPriceCents, suggested_price_cents: vals.suggestedPriceCents };
+    // Pay-what-you-want has no seller-set minimum — the only floor is the
+    // platform minimum (Stripe can't process tiny charges). Suggested is optional.
+    return {
+      price_cents: null,
+      min_price_cents: MODEL_MIN_PRICE_CENTS,
+      suggested_price_cents: vals.suggestedPriceCents,
+    };
   }
   return { price_cents: null, min_price_cents: null, suggested_price_cents: null };
 }
