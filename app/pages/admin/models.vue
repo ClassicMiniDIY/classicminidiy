@@ -344,6 +344,17 @@
   const external = ref<any[]>([]);
   const externalLoading = ref(false);
   const externalError = ref<string | null>(null);
+  // Pending count for the tab badge — fetched eagerly (see onMounted below) so it
+  // shows on any tab, not just after the External tab's full list has loaded.
+  const externalCount = ref(0);
+
+  async function refreshExternalCount() {
+    const { count } = await supabase
+      .from('external_models')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    externalCount.value = count ?? 0;
+  }
 
   async function loadExternal() {
     externalLoading.value = true;
@@ -357,6 +368,7 @@
       .order('created_at', { ascending: true });
     if (error) externalError.value = error.message;
     external.value = (data ?? []) as any[];
+    externalCount.value = external.value.length;
     externalLoading.value = false;
   }
 
@@ -376,6 +388,7 @@
     }
     flash('success', `Approved "${row.title}"`);
     external.value = external.value.filter((r) => r.id !== row.id);
+    externalCount.value = external.value.length;
   }
 
   async function rejectExternal(row: any) {
@@ -395,6 +408,7 @@
     }
     flash('success', `Rejected "${row.title}"`);
     external.value = external.value.filter((r) => r.id !== row.id);
+    externalCount.value = external.value.length;
   }
 
   // ----- lazy per-tab load -----
@@ -417,6 +431,10 @@
     else if (t === 'external') await loadExternal();
   }
   watch(tab, (t) => ensureLoaded(t), { immediate: true });
+
+  // Seed the External badge count on mount so it shows regardless of the active
+  // tab (the full list still loads lazily when the tab is opened).
+  onMounted(refreshExternalCount);
 
   useHead({
     title: '3D Models Admin | Admin - Classic Mini DIY',
@@ -462,7 +480,7 @@
         </button>
         <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'external' }" @click="tab = 'external'">
           <i class="fas fa-link"></i> External
-          <span v-if="loaded.external && external.length" class="badge badge-warning badge-sm">{{ external.length }}</span>
+          <span v-if="externalCount" class="badge badge-warning badge-sm">{{ externalCount }}</span>
         </button>
       </div>
 
