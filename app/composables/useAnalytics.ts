@@ -76,6 +76,18 @@ export function useAnalytics() {
     capture('document_downloaded', { ...opts });
   }
 
+  // ---- GEO / AI referral ----------------------------------------------
+  /**
+   * Fire when a visit is attributed to an AI answer engine (ChatGPT, Perplexity,
+   * Gemini, Claude, Copilot). The entry referral is auto-detected + registered as
+   * the `ai_source` super-property in app/plugins/posthog.ts; this helper is for
+   * any explicit/in-app attribution (e.g. a deep-linked AI citation landing).
+   */
+  function trackAiReferral(source: string, props?: Props) {
+    if (!source) return;
+    capture('ai_referral', { ai_source: source, ...props });
+  }
+
   // ---- Forms / funnels ------------------------------------------------
   /** Fire once on first meaningful interaction so abandonment is measurable. */
   function trackFormStarted(form: string, props?: Props) {
@@ -101,6 +113,7 @@ export function useAnalytics() {
     trackOutbound,
     trackSearch,
     trackDownload,
+    trackAiReferral,
     trackFormStarted,
     trackFormStep,
     trackFormSubmitted,

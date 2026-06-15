@@ -56,3 +56,26 @@ export const PRIVATE_DISALLOW = [
   '/store/',
   '/plugins/',
 ];
+
+// Ordered most-specific-first so e.g. "Applebot-Extended" (training) matches before
+// "Applebot" (search), and so a bot is attributed to a single category.
+const BOT_GROUPS: { tokens: readonly string[]; category: 'answer' | 'training' | 'search' }[] = [
+  { tokens: AI_ANSWER_BOTS, category: 'answer' },
+  { tokens: AI_TRAINING_BOTS, category: 'training' },
+  { tokens: SEARCH_BOTS, category: 'search' },
+];
+
+/**
+ * Identify a known bot from a User-Agent string for analytics (bot-crawl tracking).
+ * Returns the matched token + its policy category, or null for non-bot/unknown UAs.
+ * Substring match against the verbatim UA tokens (case-sensitive — they're exact).
+ */
+export function matchBot(userAgent: string | undefined | null): { bot: string; category: string } | null {
+  if (!userAgent) return null;
+  for (const group of BOT_GROUPS) {
+    for (const token of group.tokens) {
+      if (userAgent.includes(token)) return { bot: token, category: group.category };
+    }
+  }
+  return null;
+}

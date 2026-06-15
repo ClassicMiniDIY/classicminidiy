@@ -1,4 +1,5 @@
 import posthog from 'posthog-js';
+import { classifyAiReferrer } from '~/utils/geo/aiReferrer';
 
 export default defineNuxtPlugin({
   name: 'posthog',
@@ -23,6 +24,20 @@ export default defineNuxtPlugin({
         if (import.meta.env.MODE === 'development') posthog.debug();
       },
     });
+
+    // GEO: classify the entry referrer as an AI answer engine and register it as
+    // an `ai_source` super-property so EVERY subsequent event (incl. the entry
+    // $pageview captured below) is filterable by it. Fire a one-off `ai_referral`
+    // entry event too. Done before the first pageview so the pageview is tagged.
+    const aiReferral = classifyAiReferrer(typeof document !== 'undefined' ? document.referrer : '');
+    if (aiReferral) {
+      posthog.register({ ai_source: aiReferral.source, ai_referrer_host: aiReferral.host });
+      posthog.capture('ai_referral', {
+        ai_source: aiReferral.source,
+        referrer_host: aiReferral.host,
+        entry_path: router.currentRoute.value.fullPath,
+      });
+    }
 
     // Manual SPA pageviews. router.afterEach does not fire for the initial
     // (hydrated) navigation, so capture the entry route explicitly. The
