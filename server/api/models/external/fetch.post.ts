@@ -8,7 +8,8 @@
  */
 import { requireUserAuth } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
-import { fetchExternalMetadata, ScrapeError, normalizeExternalUrl } from '../../../utils/external-models';
+import { fetchExternalMetadata, normalizeExternalUrl } from '../../../utils/external-models';
+import { ScrapeError } from '../../../utils/external-models/errors';
 import type { ExternalModelPreview } from '../../../../data/models/external-models';
 
 export default defineEventHandler(async (event): Promise<ExternalModelPreview> => {

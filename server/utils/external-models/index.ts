@@ -19,7 +19,8 @@ import { enrich } from './enrichers';
 import { ScrapeError } from './errors';
 
 export { detectSourceSite, extractExternalId, isValidExternalUrl, normalizeExternalUrl };
-export { ScrapeError } from './errors';
+// ScrapeError is NOT re-exported here — import it from './errors' to avoid a
+// duplicate Nitro auto-import (both modules live under server/utils).
 
 export interface ScrapedExternalModel {
   sourceSite: ExternalSourceSite;
