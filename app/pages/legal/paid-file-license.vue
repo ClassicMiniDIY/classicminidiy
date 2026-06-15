@@ -9,7 +9,7 @@
 
   useHead({
     title: 'Paid File License | Classic Mini DIY',
-    link: [{ rel: 'canonical', href: 'https://classicminidiy.com/legal/paid-file-license' }],
+    link: [{ rel: 'canonical', href: 'https://www.classicminidiy.com/legal/paid-file-license' }],
   });
   useSeoMeta({
     description:

@@ -53,7 +53,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical/torque',
+        href: 'https://www.classicminidiy.com/technical/torque',
       },
       {
         rel: 'preconnect',
@@ -65,7 +65,7 @@
   useSeoMeta({
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
-    ogUrl: 'https://classicminidiy.com/technical/torque',
+    ogUrl: 'https://www.classicminidiy.com/technical/torque',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/torque.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
@@ -84,7 +84,7 @@
     // The founder Person (Cole Gentry) — defined in the site-wide schema-org base
     // graph (app/app.vue #founder). @id-referenced so consumers link author → entity.
     author: {
-      '@id': 'https://classicminidiy.com/#founder',
+      '@id': 'https://www.classicminidiy.com/#founder',
     },
     publisher: {
       '@type': 'Organization',
@@ -94,7 +94,7 @@
         url: 'https://classicminidiy.s3.amazonaws.com/misc/logo.png',
       },
     },
-    url: 'https://classicminidiy.com/technical/torque',
+    url: 'https://www.classicminidiy.com/technical/torque',
     mainEntity: {
       '@type': 'Dataset',
       name: t('structured_data.dataset_name'),

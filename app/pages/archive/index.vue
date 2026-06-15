@@ -38,7 +38,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/archive',
+        href: 'https://www.classicminidiy.com/archive',
       },
       {
         rel: 'preconnect',
@@ -50,7 +50,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/archive',
+    ogUrl: 'https://www.classicminidiy.com/archive',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
@@ -67,7 +67,7 @@
     description: t('structured_data.description'),
     image: 'https://classicminidiy.s3.amazonaws.com/misc/archive-seo.jpg',
     author: {
-      '@id': 'https://classicminidiy.com/#founder',
+      '@id': 'https://www.classicminidiy.com/#founder',
     },
     publisher: {
       '@type': 'Organization',
@@ -77,7 +77,7 @@
         url: 'https://classicminidiy.s3.amazonaws.com/misc/logo.png',
       },
     },
-    url: 'https://classicminidiy.com/archive',
+    url: 'https://www.classicminidiy.com/archive',
     mainEntity: {
       '@type': 'Dataset',
       name: t('structured_data.dataset_name'),

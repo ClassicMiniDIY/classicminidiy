@@ -66,7 +66,7 @@
     link: [
       {
         rel: 'canonical',
-        href: `https://classicminidiy.com${fullPath}`,
+        href: `https://www.classicminidiy.com${fullPath}`,
       },
       {
         rel: 'preconnect',
@@ -79,7 +79,7 @@
     ogTitle: `${currentPostData.value?.title} ${$t('seo.og_title_suffix')}`,
     ogDescription:
       currentPostData.value?.description || $t('seo.description_fallback', { title: currentPostData.value?.title }),
-    ogUrl: `https://classicminidiy.com${fullPath}`,
+    ogUrl: `https://www.classicminidiy.com${fullPath}`,
     ogImage: currentPostData.value?.image,
     ogType: 'article',
     author: currentPostData.value?.author,
@@ -96,7 +96,7 @@
     '@type': 'DigitalDocument',
     name: currentPostData.value?.title,
     description: currentPostData.value?.description,
-    url: `https://classicminidiy.com${fullPath}`,
+    url: `https://www.classicminidiy.com${fullPath}`,
     image: currentPostData.value?.image,
     encodingFormat: fileType, // Using plain string value, not computed
     author: {
@@ -114,7 +114,7 @@
     isPartOf: {
       '@type': 'CollectionPage',
       name: $t('structured_data.collection_name'),
-      url: 'https://classicminidiy.com/archive',
+      url: 'https://www.classicminidiy.com/archive',
     },
   };
 

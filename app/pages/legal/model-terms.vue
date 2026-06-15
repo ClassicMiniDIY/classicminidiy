@@ -9,7 +9,7 @@
 
   useHead({
     title: 'Model Library Terms & Safety | Classic Mini DIY',
-    link: [{ rel: 'canonical', href: 'https://classicminidiy.com/legal/model-terms' }],
+    link: [{ rel: 'canonical', href: 'https://www.classicminidiy.com/legal/model-terms' }],
   });
   useSeoMeta({
     description:

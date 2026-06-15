@@ -24,7 +24,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/privacy',
+        href: 'https://www.classicminidiy.com/privacy',
       },
     ],
   });
@@ -32,7 +32,7 @@
   useSeoMeta({
     ogTitle: t('title'),
     ogDescription: t('description'),
-    ogUrl: 'https://classicminidiy.com/privacy',
+    ogUrl: 'https://www.classicminidiy.com/privacy',
     ogType: 'website',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.png',
     twitterCard: 'summary_large_image',
@@ -56,7 +56,7 @@
         url: 'https://classicminidiy.s3.amazonaws.com/misc/logo.png',
       },
     },
-    url: 'https://classicminidiy.com/privacy',
+    url: 'https://www.classicminidiy.com/privacy',
   };
 
   // Add JSON-LD structured data to head

@@ -94,7 +94,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical/clearance',
+        href: 'https://www.classicminidiy.com/technical/clearance',
       },
       {
         rel: 'preconnect',
@@ -109,18 +109,18 @@
     '@type': 'TechArticle',
     headline: 'Classic Mini Clearance Specifications',
     description: t('description'),
-    url: 'https://classicminidiy.com/technical/clearance',
+    url: 'https://www.classicminidiy.com/technical/clearance',
     author: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
     publisher: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
-    mainEntityOfPage: 'https://classicminidiy.com/technical/clearance',
+    mainEntityOfPage: 'https://www.classicminidiy.com/technical/clearance',
     about: {
       '@type': 'Thing',
       name: 'Classic Mini Engine and Mechanical Clearances',
@@ -132,7 +132,7 @@
     '@type': 'Dataset',
     name: 'Classic Mini Clearance Specifications Database',
     description: t('description'),
-    url: 'https://classicminidiy.com/technical/clearance',
+    url: 'https://www.classicminidiy.com/technical/clearance',
     keywords: [
       'Classic Mini clearances',
       'engine clearances',
@@ -144,7 +144,7 @@
     creator: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
     license: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
     isAccessibleForFree: true,
@@ -187,7 +187,7 @@
   useSeoMeta({
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
-    ogUrl: 'https://classicminidiy.com/technical/clearance',
+    ogUrl: 'https://www.classicminidiy.com/technical/clearance',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/clearance.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

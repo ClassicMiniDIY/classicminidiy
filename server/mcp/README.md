@@ -37,12 +37,12 @@ environment. For local development, set `MCP_API_KEY` (or `MCP_API_KEYS`) in you
 API keys must be provided via Authorization header with Bearer token:
 
 ```bash
-curl -H "Authorization: Bearer your-api-key" https://classicminidiy.com/mcp
+curl -H "Authorization: Bearer your-api-key" https://www.classicminidiy.com/mcp
 ```
 
 ## MCP Server Endpoint
 
-- **URL**: `https://classicminidiy.com/mcp`
+- **URL**: `https://www.classicminidiy.com/mcp`
 - **Server Name**: `classic-mini-calculators`
 - **Authentication**: API Key Required
 
@@ -138,7 +138,7 @@ Add to your MCP configuration:
 {
   "mcpServers": {
     "classic-mini-diy": {
-      "url": "https://classicminidiy.com/mcp",
+      "url": "https://www.classicminidiy.com/mcp",
       "headers": {
         "Authorization": "Bearer your-api-key"
       }
@@ -155,7 +155,7 @@ Add to `.cursor/mcp.json`:
 {
   "mcpServers": {
     "classic-mini-diy": {
-      "url": "https://classicminidiy.com/mcp",
+      "url": "https://www.classicminidiy.com/mcp",
       "headers": {
         "X-API-Key": "your-api-key"
       }
@@ -175,7 +175,7 @@ const client = new Client({
 });
 
 await client.connect({
-  url: 'https://classicminidiy.com/mcp',
+  url: 'https://www.classicminidiy.com/mcp',
   headers: {
     Authorization: 'Bearer your-api-key',
   },
@@ -241,4 +241,4 @@ Invalid API key:
 For issues or questions:
 
 - GitHub: https://github.com/SomethingNew71/classicminidiy
-- Website: https://classicminidiy.com
+- Website: https://www.classicminidiy.com

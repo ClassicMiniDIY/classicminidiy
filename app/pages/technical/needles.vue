@@ -23,7 +23,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical/needles',
+        href: 'https://www.classicminidiy.com/technical/needles',
       },
       {
         rel: 'preconnect',
@@ -35,7 +35,7 @@
   useSeoMeta({
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
-    ogUrl: 'https://classicminidiy.com/technical/needles',
+    ogUrl: 'https://www.classicminidiy.com/technical/needles',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/needles.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

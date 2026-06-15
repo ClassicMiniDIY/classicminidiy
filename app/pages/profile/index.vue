@@ -55,7 +55,7 @@
   });
   const initials = computed(() => displayName.value.charAt(0).toUpperCase());
   const shareUrl = computed(() => {
-    return `https://classicminidiy.com/users/${user.value?.id}`;
+    return `https://www.classicminidiy.com/users/${user.value?.id}`;
   });
   const hasSocialLinks = computed(() => {
     if (!profile.value?.social_links) return false;

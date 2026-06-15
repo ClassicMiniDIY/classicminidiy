@@ -32,7 +32,7 @@ export function useModelSeo(opts: {
   const { model, slug, fallbackTitle, fallbackDescription } = opts;
   const site = useSiteConfig();
 
-  const baseUrl = computed(() => (site.url || 'https://classicminidiy.com').replace(/\/$/, ''));
+  const baseUrl = computed(() => (site.url || 'https://www.classicminidiy.com').replace(/\/$/, ''));
   const canonical = computed(() => `${baseUrl.value}/models/${slug.value}`);
 
   const pageTitle = computed(() => `${model.value?.title || fallbackTitle} | ${BRAND}`);

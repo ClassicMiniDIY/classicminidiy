@@ -35,7 +35,7 @@
     link: [
       {
         rel: 'canonical',
-        href: `https://classicminidiy.com/archive/documents/collection/${slug}`,
+        href: `https://www.classicminidiy.com/archive/documents/collection/${slug}`,
       },
     ],
   });
@@ -43,7 +43,7 @@
   useSeoMeta({
     ogTitle: computed(() => collection.value?.title || t('title')),
     ogDescription: computed(() => collection.value?.description || t('description')),
-    ogUrl: `https://classicminidiy.com/archive/documents/collection/${slug}`,
+    ogUrl: `https://www.classicminidiy.com/archive/documents/collection/${slug}`,
     ogType: 'website',
   });
 </script>

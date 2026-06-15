@@ -113,7 +113,7 @@
 
   // Copy link to clipboard
   async function copyUrl() {
-    const url = `https://classicminidiy.com/archive/documents/${slug}`;
+    const url = `https://www.classicminidiy.com/archive/documents/${slug}`;
     try {
       await navigator.clipboard.writeText(url);
       copied.value = true;
@@ -131,7 +131,7 @@
       await navigator.share({
         title: doc.value.title,
         text: doc.value.description || t('seo.description_fallback', { title: doc.value.title }),
-        url: `https://classicminidiy.com/archive/documents/${slug}`,
+        url: `https://www.classicminidiy.com/archive/documents/${slug}`,
       });
       track('document_shared', { document_id: doc.value.id, method: 'web_share' });
     } catch {
@@ -155,7 +155,7 @@
     '@type': 'DigitalDocument',
     name: doc.value?.title,
     description: doc.value?.description,
-    url: `https://classicminidiy.com/archive/documents/${slug}`,
+    url: `https://www.classicminidiy.com/archive/documents/${slug}`,
     image: doc.value?.image,
     encodingFormat: fileType.value?.toLowerCase(),
     numberOfPages: doc.value?.pageCount || undefined,
@@ -176,7 +176,7 @@
     isPartOf: {
       '@type': 'CollectionPage',
       name: t('structured_data.collection_name'),
-      url: 'https://classicminidiy.com/archive/documents',
+      url: 'https://www.classicminidiy.com/archive/documents',
     },
   }));
 
@@ -202,7 +202,7 @@
     link: [
       {
         rel: 'canonical',
-        href: `https://classicminidiy.com/archive/documents/${slug}`,
+        href: `https://www.classicminidiy.com/archive/documents/${slug}`,
       },
     ],
     script: [
@@ -216,7 +216,7 @@
   useSeoMeta(() => ({
     ogTitle: `${doc.value?.title || ''} ${t('seo.og_title_suffix')}`,
     ogDescription: doc.value?.description || t('seo.description_fallback', { title: doc.value?.title }),
-    ogUrl: `https://classicminidiy.com/archive/documents/${slug}`,
+    ogUrl: `https://www.classicminidiy.com/archive/documents/${slug}`,
     ogImage: doc.value?.image,
     ogType: 'article' as const,
     author: doc.value?.author,

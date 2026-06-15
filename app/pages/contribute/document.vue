@@ -77,7 +77,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/contribute/document',
+    ogUrl: 'https://www.classicminidiy.com/contribute/document',
     ogType: 'website',
     twitterTitle: t('seo.twitter_title'),
     twitterDescription: t('seo.twitter_description'),

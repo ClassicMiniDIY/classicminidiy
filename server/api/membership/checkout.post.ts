@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Supabase URL not configured' });
   }
 
-  const siteUrl = ((config.public.siteUrl as string) || 'https://classicminidiy.com').replace(/\/$/, '');
+  const siteUrl = ((config.public.siteUrl as string) || 'https://www.classicminidiy.com').replace(/\/$/, '');
 
   try {
     const res = await $fetch<{ url?: string }>(`${supabaseUrl}/functions/v1/create-membership-checkout`, {

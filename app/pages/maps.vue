@@ -22,7 +22,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/maps',
+        href: 'https://www.classicminidiy.com/maps',
       },
       {
         rel: 'preconnect',
@@ -34,7 +34,7 @@
   useSeoMeta({
     ogTitle: t('seo.ogTitle'),
     ogDescription: t('seo.description'),
-    ogUrl: 'https://classicminidiy.com/maps',
+    ogUrl: 'https://www.classicminidiy.com/maps',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/maps.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
@@ -57,7 +57,7 @@
       priceCurrency: 'USD',
       priceValidUntil: '2025-12-31',
       availability: 'https://schema.org/InStock',
-      url: 'https://classicminidiy.com/maps',
+      url: 'https://www.classicminidiy.com/maps',
       seller: {
         '@type': 'Organization',
         name: 'Classic Mini DIY',

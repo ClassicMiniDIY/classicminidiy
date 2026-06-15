@@ -31,7 +31,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/archive/registry',
+        href: 'https://www.classicminidiy.com/archive/registry',
       },
       {
         rel: 'preconnect',
@@ -46,7 +46,7 @@
     '@type': 'CollectionPage',
     name: 'Classic Mini Registry',
     description: t('description'),
-    url: 'https://classicminidiy.com/archive/registry',
+    url: 'https://www.classicminidiy.com/archive/registry',
     mainEntity: {
       '@type': 'ItemList',
       name: 'Registered Classic Mini Vehicles',
@@ -55,7 +55,7 @@
     provider: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
   };
 
@@ -72,7 +72,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/archive/registry',
+    ogUrl: 'https://www.classicminidiy.com/archive/registry',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/registry.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

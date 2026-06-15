@@ -101,7 +101,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/archive/colors',
+        href: 'https://www.classicminidiy.com/archive/colors',
       },
     ],
   });
@@ -112,12 +112,12 @@
     '@type': 'Dataset',
     name: 'Classic Mini Paint Color Database',
     description: t('description'),
-    url: 'https://classicminidiy.com/archive/colors',
+    url: 'https://www.classicminidiy.com/archive/colors',
     keywords: ['Classic Mini colors', 'paint codes', 'BMC colors', 'Mini Cooper paint'],
     creator: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
     license: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
     isAccessibleForFree: true,
@@ -148,7 +148,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/archive/colors',
+    ogUrl: 'https://www.classicminidiy.com/archive/colors',
     ogType: 'website',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/colors.png',
     twitterCard: 'summary_large_image',

@@ -29,7 +29,7 @@
   });
 
   async function copyUrl() {
-    const url = `https://classicminidiy.com/archive/wheels/${wheel.value?.uuid}`;
+    const url = `https://www.classicminidiy.com/archive/wheels/${wheel.value?.uuid}`;
     try {
       await navigator.clipboard.writeText(url);
       copied.value = true;
@@ -67,7 +67,7 @@
         link: [
           {
             rel: 'canonical',
-            href: `https://classicminidiy.com/archive/wheels/${wheel.value.uuid}`,
+            href: `https://www.classicminidiy.com/archive/wheels/${wheel.value.uuid}`,
           },
           {
             rel: 'preconnect',

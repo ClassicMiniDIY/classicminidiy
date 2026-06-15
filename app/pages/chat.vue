@@ -36,7 +36,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/chat',
+        href: 'https://www.classicminidiy.com/chat',
       },
       {
         rel: 'preconnect',
@@ -50,7 +50,7 @@
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/chat.png',
-    ogUrl: 'https://classicminidiy.com/chat',
+    ogUrl: 'https://www.classicminidiy.com/chat',
     ogType: 'website',
     twitterCard: 'summary_large_image',
     twitterTitle: t('twitter_title'),
@@ -66,7 +66,7 @@
     applicationCategory: 'UtilityApplication',
     operatingSystem: 'Web Browser',
     description: t('description'),
-    url: 'https://classicminidiy.com/chat',
+    url: 'https://www.classicminidiy.com/chat',
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -75,7 +75,7 @@
     provider: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
   };
 
