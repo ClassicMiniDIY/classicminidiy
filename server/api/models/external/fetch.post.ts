@@ -19,9 +19,10 @@ export default defineEventHandler(async (event): Promise<ExternalModelPreview> =
   const url = typeof body?.url === 'string' ? body.url.trim() : '';
   if (!url) throw createError({ statusCode: 400, message: 'A model URL is required' });
 
+  const microlinkApiKey = useRuntimeConfig().MICROLINK_API_KEY as string;
   let scraped;
   try {
-    scraped = await fetchExternalMetadata(url);
+    scraped = await fetchExternalMetadata(url, { microlinkApiKey });
   } catch (err) {
     if (err instanceof ScrapeError) {
       throw createError({ statusCode: err.statusCode, message: err.message });

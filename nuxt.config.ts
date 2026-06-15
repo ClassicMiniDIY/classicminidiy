@@ -515,6 +515,11 @@ export default defineNuxtConfig({
     // default. Set MCP_API_KEY (or MCP_API_KEYS) in .env for local development.
     MCP_API_KEY: process.env.MCP_API_KEY || '',
     MCP_API_KEYS: process.env.MCP_API_KEYS || '',
+    // Microlink render-service key for the external-model scraper fallback
+    // (Cloudflare-blocked sites — MakerWorld etc.). Optional: the free public
+    // endpoint works without it but is rate-limited (~50 req/day). Set for the
+    // pro tier. Read server-side only and forwarded to renderExternalPage().
+    MICROLINK_API_KEY: process.env.MICROLINK_API_KEY || '',
     NODE_ENV: process.env.NODE_ENV || 'development',
   },
 

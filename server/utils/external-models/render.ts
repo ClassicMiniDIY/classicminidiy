@@ -28,9 +28,18 @@ interface MicrolinkResponse {
 
 const DEFAULT_ENDPOINT = 'https://api.microlink.io';
 
-/** Render `url` via the service and return OG-shaped metadata, or throw ScrapeError. */
-export async function renderExternalPage(url: string, fetchImpl?: typeof fetch): Promise<OgMetadata> {
-  const apiKey = process.env.MICROLINK_API_KEY;
+/**
+ * Render `url` via the service and return OG-shaped metadata, or throw ScrapeError.
+ * `apiKey` is forwarded from runtimeConfig by the caller (server-only); it falls
+ * back to MICROLINK_API_KEY in the environment so the function stays usable in
+ * isolation (e.g. unit tests).
+ */
+export async function renderExternalPage(
+  url: string,
+  fetchImpl?: typeof fetch,
+  apiKey?: string
+): Promise<OgMetadata> {
+  const key = apiKey || process.env.MICROLINK_API_KEY;
   const base = process.env.MICROLINK_API_URL || DEFAULT_ENDPOINT;
   const endpoint = `${base}?url=${encodeURIComponent(url)}`;
   const doFetch = fetchImpl ?? fetch;
@@ -38,7 +47,7 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch):
   let res: Response;
   try {
     res = await doFetch(endpoint, {
-      headers: { Accept: 'application/json', ...(apiKey ? { 'x-api-key': apiKey } : {}) },
+      headers: { Accept: 'application/json', ...(key ? { 'x-api-key': key } : {}) },
     });
   } catch {
     throw new ScrapeError('Couldn’t reach the preview service. Try again in a moment.', 502);
