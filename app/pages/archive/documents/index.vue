@@ -285,13 +285,13 @@
   useHead({
     title: t('title'),
     meta: [{ key: 'description', name: 'description', content: t('description') }],
-    link: [{ rel: 'canonical', href: 'https://classicminidiy.com/archive/documents' }],
+    link: [{ rel: 'canonical', href: 'https://www.classicminidiy.com/archive/documents' }],
   });
 
   useSeoMeta({
     ogTitle: t('title'),
     ogDescription: t('description'),
-    ogUrl: 'https://classicminidiy.com/archive/documents',
+    ogUrl: 'https://www.classicminidiy.com/archive/documents',
     ogType: 'website',
   });
 </script>

@@ -60,7 +60,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical/engine-decoder',
+        href: 'https://www.classicminidiy.com/technical/engine-decoder',
       },
       {
         rel: 'preconnect',
@@ -75,7 +75,7 @@
     '@type': 'Dataset',
     name: 'Classic Mini Engine Code Database',
     description: t('description'),
-    url: 'https://classicminidiy.com/technical/engine-decoder',
+    url: 'https://www.classicminidiy.com/technical/engine-decoder',
     keywords: ['Classic Mini', 'engine codes', 'Mini Cooper', 'A-series engine'],
     creator: {
       '@type': 'Organization',
@@ -104,7 +104,7 @@
   useSeoMeta({
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
-    ogUrl: 'https://classicminidiy.com/technical/engine-decoder',
+    ogUrl: 'https://www.classicminidiy.com/technical/engine-decoder',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/engine-decoder.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

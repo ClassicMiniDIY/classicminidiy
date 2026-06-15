@@ -81,7 +81,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/contribute/registry',
+    ogUrl: 'https://www.classicminidiy.com/contribute/registry',
     ogType: 'website',
   });
 

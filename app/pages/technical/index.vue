@@ -20,7 +20,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical',
+        href: 'https://www.classicminidiy.com/technical',
       },
       {
         rel: 'preconnect',
@@ -32,7 +32,7 @@
   useSeoMeta({
     ogTitle: t('ogTitle'),
     ogDescription: t('ogDescription'),
-    ogUrl: 'https://classicminidiy.com/technical',
+    ogUrl: 'https://www.classicminidiy.com/technical',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',
@@ -47,11 +47,11 @@
     '@type': 'ItemList',
     name: t('structured_data.name'),
     description: t('structured_data.description'),
-    url: 'https://classicminidiy.com/technical',
+    url: 'https://www.classicminidiy.com/technical',
     itemListElement: ToolboxItems.map((item, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: `https://classicminidiy.com${item.to}`,
+      url: `https://www.classicminidiy.com${item.to}`,
       name: t(item.titleKey),
     })),
   };

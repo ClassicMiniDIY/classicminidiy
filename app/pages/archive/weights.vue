@@ -30,7 +30,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/archive/weights',
+        href: 'https://www.classicminidiy.com/archive/weights',
       },
       {
         rel: 'preconnect',
@@ -42,7 +42,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/archive/weights',
+    ogUrl: 'https://www.classicminidiy.com/archive/weights',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/weights.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

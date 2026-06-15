@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig();
-  const siteUrl = ((config.public.siteUrl as string) || 'https://classicminidiy.com').replace(/\/$/, '');
+  const siteUrl = ((config.public.siteUrl as string) || 'https://www.classicminidiy.com').replace(/\/$/, '');
   const text = renderLicense({
     title: model.title,
     modelUrl: `${siteUrl}/models/${model.slug}`,

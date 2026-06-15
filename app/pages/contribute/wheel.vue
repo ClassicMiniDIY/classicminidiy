@@ -31,7 +31,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/contribute/wheel',
+    ogUrl: 'https://www.classicminidiy.com/contribute/wheel',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/wheels.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

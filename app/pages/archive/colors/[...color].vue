@@ -21,7 +21,7 @@
   });
 
   async function copyUrl() {
-    const url = `https://classicminidiy.com/archive/colors/${color?.value?.raw.id}`;
+    const url = `https://www.classicminidiy.com/archive/colors/${color?.value?.raw.id}`;
     try {
       await navigator.clipboard.writeText(url);
       copied.value = true;

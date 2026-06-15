@@ -76,7 +76,7 @@
       { name: 'keywords', content: t('links.seo.keywords') },
     ],
     link: [
-      { rel: 'canonical', href: 'https://classicminidiy.com/links' },
+      { rel: 'canonical', href: 'https://www.classicminidiy.com/links' },
       { rel: 'preconnect', href: 'https://classicminidiy.s3.amazonaws.com' },
     ],
   }));
@@ -84,7 +84,7 @@
   useSeoMeta({
     ogTitle: () => t('links.seo.title'),
     ogDescription: () => t('links.seo.description'),
-    ogUrl: 'https://classicminidiy.com/links',
+    ogUrl: 'https://www.classicminidiy.com/links',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
     ogType: 'website',
     twitterCard: 'summary_large_image',
@@ -98,7 +98,7 @@
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: t('links.seo.title'),
-    url: 'https://classicminidiy.com/links',
+    url: 'https://www.classicminidiy.com/links',
     description: t('links.seo.description'),
     mainEntity: {
       '@type': 'ItemList',

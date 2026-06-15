@@ -85,7 +85,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/contribute/color',
+    ogUrl: 'https://www.classicminidiy.com/contribute/color',
     ogType: 'website',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/colors.png',
     twitterCard: 'summary_large_image',

@@ -5,7 +5,7 @@
   // content for the founder entity, so it isn't run through the per-locale <i18n>
   // machinery. NOTE for Cole: personalize the bio below — kept factual + modest.
 
-  const canonical = 'https://classicminidiy.com/about';
+  const canonical = 'https://www.classicminidiy.com/about';
   const description =
     'About Classic Mini DIY — a knowledgebase, toolkit, and archive for Classic Mini Cooper owners, founded by Cole Gentry to help enthusiasts work on their own cars.';
 
@@ -33,7 +33,7 @@
   useSchemaOrg([
     defineWebPage({
       '@type': 'AboutPage',
-      about: { '@id': 'https://classicminidiy.com/#founder' },
+      about: { '@id': 'https://www.classicminidiy.com/#founder' },
     }),
   ]);
 </script>

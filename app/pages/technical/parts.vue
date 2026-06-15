@@ -93,7 +93,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical/parts',
+        href: 'https://www.classicminidiy.com/technical/parts',
       },
       {
         rel: 'preconnect',
@@ -108,7 +108,7 @@
     '@type': 'Dataset',
     name: 'Classic Mini Parts Equivalency Database',
     description: t('description'),
-    url: 'https://classicminidiy.com/technical/parts',
+    url: 'https://www.classicminidiy.com/technical/parts',
     keywords: [
       'Classic Mini parts',
       'parts cross-reference',
@@ -121,7 +121,7 @@
     creator: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
     license: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
     isAccessibleForFree: true,
@@ -152,7 +152,7 @@
   useSeoMeta({
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
-    ogUrl: 'https://classicminidiy.com/technical/parts',
+    ogUrl: 'https://www.classicminidiy.com/technical/parts',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/parts.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

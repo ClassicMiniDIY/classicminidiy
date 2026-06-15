@@ -21,7 +21,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical/compression',
+        href: 'https://www.classicminidiy.com/technical/compression',
       },
       {
         rel: 'preconnect',
@@ -33,7 +33,7 @@
   useSeoMeta({
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
-    ogUrl: 'https://classicminidiy.com/technical/compression',
+    ogUrl: 'https://www.classicminidiy.com/technical/compression',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/compression.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

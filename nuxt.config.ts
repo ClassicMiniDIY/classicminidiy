@@ -3,10 +3,10 @@ import { ArchiveItems, ToolboxItems } from './data/models/generic';
 import { AI_ANSWER_BOTS, AI_TRAINING_BOTS, PRIVATE_DISALLOW } from './server/utils/aiBots';
 
 const parsedArchive = ArchiveItems.map((item) => {
-  return { title: item.title, description: item.description, href: `https://classicminidiy.com${item.to}` };
+  return { title: item.title, description: item.description, href: `https://www.classicminidiy.com${item.to}` };
 });
 const parsedToolbox = ToolboxItems.map((item) => {
-  return { title: item.titleKey, description: item.titleKey, href: `https://classicminidiy.com${item.to}` };
+  return { title: item.titleKey, description: item.titleKey, href: `https://www.classicminidiy.com${item.to}` };
 });
 
 export default defineNuxtConfig({
@@ -45,7 +45,7 @@ export default defineNuxtConfig({
         },
         {
           property: 'og:url',
-          content: 'https://classicminidiy.com',
+          content: 'https://www.classicminidiy.com',
         },
         {
           property: 'og:image',
@@ -173,7 +173,7 @@ export default defineNuxtConfig({
   // schema-org, og-image, canonicals). `name` must be the brand (used in the
   // title template + WebSite/Organization schema) — NOT a paragraph.
   site: {
-    url: 'https://classicminidiy.com',
+    url: 'https://www.classicminidiy.com',
     name: 'Classic Mini DIY',
     description:
       'One of the most important parts of Classic Mini DIY is the focus on getting out and working on your own car. So to make this easier for you, I have collected technical information from various sources and consolidated it right here on classicminidiy.com',
@@ -329,7 +329,7 @@ export default defineNuxtConfig({
   },
 
   llms: {
-    domain: 'https://classicminidiy.com',
+    domain: 'https://www.classicminidiy.com',
     title: 'Classic Mini DIY',
     description:
       'One of the most important parts of Classic Mini DIY is the focus on getting out and working on your own car. So to make this easier for you, I have collected technical information from various sources and consolidated it right here on classicminidiy.com',
@@ -362,22 +362,22 @@ export default defineNuxtConfig({
           {
             title: 'Workshop Manuals',
             description: 'Factory workshop manuals for Classic Mini',
-            href: 'https://classicminidiy.com/archive/documents?type=manual',
+            href: 'https://www.classicminidiy.com/archive/documents?type=manual',
           },
           {
             title: 'Adverts Archive',
             description: 'Historical Classic Mini advertisements',
-            href: 'https://classicminidiy.com/archive/documents?type=advert',
+            href: 'https://www.classicminidiy.com/archive/documents?type=advert',
           },
           {
             title: 'Tuning Archive',
             description: 'Classic Mini tuning documentation',
-            href: 'https://classicminidiy.com/archive/documents?type=tuning',
+            href: 'https://www.classicminidiy.com/archive/documents?type=tuning',
           },
           {
             title: 'Catalogues Archive',
             description: 'Classic Mini vendor catalogues',
-            href: 'https://classicminidiy.com/archive/documents?type=catalogue',
+            href: 'https://www.classicminidiy.com/archive/documents?type=catalogue',
           },
         ],
       },
@@ -389,7 +389,7 @@ export default defineNuxtConfig({
           {
             title: '3D Model Library',
             description: 'Browse all 3D-printable Classic Mini parts',
-            href: 'https://classicminidiy.com/models',
+            href: 'https://www.classicminidiy.com/models',
           },
         ],
       },

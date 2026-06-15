@@ -266,7 +266,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/contact',
+        href: 'https://www.classicminidiy.com/contact',
       },
     ],
   });
@@ -274,7 +274,7 @@
   useSeoMeta({
     ogTitle: t('title'),
     ogDescription: t('description'),
-    ogUrl: 'https://classicminidiy.com/contact',
+    ogUrl: 'https://www.classicminidiy.com/contact',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

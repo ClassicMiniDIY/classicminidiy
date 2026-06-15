@@ -151,7 +151,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/technical/chassis-decoder',
+        href: 'https://www.classicminidiy.com/technical/chassis-decoder',
       },
       {
         rel: 'preconnect',
@@ -196,7 +196,7 @@
   useSeoMeta({
     ogTitle: t('og_title'),
     ogDescription: t('og_description'),
-    ogUrl: 'https://classicminidiy.com/technical/chassis-decoder',
+    ogUrl: 'https://www.classicminidiy.com/technical/chassis-decoder',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/technical/chassis-decoder.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

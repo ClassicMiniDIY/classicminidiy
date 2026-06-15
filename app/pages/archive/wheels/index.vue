@@ -20,7 +20,7 @@
     link: [
       {
         rel: 'canonical',
-        href: 'https://classicminidiy.com/archive/wheels',
+        href: 'https://www.classicminidiy.com/archive/wheels',
       },
       {
         rel: 'preconnect',
@@ -35,7 +35,7 @@
     '@type': 'CollectionPage',
     name: 'Classic Mini Wheels Archive',
     description: t('description'),
-    url: 'https://classicminidiy.com/archive/wheels',
+    url: 'https://www.classicminidiy.com/archive/wheels',
     mainEntity: {
       '@type': 'ItemList',
       name: 'Classic Mini Wheel Fitment Database',
@@ -48,7 +48,7 @@
     provider: {
       '@type': 'Organization',
       name: 'Classic Mini DIY',
-      url: 'https://classicminidiy.com',
+      url: 'https://www.classicminidiy.com',
     },
   };
 
@@ -65,7 +65,7 @@
   useSeoMeta({
     ogTitle: t('seo.og_title'),
     ogDescription: t('seo.og_description'),
-    ogUrl: 'https://classicminidiy.com/archive/wheels',
+    ogUrl: 'https://www.classicminidiy.com/archive/wheels',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/wheels.png',
     ogType: 'website',
     twitterCard: 'summary_large_image',

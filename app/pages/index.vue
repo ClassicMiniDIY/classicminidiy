@@ -96,7 +96,7 @@
     ogTitle: t('home.title'),
     ogDescription: t('home.description'),
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
-    ogUrl: 'https://classicminidiy.com',
+    ogUrl: 'https://www.classicminidiy.com',
     twitterCard: 'summary_large_image',
     twitterTitle: t('home.title'),
     twitterDescription: t('home.description'),
