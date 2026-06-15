@@ -90,11 +90,11 @@ export default defineNuxtConfig({
           name: 'apple-mobile-web-app-status-bar-style',
           content: 'black-translucent',
         },
-        // SEO tags
-        {
-          name: 'robots',
-          content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
-        },
+        // NOTE: the `robots` meta is now emitted by @nuxtjs/robots, whose default
+        // `robotsEnabledValue` is already
+        // `index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1`
+        // (identical to the old static tag). Per-route noindex is handled by the
+        // module + page-level useSeoMeta. Don't re-add a static one here (duplicates).
         {
           name: 'keywords',
           content:
@@ -131,11 +131,13 @@ export default defineNuxtConfig({
           media: 'print',
           onload: 'this.media="all"',
         },
-        // Canonical URL to prevent duplicate content issues
-        { rel: 'canonical', href: 'https://classicminidiy.com' },
-        // Alternative languages if you add them in the future
-        { rel: 'alternate', href: 'https://classicminidiy.com', hreflang: 'x-default' },
-        { rel: 'alternate', href: 'https://classicminidiy.com', hreflang: 'en' },
+        // Canonical is now auto-emitted per-route (self-referencing) by
+        // @nuxtjs/seo / nuxt-seo-utils from `site.url` + the current path. The old
+        // hardcoded homepage canonical here leaked onto every interior page that
+        // didn't override it (~37 pages declared themselves homepage duplicates).
+        // hreflang removed: i18n `strategy:'no_prefix'` has one URL per page, so
+        // there are no per-locale URLs to point at — the old en/x-default tags both
+        // pointed at the bare homepage and signalled nothing. `<html lang>` stays.
       ],
       script: [
         // Set initial theme before hydration to prevent FOUC
@@ -158,44 +160,22 @@ export default defineNuxtConfig({
           crossorigin: 'anonymous',
           defer: true,
         },
-        // Structured data for better search results
-        {
-          type: 'application/ld+json',
-          innerHTML: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'WebSite',
-            name: 'Classic Mini DIY',
-            url: 'https://classicminidiy.com',
-            potentialAction: {
-              '@type': 'SearchAction',
-              target: 'https://classicminidiy.com/search?q={search_term_string}',
-              'query-input': 'required name=search_term_string',
-            },
-          }),
-        },
-        // Organization schema
-        {
-          type: 'application/ld+json',
-          innerHTML: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Organization',
-            name: 'Classic Mini DIY',
-            url: 'https://classicminidiy.com',
-            logo: 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg',
-            sameAs: [
-              'https://www.youtube.com/c/classicminidiy',
-              'https://www.facebook.com/classicminidiy',
-              'https://www.instagram.com/classicminidiy/',
-            ],
-          }),
-        },
+        // Site-wide WebSite + Organization JSON-LD now lives in the nuxt-schema-org
+        // base graph (see app/app.vue → useSchemaOrg). That gives @id-linked nodes
+        // and merges a per-route WebPage automatically. The old SearchAction was
+        // dropped: it targeted /search?q= which has never existed (404).
       ],
     },
   },
 
+  // Read by nuxt-site-config and consumed across @nuxtjs/seo (sitemap, robots,
+  // schema-org, og-image, canonicals). `name` must be the brand (used in the
+  // title template + WebSite/Organization schema) — NOT a paragraph.
   site: {
     url: 'https://classicminidiy.com',
-    name: 'One of the most important parts of Classic Mini DIY is the focus on getting out and working on your own car. So to make this easier for you, I have collected technical information from various sources and consolidated it right here on classicminidiy.com',
+    name: 'Classic Mini DIY',
+    description:
+      'One of the most important parts of Classic Mini DIY is the focus on getting out and working on your own car. So to make this easier for you, I have collected technical information from various sources and consolidated it right here on classicminidiy.com',
   },
 
   sitemap: {
@@ -259,9 +239,10 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/fontaine',
     '@vite-pwa/nuxt',
-    '@nuxtjs/sitemap',
-    '@nuxtjs/robots',
-    'nuxt-og-image',
+    // @nuxtjs/seo umbrella — bundles @nuxtjs/sitemap, @nuxtjs/robots, nuxt-og-image,
+    // nuxt-schema-org, nuxt-seo-utils, nuxt-link-checker over shared nuxt-site-config.
+    // Do NOT also list those sub-modules here (double-registration / version skew).
+    '@nuxtjs/seo',
     '@nuxt/image',
     'nuxt-llms',
     '@nuxtjs/i18n',

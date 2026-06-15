@@ -81,54 +81,13 @@
         content: t('home.keywords'),
       },
     ],
+    // Canonical is auto-emitted (self-referencing) by @nuxtjs/seo. The homepage
+    // WebSite + Organization JSON-LD now comes from the schema-org base graph
+    // (app/app.vue), so the hand-rolled block was removed.
     link: [
-      {
-        rel: 'canonical',
-        href: 'https://classicminidiy.com',
-      },
       {
         rel: 'preconnect',
         href: 'https://classicminidiy.s3.amazonaws.com',
-      },
-    ],
-  });
-
-  // WebSite structured data for home page
-  const websiteJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Classic Mini DIY',
-    url: 'https://classicminidiy.com',
-    description: t('home.description'),
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: 'https://classicminidiy.com/search?q={search_term_string}',
-      },
-      'query-input': 'required name=search_term_string',
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Classic Mini DIY',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://classicminidiy.s3.amazonaws.com/misc/seo-images/avatar.jpg',
-      },
-      sameAs: [
-        'https://www.youtube.com/c/ClassicMiniDIY',
-        'https://www.facebook.com/classicminidiy',
-        'https://www.instagram.com/classicminidiy/',
-      ],
-    },
-  };
-
-  // Add JSON-LD structured data to head
-  useHead({
-    script: [
-      {
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify(websiteJsonLd),
       },
     ],
   });
