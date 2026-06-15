@@ -16,8 +16,10 @@ import {
 } from '../../../data/models/external-sources';
 import { fetchExternalPage, parseOpenGraph } from './ogParser';
 import { enrich } from './enrichers';
+import { ScrapeError } from './errors';
 
 export { detectSourceSite, extractExternalId, isValidExternalUrl, normalizeExternalUrl };
+export { ScrapeError } from './errors';
 
 export interface ScrapedExternalModel {
   sourceSite: ExternalSourceSite;
@@ -35,17 +37,6 @@ export interface ScrapedExternalModel {
   tags: string[];
   printSettings: PrintSettings;
   images: { url: string; isPrimary: boolean }[];
-}
-
-export class ScrapeError extends Error {
-  constructor(
-    message: string,
-    public statusCode = 422,
-    public site?: ExternalSourceSite
-  ) {
-    super(message);
-    this.name = 'ScrapeError';
-  }
 }
 
 export interface ScrapeDeps {
@@ -68,7 +59,8 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
   let page;
   try {
     page = await fetchExternalPage(sourceUrl, deps.fetchImpl);
-  } catch {
+  } catch (e) {
+    if (e instanceof ScrapeError) throw e; // SSRF / non-HTML / too-large carry their own status
     throw new ScrapeError('Couldn’t reach that page. Check the link and try again.', 502, site);
   }
 

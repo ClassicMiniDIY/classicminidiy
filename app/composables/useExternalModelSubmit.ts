@@ -56,7 +56,7 @@ export function useExternalModelSubmit() {
 
   /** POST /api/models/external/fetch — no DB write. */
   async function fetchPreview(): Promise<void> {
-    if (!isValidUrl.value) return;
+    if (fetching.value || !isValidUrl.value) return; // guard against concurrent fetches
     fetching.value = true;
     fetchError.value = null;
     preview.value = null;
