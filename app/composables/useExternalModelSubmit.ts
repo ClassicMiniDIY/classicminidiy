@@ -85,7 +85,7 @@ export function useExternalModelSubmit() {
       track('external_model_preview_fetched', { source_site: result.sourceSite });
     } catch (e: any) {
       fetchError.value =
-        e?.data?.statusMessage || e?.statusMessage || 'Could not fetch details for that URL.';
+        e?.data?.message || e?.data?.statusMessage || e?.statusMessage || 'Could not fetch details for that URL.';
     } finally {
       fetching.value = false;
     }
@@ -121,13 +121,14 @@ export function useExternalModelSubmit() {
       });
       return { slug: res.slug };
     } catch (e: any) {
-      // 409 = already listed; the error body carries the existing slug.
-      if (e?.statusCode === 409 && e?.data?.slug) {
-        alreadyListed.value = { slug: e.data.slug };
+      // 409 = already listed; createError({ data }) nests it at e.data.data.slug.
+      const dupSlug = e?.data?.data?.slug ?? e?.data?.slug;
+      if (e?.statusCode === 409 && dupSlug) {
+        alreadyListed.value = { slug: dupSlug };
         submitError.value = 'This model is already in the library.';
       } else {
         submitError.value =
-          e?.data?.statusMessage || e?.statusMessage || 'Could not submit the listing.';
+          e?.data?.message || e?.data?.statusMessage || e?.statusMessage || 'Could not submit the listing.';
       }
       return null;
     } finally {

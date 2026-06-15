@@ -17,17 +17,17 @@ export default defineEventHandler(async (event): Promise<ExternalModelPreview> =
 
   const body = await readBody(event);
   const url = typeof body?.url === 'string' ? body.url.trim() : '';
-  if (!url) throw createError({ statusCode: 400, statusMessage: 'A model URL is required' });
+  if (!url) throw createError({ statusCode: 400, message: 'A model URL is required' });
 
   let scraped;
   try {
     scraped = await fetchExternalMetadata(url);
   } catch (err) {
     if (err instanceof ScrapeError) {
-      throw createError({ statusCode: err.statusCode, statusMessage: err.message });
+      throw createError({ statusCode: err.statusCode, message: err.message });
     }
     console.error('[external/fetch] scrape failed:', err);
-    throw createError({ statusCode: 502, statusMessage: 'Could not read that page. Try again.' });
+    throw createError({ statusCode: 502, message: 'Could not read that page. Try again.' });
   }
 
   // Dedupe hint: is this source URL already listed?
