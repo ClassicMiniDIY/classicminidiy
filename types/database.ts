@@ -970,7 +970,7 @@ export type Database = {
           remixes_allowed?: boolean | null
           reviewed_at?: string | null
           reviewed_by?: string | null
-          search?: never
+          search?: unknown
           slug: string
           source_author_name?: string | null
           source_author_url?: string | null
@@ -1003,7 +1003,7 @@ export type Database = {
           remixes_allowed?: boolean | null
           reviewed_at?: string | null
           reviewed_by?: string | null
-          search?: never
+          search?: unknown
           slug?: string
           source_author_name?: string | null
           source_author_url?: string | null
@@ -1027,29 +1027,29 @@ export type Database = {
             referencedColumns: ["slug"]
           },
           {
-            foreignKeyName: "external_models_submitted_by_fkey"
-            columns: ["submitted_by"]
+            foreignKeyName: "external_models_reviewed_by_fkey"
+            columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "external_models_submitted_by_fkey"
-            columns: ["submitted_by"]
+            foreignKeyName: "external_models_reviewed_by_fkey"
+            columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "external_models_reviewed_by_fkey"
-            columns: ["reviewed_by"]
+            foreignKeyName: "external_models_submitted_by_fkey"
+            columns: ["submitted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "external_models_reviewed_by_fkey"
-            columns: ["reviewed_by"]
+            foreignKeyName: "external_models_submitted_by_fkey"
+            columns: ["submitted_by"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -3840,7 +3840,7 @@ export type Database = {
           primary_image_path: string | null
           published_at: string | null
           safety_critical: boolean | null
-          search: unknown | null
+          search: unknown
           slug: string | null
           sort_at: string | null
           source_author_name: string | null
@@ -3892,14 +3892,6 @@ export type Database = {
       }
     }
     Functions: {
-      increment_external_model_click: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      moderate_external_model: {
-        Args: { p_id: string; p_notes?: string; p_status: string }
-        Returns: undefined
-      }
       admin_get_membership: {
         Args: { p_user_id: string }
         Returns: {
@@ -4138,6 +4130,10 @@ export type Database = {
         Args: { p_model_id: string; p_user_id?: string }
         Returns: boolean
       }
+      increment_external_model_click: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       increment_listing_views: {
         Args: { listing_id_param: string }
         Returns: undefined
@@ -4150,6 +4146,10 @@ export type Database = {
       }
       mark_messages_as_read: {
         Args: { p_conversation_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      moderate_external_model: {
+        Args: { p_id: string; p_notes?: string; p_status: string }
         Returns: undefined
       }
       place_bid: {
