@@ -56,12 +56,6 @@ export default defineEventHandler(async (event) => {
   // Pricing only applies to first-party listings.
   if (pricing) builder = builder.eq('kind', 'first_party').eq('pricing_mode', pricing);
 
-  // First-party models always rank above external ("Around the Web") listings,
-  // within whatever sort the user picked — so e.g. "Newest" reads as newest
-  // first-party, then newest external. `kind` is the primary order key; the
-  // view's literals are fixed ('first_party' > 'external'), so DESC puts
-  // first-party first.
-  builder = builder.order('kind', { ascending: false });
   switch (sort) {
     case 'popular':
       builder = builder.order('engagement_count', { ascending: false }).order('sort_at', { ascending: false });

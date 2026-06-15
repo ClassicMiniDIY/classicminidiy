@@ -6,7 +6,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // can assert the published-only filter and slug/id resolution.
 const eqSpy = vi.fn();
 const textSearchSpy = vi.fn();
-const orderSpy = vi.fn();
 let resultByTable: Record<string, any> = {};
 let singleByTable: Record<string, any> = {};
 
@@ -18,10 +17,7 @@ function makeBuilder(table: string) {
       return builder;
     },
     in: () => builder,
-    order: (...args: any[]) => {
-      orderSpy(...args);
-      return builder;
-    },
+    order: () => builder,
     range: () => builder,
     textSearch: (...args: any[]) => {
       textSearchSpy(...args);
@@ -70,17 +66,6 @@ describe('server/api/models browse + detail routes', () => {
       resultByTable['model_browse_cards'] = { data: [], count: 0, error: null };
       await listHandler({});
       expect(mockService.from).toHaveBeenCalledWith('model_browse_cards');
-    });
-
-    it('ranks first-party above external as the primary sort, for every sort type', async () => {
-      for (const sort of ['newest', 'popular', 'likes', 'featured']) {
-        orderSpy.mockClear();
-        (getQuery as any).mockReturnValue({ sort });
-        resultByTable['model_browse_cards'] = { data: [], count: 0, error: null };
-        await listHandler({});
-        // `kind` DESC must be the FIRST order key so first-party always wins.
-        expect(orderSpy.mock.calls[0]).toEqual(['kind', { ascending: false }]);
-      }
     });
 
     it('applies full-text search when q is present', async () => {
