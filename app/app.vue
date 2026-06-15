@@ -13,6 +13,23 @@
   // Initialize color mode on client
   useColorMode();
 
+  // Site-wide schema.org base graph (nuxt-schema-org). This replaces the old
+  // hand-rolled WebSite + Organization JSON-LD that lived in nuxt.config head.
+  // The module auto-creates @id-linked WebSite + per-route WebPage from site
+  // config and wires this Organization as their publisher/identity.
+  // Founder Person + author bylines land in Phase 5 (see docs/plans/2026-06-14).
+  useSchemaOrg([
+    defineOrganization({
+      name: 'Classic Mini DIY',
+      logo: 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg',
+      sameAs: [
+        'https://www.youtube.com/c/ClassicMiniDIY',
+        'https://www.facebook.com/classicminidiy',
+        'https://www.instagram.com/classicminidiy/',
+      ],
+    }),
+  ]);
+
   onMounted(() => {
     initAuth();
   });
