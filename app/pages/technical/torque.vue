@@ -1,5 +1,7 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+  import { torqueFaqs } from '~/utils/geo/generateFaqs';
+  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { trackSearch, track } = useAnalytics();
@@ -100,6 +102,11 @@
     },
   }));
 
+  // FAQPage derived from the real torque data — GEO answer surface. The same list
+  // feeds the visible <GeoQuickAnswer> below so the markup matches on-page content.
+  const torqueFaqList = torqueFaqs();
+  const torqueFaqNode = buildFaqPage(torqueFaqList);
+
   // Add JSON-LD structured data to head
   useHead({
     script: [
@@ -107,6 +114,9 @@
         type: 'application/ld+json',
         innerHTML: () => JSON.stringify(torqueSpecsJsonLd.value),
       },
+      ...(torqueFaqNode
+        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(torqueFaqNode) }]
+        : []),
     ],
   });
 
@@ -146,6 +156,12 @@
             />
           </div>
         </div>
+      </div>
+      <div class="col-span-12">
+        <GeoQuickAnswer
+          :faqs="torqueFaqList"
+          lead="Key torque settings for the Classic Mini A-series engine and running gear. Expand a question for the exact figure, or search the full chart below."
+        />
       </div>
       <div class="col-span-12">
         <!-- Loading state -->

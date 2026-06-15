@@ -1,5 +1,7 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+  import { engineCodeFaqs } from '~/utils/geo/generateFaqs';
+  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { data: engineCodes } = await useFetch('/api/decoders/engine');
@@ -81,6 +83,11 @@
     },
   };
 
+  // FAQPage from the engine-code data (one entry per displacement) — feeds the
+  // visible <GeoQuickAnswer> too so the markup matches on-page content.
+  const engineFaqList = engineCodeFaqs();
+  const engineFaqNode = buildFaqPage(engineFaqList);
+
   // Add JSON-LD structured data to head
   useHead({
     script: [
@@ -88,6 +95,9 @@
         type: 'application/ld+json',
         innerHTML: JSON.stringify(datasetJsonLd),
       },
+      ...(engineFaqNode
+        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(engineFaqNode) }]
+        : []),
     ],
   });
 
@@ -159,6 +169,14 @@
           </div>
         </div>
       </div>
+
+      <div class="col-span-12">
+        <GeoQuickAnswer
+          :faqs="engineFaqList"
+          lead="Identify a Classic Mini engine by its code. Expand a question to see the common codes for each displacement, or search the full database below."
+        />
+      </div>
+
       <div class="col-span-12">
         <div class="col-span-12 pb-5">
           <i class="fas fa-circle pl-1 color-850"></i>
