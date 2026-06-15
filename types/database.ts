@@ -837,6 +837,225 @@ export type Database = {
           },
         ]
       }
+      external_model_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          external_model_id: string
+          id: string
+          is_primary: boolean
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          external_model_id: string
+          id?: string
+          is_primary?: boolean
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          external_model_id?: string
+          id?: string
+          is_primary?: boolean
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_model_images_external_model_id_fkey"
+            columns: ["external_model_id"]
+            isOneToOne: false
+            referencedRelation: "external_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_model_likes: {
+        Row: {
+          created_at: string
+          external_model_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          external_model_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          external_model_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_model_likes_external_model_id_fkey"
+            columns: ["external_model_id"]
+            isOneToOne: false
+            referencedRelation: "external_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_model_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_model_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_models: {
+        Row: {
+          admin_notes: string | null
+          category_slug: string
+          click_count: number
+          comment_count: number
+          commercial_use_allowed: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          is_featured: boolean
+          like_count: number
+          metadata_fetched_at: string | null
+          print_settings: Json
+          published_at: string | null
+          rejection_reason: string | null
+          remixes_allowed: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          search: unknown
+          slug: string
+          source_author_name: string | null
+          source_author_url: string | null
+          source_external_id: string | null
+          source_license: string | null
+          source_site: string
+          source_url: string
+          status: string
+          submitted_by: string | null
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category_slug: string
+          click_count?: number
+          comment_count?: number
+          commercial_use_allowed?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean
+          like_count?: number
+          metadata_fetched_at?: string | null
+          print_settings?: Json
+          published_at?: string | null
+          rejection_reason?: string | null
+          remixes_allowed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          search?: never
+          slug: string
+          source_author_name?: string | null
+          source_author_url?: string | null
+          source_external_id?: string | null
+          source_license?: string | null
+          source_site: string
+          source_url: string
+          status?: string
+          submitted_by?: string | null
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category_slug?: string
+          click_count?: number
+          comment_count?: number
+          commercial_use_allowed?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_featured?: boolean
+          like_count?: number
+          metadata_fetched_at?: string | null
+          print_settings?: Json
+          published_at?: string | null
+          rejection_reason?: string | null
+          remixes_allowed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          search?: never
+          slug?: string
+          source_author_name?: string | null
+          source_author_url?: string | null
+          source_external_id?: string | null
+          source_license?: string | null
+          source_site?: string
+          source_url?: string
+          status?: string
+          submitted_by?: string | null
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_models_category_slug_fkey"
+            columns: ["category_slug"]
+            isOneToOne: false
+            referencedRelation: "model_categories"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "external_models_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_models_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_models_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_models_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_comments: {
         Row: {
           content: string
@@ -3600,6 +3819,38 @@ export type Database = {
         }
         Relationships: []
       }
+      model_browse_cards: {
+        Row: {
+          author_id: string | null
+          category_slug: string | null
+          click_count: number | null
+          comment_count: number | null
+          created_at: string | null
+          currency: string | null
+          download_count: number | null
+          engagement_count: number | null
+          id: string | null
+          is_featured: boolean | null
+          kind: string | null
+          license_code: string | null
+          like_count: number | null
+          min_price_cents: number | null
+          price_cents: number | null
+          pricing_mode: string | null
+          primary_image_path: string | null
+          published_at: string | null
+          safety_critical: boolean | null
+          search: unknown | null
+          slug: string | null
+          sort_at: string | null
+          source_author_name: string | null
+          source_site: string | null
+          source_url: string | null
+          summary: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -3641,6 +3892,14 @@ export type Database = {
       }
     }
     Functions: {
+      increment_external_model_click: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      moderate_external_model: {
+        Args: { p_id: string; p_notes?: string; p_status: string }
+        Returns: undefined
+      }
       admin_get_membership: {
         Args: { p_user_id: string }
         Returns: {

@@ -183,6 +183,18 @@
       subpageHref="/models"
     />
 
+    <!-- Around the Web CTA: link an external model instead of uploading -->
+    <div v-if="!w.isEditing.value" class="alert alert-soft mb-6 items-center">
+      <i class="fas fa-arrow-up-right-from-square text-primary"></i>
+      <span class="text-sm">
+        {{ t('externalCta.prefix') }}
+        <NuxtLink to="/models/submit-external" class="link link-primary font-medium">
+          {{ t('externalCta.link') }}
+        </NuxtLink>
+        {{ t('externalCta.suffix') }}
+      </span>
+    </div>
+
     <!-- Not signed in -->
     <div v-if="!isAuthenticated" class="card bg-base-100 border border-base-300 shadow-sm my-10">
       <div class="card-body items-center text-center gap-3">
@@ -874,6 +886,11 @@
       "back": "Back",
       "next": "Next",
       "submit": "Submit"
+    },
+    "externalCta": {
+      "prefix": "Found a model on another site?",
+      "link": "Link it instead",
+      "suffix": "— no files to upload, just paste the URL."
     }
   },
   "es": {
@@ -1013,6 +1030,11 @@
       "back": "Atrás",
       "next": "Siguiente",
       "submit": "Enviar"
+    },
+    "externalCta": {
+      "prefix": "¿Encontraste un modelo en otro sitio?",
+      "link": "Enlázalo en su lugar",
+      "suffix": "— sin archivos que subir, solo pega la URL."
     }
   },
   "fr": {
@@ -1152,6 +1174,11 @@
       "back": "Retour",
       "next": "Suivant",
       "submit": "Soumettre"
+    },
+    "externalCta": {
+      "prefix": "Vous avez trouvé un modèle sur un autre site ?",
+      "link": "Liez-le plutôt",
+      "suffix": "— aucun fichier à téléverser, collez juste l'URL."
     }
   },
   "de": {
@@ -1291,6 +1318,11 @@
       "back": "Zurück",
       "next": "Weiter",
       "submit": "Einreichen"
+    },
+    "externalCta": {
+      "prefix": "Ein Modell auf einer anderen Seite gefunden?",
+      "link": "Verknüpfe es stattdessen",
+      "suffix": "— keine Dateien hochladen, einfach URL einfügen."
     }
   },
   "it": {
@@ -1430,6 +1462,11 @@
       "back": "Indietro",
       "next": "Avanti",
       "submit": "Invia"
+    },
+    "externalCta": {
+      "prefix": "Hai trovato un modello su un altro sito?",
+      "link": "Collegalo invece",
+      "suffix": "— nessun file da caricare, incolla solo l'URL."
     }
   },
   "pt": {
@@ -1569,6 +1606,11 @@
       "back": "Voltar",
       "next": "Seguinte",
       "submit": "Submeter"
+    },
+    "externalCta": {
+      "prefix": "Encontrou um modelo noutro site?",
+      "link": "Vincule-o",
+      "suffix": "— sem ficheiros para carregar, basta colar o URL."
     }
   },
   "ru": {
@@ -1708,6 +1750,11 @@
       "back": "Назад",
       "next": "Далее",
       "submit": "Отправить"
+    },
+    "externalCta": {
+      "prefix": "Нашли модель на другом сайте?",
+      "link": "Добавьте ссылку",
+      "suffix": "— без загрузки файлов, просто вставьте URL."
     }
   },
   "ja": {
@@ -1847,6 +1894,11 @@
       "back": "戻る",
       "next": "次へ",
       "submit": "送信"
+    },
+    "externalCta": {
+      "prefix": "別のサイトでモデルを見つけましたか？",
+      "link": "代わりにリンク",
+      "suffix": "— ファイルのアップロード不要、URLを貼り付けるだけ。"
     }
   },
   "zh": {
@@ -1986,6 +2038,11 @@
       "back": "上一步",
       "next": "下一步",
       "submit": "提交"
+    },
+    "externalCta": {
+      "prefix": "在其他网站找到了模型？",
+      "link": "链接它",
+      "suffix": "— 无需上传文件，只需粘贴 URL。"
     }
   },
   "ko": {
@@ -2125,6 +2182,11 @@
       "back": "이전",
       "next": "다음",
       "submit": "제출"
+    },
+    "externalCta": {
+      "prefix": "다른 사이트에서 모델을 찾으셨나요?",
+      "link": "대신 링크하세요",
+      "suffix": "— 파일 업로드 없이 URL만 붙여넣으면 됩니다."
     }
   }
 }

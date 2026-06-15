@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { HERO_TYPES } from '~~/data/models/generic';
-  import type { ModelCard as ModelCardType } from '~~/data/models/model-library';
+  import type { BrowseCard } from '~~/data/models/external-models';
+  import { EXTERNAL_SOURCES, SUPPORTED_SOURCE_SITES } from '~~/data/models/external-sources';
 
   const { t } = useI18n();
   const route = useRoute();
@@ -10,6 +11,7 @@
   const q = ref(typeof route.query.q === 'string' ? route.query.q : '');
   const category = ref(typeof route.query.category === 'string' ? route.query.category : '');
   const pricing = ref(typeof route.query.pricing === 'string' ? route.query.pricing : '');
+  const source = ref(typeof route.query.source === 'string' ? route.query.source : '');
   const sort = ref(typeof route.query.sort === 'string' ? route.query.sort : 'newest');
   const page = ref(Number(route.query.page) || 1);
 
@@ -25,7 +27,7 @@
   });
 
   // Reset to page 1 whenever a filter changes.
-  watch([category, pricing, sort], () => {
+  watch([category, pricing, source, sort], () => {
     page.value = 1;
   });
 
@@ -33,20 +35,21 @@
   const categories = computed(() => categoriesData.value?.categories ?? []);
 
   const { data, status } = await useFetch('/api/models', {
-    query: { q: debouncedQ, category, pricing, sort, page },
+    query: { q: debouncedQ, category, pricing, source, sort, page },
   });
 
-  const models = computed<ModelCardType[]>(() => data.value?.models ?? []);
+  const models = computed<BrowseCard[]>(() => (data.value?.models ?? []) as BrowseCard[]);
   const total = computed(() => data.value?.total ?? 0);
   const hasMore = computed(() => data.value?.hasMore ?? false);
 
   // Keep the URL in sync so the view is shareable / back-button friendly.
-  watch([debouncedQ, category, pricing, sort, page], () => {
+  watch([debouncedQ, category, pricing, source, sort, page], () => {
     router.replace({
       query: {
         ...(debouncedQ.value ? { q: debouncedQ.value } : {}),
         ...(category.value ? { category: category.value } : {}),
         ...(pricing.value ? { pricing: pricing.value } : {}),
+        ...(source.value ? { source: source.value } : {}),
         ...(sort.value !== 'newest' ? { sort: sort.value } : {}),
         ...(page.value > 1 ? { page: String(page.value) } : {}),
       },
@@ -66,12 +69,19 @@
     { value: 'likes', label: t('filters.sort.likes') },
     { value: 'featured', label: t('filters.sort.featured') },
   ]);
+  const sourceOptions = computed(() => [
+    { value: '', label: t('filters.source.all') },
+    { value: 'first_party', label: t('filters.source.firstParty') },
+    { value: 'external', label: t('filters.source.external') },
+    ...SUPPORTED_SOURCE_SITES.map((s) => ({ value: s, label: EXTERNAL_SOURCES[s].label })),
+  ]);
 
   function clearFilters() {
     q.value = '';
     debouncedQ.value = '';
     category.value = '';
     pricing.value = '';
+    source.value = '';
     sort.value = 'newest';
     page.value = 1;
   }
@@ -129,6 +139,9 @@
                 <i class="fas fa-magnifying-glass opacity-50"></i>
                 <input v-model="q" type="search" :placeholder="t('filters.searchPlaceholder')" :aria-label="t('filters.searchLabel')" />
               </label>
+              <select v-model="source" class="select w-full md:w-auto" :aria-label="t('filters.sourceLabel')">
+                <option v-for="opt in sourceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
               <select v-model="pricing" class="select w-full md:w-auto" :aria-label="t('filters.pricingLabel')">
                 <option v-for="opt in pricingOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
@@ -161,7 +174,7 @@
         <div class="flex items-center justify-between mb-4 text-sm opacity-70">
           <span>{{ t('results.count', { count: total }) }}</span>
           <button
-            v-if="q || category || pricing || sort !== 'newest'"
+            v-if="q || category || pricing || source || sort !== 'newest'"
             class="btn btn-ghost btn-xs"
             @click="clearFilters"
           >
@@ -180,7 +193,10 @@
         </div>
 
         <div v-else class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <ModelsModelCard v-for="model in models" :key="model.id" :model="model" />
+          <template v-for="model in models" :key="model.id">
+            <ModelsExternalModelCard v-if="model.kind === 'external'" :model="model" />
+            <ModelsModelCard v-else :model="model" />
+          </template>
         </div>
 
         <!-- Pagination -->
@@ -223,6 +239,8 @@
       "myModels": "My models"
     },
     "filters": {
+      "sourceLabel": "Filter by source",
+      "source": { "all": "All sources", "firstParty": "Classic Mini DIY", "external": "Around the web" },
       "searchPlaceholder": "Search models…",
       "searchLabel": "Search models",
       "pricingLabel": "Filter by pricing",
@@ -267,6 +285,8 @@
       "myModels": "Mis modelos"
     },
     "filters": {
+      "sourceLabel": "Filtrar por origen",
+      "source": { "all": "Todas las fuentes", "firstParty": "Classic Mini DIY", "external": "De la web" },
       "searchPlaceholder": "Buscar modelos…",
       "searchLabel": "Buscar modelos",
       "pricingLabel": "Filtrar por precio",
@@ -311,6 +331,8 @@
       "myModels": "Mes modèles"
     },
     "filters": {
+      "sourceLabel": "Filtrer par source",
+      "source": { "all": "Toutes les sources", "firstParty": "Classic Mini DIY", "external": "Ailleurs sur le web" },
       "searchPlaceholder": "Rechercher des modèles…",
       "searchLabel": "Rechercher des modèles",
       "pricingLabel": "Filtrer par tarif",
@@ -355,6 +377,8 @@
       "myModels": "Meine Modelle"
     },
     "filters": {
+      "sourceLabel": "Nach Quelle filtern",
+      "source": { "all": "Alle Quellen", "firstParty": "Classic Mini DIY", "external": "Aus dem Web" },
       "searchPlaceholder": "Modelle suchen…",
       "searchLabel": "Modelle suchen",
       "pricingLabel": "Nach Preis filtern",
@@ -399,6 +423,8 @@
       "myModels": "I miei modelli"
     },
     "filters": {
+      "sourceLabel": "Filtra per fonte",
+      "source": { "all": "Tutte le fonti", "firstParty": "Classic Mini DIY", "external": "Dal web" },
       "searchPlaceholder": "Cerca modelli…",
       "searchLabel": "Cerca modelli",
       "pricingLabel": "Filtra per prezzo",
@@ -443,6 +469,8 @@
       "myModels": "Os meus modelos"
     },
     "filters": {
+      "sourceLabel": "Filtrar por origem",
+      "source": { "all": "Todas as fontes", "firstParty": "Classic Mini DIY", "external": "Da web" },
       "searchPlaceholder": "Pesquisar modelos…",
       "searchLabel": "Pesquisar modelos",
       "pricingLabel": "Filtrar por preço",
@@ -487,6 +515,8 @@
       "myModels": "Мои модели"
     },
     "filters": {
+      "sourceLabel": "Фильтр по источнику",
+      "source": { "all": "Все источники", "firstParty": "Classic Mini DIY", "external": "Со всего веба" },
       "searchPlaceholder": "Поиск моделей…",
       "searchLabel": "Поиск моделей",
       "pricingLabel": "Фильтр по цене",
@@ -531,6 +561,8 @@
       "myModels": "マイモデル"
     },
     "filters": {
+      "sourceLabel": "ソースで絞り込む",
+      "source": { "all": "すべてのソース", "firstParty": "Classic Mini DIY", "external": "ウェブ上から" },
       "searchPlaceholder": "モデルを検索…",
       "searchLabel": "モデルを検索",
       "pricingLabel": "価格でフィルター",
@@ -575,6 +607,8 @@
       "myModels": "我的模型"
     },
     "filters": {
+      "sourceLabel": "按来源筛选",
+      "source": { "all": "所有来源", "firstParty": "Classic Mini DIY", "external": "来自网络" },
       "searchPlaceholder": "搜索模型…",
       "searchLabel": "搜索模型",
       "pricingLabel": "按价格筛选",
@@ -619,6 +653,8 @@
       "myModels": "내 모델"
     },
     "filters": {
+      "sourceLabel": "출처로 필터",
+      "source": { "all": "모든 출처", "firstParty": "Classic Mini DIY", "external": "웹에서" },
       "searchPlaceholder": "모델 검색…",
       "searchLabel": "모델 검색",
       "pricingLabel": "가격으로 필터",

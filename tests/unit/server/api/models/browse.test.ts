@@ -62,59 +62,101 @@ describe('server/api/models browse + detail routes', () => {
   });
 
   describe('GET /api/models (browse)', () => {
-    it('only ever queries published models', async () => {
-      resultByTable['models'] = { data: [], count: 0, error: null };
+    it('reads the unified model_browse_cards view', async () => {
+      resultByTable['model_browse_cards'] = { data: [], count: 0, error: null };
       await listHandler({});
-      expect(eqSpy).toHaveBeenCalledWith('models', 'status', 'published');
+      expect(mockService.from).toHaveBeenCalledWith('model_browse_cards');
     });
 
     it('applies full-text search when q is present', async () => {
       (getQuery as any).mockReturnValue({ q: 'gauge pod' });
-      resultByTable['models'] = { data: [], count: 0, error: null };
+      resultByTable['model_browse_cards'] = { data: [], count: 0, error: null };
       await listHandler({});
       expect(textSearchSpy).toHaveBeenCalledWith('search', 'gauge pod', expect.objectContaining({ type: 'websearch' }));
     });
 
-    it('maps rows to cards with batched image + author', async () => {
-      resultByTable['models'] = {
+    it('scopes to external listings of a given source site', async () => {
+      (getQuery as any).mockReturnValue({ source: 'thingiverse' });
+      resultByTable['model_browse_cards'] = { data: [], count: 0, error: null };
+      await listHandler({});
+      expect(eqSpy).toHaveBeenCalledWith('model_browse_cards', 'kind', 'external');
+      expect(eqSpy).toHaveBeenCalledWith('model_browse_cards', 'source_site', 'thingiverse');
+    });
+
+    it('maps first-party + external rows to discriminated cards', async () => {
+      resultByTable['model_browse_cards'] = {
         data: [
           {
+            kind: 'first_party',
             id: 'm1',
             slug: 'gauge-pod',
             title: 'Gauge Pod',
             summary: null,
             category_slug: 'dash-gauges',
+            created_at: '2026-06-11T00:00:00Z',
+            published_at: null,
+            like_count: 2,
+            comment_count: 0,
+            download_count: 9,
+            click_count: null,
             pricing_mode: 'free',
             price_cents: null,
             min_price_cents: null,
             currency: 'usd',
             license_code: 'CC-BY-4.0',
-            like_count: 2,
-            comment_count: 0,
-            download_count: 9,
             safety_critical: false,
             is_featured: false,
-            owner_id: 'u1',
-            created_at: '2026-06-11T00:00:00Z',
+            author_id: 'u1',
+            source_site: null,
+            source_url: null,
+            source_author_name: null,
+            primary_image_path: 'm1/a.webp',
+          },
+          {
+            kind: 'external',
+            id: 'e1',
+            slug: 'cool-knob',
+            title: 'Cool Knob',
+            summary: 'shiny',
+            category_slug: 'interior',
+            created_at: '2026-06-12T00:00:00Z',
+            published_at: '2026-06-13T00:00:00Z',
+            like_count: 5,
+            comment_count: 0,
+            download_count: null,
+            click_count: 12,
+            pricing_mode: null,
+            price_cents: null,
+            min_price_cents: null,
+            currency: null,
+            license_code: null,
+            safety_critical: false,
+            is_featured: false,
+            author_id: null,
+            source_site: 'thingiverse',
+            source_url: 'https://www.thingiverse.com/thing:1',
+            source_author_name: 'Bob',
+            primary_image_path: 'external/e1/x.webp',
           },
         ],
-        count: 1,
+        count: 2,
         error: null,
-      };
-      resultByTable['model_images'] = {
-        data: [{ model_id: 'm1', storage_path: 'm1/a.webp', is_primary: true, sort_order: 0 }],
       };
       resultByTable['profiles'] = { data: [{ id: 'u1', display_name: 'Cole', username: 'cole', avatar_url: null }] };
 
       const res = await listHandler({});
-      expect(res.total).toBe(1);
-      expect(res.models[0]).toMatchObject({ id: 'm1', slug: 'gauge-pod', pricingMode: 'free' });
-      expect(res.models[0].primaryImage).toContain('/storage/v1/object/public/model-images/m1/a.webp');
-      expect(res.models[0].author).toMatchObject({ displayName: 'Cole' });
+      expect(res.total).toBe(2);
+      const fp = res.models.find((c: any) => c.kind === 'first_party');
+      const ext = res.models.find((c: any) => c.kind === 'external');
+      expect(fp).toMatchObject({ id: 'm1', slug: 'gauge-pod', pricingMode: 'free' });
+      expect(fp.primaryImage).toContain('/storage/v1/object/public/model-images/m1/a.webp');
+      expect(fp.author).toMatchObject({ displayName: 'Cole' });
+      expect(ext).toMatchObject({ id: 'e1', sourceSite: 'thingiverse', sourceAuthorName: 'Bob', clickCount: 12 });
+      expect(ext.primaryImage).toContain('/storage/v1/object/public/model-images/external/e1/x.webp');
     });
 
     it('500s when the query errors', async () => {
-      resultByTable['models'] = { data: null, count: null, error: { message: 'boom' } };
+      resultByTable['model_browse_cards'] = { data: null, count: null, error: { message: 'boom' } };
       await expect(listHandler({})).rejects.toMatchObject({ statusCode: 500 });
     });
   });
