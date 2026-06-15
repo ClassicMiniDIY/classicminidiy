@@ -47,9 +47,10 @@ export default defineEventHandler(async (event) => {
   if (!categorySlug) throw createError({ statusCode: 400, message: 'Category is required' });
 
   // Re-scrape: the source of truth for source_site / id / author / license / images.
+  const microlinkApiKey = useRuntimeConfig().MICROLINK_API_KEY as string;
   let scraped;
   try {
-    scraped = await fetchExternalMetadata(url);
+    scraped = await fetchExternalMetadata(url, { microlinkApiKey });
   } catch (err) {
     if (err instanceof ScrapeError) throw createError({ statusCode: err.statusCode, message: err.message });
     throw createError({ statusCode: 502, message: 'Could not read that page. Try again.' });

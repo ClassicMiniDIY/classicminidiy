@@ -49,6 +49,12 @@ Branch: `feature/3d-models` → merges to `main` once this checklist is green.
 - [ ] `S3_MODELS_BUCKET`, `S3_MODELS_ACCESS_KEY_ID`, `S3_MODELS_SECRET_ACCESS_KEY`
       set in Vercel (and locally in `.env` for dev testing).
 - [ ] `supabaseUrl` / `supabaseKey` public runtime config present (already in use).
+- [ ] `MICROLINK_API_KEY` set in Vercel for the external-model scraper's render
+      fallback (Cloudflare-blocked sites: MakerWorld, Cults3D, Thangs,
+      MyMiniFactory). _Optional_ — the free public endpoint works without a key
+      but is rate-limited (~50 req/day), and each blocked-site submission uses ~2
+      (preview + submit). Recommended before promoting the "Around the Web"
+      feature. Thingiverse / Printables don't need it (direct fetch).
 
 ## 5. End-to-end smoke (Stripe test mode)
 

@@ -49,6 +49,8 @@ export interface ScrapeDeps {
   fetchImpl?: typeof fetch;
   /** Injected for tests — stands in for the render-service fetch. */
   renderImpl?: typeof fetch;
+  /** Render-service API key, forwarded from runtimeConfig by the route. */
+  microlinkApiKey?: string;
 }
 
 /**
@@ -84,7 +86,7 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
   // 2) Render-service fallback for blocked / JS-only / empty pages. Runs in
   //    production (no injected fetchImpl) or when a test supplies `renderImpl`.
   if (!og && (!deps.fetchImpl || deps.renderImpl)) {
-    og = await renderExternalPage(sourceUrl, deps.renderImpl); // throws ScrapeError if it also fails
+    og = await renderExternalPage(sourceUrl, deps.renderImpl, deps.microlinkApiKey); // throws ScrapeError if it also fails
   }
 
   if (!og) {
