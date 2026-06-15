@@ -179,10 +179,24 @@ export default defineNuxtConfig({
       'One of the most important parts of Classic Mini DIY is the focus on getting out and working on your own car. So to make this easier for you, I have collected technical information from various sources and consolidated it right here on classicminidiy.com',
   },
 
+  // nuxt-link-checker (bundled with @nuxtjs/seo) crawl-checks internal links at
+  // build via a prerender:generate hook. It false-positives on the archive DETAIL
+  // pages — they're SSR and 500 during build (no Supabase public env), flooding
+  // the log with [HEAD] 500s. It's a dev/lint aid, not needed for prod or GEO, so
+  // the build-time crawl is off. Re-enable with path excludes if link audit is wanted.
+  linkChecker: { enabled: false },
+
   sitemap: {
-    // Dynamic source: published 3D Model Library listings (SSR routes the module
-    // can't auto-discover). See server/api/__sitemap__/urls.ts.
-    sources: ['/api/__sitemap__/urls'],
+    // Dynamic sources for SSR/DB-backed routes the module can't auto-discover:
+    // 3D Model Library listings + the archive detail pages (colours, wheels,
+    // documents + collections). Each filters to published/approved rows.
+    // See server/api/__sitemap__/*.ts.
+    sources: [
+      '/api/__sitemap__/urls',
+      '/api/__sitemap__/colors',
+      '/api/__sitemap__/wheels',
+      '/api/__sitemap__/documents',
+    ],
     xslColumns: [
       { label: 'URL', width: '50%' },
       { label: 'Last Modified', width: '25%' },
@@ -355,6 +369,18 @@ export default defineNuxtConfig({
           },
         ],
       },
+      {
+        title: '3D Model Library',
+        description:
+          'Community 3D-printable parts for the Classic Mini — a marketplace of downloadable model files (STL and more) for restoration, repair, and upgrades.',
+        links: [
+          {
+            title: '3D Model Library',
+            description: 'Browse all 3D-printable Classic Mini parts',
+            href: 'https://classicminidiy.com/models',
+          },
+        ],
+      },
     ],
   },
 
@@ -494,7 +520,20 @@ export default defineNuxtConfig({
     prerender: {
       crawlLinks: true,
       failOnError: false,
-      ignore: ['/admin', '/admin/**', '/raw', '/raw/**'],
+      // The archive DETAIL pages are intentionally SSR (DB-backed, Supabase at
+      // runtime) — they're discoverable via the sitemap sources, not prerender.
+      // crawlLinks follows the listing pages' links into them; without these
+      // ignores the prerenderer 500s on every one (no public Supabase env at
+      // build). nitro matches ignore patterns with String.startsWith, so these
+      // are PREFIXES (trailing slash) — they catch `/archive/colors/<id>` but not
+      // the prerendered index `/archive/colors` itself.
+      ignore: [
+        '/admin',
+        '/raw',
+        '/archive/colors/',
+        '/archive/wheels/',
+        '/archive/documents/',
+      ],
       routes: [
         '/',
         '/privacy',
