@@ -4,8 +4,11 @@
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
 
-  // Redirect unauthenticated visitors to login, preserving intent.
-  if (!isAuthenticated.value) {
+  // Redirect unauthenticated visitors to login, preserving intent. The Supabase
+  // session lives in localStorage, so isAuthenticated is only meaningful on the
+  // client — gating on import.meta.client avoids redirecting logged-in users
+  // during SSR.
+  if (import.meta.client && !isAuthenticated.value) {
     await navigateTo(`/login?redirect=${encodeURIComponent('/models/submit-external')}`, { replace: true });
   }
 

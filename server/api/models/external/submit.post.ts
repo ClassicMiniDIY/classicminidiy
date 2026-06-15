@@ -15,6 +15,7 @@ import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
 import { slugifyModelTitle } from '../../../utils/models';
 import { fetchExternalMetadata, ScrapeError } from '../../../utils/external-models';
+import { safeFetch, readBodyCapped, SsrfError } from '../../../utils/external-models/ssrf';
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // bucket limit
@@ -121,13 +122,26 @@ export default defineEventHandler(async (event) => {
   for (let i = 0; i < Math.min(scraped.images.length, MAX_IMAGES); i++) {
     const img = scraped.images[i];
     try {
-      const res = await fetch(img.url);
+      let res: Response;
+      try {
+        res = await safeFetch(img.url); // SSRF-guarded (image URLs are attacker-controllable too)
+      } catch (e) {
+        if (e instanceof SsrfError) continue; // skip private/unreachable image hosts
+        throw e;
+      }
       if (!res.ok) continue;
+      const contentLength = res.headers.get('content-length');
+      if (contentLength && Number(contentLength) > MAX_IMAGE_BYTES) continue; // avoid OOM up front
       const contentType = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
       const ext = MIME_EXT[contentType];
       if (!ext) continue; // only jpg/png/webp per bucket policy
-      const buffer = new Uint8Array(await res.arrayBuffer());
-      if (buffer.byteLength === 0 || buffer.byteLength > MAX_IMAGE_BYTES) continue;
+      let buffer: Uint8Array;
+      try {
+        buffer = await readBodyCapped(res, MAX_IMAGE_BYTES); // caps streaming/oversized bodies
+      } catch {
+        continue; // exceeded the cap
+      }
+      if (buffer.byteLength === 0) continue;
 
       const storagePath = `external/${row.id}/${randomUUID()}.${ext}`;
       const { error: upErr } = await service.storage

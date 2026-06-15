@@ -31,6 +31,12 @@
     page.value = 1;
   });
 
+  // External listings have no pricing — clear the pricing filter when an
+  // external source is chosen so the two never combine into 0 results.
+  watch(source, (val) => {
+    if (val && val !== 'first_party') pricing.value = '';
+  });
+
   const { data: categoriesData } = await useFetch('/api/models/categories');
   const categories = computed(() => categoriesData.value?.categories ?? []);
 
@@ -142,7 +148,12 @@
               <select v-model="source" class="select w-full md:w-auto" :aria-label="t('filters.sourceLabel')">
                 <option v-for="opt in sourceOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
-              <select v-model="pricing" class="select w-full md:w-auto" :aria-label="t('filters.pricingLabel')">
+              <select
+                v-model="pricing"
+                class="select w-full md:w-auto"
+                :disabled="!!source && source !== 'first_party'"
+                :aria-label="t('filters.pricingLabel')"
+              >
                 <option v-for="opt in pricingOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
               <select v-model="sort" class="select w-full md:w-auto" :aria-label="t('filters.sortLabel')">

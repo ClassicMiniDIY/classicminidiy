@@ -4,6 +4,10 @@
  * API, no per-request cost, full control. `parseMetaTags` / `parseOpenGraph`
  * are pure and unit-testable against captured HTML fixtures.
  */
+import { ScrapeError } from './errors';
+import { safeFetch, readBodyCapped, SsrfError } from './ssrf';
+
+const MAX_HTML_BYTES = 5 * 1024 * 1024; // 5 MB — generous for HTML, fatal for binaries
 
 export interface OgMetadata {
   title: string | null;
@@ -195,23 +199,48 @@ export interface FetchedPage {
   status: number;
 }
 
+const REQUEST_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (compatible; ClassicMiniDIYBot/1.0; +https://classicminidiy.com/about)',
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
+
 /**
- * Fetch an external page server-side with a real User-Agent (some hosts 403 the
- * default fetch UA). Injectable for tests.
+ * Fetch an external page server-side. The production path is SSRF-guarded
+ * (`safeFetch` validates every redirect hop) and refuses non-HTML responses +
+ * caps the body to avoid OOM on huge/streaming bodies. A `fetchImpl` may be
+ * injected for tests, which bypasses the network-safety layer (no real I/O).
  */
-export async function fetchExternalPage(
-  url: string,
-  fetchImpl: typeof fetch = fetch
-): Promise<FetchedPage> {
-  const res = await fetchImpl(url, {
-    redirect: 'follow',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (compatible; ClassicMiniDIYBot/1.0; +https://classicminidiy.com/about)',
-      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-    },
-  });
-  const html = await res.text();
-  return { html, finalUrl: res.url || url, status: res.status };
+export async function fetchExternalPage(url: string, fetchImpl?: typeof fetch): Promise<FetchedPage> {
+  if (fetchImpl) {
+    const res = await fetchImpl(url, { redirect: 'follow', headers: REQUEST_HEADERS });
+    const html = await res.text();
+    return { html, finalUrl: res.url || url, status: res.status };
+  }
+
+  let res: Response;
+  try {
+    res = await safeFetch(url, { headers: REQUEST_HEADERS });
+  } catch (e) {
+    if (e instanceof SsrfError) {
+      throw new ScrapeError('That address can’t be fetched — it points somewhere private or unreachable.', 400);
+    }
+    throw e;
+  }
+
+  // Let the caller map 4xx (e.g. 404) — don't read an error body.
+  if (res.status >= 400) return { html: '', finalUrl: res.url || url, status: res.status };
+
+  const contentType = (res.headers.get('content-type') || '').toLowerCase();
+  if (contentType && !contentType.includes('text/html') && !contentType.includes('xml')) {
+    throw new ScrapeError('That link doesn’t point to a readable web page.', 422);
+  }
+
+  let bytes: Uint8Array;
+  try {
+    bytes = await readBodyCapped(res, MAX_HTML_BYTES);
+  } catch {
+    throw new ScrapeError('That page is too large to read.', 413);
+  }
+  return { html: new TextDecoder('utf-8').decode(bytes), finalUrl: res.url || url, status: res.status };
 }

@@ -5,10 +5,11 @@
   const supabase = useSupabase();
   const { user } = useAuth();
 
+  // Client-only: the Supabase session is in localStorage, so a server run would
+  // always come back empty and poison the payload cache / cause hydration drift.
   const { data, pending, refresh } = await useAsyncData(
     'external-submissions-mine',
     async () => {
-      if (!import.meta.client) return { submissions: [] as ExternalModelSubmission[] };
       const { data: s } = await supabase.auth.getSession();
       const token = s.session?.access_token;
       if (!token) return { submissions: [] as ExternalModelSubmission[] };
@@ -16,7 +17,7 @@
         headers: { Authorization: `Bearer ${token}` },
       });
     },
-    { watch: [user] }
+    { watch: [user], server: false }
   );
 
   const submissions = computed(() => data.value?.submissions ?? []);
