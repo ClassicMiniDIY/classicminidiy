@@ -39,7 +39,10 @@ export async function renderExternalPage(
   fetchImpl?: typeof fetch,
   apiKey?: string
 ): Promise<OgMetadata> {
-  const key = apiKey || process.env.MICROLINK_API_KEY;
+  // Strict undefined check: a forwarded '' (runtimeConfig default when unset)
+  // means "no key" and must NOT fall through to process.env. Only an omitted
+  // arg (e.g. a direct unit-test call) falls back.
+  const key = apiKey !== undefined ? apiKey : process.env.MICROLINK_API_KEY;
   const base = process.env.MICROLINK_API_URL || DEFAULT_ENDPOINT;
   const endpoint = `${base}?url=${encodeURIComponent(url)}`;
   const doFetch = fetchImpl ?? fetch;
