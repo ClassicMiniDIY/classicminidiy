@@ -175,8 +175,8 @@
     },
   };
 
-  // FAQPage derived from the chassis-range data — answer surface for AI engines.
-  // Same list feeds the visible <GeoQuickAnswer> below (markup matches content).
+  // FAQPage JSON-LD only (no visible block) — answer surface for AI engines, derived
+  // from the chassis-range data the decoder already presents on the page.
   const chassisFaqList = chassisFaqs();
   const chassisFaqNode = buildFaqPage(chassisFaqList);
 
@@ -256,13 +256,6 @@
             </NuxtLink>
           </div>
         </div>
-      </div>
-
-      <div class="col-span-12">
-        <GeoQuickAnswer
-          :faqs="chassisFaqList"
-          lead="Decode a Classic Mini chassis (VIN/commission) number. Expand a question to see the format for your car's era and what each character means, or use the interactive decoder below."
-        />
       </div>
 
       <!-- Chassis Decoder Form -->

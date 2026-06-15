@@ -329,6 +329,14 @@ export default defineNuxtConfig({
     title: 'Classic Mini DIY',
     description:
       'One of the most important parts of Classic Mini DIY is the focus on getting out and working on your own car. So to make this easier for you, I have collected technical information from various sources and consolidated it right here on classicminidiy.com',
+    // Enables /llms-full.txt (linked from /llms.txt) and lets a Nitro plugin push
+    // the generated technical Q&A into it — see server/plugins/llms-faq.ts. This is
+    // the legitimate machine-only content surface (not cloaking — it isn't the page).
+    full: {
+      title: 'Classic Mini DIY — Full Technical Reference',
+      description:
+        'Answer-first technical reference for the Classic Mini: torque specs, clearances, engine codes, and chassis/VIN decoding.',
+    },
     sections: [
       {
         title: 'Archive',

@@ -162,7 +162,8 @@
     ],
   };
 
-  // FAQPage from the real clearance data — feeds the visible <GeoQuickAnswer> too.
+  // FAQPage JSON-LD only (no visible block — answers derive from the clearance
+  // tables already on the page; structured data for AI engines, not a UX surface).
   const clearanceFaqList = clearanceFaqs();
   const clearanceFaqNode = buildFaqPage(clearanceFaqList);
 
@@ -207,11 +208,6 @@
     <div class="mb-8">
       <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')" as="h2" />
     </div>
-
-    <GeoQuickAnswer
-      :faqs="clearanceFaqList"
-      lead="Common Classic Mini A-series clearances and endfloats. Expand a question for the exact figure in thou and millimetres, or browse the full tables below."
-    />
 
     <div class="join join-vertical w-full space-y-2">
       <div
