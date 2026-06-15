@@ -41,18 +41,18 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
   const url = typeof body?.url === 'string' ? body.url.trim() : '';
-  if (!url) throw createError({ statusCode: 400, statusMessage: 'A model URL is required' });
+  if (!url) throw createError({ statusCode: 400, message: 'A model URL is required' });
 
   const categorySlug = typeof body?.categorySlug === 'string' ? body.categorySlug.trim() : '';
-  if (!categorySlug) throw createError({ statusCode: 400, statusMessage: 'Category is required' });
+  if (!categorySlug) throw createError({ statusCode: 400, message: 'Category is required' });
 
   // Re-scrape: the source of truth for source_site / id / author / license / images.
   let scraped;
   try {
     scraped = await fetchExternalMetadata(url);
   } catch (err) {
-    if (err instanceof ScrapeError) throw createError({ statusCode: err.statusCode, statusMessage: err.message });
-    throw createError({ statusCode: 502, statusMessage: 'Could not read that page. Try again.' });
+    if (err instanceof ScrapeError) throw createError({ statusCode: err.statusCode, message: err.message });
+    throw createError({ statusCode: 502, message: 'Could not read that page. Try again.' });
   }
 
   const service = getServiceClient();
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
   if (existing) {
     throw createError({
       statusCode: 409,
-      statusMessage: 'This model is already listed.',
+      message: 'This model is already listed.',
       data: { slug: existing.slug },
     });
   }
@@ -113,7 +113,7 @@ export default defineEventHandler(async (event) => {
 
   if (insertError || !row) {
     console.error('[external/submit] insert failed:', insertError?.message);
-    throw createError({ statusCode: 400, statusMessage: insertError?.message || 'Could not save this listing' });
+    throw createError({ statusCode: 400, message: insertError?.message || 'Could not save this listing' });
   }
 
   // Download a copy of each scraped photo into the shared model-images bucket
