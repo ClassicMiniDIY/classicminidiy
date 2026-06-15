@@ -1,7 +1,10 @@
 /**
- * External-model scraper entry point. Detects the source site, fetches the
- * page server-side, parses Open Graph / JSON-LD, and runs the per-site
- * enricher into a normalized `ScrapedExternalModel`. No third-party API.
+ * External-model scraper entry point. Detects the source site, fetches the page
+ * server-side (self-hosted OG/JSON-LD parse), and runs the per-site enricher
+ * into a normalized `ScrapedExternalModel`. When the direct fetch is blocked or
+ * empty — e.g. Cloudflare bot-managed sites like MakerWorld — it falls back to a
+ * rendering service (`renderExternalPage`). Direct path stays the default, so
+ * non-blocked sites (Thingiverse / Printables) never hit the third-party.
  *
  * Re-exports the shared detection helpers so server code has one import.
  */
@@ -14,7 +17,8 @@ import {
   isValidExternalUrl,
   normalizeExternalUrl,
 } from '../../../data/models/external-sources';
-import { fetchExternalPage, parseOpenGraph } from './ogParser';
+import { fetchExternalPage, parseOpenGraph, type OgMetadata } from './ogParser';
+import { renderExternalPage } from './render';
 import { enrich } from './enrichers';
 import { ScrapeError } from './errors';
 
@@ -41,7 +45,10 @@ export interface ScrapedExternalModel {
 }
 
 export interface ScrapeDeps {
+  /** Injected for tests — exercises the direct fetch path in isolation. */
   fetchImpl?: typeof fetch;
+  /** Injected for tests — stands in for the render-service fetch. */
+  renderImpl?: typeof fetch;
 }
 
 /**
@@ -57,39 +64,42 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
   const sourceUrl = normalizeExternalUrl(rawUrl);
   const site = detectSourceSite(sourceUrl) ?? 'other';
 
-  let page;
+  // 1) Self-hosted direct fetch + OG/JSON-LD parse. `og` stays null when the
+  //    page is blocked (4xx), JS-only (200 with no usable metadata), or the
+  //    fetch errored — those fall through to the render service below.
+  let og: OgMetadata | null = null;
+  let directStatus = 0;
   try {
-    page = await fetchExternalPage(sourceUrl, deps.fetchImpl);
+    const page = await fetchExternalPage(sourceUrl, deps.fetchImpl);
+    directStatus = page.status;
+    if (page.status < 400) {
+      const parsed = parseOpenGraph(page.html);
+      if (parsed.title || parsed.image) og = parsed;
+    }
   } catch (e) {
-    if (e instanceof ScrapeError) throw e; // SSRF / non-HTML / too-large carry their own status
-    throw new ScrapeError('Couldn’t reach that page. Check the link and try again.', 502, site);
+    // SSRF (private address) and too-large are terminal — never send those on.
+    if (e instanceof ScrapeError && (e.statusCode === 400 || e.statusCode === 413)) throw e;
   }
 
-  if (page.status === 404) {
-    throw new ScrapeError('That model page couldn’t be found (404). It may have been removed.', 404, site);
+  // 2) Render-service fallback for blocked / JS-only / empty pages. Runs in
+  //    production (no injected fetchImpl) or when a test supplies `renderImpl`.
+  if (!og && (!deps.fetchImpl || deps.renderImpl)) {
+    og = await renderExternalPage(sourceUrl, deps.renderImpl); // throws ScrapeError if it also fails
   }
-  if (page.status >= 400) {
+
+  if (!og) {
+    if (directStatus === 404) {
+      throw new ScrapeError('That model page couldn’t be found (404). It may have been removed.', 404, site);
+    }
     throw new ScrapeError(
-      `The source site returned an error (${page.status}). It may block automated previews — try a different model.`,
-      502,
+      'We couldn’t read any model details from that page. It may require a login or block previews.',
+      422,
       site
     );
   }
 
-  const og = parseOpenGraph(page.html);
   const externalId = extractExternalId(sourceUrl, site);
   const fields = enrich(og, { url: sourceUrl, site, externalId });
-
-  if (!fields.title || fields.title === 'Untitled') {
-    if (!og.title && !og.image) {
-      throw new ScrapeError(
-        'We couldn’t read any model details from that page. It may require a login or block previews.',
-        422,
-        site
-      );
-    }
-  }
-
   const images = og.images.map((url, i) => ({ url, isPrimary: i === 0 }));
 
   return {
