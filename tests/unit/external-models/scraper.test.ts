@@ -14,6 +14,7 @@ import {
 import { enrich } from '~~/server/utils/external-models/enrichers';
 import { fetchExternalMetadata } from '~~/server/utils/external-models';
 import { ScrapeError } from '~~/server/utils/external-models/errors';
+import { renderExternalPage } from '~~/server/utils/external-models/render';
 
 // --- external-sources: detection / id / normalization -----------------------
 
@@ -217,5 +218,72 @@ describe('fetchExternalMetadata', () => {
 
   it('rejects an invalid URL', async () => {
     await expect(fetchExternalMetadata('not-a-url', { fetchImpl: fakeFetch('') })).rejects.toBeInstanceOf(ScrapeError);
+  });
+});
+
+// --- render-service fallback ------------------------------------------------
+
+function fakeJsonFetch(payload: unknown, status = 200) {
+  return async () => ({ status, json: async () => payload }) as unknown as Response;
+}
+
+describe('renderExternalPage (fallback)', () => {
+  it('maps a successful render response to OG metadata', async () => {
+    const og = await renderExternalPage(
+      'https://makerworld.com/en/models/1',
+      fakeJsonFetch({
+        status: 'success',
+        data: {
+          title: 'Mount - MakerWorld',
+          description: 'd',
+          author: 'Bob',
+          publisher: 'MakerWorld',
+          image: { url: 'https://cdn.test/x.jpg' },
+        },
+      })
+    );
+    expect(og.title).toBe('Mount - MakerWorld');
+    expect(og.image).toBe('https://cdn.test/x.jpg');
+    expect(og.author).toBe('Bob');
+  });
+
+  it('throws ScrapeError when the service cannot render', async () => {
+    await expect(renderExternalPage('https://x/y', fakeJsonFetch({ status: 'fail' }))).rejects.toBeInstanceOf(ScrapeError);
+  });
+
+  it('throws ScrapeError when rate-limited', async () => {
+    await expect(renderExternalPage('https://x/y', fakeJsonFetch({}, 429))).rejects.toBeInstanceOf(ScrapeError);
+  });
+});
+
+describe('fetchExternalMetadata — render fallback wiring', () => {
+  it('falls back to the render service when the direct fetch is blocked (403)', async () => {
+    const result = await fetchExternalMetadata('https://makerworld.com/en/models/1830846-foo', {
+      fetchImpl: fakeFetch('', 403), // Cloudflare block
+      renderImpl: fakeJsonFetch({
+        status: 'success',
+        data: {
+          title: 'Classic Mini Gauge Mount - Free 3D Print Model - MakerWorld',
+          author: 'Dana',
+          image: { url: 'https://cdn.test/m.jpg' },
+        },
+      }) as unknown as typeof fetch,
+    });
+    expect(result.sourceSite).toBe('makerworld');
+    expect(result.title).toBe('Classic Mini Gauge Mount'); // enricher stripped the MakerWorld suffix
+    expect(result.images[0]).toEqual({ url: 'https://cdn.test/m.jpg', isPrimary: true });
+  });
+
+  it('does NOT fall back when the direct fetch succeeds', async () => {
+    let rendered = false;
+    const result = await fetchExternalMetadata('https://www.thingiverse.com/thing:5', {
+      fetchImpl: fakeFetch('<meta property="og:title" content="Sump Guard by Dave - Thingiverse">', 200),
+      renderImpl: (async () => {
+        rendered = true;
+        return fakeJsonFetch({})();
+      }) as unknown as typeof fetch,
+    });
+    expect(rendered).toBe(false);
+    expect(result.title).toBe('Sump Guard');
   });
 });
