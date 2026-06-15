@@ -103,8 +103,9 @@
     },
   }));
 
-  // FAQPage derived from the real torque data — GEO answer surface. The same list
-  // feeds the visible <GeoQuickAnswer> below so the markup matches on-page content.
+  // FAQPage JSON-LD (structured data only — no visible block). The Q&As are derived
+  // from the torque tables already rendered on the page, so the schema reflects
+  // on-page content; it's metadata for AI engines, not a human-facing UX surface.
   const torqueFaqList = torqueFaqs();
   const torqueFaqNode = buildFaqPage(torqueFaqList);
 
@@ -157,12 +158,6 @@
             />
           </div>
         </div>
-      </div>
-      <div class="col-span-12">
-        <GeoQuickAnswer
-          :faqs="torqueFaqList"
-          lead="Key torque settings for the Classic Mini A-series engine and running gear. Expand a question for the exact figure, or search the full chart below."
-        />
       </div>
       <div class="col-span-12">
         <!-- Loading state -->

@@ -83,8 +83,8 @@
     },
   };
 
-  // FAQPage from the engine-code data (one entry per displacement) — feeds the
-  // visible <GeoQuickAnswer> too so the markup matches on-page content.
+  // FAQPage JSON-LD only (no visible block) from the engine-code data (one entry per
+  // displacement) — structured data for AI engines; the codes are in the table below.
   const engineFaqList = engineCodeFaqs();
   const engineFaqNode = buildFaqPage(engineFaqList);
 
@@ -168,13 +168,6 @@
             </NuxtLink>
           </div>
         </div>
-      </div>
-
-      <div class="col-span-12">
-        <GeoQuickAnswer
-          :faqs="engineFaqList"
-          lead="Identify a Classic Mini engine by its code. Expand a question to see the common codes for each displacement, or search the full database below."
-        />
       </div>
 
       <div class="col-span-12">
