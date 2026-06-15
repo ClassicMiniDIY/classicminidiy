@@ -13,6 +13,20 @@
   // Initialize color mode on client
   useColorMode();
 
+  // Dedup title template. nuxt-seo-utils (automaticDefaults) sets a low-priority
+  // `%s %separator %siteName` template, which doubled the brand on titles that
+  // already contain it (homepage, model listings, contact). This normal-priority
+  // override wins over its `tagPriority: 'low'` and appends the brand only when it
+  // isn't already present. (Must live here, not nuxt.config app.head — functions
+  // there don't serialize.)
+  useHead({
+    titleTemplate: (title?: string) => {
+      const brand = 'Classic Mini DIY';
+      if (!title || title === brand) return brand;
+      return title.includes(brand) ? title : `${title} | ${brand}`;
+    },
+  });
+
   // Site-wide schema.org base graph (nuxt-schema-org). This replaces the old
   // hand-rolled WebSite + Organization JSON-LD that lived in nuxt.config head.
   // The module auto-creates @id-linked WebSite + per-route WebPage from site
