@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import { ArchiveItems, ToolboxItems } from './data/models/generic';
+import { AI_ANSWER_BOTS, AI_TRAINING_BOTS, PRIVATE_DISALLOW } from './server/utils/aiBots';
 
 const parsedArchive = ArchiveItems.map((item) => {
   return { title: item.title, description: item.description, href: `https://classicminidiy.com${item.to}` };
@@ -407,10 +408,29 @@ export default defineNuxtConfig({
     '/submissions/**': { redirect: { to: '/dashboard', statusCode: 301 } },
   },
 
+  // AI crawler policy (GEO): allow the live answer/search bots that drive
+  // citations + referral traffic; block the bulk training crawlers. UA lists live
+  // in server/utils/aiBots.ts (single source of truth). robots is advisory — the
+  // training-bot block is additionally enforced at the edge via Vercel WAF (Phase 3).
+  // Named groups take precedence over `*`, so standard search engines (Googlebot,
+  // Bingbot, …) keep the unchanged `*` rules below.
   robots: {
-    // provide simple disallow rules for all robots `user-agent: *`
-    disallow: ['/assets/', '/data/', '/server/', '/store/', '/plugins/'],
     sitemap: ['/sitemap.xml'],
+    groups: [
+      {
+        userAgent: [...AI_ANSWER_BOTS],
+        allow: ['/'],
+        disallow: [...PRIVATE_DISALLOW],
+      },
+      {
+        userAgent: [...AI_TRAINING_BOTS],
+        disallow: ['/'],
+      },
+      {
+        userAgent: ['*'],
+        disallow: ['/assets/', '/data/', '/server/', '/store/', '/plugins/'],
+      },
+    ],
   },
 
   plugins: [

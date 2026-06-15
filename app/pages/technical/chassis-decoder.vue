@@ -1,6 +1,8 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
   import { chassisRanges } from '../../../data/models/decoders';
+  import { chassisFaqs } from '~/utils/geo/generateFaqs';
+  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { capture } = usePostHog();
@@ -173,6 +175,11 @@
     },
   };
 
+  // FAQPage derived from the chassis-range data — answer surface for AI engines.
+  // Same list feeds the visible <GeoQuickAnswer> below (markup matches content).
+  const chassisFaqList = chassisFaqs();
+  const chassisFaqNode = buildFaqPage(chassisFaqList);
+
   // Add JSON-LD structured data to head
   useHead({
     script: [
@@ -180,6 +187,9 @@
         type: 'application/ld+json',
         innerHTML: JSON.stringify(decoderJsonLd),
       },
+      ...(chassisFaqNode
+        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(chassisFaqNode) }]
+        : []),
     ],
   });
 
@@ -246,6 +256,13 @@
             </NuxtLink>
           </div>
         </div>
+      </div>
+
+      <div class="col-span-12">
+        <GeoQuickAnswer
+          :faqs="chassisFaqList"
+          lead="Decode a Classic Mini chassis (VIN/commission) number. Expand a question to see the format for your car's era and what each character means, or use the interactive decoder below."
+        />
       </div>
 
       <!-- Chassis Decoder Form -->

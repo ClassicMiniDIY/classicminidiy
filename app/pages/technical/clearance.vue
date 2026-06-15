@@ -1,5 +1,7 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+  import { clearanceFaqs } from '~/utils/geo/generateFaqs';
+  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { trackSearch, track } = useAnalytics();
@@ -160,6 +162,10 @@
     ],
   };
 
+  // FAQPage from the real clearance data — feeds the visible <GeoQuickAnswer> too.
+  const clearanceFaqList = clearanceFaqs();
+  const clearanceFaqNode = buildFaqPage(clearanceFaqList);
+
   // Add JSON-LD structured data to head
   useHead({
     script: [
@@ -171,6 +177,9 @@
         type: 'application/ld+json',
         innerHTML: JSON.stringify(datasetJsonLd),
       },
+      ...(clearanceFaqNode
+        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(clearanceFaqNode) }]
+        : []),
     ],
   });
 
@@ -198,6 +207,11 @@
     <div class="mb-8">
       <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')" as="h2" />
     </div>
+
+    <GeoQuickAnswer
+      :faqs="clearanceFaqList"
+      lead="Common Classic Mini A-series clearances and endfloats. Expand a question for the exact figure in thou and millimetres, or browse the full tables below."
+    />
 
     <div class="join join-vertical w-full space-y-2">
       <div
