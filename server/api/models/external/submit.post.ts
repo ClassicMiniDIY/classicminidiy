@@ -14,7 +14,8 @@ import { randomUUID } from 'node:crypto';
 import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
 import { slugifyModelTitle } from '../../../utils/models';
-import { fetchExternalMetadata, ScrapeError } from '../../../utils/external-models';
+import { fetchExternalMetadata } from '../../../utils/external-models';
+import { ScrapeError } from '../../../utils/external-models/errors';
 import { safeFetch, readBodyCapped, SsrfError } from '../../../utils/external-models/ssrf';
 
 const MAX_IMAGES = 8;
