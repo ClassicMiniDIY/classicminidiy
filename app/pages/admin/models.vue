@@ -3,7 +3,7 @@
 
   const supabase = useSupabase();
 
-  type Tab = 'queue' | 'library' | 'reports' | 'sellers' | 'sales';
+  type Tab = 'queue' | 'library' | 'reports' | 'sellers' | 'sales' | 'external';
   const tab = ref<Tab>('queue');
 
   const busy = ref<string | null>(null);
@@ -340,6 +340,63 @@
     confirmRemove.value = null;
   }
 
+  // ===================== EXTERNAL LISTINGS =====================
+  const external = ref<any[]>([]);
+  const externalLoading = ref(false);
+  const externalError = ref<string | null>(null);
+
+  async function loadExternal() {
+    externalLoading.value = true;
+    externalError.value = null;
+    const { data, error } = await supabase
+      .from('external_models')
+      .select(
+        'id, slug, title, summary, source_site, source_url, source_author_name, source_license, category_slug, created_at'
+      )
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+    if (error) externalError.value = error.message;
+    external.value = (data ?? []) as any[];
+    externalLoading.value = false;
+  }
+
+  const externalBusy = ref<string | null>(null);
+
+  async function approveExternal(row: any) {
+    externalBusy.value = row.id;
+    externalError.value = null;
+    const { error } = await supabase.rpc('moderate_external_model', {
+      p_id: row.id,
+      p_status: 'approved',
+    });
+    externalBusy.value = null;
+    if (error) {
+      externalError.value = error.message;
+      return;
+    }
+    flash('success', `Approved "${row.title}"`);
+    external.value = external.value.filter((r) => r.id !== row.id);
+  }
+
+  async function rejectExternal(row: any) {
+    const reason = window.prompt(`Reject "${row.title}"\n\nRejection reason (shown to submitter):`);
+    if (reason === null) return; // cancelled
+    externalBusy.value = row.id;
+    externalError.value = null;
+    const { error } = await supabase.rpc('moderate_external_model', {
+      p_id: row.id,
+      p_status: 'rejected',
+      p_notes: reason.trim() || undefined,
+    });
+    externalBusy.value = null;
+    if (error) {
+      externalError.value = error.message;
+      return;
+    }
+    flash('success', `Rejected "${row.title}"`);
+    external.value = external.value.filter((r) => r.id !== row.id);
+  }
+
   // ----- lazy per-tab load -----
   const loaded = reactive<Record<Tab, boolean>>({
     queue: false,
@@ -347,6 +404,7 @@
     reports: false,
     sellers: false,
     sales: false,
+    external: false,
   });
   async function ensureLoaded(t: Tab) {
     if (loaded[t]) return;
@@ -355,12 +413,13 @@
     else if (t === 'library') await loadLibrary();
     else if (t === 'reports') await loadReports();
     else if (t === 'sellers') await loadSellers();
-    else await loadSales();
+    else if (t === 'sales') await loadSales();
+    else if (t === 'external') await loadExternal();
   }
   watch(tab, (t) => ensureLoaded(t), { immediate: true });
 
   useHead({
-    title: '3D Models Admin - Classic Mini DIY',
+    title: '3D Models Admin | Admin - Classic Mini DIY',
     meta: [{ name: 'robots', content: 'noindex, nofollow' }],
   });
 </script>
@@ -400,6 +459,10 @@
         </button>
         <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'sales' }" @click="tab = 'sales'">
           <i class="fas fa-chart-line"></i> Sales
+        </button>
+        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'external' }" @click="tab = 'external'">
+          <i class="fas fa-link"></i> External
+          <span v-if="loaded.external && external.length" class="badge badge-warning badge-sm">{{ external.length }}</span>
         </button>
       </div>
 
@@ -771,6 +834,77 @@
             <p class="text-xs opacity-50 mt-2">Showing the 100 most recent transactions.</p>
           </div>
         </template>
+      </div>
+      <!-- ================= EXTERNAL LISTINGS ================= -->
+      <div v-show="tab === 'external'">
+        <div v-if="externalError" role="alert" class="alert alert-error mb-4">
+          <i class="fas fa-circle-exclamation"></i>
+          <span>{{ externalError }}</span>
+        </div>
+
+        <div v-if="externalLoading" class="flex justify-center py-16">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+        <div v-else-if="external.length === 0" class="text-center py-16 opacity-60">
+          <i class="fas fa-circle-check text-5xl text-success mb-3 block"></i>
+          <p class="font-semibold">External queue is clear</p>
+          <p class="text-sm">No pending external model links to review.</p>
+        </div>
+        <div v-else class="space-y-4">
+          <div v-for="row in external" :key="row.id" class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-semibold text-lg">{{ row.title }}</h3>
+                    <ModelsSourceBadge :site="row.source_site" />
+                    <span v-if="row.category_slug" class="badge badge-ghost badge-sm">{{ row.category_slug }}</span>
+                  </div>
+                  <p class="text-xs opacity-60 mt-1">Submitted {{ fmtDate(row.created_at) }}</p>
+                </div>
+                <div class="text-sm opacity-70 shrink-0">
+                  {{ row.source_author_name || '—' }}
+                </div>
+              </div>
+
+              <p v-if="row.summary" class="text-sm opacity-80">{{ row.summary }}</p>
+
+              <div class="flex flex-wrap items-center gap-3 text-sm">
+                <a
+                  :href="row.source_url"
+                  target="_blank"
+                  rel="nofollow noopener"
+                  class="link link-primary flex items-center gap-1 text-xs"
+                >
+                  <i class="fas fa-arrow-up-right-from-square"></i>
+                  Open source
+                </a>
+                <span v-if="row.source_license" class="badge badge-neutral badge-sm">
+                  {{ row.source_license }}
+                </span>
+              </div>
+
+              <div class="card-actions justify-end pt-2 border-t border-base-300">
+                <button
+                  class="btn btn-sm btn-error btn-outline"
+                  :disabled="externalBusy === row.id"
+                  @click="rejectExternal(row)"
+                >
+                  <span v-if="externalBusy === row.id" class="loading loading-spinner loading-xs"></span>
+                  <i v-else class="fas fa-xmark mr-1"></i> Reject
+                </button>
+                <button
+                  class="btn btn-sm btn-success"
+                  :disabled="externalBusy === row.id"
+                  @click="approveExternal(row)"
+                >
+                  <span v-if="externalBusy === row.id" class="loading loading-spinner loading-xs"></span>
+                  <i v-else class="fas fa-check mr-1"></i> Approve
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

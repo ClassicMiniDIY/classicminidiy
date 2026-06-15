@@ -87,6 +87,8 @@ export interface ModelFileInfo {
 
 /** Card shape for the browse grid. */
 export interface ModelCard {
+  /** Discriminator for the unified browse grid (see `external-models.ts#BrowseCard`). */
+  kind: 'first_party';
   id: string;
   slug: string;
   title: string;

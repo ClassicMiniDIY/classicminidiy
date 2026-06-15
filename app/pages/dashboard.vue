@@ -9,6 +9,7 @@
     { to: '/dashboard/models', key: 'models', icon: 'fa-cube' },
     { to: '/dashboard/gear-configs', key: 'gear_configs', icon: 'fa-gears' },
     { to: '/dashboard/submissions', key: 'submissions', icon: 'fa-file-lines' },
+    { to: '/dashboard/external', key: 'external', icon: 'fa-link' },
     { to: '/dashboard/selling', key: 'selling', icon: 'fa-store' },
     { to: '/dashboard/purchases', key: 'purchases', icon: 'fa-bag-shopping' },
   ];
@@ -80,7 +81,7 @@
     "hero_title": "Dashboard",
     "breadcrumb_title": "Dashboard",
     "eyebrow": "ACCOUNT",
-    "tabs": { "models": "3D Models", "gear_configs": "Gear Configs", "submissions": "Submissions", "selling": "Selling", "purchases": "Purchases" },
+    "tabs": { "models": "3D Models", "gear_configs": "Gear Configs", "submissions": "Submissions", "external": "External Links", "selling": "Selling", "purchases": "Purchases" },
     "auth": {
       "sign_in_title": "Sign In to View Dashboard",
       "sign_in_description": "You need to be signed in to access your dashboard. Create a free account to get started.",
@@ -93,7 +94,7 @@
     "hero_title": "Panel",
     "breadcrumb_title": "Panel",
     "eyebrow": "CUENTA",
-    "tabs": { "models": "Modelos 3D", "gear_configs": "Engranajes", "submissions": "Envíos", "selling": "Ventas", "purchases": "Compras" },
+    "tabs": { "models": "Modelos 3D", "gear_configs": "Engranajes", "submissions": "Envíos", "external": "Enlaces externos", "selling": "Ventas", "purchases": "Compras" },
     "auth": {
       "sign_in_title": "Inicia Sesión para Ver el Panel",
       "sign_in_description": "Debes iniciar sesión para acceder a tu panel. Crea una cuenta gratuita para empezar.",
@@ -106,7 +107,7 @@
     "hero_title": "Tableau de Bord",
     "breadcrumb_title": "Tableau de Bord",
     "eyebrow": "COMPTE",
-    "tabs": { "models": "Modèles 3D", "gear_configs": "Engrenages", "submissions": "Soumissions", "selling": "Ventes", "purchases": "Achats" },
+    "tabs": { "models": "Modèles 3D", "gear_configs": "Engrenages", "submissions": "Soumissions", "external": "Liens externes", "selling": "Ventes", "purchases": "Achats" },
     "auth": {
       "sign_in_title": "Connectez-vous pour Voir le Tableau de Bord",
       "sign_in_description": "Vous devez être connecté pour accéder à votre tableau de bord. Créez un compte gratuit pour commencer.",
@@ -119,7 +120,7 @@
     "hero_title": "Dashboard",
     "breadcrumb_title": "Dashboard",
     "eyebrow": "KONTO",
-    "tabs": { "models": "3D-Modelle", "gear_configs": "Getriebe", "submissions": "Einreichungen", "selling": "Verkauf", "purchases": "Käufe" },
+    "tabs": { "models": "3D-Modelle", "gear_configs": "Getriebe", "submissions": "Einreichungen", "external": "Externe Links", "selling": "Verkauf", "purchases": "Käufe" },
     "auth": {
       "sign_in_title": "Anmelden zum Dashboard",
       "sign_in_description": "Sie müssen angemeldet sein, um auf Ihr Dashboard zuzugreifen. Erstellen Sie ein kostenloses Konto.",
@@ -132,7 +133,7 @@
     "hero_title": "Dashboard",
     "breadcrumb_title": "Dashboard",
     "eyebrow": "ACCOUNT",
-    "tabs": { "models": "Modelli 3D", "gear_configs": "Ingranaggi", "submissions": "Proposte", "selling": "Vendite", "purchases": "Acquisti" },
+    "tabs": { "models": "Modelli 3D", "gear_configs": "Ingranaggi", "submissions": "Proposte", "external": "Link esterni", "selling": "Vendite", "purchases": "Acquisti" },
     "auth": {
       "sign_in_title": "Accedi per Vedere la Dashboard",
       "sign_in_description": "Devi essere connesso per accedere alla tua dashboard. Crea un account gratuito per iniziare.",
@@ -145,7 +146,7 @@
     "hero_title": "Painel",
     "breadcrumb_title": "Painel",
     "eyebrow": "CONTA",
-    "tabs": { "models": "Modelos 3D", "gear_configs": "Engrenagens", "submissions": "Envios", "selling": "Vendas", "purchases": "Compras" },
+    "tabs": { "models": "Modelos 3D", "gear_configs": "Engrenagens", "submissions": "Envios", "external": "Links externos", "selling": "Vendas", "purchases": "Compras" },
     "auth": {
       "sign_in_title": "Entre para Ver o Painel",
       "sign_in_description": "Você precisa estar conectado para acessar seu painel. Crie uma conta gratuita para começar.",
@@ -158,7 +159,7 @@
     "hero_title": "Панель управления",
     "breadcrumb_title": "Панель управления",
     "eyebrow": "АККАУНТ",
-    "tabs": { "models": "3D-модели", "gear_configs": "Передачи", "submissions": "Заявки", "selling": "Продажи", "purchases": "Покупки" },
+    "tabs": { "models": "3D-модели", "gear_configs": "Передачи", "submissions": "Заявки", "external": "Внешние ссылки", "selling": "Продажи", "purchases": "Покупки" },
     "auth": {
       "sign_in_title": "Войдите для Доступа к Панели",
       "sign_in_description": "Вы должны быть авторизованы для доступа к панели управления. Создайте бесплатную учётную запись.",
@@ -171,7 +172,7 @@
     "hero_title": "ダッシュボード",
     "breadcrumb_title": "ダッシュボード",
     "eyebrow": "アカウント",
-    "tabs": { "models": "3Dモデル", "gear_configs": "ギア設定", "submissions": "申請", "selling": "販売", "purchases": "購入" },
+    "tabs": { "models": "3Dモデル", "gear_configs": "ギア設定", "submissions": "申請", "external": "外部リンク", "selling": "販売", "purchases": "購入" },
     "auth": {
       "sign_in_title": "ダッシュボード表示にはログインが必要です",
       "sign_in_description": "ダッシュボードにアクセスするにはログインが必要です。無料アカウントを作成して始めましょう。",
@@ -184,7 +185,7 @@
     "hero_title": "仪表板",
     "breadcrumb_title": "仪表板",
     "eyebrow": "账户",
-    "tabs": { "models": "3D模型", "gear_configs": "齿轮配置", "submissions": "提交", "selling": "销售", "purchases": "购买" },
+    "tabs": { "models": "3D模型", "gear_configs": "齿轮配置", "submissions": "提交", "external": "外部链接", "selling": "销售", "purchases": "购买" },
     "auth": {
       "sign_in_title": "登录以查看仪表板",
       "sign_in_description": "您需要登录才能访问您的仪表板。创建免费账户即可开始。",
@@ -197,7 +198,7 @@
     "hero_title": "대시보드",
     "breadcrumb_title": "대시보드",
     "eyebrow": "계정",
-    "tabs": { "models": "3D 모델", "gear_configs": "기어 구성", "submissions": "제출", "selling": "판매", "purchases": "구매" },
+    "tabs": { "models": "3D 모델", "gear_configs": "기어 구성", "submissions": "제출", "external": "외부 링크", "selling": "판매", "purchases": "구매" },
     "auth": {
       "sign_in_title": "대시보드 보기를 위해 로그인하세요",
       "sign_in_description": "대시보드에 접근하려면 로그인해야 합니다. 무료 계정을 만들어 시작하세요.",
