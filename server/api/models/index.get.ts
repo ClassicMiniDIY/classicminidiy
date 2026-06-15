@@ -8,8 +8,14 @@
  * combined `search` vector), `category`, `pricing` (first-party only), `source`
  * (`all` | `first_party` | `external` | a specific site slug), `sort`, and
  * pagination. Returns a mixed `BrowseCard[]`.
+ *
+ * In the default mixed view, results are INTERLEAVED 2:1 (first-party : external)
+ * so first-party lead every page while external stay visible — never buried off
+ * the end (see server/utils/browseInterleave.ts). When a filter restricts to a
+ * single kind (`source` or `pricing`), it falls back to one straight query.
  */
 import { getServiceClient } from '../../utils/supabase';
+import { planInterleave, type BrowseKind } from '../../utils/browseInterleave';
 import type { ModelCard, PricingMode } from '../../../data/models/model-library';
 import type { BrowseCard, ExternalModelCard } from '../../../data/models/external-models';
 import { SUPPORTED_SOURCE_SITES, type ExternalSourceSite } from '../../../data/models/external-sources';
@@ -19,6 +25,9 @@ const SORTS = ['newest', 'popular', 'likes', 'featured'];
 const SOURCES = ['all', 'first_party', 'external', ...SUPPORTED_SOURCE_SITES];
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 48;
+
+const SELECT_COLS =
+  'kind, id, slug, title, summary, category_slug, created_at, published_at, like_count, comment_count, download_count, click_count, pricing_mode, price_cents, min_price_cents, currency, license_code, safety_critical, is_featured, author_id, source_site, source_url, source_author_name, primary_image_path';
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -36,50 +45,88 @@ export default defineEventHandler(async (event) => {
   const imageUrl = (path: string | null) =>
     path ? `${supabaseUrl}/storage/v1/object/public/model-images/${path}` : null;
 
-  let builder = service
-    .from('model_browse_cards')
-    .select(
-      'kind, id, slug, title, summary, category_slug, created_at, published_at, like_count, comment_count, download_count, click_count, pricing_mode, price_cents, min_price_cents, currency, license_code, safety_critical, is_featured, author_id, source_site, source_url, source_author_name, primary_image_path',
-      { count: 'exact' }
-    );
+  const applyFilters = (b: any) => {
+    if (category) b = b.eq('category_slug', category);
+    if (q) b = b.textSearch('search', q, { type: 'websearch', config: 'english' });
+    return b;
+  };
+  const applySort = (b: any) => {
+    switch (sort) {
+      case 'popular':
+        return b.order('engagement_count', { ascending: false }).order('sort_at', { ascending: false });
+      case 'likes':
+        return b.order('like_count', { ascending: false }).order('sort_at', { ascending: false });
+      case 'featured':
+        return b.order('is_featured', { ascending: false }).order('sort_at', { ascending: false });
+      default:
+        return b.order('sort_at', { ascending: false });
+    }
+  };
+  const kindRows = (kind: BrowseKind) =>
+    applySort(applyFilters(service.from('model_browse_cards').select(SELECT_COLS).eq('kind', kind)));
+  const kindCount = (kind: BrowseKind) =>
+    applyFilters(service.from('model_browse_cards').select('id', { count: 'exact', head: true }).eq('kind', kind));
 
-  if (category) builder = builder.eq('category_slug', category);
-  if (q) builder = builder.textSearch('search', q, { type: 'websearch', config: 'english' });
-
-  // Source scoping.
-  if (source === 'first_party') builder = builder.eq('kind', 'first_party');
-  else if (source === 'external') builder = builder.eq('kind', 'external');
+  // A single-kind filter (explicit source, or pricing → first-party only) skips
+  // interleaving and runs one straight query.
+  let restrictKind: BrowseKind | null = null;
+  let siteFilter: string | null = null;
+  if (source === 'first_party') restrictKind = 'first_party';
+  else if (source === 'external') restrictKind = 'external';
   else if (SUPPORTED_SOURCE_SITES.includes(source as ExternalSourceSite)) {
-    builder = builder.eq('kind', 'external').eq('source_site', source);
+    restrictKind = 'external';
+    siteFilter = source;
+  }
+  if (pricing) {
+    restrictKind = 'first_party';
+    siteFilter = null;
   }
 
-  // Pricing only applies to first-party listings.
-  if (pricing) builder = builder.eq('kind', 'first_party').eq('pricing_mode', pricing);
+  const offset = (page - 1) * limit;
+  let list: any[] = [];
+  let total = 0;
 
-  switch (sort) {
-    case 'popular':
-      builder = builder.order('engagement_count', { ascending: false }).order('sort_at', { ascending: false });
-      break;
-    case 'likes':
-      builder = builder.order('like_count', { ascending: false }).order('sort_at', { ascending: false });
-      break;
-    case 'featured':
-      builder = builder.order('is_featured', { ascending: false }).order('sort_at', { ascending: false });
-      break;
-    default:
-      builder = builder.order('sort_at', { ascending: false });
+  if (restrictKind) {
+    let b = applySort(applyFilters(service.from('model_browse_cards').select(SELECT_COLS, { count: 'exact' }).eq('kind', restrictKind)));
+    if (siteFilter) b = b.eq('source_site', siteFilter);
+    if (pricing) b = b.eq('pricing_mode', pricing);
+    const { data, count, error } = await b.range(offset, offset + limit - 1);
+    if (error) {
+      console.error('[models/index] query failed:', error.message);
+      throw createError({ statusCode: 500, statusMessage: 'Failed to load models' });
+    }
+    list = data ?? [];
+    total = count ?? 0;
+  } else {
+    // Mixed view: interleave first-party + external 2:1.
+    const [fpC, extC] = await Promise.all([kindCount('first_party'), kindCount('external')]);
+    if (fpC.error || extC.error) {
+      console.error('[models/index] count failed:', (fpC.error || extC.error)?.message);
+      throw createError({ statusCode: 500, statusMessage: 'Failed to load models' });
+    }
+    const fpTotal = fpC.count ?? 0;
+    const extTotal = extC.count ?? 0;
+    total = fpTotal + extTotal;
+
+    const plan = planInterleave(fpTotal, extTotal, offset, limit);
+    const [fpRes, extRes] = await Promise.all([
+      plan.fpCount
+        ? kindRows('first_party').range(plan.fpStart, plan.fpStart + plan.fpCount - 1)
+        : Promise.resolve({ data: [], error: null }),
+      plan.extCount
+        ? kindRows('external').range(plan.extStart, plan.extStart + plan.extCount - 1)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (fpRes.error || extRes.error) {
+      console.error('[models/index] query failed:', (fpRes.error || extRes.error)?.message);
+      throw createError({ statusCode: 500, statusMessage: 'Failed to load models' });
+    }
+    const fpData = (fpRes.data ?? []) as any[];
+    const extData = (extRes.data ?? []) as any[];
+    let fi = 0;
+    let ei = 0;
+    list = plan.order.map((k) => (k === 'first_party' ? fpData[fi++] : extData[ei++])).filter(Boolean);
   }
-
-  const from = (page - 1) * limit;
-  builder = builder.range(from, from + limit - 1);
-
-  const { data: rows, count, error } = await builder;
-  if (error) {
-    console.error('[models/index] query failed:', error.message);
-    throw createError({ statusCode: 500, statusMessage: 'Failed to load models' });
-  }
-
-  const list = rows ?? [];
 
   // Batch author profiles for the first-party rows only.
   const ownerIds = [...new Set(list.filter((m) => m.author_id).map((m) => m.author_id as string))];
@@ -139,6 +186,5 @@ export default defineEventHandler(async (event) => {
     return card;
   });
 
-  const total = count ?? 0;
-  return { models: cards, total, page, limit, hasMore: from + cards.length < total };
+  return { models: cards, total, page, limit, hasMore: offset + cards.length < total };
 });
