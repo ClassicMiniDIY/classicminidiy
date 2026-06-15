@@ -12,7 +12,8 @@ import {
   parseJsonLd,
 } from '~~/server/utils/external-models/ogParser';
 import { enrich } from '~~/server/utils/external-models/enrichers';
-import { fetchExternalMetadata, ScrapeError } from '~~/server/utils/external-models';
+import { fetchExternalMetadata } from '~~/server/utils/external-models';
+import { ScrapeError } from '~~/server/utils/external-models/errors';
 
 // --- external-sources: detection / id / normalization -----------------------
 
