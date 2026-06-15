@@ -386,6 +386,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/': { prerender: true },
+    '/about': { prerender: true },
     '/archive': { prerender: true },
     '/archive/engines': { prerender: true },
     '/archive/colors': { prerender: true },
