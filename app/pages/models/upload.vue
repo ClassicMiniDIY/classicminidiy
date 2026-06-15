@@ -142,6 +142,21 @@
   // Resume/edit: ?model=<id> loads an existing model client-side (needs the
   // session token, which lives in localStorage).
   const route = useRoute();
+
+  // Pre-wizard mode chooser: upload your own model vs. link one found online.
+  // Editing/resuming (?model=) skips straight to the wizard.
+  const { track } = useAnalytics();
+  const shareChoice = ref<'own' | 'external' | ''>('');
+  const shareMode = ref<'choose' | 'own'>(
+    typeof route.query.model === 'string' && route.query.model ? 'own' : 'choose'
+  );
+  function onShareContinue() {
+    if (!shareChoice.value) return;
+    track('model_share_path_chosen', { path: shareChoice.value });
+    if (shareChoice.value === 'external') return navigateTo('/models/submit-external');
+    shareMode.value = 'own';
+  }
+
   const loadingExisting = ref(false);
   onMounted(async () => {
     const id = route.query.model;
@@ -182,18 +197,6 @@
       subpage="3D Models"
       subpageHref="/models"
     />
-
-    <!-- Around the Web CTA: link an external model instead of uploading -->
-    <div v-if="!w.isEditing.value" class="alert alert-soft mb-6 items-center">
-      <i class="fas fa-arrow-up-right-from-square text-primary"></i>
-      <span class="text-sm">
-        {{ t('externalCta.prefix') }}
-        <NuxtLink to="/models/submit-external" class="link link-primary font-medium">
-          {{ t('externalCta.link') }}
-        </NuxtLink>
-        {{ t('externalCta.suffix') }}
-      </span>
-    </div>
 
     <!-- Not signed in -->
     <div v-if="!isAuthenticated" class="card bg-base-100 border border-base-300 shadow-sm my-10">
@@ -243,6 +246,56 @@
         </div>
       </div>
     </div>
+
+    <!-- MODE CHOOSER: upload your own model vs. link one found online -->
+    <template v-else-if="shareMode === 'choose' && !w.isEditing.value">
+      <div class="my-6">
+        <div class="text-center mb-6">
+          <h2 class="text-2xl font-bold">{{ t('choose.heading') }}</h2>
+          <p class="opacity-70 mt-1">{{ t('choose.subheading') }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button
+            type="button"
+            class="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer border-2"
+            :class="shareChoice === 'own' ? 'border-primary' : 'border-transparent'"
+            @click="shareChoice = 'own'"
+            @dblclick="onShareContinue"
+          >
+            <div class="card-body items-center text-center py-8 gap-2">
+              <span class="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-2">
+                <i class="fas fa-cloud-arrow-up text-3xl"></i>
+              </span>
+              <h3 class="card-title">{{ t('choose.ownTitle') }}</h3>
+              <p class="text-base-content/70 text-sm">{{ t('choose.ownDesc') }}</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer border-2"
+            :class="shareChoice === 'external' ? 'border-primary' : 'border-transparent'"
+            @click="shareChoice = 'external'"
+            @dblclick="onShareContinue"
+          >
+            <div class="card-body items-center text-center py-8 gap-2">
+              <span class="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-2">
+                <i class="fas fa-arrow-up-right-from-square text-3xl"></i>
+              </span>
+              <h3 class="card-title">{{ t('choose.externalTitle') }}</h3>
+              <p class="text-base-content/70 text-sm">{{ t('choose.externalDesc') }}</p>
+            </div>
+          </button>
+        </div>
+
+        <div class="flex justify-end mt-6">
+          <button type="button" class="btn btn-primary" :disabled="!shareChoice" @click="onShareContinue">
+            {{ t('choose.continue') }} <i class="fas fa-arrow-right ml-1"></i>
+          </button>
+        </div>
+      </div>
+    </template>
 
     <template v-else>
       <!-- Steps indicator -->
@@ -887,10 +940,14 @@
       "next": "Next",
       "submit": "Submit"
     },
-    "externalCta": {
-      "prefix": "Found a model on another site?",
-      "link": "Link it instead",
-      "suffix": "— no files to upload, just paste the URL."
+    "choose": {
+      "heading": "What would you like to share?",
+      "subheading": "Two ways to add to the library — pick one to get started.",
+      "ownTitle": "Submit your own model",
+      "ownDesc": "Upload your STL/3MF files with print settings, photos, and assembly notes — hosted here for the community.",
+      "externalTitle": "Share something you found online",
+      "externalDesc": "Found a great Mini model on another site? Link it and we'll pull in the details, sending people to the source to download.",
+      "continue": "Continue"
     }
   },
   "es": {
@@ -1031,10 +1088,14 @@
       "next": "Siguiente",
       "submit": "Enviar"
     },
-    "externalCta": {
-      "prefix": "¿Encontraste un modelo en otro sitio?",
-      "link": "Enlázalo en su lugar",
-      "suffix": "— sin archivos que subir, solo pega la URL."
+    "choose": {
+      "heading": "¿Qué te gustaría compartir?",
+      "subheading": "Dos formas de aportar a la biblioteca — elige una para empezar.",
+      "ownTitle": "Sube tu propio modelo",
+      "ownDesc": "Sube tus archivos STL/3MF con ajustes de impresión, fotos y notas de montaje — alojados aquí para la comunidad.",
+      "externalTitle": "Comparte algo que encontraste en línea",
+      "externalDesc": "¿Encontraste un buen modelo de Mini en otro sitio? Enlázalo y traeremos los detalles, enviando a la gente a la fuente para descargar.",
+      "continue": "Continuar"
     }
   },
   "fr": {
@@ -1175,10 +1236,14 @@
       "next": "Suivant",
       "submit": "Soumettre"
     },
-    "externalCta": {
-      "prefix": "Vous avez trouvé un modèle sur un autre site ?",
-      "link": "Liez-le plutôt",
-      "suffix": "— aucun fichier à téléverser, collez juste l'URL."
+    "choose": {
+      "heading": "Que souhaitez-vous partager ?",
+      "subheading": "Deux façons d'enrichir la bibliothèque — choisissez-en une pour commencer.",
+      "ownTitle": "Publier votre propre modèle",
+      "ownDesc": "Téléversez vos fichiers STL/3MF avec réglages d'impression, photos et notes d'assemblage — hébergés ici pour la communauté.",
+      "externalTitle": "Partager quelque chose trouvé en ligne",
+      "externalDesc": "Vous avez trouvé un bon modèle de Mini sur un autre site ? Liez-le et nous récupérerons les détails, en renvoyant les gens vers la source pour télécharger.",
+      "continue": "Continuer"
     }
   },
   "de": {
@@ -1319,10 +1384,14 @@
       "next": "Weiter",
       "submit": "Einreichen"
     },
-    "externalCta": {
-      "prefix": "Ein Modell auf einer anderen Seite gefunden?",
-      "link": "Verknüpfe es stattdessen",
-      "suffix": "— keine Dateien hochladen, einfach URL einfügen."
+    "choose": {
+      "heading": "Was möchtest du teilen?",
+      "subheading": "Zwei Wege, zur Bibliothek beizutragen — wähle einen, um zu starten.",
+      "ownTitle": "Eigenes Modell hochladen",
+      "ownDesc": "Lade deine STL/3MF-Dateien mit Druckeinstellungen, Fotos und Montagehinweisen hoch — hier für die Community gehostet.",
+      "externalTitle": "Etwas teilen, das du online gefunden hast",
+      "externalDesc": "Ein tolles Mini-Modell auf einer anderen Seite gefunden? Verknüpfe es und wir holen die Details und schicken die Leute zum Herunterladen zur Quelle.",
+      "continue": "Weiter"
     }
   },
   "it": {
@@ -1463,10 +1532,14 @@
       "next": "Avanti",
       "submit": "Invia"
     },
-    "externalCta": {
-      "prefix": "Hai trovato un modello su un altro sito?",
-      "link": "Collegalo invece",
-      "suffix": "— nessun file da caricare, incolla solo l'URL."
+    "choose": {
+      "heading": "Cosa vuoi condividere?",
+      "subheading": "Due modi per contribuire alla libreria — scegline uno per iniziare.",
+      "ownTitle": "Carica il tuo modello",
+      "ownDesc": "Carica i tuoi file STL/3MF con impostazioni di stampa, foto e note di montaggio — ospitati qui per la community.",
+      "externalTitle": "Condividi qualcosa trovato online",
+      "externalDesc": "Hai trovato un bel modello di Mini su un altro sito? Collegalo e recupereremo i dettagli, indirizzando le persone alla fonte per scaricare.",
+      "continue": "Continua"
     }
   },
   "pt": {
@@ -1607,10 +1680,14 @@
       "next": "Seguinte",
       "submit": "Submeter"
     },
-    "externalCta": {
-      "prefix": "Encontrou um modelo noutro site?",
-      "link": "Vincule-o",
-      "suffix": "— sem ficheiros para carregar, basta colar o URL."
+    "choose": {
+      "heading": "O que gostaria de partilhar?",
+      "subheading": "Duas formas de contribuir para a biblioteca — escolha uma para começar.",
+      "ownTitle": "Envie o seu próprio modelo",
+      "ownDesc": "Carregue os seus ficheiros STL/3MF com configurações de impressão, fotos e notas de montagem — alojados aqui para a comunidade.",
+      "externalTitle": "Partilhe algo que encontrou online",
+      "externalDesc": "Encontrou um bom modelo de Mini noutro site? Vincule-o e traremos os detalhes, enviando as pessoas para a fonte para descarregar.",
+      "continue": "Continuar"
     }
   },
   "ru": {
@@ -1751,10 +1828,14 @@
       "next": "Далее",
       "submit": "Отправить"
     },
-    "externalCta": {
-      "prefix": "Нашли модель на другом сайте?",
-      "link": "Добавьте ссылку",
-      "suffix": "— без загрузки файлов, просто вставьте URL."
+    "choose": {
+      "heading": "Чем вы хотите поделиться?",
+      "subheading": "Два способа пополнить библиотеку — выберите один, чтобы начать.",
+      "ownTitle": "Загрузить свою модель",
+      "ownDesc": "Загрузите файлы STL/3MF с настройками печати, фото и инструкциями по сборке — размещается здесь для сообщества.",
+      "externalTitle": "Поделиться найденным в сети",
+      "externalDesc": "Нашли отличную модель Mini на другом сайте? Добавьте ссылку — мы подтянем детали и направим людей к источнику для скачивания.",
+      "continue": "Продолжить"
     }
   },
   "ja": {
@@ -1895,10 +1976,14 @@
       "next": "次へ",
       "submit": "送信"
     },
-    "externalCta": {
-      "prefix": "別のサイトでモデルを見つけましたか？",
-      "link": "代わりにリンク",
-      "suffix": "— ファイルのアップロード不要、URLを貼り付けるだけ。"
+    "choose": {
+      "heading": "何を共有しますか？",
+      "subheading": "ライブラリに追加する2つの方法 — 1つ選んで始めましょう。",
+      "ownTitle": "自分のモデルを投稿",
+      "ownDesc": "STL/3MFファイルを印刷設定・写真・組み立てメモと一緒にアップロード — コミュニティのためにここでホストします。",
+      "externalTitle": "オンラインで見つけたものを共有",
+      "externalDesc": "他のサイトで良いMiniモデルを見つけましたか？リンクすれば詳細を取り込み、ダウンロードは元のサイトへご案内します。",
+      "continue": "続ける"
     }
   },
   "zh": {
@@ -2039,10 +2124,14 @@
       "next": "下一步",
       "submit": "提交"
     },
-    "externalCta": {
-      "prefix": "在其他网站找到了模型？",
-      "link": "链接它",
-      "suffix": "— 无需上传文件，只需粘贴 URL。"
+    "choose": {
+      "heading": "您想分享什么？",
+      "subheading": "两种方式为模型库做贡献 — 选择一种开始。",
+      "ownTitle": "上传您自己的模型",
+      "ownDesc": "上传您的 STL/3MF 文件，附带打印设置、照片和组装说明 — 托管在此供社区使用。",
+      "externalTitle": "分享您在网上找到的",
+      "externalDesc": "在其他网站找到了不错的 Mini 模型？链接它，我们会拉取详情，并将人们引导至原网站下载。",
+      "continue": "继续"
     }
   },
   "ko": {
@@ -2183,10 +2272,14 @@
       "next": "다음",
       "submit": "제출"
     },
-    "externalCta": {
-      "prefix": "다른 사이트에서 모델을 찾으셨나요?",
-      "link": "대신 링크하세요",
-      "suffix": "— 파일 업로드 없이 URL만 붙여넣으면 됩니다."
+    "choose": {
+      "heading": "무엇을 공유하시겠어요?",
+      "subheading": "라이브러리에 기여하는 두 가지 방법 — 하나를 선택해 시작하세요.",
+      "ownTitle": "내 모델 올리기",
+      "ownDesc": "STL/3MF 파일을 출력 설정, 사진, 조립 노트와 함께 업로드 — 커뮤니티를 위해 여기에 호스팅됩니다.",
+      "externalTitle": "온라인에서 찾은 것 공유하기",
+      "externalDesc": "다른 사이트에서 좋은 Mini 모델을 찾으셨나요? 링크하면 세부정보를 가져오고, 다운로드는 원본 사이트로 안내합니다.",
+      "continue": "계속"
     }
   }
 }
