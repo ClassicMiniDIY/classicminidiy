@@ -67,8 +67,7 @@
     description: t('structured_data.description'),
     image: 'https://classicminidiy.s3.amazonaws.com/misc/archive-seo.jpg',
     author: {
-      '@type': 'Person',
-      name: t('structured_data.author_name'),
+      '@id': 'https://classicminidiy.com/#founder',
     },
     publisher: {
       '@type': 'Organization',

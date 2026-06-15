@@ -81,9 +81,10 @@
     headline: t('structured_data.headline'),
     description: t('structured_data.description'),
     image: 'https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png',
+    // The founder Person (Cole Gentry) — defined in the site-wide schema-org base
+    // graph (app/app.vue #founder). @id-referenced so consumers link author → entity.
     author: {
-      '@type': 'Person',
-      name: 'Classic Mini DIY',
+      '@id': 'https://classicminidiy.com/#founder',
     },
     publisher: {
       '@type': 'Organization',

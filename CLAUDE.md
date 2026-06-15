@@ -469,9 +469,10 @@ hold strings. `nuxt.config.ts` sets `i18n.restructureDir: '.'` so the root
 
 Most of the site is localized via these blocks. The **3D Model Library** user-facing UI
 (browse, detail, the upload wizard, the dashboard `models`/`selling`/`purchases` tabs, and
-the `app/components/models/*` components) is fully translated. **`/legal/*` and
+the `app/components/models/*` components) is fully translated. **`/legal/*`, `/about`, and
 `/admin/models` are intentionally English-only** — legal text is kept authoritative in one
-language (translating it creates per-language liability), and admin is internal tooling.
+language (translating it creates per-language liability), `/about` is authoritative founder
+E-E-A-T identity content (same rationale), and admin is internal tooling.
 
 ## 3D Model Library (marketplace)
 

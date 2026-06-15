@@ -17,7 +17,11 @@
   // hand-rolled WebSite + Organization JSON-LD that lived in nuxt.config head.
   // The module auto-creates @id-linked WebSite + per-route WebPage from site
   // config and wires this Organization as their publisher/identity.
-  // Founder Person + author bylines land in Phase 5 (see docs/plans/2026-06-14).
+  //
+  // The founder Person (#founder) is the E-E-A-T authority entity: it's the
+  // Organization's `founder`, the author of the technical articles (referenced by
+  // @id), and its canonical home is /about. Given an explicit @id it stays a
+  // regular node — the Organization remains the site identity (#identity).
   useSchemaOrg([
     defineOrganization({
       name: 'Classic Mini DIY',
@@ -26,6 +30,23 @@
         'https://www.youtube.com/c/ClassicMiniDIY',
         'https://www.facebook.com/classicminidiy',
         'https://www.instagram.com/classicminidiy/',
+      ],
+      founder: { '@id': 'https://classicminidiy.com/#founder' },
+    }),
+    definePerson({
+      '@id': 'https://classicminidiy.com/#founder',
+      name: 'Cole Gentry',
+      url: 'https://classicminidiy.com/about',
+      image: 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg',
+      jobTitle: 'Founder',
+      sameAs: ['https://www.youtube.com/c/ClassicMiniDIY'],
+      knowsAbout: [
+        'Classic Mini',
+        'Mini Cooper restoration',
+        'A-series engine',
+        'SU carburettors',
+        'classic car maintenance',
+        'engine tuning',
       ],
     }),
   ]);
