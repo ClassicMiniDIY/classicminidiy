@@ -263,6 +263,10 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxtjs/mcp-toolkit',
     '@nuxtjs/turnstile',
+    // Vercel BotID — sets up the challenge proxy rewrites. Client init lives in
+    // app/plugins/botid.client.ts; server enforcement via checkBotId() in the
+    // protected handlers. Only active in production (local dev = always human).
+    'botid/nuxt',
   ],
 
   // @nuxtjs/turnstile auto-populates runtimeConfig.public.turnstile.siteKey.

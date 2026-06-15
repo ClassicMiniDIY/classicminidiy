@@ -10,7 +10,16 @@
  *   body: { returnUrl?, refreshUrl? }   (built from the browser origin so dev
  *                                        returns to localhost, prod to the site)
  */
+import { checkBotId } from 'botid/server';
+
 export default defineEventHandler(async (event) => {
+  // Vercel BotID — block bots before creating a Stripe Connect onboarding link.
+  // Protected in app/plugins/botid.client.ts. No-op (always human) in local dev.
+  const { isBot } = await checkBotId();
+  if (isBot) {
+    throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
+  }
+
   const config = useRuntimeConfig();
 
   const authorization = getHeader(event, 'authorization');
