@@ -1,7 +1,18 @@
+import { checkBotId } from 'botid/server';
 import { getApiUrl, getApiKey, forwardHeaders } from './_utils';
 
 // Fallback handler for any endpoints not covered by specific files
 export default defineEventHandler(async (event) => {
+  // Vercel BotID — only POSTs (chat runs/streaming) carry the challenge header
+  // (see app/plugins/botid.client.ts); GET reads (thread state) aren't protected,
+  // so don't bot-check them or they'd 403 for lack of a token. No-op in local dev.
+  if (event.method === 'POST') {
+    const { isBot } = await checkBotId();
+    if (isBot) {
+      throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
+    }
+  }
+
   try {
     const path = getRouterParam(event, 'path') || '';
     const method = event.method;

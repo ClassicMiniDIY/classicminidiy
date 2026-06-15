@@ -1,6 +1,14 @@
+import { checkBotId } from 'botid/server';
 import { createLangGraphClient } from './_utils';
 
 export default defineEventHandler(async (event) => {
+  // Vercel BotID — reject classified bots before spending any LangGraph budget.
+  // Protected in app/plugins/botid.client.ts. No-op (always human) in local dev.
+  const { isBot } = await checkBotId();
+  if (isBot) {
+    throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
+  }
+
   try {
     const client = createLangGraphClient();
     const thread = await client.threads.create();

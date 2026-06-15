@@ -14,7 +14,16 @@
  * actionable error codes (ALREADY_OWNED, SELLER_UNAVAILABLE, AMOUNT_BELOW_MINIMUM
  * …); we preserve its status + message for the UI.
  */
+import { checkBotId } from 'botid/server';
+
 export default defineEventHandler(async (event) => {
+  // Vercel BotID — block bots before minting a Stripe Checkout session.
+  // Protected in app/plugins/botid.client.ts. No-op (always human) in local dev.
+  const { isBot } = await checkBotId();
+  if (isBot) {
+    throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
+  }
+
   const config = useRuntimeConfig();
 
   const authorization = getHeader(event, 'authorization');
