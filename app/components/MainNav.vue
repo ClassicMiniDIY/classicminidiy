@@ -54,22 +54,33 @@
     },
   ]);
 
-  // Community link data (single source of truth for desktop + mobile)
+  // Community link data (single source of truth for desktop + mobile).
+  // `external: false` entries are internal routes (NuxtLink, same tab, no outbound
+  // tracking); the rest are external CMDIY properties opened in a new tab.
   const communityLinks = computed(() => [
+    {
+      label: t('navigation.about'),
+      faIcon: 'fa-circle-info',
+      to: '/about',
+      external: false,
+    },
     {
       label: t('navigation.exchange'),
       faIcon: 'fa-shop',
       to: 'https://theminiexchange.com',
+      external: true,
     },
     {
       label: t('navigation.blog'),
       faIcon: 'fa-pencil',
       to: 'https://news.classicminidiy.com/',
+      external: true,
     },
     {
       label: t('navigation.store'),
       faIcon: 'fa-store',
       to: 'https://store.classicminidiy.com/',
+      external: true,
     },
   ]);
 
@@ -172,7 +183,12 @@
               class="dropdown-content menu bg-base-100 rounded-box shadow-lg z-[60] mt-2 w-56 p-2 border border-base-300"
             >
               <li v-for="link in communityLinks" :key="link.to">
+                <NuxtLink v-if="!link.external" :to="link.to" @click="closeDropdowns()">
+                  <i :class="['fad', link.faIcon]"></i>
+                  {{ link.label }}
+                </NuxtLink>
                 <a
+                  v-else
                   :href="link.to"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -377,18 +393,28 @@
 
               <!-- Community Links -->
               <p class="text-sm opacity-70 px-2">{{ t('navigation.community') }}</p>
-              <a
-                v-for="link in communityLinks"
-                :key="link.to"
-                :href="link.to"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-ghost btn-block justify-start font-bold"
-                @click="trackOutbound({ destination: link.to, label: link.label, group: 'community_nav' })"
-              >
-                <i :class="['fad', link.faIcon, 'mr-2']"></i>
-                {{ link.label }}
-              </a>
+              <template v-for="link in communityLinks" :key="link.to">
+                <NuxtLink
+                  v-if="!link.external"
+                  :to="link.to"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="isMobileMenuOpen = false"
+                >
+                  <i :class="['fad', link.faIcon, 'mr-2']"></i>
+                  {{ link.label }}
+                </NuxtLink>
+                <a
+                  v-else
+                  :href="link.to"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-ghost btn-block justify-start font-bold"
+                  @click="trackOutbound({ destination: link.to, label: link.label, group: 'community_nav' })"
+                >
+                  <i :class="['fad', link.faIcon, 'mr-2']"></i>
+                  {{ link.label }}
+                </a>
+              </template>
 
               <div class="divider my-2"></div>
 
@@ -539,7 +565,8 @@
       "community": "Community",
       "exchange": "The Mini Exchange",
       "blog": "Blog",
-      "store": "Store"
+      "store": "Store",
+      "about": "About"
     },
     "profile": {
       "sign_in": "Sign In",
@@ -569,7 +596,8 @@
       "community": "Comunidad",
       "exchange": "The Mini Exchange",
       "blog": "Blog",
-      "store": "Tienda"
+      "store": "Tienda",
+      "about": "Acerca de"
     },
     "profile": {
       "sign_in": "Iniciar sesión",
@@ -597,7 +625,8 @@
       "community": "Communauté",
       "exchange": "The Mini Exchange",
       "blog": "Blog",
-      "store": "Boutique"
+      "store": "Boutique",
+      "about": "À propos"
     },
     "profile": {
       "sign_in": "Se connecter",
@@ -625,7 +654,8 @@
       "community": "Gemeinschaft",
       "exchange": "The Mini Exchange",
       "blog": "Blog",
-      "store": "Shop"
+      "store": "Shop",
+      "about": "Über uns"
     },
     "profile": {
       "sign_in": "Anmelden",
@@ -653,7 +683,8 @@
       "community": "Comunità",
       "exchange": "The Mini Exchange",
       "blog": "Blog",
-      "store": "Negozio"
+      "store": "Negozio",
+      "about": "Chi siamo"
     },
     "profile": {
       "sign_in": "Accedi",
@@ -681,7 +712,8 @@
       "community": "コミュニティ",
       "exchange": "The Mini Exchange",
       "blog": "ブログ",
-      "store": "ストア"
+      "store": "ストア",
+      "about": "概要"
     },
     "profile": {
       "sign_in": "ログイン",
@@ -709,7 +741,8 @@
       "community": "커뮤니티",
       "exchange": "The Mini Exchange",
       "blog": "블로그",
-      "store": "스토어"
+      "store": "스토어",
+      "about": "소개"
     },
     "profile": {
       "sign_in": "로그인",
@@ -737,7 +770,8 @@
       "community": "Comunidade",
       "exchange": "The Mini Exchange",
       "blog": "Blog",
-      "store": "Loja"
+      "store": "Loja",
+      "about": "Sobre"
     },
     "profile": {
       "sign_in": "Entrar",
@@ -765,7 +799,8 @@
       "community": "Сообщество",
       "exchange": "The Mini Exchange",
       "blog": "Блог",
-      "store": "Магазин"
+      "store": "Магазин",
+      "about": "О нас"
     },
     "profile": {
       "sign_in": "Войти",
@@ -793,7 +828,8 @@
       "community": "社区",
       "exchange": "The Mini Exchange",
       "blog": "博客",
-      "store": "商店"
+      "store": "商店",
+      "about": "关于"
     },
     "profile": {
       "sign_in": "登录",
