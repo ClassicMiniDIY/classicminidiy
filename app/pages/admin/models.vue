@@ -326,7 +326,10 @@
     try {
       await $adminFetch('/api/admin/models/set-status', { method: 'POST', body: { modelId: m.id, status } });
       m.status = status;
-      flash('success', status === 'published' ? 'Model shown' : status === 'archived' ? 'Model hidden' : 'Model removed');
+      flash(
+        'success',
+        status === 'published' ? 'Model shown' : status === 'archived' ? 'Model hidden' : 'Model removed'
+      );
     } catch (e: any) {
       flash('error', e?.data?.statusMessage || e?.statusMessage || 'Failed to update model');
     }
@@ -362,12 +365,24 @@
     const { data, error } = await supabase
       .from('external_models')
       .select(
-        'id, slug, title, summary, source_site, source_url, source_author_name, source_license, category_slug, created_at'
+        'id, slug, title, summary, source_site, source_url, source_author_name, source_author_url, source_license, category_slug, submitted_by, created_at'
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true });
     if (error) externalError.value = error.message;
-    external.value = (data ?? []) as any[];
+    const rows = (data ?? []) as any[];
+    // Join the CMDIY member who submitted the link (distinct from the original
+    // designer in `source_author_name`).
+    const submitterIds = [...new Set(rows.map((r) => r.submitted_by).filter(Boolean))];
+    const profiles: Record<string, any> = {};
+    if (submitterIds.length) {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, trust_level')
+        .in('id', submitterIds);
+      for (const p of (profs ?? []) as any[]) profiles[p.id] = p;
+    }
+    external.value = rows.map((r) => ({ ...r, submitter: profiles[r.submitted_by] || null }));
     externalCount.value = external.value.length;
     externalLoading.value = false;
   }
@@ -391,15 +406,23 @@
     externalCount.value = external.value.length;
   }
 
-  async function rejectExternal(row: any) {
-    const reason = window.prompt(`Reject "${row.title}"\n\nRejection reason (shown to submitter):`);
-    if (reason === null) return; // cancelled
+  // Reject flow: a proper reason modal (the reason is stored on the listing,
+  // shown to the submitter in their dashboard, and emailed to them).
+  const externalRejectTarget = ref<any | null>(null);
+  const externalRejectReason = ref('');
+  function openRejectExternal(row: any) {
+    externalRejectTarget.value = row;
+    externalRejectReason.value = '';
+  }
+  async function confirmRejectExternal() {
+    const row = externalRejectTarget.value;
+    if (!row || externalRejectReason.value.trim().length < 3) return;
     externalBusy.value = row.id;
     externalError.value = null;
     const { error } = await supabase.rpc('moderate_external_model', {
       p_id: row.id,
       p_status: 'rejected',
-      p_notes: reason.trim() || undefined,
+      p_notes: externalRejectReason.value.trim(),
     });
     externalBusy.value = null;
     if (error) {
@@ -409,6 +432,8 @@
     flash('success', `Rejected "${row.title}"`);
     external.value = external.value.filter((r) => r.id !== row.id);
     externalCount.value = external.value.length;
+    externalRejectTarget.value = null;
+    externalRejectReason.value = '';
   }
 
   // ----- lazy per-tab load -----
@@ -454,7 +479,9 @@
     <div class="container mx-auto px-4 py-8">
       <div class="breadcrumbs text-sm mb-4">
         <ul>
-          <li><NuxtLink to="/admin" class="link link-primary"><i class="fas fa-gauge mr-1"></i> Admin</NuxtLink></li>
+          <li>
+            <NuxtLink to="/admin" class="link link-primary"><i class="fas fa-gauge mr-1"></i> Admin</NuxtLink>
+          </li>
           <li><span>3D Models</span></li>
         </ul>
       </div>
@@ -515,16 +542,18 @@
                   <span class="text-sm opacity-70">
                     {{ v.owner?.display_name || v.owner?.username || 'Unknown' }}
                   </span>
-                  <span v-if="v.owner" class="badge badge-sm capitalize" :class="trustTone[v.owner.trust_level] || 'badge-ghost'">
+                  <span
+                    v-if="v.owner"
+                    class="badge badge-sm capitalize"
+                    :class="trustTone[v.owner.trust_level] || 'badge-ghost'"
+                  >
                     {{ v.owner.trust_level }}
                   </span>
                 </div>
               </div>
 
               <p v-if="v.model?.summary" class="text-sm opacity-80">{{ v.model.summary }}</p>
-              <p v-if="v.changelog" class="text-sm">
-                <span class="opacity-50">Changelog:</span> {{ v.changelog }}
-              </p>
+              <p v-if="v.changelog" class="text-sm"><span class="opacity-50">Changelog:</span> {{ v.changelog }}</p>
 
               <!-- Images -->
               <div v-if="v.images.length" class="flex gap-2 flex-wrap">
@@ -624,11 +653,17 @@
                 <td class="text-sm whitespace-nowrap">
                   {{ m.owner?.display_name || m.owner?.username || m.owner_id.slice(0, 8) }}
                 </td>
-                <td><span class="badge badge-ghost badge-sm capitalize">{{ m.pricing_mode }}</span></td>
                 <td>
-                  <span class="badge badge-sm capitalize" :class="modelStatusTone[m.status] || 'badge-ghost'">{{ m.status }}</span>
+                  <span class="badge badge-ghost badge-sm capitalize">{{ m.pricing_mode }}</span>
                 </td>
-                <td class="text-right text-xs opacity-70 whitespace-nowrap">{{ m.download_count }} / {{ m.like_count }}</td>
+                <td>
+                  <span class="badge badge-sm capitalize" :class="modelStatusTone[m.status] || 'badge-ghost'">{{
+                    m.status
+                  }}</span>
+                </td>
+                <td class="text-right text-xs opacity-70 whitespace-nowrap">
+                  {{ m.download_count }} / {{ m.like_count }}
+                </td>
                 <td class="text-right">
                   <div class="flex justify-end items-center gap-1.5">
                     <button
@@ -697,7 +732,9 @@
             <div class="card-body gap-2">
               <div class="flex flex-wrap items-start justify-between gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="badge badge-sm capitalize" :class="reasonTone[r.reason] || 'badge-ghost'">{{ r.reason }}</span>
+                  <span class="badge badge-sm capitalize" :class="reasonTone[r.reason] || 'badge-ghost'">{{
+                    r.reason
+                  }}</span>
                   <NuxtLink
                     v-if="r.model"
                     :to="`/models/${r.model.slug}`"
@@ -748,7 +785,9 @@
             <tbody>
               <tr v-for="s in sellers" :key="s.user_id" :class="{ 'opacity-50': s.selling_disabled }">
                 <td>
-                  <div class="font-medium">{{ s.profile?.display_name || s.profile?.username || s.user_id.slice(0, 8) }}</div>
+                  <div class="font-medium">
+                    {{ s.profile?.display_name || s.profile?.username || s.user_id.slice(0, 8) }}
+                  </div>
                   <div class="text-xs opacity-50 font-mono">{{ s.stripe_account_id }}</div>
                 </td>
                 <td>
@@ -757,13 +796,23 @@
                   </span>
                 </td>
                 <td>
-                  <i :class="s.charges_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'"></i>
+                  <i
+                    :class="
+                      s.charges_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'
+                    "
+                  ></i>
                 </td>
                 <td>
-                  <i :class="s.payouts_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'"></i>
+                  <i
+                    :class="
+                      s.payouts_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'
+                    "
+                  ></i>
                 </td>
                 <td class="text-center">
-                  <span :class="s.strikes >= 3 ? 'text-error font-bold' : s.strikes > 0 ? 'text-warning' : 'opacity-40'">
+                  <span
+                    :class="s.strikes >= 3 ? 'text-error font-bold' : s.strikes > 0 ? 'text-warning' : 'opacity-40'"
+                  >
                     {{ s.strikes }}
                   </span>
                 </td>
@@ -843,7 +892,9 @@
                   <td class="text-right whitespace-nowrap">{{ fmt(p.amount_cents) }}</td>
                   <td class="text-right whitespace-nowrap opacity-70">{{ fmt(p.application_fee_cents) }}</td>
                   <td>
-                    <span class="badge badge-xs capitalize" :class="statusTone[p.status] || 'badge-ghost'">{{ p.status }}</span>
+                    <span class="badge badge-xs capitalize" :class="statusTone[p.status] || 'badge-ghost'">{{
+                      p.status
+                    }}</span>
                   </td>
                   <td class="text-right whitespace-nowrap text-xs opacity-60">{{ fmtDate(p.created_at) }}</td>
                 </tr>
@@ -880,8 +931,20 @@
                   </div>
                   <p class="text-xs opacity-60 mt-1">Submitted {{ fmtDate(row.created_at) }}</p>
                 </div>
-                <div class="text-sm opacity-70 shrink-0">
-                  {{ row.source_author_name || '—' }}
+                <div class="flex items-center gap-2 shrink-0">
+                  <div class="text-right">
+                    <p class="text-xs opacity-50 leading-tight">Submitted by</p>
+                    <p class="text-sm font-medium leading-tight">
+                      {{ row.submitter?.display_name || row.submitter?.username || 'Unknown' }}
+                    </p>
+                  </div>
+                  <span
+                    v-if="row.submitter"
+                    class="badge badge-sm capitalize"
+                    :class="trustTone[row.submitter.trust_level] || 'badge-ghost'"
+                  >
+                    {{ row.submitter.trust_level }}
+                  </span>
                 </div>
               </div>
 
@@ -900,13 +963,25 @@
                 <span v-if="row.source_license" class="badge badge-neutral badge-sm">
                   {{ row.source_license }}
                 </span>
+                <span v-if="row.source_author_name" class="text-xs opacity-60">
+                  Designer:
+                  <a
+                    v-if="row.source_author_url"
+                    :href="row.source_author_url"
+                    target="_blank"
+                    rel="nofollow noopener"
+                    class="link link-hover"
+                    >{{ row.source_author_name }}</a
+                  >
+                  <template v-else>{{ row.source_author_name }}</template>
+                </span>
               </div>
 
               <div class="card-actions justify-end pt-2 border-t border-base-300">
                 <button
                   class="btn btn-sm btn-error btn-outline"
                   :disabled="externalBusy === row.id"
-                  @click="rejectExternal(row)"
+                  @click="openRejectExternal(row)"
                 >
                   <span v-if="externalBusy === row.id" class="loading loading-spinner loading-xs"></span>
                   <i v-else class="fas fa-xmark mr-1"></i> Reject
@@ -1019,6 +1094,39 @@
         </div>
       </div>
       <form method="dialog" class="modal-backdrop" @click="confirmRemove = null"><button>close</button></form>
+    </dialog>
+
+    <!-- Reject external listing modal -->
+    <dialog class="modal" :class="{ 'modal-open': !!externalRejectTarget }">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Reject "{{ externalRejectTarget?.title }}"</h3>
+        <p class="text-sm opacity-70 py-2">
+          The submitter is emailed this reason and sees it on their dashboard. Be specific — e.g. the page couldn't be
+          read, it isn't a Classic Mini part, or it links to a profile instead of a model.
+        </p>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">Reason</legend>
+          <textarea
+            v-model="externalRejectReason"
+            class="textarea w-full"
+            rows="3"
+            placeholder="e.g. We couldn't read model details from this GrabCAD link — please submit a Thingiverse, Printables, or MakerWorld link instead."
+          ></textarea>
+        </fieldset>
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" @click="externalRejectTarget = null">Cancel</button>
+          <button
+            type="button"
+            class="btn btn-error"
+            :disabled="externalRejectReason.trim().length < 3 || externalBusy === externalRejectTarget?.id"
+            @click="confirmRejectExternal"
+          >
+            <span v-if="externalBusy === externalRejectTarget?.id" class="loading loading-spinner loading-sm"></span>
+            Reject listing
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="externalRejectTarget = null"><button>close</button></form>
     </dialog>
 
     <!-- Toast -->
