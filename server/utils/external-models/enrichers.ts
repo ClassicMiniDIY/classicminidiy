@@ -79,9 +79,8 @@ const makerworld: Enricher = (base, ctx) => {
   // Author: "designed by X" in the description, else OG author.
   const m = base.description?.match(/designed by\s+([^.]+)/i);
   if (m) f.authorName = m[1].trim();
-  f.description = (base.description ?? '')
-    .replace(/^Download this free 3D print file designed by [^.]+\.\s*/i, '')
-    .trim() || f.title;
+  f.description =
+    (base.description ?? '').replace(/^Download this free 3D print file designed by [^.]+\.\s*/i, '').trim() || f.title;
   f.summary = f.description ? truncate(f.description, 280) : null;
   if (f.authorName) f.authorUrl = `https://makerworld.com/en/@${f.authorName.replace(/\s+/g, '')}`;
   return f;
@@ -132,6 +131,20 @@ const myminifactory: Enricher = (base, ctx) => {
   return f;
 };
 
+const grabcad: Enricher = (base, ctx) => {
+  const f = baseFields(base, ctx);
+  // Strip GrabCAD title suffixes (rendered metadata only — static pages are an
+  // unrendered shell, so `requiresRender` routes GrabCAD through the render
+  // service): "… | The GrabCAD Community Library", "… | CAD Models | GrabCAD",
+  // and the bare "… | GrabCAD" / "… - GrabCAD".
+  f.title = f.title
+    .replace(/\s*[|\-–]\s*The GrabCAD Community Library\s*$/i, '')
+    .replace(/\s*[|\-–]\s*CAD Models\s*[|\-–]\s*GrabCAD\s*$/i, '')
+    .replace(/\s*[|\-–]\s*GrabCAD\s*$/i, '')
+    .trim();
+  return f;
+};
+
 /** Generic OG-only fallback for `source_site: 'other'`. */
 const generic: Enricher = (base, ctx) => baseFields(base, ctx);
 
@@ -142,6 +155,7 @@ export const ENRICHERS: Record<ExternalSourceSite, Enricher> = {
   cults3d,
   thangs,
   myminifactory,
+  grabcad,
   other: generic,
 };
 

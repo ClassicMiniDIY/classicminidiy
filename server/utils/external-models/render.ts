@@ -16,6 +16,8 @@ import { ScrapeError } from './errors';
 
 interface MicrolinkResponse {
   status?: string;
+  /** Upstream HTTP status of the rendered page (Microlink reports it here). */
+  statusCode?: number;
   data?: {
     title?: string;
     description?: string;
@@ -34,11 +36,7 @@ const DEFAULT_ENDPOINT = 'https://api.microlink.io';
  * back to MICROLINK_API_KEY in the environment so the function stays usable in
  * isolation (e.g. unit tests).
  */
-export async function renderExternalPage(
-  url: string,
-  fetchImpl?: typeof fetch,
-  apiKey?: string
-): Promise<OgMetadata> {
+export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, apiKey?: string): Promise<OgMetadata> {
   // Strict undefined check: a forwarded '' (runtimeConfig default when unset)
   // means "no key" and must NOT fall through to process.env. Only an omitted
   // arg (e.g. a direct unit-test call) falls back.
@@ -68,6 +66,14 @@ export async function renderExternalPage(
   }
 
   if (body.status !== 'success' || !body.data) {
+    throw new ScrapeError('That site blocks automated previews and we couldn’t render it.', 422);
+  }
+
+  // Microlink wraps the render in `status:"success"` even when the upstream page
+  // returned an error (e.g. GrabCAD behind CloudFront answers 403 with an
+  // "ERROR: The request could not be satisfied" body). Treat any 4xx/5xx upstream
+  // status as blocked rather than storing the error page as model metadata.
+  if (typeof body.statusCode === 'number' && body.statusCode >= 400) {
     throw new ScrapeError('That site blocks automated previews and we couldn’t render it.', 422);
   }
 
