@@ -330,6 +330,20 @@ describe('fetchExternalMetadata — render fallback wiring', () => {
     expect(rendered).toBe(false);
     expect(result.title).toBe('Sump Guard');
   });
+
+  it('does NOT render on a real 404 (terminal — saves render quota)', async () => {
+    let rendered = false;
+    await expect(
+      fetchExternalMetadata('https://www.thingiverse.com/thing:404', {
+        fetchImpl: fakeFetch('', 404),
+        renderImpl: (async () => {
+          rendered = true;
+          return fakeJsonFetch({})();
+        }) as unknown as typeof fetch,
+      })
+    ).rejects.toBeInstanceOf(ScrapeError);
+    expect(rendered).toBe(false);
+  });
 });
 
 describe('fetchExternalMetadata — requiresRender (GrabCAD SPA)', () => {
