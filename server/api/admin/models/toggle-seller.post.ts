@@ -37,5 +37,16 @@ export default defineEventHandler(async (event) => {
     details: { selling_disabled: sellingDisabled },
   });
 
+  // Notify the seller when the kill switch is engaged (re-enabling is silent).
+  if (sellingDisabled) {
+    await db.from('notification_queue').insert({
+      user_id: userId,
+      event_type: 'model_seller_disabled',
+      payload: { user_id: userId },
+      channel: 'email',
+      batch_key: `seller_disabled:${userId}`,
+    });
+  }
+
   return { ok: true };
 });

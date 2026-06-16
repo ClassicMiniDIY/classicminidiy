@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   const db = getServiceClient();
   const { data: model, error: mErr } = await db
     .from('models')
-    .select('id, status, current_version_id, title')
+    .select('id, status, current_version_id, title, owner_id')
     .eq('id', modelId)
     .single();
   if (mErr || !model) throw createError({ statusCode: 404, statusMessage: 'Model not found' });
@@ -54,6 +54,19 @@ export default defineEventHandler(async (event) => {
     target_id: modelId,
     details: { from: model.status, to: status, title: model.title },
   });
+
+  // Notify the owner when their model is hidden or removed (enforcement notice;
+  // re-publishing/"show" is intentionally silent). Rendered + sent by the
+  // process-notifications edge function.
+  if ((status === 'archived' || status === 'removed') && model.owner_id) {
+    await db.from('notification_queue').insert({
+      user_id: model.owner_id,
+      event_type: status === 'removed' ? 'model_removed' : 'model_hidden',
+      payload: { model_id: modelId, title: model.title, reason: status === 'removed' ? 'admin_removed' : null },
+      channel: 'email',
+      batch_key: `model_admin_action:${modelId}`,
+    });
+  }
 
   return { ok: true };
 });

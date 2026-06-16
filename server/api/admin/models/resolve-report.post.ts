@@ -48,9 +48,25 @@ export default defineEventHandler(async (event) => {
 
   let modelRemoved = false;
   if (action === 'takedown') {
-    const { error: mErr } = await db.from('models').update({ status: 'removed' }).eq('id', report.model_id);
+    const { data: model, error: mErr } = await db
+      .from('models')
+      .update({ status: 'removed' })
+      .eq('id', report.model_id)
+      .select('owner_id, title')
+      .single();
     if (mErr) throw createError({ statusCode: 500, statusMessage: mErr.message });
     modelRemoved = true;
+
+    // Notify the model owner of the takedown (skip if the owner filed the report).
+    if (model?.owner_id && model.owner_id !== report.reporter_id) {
+      await db.from('notification_queue').insert({
+        user_id: model.owner_id,
+        event_type: 'model_removed',
+        payload: { model_id: report.model_id, title: model.title, reason: 'report_takedown' },
+        channel: 'email',
+        batch_key: `model_admin_action:${report.model_id}`,
+      });
+    }
   }
 
   // Registered reporters get a notification; DMCA email intake has no user row.
