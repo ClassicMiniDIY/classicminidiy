@@ -416,7 +416,7 @@
   }
   async function confirmRejectExternal() {
     const row = externalRejectTarget.value;
-    if (!row || externalRejectReason.value.trim().length < 3) return;
+    if (!row || externalBusy.value || externalRejectReason.value.trim().length < 3) return;
     externalBusy.value = row.id;
     externalError.value = null;
     const { error } = await supabase.rpc('moderate_external_model', {

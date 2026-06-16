@@ -75,18 +75,22 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
   //    JS-only (200 with no usable metadata), or the fetch errored — those fall
   //    through to the render service below.
   let og: OgMetadata | null = null;
-  let directStatus = 0;
   if (!forceRender) {
     try {
       const page = await fetchExternalPage(sourceUrl, deps.fetchImpl);
-      directStatus = page.status;
+      // A real 404 won't be fixed by rendering — fail now with a precise message
+      // rather than wasting a render call and returning a generic "blocked" error.
+      if (page.status === 404) {
+        throw new ScrapeError('That model page couldn’t be found (404). It may have been removed.', 404, site);
+      }
       if (page.status < 400) {
         const parsed = parseOpenGraph(page.html);
         if (parsed.title || parsed.image) og = parsed;
       }
     } catch (e) {
-      // SSRF (private address) and too-large are terminal — never send those on.
-      if (e instanceof ScrapeError && (e.statusCode === 400 || e.statusCode === 413)) throw e;
+      // ScrapeErrors (SSRF, too-large, non-HTML, or the 404 above) are terminal —
+      // never fall through to the render service for those.
+      if (e instanceof ScrapeError) throw e;
     }
   }
 
@@ -96,10 +100,9 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
     og = await renderExternalPage(sourceUrl, deps.renderImpl, deps.microlinkApiKey); // throws ScrapeError if it also fails
   }
 
+  // A 404 already threw above; reaching here means the page (or render) yielded
+  // no usable metadata — login-walled, JS-only, or preview-blocked.
   if (!og) {
-    if (directStatus === 404) {
-      throw new ScrapeError('That model page couldn’t be found (404). It may have been removed.', 404, site);
-    }
     throw new ScrapeError(
       'We couldn’t read any model details from that page. It may require a login or block previews.',
       422,
