@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
       .update({ status: 'removed' })
       .eq('id', report.model_id)
       .select('owner_id, title')
-      .single();
+      .maybeSingle();
     if (mErr) throw createError({ statusCode: 500, statusMessage: mErr.message });
     modelRemoved = true;
 
