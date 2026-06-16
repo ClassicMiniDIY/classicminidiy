@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { ArchiveItems, ToolboxItems } from './data/models/generic';
 import { AI_ANSWER_BOTS, AI_TRAINING_BOTS, PRIVATE_DISALLOW } from './server/utils/aiBots';
@@ -545,13 +546,7 @@ export default defineNuxtConfig({
       // build). nitro matches ignore patterns with String.startsWith, so these
       // are PREFIXES (trailing slash) — they catch `/archive/colors/<id>` but not
       // the prerendered index `/archive/colors` itself.
-      ignore: [
-        '/admin',
-        '/raw',
-        '/archive/colors/',
-        '/archive/wheels/',
-        '/archive/documents/',
-      ],
+      ignore: ['/admin', '/raw', '/archive/colors/', '/archive/wheels/', '/archive/documents/'],
       routes: [
         '/',
         '/privacy',
@@ -575,6 +570,16 @@ export default defineNuxtConfig({
     },
     // Minify responses
     minify: true,
+    // botid/server does a guarded `await import("next/headers")` for its Next.js
+    // code path. This is a Nuxt app, so that bare specifier never resolves and
+    // Rollup logs a noisy UNRESOLVED_IMPORT warning on every server build. Alias
+    // it to a local stub so the import resolves cleanly; botid's try/catch around
+    // it still falls back to null (the Next path is never taken here). Done via an
+    // alias rather than a custom onwarn so Nitro's default warning filtering
+    // (circular-dep noise, etc.) stays intact.
+    alias: {
+      'next/headers': fileURLToPath(new URL('./server/stubs/next-headers-stub.mjs', import.meta.url)),
+    },
   },
 
   vite: {
