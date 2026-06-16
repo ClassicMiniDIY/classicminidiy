@@ -19,6 +19,7 @@ export type ExternalSourceSite =
   | 'cults3d'
   | 'thangs'
   | 'myminifactory'
+  | 'grabcad'
   | 'other';
 
 export interface ExternalSourceConfig {
@@ -37,6 +38,14 @@ export interface ExternalSourceConfig {
   defaultLicense: string | null;
   /** Whether the default license permits commercial use. */
   commercialUseAllowed: boolean | null;
+  /**
+   * Skip the self-hosted direct fetch and go straight to the render service.
+   * For client-rendered SPAs (e.g. GrabCAD's AngularJS pages) the static HTML
+   * carries no usable OG/JSON-LD — only an unrendered template shell — so the
+   * direct parse would otherwise "succeed" with generic junk and never fall
+   * back. See `server/utils/external-models/index.ts`.
+   */
+  requiresRender?: boolean;
   /** Optional brand logo at `/public/brands/{id}.svg`. */
   logo?: string;
 }
@@ -106,6 +115,23 @@ export const EXTERNAL_SOURCES: Record<ExternalSourceSite, ExternalSourceConfig> 
     defaultLicense: null,
     commercialUseAllowed: null,
   },
+  grabcad: {
+    id: 'grabcad',
+    label: 'GrabCAD',
+    // GrabCAD (a Stratasys brand) teal. Verify against current brand guidelines.
+    brandColor: '#00B2A9',
+    textColor: '#FFFFFF',
+    hostnames: ['grabcad.com', 'www.grabcad.com'],
+    // Model pages are /library/{slug}; capture the slug. Profile pages
+    // (/{user}/models) intentionally don't match → no external id.
+    urlPattern: /grabcad\.com\/library\/([\w-]+)/i,
+    // GrabCAD models carry the GrabCAD Terms, not a standard CC license; leave
+    // unknown rather than asserting a permissive default.
+    defaultLicense: null,
+    commercialUseAllowed: null,
+    // AngularJS SPA — static HTML has no real OG/JSON-LD. Force the render path.
+    requiresRender: true,
+  },
   other: {
     id: 'other',
     label: 'External',
@@ -126,6 +152,7 @@ export const SUPPORTED_SOURCE_SITES: ExternalSourceSite[] = [
   'cults3d',
   'thangs',
   'myminifactory',
+  'grabcad',
 ];
 
 export function sourceConfig(site: ExternalSourceSite | string | null | undefined): ExternalSourceConfig {

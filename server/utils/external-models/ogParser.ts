@@ -64,8 +64,12 @@ export function decodeHtmlEntities(input: string): string {
 }
 
 function getAttr(tag: string, attr: string): string | null {
-  // attr="value" | attr='value' (attribute order within the tag is irrelevant)
-  const re = new RegExp(`${attr}\\s*=\\s*("([^"]*)"|'([^']*)')`, 'i');
+  // attr="value" | attr='value' (attribute order within the tag is irrelevant).
+  // The negative lookbehind keeps `content` from matching inside `ng-attr-content`
+  // / `data-content` — SPA shells (e.g. GrabCAD's AngularJS pages) expose those
+  // carrying an unrendered `{{…}}` template literal that we must NOT read as the
+  // real attribute value.
+  const re = new RegExp(`(?<![-\\w:])${attr}\\s*=\\s*("([^"]*)"|'([^']*)')`, 'i');
   const m = tag.match(re);
   if (!m) return null;
   return decodeHtmlEntities(m[2] ?? m[3] ?? '').trim();
@@ -104,7 +108,14 @@ export function parseJsonLd(html: string): unknown[] {
 }
 
 function firstString(...vals: (string | null | undefined)[]): string | null {
-  for (const v of vals) if (v && v.trim()) return v.trim();
+  for (const v of vals) {
+    if (!v) continue;
+    // Drop unrendered client-side template tokens (`{{ … }}`) before considering
+    // a candidate — an SPA shell with no static fallback otherwise yields a
+    // literal "{{meta.title}}" as the title/description.
+    const cleaned = v.replace(/\{\{[^}]*\}\}/g, '').trim();
+    if (cleaned) return cleaned;
+  }
   return null;
 }
 
@@ -117,7 +128,14 @@ function harvestJsonLd(blocks: unknown[]): {
   keywords: string[];
   license: string | null;
 } {
-  const out = { name: null as string | null, description: null as string | null, image: [] as string[], author: null as string | null, keywords: [] as string[], license: null as string | null };
+  const out = {
+    name: null as string | null,
+    description: null as string | null,
+    image: [] as string[],
+    author: null as string | null,
+    keywords: [] as string[],
+    license: null as string | null,
+  };
   const visit = (node: unknown): void => {
     if (!node || typeof node !== 'object') return;
     if (Array.isArray(node)) {
@@ -133,19 +151,36 @@ function harvestJsonLd(blocks: unknown[]): {
     // image: string | {url} | array
     const img = obj.image;
     if (typeof img === 'string') out.image.push(img);
-    else if (img && typeof img === 'object' && typeof (img as Record<string, unknown>).url === 'string') out.image.push((img as Record<string, string>).url);
-    else if (Array.isArray(img)) for (const i of img) {
-      if (typeof i === 'string') out.image.push(i);
-      else if (i && typeof i === 'object' && typeof (i as Record<string, unknown>).url === 'string') out.image.push((i as Record<string, string>).url);
-    }
+    else if (img && typeof img === 'object' && typeof (img as Record<string, unknown>).url === 'string')
+      out.image.push((img as Record<string, string>).url);
+    else if (Array.isArray(img))
+      for (const i of img) {
+        if (typeof i === 'string') out.image.push(i);
+        else if (i && typeof i === 'object' && typeof (i as Record<string, unknown>).url === 'string')
+          out.image.push((i as Record<string, string>).url);
+      }
     // author: string | {name} | array
     const author = obj.author;
     if (typeof author === 'string') out.author ??= author;
-    else if (author && typeof author === 'object' && typeof (author as Record<string, unknown>).name === 'string') out.author ??= (author as Record<string, string>).name;
-    else if (Array.isArray(author) && author[0] && typeof author[0] === 'object' && typeof (author[0] as Record<string, unknown>).name === 'string') out.author ??= (author[0] as Record<string, string>).name;
+    else if (author && typeof author === 'object' && typeof (author as Record<string, unknown>).name === 'string')
+      out.author ??= (author as Record<string, string>).name;
+    else if (
+      Array.isArray(author) &&
+      author[0] &&
+      typeof author[0] === 'object' &&
+      typeof (author[0] as Record<string, unknown>).name === 'string'
+    )
+      out.author ??= (author[0] as Record<string, string>).name;
     // keywords: string (comma) | array
-    if (typeof obj.keywords === 'string') out.keywords.push(...obj.keywords.split(',').map((k) => k.trim()).filter(Boolean));
-    else if (Array.isArray(obj.keywords)) out.keywords.push(...(obj.keywords as unknown[]).filter((k): k is string => typeof k === 'string'));
+    if (typeof obj.keywords === 'string')
+      out.keywords.push(
+        ...obj.keywords
+          .split(',')
+          .map((k) => k.trim())
+          .filter(Boolean)
+      );
+    else if (Array.isArray(obj.keywords))
+      out.keywords.push(...(obj.keywords as unknown[]).filter((k): k is string => typeof k === 'string'));
   };
   blocks.forEach(visit);
   return out;
@@ -174,7 +209,13 @@ export function parseOpenGraph(html: string): OgMetadata {
 
   const keywords = Array.from(
     new Set(
-      [...(get('keywords')?.split(',').map((k) => k.trim()) ?? []), ...getAll('article:tag'), ...ld.keywords]
+      [
+        ...(get('keywords')
+          ?.split(',')
+          .map((k) => k.trim()) ?? []),
+        ...getAll('article:tag'),
+        ...ld.keywords,
+      ]
         .map((k) => k.trim())
         .filter(Boolean)
     )

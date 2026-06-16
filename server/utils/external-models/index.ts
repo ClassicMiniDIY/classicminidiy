@@ -16,6 +16,7 @@ import {
   extractExternalId,
   isValidExternalUrl,
   normalizeExternalUrl,
+  sourceConfig,
 } from '../../../data/models/external-sources';
 import { fetchExternalPage, parseOpenGraph, type OgMetadata } from './ogParser';
 import { renderExternalPage } from './render';
@@ -65,22 +66,28 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
 
   const sourceUrl = normalizeExternalUrl(rawUrl);
   const site = detectSourceSite(sourceUrl) ?? 'other';
+  const forceRender = sourceConfig(site).requiresRender === true;
 
-  // 1) Self-hosted direct fetch + OG/JSON-LD parse. `og` stays null when the
-  //    page is blocked (4xx), JS-only (200 with no usable metadata), or the
-  //    fetch errored — those fall through to the render service below.
+  // 1) Self-hosted direct fetch + OG/JSON-LD parse. Skipped entirely for sites
+  //    flagged `requiresRender` (client-rendered SPAs whose static HTML is only
+  //    an unrendered template shell — parsing it yields generic junk that would
+  //    masquerade as success). `og` stays null when the page is blocked (4xx),
+  //    JS-only (200 with no usable metadata), or the fetch errored — those fall
+  //    through to the render service below.
   let og: OgMetadata | null = null;
   let directStatus = 0;
-  try {
-    const page = await fetchExternalPage(sourceUrl, deps.fetchImpl);
-    directStatus = page.status;
-    if (page.status < 400) {
-      const parsed = parseOpenGraph(page.html);
-      if (parsed.title || parsed.image) og = parsed;
+  if (!forceRender) {
+    try {
+      const page = await fetchExternalPage(sourceUrl, deps.fetchImpl);
+      directStatus = page.status;
+      if (page.status < 400) {
+        const parsed = parseOpenGraph(page.html);
+        if (parsed.title || parsed.image) og = parsed;
+      }
+    } catch (e) {
+      // SSRF (private address) and too-large are terminal — never send those on.
+      if (e instanceof ScrapeError && (e.statusCode === 400 || e.statusCode === 413)) throw e;
     }
-  } catch (e) {
-    // SSRF (private address) and too-large are terminal — never send those on.
-    if (e instanceof ScrapeError && (e.statusCode === 400 || e.statusCode === 413)) throw e;
   }
 
   // 2) Render-service fallback for blocked / JS-only / empty pages. Runs in

@@ -26,6 +26,7 @@ describe('detectSourceSite', () => {
     expect(detectSourceSite('https://cults3d.com/en/3d-model/tool/foo')).toBe('cults3d');
     expect(detectSourceSite('https://thangs.com/designer/x/3d-model/foo-123')).toBe('thangs');
     expect(detectSourceSite('https://www.myminifactory.com/object/3d-print-foo-123')).toBe('myminifactory');
+    expect(detectSourceSite('https://grabcad.com/library/austin-mini-1')).toBe('grabcad');
   });
   it('falls back to other for unknown hosts and null for non-URLs', () => {
     expect(detectSourceSite('https://example.com/cool-model')).toBe('other');
@@ -39,9 +40,14 @@ describe('extractExternalId', () => {
     expect(extractExternalId('https://www.printables.com/model/98765-foo')).toBe('98765');
     expect(extractExternalId('https://makerworld.com/en/models/555')).toBe('555');
     expect(extractExternalId('https://cults3d.com/en/3d-model/various/mini-knob')).toBe('mini-knob');
+    expect(extractExternalId('https://grabcad.com/library/classic-mini-rear-trailing-arm-1')).toBe(
+      'classic-mini-rear-trailing-arm-1'
+    );
   });
   it('returns null when there is no id pattern', () => {
     expect(extractExternalId('https://example.com/foo')).toBeNull();
+    // GrabCAD profile pages aren't model pages — no id
+    expect(extractExternalId('https://grabcad.com/mike--223/models')).toBeNull();
   });
 });
 
@@ -117,6 +123,18 @@ describe('parseMetaTags / parseOpenGraph', () => {
     const blocks = parseJsonLd('<script type="application/ld+json">{bad json}</script>');
     expect(blocks).toEqual([]);
   });
+
+  it('ignores ng-attr-content and drops {{ }} template placeholders (SPA shell)', () => {
+    // GrabCAD-style AngularJS shell: the real `content` must win over the
+    // adjacent `ng-attr-content`, and a pure-placeholder og:title is skipped.
+    const html = `
+      <title ng-bind="title">Free CAD Designs, Files &amp; 3D Models | The GrabCAD Community Library</title>
+      <meta name="description" ng-attr-content="{{meta.description}}" content="Static fallback blurb">
+      <meta property="og:title" content="{{model.title}}">`;
+    const og = parseOpenGraph(html);
+    expect(og.description).toBe('Static fallback blurb');
+    expect(og.title).toBe('Free CAD Designs, Files & 3D Models | The GrabCAD Community Library');
+  });
 });
 
 // --- enrichers --------------------------------------------------------------
@@ -160,12 +178,23 @@ describe('enrichers', () => {
 
   it('makerworld strips suffix + reads "designed by"', () => {
     const f = enrich(
-      base({ title: 'Cool Part - Free 3D Print Model - MakerWorld', description: 'Download this free 3D print file designed by Carol. Extra.' }),
+      base({
+        title: 'Cool Part - Free 3D Print Model - MakerWorld',
+        description: 'Download this free 3D print file designed by Carol. Extra.',
+      }),
       { url: 'https://makerworld.com/en/models/3', site: 'makerworld', externalId: '3' }
     );
     expect(f.title).toBe('Cool Part');
     expect(f.authorName).toBe('Carol');
     expect(f.description).toBe('Extra.');
+  });
+
+  it('grabcad strips its title suffixes', () => {
+    const e = (title: string, externalId: string | null = 'x') =>
+      enrich(base({ title }), { url: 'https://grabcad.com/library/x', site: 'grabcad', externalId }).title;
+    expect(e('Classic Mini Trailing Arm | The GrabCAD Community Library')).toBe('Classic Mini Trailing Arm');
+    expect(e('Mike | CAD Models | GrabCAD', null)).toBe('Mike');
+    expect(e('Widget - GrabCAD')).toBe('Widget');
   });
 
   it('generic (other) passes the OG title through', () => {
@@ -182,8 +211,7 @@ describe('enrichers', () => {
 // --- fetchExternalMetadata (injected fetch) ---------------------------------
 
 function fakeFetch(html: string, status = 200) {
-  return async (url: string) =>
-    ({ text: async () => html, url, status }) as unknown as Response;
+  return async (url: string) => ({ text: async () => html, url, status }) as unknown as Response;
 }
 
 describe('fetchExternalMetadata', () => {
@@ -248,11 +276,27 @@ describe('renderExternalPage (fallback)', () => {
   });
 
   it('throws ScrapeError when the service cannot render', async () => {
-    await expect(renderExternalPage('https://x/y', fakeJsonFetch({ status: 'fail' }))).rejects.toBeInstanceOf(ScrapeError);
+    await expect(renderExternalPage('https://x/y', fakeJsonFetch({ status: 'fail' }))).rejects.toBeInstanceOf(
+      ScrapeError
+    );
   });
 
   it('throws ScrapeError when rate-limited', async () => {
     await expect(renderExternalPage('https://x/y', fakeJsonFetch({}, 429))).rejects.toBeInstanceOf(ScrapeError);
+  });
+
+  it('throws ScrapeError when the rendered page errored upstream (statusCode >= 400)', async () => {
+    // Microlink reports success but the upstream page was a CloudFront 403 error.
+    await expect(
+      renderExternalPage(
+        'https://grabcad.com/library/x',
+        fakeJsonFetch({
+          status: 'success',
+          statusCode: 403,
+          data: { title: 'ERROR: The request could not be satisfied', logo: { url: 'https://t3.gstatic.com/favicon' } },
+        })
+      )
+    ).rejects.toBeInstanceOf(ScrapeError);
   });
 });
 
@@ -285,5 +329,43 @@ describe('fetchExternalMetadata — render fallback wiring', () => {
     });
     expect(rendered).toBe(false);
     expect(result.title).toBe('Sump Guard');
+  });
+});
+
+describe('fetchExternalMetadata — requiresRender (GrabCAD SPA)', () => {
+  it('skips the direct fetch entirely and renders', async () => {
+    let directHit = false;
+    const result = await fetchExternalMetadata('https://grabcad.com/library/classic-mini-boot-rough-1', {
+      fetchImpl: (async (url: string) => {
+        directHit = true; // must NOT be called for a requiresRender site
+        return {
+          text: async () => '<title>Free CAD Designs, Files & 3D Models | The GrabCAD Community Library</title>',
+          url,
+          status: 200,
+        } as unknown as Response;
+      }) as unknown as typeof fetch,
+      renderImpl: fakeJsonFetch({
+        status: 'success',
+        statusCode: 200,
+        data: { title: 'Classic Mini Boot | GrabCAD', author: 'Bob', image: { url: 'https://cdn.test/boot.jpg' } },
+      }) as unknown as typeof fetch,
+    });
+    expect(directHit).toBe(false);
+    expect(result.sourceSite).toBe('grabcad');
+    expect(result.title).toBe('Classic Mini Boot'); // enricher stripped the GrabCAD suffix
+    expect(result.images[0]).toEqual({ url: 'https://cdn.test/boot.jpg', isPrimary: true });
+  });
+
+  it('fails cleanly (no junk stored) when GrabCAD is blocked upstream', async () => {
+    await expect(
+      fetchExternalMetadata('https://grabcad.com/library/classic-mini-rear-trailing-arm-1', {
+        fetchImpl: fakeFetch('', 200),
+        renderImpl: fakeJsonFetch({
+          status: 'success',
+          statusCode: 403,
+          data: { title: 'ERROR: The request could not be satisfied', logo: { url: 'https://t3.gstatic.com/fav' } },
+        }) as unknown as typeof fetch,
+      })
+    ).rejects.toBeInstanceOf(ScrapeError);
   });
 });
