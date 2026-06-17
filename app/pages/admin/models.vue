@@ -52,13 +52,18 @@
   const queueLoading = ref(false);
   async function loadQueue() {
     queueLoading.value = true;
-    const { data: versions } = await supabase
+    // Pin the FK on the models embed: models<->model_versions has TWO
+    // relationships (model_versions.model_id and models.current_version_id), so a
+    // bare `models(...)` embed is ambiguous and PostgREST fails it (PGRST201),
+    // which previously left the queue silently empty.
+    const { data: versions, error } = await supabase
       .from('model_versions')
       .select(
-        'id, version_number, label, changelog, created_at, status, models(id, title, slug, status, owner_id, pricing_mode, price_cents, suggested_price_cents, min_price_cents, currency, safety_critical, license_code, summary)'
+        'id, version_number, label, changelog, created_at, status, models!model_versions_model_id_fkey(id, title, slug, status, owner_id, pricing_mode, price_cents, suggested_price_cents, min_price_cents, currency, safety_critical, license_code, summary)'
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true });
+    if (error) flash('error', `Failed to load review queue: ${error.message}`);
     const rows = (versions ?? []) as any[];
     const versionIds = rows.map((r) => r.id);
     const modelIds = rows.map((r) => r.models?.id).filter(Boolean);
