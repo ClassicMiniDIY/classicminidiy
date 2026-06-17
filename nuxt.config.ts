@@ -495,6 +495,14 @@ export default defineNuxtConfig({
       // The /membership "Manage membership" button links here (with the member's
       // email pre-filled). Hidden when unset.
       stripePortalUrl: process.env.NUXT_PUBLIC_STRIPE_PORTAL_URL || '',
+      // The Mini Exchange consolidation cutover switch. While the marketplace is
+      // being merged in on the `tme-merge` branch, this stays false so /exchange/**
+      // routes (app/middleware/exchange-flag.global.ts), the nav entry, the
+      // dashboard/admin exchange tabs, and the marketplace sitemap/feeds are all
+      // hidden + uncrawlable in production even after the branch merges to main.
+      // Boolean default → Nuxt overrides it at runtime from NUXT_PUBLIC_EXCHANGE_ENABLED,
+      // so go-live is a single env flip in Vercel Production with NO rebuild.
+      exchangeEnabled: process.env.NUXT_PUBLIC_EXCHANGE_ENABLED === 'true',
     },
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
     // 3D Model Library private S3 bucket (keystone §5/§10). Dedicated IAM user

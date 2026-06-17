@@ -5,6 +5,10 @@
   const { t, locale, locales, setLocale } = useI18n();
   const { user, userProfile, isAuthenticated, isAdmin, signOut } = useAuth();
   const { track, trackOutbound } = useAnalytics();
+  // Cutover switch: once the marketplace consolidation goes live the "exchange"
+  // community link becomes an internal /exchange route; until then it points at
+  // the still-standalone theminiexchange.com so users are never sent to a 404.
+  const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
 
   const displayName = computed(() => {
     if (!user.value) return '';
@@ -67,8 +71,8 @@
     {
       label: t('navigation.exchange'),
       faIcon: 'fa-shop',
-      to: 'https://theminiexchange.com',
-      external: true,
+      to: exchangeEnabled ? '/exchange' : 'https://theminiexchange.com',
+      external: !exchangeEnabled,
     },
     {
       label: t('navigation.blog'),
