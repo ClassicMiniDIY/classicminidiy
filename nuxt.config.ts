@@ -260,6 +260,14 @@ export default defineNuxtConfig({
     // Do NOT also list those sub-modules here (double-registration / version skew).
     '@nuxtjs/seo',
     '@nuxt/image',
+    // TRANSITION-ONLY (tme-merge): @nuxt/icon renders The Mini Exchange's
+    // ~700 <Icon name="i-heroicons-*"> tags so migrated marketplace components
+    // work unchanged the moment they're copied in. Icons get converted to the
+    // site-standard Font Awesome 6 (<i class="fas fa-*">) per-component across
+    // stages 3-7; this module + @iconify-json/heroicons are removed before
+    // cutover so CMDIY stays FA6-exclusive. Coexists with the FA Kit (FA
+    // converts <i> tags; @nuxt/icon renders <Icon>).
+    '@nuxt/icon',
     'nuxt-llms',
     '@nuxtjs/i18n',
     '@nuxtjs/mcp-toolkit',
