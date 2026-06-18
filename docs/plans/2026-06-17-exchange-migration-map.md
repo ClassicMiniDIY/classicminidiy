@@ -73,3 +73,33 @@ sit at the repo root. Targets in CMDIY:
 Every migrated `.vue` adds `const { t } = useI18n()` + a `<i18n lang="json">` block with all 10 locales
 (en es fr de it pt ru ja zh ko); no HTML in message values. `/admin/exchange/*` + `/legal/marketplace-terms`
 stay English-only.
+
+## ⚠️ Component auto-import renaming (load-bearing)
+
+Nuxt derives auto-import component names from the path under `components/`. Moving TME components into
+`app/components/exchange/<group>/` **changes their tag names** — every cross-component reference in migrated
+`.vue` files must be updated:
+
+| TME path → tag | CMDIY path → tag |
+|---|---|
+| `components/listings/PriceDropBadge.vue` → `<ListingsPriceDropBadge>` | `app/components/exchange/listings/PriceDropBadge.vue` → `<ExchangeListingsPriceDropBadge>` |
+| `components/listings/ListingShippingBadge.vue` → `<ListingsListingShippingBadge>` | → `<ExchangeListingsListingShippingBadge>` |
+| `components/messages/MessageList.vue` → `<MessagesMessageList>` | → `<ExchangeMessagesMessageList>` |
+| `components/Avatar.vue` → `<Avatar>` | reconcile: use CMDIY's `<Avatar>` if API-compatible, else `app/components/exchange/Avatar.vue` → `<ExchangeAvatar>` |
+
+Rule: prepend `Exchange` to every `<Listings*>`, `<Messages*>`, `<Wanted*>`, `<Finds*>`, `<Dashboard*>`,
+`<Home*>`, `<Profile*>`, `<Admin*>` tag as its file moves under `app/components/exchange/`. Global/un-grouped
+TME components (`Avatar`, `ConfirmDialog`, `ToastContainer`, `AnnouncementBanner`) reconcile against CMDIY
+equivalents first (CMDIY has `Toaster.vue`, possibly `Avatar`); only namespace the ones with no CMDIY peer.
+
+## Component dependency graph (port leaves first)
+
+Migrate each page's component tree **leaf-first** so parents always resolve their children. Example —
+`ListingCard` (the marketplace's central card) depends on: `PriceDropBadge`, `ListingShippingBadge`,
+`Avatar`, `DashboardListingAnalytics` (children) + `~/utils/countryFlags` (port to `app/utils/`) + the
+already-ported composables. Build order for the browse slice: leaves (`PriceDropBadge`,
+`ListingShippingBadge`, `Avatar` reconcile, `countryFlags` util) → `ListingCard` → `SearchBar`,
+`SortDropdown`, `FilterSidebar`, `ListingsMap` → `pages/exchange/listings/index.vue`.
+
+Link URLs inside components change too: `/listings/${slug}` → `/exchange/listings/${slug}`,
+`/listings/new?draft=` → `/exchange/listings/new?draft=`, etc.
