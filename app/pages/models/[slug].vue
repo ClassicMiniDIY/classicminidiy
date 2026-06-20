@@ -9,6 +9,7 @@
   const { isAuthenticated, user } = useAuth();
   const supabase = useSupabase();
   const { verifyPurchase, downloadFile, downloadAll } = useModelCheckout();
+  const { track } = useAnalytics();
 
   const { data, error } = await useFetch<ModelDetail>(() => `/api/models/${slug.value}`);
   if (error.value) {
@@ -127,12 +128,17 @@
       if (sid && model.value) {
         const res = await verifyPurchase(model.value.id, sid);
         if (res.verified) {
+          track('model_purchase_completed', { model_id: model.value.id, kind: res.kind ?? 'purchase', session_id: sid });
           purchaseNotice.value = {
             type: 'success',
             text: res.kind === 'tip' ? t('notice.thankYouTip') : t('notice.purchaseComplete'),
           };
           await refreshEntitlement();
         } else {
+          // Stripe redirected to success but our webhook-lag verify hasn't seen
+          // the payment yet — track separately so the funnel distinguishes a true
+          // failure from normal webhook latency.
+          track('model_purchase_pending', { model_id: model.value.id, session_id: sid });
           purchaseNotice.value = {
             type: 'info',
             text: t('notice.paymentPending'),
@@ -143,6 +149,7 @@
       }
       router.replace({ query: {} });
     } else if (q.purchase === 'cancelled') {
+      if (model.value) track('model_checkout_cancelled', { model_id: model.value.id });
       purchaseNotice.value = { type: 'info', text: t('notice.checkoutCancelled') };
       router.replace({ query: {} });
     }

@@ -18,6 +18,7 @@ export interface SellerStatus {
 
 export function useModelCheckout() {
   const supabase = useSupabase();
+  const { track } = useAnalytics();
 
   async function authHeader(): Promise<Record<string, string>> {
     const { data } = await supabase.auth.getSession();
@@ -26,6 +27,31 @@ export function useModelCheckout() {
 
   function errMessage(e: any, fallback: string): string {
     return e?.data?.statusMessage || e?.statusMessage || e?.data?.message || fallback;
+  }
+
+  /**
+   * POST a Vercel BotID-protected route using the NATIVE fetch — NOT $fetch.
+   *
+   * Vercel BotID's client plugin (app/plugins/botid.client.ts) patches
+   * window.fetch so calls to protected paths carry the x-is-human challenge
+   * header; the server's checkBotId() fail-closes (403 'Bot detected') without
+   * it. Nuxt's $fetch (ofetch) captures its fetch reference before that patch is
+   * applied, so $fetch calls SKIP the challenge and every real buyer was being
+   * 403'd. The chat works only because it uses native fetch (useStreamProvider).
+   * Keep checkout + seller-onboard on native fetch so the challenge attaches.
+   *
+   * Throws an ofetch-shaped error ({ statusCode, data }) so errMessage() can
+   * still surface the edge function's actionable message (ALREADY_OWNED, etc).
+   */
+  async function postProtected<T>(url: string, headers: Record<string, string>, body: unknown): Promise<T> {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw { statusCode: res.status, data };
+    return data as T;
   }
 
   /**
@@ -40,25 +66,27 @@ export function useModelCheckout() {
     const headers = await authHeader();
     if (!headers.Authorization) return 'Please sign in to continue.';
 
+    track('model_checkout_started', { model_id: modelId, kind, amount_cents: amountCents ?? null });
+
     const base = `${window.location.origin}${window.location.pathname}`;
     try {
-      const res = await $fetch<{ url?: string }>(`/api/models/${modelId}/checkout`, {
-        method: 'POST',
-        headers,
-        body: {
-          kind,
-          ...(amountCents != null ? { amountCents } : {}),
-          successUrl: `${base}?purchase=success`,
-          cancelUrl: `${base}?purchase=cancelled`,
-        },
+      // Native fetch (not $fetch) so Vercel BotID's challenge header attaches — see postProtected.
+      const res = await postProtected<{ url?: string }>(`/api/models/${modelId}/checkout`, headers, {
+        kind,
+        ...(amountCents != null ? { amountCents } : {}),
+        successUrl: `${base}?purchase=success`,
+        cancelUrl: `${base}?purchase=cancelled`,
       });
       if (res?.url) {
         window.location.href = res.url;
         return null;
       }
+      track('model_checkout_failed', { model_id: modelId, kind, reason: 'no_url' });
       return 'Could not start checkout. Please try again.';
     } catch (e: any) {
-      return errMessage(e, 'Could not start checkout. Please try again.');
+      const msg = errMessage(e, 'Could not start checkout. Please try again.');
+      track('model_checkout_failed', { model_id: modelId, kind, reason: msg, status: e?.statusCode ?? null });
+      return msg;
     }
   }
 
@@ -69,13 +97,10 @@ export function useModelCheckout() {
 
     const origin = window.location.origin;
     try {
-      const res = await $fetch<{ url?: string }>('/api/models/seller/onboard', {
-        method: 'POST',
-        headers,
-        body: {
-          returnUrl: `${origin}/dashboard/selling?onboarded=1`,
-          refreshUrl: `${origin}/dashboard/selling?refresh=1`,
-        },
+      // Native fetch (not $fetch) so Vercel BotID's challenge header attaches — see postProtected.
+      const res = await postProtected<{ url?: string }>('/api/models/seller/onboard', headers, {
+        returnUrl: `${origin}/dashboard/selling?onboarded=1`,
+        refreshUrl: `${origin}/dashboard/selling?refresh=1`,
       });
       if (res?.url) {
         window.location.href = res.url;
