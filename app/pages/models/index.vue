@@ -10,7 +10,11 @@
   // Filters (seeded from the URL so a shared link reproduces the view).
   const q = ref(typeof route.query.q === 'string' ? route.query.q : '');
   const category = ref(typeof route.query.category === 'string' ? route.query.category : '');
-  const pricing = ref(typeof route.query.pricing === 'string' ? route.query.pricing : '');
+  // "Paid" is the umbrella for pwyw + fixed; migrate legacy deep-link values
+  // (?pricing=pwyw / ?pricing=fixed) at seed time so the dropdown shows a valid
+  // selection instead of a blank one.
+  const normalizePricing = (v: unknown) => (v === 'pwyw' || v === 'fixed' ? 'paid' : typeof v === 'string' ? v : '');
+  const pricing = ref(normalizePricing(route.query.pricing));
   const source = ref(typeof route.query.source === 'string' ? route.query.source : '');
   const sort = ref(typeof route.query.sort === 'string' ? route.query.sort : 'newest');
   const page = ref(Number(route.query.page) || 1);
