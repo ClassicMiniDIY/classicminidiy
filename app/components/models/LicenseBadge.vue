@@ -49,21 +49,25 @@
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-2">
+  <div class="flex flex-wrap items-start gap-2">
     <a
       v-if="license.url"
       :href="license.url"
       target="_blank"
       rel="noopener noreferrer"
-      class="badge badge-lg gap-1.5"
+      class="badge badge-lg h-auto min-h-8 items-start gap-1.5 whitespace-normal py-1.5 text-left leading-snug"
       :class="license.isPaid ? 'badge-primary' : 'badge-outline'"
       :title="viewFullLicense"
     >
-      <i class="fas" :class="license.isPaid ? 'fa-tag' : 'fa-scale-balanced'"></i>
+      <i class="fas mt-0.5 shrink-0" :class="license.isPaid ? 'fa-tag' : 'fa-scale-balanced'"></i>
       {{ license.name }}
     </a>
-    <span v-else class="badge badge-lg gap-1.5" :class="license.isPaid ? 'badge-primary' : 'badge-outline'">
-      <i class="fas" :class="license.isPaid ? 'fa-tag' : 'fa-scale-balanced'"></i>
+    <span
+      v-else
+      class="badge badge-lg h-auto min-h-8 items-start gap-1.5 whitespace-normal py-1.5 text-left leading-snug"
+      :class="license.isPaid ? 'badge-primary' : 'badge-outline'"
+    >
+      <i class="fas mt-0.5 shrink-0" :class="license.isPaid ? 'fa-tag' : 'fa-scale-balanced'"></i>
       {{ license.name }}
     </span>
 
