@@ -20,7 +20,12 @@ import type { ModelCard, PricingMode } from '../../../data/models/model-library'
 import type { BrowseCard, ExternalModelCard } from '../../../data/models/external-models';
 import { SUPPORTED_SOURCE_SITES, type ExternalSourceSite } from '../../../data/models/external-sources';
 
-const PRICING_MODES = ['free', 'tips', 'pwyw', 'fixed'];
+// Accepted `pricing` query values. `paid` is an umbrella (added for the browse
+// UI): it matches every model that costs money to download — `pwyw` (enforced
+// $1 minimum) and `fixed` (set price) — while `tips`/`free` download for $0.
+// The granular `pwyw`/`fixed` values stay accepted so older deep links keep working.
+const PRICING_MODES = ['free', 'tips', 'pwyw', 'fixed', 'paid'];
+const PAID_MODES = ['pwyw', 'fixed'];
 const SORTS = ['newest', 'popular', 'likes', 'featured'];
 const SOURCES = ['all', 'first_party', 'external', ...SUPPORTED_SOURCE_SITES];
 const DEFAULT_LIMIT = 24;
@@ -89,7 +94,7 @@ export default defineEventHandler(async (event) => {
   if (restrictKind) {
     let b = applySort(applyFilters(service.from('model_browse_cards').select(SELECT_COLS, { count: 'exact' }).eq('kind', restrictKind)));
     if (siteFilter) b = b.eq('source_site', siteFilter);
-    if (pricing) b = b.eq('pricing_mode', pricing);
+    if (pricing) b = pricing === 'paid' ? b.in('pricing_mode', PAID_MODES) : b.eq('pricing_mode', pricing);
     const { data, count, error } = await b.range(offset, offset + limit - 1);
     if (error) {
       console.error('[models/index] query failed:', error.message);
