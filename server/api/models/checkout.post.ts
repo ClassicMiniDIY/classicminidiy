@@ -13,13 +13,14 @@
  * STATIC path — modelId rides in the BODY, not the URL — on purpose. Vercel
  * BotID's client protection (app/plugins/botid.client.ts) attaches the
  * x-is-human challenge by matching the OUTGOING request path. The old route,
- * /api/models/[modelId]/checkout, needed a mid-path wildcard
- * (`/api/models/*/checkout`) to register, and that did NOT carry the challenge
- * the way a trailing-wildcard / static path does — so checkBotId() fail-closed
+ * /api/models/[modelId]/checkout, put the model id as a dynamic segment in the
+ * MIDDLE of the path, which forced a mid-path wildcard in the BotID protect
+ * list; that pattern never carried the challenge, so checkBotId() fail-closed
  * to 403 'Bot detected' for every real buyer (zero sales since launch). The
- * chat proxy was never affected because /api/langgraph/* is a trailing-wildcard
- * match. Keep this path static and listed verbatim in botid.client.ts; any new
- * BotID-protected route should avoid a dynamic segment before the matched path.
+ * langgraph chat proxy was never affected because its protect entry is a
+ * trailing wildcard. Keep this path static and listed verbatim in
+ * botid.client.ts; any new BotID-protected route should avoid a dynamic
+ * segment before the matched path.
  *
  * The edge function owns amount/seller/entitlement validation and surfaces
  * actionable error codes (ALREADY_OWNED, SELLER_UNAVAILABLE, AMOUNT_BELOW_MINIMUM
