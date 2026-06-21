@@ -1,5 +1,5 @@
 /**
- * POST /api/models/[modelId]/checkout  (keystone §6)
+ * POST /api/models/checkout  (keystone §6)
  *
  * Thin web proxy for model purchases and tips. Forwards the caller's Supabase
  * access token to the `create-model-checkout` Edge Function, which validates the
@@ -8,7 +8,18 @@
  * Stripe here — the web only mints the session via the edge function and the
  * client redirects to the returned URL.
  *
- *   body: { kind: 'purchase'|'tip', amountCents?, successUrl?, cancelUrl? }
+ *   body: { modelId, kind: 'purchase'|'tip', amountCents?, successUrl?, cancelUrl? }
+ *
+ * STATIC path — modelId rides in the BODY, not the URL — on purpose. Vercel
+ * BotID's client protection (app/plugins/botid.client.ts) attaches the
+ * x-is-human challenge by matching the OUTGOING request path. The old route,
+ * /api/models/[modelId]/checkout, needed a mid-path wildcard
+ * (`/api/models/*/checkout`) to register, and that did NOT carry the challenge
+ * the way a trailing-wildcard / static path does — so checkBotId() fail-closed
+ * to 403 'Bot detected' for every real buyer (zero sales since launch). The
+ * chat proxy was never affected because /api/langgraph/* is a trailing-wildcard
+ * match. Keep this path static and listed verbatim in botid.client.ts; any new
+ * BotID-protected route should avoid a dynamic segment before the matched path.
  *
  * The edge function owns amount/seller/entitlement validation and surfaces
  * actionable error codes (ALREADY_OWNED, SELLER_UNAVAILABLE, AMOUNT_BELOW_MINIMUM
@@ -19,8 +30,14 @@ import { checkBotId } from 'botid/server';
 export default defineEventHandler(async (event) => {
   // Vercel BotID — block bots before minting a Stripe Checkout session.
   // Protected in app/plugins/botid.client.ts. No-op (always human) in local dev.
-  const { isBot } = await checkBotId();
-  if (isBot) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    // Surface the classification so this isn't a silent black box again — the
+    // last regression hid for a week because the 403 carried no reason.
+    console.warn('[models/checkout] BotID blocked request', {
+      classificationReason: verification.classificationReason,
+      isVerifiedBot: verification.isVerifiedBot,
+    });
     throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
   }
 
@@ -31,16 +48,23 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: 'Sign in required to start checkout' });
   }
 
-  const modelId = getRouterParam(event, 'modelId');
-  if (!modelId) throw createError({ statusCode: 400, statusMessage: 'Missing model id' });
-
   const supabaseUrl = (config.public.supabaseUrl as string)?.replace(/\/$/, '');
   const supabaseKey = config.public.supabaseKey as string;
   if (!supabaseUrl) {
     throw createError({ statusCode: 500, statusMessage: 'Supabase URL not configured' });
   }
 
-  const body = await readBody<{ kind?: string; amountCents?: number; successUrl?: string; cancelUrl?: string }>(event);
+  const body = await readBody<{
+    modelId?: string;
+    kind?: string;
+    amountCents?: number;
+    successUrl?: string;
+    cancelUrl?: string;
+  }>(event);
+
+  const modelId = body?.modelId;
+  if (!modelId) throw createError({ statusCode: 400, statusMessage: 'Missing model id' });
+
   const kind = body?.kind === 'tip' ? 'tip' : body?.kind === 'purchase' ? 'purchase' : null;
   if (!kind) {
     throw createError({ statusCode: 400, statusMessage: 'kind must be "purchase" or "tip"' });

@@ -70,8 +70,12 @@ export function useModelCheckout() {
 
     const base = `${window.location.origin}${window.location.pathname}`;
     try {
-      // Native fetch (not $fetch) so Vercel BotID's challenge header attaches — see postProtected.
-      const res = await postProtected<{ url?: string }>(`/api/models/${modelId}/checkout`, headers, {
+      // STATIC path with modelId in the body — Vercel BotID matches the request
+      // path to attach its challenge, and a dynamic mid-path segment
+      // (/api/models/[id]/checkout) did not register, so checkBotId() 403'd every
+      // real buyer. See server/api/models/checkout.post.ts + botid.client.ts.
+      const res = await postProtected<{ url?: string }>(`/api/models/checkout`, headers, {
+        modelId,
         kind,
         ...(amountCents != null ? { amountCents } : {}),
         successUrl: `${base}?purchase=success`,

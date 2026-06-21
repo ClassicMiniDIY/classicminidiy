@@ -24,8 +24,12 @@ export default defineNuxtPlugin({
         // Unauthenticated, expensive AI chat proxy — thread creation + run streaming
         // (POST). GET reads (thread state/history) are intentionally not protected.
         { path: '/api/langgraph/*', method: 'POST' },
-        // Stripe Connect money paths (web model marketplace).
-        { path: '/api/models/*/checkout', method: 'POST' },
+        // Stripe Connect money paths (web model marketplace). BOTH are STATIC
+        // paths on purpose: BotID matches the outgoing request path to attach the
+        // x-is-human challenge, and a dynamic mid-path segment
+        // (the old /api/models/*/checkout) did not register the challenge — so
+        // checkBotId() 403'd every real buyer. checkout takes modelId in the body.
+        { path: '/api/models/checkout', method: 'POST' },
         { path: '/api/models/seller/onboard', method: 'POST' },
       ],
     });
