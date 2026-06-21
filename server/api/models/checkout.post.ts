@@ -31,12 +31,15 @@ export default defineEventHandler(async (event) => {
   // Vercel BotID — block bots before minting a Stripe Checkout session.
   // Protected in app/plugins/botid.client.ts. No-op (always human) in local dev.
   const verification = await checkBotId();
-  if (verification.isBot) {
+  // Fail CLOSED: treat a missing/odd verification as a block. (Optional chaining
+  // on `verification?.isBot` alone would fail OPEN on a nullish result, which is
+  // the wrong default for a security gate — checkBotId() returns an object or throws.)
+  if (!verification || verification.isBot) {
     // Surface the classification so this isn't a silent black box again — the
     // last regression hid for a week because the 403 carried no reason.
     console.warn('[models/checkout] BotID blocked request', {
-      classificationReason: verification.classificationReason,
-      isVerifiedBot: verification.isVerifiedBot,
+      classificationReason: verification?.classificationReason,
+      isVerifiedBot: verification?.isVerifiedBot,
     });
     throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
   }
@@ -63,11 +66,27 @@ export default defineEventHandler(async (event) => {
   }>(event);
 
   const modelId = body?.modelId;
-  if (!modelId) throw createError({ statusCode: 400, statusMessage: 'Missing model id' });
+  if (!modelId || typeof modelId !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'Missing or invalid model id' });
+  }
 
   const kind = body?.kind === 'tip' ? 'tip' : body?.kind === 'purchase' ? 'purchase' : null;
   if (!kind) {
     throw createError({ statusCode: 400, statusMessage: 'kind must be "purchase" or "tip"' });
+  }
+
+  // Defense-in-depth on the optional fields before they reach the edge function.
+  if (
+    body?.amountCents != null &&
+    (typeof body.amountCents !== 'number' || !Number.isSafeInteger(body.amountCents) || body.amountCents < 0)
+  ) {
+    throw createError({ statusCode: 400, statusMessage: 'amountCents must be a non-negative integer' });
+  }
+  if (body?.successUrl != null && typeof body.successUrl !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'successUrl must be a string' });
+  }
+  if (body?.cancelUrl != null && typeof body.cancelUrl !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'cancelUrl must be a string' });
   }
 
   try {

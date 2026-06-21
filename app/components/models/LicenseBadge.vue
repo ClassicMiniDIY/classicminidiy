@@ -50,26 +50,17 @@
 
 <template>
   <div class="flex flex-wrap items-start gap-2">
-    <a
-      v-if="license.url"
-      :href="license.url"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="badge badge-lg h-auto min-h-8 items-start gap-1.5 whitespace-normal py-1.5 text-left leading-snug"
-      :class="license.isPaid ? 'badge-primary' : 'badge-outline'"
-      :title="viewFullLicense"
-    >
-      <i class="fas mt-0.5 shrink-0" :class="license.isPaid ? 'fa-tag' : 'fa-scale-balanced'"></i>
-      {{ license.name }}
-    </a>
-    <span
-      v-else
+    <component
+      :is="license.url ? 'a' : 'span'"
+      v-bind="
+        license.url ? { href: license.url, target: '_blank', rel: 'noopener noreferrer', title: viewFullLicense } : {}
+      "
       class="badge badge-lg h-auto min-h-8 items-start gap-1.5 whitespace-normal py-1.5 text-left leading-snug"
       :class="license.isPaid ? 'badge-primary' : 'badge-outline'"
     >
       <i class="fas mt-0.5 shrink-0" :class="license.isPaid ? 'fa-tag' : 'fa-scale-balanced'"></i>
       {{ license.name }}
-    </span>
+    </component>
 
     <template v-if="!compact">
       <span v-for="chip in chips" :key="chip.label" class="badge badge-sm gap-1" :class="toneClass[chip.tone]">
