@@ -62,12 +62,13 @@
     });
   });
 
+  // "Paid" is an umbrella covering pwyw (min $1) + fixed — every model that costs
+  // money to download. The server expands `paid` accordingly.
   const pricingOptions = computed(() => [
     { value: '', label: t('filters.pricing.all') },
     { value: 'free', label: t('filters.pricing.free') },
     { value: 'tips', label: t('filters.pricing.tips') },
-    { value: 'pwyw', label: t('filters.pricing.pwyw') },
-    { value: 'fixed', label: t('filters.pricing.fixed') },
+    { value: 'paid', label: t('filters.pricing.paid') },
   ]);
   const sortOptions = computed(() => [
     { value: 'newest', label: t('filters.sort.newest') },
@@ -261,8 +262,7 @@
         "all": "All pricing",
         "free": "Free",
         "tips": "Free + tips",
-        "pwyw": "Pay what you want",
-        "fixed": "Paid"
+        "paid": "Paid"
       },
       "sort": {
         "newest": "Newest",
@@ -307,8 +307,7 @@
         "all": "Todos los precios",
         "free": "Gratis",
         "tips": "Gratis + propinas",
-        "pwyw": "Paga lo que quieras",
-        "fixed": "De pago"
+        "paid": "De pago"
       },
       "sort": {
         "newest": "Más recientes",
@@ -353,8 +352,7 @@
         "all": "Tous les tarifs",
         "free": "Gratuit",
         "tips": "Gratuit + pourboires",
-        "pwyw": "Prix libre",
-        "fixed": "Payant"
+        "paid": "Payant"
       },
       "sort": {
         "newest": "Les plus récents",
@@ -399,8 +397,7 @@
         "all": "Alle Preise",
         "free": "Kostenlos",
         "tips": "Kostenlos + Trinkgeld",
-        "pwyw": "Zahle was du willst",
-        "fixed": "Kostenpflichtig"
+        "paid": "Kostenpflichtig"
       },
       "sort": {
         "newest": "Neueste",
@@ -445,8 +442,7 @@
         "all": "Tutti i prezzi",
         "free": "Gratuito",
         "tips": "Gratuito + mance",
-        "pwyw": "Paghi quanto vuoi",
-        "fixed": "A pagamento"
+        "paid": "A pagamento"
       },
       "sort": {
         "newest": "Più recenti",
@@ -491,8 +487,7 @@
         "all": "Todos os preços",
         "free": "Grátis",
         "tips": "Grátis + gorjetas",
-        "pwyw": "Pague o que quiser",
-        "fixed": "Pago"
+        "paid": "Pago"
       },
       "sort": {
         "newest": "Mais recentes",
@@ -537,8 +532,7 @@
         "all": "Любая цена",
         "free": "Бесплатно",
         "tips": "Бесплатно + чаевые",
-        "pwyw": "Платите сколько хотите",
-        "fixed": "Платно"
+        "paid": "Платно"
       },
       "sort": {
         "newest": "Новые",
@@ -583,8 +577,7 @@
         "all": "すべての価格",
         "free": "無料",
         "tips": "無料＋チップ",
-        "pwyw": "自由価格",
-        "fixed": "有料"
+        "paid": "有料"
       },
       "sort": {
         "newest": "新着順",
@@ -629,8 +622,7 @@
         "all": "全部价格",
         "free": "免费",
         "tips": "免费 + 打赏",
-        "pwyw": "随心付",
-        "fixed": "付费"
+        "paid": "付费"
       },
       "sort": {
         "newest": "最新",
@@ -675,8 +667,7 @@
         "all": "모든 가격",
         "free": "무료",
         "tips": "무료 + 후원",
-        "pwyw": "자유 가격",
-        "fixed": "유료"
+        "paid": "유료"
       },
       "sort": {
         "newest": "최신순",
