@@ -233,7 +233,7 @@
     loading.value = true;
 
     try {
-      const response = await $fetch('/api/contact-seller', {
+      const response = await $fetch('/api/exchange/contact-seller', {
         method: 'POST',
         body: {
           listingId: props.listingId,

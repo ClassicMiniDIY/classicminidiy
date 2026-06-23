@@ -273,7 +273,7 @@ export const useWantedPosts = () => {
       const accessToken = await getAccessTokenOrWarn('create a wanted post');
       if (!accessToken) return null;
 
-      const response = await $fetch('/api/wanted/create', {
+      const response = await $fetch('/api/exchange/wanted/create', {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
         body: {
@@ -340,7 +340,7 @@ export const useWantedPosts = () => {
       const accessToken = await getAccessTokenOrWarn('update your wanted post');
       if (!accessToken) return null;
 
-      const response = await $fetch(`/api/wanted/${id}`, {
+      const response = await $fetch(`/api/exchange/wanted/${id}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${accessToken}` },
         body: {
@@ -415,7 +415,7 @@ export const useWantedPosts = () => {
       const accessToken = await getAccessTokenOrWarn('delete your wanted post');
       if (!accessToken) return false;
 
-      await $fetch(`/api/wanted/${id}`, {
+      await $fetch(`/api/exchange/wanted/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${accessToken}` },
       });

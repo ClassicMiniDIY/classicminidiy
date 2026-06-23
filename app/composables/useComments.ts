@@ -66,7 +66,7 @@ export const useComments = (targetId: string, targetType: 'listing' | 'external'
       queryParams.set('limit', PAGE_SIZE.toString());
       queryParams.set('offset', commentOffset.value.toString());
 
-      const response = await $fetch(`/api/comments/${targetId}?${queryParams.toString()}`);
+      const response = await $fetch(`/api/exchange/comments/${targetId}?${queryParams.toString()}`);
 
       if (append) {
         comments.value = [...comments.value, ...response.comments];
@@ -136,7 +136,7 @@ export const useComments = (targetId: string, targetType: 'listing' | 'external'
       }
 
       const headers = await getAuthHeaders();
-      const response = await $fetch('/api/comments/create', {
+      const response = await $fetch('/api/exchange/comments/create', {
         method: 'POST',
         headers,
         body,
@@ -194,7 +194,7 @@ export const useComments = (targetId: string, targetType: 'listing' | 'external'
 
     try {
       const headers = await getAuthHeaders();
-      await $fetch(`/api/comments/${commentId}/flag`, {
+      await $fetch(`/api/exchange/comments/${commentId}/flag`, {
         method: 'PATCH',
         headers,
       });
@@ -228,7 +228,7 @@ export const useComments = (targetId: string, targetType: 'listing' | 'external'
 
     try {
       const headers = await getAuthHeaders();
-      await $fetch(`/api/comments/${commentId}/delete`, {
+      await $fetch(`/api/exchange/comments/${commentId}/delete`, {
         method: 'DELETE',
         headers,
       });
