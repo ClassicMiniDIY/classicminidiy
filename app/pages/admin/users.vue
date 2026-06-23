@@ -367,6 +367,88 @@
     }
   }
 
+  // --- Marketplace user-admin (The Mini Exchange) folded in here per the
+  // consolidation. ban/details/delete all go through useAdmin's is_admin()-gated
+  // PostgREST/RPC — no new server routes. The marketplace surface is an on-demand
+  // details modal (profile incl. is_banned + the user's listings), so the live
+  // user-list query + UserItem type stay untouched. Ban/Delete act on the loaded
+  // profile id. Reversible ban needs no confirm; delete uses an inline confirm.
+  const { toggleUserBan, getUserDetails, deleteUser } = useAdmin();
+  const { add: addToast } = useToast();
+  const { getPhotoUrl, getPrimaryPhoto } = useListings();
+  // getInitials already exists as a local helper on this page; only pull formatStatus.
+  const { formatStatus } = useFormatters();
+
+  const showDetailsModal = ref(false);
+  const detailsLoading = ref(false);
+  const userDetails = ref<{ profile: any; listings: any[] } | null>(null);
+  const confirmingDelete = ref(false);
+
+  async function openDetailsModal(userItem: UserItem) {
+    showDetailsModal.value = true;
+    detailsLoading.value = true;
+    confirmingDelete.value = false;
+    userDetails.value = null;
+    try {
+      userDetails.value = await getUserDetails(userItem.id);
+    } catch (error: any) {
+      addToast({ title: 'Error', description: error?.message || 'Failed to load user details', color: 'error' });
+      showDetailsModal.value = false;
+    } finally {
+      detailsLoading.value = false;
+    }
+  }
+
+  function closeDetailsModal() {
+    showDetailsModal.value = false;
+    userDetails.value = null;
+    confirmingDelete.value = false;
+  }
+
+  async function handleToggleBan() {
+    if (!userDetails.value?.profile) return;
+    const profile = userDetails.value.profile;
+    isProcessing.value = true;
+    try {
+      await toggleUserBan(profile.id, !profile.is_banned);
+      profile.is_banned = !profile.is_banned;
+      track('admin_action', { item_type: 'user', action: profile.is_banned ? 'user_banned' : 'user_unbanned' });
+      addToast({ title: 'Success', description: profile.is_banned ? 'User banned' : 'User unbanned', color: 'success' });
+      await refreshData();
+    } catch (error: any) {
+      addToast({ title: 'Error', description: error?.message || 'Failed to update user', color: 'error' });
+    } finally {
+      isProcessing.value = false;
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!userDetails.value?.profile) return;
+    isProcessing.value = true;
+    try {
+      await deleteUser(userDetails.value.profile.id);
+      track('admin_action', { item_type: 'user', action: 'user_deleted' });
+      addToast({ title: 'Success', description: 'User deleted', color: 'success' });
+      closeDetailsModal();
+      await refreshData();
+    } catch (error: any) {
+      addToast({ title: 'Error', description: error?.message || 'Failed to delete user', color: 'error' });
+    } finally {
+      isProcessing.value = false;
+    }
+  }
+
+  function listingStatusBadge(status: string): string {
+    const map: Record<string, string> = {
+      active: 'badge-success',
+      sold: 'badge-info',
+      draft: 'badge-warning',
+      expired: 'badge-error',
+      pending: 'badge-warning',
+    };
+    return map[status] || 'badge-ghost';
+  }
+
   const compExpiryLabel = computed(() => {
     const exp = membershipData.value?.comp_expires_at;
     if (!exp) return null;
@@ -528,17 +610,28 @@
               <span class="text-xs opacity-70">{{ formatDate(userItem.created_at) }}</span>
             </td>
 
-            <!-- Membership / Comp -->
+            <!-- Membership / Comp + Marketplace -->
             <td class="text-center">
-              <button
-                type="button"
-                class="btn btn-ghost btn-xs"
-                :disabled="isProcessing"
-                @click="openMembershipModal(userItem)"
-              >
-                <i class="fas fa-star opacity-70"></i>
-                Manage
-              </button>
+              <div class="flex flex-col gap-1 items-center">
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs"
+                  :disabled="isProcessing"
+                  @click="openMembershipModal(userItem)"
+                >
+                  <i class="fas fa-star opacity-70"></i>
+                  Manage
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-xs"
+                  :disabled="isProcessing"
+                  @click="openDetailsModal(userItem)"
+                >
+                  <i class="fas fa-shop opacity-70"></i>
+                  Marketplace
+                </button>
+              </div>
             </td>
 
             <!-- Actions -->
@@ -796,6 +889,123 @@
         </div>
       </div>
       <div class="modal-backdrop" @click="closeMembershipModal"></div>
+    </dialog>
+
+    <!-- Marketplace user details modal (folded in from The Mini Exchange) -->
+    <dialog class="modal" :class="{ 'modal-open': showDetailsModal }">
+      <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">Marketplace — User Details</h3>
+
+        <div v-if="detailsLoading" class="flex justify-center py-12">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+
+        <div v-else-if="userDetails" class="space-y-4">
+          <!-- Profile header -->
+          <div class="flex items-center gap-3">
+            <div class="avatar" :class="{ placeholder: !userDetails.profile.avatar_url }">
+              <div class="w-12 h-12 rounded-full bg-neutral text-neutral-content">
+                <img
+                  v-if="userDetails.profile.avatar_url"
+                  :src="userDetails.profile.avatar_url"
+                  :alt="userDetails.profile.display_name || 'User avatar'"
+                  loading="lazy"
+                />
+                <span v-else class="text-sm">{{
+                  getInitials(userDetails.profile.display_name || userDetails.profile.email)
+                }}</span>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-semibold truncate">{{ userDetails.profile.display_name || 'No name set' }}</span>
+                <span v-if="userDetails.profile.is_banned" class="badge badge-error badge-sm">Banned</span>
+              </div>
+              <p class="text-sm text-base-content/70 truncate">{{ userDetails.profile.email }}</p>
+              <p v-if="userDetails.profile.location" class="text-xs text-base-content/60">
+                {{ userDetails.profile.location }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Listings -->
+          <div>
+            <h4 class="font-semibold mb-2">Listings ({{ userDetails.listings.length }})</h4>
+            <div v-if="userDetails.listings.length > 0" class="space-y-2 max-h-60 overflow-y-auto">
+              <div
+                v-for="listing in userDetails.listings"
+                :key="listing.id"
+                class="flex items-center gap-3 p-2 rounded-lg bg-base-200"
+              >
+                <div class="avatar">
+                  <div class="w-12 h-12 rounded">
+                    <img
+                      v-if="getPrimaryPhoto(listing)"
+                      :src="getPhotoUrl(getPrimaryPhoto(listing))"
+                      :alt="listing.title"
+                      loading="lazy"
+                    />
+                    <div v-else class="bg-base-300 w-full h-full flex items-center justify-center">
+                      <i class="fas fa-image text-base-content/30"></i>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <NuxtLink
+                    :to="`/exchange/listings/${listing.slug}`"
+                    target="_blank"
+                    class="font-medium text-sm link link-hover"
+                  >
+                    {{ listing.title }}
+                  </NuxtLink>
+                  <div class="text-xs text-base-content/70">{{ listing.year }} {{ listing.model }}</div>
+                </div>
+                <span class="badge badge-sm" :class="listingStatusBadge(listing.status)">
+                  {{ formatStatus(listing.status) }}
+                </span>
+              </div>
+            </div>
+            <div v-else class="text-center py-6 text-base-content/70 text-sm">No listings yet</div>
+          </div>
+
+          <!-- Danger zone (ban / delete) -->
+          <div class="border-t border-base-300 pt-4 flex flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              class="btn btn-sm"
+              :class="userDetails.profile.is_banned ? 'btn-success' : 'btn-error btn-outline'"
+              :disabled="isProcessing"
+              @click="handleToggleBan"
+            >
+              <i :class="userDetails.profile.is_banned ? 'fas fa-circle-check' : 'fas fa-ban'"></i>
+              {{ userDetails.profile.is_banned ? 'Unban User' : 'Ban User' }}
+            </button>
+
+            <template v-if="!confirmingDelete">
+              <button type="button" class="btn btn-sm btn-ghost text-error" :disabled="isProcessing" @click="confirmingDelete = true">
+                <i class="fas fa-trash"></i>
+                Delete User
+              </button>
+            </template>
+            <template v-else>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-error">Permanently delete this user + all their listings?</span>
+                <button type="button" class="btn btn-xs btn-ghost" :disabled="isProcessing" @click="confirmingDelete = false">
+                  Cancel
+                </button>
+                <button type="button" class="btn btn-xs btn-error" :disabled="isProcessing" @click="handleDeleteUser">
+                  Delete Permanently
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="modal-action">
+          <button type="button" class="btn btn-outline" @click="closeDetailsModal">Close</button>
+        </div>
+      </div>
+      <div class="modal-backdrop" @click="closeDetailsModal"></div>
     </dialog>
   </div>
 </template>
