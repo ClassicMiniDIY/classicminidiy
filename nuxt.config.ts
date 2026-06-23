@@ -537,6 +537,10 @@ export default defineNuxtConfig({
     // endpoint works without it but is rate-limited (~50 req/day). Set for the
     // pro tier. Read server-side only and forwarded to renderExternalPage().
     MICROLINK_API_KEY: process.env.MICROLINK_API_KEY || '',
+    // Camino AI key for the exchange safe-meeting-spot + distance proxies
+    // (server/utils/exchange/camino.ts). Optional — the camino routes 502
+    // gracefully when unset; set CAMINO_API_KEY in prod to enable.
+    caminoApiKey: process.env.CAMINO_API_KEY || '',
     NODE_ENV: process.env.NODE_ENV || 'development',
   },
 
