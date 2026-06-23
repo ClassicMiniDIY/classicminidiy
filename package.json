@@ -56,6 +56,8 @@
     "@vueuse/core": "^14.2.1",
     "bad-words": "^4.0.0",
     "browser-image-compression": "^2.0.2",
+    "chart.js": "^4.5.1",
+    "vue-chartjs": "^5.3.3",
     "dompurify": "^3.3.3",
     "feed": "^5.2.0",
     "heic2any": "^0.0.4",
