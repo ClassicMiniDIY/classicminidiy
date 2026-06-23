@@ -503,6 +503,10 @@ export default defineNuxtConfig({
       // The /membership "Manage membership" button links here (with the member's
       // email pre-filled). Hidden when unset.
       stripePortalUrl: process.env.NUXT_PUBLIC_STRIPE_PORTAL_URL || '',
+      // Web Push VAPID public key for The Mini Exchange message/alert push
+      // notifications (app/composables/usePushNotifications.ts). Optional —
+      // push is a progressive enhancement; unset = push UI hidden.
+      vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
       // The Mini Exchange consolidation cutover switch. While the marketplace is
       // being merged in on the `tme-merge` branch, this stays false so /exchange/**
       // routes (app/middleware/exchange-flag.global.ts), the nav entry, the
