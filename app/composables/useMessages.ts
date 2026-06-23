@@ -471,7 +471,7 @@ export const useMessages = () => {
       const accessToken = sessionData?.session?.access_token;
 
       if (accessToken) {
-        $fetch('/api/notifications/queue-message', {
+        $fetch('/api/exchange/notifications/queue-message', {
           method: 'POST',
           headers: { Authorization: `Bearer ${accessToken}` },
           body: {
