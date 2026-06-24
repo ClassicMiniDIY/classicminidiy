@@ -14,8 +14,9 @@
   });
 
   function toeShort(mm: number) {
-    if (Math.abs(mm) < 0.05) return t('parallel');
-    return `${mmToInchFraction(mm)} ${mm < 0 ? t('out') : t('in')}`;
+    const fraction = mmToInchFraction(mm);
+    if (Math.abs(mm) < 0.05 || fraction === '0') return t('parallel');
+    return `${fraction} ${mm < 0 ? t('out') : t('in')}`;
   }
   function summary(c: SavedAlignmentConfig) {
     return `${t('front')}: ${c.front_camber}° · ${toeShort(c.front_toe)}  ·  ${t('rear')}: ${c.rear_camber}° · ${toeShort(

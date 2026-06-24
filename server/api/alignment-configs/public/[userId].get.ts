@@ -3,8 +3,8 @@ import { getServiceClient } from '../../../utils/supabase';
 export default defineEventHandler(async (event) => {
   const userId = getRouterParam(event, 'userId');
 
-  if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: 'User ID required' });
+  if (!userId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid or missing User ID' });
   }
 
   const supabase = getServiceClient();

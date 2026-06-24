@@ -41,9 +41,11 @@
   const fmtDeg = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(1)}°`;
 
   const toeLabel = (mm: number) => {
-    if (Math.abs(mm) < 0.05) return t('parallel');
+    const fraction = mmToInchFraction(mm);
+    // A non-zero mm that rounds to 0 sixteenths has no meaningful direction — show "parallel".
+    if (Math.abs(mm) < 0.05 || fraction === '0') return t('parallel');
     const dir = mm < 0 ? t('out') : t('in');
-    return `${mmToInchFraction(mm)} ${dir}`;
+    return `${fraction} ${dir}`;
   };
 
   const frontToeLabel = computed(() => toeLabel(props.frontToe));

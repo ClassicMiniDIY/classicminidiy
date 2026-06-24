@@ -110,6 +110,11 @@ describe('mmToInchFraction', () => {
     expect(mmToInchFraction(-1.5875)).toBe('1/16"');
     expect(mmToInchFraction(0)).toBe('0');
   });
+
+  it('rounds a small sub-1/32" toe to "0" (the readouts must treat this as parallel, not "0 in/out")', () => {
+    expect(mmToInchFraction(0.5)).toBe('0');
+    expect(mmToInchFraction(-0.5)).toBe('0');
+  });
 });
 
 describe('toeMmToDegrees', () => {

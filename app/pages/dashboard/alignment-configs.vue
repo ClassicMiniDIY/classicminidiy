@@ -23,7 +23,9 @@
   function toeText(mm: number) {
     if (Math.abs(mm) < 0.05) return t('parallel');
     const dir = mm < 0 ? t('toe_out') : t('toe_in');
-    return `${Math.abs(mm).toFixed(2).replace(/\.?0+$/, '')} mm ${dir} (${mmToInchFraction(mm)})`;
+    const mmText = `${Math.abs(mm).toFixed(2).replace(/\.?0+$/, '')} mm ${dir}`;
+    const fraction = mmToInchFraction(mm);
+    return fraction === '0' ? mmText : `${mmText} (${fraction})`;
   }
   const degText = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2).replace(/\.?0+$/, '')}°`;
 
@@ -40,9 +42,11 @@
   async function handleAddNote(id: string) {
     const body = (newNotes[id] ?? '').trim();
     if (!body) return;
-    await addJournalEntry(id, body);
-    newNotes[id] = '';
-    track('alignment_journal_entry_added', { config_id: id });
+    const result = await addJournalEntry(id, body);
+    if (result) {
+      newNotes[id] = '';
+      track('alignment_journal_entry_added', { config_id: id });
+    }
   }
 
   async function handleDeleteNote(id: string, entryId: string) {

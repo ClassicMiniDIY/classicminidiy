@@ -76,7 +76,9 @@
     const param = ALIGNMENT_PARAMETERS.find((p) => p.id === id)!;
     if (param.kind === 'toe') {
       if (Math.abs(v) < 0.05) return t('parallel');
-      return `${Math.abs(v).toFixed(2).replace(/\.?0+$/, '')} mm ${toeDir(v)} · ${toeFraction(v)}`;
+      const mmText = `${Math.abs(v).toFixed(2).replace(/\.?0+$/, '')} mm ${toeDir(v)}`;
+      const fraction = toeFraction(v);
+      return fraction === '0' ? mmText : `${mmText} · ${fraction}`;
     }
     return fmtDeg(v);
   }
