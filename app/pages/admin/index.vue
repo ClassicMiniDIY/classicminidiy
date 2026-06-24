@@ -19,6 +19,9 @@
   // Get user info from Supabase auth
   const { userProfile, signOut } = useAuth();
 
+  // Marketplace admin is only surfaced when the Exchange section is enabled
+  const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
+
   // Fetch pending count — uses useAdminFetch to inject auth header and skip SSR
   const { data: totalPendingCount } = await useAdminFetch<{ count: number }>('/api/admin/queue/count');
 
@@ -160,6 +163,33 @@
               <NuxtLink to="/admin/users" class="btn btn-warning">
                 <i class="fad fa-arrow-right mr-2"></i>
                 Manage Users
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
+        <!-- The Mini Exchange Card -->
+        <div
+          v-if="exchangeEnabled"
+          class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow"
+        >
+          <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                <i class="fad fa-store text-2xl text-accent"></i>
+              </div>
+              <h2 class="text-xl font-bold">The Mini Exchange</h2>
+            </div>
+
+            <p class="opacity-70 mb-6">
+              Marketplace admin — listings, wanted posts, finds, message moderation, promotions, newsletter, and the
+              site announcement banner.
+            </p>
+
+            <div class="card-actions justify-end">
+              <NuxtLink to="/admin/exchange" class="btn btn-accent">
+                <i class="fad fa-arrow-right mr-2"></i>
+                Open Exchange
               </NuxtLink>
             </div>
           </div>
