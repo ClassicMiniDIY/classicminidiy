@@ -171,6 +171,19 @@ export const ToolboxItems: ToolboxItem[] = [
       '<i class="fa-duotone fa-calculator" style="--fa-primary-color: #859369; --fa-secondary-color: #859369;"></i>',
   },
   {
+    titleKey: 'toolbox.alignment_calculator',
+    descKey: 'toolbox.alignment_calculator_desc',
+    kindKey: 'toolbox.kind.calculator',
+    path: '/technical/alignment',
+    to: '/technical/alignment',
+    iconName: 'fa-tire',
+    iconPrimary: '#417bbd',
+    iconSecondary: '#2f2f2f',
+    iconSecondaryOpacity: 0.7,
+    iconHtml:
+      '<i class="fa-duotone fa-tire" style="--fa-primary-color: #417bbd; --fa-secondary-color: #2f2f2f; --fa-secondary-opacity: 0.7;"></i>',
+  },
+  {
     titleKey: 'toolbox.parts_equivalency',
     descKey: 'toolbox.parts_equivalency_desc',
     kindKey: 'toolbox.kind.reference',

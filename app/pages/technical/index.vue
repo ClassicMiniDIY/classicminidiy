@@ -143,6 +143,7 @@
       "needle_configurator": "Carb Needle Configurator",
       "gearbox_calculator": "Gearbox Calculator",
       "compression_calculator": "Compression Ratio Calculator",
+      "alignment_calculator": "Alignment Calculator",
       "parts_equivalency": "Parts Equivalency",
       "common_clearances": "Common Clearances",
       "kind": {
@@ -156,6 +157,7 @@
       "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
       "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
       "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
+      "alignment_calculator_desc": "Visualize camber, caster, and toe live, with presets for stock, fast road, track, and boosted.",
       "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
       "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     }
@@ -188,6 +190,7 @@
       "needle_configurator": "Configurador de Agujas de Carburador",
       "gearbox_calculator": "Calculadora de Caja de Cambios",
       "compression_calculator": "Calculadora de Relación de Compresión",
+      "alignment_calculator": "Calculadora de alineación",
       "parts_equivalency": "Equivalencia de Piezas",
       "common_clearances": "Holguras Comunes",
       "kind": {
@@ -201,6 +204,7 @@
       "needle_configurator_desc": "Compara perfiles de agujas SU HS2/HS4/HIF44 lado a lado con superposiciones gráficas.",
       "gearbox_calculator_desc": "Cálculos de transmisión final para SPi, MPi y coches pre-Verto.",
       "compression_calculator_desc": "CR para cualquier combinación de diámetro, carrera, cc de culata y altura de cubierta.",
+      "alignment_calculator_desc": "Visualiza caída, avance y convergencia en vivo, con preajustes para estándar, carretera rápida, circuito y sobrealimentado.",
       "parts_equivalency_desc": "Referencias cruzadas de números de pieza entre proveedores y marcas.",
       "common_clearances_desc": "Ajustes de taqués, tolerancias de cojinetes y holguras de montaje."
     }
@@ -233,6 +237,7 @@
       "needle_configurator": "Configurateur d'Aiguilles de Carburateur",
       "gearbox_calculator": "Calculatrice de Boîte de Vitesses",
       "compression_calculator": "Calculatrice de Rapport de Compression",
+      "alignment_calculator": "Calculateur de géométrie",
       "parts_equivalency": "Équivalence des Pièces",
       "common_clearances": "Jeux Communs",
       "kind": {
@@ -246,6 +251,7 @@
       "needle_configurator_desc": "Compare des profils d'aiguilles SU HS2/HS4/HIF44 côte à côte avec superpositions graphiques.",
       "gearbox_calculator_desc": "Calculs de réduction finale pour SPi, MPi et voitures pré-Verto.",
       "compression_calculator_desc": "CR pour n'importe quelle combinaison d'alésage, course, cc de culasse et hauteur de pont.",
+      "alignment_calculator_desc": "Visualisez carrossage, chasse et parallélisme en direct, avec des préréglages pour origine, route sportive, circuit et suralimentée.",
       "parts_equivalency_desc": "Recoupement des numéros de pièces entre fournisseurs et marques.",
       "common_clearances_desc": "Calage de soupapes, tolérances de paliers et jeux de montage."
     }
@@ -278,6 +284,7 @@
       "needle_configurator": "Configuratore Aghi Carburatore",
       "gearbox_calculator": "Calcolatrice Cambio",
       "compression_calculator": "Calcolatrice Rapporto Compressione",
+      "alignment_calculator": "Calcolatore di allineamento",
       "parts_equivalency": "Equivalenza Parti",
       "common_clearances": "Giochi Comuni",
       "kind": {
@@ -291,6 +298,7 @@
       "needle_configurator_desc": "Confronta i profili degli aghi SU HS2/HS4/HIF44 fianco a fianco con overlay grafici.",
       "gearbox_calculator_desc": "Calcoli di trasmissione finale per SPi, MPi e auto pre-Verto.",
       "compression_calculator_desc": "CR per qualsiasi combinazione di alesaggio, corsa, cc della testata e altezza piano.",
+      "alignment_calculator_desc": "Visualizza campanatura, incidenza e convergenza dal vivo, con preset per di serie, strada sportiva, pista e sovralimentata.",
       "parts_equivalency_desc": "Tabelle di corrispondenza dei codici ricambio tra fornitori e marchi.",
       "common_clearances_desc": "Gioco delle punterie, tolleranze dei cuscinetti e giochi di assemblaggio."
     }
@@ -323,6 +331,7 @@
       "needle_configurator": "Vergaserdüsen-Konfigurator",
       "gearbox_calculator": "Getrieberechner",
       "compression_calculator": "Kompressionsverhältnis-Rechner",
+      "alignment_calculator": "Achsvermessungsrechner",
       "parts_equivalency": "Teileäquivalenz",
       "common_clearances": "Übliche Spiele",
       "kind": {
@@ -336,6 +345,7 @@
       "needle_configurator_desc": "Vergleiche SU HS2/HS4/HIF44 Nadelprofile nebeneinander mit Diagramm-Overlays.",
       "gearbox_calculator_desc": "Achsantriebsmathematik für SPi, MPi und Pre-Verto-Fahrzeuge.",
       "compression_calculator_desc": "CR für jede Kombination aus Bohrung, Hub, Brennraumvolumen und Decköhe.",
+      "alignment_calculator_desc": "Visualisiere Sturz, Nachlauf und Spur live, mit Voreinstellungen für Serie, schnelle Straße, Rennstrecke und aufgeladen.",
       "parts_equivalency_desc": "Querverweise von Teilenummern über Lieferanten und Marken hinweg.",
       "common_clearances_desc": "Ventilspiele, Lagertoleranzen und Montagespielmaße."
     }
@@ -368,6 +378,7 @@
       "needle_configurator": "Configurador de Agulhas do Carburador",
       "gearbox_calculator": "Calculadora de Câmbio",
       "compression_calculator": "Calculadora de Razão de Compressão",
+      "alignment_calculator": "Calculadora de Alinhamento",
       "parts_equivalency": "Equivalência de Peças",
       "common_clearances": "Folgas Comuns",
       "kind": {
@@ -381,6 +392,7 @@
       "needle_configurator_desc": "Compara perfis de agulhas SU HS2/HS4/HIF44 lado a lado com sobreposições gráficas.",
       "gearbox_calculator_desc": "Cálculos de transmissão final para SPi, MPi e carros pré-Verto.",
       "compression_calculator_desc": "CR para qualquer combinação de diâmetro, curso, cc do cabeçote e altura do platô.",
+      "alignment_calculator_desc": "Visualize a cambagem, o cáster e a convergência ao vivo, com predefinições para série, estrada rápida, pista e turbo.",
       "parts_equivalency_desc": "Referência cruzada de números de peças entre fornecedores e marcas.",
       "common_clearances_desc": "Ajustes de tuchos, tolerâncias de mancais e folgas de montagem."
     }
@@ -413,6 +425,7 @@
       "needle_configurator": "Конфигуратор Игл Карбюратора",
       "gearbox_calculator": "Калькулятор Коробки Передач",
       "compression_calculator": "Калькулятор Степени Сжатия",
+      "alignment_calculator": "Калькулятор развал-схождения",
       "parts_equivalency": "Эквивалентность Деталей",
       "common_clearances": "Общие Зазоры",
       "kind": {
@@ -426,6 +439,7 @@
       "needle_configurator_desc": "Сравните профили игл SU HS2/HS4/HIF44 параллельно с наложением графиков.",
       "gearbox_calculator_desc": "Математика главной передачи для SPi, MPi и до-Verto автомобилей.",
       "compression_calculator_desc": "CR для любого сочетания диаметра цилиндра, хода поршня, объёма ГБЦ и высоты деки.",
+      "alignment_calculator_desc": "Визуализируйте развал, кастер и схождение вживую, с пресетами для стока, спорт-дороги, трека и наддува.",
       "parts_equivalency_desc": "Перекрёстная справка номеров деталей между поставщиками и брендами.",
       "common_clearances_desc": "Регулировки клапанов, допуски подшипников и сборочные зазоры."
     }
@@ -458,6 +472,7 @@
       "needle_configurator": "キャブレターニードル設定ツール",
       "gearbox_calculator": "ギアボックス計算機",
       "compression_calculator": "圧縮比計算機",
+      "alignment_calculator": "アライメント計算機",
       "parts_equivalency": "部品等価性",
       "common_clearances": "一般的なクリアランス",
       "kind": {
@@ -471,6 +486,7 @@
       "needle_configurator_desc": "SU HS2/HS4/HIF44のニードルプロファイルをグラフ重ね表示で並べて比較。",
       "gearbox_calculator_desc": "SPi、MPi、Verto以前の車のファイナルドライブ計算。",
       "compression_calculator_desc": "ボア、ストローク、ヘッドcc、デッキ高さの任意の組み合わせのCR。",
+      "alignment_calculator_desc": "キャンバー、キャスター、トーをライブで可視化。ノーマル、ファストロード、トラック、過給のプリセット付き。",
       "parts_equivalency_desc": "ベンダーとブランド間の部品番号のクロスリファレンス。",
       "common_clearances_desc": "タペット隙間、ベアリング公差、組立クリアランス。"
     }
@@ -503,6 +519,7 @@
       "needle_configurator": "化油器针配置器",
       "gearbox_calculator": "变速箱计算器",
       "compression_calculator": "压缩比计算器",
+      "alignment_calculator": "四轮定位计算器",
       "parts_equivalency": "零件等效性",
       "common_clearances": "常见间隙",
       "kind": {
@@ -516,6 +533,7 @@
       "needle_configurator_desc": "通过图表叠加并排比较 SU HS2/HS4/HIF44 化油器针型。",
       "gearbox_calculator_desc": "适用于 SPi、MPi 和 Verto 之前车型的主减速比计算。",
       "compression_calculator_desc": "适用于任意缸径、行程、燃烧室容积和甲板高度组合的CR计算。",
+      "alignment_calculator_desc": "实时可视化外倾角、主销后倾角和前束，配有原厂、高性能街道、赛道和增压预设。",
       "parts_equivalency_desc": "跨供应商和品牌的零件号交叉参考。",
       "common_clearances_desc": "气门间隙、轴承公差和装配间隙。"
     }
@@ -548,6 +566,7 @@
       "needle_configurator": "카뷰레터 니들 구성기",
       "gearbox_calculator": "기어박스 계산기",
       "compression_calculator": "압축비 계산기",
+      "alignment_calculator": "얼라인먼트 계산기",
       "parts_equivalency": "부품 등가성",
       "common_clearances": "일반적인 클리어런스",
       "kind": {
@@ -561,6 +580,7 @@
       "needle_configurator_desc": "차트 오버레이로 SU HS2/HS4/HIF44 니들 프로파일을 나란히 비교.",
       "gearbox_calculator_desc": "SPi, MPi, Verto 이전 차량을 위한 최종 감속비 계산.",
       "compression_calculator_desc": "보어, 스트로크, 헤드 cc, 데크 높이의 모든 조합에 대한 CR.",
+      "alignment_calculator_desc": "캠버, 캐스터, 토를 실시간으로 시각화하고, 순정, 패스트 로드, 트랙, 부스트용 프리셋을 제공합니다.",
       "parts_equivalency_desc": "공급업체와 브랜드 간 부품 번호 교차 참조.",
       "common_clearances_desc": "태핏 갭, 베어링 공차, 조립 간극."
     }
