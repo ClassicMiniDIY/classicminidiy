@@ -1,5 +1,6 @@
 import { requireUserAuth } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
+import { ALIGNMENT_WHEEL_SIZES } from '../../../data/models/alignment';
 
 const NUMERIC_FIELDS = ['front_camber', 'front_caster', 'front_toe', 'rear_camber', 'rear_toe'] as const;
 
@@ -20,8 +21,8 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   const body = await readBody(event);
 
-  if (!id) {
-    throw createError({ statusCode: 400, statusMessage: 'Config ID required' });
+  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid or missing Config ID' });
   }
 
   if (body.name !== undefined) {
@@ -42,7 +43,12 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (body.wheel_size !== undefined) updates.wheel_size = body.wheel_size != null ? String(body.wheel_size) : null;
+  if (body.wheel_size !== undefined) {
+    if (body.wheel_size != null && !ALIGNMENT_WHEEL_SIZES.map(String).includes(String(body.wheel_size))) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid wheel size' });
+    }
+    updates.wheel_size = body.wheel_size != null ? String(body.wheel_size) : null;
+  }
   if (body.preset !== undefined) updates.preset = body.preset != null ? String(body.preset) : null;
   if (body.notes !== undefined) updates.notes = body.notes != null ? String(body.notes).slice(0, 5000) : null;
   if (body.journal !== undefined) updates.journal = sanitizeJournal(body.journal);
@@ -63,6 +69,10 @@ export default defineEventHandler(async (event) => {
     .single();
 
   if (error) {
+    // .single() raises PGRST116 when no row matches (missing id or not the caller's row).
+    if ((error as { code?: string }).code === 'PGRST116') {
+      throw createError({ statusCode: 404, statusMessage: 'Config not found' });
+    }
     throw createError({ statusCode: 500, statusMessage: 'Failed to update config' });
   }
 

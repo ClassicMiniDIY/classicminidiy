@@ -1,6 +1,6 @@
 import { requireUserAuth } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
-import { ALIGNMENT_MAX_CONFIGS } from '../../../data/models/alignment';
+import { ALIGNMENT_MAX_CONFIGS, ALIGNMENT_WHEEL_SIZES } from '../../../data/models/alignment';
 
 const NUMERIC_FIELDS = ['front_camber', 'front_caster', 'front_toe', 'rear_camber', 'rear_toe'] as const;
 
@@ -25,6 +25,10 @@ export default defineEventHandler(async (event) => {
 
   if (typeof name !== 'string' || name.trim().length === 0 || name.length > 100) {
     throw createError({ statusCode: 400, statusMessage: 'Name must be 1-100 characters' });
+  }
+
+  if (wheel_size != null && !ALIGNMENT_WHEEL_SIZES.map(String).includes(String(wheel_size))) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid wheel size' });
   }
 
   for (const field of NUMERIC_FIELDS) {
