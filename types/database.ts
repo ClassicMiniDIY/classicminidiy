@@ -2738,6 +2738,7 @@ export type Database = {
           email_new_comments: boolean | null
           email_new_messages: boolean | null
           email_saved_search_matches: boolean | null
+          email_submission_updates: boolean | null
           email_weekly_digest: boolean | null
           push_new_messages: boolean | null
           updated_at: string | null
@@ -2750,6 +2751,7 @@ export type Database = {
           email_new_comments?: boolean | null
           email_new_messages?: boolean | null
           email_saved_search_matches?: boolean | null
+          email_submission_updates?: boolean | null
           email_weekly_digest?: boolean | null
           push_new_messages?: boolean | null
           updated_at?: string | null
@@ -2762,6 +2764,7 @@ export type Database = {
           email_new_comments?: boolean | null
           email_new_messages?: boolean | null
           email_saved_search_matches?: boolean | null
+          email_submission_updates?: boolean | null
           email_weekly_digest?: boolean | null
           push_new_messages?: boolean | null
           updated_at?: string | null
@@ -3118,6 +3121,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saved_alignment_configs: {
+        Row: {
+          created_at: string
+          front_camber: number
+          front_caster: number
+          front_toe: number
+          id: string
+          is_public: boolean
+          journal: Json
+          name: string
+          notes: string | null
+          preset: string | null
+          rear_camber: number
+          rear_toe: number
+          updated_at: string
+          user_id: string
+          wheel_size: string | null
+        }
+        Insert: {
+          created_at?: string
+          front_camber: number
+          front_caster: number
+          front_toe: number
+          id?: string
+          is_public?: boolean
+          journal?: Json
+          name: string
+          notes?: string | null
+          preset?: string | null
+          rear_camber: number
+          rear_toe: number
+          updated_at?: string
+          user_id: string
+          wheel_size?: string | null
+        }
+        Update: {
+          created_at?: string
+          front_camber?: number
+          front_caster?: number
+          front_toe?: number
+          id?: string
+          is_public?: boolean
+          journal?: Json
+          name?: string
+          notes?: string | null
+          preset?: string | null
+          rear_camber?: number
+          rear_toe?: number
+          updated_at?: string
+          user_id?: string
+          wheel_size?: string | null
+        }
+        Relationships: []
       }
       saved_gear_configs: {
         Row: {
@@ -3954,10 +4011,6 @@ export type Database = {
         Args: { p_city: string; p_country: string; p_state_province: string }
         Returns: string
       }
-      get_auction_fee_by_category: {
-        Args: { p_category: string }
-        Returns: number
-      }
       get_comment_count: { Args: { p_listing_id: string }; Returns: number }
       get_listing_analytics: {
         Args: { p_listing_id: string }
@@ -4151,10 +4204,6 @@ export type Database = {
       moderate_external_model: {
         Args: { p_id: string; p_notes?: string; p_status: string }
         Returns: undefined
-      }
-      place_bid: {
-        Args: { p_amount: number; p_bidder_id: string; p_listing_id: string }
-        Returns: Json
       }
       publish_model_version: {
         Args: { p_version_id: string }
