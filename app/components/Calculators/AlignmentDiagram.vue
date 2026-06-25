@@ -134,7 +134,7 @@
       </figure>
 
       <!-- caster (side view) -->
-      <figure class="align-diagram__panel">
+      <figure class="align-diagram__panel align-diagram__panel--caster">
         <svg viewBox="0 0 200 132" role="img" :aria-label="t('aria.caster')">
           <line x1="16" y1="112" x2="184" y2="112" class="ad-ground" />
           <circle cx="100" cy="76" r="36" class="ad-wheel-side" />
@@ -179,8 +179,17 @@
   }
   .align-diagram__insets {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
+  }
+  /* Caster spans the full width beneath the two camber cards. */
+  .align-diagram__panel--caster {
+    grid-column: 1 / -1;
+  }
+  .align-diagram__panel--caster svg {
+    max-width: 300px;
+    margin-inline: auto;
+    display: block;
   }
   @media (max-width: 520px) {
     .align-diagram__insets {
