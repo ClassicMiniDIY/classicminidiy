@@ -208,7 +208,8 @@
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--fg-3, #76767c);
+    /* fg-2 (not fg-3): fg-3 on the panel bg is 4.06:1, just under the WCAG AA 4.5:1 floor. */
+    color: var(--fg-2, #4a4a4f);
     font-weight: 600;
   }
   .ad-cap-val {
@@ -268,7 +269,7 @@
   }
   .ad-end-label,
   .ad-side-hint {
-    fill: var(--fg-3, #76767c);
+    fill: var(--fg-2, #4a4a4f);
     font-size: 13px;
     font-weight: 700;
     text-anchor: middle;

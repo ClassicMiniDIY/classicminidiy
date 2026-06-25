@@ -248,13 +248,13 @@
                 <span class="text-xs opacity-60 w-6">{{ param.unit === 'deg' ? '°' : 'mm' }}</span>
               </div>
               <p class="text-xs opacity-60 mt-1">{{ t(`params.${param.id}.help`) }}</p>
-              <p v-if="param.kind === 'toe'" class="text-xs opacity-50 mt-0.5">
+              <p v-if="param.kind === 'toe'" class="text-xs opacity-60 mt-0.5">
                 {{ t('approx_total_deg', { deg: toeDegTotal(values[param.id]).toFixed(2) }) }}
               </p>
-              <p v-if="param.kind === 'camber'" class="text-xs opacity-50 mt-0.5">
+              <p v-if="param.kind === 'camber'" class="text-xs opacity-60 mt-0.5">
                 {{ t('camber_guidance', { size: wheelSize, range: camberRangeText(param.axle) }) }}
               </p>
-              <p v-if="param.kind === 'camber' && isCamberAggressive(param.id)" class="text-xs text-warning mt-0.5">
+              <p v-if="param.kind === 'camber' && isCamberAggressive(param.id)" class="text-xs camber-warn mt-0.5">
                 <i class="fas fa-triangle-exclamation"></i> {{ t('camber_aggressive', { size: wheelSize }) }}
               </p>
             </div>
@@ -295,13 +295,13 @@
                 <span class="text-xs opacity-60 w-6">{{ param.unit === 'deg' ? '°' : 'mm' }}</span>
               </div>
               <p class="text-xs opacity-60 mt-1">{{ t(`params.${param.id}.help`) }}</p>
-              <p v-if="param.kind === 'toe'" class="text-xs opacity-50 mt-0.5">
+              <p v-if="param.kind === 'toe'" class="text-xs opacity-60 mt-0.5">
                 {{ t('approx_total_deg', { deg: toeDegTotal(values[param.id]).toFixed(2) }) }}
               </p>
-              <p v-if="param.kind === 'camber'" class="text-xs opacity-50 mt-0.5">
+              <p v-if="param.kind === 'camber'" class="text-xs opacity-60 mt-0.5">
                 {{ t('camber_guidance', { size: wheelSize, range: camberRangeText(param.axle) }) }}
               </p>
-              <p v-if="param.kind === 'camber' && isCamberAggressive(param.id)" class="text-xs text-warning mt-0.5">
+              <p v-if="param.kind === 'camber' && isCamberAggressive(param.id)" class="text-xs camber-warn mt-0.5">
                 <i class="fas fa-triangle-exclamation"></i> {{ t('camber_aggressive', { size: wheelSize }) }}
               </p>
             </div>
@@ -452,6 +452,14 @@
     background: color-mix(in srgb, var(--cm-secondary, #ed7135) 22%, transparent);
     color: #b34a17;
     border: none;
+  }
+  /* Aggressive-camber nudge: a deep amber that clears WCAG AA on the white card
+     (daisyUI's text-warning #f59e0b is only ~2:1 on white). Lighter amber in dark mode. */
+  .camber-warn {
+    color: #92400e;
+  }
+  [data-theme='cmdiy-dark'] .camber-warn {
+    color: #fbbf24;
   }
 </style>
 
