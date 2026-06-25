@@ -438,20 +438,24 @@
 </template>
 
 <style scoped>
-  .confidence-high {
-    background: color-mix(in srgb, #4caf50 22%, transparent);
-    color: #2e7d32;
+  /* Solid, opaque pills with white text. The old translucent-tint + dark-text badges
+     went dark-on-dark in dark mode and on the selected (btn-primary) preset button.
+     Fixed bg + white text clears WCAG AA (5.0–5.2:1) regardless of theme or button state. */
+  .confidence-high,
+  .confidence-medium,
+  .confidence-low {
+    color: #fff;
     border: none;
+    font-weight: 600;
+  }
+  .confidence-high {
+    background: #15803d;
   }
   .confidence-medium {
-    background: color-mix(in srgb, var(--cm-fa-orange, #f3b140) 28%, transparent);
-    color: #8a6d00;
-    border: none;
+    background: #a16207;
   }
   .confidence-low {
-    background: color-mix(in srgb, var(--cm-secondary, #ed7135) 22%, transparent);
-    color: #b34a17;
-    border: none;
+    background: #c2410c;
   }
   /* Aggressive-camber nudge: a deep amber that clears WCAG AA on the white card
      (daisyUI's text-warning #f59e0b is only ~2:1 on white). Lighter amber in dark mode. */
