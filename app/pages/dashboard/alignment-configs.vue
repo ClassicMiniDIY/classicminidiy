@@ -99,10 +99,11 @@
                   type="checkbox"
                   class="toggle toggle-primary toggle-sm"
                   :checked="config.is_public"
+                  :aria-label="t('public')"
                   @change="togglePublic(config)"
                 />
               </div>
-              <button class="btn btn-ghost btn-sm btn-square text-error" :title="t('delete')" @click="handleDelete(config.id)">
+              <button class="btn btn-ghost btn-sm btn-square text-error" :title="t('delete')" :aria-label="t('delete')" @click="handleDelete(config.id)">
                 <i class="fas fa-trash"></i>
               </button>
             </div>
@@ -110,7 +111,11 @@
 
           <!-- Journal -->
           <div class="mt-3 border-t border-base-300 pt-3">
-            <button class="btn btn-ghost btn-xs gap-2" @click="expanded[config.id] = !expanded[config.id]">
+            <button
+              class="btn btn-ghost btn-xs gap-2"
+              :aria-expanded="!!expanded[config.id]"
+              @click="expanded[config.id] = !expanded[config.id]"
+            >
               <i class="fas" :class="expanded[config.id] ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
               {{ t('journal') }}
               <span class="badge badge-xs">{{ config.journal?.length || 0 }}</span>
@@ -123,6 +128,7 @@
                   type="text"
                   class="input input-bordered input-sm grow"
                   :placeholder="t('note_placeholder')"
+                  :aria-label="t('note_placeholder')"
                   @keyup.enter="handleAddNote(config.id)"
                 />
                 <button class="btn btn-sm btn-primary" @click="handleAddNote(config.id)">
@@ -144,6 +150,7 @@
                   <button
                     class="btn btn-ghost btn-xs btn-square text-error shrink-0"
                     :title="t('delete_note')"
+                    :aria-label="t('delete_note')"
                     @click="handleDeleteNote(config.id, entry.id)"
                   >
                     <i class="fas fa-xmark"></i>
