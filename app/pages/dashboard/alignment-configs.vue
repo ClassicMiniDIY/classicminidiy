@@ -136,7 +136,7 @@
                 </button>
               </div>
 
-              <div v-if="!config.journal?.length" class="text-xs opacity-50">{{ t('no_notes') }}</div>
+              <div v-if="!config.journal?.length" class="text-xs opacity-60">{{ t('no_notes') }}</div>
               <ul v-else class="space-y-2">
                 <li
                   v-for="entry in config.journal"
@@ -144,7 +144,7 @@
                   class="flex items-start justify-between gap-3 text-sm rounded bg-base-200 px-3 py-2"
                 >
                   <div class="min-w-0">
-                    <span class="text-xs opacity-50 mr-2">{{ entry.date }}</span>
+                    <span class="text-xs opacity-60 mr-2">{{ entry.date }}</span>
                     <span>{{ entry.body }}</span>
                   </div>
                   <button
