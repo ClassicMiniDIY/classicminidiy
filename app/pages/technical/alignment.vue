@@ -77,7 +77,7 @@
 
 <template>
   <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.TECH" />
-  <div class="container mx-auto px-4">
+  <div class="container mx-auto px-4 pb-15">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
         <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
