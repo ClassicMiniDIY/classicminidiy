@@ -41,11 +41,12 @@ describe('ALIGNMENT_PARAMETERS', () => {
 });
 
 describe('ALIGNMENT_PRESETS', () => {
-  it('defines the five presets in the expected order', () => {
+  it('defines the six presets in the expected ladder order', () => {
     expect(ALIGNMENT_PRESETS.map((p) => p.id)).toEqual([
+      'factory',
       'stockRoad',
-      'fastRoad',
-      'trackDay',
+      'performance',
+      'track',
       'boostedRoad',
       'boostedTrack',
     ]);
@@ -70,12 +71,26 @@ describe('ALIGNMENT_PRESETS', () => {
     }
   });
 
-  it('respects the Mini sign conventions: front toe-out, rear toe-in, positive stock front camber', () => {
-    const stock = getAlignmentPreset('stockRoad')!;
-    expect(stock.values.frontToe).toBeLessThan(0); // front runs toe-out
-    expect(stock.values.rearToe).toBeGreaterThan(0); // rear runs toe-in
-    expect(stock.values.frontCamber).toBeGreaterThan(0); // factory front camber is positive
-    expect(stock.values.frontCaster).toBeGreaterThan(0); // caster always positive
+  it('respects the Mini sign conventions: front toe-out, rear toe-in, positive factory front camber', () => {
+    const factory = getAlignmentPreset('factory')!;
+    expect(factory.values.frontToe).toBeLessThan(0); // front runs toe-out
+    expect(factory.values.rearToe).toBeGreaterThan(0); // rear runs toe-in
+    expect(factory.values.frontCamber).toBeGreaterThan(0); // factory front camber is positive
+    expect(factory.values.frontCaster).toBeGreaterThan(0); // caster always positive
+  });
+
+  it('stock road softens factory: mild negative front camber, otherwise near stock', () => {
+    const factory = getAlignmentPreset('factory')!.values;
+    const stock = getAlignmentPreset('stockRoad')!.values;
+    expect(stock.frontCamber).toBeLessThan(0); // corrected off the factory positive
+    expect(stock.frontCamber).toBeGreaterThan(-1.5); // but mild
+    expect(stock.frontCaster).toBe(factory.frontCaster);
+    expect(stock.rearToe).toBe(factory.rearToe); // keeps factory rear toe-in for comfort
+  });
+
+  it('boosted presets run high caster (≥6°) per forced-induction practitioner input', () => {
+    expect(getAlignmentPreset('boostedRoad')!.values.frontCaster).toBeGreaterThanOrEqual(6);
+    expect(getAlignmentPreset('boostedTrack')!.values.frontCaster).toBeGreaterThanOrEqual(6);
   });
 
   it('boosted road sets the front toe parallel (the headline torque-steer finding)', () => {
@@ -90,11 +105,11 @@ describe('ALIGNMENT_PRESETS', () => {
 });
 
 describe('defaultAlignmentValues', () => {
-  it('returns the stock-road geometry as a fresh object', () => {
+  it('returns the factory geometry as a fresh object', () => {
     const a = defaultAlignmentValues();
-    expect(a).toEqual(getAlignmentPreset('stockRoad')!.values);
+    expect(a).toEqual(getAlignmentPreset('factory')!.values);
     a.frontCamber = 99;
-    expect(getAlignmentPreset('stockRoad')!.values.frontCamber).not.toBe(99); // not a shared reference
+    expect(getAlignmentPreset('factory')!.values.frontCamber).not.toBe(99); // not a shared reference
   });
 });
 

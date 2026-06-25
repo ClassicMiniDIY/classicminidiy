@@ -14,7 +14,7 @@
 export type AlignmentAxle = 'front' | 'rear';
 export type AlignmentParamKind = 'camber' | 'caster' | 'toe';
 export type AlignmentParamId = 'frontCamber' | 'frontCaster' | 'frontToe' | 'rearCamber' | 'rearToe';
-export type AlignmentPresetId = 'stockRoad' | 'fastRoad' | 'trackDay' | 'boostedRoad' | 'boostedTrack';
+export type AlignmentPresetId = 'factory' | 'stockRoad' | 'performance' | 'track' | 'boostedRoad' | 'boostedTrack';
 export type AlignmentConfidence = 'high' | 'medium' | 'low';
 
 export interface AlignmentValues {
@@ -81,17 +81,20 @@ export function getCamberGuidance(wheelSize: number, axle: AlignmentAxle): Cambe
 
 export const ALIGNMENT_PARAMETERS: AlignmentParameter[] = [
   { id: 'frontCamber', axle: 'front', kind: 'camber', unit: 'deg', min: -3, max: 2.5, step: 0.25, stockDefault: 2 },
-  { id: 'frontCaster', axle: 'front', kind: 'caster', unit: 'deg', min: 1, max: 6, step: 0.25, stockDefault: 3 },
+  { id: 'frontCaster', axle: 'front', kind: 'caster', unit: 'deg', min: 1, max: 7, step: 0.25, stockDefault: 3 },
   { id: 'frontToe', axle: 'front', kind: 'toe', unit: 'mm', min: -4, max: 3, step: 0.25, stockDefault: -1.59 },
   { id: 'rearCamber', axle: 'rear', kind: 'camber', unit: 'deg', min: -2, max: 1, step: 0.25, stockDefault: 0 },
   { id: 'rearToe', axle: 'rear', kind: 'toe', unit: 'mm', min: -1, max: 5, step: 0.25, stockDefault: 3.18 },
 ];
 
-/** Five research-derived starting points. Numeric values + sources only; display name,
- *  summary, and rationale are localized via i18n keys (`presets.<id>.*`) in the component. */
+/** Six starting points, ordered from mildest to most aggressive (then the two boosted setups).
+ *  Numeric values + sources only; display name, summary, and rationale are localized via i18n
+ *  keys (`presets.<id>.*`) in the component. Boosted caster (6° / 6.5°) reflects practitioner
+ *  input from forced-induction Mini builders, who run far more caster than an N/A car. */
 export const ALIGNMENT_PRESETS: AlignmentPreset[] = [
   {
-    id: 'stockRoad',
+    // Pure Haynes / workshop-manual geometry — the faithful baseline (positive front camber).
+    id: 'factory',
     confidence: 'high',
     values: { frontCamber: 2, frontCaster: 3, frontToe: -1.59, rearCamber: 0, rearToe: 3.18 },
     sources: [
@@ -101,7 +104,19 @@ export const ALIGNMENT_PRESETS: AlignmentPreset[] = [
     ],
   },
   {
-    id: 'fastRoad',
+    // Factory geometry gently corrected for modern radials: mild negative front camber, rest near stock.
+    id: 'stockRoad',
+    confidence: 'high',
+    values: { frontCamber: -0.5, frontCaster: 3, frontToe: -1.59, rearCamber: 0, rearToe: 3.18 },
+    sources: [
+      'https://www.calverst.com/technical-info/suspension-basic-set-up-method/',
+      'https://www.med-engineering.co.uk/blogs/news/classic-mini-suspension-geometry-setup-guide',
+      'https://www.theminiforum.co.uk/forums/topic/353453-camber-caster-toe-tracking-figures/page-2',
+    ],
+  },
+  {
+    // Sharper road setup (formerly "fast road").
+    id: 'performance',
     confidence: 'high',
     values: { frontCamber: -1, frontCaster: 3.5, frontToe: -1.59, rearCamber: -0.5, rearToe: 1.59 },
     sources: [
@@ -111,7 +126,7 @@ export const ALIGNMENT_PRESETS: AlignmentPreset[] = [
     ],
   },
   {
-    id: 'trackDay',
+    id: 'track',
     confidence: 'medium',
     values: { frontCamber: -2, frontCaster: 4.5, frontToe: -1.59, rearCamber: -0.5, rearToe: 0 },
     sources: [
@@ -123,7 +138,7 @@ export const ALIGNMENT_PRESETS: AlignmentPreset[] = [
   {
     id: 'boostedRoad',
     confidence: 'medium',
-    values: { frontCamber: -1, frontCaster: 4, frontToe: 0, rearCamber: -0.5, rearToe: 3.18 },
+    values: { frontCamber: -1, frontCaster: 6, frontToe: 0, rearCamber: -0.5, rearToe: 3.18 },
     sources: [
       'https://www.turbominis.co.uk/forums/index.php?p=vt&tid=593349',
       'https://www.med-engineering.co.uk/blogs/news/classic-mini-suspension-geometry-setup-guide',
@@ -133,7 +148,7 @@ export const ALIGNMENT_PRESETS: AlignmentPreset[] = [
   {
     id: 'boostedTrack',
     confidence: 'low',
-    values: { frontCamber: -2.5, frontCaster: 5, frontToe: -1, rearCamber: -1, rearToe: 1.59 },
+    values: { frontCamber: -2.5, frontCaster: 6.5, frontToe: -1, rearCamber: -1, rearToe: 1.59 },
     sources: [
       'https://www.turbominis.co.uk/forums/index.php?p=vt&tid=345429',
       'https://www.turbominis.co.uk/forums/index.php?p=vt&tid=593349',
@@ -146,9 +161,9 @@ export function getAlignmentPreset(id: AlignmentPresetId): AlignmentPreset | und
   return ALIGNMENT_PRESETS.find((p) => p.id === id);
 }
 
-/** Default tool state = factory/stock geometry. */
+/** Default tool state = factory (Haynes) geometry. */
 export function defaultAlignmentValues(): AlignmentValues {
-  return { ...(getAlignmentPreset('stockRoad') as AlignmentPreset).values };
+  return { ...(getAlignmentPreset('factory') as AlignmentPreset).values };
 }
 
 /**
