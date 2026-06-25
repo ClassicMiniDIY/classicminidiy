@@ -32,7 +32,7 @@ Web first; the data model + presets are intended to cascade to the iOS/Android t
 | Param | Unit | Sign convention | Min | Max | Step | Stock default |
 |---|---|---|---|---|---|---|
 | Front camber | ° | + = top leans OUT, − = top leans IN (stock is **positive**) | −3 | 2.5 | 0.25 | +2 |
-| Front caster | ° | always **positive** (validate ≥0) | 1 | 6 | 0.25 | +3 |
+| Front caster | ° | always **positive** | 1 | 7 | 0.25 | +3 |
 | Front toe (total) | mm | − = toe-**OUT**, + = toe-IN (front runs **toe-out**) | −4 | 3 | 0.25 | −1.59 |
 | Rear camber | ° | + = out, − = in | −2 | 1 | 0.25 | 0 |
 | Rear toe (total) | mm | + = toe-**IN**, − = toe-OUT (rear runs **toe-in**) | −1 | 5 | 0.25 | +3.18 |
@@ -45,18 +45,25 @@ in the UI. Key conversions: 1/16″ = 1.5875 mm, 1/8″ = 3.175 mm, 3/16″ = 4.
 
 ## Presets
 
+A clear ladder from mildest to most aggressive, plus the two boosted setups. (Renamed 2026-06-25
+per user/community feedback — "fast road" dropped; Factory split out from a gently-improved Stock
+Road; boosted caster raised to match real forced-induction practice.)
+
 | Preset | F camber | F caster | F toe (mm) | R camber | R toe (mm) | Conf. |
 |---|---|---|---|---|---|---|
-| Stock Road | +2 | +3 | −1.59 (1/16″ out) | 0 | +3.18 (1/8″ in) | high |
-| Fast Road | −1 | +3.5 | −1.59 | −0.5 | +1.59 | high |
-| Track Day | −2 | +4.5 | −1.59 | −0.5 | 0 (straight) | medium |
-| Boosted Road | −1 | +4 | 0 (parallel) | −0.5 | +3.18 | medium |
-| Boosted Track | −2.5 | +5 | −1 | −1 | +1.59 | low |
+| Factory | +2 | +3 | −1.59 (1/16″ out) | 0 | +3.18 (1/8″ in) | high |
+| Stock Road | −0.5 | +3 | −1.59 | 0 | +3.18 | high |
+| Performance | −1 | +3.5 | −1.59 | −0.5 | +1.59 | high |
+| Track | −2 | +4.5 | −1.59 | −0.5 | 0 (straight) | medium |
+| Boosted Road | −1 | +6 | 0 (parallel) | −0.5 | +3.18 | medium |
+| Boosted Track | −2.5 | +6.5 | −1 | −1 | +1.59 | low |
 
-Each preset carries a `rationale` + `sources[]` + `confidence`. The Boosted-Road headline is
-**front toe set parallel** (Wiginton) to cut torque steer; Boosted-Track is the most extrapolated
-(flagged low). Full numbers/rationale/sources live in `data/models/alignment.ts`. Tool shows a
-standing disclaimer: starting points only, verify on a rig, match sides within 0.5°.
+Factory = pure Haynes geometry; Stock Road = factory gently corrected for modern radials (mild
+negative front camber). Each preset carries a `rationale` + `sources[]` + `confidence`. The
+Boosted-Road headline is **front toe set parallel** (Wiginton) to cut torque steer; the high
+boosted caster (6° / 6.5°) reflects practitioner input (turbo Minis run far more caster than N/A).
+Full numbers/rationale/sources live in `data/models/alignment.ts`. Standing disclaimer in the tool:
+starting points only, verify on a rig, match sides within 0.5°.
 
 ## Architecture (mirrors saved gear configs 1:1)
 

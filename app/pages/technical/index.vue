@@ -157,7 +157,7 @@
       "needle_configurator_desc": "Compare SU HS2/HS4/HIF44 needle profiles side-by-side with chart overlays.",
       "gearbox_calculator_desc": "Final-drive math across SPi, MPi, and pre-Verto cars.",
       "compression_calculator_desc": "CR for any combo of bore, stroke, head cc and deck height.",
-      "alignment_calculator_desc": "Visualize camber, caster, and toe live, with presets for stock, fast road, track, and boosted.",
+      "alignment_calculator_desc": "Visualize camber, caster, and toe live — presets from factory to track, plus boosted.",
       "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
       "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
     }

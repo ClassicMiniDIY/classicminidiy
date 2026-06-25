@@ -120,11 +120,11 @@
     "hero_title": "Alignment Calculator",
     "breadcrumb_title": "Alignment Calculator",
     "og_title": "Classic Mini Alignment Calculator",
-    "og_description": "Dial in camber, caster, and toe with a live top-down diagram and proven presets for stock, fast road, track, and boosted Minis. Save your setups and keep a driving journal.",
+    "og_description": "Dial in camber, caster, and toe with a live top-down diagram and proven presets — from factory through performance and track to boosted. Save your setups and keep a driving journal.",
     "twitter_title": "Classic Mini Alignment Calculator",
     "twitter_description": "Dial in camber, caster, and toe with a live diagram and proven presets. Save your setups and keep a driving journal.",
     "main_heading": "Alignment Calculator",
-    "description_text": "Visualize and plan your Classic Mini's wheel alignment in real time. Start from a research-derived preset (stock, fast road, track, or boosted), fine-tune camber, caster, and toe, and watch the top-down diagram update live. Sign in to save setups and keep a dated driving journal for each one.",
+    "description_text": "Visualize and plan your Classic Mini's wheel alignment in real time. Start from a preset (factory, stock road, performance, track, or boosted), fine-tune camber, caster, and toe, and watch the top-down diagram update live. Sign in to save setups and keep a dated driving journal for each one.",
     "eyebrow": "CALCULATOR",
     "support_section": "Support",
     "ui": {
@@ -138,7 +138,7 @@
       "steps": {
         "preset": {
           "name": "Pick a preset",
-          "text": "Choose a starting point — stock, fast road, track day, or boosted."
+          "text": "Choose a starting point — factory, stock road, performance, track, or boosted."
         },
         "adjust": {
           "name": "Adjust the angles",
@@ -162,11 +162,9 @@
     "hero_title": "Calculadora de alineación",
     "breadcrumb_title": "Calculadora de alineación",
     "og_title": "Calculadora de alineación Classic Mini",
-    "og_description": "Ajusta caída, avance y convergencia con un diagrama cenital en vivo y preajustes probados para Minis estándar, de carretera rápida, de circuito y sobrealimentados. Guarda tus configuraciones y mantén un diario de conducción.",
     "twitter_title": "Calculadora de alineación Classic Mini",
     "twitter_description": "Ajusta caída, avance y convergencia con un diagrama en vivo y preajustes probados. Guarda tus configuraciones y mantén un diario de conducción.",
     "main_heading": "Calculadora de alineación",
-    "description_text": "Visualiza y planifica la alineación de las ruedas de tu Classic Mini en tiempo real. Empieza desde un preajuste basado en investigación (estándar, carretera rápida, circuito o sobrealimentado), ajusta con precisión la caída, el avance y la convergencia, y observa cómo el diagrama cenital se actualiza en vivo. Inicia sesión para guardar configuraciones y mantener un diario de conducción fechado para cada una.",
     "eyebrow": "CALCULADORA",
     "support_section": "Apoyo",
     "ui": {
@@ -180,7 +178,7 @@
       "steps": {
         "preset": {
           "name": "Elige un preajuste",
-          "text": "Elige un punto de partida — estándar, carretera rápida, día de circuito o sobrealimentado."
+          "text": "Elige un punto de partida: de fábrica, calle de serie, deportivo, circuito o sobrealimentado."
         },
         "adjust": {
           "name": "Ajusta los ángulos",
@@ -195,7 +193,9 @@
           "text": "Inicia sesión para guardar la configuración y mantener un diario de conducción fechado."
         }
       }
-    }
+    },
+    "description_text": "Visualiza y planifica la alineación de las ruedas de tu Classic Mini en tiempo real. Parte de un reglaje predefinido (de fábrica, calle de serie, deportivo, circuito o sobrealimentado), ajusta con precisión la caída, el avance y la convergencia, y observa cómo el diagrama en planta se actualiza en vivo. Inicia sesión para guardar reglajes y llevar un diario de conducción fechado para cada uno.",
+    "og_description": "Afina la caída, el avance y la convergencia con un diagrama en planta en vivo y reglajes predefinidos probados: desde el de fábrica, pasando por deportivo y circuito, hasta sobrealimentado. Guarda tus reglajes y lleva un diario de conducción."
   },
   "fr": {
     "title": "Tech - Calculateur de géométrie",
@@ -204,11 +204,9 @@
     "hero_title": "Calculateur de géométrie",
     "breadcrumb_title": "Calculateur de géométrie",
     "og_title": "Calculateur de géométrie Classic Mini",
-    "og_description": "Réglez carrossage, chasse et parallélisme avec un schéma en vue de dessus en direct et des préréglages éprouvés pour les Mini d'origine, route sportive, circuit et suralimentées. Enregistrez vos réglages et tenez un journal de conduite.",
     "twitter_title": "Calculateur de géométrie Classic Mini",
     "twitter_description": "Réglez carrossage, chasse et parallélisme avec un schéma en direct et des préréglages éprouvés. Enregistrez vos réglages et tenez un journal de conduite.",
     "main_heading": "Calculateur de géométrie",
-    "description_text": "Visualisez et planifiez en temps réel la géométrie des roues de votre Classic Mini. Partez d'un préréglage issu de recherches (origine, route sportive, circuit ou suralimentée), affinez carrossage, chasse et parallélisme, et regardez le schéma en vue de dessus se mettre à jour en direct. Connectez-vous pour enregistrer vos réglages et tenir un journal de conduite daté pour chacun.",
     "eyebrow": "CALCULATEUR",
     "support_section": "Soutien",
     "ui": {
@@ -222,7 +220,7 @@
       "steps": {
         "preset": {
           "name": "Choisissez un préréglage",
-          "text": "Choisissez un point de départ — origine, route sportive, journée circuit ou suralimentée."
+          "text": "Choisissez un point de départ — origine, route d'origine, sport, circuit ou suralimenté."
         },
         "adjust": {
           "name": "Ajustez les angles",
@@ -237,7 +235,9 @@
           "text": "Connectez-vous pour enregistrer la configuration et tenir un journal de conduite daté."
         }
       }
-    }
+    },
+    "description_text": "Visualisez et planifiez la géométrie des roues de votre Classic Mini en temps réel. Partez d'un préréglage (origine, route d'origine, sport, circuit ou suralimenté), ajustez finement le carrossage, la chasse et le parallélisme, et regardez le schéma vu de dessus se mettre à jour en direct. Connectez-vous pour enregistrer vos réglages et tenir un journal de conduite daté pour chacun.",
+    "og_description": "Réglez le carrossage, la chasse et le parallélisme avec un schéma vu de dessus en direct et des préréglages éprouvés — de l'origine au sport et au circuit en passant par le suralimenté. Enregistrez vos réglages et tenez un journal de conduite."
   },
   "de": {
     "title": "Technik - Achsvermessungsrechner",
@@ -246,11 +246,9 @@
     "hero_title": "Achsvermessungsrechner",
     "breadcrumb_title": "Achsvermessungsrechner",
     "og_title": "Classic Mini Achsvermessungsrechner",
-    "og_description": "Stelle Sturz, Nachlauf und Spur mit einer Live-Draufsicht und bewährten Voreinstellungen für Serie, schnelle Straße, Rennstrecke und aufgeladene Minis ein. Speichere deine Setups und führe ein Fahrtenjournal.",
     "twitter_title": "Classic Mini Achsvermessungsrechner",
     "twitter_description": "Stelle Sturz, Nachlauf und Spur mit einem Live-Diagramm und bewährten Voreinstellungen ein. Speichere deine Setups und führe ein Fahrtenjournal.",
     "main_heading": "Achsvermessungsrechner",
-    "description_text": "Visualisiere und plane die Achseinstellung deines Classic Mini in Echtzeit. Beginne mit einer recherchierten Voreinstellung (Serie, schnelle Straße, Rennstrecke oder aufgeladen), feine Sturz, Nachlauf und Spur ab und beobachte, wie sich die Draufsicht live aktualisiert. Melde dich an, um Setups zu speichern und für jedes ein datiertes Fahrtenjournal zu führen.",
     "eyebrow": "RECHNER",
     "support_section": "Unterstützung",
     "ui": {
@@ -264,7 +262,7 @@
       "steps": {
         "preset": {
           "name": "Eine Voreinstellung wählen",
-          "text": "Wähle einen Ausgangspunkt — Serie, schnelle Straße, Trackday oder aufgeladen."
+          "text": "Wähle einen Ausgangspunkt — Werkseinstellung, Serie Straße, Performance, Rennstrecke oder aufgeladen."
         },
         "adjust": {
           "name": "Die Winkel anpassen",
@@ -279,7 +277,9 @@
           "text": "Melde dich an, um die Konfiguration zu speichern und ein datiertes Fahrtenjournal zu führen."
         }
       }
-    }
+    },
+    "description_text": "Visualisiere und plane die Achsvermessung deines Classic Mini in Echtzeit. Starte von einer Voreinstellung (Werkseinstellung, Serie Straße, Performance, Rennstrecke oder aufgeladen), justiere Sturz, Nachlauf und Spur fein und beobachte, wie sich das Draufsicht-Diagramm live aktualisiert. Melde dich an, um Setups zu speichern und für jedes ein datiertes Fahrtenbuch zu führen.",
+    "og_description": "Stelle Sturz, Nachlauf und Spur mit einem Live-Draufsicht-Diagramm und bewährten Voreinstellungen ein — von Werkseinstellung über Performance und Rennstrecke bis aufgeladen. Speichere deine Setups und führe ein Fahrtenbuch."
   },
   "it": {
     "title": "Tech - Calcolatore di allineamento",
@@ -288,11 +288,9 @@
     "hero_title": "Calcolatore di allineamento",
     "breadcrumb_title": "Calcolatore di allineamento",
     "og_title": "Calcolatore di allineamento Classic Mini",
-    "og_description": "Regola campanatura, incidenza e convergenza con un diagramma dall'alto in tempo reale e preset collaudati per Mini di serie, strada sportiva, pista e sovralimentate. Salva le tue configurazioni e tieni un diario di guida.",
     "twitter_title": "Calcolatore di allineamento Classic Mini",
     "twitter_description": "Regola campanatura, incidenza e convergenza con un diagramma in tempo reale e preset collaudati. Salva le tue configurazioni e tieni un diario di guida.",
     "main_heading": "Calcolatore di allineamento",
-    "description_text": "Visualizza e pianifica in tempo reale l'allineamento delle ruote della tua Classic Mini. Parti da un preset derivato da ricerche (di serie, strada sportiva, pista o sovralimentata), affina campanatura, incidenza e convergenza, e guarda il diagramma dall'alto aggiornarsi dal vivo. Accedi per salvare le configurazioni e tenere un diario di guida datato per ciascuna.",
     "eyebrow": "CALCOLATORE",
     "support_section": "Supporto",
     "ui": {
@@ -306,7 +304,7 @@
       "steps": {
         "preset": {
           "name": "Scegli un preset",
-          "text": "Scegli un punto di partenza — di serie, strada sportiva, giornata in pista o sovralimentata."
+          "text": "Scegli un punto di partenza — originale, strada standard, sportivo, pista o sovralimentato."
         },
         "adjust": {
           "name": "Regola gli angoli",
@@ -321,7 +319,9 @@
           "text": "Accedi per salvare la configurazione e tenere un diario di guida datato."
         }
       }
-    }
+    },
+    "description_text": "Visualizza e pianifica l'assetto delle ruote della tua Classic Mini in tempo reale. Parti da un preset (originale, strada standard, sportivo, pista o sovralimentato), regola con precisione campanatura, incidenza e convergenza, e guarda lo schema dall'alto aggiornarsi dal vivo. Accedi per salvare gli assetti e tenere un diario di guida datato per ciascuno.",
+    "og_description": "Metti a punto campanatura, incidenza e convergenza con uno schema dall'alto dal vivo e preset collaudati — dall'originale allo sportivo e alla pista fino al sovralimentato. Salva i tuoi assetti e tieni un diario di guida."
   },
   "pt": {
     "title": "Técnico - Calculadora de Alinhamento",
@@ -330,11 +330,9 @@
     "hero_title": "Calculadora de Alinhamento",
     "breadcrumb_title": "Calculadora de Alinhamento",
     "og_title": "Calculadora de Alinhamento do Classic Mini",
-    "og_description": "Acerte a cambagem, o cáster e a convergência com um diagrama de cima ao vivo e predefinições comprovadas para Minis de série, estrada rápida, pista e turbo. Guarde as suas configurações e mantenha um diário de condução.",
     "twitter_title": "Calculadora de Alinhamento do Classic Mini",
     "twitter_description": "Acerte a cambagem, o cáster e a convergência com um diagrama ao vivo e predefinições comprovadas. Guarde as suas configurações e mantenha um diário de condução.",
     "main_heading": "Calculadora de Alinhamento",
-    "description_text": "Visualize e planeie o alinhamento das rodas do seu Classic Mini em tempo real. Comece a partir de uma predefinição derivada de pesquisa (série, estrada rápida, pista ou turbo), afine a cambagem, o cáster e a convergência, e veja o diagrama de cima atualizar-se ao vivo. Inicie sessão para guardar configurações e manter um diário de condução datado para cada uma.",
     "eyebrow": "CALCULADORA",
     "support_section": "Apoio",
     "ui": {
@@ -348,7 +346,7 @@
       "steps": {
         "preset": {
           "name": "Escolha uma predefinição",
-          "text": "Escolha um ponto de partida — série, estrada rápida, dia de pista ou turbo."
+          "text": "Escolha um ponto de partida — fábrica, estrada original, desportivo, pista ou turbo."
         },
         "adjust": {
           "name": "Ajuste os ângulos",
@@ -363,7 +361,9 @@
           "text": "Inicie sessão para guardar a configuração e manter um diário de condução datado."
         }
       }
-    }
+    },
+    "description_text": "Visualize e planeie o alinhamento das rodas do seu Classic Mini em tempo real. Comece a partir de uma predefinição (fábrica, estrada original, desportivo, pista ou turbo), afine a caída, o avance e a convergência, e veja o diagrama de vista superior atualizar-se ao vivo. Inicie sessão para guardar configurações e manter um diário de condução datado para cada uma.",
+    "og_description": "Acerte a caída, o avance e a convergência com um diagrama de vista superior ao vivo e predefinições comprovadas — de fábrica, passando por desportivo e pista, até turbo. Guarde as suas configurações e mantenha um diário de condução."
   },
   "ru": {
     "title": "Техника — Калькулятор развал-схождения",
@@ -372,11 +372,9 @@
     "hero_title": "Калькулятор развал-схождения",
     "breadcrumb_title": "Калькулятор развал-схождения",
     "og_title": "Калькулятор развал-схождения Classic Mini",
-    "og_description": "Настройте развал, кастер и схождение с живой схемой вида сверху и проверенными пресетами для стокового, спортивного, трекового Mini и Mini с наддувом. Сохраняйте свои настройки и ведите журнал поездок.",
     "twitter_title": "Калькулятор развал-схождения Classic Mini",
     "twitter_description": "Настройте развал, кастер и схождение с живой схемой и проверенными пресетами. Сохраняйте свои настройки и ведите журнал поездок.",
     "main_heading": "Калькулятор развал-схождения",
-    "description_text": "Визуализируйте и планируйте развал-схождение вашего Classic Mini в реальном времени. Начните с пресета на основе исследований (сток, спорт-дорога, трек или наддув), точно подстройте развал, кастер и схождение и наблюдайте, как схема вида сверху обновляется вживую. Войдите, чтобы сохранять настройки и вести датированный журнал поездок для каждой из них.",
     "eyebrow": "КАЛЬКУЛЯТОР",
     "support_section": "Поддержка",
     "ui": {
@@ -390,7 +388,7 @@
       "steps": {
         "preset": {
           "name": "Выберите пресет",
-          "text": "Выберите отправную точку — сток, спорт-дорога, трек-день или наддув."
+          "text": "Выберите отправную точку — заводская, сток дорога, спорт, трек или наддувная."
         },
         "adjust": {
           "name": "Отрегулируйте углы",
@@ -405,7 +403,9 @@
           "text": "Войдите, чтобы сохранить конфигурацию и вести датированный журнал поездок."
         }
       }
-    }
+    },
+    "description_text": "Визуализируйте и планируйте развал-схождение вашего Classic Mini в реальном времени. Начните с пресета (заводская, сток дорога, спорт, трек или наддувный), точно настройте развал, кастор и схождение и наблюдайте, как схема вида сверху обновляется вживую. Войдите, чтобы сохранять настройки и вести датированный журнал поездок для каждой из них.",
+    "og_description": "Настройте развал, кастор и схождение с живой схемой вида сверху и проверенными пресетами — от заводской через спорт и трек до наддувной. Сохраняйте настройки и ведите журнал поездок."
   },
   "ja": {
     "title": "テック - アライメント計算機",
@@ -414,11 +414,9 @@
     "hero_title": "アライメント計算機",
     "breadcrumb_title": "アライメント計算機",
     "og_title": "Classic Mini アライメント計算機",
-    "og_description": "ライブの上面図と、ノーマル・ファストロード・トラック・過給のMini向けに実証されたプリセットで、キャンバー、キャスター、トーを設定。セットアップを保存してドライビングジャーナルを記録できます。",
     "twitter_title": "Classic Mini アライメント計算機",
     "twitter_description": "ライブ図と実証済みプリセットで、キャンバー、キャスター、トーを設定。セットアップを保存してドライビングジャーナルを記録できます。",
     "main_heading": "アライメント計算機",
-    "description_text": "Classic Miniのホイールアライメントをリアルタイムで可視化・計画します。調査に基づくプリセット（ノーマル、ファストロード、トラック、過給）から始め、キャンバー、キャスター、トーを微調整し、上面図がライブで更新される様子を確認できます。サインインするとセットアップを保存し、それぞれに日付付きのドライビングジャーナルを記録できます。",
     "eyebrow": "計算機",
     "support_section": "サポート",
     "ui": {
@@ -432,7 +430,7 @@
       "steps": {
         "preset": {
           "name": "プリセットを選ぶ",
-          "text": "出発点を選びます — ノーマル、ファストロード、トラックデー、または過給。"
+          "text": "出発点を選びましょう――ファクトリー、ストックロード、パフォーマンス、トラック、または過給。"
         },
         "adjust": {
           "name": "角度を調整する",
@@ -447,7 +445,9 @@
           "text": "サインインして設定を保存し、日付付きのドライビングジャーナルを記録します。"
         }
       }
-    }
+    },
+    "description_text": "Classic Miniのホイールアライメントをリアルタイムで可視化し、プランニングできます。プリセット（ファクトリー、ストックロード、パフォーマンス、トラック、過給）から始め、キャンバー・キャスター・トーを微調整しながら、上面図のダイアグラムがライブで更新される様子を確認できます。サインインすればセットアップを保存し、それぞれに日付付きのドライビングジャーナルを残せます。",
+    "og_description": "ライブの上面図ダイアグラムと実証済みのプリセット――ファクトリーからパフォーマンス、トラック、そして過給まで――でキャンバー・キャスター・トーを追い込めます。セットアップを保存し、ドライビングジャーナルを残しましょう。"
   },
   "zh": {
     "title": "技术 - 四轮定位计算器",
@@ -456,11 +456,9 @@
     "hero_title": "四轮定位计算器",
     "breadcrumb_title": "四轮定位计算器",
     "og_title": "Classic Mini 四轮定位计算器",
-    "og_description": "通过实时俯视图以及针对原厂、高性能街道、赛道和增压 Mini 的成熟预设，精准调校外倾角、主销后倾角和前束。保存您的设置并记录驾驶日志。",
     "twitter_title": "Classic Mini 四轮定位计算器",
     "twitter_description": "通过实时图示和成熟预设精准调校外倾角、主销后倾角和前束。保存您的设置并记录驾驶日志。",
     "main_heading": "四轮定位计算器",
-    "description_text": "实时可视化并规划您的 Classic Mini 四轮定位。从研究得出的预设（原厂、高性能街道、赛道或增压）开始，微调外倾角、主销后倾角和前束，并实时观看俯视图更新。登录即可保存设置，并为每个设置记录带日期的驾驶日志。",
     "eyebrow": "计算器",
     "support_section": "支持",
     "ui": {
@@ -474,7 +472,7 @@
       "steps": {
         "preset": {
           "name": "选择预设",
-          "text": "选择一个起始点——原厂、高性能街道、赛道日或增压。"
+          "text": "选择一个起点——原厂、街道原厂、运动、赛道或增压。"
         },
         "adjust": {
           "name": "调整角度",
@@ -489,7 +487,9 @@
           "text": "登录以保存配置并记录带日期的驾驶日志。"
         }
       }
-    }
+    },
+    "description_text": "实时可视化并规划你的 Classic Mini 四轮定位。从预设方案入手（原厂、街道原厂、运动、赛道或增压），微调外倾角、后倾角与前束，看着俯视示意图实时更新。登录即可保存设定，并为每套设定保留带日期的驾驶日志。",
+    "og_description": "借助实时俯视示意图与久经验证的预设方案，精准调校外倾角、后倾角与前束——从原厂、运动、赛道到增压一应俱全。保存你的设定并记录驾驶日志。"
   },
   "ko": {
     "title": "기술 - 얼라인먼트 계산기",
@@ -498,11 +498,9 @@
     "hero_title": "얼라인먼트 계산기",
     "breadcrumb_title": "얼라인먼트 계산기",
     "og_title": "Classic Mini 얼라인먼트 계산기",
-    "og_description": "실시간 평면도와 순정, 패스트 로드, 트랙, 부스트 Mini용 검증된 프리셋으로 캠버, 캐스터, 토를 세팅하세요. 세팅을 저장하고 주행 저널을 기록하세요.",
     "twitter_title": "Classic Mini 얼라인먼트 계산기",
     "twitter_description": "실시간 다이어그램과 검증된 프리셋으로 캠버, 캐스터, 토를 세팅하세요. 세팅을 저장하고 주행 저널을 기록하세요.",
     "main_heading": "얼라인먼트 계산기",
-    "description_text": "Classic Mini의 휠 얼라인먼트를 실시간으로 시각화하고 계획하세요. 연구 기반 프리셋(순정, 패스트 로드, 트랙, 부스트)에서 시작해 캠버, 캐스터, 토를 미세 조정하고 평면도가 실시간으로 갱신되는 모습을 확인하세요. 로그인하면 세팅을 저장하고 각각에 대해 날짜가 기록된 주행 저널을 남길 수 있습니다.",
     "eyebrow": "계산기",
     "support_section": "후원",
     "ui": {
@@ -516,7 +514,7 @@
       "steps": {
         "preset": {
           "name": "프리셋 선택",
-          "text": "출발점을 선택하세요 — 순정, 패스트 로드, 트랙 데이, 또는 부스트."
+          "text": "시작점을 선택하세요 — 공장 사양, 기본 도로, 퍼포먼스, 트랙, 부스트."
         },
         "adjust": {
           "name": "각도 조정",
@@ -531,7 +529,9 @@
           "text": "로그인하여 구성을 저장하고 날짜가 기록된 주행 저널을 남기세요."
         }
       }
-    }
+    },
+    "description_text": "Classic Mini의 휠 얼라인먼트를 실시간으로 시각화하고 계획하세요. 프리셋(공장 사양, 기본 도로, 퍼포먼스, 트랙, 부스트)에서 시작해 캠버, 캐스터, 토를 미세 조정하고 위에서 본 도면이 실시간으로 갱신되는 모습을 확인하세요. 로그인하면 세팅을 저장하고 각 세팅마다 날짜별 주행 일지를 기록할 수 있습니다.",
+    "og_description": "실시간 위에서 본 도면과 검증된 프리셋으로 캠버, 캐스터, 토를 세팅하세요 — 공장 사양부터 퍼포먼스와 트랙, 부스트까지. 세팅을 저장하고 주행 일지를 기록하세요."
   }
 }
 </i18n>
