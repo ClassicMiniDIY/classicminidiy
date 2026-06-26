@@ -67,13 +67,16 @@ just-banned scammer could keep hitting **all 27 authenticated write endpoints**
 (submissions, uploads, comments, checkout, seller onboarding) until their token
 lapsed. `is_banned` was referenced **nowhere** in the server or app code.
 
-**Fix:** `requireUserAuth` now does one extra lookup
-(`profiles.select('is_banned')`) after token verification and throws **403
-"Account suspended"** when `is_banned === true`. Because `requireUserClient`
-delegates to `requireUserAuth`, every authed write inherits the check from one
-place. It is **fail-open**: a missing profile row or a query error never blocks —
-only an explicit `is_banned === true` does. The ban now takes effect on the
-banned user's **next request**, not whenever their token happens to expire.
+**Fix:** `requireUserAuth` now looks up `profiles.is_banned` after token
+verification and throws **403 "Account suspended"** when `is_banned === true`.
+Because `requireUserClient` delegates to `requireUserAuth`, every authed write
+inherits the check from one place. The result is memoized in a short-lived
+(~30s TTL), memory-bounded in-process cache so a burst of requests from one
+active user does not fan out into a query each — so a ban takes effect **within
+~30s**, versus the ~1h token lifetime before. It is **fail-open**: a missing
+profile row, a returned query `error`, or a thrown exception (transient
+network) never blocks — only an explicit `is_banned === true` does, and
+uncertain results are not cached so the next request re-checks promptly.
 
 ### 1.2 Generalized per-IP write rate limiting
 

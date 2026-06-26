@@ -1,6 +1,61 @@
 // server/utils/userAuth.ts
 import { getServiceClient, getUserClient } from './supabase';
 
+// --- Ban-status cache -------------------------------------------------------
+// requireUserAuth runs on every authenticated request (all writes plus a few
+// authed reads). The ban check is a cheap indexed PK lookup on `profiles`, but
+// we memoize the result for a short window so a burst of requests from one
+// active user does not fan out into a query per request. The TTL is short, so
+// an admin ban still takes effect within ~BAN_CACHE_TTL_MS — far faster than
+// the ~1h access-token lifetime that previously let a banned account keep
+// writing until the token expired.
+const BAN_CACHE_TTL_MS = 30_000;
+// Bound the map so a long-lived warm instance can't accumulate an entry per
+// distinct user forever. Cardinality is low (authenticated users only, not
+// anonymous IPs); on overflow we evict the oldest-inserted entry in O(1).
+const BAN_CACHE_MAX = 10_000;
+const banCache = new Map<string, { banned: boolean; expiresAt: number }>();
+
+/**
+ * Resolve whether a user is banned, memoized for BAN_CACHE_TTL_MS.
+ *
+ * Fail-open by design: this check is layered on top of an already-valid
+ * session. A transient failure — whether the Supabase client THROWS (network)
+ * or returns an `error` (query) — must never lock a legitimate user out, so we
+ * only ever block on an explicit `is_banned === true`. Uncertain results are
+ * not cached, so the next request re-checks promptly.
+ */
+async function isUserBanned(supabase: any, userId: string): Promise<boolean> {
+  const now = Date.now();
+  const cached = banCache.get(userId);
+  if (cached && cached.expiresAt > now) return cached.banned;
+
+  let banned = false;
+  try {
+    const { data: profile, error } = await supabase.from('profiles').select('is_banned').eq('id', userId).maybeSingle();
+    if (error) {
+      console.error('[userAuth] ban-check query error (failing open):', error.message);
+      return false; // do not cache uncertainty
+    }
+    banned = profile?.is_banned === true;
+  } catch (err) {
+    console.error('[userAuth] ban-check threw (failing open):', err);
+    return false; // do not cache uncertainty
+  }
+
+  if (banCache.size >= BAN_CACHE_MAX) {
+    const oldest = banCache.keys().next().value;
+    if (oldest !== undefined) banCache.delete(oldest);
+  }
+  banCache.set(userId, { banned, expiresAt: now + BAN_CACHE_TTL_MS });
+  return banned;
+}
+
+/** Test/maintenance helper: clear the in-memory ban-status cache. */
+export function _resetBanCache(): void {
+  banCache.clear();
+}
+
 /**
  * Pull a Supabase access token off the request — prefers the `Authorization:
  * Bearer` header, falls back to the `sb-<ref>-auth-token` cookie (object or
@@ -57,15 +112,9 @@ export async function requireUserAuth(event: any) {
   // expires even after we ban the account in `profiles`, so an admin-banned
   // scammer could otherwise keep hitting every write endpoint (submissions,
   // uploads, comments, checkout) for the remaining token lifetime. Gate the
-  // shared auth helper itself so the ban takes effect on the next request.
-  //
-  // Fail-open by design: this is an extra lookup layered on top of an already
-  // valid session. If the profile row is missing (brand-new user, row not yet
-  // provisioned) or the query errors, we do NOT block — we only reject on an
-  // explicit `is_banned === true`, never on uncertainty.
-  const { data: profile } = await supabase.from('profiles').select('is_banned').eq('id', user.id).maybeSingle();
-
-  if (profile?.is_banned === true) {
+  // shared auth helper itself so the ban takes effect within ~BAN_CACHE_TTL_MS.
+  // See isUserBanned for the fail-open and caching rationale.
+  if (await isUserBanned(supabase, user.id)) {
     throw createError({
       statusCode: 403,
       statusMessage: 'Account suspended',

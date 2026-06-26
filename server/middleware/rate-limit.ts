@@ -89,7 +89,9 @@ export default defineEventHandler((event) => {
   if (
     pathname.startsWith('/api/') &&
     WRITE_METHODS.has(event.method) &&
-    !WRITE_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+    // Match on a path-segment boundary so a prefix of '/api/admin' exempts
+    // '/api/admin' and '/api/admin/...' but NOT '/api/admin-foo'.
+    !WRITE_EXEMPT_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))
   ) {
     applyLimit(
       event,
