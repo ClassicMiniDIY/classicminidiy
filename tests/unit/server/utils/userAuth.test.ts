@@ -44,7 +44,7 @@ vi.stubGlobal(
 );
 
 // Import module under test AFTER mocks are in place
-import { requireUserAuth } from '~/server/utils/userAuth';
+import { requireUserAuth, _resetBanCache } from '~/server/utils/userAuth';
 
 // A helper to build a mock H3 event object
 function createMockEvent() {
@@ -57,6 +57,8 @@ describe('server/utils/userAuth', () => {
     mockParseCookies.mockReturnValue({});
     // Default: no profile row → not banned. Individual tests override.
     mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+    // Prevent the in-memory ban cache from leaking state across tests.
+    _resetBanCache();
   });
 
   describe('requireUserAuth', () => {
@@ -308,6 +310,25 @@ describe('server/utils/userAuth', () => {
 
       const result = await requireUserAuth(event);
       expect(result.user).toEqual({ id: 'no-profile-user' });
+    });
+
+    it('fails open: allows the request when the profile lookup throws', async () => {
+      const event = createMockEvent();
+
+      (getHeader as any).mockImplementation((_e: any, name: string) => {
+        if (name === 'authorization') return 'Bearer good';
+        return undefined;
+      });
+      mockGetUser.mockResolvedValue({
+        data: { user: { id: 'throwing-user' } },
+        error: null,
+      });
+      // A transient network failure surfaces as a thrown exception, not an
+      // { error } result — it must still fail open, not 500.
+      mockMaybeSingle.mockRejectedValue(new Error('ECONNRESET'));
+
+      const result = await requireUserAuth(event);
+      expect(result.user).toEqual({ id: 'throwing-user' });
     });
 
     it('calls getServiceClient to obtain the supabase client', async () => {

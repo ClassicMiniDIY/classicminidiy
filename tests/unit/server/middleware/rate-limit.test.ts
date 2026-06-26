@@ -157,6 +157,16 @@ describe('server/middleware/rate-limit', () => {
       expect(mockGetRequestIP).not.toHaveBeenCalled();
     });
 
+    it('does NOT exempt a non-boundary prefix match like /api/admin-foo', () => {
+      // '/api/admin' exempts '/api/admin/...', but '/api/admin-foo' is a
+      // different route and must still be throttled.
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/admin-foo'));
+      expect(callWrite('POST')).toBeUndefined();
+      expect(callWrite('POST')).toBeUndefined();
+      expect(callWrite('POST')).toBeUndefined();
+      expect(callWriteCatching('POST')).toMatchObject({ statusCode: 429 });
+    });
+
     it('keeps the write budget separate from the langgraph budget', () => {
       // Exhaust the chat budget on one IP...
       mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
