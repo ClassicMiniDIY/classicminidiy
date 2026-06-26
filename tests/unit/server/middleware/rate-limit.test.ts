@@ -6,6 +6,8 @@ const { mockGetRequestURL, mockGetRequestIP, mockGetHeader, mockSetHeader } = vi
   // Force a tiny limit so we can drive the 429 path in a couple of calls.
   process.env.LANGGRAPH_RATELIMIT_MAX = '3';
   process.env.LANGGRAPH_RATELIMIT_WINDOW_MS = '60000';
+  process.env.WRITE_RATELIMIT_MAX = '3';
+  process.env.WRITE_RATELIMIT_WINDOW_MS = '60000';
 
   const mockGetRequestURL = vi.fn();
   const mockGetRequestIP = vi.fn();
@@ -107,5 +109,65 @@ describe('server/middleware/rate-limit', () => {
     call();
     call();
     expect(callCatching()).toMatchObject({ statusCode: 429 });
+  });
+
+  describe('write (mutation) policy', () => {
+    // A sibling test above uses mockReturnValueOnce on getRequestIP without
+    // consuming the queue (it keys on x-real-ip), and clearAllMocks does not
+    // drain that queue. Reset it here so every call in this block resolves to
+    // one stable IP and therefore shares a single rate-limit bucket.
+    beforeEach(() => {
+      mockGetRequestIP.mockReset();
+      mockGetRequestIP.mockReturnValue('203.0.113.7');
+    });
+
+    const writeEvent = (method: string) => ({ method }) as any;
+    const callWrite = (method: string) => (handler as Function)(writeEvent(method));
+    const callWriteCatching = (method: string): any => {
+      try {
+        callWrite(method);
+        return undefined;
+      } catch (e) {
+        return e;
+      }
+    };
+
+    it('does not throttle GET reads', () => {
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/models'));
+      expect(callWrite('GET')).toBeUndefined();
+      expect(mockGetRequestIP).not.toHaveBeenCalled();
+      expect(mockSetHeader).not.toHaveBeenCalled();
+    });
+
+    it('throttles POST/PUT/PATCH/DELETE on /api/** once the per-IP limit is exceeded', () => {
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/gear-configs'));
+      expect(callWrite('POST')).toBeUndefined(); // 1
+      expect(callWrite('PUT')).toBeUndefined(); // 2
+      expect(callWrite('PATCH')).toBeUndefined(); // 3 (== max)
+      expect(callWriteCatching('DELETE')).toMatchObject({ statusCode: 429 }); // 4
+      expect(mockSetHeader).toHaveBeenCalledWith(expect.anything(), 'Retry-After', expect.any(String));
+    });
+
+    it('exempts /api/admin mutations (moderator queue work)', () => {
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/admin/queue/approve'));
+      expect(callWrite('POST')).toBeUndefined();
+      expect(callWrite('POST')).toBeUndefined();
+      expect(callWrite('POST')).toBeUndefined();
+      expect(callWrite('POST')).toBeUndefined(); // beyond the limit, still allowed
+      expect(mockGetRequestIP).not.toHaveBeenCalled();
+    });
+
+    it('keeps the write budget separate from the langgraph budget', () => {
+      // Exhaust the chat budget on one IP...
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+      call();
+      call();
+      call();
+      expect(callCatching()).toMatchObject({ statusCode: 429 });
+
+      // ...the write budget for the same IP is untouched.
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/models'));
+      expect(callWrite('POST')).toBeUndefined();
+    });
   });
 });
