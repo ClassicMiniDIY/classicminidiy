@@ -3,9 +3,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // --- Mock helpers ---
 const mockGetUser = vi.fn();
+// Profile lookup for the ban check: requireUserAuth does
+// supabase.from('profiles').select('is_banned').eq('id', uid).maybeSingle().
+// Default resolves to "no profile row" → treated as not banned (fail-open).
+const mockMaybeSingle = vi.fn(async () => ({ data: null, error: null }));
 
 const mockSupabaseClient = {
   auth: { getUser: mockGetUser },
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        maybeSingle: mockMaybeSingle,
+      })),
+    })),
+  })),
 };
 
 // Mock the supabase module before importing the module under test
@@ -44,6 +55,8 @@ describe('server/utils/userAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockParseCookies.mockReturnValue({});
+    // Default: no profile row → not banned. Individual tests override.
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
   });
 
   describe('requireUserAuth', () => {
@@ -243,6 +256,58 @@ describe('server/utils/userAuth', () => {
 
       expect(mockGetUser).toHaveBeenCalledWith(token);
       expect(result.user).toEqual({ id: 'user-multi-cookie' });
+    });
+
+    it('throws 403 when the account is banned (is_banned === true)', async () => {
+      const event = createMockEvent();
+
+      (getHeader as any).mockImplementation((_e: any, name: string) => {
+        if (name === 'authorization') return 'Bearer valid-but-banned';
+        return undefined;
+      });
+      mockGetUser.mockResolvedValue({
+        data: { user: { id: 'banned-user' } },
+        error: null,
+      });
+      mockMaybeSingle.mockResolvedValue({ data: { is_banned: true }, error: null });
+
+      await expect(requireUserAuth(event)).rejects.toMatchObject({
+        statusCode: 403,
+      });
+    });
+
+    it('allows the request when the profile exists and is not banned', async () => {
+      const event = createMockEvent();
+
+      (getHeader as any).mockImplementation((_e: any, name: string) => {
+        if (name === 'authorization') return 'Bearer good';
+        return undefined;
+      });
+      mockGetUser.mockResolvedValue({
+        data: { user: { id: 'ok-user' } },
+        error: null,
+      });
+      mockMaybeSingle.mockResolvedValue({ data: { is_banned: false }, error: null });
+
+      const result = await requireUserAuth(event);
+      expect(result.user).toEqual({ id: 'ok-user' });
+    });
+
+    it('fails open: allows the request when the profile lookup errors', async () => {
+      const event = createMockEvent();
+
+      (getHeader as any).mockImplementation((_e: any, name: string) => {
+        if (name === 'authorization') return 'Bearer good';
+        return undefined;
+      });
+      mockGetUser.mockResolvedValue({
+        data: { user: { id: 'no-profile-user' } },
+        error: null,
+      });
+      mockMaybeSingle.mockResolvedValue({ data: null, error: { message: 'db down' } });
+
+      const result = await requireUserAuth(event);
+      expect(result.user).toEqual({ id: 'no-profile-user' });
     });
 
     it('calls getServiceClient to obtain the supabase client', async () => {

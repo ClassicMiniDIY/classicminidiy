@@ -53,6 +53,26 @@ export async function requireUserAuth(event: any) {
     });
   }
 
+  // Ban enforcement. A valid Supabase access token keeps working until it
+  // expires even after we ban the account in `profiles`, so an admin-banned
+  // scammer could otherwise keep hitting every write endpoint (submissions,
+  // uploads, comments, checkout) for the remaining token lifetime. Gate the
+  // shared auth helper itself so the ban takes effect on the next request.
+  //
+  // Fail-open by design: this is an extra lookup layered on top of an already
+  // valid session. If the profile row is missing (brand-new user, row not yet
+  // provisioned) or the query errors, we do NOT block — we only reject on an
+  // explicit `is_banned === true`, never on uncertainty.
+  const { data: profile } = await supabase.from('profiles').select('is_banned').eq('id', user.id).maybeSingle();
+
+  if (profile?.is_banned === true) {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Account suspended',
+      message: 'This account has been suspended. Contact support if you believe this is a mistake.',
+    });
+  }
+
   return { user };
 }
 
