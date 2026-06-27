@@ -106,10 +106,11 @@
         </div>
 
         <!-- Already listed (from preview dedupe check) -->
-        <div v-if="f.alreadyListed.value && !f.preview.value" class="alert alert-info">
+        <div v-if="f.alreadyListed.value" class="alert alert-info">
           <i class="fas fa-circle-info"></i>
           <div>
             <p class="font-semibold">{{ t('step1.alreadyListedTitle') }}</p>
+            <p class="text-sm opacity-80">{{ t('step1.alreadyListedBody') }}</p>
             <NuxtLink
               :to="`/models/external/${f.alreadyListed.value.slug}`"
               class="link link-primary text-sm"
@@ -283,6 +284,7 @@
       "detectedLabel": "Detected site:",
       "sitesHint": "Works best with {sites}. Any other URL is also accepted as a generic listing.",
       "alreadyListedTitle": "This model is already in the library.",
+      "alreadyListedBody": "Someone has already added this model, so there's nothing more to submit.",
       "alreadyListedLink": "View the existing listing"
     },
     "step2": {
@@ -319,6 +321,7 @@
       "detectedLabel": "Sitio detectado:",
       "sitesHint": "Funciona mejor con {sites}. Cualquier otra URL también se acepta como listado genérico.",
       "alreadyListedTitle": "Este modelo ya está en la biblioteca.",
+      "alreadyListedBody": "Alguien ya añadió este modelo, así que no hay nada más que enviar.",
       "alreadyListedLink": "Ver el listado existente"
     },
     "step2": {
@@ -355,6 +358,7 @@
       "detectedLabel": "Site détecté :",
       "sitesHint": "Fonctionne mieux avec {sites}. Toute autre URL est aussi acceptée comme listage générique.",
       "alreadyListedTitle": "Ce modèle est déjà dans la bibliothèque.",
+      "alreadyListedBody": "Quelqu'un a déjà ajouté ce modèle, il n'y a donc rien de plus à soumettre.",
       "alreadyListedLink": "Voir le listage existant"
     },
     "step2": {
@@ -391,6 +395,7 @@
       "detectedLabel": "Erkannte Seite:",
       "sitesHint": "Funktioniert am besten mit {sites}. Jede andere URL wird auch als generisches Listing akzeptiert.",
       "alreadyListedTitle": "Dieses Modell ist bereits in der Bibliothek.",
+      "alreadyListedBody": "Jemand hat dieses Modell bereits hinzugefügt, es gibt also nichts mehr einzureichen.",
       "alreadyListedLink": "Vorhandenes Listing ansehen"
     },
     "step2": {
@@ -427,6 +432,7 @@
       "detectedLabel": "Sito rilevato:",
       "sitesHint": "Funziona meglio con {sites}. Qualsiasi altro URL è accettato come listato generico.",
       "alreadyListedTitle": "Questo modello è già nella libreria.",
+      "alreadyListedBody": "Qualcuno ha già aggiunto questo modello, quindi non c'è altro da inviare.",
       "alreadyListedLink": "Visualizza il listato esistente"
     },
     "step2": {
@@ -463,6 +469,7 @@
       "detectedLabel": "Site detectado:",
       "sitesHint": "Funciona melhor com {sites}. Qualquer outro URL também é aceito como listagem genérica.",
       "alreadyListedTitle": "Este modelo já está na biblioteca.",
+      "alreadyListedBody": "Alguém já adicionou este modelo, então não há mais nada a enviar.",
       "alreadyListedLink": "Ver a listagem existente"
     },
     "step2": {
@@ -499,6 +506,7 @@
       "detectedLabel": "Обнаруженный сайт:",
       "sitesHint": "Лучше всего работает с {sites}. Любой другой URL принимается как общий листинг.",
       "alreadyListedTitle": "Эта модель уже есть в библиотеке.",
+      "alreadyListedBody": "Кто-то уже добавил эту модель, так что отправлять больше нечего.",
       "alreadyListedLink": "Посмотреть существующий листинг"
     },
     "step2": {
@@ -535,6 +543,7 @@
       "detectedLabel": "検出されたサイト：",
       "sitesHint": "{sites}で最もよく機能します。その他のURLも汎用リストとして受け付けられます。",
       "alreadyListedTitle": "このモデルはすでにライブラリにあります。",
+      "alreadyListedBody": "このモデルはすでに誰かが追加しているため、提出するものはありません。",
       "alreadyListedLink": "既存のリストを見る"
     },
     "step2": {
@@ -571,6 +580,7 @@
       "detectedLabel": "检测到的网站：",
       "sitesHint": "最适合 {sites}。其他链接也可作为通用列表接受。",
       "alreadyListedTitle": "此模型已在库中。",
+      "alreadyListedBody": "已有人添加了此模型，因此无需再提交。",
       "alreadyListedLink": "查看现有列表"
     },
     "step2": {
@@ -607,6 +617,7 @@
       "detectedLabel": "감지된 사이트:",
       "sitesHint": "{sites}에서 가장 잘 작동합니다. 다른 URL도 일반 목록으로 허용됩니다.",
       "alreadyListedTitle": "이 모델은 이미 라이브러리에 있습니다.",
+      "alreadyListedBody": "이미 다른 사용자가 이 모델을 추가했으므로 제출할 항목이 없습니다.",
       "alreadyListedLink": "기존 목록 보기"
     },
     "step2": {
