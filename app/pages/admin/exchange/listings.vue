@@ -117,7 +117,7 @@
                 </button>
                 <ul
                   tabindex="0"
-                  class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 z-9999"
+                  class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 z-[9999]"
                 >
                   <li v-if="listing.status !== 'active'">
                     <a @click="confirmChangeStatus(listing.id, 'active')">
@@ -288,7 +288,7 @@
                       </button>
                       <ul
                         tabindex="0"
-                        class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 z-9999"
+                        class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 z-[9999]"
                       >
                         <li v-if="listing.status !== 'active'">
                           <a @click="confirmChangeStatus(listing.id, 'active')">

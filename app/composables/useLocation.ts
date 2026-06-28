@@ -30,7 +30,7 @@ export const useLocation = () => {
   const stripPostalCodes = (location: string): string => {
     return location
       .replace(/\b\d{5,10}(-\d{3,4})?\b/g, '') // US ZIP (5+4) and longer postal codes
-      .replace(/(?<=,\s*|\s)\d{4}\b/g, '') // 4-digit codes (AU, NL, DK) after comma/space
+      .replace(/([,\s]\s*)\d{4}\b/g, '$1') // 4-digit codes (AU, NL, DK) after comma/space (capture group avoids lookbehind — unsupported in Safari < 16.4)
       .replace(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/gi, '') // UK postal codes
       .replace(/\b[A-Z]\d[A-Z]\s*\d[A-Z]\d\b/gi, '') // Canadian postal codes
       .replace(/\s{2,}/g, ' ') // collapse double spaces
