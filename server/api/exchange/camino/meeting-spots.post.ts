@@ -18,7 +18,7 @@ interface MeetingSpotsRequest {
 export default defineEventHandler(async (event) => {
   const body = await readBody<MeetingSpotsRequest>(event);
 
-  if (!body.buyerLat || !body.buyerLon || !body.sellerLat || !body.sellerLon) {
+  if (body.buyerLat == null || body.buyerLon == null || body.sellerLat == null || body.sellerLon == null) {
     throw createError({ statusCode: 400, message: 'Missing coordinates for both parties' });
   }
 
