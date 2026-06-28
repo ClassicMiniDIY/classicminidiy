@@ -124,6 +124,19 @@ export function createRateLimitMiddleware(config: RateLimitConfig) {
   };
 }
 
+/** Test/maintenance helper: clear all tracked entries. */
+export function _resetRateLimitStore(): void {
+  rateLimitStore.clear();
+}
+
+/** Test helper: current number of tracked keys. */
+export function _rateLimitStoreSize(): number {
+  return rateLimitStore.size;
+}
+
+/** Exposed for tests so eviction can be exercised without inserting 50k keys. */
+export const _MAX_TRACKED_KEYS = MAX_TRACKED_KEYS;
+
 /**
  * Preset rate limit configurations
  */
