@@ -19,7 +19,7 @@
     </div>
 
     <!-- Tab Navigation -->
-    <div class="tabs tabs-bordered mb-6">
+    <div class="tabs tabs-border mb-6">
       <button class="tab" :class="{ 'tab-active': activeTab === 'listings' }" @click="activeTab = 'listings'">
         Listings
         <span v-if="counts.listings > 0" class="badge badge-warning badge-sm ml-2">{{ counts.listings }}</span>
