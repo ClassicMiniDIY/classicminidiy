@@ -121,6 +121,9 @@
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      // Pin to UTC so SSR (UTC) and client (local TZ) render identically — no
+      // hydration mismatch.
+      timeZone: 'UTC',
     }).format(date);
   };
 

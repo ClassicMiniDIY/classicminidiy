@@ -88,7 +88,11 @@ function generateFindSlug(title: string): string {
     .replace(/^-|-$/g, '')
     .slice(0, 50);
 
-  const suffix = crypto.randomUUID().split('-')[0];
+  // crypto.randomUUID is undefined in non-secure (HTTP) contexts / older browsers.
+  const suffix =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().split('-')[0]
+      : Math.random().toString(36).substring(2, 10);
   return `${baseSlug}-${suffix}`;
 }
 

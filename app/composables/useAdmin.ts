@@ -1,9 +1,5 @@
 import { ADMIN_CACHE_TTL_MS } from '~/utils/constants';
 
-// Cache for dashboard data (persists across navigations within the SPA)
-let statsCache: { data: any; timestamp: number } | null = null;
-let trendCache: { data: any; timestamp: number } | null = null;
-
 export interface MessageQueueItem {
   id: string;
   conversation_id: string;
@@ -84,16 +80,21 @@ export interface AdminConversation {
   flagged_count?: number;
 }
 
-const invalidateCache = () => {
-  statsCache = null;
-  trendCache = null;
-};
-
 export const useAdmin = () => {
   const supabase = useSupabase();
   const { user } = useAuth();
   const { capture } = usePostHog();
   const { handleError } = useErrorHandler();
+
+  // Dashboard caches via useState — shared across SPA navigations on the client
+  // but isolated per request on the server (a module-level cache would leak one
+  // user's admin data across requests during SSR).
+  const statsCache = useState<{ data: any; timestamp: number } | null>('admin-stats-cache', () => null);
+  const trendCache = useState<{ data: any; timestamp: number } | null>('admin-trend-cache', () => null);
+  const invalidateCache = () => {
+    statsCache.value = null;
+    trendCache.value = null;
+  };
 
   /**
    * Check if current user is admin
@@ -111,8 +112,8 @@ export const useAdmin = () => {
    * Get dashboard statistics (parallelized, cached for 2 min)
    */
   const getStats = async () => {
-    if (statsCache && Date.now() - statsCache.timestamp < ADMIN_CACHE_TTL_MS) {
-      return statsCache.data;
+    if (statsCache.value && Date.now() - statsCache.value.timestamp < ADMIN_CACHE_TTL_MS) {
+      return statsCache.value.data;
     }
 
     try {
@@ -151,7 +152,7 @@ export const useAdmin = () => {
         recentListings: recentListings || 0,
       };
 
-      statsCache = { data: result, timestamp: Date.now() };
+      statsCache.value = { data: result, timestamp: Date.now() };
       return result;
     } catch (error) {
       handleError(error, { toastTitle: 'Dashboard Statistics', showToast: false, rethrow: true });
@@ -469,8 +470,8 @@ export const useAdmin = () => {
    * Get trend data for charts (last 30 days, cached for 2 min)
    */
   const getTrendData = async () => {
-    if (trendCache && Date.now() - trendCache.timestamp < ADMIN_CACHE_TTL_MS) {
-      return trendCache.data;
+    if (trendCache.value && Date.now() - trendCache.value.timestamp < ADMIN_CACHE_TTL_MS) {
+      return trendCache.value.data;
     }
 
     const thirtyDaysAgo = new Date();
@@ -523,7 +524,7 @@ export const useAdmin = () => {
       statusCounts,
     };
 
-    trendCache = { data: result, timestamp: Date.now() };
+    trendCache.value = { data: result, timestamp: Date.now() };
     return result;
   };
 

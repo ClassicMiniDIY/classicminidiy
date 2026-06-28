@@ -171,7 +171,16 @@ export const useMessageAttachments = () => {
     try {
       for (const { file, width, height } of prepared) {
         const ext = (file.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-        const storagePath = `${conversationId}/${crypto.randomUUID()}.${ext}`;
+        // crypto.randomUUID is undefined in non-secure (HTTP) contexts / older browsers.
+        const uuid =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+                const r = (Math.random() * 16) | 0;
+                const v = c === 'x' ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+              });
+        const storagePath = `${conversationId}/${uuid}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from('message-images')
@@ -227,11 +236,15 @@ export const useMessageAttachments = () => {
    */
   const getSignedUrl = async (storagePath: string): Promise<string | null> => {
     const now = Date.now();
-    const cached = signedUrlCache.get(storagePath);
-    if (cached && cached.expiresAt > now) {
-      // Refresh LRU position even on cache hit
-      touchCache(storagePath, cached);
-      return cached.url;
+    // Client-only: signedUrlCache is a module-level Map; on the server it would
+    // be shared across all requests/users (cross-request leak of private signed URLs).
+    if (import.meta.client) {
+      const cached = signedUrlCache.get(storagePath);
+      if (cached && cached.expiresAt > now) {
+        // Refresh LRU position even on cache hit
+        touchCache(storagePath, cached);
+        return cached.url;
+      }
     }
 
     const { data, error } = await supabase.storage
@@ -242,10 +255,12 @@ export const useMessageAttachments = () => {
       return null;
     }
 
-    touchCache(storagePath, {
-      url: data.signedUrl,
-      expiresAt: now + SIGNED_URL_TTL_MS,
-    });
+    if (import.meta.client) {
+      touchCache(storagePath, {
+        url: data.signedUrl,
+        expiresAt: now + SIGNED_URL_TTL_MS,
+      });
+    }
     return data.signedUrl;
   };
 

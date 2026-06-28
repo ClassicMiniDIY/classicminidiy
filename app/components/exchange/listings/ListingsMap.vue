@@ -22,8 +22,14 @@
 </template>
 
 <script setup lang="ts">
-  import mapboxgl from 'mapbox-gl';
+  // Type-only import — mapbox-gl touches browser globals (window) on load, so
+  // importing it at module top crashes SSR. The runtime module is loaded
+  // dynamically, client-only, in onMounted.
+  import type MapboxGL from 'mapbox-gl';
   import 'mapbox-gl/dist/mapbox-gl.css';
+
+  // Definite-assignment: set in onMounted (client) before any map code runs.
+  let mapboxgl!: typeof MapboxGL;
 
   const { t } = useI18n();
 
@@ -56,15 +62,18 @@
 
   const config = useRuntimeConfig();
   const mapContainer = ref<HTMLElement | null>(null);
-  const map = ref<mapboxgl.Map | null>(null);
-  const popup = ref<mapboxgl.Popup | null>(null);
+  const map = ref<MapboxGL.Map | null>(null);
+  const popup = ref<MapboxGL.Popup | null>(null);
   const isLoading = ref(true);
   const error = ref('');
 
   // Store listings data for lookup when clicking markers
   const listingsMap = ref<Map<string, Listing>>(new Map());
 
-  onMounted(() => {
+  onMounted(async () => {
+    // Client-only dynamic import — keeps mapbox-gl out of the SSR bundle.
+    if (!import.meta.client) return;
+    mapboxgl = (await import('mapbox-gl')).default;
     initMap();
   });
 
@@ -225,7 +234,7 @@
 
       const clusterId = feature.properties?.cluster_id;
       const coordinates = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
-      const source = map.value!.getSource('listings') as mapboxgl.GeoJSONSource;
+      const source = map.value!.getSource('listings') as MapboxGL.GeoJSONSource;
 
       source.getClusterExpansionZoom(clusterId, (err, zoom) => {
         if (err || zoom == null) return;
@@ -293,7 +302,7 @@
       popup.value = new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
         .setLngLat(coordinates)
         .setHTML(popupContent)
-        .addTo(map.value! as unknown as mapboxgl.Map);
+        .addTo(map.value! as unknown as MapboxGL.Map);
     });
 
     // Change cursor on hover
@@ -354,7 +363,7 @@
     }));
 
     // Update the source data
-    const source = map.value.getSource('listings') as mapboxgl.GeoJSONSource;
+    const source = map.value.getSource('listings') as MapboxGL.GeoJSONSource;
     if (source) {
       source.setData({
         type: 'FeatureCollection',
