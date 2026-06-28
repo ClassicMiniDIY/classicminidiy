@@ -121,17 +121,19 @@ These were designed/decided but not yet coded — they need secrets/Supabase and
      TME From identity (out of `CMDIY_EVENT_TYPES`) and are unmapped in the prefs map
      (admin = always-sent; user = default-on email). URLs use `SITE_URL` + bare TME paths and rely on
      the host 301s.
-   - ⬜ **Web enqueues remaining (CMDIY `tme-merge`):** extend `server/utils/exchange/notificationQueue.ts`
-     `EventType` union + `buildBatchKey` for the 7 types; add an **admin fan-out helper** (one queue row
-     per `profiles.is_admin=true` user). Then wire the 4 `TODO(Stage 8)` sites:
-     `listings/submit.post.ts` → `listing_submitted` (seller) + `admin_listing_pending` (admins);
-     `contact-seller.post.ts` → `seller_inquiry` (verify it isn't redundant with the `new_message` that
-     the conversation insert already triggers); `wanted/create.post.ts` → `admin_wanted_pending`
-     (payload `{postTitle, posterName, isFlagged}`); `external-listings/notify-submit.post.ts` →
-     `admin_find_pending` (payload `{findTitle, sourceSite, submitterName}`).
-   - ⬜ **`watchlist_sold` / `price_drop` have no web trigger yet** — there is NO mark-sold or
-     price-update route under `server/api/exchange/`; locate the mark-sold flow (MarkSoldModal → RPC?)
-     and the price-edit flow, add watcher fan-out (query the watchlist for the listing) before enqueuing.
+   - ✅ **Web enqueues wired (CMDIY `tme-merge`):** `notificationQueue.ts` `EventType` union +
+     `buildBatchKey` extended; added `queueAdminNotification()` (one row per `profiles.is_admin=true`,
+     shared batch key → one digest per admin). The 4 `TODO(Stage 8)` sites now enqueue:
+     `listings/submit` → `listing_submitted` + `admin_listing_pending`; `contact-seller` →
+     `seller_inquiry` (confirmed NOT redundant — it's the anonymous contact form, no conversation/
+     `new_message`; unique batch key per inquiry); `wanted/create` → `admin_wanted_pending`;
+     `external-listings/notify-submit` → `admin_find_pending`. All fire-and-forget + awaited.
+   - ⬜ **`watchlist_sold` / `price_drop` still not fired** — in the `EventType` union for parity but no
+     caller. There is NO mark-sold or price-update route under `server/api/exchange/` (the mark-sold
+     flow is `MarkSoldModal` → likely a PostgREST update/RPC client-side; price edits go through the
+     listing edit/update path). To wire: find those trigger points, query the watchlist for the listing
+     to fan out to each watcher, then `queueNotification` per watcher with `buildBatchKey('watchlist_sold'
+     | 'price_drop', { listingId })`. Builders + constraint already accept them.
    - **Email is AWS SES, NOT Resend.**
 4. **Supabase edge-fn branch — ✅ merged up to date.** `classicminidiy-supabase` `tme-merge` has
    `create-listing-checkout / verify-listing-payment / stripe-listings-webhook` (S1) and is now merged
