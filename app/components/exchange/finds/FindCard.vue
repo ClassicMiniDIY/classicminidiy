@@ -47,15 +47,17 @@
         {{ find.price_label }}
       </div>
 
-      <!-- Auction countdown -->
-      <div
-        v-if="auctionLabel"
-        class="flex items-center gap-1 text-sm"
-        :class="auctionEnded ? 'text-base-content/50' : 'text-warning'"
-      >
-        <i :class="auctionEnded ? 'fas fa-clock' : 'fas fa-fire'"></i>
-        {{ auctionLabel }}
-      </div>
+      <!-- Auction countdown — client-only: now-based label drifts vs server (hydration mismatch) -->
+      <ClientOnly>
+        <div
+          v-if="auctionLabel"
+          class="flex items-center gap-1 text-sm"
+          :class="auctionEnded ? 'text-base-content/50' : 'text-warning'"
+        >
+          <i :class="auctionEnded ? 'fas fa-clock' : 'fas fa-fire'"></i>
+          {{ auctionLabel }}
+        </div>
+      </ClientOnly>
 
       <!-- Description snippet -->
       <p v-if="find.description" class="text-sm text-base-content/60 line-clamp-2">

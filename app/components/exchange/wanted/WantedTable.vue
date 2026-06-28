@@ -82,7 +82,7 @@
 
           <!-- Posted -->
           <td class="whitespace-nowrap text-base-content/70">
-            {{ timeAgo(post.created_at) }}
+            <ClientOnly>{{ timeAgo(post.created_at) }}</ClientOnly>
           </td>
 
           <!-- User (optional column) -->
