@@ -321,6 +321,13 @@ export const useSearch = () => {
         if (result) {
           geocodedCoords = { latitude: result.latitude, longitude: result.longitude };
           locationCoords.value = geocodedCoords;
+        } else {
+          // Geocoding failed for an active distance filter — short-circuit to
+          // empty results instead of returning unfiltered listings. (The
+          // try/finally resets `loading`.)
+          listings.value = [];
+          totalCount.value = 0;
+          return;
         }
       }
 
