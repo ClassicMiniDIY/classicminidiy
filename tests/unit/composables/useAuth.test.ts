@@ -442,7 +442,7 @@ describe('useAuth', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
       expect(mockSupabase._mockSelect).toHaveBeenCalledWith(
-        'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions'
+        'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions, onboarding_completed'
       );
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'user-123');
       expect(mockSupabase._mockSingle).toHaveBeenCalled();
