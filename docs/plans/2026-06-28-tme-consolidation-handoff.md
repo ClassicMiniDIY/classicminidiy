@@ -36,10 +36,10 @@ is complete it merges to `main` and we flip the flag — that's cutover.
 | #644 | 6 — messaging + Finds scraper | ✅ merged (+review fixes) |
 | #645 | 7 — dashboard + admin core | ✅ merged (+review fixes) |
 | #646 | 8 — admin rest (finds/promotions/messages/newsletter) | ✅ merged (+review fixes) |
-| #647 | 9 — onboarding + remaining pages + seller signals | 🔄 open, awaiting Copilot |
-| — | 10 — feeds + sitemap/robots + legal + redirects | ⬜ next (last section) |
+| #647 | 9 — onboarding + remaining pages + seller signals | ✅ merged (+review fixes) |
+| #648 | 10 — feeds + sitemap/robots + legal + redirects | 🔄 open, awaiting Copilot (LAST section) |
 
-`dev` is currently `main` + copilot + sections 1–8 (39 commits ahead). Section 9 (#647) open.
+`dev` is currently `main` + copilot + sections 1–9 (47 commits ahead). Section 10 (#648) open — once it merges, the section-PR phase is **done** and the next step is dev→main cutover prep (see "NOT YET BUILT" + "Cutover" below).
 
 ## How to cut the next section PR (the loop)
 
