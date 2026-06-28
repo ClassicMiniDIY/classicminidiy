@@ -205,13 +205,21 @@
               </label>
 
               <div class="flex flex-col items-center gap-4">
-                <div class="relative cursor-pointer group" @click="triggerFileUpload">
+                <div
+                  class="relative cursor-pointer group"
+                  role="button"
+                  tabindex="0"
+                  :aria-label="t('avatar.upload')"
+                  @click="triggerFileUpload"
+                  @keydown.enter.prevent="triggerFileUpload"
+                  @keydown.space.prevent="triggerFileUpload"
+                >
                   <div class="avatar">
                     <div class="w-32 h-32 rounded-full bg-neutral text-neutral-content">
                       <img
                         v-if="avatarPreview"
                         :src="avatarPreview"
-                        alt="Preview"
+                        :alt="t('avatar.label')"
                         class="w-full h-full object-cover"
                         loading="lazy"
                       />
@@ -224,7 +232,7 @@
                   <div
                     class="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center"
                   >
-                    <i class="fas fa-camera text-2xl text-white mb-1"></i>
+                    <i class="fas fa-camera text-2xl text-white mb-1" aria-hidden="true"></i>
                     <span class="text-sm font-medium text-white">{{ t('avatar.upload') }}</span>
                   </div>
                 </div>

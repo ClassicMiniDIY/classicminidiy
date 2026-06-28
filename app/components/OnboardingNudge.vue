@@ -3,23 +3,29 @@
        users who haven't completed onboarding. Non-blocking; persists until done.
        Hidden on the onboarding page itself. The hard /exchange gate lives in
        middleware/exchange-onboarding.global.ts. -->
-  <div v-if="show" class="fixed bottom-6 right-6 z-50 max-w-sm w-full px-4">
+  <aside
+    v-if="show"
+    role="complementary"
+    aria-live="polite"
+    :aria-label="t('title')"
+    class="fixed bottom-6 right-6 z-50 max-w-sm w-full px-4"
+  >
     <div class="bg-base-100 rounded-2xl shadow-xl border border-base-300 p-5">
       <div class="flex items-start gap-3">
         <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <i class="fas fa-user-check text-primary"></i>
+          <i class="fas fa-user-check text-primary" aria-hidden="true"></i>
         </div>
         <div class="flex-1 min-w-0">
           <h3 class="font-bold text-base">{{ t('title') }}</h3>
           <p class="text-sm text-base-content/70 mt-1">{{ t('body') }}</p>
           <button type="button" class="btn btn-primary btn-sm mt-3 w-full" @click="goToOnboarding">
-            <i class="fas fa-arrow-right"></i>
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
             {{ t('cta') }}
           </button>
         </div>
       </div>
     </div>
-  </div>
+  </aside>
 </template>
 
 <script setup lang="ts">
