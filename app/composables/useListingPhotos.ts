@@ -19,8 +19,15 @@ const validateImageFile = async (file: File): Promise<{ valid: boolean; error?: 
   }
 
   // Check file extension
-  const fileExt = file.name.split('.').pop()?.toLowerCase();
-  if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+  const lastDotIndex = file.name.lastIndexOf('.');
+  const fileExt = lastDotIndex > 0 ? file.name.slice(lastDotIndex + 1).toLowerCase() : '';
+  if (!fileExt) {
+    return {
+      valid: false,
+      error: `File has no extension. Only ${ALLOWED_EXTENSIONS.join(', ')} are accepted.`,
+    };
+  }
+  if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
     return {
       valid: false,
       error: `File extension .${fileExt} is not allowed. Only ${ALLOWED_EXTENSIONS.join(', ')} are accepted.`,

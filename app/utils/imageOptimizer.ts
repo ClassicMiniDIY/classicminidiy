@@ -97,9 +97,12 @@ export const optimizeImage = async (file: File, opts: OptimizeOptions = {}): Pro
   const outputType = supportsWebP() ? 'image/webp' : 'image/jpeg';
   const outputExt = supportsWebP() ? 'webp' : 'jpg';
 
+  // Resolve effective max size once so the final-size check honors caller overrides
+  const maxSizeMB = opts.maxSizeMB ?? IMAGE_OPTIMIZE_DEFAULTS.maxSizeMB;
+
   // Compression options
   const compressionOptions = {
-    maxSizeMB: opts.maxSizeMB ?? IMAGE_OPTIMIZE_DEFAULTS.maxSizeMB,
+    maxSizeMB,
     maxWidthOrHeight: opts.maxWidthOrHeight ?? IMAGE_OPTIMIZE_DEFAULTS.maxWidthOrHeight,
     useWebWorker: IMAGE_OPTIMIZE_DEFAULTS.useWebWorker,
     initialQuality: opts.quality ?? IMAGE_OPTIMIZE_DEFAULTS.initialQuality,
@@ -124,10 +127,8 @@ export const optimizeImage = async (file: File, opts: OptimizeOptions = {}): Pro
     });
 
     // Validate final size
-    if (optimizedFile.size > IMAGE_OPTIMIZE_DEFAULTS.maxSizeMB * 1024 * 1024) {
-      throw new Error(
-        `Image could not be compressed below ${IMAGE_OPTIMIZE_DEFAULTS.maxSizeMB}MB. Please use a smaller image.`
-      );
+    if (optimizedFile.size > maxSizeMB * 1024 * 1024) {
+      throw new Error(`Image could not be compressed below ${maxSizeMB}MB. Please use a smaller image.`);
     }
 
     // Create preview
