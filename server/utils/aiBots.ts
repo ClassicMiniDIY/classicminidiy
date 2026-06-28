@@ -50,6 +50,11 @@ export const PRIVATE_DISALLOW = [
   '/profile',
   '/auth',
   '/login',
+  // Private marketplace surfaces (public /exchange listing/finds/wanted pages
+  // stay crawlable; these are user-specific and noindex'd).
+  '/exchange/messages',
+  '/exchange/watchlist',
+  '/onboarding',
   '/assets/',
   '/data/',
   '/server/',
