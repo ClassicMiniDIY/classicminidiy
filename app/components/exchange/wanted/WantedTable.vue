@@ -82,7 +82,7 @@
 
           <!-- Posted -->
           <td class="whitespace-nowrap text-base-content/70">
-            <ClientOnly>{{ timeAgo(post.created_at) }}</ClientOnly>
+            <ClientOnly>{{ timeAgo(post.created_at, locale) }}</ClientOnly>
           </td>
 
           <!-- User (optional column) -->
@@ -121,7 +121,7 @@
   import { getCountryFlag } from '~/utils/countryFlags';
   import { categoryBadgeClass, formatCategory, formatBudget, formatLocation, timeAgo } from '~/utils/wantedFormatters';
 
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const props = defineProps<{
     posts: WantedPost[];

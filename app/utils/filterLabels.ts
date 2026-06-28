@@ -91,8 +91,8 @@ export function formatFilterSummary(filters: Record<string, any>): string {
   const parts: string[] = [];
 
   for (const [key, value] of Object.entries(filters)) {
-    if (value && labelMap[key]) {
-      parts.push(labelMap[key](value));
+    if (value !== null && value !== undefined && value !== '' && labelMap[key]) {
+      parts.push(labelMap[key](String(value)));
     }
   }
 

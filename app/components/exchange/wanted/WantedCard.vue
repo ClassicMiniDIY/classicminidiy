@@ -48,7 +48,7 @@
       <div class="flex items-center justify-between gap-2 pt-3 mt-auto border-t border-base-300">
         <ClientOnly>
           <span class="text-xs text-base-content/50">
-            {{ timeAgo(post.created_at) }}
+            {{ timeAgo(post.created_at, locale) }}
           </span>
         </ClientOnly>
         <div v-if="post.profiles" class="flex items-center gap-1.5 min-w-0">
@@ -104,7 +104,7 @@
     timeAgo,
   } from '~/utils/wantedFormatters';
 
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const props = defineProps<{
     post: WantedPost;
