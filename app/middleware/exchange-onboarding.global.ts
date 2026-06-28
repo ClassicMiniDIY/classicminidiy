@@ -30,7 +30,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path === '/onboarding' || to.path === '/auth/callback') return;
 
   const { user, userProfile, waitForAuth, fetchUserProfile } = useAuth();
-  await waitForAuth(1500);
+  // Wait for auth to actually settle before deciding. If the bounded wait times
+  // out (e.g. a slow session/token refresh), extend it once — otherwise a
+  // slow-loading logged-in user would be read as null here, mistaken for an
+  // anonymous visitor, and allowed to bypass onboarding.
+  if (!(await waitForAuth(1500))) {
+    await waitForAuth();
+  }
 
   // Anonymous browsing of the exchange stays public.
   if (!user.value) return;
