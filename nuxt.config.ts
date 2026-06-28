@@ -197,6 +197,8 @@ export default defineNuxtConfig({
       '/api/__sitemap__/colors',
       '/api/__sitemap__/wheels',
       '/api/__sitemap__/documents',
+      // Marketplace URLs (flag-gated inside the source — empty pre-cutover).
+      '/api/__sitemap__/exchange',
     ],
     xslColumns: [
       { label: 'URL', width: '50%' },
@@ -226,6 +228,27 @@ export default defineNuxtConfig({
       // module can't see — exclude them here too to avoid mixed signals).
       '/membership/claim',
       '/discord/connect',
+      // All admin sub-pages are private/noindex — keep them out of the sitemap
+      // (the bare `/admin` above only matched the index).
+      '/admin/**',
+      // Private marketplace surfaces are never in the sitemap. Public /exchange
+      // section pages are auto-discovered; dynamic listing/finds/wanted detail
+      // URLs come from /api/__sitemap__/exchange (NOT excluded here, so the broad
+      // glob below would not cancel them post-cutover).
+      '/onboarding',
+      '/exchange/messages',
+      '/exchange/messages/**',
+      '/exchange/watchlist',
+      '/exchange/listings/new',
+      '/exchange/listings/bulk',
+      '/exchange/listings/*/edit',
+      '/exchange/listings/payment/**',
+      '/exchange/finds/submit',
+      '/exchange/wanted/new',
+      // Pre-cutover, hide the ENTIRE marketplace from the sitemap. Build-time flag
+      // (mirrors the runtime gate); at cutover the redeploy drops this so the
+      // public /exchange pages + the dynamic source URLs become discoverable.
+      ...(process.env.NUXT_PUBLIC_EXCHANGE_ENABLED === 'true' ? [] : ['/exchange/**']),
     ],
   },
 
