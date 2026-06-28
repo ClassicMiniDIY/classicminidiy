@@ -23,10 +23,13 @@
         <!-- Question Badge -->
         <span v-if="comment.is_question" class="badge badge-sm badge-info"> {{ t('question') }} </span>
 
-        <!-- Timestamp -->
-        <span class="text-xs text-base-content/60">
-          {{ formatTimeAgo(comment.created_at) }}
-        </span>
+        <!-- Timestamp — client-only: relative time drifts vs server, causing
+             hydration mismatches. -->
+        <ClientOnly>
+          <span class="text-xs text-base-content/60">
+            {{ formatTimeAgo(comment.created_at) }}
+          </span>
+        </ClientOnly>
 
         <!-- Edited indicator -->
         <span v-if="comment.updated_at !== comment.created_at" class="text-xs text-base-content/50"> {{ t('edited') }} </span>
