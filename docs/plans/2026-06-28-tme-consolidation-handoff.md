@@ -37,9 +37,12 @@ is complete it merges to `main` and we flip the flag — that's cutover.
 | #645 | 7 — dashboard + admin core | ✅ merged (+review fixes) |
 | #646 | 8 — admin rest (finds/promotions/messages/newsletter) | ✅ merged (+review fixes) |
 | #647 | 9 — onboarding + remaining pages + seller signals | ✅ merged (+review fixes) |
-| #648 | 10 — feeds + sitemap/robots + legal + redirects | 🔄 open, awaiting Copilot (LAST section) |
+| #648 | 10 — feeds + sitemap/robots + legal + redirects | ✅ merged (+review fixes) |
 
-`dev` is currently `main` + copilot + sections 1–9 (47 commits ahead). Section 10 (#648) open — once it merges, the section-PR phase is **done** and the next step is dev→main cutover prep (see "NOT YET BUILT" + "Cutover" below).
+✅ **Section-PR phase COMPLETE — all 10 sections merged to `dev` (51 commits ahead of `main`).**
+The entire TME consolidation now lives on `dev` behind `NUXT_PUBLIC_EXCHANGE_ENABLED` (off in prod).
+Next step is **NOT** another section — it's the dev→main cutover, which depends on the "NOT YET
+BUILT" backend work below landing first. Nothing more to cherry-pick from `tme-merge` for sections.
 
 ## How to cut the next section PR (the loop)
 
