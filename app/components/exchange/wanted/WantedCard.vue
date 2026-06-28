@@ -46,9 +46,11 @@
 
       <!-- Footer: Posted date + User info -->
       <div class="flex items-center justify-between gap-2 pt-3 mt-auto border-t border-base-300">
-        <span class="text-xs text-base-content/50">
-          {{ timeAgo(post.created_at) }}
-        </span>
+        <ClientOnly>
+          <span class="text-xs text-base-content/50">
+            {{ timeAgo(post.created_at) }}
+          </span>
+        </ClientOnly>
         <div v-if="post.profiles" class="flex items-center gap-1.5 min-w-0">
           <ExchangeAvatar
             :avatar-url="post.profiles.avatar_url"
