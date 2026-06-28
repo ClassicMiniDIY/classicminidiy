@@ -53,9 +53,11 @@
                 : t('peopleCountPlural', { count: group.conversations.length })
             }}
           </span>
-          <span class="text-base-content/50 hidden sm:inline">
-            {{ t('lastActivity', { time: formatTime(group.latestMessageAt) }) }}
-          </span>
+          <ClientOnly>
+            <span class="text-base-content/50 hidden sm:inline">
+              {{ t('lastActivity', { time: formatTime(group.latestMessageAt) }) }}
+            </span>
+          </ClientOnly>
         </div>
       </div>
 
@@ -100,9 +102,11 @@
             >
               {{ getParticipantName(conversation) }}
             </span>
-            <time class="text-xs text-base-content/60 flex-shrink-0">
-              {{ formatTime(conversation.last_message_at) }}
-            </time>
+            <ClientOnly>
+              <time class="text-xs text-base-content/60 flex-shrink-0">
+                {{ formatTime(conversation.last_message_at) }}
+              </time>
+            </ClientOnly>
           </div>
           <div class="text-xs text-base-content/50 mt-0.5 flex items-center gap-1">
             <i class="fas fa-circle-arrow-right"></i>

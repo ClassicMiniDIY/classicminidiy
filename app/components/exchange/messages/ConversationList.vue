@@ -51,10 +51,12 @@
                   {{ getOtherParticipantName(conversation) }}
                 </h3>
 
-                <!-- Timestamp -->
-                <time class="text-xs text-base-content/60 flex-shrink-0">
-                  {{ formatTime(conversation.last_message_at) }}
-                </time>
+                <!-- Timestamp (client-only: relative time drifts vs server → hydration mismatch) -->
+                <ClientOnly>
+                  <time class="text-xs text-base-content/60 flex-shrink-0">
+                    {{ formatTime(conversation.last_message_at) }}
+                  </time>
+                </ClientOnly>
               </div>
 
               <!-- Listing title + sold badge -->
