@@ -11,5 +11,175 @@
       "source": "/t/:path*",
       "destination": "https://us.i.posthog.com/:path*"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/admin/users",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/admin/users",
+      "permanent": true
+    },
+    {
+      "source": "/admin/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/admin/exchange/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/settings/membership",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/membership",
+      "permanent": true
+    },
+    {
+      "source": "/settings/notifications",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/dashboard/notifications",
+      "permanent": true
+    },
+    {
+      "source": "/settings/saved-searches",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/dashboard/saved-searches",
+      "permanent": true
+    },
+    {
+      "source": "/terms",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/legal/marketplace-terms",
+      "permanent": true
+    },
+    {
+      "source": "/feed.xml",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/feed.xml",
+      "permanent": true
+    },
+    {
+      "source": "/atom.xml",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/atom.xml",
+      "permanent": true
+    },
+    {
+      "source": "/feed.json",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/feed.json",
+      "permanent": true
+    },
+    {
+      "source": "/feed/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/feed/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/feeds",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/feeds",
+      "permanent": true
+    },
+    {
+      "source": "/listings/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/listings/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/wanted/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/wanted/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/finds/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/finds/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/messages/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/messages/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/watchlist",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/watchlist",
+      "permanent": true
+    },
+    {
+      "source": "/sold",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/sold",
+      "permanent": true
+    },
+    {
+      "source": "/social",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/social",
+      "permanent": true
+    },
+    {
+      "source": "/how-it-works",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/how-it-works",
+      "permanent": true
+    },
+    {
+      "source": "/safety",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange/safety",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange",
+      "permanent": true
+    },
+    {
+      "source": "/dashboard/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/dashboard/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/profile/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/profile/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/users/:path*",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/users/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/onboarding",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/onboarding",
+      "permanent": true
+    },
+    {
+      "source": "/contact",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/contact",
+      "permanent": true
+    },
+    {
+      "source": "/privacy",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "(www\\.)?theminiexchange\\.com" }],
+      "destination": "https://www.classicminidiy.com/exchange",
+      "permanent": true
+    }
   ]
 }
