@@ -35,11 +35,11 @@ is complete it merges to `main` and we flip the flag — that's cutover.
 | #643 | 5 — edit/bulk + write server routes | ✅ merged (+review fixes) |
 | #644 | 6 — messaging + Finds scraper | ✅ merged (+review fixes) |
 | #645 | 7 — dashboard + admin core | ✅ merged (+review fixes) |
-| #646 | 8 — admin rest (finds/promotions/messages/newsletter) | 🔄 open, awaiting Copilot |
-| — | 9 — onboarding + remaining pages + seller signals | ⬜ next |
-| — | 10 — feeds + sitemap/robots + legal + redirects | ⬜ |
+| #646 | 8 — admin rest (finds/promotions/messages/newsletter) | ✅ merged (+review fixes) |
+| #647 | 9 — onboarding + remaining pages + seller signals | 🔄 open, awaiting Copilot |
+| — | 10 — feeds + sitemap/robots + legal + redirects | ⬜ next (last section) |
 
-`dev` is currently `main` + copilot + sections 1–7 (33 commits ahead). Section 8 (#646) open.
+`dev` is currently `main` + copilot + sections 1–8 (39 commits ahead). Section 9 (#647) open.
 
 ## How to cut the next section PR (the loop)
 
