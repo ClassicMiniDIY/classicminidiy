@@ -1,7 +1,7 @@
 import { sanitizeUserInput } from '../../../utils/exchange/sanitize';
 import { moderateMessage } from '../../../utils/exchange/contentFilter';
 import { createRateLimitMiddleware, RateLimitPresets } from '../../../utils/exchange/rateLimit';
-import { VALID_CATEGORIES, MAX_CONTENT_LENGTH } from '~/utils/constants';
+import { VALID_CATEGORIES, VALID_CONDITION_PREFERENCES, MAX_CONTENT_LENGTH } from '~/utils/constants';
 import { validateBudgetValue, validateBudgetRange } from '../../../utils/exchange/validators';
 import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
@@ -59,6 +59,14 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         message: 'Parts subcategory is required when category is parts',
+      });
+    }
+
+    // Validate condition preference if provided
+    if (conditionPreference !== undefined && !VALID_CONDITION_PREFERENCES.includes(conditionPreference)) {
+      throw createError({
+        statusCode: 400,
+        message: `Invalid condition preference. Must be one of: ${VALID_CONDITION_PREFERENCES.join(', ')}`,
       });
     }
 

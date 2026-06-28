@@ -38,8 +38,7 @@ export default defineEventHandler(async (event) => {
         user:profiles (
           id,
           display_name,
-          avatar_url,
-          email
+          avatar_url
         )
       `
       )

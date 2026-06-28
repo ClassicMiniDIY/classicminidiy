@@ -1,6 +1,8 @@
 /**
  * Sanitize user input to prevent XSS attacks
- * Strips HTML tags and encodes dangerous characters
+ * Strips HTML tags and normalizes whitespace, storing raw text.
+ * Do NOT HTML-encode here — the render layer (Vue mustache) escapes on output.
+ * Encoding here would double-escape and hide patterns from moderation/URL detection.
  */
 export function sanitizeUserInput(input: string): string {
   if (!input || typeof input !== 'string') {
@@ -9,18 +11,6 @@ export function sanitizeUserInput(input: string): string {
 
   // Remove HTML tags
   let sanitized = input.replace(/<[^>]*>/g, '');
-
-  // Encode special characters
-  const htmlEntities: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#x27;',
-    '/': '&#x2F;',
-  };
-
-  sanitized = sanitized.replace(/[&<>"'\/]/g, (char) => htmlEntities[char] || char);
 
   // Remove potential script injection patterns
   sanitized = sanitized.replace(/javascript:/gi, '');
@@ -34,7 +24,9 @@ export function sanitizeUserInput(input: string): string {
 
 /**
  * Sanitize comment content
- * Allows basic formatting but removes dangerous content
+ * Strips HTML tags while preserving newlines/whitespace, storing raw text.
+ * Comments render as plain text (whitespace-pre-wrap, NOT v-html), so do NOT
+ * HTML-encode here — encoding produces inert, double-escaped output (e.g. "&lt;3").
  */
 export function sanitizeCommentContent(content: string): string {
   if (!content || typeof content !== 'string') {
@@ -45,16 +37,12 @@ export function sanitizeCommentContent(content: string): string {
   const maxLength = 2000;
   let sanitized = content.slice(0, maxLength);
 
-  // Remove HTML tags except basic formatting (newlines preserved)
-  sanitized = sanitized.replace(/<(?!br\s*\/?)[^>]+>/gi, '');
-
-  // Encode dangerous characters but preserve basic punctuation
-  sanitized = sanitized.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+  // Remove all HTML tags (newlines/whitespace preserved as-is)
+  sanitized = sanitized.replace(/<[^>]*>/g, '');
 
   // Remove script injection patterns
   sanitized = sanitized.replace(/javascript:/gi, '');
   sanitized = sanitized.replace(/on\w+\s*=/gi, '');
-  sanitized = sanitized.replace(/<script/gi, '&lt;script');
 
   // Trim but preserve paragraph breaks
   sanitized = sanitized.trim();
