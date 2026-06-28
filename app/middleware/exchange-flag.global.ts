@@ -4,21 +4,12 @@
 // already merged to main. Flipping the flag (env-only, no rebuild) lights them up.
 //
 // Runs on server AND client (unlike admin.global.ts) so SSR returns a real 404,
-// not a flash of content. Keep this list in sync as marketplace surfaces land:
-// the /exchange section, the dashboard/admin exchange tabs, and the feeds.
-const GUARDED_PREFIXES = [
-  '/exchange',
-  '/onboarding',
-  '/dashboard/listings',
-  '/dashboard/wanted',
-  '/dashboard/notifications',
-  '/dashboard/saved-searches',
-  '/admin/exchange',
-];
+// not a flash of content. The guarded set lives in ~/utils/exchangeRoutes so the
+// flag-gate and the onboarding-gate share one definition of "the Exchange".
+import { EXCHANGE_FLAG_PREFIXES, pathInPrefixes } from '~/utils/exchangeRoutes';
 
 export default defineNuxtRouteMiddleware((to) => {
-  const isGuarded = GUARDED_PREFIXES.some((prefix) => to.path === prefix || to.path.startsWith(`${prefix}/`));
-  if (!isGuarded) {
+  if (!pathInPrefixes(to.path, EXCHANGE_FLAG_PREFIXES)) {
     return;
   }
 

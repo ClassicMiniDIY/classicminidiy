@@ -11,6 +11,8 @@
 // state. We actively wait for auth + fetch the profile before deciding, so a
 // not-onboarded user can't slip in during the auth-load window. Verified state
 // is cached per user id to avoid refetching on every in-section navigation.
+import { EXCHANGE_PREFIXES, pathInPrefixes } from '~/utils/exchangeRoutes';
+
 let verifiedUserId: string | null = null;
 
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -20,9 +22,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { exchangeEnabled } = useRuntimeConfig().public;
   if (!exchangeEnabled) return;
 
-  // Only guard the exchange section.
-  const inExchange = to.path === '/exchange' || to.path.startsWith('/exchange/');
-  if (!inExchange) return;
+  // Guard the whole Exchange — the /exchange section AND the user's marketplace
+  // management tabs under /dashboard (shared prefix list with the flag-gate).
+  if (!pathInPrefixes(to.path, EXCHANGE_PREFIXES)) return;
 
   // Never trap the onboarding page or the auth callback.
   if (to.path === '/onboarding' || to.path === '/auth/callback') return;

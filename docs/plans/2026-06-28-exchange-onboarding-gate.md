@@ -76,3 +76,24 @@ toolbox experience a *soft*, dismissible-by-completion nudge instead.
 - **Completion reactivity:** `completeOnboarding` → `fetchUserProfile` refreshes
   `onboarding_completed`, so the nudge vanishes, the chat returns, and the exchange unlocks
   without a reload.
+
+## Post-review adjustments (adversarial review, 2026-06-28)
+
+A 4-lens adversarial review (24 candidate findings → 5 confirmed) drove these:
+
+- **Gate scope (was the real bug):** the hard gate now keys off a shared
+  `~/utils/exchangeRoutes.ts#EXCHANGE_PREFIXES` (= `/exchange` **plus** the user's marketplace
+  dashboard tabs `/dashboard/{listings,wanted,notifications,saved-searches}`), imported by BOTH
+  the flag-gate and the onboarding-gate so the two can't drift. Previously the onboarding gate
+  only matched `/exchange/**`, letting a not-onboarded user reach `/dashboard/listings` (real
+  writes). `/onboarding` and `/admin/exchange` are flag-hidden but intentionally NOT
+  onboarding-gated (admins reach moderation via `is_admin`, not buyer/seller onboarding).
+- **a11y:** the nudge is now an `<aside role="complementary" aria-live="polite">` with a label
+  and `aria-hidden` decorative icons; the avatar picker is keyboard-operable (`role="button"`,
+  `tabindex=0`, Enter/Space handlers, `aria-label`).
+- **Accepted as-is:** nudge shares the bottom-right corner with toasts — but it inherits the
+  exact anchor of the `FloatingChatInput` it replaces, so this is pre-existing corner behavior,
+  not a regression.
+- **Deferred to the profile merge:** `profiles.location` stores the full formatted address
+  (matches TME) while the UI promises "only your country is public" — the public-display
+  contract (country-only rendering on `/users/[id]`) is handled in the seller-signal merge.
