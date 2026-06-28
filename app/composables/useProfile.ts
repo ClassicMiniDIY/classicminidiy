@@ -129,6 +129,48 @@ export const useProfile = () => {
   };
 
   /**
+   * Complete profile onboarding. Upserts the profile (handles both the
+   * trigger-created row and the edge case where no row exists yet) and flips
+   * `onboarding_completed` true. Display name + location are required; the rest
+   * are optional. Drives the exchange onboarding gate (see useOnboardingGate).
+   */
+  const completeOnboarding = async (profileData: {
+    display_name: string;
+    location: string;
+    bio?: string;
+    avatar_url?: string;
+    preferred_currency?: string;
+  }) => {
+    if (!user.value) throw new Error('Not authenticated');
+    if (!profileData.display_name?.trim()) throw new Error('Display name is required');
+    if (!profileData.location?.trim()) throw new Error('Location is required');
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: user.value.id,
+          email: user.value.email!,
+          ...profileData,
+          onboarding_completed: true,
+        },
+        { onConflict: 'id' }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    capture('onboarding_completed', {
+      has_avatar: !!profileData.avatar_url,
+      has_bio: !!profileData.bio,
+      preferred_currency: profileData.preferred_currency,
+    });
+
+    return data;
+  };
+
+  /**
    * Get a public profile by UUID.
    * Returns { profile } on success, { private: true } if user exists but is private,
    * or null if user doesn't exist.
@@ -169,6 +211,7 @@ export const useProfile = () => {
     fetchProfile,
     updateProfile,
     uploadAvatar,
+    completeOnboarding,
     getPublicProfile,
     getPublicProfileVehicles,
   };

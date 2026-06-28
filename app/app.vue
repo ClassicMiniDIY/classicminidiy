@@ -81,6 +81,7 @@
     <div class="app-content">
       <MainNav></MainNav>
       <Toaster />
+      <OnboardingNudge />
       <NuxtLoadingIndicator />
       <main id="main-content" class="bg-base-100">
         <NuxtPage />

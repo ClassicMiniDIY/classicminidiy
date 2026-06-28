@@ -9,6 +9,10 @@ interface UserProfile {
   total_submissions: number;
   approved_submissions: number;
   rejected_submissions: number;
+  // Profile-onboarding flag (a real `profiles` column). Drives the exchange
+  // onboarding gate + the toolbox nudge (see useOnboardingGate). Distinct from
+  // `onboarding_completed_app`, which is the mobile app's flag.
+  onboarding_completed: boolean;
   // Sustaining Member status. NOT a `profiles` column — it is computed by
   // user_has_subscription() and folded in here so the badge + benefits area
   // can gate on shared auth state (keystone §9). See fetchMembership below.
@@ -65,7 +69,7 @@ export const useAuth = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select(
-          'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions'
+          'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions, onboarding_completed'
         )
         .eq('id', userId)
         .single();
