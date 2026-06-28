@@ -97,20 +97,32 @@ gh pr merge <n> --rebase --delete-branch
 
 These were designed/decided but not yet coded — they need secrets/Supabase and were deferred:
 
-1. **Social auto-posting (web).** Port `TheMiniExchange/server/utils/socialMedia.ts` +
-   `imageProcessor.ts` → `server/utils/exchange/`; add the `social-retry` admin route
-   (`server/api/admin/exchange/social-retry.post.ts`) and a **cron sweep** (DECISION) that posts
-   paid+active listings with `promoted_on_social=false`. Add `sharp` dep. Add private runtimeConfig:
-   `metaAccessToken / metaPageId / metaInstagramAccountId / blueskyHandle / blueskyAppPassword`
-   = **same TME account values** (Cole confirmed reuse). Replace the SES failure-email with a
-   notification-queue enqueue (or log) — the admin already sees failures in the promotions dashboard.
-   The promotions admin page already calls `/api/admin/exchange/social-retry` (currently 404).
-2. **Newsletter bulk send → Supabase (DECISION).** TME's `executeNewsletterSend` uses a post-response
-   loop that **breaks on Vercel serverless** — so the bulk send moves to a **Supabase edge fn +
-   pg_cron** (loop subscribers + SES). **Keep the Shopify subscriber merge** (DECISION) — port
-   `TheMiniExchange/server/utils/shopify.ts` + token. Web admin newsletter page already calls
-   `/api/admin/exchange/newsletter/{preview,test,send}` (currently 404) → make them thin proxies.
-   Tables (`newsletter_sends`, `email_suppressions`, `notification_preferences`) already exist (shared DB).
+1. **Social auto-posting — ✅ DONE (web; authored, not deployed).** On CMDIY `tme-merge`:
+   `server/utils/exchange/{socialMedia,imageProcessor}.ts` (Meta Graph + Bluesky + sharp), the
+   `server/api/admin/exchange/social-retry.post.ts` admin route (requireAdminAuth; the promotions page's
+   404 call now resolves), and `server/api/cron/exchange/social-sweep.get.ts` — a Vercel Cron
+   (`*/15`, in vercel.json) that posts paid+active+`promoted_on_social=false` listings (CRON_SECRET
+   bearer, flag-gated, bounded 10/run; idempotent atomic claim). `sharp` added; meta*/bluesky* +
+   `cronSecret` private runtimeConfig added (reuse TME creds). SES failure-email → console.error.
+   Routes verified compiling (401, sharp resolves). **Deploy/env:** set META_ACCESS_TOKEN, META_PAGE_ID,
+   META_INSTAGRAM_ACCOUNT_ID, BLUESKY_HANDLE, BLUESKY_APP_PASSWORD, CRON_SECRET in Vercel; confirm the
+   plan allows the `*/15` cron (Hobby = once/day max → bump the schedule if so).
+2. **Newsletter — ✅ core DONE (bulk send), ⬜ admin proxies remain.**
+   - ✅ **Bulk send + Shopify merge (supabase `tme-merge`, commit 58cf152, deno-checked, NOT deployed):**
+     process-notifications already had `processWeeklyDigest` (premium/free curation, SES send,
+     `newsletter_sends` logging) + a pg_cron (`weekly-digest-newsletter`, Mon 09:00 UTC). Enriched it
+     with `_shared/shopify.ts` (ported Shopify Admin GraphQL subscriber fetch) + `email_suppressions`
+     filtering — recipients = opted-in profiles ∪ Shopify subs (deduped) − suppressed. So the
+     consolidation's "edge fn + pg_cron + keep Shopify merge" decision is satisfied by EXTENDING the
+     existing digest, not a new fn (avoids a duplicate newsletter). **Deploy/env:** set
+     SHOPIFY_STORE_DOMAIN + SHOPIFY_ACCESS_TOKEN as edge-fn secrets.
+   - ⬜ **Admin proxies (`/api/admin/exchange/newsletter/{preview,test,send}` — still 404):** the admin
+     newsletter page (`app/pages/admin/exchange/newsletter.vue`) calls these for manual preview/test/send.
+     Wire as thin web routes (requireAdminAuth) → for `send`, invoke process-notifications with
+     `{action:'weekly_digest'}` (the pattern: `$fetch(\`${supabaseUrl}/functions/v1/process-notifications\`, { headers: Bearer service-key })`, see server/api/models/checkout.post.ts). `preview`/`test`
+     need small new process-notifications actions (return counts + listings + emailHtml; send to one
+     address) OR render web-side — preview/test reuse the same curation+template, so a process-notifications
+     `newsletter_preview`/`newsletter_test` action is the DRY path. Tables already exist (shared DB).
 3. **Transactional email — ✅ DONE (authored, not deployed).** SES builders + web enqueues + watcher
    triggers all landed; deploying `process-notifications` + applying migrations `20260628000001/2` at
    cutover makes it live.
