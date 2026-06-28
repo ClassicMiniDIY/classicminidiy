@@ -35,8 +35,11 @@
       const { data, error } = await applyPhotoOrdering(
         supabase
           .from('listings')
+          // Select * so ExchangeListingsListingCard gets every field it reads
+          // (status, currency, listing_category, manufacturer, country, previous_price,
+          // final_price, city/state_province, featured_until) and sortExamplesLast has `status`.
           .select(
-            `id, title, slug, description, year, model, price, location, condition, tier, created_at,
+            `*,
              listing_photos ( id, storage_path, is_primary, display_order )`
           )
           .eq('user_id', userId)
