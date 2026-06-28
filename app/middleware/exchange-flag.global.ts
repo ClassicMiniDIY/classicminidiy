@@ -8,6 +8,7 @@
 // the /exchange section, the dashboard/admin exchange tabs, and the feeds.
 const GUARDED_PREFIXES = [
   '/exchange',
+  '/onboarding',
   '/dashboard/listings',
   '/dashboard/wanted',
   '/dashboard/notifications',
