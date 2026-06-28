@@ -66,13 +66,19 @@
   };
 
   // Close suggestions when clicking outside
+  const handleClickOutside = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      showSuggestions.value = false;
+    }
+  };
+
   onMounted(() => {
-    document.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.relative')) {
-        showSuggestions.value = false;
-      }
-    });
+    document.addEventListener('click', handleClickOutside);
+  });
+
+  onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside);
   });
 </script>
 

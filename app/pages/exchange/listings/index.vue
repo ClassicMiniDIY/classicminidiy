@@ -199,8 +199,6 @@
   const { t } = useI18n();
 
   const config = useRuntimeConfig();
-  const supabase = useSupabase();
-  const { user } = useAuth();
   const { capture } = usePostHog();
 
   const {
@@ -288,8 +286,8 @@
   const listingsWithCoordinates = computed(() => {
     return listings.value.filter(
       (listing) =>
-        listing.latitude &&
-        listing.longitude &&
+        listing.latitude != null &&
+        listing.longitude != null &&
         !isNaN(listing.latitude) &&
         !isNaN(listing.longitude) &&
         listing.latitude >= -90 &&
@@ -300,15 +298,15 @@
   });
 
   // Check if we're on desktop (for SSR compatibility)
+  const checkDesktop = () => {
+    isDesktop.value = window.innerWidth >= 1024; // lg breakpoint
+  };
   onMounted(() => {
-    const checkDesktop = () => {
-      isDesktop.value = window.innerWidth >= 1024; // lg breakpoint
-    };
     checkDesktop();
     window.addEventListener('resize', checkDesktop);
-    onBeforeUnmount(() => {
-      window.removeEventListener('resize', checkDesktop);
-    });
+  });
+  onBeforeUnmount(() => {
+    window.removeEventListener('resize', checkDesktop);
   });
 
   // Compute pagination range for display
