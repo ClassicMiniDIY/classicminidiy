@@ -42,7 +42,7 @@
         </div>
 
         <!-- Tabs -->
-        <div role="tablist" class="tabs tabs-bordered mb-4">
+        <div role="tablist" class="tabs tabs-border mb-4">
           <button
             v-for="tab in tabs"
             :key="tab.key"
