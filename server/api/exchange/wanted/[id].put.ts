@@ -174,9 +174,13 @@ export default defineEventHandler(async (event) => {
       updateData.budget_max = budgetMax;
     }
 
-    // Validate budget range if both are provided or being updated
-    if (updateData.budget_min !== undefined && updateData.budget_max !== undefined) {
-      validateBudgetRange(updateData.budget_min, updateData.budget_max);
+    // Validate the would-be-persisted budget range. Fall back to the existing post's
+    // values for whichever side isn't in the request so a partial update can't persist
+    // an invalid range against the stored value.
+    const resolvedBudgetMin = updateData.budget_min !== undefined ? updateData.budget_min : existingPost.budget_min;
+    const resolvedBudgetMax = updateData.budget_max !== undefined ? updateData.budget_max : existingPost.budget_max;
+    if (resolvedBudgetMin !== null && resolvedBudgetMin !== undefined && resolvedBudgetMax !== null && resolvedBudgetMax !== undefined) {
+      validateBudgetRange(resolvedBudgetMin, resolvedBudgetMax);
     }
 
     // Handle currency
