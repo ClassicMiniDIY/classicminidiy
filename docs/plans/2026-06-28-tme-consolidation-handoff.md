@@ -111,7 +111,9 @@ These were designed/decided but not yet coded — they need secrets/Supabase and
    `TheMiniExchange/server/utils/shopify.ts` + token. Web admin newsletter page already calls
    `/api/admin/exchange/newsletter/{preview,test,send}` (currently 404) → make them thin proxies.
    Tables (`newsletter_sends`, `email_suppressions`, `notification_preferences`) already exist (shared DB).
-3. **Transactional email — SES builders DONE (supabase side), web enqueues PARTLY pending.**
+3. **Transactional email — ✅ DONE (authored, not deployed).** SES builders + web enqueues + watcher
+   triggers all landed; deploying `process-notifications` + applying migrations `20260628000001/2` at
+   cutover makes it live.
    - ✅ **Supabase (`classicminidiy-supabase` `tme-merge`, commit 3287675, deno-checked, NOT deployed):**
      `process-notifications` now renders 7 new TME-branded marketplace templates +
      migration `20260628000001` widens `notification_queue.valid_event_type`:
@@ -128,12 +130,14 @@ These were designed/decided but not yet coded — they need secrets/Supabase and
      `seller_inquiry` (confirmed NOT redundant — it's the anonymous contact form, no conversation/
      `new_message`; unique batch key per inquiry); `wanted/create` → `admin_wanted_pending`;
      `external-listings/notify-submit` → `admin_find_pending`. All fire-and-forget + awaited.
-   - ⬜ **`watchlist_sold` / `price_drop` still not fired** — in the `EventType` union for parity but no
-     caller. There is NO mark-sold or price-update route under `server/api/exchange/` (the mark-sold
-     flow is `MarkSoldModal` → likely a PostgREST update/RPC client-side; price edits go through the
-     listing edit/update path). To wire: find those trigger points, query the watchlist for the listing
-     to fan out to each watcher, then `queueNotification` per watcher with `buildBatchKey('watchlist_sold'
-     | 'price_drop', { listingId })`. Builders + constraint already accept them.
+   - ✅ **`watchlist_sold` / `price_drop` fire via DB trigger** (supabase `tme-merge`, migration
+     `20260628000002`, commit 43080d4). An `AFTER UPDATE ON listings` trigger
+     (`notify_listing_watchers`, SECURITY DEFINER) fans rows out to every watcher (except the seller):
+     status→`sold` ⇒ `watchlist_sold`, active price decrease (`NEW.price < OLD.price`) ⇒ `price_drop`.
+     Chosen over a web route because mark-sold/price edits run client-side via PostgREST (a route hook
+     would be skippable) and the trigger gets `OLD.price` vs `NEW.price` natively. Validated in a
+     disposable Postgres (sale→2, drop→2, seller excluded, no-op updates don't fire; payloads match the
+     builders). The web `EventType` union still lists both for parity; they have no web caller by design.
    - **Email is AWS SES, NOT Resend.**
 4. **Supabase edge-fn branch — ✅ merged up to date.** `classicminidiy-supabase` `tme-merge` has
    `create-listing-checkout / verify-listing-payment / stripe-listings-webhook` (S1) and is now merged
