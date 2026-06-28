@@ -111,13 +111,31 @@ These were designed/decided but not yet coded — they need secrets/Supabase and
    `TheMiniExchange/server/utils/shopify.ts` + token. Web admin newsletter page already calls
    `/api/admin/exchange/newsletter/{preview,test,send}` (currently 404) → make them thin proxies.
    Tables (`newsletter_sends`, `email_suppressions`, `notification_preferences`) already exist (shared DB).
-3. **Transactional email = ALREADY enqueued web-side** (the ported routes insert into
-   `notification_queue`). Remaining: extend the **`process-notifications`** edge fn (in
-   `classicminidiy-supabase`) to render the ~15 marketplace templates via **AWS SES** (templates live
-   in TME's `server/utils/email.ts`). **Email is AWS SES, NOT Resend.**
-4. **Supabase edge-fn branch.** `classicminidiy-supabase` has a `tme-merge` branch with
-   `create-listing-checkout / verify-listing-payment / stripe-listings-webhook` (authored, **NOT
-   deployed**). It is ~4 commits behind supabase `main` — `git merge origin/main` then deploy at cutover.
+3. **Transactional email — SES builders DONE (supabase side), web enqueues PARTLY pending.**
+   - ✅ **Supabase (`classicminidiy-supabase` `tme-merge`, commit 3287675, deno-checked, NOT deployed):**
+     `process-notifications` now renders 7 new TME-branded marketplace templates +
+     migration `20260628000001` widens `notification_queue.valid_event_type`:
+     `listing_submitted`, `seller_inquiry`, `watchlist_sold`, `price_drop`, `admin_listing_pending`,
+     `admin_wanted_pending`, `admin_find_pending`. (5 older types — `new_message`, `new_comment`,
+     `comment_reply`, `listing_status`, `saved_search_match` — were already built.) New types use the
+     TME From identity (out of `CMDIY_EVENT_TYPES`) and are unmapped in the prefs map
+     (admin = always-sent; user = default-on email). URLs use `SITE_URL` + bare TME paths and rely on
+     the host 301s.
+   - ⬜ **Web enqueues remaining (CMDIY `tme-merge`):** extend `server/utils/exchange/notificationQueue.ts`
+     `EventType` union + `buildBatchKey` for the 7 types; add an **admin fan-out helper** (one queue row
+     per `profiles.is_admin=true` user). Then wire the 4 `TODO(Stage 8)` sites:
+     `listings/submit.post.ts` → `listing_submitted` (seller) + `admin_listing_pending` (admins);
+     `contact-seller.post.ts` → `seller_inquiry` (verify it isn't redundant with the `new_message` that
+     the conversation insert already triggers); `wanted/create.post.ts` → `admin_wanted_pending`
+     (payload `{postTitle, posterName, isFlagged}`); `external-listings/notify-submit.post.ts` →
+     `admin_find_pending` (payload `{findTitle, sourceSite, submitterName}`).
+   - ⬜ **`watchlist_sold` / `price_drop` have no web trigger yet** — there is NO mark-sold or
+     price-update route under `server/api/exchange/`; locate the mark-sold flow (MarkSoldModal → RPC?)
+     and the price-edit flow, add watcher fan-out (query the watchlist for the listing) before enqueuing.
+   - **Email is AWS SES, NOT Resend.**
+4. **Supabase edge-fn branch — ✅ merged up to date.** `classicminidiy-supabase` `tme-merge` has
+   `create-listing-checkout / verify-listing-payment / stripe-listings-webhook` (S1) and is now merged
+   current with `main` (merge commit 7346d83). Still **NOT deployed** — deploy at cutover.
 5. **Tests.** TME's ~142 vitest tests not yet ported.
 
 ## Cutover (dev → main), later
