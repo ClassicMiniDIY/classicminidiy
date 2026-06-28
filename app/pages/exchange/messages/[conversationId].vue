@@ -24,14 +24,15 @@
         <!-- Listing Info Header -->
         <div class="card bg-base-100 shadow-sm">
           <div class="card-body p-4">
-            <div class="flex gap-4">
+            <!-- Listing-linked conversation -->
+            <div v-if="conversation.listing" class="flex gap-4">
               <!-- Listing image -->
-              <NuxtLink :to="`/exchange/listings/${conversation.listing?.slug}`" class="avatar flex-shrink-0">
+              <NuxtLink :to="`/exchange/listings/${conversation.listing.slug}`" class="avatar flex-shrink-0">
                 <div class="w-20 h-20 rounded">
                   <img
                     v-if="listingImage"
                     :src="listingImage"
-                    :alt="conversation.listing?.title"
+                    :alt="conversation.listing.title"
                     class="object-cover w-full h-full"
                     loading="lazy"
                   />
@@ -44,18 +45,34 @@
               <!-- Listing details -->
               <div class="flex-1">
                 <NuxtLink
-                  :to="`/exchange/listings/${conversation.listing?.slug}`"
+                  :to="`/exchange/listings/${conversation.listing.slug}`"
                   class="link link-hover text-lg font-semibold mb-1 block"
                 >
-                  {{ conversation.listing?.title }}
+                  {{ conversation.listing.title }}
                 </NuxtLink>
 
                 <div class="flex items-center gap-4 text-sm">
                   <span class="font-bold text-primary text-lg">
-                    ${{ conversation.listing?.price?.toLocaleString() }}
+                    ${{ conversation.listing.price?.toLocaleString() }}
                   </span>
                   <span class="text-base-content/60">{{ t('chattingWith', { name: otherParticipantName }) }}</span>
                 </div>
+              </div>
+            </div>
+
+            <!-- Orphan / wanted conversation (no associated listing) -->
+            <div v-else class="flex gap-4">
+              <div class="avatar flex-shrink-0">
+                <div class="w-20 h-20 rounded">
+                  <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                    <i class="fas fa-comments text-2xl text-base-content/30"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex-1">
+                <p class="text-lg font-semibold mb-1">{{ t('noListing') }}</p>
+                <span class="text-base-content/60 text-sm">{{ t('chattingWith', { name: otherParticipantName }) }}</span>
               </div>
             </div>
           </div>
@@ -141,7 +158,7 @@
   const otherParticipantName = computed(() => {
     if (!conversation.value) return '';
     const participant = getOtherParticipant(conversation.value);
-    return participant?.name || 'Unknown User';
+    return participant?.name || t('unknownUser');
   });
 
   const listingImage = computed(() => {
@@ -259,7 +276,9 @@
     "notFound": "Conversation not found",
     "chattingWith": "Chatting with {name}",
     "conversation": "Conversation",
-    "loadOlder": "Load Older Messages"
+    "loadOlder": "Load Older Messages",
+    "unknownUser": "Unknown User",
+    "noListing": "No associated listing"
   },
   "es": {
     "seo": { "title": "Conversación - The Mini Exchange | Classic Mini DIY" },
@@ -267,7 +286,9 @@
     "notFound": "Conversación no encontrada",
     "chattingWith": "Chateando con {name}",
     "conversation": "Conversación",
-    "loadOlder": "Cargar mensajes anteriores"
+    "loadOlder": "Cargar mensajes anteriores",
+    "unknownUser": "Usuario desconocido",
+    "noListing": "Sin anuncio asociado"
   },
   "fr": {
     "seo": { "title": "Conversation - The Mini Exchange | Classic Mini DIY" },
@@ -275,7 +296,9 @@
     "notFound": "Conversation introuvable",
     "chattingWith": "Discussion avec {name}",
     "conversation": "Conversation",
-    "loadOlder": "Charger les messages plus anciens"
+    "loadOlder": "Charger les messages plus anciens",
+    "unknownUser": "Utilisateur inconnu",
+    "noListing": "Aucune annonce associée"
   },
   "de": {
     "seo": { "title": "Konversation - The Mini Exchange | Classic Mini DIY" },
@@ -283,7 +306,9 @@
     "notFound": "Konversation nicht gefunden",
     "chattingWith": "Chat mit {name}",
     "conversation": "Konversation",
-    "loadOlder": "Ältere Nachrichten laden"
+    "loadOlder": "Ältere Nachrichten laden",
+    "unknownUser": "Unbekannter Benutzer",
+    "noListing": "Kein zugehöriges Angebot"
   },
   "it": {
     "seo": { "title": "Conversazione - The Mini Exchange | Classic Mini DIY" },
@@ -291,7 +316,9 @@
     "notFound": "Conversazione non trovata",
     "chattingWith": "Stai chattando con {name}",
     "conversation": "Conversazione",
-    "loadOlder": "Carica messaggi precedenti"
+    "loadOlder": "Carica messaggi precedenti",
+    "unknownUser": "Utente sconosciuto",
+    "noListing": "Nessun annuncio associato"
   },
   "pt": {
     "seo": { "title": "Conversa - The Mini Exchange | Classic Mini DIY" },
@@ -299,7 +326,9 @@
     "notFound": "Conversa não encontrada",
     "chattingWith": "A conversar com {name}",
     "conversation": "Conversa",
-    "loadOlder": "Carregar mensagens anteriores"
+    "loadOlder": "Carregar mensagens anteriores",
+    "unknownUser": "Utilizador desconhecido",
+    "noListing": "Sem anúncio associado"
   },
   "ru": {
     "seo": { "title": "Переписка - The Mini Exchange | Classic Mini DIY" },
@@ -307,7 +336,9 @@
     "notFound": "Переписка не найдена",
     "chattingWith": "Переписка с {name}",
     "conversation": "Переписка",
-    "loadOlder": "Загрузить более старые сообщения"
+    "loadOlder": "Загрузить более старые сообщения",
+    "unknownUser": "Неизвестный пользователь",
+    "noListing": "Нет связанного объявления"
   },
   "ja": {
     "seo": { "title": "会話 - The Mini Exchange | Classic Mini DIY" },
@@ -315,7 +346,9 @@
     "notFound": "会話が見つかりません",
     "chattingWith": "{name} とチャット中",
     "conversation": "会話",
-    "loadOlder": "過去のメッセージを読み込む"
+    "loadOlder": "過去のメッセージを読み込む",
+    "unknownUser": "不明なユーザー",
+    "noListing": "関連する出品はありません"
   },
   "zh": {
     "seo": { "title": "会话 - The Mini Exchange | Classic Mini DIY" },
@@ -323,7 +356,9 @@
     "notFound": "未找到会话",
     "chattingWith": "正在与 {name} 聊天",
     "conversation": "会话",
-    "loadOlder": "加载更早的消息"
+    "loadOlder": "加载更早的消息",
+    "unknownUser": "未知用户",
+    "noListing": "无关联商品"
   },
   "ko": {
     "seo": { "title": "대화 - The Mini Exchange | Classic Mini DIY" },
@@ -331,7 +366,9 @@
     "notFound": "대화를 찾을 수 없습니다",
     "chattingWith": "{name} 님과 대화 중",
     "conversation": "대화",
-    "loadOlder": "이전 메시지 불러오기"
+    "loadOlder": "이전 메시지 불러오기",
+    "unknownUser": "알 수 없는 사용자",
+    "noListing": "연결된 매물 없음"
   }
 }
 </i18n>
