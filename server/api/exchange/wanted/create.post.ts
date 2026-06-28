@@ -5,6 +5,7 @@ import { VALID_CATEGORIES, VALID_CONDITION_PREFERENCES, MAX_CONTENT_LENGTH } fro
 import { validateBudgetValue, validateBudgetRange } from '../../../utils/exchange/validators';
 import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
+import { queueAdminNotification } from '../../../utils/exchange/notificationQueue';
 
 // Rate limit: 3 requests per 15 minutes (strict preset)
 const rateLimitMiddleware = createRateLimitMiddleware({
@@ -158,7 +159,16 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // TODO(Stage 8): enqueue an admin 'wanted_post_pending' notification_queue event (type + builder pending in classicminidiy-supabase).
+    // Notify admins of the pending wanted post (batched digest, flags content
+    // -moderation hits). Fire-and-forget; never blocks the create response.
+    await queueAdminNotification({
+      eventType: 'admin_wanted_pending',
+      payload: {
+        postTitle: sanitizedTitle,
+        posterName: profile.display_name || 'a member',
+        isFlagged,
+      },
+    });
 
     return {
       success: true,

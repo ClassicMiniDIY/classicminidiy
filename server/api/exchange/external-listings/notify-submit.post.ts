@@ -12,6 +12,7 @@
 import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
 import { createRateLimitMiddleware, RateLimitPresets } from '../../../utils/exchange/rateLimit';
+import { queueAdminNotification } from '../../../utils/exchange/notificationQueue';
 
 const rateLimitMiddleware = createRateLimitMiddleware({ ...RateLimitPresets.moderate, keyPrefix: 'finds-notify' });
 
@@ -35,10 +36,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'You can only notify on your own submission' });
   }
 
-  // TODO(Stage 8): enqueue an admin "new find pending review" notification_queue
-  // event — the finds event type + its process-notifications builder aren't
-  // defined yet (classicminidiy-supabase). Ownership/validation above stays so
-  // wiring the enqueue later is a one-liner against `find`.
+  // Notify admins of the pending find (batched digest). Ownership verified above,
+  // so submitted_by === user.id; resolve the submitter's display name for the
+  // email. Fire-and-forget — never blocks submission.
+  const { data: submitter } = await supabase.from('profiles').select('display_name').eq('id', find.submitted_by).maybeSingle();
+  await queueAdminNotification({
+    eventType: 'admin_find_pending',
+    payload: {
+      findTitle: find.title,
+      sourceSite: find.source_site || 'link',
+      submitterName: submitter?.display_name || 'a member',
+    },
+  });
 
   return { success: true };
 });

@@ -2,6 +2,7 @@ import { sanitizeUserInput } from '../../utils/exchange/sanitize';
 import { moderateMessage } from '../../utils/exchange/contentFilter';
 import { checkRateLimit } from '../../utils/exchange/rateLimit';
 import { getServiceClient } from '../../utils/supabase';
+import { queueNotification, buildBatchKey } from '../../utils/exchange/notificationQueue';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -199,9 +200,23 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // TODO(Stage 8): enqueue a 'seller_inquiry' notification_queue event (type + builder pending in classicminidiy-supabase) to email the seller.
-    // The seller inquiry email is deferred until the notification_queue event type + builder land in the supabase repo.
-    // All validation, spam/moderation, honeypot, and seller-lookup checks above still run; we return success after they pass.
+    // Email the seller via notification_queue + process-notifications (SES).
+    // Recipient = the listing owner; the buyer's email is surfaced in the body
+    // (the queue send path has no per-email Reply-To). Unique batch key per
+    // inquiry so concurrent inquiries never collapse into one. Fire-and-forget.
+    const inquiryId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    await queueNotification({
+      userId: listing.user_id,
+      eventType: 'seller_inquiry',
+      payload: {
+        listingTitle: listing.title,
+        listingSlug: listing.slug,
+        inquirerName: sanitizedName,
+        inquirerEmail: sanitizedEmail,
+        message: sanitizedMessage,
+      },
+      batchKey: buildBatchKey('seller_inquiry', { inquiryId }),
+    });
 
     return {
       success: true,
