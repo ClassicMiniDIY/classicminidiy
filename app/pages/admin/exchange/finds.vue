@@ -33,7 +33,7 @@
     </div>
 
     <!-- Tabs -->
-    <div class="tabs tabs-bordered mb-6">
+    <div class="tabs tabs-border mb-6">
       <button class="tab" :class="{ 'tab-active': activeTab === 'pending' }" @click="activeTab = 'pending'">
         Pending
         <span v-if="pendingFinds.length > 0" class="badge badge-warning badge-sm ml-2">

@@ -426,6 +426,7 @@
                     v-if="item.hasFacebook && item.features.facebook_post_id"
                     :href="`https://facebook.com/${item.features.facebook_post_id}`"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="btn btn-ghost btn-sm"
                     title="View Facebook post"
                   >
@@ -443,6 +444,7 @@
                     v-if="item.hasInstagram && item.features.instagram_post_id"
                     :href="`https://instagram.com/p/${item.features.instagram_post_id}`"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="btn btn-ghost btn-sm"
                     title="View Instagram post"
                   >
@@ -460,6 +462,7 @@
                     v-if="item.hasBluesky && item.features.bluesky_post_id"
                     :href="`https://bsky.app/profile/${blueskyHandle}/post/${item.features.bluesky_post_id}`"
                     target="_blank"
+                    rel="noopener noreferrer"
                     class="btn btn-ghost btn-sm"
                     title="View Bluesky post"
                   >
