@@ -5,8 +5,13 @@ import { getServiceClient } from '../../utils/supabase';
 
 export default defineEventHandler(async (event) => {
   try {
-    // Rate limiting: 3 emails per IP per hour
-    const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown';
+    // Rate limiting: 3 emails per IP per hour.
+    // Prefer the provider-set 'x-real-ip' header (set by the Vercel edge proxy
+    // and not client-spoofable) before falling back to the left-most
+    // 'x-forwarded-for' entry, which IS client-controllable and would otherwise
+    // let an attacker rotate the header to dodge the limit. Same approach as
+    // server/middleware/rate-limit.ts.
+    const ip = getHeader(event, 'x-real-ip') || getRequestIP(event, { xForwardedFor: true }) || 'unknown';
     const rateLimit = checkRateLimit(ip, {
       maxRequests: 3,
       windowMs: 60 * 60 * 1000, // 1 hour
