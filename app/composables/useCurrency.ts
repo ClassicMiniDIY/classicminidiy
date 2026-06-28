@@ -107,11 +107,14 @@ export function useCurrency() {
    */
   const convertCurrency = (amount: number, fromCurrency: CurrencyCode, toCurrency: CurrencyCode): number | null => {
     if (fromCurrency === toCurrency) return amount;
-    if (!cachedRates) return null;
+    // Read the reactive ref (not the module-level cachedRates) so computed
+    // callers (e.g. convertedPrice in ListingCard) re-evaluate once the async
+    // rates fetch resolves.
+    if (!exchangeRates.value) return null;
 
     // Rates are relative to USD
-    const fromRate = cachedRates[fromCurrency];
-    const toRate = cachedRates[toCurrency];
+    const fromRate = exchangeRates.value[fromCurrency];
+    const toRate = exchangeRates.value[toCurrency];
 
     if (!fromRate || !toRate) return null;
 

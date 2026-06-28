@@ -35,7 +35,11 @@ export function useFormatters() {
    * Format date string to localized format
    */
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString);
+    // Guard malformed/empty dates — toLocaleDateString throws RangeError on an
+    // Invalid Date, which would crash rendering.
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

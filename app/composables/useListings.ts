@@ -157,8 +157,10 @@ export const useListings = () => {
 
     if (error) throw error;
 
-    // Atomically increment view count using RPC
-    if (data) {
+    // Atomically increment view count using RPC — client-only so crawler / SSR
+    // hits don't inflate counts, and so we never fire an un-awaited promise
+    // during SSR (the serverless context can freeze before it resolves).
+    if (data && import.meta.client) {
       // Fire and forget - don't wait for response or throw errors
       supabase.rpc('increment_listing_views', { listing_id_param: data.id }).then(({ error: rpcError }) => {
         if (rpcError) {
