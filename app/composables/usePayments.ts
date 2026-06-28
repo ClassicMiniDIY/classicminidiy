@@ -201,57 +201,6 @@ export const usePayments = () => {
   };
 
   /**
-   * Update listing tier after successful payment
-   */
-  const updateListingTier = async (
-    listingId: string,
-    tier: ListingTier,
-    paymentDetails: {
-      amount: number;
-      paymentReference: string;
-      paymentMethod?: string;
-    }
-  ): Promise<void> => {
-    try {
-      const pricing = getTierPricing(tier);
-
-      // Calculate featured_until for paid tier (30 days from now)
-      const featuredUntil = tier === 'paid' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
-
-      // Update listing
-      const { error: listingError } = await supabase
-        .from('listings')
-        .update({
-          tier,
-          paid_amount: paymentDetails.amount,
-          payment_status: 'paid',
-          featured_until: featuredUntil,
-        })
-        .eq('id', listingId);
-
-      if (listingError) throw listingError;
-
-      // Record promotion
-      const { error: promoError } = await supabase.from('listing_promotions').insert({
-        listing_id: listingId,
-        tier,
-        amount_paid: paymentDetails.amount,
-        payment_method: paymentDetails.paymentMethod,
-        payment_reference: paymentDetails.paymentReference,
-        features: {
-          ...pricing.features,
-          featuredUntil,
-        },
-      });
-
-      if (promoError) throw promoError;
-    } catch (error: any) {
-      console.error('Failed to update listing tier:', error);
-      throw new Error(error.message || 'Failed to update listing tier');
-    }
-  };
-
-  /**
    * Format price for display
    */
   const formatPrice = (cents: number): string => {
@@ -268,7 +217,6 @@ export const usePayments = () => {
     createCheckoutSession,
     verifyPayment,
     getPaymentStatus,
-    updateListingTier,
     formatPrice,
   };
 };
