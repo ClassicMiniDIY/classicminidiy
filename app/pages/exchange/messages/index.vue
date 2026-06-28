@@ -179,7 +179,7 @@
           group = {
             kind: 'wanted_post',
             id: key,
-            title: `Wanted: ${c.wanted_post.title}`,
+            title: t('groups.wanted', { title: c.wanted_post.title }),
             thumbnailUrl: null,
             status: null,
             price: null,
@@ -195,7 +195,7 @@
           group = {
             kind: 'orphan',
             id: key,
-            title: 'Conversation',
+            title: t('groups.orphan'),
             thumbnailUrl: null,
             status: null,
             price: null,
@@ -375,7 +375,8 @@
     "search": { "placeholder": "Search by listing title or person...", "ariaLabel": "Search conversations", "clear": "Clear search" },
     "tabs": { "active": "Active", "sold": "Sold", "all": "All" },
     "empty": { "title": "No messages yet", "body": "Start a conversation by contacting a seller on a listing", "browse": "Browse Listings" },
-    "emptySearch": { "noMatch": "No conversations match \"{query}\"", "noTab": "No conversations in this tab" }
+    "emptySearch": { "noMatch": "No conversations match \"{query}\"", "noTab": "No conversations in this tab" },
+    "groups": { "wanted": "Wanted: {title}", "orphan": "Conversation" }
   },
   "es": {
     "seo": { "title": "Mensajes - The Mini Exchange | Classic Mini DIY" },
@@ -384,7 +385,8 @@
     "search": { "placeholder": "Buscar por título de anuncio o persona...", "ariaLabel": "Buscar conversaciones", "clear": "Borrar búsqueda" },
     "tabs": { "active": "Activos", "sold": "Vendidos", "all": "Todos" },
     "empty": { "title": "Aún no hay mensajes", "body": "Inicia una conversación contactando a un vendedor en un anuncio", "browse": "Explorar anuncios" },
-    "emptySearch": { "noMatch": "Ninguna conversación coincide con \"{query}\"", "noTab": "No hay conversaciones en esta pestaña" }
+    "emptySearch": { "noMatch": "Ninguna conversación coincide con \"{query}\"", "noTab": "No hay conversaciones en esta pestaña" },
+    "groups": { "wanted": "Buscado: {title}", "orphan": "Conversación" }
   },
   "fr": {
     "seo": { "title": "Messages - The Mini Exchange | Classic Mini DIY" },
@@ -393,7 +395,8 @@
     "search": { "placeholder": "Rechercher par titre d'annonce ou personne...", "ariaLabel": "Rechercher des conversations", "clear": "Effacer la recherche" },
     "tabs": { "active": "Actives", "sold": "Vendues", "all": "Toutes" },
     "empty": { "title": "Aucun message pour l'instant", "body": "Démarrez une conversation en contactant un vendeur sur une annonce", "browse": "Parcourir les annonces" },
-    "emptySearch": { "noMatch": "Aucune conversation ne correspond à \"{query}\"", "noTab": "Aucune conversation dans cet onglet" }
+    "emptySearch": { "noMatch": "Aucune conversation ne correspond à \"{query}\"", "noTab": "Aucune conversation dans cet onglet" },
+    "groups": { "wanted": "Recherché : {title}", "orphan": "Conversation" }
   },
   "de": {
     "seo": { "title": "Nachrichten - The Mini Exchange | Classic Mini DIY" },
@@ -402,7 +405,8 @@
     "search": { "placeholder": "Nach Anzeigentitel oder Person suchen...", "ariaLabel": "Konversationen durchsuchen", "clear": "Suche löschen" },
     "tabs": { "active": "Aktiv", "sold": "Verkauft", "all": "Alle" },
     "empty": { "title": "Noch keine Nachrichten", "body": "Starten Sie eine Konversation, indem Sie einen Verkäufer zu einer Anzeige kontaktieren", "browse": "Anzeigen durchsuchen" },
-    "emptySearch": { "noMatch": "Keine Konversationen passen zu \"{query}\"", "noTab": "Keine Konversationen in diesem Tab" }
+    "emptySearch": { "noMatch": "Keine Konversationen passen zu \"{query}\"", "noTab": "Keine Konversationen in diesem Tab" },
+    "groups": { "wanted": "Gesucht: {title}", "orphan": "Konversation" }
   },
   "it": {
     "seo": { "title": "Messaggi - The Mini Exchange | Classic Mini DIY" },
@@ -411,7 +415,8 @@
     "search": { "placeholder": "Cerca per titolo annuncio o persona...", "ariaLabel": "Cerca conversazioni", "clear": "Cancella ricerca" },
     "tabs": { "active": "Attivi", "sold": "Venduti", "all": "Tutti" },
     "empty": { "title": "Ancora nessun messaggio", "body": "Avvia una conversazione contattando un venditore su un annuncio", "browse": "Sfoglia annunci" },
-    "emptySearch": { "noMatch": "Nessuna conversazione corrisponde a \"{query}\"", "noTab": "Nessuna conversazione in questa scheda" }
+    "emptySearch": { "noMatch": "Nessuna conversazione corrisponde a \"{query}\"", "noTab": "Nessuna conversazione in questa scheda" },
+    "groups": { "wanted": "Cercato: {title}", "orphan": "Conversazione" }
   },
   "pt": {
     "seo": { "title": "Mensagens - The Mini Exchange | Classic Mini DIY" },
@@ -420,7 +425,8 @@
     "search": { "placeholder": "Pesquisar por título do anúncio ou pessoa...", "ariaLabel": "Pesquisar conversas", "clear": "Limpar pesquisa" },
     "tabs": { "active": "Ativas", "sold": "Vendidas", "all": "Todas" },
     "empty": { "title": "Ainda não há mensagens", "body": "Inicie uma conversa contactando um vendedor num anúncio", "browse": "Explorar anúncios" },
-    "emptySearch": { "noMatch": "Nenhuma conversa corresponde a \"{query}\"", "noTab": "Nenhuma conversa neste separador" }
+    "emptySearch": { "noMatch": "Nenhuma conversa corresponde a \"{query}\"", "noTab": "Nenhuma conversa neste separador" },
+    "groups": { "wanted": "Procurado: {title}", "orphan": "Conversa" }
   },
   "ru": {
     "seo": { "title": "Сообщения - The Mini Exchange | Classic Mini DIY" },
@@ -429,7 +435,8 @@
     "search": { "placeholder": "Поиск по названию объявления или человеку...", "ariaLabel": "Поиск по переписке", "clear": "Очистить поиск" },
     "tabs": { "active": "Активные", "sold": "Проданные", "all": "Все" },
     "empty": { "title": "Сообщений пока нет", "body": "Начните переписку, связавшись с продавцом по объявлению", "browse": "Просмотреть объявления" },
-    "emptySearch": { "noMatch": "Нет переписок, соответствующих \"{query}\"", "noTab": "Нет переписок на этой вкладке" }
+    "emptySearch": { "noMatch": "Нет переписок, соответствующих \"{query}\"", "noTab": "Нет переписок на этой вкладке" },
+    "groups": { "wanted": "Куплю: {title}", "orphan": "Переписка" }
   },
   "ja": {
     "seo": { "title": "メッセージ - The Mini Exchange | Classic Mini DIY" },
@@ -438,7 +445,8 @@
     "search": { "placeholder": "出品タイトルまたは人物で検索...", "ariaLabel": "会話を検索", "clear": "検索をクリア" },
     "tabs": { "active": "アクティブ", "sold": "売却済み", "all": "すべて" },
     "empty": { "title": "まだメッセージはありません", "body": "出品の販売者に連絡して会話を始めましょう", "browse": "出品を見る" },
-    "emptySearch": { "noMatch": "「{query}」に一致する会話はありません", "noTab": "このタブに会話はありません" }
+    "emptySearch": { "noMatch": "「{query}」に一致する会話はありません", "noTab": "このタブに会話はありません" },
+    "groups": { "wanted": "募集中: {title}", "orphan": "会話" }
   },
   "zh": {
     "seo": { "title": "消息 - The Mini Exchange | Classic Mini DIY" },
@@ -447,7 +455,8 @@
     "search": { "placeholder": "按刊登标题或人员搜索...", "ariaLabel": "搜索会话", "clear": "清除搜索" },
     "tabs": { "active": "进行中", "sold": "已售", "all": "全部" },
     "empty": { "title": "暂无消息", "body": "通过在刊登上联系卖家来开始对话", "browse": "浏览刊登" },
-    "emptySearch": { "noMatch": "没有与“{query}”匹配的会话", "noTab": "此标签下没有会话" }
+    "emptySearch": { "noMatch": "没有与“{query}”匹配的会话", "noTab": "此标签下没有会话" },
+    "groups": { "wanted": "求购：{title}", "orphan": "会话" }
   },
   "ko": {
     "seo": { "title": "메시지 - The Mini Exchange | Classic Mini DIY" },
@@ -456,7 +465,8 @@
     "search": { "placeholder": "매물 제목 또는 사람으로 검색...", "ariaLabel": "대화 검색", "clear": "검색 지우기" },
     "tabs": { "active": "활성", "sold": "판매됨", "all": "전체" },
     "empty": { "title": "아직 메시지가 없습니다", "body": "매물에서 판매자에게 연락하여 대화를 시작하세요", "browse": "매물 둘러보기" },
-    "emptySearch": { "noMatch": "\"{query}\"와 일치하는 대화가 없습니다", "noTab": "이 탭에 대화가 없습니다" }
+    "emptySearch": { "noMatch": "\"{query}\"와 일치하는 대화가 없습니다", "noTab": "이 탭에 대화가 없습니다" },
+    "groups": { "wanted": "구함: {title}", "orphan": "대화" }
   }
 }
 </i18n>

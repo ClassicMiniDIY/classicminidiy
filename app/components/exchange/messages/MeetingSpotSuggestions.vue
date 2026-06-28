@@ -138,7 +138,7 @@
             <a
               :href="getMapsUrl(spot)"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
               class="btn btn-xs btn-ghost"
               :title="t('openInMaps')"
             >

@@ -3,7 +3,9 @@
  * Finds safe, public locations near the midpoint between buyer and seller
  */
 
+import { caminoFetch } from './camino';
 import type { CaminoQueryResult, CaminoRelationshipResponse } from './camino';
+import { haversineDistance } from './geo';
 
 const SAFE_PLACE_QUERIES = [
   'police station',
@@ -71,7 +73,7 @@ export async function findMeetingSpots(midLat: number, midLon: number): Promise<
 function deduplicateAndRank(spots: any[], midLat: number, midLon: number): MeetingSpot[] {
   const unique: any[] = [];
   for (const spot of spots) {
-    if (!spot.lat || !spot.lon) continue;
+    if (spot.lat == null || spot.lon == null) continue;
     const isDuplicate = unique.some((s) => haversineDistance(s.lat, s.lon, spot.lat, spot.lon) < 100);
     if (!isDuplicate) unique.push(spot);
   }

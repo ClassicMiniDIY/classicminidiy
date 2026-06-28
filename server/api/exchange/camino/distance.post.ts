@@ -26,7 +26,7 @@ export interface DistanceResponse {
 export default defineEventHandler(async (event) => {
   const body = await readBody<DistanceRequest>(event);
 
-  if (!body.buyerLat || !body.buyerLon || !body.listingLat || !body.listingLon) {
+  if (body.buyerLat == null || body.buyerLon == null || body.listingLat == null || body.listingLon == null) {
     throw createError({ statusCode: 400, message: 'Missing coordinates' });
   }
 
