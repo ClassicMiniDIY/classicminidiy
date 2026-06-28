@@ -30,16 +30,16 @@ is complete it merges to `main` and we flip the flag — that's cutover.
 | #638 | `.github/copilot-instructions.md` | ✅ merged to dev |
 | #639 | 1 — foundation (flag, gate, deps, shared composables, browse) | ✅ merged (+review fixes) |
 | #640 | 2 — listing detail page | ✅ merged (+review fixes) |
-| — | 3 — read pages (finds/wanted/sold + full browse) | ⬜ next |
-| — | 4 — create-listing wizard + Stripe proxy | ⬜ |
-| — | 5 — edit/bulk + write server routes | ⬜ |
-| — | 6 — messaging + Finds scraper | ⬜ |
-| — | 7 — dashboard + admin core | ⬜ |
-| — | 8 — admin rest (finds/promotions/messages/newsletter) | ⬜ |
-| — | 9 — onboarding + remaining pages + seller signals | ⬜ |
+| #641 | 3 — read pages (finds/wanted/sold + full browse) | ✅ merged (+review fixes) |
+| #642 | 4 — create-listing wizard + Stripe proxy | ✅ merged (+review fixes) |
+| #643 | 5 — edit/bulk + write server routes | ✅ merged (+review fixes) |
+| #644 | 6 — messaging + Finds scraper | ✅ merged (+review fixes) |
+| #645 | 7 — dashboard + admin core | ✅ merged (+review fixes) |
+| #646 | 8 — admin rest (finds/promotions/messages/newsletter) | 🔄 open, awaiting Copilot |
+| — | 9 — onboarding + remaining pages + seller signals | ⬜ next |
 | — | 10 — feeds + sitemap/robots + legal + redirects | ⬜ |
 
-`dev` is currently `main` + copilot + sections 1–2 (14 commits ahead).
+`dev` is currently `main` + copilot + sections 1–7 (33 commits ahead). Section 8 (#646) open.
 
 ## How to cut the next section PR (the loop)
 
