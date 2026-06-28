@@ -74,7 +74,7 @@
 
               <!-- Timestamp and report button -->
               <div class="chat-footer mt-1 opacity-60 flex items-center gap-1">
-                <time class="text-xs">{{ formatMessageTime(message.created_at) }}</time>
+                <ClientOnly><time class="text-xs">{{ formatMessageTime(message.created_at) }}</time></ClientOnly>
                 <span
                   v-if="isOwnMessage(message.sender_id)"
                   class="text-xs ml-2"
