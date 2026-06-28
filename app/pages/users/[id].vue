@@ -7,15 +7,51 @@
   const { getPublicProfile, getPublicProfileVehicles } = useProfile();
   const { track } = useAnalytics();
   const { fetchPublicConfigs } = useGearConfigs();
+  const { getPublicLocation, extractCountry } = useLocation();
+  const supabase = useSupabase();
+
+  // Marketplace seller signals (listings + trust) only surface when the Exchange
+  // section is live. Routes here are NOT flag-gated (this is a kept CMDIY page),
+  // so the marketplace bits are gated inline instead.
+  const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
 
   const identifier = route.params.id as string;
 
   const profile = ref<PublicProfile | null>(null);
   const vehicles = ref<Vehicle[]>([]);
   const publicConfigs = ref<any[]>([]);
+  const userListings = ref<any[]>([]);
   const loading = ref(true);
+  const loadingListings = ref(!!exchangeEnabled);
   const notFound = ref(false);
   const isPrivate = ref(false);
+
+  // The user's active marketplace listings (mirrors TME's seller-profile query).
+  const fetchUserListings = async (userId: string) => {
+    loadingListings.value = true;
+    try {
+      const { loadVisibility, activeStatuses } = useExampleListings();
+      await loadVisibility();
+      const { data, error } = await applyPhotoOrdering(
+        supabase
+          .from('listings')
+          .select(
+            `id, title, slug, description, year, model, price, location, condition, tier, created_at,
+             listing_photos ( id, storage_path, is_primary, display_order )`
+          )
+          .eq('user_id', userId)
+          .in('status', activeStatuses.value)
+          .order('created_at', { ascending: false })
+      );
+      if (error) throw error;
+      userListings.value = sortExamplesLast(data || []);
+    } catch (error) {
+      console.error('Failed to load user listings:', error);
+      userListings.value = [];
+    } finally {
+      loadingListings.value = false;
+    }
+  };
 
   onMounted(async () => {
     try {
@@ -33,6 +69,9 @@
 
       profile.value = result.profile;
       track('public_profile_viewed', { target_user_id: result.profile.id });
+
+      // Marketplace listings load independently (flag-gated) — don't block the page.
+      if (exchangeEnabled) fetchUserListings(result.profile.id);
 
       // Fetch gear configs and vehicles in parallel
       const [configs, vehiclesData] = await Promise.all([
@@ -133,7 +172,10 @@
               </div>
 
               <p v-if="profile?.location" class="text-sm opacity-60 mt-1">
-                <i class="fas fa-location-dot mr-1"></i>{{ profile.location }}
+                <template v-if="getCountryFlag(extractCountry(profile.location))">
+                  {{ getCountryFlag(extractCountry(profile.location)) }}
+                </template>
+                <i v-else class="fas fa-location-dot mr-1"></i>{{ getPublicLocation(profile.location) }}
               </p>
 
               <p v-if="profile?.bio" class="mt-2 opacity-80">{{ profile.bio }}</p>
@@ -146,6 +188,9 @@
               <div v-if="hasSocialLinks" class="mt-3">
                 <ProfileSocialLinks :links="profile!.social_links" size="sm" />
               </div>
+
+              <!-- Marketplace seller trust signals (flag-gated) -->
+              <ExchangeProfileSellerTrustSignals v-if="exchangeEnabled && profile?.id" :seller-id="profile.id" class="mt-4" />
             </div>
           </div>
         </div>
@@ -159,6 +204,42 @@
             <h3 class="text-lg font-semibold">{{ t('vehicles.title') }}</h3>
           </div>
           <ProfileVehicleShowcase :vehicles="vehicles" />
+        </div>
+      </div>
+
+      <!-- Marketplace Listings (flag-gated) -->
+      <div v-if="exchangeEnabled" class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <i class="fad fa-tag mr-2"></i>
+              <h3 class="text-lg font-semibold">{{ t('listings.title') }}</h3>
+            </div>
+            <span v-if="!loadingListings" class="text-sm opacity-60">
+              {{ t('listings.count', { count: userListings.length }, userListings.length) }}
+            </span>
+          </div>
+
+          <!-- Loading -->
+          <div v-if="loadingListings" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-6 mt-4">
+            <div v-for="i in 3" :key="i" class="skeleton h-80 w-full"></div>
+          </div>
+
+          <!-- Listings grid -->
+          <div v-else-if="userListings.length > 0" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-6 mt-4">
+            <ExchangeListingsListingCard
+              v-for="listing in userListings"
+              :key="listing.id"
+              :listing="listing"
+              :show-seller-info="false"
+            />
+          </div>
+
+          <!-- Empty -->
+          <div v-else class="text-center py-8 opacity-60">
+            <i class="fas fa-inbox text-4xl mb-3 block"></i>
+            <p>{{ t('listings.empty') }}</p>
+          </div>
         </div>
       </div>
 
@@ -212,6 +293,7 @@
     "vehicles": {
       "title": "Their Minis"
     },
+    "listings": {"title": "Active Listings", "count": "{count} listing | {count} listings", "empty": "This member hasn't posted any listings."},
     "gear_configs": {
       "title": "Gear Configurations",
       "empty": "No public configurations shared.",
@@ -237,6 +319,7 @@
     "vehicles": {
       "title": "Sus Minis"
     },
+    "listings": {"title": "Anuncios activos", "count": "{count} anuncio | {count} anuncios", "empty": "Este miembro no ha publicado ningún anuncio."},
     "gear_configs": {
       "title": "Configuraciones de Engranajes",
       "empty": "No hay configuraciones públicas compartidas.",
@@ -262,6 +345,7 @@
     "vehicles": {
       "title": "Ses Minis"
     },
+    "listings": {"title": "Annonces actives", "count": "{count} annonce | {count} annonces", "empty": "Ce membre n'a publié aucune annonce."},
     "gear_configs": {
       "title": "Configurations d'Engrenages",
       "empty": "Aucune configuration publique partagée.",
@@ -287,6 +371,7 @@
     "vehicles": {
       "title": "Ihre Minis"
     },
+    "listings": {"title": "Aktive Inserate", "count": "{count} Inserat | {count} Inserate", "empty": "Dieses Mitglied hat noch keine Inserate veröffentlicht."},
     "gear_configs": {
       "title": "Getriebe-Konfigurationen",
       "empty": "Keine öffentlichen Konfigurationen geteilt.",
@@ -312,6 +397,7 @@
     "vehicles": {
       "title": "Le Sue Mini"
     },
+    "listings": {"title": "Annunci attivi", "count": "{count} annuncio | {count} annunci", "empty": "Questo membro non ha pubblicato alcun annuncio."},
     "gear_configs": {
       "title": "Configurazioni Ingranaggi",
       "empty": "Nessuna configurazione pubblica condivisa.",
@@ -337,6 +423,7 @@
     "vehicles": {
       "title": "Seus Minis"
     },
+    "listings": {"title": "Anúncios ativos", "count": "{count} anúncio | {count} anúncios", "empty": "Este membro não publicou nenhum anúncio."},
     "gear_configs": {
       "title": "Configurações de Engrenagens",
       "empty": "Nenhuma configuração pública compartilhada.",
@@ -362,6 +449,7 @@
     "vehicles": {
       "title": "Автомобили"
     },
+    "listings": {"title": "Активные объявления", "count": "{count} объявление | {count} объявлений", "empty": "Этот участник пока не разместил объявлений."},
     "gear_configs": {
       "title": "Конфигурации Передач",
       "empty": "Нет публичных конфигураций.",
@@ -387,6 +475,7 @@
     "vehicles": {
       "title": "所有車両"
     },
+    "listings": {"title": "出品中", "count": "出品 {count} 件", "empty": "このメンバーはまだ出品していません。"},
     "gear_configs": {
       "title": "ギア設定",
       "empty": "公開設定はありません。",
@@ -412,6 +501,7 @@
     "vehicles": {
       "title": "TA的Mini"
     },
+    "listings": {"title": "在售商品", "count": "{count} 件商品", "empty": "该会员还没有发布任何商品。"},
     "gear_configs": {
       "title": "齿轮配置",
       "empty": "暂无公开配置。",
@@ -437,6 +527,7 @@
     "vehicles": {
       "title": "보유 차량"
     },
+    "listings": {"title": "판매 중인 매물", "count": "매물 {count}개", "empty": "이 회원은 아직 등록한 매물이 없습니다."},
     "gear_configs": {
       "title": "기어 구성",
       "empty": "공개된 구성이 없습니다.",
