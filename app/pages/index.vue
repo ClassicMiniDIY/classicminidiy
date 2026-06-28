@@ -4,6 +4,10 @@
   const route = useRoute();
   const router = useRouter();
 
+  // Logged-in users who haven't completed onboarding get the OnboardingNudge
+  // (mounted globally in app.vue) in the chat-overlay slot instead of the chat.
+  const { needsOnboarding } = useOnboardingGate();
+
   // The discord-claim Edge Function 302-redirects failed claims to
   // `/?discord_error=<code>` (keystone §12). Surface a friendly, dismissible
   // banner on the home page for the known codes; anything else gets a generic
@@ -300,8 +304,9 @@
     </div>
   </div>
 
-  <!-- Floating Chat Input -->
-  <FloatingChatInput />
+  <!-- Floating Chat Input — yields to the OnboardingNudge for logged-in users
+       who haven't finished onboarding (the nudge takes this corner slot). -->
+  <FloatingChatInput v-if="!needsOnboarding" />
 </template>
 
 <style lang="scss">
