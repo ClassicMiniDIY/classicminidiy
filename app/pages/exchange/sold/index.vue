@@ -142,10 +142,8 @@
   });
 
   const supabase = useSupabase();
-  const { user } = useAuth();
   const { getPhotoUrl } = useListings();
   const { formatCurrency, convertCurrency, fetchExchangeRates, exchangeRates } = useCurrency();
-  const { fetchProfile } = useProfile();
 
   const { userCurrency } = useCurrency();
 
@@ -159,7 +157,7 @@
   const getSoldPrice = (listing: ListingWithPhotos): number | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalPrice = (listing as any).final_price;
-    if (finalPrice) return finalPrice;
+    if (finalPrice !== null && finalPrice !== undefined) return finalPrice;
     return listing.price;
   };
 
@@ -170,7 +168,7 @@
     if (listingCurrency === userCurrency.value) return null;
 
     const price = getSoldPrice(listing);
-    if (!price) return null;
+    if (price === null || price === undefined) return null;
     return convertCurrency(price, listingCurrency, userCurrency.value);
   };
 
@@ -291,9 +289,23 @@
     sortBy.value = 'newest';
   };
 
-  // Watch search and sort
-  watch([searchQuery, sortBy], () => {
+  // Debounce searchQuery-driven searches; run sortBy changes immediately.
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  watch(searchQuery, () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      performSearch();
+    }, 300);
+  });
+
+  watch(sortBy, () => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
     performSearch();
+  });
+
+  onBeforeUnmount(() => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   });
 
   // Initial load
