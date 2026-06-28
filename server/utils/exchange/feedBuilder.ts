@@ -89,6 +89,34 @@ function escapeHtml(unsafe: string): string {
   );
 }
 
+/**
+ * Build a Supabase Storage public URL from an object key. Encode each path
+ * segment individually so special characters are safe but the `/` separators
+ * are preserved (encodeURIComponent on the whole key would turn `/` into `%2F`
+ * and 404 the object). Mirrors what `storage.getPublicUrl()` does client-side.
+ */
+function storagePublicUrl(supabaseUrl: string, bucket: string, key: string): string {
+  const encoded = key.split('/').map(encodeURIComponent).join('/');
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${encoded}`;
+}
+
+/** Infer an image MIME type from a URL's file extension (defaults to JPEG). */
+function imageMimeFromUrl(url: string): string {
+  const ext = url.split(/[?#]/)[0].split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'png':
+      return 'image/png';
+    case 'webp':
+      return 'image/webp';
+    case 'gif':
+      return 'image/gif';
+    case 'avif':
+      return 'image/avif';
+    default:
+      return 'image/jpeg';
+  }
+}
+
 /** Order embedded listing_photos: primary first, then display_order. */
 function applyPhotoOrdering<T extends { order: (...args: any[]) => T }>(query: T): T {
   return query
@@ -117,7 +145,7 @@ function buildListingItems(listings: any[], supabaseUrl: string, siteUrl: string
     const photos = listing.listing_photos || [];
     const primaryPhoto = photos.find((p: any) => p.is_primary) || photos[0];
     const imageUrl = primaryPhoto?.storage_path
-      ? `${supabaseUrl}/storage/v1/object/public/listing-photos/${encodeURIComponent(primaryPhoto.storage_path)}`
+      ? storagePublicUrl(supabaseUrl, 'listing-photos', primaryPhoto.storage_path)
       : undefined;
 
     const sellerName = listing.user?.display_name || 'Anonymous Seller';
@@ -151,8 +179,11 @@ function buildListingItems(listings: any[], supabaseUrl: string, siteUrl: string
     };
 
     if (imageUrl) {
-      feedItem.image = imageUrl;
-      feedItem.enclosure = { url: imageUrl, type: 'image/jpeg' };
+      // Don't set feedItem.image: the `feed` lib re-derives the enclosure MIME
+      // from the URL extension for a string image (e.g. .jpg -> image/jpg) and
+      // overrides our explicit type. The image still renders via the <img> in
+      // `content`/`content_html`; the enclosure carries the canonical MIME.
+      feedItem.enclosure = { url: imageUrl, type: imageMimeFromUrl(imageUrl) };
     }
 
     return { item: feedItem, date: new Date(listing.created_at) };
@@ -183,27 +214,29 @@ function buildFindItems(finds: any[], siteUrl: string): FeedItem[] {
     };
 
     if (find.og_image_url) {
+      // No feedItem.image (see buildListingItems) — keep the canonical enclosure MIME.
       const safeImageUrl = escapeHtml(find.og_image_url);
-      feedItem.image = safeImageUrl;
-      feedItem.enclosure = { url: safeImageUrl, type: 'image/jpeg' };
+      feedItem.enclosure = { url: safeImageUrl, type: imageMimeFromUrl(find.og_image_url) };
     }
 
     return { item: feedItem, date: new Date(find.published_at) };
   });
 }
 
-function formatBudget(minCents: number | null, maxCents: number | null, currency: string): string {
-  const fmt = (cents: number) =>
+function formatBudget(min: number | null, max: number | null, currency: string): string {
+  // Budgets are stored as whole currency units (not cents) — see
+  // app/utils/wantedFormatters.ts#formatBudget, the canonical UI formatter.
+  const fmt = (amount: number) =>
     new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(cents / 100);
+    }).format(amount);
 
-  if (minCents != null && maxCents != null) return `${fmt(minCents)} – ${fmt(maxCents)}`;
-  if (maxCents != null) return `Up to ${fmt(maxCents)}`;
-  if (minCents != null) return `From ${fmt(minCents)}`;
+  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`;
+  if (max != null) return `Up to ${fmt(max)}`;
+  if (min != null) return `From ${fmt(min)}`;
   return 'Flexible';
 }
 
