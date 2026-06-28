@@ -107,7 +107,7 @@ These were designed/decided but not yet coded — they need secrets/Supabase and
    Routes verified compiling (401, sharp resolves). **Deploy/env:** set META_ACCESS_TOKEN, META_PAGE_ID,
    META_INSTAGRAM_ACCOUNT_ID, BLUESKY_HANDLE, BLUESKY_APP_PASSWORD, CRON_SECRET in Vercel; confirm the
    plan allows the `*/15` cron (Hobby = once/day max → bump the schedule if so).
-2. **Newsletter — ✅ core DONE (bulk send), ⬜ admin proxies remain.**
+2. **Newsletter — ✅ DONE (bulk send + admin controls; authored, not deployed).**
    - ✅ **Bulk send + Shopify merge (supabase `tme-merge`, commit 58cf152, deno-checked, NOT deployed):**
      process-notifications already had `processWeeklyDigest` (premium/free curation, SES send,
      `newsletter_sends` logging) + a pg_cron (`weekly-digest-newsletter`, Mon 09:00 UTC). Enriched it
@@ -116,13 +116,13 @@ These were designed/decided but not yet coded — they need secrets/Supabase and
      consolidation's "edge fn + pg_cron + keep Shopify merge" decision is satisfied by EXTENDING the
      existing digest, not a new fn (avoids a duplicate newsletter). **Deploy/env:** set
      SHOPIFY_STORE_DOMAIN + SHOPIFY_ACCESS_TOKEN as edge-fn secrets.
-   - ⬜ **Admin proxies (`/api/admin/exchange/newsletter/{preview,test,send}` — still 404):** the admin
-     newsletter page (`app/pages/admin/exchange/newsletter.vue`) calls these for manual preview/test/send.
-     Wire as thin web routes (requireAdminAuth) → for `send`, invoke process-notifications with
-     `{action:'weekly_digest'}` (the pattern: `$fetch(\`${supabaseUrl}/functions/v1/process-notifications\`, { headers: Bearer service-key })`, see server/api/models/checkout.post.ts). `preview`/`test`
-     need small new process-notifications actions (return counts + listings + emailHtml; send to one
-     address) OR render web-side — preview/test reuse the same curation+template, so a process-notifications
-     `newsletter_preview`/`newsletter_test` action is the DRY path. Tables already exist (shared DB).
+   - ✅ **Admin proxies wired** (commit acf8faa supabase + the web routes on CMDIY `tme-merge`):
+     process-notifications refactored into helpers (`buildWeeklyNewsletterContent`,
+     `resolveNewsletterRecipients`, `getLastNewsletterSend`, `checkNewsletterGuard`) + 3 new actions
+     (`newsletter_preview` / `newsletter_test` / `newsletter_send`). The web routes
+     `/api/admin/exchange/newsletter/{preview,test,send}` are thin `requireAdminAuth` proxies that invoke
+     them with the service key (send maps `blocked`→429). preview/test/send/cron all render identically.
+     deno check clean; routes verified compiling (401). Tables already exist (shared DB).
 3. **Transactional email — ✅ DONE (authored, not deployed).** SES builders + web enqueues + watcher
    triggers all landed; deploying `process-notifications` + applying migrations `20260628000001/2` at
    cutover makes it live.
