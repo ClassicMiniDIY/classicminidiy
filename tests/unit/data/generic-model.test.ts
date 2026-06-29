@@ -156,8 +156,8 @@ describe('MobileMenuItems', () => {
 // ToolboxItems
 // ---------------------------------------------------------------------------
 describe('ToolboxItems', () => {
-  it('has 8 items', () => {
-    expect(ToolboxItems).toHaveLength(8);
+  it('has 9 items', () => {
+    expect(ToolboxItems).toHaveLength(9);
   });
 
   it('each item has titleKey, path, iconHtml, and to', () => {

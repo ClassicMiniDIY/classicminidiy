@@ -36,6 +36,13 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Nuxt aliases `~` to the `app/` srcDir, but the broad `~` entry below
+      // maps to the repo root (needed for `~/server/*` in tests). Map the Nuxt
+      // app subtrees explicitly first so source files that import `~/utils/*`,
+      // `~/composables/*`, etc. resolve to `app/` as they do at runtime. More
+      // specific keys are matched before the bare `~` fallback.
+      '~/utils': fileURLToPath(new URL('./app/utils', import.meta.url)),
+      '~/composables': fileURLToPath(new URL('./app/composables', import.meta.url)),
       '~': fileURLToPath(new URL('./', import.meta.url)),
       '@': fileURLToPath(new URL('./', import.meta.url)),
       '~~': fileURLToPath(new URL('./', import.meta.url)),

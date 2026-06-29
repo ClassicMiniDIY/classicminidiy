@@ -74,5 +74,8 @@ const COUNTRY_CURRENCY: Record<string, CurrencyCode> = {
  */
 export function currencyForCountry(country: string | null | undefined): CurrencyCode | undefined {
   if (!country) return undefined;
-  return COUNTRY_CURRENCY[country.toLowerCase().trim()];
+  const key = country.toLowerCase().trim();
+  // Own-property guard: bracket access would otherwise leak inherited members
+  // (e.g. 'constructor', '__proto__') as a return value, violating the type.
+  return Object.hasOwn(COUNTRY_CURRENCY, key) ? COUNTRY_CURRENCY[key] : undefined;
 }

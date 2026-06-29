@@ -18,6 +18,7 @@
  */
 import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
+import { queueNotification, queueAdminNotification, buildBatchKey } from '../../../utils/exchange/notificationQueue';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserClient(event);
@@ -32,7 +33,7 @@ export default defineEventHandler(async (event) => {
   const db = getServiceClient();
   const { data: listing, error } = await db
     .from('listings')
-    .select('id, slug, title, user_id')
+    .select('id, slug, title, user_id, profiles:user_id ( display_name )')
     .eq('id', body.listingId)
     .maybeSingle();
 
@@ -42,10 +43,23 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'You can only submit your own listings' });
   }
 
-  // TODO(Stage 8): enqueue notification_queue rows instead of the legacy direct-SES
-  // sends — needs `listing_submitted` (to the seller) + `admin_listing_pending`
-  // (to admins) event types added to the valid_event_type CHECK + builders in the
-  // process-notifications edge function (classicminidiy-supabase).
+  // Transactional email via notification_queue + process-notifications (SES):
+  // confirm to the seller, and fan a pending-review digest out to admins.
+  // Both are fire-and-forget (never throw); awaited so they run before the
+  // serverless function freezes after the response.
+  const sellerName = (listing as { profiles?: { display_name?: string | null } }).profiles?.display_name || 'a seller';
+  await Promise.all([
+    queueNotification({
+      userId: listing.user_id,
+      eventType: 'listing_submitted',
+      payload: { listingTitle: listing.title, listingSlug: listing.slug },
+      batchKey: buildBatchKey('listing_submitted', { listingId: listing.id }),
+    }),
+    queueAdminNotification({
+      eventType: 'admin_listing_pending',
+      payload: { listingTitle: listing.title, sellerName },
+    }),
+  ]);
 
   return { success: true, message: 'Listing submitted for review' };
 });

@@ -60,7 +60,7 @@ const BLOCKED_HOSTNAMES = ['localhost', '0.0.0.0'];
 const BLOCKED_IP_PREFIXES = ['127.', '10.', '192.168.', '169.254.'];
 const BLOCKED_IPV6 = ['::1', '::'];
 
-function isPrivateHost(hostname: string): boolean {
+export function isPrivateHost(hostname: string): boolean {
   if (BLOCKED_HOSTNAMES.includes(hostname)) return true;
   if (BLOCKED_IPV6.includes(hostname)) return true;
   if (BLOCKED_IP_PREFIXES.some((prefix) => hostname.startsWith(prefix))) return true;
