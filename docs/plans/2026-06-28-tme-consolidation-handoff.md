@@ -154,7 +154,17 @@ These were designed/decided but not yet coded — they need secrets/Supabase and
 4. **Supabase edge-fn branch — ✅ merged up to date.** `classicminidiy-supabase` `tme-merge` has
    `create-listing-checkout / verify-listing-payment / stripe-listings-webhook` (S1) and is now merged
    current with `main` (merge commit 7346d83). Still **NOT deployed** — deploy at cutover.
-5. **Tests.** TME's ~142 vitest tests not yet ported.
+5. **Tests — 🔄 in progress (exhaustive business-logic coverage).** ~2,950 new exchange unit cases
+   added on CMDIY `tme-merge`, full suite green (baseline 1,730 → **4,684 passing**). Done:
+   app/utils + server/utils/exchange pure (wave 1, 821) — surfaced + fixed a prototype-pollution bug
+   in `currencyForCountry`; heavy server utils social/image/feed/camino/meetingSpots (wave 2a, 222);
+   27 composables = 21 TME-ported + 6 new (waves 2b/2c, 1,182); 22 server routes + 3 middleware
+   (wave 3, 725). Test infra added: h3 server globals + `defineNuxtRouteMiddleware` pattern in
+   `tests/setup/vitest.setup.ts`, extended `mockSupabase` chainable builder, vitest `~/utils`+
+   `~/composables` aliases. Run workflows CHUNKED (3 concurrent) to avoid the API rate limit.
+   Remaining: coverage-pass gap-fill toward ~100% on business logic; TME **integration** tests
+   (RLS/auth/CRUD) deferred to CI (need a live test Supabase). Decisions: "business logic
+   exhaustively" (not every page/SSR line); unit-only for now.
 
 ## Cutover (dev → main), later
 
