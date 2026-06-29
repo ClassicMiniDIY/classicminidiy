@@ -39,6 +39,14 @@ export const createMockSupabaseClient = () => {
   const mockIn = vi.fn().mockReturnThis();
   const mockIs = vi.fn().mockReturnThis();
   const mockNot = vi.fn().mockReturnThis();
+  const mockOr = vi.fn().mockReturnThis();
+  const mockGte = vi.fn().mockReturnThis();
+  const mockLte = vi.fn().mockReturnThis();
+  const mockGt = vi.fn().mockReturnThis();
+  const mockLt = vi.fn().mockReturnThis();
+  const mockContains = vi.fn().mockReturnThis();
+  const mockOverlaps = vi.fn().mockReturnThis();
+  const mockTextSearch = vi.fn().mockReturnThis();
   const mockOrder = vi.fn().mockReturnThis();
   const mockLimit = vi.fn().mockReturnThis();
   const mockRange = vi.fn().mockReturnThis();
@@ -59,6 +67,14 @@ export const createMockSupabaseClient = () => {
     in: mockIn,
     is: mockIs,
     not: mockNot,
+    or: mockOr,
+    gte: mockGte,
+    lte: mockLte,
+    gt: mockGt,
+    lt: mockLt,
+    contains: mockContains,
+    overlaps: mockOverlaps,
+    textSearch: mockTextSearch,
     order: mockOrder,
     limit: mockLimit,
     range: mockRange,
