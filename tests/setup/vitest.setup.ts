@@ -122,6 +122,40 @@ const __nuxtStateStore: Record<string, ReturnType<typeof ref>> = {};
   trackFormError: vi.fn(),
 }));
 
+// ===== h3 / Nitro server auto-imports (for server/api route-handler tests) =====
+// defineEventHandler returns the handler verbatim so a route's `export default`
+// is the callable async fn. createError builds an Error carrying statusCode so
+// tests can assert `.statusCode`. The request accessors are vi.fn()s tests set
+// per-case (readBody.mockResolvedValue(...), getHeader.mockReturnValue(...)).
+(global as any).defineEventHandler = (fn: any) => fn;
+(global as any).defineCachedEventHandler = (fn: any) => fn;
+(global as any).createError = (opts: any) => {
+  if (opts instanceof Error) return opts;
+  const err: any = new Error(opts?.statusMessage || opts?.message || 'error');
+  err.statusCode = opts?.statusCode;
+  err.statusMessage = opts?.statusMessage;
+  err.message = opts?.message || opts?.statusMessage || err.message;
+  err.data = opts?.data;
+  err.fatal = opts?.fatal;
+  return err;
+};
+(global as any).readBody = vi.fn(async () => ({}));
+(global as any).readRawBody = vi.fn(async () => '');
+(global as any).getHeader = vi.fn(() => undefined);
+(global as any).getHeaders = vi.fn(() => ({}));
+(global as any).getRequestHeader = vi.fn(() => undefined);
+(global as any).getQuery = vi.fn(() => ({}));
+(global as any).getRouterParam = vi.fn(() => undefined);
+(global as any).getRouterParams = vi.fn(() => ({}));
+(global as any).getRequestIP = vi.fn(() => '203.0.113.7');
+(global as any).getCookie = vi.fn(() => undefined);
+(global as any).setCookie = vi.fn();
+(global as any).setHeader = vi.fn();
+(global as any).setResponseStatus = vi.fn();
+(global as any).sendError = vi.fn();
+(global as any).sendRedirect = vi.fn();
+(global as any).defineSitemapEventHandler = (fn: any) => fn;
+
 // ===== Vue APIs as globals (Nuxt auto-imports) =====
 (global as any).computed = computed;
 (global as any).watch = watch;
