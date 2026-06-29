@@ -50,7 +50,6 @@
     "@aws-sdk/client-s3": "^3.1067.0",
     "@aws-sdk/s3-presigned-post": "^3.1067.0",
     "@aws-sdk/s3-request-presigner": "^3.1067.0",
-    "@atproto/api": "^0.19.4",
     "@fontsource/outfit": "^5.2.8",
     "@nuxt/icon": "^2.2.1",
     "@vueuse/core": "^14.2.1",

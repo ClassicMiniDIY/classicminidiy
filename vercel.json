@@ -2,12 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "bun install --frozen-lockfile",
   "buildCommand": "NODE_OPTIONS=--max-old-space-size=8192 bun run build",
-  "crons": [
-    {
-      "path": "/api/cron/exchange/social-sweep",
-      "schedule": "*/15 * * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/t/static/:path*",
