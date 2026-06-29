@@ -339,6 +339,35 @@ describe('server/utils/exchange/rateLimit', () => {
     });
   });
 
+  describe('periodic cleanup interval', () => {
+    // The setInterval cleanup callback (lines 25-28 of the source) is registered
+    // at module-load time. The top-level import was evaluated under real timers,
+    // so its interval is not controllable here. Re-import the module *while* fake
+    // timers are installed so the freshly-registered interval can be driven by
+    // vi.advanceTimersByTime, then exercise the sweep over a mix of expired and
+    // still-live entries.
+    it('sweeps expired entries (and spares live ones) when the 5-minute timer fires', async () => {
+      vi.resetModules();
+      const mod = await import('~~/server/utils/exchange/rateLimit');
+
+      // One short-lived entry (expires before the sweep) and one long-lived entry
+      // (still live at sweep time) — covers both sides of the `resetAt < now` test.
+      mod.checkRateLimit('expiring', { maxRequests: 5, windowMs: 1000, keyPrefix: 'sweep' });
+      mod.checkRateLimit('surviving', { maxRequests: 5, windowMs: 10 * 60 * 1000, keyPrefix: 'sweep' });
+      expect(mod._rateLimitStoreSize()).toBe(2);
+
+      // Advance past the short window (expiring it) and across the 5-minute
+      // cleanup interval so the callback runs.
+      vi.advanceTimersByTime(5 * 60 * 1000 + 1);
+
+      // Expired entry reclaimed; live entry retained.
+      expect(mod._rateLimitStoreSize()).toBe(1);
+      // The surviving key still holds its window: next hit is the 2nd of 5.
+      const res = mod.checkRateLimit('surviving', { maxRequests: 5, windowMs: 10 * 60 * 1000, keyPrefix: 'sweep' });
+      expect(res.remaining).toBe(3);
+    });
+  });
+
   describe('RateLimitPresets', () => {
     it.each([
       ['strict', 3, 15 * 60 * 1000],

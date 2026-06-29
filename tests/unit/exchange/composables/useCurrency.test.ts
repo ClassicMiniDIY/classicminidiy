@@ -181,6 +181,17 @@ describe('useCurrency', () => {
       const { formatCurrency } = (await loadUseCurrency()).useCurrency();
       expect(formatCurrency(-500, 'USD')).toContain('500');
     });
+
+    it('falls back to the en-US locale for an unsupported code with a real amount', async () => {
+      const { formatCurrency } = (await loadUseCurrency()).useCurrency();
+      // Unsupported code => SUPPORTED_CURRENCIES.find returns undefined, so
+      // `currency?.locale || 'en-US'` exercises the `|| 'en-US'` fallback (line 94).
+      // 'XYZ' is a syntactically valid ISO-4217 code, so Intl does not throw and
+      // formats with en-US grouping + the code as the currency display.
+      const result = formatCurrency(1234, 'XYZ' as any);
+      expect(result).toContain('1,234');
+      expect(result).toContain('XYZ');
+    });
   });
 
   // ===========================================================================

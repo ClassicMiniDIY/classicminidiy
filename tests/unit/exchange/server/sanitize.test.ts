@@ -1,6 +1,12 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import { sanitizeUserInput, sanitizeCommentContent, sanitizeUrl, isValidEmail } from '~~/server/utils/exchange/sanitize';
+import {
+  sanitizeUserInput,
+  sanitizeCommentContent,
+  sanitizeUrl,
+  isValidEmail,
+  isPrivateHost,
+} from '~~/server/utils/exchange/sanitize';
 
 describe('sanitizeUserInput', () => {
   describe('falsy / non-string input', () => {
@@ -266,6 +272,45 @@ describe('sanitizeUrl', () => {
   describe('malformed URLs', () => {
     it.each(['not a url', 'http://', '://missing-scheme', 'h ttp://x.com'])('returns null for %s', (url) => {
       expect(sanitizeUrl(url)).toBeNull();
+    });
+  });
+});
+
+describe('isPrivateHost (SSRF host classifier)', () => {
+  // Directly exercises the classifier. The bracketless IPv6 branch (BLOCKED_IPV6)
+  // is unreachable via sanitizeUrl because URL.hostname returns bracketed forms
+  // ("[::1]"), so this is the only way to pin that SSRF-defense branch.
+  describe('blocks bare IPv6 loopback/unspecified (BLOCKED_IPV6 branch)', () => {
+    it.each(['::1', '::'])('blocks %s', (hostname) => {
+      expect(isPrivateHost(hostname)).toBe(true);
+    });
+  });
+
+  describe('blocks named/prefixed private hosts', () => {
+    it.each([
+      'localhost',
+      '0.0.0.0',
+      '127.0.0.1',
+      '10.1.2.3',
+      '192.168.0.1',
+      '169.254.0.1',
+      '172.16.0.1',
+      '172.31.255.255',
+    ])('blocks %s', (hostname) => {
+      expect(isPrivateHost(hostname)).toBe(true);
+    });
+  });
+
+  describe('allows public / non-private hosts', () => {
+    it.each([
+      'classicminidiy.com',
+      '8.8.8.8',
+      '172.15.0.1', // just below the 172.16/12 range
+      '172.32.0.1', // just above the 172.16/12 range
+      '[::1]', // bracketed form is NOT in BLOCKED_IPV6 (documents the gap)
+      '2001:4860:4860::8888', // public IPv6
+    ])('allows %s', (hostname) => {
+      expect(isPrivateHost(hostname)).toBe(false);
     });
   });
 });

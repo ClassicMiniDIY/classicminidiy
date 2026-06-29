@@ -490,6 +490,29 @@ describe('useComments', () => {
         color: 'error',
       });
     });
+
+    it("captures error_type 'unknown' when neither error.data.message nor error.message is present", async () => {
+      // A non-Error rejection with no .data and no .message exercises the final
+      // `|| 'unknown'` branch on line 169.
+      vi.stubGlobal('$fetch', vi.fn().mockRejectedValue({}));
+
+      const useComments = await importComposable();
+      const { postComment } = useComments(listingId);
+
+      const result = await postComment('Test comment');
+
+      expect(result).toBe(false);
+      expect(mockCapture).toHaveBeenCalledWith('comment_failed', {
+        listing_id: listingId,
+        error_type: 'unknown',
+        target_type: 'listing',
+      });
+      expect(mockToast.add).toHaveBeenCalledWith({
+        title: 'Error',
+        description: 'Failed to post comment',
+        color: 'error',
+      });
+    });
   });
 
   // ---------------------------------------------------------------------------

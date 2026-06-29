@@ -262,6 +262,18 @@ describe('findMeetingSpots — scoring & ranking', () => {
     expect(result[0].score).toBeCloseTo(-dist / 100, 6);
   });
 
+  it('falls back to an empty name string when name is missing (no crash, scores on type)', async () => {
+    // Exercises the `spot.name || ''` fallback (line 86): a spot with no name at
+    // all must not throw and should still score off type/tags. Here type carries
+    // the "police" keyword so the boost still applies despite the absent name.
+    const dist = haversineDistance(MID.lat, MID.lon, 0.02, 0);
+    resolveFirstThenEmpty({ results: [{ type: 'police', lat: 0.02, lon: 0 }] });
+    const result = await findMeetingSpots(MID.lat, MID.lon);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBeUndefined();
+    expect(result[0].score).toBeCloseTo(50 - dist / 100, 6);
+  });
+
   it('with equal safety, the closer spot ranks higher', async () => {
     // Both keyword-less; closer one has smaller distance penalty.
     resolveFirstThenEmpty({

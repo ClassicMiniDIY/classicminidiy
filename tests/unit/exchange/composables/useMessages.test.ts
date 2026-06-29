@@ -530,6 +530,30 @@ describe('useMessages', () => {
       expect($fetch).not.toHaveBeenCalled();
     });
 
+    it('swallows a rejected notification fetch (fire-and-forget) and still returns true', async () => {
+      okInsert();
+      const queueErr = new Error('queue endpoint 500');
+      vi.stubGlobal('$fetch', vi.fn().mockRejectedValue(queueErr));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const useMessages = await importComposable();
+      const { sendMessage } = useMessages();
+      const result = await sendMessage('conv-1', 'Hello there');
+
+      // The send itself succeeds regardless of the notification queue failing.
+      expect(result).toBe(true);
+      expect($fetch).toHaveBeenCalledWith(
+        '/api/exchange/notifications/queue-message',
+        expect.anything()
+      );
+      // Let the rejected fire-and-forget promise settle so its .catch handler runs.
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to queue message notification:', queueErr);
+
+      consoleSpy.mockRestore();
+    });
+
     it('uploads attachments and captures message_image_uploaded', async () => {
       okInsert();
       const attachToMessage = vi.fn().mockResolvedValue(undefined);
@@ -706,6 +730,39 @@ describe('useMessages', () => {
       const count = await getUnreadCount();
 
       expect(count).toBe(0);
+    });
+
+    it('suppresses an AbortError (navigation away) without logging', async () => {
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: { message: 'The user aborted a request. AbortError' } })
+      );
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const useMessages = await importComposable();
+      const { getUnreadCount } = useMessages();
+      const count = await getUnreadCount();
+
+      expect(count).toBe(0);
+      // The AbortError branch returns early — no error logging for the benign abort.
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('suppresses an error whose code is ABORT_ERR without logging', async () => {
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: { code: 'ABORT_ERR' } })
+      );
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const useMessages = await importComposable();
+      const { getUnreadCount } = useMessages();
+      const count = await getUnreadCount();
+
+      expect(count).toBe(0);
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
     });
   });
 

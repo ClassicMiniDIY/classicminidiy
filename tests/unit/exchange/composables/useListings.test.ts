@@ -330,6 +330,20 @@ describe('useListings', () => {
       const { useListings } = await import('~/app/composables/useListings');
       await expect(useListings().fetchListingBySlug('nope')).rejects.toEqual(notFound);
     });
+
+    it('skips the view-count RPC when data is falsy (no error)', async () => {
+      // data null + error null => no throw, but the `data &&` guard short-circuits
+      // so increment_listing_views must NOT fire (line 163 false branch).
+      mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: null });
+      mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: null });
+
+      const { useListings } = await import('~/app/composables/useListings');
+      const result = await useListings().fetchListingBySlug('1965-austin-mini-cooper-s');
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(result).toBeNull();
+      expect(mockSupabase.rpc).not.toHaveBeenCalled();
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -688,6 +702,21 @@ describe('useListings', () => {
     it('returns undefined when listing_photos is missing', async () => {
       const { useListings } = await import('~/app/composables/useListings');
       expect(useListings().getPrimaryPhoto({ ...mockListingWithPhotos, listing_photos: undefined } as any)).toBeUndefined();
+    });
+
+    it('returns undefined when the resolved photo is falsy (no primary, falsy first entry)', async () => {
+      // length > 0 passes the guard; find(is_primary) is undefined (the falsy
+      // primitive has no truthy is_primary), and [0] is falsy => photo is falsy,
+      // so the ternary returns undefined (line 360). A primitive 0 avoids the
+      // null-deref the .find() callback would hit on a null/undefined element.
+      const getPublicUrl = vi.fn();
+      mockSupabase.storage.from = vi.fn(() => ({ getPublicUrl })) as any;
+
+      const { useListings } = await import('~/app/composables/useListings');
+      const url = useListings().getPrimaryPhoto({ ...mockListingWithPhotos, listing_photos: [0] } as any);
+
+      expect(url).toBeUndefined();
+      expect(getPublicUrl).not.toHaveBeenCalled();
     });
   });
 

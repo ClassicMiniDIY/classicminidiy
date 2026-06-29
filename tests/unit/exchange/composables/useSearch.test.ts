@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ref, computed } from 'vue';
+import { ref, computed, reactive, nextTick } from 'vue';
 import { createMockSupabaseClient } from '../../../setup/mockSupabase';
 import { setupGlobalMocks, cleanupGlobalMocks, createMockUser } from '../../../setup/testHelpers';
 
@@ -1024,6 +1024,39 @@ describe('useSearch', () => {
   });
 
   // -------------------------------------------------------------------------
+  // route.query watcher (deep) — re-derives filters + re-searches when the URL
+  // changes while the composable is mounted (e.g. clicking a category link in
+  // the navbar from the listings page).
+  // -------------------------------------------------------------------------
+  describe('route query watcher', () => {
+    it('re-derives filters and re-searches when route.query mutates', async () => {
+      // A reactive route query so the composable's `watch(() => route.query, …,
+      // { deep: true })` actually fires on mutation (a plain-object reassign
+      // would not — the composable captures route.query by reference once).
+      mockRouteQuery = reactive({}) as Record<string, string>;
+      resolveQueryWith({ data: mockListings, error: null, count: 2 });
+
+      const useSearch = await importUseSearch();
+      const s = useSearch();
+      // Initial state derived from the (empty) query.
+      expect(s.selectedCategory.value).toBe('');
+
+      mockSupabase.from = vi.fn().mockReturnValue(mockSupabase._queryBuilder);
+
+      // Simulate a navbar category link changing the URL in place.
+      (mockRouteQuery as Record<string, string>).category = 'vehicle';
+      (mockRouteQuery as Record<string, string>).search = 'Cooper, S.';
+      await nextTick();
+
+      // Filters re-derived from the new query (search sanitized).
+      expect(s.selectedCategory.value).toBe('vehicle');
+      expect(s.searchQuery.value).toBe('Cooper S');
+      // And a fresh search ran off the new filters.
+      expect(mockSupabase.from).toHaveBeenCalledWith('listings');
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // cleanup()
   // -------------------------------------------------------------------------
   describe('cleanup()', () => {
@@ -1039,6 +1072,30 @@ describe('useSearch', () => {
       // Watchers are async; give the scheduler a tick.
       await Promise.resolve();
       expect(mockSupabase.from).not.toHaveBeenCalled();
+    });
+
+    it('aborts the live AbortController when a search is still in flight', async () => {
+      // A query that never resolves keeps currentAbortController non-null so
+      // cleanup() takes the abort branch (controller.abort(); controller = null).
+      mockSupabase._queryBuilder.abortSignal = vi.fn(() => new Promise(() => {}));
+
+      const useSearch = await importUseSearch();
+      const { performSearch, cleanup } = useSearch();
+
+      // Kick off a search; it parks awaiting the never-resolving terminal,
+      // leaving the controller live.
+      void performSearch();
+      // Let loadVisibility() resolve so abortSignal(signal) is reached and the
+      // controller's signal is wired up.
+      await vi.waitFor(() => expect(mockSupabase._queryBuilder.abortSignal).toHaveBeenCalled());
+
+      const signal = mockSupabase._queryBuilder.abortSignal.mock.calls[0][0] as AbortSignal;
+      expect(signal.aborted).toBe(false);
+
+      cleanup();
+
+      // The in-flight request's signal is now aborted.
+      expect(signal.aborted).toBe(true);
     });
   });
 
