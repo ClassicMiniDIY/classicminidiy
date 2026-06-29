@@ -630,6 +630,16 @@ export default defineNuxtConfig({
     },
     // Minify responses
     minify: true,
+    // Keep the heavy social-posting deps OUT of the Rollup server bundle. The
+    // `await import('@atproto/api')` in socialMedia.ts otherwise makes Rollup
+    // pull @atproto/api (2433 files) — plus sharp's native binaries — into a
+    // server chunk, which blew the Nitro vercel-preset build up to ~25 min + a
+    // JS-heap OOM. They're only needed by the social-sweep cron + admin
+    // social-retry route; marked external they stay available at runtime
+    // (Vercel/nft includes them from node_modules) without being bundled.
+    externals: {
+      external: ['sharp', '@atproto/api'],
+    },
     // botid/server does a guarded `await import("next/headers")` for its Next.js
     // code path. This is a Nuxt app, so that bare specifier never resolves and
     // Rollup logs a noisy UNRESOLVED_IMPORT warning on every server build. Alias
