@@ -577,6 +577,77 @@ describe('postToInstagram', () => {
     expect(result.error).toBe('Application request limit reached [code 4]');
     expect(result.errorCode).toBe(4);
   });
+
+  it('retries while the container is IN_PROGRESS, then publishes once FINISHED', async () => {
+    vi.useFakeTimers();
+    $fetch
+      .mockResolvedValueOnce({ id: 'container-1' }) // create
+      .mockResolvedValueOnce({ status_code: 'IN_PROGRESS', id: 'container-1' }) // poll 1 -> wait+retry
+      .mockResolvedValueOnce({ status_code: 'FINISHED', id: 'container-1' }) // poll 2 -> ready
+      .mockResolvedValueOnce({ id: 'ig-post-1' }); // publish
+
+    const promise = postToInstagram(baseListing, ['https://x/1.jpg']);
+    // First poll returns IN_PROGRESS; advancing the 3s retry delay lets poll 2 run.
+    await vi.advanceTimersByTimeAsync(3000);
+    const result = await promise;
+
+    expect(result).toEqual({ success: true, postId: 'ig-post-1' });
+    // create + 2 status polls + publish.
+    expect($fetch).toHaveBeenCalledTimes(4);
+  });
+
+  it('fails when the container never finishes within maxAttempts', async () => {
+    vi.useFakeTimers();
+    // create succeeds; every subsequent status poll stays IN_PROGRESS.
+    $fetch.mockImplementation(async (url: string) => {
+      if (url.endsWith('/media')) return { id: 'container-1' };
+      return { status_code: 'IN_PROGRESS', id: 'container-1' };
+    });
+
+    const promise = postToInstagram(baseListing, ['https://x/1.jpg']);
+    // 10 attempts × 3s delay between polls drains the loop to the not-ready throw.
+    await vi.advanceTimersByTimeAsync(10 * 3000);
+    const result = await promise;
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('not ready after');
+  });
+
+  it('rethrows a non-100/33 error encountered while polling status (surfaces as failure)', async () => {
+    $fetch
+      .mockResolvedValueOnce({ id: 'container-1' }) // create
+      .mockRejectedValueOnce(metaError({ message: 'Temporarily unavailable', code: 2 })); // status poll throws
+
+    const result = await postToInstagram(baseListing, ['https://x/1.jpg']);
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Temporarily unavailable [code 2]');
+    expect(result.errorCode).toBe(2);
+  });
+
+  it('skips the fallback wait on a second 100/33 within the recent-wait window (carousel)', async () => {
+    vi.useFakeTimers();
+    // Two carousel children: first 100/33 triggers the fixed wait + records the
+    // timestamp; the second 100/33 (same token, within window) hits the skip path.
+    $fetch.mockImplementation(async (url: string, init: any) => {
+      if (url.endsWith('/media')) {
+        return { id: init?.body?.media_type === 'CAROUSEL' ? 'carousel-1' : 'child-x' };
+      }
+      if (url.endsWith('/media_publish')) return { id: 'ig-carousel-post' };
+      // status polls: always 100/33 (status endpoint unreadable by this token)
+      throw metaError({ code: 100, error_subcode: 33, type: 'GraphMethodException' });
+    });
+
+    const promise = postToInstagram(baseListing, ['https://x/1.jpg', 'https://x/2.jpg']);
+    // Drain the single fixed fallback wait (children run concurrently via Promise.all).
+    await vi.advanceTimersByTimeAsync(10_000);
+    const result = await promise;
+
+    expect(result).toEqual({ success: true, postId: 'ig-carousel-post' });
+    // Only one warn mentions the fixed fallback wait; the rest are "skipping".
+    const warnMsgs = (console.warn as any).mock.calls.map((c: any[]) => String(c[0]));
+    expect(warnMsgs.some((m: string) => m.includes('Falling back to fixed'))).toBe(true);
+    expect(warnMsgs.some((m: string) => m.includes('Already waited recently, skipping'))).toBe(true);
+  });
 });
 
 // ===========================================================================
@@ -670,6 +741,37 @@ describe('postToBluesky', () => {
     const result = await postToBluesky(baseListing, ['https://x/1.jpg']);
     expect(result.success).toBe(false);
     expect(result.error).toBe('Unknown Bluesky error');
+  });
+
+  it('truncates a long reply-thread description to 250 chars with an ellipsis', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(100) })));
+    const longDesc = 'z'.repeat(400);
+    const result = await postToBluesky({ ...baseListing, description: longDesc }, ['https://x/1.jpg']);
+
+    expect(result.success).toBe(true);
+    // Reply thread posts (year/model present) -> 2 posts total.
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    // The reply post body carries the truncated description.
+    const replyPostText = mockPost.mock.calls[1][0].text;
+    expect(replyPostText).toContain('z'.repeat(250) + '...');
+    expect(replyPostText).not.toContain('z'.repeat(251));
+  });
+
+  it('posts only the main post (no reply) when there are no thread-worthy details', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(100) })));
+    // No year/model/condition/description -> formatBlueskyReplyText returns null.
+    const bare: ListingForSocialPost = {
+      ...baseListing,
+      year: null,
+      model: null,
+      condition: null,
+      description: '',
+    };
+
+    const result = await postToBluesky(bare, ['https://x/1.jpg']);
+    expect(result).toEqual({ success: true, postId: 'postrkey' });
+    // Only the main post fires; the reply branch is skipped.
+    expect(mockPost).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -860,6 +962,83 @@ describe('postListingToSocialMedia', () => {
 
     await postListingToSocialMedia(listingWithPhotos, supabase);
     expect(mockCleanupTempImages).not.toHaveBeenCalled();
+  });
+
+  it('sorts photos primary-first then by display_order before posting', async () => {
+    const supabase = makeSupabase();
+    vi.stubGlobal('fetch', vi.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(100) })));
+    $fetch.mockImplementation(async (url: string, init: any) => {
+      if (url.endsWith('/photos')) return { id: 'fb-media' };
+      if (url.endsWith('/feed')) return { id: 'fb-post' };
+      if (url.endsWith('/media_publish')) return { id: 'ig-post' };
+      if (url.endsWith('/media')) return { id: init?.body?.media_type === 'CAROUSEL' ? 'ig-carousel' : 'ig-child' };
+      return { status_code: 'FINISHED', id: 'container' };
+    });
+
+    // Unsorted input: a late non-primary, the primary in the middle, an early
+    // non-primary. Exercises both primary-ordering branches AND the
+    // display_order tiebreak between the two non-primary photos.
+    const listing: ListingForSocialPost = {
+      ...baseListing,
+      listing_photos: [
+        { storage_path: 'l1/c.jpg', display_order: 3, is_primary: false },
+        { storage_path: 'l1/primary.jpg', display_order: 5, is_primary: true },
+        { storage_path: 'l1/b.jpg', display_order: 2, is_primary: false },
+      ],
+    };
+
+    await postListingToSocialMedia(listing, supabase);
+
+    // Expected order: primary.jpg, then b.jpg (order 2) before c.jpg (order 3).
+    const igUrls = mockPrepareImageForInstagram.mock.calls.map((c: any) => c[0]);
+    expect(igUrls[0]).toContain('l1/primary.jpg');
+    expect(igUrls[1]).toContain('l1/b.jpg');
+    expect(igUrls[2]).toContain('l1/c.jpg');
+  });
+
+  it('logs a CRITICAL error when reverting the flag also fails after an unexpected error', async () => {
+    // Claim succeeds; image processing throws (enters the catch); the revert
+    // update itself rejects -> inner catch logs CRITICAL (line ~960).
+    const supabase = makeSupabase();
+    vi.stubGlobal('fetch', vi.fn());
+    mockPrepareImageForInstagram.mockRejectedValueOnce(new Error('sharp exploded'));
+
+    // First update (claim) returns the builder + resolving single(); the revert
+    // update should throw. Swap the update impl to throw on the revert payload.
+    const realUpdate = supabase._builder.update;
+    supabase._builder.update = vi.fn((payload: any) => {
+      if (payload && payload.promoted_on_social === false) {
+        throw new Error('revert db unreachable');
+      }
+      return realUpdate(payload);
+    });
+
+    await postListingToSocialMedia(listingWithPhotos, supabase);
+
+    const errMsgs = (console.error as any).mock.calls.map((c: any[]) => String(c[0]));
+    expect(errMsgs.some((m: string) => m.includes('CRITICAL: Failed to revert'))).toBe(true);
+  });
+
+  it('swallows a cleanup failure without throwing (best-effort temp cleanup)', async () => {
+    const supabase = makeSupabase();
+    vi.stubGlobal('fetch', vi.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(100) })));
+    $fetch.mockImplementation(async (url: string, init: any) => {
+      if (url.endsWith('/photos')) return { id: 'fb-media' };
+      if (url.endsWith('/feed')) return { id: 'fb-post' };
+      if (url.endsWith('/media_publish')) return { id: 'ig-post' };
+      if (url.endsWith('/media')) return { id: init?.body?.media_type === 'CAROUSEL' ? 'ig-carousel' : 'ig-child' };
+      return { status_code: 'FINISHED', id: 'container' };
+    });
+    mockPrepareImageForInstagram.mockImplementation(async (url: string) => ({ url, wasCropped: true }));
+    mockCleanupTempImages.mockRejectedValueOnce(new Error('s3 delete failed'));
+
+    // Must not throw despite the rejected cleanup promise.
+    await expect(postListingToSocialMedia(listingWithPhotos, supabase)).resolves.toBeUndefined();
+    // Let the non-blocking .catch() microtask settle, then assert it warned.
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+    const warnMsgs = (console.warn as any).mock.calls.map((c: any[]) => String(c[0]));
+    expect(warnMsgs.some((m: string) => m.includes('Failed to cleanup temp images'))).toBe(true);
   });
 
   it('proceeds with only Bluesky configured (Meta absent) and still claims', async () => {

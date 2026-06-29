@@ -18,7 +18,7 @@
  * tests assert the security invariant ("no javascript: survives") rather than an
  * exact string, so the suite is deterministic regardless of test ordering.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { renderMessageMarkdown, stripMessageMarkdown } from '~~/app/utils/markdown';
 
 describe('renderMessageMarkdown — empty / falsy input', () => {
@@ -93,6 +93,39 @@ describe('renderMessageMarkdown — disallowed block constructs are downgraded',
     expect(out).not.toContain('example.com/a.png');
     // marked emits an empty image -> wrapped in an empty paragraph.
     expect(out).toBe('<p></p>\n');
+  });
+
+  // serverSanitize() strips any tag NOT in ALLOWED_TAGS. marked's controlled
+  // renderer already blocks raw HTML/headings/images, but GFM still emits a few
+  // structural tags (table, hr, task-list <input>) that are outside the
+  // allowlist — these exercise the `return ''` removal branch of serverSanitize.
+  // NOTE: these MUST run before DOMPurify finishes its lazy load, otherwise the
+  // render takes the client path and serverSanitize is never called. The file
+  // runs sequentially (fileParallelism: false, no shuffle) and the DOMPurify
+  // path is forced only in the final describe block, so this ordering holds.
+  it('strips non-allowlisted GFM table tags via serverSanitize (server path)', () => {
+    const out = renderMessageMarkdown('| a | b |\n|---|---|\n| 1 | 2 |');
+    // The cell *text* survives, but no table structural tag does.
+    expect(out).toContain('a');
+    expect(out).toContain('1');
+    expect(out).not.toContain('<table');
+    expect(out).not.toContain('<thead');
+    expect(out).not.toContain('<tbody');
+    expect(out).not.toContain('<tr');
+    expect(out).not.toMatch(/<t[hd]\b/);
+  });
+
+  it('strips a thematic break (<hr>) tag via serverSanitize (server path)', () => {
+    const out = renderMessageMarkdown('---');
+    expect(out).not.toContain('<hr');
+  });
+
+  it('strips a GFM task-list <input> tag via serverSanitize (server path)', () => {
+    const out = renderMessageMarkdown('- [ ] todo\n- [x] done');
+    // The list itself is allowlisted (<ul>/<li>); the injected <input> is not.
+    expect(out).not.toContain('<input');
+    expect(out).toContain('todo');
+    expect(out).toContain('done');
   });
 });
 
@@ -248,5 +281,79 @@ describe('stripMessageMarkdown — documented limitations (not a full md->text c
     // `\[([^\]]+)\]\([^)]+\)` consumes up to the first ')'; with a paren inside
     // the URL the remaining ')' is left behind. Documenting actual behavior.
     expect(stripMessageMarkdown('[xss](javascript:alert(1))')).toBe('xss)');
+  });
+});
+
+/**
+ * The DOMPurify (client) render path. Until the module-level `purifyInstance`
+ * finishes its lazy `import('dompurify')`, every render falls back to
+ * serverSanitize/serverHardenLinks (all tests above run on that fallback path).
+ * Once it loads, renderMessageMarkdown takes the `if (purifyInstance)` branch,
+ * which installs the `afterSanitizeAttributes` link-hardening hook and runs the
+ * real DOMPurify sanitizer.
+ *
+ * This block MUST come last: once DOMPurify is loaded it stays loaded for the
+ * remainder of the file (module-global), so any server-path assertion after this
+ * point would silently switch paths.
+ */
+describe('renderMessageMarkdown — DOMPurify client path (after lazy load)', () => {
+  // Drive the lazy load, then wait until renders actually go through DOMPurify.
+  // The first render fires the fire-and-forget getPurify(); importing dompurify
+  // ourselves resolves the same cached module, after which the module-global
+  // purifyInstance is populated. We poll on a behavioral signal: on the server
+  // fallback a stripped javascript: link yields href="", whereas DOMPurify drops
+  // the href attribute entirely.
+  beforeAll(async () => {
+    renderMessageMarkdown('warm up the lazy DOMPurify import');
+    await import('dompurify');
+    await vi.waitFor(
+      () => {
+        const out = renderMessageMarkdown('[x](javascript:alert(1))');
+        if (out.includes('href=""')) {
+          throw new Error('DOMPurify not loaded yet (still on server fallback path)');
+        }
+      },
+      { timeout: 5000, interval: 25 }
+    );
+  });
+
+  it('sanitizes a safe link and applies the afterSanitizeAttributes hook to <a>', () => {
+    // Hits the `if (purifyInstance)` branch + purifyInstance.sanitize call, plus
+    // the hook body that forces target/rel on the anchor node.
+    const out = renderMessageMarkdown('[link](https://example.com)');
+    expect(out).toContain('href="https://example.com"');
+    expect(out).toContain('target="_blank"');
+    expect(out).toContain('rel="noopener noreferrer nofollow ugc"');
+    expect(out).toContain('>link</a>');
+  });
+
+  it('forces target/rel even when no anchor-internal attrs are present', () => {
+    // Confirms the hook (node.nodeName === "A") rewrites attributes on a plain
+    // anchor rather than relying on marked/serverHardenLinks.
+    const out = renderMessageMarkdown('see [docs](https://docs.example.org/path)');
+    const anchor = out.match(/<a\b[^>]*>/i)?.[0] ?? '';
+    expect(anchor).toContain('target="_blank"');
+    expect(anchor).toContain('rel="noopener noreferrer nofollow ugc"');
+  });
+
+  it('drops a dangerous javascript: href entirely on the DOMPurify path', () => {
+    // DOMPurify removes the unsafe href attribute (no href="" placeholder),
+    // distinguishing this from the server-fallback hardening.
+    const out = renderMessageMarkdown('[x](javascript:alert(1))').toLowerCase();
+    expect(out).toContain('<a');
+    expect(out).not.toContain('javascript:');
+    expect(out).not.toContain('href=""');
+  });
+
+  it('still neutralizes raw <script> on the DOMPurify path', () => {
+    const out = renderMessageMarkdown('<script>alert(1)</script>');
+    expect(out).not.toContain('<script');
+    expect(out).not.toContain('alert(1)');
+  });
+
+  it('still renders basic inline formatting on the DOMPurify path', () => {
+    const out = renderMessageMarkdown('**bold** and `code`');
+    expect(out).toContain('<strong>bold</strong>');
+    expect(out).toContain('<code>code</code>');
   });
 });

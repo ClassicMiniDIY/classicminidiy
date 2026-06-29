@@ -472,6 +472,410 @@ describe('assembleFeed', () => {
 });
 
 // ===========================================================================
+// Missing-field fallbacks & remaining budget/location branches
+// (covers feedBuilder.ts:133 formatServerLocation fallback,
+//  244-246 formatBudget max-only/min-only/Flexible, and the per-item
+//  fallback branches: Anonymous Seller, Free / Contact for price,
+//  find description chain, category label fallback, no-photo listing).
+// ===========================================================================
+describe('assembleFeed — missing-field fallbacks', () => {
+  it('falls back to listing.location when no city/state/country parts exist (line 133)', async () => {
+    listingsRows = [
+      {
+        id: 'l-loc',
+        title: 'No address listing',
+        slug: 'no-address',
+        description: 'desc',
+        price: 100,
+        year: 1970,
+        model: 'Mini',
+        location: 'Somewhere, UK',
+        city: null,
+        state_province: null,
+        country: null,
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: { display_name: 'Sam' },
+        listing_photos: [],
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Somewhere, UK');
+  });
+
+  it('omits the country part when it equals "United States" but keeps city/state', async () => {
+    listingsRows = [
+      {
+        id: 'l-us',
+        title: 'US listing',
+        slug: 'us-listing',
+        description: 'desc',
+        price: 100,
+        year: 1970,
+        model: 'Mini',
+        location: 'ignored fallback',
+        city: 'Detroit',
+        state_province: 'MI',
+        country: 'United States',
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: { display_name: 'Sam' },
+        listing_photos: [],
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Detroit, MI');
+    expect(rss).not.toContain('United States');
+    // location fallback must NOT be used when parts exist
+    expect(rss).not.toContain('ignored fallback');
+  });
+
+  it('uses "Anonymous Seller" when the listing has no user display_name', async () => {
+    listingsRows = [
+      {
+        id: 'l-anon',
+        title: 'Sellerless',
+        slug: 'sellerless',
+        description: 'desc',
+        price: 100,
+        year: 1970,
+        model: 'Mini',
+        location: '',
+        city: null,
+        state_province: null,
+        country: null,
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: null,
+        listing_photos: [],
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Anonymous Seller');
+  });
+
+  it('renders "Free" when price is exactly 0', async () => {
+    listingsRows = [
+      {
+        id: 'l-free',
+        title: 'Freebie',
+        slug: 'freebie',
+        description: 'desc',
+        price: 0,
+        year: 1970,
+        model: 'Mini',
+        location: '',
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: { display_name: 'Sam' },
+        listing_photos: [],
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Free');
+  });
+
+  it('renders "Contact for price" when price is null/undefined', async () => {
+    listingsRows = [
+      {
+        id: 'l-nop',
+        title: 'No price',
+        slug: 'no-price',
+        description: 'desc',
+        price: null,
+        year: 1970,
+        model: 'Mini',
+        location: '',
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: { display_name: 'Sam' },
+        listing_photos: [],
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Contact for price');
+  });
+
+  it('omits the enclosure/img when a listing has no photos', async () => {
+    listingsRows = [
+      {
+        id: 'l-nophoto',
+        title: 'Photoless',
+        slug: 'photoless',
+        description: 'desc',
+        price: 100,
+        year: 1970,
+        model: 'Mini',
+        location: '',
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: { display_name: 'Sam' },
+        listing_photos: [],
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Photoless');
+    expect(rss).not.toContain('storage/v1/object/public/listing-photos');
+    expect(rss).not.toContain('<enclosure');
+  });
+
+  it('uses the first photo when none is flagged is_primary', async () => {
+    listingsRows = [
+      {
+        id: 'l-noprimary',
+        title: 'No primary photo',
+        slug: 'no-primary',
+        description: 'desc',
+        price: 100,
+        year: 1970,
+        model: 'Mini',
+        location: '',
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: { display_name: 'Sam' },
+        listing_photos: [
+          { storage_path: 'np/first.jpg', is_primary: false },
+          { storage_path: 'np/second.jpg', is_primary: false },
+        ],
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('listing-photos/np/first.jpg');
+    expect(rss).not.toContain('np/second.jpg');
+  });
+
+  it('falls back through editor_commentary -> description -> og_description for finds', async () => {
+    findsRows = [
+      {
+        id: 'f-desc',
+        title: 'Find with description only',
+        slug: 'find-desc',
+        description: 'plain description',
+        og_description: 'og fallback',
+        og_image_url: null,
+        editor_commentary: null,
+        published_at: '2026-02-02T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('plain description');
+    // no og_image_url => no enclosure/img tag
+    expect(rss).not.toContain('<enclosure');
+  });
+
+  it('falls back to og_description when find has neither commentary nor description', async () => {
+    findsRows = [
+      {
+        id: 'f-og',
+        title: 'Find with og only',
+        slug: 'find-og',
+        description: null,
+        og_description: 'og only content',
+        og_image_url: null,
+        editor_commentary: null,
+        published_at: '2026-02-02T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('og only content');
+  });
+
+  it('renders an empty find content when all description sources are absent', async () => {
+    findsRows = [
+      {
+        id: 'f-empty',
+        title: 'Find no content',
+        slug: 'find-empty',
+        description: null,
+        og_description: null,
+        og_image_url: null,
+        editor_commentary: null,
+        published_at: '2026-02-02T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('[Mini Find] Find no content');
+  });
+
+  it('formats a "Up to" budget when only budget_max is set (line 244)', async () => {
+    wantedRows = [
+      {
+        id: 'w-max',
+        title: 'WTB max only',
+        description: 'desc',
+        category: 'parts',
+        budget_min: null,
+        budget_max: 2000,
+        currency: 'USD',
+        city: 'Bath',
+        state_province: null,
+        country: 'United Kingdom',
+        created_at: '2026-02-03T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Up to $2,000');
+  });
+
+  it('formats a "From" budget when only budget_min is set (line 245)', async () => {
+    wantedRows = [
+      {
+        id: 'w-min',
+        title: 'WTB min only',
+        description: 'desc',
+        category: 'parts',
+        budget_min: 300,
+        budget_max: null,
+        currency: 'USD',
+        city: 'Bath',
+        state_province: null,
+        country: 'United Kingdom',
+        created_at: '2026-02-03T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('From $300');
+  });
+
+  it('formats a "Flexible" budget when neither min nor max is set (line 246)', async () => {
+    wantedRows = [
+      {
+        id: 'w-flex',
+        title: 'WTB flexible',
+        description: 'desc',
+        category: 'vehicle',
+        budget_min: null,
+        budget_max: null,
+        currency: 'USD',
+        city: 'Bath',
+        state_province: null,
+        country: 'United Kingdom',
+        created_at: '2026-02-03T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('Flexible');
+  });
+
+  it('falls back to the raw category when it has no CATEGORY_LABELS entry', async () => {
+    wantedRows = [
+      {
+        id: 'w-cat',
+        title: 'WTB misc',
+        description: 'desc',
+        category: 'misc',
+        budget_min: null,
+        budget_max: null,
+        currency: 'USD',
+        city: 'Bath',
+        state_province: null,
+        country: 'United Kingdom',
+        created_at: '2026-02-03T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('misc');
+  });
+
+  it('defaults wanted currency to USD when currency is absent', async () => {
+    wantedRows = [
+      {
+        id: 'w-nocur',
+        title: 'WTB no currency',
+        description: 'desc',
+        category: 'engine',
+        budget_min: 750,
+        budget_max: null,
+        currency: null,
+        city: 'Bath',
+        state_province: null,
+        country: 'United Kingdom',
+        created_at: '2026-02-03T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('From $750');
+  });
+
+  it('tolerates a listing with null title/model/description and absent listing_photos (field fallbacks)', async () => {
+    listingsRows = [
+      {
+        id: 'l-nulls',
+        title: null,
+        slug: 'null-fields',
+        description: null,
+        price: 100,
+        year: 1970,
+        model: null,
+        location: '',
+        created_at: '2026-02-01T00:00:00.000Z',
+        user: { display_name: 'Sam' },
+        // listing_photos key intentionally absent -> exercises `|| []`
+      },
+    ];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    expect(feed.items).toHaveLength(1);
+    const rss = feed.rss2();
+    // null title/model/description must not throw; year still renders
+    expect(rss).toContain('1970');
+    expect(rss).not.toContain('storage/v1/object/public/listing-photos');
+  });
+
+  it('renders a wanted post with a null description (field fallback)', async () => {
+    wantedRows = [
+      {
+        id: 'w-nulldesc',
+        title: 'WTB null desc',
+        description: null,
+        category: 'parts',
+        budget_min: 100,
+        budget_max: 200,
+        currency: 'USD',
+        city: 'Bath',
+        state_province: null,
+        country: 'United Kingdom',
+        created_at: '2026-02-03T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    expect(feed.items).toHaveLength(1);
+    const rss = feed.rss2();
+    expect(rss).toContain('[Wanted] WTB null desc');
+  });
+
+  it('omits the Location line for a wanted post with no location at all', async () => {
+    wantedRows = [
+      {
+        id: 'w-noloc',
+        title: 'WTB no location',
+        description: 'desc',
+        category: 'parts',
+        budget_min: null,
+        budget_max: null,
+        currency: 'USD',
+        city: null,
+        state_province: null,
+        country: null,
+        location: null,
+        created_at: '2026-02-03T00:00:00.000Z',
+      },
+    ];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    const rss = feed.rss2();
+    expect(rss).toContain('[Wanted] WTB no location');
+    expect(rss).not.toContain('<strong>Location:</strong>');
+  });
+});
+
+// ===========================================================================
 // createFeedHandler — flag gating + content-type per format
 // ===========================================================================
 describe('createFeedHandler', () => {
