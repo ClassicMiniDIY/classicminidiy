@@ -630,6 +630,9 @@ export default defineNuxtConfig({
     },
     // Minify responses
     minify: true,
+    // No server source maps in the build output — they add ~430 .map files to
+    // the deployed function (dead weight in prod) and bloat the Vercel upload.
+    sourceMap: false,
     // Keep the heavy social-posting deps OUT of the Rollup server bundle. The
     // `await import('@atproto/api')` in socialMedia.ts otherwise makes Rollup
     // pull @atproto/api (2433 files) — plus sharp's native binaries — into a
