@@ -82,7 +82,7 @@ export const FEED_META: Record<FeedType, FeedConfig> = {
 };
 
 /** Escape HTML entities for safe inclusion in feed content. */
-function escapeHtml(unsafe: string): string {
+export function escapeHtml(unsafe: string): string {
   return unsafe.replace(
     /[&<>"']/g,
     (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m] || m
@@ -95,13 +95,13 @@ function escapeHtml(unsafe: string): string {
  * are preserved (encodeURIComponent on the whole key would turn `/` into `%2F`
  * and 404 the object). Mirrors what `storage.getPublicUrl()` does client-side.
  */
-function storagePublicUrl(supabaseUrl: string, bucket: string, key: string): string {
+export function storagePublicUrl(supabaseUrl: string, bucket: string, key: string): string {
   const encoded = key.split('/').map(encodeURIComponent).join('/');
   return `${supabaseUrl}/storage/v1/object/public/${bucket}/${encoded}`;
 }
 
 /** Infer an image MIME type from a URL's file extension (defaults to JPEG). */
-function imageMimeFromUrl(url: string): string {
+export function imageMimeFromUrl(url: string): string {
   const ext = url.split(/[?#]/)[0].split('.').pop()?.toLowerCase();
   switch (ext) {
     case 'png':
@@ -223,20 +223,26 @@ function buildFindItems(finds: any[], siteUrl: string): FeedItem[] {
   });
 }
 
-function formatBudget(min: number | null, max: number | null, currency: string): string {
-  // Budgets are stored as whole currency units (not cents) — see
-  // app/utils/wantedFormatters.ts#formatBudget, the canonical UI formatter.
-  const fmt = (amount: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+/**
+ * Format a whole-unit currency amount (no cents). Budgets are stored as whole
+ * currency units — see app/utils/wantedFormatters.ts#formatBudget, the canonical
+ * UI formatter. Returns an empty string for null/undefined/NaN so callers never
+ * render "$NaN".
+ */
+export function formatMoney(amount: number | null | undefined, currency: string): string {
+  if (amount == null || Number.isNaN(amount)) return '';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
-  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`;
-  if (max != null) return `Up to ${fmt(max)}`;
-  if (min != null) return `From ${fmt(min)}`;
+function formatBudget(min: number | null, max: number | null, currency: string): string {
+  if (min != null && max != null) return `${formatMoney(min, currency)} – ${formatMoney(max, currency)}`;
+  if (max != null) return `Up to ${formatMoney(max, currency)}`;
+  if (min != null) return `From ${formatMoney(min, currency)}`;
   return 'Flexible';
 }
 
