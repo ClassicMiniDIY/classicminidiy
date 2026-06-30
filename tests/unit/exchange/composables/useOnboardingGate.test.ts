@@ -11,11 +11,13 @@ import { cleanupGlobalMocks } from '../../../setup/testHelpers';
  *     - exchangeEnabled is truthy            (flag gate)
  *     - isAuthenticated.value is true        (logged in)
  *     - userProfile.value is truthy          (profile loaded, not null)
- *     - userProfile.value.onboarding_completed === false  (explicit false)
+ *     - userProfile.value.onboarding_completed !== true  (not explicitly completed)
  *
- * It is intentionally conservative: a still-loading (null) profile, or a
- * profile whose onboarding_completed is undefined/true, yields false. So does
- * the flag being off or the user being anonymous.
+ * The check is `!== true`, meaning null/undefined/false all satisfy the
+ * condition (all these users are driven to onboard). Only an explicit true
+ * yields false. A still-loading (null) profile returns false because the
+ * profile-loaded gate (`!!userProfile.value`) fails first.
+ * Flag off, not authed, or no profile loaded also yield false.
  */
 
 // Fine-grained auth stub. Unlike testHelpers' createMockAuth (which couples
@@ -130,9 +132,9 @@ describe('useOnboardingGate', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // onboarding_completed branch: must be EXPLICIT === false
+  // onboarding_completed branch: !== true means false/null/undefined all need onboarding
   // ---------------------------------------------------------------------------
-  describe('onboarding_completed branch (strict === false)', () => {
+  describe('onboarding_completed branch (!== true)', () => {
     it('is true when onboarding_completed === false', async () => {
       stubExchangeFlag(true);
       stubAuth({ authed: true, profile: { onboarding_completed: false } });
@@ -151,29 +153,31 @@ describe('useOnboardingGate', () => {
       expect(needsOnboarding.value).toBe(false);
     });
 
-    it('is false when onboarding_completed is undefined (column absent on profile)', async () => {
+    it('is true when onboarding_completed is undefined (column absent on profile — needs onboarding)', async () => {
       stubExchangeFlag(true);
       stubAuth({ authed: true, profile: {} });
 
       const { needsOnboarding } = await loadComposable();
 
-      expect(needsOnboarding.value).toBe(false);
+      // undefined !== true → user has a loaded profile but hasn't completed onboarding.
+      expect(needsOnboarding.value).toBe(true);
     });
 
-    it('is false when onboarding_completed is null (strict equality, not loose falsy)', async () => {
+    it('is true when onboarding_completed is null (backfilled null also needs onboarding)', async () => {
       stubExchangeFlag(true);
       stubAuth({ authed: true, profile: { onboarding_completed: null } });
 
       const { needsOnboarding } = await loadComposable();
 
-      // null !== false — the === false check must NOT treat null as "needs onboarding".
-      expect(needsOnboarding.value).toBe(false);
+      // null !== true → existing users whose column was backfilled to null get the nudge.
+      expect(needsOnboarding.value).toBe(true);
     });
   });
 
   // ---------------------------------------------------------------------------
   // Truth table — every combination of (flag, authed, profile-present,
-  // onboarding_completed). The single true case is the conjunction of all gates.
+  // onboarding_completed). The single false-for-complete case is when
+  // onboarding_completed === true; all other loaded-profile states need onboarding.
   // ---------------------------------------------------------------------------
   describe('full truth table', () => {
     type Row = {
@@ -210,15 +214,15 @@ describe('useOnboardingGate', () => {
         expected: false,
         label: 'flag on / anon / pending profile present',
       },
-      // flag ON, authed, profile null — false (loading)
+      // flag ON, authed, profile null — false (loading, profile-loaded gate fails)
       { flag: true, authed: true, profile: null, expected: false, label: 'flag on / authed / profile loading (null)' },
-      // flag ON, authed, profile present — depends on onboarding_completed
+      // flag ON, authed, profile present — depends on onboarding_completed !== true
       {
         flag: true,
         authed: true,
         profile: { onboarding_completed: false },
         expected: true,
-        label: 'flag on / authed / pending (=== false) ⇒ THE one true case',
+        label: 'flag on / authed / pending (=== false) ⇒ needs onboarding',
       },
       {
         flag: true,
@@ -231,15 +235,15 @@ describe('useOnboardingGate', () => {
         flag: true,
         authed: true,
         profile: {},
-        expected: false,
-        label: 'flag on / authed / onboarding_completed undefined',
+        expected: true,
+        label: 'flag on / authed / onboarding_completed undefined ⇒ needs onboarding',
       },
       {
         flag: true,
         authed: true,
         profile: { onboarding_completed: null },
-        expected: false,
-        label: 'flag on / authed / onboarding_completed null',
+        expected: true,
+        label: 'flag on / authed / onboarding_completed null ⇒ needs onboarding',
       },
     ];
 
@@ -252,8 +256,11 @@ describe('useOnboardingGate', () => {
       expect(needsOnboarding.value).toBe(expected);
     });
 
-    it('has exactly one true row in the truth table (only the full conjunction)', () => {
-      expect(rows.filter((r) => r.expected).length).toBe(1);
+    it('has exactly one false row for the completed case (only explicit true skips onboarding)', () => {
+      // Among authenticated, flag-on, profile-loaded rows, only onboarding_completed === true is false.
+      const authedFlagOnLoaded = rows.filter((r) => r.flag && r.authed && r.profile !== null);
+      expect(authedFlagOnLoaded.filter((r) => !r.expected).length).toBe(1);
+      expect(authedFlagOnLoaded.find((r) => !r.expected)?.profile).toEqual({ onboarding_completed: true });
     });
   });
 
@@ -272,6 +279,18 @@ describe('useOnboardingGate', () => {
 
       // Profile finishes loading, onboarding not yet done.
       auth.userProfile.value = { onboarding_completed: false };
+      expect(needsOnboarding.value).toBe(true);
+    });
+
+    it('flips false → true when a null profile resolves to one with undefined onboarding_completed', async () => {
+      stubExchangeFlag(true);
+      const auth = stubAuth({ authed: true, profile: null });
+
+      const { needsOnboarding } = await loadComposable();
+      expect(needsOnboarding.value).toBe(false);
+
+      // Profile loaded but column absent (existing user, column backfilled null in DB).
+      auth.userProfile.value = { onboarding_completed: null };
       expect(needsOnboarding.value).toBe(true);
     });
 
