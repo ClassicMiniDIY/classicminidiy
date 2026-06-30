@@ -86,6 +86,10 @@ export const useMessageAttachments = () => {
    * be compressed below the limit.
    */
   const prepareAttachment = async (input: File): Promise<PreparedAttachment> => {
+    // Browser-only: dynamically imports heic2any (libheif WASM) +
+    // browser-image-compression. The guard keeps both out of the SSR/server
+    // build so they aren't traced into the Vercel serverless function.
+    if (!import.meta.client) throw new Error('prepareAttachment is browser-only');
     let file: File = input;
 
     // HEIC conversion (iOS Safari) — done BEFORE size check because HEICs
