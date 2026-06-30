@@ -668,7 +668,26 @@ export default defineNuxtConfig({
         'highlight.js',
         '@vue/devtools-core',
         '@vue/devtools-kit',
+        '@vueuse/core',
         'fuse.js',
+        // schema-org (via @nuxtjs/seo, imported from app.vue) — pre-bundle so dev
+        // doesn't trigger a mid-session re-optimize + full page reload.
+        '@unhead/schema-org/vue',
+        // Exchange client-only deps discovered on the listing/message pages.
+        // (They're client-only — guarded out of the server bundle — so this is
+        // purely a dev pre-bundle to stop the mid-session re-optimize/reload.)
+        'mapbox-gl',
+        'heic2any',
+        'browser-image-compression',
+        // Other client-only libs across exchange/model components (charts,
+        // drag-reorder, 3D viewer, HTML sanitizer, zip). Pre-bundled up front so
+        // dev doesn't re-optimize + reload the first time each page is visited.
+        'chart.js',
+        'vue-chartjs',
+        'vuedraggable',
+        'three',
+        'dompurify',
+        'client-zip',
       ],
       exclude: [],
     },
