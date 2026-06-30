@@ -1,17 +1,19 @@
-// Hard onboarding gate for the Mini Exchange section.
+// Onboarding gate for the Mini Exchange — applied only at the point of ACTION.
 //
-// When the exchange is live (NUXT_PUBLIC_EXCHANGE_ENABLED on), a logged-in user
-// whose profile isn't complete cannot enter any /exchange route — they're
-// redirected to the full /onboarding page (non-skippable), with their intended
-// destination preserved as ?redirect=. Anonymous visitors pass through so public
-// listing pages stay browsable + indexable. The soft, skippable toolbox nudge
-// lives in OnboardingNudge.vue (see useOnboardingGate).
+// When the exchange is live (NUXT_PUBLIC_EXCHANGE_ENABLED on), browsing the
+// marketplace is open to EVERYONE (anonymous or logged-in, onboarded or not) so
+// existing users are never walled out. Onboarding is only required to *act* —
+// create a listing, post a want, submit a find, or message (EXCHANGE_ONBOARDING_
+// PREFIXES). A logged-in user without a completed profile who hits one of those
+// is redirected to the full /onboarding page, intended destination preserved as
+// ?redirect=. The soft nudge that DRIVES onboarding from browse pages lives in
+// OnboardingNudge.vue (see useOnboardingGate).
 //
 // Client-only: the Supabase session is in localStorage, so SSR can't know auth
 // state. We actively wait for auth + fetch the profile before deciding, so a
 // not-onboarded user can't slip in during the auth-load window. Verified state
 // is cached per user id to avoid refetching on every in-section navigation.
-import { EXCHANGE_PREFIXES, pathInPrefixes } from '~/utils/exchangeRoutes';
+import { EXCHANGE_ONBOARDING_PREFIXES, pathInPrefixes } from '~/utils/exchangeRoutes';
 
 let verifiedUserId: string | null = null;
 
@@ -22,9 +24,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { exchangeEnabled } = useRuntimeConfig().public;
   if (!exchangeEnabled) return;
 
-  // Guard the whole Exchange — the /exchange section AND the user's marketplace
-  // management tabs under /dashboard (shared prefix list with the flag-gate).
-  if (!pathInPrefixes(to.path, EXCHANGE_PREFIXES)) return;
+  // Only gate the action routes (create/list/post/message). Browse + detail +
+  // dashboard tabs are intentionally NOT here — they stay open to everyone.
+  if (!pathInPrefixes(to.path, EXCHANGE_ONBOARDING_PREFIXES)) return;
 
   // Never trap the onboarding page or the auth callback.
   if (to.path === '/onboarding' || to.path === '/auth/callback') return;

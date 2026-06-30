@@ -19,12 +19,17 @@ export function useOnboardingGate() {
   const { exchangeEnabled } = useRuntimeConfig().public;
   const { isAuthenticated, userProfile } = useAuth();
 
+  // Needs onboarding = a loaded profile that is NOT explicitly completed. This
+  // covers existing users whose `onboarding_completed` is null (the column was
+  // backfilled to null, not false) as well as new users (false) — both get the
+  // nudge that drives them into the flow. Requiring a LOADED profile (`!!`) keeps
+  // it from flashing before auth/profile settle.
   const needsOnboarding = computed(
     () =>
       !!exchangeEnabled &&
       isAuthenticated.value &&
       !!userProfile.value &&
-      userProfile.value.onboarding_completed === false
+      userProfile.value.onboarding_completed !== true
   );
 
   return { needsOnboarding };
