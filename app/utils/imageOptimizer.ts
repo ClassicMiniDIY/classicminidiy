@@ -47,6 +47,10 @@ export const isHeicFile = (file: File): boolean => {
  * Convert HEIC file to JPEG using heic2any (dynamically imported)
  */
 const convertHeicToJpeg = async (file: File): Promise<File> => {
+  // Browser-only: heic2any bundles a multi-MB libheif WASM blob. The
+  // import.meta.client guard lets the SSR/server build dead-code-eliminate this
+  // path so heic2any is never traced into the Vercel serverless function.
+  if (!import.meta.client) throw new Error('convertHeicToJpeg is browser-only');
   try {
     const heic2any = await import('heic2any');
     const blob = await heic2any.default({
@@ -85,6 +89,10 @@ const createPreview = (file: File): Promise<string> => {
  * - Outputs WebP (or JPEG fallback)
  */
 export const optimizeImage = async (file: File, opts: OptimizeOptions = {}): Promise<OptimizeResult> => {
+  // Browser-only: uses canvas/FileReader/web-workers + dynamically imports
+  // browser-image-compression (and heic2any via convertHeicToJpeg). The guard
+  // keeps both out of the SSR/server build + the Vercel serverless function.
+  if (!import.meta.client) throw new Error('optimizeImage is browser-only');
   const originalSize = file.size;
   let fileToProcess = file;
 
