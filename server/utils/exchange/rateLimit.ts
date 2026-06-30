@@ -125,7 +125,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig) {
 }
 
 /** Test/maintenance helper: clear all tracked entries. */
-export function _resetRateLimitStore(): void {
+export function _resetExchangeRateLimitStore(): void {
   rateLimitStore.clear();
 }
 

@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { _resetRateLimitStore, RateLimitPresets } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore, RateLimitPresets } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -76,7 +76,7 @@ describe('server/api/exchange/camino/distance.post', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cacheStore.clear();
-    _resetRateLimitStore();
+    _resetExchangeRateLimitStore();
 
     // Defaults: valid body, fixed IP, no x-forwarded-for fallback, happy Camino.
     setBody({ ...VALID_BODY });

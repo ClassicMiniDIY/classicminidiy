@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockSupabaseClient } from '../../../../setup/mockSupabase';
-import { _resetRateLimitStore } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // Mock the auth + service deps the route imports. The route imports them via
@@ -101,7 +101,7 @@ function lastUpdateArg() {
 }
 
 beforeEach(() => {
-  _resetRateLimitStore();
+  _resetExchangeRateLimitStore();
   vi.clearAllMocks();
 
   // Default: authenticated owner, existing post, clean partial update.

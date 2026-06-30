@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { _resetRateLimitStore, RateLimitPresets } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore, RateLimitPresets } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -80,7 +80,7 @@ function setRealIp(ip: string | undefined) {
 describe('server/api/exchange/camino/meeting-spots.post', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    _resetRateLimitStore();
+    _resetExchangeRateLimitStore();
 
     // Defaults: valid body, fixed IP, no x-forwarded-for fallback, happy upstream.
     setBody({ ...VALID_BODY });

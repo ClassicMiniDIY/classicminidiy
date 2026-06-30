@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockSupabaseClient } from '../../../../setup/mockSupabase';
-import { _resetRateLimitStore } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // Mock the auth + service deps the route imports. The route imports them via
@@ -81,7 +81,7 @@ function wireSupabase(
 }
 
 beforeEach(() => {
-  _resetRateLimitStore();
+  _resetExchangeRateLimitStore();
   vi.clearAllMocks();
 
   // Default: authenticated user owns a clean find that resolves successfully.
