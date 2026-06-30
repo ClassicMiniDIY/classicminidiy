@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockSupabaseClient } from '../../../../setup/mockSupabase';
-import { _resetRateLimitStore } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // The route under test:
@@ -129,7 +129,7 @@ function wireImageFetch(contentType = 'image/jpeg', ok = true) {
 }
 
 beforeEach(() => {
-  _resetRateLimitStore();
+  _resetExchangeRateLimitStore();
   vi.clearAllMocks();
 
   // Default happy-ish setup: a fetched page with NO OG (so the easy branches

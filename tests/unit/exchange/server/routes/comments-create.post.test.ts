@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockSupabaseClient } from '../../../../setup/mockSupabase';
-import { _resetRateLimitStore } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -103,7 +103,7 @@ function wireSingles(...results: Array<{ data: any; error: any }>) {
 }
 
 beforeEach(() => {
-  _resetRateLimitStore();
+  _resetExchangeRateLimitStore();
   vi.clearAllMocks();
 
   (requireUserClient as any).mockResolvedValue({ user: { ...USER } });
@@ -126,7 +126,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
-  _resetRateLimitStore();
+  _resetExchangeRateLimitStore();
 });
 
 // ===========================================================================

@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockSupabaseClient } from '../../../../setup/mockSupabase';
-import { _resetRateLimitStore } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -74,7 +74,7 @@ function wire(find: { data: any; error: any }, profile: { data: any; error: any 
 
 beforeEach(() => {
   vi.clearAllMocks();
-  _resetRateLimitStore();
+  _resetExchangeRateLimitStore();
   (requireUserClient as any).mockResolvedValue({ user: { ...USER } });
   setFindId(FIND_ID);
   // Default happy path: non-admin owner deletes their own pending find.
@@ -83,7 +83,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
-  _resetRateLimitStore();
+  _resetExchangeRateLimitStore();
 });
 
 describe('server/api/exchange/external-listings/[id].delete', () => {

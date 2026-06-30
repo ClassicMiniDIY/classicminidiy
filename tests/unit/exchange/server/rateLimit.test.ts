@@ -4,14 +4,14 @@ import {
   checkRateLimit,
   createRateLimitMiddleware,
   RateLimitPresets,
-  _resetRateLimitStore,
+  _resetExchangeRateLimitStore,
   _rateLimitStoreSize,
   _MAX_TRACKED_KEYS,
 } from '~~/server/utils/exchange/rateLimit';
 
 describe('server/utils/exchange/rateLimit', () => {
   beforeEach(() => {
-    _resetRateLimitStore();
+    _resetExchangeRateLimitStore();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
   });
@@ -137,7 +137,7 @@ describe('server/utils/exchange/rateLimit', () => {
     });
 
     it('defaults keyPrefix to "rl"', () => {
-      _resetRateLimitStore();
+      _resetExchangeRateLimitStore();
       checkRateLimit('px', { maxRequests: 5, windowMs: 1000 });
       expect(_rateLimitStoreSize()).toBe(1);
       // Re-keying with explicit "rl" prefix collides with the default bucket.
@@ -245,7 +245,7 @@ describe('server/utils/exchange/rateLimit', () => {
       expect(getHeader).toHaveBeenCalledWith(expect.anything(), 'x-real-ip');
       // The bucket must be keyed off x-real-ip, not the forwarded IP. Exhaust
       // the real-ip bucket and confirm the forwarded IP would still be fresh.
-      _resetRateLimitStore();
+      _resetExchangeRateLimitStore();
       const realIp = checkRateLimit('203.0.113.9', config);
       expect(realIp.remaining).toBe(4);
       // getRequestIP is only consulted as a fallback; with x-real-ip present it

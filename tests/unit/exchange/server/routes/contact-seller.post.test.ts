@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockSupabaseClient } from '../../../../setup/mockSupabase';
-import { _resetRateLimitStore } from '~~/server/utils/exchange/rateLimit';
+import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -83,7 +83,7 @@ describe('server/api/exchange/contact-seller.post', () => {
     mockQueueNotification.mockResolvedValue(undefined);
 
     // Reset the shared in-memory rate-limit store so per-IP counts don't leak.
-    _resetRateLimitStore();
+    _resetExchangeRateLimitStore();
 
     setBody({ ...VALID_BODY });
     setRealIp('9.9.9.9');
@@ -94,7 +94,7 @@ describe('server/api/exchange/contact-seller.post', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
-    _resetRateLimitStore();
+    _resetExchangeRateLimitStore();
   });
 
   // -------------------------------------------------------------------------
