@@ -518,6 +518,61 @@ describe('useMessages', () => {
       );
     });
 
+    it('treats a held (pending) message as success, notifies the sender, and skips the recipient notification', async () => {
+      mockSupabase._mockSingle.mockResolvedValue({
+        data: { id: 'msg-1', moderation_status: 'pending', moderation_issues: ['external_url'] },
+        error: null,
+      });
+
+      const useMessages = await importComposable();
+      const { sendMessage } = useMessages();
+      const result = await sendMessage('conv-1', 'Check out https://example.com/parts');
+
+      expect(result).toBe(true);
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Message Pending Review', color: 'info' })
+      );
+      expect(mockCapture).toHaveBeenCalledWith(
+        'message_sent',
+        expect.objectContaining({ moderation_status: 'pending' })
+      );
+      // Recipient can't see a pending message, so we must not queue a notification email.
+      expect($fetch).not.toHaveBeenCalled();
+    });
+
+    it('shows friendly copy when the account is banned from sending', async () => {
+      mockSupabase._mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '42501', message: 'Account is banned from sending messages' },
+      });
+
+      const useMessages = await importComposable();
+      const { sendMessage } = useMessages();
+      const result = await sendMessage('conv-1', 'Hello there');
+
+      expect(result).toBe(false);
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Account Restricted', color: 'error' })
+      );
+    });
+
+    it('surfaces the fan-out cap message for new accounts', async () => {
+      const capMessage = 'New accounts are limited to 5 new conversations per 24 hours';
+      mockSupabase._mockSingle.mockResolvedValue({
+        data: null,
+        error: { code: '42501', message: capMessage },
+      });
+
+      const useMessages = await importComposable();
+      const { sendMessage } = useMessages();
+      const result = await sendMessage('conv-1', 'Hi, is this still available?');
+
+      expect(result).toBe(false);
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'New-Account Message Limit', description: capMessage, color: 'error' })
+      );
+    });
+
     it('skips the notification fetch when there is no access token', async () => {
       okInsert();
       mockSupabase.auth.getSession = vi.fn().mockResolvedValue({ data: { session: null }, error: null });
@@ -780,7 +835,7 @@ describe('useMessages', () => {
         seller: { id: 'seller-1', display_name: 'John Seller', username: 'jseller' },
       } as any);
 
-      expect(result).toEqual({ name: 'John Seller', id: 'seller-1' });
+      expect(result).toEqual({ name: 'John Seller', id: 'seller-1', created_at: null });
     });
 
     it('returns the buyer when the current user is the seller', async () => {
@@ -793,7 +848,7 @@ describe('useMessages', () => {
         buyer: { id: 'buyer-1', display_name: 'Jane Buyer', username: 'jbuyer' },
       } as any);
 
-      expect(result).toEqual({ name: 'Jane Buyer', id: 'buyer-1' });
+      expect(result).toEqual({ name: 'Jane Buyer', id: 'buyer-1', created_at: null });
     });
 
     it('falls back to username when display_name is missing', async () => {
@@ -806,7 +861,7 @@ describe('useMessages', () => {
         buyer: { id: 'buyer-1', display_name: null, username: 'mini_fan_99' },
       } as any);
 
-      expect(result).toEqual({ name: 'mini_fan_99', id: 'buyer-1' });
+      expect(result).toEqual({ name: 'mini_fan_99', id: 'buyer-1', created_at: null });
     });
 
     it('falls back to "Anonymous" and never leaks an email', async () => {
@@ -819,7 +874,7 @@ describe('useMessages', () => {
         buyer: { id: 'buyer-1', display_name: null, username: null, email: 'private@example.com' },
       } as any);
 
-      expect(result).toEqual({ name: 'Anonymous', id: 'buyer-1' });
+      expect(result).toEqual({ name: 'Anonymous', id: 'buyer-1', created_at: null });
       expect(result?.name).not.toContain('@');
       expect(result?.name).not.toContain('private');
     });

@@ -13,7 +13,7 @@
 
     <!-- Messages -->
     <div v-else ref="messagesContainer" class="space-y-4">
-      <div v-for="message in messages" :key="message.id">
+      <div v-for="message in visibleMessages" :key="message.id">
         <!-- System message (admin injected) -->
         <div v-if="message.is_system_message" class="flex justify-center my-4">
           <div class="alert alert-info max-w-md py-2 px-4">
@@ -34,8 +34,13 @@
               }"
             >
               <!-- Sender name (only for other person's messages) -->
-              <div v-if="!isOwnMessage(message.sender_id)" class="chat-header mb-1">
+              <div v-if="!isOwnMessage(message.sender_id)" class="chat-header mb-1 flex items-center gap-2">
                 <span class="text-sm font-medium">{{ getSenderName(message) }}</span>
+                <!-- New-account signal: helps recipients spot cold outreach from a fresh account -->
+                <span v-if="isNewAccountSender(message)" class="badge badge-warning badge-xs gap-1" :title="t('newAccountTitle')">
+                  <i class="fas fa-wand-magic-sparkles"></i>
+                  {{ t('newAccount') }}
+                </span>
               </div>
 
               <!-- Message content -->
@@ -68,6 +73,18 @@
                   <div class="flex items-center gap-2 text-xs opacity-75">
                     <i class="fas fa-triangle-exclamation"></i>
                     <span>{{ t('flagged') }}</span>
+                  </div>
+                </div>
+
+                <!-- Pending (held) indicator — only shown to the sender of their
+                     own held message. The recipient never sees a pending message. -->
+                <div
+                  v-if="message.moderation_status === 'pending' && isOwnMessage(message.sender_id)"
+                  class="mt-2 pt-2 border-t border-current/20"
+                >
+                  <div class="flex items-center gap-2 text-xs opacity-75">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ t('pendingNotice') }}</span>
                   </div>
                 </div>
               </div>
@@ -122,9 +139,15 @@
     messages: Message[];
     loading?: boolean;
     conversationId: string;
+    /** The other participant's id — used to tag their messages with a "new account" badge. */
+    counterpartyId?: string;
+    /** When true, the counterparty is a recently-created account (cold-outreach signal). */
+    counterpartyIsNew?: boolean;
   }
 
   const props = defineProps<Props>();
+
+  const { isBlocked } = useBlockedUsers();
 
   // Memoize rendered markdown per message id to avoid re-parsing on every
   // re-render (scroll, unread-count updates, etc.).
@@ -160,6 +183,26 @@
   const isOwnMessage = (senderId: string) => {
     return user.value?.id === senderId;
   };
+
+  // Messages actually rendered to the current user.
+  // - A 'pending' (held) message is only visible to its own sender; the
+  //   recipient never sees it. RLS already enforces this server-side, but we
+  //   filter client-side too as defense-in-depth (realtime/cache could surface
+  //   a row that slips past).
+  // - Messages from blocked/muted users are hidden from the current user's view.
+  const visibleMessages = computed(() =>
+    props.messages.filter((message) => {
+      const own = isOwnMessage(message.sender_id);
+      if (message.moderation_status === 'pending' && !own) return false;
+      if (!own && isBlocked(message.sender_id)) return false;
+      return true;
+    })
+  );
+
+  // Tag a counterparty's messages with a "new account" badge so recipients can
+  // spot cold outreach from a freshly-created account.
+  const isNewAccountSender = (message: Message) =>
+    !!props.counterpartyIsNew && !isOwnMessage(message.sender_id) && message.sender_id === props.counterpartyId;
 
   // Get sender display name
   const getSenderName = (message: Message) => {
@@ -197,16 +240,16 @@
 
 <i18n lang="json">
 {
-  "en": { "empty": "No messages yet. Start the conversation!", "flagged": "Message flagged for review", "report": "Report message", "sent": "Sent", "read": "Read", "anonymous": "Anonymous", "unknownUser": "Unknown User" },
-  "es": { "empty": "Aún no hay mensajes. ¡Inicia la conversación!", "flagged": "Mensaje marcado para revisión", "report": "Reportar mensaje", "sent": "Enviado", "read": "Leído", "anonymous": "Anónimo", "unknownUser": "Usuario desconocido" },
-  "fr": { "empty": "Aucun message pour le moment. Lancez la conversation !", "flagged": "Message signalé pour examen", "report": "Signaler le message", "sent": "Envoyé", "read": "Lu", "anonymous": "Anonyme", "unknownUser": "Utilisateur inconnu" },
-  "de": { "empty": "Noch keine Nachrichten. Starte die Unterhaltung!", "flagged": "Nachricht zur Überprüfung gemeldet", "report": "Nachricht melden", "sent": "Gesendet", "read": "Gelesen", "anonymous": "Anonym", "unknownUser": "Unbekannter Benutzer" },
-  "it": { "empty": "Ancora nessun messaggio. Inizia la conversazione!", "flagged": "Messaggio segnalato per revisione", "report": "Segnala messaggio", "sent": "Inviato", "read": "Letto", "anonymous": "Anonimo", "unknownUser": "Utente sconosciuto" },
-  "pt": { "empty": "Ainda não há mensagens. Inicie a conversa!", "flagged": "Mensagem sinalizada para revisão", "report": "Denunciar mensagem", "sent": "Enviado", "read": "Lido", "anonymous": "Anônimo", "unknownUser": "Usuário desconhecido" },
-  "ru": { "empty": "Сообщений пока нет. Начните разговор!", "flagged": "Сообщение отмечено для проверки", "report": "Пожаловаться на сообщение", "sent": "Отправлено", "read": "Прочитано", "anonymous": "Аноним", "unknownUser": "Неизвестный пользователь" },
-  "ja": { "empty": "まだメッセージはありません。会話を始めましょう！", "flagged": "メッセージが確認のため報告されました", "report": "メッセージを報告", "sent": "送信済み", "read": "既読", "anonymous": "匿名", "unknownUser": "不明なユーザー" },
-  "zh": { "empty": "还没有消息。开始对话吧！", "flagged": "消息已被举报待审核", "report": "举报消息", "sent": "已发送", "read": "已读", "anonymous": "匿名", "unknownUser": "未知用户" },
-  "ko": { "empty": "아직 메시지가 없습니다. 대화를 시작하세요!", "flagged": "메시지가 검토를 위해 신고되었습니다", "report": "메시지 신고", "sent": "전송됨", "read": "읽음", "anonymous": "익명", "unknownUser": "알 수 없는 사용자" }
+  "en": {"empty": "No messages yet. Start the conversation!", "flagged": "Message flagged for review", "report": "Report message", "sent": "Sent", "read": "Read", "anonymous": "Anonymous", "unknownUser": "Unknown User", "newAccount": "New account", "newAccountTitle": "This account was created recently. Be cautious with unexpected requests, links, or payment asks.", "pendingNotice": "Pending review — the other person won't see this until it's approved"},
+  "es": {"empty": "Aún no hay mensajes. ¡Inicia la conversación!", "flagged": "Mensaje marcado para revisión", "report": "Reportar mensaje", "sent": "Enviado", "read": "Leído", "anonymous": "Anónimo", "unknownUser": "Usuario desconocido", "newAccount": "Cuenta nueva", "newAccountTitle": "Esta cuenta se creó recientemente. Ten cuidado con solicitudes, enlaces o peticiones de pago inesperadas.", "pendingNotice": "Pendiente de revisión: la otra persona no lo verá hasta que se apruebe"},
+  "fr": {"empty": "Aucun message pour le moment. Lancez la conversation !", "flagged": "Message signalé pour examen", "report": "Signaler le message", "sent": "Envoyé", "read": "Lu", "anonymous": "Anonyme", "unknownUser": "Utilisateur inconnu", "newAccount": "Nouveau compte", "newAccountTitle": "Ce compte a été créé récemment. Méfiez-vous des demandes, liens ou demandes de paiement inattendus.", "pendingNotice": "En attente de vérification — l'autre personne ne le verra pas avant son approbation"},
+  "de": {"empty": "Noch keine Nachrichten. Starte die Unterhaltung!", "flagged": "Nachricht zur Überprüfung gemeldet", "report": "Nachricht melden", "sent": "Gesendet", "read": "Gelesen", "anonymous": "Anonym", "unknownUser": "Unbekannter Benutzer", "newAccount": "Neues Konto", "newAccountTitle": "Dieses Konto wurde kürzlich erstellt. Sei vorsichtig bei unerwarteten Anfragen, Links oder Zahlungsaufforderungen.", "pendingNotice": "Wartet auf Überprüfung — die andere Person sieht dies erst nach der Freigabe"},
+  "it": {"empty": "Ancora nessun messaggio. Inizia la conversazione!", "flagged": "Messaggio segnalato per revisione", "report": "Segnala messaggio", "sent": "Inviato", "read": "Letto", "anonymous": "Anonimo", "unknownUser": "Utente sconosciuto", "newAccount": "Account nuovo", "newAccountTitle": "Questo account è stato creato di recente. Fai attenzione a richieste, link o richieste di pagamento inaspettate.", "pendingNotice": "In attesa di revisione: l'altra persona non lo vedrà finché non sarà approvato"},
+  "pt": {"empty": "Ainda não há mensagens. Inicie a conversa!", "flagged": "Mensagem sinalizada para revisão", "report": "Denunciar mensagem", "sent": "Enviado", "read": "Lido", "anonymous": "Anônimo", "unknownUser": "Usuário desconhecido", "newAccount": "Conta nova", "newAccountTitle": "Esta conta foi criada recentemente. Tenha cuidado com solicitações, links ou pedidos de pagamento inesperados.", "pendingNotice": "Aguardando revisão — a outra pessoa só verá após a aprovação"},
+  "ru": {"empty": "Сообщений пока нет. Начните разговор!", "flagged": "Сообщение отмечено для проверки", "report": "Пожаловаться на сообщение", "sent": "Отправлено", "read": "Прочитано", "anonymous": "Аноним", "unknownUser": "Неизвестный пользователь", "newAccount": "Новый аккаунт", "newAccountTitle": "Этот аккаунт создан недавно. Будьте осторожны с неожиданными просьбами, ссылками или запросами оплаты.", "pendingNotice": "Ожидает проверки — собеседник не увидит это до одобрения"},
+  "ja": {"empty": "まだメッセージはありません。会話を始めましょう！", "flagged": "メッセージが確認のため報告されました", "report": "メッセージを報告", "sent": "送信済み", "read": "既読", "anonymous": "匿名", "unknownUser": "不明なユーザー", "newAccount": "新規アカウント", "newAccountTitle": "このアカウントは最近作成されました。予期しない依頼、リンク、支払い要求にはご注意ください。", "pendingNotice": "審査待ち — 承認されるまで相手には表示されません"},
+  "zh": {"empty": "还没有消息。开始对话吧！", "flagged": "消息已被举报待审核", "report": "举报消息", "sent": "已发送", "read": "已读", "anonymous": "匿名", "unknownUser": "未知用户", "newAccount": "新账户", "newAccountTitle": "该账户是最近创建的。请警惕意外的请求、链接或付款要求。", "pendingNotice": "等待审核——在批准之前对方不会看到此消息"},
+  "ko": {"empty": "아직 메시지가 없습니다. 대화를 시작하세요!", "flagged": "메시지가 검토를 위해 신고되었습니다", "report": "메시지 신고", "sent": "전송됨", "read": "읽음", "anonymous": "익명", "unknownUser": "알 수 없는 사용자", "newAccount": "신규 계정", "newAccountTitle": "이 계정은 최근에 생성되었습니다. 예상치 못한 요청, 링크 또는 결제 요구에 주의하세요.", "pendingNotice": "검토 대기 중 — 승인될 때까지 상대방에게 표시되지 않습니다"}
 }
 </i18n>
 
