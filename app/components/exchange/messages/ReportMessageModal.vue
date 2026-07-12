@@ -12,6 +12,7 @@
           type="button"
           class="btn btn-xs"
           :class="reason === preset.label ? 'btn-error' : 'btn-outline'"
+          :aria-pressed="reason === preset.label"
           @click="reason = preset.label"
         >
           {{ preset.label }}
