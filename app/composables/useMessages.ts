@@ -39,11 +39,13 @@ export interface Conversation {
     id: string;
     display_name: string | null;
     username: string | null;
+    created_at?: string | null;
   };
   seller?: {
     id: string;
     display_name: string | null;
     username: string | null;
+    created_at?: string | null;
   };
   latest_message?: Message;
 }
@@ -130,12 +132,14 @@ export const useMessages = () => {
           buyer:public_profiles!conversations_buyer_id_fkey (
             id,
             display_name,
-            username
+            username,
+            created_at
           ),
           seller:public_profiles!conversations_seller_id_fkey (
             id,
             display_name,
-            username
+            username,
+            created_at
           )
         `
         )
@@ -194,12 +198,14 @@ export const useMessages = () => {
           buyer:public_profiles!conversations_buyer_id_fkey (
             id,
             display_name,
-            username
+            username,
+            created_at
           ),
           seller:public_profiles!conversations_seller_id_fkey (
             id,
             display_name,
-            username
+            username,
+            created_at
           )
         `
         )
@@ -426,10 +432,19 @@ export const useMessages = () => {
           sender_id: user.value.id,
           content: content.trim(),
         })
-        .select('id')
+        .select('id, moderation_status, moderation_issues')
         .single();
 
       if (error) throw error;
+
+      // The shared Supabase backend may "hold" a message from a new/probationary
+      // account when it contains an external link: the row is saved with
+      // moderation_status='pending' (and 'external_url' in moderation_issues),
+      // and RLS hides it from the recipient until an admin approves it. The
+      // sender still sees their own pending message, so this is NOT a failure —
+      // we just let them know it's awaiting review and skip notifying the
+      // recipient (who can't see it yet).
+      const isPending = (inserted as any)?.moderation_status === 'pending';
 
       // Upload and link any attachments. If this fails we keep the text
       // message and surface a toast; orphaned storage objects (if any)
@@ -463,7 +478,20 @@ export const useMessages = () => {
         listing_id: context?.conversation?.listing_id || undefined,
         message_length: content.length,
         is_first_message: (context?.existingMessageCount ?? 0) === 0,
+        moderation_status: isPending ? 'pending' : 'approved',
       });
+
+      if (isPending) {
+        toast.add({
+          title: 'Message Pending Review',
+          description:
+            "Because your account is new, messages containing links are checked before the other person sees them. This lifts as your account ages — your message will appear once it's approved.",
+          color: 'info',
+          duration: 9000,
+        });
+        // Don't notify the recipient about a message they can't see yet.
+        return true;
+      }
 
       // Fire-and-forget: queue notification for the recipient
       // Server derives recipient and sender name from the conversation + auth token
@@ -487,19 +515,71 @@ export const useMessages = () => {
 
       // Track message failure
       capture('message_failed', {
-        error_type: error.message || 'unknown',
+        error_type: error?.code || error?.message || 'unknown',
         conversation_id: conversationId,
       });
 
+      // The shared Supabase backend enforces anti-abuse limits at the DB layer.
+      // A blocked insert surfaces as a Postgres error (SQLSTATE 42501) carrying
+      // a specific message. Translate the known cases into friendly copy
+      // instead of a generic failure.
+      const { title, description } = friendlySendError(error);
       toast.add({
-        title: 'Error',
-        description: 'Failed to send message',
+        title,
+        description,
         color: 'error',
+        duration: 9000,
       });
       return false;
     } finally {
       sending.value = false;
     }
+  };
+
+  /**
+   * Translate a failed message insert into user-friendly copy.
+   *
+   * The shared Supabase backend (classicminidiy-supabase messaging probation)
+   * rejects sends at the DB layer with SQLSTATE 42501 and a recognizable
+   * message for two cases:
+   *   - Banned sender: "Account is banned from sending messages"
+   *   - Fan-out cap:   "New accounts are limited to N new conversations per 24 hours…"
+   * Anything else falls back to a generic-but-clear message.
+   */
+  const friendlySendError = (error: any): { title: string; description: string } => {
+    const message: string = error?.message || '';
+    const lower = message.toLowerCase();
+
+    if (lower.includes('banned')) {
+      return {
+        title: 'Account Restricted',
+        description:
+          "Your account can't send messages right now. If you believe this is a mistake, please contact support.",
+      };
+    }
+
+    if (lower.includes('new accounts are limited') || lower.includes('conversations per') || lower.includes('24 hours')) {
+      return {
+        title: 'New-Account Message Limit',
+        description:
+          // Surface the server's own message when present — it states the exact cap.
+          message ||
+          'New accounts can only start a few new conversations per day. This lifts as your account ages, or after 24 hours.',
+      };
+    }
+
+    if (error?.code === '42501') {
+      return {
+        title: "Message Couldn't Be Sent",
+        description:
+          "You don't have permission to send this message, or a sending limit applies. New accounts have lighter limits that lift as the account ages.",
+      };
+    }
+
+    return {
+      title: 'Error',
+      description: 'Failed to send message. Please try again.',
+    };
   };
 
   /**
@@ -558,18 +638,22 @@ export const useMessages = () => {
   /**
    * Get display name for other participant in conversation
    */
-  const getOtherParticipant = (conversation: Conversation): { name: string; id: string } | null => {
+  const getOtherParticipant = (
+    conversation: Conversation
+  ): { name: string; id: string; created_at?: string | null } | null => {
     if (!user.value) return null;
 
     if (conversation.buyer_id === user.value.id && conversation.seller) {
       return {
         name: conversation.seller.display_name || conversation.seller.username || 'Anonymous',
         id: conversation.seller.id,
+        created_at: conversation.seller.created_at ?? null,
       };
     } else if (conversation.seller_id === user.value.id && conversation.buyer) {
       return {
         name: conversation.buyer.display_name || conversation.buyer.username || 'Anonymous',
         id: conversation.buyer.id,
+        created_at: conversation.buyer.created_at ?? null,
       };
     }
 
