@@ -86,6 +86,24 @@ describe('useBlockedUsers', () => {
     expect(localStorage.setItem).toHaveBeenCalledWith('cmdiy_blocked_users:me-123', JSON.stringify(['scammer-1']));
   });
 
+  it('tolerates corrupted localStorage payloads (non-array / non-string members)', async () => {
+    const useBlockedUsers = await getUseBlockedUsers();
+    const { load, isBlocked, blockedIds } = useBlockedUsers();
+
+    (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue('"not-an-array"');
+    load();
+    expect(blockedIds.value).toEqual([]);
+
+    (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue('[1, "real-id", null]');
+    load();
+    expect(blockedIds.value).toEqual(['real-id']);
+    expect(isBlocked('real-id')).toBe(true);
+
+    (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue('{{{not json');
+    load();
+    expect(blockedIds.value).toEqual([]);
+  });
+
   it('reloads per-user state when the signed-in user changes (no leakage)', async () => {
     const useBlockedUsers = await getUseBlockedUsers();
     const { isBlocked, blockUser } = useBlockedUsers();

@@ -34,7 +34,10 @@ export const useBlockedUsers = () => {
     if (!import.meta.client) return;
     try {
       const raw = localStorage.getItem(storageKey());
-      blockedIds.value = raw ? (JSON.parse(raw) as string[]) : [];
+      const parsed = raw ? JSON.parse(raw) : [];
+      // Corrupted storage (non-array, or non-string members) must not poison
+      // the reactive list — includes()/spread assume string[].
+      blockedIds.value = Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
     } catch {
       blockedIds.value = [];
     }

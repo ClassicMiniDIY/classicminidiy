@@ -5,8 +5,9 @@
       <span class="loading loading-spinner loading-lg"></span>
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="messages.length === 0" class="text-center py-12">
+    <!-- Empty state (based on what's actually visible — blocked/held messages
+         don't count, so an all-hidden thread still explains itself) -->
+    <div v-else-if="visibleMessages.length === 0" class="text-center py-12">
       <i class="fas fa-comments text-6xl mx-auto text-base-content/30 mb-4 block"></i>
       <p class="text-base-content/60">{{ t('empty') }}</p>
     </div>
@@ -223,9 +224,10 @@
     });
   };
 
-  // Watch for new messages and scroll
+  // Watch for new VISIBLE messages and scroll — hidden (blocked/held) rows
+  // changing the raw prop length must not cause a scroll jump.
   watch(
-    () => props.messages.length,
+    () => visibleMessages.value.length,
     () => {
       scrollToBottom();
     },
