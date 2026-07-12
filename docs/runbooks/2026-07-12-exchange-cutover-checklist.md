@@ -57,9 +57,17 @@ In `classicminidiy-supabase`:
 5. [ ] Edge-fn secrets (Supabase dashboard → Edge Functions → secrets), reusing TME's
        existing values:
    - `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ACCESS_TOKEN` (newsletter subscriber merge)
-   - `STRIPE_LISTINGS_WEBHOOK_SECRET` — create the **listing** webhook endpoint in the
-     Stripe dashboard pointing at `stripe-listings-webhook`. This is the THIRD isolated
-     Stripe webhook (membership / model-connect / listings) — secrets must not cross.
+   - `STRIPE_LISTINGS_SECRET_KEY` + `STRIPE_LISTINGS_WEBHOOK_SECRET` — NO new Stripe
+     endpoint (the account is out of webhook slots): **repurpose the existing
+     `the-mini-exchange` destination** (`theminiexchange.com/api/payments/webhook`,
+     2 events: `checkout.session.completed` + `charge.refunded` — the edge fn handles
+     exactly these). Its signing secret survives a URL edit, so set both secrets NOW
+     from the existing endpoint (`STRIPE_LISTINGS_SECRET_KEY` = the account key, same
+     value as `STRIPE_SECRET_KEY`; isolation stays at the per-endpoint-secret level),
+     then at Stage D edit the destination URL to
+     `https://psoqirvbujwohemmwplv.supabase.co/functions/v1/stripe-listings-webhook`.
+     No gap window: both handlers write the same shared-DB tables, and the old URL
+     dies behind the host 301s at DNS cutover anyway.
    - Meta + Bluesky creds for `post-listing-social`
 6. [ ] Verify: `newsletter_preview` action via the web admin proxy on a flag-on preview;
        Stripe test-mode replay against `stripe-listings-webhook`; confirm the membership
