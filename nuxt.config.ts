@@ -568,19 +568,11 @@ export default defineNuxtConfig({
     // (server/utils/exchange/camino.ts). Optional — the camino routes 502
     // gracefully when unset; set CAMINO_API_KEY in prod to enable.
     caminoApiKey: process.env.CAMINO_API_KEY || '',
-    // The Mini Exchange social auto-posting (server/utils/exchange/socialMedia.ts):
-    // Meta Graph API (Facebook Page + Instagram Business) + Bluesky AT protocol.
-    // Reuse the existing TME app credentials. All server-only — the cron sweep +
-    // admin social-retry route post on the marketplace's behalf. An unset platform
-    // is skipped (getMetaConfig/getBlueskyConfig return null).
-    metaAccessToken: process.env.META_ACCESS_TOKEN || '',
-    metaPageId: process.env.META_PAGE_ID || '',
-    metaInstagramAccountId: process.env.META_INSTAGRAM_ACCOUNT_ID || '',
-    blueskyHandle: process.env.BLUESKY_HANDLE || '',
-    blueskyAppPassword: process.env.BLUESKY_APP_PASSWORD || '',
-    // Shared secret for Vercel Cron-invoked routes (server/api/cron/exchange/*).
-    // Vercel sends `Authorization: Bearer <CRON_SECRET>`; the routes 401 otherwise.
-    cronSecret: process.env.CRON_SECRET || '',
+    // Social auto-posting (Meta/Bluesky) lives entirely in the post-listing-social
+    // Supabase edge function since PR #649 — its credentials are edge-fn secrets,
+    // NOT web runtimeConfig. The web side is only the thin requireAdminAuth proxy
+    // at /api/admin/exchange/social-retry, which needs no social keys. The Vercel
+    // cron + CRON_SECRET went with it (vercel.json crons is null by design).
     NODE_ENV: process.env.NODE_ENV || 'development',
   },
 
