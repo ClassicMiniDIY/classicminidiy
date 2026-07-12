@@ -19,18 +19,26 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 // the periodic sweep — a self-inflicted DoS vector. See server/utils/rateLimit.ts.
 const MAX_TRACKED_KEYS = 50_000;
 
-// Cleanup old entries every 5 minutes
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, entry] of rateLimitStore.entries()) {
-      if (entry.resetAt < now) {
-        rateLimitStore.delete(key);
-      }
+// Expired entries are swept lazily on access (throttled below), NOT via a
+// module-level setInterval. This file is bundled into Nitro's core chunk, so a
+// module-level timer also runs inside the prerender process at build time and
+// keeps the Node event loop alive after `nuxi build` finishes — which is
+// exactly what hung every Vercel deploy at "Build complete!" until the 45-min
+// build timeout (2026-06/07 deploy-stall incident). Do not reintroduce a
+// timer here; mirror server/utils/rateLimit.ts (lazy throttled sweep).
+const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+let lastSweep = 0;
+
+/** Remove expired entries, at most once per SWEEP_INTERVAL_MS. */
+function sweepExpired(now: number): void {
+  if (now - lastSweep < SWEEP_INTERVAL_MS) return;
+  lastSweep = now;
+  for (const [key, entry] of rateLimitStore.entries()) {
+    if (entry.resetAt < now) {
+      rateLimitStore.delete(key);
     }
-  },
-  5 * 60 * 1000
-);
+  }
+}
 
 /** Strictly bound the map before inserting a new key. */
 function makeRoomForNewKey(now: number): void {
@@ -67,6 +75,8 @@ export function checkRateLimit(
   const { maxRequests, windowMs, keyPrefix = 'rl' } = config;
   const key = `${keyPrefix}:${identifier}`;
   const now = Date.now();
+
+  sweepExpired(now);
 
   const entry = rateLimitStore.get(key);
 
@@ -127,6 +137,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig) {
 /** Test/maintenance helper: clear all tracked entries. */
 export function _resetExchangeRateLimitStore(): void {
   rateLimitStore.clear();
+  lastSweep = 0;
 }
 
 /** Test helper: current number of tracked keys. */

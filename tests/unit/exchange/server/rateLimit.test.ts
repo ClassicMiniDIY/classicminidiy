@@ -339,14 +339,14 @@ describe('server/utils/exchange/rateLimit', () => {
     });
   });
 
-  describe('periodic cleanup interval', () => {
-    // The setInterval cleanup callback (lines 25-28 of the source) is registered
-    // at module-load time. The top-level import was evaluated under real timers,
-    // so its interval is not controllable here. Re-import the module *while* fake
-    // timers are installed so the freshly-registered interval can be driven by
-    // vi.advanceTimersByTime, then exercise the sweep over a mix of expired and
-    // still-live entries.
-    it('sweeps expired entries (and spares live ones) when the 5-minute timer fires', async () => {
+  describe('lazy throttled sweep', () => {
+    // Cleanup is a lazy sweep on access (throttled to once per 5 minutes), NOT a
+    // module-level setInterval: a timer here lands in Nitro's core chunk, runs in
+    // the prerender process, and keeps the build alive after "Build complete!" —
+    // the 2026-06/07 Vercel deploy-stall regression. This test pins the lazy
+    // behavior: expired entries are reclaimed by the next checkRateLimit call
+    // once the sweep window has elapsed.
+    it('sweeps expired entries (and spares live ones) on next access after the sweep window', async () => {
       vi.resetModules();
       const mod = await import('~~/server/utils/exchange/rateLimit');
 
@@ -357,13 +357,15 @@ describe('server/utils/exchange/rateLimit', () => {
       expect(mod._rateLimitStoreSize()).toBe(2);
 
       // Advance past the short window (expiring it) and across the 5-minute
-      // cleanup interval so the callback runs.
+      // sweep throttle. Nothing runs in the background — the store is untouched
+      // until the next access.
       vi.advanceTimersByTime(5 * 60 * 1000 + 1);
+      expect(mod._rateLimitStoreSize()).toBe(2);
 
-      // Expired entry reclaimed; live entry retained.
-      expect(mod._rateLimitStoreSize()).toBe(1);
-      // The surviving key still holds its window: next hit is the 2nd of 5.
+      // The next call sweeps: expired entry reclaimed, live entry retained and
+      // still holding its window — this hit is the 2nd of 5.
       const res = mod.checkRateLimit('surviving', { maxRequests: 5, windowMs: 10 * 60 * 1000, keyPrefix: 'sweep' });
+      expect(mod._rateLimitStoreSize()).toBe(1);
       expect(res.remaining).toBe(3);
     });
   });
