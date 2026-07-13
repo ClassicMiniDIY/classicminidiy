@@ -109,30 +109,30 @@
                       v-if="!item.hasFacebook"
                       @click="retrySocialPost(item.listing.id, ['facebook'])"
                       class="btn btn-sm btn-primary"
-                      :class="{ loading: retryingId === item.listing.id }"
                       :disabled="retryingId === item.listing.id"
                     >
-                      <i v-if="retryingId !== item.listing.id" class="fas fa-arrows-rotate"></i>
+                      <span v-if="retryingId === item.listing.id" class="loading loading-spinner loading-xs"></span>
+                      <i v-else class="fas fa-arrows-rotate"></i>
                       Retry FB
                     </button>
                     <button
                       v-if="!item.hasInstagram"
                       @click="retrySocialPost(item.listing.id, ['instagram'])"
                       class="btn btn-sm btn-primary"
-                      :class="{ loading: retryingId === item.listing.id }"
                       :disabled="retryingId === item.listing.id"
                     >
-                      <i v-if="retryingId !== item.listing.id" class="fas fa-arrows-rotate"></i>
+                      <span v-if="retryingId === item.listing.id" class="loading loading-spinner loading-xs"></span>
+                      <i v-else class="fas fa-arrows-rotate"></i>
                       Retry IG
                     </button>
                     <button
                       v-if="!item.hasBluesky"
                       @click="retrySocialPost(item.listing.id, ['bluesky'])"
                       class="btn btn-sm btn-primary"
-                      :class="{ loading: retryingId === item.listing.id }"
                       :disabled="retryingId === item.listing.id"
                     >
-                      <i v-if="retryingId !== item.listing.id" class="fas fa-arrows-rotate"></i>
+                      <span v-if="retryingId === item.listing.id" class="loading loading-spinner loading-xs"></span>
+                      <i v-else class="fas fa-arrows-rotate"></i>
                       Retry Bsky
                     </button>
                   </div>
@@ -250,10 +250,10 @@
                   <button
                     @click="autoPostToSocials(listing.id)"
                     class="btn btn-primary btn-sm flex-1"
-                    :class="{ loading: postingId === listing.id }"
                     :disabled="postingId === listing.id"
                   >
-                    <i v-if="postingId !== listing.id" class="fas fa-paper-plane"></i>
+                    <span v-if="postingId === listing.id" class="loading loading-spinner loading-xs"></span>
+                    <i v-else class="fas fa-paper-plane"></i>
                     Post to Socials
                   </button>
                 </div>
@@ -325,11 +325,11 @@
                       <button
                         @click="autoPostToSocials(listing.id)"
                         class="btn btn-primary btn-sm"
-                        :class="{ loading: postingId === listing.id }"
                         :disabled="postingId === listing.id"
                         title="Auto-post to all social platforms"
                       >
-                        <i v-if="postingId !== listing.id" class="fas fa-paper-plane"></i>
+                        <span v-if="postingId === listing.id" class="loading loading-spinner loading-xs"></span>
+                        <i v-else class="fas fa-paper-plane"></i>
                         Post
                       </button>
                     </div>

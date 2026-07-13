@@ -81,8 +81,9 @@
             </p>
           </div>
           <div class="flex gap-2">
-            <button @click="refreshPreview" class="btn btn-ghost btn-sm" :class="{ loading: loading }">
-              <i v-if="!loading" class="fas fa-arrows-rotate"></i>
+            <button @click="refreshPreview" class="btn btn-ghost btn-sm" :disabled="loading">
+              <span v-if="loading" class="loading loading-spinner loading-xs"></span>
+              <i v-else class="fas fa-arrows-rotate"></i>
               Refresh
             </button>
           </div>
@@ -226,8 +227,9 @@
         </fieldset>
         <div class="modal-action">
           <button @click="closeTestModal" class="btn btn-ghost">Cancel</button>
-          <button @click="handleSendTest" class="btn btn-primary" :class="{ loading: testSending }">
-            <i v-if="!testSending" class="fas fa-paper-plane"></i>
+          <button @click="handleSendTest" class="btn btn-primary" :disabled="testSending">
+            <span v-if="testSending" class="loading loading-spinner loading-sm"></span>
+            <i v-else class="fas fa-paper-plane"></i>
             Send Test
           </button>
         </div>
@@ -271,10 +273,10 @@
           <button
             @click="handleSendToAll"
             class="btn btn-primary"
-            :class="{ loading: sending }"
-            :disabled="!canSendNewsletter && !forceOverride"
+            :disabled="sending || (!canSendNewsletter && !forceOverride)"
           >
-            <i v-if="!sending" class="fas fa-envelope"></i>
+            <span v-if="sending" class="loading loading-spinner loading-sm"></span>
+            <i v-else class="fas fa-envelope"></i>
             Send Newsletter
           </button>
         </div>
