@@ -98,7 +98,10 @@ In `classicminidiy-supabase`:
        TME site's own senders** (take TME to a redirect shell or kill its cron/email):
    - apply migration `20260628000002` (watcher triggers)
    - schedule the `post-listing-social` `*/15` cron
-3. [ ] Point `theminiexchange.com` + `www` DNS at the CMDIY Vercel project → activates the
+3. [ ] In the Stripe dashboard, edit the `the-mini-exchange` webhook destination URL →
+       `https://psoqirvbujwohemmwplv.supabase.co/functions/v1/stripe-listings-webhook`
+       (same signing secret — already set as `STRIPE_LISTINGS_WEBHOOK_SECRET`; same 2 events).
+4. [ ] Point `theminiexchange.com` + `www` DNS at the CMDIY Vercel project → activates the
        28 host-scoped 301s in `vercel.json`. Verify legacy deep links 301 correctly:
    ```bash
    for p in / /listings/some-slug /wanted /finds /messages /terms /feed.xml; do
@@ -106,7 +109,7 @@ In `classicminidiy-supabase`:
    done
    ```
    Keep the domain registered indefinitely.
-4. [ ] Live verification (the four zero-functionality-loss proofs):
+5. [ ] Live verification (the four zero-functionality-loss proofs):
    - [ ] one listing-promotion purchase end-to-end (checkout → `stripe-listings-webhook` →
          `listing_promotions` row → premium badge)
    - [ ] a transactional email fires from `notification_queue` (e.g. `listing_submitted`)
