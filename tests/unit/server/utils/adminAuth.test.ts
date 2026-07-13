@@ -243,9 +243,9 @@ describe('server/utils/adminAuth', () => {
       const result = await requireAdminAuth(event);
 
       expect(result).toEqual({ user, profile });
-      expect(mockFrom).toHaveBeenCalledWith('profiles');
+      expect(mockFrom).toHaveBeenCalledWith('profile_private');
       expect(mockSelect).toHaveBeenCalledWith('is_admin');
-      expect(mockEq).toHaveBeenCalledWith('id', 'admin-user');
+      expect(mockEq).toHaveBeenCalledWith('user_id', 'admin-user');
     });
 
     it('prefers Bearer token over cookie when both are present', async () => {

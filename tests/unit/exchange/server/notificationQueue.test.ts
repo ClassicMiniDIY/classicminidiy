@@ -7,19 +7,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // notificationQueue.ts imports `getServiceClient` from '../supabase' (relative);
 // the `~~/` alias resolves to the same absolute module, so this mock intercepts
 // it. The query builder is chainable: select/eq return `this`, insert resolves
-// to { error } and the profiles select resolves via the awaited builder (.then).
+// to { error } and the profile_private select resolves via the awaited builder
+// (.then).
 // ---------------------------------------------------------------------------
 
 // notification_queue.insert(...) — resolves to { error } by default (success).
 const mockInsert = vi.fn().mockResolvedValue({ error: null });
 
-// profiles select chain: .select().eq().eq() then awaited -> { data, error }.
+// profile_private select chain: .select().eq().eq() then awaited -> { data, error }.
 // We control the awaited result via mockAdminThen.
 const mockAdminThen = vi.fn((resolve: (v: any) => any) => resolve({ data: [], error: null }));
 const mockSelect = vi.fn().mockReturnThis();
 const mockEq = vi.fn().mockReturnThis();
 
-const profilesBuilder: Record<string, any> = {
+const adminLookupBuilder: Record<string, any> = {
   select: mockSelect,
   eq: mockEq,
   then: mockAdminThen,
@@ -29,9 +30,10 @@ const notificationBuilder: Record<string, any> = {
   insert: mockInsert,
 };
 
-// `from('notification_queue')` returns the insert builder; `from('profiles')`
-// returns the chainable select builder.
-const mockFrom = vi.fn((table: string) => (table === 'profiles' ? profilesBuilder : notificationBuilder));
+// `from('notification_queue')` returns the insert builder; `from('profile_private')`
+// returns the chainable select builder (admin fan-out resolves admins there
+// since the profiles sensitive-column split).
+const mockFrom = vi.fn((table: string) => (table === 'profile_private' ? adminLookupBuilder : notificationBuilder));
 
 const mockSupabase = { from: mockFrom };
 
@@ -82,7 +84,9 @@ describe('buildBatchKey', () => {
       'price_drop',
     ];
     // Each produces a unique, defined key with the documented prefix shape.
-    const keys = all.map((t) => buildBatchKey(t, { conversationId: 'x', listingId: 'x', parentCommentId: 'x', userId: 'x', inquiryId: 'x' }));
+    const keys = all.map((t) =>
+      buildBatchKey(t, { conversationId: 'x', listingId: 'x', parentCommentId: 'x', userId: 'x', inquiryId: 'x' })
+    );
     expect(keys).toHaveLength(9);
     keys.forEach((k) => expect(typeof k).toBe('string'));
     // All distinct prefixes -> distinct keys for the same context.
@@ -98,7 +102,9 @@ describe('buildBatchKey', () => {
     });
 
     it('ignores unrelated context fields and uses only the relevant one', () => {
-      expect(buildBatchKey('listing_status', { listingId: 'L', conversationId: 'NOPE', userId: 'NOPE' })).toBe('status:L');
+      expect(buildBatchKey('listing_status', { listingId: 'L', conversationId: 'NOPE', userId: 'NOPE' })).toBe(
+        'status:L'
+      );
     });
 
     it('preserves empty-string ids verbatim', () => {
@@ -153,7 +159,12 @@ describe('queueNotification', () => {
     });
 
     expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: 'email', user_id: 'user-2', event_type: 'price_drop', batch_key: 'price_drop:l5' })
+      expect.objectContaining({
+        channel: 'email',
+        user_id: 'user-2',
+        event_type: 'price_drop',
+        batch_key: 'price_drop:l5',
+      })
     );
   });
 
@@ -202,7 +213,10 @@ describe('queueNotification', () => {
         queueNotification({ userId: 'u', eventType: 'new_message', payload: {}, batchKey: 'k' })
       ).resolves.toBeUndefined();
 
-      expect(spy).toHaveBeenCalledWith('[NotificationQueue] Unexpected error queueing notification:', expect.any(Error));
+      expect(spy).toHaveBeenCalledWith(
+        '[NotificationQueue] Unexpected error queueing notification:',
+        expect.any(Error)
+      );
       spy.mockRestore();
     });
 
@@ -217,7 +231,10 @@ describe('queueNotification', () => {
         queueNotification({ userId: 'u', eventType: 'new_message', payload: {}, batchKey: 'k' })
       ).resolves.toBeUndefined();
 
-      expect(spy).toHaveBeenCalledWith('[NotificationQueue] Unexpected error queueing notification:', expect.any(Error));
+      expect(spy).toHaveBeenCalledWith(
+        '[NotificationQueue] Unexpected error queueing notification:',
+        expect.any(Error)
+      );
       spy.mockRestore();
     });
   });
@@ -227,52 +244,70 @@ describe('queueNotification', () => {
 // queueAdminNotification — admin fan-out
 // ===========================================================================
 describe('queueAdminNotification', () => {
-  const setAdmins = (admins: Array<{ id: string }> | null, error: any = null) => {
+  const setAdmins = (admins: Array<{ user_id: string }> | null, error: any = null) => {
     mockAdminThen.mockImplementation((resolve: (v: any) => any) => resolve({ data: admins, error }));
   };
 
-  it('queries active (non-banned) admins from profiles', async () => {
-    setAdmins([{ id: 'a1' }]);
+  it('queries active (non-banned) admins from profile_private joined to profiles', async () => {
+    setAdmins([{ user_id: 'a1' }]);
     await queueAdminNotification({ eventType: 'admin_listing_pending', payload: { x: 1 } });
 
-    expect(mockFrom).toHaveBeenCalledWith('profiles');
-    expect(mockSelect).toHaveBeenCalledWith('id');
+    expect(mockFrom).toHaveBeenCalledWith('profile_private');
+    expect(mockSelect).toHaveBeenCalledWith('user_id, profiles!inner ( is_banned )');
     expect(mockEq).toHaveBeenCalledWith('is_admin', true);
-    expect(mockEq).toHaveBeenCalledWith('is_banned', false);
+    expect(mockEq).toHaveBeenCalledWith('profiles.is_banned', false);
   });
 
   it('fans out one row per admin, all sharing the default batch key (= eventType)', async () => {
-    setAdmins([{ id: 'a1' }, { id: 'a2' }, { id: 'a3' }]);
+    setAdmins([{ user_id: 'a1' }, { user_id: 'a2' }, { user_id: 'a3' }]);
     await queueAdminNotification({ eventType: 'admin_wanted_pending', payload: { listingId: 'L' } });
 
     expect(mockInsert).toHaveBeenCalledTimes(1);
     const rows = mockInsert.mock.calls[0][0];
     expect(rows).toHaveLength(3);
     expect(rows).toEqual([
-      { user_id: 'a1', event_type: 'admin_wanted_pending', payload: { listingId: 'L' }, channel: 'email', batch_key: 'admin_wanted_pending' },
-      { user_id: 'a2', event_type: 'admin_wanted_pending', payload: { listingId: 'L' }, channel: 'email', batch_key: 'admin_wanted_pending' },
-      { user_id: 'a3', event_type: 'admin_wanted_pending', payload: { listingId: 'L' }, channel: 'email', batch_key: 'admin_wanted_pending' },
+      {
+        user_id: 'a1',
+        event_type: 'admin_wanted_pending',
+        payload: { listingId: 'L' },
+        channel: 'email',
+        batch_key: 'admin_wanted_pending',
+      },
+      {
+        user_id: 'a2',
+        event_type: 'admin_wanted_pending',
+        payload: { listingId: 'L' },
+        channel: 'email',
+        batch_key: 'admin_wanted_pending',
+      },
+      {
+        user_id: 'a3',
+        event_type: 'admin_wanted_pending',
+        payload: { listingId: 'L' },
+        channel: 'email',
+        batch_key: 'admin_wanted_pending',
+      },
     ]);
     // Shared batch key across all rows.
     expect(new Set(rows.map((r: any) => r.batch_key)).size).toBe(1);
   });
 
   it('always uses the "email" channel for admin rows', async () => {
-    setAdmins([{ id: 'a1' }, { id: 'a2' }]);
+    setAdmins([{ user_id: 'a1' }, { user_id: 'a2' }]);
     await queueAdminNotification({ eventType: 'admin_find_pending', payload: {} });
     const rows = mockInsert.mock.calls[0][0];
     rows.forEach((r: any) => expect(r.channel).toBe('email'));
   });
 
   it('uses a custom batchKey when provided (overrides the eventType default)', async () => {
-    setAdmins([{ id: 'a1' }, { id: 'a2' }]);
+    setAdmins([{ user_id: 'a1' }, { user_id: 'a2' }]);
     await queueAdminNotification({ eventType: 'admin_listing_pending', payload: {}, batchKey: 'custom-window-key' });
     const rows = mockInsert.mock.calls[0][0];
     rows.forEach((r: any) => expect(r.batch_key).toBe('custom-window-key'));
   });
 
   it('inserts into notification_queue (not profiles)', async () => {
-    setAdmins([{ id: 'a1' }]);
+    setAdmins([{ user_id: 'a1' }]);
     await queueAdminNotification({ eventType: 'admin_listing_pending', payload: {} });
     // from() called for both profiles (select) and notification_queue (insert).
     expect(mockFrom).toHaveBeenCalledWith('notification_queue');
@@ -308,14 +343,16 @@ describe('queueAdminNotification', () => {
 
     it('logs but does not throw when the fan-out insert errors', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      setAdmins([{ id: 'a1' }]);
+      setAdmins([{ user_id: 'a1' }]);
       mockInsert.mockResolvedValueOnce({ error: { message: 'insert failed' } });
 
       await expect(
         queueAdminNotification({ eventType: 'admin_listing_pending', payload: {} })
       ).resolves.toBeUndefined();
 
-      expect(spy).toHaveBeenCalledWith('[NotificationQueue] Failed to insert admin notifications:', { message: 'insert failed' });
+      expect(spy).toHaveBeenCalledWith('[NotificationQueue] Failed to insert admin notifications:', {
+        message: 'insert failed',
+      });
       spy.mockRestore();
     });
 
@@ -329,7 +366,10 @@ describe('queueAdminNotification', () => {
         queueAdminNotification({ eventType: 'admin_listing_pending', payload: {} })
       ).resolves.toBeUndefined();
 
-      expect(spy).toHaveBeenCalledWith('[NotificationQueue] Unexpected error queueing admin notification:', expect.any(Error));
+      expect(spy).toHaveBeenCalledWith(
+        '[NotificationQueue] Unexpected error queueing admin notification:',
+        expect.any(Error)
+      );
       spy.mockRestore();
     });
 
@@ -344,7 +384,10 @@ describe('queueAdminNotification', () => {
         queueAdminNotification({ eventType: 'admin_listing_pending', payload: {} })
       ).resolves.toBeUndefined();
 
-      expect(spy).toHaveBeenCalledWith('[NotificationQueue] Unexpected error queueing admin notification:', expect.any(Error));
+      expect(spy).toHaveBeenCalledWith(
+        '[NotificationQueue] Unexpected error queueing admin notification:',
+        expect.any(Error)
+      );
       spy.mockRestore();
     });
   });

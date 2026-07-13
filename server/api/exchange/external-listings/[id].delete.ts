@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
     if (fetchError || !find) throw createError({ statusCode: 404, message: 'Find not found' });
 
-    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+    const { data: profile } = await supabase.from('profile_private').select('is_admin').eq('user_id', user.id).single();
     const isAdmin = profile?.is_admin === true;
     const isOwner = find.submitted_by === user.id;
 

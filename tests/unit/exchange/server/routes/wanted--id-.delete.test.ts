@@ -119,10 +119,10 @@ describe('server/api/exchange/wanted/[id].delete', () => {
     it('looks up the profile admin flag keyed by the authenticated user id', async () => {
       await handler(evt());
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
+      expect(mockSupabase.from).toHaveBeenCalledWith('profile_private');
       const profileSelect = (mockSupabase._mockSelect as any).mock.calls.find((c: any[]) => c[0] === 'is_admin');
       expect(profileSelect).toBeTruthy();
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', USER.id);
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', USER.id);
     });
 
     it('verifies authentication via requireUserClient exactly once', async () => {

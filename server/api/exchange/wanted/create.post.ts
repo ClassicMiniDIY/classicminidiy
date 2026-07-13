@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
     // Check if user is banned
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, is_banned, display_name, email')
+      .select('id, is_banned, display_name')
       .eq('id', user.id)
       .single();
 

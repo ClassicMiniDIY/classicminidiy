@@ -69,13 +69,15 @@ function validBody(overrides: Record<string, any> = {}) {
 let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
 
 /**
- * Configure the service-client mock. The route calls `.single()` up to three
+ * Configure the service-client mock. The route calls `.single()` up to four
  * times in order:
  *   1. wanted_posts fetch (ownership check)
- *   2. profiles fetch (admin / ban)
- *   3. wanted_posts update (final write)
- * Provide the resolutions in that order. The update resolution is omitted when
- * an earlier branch short-circuits.
+ *   2. profiles fetch (is_banned) — first arm of the parallel profile reads
+ *   3. profile_private fetch (is_admin) — second arm (sensitive-column split)
+ *   4. wanted_posts update (final write)
+ * `profile` still takes the combined { is_admin, is_banned } shape and is
+ * split across the two reads here. The update resolution is omitted when an
+ * earlier branch short-circuits.
  */
 function wireSupabase(
   opts: {
@@ -87,10 +89,19 @@ function wireSupabase(
   mockSupabase = createMockSupabaseClient();
   const existingRes = opts.existing ?? { data: { ...EXISTING_POST }, error: null };
   const profileRes = opts.profile ?? { data: { ...OWNER_PROFILE }, error: null };
+  const bannedRes = {
+    data: profileRes.data ? { is_banned: profileRes.data.is_banned } : null,
+    error: profileRes.error,
+  };
+  const adminRes = {
+    data: profileRes.data ? { is_admin: profileRes.data.is_admin } : null,
+    error: profileRes.error,
+  };
   const updateRes = opts.update ?? { data: { ...EXISTING_POST, ...{ id: POST_ID } }, error: null };
   mockSupabase._mockSingle
     .mockResolvedValueOnce(existingRes)
-    .mockResolvedValueOnce(profileRes)
+    .mockResolvedValueOnce(bannedRes)
+    .mockResolvedValueOnce(adminRes)
     .mockResolvedValueOnce(updateRes);
   (getServiceClient as any).mockReturnValue(mockSupabase);
 }

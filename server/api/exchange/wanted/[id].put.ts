@@ -62,11 +62,15 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase.from('profiles').select('is_admin, is_banned').eq('id', user.id).single();
+    // Check if user is admin (is_admin lives on profile_private; is_banned
+    // stays on profiles — sensitive-column split)
+    const [{ data: profile }, { data: privateProfile }] = await Promise.all([
+      supabase.from('profiles').select('is_banned').eq('id', user.id).single(),
+      supabase.from('profile_private').select('is_admin').eq('user_id', user.id).single(),
+    ]);
 
     const isOwner = existingPost.user_id === user.id;
-    const isAdmin = profile?.is_admin === true;
+    const isAdmin = privateProfile?.is_admin === true;
 
     // Verify ownership or admin access
     if (!isOwner && !isAdmin) {
@@ -179,7 +183,12 @@ export default defineEventHandler(async (event) => {
     // an invalid range against the stored value.
     const resolvedBudgetMin = updateData.budget_min !== undefined ? updateData.budget_min : existingPost.budget_min;
     const resolvedBudgetMax = updateData.budget_max !== undefined ? updateData.budget_max : existingPost.budget_max;
-    if (resolvedBudgetMin !== null && resolvedBudgetMin !== undefined && resolvedBudgetMax !== null && resolvedBudgetMax !== undefined) {
+    if (
+      resolvedBudgetMin !== null &&
+      resolvedBudgetMin !== undefined &&
+      resolvedBudgetMax !== null &&
+      resolvedBudgetMax !== undefined
+    ) {
       validateBudgetRange(resolvedBudgetMin, resolvedBudgetMax);
     }
 

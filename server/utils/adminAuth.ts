@@ -54,11 +54,11 @@ export async function requireAdminAuth(event: any) {
     });
   }
 
-  // Check admin status from profiles table
+  // Check admin status from profile_private (sensitive-column split)
   const { data: profile, error: profileError } = await supabase
-    .from('profiles')
+    .from('profile_private')
     .select('is_admin')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (profileError || !profile?.is_admin) {

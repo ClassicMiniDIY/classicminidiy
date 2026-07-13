@@ -16,7 +16,7 @@ export interface MessageQueueItem {
   sender?: {
     id: string;
     display_name: string | null;
-    email: string;
+    email: string | null;
     warning_count: number;
     is_banned: boolean;
   };
@@ -33,12 +33,12 @@ export interface MessageQueueItem {
     buyer?: {
       id: string;
       display_name: string | null;
-      email: string;
+      email: string | null;
     };
     seller?: {
       id: string;
       display_name: string | null;
-      email: string;
+      email: string | null;
     };
   };
   context_messages?: Array<{
@@ -49,7 +49,7 @@ export interface MessageQueueItem {
     sender?: {
       id: string;
       display_name: string | null;
-      email: string;
+      email: string | null;
     };
   }>;
 }
@@ -64,12 +64,12 @@ export interface AdminConversation {
   buyer?: {
     id: string;
     display_name: string | null;
-    email: string;
+    email: string | null;
   };
   seller?: {
     id: string;
     display_name: string | null;
-    email: string;
+    email: string | null;
   };
   listing?: {
     id: string;
@@ -79,6 +79,18 @@ export interface AdminConversation {
   message_count?: number;
   flagged_count?: number;
 }
+
+/**
+ * Merge an embedded `profile_private` row into its parent profile object so
+ * existing consumers keep reading flat fields (email, warning_count, is_admin).
+ * Sensitive columns moved to `profile_private` in the profiles split — admin
+ * views read them via a PostgREST embed and flatten here.
+ */
+const flattenProfilePrivate = <T extends Record<string, any>>(profile: T | null | undefined): any => {
+  if (!profile || typeof profile !== 'object') return profile;
+  const { profile_private: priv, ...rest } = profile as any;
+  return { ...rest, ...(priv ?? {}) };
+};
 
 export const useAdmin = () => {
   const supabase = useSupabase();
@@ -102,7 +114,11 @@ export const useAdmin = () => {
   const isAdmin = async () => {
     if (!user.value) return false;
 
-    const { data, error } = await supabase.from('profiles').select('is_admin').eq('id', user.value.id).single();
+    const { data, error } = await supabase
+      .from('profile_private')
+      .select('is_admin')
+      .eq('user_id', user.value.id)
+      .single();
 
     if (error) return false;
     return data?.is_admin || false;
@@ -181,8 +197,8 @@ export const useAdmin = () => {
         profiles!listings_user_id_fkey (
           id,
           display_name,
-          email,
-          location
+          location,
+          profile_private ( email )
         )
       `,
         { count: 'exact' }
@@ -201,7 +217,7 @@ export const useAdmin = () => {
     }
 
     return {
-      listings: data || [],
+      listings: (data || []).map((l: any) => ({ ...l, profiles: flattenProfilePrivate(l.profiles) })),
       total: count || 0,
     };
   };
@@ -215,7 +231,7 @@ export const useAdmin = () => {
 
     const { data, error, count } = await supabase
       .from('profiles')
-      .select('*', { count: 'exact' })
+      .select('*, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(start, end);
 
@@ -224,7 +240,7 @@ export const useAdmin = () => {
     }
 
     return {
-      users: data || [],
+      users: (data || []).map(flattenProfilePrivate),
       total: count || 0,
     };
   };
@@ -381,7 +397,11 @@ export const useAdmin = () => {
    */
   const getUserDetails = async (userId: string) => {
     const [profileResult, listingsResult] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId).single(),
+      supabase
+        .from('profiles')
+        .select('*, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )')
+        .eq('id', userId)
+        .single(),
       applyPhotoOrdering(
         supabase
           .from('listings')
@@ -405,7 +425,7 @@ export const useAdmin = () => {
     }
 
     return {
-      profile: profileResult.data,
+      profile: flattenProfilePrivate(profileResult.data),
       listings: listingsResult.data || [],
     };
   };
@@ -541,7 +561,8 @@ export const useAdmin = () => {
         `
       *,
       sender:profiles!messages_sender_id_fkey (
-        id, display_name, email, warning_count, is_banned
+        id, display_name, is_banned,
+        profile_private ( email, warning_count )
       ),
       conversation:conversations!messages_conversation_id_fkey (
         id, listing_id, buyer_id, seller_id,
@@ -549,10 +570,12 @@ export const useAdmin = () => {
           id, title, slug
         ),
         buyer:profiles!conversations_buyer_id_fkey (
-          id, display_name, email
+          id, display_name,
+          profile_private ( email )
         ),
         seller:profiles!conversations_seller_id_fkey (
-          id, display_name, email
+          id, display_name,
+          profile_private ( email )
         )
       )
     `,
@@ -567,8 +590,20 @@ export const useAdmin = () => {
       handleError(error, { toastTitle: 'Failed to fetch message queue', rethrow: true });
     }
 
+    const items = (data || []).map((m: any) => ({
+      ...m,
+      sender: flattenProfilePrivate(m.sender),
+      conversation: m.conversation
+        ? {
+            ...m.conversation,
+            buyer: flattenProfilePrivate(m.conversation.buyer),
+            seller: flattenProfilePrivate(m.conversation.seller),
+          }
+        : m.conversation,
+    }));
+
     return {
-      items: (data || []) as MessageQueueItem[],
+      items: items as MessageQueueItem[],
       total: count || 0,
     };
   };
@@ -625,12 +660,17 @@ export const useAdmin = () => {
     if (filters?.search) {
       const q = `%${filters.search}%`;
 
-      const [profileResult, listingResult] = await Promise.all([
-        supabase.from('profiles').select('id').or(`display_name.ilike.${q},email.ilike.${q}`),
+      // Email lives on profile_private (sensitive-column split) — search it
+      // separately from display_name and merge the id sets.
+      const [nameResult, emailResult, listingResult] = await Promise.all([
+        supabase.from('profiles').select('id').ilike('display_name', q),
+        supabase.from('profile_private').select('user_id').ilike('email', q),
         supabase.from('listings').select('id').ilike('title', q),
       ]);
 
-      const profileIds = (profileResult.data || []).map((p) => p.id);
+      const profileIds = [
+        ...new Set([...(nameResult.data || []).map((p) => p.id), ...(emailResult.data || []).map((p) => p.user_id)]),
+      ];
       const listingIds = (listingResult.data || []).map((l) => l.id);
 
       // Find conversations matching these profiles or listings
@@ -669,10 +709,12 @@ export const useAdmin = () => {
         `
       *,
       buyer:profiles!conversations_buyer_id_fkey (
-        id, display_name, email
+        id, display_name,
+        profile_private ( email )
       ),
       seller:profiles!conversations_seller_id_fkey (
-        id, display_name, email
+        id, display_name,
+        profile_private ( email )
       ),
       listing:listings!conversations_listing_id_fkey (
         id, title, slug
@@ -701,8 +743,14 @@ export const useAdmin = () => {
       handleError(error, { toastTitle: 'Failed to fetch conversations', rethrow: true });
     }
 
+    const conversations = (data || []).map((c: any) => ({
+      ...c,
+      buyer: flattenProfilePrivate(c.buyer),
+      seller: flattenProfilePrivate(c.seller),
+    }));
+
     return {
-      conversations: (data || []) as AdminConversation[],
+      conversations: conversations as AdminConversation[],
       total: count || 0,
     };
   };
@@ -717,7 +765,8 @@ export const useAdmin = () => {
         `
       *,
       sender:profiles!messages_sender_id_fkey (
-        id, display_name, email, warning_count, is_banned
+        id, display_name, is_banned,
+        profile_private ( email, warning_count )
       )
     `
       )
@@ -727,7 +776,7 @@ export const useAdmin = () => {
     if (error) {
       handleError(error, { toastTitle: 'Failed to fetch messages', rethrow: true });
     }
-    return data || [];
+    return (data || []).map((m: any) => ({ ...m, sender: flattenProfilePrivate(m.sender) }));
   };
 
   /**
@@ -820,7 +869,7 @@ export const useAdmin = () => {
       .select(
         `
       id, sender_id, content, created_at,
-      sender:profiles!messages_sender_id_fkey (id, display_name, email)
+      sender:profiles!messages_sender_id_fkey (id, display_name, profile_private ( email ))
     `
       )
       .eq('conversation_id', conversationId)
@@ -833,7 +882,7 @@ export const useAdmin = () => {
       .select(
         `
       id, sender_id, content, created_at,
-      sender:profiles!messages_sender_id_fkey (id, display_name, email)
+      sender:profiles!messages_sender_id_fkey (id, display_name, profile_private ( email ))
     `
       )
       .eq('conversation_id', conversationId)
@@ -841,7 +890,10 @@ export const useAdmin = () => {
       .order('created_at', { ascending: true })
       .limit(3);
 
-    return [...(before || []).reverse(), ...(after || [])];
+    return [...(before || []).reverse(), ...(after || [])].map((m: any) => ({
+      ...m,
+      sender: flattenProfilePrivate(m.sender),
+    }));
   };
 
   return {

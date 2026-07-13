@@ -34,15 +34,28 @@ export const useProfile = () => {
   const { capture } = usePostHog();
 
   /**
-   * Fetch the authenticated user's full profile
+   * Fetch the authenticated user's full profile.
+   * Sensitive columns live on profile_private (profiles split): is_admin is
+   * embedded from the user's own profile_private row, and email comes from
+   * the Supabase auth user object — never from profiles.
    */
   const fetchProfile = async () => {
     if (!user.value) throw new Error('Not authenticated');
 
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.value.id).single();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*, profile_private ( is_admin )')
+      .eq('id', user.value.id)
+      .single();
 
     if (error) throw error;
-    return data;
+
+    const { profile_private: priv, ...profile } = (data ?? {}) as any;
+    return {
+      ...profile,
+      email: user.value.email ?? '',
+      is_admin: priv?.is_admin ?? false,
+    };
   };
 
   /**
@@ -59,12 +72,7 @@ export const useProfile = () => {
   }) => {
     if (!user.value) throw new Error('Not authenticated');
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.value.id)
-      .select()
-      .single();
+    const { data, error } = await supabase.from('profiles').update(updates).eq('id', user.value.id).select().single();
 
     if (error) throw error;
     return data;
@@ -181,11 +189,7 @@ export const useProfile = () => {
     const { data, error } = await supabase.rpc('get_public_profile_by_id', { p_user_id: identifier }).single();
 
     if (error || !data) {
-      const { data: exists } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', identifier)
-        .maybeSingle();
+      const { data: exists } = await supabase.from('profiles').select('id').eq('id', identifier).maybeSingle();
       if (exists) return { private: true };
       return null;
     }
