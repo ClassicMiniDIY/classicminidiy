@@ -28,7 +28,6 @@
   });
 
   const nextTarget = computed(() => (nextLevel.value === 'contributor' ? 3 : 10));
-  const progressPct = computed(() => Math.min(100, Math.round((approved.value / nextTarget.value) * 100)));
   const rejectionRateBlocks = computed(() => nextLevel.value === 'trusted' && rejectionRate.value >= 0.2);
 </script>
 

@@ -40,7 +40,7 @@ const makeContributionRow = (overrides: Record<string, any> = {}) => ({
 
 describe('useContributions', () => {
   describe('getContributorProfile()', () => {
-    it('queries profiles table by userId with maybeSingle()', async () => {
+    it('queries the public_profiles view by userId with maybeSingle()', async () => {
       const profileRow = makeProfileRow();
       mockSupabase._mockMaybeSingle.mockResolvedValue({
         data: profileRow,
@@ -51,7 +51,7 @@ describe('useContributions', () => {
       const { getContributorProfile } = useContributions();
       await getContributorProfile('user-1');
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
+      expect(mockSupabase.from).toHaveBeenCalledWith('public_profiles');
       expect(mockSupabase._mockSelect).toHaveBeenCalledWith(
         'id, display_name, avatar_url, bio, trust_level, total_submissions, approved_submissions, created_at'
       );
