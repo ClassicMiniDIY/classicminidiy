@@ -100,7 +100,7 @@
 
       // get_seller_stats is a RETURNS TABLE function, so PostgREST hands back a
       // single-row array — unwrap it to the row object.
-      stats.value = (Array.isArray(data) ? data[0] : data) as SellerStats | null;
+      stats.value = (Array.isArray(data) ? (data[0] ?? null) : data) as SellerStats | null;
       cachedSellerId.value = props.sellerId;
     } catch (err) {
       console.error('Failed to fetch seller stats:', err);
