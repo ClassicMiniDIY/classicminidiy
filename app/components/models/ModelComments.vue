@@ -173,7 +173,7 @@
   "en": {
     "title": "Comments ({count})",
     "placeholder": "Share tips, ask a question…",
-    "pendingModeration": "Your comment is awaiting moderation.",
+    "pendingModeration": "Your comment is awaiting moderation — first comments from new members are reviewed. Contributors post instantly.",
     "post": "Post",
     "signIn": "Sign in",
     "joinConversation": "to join the conversation.",
@@ -188,7 +188,7 @@
   "es": {
     "title": "Comentarios ({count})",
     "placeholder": "Comparte consejos, haz una pregunta…",
-    "pendingModeration": "Tu comentario está pendiente de moderación.",
+    "pendingModeration": "Tu comentario está pendiente de moderación — los primeros comentarios de miembros nuevos se revisan. Los colaboradores publican al instante.",
     "post": "Publicar",
     "signIn": "Inicia sesión",
     "joinConversation": "para unirte a la conversación.",
@@ -203,7 +203,7 @@
   "fr": {
     "title": "Commentaires ({count})",
     "placeholder": "Partagez des astuces, posez une question…",
-    "pendingModeration": "Votre commentaire est en attente de modération.",
+    "pendingModeration": "Votre commentaire est en attente de modération — les premiers commentaires des nouveaux membres sont relus. Les contributeurs publient instantanément.",
     "post": "Publier",
     "signIn": "Connectez-vous",
     "joinConversation": "pour rejoindre la conversation.",
@@ -218,7 +218,7 @@
   "de": {
     "title": "Kommentare ({count})",
     "placeholder": "Tipps teilen, eine Frage stellen…",
-    "pendingModeration": "Ihr Kommentar wartet auf Moderation.",
+    "pendingModeration": "Ihr Kommentar wartet auf Moderation — erste Kommentare neuer Mitglieder werden geprüft. Beitragende posten sofort.",
     "post": "Posten",
     "signIn": "Anmelden",
     "joinConversation": "um an der Unterhaltung teilzunehmen.",
@@ -233,7 +233,7 @@
   "it": {
     "title": "Commenti ({count})",
     "placeholder": "Condividi consigli, fai una domanda…",
-    "pendingModeration": "Il tuo commento è in attesa di moderazione.",
+    "pendingModeration": "Il tuo commento è in attesa di moderazione — i primi commenti dei nuovi membri vengono revisionati. I collaboratori pubblicano subito.",
     "post": "Pubblica",
     "signIn": "Accedi",
     "joinConversation": "per partecipare alla conversazione.",
@@ -248,7 +248,7 @@
   "pt": {
     "title": "Comentários ({count})",
     "placeholder": "Compartilhe dicas, faça uma pergunta…",
-    "pendingModeration": "Seu comentário está aguardando moderação.",
+    "pendingModeration": "Seu comentário está aguardando moderação — os primeiros comentários de novos membros são revisados. Colaboradores publicam na hora.",
     "post": "Publicar",
     "signIn": "Entre",
     "joinConversation": "para participar da conversa.",
@@ -263,7 +263,7 @@
   "ru": {
     "title": "Комментарии ({count})",
     "placeholder": "Поделитесь советами, задайте вопрос…",
-    "pendingModeration": "Ваш комментарий ожидает модерации.",
+    "pendingModeration": "Ваш комментарий ожидает модерации — первые комментарии новых участников проверяются. Участники публикуют мгновенно.",
     "post": "Отправить",
     "signIn": "Войдите",
     "joinConversation": "чтобы присоединиться к разговору.",
@@ -278,7 +278,7 @@
   "ja": {
     "title": "コメント ({count})",
     "placeholder": "ヒントを共有したり、質問したりしましょう…",
-    "pendingModeration": "コメントは審査待ちです。",
+    "pendingModeration": "コメントは審査待ちです — 新規メンバーの最初のコメントは審査されます。投稿者は即時公開されます。",
     "post": "投稿",
     "signIn": "ログイン",
     "joinConversation": "して会話に参加しましょう。",
@@ -293,7 +293,7 @@
   "zh": {
     "title": "评论 ({count})",
     "placeholder": "分享技巧，提出问题…",
-    "pendingModeration": "您的评论正在等待审核。",
+    "pendingModeration": "您的评论正在等待审核 — 新成员的首批评论需要审核。贡献者可即时发布。",
     "post": "发布",
     "signIn": "登录",
     "joinConversation": "加入讨论。",
@@ -308,7 +308,7 @@
   "ko": {
     "title": "댓글 ({count})",
     "placeholder": "팁을 공유하거나 질문하세요…",
-    "pendingModeration": "댓글이 검토 중입니다.",
+    "pendingModeration": "댓글이 검토 중입니다 — 신규 멤버의 첫 댓글은 검토를 거칩니다. 기여자는 즉시 게시됩니다.",
     "post": "게시",
     "signIn": "로그인",
     "joinConversation": "하여 대화에 참여하세요.",

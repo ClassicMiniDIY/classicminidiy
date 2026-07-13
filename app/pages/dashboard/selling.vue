@@ -163,7 +163,10 @@
 
           <div v-if="!trustOk" role="alert" class="alert alert-warning alert-soft text-sm">
             <i class="fas fa-lock"></i>
-            <span>{{ t('onboarding.trustWarning', { level: trustLevel }) }}</span>
+            <span>
+              {{ t('onboarding.trustWarning', { level: trustLevel }) }}
+              <NuxtLink to="/dashboard/submissions" class="link">{{ t('onboarding.trustStatusLink') }}</NuxtLink>
+            </span>
           </div>
 
           <div v-if="onboardError" role="alert" class="alert alert-error alert-soft text-sm">
@@ -317,6 +320,7 @@
       "bullet2": "Buyers get every version, past and future",
       "bullet3": "Payouts, refunds, and taxes handled in Stripe",
       "trustWarning": "Selling unlocks at contributor trust. Share a model or contribute to the archive to get there — your current level is {level}.",
+      "trustStatusLink": "See your contributor status",
       "startBtn": "Start selling with Stripe",
       "continueBtn": "Continue Stripe onboarding",
       "redirectNote": "You'll be redirected to Stripe to set up payouts, then back here."
@@ -357,6 +361,7 @@
       "bullet2": "Los compradores obtienen todas las versiones, pasadas y futuras",
       "bullet3": "Pagos, reembolsos e impuestos gestionados en Stripe",
       "trustWarning": "Las ventas se desbloquean con el nivel de confianza contribuidor. Comparte un modelo o contribuye al archivo para llegar ahí — tu nivel actual es {level}.",
+      "trustStatusLink": "Ver tu estado de colaborador",
       "startBtn": "Empieza a vender con Stripe",
       "continueBtn": "Continuar el registro en Stripe",
       "redirectNote": "Serás redirigido a Stripe para configurar los pagos y luego volverás aquí."
@@ -397,6 +402,7 @@
       "bullet2": "Les acheteurs reçoivent toutes les versions, passées et futures",
       "bullet3": "Paiements, remboursements et taxes gérés dans Stripe",
       "trustWarning": "Les ventes se débloquent au niveau de confiance contributeur. Partagez un modèle ou contribuez aux archives pour y parvenir — votre niveau actuel est {level}.",
+      "trustStatusLink": "Voir votre statut de contributeur",
       "startBtn": "Commencer à vendre avec Stripe",
       "continueBtn": "Continuer l'inscription Stripe",
       "redirectNote": "Vous serez redirigé vers Stripe pour configurer les paiements, puis ramené ici."
@@ -437,6 +443,7 @@
       "bullet2": "Käufer erhalten jede Version, vergangene und zukünftige",
       "bullet3": "Auszahlungen, Rückerstattungen und Steuern werden in Stripe verwaltet",
       "trustWarning": "Verkaufen wird mit dem Vertrauenslevel Beitragender freigeschaltet. Teile ein Modell oder trage zum Archiv bei, um es zu erreichen — dein aktuelles Level ist {level}.",
+      "trustStatusLink": "Deinen Beitragsstatus ansehen",
       "startBtn": "Mit Stripe verkaufen starten",
       "continueBtn": "Stripe-Onboarding fortsetzen",
       "redirectNote": "Du wirst zu Stripe weitergeleitet, um Auszahlungen einzurichten, und dann zurück hierher."
@@ -477,6 +484,7 @@
       "bullet2": "Gli acquirenti ricevono ogni versione, passata e futura",
       "bullet3": "Pagamenti, rimborsi e tasse gestiti in Stripe",
       "trustWarning": "Le vendite si sbloccano al livello di fiducia collaboratore. Condividi un modello o contribuisci all'archivio per arrivarci — il tuo livello attuale è {level}.",
+      "trustStatusLink": "Vedi il tuo stato di collaboratore",
       "startBtn": "Inizia a vendere con Stripe",
       "continueBtn": "Continua l'iscrizione a Stripe",
       "redirectNote": "Verrai reindirizzato a Stripe per configurare i pagamenti, poi tornerai qui."
@@ -517,6 +525,7 @@
       "bullet2": "Compradores recebem todas as versões, passadas e futuras",
       "bullet3": "Pagamentos, reembolsos e impostos gerenciados no Stripe",
       "trustWarning": "As vendas se desbloqueiam no nível de confiança colaborador. Compartilhe um modelo ou contribua com o arquivo para chegar lá — seu nível atual é {level}.",
+      "trustStatusLink": "Ver seu status de colaborador",
       "startBtn": "Comece a vender com o Stripe",
       "continueBtn": "Continuar integração com o Stripe",
       "redirectNote": "Você será redirecionado ao Stripe para configurar os pagamentos e, em seguida, voltará aqui."
@@ -557,6 +566,7 @@
       "bullet2": "Покупатели получают все версии — прошлые и будущие",
       "bullet3": "Выплаты, возвраты и налоги управляются в Stripe",
       "trustWarning": "Продажи открываются на уровне доверия участник. Поделитесь моделью или внесите вклад в архив, чтобы достичь его — ваш текущий уровень: {level}.",
+      "trustStatusLink": "Посмотреть статус участника",
       "startBtn": "Начать продажи через Stripe",
       "continueBtn": "Продолжить регистрацию в Stripe",
       "redirectNote": "Вы будете перенаправлены на Stripe для настройки выплат, а затем вернётесь сюда."
@@ -597,6 +607,7 @@
       "bullet2": "購入者は過去・未来のすべてのバージョンを入手できます",
       "bullet3": "支払い、返金、税金はStripeで管理",
       "trustWarning": "販売はコントリビューターの信頼レベルで解除されます。モデルをシェアするかアーカイブに貢献してください — 現在のレベルは{level}です。",
+      "trustStatusLink": "投稿者ステータスを見る",
       "startBtn": "Stripeで販売を開始する",
       "continueBtn": "Stripeオンボーディングを続ける",
       "redirectNote": "支払いを設定するためStripeにリダイレクトされ、その後こちらに戻ります。"
@@ -637,6 +648,7 @@
       "bullet2": "买家获得所有版本，包括过去和未来的",
       "bullet3": "付款、退款和税务均在Stripe中处理",
       "trustWarning": "在贡献者信任等级时解锁销售功能。分享模型或为存档做贡献即可达到——您当前的等级是{level}。",
+      "trustStatusLink": "查看您的贡献者状态",
       "startBtn": "通过Stripe开始销售",
       "continueBtn": "继续Stripe入驻",
       "redirectNote": "您将被重定向到Stripe设置付款，然后返回此处。"
@@ -677,6 +689,7 @@
       "bullet2": "구매자는 과거와 미래의 모든 버전을 받습니다",
       "bullet3": "지급, 환불, 세금은 Stripe에서 처리됩니다",
       "trustWarning": "판매는 기여자 신뢰 수준에서 잠금 해제됩니다. 모델을 공유하거나 아카이브에 기여하여 도달하세요 — 현재 레벨은 {level}입니다.",
+      "trustStatusLink": "기여자 상태 보기",
       "startBtn": "Stripe로 판매 시작하기",
       "continueBtn": "Stripe 온보딩 계속하기",
       "redirectNote": "지급을 설정하기 위해 Stripe로 이동하며, 그 후 여기로 돌아옵니다."

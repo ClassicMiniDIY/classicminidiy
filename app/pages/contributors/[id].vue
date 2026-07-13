@@ -66,6 +66,9 @@
       registry: 'fa-clipboard-list',
       color: 'fa-palette',
       wheel: 'fa-tire',
+      model_version: 'fa-cube',
+      external_model: 'fa-up-right-from-square',
+      listing: 'fa-store',
     };
     return icons[targetType] || 'fa-file';
   };
@@ -234,6 +237,27 @@
                   <p class="text-xs text-base-content/60">{{ t('stats_breakdown.wheels') }}</p>
                 </div>
               </div>
+              <div v-if="stats!['model_version']" class="flex items-center gap-3">
+                <i class="fa-duotone fa-cube text-2xl text-secondary"></i>
+                <div>
+                  <p class="font-bold text-xl">{{ stats!['model_version'] }}</p>
+                  <p class="text-xs text-base-content/60">{{ t('contributions.target.model_version') }}</p>
+                </div>
+              </div>
+              <div v-if="stats!['external_model']" class="flex items-center gap-3">
+                <i class="fa-duotone fa-up-right-from-square text-2xl text-info"></i>
+                <div>
+                  <p class="font-bold text-xl">{{ stats!['external_model'] }}</p>
+                  <p class="text-xs text-base-content/60">{{ t('contributions.target.external_model') }}</p>
+                </div>
+              </div>
+              <div v-if="stats!['listing']" class="flex items-center gap-3">
+                <i class="fa-duotone fa-store text-2xl text-warning"></i>
+                <div>
+                  <p class="font-bold text-xl">{{ stats!['listing'] }}</p>
+                  <p class="text-xs text-base-content/60">{{ t('contributions.target.listing') }}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -328,7 +352,10 @@
         "collection": "Collection",
         "registry": "Registry",
         "color": "Color",
-        "wheel": "Wheel"
+        "wheel": "Wheel",
+        "model_version": "3D Model",
+        "external_model": "External Find",
+        "listing": "Exchange Listing"
       }
     },
     "stats_breakdown": {
@@ -382,7 +409,10 @@
         "collection": "Sammlung",
         "registry": "Verzeichnis",
         "color": "Farbe",
-        "wheel": "Felge"
+        "wheel": "Felge",
+        "model_version": "3D-Modell",
+        "external_model": "Externer Fund",
+        "listing": "Exchange-Anzeige"
       }
     },
     "stats_breakdown": {
@@ -436,7 +466,10 @@
         "collection": "Colección",
         "registry": "Registro",
         "color": "Color",
-        "wheel": "Rueda"
+        "wheel": "Rueda",
+        "model_version": "Modelo 3D",
+        "external_model": "Hallazgo Externo",
+        "listing": "Anuncio del Exchange"
       }
     },
     "stats_breakdown": {
@@ -490,7 +523,10 @@
         "collection": "Collection",
         "registry": "Registre",
         "color": "Couleur",
-        "wheel": "Roue"
+        "wheel": "Roue",
+        "model_version": "Modèle 3D",
+        "external_model": "Trouvaille Externe",
+        "listing": "Annonce Exchange"
       }
     },
     "stats_breakdown": {
@@ -544,7 +580,10 @@
         "collection": "Collezione",
         "registry": "Registro",
         "color": "Colore",
-        "wheel": "Ruota"
+        "wheel": "Ruota",
+        "model_version": "Modello 3D",
+        "external_model": "Scoperta Esterna",
+        "listing": "Annuncio Exchange"
       }
     },
     "stats_breakdown": {
@@ -598,7 +637,10 @@
         "collection": "Coleção",
         "registry": "Registro",
         "color": "Cor",
-        "wheel": "Roda"
+        "wheel": "Roda",
+        "model_version": "Modelo 3D",
+        "external_model": "Achado Externo",
+        "listing": "Anúncio do Exchange"
       }
     },
     "stats_breakdown": {
@@ -652,7 +694,10 @@
         "collection": "Коллекция",
         "registry": "Реестр",
         "color": "Цвет",
-        "wheel": "Колесо"
+        "wheel": "Колесо",
+        "model_version": "3D-модель",
+        "external_model": "Внешняя находка",
+        "listing": "Объявление Exchange"
       }
     },
     "stats_breakdown": {
@@ -706,7 +751,10 @@
         "collection": "コレクション",
         "registry": "レジストリ",
         "color": "カラー",
-        "wheel": "ホイール"
+        "wheel": "ホイール",
+        "model_version": "3Dモデル",
+        "external_model": "外部リンク",
+        "listing": "Exchange出品"
       }
     },
     "stats_breakdown": {
@@ -760,7 +808,10 @@
         "collection": "集合",
         "registry": "注册表",
         "color": "颜色",
-        "wheel": "轮毂"
+        "wheel": "轮毂",
+        "model_version": "3D 模型",
+        "external_model": "外部发现",
+        "listing": "Exchange 商品"
       }
     },
     "stats_breakdown": {
@@ -814,7 +865,10 @@
         "collection": "컬렉션",
         "registry": "레지스트리",
         "color": "색상",
-        "wheel": "휠"
+        "wheel": "휠",
+        "model_version": "3D 모델",
+        "external_model": "외부 발견",
+        "listing": "Exchange 판매글"
       }
     },
     "stats_breakdown": {
