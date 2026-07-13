@@ -26,6 +26,8 @@ export interface Vehicle {
   color: string | null;
 }
 
+import { PROFILE_PUBLIC_COLUMNS } from '~/utils/constants';
+
 const AVATAR_BUCKET = 'avatars';
 
 export const useProfile = () => {
@@ -37,14 +39,15 @@ export const useProfile = () => {
    * Fetch the authenticated user's full profile.
    * Sensitive columns live on profile_private (profiles split): is_admin is
    * embedded from the user's own profile_private row, and email comes from
-   * the Supabase auth user object — never from profiles.
+   * the Supabase auth user object — never from profiles. Explicit column list
+   * so legacy sensitive-column reads can't sneak back in before Phase 4.
    */
   const fetchProfile = async () => {
     if (!user.value) throw new Error('Not authenticated');
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('*, profile_private ( is_admin )')
+      .select(`${PROFILE_PUBLIC_COLUMNS}, profile_private ( is_admin )`)
       .eq('id', user.value.id)
       .single();
 
