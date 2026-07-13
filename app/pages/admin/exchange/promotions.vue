@@ -688,6 +688,7 @@
                 tier,
                 payment_status,
                 created_at,
+                promoted_on_social_at,
                 listing_photos (
                   id,
                   storage_path,
@@ -698,6 +699,10 @@
               )
               .in('id', listingIds)
               .not('status', 'in', '("example_free","example_paid")')
+              // Newest SOCIAL post first — when it went out on social media, not
+              // when the listing was created on the exchange. Legacy rows that
+              // predate promoted_on_social_at sort last, by listing age.
+              .order('promoted_on_social_at', { ascending: false, nullsFirst: false })
               .order('created_at', { ascending: false })
           );
 
