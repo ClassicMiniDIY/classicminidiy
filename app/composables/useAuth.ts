@@ -63,26 +63,38 @@ export const useAuth = () => {
     }
   };
 
-  // Fetch user profile including admin status + Sustaining Member status
+  // Fetch user profile including admin status + Sustaining Member status.
+  // Sensitive columns live on profile_private (profiles split): is_admin is
+  // read from the user's own profile_private row (RLS: own-row SELECT), and
+  // the user's own email comes from the Supabase auth user object — never
+  // from profiles.
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(
-          'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions, onboarding_completed'
-        )
-        .eq('id', userId)
-        .single();
+      const [profileResult, privateResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select(
+            'display_name, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions, onboarding_completed'
+          )
+          .eq('id', userId)
+          .single(),
+        supabase.from('profile_private').select('is_admin').eq('user_id', userId).maybeSingle(),
+      ]);
 
-      if (error) {
-        console.error('Error fetching user profile:', error);
+      if (profileResult.error) {
+        console.error('Error fetching user profile:', profileResult.error);
         userProfile.value = null;
         return;
       }
 
       // Membership is computed, not a profiles column — fold it into shared state.
       const isSustaining = await fetchMembership(userId);
-      userProfile.value = { ...data, is_sustaining_member: isSustaining } as UserProfile;
+      userProfile.value = {
+        ...profileResult.data,
+        email: user.value?.email ?? '',
+        is_admin: privateResult.data?.is_admin ?? false,
+        is_sustaining_member: isSustaining,
+      } as UserProfile;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       userProfile.value = null;

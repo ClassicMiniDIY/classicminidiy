@@ -138,7 +138,7 @@ describe('server/api/admin/queue/list', () => {
 
     expect(mockFrom).toHaveBeenCalledWith('submission_queue');
     expect(mockSelect).toHaveBeenCalledWith(
-      '*, submitter:profiles!submission_queue_submitted_by_fkey(display_name, email, avatar_url, trust_level)'
+      '*, submitter:profiles!submission_queue_submitted_by_fkey(display_name, avatar_url, trust_level, profile_private ( email ))'
     );
     expect(mockOrder).toHaveBeenCalledWith('created_at', { ascending: false });
   });
@@ -193,9 +193,9 @@ describe('server/api/admin/queue/list', () => {
       submitted_by: 'user-456',
       submitter: {
         display_name: 'John Doe',
-        email: 'john@example.com',
         avatar_url: 'https://example.com/avatar.jpg',
         trust_level: 'trusted',
+        profile_private: { email: 'john@example.com' },
       },
     };
 
@@ -236,7 +236,12 @@ describe('server/api/admin/queue/list', () => {
           reviewed_at: null,
           created_at: '2026-01-01',
           submitted_by: 'u1',
-          submitter: { display_name: null, email: 'fallback@email.com', avatar_url: null, trust_level: null },
+          submitter: {
+            display_name: null,
+            avatar_url: null,
+            trust_level: null,
+            profile_private: { email: 'fallback@email.com' },
+          },
         },
       ],
     });
@@ -259,7 +264,7 @@ describe('server/api/admin/queue/list', () => {
           reviewed_at: null,
           created_at: '2026-01-01',
           submitted_by: 'u2',
-          submitter: { display_name: null, email: null, avatar_url: null, trust_level: null },
+          submitter: { display_name: null, avatar_url: null, trust_level: null, profile_private: { email: null } },
         },
       ],
     });

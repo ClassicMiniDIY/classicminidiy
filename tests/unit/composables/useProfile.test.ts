@@ -45,7 +45,7 @@ describe('useProfile', () => {
       await fetchProfile();
 
       expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('*');
+      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('*, profile_private ( is_admin )');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'test-user-id');
       expect(mockSupabase._mockSingle).toHaveBeenCalled();
     });
@@ -55,14 +55,27 @@ describe('useProfile', () => {
       const mockAuth = createMockAuth(mockUser);
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      const profileData = { id: 'test-user-id', display_name: 'Test User', bio: 'Mini fan' };
+      const profileData = {
+        id: 'test-user-id',
+        display_name: 'Test User',
+        bio: 'Mini fan',
+        profile_private: { is_admin: true },
+      };
       mockSupabase._mockSingle.mockResolvedValue({ data: profileData, error: null });
 
       const { useProfile } = await import('~/app/composables/useProfile');
       const { fetchProfile } = useProfile();
       const result = await fetchProfile();
 
-      expect(result).toEqual(profileData);
+      // is_admin is flattened from the profile_private embed; email comes from
+      // the auth user object, not profiles (sensitive-column split).
+      expect(result).toEqual({
+        id: 'test-user-id',
+        display_name: 'Test User',
+        bio: 'Mini fan',
+        email: mockUser.email,
+        is_admin: true,
+      });
     });
 
     it('throws when Supabase returns an error', async () => {
@@ -392,9 +405,7 @@ describe('useProfile', () => {
       const mockAuth = createMockAuth(null);
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      const vehicles = [
-        { id: 'v1', name: 'Red Mini', year: 1970, make: 'BMC', model: 'Cooper S', color: 'Red' },
-      ];
+      const vehicles = [{ id: 'v1', name: 'Red Mini', year: 1970, make: 'BMC', model: 'Cooper S', color: 'Red' }];
       mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: vehicles, error: null }));
 
       const { useProfile } = await import('~/app/composables/useProfile');

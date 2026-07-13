@@ -139,11 +139,13 @@ export async function queueAdminNotification(params: {
   try {
     const supabase = getServiceClient();
 
+    // is_admin lives on profile_private, is_banned stays on profiles
+    // (sensitive-column split) — join through the user_id FK and filter both.
     const { data: admins, error: adminErr } = await supabase
-      .from('profiles')
-      .select('id')
+      .from('profile_private')
+      .select('user_id, profiles!inner ( is_banned )')
       .eq('is_admin', true)
-      .eq('is_banned', false);
+      .eq('profiles.is_banned', false);
 
     if (adminErr) {
       console.error('[NotificationQueue] Failed to resolve admins:', adminErr);
@@ -152,8 +154,8 @@ export async function queueAdminNotification(params: {
     if (!admins || admins.length === 0) return;
 
     const key = batchKey ?? eventType;
-    const rows = admins.map((a: { id: string }) => ({
-      user_id: a.id,
+    const rows = admins.map((a: { user_id: string }) => ({
+      user_id: a.user_id,
       event_type: eventType,
       payload,
       channel: 'email' as const,

@@ -20,11 +20,7 @@
             <label for="status-filter" class="label">
               <span class="label-text">Filter by Status</span>
             </label>
-            <select
-              id="status-filter"
-              v-model="selectedStatus"
-              class="select select-bordered w-full max-w-xs"
-            >
+            <select id="status-filter" v-model="selectedStatus" class="select select-bordered w-full max-w-xs">
               <option value="all">All Statuses</option>
               <option value="flagged">Flagged</option>
               <option value="active">Active</option>
@@ -165,10 +161,7 @@
                 <th class="cursor-pointer select-none" @click="toggleSort('status')">
                   <span class="flex items-center gap-1">
                     Status
-                    <i
-                      class="text-xs"
-                      :class="[getSortIcon('status'), { 'opacity-30': !isSortedBy('status') }]"
-                    ></i>
+                    <i class="text-xs" :class="[getSortIcon('status'), { 'opacity-30': !isSortedBy('status') }]"></i>
                   </span>
                 </th>
                 <th class="cursor-pointer select-none" @click="toggleSort('moderation_status')">
@@ -421,9 +414,11 @@
     loading.value = true;
 
     try {
+      // Email lives on profile_private (sensitive-column split) — embed via
+      // profiles and flatten so the template keeps reading profiles.email.
       let query = supabase
         .from('wanted_posts')
-        .select('*, profiles!wanted_posts_user_id_fkey(id, display_name, email, avatar_url)')
+        .select('*, profiles!wanted_posts_user_id_fkey(id, display_name, avatar_url, profile_private ( email ))')
         .order('created_at', { ascending: false });
 
       if (selectedStatus.value && selectedStatus.value !== 'all') {
@@ -439,7 +434,11 @@
 
       if (error) throw error;
 
-      posts.value = (data as unknown as WantedPost[]) || [];
+      posts.value = ((data as any[]) || []).map((p) => {
+        if (!p.profiles) return p;
+        const { profile_private: priv, ...profile } = p.profiles;
+        return { ...p, profiles: { ...profile, email: priv?.email ?? null } };
+      }) as WantedPost[];
     } catch (error) {
       handleError(error, { toastTitle: 'Failed to load wanted posts' });
     } finally {

@@ -87,10 +87,10 @@ describe('server/api/exchange/comments/[id]/delete.delete', () => {
   it('looks up the profile admin flag keyed by the authenticated user id', async () => {
     await handler(evt());
 
-    expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
+    expect(mockSupabase.from).toHaveBeenCalledWith('profile_private');
     const profileSelect = (mockSupabase._mockSelect as any).mock.calls.find((c: any[]) => c[0] === 'is_admin');
     expect(profileSelect).toBeTruthy();
-    expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', USER.id);
+    expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', USER.id);
   });
 
   it('fetches the comment ownership row (id, user_id) filtered by the comment id', async () => {
@@ -107,7 +107,10 @@ describe('server/api/exchange/comments/[id]/delete.delete', () => {
   //  Happy path — admin (not owner)
   // =========================================================================
   it('allows an admin to delete a comment they do not own', async () => {
-    wire({ data: { is_admin: true }, error: null }, { data: { id: 'comment-1', user_id: 'someone-else' }, error: null });
+    wire(
+      { data: { is_admin: true }, error: null },
+      { data: { id: 'comment-1', user_id: 'someone-else' }, error: null }
+    );
 
     const result = await handler(evt());
     expect(result).toEqual({ success: true, message: 'Comment deleted successfully' });
@@ -144,7 +147,10 @@ describe('server/api/exchange/comments/[id]/delete.delete', () => {
   //  Forbidden (403) — not owner, not admin
   // =========================================================================
   it('throws 403 when the requester is neither owner nor admin', async () => {
-    wire({ data: { is_admin: false }, error: null }, { data: { id: 'comment-1', user_id: 'someone-else' }, error: null });
+    wire(
+      { data: { is_admin: false }, error: null },
+      { data: { id: 'comment-1', user_id: 'someone-else' }, error: null }
+    );
     await expect(handler(evt())).rejects.toMatchObject({
       statusCode: 403,
       message: 'You do not have permission to delete this comment',

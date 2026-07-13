@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -2889,6 +2909,54 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_private: {
+        Row: {
+          auth_provider: string | null
+          created_at: string
+          email: string | null
+          firebase_uid: string | null
+          is_admin: boolean
+          updated_at: string
+          user_id: string
+          warning_count: number
+        }
+        Insert: {
+          auth_provider?: string | null
+          created_at?: string
+          email?: string | null
+          firebase_uid?: string | null
+          is_admin?: boolean
+          updated_at?: string
+          user_id: string
+          warning_count?: number
+        }
+        Update: {
+          auth_provider?: string | null
+          created_at?: string
+          email?: string | null
+          firebase_uid?: string | null
+          is_admin?: boolean
+          updated_at?: string
+          user_id?: string
+          warning_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_private_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_private_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           approved_submissions: number
@@ -3227,8 +3295,8 @@ export type Database = {
           filters: Json
           id: string
           is_active: boolean
-          last_notified_at: string | null
           name: string
+          notified_listing_ids: string[]
           notify_email: boolean
           user_id: string
         }
@@ -3237,8 +3305,8 @@ export type Database = {
           filters?: Json
           id?: string
           is_active?: boolean
-          last_notified_at?: string | null
           name: string
+          notified_listing_ids?: string[]
           notify_email?: boolean
           user_id: string
         }
@@ -3247,8 +3315,8 @@ export type Database = {
           filters?: Json
           id?: string
           is_active?: boolean
-          last_notified_at?: string | null
           name?: string
+          notified_listing_ids?: string[]
           notify_email?: boolean
           user_id?: string
         }
@@ -4006,6 +4074,10 @@ export type Database = {
           status: string
         }[]
       }
+      count_probation_cold_outreach: {
+        Args: { p_sender: string }
+        Returns: number
+      }
       find_user_id_by_email: { Args: { p_email: string }; Returns: string }
       generate_location_string: {
         Args: { p_city: string; p_country: string; p_state_province: string }
@@ -4191,6 +4263,7 @@ export type Database = {
         Args: { listing_id_param: string }
         Returns: undefined
       }
+      is_account_on_probation: { Args: { p_user_id: string }; Returns: boolean }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
       is_username_available: { Args: { p_username: string }; Returns: boolean }
       is_watchlisted: {
@@ -4613,6 +4686,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       announcement_type_enum: ["error", "warning", "info", "success"],
@@ -4812,3 +4888,4 @@ export const Constants = {
     },
   },
 } as const
+

@@ -15,8 +15,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Get user profile to check admin status
-    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+    // Get admin status from profile_private (sensitive-column split)
+    const { data: profile } = await supabase.from('profile_private').select('is_admin').eq('user_id', user.id).single();
 
     // Verify comment exists and check ownership
     const { data: comment, error: fetchError } = await supabase

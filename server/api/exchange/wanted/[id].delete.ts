@@ -40,8 +40,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+    // Check if user is admin (is_admin lives on profile_private — sensitive-column split)
+    const { data: profile } = await supabase.from('profile_private').select('is_admin').eq('user_id', user.id).single();
 
     const isOwner = existingPost.user_id === user.id;
     const isAdmin = profile?.is_admin === true;

@@ -11,7 +11,9 @@ export default defineEventHandler(async (event) => {
 
   let q = supabase
     .from('submission_queue')
-    .select('*, submitter:profiles!submission_queue_submitted_by_fkey(display_name, email, avatar_url, trust_level)')
+    .select(
+      '*, submitter:profiles!submission_queue_submitted_by_fkey(display_name, avatar_url, trust_level, profile_private ( email ))'
+    )
     .order('created_at', { ascending: false });
 
   if (status !== 'all') q = q.eq('status', status);
@@ -54,8 +56,8 @@ export default defineEventHandler(async (event) => {
     reviewedAt: item.reviewed_at,
     createdAt: item.created_at,
     submittedBy: item.submitted_by,
-    submitterName: item.submitter?.display_name || item.submitter?.email || 'Unknown',
-    submitterEmail: item.submitter?.email || null,
+    submitterName: item.submitter?.display_name || item.submitter?.profile_private?.email || 'Unknown',
+    submitterEmail: item.submitter?.profile_private?.email || null,
     submitterAvatar: item.submitter?.avatar_url || null,
     submitterTrustLevel: item.submitter?.trust_level || 'new',
   }));

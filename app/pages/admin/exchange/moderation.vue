@@ -95,7 +95,11 @@
                     <i class="fas fa-circle-check"></i>
                     Approve
                   </button>
-                  <NuxtLink :to="`/exchange/listings/${listing.slug}`" target="_blank" class="btn btn-ghost btn-sm gap-1">
+                  <NuxtLink
+                    :to="`/exchange/listings/${listing.slug}`"
+                    target="_blank"
+                    class="btn btn-ghost btn-sm gap-1"
+                  >
                     <i class="fas fa-eye"></i>
                     View
                   </NuxtLink>
@@ -508,14 +512,20 @@
   const loadWantedPosts = async () => {
     tabErrors.value.wanted = null;
     try {
+      // Email lives on profile_private (sensitive-column split) — embed via
+      // profiles and flatten so the template keeps reading profiles.email.
       const { data, error } = await supabase
         .from('wanted_posts')
-        .select('*, profiles!wanted_posts_user_id_fkey(id, display_name, email, avatar_url)')
+        .select('*, profiles!wanted_posts_user_id_fkey(id, display_name, avatar_url, profile_private ( email ))')
         .in('moderation_status', ['pending', 'flagged'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      wantedPosts.value = (data as unknown as WantedPost[]) || [];
+      wantedPosts.value = ((data as any[]) || []).map((p) => {
+        if (!p.profiles) return p;
+        const { profile_private: priv, ...profile } = p.profiles;
+        return { ...p, profiles: { ...profile, email: priv?.email ?? null } };
+      }) as WantedPost[];
     } catch (error: any) {
       console.error('Error loading wanted posts:', error);
       tabErrors.value.wanted = 'Failed to load wanted posts';

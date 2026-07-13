@@ -388,8 +388,9 @@ describe('useAuth', () => {
   // ---------------------------------------------------------------------------
   describe('isAdmin', () => {
     it('returns true when userProfile.is_admin is true', async () => {
-      const adminProfile = { ...mockProfile, is_admin: true };
-      mockSupabase._mockSingle.mockResolvedValue({ data: adminProfile, error: null });
+      mockSupabase._mockSingle.mockResolvedValue({ data: mockProfile, error: null });
+      // is_admin now comes from the user's own profile_private row (maybeSingle).
+      mockSupabase._mockMaybeSingle.mockResolvedValue({ data: { is_admin: true }, error: null });
 
       const { useAuth } = await import('~/app/composables/useAuth');
       const auth = useAuth();
@@ -400,8 +401,9 @@ describe('useAuth', () => {
     });
 
     it('returns false when userProfile.is_admin is false', async () => {
-      mockSupabase._mockSingle.mockResolvedValue({
-        data: { ...mockProfile, is_admin: false },
+      mockSupabase._mockSingle.mockResolvedValue({ data: mockProfile, error: null });
+      mockSupabase._mockMaybeSingle.mockResolvedValue({
+        data: { is_admin: false },
         error: null,
       });
 
@@ -432,7 +434,7 @@ describe('useAuth', () => {
   // fetchUserProfile()
   // ---------------------------------------------------------------------------
   describe('fetchUserProfile()', () => {
-    it('queries profiles table with correct user id and fields', async () => {
+    it('queries profiles and profile_private with correct user id and fields', async () => {
       mockSupabase._mockSingle.mockResolvedValue({ data: mockProfile, error: null });
 
       const { useAuth } = await import('~/app/composables/useAuth');
@@ -440,12 +442,19 @@ describe('useAuth', () => {
 
       await auth.fetchUserProfile('user-123');
 
+      // Public fields from profiles; is_admin from the user's own
+      // profile_private row (sensitive-column split). Email is NOT selected
+      // from profiles — it comes from the auth user object.
       expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
+      expect(mockSupabase.from).toHaveBeenCalledWith('profile_private');
       expect(mockSupabase._mockSelect).toHaveBeenCalledWith(
-        'is_admin, display_name, email, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions, onboarding_completed'
+        'display_name, avatar_url, trust_level, total_submissions, approved_submissions, rejected_submissions, onboarding_completed'
       );
+      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('is_admin');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'user-123');
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', 'user-123');
       expect(mockSupabase._mockSingle).toHaveBeenCalled();
+      expect(mockSupabase._mockMaybeSingle).toHaveBeenCalled();
     });
 
     it('sets userProfile when profile data is returned', async () => {
@@ -456,7 +465,15 @@ describe('useAuth', () => {
 
       await auth.fetchUserProfile('user-123');
 
-      expect(auth.userProfile.value).toEqual({ ...mockProfile, is_sustaining_member: false });
+      // Email is '' here because user.value was never set (no initAuth) —
+      // own email comes from the auth user object, not profiles. is_admin
+      // defaults to false when the profile_private row is absent.
+      expect(auth.userProfile.value).toEqual({
+        ...mockProfile,
+        email: '',
+        is_admin: false,
+        is_sustaining_member: false,
+      });
     });
 
     it('sets userProfile to null when supabase returns an error', async () => {
@@ -518,10 +535,11 @@ describe('useAuth', () => {
       // Canonical gate: RPC called with the user id (keystone §9).
       expect(mockSupabase.rpc).toHaveBeenCalledWith('user_has_subscription', { p_user_id: 'user-123' });
 
-      // Regression guard: is_sustaining_member is NOT a profiles column.
-      const selectArg = mockSupabase._mockSelect.mock.calls[0][0] as string;
-      expect(selectArg).toContain('is_admin');
-      expect(selectArg).not.toContain('is_sustaining_member');
+      // Regression guard: is_sustaining_member is NOT a profiles or
+      // profile_private column. is_admin is selected from profile_private.
+      const selectArgs = mockSupabase._mockSelect.mock.calls.map((c) => c[0] as string);
+      expect(selectArgs).toContain('is_admin');
+      selectArgs.forEach((arg) => expect(arg).not.toContain('is_sustaining_member'));
     });
 
     it('is true when the gate RPC returns true', async () => {
