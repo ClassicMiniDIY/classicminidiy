@@ -49,9 +49,9 @@ export const useContributions = () => {
       displayName: data.display_name,
       avatarUrl: data.avatar_url,
       bio: data.bio,
-      trustLevel: data.trust_level,
-      totalSubmissions: data.total_submissions,
-      approvedSubmissions: data.approved_submissions,
+      trustLevel: data.trust_level ?? 'new',
+      totalSubmissions: data.total_submissions ?? 0,
+      approvedSubmissions: data.approved_submissions ?? 0,
       joinedAt: data.created_at,
     };
   };

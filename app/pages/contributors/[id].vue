@@ -277,7 +277,7 @@
             <ul v-else class="divide-y divide-base-200">
               <li v-for="item in contributions" :key="item.id" class="flex items-center gap-3 py-3 px-1">
                 <i
-                  :class="`fa-duotone fa-${targetTypeIcon(item.targetType)} text-xl text-base-content/40 shrink-0 w-6 text-center`"
+                  :class="`fa-duotone ${targetTypeIcon(item.targetType)} text-xl text-base-content/40 shrink-0 w-6 text-center`"
                 ></i>
                 <div class="flex-1 min-w-0">
                   <p class="font-medium truncate">
