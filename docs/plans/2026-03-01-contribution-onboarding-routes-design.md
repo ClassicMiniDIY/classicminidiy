@@ -60,7 +60,7 @@
 
 ### Shared Auth (Already Implemented)
 
-Both classicminidiy.com and theminiexchange.com use the same Supabase project (`psoqirvbujwohemmwplv` at `auth.theminiexchange.com`). Auth methods (magic link, Google OAuth, Apple OAuth) and the `profiles` table are shared. No auth infrastructure changes needed.
+Both classicminidiy.com and theminiexchange.com use the same Supabase project (shared project ref — see Supabase dashboard). Auth methods (magic link, Google OAuth, Apple OAuth) and the `profiles` table are shared. No auth infrastructure changes needed.
 
 ### Login Page Updates
 

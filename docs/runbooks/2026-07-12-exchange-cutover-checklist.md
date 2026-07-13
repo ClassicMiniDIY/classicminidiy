@@ -65,7 +65,7 @@ In `classicminidiy-supabase`:
      from the existing endpoint (`STRIPE_LISTINGS_SECRET_KEY` = the account key, same
      value as `STRIPE_SECRET_KEY`; isolation stays at the per-endpoint-secret level),
      then at Stage D edit the destination URL to
-     `https://psoqirvbujwohemmwplv.supabase.co/functions/v1/stripe-listings-webhook`.
+     `https://<project-ref>.supabase.co/functions/v1/stripe-listings-webhook`.
      No gap window: both handlers write the same shared-DB tables, and the old URL
      dies behind the host 301s at DNS cutover anyway.
    - Meta + Bluesky creds for `post-listing-social`
@@ -99,7 +99,7 @@ In `classicminidiy-supabase`:
    - apply migration `20260628000002` (watcher triggers)
    - schedule the `post-listing-social` `*/15` cron
 3. [ ] In the Stripe dashboard, edit the `the-mini-exchange` webhook destination URL →
-       `https://psoqirvbujwohemmwplv.supabase.co/functions/v1/stripe-listings-webhook`
+       `https://<project-ref>.supabase.co/functions/v1/stripe-listings-webhook`
        (same signing secret — already set as `STRIPE_LISTINGS_WEBHOOK_SECRET`; same 2 events).
 4. [ ] Point `theminiexchange.com` + `www` DNS at the CMDIY Vercel project → activates the
        28 host-scoped 301s in `vercel.json`. Verify legacy deep links 301 correctly:

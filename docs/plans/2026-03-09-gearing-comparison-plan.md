@@ -16,7 +16,7 @@
 
 **Files:**
 
-- Create: migration SQL file (apply via Supabase dashboard or migration tooling — this is the shared database at `psoqirvbujwohemmwplv`)
+- Create: migration SQL file (apply via Supabase dashboard or migration tooling — this is the shared database; ref in the Supabase dashboard)
 
 **Step 1: Write the migration SQL**
 
