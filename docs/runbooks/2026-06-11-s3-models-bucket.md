@@ -47,7 +47,7 @@ Bucket created and configured with the `cmdiy-s3` CLI identity. Verified state:
 Exact commands used (for reproducibility / disaster recovery):
 
 ```bash
-B=<models-bucket>   # your bucket name
+B="<models-bucket>"   # your bucket name
 aws s3api create-bucket --bucket "$B" --region us-east-1
 
 aws s3api put-public-access-block --bucket "$B" \
@@ -171,9 +171,9 @@ All four `S3_MODELS_*` are server-only (private `runtimeConfig`); never expose i
 ```bash
 # As the new user's profile, confirm scoped access works:
 echo "hello" > /tmp/probe.txt
-aws s3 cp /tmp/probe.txt s3://<models-bucket>/models/_probe/v1/_/probe.txt
-aws s3 ls s3://<models-bucket>/models/_probe/v1/_/
-aws s3 rm s3://<models-bucket>/models/_probe/v1/_/probe.txt
+aws s3 cp /tmp/probe.txt "s3://<models-bucket>/models/_probe/v1/_/probe.txt"
+aws s3 ls "s3://<models-bucket>/models/_probe/v1/_/"
+aws s3 rm "s3://<models-bucket>/models/_probe/v1/_/probe.txt"
 
 # Confirm the user CANNOT touch other buckets (should AccessDenied):
 aws s3 ls s3://classicminidiy
@@ -190,8 +190,8 @@ Then, with `NUXT_PUBLIC_MODELS_ENABLED=true` in a preview env, exercise
 The bucket is empty and reversible. To fully remove:
 
 ```bash
-aws s3 rm s3://<models-bucket> --recursive   # if any objects exist
-aws s3api delete-bucket --bucket <models-bucket> --region us-east-1
+aws s3 rm "s3://<models-bucket>" --recursive   # if any objects exist
+aws s3api delete-bucket --bucket "<models-bucket>" --region us-east-1
 aws iam delete-access-key --user-name cmdiy-models-s3 --access-key-id <id>
 aws iam delete-user-policy --user-name cmdiy-models-s3 --policy-name models-bucket-scoped
 aws iam delete-user --user-name cmdiy-models-s3
