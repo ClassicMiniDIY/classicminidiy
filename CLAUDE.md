@@ -304,6 +304,12 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
 - **`/mcp` auth fails closed.** Valid keys come ONLY from `MCP_API_KEY` / `MCP_API_KEYS` env vars — there is no hardcoded/default key. The old `dev-mcp-key-classic-mini-diy` default is in public git history and must never be re-accepted in any environment. For local dev, set `MCP_API_KEY` in `.env`.
 - **`SUPABASE_SERVICE_KEY` is server-only.** It lives in private `runtimeConfig` and is read only via `server/utils/supabase.ts#getServiceClient`. Never import that into `app/` or move the key to `runtimeConfig.public`.
 
+## Trust System Invariants
+
+- **Every human-reviewed approval must feed trust.** Counters + `contributions` ledger + `recalculate_trust_level()` fire DB-side (submission_queue trigger, model-version RPCs, `moderate_external_model`, listings pending→active trigger). If you add a new approval surface, it must do the same — contract: `classicminidiy-supabase/docs/plans/2026-07-13-unified-trust-pipeline.md`.
+- **Public profile reads go through the `public_profiles` view, not `profiles`.** Since the profiles split, `profiles` SELECT is own-row/admin-only; the view carries the community-facing trust columns (`trust_level`, `total_submissions`, `approved_submissions`). Querying `profiles` for another user silently returns zero rows.
+- **Trust visibility:** `DashboardTrustProgressCard` on `/dashboard/submissions` is the user-facing explanation of levels/thresholds (3 approved → contributor; 10 + <20% rejections → trusted; 30-day tenure path to contributor). Keep its copy in sync with the DB thresholds if they change.
+
 ## Environment Variables
 
 ### Required Runtime Config

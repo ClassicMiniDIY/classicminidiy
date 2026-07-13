@@ -1,7 +1,7 @@
 export interface ContributionItem {
   id: string;
   action: 'submitted' | 'edited' | 'approved' | 'rejected';
-  targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel';
+  targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'model_version' | 'external_model' | 'listing';
   targetId: string;
   targetTitle: string | null;
   details: string | null;
@@ -33,8 +33,11 @@ export const useContributions = () => {
   });
 
   const getContributorProfile = async (userId: string): Promise<ContributorProfile | null> => {
+    // public_profiles, not profiles: since the profiles split, profiles is
+    // own-row/admin SELECT only — the view is the safe public projection and
+    // carries the community-facing trust columns (20260713000007).
     const { data, error } = await supabase
-      .from('profiles')
+      .from('public_profiles')
       .select('id, display_name, avatar_url, bio, trust_level, total_submissions, approved_submissions, created_at')
       .eq('id', userId)
       .maybeSingle();
