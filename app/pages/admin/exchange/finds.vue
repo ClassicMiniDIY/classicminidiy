@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <AdminExchangeShell>
     <!-- Page Header -->
     <div class="flex items-center justify-between mb-8">
       <div>
@@ -524,7 +524,7 @@
         <button>close</button>
       </form>
     </dialog>
-  </div>
+  </AdminExchangeShell>
 </template>
 
 <script setup lang="ts">
