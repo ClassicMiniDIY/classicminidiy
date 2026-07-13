@@ -166,7 +166,7 @@ const mockRouter = {
   youtubeAPIKey: 'test-youtube-key',
   NUXT_LANGGRAPH_API_URL: 'https://test-langgraph.api',
   NUXT_LANGSMITH_API_KEY: 'test-langsmith-key',
-  MCP_API_KEY: 'dev-mcp-key-classic-mini-diy',
+  MCP_API_KEY: 'test-mcp-key',
   MCP_API_KEYS: '',
   NODE_ENV: 'test',
 }));
