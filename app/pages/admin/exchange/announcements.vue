@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <AdminExchangeShell>
     <!-- Page Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold mb-2">Site Announcement</h1>
@@ -94,7 +94,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </AdminExchangeShell>
 </template>
 
 <script setup lang="ts">

@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <AdminExchangeShell>
     <div class="mb-8">
       <h1 class="text-3xl font-bold mb-2">Weekly Newsletter</h1>
       <p class="text-base-content/70">Manage the weekly digest sent to all subscribers</p>
@@ -283,7 +283,7 @@
         <button>close</button>
       </form>
     </dialog>
-  </div>
+  </AdminExchangeShell>
 </template>
 
 <script setup lang="ts">

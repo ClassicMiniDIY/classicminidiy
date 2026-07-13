@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <AdminExchangeShell>
     <div class="mb-8">
       <h1 class="text-3xl font-bold mb-2">Social Posting</h1>
       <p class="text-base-content/70">Manage social media posts for listings</p>
@@ -513,7 +513,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </AdminExchangeShell>
 </template>
 
 <script setup lang="ts">
