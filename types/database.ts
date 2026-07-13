@@ -3958,6 +3958,7 @@ export type Database = {
       }
       public_profiles: {
         Row: {
+          approved_submissions: number | null
           avatar_url: string | null
           bio: string | null
           created_at: string | null
@@ -3966,10 +3967,13 @@ export type Database = {
           location: string | null
           show_vehicles: boolean | null
           social_links: Json | null
+          total_submissions: number | null
+          trust_level: Database["public"]["Enums"]["trust_level_enum"] | null
           updated_at: string | null
           username: string | null
         }
         Insert: {
+          approved_submissions?: number | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
@@ -3978,10 +3982,13 @@ export type Database = {
           location?: string | null
           show_vehicles?: boolean | null
           social_links?: Json | null
+          total_submissions?: number | null
+          trust_level?: Database["public"]["Enums"]["trust_level_enum"] | null
           updated_at?: string | null
           username?: string | null
         }
         Update: {
+          approved_submissions?: number | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
@@ -3990,6 +3997,8 @@ export type Database = {
           location?: string | null
           show_vehicles?: boolean | null
           social_links?: Json | null
+          total_submissions?: number | null
+          trust_level?: Database["public"]["Enums"]["trust_level_enum"] | null
           updated_at?: string | null
           username?: string | null
         }
