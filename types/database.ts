@@ -2945,7 +2945,7 @@ export type Database = {
           bio: string | null
           created_at: string | null
           display_name: string | null
-          email: string
+          email: string | null
           firebase_uid: string | null
           id: string
           is_admin: boolean | null
@@ -2973,7 +2973,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
-          email: string
+          email?: string | null
           firebase_uid?: string | null
           id: string
           is_admin?: boolean | null
@@ -3001,7 +3001,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string
+          email?: string | null
           firebase_uid?: string | null
           id?: string
           is_admin?: boolean | null
@@ -4011,7 +4011,6 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
-      approve_listing_edit: { Args: { edit_id: string }; Returns: boolean }
       approve_model_version: {
         Args: { p_notes?: string; p_version_id: string }
         Returns: undefined
@@ -4258,6 +4257,7 @@ export type Database = {
         Args: { p_id: string; p_notes?: string; p_status: string }
         Returns: undefined
       }
+      promote_tenured_users: { Args: never; Returns: number }
       publish_model_version: {
         Args: { p_version_id: string }
         Returns: undefined
@@ -4495,6 +4495,8 @@ export type Database = {
         | "color"
         | "wheel"
         | "model_version"
+        | "external_model"
+        | "listing"
       trust_level_enum:
         | "new"
         | "contributor"
@@ -4817,6 +4819,8 @@ export const Constants = {
         "color",
         "wheel",
         "model_version",
+        "external_model",
+        "listing",
       ],
       trust_level_enum: ["new", "contributor", "trusted", "moderator", "admin"],
       underside_condition_enum: ["excellent", "good", "fair", "needs_work"],
