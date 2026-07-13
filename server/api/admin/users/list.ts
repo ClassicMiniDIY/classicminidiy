@@ -13,10 +13,16 @@ export default defineEventHandler(async (event) => {
 
   // Sensitive columns (email, is_admin, warning_count, ...) live on
   // profile_private (profiles split) — embed and flatten so the response
-  // shape is unchanged for the admin users table.
+  // shape is unchanged for the admin users table. Explicit column list (not *)
+  // so legacy sensitive-column reads can't sneak back in before the Phase 4
+  // column drop. Keep in sync with PROFILE_PUBLIC_COLUMNS in app/utils/constants.ts.
+  const profilePublicColumns =
+    'id, username, display_name, avatar_url, location, bio, social_links, show_vehicles, is_public, is_banned, preferred_currency, unit_system, trust_level, total_submissions, approved_submissions, rejected_submissions, onboarding_completed, onboarding_completed_app, profile_completed_at, created_at, updated_at';
   let q = supabase
     .from('profiles')
-    .select('*, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )', { count: 'exact' })
+    .select(`${profilePublicColumns}, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )`, {
+      count: 'exact',
+    })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 

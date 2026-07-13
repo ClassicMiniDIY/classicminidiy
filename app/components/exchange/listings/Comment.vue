@@ -1,13 +1,7 @@
 <template>
   <div class="flex gap-3" :class="{ 'ml-12': isReply }">
     <!-- Avatar -->
-    <ExchangeAvatar
-      :avatar-url="comment.user.avatar_url"
-      :display-name="comment.user.display_name"
-      :email="comment.user.email"
-      size="sm"
-      class="shrink-0"
-    />
+    <ExchangeAvatar :avatar-url="comment.user.avatar_url" :display-name="comment.user.display_name" size="sm" class="shrink-0" />
 
     <!-- Comment Content -->
     <div class="flex-1 min-w-0">
@@ -138,15 +132,10 @@
   const showReplyForm = ref(false);
   const replyContent = ref('');
 
-  // Display name with email fallback
+  // Never derive a display name from email — commenter emails must not reach
+  // this component (profiles split; comments API returns display_name only).
   const displayName = computed(() => {
-    if (props.comment.user.display_name) {
-      return props.comment.user.display_name;
-    }
-    if (props.comment.user.email) {
-      return props.comment.user.email.split('@')[0];
-    }
-    return t('anonymous');
+    return props.comment.user.display_name || t('anonymous');
   });
 
   // Check if user is admin (you'll need to add this to your useAuth composable)

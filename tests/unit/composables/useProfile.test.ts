@@ -45,7 +45,11 @@ describe('useProfile', () => {
       await fetchProfile();
 
       expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('*, profile_private ( is_admin )');
+      const selectArg = mockSupabase._mockSelect.mock.calls[0][0];
+      // Explicit column list (never *) + is_admin via the profile_private embed
+      expect(selectArg).not.toContain('*');
+      expect(selectArg).toContain('profile_private ( is_admin )');
+      expect(selectArg).not.toMatch(/\bemail\b|firebase_uid|warning_count|auth_provider/);
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'test-user-id');
       expect(mockSupabase._mockSingle).toHaveBeenCalled();
     });

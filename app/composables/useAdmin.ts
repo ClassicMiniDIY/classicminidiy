@@ -1,4 +1,4 @@
-import { ADMIN_CACHE_TTL_MS } from '~/utils/constants';
+import { ADMIN_CACHE_TTL_MS, PROFILE_PUBLIC_COLUMNS } from '~/utils/constants';
 
 export interface MessageQueueItem {
   id: string;
@@ -231,7 +231,9 @@ export const useAdmin = () => {
 
     const { data, error, count } = await supabase
       .from('profiles')
-      .select('*, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )', { count: 'exact' })
+      .select(`${PROFILE_PUBLIC_COLUMNS}, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )`, {
+        count: 'exact',
+      })
       .order('created_at', { ascending: false })
       .range(start, end);
 
@@ -399,7 +401,7 @@ export const useAdmin = () => {
     const [profileResult, listingsResult] = await Promise.all([
       supabase
         .from('profiles')
-        .select('*, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )')
+        .select(`${PROFILE_PUBLIC_COLUMNS}, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )`)
         .eq('id', userId)
         .single(),
       applyPhotoOrdering(
