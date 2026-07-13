@@ -21,7 +21,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Cannot remove your own admin access' });
   }
 
-  const { error } = await supabase.from('profiles').update({ is_admin: isAdmin }).eq('id', userId);
+  // profiles split Phase 3: is_admin is canonical on profile_private (the
+  // dual-write mirror from profiles is gone — writing profiles.is_admin here
+  // would silently do nothing).
+  const { error } = await supabase.from('profile_private').update({ is_admin: isAdmin }).eq('user_id', userId);
 
   if (error) {
     throw createError({ statusCode: 500, statusMessage: error.message });
