@@ -206,7 +206,10 @@ export function usePersistentThread() {
     }
   });
 
-  // Initialize on creation
+  // Initialize on creation. NOTE: this reads localStorage synchronously during
+  // setup, so client state can differ from the SSR HTML — anything that renders
+  // from currentThreadId/getThreadData must not branch on it until after mount
+  // (see isChatEmpty in ChatWindow.vue) or hydration mismatches corrupt the DOM.
   initializeThread();
 
   // Watch for thread expiry and clean up automatically
