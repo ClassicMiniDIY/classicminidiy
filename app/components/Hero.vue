@@ -67,10 +67,10 @@
 
   switch (props.heroType) {
     case HERO_TYPES.HOME:
+      // Size/position handled by responsive classes: full-bleed cover on
+      // mobile, contain-right on md+ (inline style would override both).
       styleObject = {
         backgroundImage: `url(https://classicminidiy.s3.amazonaws.com/misc${props.background}.webp)`,
-        backgroundSize: 'contain',
-        backgroundPosition: 'right',
       };
       break;
     case HERO_TYPES.TECH:
@@ -103,7 +103,7 @@
     :class="{
       [textSize]: textSize,
       'hero-section--scrim': displayTitle || displaySubtitle,
-      'md:h-144 sm:h-96': heroType === HERO_TYPES.HOME,
+      'md:h-144 sm:h-96 md:bg-contain md:bg-right': heroType === HERO_TYPES.HOME,
       'md:h-60 sm:h-48': heroType === HERO_TYPES.TECH || heroType === HERO_TYPES.ARCHIVE,
       'md:h-112 sm:h-96': heroType === HERO_TYPES.BLOG || heroType === HERO_TYPES.MAPS,
     }"
@@ -113,7 +113,7 @@
       class="hero-content relative z-10 flex flex-col items-start justify-center"
       :style="[blog ? { paddingTop: '4rem', paddingBottom: '4rem' } : {}]"
     >
-      <div class="pl-20" :class="{ 'text-center': centered }">
+      <div class="pl-6 md:pl-20" :class="{ 'text-center': centered }">
         <p class="eyebrow" :class="{ 'text-center': blog }">
           {{ displaySubtitle }}
         </p>
