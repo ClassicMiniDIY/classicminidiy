@@ -147,6 +147,7 @@ A weekly remote agent updates the rolling [Weekly Cascade Report](https://github
 - **CMDIY Assistant** - LangGraph-powered conversational AI with context awareness
 - **Model Context Protocol (MCP) Server** - AI integration with calculators and tools
 - **Streaming Responses** - Real-time AI chat with persistent conversation threads
+- **Hydration invariant**: `/chat` is SSR'd and the server always renders the empty/welcome branch. The persisted thread (localStorage, `usePersistentThread`) is read synchronously during setup, so nothing may branch the template on it until after `onMounted` (see `hasMounted` gate in `ChatWindow.vue`) — otherwise refreshing with a <24h-old thread causes a structural hydration mismatch that corrupts the page DOM. Also note `createStreamSession()`/`provideStreamContext()` call `useI18n()`/`provide()` and must keep running synchronously during setup (the `immediate: true` watch), never deferred to post-mount.
 
 #### Administrative Features (`app/admin`)
 
