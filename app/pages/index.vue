@@ -19,6 +19,16 @@
     const key = DISCORD_ERROR_CODES.includes(discordError.value) ? discordError.value : 'generic';
     return t(`discord_errors.${key}`);
   });
+  // Every failed claim has a self-serve recovery: a stale/missing token is
+  // fixed by /discord/connect (mints a fresh claim via discord-claim-reissue),
+  // and not_active means the membership itself needs attention. Without this
+  // CTA the banner dead-ends members at "contact us" for a solvable state.
+  const discordErrorCta = computed(() => {
+    if (!discordError.value) return null;
+    return discordError.value === 'not_active'
+      ? { to: '/membership', label: t('discord_errors.cta_membership') }
+      : { to: '/discord/connect', label: t('discord_errors.cta_connect') };
+  });
   onMounted(() => {
     const code = route.query.discord_error;
     if (typeof code === 'string' && code) {
@@ -116,6 +126,14 @@
       <div role="alert" class="alert alert-error">
         <i class="fas fa-triangle-exclamation"></i>
         <span class="flex-1">{{ discordErrorMessage }}</span>
+        <NuxtLink
+          v-if="discordErrorCta"
+          :to="discordErrorCta.to"
+          class="btn btn-sm"
+          @click="track('discord_claim_error_cta_clicked', { code: discordError, to: discordErrorCta.to })"
+        >
+          {{ discordErrorCta.label }}
+        </NuxtLink>
         <button type="button" class="btn btn-sm btn-ghost" :aria-label="t('common.dismiss')" @click="discordError = null">
           <i class="fas fa-xmark"></i>
         </button>
@@ -387,12 +405,14 @@
       "dismiss": "Dismiss"
     },
     "discord_errors": {
-      "missing_token": "This Discord invite link is incomplete. Use the most recent invite email, or reach out via the contact page and we'll send you a fresh one.",
-      "expired_link": "This Discord invite link has expired. Reach out via the contact page and we'll send you a new one.",
-      "link_not_found": "We couldn't find a Discord invite for your account. Check that your Sustaining Membership is active on the membership page, then reach out via the contact page if you still need an invite.",
-      "link_superseded": "A newer Discord invite was issued. Use the most recent link from your email, or reach out via the contact page if you can't find it.",
-      "not_active": "Your Discord access isn't active. An active Sustaining Membership is required to join the members-only Discord — check yours on the membership page.",
-      "generic": "We couldn't complete your Discord invite. Try the most recent link from your email, or reach out via the contact page and we'll sort it out."
+      "missing_token": "This Discord invite link is incomplete. Sign in and we'll issue you a fresh one right away.",
+      "expired_link": "This Discord invite link has expired. Sign in and we'll issue you a fresh one right away.",
+      "link_not_found": "We couldn't find a Discord invite for your account. Sign in as a Sustaining Member and we'll issue one right away.",
+      "link_superseded": "A newer Discord invite was issued. Sign in and we'll get you the current one right away.",
+      "not_active": "Your Discord access isn't active. An active Sustaining Membership is required to join the members-only Discord.",
+      "generic": "We couldn't complete your Discord invite. Sign in and we'll issue you a fresh one — or reach out via the contact page and we'll sort it out.",
+      "cta_connect": "Get a fresh invite",
+      "cta_membership": "View membership"
     },
     "home": {
       "title": "Classic Mini DIY | Your Friendly Neighborhood Classic Mini Resource",
