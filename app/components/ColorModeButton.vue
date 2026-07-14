@@ -9,6 +9,15 @@ const props = withDefaults(
 const { isDark, toggle } = useColorMode();
 const { track } = useAnalytics();
 
+// SSR always renders light mode, but the persisted preference (localStorage) is
+// applied during client setup — gate on mount so the first client render matches
+// the server markup and hydration stays clean.
+const hasMounted = ref(false);
+onMounted(() => {
+  hasMounted.value = true;
+});
+const showDark = computed(() => hasMounted.value && isDark.value);
+
 function handleToggle() {
   toggle();
   track('color_mode_toggled', { new_mode: isDark.value ? 'light' : 'dark' });
@@ -31,10 +40,10 @@ const sizeClass = computed(() => {
 <template>
   <button
     :class="['btn btn-ghost btn-circle', sizeClass]"
-    :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+    :aria-label="showDark ? 'Switch to light mode' : 'Switch to dark mode'"
     @click="handleToggle"
   >
-    <i v-if="isDark" class="fas fa-sun" aria-hidden="true"></i>
+    <i v-if="showDark" class="fas fa-sun" aria-hidden="true"></i>
     <i v-else class="fas fa-moon" aria-hidden="true"></i>
   </button>
 </template>
