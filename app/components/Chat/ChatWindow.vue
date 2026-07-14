@@ -16,9 +16,9 @@
                   {{ t('welcome_title') }}
                 </h3>
                 <p class="text-base opacity-70 leading-relaxed">
-                  I'm your Classic Mini DIY assistant, here to help you with technical questions, decode chassis numbers,
-                  find parts information, navigate the archives, and provide guidance on Classic Mini restoration and
-                  maintenance. Ask me anything about your Classic Mini project!
+                  I'm your Classic Mini DIY assistant, here to help you with technical questions, decode chassis
+                  numbers, find parts information, navigate the archives, and provide guidance on Classic Mini
+                  restoration and maintenance. Ask me anything about your Classic Mini project!
                 </p>
               </div>
             </div>
@@ -198,8 +198,23 @@
   const messagesContainer = ref<HTMLDivElement>();
   const showScrollButton = ref(false);
 
+  // The server never has a persisted thread, so SSR always renders the empty
+  // (welcome) branch. The client reads localStorage during setup, so without
+  // this gate a restored thread flips isChatEmpty to false on the very first
+  // client render — a structural hydration mismatch that mangles the page DOM
+  // on refresh (chat + footer interleaved). Stay "empty" until after mount.
+  const hasMounted = ref(false);
+  onMounted(() => {
+    hasMounted.value = true;
+  });
+
   // Check if chat is empty (no messages and no persisted thread)
   const isChatEmpty = computed(() => {
+    // Match the server-rendered welcome branch during hydration
+    if (!hasMounted.value) {
+      return true;
+    }
+
     // If we have messages in the current context, chat is not empty
     if (streamContext?.messages.value && streamContext.messages.value.length > 0) {
       return false;
