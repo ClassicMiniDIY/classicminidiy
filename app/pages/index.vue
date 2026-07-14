@@ -489,7 +489,18 @@
     },
     "common": {
       "donate": "Donar",
-      "contribute": "Contribuir"
+      "contribute": "Contribuir",
+      "dismiss": "Descartar"
+    },
+    "discord_errors": {
+      "missing_token": "Este enlace de invitación a Discord está incompleto. Inicia sesión y te emitiremos uno nuevo al momento.",
+      "expired_link": "Este enlace de invitación a Discord ha caducado. Inicia sesión y te emitiremos uno nuevo al momento.",
+      "link_not_found": "No encontramos una invitación a Discord para tu cuenta. Inicia sesión como Miembro Sostenedor y te la emitiremos al momento.",
+      "link_superseded": "Se emitió una invitación a Discord más reciente. Inicia sesión y te daremos la actual al momento.",
+      "not_active": "Tu acceso a Discord no está activo. Se requiere una Membresía de Sostenedor activa para unirte al Discord exclusivo para miembros.",
+      "generic": "No pudimos completar tu invitación a Discord. Inicia sesión y te emitiremos una nueva — o escríbenos desde la página de contacto y lo resolveremos.",
+      "cta_connect": "Obtener nueva invitación",
+      "cta_membership": "Ver membresía"
     },
     "home": {
       "title": "Classic Mini DIY | Tu Recurso Amigable del Barrio para Classic Mini",
@@ -565,7 +576,18 @@
     },
     "common": {
       "donate": "Faire un don",
-      "contribute": "Contribuer"
+      "contribute": "Contribuer",
+      "dismiss": "Fermer"
+    },
+    "discord_errors": {
+      "missing_token": "Ce lien d'invitation Discord est incomplet. Connectez-vous et nous vous en délivrerons un nouveau immédiatement.",
+      "expired_link": "Ce lien d'invitation Discord a expiré. Connectez-vous et nous vous en délivrerons un nouveau immédiatement.",
+      "link_not_found": "Nous n'avons pas trouvé d'invitation Discord pour votre compte. Connectez-vous en tant que Membre Soutien et nous vous en délivrerons une immédiatement.",
+      "link_superseded": "Une invitation Discord plus récente a été émise. Connectez-vous et nous vous fournirons la plus récente immédiatement.",
+      "not_active": "Votre accès Discord n'est pas actif. Une adhésion Membre Soutien active est requise pour rejoindre le Discord réservé aux membres.",
+      "generic": "Nous n'avons pas pu finaliser votre invitation Discord. Connectez-vous et nous vous en délivrerons une nouvelle — ou contactez-nous via la page de contact et nous réglerons cela.",
+      "cta_connect": "Obtenir une nouvelle invitation",
+      "cta_membership": "Voir l'adhésion"
     },
     "home": {
       "title": "Classic Mini DIY | Votre Ressource Amicale de Quartier pour Classic Mini",
@@ -641,7 +663,18 @@
     },
     "common": {
       "donate": "Dona",
-      "contribute": "Contribuisci"
+      "contribute": "Contribuisci",
+      "dismiss": "Chiudi"
+    },
+    "discord_errors": {
+      "missing_token": "Questo link di invito a Discord è incompleto. Accedi e te ne emetteremo subito uno nuovo.",
+      "expired_link": "Questo link di invito a Discord è scaduto. Accedi e te ne emetteremo subito uno nuovo.",
+      "link_not_found": "Non abbiamo trovato un invito a Discord per il tuo account. Accedi come Membro Sostenitore e te ne emetteremo subito uno.",
+      "link_superseded": "È stato emesso un invito a Discord più recente. Accedi e ti forniremo subito quello attuale.",
+      "not_active": "Il tuo accesso a Discord non è attivo. Per entrare nel Discord riservato ai membri è necessaria un'iscrizione attiva come Membro Sostenitore.",
+      "generic": "Non siamo riusciti a completare il tuo invito a Discord. Accedi e te ne emetteremo uno nuovo — oppure scrivici dalla pagina contatti e risolveremo.",
+      "cta_connect": "Richiedi un nuovo invito",
+      "cta_membership": "Vedi iscrizione"
     },
     "home": {
       "title": "Classic Mini DIY | La Tua Risorsa Amichevole di Quartiere per Classic Mini",
@@ -717,7 +750,18 @@
     },
     "common": {
       "donate": "Spenden",
-      "contribute": "Beitragen"
+      "contribute": "Beitragen",
+      "dismiss": "Schließen"
+    },
+    "discord_errors": {
+      "missing_token": "Dieser Discord-Einladungslink ist unvollständig. Melden Sie sich an und wir stellen sofort einen neuen aus.",
+      "expired_link": "Dieser Discord-Einladungslink ist abgelaufen. Melden Sie sich an und wir stellen sofort einen neuen aus.",
+      "link_not_found": "Wir konnten keine Discord-Einladung für Ihr Konto finden. Melden Sie sich als Sustaining Member an und wir stellen sofort eine aus.",
+      "link_superseded": "Es wurde eine neuere Discord-Einladung ausgestellt. Melden Sie sich an und wir geben Ihnen sofort die aktuelle.",
+      "not_active": "Ihr Discord-Zugang ist nicht aktiv. Für den Discord nur für Mitglieder ist eine aktive Sustaining-Mitgliedschaft erforderlich.",
+      "generic": "Ihre Discord-Einladung konnte nicht abgeschlossen werden. Melden Sie sich an und wir stellen eine neue aus — oder melden Sie sich über die Kontaktseite und wir kümmern uns darum.",
+      "cta_connect": "Neue Einladung erhalten",
+      "cta_membership": "Mitgliedschaft ansehen"
     },
     "home": {
       "title": "Classic Mini DIY | Ihre Freundliche Nachbarschaftsressource für Classic Mini",
@@ -793,7 +837,18 @@
     },
     "common": {
       "donate": "Doar",
-      "contribute": "Contribuir"
+      "contribute": "Contribuir",
+      "dismiss": "Dispensar"
+    },
+    "discord_errors": {
+      "missing_token": "Este link de convite do Discord está incompleto. Entre na sua conta e emitiremos um novo imediatamente.",
+      "expired_link": "Este link de convite do Discord expirou. Entre na sua conta e emitiremos um novo imediatamente.",
+      "link_not_found": "Não encontramos um convite do Discord para a sua conta. Entre como Membro Mantenedor e emitiremos um imediatamente.",
+      "link_superseded": "Um convite do Discord mais recente foi emitido. Entre na sua conta e forneceremos o atual imediatamente.",
+      "not_active": "Seu acesso ao Discord não está ativo. É necessária uma assinatura ativa de Membro Mantenedor para entrar no Discord exclusivo para membros.",
+      "generic": "Não foi possível concluir seu convite do Discord. Entre na sua conta e emitiremos um novo — ou fale conosco pela página de contato e resolveremos.",
+      "cta_connect": "Obter novo convite",
+      "cta_membership": "Ver assinatura"
     },
     "home": {
       "title": "Classic Mini DIY | Seu Recurso Amigável da Vizinhança para Classic Mini",
@@ -869,7 +924,18 @@
     },
     "common": {
       "donate": "Пожертвовать",
-      "contribute": "Внести вклад"
+      "contribute": "Внести вклад",
+      "dismiss": "Закрыть"
+    },
+    "discord_errors": {
+      "missing_token": "Эта ссылка-приглашение в Discord неполная. Войдите, и мы сразу выдадим вам новую.",
+      "expired_link": "Срок действия этой ссылки-приглашения в Discord истёк. Войдите, и мы сразу выдадим вам новую.",
+      "link_not_found": "Мы не нашли приглашение в Discord для вашего аккаунта. Войдите как поддерживающий участник, и мы сразу его выдадим.",
+      "link_superseded": "Было выдано более новое приглашение в Discord. Войдите, и мы сразу предоставим актуальное.",
+      "not_active": "Ваш доступ к Discord не активен. Для входа в Discord только для участников требуется активное членство поддерживающего участника.",
+      "generic": "Не удалось завершить ваше приглашение в Discord. Войдите, и мы выдадим новое — или напишите нам через страницу контактов, и мы всё решим.",
+      "cta_connect": "Получить новое приглашение",
+      "cta_membership": "Посмотреть членство"
     },
     "home": {
       "title": "Classic Mini DIY | Ваш Дружелюбный Соседский Ресурс для Classic Mini",
@@ -945,7 +1011,18 @@
     },
     "common": {
       "donate": "寄付",
-      "contribute": "貢献"
+      "contribute": "貢献",
+      "dismiss": "閉じる"
+    },
+    "discord_errors": {
+      "missing_token": "このDiscord招待リンクは不完全です。サインインすると、すぐに新しい招待を発行します。",
+      "expired_link": "このDiscord招待リンクは期限切れです。サインインすると、すぐに新しい招待を発行します。",
+      "link_not_found": "アカウントのDiscord招待が見つかりませんでした。サステイニングメンバーとしてサインインすると、すぐに発行します。",
+      "link_superseded": "より新しいDiscord招待が発行されています。サインインすると、最新の招待をすぐにお渡しします。",
+      "not_active": "Discordアクセスが有効ではありません。メンバー限定Discordへの参加には、有効なサステイニングメンバーシップが必要です。",
+      "generic": "Discord招待を完了できませんでした。サインインすると新しい招待を発行します。解決しない場合はお問い合わせページからご連絡ください。",
+      "cta_connect": "新しい招待を取得",
+      "cta_membership": "メンバーシップを見る"
     },
     "home": {
       "title": "Classic Mini DIY | あなたの親しみやすい近所のClassic Miniリソース",
@@ -1021,7 +1098,18 @@
     },
     "common": {
       "donate": "捐赠",
-      "contribute": "贡献"
+      "contribute": "贡献",
+      "dismiss": "关闭"
+    },
+    "discord_errors": {
+      "missing_token": "此 Discord 邀请链接不完整。登录后我们会立即为你发放新的邀请。",
+      "expired_link": "此 Discord 邀请链接已过期。登录后我们会立即为你发放新的邀请。",
+      "link_not_found": "未找到你账户的 Discord 邀请。以维持会员身份登录后，我们会立即为你发放。",
+      "link_superseded": "已发放更新的 Discord 邀请。登录后我们会立即提供最新的邀请。",
+      "not_active": "你的 Discord 访问权限未激活。加入会员专属 Discord 需要有效的维持会员资格。",
+      "generic": "无法完成你的 Discord 邀请。登录后我们会发放新的邀请——也可以通过联系页面联系我们解决。",
+      "cta_connect": "获取新邀请",
+      "cta_membership": "查看会员资格"
     },
     "home": {
       "title": "Classic Mini DIY | 您友好的邻里Classic Mini资源",
@@ -1097,7 +1185,18 @@
     },
     "common": {
       "donate": "기부",
-      "contribute": "기여"
+      "contribute": "기여",
+      "dismiss": "닫기"
+    },
+    "discord_errors": {
+      "missing_token": "이 Discord 초대 링크가 불완전합니다. 로그인하시면 즉시 새 초대를 발급해 드립니다.",
+      "expired_link": "이 Discord 초대 링크가 만료되었습니다. 로그인하시면 즉시 새 초대를 발급해 드립니다.",
+      "link_not_found": "계정에 대한 Discord 초대를 찾을 수 없습니다. 서스테이닝 멤버로 로그인하시면 즉시 발급해 드립니다.",
+      "link_superseded": "더 새로운 Discord 초대가 발급되었습니다. 로그인하시면 최신 초대를 바로 제공해 드립니다.",
+      "not_active": "Discord 이용 권한이 활성화되어 있지 않습니다. 멤버 전용 Discord에 참여하려면 유효한 서스테이닝 멤버십이 필요합니다.",
+      "generic": "Discord 초대를 완료하지 못했습니다. 로그인하시면 새 초대를 발급해 드립니다 — 문제가 계속되면 문의 페이지로 연락해 주세요.",
+      "cta_connect": "새 초대 받기",
+      "cta_membership": "멤버십 보기"
     },
     "home": {
       "title": "Classic Mini DIY | 당신의 친근한 동네 Classic Mini 리소스",
