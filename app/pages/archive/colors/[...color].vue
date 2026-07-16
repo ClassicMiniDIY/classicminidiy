@@ -10,14 +10,14 @@
   const { data: color, status } = await useAsyncData(`color-${colorId}`, () => getColor(colorId as string));
 
   const copied = ref(false);
-  const shareImage = ref('');
-
-  watch(color, (newColor) => {
-    if (newColor?.raw.hasSwatch && newColor.raw.imageSwatch) {
-      shareImage.value = newColor.raw.imageSwatch;
-    } else {
-      shareImage.value = 'https://classicminidiy.s3.amazonaws.com/misc/noSwatch.jpeg';
+  // Computed (not ref + watch) so the value is populated during SSR — a lazy
+  // watch never fires server-side, which left og:image/twitter:image as '' and
+  // crashed nuxt-og-image's tags:afterResolve hook (unhead coerces '' to true).
+  const shareImage = computed(() => {
+    if (color.value?.raw.hasSwatch && color.value.raw.imageSwatch) {
+      return color.value.raw.imageSwatch;
     }
+    return 'https://classicminidiy.s3.amazonaws.com/misc/noSwatch.jpeg';
   });
 
   async function copyUrl() {
@@ -55,7 +55,7 @@
     link: [
       {
         rel: 'preload',
-        href: shareImage.value,
+        href: shareImage,
         as: 'image',
       },
     ],
@@ -68,7 +68,7 @@
     }),
     ogDescription: t('seo.og_description'),
     ogUrl: `classicminidiy.com/archive/colors/${color?.value?.raw.id}`,
-    ogImage: shareImage.value,
+    ogImage: shareImage,
     ogType: 'website',
     twitterCard: 'summary_large_image',
     twitterTitle: t('seo.twitter_title_template', {
@@ -76,7 +76,7 @@
       code: color.value?.pretty.Code,
     }),
     twitterDescription: t('seo.twitter_description'),
-    twitterImage: shareImage.value,
+    twitterImage: shareImage,
   });
 </script>
 

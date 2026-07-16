@@ -297,6 +297,10 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 - **CDN Integration**: S3 static assets with intelligent tiering
 - **Bundle Optimization**: Tree shaking and dependency optimization
 
+### SEO / Head Invariants
+
+- **Never pass a possibly-empty string (or any non-string) to `ogImage` / `twitterImage` in `useSeoMeta`.** unhead's flat-meta unpacking coerces `''` to boolean `true`, and nuxt-og-image's `tags:afterResolve` hook calls `.replaceAll()` on every `og:image`/`twitter:image` content — a truthy non-string 500s the whole SSR render (this took down `/archive/colors/[id]` for months). Derive share images with `computed()` (a lazy `watch` never fires during SSR, so a ref stays at its initial value server-side) and always fall back to a real URL. `app/plugins/seo-tag-guard.server.ts` + `app/utils/seoTagGuards.ts` are the SSR safety net that sanitizes these tags before nuxt-og-image sees them — don't remove them.
+
 ### Security Invariants
 
 Load-bearing contracts — don't "fix" these without understanding why they're this way:
