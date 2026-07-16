@@ -1,5 +1,7 @@
 import type { Color, PrettyColor } from '../../data/models/colors';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const useColors = () => {
   const supabase = useSupabase();
   const config = useRuntimeConfig();
@@ -32,6 +34,9 @@ export const useColors = () => {
   };
 
   const getColor = async (id: string): Promise<PrettyColor | null> => {
+    // colors.id is a uuid; the catch-all route param can be anything (e.g. /archive/colors/review),
+    // and passing a non-uuid straight through throws 22P02 in Postgres.
+    if (!UUID_RE.test(id)) return null;
     const { data, error } = await supabase.from('colors').select('*').eq('id', id).eq('status', 'approved').single();
 
     if (error) return null;

@@ -235,11 +235,11 @@ describe('useColors', () => {
 
       const { useColors } = await import('~/app/composables/useColors');
       const { getColor } = useColors();
-      await getColor('color-1');
+      await getColor('11111111-2222-4333-8444-555555555555');
 
       expect(mockSupabase.from).toHaveBeenCalledWith('colors');
       expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'color-1');
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
       expect(mockSupabase._queryBuilder.single).toHaveBeenCalled();
     });
 
@@ -251,7 +251,7 @@ describe('useColors', () => {
 
       const { useColors } = await import('~/app/composables/useColors');
       const { getColor } = useColors();
-      const result = await getColor('color-1');
+      const result = await getColor('11111111-2222-4333-8444-555555555555');
 
       expect(result).not.toBeNull();
       expect(result!.raw).toEqual({
@@ -288,7 +288,7 @@ describe('useColors', () => {
 
       const { useColors } = await import('~/app/composables/useColors');
       const { getColor } = useColors();
-      const result = await getColor('nonexistent-id');
+      const result = await getColor('11111111-2222-4333-8444-555555555555');
 
       expect(result).toBeNull();
     });
@@ -301,9 +301,21 @@ describe('useColors', () => {
 
       const { useColors } = await import('~/app/composables/useColors');
       const { getColor } = useColors();
-      const result = await getColor('no-such-id');
+      const result = await getColor('11111111-2222-4333-8444-555555555555');
 
       expect(result).toBeNull();
+    });
+
+    it('returns null for a non-uuid id without querying Supabase', async () => {
+      const { useColors } = await import('~/app/composables/useColors');
+      const { getColor } = useColors();
+
+      // Non-uuid route params (e.g. /archive/colors/review) must never reach
+      // Postgres — a raw eq('id', 'review') throws 22P02 on the uuid column.
+      const result = await getColor('review');
+
+      expect(result).toBeNull();
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
   });
 
