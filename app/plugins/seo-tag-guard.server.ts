@@ -1,4 +1,4 @@
-import { normalizeSocialImageContent } from '../utils/seoTagGuards';
+import { normalizeSocialImageContent } from '~/utils/seoTagGuards';
 
 /**
  * SSR-only safety net for nuxt-og-image (see app/utils/seoTagGuards.ts).
