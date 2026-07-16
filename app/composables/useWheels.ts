@@ -1,5 +1,7 @@
 import type { IWheelsData } from '../../data/models/wheels';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const useWheels = () => {
   const supabase = useSupabase();
   const config = useRuntimeConfig();
@@ -82,6 +84,9 @@ export const useWheels = () => {
   };
 
   const getWheel = async (id: string): Promise<IWheelsData | null> => {
+    // wheels.id is a uuid; the catch-all route param can be anything (including the 'noWheel'
+    // fallback), and passing a non-uuid straight through throws 22P02 in Postgres.
+    if (!UUID_RE.test(id)) return null;
     const { data, error } = await supabase.from('wheels').select('*').eq('id', id).eq('status', 'approved').single();
 
     if (error) return null;

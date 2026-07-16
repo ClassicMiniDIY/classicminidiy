@@ -300,11 +300,11 @@ describe('useWheels', () => {
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();
-      const result = await getWheel('wheel-42');
+      const result = await getWheel('11111111-2222-4333-8444-555555555555');
 
       expect(mockSupabase.from).toHaveBeenCalledWith('wheels');
       expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'wheel-42');
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
       expect(mockSupabase._mockSingle).toHaveBeenCalled();
       expect(result).not.toBeNull();
       expect(result!.uuid).toBe('wheel-42');
@@ -317,9 +317,9 @@ describe('useWheels', () => {
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();
-      const result = await getWheel('wheel-42');
+      const result = await getWheel('11111111-2222-4333-8444-555555555555');
 
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'wheel-42');
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('status', 'approved');
       expect(result).not.toBeNull();
     });
@@ -332,9 +332,22 @@ describe('useWheels', () => {
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();
-      const result = await getWheel('nonexistent');
+      const result = await getWheel('11111111-2222-4333-8444-555555555555');
 
       expect(result).toBeNull();
+    });
+
+    it('returns null for a non-uuid id without querying Supabase', async () => {
+      const { useWheels } = await import('~/app/composables/useWheels');
+      const { getWheel } = useWheels();
+
+      // Non-uuid route params (e.g. /archive/wheels/review, or the page's
+      // 'noWheel' fallback) must never reach Postgres — a raw eq('id', ...)
+      // throws 22P02 on the uuid column.
+      const result = await getWheel('noWheel');
+
+      expect(result).toBeNull();
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
     it('maps the fetched row to IWheelsData', async () => {
@@ -351,7 +364,7 @@ describe('useWheels', () => {
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();
-      const result = await getWheel('w-mapped');
+      const result = await getWheel('11111111-2222-4333-8444-555555555555');
 
       expect(result!.uuid).toBe('w-mapped');
       expect(result!.name).toBe('Cosmic');
