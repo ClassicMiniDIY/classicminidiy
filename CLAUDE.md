@@ -377,6 +377,32 @@ s3Base=
 
 ## Testing & Quality
 
+### Intentional dependency pins (do not blindly bump)
+
+- **`nuxt` is held at `~4.4.8` — do NOT move to 4.5.x yet.** Nuxt 4.5's head-pipeline
+  change breaks `nuxt-schema-org` (via `@nuxtjs/seo`): every SSR request throws
+  `unhandledRejection ... reading 'resolveGraph'/'push'` and ALL schema.org JSON-LD
+  renders as an EMPTY `<script type="application/ld+json">` — silently killing the GEO
+  structured-data work. Upstream: https://github.com/harlan-zw/nuxt-seo/issues/588 (open).
+  Nuxt 4.5 also surfaced (fixes already landed here, kept forward-compatible):
+  rolldown-vite requires function-form `manualChunks` + `cssMinify: 'esbuild'`
+  (lightningcss chokes on daisyUI `round(to-zero, ...)`), highcharts-vue's UMD default
+  import needs the install-unwrap in `app/plugins/highcharts.ts`, and
+  `await useFetch(() => '/url')` (getter form) stops blocking async setup — SSR renders
+  the pending branch and client hydration hangs (fixed in Needles.vue; check
+  `ModelComments.vue`'s reactive getter when unpinning). When #588 is fixed: bump nuxt,
+  re-verify JSON-LD is non-empty on a built page, and adopt `experimental.watcher: 'builder'`.
+- **`dompurify` is pinned to exactly `3.4.7`.** 3.4.8 changed its node-iterator-based
+  template scrubbing in a way happy-dom's NodeIterator mishandles: under happy-dom,
+  `sanitize()` silently lets `<script>` through and breaks the `afterSanitizeAttributes`
+  link-hardening hook, so the chat-markdown XSS tests can't verify anything. Real browsers
+  are unaffected, but never ship a DOMPurify our test env can't validate. Re-test
+  `tests/unit/exchange/utils/markdown.test.ts` against a newer dompurify + happy-dom pair
+  before unpinning.
+- **`@takumi-rs/core` stays on 1.x.** nuxt-og-image's optional peer range is `^1.x`; 2.x
+  breaks branded OG image rendering.
+- **`@types/node` stays on 25.x** while `engines.node` is `^24` (26.x types target Node 26 APIs).
+
 ### Code Quality
 
 - **TypeScript**: Compile-time type checking

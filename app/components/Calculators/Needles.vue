@@ -87,7 +87,11 @@
   };
 
   // Fetch needles data
-  const { data: needles, pending }: any = await useFetch(() => '/api/needles/list');
+  // Plain string URL — under Nuxt 4.5 the getter form (`() => '/api/...'`)
+  // stops blocking async setup: SSR renders the pending branch and client
+  // hydration suspends forever (chart never mounts). The URL is static, so
+  // the getter bought nothing anyway.
+  const { data: needles, pending }: any = await useFetch('/api/needles/list');
 
   // Merge chart options with color mode options
   const getChartOptionsForMode = () => {

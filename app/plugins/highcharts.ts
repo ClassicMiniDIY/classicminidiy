@@ -3,8 +3,20 @@ import 'highcharts/highcharts-more';
 import 'highcharts/modules/exporting';
 import 'highcharts/modules/offline-exporting';
 import 'highcharts/modules/accessibility';
-import HighchartsVue from 'highcharts-vue';
+import HighchartsVueImport from 'highcharts-vue';
 import { getCurrentInstance, onBeforeUnmount } from 'vue';
+
+// highcharts-vue ships UMD-only (no ESM/exports map). Vite 8's rolldown interop
+// resolves the default import to the module namespace, so `app.use()` silently
+// no-ops (no install found) and the <highcharts> component never registers.
+// Unwrap until we find the object that actually carries install().
+const HighchartsVue: any = (() => {
+  let mod: any = HighchartsVueImport;
+  while (mod && typeof mod.install !== 'function' && typeof mod !== 'function' && mod.default) {
+    mod = mod.default;
+  }
+  return mod;
+})();
 
 // Set global Highcharts options for better rendering
 Highcharts.setOptions({
