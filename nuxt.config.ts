@@ -706,9 +706,9 @@ export default defineNuxtConfig({
           // Vite 8's rolldown bundler only accepts the function form of
           // manualChunks (the object form throws "manualChunks is not a function").
           manualChunks(id: string) {
-            // Chart libraries (tend to be large) — matches highcharts,
-            // highcharts-vue, and all highcharts/* module entrypoints
-            if (id.includes('node_modules/highcharts')) return 'highcharts';
+            // Chart libraries (tend to be large): highcharts itself, all its
+            // highcharts/* module entrypoints, and highcharts-vue
+            if (/node_modules\/highcharts(-vue)?\//.test(id)) return 'highcharts';
 
             // Utility libraries
             if (id.includes('node_modules/luxon')) return 'utilities';
