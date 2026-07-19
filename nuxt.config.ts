@@ -270,6 +270,8 @@ export default defineNuxtConfig({
     renderJsonPayloads: true,
     // Enable async context for server composables (required for MCP tools)
     asyncContext: true,
+    // When the nuxt 4.5 hold is lifted (see CLAUDE.md "Intentional dependency
+    // pins"), adopt `watcher: 'builder'` here (4.5 feature, default in v5).
   },
 
   /*
@@ -689,6 +691,10 @@ export default defineNuxtConfig({
       sourcemap: process.env.NODE_ENV !== 'production',
       target: 'esnext',
       minify: 'terser',
+      // Vite 8 defaults CSS minification to lightningcss, which fails on
+      // daisyUI's countdown CSS (`round(to-zero, ...)`) with "Unexpected token
+      // CloseParenthesis". Keep the esbuild CSS minifier Vite 7 used.
+      cssMinify: 'esbuild',
       terserOptions: {
         compress: {
           drop_console: process.env.NODE_ENV === 'production',
@@ -697,22 +703,18 @@ export default defineNuxtConfig({
       // Split chunks for better caching
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Chart libraries (tend to be large)
-            highcharts: [
-              'highcharts',
-              'highcharts/highcharts-more',
-              'highcharts-vue',
-              'highcharts/modules/exporting',
-              'highcharts/modules/export-data',
-              'highcharts/modules/accessibility',
-            ],
+          // Vite 8's rolldown bundler only accepts the function form of
+          // manualChunks (the object form throws "manualChunks is not a function").
+          manualChunks(id: string) {
+            // Chart libraries (tend to be large) — matches highcharts,
+            // highcharts-vue, and all highcharts/* module entrypoints
+            if (id.includes('node_modules/highcharts')) return 'highcharts';
 
             // Utility libraries
-            utilities: ['luxon'],
+            if (id.includes('node_modules/luxon')) return 'utilities';
 
             // Analytics and tracking
-            analytics: ['posthog-js'],
+            if (id.includes('node_modules/posthog-js')) return 'analytics';
           },
         },
       },
