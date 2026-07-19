@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-  import type { SuggestedNeedles } from '../../data/models/needles';
+  import type { Item, SuggestedNeedles } from '../../data/models/needles';
 
   const { t } = useI18n();
   const { data: needlesTables, status } = await useFetch<SuggestedNeedles[]>(() => '/api/needles/suggested');
 
   // Table columns configuration
-  const tableColumns = computed(() => [
+  const tableColumns = computed<{ accessorKey: keyof Item; header: string }[]>(() => [
     {
       accessorKey: 'engineSize',
       header: t('table_headers.engine_size'),
@@ -68,7 +68,7 @@
               <tbody>
                 <tr v-for="(row, i) in table.items" :key="i">
                   <td v-for="col in tableColumns" :key="col.accessorKey">
-                    {{ (row as Record<string, any>)[col.accessorKey] }}
+                    {{ row[col.accessorKey] }}
                   </td>
                 </tr>
               </tbody>
