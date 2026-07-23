@@ -2940,15 +2940,11 @@ export type Database = {
       profiles: {
         Row: {
           approved_submissions: number
-          auth_provider: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string | null
           display_name: string | null
-          email: string | null
-          firebase_uid: string | null
           id: string
-          is_admin: boolean | null
           is_banned: boolean | null
           is_public: boolean
           location: string | null
@@ -2964,19 +2960,14 @@ export type Database = {
           unit_system: string | null
           updated_at: string | null
           username: string | null
-          warning_count: number | null
         }
         Insert: {
           approved_submissions?: number
-          auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
-          firebase_uid?: string | null
           id: string
-          is_admin?: boolean | null
           is_banned?: boolean | null
           is_public?: boolean
           location?: string | null
@@ -2992,19 +2983,14 @@ export type Database = {
           unit_system?: string | null
           updated_at?: string | null
           username?: string | null
-          warning_count?: number | null
         }
         Update: {
           approved_submissions?: number
-          auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
-          firebase_uid?: string | null
           id?: string
-          is_admin?: boolean | null
           is_banned?: boolean | null
           is_public?: boolean
           location?: string | null
@@ -3020,7 +3006,6 @@ export type Database = {
           unit_system?: string | null
           updated_at?: string | null
           username?: string | null
-          warning_count?: number | null
         }
         Relationships: []
       }
@@ -4265,6 +4250,12 @@ export type Database = {
       moderate_external_model: {
         Args: { p_id: string; p_notes?: string; p_status: string }
         Returns: undefined
+      }
+      own_profile_privileged_flags: {
+        Args: never
+        Returns: {
+          is_banned: boolean
+        }[]
       }
       promote_tenured_users: { Args: never; Returns: number }
       publish_model_version: {
