@@ -161,7 +161,10 @@ export const useProfile = () => {
       .upsert(
         {
           id: user.value.id,
-          email: user.value.email!,
+          // No email here: it lives on profile_private (profiles split Phase 3,
+          // written by handle_new_user at signup). Writing it to profiles was
+          // the last legacy-column writer blocking the Phase 4 column drop —
+          // and would 400 once the column is gone.
           ...profileData,
           onboarding_completed: true,
         },
