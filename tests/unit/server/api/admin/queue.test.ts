@@ -718,6 +718,98 @@ describe('server/api/admin/queue/approve.post', () => {
     expect(mockEq).toHaveBeenCalledWith('id', 'color-99');
   });
 
+  it('rejects an edit suggestion naming a column that is not user-editable', async () => {
+    // `data.changes` is written client-side into submission_queue, so its keys are
+    // attacker-controlled. Approving must not let them reach moderation columns.
+    mockFetchSubmission({
+      id: 'sub-esc',
+      type: 'edit_suggestion',
+      target_type: 'registry',
+      target_id: 'reg-1',
+      data: {
+        changes: {
+          model: { from: 'Mini', to: 'Cooper S' },
+          status: { from: 'approved', to: 'approved' },
+          submitted_by: { from: null, to: 'attacker-uuid' },
+        },
+      },
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-esc' });
+    mockUpdateSuccess();
+
+    await expect(handler(createMockEvent())).rejects.toMatchObject({
+      statusCode: 500,
+      statusMessage: 'Suggestion targets fields that are not user-editable on registry: status, submitted_by',
+    });
+
+    // The whole approval is refused -- no partial write of the legitimate field.
+    expect(mockUpdate).not.toHaveBeenCalledWith(expect.objectContaining({ model: 'Cooper S' }));
+  });
+
+  it('rejects a field key that is not a column on the target table', async () => {
+    // The wheels column is offset_value; `offset` used to reach the UPDATE and
+    // fail with `column "offset" does not exist`.
+    mockFetchSubmission({
+      id: 'sub-off',
+      type: 'edit_suggestion',
+      target_type: 'wheel',
+      target_id: 'wheel-1',
+      data: { changes: { offset: { from: '-10', to: '-12' } } },
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-off' });
+    mockUpdateSuccess();
+
+    await expect(handler(createMockEvent())).rejects.toMatchObject({
+      statusCode: 500,
+      statusMessage: 'Suggestion targets fields that are not user-editable on wheel: offset',
+    });
+  });
+
+  it('applies a wheel offset_value edit suggestion', async () => {
+    mockFetchSubmission({
+      id: 'sub-off2',
+      type: 'edit_suggestion',
+      target_type: 'wheel',
+      target_id: 'wheel-1',
+      data: { changes: { offset_value: { from: '-10', to: '-12' } } },
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-off2' });
+    mockUpdateSuccess();
+
+    await handler(createMockEvent());
+
+    expect(mockFrom).toHaveBeenCalledWith('wheels');
+    expect(mockUpdate).toHaveBeenCalledWith({ offset_value: '-12' });
+    expect(mockEq).toHaveBeenCalledWith('id', 'wheel-1');
+  });
+
+  it('coerces a cleared field to null rather than writing an empty string', async () => {
+    // page_count is integer; '' would fail with 22P02 as an opaque 500.
+    mockFetchSubmission({
+      id: 'sub-clear',
+      type: 'edit_suggestion',
+      target_type: 'document',
+      target_id: 'doc-1',
+      data: {
+        changes: {
+          page_count: { from: 120, to: '' },
+          author: { from: 'BMC', to: '' },
+        },
+      },
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-clear' });
+    mockUpdateSuccess();
+
+    await handler(createMockEvent());
+
+    expect(mockFrom).toHaveBeenCalledWith('archive_documents');
+    expect(mockUpdate).toHaveBeenCalledWith({ page_count: null, author: null });
+  });
+
   it('does not apply edit_suggestion when target_id is null', async () => {
     mockFetchSubmission({
       id: 'sub-7',
