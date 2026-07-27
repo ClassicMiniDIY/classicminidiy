@@ -61,15 +61,20 @@ export type Database = {
       }
       archive_documents: {
         Row: {
+          applicable_models: string[] | null
           author: string | null
           code: string | null
           collection_id: string | null
           created_at: string
           description: string | null
+          edition: string | null
           file_path: string | null
           id: string
+          language: string | null
           legacy_slug: string | null
           metadata: Json | null
+          page_count: number | null
+          publisher: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           slug: string
@@ -80,18 +85,25 @@ export type Database = {
           title: string
           type: Database["public"]["Enums"]["document_type_enum"]
           updated_at: string
+          vehicle_year_end: number | null
+          vehicle_year_start: number | null
           year: number | null
         }
         Insert: {
+          applicable_models?: string[] | null
           author?: string | null
           code?: string | null
           collection_id?: string | null
           created_at?: string
           description?: string | null
+          edition?: string | null
           file_path?: string | null
           id?: string
+          language?: string | null
           legacy_slug?: string | null
           metadata?: Json | null
+          page_count?: number | null
+          publisher?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           slug: string
@@ -102,18 +114,25 @@ export type Database = {
           title: string
           type: Database["public"]["Enums"]["document_type_enum"]
           updated_at?: string
+          vehicle_year_end?: number | null
+          vehicle_year_start?: number | null
           year?: number | null
         }
         Update: {
+          applicable_models?: string[] | null
           author?: string | null
           code?: string | null
           collection_id?: string | null
           created_at?: string
           description?: string | null
+          edition?: string | null
           file_path?: string | null
           id?: string
+          language?: string | null
           legacy_slug?: string | null
           metadata?: Json | null
+          page_count?: number | null
+          publisher?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           slug?: string
@@ -124,6 +143,8 @@ export type Database = {
           title?: string
           type?: Database["public"]["Enums"]["document_type_enum"]
           updated_at?: string
+          vehicle_year_end?: number | null
+          vehicle_year_start?: number | null
           year?: number | null
         }
         Relationships: [
@@ -213,6 +234,7 @@ export type Database = {
           has_swatch: boolean
           hex_value: string | null
           id: string
+          legacy_id: string | null
           legacy_submitted_by: string | null
           legacy_submitted_by_email: string | null
           metadata: Json | null
@@ -236,6 +258,7 @@ export type Database = {
           has_swatch?: boolean
           hex_value?: string | null
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           metadata?: Json | null
@@ -259,6 +282,7 @@ export type Database = {
           has_swatch?: boolean
           hex_value?: string | null
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           metadata?: Json | null
@@ -3141,6 +3165,7 @@ export type Database = {
           engine_number: string | null
           engine_size: number | null
           id: string
+          legacy_id: string | null
           legacy_submitted_by: string | null
           legacy_submitted_by_email: string | null
           location: string | null
@@ -3165,6 +3190,7 @@ export type Database = {
           engine_number?: string | null
           engine_size?: number | null
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           location?: string | null
@@ -3189,6 +3215,7 @@ export type Database = {
           engine_number?: string | null
           engine_size?: number | null
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           location?: string | null
@@ -3841,6 +3868,7 @@ export type Database = {
           center_bore: string | null
           created_at: string
           id: string
+          legacy_id: string | null
           legacy_submitted_by: string | null
           legacy_submitted_by_email: string | null
           manufacturer: string | null
@@ -3864,6 +3892,7 @@ export type Database = {
           center_bore?: string | null
           created_at?: string
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           manufacturer?: string | null
@@ -3887,6 +3916,7 @@ export type Database = {
           center_bore?: string | null
           created_at?: string
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           manufacturer?: string | null
@@ -4127,6 +4157,14 @@ export type Database = {
           status: string
         }[]
       }
+      claim_registry_entry: {
+        Args: { p_entry_id: string }
+        Returns: {
+          id: string
+          model: string
+          year: number
+        }[]
+      }
       count_probation_cold_outreach: {
         Args: { p_sender: string }
         Returns: number
@@ -4195,6 +4233,16 @@ export type Database = {
           net_cents: number
           sale_count: number
           tip_count: number
+        }[]
+      }
+      get_my_claimable_registry_entries: {
+        Args: never
+        Returns: {
+          body_number: string
+          id: string
+          model: string
+          submitted_by_name: string
+          year: number
         }[]
       }
       get_my_membership: {
