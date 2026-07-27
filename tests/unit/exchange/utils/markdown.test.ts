@@ -1,12 +1,23 @@
 /**
  * Unit tests for the chat-message markdown renderer.
  *
- * @vitest-environment happy-dom
+ * @vitest-environment jsdom
  *
- * Why happy-dom (not node): the vitest config rewrites `import.meta.client` to
+ * Why a DOM env (not node): the vitest config rewrites `import.meta.client` to
  * `(true)`, so `renderMessageMarkdown` always takes the client branch. That
  * branch lazily imports DOMPurify, which needs a DOM (`window`/`document`).
- * happy-dom provides it; the node env would crash DOMPurify.
+ * The node env would crash DOMPurify.
+ *
+ * Why jsdom specifically, when the rest of the suite uses happy-dom (the global
+ * default in vitest.config.ts): happy-dom mis-implements the node-iterator walk
+ * DOMPurify has used since 3.4.8, and the result is not a harmless cosmetic
+ * difference — under happy-dom, `sanitize()` silently returns markup with a live
+ * `javascript:` href intact and never fires the `afterSanitizeAttributes`
+ * link-hardening hook. A suite running on happy-dom would therefore "pass" while
+ * asserting nothing about the sanitizer, which is the worst possible outcome for
+ * an XSS test. jsdom's output matches a real browser byte-for-byte (verified
+ * against Chrome with DOMPurify 3.4.12), so these assertions mean what they say.
+ * Do not move this file back to happy-dom to match the rest of the suite.
  *
  * Two render paths exist and the active one depends on whether DOMPurify has
  * finished its async load yet (module-level `purifyInstance`):

@@ -392,13 +392,19 @@ s3Base=
   the pending branch and client hydration hangs (fixed in Needles.vue; check
   `ModelComments.vue`'s reactive getter when unpinning). When #588 is fixed: bump nuxt,
   re-verify JSON-LD is non-empty on a built page, and adopt `experimental.watcher: 'builder'`.
-- **`dompurify` is pinned to exactly `3.4.7`.** 3.4.8 changed its node-iterator-based
-  template scrubbing in a way happy-dom's NodeIterator mishandles: under happy-dom,
-  `sanitize()` silently lets `<script>` through and breaks the `afterSanitizeAttributes`
-  link-hardening hook, so the chat-markdown XSS tests can't verify anything. Real browsers
-  are unaffected, but never ship a DOMPurify our test env can't validate. Re-test
-  `tests/unit/exchange/utils/markdown.test.ts` against a newer dompurify + happy-dom pair
-  before unpinning.
+- **`dompurify` is pinned to an exact version (currently `3.4.12`), and
+  `tests/unit/exchange/utils/markdown.test.ts` MUST stay on `@vitest-environment jsdom`.**
+  These two facts are one contract — don't change either in isolation. Since 3.4.8
+  DOMPurify walks the DOM with a node iterator that happy-dom mis-implements, and the
+  failure is silent-unsafe rather than noisy: under happy-dom, `sanitize()` returns
+  markup with a live `javascript:` href intact, drops allowlisted tags, and never fires
+  the `afterSanitizeAttributes` link-hardening hook. Under happy-dom the XSS suite is
+  therefore asserting nothing. jsdom reproduces real-browser output byte-for-byte
+  (verified against Chrome on 3.4.12), so that file — and any future test that exercises
+  DOMPurify — runs on jsdom while the rest of the suite keeps the happy-dom default from
+  `vitest.config.ts`. happy-dom 20.11.1 is still affected; recheck before "simplifying"
+  the env back. The exact pin (no `^`) is deliberate: a DOMPurify bump is a security
+  change and should be a visible, tested commit, not a silent range resolution.
 - **`@takumi-rs/core` stays on 1.x.** nuxt-og-image's optional peer range is `^1.x`; 2.x
   breaks branded OG image rendering.
 - **`@types/node` stays on 25.x** while `engines.node` is `^24` (26.x types target Node 26 APIs).
