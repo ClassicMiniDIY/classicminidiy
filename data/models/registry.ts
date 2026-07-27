@@ -19,6 +19,22 @@ export interface RegistryItem extends Record<string, any> {
   engineSize: number;
   color: string;
   status?: RegistryItemStatus;
+  /**
+   * profiles id of the account that owns this entry, or null while unowned.
+   * Set by the #65 phase-3 backfill for submitters whose email matched a
+   * confirmed account, and by `claim_registry_entry` for anyone claiming later.
+   * Drives the owner-only "suggest an edit" affordance.
+   */
+  ownerId?: string | null;
+}
+
+/** A register entry the signed-in user is entitled to claim. */
+export interface ClaimableRegistryEntry {
+  id: string;
+  year: number;
+  model: string;
+  bodyNum: string;
+  submittedBy: string;
 }
 
 export interface RegistryQueueSubmissionResponse {

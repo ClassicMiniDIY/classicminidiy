@@ -17,6 +17,51 @@
   // Fetch pending registry items
   const { data: pendingItemsRaw, status } = await useAdminFetch<RegistryItem[]>('/api/registry/queue/list');
 
+  /**
+   * Pending rows that sit on `registry_entries` itself rather than in
+   * submission_queue — the DynamoDB MiniRegisterQueue submissions that were never
+   * approved and whose submitters never had accounts (classicminidiy-supabase
+   * 20260727000004). The table above reads submission_queue, so without this they
+   * are reachable only by SQL.
+   */
+  interface LegacyPendingEntry {
+    id: string;
+    year: number;
+    model: string;
+    bodyNum: string;
+    submittedBy: string;
+    submittedByEmail: string;
+  }
+
+  const { data: legacyPendingRaw, refresh: refreshLegacy } = await useAdminFetch<LegacyPendingEntry[]>(
+    '/api/registry/pending-entries/list'
+  );
+
+  const legacyPending = computed(() => legacyPendingRaw.value ?? []);
+  const moderating = ref<string | null>(null);
+  const legacyError = ref('');
+
+  // $adminFetch, not useAdminFetch: this runs from a click handler, and
+  // useAdminFetch wraps useFetch, which belongs in setup rather than an event
+  // callback. $adminFetch is the $fetch-based mutation wrapper.
+  const moderate = async (entry: LegacyPendingEntry, action: 'approve' | 'reject') => {
+    moderating.value = entry.id;
+    legacyError.value = '';
+    try {
+      await $adminFetch('/api/registry/pending-entries/moderate', {
+        method: 'POST',
+        body: { id: entry.id, action },
+      });
+      await refreshLegacy();
+    } catch (e: any) {
+      // The endpoint refuses an entry that already has a submitter account, so
+      // its message is worth showing verbatim rather than a generic failure.
+      legacyError.value = e?.data?.message || e?.statusMessage || e?.message || 'Failed to moderate entry';
+    } finally {
+      moderating.value = null;
+    }
+  };
+
   // Computed property to filter only pending items
   const pendingItems = computed(() => {
     if (!pendingItemsRaw.value) return [];
@@ -62,7 +107,13 @@
         </breadcrumb>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')" class="mb-6" as="h2" />
+            <PageIntro
+              :eyebrow="t('eyebrow')"
+              :title="t('main_heading')"
+              :description="t('description_text')"
+              class="mb-6"
+              as="h2"
+            />
             <h2 class="text-xl mt-4">
               <strong>{{ pendingItems?.length || '0' }}</strong>
               {{ t('subtitle') }}
@@ -111,6 +162,65 @@
           :defaultPageSize="10"
         />
       </div>
+      <!-- Legacy imports: pending rows that live on registry_entries rather than
+           submission_queue, so they don't appear in the table above. -->
+      <div v-if="legacyPending.length > 0" class="col-span-12">
+        <div class="card bg-base-100 shadow-sm border border-warning/40">
+          <div class="card-body">
+            <h2 class="card-title text-lg">
+              <i class="fas fa-box-archive text-warning mr-2" aria-hidden="true"></i>
+              {{ t('legacy.title', legacyPending.length) }}
+            </h2>
+            <p class="text-sm text-base-content/70">{{ t('legacy.description') }}</p>
+
+            <p v-if="legacyError" class="text-error text-sm mt-2">{{ legacyError }}</p>
+
+            <div class="overflow-x-auto mt-3">
+              <table class="table table-zebra">
+                <thead>
+                  <tr>
+                    <th>{{ t('table_headers.year') }}</th>
+                    <th>{{ t('table_headers.model') }}</th>
+                    <th>{{ t('table_headers.body_number') }}</th>
+                    <th>{{ t('table_headers.submitted_by') }}</th>
+                    <th class="text-right">{{ t('legacy.actions') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="entry in legacyPending" :key="entry.id">
+                    <td>{{ entry.year }}</td>
+                    <td>{{ entry.model || '---' }}</td>
+                    <td>{{ entry.bodyNum || '---' }}</td>
+                    <td>
+                      <div>{{ entry.submittedBy || '---' }}</div>
+                      <div class="text-xs text-base-content/60">{{ entry.submittedByEmail || '---' }}</div>
+                    </td>
+                    <td class="text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        class="btn btn-success btn-xs mr-2"
+                        :disabled="moderating === entry.id"
+                        @click="moderate(entry, 'approve')"
+                      >
+                        {{ t('legacy.approve') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-error btn-outline btn-xs"
+                        :disabled="moderating === entry.id"
+                        @click="moderate(entry, 'reject')"
+                      >
+                        {{ t('legacy.reject') }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <div class="divider">{{ t('submit_divider') }}</div>
       </div>
@@ -135,6 +245,13 @@
     "description_text": "Below you can see all pending registry submissions that are currently being reviewed. Submissions are typically processed within 7-14 days.",
     "contact_text": "If you have questions about your submission, please",
     "contact_link": "contact us",
+    "legacy": {
+      "title": "1 legacy submission needs review | {count} legacy submissions need review",
+      "description": "These were submitted before the site moved to Supabase and were never approved. Their submitters have no account, so they are not in the queue above. Approving publishes the entry to the register; rejecting hides it.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "actions": "Actions"
+    },
     "table_headers": {
       "year": "Year",
       "model": "Model",
@@ -171,6 +288,13 @@
     "description_text": "Unten können Sie alle ausstehenden Registry-Einreichungen sehen, die derzeit überprüft werden. Einreichungen werden normalerweise innerhalb von 7-14 Tagen bearbeitet.",
     "contact_text": "Wenn Sie Fragen zu Ihrer Einreichung haben, bitte",
     "contact_link": "kontaktieren Sie uns",
+    "legacy": {
+      "title": "1 Alteinreichung wartet auf Prüfung | {count} Alteinreichungen warten auf Prüfung",
+      "description": "Diese wurden vor dem Wechsel zu Supabase eingereicht und nie genehmigt. Ihre Einreicher haben kein Konto, daher stehen sie nicht in der Liste oben. Genehmigen veröffentlicht den Eintrag im Register, Ablehnen blendet ihn aus.",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "actions": "Aktionen"
+    },
     "table_headers": {
       "year": "Jahr",
       "model": "Modell",
@@ -207,6 +331,13 @@
     "description_text": "A continuación puedes ver todos los envíos de registro pendientes que están siendo revisados actualmente. Los envíos se procesan típicamente dentro de 7-14 días.",
     "contact_text": "Si tienes preguntas sobre tu envío, por favor",
     "contact_link": "contáctanos",
+    "legacy": {
+      "title": "1 envío heredado requiere revisión | {count} envíos heredados requieren revisión",
+      "description": "Se enviaron antes de la migración a Supabase y nunca se aprobaron. Sus autores no tienen cuenta, por lo que no aparecen en la cola anterior. Aprobar publica la entrada en el registro; rechazar la oculta.",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "actions": "Acciones"
+    },
     "table_headers": {
       "year": "Año",
       "model": "Modelo",
@@ -243,6 +374,13 @@
     "description_text": "Ci-dessous, vous pouvez voir toutes les soumissions de registre en attente qui sont actuellement en cours de révision. Les soumissions sont généralement traitées dans les 7-14 jours.",
     "contact_text": "Si vous avez des questions sur votre soumission, veuillez",
     "contact_link": "nous contacter",
+    "legacy": {
+      "title": "1 soumission héritée à examiner | {count} soumissions héritées à examiner",
+      "description": "Elles ont été soumises avant le passage à Supabase et n'ont jamais été approuvées. Leurs auteurs n'ont pas de compte, elles n'apparaissent donc pas dans la file ci-dessus. Approuver publie l'entrée au registre ; rejeter la masque.",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "actions": "Actions"
+    },
     "table_headers": {
       "year": "Année",
       "model": "Modèle",
@@ -279,6 +417,13 @@
     "description_text": "Di seguito puoi vedere tutti gli invii di registro in sospeso che sono attualmente in fase di revisione. Gli invii vengono generalmente elaborati entro 7-14 giorni.",
     "contact_text": "Se hai domande sul tuo invio, per favore",
     "contact_link": "contattaci",
+    "legacy": {
+      "title": "1 invio legacy da revisionare | {count} invii legacy da revisionare",
+      "description": "Sono stati inviati prima del passaggio a Supabase e mai approvati. Chi li ha inviati non ha un account, quindi non compaiono nella coda sopra. Approvare pubblica la voce nel registro; rifiutare la nasconde.",
+      "approve": "Approva",
+      "reject": "Rifiuta",
+      "actions": "Azioni"
+    },
     "table_headers": {
       "year": "Anno",
       "model": "Modello",
@@ -315,6 +460,13 @@
     "description_text": "Abaixo você pode ver todas as submissões de registro pendentes que estão sendo revisadas atualmente. As submissões são normalmente processadas dentro de 7-14 dias.",
     "contact_text": "Se você tem perguntas sobre sua submissão, por favor",
     "contact_link": "entre em contato conosco",
+    "legacy": {
+      "title": "1 envio antigo precisa de revisão | {count} envios antigos precisam de revisão",
+      "description": "Foram enviados antes da migração para o Supabase e nunca aprovados. Os autores não têm conta, por isso não aparecem na fila acima. Aprovar publica a entrada no registro; rejeitar a oculta.",
+      "approve": "Aprovar",
+      "reject": "Rejeitar",
+      "actions": "Ações"
+    },
     "table_headers": {
       "year": "Ano",
       "model": "Modelo",
@@ -351,6 +503,13 @@
     "description_text": "Ниже вы можете видеть все ожидающие заявки в реестр, которые в данный момент проходят проверку. Заявки обычно обрабатываются в течение 7-14 дней.",
     "contact_text": "Если у вас есть вопросы по вашей заявке, пожалуйста",
     "contact_link": "свяжитесь с нами",
+    "legacy": {
+      "title": "1 старая заявка ожидает проверки | {count} старых заявок ожидают проверки",
+      "description": "Они были отправлены до перехода на Supabase и никогда не одобрялись. У их авторов нет аккаунта, поэтому они не попадают в очередь выше. Одобрение публикует запись в реестре, отклонение скрывает её.",
+      "approve": "Одобрить",
+      "reject": "Отклонить",
+      "actions": "Действия"
+    },
     "table_headers": {
       "year": "Год",
       "model": "Модель",
@@ -387,6 +546,13 @@
     "description_text": "現在審査中のすべてのレジストリ申請を以下でご確認いただけます。申請は通常7〜14日以内に処理されます。",
     "contact_text": "申請についてご質問がある場合は、",
     "contact_link": "お問い合わせください",
+    "legacy": {
+      "title": "確認待ちの旧申請が1件あります | 確認待ちの旧申請が{count}件あります",
+      "description": "Supabase移行前に申請され、承認されないままだったものです。申請者にアカウントがないため、上のキューには表示されません。承認すると登録簿に公開され、却下すると非表示になります。",
+      "approve": "承認",
+      "reject": "却下",
+      "actions": "操作"
+    },
     "table_headers": {
       "year": "年式",
       "model": "モデル",
@@ -423,6 +589,13 @@
     "description_text": "以下您可以查看所有正在审核中的待处理注册表提交。提交通常在7-14天内处理完成。",
     "contact_text": "如果您对提交有疑问，请",
     "contact_link": "联系我们",
+    "legacy": {
+      "title": "有 1 条旧提交待审核 | 有 {count} 条旧提交待审核",
+      "description": "这些是在迁移到 Supabase 之前提交且从未审核通过的记录。提交者没有账户，因此不会出现在上面的队列中。通过后将公开显示在登记簿中，拒绝则会隐藏。",
+      "approve": "通过",
+      "reject": "拒绝",
+      "actions": "操作"
+    },
     "table_headers": {
       "year": "年份",
       "model": "型号",
@@ -459,6 +632,13 @@
     "description_text": "아래에서 현재 검토 중인 모든 대기 중인 레지스트리 제출을 확인할 수 있습니다. 제출은 보통 7-14일 이내에 처리됩니다.",
     "contact_text": "제출에 대한 질문이 있으시면",
     "contact_link": "문의하세요",
+    "legacy": {
+      "title": "검토가 필요한 이전 제출 1건 | 검토가 필요한 이전 제출 {count}건",
+      "description": "Supabase로 이전하기 전에 제출되어 승인되지 않은 항목입니다. 제출자에게 계정이 없어 위 대기열에 표시되지 않습니다. 승인하면 등록부에 공개되고, 거부하면 숨겨집니다.",
+      "approve": "승인",
+      "reject": "거부",
+      "actions": "작업"
+    },
     "table_headers": {
       "year": "연도",
       "model": "모델",

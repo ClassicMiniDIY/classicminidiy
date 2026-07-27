@@ -105,6 +105,7 @@ describe('useRegistry', () => {
         buildDate: '1967-03-15',
         notes: 'Numbers matching',
         submittedBy: 'John Doe',
+        ownerId: null,
         status: 'A',
       });
     });
@@ -145,6 +146,7 @@ describe('useRegistry', () => {
         buildDate: null,
         notes: '',
         submittedBy: '',
+        ownerId: null,
         status: 'A',
       });
     });
@@ -305,6 +307,71 @@ describe('useRegistry', () => {
       const result = await submitRegistryEntry({ model: 'Cooper' });
 
       expect(result).toEqual(responseData);
+    });
+  });
+
+  describe('ownership', () => {
+    it('maps submitted_by to ownerId so the owner-only edit affordance can key off it', async () => {
+      const rows = [makeRow({ submitted_by: 'user-42' }), makeRow({ id: 'row-2', submitted_by: null })];
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: rows, error: null }));
+
+      const { useRegistry } = await import('~/app/composables/useRegistry');
+      const result = await useRegistry().listApproved();
+
+      expect(result[0]!.ownerId).toBe('user-42');
+      expect(result[1]!.ownerId).toBeNull();
+    });
+
+    it('requests submitted_by but never the submitter email', async () => {
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: [], error: null }));
+
+      const { useRegistry } = await import('~/app/composables/useRegistry');
+      await useRegistry().listApproved();
+
+      const selected = mockSupabase._mockSelect.mock.calls[0]![0] as string;
+      expect(selected).toContain('submitted_by');
+      expect(selected).not.toContain('legacy_submitted_by_email');
+    });
+  });
+
+  describe('claim flow', () => {
+    it('maps claimable entries returned by the RPC', async () => {
+      mockSupabase.rpc = vi.fn().mockResolvedValue({
+        data: [{ id: 'e1', year: 1967, model: 'Cooper S', body_number: 'B-1', submitted_by_name: 'Jane' }],
+        error: null,
+      });
+
+      const { useRegistry } = await import('~/app/composables/useRegistry');
+      const result = await useRegistry().listClaimable();
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_my_claimable_registry_entries');
+      expect(result).toEqual([{ id: 'e1', year: 1967, model: 'Cooper S', bodyNum: 'B-1', submittedBy: 'Jane' }]);
+    });
+
+    it('returns an empty list rather than throwing when the caller is not signed in', async () => {
+      // The RPC is granted to `authenticated` only, so an anonymous visitor gets
+      // an error back. The prompt should stay invisible, not break the page.
+      mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: { message: 'permission denied' } });
+
+      const { useRegistry } = await import('~/app/composables/useRegistry');
+      await expect(useRegistry().listClaimable()).resolves.toEqual([]);
+    });
+
+    it('passes the entry id to claim_registry_entry', async () => {
+      mockSupabase.rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+
+      const { useRegistry } = await import('~/app/composables/useRegistry');
+      await useRegistry().claimEntry('entry-9');
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('claim_registry_entry', { p_entry_id: 'entry-9' });
+    });
+
+    it('throws when the claim is refused, so the UI can surface the reason', async () => {
+      const refusal = { message: 'That register entry was not submitted from your email address' };
+      mockSupabase.rpc = vi.fn().mockResolvedValue({ data: null, error: refusal });
+
+      const { useRegistry } = await import('~/app/composables/useRegistry');
+      await expect(useRegistry().claimEntry('entry-9')).rejects.toEqual(refusal);
     });
   });
 });

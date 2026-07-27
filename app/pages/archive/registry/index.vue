@@ -13,7 +13,9 @@
     { title: t('table_headers.color'), key: 'color' },
   ];
 
-  const { data: registryItems, status } = await useAsyncData('registry-list', () => listApproved());
+  // `refresh` re-pulls the list after a claim so the entry immediately shows as
+  // owned (and its "suggest an edit" affordance appears) without a reload.
+  const { data: registryItems, status, refresh } = await useAsyncData('registry-list', () => listApproved());
 
   useHead({
     title: t('title'),
@@ -137,7 +139,9 @@
               class="block"
               @click="track('contribute_cta_clicked', { type: 'registry', location: 'archive_registry' })"
             >
-              <div class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-2xl transition-shadow duration-300">
+              <div
+                class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-2xl transition-shadow duration-300"
+              >
                 <div class="card-body">
                   <div class="flex items-start space-x-4">
                     <div class="flex-shrink-0">
@@ -174,6 +178,10 @@
         </div>
       </div>
       <div class="col-span-12">
+        <!-- Renders nothing unless the signed-in user has an unclaimed entry
+             submitted from their confirmed email address. -->
+        <RegistryClaimPrompt @claimed="refresh()" />
+
         <RegistryTable
           :items="registryItems || []"
           :loading="status === 'pending'"
