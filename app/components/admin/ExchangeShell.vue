@@ -84,7 +84,7 @@
                 User Management
               </NuxtLink>
             </li>
-            <li>
+            <li v-if="marketingAllowed === true">
               <NuxtLink to="/admin/marketing" active-class="active">
                 <i class="fas fa-envelope-open-text w-4"></i>
                 Marketing Email
@@ -111,6 +111,10 @@
 
   const messageQueueCount = ref(0);
   const moderationCount = ref(0);
+
+  // Marketing Email is allowlist-gated (MARKETING_ADMIN_EMAILS) — only render
+  // the sidebar entry for admins the access probe approves.
+  const { allowed: marketingAllowed, check: checkMarketingAccess } = useMarketingAccess();
 
   const loadMessageQueueCount = async () => {
     try {
@@ -139,6 +143,7 @@
   onMounted(() => {
     loadMessageQueueCount();
     loadModerationCount();
+    checkMarketingAccess();
   });
 
   // Refresh badges when navigating between exchange admin sections.

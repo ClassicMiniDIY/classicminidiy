@@ -22,6 +22,13 @@
   // Marketplace admin is only surfaced when the Exchange section is enabled
   const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
 
+  // Marketing Email is allowlist-gated (MARKETING_ADMIN_EMAILS, server-side) —
+  // the card only renders for admins the probe approves.
+  const { allowed: marketingAllowed, check: checkMarketingAccess } = useMarketingAccess();
+  onMounted(() => {
+    checkMarketingAccess();
+  });
+
   // Fetch pending count — uses useAdminFetch to inject auth header and skip SSR
   const { data: totalPendingCount } = await useAdminFetch<{ count: number }>('/api/admin/queue/count');
 
@@ -163,6 +170,33 @@
               <NuxtLink to="/admin/users" class="btn btn-warning">
                 <i class="fad fa-arrow-right mr-2"></i>
                 Manage Users
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
+        <!-- Marketing Email Card (allowlisted marketing admins only) -->
+        <div
+          v-if="marketingAllowed === true"
+          class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow"
+        >
+          <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                <i class="fad fa-envelope-open-text text-2xl text-success"></i>
+              </div>
+              <h2 class="text-xl font-bold">Marketing Email</h2>
+            </div>
+
+            <p class="opacity-70 mb-6">
+              Compose and send one-off marketing emails to newsletter subscribers, Shopify, Ghost, and Patreon
+              supporters.
+            </p>
+
+            <div class="card-actions justify-end">
+              <NuxtLink to="/admin/marketing" class="btn btn-success">
+                <i class="fad fa-arrow-right mr-2"></i>
+                Open Composer
               </NuxtLink>
             </div>
           </div>
