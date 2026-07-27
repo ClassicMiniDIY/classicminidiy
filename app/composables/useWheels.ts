@@ -2,6 +2,34 @@ import type { IWheelsData } from '../../data/models/wheels';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * Columns read from `wheels` for the public archive.
+ *
+ * Deliberately NOT `select('*')`. The table uses column-level SELECT grants
+ * since classicminidiy-supabase migration 20260727000002: submitter contact
+ * details (`legacy_submitted_by_email`) are revoked from anon/authenticated
+ * because they were world-readable, and Postgres expands `*` to every column
+ * and rejects the whole query with 42501 when one of them is not granted.
+ *
+ * Adding a column here means checking it is granted to anon in that repo.
+ */
+const WHEEL_COLUMNS = [
+  'id',
+  'name',
+  'wheel_type',
+  'size',
+  'width',
+  'offset_value',
+  'bolt_pattern',
+  'center_bore',
+  'manufacturer',
+  'weight',
+  'notes',
+  'photos',
+  'legacy_submitted_by',
+  'status',
+].join(', ');
+
 export const useWheels = () => {
   const supabase = useSupabase();
   const config = useRuntimeConfig();
@@ -21,7 +49,9 @@ export const useWheels = () => {
     offset: row.offset_value || '',
     notes: row.notes || '',
     userName: row.legacy_submitted_by || '',
-    emailAddress: row.legacy_submitted_by_email || '',
+    // No emailAddress: the archive never rendered it, and the column is no
+    // longer readable by anon/authenticated. The admin review screen gets it
+    // from submission_queue via the service client instead.
     referral: '',
     images: (row.photos || []).map((p: string) => ({ src: getPhotoUrl(p) })),
     manufacturer: row.manufacturer || '',
@@ -31,7 +61,7 @@ export const useWheels = () => {
   });
 
   const listAll = async (): Promise<IWheelsData[]> => {
-    const { data, error } = await supabase.from('wheels').select('*').eq('status', 'approved').order('name');
+    const { data, error } = await supabase.from('wheels').select(WHEEL_COLUMNS).eq('status', 'approved').order('name');
 
     if (error) throw error;
     return (data || []).map(mapToWheel);
@@ -52,7 +82,7 @@ export const useWheels = () => {
   const listFeaturedCandidates = async (poolSize = 100): Promise<IWheelsData[]> => {
     const { data, error } = await supabase
       .from('wheels')
-      .select('*')
+      .select(WHEEL_COLUMNS)
       .eq('status', 'approved')
       .not('name', 'is', null)
       .not('photos', 'is', null)
@@ -66,7 +96,7 @@ export const useWheels = () => {
   const listBySize = async (wheelSize: number): Promise<IWheelsData[]> => {
     const { data, error } = await supabase
       .from('wheels')
-      .select('*')
+      .select(WHEEL_COLUMNS)
       .eq('status', 'approved')
       .eq('size', wheelSize)
       .order('name');
@@ -93,7 +123,7 @@ export const useWheels = () => {
     // returns null data and no error, which is what a miss actually is.
     const { data, error } = await supabase
       .from('wheels')
-      .select('*')
+      .select(WHEEL_COLUMNS)
       .eq('id', id)
       .eq('status', 'approved')
       .maybeSingle();

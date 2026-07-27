@@ -3,7 +3,13 @@ export interface RegistryItem extends Record<string, any> {
   bodyNum: string;
   trim: string;
   submittedBy: string;
-  submittedByEmail: string;
+  /**
+   * Optional: only the submission form and the admin queue view (service
+   * client, reads submission_queue) carry this. The public register no longer
+   * fetches it — `registry_entries.legacy_submitted_by_email` is revoked from
+   * anon/authenticated as PII.
+   */
+  submittedByEmail?: string;
   engineNum: string;
   notes: string;
   year: number;

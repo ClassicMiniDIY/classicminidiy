@@ -48,8 +48,13 @@ describe('useRegistry', () => {
 
       // Verify correct table
       expect(mockSupabase.from).toHaveBeenCalledWith('registry_entries');
-      // Verify select all
-      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('*');
+      // NOT select('*'): registry_entries uses column-level SELECT grants, so
+      // `*` fails with 42501 for anon/authenticated, and the submitter email
+      // must never be requested (PII — revoked in supabase 20260727000002).
+      const selected = mockSupabase._mockSelect.mock.calls[0]![0] as string;
+      expect(selected).not.toBe('*');
+      expect(selected).not.toContain('legacy_submitted_by_email');
+      expect(selected).toContain('legacy_submitted_by');
       // Verify filtering for approved
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('status', 'approved');
       // Verify ordering
@@ -100,7 +105,6 @@ describe('useRegistry', () => {
         buildDate: '1967-03-15',
         notes: 'Numbers matching',
         submittedBy: 'John Doe',
-        submittedByEmail: 'john@example.com',
         status: 'A',
       });
     });
@@ -141,7 +145,6 @@ describe('useRegistry', () => {
         buildDate: null,
         notes: '',
         submittedBy: '',
-        submittedByEmail: '',
         status: 'A',
       });
     });

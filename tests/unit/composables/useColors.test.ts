@@ -112,7 +112,12 @@ describe('useColors', () => {
       const result = await listColors();
 
       expect(mockSupabase.from).toHaveBeenCalledWith('colors');
-      expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
+      // NOT select('*'): colors uses column-level SELECT grants, so `*` fails
+      // with 42501 for anon/authenticated, and the submitter email must never
+      // be requested (PII — revoked in supabase 20260727000002).
+      const selected = mockSupabase._queryBuilder.select.mock.calls[0]![0] as string;
+      expect(selected).not.toBe('*');
+      expect(selected).not.toContain('legacy_submitted_by_email');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('status', 'approved');
       expect(mockSupabase._queryBuilder.order).toHaveBeenCalledWith('name');
       expect(result).toHaveLength(2);
@@ -238,7 +243,12 @@ describe('useColors', () => {
       await getColor('11111111-2222-4333-8444-555555555555');
 
       expect(mockSupabase.from).toHaveBeenCalledWith('colors');
-      expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
+      // NOT select('*'): colors uses column-level SELECT grants, so `*` fails
+      // with 42501 for anon/authenticated, and the submitter email must never
+      // be requested (PII — revoked in supabase 20260727000002).
+      const selected = mockSupabase._queryBuilder.select.mock.calls[0]![0] as string;
+      expect(selected).not.toBe('*');
+      expect(selected).not.toContain('legacy_submitted_by_email');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
       expect(mockSupabase._queryBuilder.maybeSingle).toHaveBeenCalled();
     });

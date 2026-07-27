@@ -2,6 +2,33 @@ import type { Color, PrettyColor } from '../../data/models/colors';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * Columns read from `colors` for the public archive.
+ *
+ * Deliberately NOT `select('*')`. The table uses column-level SELECT grants
+ * since classicminidiy-supabase migration 20260727000002: submitter contact
+ * details (`legacy_submitted_by_email`) are revoked from anon/authenticated
+ * because they were world-readable, and Postgres expands `*` to every column
+ * and rejects the whole query with 42501 when one of them is not granted.
+ *
+ * Adding a column here means checking it is granted to anon in that repo.
+ */
+const COLOR_COLUMNS = [
+  'id',
+  'name',
+  'code',
+  'short_code',
+  'ditzler_ppg_code',
+  'dulux_code',
+  'year_start',
+  'year_end',
+  'hex_value',
+  'swatch_path',
+  'has_swatch',
+  'contributor_images',
+  'status',
+].join(', ');
+
 export const useColors = () => {
   const supabase = useSupabase();
   const config = useRuntimeConfig();
@@ -27,7 +54,7 @@ export const useColors = () => {
   });
 
   const listColors = async (): Promise<Color[]> => {
-    const { data, error } = await supabase.from('colors').select('*').eq('status', 'approved').order('name');
+    const { data, error } = await supabase.from('colors').select(COLOR_COLUMNS).eq('status', 'approved').order('name');
 
     if (error) throw error;
     return (data || []).map(mapToColor);
@@ -42,7 +69,7 @@ export const useColors = () => {
     // a 406 API error.
     const { data, error } = await supabase
       .from('colors')
-      .select('*')
+      .select(COLOR_COLUMNS)
       .eq('id', id)
       .eq('status', 'approved')
       .maybeSingle();
