@@ -542,6 +542,14 @@ export default defineNuxtConfig({
       exchangeEnabled: process.env.NUXT_PUBLIC_EXCHANGE_ENABLED === 'true',
     },
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
+    // Marketing email composer (/admin/marketing). Allowlist is checked ON TOP
+    // of requireAdminAuth — only these admin emails may compose/send marketing
+    // mail. Comma-separated; defaults to the founder account.
+    MARKETING_ADMIN_EMAILS: process.env.MARKETING_ADMIN_EMAILS || 'classicminidiy@gmail.com',
+    // Shared HMAC secret with the send-marketing-email edge function: the edge
+    // fn signs per-recipient /email/unsubscribe links, this side verifies them.
+    // Unset = unsubscribe endpoints 503 (never silently accept unsigned links).
+    MARKETING_UNSUB_SECRET: process.env.MARKETING_UNSUB_SECRET || '',
     // 3D Model Library private S3 bucket (keystone §5/§10). Dedicated IAM user
     // scoped to `classicminidiy-models` ONLY — never the static-assets creds.
     // Used by server/utils/s3Models.ts for presigned upload POSTs and download
