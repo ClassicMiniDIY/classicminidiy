@@ -274,12 +274,12 @@
         v-model="showSuggestEdit"
         target-type="wheel"
         :target-id="wheel.uuid"
-        :current-data="{ name: wheel.name, width: wheel.width, size: wheel.size, offset: wheel.offset }"
+        :current-data="{ name: wheel.name, width: wheel.width, size: wheel.size, offset_value: wheel.offset }"
         :editable-fields="[
           { key: 'name', label: t('field_name'), type: 'text' },
           { key: 'width', label: t('field_width'), type: 'text' },
           { key: 'size', label: t('field_size'), type: 'text' },
-          { key: 'offset', label: t('field_offset'), type: 'text' },
+          { key: 'offset_value', label: t('field_offset'), type: 'text' },
         ]"
       />
     </div>
