@@ -27,6 +27,16 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      # Required: tsconfig.json extends ./.nuxt/tsconfig.json, which is
+      # generated rather than committed (.nuxt is gitignored). The repo's
+      # postinstall is overridden for a better-sqlite3 rebuild, so the usual
+      # Nuxt `postinstall: nuxt prepare` never runs and .nuxt is absent on a
+      # fresh checkout. Without this step every test file fails to load with
+      # `Cannot find module './.nuxt/tsconfig.json'` — 147 files, 0 tests run.
+      # It passes locally only because .nuxt lingers from `bun run dev`.
+      - name: Prepare Nuxt types
+        run: bunx nuxi prepare
+
       # Includes tests/unit/data/needles-data-integrity.test.ts, which pins the
       # canonical hash of data/needles.json. The Android and iOS repos pin the
       # same hash, so a drifted copy fails CI in whichever repo drifted.
