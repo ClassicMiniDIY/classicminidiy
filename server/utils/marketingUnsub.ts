@@ -42,11 +42,23 @@ export function unsubConfigured(): boolean {
   return Boolean(useRuntimeConfig().MARKETING_UNSUB_SECRET);
 }
 
-/** Mask an email for display: ab***@d***.com style, never the full address. */
+/** Escape a value for interpolation into the unsubscribe pages' HTML. */
+export function escapeUnsubHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/** Mask an email for display: ab…@d….com style — local AND domain masked. */
 export function maskEmail(email: string): string {
-  const [local, domain] = email.split('@');
-  const maskedLocal = local.length <= 2 ? `${local[0] ?? ''}…` : `${local.slice(0, 2)}…`;
-  return `${maskedLocal}@${domain ?? ''}`;
+  const [local = '', domain = ''] = email.split('@');
+  const maskedLocal = `${local.slice(0, Math.min(2, Math.max(1, local.length - 1)))}…`;
+  const lastDot = domain.lastIndexOf('.');
+  const maskedDomain = lastDot > 0 ? `${domain[0] ?? ''}…${domain.slice(lastDot)}` : `${domain[0] ?? ''}…`;
+  return `${maskedLocal}@${maskedDomain}`;
 }
 
 /** Minimal self-contained CMDIY-ish page (no app bundle, no external assets). */

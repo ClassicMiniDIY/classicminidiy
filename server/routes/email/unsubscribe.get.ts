@@ -7,7 +7,7 @@
  * a masked address and a POST form to the same URL; the POST (also the RFC
  * 8058 one-click target) does the actual suppression.
  */
-import { maskEmail, unsubConfigured, unsubPage, verifyUnsubToken } from '../../utils/marketingUnsub';
+import { escapeUnsubHtml, maskEmail, unsubConfigured, unsubPage, verifyUnsubToken } from '../../utils/marketingUnsub';
 
 export default defineEventHandler((event) => {
   setHeader(event, 'X-Robots-Tag', 'noindex');
@@ -41,7 +41,7 @@ export default defineEventHandler((event) => {
   return unsubPage(
     'Unsubscribe',
     `<h1>Unsubscribe from marketing emails?</h1>
-     <p>Stop sending Classic Mini DIY marketing emails to <strong>${maskEmail(email)}</strong>?</p>
+     <p>Stop sending Classic Mini DIY marketing emails to <strong>${escapeUnsubHtml(maskEmail(email))}</strong>?</p>
      <form method="POST" action="/email/unsubscribe?e=${e}&t=${t}">
        <button type="submit" class="btn">Unsubscribe</button>
      </form>`

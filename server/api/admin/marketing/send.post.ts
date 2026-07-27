@@ -26,7 +26,15 @@ export default defineEventHandler(async (event) => {
   // marketing_emails postdates the generated Database types — cast until
   // `bun run gen:types` runs against the migrated schema.
   const db = getServiceClient() as any;
-  const { data: draft } = await db.from('marketing_emails').select('id, subject, status').eq('id', id).maybeSingle();
+  const { data: draft, error: lookupError } = await db
+    .from('marketing_emails')
+    .select('id, subject, status')
+    .eq('id', id)
+    .maybeSingle();
+  if (lookupError) {
+    console.error('[marketing/send] lookup failed:', lookupError.message);
+    throw createError({ statusCode: 500, statusMessage: 'Failed to look up marketing email' });
+  }
   if (!draft) throw createError({ statusCode: 404, statusMessage: 'Marketing email not found' });
   if (draft.status !== 'draft') {
     throw createError({ statusCode: 429, statusMessage: `Marketing email is ${draft.status}, not draft` });
