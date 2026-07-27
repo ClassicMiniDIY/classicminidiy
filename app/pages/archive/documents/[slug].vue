@@ -422,7 +422,17 @@
       </template>
     </div>
 
-    <!-- Suggest Edit Modal -->
+    <!--
+      Suggest Edit Modal
+
+      Every `key` here MUST be a real column on `archive_documents` — the admin
+      approve handler (server/api/admin/queue/approve.post.ts) maps
+      `changes.{key}.to` straight onto the UPDATE with no camelCase translation,
+      so a key that isn't a column fails the whole approval with a 500.
+      publisher / edition / page_count / language / vehicle_year_* are NOT
+      columns (the composable reads them off the row and always gets undefined);
+      they can only come back here alongside a migration that adds them.
+    -->
     <SuggestEditModal
       v-if="doc"
       v-model="showSuggestEdit"
@@ -434,12 +444,6 @@
         description: doc.description,
         author: doc.author,
         year: doc.year,
-        publisher: doc.publisher,
-        edition: doc.edition,
-        page_count: doc.pageCount,
-        language: doc.language,
-        vehicle_year_start: doc.vehicleYearStart,
-        vehicle_year_end: doc.vehicleYearEnd,
         collection_id: doc.collection?.id ?? null,
       }"
       :editable-fields="[
@@ -448,12 +452,6 @@
         { key: 'description', label: t('field.description'), type: 'textarea' },
         { key: 'author', label: t('field.author'), type: 'text' },
         { key: 'year', label: t('field.year'), type: 'number' },
-        { key: 'publisher', label: t('field.publisher'), type: 'text' },
-        { key: 'edition', label: t('field.edition'), type: 'text' },
-        { key: 'page_count', label: t('field.page_count'), type: 'number' },
-        { key: 'language', label: t('field.language'), type: 'text' },
-        { key: 'vehicle_year_start', label: t('field.vehicle_year_start'), type: 'number' },
-        { key: 'vehicle_year_end', label: t('field.vehicle_year_end'), type: 'number' },
         {
           key: 'collection_id',
           label: t('field.collection'),
