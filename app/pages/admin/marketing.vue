@@ -552,11 +552,20 @@
     () => {
       if (previewTimer) clearTimeout(previewTimer);
       previewTimer = setTimeout(() => {
-        if (formValid.value) fetchPreview(toPayload());
+        previewTimer = null;
+        if (formValid.value) {
+          fetchPreview(toPayload());
+        } else {
+          // Don't leave a stale preview up when the draft is no longer renderable.
+          previewHtml.value = '';
+        }
       }, 600);
     },
     { deep: true }
   );
+  onBeforeUnmount(() => {
+    if (previewTimer) clearTimeout(previewTimer);
+  });
 
   const resizeIframe = () => {
     const iframe = emailPreviewFrame.value;
