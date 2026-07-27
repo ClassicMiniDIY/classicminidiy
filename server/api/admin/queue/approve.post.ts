@@ -2,6 +2,84 @@ import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 import { toDateOrNull } from '../../../utils/sanitize';
 
+/**
+ * Where each submission target_type writes, and which of that table's columns a
+ * user-submitted edit suggestion is allowed to touch.
+ *
+ * `columns` is a security boundary, not a convenience: applyEditSuggestion() maps
+ * `data.changes` keys directly onto column names, and `data` is written to
+ * submission_queue by the browser (useSubmissions.submitEditSuggestion), so
+ * anything omitted here is a column a crafted suggestion cannot reach.
+ *
+ * Rules for editing these lists:
+ *  - Only descriptive/bibliographic columns belong here.
+ *  - NEVER add ownership, moderation or audit columns: id, status, submitted_by,
+ *    reviewed_by, reviewed_at, created_at, updated_at, legacy_id,
+ *    legacy_submitted_by, legacy_submitted_by_email.
+ *  - Asset paths (photos, swatch_path, file_path, thumbnail_path,
+ *    contributor_images) are owned by the upload flows, not by suggestions.
+ *  - Every name must be a real column on the mapped table. There is no
+ *    camelCase-to-snake_case translation anywhere in this path, so the client's
+ *    field keys must be snake_case column names too (this is what the wheels
+ *    `offset` vs `offset_value` bug got wrong).
+ */
+const EDIT_TARGETS: Record<string, { table: string; columns: string[] }> = {
+  color: {
+    table: 'colors',
+    columns: ['name', 'code', 'short_code', 'ditzler_ppg_code', 'dulux_code', 'year_start', 'year_end', 'hex_value'],
+  },
+  wheel: {
+    table: 'wheels',
+    columns: [
+      'name',
+      'wheel_type',
+      'size',
+      'width',
+      'offset_value',
+      'bolt_pattern',
+      'center_bore',
+      'manufacturer',
+      'weight',
+      'notes',
+    ],
+  },
+  registry: {
+    table: 'registry_entries',
+    columns: [
+      'year',
+      'model',
+      'body_number',
+      'engine_number',
+      'engine_size',
+      'body_type',
+      'color',
+      'trim',
+      'build_date',
+      'owner',
+      'location',
+      'notes',
+    ],
+  },
+  document: {
+    table: 'archive_documents',
+    columns: [
+      'title',
+      'description',
+      'code',
+      'author',
+      'year',
+      'collection_id',
+      'publisher',
+      'edition',
+      'page_count',
+      'language',
+      'applicable_models',
+      'vehicle_year_start',
+      'vehicle_year_end',
+    ],
+  },
+};
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
   const body = await readBody(event);
@@ -176,7 +254,11 @@ async function applyEditSuggestion(
   const updates: Record<string, any> = {};
   for (const [field, diff] of Object.entries(changes)) {
     if (diff && typeof diff === 'object' && 'to' in (diff as any)) {
-      updates[field] = (diff as any).to;
+      const value = (diff as any).to;
+      // The modal submits every input as a string, so a cleared field arrives as
+      // ''. Postgres rejects that for integer/date columns (22P02), which used to
+      // surface as an opaque 500 on approval; NULL is what "cleared" means here.
+      updates[field] = value === '' ? null : value;
     }
   }
 
@@ -222,16 +304,21 @@ async function applyEditSuggestion(
 
   if (Object.keys(updates).length === 0) return null;
 
-  const tableMap: Record<string, string> = {
-    color: 'colors',
-    wheel: 'wheels',
-    registry: 'registry_entries',
-    document: 'archive_documents',
-  };
+  const target = EDIT_TARGETS[targetType];
+  if (!target) return `Unsupported target type: ${targetType}`;
 
-  const table = tableMap[targetType];
-  if (!table) return `Unsupported target type: ${targetType}`;
+  // `data.changes` is written client-side straight into submission_queue, so its
+  // keys are attacker-controlled. Without this check they land verbatim in the
+  // UPDATE under the service role, letting a crafted suggestion rewrite status,
+  // submitted_by, reviewed_by, legacy_id or legacy_submitted_by_email on any
+  // archive row the moment an admin approves it. It also turns a field key that
+  // isn't a column (the `offset` vs `offset_value` bug) into a named 400 instead
+  // of an opaque 500.
+  const rejected = Object.keys(updates).filter((key) => !target.columns.includes(key));
+  if (rejected.length > 0) {
+    return `Suggestion targets fields that are not user-editable on ${targetType}: ${rejected.join(', ')}`;
+  }
 
-  const { error } = await supabase.from(table).update(updates).eq('id', targetId);
+  const { error } = await supabase.from(target.table).update(updates).eq('id', targetId);
   return error?.message || null;
 }
