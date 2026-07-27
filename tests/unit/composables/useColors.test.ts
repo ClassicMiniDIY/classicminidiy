@@ -227,8 +227,8 @@ describe('useColors', () => {
   });
 
   describe('getColor', () => {
-    it('queries colors table by id with .single()', async () => {
-      mockSupabase._queryBuilder.single.mockResolvedValue({
+    it('queries colors table by id with .maybeSingle()', async () => {
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({
         data: mockColorRow,
         error: null,
       });
@@ -240,11 +240,11 @@ describe('useColors', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('colors');
       expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
-      expect(mockSupabase._queryBuilder.single).toHaveBeenCalled();
+      expect(mockSupabase._queryBuilder.maybeSingle).toHaveBeenCalled();
     });
 
     it('returns a PrettyColor object with raw and pretty fields', async () => {
-      mockSupabase._queryBuilder.single.mockResolvedValue({
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({
         data: mockColorRow,
         error: null,
       });
@@ -281,7 +281,7 @@ describe('useColors', () => {
     });
 
     it('returns null when Supabase returns an error', async () => {
-      mockSupabase._queryBuilder.single.mockResolvedValue({
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({
         data: null,
         error: { message: 'Not found', code: 'PGRST116' },
       });
@@ -294,9 +294,11 @@ describe('useColors', () => {
     });
 
     it('returns null when the color does not exist', async () => {
-      mockSupabase._queryBuilder.single.mockResolvedValue({
+      // maybeSingle reports a miss as {data: null, error: null} — the shape every
+      // stale pre-re-seed colour link produces. single() would 406 instead.
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({
         data: null,
-        error: { message: 'Row not found', code: 'PGRST116' },
+        error: null,
       });
 
       const { useColors } = await import('~/app/composables/useColors');
@@ -304,6 +306,7 @@ describe('useColors', () => {
       const result = await getColor('11111111-2222-4333-8444-555555555555');
 
       expect(result).toBeNull();
+      expect(mockSupabase._queryBuilder.single).not.toHaveBeenCalled();
     });
 
     it('returns null for a non-uuid id without querying Supabase', async () => {

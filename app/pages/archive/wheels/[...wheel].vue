@@ -19,6 +19,14 @@
     default: () => ({}) as IWheelsData,
   });
 
+  // An unresolvable id still rendered this page: `default` supplies an empty object,
+  // so the response was 200 with a blank body and an "undefined" SEO title — a soft
+  // 404. Crawlers read that as a live page and keep re-requesting dead pre-migration
+  // deep links indefinitely. Answer with a real 404 instead.
+  if (!wheel.value?.uuid) {
+    throw createError({ statusCode: 404, statusMessage: 'Wheel not found', fatal: true });
+  }
+
   const copied = ref<boolean>(false);
   const showSuggestEdit = ref(false);
   // Legacy notes may contain embedded HTML; strip tags so they render as plain text rather than escaped markup.

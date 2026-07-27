@@ -296,7 +296,7 @@ describe('useWheels', () => {
   describe('getWheel', () => {
     it('fetches a single wheel by id', async () => {
       const row = makeWheelRow({ id: 'wheel-42' });
-      mockSupabase._mockSingle.mockResolvedValue({ data: row, error: null });
+      mockSupabase._mockMaybeSingle.mockResolvedValue({ data: row, error: null });
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();
@@ -305,7 +305,7 @@ describe('useWheels', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('wheels');
       expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
-      expect(mockSupabase._mockSingle).toHaveBeenCalled();
+      expect(mockSupabase._mockMaybeSingle).toHaveBeenCalled();
       expect(result).not.toBeNull();
       expect(result!.uuid).toBe('wheel-42');
       expect(result!.name).toBe('Minilite');
@@ -313,7 +313,7 @@ describe('useWheels', () => {
 
     it('filters by id and approved status', async () => {
       const row = makeWheelRow({ id: 'wheel-42' });
-      mockSupabase._mockSingle.mockResolvedValue({ data: row, error: null });
+      mockSupabase._mockMaybeSingle.mockResolvedValue({ data: row, error: null });
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();
@@ -325,7 +325,7 @@ describe('useWheels', () => {
     });
 
     it('returns null when Supabase returns an error', async () => {
-      mockSupabase._mockSingle.mockResolvedValue({
+      mockSupabase._mockMaybeSingle.mockResolvedValue({
         data: null,
         error: { message: 'Row not found', code: 'PGRST116' },
       });
@@ -334,6 +334,21 @@ describe('useWheels', () => {
       const { getWheel } = useWheels();
       const result = await getWheel('11111111-2222-4333-8444-555555555555');
 
+      expect(result).toBeNull();
+    });
+
+    it('uses maybeSingle so a uuid-shaped miss is null rather than a 406', async () => {
+      // Pre-migration deep links carry uuids the DynamoDB import never brought
+      // across, so "well-formed id, no row" is the common case — not an error.
+      // maybeSingle returns {data: null, error: null}; single() would 406.
+      mockSupabase._mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+      const { useWheels } = await import('~/app/composables/useWheels');
+      const { getWheel } = useWheels();
+      const result = await getWheel('1ce3638a-7754-5a43-ad6f-cddffe477235');
+
+      expect(mockSupabase._mockMaybeSingle).toHaveBeenCalled();
+      expect(mockSupabase._mockSingle).not.toHaveBeenCalled();
       expect(result).toBeNull();
     });
 
@@ -360,7 +375,7 @@ describe('useWheels', () => {
         offset_value: 'ET+10',
         photos: ['cosmic/front.jpg'],
       });
-      mockSupabase._mockSingle.mockResolvedValue({ data: row, error: null });
+      mockSupabase._mockMaybeSingle.mockResolvedValue({ data: row, error: null });
 
       const { useWheels } = await import('~/app/composables/useWheels');
       const { getWheel } = useWheels();

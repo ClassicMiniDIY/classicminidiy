@@ -37,9 +37,17 @@ export const useColors = () => {
     // colors.id is a uuid; the catch-all route param can be anything (e.g. /archive/colors/review),
     // and passing a non-uuid straight through throws 22P02 in Postgres.
     if (!UUID_RE.test(id)) return null;
-    const { data, error } = await supabase.from('colors').select('*').eq('id', id).eq('status', 'approved').single();
+    // maybeSingle, not single — see the equivalent note in useWheels.getWheel: a
+    // uuid-shaped miss is expected for pre-migration links and shouldn't surface as
+    // a 406 API error.
+    const { data, error } = await supabase
+      .from('colors')
+      .select('*')
+      .eq('id', id)
+      .eq('status', 'approved')
+      .maybeSingle();
 
-    if (error) return null;
+    if (error || !data) return null;
     const color = mapToColor(data);
     return {
       raw: color,
