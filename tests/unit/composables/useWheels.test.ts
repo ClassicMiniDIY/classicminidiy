@@ -75,7 +75,13 @@ describe('useWheels', () => {
       const result = await listAll();
 
       expect(mockSupabase.from).toHaveBeenCalledWith('wheels');
-      expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
+      // NOT select('*'): wheels uses column-level SELECT grants, so `*` fails
+      // with 42501 for anon/authenticated, and the submitter email must never
+      // be requested (PII — revoked in supabase 20260727000002).
+      const selected = mockSupabase._queryBuilder.select.mock.calls[0]![0] as string;
+      expect(selected).not.toBe('*');
+      expect(selected).not.toContain('legacy_submitted_by_email');
+      expect(selected).toContain('legacy_submitted_by');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('status', 'approved');
       expect(mockSupabase._queryBuilder.order).toHaveBeenCalledWith('name');
       expect(result).toHaveLength(2);
@@ -101,7 +107,8 @@ describe('useWheels', () => {
       expect(wheel.offset).toBe('ET0');
       expect(wheel.notes).toBe('Classic look');
       expect(wheel.userName).toBe('TestUser');
-      expect(wheel.emailAddress).toBe('test@example.com');
+      // Never mapped from the public archive read — see WHEEL_COLUMNS.
+      expect(wheel.emailAddress).toBeUndefined();
       expect(wheel.referral).toBe('');
       expect(wheel.manufacturer).toBe('Minilite');
       expect(wheel.boltPattern).toBe('4x101.6');
@@ -168,7 +175,7 @@ describe('useWheels', () => {
       expect(wheel.offset).toBe('');
       expect(wheel.notes).toBe('');
       expect(wheel.userName).toBe('');
-      expect(wheel.emailAddress).toBe('');
+      expect(wheel.emailAddress).toBeUndefined();
       expect(wheel.manufacturer).toBe('');
       expect(wheel.boltPattern).toBe('');
       expect(wheel.centerBore).toBe('');
@@ -303,7 +310,13 @@ describe('useWheels', () => {
       const result = await getWheel('11111111-2222-4333-8444-555555555555');
 
       expect(mockSupabase.from).toHaveBeenCalledWith('wheels');
-      expect(mockSupabase._queryBuilder.select).toHaveBeenCalledWith('*');
+      // NOT select('*'): wheels uses column-level SELECT grants, so `*` fails
+      // with 42501 for anon/authenticated, and the submitter email must never
+      // be requested (PII — revoked in supabase 20260727000002).
+      const selected = mockSupabase._queryBuilder.select.mock.calls[0]![0] as string;
+      expect(selected).not.toBe('*');
+      expect(selected).not.toContain('legacy_submitted_by_email');
+      expect(selected).toContain('legacy_submitted_by');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
       expect(mockSupabase._mockMaybeSingle).toHaveBeenCalled();
       expect(result).not.toBeNull();

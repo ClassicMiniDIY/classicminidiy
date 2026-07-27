@@ -13,7 +13,13 @@ export interface IWheelsData {
   offset: string;
   notes: string;
   userName: string;
-  emailAddress: string;
+  /**
+   * Optional: only the submission form and the admin review view (service
+   * client, reads submission_queue) carry this. The public archive no longer
+   * fetches it — `wheels.legacy_submitted_by_email` is revoked from
+   * anon/authenticated as PII.
+   */
+  emailAddress?: string;
   referral: string;
   images?: any[];
   newWheel?: boolean;
