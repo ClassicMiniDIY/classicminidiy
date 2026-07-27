@@ -337,6 +337,35 @@ describe('useWheels', () => {
       expect(result).toBeNull();
     });
 
+    it('falls back to legacy_id when the id matches no row', async () => {
+      // Pre-migration deep links carry the DynamoDB id, which the import never
+      // brought across. The first lookup misses; the legacy_id lookup resolves.
+      const row = makeWheelRow({ id: 'current-uuid' });
+      mockSupabase._mockMaybeSingle
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: row, error: null });
+
+      const { useWheels } = await import('~/app/composables/useWheels');
+      const { getWheel } = useWheels();
+      const result = await getWheel('1ce3638a-7754-5a43-ad6f-cddffe477235');
+
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('legacy_id', '1ce3638a-7754-5a43-ad6f-cddffe477235');
+      // Returns the CURRENT id so the page can 301 to the canonical URL.
+      expect(result!.uuid).toBe('current-uuid');
+    });
+
+    it('returns null when neither the id nor legacy_id matches', async () => {
+      mockSupabase._mockMaybeSingle
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
+
+      const { useWheels } = await import('~/app/composables/useWheels');
+      const { getWheel } = useWheels();
+      const result = await getWheel('11111111-2222-4333-8444-555555555555');
+
+      expect(result).toBeNull();
+    });
+
     it('uses maybeSingle so a uuid-shaped miss is null rather than a 406', async () => {
       // Pre-migration deep links carry uuids the DynamoDB import never brought
       // across, so "well-formed id, no row" is the common case — not an error.

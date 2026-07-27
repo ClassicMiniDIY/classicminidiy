@@ -87,10 +87,9 @@ export const useWheels = () => {
     // wheels.id is a uuid; the catch-all route param can be anything (including the 'noWheel'
     // fallback), and passing a non-uuid straight through throws 22P02 in Postgres.
     if (!UUID_RE.test(id)) return null;
-    // maybeSingle, not single: a well-formed uuid that matches no row is the COMMON
-    // case here — pre-migration deep links use ids the DynamoDB import never carried
-    // over. single() answers that with a 406 logged as an API error; maybeSingle()
-    // returns null data and no error, which is what a miss actually is.
+    // maybeSingle, not single: a well-formed uuid that matches no row is an ordinary
+    // outcome here, not an exception. single() answers it with a 406 logged as an
+    // API error; maybeSingle() returns null data and no error.
     const { data, error } = await supabase
       .from('wheels')
       .select('*')
@@ -98,8 +97,23 @@ export const useWheels = () => {
       .eq('status', 'approved')
       .maybeSingle();
 
-    if (error || !data) return null;
-    return mapToWheel(data);
+    if (error) return null;
+    if (data) return mapToWheel(data);
+
+    // Fall back to the pre-Supabase id. The DynamoDB import minted fresh uuids
+    // instead of carrying the source id, so every URL indexed before the migration
+    // points at an id that no longer exists; legacy_id was recovered from DynamoDB
+    // and backfilled (supabase 20260727000001). Callers compare the returned
+    // `uuid` against the requested one to decide whether to redirect.
+    const { data: legacy, error: legacyError } = await supabase
+      .from('wheels')
+      .select('*')
+      .eq('legacy_id', id)
+      .eq('status', 'approved')
+      .maybeSingle();
+
+    if (legacyError || !legacy) return null;
+    return mapToWheel(legacy);
   };
 
   const submitWheel = async (wheelData: Partial<IWheelsData>): Promise<any> => {

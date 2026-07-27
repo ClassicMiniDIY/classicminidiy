@@ -309,6 +309,21 @@ describe('useColors', () => {
       expect(mockSupabase._queryBuilder.single).not.toHaveBeenCalled();
     });
 
+    it('falls back to legacy_id when the id matches no row', async () => {
+      mockSupabase._queryBuilder.maybeSingle
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: mockColorRow, error: null });
+
+      const { useColors } = await import('~/app/composables/useColors');
+      const { getColor } = useColors();
+      const result = await getColor('54427af3-304f-4af6-9e46-b6df1a5d95f2');
+
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('legacy_id', '54427af3-304f-4af6-9e46-b6df1a5d95f2');
+      expect(result).not.toBeNull();
+      // Returns the CURRENT id so the page can 301 to the canonical URL.
+      expect(result!.raw.id).toBe('color-1');
+    });
+
     it('returns null for a non-uuid id without querying Supabase', async () => {
       const { useColors } = await import('~/app/composables/useColors');
       const { getColor } = useColors();

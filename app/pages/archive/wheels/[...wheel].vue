@@ -21,10 +21,18 @@
 
   // An unresolvable id still rendered this page: `default` supplies an empty object,
   // so the response was 200 with a blank body and an "undefined" SEO title — a soft
-  // 404. Crawlers read that as a live page and keep re-requesting dead pre-migration
-  // deep links indefinitely. Answer with a real 404 instead.
+  // 404. Crawlers read that as a live page and keep re-requesting it indefinitely.
+  // Answer with a real 404 instead.
   if (!wheel.value?.uuid) {
     throw createError({ statusCode: 404, statusMessage: 'Wheel not found', fatal: true });
+  }
+
+  // getWheel also resolves pre-migration ids via legacy_id. When it matched that
+  // way the canonical id differs from the one requested, so send a 301 to the
+  // current URL — that restores the link AND lets search engines fold the old URL's
+  // history into the live one instead of us serving the same wheel on two paths.
+  if (wheelId.value?.[0] && wheel.value.uuid !== wheelId.value[0]) {
+    await navigateTo(`/archive/wheels/${wheel.value.uuid}`, { redirectCode: 301, replace: true });
   }
 
   const copied = ref<boolean>(false);

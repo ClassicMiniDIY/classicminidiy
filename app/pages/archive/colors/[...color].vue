@@ -11,9 +11,13 @@
 
   // Same soft-404 as the wheel detail page: the template has no v-else after
   // `v-else-if="color"`, so an unresolvable id rendered an empty shell with a 200.
-  // Every id the colors re-seed regenerated lands here, so answer with a real 404.
   if (!color.value) {
     throw createError({ statusCode: 404, statusMessage: 'Color not found', fatal: true });
+  }
+
+  // Resolved via legacy_id — redirect to the canonical URL. See the wheel page.
+  if (colorId && color.value.raw.id !== colorId) {
+    await navigateTo(`/archive/colors/${color.value.raw.id}`, { redirectCode: 301, replace: true });
   }
 
   const copied = ref(false);

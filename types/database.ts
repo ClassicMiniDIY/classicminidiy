@@ -213,6 +213,7 @@ export type Database = {
           has_swatch: boolean
           hex_value: string | null
           id: string
+          legacy_id: string | null
           legacy_submitted_by: string | null
           legacy_submitted_by_email: string | null
           metadata: Json | null
@@ -236,6 +237,7 @@ export type Database = {
           has_swatch?: boolean
           hex_value?: string | null
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           metadata?: Json | null
@@ -259,6 +261,7 @@ export type Database = {
           has_swatch?: boolean
           hex_value?: string | null
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           metadata?: Json | null
@@ -1781,6 +1784,86 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_emails: {
+        Row: {
+          audience_counts: Json | null
+          blocks: Json
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          preheader: string | null
+          recipient_count: number
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          subject: string
+          total_recipients: number | null
+          updated_at: string
+        }
+        Insert: {
+          audience_counts?: Json | null
+          blocks?: Json
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          preheader?: string | null
+          recipient_count?: number
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          subject?: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Update: {
+          audience_counts?: Json | null
+          blocks?: Json
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          preheader?: string | null
+          recipient_count?: number
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          subject?: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_emails_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_emails_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_emails_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_emails_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3761,6 +3844,7 @@ export type Database = {
           center_bore: string | null
           created_at: string
           id: string
+          legacy_id: string | null
           legacy_submitted_by: string | null
           legacy_submitted_by_email: string | null
           manufacturer: string | null
@@ -3784,6 +3868,7 @@ export type Database = {
           center_bore?: string | null
           created_at?: string
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           manufacturer?: string | null
@@ -3807,6 +3892,7 @@ export type Database = {
           center_bore?: string | null
           created_at?: string
           id?: string
+          legacy_id?: string | null
           legacy_submitted_by?: string | null
           legacy_submitted_by_email?: string | null
           manufacturer?: string | null

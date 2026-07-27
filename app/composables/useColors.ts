@@ -37,17 +37,29 @@ export const useColors = () => {
     // colors.id is a uuid; the catch-all route param can be anything (e.g. /archive/colors/review),
     // and passing a non-uuid straight through throws 22P02 in Postgres.
     if (!UUID_RE.test(id)) return null;
-    // maybeSingle, not single — see the equivalent note in useWheels.getWheel: a
-    // uuid-shaped miss is expected for pre-migration links and shouldn't surface as
-    // a 406 API error.
-    const { data, error } = await supabase
+    // maybeSingle + legacy_id fallback — see the equivalent notes in
+    // useWheels.getWheel. Colours broke the same way on a later re-seed.
+    const { data: current, error } = await supabase
       .from('colors')
       .select('*')
       .eq('id', id)
       .eq('status', 'approved')
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) return null;
+
+    let data = current;
+    if (!data) {
+      const { data: legacy, error: legacyError } = await supabase
+        .from('colors')
+        .select('*')
+        .eq('legacy_id', id)
+        .eq('status', 'approved')
+        .maybeSingle();
+      if (legacyError || !legacy) return null;
+      data = legacy;
+    }
+
     const color = mapToColor(data);
     return {
       raw: color,
