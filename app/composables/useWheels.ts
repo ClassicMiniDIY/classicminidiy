@@ -87,9 +87,18 @@ export const useWheels = () => {
     // wheels.id is a uuid; the catch-all route param can be anything (including the 'noWheel'
     // fallback), and passing a non-uuid straight through throws 22P02 in Postgres.
     if (!UUID_RE.test(id)) return null;
-    const { data, error } = await supabase.from('wheels').select('*').eq('id', id).eq('status', 'approved').single();
+    // maybeSingle, not single: a well-formed uuid that matches no row is the COMMON
+    // case here — pre-migration deep links use ids the DynamoDB import never carried
+    // over. single() answers that with a 406 logged as an API error; maybeSingle()
+    // returns null data and no error, which is what a miss actually is.
+    const { data, error } = await supabase
+      .from('wheels')
+      .select('*')
+      .eq('id', id)
+      .eq('status', 'approved')
+      .maybeSingle();
 
-    if (error) return null;
+    if (error || !data) return null;
     return mapToWheel(data);
   };
 
