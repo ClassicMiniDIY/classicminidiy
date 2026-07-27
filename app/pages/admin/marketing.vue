@@ -662,6 +662,14 @@
   };
 
   onMounted(async () => {
+    // Allowlist guard: a non-allowlisted admin can reach this route (the
+    // global middleware only checks is_admin) but every action would 403 —
+    // bounce them back to the dashboard instead of showing a dead page.
+    const { check: checkMarketingAccess } = useMarketingAccess();
+    if (!(await checkMarketingAccess())) {
+      toast.add({ title: 'Not available', description: 'Marketing email access is restricted', color: 'warning' });
+      return navigateTo('/admin');
+    }
     await fetchEmails();
     // Resume progress polling if a send is mid-flight (e.g. page reload).
     if (activeSend.value) pollWhileSending(activeSend.value.id);
