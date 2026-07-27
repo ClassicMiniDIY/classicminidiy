@@ -84,6 +84,12 @@
                 User Management
               </NuxtLink>
             </li>
+            <li>
+              <NuxtLink to="/admin/marketing" active-class="active">
+                <i class="fas fa-envelope-open-text w-4"></i>
+                Marketing Email
+              </NuxtLink>
+            </li>
           </ul>
         </nav>
       </aside>
