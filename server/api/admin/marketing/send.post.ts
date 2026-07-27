@@ -23,9 +23,7 @@ export default defineEventHandler(async (event) => {
   const id = typeof body?.id === 'string' ? body.id : '';
   if (!id) throw createError({ statusCode: 400, statusMessage: 'id is required' });
 
-  // marketing_emails postdates the generated Database types — cast until
-  // `bun run gen:types` runs against the migrated schema.
-  const db = getServiceClient() as any;
+  const db = getServiceClient();
   const { data: draft, error: lookupError } = await db
     .from('marketing_emails')
     .select('id, subject, status')
