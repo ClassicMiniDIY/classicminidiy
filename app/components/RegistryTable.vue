@@ -23,6 +23,28 @@
     defaultPageSize: 10,
   });
 
+  const { user } = useAuth();
+
+  /**
+   * Owner edits go through the moderation queue rather than writing to
+   * registry_entries directly — the RLS UPDATE policy permits nothing on an
+   * approved entry by design, so an approved register entry can't be silently
+   * rewritten. SuggestEditModal already speaks `target_type: 'registry'`, and
+   * the admin approve handler applies the change to the target row.
+   *
+   * Only the owner sees this; ownership comes from the `submitted_by` column,
+   * set by the #65 backfill or by claiming.
+   */
+  const isOwner = (item: RegistryItem) => !!user.value && !!item.ownerId && item.ownerId === user.value.id;
+
+  const editingItem = ref<RegistryItem | null>(null);
+  const showSuggestEdit = ref(false);
+
+  const openSuggestEdit = (item: RegistryItem) => {
+    editingItem.value = item;
+    showSuggestEdit.value = true;
+  };
+
   // State
   const searchValue = ref('');
   const expanded = ref<string[]>([]);
@@ -281,6 +303,16 @@
                         <strong>{{ t('expanded_details.notes') }}</strong>
                         <div>{{ item.notes || t('no_data') }}</div>
                       </div>
+                      <div v-if="isOwner(item)" class="mt-2">
+                        <span class="badge badge-success badge-sm mr-2">
+                          <i class="fas fa-circle-check mr-1" aria-hidden="true"></i>
+                          {{ t('owner.yours') }}
+                        </span>
+                        <button type="button" class="btn btn-outline btn-xs" @click="openSuggestEdit(item)">
+                          <i class="fas fa-pen-to-square mr-1" aria-hidden="true"></i>
+                          {{ t('owner.suggest_edit') }}
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -339,6 +371,29 @@
         </div>
       </div>
     </div>
+
+    <SuggestEditModal
+      v-if="editingItem"
+      v-model="showSuggestEdit"
+      target-type="registry"
+      :target-id="editingItem.uniqueId"
+      :current-data="{
+        model: editingItem.model,
+        trim: editingItem.trim,
+        color: editingItem.color,
+        body_number: editingItem.bodyNum,
+        engine_number: editingItem.engineNum,
+        notes: editingItem.notes,
+      }"
+      :editable-fields="[
+        { key: 'model', label: t('owner.field_model'), type: 'text' },
+        { key: 'trim', label: t('owner.field_trim'), type: 'text' },
+        { key: 'color', label: t('owner.field_color'), type: 'text' },
+        { key: 'body_number', label: t('owner.field_body_number'), type: 'text' },
+        { key: 'engine_number', label: t('owner.field_engine_number'), type: 'text' },
+        { key: 'notes', label: t('owner.field_notes'), type: 'textarea' },
+      ]"
+    />
   </div>
 </template>
 
@@ -366,6 +421,16 @@
       "submitted_by": "Submitted by:",
       "notes": "Notes:"
     },
+    "owner": {
+      "yours": "Your entry",
+      "suggest_edit": "Suggest an edit",
+      "field_model": "Model",
+      "field_trim": "Trim",
+      "field_color": "Color",
+      "field_body_number": "Body number",
+      "field_engine_number": "Engine number",
+      "field_notes": "Notes"
+    },
     "no_items_found": "No items found",
     "no_data": "---"
   },
@@ -390,6 +455,16 @@
       "engine_number": "Motor-Nr.:",
       "submitted_by": "Eingereicht von:",
       "notes": "Notizen:"
+    },
+    "owner": {
+      "yours": "Ihr Eintrag",
+      "suggest_edit": "Änderung vorschlagen",
+      "field_model": "Modell",
+      "field_trim": "Ausstattung",
+      "field_color": "Farbe",
+      "field_body_number": "Karosserienummer",
+      "field_engine_number": "Motornummer",
+      "field_notes": "Notizen"
     },
     "no_items_found": "Keine Elemente gefunden",
     "no_data": "---"
@@ -416,6 +491,16 @@
       "submitted_by": "Enviado por:",
       "notes": "Notas:"
     },
+    "owner": {
+      "yours": "Su entrada",
+      "suggest_edit": "Sugerir un cambio",
+      "field_model": "Modelo",
+      "field_trim": "Acabado",
+      "field_color": "Color",
+      "field_body_number": "Número de carrocería",
+      "field_engine_number": "Número de motor",
+      "field_notes": "Notas"
+    },
     "no_items_found": "No se encontraron elementos",
     "no_data": "---"
   },
@@ -440,6 +525,16 @@
       "engine_number": "N° de moteur :",
       "submitted_by": "Soumis par :",
       "notes": "Notes :"
+    },
+    "owner": {
+      "yours": "Votre entrée",
+      "suggest_edit": "Suggérer une modification",
+      "field_model": "Modèle",
+      "field_trim": "Finition",
+      "field_color": "Couleur",
+      "field_body_number": "Numéro de caisse",
+      "field_engine_number": "Numéro de moteur",
+      "field_notes": "Notes"
     },
     "no_items_found": "Aucun élément trouvé",
     "no_data": "---"
@@ -466,6 +561,16 @@
       "submitted_by": "Inviato da:",
       "notes": "Note:"
     },
+    "owner": {
+      "yours": "La tua voce",
+      "suggest_edit": "Suggerisci una modifica",
+      "field_model": "Modello",
+      "field_trim": "Allestimento",
+      "field_color": "Colore",
+      "field_body_number": "Numero scocca",
+      "field_engine_number": "Numero motore",
+      "field_notes": "Note"
+    },
     "no_items_found": "Nessun elemento trovato",
     "no_data": "---"
   },
@@ -490,6 +595,16 @@
       "engine_number": "Nº do Motor:",
       "submitted_by": "Enviado por:",
       "notes": "Observações:"
+    },
+    "owner": {
+      "yours": "Sua entrada",
+      "suggest_edit": "Sugerir uma alteração",
+      "field_model": "Modelo",
+      "field_trim": "Acabamento",
+      "field_color": "Cor",
+      "field_body_number": "Número de carroceria",
+      "field_engine_number": "Número do motor",
+      "field_notes": "Notas"
     },
     "no_items_found": "Nenhum item encontrado",
     "no_data": "---"
@@ -516,6 +631,16 @@
       "submitted_by": "Отправлено:",
       "notes": "Примечания:"
     },
+    "owner": {
+      "yours": "Ваша запись",
+      "suggest_edit": "Предложить изменение",
+      "field_model": "Модель",
+      "field_trim": "Комплектация",
+      "field_color": "Цвет",
+      "field_body_number": "Номер кузова",
+      "field_engine_number": "Номер двигателя",
+      "field_notes": "Примечания"
+    },
     "no_items_found": "Элементы не найдены",
     "no_data": "---"
   },
@@ -540,6 +665,16 @@
       "engine_number": "エンジン番号:",
       "submitted_by": "投稿者:",
       "notes": "備考:"
+    },
+    "owner": {
+      "yours": "あなたの登録",
+      "suggest_edit": "修正を提案",
+      "field_model": "モデル",
+      "field_trim": "トリム",
+      "field_color": "カラー",
+      "field_body_number": "ボディ番号",
+      "field_engine_number": "エンジン番号",
+      "field_notes": "備考"
     },
     "no_items_found": "項目が見つかりません",
     "no_data": "---"
@@ -566,6 +701,16 @@
       "submitted_by": "提交者：",
       "notes": "备注："
     },
+    "owner": {
+      "yours": "您的记录",
+      "suggest_edit": "建议修改",
+      "field_model": "车型",
+      "field_trim": "内饰",
+      "field_color": "颜色",
+      "field_body_number": "车身编号",
+      "field_engine_number": "发动机编号",
+      "field_notes": "备注"
+    },
     "no_items_found": "未找到项目",
     "no_data": "---"
   },
@@ -590,6 +735,16 @@
       "engine_number": "엔진 번호:",
       "submitted_by": "제출자:",
       "notes": "참고사항:"
+    },
+    "owner": {
+      "yours": "내 항목",
+      "suggest_edit": "수정 제안",
+      "field_model": "모델",
+      "field_trim": "트림",
+      "field_color": "색상",
+      "field_body_number": "차체 번호",
+      "field_engine_number": "엔진 번호",
+      "field_notes": "메모"
     },
     "no_items_found": "항목을 찾을 수 없습니다",
     "no_data": "---"

@@ -1,4 +1,4 @@
-import type { RegistryItem } from '../../data/models/registry';
+import type { ClaimableRegistryEntry, RegistryItem } from '../../data/models/registry';
 
 /**
  * Columns read from `registry_entries` for the public register.
@@ -24,6 +24,11 @@ const REGISTRY_COLUMNS = [
   'build_date',
   'notes',
   'legacy_submitted_by',
+  // Ownership, not contact details: this is a profiles id, and it drives the
+  // "this entry is yours" affordance. Populated by the #65 phase-3 backfill for
+  // submitters whose email matched a confirmed account, and by claim_registry_entry
+  // for everyone who claims later.
+  'submitted_by',
   'status',
 ].join(', ');
 
@@ -43,6 +48,7 @@ export const useRegistry = () => {
     buildDate: row.build_date,
     notes: row.notes || '',
     submittedBy: row.legacy_submitted_by || '',
+    ownerId: row.submitted_by ?? null,
     // No submittedByEmail: the register never rendered it, and the column is no
     // longer readable by anon/authenticated. Admin surfaces read submitter
     // contact details from submission_queue via the service client instead.
@@ -80,5 +86,36 @@ export const useRegistry = () => {
     return data;
   };
 
-  return { listApproved, submitRegistryEntry };
+  /**
+   * Register entries this user can claim: ones whose recorded submitter email
+   * equals their CONFIRMED account email and that nobody owns yet.
+   *
+   * The RPC does the matching server-side and never returns the stored email —
+   * that column is service_role-only. It returns nothing for an unauthenticated
+   * or unconfirmed caller, so this is safe to call unconditionally after auth.
+   */
+  const listClaimable = async (): Promise<ClaimableRegistryEntry[]> => {
+    const { data, error } = await supabase.rpc('get_my_claimable_registry_entries');
+
+    // A logged-out visitor is the common case, not an error worth surfacing.
+    if (error) return [];
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      year: row.year,
+      model: row.model || '',
+      bodyNum: row.body_number || '',
+      submittedBy: row.submitted_by_name || '',
+    }));
+  };
+
+  /**
+   * Take ownership of an entry submitted from this user's confirmed address.
+   * The server re-checks the match; this cannot claim someone else's entry.
+   */
+  const claimEntry = async (entryId: string): Promise<void> => {
+    const { error } = await supabase.rpc('claim_registry_entry', { p_entry_id: entryId });
+    if (error) throw error;
+  };
+
+  return { listApproved, submitRegistryEntry, listClaimable, claimEntry };
 };
