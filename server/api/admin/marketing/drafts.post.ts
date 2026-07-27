@@ -22,9 +22,7 @@ export default defineEventHandler(async (event) => {
   const blocks = Array.isArray(body?.blocks) ? body.blocks : [];
   if (!subject) throw createError({ statusCode: 400, statusMessage: 'subject is required' });
 
-  // marketing_emails postdates the generated Database types — cast until
-  // `bun run gen:types` runs against the migrated schema.
-  const db = getServiceClient() as any;
+  const db = getServiceClient();
   const { data: row, error } = await db
     .from('marketing_emails')
     .insert({ subject, preheader, blocks, created_by: user.id })

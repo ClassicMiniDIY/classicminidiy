@@ -93,14 +93,13 @@ export const useMarketingEmail = () => {
   const fetchEmails = async () => {
     emailsLoading.value = true;
     try {
-      // marketing_emails is newer than the generated Database types — cast
-      // until `bun run gen:types` runs against the migrated schema.
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('marketing_emails')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      emails.value = (data as MarketingEmailRecord[]) || [];
+      // Generated Row types blocks as Json; the app-level type narrows it.
+      emails.value = (data as unknown as MarketingEmailRecord[]) || [];
     } catch (error: any) {
       console.error('Failed to load marketing emails:', error);
       toast.add({ title: 'Error', description: 'Failed to load marketing emails', color: 'error' });
@@ -229,9 +228,10 @@ export const useMarketingEmail = () => {
     let draftPolls = 0;
     pollTimer = setInterval(async () => {
       try {
-        const { data } = await (supabase as any).from('marketing_emails').select('*').eq('id', id).maybeSingle();
-        if (!data) return;
-        emails.value = emails.value.map((e) => (e.id === id ? (data as MarketingEmailRecord) : e));
+        const { data: row } = await supabase.from('marketing_emails').select('*').eq('id', id).maybeSingle();
+        if (!row) return;
+        const data = row as unknown as MarketingEmailRecord;
+        emails.value = emails.value.map((e) => (e.id === id ? data : e));
         if (data.status === 'draft') {
           if (++draftPolls >= 3) {
             stopPolling();

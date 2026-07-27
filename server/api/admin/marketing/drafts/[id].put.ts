@@ -25,9 +25,7 @@ export default defineEventHandler(async (event) => {
   }
   if (Array.isArray(body?.blocks)) updates.blocks = body.blocks;
 
-  // marketing_emails postdates the generated Database types — cast until
-  // `bun run gen:types` runs against the migrated schema.
-  const db = getServiceClient() as any;
+  const db = getServiceClient();
   const { data: row, error } = await db
     .from('marketing_emails')
     .update(updates)
