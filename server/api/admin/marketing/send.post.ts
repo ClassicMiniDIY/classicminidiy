@@ -19,8 +19,9 @@ import { callMarketingEdge } from '../../../utils/marketingEdge';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireMarketingAdmin(event);
-  const body = await readBody<{ id?: string }>(event);
+  const body = await readBody<{ id?: string; resume?: boolean }>(event);
   const id = typeof body?.id === 'string' ? body.id : '';
+  const resume = body?.resume === true;
   if (!id) throw createError({ statusCode: 400, statusMessage: 'id is required' });
 
   const db = getServiceClient();
@@ -34,14 +35,23 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to look up marketing email' });
   }
   if (!draft) throw createError({ statusCode: 404, statusMessage: 'Marketing email not found' });
-  if (draft.status !== 'draft') {
+  // A resume targets a stalled 'sending' row; a fresh send targets a draft.
+  // The edge fn enforces both transitions atomically (lease-guarded) — this
+  // is just the fast, friendly rejection.
+  if (!resume && draft.status !== 'draft') {
     throw createError({ statusCode: 429, statusMessage: `Marketing email is ${draft.status}, not draft` });
+  }
+  if (resume && draft.status !== 'sending') {
+    throw createError({
+      statusCode: 409,
+      statusMessage: `Only a stalled sending email can be resumed (status: ${draft.status})`,
+    });
   }
 
   // Audit intent BEFORE forwarding — the edge call may outlive this request.
   await db.from('admin_audit_log').insert({
     admin_id: user.id,
-    action: 'marketing_email_sent',
+    action: resume ? 'marketing_email_send_resumed' : 'marketing_email_sent',
     target_type: 'marketing_email',
     target_id: id,
     details: { subject: draft.subject },
@@ -49,7 +59,7 @@ export default defineEventHandler(async (event) => {
 
   let result: any;
   try {
-    result = await callMarketingEdge({ action: 'marketing_send', marketingEmailId: id, sentBy: user.id });
+    result = await callMarketingEdge({ action: 'marketing_send', marketingEmailId: id, sentBy: user.id, resume });
   } catch (error: any) {
     // Distinguish "edge rejected it" from "proxy gave up waiting". On a
     // timeout/abort the Deno loop keeps running — tell the client to poll.
