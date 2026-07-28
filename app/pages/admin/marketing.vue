@@ -8,12 +8,31 @@
     </div>
 
     <!-- Active send progress -->
-    <div v-if="activeSend" class="alert alert-info mb-6">
-      <span class="loading loading-spinner loading-sm"></span>
+    <div v-if="activeSend" class="alert mb-6" :class="stalledSend ? 'alert-warning' : 'alert-info'">
+      <span v-if="!stalledSend" class="loading loading-spinner loading-sm"></span>
+      <i v-else class="fas fa-triangle-exclamation"></i>
       <span>
-        Sending "{{ activeSend.subject }}" — {{ activeSend.recipient_count }}/{{ activeSend.total_recipients ?? '?' }}
-        delivered
+        <template v-if="stalledSend">
+          Send of "{{ activeSend.subject }}" stalled at {{ activeSend.recipient_count }}/{{
+            activeSend.total_recipients ?? '?'
+          }}
+          — resume to deliver the rest (no one gets it twice).
+        </template>
+        <template v-else>
+          Sending "{{ activeSend.subject }}" — {{ activeSend.recipient_count }}/{{ activeSend.total_recipients ?? '?' }}
+          delivered
+        </template>
       </span>
+      <button
+        v-if="stalledSend"
+        class="btn btn-sm btn-warning"
+        :disabled="sending"
+        @click="handleResume(activeSend.id)"
+      >
+        <span v-if="sending" class="loading loading-spinner loading-xs"></span>
+        <i v-else class="fas fa-rotate-right"></i>
+        Resume send
+      </button>
     </div>
 
     <div class="grid lg:grid-cols-2 gap-6 mb-8 items-start">
@@ -455,7 +474,21 @@
     sendTest,
     sendMarketingEmail,
     pollWhileSending,
+    isStalled,
   } = useMarketingEmail();
+
+  // Stalled-send detection re-evaluates on a slow tick (isStalled compares
+  // the lease against wall-clock time, which isn't reactive by itself).
+  const stalledTick = ref(0);
+  let stalledTimer: ReturnType<typeof setInterval> | null = null;
+  const stalledSend = computed(() => {
+    void stalledTick.value;
+    return isStalled(activeSend.value) ? activeSend.value : null;
+  });
+
+  const handleResume = async (id: string) => {
+    await sendMarketingEmail(id, { resume: true });
+  };
 
   // Editor state. Blocks carry a local `key` for draggable identity — stripped
   // before anything is sent to the server.
@@ -673,5 +706,10 @@
     await fetchEmails();
     // Resume progress polling if a send is mid-flight (e.g. page reload).
     if (activeSend.value) pollWhileSending(activeSend.value.id);
+    stalledTimer = setInterval(() => stalledTick.value++, 30_000);
+  });
+
+  onBeforeUnmount(() => {
+    if (stalledTimer) clearInterval(stalledTimer);
   });
 </script>

@@ -40,6 +40,7 @@ export interface MarketingEmailRecord {
   sent_by: string | null;
   sent_at: string | null;
   error_message: string | null;
+  send_lease_expires_at: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -89,6 +90,13 @@ export const useMarketingEmail = () => {
   const drafts = computed(() => emails.value.filter((e) => e.status === 'draft'));
   const history = computed(() => emails.value.filter((e) => e.status !== 'draft'));
   const activeSend = computed(() => emails.value.find((e) => e.status === 'sending') ?? null);
+  /** A send whose isolate died: still 'sending' but its lease has lapsed
+   *  (with a minute of grace for the auto-handoff to re-claim). */
+  const isStalled = (e: MarketingEmailRecord | null): boolean =>
+    !!e &&
+    e.status === 'sending' &&
+    !!e.send_lease_expires_at &&
+    Date.now() - new Date(e.send_lease_expires_at).getTime() > 60_000;
 
   const fetchEmails = async () => {
     emailsLoading.value = true;
@@ -255,13 +263,23 @@ export const useMarketingEmail = () => {
     }, 5000);
   };
 
-  const sendMarketingEmail = async (id: string): Promise<boolean> => {
+  const sendMarketingEmail = async (id: string, opts: { resume?: boolean } = {}): Promise<boolean> => {
     sending.value = true;
+    // Immediate feedback — the actual send can run for minutes edge-side.
+    toast.add({
+      title: opts.resume ? 'Resuming send' : 'Send started',
+      description: 'Delivery runs in the background — progress updates below.',
+      color: 'info',
+    });
     try {
-      const result = await $adminFetch<any>('/api/admin/marketing/send', { method: 'POST', body: { id } });
+      const result = await $adminFetch<any>('/api/admin/marketing/send', {
+        method: 'POST',
+        body: { id, resume: !!opts.resume },
+      });
       await fetchEmails();
-      if (result?.polling || emails.value.find((e) => e.id === id)?.status === 'sending') {
-        // Proxy timed out (or send still running) — the edge loop continues.
+      if (result?.polling || result?.handedOff || emails.value.find((e) => e.id === id)?.status === 'sending') {
+        // Proxy timed out, or the edge fn handed off to a fresh isolate —
+        // either way the send continues server-side; watch the row.
         pollWhileSending(id);
         return true;
       }
@@ -278,7 +296,7 @@ export const useMarketingEmail = () => {
       sending.value = false;
       const status = error?.statusCode || error?.response?.status;
       toast.add({
-        title: status === 429 ? 'Already sent' : 'Send failed',
+        title: status === 429 ? 'Already sent' : status === 409 ? 'Nothing to resume' : 'Send failed',
         description: error?.data?.message || 'Failed to send marketing email',
         color: 'error',
       });
@@ -295,6 +313,7 @@ export const useMarketingEmail = () => {
     drafts,
     history,
     activeSend,
+    isStalled,
     previewHtml,
     previewLoading,
     audience,
