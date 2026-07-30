@@ -285,8 +285,14 @@
   useHead({
     title: t('title'),
     meta: [{ key: 'description', name: 'description', content: t('description') }],
-    link: [{ rel: 'canonical', href: 'https://www.classicminidiy.com/archive/documents' }],
   });
+
+  // `?type=manual|advert|catalogue|tuning|electrical` are the targets of the legacy
+  // /archive/{manuals,adverts,…} 301s in nuxt.config, so they're linked from the
+  // outside and must stay INDEXABLE — they're the real landing pages for those
+  // sections, not throwaway filters. Search and any other param collapses onto the
+  // type-scoped canonical. Replaces a hardcoded canonical that ignored the filter.
+  useFacetedSeo('/archive/documents', { indexableParams: ['type', 'page'] });
 
   useSeoMeta({
     ogTitle: t('title'),

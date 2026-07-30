@@ -152,6 +152,9 @@
     twitterCard: 'summary_large_image',
   });
 
+  // Category/condition/budget/country/sort permutations are near-duplicates.
+  useFacetedSeo('/exchange/wanted');
+
   // Filter and search state
   const searchQuery = ref('');
   const filterCategory = ref('');
@@ -254,13 +257,18 @@
     loadPosts();
   });
 
-  // Initial load and analytics
+  // Initial load runs during SSR so crawlers get real wanted-post content and links
+  // rather than an empty list. `wantedPosts` is useState-backed, so it serialises
+  // into the payload and hydrates without a refetch. Analytics stays client-only.
+  await useAsyncData('wanted-index-initial', async () => {
+    await loadPosts();
+    return true;
+  });
+
   onMounted(() => {
-    loadPosts().then(() => {
-      capture('wanted_browse_viewed', {
-        total_results: totalCount.value,
-        page: currentPage.value,
-      });
+    capture('wanted_browse_viewed', {
+      total_results: totalCount.value,
+      page: currentPage.value,
     });
   });
 </script>

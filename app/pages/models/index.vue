@@ -115,6 +115,10 @@
     ogDescription: 'Mini-specific 3D-printable parts with print settings, hardware lists, and assembly guides.',
     ogType: 'website',
   });
+
+  // ?category / ?pricing / ?source / ?q / ?sort are filters over one collection —
+  // only ?page stays indexable. See app/composables/useFacetedSeo.ts.
+  useFacetedSeo('/models');
 </script>
 
 <template>
