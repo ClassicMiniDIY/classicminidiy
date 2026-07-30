@@ -1,7 +1,5 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
-  import { torqueFaqs } from '~/utils/geo/generateFaqs';
-  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { trackSearch, track } = useAnalytics();
@@ -103,22 +101,18 @@
     },
   }));
 
-  // FAQPage JSON-LD (structured data only — no visible block). The Q&As are derived
-  // from the torque tables already rendered on the page, so the schema reflects
-  // on-page content; it's metadata for AI engines, not a human-facing UX surface.
-  const torqueFaqList = torqueFaqs();
-  const torqueFaqNode = buildFaqPage(torqueFaqList);
-
-  // Add JSON-LD structured data to head
+  // No FAQPage JSON-LD here by design. Google requires FAQ markup to match content
+  // that is VISIBLE on the page, and a visible Q&A block was judged to add nothing
+  // for human readers on a page that is already a spec table. Rather than ship
+  // markup without its on-page counterpart, the generated Q&As go to the
+  // machine-readable channel only: /llms-full.txt, via server/plugins/llms-faq.ts.
+  // Don't re-add FAQPage schema unless the questions are also rendered.
   useHead({
     script: [
       {
         type: 'application/ld+json',
         innerHTML: () => JSON.stringify(torqueSpecsJsonLd.value),
       },
-      ...(torqueFaqNode
-        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(torqueFaqNode) }]
-        : []),
     ],
   });
 

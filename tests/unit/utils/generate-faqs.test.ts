@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  torqueFaqs,
-  clearanceFaqs,
-  engineCodeFaqs,
-  chassisFaqs,
-} from '~/app/utils/geo/generateFaqs';
-import { buildFaqPage } from '~/app/utils/schema/faqPage';
+import { torqueFaqs, clearanceFaqs, engineCodeFaqs, chassisFaqs } from '~/app/utils/geo/generateFaqs';
 
 describe('torqueFaqs', () => {
   const faqs = torqueFaqs();
@@ -71,16 +65,5 @@ describe('chassisFaqs', () => {
   });
 });
 
-describe('buildFaqPage', () => {
-  it('maps Q&As into a valid FAQPage graph', () => {
-    const node = buildFaqPage([{ q: 'Q1?', a: 'A1.' }]);
-    expect(node).toMatchObject({
-      '@type': 'FAQPage',
-      mainEntity: [{ '@type': 'Question', name: 'Q1?', acceptedAnswer: { '@type': 'Answer', text: 'A1.' } }],
-    });
-  });
-  it('drops blank entries and returns null when empty', () => {
-    expect(buildFaqPage([{ q: '  ', a: '' }])).toBeNull();
-    expect(buildFaqPage([])).toBeNull();
-  });
-});
+// NOTE: `buildFaqPage` and its tests were removed along with the FAQPage JSON-LD.
+// These generators now feed /llms-full.txt only — see the header of generateFaqs.ts.

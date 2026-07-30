@@ -1,8 +1,6 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
   import { chassisRanges } from '../../../data/models/decoders';
-  import { chassisFaqs } from '~/utils/geo/generateFaqs';
-  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { capture } = usePostHog();
@@ -175,21 +173,14 @@
     },
   };
 
-  // FAQPage JSON-LD only (no visible block) — answer surface for AI engines, derived
-  // from the chassis-range data the decoder already presents on the page.
-  const chassisFaqList = chassisFaqs();
-  const chassisFaqNode = buildFaqPage(chassisFaqList);
-
-  // Add JSON-LD structured data to head
+  // No FAQPage JSON-LD — see the note on technical/torque.vue. The generated Q&As
+  // reach machines via /llms-full.txt (server/plugins/llms-faq.ts) instead.
   useHead({
     script: [
       {
         type: 'application/ld+json',
         innerHTML: JSON.stringify(decoderJsonLd),
       },
-      ...(chassisFaqNode
-        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(chassisFaqNode) }]
-        : []),
     ],
   });
 
@@ -446,7 +437,13 @@
               target="_blank"
               rel="noopener noreferrer"
               class="link link-primary"
-              @click="trackOutbound({ destination: 'https://www.minimania.com/Mini_Chassis_VIN_and_Commission_Numbers__Part_I__Revised_', group: 'reference', label: 'mini_mania' })"
+              @click="
+                trackOutbound({
+                  destination: 'https://www.minimania.com/Mini_Chassis_VIN_and_Commission_Numbers__Part_I__Revised_',
+                  group: 'reference',
+                  label: 'mini_mania',
+                })
+              "
             >
               {{ t('attribution.link_text') }}</a
             >
