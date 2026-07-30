@@ -1,9 +1,14 @@
 /**
  * Single source of truth for AI crawler user-agent policy.
  *
- * Imported by the robots config (nuxt.config.ts) and — in later GEO phases — by
- * the bot-analytics middleware and the Vercel WAF runbook, so robots, edge rules,
- * and analytics never drift.
+ * Three surfaces consume this file and must never disagree:
+ *   1. **robots.txt** — `robots.groups` in nuxt.config.ts (advisory).
+ *   2. **Vercel WAF** — the "Block AI Training Crawlers" custom rule (enforcing).
+ *      Its regex is NOT read from here at runtime; it lives in the Vercel console,
+ *      so `WAF_DENY_REGEX` below is the canonical string to paste in, and
+ *      `tests/unit/server/utils/aiBots.test.ts` pins it. Runbook:
+ *      `docs/runbooks/2026-07-30-ai-crawler-firewall.md`.
+ *   3. **Analytics** — `matchBot()` in server/middleware/bot-analytics.ts.
  *
  * Policy (decided 2026-06-14): ALLOW the live answer/search bots that drive
  * citations + referral traffic; DISALLOW the bulk training crawlers.
@@ -24,21 +29,51 @@ export const AI_ANSWER_BOTS = [
 ] as const;
 
 /**
- * Bulk training / dataset crawlers — DISALLOWED in robots. The ones that send a
- * distinguishable user-agent are additionally hard-blocked at the edge (Vercel WAF,
- * Phase 3). Google-Extended / Applebot-Extended are training-PERMISSION tokens, not
- * crawlers — robots-only (no separate UA hits the edge).
+ * Training-PERMISSION tokens. These are not crawlers and never hit the edge — they
+ * exist only so a site can opt out of a vendor's model training via robots.txt.
+ * Blocking them at the WAF would be a no-op, so they are deliberately absent from
+ * `EDGE_DENY_BOTS`. (Blocking Google-Extended opts out of Gemini training WITHOUT
+ * removing the site from AI Overviews, which uses the normal Googlebot index.)
  */
-export const AI_TRAINING_BOTS = [
-  'GPTBot',
-  'ClaudeBot',
-  'anthropic-ai',
-  'CCBot',
-  'Google-Extended',
-  'Applebot-Extended',
-  'Bytespider',
-  'Meta-ExternalAgent',
+export const AI_TRAINING_PERMISSION_TOKENS = ['Google-Extended', 'Applebot-Extended'] as const;
+
+/**
+ * Bulk training / dataset crawlers that send a real, distinguishable user-agent.
+ * These are Disallowed in robots.txt AND hard-denied at the edge by the Vercel WAF
+ * rule — robots is advisory and these are precisely the crawlers most likely to
+ * ignore it.
+ */
+export const EDGE_DENY_BOTS = [
+  'GPTBot', // OpenAI model-training crawler (distinct from OAI-SearchBot)
+  'ClaudeBot', // Anthropic training crawler (distinct from Claude-User/-SearchBot)
+  'anthropic-ai', // legacy Anthropic crawler token
+  'CCBot', // Common Crawl — feeds most public training corpora
+  'Bytespider', // ByteDance/TikTok training crawler; ignores robots in the wild
+  'Meta-ExternalAgent', // Meta training/dataset crawler
+  'Diffbot', // commercial web-data extraction / knowledge-graph crawler
+  'Omgilibot', // Omgili / webz.io — resells scraped web data as LLM training sets
+  'ImagesiftBot', // ImageSift (Hive AI) — bulk image dataset crawler
 ] as const;
+
+/**
+ * Everything DISALLOWED in robots.txt: the edge-denied crawlers plus the
+ * permission-only tokens. Kept as one list because robots.txt makes no distinction —
+ * only the WAF does.
+ *
+ * NOTE: Diffbot / Omgilibot / ImagesiftBot were denied at the edge from day one but
+ * were missing here until 2026-07-30, so robots.txt never told them to stay away and
+ * `matchBot()` couldn't classify them in `bot_crawl` analytics. Keep the two lists
+ * reconciled — that gap is exactly what this file exists to prevent.
+ */
+export const AI_TRAINING_BOTS = [...EDGE_DENY_BOTS, ...AI_TRAINING_PERMISSION_TOKENS] as const;
+
+/**
+ * The canonical regex body for the Vercel WAF "Block AI Training Crawlers" custom
+ * rule (condition: `User-Agent` matches regex). The console holds a COPY — changing
+ * this list does not change production until someone updates the rule, which is what
+ * the runbook and `tests/unit/server/utils/aiBots.test.ts` are there to force.
+ */
+export const WAF_DENY_REGEX = `(${EDGE_DENY_BOTS.join('|')})`;
 
 /** Standard search engines — left under the default `*` rules; listed for analytics. */
 export const SEARCH_BOTS = ['Googlebot', 'Bingbot', 'DuckDuckBot', 'Applebot', 'Amazonbot'] as const;
