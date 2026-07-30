@@ -18,6 +18,13 @@
   const contributions = contributionsResult.data;
   const stats = statsResult.data;
 
+  // The page had a "Contributor Not Found" branch that still answered HTTP 200, so
+  // every scraped or guessed user id became an indexable near-duplicate. Make it a
+  // real 404 — the visible not-found branch stays for client-side navigation.
+  if (!profile.value) {
+    throw createError({ statusCode: 404, statusMessage: 'Contributor not found', fatal: true });
+  }
+
   if (profile.value) {
     track('contributor_profile_viewed', { contributor_user_id: userId });
   }

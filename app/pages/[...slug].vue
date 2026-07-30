@@ -22,6 +22,16 @@
     return result || null;
   });
 
+  // This is the site-wide catch-all: ANY path that matches no other route lands
+  // here. Without this throw it answered 200 for every unknown URL on the domain
+  // (`<title>undefined - Classic Mini Archive</title>` + a self-referencing
+  // canonical), which is an unbounded soft-404 space — Google indexes the junk,
+  // burns crawl budget on it, and flags the site in Search Console. Every miss
+  // must be a real 404.
+  if (!currentPostData.value) {
+    throw createError({ statusCode: 404, statusMessage: 'Archive document not found', fatal: true });
+  }
+
   // Provide default values and handle potential undefined values
   const archiveType = determineArchiveType(path) || 'unknown';
   const fileType = currentPostData.value?.download?.split('.')?.pop() || 'unknown';
@@ -75,19 +85,26 @@
     ],
   });
 
+  // Share image must always be a non-empty STRING — see the "SEO / Head Invariants"
+  // note in CLAUDE.md: unhead coerces '' to boolean `true` and nuxt-og-image's
+  // afterResolve hook then calls .replaceAll() on it, 500ing the whole SSR render.
+  const shareImage = computed(
+    () => currentPostData.value?.image || 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg'
+  );
+
   await useSeoMeta({
     ogTitle: `${currentPostData.value?.title} ${$t('seo.og_title_suffix')}`,
     ogDescription:
       currentPostData.value?.description || $t('seo.description_fallback', { title: currentPostData.value?.title }),
     ogUrl: `https://www.classicminidiy.com${fullPath}`,
-    ogImage: currentPostData.value?.image,
+    ogImage: () => shareImage.value,
     ogType: 'article',
     author: currentPostData.value?.author,
     twitterCard: 'summary_large_image',
     twitterTitle: `${currentPostData.value?.title} ${$t('seo.twitter_title_suffix')}`,
     twitterDescription:
       currentPostData.value?.description || $t('seo.description_fallback', { title: currentPostData.value?.title }),
-    twitterImage: currentPostData.value?.image,
+    twitterImage: () => shareImage.value,
   });
 
   // Add structured data for the archive item

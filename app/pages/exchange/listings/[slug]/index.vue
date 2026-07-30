@@ -1098,6 +1098,18 @@
   listing.value = fetchedListing.value;
   loading.value = !fetchedListing.value;
 
+  // An SSR miss is either a genuinely dead slug (sold/expired/deleted — constant on a
+  // marketplace) or a PENDING listing whose RLS row only the signed-in owner can read;
+  // SSR has no session, so the two look identical here. We can't `createError` — that
+  // would break the owner landing on their own just-created listing (the onMounted
+  // retry below is what recovers it). So instead: send a real 404 status and noindex
+  // the response, while still rendering the page so the client retry can succeed.
+  // Crawlers see 404 + noindex; the owner still gets their listing after hydration.
+  if (!fetchedListing.value) {
+    if (import.meta.server) setResponseStatus(useRequestEvent()!, 404);
+    useSeoMeta({ robots: 'noindex, nofollow' });
+  }
+
   // Set SEO metadata reactively (runs during SSR for social media crawlers)
   const siteUrl = config.public.siteUrl || 'https://www.classicminidiy.com';
 

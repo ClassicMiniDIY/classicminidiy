@@ -19,6 +19,13 @@
     return result || null;
   });
 
+  // Dead slugs answered 200 with an empty `<title> - Classic Mini Archive</title>`.
+  // 320 document URLs are in the sitemap, so stale/renamed slugs are a live risk —
+  // they must 404, matching how the wheel and colour detail routes already behave.
+  if (!doc.value) {
+    throw createError({ statusCode: 404, statusMessage: 'Document not found', fatal: true });
+  }
+
   // Fetch all collections for the suggest-edit dropdown
   const { data: collections } = await useAsyncData('archive-document-collections', () => listCollections(), {
     default: () => [],
