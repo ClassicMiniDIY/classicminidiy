@@ -81,7 +81,7 @@
                 <p class="text-sm text-base-content/70 line-clamp-1">{{ listing.title }}</p>
 
                 <div class="mt-2">
-                  <div class="text-lg font-bold text-success">
+                  <div v-if="hasDisclosedPrice(listing)" class="text-lg font-bold text-success">
                     {{
                       formatListingPrice(
                         getSoldPrice(listing),
@@ -89,13 +89,33 @@
                       )
                     }}
                   </div>
+                  <template v-else>
+                    <div class="text-base font-semibold text-base-content/70">
+                      {{
+                        t('price.asked', {
+                          amount: formatListingPrice(
+                            getSoldPrice(listing),
+                            formatCurrency(getSoldPrice(listing), getListingCurrency(listing))
+                          ),
+                        })
+                      }}
+                    </div>
+                    <div class="text-xs text-base-content/50">{{ t('price.notDisclosed') }}</div>
+                  </template>
                   <div
-                    v-if="getConvertedPrice(listing) && getSoldPrice(listing) !== 0"
+                    v-if="hasDisclosedPrice(listing) && getConvertedPrice(listing) && getSoldPrice(listing) !== 0"
                     class="text-xs text-base-content/60"
                   >
-                    {{ t('price.about', { amount: formatCurrency(getConvertedPrice(listing)!, userCurrency), currency: userCurrency }) }}
+                    {{
+                      t('price.about', {
+                        amount: formatCurrency(getConvertedPrice(listing)!, userCurrency),
+                        currency: userCurrency,
+                      })
+                    }}
                   </div>
-                  <div class="text-xs text-base-content/60">{{ t('price.soldOn', { date: formatSoldDate(listing.sold_date) }) }}</div>
+                  <div class="text-xs text-base-content/60">
+                    {{ t('price.soldOn', { date: formatSoldDate(listing.sold_date) }) }}
+                  </div>
                 </div>
 
                 <div v-if="displayLocation(listing)" class="mt-2">
@@ -134,12 +154,19 @@
     description: () => t('seo.description'),
     ogTitle: () => t('seo.title'),
     ogDescription: () => t('seo.description'),
-    robots: 'noindex, follow',
   });
 
-  useHead({
-    link: [{ rel: 'canonical', href: 'https://www.classicminidiy.com/exchange/sold' }],
-  });
+  // The `robots: 'noindex, follow'` that used to sit above was inherited verbatim when
+  // this page was ported from The Mini Exchange (Stage 3 of the consolidation) — it was
+  // never a CMDIY decision, and it was suppressing the one marketplace surface with
+  // durable organic value. Unlike live listings, which sell and go stale, a sold
+  // archive only accumulates: "what did a Cooper S actually go for" is a real,
+  // high-intent query and nobody else answers it for Classic Minis.
+  //
+  // Search and sort permutations are still near-duplicates of the archive itself, so
+  // only pagination stays indexable. Also replaces a hardcoded canonical that ignored
+  // the query string entirely.
+  useFacetedSeo('/exchange/sold');
 
   const supabase = useSupabase();
   const { getPhotoUrl } = useListings();
@@ -159,6 +186,22 @@
     const finalPrice = (listing as any).final_price;
     if (finalPrice !== null && finalPrice !== undefined) return finalPrice;
     return listing.price;
+  };
+
+  /**
+   * Whether the seller actually disclosed what it sold for.
+   *
+   * This matters more than it looks. `getSoldPrice()` falls back to the ASKING price
+   * when `final_price` is null, and until the mark-as-sold dialog started capturing a
+   * price nothing ever set that column — so the archive was rendering asking prices
+   * styled as sale prices. That was survivable while the page was noindex; now that it
+   * is indexed and the figure feeds Product/Offer schema, presenting an asking price as
+   * a transaction price would be actively misleading. Label the two differently.
+   */
+  const hasDisclosedPrice = (listing: ListingWithPhotos): boolean => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const finalPrice = (listing as any).final_price;
+    return finalPrice !== null && finalPrice !== undefined;
   };
 
   // Get converted price for a listing
@@ -308,9 +351,19 @@
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   });
 
-  // Initial load
+  // Initial load runs during SSR so the archive ships real, crawlable sold entries
+  // instead of an empty shell. This page is now indexable (see the SEO block above),
+  // which only means anything if a crawler can actually see the listings. `listings`
+  // is a plain ref populated inside useAsyncData, so it serialises into the payload
+  // and the client hydrates against identical markup rather than refetching.
+  await useAsyncData('sold-index-initial', async () => {
+    await performSearch();
+    return true;
+  });
+
+  // Currency conversion is a client concern (it reads the visitor's locale/currency)
+  // and must not gate the SSR render.
   onMounted(() => {
-    performSearch();
     fetchExchangeRates();
   });
 </script>
@@ -318,114 +371,474 @@
 <i18n lang="json">
 {
   "en": {
-    "seo": { "title": "Sold Listings Archive - The Mini Exchange", "description": "Browse previously sold Classic Mini listings. Research past prices for vehicles, engines, and parts." },
-    "header": { "title": "Sold Listings Archive", "subtitle": "Browse {count} sold listings for market research" },
-    "search": { "placeholder": "Search sold listings..." },
-    "results": { "searching": "Searching...", "showing": "Showing {shown} of {total} sold listings", "none": "No sold listings found" },
-    "sort": { "ariaLabel": "Sort sold listings", "newest": "Recently Sold", "oldest": "Oldest First", "priceDesc": "Highest Price", "priceAsc": "Lowest Price" },
-    "badge": { "sold": "SOLD" },
-    "price": { "about": "About {amount} in {currency}", "soldOn": "Sold {date}" },
-    "empty": { "title": "No Sold Listings Found", "body": "Try adjusting your search to see more results.", "clear": "Clear Search" },
-    "date": { "unknown": "Unknown date", "today": "Today", "yesterday": "Yesterday", "daysAgo": "{count} days ago", "weeksAgo": "{count} weeks ago", "monthsAgo": "{count} months ago" }
+    "seo": {
+      "title": "Sold Listings Archive - The Mini Exchange",
+      "description": "Browse previously sold Classic Mini listings. Research past prices for vehicles, engines, and parts."
+    },
+    "header": {
+      "title": "Sold Listings Archive",
+      "subtitle": "Browse {count} sold listings for market research"
+    },
+    "search": {
+      "placeholder": "Search sold listings..."
+    },
+    "results": {
+      "searching": "Searching...",
+      "showing": "Showing {shown} of {total} sold listings",
+      "none": "No sold listings found"
+    },
+    "sort": {
+      "ariaLabel": "Sort sold listings",
+      "newest": "Recently Sold",
+      "oldest": "Oldest First",
+      "priceDesc": "Highest Price",
+      "priceAsc": "Lowest Price"
+    },
+    "badge": {
+      "sold": "SOLD"
+    },
+    "price": {
+      "about": "About {amount} in {currency}",
+      "soldOn": "Sold {date}",
+      "asked": "Asked {amount}",
+      "notDisclosed": "Sale price not disclosed"
+    },
+    "empty": {
+      "title": "No Sold Listings Found",
+      "body": "Try adjusting your search to see more results.",
+      "clear": "Clear Search"
+    },
+    "date": {
+      "unknown": "Unknown date",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count} days ago",
+      "weeksAgo": "{count} weeks ago",
+      "monthsAgo": "{count} months ago"
+    }
   },
   "es": {
-    "seo": { "title": "Archivo de anuncios vendidos - The Mini Exchange", "description": "Explora anuncios de Classic Mini vendidos anteriormente. Investiga precios pasados de vehículos, motores y piezas." },
-    "header": { "title": "Archivo de anuncios vendidos", "subtitle": "Explora {count} anuncios vendidos para estudios de mercado" },
-    "search": { "placeholder": "Buscar anuncios vendidos..." },
-    "results": { "searching": "Buscando...", "showing": "Mostrando {shown} de {total} anuncios vendidos", "none": "No se encontraron anuncios vendidos" },
-    "sort": { "ariaLabel": "Ordenar anuncios vendidos", "newest": "Vendidos recientemente", "oldest": "Más antiguos primero", "priceDesc": "Precio más alto", "priceAsc": "Precio más bajo" },
-    "badge": { "sold": "VENDIDO" },
-    "price": { "about": "Aproximadamente {amount} en {currency}", "soldOn": "Vendido {date}" },
-    "empty": { "title": "No se encontraron anuncios vendidos", "body": "Intenta ajustar tu búsqueda para ver más resultados.", "clear": "Borrar búsqueda" },
-    "date": { "unknown": "Fecha desconocida", "today": "Hoy", "yesterday": "Ayer", "daysAgo": "hace {count} días", "weeksAgo": "hace {count} semanas", "monthsAgo": "hace {count} meses" }
+    "seo": {
+      "title": "Archivo de anuncios vendidos - The Mini Exchange",
+      "description": "Explora anuncios de Classic Mini vendidos anteriormente. Investiga precios pasados de vehículos, motores y piezas."
+    },
+    "header": {
+      "title": "Archivo de anuncios vendidos",
+      "subtitle": "Explora {count} anuncios vendidos para estudios de mercado"
+    },
+    "search": {
+      "placeholder": "Buscar anuncios vendidos..."
+    },
+    "results": {
+      "searching": "Buscando...",
+      "showing": "Mostrando {shown} de {total} anuncios vendidos",
+      "none": "No se encontraron anuncios vendidos"
+    },
+    "sort": {
+      "ariaLabel": "Ordenar anuncios vendidos",
+      "newest": "Vendidos recientemente",
+      "oldest": "Más antiguos primero",
+      "priceDesc": "Precio más alto",
+      "priceAsc": "Precio más bajo"
+    },
+    "badge": {
+      "sold": "VENDIDO"
+    },
+    "price": {
+      "about": "Aproximadamente {amount} en {currency}",
+      "soldOn": "Vendido {date}",
+      "asked": "Pedía {amount}",
+      "notDisclosed": "Precio de venta no revelado"
+    },
+    "empty": {
+      "title": "No se encontraron anuncios vendidos",
+      "body": "Intenta ajustar tu búsqueda para ver más resultados.",
+      "clear": "Borrar búsqueda"
+    },
+    "date": {
+      "unknown": "Fecha desconocida",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "daysAgo": "hace {count} días",
+      "weeksAgo": "hace {count} semanas",
+      "monthsAgo": "hace {count} meses"
+    }
   },
   "fr": {
-    "seo": { "title": "Archive des annonces vendues - The Mini Exchange", "description": "Parcourez les annonces de Classic Mini déjà vendues. Recherchez les prix passés des véhicules, moteurs et pièces." },
-    "header": { "title": "Archive des annonces vendues", "subtitle": "Parcourez {count} annonces vendues pour vos études de marché" },
-    "search": { "placeholder": "Rechercher des annonces vendues..." },
-    "results": { "searching": "Recherche...", "showing": "Affichage de {shown} sur {total} annonces vendues", "none": "Aucune annonce vendue trouvée" },
-    "sort": { "ariaLabel": "Trier les annonces vendues", "newest": "Vendues récemment", "oldest": "Les plus anciennes d'abord", "priceDesc": "Prix le plus élevé", "priceAsc": "Prix le plus bas" },
-    "badge": { "sold": "VENDU" },
-    "price": { "about": "Environ {amount} en {currency}", "soldOn": "Vendu {date}" },
-    "empty": { "title": "Aucune annonce vendue trouvée", "body": "Essayez d'ajuster votre recherche pour voir plus de résultats.", "clear": "Effacer la recherche" },
-    "date": { "unknown": "Date inconnue", "today": "Aujourd'hui", "yesterday": "Hier", "daysAgo": "il y a {count} jours", "weeksAgo": "il y a {count} semaines", "monthsAgo": "il y a {count} mois" }
+    "seo": {
+      "title": "Archive des annonces vendues - The Mini Exchange",
+      "description": "Parcourez les annonces de Classic Mini déjà vendues. Recherchez les prix passés des véhicules, moteurs et pièces."
+    },
+    "header": {
+      "title": "Archive des annonces vendues",
+      "subtitle": "Parcourez {count} annonces vendues pour vos études de marché"
+    },
+    "search": {
+      "placeholder": "Rechercher des annonces vendues..."
+    },
+    "results": {
+      "searching": "Recherche...",
+      "showing": "Affichage de {shown} sur {total} annonces vendues",
+      "none": "Aucune annonce vendue trouvée"
+    },
+    "sort": {
+      "ariaLabel": "Trier les annonces vendues",
+      "newest": "Vendues récemment",
+      "oldest": "Les plus anciennes d'abord",
+      "priceDesc": "Prix le plus élevé",
+      "priceAsc": "Prix le plus bas"
+    },
+    "badge": {
+      "sold": "VENDU"
+    },
+    "price": {
+      "about": "Environ {amount} en {currency}",
+      "soldOn": "Vendu {date}",
+      "asked": "Demandait {amount}",
+      "notDisclosed": "Prix de vente non communiqué"
+    },
+    "empty": {
+      "title": "Aucune annonce vendue trouvée",
+      "body": "Essayez d'ajuster votre recherche pour voir plus de résultats.",
+      "clear": "Effacer la recherche"
+    },
+    "date": {
+      "unknown": "Date inconnue",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "daysAgo": "il y a {count} jours",
+      "weeksAgo": "il y a {count} semaines",
+      "monthsAgo": "il y a {count} mois"
+    }
   },
   "de": {
-    "seo": { "title": "Archiv verkaufter Anzeigen - The Mini Exchange", "description": "Durchsuche zuvor verkaufte Classic-Mini-Anzeigen. Recherchiere frühere Preise für Fahrzeuge, Motoren und Teile." },
-    "header": { "title": "Archiv verkaufter Anzeigen", "subtitle": "Durchsuche {count} verkaufte Anzeigen für die Marktforschung" },
-    "search": { "placeholder": "Verkaufte Anzeigen suchen..." },
-    "results": { "searching": "Suche läuft...", "showing": "Zeige {shown} von {total} verkauften Anzeigen", "none": "Keine verkauften Anzeigen gefunden" },
-    "sort": { "ariaLabel": "Verkaufte Anzeigen sortieren", "newest": "Kürzlich verkauft", "oldest": "Älteste zuerst", "priceDesc": "Höchster Preis", "priceAsc": "Niedrigster Preis" },
-    "badge": { "sold": "VERKAUFT" },
-    "price": { "about": "Etwa {amount} in {currency}", "soldOn": "Verkauft {date}" },
-    "empty": { "title": "Keine verkauften Anzeigen gefunden", "body": "Passe deine Suche an, um mehr Ergebnisse zu sehen.", "clear": "Suche zurücksetzen" },
-    "date": { "unknown": "Unbekanntes Datum", "today": "Heute", "yesterday": "Gestern", "daysAgo": "vor {count} Tagen", "weeksAgo": "vor {count} Wochen", "monthsAgo": "vor {count} Monaten" }
+    "seo": {
+      "title": "Archiv verkaufter Anzeigen - The Mini Exchange",
+      "description": "Durchsuche zuvor verkaufte Classic-Mini-Anzeigen. Recherchiere frühere Preise für Fahrzeuge, Motoren und Teile."
+    },
+    "header": {
+      "title": "Archiv verkaufter Anzeigen",
+      "subtitle": "Durchsuche {count} verkaufte Anzeigen für die Marktforschung"
+    },
+    "search": {
+      "placeholder": "Verkaufte Anzeigen suchen..."
+    },
+    "results": {
+      "searching": "Suche läuft...",
+      "showing": "Zeige {shown} von {total} verkauften Anzeigen",
+      "none": "Keine verkauften Anzeigen gefunden"
+    },
+    "sort": {
+      "ariaLabel": "Verkaufte Anzeigen sortieren",
+      "newest": "Kürzlich verkauft",
+      "oldest": "Älteste zuerst",
+      "priceDesc": "Höchster Preis",
+      "priceAsc": "Niedrigster Preis"
+    },
+    "badge": {
+      "sold": "VERKAUFT"
+    },
+    "price": {
+      "about": "Etwa {amount} in {currency}",
+      "soldOn": "Verkauft {date}",
+      "asked": "Gefordert {amount}",
+      "notDisclosed": "Verkaufspreis nicht angegeben"
+    },
+    "empty": {
+      "title": "Keine verkauften Anzeigen gefunden",
+      "body": "Passe deine Suche an, um mehr Ergebnisse zu sehen.",
+      "clear": "Suche zurücksetzen"
+    },
+    "date": {
+      "unknown": "Unbekanntes Datum",
+      "today": "Heute",
+      "yesterday": "Gestern",
+      "daysAgo": "vor {count} Tagen",
+      "weeksAgo": "vor {count} Wochen",
+      "monthsAgo": "vor {count} Monaten"
+    }
   },
   "it": {
-    "seo": { "title": "Archivio annunci venduti - The Mini Exchange", "description": "Sfoglia gli annunci di Classic Mini venduti in precedenza. Ricerca i prezzi passati di veicoli, motori e ricambi." },
-    "header": { "title": "Archivio annunci venduti", "subtitle": "Sfoglia {count} annunci venduti per ricerche di mercato" },
-    "search": { "placeholder": "Cerca annunci venduti..." },
-    "results": { "searching": "Ricerca in corso...", "showing": "Mostrando {shown} di {total} annunci venduti", "none": "Nessun annuncio venduto trovato" },
-    "sort": { "ariaLabel": "Ordina annunci venduti", "newest": "Venduti di recente", "oldest": "Prima i più vecchi", "priceDesc": "Prezzo più alto", "priceAsc": "Prezzo più basso" },
-    "badge": { "sold": "VENDUTO" },
-    "price": { "about": "Circa {amount} in {currency}", "soldOn": "Venduto {date}" },
-    "empty": { "title": "Nessun annuncio venduto trovato", "body": "Prova a modificare la ricerca per vedere più risultati.", "clear": "Cancella ricerca" },
-    "date": { "unknown": "Data sconosciuta", "today": "Oggi", "yesterday": "Ieri", "daysAgo": "{count} giorni fa", "weeksAgo": "{count} settimane fa", "monthsAgo": "{count} mesi fa" }
+    "seo": {
+      "title": "Archivio annunci venduti - The Mini Exchange",
+      "description": "Sfoglia gli annunci di Classic Mini venduti in precedenza. Ricerca i prezzi passati di veicoli, motori e ricambi."
+    },
+    "header": {
+      "title": "Archivio annunci venduti",
+      "subtitle": "Sfoglia {count} annunci venduti per ricerche di mercato"
+    },
+    "search": {
+      "placeholder": "Cerca annunci venduti..."
+    },
+    "results": {
+      "searching": "Ricerca in corso...",
+      "showing": "Mostrando {shown} di {total} annunci venduti",
+      "none": "Nessun annuncio venduto trovato"
+    },
+    "sort": {
+      "ariaLabel": "Ordina annunci venduti",
+      "newest": "Venduti di recente",
+      "oldest": "Prima i più vecchi",
+      "priceDesc": "Prezzo più alto",
+      "priceAsc": "Prezzo più basso"
+    },
+    "badge": {
+      "sold": "VENDUTO"
+    },
+    "price": {
+      "about": "Circa {amount} in {currency}",
+      "soldOn": "Venduto {date}",
+      "asked": "Chiedeva {amount}",
+      "notDisclosed": "Prezzo di vendita non dichiarato"
+    },
+    "empty": {
+      "title": "Nessun annuncio venduto trovato",
+      "body": "Prova a modificare la ricerca per vedere più risultati.",
+      "clear": "Cancella ricerca"
+    },
+    "date": {
+      "unknown": "Data sconosciuta",
+      "today": "Oggi",
+      "yesterday": "Ieri",
+      "daysAgo": "{count} giorni fa",
+      "weeksAgo": "{count} settimane fa",
+      "monthsAgo": "{count} mesi fa"
+    }
   },
   "pt": {
-    "seo": { "title": "Arquivo de anúncios vendidos - The Mini Exchange", "description": "Navegue por anúncios de Classic Mini vendidos anteriormente. Pesquise preços passados de veículos, motores e peças." },
-    "header": { "title": "Arquivo de anúncios vendidos", "subtitle": "Navegue por {count} anúncios vendidos para pesquisa de mercado" },
-    "search": { "placeholder": "Pesquisar anúncios vendidos..." },
-    "results": { "searching": "Pesquisando...", "showing": "Mostrando {shown} de {total} anúncios vendidos", "none": "Nenhum anúncio vendido encontrado" },
-    "sort": { "ariaLabel": "Ordenar anúncios vendidos", "newest": "Vendidos recentemente", "oldest": "Mais antigos primeiro", "priceDesc": "Maior preço", "priceAsc": "Menor preço" },
-    "badge": { "sold": "VENDIDO" },
-    "price": { "about": "Cerca de {amount} em {currency}", "soldOn": "Vendido {date}" },
-    "empty": { "title": "Nenhum anúncio vendido encontrado", "body": "Tente ajustar sua pesquisa para ver mais resultados.", "clear": "Limpar pesquisa" },
-    "date": { "unknown": "Data desconhecida", "today": "Hoje", "yesterday": "Ontem", "daysAgo": "há {count} dias", "weeksAgo": "há {count} semanas", "monthsAgo": "há {count} meses" }
+    "seo": {
+      "title": "Arquivo de anúncios vendidos - The Mini Exchange",
+      "description": "Navegue por anúncios de Classic Mini vendidos anteriormente. Pesquise preços passados de veículos, motores e peças."
+    },
+    "header": {
+      "title": "Arquivo de anúncios vendidos",
+      "subtitle": "Navegue por {count} anúncios vendidos para pesquisa de mercado"
+    },
+    "search": {
+      "placeholder": "Pesquisar anúncios vendidos..."
+    },
+    "results": {
+      "searching": "Pesquisando...",
+      "showing": "Mostrando {shown} de {total} anúncios vendidos",
+      "none": "Nenhum anúncio vendido encontrado"
+    },
+    "sort": {
+      "ariaLabel": "Ordenar anúncios vendidos",
+      "newest": "Vendidos recentemente",
+      "oldest": "Mais antigos primeiro",
+      "priceDesc": "Maior preço",
+      "priceAsc": "Menor preço"
+    },
+    "badge": {
+      "sold": "VENDIDO"
+    },
+    "price": {
+      "about": "Cerca de {amount} em {currency}",
+      "soldOn": "Vendido {date}",
+      "asked": "Pedia {amount}",
+      "notDisclosed": "Preço de venda não divulgado"
+    },
+    "empty": {
+      "title": "Nenhum anúncio vendido encontrado",
+      "body": "Tente ajustar sua pesquisa para ver mais resultados.",
+      "clear": "Limpar pesquisa"
+    },
+    "date": {
+      "unknown": "Data desconhecida",
+      "today": "Hoje",
+      "yesterday": "Ontem",
+      "daysAgo": "há {count} dias",
+      "weeksAgo": "há {count} semanas",
+      "monthsAgo": "há {count} meses"
+    }
   },
   "ru": {
-    "seo": { "title": "Архив проданных объявлений - The Mini Exchange", "description": "Просматривайте ранее проданные объявления Classic Mini. Изучайте прошлые цены на автомобили, двигатели и запчасти." },
-    "header": { "title": "Архив проданных объявлений", "subtitle": "Просмотрите {count} проданных объявлений для анализа рынка" },
-    "search": { "placeholder": "Поиск проданных объявлений..." },
-    "results": { "searching": "Поиск...", "showing": "Показано {shown} из {total} проданных объявлений", "none": "Проданные объявления не найдены" },
-    "sort": { "ariaLabel": "Сортировать проданные объявления", "newest": "Недавно проданные", "oldest": "Сначала старые", "priceDesc": "Сначала дорогие", "priceAsc": "Сначала дешёвые" },
-    "badge": { "sold": "ПРОДАНО" },
-    "price": { "about": "Около {amount} в {currency}", "soldOn": "Продано {date}" },
-    "empty": { "title": "Проданные объявления не найдены", "body": "Попробуйте изменить запрос, чтобы увидеть больше результатов.", "clear": "Очистить поиск" },
-    "date": { "unknown": "Дата неизвестна", "today": "Сегодня", "yesterday": "Вчера", "daysAgo": "{count} дн. назад", "weeksAgo": "{count} нед. назад", "monthsAgo": "{count} мес. назад" }
+    "seo": {
+      "title": "Архив проданных объявлений - The Mini Exchange",
+      "description": "Просматривайте ранее проданные объявления Classic Mini. Изучайте прошлые цены на автомобили, двигатели и запчасти."
+    },
+    "header": {
+      "title": "Архив проданных объявлений",
+      "subtitle": "Просмотрите {count} проданных объявлений для анализа рынка"
+    },
+    "search": {
+      "placeholder": "Поиск проданных объявлений..."
+    },
+    "results": {
+      "searching": "Поиск...",
+      "showing": "Показано {shown} из {total} проданных объявлений",
+      "none": "Проданные объявления не найдены"
+    },
+    "sort": {
+      "ariaLabel": "Сортировать проданные объявления",
+      "newest": "Недавно проданные",
+      "oldest": "Сначала старые",
+      "priceDesc": "Сначала дорогие",
+      "priceAsc": "Сначала дешёвые"
+    },
+    "badge": {
+      "sold": "ПРОДАНО"
+    },
+    "price": {
+      "about": "Около {amount} в {currency}",
+      "soldOn": "Продано {date}",
+      "asked": "Просили {amount}",
+      "notDisclosed": "Цена продажи не раскрыта"
+    },
+    "empty": {
+      "title": "Проданные объявления не найдены",
+      "body": "Попробуйте изменить запрос, чтобы увидеть больше результатов.",
+      "clear": "Очистить поиск"
+    },
+    "date": {
+      "unknown": "Дата неизвестна",
+      "today": "Сегодня",
+      "yesterday": "Вчера",
+      "daysAgo": "{count} дн. назад",
+      "weeksAgo": "{count} нед. назад",
+      "monthsAgo": "{count} мес. назад"
+    }
   },
   "ja": {
-    "seo": { "title": "売却済み出品アーカイブ - The Mini Exchange", "description": "過去に売却されたクラシックミニの出品を閲覧。車両、エンジン、パーツの過去価格を調べられます。" },
-    "header": { "title": "売却済み出品アーカイブ", "subtitle": "市場調査向けに {count} 件の売却済み出品を閲覧" },
-    "search": { "placeholder": "売却済み出品を検索..." },
-    "results": { "searching": "検索中...", "showing": "{total} 件中 {shown} 件の売却済み出品を表示", "none": "売却済み出品が見つかりません" },
-    "sort": { "ariaLabel": "売却済み出品を並べ替え", "newest": "最近売却", "oldest": "古い順", "priceDesc": "価格が高い順", "priceAsc": "価格が安い順" },
-    "badge": { "sold": "売却済み" },
-    "price": { "about": "約 {amount}（{currency}）", "soldOn": "{date} に売却" },
-    "empty": { "title": "売却済み出品が見つかりません", "body": "検索条件を変更すると、より多くの結果が表示されます。", "clear": "検索をクリア" },
-    "date": { "unknown": "日付不明", "today": "今日", "yesterday": "昨日", "daysAgo": "{count} 日前", "weeksAgo": "{count} 週間前", "monthsAgo": "{count} か月前" }
+    "seo": {
+      "title": "売却済み出品アーカイブ - The Mini Exchange",
+      "description": "過去に売却されたクラシックミニの出品を閲覧。車両、エンジン、パーツの過去価格を調べられます。"
+    },
+    "header": {
+      "title": "売却済み出品アーカイブ",
+      "subtitle": "市場調査向けに {count} 件の売却済み出品を閲覧"
+    },
+    "search": {
+      "placeholder": "売却済み出品を検索..."
+    },
+    "results": {
+      "searching": "検索中...",
+      "showing": "{total} 件中 {shown} 件の売却済み出品を表示",
+      "none": "売却済み出品が見つかりません"
+    },
+    "sort": {
+      "ariaLabel": "売却済み出品を並べ替え",
+      "newest": "最近売却",
+      "oldest": "古い順",
+      "priceDesc": "価格が高い順",
+      "priceAsc": "価格が安い順"
+    },
+    "badge": {
+      "sold": "売却済み"
+    },
+    "price": {
+      "about": "約 {amount}（{currency}）",
+      "soldOn": "{date} に売却",
+      "asked": "希望価格 {amount}",
+      "notDisclosed": "売却価格は非公開"
+    },
+    "empty": {
+      "title": "売却済み出品が見つかりません",
+      "body": "検索条件を変更すると、より多くの結果が表示されます。",
+      "clear": "検索をクリア"
+    },
+    "date": {
+      "unknown": "日付不明",
+      "today": "今日",
+      "yesterday": "昨日",
+      "daysAgo": "{count} 日前",
+      "weeksAgo": "{count} 週間前",
+      "monthsAgo": "{count} か月前"
+    }
   },
   "zh": {
-    "seo": { "title": "已售刊登存档 - The Mini Exchange", "description": "浏览以往售出的经典 Mini 刊登。研究车辆、发动机和零件的历史价格。" },
-    "header": { "title": "已售刊登存档", "subtitle": "浏览 {count} 条已售刊登用于市场调研" },
-    "search": { "placeholder": "搜索已售刊登..." },
-    "results": { "searching": "搜索中...", "showing": "显示 {total} 条已售刊登中的 {shown} 条", "none": "未找到已售刊登" },
-    "sort": { "ariaLabel": "排序已售刊登", "newest": "最近售出", "oldest": "最早优先", "priceDesc": "价格从高到低", "priceAsc": "价格从低到高" },
-    "badge": { "sold": "已售" },
-    "price": { "about": "约 {amount}（{currency}）", "soldOn": "售于 {date}" },
-    "empty": { "title": "未找到已售刊登", "body": "尝试调整搜索条件以查看更多结果。", "clear": "清除搜索" },
-    "date": { "unknown": "日期未知", "today": "今天", "yesterday": "昨天", "daysAgo": "{count} 天前", "weeksAgo": "{count} 周前", "monthsAgo": "{count} 个月前" }
+    "seo": {
+      "title": "已售刊登存档 - The Mini Exchange",
+      "description": "浏览以往售出的经典 Mini 刊登。研究车辆、发动机和零件的历史价格。"
+    },
+    "header": {
+      "title": "已售刊登存档",
+      "subtitle": "浏览 {count} 条已售刊登用于市场调研"
+    },
+    "search": {
+      "placeholder": "搜索已售刊登..."
+    },
+    "results": {
+      "searching": "搜索中...",
+      "showing": "显示 {total} 条已售刊登中的 {shown} 条",
+      "none": "未找到已售刊登"
+    },
+    "sort": {
+      "ariaLabel": "排序已售刊登",
+      "newest": "最近售出",
+      "oldest": "最早优先",
+      "priceDesc": "价格从高到低",
+      "priceAsc": "价格从低到高"
+    },
+    "badge": {
+      "sold": "已售"
+    },
+    "price": {
+      "about": "约 {amount}（{currency}）",
+      "soldOn": "售于 {date}",
+      "asked": "要价 {amount}",
+      "notDisclosed": "成交价未公开"
+    },
+    "empty": {
+      "title": "未找到已售刊登",
+      "body": "尝试调整搜索条件以查看更多结果。",
+      "clear": "清除搜索"
+    },
+    "date": {
+      "unknown": "日期未知",
+      "today": "今天",
+      "yesterday": "昨天",
+      "daysAgo": "{count} 天前",
+      "weeksAgo": "{count} 周前",
+      "monthsAgo": "{count} 个月前"
+    }
   },
   "ko": {
-    "seo": { "title": "판매 완료 매물 아카이브 - The Mini Exchange", "description": "이전에 판매된 클래식 미니 매물을 둘러보세요. 차량, 엔진, 부품의 과거 가격을 조사할 수 있습니다." },
-    "header": { "title": "판매 완료 매물 아카이브", "subtitle": "시장 조사를 위해 {count}개의 판매 완료 매물 둘러보기" },
-    "search": { "placeholder": "판매 완료 매물 검색..." },
-    "results": { "searching": "검색 중...", "showing": "판매 완료 매물 {total}개 중 {shown}개 표시", "none": "판매 완료 매물을 찾을 수 없습니다" },
-    "sort": { "ariaLabel": "판매 완료 매물 정렬", "newest": "최근 판매순", "oldest": "오래된 순", "priceDesc": "높은 가격순", "priceAsc": "낮은 가격순" },
-    "badge": { "sold": "판매됨" },
-    "price": { "about": "약 {amount} ({currency})", "soldOn": "{date} 판매" },
-    "empty": { "title": "판매 완료 매물을 찾을 수 없습니다", "body": "검색 조건을 조정하면 더 많은 결과를 볼 수 있습니다.", "clear": "검색 지우기" },
-    "date": { "unknown": "날짜 불명", "today": "오늘", "yesterday": "어제", "daysAgo": "{count}일 전", "weeksAgo": "{count}주 전", "monthsAgo": "{count}개월 전" }
+    "seo": {
+      "title": "판매 완료 매물 아카이브 - The Mini Exchange",
+      "description": "이전에 판매된 클래식 미니 매물을 둘러보세요. 차량, 엔진, 부품의 과거 가격을 조사할 수 있습니다."
+    },
+    "header": {
+      "title": "판매 완료 매물 아카이브",
+      "subtitle": "시장 조사를 위해 {count}개의 판매 완료 매물 둘러보기"
+    },
+    "search": {
+      "placeholder": "판매 완료 매물 검색..."
+    },
+    "results": {
+      "searching": "검색 중...",
+      "showing": "판매 완료 매물 {total}개 중 {shown}개 표시",
+      "none": "판매 완료 매물을 찾을 수 없습니다"
+    },
+    "sort": {
+      "ariaLabel": "판매 완료 매물 정렬",
+      "newest": "최근 판매순",
+      "oldest": "오래된 순",
+      "priceDesc": "높은 가격순",
+      "priceAsc": "낮은 가격순"
+    },
+    "badge": {
+      "sold": "판매됨"
+    },
+    "price": {
+      "about": "약 {amount} ({currency})",
+      "soldOn": "{date} 판매",
+      "asked": "희망가 {amount}",
+      "notDisclosed": "판매 가격 비공개"
+    },
+    "empty": {
+      "title": "판매 완료 매물을 찾을 수 없습니다",
+      "body": "검색 조건을 조정하면 더 많은 결과를 볼 수 있습니다.",
+      "clear": "검색 지우기"
+    },
+    "date": {
+      "unknown": "날짜 불명",
+      "today": "오늘",
+      "yesterday": "어제",
+      "daysAgo": "{count}일 전",
+      "weeksAgo": "{count}주 전",
+      "monthsAgo": "{count}개월 전"
+    }
   }
 }
 </i18n>
