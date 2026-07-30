@@ -224,6 +224,16 @@ export default defineNuxtConfig({
       '/contribute/**',
       '/welcome',
       '/profile/**',
+      // Legacy calculator paths — 301'd in routeRules below. A routeRule makes the
+      // path a "known route" to the sitemap module, so exclude them explicitly
+      // rather than relying on redirect-detection.
+      '/technical/calculators/**',
+      // Auth-gated submission forms: real pages, but a logged-out crawler gets a
+      // login wall, so they're crawl-budget waste and thin-content risk. The
+      // browse surfaces (/models, /models/[slug]) carry the discoverable content.
+      '/models/upload',
+      '/models/submit-external',
+      '/models/mine',
       // Transient claim-chain pages (noindex via useHead, which the sitemap
       // module can't see — exclude them here too to avoid mixed signals).
       '/membership/claim',
@@ -427,6 +437,52 @@ export default defineNuxtConfig({
           },
         ],
       },
+      {
+        // The Mini Exchange was folded into this site in the TME consolidation but
+        // never made it into llms.txt, so the marketplace was invisible to any agent
+        // reading this file. Public browse surfaces only — messages, watchlist and
+        // the create/edit forms are private (and Disallowed in robots.txt).
+        title: 'The Mini Exchange (Marketplace)',
+        description:
+          'Enthusiast marketplace for Classic Mini vehicles, engines, and parts: member listings, curated finds from auction sites elsewhere on the web, and wanted posts.',
+        links: [
+          {
+            title: 'The Mini Exchange',
+            description: 'Marketplace home — vehicles, engines, and parts for the Classic Mini',
+            href: 'https://www.classicminidiy.com/exchange',
+          },
+          {
+            title: 'Browse Listings',
+            description: 'Classic Mini vehicles, engines, and parts for sale from enthusiasts worldwide',
+            href: 'https://www.classicminidiy.com/exchange/listings',
+          },
+          {
+            title: 'Mini Finds',
+            description: 'Curated Classic Minis for sale on other sites — Bring a Trailer, eBay, Cars & Bids and more',
+            href: 'https://www.classicminidiy.com/exchange/finds',
+          },
+          {
+            title: 'Wanted Posts',
+            description: 'Parts and vehicles Classic Mini owners are actively looking for',
+            href: 'https://www.classicminidiy.com/exchange/wanted',
+          },
+          {
+            title: 'Sold Archive',
+            description: 'Recently sold Classic Minis and parts — useful as a pricing reference',
+            href: 'https://www.classicminidiy.com/exchange/sold',
+          },
+          {
+            title: 'How The Mini Exchange Works',
+            description: 'Listing, buying, promotion, and fees on the marketplace',
+            href: 'https://www.classicminidiy.com/exchange/how-it-works',
+          },
+          {
+            title: 'Buyer and Seller Safety',
+            description: 'Guidance for safely buying and selling a Classic Mini',
+            href: 'https://www.classicminidiy.com/exchange/safety',
+          },
+        ],
+      },
     ],
   },
 
@@ -439,8 +495,15 @@ export default defineNuxtConfig({
     '/privacy': { prerender: true },
     '/technical/parts': { prerender: true },
     '/technical/torque': { prerender: true },
-    '/technical/calculators/needles': { prerender: false },
-    '/technical/calculators/gearbox': { prerender: false },
+    // Legacy calculator URLs. The pages moved to /technical/{needles,gearing} long
+    // ago; these entries survived as `prerender: false` rules, which was actively
+    // harmful — a routeRule counts as a known route, so @nuxtjs/sitemap emitted
+    // both URLs, and with no page file behind them they fell through to the
+    // [...slug] archive catch-all and answered 200 with `<title>undefined -
+    // Classic Mini Archive</title>`. i.e. two dead pages were being SUBMITTED to
+    // Google. 301 them onto the real tools instead.
+    '/technical/calculators/needles': { redirect: { to: '/technical/needles', statusCode: 301 } },
+    '/technical/calculators/gearbox': { redirect: { to: '/technical/gearing', statusCode: 301 } },
     '/admin/**': { prerender: false },
     // /auth/callback must never be prerendered or CDN-cached: each request
     // carries a single-use ?code= that the page reads on mount. If the page

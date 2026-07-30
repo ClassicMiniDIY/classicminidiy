@@ -12,6 +12,12 @@
   const collection = computed(() => result.value?.collection || null);
   const documents = computed(() => result.value?.documents || []);
 
+  // Unknown collection slugs previously rendered a 200 "Collection" shell — an
+  // indexable soft 404. See the same guard on the document detail route.
+  if (!collection.value) {
+    throw createError({ statusCode: 404, statusMessage: 'Collection not found', fatal: true });
+  }
+
   // Type config for badge display
   const typeConfig: Record<string, { icon: string; label: string; color: string }> = {
     manual: { icon: 'fas fa-book', label: t('type.manual'), color: 'primary' },

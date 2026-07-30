@@ -505,11 +505,13 @@
   // Fetch post data (SSR-compatible for SEO)
   const { data: fetchedPost } = await useAsyncData(`wanted-post-${postId}`, () => fetchWantedPost(postId));
 
-  // If useAsyncData resolved, set the loading state accordingly
-  if (fetchedPost.value) {
-    loading.value = false;
-  } else {
-    loading.value = false;
+  loading.value = false;
+
+  // Wanted posts get fulfilled, expire, and are deleted, so dead /exchange/wanted/*
+  // URLs accumulate fast. Answering 200 with an empty "Wanted Post" shell made every
+  // one of them an indexable soft 404 — a real 404 keeps them out of the index.
+  if (!fetchedPost.value) {
+    throw createError({ statusCode: 404, statusMessage: 'Wanted post not found', fatal: true });
   }
 
   // --- SEO ---
