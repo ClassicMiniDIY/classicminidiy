@@ -106,9 +106,9 @@
     twitterCard: 'summary_large_image',
   });
 
-  useHead({
-    link: [{ rel: 'canonical', href: 'https://www.classicminidiy.com/exchange/finds' }],
-  });
+  // Replaces a hardcoded canonical: source-site/category/sort permutations are
+  // near-duplicates and must not self-canonicalise. See useFacetedSeo.
+  useFacetedSeo('/exchange/finds');
 
   // Filters state
   const filters = ref<FindFilters & { _sort?: string }>({});
@@ -172,9 +172,17 @@
     { deep: true }
   );
 
-  // Initial load
+  // Initial load runs during SSR so the browse page ships real, crawlable find
+  // cards + links instead of an empty shell. `finds` is useState-backed, so the
+  // result serialises into the payload and the client hydrates against identical
+  // markup rather than re-fetching. Only the user-specific like/watchlist state
+  // stays on the client.
+  await useAsyncData('finds-index-initial', async () => {
+    await loadFinds();
+    return true;
+  });
+
   onMounted(() => {
-    loadFinds();
     if (user.value) {
       loadUserInteractions();
     }

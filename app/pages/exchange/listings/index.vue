@@ -196,10 +196,13 @@
 </template>
 
 <script setup lang="ts">
+  import { buildItemList } from '~/utils/schema/itemList';
+
   const { t } = useI18n();
 
   const config = useRuntimeConfig();
   const { capture } = usePostHog();
+  const supabase = useSupabase();
 
   const {
     searchQuery,
@@ -261,6 +264,52 @@
     ogUrl: 'https://www.classicminidiy.com/exchange/listings',
     ogImage: `${config.public.siteUrl}/og-image.jpg`,
     twitterCard: 'summary_large_image',
+  });
+
+  // Category/condition/price/sort permutations are near-duplicates of the unfiltered
+  // list; only pagination stays indexable. See app/composables/useFacetedSeo.ts.
+  const { isFaceted } = useFacetedSeo('/exchange/listings');
+
+  // The visible results grid lives inside <ClientOnly> (useSearch fetches on mount),
+  // so the SSR HTML of this page contains no listings at all — a crawler, or one of
+  // the AI answer bots we allow in robots.txt, sees an empty browse page. This is a
+  // small independent SSR read purely to emit an ItemList so those engines know what
+  // the page holds and have named entries to cite. It deliberately does NOT feed the
+  // grid: useSearch owns that state, and duplicating it here would risk a hydration
+  // mismatch. Skipped on faceted views, which are noindex anyway.
+  const { data: listingsForSchema } = await useAsyncData(
+    'exchange-listings-itemlist',
+    async () => {
+      if (isFaceted.value) return [];
+      const { data } = await supabase
+        .from('listings')
+        .select('slug, title, description')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(24);
+      return data ?? [];
+    },
+    { default: () => [] }
+  );
+
+  const listingsItemList = computed(() =>
+    buildItemList(
+      (listingsForSchema.value ?? [])
+        .filter((l) => l.slug && l.title)
+        .map((l) => ({
+          name: l.title as string,
+          url: `${config.public.siteUrl}/exchange/listings/${l.slug}`,
+          description: l.description,
+        })),
+      { name: 'Classic Mini Listings', url: `${config.public.siteUrl}/exchange/listings` }
+    )
+  );
+
+  useHead({
+    script: () =>
+      listingsItemList.value
+        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(listingsItemList.value) }]
+        : [],
   });
 
   // Schema.org CollectionPage markup

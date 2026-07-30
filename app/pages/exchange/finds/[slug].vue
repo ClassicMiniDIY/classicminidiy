@@ -227,6 +227,17 @@
   const slug = route.params.slug as string;
   const imageError = ref(false);
 
+  // Fetch during SSR, not onMounted. Fetching on mount meant crawlers — and the AI
+  // answer bots we allow in robots.txt, most of which don't execute JS — received an
+  // empty shell for every /exchange/finds/* URL in the sitemap. A miss is a real 404
+  // rather than a 200 placeholder: finds are pulled when the source auction dies, so
+  // this route churns and would otherwise accumulate indexed empty pages.
+  await useAsyncData(`find-${slug}`, () => fetchFind(slug));
+
+  if (!currentFind.value) {
+    throw createError({ statusCode: 404, statusMessage: 'Find not found', fatal: true });
+  }
+
   // Source site display names (used for "View on ..." button) — dynamic data, not translated
   const sourceSiteDisplayName = computed(() => {
     if (!currentFind.value) return 'Other';
@@ -356,6 +367,41 @@
     twitterImage: () => currentFind.value?.og_image_url || `${siteUrl}/og-image.jpg`,
   });
 
+  // A "find" is a curated pointer at a car for sale on someone else's site, so the
+  // schema has to be honest about that: we describe our own page (the commentary and
+  // summary are ours), and `sameAs` + `isBasedOn` point at the source listing rather
+  // than claiming we're the seller. No Offer node — we don't transact these, and
+  // asserting a price we don't control would be a merchant-listing violation.
+  // BreadcrumbList mirrors what /exchange/listings/[slug] already emits.
+  useSchemaOrg([
+    {
+      '@type': 'Article',
+      headline: currentFind.value.title,
+      description: currentFind.value.description || currentFind.value.og_description || undefined,
+      image: currentFind.value.og_image_url || undefined,
+      url: `${siteUrl}/exchange/finds/${slug}`,
+      datePublished: currentFind.value.published_at || currentFind.value.created_at,
+      dateModified: currentFind.value.updated_at || undefined,
+      sameAs: currentFind.value.source_url,
+      isBasedOn: currentFind.value.source_url,
+      about: {
+        '@type': 'Car',
+        name: currentFind.value.title,
+        ...(currentFind.value.model ? { model: currentFind.value.model } : {}),
+        ...(currentFind.value.year ? { productionDate: String(currentFind.value.year) } : {}),
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: 'The Mini Exchange', item: `${siteUrl}/exchange` },
+        { '@type': 'ListItem', position: 3, name: 'Finds', item: `${siteUrl}/exchange/finds` },
+        { '@type': 'ListItem', position: 4, name: currentFind.value.title },
+      ],
+    },
+  ]);
+
   // Track view on mount
   const hasTrackedView = ref(false);
 
@@ -374,10 +420,9 @@
     { immediate: true }
   );
 
-  // Fetch find on mount
-  onMounted(async () => {
-    await fetchFind(slug);
-
+  // User-specific interactions are the only genuinely client-side work left —
+  // the find itself is fetched during SSR above so crawlers get real content.
+  onMounted(() => {
     if (user.value) {
       loadUserInteractions();
     }
