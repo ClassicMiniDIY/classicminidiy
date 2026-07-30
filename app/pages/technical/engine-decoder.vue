@@ -1,7 +1,5 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
-  import { engineCodeFaqs } from '~/utils/geo/generateFaqs';
-  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { data: engineCodes } = await useFetch('/api/decoders/engine');
@@ -83,21 +81,14 @@
     },
   };
 
-  // FAQPage JSON-LD only (no visible block) from the engine-code data (one entry per
-  // displacement) — structured data for AI engines; the codes are in the table below.
-  const engineFaqList = engineCodeFaqs();
-  const engineFaqNode = buildFaqPage(engineFaqList);
-
-  // Add JSON-LD structured data to head
+  // No FAQPage JSON-LD — see the note on technical/torque.vue. The generated Q&As
+  // reach machines via /llms-full.txt (server/plugins/llms-faq.ts) instead.
   useHead({
     script: [
       {
         type: 'application/ld+json',
         innerHTML: JSON.stringify(datasetJsonLd),
       },
-      ...(engineFaqNode
-        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(engineFaqNode) }]
-        : []),
     ],
   });
 

@@ -1,7 +1,5 @@
 <script lang="ts" setup>
   import { BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
-  import { clearanceFaqs } from '~/utils/geo/generateFaqs';
-  import { buildFaqPage } from '~/utils/schema/faqPage';
 
   const { t } = useI18n();
   const { trackSearch, track } = useAnalytics();
@@ -162,12 +160,8 @@
     ],
   };
 
-  // FAQPage JSON-LD only (no visible block — answers derive from the clearance
-  // tables already on the page; structured data for AI engines, not a UX surface).
-  const clearanceFaqList = clearanceFaqs();
-  const clearanceFaqNode = buildFaqPage(clearanceFaqList);
-
-  // Add JSON-LD structured data to head
+  // No FAQPage JSON-LD — see the note on technical/torque.vue. The generated Q&As
+  // reach machines via /llms-full.txt (server/plugins/llms-faq.ts) instead.
   useHead({
     script: [
       {
@@ -178,9 +172,6 @@
         type: 'application/ld+json',
         innerHTML: JSON.stringify(datasetJsonLd),
       },
-      ...(clearanceFaqNode
-        ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(clearanceFaqNode) }]
-        : []),
     ],
   });
 

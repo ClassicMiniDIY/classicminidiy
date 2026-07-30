@@ -2,17 +2,21 @@
  * Generative-Engine-Optimization FAQ generators.
  *
  * These derive answer-first Q&As from the site's EXISTING reference data (no
- * hand-authoring of hundreds of entries). The same {q,a}[] feeds both:
- *   - the FAQPage JSON-LD (app/utils/schema/faqPage.ts → buildFaqPage), and
- *   - the visible above-the-fold block (app/components/geo/QuickAnswer.vue),
- * so the markup always matches on-page content.
+ * hand-authoring of hundreds of entries).
+ *
+ * The single consumer is `server/plugins/llms-faq.ts`, which renders them into
+ * `/llms-full.txt`. There is deliberately no FAQPage JSON-LD and no visible FAQ
+ * block: Google requires FAQ markup to match content visible on the page, and a
+ * visible Q&A section was judged to add nothing for humans on pages that are
+ * already spec tables. Rather than ship markup without its on-page counterpart,
+ * these answers go to the machine-readable channel only. If you ever want FAQPage
+ * schema back, the questions have to be rendered on the page too — both halves or
+ * neither.
  *
  * i18n: the answers are domain data (engine codes, chassis positions, torque /
  * clearance values) which the site already renders English-only in every locale
- * (the decoder tables import these same English data files). So the FAQ content is
- * intentionally English — it mirrors what the page's tables already show. Only the
- * QuickAnswer component's CHROME (headings, toggle labels) is translated, in its
- * own SFC <i18n> block.
+ * (the decoder tables import these same English data files), and llms-full.txt is
+ * a single-language surface — so this content is intentionally English.
  *
  * Pure + deterministic → unit-tested in tests/unit/utils/generate-faqs.test.ts.
  */
@@ -20,9 +24,14 @@ import { chassisRanges, type ChassisRange } from '../../../data/models/decoders'
 import torqueSpecs from '../../../data/torqueSpecs.json';
 import commonClearances from '../../../data/commonClearances.json';
 import engineCodes from '../../../data/engineCodes.json';
-import type { Faq } from '../schema/faqPage';
 
-export type { Faq };
+/** One generated question/answer pair. */
+export interface Faq {
+  /** The question, phrased the way a person would ask it. */
+  q: string;
+  /** A self-contained, answer-first response in plain text (no HTML). */
+  a: string;
+}
 
 // ---- shared shapes for the JSON tables -------------------------------------
 interface SpecItem {
@@ -145,8 +154,7 @@ export function engineCodeFaqs(): Faq[] {
 }
 
 // ---- chassis / VIN numbers -------------------------------------------------
-const findEra = (title: string): ChassisRange | undefined =>
-  chassisRanges.find((r) => r.title === title);
+const findEra = (title: string): ChassisRange | undefined => chassisRanges.find((r) => r.title === title);
 
 /** Concatenate a ChassisRange.PrimaryExample into its readable example string. */
 function exampleString(r: ChassisRange): string {
@@ -196,9 +204,7 @@ export function chassisFaqs(): Faq[] {
 
   // Marque letters — derived from the first era's position 1.
   if (era59?.value.options['1']?.length) {
-    const marques = era59.value.options['1']
-      .map((o) => `${o.value} = ${o.name.trim()}`)
-      .join('; ');
+    const marques = era59.value.options['1'].map((o) => `${o.value} = ${o.name.trim()}`).join('; ');
     out.push({
       q: 'What do the first letters of an early Classic Mini chassis number mean?',
       a: `On 1959-1969 cars the first letter is the marque: ${marques}.`,
