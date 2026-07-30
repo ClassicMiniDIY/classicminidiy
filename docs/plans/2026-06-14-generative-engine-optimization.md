@@ -1,6 +1,33 @@
 # Generative Engine Optimization (GEO) — classicminidiy.com
 
-> Status: in progress. Phase 1 on `feature/geo-foundation`. Each phase ships as its own PR.
+> Status: **all six phases shipped.**
+>
+> Phase 3 correction (2026-07-30): the WAF rule had in fact been live and correct since
+> **2026-06-15** — this doc and an earlier hand-off both wrongly listed it as outstanding. What was
+> genuinely missing was everything *around* it: the runbook was never written, and the console rule
+> had drifted from the code (`Diffbot`, `Omgilibot`, `ImagesiftBot` were denied at the edge but
+> absent from `server/utils/aiBots.ts`, so robots.txt never disallowed them and `matchBot()` couldn't
+> see them in `bot_crawl`). Both closed — see `docs/runbooks/2026-07-30-ai-crawler-firewall.md`.
+>
+> **Follow-up pass, 2026-07-28** (post-TME-consolidation audit) closed the gaps this plan left and
+> the ones the marketplace merge introduced:
+> - **Site-wide soft 404s.** `app/pages/[...slug].vue` answered 200 for every unknown URL on the
+>   domain; six more detail routes (exchange listings/finds/wanted, archive documents +
+>   collections, contributors) did the same for dead records. All now 404.
+> - **Two dead URLs were in the sitemap.** `/technical/calculators/{needles,gearbox}` routeRules
+>   outlived their pages → 301s + sitemap excludes.
+> - **FAQPage JSON-LD removed entirely.** Four pages carried FAQPage markup with no visible
+>   counterpart, which Google's structured-data policy disallows. A visible Q&A block had already
+>   been tried and rejected (no value to human readers on pages that are spec tables), so rather
+>   than reinstate it the schema was dropped: `generateFaqs.ts` now feeds `/llms-full.txt` only.
+>   This supersedes Phase 2's `QuickAnswer.vue` line item — it is not coming back. Both halves or
+>   neither.
+> - **Faceted-nav crawl trap.** `useFacetedSeo()` added; every filter permutation used to
+>   self-canonicalise.
+> - **Marketplace browse pages were client-only.** finds/wanted indexes now fetch during SSR;
+>   the listings index emits an SSR `ItemList` (its grid stays `<ClientOnly>` — `useSearch` owns
+>   that state).
+> - **llms.txt had no Exchange section** despite the consolidation.
 
 ## Context
 
@@ -143,9 +170,18 @@ Phase 2, where pages consume them, to keep this PR tight.)
 `technical/*` (FAQPage/Dataset/HowTo) + archive wheel/color detail (Product/ImageObject) + `models`
 index (ItemList + canonical); robots groups.
 
-### Phase 3 — Edge enforcement (`feature/geo-edge-enforcement`)
+### Phase 3 — Edge enforcement (`feature/geo-edge-enforcement`) — SHIPPED
 Vercel WAF Deny rules + managed ruleset → Log; `server/utils/aiBots.ts`; `@vercel/botid` on write
 endpoints; runbook.
+
+**As built:** one custom rule, `Block AI Training Crawlers`
+(`rule_block_ai_training_crawlers_nbb6RE`), UA-regex → Deny, live since 2026-06-15 and verified
+against production 2026-07-30. The all-or-nothing managed *AI Bots* ruleset was left **off** rather
+than set to Log — it would have blocked the answer bots too. BotID covers the LangGraph chat proxy
+and seller onboarding, but **not** `/api/models/checkout` (removed after it false-positive-blocked
+~100% of real buyers — PR #632). Reconciled the code/console drift and added `WAF_DENY_REGEX` +
+`EDGE_DENY_BOTS` + `AI_TRAINING_PERMISSION_TOKENS` to `server/utils/aiBots.ts`, a pinned-regex
+tripwire test, `scripts/verify-ai-crawler-firewall.sh` (37 live assertions), and the runbook.
 
 ### Phase 4 — Completeness (`feature/geo-sitemap-llms`)
 Sitemap sources for colors/wheels/documents/registry; enrich `llms:` config; optional ISR.
@@ -167,6 +203,16 @@ Sitemap sources for colors/wheels/documents/registry; enrich `llms:` config; opt
 - **OG/llms:** `/llms.txt` + `/llms-full.txt` contain new sections + FAQ bodies.
 - **Tests:** Vitest for `app/utils/schema/*` + `generateFaqs.ts`.
 - **Measurement:** PostHog `ai_source` populates on a referred visit; `bot_crawl` fires for a spoofed UA.
+
+## Remaining
+
+- **`/exchange/listings` results grid is still `<ClientOnly>`.** `useSearch()` owns filter state,
+  pagination, and the map view, so SSR-ing it is a real refactor with hydration risk, not an SEO
+  tweak — deliberately out of scope for this pass. Mitigations in place: every listing is in the
+  sitemap, each detail page is SSR'd with full Product schema, and the index now emits an SSR
+  `ItemList`. Worth doing on its own branch if marketplace organic traffic becomes a priority.
+- **`/users/[id]` is client-only and soft-404s**, but it is `noindex, nofollow`, so it costs nothing
+  in the index. Left alone intentionally.
 
 ## Non-goals
 - Per-locale URLs / real hreflang (would need `prefix_except_default`).
