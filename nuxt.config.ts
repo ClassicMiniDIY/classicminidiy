@@ -700,7 +700,20 @@ export default defineNuxtConfig({
       // build). nitro matches ignore patterns with String.startsWith, so these
       // are PREFIXES (trailing slash) — they catch `/archive/colors/<id>` but not
       // the prerendered index `/archive/colors` itself.
-      ignore: ['/admin', '/raw', '/archive/colors/', '/archive/wheels/', '/archive/documents/'],
+      // `/_ipx` is load-bearing for build memory, not just speed. ipx is a RUNTIME
+      // optimizer, but crawlLinks doesn't know that: it follows same-origin hrefs/srcs
+      // out of prerendered pages, and once images resolve through the optimizer their
+      // URLs become same-origin `/_ipx/...` paths instead of absolute S3/Supabase URLs
+      // (which, being external, were never crawled). Every crawled variant then
+      // downloads a remote image and transcodes it through sharp DURING the build.
+      //
+      // That is pure waste — the variants are regenerated at runtime anyway and cached
+      // at the edge for 7 days (`s-maxage=604800`), and prerendering user-generated
+      // content can't cover photos uploaded after the build. It also cost a deploy:
+      // sharp's native allocations inflate RSS through the prerender phase, and the
+      // Nitro bundling step that follows then couldn't fit in the 8 GB build container
+      // and was SIGKILLed by the OOM killer.
+      ignore: ['/admin', '/raw', '/archive/colors/', '/archive/wheels/', '/archive/documents/', '/_ipx'],
       routes: [
         '/',
         '/privacy',
