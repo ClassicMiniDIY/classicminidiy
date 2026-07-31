@@ -265,6 +265,18 @@ straight into `:class`, so it must be `'fas fa-circle-check'`, never `'i-fa6-sol
 - `app/components/Breadcrumb.vue` uses the string as a sentinel value and renders
   `<i class="fas fa-house">` explicitly.
 
+Both exceptions are **pure string manipulation** — they emit an FA class for the Kit to swap and
+never resolve Iconify icon *data*. That is why the `@iconify-json/*` collections could be dropped
+along with `@nuxt/icon` (the transition-only module for the TME merge) once the last `<Icon>` tag
+was converted. Nothing in `app/` renders `<Icon>` or needs an Iconify collection; don't re-add one
+to "support" these two files.
+
+**Gotcha:** `@nuxt/icon` and `@iconify-json/carbon` are still physically present in
+`node_modules` as transitive deps of `nuxtseo-layer-devtools` → `@nuxt/ui` (the `@nuxtjs/seo`
+devtools layer). Their presence on disk is **not** evidence the site uses them — the module is not
+in `nuxt.config.ts`'s `modules` array, so it never runs, and `@nuxt/ui` being reachable in
+`node_modules` still does not mean `<U*>` components exist here.
+
 #### Inline Icons
 
 For inline icons in templates, use the traditional Font Awesome class syntax:
