@@ -375,6 +375,13 @@ export default defineNuxtConfig({
       'classicminidiy.s3.us-east-1.amazonaws.com',
       'classicminidiy.s3.amazonaws.com',
       'cmdiy-archive.s3.us-east-1.amazonaws.com',
+      // Supabase Storage is reached through the CUSTOM auth domain, not the project-ref
+      // host: `NUXT_PUBLIC_SUPABASE_URL` is https://auth.classicminidiy.com, and
+      // `storage.getPublicUrl()` builds every URL from it. The project-ref entry below
+      // therefore matches nothing in practice — it is kept only so a deploy that points
+      // NUXT_PUBLIC_SUPABASE_URL back at the raw host keeps working. Without the custom
+      // domain listed, every listing photo, model image and avatar bypassed ipx.
+      'auth.classicminidiy.com',
       'psoqirvbujwohemmwplv.supabase.co',
       'i.ytimg.com',
       'img.youtube.com',
@@ -892,7 +899,10 @@ export default defineNuxtConfig({
           },
         },
         {
-          urlPattern: /^https:\/\/psoqirvbujwohemmwplv\.supabase\.co\/storage\/.*/i,
+          // Same custom-domain caveat as `image.domains`: storage URLs are built from
+          // NUXT_PUBLIC_SUPABASE_URL (auth.classicminidiy.com), so the project-ref host
+          // alone cached nothing. Match both.
+          urlPattern: /^https:\/\/(?:auth\.classicminidiy\.com|psoqirvbujwohemmwplv\.supabase\.co)\/storage\/.*/i,
           handler: 'CacheFirst',
           options: {
             cacheName: 'supabase-storage',
