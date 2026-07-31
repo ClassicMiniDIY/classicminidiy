@@ -335,6 +335,25 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
   `og_image_url` scraped from arbitrary third-party sites, so it stays a raw `<img>` with its
   `@error` fallback. Same for `blob:`/`data:` upload previews. Don't "fix" these.
 
+- **`/_ipx` MUST stay in `nitro.prerender.ignore` — this is a build-memory contract, not an
+  optimization.** `crawlLinks: true` follows same-origin URLs out of prerendered pages. An
+  unoptimized image is an *absolute* S3/Supabase URL (external → never crawled), but an
+  optimized one is a same-origin `/_ipx/...` path, so the crawler treats every variant as a
+  route and transcodes it through sharp **at build time**. When this was first missed it was
+  **603 of 768 prerendered routes (78%)**, and the resulting RSS inflation pushed the Nitro
+  bundling step past the 8 GB build container — SIGKILL, OOM.
+
+  Two things make this hard to diagnose, so recognise the shape: the kill lands during Nitro
+  *bundling*, well after prerender reports success, and because the build sits near the
+  ceiling it can first fail on a commit that touches nothing (it initially tripped on a
+  docs-only commit). A `SIGKILL` is the **container** OOM killer, not a V8 heap error — if you
+  see `JavaScript heap out of memory` instead, that's a genuinely different problem.
+
+  Prerendering ipx output is worthless anyway: variants regenerate at runtime and Vercel's CDN
+  holds them for 7 days (`s-maxage=604800`), and user-uploaded photos added after a build have
+  no baked variant regardless. The same reasoning applies to any future runtime-generated
+  image route.
+
 ### SEO / Head Invariants
 
 - **Never pass a possibly-empty string (or any non-string) to `ogImage` / `twitterImage` in `useSeoMeta`.** unhead's flat-meta unpacking coerces `''` to boolean `true`, and nuxt-og-image's `tags:afterResolve` hook calls `.replaceAll()` on every `og:image`/`twitter:image` content — a truthy non-string 500s the whole SSR render (this took down `/archive/colors/[id]` for months). Derive share images with `computed()` (a lazy `watch` never fires during SSR, so a ref stays at its initial value server-side) and always fall back to a real URL. `app/plugins/seo-tag-guard.server.ts` + `app/utils/seoTagGuards.ts` are the SSR safety net that sanitizes these tags before nuxt-og-image sees them — don't remove them.
