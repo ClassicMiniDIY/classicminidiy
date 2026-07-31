@@ -20,7 +20,14 @@
   <div class="card bg-base-100 shadow-md border border-base-300 relative h-full flex flex-col">
     <figure v-if="item.image" class="relative">
       <NuxtLink v-if="item.download" :to="item.path">
-        <img :src="item.image" :alt="item.title" class="h-[150px] w-full object-cover rounded-t-lg" />
+        <nuxt-img
+          :src="item.image"
+          :alt="item.title"
+          class="h-[150px] w-full object-cover rounded-t-lg"
+          format="webp"
+          sizes="100vw sm:50vw lg:400px"
+          loading="lazy"
+        />
       </NuxtLink>
       <img v-else :src="item.image" :alt="item.title" class="h-[150px] w-full object-cover rounded-t-lg" />
       <div v-if="item.download" class="absolute top-2 right-2">
@@ -76,7 +83,14 @@
           :to="item.download"
           target="_blank"
           class="btn btn-sm btn-primary"
-          @click="trackDownload({ document_id: item.id, file_type: item.download.split('.').pop()?.toUpperCase(), location: 'card', name: item.title })"
+          @click="
+            trackDownload({
+              document_id: item.id,
+              file_type: item.download.split('.').pop()?.toUpperCase(),
+              location: 'card',
+              name: item.title,
+            })
+          "
         >
           <i class="fad fa-download mr-1"></i> {{ t('actions.download') }}
         </NuxtLink>

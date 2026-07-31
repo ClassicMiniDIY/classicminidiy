@@ -445,7 +445,10 @@
                 </div>
               </div>
               <div class="p-2">
-                <div v-if="commitsLoading === 'pending' || releasesLoading === 'pending'" class="flex justify-center p-4">
+                <div
+                  v-if="commitsLoading === 'pending' || releasesLoading === 'pending'"
+                  class="flex justify-center p-4"
+                >
                   <div class="loading loading-spinner loading-md text-primary"></div>
                 </div>
                 <div v-else-if="mergedUpdates && mergedUpdates.length > 0">
@@ -530,45 +533,63 @@
               </div>
               <div class="grid grid-cols-1 gap-6">
                 <div class="image">
-                  <img
+                  <nuxt-img
                     class="mx-auto w-1/2"
                     src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/haltech.jpg"
                     alt="Haltech ECU"
+                    format="webp"
+                    sizes="50vw lg:320px"
+                    loading="lazy"
                   />
                 </div>
                 <div class="image">
-                  <img
+                  <nuxt-img
                     class="mx-auto w-1/2"
                     src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/speeduino.jpg"
                     alt="Speeduino ECU"
+                    format="webp"
+                    sizes="50vw lg:320px"
+                    loading="lazy"
                   />
                 </div>
                 <div class="image">
-                  <img
+                  <nuxt-img
                     class="mx-auto w-1/2"
                     src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/megasquirt.png"
                     alt="MegaSquirt ECU"
+                    format="webp"
+                    sizes="50vw lg:320px"
+                    loading="lazy"
                   />
                 </div>
                 <div class="image">
-                  <img
+                  <nuxt-img
                     class="mx-auto w-1/2"
                     src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/emerald.png"
                     alt="Emerald ECU"
+                    format="webp"
+                    sizes="50vw lg:320px"
+                    loading="lazy"
                   />
                 </div>
                 <div class="image">
-                  <img
+                  <nuxt-img
                     class="mx-auto w-1/2"
                     src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/megajolt.png"
                     alt="MegaJolt ECU"
+                    format="webp"
+                    sizes="50vw lg:320px"
+                    loading="lazy"
                   />
                 </div>
                 <div class="image">
-                  <img
+                  <nuxt-img
                     class="mx-auto w-1/2"
                     src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/ecus/dta.jpg"
                     alt="DTA Fast ECU"
+                    format="webp"
+                    sizes="50vw lg:320px"
+                    loading="lazy"
                   />
                 </div>
               </div>

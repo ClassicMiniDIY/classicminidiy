@@ -9,8 +9,8 @@
   const description =
     'About Classic Mini DIY — a knowledgebase, toolkit, and archive for Classic Mini Cooper owners, founded by Cole Gentry to help enthusiasts work on their own cars.';
 
-    // Title is just "About" — nuxt-seo-utils appends " | Classic Mini DIY" via the
-    // site-name template (including the brand here would double it).
+  // Title is just "About" — nuxt-seo-utils appends " | Classic Mini DIY" via the
+  // site-name template (including the brand here would double it).
   useSeoMeta({
     title: 'About',
     description,
@@ -76,6 +76,7 @@
                 alt="Cole Gentry, founder of Classic Mini DIY"
                 width="120"
                 height="120"
+                format="webp"
                 class="rounded-full w-30 h-30 object-cover mb-2"
                 loading="lazy"
               />
@@ -100,10 +101,10 @@
             <div class="card-body">
               <h2 class="font-semibold text-2xl mb-2">Who's behind it</h2>
               <p class="opacity-80 leading-relaxed">
-                I'm Cole Gentry, the founder of Classic Mini DIY. I build the calculators, decoders, and
-                reference data on this site and share Classic Mini repair and restoration know-how on
-                YouTube. The goal is simple: pull technical information from across the Classic Mini
-                community into one place and keep it free, accurate, and easy to use.
+                I'm Cole Gentry, the founder of Classic Mini DIY. I build the calculators, decoders, and reference data
+                on this site and share Classic Mini repair and restoration know-how on YouTube. The goal is simple: pull
+                technical information from across the Classic Mini community into one place and keep it free, accurate,
+                and easy to use.
               </p>
             </div>
           </div>
@@ -112,8 +113,8 @@
             <div class="card-body">
               <h2 class="font-semibold text-2xl mb-3">What you'll find here</h2>
               <p class="opacity-80 leading-relaxed mb-4">
-                Everything here is focused on the A-series Classic Mini (1959–2000) — the cars, the
-                engines, and the people who keep them on the road.
+                Everything here is focused on the A-series Classic Mini (1959–2000) — the cars, the engines, and the
+                people who keep them on the road.
               </p>
               <ul class="space-y-2">
                 <li class="flex items-start gap-3">
@@ -126,13 +127,9 @@
                 <li class="flex items-start gap-3">
                   <i class="fas fa-magnifying-glass text-primary mt-1"></i>
                   <span class="opacity-80">
-                    <NuxtLink to="/technical/chassis-decoder" class="text-primary hover:underline"
-                      >Chassis</NuxtLink
-                    >
+                    <NuxtLink to="/technical/chassis-decoder" class="text-primary hover:underline">Chassis</NuxtLink>
                     and
-                    <NuxtLink to="/technical/engine-decoder" class="text-primary hover:underline"
-                      >engine</NuxtLink
-                    >
+                    <NuxtLink to="/technical/engine-decoder" class="text-primary hover:underline">engine</NuxtLink>
                     number decoders to identify your car.
                   </span>
                 </li>

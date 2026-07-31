@@ -101,26 +101,26 @@
               :title="t('compression_card.link_title')"
               @click="track('tool_card_clicked', { tool_name: 'compression', location: 'archive_engines' })"
             >
-              <div class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-xl transition-shadow duration-300">
+              <div
+                class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-xl transition-shadow duration-300"
+              >
                 <div class="card-body">
                   <div class="flex items-start">
                     <div class="mr-4">
                       <figure class="w-16 h-16">
-                        <picture>
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-calculator-100.webp"
-                            type="image/webp"
-                          />
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-calculator-100.png"
-                            type="image/png"
-                          />
-                          <nuxt-img
-                            src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-calculator-100.png"
-                            :alt="t('compression_card.alt_text')"
-                            class="w-full h-full object-contain"
-                          />
-                        </picture>
+                        <!-- Was a hand-rolled <picture> whose <source> srcsets pointed
+                             straight at S3, so the browser always took the raw 100px
+                             asset and the <nuxt-img> fallback never rendered. A single
+                             nuxt-img lets ipx resize to the 64px display size. -->
+                        <nuxt-img
+                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-calculator-100.png"
+                          :alt="t('compression_card.alt_text')"
+                          class="w-full h-full object-contain"
+                          format="webp"
+                          width="64"
+                          height="64"
+                          loading="lazy"
+                        />
                       </figure>
                     </div>
                     <div>

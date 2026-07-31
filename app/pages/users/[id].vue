@@ -79,9 +79,7 @@
       // Fetch gear configs and vehicles in parallel
       const [configs, vehiclesData] = await Promise.all([
         fetchPublicConfigs(result.profile.id),
-        result.profile.show_vehicles
-          ? getPublicProfileVehicles(result.profile.id)
-          : Promise.resolve([] as Vehicle[]),
+        result.profile.show_vehicles ? getPublicProfileVehicles(result.profile.id) : Promise.resolve([] as Vehicle[]),
       ]);
 
       publicConfigs.value = configs;
@@ -159,7 +157,14 @@
           <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div v-if="profile?.avatar_url" class="avatar">
               <div class="w-20 rounded-full">
-                <img :src="profile.avatar_url" :alt="displayName" />
+                <nuxt-img
+                  :src="profile.avatar_url"
+                  :alt="displayName"
+                  format="webp"
+                  width="80"
+                  height="80"
+                  loading="lazy"
+                />
               </div>
             </div>
             <div v-else class="avatar avatar-placeholder">
@@ -193,14 +198,21 @@
               </div>
 
               <!-- Marketplace seller trust signals (flag-gated) -->
-              <ExchangeProfileSellerTrustSignals v-if="exchangeEnabled && profile?.id" :seller-id="profile.id" class="mt-4" />
+              <ExchangeProfileSellerTrustSignals
+                v-if="exchangeEnabled && profile?.id"
+                :seller-id="profile.id"
+                class="mt-4"
+              />
             </div>
           </div>
         </div>
       </div>
 
       <!-- Vehicles -->
-      <div v-if="profile?.show_vehicles && vehicles.length > 0" class="card bg-base-100 shadow-sm border border-base-300">
+      <div
+        v-if="profile?.show_vehicles && vehicles.length > 0"
+        class="card bg-base-100 shadow-sm border border-base-300"
+      >
         <div class="card-body">
           <div class="flex items-center">
             <i class="fad fa-car mr-2"></i>
@@ -296,7 +308,11 @@
     "vehicles": {
       "title": "Their Minis"
     },
-    "listings": {"title": "Active Listings", "count": "{count} listing | {count} listings", "empty": "This member hasn't posted any listings."},
+    "listings": {
+      "title": "Active Listings",
+      "count": "{count} listing | {count} listings",
+      "empty": "This member hasn't posted any listings."
+    },
     "gear_configs": {
       "title": "Gear Configurations",
       "empty": "No public configurations shared.",
@@ -322,7 +338,11 @@
     "vehicles": {
       "title": "Sus Minis"
     },
-    "listings": {"title": "Anuncios activos", "count": "{count} anuncio | {count} anuncios", "empty": "Este miembro no ha publicado ningún anuncio."},
+    "listings": {
+      "title": "Anuncios activos",
+      "count": "{count} anuncio | {count} anuncios",
+      "empty": "Este miembro no ha publicado ningún anuncio."
+    },
     "gear_configs": {
       "title": "Configuraciones de Engranajes",
       "empty": "No hay configuraciones públicas compartidas.",
@@ -348,7 +368,11 @@
     "vehicles": {
       "title": "Ses Minis"
     },
-    "listings": {"title": "Annonces actives", "count": "{count} annonce | {count} annonces", "empty": "Ce membre n'a publié aucune annonce."},
+    "listings": {
+      "title": "Annonces actives",
+      "count": "{count} annonce | {count} annonces",
+      "empty": "Ce membre n'a publié aucune annonce."
+    },
     "gear_configs": {
       "title": "Configurations d'Engrenages",
       "empty": "Aucune configuration publique partagée.",
@@ -374,7 +398,11 @@
     "vehicles": {
       "title": "Ihre Minis"
     },
-    "listings": {"title": "Aktive Inserate", "count": "{count} Inserat | {count} Inserate", "empty": "Dieses Mitglied hat noch keine Inserate veröffentlicht."},
+    "listings": {
+      "title": "Aktive Inserate",
+      "count": "{count} Inserat | {count} Inserate",
+      "empty": "Dieses Mitglied hat noch keine Inserate veröffentlicht."
+    },
     "gear_configs": {
       "title": "Getriebe-Konfigurationen",
       "empty": "Keine öffentlichen Konfigurationen geteilt.",
@@ -400,7 +428,11 @@
     "vehicles": {
       "title": "Le Sue Mini"
     },
-    "listings": {"title": "Annunci attivi", "count": "{count} annuncio | {count} annunci", "empty": "Questo membro non ha pubblicato alcun annuncio."},
+    "listings": {
+      "title": "Annunci attivi",
+      "count": "{count} annuncio | {count} annunci",
+      "empty": "Questo membro non ha pubblicato alcun annuncio."
+    },
     "gear_configs": {
       "title": "Configurazioni Ingranaggi",
       "empty": "Nessuna configurazione pubblica condivisa.",
@@ -426,7 +458,11 @@
     "vehicles": {
       "title": "Seus Minis"
     },
-    "listings": {"title": "Anúncios ativos", "count": "{count} anúncio | {count} anúncios", "empty": "Este membro não publicou nenhum anúncio."},
+    "listings": {
+      "title": "Anúncios ativos",
+      "count": "{count} anúncio | {count} anúncios",
+      "empty": "Este membro não publicou nenhum anúncio."
+    },
     "gear_configs": {
       "title": "Configurações de Engrenagens",
       "empty": "Nenhuma configuração pública compartilhada.",
@@ -452,7 +488,11 @@
     "vehicles": {
       "title": "Автомобили"
     },
-    "listings": {"title": "Активные объявления", "count": "{count} объявление | {count} объявлений", "empty": "Этот участник пока не разместил объявлений."},
+    "listings": {
+      "title": "Активные объявления",
+      "count": "{count} объявление | {count} объявлений",
+      "empty": "Этот участник пока не разместил объявлений."
+    },
     "gear_configs": {
       "title": "Конфигурации Передач",
       "empty": "Нет публичных конфигураций.",
@@ -478,7 +518,7 @@
     "vehicles": {
       "title": "所有車両"
     },
-    "listings": {"title": "出品中", "count": "出品 {count} 件", "empty": "このメンバーはまだ出品していません。"},
+    "listings": { "title": "出品中", "count": "出品 {count} 件", "empty": "このメンバーはまだ出品していません。" },
     "gear_configs": {
       "title": "ギア設定",
       "empty": "公開設定はありません。",
@@ -504,7 +544,7 @@
     "vehicles": {
       "title": "TA的Mini"
     },
-    "listings": {"title": "在售商品", "count": "{count} 件商品", "empty": "该会员还没有发布任何商品。"},
+    "listings": { "title": "在售商品", "count": "{count} 件商品", "empty": "该会员还没有发布任何商品。" },
     "gear_configs": {
       "title": "齿轮配置",
       "empty": "暂无公开配置。",
@@ -530,7 +570,11 @@
     "vehicles": {
       "title": "보유 차량"
     },
-    "listings": {"title": "판매 중인 매물", "count": "매물 {count}개", "empty": "이 회원은 아직 등록한 매물이 없습니다."},
+    "listings": {
+      "title": "판매 중인 매물",
+      "count": "매물 {count}개",
+      "empty": "이 회원은 아직 등록한 매물이 없습니다."
+    },
     "gear_configs": {
       "title": "기어 구성",
       "empty": "공개된 구성이 없습니다.",

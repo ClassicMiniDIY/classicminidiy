@@ -125,22 +125,15 @@
                   <div class="flex items-start space-x-4">
                     <div class="shrink-0">
                       <figure class="w-16 h-16">
-                        <picture>
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.webp"
-                            type="image/webp"
-                          />
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png"
-                            type="image/png"
-                          />
-                          <nuxt-img
-                            loading="lazy"
-                            src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png"
-                            class="w-full h-full object-contain"
-                            :alt="t('engine_sizes_card.alt_text')"
-                          />
-                        </picture>
+                        <nuxt-img
+                          loading="lazy"
+                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png"
+                          class="w-full h-full object-contain"
+                          :alt="t('engine_sizes_card.alt_text')"
+                          format="webp"
+                          width="64"
+                          height="64"
+                        />
                       </figure>
                     </div>
                     <div>

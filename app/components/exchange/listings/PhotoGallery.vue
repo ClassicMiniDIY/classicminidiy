@@ -66,13 +66,31 @@
 
     <!-- Hero Main Image -->
     <div class="relative overflow-hidden rounded-lg bg-base-200">
-      <img
+      <!-- nuxt-img (not nuxt-picture): this renders a single <img>, so the class,
+           data-testid and @click land on the image element exactly as before.
+           `format="webp"` is required — NuxtImg emits the SOURCE format unless told
+           otherwise; the `image.format` list in nuxt.config only applies to
+           <NuxtPicture>. No width/height here on purpose: passing only `sizes` keeps
+           each photo's natural aspect ratio (listing photos are user-uploaded and
+           vary), and the aspect-* class on the element itself already reserves the
+           box, so there's no CLS. -->
+      <nuxt-img
         v-if="activePhoto"
         data-testid="hero-image"
         :src="getPhotoUrl(activePhoto.storage_path)"
-        :alt="t('heroAlt', { title: listingTitle, category: activePhoto.category || t('photo'), index: activeFilteredIndex + 1 })"
+        :alt="
+          t('heroAlt', {
+            title: listingTitle,
+            category: activePhoto.category || t('photo'),
+            index: activeFilteredIndex + 1,
+          })
+        "
         class="w-full aspect-4/3 md:aspect-video object-contain cursor-zoom-in"
         style="object-fit: contain"
+        format="webp"
+        sizes="100vw md:768px lg:1024px"
+        loading="eager"
+        fetchpriority="high"
         @click="openLightbox"
       />
 
@@ -128,10 +146,17 @@
         style="scroll-snap-align: center"
         @click="selectPhoto(photo)"
       >
-        <img
+        <!-- Thumbnails render at 64/80px but were loading the full-size upload.
+             width+height here are deliberate: the strip crops (object-cover), so a
+             square resize is correct and it pins the request to ~80px. -->
+        <nuxt-img
           :src="getPhotoUrl(photo.storage_path)"
           :alt="t('thumbnailAlt', { title: listingTitle, index: index + 1 })"
           class="w-full h-full object-cover"
+          format="webp"
+          width="80"
+          height="80"
+          sizes="64px md:80px"
           loading="lazy"
         />
       </button>
@@ -154,10 +179,12 @@
               :ref="(el) => setLightboxSlideRef(index, el)"
               class="carousel-item relative w-full"
             >
-              <img
+              <nuxt-img
                 :src="getPhotoUrl(photo.storage_path)"
                 :alt="t('lightboxAlt', { title: listingTitle, index: index + 1 })"
                 class="w-full max-h-[80vh] object-contain mx-auto"
+                format="webp"
+                sizes="100vw lg:1280px"
                 loading="lazy"
               />
 

@@ -220,17 +220,15 @@
                   <div class="flex items-start space-x-4">
                     <div class="shrink-0">
                       <figure class="w-16 h-16">
-                        <picture>
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.webp"
-                            type="image/webp"
-                          />
-                          <img
-                            src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
-                            :alt="t('engine_decoder_card.alt_text')"
-                            class="w-full h-full object-cover rounded"
-                          />
-                        </picture>
+                        <nuxt-img
+                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
+                          :alt="t('engine_decoder_card.alt_text')"
+                          class="w-full h-full object-cover rounded"
+                          format="webp"
+                          width="64"
+                          height="64"
+                          loading="lazy"
+                        />
                       </figure>
                     </div>
                     <div class="flex-1">

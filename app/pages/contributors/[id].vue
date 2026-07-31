@@ -158,7 +158,14 @@
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-2">
               <div v-if="profile.avatarUrl" class="avatar">
                 <div class="w-32 rounded-full">
-                  <img :src="profile.avatarUrl" :alt="displayName" />
+                  <nuxt-img
+                    :src="profile.avatarUrl"
+                    :alt="displayName"
+                    format="webp"
+                    width="128"
+                    height="128"
+                    loading="lazy"
+                  />
                 </div>
               </div>
               <div v-else class="avatar avatar-placeholder">
@@ -170,10 +177,7 @@
                 <span class="eyebrow">{{ t('eyebrow') }}</span>
                 <h2 class="text-3xl font-bold mb-2">{{ displayName }}</h2>
                 <div class="mb-3">
-                  <span
-                    class="badge badge-soft"
-                    :class="`badge-${trustLevelConfig.color}`"
-                  >
+                  <span class="badge badge-soft" :class="`badge-${trustLevelConfig.color}`">
                     {{ trustLevelConfig.label }}
                   </span>
                 </div>
@@ -295,10 +299,7 @@
                   </p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <span
-                    class="badge badge-soft badge-sm"
-                    :class="`badge-${actionBadgeColor(item.action)}`"
-                  >
+                  <span class="badge badge-soft badge-sm" :class="`badge-${actionBadgeColor(item.action)}`">
                     {{ t(`contributions.action.${item.action}`) }}
                   </span>
                   <span class="text-xs text-base-content/40 hidden sm:inline">

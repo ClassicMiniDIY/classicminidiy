@@ -157,6 +157,7 @@
             class="w-32 logo-image"
             width="128"
             height="37"
+            format="webp"
             loading="eager"
             fetchpriority="high"
           />

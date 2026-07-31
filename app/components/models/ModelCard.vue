@@ -14,11 +14,13 @@
     class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
   >
     <figure class="relative aspect-[4/3] bg-base-200 overflow-hidden">
-      <img
+      <nuxt-img
         v-if="model.primaryImage"
         :src="model.primaryImage"
         :alt="model.title"
         loading="lazy"
+        format="webp"
+        sizes="100vw sm:50vw lg:400px"
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
       <div v-else class="w-full h-full flex items-center justify-center text-base-content/30">
@@ -50,11 +52,14 @@
 
       <div class="flex items-center justify-between mt-2 text-xs opacity-70">
         <span v-if="model.author" class="flex items-center gap-1.5 min-w-0">
-          <img
+          <nuxt-img
             v-if="model.author.avatarUrl"
             :src="model.author.avatarUrl"
             :alt="model.author.displayName || t('author.label')"
             class="w-5 h-5 rounded-full object-cover"
+            format="webp"
+            width="20"
+            height="20"
             loading="lazy"
           />
           <i v-else class="fas fa-circle-user text-base"></i>

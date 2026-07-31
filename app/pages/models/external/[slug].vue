@@ -15,9 +15,7 @@
   // ── SEO ──────────────────────────────────────────────────────────────────────
   const SITE_DEFAULT_OG = 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg';
 
-  const seoTitle = computed(() =>
-    model.value ? `${model.value.title} | Classic Mini DIY` : t('meta.defaultTitle')
-  );
+  const seoTitle = computed(() => (model.value ? `${model.value.title} | Classic Mini DIY` : t('meta.defaultTitle')));
   const seoDesc = computed(() => {
     const m = model.value;
     if (!m) return t('meta.defaultDescription');
@@ -82,7 +80,14 @@
           class="rounded-xl overflow-hidden border border-base-300 bg-base-200"
           style="aspect-ratio: 4 / 3"
         >
-          <img :src="activeImage.url" :alt="activeImage.alt" class="w-full h-full object-contain" />
+          <nuxt-img
+            :src="activeImage.url"
+            :alt="activeImage.alt"
+            class="w-full h-full object-contain"
+            format="webp"
+            sizes="100vw lg:768px"
+            loading="eager"
+          />
         </div>
         <!-- No images placeholder -->
         <div
@@ -99,14 +104,18 @@
             v-for="img in model.images"
             :key="img.id"
             class="w-16 h-16 rounded-lg border-2 overflow-hidden"
-            :class="
-              activeImage?.url === img.url
-                ? 'border-primary'
-                : 'border-base-300 hover:border-primary/50'
-            "
+            :class="activeImage?.url === img.url ? 'border-primary' : 'border-base-300 hover:border-primary/50'"
             @click="activeImage = { url: img.url, alt: img.altText || model.title }"
           >
-            <img :src="img.url" :alt="img.altText || model.title" class="w-full h-full object-cover" loading="lazy" />
+            <nuxt-img
+              :src="img.url"
+              :alt="img.altText || model.title"
+              class="w-full h-full object-cover"
+              format="webp"
+              width="64"
+              height="64"
+              loading="lazy"
+            />
           </button>
         </div>
       </div>
@@ -160,7 +169,8 @@
                   target="_blank"
                   rel="nofollow noopener"
                   class="link link-hover font-semibold"
-                >{{ model.sourceAuthorName }}</a>
+                  >{{ model.sourceAuthorName }}</a
+                >
                 <span v-else class="font-semibold">{{ model.sourceAuthorName }}</span>
               </div>
             </div>

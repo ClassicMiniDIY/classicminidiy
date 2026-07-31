@@ -120,11 +120,7 @@
         <breadcrumb class="my-6" :version="BREADCRUMB_VERSIONS.TECH" :page="t('breadcrumb_title')"></breadcrumb>
         <div class="grid grid-cols-11 md:grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-8">
-            <PageIntro
-              :eyebrow="t('eyebrow')"
-              :title="t('main_heading')"
-              :description="t('description_text')"
-            />
+            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')" />
           </div>
           <div class="col-span-12 md:col-span-4">
             <NuxtLink :to="'/archive/engines'" :title="t('engine_sizes_card.link_title')" class="block">
@@ -133,22 +129,15 @@
                   <div class="flex items-start space-x-4">
                     <div class="shrink-0">
                       <figure class="w-16 h-16">
-                        <picture>
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.webp"
-                            type="image/webp"
-                          />
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png"
-                            type="image/png"
-                          />
-                          <nuxt-img
-                            loading="lazy"
-                            src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png"
-                            :alt="t('engine_sizes_card.alt_text')"
-                            class="w-full h-full object-contain"
-                          />
-                        </picture>
+                        <nuxt-img
+                          loading="lazy"
+                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-dashboard-100.png"
+                          :alt="t('engine_sizes_card.alt_text')"
+                          class="w-full h-full object-contain"
+                          format="webp"
+                          width="64"
+                          height="64"
+                        />
                       </figure>
                     </div>
                     <div>

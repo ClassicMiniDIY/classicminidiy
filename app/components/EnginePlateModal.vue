@@ -59,11 +59,14 @@
         <!-- Carousel -->
         <div class="relative w-full mb-4">
           <div class="relative w-full h-64 md:h-96 overflow-hidden rounded-lg">
-            <img
+            <nuxt-img
               v-for="(slide, index) in slides"
               :key="index"
               :src="slide.src"
               :alt="slide.alt"
+              format="webp"
+              sizes="100vw lg:672px"
+              loading="lazy"
               class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300"
               :class="currentSlide === index ? 'opacity-100' : 'opacity-0'"
             />

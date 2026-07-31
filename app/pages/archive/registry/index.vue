@@ -146,22 +146,15 @@
                   <div class="flex items-start space-x-4">
                     <div class="flex-shrink-0">
                       <figure class="w-16 h-16">
-                        <picture>
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.webp"
-                            type="image/webp"
-                          />
-                          <source
-                            srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
-                            type="image/png"
-                          />
-                          <nuxt-img
-                            loading="lazy"
-                            src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
-                            :alt="t('submit_card.alt_text')"
-                            class="w-16 h-16"
-                          />
-                        </picture>
+                        <nuxt-img
+                          loading="lazy"
+                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-book-reading-100.png"
+                          :alt="t('submit_card.alt_text')"
+                          class="w-16 h-16"
+                          format="webp"
+                          width="64"
+                          height="64"
+                        />
                       </figure>
                     </div>
                     <div>

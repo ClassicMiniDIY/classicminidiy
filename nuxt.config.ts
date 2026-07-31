@@ -122,6 +122,10 @@ export default defineNuxtConfig({
         { rel: 'dns-prefetch', href: 'https://use.typekit.net' },
         { rel: 'preconnect', href: 'https://classicminidiy.s3.us-east-1.amazonaws.com', crossorigin: '' },
         { rel: 'dns-prefetch', href: 'https://classicminidiy.s3.us-east-1.amazonaws.com' },
+        // The bare virtual-hosted name is a separate origin to the browser and is the
+        // more common spelling in this codebase, so it needs its own hint.
+        { rel: 'preconnect', href: 'https://classicminidiy.s3.amazonaws.com', crossorigin: '' },
+        { rel: 'dns-prefetch', href: 'https://classicminidiy.s3.amazonaws.com' },
         { rel: 'preconnect', href: 'https://kit.fontawesome.com', crossorigin: '' },
         { rel: 'dns-prefetch', href: 'https://kit.fontawesome.com' },
         { rel: 'preconnect', href: 'https://ka-f.fontawesome.com', crossorigin: '' },
@@ -355,8 +359,26 @@ export default defineNuxtConfig({
   image: {
     // Provider options
     provider: 'ipx',
-    // Domains allowed for external images
-    domains: ['classicminidiy.s3.us-east-1.amazonaws.com', 'psoqirvbujwohemmwplv.supabase.co'],
+    // Domains allowed for external images.
+    //
+    // The main asset bucket is referenced by BOTH its regional and bare virtual-hosted
+    // names across the codebase (`classicminidiy.s3.amazonaws.com` is by far the more
+    // common spelling — ~230 call sites vs ~40 regional). @nuxt/image matches this
+    // allowlist on the literal hostname, so a miss means the URL is passed through
+    // untouched: no resize, no format conversion, even inside <nuxt-img>. Both spellings
+    // must be listed until the call sites are normalized onto one host.
+    // YouTube thumbnails (RecentVideos / links.vue) are served from i.ytimg.com. While
+    // that host was unlisted, <nuxt-picture> still emitted webp+avif <source> elements
+    // whose srcset entries were all the same untouched maxresdefault.jpg — declaring
+    // formats it did not serve and offering 3072w of a 1280px file.
+    domains: [
+      'classicminidiy.s3.us-east-1.amazonaws.com',
+      'classicminidiy.s3.amazonaws.com',
+      'cmdiy-archive.s3.us-east-1.amazonaws.com',
+      'psoqirvbujwohemmwplv.supabase.co',
+      'i.ytimg.com',
+      'img.youtube.com',
+    ],
     // Image formats to generate
     format: ['webp', 'avif', 'jpg', 'png'],
     // Default image quality
@@ -855,7 +877,11 @@ export default defineNuxtConfig({
       // Customize caching strategies
       runtimeCaching: [
         {
-          urlPattern: /^https:\/\/classicminidiy\.s3\.us-east-1\.amazonaws\.com\/.*/i,
+          // Matches the asset bucket under both its regional and bare virtual-hosted
+          // names, and the archive bucket. Keep in sync with `image.domains` above —
+          // a host that resolves images but isn't matched here silently loses offline
+          // caching for every raw <img> still pointed straight at S3.
+          urlPattern: /^https:\/\/(?:classicminidiy|cmdiy-archive)\.s3\.(?:us-east-1\.)?amazonaws\.com\/.*/i,
           handler: 'CacheFirst',
           options: {
             cacheName: 's3-assets',
