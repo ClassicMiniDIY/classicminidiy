@@ -8,39 +8,41 @@
 
     <!-- Listings Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <NuxtLink
-          v-for="item in relatedListings"
-          :key="item.id"
-          :to="`/exchange/listings/${item.slug}`"
-          class="bg-base-100 shadow-sm hover:shadow-md transition-shadow rounded-lg overflow-hidden"
-        >
-          <!-- Photo -->
-          <div class="aspect-video bg-linear-to-br from-base-200 to-base-300">
-            <img
-              v-if="getItemPhotoUrl(item)"
-              :src="getItemPhotoUrl(item)!"
-              :alt="item.title"
-              class="w-full h-full object-contain"
-              loading="lazy"
-            />
-            <div v-else class="w-full h-full flex items-center justify-center">
-              <i class="fas fa-image text-base-content/30 text-5xl"></i>
-            </div>
+      <NuxtLink
+        v-for="item in relatedListings"
+        :key="item.id"
+        :to="`/exchange/listings/${item.slug}`"
+        class="bg-base-100 shadow-sm hover:shadow-md transition-shadow rounded-lg overflow-hidden"
+      >
+        <!-- Photo -->
+        <div class="aspect-video bg-linear-to-br from-base-200 to-base-300">
+          <nuxt-img
+            v-if="getItemPhotoUrl(item)"
+            :src="getItemPhotoUrl(item)!"
+            :alt="item.title"
+            class="w-full h-full object-contain"
+            format="webp"
+            sizes="100vw sm:50vw lg:320px"
+            loading="lazy"
+          />
+          <div v-else class="w-full h-full flex items-center justify-center">
+            <i class="fas fa-image text-base-content/30 text-5xl"></i>
           </div>
+        </div>
 
-          <!-- Info -->
-          <div class="p-4">
-            <h3 class="font-semibold line-clamp-1">{{ item.title }}</h3>
-            <div class="text-lg font-bold mt-1" :class="item.price === 0 ? 'text-success' : 'text-primary'">
-              {{ formatPrice(item.price) }}
-            </div>
-            <div v-if="item.location" class="flex items-center gap-1 text-sm text-base-content/60 mt-1">
-              <i class="fas fa-location-dot"></i>
-              <span class="truncate">{{ item.location }}</span>
-            </div>
+        <!-- Info -->
+        <div class="p-4">
+          <h3 class="font-semibold line-clamp-1">{{ item.title }}</h3>
+          <div class="text-lg font-bold mt-1" :class="item.price === 0 ? 'text-success' : 'text-primary'">
+            {{ formatPrice(item.price) }}
           </div>
-        </NuxtLink>
-      </div>
+          <div v-if="item.location" class="flex items-center gap-1 text-sm text-base-content/60 mt-1">
+            <i class="fas fa-location-dot"></i>
+            <span class="truncate">{{ item.location }}</span>
+          </div>
+        </div>
+      </NuxtLink>
+    </div>
   </div>
 
   <!-- Loading State -->

@@ -134,7 +134,10 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'list' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'list'; track('wheel_filter_changed', { size_selected: 'list' })"
+                @click="
+                  size = 'list';
+                  track('wheel_filter_changed', { size_selected: 'list' });
+                "
               >
                 {{ t('all_sizes') }}
               </button>
@@ -142,7 +145,10 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'ten' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'ten'; track('wheel_filter_changed', { size_selected: 'ten' })"
+                @click="
+                  size = 'ten';
+                  track('wheel_filter_changed', { size_selected: 'ten' });
+                "
               >
                 {{ t('ten_inch_wheels') }}
               </button>
@@ -150,7 +156,10 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'twelve' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'twelve'; track('wheel_filter_changed', { size_selected: 'twelve' })"
+                @click="
+                  size = 'twelve';
+                  track('wheel_filter_changed', { size_selected: 'twelve' });
+                "
               >
                 {{ t('twelve_inch_wheels') }}
               </button>
@@ -158,7 +167,10 @@
                 type="button"
                 class="btn join-item"
                 :class="size === 'thirteen' ? 'btn-primary' : 'btn-outline'"
-                @click="size = 'thirteen'; track('wheel_filter_changed', { size_selected: 'thirteen' })"
+                @click="
+                  size = 'thirteen';
+                  track('wheel_filter_changed', { size_selected: 'thirteen' });
+                "
               >
                 {{ t('thirteen_inch_wheels') }}
               </button>
@@ -200,10 +212,12 @@
             class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow duration-300"
           >
             <figure class="relative pt-[100%] bg-base-200 rounded-t-lg">
-              <img
+              <nuxt-img
                 :src="getWheelImageUrl(wheel)"
                 :alt="wheel.name"
                 class="absolute inset-0 w-full h-full object-contain p-4"
+                format="webp"
+                sizes="100vw sm:50vw lg:300px"
                 loading="lazy"
               />
             </figure>
@@ -241,12 +255,7 @@
       <div class="border-t border-base-300 pt-4 mt-4">
         <div class="flex items-center justify-center">
           <div class="join">
-            <button
-              type="button"
-              class="btn join-item"
-              :disabled="page === 1"
-              @click="page > 1 && page--"
-            >
+            <button type="button" class="btn join-item" :disabled="page === 1" @click="page > 1 && page--">
               <i class="fad fa-arrow-left"></i>
             </button>
             <button type="button" class="btn join-item btn-ghost pointer-events-none">

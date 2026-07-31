@@ -17,11 +17,13 @@
     class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
   >
     <figure class="relative aspect-[4/3] bg-base-200 overflow-hidden">
-      <img
+      <nuxt-img
         v-if="model.primaryImage"
         :src="model.primaryImage"
         :alt="model.title"
         loading="lazy"
+        format="webp"
+        sizes="100vw sm:50vw lg:400px"
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
       <div v-else class="w-full h-full flex items-center justify-center text-base-content/30">
@@ -56,12 +58,37 @@
 <i18n lang="json">
 {
   "en": { "featured": "Featured", "anonymous": "Unknown maker", "likes": "Likes", "visits": "Outbound visits" },
-  "es": { "featured": "Destacado", "anonymous": "Autor desconocido", "likes": "Me gusta", "visits": "Visitas externas" },
+  "es": {
+    "featured": "Destacado",
+    "anonymous": "Autor desconocido",
+    "likes": "Me gusta",
+    "visits": "Visitas externas"
+  },
   "fr": { "featured": "En vedette", "anonymous": "Créateur inconnu", "likes": "J'aime", "visits": "Visites sortantes" },
-  "de": { "featured": "Empfohlen", "anonymous": "Unbekannter Ersteller", "likes": "Gefällt mir", "visits": "Externe Besuche" },
-  "it": { "featured": "In evidenza", "anonymous": "Autore sconosciuto", "likes": "Mi piace", "visits": "Visite esterne" },
-  "pt": { "featured": "Destaque", "anonymous": "Autor desconhecido", "likes": "Curtidas", "visits": "Visitas externas" },
-  "ru": { "featured": "Рекомендуем", "anonymous": "Автор неизвестен", "likes": "Нравится", "visits": "Внешние переходы" },
+  "de": {
+    "featured": "Empfohlen",
+    "anonymous": "Unbekannter Ersteller",
+    "likes": "Gefällt mir",
+    "visits": "Externe Besuche"
+  },
+  "it": {
+    "featured": "In evidenza",
+    "anonymous": "Autore sconosciuto",
+    "likes": "Mi piace",
+    "visits": "Visite esterne"
+  },
+  "pt": {
+    "featured": "Destaque",
+    "anonymous": "Autor desconhecido",
+    "likes": "Curtidas",
+    "visits": "Visitas externas"
+  },
+  "ru": {
+    "featured": "Рекомендуем",
+    "anonymous": "Автор неизвестен",
+    "likes": "Нравится",
+    "visits": "Внешние переходы"
+  },
   "ja": { "featured": "おすすめ", "anonymous": "作者不明", "likes": "いいね", "visits": "外部アクセス" },
   "zh": { "featured": "精选", "anonymous": "未知作者", "likes": "点赞", "visits": "外部访问" },
   "ko": { "featured": "추천", "anonymous": "작자 미상", "likes": "좋아요", "visits": "외부 방문" }

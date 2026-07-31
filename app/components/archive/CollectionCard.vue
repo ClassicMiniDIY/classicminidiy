@@ -17,10 +17,13 @@
 
       <div class="card bg-base-100 shadow-md border border-base-300 relative h-full">
         <figure v-if="collection.image" class="relative">
-          <img
+          <nuxt-img
             :src="collection.image"
             :alt="collection.title"
             class="h-[150px] w-full object-cover rounded-t-lg group-hover:opacity-90 transition-opacity"
+            format="webp"
+            sizes="100vw sm:50vw lg:400px"
+            loading="lazy"
           />
           <!-- Item count badge -->
           <div class="absolute top-2 right-2">

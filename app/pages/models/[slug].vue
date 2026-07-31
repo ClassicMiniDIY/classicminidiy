@@ -128,7 +128,11 @@
       if (sid && model.value) {
         const res = await verifyPurchase(model.value.id, sid);
         if (res.verified) {
-          track('model_purchase_completed', { model_id: model.value.id, kind: res.kind ?? 'purchase', session_id: sid });
+          track('model_purchase_completed', {
+            model_id: model.value.id,
+            kind: res.kind ?? 'purchase',
+            session_id: sid,
+          });
           purchaseNotice.value = {
             type: 'success',
             text: res.kind === 'tip' ? t('notice.thankYouTip') : t('notice.purchaseComplete'),
@@ -224,7 +228,14 @@
           class="rounded-xl overflow-hidden border border-base-300 bg-base-200"
           style="aspect-ratio: 4 / 3"
         >
-          <img :src="activeMedia.url" :alt="activeMedia.alt" class="w-full h-full object-contain" />
+          <nuxt-img
+            :src="activeMedia.url"
+            :alt="activeMedia.alt"
+            class="w-full h-full object-contain"
+            format="webp"
+            sizes="100vw lg:768px"
+            loading="eager"
+          />
         </div>
         <div
           v-else
@@ -261,7 +272,15 @@
             "
             @click="activeMedia = { kind: 'image', url: img.url, alt: img.altText || model.title }"
           >
-            <img :src="img.url" :alt="img.altText || model.title" class="w-full h-full object-cover" loading="lazy" />
+            <nuxt-img
+              :src="img.url"
+              :alt="img.altText || model.title"
+              class="w-full h-full object-cover"
+              format="webp"
+              width="64"
+              height="64"
+              loading="lazy"
+            />
           </button>
         </div>
       </div>
@@ -278,15 +297,20 @@
 
           <!-- Author -->
           <div v-if="model.author" class="flex items-center gap-2">
-            <img
+            <nuxt-img
               v-if="model.author.avatarUrl"
               :src="model.author.avatarUrl"
               class="w-8 h-8 rounded-full object-cover"
               :alt="model.author.displayName || t('author.fallback')"
+              format="webp"
+              width="32"
+              height="32"
+              loading="lazy"
             />
             <i v-else class="fas fa-circle-user text-2xl opacity-60"></i>
             <span class="text-sm"
-              >{{ t('author.by') }} <strong>{{ model.author.displayName || model.author.username || t('author.anonymous') }}</strong></span
+              >{{ t('author.by') }}
+              <strong>{{ model.author.displayName || model.author.username || t('author.anonymous') }}</strong></span
             >
           </div>
 
@@ -315,7 +339,9 @@
                     {{ priceAside.text }}
                   </div>
                 </div>
-                <span v-if="isOwner" class="badge badge-neutral badge-sm shrink-0 whitespace-nowrap">{{ t('pricing.yourModel') }}</span>
+                <span v-if="isOwner" class="badge badge-neutral badge-sm shrink-0 whitespace-nowrap">{{
+                  t('pricing.yourModel')
+                }}</span>
                 <span v-else-if="entitled && !isFree" class="badge badge-success badge-sm shrink-0 whitespace-nowrap">
                   <i class="fas fa-check mr-1"></i> {{ t('pricing.purchased') }}
                 </span>
@@ -433,7 +459,9 @@
         <!-- Description -->
         <div v-if="model.description" class="card bg-base-100 shadow-sm border border-base-300">
           <div class="card-body">
-            <h2 class="card-title text-lg"><i class="fas fa-align-left text-primary mr-1"></i> {{ t('about.heading') }}</h2>
+            <h2 class="card-title text-lg">
+              <i class="fas fa-align-left text-primary mr-1"></i> {{ t('about.heading') }}
+            </h2>
             <p class="whitespace-pre-line text-sm leading-relaxed">{{ model.description }}</p>
             <a
               v-if="model.sourceUrl"
@@ -455,7 +483,8 @@
         <div v-if="model.version?.changelog" class="card bg-base-100 shadow-sm border border-base-300">
           <div class="card-body">
             <h3 class="card-title text-lg">
-              <i class="fas fa-code-branch text-primary mr-1"></i> {{ t('changelog.heading', { version: model.version.versionNumber }) }}
+              <i class="fas fa-code-branch text-primary mr-1"></i>
+              {{ t('changelog.heading', { version: model.version.versionNumber }) }}
             </h3>
             <p class="whitespace-pre-line text-sm opacity-80">{{ model.version.changelog }}</p>
           </div>
@@ -547,7 +576,12 @@
       "signInCta": "Inicia sesión para descargar",
       "filesHeading": "Archivos ({count})",
       "all": "Descargar todo",
-      "group": { "model": "Archivos de impresión", "source": "Fuente y CAD", "document": "Documentos", "other": "Otros archivos" }
+      "group": {
+        "model": "Archivos de impresión",
+        "source": "Fuente y CAD",
+        "document": "Documentos",
+        "other": "Otros archivos"
+      }
     },
     "notice": {
       "purchaseComplete": "Compra completada — tus archivos están desbloqueados abajo.",
@@ -594,7 +628,12 @@
       "signInCta": "Connectez-vous pour télécharger",
       "filesHeading": "Fichiers ({count})",
       "all": "Tout télécharger",
-      "group": { "model": "Fichiers d'impression", "source": "Source et CAO", "document": "Documents", "other": "Autres fichiers" }
+      "group": {
+        "model": "Fichiers d'impression",
+        "source": "Source et CAO",
+        "document": "Documents",
+        "other": "Autres fichiers"
+      }
     },
     "notice": {
       "purchaseComplete": "Achat effectué — vos fichiers sont déverrouillés ci-dessous.",
@@ -641,7 +680,12 @@
       "signInCta": "Zum Herunterladen anmelden",
       "filesHeading": "Dateien ({count})",
       "all": "Alle herunterladen",
-      "group": { "model": "Druckdateien", "source": "Quelle & CAD", "document": "Dokumente", "other": "Weitere Dateien" }
+      "group": {
+        "model": "Druckdateien",
+        "source": "Quelle & CAD",
+        "document": "Dokumente",
+        "other": "Weitere Dateien"
+      }
     },
     "notice": {
       "purchaseComplete": "Kauf abgeschlossen — deine Dateien sind unten freigeschaltet.",
@@ -735,7 +779,12 @@
       "signInCta": "Entre para baixar",
       "filesHeading": "Arquivos ({count})",
       "all": "Baixar tudo",
-      "group": { "model": "Arquivos de impressão", "source": "Fonte e CAD", "document": "Documentos", "other": "Outros arquivos" }
+      "group": {
+        "model": "Arquivos de impressão",
+        "source": "Fonte e CAD",
+        "document": "Documentos",
+        "other": "Outros arquivos"
+      }
     },
     "notice": {
       "purchaseComplete": "Compra concluída — seus arquivos estão desbloqueados abaixo.",
@@ -782,7 +831,12 @@
       "signInCta": "Войдите, чтобы скачать",
       "filesHeading": "Файлы ({count})",
       "all": "Скачать всё",
-      "group": { "model": "Файлы для печати", "source": "Исходники и CAD", "document": "Документы", "other": "Другие файлы" }
+      "group": {
+        "model": "Файлы для печати",
+        "source": "Исходники и CAD",
+        "document": "Документы",
+        "other": "Другие файлы"
+      }
     },
     "notice": {
       "purchaseComplete": "Покупка завершена — ваши файлы разблокированы ниже.",
@@ -829,7 +883,12 @@
       "signInCta": "ダウンロードするにはサインイン",
       "filesHeading": "ファイル ({count})",
       "all": "すべてダウンロード",
-      "group": { "model": "印刷ファイル", "source": "ソース・CAD", "document": "ドキュメント", "other": "その他のファイル" }
+      "group": {
+        "model": "印刷ファイル",
+        "source": "ソース・CAD",
+        "document": "ドキュメント",
+        "other": "その他のファイル"
+      }
     },
     "notice": {
       "purchaseComplete": "購入完了 — ファイルは以下でダウンロードできます。",

@@ -64,7 +64,11 @@
     });
   }
 
-  const { data: videos, status, error } = await useFetch('/api/youtube/videos', {
+  const {
+    data: videos,
+    status,
+    error,
+  } = await useFetch('/api/youtube/videos', {
     query: { limit: 10 },
     key: 'links-page-videos',
   });
@@ -131,6 +135,7 @@
             alt="Classic Mini DIY"
             width="120"
             height="120"
+            format="webp"
             loading="eager"
             class="rounded-full shadow-lg ring-4 ring-base-100 mb-4"
           />
@@ -199,9 +204,20 @@
           target="_blank"
           rel="noopener"
           class="card bg-base-100 shadow-md border border-base-300 overflow-hidden hover:shadow-lg transition-shadow"
-          @click="capture('links_page_click', { link_id: 'video', group: 'video', destination: video.videoUrl, label: video.title })"
+          @click="
+            capture('links_page_click', {
+              link_id: 'video',
+              group: 'video',
+              destination: video.videoUrl,
+              label: video.title,
+            })
+          "
         >
           <figure class="relative">
+            <!-- Explicit format="webp" rather than inheriting nuxt.config's
+                 ['webp','avif','jpg','png']: avif measured barely better than jpeg on
+                 these photographic thumbnails at q80 and is far slower to encode on a
+                 cold serverless path, so it costs more than it saves. -->
             <nuxt-picture
               :src="video.thumbnails.maxres"
               :alt="video.title"
@@ -209,6 +225,7 @@
               loading="lazy"
               width="720"
               height="404"
+              format="webp"
             />
             <span class="absolute inset-0 flex items-center justify-center">
               <span class="rounded-full bg-black/60 text-white w-14 h-14 flex items-center justify-center">

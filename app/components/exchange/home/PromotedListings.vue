@@ -18,12 +18,14 @@
         >
           <!-- Image -->
           <figure class="relative aspect-[4/3] bg-base-300 overflow-hidden">
-            <img
+            <nuxt-img
               v-if="getPrimaryPhoto(listing)"
               :src="getPrimaryPhoto(listing)"
               :alt="listing.title"
               class="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-300"
               style="object-fit: contain"
+              format="webp"
+              sizes="100vw sm:50vw lg:400px"
               loading="lazy"
             />
             <div v-else class="w-full h-full flex items-center justify-center">

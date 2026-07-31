@@ -1,7 +1,16 @@
 <template>
   <div class="avatar" :class="{ placeholder: !avatarUrl }">
     <div class="rounded-full bg-neutral text-neutral-content flex items-center justify-center" :class="sizeClasses">
-      <img v-if="avatarUrl" :src="avatarUrl" :alt="displayName || t('userAvatar')" class="rounded-full" loading="lazy" />
+      <nuxt-img
+        v-if="avatarUrl"
+        :src="avatarUrl"
+        :alt="displayName || t('userAvatar')"
+        class="rounded-full"
+        format="webp"
+        :width="avatarPx"
+        :height="avatarPx"
+        loading="lazy"
+      />
       <span v-else :class="textSizeClass">{{ initials }}</span>
     </div>
   </div>
@@ -34,6 +43,13 @@
       xl: 'w-32 h-32',
     };
     return sizes[props.size];
+  });
+
+  // Pixel equivalents of `sizeClasses`, so nuxt-img asks ipx for the size actually
+  // rendered instead of the full-resolution upload. Keep in sync with the map above.
+  const avatarPx = computed(() => {
+    const px = { xs: 32, sm: 40, md: 64, lg: 96, xl: 128 };
+    return px[props.size];
   });
 
   // Size mappings for text

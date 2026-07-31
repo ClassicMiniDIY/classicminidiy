@@ -128,22 +128,15 @@
                 <div class="card-body">
                   <div class="flex items-center">
                     <div class="shrink-0">
-                      <picture>
-                        <source
-                          srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.webp"
-                          type="image/webp"
-                        />
-                        <source
-                          srcset="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
-                          type="image/png"
-                        />
-                        <nuxt-img
-                          loading="lazy"
-                          src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
-                          :alt="t('chassis_decoder_card.alt_text')"
-                          class="w-16 h-16"
-                        />
-                      </picture>
+                      <nuxt-img
+                        loading="lazy"
+                        src="https://classicminidiy.s3.amazonaws.com/cloud-icon/icons8-blueprint-zoom-100.png"
+                        :alt="t('chassis_decoder_card.alt_text')"
+                        class="w-16 h-16"
+                        format="webp"
+                        width="64"
+                        height="64"
+                      />
                     </div>
                     <div class="ml-4">
                       <h2 class="text-xl font-semibold mb-2">

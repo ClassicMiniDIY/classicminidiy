@@ -20,12 +20,14 @@
       <!-- Image -->
       <figure class="relative">
         <div class="aspect-video bg-linear-to-br from-base-200 to-base-300 w-full">
-          <img
+          <nuxt-img
             v-if="primaryPhoto"
             :src="primaryPhoto"
             :alt="listing.title"
             class="w-full h-full object-contain"
             style="object-fit: contain"
+            format="webp"
+            sizes="100vw sm:50vw lg:384px"
             loading="lazy"
           />
           <div v-else class="w-full h-full flex items-center justify-center">
@@ -69,7 +71,12 @@
             </template>
             <!-- Conversion estimate -->
             <div v-if="convertedPrice && displayPrice !== 0" class="text-xs text-base-content/60">
-              {{ t('aboutInCurrency', { amount: formatCurrency(convertedPrice, viewerCurrency), currency: viewerCurrency }) }}
+              {{
+                t('aboutInCurrency', {
+                  amount: formatCurrency(convertedPrice, viewerCurrency),
+                  currency: viewerCurrency,
+                })
+              }}
             </div>
           </div>
 
@@ -176,12 +183,14 @@
   >
     <figure class="w-48 sm:w-64 bg-base-300 shrink-0">
       <div class="w-full h-full">
-        <img
+        <nuxt-img
           v-if="primaryPhoto"
           :src="primaryPhoto"
           :alt="listing.title"
           class="w-full h-full object-contain"
           style="object-fit: contain"
+          format="webp"
+          sizes="192px sm:256px"
           loading="lazy"
         />
         <div v-else class="flex items-center justify-center w-full h-full">
@@ -254,10 +263,12 @@
   >
     <figure class="w-32 sm:w-40 bg-base-300 shrink-0">
       <div class="w-full h-full">
-        <img
+        <nuxt-img
           v-if="primaryPhoto"
           :src="primaryPhoto"
           :alt="listing.title"
+          format="webp"
+          sizes="128px sm:160px"
           class="w-full h-full object-contain"
           style="object-fit: contain"
           loading="lazy"
@@ -545,15 +556,155 @@
 
 <i18n lang="json">
 {
-  "en": { "exampleListing": "Example Listing", "soldSuffix": "sold", "soldFor": "Sold for", "soldLabel": "Sold", "aboutInCurrency": "About {amount} in {currency}", "about": "About {amount}", "markSoldShort": "Sold", "markSold": "Mark as Sold", "delete": "Delete", "deleteListing": "Delete listing", "relist": "Relist", "relistListing": "Relist listing", "anonymous": "Anonymous" },
-  "es": { "exampleListing": "Anuncio de ejemplo", "soldSuffix": "vendido", "soldFor": "Vendido por", "soldLabel": "Vendido", "aboutInCurrency": "Aproximadamente {amount} en {currency}", "about": "Aproximadamente {amount}", "markSoldShort": "Vendido", "markSold": "Marcar como vendido", "delete": "Eliminar", "deleteListing": "Eliminar anuncio", "relist": "Volver a publicar", "relistListing": "Volver a publicar anuncio", "anonymous": "Anónimo" },
-  "fr": { "exampleListing": "Annonce exemple", "soldSuffix": "vendu", "soldFor": "Vendu pour", "soldLabel": "Vendu", "aboutInCurrency": "Environ {amount} en {currency}", "about": "Environ {amount}", "markSoldShort": "Vendu", "markSold": "Marquer comme vendu", "delete": "Supprimer", "deleteListing": "Supprimer l'annonce", "relist": "Republier", "relistListing": "Republier l'annonce", "anonymous": "Anonyme" },
-  "de": { "exampleListing": "Beispielanzeige", "soldSuffix": "verkauft", "soldFor": "Verkauft für", "soldLabel": "Verkauft", "aboutInCurrency": "Etwa {amount} in {currency}", "about": "Etwa {amount}", "markSoldShort": "Verkauft", "markSold": "Als verkauft markieren", "delete": "Löschen", "deleteListing": "Anzeige löschen", "relist": "Erneut einstellen", "relistListing": "Anzeige erneut einstellen", "anonymous": "Anonym" },
-  "it": { "exampleListing": "Annuncio di esempio", "soldSuffix": "venduto", "soldFor": "Venduto a", "soldLabel": "Venduto", "aboutInCurrency": "Circa {amount} in {currency}", "about": "Circa {amount}", "markSoldShort": "Venduto", "markSold": "Segna come venduto", "delete": "Elimina", "deleteListing": "Elimina annuncio", "relist": "Ripubblica", "relistListing": "Ripubblica annuncio", "anonymous": "Anonimo" },
-  "pt": { "exampleListing": "Anúncio de exemplo", "soldSuffix": "vendido", "soldFor": "Vendido por", "soldLabel": "Vendido", "aboutInCurrency": "Cerca de {amount} em {currency}", "about": "Cerca de {amount}", "markSoldShort": "Vendido", "markSold": "Marcar como vendido", "delete": "Excluir", "deleteListing": "Excluir anúncio", "relist": "Republicar", "relistListing": "Republicar anúncio", "anonymous": "Anônimo" },
-  "ru": { "exampleListing": "Пример объявления", "soldSuffix": "продано", "soldFor": "Продано за", "soldLabel": "Продано", "aboutInCurrency": "Около {amount} в {currency}", "about": "Около {amount}", "markSoldShort": "Продано", "markSold": "Отметить как проданное", "delete": "Удалить", "deleteListing": "Удалить объявление", "relist": "Опубликовать снова", "relistListing": "Опубликовать объявление снова", "anonymous": "Аноним" },
-  "ja": { "exampleListing": "サンプル出品", "soldSuffix": "売却済み", "soldFor": "販売価格", "soldLabel": "売却済み", "aboutInCurrency": "約 {amount}（{currency}）", "about": "約 {amount}", "markSoldShort": "売却済み", "markSold": "売却済みにする", "delete": "削除", "deleteListing": "出品を削除", "relist": "再出品", "relistListing": "出品を再出品", "anonymous": "匿名" },
-  "zh": { "exampleListing": "示例刊登", "soldSuffix": "已售", "soldFor": "售出价", "soldLabel": "已售", "aboutInCurrency": "约 {amount}（{currency}）", "about": "约 {amount}", "markSoldShort": "已售", "markSold": "标记为已售", "delete": "删除", "deleteListing": "删除刊登", "relist": "重新刊登", "relistListing": "重新刊登", "anonymous": "匿名" },
-  "ko": { "exampleListing": "예시 매물", "soldSuffix": "판매됨", "soldFor": "판매가", "soldLabel": "판매됨", "aboutInCurrency": "약 {amount} ({currency})", "about": "약 {amount}", "markSoldShort": "판매됨", "markSold": "판매됨으로 표시", "delete": "삭제", "deleteListing": "매물 삭제", "relist": "다시 등록", "relistListing": "매물 다시 등록", "anonymous": "익명" }
+  "en": {
+    "exampleListing": "Example Listing",
+    "soldSuffix": "sold",
+    "soldFor": "Sold for",
+    "soldLabel": "Sold",
+    "aboutInCurrency": "About {amount} in {currency}",
+    "about": "About {amount}",
+    "markSoldShort": "Sold",
+    "markSold": "Mark as Sold",
+    "delete": "Delete",
+    "deleteListing": "Delete listing",
+    "relist": "Relist",
+    "relistListing": "Relist listing",
+    "anonymous": "Anonymous"
+  },
+  "es": {
+    "exampleListing": "Anuncio de ejemplo",
+    "soldSuffix": "vendido",
+    "soldFor": "Vendido por",
+    "soldLabel": "Vendido",
+    "aboutInCurrency": "Aproximadamente {amount} en {currency}",
+    "about": "Aproximadamente {amount}",
+    "markSoldShort": "Vendido",
+    "markSold": "Marcar como vendido",
+    "delete": "Eliminar",
+    "deleteListing": "Eliminar anuncio",
+    "relist": "Volver a publicar",
+    "relistListing": "Volver a publicar anuncio",
+    "anonymous": "Anónimo"
+  },
+  "fr": {
+    "exampleListing": "Annonce exemple",
+    "soldSuffix": "vendu",
+    "soldFor": "Vendu pour",
+    "soldLabel": "Vendu",
+    "aboutInCurrency": "Environ {amount} en {currency}",
+    "about": "Environ {amount}",
+    "markSoldShort": "Vendu",
+    "markSold": "Marquer comme vendu",
+    "delete": "Supprimer",
+    "deleteListing": "Supprimer l'annonce",
+    "relist": "Republier",
+    "relistListing": "Republier l'annonce",
+    "anonymous": "Anonyme"
+  },
+  "de": {
+    "exampleListing": "Beispielanzeige",
+    "soldSuffix": "verkauft",
+    "soldFor": "Verkauft für",
+    "soldLabel": "Verkauft",
+    "aboutInCurrency": "Etwa {amount} in {currency}",
+    "about": "Etwa {amount}",
+    "markSoldShort": "Verkauft",
+    "markSold": "Als verkauft markieren",
+    "delete": "Löschen",
+    "deleteListing": "Anzeige löschen",
+    "relist": "Erneut einstellen",
+    "relistListing": "Anzeige erneut einstellen",
+    "anonymous": "Anonym"
+  },
+  "it": {
+    "exampleListing": "Annuncio di esempio",
+    "soldSuffix": "venduto",
+    "soldFor": "Venduto a",
+    "soldLabel": "Venduto",
+    "aboutInCurrency": "Circa {amount} in {currency}",
+    "about": "Circa {amount}",
+    "markSoldShort": "Venduto",
+    "markSold": "Segna come venduto",
+    "delete": "Elimina",
+    "deleteListing": "Elimina annuncio",
+    "relist": "Ripubblica",
+    "relistListing": "Ripubblica annuncio",
+    "anonymous": "Anonimo"
+  },
+  "pt": {
+    "exampleListing": "Anúncio de exemplo",
+    "soldSuffix": "vendido",
+    "soldFor": "Vendido por",
+    "soldLabel": "Vendido",
+    "aboutInCurrency": "Cerca de {amount} em {currency}",
+    "about": "Cerca de {amount}",
+    "markSoldShort": "Vendido",
+    "markSold": "Marcar como vendido",
+    "delete": "Excluir",
+    "deleteListing": "Excluir anúncio",
+    "relist": "Republicar",
+    "relistListing": "Republicar anúncio",
+    "anonymous": "Anônimo"
+  },
+  "ru": {
+    "exampleListing": "Пример объявления",
+    "soldSuffix": "продано",
+    "soldFor": "Продано за",
+    "soldLabel": "Продано",
+    "aboutInCurrency": "Около {amount} в {currency}",
+    "about": "Около {amount}",
+    "markSoldShort": "Продано",
+    "markSold": "Отметить как проданное",
+    "delete": "Удалить",
+    "deleteListing": "Удалить объявление",
+    "relist": "Опубликовать снова",
+    "relistListing": "Опубликовать объявление снова",
+    "anonymous": "Аноним"
+  },
+  "ja": {
+    "exampleListing": "サンプル出品",
+    "soldSuffix": "売却済み",
+    "soldFor": "販売価格",
+    "soldLabel": "売却済み",
+    "aboutInCurrency": "約 {amount}（{currency}）",
+    "about": "約 {amount}",
+    "markSoldShort": "売却済み",
+    "markSold": "売却済みにする",
+    "delete": "削除",
+    "deleteListing": "出品を削除",
+    "relist": "再出品",
+    "relistListing": "出品を再出品",
+    "anonymous": "匿名"
+  },
+  "zh": {
+    "exampleListing": "示例刊登",
+    "soldSuffix": "已售",
+    "soldFor": "售出价",
+    "soldLabel": "已售",
+    "aboutInCurrency": "约 {amount}（{currency}）",
+    "about": "约 {amount}",
+    "markSoldShort": "已售",
+    "markSold": "标记为已售",
+    "delete": "删除",
+    "deleteListing": "删除刊登",
+    "relist": "重新刊登",
+    "relistListing": "重新刊登",
+    "anonymous": "匿名"
+  },
+  "ko": {
+    "exampleListing": "예시 매물",
+    "soldSuffix": "판매됨",
+    "soldFor": "판매가",
+    "soldLabel": "판매됨",
+    "aboutInCurrency": "약 {amount} ({currency})",
+    "about": "약 {amount}",
+    "markSoldShort": "판매됨",
+    "markSold": "판매됨으로 표시",
+    "delete": "삭제",
+    "deleteListing": "매물 삭제",
+    "relist": "다시 등록",
+    "relistListing": "매물 다시 등록",
+    "anonymous": "익명"
+  }
 }
 </i18n>

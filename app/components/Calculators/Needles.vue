@@ -562,11 +562,13 @@
             <div class="modal" :class="{ 'modal-open': showDiagramModal }">
               <div class="modal-box max-w-3xl">
                 <h3 class="font-bold text-lg">{{ t('diagram_modal.title') }}</h3>
-                <img
+                <nuxt-img
                   loading="lazy"
                   class="diagram mx-auto"
                   src="https://classicminidiy.s3.us-east-1.amazonaws.com/misc/diagram.jpg"
                   :alt="t('diagram_modal.alt_text')"
+                  format="webp"
+                  sizes="100vw lg:768px"
                 />
                 <div class="modal-action">
                   <button class="btn btn-primary" @click="showDiagramModal = false">
@@ -721,15 +723,11 @@
           </template>
         </div>
       </div>
-
     </div>
 
     <!-- Relative Search (top-right column on desktop) -->
     <div class="col-span-12 md:col-span-6">
-      <div
-        v-if="selectedNeedles.length && !pending"
-        class="card bg-base-100 shadow-md border border-base-300 h-full"
-      >
+      <div v-if="selectedNeedles.length && !pending" class="card bg-base-100 shadow-md border border-base-300 h-full">
         <div class="card-body">
           <h3 class="fancy-font-bold text-lg">{{ t('relative.title') }}</h3>
           <p class="text-sm opacity-70">{{ t('relative.description') }}</p>
@@ -805,7 +803,11 @@
                   <span class="font-semibold text-sm">{{ result.candidate.name }}</span>
                   <span
                     class="badge badge-xs"
-                    :class="referenceNeedle && result.candidate.size === referenceNeedle.size ? 'badge-neutral' : 'badge-warning'"
+                    :class="
+                      referenceNeedle && result.candidate.size === referenceNeedle.size
+                        ? 'badge-neutral'
+                        : 'badge-warning'
+                    "
                     :title="
                       referenceNeedle && result.candidate.size === referenceNeedle.size
                         ? t('relative.size_match')
