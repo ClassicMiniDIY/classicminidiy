@@ -1,6 +1,12 @@
 <script lang="ts" setup>
+  import { activeGiveaway } from '~~/data/models/giveaways';
+
   const { t } = useI18n();
   const { capture } = usePostHog();
+
+  // Evaluated once during setup so SSR and hydration agree on which giveaway
+  // (if any) is live. Expired entries retire themselves — see data/models/giveaways.ts.
+  const giveaway = activeGiveaway();
 
   type LinkItem = {
     id: string;
@@ -64,7 +70,11 @@
     });
   }
 
-  const { data: videos, status, error } = await useFetch('/api/youtube/videos', {
+  const {
+    data: videos,
+    status,
+    error,
+  } = await useFetch('/api/youtube/videos', {
     query: { limit: 10 },
     key: 'links-page-videos',
   });
@@ -93,7 +103,11 @@
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/root.jpg',
   });
 
-  const allLinks = computed(() => [...primaryLinks.value, ...secondaryLinks.value]);
+  const allLinks = computed(() => [
+    ...primaryLinks.value,
+    ...(giveaway ? [{ label: giveaway.title, href: giveaway.href }] : []),
+    ...secondaryLinks.value,
+  ]);
   const linksJsonLd = computed(() => ({
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -155,6 +169,8 @@
             </span>
             <i class="fas fa-arrow-right opacity-60 shrink-0"></i>
           </a>
+
+          <GiveawayCard v-if="giveaway" :giveaway="giveaway" />
         </div>
 
         <div class="flex flex-col gap-2">
@@ -199,7 +215,14 @@
           target="_blank"
           rel="noopener"
           class="card bg-base-100 shadow-md border border-base-300 overflow-hidden hover:shadow-lg transition-shadow"
-          @click="capture('links_page_click', { link_id: 'video', group: 'video', destination: video.videoUrl, label: video.title })"
+          @click="
+            capture('links_page_click', {
+              link_id: 'video',
+              group: 'video',
+              destination: video.videoUrl,
+              label: video.title,
+            })
+          "
         >
           <figure class="relative">
             <nuxt-picture
