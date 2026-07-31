@@ -387,6 +387,33 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 
 - **There is deliberately NO FAQPage JSON-LD, and no visible FAQ block, on the technical pages.** Google requires FAQ markup to match content that is *visible* on the page, and a visible Q&A section was judged to add nothing for human readers on pages that are already spec tables. Shipping the schema without its on-page counterpart is a structured-data policy violation, so the project ships **neither**: `app/utils/geo/generateFaqs.ts` now feeds only `server/plugins/llms-faq.ts` → **`/llms-full.txt`**, which is the legitimate machine-readable channel (it isn't the page, so it isn't cloaking). Both halves or neither — don't re-add FAQPage schema without rendering the questions.
 
+### Image Optimization Invariants
+
+- **Never set `image.provider` in `nuxt.config.ts`.** Leaving it unset (`'auto'`) is
+  load-bearing: `@nuxt/image` resolves the provider from `std-env`'s deployment detection —
+  Vercel's native optimizer in production, `ipx` locally. Pinning it to `'ipx'` broke every
+  LOCAL image under `public/` in production with `[404] [IPX_FILE_NOT_FOUND]`
+  (upstream: nuxt/image#1281): ipx resolves local paths with a **filesystem** read, but on
+  Vercel `public/` ships to the CDN static output and is absent from the serverless function's
+  filesystem. Remote images were unaffected — those are network fetches, which is why the bug
+  looked selective. Verify a provider change by building with `VERCEL=1 NITRO_PRESET=vercel`
+  and confirming `.vercel/output/config.json` has an `images` key and the HTML emits
+  `/_vercel/image?url=…`, not `/_ipx/…`.
+
+- **It hid behind the prerenderer for months.** Nitro's `crawlLinks` was baking the
+  `/_ipx/...` variants into static output (603 of them), so the CDN answered and the runtime
+  handler was never asked. Adding `/_ipx` to `nitro.prerender.ignore` to fix the build OOM
+  removed that crutch and surfaced the real misconfiguration — the homepage mascot, the
+  app-promo screenshots and the giveaway carousel all 404'd at once. Both facts are one
+  contract: with the Vercel provider there is no `/_ipx` to prerender, and sharp leaves the
+  build and the runtime entirely.
+
+- **`image.screens` is the allowlist.** It is emitted into the Vercel build-output image
+  config as `images.sizes`, and Vercel serves ONLY those widths. `@nuxt/image` snaps requested
+  widths to the list, so a `sizes` expression that overstates the slot silently pulls a much
+  larger variant. State the real CSS width — the giveaway card is in a `max-w-md` column, so
+  `sizes="448px"` yields 640/1024 candidates where `sm:100vw md:448px` reached for 1280/1536.
+
 ### Security Invariants
 
 Load-bearing contracts — don't "fix" these without understanding why they're this way:

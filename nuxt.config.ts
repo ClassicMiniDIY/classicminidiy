@@ -349,8 +349,28 @@ export default defineNuxtConfig({
 
   // Image optimization configuration
   image: {
-    // Provider options
-    provider: 'ipx',
+    // NO explicit `provider` — this is deliberate. @nuxt/image auto-selects per
+    // environment: Vercel's native optimizer in production, ipx locally.
+    //
+    // It used to be pinned to `provider: 'ipx'`, and that silently broke every
+    // LOCAL image under `public/` in production with
+    // `[404] [IPX_FILE_NOT_FOUND]` (upstream: nuxt/image#1281). ipx resolves
+    // local paths with a FILESYSTEM read, but on Vercel `public/` is deployed to
+    // the CDN static output and is NOT present in the serverless function's
+    // filesystem. Remote images were unaffected — those are network fetches.
+    //
+    // It hid for a long time because Nitro's `crawlLinks` prerenderer was baking
+    // the `/_ipx/...` variants into static output (603 of them), so the CDN
+    // served them and the runtime handler was never asked. Adding `/_ipx` to
+    // `nitro.prerender.ignore` to fix the build OOM removed that crutch and
+    // exposed the real misconfiguration: the homepage mascot, the app-promo
+    // screenshots and the giveaway carousel all 404'd at once.
+    //
+    // Vercel's optimizer fetches the source over HTTP instead, so `public/`
+    // files work the same as remote ones. It also takes sharp out of both the
+    // build and the runtime, which is what made the OOM possible in the first
+    // place. `domains` below is emitted into the Vercel build-output image
+    // config as the remote allowlist, so it stays load-bearing.
     // Domains allowed for external images.
     //
     // The main asset bucket is referenced by BOTH its regional and bare virtual-hosted
