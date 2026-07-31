@@ -128,9 +128,12 @@ Classic Mini DIY is part of a broader ecosystem of applications sharing a single
 
 | Property | Description | URL |
 |---|---|---|
-| **Classic Mini DIY** (this repo) | Knowledgebase, archive, and community site | [classicminidiy.com](https://classicminidiy.com) |
-| **The Mini Exchange** | Classic Mini parts/vehicles marketplace | [theminiexchange.com](https://theminiexchange.com) |
+| **Classic Mini DIY** (this repo) | Knowledgebase, archive, community site, and the marketplace at `/exchange` | [classicminidiy.com](https://classicminidiy.com) |
 | **Classic Mini Toolbox** | iOS and Android mobile apps | App Store / Google Play |
+
+> **The Mini Exchange is retired as a standalone property.** The marketplace was consolidated
+> into this repo and went live at [classicminidiy.com/exchange](https://classicminidiy.com/exchange)
+> on 2026-07-13. `theminiexchange.com` now 301s here.
 
 All properties share authentication via Supabase with custom domain `auth.classicminidiy.com`. Users sign in once and their profile, avatar, and preferences carry across all platforms. Sustaining Members ($1.99/mo via the App Store, Google Play, or classicminidiy.com) unlock a unified set of benefits across all properties.
 
@@ -309,7 +312,7 @@ New in v8.0.0 — a centralized user experience:
   - Bio / about section
   - Social links (Instagram, Facebook, YouTube, website)
   - Privacy toggles (public profile, show vehicles)
-- **Shared Across Ecosystem** - Profile data is shared with The Mini Exchange and mobile apps via Supabase
+- **Shared Across Ecosystem** - Profile data is shared with the `/exchange` marketplace and the mobile apps via Supabase
 
 #### Public User Pages (`/users/[id]`)
 
@@ -604,7 +607,6 @@ Your support helps cover:
 ### Related Projects
 
 - **[Classic Mini DIY YouTube](https://youtube.com/c/classicminidiy)** - Video tutorials and builds
-- **[The Mini Exchange](https://theminiexchange.com)** - Classic Mini marketplace
 - **Classic Mini Toolbox** - iOS and Android mobile apps
 
 ## Credits & Acknowledgments
