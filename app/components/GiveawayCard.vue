@@ -172,7 +172,11 @@
         <!-- `img-attrs`, not plain class/@error: NuxtPicture's fallthrough attrs
              land on the <picture> root, where `object-cover` is meaningless
              (it's display:inline) and where an img `error` never arrives —
-             error doesn't bubble. Both have to be aimed at the <img> itself. -->
+             error doesn't bubble. Both have to be aimed at the <img> itself.
+
+             `sizes="448px"`: the card lives in a `max-w-md` column, so the image
+             is never wider than 448 CSS px at any breakpoint. `100vw` overstated
+             it on a phone and pulled a needlessly large variant. -->
         <nuxt-picture
           :src="image.src"
           :alt="image.alt"
@@ -180,7 +184,7 @@
           :width="renderSize.width"
           :height="renderSize.height"
           format="webp"
-          sizes="sm:100vw md:448px"
+          sizes="448px"
           class="block w-full h-full"
           :img-attrs="{
             class: 'w-full h-full object-cover',
