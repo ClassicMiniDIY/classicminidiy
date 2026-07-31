@@ -166,14 +166,14 @@
         title: t('success_title'),
         description: t('success_description'),
         color: 'success',
-        icon: 'i-fa6-solid-circle-check',
+        icon: 'fas fa-circle-check',
       });
     } catch (err: any) {
       toast.add({
         title: t('error_title'),
         description: err?.message || t('error_generic'),
         color: 'error',
-        icon: 'i-fa6-solid-circle-xmark',
+        icon: 'fas fa-circle-xmark',
       });
     } finally {
       saving.value = false;

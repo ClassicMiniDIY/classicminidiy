@@ -85,7 +85,7 @@
         title: t('toasts.success_title'),
         description: t('toasts.success_body'),
         color: 'success',
-        icon: 'i-fa6-solid-circle-check',
+        icon: 'fas fa-circle-check',
         timeout: 8000,
       });
       // The RPC writes the subscriptions row synchronously — refresh the shared
