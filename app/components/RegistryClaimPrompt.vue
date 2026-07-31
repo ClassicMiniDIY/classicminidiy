@@ -50,7 +50,7 @@
         title: t('claimed_title'),
         description: t('claimed_description', { year: entry.year, model: entry.model }),
         color: 'success',
-        icon: 'i-fa6-solid-circle-check',
+        icon: 'fas fa-circle-check',
       });
       track?.('registry_entry_claimed', { entry_id: entry.id });
       emit('claimed');
@@ -61,7 +61,7 @@
         title: t('claim_failed_title'),
         description: e?.message || t('claim_failed_description'),
         color: 'error',
-        icon: 'i-fa6-solid-triangle-exclamation',
+        icon: 'fas fa-triangle-exclamation',
       });
     } finally {
       claiming.value = null;

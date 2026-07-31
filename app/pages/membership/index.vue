@@ -112,7 +112,7 @@
         title: t('errors.checkout_title'),
         description: t('errors.checkout_body'),
         color: 'error',
-        icon: 'i-fa6-solid-triangle-exclamation',
+        icon: 'fas fa-triangle-exclamation',
       });
     } finally {
       checkoutLoading.value = false;
@@ -234,7 +234,7 @@
           title: t('toasts.subscribed_title'),
           description: t('toasts.subscribed_body'),
           color: 'success',
-          icon: 'i-fa6-solid-circle-check',
+          icon: 'fas fa-circle-check',
           timeout: 8000,
         });
         // The subscriptions row is written asynchronously by the webhook; poll
@@ -246,7 +246,7 @@
           title: t('toasts.canceled_title'),
           description: t('toasts.canceled_body'),
           color: 'info',
-          icon: 'i-fa6-solid-circle-info',
+          icon: 'fas fa-circle-info',
         });
       }
       // Restored sign-in intent: auto-start checkout for an authenticated

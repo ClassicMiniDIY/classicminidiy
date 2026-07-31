@@ -94,7 +94,7 @@
           title: t('toast.denied_title'),
           description: t('toast.denied_description'),
           color: 'warning',
-          icon: 'i-fa6-solid-location-crosshairs',
+          icon: 'fas fa-location-crosshairs',
         });
         return;
       }
@@ -106,7 +106,7 @@
           title: t('toast.not_found_title'),
           description: t('toast.not_found_description'),
           color: 'error',
-          icon: 'i-fa6-solid-circle-xmark',
+          icon: 'fas fa-circle-xmark',
         });
         return;
       }
@@ -119,7 +119,7 @@
         title: t('toast.error_title'),
         description: t('toast.error_description'),
         color: 'error',
-        icon: 'i-fa6-solid-circle-xmark',
+        icon: 'fas fa-circle-xmark',
       });
     } finally {
       isGettingLocation.value = false;
