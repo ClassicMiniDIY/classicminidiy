@@ -306,6 +306,44 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 - **CDN Integration**: S3 static assets with intelligent tiering
 - **Bundle Optimization**: Tree shaking and dependency optimization
 
+### Image Optimization Invariants
+
+- **`image.domains` in `nuxt.config.ts` is matched on the LITERAL hostname, and a miss is
+  silent.** @nuxt/image passes an unlisted URL straight through — no resize, no format
+  conversion — *even inside `<nuxt-img>`*, so the markup looks optimized while shipping the
+  full-size original. Three ways this has bitten us, all fixed 2026-07-31:
+  - The asset bucket is referenced by **both** `classicminidiy.s3.amazonaws.com` (~230 call
+    sites) and `classicminidiy.s3.us-east-1.amazonaws.com` (~40). Both must stay listed
+    until the call sites are normalized onto one host.
+  - **Supabase Storage is reached via the CUSTOM domain `auth.classicminidiy.com`**, because
+    `storage.getPublicUrl()` builds every URL from `NUXT_PUBLIC_SUPABASE_URL`. The
+    `psoqirvbujwohemmwplv.supabase.co` entry matches nothing in practice — it is kept only as
+    a fallback if that env var is ever pointed back at the raw host. Listing photos, model
+    images and avatars ALL depend on the custom domain being listed.
+  - `i.ytimg.com` (YouTube thumbnails) and `cmdiy-archive.s3.us-east-1.amazonaws.com`.
+
+  Adding a new remote image host means adding it here **and** to the PWA `runtimeCaching`
+  `urlPattern` (which had the same regional-only / project-ref-only bugs), **and** a
+  `preconnect`/`dns-prefetch` hint if it's a new origin. Verify by rendering a real page and
+  confirming the `src` starts with `/_ipx/` — do not trust the config.
+
+- **`<NuxtImg>` ignores the `image.format` list; only `<NuxtPicture>` uses it.** NuxtImg emits
+  a single `<img>` in the SOURCE format unless given an explicit `format` prop, so every
+  `<nuxt-img>` without `format="webp"` serves JPEG/PNG. Prefer explicit `format="webp"` over
+  inheriting the config list — AVIF measured barely better than JPEG on detailed photos at
+  q80 here and is far slower to encode on a cold serverless path.
+
+- **`<NuxtPicture>` puts fallthrough `class` / `data-testid` / `@error` on the `<picture>`
+  root, not the inner `<img>`.** `object-cover` on a `display:inline` `<picture>` silently
+  does nothing and the img falls back to `object-fit: fill`, which SQUASHES non-matching
+  aspect ratios instead of cropping; `error` does not bubble from `<img>` to `<picture>`, so
+  `@error` never fires. Pass those via `:img-attrs="{ class: '...', onError: ... }"`, or use
+  `<NuxtImg>` (a single `<img>`) when you just need the existing attributes to keep working.
+
+- **Some image hosts CANNOT be allowlisted.** `exchange/finds/FindCard.vue` renders
+  `og_image_url` scraped from arbitrary third-party sites, so it stays a raw `<img>` with its
+  `@error` fallback. Same for `blob:`/`data:` upload previews. Don't "fix" these.
+
 ### SEO / Head Invariants
 
 - **Never pass a possibly-empty string (or any non-string) to `ogImage` / `twitterImage` in `useSeoMeta`.** unhead's flat-meta unpacking coerces `''` to boolean `true`, and nuxt-og-image's `tags:afterResolve` hook calls `.replaceAll()` on every `og:image`/`twitter:image` content — a truthy non-string 500s the whole SSR render (this took down `/archive/colors/[id]` for months). Derive share images with `computed()` (a lazy `watch` never fires during SSR, so a ref stays at its initial value server-side) and always fall back to a real URL. `app/plugins/seo-tag-guard.server.ts` + `app/utils/seoTagGuards.ts` are the SSR safety net that sanitizes these tags before nuxt-og-image sees them — don't remove them.
