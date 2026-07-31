@@ -2,7 +2,8 @@
 
 Repo-wide custom instructions for Copilot code review and Copilot Chat. Classic Mini DIY
 (CMDIY, classicminidiy.com) is a Nuxt 4 knowledgebase + toolkit for Classic Mini Coopers
-(1959–2000), now also hosting **The Mini Exchange** marketplace under `/exchange`.
+(1959–2000), which also hosts the **marketplace** under `/exchange` — formerly the standalone
+The Mini Exchange property, consolidated into this repo and live here since 2026-07-13.
 
 When reviewing, prioritize the **load-bearing contracts** below — these are the things that
 silently break the build, the design system, security, or SEO if violated.
@@ -68,9 +69,15 @@ silently break the build, the design system, security, or SEO if violated.
 - RLS is the security boundary — prefer RLS-respecting `getUserClient`/PostgREST over the
   service role unless bypass is justified.
 
-## The Mini Exchange (`/exchange`) consolidation
+## Marketplace (`/exchange`)
 
-The marketplace is merged in behind a single flag and is invisible until cutover.
+Live in production since the 2026-07-13 cutover, when The Mini Exchange was retired as a
+standalone property and folded into this repo. The old `theminiexchange.com` domain 301s to
+classicminidiy.com via the host rules in `vercel.json` — those redirects are load-bearing SEO;
+never remove them. The `TheMiniExchange` repo is retired and takes no further changes.
+
+The flag below still exists and still gates the routes, so keep it in sync — but note it is
+now **ON** in production; it is no longer a "pre-launch, invisible" switch.
 
 - **Flag:** `runtimeConfig.public.exchangeEnabled` (`NUXT_PUBLIC_EXCHANGE_ENABLED`). The route
   gates live in `app/middleware/exchange-flag.global.ts` (404s marketplace routes when off) and

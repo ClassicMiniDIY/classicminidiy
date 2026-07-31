@@ -7,14 +7,18 @@ This file provides guidance to Claude Code when working with the Classic Mini DI
 This repo is part of the Classic Mini DIY property ecosystem. For the full cross-repo architecture, please refer to the central documentation. Key related repos:
 
 - **classicminidiy-supabase** — Shared Supabase backend (PostgreSQL, Auth, Edge Functions, RLS)
-- **TheMiniExchange** — Classic Mini marketplace (Nuxt 4, daisyUI, Stripe)
+- ~~**TheMiniExchange**~~ — **RETIRED.** The marketplace was consolidated into this repo and
+  lives at `/exchange` on classicminidiy.com (cutover completed 2026-07-13). The
+  `TheMiniExchange` repo is retired and its remaining infra is being torn down separately —
+  **make no changes there**. `theminiexchange.com` 301s here via the host rules in `vercel.json`; those
+  redirects are load-bearing SEO and must not be removed.
 - **Native CMDIY Apps** — iOS (Swift) and Android (Kotlin) mobile apps
 
 This site shares the Supabase auth and profiles with the other properties. Database schema lives in `classicminidiy-supabase`.
 
 ## Cross-Property Feature Tracking
 
-Features that span multiple CMDIY properties (Web / Supabase / iOS / Android / TME) are tracked in the org-level GitHub Project: **[CMDIY Platform #9](https://github.com/orgs/ClassicMiniDIY/projects/9)**.
+Features that span multiple CMDIY properties (Web / Supabase / iOS / Android) are tracked in the org-level GitHub Project: **[CMDIY Platform #9](https://github.com/orgs/ClassicMiniDIY/projects/9)**. The board still has a **TME** field from before the marketplace was folded into this repo — it no longer cascades anywhere, so leave it `N/A`.
 
 **Before starting work on a new feature, check if it has a card on the board.** If not, create one:
 
@@ -40,7 +44,7 @@ A weekly remote agent updates the rolling [Weekly Cascade Report](https://github
 
 **Classic Mini DIY** is a comprehensive web application serving as both a toolkit and permanent archive for Classic Mini enthusiasts. It provides technical information, calculators, historical documents, and interactive tools for Classic Mini owners and mechanics.
 
-- **Framework**: Nuxt 4.1.2 (Vue.js) with TypeScript
+- **Framework**: Nuxt `~4.4.8` (Vue 3.5) with TypeScript — deliberately pinned, see "Intentional dependency pins"
 - **Purpose**: Classic Mini car enthusiast website and knowledgebase
 - **URL**: https://classicminidiy.com
 - **Repository**: https://github.com/somethingnew71/classicminidiy
@@ -50,9 +54,9 @@ A weekly remote agent updates the rolling [Weekly Cascade Report](https://github
 
 ### Frontend
 
-- **Framework**: Nuxt 4.1.2 with TypeScript
-- **UI Components**: Nuxt UI for form controls, modals, accordions, and other UI elements
-- **Styling**: TailwindCSS 4.1.13 with @tailwindcss/vite
+- **Framework**: Nuxt `~4.4.8` with TypeScript (pinned — do not bump to 4.5.x)
+- **UI Components**: **daisyUI 5** (`card`, `btn`, `badge`, `modal`, `tabs`, `alert`, …). `@nuxt/ui` is NOT installed — it was removed in `3c6d6125 refactor: migrate from @nuxt/ui to daisyui 5`, and `<U*>` components do not exist in this codebase
+- **Styling**: TailwindCSS `^4.3.3` with @tailwindcss/vite
 - **Icons**: Font Awesome 6 (exclusive icon library - no Heroicons or Lucide)
 - **Search**: Fuse.js for advanced fuzzy search functionality
 - **Charts**: Highcharts for data visualization
@@ -80,7 +84,7 @@ A weekly remote agent updates the rolling [Weekly Cascade Report](https://github
 ### Package Management
 
 - **Primary**: bun (Node.js v24+)
-- **Current Version**: 3.5.4
+- **Current Version**: see `package.json` (`10.0.0` at time of writing)
 - **Scripts**:
   - `bun run dev` - Start development server (using `nuxi dev`)
   - `bun run build` - Build for production (using `nuxi build`)
@@ -91,16 +95,16 @@ A weekly remote agent updates the rolling [Weekly Cascade Report](https://github
 
 ### Key Technologies
 
-- **Nuxt 4.1.2** with Vue 3 Composition API
+- **Nuxt `~4.4.8`** with Vue 3.5 Composition API (pinned — do not bump to 4.5.x)
 - **TypeScript** for type safety
-- **Nuxt UI** for UI components (buttons, forms, modals, accordions, etc.)
-- **TailwindCSS 4.1.13** with @tailwindcss/vite for styling
+- **daisyUI 5** for UI components (buttons, cards, badges, modals, tabs, alerts) — loaded as a Tailwind 4 plugin via `@plugin "daisyui"` in `app/assets/css/main.css`, not a Nuxt module
+- **TailwindCSS `^4.3.3`** with @tailwindcss/vite for styling
 - **Font Awesome 6** for all icons (exclusive - no Heroicons/Lucide)
 - **Nuxt Content** for content management
 - **AWS SDK v3** (v3.894.0) for cloud services
-- **LangChain/LangGraph** (v0.1.6) for AI functionality
-- **Highcharts** (v12.4.0) for interactive data visualization
-- **Fuse.js** (v7.1.0) for advanced search functionality
+- **LangChain/LangGraph SDK** (`^1.9.27`) for AI functionality
+- **Highcharts** (`^13.0.0`) for interactive data visualization
+- **Fuse.js** (`^7.5.0`) for advanced search functionality
 
 ## Project Structure
 
@@ -233,28 +237,33 @@ A weekly remote agent updates the rolling [Weekly Cascade Report](https://github
 
 Font Awesome is loaded via a **Font Awesome Kit** (CDN script configured in `nuxt.config.ts`), not via an npm package.
 
-#### Nuxt UI Component Icons
+#### Always use the class form — the Iconify `i-fa6-*` form does NOT render
 
-When using Nuxt UI components with `icon` props (UButton, UAccordion, UAlert, etc.), use the Iconify format:
+The FA Kit works by scanning the DOM for `fa-` class tokens and swapping the element for an
+inline `<svg class="svg-inline--fa">`. A single hyphenated class like `i-fa6-solid-house` has
+no `fa-` token, there is no Iconify Tailwind plugin in `main.css`, and nothing renders `<Icon>`
+components — so an `i-fa6-*` string used as a class produces a **silently empty element**.
+
+The Iconify format only ever worked as a Nuxt UI `icon` prop, and Nuxt UI is gone (see above).
+Any `i-fa6-*` you find is a leftover. Eleven of them were live toast icons rendering nothing
+(`toast.add({ icon })` flows into `:class` in `Toaster.vue`) — fixed 2026-07-31.
 
 ```vue
-<!-- Solid icons (most common) -->
-<UButton icon="i-fa6-solid-house" />
-<UAccordion :items="[{ label: 'Item', icon: 'i-fa6-solid-gear' }]" />
-<UAlert icon="i-fa6-solid-circle-info" />
-
-<!-- Regular icons -->
-<UButton icon="i-fa6-regular-heart" />
-
-<!-- Brand icons -->
-<UButton icon="i-fa6-brands-github" />
+<!-- Correct, everywhere: solid / regular / brands -->
+<i class="fas fa-house"></i>
+<i class="far fa-heart"></i>
+<i class="fab fa-github"></i>
 ```
 
-**Format**: `i-fa6-{style}-{icon-name}`
+Pass the same class string wherever a component takes an `icon` option — `Toaster.vue` binds it
+straight into `:class`, so it must be `'fas fa-circle-check'`, never `'i-fa6-solid-circle-check'`.
 
-- `i-fa6-solid-*` - Solid style (fas)
-- `i-fa6-regular-*` - Regular style (far)
-- `i-fa6-brands-*` - Brand icons (fab)
+**Two deliberate exceptions** — do not "clean these up":
+
+- `app/pages/models/index.vue` parses `^i-fa6-(solid|regular|brands)-(.+)$` on purpose, because
+  3D-model **category icons are stored in the database in Iconify form** and converted on read.
+- `app/components/Breadcrumb.vue` uses the string as a sentinel value and renders
+  `<i class="fas fa-house">` explicitly.
 
 #### Inline Icons
 
@@ -598,12 +607,12 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 
 ## Recent Updates & Changes
 
-### Current Version: 3.5.4
+### Current Version: 10.0.0
 
 **Major Framework Upgrades:**
 
-- **Nuxt 4.1.2**: Upgraded from Nuxt 3 to Nuxt 4.1.2 for improved performance and new features
-- **TailwindCSS v4**: Migration to TailwindCSS 4.1.13 with @tailwindcss/vite for better build performance and developer experience
+- **Nuxt 4**: Upgraded from Nuxt 3; now pinned at `~4.4.8` (see "Intentional dependency pins")
+- **TailwindCSS v4**: Migration to TailwindCSS 4.x with @tailwindcss/vite for better build performance and developer experience
 - **Node.js 24**: Updated Node.js requirement to v24+ for latest performance improvements
 - **Bun Package Manager**: Migrated from npm to bun for faster dependency installation and script execution
 
@@ -612,19 +621,19 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 - **AWS Package Updates**: Updated AWS SDK packages to v3.894.0 for improved performance and security
 - **Visual Normalization**: Extensive visual improvements across search and table views with new table options for archive pages
 - **Wheel Submit Bugfixes**: Small improvements to the wheel submission functionality
-- **Search Enhancement**: Migration to Fuse.js v7.1.0 for improved fuzzy search capabilities across the platform
+- **Search Enhancement**: Migration to Fuse.js (now `^7.5.0`) for improved fuzzy search capabilities across the platform
 - **Security Updates**: Regular package updates focusing on security improvements
 - **Translation Fixes**: Ongoing improvements to internationalization support
 
 **Key Dependencies Updated:**
 
 - `@aws-sdk/*` packages: v3.894.0
-- `nuxt`: v4.1.2
-- `@nuxt/ui`: Nuxt UI component library
-- `tailwindcss`: v4.1.13
-- `fuse.js`: v7.1.0
-- `highcharts`: v12.4.0
-- `@langchain/langgraph-sdk`: v0.1.6
+- `nuxt`: `~4.4.8` (pinned)
+- `daisyui`: v5.6.18 (Tailwind 4 plugin — replaced `@nuxt/ui`)
+- `tailwindcss`: `^4.3.3`
+- `fuse.js`: `^7.5.0`
+- `highcharts`: `^13.0.0`
+- `@langchain/langgraph-sdk`: `^1.9.27`
 
 **Font Awesome**: Loaded via Font Awesome Kit (CDN script in nuxt.config.ts)
 
