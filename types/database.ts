@@ -458,13 +458,99 @@ export type Database = {
           },
         ]
       }
+      discord_audit_runs: {
+        Row: {
+          complete: boolean
+          counts: Json
+          departed: number
+          finished_at: string | null
+          id: number
+          last_error: string | null
+          members_seen: number
+          pages_fetched: number
+          started_at: string
+        }
+        Insert: {
+          complete?: boolean
+          counts?: Json
+          departed?: number
+          finished_at?: string | null
+          id?: never
+          last_error?: string | null
+          members_seen?: number
+          pages_fetched?: number
+          started_at?: string
+        }
+        Update: {
+          complete?: boolean
+          counts?: Json
+          departed?: number
+          finished_at?: string | null
+          id?: never
+          last_error?: string | null
+          members_seen?: number
+          pages_fetched?: number
+          started_at?: string
+        }
+        Relationships: []
+      }
+      discord_guild_members: {
+        Row: {
+          discord_user_id: string
+          exempt: boolean
+          exempt_reason: string | null
+          first_seen_at: string
+          global_name: string | null
+          guild_joined_at: string | null
+          has_paid_role: boolean
+          is_bot: boolean
+          last_seen_at: string
+          left_at: string | null
+          nick: string | null
+          roles: string[]
+          username: string
+        }
+        Insert: {
+          discord_user_id: string
+          exempt?: boolean
+          exempt_reason?: string | null
+          first_seen_at?: string
+          global_name?: string | null
+          guild_joined_at?: string | null
+          has_paid_role?: boolean
+          is_bot?: boolean
+          last_seen_at?: string
+          left_at?: string | null
+          nick?: string | null
+          roles?: string[]
+          username: string
+        }
+        Update: {
+          discord_user_id?: string
+          exempt?: boolean
+          exempt_reason?: string | null
+          first_seen_at?: string
+          global_name?: string | null
+          guild_joined_at?: string | null
+          has_paid_role?: boolean
+          is_bot?: boolean
+          last_seen_at?: string
+          left_at?: string | null
+          nick?: string | null
+          roles?: string[]
+          username?: string
+        }
+        Relationships: []
+      }
       discord_links: {
         Row: {
           claim_issued_at: string | null
           claim_token_jti: string | null
           claimed_at: string | null
           created_at: string
+          discord_global_name: string | null
           discord_user_id: string | null
+          discord_username: string | null
           ghost_email: string
           ghost_member_id: string | null
           id: string
@@ -479,7 +565,9 @@ export type Database = {
           claim_token_jti?: string | null
           claimed_at?: string | null
           created_at?: string
+          discord_global_name?: string | null
           discord_user_id?: string | null
+          discord_username?: string | null
           ghost_email: string
           ghost_member_id?: string | null
           id?: string
@@ -494,7 +582,9 @@ export type Database = {
           claim_token_jti?: string | null
           claimed_at?: string | null
           created_at?: string
+          discord_global_name?: string | null
           discord_user_id?: string | null
+          discord_username?: string | null
           ghost_email?: string
           ghost_member_id?: string | null
           id?: string
@@ -1809,6 +1899,35 @@ export type Database = {
           },
         ]
       }
+      marketing_email_recipients: {
+        Row: {
+          email: string
+          failed: boolean
+          marketing_email_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          email: string
+          failed?: boolean
+          marketing_email_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          email?: string
+          failed?: boolean
+          marketing_email_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_email_recipients_marketing_email_id_fkey"
+            columns: ["marketing_email_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_emails: {
         Row: {
           audience_counts: Json | null
@@ -1819,6 +1938,7 @@ export type Database = {
           id: string
           preheader: string | null
           recipient_count: number
+          send_lease_expires_at: string | null
           sent_at: string | null
           sent_by: string | null
           status: string
@@ -1835,6 +1955,7 @@ export type Database = {
           id?: string
           preheader?: string | null
           recipient_count?: number
+          send_lease_expires_at?: string | null
           sent_at?: string | null
           sent_by?: string | null
           status?: string
@@ -1851,6 +1972,7 @@ export type Database = {
           id?: string
           preheader?: string | null
           recipient_count?: number
+          send_lease_expires_at?: string | null
           sent_at?: string | null
           sent_by?: string | null
           status?: string
@@ -4107,6 +4229,12 @@ export type Database = {
           active_platform: string
           comp_expires_at: string
           comp_note: string
+          discord_global_name: string
+          discord_has_role: boolean
+          discord_in_guild: boolean
+          discord_status: string
+          discord_user_id: string
+          discord_username: string
           has_active_comp: boolean
           is_member: boolean
         }[]
@@ -4114,6 +4242,30 @@ export type Database = {
       admin_increment_warning_count: {
         Args: { p_user_id: string }
         Returns: number
+      }
+      admin_latest_discord_audit: {
+        Args: never
+        Returns: {
+          complete: boolean
+          counts: Json
+          departed: number
+          finished_at: string
+          id: number
+          last_error: string
+          members_seen: number
+          pages_fetched: number
+          started_at: string
+        }[]
+      }
+      admin_list_discord_roster: {
+        Args: never
+        Returns: Database["public"]["CompositeTypes"]["discord_roster_row"][]
+        SetofOptions: {
+          from: "*"
+          to: "discord_roster_row"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       approve_model_version: {
         Args: { p_notes?: string; p_version_id: string }
@@ -4168,6 +4320,16 @@ export type Database = {
       count_probation_cold_outreach: {
         Args: { p_sender: string }
         Returns: number
+      }
+      discord_roster_classified: {
+        Args: never
+        Returns: Database["public"]["CompositeTypes"]["discord_roster_row"][]
+        SetofOptions: {
+          from: "*"
+          to: "discord_roster_row"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       find_user_id_by_email: { Args: { p_email: string }; Returns: string }
       generate_location_string: {
@@ -4673,7 +4835,22 @@ export type Database = {
       window_type_enum: "sliding" | "wind_up"
     }
     CompositeTypes: {
-      [_ in never]: never
+      discord_roster_row: {
+        discord_user_id: string | null
+        username: string | null
+        global_name: string | null
+        nick: string | null
+        in_guild: boolean | null
+        has_paid_role: boolean | null
+        exempt: boolean | null
+        guild_joined_at: string | null
+        last_seen_at: string | null
+        user_id: string | null
+        email: string | null
+        link_status: string | null
+        is_entitled: boolean | null
+        classification: string | null
+      }
     }
   }
 }
