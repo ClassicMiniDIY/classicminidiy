@@ -18,6 +18,22 @@ export interface AdminMembership {
   comp_expires_at: string | null;
   /** Admin-supplied reason on the comp row. */
   comp_note: string | null;
+  /** discord_links lifecycle: pending | active | revoked | failed, or null when
+   *  the user has never had a link row. */
+  discord_status: 'pending' | 'active' | 'revoked' | 'failed' | null;
+  /** Discord snowflake — the stable identity key. */
+  discord_user_id: string | null;
+  /** Discord @handle, captured at OAuth and refreshed daily by discord-audit. */
+  discord_username: string | null;
+  /** Discord display name; null when the account never set one. */
+  discord_global_name: string | null;
+  /** Present in the guild as of the last discord-audit run. FALSE also means
+   *  "no audit has run yet" — check the Discord roster page's last-run stamp. */
+  discord_in_guild: boolean;
+  /** Holds the paid role as of the last discord-audit run. `is_member` false
+   *  with this true is the drift case: still in the members-only server after
+   *  going free. */
+  discord_has_role: boolean;
 }
 
 export const useAdminMembership = () => {
