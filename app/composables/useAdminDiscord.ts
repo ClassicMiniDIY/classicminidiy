@@ -111,19 +111,12 @@ export const DISCORD_CLASSIFICATION_BADGES: Record<DiscordClassification, string
 export const useAdminDiscord = () => {
   const supabase = useSupabase();
 
-  /**
-   * Full reconciliation roster, worst-first.
-   *
-   * NOTE: the `as never` on the RPC name is a temporary bridge — types/database.ts
-   * is raw `bun run gen:types` output and will not know these functions until
-   * migration 20260801000001 is pushed and types are regenerated. Drop the cast
-   * (here and in latestRun) on the next `bun run gen:types`.
-   */
+  /** Full reconciliation roster, worst-first. */
   const listRoster = async (): Promise<DiscordRosterRow[]> => {
-    const { data, error } = await supabase.rpc('admin_list_discord_roster' as never);
+    const { data, error } = await supabase.rpc('admin_list_discord_roster');
     if (error) throw error;
 
-    const rows = (data ?? []) as unknown as DiscordRosterRow[];
+    const rows = (data ?? []) as DiscordRosterRow[];
     const rank = (c: DiscordClassification) => {
       const i = DISCORD_CLASSIFICATION_ORDER.indexOf(c);
       return i === -1 ? DISCORD_CLASSIFICATION_ORDER.length : i;
@@ -141,9 +134,9 @@ export const useAdminDiscord = () => {
    * for an admin.
    */
   const latestRun = async (): Promise<DiscordAuditRun | null> => {
-    const { data, error } = await supabase.rpc('admin_latest_discord_audit' as never);
+    const { data, error } = await supabase.rpc('admin_latest_discord_audit');
     if (error) throw error;
-    const rows = (data ?? []) as unknown as DiscordAuditRun[];
+    const rows = (data ?? []) as DiscordAuditRun[];
     return rows[0] ?? null;
   };
 
