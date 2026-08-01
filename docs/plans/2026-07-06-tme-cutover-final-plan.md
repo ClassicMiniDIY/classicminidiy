@@ -120,7 +120,7 @@ Order matters (flag before DNS, so redirect targets exist):
 1. Remove the flag + gates: delete `exchange-flag.global.ts`, drop `exchangeEnabled` from runtimeConfig, remove the flag conditionals in nav/sitemap/robots/prerender, keep `exchange-onboarding.global.ts` (that one is permanent behavior). Delete `.env` flag references.
 2. Retire the standalone TME Vercel project + repo (archive `ClassicMiniDIY/TheMiniExchange`; final README pointer to `classicminidiy`). Remove TME-only secrets from its Vercel project.
 3. Delete stale branches: `tme-merge` (both repos, after confirming content parity with what shipped), and the merged `exchange/*` section branches if any remain.
-4. Update docs: mark `docs/plans/2026-06-28-tme-consolidation-handoff.md` + the design doc as COMPLETE; update repo `CLAUDE.md` (it still says "Nuxt UI" and doesn't mention `/exchange`); update the CMDIY Platform #9 project card (TME property → Shipped/consolidated).
+4. Update docs: mark `docs/plans/2026-06-28-tme-consolidation-handoff.md` + the design doc as COMPLETE; update repo `CLAUDE.md` (it still says "Nuxt UI" and doesn't mention `/exchange`).
 5. Backlog (record, don't block): integration test suite in CI against a test Supabase; Finds scraper metadata-coverage review (Puppeteer was dropped for OG/JSON-LD + Microlink — watch for bot-blocked sites); confirm which review bot (Copilot vs Gemini) is the active gate.
 
 ## Verification summary

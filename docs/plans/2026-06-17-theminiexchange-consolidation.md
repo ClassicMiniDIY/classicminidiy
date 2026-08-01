@@ -1,7 +1,7 @@
 # The Mini Exchange → Classic Mini DIY Consolidation
 
 **Status:** In progress (branch `tme-merge`, started 2026-06-17)
-**Cascade:** Web + Supabase — tracked on [CMDIY Platform #9](https://github.com/orgs/ClassicMiniDIY/projects/9)
+**Cascade:** Web + Supabase
 **Cutover switch:** `NUXT_PUBLIC_EXCHANGE_ENABLED` (off until go-live)
 
 ## Why
@@ -109,7 +109,7 @@ All schema/edge-function changes live in `classicminidiy-supabase` (hard rule) a
 
 ## Execution: stages (commit milestones on one branch)
 
-- **Stage 0** — design doc + flag + `exchange-flag.global.ts` + placeholder `/exchange` + Project #9 card. ← *this commit*
+- **Stage 0** — design doc + flag + `exchange-flag.global.ts` + placeholder `/exchange`. ← *this commit*
 - **Supabase branch (S1, S2)** — edge fns + queue convergence (lands first).
 - **Stage 1** — deps merge (drop `puppeteer*`), `@iconify-json/heroicons`, icon-mapping plan.
 - **Stage 2** — auth rewire, `gen:types`, composable dedup. No UI; green tests.

@@ -111,8 +111,8 @@ instance counter, so it's an abuse **dampener**, not a hard global quota.
 
 ## Part 2 — Needs to land in other repos (the real messaging fix)
 
-> Tracked for cross-property cascade per root `CLAUDE.md`. Consider a card on
-> **CMDIY Platform #9** (Web = Shipped for Part 1; Supabase / TME = Not Started).
+> Tracked for cross-property cascade per root `CLAUDE.md`
+> (Web = Shipped for Part 1; Supabase / TME = Not Started).
 
 ### 2.1 `classicminidiy-supabase` — throttle & gate at the source
 
