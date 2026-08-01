@@ -24,8 +24,7 @@ This adds a `/technical/alignment` tool that:
    (mirrors saved gear configs), so they can track spec changes and driving impressions over
    time.
 
-Web first; the data model + presets are intended to cascade to the iOS/Android toolbox later
-(GitHub Project #9 card).
+Web first; the data model + presets are intended to cascade to the iOS/Android toolbox later.
 
 ## Parameters (canonical units + sign conventions)
 
@@ -119,6 +118,6 @@ in messages. Build English-complete first, then a translation pass fills the oth
 
 ## Out of scope / follow-ups
 
-- Mobile (iOS/Android) port — tracked on Project #9.
+- Mobile (iOS/Android) port.
 - Per-wheel (split L/R) alignment entry — tool uses total-toe convention only for now.
 - Wheel size drives the toe°-at-rim readout and per-rim camber guidance (typical range + an aggressive-camber nudge under the camber sliders); *auto-rewriting preset camber numbers* per rim is still out of scope (presets assume ~10″).

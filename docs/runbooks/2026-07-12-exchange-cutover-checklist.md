@@ -126,8 +126,7 @@ In `classicminidiy-supabase`:
 3. [ ] Delete stale branches: `tme-merge` (both repos, after parity check), leftover
        `exchange/*` section branches.
 4. [ ] Docs: mark the handoff + design docs COMPLETE; update repo `CLAUDE.md` (still says
-       Nuxt-UI-only and omits `/exchange`); update CMDIY Platform Project #9 (TME property
-       → consolidated).
+       Nuxt-UI-only and omits `/exchange`).
 5. [ ] Backlog (recorded, non-blocking): integration tests (RLS/auth/CRUD) in CI against a
        test Supabase; Finds scraper OG/JSON-LD coverage watch; confirm the active review
        bot (Copilot vs Gemini).
