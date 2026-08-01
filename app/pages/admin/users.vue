@@ -298,6 +298,13 @@
   const compNote = ref('');
   const compExpiry = ref(''); // YYYY-MM-DD, '' = permanent
 
+  // Still in the members-only Discord after going free. Guarded on the audit
+  // having actually observed them (has_role is FALSE both when the role is
+  // genuinely absent and when no audit has run yet).
+  const discordDrift = computed(
+    () => !!membershipData.value && !membershipData.value.is_member && membershipData.value.discord_has_role
+  );
+
   async function loadMembership(userId: string) {
     membershipLoading.value = true;
     membershipError.value = '';
@@ -826,6 +833,33 @@
             <div v-if="membershipData.has_active_comp" class="opacity-70">
               Comp {{ compExpiryLabel ? `expires ${compExpiryLabel}` : 'is permanent' }}
               <span v-if="membershipData.comp_note">&mdash; &ldquo;{{ membershipData.comp_note }}&rdquo;</span>
+            </div>
+
+            <!-- Discord linkage (20260801000001). Read-only: nothing here grants
+                 or removes a role — the audit is observe-only. -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="opacity-70">Discord:</span>
+              <template v-if="membershipData.discord_username">
+                <span class="font-mono">@{{ membershipData.discord_username }}</span>
+                <span v-if="membershipData.discord_global_name" class="opacity-70">
+                  ({{ membershipData.discord_global_name }})
+                </span>
+                <span v-if="membershipData.discord_in_guild" class="badge badge-outline badge-sm">in server</span>
+                <span v-if="membershipData.discord_has_role" class="badge badge-outline badge-sm">has role</span>
+              </template>
+              <span v-else-if="membershipData.discord_status === 'pending'" class="badge badge-ghost badge-sm">
+                Claim sent, not linked
+              </span>
+              <span v-else class="badge badge-ghost badge-sm">Not connected</span>
+            </div>
+
+            <!-- The leak this whole surface exists to make visible. -->
+            <div v-if="discordDrift" role="alert" class="alert alert-warning py-2">
+              <i class="fas fa-triangle-exclamation"></i>
+              <span>
+                Not a paying member but still holds the Discord role. Review on the
+                <NuxtLink to="/admin/discord" class="link">Discord roster</NuxtLink>.
+              </span>
             </div>
           </div>
 

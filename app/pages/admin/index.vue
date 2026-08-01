@@ -175,6 +175,30 @@
           </div>
         </div>
 
+        <!-- Discord Roster Card -->
+        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
+          <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
+                <i class="fab fa-discord text-2xl text-info"></i>
+              </div>
+              <h2 class="text-xl font-bold">Discord Roster</h2>
+            </div>
+
+            <p class="opacity-70 mb-6">
+              See who is in the members-only Discord, matched to accounts by username, and spot anyone still
+              holding the paid role after going free.
+            </p>
+
+            <div class="card-actions justify-end">
+              <NuxtLink to="/admin/discord" class="btn btn-info">
+                <i class="fad fa-arrow-right mr-2"></i>
+                View Roster
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
         <!-- Marketing Email Card (allowlisted marketing admins only) -->
         <div
           v-if="marketingAllowed === true"
