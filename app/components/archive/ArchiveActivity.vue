@@ -119,9 +119,9 @@
     <div class="month-card rounded-box p-5">
       <p class="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-accent">{{ t('this_month') }}</p>
       <p class="text-[26px] font-extrabold leading-tight">
-        {{ t('items_count', { count: monthStats?.items ?? 0 }) }}
+        {{ t('items_count', { count: monthStats?.items ?? 0 }, monthStats?.items ?? 0) }}
         <span class="text-[15px] font-semibold opacity-70">
-          {{ t('from_people', { count: monthStats?.contributors ?? 0 }) }}
+          {{ t('from_people', { count: monthStats?.contributors ?? 0 }, monthStats?.contributors ?? 0) }}
         </span>
       </p>
       <NuxtLink to="/archive/contributors" class="mt-2.5 inline-block text-sm font-bold text-primary hover:underline">
@@ -151,7 +151,7 @@
           :title="request.asked_by_me ? t('already_asked') : t('add_ask')"
           @click="addAsk(request)"
         >
-          {{ t('asks', { count: request.ask_count }) }}
+          {{ t('asks', { count: request.ask_count }, request.ask_count) }}
         </button>
         <button type="button" class="btn btn-outline btn-secondary btn-xs h-[30px] shrink-0" @click="fillGap(request)">
           {{ t('i_have_this') }}
@@ -174,12 +174,12 @@
     "latest_additions": "Latest additions",
     "no_additions": "Nothing added yet — be the first.",
     "this_month": "This month",
-    "items_count": "{count} items",
-    "from_people": "from {count} people",
+    "items_count": "{count} item | {count} items",
+    "from_people": "from {count} person | from {count} people",
     "leaderboard": "Contributor leaderboard",
     "most_wanted": "Most wanted",
     "most_wanted_hint": "asked for, still missing",
-    "asks": "{count} asks",
+    "asks": "{count} ask | {count} asks",
     "add_ask": "Add your ask",
     "already_asked": "You have already asked for this",
     "i_have_this": "I have this",
@@ -189,12 +189,12 @@
     "latest_additions": "Últimas incorporaciones",
     "no_additions": "Todavía no hay nada — sé el primero.",
     "this_month": "Este mes",
-    "items_count": "{count} elementos",
-    "from_people": "de {count} personas",
+    "items_count": "{count} elemento | {count} elementos",
+    "from_people": "de {count} persona | de {count} personas",
     "leaderboard": "Tabla de contribuyentes",
     "most_wanted": "Más buscados",
     "most_wanted_hint": "pedidos, aún ausentes",
-    "asks": "{count} peticiones",
+    "asks": "{count} petición | {count} peticiones",
     "add_ask": "Añade tu petición",
     "already_asked": "Ya has pedido esto",
     "i_have_this": "Yo lo tengo",
@@ -204,12 +204,12 @@
     "latest_additions": "Derniers ajouts",
     "no_additions": "Rien encore — soyez le premier.",
     "this_month": "Ce mois-ci",
-    "items_count": "{count} éléments",
-    "from_people": "de {count} personnes",
+    "items_count": "{count} élément | {count} éléments",
+    "from_people": "de {count} personne | de {count} personnes",
     "leaderboard": "Classement des contributeurs",
     "most_wanted": "Les plus demandés",
     "most_wanted_hint": "demandés, toujours manquants",
-    "asks": "{count} demandes",
+    "asks": "{count} demande | {count} demandes",
     "add_ask": "Ajouter votre demande",
     "already_asked": "Vous l'avez déjà demandé",
     "i_have_this": "Je l'ai",
@@ -219,12 +219,12 @@
     "latest_additions": "Neueste Ergänzungen",
     "no_additions": "Noch nichts da — mach den Anfang.",
     "this_month": "Diesen Monat",
-    "items_count": "{count} Einträge",
-    "from_people": "von {count} Personen",
+    "items_count": "{count} Eintrag | {count} Einträge",
+    "from_people": "von {count} Person | von {count} Personen",
     "leaderboard": "Bestenliste der Beitragenden",
     "most_wanted": "Meistgesucht",
     "most_wanted_hint": "angefragt, noch nicht da",
-    "asks": "{count} Anfragen",
+    "asks": "{count} Anfrage | {count} Anfragen",
     "add_ask": "Deine Anfrage hinzufügen",
     "already_asked": "Du hast das bereits angefragt",
     "i_have_this": "Habe ich",
@@ -234,12 +234,12 @@
     "latest_additions": "Ultime aggiunte",
     "no_additions": "Ancora niente — sii il primo.",
     "this_month": "Questo mese",
-    "items_count": "{count} elementi",
-    "from_people": "da {count} persone",
+    "items_count": "{count} elemento | {count} elementi",
+    "from_people": "da {count} persona | da {count} persone",
     "leaderboard": "Classifica dei contributori",
     "most_wanted": "Più richiesti",
     "most_wanted_hint": "richiesti, ancora mancanti",
-    "asks": "{count} richieste",
+    "asks": "{count} richiesta | {count} richieste",
     "add_ask": "Aggiungi la tua richiesta",
     "already_asked": "L'hai già richiesto",
     "i_have_this": "Ce l'ho",
@@ -249,12 +249,12 @@
     "latest_additions": "Adições recentes",
     "no_additions": "Ainda nada — seja o primeiro.",
     "this_month": "Este mês",
-    "items_count": "{count} itens",
-    "from_people": "de {count} pessoas",
+    "items_count": "{count} item | {count} itens",
+    "from_people": "de {count} pessoa | de {count} pessoas",
     "leaderboard": "Tabela de contribuidores",
     "most_wanted": "Mais procurados",
     "most_wanted_hint": "pedidos, ainda em falta",
-    "asks": "{count} pedidos",
+    "asks": "{count} pedido | {count} pedidos",
     "add_ask": "Adicione o seu pedido",
     "already_asked": "Já pediu isto",
     "i_have_this": "Eu tenho isto",

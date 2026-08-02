@@ -405,6 +405,63 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
 - **Public profile reads go through the `public_profiles` view, not `profiles`.** Since the profiles split, `profiles` SELECT is own-row/admin-only; the view carries the community-facing trust columns (`trust_level`, `total_submissions`, `approved_submissions`). Querying `profiles` for another user silently returns zero rows.
 - **Trust visibility:** `DashboardTrustProgressCard` on `/dashboard/submissions` is the user-facing explanation of levels/thresholds (3 approved → contributor; 10 + <20% rejections → trusted; 30-day tenure path to contributor). Keep its copy in sync with the DB thresholds if they change.
 
+## Contribution Loop Invariants
+
+The UX cohesion pass turned the archive into a contribution platform. The loop is
+_wizard → admin inbox → review drawer → contributor profile_, and these are the
+parts of it that break silently if you get them wrong.
+
+- **Approving a queued submission MUST write `submitted_by` on the inserted row.**
+  `insertApprovedItem()` in `server/api/admin/queue/approve.post.ts` used to set only
+  the free-text `legacy_submitted_by`, so an approved contribution was never linked to
+  the account that made it — no profile stats, no badges, no leaderboard entry, no
+  "added by @handle" credit anywhere. Every archive table has the FK; it just wasn't
+  being populated. A new approval path must populate it too.
+
+- **`contributor_archive_items` is the single source for every contributor stat.**
+  It unions the approved, user-attributed rows of wheels / registry_entries / colors /
+  archive_documents. `get_contributor_impact`, `contributor_badge_metrics`,
+  `get_contributor_leaderboard` and `get_archive_latest_additions` all read it, so a new
+  contributable table is one branch in that view — not five aggregate rewrites.
+
+- **Nothing an anonymous caller writes may move a number a visitor can see.**
+  Two places this shows up: omnisearch zero-result telemetry lands in the admin-only
+  `archive_search_misses` and is promoted to a public Most Wanted row by hand
+  (`promote_search_miss`), and `archive_requests.ask_count` only moves through
+  `request_archive_item()`, which is one-ask-per-account via the `archive_request_asks`
+  ledger. Same reasoning for reach: `record_archive_view` is **service-role only** and
+  `archive_item_views` is keyed `(target, day, visitor_hash, is_download)`, so a refresh
+  loop is worthless — the same shape `model_downloads` already uses.
+
+- **`changes_requested` deliberately touches no counter.** It is a request for a
+  revision, not a verdict. Counting it against the contributor would teach reviewers to
+  reject instead of coach, which is the opposite of why the third button exists.
+  `/api/admin/queue/request-changes` requires a reviewer note for the same reason — the
+  note is the entire deliverable of that action.
+
+- **`data/models/toolbox-catalog.ts` is keyed on the same `to` paths as `ToolboxItems`
+  in `generic.ts`.** The catalog carries the wayfinding metadata (English names for
+  server-side search, `category` for the subnav, `relatedArchive` for the tool-page
+  box, `archiveBacked` for the olive tag). Add or move a tool and both must change.
+  Tool names live there in English rather than as i18n keys because `/api/search` runs
+  server-side and has no `useI18n()`.
+
+- **Omnisearch is two sources merged in the Nitro route, on purpose.** Postgres
+  `omnisearch()` covers the data surfaces; the Toolbox is matched in process from the
+  static catalog. That keeps "add a calculator" a code change rather than a migration,
+  and lets tool matching use synonyms ("CR", "lb-ft", "HIF44") that would be awkward to
+  store. The SQL is ILIKE rather than tsvector deliberately — these corpora are small
+  and the queries are as often part numbers and wheel sizes as words, which stemming
+  actively hurts.
+
+- **`/search` must keep `useFacetedSeo('/search', { indexableParams: [] })`.** `?q=` and
+  `?surface=` would otherwise self-canonicalise every query into its own indexable
+  near-duplicate — the same crawl trap documented under SEO invariants above.
+
+- **`useRecentTools().load()` runs in `onMounted`, never during setup.** It reads
+  localStorage, and the server renders "no chips"; reading it during setup is exactly
+  the structural hydration mismatch that corrupted `/chat`.
+
 ## Environment Variables
 
 ### Required Runtime Config
