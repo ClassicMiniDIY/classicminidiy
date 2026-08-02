@@ -6,6 +6,12 @@
     description: string;
     /** Short tag shown bottom-left (e.g. "Calculator", "Decoder", "Reference"). */
     kind?: string;
+    /**
+     * Replaces the kind tag with an olive "Archive data" marker on tools whose
+     * data the community actually feeds (design S4). Only set it where a
+     * contribution genuinely improves the tool — it is a promise, not a badge.
+     */
+    archiveBacked?: boolean;
     /** Duotone primary color (matches the tool's icon in /technical). */
     iconPrimary?: string;
     /** Duotone secondary color. Defaults to iconPrimary (monochrome look). */
@@ -16,6 +22,7 @@
 
   const props = withDefaults(defineProps<Props>(), {
     kind: '',
+    archiveBacked: false,
     iconPrimary: undefined,
     iconSecondary: undefined,
     iconSecondaryOpacity: 1,
@@ -45,16 +52,16 @@
   const { t } = useI18n({
     useScope: 'global',
     messages: {
-      en: { open: 'Open' },
-      es: { open: 'Abrir' },
-      fr: { open: 'Ouvrir' },
-      de: { open: 'Öffnen' },
-      it: { open: 'Apri' },
-      pt: { open: 'Abrir' },
-      ru: { open: 'Открыть' },
-      ja: { open: '開く' },
-      zh: { open: '打开' },
-      ko: { open: '열기' },
+      en: { open: 'Open', archive_data: 'Archive data' },
+      es: { open: 'Abrir', archive_data: 'Datos del archivo' },
+      fr: { open: 'Ouvrir', archive_data: 'Données des archives' },
+      de: { open: 'Öffnen', archive_data: 'Archivdaten' },
+      it: { open: 'Apri', archive_data: "Dati dell'archivio" },
+      pt: { open: 'Abrir', archive_data: 'Dados do arquivo' },
+      ru: { open: 'Открыть', archive_data: 'Данные архива' },
+      ja: { open: '開く', archive_data: 'アーカイブ由来' },
+      zh: { open: '打开', archive_data: '档案数据' },
+      ko: { open: '열기', archive_data: '아카이브 데이터' },
     },
   });
 
@@ -77,7 +84,10 @@
     <h4 class="tool-card__title">{{ title }}</h4>
     <p class="tool-card__desc">{{ description }}</p>
     <div class="tool-card__footer">
-      <span v-if="kind">{{ kind }}</span>
+      <span v-if="archiveBacked" class="tool-card__archive">
+        <i class="fas fa-book" aria-hidden="true"></i> {{ t('archive_data') }}
+      </span>
+      <span v-else-if="kind">{{ kind }}</span>
       <span class="tool-card__go">{{ t('open') }} →</span>
     </div>
   </NuxtLink>
@@ -139,6 +149,13 @@
     text-transform: uppercase;
     letter-spacing: var(--tracking-caps);
     font-weight: 600;
+  }
+  .tool-card__archive {
+    color: var(--cm-accent);
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 0.75rem;
   }
   .tool-card__go {
     color: var(--cm-secondary);

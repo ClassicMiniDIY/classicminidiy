@@ -231,6 +231,10 @@
         <patreon-card size="large" />
       </div>
     </div>
+
+    <div class="pb-12">
+      <ToolFooter slug="torque" />
+    </div>
   </div>
 </template>
 

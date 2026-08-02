@@ -1,7 +1,39 @@
 <script lang="ts" setup>
   import { ToolboxItems, BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+  import { TOOLBOX_SECTIONS, toolByPath } from '../../../data/models/toolbox-catalog';
 
   const { t } = useI18n();
+  const route = useRoute();
+  const { openWizard } = useContributeWizard();
+  const { tools: recentTools, load: loadRecentTools } = useRecentTools();
+
+  /**
+   * The subnav filters the existing grid via `?category=` rather than adding
+   * three new routes — the tools themselves are out of scope for this pass, and
+   * three near-duplicate URLs would land in the sitemap for no gain.
+   */
+  const subnavLinks = TOOLBOX_SECTIONS.map((section) => ({
+    key: section.key,
+    label: t(`sections.${section.key}`),
+    to: section.to,
+  }));
+
+  const activeCategory = computed(() => String(route.query.category ?? ''));
+
+  const visibleTools = computed(() => {
+    if (!activeCategory.value) return ToolboxItems;
+    return ToolboxItems.filter((item) => toolByPath(item.to)?.category === activeCategory.value);
+  });
+
+  const isArchiveBacked = (path: string) => Boolean(toolByPath(path)?.archiveBacked);
+
+  const requestATool = () =>
+    openWizard({ mode: 'request', origin: 'toolbox_request_tool', requestTitle: '' });
+
+  // localStorage read has to wait for mount — reading it during setup would make
+  // the client's first render disagree with the server's (no chips) and corrupt
+  // hydration, the same failure mode /chat hit.
+  onMounted(loadRecentTools);
 
   useHead({
     title: t('title'),
@@ -75,6 +107,15 @@
     :subtitle="t('hero_subtitle')"
     :heroType="HERO_TYPES.TECH"
   />
+  <SectionSubnav
+    :label="t('subnav_label')"
+    :links="subnavLinks"
+    :active-key="activeCategory"
+    :action-label="t('request_tool')"
+    action-icon="fas fa-paper-plane"
+    @action="requestATool()"
+  />
+
   <div class="container mx-auto px-4 pb-15 pt-6">
     <breadcrumb :version="BREADCRUMB_VERSIONS.TECH" root></breadcrumb>
 
@@ -86,9 +127,19 @@
           <p>{{ t('description_text') }}</p>
         </div>
       </div>
+
+      <!-- Recently used — localStorage, no account needed (design S4). -->
+      <div v-if="recentTools.length" class="mb-6 flex flex-wrap items-center gap-2.5">
+        <span class="text-xs font-bold uppercase tracking-[0.08em] opacity-55">{{ t('recently_used') }}</span>
+        <NuxtLink v-for="tool in recentTools" :key="tool.slug" :to="tool.to" class="recent-chip">
+          <i :class="tool.icon" aria-hidden="true"></i>
+          {{ tool.name }}
+        </NuxtLink>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <HomeToolCard
-          v-for="tool in ToolboxItems"
+          v-for="tool in visibleTools"
           :key="tool.to"
           :to="tool.to"
           :icon="tool.iconName || 'fa-toolbox'"
@@ -98,8 +149,15 @@
           :title="t(tool.titleKey)"
           :description="tool.descKey ? t(tool.descKey) : ''"
           :kind="tool.kindKey ? t(tool.kindKey) : ''"
+          :archive-backed="isArchiveBacked(tool.to)"
         />
       </div>
+
+      <!-- On mobile the section action moves to the list footer (design M5). -->
+      <button type="button" class="btn btn-secondary btn-block mt-5 h-[46px] sm:hidden" @click="requestATool()">
+        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+        {{ t('request_tool') }}
+      </button>
     </section>
 
     <div class="grid grid-cols-12 gap-4 mt-12">
@@ -112,6 +170,26 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+  .recent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    height: 32px;
+    padding: 0 0.8125rem;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--cm-primary) 12%, transparent);
+    color: var(--cm-accent);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .recent-chip:hover {
+    background: color-mix(in srgb, var(--cm-primary) 20%, transparent);
+    text-decoration: none;
+  }
+</style>
 
 <i18n lang="json">
 {
@@ -160,6 +238,14 @@
       "alignment_calculator_desc": "Visualize camber, caster, and toe live — presets from factory to track, plus boosted.",
       "parts_equivalency_desc": "Cross-reference part numbers across vendors and brands.",
       "common_clearances_desc": "Tappet gaps, bearing tolerances, and assembly clearances."
+    },
+    "subnav_label": "TOOLBOX",
+    "request_tool": "Request a Tool",
+    "recently_used": "Recently used",
+    "sections": {
+      "calculator": "Calculators",
+      "decoder": "Decoders",
+      "reference": "References"
     }
   },
   "es": {
@@ -207,6 +293,14 @@
       "alignment_calculator_desc": "Visualiza caída, avance y convergencia en vivo, con preajustes para estándar, carretera rápida, circuito y sobrealimentado.",
       "parts_equivalency_desc": "Referencias cruzadas de números de pieza entre proveedores y marcas.",
       "common_clearances_desc": "Ajustes de taqués, tolerancias de cojinetes y holguras de montaje."
+    },
+    "subnav_label": "HERRAMIENTAS",
+    "request_tool": "Pedir una herramienta",
+    "recently_used": "Usadas recientemente",
+    "sections": {
+      "calculator": "Calculadoras",
+      "decoder": "Decodificadores",
+      "reference": "Referencias"
     }
   },
   "fr": {
@@ -254,6 +348,14 @@
       "alignment_calculator_desc": "Visualisez carrossage, chasse et parallélisme en direct, avec des préréglages pour origine, route sportive, circuit et suralimentée.",
       "parts_equivalency_desc": "Recoupement des numéros de pièces entre fournisseurs et marques.",
       "common_clearances_desc": "Calage de soupapes, tolérances de paliers et jeux de montage."
+    },
+    "subnav_label": "OUTILS",
+    "request_tool": "Demander un outil",
+    "recently_used": "Utilisés récemment",
+    "sections": {
+      "calculator": "Calculatrices",
+      "decoder": "Décodeurs",
+      "reference": "Références"
     }
   },
   "it": {
@@ -301,6 +403,14 @@
       "alignment_calculator_desc": "Visualizza campanatura, incidenza e convergenza dal vivo, con preset per di serie, strada sportiva, pista e sovralimentata.",
       "parts_equivalency_desc": "Tabelle di corrispondenza dei codici ricambio tra fornitori e marchi.",
       "common_clearances_desc": "Gioco delle punterie, tolleranze dei cuscinetti e giochi di assemblaggio."
+    },
+    "subnav_label": "STRUMENTI",
+    "request_tool": "Richiedi uno strumento",
+    "recently_used": "Usati di recente",
+    "sections": {
+      "calculator": "Calcolatori",
+      "decoder": "Decodificatori",
+      "reference": "Riferimenti"
     }
   },
   "de": {
@@ -348,6 +458,14 @@
       "alignment_calculator_desc": "Visualisiere Sturz, Nachlauf und Spur live, mit Voreinstellungen für Serie, schnelle Straße, Rennstrecke und aufgeladen.",
       "parts_equivalency_desc": "Querverweise von Teilenummern über Lieferanten und Marken hinweg.",
       "common_clearances_desc": "Ventilspiele, Lagertoleranzen und Montagespielmaße."
+    },
+    "subnav_label": "WERKZEUGE",
+    "request_tool": "Werkzeug vorschlagen",
+    "recently_used": "Zuletzt verwendet",
+    "sections": {
+      "calculator": "Rechner",
+      "decoder": "Decoder",
+      "reference": "Referenzen"
     }
   },
   "pt": {
@@ -395,6 +513,14 @@
       "alignment_calculator_desc": "Visualize a cambagem, o cáster e a convergência ao vivo, com predefinições para série, estrada rápida, pista e turbo.",
       "parts_equivalency_desc": "Referência cruzada de números de peças entre fornecedores e marcas.",
       "common_clearances_desc": "Ajustes de tuchos, tolerâncias de mancais e folgas de montagem."
+    },
+    "subnav_label": "FERRAMENTAS",
+    "request_tool": "Pedir uma ferramenta",
+    "recently_used": "Usadas recentemente",
+    "sections": {
+      "calculator": "Calculadoras",
+      "decoder": "Descodificadores",
+      "reference": "Referências"
     }
   },
   "ru": {
@@ -442,6 +568,14 @@
       "alignment_calculator_desc": "Визуализируйте развал, кастер и схождение вживую, с пресетами для стока, спорт-дороги, трека и наддува.",
       "parts_equivalency_desc": "Перекрёстная справка номеров деталей между поставщиками и брендами.",
       "common_clearances_desc": "Регулировки клапанов, допуски подшипников и сборочные зазоры."
+    },
+    "subnav_label": "ИНСТРУМЕНТЫ",
+    "request_tool": "Предложить инструмент",
+    "recently_used": "Недавно использованные",
+    "sections": {
+      "calculator": "Калькуляторы",
+      "decoder": "Декодеры",
+      "reference": "Справочники"
     }
   },
   "ja": {
@@ -489,6 +623,14 @@
       "alignment_calculator_desc": "キャンバー、キャスター、トーをライブで可視化。ノーマル、ファストロード、トラック、過給のプリセット付き。",
       "parts_equivalency_desc": "ベンダーとブランド間の部品番号のクロスリファレンス。",
       "common_clearances_desc": "タペット隙間、ベアリング公差、組立クリアランス。"
+    },
+    "subnav_label": "ツールボックス",
+    "request_tool": "ツールをリクエスト",
+    "recently_used": "最近使ったツール",
+    "sections": {
+      "calculator": "計算ツール",
+      "decoder": "デコーダー",
+      "reference": "リファレンス"
     }
   },
   "zh": {
@@ -536,6 +678,14 @@
       "alignment_calculator_desc": "实时可视化外倾角、主销后倾角和前束，配有原厂、高性能街道、赛道和增压预设。",
       "parts_equivalency_desc": "跨供应商和品牌的零件号交叉参考。",
       "common_clearances_desc": "气门间隙、轴承公差和装配间隙。"
+    },
+    "subnav_label": "工具箱",
+    "request_tool": "申请新工具",
+    "recently_used": "最近使用",
+    "sections": {
+      "calculator": "计算器",
+      "decoder": "解码器",
+      "reference": "参考资料"
     }
   },
   "ko": {
@@ -583,6 +733,14 @@
       "alignment_calculator_desc": "캠버, 캐스터, 토를 실시간으로 시각화하고, 순정, 패스트 로드, 트랙, 부스트용 프리셋을 제공합니다.",
       "parts_equivalency_desc": "공급업체와 브랜드 간 부품 번호 교차 참조.",
       "common_clearances_desc": "태핏 갭, 베어링 공차, 조립 간극."
+    },
+    "subnav_label": "도구상자",
+    "request_tool": "도구 요청",
+    "recently_used": "최근 사용",
+    "sections": {
+      "calculator": "계산기",
+      "decoder": "디코더",
+      "reference": "참고자료"
     }
   }
 }

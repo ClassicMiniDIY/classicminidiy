@@ -96,7 +96,30 @@
   // Default fallback image URL for reuse
   const DEFAULT_WHEEL_IMAGE = 'https://classicminidiy.s3.us-east-1.amazonaws.com/wheels/missing-wheel-image.png';
 
-  // Helper function to get proper image URL with fallback
+  const { openWizard } = useContributeWizard();
+
+  /**
+   * "Has photos" is the same test getWheelImageUrl uses to decide it must fall
+   * back to the placeholder — kept in one predicate so the card's gap state and
+   * the image can never disagree about whether an entry has pictures.
+   */
+  function hasPhotos(wheel: IWheelsData): boolean {
+    const first = wheel.images?.[0]?.src;
+    return Boolean(first) && first !== 'https://classicminidiy.s3.amazonaws.com/cloud-icon/missing.svg';
+  }
+
+  /** Opens the wizard pre-filled to add photos to this specific entry. */
+  function addPhotos(wheel: IWheelsData) {
+    track('wheel_gap_cta_clicked', { wheel: wheel.name });
+    openWizard({
+      kind: 'wheel',
+      targetType: 'wheel',
+      targetId: wheel.uuid,
+      targetTitle: wheel.name,
+      origin: 'wheel_library_gap',
+    });
+  }
+
   function getWheelImageUrl(wheel: IWheelsData): string {
     if (
       !wheel.images?.[0]?.src ||
@@ -106,6 +129,11 @@
     }
     return wheel.images[0].src;
   }
+
+  /** Section action from the filter row (design S7). */
+  function addAWheel() {
+    openWizard({ kind: 'wheel', origin: 'wheel_library' });
+  }
 </script>
 
 <template>
@@ -114,16 +142,28 @@
       <!-- Header section -->
       <div class="flex items-center justify-between border-b border-base-300 pb-3 mb-4">
         <h2 class="font-semibold text-lg"><i class="fad fa-tire fa-spin mr-2"></i> {{ t('title') }}</h2>
-        <button
-          v-if="filtersActive"
-          type="button"
-          class="btn btn-ghost btn-sm tooltip"
-          :data-tip="t('clear_filters')"
-          @click="clearFilters"
-        >
-          <i class="fas fa-filter-circle-xmark mr-1"></i>
-          {{ t('clear_filters') }}
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="filtersActive"
+            type="button"
+            class="btn btn-ghost btn-sm tooltip"
+            :data-tip="t('clear_filters')"
+            @click="clearFilters"
+          >
+            <i class="fas fa-filter-circle-xmark mr-1"></i>
+            {{ t('clear_filters') }}
+          </button>
+          <!-- Mobile collapses this to a 44px icon button (design M8). -->
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm max-sm:h-11 max-sm:w-11 max-sm:p-0"
+            :aria-label="t('add_a_wheel')"
+            @click="addAWheel()"
+          >
+            <i class="fas fa-plus" aria-hidden="true"></i>
+            <span class="max-sm:hidden">{{ t('add_a_wheel') }}</span>
+          </button>
+        </div>
       </div>
 
       <div class="mb-6">
@@ -211,7 +251,24 @@
             :key="wheel.uuid"
             class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow duration-300"
           >
-            <figure class="relative pt-[100%] bg-base-200 rounded-t-lg">
+            <!--
+              Gap state (design S7): an entry with specs but no photos advertises
+              the gap where the gap is, and the CTA opens the contribute wizard
+              already pointed at this wheel. A blank placeholder image would hide
+              exactly the contribution we want.
+            -->
+            <button
+              v-if="!hasPhotos(wheel)"
+              type="button"
+              class="relative flex w-full flex-col items-center justify-center gap-1.5 rounded-t-lg bg-base-200 pt-[100%]"
+              @click="addPhotos(wheel)"
+            >
+              <span class="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+                <i class="fas fa-camera text-2xl text-secondary" aria-hidden="true"></i>
+                <span class="text-[12.5px] font-semibold text-secondary">{{ t('missing_photos') }}</span>
+              </span>
+            </button>
+            <figure v-else class="relative pt-[100%] bg-base-200 rounded-t-lg">
               <nuxt-img
                 :src="getWheelImageUrl(wheel)"
                 :alt="wheel.name"
@@ -222,7 +279,24 @@
               />
             </figure>
             <div class="card-body">
-              <h3 class="font-semibold text-lg mb-2">{{ wheel.name }}</h3>
+              <div class="mb-2 flex items-start gap-2">
+                <h3 class="flex-1 font-semibold text-lg">{{ wheel.name }}</h3>
+                <span v-if="hasPhotos(wheel)" class="shrink-0 text-[11.5px] font-semibold text-success">
+                  <i class="fas fa-circle-check" aria-hidden="true"></i> {{ t('verified') }}
+                </span>
+                <span v-else class="shrink-0 text-[11.5px] font-semibold opacity-60">{{ t('specs_only') }}</span>
+              </div>
+              <p v-if="wheel.contributorUsername || wheel.contributorName" class="-mt-1 mb-2 text-xs opacity-60">
+                {{ t('by') }}
+                <NuxtLink
+                  v-if="wheel.contributorUsername"
+                  :to="`/users/${wheel.contributorUsername}`"
+                  class="font-semibold text-primary hover:underline"
+                >
+                  @{{ wheel.contributorUsername }}
+                </NuxtLink>
+                <span v-else class="font-semibold">{{ wheel.contributorName }}</span>
+              </p>
               <div class="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <div class="text-base-content/70">{{ t('size_label') }}</div>
@@ -296,7 +370,12 @@
     "material_label": "Material",
     "not_available": "N/A",
     "view_details": "View Details",
-    "page_info": "Page {current} of {total}"
+    "page_info": "Page {current} of {total}",
+    "verified": "Verified",
+    "specs_only": "Specs only",
+    "missing_photos": "Missing photos — add yours",
+    "by": "by",
+    "add_a_wheel": "Add a Wheel"
   },
   "de": {
     "title": "Felgen-Register",
@@ -316,7 +395,12 @@
     "material_label": "Material",
     "not_available": "N/V",
     "view_details": "Details anzeigen",
-    "page_info": "Seite {current} von {total}"
+    "page_info": "Seite {current} von {total}",
+    "verified": "Geprüft",
+    "specs_only": "Nur Daten",
+    "missing_photos": "Fotos fehlen — füge deine hinzu",
+    "by": "von",
+    "add_a_wheel": "Rad hinzufügen"
   },
   "es": {
     "title": "Registro de Llantas",
@@ -336,7 +420,12 @@
     "material_label": "Material",
     "not_available": "N/D",
     "view_details": "Ver Detalles",
-    "page_info": "Página {current} de {total}"
+    "page_info": "Página {current} de {total}",
+    "verified": "Verificado",
+    "specs_only": "Solo datos",
+    "missing_photos": "Faltan fotos — añade las tuyas",
+    "by": "por",
+    "add_a_wheel": "Añadir una rueda"
   },
   "fr": {
     "title": "Registre des Jantes",
@@ -356,7 +445,12 @@
     "material_label": "Matériau",
     "not_available": "N/D",
     "view_details": "Voir les Détails",
-    "page_info": "Page {current} sur {total}"
+    "page_info": "Page {current} sur {total}",
+    "verified": "Vérifié",
+    "specs_only": "Specs seules",
+    "missing_photos": "Photos manquantes — ajoutez les vôtres",
+    "by": "par",
+    "add_a_wheel": "Ajouter une jante"
   },
   "it": {
     "title": "Registro Cerchi",
@@ -376,7 +470,12 @@
     "material_label": "Materiale",
     "not_available": "N/D",
     "view_details": "Vedi Dettagli",
-    "page_info": "Pagina {current} di {total}"
+    "page_info": "Pagina {current} di {total}",
+    "verified": "Verificato",
+    "specs_only": "Solo dati",
+    "missing_photos": "Foto mancanti — aggiungi le tue",
+    "by": "di",
+    "add_a_wheel": "Aggiungi un cerchio"
   },
   "ja": {
     "title": "ホイール登録",
@@ -396,7 +495,12 @@
     "material_label": "材質",
     "not_available": "N/A",
     "view_details": "詳細を見る",
-    "page_info": "ページ {current} / {total}"
+    "page_info": "ページ {current} / {total}",
+    "verified": "確認済み",
+    "specs_only": "仕様のみ",
+    "missing_photos": "写真がありません — 追加してください",
+    "by": "投稿者",
+    "add_a_wheel": "ホイールを追加"
   },
   "ko": {
     "title": "휠 등록부",
@@ -416,7 +520,12 @@
     "material_label": "재질",
     "not_available": "N/A",
     "view_details": "세부 정보 보기",
-    "page_info": "페이지 {current} / {total}"
+    "page_info": "페이지 {current} / {total}",
+    "verified": "확인됨",
+    "specs_only": "사양만 있음",
+    "missing_photos": "사진 없음 — 사진을 올려 주세요",
+    "by": "등록",
+    "add_a_wheel": "휠 추가"
   },
   "pt": {
     "title": "Registro de Rodas",
@@ -436,7 +545,12 @@
     "material_label": "Material",
     "not_available": "N/D",
     "view_details": "Ver Detalhes",
-    "page_info": "Página {current} de {total}"
+    "page_info": "Página {current} de {total}",
+    "verified": "Verificado",
+    "specs_only": "Só dados",
+    "missing_photos": "Faltam fotos — adicione as suas",
+    "by": "por",
+    "add_a_wheel": "Adicionar uma jante"
   },
   "ru": {
     "title": "Реестр Дисков",
@@ -456,7 +570,12 @@
     "material_label": "Материал",
     "not_available": "Н/Д",
     "view_details": "Подробности",
-    "page_info": "Страница {current} из {total}"
+    "page_info": "Страница {current} из {total}",
+    "verified": "Проверено",
+    "specs_only": "Только характеристики",
+    "missing_photos": "Нет фото — добавьте свои",
+    "by": "добавил",
+    "add_a_wheel": "Добавить диск"
   },
   "zh": {
     "title": "轮毂注册表",
@@ -476,7 +595,12 @@
     "material_label": "材质",
     "not_available": "不适用",
     "view_details": "查看详情",
-    "page_info": "第 {current} 页，共 {total} 页"
+    "page_info": "第 {current} 页，共 {total} 页",
+    "verified": "已验证",
+    "specs_only": "仅参数",
+    "missing_photos": "缺少照片 — 上传你的",
+    "by": "贡献者",
+    "add_a_wheel": "添加轮毂"
   }
 }
 </i18n>

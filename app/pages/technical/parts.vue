@@ -302,6 +302,10 @@
     <div class="mb-8">
       <patreon-card size="large" />
     </div>
+
+    <div class="pb-12">
+      <ToolFooter slug="parts" />
+    </div>
   </div>
 </template>
 
