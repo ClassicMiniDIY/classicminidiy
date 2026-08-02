@@ -121,9 +121,6 @@
 
 <template>
   <HeroPromo />
-  <!-- Search is the front door (design S1), so it sits under the hero at full
-       weight rather than as an icon in the corner of the header. -->
-  <HomeSearchBar />
 
   <ClientOnly>
     <div v-if="discordError" class="container mx-auto px-4 pt-4">

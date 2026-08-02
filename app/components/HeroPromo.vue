@@ -187,6 +187,10 @@
         <h1 class="fancy-font-bold text-white text-4xl lg:text-5xl mt-2 special-title">
           {{ selectedPromo.title }}
         </h1>
+        <!-- Same placement as the non-promo hero: inside the hero content, above
+             the CTAs. The `.spacer.layer` after this section has a -10% margin
+             and eats anything rendered between the hero and the page body. -->
+        <HomeSearchBar />
         <!-- Multiple CTAs (e.g. App Store + Google Play) -->
         <div v-if="selectedPromo.secondaryCtas?.length" class="flex flex-col sm:flex-row gap-3 mt-6">
           <NuxtLink

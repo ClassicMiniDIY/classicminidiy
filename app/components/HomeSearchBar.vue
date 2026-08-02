@@ -3,8 +3,14 @@
    * The homepage search field (design S1 / M1).
    *
    * "Search is the front door, not a corner icon" — so this is a 52px field with
-   * real weight, sitting directly under the hero rather than a magnifying glass
-   * tucked in the header.
+   * real weight, sitting in the hero rather than a magnifying glass tucked in
+   * the header.
+   *
+   * It renders INSIDE the hero content column, not as a band between the hero
+   * and the page. The decorative `.spacer.layer` that follows the hero carries
+   * `margin-top: -10%` — ten percent of the page WIDTH, ~160px at desktop — and
+   * is designed to bite up into the hero. Anything placed between the two gets
+   * eaten by it.
    *
    * It is a button, not an input: focusing it opens the omnisearch palette,
    * which owns the real input. Two live text fields competing for the same query
@@ -21,22 +27,29 @@
 </script>
 
 <template>
-  <div class="home-search-band">
-    <div class="mx-auto w-full max-w-[1232px] px-4 lg:px-6">
-      <button type="button" class="home-search" @click="openSearch">
-        <i class="fas fa-magnifying-glass text-secondary" aria-hidden="true"></i>
-        <span class="truncate">{{ t('placeholder') }}</span>
-      </button>
-      <p class="mt-2.5 text-[13.5px] text-white/70">{{ t('hint') }}</p>
-    </div>
+  <div class="home-search-wrap">
+    <button type="button" class="home-search" @click="openSearch">
+      <i class="fas fa-magnifying-glass text-secondary shrink-0" aria-hidden="true"></i>
+      <!--
+        `min-w-0` is load-bearing, not decoration. `truncate` sets
+        white-space: nowrap, and a flex child defaults to min-width: auto, so
+        without this the span refuses to shrink below the full placeholder
+        string. That min-content width propagates up through the hero's flex
+        column (also min-width: auto) and pushes the whole hero — headline, CTAs
+        and all — wider than a 375px viewport.
+      -->
+      <span class="min-w-0 truncate">{{ t('placeholder') }}</span>
+    </button>
+    <p class="home-search-hint">{{ t('hint') }}</p>
   </div>
 </template>
 
 <style scoped>
-  .home-search-band {
-    background: #242424;
-    padding: 0 0 1.75rem;
-    margin-top: -1px;
+  .home-search-wrap {
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 560px;
+    min-width: 0;
   }
 
   .home-search {
@@ -44,7 +57,6 @@
     align-items: center;
     gap: 0.625rem;
     width: 100%;
-    max-width: 560px;
     height: 52px;
     padding: 0 1.125rem;
     background: #fff;
@@ -56,7 +68,23 @@
     cursor: text;
   }
 
+  .home-search-hint {
+    margin: 0.625rem 0 0;
+    font-size: 13.5px;
+    color: rgb(255 255 255 / 0.72);
+  }
+
   @media (max-width: 640px) {
+    .home-search-wrap {
+      margin-top: 1.25rem;
+      /* The hero content column is padded on the LEFT only (`pl-6 md:pl-20` in
+         Hero.vue) and is itself a little wider than a phone viewport, so a
+         full-width child would sit flush against the right edge. Clamping to the
+         viewport minus the column's real left inset (16px .hero-content padding
+         + 24px pl-6, twice) gives the field an even gutter on both sides without
+         touching the hero, which the headline and CTAs are laid out against. */
+      max-width: calc(100vw - 5rem);
+    }
     .home-search {
       height: 48px;
       font-size: 15px;

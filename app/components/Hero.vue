@@ -129,6 +129,10 @@
             {{ displayTitle }}
           </span>
         </h1>
+        <!-- Search is the front door on the homepage (design S1). It lives here,
+             inside the hero, because the `.spacer.layer` that follows carries a
+             -10% (of page width) margin and swallows anything placed between. -->
+        <HomeSearchBar v-if="heroType === HERO_TYPES.HOME" />
         <div v-if="heroType === HERO_TYPES.HOME" class="mt-6 flex flex-wrap gap-2">
           <NuxtLink to="/technical" class="btn btn-secondary" @click="track('home_cta_clicked', { cta: 'toolbox', location: 'hero' })">
             <i class="fad fa-toolbox mr-2"></i>{{ t('cta_open_toolbox') }}
