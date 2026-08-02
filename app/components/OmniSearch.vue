@@ -185,7 +185,7 @@
                   <i class="fas fa-hand w-[18px] text-center text-secondary" aria-hidden="true"></i>
                   <span class="flex-1 truncate text-[14.5px]">{{ request.title }}</span>
                   <span class="badge badge-sm shrink-0 rounded-full bg-base-200 border-0 text-[11px]">
-                    {{ t('asks', { count: request.ask_count }) }}
+                    {{ t('asks', { count: request.ask_count }, request.ask_count) }}
                   </span>
                 </button>
               </template>
@@ -259,7 +259,7 @@
     "cancel": "Cancel",
     "recent": "Recent searches",
     "most_wanted": "Most wanted",
-    "asks": "{count} asks",
+    "asks": "{count} ask | {count} asks",
     "idle_hint": "Search tools, the archive, wheels and The Mini Exchange.",
     "empty_title": "No results for \"{query}\"",
     "empty_body": "Nothing in the toolbox, archive or exchange matches that yet.",
@@ -274,7 +274,7 @@
     "cancel": "Cancelar",
     "recent": "Búsquedas recientes",
     "most_wanted": "Más buscados",
-    "asks": "{count} peticiones",
+    "asks": "{count} petición | {count} peticiones",
     "idle_hint": "Busca herramientas, el archivo, ruedas y The Mini Exchange.",
     "empty_title": "Sin resultados para \"{query}\"",
     "empty_body": "Nada en las herramientas, el archivo o el mercado coincide todavía.",
@@ -289,7 +289,7 @@
     "cancel": "Annuler",
     "recent": "Recherches récentes",
     "most_wanted": "Les plus demandés",
-    "asks": "{count} demandes",
+    "asks": "{count} demande | {count} demandes",
     "idle_hint": "Cherchez les outils, les archives, les jantes et The Mini Exchange.",
     "empty_title": "Aucun résultat pour \"{query}\"",
     "empty_body": "Rien dans les outils, les archives ou la petite annonce ne correspond encore.",
@@ -304,7 +304,7 @@
     "cancel": "Abbrechen",
     "recent": "Letzte Suchen",
     "most_wanted": "Meistgesucht",
-    "asks": "{count} Anfragen",
+    "asks": "{count} Anfrage | {count} Anfragen",
     "idle_hint": "Durchsuche Werkzeuge, Archiv, Räder und The Mini Exchange.",
     "empty_title": "Keine Ergebnisse für \"{query}\"",
     "empty_body": "Noch nichts in Werkzeugen, Archiv oder Marktplatz passt dazu.",
@@ -319,7 +319,7 @@
     "cancel": "Annulla",
     "recent": "Ricerche recenti",
     "most_wanted": "Più richiesti",
-    "asks": "{count} richieste",
+    "asks": "{count} richiesta | {count} richieste",
     "idle_hint": "Cerca strumenti, archivio, cerchi e The Mini Exchange.",
     "empty_title": "Nessun risultato per \"{query}\"",
     "empty_body": "Niente negli strumenti, nell'archivio o nel mercato corrisponde ancora.",
@@ -334,7 +334,7 @@
     "cancel": "Cancelar",
     "recent": "Pesquisas recentes",
     "most_wanted": "Mais procurados",
-    "asks": "{count} pedidos",
+    "asks": "{count} pedido | {count} pedidos",
     "idle_hint": "Pesquise ferramentas, o arquivo, rodas e The Mini Exchange.",
     "empty_title": "Sem resultados para \"{query}\"",
     "empty_body": "Nada nas ferramentas, no arquivo ou no mercado corresponde ainda.",

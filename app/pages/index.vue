@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   const { t, tm, rt } = useI18n();
   const { track, trackOutbound } = useAnalytics();
+  const { openWizard } = useContributeWizard();
   const route = useRoute();
   const router = useRouter();
 
@@ -120,6 +121,9 @@
 
 <template>
   <HeroPromo />
+  <!-- Search is the front door (design S1), so it sits under the hero at full
+       weight rather than as an icon in the corner of the header. -->
+  <HomeSearchBar />
 
   <ClientOnly>
     <div v-if="discordError" class="container mx-auto px-4 pt-4">
@@ -232,9 +236,23 @@
         <h2 class="text-3xl md:text-4xl">{{ t('home.wheel_preview.heading') }}</h2>
         <p>{{ t('home.wheel_preview.subheading') }}</p>
       </div>
-      <NuxtLink to="/contribute/wheels" class="btn btn-secondary btn-sm" @click="track('home_cta_clicked', { cta: 'wheel_registry' })">
+      <!--
+        Was a NuxtLink to /contribute/wheels, which has never existed — the page
+        is /contribute/wheel — so this CTA 404'd through the catch-all and showed
+        up as a fatal during prerender. Now it opens the contribute wizard with
+        the wheel type already selected, which is where every other "add a wheel"
+        affordance goes.
+      -->
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        @click="
+          track('home_cta_clicked', { cta: 'wheel_registry' });
+          openWizard({ kind: 'wheel', origin: 'home_wheel_preview' });
+        "
+      >
         <i class="fad fa-paper-plane mr-1"></i>{{ t('home.wheel_preview.cta') }}
-      </NuxtLink>
+      </button>
     </div>
     <div v-if="featuredWheels?.length" class="grid grid-cols-2 md:grid-cols-3 gap-4">
       <NuxtLink

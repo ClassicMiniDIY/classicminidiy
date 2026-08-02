@@ -208,6 +208,10 @@
         </div>
       </div>
 
+      <!-- Contribution impact + badges (design S9). The public view is the same
+           block minus the submission status column, which lives on /dashboard. -->
+      <ContributorImpact v-if="profile?.id" :user-id="profile.id" possessive="their" />
+
       <!-- Vehicles -->
       <div
         v-if="profile?.show_vehicles && vehicles.length > 0"

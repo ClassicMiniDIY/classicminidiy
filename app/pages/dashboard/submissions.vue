@@ -5,7 +5,7 @@
 
   const submissions = ref<Awaited<ReturnType<typeof listMySubmissions>>>([]);
   const submissionsLoading = ref(false);
-  const statusFilter = ref<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const statusFilter = ref<'all' | 'pending' | 'approved' | 'changes_requested' | 'rejected'>('all');
   const typeFilter = ref<'all' | 'document' | 'registry' | 'color' | 'wheel'>('all');
 
   const filteredSubmissions = computed(() => {
@@ -156,6 +156,14 @@
             </button>
             <button
               class="btn btn-xs"
+              :class="statusFilter === 'changes_requested' ? 'btn-info' : 'btn-outline'"
+              @click="statusFilter = 'changes_requested'"
+            >
+              {{ t('submissions.filters.changes_requested') }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm"
               :class="statusFilter === 'rejected' ? 'btn-error' : 'btn-outline'"
               @click="statusFilter = 'rejected'"
             >
@@ -245,14 +253,24 @@
               <!-- Status badge -->
               <span
                 class="badge badge-sm"
-                :class="item.status === 'pending' ? 'badge-warning' : item.status === 'approved' ? 'badge-success' : 'badge-error'"
+                :class="
+                  item.status === 'pending'
+                    ? 'badge-warning'
+                    : item.status === 'approved'
+                      ? 'badge-success'
+                      : item.status === 'changes_requested'
+                        ? 'badge-info'
+                        : 'badge-error'
+                "
               >
                 {{
                   item.status === 'pending'
                     ? t('submissions.item.status.pending')
                     : item.status === 'approved'
                       ? t('submissions.item.status.approved')
-                      : t('submissions.item.status.rejected')
+                      : item.status === 'changes_requested'
+                        ? t('submissions.item.status.changes_requested')
+                        : t('submissions.item.status.rejected')
                 }}
               </span>
             </div>
@@ -299,11 +317,17 @@
               <p class="text-xs opacity-40 font-mono">ID: {{ item.id }}</p>
 
               <!-- Reviewer notes -->
-              <div v-if="item.reviewerNotes && (item.status === 'approved' || item.status === 'rejected')">
+              <div v-if="item.reviewerNotes && item.status !== 'pending'">
                 <div
                   role="alert"
                   class="alert alert-soft"
-                  :class="item.status === 'approved' ? 'alert-success' : 'alert-error'"
+                  :class="
+                    item.status === 'approved'
+                      ? 'alert-success'
+                      : item.status === 'changes_requested'
+                        ? 'alert-info'
+                        : 'alert-error'
+                  "
                 >
                   <div>
                     <div class="font-semibold">{{ t('submissions.item.reviewer_notes') }}</div>
@@ -343,14 +367,20 @@
         "documents": "Documents",
         "registry": "Registry",
         "colors": "Colors",
-        "wheels": "Wheels"
+        "wheels": "Wheels",
+        "changes_requested": "Changes asked"
       },
       "item": {
         "new_item": "New",
         "edit_suggestion": "Edit Suggestion",
         "new_collection": "Collection",
         "untitled": "Untitled Submission",
-        "status": { "pending": "Pending", "approved": "Approved", "rejected": "Rejected" },
+        "status": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "changes_requested": "Changes asked"
+        },
         "reviewer_notes": "Reviewer Notes",
         "submitted": "Submitted",
         "reviewed": "Reviewed"
@@ -391,14 +421,20 @@
         "documents": "Documentos",
         "registry": "Registro",
         "colors": "Colores",
-        "wheels": "Ruedas"
+        "wheels": "Ruedas",
+        "changes_requested": "Cambios"
       },
       "item": {
         "new_item": "Nuevo",
         "edit_suggestion": "Sugerencia de Edición",
         "new_collection": "Colección",
         "untitled": "Envío sin título",
-        "status": { "pending": "Pendiente", "approved": "Aprobado", "rejected": "Rechazado" },
+        "status": {
+          "pending": "Pendiente",
+          "approved": "Aprobado",
+          "rejected": "Rechazado",
+          "changes_requested": "Cambios solicitados"
+        },
         "reviewer_notes": "Notas del Revisor",
         "submitted": "Enviado",
         "reviewed": "Revisado"
@@ -439,14 +475,20 @@
         "documents": "Documents",
         "registry": "Registre",
         "colors": "Couleurs",
-        "wheels": "Roues"
+        "wheels": "Roues",
+        "changes_requested": "Modifications"
       },
       "item": {
         "new_item": "Nouveau",
         "edit_suggestion": "Suggestion de Modification",
         "new_collection": "Collection",
         "untitled": "Soumission sans titre",
-        "status": { "pending": "En attente", "approved": "Approuvé", "rejected": "Rejeté" },
+        "status": {
+          "pending": "En attente",
+          "approved": "Approuvé",
+          "rejected": "Rejeté",
+          "changes_requested": "Modifications demandées"
+        },
         "reviewer_notes": "Notes du Réviseur",
         "submitted": "Soumis",
         "reviewed": "Révisé"
@@ -487,14 +529,20 @@
         "documents": "Dokumente",
         "registry": "Register",
         "colors": "Farben",
-        "wheels": "Räder"
+        "wheels": "Räder",
+        "changes_requested": "Änderungen"
       },
       "item": {
         "new_item": "Neu",
         "edit_suggestion": "Bearbeitungsvorschlag",
         "new_collection": "Sammlung",
         "untitled": "Unbenannte Einreichung",
-        "status": { "pending": "Ausstehend", "approved": "Genehmigt", "rejected": "Abgelehnt" },
+        "status": {
+          "pending": "Ausstehend",
+          "approved": "Genehmigt",
+          "rejected": "Abgelehnt",
+          "changes_requested": "Änderungen erbeten"
+        },
         "reviewer_notes": "Prüfernotizen",
         "submitted": "Eingereicht",
         "reviewed": "Überprüft"
@@ -535,14 +583,20 @@
         "documents": "Documenti",
         "registry": "Registro",
         "colors": "Colori",
-        "wheels": "Ruote"
+        "wheels": "Ruote",
+        "changes_requested": "Modifiche"
       },
       "item": {
         "new_item": "Nuovo",
         "edit_suggestion": "Suggerimento di Modifica",
         "new_collection": "Raccolta",
         "untitled": "Proposta senza titolo",
-        "status": { "pending": "In attesa", "approved": "Approvato", "rejected": "Rifiutato" },
+        "status": {
+          "pending": "In attesa",
+          "approved": "Approvato",
+          "rejected": "Rifiutato",
+          "changes_requested": "Modifiche richieste"
+        },
         "reviewer_notes": "Note del Revisore",
         "submitted": "Inviato",
         "reviewed": "Revisionato"
@@ -583,14 +637,20 @@
         "documents": "Documentos",
         "registry": "Registro",
         "colors": "Cores",
-        "wheels": "Rodas"
+        "wheels": "Rodas",
+        "changes_requested": "Alterações"
       },
       "item": {
         "new_item": "Novo",
         "edit_suggestion": "Sugestão de Edição",
         "new_collection": "Coleção",
         "untitled": "Envio sem título",
-        "status": { "pending": "Pendente", "approved": "Aprovado", "rejected": "Rejeitado" },
+        "status": {
+          "pending": "Pendente",
+          "approved": "Aprovado",
+          "rejected": "Rejeitado",
+          "changes_requested": "Alterações pedidas"
+        },
         "reviewer_notes": "Notas do Revisor",
         "submitted": "Enviado",
         "reviewed": "Revisado"
@@ -631,14 +691,20 @@
         "documents": "Документы",
         "registry": "Реестр",
         "colors": "Цвета",
-        "wheels": "Колёса"
+        "wheels": "Колёса",
+        "changes_requested": "Правки"
       },
       "item": {
         "new_item": "Новый",
         "edit_suggestion": "Предложение правки",
         "new_collection": "Коллекция",
         "untitled": "Заявка без названия",
-        "status": { "pending": "Ожидает", "approved": "Одобрено", "rejected": "Отклонено" },
+        "status": {
+          "pending": "Ожидает",
+          "approved": "Одобрено",
+          "rejected": "Отклонено",
+          "changes_requested": "Нужны правки"
+        },
         "reviewer_notes": "Заметки проверяющего",
         "submitted": "Отправлено",
         "reviewed": "Проверено"
@@ -679,14 +745,20 @@
         "documents": "ドキュメント",
         "registry": "レジストリ",
         "colors": "カラー",
-        "wheels": "ホイール"
+        "wheels": "ホイール",
+        "changes_requested": "修正依頼"
       },
       "item": {
         "new_item": "新規",
         "edit_suggestion": "編集提案",
         "new_collection": "コレクション",
         "untitled": "タイトルなしの申請",
-        "status": { "pending": "審査中", "approved": "承認済み", "rejected": "却下" },
+        "status": {
+          "pending": "審査中",
+          "approved": "承認済み",
+          "rejected": "却下",
+          "changes_requested": "修正依頼"
+        },
         "reviewer_notes": "レビュアーのメモ",
         "submitted": "提出日",
         "reviewed": "審査日"
@@ -727,14 +799,20 @@
         "documents": "文档",
         "registry": "注册表",
         "colors": "颜色",
-        "wheels": "轮毂"
+        "wheels": "轮毂",
+        "changes_requested": "需修改"
       },
       "item": {
         "new_item": "新建",
         "edit_suggestion": "编辑建议",
         "new_collection": "集合",
         "untitled": "未命名提交",
-        "status": { "pending": "待审核", "approved": "已批准", "rejected": "已拒绝" },
+        "status": {
+          "pending": "待审核",
+          "approved": "已批准",
+          "rejected": "已拒绝",
+          "changes_requested": "需要修改"
+        },
         "reviewer_notes": "审核员备注",
         "submitted": "提交时间",
         "reviewed": "审核时间"
@@ -775,14 +853,20 @@
         "documents": "문서",
         "registry": "레지스트리",
         "colors": "색상",
-        "wheels": "휠"
+        "wheels": "휠",
+        "changes_requested": "수정 요청"
       },
       "item": {
         "new_item": "신규",
         "edit_suggestion": "수정 제안",
         "new_collection": "컬렉션",
         "untitled": "제목 없는 제출",
-        "status": { "pending": "대기 중", "approved": "승인됨", "rejected": "거부됨" },
+        "status": {
+          "pending": "대기 중",
+          "approved": "승인됨",
+          "rejected": "거부됨",
+          "changes_requested": "수정 요청"
+        },
         "reviewer_notes": "검토자 메모",
         "submitted": "제출일",
         "reviewed": "검토일"
