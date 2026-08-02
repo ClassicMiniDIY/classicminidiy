@@ -80,6 +80,9 @@
     </a>
     <div class="app-content">
       <MainNav></MainNav>
+      <!-- Mounted once, opened from anywhere via useOmnisearch/useContributeWizard. -->
+      <OmniSearch />
+      <ContributeWizard />
       <Toaster />
       <OnboardingNudge />
       <NuxtLoadingIndicator />

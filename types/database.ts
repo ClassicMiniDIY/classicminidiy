@@ -185,6 +185,186 @@ export type Database = {
           },
         ]
       }
+      archive_item_stats: {
+        Row: {
+          download_count: number
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type_enum"]
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          download_count?: number
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type_enum"]
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          download_count?: number
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["target_type_enum"]
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
+      archive_item_views: {
+        Row: {
+          created_at: string
+          day_bucket: string
+          is_download: boolean
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type_enum"]
+          visitor_hash: string
+        }
+        Insert: {
+          created_at?: string
+          day_bucket?: string
+          is_download?: boolean
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type_enum"]
+          visitor_hash: string
+        }
+        Update: {
+          created_at?: string
+          day_bucket?: string
+          is_download?: boolean
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["target_type_enum"]
+          visitor_hash?: string
+        }
+        Relationships: []
+      }
+      archive_request_asks: {
+        Row: {
+          created_at: string
+          request_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          request_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archive_request_asks_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "archive_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      archive_requests: {
+        Row: {
+          ask_count: number
+          cleared_at: string | null
+          cleared_by: string | null
+          cleared_by_submission: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          normalized_title: string | null
+          notes: string | null
+          source: Database["public"]["Enums"]["archive_request_source_enum"]
+          status: Database["public"]["Enums"]["archive_request_status_enum"]
+          target_id: string | null
+          target_type: Database["public"]["Enums"]["target_type_enum"] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ask_count?: number
+          cleared_at?: string | null
+          cleared_by?: string | null
+          cleared_by_submission?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          normalized_title?: string | null
+          notes?: string | null
+          source?: Database["public"]["Enums"]["archive_request_source_enum"]
+          status?: Database["public"]["Enums"]["archive_request_status_enum"]
+          target_id?: string | null
+          target_type?: Database["public"]["Enums"]["target_type_enum"] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ask_count?: number
+          cleared_at?: string | null
+          cleared_by?: string | null
+          cleared_by_submission?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          normalized_title?: string | null
+          notes?: string | null
+          source?: Database["public"]["Enums"]["archive_request_source_enum"]
+          status?: Database["public"]["Enums"]["archive_request_status_enum"]
+          target_id?: string | null
+          target_type?: Database["public"]["Enums"]["target_type_enum"] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archive_requests_cleared_by_submission_fkey"
+            columns: ["cleared_by_submission"]
+            isOneToOne: false
+            referencedRelation: "submission_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      archive_search_misses: {
+        Row: {
+          dismissed_at: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          miss_count: number
+          normalized_query: string | null
+          promoted_request_id: string | null
+          query: string
+        }
+        Insert: {
+          dismissed_at?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          miss_count?: number
+          normalized_query?: string | null
+          promoted_request_id?: string | null
+          query: string
+        }
+        Update: {
+          dismissed_at?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          miss_count?: number
+          normalized_query?: string | null
+          promoted_request_id?: string | null
+          query?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archive_search_misses_promoted_request_id_fkey"
+            columns: ["promoted_request_id"]
+            isOneToOne: false
+            referencedRelation: "archive_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auth_migration_log: {
         Row: {
           created_at: string
@@ -221,6 +401,36 @@ export type Database = {
           migration_status?: string
           provider?: string | null
           supabase_user_id?: string | null
+        }
+        Relationships: []
+      }
+      badges: {
+        Row: {
+          description: string
+          icon: string
+          key: string
+          metric: string
+          name: string
+          sort_order: number
+          threshold: number
+        }
+        Insert: {
+          description: string
+          icon: string
+          key: string
+          metric: string
+          name: string
+          sort_order?: number
+          threshold: number
+        }
+        Update: {
+          description?: string
+          icon?: string
+          key?: string
+          metric?: string
+          name?: string
+          sort_order?: number
+          threshold?: number
         }
         Relationships: []
       }
@@ -545,6 +755,8 @@ export type Database = {
       discord_links: {
         Row: {
           claim_issued_at: string | null
+          claim_nag_count: number
+          claim_nag_last_at: string | null
           claim_token_jti: string | null
           claimed_at: string | null
           created_at: string
@@ -562,6 +774,8 @@ export type Database = {
         }
         Insert: {
           claim_issued_at?: string | null
+          claim_nag_count?: number
+          claim_nag_last_at?: string | null
           claim_token_jti?: string | null
           claimed_at?: string | null
           created_at?: string
@@ -579,6 +793,8 @@ export type Database = {
         }
         Update: {
           claim_issued_at?: string | null
+          claim_nag_count?: number
+          claim_nag_last_at?: string | null
           claim_token_jti?: string | null
           claimed_at?: string | null
           created_at?: string
@@ -3815,6 +4031,32 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          awarded_at: string
+          badge_key: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_key: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_key_fkey"
+            columns: ["badge_key"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           color: Database["public"]["Enums"]["vehicle_color"]
@@ -4090,6 +4332,18 @@ export type Database = {
       }
     }
     Views: {
+      contributor_archive_items: {
+        Row: {
+          created_at: string | null
+          photo_count: number | null
+          reviewed_at: string | null
+          target_id: string | null
+          target_type: Database["public"]["Enums"]["target_type_enum"] | null
+          title: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       market_insights: {
         Row: {
           condition:
@@ -4272,6 +4526,7 @@ export type Database = {
         Returns: undefined
       }
       array_to_search_text: { Args: { arr: string[] }; Returns: string }
+      award_badges: { Args: { p_user_id: string }; Returns: number }
       calculate_distance_miles: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
@@ -4317,6 +4572,13 @@ export type Database = {
           year: number
         }[]
       }
+      contributor_badge_metrics: {
+        Args: { p_user_id: string }
+        Returns: {
+          metric: string
+          value: number
+        }[]
+      }
       count_probation_cold_outreach: {
         Args: { p_sender: string }
         Returns: number
@@ -4336,7 +4598,92 @@ export type Database = {
         Args: { p_city: string; p_country: string; p_state_province: string }
         Returns: string
       }
+      get_admin_inbox: {
+        Args: { p_kind?: string; p_limit?: number }
+        Returns: {
+          approved_submissions: number
+          avatar_url: string
+          created_at: string
+          display_name: string
+          id: string
+          kind: string
+          rejected_submissions: number
+          source: string
+          submitted_by: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type_enum"]
+          title: string
+          trust_level: Database["public"]["Enums"]["trust_level_enum"]
+          username: string
+        }[]
+      }
+      get_admin_inbox_counts: {
+        Args: never
+        Returns: {
+          count: number
+          kind: string
+        }[]
+      }
+      get_archive_latest_additions: {
+        Args: { p_limit?: number }
+        Returns: {
+          added_at: string
+          avatar_url: string
+          display_name: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type_enum"]
+          title: string
+          username: string
+        }[]
+      }
+      get_archive_month_stats: {
+        Args: never
+        Returns: {
+          contributors_this_month: number
+          items_all_time: number
+          items_this_month: number
+        }[]
+      }
+      get_badge_progress: {
+        Args: { p_user_id: string }
+        Returns: {
+          awarded_at: string
+          current_value: number
+          description: string
+          earned: boolean
+          icon: string
+          key: string
+          metric: string
+          name: string
+          threshold: number
+        }[]
+      }
       get_comment_count: { Args: { p_listing_id: string }; Returns: number }
+      get_contributor_impact: {
+        Args: { p_user_id: string }
+        Returns: {
+          colors_added: number
+          documents_added: number
+          people_helped: number
+          photos_added: number
+          registry_entries: number
+          total_items: number
+          wheels_added: number
+        }[]
+      }
+      get_contributor_leaderboard: {
+        Args: { p_limit?: number; p_window?: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          helped: number
+          items: number
+          rank: number
+          trust_level: Database["public"]["Enums"]["trust_level_enum"]
+          user_id: string
+          username: string
+        }[]
+      }
       get_listing_analytics: {
         Args: { p_listing_id: string }
         Returns: {
@@ -4397,6 +4744,19 @@ export type Database = {
           tip_count: number
         }[]
       }
+      get_most_wanted: {
+        Args: { p_limit?: number }
+        Returns: {
+          ask_count: number
+          asked_by_me: boolean
+          created_at: string
+          id: string
+          notes: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["target_type_enum"]
+          title: string
+        }[]
+      }
       get_my_claimable_registry_entries: {
         Args: never
         Returns: {
@@ -4405,6 +4765,15 @@ export type Database = {
           model: string
           submitted_by_name: string
           year: number
+        }[]
+      }
+      get_my_leaderboard_row: {
+        Args: { p_window?: string }
+        Returns: {
+          helped: number
+          items: number
+          items_to_top_ten: number
+          rank: number
         }[]
       }
       get_my_membership: {
@@ -4541,11 +4910,52 @@ export type Database = {
         Args: { p_id: string; p_notes?: string; p_status: string }
         Returns: undefined
       }
+      omnisearch: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          contributor_username: string
+          icon: string
+          id: string
+          rank: number
+          subtitle: string
+          surface: string
+          tag: string
+          title: string
+          url: string
+          verified: boolean
+        }[]
+      }
       own_profile_privileged_flags: {
         Args: never
         Returns: {
           is_banned: boolean
         }[]
+      }
+      promote_search_miss: {
+        Args: { p_miss_id: string; p_title?: string }
+        Returns: {
+          ask_count: number
+          cleared_at: string | null
+          cleared_by: string | null
+          cleared_by_submission: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          normalized_title: string | null
+          notes: string | null
+          source: Database["public"]["Enums"]["archive_request_source_enum"]
+          status: Database["public"]["Enums"]["archive_request_status_enum"]
+          target_id: string | null
+          target_type: Database["public"]["Enums"]["target_type_enum"] | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "archive_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       promote_tenured_users: { Args: never; Returns: number }
       publish_model_version: {
@@ -4585,6 +4995,16 @@ export type Database = {
         }
       }
       recalculate_trust_level: { Args: { user_id: string }; Returns: undefined }
+      record_archive_view: {
+        Args: {
+          p_is_download?: boolean
+          p_target_id: string
+          p_target_type: Database["public"]["Enums"]["target_type_enum"]
+          p_visitor_hash: string
+        }
+        Returns: undefined
+      }
+      record_search_miss: { Args: { p_query: string }; Returns: undefined }
       reject_model_version: {
         Args: { p_reason: string; p_version_id: string }
         Returns: undefined
@@ -4592,6 +5012,38 @@ export type Database = {
       report_message: {
         Args: { p_message_id: string; p_reason: string }
         Returns: undefined
+      }
+      request_archive_item: {
+        Args: {
+          p_notes?: string
+          p_source?: Database["public"]["Enums"]["archive_request_source_enum"]
+          p_target_id?: string
+          p_target_type?: Database["public"]["Enums"]["target_type_enum"]
+          p_title: string
+        }
+        Returns: {
+          ask_count: number
+          cleared_at: string | null
+          cleared_by: string | null
+          cleared_by_submission: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          normalized_title: string | null
+          notes: string | null
+          source: Database["public"]["Enums"]["archive_request_source_enum"]
+          status: Database["public"]["Enums"]["archive_request_status_enum"]
+          target_id: string | null
+          target_type: Database["public"]["Enums"]["target_type_enum"] | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "archive_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       revoke_comp_membership: {
         Args: { p_user_id: string }
@@ -4653,6 +5105,8 @@ export type Database = {
     }
     Enums: {
       announcement_type_enum: "error" | "warning" | "info" | "success"
+      archive_request_source_enum: "manual" | "search_miss" | "gap"
+      archive_request_status_enum: "open" | "fulfilled" | "dismissed"
       brake_type_enum: "standard_drum" | "disc_front" | "four_wheel_disc"
       bumper_type_enum:
         | "chrome_standard"
@@ -4732,7 +5186,12 @@ export type Database = {
         | "wolseley"
         | "riley"
         | "other"
-      moderation_status_enum: "draft" | "pending" | "approved" | "rejected"
+      moderation_status_enum:
+        | "draft"
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "changes_requested"
       oem_or_aftermarket_enum: "oem" | "aftermarket" | "reproduction"
       part_condition_enum:
         | "new"
@@ -4976,6 +5435,8 @@ export const Constants = {
   public: {
     Enums: {
       announcement_type_enum: ["error", "warning", "info", "success"],
+      archive_request_source_enum: ["manual", "search_miss", "gap"],
+      archive_request_status_enum: ["open", "fulfilled", "dismissed"],
       brake_type_enum: ["standard_drum", "disc_front", "four_wheel_disc"],
       bumper_type_enum: [
         "chrome_standard",
@@ -5065,7 +5526,13 @@ export const Constants = {
         "riley",
         "other",
       ],
-      moderation_status_enum: ["draft", "pending", "approved", "rejected"],
+      moderation_status_enum: [
+        "draft",
+        "pending",
+        "approved",
+        "rejected",
+        "changes_requested",
+      ],
       oem_or_aftermarket_enum: ["oem", "aftermarket", "reproduction"],
       part_condition_enum: [
         "new",

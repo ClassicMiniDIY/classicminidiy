@@ -3,7 +3,7 @@ export interface SubmissionItem {
   type: 'new_item' | 'edit_suggestion' | 'new_collection';
   targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel';
   targetId: string | null;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'changes_requested';
   data: Record<string, any>;
   reviewerNotes: string | null;
   createdAt: string;
@@ -27,7 +27,7 @@ export const useSubmissions = () => {
   });
 
   const listMySubmissions = async (opts?: {
-    status?: 'pending' | 'approved' | 'rejected';
+    status?: 'pending' | 'approved' | 'rejected' | 'changes_requested';
     targetType?: string;
   }): Promise<SubmissionItem[]> => {
     if (!user.value) return [];
@@ -93,6 +93,43 @@ export const useSubmissions = () => {
     return mapToSubmission(data);
   };
 
+  /**
+   * The contribute wizard's write path.
+   *
+   * `submitEditSuggestion` above is the SuggestEditModal shape — it always wraps
+   * the payload as `{ changes, reason }` because the approve route maps those
+   * keys onto columns. The wizard's fixes and gap-fills carry a free-form
+   * payload instead (a photo-only addition has no `changes` at all), so it needs
+   * to write `data` verbatim rather than have a shape imposed on it.
+   *
+   * `targetId` may be null: a correction raised from a tool page has no archive
+   * row behind it, and the reviewer applies it by hand.
+   */
+  const submitContribution = async (
+    type: 'new_item' | 'edit_suggestion',
+    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
+    targetId: string | null,
+    data: Record<string, any>
+  ): Promise<SubmissionItem> => {
+    if (!user.value) throw new Error('Must be authenticated to submit');
+
+    const { data: row, error } = await supabase
+      .from('submission_queue')
+      .insert({
+        type,
+        target_type: targetType,
+        target_id: targetId,
+        submitted_by: user.value.id,
+        status: 'pending',
+        data,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return mapToSubmission(row);
+  };
+
   const getSubmission = async (id: string): Promise<SubmissionItem | null> => {
     const { data, error } = await supabase.from('submission_queue').select('*').eq('id', id).maybeSingle();
 
@@ -100,5 +137,5 @@ export const useSubmissions = () => {
     return mapToSubmission(data);
   };
 
-  return { listMySubmissions, submitNewItem, submitEditSuggestion, getSubmission };
+  return { listMySubmissions, submitNewItem, submitEditSuggestion, submitContribution, getSubmission };
 };

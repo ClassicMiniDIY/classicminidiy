@@ -80,6 +80,17 @@ const EDIT_TARGETS: Record<string, { table: string; columns: string[] }> = {
   },
 };
 
+/**
+ * Which targets accept a photo-only addition, and the table whose `photos`
+ * text[] column receives it. Colours store images in `contributor_images`
+ * (jsonb, different shape) and documents have a single `file_path`, so neither
+ * is a straight append — they are deliberately absent rather than special-cased.
+ */
+const PHOTO_APPEND_TARGETS: Record<string, string> = {
+  wheel: 'wheels',
+  registry: 'registry_entries',
+};
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
   const body = await readBody(event);
@@ -106,7 +117,12 @@ export default defineEventHandler(async (event) => {
 
   // For new_item submissions, insert into the appropriate table
   if (submission.type === 'new_item') {
-    const insertError = await insertApprovedItem(supabase, submission.target_type, itemData);
+    const insertError = await insertApprovedItem(
+      supabase,
+      submission.target_type,
+      itemData,
+      submission.submitted_by
+    );
     if (insertError) {
       throw createError({ statusCode: 500, statusMessage: insertError });
     }
@@ -139,7 +155,19 @@ export default defineEventHandler(async (event) => {
   return { success: true };
 });
 
-async function insertApprovedItem(supabase: any, targetType: string, data: any): Promise<string | null> {
+/**
+ * `submittedBy` is the credit. Before the UX cohesion pass these inserts only
+ * carried `legacy_submitted_by` (a free-text name), so an approved contribution
+ * was never linked back to the account that made it — which meant no profile
+ * stats, no badges, and no leaderboard entry. Every archive table already has a
+ * `submitted_by` FK; it just was not being written.
+ */
+async function insertApprovedItem(
+  supabase: any,
+  targetType: string,
+  data: any,
+  submittedBy: string | null
+): Promise<string | null> {
   let error;
 
   switch (targetType) {
@@ -172,6 +200,7 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
         swatch_path: swatchPath,
         contributor_images: contributorImages,
         status: 'approved',
+        submitted_by: submittedBy,
         legacy_submitted_by: data.submittedBy || data.legacy_submitted_by || null,
         legacy_submitted_by_email: data.submittedByEmail || data.legacy_submitted_by_email || null,
       }));
@@ -192,6 +221,7 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
         notes: data.notes || null,
         photos: data.photos || (data.images || []).map((img: any) => img.src || img),
         status: 'approved',
+        submitted_by: submittedBy,
         legacy_submitted_by: data.userName || data.legacy_submitted_by || null,
         legacy_submitted_by_email: data.emailAddress || data.legacy_submitted_by_email || null,
       }));
@@ -212,6 +242,7 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
         location: data.location || null,
         notes: data.notes || null,
         status: 'approved',
+        submitted_by: submittedBy,
         legacy_submitted_by: data.submittedBy || data.legacy_submitted_by || null,
         legacy_submitted_by_email: data.submittedByEmail || data.legacy_submitted_by_email || null,
       }));
@@ -232,6 +263,7 @@ async function insertApprovedItem(supabase: any, targetType: string, data: any):
         file_path: data.filePath || data.file_path || null,
         thumbnail_path: data.thumbnailPath || data.thumbnail_path || null,
         status: 'approved',
+        submitted_by: submittedBy,
       }));
       break;
 
@@ -249,7 +281,32 @@ async function applyEditSuggestion(
   data: any
 ): Promise<string | null> {
   const changes = data.changes;
-  if (!changes || typeof changes !== 'object') return 'No changes provided';
+
+  // Photo-only addition: the contribute wizard's "add yours" / "I have this"
+  // path fills a gap on an existing entry with images and no field edits.
+  // Safe to append without an allowlist check because the URLs come from our own
+  // storage upload route (server/api/archive/upload.ts), never from the client —
+  // the client only ever chose which bytes to send.
+  if (!changes || typeof changes !== 'object') {
+    const uploaded: { url: string }[] = Array.isArray(data.uploadedFiles) ? data.uploadedFiles : [];
+    const urls = uploaded.map((file: any) => (typeof file === 'string' ? file : file?.url)).filter(Boolean);
+
+    if (urls.length === 0) return 'No changes provided';
+
+    const photoTable = PHOTO_APPEND_TARGETS[targetType];
+    if (!photoTable) return `Cannot attach photos to a ${targetType} entry`;
+
+    const { data: current, error: readError } = await supabase
+      .from(photoTable)
+      .select('photos')
+      .eq('id', targetId)
+      .single();
+    if (readError) return readError.message;
+
+    const merged = [...((current?.photos as string[]) || []), ...urls];
+    const { error: photoError } = await supabase.from(photoTable).update({ photos: merged }).eq('id', targetId);
+    return photoError?.message || null;
+  }
 
   const updates: Record<string, any> = {};
   for (const [field, diff] of Object.entries(changes)) {
