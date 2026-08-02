@@ -1,9 +1,22 @@
 <script setup lang="ts">
   import { ArchiveItems, BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
+  import { ARCHIVE_SECTIONS } from '../../../data/models/toolbox-catalog';
   const { path } = useRoute();
   const { capture } = usePostHog();
   const { track } = useAnalytics();
   const { t } = useI18n();
+  const { openWizard } = useContributeWizard();
+
+  const subnavLinks = ARCHIVE_SECTIONS.map((section) => ({
+    key: section.key,
+    label: t(`sections.${section.key}`),
+    to: section.to,
+  }));
+
+  const contribute = () => {
+    track('contribute_cta_clicked', { type: 'archive', location: 'archive_home' });
+    openWizard({ origin: 'archive_home' });
+  };
 
   // Function to get translated archive item title
   const getArchiveItemTitle = (title: string) => {
@@ -98,6 +111,13 @@
 
 <template>
   <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <SectionSubnav
+    :label="t('subnav_label')"
+    :links="subnavLinks"
+    :action-label="t('contribute')"
+    action-icon="fas fa-paper-plane"
+    @action="contribute()"
+  />
   <div class="container mx-auto px-4 pb-15 pt-6">
     <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" root></breadcrumb>
 
@@ -110,14 +130,6 @@
         </div>
         <div class="flex flex-wrap gap-2">
           <NuxtLink
-            class="btn btn-primary btn-sm"
-            to="/contribute"
-            @click="track('contribute_cta_clicked', { type: 'archive', location: 'archive_home' })"
-          >
-            <i class="fad fa-paper-plane mr-1"></i>
-            {{ t('contribute_to_archive') }}
-          </NuxtLink>
-          <NuxtLink
             class="btn btn-secondary btn-sm"
             to="https://buy.stripe.com/3cs8yWe1P1ER3Oo5kl"
             target="_blank"
@@ -129,6 +141,16 @@
           </NuxtLink>
         </div>
       </div>
+
+      <!-- Growth, not completeness: latest additions, this month, Most Wanted. -->
+      <ArchiveActivity />
+
+      <!-- On mobile Contribute is a full-width CTA rather than a subnav chip (M7). -->
+      <button type="button" class="btn btn-secondary btn-block mb-5 h-[46px] sm:hidden" @click="contribute()">
+        <i class="fas fa-paper-plane" aria-hidden="true"></i>
+        {{ t('contribute_to_archive') }}
+      </button>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <HomeToolCard
           v-for="archive in ArchiveItems"
@@ -211,7 +233,14 @@
       "models": "3D Models",
       "models_desc": "Community 3D-printable parts with print settings and assembly guides."
     },
-    "eyebrow": "THE ARCHIVE"
+    "eyebrow": "THE ARCHIVE",
+    "subnav_label": "ARCHIVE",
+    "sections": {
+      "documents": "Manuals",
+      "registry": "Registries",
+      "wheels": "Wheels",
+      "electrical": "Electrical"
+    }
   },
   "es": {
     "title": "Archivo Classic Mini DIY - Documentos Históricos y Recursos",
@@ -266,7 +295,14 @@
       "models": "Modelos 3D",
       "models_desc": "Piezas imprimibles en 3D de la comunidad con ajustes de impresión y guías de montaje."
     },
-    "eyebrow": "EL ARCHIVO"
+    "eyebrow": "EL ARCHIVO",
+    "subnav_label": "ARCHIVO",
+    "sections": {
+      "documents": "Manuales",
+      "registry": "Registros",
+      "wheels": "Ruedas",
+      "electrical": "Eléctricos"
+    }
   },
   "fr": {
     "title": "Archive Classic Mini DIY - Documents Historiques et Ressources",
@@ -321,7 +357,14 @@
       "models": "Modèles 3D",
       "models_desc": "Pièces imprimables en 3D de la communauté avec réglages d'impression et guides de montage."
     },
-    "eyebrow": "LES ARCHIVES"
+    "eyebrow": "LES ARCHIVES",
+    "subnav_label": "ARCHIVE",
+    "sections": {
+      "documents": "Manuels",
+      "registry": "Registres",
+      "wheels": "Jantes",
+      "electrical": "Électricité"
+    }
   },
   "it": {
     "title": "Archivio Classic Mini DIY - Documenti Storici e Risorse",
@@ -376,7 +419,14 @@
       "models": "Modelli 3D",
       "models_desc": "Parti stampabili in 3D della comunità con impostazioni di stampa e guide di montaggio."
     },
-    "eyebrow": "L'ARCHIVIO"
+    "eyebrow": "L'ARCHIVIO",
+    "subnav_label": "ARCHIVIO",
+    "sections": {
+      "documents": "Manuali",
+      "registry": "Registri",
+      "wheels": "Cerchi",
+      "electrical": "Impianto elettrico"
+    }
   },
   "de": {
     "title": "Classic Mini DIY Archiv - Historische Dokumente und Ressourcen",
@@ -431,7 +481,14 @@
       "models": "3D-Modelle",
       "models_desc": "3D-druckbare Teile aus der Community mit Druckeinstellungen und Montageanleitungen."
     },
-    "eyebrow": "DAS ARCHIV"
+    "eyebrow": "DAS ARCHIV",
+    "subnav_label": "ARCHIV",
+    "sections": {
+      "documents": "Handbücher",
+      "registry": "Register",
+      "wheels": "Räder",
+      "electrical": "Elektrik"
+    }
   },
   "pt": {
     "title": "Arquivo Classic Mini DIY - Documentos Históricos e Recursos",
@@ -486,7 +543,14 @@
       "models": "Modelos 3D",
       "models_desc": "Peças imprimíveis em 3D da comunidade com configurações de impressão e guias de montagem."
     },
-    "eyebrow": "O ARQUIVO"
+    "eyebrow": "O ARQUIVO",
+    "subnav_label": "ARQUIVO",
+    "sections": {
+      "documents": "Manuais",
+      "registry": "Registos",
+      "wheels": "Jantes",
+      "electrical": "Elétrico"
+    }
   },
   "ru": {
     "title": "Архив Classic Mini DIY - Исторические Документы и Ресурсы",
@@ -541,7 +605,14 @@
       "models": "3D-модели",
       "models_desc": "Печатаемые на 3D-принтере детали от сообщества с настройками печати и руководствами по сборке."
     },
-    "eyebrow": "АРХИВ"
+    "eyebrow": "АРХИВ",
+    "subnav_label": "АРХИВ",
+    "sections": {
+      "documents": "Руководства",
+      "registry": "Реестры",
+      "wheels": "Диски",
+      "electrical": "Электрика"
+    }
   },
   "ja": {
     "title": "Classic Mini DIY アーカイブ - 歴史的文書とリソース",
@@ -596,7 +667,14 @@
       "models": "3Dモデル",
       "models_desc": "印刷設定と組み立てガイド付きの、コミュニティによる3Dプリント部品。"
     },
-    "eyebrow": "アーカイブ"
+    "eyebrow": "アーカイブ",
+    "subnav_label": "アーカイブ",
+    "sections": {
+      "documents": "マニュアル",
+      "registry": "レジストリ",
+      "wheels": "ホイール",
+      "electrical": "電装"
+    }
   },
   "zh": {
     "title": "Classic Mini DIY 档案 - 历史文档和资源",
@@ -651,7 +729,14 @@
       "models": "3D模型",
       "models_desc": "社区贡献的可3D打印零件，附打印设置和组装指南。"
     },
-    "eyebrow": "档案"
+    "eyebrow": "档案",
+    "subnav_label": "档案馆",
+    "sections": {
+      "documents": "手册",
+      "registry": "注册库",
+      "wheels": "轮毂",
+      "electrical": "电路"
+    }
   },
   "ko": {
     "title": "Classic Mini DIY 아카이브 - 역사적 문서와 자료",
@@ -706,7 +791,14 @@
       "models": "3D 모델",
       "models_desc": "인쇄 설정과 조립 가이드가 포함된 커뮤니티 3D 프린트 부품."
     },
-    "eyebrow": "아카이브"
+    "eyebrow": "아카이브",
+    "subnav_label": "아카이브",
+    "sections": {
+      "documents": "매뉴얼",
+      "registry": "레지스트리",
+      "wheels": "휠",
+      "electrical": "전기"
+    }
   }
 }
 </i18n>

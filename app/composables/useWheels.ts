@@ -27,7 +27,13 @@ const WHEEL_COLUMNS = [
   'notes',
   'photos',
   'legacy_submitted_by',
+  'submitted_by',
   'status',
+  // The design credits a contributor on every card and gap state, so the
+  // account behind `submitted_by` has to come back with the row. Read through
+  // public_profiles, not profiles — since the profiles split, selecting another
+  // user's `profiles` row silently returns nothing.
+  'submitter:public_profiles!wheels_submitted_by_fkey(username, display_name)',
 ].join(', ');
 
 export const useWheels = () => {
@@ -43,6 +49,9 @@ export const useWheels = () => {
   const mapToWheel = (row: any): IWheelsData => ({
     uuid: row.id,
     name: row.name || '',
+    submittedBy: row.submitted_by || null,
+    contributorUsername: row.submitter?.username || null,
+    contributorName: row.submitter?.display_name || row.legacy_submitted_by || '',
     type: row.wheel_type || '',
     size: String(row.size || ''),
     width: row.width || '',

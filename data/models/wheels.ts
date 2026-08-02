@@ -27,6 +27,15 @@ export interface IWheelsData {
   boltPattern?: string;
   centerBore?: string;
   weight?: string | number;
+  /**
+   * Account credit for the entry. `submittedBy` is the profile id;
+   * `contributorUsername` is the @handle to link, and `contributorName` falls
+   * back to the legacy free-text name for pre-account imports. Every card
+   * credits its contributor (design S7) — this is what it credits with.
+   */
+  submittedBy?: string | null;
+  contributorUsername?: string | null;
+  contributorName?: string;
   status?: WheelItemStatus;
 }
 export interface IWheelsDataReviewItem {

@@ -290,6 +290,10 @@
     <div class="mb-8">
       <patreon-card size="large" />
     </div>
+
+    <div class="pb-12">
+      <ToolFooter slug="clearance" />
+    </div>
   </div>
 </template>
 

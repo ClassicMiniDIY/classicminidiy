@@ -163,6 +163,10 @@
         <patreon-card size="large" />
       </div>
     </div>
+
+    <div class="pb-12">
+      <ToolFooter slug="compression" />
+    </div>
   </div>
 </template>
 

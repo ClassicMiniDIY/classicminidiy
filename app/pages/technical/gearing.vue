@@ -169,6 +169,10 @@
         </ClientOnly>
       </div>
     </div>
+
+    <div class="pb-12">
+      <ToolFooter slug="gearing" />
+    </div>
   </div>
 </template>
 
