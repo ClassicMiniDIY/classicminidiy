@@ -512,7 +512,10 @@
   }
 
   .omnisearch-trigger {
-    display: flex;
+    /* No `display` here on purpose. Scoped component CSS and a Tailwind utility
+       are both single-class selectors, and the scoped block is injected last, so
+       `display: flex` here would beat `hidden` and leak the desktop search field
+       onto mobile. Display is owned by the `hidden lg:flex` on the element. */
     align-items: center;
     gap: 0.5rem;
     width: 250px;
