@@ -100,11 +100,19 @@ export function collectColorAssets(
 
   const uploadedFiles = Array.isArray(data?.uploadedFiles) ? data.uploadedFiles : [];
   for (const file of uploadedFiles) {
-    const fileObj = typeof file === 'string' ? { url: file, category: 'general' } : file;
+    const fileObj = typeof file === 'string' ? { url: file } : file;
     if (!isOwnUploadUrl(fileObj?.url, submissionId)) continue;
-    if (fileObj.category === 'swatch' && !swatchPath) {
+
+    // Default the category for OBJECT entries too, not just bare strings.
+    // `server/api/archive/upload.ts` stamps 'general' when the caller sends no
+    // `?category=`, but `submission_queue.data` is browser-written, so
+    // `{ url, category: undefined }` is reachable — and matching neither arm of
+    // the branch below silently dropped a legitimate own-upload photo.
+    const category = fileObj?.category || 'general';
+
+    if (category === 'swatch' && !swatchPath) {
       swatchPath = fileObj.url;
-    } else if (fileObj.category === 'car-photos' || fileObj.category === 'general') {
+    } else if (category === 'car-photos' || category === 'general') {
       contributorImages.push({ url: fileObj.url, contributor });
     }
   }
