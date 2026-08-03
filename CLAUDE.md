@@ -439,6 +439,26 @@ parts of it that break silently if you get them wrong.
   "added by @handle" credit anywhere. Every archive table has the FK; it just wasn't
   being populated. A new approval path must populate it too.
 
+- **"Attach to an existing entry" is carried differently for colours than for
+  everything else, and dropping it creates duplicate archive rows.** Wheels and
+  registry entries gap-fill through `edit_suggestion` + `target_id`, so the
+  association lives on the submission row and `applyEditSuggestion()` cannot lose
+  it. Colours can't: `/contribute/color` is the one archive form that is not the
+  wizard, so it submits a `new_item` and stamps the chosen colour's id inside
+  `data.originalColorId`. `insertApprovedItem()` ignored that field until
+  2026-08 and INSERTed a photo-only stub instead — same name, no hex, no swatch,
+  empty paint codes — which is how `/archive/colors` ended up listing colours
+  twice. The blast radius was bigger than the listing: a stub shares its real
+  colour's `name+code+short_code`, the exact tuple
+  `20260727000001_restore_wheel_colour_legacy_ids.sql` matches on, so a legacy
+  DynamoDB id was restored onto a stub and that colour's legacy deep link broke.
+  (Two live instances, rows cleaned up by supabase PR #77.) When merging into an
+  existing row, `submitted_by` and `swatch_path` are only written if the row does
+  not already have one — reassigning either steals another contributor's credit
+  or overwrites curated data. **`server/api/colors/queue/save.ts` (the unlinked
+  legacy `/admin/colors/review` page) still has this bug** and additionally
+  *replaces* rather than appends `contributor_images`.
+
 - **`contributor_archive_items` is the single source for every contributor stat.**
   It unions the approved, user-attributed rows of wheels / registry_entries / colors /
   archive_documents. `get_contributor_impact`, `contributor_badge_metrics`,

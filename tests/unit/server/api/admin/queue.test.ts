@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock Supabase query builder -- chainable, with async resolution via .then()
 // ---------------------------------------------------------------------------
 const mockSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+const mockMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
 const mockEq = vi.fn().mockReturnThis();
 const mockOrder = vi.fn().mockReturnThis();
 const mockSelect = vi.fn().mockReturnThis();
@@ -19,6 +20,7 @@ const queryBuilder: Record<string, any> = {
   eq: mockEq,
   order: mockOrder,
   single: mockSingle,
+  maybeSingle: mockMaybeSingle,
   // Allows `const { data, error } = await q;` via `await` on the builder
   then: vi.fn(),
 };
@@ -420,11 +422,14 @@ describe('server/api/admin/queue/approve.post', () => {
     mockEq.mockReturnThis();
     mockFrom.mockReturnValue(queryBuilder);
 
-    // Default: single fetch succeeds, update succeeds
+    // Default: single fetch succeeds, update succeeds.
+    // vi.clearAllMocks() only clears call history, so every mockResolvedValue
+    // set by a previous test survives -- each default has to be restored here.
     mockSingle.mockResolvedValue({
       data: { id: 'sub-1', type: 'new_item', target_type: 'color', target_id: null, data: { name: 'Test' } },
       error: null,
     });
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
     resolveQuery({ data: null, error: null });
 
     const mod = await import('~/server/api/admin/queue/approve.post');
@@ -572,6 +577,231 @@ describe('server/api/admin/queue/approve.post', () => {
         contributor_images: [{ url: ownUrl('archive-colors', 'mine.jpg'), contributor: null }],
       })
     );
+  });
+
+  // -------------------------------------------------------------------------
+  // "Add photos to an existing colour" -- data.originalColorId
+  //
+  // /contribute/color is the one archive form that is not the wizard, so this
+  // arrives as a new_item carrying the target colour's id in `data` rather than
+  // as an edit_suggestion with a target_id. Ignoring it inserted a photo-only
+  // duplicate row; two reached production, and because a duplicate shares its
+  // real colour's name+code+short_code it went on to steal the legacy id that
+  // 20260727000001_restore_wheel_colour_legacy_ids.sql was matching on.
+  // -------------------------------------------------------------------------
+  const EXISTING_COLOR_ID = 'c8f76d6c-c139-4e8c-9fac-fcfab47f78c2';
+
+  /** Resolve the `colors` lookup that the originalColorId branch performs. */
+  function mockExistingColor(row: any) {
+    mockMaybeSingle.mockResolvedValue({ data: row, error: null });
+  }
+
+  function colorContribution(overrides: Record<string, any> = {}) {
+    return {
+      id: 'sub-1',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: {
+        name: 'Opaline MET',
+        originalColorId: EXISTING_COLOR_ID,
+        uploadedFiles: [{ url: ownUrl('archive-colors', 'my-mini.jpg'), category: 'car-photos' }],
+        submittedBy: 'PhotoContributor',
+        ...overrides,
+      },
+    };
+  }
+
+  it('appends photos to the existing colour instead of inserting a duplicate', async () => {
+    mockFetchSubmission(colorContribution());
+    mockExistingColor({
+      id: EXISTING_COLOR_ID,
+      submitted_by: null,
+      swatch_path: '/swatches/opaline.png',
+      contributor_images: [{ url: '/existing/photo.jpg', contributor: 'SomeoneElse' }],
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+
+    await handler(createMockEvent());
+
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockFrom).toHaveBeenCalledWith('colors');
+    expect(mockUpdate).toHaveBeenCalledWith({
+      contributor_images: [
+        { url: '/existing/photo.jpg', contributor: 'SomeoneElse' },
+        { url: ownUrl('archive-colors', 'my-mini.jpg'), contributor: 'PhotoContributor' },
+      ],
+    });
+    expect(mockEq).toHaveBeenCalledWith('id', EXISTING_COLOR_ID);
+  });
+
+  /** The colour UPDATE, picked out from the submission_queue status UPDATE. */
+  const colorUpdateCall = () => mockUpdate.mock.calls.find((call: any[]) => 'contributor_images' in call[0])?.[0];
+
+  it('claims an unowned colour for the submitter', async () => {
+    // The archive import left submitted_by NULL, which is the case this fills.
+    mockFetchSubmission({ ...colorContribution(), submitted_by: 'user-abc' });
+    mockExistingColor({
+      id: EXISTING_COLOR_ID,
+      submitted_by: null,
+      swatch_path: '/swatches/opaline.png',
+      contributor_images: null,
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(colorUpdateCall()).toMatchObject({ submitted_by: 'user-abc' });
+  });
+
+  it('never reassigns a colour that already has an owner', async () => {
+    // Overwriting a real owner would move their credit -- and their trust
+    // counters, via contributor_archive_items -- onto someone else's photo.
+    mockFetchSubmission({ ...colorContribution(), submitted_by: 'user-abc' });
+    mockExistingColor({
+      id: EXISTING_COLOR_ID,
+      submitted_by: 'original-owner',
+      swatch_path: '/swatches/opaline.png',
+      contributor_images: null,
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(colorUpdateCall()).not.toHaveProperty('submitted_by');
+  });
+
+  it('fills a missing swatch on the existing colour', async () => {
+    const swatch = ownUrl('archive-colors', 'swatch.png');
+    mockFetchSubmission(colorContribution({ uploadedFiles: [{ url: swatch, category: 'swatch' }] }));
+    mockExistingColor({
+      id: EXISTING_COLOR_ID,
+      submitted_by: null,
+      swatch_path: null,
+      contributor_images: [],
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(colorUpdateCall()).toMatchObject({ swatch_path: swatch, has_swatch: true });
+  });
+
+  it('does not replace a swatch the existing colour already has', async () => {
+    const swatch = ownUrl('archive-colors', 'swatch.png');
+    mockFetchSubmission(colorContribution({ uploadedFiles: [{ url: swatch, category: 'swatch' }] }));
+    mockExistingColor({
+      id: EXISTING_COLOR_ID,
+      submitted_by: null,
+      swatch_path: '/swatches/curated.png',
+      contributor_images: [],
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(colorUpdateCall()).not.toHaveProperty('swatch_path');
+  });
+
+  it('does not append the same photo twice when a submission is re-approved', async () => {
+    const photo = ownUrl('archive-colors', 'my-mini.jpg');
+    mockFetchSubmission(colorContribution());
+    mockExistingColor({
+      id: EXISTING_COLOR_ID,
+      submitted_by: null,
+      swatch_path: '/swatches/opaline.png',
+      contributor_images: [{ url: photo, contributor: 'PhotoContributor' }],
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ contributor_images: [{ url: photo, contributor: 'PhotoContributor' }] })
+    );
+  });
+
+  it('still drops foreign asset URLs when attaching to an existing colour', async () => {
+    mockFetchSubmission(
+      colorContribution({
+        uploadedFiles: [
+          { url: 'https://evil.example.com/tracker.png', category: 'car-photos' },
+          { url: ownUrl('archive-colors', 'stolen.jpg', 'someone-elses-submission'), category: 'car-photos' },
+          { url: ownUrl('archive-colors', 'mine.jpg'), category: 'car-photos' },
+        ],
+      })
+    );
+    mockExistingColor({
+      id: EXISTING_COLOR_ID,
+      submitted_by: null,
+      swatch_path: '/swatches/opaline.png',
+      contributor_images: [],
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contributor_images: [{ url: ownUrl('archive-colors', 'mine.jpg'), contributor: 'PhotoContributor' }],
+      })
+    );
+  });
+
+  it('inserts a new colour when originalColorId no longer resolves', async () => {
+    // A stale or deleted id must not drop the contribution on the floor.
+    mockFetchSubmission(colorContribution());
+    mockExistingColor(null);
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ name: 'Opaline MET', status: 'approved' }));
+  });
+
+  it('ignores an originalColorId that is not a uuid rather than 500ing on 22P02', async () => {
+    mockFetchSubmission(colorContribution({ originalColorId: 'not-a-uuid' }));
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ name: 'Opaline MET' }));
+  });
+
+  it('inserts normally when the submission carries no originalColorId', async () => {
+    mockFetchSubmission(colorContribution({ originalColorId: undefined }));
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+    await handler(createMockEvent());
+
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+    expect(mockInsert).toHaveBeenCalled();
+  });
+
+  it('surfaces a failure to read the existing colour as a 500', async () => {
+    mockFetchSubmission(colorContribution());
+    mockMaybeSingle.mockResolvedValue({ data: null, error: { message: 'colors read failed' } });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+
+    await expect(handler(createMockEvent())).rejects.toMatchObject({
+      statusCode: 500,
+      statusMessage: 'colors read failed',
+    });
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it('inserts into wheels table for new_item wheel submission', async () => {
