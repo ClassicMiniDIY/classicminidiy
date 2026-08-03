@@ -192,6 +192,89 @@ export const TOOLBOX_SECTIONS = [
   { key: 'reference', label: 'References', to: '/technical?category=reference' },
 ] as const;
 
+/**
+ * Archive sections as SEARCH targets.
+ *
+ * Several archive surfaces are static reference tables rather than rows in
+ * Postgres — engine sizes, vehicle weights, the electrical index — so
+ * `omnisearch()` cannot see them at all. Without these entries, searching
+ * "weights" or "wiring" returned nothing from the archive, which is exactly the
+ * kind of miss that makes people stop using search.
+ *
+ * These are SECTION-level on purpose. A weights row ("Mk1 Saloon, 587kg") has no
+ * page of its own, so returning forty rows that all link to /archive/weights
+ * would be noise. Electrical is the exception and is indexed per diagram in
+ * `server/api/search`, because each one is a distinct named document and that
+ * page can filter to it via `?q=`.
+ */
+export interface ArchiveSectionSearchEntry {
+  key: string;
+  name: string;
+  summary: string;
+  to: string;
+  icon: string;
+  searchTerms: string[];
+}
+
+export const ARCHIVE_SEARCH_SECTIONS: ArchiveSectionSearchEntry[] = [
+  {
+    key: 'electrical',
+    name: 'Electrical Diagrams',
+    summary: 'Wiring diagrams by model, year and ground polarity.',
+    to: '/archive/electrical',
+    icon: 'fas fa-bolt',
+    searchTerms: ['wiring', 'wiring diagram', 'electrical', 'loom', 'harness', 'schematic', 'earth', 'ground'],
+  },
+  {
+    key: 'engines',
+    name: 'Engine Sizes',
+    summary: 'Bore, stroke, power and torque for every A-series displacement.',
+    to: '/archive/engines',
+    icon: 'fas fa-engine',
+    searchTerms: ['engine size', 'displacement', 'bore', 'stroke', 'a-series', '850', '997', '998', '1100', '1275', 'bhp', 'torque'],
+  },
+  {
+    key: 'weights',
+    name: 'Vehicle Weights',
+    summary: 'Curb and component weights by model and body type.',
+    to: '/archive/weights',
+    icon: 'fas fa-weight-hanging',
+    searchTerms: ['weight', 'weights', 'curb weight', 'kerb weight', 'mass', 'kg', 'lbs'],
+  },
+  {
+    key: 'manuals',
+    name: 'Workshop Manuals & Documents',
+    summary: 'Scanned manuals, adverts, catalogues and tuning guides.',
+    to: '/archive/documents',
+    icon: 'fas fa-books',
+    searchTerms: ['manual', 'manuals', 'workshop manual', 'handbook', 'catalogue', 'advert', 'brochure', 'tuning guide'],
+  },
+  {
+    key: 'registry',
+    name: 'Mini Registry',
+    summary: 'Community-submitted cars with chassis and engine numbers.',
+    to: '/archive/registry',
+    icon: 'fas fa-clipboard-list',
+    searchTerms: ['registry', 'register', 'my mini', 'chassis plate', 'heritage', 'owners'],
+  },
+  {
+    key: 'wheels',
+    name: 'Wheel Library',
+    summary: 'Fitment, offsets and photos for hundreds of wheels.',
+    to: '/archive/wheels',
+    icon: 'fas fa-ring',
+    searchTerms: ['wheel library', 'wheels', 'fitment', 'offset', 'backspace', 'rim'],
+  },
+  {
+    key: 'colors',
+    name: 'Colour Picker',
+    summary: 'Factory paint colours with codes and swatches.',
+    to: '/archive/colors',
+    icon: 'fas fa-brush',
+    searchTerms: ['colour', 'color', 'paint', 'swatch', 'ditzler', 'dulux', 'paint code'],
+  },
+];
+
 /** Archive row-2 subnav (design S6). */
 export const ARCHIVE_SECTIONS = [
   { key: 'documents', label: 'Manuals', to: '/archive/documents' },

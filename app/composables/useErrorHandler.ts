@@ -105,9 +105,17 @@ export function useErrorHandler() {
   };
 
   /**
-   * Create a standardized error
+   * Build a standardized AppError object.
+   *
+   * NOT called `createError`, even though that reads better here. Nuxt's
+   * auto-import skips injecting any identifier it finds declared in a file
+   * without doing scope analysis, so a local `const createError` silently
+   * suppresses `createError` from Nuxt for this ENTIRE module — and the next
+   * person to write `throw createError({ statusCode: 404 })` in here would get
+   * this factory instead, which returns a plain object and throws nothing.
+   * Exported under both names so existing callers keep working.
    */
-  const createError = (message: string, code?: string, statusCode?: number): AppError => {
+  const buildAppError = (message: string, code?: string, statusCode?: number): AppError => {
     return {
       message,
       code,
@@ -119,6 +127,8 @@ export function useErrorHandler() {
     handleError,
     withErrorHandling,
     validateRequired,
-    createError,
+    buildAppError,
+    /** @deprecated Use `buildAppError` — the old name shadows Nuxt's `createError`. */
+    createError: buildAppError,
   };
 }

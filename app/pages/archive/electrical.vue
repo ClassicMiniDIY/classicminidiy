@@ -7,7 +7,15 @@
 
   const { data: diagrams, status } = await useFetch('/api/diagrams');
   const activePanel = ref<string | null>(null);
-  const searchQuery = ref('');
+
+  /**
+   * Seeded from `?q=` so omnisearch can deep-link a specific diagram into this
+   * page's own filter instead of dumping the visitor on a raw S3 PDF with no
+   * year range, no ground polarity and no way back. Also makes this page's
+   * search shareable, which it wasn't.
+   */
+  const route = useRoute();
+  const searchQuery = ref(String(route.query.q ?? ''));
 
   // Prepare data for Fuse.js search
   const searchableItems = computed(() => {

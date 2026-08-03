@@ -15,10 +15,21 @@ export type { SearchResult };
 const RECENT_KEY = 'cmdiy:recent-searches';
 const RECENT_LIMIT = 5;
 
+/**
+ * The palette shows at most this many rows per surface. It is a browsing aid,
+ * not the results page — sixteen wheels in a dropdown buries the one Exchange
+ * listing and the one archive doc underneath it. The group label keeps showing
+ * the TRUE total, and "View all N results" goes to /search, which is unfiltered.
+ */
+const PALETTE_ROWS_PER_SURFACE = 5;
+
 export interface SearchGroup {
   surface: string;
   label: string;
+  /** Capped to PALETTE_ROWS_PER_SURFACE. */
   results: SearchResult[];
+  /** How many this surface actually matched — what the group label shows. */
+  total: number;
 }
 
 const SURFACE_LABELS: Record<string, string> = {
@@ -58,12 +69,20 @@ export const useOmnisearch = () => {
     return [...bySurface.entries()].map(([surface, items]) => ({
       surface,
       label: surfaceLabel(surface),
-      results: items,
+      results: items.slice(0, PALETTE_ROWS_PER_SURFACE),
+      total: items.length,
     }));
   });
 
-  /** Flat list in render order — what the arrow keys walk. */
+  /**
+   * Flat list in render order — what the arrow keys walk. Built from the CAPPED
+   * group results, so keyboard navigation can never land on a row that is not
+   * on screen.
+   */
   const flatResults = computed(() => groups.value.flatMap((group) => group.results));
+
+  /** Every match, capped or not — drives the "View all N results" count. */
+  const totalResults = computed(() => results.value.length);
 
   const loadRecent = () => {
     if (typeof window === 'undefined') return;
@@ -149,7 +168,7 @@ export const useOmnisearch = () => {
     const term = query.value.trim();
     if (!term) return;
     rememberSearch(term);
-    track('omnisearch_view_all', { query: term, results: results.value.length });
+    track('omnisearch_view_all', { query: term, results: totalResults.value });
     close();
     router.push({ path: '/search', query: { q: term } });
   };
@@ -173,6 +192,7 @@ export const useOmnisearch = () => {
     counts,
     groups,
     flatResults,
+    totalResults,
     loading,
     highlighted,
     recent,
