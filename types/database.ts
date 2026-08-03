@@ -4639,6 +4639,7 @@ export type Database = {
       get_archive_month_stats: {
         Args: never
         Returns: {
+          contributors_all_time: number
           contributors_this_month: number
           items_all_time: number
           items_this_month: number

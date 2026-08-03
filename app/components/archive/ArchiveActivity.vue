@@ -19,7 +19,33 @@
     Database['public']['Functions']['get_archive_latest_additions']['Returns'][number];
 
   const latest = ref<LatestAddition[]>([]);
-  const monthStats = ref<{ items: number; contributors: number } | null>(null);
+  const monthStats = ref<{
+    items: number;
+    contributors: number;
+    itemsAllTime: number;
+    contributorsAllTime: number;
+  } | null>(null);
+
+  /**
+   * The card falls back to all-time when the calendar month is still empty.
+   *
+   * "0 items from 0 people" is the opposite of the momentum this block exists to
+   * show, and on the 1st of every month it would be the honest-but-useless
+   * default. Falling back keeps the semantics ("things people contributed")
+   * rather than swapping in a bigger unrelated number like total archive size —
+   * most of the archive predates accounts and was never attributed to anyone.
+   */
+  const showAllTime = computed(() => (monthStats.value?.items ?? 0) === 0);
+
+  const statItems = computed(() =>
+    showAllTime.value ? (monthStats.value?.itemsAllTime ?? 0) : (monthStats.value?.items ?? 0)
+  );
+  const statContributors = computed(() =>
+    showAllTime.value ? (monthStats.value?.contributorsAllTime ?? 0) : (monthStats.value?.contributors ?? 0)
+  );
+
+  /** Nothing attributed at all yet — invite rather than print zeros. */
+  const isEmpty = computed(() => monthStats.value !== null && statItems.value === 0);
 
   const ICONS: Record<string, string> = {
     wheel: 'fas fa-ring',
@@ -69,6 +95,8 @@
       monthStats.value = {
         items: Number(stats.data[0].items_this_month ?? 0),
         contributors: Number(stats.data[0].contributors_this_month ?? 0),
+        itemsAllTime: Number(stats.data[0].items_all_time ?? 0),
+        contributorsAllTime: Number(stats.data[0].contributors_all_time ?? 0),
       };
     }
     await loadMostWanted(3);
@@ -115,15 +143,20 @@
       <p v-else class="text-sm opacity-60">{{ t('no_additions') }}</p>
     </div>
 
-    <!-- This month -->
+    <!-- This month, falling back to all-time so the card never reads 0 from 0 -->
     <div class="month-card rounded-box p-5">
-      <p class="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-accent">{{ t('this_month') }}</p>
-      <p class="text-[26px] font-extrabold leading-tight">
-        {{ t('items_count', { count: monthStats?.items ?? 0 }, monthStats?.items ?? 0) }}
-        <span class="text-[15px] font-semibold opacity-70">
-          {{ t('from_people', { count: monthStats?.contributors ?? 0 }, monthStats?.contributors ?? 0) }}
-        </span>
+      <p class="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-accent">
+        {{ showAllTime ? t('all_time') : t('this_month') }}
       </p>
+      <template v-if="!isEmpty">
+        <p class="text-[26px] font-extrabold leading-tight">
+          {{ t('items_count', { count: statItems }, statItems) }}
+          <span class="text-[15px] font-semibold opacity-70">
+            {{ t('from_people', { count: statContributors }, statContributors) }}
+          </span>
+        </p>
+      </template>
+      <p v-else class="text-[15px] font-semibold leading-snug">{{ t('be_the_first') }}</p>
       <NuxtLink to="/archive/contributors" class="mt-2.5 inline-block text-sm font-bold text-primary hover:underline">
         <i class="fas fa-trophy text-secondary" aria-hidden="true"></i>
         {{ t('leaderboard') }} &rarr;
@@ -183,7 +216,9 @@
     "add_ask": "Add your ask",
     "already_asked": "You have already asked for this",
     "i_have_this": "I have this",
-    "someone": "a member"
+    "someone": "a member",
+    "all_time": "All time",
+    "be_the_first": "Be the first contribution."
   },
   "es": {
     "latest_additions": "Últimas incorporaciones",
@@ -198,7 +233,9 @@
     "add_ask": "Añade tu petición",
     "already_asked": "Ya has pedido esto",
     "i_have_this": "Yo lo tengo",
-    "someone": "un miembro"
+    "someone": "un miembro",
+    "all_time": "Histórico",
+    "be_the_first": "Sé la primera contribución."
   },
   "fr": {
     "latest_additions": "Derniers ajouts",
@@ -213,7 +250,9 @@
     "add_ask": "Ajouter votre demande",
     "already_asked": "Vous l'avez déjà demandé",
     "i_have_this": "Je l'ai",
-    "someone": "un membre"
+    "someone": "un membre",
+    "all_time": "Depuis toujours",
+    "be_the_first": "Soyez la première contribution."
   },
   "de": {
     "latest_additions": "Neueste Ergänzungen",
@@ -228,7 +267,9 @@
     "add_ask": "Deine Anfrage hinzufügen",
     "already_asked": "Du hast das bereits angefragt",
     "i_have_this": "Habe ich",
-    "someone": "ein Mitglied"
+    "someone": "ein Mitglied",
+    "all_time": "Gesamt",
+    "be_the_first": "Mach den ersten Beitrag."
   },
   "it": {
     "latest_additions": "Ultime aggiunte",
@@ -243,7 +284,9 @@
     "add_ask": "Aggiungi la tua richiesta",
     "already_asked": "L'hai già richiesto",
     "i_have_this": "Ce l'ho",
-    "someone": "un membro"
+    "someone": "un membro",
+    "all_time": "Sempre",
+    "be_the_first": "Sii il primo contributo."
   },
   "pt": {
     "latest_additions": "Adições recentes",
@@ -258,7 +301,9 @@
     "add_ask": "Adicione o seu pedido",
     "already_asked": "Já pediu isto",
     "i_have_this": "Eu tenho isto",
-    "someone": "um membro"
+    "someone": "um membro",
+    "all_time": "Desde sempre",
+    "be_the_first": "Seja a primeira contribuição."
   },
   "ru": {
     "latest_additions": "Последние поступления",
@@ -273,7 +318,9 @@
     "add_ask": "Добавить свой запрос",
     "already_asked": "Вы уже это запрашивали",
     "i_have_this": "У меня это есть",
-    "someone": "участник"
+    "someone": "участник",
+    "all_time": "За всё время",
+    "be_the_first": "Станьте первым вкладом."
   },
   "ja": {
     "latest_additions": "最近の追加",
@@ -288,7 +335,9 @@
     "add_ask": "自分もリクエストする",
     "already_asked": "すでにリクエスト済みです",
     "i_have_this": "持っています",
-    "someone": "メンバー"
+    "someone": "メンバー",
+    "all_time": "累計",
+    "be_the_first": "最初の貢献をどうぞ。"
   },
   "zh": {
     "latest_additions": "最新收录",
@@ -303,7 +352,9 @@
     "add_ask": "我也想要",
     "already_asked": "你已经请求过了",
     "i_have_this": "我有这个",
-    "someone": "一位成员"
+    "someone": "一位成员",
+    "all_time": "全部时间",
+    "be_the_first": "来做第一份贡献吧。"
   },
   "ko": {
     "latest_additions": "최근 추가",
@@ -318,7 +369,9 @@
     "add_ask": "나도 요청하기",
     "already_asked": "이미 요청하셨습니다",
     "i_have_this": "제가 가지고 있어요",
-    "someone": "회원"
+    "someone": "회원",
+    "all_time": "전체 기간",
+    "be_the_first": "첫 번째 기여자가 되어 주세요."
   }
 }
 </i18n>
