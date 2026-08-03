@@ -68,7 +68,23 @@
   const profileUrl = (row: Row) => (row.username ? `/users/${row.username}` : `/users/${row.user_id}`);
 
   watch(boardWindow, load);
-  onMounted(load);
+
+  /**
+   * Open on All Time when the current month has nobody on it.
+   *
+   * The month window is the intended default — it resets so newcomers always
+   * have a shot — but landing on "Nobody on the board yet" is a dead end,
+   * especially in the first days of a month, and especially when it is reached
+   * from the archive card that just showed an all-time figure. Falls back only
+   * once, on first load; the toggle stays fully under the visitor's control
+   * after that.
+   */
+  onMounted(async () => {
+    await load();
+    if (rows.value.length === 0 && boardWindow.value === 'month') {
+      boardWindow.value = 'all';
+    }
+  });
 
   useHead({ title: t('title') });
   useSeoMeta({
