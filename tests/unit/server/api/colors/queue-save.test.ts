@@ -241,6 +241,42 @@ describe('server/api/colors/queue/save', () => {
     );
   });
 
+  it('keeps an own-upload that carries no category', async () => {
+    // upload.ts stamps 'general' when the caller sends no ?category=, but
+    // submission_queue.data is browser-written, so { url } with no category is
+    // reachable -- and it used to match neither arm of the sort and vanish.
+    // Raised by Copilot on PR #699.
+    (readBody as any).mockResolvedValue({
+      uuid: SUBMISSION_ID,
+      details: details({
+        uploadedFiles: [{ url: ownUrl('no-category.jpg') }, { url: ownUrl('explicit.jpg'), category: 'car-photos' }],
+      }),
+    });
+
+    await handler(createMockEvent());
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contributor_images: [
+          { url: ownUrl('no-category.jpg'), contributor: 'PhotoContributor' },
+          { url: ownUrl('explicit.jpg'), contributor: 'PhotoContributor' },
+        ],
+      })
+    );
+  });
+
+  it('still ignores an upload whose category is not a colour category', async () => {
+    // Defaulting a MISSING category must not turn an unknown one into a photo.
+    (readBody as any).mockResolvedValue({
+      uuid: SUBMISSION_ID,
+      details: details({ uploadedFiles: [{ url: ownUrl('thumb.jpg'), category: 'thumbnail' }] }),
+    });
+
+    await handler(createMockEvent());
+
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ contributor_images: [] }));
+  });
+
   it('credits the submitter on a newly inserted colour', async () => {
     await handler(createMockEvent());
 
