@@ -483,6 +483,11 @@ describe('server/api/admin/queue/approve.post', () => {
     });
   });
 
+  // Real uploads look exactly like this — see server/api/archive/upload.ts, which
+  // writes `<supabaseUrl>/storage/v1/object/public/<bucket>/uploads/<submissionId>/<name>`.
+  const ownUrl = (bucket: string, name: string, submissionId = 'sub-1') =>
+    `https://test.supabase.co/storage/v1/object/public/${bucket}/uploads/${submissionId}/${name}`;
+
   it('inserts into colors table for new_item color submission', async () => {
     const colorData = {
       name: 'Almond Green',
@@ -492,8 +497,8 @@ describe('server/api/admin/queue/approve.post', () => {
       duluxCode: 'DX99',
       primaryColor: '#556B2F',
       hasSwatch: true,
-      imageSwatch: '/swatches/almond.png',
-      images: ['/img1.jpg'],
+      imageSwatch: ownUrl('archive-colors', 'almond.png'),
+      images: [ownUrl('archive-colors', 'img1.jpg')],
       submittedBy: 'contributor-1',
       submittedByEmail: 'contributor@test.com',
     };
@@ -521,11 +526,50 @@ describe('server/api/admin/queue/approve.post', () => {
         dulux_code: 'DX99',
         hex_value: '#556B2F',
         has_swatch: true,
-        swatch_path: '/swatches/almond.png',
-        contributor_images: ['/img1.jpg'],
+        swatch_path: ownUrl('archive-colors', 'almond.png'),
+        contributor_images: [{ url: ownUrl('archive-colors', 'img1.jpg'), contributor: 'contributor-1' }],
         status: 'approved',
         legacy_submitted_by: 'contributor-1',
         legacy_submitted_by_email: 'contributor@test.com',
+      })
+    );
+  });
+
+  /**
+   * `submission_queue.data` is written by the browser and the INSERT policy only
+   * checks `auth.uid() = submitted_by`, so every asset URL in it is
+   * attacker-controlled. Approving must never copy a foreign URL onto an archive
+   * row. Reported on PR #697.
+   */
+  it('drops asset URLs that did not come from this submission’s uploads', async () => {
+    mockFetchSubmission({
+      id: 'sub-1',
+      type: 'new_item',
+      target_type: 'color',
+      target_id: null,
+      data: {
+        name: 'Evil Green',
+        primaryColor: '#000000',
+        imageSwatch: 'https://evil.example.com/tracker.png',
+        images: [
+          'https://evil.example.com/x.jpg',
+          '/relative/path.png',
+          // Right origin and bucket, but uploaded against someone else's submission.
+          ownUrl('archive-colors', 'stolen.jpg', 'someone-elses-submission'),
+          ownUrl('archive-colors', 'mine.jpg'),
+        ],
+      },
+    });
+
+    (readBody as any).mockResolvedValue({ id: 'sub-1' });
+    mockUpdateSuccess();
+
+    await handler(createMockEvent());
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        swatch_path: null,
+        contributor_images: [{ url: ownUrl('archive-colors', 'mine.jpg'), contributor: null }],
       })
     );
   });

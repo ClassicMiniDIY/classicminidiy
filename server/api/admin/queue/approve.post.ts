@@ -80,6 +80,9 @@ const EDIT_TARGETS: Record<string, { table: string; columns: string[] }> = {
   },
 };
 
+/** Buckets server/api/archive/upload.ts is allowed to write to. */
+const UPLOAD_BUCKETS = ['archive-documents', 'archive-thumbnails', 'archive-colors', 'archive-wheels'] as const;
+
 /**
  * Which targets accept a photo-only addition, and the table whose `photos`
  * text[] column receives it. Colours store images in `contributor_images`
@@ -121,7 +124,8 @@ export default defineEventHandler(async (event) => {
       supabase,
       submission.target_type,
       itemData,
-      submission.submitted_by
+      submission.submitted_by,
+      submission.id
     );
     if (insertError) {
       throw createError({ statusCode: 500, statusMessage: insertError });
@@ -130,7 +134,13 @@ export default defineEventHandler(async (event) => {
 
   // For edit_suggestion submissions, apply the changes to the target
   if (submission.type === 'edit_suggestion' && submission.target_id) {
-    const applyError = await applyEditSuggestion(supabase, submission.target_type, submission.target_id, itemData);
+    const applyError = await applyEditSuggestion(
+      supabase,
+      submission.target_type,
+      submission.target_id,
+      itemData,
+      submission.id
+    );
     if (applyError) {
       throw createError({ statusCode: 500, statusMessage: applyError });
     }
@@ -166,19 +176,32 @@ async function insertApprovedItem(
   supabase: any,
   targetType: string,
   data: any,
-  submittedBy: string | null
+  submittedBy: string | null,
+  submissionId: string
 ): Promise<string | null> {
   let error;
+
+  // `data` is written to submission_queue by the browser, so every asset URL in
+  // it is attacker-controlled until proven otherwise. Copilot flagged this on
+  // the edit path; the insert path below had the identical hole.
+  const ownUrls = (values: unknown): string[] =>
+    (Array.isArray(values) ? values : [])
+      .map((v: any) => (typeof v === 'string' ? v : (v?.url ?? v?.src)))
+      .filter((url: unknown): url is string => typeof url === 'string')
+      .filter((url) => isOwnUploadUrl(url, submissionId));
 
   switch (targetType) {
     case 'color': {
       // Map uploaded files to swatch_path and contributor_images based on category
-      let swatchPath = data.imageSwatch || data.swatch_path || null;
-      const contributorImages: { url: string; contributor?: string }[] = data.images || data.contributor_images || [];
-      const uploadedFiles = data.uploadedFiles || [];
+      let swatchPath = ownUrls([data.imageSwatch ?? data.swatch_path])[0] ?? null;
+      const contributorImages: { url: string; contributor?: string }[] = ownUrls(
+        data.images || data.contributor_images
+      ).map((url) => ({ url, contributor: data.submittedBy || data.legacy_submitted_by || null }));
+      const uploadedFiles = Array.isArray(data.uploadedFiles) ? data.uploadedFiles : [];
 
       for (const file of uploadedFiles) {
         const fileObj = typeof file === 'string' ? { url: file, category: 'general' } : file;
+        if (!isOwnUploadUrl(fileObj?.url, submissionId)) continue;
         if (fileObj.category === 'swatch' && !swatchPath) {
           swatchPath = fileObj.url;
         } else if (fileObj.category === 'car-photos' || fileObj.category === 'general') {
@@ -219,7 +242,7 @@ async function insertApprovedItem(
         manufacturer: data.manufacturer || null,
         weight: data.weight || null,
         notes: data.notes || null,
-        photos: data.photos || (data.images || []).map((img: any) => img.src || img),
+        photos: [...new Set([...ownUrls(data.photos), ...ownUrls(data.images), ...ownUrls(data.uploadedFiles)])],
         status: 'approved',
         submitted_by: submittedBy,
         legacy_submitted_by: data.userName || data.legacy_submitted_by || null,
@@ -274,22 +297,56 @@ async function insertApprovedItem(
   return error?.message || null;
 }
 
+/**
+ * True only for URLs this app minted for THIS submission.
+ *
+ * The upload route writes files to
+ * `<supabaseUrl>/storage/v1/object/public/<bucket>/uploads/<submissionId>/<name>`,
+ * so pinning the whole prefix — origin, storage path, bucket allowlist and the
+ * submission id — means a payload cannot smuggle in an external URL, another
+ * bucket, or a file uploaded against somebody else's submission.
+ *
+ * `supabaseUrl` comes from runtimeConfig rather than a literal because Storage
+ * is served from the custom domain (auth.classicminidiy.com); hardcoding the
+ * project-ref host would reject every real upload.
+ */
+function isOwnUploadUrl(url: unknown, submissionId: string): boolean {
+  if (typeof url !== 'string') return false;
+  const base = (useRuntimeConfig().public.supabaseUrl as string)?.replace(/\/$/, '');
+  if (!base) return false;
+
+  return UPLOAD_BUCKETS.some((bucket) =>
+    url.startsWith(`${base}/storage/v1/object/public/${bucket}/uploads/${submissionId}/`)
+  );
+}
+
 async function applyEditSuggestion(
   supabase: any,
   targetType: string,
   targetId: string,
-  data: any
+  data: any,
+  submissionId: string
 ): Promise<string | null> {
   const changes = data.changes;
 
   // Photo-only addition: the contribute wizard's "add yours" / "I have this"
   // path fills a gap on an existing entry with images and no field edits.
-  // Safe to append without an allowlist check because the URLs come from our own
-  // storage upload route (server/api/archive/upload.ts), never from the client —
-  // the client only ever chose which bytes to send.
+  //
+  // Every URL is validated against our own storage prefix first. An earlier
+  // version of this comment claimed the URLs "come from our own upload route,
+  // never from the client" — that was WRONG. `server/api/archive/upload.ts`
+  // does write `data.uploadedFiles`, but the whole `data` object is inserted by
+  // the browser (useSubmissions.submitContribution) and the submission_queue
+  // INSERT policy only checks `auth.uid() = submitted_by`, not the payload. A
+  // crafted submission could therefore have put an arbitrary external URL into
+  // `wheels.photos` the moment an admin approved it. Same class of bug as the
+  // EDIT_TARGETS allowlist above, and the same reason it needs a check here.
   if (!changes || typeof changes !== 'object') {
-    const uploaded: { url: string }[] = Array.isArray(data.uploadedFiles) ? data.uploadedFiles : [];
-    const urls = uploaded.map((file: any) => (typeof file === 'string' ? file : file?.url)).filter(Boolean);
+    const uploaded: unknown = data.uploadedFiles;
+    const urls = (Array.isArray(uploaded) ? uploaded : [])
+      .map((file: any) => (typeof file === 'string' ? file : file?.url))
+      .filter((url: unknown): url is string => typeof url === 'string')
+      .filter((url) => isOwnUploadUrl(url, submissionId));
 
     if (urls.length === 0) return 'No changes provided';
 
