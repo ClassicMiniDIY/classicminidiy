@@ -16,6 +16,7 @@
     loading,
     highlighted,
     recent,
+    totalResults,
     close,
     debouncedSearch,
     goTo,
@@ -119,7 +120,7 @@
             <template v-if="hasQuery && flatResults.length > 0">
               <div v-for="group in groups" :key="group.surface" class="mb-1">
                 <p class="mx-3 my-1 text-[11px] font-bold tracking-[0.08em] uppercase opacity-55">
-                  {{ group.label }} &middot; {{ group.results.length }}
+                  {{ group.label }} &middot; {{ group.total }}
                 </p>
                 <button
                   v-for="result in group.results"
@@ -138,6 +139,14 @@
                   <span v-if="result.tag" class="badge badge-sm shrink-0 rounded-full bg-base-200 border-0 text-[11px]">
                     {{ result.tag }}
                   </span>
+                </button>
+                <button
+                  v-if="group.total > group.results.length"
+                  type="button"
+                  class="mx-3 mb-1 text-left text-xs font-semibold text-primary hover:underline"
+                  @click="viewAllResults()"
+                >
+                  {{ t('more_in_surface', { count: group.total - group.results.length, surface: group.label }) }}
                 </button>
               </div>
             </template>
@@ -209,7 +218,7 @@
               <span class="hidden sm:inline"> &mdash; {{ t('feeds_most_wanted') }}</span>
             </span>
             <button type="button" class="text-left text-[13px] font-bold text-primary hover:underline" @click="viewAllResults()">
-              {{ t('view_all', { count: flatResults.length }) }} &rarr;
+              {{ t('view_all', { count: totalResults }) }} &rarr;
             </button>
           </div>
         </div>
@@ -266,7 +275,8 @@
     "cant_find": "Can't find it?",
     "request_it": "Request it",
     "feeds_most_wanted": "feeds Most Wanted",
-    "view_all": "View all {count} results"
+    "view_all": "View all {count} results",
+    "more_in_surface": "+{count} more in {surface}"
   },
   "es": {
     "aria_label": "Buscar en todo",
@@ -281,7 +291,8 @@
     "cant_find": "¿No lo encuentras?",
     "request_it": "Pídelo",
     "feeds_most_wanted": "alimenta Más buscados",
-    "view_all": "Ver los {count} resultados"
+    "view_all": "Ver los {count} resultados",
+    "more_in_surface": "+{count} más en {surface}"
   },
   "fr": {
     "aria_label": "Tout rechercher",
@@ -296,7 +307,8 @@
     "cant_find": "Vous ne trouvez pas ?",
     "request_it": "Demandez-le",
     "feeds_most_wanted": "alimente Les plus demandés",
-    "view_all": "Voir les {count} résultats"
+    "view_all": "Voir les {count} résultats",
+    "more_in_surface": "+{count} de plus dans {surface}"
   },
   "de": {
     "aria_label": "Alles durchsuchen",
@@ -311,7 +323,8 @@
     "cant_find": "Nicht gefunden?",
     "request_it": "Anfragen",
     "feeds_most_wanted": "speist Meistgesucht",
-    "view_all": "Alle {count} Ergebnisse anzeigen"
+    "view_all": "Alle {count} Ergebnisse anzeigen",
+    "more_in_surface": "+{count} weitere in {surface}"
   },
   "it": {
     "aria_label": "Cerca ovunque",
@@ -326,7 +339,8 @@
     "cant_find": "Non lo trovi?",
     "request_it": "Richiedilo",
     "feeds_most_wanted": "alimenta Più richiesti",
-    "view_all": "Vedi tutti i {count} risultati"
+    "view_all": "Vedi tutti i {count} risultati",
+    "more_in_surface": "+{count} altri in {surface}"
   },
   "pt": {
     "aria_label": "Pesquisar tudo",
@@ -341,7 +355,8 @@
     "cant_find": "Não encontrou?",
     "request_it": "Peça",
     "feeds_most_wanted": "alimenta Mais procurados",
-    "view_all": "Ver todos os {count} resultados"
+    "view_all": "Ver todos os {count} resultados",
+    "more_in_surface": "+{count} mais em {surface}"
   },
   "ru": {
     "aria_label": "Искать везде",
@@ -356,7 +371,8 @@
     "cant_find": "Не нашли?",
     "request_it": "Запросить",
     "feeds_most_wanted": "пополняет «Самое востребованное»",
-    "view_all": "Показать все результаты ({count})"
+    "view_all": "Показать все результаты ({count})",
+    "more_in_surface": "ещё {count} в разделе «{surface}»"
   },
   "ja": {
     "aria_label": "すべてを検索",
@@ -371,7 +387,8 @@
     "cant_find": "見つかりませんか？",
     "request_it": "リクエストする",
     "feeds_most_wanted": "リクエストの多い項目に反映されます",
-    "view_all": "{count}件すべての結果を表示"
+    "view_all": "{count}件すべての結果を表示",
+    "more_in_surface": "{surface} にあと {count} 件"
   },
   "zh": {
     "aria_label": "搜索全部",
@@ -386,7 +403,8 @@
     "cant_find": "找不到？",
     "request_it": "请求收录",
     "feeds_most_wanted": "会加入最想要列表",
-    "view_all": "查看全部 {count} 条结果"
+    "view_all": "查看全部 {count} 条结果",
+    "more_in_surface": "{surface} 中还有 {count} 条"
   },
   "ko": {
     "aria_label": "전체 검색",
@@ -401,7 +419,8 @@
     "cant_find": "찾지 못하셨나요?",
     "request_it": "요청하기",
     "feeds_most_wanted": "가장 많이 요청됨 목록에 반영됩니다",
-    "view_all": "{count}개 결과 모두 보기"
+    "view_all": "{count}개 결과 모두 보기",
+    "more_in_surface": "{surface}에 {count}건 더"
   }
 }
 </i18n>

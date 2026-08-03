@@ -209,8 +209,9 @@ was found in 2026-08. Applies equally to `computed`, `watch`, `useState`, `props
 and any composable name. If you want a short local for a "reference" something, call
 it `reference`.
 
-To confirm a suspected case in dev, fetch the transformed module and look at the vue
-import line:
+`python3 scripts/find-shadowed-autoimports.py` sweeps the repo for this and exits
+non-zero on a hit — run it if a component mysteriously never mounts. To confirm a
+specific case in dev, fetch the transformed module and look at the vue import line:
 `curl -s localhost:3000/_nuxt/components/<Path>.vue | grep -oE 'import \{[^}]*\} from "[^"]*vue.runtime[^"]*"'`
 
 ### Code Standards

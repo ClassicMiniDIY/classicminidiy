@@ -1,16 +1,23 @@
 import { getServiceClient } from '../../utils/supabase';
-import { ToolCatalog, TOOL_CATEGORY_LABELS } from '../../../data/models/toolbox-catalog';
+import {
+  ToolCatalog,
+  TOOL_CATEGORY_LABELS,
+  ARCHIVE_SEARCH_SECTIONS,
+} from '../../../data/models/toolbox-catalog';
+import wiringDiagrams from '../../../data/wiringDiagrams.json';
 
 /**
  * Omnisearch — one query across every surface (design S2/S3).
  *
- * Two sources are merged here rather than in the database:
+ * THREE sources are merged here rather than in the database:
  *   * `omnisearch()` in Postgres covers the data surfaces (wheels, colours,
  *     documents, registry, exchange listings, models).
  *   * The Toolbox is a static catalog in the web repo, so it is matched in
- *     process. Keeping it out of SQL means adding a calculator never needs a
- *     migration, and tool matching can use synonyms ("CR", "lb-ft") that would
- *     be awkward to store.
+ *     process. Adding a calculator then never needs a migration, and tool
+ *     matching can use synonyms ("CR", "lb-ft") that would be awkward to store.
+ *   * Static archive content — wiring diagrams, and the reference sections that
+ *     live in JSON rather than Postgres. Without these, searching "wiring" or
+ *     "weights" returned nothing from the archive at all.
  *
  * Reads only, and every underlying row is already public, so this runs on the
  * service client without an auth requirement — the same reasoning as the
@@ -42,23 +49,28 @@ export interface SearchResponse {
 
 const MAX_QUERY_LENGTH = 120;
 
-/** Tools are matched on name, summary and synonym list, ranked name-first. */
+/**
+ * Shared ranking for the in-process sources: name prefix beats name substring
+ * beats a synonym hit beats a description hit. Returns null for no match.
+ */
+function rank(needle: string, name: string, terms: string[], summary: string): number | null {
+  const lower = name.toLowerCase();
+  if (lower.startsWith(needle)) return 0;
+  if (lower.includes(needle)) return 1;
+  if (terms.some((term) => term.includes(needle) || needle.includes(term))) return 2;
+  if (summary.toLowerCase().includes(needle)) return 3;
+  return null;
+}
+
 function searchTools(query: string): SearchResult[] {
   const needle = query.toLowerCase();
 
   return ToolCatalog.map((tool) => {
-    const name = tool.name.toLowerCase();
-    let rank: number | null = null;
-
-    if (name.startsWith(needle)) rank = 0;
-    else if (name.includes(needle)) rank = 1;
-    else if (tool.searchTerms.some((term) => term.includes(needle) || needle.includes(term))) rank = 2;
-    else if (tool.summary.toLowerCase().includes(needle)) rank = 3;
-
-    return rank === null ? null : { tool, rank };
+    const score = rank(needle, tool.name, tool.searchTerms, tool.summary);
+    return score === null ? null : { tool, score };
   })
-    .filter((hit): hit is { tool: (typeof ToolCatalog)[number]; rank: number } => hit !== null)
-    .sort((a, b) => a.rank - b.rank || a.tool.name.localeCompare(b.tool.name))
+    .filter((hit): hit is { tool: (typeof ToolCatalog)[number]; score: number } => hit !== null)
+    .sort((a, b) => a.score - b.score || a.tool.name.localeCompare(b.tool.name))
     .map(({ tool }) => ({
       surface: 'tools' as const,
       id: tool.slug,
@@ -67,6 +79,77 @@ function searchTools(query: string): SearchResult[] {
       url: tool.to,
       icon: tool.icon,
       tag: TOOL_CATEGORY_LABELS[tool.category],
+      contributorUsername: null,
+      verified: false,
+    }));
+}
+
+interface DiagramGroup {
+  title: string;
+  items: { name: string; from?: number; to?: number; link?: string }[];
+}
+
+/**
+ * Wiring diagrams, one result per diagram.
+ *
+ * Deep-links into `/archive/electrical?q=` rather than at the raw S3 PDF: that
+ * page seeds its own filter from the query param, so the visitor lands on the
+ * diagram WITH its ground polarity, year range and siblings, instead of on a
+ * bare PDF with no way back.
+ */
+function searchDiagrams(query: string): SearchResult[] {
+  const needle = query.toLowerCase();
+  const groups = wiringDiagrams as unknown as Record<string, DiagramGroup>;
+  const hits: { result: SearchResult; score: number }[] = [];
+
+  for (const [key, group] of Object.entries(groups)) {
+    if (!group?.items) continue;
+    for (const item of group.items) {
+      const years = item.from && item.to ? `${item.from}–${item.to}` : item.from ? `${item.from}+` : '';
+      const score = rank(needle, item.name, [group.title.toLowerCase(), 'wiring', 'diagram'], years);
+      if (score === null) continue;
+
+      hits.push({
+        score,
+        result: {
+          surface: 'archive',
+          id: `diagram-${key}-${item.name}`,
+          title: item.name,
+          subtitle: [group.title, years].filter(Boolean).join(' · '),
+          url: `/archive/electrical?q=${encodeURIComponent(item.name)}`,
+          icon: 'fas fa-bolt',
+          tag: 'Wiring',
+          contributorUsername: null,
+          verified: true,
+        },
+      });
+    }
+  }
+
+  return hits.sort((a, b) => a.score - b.score).map((hit) => hit.result);
+}
+
+/**
+ * Archive sections that live in JSON rather than Postgres. Section-level on
+ * purpose — see the comment on ARCHIVE_SEARCH_SECTIONS.
+ */
+function searchArchiveSections(query: string): SearchResult[] {
+  const needle = query.toLowerCase();
+
+  return ARCHIVE_SEARCH_SECTIONS.map((section) => {
+    const score = rank(needle, section.name, section.searchTerms, section.summary);
+    return score === null ? null : { section, score };
+  })
+    .filter((hit): hit is { section: (typeof ARCHIVE_SEARCH_SECTIONS)[number]; score: number } => hit !== null)
+    .sort((a, b) => a.score - b.score)
+    .map(({ section }) => ({
+      surface: 'archive' as const,
+      id: `section-${section.key}`,
+      title: section.name,
+      subtitle: section.summary,
+      url: section.to,
+      icon: section.icon,
+      tag: 'Archive',
       contributorUsername: null,
       verified: false,
     }));
@@ -109,7 +192,10 @@ export default defineEventHandler(async (event): Promise<SearchResponse> => {
     verified: row.verified ?? false,
   }));
 
-  const results = [...searchTools(query), ...dbResults].sort(
+  // Order matters: the in-process sources go first within their surface, and
+  // archive sections go LAST so a broad word like "wheels" surfaces real entries
+  // above the section landing page.
+  const results = [...searchTools(query), ...searchDiagrams(query), ...dbResults, ...searchArchiveSections(query)].sort(
     (a, b) => SURFACE_ORDER.indexOf(a.surface) - SURFACE_ORDER.indexOf(b.surface)
   );
 
