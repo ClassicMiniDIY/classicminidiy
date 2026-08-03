@@ -88,11 +88,35 @@ const UPLOAD_BUCKETS = ['archive-documents', 'archive-thumbnails', 'archive-colo
  * text[] column receives it. Colours store images in `contributor_images`
  * (jsonb, different shape) and documents have a single `file_path`, so neither
  * is a straight append — they are deliberately absent rather than special-cased.
+ *
+ * Wheels and registry entries reach this through `edit_suggestion` + `target_id`
+ * (ContributeWizard's gap-fill, `/contribute/wheel?uuid=`), which is why they
+ * have no "attach to existing" field inside `data` the way colours do — the
+ * association is on the submission row itself and cannot be dropped.
  */
 const PHOTO_APPEND_TARGETS: Record<string, string> = {
   wheel: 'wheels',
   registry: 'registry_entries',
 };
+
+/**
+ * `/contribute/color` is the one archive form that is not the wizard (its
+ * swatch-versus-contributor-photo split does not fit the shared step 2), so an
+ * "add photos to this colour" submission arrives as a `new_item` carrying the
+ * chosen colour's id in `data.originalColorId` rather than as an
+ * `edit_suggestion` with a `target_id`.
+ *
+ * The id is client-written, and `colors.id` is a uuid — an unparseable value
+ * reaching `.eq('id', …)` is a Postgres 22P02 surfacing as an opaque 500 on
+ * approval, so anything that is not a uuid is treated as absent.
+ */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function asColorId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return UUID_PATTERN.test(trimmed) ? trimmed : null;
+}
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -212,6 +236,34 @@ async function insertApprovedItem(
         }
       }
 
+      // "Add photos to a colour that already exists". Ignoring `originalColorId`
+      // INSERTed a second `colors` row carrying only the new photos — no swatch,
+      // no hex_value, empty ditzler_ppg_code/dulux_code — so /archive/colors
+      // listed the same colour twice, once real and once as a photo-only stub.
+      //
+      // Two of those reached production (supabase PR #77 cleaned the rows up)
+      // and the damage did not stop at the listing: the stubs share their real
+      // colour's name/code/short_code, which is exactly the tuple
+      // `20260727000001_restore_wheel_colour_legacy_ids.sql` matches on, so a
+      // legacy DynamoDB id was restored onto a stub and that colour's
+      // /archive/colors/<legacy-id> deep link started resolving to a row with
+      // no colour data in it.
+      const attachToId = asColorId(data.originalColorId);
+      if (attachToId) {
+        const { data: existing, error: readError } = await supabase
+          .from('colors')
+          .select('id, submitted_by, swatch_path, contributor_images')
+          .eq('id', attachToId)
+          .maybeSingle();
+        if (readError) return readError.message;
+
+        // A stale or deleted id falls through to the INSERT below rather than
+        // dropping the contribution on the floor.
+        if (existing) {
+          return attachToExistingColor(supabase, existing, contributorImages, swatchPath, submittedBy);
+        }
+      }
+
       ({ error } = await supabase.from('colors').insert({
         name: data.name,
         code: data.code || '',
@@ -294,6 +346,50 @@ async function insertApprovedItem(
       return `Unsupported target type: ${targetType}`;
   }
 
+  return error?.message || null;
+}
+
+/**
+ * Merges an approved colour contribution into the colour it was submitted
+ * against, instead of creating a second row for it.
+ *
+ * Three things are deliberately conservative here, because the target is an
+ * existing public row rather than one this submission is creating:
+ *
+ *  - `submitted_by` is only written when the row does not have one. The archive
+ *    import left it NULL, which is the case this fills; overwriting a real value
+ *    would move another contributor's credit — and, through the trust pipeline's
+ *    `contributor_archive_items` view, their counters — onto this photo.
+ *  - `swatch_path` is only written when the row has none. A colour that already
+ *    has a swatch has a curated one; a submitted duplicate is not an upgrade,
+ *    and it is not a car photo either, so it does not become one.
+ *  - No other field is touched. Correcting `hex_value` or a paint code on an
+ *    existing colour is an edit suggestion, which goes through EDIT_TARGETS.
+ */
+async function attachToExistingColor(
+  supabase: any,
+  existing: { id: string; contributor_images: unknown; submitted_by: string | null; swatch_path: string | null },
+  contributorImages: { url: string; contributor?: string | null }[],
+  swatchPath: string | null,
+  submittedBy: string | null
+): Promise<string | null> {
+  const merged = Array.isArray(existing.contributor_images) ? [...existing.contributor_images] : [];
+  const seen = new Set(merged.map((image: any) => (typeof image === 'string' ? image : image?.url)));
+
+  for (const image of contributorImages) {
+    if (seen.has(image.url)) continue;
+    seen.add(image.url);
+    merged.push(image);
+  }
+
+  const updates: Record<string, any> = { contributor_images: merged };
+  if (!existing.submitted_by && submittedBy) updates.submitted_by = submittedBy;
+  if (!existing.swatch_path && swatchPath) {
+    updates.swatch_path = swatchPath;
+    updates.has_swatch = true;
+  }
+
+  const { error } = await supabase.from('colors').update(updates).eq('id', existing.id);
   return error?.message || null;
 }
 
