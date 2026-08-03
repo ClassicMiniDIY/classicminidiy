@@ -213,11 +213,18 @@
           <i class="fas fa-magnifying-glass opacity-60"></i>
           <input type="text" v-model="searchValue" :placeholder="t('search_placeholder')" />
         </label>
-        <div class="flex items-center gap-2">
-          <span v-if="items?.length" class="badge badge-primary badge-lg">
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <!--
+            `whitespace-nowrap shrink-0` is load-bearing. A daisyUI badge is a
+            fixed-height inline-flex, so once this flex child is squeezed enough
+            for "40 Total Minis" to wrap, the text spills above and below the
+            coloured box and only the middle line looks like a pill. Let the row
+            wrap instead of the badge.
+          -->
+          <span v-if="items?.length" class="badge badge-primary badge-lg shrink-0 whitespace-nowrap">
             {{ items?.length }} {{ t('total_minis') }}
           </span>
-          <select v-model="pageSize" class="select select-bordered select-sm">
+          <select v-model="pageSize" class="select select-bordered select-sm shrink-0">
             <option v-for="opt in pageSizeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </div>
