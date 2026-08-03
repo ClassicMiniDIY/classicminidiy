@@ -4,6 +4,19 @@
   const { t } = useI18n();
   const { track } = useAnalytics();
   const { listApproved } = useRegistry();
+  const { openWizard } = useContributeWizard();
+
+  /**
+   * Registering a Mini now goes through the one contribute wizard, like every
+   * other archive contribution. It used to be a 1,070-line form rendered inline
+   * at the bottom of this page (plus a near-identical copy at
+   * /contribute/registry), which meant three places to keep the field list and
+   * its validation in step.
+   */
+  const addYourMini = (location: string) => {
+    track('contribute_cta_clicked', { type: 'registry', location: `archive_registry_${location}` });
+    openWizard({ kind: 'registry', origin: '/archive/registry' });
+  };
 
   // Define table columns
   const tableHeaders = [
@@ -102,13 +115,9 @@
                   <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
                 </div>
               </div>
-              <NuxtLink
-                to="/contribute/registry"
-                class="btn btn-primary btn-outline btn-sm"
-                @click="track('contribute_cta_clicked', { type: 'registry', location: 'archive_registry' })"
-              >
+              <button type="button" class="btn btn-primary btn-outline btn-sm" @click="addYourMini('banner')">
                 {{ t('contribute_banner_button') }}
-              </NuxtLink>
+              </button>
             </div>
           </div>
         </div>
@@ -134,11 +143,7 @@
             </NuxtLink>
           </div>
           <div class="col-span-12 md:col-span-4">
-            <a
-              href="#submitAnchor"
-              class="block"
-              @click="track('contribute_cta_clicked', { type: 'registry', location: 'archive_registry' })"
-            >
+            <button type="button" class="block w-full text-left" @click="addYourMini('card')">
               <div
                 class="card bg-base-100 shadow-sm border border-base-300 hover:shadow-2xl transition-shadow duration-300"
               >
@@ -166,7 +171,7 @@
                   </div>
                 </div>
               </div>
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -181,12 +186,6 @@
           :tableHeaders="tableHeaders"
           :defaultPageSize="10"
         />
-      </div>
-      <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <div id="submitAnchor" class="divider">{{ t('submit_divider') }}</div>
-      </div>
-      <div class="col-span-12 md:col-span-10 md:col-start-2">
-        <RegistrySubmission></RegistrySubmission>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
         <div class="divider">{{ t('support_divider') }}</div>

@@ -2,7 +2,7 @@
  * Coerce a possibly-malformed value into a Postgres-safe `date` value or null.
  *
  * Registry submissions historically defaulted `buildDate` to `[]` (an empty
- * array — see RegistrySubmission.vue). `[]` is truthy in JS, so `value || null`
+ * array — see the registry step in ContributeWizard.vue). `[]` is truthy in JS, so `value || null`
  * let it slip through into the `registry_entries.build_date` date column as the
  * string "[]", producing `invalid input syntax for type date: "[]"` and breaking
  * every registry approval (including already-queued submissions).

@@ -19,9 +19,19 @@
     ],
   });
 
+  const { openWizard } = useContributeWizard();
+
+  /**
+   * Three of these four open the shared wizard in place rather than navigating
+   * — the destination pages are now just launchers for the same modal, so a
+   * page load in between is pure friction.
+   *
+   * Colour is the exception and stays a real page: its swatch-versus-contributor
+   * -photo split does not fit the wizard's shared step 2.
+   */
   const contributionTypes = [
     {
-      to: '/contribute/document',
+      kind: 'document' as const,
       icon: 'fa-duotone fa-books',
       titleKey: 'document_title',
       descriptionKey: 'document_description',
@@ -33,18 +43,23 @@
       descriptionKey: 'color_description',
     },
     {
-      to: '/contribute/wheel',
+      kind: 'wheel' as const,
       icon: 'fa-duotone fa-tire',
       titleKey: 'wheel_title',
       descriptionKey: 'wheel_description',
     },
     {
-      to: '/contribute/registry',
+      kind: 'registry' as const,
       icon: 'fa-duotone fa-clipboard-list',
       titleKey: 'registry_title',
       descriptionKey: 'registry_description',
     },
   ];
+
+  const choose = (item: (typeof contributionTypes)[number]) => {
+    track('contribute_type_selected', { type: item.kind });
+    openWizard({ kind: item.kind!, origin: '/contribute' });
+  };
 </script>
 
 <template>
@@ -80,15 +95,30 @@
 
       <!-- 2x2 Contribution Type Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-        <NuxtLink v-for="item in contributionTypes" :key="item.to" :to="item.to" @click="track('contribute_type_selected', { type: item.to.split('/').pop() })">
-          <div class="card bg-base-100 shadow-md h-full hover:shadow-xl transition-shadow">
-            <div class="card-body text-center p-6">
-              <i :class="item.icon" class="text-4xl text-primary mb-4 block"></i>
-              <h2 class="text-lg font-bold mb-2">{{ t(item.titleKey) }}</h2>
-              <p class="text-sm opacity-70">{{ t(item.descriptionKey) }}</p>
+        <template v-for="item in contributionTypes" :key="item.titleKey">
+          <NuxtLink
+            v-if="item.to"
+            :to="item.to"
+            @click="track('contribute_type_selected', { type: 'color' })"
+          >
+            <div class="card bg-base-100 shadow-md h-full hover:shadow-xl transition-shadow">
+              <div class="card-body text-center p-6">
+                <i :class="item.icon" class="text-4xl text-primary mb-4 block"></i>
+                <h2 class="text-lg font-bold mb-2">{{ t(item.titleKey) }}</h2>
+                <p class="text-sm opacity-70">{{ t(item.descriptionKey) }}</p>
+              </div>
             </div>
-          </div>
-        </NuxtLink>
+          </NuxtLink>
+          <button v-else type="button" class="text-left" @click="choose(item)">
+            <div class="card bg-base-100 shadow-md h-full hover:shadow-xl transition-shadow">
+              <div class="card-body text-center p-6">
+                <i :class="item.icon" class="text-4xl text-primary mb-4 block"></i>
+                <h2 class="text-lg font-bold mb-2">{{ t(item.titleKey) }}</h2>
+                <p class="text-sm opacity-70">{{ t(item.descriptionKey) }}</p>
+              </div>
+            </div>
+          </button>
+        </template>
       </div>
 
       <!-- User Stats Card -->

@@ -42,6 +42,9 @@
     year: '',
     description: '',
     model: '',
+    trim: '',
+    bodyType: 'Saloon',
+    engineSize: '998',
     bodyNumber: '',
     engineNumber: '',
     color: '',
@@ -65,11 +68,28 @@
 
   const totalSteps = 3;
 
+  /**
+   * Registry option lists, carried over verbatim from the inline
+   * RegistrySubmission form this wizard replaces. Both are closed sets in the
+   * archive — a free-text body type or displacement would fragment the registry
+   * table, which groups on them.
+   */
+  const BODY_TYPES = ['Saloon', 'Pickup', 'Estate', 'Cabriolet', 'Clubman', 'Van', 'Hornet'] as const;
+  const ENGINE_SIZES = ['850', '997', '998', '1100', '1275'] as const;
+
+  /** Fields whose empty value is not '' — reset has to restore the default, not blank it. */
+  const FIELD_DEFAULTS: Record<string, string> = {
+    docType: 'manual',
+    fixArea: 'document',
+    bodyType: 'Saloon',
+    engineSize: '998',
+  };
+
   const resetForm = () => {
     step.value = 1;
     files.value = [];
     Object.keys(form).forEach((key) => {
-      form[key] = key === 'docType' ? 'manual' : key === 'fixArea' ? 'document' : '';
+      form[key] = FIELD_DEFAULTS[key] ?? '';
     });
   };
 
@@ -176,6 +196,13 @@
         title: `${form.year.trim()} ${form.model.trim()}`.trim(),
         year: Number(form.year.trim()),
         model: form.model.trim(),
+        // Key names must match what the approve route reads — see
+        // insertApprovedItem()'s `registry` branch, which maps bodyNum →
+        // body_number, engineNum → engine_number, and takes bodyType /
+        // engineSize / trim straight through.
+        trim: form.trim.trim() || undefined,
+        bodyType: form.bodyType || undefined,
+        engineSize: form.engineSize ? Number(form.engineSize) : undefined,
         bodyNum: form.bodyNumber.trim() || undefined,
         engineNum: form.engineNumber.trim() || undefined,
         color: form.color.trim() || undefined,
@@ -299,6 +326,9 @@
     } else if (kind.value === 'registry') {
       push(t('fields.year'), form.year);
       push(t('fields.model'), form.model);
+      push(t('fields.trim'), form.trim);
+      push(t('fields.body_type'), form.bodyType ? t(`body_types.${form.bodyType.toLowerCase()}`) : '');
+      push(t('fields.engine_size'), form.engineSize ? `${form.engineSize}cc` : '');
       push(t('fields.body_number'), form.bodyNumber);
       push(t('fields.engine_number'), form.engineNumber);
       push(t('fields.location'), form.location);
@@ -434,6 +464,24 @@
                 <label class="form-control">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.model') }} *</span>
                   <input v-model="form.model" type="text" class="input input-bordered w-full" />
+                </label>
+                <label class="form-control">
+                  <span class="mb-1 block text-sm font-semibold">{{ t('fields.trim') }}</span>
+                  <input v-model="form.trim" type="text" class="input input-bordered w-full" />
+                </label>
+                <label class="form-control">
+                  <span class="mb-1 block text-sm font-semibold">{{ t('fields.body_type') }}</span>
+                  <select v-model="form.bodyType" class="select select-bordered w-full">
+                    <option v-for="option in BODY_TYPES" :key="option" :value="option">
+                      {{ t(`body_types.${option.toLowerCase()}`) }}
+                    </option>
+                  </select>
+                </label>
+                <label class="form-control">
+                  <span class="mb-1 block text-sm font-semibold">{{ t('fields.engine_size') }}</span>
+                  <select v-model="form.engineSize" class="select select-bordered w-full">
+                    <option v-for="option in ENGINE_SIZES" :key="option" :value="option">{{ option }}cc</option>
+                  </select>
                 </label>
                 <label class="form-control">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.body_number') }}</span>
@@ -695,7 +743,10 @@
       "target": "Entry",
       "files": "Files",
       "request_title": "What are you looking for?",
-      "request_notes": "Anything that would help someone find it"
+      "request_notes": "Anything that would help someone find it",
+      "trim": "Trim",
+      "body_type": "Body type",
+      "engine_size": "Engine size"
     },
     "errors": {
       "title": "Add a title.",
@@ -707,6 +758,15 @@
       "size": "Add the wheel size.",
       "reason": "Describe the fix in a little more detail.",
       "request_title": "Give the request a short title."
+    },
+    "body_types": {
+      "saloon": "Saloon",
+      "pickup": "Pickup",
+      "estate": "Estate",
+      "cabriolet": "Cabriolet",
+      "clubman": "Clubman",
+      "van": "Van",
+      "hornet": "Hornet"
     }
   },
   "es": {
@@ -780,7 +840,10 @@
       "target": "Entrada",
       "files": "Archivos",
       "request_title": "¿Qué estás buscando?",
-      "request_notes": "Cualquier detalle que ayude a encontrarlo"
+      "request_notes": "Cualquier detalle que ayude a encontrarlo",
+      "trim": "Acabado",
+      "body_type": "Carrocería",
+      "engine_size": "Cilindrada"
     },
     "errors": {
       "title": "Añade un título.",
@@ -792,6 +855,15 @@
       "size": "Añade el tamaño de la rueda.",
       "reason": "Describe la corrección con algo más de detalle.",
       "request_title": "Dale un título corto a la petición."
+    },
+    "body_types": {
+      "saloon": "Berlina",
+      "pickup": "Pickup",
+      "estate": "Familiar",
+      "cabriolet": "Cabriolet",
+      "clubman": "Clubman",
+      "van": "Furgoneta",
+      "hornet": "Hornet"
     }
   },
   "fr": {
@@ -865,7 +937,10 @@
       "target": "Entrée",
       "files": "Fichiers",
       "request_title": "Que cherchez-vous ?",
-      "request_notes": "Tout ce qui aiderait à le retrouver"
+      "request_notes": "Tout ce qui aiderait à le retrouver",
+      "trim": "Finition",
+      "body_type": "Carrosserie",
+      "engine_size": "Cylindrée"
     },
     "errors": {
       "title": "Ajoutez un titre.",
@@ -877,6 +952,15 @@
       "size": "Ajoutez la taille de la jante.",
       "reason": "Décrivez la correction un peu plus précisément.",
       "request_title": "Donnez un titre court à la demande."
+    },
+    "body_types": {
+      "saloon": "Berline",
+      "pickup": "Pickup",
+      "estate": "Break",
+      "cabriolet": "Cabriolet",
+      "clubman": "Clubman",
+      "van": "Fourgonnette",
+      "hornet": "Hornet"
     }
   },
   "de": {
@@ -950,7 +1034,10 @@
       "target": "Eintrag",
       "files": "Dateien",
       "request_title": "Wonach suchst du?",
-      "request_notes": "Alles, was beim Finden hilft"
+      "request_notes": "Alles, was beim Finden hilft",
+      "trim": "Ausstattung",
+      "body_type": "Karosserie",
+      "engine_size": "Hubraum"
     },
     "errors": {
       "title": "Titel ergänzen.",
@@ -962,6 +1049,15 @@
       "size": "Radgröße ergänzen.",
       "reason": "Beschreibe die Korrektur etwas ausführlicher.",
       "request_title": "Gib der Anfrage einen kurzen Titel."
+    },
+    "body_types": {
+      "saloon": "Limousine",
+      "pickup": "Pickup",
+      "estate": "Kombi",
+      "cabriolet": "Cabriolet",
+      "clubman": "Clubman",
+      "van": "Kastenwagen",
+      "hornet": "Hornet"
     }
   },
   "it": {
@@ -1035,7 +1131,10 @@
       "target": "Voce",
       "files": "File",
       "request_title": "Cosa stai cercando?",
-      "request_notes": "Qualsiasi dettaglio utile a trovarlo"
+      "request_notes": "Qualsiasi dettaglio utile a trovarlo",
+      "trim": "Allestimento",
+      "body_type": "Carrozzeria",
+      "engine_size": "Cilindrata"
     },
     "errors": {
       "title": "Aggiungi un titolo.",
@@ -1047,6 +1146,15 @@
       "size": "Aggiungi la misura del cerchio.",
       "reason": "Descrivi la correzione con un po' più di dettaglio.",
       "request_title": "Dai un titolo breve alla richiesta."
+    },
+    "body_types": {
+      "saloon": "Berlina",
+      "pickup": "Pickup",
+      "estate": "Familiare",
+      "cabriolet": "Cabriolet",
+      "clubman": "Clubman",
+      "van": "Furgone",
+      "hornet": "Hornet"
     }
   },
   "pt": {
@@ -1120,7 +1228,10 @@
       "target": "Entrada",
       "files": "Ficheiros",
       "request_title": "O que procura?",
-      "request_notes": "Qualquer detalhe que ajude a encontrar"
+      "request_notes": "Qualquer detalhe que ajude a encontrar",
+      "trim": "Acabamento",
+      "body_type": "Carroçaria",
+      "engine_size": "Cilindrada"
     },
     "errors": {
       "title": "Adicione um título.",
@@ -1132,6 +1243,15 @@
       "size": "Adicione o tamanho da jante.",
       "reason": "Descreva a correção com um pouco mais de detalhe.",
       "request_title": "Dê um título curto ao pedido."
+    },
+    "body_types": {
+      "saloon": "Berlina",
+      "pickup": "Pickup",
+      "estate": "Carrinha",
+      "cabriolet": "Cabriolet",
+      "clubman": "Clubman",
+      "van": "Van",
+      "hornet": "Hornet"
     }
   },
   "ru": {
@@ -1205,7 +1325,10 @@
       "target": "Запись",
       "files": "Файлы",
       "request_title": "Что вы ищете?",
-      "request_notes": "Всё, что поможет это найти"
+      "request_notes": "Всё, что поможет это найти",
+      "trim": "Комплектация",
+      "body_type": "Тип кузова",
+      "engine_size": "Объём двигателя"
     },
     "errors": {
       "title": "Добавьте название.",
@@ -1217,6 +1340,15 @@
       "size": "Укажите размер диска.",
       "reason": "Опишите исправление подробнее.",
       "request_title": "Дайте запросу короткое название."
+    },
+    "body_types": {
+      "saloon": "Седан",
+      "pickup": "Пикап",
+      "estate": "Универсал",
+      "cabriolet": "Кабриолет",
+      "clubman": "Clubman",
+      "van": "Фургон",
+      "hornet": "Hornet"
     }
   },
   "ja": {
@@ -1290,7 +1422,10 @@
       "target": "エントリー",
       "files": "ファイル",
       "request_title": "何をお探しですか？",
-      "request_notes": "見つける手がかりになること"
+      "request_notes": "見つける手がかりになること",
+      "trim": "グレード",
+      "body_type": "ボディタイプ",
+      "engine_size": "排気量"
     },
     "errors": {
       "title": "タイトルを入力してください。",
@@ -1302,6 +1437,15 @@
       "size": "ホイールサイズを入力してください。",
       "reason": "修正内容をもう少し詳しく記入してください。",
       "request_title": "リクエストに短いタイトルを付けてください。"
+    },
+    "body_types": {
+      "saloon": "サルーン",
+      "pickup": "ピックアップ",
+      "estate": "エステート",
+      "cabriolet": "カブリオレ",
+      "clubman": "クラブマン",
+      "van": "バン",
+      "hornet": "ホーネット"
     }
   },
   "zh": {
@@ -1375,7 +1519,10 @@
       "target": "条目",
       "files": "文件",
       "request_title": "你在找什么？",
-      "request_notes": "任何有助于找到它的信息"
+      "request_notes": "任何有助于找到它的信息",
+      "trim": "配置",
+      "body_type": "车身型式",
+      "engine_size": "排量"
     },
     "errors": {
       "title": "请填写标题。",
@@ -1387,6 +1534,15 @@
       "size": "请填写轮毂尺寸。",
       "reason": "请把更正内容再写详细一些。",
       "request_title": "给请求起一个简短标题。"
+    },
+    "body_types": {
+      "saloon": "轿车",
+      "pickup": "皮卡",
+      "estate": "旅行车",
+      "cabriolet": "敞篷",
+      "clubman": "Clubman",
+      "van": "厢式车",
+      "hornet": "Hornet"
     }
   },
   "ko": {
@@ -1460,7 +1616,10 @@
       "target": "항목",
       "files": "파일",
       "request_title": "무엇을 찾고 계신가요?",
-      "request_notes": "찾는 데 도움이 될 만한 정보"
+      "request_notes": "찾는 데 도움이 될 만한 정보",
+      "trim": "트림",
+      "body_type": "바디 타입",
+      "engine_size": "배기량"
     },
     "errors": {
       "title": "제목을 입력하세요.",
@@ -1472,6 +1631,15 @@
       "size": "휠 사이즈를 입력하세요.",
       "reason": "수정 내용을 조금 더 자세히 적어 주세요.",
       "request_title": "요청에 짧은 제목을 붙여 주세요."
+    },
+    "body_types": {
+      "saloon": "설룬",
+      "pickup": "픽업",
+      "estate": "에스테이트",
+      "cabriolet": "카브리올레",
+      "clubman": "클럽맨",
+      "van": "밴",
+      "hornet": "호넷"
     }
   }
 }
