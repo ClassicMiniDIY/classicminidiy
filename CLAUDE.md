@@ -455,9 +455,21 @@ parts of it that break silently if you get them wrong.
   (Two live instances, rows cleaned up by supabase PR #77.) When merging into an
   existing row, `submitted_by` and `swatch_path` are only written if the row does
   not already have one — reassigning either steals another contributor's credit
-  or overwrites curated data. **`server/api/colors/queue/save.ts` (the unlinked
-  legacy `/admin/colors/review` page) still has this bug** and additionally
-  *replaces* rather than appends `contributor_images`.
+  or overwrites curated data.
+
+- **TWO routes approve colours, and their shared decisions live in
+  `server/utils/archiveApprovals.ts` so they cannot drift again.**
+  `server/api/admin/queue/approve.post.ts` is the admin inbox and the path
+  submissions actually flow through; `server/api/colors/queue/save.ts` is the
+  older `/admin/colors/review` page, unlinked from every nav but reachable by
+  URL — and `/api/colors/queue/list` spreads `...item.data`, so the SAME
+  submissions are approvable from it. They had drifted on all four decisions
+  that matter: honouring `originalColorId`, appending rather than replacing
+  `contributor_images`, pinning asset URLs to this submission's own uploads
+  (`isOwnUploadUrl` — `submission_queue.data` is browser-written), and writing
+  `submitted_by`. Anything both routes must decide identically belongs in that
+  util, not copied into one of them. If you add a third approval surface, it
+  imports from there too.
 
 - **`contributor_archive_items` is the single source for every contributor stat.**
   It unions the approved, user-attributed rows of wheels / registry_entries / colors /

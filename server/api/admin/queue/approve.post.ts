@@ -1,6 +1,12 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 import { toDateOrNull } from '../../../utils/sanitize';
+import {
+  attachToExistingColor,
+  collectColorAssets,
+  isOwnUploadUrl,
+  resolveColorTarget,
+} from '../../../utils/archiveApprovals';
 
 /**
  * Where each submission target_type writes, and which of that table's columns a
@@ -80,9 +86,6 @@ const EDIT_TARGETS: Record<string, { table: string; columns: string[] }> = {
   },
 };
 
-/** Buckets server/api/archive/upload.ts is allowed to write to. */
-const UPLOAD_BUCKETS = ['archive-documents', 'archive-thumbnails', 'archive-colors', 'archive-wheels'] as const;
-
 /**
  * Which targets accept a photo-only addition, and the table whose `photos`
  * text[] column receives it. Colours store images in `contributor_images`
@@ -98,25 +101,6 @@ const PHOTO_APPEND_TARGETS: Record<string, string> = {
   wheel: 'wheels',
   registry: 'registry_entries',
 };
-
-/**
- * `/contribute/color` is the one archive form that is not the wizard (its
- * swatch-versus-contributor-photo split does not fit the shared step 2), so an
- * "add photos to this colour" submission arrives as a `new_item` carrying the
- * chosen colour's id in `data.originalColorId` rather than as an
- * `edit_suggestion` with a `target_id`.
- *
- * The id is client-written, and `colors.id` is a uuid — an unparseable value
- * reaching `.eq('id', …)` is a Postgres 22P02 surfacing as an opaque 500 on
- * approval, so anything that is not a uuid is treated as absent.
- */
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function asColorId(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return UUID_PATTERN.test(trimmed) ? trimmed : null;
-}
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -216,52 +200,14 @@ async function insertApprovedItem(
 
   switch (targetType) {
     case 'color': {
-      // Map uploaded files to swatch_path and contributor_images based on category
-      let swatchPath = ownUrls([data.imageSwatch ?? data.swatch_path])[0] ?? null;
-      const contributorImages: { url: string; contributor?: string }[] = ownUrls(
-        data.images || data.contributor_images
-      ).map((url) => ({ url, contributor: data.submittedBy || data.legacy_submitted_by || null }));
-      const uploadedFiles = Array.isArray(data.uploadedFiles) ? data.uploadedFiles : [];
+      const { swatchPath, contributorImages } = collectColorAssets(data, submissionId);
 
-      for (const file of uploadedFiles) {
-        const fileObj = typeof file === 'string' ? { url: file, category: 'general' } : file;
-        if (!isOwnUploadUrl(fileObj?.url, submissionId)) continue;
-        if (fileObj.category === 'swatch' && !swatchPath) {
-          swatchPath = fileObj.url;
-        } else if (fileObj.category === 'car-photos' || fileObj.category === 'general') {
-          contributorImages.push({
-            url: fileObj.url,
-            contributor: data.submittedBy || data.legacy_submitted_by || null,
-          });
-        }
-      }
-
-      // "Add photos to a colour that already exists". Ignoring `originalColorId`
-      // INSERTed a second `colors` row carrying only the new photos — no swatch,
-      // no hex_value, empty ditzler_ppg_code/dulux_code — so /archive/colors
-      // listed the same colour twice, once real and once as a photo-only stub.
-      //
-      // Two of those reached production (supabase PR #77 cleaned the rows up)
-      // and the damage did not stop at the listing: the stubs share their real
-      // colour's name/code/short_code, which is exactly the tuple
-      // `20260727000001_restore_wheel_colour_legacy_ids.sql` matches on, so a
-      // legacy DynamoDB id was restored onto a stub and that colour's
-      // /archive/colors/<legacy-id> deep link started resolving to a row with
-      // no colour data in it.
-      const attachToId = asColorId(data.originalColorId);
-      if (attachToId) {
-        const { data: existing, error: readError } = await supabase
-          .from('colors')
-          .select('id, submitted_by, swatch_path, contributor_images')
-          .eq('id', attachToId)
-          .maybeSingle();
-        if (readError) return readError.message;
-
-        // A stale or deleted id falls through to the INSERT below rather than
-        // dropping the contribution on the floor.
-        if (existing) {
-          return attachToExistingColor(supabase, existing, contributorImages, swatchPath, submittedBy);
-        }
+      // "Add photos to a colour that already exists" — see attachToExistingColor
+      // for what this used to do instead and what it cost.
+      const { existing, error: readError } = await resolveColorTarget(supabase, data.originalColorId);
+      if (readError) return readError;
+      if (existing) {
+        return attachToExistingColor(supabase, existing, contributorImages, swatchPath, submittedBy);
       }
 
       ({ error } = await supabase.from('colors').insert({
@@ -347,73 +293,6 @@ async function insertApprovedItem(
   }
 
   return error?.message || null;
-}
-
-/**
- * Merges an approved colour contribution into the colour it was submitted
- * against, instead of creating a second row for it.
- *
- * Three things are deliberately conservative here, because the target is an
- * existing public row rather than one this submission is creating:
- *
- *  - `submitted_by` is only written when the row does not have one. The archive
- *    import left it NULL, which is the case this fills; overwriting a real value
- *    would move another contributor's credit — and, through the trust pipeline's
- *    `contributor_archive_items` view, their counters — onto this photo.
- *  - `swatch_path` is only written when the row has none. A colour that already
- *    has a swatch has a curated one; a submitted duplicate is not an upgrade,
- *    and it is not a car photo either, so it does not become one.
- *  - No other field is touched. Correcting `hex_value` or a paint code on an
- *    existing colour is an edit suggestion, which goes through EDIT_TARGETS.
- */
-async function attachToExistingColor(
-  supabase: any,
-  existing: { id: string; contributor_images: unknown; submitted_by: string | null; swatch_path: string | null },
-  contributorImages: { url: string; contributor?: string | null }[],
-  swatchPath: string | null,
-  submittedBy: string | null
-): Promise<string | null> {
-  const merged = Array.isArray(existing.contributor_images) ? [...existing.contributor_images] : [];
-  const seen = new Set(merged.map((image: any) => (typeof image === 'string' ? image : image?.url)));
-
-  for (const image of contributorImages) {
-    if (seen.has(image.url)) continue;
-    seen.add(image.url);
-    merged.push(image);
-  }
-
-  const updates: Record<string, any> = { contributor_images: merged };
-  if (!existing.submitted_by && submittedBy) updates.submitted_by = submittedBy;
-  if (!existing.swatch_path && swatchPath) {
-    updates.swatch_path = swatchPath;
-    updates.has_swatch = true;
-  }
-
-  const { error } = await supabase.from('colors').update(updates).eq('id', existing.id);
-  return error?.message || null;
-}
-
-/**
- * True only for URLs this app minted for THIS submission.
- *
- * The upload route writes files to
- * `<supabaseUrl>/storage/v1/object/public/<bucket>/uploads/<submissionId>/<name>`,
- * so pinning the whole prefix — origin, storage path, bucket allowlist and the
- * submission id — means a payload cannot smuggle in an external URL, another
- * bucket, or a file uploaded against somebody else's submission.
- *
- * `supabaseUrl` comes from runtimeConfig rather than a literal because Storage
- * is served from the custom domain (auth.classicminidiy.com); hardcoding the
- * project-ref host would reject every real upload.
- */
-function isOwnUploadUrl(url: unknown, submissionId: string): boolean {
-  if (typeof url !== 'string') return false;
-  const base = (useRuntimeConfig().public.supabaseUrl as string)?.replace(/\/$/, '');
-  if (!base) return false;
-
-  return UPLOAD_BUCKETS.some((bucket) =>
-    url.startsWith(`${base}/storage/v1/object/public/${bucket}/uploads/${submissionId}/`)
-  );
 }
 
 async function applyEditSuggestion(
