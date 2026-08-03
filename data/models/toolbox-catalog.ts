@@ -275,10 +275,26 @@ export const ARCHIVE_SEARCH_SECTIONS: ArchiveSectionSearchEntry[] = [
   },
 ];
 
-/** Archive row-2 subnav (design S6). */
+/**
+ * Archive row-2 subnav (design S6).
+ *
+ * EVERY archive section belongs here, not the four the design mocked. Unlike the
+ * Toolbox bar — which filters cards on one page via `?category=` — these are
+ * real routes, so a partial list does not read as "here are some shortcuts", it
+ * reads as "the archive contains these four things" and hides the other three.
+ *
+ * Labels match each destination's own page title, so following a link never
+ * lands you somewhere that calls itself something else.
+ *
+ * 3D Models is deliberately absent: it lives at /models under its own top-level
+ * nav item, not inside the archive.
+ */
 export const ARCHIVE_SECTIONS = [
-  { key: 'documents', label: 'Manuals', to: '/archive/documents' },
-  { key: 'registry', label: 'Registries', to: '/archive/registry' },
+  { key: 'registry', label: 'Registry', to: '/archive/registry' },
+  { key: 'documents', label: 'Documents', to: '/archive/documents' },
   { key: 'wheels', label: 'Wheels', to: '/archive/wheels' },
+  { key: 'colors', label: 'Colours', to: '/archive/colors' },
   { key: 'electrical', label: 'Electrical', to: '/archive/electrical' },
+  { key: 'engines', label: 'Engines', to: '/archive/engines' },
+  { key: 'weights', label: 'Weights', to: '/archive/weights' },
 ] as const;

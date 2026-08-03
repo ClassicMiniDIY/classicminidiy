@@ -39,11 +39,34 @@
     const path = link.to.split('?')[0] ?? link.to;
     return route.path === path || route.path.startsWith(path + '/');
   };
+
+  const scroller = ref<HTMLElement | null>(null);
+
+  /**
+   * Bring the current section into view on a narrow screen.
+   *
+   * The bar scrolls horizontally once there are more sections than fit, so a
+   * visitor on the last one (Weights) would otherwise see the bar starting at
+   * Registry with no visible sign of where they are — which is the whole reason
+   * the active state exists.
+   */
+  onMounted(() => {
+    const current = scroller.value?.querySelector<HTMLElement>('.subnav-link.is-current');
+    if (!current || !scroller.value) return;
+    if (scroller.value.scrollWidth <= scroller.value.clientWidth) return;
+
+    // Not scrollIntoView(): that also scrolls the PAGE, yanking the visitor past
+    // the hero on load.
+    scroller.value.scrollLeft = Math.max(
+      0,
+      current.offsetLeft - scroller.value.clientWidth / 2 + current.offsetWidth / 2
+    );
+  });
 </script>
 
 <template>
   <div class="section-subnav border-b border-base-300">
-    <div class="mx-auto flex h-12 max-w-[1400px] items-center gap-1 overflow-x-auto px-4 lg:px-6">
+    <div ref="scroller" class="mx-auto flex h-12 max-w-[1400px] items-center gap-1 overflow-x-auto px-4 lg:px-6">
       <span class="mr-3 shrink-0 text-xs font-bold uppercase tracking-[0.08em] text-accent">{{ label }}</span>
 
       <NuxtLink

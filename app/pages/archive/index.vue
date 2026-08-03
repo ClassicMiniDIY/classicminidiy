@@ -1,17 +1,10 @@
 <script setup lang="ts">
   import { ArchiveItems, BREADCRUMB_VERSIONS, HERO_TYPES } from '../../../data/models/generic';
-  import { ARCHIVE_SECTIONS } from '../../../data/models/toolbox-catalog';
   const { path } = useRoute();
   const { capture } = usePostHog();
   const { track } = useAnalytics();
   const { t } = useI18n();
   const { openWizard } = useContributeWizard();
-
-  const subnavLinks = ARCHIVE_SECTIONS.map((section) => ({
-    key: section.key,
-    label: t(`sections.${section.key}`),
-    to: section.to,
-  }));
 
   const contribute = () => {
     track('contribute_cta_clicked', { type: 'archive', location: 'archive_home' });
@@ -111,13 +104,7 @@
 
 <template>
   <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
-  <SectionSubnav
-    :label="t('subnav_label')"
-    :links="subnavLinks"
-    :action-label="t('contribute')"
-    action-icon="fas fa-paper-plane"
-    @action="contribute()"
-  />
+  <ArchiveSubnav />
   <div class="container mx-auto px-4 pb-15 pt-6">
     <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" root></breadcrumb>
 
