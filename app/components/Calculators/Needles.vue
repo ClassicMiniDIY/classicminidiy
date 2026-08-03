@@ -146,10 +146,15 @@
   });
 
   const relativeResults = computed<RankedNeedle[]>(() => {
-    const ref = referenceNeedle.value;
+    // Must not be called `ref`. Nuxt's auto-import scans the whole file for
+    // declared identifiers and skips injecting any it thinks already exist, so a
+    // single `const ref` anywhere in the module silently suppresses
+    // `import { ref } from 'vue'` — and every ref() at setup scope then throws
+    // "ref is not defined", which took this whole tool down.
+    const reference = referenceNeedle.value;
     const pool = needles.value?.all;
-    if (!ref || !pool || !pool.length) return [];
-    return findRelativeNeedles(ref, pool, {
+    if (!reference || !pool || !pool.length) return [];
+    return findRelativeNeedles(reference, pool, {
       band: relativeBand.value,
       direction: relativeDirection.value,
       sameSizeOnly: relativeSameSize.value,

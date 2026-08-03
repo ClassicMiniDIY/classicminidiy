@@ -27,7 +27,10 @@
           />
           <!-- Item count badge -->
           <div class="absolute top-2 right-2">
-            <span class="badge badge-primary badge-lg font-bold">
+            <!-- nowrap for the same reason as RegistryTable: a fixed-height
+                 daisyUI badge spills its text out of the coloured box the
+                 moment "12 items" wraps. -->
+            <span class="badge badge-primary badge-lg font-bold whitespace-nowrap">
               {{ collection.itemCount }} {{ t('items_label') }}
             </span>
           </div>
@@ -36,7 +39,7 @@
           <i class="fad fa-books text-4xl opacity-70"></i>
           <!-- Item count badge -->
           <div class="absolute top-2 right-2">
-            <span class="badge badge-primary badge-lg font-bold">
+            <span class="badge badge-primary badge-lg font-bold whitespace-nowrap">
               {{ collection.itemCount }} {{ t('items_label') }}
             </span>
           </div>

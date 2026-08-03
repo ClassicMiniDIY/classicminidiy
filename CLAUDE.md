@@ -193,6 +193,26 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 
 ## Development Guidelines
 
+### Auto-import gotcha: never shadow an auto-imported name
+
+**A local `const ref = …` anywhere in a `<script setup>` block suppresses
+`import { ref } from 'vue'` for the WHOLE file.** Nuxt's auto-import (unimport)
+scans the module for declared identifiers and skips injecting any name it thinks is
+already provided — it does not do scope analysis. So one `const ref` inside a
+`computed()` callback silently strips the top-level import, and every `ref()` at
+setup scope throws `ReferenceError: ref is not defined` at runtime. Nothing fails at
+build time; the component just never mounts.
+
+This took the SU needle configurator (`app/components/Calculators/Needles.vue`) down
+completely — `const ref = referenceNeedle.value` shadowed it from `ce5dc70b` until it
+was found in 2026-08. Applies equally to `computed`, `watch`, `useState`, `props`,
+and any composable name. If you want a short local for a "reference" something, call
+it `reference`.
+
+To confirm a suspected case in dev, fetch the transformed module and look at the vue
+import line:
+`curl -s localhost:3000/_nuxt/components/<Path>.vue | grep -oE 'import \{[^}]*\} from "[^"]*vue.runtime[^"]*"'`
+
 ### Code Standards
 
 - **TypeScript**: Strict type checking enabled
