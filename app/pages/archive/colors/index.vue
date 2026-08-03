@@ -160,6 +160,7 @@
 
 <template>
   <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <ArchiveSubnav active-key="colors" />
   <div class="container mx-auto px-4 pb-15">
     <!-- Breadcrumb -->
     <!-- Header -->

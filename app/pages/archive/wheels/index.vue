@@ -78,6 +78,7 @@
 <template>
   <div>
     <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+    <ArchiveSubnav active-key="wheels" />
     <div class="container mx-auto px-4">
       <breadcrumb :page="t('breadcrumb_title')" class="my-6"></breadcrumb>
 

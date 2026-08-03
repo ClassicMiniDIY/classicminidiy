@@ -142,6 +142,7 @@
 
 <template>
   <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <ArchiveSubnav active-key="electrical" />
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-12 gap-6">
       <div class="col-span-12">
