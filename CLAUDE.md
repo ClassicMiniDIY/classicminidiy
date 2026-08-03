@@ -462,6 +462,21 @@ parts of it that break silently if you get them wrong.
   localStorage, and the server renders "no chips"; reading it during setup is exactly
   the structural hydration mismatch that corrupted `/chat`.
 
+- **`ContributeWizard.vue` is the only archive submission form — except colours.**
+  Documents, registry entries, wheels and fixes all go through it. The
+  `/contribute/{document,registry,wheel}` ROUTES still exist but are thin
+  `ContributeLauncher` pages that open the wizard: `nuxt.config.ts` 301s
+  `/archive/documents/submit`, `/archive/colors/contribute` and `/archive/wheels/submit`
+  at them, so deleting the routes would break years-old inbound links. `?uuid=` on
+  `/contribute/wheel` still means "add to this existing entry" and maps to the wizard's
+  gap-fill. `/contribute/color` remains a real form — its swatch-versus-contributor-photo
+  split does not fit the wizard's shared step 2.
+
+  The registry step must keep collecting `trim`, `bodyType` and `engineSize`. They are
+  real `registry_entries` columns, `trim` is a visible `RegistryTable` column, and the
+  payload keys have to stay as-is because `insertApprovedItem()` maps them by name
+  (`bodyNum` → `body_number`, `engineNum` → `engine_number`).
+
 ## Environment Variables
 
 ### Required Runtime Config

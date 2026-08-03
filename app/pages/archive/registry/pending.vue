@@ -4,6 +4,13 @@
   import { RegistryItemStatus } from '../../../../data/models/registry';
 
   const { t } = useI18n();
+  const { track } = useAnalytics();
+  const { openWizard } = useContributeWizard();
+
+  const addYourMini = () => {
+    track('contribute_cta_clicked', { type: 'registry', location: 'archive_registry_pending' });
+    openWizard({ kind: 'registry', origin: '/archive/registry/pending' });
+  };
 
   // Define table columns
   const tableHeaders = [
@@ -225,7 +232,18 @@
         <div class="divider">{{ t('submit_divider') }}</div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2 pb-15">
-        <RegistrySubmission />
+        <div class="card border border-base-300 bg-base-100 shadow-sm">
+          <div class="card-body flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+            <i class="fad fa-clipboard-list text-2xl text-primary" aria-hidden="true"></i>
+            <div class="flex-1">
+              <p class="font-semibold">{{ t('submit_cta.title') }}</p>
+              <p class="text-sm opacity-70">{{ t('submit_cta.description') }}</p>
+            </div>
+            <button type="button" class="btn btn-primary" @click="addYourMini()">
+              {{ t('submit_cta.button') }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -274,6 +292,11 @@
       "og_description": "Track the status of pending Classic Mini registry submissions",
       "twitter_title": "Pending Registry Submissions - Classic Mini DIY",
       "twitter_description": "Track the status of pending Classic Mini registry submissions"
+    },
+    "submit_cta": {
+      "title": "Got another Mini to add?",
+      "description": "Registering a car takes a minute and helps the whole community.",
+      "button": "Add your Mini"
     }
   },
   "de": {
@@ -317,6 +340,11 @@
       "og_description": "Verfolgen Sie den Status ausstehender Classic Mini Registry-Einreichungen",
       "twitter_title": "Ausstehende Registry-Einreichungen - Classic Mini DIY",
       "twitter_description": "Verfolgen Sie den Status ausstehender Classic Mini Registry-Einreichungen"
+    },
+    "submit_cta": {
+      "title": "Noch einen Mini hinzuzufügen?",
+      "description": "Ein Auto einzutragen dauert eine Minute und hilft der ganzen Community.",
+      "button": "Deinen Mini eintragen"
     }
   },
   "es": {
@@ -360,6 +388,11 @@
       "og_description": "Rastrea el estado de los envíos de registro de Classic Mini pendientes",
       "twitter_title": "Envíos de Registro Pendientes - Classic Mini DIY",
       "twitter_description": "Rastrea el estado de los envíos de registro de Classic Mini pendientes"
+    },
+    "submit_cta": {
+      "title": "¿Tienes otro Mini que añadir?",
+      "description": "Registrar un coche lleva un minuto y ayuda a toda la comunidad.",
+      "button": "Añade tu Mini"
     }
   },
   "fr": {
@@ -403,6 +436,11 @@
       "og_description": "Suivez le statut des soumissions de registre Classic Mini en attente",
       "twitter_title": "Soumissions de Registre en Attente - Classic Mini DIY",
       "twitter_description": "Suivez le statut des soumissions de registre Classic Mini en attente"
+    },
+    "submit_cta": {
+      "title": "Une autre Mini à ajouter ?",
+      "description": "Enregistrer une voiture prend une minute et profite à toute la communauté.",
+      "button": "Ajouter votre Mini"
     }
   },
   "it": {
@@ -446,6 +484,11 @@
       "og_description": "Traccia lo stato degli invii di registro Classic Mini in sospeso",
       "twitter_title": "Invii di Registro in Sospeso - Classic Mini DIY",
       "twitter_description": "Traccia lo stato degli invii di registro Classic Mini in sospeso"
+    },
+    "submit_cta": {
+      "title": "Hai un altro Mini da aggiungere?",
+      "description": "Registrare un’auto richiede un minuto e aiuta tutta la comunità.",
+      "button": "Aggiungi il tuo Mini"
     }
   },
   "pt": {
@@ -489,6 +532,11 @@
       "og_description": "Acompanhe o status das submissões de registro Classic Mini pendentes",
       "twitter_title": "Submissões de Registro Pendentes - Classic Mini DIY",
       "twitter_description": "Acompanhe o status das submissões de registro Classic Mini pendentes"
+    },
+    "submit_cta": {
+      "title": "Tem outro Mini para adicionar?",
+      "description": "Registar um carro demora um minuto e ajuda toda a comunidade.",
+      "button": "Adicione o seu Mini"
     }
   },
   "ru": {
@@ -532,6 +580,11 @@
       "og_description": "Отслеживайте статус ожидающих заявок в реестр Classic Mini",
       "twitter_title": "Ожидающие заявки в реестр - Classic Mini DIY",
       "twitter_description": "Отслеживайте статус ожидающих заявок в реестр Classic Mini"
+    },
+    "submit_cta": {
+      "title": "Есть ещё один Mini?",
+      "description": "Регистрация занимает минуту и помогает всему сообществу.",
+      "button": "Добавить свой Mini"
     }
   },
   "ja": {
@@ -575,6 +628,11 @@
       "og_description": "クラシックミニ レジストリの審査中申請状況を追跡する",
       "twitter_title": "審査中のレジストリ申請 - Classic Mini DIY",
       "twitter_description": "クラシックミニ レジストリの審査中申請状況を追跡する"
+    },
+    "submit_cta": {
+      "title": "追加したい Mini はありますか？",
+      "description": "登録は1分ほどで、コミュニティ全体の役に立ちます。",
+      "button": "Mini を登録する"
     }
   },
   "zh": {
@@ -618,6 +676,11 @@
       "og_description": "追踪经典迷你注册表待审核提交的状态",
       "twitter_title": "待审核的注册表提交 - Classic Mini DIY",
       "twitter_description": "追踪经典迷你注册表待审核提交的状态"
+    },
+    "submit_cta": {
+      "title": "还有其他 Mini 要登记吗？",
+      "description": "登记一辆车只要一分钟，却能帮到整个社区。",
+      "button": "登记你的 Mini"
     }
   },
   "ko": {
@@ -661,6 +724,11 @@
       "og_description": "클래식 미니 레지스트리 대기 중인 제출 상태 추적",
       "twitter_title": "대기 중인 레지스트리 제출 - Classic Mini DIY",
       "twitter_description": "클래식 미니 레지스트리 대기 중인 제출 상태 추적"
+    },
+    "submit_cta": {
+      "title": "등록할 Mini가 더 있나요?",
+      "description": "차 한 대 등록에 1분이면 되고, 커뮤니티 전체에 도움이 됩니다.",
+      "button": "내 Mini 등록하기"
     }
   }
 }
