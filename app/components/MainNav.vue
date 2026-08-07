@@ -243,11 +243,18 @@
       <!-- Account -->
       <div v-if="isAuthenticated" class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="avatar-button" :aria-label="displayName">
+          <!-- Sized in px, not `h-full w-full`. A percentage against an
+               auto-height parent resolves to `auto`, i.e. the image's INTRINSIC
+               size — so if `.avatar-button` ever fails to constrain the box
+               (scoped CSS not applied yet, style block dropped) a 1024px avatar
+               renders at 1024px, overflows the header row, shrinks the
+               omnisearch field and drags the account dropdown off-screen with
+               it. Fixed px means the worst case is an unrounded avatar. -->
           <img
             v-if="userProfile?.avatar_url"
             :src="userProfile.avatar_url"
             :alt="displayName"
-            class="h-full w-full rounded-full object-cover"
+            class="h-[34px] w-[34px] rounded-full object-cover"
           />
           <span v-else>{{ initials }}</span>
         </div>
@@ -442,11 +449,13 @@
                 @click="goToDrawerLink('profile')"
               >
                 <span class="avatar-button avatar-button--sm">
+                  <!-- Fixed px for the same reason as the header avatar above;
+                       matches `.avatar-button--sm`. -->
                   <img
                     v-if="userProfile?.avatar_url"
                     :src="userProfile.avatar_url"
                     :alt="displayName"
-                    class="h-full w-full rounded-full object-cover"
+                    class="h-9 w-9 rounded-full object-cover"
                   />
                   <span v-else>{{ initials }}</span>
                 </span>
