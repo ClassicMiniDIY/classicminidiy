@@ -179,8 +179,11 @@
       />
     </div>
     <div class="absolute inset-0 bg-black/60"></div>
-    <div class="hero-content relative flex flex-col items-start justify-center w-full">
-      <div class="px-6 sm:px-12 md:pl-20 py-10">
+    <!-- Same container contract as Hero.vue: daisyUI's `hero-content` brings
+         `max-width: 80rem; padding: 1rem`, which left-pins the column, so both
+         are neutralised and the page container does the aligning. -->
+    <div class="hero-content relative flex w-full max-w-none flex-col items-start justify-center p-0">
+      <div class="container mx-auto w-full px-4 py-10">
         <p class="eyebrow">
           {{ selectedPromo.subtitle }}
         </p>

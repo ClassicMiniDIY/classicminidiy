@@ -77,13 +77,12 @@
   @media (max-width: 640px) {
     .home-search-wrap {
       margin-top: 1.25rem;
-      /* The hero content column is padded on the LEFT only (`pl-6 md:pl-20` in
-         Hero.vue) and is itself a little wider than a phone viewport, so a
-         full-width child would sit flush against the right edge. Clamping to the
-         viewport minus the column's real left inset (16px .hero-content padding
-         + 24px pl-6, twice) gives the field an even gutter on both sides without
-         touching the hero, which the headline and CTAs are laid out against. */
-      max-width: calc(100vw - 5rem);
+      /* No viewport clamp here. The hero column used to be padded on the LEFT
+         only (`pl-6 md:pl-20`), so a full-width child ran off the right edge and
+         had to be clamped by hand. Hero.vue now lays the column out in the same
+         `container mx-auto` every page body uses, which is symmetric — so 100%
+         already lines the field up with the headline and the sections below it,
+         and re-adding a clamp would only pull it back off that grid. */
     }
     .home-search {
       height: 48px;

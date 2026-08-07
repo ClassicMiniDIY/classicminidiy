@@ -214,6 +214,32 @@ non-zero on a hit — run it if a component mysteriously never mounts. To confir
 specific case in dev, fetch the transformed module and look at the vue import line:
 `curl -s localhost:3000/_nuxt/components/<Path>.vue | grep -oE 'import \{[^}]*\} from "[^"]*vue.runtime[^"]*"'`
 
+### Layout invariants
+
+- **`hero-content` is a daisyUI class, and it carries `max-width: 80rem; padding: 1rem`.**
+  `Hero.vue`/`HeroPromo.vue` are not daisyUI `hero`s — they're custom `.hero-section`
+  banners — so picking up `.hero-content` was accidental, and its max-width pinned the
+  hero text column to the LEFT EDGE of the viewport (capped at 1280px starting at x=0)
+  rather than centring it. Combined with a left-only `pl-6 md:pl-20`, the homepage H1
+  sat ~250px left of every other section at 2000px wide, and got worse the wider the
+  screen. Both files now neutralise it (`w-full max-w-none p-0`) and lay the column out
+  in `container mx-auto px-4` — **the same container every page body uses**. Hero text
+  must line up with the content beneath it; if you touch either file, verify the H1's
+  `x` equals a body `section.container` child's `x` at a wide viewport.
+
+- **Don't reintroduce per-component viewport clamps to compensate for hero padding.**
+  `HomeSearchBar`'s `max-width: calc(100vw - 5rem)` existed only because the old column
+  was padded on one side and overflowed right on phones. With a symmetric container that
+  clamp pulls the field *off* the grid. Same reasoning for anything else placed in a hero.
+
+- **Never size an avatar (or any fixed chrome image) with `h-full w-full`.** A percentage
+  height against an auto-height parent resolves to `auto` — the image's INTRINSIC size. If
+  the parent's sizing rule is ever missing or late (scoped CSS not yet applied, style block
+  dropped), a 1024px avatar renders at 1024px, overflows the header flex row, shrink-crushes
+  the omnisearch field (it has `flex-shrink: 1`) and drags the account dropdown off-screen.
+  `MainNav.vue` uses explicit px on the `<img>` so the worst case is a merely-unrounded
+  avatar, not a wrecked header.
+
 ### Code Standards
 
 - **TypeScript**: Strict type checking enabled

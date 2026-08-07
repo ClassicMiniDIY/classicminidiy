@@ -109,11 +109,17 @@
     }"
     :style="[!showImage ? { backgroundImage: 'none' } : styleObject]"
   >
+    <!-- `hero-content` is daisyUI's, and it ships `max-width: 80rem; padding: 1rem`.
+         Left unchecked that pins the hero column to the LEFT EDGE of the viewport
+         (and caps it at 1280px starting at x=0), so on wide screens the H1 sat
+         ~250px left of every other section on the page. Neutralise both, then use
+         the same `container mx-auto px-4` every page body uses so hero text lines
+         up with the content beneath it. -->
     <div
-      class="hero-content relative z-10 flex flex-col items-start justify-center"
+      class="hero-content relative z-10 flex w-full max-w-none flex-col items-start justify-center p-0"
       :style="[blog ? { paddingTop: '4rem', paddingBottom: '4rem' } : {}]"
     >
-      <div class="pl-6 md:pl-20" :class="{ 'text-center': centered }">
+      <div class="container mx-auto w-full px-4" :class="{ 'text-center': centered }">
         <p class="eyebrow" :class="{ 'text-center': blog }">
           {{ displaySubtitle }}
         </p>
