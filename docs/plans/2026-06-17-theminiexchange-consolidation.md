@@ -1,8 +1,31 @@
 # The Mini Exchange → Classic Mini DIY Consolidation
 
-**Status:** In progress (branch `tme-merge`, started 2026-06-17)
+**Status:** COMPLETE — cutover 2026-07-13, teardown finished 2026-08-09 (started 2026-06-17, branch `tme-merge`)
 **Cascade:** Web + Supabase
-**Cutover switch:** `NUXT_PUBLIC_EXCHANGE_ENABLED` (off until go-live)
+**Cutover switch:** `NUXT_PUBLIC_EXCHANGE_ENABLED` (retired — the section is unconditionally live)
+
+## Teardown record (2026-08-09)
+
+The standalone property is fully retired. For anyone tracing leftovers later:
+
+- Vercel project `the-mini-exchange` deleted; `theminiexchange.com` + `www` now resolve to the
+  `classicminidiy` project, which serves the host-based 301s in `vercel.json`.
+- `ClassicMiniDIY/TheMiniExchange` GitHub repo archived.
+- The last runtime dependency — the `cleanup-message-images` pg_cron job, which POSTed to TME's
+  Nuxt route via the `tme_url` vault secret and had been a silent no-op since cutover — was ported
+  to the `cleanup-message-images` Supabase edge function (supabase PR #81, deployed 2026-08-09).
+  The `tme_url` / `tme_cron_secret` vault secrets are deleted.
+- SES bounce/complaint handling moved to the `ses-event-webhook` edge function plus the
+  `syncSesSuppressions()` pre-send pull; TME's `/api/webhooks/ses-notifications` route is obsolete.
+
+**Deliberately NOT changed** — these look like leftovers and are not:
+
+- The `theminiexchange.com` host rules in `vercel.json` are load-bearing SEO for the retired domain.
+- `TME_FROM_EMAIL` and the bare TME paths built from `SITE_URL` in `process-notifications` /
+  `_shared/email-*.ts` are the documented per-brand envelope and rely on those same 301s
+  (see the comment at `process-notifications/index.ts` above the marketplace template builders).
+  Repointing `SITE_URL` at classicminidiy.com without also rewriting every path to `/exchange/*`
+  would break every marketplace email link.
 
 ## Why
 
