@@ -566,3 +566,75 @@ body {
   --fa-primary-color: #d1d5db !important;
   --fa-secondary-color: #9aac7f !important;
 }
+
+/* ============================================
+   DROPDOWN MENUS (global)
+   ============================================
+
+   daisyUI 5's `.dropdown .dropdown-content` sets ONLY `position: absolute` —
+   no `top`, no `bottom`, no size limit. Vertical placement falls out of the
+   element's static position, and the `position-area` daisyUI puts on
+   `.dropdown` is inert on a `position: relative` box with no anchor-name. So
+   every dropdown in the app inherits three gaps, and they are fixed here once
+   rather than per component:
+
+     1. Placement depends on flow rather than being stated.
+     2. `max-height: none` + `overflow-y: visible` — a menu taller than the
+        window has no way to reach its own last item.
+     3. Ancestors that clip cut the menu off outright.
+
+   (3) is what made the admin tables the worst case: a row kebab menu sits
+   inside `.overflow-x-auto` (which computes to `overflow: auto auto`, because
+   a non-`visible` axis forces the other to `auto`) nested inside `.card`
+   (`overflow: hidden`). Two clipping ancestors, and `z-[9999]` on the menu
+   does nothing about either — clipping is not stacking. Measured on the
+   listings table: 204px of the menu cut off, last action not clickable.
+
+   These rules live in `@layer components` on purpose, so daisyUI's directional
+   variants (`.dropdown-top` et al) and any Tailwind utility on the element
+   still win — this only fills in what nothing else sets. */
+
+@layer components {
+  /* State the default placement instead of inheriting the static position.
+     Excludes the variants that deliberately place themselves elsewhere. */
+  .dropdown:not(.dropdown-top, .dropdown-left, .dropdown-right, .dropdown-bottom) > .dropdown-content {
+    top: 100%;
+    bottom: auto;
+  }
+
+  /* Never taller than the window; scroll past that. `overscroll-behavior`
+     keeps a scrolled menu from chaining into the page behind it. */
+  .dropdown-content {
+    max-height: calc(100dvh - 5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    flex-wrap: nowrap;
+  }
+
+}
+
+/* Stop clipping WHILE a menu inside is open, and only then. daisyUI opens on
+   `:focus-within`, so this matches exactly the moment the menu needs to escape
+   and reverts the instant it closes. Permanently unclipping these containers
+   would instead give up the horizontal scrolling the wide admin tables need in
+   the md-to-lg band.
+
+   UNLAYERED on purpose, and this is load-bearing: the thing being overridden is
+   `.overflow-x-auto`, a Tailwind UTILITY. Utilities sort after `components`, so
+   the same rule inside the block above lost to it no matter how specific it was
+   — layer order beats specificity. Unlayered styles outrank every layer, which
+   is the only way a rule in this file can win against a utility class.
+
+   VERTICAL scroll containers are deliberately excluded (`.overflow-y-auto`,
+   `.overflow-auto`). Switching a scrolled container to `overflow: visible`
+   resets its scroll offset, so unclipping one of those would yank the region
+   back to the top the moment a menu opened inside it — worse than the clipping
+   it fixes. `ReviewDrawer`'s scrolling body is exactly that shape. The
+   horizontal case carries the same caveat in the md-to-lg band, where the admin
+   tables can actually be scrolled sideways; there it is worth it, because
+   otherwise the row menus are unusable outright. */
+.card:has(.dropdown:focus-within),
+.overflow-hidden:has(.dropdown:focus-within),
+.overflow-x-auto:has(.dropdown:focus-within) {
+  overflow: visible;
+}

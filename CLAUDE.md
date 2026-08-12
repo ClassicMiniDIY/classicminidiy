@@ -240,6 +240,47 @@ specific case in dev, fetch the transformed module and look at the vue import li
   `MainNav.vue` uses explicit px on the `<img>` so the worst case is a merely-unrounded
   avatar, not a wrecked header.
 
+### Dropdown invariants
+
+- **Dropdown behaviour is global, in `app/assets/css/main.css`, not per component.** daisyUI 5's
+  `.dropdown .dropdown-content` sets ONLY `position: absolute` — no `top`, no `bottom`, no size
+  limit — so placement falls out of the static position and a menu taller than the window has no
+  way to reach its own last item (`position-area`, which daisyUI puts on `.dropdown`, is inert on
+  a `position: relative` box with no anchor-name). The global block states the default placement,
+  caps every menu at `calc(100dvh - 5rem)` and lets it scroll. **Fix dropdown problems there, not
+  in one component** — this was first patched in `MainNav` alone, which left the admin tables,
+  `ReviewDrawer` and `LanguageSwitcher` still broken.
+
+- **A clipping ancestor beats any z-index.** An admin row kebab sits inside `.overflow-x-auto`
+  (which computes to `overflow: auto auto` — a non-`visible` axis forces the other to `auto`)
+  nested in `.card` (`overflow: hidden`). Measured on the listings table: 204px of menu cut off,
+  last action unclickable, and the `z-[9999]` already on it did nothing, because clipping is not
+  stacking. The global rule unclips those containers only while a menu inside is open
+  (`:has(.dropdown:focus-within)`).
+
+- **That unclip rule MUST stay unlayered.** It overrides `.overflow-x-auto`, a Tailwind
+  *utility*. Utilities sort after `components`, so the identical rule inside `@layer components`
+  loses no matter how specific it is — layer order beats specificity, and unlayered beats every
+  layer. Conversely the placement/size defaults stay IN `@layer components` on purpose, so
+  daisyUI's directional variants (`.dropdown-top` et al) and per-element utilities can still
+  override them.
+
+- **Never unclip a vertical scroll container.** `.overflow-y-auto` / `.overflow-auto` are
+  deliberately excluded: switching a scrolled container to `overflow: visible` resets its scroll
+  offset, so the region would jump to the top the moment a menu opened inside it.
+  `ReviewDrawer`'s scrolling body is exactly that shape.
+
+- **Escape-to-dismiss lives in `app/plugins/dropdown-dismiss.client.ts`.** These menus are pure
+  CSS opened on `:focus-within`, so there is no state to clear — closing one means blurring out
+  of it. It acts only when focus is genuinely inside a `.dropdown`, so it never swallows an
+  Escape meant for the omnisearch palette, the contribute wizard or a `<dialog class="modal">`.
+
+- **Verifying dropdowns in a headless/background pane: assert on `:focus-within`, not on
+  `display`.** daisyUI transitions `display` with `transition-behavior: allow-discrete`. When the
+  pane is backgrounded (`document.visibilityState === 'hidden'`, `document.timeline.currentTime`
+  stuck at 0) the animation clock never advances, so a closed menu reads as `display: flex;
+  opacity: 0` forever and looks like a stuck-open bug that does not exist.
+
 ### Code Standards
 
 - **TypeScript**: Strict type checking enabled
