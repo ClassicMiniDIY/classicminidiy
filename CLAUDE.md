@@ -482,12 +482,33 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   trigger — so promoting a swallowed listing straight to `active` silently robs
   the seller of trust credit. Send it to `pending` and let review approve it.
 
-- **`useListings().publishListing()` has no callers, and wiring it up client-side
-  is the wrong fix for the above.** It sets `status: 'active'` directly, and the
-  `Update listings policy` RLS rule is `auth.uid() = user_id` with **no
-  `with_check` and no column allowlist** — so an owner can already self-publish
-  straight past moderation from the browser. Promotion belongs server-side, in
-  the edge function, where ownership and payment are both verified.
+- **`pending → active` is enforced in the DATABASE, not just by convention.**
+  `Update listings policy` RLS is `auth.uid() = user_id` with no `with_check` and
+  no column allowlist, and RLS gates rows — never columns or values — so an owner
+  could PATCH their own `status` to `active` (or `example_*`) from the browser and
+  skip review entirely. `useListings().publishListing()` is a zero-caller function
+  that does exactly that write, sitting there for the next person who wants a
+  "publish my draft" button.
+
+  Migration `20260812000001_enforce_listing_status_transitions` closes it with a
+  BEFORE UPDATE trigger (a `with_check` can't — it sees only NEW, and the rule is
+  about the transition). For a non-admin owner: `draft|pending → active` and
+  anything `→ example_*` are refused; `draft → pending`, `active → sold`, and
+  relisting an already-moderated `sold|expired|cancelled → active` all still work.
+  Service-role and admins bypass. **If you add an owner-facing status action,
+  check it against that trigger** — it fails as a `42501` permission error, not a
+  validation message.
+
+- **Admin listing moderation runs through two server routes that must exist:**
+  `PUT /api/admin/listings/[id]/status` and `.../tier`. They are the only path to
+  `active` (service-role, so they pass the trigger above), and `useAdmin()` has
+  been calling them since the TME consolidation — but they were never ported, so
+  every approve/reject/relist/tier click 404'd from the cutover until 2026-08-12.
+  Combined with paid listings never reaching `pending`, the paid pipeline was dead
+  at both ends: nothing arrived in the queue, and nothing could leave it. The
+  status route is also what emails the seller on approval — the `on_listing_approved`
+  trigger only moves trust counters, so without it the "we'll email you when your
+  listing is approved" promise in the submission confirmation goes unkept.
 
 ## Contribution Loop Invariants
 
