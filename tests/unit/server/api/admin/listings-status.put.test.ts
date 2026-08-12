@@ -105,18 +105,34 @@ beforeEach(() => {
 });
 
 describe('PUT /api/admin/listings/:id/status', () => {
-  it('refuses a status outside the moderation set', async () => {
+  it('refuses a status outside the allowed set', async () => {
+    // `draft` is specifically excluded: pushing a listing back to draft would
+    // drop it out of the moderation queue with no way back in.
     (readBody as any).mockResolvedValue({ status: 'draft' });
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 400 });
 
-    // `draft` is specifically excluded: pushing a listing back to draft would
-    // drop it out of the moderation queue with no way back in.
-    (readBody as any).mockResolvedValue({ status: 'example_paid' });
+    (readBody as any).mockResolvedValue({ status: 'nonsense' });
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 400 });
 
     (readBody as any).mockResolvedValue({});
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 400 });
   });
+
+  it.each(['example_free', 'example_paid'])(
+    'accepts %s — the admin UI offers it and this is the only route that can set it',
+    async (status) => {
+      (readBody as any).mockResolvedValue({ status });
+
+      expect(await handler(evt())).toMatchObject({ success: true, status });
+
+      const update = tableCall('listings', 'update')!;
+      expect(update.values).toEqual({ status });
+      // Not a publication and not a verdict: no published_at, and the seller is
+      // not emailed that their listing became a demo fixture.
+      expect(update.values.published_at).toBeUndefined();
+      expect(tableCall('notification_queue')).toBeUndefined();
+    }
+  );
 
   it('404s when the listing does not exist', async () => {
     canned.listings = { data: null, error: null };
@@ -169,15 +185,37 @@ describe('PUT /api/admin/listings/:id/status', () => {
     });
   });
 
-  it('relisting clears the sale metadata', async () => {
-    canned.listings = { data: { ...LISTING, status: 'sold' }, error: null };
+  it('relisting clears the whole sale trail, matching the seller relist', async () => {
+    canned.listings = { data: { ...LISTING, status: 'sold', tier: 'free' }, error: null };
     (readBody as any).mockResolvedValue({ status: 'active', relist: true });
 
     await handler(evt());
 
+    // Field-for-field parity with relistListing() in useListings.ts. Leaving
+    // tracking_* behind resurfaces stale shipping info on the detail page;
+    // leaving promoted_on_social_at set makes it look already-promoted.
     const update = tableCall('listings', 'update')!;
-    expect(update.values).toMatchObject({ status: 'active', sold_date: null, final_price: null });
+    expect(update.values).toMatchObject({
+      status: 'active',
+      sold_date: null,
+      final_price: null,
+      tracking_number: null,
+      tracking_carrier: null,
+      promoted_on_social_at: null,
+      featured_until: null, // free tier
+    });
+    expect(update.values.published_at).toBeTypeOf('string');
     expect(tableCall('admin_audit_log', 'insert')!.values.action).toBe('listing_relisted');
+  });
+
+  it('relisting a paid listing restores its featured window', async () => {
+    canned.listings = { data: { ...LISTING, status: 'sold', tier: 'paid' }, error: null };
+    (readBody as any).mockResolvedValue({ status: 'active', relist: true });
+
+    await handler(evt());
+
+    const featuredUntil = tableCall('listings', 'update')!.values.featured_until as string;
+    expect(new Date(featuredUntil).getTime()).toBeGreaterThan(Date.now());
   });
 
   it('short-circuits when the status already matches, writing nothing', async () => {
