@@ -2,6 +2,45 @@
 
 This file provides guidance to Claude Code when working with the Classic Mini DIY project.
 
+## Public repository — everything here is world-readable
+
+**`ClassicMiniDIY/classicminidiy` is a PUBLIC repo (GPL-3.0). Every file you add
+or edit — code, comments, docs, commit messages, PR titles and bodies — is
+published, permanently, to anyone. `classicminidiy-supabase` is PRIVATE; that is
+where anything that must not be public belongs.** Write as if a stranger is
+reading, because one is.
+
+Note what this does and does not buy you. The source here is already public, so
+redacting something from a doc that the code plainly shows achieves nothing —
+the rate-limit defaults and the `/api/admin/**` throttle exemption, for example,
+are right there in `server/middleware/rate-limit.ts`. What documentation
+uniquely exposes, and what therefore needs judgement, is:
+
+1. **Private-repo internals.** RLS policy bodies, migration contents, trigger and
+   schema detail from `classicminidiy-supabase` are not otherwise visible here.
+   Restating them turns a private design into a public one. Reference the
+   contract and the behaviour developers must respect; point at the private repo
+   for the mechanism.
+2. **Attack narratives.** A synthesised "here is how you would defeat X" — an
+   ordered bypass sequence, a probe map, a named function that is a ready-made
+   exploit call — is worth far more to an adversary than the scattered code it
+   was assembled from. Document the rule to uphold, not the route around it. The
+   same applies to describing a weakness in the present tense; if something is
+   genuinely exploitable, fix it in code rather than annotate it in prose.
+3. **Operational state.** What is currently unfixed, infra-side configuration
+   that lives outside this repo (WAF and firewall rules, env values, dashboard
+   settings), abuse thresholds tuned in infra rather than code, and incident
+   specifics naming real users or their data.
+
+Also never commit real user data — no customer emails, listing or user ids, or
+support-ticket contents — even in a test fixture or a comment. Use obviously
+fake values.
+
+If a note is genuinely valuable but fails the above, write it in
+`classicminidiy-supabase`'s CLAUDE.md and leave a pointer here. And remember that
+scrubbing after the fact is only partial: history, forks and API caches keep what
+was pushed, and rewriting `main` is not an option.
+
 ## CMDIY Ecosystem Context
 
 This repo is part of the Classic Mini DIY property ecosystem. For the full cross-repo architecture, please refer to the central documentation. Key related repos:
@@ -515,43 +554,28 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   locales. Nobody caught it sooner because the paid path also never called
   `/api/exchange/listings/submit`, so no `admin_listing_pending` email ever fired.
 
-  `promoteListingToPending` is filtered on `status='draft'` and that predicate is
-  load-bearing, not defensive: it is the only thing stopping a payment from
-  flipping a `pending` listing live (bypassing review), resurrecting a `sold`
-  one, or demoting an `active` one. Never widen it. `pending → active` belongs to
-  moderation alone, which is also what fires the `on_listing_approved` trust
-  trigger — so promoting a swallowed listing straight to `active` silently robs
-  the seller of trust credit. Send it to `pending` and let review approve it.
+  The promotion is deliberately narrow — it moves a listing into review and
+  nothing else; completing a payment never publishes anything. Its constraints and
+  the reasons for them are documented in `classicminidiy-supabase`. One
+  consequence matters on this side: `pending → active` belongs to moderation
+  alone, and that transition is also what credits the seller's trust score, so
+  repairing a stuck listing by jumping it straight to `active` silently costs them
+  that credit. Route it to `pending` and let review approve it.
 
-- **`pending → active` is enforced in the DATABASE, not just by convention.**
-  `Update listings policy` RLS is `auth.uid() = user_id` with no `with_check` and
-  no column allowlist, and RLS gates rows — never columns or values — so an owner
-  could PATCH their own `status` to `active` (or `example_*`) from the browser and
-  skip review entirely. `useListings().publishListing()` is a zero-caller function
-  that does exactly that write, sitting there for the next person who wants a
-  "publish my draft" button.
+- **A listing becoming publicly visible is enforced server-side, and client code
+  must never try to do it.** Only moderation makes a listing `active`, via the
+  admin routes below. Client-side writes that set a listing live are rejected —
+  the enforcement lives in the database, so a rejection surfaces as a permission
+  error rather than a validation message. `useListings().publishListing()` is a
+  leftover with no callers; it is not a supported path and should not be wired to
+  a "publish my draft" button.
 
-  Migration `20260812000001_enforce_listing_status_transitions` closes it with a
-  BEFORE UPDATE trigger (a `with_check` can't — it sees only NEW, and the rule is
-  about the transition). **Visibility is gated on `listings.approved_at`, not on
-  the previous status.** For a non-admin owner: any move to `active` while
-  `approved_at IS NULL` is refused, anything `→ example_*` is refused, and any
-  write to `approved_at` itself is refused. `draft → pending`, `active → sold`,
-  and relisting a genuinely-approved `sold|expired|cancelled → active` all still
-  work. Service-role and admins bypass, and stamp `approved_at` on the first
-  publish. **If you add an owner-facing status action, check it against that
-  trigger** — it fails as a `42501` permission error, not a validation message.
-
-  It is gated on a column rather than an allowlist of transitions because the
-  first version of this trigger simply refused `draft|pending → active` and
-  trusted `sold|expired|cancelled → active` as "relisting something already
-  approved". Both legs are legal alone, so `pending → cancelled → active` — or
-  `draft → sold → active` — walked straight through in two hops. Reaching a
-  post-sale status is not evidence of approval. Don't reintroduce a
-  status-pair allowlist. (`published_at` cannot stand in for `approved_at`
-  either: it is NULL on almost every active listing and owners can write it.)
-  `classicminidiy-supabase/snippets/verify_20260812_listing_status_transitions.sql`
-  reproduces all 13 cases in a rolled-back transaction.
+  **The mechanism, and the reasoning behind its exact shape, are documented in
+  `classicminidiy-supabase` (private) — see the `listings` notes in that repo's
+  CLAUDE.md.** Deliberately not restated here; see "Public repository" below.
+  What you need on this side: if you add any owner-facing action that changes a
+  listing's status, exercise it against a real non-admin session before shipping,
+  because the server, not the form, is what will refuse it.
 
 - **Admin listing moderation runs through two server routes that must exist:**
   `PUT /api/admin/listings/[id]/status` and `.../tier`. They are the only path to
