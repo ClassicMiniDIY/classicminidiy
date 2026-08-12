@@ -363,6 +363,10 @@ export const useListings = () => {
   /**
    * Relist a sold, expired, or cancelled listing back to active
    * Resets sale-related fields, preserves tier, optionally updates price
+   *
+   * The reset field list MUST stay in sync with the admin relist branch in
+   * server/api/admin/listings/[id]/status.put.ts — "relist" has to mean the same
+   * thing whether the seller or an admin clicks it.
    */
   const relistListing = async (listingId: string, previousStatus: string, tier: string, newPrice?: number) => {
     const user = getUser();

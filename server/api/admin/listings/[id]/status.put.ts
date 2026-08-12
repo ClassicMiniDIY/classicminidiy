@@ -22,11 +22,27 @@
 import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
 
-/** Statuses an admin may set from the moderation UI. `draft` is deliberately
- *  absent — it is the seller's pre-submission state, not a moderation verdict,
- *  and pushing a listing back to draft would hide it from the queue entirely.
- *  `example_*` rows are curated fixtures, seeded rather than moderated. */
-const ALLOWED = ['pending', 'active', 'sold', 'expired', 'cancelled'] as const;
+/** Statuses an admin may set. Mirrors the options the admin listings UI actually
+ *  offers, including its "Set Example (Free/Paid)" actions — `example_*` rows are
+ *  the curated demo listings surfaced by `useExampleListings`, and this route is
+ *  the only server path that can set them (the enforce_listing_status_transition
+ *  trigger refuses them for non-service-role callers).
+ *
+ *  `draft` is deliberately absent: it is the seller's pre-submission state, not a
+ *  moderation verdict, and pushing a listing back to draft would drop it out of
+ *  the queue with no way back in. */
+const ALLOWED = [
+  'pending',
+  'active',
+  'sold',
+  'expired',
+  'cancelled',
+  'example_free',
+  'example_paid',
+] as const;
+
+/** Mirrors FEATURED_DURATION_DAYS in app/composables/useListings.ts. */
+const FEATURED_DURATION_DAYS = 30;
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -46,7 +62,7 @@ export default defineEventHandler(async (event) => {
   const db = getServiceClient();
   const { data: listing, error: loadErr } = await db
     .from('listings')
-    .select('id, user_id, title, slug, status')
+    .select('id, user_id, title, slug, status, tier')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw createError({ statusCode: 500, statusMessage: 'Failed to load listing' });
@@ -58,17 +74,29 @@ export default defineEventHandler(async (event) => {
 
   const updates: Record<string, unknown> = { status };
 
-  // Going live for the first time stamps published_at; it is otherwise left
-  // alone so a relist keeps its original publication date.
-  if (status === 'active' && !body?.relist) {
+  // Going live — whether by approval or by relist — republishes, so published_at
+  // is stamped either way. (Relist matching approval here is intentional: a
+  // relisted listing should sort as newly published in browse.)
+  if (status === 'active') {
     updates.published_at = new Date().toISOString();
   }
 
-  // Relist: clear the sale metadata so the listing doesn't render as sold.
+  // Relist: reset the sale trail. This MUST stay in sync with
+  // `relistListing()` in app/composables/useListings.ts — that is the seller's
+  // own relist button, and "relist" has to mean the same thing whoever clicks
+  // it. Leaving tracking_* behind resurfaces stale shipping info on the detail
+  // page, and leaving promoted_on_social_at set makes the relisted listing look
+  // already-promoted to the social worker.
   if (body?.relist) {
     updates.sold_date = null;
     updates.final_price = null;
-    updates.published_at = new Date().toISOString();
+    updates.tracking_number = null;
+    updates.tracking_carrier = null;
+    updates.promoted_on_social_at = null;
+    updates.featured_until =
+      listing.tier === 'paid'
+        ? new Date(Date.now() + FEATURED_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
+        : null;
   }
 
   const { error: upErr } = await db.from('listings').update(updates).eq('id', id);

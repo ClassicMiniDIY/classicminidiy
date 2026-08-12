@@ -696,9 +696,15 @@
         },
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-    } catch (emailError) {
-      // Don't fail the whole submission if email fails
-      console.error('Failed to send submission email:', emailError);
+    } catch (notifyError) {
+      // Don't fail the whole submission — the listing is already saved. Note this
+      // one call fans out to BOTH the seller confirmation and the admin
+      // pending-review queue, so a failure here can mean no admin was told a
+      // listing is waiting; say so rather than blaming "the email".
+      console.error(
+        'Listing submitted, but queueing its seller confirmation + admin pending-review notification failed:',
+        notifyError
+      );
     }
   };
 
