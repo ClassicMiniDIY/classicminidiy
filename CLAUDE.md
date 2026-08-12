@@ -452,6 +452,43 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
 - **Public profile reads go through the `public_profiles` view, not `profiles`.** Since the profiles split, `profiles` SELECT is own-row/admin-only; the view carries the community-facing trust columns (`trust_level`, `total_submissions`, `approved_submissions`). Querying `profiles` for another user silently returns zero rows.
 - **Trust visibility:** `DashboardTrustProgressCard` on `/dashboard/submissions` is the user-facing explanation of levels/thresholds (3 approved → contributor; 10 + <20% rejections → trusted; 30-day tenure path to contributor). Keep its copy in sync with the DB thresholds if they change.
 
+## Marketplace (`/exchange`) Invariants
+
+- **A paid listing is born `draft`, and ONLY the payment path may promote it to
+  `pending`.** `ListingWizard.submitListing()` creates paid-tier rows as `draft`
+  on purpose, so an abandoned Stripe checkout never lands in the moderation
+  queue. That makes the promotion a hard requirement of every surface that
+  completes a payment, and there are three: the Sustaining Member comp
+  (`grantComplimentaryPremiumListing`), the webhook, and the verify fallback
+  (both via `markListingPaid`). All three call `promoteListingToPending` in
+  `classicminidiy-supabase/supabase/functions/_shared/listings.ts`.
+
+  Getting this wrong is invisible in testing and total in production. A `draft`
+  is filtered out of **both** directions — browse reads `status='active'` only
+  (`useExampleListings.activeStatuses`) and the admin queue reads
+  `status='pending'` only (`/admin/exchange/moderation`) — so the listing exists,
+  is complete, and is readable by nobody but its owner via own-row RLS. From the
+  2026-07-13 TME cutover until 2026-08-12 every paid listing landed there. It
+  surfaced as a seller reporting his ad had *disappeared*, not that it had never
+  published, because the comped confirmation screen claimed "Live Now" in all 10
+  locales. Nobody caught it sooner because the paid path also never called
+  `/api/exchange/listings/submit`, so no `admin_listing_pending` email ever fired.
+
+  `promoteListingToPending` is filtered on `status='draft'` and that predicate is
+  load-bearing, not defensive: it is the only thing stopping a payment from
+  flipping a `pending` listing live (bypassing review), resurrecting a `sold`
+  one, or demoting an `active` one. Never widen it. `pending → active` belongs to
+  moderation alone, which is also what fires the `on_listing_approved` trust
+  trigger — so promoting a swallowed listing straight to `active` silently robs
+  the seller of trust credit. Send it to `pending` and let review approve it.
+
+- **`useListings().publishListing()` has no callers, and wiring it up client-side
+  is the wrong fix for the above.** It sets `status: 'active'` directly, and the
+  `Update listings policy` RLS rule is `auth.uid() = user_id` with **no
+  `with_check` and no column allowlist** — so an owner can already self-publish
+  straight past moderation from the browser. Promotion belongs server-side, in
+  the edge function, where ownership and payment are both verified.
+
 ## Contribution Loop Invariants
 
 The UX cohesion pass turned the archive into a contribution platform. The loop is
