@@ -533,12 +533,25 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
 
   Migration `20260812000001_enforce_listing_status_transitions` closes it with a
   BEFORE UPDATE trigger (a `with_check` can't — it sees only NEW, and the rule is
-  about the transition). For a non-admin owner: `draft|pending → active` and
-  anything `→ example_*` are refused; `draft → pending`, `active → sold`, and
-  relisting an already-moderated `sold|expired|cancelled → active` all still work.
-  Service-role and admins bypass. **If you add an owner-facing status action,
-  check it against that trigger** — it fails as a `42501` permission error, not a
-  validation message.
+  about the transition). **Visibility is gated on `listings.approved_at`, not on
+  the previous status.** For a non-admin owner: any move to `active` while
+  `approved_at IS NULL` is refused, anything `→ example_*` is refused, and any
+  write to `approved_at` itself is refused. `draft → pending`, `active → sold`,
+  and relisting a genuinely-approved `sold|expired|cancelled → active` all still
+  work. Service-role and admins bypass, and stamp `approved_at` on the first
+  publish. **If you add an owner-facing status action, check it against that
+  trigger** — it fails as a `42501` permission error, not a validation message.
+
+  It is gated on a column rather than an allowlist of transitions because the
+  first version of this trigger simply refused `draft|pending → active` and
+  trusted `sold|expired|cancelled → active` as "relisting something already
+  approved". Both legs are legal alone, so `pending → cancelled → active` — or
+  `draft → sold → active` — walked straight through in two hops. Reaching a
+  post-sale status is not evidence of approval. Don't reintroduce a
+  status-pair allowlist. (`published_at` cannot stand in for `approved_at`
+  either: it is NULL on almost every active listing and owners can write it.)
+  `classicminidiy-supabase/snippets/verify_20260812_listing_status_transitions.sql`
+  reproduces all 13 cases in a rolled-back transaction.
 
 - **Admin listing moderation runs through two server routes that must exist:**
   `PUT /api/admin/listings/[id]/status` and `.../tier`. They are the only path to
