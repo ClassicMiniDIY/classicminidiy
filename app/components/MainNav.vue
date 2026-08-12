@@ -120,22 +120,10 @@
    * `/` opens omnisearch from anywhere — but never while the caret is in a text
    * field, or the key would be swallowed instead of typed.
    *
-   * Escape closes an open header menu. These menus are pure CSS (daisyUI opens
-   * them on `:focus-within`), so closing one means moving focus out of it —
-   * which, until this existed, only a click somewhere else could do. Scoped to
-   * focus actually being inside a header dropdown so it never eats an Escape
-   * meant for the omnisearch palette or a modal.
+   * Escape-to-dismiss is NOT here: it applies to every dropdown in the app, so
+   * it lives in `app/plugins/dropdown-dismiss.client.ts`.
    */
   const onGlobalKeydown = (event: KeyboardEvent) => {
-    const active = document.activeElement;
-
-    if (event.key === 'Escape') {
-      if (!(active instanceof HTMLElement) || !active.closest('.main-nav .dropdown')) return;
-      event.preventDefault();
-      active.blur();
-      return;
-    }
-
     if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
     const target = event.target as HTMLElement | null;
     if (!target) return;
@@ -210,7 +198,7 @@
           </div>
           <ul
             tabindex="0"
-            class="nav-menu dropdown-content menu z-[60] mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+            class="dropdown-content menu z-[60] mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
           >
             <li v-for="link in secondaryLinks" :key="link.to">
               <NuxtLink v-if="!link.external" :to="link.to" class="font-semibold" @click="closeDropdowns()">
@@ -282,7 +270,7 @@
         </div>
         <ul
           tabindex="0"
-          class="nav-menu dropdown-content menu z-[60] mt-2 w-60 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+          class="dropdown-content menu z-[60] mt-2 w-60 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
         >
           <li class="menu-title truncate">{{ handle }}</li>
           <li>
@@ -349,7 +337,7 @@
           </div>
           <ul
             tabindex="0"
-            class="nav-menu dropdown-content menu z-[60] mt-2 w-48 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+            class="dropdown-content menu z-[60] mt-2 w-48 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
           >
             <li v-for="loc in availableLocales" :key="loc.code">
               <button type="button" @click="handleLanguageChange(loc.code)">{{ getLanguageName(loc.code) }}</button>
@@ -540,39 +528,6 @@
   .nav-link.is-active {
     background: var(--color-base-200);
     color: var(--color-primary);
-  }
-
-  /**
-   * Every header menu, and the reason they don't inherit daisyUI's defaults.
-   *
-   * daisyUI 5's `.dropdown .dropdown-content` sets ONLY `position: absolute` —
-   * no `top`, no `bottom`. Vertical placement falls out of the element's static
-   * position, and `position-area` (which daisyUI puts on `.dropdown`) is inert
-   * on a `position: relative` box with no anchor-name. So placement is whatever
-   * flow happens to produce, and there is no viewport awareness at all:
-   * `max-height` is `none` and `overflow-y` is `visible`.
-   *
-   * That is fine on a tall window and unusable on a short one. These menus are
-   * absolutely positioned inside a `sticky` header, so anything past the
-   * viewport edge is not merely off-screen — it is UNREACHABLE, because there
-   * is nothing to scroll. At 320px tall the account menu (331px) put 68px of
-   * itself, Sign Out included, permanently out of reach. Browser zoom shortens
-   * the viewport exactly the same way, which is how this shows up on a normal
-   * display.
-   *
-   * So: pin the menu below its trigger explicitly, and never let it be taller
-   * than the room beneath it — scroll instead. Unlayered scoped CSS beats
-   * daisyUI's `@layer utilities` regardless of source order.
-   */
-  .nav-menu {
-    top: 100%;
-    bottom: auto;
-    /* Viewport minus the menu's own offset from the top of the sticky header,
-       plus a small gutter so it never sits flush against the bottom edge. */
-    max-height: calc(100dvh - 5rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    flex-wrap: nowrap;
   }
 
   .omnisearch-trigger {
