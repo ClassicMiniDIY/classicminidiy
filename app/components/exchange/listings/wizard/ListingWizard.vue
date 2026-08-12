@@ -675,10 +675,12 @@
    * pending-moderation fan-out. Never throws — a failed email must not fail a
    * submission that already landed in the database.
    *
-   * Called for every listing that has actually reached `pending`: free tier, and
-   * the comped Sustaining Member premium path. Until 2026-08-12 the paid path
-   * called this never, which is the main reason paid listings sat invisible for
-   * a month without anyone noticing — no admin was ever told one was waiting.
+   * FREE TIER ONLY. Free rows are created `pending` outright, so nothing
+   * server-side observes a transition for them and the client has to announce it.
+   * Paid rows are created `draft` and announced by `promoteListingToPending` in
+   * the edge function, at the moment payment or the member comp actually moves
+   * them to `pending` — which is the only place that can see the Stripe path,
+   * where the seller is on Stripe's domain when the webhook lands.
    */
   const notifySubmitted = async (listingId: string) => {
     const userEmail = user.value?.email || userProfile.value?.email;
@@ -747,11 +749,10 @@
         // redirect and advance straight to confirmation. The server is the source
         // of truth for the grant — we only branch the UX on the response here.
         if (response.comped || !response.url) {
-          // The grant also promoted the listing draft -> pending server-side
-          // (grantComplimentaryPremiumListing), so it is genuinely queued for
-          // review now and the notifications describe a real state.
-          await notifySubmitted(listingId);
-
+          // No notifySubmitted() here on purpose: the comp grant already
+          // promoted the row draft -> pending server-side, and
+          // promoteListingToPending enqueues the seller + admin notifications on
+          // that transition. Calling it again here would double-notify.
           comped.value = true;
           submissionComplete.value = true;
           toast.add({
