@@ -670,6 +670,36 @@
     });
   };
 
+  /**
+   * Fire the "submitted for review" seller confirmation + the admin
+   * pending-moderation fan-out. Never throws — a failed email must not fail a
+   * submission that already landed in the database.
+   *
+   * Called for every listing that has actually reached `pending`: free tier, and
+   * the comped Sustaining Member premium path. Until 2026-08-12 the paid path
+   * called this never, which is the main reason paid listings sat invisible for
+   * a month without anyone noticing — no admin was ever told one was waiting.
+   */
+  const notifySubmitted = async (listingId: string) => {
+    const userEmail = user.value?.email || userProfile.value?.email;
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      await $fetch('/api/exchange/listings/submit', {
+        method: 'POST',
+        body: {
+          listingId,
+          userEmail,
+          listingTitle: formData.value.title,
+        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch (emailError) {
+      // Don't fail the whole submission if email fails
+      console.error('Failed to send submission email:', emailError);
+    }
+  };
+
   const submitListing = async () => {
     if (!user.value) return;
 
@@ -717,6 +747,11 @@
         // redirect and advance straight to confirmation. The server is the source
         // of truth for the grant — we only branch the UX on the response here.
         if (response.comped || !response.url) {
+          // The grant also promoted the listing draft -> pending server-side
+          // (grantComplimentaryPremiumListing), so it is genuinely queued for
+          // review now and the notifications describe a real state.
+          await notifySubmitted(listingId);
+
           comped.value = true;
           submissionComplete.value = true;
           toast.add({
@@ -733,23 +768,7 @@
       }
 
       // Free tier: send email and show confirmation step
-      const userEmail = user.value?.email || userProfile.value?.email;
-      try {
-        const session = await supabase.auth.getSession();
-        const token = session.data.session?.access_token;
-        await $fetch('/api/exchange/listings/submit', {
-          method: 'POST',
-          body: {
-            listingId: listingId,
-            userEmail,
-            listingTitle: formData.value.title,
-          },
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-      } catch (emailError) {
-        // Don't fail the whole submission if email fails
-        console.error('Failed to send submission email:', emailError);
-      }
+      await notifySubmitted(listingId);
 
       trackListingSubmission(listingId);
 

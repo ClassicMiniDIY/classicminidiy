@@ -24,7 +24,13 @@
         <div class="card-body">
           <h3 class="font-bold mb-4">{{ t('nextSteps.heading') }}</h3>
 
-          <!-- Comped Premium (Sustaining Member) -->
+          <!-- Comped Premium (Sustaining Member).
+               Step order is deliberate: the premium grant is immediate, but the
+               listing still goes through moderation like every other one, so
+               review comes BEFORE going live. This block used to promise "Live
+               Now / visible to all buyers", which was wrong on both counts and
+               is what made sellers think an approved-and-live listing had
+               vanished the next day. -->
           <div v-if="comped" class="space-y-3">
             <div class="flex items-start gap-3">
               <div class="badge badge-primary badge-sm mt-1">1</div>
@@ -36,15 +42,15 @@
             <div class="flex items-start gap-3">
               <div class="badge badge-primary badge-sm mt-1">2</div>
               <div>
-                <p class="font-medium">{{ t('comped.featured.title') }}</p>
-                <p class="text-sm text-base-content/70">{{ t('comped.featured.desc') }}</p>
+                <p class="font-medium">{{ t('comped.review.title') }}</p>
+                <p class="text-sm text-base-content/70">{{ t('comped.review.desc') }}</p>
               </div>
             </div>
             <div class="flex items-start gap-3">
-              <div class="badge badge-primary badge-sm mt-1">3</div>
+              <div class="badge badge-ghost badge-sm mt-1">3</div>
               <div>
-                <p class="font-medium">{{ t('comped.live.title') }}</p>
-                <p class="text-sm text-base-content/70">{{ t('comped.live.desc') }}</p>
+                <p class="font-medium">{{ t('comped.featured.title') }}</p>
+                <p class="text-sm text-base-content/70">{{ t('comped.featured.desc') }}</p>
               </div>
             </div>
           </div>
@@ -143,15 +149,15 @@
     "submitting": "Submitting your listing...",
     "submitted": "Listing Submitted!",
     "subtitle": {
-      "comped": "Premium included with your Sustaining membership — your listing is now live.",
+      "comped": "Premium included with your Sustaining membership — your listing is now in review.",
       "paid": "Complete your payment to activate your Premium features.",
       "free": "Your listing is being reviewed."
     },
     "nextSteps": { "heading": "What happens next?" },
     "comped": {
       "premiumApplied": { "title": "Premium Applied", "desc": "Included with your Sustaining membership" },
-      "featured": { "title": "Featured for 30 Days", "desc": "Priority search placement and homepage carousel exposure" },
-      "live": { "title": "Live Now", "desc": "Your listing is visible to all buyers" }
+      "review": { "title": "Admin Review", "desc": "Our team reviews all listings for quality (24-48 hours)" },
+      "featured": { "title": "Featured for 30 Days", "desc": "Once approved: priority search placement and homepage carousel exposure" }
     },
     "paid": {
       "payment": { "title": "Complete Payment", "desc": "Click below to securely pay via Stripe" },
@@ -172,15 +178,15 @@
     "submitting": "Enviando tu anuncio...",
     "submitted": "¡Anuncio enviado!",
     "subtitle": {
-      "comped": "Premium incluido con tu membresía Sustaining: tu anuncio ya está activo.",
+      "comped": "Premium incluido con tu membresía Sustaining: tu anuncio está en revisión.",
       "paid": "Completa tu pago para activar tus funciones Premium.",
       "free": "Tu anuncio está en revisión."
     },
     "nextSteps": { "heading": "¿Qué sucede ahora?" },
     "comped": {
       "premiumApplied": { "title": "Premium aplicado", "desc": "Incluido con tu membresía Sustaining" },
-      "featured": { "title": "Destacado durante 30 días", "desc": "Posición prioritaria en búsquedas y aparición en el carrusel de la página de inicio" },
-      "live": { "title": "Activo ahora", "desc": "Tu anuncio es visible para todos los compradores" }
+      "review": { "title": "Revisión del administrador", "desc": "Nuestro equipo revisa todos los anuncios por calidad (24-48 horas)" },
+      "featured": { "title": "Destacado durante 30 días", "desc": "Una vez aprobado: posición prioritaria en búsquedas y aparición en el carrusel de la página de inicio" }
     },
     "paid": {
       "payment": { "title": "Completar el pago", "desc": "Haz clic abajo para pagar de forma segura con Stripe" },
@@ -201,15 +207,15 @@
     "submitting": "Envoi de votre annonce...",
     "submitted": "Annonce envoyée !",
     "subtitle": {
-      "comped": "Premium inclus avec votre abonnement Sustaining — votre annonce est désormais en ligne.",
+      "comped": "Premium inclus avec votre abonnement Sustaining — votre annonce est en cours d'examen.",
       "paid": "Finalisez votre paiement pour activer vos fonctionnalités Premium.",
       "free": "Votre annonce est en cours d'examen."
     },
     "nextSteps": { "heading": "Que se passe-t-il ensuite ?" },
     "comped": {
       "premiumApplied": { "title": "Premium appliqué", "desc": "Inclus avec votre abonnement Sustaining" },
-      "featured": { "title": "Mis en avant pendant 30 jours", "desc": "Placement prioritaire dans la recherche et exposition dans le carrousel de la page d'accueil" },
-      "live": { "title": "En ligne maintenant", "desc": "Votre annonce est visible par tous les acheteurs" }
+      "review": { "title": "Examen par l'administrateur", "desc": "Notre équipe examine la qualité de toutes les annonces (24-48 heures)" },
+      "featured": { "title": "Mis en avant pendant 30 jours", "desc": "Après approbation : placement prioritaire dans la recherche et exposition dans le carrousel de la page d'accueil" }
     },
     "paid": {
       "payment": { "title": "Finaliser le paiement", "desc": "Cliquez ci-dessous pour payer en toute sécurité via Stripe" },
@@ -230,15 +236,15 @@
     "submitting": "Anzeige wird übermittelt...",
     "submitted": "Anzeige übermittelt!",
     "subtitle": {
-      "comped": "Premium ist in deiner Sustaining-Mitgliedschaft enthalten — deine Anzeige ist jetzt live.",
+      "comped": "Premium ist in deiner Sustaining-Mitgliedschaft enthalten — deine Anzeige wird jetzt überprüft.",
       "paid": "Schließe deine Zahlung ab, um deine Premium-Funktionen zu aktivieren.",
       "free": "Deine Anzeige wird überprüft."
     },
     "nextSteps": { "heading": "Was passiert als Nächstes?" },
     "comped": {
       "premiumApplied": { "title": "Premium angewendet", "desc": "In deiner Sustaining-Mitgliedschaft enthalten" },
-      "featured": { "title": "30 Tage hervorgehoben", "desc": "Vorrangige Platzierung in der Suche und Anzeige im Karussell der Startseite" },
-      "live": { "title": "Jetzt live", "desc": "Deine Anzeige ist für alle Käufer sichtbar" }
+      "review": { "title": "Admin-Prüfung", "desc": "Unser Team prüft alle Anzeigen auf Qualität (24-48 Stunden)" },
+      "featured": { "title": "30 Tage hervorgehoben", "desc": "Nach der Genehmigung: vorrangige Platzierung in der Suche und Anzeige im Karussell der Startseite" }
     },
     "paid": {
       "payment": { "title": "Zahlung abschließen", "desc": "Klicke unten, um sicher über Stripe zu bezahlen" },
@@ -259,15 +265,15 @@
     "submitting": "Invio del tuo annuncio...",
     "submitted": "Annuncio inviato!",
     "subtitle": {
-      "comped": "Premium incluso con il tuo abbonamento Sustaining: il tuo annuncio è ora online.",
+      "comped": "Premium incluso con il tuo abbonamento Sustaining: il tuo annuncio è in fase di revisione.",
       "paid": "Completa il pagamento per attivare le funzionalità Premium.",
       "free": "Il tuo annuncio è in fase di revisione."
     },
     "nextSteps": { "heading": "Cosa succede ora?" },
     "comped": {
       "premiumApplied": { "title": "Premium applicato", "desc": "Incluso con il tuo abbonamento Sustaining" },
-      "featured": { "title": "In evidenza per 30 giorni", "desc": "Posizionamento prioritario nelle ricerche ed esposizione nel carosello della home page" },
-      "live": { "title": "Online ora", "desc": "Il tuo annuncio è visibile a tutti gli acquirenti" }
+      "review": { "title": "Revisione dell'amministratore", "desc": "Il nostro team controlla la qualità di tutti gli annunci (24-48 ore)" },
+      "featured": { "title": "In evidenza per 30 giorni", "desc": "Una volta approvato: posizionamento prioritario nelle ricerche ed esposizione nel carosello della home page" }
     },
     "paid": {
       "payment": { "title": "Completa il pagamento", "desc": "Clicca qui sotto per pagare in sicurezza tramite Stripe" },
@@ -288,15 +294,15 @@
     "submitting": "Enviando seu anúncio...",
     "submitted": "Anúncio enviado!",
     "subtitle": {
-      "comped": "Premium incluído na sua assinatura Sustaining — seu anúncio já está no ar.",
+      "comped": "Premium incluído na sua assinatura Sustaining — seu anúncio está em análise.",
       "paid": "Conclua seu pagamento para ativar seus recursos Premium.",
       "free": "Seu anúncio está em análise."
     },
     "nextSteps": { "heading": "O que acontece a seguir?" },
     "comped": {
       "premiumApplied": { "title": "Premium aplicado", "desc": "Incluído na sua assinatura Sustaining" },
-      "featured": { "title": "Destaque por 30 dias", "desc": "Posição prioritária na busca e exposição no carrossel da página inicial" },
-      "live": { "title": "No ar agora", "desc": "Seu anúncio está visível para todos os compradores" }
+      "review": { "title": "Revisão do administrador", "desc": "Nossa equipe revisa a qualidade de todos os anúncios (24-48 horas)" },
+      "featured": { "title": "Destaque por 30 dias", "desc": "Após a aprovação: posição prioritária na busca e exposição no carrossel da página inicial" }
     },
     "paid": {
       "payment": { "title": "Concluir pagamento", "desc": "Clique abaixo para pagar com segurança via Stripe" },
@@ -317,15 +323,15 @@
     "submitting": "Отправка вашего объявления...",
     "submitted": "Объявление отправлено!",
     "subtitle": {
-      "comped": "Premium включён в вашу подписку Sustaining — ваше объявление уже опубликовано.",
+      "comped": "Premium включён в вашу подписку Sustaining — ваше объявление находится на проверке.",
       "paid": "Завершите оплату, чтобы активировать функции Premium.",
       "free": "Ваше объявление находится на проверке."
     },
     "nextSteps": { "heading": "Что дальше?" },
     "comped": {
       "premiumApplied": { "title": "Premium применён", "desc": "Включён в вашу подписку Sustaining" },
-      "featured": { "title": "Выделение на 30 дней", "desc": "Приоритетное место в поиске и показ в карусели на главной странице" },
-      "live": { "title": "Опубликовано", "desc": "Ваше объявление видно всем покупателям" }
+      "review": { "title": "Проверка администратором", "desc": "Наша команда проверяет качество всех объявлений (24-48 часов)" },
+      "featured": { "title": "Выделение на 30 дней", "desc": "После одобрения: приоритетное место в поиске и показ в карусели на главной странице" }
     },
     "paid": {
       "payment": { "title": "Завершить оплату", "desc": "Нажмите ниже, чтобы безопасно оплатить через Stripe" },
@@ -346,15 +352,15 @@
     "submitting": "出品を送信しています...",
     "submitted": "出品が送信されました！",
     "subtitle": {
-      "comped": "Premium は Sustaining メンバーシップに含まれています — 出品は公開されました。",
+      "comped": "Premium は Sustaining メンバーシップに含まれています — 出品は審査中です。",
       "paid": "Premium 機能を有効にするには支払いを完了してください。",
       "free": "出品は審査中です。"
     },
     "nextSteps": { "heading": "次に何が起こりますか？" },
     "comped": {
       "premiumApplied": { "title": "Premium 適用済み", "desc": "Sustaining メンバーシップに含まれます" },
-      "featured": { "title": "30 日間の注目掲載", "desc": "検索での優先表示とホームページのカルーセルへの露出" },
-      "live": { "title": "現在公開中", "desc": "出品はすべての購入者に表示されます" }
+      "review": { "title": "管理者による審査", "desc": "当チームがすべての出品の品質を確認します（24〜48時間）" },
+      "featured": { "title": "30 日間の注目掲載", "desc": "承認後：検索での優先表示とホームページのカルーセルへの露出" }
     },
     "paid": {
       "payment": { "title": "支払いを完了", "desc": "下のボタンから Stripe で安全に支払えます" },
@@ -375,15 +381,15 @@
     "submitting": "正在提交您的刊登...",
     "submitted": "刊登已提交！",
     "subtitle": {
-      "comped": "Premium 已包含在您的 Sustaining 会籍中——您的刊登现已上线。",
+      "comped": "Premium 已包含在您的 Sustaining 会籍中——您的刊登正在审核中。",
       "paid": "完成付款以激活您的 Premium 功能。",
       "free": "您的刊登正在审核中。"
     },
     "nextSteps": { "heading": "接下来会发生什么？" },
     "comped": {
       "premiumApplied": { "title": "已应用 Premium", "desc": "已包含在您的 Sustaining 会籍中" },
-      "featured": { "title": "精选展示 30 天", "desc": "搜索优先展示以及首页轮播曝光" },
-      "live": { "title": "现已上线", "desc": "您的刊登对所有买家可见" }
+      "review": { "title": "管理员审核", "desc": "我们的团队会审核所有刊登的质量（24-48 小时）" },
+      "featured": { "title": "精选展示 30 天", "desc": "审核通过后：搜索优先展示以及首页轮播曝光" }
     },
     "paid": {
       "payment": { "title": "完成付款", "desc": "点击下方通过 Stripe 安全付款" },
@@ -404,15 +410,15 @@
     "submitting": "등록을 제출하는 중...",
     "submitted": "등록이 제출되었습니다!",
     "subtitle": {
-      "comped": "Premium은 Sustaining 멤버십에 포함되어 있습니다 — 등록이 이제 공개되었습니다.",
+      "comped": "Premium은 Sustaining 멤버십에 포함되어 있습니다 — 등록을 검토하고 있습니다.",
       "paid": "Premium 기능을 활성화하려면 결제를 완료하세요.",
       "free": "등록을 검토하고 있습니다."
     },
     "nextSteps": { "heading": "다음은 무엇인가요?" },
     "comped": {
       "premiumApplied": { "title": "Premium 적용됨", "desc": "Sustaining 멤버십에 포함됨" },
-      "featured": { "title": "30일간 추천 노출", "desc": "검색 우선 노출 및 홈페이지 캐러셀 노출" },
-      "live": { "title": "지금 공개됨", "desc": "등록이 모든 구매자에게 표시됩니다" }
+      "review": { "title": "관리자 검토", "desc": "저희 팀이 모든 등록의 품질을 검토합니다 (24-48시간)" },
+      "featured": { "title": "30일간 추천 노출", "desc": "승인 후: 검색 우선 노출 및 홈페이지 캐러셀 노출" }
     },
     "paid": {
       "payment": { "title": "결제 완료", "desc": "아래를 클릭하여 Stripe로 안전하게 결제하세요" },
