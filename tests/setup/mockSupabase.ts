@@ -85,6 +85,14 @@ export const createMockSupabaseClient = () => {
 
   const mockFrom = vi.fn(() => queryBuilder);
 
+  // Realtime. `.on()` chains and `.subscribe()` terminates, mirroring the real
+  // client, so consumers that build a channel fluently work unchanged.
+  const mockSubscribe = vi.fn().mockReturnThis();
+  const mockOn = vi.fn().mockReturnThis();
+  const realtimeChannel: any = { on: mockOn, subscribe: mockSubscribe, unsubscribe: vi.fn() };
+  const mockChannel = vi.fn(() => realtimeChannel);
+  const mockRemoveChannel = vi.fn();
+
   return {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: mockSession }, error: null }),
@@ -96,6 +104,8 @@ export const createMockSupabaseClient = () => {
     },
     from: mockFrom,
     rpc: mockRpc,
+    channel: mockChannel,
+    removeChannel: mockRemoveChannel,
     storage: {
       from: vi.fn(() => ({
         upload: vi.fn().mockResolvedValue({ data: { path: 'mock-path' }, error: null }),
@@ -104,6 +114,10 @@ export const createMockSupabaseClient = () => {
       })),
     },
     _queryBuilder: queryBuilder,
+    _realtimeChannel: realtimeChannel,
+    _mockChannel: mockChannel,
+    _mockChannelOn: mockOn,
+    _mockRemoveChannel: mockRemoveChannel,
     _mockRpc: mockRpc,
     _mockSelect: mockSelect,
     _mockInsert: mockInsert,

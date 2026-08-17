@@ -23,6 +23,11 @@
   const { user, userProfile, isAuthenticated, isAdmin, signOut } = useAuth();
   const { track, trackOutbound } = useAnalytics();
   const { open: openOmnisearch } = useOmnisearch();
+  // Read-only here: `MessagesNavButton` owns the fetch + subscription, and the
+  // count is shared state, so the dropdown and drawer entries just render it.
+  const { unreadCount } = useUnreadMessages();
+
+  const unreadBadge = computed(() => (unreadCount.value > 99 ? '99+' : String(unreadCount.value)));
 
   const displayName = computed(() => {
     if (!user.value) return '';
@@ -248,6 +253,10 @@
         <i class="fas fa-magnifying-glass text-base" aria-hidden="true"></i>
       </button>
 
+      <!-- Inbox, left of the theme toggle. Signed-in only — there is nothing to
+           count otherwise, and /exchange/messages is behind `exchange-auth`. -->
+      <MessagesNavButton v-if="isAuthenticated" />
+
       <ColorModeButton size="sm" />
 
       <!-- Account -->
@@ -273,6 +282,15 @@
           class="dropdown-content menu z-[60] mt-2 w-60 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
         >
           <li class="menu-title truncate">{{ handle }}</li>
+          <li>
+            <NuxtLink to="/exchange/messages" @click="closeDropdowns()">
+              <i class="fas fa-envelope w-4" aria-hidden="true"></i>
+              {{ t('profile.messages') }}
+              <span v-if="unreadCount > 0" class="badge badge-primary badge-sm ml-auto">
+                {{ unreadBadge }}
+              </span>
+            </NuxtLink>
+          </li>
           <li>
             <NuxtLink to="/profile" @click="closeDropdowns()">
               <i class="fas fa-user w-4" aria-hidden="true"></i>
@@ -421,6 +439,20 @@
               </template>
 
               <div class="my-2 mx-1.5 h-px bg-base-300"></div>
+
+              <NuxtLink
+                v-if="isAuthenticated"
+                to="/exchange/messages"
+                class="drawer-link"
+                :class="{ 'is-active': isActive('/exchange/messages') }"
+                @click="goToDrawerLink('Messages')"
+              >
+                <i class="fas fa-envelope w-[18px] text-secondary" aria-hidden="true"></i>
+                {{ t('profile.messages') }}
+                <span v-if="unreadCount > 0" class="badge badge-primary badge-sm ml-auto">
+                  {{ unreadBadge }}
+                </span>
+              </NuxtLink>
 
               <NuxtLink
                 v-if="isAdmin"
@@ -637,6 +669,7 @@
       "about": "About"
     },
     "profile": {
+      "messages": "Messages",
       "sign_in": "Sign In",
       "sign_out": "Sign Out",
       "admin": "Admin",
@@ -667,6 +700,7 @@
       "about": "Acerca de"
     },
     "profile": {
+      "messages": "Mensajes",
       "sign_in": "Iniciar sesión",
       "sign_out": "Cerrar sesión",
       "admin": "Admin",
@@ -697,6 +731,7 @@
       "about": "À propos"
     },
     "profile": {
+      "messages": "Messages",
       "sign_in": "Se connecter",
       "sign_out": "Se déconnecter",
       "admin": "Admin",
@@ -727,6 +762,7 @@
       "about": "Über uns"
     },
     "profile": {
+      "messages": "Nachrichten",
       "sign_in": "Anmelden",
       "sign_out": "Abmelden",
       "admin": "Admin",
@@ -757,6 +793,7 @@
       "about": "Chi siamo"
     },
     "profile": {
+      "messages": "Messaggi",
       "sign_in": "Accedi",
       "sign_out": "Esci",
       "admin": "Admin",
@@ -787,6 +824,7 @@
       "about": "Sobre"
     },
     "profile": {
+      "messages": "Mensagens",
       "sign_in": "Entrar",
       "sign_out": "Sair",
       "admin": "Admin",
@@ -817,6 +855,7 @@
       "about": "О нас"
     },
     "profile": {
+      "messages": "Сообщения",
       "sign_in": "Войти",
       "sign_out": "Выйти",
       "admin": "Админ",
@@ -847,6 +886,7 @@
       "about": "概要"
     },
     "profile": {
+      "messages": "メッセージ",
       "sign_in": "ログイン",
       "sign_out": "ログアウト",
       "admin": "管理",
@@ -877,6 +917,7 @@
       "about": "关于"
     },
     "profile": {
+      "messages": "消息",
       "sign_in": "登录",
       "sign_out": "退出",
       "admin": "管理",
@@ -907,6 +948,7 @@
       "about": "소개"
     },
     "profile": {
+      "messages": "메시지",
       "sign_in": "로그인",
       "sign_out": "로그아웃",
       "admin": "관리",
