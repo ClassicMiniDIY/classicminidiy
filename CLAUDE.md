@@ -297,12 +297,28 @@ specific case in dev, fetch the transformed module and look at the vue import li
   stacking. The global rule unclips those containers only while a menu inside is open
   (`:has(.dropdown:focus-within)`).
 
-- **That unclip rule MUST stay unlayered.** It overrides `.overflow-x-auto`, a Tailwind
-  *utility*. Utilities sort after `components`, so the identical rule inside `@layer components`
-  loses no matter how specific it is — layer order beats specificity, and unlayered beats every
-  layer. Conversely the placement/size defaults stay IN `@layer components` on purpose, so
-  daisyUI's directional variants (`.dropdown-top` et al) and per-element utilities can still
-  override them.
+- **EVERY rule in that block must stay unlayered — placement and sizing included.** The
+  unclip rule overrides `.overflow-x-auto`, a Tailwind *utility*. But the same reasoning
+  applies to all of them, because **daisyUI 5 ships the whole `.dropdown` component inside
+  `@layer utilities`** (see `node_modules/daisyui/components/dropdown.css`), not `components`.
+  Utilities sort after `components`, so anything we put in `@layer components` is structurally
+  outranked by daisyUI's own declarations no matter how specific it is — layer order beats
+  specificity, and unlayered beats every layer. The placement/size defaults *were* in
+  `@layer components`, which happened to work only because daisyUI sets no `top`/`max-height`
+  on `.dropdown-content` for the default case; it was one upstream declaration away from being
+  silently overridden. Directional variants (`.dropdown-top` et al) still win because the
+  placement rule **excludes them by selector** (`:not(.dropdown-top, …)`) rather than relying
+  on layer order — verify that when touching it, since nothing else protects them now.
+  Nothing in `app/` sets `top`/`bottom`/`max-height`/`overflow` on a `.dropdown-content` via a
+  Tailwind utility, so unlayering tramples nothing; re-check that before adding one.
+
+- **`.dropdown { position: relative }` is restated unlayered, and it is load-bearing.** Every
+  other rule positions the menu against `.dropdown`. If that declaration ever fails to apply,
+  the menu resolves against the *initial containing block* instead — which pins it to the
+  VIEWPORT edges rather than the trigger: hard against the right edge of the window, and
+  vertically wherever the static position lands. daisyUI does set it, but in `utilities`, where
+  a stray utility outranks it. `[popover]` dropdowns are excluded because daisyUI deliberately
+  makes those `position: fixed`.
 
 - **Never unclip a vertical scroll container.** `.overflow-y-auto` / `.overflow-auto` are
   deliberately excluded: switching a scrolled container to `overflow: visible` resets its scroll
