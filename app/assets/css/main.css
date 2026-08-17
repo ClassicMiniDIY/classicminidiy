@@ -6,11 +6,13 @@
 @plugin '@tailwindcss/typography';
 
 @plugin "daisyui" {
-  themes: cmdiy --default, cmdiy-dark --prefersdark;
-  root: ":root";
-  include: ;
-  exclude: ;
-  prefix: ;
+  themes:
+    cmdiy --default,
+    cmdiy-dark --prefersdark;
+  root: ':root';
+  include:;
+  exclude:;
+  prefix:;
   logs: false;
 }
 
@@ -185,10 +187,10 @@
    Typography - Outfit font + Futura PT display
    ============================================ */
 :root {
-  --font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-  --font-display: futura-pt, 'Futura PT', 'Bahnschrift', 'Trebuchet MS', 'Avenir Next', 'Avenir', system-ui,
-    sans-serif;
+  --font-sans:
+    'Outfit', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-display: futura-pt, 'Futura PT', 'Bahnschrift', 'Trebuchet MS', 'Avenir Next', 'Avenir', system-ui, sans-serif;
 
   /* Type scale (1.250 ratio, compressed at small sizes) */
   --fs-xs: 0.75rem;
@@ -590,27 +592,46 @@ body {
    does nothing about either — clipping is not stacking. Measured on the
    listings table: 204px of the menu cut off, last action not clickable.
 
-   These rules live in `@layer components` on purpose, so daisyUI's directional
-   variants (`.dropdown-top` et al) and any Tailwind utility on the element
-   still win — this only fills in what nothing else sets. */
+   These rules are UNLAYERED, and that is deliberate — see the note on the
+   unclip rule below for the full reasoning. daisyUI 5 ships the whole
+   `.dropdown` component inside `@layer utilities` (check
+   `node_modules/daisyui/components/dropdown.css` if that ever looks wrong), and
+   utilities sort AFTER components, so anything we put in `@layer components`
+   is outranked by daisyUI's own declarations no matter how specific it is.
+   Directional variants still win where it matters because the placement rule
+   below excludes them by selector rather than by relying on layer order, and
+   nothing in `app/` sets `top`/`bottom`/`max-height`/`overflow` on a
+   `.dropdown-content` via a Tailwind utility. */
 
-@layer components {
-  /* State the default placement instead of inheriting the static position.
-     Excludes the variants that deliberately place themselves elsewhere. */
-  .dropdown:not(.dropdown-top, .dropdown-left, .dropdown-right, .dropdown-bottom) > .dropdown-content {
-    top: 100%;
-    bottom: auto;
-  }
+/* Guarantee the containing block. Everything else here positions against
+   `.dropdown`, so if this ever fails to apply the menu resolves against the
+   initial containing block instead — which puts it against the VIEWPORT edges
+   rather than the trigger, i.e. hard against the right edge of the window and
+   vertically wherever the static position lands. daisyUI does set this, but it
+   sets it in `utilities` where a stray utility can outrank it; restating it
+   unlayered makes that unreachable. `[popover]` dropdowns are excluded because
+   daisyUI deliberately makes those `position: fixed`. */
+.dropdown:not([popover]) {
+  position: relative;
+}
 
-  /* Never taller than the window; scroll past that. `overscroll-behavior`
-     keeps a scrolled menu from chaining into the page behind it. */
-  .dropdown-content {
-    max-height: calc(100dvh - 5rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    flex-wrap: nowrap;
-  }
+/* State the default placement instead of inheriting the static position.
+   Excludes the variants that deliberately place themselves elsewhere. */
+.dropdown:not(.dropdown-top, .dropdown-left, .dropdown-right, .dropdown-bottom) > .dropdown-content {
+  top: 100%;
+  bottom: auto;
+}
 
+/* Never larger than the window; scroll past that. `overscroll-behavior` keeps a
+   scrolled menu from chaining into the page behind it. The `max-width` is the
+   horizontal twin of the height cap: a menu wider than the window is just as
+   unreachable as one taller than it. */
+.dropdown-content {
+  max-height: calc(100dvh - 5rem);
+  max-width: calc(100vw - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex-wrap: nowrap;
 }
 
 /* Stop clipping WHILE a menu inside is open, and only then. daisyUI opens on
