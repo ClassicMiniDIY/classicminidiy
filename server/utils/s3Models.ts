@@ -123,19 +123,44 @@ export function createModelUploadPost(opts: {
   });
 }
 
-/** HeadObject — returns the object's size (and existence) for finalize. */
+/**
+ * HeadObject — returns the object's size (and existence) for finalize.
+ *
+ * Deliberately presigns the request and issues it with `fetch()` rather than
+ * calling `client.send()`. The AWS SDK's transport (`@smithy/node-http-handler`
+ * -> node:http/https) does not survive the Cloudflare Workers bundle: nitropack
+ * lists http/https in `unsupportedNodeModules`, and the call fails before it
+ * ever reaches AWS. Signing is pure crypto and works everywhere, so presign +
+ * fetch behaves identically on Node and on workerd.
+ *
+ * Verified on a workers.dev spike: `client.send()` threw
+ * `TypeError: Uj is not a function` with credentials that were deliberately
+ * invalid, i.e. it never got as far as being rejected by AWS.
+ *
+ * Do not "simplify" this back to `client.send()`.
+ */
 export async function headModelObject(key: string): Promise<{ exists: boolean; size: number }> {
   const { client, bucket } = getModelsS3();
-  try {
-    const res = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
-    return { exists: true, size: res.ContentLength ?? 0 };
-  } catch (err: any) {
-    const status = err?.$metadata?.httpStatusCode;
-    if (status === 404 || err?.name === 'NotFound' || err?.name === 'NoSuchKey') {
-      return { exists: false, size: 0 };
-    }
-    throw err;
+  const url = await getSignedUrl(client, new HeadObjectCommand({ Bucket: bucket, Key: key }), {
+    expiresIn: 60,
+  });
+
+  const res = await fetch(url, { method: 'HEAD' });
+
+  if (res.status === 404 || res.status === 403) {
+    // S3 answers 403 rather than 404 for a missing key when the caller lacks
+    // s3:ListBucket, so both mean "not there" for finalize's purposes.
+    return { exists: false, size: 0 };
   }
+  if (!res.ok) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: `S3 HeadObject failed (${res.status})`,
+    });
+  }
+
+  const len = res.headers.get('content-length');
+  return { exists: true, size: len ? Number.parseInt(len, 10) || 0 : 0 };
 }
 
 /**
@@ -144,11 +169,25 @@ export async function headModelObject(key: string): Promise<{ exists: boolean; s
  */
 export async function getModelObjectHead(key: string, length = 512): Promise<Buffer> {
   const { client, bucket } = getModelsS3();
-  const res = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key, Range: `bytes=0-${length - 1}` }));
-  if (!res.Body) return Buffer.alloc(0);
-  // The Node SDK augments Body with transformToByteArray().
-  const bytes = await (res.Body as any).transformToByteArray();
-  return Buffer.from(bytes);
+  // Presign + fetch, not client.send() — see headModelObject above for why.
+  const url = await getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+    expiresIn: 60,
+  });
+
+  const res = await fetch(url, { headers: { Range: `bytes=0-${length - 1}` } });
+
+  // 206 is the expected answer to a ranged GET; 200 means the object was
+  // smaller than the range and S3 returned the whole thing.
+  if (res.status === 404 || res.status === 403) return Buffer.alloc(0);
+  if (!res.ok && res.status !== 206) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: `S3 GetObject range failed (${res.status})`,
+    });
+  }
+
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  return Buffer.from(bytes.subarray(0, length));
 }
 
 /**

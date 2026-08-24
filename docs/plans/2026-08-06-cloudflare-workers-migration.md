@@ -967,6 +967,55 @@ they carry the real blast radius.
 - **Still unrun:** SSE streaming from the langgraph proxy, the KV cache mount, and env-timing
   checks.
 
+#### 2026-08-24 — A1 ROOT CAUSE: `new S3Client()` itself fails; A1's scope AND mechanism are both wrong [contradicts A1 — raises severity] [source: this branch]
+Isolating each SDK step on an UNMINIFIED worker build gave the real failure:
+
+```
+TypeError: emitWarningIfUnsupportedVersion$1 is not a function
+    at getRuntimeConfig (index.js:325615:7)
+    at new S3Client (index.js:325697:27)
+```
+
+In the bundle: `const no$2 = Symbol.for("node-only"); const emitWarningIfUnsupportedVersion$2 = no$2;`
+— that is `@aws-sdk/core`'s **browser** build, where Node-only exports are sentinels rather than
+functions. But `@aws-sdk/client-s3` kept its **Node** `getRuntimeConfig`, which calls that sentinel
+as a function. A dual-package hazard: the CF preset's `workerd` export condition resolves the two
+halves of the SDK to different builds.
+
+- **A1's stated scope is WRONG and too small.** It says "upload finalize breaks". In fact
+  `new S3Client()` throws, so **every** S3 operation fails on workerd — `createPresignedPost`
+  (browser direct upload), `createModelDownloadUrl` / `getSignedUrl` (downloads), and both
+  `.send()` helpers. The entire 3D model library storage layer is dead, not one finalize path.
+  An earlier note in this log claimed presigning "should work untouched" — that was wrong; signing
+  is pure crypto, but you cannot get to it without constructing a client.
+- **A1's stated mechanism is WRONG.** It blames unenv stubbing `node:http`, with `http.request`
+  being `notImplemented`. The failure is upstream of any transport and has nothing to do with
+  node:http.
+- **Fix attempt 1 — presign + `fetch()` instead of `client.send()` (the plan's prescription):
+  FAILED.** Still needs `new S3Client()` to produce the signer. Rewriting the two `.send()` call
+  sites was necessary but nowhere near sufficient. (The rewrite is kept: it is correct,
+  platform-neutral, and removes the SDK transport from the path.)
+- **Fix attempt 2 — add `browser` to nitro `exportConditions` on CF builds: FAILED.** Identical
+  error, identical line numbers. Reverted; do not re-try without new information.
+- **The assumption that may be wrong:** that the AWS SDK can be made to work on workerd through
+  bundler configuration at all. The hazard lives in the SDK's own package `exports` map.
+- **Recommended direction — drop the AWS SDK from the Workers path entirely** and sign S3 requests
+  with **`aws4fetch`** (~4 KB, purpose-built for Cloudflare Workers, SigV4 via SubtleCrypto +
+  `fetch`, works on Node 18+ too so it stays platform-neutral). It also removes a large dependency
+  from a bundle currently at 4.66 MB gzip. **Cost:** `createPresignedPost` has no aws4fetch
+  equivalent — the browser direct-upload POST policy (HMAC-SHA256 over a base64 policy document)
+  would need implementing by hand. Bounded, but real, and it touches the upload path that
+  `docs/runbooks/2026-06-12-model-library-launch-checklist.md` covers. **This is a Cole decision.**
+
+Also settled this round:
+- **GATE 6 PASS — KV works.** `useStorage('cache')` write/read round-trips against a real KV
+  namespace bound as `CACHE`, mounted via `nitro.storage` gated on `isCloudflareBuild`.
+- **GATE 3 (partial) — SSE transport works.** `/mcp` streams `event: message` frames correctly.
+  The langgraph proxy answers 200; true incremental streaming still needs the Phase 1 byte-stream
+  fix before it can be asserted.
+- **GATE 7 PASS — env timing.** `NUXT_`-prefixed secrets resolve at runtime (`/api/models` returns
+  live Supabase rows using only worker-provided secrets).
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on

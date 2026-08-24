@@ -752,8 +752,10 @@ export default defineNuxtConfig({
       '/fonts/**': { headers: { 'cache-control': 'public,max-age=31536000,immutable' } },
       '/assets/**': { headers: { 'cache-control': 'public,max-age=31536000,immutable' } },
     },
-    // Minify responses
-    minify: true,
+    // Minify responses. SPIKE: temporarily false on Cloudflare builds so worker
+    // stack traces carry real symbol names instead of `Uj is not a function`.
+    // Restore to unconditional true before Phase 1.
+    minify: !isCloudflareBuild,
     // No server source maps in the build output — they add ~430 .map files to
     // the deployed function (dead weight in prod) and bloat the Vercel upload.
     sourceMap: false,
@@ -764,6 +766,17 @@ export default defineNuxtConfig({
     // it still falls back to null (the Next path is never taken here). Done via an
     // alias rather than a custom onwarn so Nitro's default warning filtering
     // (circular-dep noise, etc.) stays intact.
+    // Mount Cloudflare KV as a nitro storage on CF builds only. Nitro's cached
+    // handlers write to `cache:`; on workers the default is per-isolate memory,
+    // which means no sharing between isolates and no persistence. Binding name
+    // must match wrangler.jsonc's kv_namespaces entry.
+    ...(isCloudflareBuild
+      ? {
+          storage: {
+            cache: { driver: 'cloudflare-kv-binding', binding: 'CACHE' },
+          },
+        }
+      : {}),
     alias: {
       'next/headers': fileURLToPath(new URL('./server/stubs/next-headers-stub.mjs', import.meta.url)),
       // Vercel BotID cannot work off Vercel — `checkBotId()` reads a signed

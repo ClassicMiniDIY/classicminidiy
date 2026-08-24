@@ -21,6 +21,14 @@
     // and /models while production served all three as 200.
     "html_handling": "drop-trailing-slash"
   },
+  // Spike KV namespace, mounted as a nitro storage in nuxt.config.ts (gated on
+  // isCloudflareBuild). Phase 2 replaces this with the real cache namespace.
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "fe83d337d18046468b17e3cb31d61728"
+    }
+  ],
   "observability": {
     "enabled": true
   }
