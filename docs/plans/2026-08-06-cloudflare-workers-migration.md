@@ -1062,6 +1062,45 @@ getModelObjectHead (sign + fetch)  PASS  reachedS3=true
   were **removed from the root `package.json`** — verified no other installed package depends on
   them. **The app now has no AWS SDK dependency at all.**
 
+#### 2026-08-24 — B1 implemented; the meta-refresh count was 7 for routeRules but 9 in total [refines B1] [source: this branch]
+- **The shadowing is real and was measured on a live deployment**, not inferred:
+
+  | | `/archive/manuals` |
+  |---|---|
+  | Cloudflare worker (before the fix) | **200 + meta-refresh HTML** |
+  | Vercel production | **301** -> `/archive/documents?type=manual` |
+
+  The static asset layer wins on Workers, so the routeRules 301 never runs and the redirect silently
+  degrades to a soft one.
+- **B1 said 7 meta-refresh artifacts; there are 9.** The 7 from `routeRules` are exactly as B1
+  listed (needles, gearbox, manuals, adverts, catalogues, tuning, submissions). The two B1 missed
+  come from **`definePageMeta({ redirect })`** rather than routeRules: `/dashboard` and
+  `/models/mine`, both of which redirect to `/dashboard/models`.
+- **After stripping, verified against the live worker:** all 7 routeRules paths return **301
+  matching production exactly**. The two `definePageMeta` paths return **302** where production
+  returns a meta-refresh **200** — a deliberate improvement (a real server-side redirect beats a
+  meta-refresh), and both paths are in `PRIVATE_DISALLOW` so there is no SEO consequence. Recorded
+  here so an archived-crawl diff is not misread, per B2's guidance.
+- **The strip list is DERIVED, not hardcoded** (`scripts/strip-meta-refresh-artifacts.sh`): it
+  greps the build output for `http-equiv="refresh"`. A hardcoded list would drift the moment a
+  routeRule is added or removed — which is precisely how B1's count came to be wrong. It refuses to
+  delete anything over 4 KB so a real page containing the string cannot be caught.
+- **The TME map now lives in `server/utils/tmeRedirects.ts`, transcribed MECHANICALLY from
+  `vercel.json`** (19 exact + 9 prefix = 28), with `server/middleware/tme-redirects.ts` applying it
+  and 78 table-driven tests asserting every source in BOTH slash forms. The slash forms matter:
+  Vercel's patterns are literal globs (`/about` does not match `/about/`) and this app has
+  prerendered assets at `/about`, `/contact`, `/privacy`, `/onboarding`, `/dashboard`, `/profile`
+  and `/users` — so a missed slash variant serves a CMDIY page as a 200 on a theminiexchange.com
+  URL, the exact duplicate-content failure the 301s exist to prevent.
+- **`vercel.json` is deliberately UNTOUCHED.** Its 28 rules stay authoritative until cutover; the
+  middleware is the Cloudflare-side implementation and the version-controlled spec the Phase 3
+  zone-edge rules will be generated from.
+- **LIMITATION — the TME middleware cannot be tested end-to-end yet.** `curl -H 'Host:
+  theminiexchange.com'` against workers.dev returns **403**: Cloudflare's routing rejects a
+  mismatched Host before the request reaches the worker. Only the unit tests cover it until the
+  zone is live and routed, and `verify-cf-deploy.sh` correctly keeps the TME assertion behind its
+  zone guard rather than pretending otherwise.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on

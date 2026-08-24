@@ -49,6 +49,15 @@ jobs:
           NUXT_SITE_ENV: preview
         run: bun run build
 
+      # routeRules and definePageMeta redirects are prerendered as meta-refresh
+      # HTML. On Vercel the platform's routing shadows them and the real 301 is
+      # served; on Workers the STATIC ASSET LAYER WINS, so the file is served
+      # directly and the redirect silently degrades to a 200 carrying a refresh.
+      # Measured before this step existed: /archive/manuals returned 200 +
+      # meta-refresh on the worker while production returned a 301.
+      - name: Strip prerendered meta-refresh artifacts
+        run: ./scripts/strip-meta-refresh-artifacts.sh .output/public
+
       - name: Report bundle size
         run: bunx wrangler deploy --dry-run
         env:
