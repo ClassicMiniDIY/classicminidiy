@@ -752,10 +752,8 @@ export default defineNuxtConfig({
       '/fonts/**': { headers: { 'cache-control': 'public,max-age=31536000,immutable' } },
       '/assets/**': { headers: { 'cache-control': 'public,max-age=31536000,immutable' } },
     },
-    // Minify responses. SPIKE: temporarily false on Cloudflare builds so worker
-    // stack traces carry real symbol names instead of `Uj is not a function`.
-    // Restore to unconditional true before Phase 1.
-    minify: !isCloudflareBuild,
+    // Minify responses
+    minify: true,
     // No server source maps in the build output — they add ~430 .map files to
     // the deployed function (dead weight in prod) and bloat the Vercel upload.
     sourceMap: false,

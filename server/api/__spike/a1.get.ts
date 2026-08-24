@@ -1,51 +1,55 @@
-/** SPIKE-ONLY. DELETE before Phase 1. Isolates WHICH AWS SDK step breaks on workerd. */
+/**
+ * SPIKE-ONLY. DELETE before Phase 1 merges.
+ *
+ * Verifies the aws4fetch rewrite on workerd. The worker's S3 credentials are
+ * deliberately FAKE, which is what makes this conclusive:
+ *   - the old AWS SDK path died at `new S3Client()` with
+ *     `emitWarningIfUnsupportedVersion is not a function` — it never reached AWS.
+ *   - the aws4fetch path should REACH S3 and be told 403 (InvalidAccessKeyId).
+ *     A real HTTP status from S3 is the proof that signing + fetch work here.
+ */
 export default defineEventHandler(async () => {
-  const steps: Record<string, unknown> = {};
-  const cfg = useRuntimeConfig();
+  const out: Record<string, unknown> = {};
 
-  const step = async (name: string, fn: () => Promise<unknown> | unknown) => {
+  const step = async (name: string, fn: () => Promise<unknown>) => {
     try {
-      const v = await fn();
-      steps[name] = { ok: true, detail: typeof v === 'object' ? 'object' : String(v).slice(0, 80) };
-      return v as any;
+      out[name] = { ok: true, detail: await fn() };
     } catch (err: any) {
-      steps[name] = {
-        ok: false,
-        name: err?.name,
-        message: String(err?.message || err).slice(0, 200),
-        stack: String(err?.stack || '').split('\n').slice(0, 4).join(' | ').slice(0, 400),
-      };
-      return undefined;
+      out[name] = { ok: false, name: err?.name, message: String(err?.message || err).slice(0, 200) };
     }
   };
 
-  const s3mod: any = await step('import @aws-sdk/client-s3', () => import('@aws-sdk/client-s3'));
-  const presignMod: any = await step('import s3-request-presigner', () => import('@aws-sdk/s3-request-presigner'));
-
-  const client = await step('new S3Client()', () =>
-    new s3mod.S3Client({
-      region: (cfg.S3_MODELS_REGION as string) || 'us-east-1',
-      credentials: {
-        accessKeyId: cfg.S3_MODELS_ACCESS_KEY_ID as string,
-        secretAccessKey: cfg.S3_MODELS_SECRET_ACCESS_KEY as string,
-      },
-    })
-  );
-
-  const cmd = await step('new HeadObjectCommand()', () =>
-    new s3mod.HeadObjectCommand({ Bucket: cfg.S3_MODELS_BUCKET as string, Key: 'spike/nope.stl' })
-  );
-
-  const url = await step('getSignedUrl()', () =>
-    presignMod.getSignedUrl(client, cmd, { expiresIn: 60 })
-  );
-
-  if (typeof url === 'string') {
-    await step('fetch(presigned)', async () => {
-      const r = await fetch(url, { method: 'HEAD' });
-      return `status=${r.status} amzReqId=${r.headers.get('x-amz-request-id') ? 'present' : 'absent'}`;
+  // Signing only — no network. Proves SubtleCrypto signing runs on workerd.
+  await step('createModelUploadUrl (sign)', async () => {
+    const r = await createModelUploadUrl({
+      key: 'spike/nope.stl',
+      contentType: 'application/octet-stream',
+      sizeBytes: 1024,
     });
-  }
+    const p = new URL(r.url).searchParams;
+    return {
+      method: r.method,
+      signedHeaders: p.get('X-Amz-SignedHeaders'),
+      expires: p.get('X-Amz-Expires'),
+      hasSignature: Boolean(p.get('X-Amz-Signature')),
+    };
+  });
 
-  return steps;
+  await step('createModelDownloadUrl (sign)', async () => {
+    const url = await createModelDownloadUrl({ key: 'spike/nope.stl', fileName: 'nope.stl' });
+    return { expires: new URL(url).searchParams.get('X-Amz-Expires') };
+  });
+
+  // Sign AND fetch. With fake creds S3 should answer 403 — reaching it is the point.
+  await step('headModelObject (sign + fetch)', async () => {
+    const res = await headModelObject('spike/nope.stl');
+    return { reachedS3: true, result: res };
+  });
+
+  await step('getModelObjectHead (sign + fetch)', async () => {
+    const buf = await getModelObjectHead('spike/nope.stl', 512);
+    return { reachedS3: true, bytes: buf.length };
+  });
+
+  return out;
 });

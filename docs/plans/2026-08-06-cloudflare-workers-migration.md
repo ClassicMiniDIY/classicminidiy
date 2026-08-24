@@ -1016,6 +1016,51 @@ Also settled this round:
 - **GATE 7 PASS — env timing.** `NUXT_`-prefixed secrets resolve at runtime (`/api/models` returns
   live Supabase rows using only worker-provided secrets).
 
+#### 2026-08-24 — A1 RESOLVED. aws4fetch works on workerd; all four S3 operations pass [closes A1] [source: this branch]
+Amendment A1 is now closed. `server/utils/s3Models.ts` no longer imports the AWS SDK at all.
+
+**Verified against the real S3 bucket BEFORE writing any code** — the open question was whether
+signing `content-length` reproduces the POST policy's `['content-length-range', 1, max]`:
+
+| probe | result |
+|---|---|
+| unsigned length, 1 KiB body | 200 |
+| **signed len=1024, sent 4096** | **403 `SignatureDoesNotMatch`** |
+| signed len=1024, sent 1024 | 200 |
+
+It does. So the upload moved from presigned POST to **presigned PUT**, which removes bespoke
+crypto from the design entirely — the earlier "hand-roll the POST policy" plan is withdrawn.
+
+**Verified on the spike worker** (fake S3 credentials, so reaching S3 at all is the proof):
+
+```
+createModelUploadUrl (sign)        PASS  method=PUT expires=900
+                                         signedHeaders=content-length;content-type;host;x-amz-storage-class
+createModelDownloadUrl (sign)      PASS  expires=60
+headModelObject (sign + fetch)     PASS  reachedS3=true
+getModelObjectHead (sign + fetch)  PASS  reachedS3=true
+```
+
+- **`aws4fetch` is pinned EXACT (`1.0.20`, no caret)** — the `dompurify` treatment. It is dormant
+  upstream (last commit 2024-12-06) but SigV4 is a frozen spec, the package is 2.5 KB gzip with no
+  transitive dependencies, and it is the answer the upstream AWS discussion, the Cloudflare
+  community and current write-ups all converge on. Small enough to vendor into `server/utils/` and
+  own outright if it ever goes bad.
+- **GOTCHA — aws4fetch defaults `X-Amz-Expires` to 86400 (24 h) for s3 when absent.** Both call
+  sites set it explicitly (900 upload / 60 download). Inheriting the default would silently turn a
+  60-second download URL into a day-long one. Tests assert both values.
+- **The size cap is now a SIGNED HEADER, not a policy.** Tests assert `content-length` actually
+  appears in `X-Amz-SignedHeaders` — an unsigned cap is decorative. Do not remove it.
+- **Bundle:** Vercel 42.7 MB -> 21 MB (15.7 -> 6.8 MB gzip); Cloudflare worker 4774 KiB -> 4624 KiB
+  gzip. Zero `@aws-sdk` references in `.vercel/output`. Full suite 4735 tests green.
+- **Platform-neutral**, so it ships through Vercel first and is verified there before Cloudflare
+  depends on it. Landed on `feature/cloudflare-workers-migration` as `589364c3`.
+- **Follow-up (unrelated, found in passing):** `scripts/migrate/*` import `@aws-sdk/lib-dynamodb`
+  and `@aws-sdk/client-dynamodb`, neither of which is declared in `package.json`. The three
+  `@aws-sdk/*` S3 packages are now unreferenced by app/server code but were LEFT DECLARED on
+  purpose — removing them risks breaking those scripts through undeclared transitive resolution.
+  Worth its own change.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
