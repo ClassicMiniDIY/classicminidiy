@@ -889,6 +889,48 @@ and any new CMDIY plan changes required.
   `server/mcp/tools/` are pure functions and port cheaply). Default is to stay in the main worker
   unless the Cloudflare-preset bundle size forces the split. Do not split preemptively.
 
+#### 2026-08-24 — Phase 0 static gates PASS; three plan errors found in the build command alone [contradicts Phase 0 text] [source: this branch]
+- **The documented build command does not work, in two independent ways.**
+  1. `NITRO_PRESET=cloudflare_module` on nitropack **2.13.4** silently selects the **LEGACY**
+     Workers Sites runtime and dies with
+     `Cannot resolve "__STATIC_CONTENT_MANIFEST" ... and externals are not allowed!`. Cause: the
+     modern preset (`name: cloudflare-module`, `stdName: cloudflare_workers`) declares
+     `compatibilityDate: 2024-09-19`, and `_resolve.mjs` drops any preset whose declared date is
+     newer than the project's. With cmdiy's `2024-08-29` the modern preset was filtered out,
+     leaving `cloudflare-module-legacy` (which claims `cloudflare-module` as an alias) as the only
+     match. **The preset name was never wrong — the date was.** OECUA never hit this because it is
+     on nitropack 2.12.9.
+  2. `NITRO_PRESET=cloudflare_workers` — the modern preset's own `stdName` — **can never resolve**.
+     `_resolve.mjs` does `kebabCase(name)`, turning it into `cloudflare-workers`, which matches no
+     preset's name, stdName or alias. It then re-filters on the RAW name in an error branch and
+     reports `cannot be resolved with current compatibilityDate`, which points at the wrong cause
+     entirely. Do not chase the date when you see that message — check the name first.
+- **`compatibilityDate` bumped `2024-08-29` -> `2024-09-25`.** Nitro resolves an effective date
+  6-8 days EARLIER than the configured value, so the naive `2024-09-19` still failed the
+  `>= 2024-09-19` gate. This date governs the **Vercel** build too; verified no regression —
+  `VERCEL=1 NITRO_PRESET=vercel` builds green and `.vercel/output/config.json` still carries the
+  `images` key, so the image-provider auto-detection contract holds.
+- **6144 MB of heap is NOT enough for cmdiy** — V8 `Reached heap limit`, SIGABRT. 8192 works. This
+  extends the pathfinder's NODE_OPTIONS finding rather than repeating it: the value that is
+  sufficient for OECUA is insufficient here, and note this is a **V8 heap** OOM, not the container
+  SIGKILL documented in CLAUDE.md — different failure, different fix.
+- **Bundle gate PASSES: 19283 KiB raw / 4774 KiB gzip (4.66 MB).** Under the 9 MB spike gate and
+  under the 10 MB paid limit, but **well over the 3 MiB free cap** — Workers Paid confirmed
+  necessary for cmdiy as it was for OECUA, now with the MCP SDK and `agents` included.
+- **Other static gates:** no `.node` files; no real `sharp`/`ipx` imports (4 chunks contain the
+  substrings, none is an import); `.output/public` is 1135 files against the 20k cap, so
+  `compressPublicAssets` `.gz`/`.br` siblings (682 of them) are NOT a problem here and can stay;
+  `_headers` IS emitted (34 lines) and needs reconciling with the planned header rules;
+  `agents/mcp` is present in the bundle.
+- **Open:** wrangler warns `Duplicate key "provider" in object literal` on the built worker — not
+  fatal, unchased.
+- **Not yet run:** every RUNTIME gate (OG image via wasm, SSE, SSR/JSON-LD parity, `/mcp` with a
+  real client, KV, env timing, and A1's `client.send()`). Those need the worker deployed.
+- **Spike-only, NOT production-safe:** `server/stubs/botid-server-stub.mjs` fail-OPENs on
+  Cloudflare builds via a new `isCloudflareBuild` alias gate in `nuxt.config.ts`. A zone WAF rule
+  must exist before any real cutover, or `/api/langgraph/*` and `/api/models/seller/onboard` lose
+  bot protection silently.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
