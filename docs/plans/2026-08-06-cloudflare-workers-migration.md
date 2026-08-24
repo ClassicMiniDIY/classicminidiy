@@ -1055,11 +1055,12 @@ getModelObjectHead (sign + fetch)  PASS  reachedS3=true
   gzip. Zero `@aws-sdk` references in `.vercel/output`. Full suite 4735 tests green.
 - **Platform-neutral**, so it ships through Vercel first and is verified there before Cloudflare
   depends on it. Landed on `feature/cloudflare-workers-migration` as `589364c3`.
-- **Follow-up (unrelated, found in passing):** `scripts/migrate/*` import `@aws-sdk/lib-dynamodb`
-  and `@aws-sdk/client-dynamodb`, neither of which is declared in `package.json`. The three
-  `@aws-sdk/*` S3 packages are now unreferenced by app/server code but were LEFT DECLARED on
-  purpose — removing them risks breaking those scripts through undeclared transitive resolution.
-  Worth its own change.
+- **CORRECTION to an earlier note in this entry.** I claimed `scripts/migrate/*` imported
+  `@aws-sdk/lib-dynamodb` / `@aws-sdk/client-dynamodb` undeclared. Wrong: `scripts/migrate/` has
+  its **own `package.json` + `bun.lock`** declaring both. Nothing is broken and nothing was
+  relying on transitive resolution. With that cleared, the three now-dead `@aws-sdk/*` S3 packages
+  were **removed from the root `package.json`** — verified no other installed package depends on
+  them. **The app now has no AWS SDK dependency at all.**
 
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
