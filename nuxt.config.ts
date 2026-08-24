@@ -3,6 +3,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { ArchiveItems, ToolboxItems } from './data/models/generic';
 import { AI_ANSWER_BOTS, AI_TRAINING_BOTS, PRIVATE_DISALLOW } from './server/utils/aiBots';
 
+// True when building for Cloudflare Workers (NITRO_PRESET=cloudflare_module).
+// Gates the handful of Vercel-only integrations that cannot resolve on workerd,
+// so the default Vercel build is completely unaffected by the migration work.
+const isCloudflareBuild = (process.env.NITRO_PRESET || '').includes('cloudflare');
+
 const parsedArchive = ArchiveItems.map((item) => {
   return { title: item.title, description: item.description, href: `https://www.classicminidiy.com${item.to}` };
 });
@@ -761,6 +766,14 @@ export default defineNuxtConfig({
     // (circular-dep noise, etc.) stays intact.
     alias: {
       'next/headers': fileURLToPath(new URL('./server/stubs/next-headers-stub.mjs', import.meta.url)),
+      // Vercel BotID cannot work off Vercel — `checkBotId()` reads a signed
+      // classification that Vercel's edge attaches to the request, and on
+      // workerd the module's platform hooks resolve to nothing. On Cloudflare
+      // builds ONLY, alias it to a stub; bot protection there is a zone WAF
+      // rule plus the in-app rate limiter, not this module.
+      ...(isCloudflareBuild
+        ? { 'botid/server': fileURLToPath(new URL('./server/stubs/botid-server-stub.mjs', import.meta.url)) }
+        : {}),
     },
   },
 
@@ -976,5 +989,12 @@ export default defineNuxtConfig({
       installPrompt: true,
     },
   },
-  compatibilityDate: '2024-08-29',
+  // Bumped from 2024-08-29 so the modern Cloudflare Workers preset resolves.
+  // nitropack 2.13.4 requires an effective date >= 2024-09-19 for
+  // `cloudflare_workers`; nitro reports the resolved date 6 days EARLIER than
+  // the value set here (2024-08-29 -> 2024-08-23, 2024-09-19 -> 2024-09-13),
+  // so 2024-09-25 is the smallest value that clears the gate. Kept as close to
+  // the old date as possible so as few other Nuxt/Nitro feature defaults move
+  // as possible -- this date also governs the Vercel build.
+  compatibilityDate: '2024-09-25',
 });

@@ -1,0 +1,19 @@
+{
+  // THROWAWAY Phase 0 spike config. Not the production worker.
+  //
+  // Deploys to a workers.dev subdomain with no routes and no zone attached, so
+  // nothing here can touch classicminidiy.com. Phase 2 replaces this wholesale
+  // with the real config (routes, KV, run_worker_first, secrets).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cmdiy-spike",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
