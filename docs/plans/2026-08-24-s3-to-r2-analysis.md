@@ -40,6 +40,39 @@ So this splits into two independent decisions that do not have to happen togethe
 - **Decision B — move `classicminidiy` + `cmdiy-archive` (26,236 objects, 1.3 GB).** Purely an
   egress/cost question. Can be deferred indefinitely, or done first, or never.
 
+## 2a. How the models bucket is actually wired (asked 2026-08-24)
+
+Worth stating plainly, because a single model's data is split across **three** systems and that
+makes the ownership look murkier than it is:
+
+| What | Where | Pointer |
+|---|---|---|
+| Metadata (title, price, license, counts) | Supabase Postgres, `models` | — |
+| Preview images | **Supabase Storage**, `model-images` bucket | `model_images.storage_path` |
+| The downloadable 3D files | **Our own S3**, `classicminidiy-models` | `model_files.s3_key` |
+
+`classicminidiy-models` is an ordinary bucket in **our** AWS account `938808401967` (created
+2026-06-11, Block Public Access fully ON). There is **no Supabase↔S3 integration** — no sync, no
+foreign key, no managed connector. The two systems are joined by one text column and three server
+routes:
+
+- `server/api/models/uploads/presign.post.ts` — mints the key via `buildModelKey()`, INSERTs the
+  `model_files` row as `upload_status: 'pending'` **under the caller's JWT** so the INSERT RLS
+  policy is the authoritative gate, then returns a presigned POST. The browser uploads directly
+  to S3; the bytes never transit our server.
+- `server/api/models/uploads/finalize.post.ts` — reads `s3_key` back, `headModelObject()` for
+  existence + size, `getModelObjectHead()` for magic-byte sniffing, then flips `upload_status`.
+- `server/api/models/[modelId]/files/[fileId]/download.get.ts` — reads `s3_key`, runs the full
+  entitlement gate, presigns a 60 s GET.
+
+**Consequence for this migration: moving the bucket requires NO Supabase change at all.** Keys are
+preserved by Super Slurper, so every existing `model_files.s3_key` value stays valid verbatim. No
+migration in `classicminidiy-supabase`, no data rewrite, no downtime. The blast radius is three
+files.
+
+The column would be named `s3_key` while pointing at R2. Leave it — renaming costs a migration in
+the supabase repo for no functional gain.
+
 ## 3. R2 does NOT eliminate the signing problem
 
 This is the finding that matters most, and it is easy to get wrong.
