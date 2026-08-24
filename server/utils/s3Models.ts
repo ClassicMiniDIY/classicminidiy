@@ -45,7 +45,18 @@ function getModelsS3(): ModelsS3Config {
   }
 
   if (!client || cachedBucket !== bucket) {
-    client = new AwsClient({ accessKeyId, secretAccessKey, region, service: 's3' });
+    client = new AwsClient({
+      accessKeyId,
+      secretAccessKey,
+      region,
+      service: 's3',
+      // aws4fetch defaults to retries:10 with exponential backoff on 5xx/429
+      // (initRetryMs 50, so worst case ~51s of retrying inside ONE request —
+      // well past any serverless/worker timeout). Pin it to 3 attempts total,
+      // matching the AWS SDK's default maxAttempts, so a struggling S3 fails
+      // fast instead of hanging the finalize request.
+      retries: 2,
+    });
     cachedBucket = bucket;
     cachedHost = `https://${bucket}.s3.${region}.amazonaws.com`;
   }
@@ -152,15 +163,17 @@ export async function createModelUploadUrl(opts: {
   return { url: signed.url.toString(), method: 'PUT', headers };
 }
 
-
 /** HeadObject — returns the object's size (and existence) for finalize. */
 export async function headModelObject(key: string): Promise<{ exists: boolean; size: number }> {
   const { client, origin } = getModelsS3();
   const res = await client.fetch(objectUrl(origin, key), { method: 'HEAD' });
 
-  // S3 answers 403 rather than 404 for a missing key when the caller lacks
-  // s3:ListBucket, so both mean "not there" as far as finalize is concerned.
-  if (res.status === 404 || res.status === 403) return { exists: false, size: 0 };
+  // ONLY 404 means "not there". Measured against this bucket: valid credentials
+  // + missing key -> 404; invalid credentials -> 403. Do NOT fold 403 in here —
+  // it would report a credential/IAM failure to the user as "your upload didn't
+  // arrive" (finalize turns !exists into a 409), so a key rotation would look
+  // like every upload silently vanishing, with nothing logged.
+  if (res.status === 404) return { exists: false, size: 0 };
   if (!res.ok) {
     throw createError({ statusCode: 502, statusMessage: `S3 HeadObject failed (${res.status})` });
   }
@@ -181,7 +194,13 @@ export async function getModelObjectHead(key: string, length = 512): Promise<Buf
 
   // 206 is the expected answer to a ranged GET; 200 means the object was smaller
   // than the requested range and S3 returned the whole thing.
-  if (res.status === 404 || res.status === 403) return Buffer.alloc(0);
+  //
+  // Every other status THROWS — deliberately. Returning an empty buffer here
+  // would fail the caller's magic-byte sniff, and finalize responds to a failed
+  // sniff by writing upload_status:'failed' permanently. A transient 404 (the
+  // nightly orphan sweep racing this read) or a credential failure would then
+  // brand a perfectly good upload as corrupt, unrecoverable without a manual DB
+  // edit. Throwing leaves the row untouched.
   if (!res.ok && res.status !== 206) {
     throw createError({ statusCode: 502, statusMessage: `S3 GetObject range failed (${res.status})` });
   }

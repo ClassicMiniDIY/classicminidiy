@@ -60,8 +60,9 @@ export default defineEventHandler(async (event) => {
 
   // Sniff the first bytes against the declared extension. Skip the ranged GET
   // for a 0-byte object — `bytes=0-511` on an empty object is a 416 from S3; an
-  // empty buffer simply fails the sniff below (presign's content-length-range
-  // min of 1 should already prevent this, but guard defensively).
+  // empty buffer simply fails the sniff below (presign rejects sizeBytes < 1
+  // and signs that exact length, so a 0-byte object should be unreachable —
+  // this is a defensive guard).
   const headBytes = head.size > 0 ? await getModelObjectHead(file.s3_key, 512) : Buffer.alloc(0);
   const sniff = sniffModelFile({ ext: file.file_ext, head: headBytes, size: head.size });
 

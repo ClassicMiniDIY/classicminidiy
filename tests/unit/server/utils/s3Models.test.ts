@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 // createError is referenced by getModelsS3 (not exercised here) — stub for safety.
 vi.stubGlobal('createError', (opts: any) => Object.assign(new Error(opts.statusMessage), opts));
@@ -14,6 +14,8 @@ import {
   contentDisposition,
   createModelUploadUrl,
   createModelDownloadUrl,
+  headModelObject,
+  getModelObjectHead,
 } from '~/server/utils/s3Models';
 
 describe('server/utils/s3Models — buildModelKey', () => {
@@ -122,5 +124,98 @@ describe('server/utils/s3Models — presigned GET (download)', () => {
   it('encodes each key segment but keeps the / separators', async () => {
     const url = await createModelDownloadUrl({ key: 'models/m/v1/f/a b.stl', fileName: 'a b.stl' });
     expect(new URL(url).pathname).toBe('/models/m/v1/f/a%20b.stl');
+  });
+});
+
+/**
+ * Error-path coverage for the two functions that talk to S3.
+ *
+ * These exist because a code review caught both mapping HTTP 403 to a
+ * "benign" result. 403 from S3 means the CREDENTIALS are bad — measured against
+ * the real bucket, a missing key with valid credentials is 404 and only invalid
+ * credentials produce 403. Conflating them turned an IAM/key-rotation outage
+ * into "your upload didn't arrive" (409) and, on the ranged GET, into a
+ * PERMANENT upload_status:'failed'.
+ */
+function mockS3Response(status: number, headers: Record<string, string> = {}, body = new Uint8Array(0)) {
+  return {
+    status,
+    ok: status >= 200 && status < 300,
+    headers: { get: (k: string) => headers[k.toLowerCase()] ?? null },
+    arrayBuffer: async () => body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+  } as unknown as Response;
+}
+
+// NOTE: do NOT use vi.unstubAllGlobals() here — it would also remove the
+// module-level `createError` / `useRuntimeConfig` stubs above, breaking every
+// other suite in this file. Restore only `fetch`.
+const realFetch = globalThis.fetch;
+let fetchMock: ReturnType<typeof vi.fn>;
+function stubFetch(fn: () => Promise<Response>) {
+  fetchMock = vi.fn(fn);
+  (globalThis as any).fetch = fetchMock;
+}
+afterEach(() => {
+  (globalThis as any).fetch = realFetch;
+});
+
+describe('server/utils/s3Models — headModelObject error mapping', () => {
+  it('reports a missing object for 404', async () => {
+    stubFetch(async () => mockS3Response(404));
+    await expect(headModelObject('models/m/v1/f/a.stl')).resolves.toEqual({ exists: false, size: 0 });
+  });
+
+  it('THROWS on 403 rather than claiming the object is missing', async () => {
+    // Regression guard: 403 means bad credentials. Reporting {exists:false} here
+    // makes finalize answer 409 "Upload not found in storage" for every user the
+    // moment a key is rotated, with nothing logged.
+    stubFetch(async () => mockS3Response(403));
+    await expect(headModelObject('models/m/v1/f/a.stl')).rejects.toMatchObject({ statusCode: 502 });
+  });
+
+  it('throws on other non-ok statuses', async () => {
+    stubFetch(async () => mockS3Response(500));
+    await expect(headModelObject('models/m/v1/f/a.stl')).rejects.toMatchObject({ statusCode: 502 });
+  });
+
+  it('returns the size from content-length on success', async () => {
+    stubFetch(async () => mockS3Response(200, { 'content-length': '4096' }));
+    await expect(headModelObject('models/m/v1/f/a.stl')).resolves.toEqual({ exists: true, size: 4096 });
+    // Proves these suites exercise the stub rather than reaching the network.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives up after 3 attempts on 5xx rather than aws4fetch\'s default 10 retries', async () => {
+    // Regression guard: the default (retries:10, initRetryMs:50) spends ~51s
+    // retrying inside a single request, past any serverless timeout.
+    stubFetch(async () => mockS3Response(500));
+    await expect(headModelObject('models/m/v1/f/a.stl')).rejects.toMatchObject({ statusCode: 502 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('server/utils/s3Models — getModelObjectHead error mapping', () => {
+  it('THROWS on 404 instead of returning an empty buffer', async () => {
+    // Regression guard: an empty buffer fails the caller's magic-byte sniff, and
+    // finalize marks a failed sniff as upload_status:'failed' permanently.
+    stubFetch(async () => mockS3Response(404));
+    await expect(getModelObjectHead('models/m/v1/f/a.stl')).rejects.toMatchObject({ statusCode: 502 });
+  });
+
+  it('THROWS on 403 instead of returning an empty buffer', async () => {
+    stubFetch(async () => mockS3Response(403));
+    await expect(getModelObjectHead('models/m/v1/f/a.stl')).rejects.toMatchObject({ statusCode: 502 });
+  });
+
+  it('accepts 206 (the normal ranged-GET answer) and returns the bytes', async () => {
+    const body = new Uint8Array([0x73, 0x6f, 0x6c, 0x69, 0x64]); // "solid"
+    stubFetch(async () => mockS3Response(206, {}, body));
+    const buf = await getModelObjectHead('models/m/v1/f/a.stl', 512);
+    expect(Buffer.from(buf).toString('utf8')).toBe('solid');
+  });
+
+  it('truncates to the requested length', async () => {
+    stubFetch(async () => mockS3Response(206, {}, new Uint8Array(1000).fill(0x41)));
+    expect((await getModelObjectHead('models/m/v1/f/a.stl', 512)).length).toBe(512);
   });
 });
