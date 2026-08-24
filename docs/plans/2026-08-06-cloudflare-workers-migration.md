@@ -859,6 +859,36 @@ and any new CMDIY plan changes required.
   AI client calls it. That silent-until-used shape is the danger; put `/mcp` in the verification
   battery explicitly.
 
+#### 2026-08-24 — MCP Server Portals evaluated and REJECTED; we are already on the first-party path [decision] [source: this branch]
+- Question raised: should `/mcp` move to Cloudflare's first-party "MCP Server Portals" / MCP
+  server features?
+- **Portals: no.** They are a **Cloudflare One / Zero Trust** feature — a centralized gateway
+  controlling which of an ORGANIZATION'S OWN USERS may reach which MCP servers (MFA, device
+  posture, geo restrictions, role-based access, aggregated audit logs, Gateway/DLP scanning of
+  upstream traffic). The docs require a Zero Trust organization with an identity provider and
+  document **no anonymous or API-key public access**. cmdiy's `/mcp` is a PUBLIC product surface
+  for enthusiasts' AI clients, gated by `MCP_API_KEY`; a Portal would force every user into our
+  Zero Trust org and break the feature. Portals would only ever be relevant to governing which
+  MCP servers *we* connect our own tooling to — a workstation-security question, not a platform one.
+- **First-party hosting: already adopted.** Cloudflare's current recommendation for remote MCP
+  servers is `createMcpHandler` on **standard Workers**, now graduated into the official MCP
+  TypeScript SDK. That is precisely what `@nuxtjs/mcp-toolkit` invokes via
+  `await import("agents/mcp")`. No architecture change needed.
+- **DO-not-required is now confirmed from two independent directions**: the local `node_modules`
+  read (`createMcpHandler` -> `createStatelessMcpHandler`, zero DurableObject refs) and
+  Cloudflare's own announcement that "MCP itself no longer requires a Durable Object to speak the
+  protocol." MCP is fully stateless — no `initialize` handshake, no `Mcp-Session-Id` in the core
+  request path.
+- **Watch item:** `@nuxtjs/mcp-toolkit` is `0.18.0` and its Cloudflare provider still carries
+  session-invalidation logic keyed on `mcp-session-id`, i.e. it straddles both protocol
+  generations. A green deploy proves little. The Phase 0 spike must call `/mcp` with a real MCP
+  client and assert a valid tool listing, not merely a 200.
+- **Open decision, deferred to the bundle measurement:** keep `/mcp` in the main worker (current;
+  shared server utils, one deploy, but the MCP SDK rides in an already-tight bundle) vs. split it
+  into its own Worker (lean main bundle, independent deploys, second deploy target; the tools in
+  `server/mcp/tools/` are pure functions and port cheaply). Default is to stay in the main worker
+  unless the Cloudflare-preset bundle size forces the split. Do not split preemptively.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
