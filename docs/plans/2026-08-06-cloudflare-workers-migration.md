@@ -137,6 +137,90 @@ Verified via Vercel API, DNS, and file-level audits — trust these over CLAUDE.
   [scripts/verify-ai-crawler-firewall.sh](scripts/verify-ai-crawler-firewall.sh)) — replicate as a
   CF WAF rule, then repoint the script.
 
+## Domain inventory — all FIVE zones (measured by dig, 2026-08-23)
+
+This plan was written for 2 zones. Cole owns **5**, and the other 3 are not the trivial
+follow-up the "Out of scope" section assumed.
+
+| Domain | Authoritative NS | Role | Mail | Zone-move risk |
+|---|---|---|---|---|
+| `classicminidiy.com` | Route 53 | Primary site (apex `A` → Vercel; `www` CNAME `…vercel-dns-017.com`) | MX forwardemail.net ×2, plus SPF / apple / pinterest / google / forward-email verification TXTs | **HIGH** — the real cutover |
+| `theminiexchange.com` | Route 53 | 28-redirect estate → cmdiy (see B1) | MX forwardemail.net ×2, `v=spf1 include:send.resend.com ~all` | **MED** — mail records + redirect map |
+| `classicminidiy.net` | **`ns1/ns2.vercel-dns.com`** | Redirect → primary | none | LOW |
+| `classicminidiy.org` | **`ns1/ns2.vercel-dns.com`** | Redirect → primary | none | LOW |
+| `wheeldictionary.com` | **`ns1/ns2.vercel-dns.com`** | Redirect → primary | none | LOW |
+
+### The finding that changes the plan: three zones are hosted on Vercel DNS
+
+The redirect domains delegate to `vercel-dns.com` — they are not Route 53 zones. Phase 5
+("remove the domains, delete the projects, downgrade or cancel the plan") therefore **cannot
+run while those three still point at Vercel**: deleting or downgrading removes their
+*nameservers*, so they go NXDOMAIN — not merely un-redirected. This promotes them from
+"future work" to an **in-scope Phase 5 blocker**, and it is the one dependency that decides
+whether this migration can actually end with Vercel switched off.
+
+### Turn that into an asset: move them FIRST, as the rehearsal (new Phase 3a)
+
+They carry no mail, no meaningful traffic and no application code, so they are a free dress
+rehearsal of the exact cutover sequence the primary zones will use:
+
+1. Create the zone in the dashboard (free plan), let the scan run.
+2. Verify the imported records against the authoritative dump — here, a trivially short list.
+3. Set the web records **DNS-only (grey cloud)**, flip NS at the registrar.
+4. Wait for Universal SSL to report **Active**.
+5. Add the zone-edge Single Redirect rule, then **proxy** the records — the real switch.
+6. Verify status code, target host, path and query preservation; roll back with one
+   `proxied: false` toggle if anything is wrong.
+
+Order: `wheeldictionary.com` → `classicminidiy.net` → `classicminidiy.org` → the two real
+zones. A mistake on step 1-3 of `wheeldictionary.com` costs nothing and teaches everything.
+This also exercises the dedicated API token against a live zone **before**
+`classicminidiy.com` depends on it — which is exactly where OECUA lost the most calendar time.
+
+### Two constraints on the redirect zones
+
+- **Measure the current redirect behavior before Vercel stops serving it.** Status code,
+  target host, whether the path is preserved, whether the query string survives, and the
+  `www` variant of each — into the Phase 0 baseline snapshot. OECUA found Vercel's apex
+  redirect was a **307**, not the assumed 308; do not assume `301` here either. Once the
+  Vercel projects are gone this behavior is unrecoverable except from archived crawls.
+- **Do not "tidy" records during any zone move.** `theminiexchange.com` publishes a **Resend**
+  SPF include while the platform's transactional mail is **SES** — a real discrepancy, and
+  cutover day is the wrong day to resolve it. Copy records verbatim, diff against the
+  authoritative dump, change nothing. Fix mail hygiene as its own change, before or after,
+  never during.
+
+## Dedicated Cloudflare API token (one token, scoped to this migration)
+
+Cole's requirement: this migration gets **its own** token, not a reused account-wide one, so it
+can be revoked at Phase 5 without collateral damage.
+
+- **Name:** `cmdiy-cf-migration` — obvious at revoke time.
+- **Zone Resources:** Include → **Specific zone** → all five zones, listed individually. Not
+  "All zones". The policy must be **zone-scoped**: an account-scoped policy alone leaves
+  DNS / SSL / Zone-Settings **denied even on zones that already exist** (OECUA, 2026-08-24).
+- **Zone permissions (Edit):** DNS · Zone Settings · SSL and Certificates · Dynamic Redirect ·
+  **Workers Routes**.
+- **Account permissions (Edit):** Workers Scripts · Workers KV Storage. Add **Bulk Redirect
+  Lists + Bulk Redirect Rules** if B1's 19 exact-source TME redirects are implemented as a
+  Bulk Redirects list — that is an account-level resource, not a zone one.
+- **Zone creation is deliberately NOT included.** Account-owned tokens cannot grant
+  `com.cloudflare.api.account.zone.create`, and the permission-group catalog is unreadable to
+  them (OECUA, 2026-08-23 and 2026-08-24). All five zones are created by hand in the
+  dashboard; the token never needs the permission, so stop trying to give it one.
+- **TTL:** set an explicit expiry roughly 90 days out, and **revoke deliberately at Phase 5**.
+  An unnoticed silent expiry mid-cutover is the failure mode to design against.
+- **Secret naming — do not reuse `CLOUDFLARE_TOKEN`.** The dead "Purge my Cache" workflow
+  (`.github/workflows/main.yml`, triggered on `deployment` events for the non-existent
+  `master` branch) still references `CLOUDFLARE_ZONE` / `CLOUDFLARE_TOKEN`. Reusing those
+  names hands migration credentials to a legacy purge action. Use **`CLOUDFLARE_API_TOKEN`**
+  (plus `CLOUDFLARE_ACCOUNT_ID`), and delete or repoint that workflow in Phase 2 as an
+  explicit step.
+- **Verify with a real write, never a read.** Reads succeeding proves nothing about this
+  token's scoping. Gate: create then delete a throwaway `TXT` on `wheeldictionary.com`, read a
+  zone setting on `classicminidiy.com`, and attempt one Workers Routes write — all three
+  before any cutover step depends on the token.
+
 ## Platform mapping
 
 | Vercel today | Cloudflare after |
@@ -266,7 +350,8 @@ actual transformation bytes wait for the zone). Rollback: n/a (no prod traffic).
 
 ### Phase 3 — Zone prep (compute still on Vercel; requires Cole for account/registrar steps)
 
-1. Create the CF zones `classicminidiy.com` + `theminiexchange.com` (free plan). Import R53 records;
+1. Create the CF zones `classicminidiy.com` + `theminiexchange.com` (free plan). **Phase 3a
+   (the three redirect zones) runs first — see the domain inventory.** Import R53 records;
    diff record-for-record (`dig` both nameserver sets) — MX/SPF/DKIM/TXT especially.
    `auth.classicminidiy.com` **DNS-only (grey cloud)**. Lower R53 TTLs to 60 s ~48 h ahead. Keep R53
    zones intact for rollback.
@@ -277,8 +362,10 @@ actual transformation bytes wait for the zone). Rollback: n/a (no prod traffic).
    Vercel's current apex behavior).
 3. Pre-stage the Worker custom domains config (activates when the zone goes live).
 
-Cole-only actions in this phase: CF account + API token creation, registrar NS change (Phase 4),
-secret values transfer, Supabase dashboard allowlist edits (unless done via MCP).
+Cole-only actions in this phase: dashboard creation of **all five** zones + the dedicated
+`cmdiy-cf-migration` API token (see its spec above), registrar NS changes (Phase 3a for the three
+redirect zones, Phase 4 for the two real ones), secret values transfer, Supabase dashboard
+allowlist edits (unless done via MCP).
 
 ### Phase 4 — Direct cutover + verification + soak
 
@@ -311,9 +398,16 @@ and the Vercel-compatible config gating remain until Phase 5. Worst case: repoin
 
 ### Phase 5 — Decommission + rewrite the documented invariants
 
-- Delete `vercel.json`, the dead "Purge my Cache" workflow (repurpose its CF secrets), the Vercel
-  Git integration and project (after soak). Keep `/_ipx` in `prerender.ignore` (ipx is still the
-  dev provider).
+- **Gate: all five zones must be off Vercel first.** `classicminidiy.net`, `.org` and
+  `wheeldictionary.com` are hosted on **Vercel DNS** — deleting the projects or downgrading the
+  plan while they still delegate to `vercel-dns.com` takes out their nameservers and NXDOMAINs
+  them. Phase 3a moves them; confirm `dig NS` shows Cloudflare on all five before this phase runs.
+- Delete `vercel.json`, the dead "Purge my Cache" workflow (delete it — do NOT repurpose its
+  `CLOUDFLARE_TOKEN`/`CLOUDFLARE_ZONE` secret names; the migration uses `CLOUDFLARE_API_TOKEN`),
+  the Vercel Git integration and the redirect-only projects, then the main project (after soak).
+  Keep `/_ipx` in `prerender.ignore` (ipx is still the dev provider).
+- **Revoke the `cmdiy-cf-migration` API token** once the deploy pipeline has its own long-lived
+  credential.
 - **Rewrite these CLAUDE.md sections** (the plan's biggest documentation deliverable):
   1. Ecosystem context — TME 301s now live in the middleware + its test.
   2. Backend & Infrastructure — hosting = Cloudflare Workers; purge stale DynamoDB/"Nuxt
@@ -364,8 +458,9 @@ and the Vercel-compatible config gating remain until Phase 5. Worst case: repoin
   specs reads + shiki on workerd; no image module, no redirects, `crawlLinks: false`; fix its
   hardcoded global homepage canonical while in there. Migrating it later unlocks downgrading/
   cancelling the Vercel plan.
-- The 3 redirect-only Vercel projects (classicminidiy.net/.org, wheeldictionary.com) — trivial CF
-  Redirect Rules whenever their zones move.
+- ~~The 3 redirect-only Vercel projects~~ — **moved IN SCOPE 2026-08-23.** They are hosted on
+  Vercel DNS, so they block Phase 5 decommissioning, and they are the zero-risk rehearsal for
+  the cutover sequence. See "Domain inventory — all FIVE zones" and Phase 3a.
 - S3 → R2 for archive/model assets (zero egress) — separate initiative.
 - Turnstile on seller/onboard — only if abuse appears post-BotID.
 

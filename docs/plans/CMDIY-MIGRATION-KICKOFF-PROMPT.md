@@ -5,7 +5,10 @@ Copy everything below the line into a fresh Claude Code session started in
 
 ---
 
-Migrate classicminidiy.com (and theminiexchange.com) from Vercel to Cloudflare Workers.
+Migrate the whole Vercel estate to Cloudflare Workers: **five domains** —
+`classicminidiy.com` (the app), `theminiexchange.com` (a 28-redirect estate), and
+`classicminidiy.net`, `classicminidiy.org`, `wheeldictionary.com` (redirects to the primary
+site, and all three hosted on Vercel DNS, so they gate decommissioning).
 OpenECUAlliance already completed this migration as the pathfinder — its findings are
 binding, and re-deriving them is wasted work.
 
@@ -79,34 +82,57 @@ The pathfinder could not exercise any of these. Treat each as full risk:
 
 Ask once, at the start, not piecemeal:
 
-1. **Cloudflare API token.** The account-owned token UI has NO zone-create permission, and
-   its permission-group catalog is unreadable. So: **Cole creates both zones in the dashboard**
-   ("Add a site", Free plan, stop at the nameserver screen — do NOT change the registrar yet).
-   Then the token needs a **zone-scoped policy** (an account-scoped policy alone leaves
-   DNS/SSL/Zone-Settings denied even on existing zones) with **Edit** on: DNS, Zone Settings,
-   SSL and Certificates, Dynamic Redirect, **Workers Routes**. Plus account-scope Workers
-   Scripts + Workers KV. Verify with a real write before proceeding — reads succeeding proves
-   nothing.
-2. **GitHub Actions secrets** — offer to set these yourself with `gh secret set` if the values
+1. **Cloudflare zones — there are FIVE, not two.** `classicminidiy.com` and
+   `theminiexchange.com` are on Route 53. `classicminidiy.net`, `classicminidiy.org` and
+   `wheeldictionary.com` all redirect to the primary site and are hosted on **Vercel DNS**
+   (`ns1/ns2.vercel-dns.com`; no MX and no TXT on any of the three). That makes them a **Phase 5
+   blocker** — deleting the Vercel projects while they still delegate there NXDOMAINs them, it
+   does not merely stop the redirect — and it makes them the **zero-risk rehearsal**: migrate
+   `wheeldictionary.com` first, then `.net`/`.org`, then the two real zones. See "Domain
+   inventory — all FIVE zones" in the master plan. **Cole creates all five zones in the
+   dashboard** ("Add a site", Free plan, stop at the nameserver screen — do NOT touch the
+   registrar yet); account-owned tokens cannot create zones and their permission-group catalog
+   is unreadable, so do not plan around API-driven zone creation.
+2. **A dedicated Cloudflare API token for this migration** — Cole's explicit ask: one token,
+   revocable at Phase 5, not a reused account-wide one. Name it `cmdiy-cf-migration`. Zone
+   Resources: Include → **Specific zone** → all five, listed individually, never "All zones";
+   the policy must be **zone-scoped**, because an account-scoped policy alone leaves
+   DNS/SSL/Zone-Settings denied even on zones that already exist. **Edit** on: DNS, Zone
+   Settings, SSL and Certificates, Dynamic Redirect, **Workers Routes**; plus account-scope
+   Workers Scripts and Workers KV — and Bulk Redirect Lists + Rules if B1's 19 exact-source TME
+   redirects are built as a Bulk Redirects list, which is an account resource, not a zone one.
+   Give it an explicit ~90-day expiry and revoke it deliberately at Phase 5. Store it as
+   **`CLOUDFLARE_API_TOKEN`** (plus `CLOUDFLARE_ACCOUNT_ID`) — **do not reuse `CLOUDFLARE_TOKEN`
+   or `CLOUDFLARE_ZONE`**, which the dead "Purge my Cache" workflow still references; delete or
+   repoint that workflow as an explicit Phase 2 step. Verify the token with a **real write**:
+   create then delete a throwaway TXT on `wheeldictionary.com`, read a zone setting on
+   `classicminidiy.com`, and attempt one Workers Routes write. Reads succeeding proves nothing.
+3. **GitHub Actions secrets** — offer to set these yourself with `gh secret set` if the values
    are already in the environment or `.env`; on OECUA that removed the step entirely.
-3. **Supabase**: redirect-URL allowlist entries for every origin that will serve the site,
+4. **Supabase**: redirect-URL allowlist entries for every origin that will serve the site,
    plus the edge-function origin allowlists (D4: FOUR functions, TWO env vars,
    `MODELS_ALLOWED_ORIGINS` and `MEMBERSHIP_ALLOWED_ORIGINS`, exact-match Sets).
-4. **Authoritative DNS dump** for both zones (Route 53 console listing or `aws route53
-   list-resource-record-sets`) — needed as the verification oracle. Flag every mail record
-   explicitly; SES DKIM CNAMEs are the untested case.
-5. **Registrar NS change** at Amazon Registrar (Phase 4a) — NO registrar transfer, ever.
-   Cole has ruled that out permanently for classicminidiy.com.
-6. **Vercel domain removal / project deletion** (Phase 5) — and note that deleting the
-   project removes the rollback path.
+5. **Authoritative DNS dump for all five zones** — `aws route53 list-resource-record-sets` for
+   the two Route 53 zones, and the Vercel DNS record listing for the other three — as the
+   verification oracle. Flag every mail record explicitly; cmdiy's SES DKIM **CNAMEs** are the
+   untested case C2 was actually written about. Note that `theminiexchange.com` publishes
+   `v=spf1 include:send.resend.com ~all` while transactional mail is **SES** — record the
+   discrepancy, do not "fix" it during a zone move.
+6. **Registrar NS changes** at Amazon Registrar — Phase 3a for the three redirect zones,
+   Phase 4a for the two real ones. **NO registrar transfer, ever**; Cole has ruled that out
+   permanently.
+7. **Vercel domain removal / project deletion** (Phase 5) — five domains and four projects, and
+   note that deleting the project removes the rollback path. Gate it on `dig NS` showing
+   Cloudflare for all five.
 
 ## Process rules
 
 - **Baseline snapshot before any code change**, committed to `docs/baselines/`. Capture
-  `curl -sI` for http+https on every hostname, redirect status codes and targets, query
-  preservation, HSTS, cache-control, and the full DNS picture. The Phase 4 battery diffs
-  against it. Note OECUA discovered Vercel's apex redirect is a **307**, not 308 — measure,
-  don't assume.
+  `curl -sI` for http+https on **every hostname across all five domains** (apex and `www`),
+  redirect status codes and targets, path and query preservation, HSTS, cache-control, and the
+  full DNS picture. The Phase 4 battery diffs against it. Note OECUA discovered Vercel's apex
+  redirect is a **307**, not 308 — measure, don't assume, and capture the three redirect
+  domains' behavior *before* Vercel stops serving them, since it is unrecoverable afterwards.
 - **Write `scripts/verify-cf-deploy.sh` in Phase 2, not Phase 4**, parameterized by origin
   (default production, accepts a workers.dev target). On OECUA it caught a stale deployment
   and two of its own assertion bugs while still on preview. A battery first exercised on
