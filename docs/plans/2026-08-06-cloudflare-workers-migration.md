@@ -828,6 +828,37 @@ and any new CMDIY plan changes required.
 
 ---
 
+### CMDIY implementation log (appended by the cmdiy migration session)
+
+#### 2026-08-23 — Token verified; A-series recon done before the spike [validates A1 scope-down, confirms A3] [source: this branch]
+- **Token:** `cmdiy-cf-migration` verified by `scripts/verify-cf-token.py`. Five zones reachable,
+  OECUA's three zones denied, all five required zone permissions plus Workers Scripts/KV present.
+  **Gotcha for the next person:** `GET /zones` returns zones covered by the ACCOUNT-scope policy
+  too, so a token correctly limited to five zones can still *list* eight. Listing is not access —
+  probe `dns_records` per zone to tell them apart. Bulk Redirect Lists is NOT granted; add it only
+  if B1's 19 exact sources ship as a Bulk Redirects list.
+- **Module-scope timers: CLEAR.** Five `setTimeout` calls in `server/`, all inside request
+  handlers (youtube retry backoff, github request timeouts). No `setInterval` anywhere. The
+  lazy-sweep fix from web#650 held. No module-scope client construction either — grep for
+  top-level `new *Client` / `createClient` in `server/` returns nothing.
+- **A1 is far smaller than the risk register assumed.** The AWS SDK appears in exactly ONE file,
+  `server/utils/s3Models.ts`, with exactly TWO `.send()` calls: `headModelObject` (HeadObject) and
+  `getModelObjectHead` (ranged GetObject for magic-byte sniffing). Both sit on the model-upload
+  **finalize** path only. The client is built lazily inside `getModelsS3()`, never at module
+  scope. Critically, `createPresignedPost` and `getSignedUrl` do NOT call `.send()` — they are
+  pure signing, so upload and download URLs should work on workerd untouched. A1's blast radius
+  is upload-finalize, not the marketplace.
+  Likely fix if the spike confirms the failure: pass `requestHandler: new FetchHttpHandler()` to
+  the `S3Client` constructor so smithy uses `fetch` instead of `node:http`. Verify the failure
+  first, per the plan.
+- **A3 CONFIRMED, with its exact mechanism.** `/mcp` is served by `@nuxtjs/mcp-toolkit@0.18.0`,
+  not a hand-written route. It declares `agents: ">=0.16.0"` as an **optional** peer, and its
+  Cloudflare provider does `await import("agents/mcp")` at REQUEST time
+  (`dist/runtime/server/mcp/providers/cloudflare.js`). Because the import is dynamic, this does
+  not break the build or worker boot — the worker deploys green and `/mcp` 500s the first time an
+  AI client calls it. That silent-until-used shape is the danger; put `/mcp` in the verification
+  battery explicitly.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
