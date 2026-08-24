@@ -1,0 +1,45 @@
+{
+  // Cloudflare Workers deploy config for classicminidiy.
+  //
+  // Phase 2: this deploys to workers.dev only. No `routes` block yet, so nothing
+  // here can serve production traffic — the switch to Cloudflare is the Phase 4
+  // grey-cloud DNS flip plus a proxy toggle, NOT a code change.
+  //
+  // Pin wrangler and compatibility_date together (plan amendment E5): bump
+  // wrangler first, compatibility_date second.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "classicminidiy",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS",
+    // LOAD-BEARING. Vercel serves prerendered routes at their NO-SLASH url as
+    // 200. The Workers assets default (auto-trailing-slash) 307s
+    // /technical/torque -> /technical/torque/ instead, which would break every
+    // canonical and every sitemap entry on the site at once.
+    //
+    // Measured on the Phase 0 spike: without this, /technical/torque,
+    // /archive/colors and /models all 307'd while production served all three
+    // as 200. With it, the no-slash form is 200 and the slashed form redirects
+    // back to it — matching Vercel exactly. Do not remove.
+    "html_handling": "drop-trailing-slash"
+  },
+
+  // Nitro's cached handlers write to `cache:`. On workers the default storage is
+  // per-isolate memory — no sharing between isolates, no persistence — so it is
+  // mounted onto KV in nuxt.config.ts (gated on isCloudflareBuild). The binding
+  // name must match the `cache` mount there.
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "fe83d337d18046468b17e3cb31d61728"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}

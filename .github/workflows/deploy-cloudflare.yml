@@ -1,0 +1,58 @@
+name: Deploy to Cloudflare Workers
+
+# Phase 2: manual only. There is no `push` trigger, because production still
+# runs on Vercel — this deploys to workers.dev so the migration can be exercised
+# without touching live traffic. Phase 4 adds the push-to-main trigger, and even
+# then the actual platform switch is a DNS/proxy change, not this workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build and report bundle size without deploying'
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-cloudflare
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build for Cloudflare Workers
+        env:
+          NITRO_PRESET: cloudflare_module
+          # MANDATORY. Node caps its own heap well below the runner's RAM, so
+          # this is required regardless of runner size. 6144 is NOT enough for
+          # this repo — it OOMs with `Reached heap limit`. Measured, not guessed.
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: bun run build
+
+      - name: Report bundle size
+        run: bunx wrangler deploy --dry-run
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy
+        if: ${{ !inputs.dry_run }}
+        run: bunx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke-test the deployment
+        if: ${{ !inputs.dry_run }}
+        run: ./scripts/verify-cf-deploy.sh https://classicminidiy.classicminidiy.workers.dev
