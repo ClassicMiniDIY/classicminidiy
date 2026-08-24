@@ -3,6 +3,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { ArchiveItems, ToolboxItems } from './data/models/generic';
 import { AI_ANSWER_BOTS, AI_TRAINING_BOTS, PRIVATE_DISALLOW } from './server/utils/aiBots';
 
+// True when building for Cloudflare Workers (NITRO_PRESET=cloudflare_module).
+// Gates the few Vercel-only integrations that cannot resolve on workerd, so the
+// default Vercel build is completely unaffected by the migration work.
+const isCloudflareBuild = (process.env.NITRO_PRESET || '').includes('cloudflare');
+
 const parsedArchive = ArchiveItems.map((item) => {
   return { title: item.title, description: item.description, href: `https://www.classicminidiy.com${item.to}` };
 });
@@ -759,8 +764,28 @@ export default defineNuxtConfig({
     // it still falls back to null (the Next path is never taken here). Done via an
     // alias rather than a custom onwarn so Nitro's default warning filtering
     // (circular-dep noise, etc.) stays intact.
+    // Mount Cloudflare KV as nitro's `cache` storage on CF builds only. The
+    // binding name must match wrangler.jsonc's kv_namespaces entry.
+    ...(isCloudflareBuild
+      ? {
+          storage: {
+            cache: { driver: 'cloudflare-kv-binding', binding: 'CACHE' },
+          },
+        }
+      : {}),
     alias: {
       'next/headers': fileURLToPath(new URL('./server/stubs/next-headers-stub.mjs', import.meta.url)),
+      // Vercel BotID cannot work off Vercel — checkBotId() reads a signed
+      // classification that Vercel's edge attaches to the request, and on
+      // workerd the module's platform hooks resolve to nothing.
+      //
+      // WARNING: the stub is FAIL-OPEN. Before any production Cloudflare
+      // cutover the zone WAF rule must exist, or /api/langgraph/* and
+      // /api/models/seller/onboard lose their bot protection silently. Tracked
+      // against Phase 3 in docs/plans/2026-08-06-cloudflare-workers-migration.md.
+      ...(isCloudflareBuild
+        ? { 'botid/server': fileURLToPath(new URL('./server/stubs/botid-server-stub.mjs', import.meta.url)) }
+        : {}),
     },
   },
 
@@ -976,5 +1001,12 @@ export default defineNuxtConfig({
       installPrompt: true,
     },
   },
-  compatibilityDate: '2024-08-29',
+  // nitropack 2.13.4 will only resolve the MODERN Cloudflare Workers preset when
+  // the compatibility date is >= 2024-09-19; with an older date it silently
+  // falls back to the LEGACY Workers Sites runtime, which fails the build with
+  // `Cannot resolve "__STATIC_CONTENT_MANIFEST"`. Nitro resolves an effective
+  // date a few days earlier than the value set here, so 2024-09-25 is the
+  // smallest value that clears the gate. This date also governs the Vercel
+  // build — verified no regression there.
+  compatibilityDate: '2024-09-25',
 });
