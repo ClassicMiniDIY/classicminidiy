@@ -1,6 +1,8 @@
 # S3 → R2: what is actually involved
 
-**Status:** analysis for a decision. Nothing implemented.
+**Status:** DECIDED 2026-08-24 — **do not migrate to R2.** See section 7. Analysis retained
+because the reasoning is what makes the decision reviewable, and because Decision B may be worth
+revisiting if the cost profile ever changes materially.
 **Context:** raised while migrating to Cloudflare Workers, because `new S3Client()` does not
 work on workerd (see the migration plan's A1 entries) and R2 was floated as the way out.
 
@@ -135,7 +137,7 @@ Three ways to satisfy it:
 **It does not remove the need for a SigV4 signer**, so the aws4fetch-vs-hand-rolled decision has
 to be made regardless of what happens to R2. That decision is not blocked by this one.
 
-## 5. Recommendation
+## 5. Recommendation (SUPERSEDED by section 7 — retained for the reasoning)
 
 **Do Decision A, defer Decision B.**
 
@@ -163,3 +165,52 @@ can be served from a custom domain on a zone Cloudflare already controls, and at
 2. **Upload path preference** — presigned PUT with a SigV4 signer (less code, keeps a dependency)
    vs. Worker-orchestrated multipart (no signing, more code and an ownership burden)?
 3. `cmdiy-substack-redirect` is empty. Delete it?
+
+## 7. DECISION (2026-08-24): stay on S3, add a signer, no R2
+
+Two facts closed this out.
+
+**Fact 1 — total S3 spend is $0.22/month.** Egress is at most a few cents of that. Decision B
+(moving `classicminidiy` + `cmdiy-archive`, 26,236 objects) would rewrite 261 hardcoded hostname
+references, the `image.domains` allowlist, the PWA `runtimeCaching` patterns and the preconnect
+hints, to save something under $0.15/month. **Dead, not deferred.** Revisit only if the S3 line
+grows by two orders of magnitude.
+
+**Fact 2 — the SigV4 signer is required either way** (section 3). R2's binding removes signing for
+`head`, ranged `get`, and download-by-streaming, but NOT for browser direct upload, which is
+mandatory because the largest object is 194.7 MB against a 128 MB isolate limit. So Decision A
+would mean migrating a bucket AND still writing the signer. And once a signer exists, `head` and
+ranged `get` are the two cheapest things to sign — R2's remaining benefit is a nicer download path,
+which does not justify a migration plus a second storage system.
+
+### What we do instead
+
+Stay on S3. Add **`aws4fetch` pinned to an exact version** (`"aws4fetch": "1.0.20"`, no caret — the
+`dompurify` treatment, because a signing library changing should be a visible tested commit). It is
+2.5 KB gzipped with no transitive dependencies; dormant since 2024-12-06, but SigV4 is a frozen
+spec and the package is small enough to vendor into `server/utils/` and own outright if it ever
+goes bad.
+
+Rewrite the four operations in `server/utils/s3Models.ts`:
+
+| Operation | With aws4fetch |
+|---|---|
+| `headModelObject` | `aws.fetch(url, { method: 'HEAD' })` |
+| `getModelObjectHead` | `aws.fetch(url, { headers: { Range } })` |
+| `createModelDownloadUrl` | `aws.sign(url, { aws: { signQuery: true } })` → presigned GET |
+| `createModelUploadPost` | presigned **PUT** via `signQuery` (replaces the POST policy) |
+
+**Presigned PUT rather than POST is the load-bearing choice.** aws4fetch does query-string signing
+natively (`signQuery: true`, verified against its README), so this design contains **no bespoke
+crypto at all** — which is why the earlier "hand-roll the POST policy" recommendation is withdrawn.
+
+**Open item to verify before committing:** today's POST policy enforces
+`['content-length-range', 1, maxBytes]` at S3. The intended replacement is to sign `content-length`
+on the PUT so a client sending a different length fails signature validation. **Verify against real
+S3.** If it does not hold, fall back to the hand-rolled POST policy — no worse than the status quo.
+
+### Why this is the low-risk path
+
+No bucket migration, no Supabase change, no second storage system, no hand-written crypto, three
+files touched. It is platform-neutral, so it ships via Vercel and is verified in production
+**before** Cloudflare sees it — the risky part of the change lands on the platform we already trust.
