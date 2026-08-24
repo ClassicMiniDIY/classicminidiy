@@ -15,13 +15,13 @@ const mockSupabase = {
 };
 
 const mockRequireUserClient = vi.fn();
-const mockCreateUploadPost = vi.fn();
+const mockCreateUploadUrl = vi.fn();
 
 vi.mock('~/server/utils/userAuth', () => ({ requireUserClient: mockRequireUserClient }));
 vi.mock('~/server/utils/s3Models', () => ({
   buildModelKey: (o: any) => `models/${o.modelId}/v${o.versionNumber}/${o.fileId}/${o.safeFilename}`,
   sanitizeModelFilename: (name: string, ext: string) => `${name.replace(/\.[^.]*$/, '')}.${ext}`,
-  createModelUploadPost: mockCreateUploadPost,
+  createModelUploadUrl: mockCreateUploadUrl,
 }));
 
 // --- globals ----------------------------------------------------------------
@@ -51,7 +51,11 @@ describe('server/api/models/uploads/presign.post', () => {
     });
     filesEq.mockResolvedValue({ data: [], error: null });
     insert.mockResolvedValue({ error: null });
-    mockCreateUploadPost.mockResolvedValue({ url: 'https://s3.example/upload', fields: { key: 'k', policy: 'p' } });
+    mockCreateUploadUrl.mockResolvedValue({
+      url: 'https://s3.example/upload',
+      method: 'PUT',
+      headers: { 'content-type': 'application/octet-stream', 'content-length': '1024' },
+    });
 
     if (!handler) handler = (await import('~/server/api/models/uploads/presign.post')).default;
   });
@@ -134,12 +138,14 @@ describe('server/api/models/uploads/presign.post', () => {
     expect(res.fileId).toBeTruthy();
     expect(res.isRenderable).toBe(true);
     expect(res.upload.url).toBe('https://s3.example/upload');
-    expect(mockCreateUploadPost).toHaveBeenCalledWith(expect.objectContaining({ maxBytes: MODEL_FILE_MAX_BYTES }));
+    // The upload cap is no longer a policy condition — it is the SIGNED
+    // content-length, so the route must pass the validated sizeBytes through.
+    expect(mockCreateUploadUrl).toHaveBeenCalledWith(expect.objectContaining({ sizeBytes: validBody.sizeBytes }));
   });
 
-  it('forwards an optional base64 sha256 to the presign policy', async () => {
+  it('forwards an optional base64 sha256 to the presigned PUT', async () => {
     (readBody as any).mockResolvedValue({ ...validBody, sha256: 'YmFzZTY0aGFzaA==' });
     await handler({});
-    expect(mockCreateUploadPost).toHaveBeenCalledWith(expect.objectContaining({ checksumSha256: 'YmFzZTY0aGFzaA==' }));
+    expect(mockCreateUploadUrl).toHaveBeenCalledWith(expect.objectContaining({ checksumSha256: 'YmFzZTY0aGFzaA==' }));
   });
 });
