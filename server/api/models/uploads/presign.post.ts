@@ -1,7 +1,7 @@
 /**
  * POST /api/models/uploads/presign  (keystone §5 step 1)
  *
- * Mints a presigned POST so the browser can upload a model file directly to the
+ * Mints a presigned PUT so the browser can upload a model file directly to the
  * private `classicminidiy-models` S3 bucket (200 MB files cannot stream through
  * serverless Nitro). Before presigning we:
  *   - confirm the caller owns a draft/rejected version (via RLS — the insert
@@ -27,7 +27,7 @@ import {
   inferKind,
   RENDERABLE_EXTS,
 } from '../../../utils/models';
-import { buildModelKey, sanitizeModelFilename, createModelUploadPost } from '../../../utils/s3Models';
+import { buildModelKey, sanitizeModelFilename, createModelUploadUrl } from '../../../utils/s3Models';
 
 export default defineEventHandler(async (event) => {
   const { user, supabase } = await requireUserClient(event);
@@ -136,10 +136,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Not allowed to add files to this version' });
   }
 
-  const post = await createModelUploadPost({
+  // sizeBytes is SIGNED into the URL, which is what caps the upload now that the
+  // POST policy's content-length-range is gone. It was already validated against
+  // MODEL_FILE_MAX_BYTES and the per-version total above, so a client cannot
+  // presign for more than it is allowed — and cannot then send more than it
+  // presigned for without failing S3's signature check.
+  const upload = await createModelUploadUrl({
     key,
     contentType,
-    maxBytes: MODEL_FILE_MAX_BYTES,
+    sizeBytes,
     checksumSha256: sha256,
   });
 
@@ -149,6 +154,6 @@ export default defineEventHandler(async (event) => {
     isRenderable,
     maxBytes: MODEL_FILE_MAX_BYTES,
     expiresIn: 900,
-    upload: { url: post.url, fields: post.fields },
+    upload,
   };
 });
