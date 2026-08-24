@@ -38,6 +38,15 @@ jobs:
           # this is required regardless of runner size. 6144 is NOT enough for
           # this repo — it OOMs with `Reached heap limit`. Measured, not guessed.
           NODE_OPTIONS: --max-old-space-size=8192
+          # MANDATORY while this deploys to a PUBLIC workers.dev URL. Without it
+          # nuxt-robots emits the indexable variant, and because
+          # NUXT_PUBLIC_SUPABASE_* is build-baked the result is a crawlable,
+          # fully functional mirror of the site reading PRODUCTION data — a
+          # duplicate-content hazard on a site where SEO is load-bearing, and a
+          # second unmonitored public front-end. verify-cf-deploy.sh asserts the
+          # noindex, so removing this fails the smoke test rather than shipping
+          # silently. Phase 4 flips this to production for the real cutover.
+          NUXT_SITE_ENV: preview
         run: bun run build
 
       - name: Report bundle size

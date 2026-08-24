@@ -79,6 +79,34 @@ expect_status "/sitemap.xml" 200
 expect_status "/llms.txt" 200
 
 echo
+echo "== deployment must not be indexable =="
+# A non-production origin serves a full, working copy of the site backed by
+# PRODUCTION data (NUXT_PUBLIC_SUPABASE_* is build-baked, not a runtime secret).
+# If it is also indexable, that is duplicate content against the real site plus
+# a second unmonitored public front-end. The build must set NUXT_SITE_ENV=preview.
+# Asserted here because a battery that only checks "robots.txt returns 200"
+# passes identically whether it says `Allow: /` or `Disallow: /`.
+if [ "$ZONE_CHECKS" = "0" ]; then
+  if curl -sS -m 30 "$ORIGIN/technical/torque" 2>/dev/null | grep -qiE '<meta[^>]*name="robots"[^>]*content="[^"]*noindex'; then
+    ok "non-production origin emits noindex"
+  else
+    bad "non-production origin is INDEXABLE — set NUXT_SITE_ENV=preview on the build"
+  fi
+  if curl -sS -m 30 "$ORIGIN/robots.txt" 2>/dev/null | grep -qi 'indexable'; then
+    bad "robots.txt advertises the indexable variant on a non-production origin"
+  else
+    ok "robots.txt is not the indexable variant"
+  fi
+else
+  # On the real origin the opposite is required: it MUST be indexable.
+  if curl -sS -m 30 "$ORIGIN/technical/torque" 2>/dev/null | grep -qiE '<meta[^>]*name="robots"[^>]*content="[^"]*noindex'; then
+    bad "PRODUCTION origin is noindex — NUXT_SITE_ENV is wrong for this deploy"
+  else
+    ok "production origin is indexable"
+  fi
+fi
+
+echo
 echo "== MCP (fails closed) =="
 mcp_status=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' -X POST "$ORIGIN/mcp" \
   -H 'Content-Type: application/json' \
