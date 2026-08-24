@@ -931,6 +931,42 @@ and any new CMDIY plan changes required.
   must exist before any real cutover, or `/api/langgraph/*` and `/api/models/seller/onboard` lose
   bot protection silently.
 
+#### 2026-08-24 — Phase 0 RUNTIME gates: A3 resolved, A1 confirmed, one site-wide URL bug caught [source: this branch]
+Spike worker: `cmdiy-spike.classicminidiy.workers.dev`, startup 147 ms. Secrets pushed with
+`wrangler secret put` (encrypted at rest, runtime-only bindings). Deliberately NOT on the spike:
+`SUPABASE_SERVICE_KEY`, real S3 keys, `MARKETING_UNSUB_SECRET`, `GITLAB` — no gate needs them and
+they carry the real blast radius.
+
+- **GATE 2 PASS — takumi-wasm renders on workerd.** A model page's `_og/s/*.png` returns 200,
+  `image/png`, **607727 bytes**, 1200x600. No fallback to satori needed. Note OG generation is
+  used ONLY on model pages (`app/composables/useModelSeo.ts`); every other page ships a static
+  S3 `social-share` image, so this gate has exactly one real test surface.
+- **GATE 4 PASS — SSR parity + the schema-org canary.** `/` 200 with **non-empty JSON-LD**
+  (1 block, non-empty — the nuxt-4.5 pin's whole reason for existing, healthy here), `/api/torque`
+  200, unknown URL a real **404** (the `[...slug].vue` catch-all fix survives), and Supabase is
+  reachable (`/api/models` returns live rows).
+- **A3 RESOLVED — `/mcp` works.** 401 with no key, 403 with a bad key (fails closed as designed),
+  and with a real key a valid `tools/list` over SSE carrying full tool schemas. That is a real MCP
+  client response, not a bare 200. `agents` + AsyncLocalStorage both work on workerd.
+- **NEW SITE-WIDE BUG CAUGHT — Workers Static Assets `html_handling`.** Default config **307'd**
+  `/technical/torque`, `/archive/colors` and `/models` to their trailing-slash form, while
+  production serves all three as **200** at the no-slash URL. Shipping that would have broken every
+  canonical and every sitemap entry at once. Fix: `"html_handling": "drop-trailing-slash"` in the
+  assets config (same value OECUA landed on). Verified after redeploy: no-slash 200, slashed form
+  307s back. **This is now a mandatory line in the Phase 2 wrangler config, not an optional
+  nicety.**
+- **A1 CONFIRMED as a blocker — but the predicted signature is WRONG.** The probe
+  (`server/api/__spike/a1.get.ts`, spike-only, delete before Phase 1) calls `headModelObject()`
+  with deliberately fake credentials, so reaching AWS at all would have refuted A1. It never got
+  there: `TypeError: Uj is not a function` — a **minified** missing function reference, NOT the
+  `notImplemented` throw from `unenv`'s `http.request` that amendment A1 describes. The conclusion
+  stands (`client.send()` is unusable on workerd) but the stated mechanism should not be trusted
+  when choosing the fix. Recommend the plan's presigned-URL + `fetch()` rewrite over the
+  `FetchHttpHandler` one-liner: it removes the SDK's HTTP layer from the path entirely and is
+  identical on Node and workerd, so Phase 1 can ship and verify it on Vercel first.
+- **Still unrun:** SSE streaming from the langgraph proxy, the KV cache mount, and env-timing
+  checks.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on

@@ -11,7 +11,15 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".output/public",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // Vercel serves prerendered routes at their NO-SLASH url as 200. The Workers
+    // assets default (auto-trailing-slash) 307s /technical/torque ->
+    // /technical/torque/ instead, which would break every canonical and every
+    // sitemap entry at once. drop-trailing-slash serves the no-slash form as 200
+    // and redirects the slashed form back to it, matching Vercel. Measured, not
+    // assumed: without this the spike 307'd /technical/torque, /archive/colors
+    // and /models while production served all three as 200.
+    "html_handling": "drop-trailing-slash"
   },
   "observability": {
     "enabled": true
