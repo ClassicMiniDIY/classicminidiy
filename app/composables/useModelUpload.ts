@@ -3,7 +3,7 @@
  * flow our graph model requires:
  *   1. create the DRAFT model + version 1 early (POST /api/models) so files have
  *      a version_id to attach to;
- *   2. files → presigned POST straight to S3, then finalize (PR5 routes);
+ *   2. files → presigned PUT straight to S3, then finalize (PR5 routes);
  *   3. images → server route → Supabase Storage `model-images`;
  *   4. PATCH the model (content/safety_ack) and version (print/BOM/assembly);
  *   5. submit_model_version via the submit route.
@@ -190,7 +190,10 @@ export function useModelUpload() {
     try {
       const headers = await authHeaders();
       entry.status = 'uploading';
-      const presign = await $fetch<{ fileId: string; upload: { url: string; fields: Record<string, string> } }>(
+      const presign = await $fetch<{
+        fileId: string;
+        upload: { url: string; method: 'PUT'; headers: Record<string, string> };
+      }>(
         '/api/models/uploads/presign',
         {
           method: 'POST',
@@ -199,7 +202,7 @@ export function useModelUpload() {
         }
       );
       entry.fileId = presign.fileId;
-      await postToS3(presign.upload, file, (p) => (entry.progress = p));
+      await putToS3(presign.upload, file, (p) => (entry.progress = p));
       entry.status = 'verifying';
       const fin = await $fetch<{ uploadStatus: string }>('/api/models/uploads/finalize', {
         method: 'POST',
@@ -214,21 +217,36 @@ export function useModelUpload() {
     }
   }
 
-  function postToS3(
-    post: { url: string; fields: Record<string, string> },
+  /**
+   * Upload straight to S3 with the presigned PUT from /api/models/uploads/presign.
+   *
+   * Every header the server returns is part of the signature, so they must be sent
+   * back verbatim — changing any of them yields `SignatureDoesNotMatch`. That is
+   * deliberate: signing `content-length` is what enforces the upload size cap now
+   * that the old POST policy's content-length-range is gone.
+   *
+   * `content-length` itself is NOT set here. The browser forbids setting it
+   * (it is a forbidden header name) and sets it automatically from the body,
+   * which is exactly the value that was signed.
+   *
+   * Still XHR rather than fetch: fetch has no upload-progress events.
+   */
+  function putToS3(
+    upload: { url: string; method: 'PUT'; headers: Record<string, string> },
     file: File,
     onProgress: (p: number) => void
   ) {
     return new Promise<void>((resolve, reject) => {
-      const form = new FormData();
-      Object.entries(post.fields).forEach(([k, v]) => form.append(k, v));
-      form.append('file', file);
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', post.url);
+      xhr.open(upload.method, upload.url);
+      for (const [k, v] of Object.entries(upload.headers)) {
+        if (k.toLowerCase() === 'content-length') continue; // browser-controlled
+        xhr.setRequestHeader(k, v);
+      }
       xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
       xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`S3 ${xhr.status}`)));
       xhr.onerror = () => reject(new Error('Network error during upload'));
-      xhr.send(form);
+      xhr.send(file);
     });
   }
 
