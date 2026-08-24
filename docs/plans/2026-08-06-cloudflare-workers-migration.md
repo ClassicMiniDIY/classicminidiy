@@ -889,6 +889,133 @@ and any new CMDIY plan changes required.
   `server/mcp/tools/` are pure functions and port cheaply). Default is to stay in the main worker
   unless the Cloudflare-preset bundle size forces the split. Do not split preemptively.
 
+#### 2026-08-24 — Phase 0 static gates PASS; three plan errors found in the build command alone [contradicts Phase 0 text] [source: this branch]
+- **The documented build command does not work, in two independent ways.**
+  1. `NITRO_PRESET=cloudflare_module` on nitropack **2.13.4** silently selects the **LEGACY**
+     Workers Sites runtime and dies with
+     `Cannot resolve "__STATIC_CONTENT_MANIFEST" ... and externals are not allowed!`. Cause: the
+     modern preset (`name: cloudflare-module`, `stdName: cloudflare_workers`) declares
+     `compatibilityDate: 2024-09-19`, and `_resolve.mjs` drops any preset whose declared date is
+     newer than the project's. With cmdiy's `2024-08-29` the modern preset was filtered out,
+     leaving `cloudflare-module-legacy` (which claims `cloudflare-module` as an alias) as the only
+     match. **The preset name was never wrong — the date was.** OECUA never hit this because it is
+     on nitropack 2.12.9.
+  2. `NITRO_PRESET=cloudflare_workers` — the modern preset's own `stdName` — **can never resolve**.
+     `_resolve.mjs` does `kebabCase(name)`, turning it into `cloudflare-workers`, which matches no
+     preset's name, stdName or alias. It then re-filters on the RAW name in an error branch and
+     reports `cannot be resolved with current compatibilityDate`, which points at the wrong cause
+     entirely. Do not chase the date when you see that message — check the name first.
+- **`compatibilityDate` bumped `2024-08-29` -> `2024-09-25`.** Nitro resolves an effective date
+  6-8 days EARLIER than the configured value, so the naive `2024-09-19` still failed the
+  `>= 2024-09-19` gate. This date governs the **Vercel** build too; verified no regression —
+  `VERCEL=1 NITRO_PRESET=vercel` builds green and `.vercel/output/config.json` still carries the
+  `images` key, so the image-provider auto-detection contract holds.
+- **6144 MB of heap is NOT enough for cmdiy** — V8 `Reached heap limit`, SIGABRT. 8192 works. This
+  extends the pathfinder's NODE_OPTIONS finding rather than repeating it: the value that is
+  sufficient for OECUA is insufficient here, and note this is a **V8 heap** OOM, not the container
+  SIGKILL documented in CLAUDE.md — different failure, different fix.
+- **Bundle gate PASSES: 19283 KiB raw / 4774 KiB gzip (4.66 MB).** Under the 9 MB spike gate and
+  under the 10 MB paid limit, but **well over the 3 MiB free cap** — Workers Paid confirmed
+  necessary for cmdiy as it was for OECUA, now with the MCP SDK and `agents` included.
+- **Other static gates:** no `.node` files; no real `sharp`/`ipx` imports (4 chunks contain the
+  substrings, none is an import); `.output/public` is 1135 files against the 20k cap, so
+  `compressPublicAssets` `.gz`/`.br` siblings (682 of them) are NOT a problem here and can stay;
+  `_headers` IS emitted (34 lines) and needs reconciling with the planned header rules;
+  `agents/mcp` is present in the bundle.
+- **Open:** wrangler warns `Duplicate key "provider" in object literal` on the built worker — not
+  fatal, unchased.
+- **Not yet run:** every RUNTIME gate (OG image via wasm, SSE, SSR/JSON-LD parity, `/mcp` with a
+  real client, KV, env timing, and A1's `client.send()`). Those need the worker deployed.
+- **Spike-only, NOT production-safe:** `server/stubs/botid-server-stub.mjs` fail-OPENs on
+  Cloudflare builds via a new `isCloudflareBuild` alias gate in `nuxt.config.ts`. A zone WAF rule
+  must exist before any real cutover, or `/api/langgraph/*` and `/api/models/seller/onboard` lose
+  bot protection silently.
+
+#### 2026-08-24 — Phase 0 RUNTIME gates: A3 resolved, A1 confirmed, one site-wide URL bug caught [source: this branch]
+Spike worker: `cmdiy-spike.classicminidiy.workers.dev`, startup 147 ms. Secrets pushed with
+`wrangler secret put` (encrypted at rest, runtime-only bindings). Deliberately NOT on the spike:
+`SUPABASE_SERVICE_KEY`, real S3 keys, `MARKETING_UNSUB_SECRET`, `GITLAB` — no gate needs them and
+they carry the real blast radius.
+
+- **GATE 2 PASS — takumi-wasm renders on workerd.** A model page's `_og/s/*.png` returns 200,
+  `image/png`, **607727 bytes**, 1200x600. No fallback to satori needed. Note OG generation is
+  used ONLY on model pages (`app/composables/useModelSeo.ts`); every other page ships a static
+  S3 `social-share` image, so this gate has exactly one real test surface.
+- **GATE 4 PASS — SSR parity + the schema-org canary.** `/` 200 with **non-empty JSON-LD**
+  (1 block, non-empty — the nuxt-4.5 pin's whole reason for existing, healthy here), `/api/torque`
+  200, unknown URL a real **404** (the `[...slug].vue` catch-all fix survives), and Supabase is
+  reachable (`/api/models` returns live rows).
+- **A3 RESOLVED — `/mcp` works.** 401 with no key, 403 with a bad key (fails closed as designed),
+  and with a real key a valid `tools/list` over SSE carrying full tool schemas. That is a real MCP
+  client response, not a bare 200. `agents` + AsyncLocalStorage both work on workerd.
+- **NEW SITE-WIDE BUG CAUGHT — Workers Static Assets `html_handling`.** Default config **307'd**
+  `/technical/torque`, `/archive/colors` and `/models` to their trailing-slash form, while
+  production serves all three as **200** at the no-slash URL. Shipping that would have broken every
+  canonical and every sitemap entry at once. Fix: `"html_handling": "drop-trailing-slash"` in the
+  assets config (same value OECUA landed on). Verified after redeploy: no-slash 200, slashed form
+  307s back. **This is now a mandatory line in the Phase 2 wrangler config, not an optional
+  nicety.**
+- **A1 CONFIRMED as a blocker — but the predicted signature is WRONG.** The probe
+  (`server/api/__spike/a1.get.ts`, spike-only, delete before Phase 1) calls `headModelObject()`
+  with deliberately fake credentials, so reaching AWS at all would have refuted A1. It never got
+  there: `TypeError: Uj is not a function` — a **minified** missing function reference, NOT the
+  `notImplemented` throw from `unenv`'s `http.request` that amendment A1 describes. The conclusion
+  stands (`client.send()` is unusable on workerd) but the stated mechanism should not be trusted
+  when choosing the fix. Recommend the plan's presigned-URL + `fetch()` rewrite over the
+  `FetchHttpHandler` one-liner: it removes the SDK's HTTP layer from the path entirely and is
+  identical on Node and workerd, so Phase 1 can ship and verify it on Vercel first.
+- **Still unrun:** SSE streaming from the langgraph proxy, the KV cache mount, and env-timing
+  checks.
+
+#### 2026-08-24 — A1 ROOT CAUSE: `new S3Client()` itself fails; A1's scope AND mechanism are both wrong [contradicts A1 — raises severity] [source: this branch]
+Isolating each SDK step on an UNMINIFIED worker build gave the real failure:
+
+```
+TypeError: emitWarningIfUnsupportedVersion$1 is not a function
+    at getRuntimeConfig (index.js:325615:7)
+    at new S3Client (index.js:325697:27)
+```
+
+In the bundle: `const no$2 = Symbol.for("node-only"); const emitWarningIfUnsupportedVersion$2 = no$2;`
+— that is `@aws-sdk/core`'s **browser** build, where Node-only exports are sentinels rather than
+functions. But `@aws-sdk/client-s3` kept its **Node** `getRuntimeConfig`, which calls that sentinel
+as a function. A dual-package hazard: the CF preset's `workerd` export condition resolves the two
+halves of the SDK to different builds.
+
+- **A1's stated scope is WRONG and too small.** It says "upload finalize breaks". In fact
+  `new S3Client()` throws, so **every** S3 operation fails on workerd — `createPresignedPost`
+  (browser direct upload), `createModelDownloadUrl` / `getSignedUrl` (downloads), and both
+  `.send()` helpers. The entire 3D model library storage layer is dead, not one finalize path.
+  An earlier note in this log claimed presigning "should work untouched" — that was wrong; signing
+  is pure crypto, but you cannot get to it without constructing a client.
+- **A1's stated mechanism is WRONG.** It blames unenv stubbing `node:http`, with `http.request`
+  being `notImplemented`. The failure is upstream of any transport and has nothing to do with
+  node:http.
+- **Fix attempt 1 — presign + `fetch()` instead of `client.send()` (the plan's prescription):
+  FAILED.** Still needs `new S3Client()` to produce the signer. Rewriting the two `.send()` call
+  sites was necessary but nowhere near sufficient. (The rewrite is kept: it is correct,
+  platform-neutral, and removes the SDK transport from the path.)
+- **Fix attempt 2 — add `browser` to nitro `exportConditions` on CF builds: FAILED.** Identical
+  error, identical line numbers. Reverted; do not re-try without new information.
+- **The assumption that may be wrong:** that the AWS SDK can be made to work on workerd through
+  bundler configuration at all. The hazard lives in the SDK's own package `exports` map.
+- **Recommended direction — drop the AWS SDK from the Workers path entirely** and sign S3 requests
+  with **`aws4fetch`** (~4 KB, purpose-built for Cloudflare Workers, SigV4 via SubtleCrypto +
+  `fetch`, works on Node 18+ too so it stays platform-neutral). It also removes a large dependency
+  from a bundle currently at 4.66 MB gzip. **Cost:** `createPresignedPost` has no aws4fetch
+  equivalent — the browser direct-upload POST policy (HMAC-SHA256 over a base64 policy document)
+  would need implementing by hand. Bounded, but real, and it touches the upload path that
+  `docs/runbooks/2026-06-12-model-library-launch-checklist.md` covers. **This is a Cole decision.**
+
+Also settled this round:
+- **GATE 6 PASS — KV works.** `useStorage('cache')` write/read round-trips against a real KV
+  namespace bound as `CACHE`, mounted via `nitro.storage` gated on `isCloudflareBuild`.
+- **GATE 3 (partial) — SSE transport works.** `/mcp` streams `event: message` frames correctly.
+  The langgraph proxy answers 200; true incremental streaming still needs the Phase 1 byte-stream
+  fix before it can be asserted.
+- **GATE 7 PASS — env timing.** `NUXT_`-prefixed secrets resolve at runtime (`/api/models` returns
+  live Supabase rows using only worker-provided secrets).
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
