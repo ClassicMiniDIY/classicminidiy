@@ -17,82 +17,110 @@
       </div>
     </header>
 
-    <div class="relative flex min-h-0 flex-1 flex-col">
-      <div
-        ref="messagesContainer"
-        class="flex-1 overflow-y-auto"
-        :class="isChatEmpty ? 'flex' : ''"
-        @scroll="handleScroll"
-      >
-        <div
-          class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
-          :class="isChatEmpty ? 'flex flex-col justify-center' : ''"
-        >
-          <ChatEmptyState v-if="isChatEmpty" @pick="handleStarter" />
+    <div class="flex min-h-0 flex-1">
+      <!-- Chat column: transcript and composer share a width, so the reading
+           column never shifts when the rail's contents change.
 
-          <!-- Deliberately NOT `role="log"`: that role carries an implicit
+           `min-w-0` is load-bearing, exactly as it is in AssistantMessage. A
+           flex item defaults to `min-width: auto`, so without it this column
+           refuses to shrink below the intrinsic width of its widest content —
+           a long source URL or an unbroken part number — and pushes itself
+           past the viewport instead of wrapping. -->
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div class="relative flex min-h-0 flex-1 flex-col">
+          <div
+            ref="messagesContainer"
+            class="flex-1 overflow-y-auto"
+            :class="isChatEmpty ? 'flex' : ''"
+            @scroll="handleScroll"
+          >
+            <div
+              class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
+              :class="isChatEmpty ? 'flex flex-col justify-center' : ''"
+            >
+              <ChatEmptyState v-if="isChatEmpty" @pick="handleStarter" />
+
+              <!-- Deliberately NOT `role="log"`: that role carries an implicit
                `aria-live="polite"`, which would make a screen reader re-announce
                the whole reply on every streamed token. The sr-only status region
                below is the single announcement point. -->
-          <div v-else class="space-y-6">
-            <template v-for="message in messages" :key="message.id">
-              <HumanMessage v-if="message.type === 'human'" :message="message" :is-loading="isLoading" />
-              <AssistantMessage v-else-if="message.type === 'ai'" :message="message" :is-loading="isLoading" />
-            </template>
+              <div v-else class="space-y-6">
+                <template v-for="message in messages" :key="message.id">
+                  <HumanMessage v-if="message.type === 'human'" :message="message" :is-loading="isLoading" />
+                  <AssistantMessage v-else-if="message.type === 'ai'" :message="message" :is-loading="isLoading" />
+                </template>
 
-            <!-- Shown only while waiting for the first token. Once text starts
+                <!-- Shown only while waiting for the first token. Once text starts
                  arriving the streaming cursor carries the signal, so the
                  indicator no longer sits underneath a half-written reply. -->
-            <div v-if="showThinkingIndicator" class="flex items-center gap-3 sm:gap-4">
-              <div
-                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
-                aria-hidden="true"
-              >
-                <i class="fas fa-comments"></i>
-              </div>
-              <div class="flex items-center gap-1" aria-hidden="true">
-                <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
-                <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
-                <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
+                <div v-if="showThinkingIndicator" class="flex items-center gap-3 sm:gap-4">
+                  <div
+                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
+                    aria-hidden="true"
+                  >
+                    <i class="fas fa-comments"></i>
+                  </div>
+                  <div class="flex items-center gap-1" aria-hidden="true">
+                    <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
+                    <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
+                    <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
+                  </div>
+                </div>
+
+                <!-- Below `lg` there is no room for a rail, so sources fall inline
+                 under the transcript. From `lg` up the rail takes over. -->
+                <UsefulLinks v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" class="lg:hidden" />
               </div>
             </div>
+          </div>
 
-            <!-- Sources sit under the transcript they belong to, at every
-                 breakpoint. The desktop layout previously reserved a permanent
-                 320px rail that held an empty placeholder for most of a session. -->
-            <UsefulLinks v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" />
+          <!-- Announces stream state without reading every streamed token aloud. -->
+          <p class="sr-only" role="status" aria-live="polite">
+            {{ isLoading ? t('sr_generating') : '' }}
+          </p>
+
+          <button
+            v-if="showScrollButton"
+            @click="scrollToBottom(true)"
+            class="btn btn-circle btn-sm absolute bottom-4 left-1/2 -translate-x-1/2 border-base-300 bg-base-100 shadow-md"
+            :title="t('scroll_to_bottom')"
+            :aria-label="t('scroll_to_bottom')"
+          >
+            <i class="fas fa-arrow-down text-xs" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="shrink-0 border-t border-base-300 bg-base-100">
+          <div class="mx-auto w-full max-w-3xl px-4 py-3 sm:px-6">
+            <ChatComposer
+              ref="composerRef"
+              v-model="input"
+              :is-loading="isLoading"
+              :disable-new-chat="isChatEmpty && !isLoading"
+              @submit="handleSubmit"
+              @stop="stopGeneration"
+              @new-chat="handleNewChat"
+            />
           </div>
         </div>
       </div>
 
-      <!-- Announces stream state without reading every streamed token aloud. -->
-      <p class="sr-only" role="status" aria-live="polite">
-        {{ isLoading ? t('sr_generating') : '' }}
-      </p>
-
-      <button
-        v-if="showScrollButton"
-        @click="scrollToBottom(true)"
-        class="btn btn-circle btn-sm absolute bottom-4 left-1/2 -translate-x-1/2 border-base-300 bg-base-100 shadow-md"
-        :title="t('scroll_to_bottom')"
-        :aria-label="t('scroll_to_bottom')"
+      <!--
+        Supplementary sources, beside the conversation rather than inside it.
+        The rail is always present from `lg` up — including when empty — so the
+        chat column keeps a constant width and nothing reflows mid-answer when
+        a search returns.
+      -->
+      <aside
+        class="hidden w-80 shrink-0 overflow-y-auto border-l border-base-300 bg-base-200/40 p-4 lg:block"
+        :aria-label="t('useful_links_region')"
       >
-        <i class="fas fa-arrow-down text-xs" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <div class="shrink-0 border-t border-base-300 bg-base-100">
-      <div class="mx-auto w-full max-w-3xl px-4 py-3 sm:px-6">
-        <ChatComposer
-          ref="composerRef"
-          v-model="input"
-          :is-loading="isLoading"
-          :disable-new-chat="isChatEmpty && !isLoading"
-          @submit="handleSubmit"
-          @stop="stopGeneration"
-          @new-chat="handleNewChat"
-        />
-      </div>
+        <UsefulLinksSidebar v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" />
+        <div v-else class="mt-8 text-center text-base-content/50">
+          <i class="fas fa-link mb-2 block text-2xl" aria-hidden="true"></i>
+          <p class="text-sm">{{ t('useful_links_placeholder') }}</p>
+        </div>
+      </aside>
     </div>
   </div>
 </template>
@@ -105,6 +133,7 @@
   import ChatEmptyState from './ChatEmptyState.vue';
   import HumanMessage from './HumanMessage.vue';
   import UsefulLinks from './UsefulLinks.vue';
+  import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
 
   const {
     assistantId,
@@ -398,61 +427,81 @@
     "assistant_name": "CMDIY Assistant",
     "beta": "Beta",
     "scroll_to_bottom": "Scroll to bottom",
-    "sr_generating": "Generating a response"
+    "sr_generating": "Generating a response",
+    "useful_links_region": "Useful links",
+    "useful_links_placeholder": "Links appear here when I search for something"
   },
   "es": {
     "assistant_name": "Asistente CMDIY",
     "beta": "Beta",
     "scroll_to_bottom": "Desplazar al final",
-    "sr_generating": "Generando una respuesta"
+    "sr_generating": "Generando una respuesta",
+    "useful_links_region": "Enlaces útiles",
+    "useful_links_placeholder": "Los enlaces aparecen aquí cuando busco algo"
   },
   "fr": {
     "assistant_name": "Assistant CMDIY",
     "beta": "Bêta",
     "scroll_to_bottom": "Défiler vers le bas",
-    "sr_generating": "Génération d'une réponse"
+    "sr_generating": "Génération d'une réponse",
+    "useful_links_region": "Liens utiles",
+    "useful_links_placeholder": "Les liens apparaissent ici quand je fais une recherche"
   },
   "de": {
     "assistant_name": "CMDIY Assistent",
     "beta": "Beta",
     "scroll_to_bottom": "Nach unten scrollen",
-    "sr_generating": "Antwort wird erzeugt"
+    "sr_generating": "Antwort wird erzeugt",
+    "useful_links_region": "Nützliche Links",
+    "useful_links_placeholder": "Links erscheinen hier, wenn ich etwas suche"
   },
   "it": {
     "assistant_name": "Assistente CMDIY",
     "beta": "Beta",
     "scroll_to_bottom": "Scorri in basso",
-    "sr_generating": "Generazione di una risposta"
+    "sr_generating": "Generazione di una risposta",
+    "useful_links_region": "Link utili",
+    "useful_links_placeholder": "I link appaiono qui quando cerco qualcosa"
   },
   "pt": {
     "assistant_name": "Assistente CMDIY",
     "beta": "Beta",
     "scroll_to_bottom": "Rolar para baixo",
-    "sr_generating": "Gerando uma resposta"
+    "sr_generating": "Gerando uma resposta",
+    "useful_links_region": "Links úteis",
+    "useful_links_placeholder": "Os links aparecem aqui quando eu pesquiso algo"
   },
   "ru": {
     "assistant_name": "Помощник CMDIY",
     "beta": "Бета",
     "scroll_to_bottom": "Прокрутить вниз",
-    "sr_generating": "Формируется ответ"
+    "sr_generating": "Формируется ответ",
+    "useful_links_region": "Полезные ссылки",
+    "useful_links_placeholder": "Ссылки появятся здесь, когда я что-то найду"
   },
   "ja": {
     "assistant_name": "CMDIYアシスタント",
     "beta": "ベータ",
     "scroll_to_bottom": "下までスクロール",
-    "sr_generating": "回答を生成しています"
+    "sr_generating": "回答を生成しています",
+    "useful_links_region": "有用なリンク",
+    "useful_links_placeholder": "検索するとここにリンクが表示されます"
   },
   "zh": {
     "assistant_name": "CMDIY助手",
     "beta": "测试版",
     "scroll_to_bottom": "滚动到底部",
-    "sr_generating": "正在生成回复"
+    "sr_generating": "正在生成回复",
+    "useful_links_region": "有用链接",
+    "useful_links_placeholder": "当我搜索时，链接会显示在这里"
   },
   "ko": {
     "assistant_name": "CMDIY 어시스턴트",
     "beta": "베타",
     "scroll_to_bottom": "맨 아래로 스크롤",
-    "sr_generating": "응답을 생성하는 중"
+    "sr_generating": "응답을 생성하는 중",
+    "useful_links_region": "유용한 링크",
+    "useful_links_placeholder": "검색하면 여기에 링크가 표시됩니다"
   }
 }
 </i18n>
