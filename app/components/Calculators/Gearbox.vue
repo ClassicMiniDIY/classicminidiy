@@ -7,6 +7,7 @@
     calculateSpeedometerTable,
     type ChartSeriesData,
   } from '../../utils/gearingCalculations';
+  import { formatMathValue as fmt } from '../../utils/mathBreakdown';
   import type { GearConfig } from '../../types/gearing';
   import type { MathStep, MathConstant } from '../../types/mathBreakdown';
   import type { SavedGearConfig } from '../../composables/useGearConfigs';
@@ -236,11 +237,6 @@
   // the panel would then be actively misleading rather than merely stale.
   const primaryConfig = computed(() => configs.value[primaryConfigIndex.value]);
 
-  function fmt(value: number, digits = 4): string {
-    if (!Number.isFinite(value)) return '---';
-    return Number.isInteger(value) ? String(value) : String(parseFloat(value.toFixed(digits)));
-  }
-
   const mathSteps = computed<MathStep[]>(() => {
     const tire = tireCalcs.value;
     const config = primaryConfig.value;
@@ -334,7 +330,7 @@
         label: t('math.speedo_accuracy', { speedo: speedoRow.speedometer }),
         formula: '(speedo drive turns ÷ speedometer head turns) × 100 × drop gear',
         substitution: `(${fmt(turnsPer)} ÷ ${speedoRow.turns}) × 100 × ${config.dropGear}`,
-        result: `${Math.round((turnsPer / speedoRow.turns) * 100 * config.dropGear)}% — ${speedoRow.result}`,
+        result: `${speedoRow.variation}% — ${speedoRow.result}`,
         note: metric.value ? t('math.note_metric_turns', { factor: kphFactor }) : t('math.note_speedo'),
       });
     }

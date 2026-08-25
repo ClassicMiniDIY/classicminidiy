@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { formOptions } from '../../../data/models/compression';
+  import { formatMathValue as fmt } from '../../utils/mathBreakdown';
   import type { MathStep, MathConstant } from '../../types/mathBreakdown';
 
   const { t } = useI18n();
@@ -43,15 +44,17 @@
   });
 
   // ---- Verifiable math breakdown --------------------------------------
+  // Printed at full double precision on purpose: this calculator multiplies by
+  // Math.PI, so quoting a truncated 3.14159 would send a reader who keys the
+  // shown numbers into their own calculator to a different answer than the
+  // Result line right above it. Gearing is different — it uses a 3.14159
+  // literal — which is why the two panels quote pi differently.
+  const PI_DISPLAY = String(pi);
+
   // Built from the SAME computed values the result cards render, so redoing
   // the arithmetic by hand lands on the numbers on screen. Never recompute the
   // results here — a second implementation would drift and the panel would
   // then be actively misleading rather than merely stale.
-  function fmt(value: number, digits = 4): string {
-    if (!Number.isFinite(value)) return '---';
-    return Number.isInteger(value) ? String(value) : String(parseFloat(value.toFixed(digits)));
-  }
-
   const mathSteps = computed<MathStep[]>(() => [
     {
       label: t('math.bore_radius'),
@@ -69,7 +72,7 @@
     {
       label: t('math.deck_volume'),
       formula: 'bore radius² × (deck height ÷ 10) × π',
-      substitution: `${fmt(boreRadius.value)}² × (${fmt(deck.value)} ÷ 10) × 3.14159`,
+      substitution: `${fmt(boreRadius.value)}² × (${fmt(deck.value)} ÷ 10) × ${PI_DISPLAY}`,
       result: `${fmt(deckVolume.value)} cc`,
     },
     {
@@ -94,7 +97,7 @@
     {
       label: t('math.swept_volume'),
       formula: 'stroke × bore radius² × π',
-      substitution: `${fmt(stroke.value)} × ${fmt(boreRadius.value)}² × 3.14159`,
+      substitution: `${fmt(stroke.value)} × ${fmt(boreRadius.value)}² × ${PI_DISPLAY}`,
       result: `${fmt(sweptVolume.value)} cc`,
     },
     {
@@ -114,7 +117,7 @@
   ]);
 
   const mathConstants = computed<MathConstant[]>(() => [
-    { label: t('math.const_pi'), value: '3.14159' },
+    { label: t('math.const_pi'), value: PI_DISPLAY },
     { label: t('math.const_thou'), value: '0.0254 cm' },
     { label: t('math.const_cylinders'), value: '4' },
   ]);

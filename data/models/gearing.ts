@@ -534,6 +534,8 @@ export interface ISpeedometerTableItem {
   turns: number;
   speed: number;
   result: string;
+  /** Raw reading percentage behind `result` (100 = accurate). */
+  variation: number;
 }
 export interface ISpeedometer {
   name: string;
