@@ -39,6 +39,22 @@
     }
   ],
 
+  // Worker routes. These are what put the worker in front of production traffic —
+  // but ONLY once the zone's records are proxied. A route on a grey-clouded record
+  // is inert, which is the whole basis of the cutover sequence: flip NS (invisible),
+  // wait for the cert, add routes (still inert), then proxy = the actual switch.
+  //
+  // Deliberately ROUTES, not a custom domain. A custom domain requires DELETING the
+  // production DNS record, so rollback means recreating it under pressure. A route
+  // plus a proxied record rolls back with a single `proxied: false` toggle.
+  //
+  // theminiexchange.com is NOT here: its 28 redirects are served by zone-edge rules,
+  // which cost no worker invocation and keep working during a worker outage.
+  "routes": [
+    { "pattern": "classicminidiy.com/*", "zone_name": "classicminidiy.com" },
+    { "pattern": "www.classicminidiy.com/*", "zone_name": "classicminidiy.com" }
+  ],
+
   "observability": {
     "enabled": true
   }
