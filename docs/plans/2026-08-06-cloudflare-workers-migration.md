@@ -1222,6 +1222,34 @@ Cloudflare in front of a cert they manage). Post-fix: 17/17 records match Route 
   agreed. This is the pathfinder's "whois is not propagation" finding reproducing exactly. The
   change was made correctly; `.org` delegation TTL is 3600.
 
+#### 2026-08-25 — Phase 3a COMPLETE: all three redirect domains live on Cloudflare [source: this branch]
+`wheeldictionary.com`, `classicminidiy.net` and `classicminidiy.org` are all served from the
+Cloudflare edge with zone-level Single Redirects. Vercel is out of the path for all three.
+
+| domain | before | after |
+|---|---|---|
+| `classicminidiy.net` | 3 hops -> `www.classicminidiy.com` | **1 hop, 301** |
+| `classicminidiy.org` | 3 hops -> `www.classicminidiy.com` | **1 hop, 301** |
+| `wheeldictionary.com` | 3 hops -> stale `/technical/wheels` | **1 hop, 301** -> `/archive/wheels` |
+
+Verified for every domain across both hosts, http and https, and with a deep path + query (all
+discarded, matching the Vercel baseline). No user-visible downtime at any point.
+
+**The full grey-cloud sequence was exercised correctly on `.net`/`.org`**, unlike the
+`wheeldictionary.com` rehearsal: records set DNS-only BEFORE the flip, zone allowed to activate
+while traffic still reached Vercel, **certificate confirmed `active`**, redirect rule added, and
+only then were the records proxied. That is the sequence the two real zones must follow.
+
+**Mechanics worth knowing for the real cutover:** ruleset changes took ~150 s to reach the edge,
+and during that window the OLD behaviour is served — a test run immediately after the API call
+reports failure and looks like a broken rule. Budget for it; do not "fix" a rule that is merely
+propagating. Cached edge responses can also make a single probe disagree with the redirect chain
+measurement; trust `curl -L` hop counts over a one-shot `%{redirect_url}`.
+
+**Remaining before the real zones can flip:** the authoritative Route 53 dump. Not a formality —
+the scan demonstrably dropped `news.` and `forum.` on classicminidiy.com, and only an enumeration
+can prove there is nothing else.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
