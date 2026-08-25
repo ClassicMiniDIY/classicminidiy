@@ -100,18 +100,40 @@ export function createStreamSession(
    */
   const threadMissing = ref(false);
 
+  /**
+   * Bumped by anything that takes ownership of `messages` — a submit, a reset,
+   * or a later loadThread. A history response whose generation is stale is
+   * discarded rather than applied.
+   */
+  let messagesGeneration = 0;
+
   const loadThreadHistory = async () => {
     if (!currentThreadId.value) return;
 
+    // Capture both the thread and the generation this request belongs to.
+    // loadThreadHistory() is fired WITHOUT await at session creation, so its
+    // response can arrive long after the conversation moved on. Applying it
+    // blindly wiped live messages: arriving at /chat?message=... with a
+    // restored thread starts this fetch and then auto-submits on the next
+    // tick, so the response landed mid-answer carrying the thread's
+    // pre-submission state and the user's own message vanished.
+    const requestedThreadId = currentThreadId.value;
+    const requestedGeneration = messagesGeneration;
+
+    const isStale = () => currentThreadId.value !== requestedThreadId || messagesGeneration !== requestedGeneration;
+
     try {
-      const endpoint = `${proxyApiUrl}/threads/${currentThreadId.value}/state`;
+      const endpoint = `${proxyApiUrl}/threads/${requestedThreadId}/state`;
       const response = await fetch(endpoint, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
 
+      if (isStale()) return;
+
       if (response.ok) {
         const threadState = await response.json();
+        if (isStale()) return;
         if (threadState && threadState.values && threadState.values.messages) {
           const threadMessages = threadState.values.messages;
           if (Array.isArray(threadMessages) && threadMessages.length > 0) {
@@ -139,6 +161,7 @@ export function createStreamSession(
    */
   const loadThread = async (nextThreadId: string) => {
     stop();
+    messagesGeneration += 1;
     messages.value = [];
     error.value = null;
     threadMissing.value = false;
@@ -155,6 +178,10 @@ export function createStreamSession(
     abortController?.abort();
     abortController = new AbortController();
     const signal = abortController.signal;
+
+    // This run now owns `messages`; any thread-history request still in flight
+    // is stale and must not overwrite what we are about to append.
+    messagesGeneration += 1;
 
     isLoading.value = true;
     error.value = null;
@@ -602,6 +629,7 @@ export function createStreamSession(
    */
   const reset = () => {
     stop();
+    messagesGeneration += 1;
     messages.value = [];
     currentThreadId.value = null;
     error.value = null;
