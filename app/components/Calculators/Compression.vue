@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { formOptions } from '../../../data/models/compression';
+  import type { MathStep, MathConstant } from '../../types/mathBreakdown';
 
   const { t } = useI18n();
   const reactiveFormOptions = ref(formOptions);
@@ -26,15 +27,100 @@
     () => pistonDish.value + gasketVolume.value + headVolume.value + deckVolume.value + ringland.value + decomp.value
   );
 
+  // Swept volume of one cylinder. Named so the math breakdown can quote it as
+  // its own step; the expression is unchanged from when it was inlined into
+  // both ratio and capacity, so the floating-point results are identical.
+  const sweptVolume = computed(() => stroke.value * (boreRadius.value * boreRadius.value) * pi);
+
   const ratio = computed(() => {
-    const preRoundratio = (stroke.value * (boreRadius.value * boreRadius.value) * pi + vc.value) / vc.value;
+    const preRoundratio = (sweptVolume.value + vc.value) / vc.value;
     return Math.round((preRoundratio + Number.EPSILON) * 100) / 100;
   });
 
   const capacity = computed(() => {
-    const preRoundcap = stroke.value * (boreRadius.value * boreRadius.value) * pi * 4;
+    const preRoundcap = sweptVolume.value * 4;
     return Math.round((preRoundcap + Number.EPSILON) * 100) / 100;
   });
+
+  // ---- Verifiable math breakdown --------------------------------------
+  // Built from the SAME computed values the result cards render, so redoing
+  // the arithmetic by hand lands on the numbers on screen. Never recompute the
+  // results here — a second implementation would drift and the panel would
+  // then be actively misleading rather than merely stale.
+  function fmt(value: number, digits = 4): string {
+    if (!Number.isFinite(value)) return '---';
+    return Number.isInteger(value) ? String(value) : String(parseFloat(value.toFixed(digits)));
+  }
+
+  const mathSteps = computed<MathStep[]>(() => [
+    {
+      label: t('math.bore_radius'),
+      formula: 'bore ÷ 2',
+      substitution: `${fmt(bore.value)} ÷ 2`,
+      result: `${fmt(boreRadius.value)} cm`,
+    },
+    {
+      label: t('math.deck_height'),
+      formula: 'deck height in thou × 0.0254',
+      substitution: `${fmt(deckHeight.value)} × 0.0254`,
+      result: `${fmt(deck.value)} cm`,
+      note: t('math.note_thou'),
+    },
+    {
+      label: t('math.deck_volume'),
+      formula: 'bore radius² × (deck height ÷ 10) × π',
+      substitution: `${fmt(boreRadius.value)}² × (${fmt(deck.value)} ÷ 10) × 3.14159`,
+      result: `${fmt(deckVolume.value)} cc`,
+    },
+    {
+      label: t('math.ringland'),
+      formula: 'bore × 0.047619',
+      substitution: `${fmt(bore.value)} × 0.047619`,
+      result: `${fmt(ringland.value)} cc`,
+      note: t('math.note_ringland'),
+    },
+    {
+      label: t('math.gasket_volume'),
+      formula: gasket.value === 0 ? t('math.gasket_custom_formula') : t('math.gasket_selected_formula'),
+      substitution: `${fmt(gasketVolume.value)} cc`,
+      result: `${fmt(gasketVolume.value)} cc`,
+    },
+    {
+      label: t('math.chamber_volume'),
+      formula: 'piston dish + gasket + head volume + deck volume + ringland + decompression plate',
+      substitution: `${fmt(pistonDish.value)} + ${fmt(gasketVolume.value)} + ${fmt(headVolume.value)} + ${fmt(deckVolume.value)} + ${fmt(ringland.value)} + ${fmt(decomp.value)}`,
+      result: `${fmt(vc.value)} cc`,
+    },
+    {
+      label: t('math.swept_volume'),
+      formula: 'stroke × bore radius² × π',
+      substitution: `${fmt(stroke.value)} × ${fmt(boreRadius.value)}² × 3.14159`,
+      result: `${fmt(sweptVolume.value)} cc`,
+    },
+    {
+      label: t('math.ratio'),
+      formula: '(swept volume + chamber volume) ÷ chamber volume',
+      substitution: `(${fmt(sweptVolume.value)} + ${fmt(vc.value)}) ÷ ${fmt(vc.value)}`,
+      result: `${ratio.value}:1`,
+      note: t('math.note_two_decimals'),
+    },
+    {
+      label: t('math.capacity'),
+      formula: 'swept volume × 4 cylinders',
+      substitution: `${fmt(sweptVolume.value)} × 4`,
+      result: `${capacity.value} cc`,
+      note: t('math.note_two_decimals'),
+    },
+  ]);
+
+  const mathConstants = computed<MathConstant[]>(() => [
+    { label: t('math.const_pi'), value: '3.14159' },
+    { label: t('math.const_thou'), value: '0.0254 cm' },
+    { label: t('math.const_cylinders'), value: '4' },
+  ]);
+
+  const MATH_SOURCE_FILE = 'app/components/Calculators/Compression.vue';
+  const MATH_SOURCE_URL = `https://github.com/ClassicMiniDIY/classicminidiy/blob/main/${MATH_SOURCE_FILE}`;
 
   const { capture } = usePostHog();
   const { track } = useAnalytics();
@@ -68,7 +154,13 @@
 <template>
   <div class="grid grid-cols-1 gap-6">
     <div class="col-span-1">
-      <button class="btn btn-primary mb-5" @click="showHelpModal = true; track('help_opened', { tool: 'compression' })">
+      <button
+        class="btn btn-primary mb-5"
+        @click="
+          showHelpModal = true;
+          track('help_opened', { tool: 'compression' });
+        "
+      >
         <i class="fad fa-question-circle mr-2"></i>
         {{ t('help_button') }}
       </button>
@@ -143,7 +235,11 @@
             <i class="fad fa-head-side-gear"></i>
             {{ t('form_labels.head_gasket') }}
           </legend>
-          <select v-model.number="gasket" class="select select-bordered w-full" @change="trackFieldChange('head_gasket')">
+          <select
+            v-model.number="gasket"
+            class="select select-bordered w-full"
+            @change="trackFieldChange('head_gasket')"
+          >
             <option v-for="opt in reactiveFormOptions.headGasketOptions" :key="opt.label" :value="opt.value">
               {{ opt.label }}
             </option>
@@ -174,7 +270,11 @@
           <i class="fad fa-arrow-down-to-line"></i>
           {{ t('form_labels.decompression_plate') }}
         </legend>
-        <select v-model="decomp" class="select select-bordered w-full" @change="trackFieldChange('decompression_plate')">
+        <select
+          v-model="decomp"
+          class="select select-bordered w-full"
+          @change="trackFieldChange('decompression_plate')"
+        >
           <option v-for="opt in reactiveFormOptions.decompPlateOptions" :key="opt.label" :value="opt.value">
             {{ opt.label }}
           </option>
@@ -256,19 +356,22 @@
       </div>
     </div>
 
+    <!-- Verifiable math -->
+    <div class="mt-6">
+      <CalculatorsMathBreakdown
+        calculator="compression"
+        :steps="mathSteps"
+        :constants="mathConstants"
+        :source-url="MATH_SOURCE_URL"
+        :source-file="MATH_SOURCE_FILE"
+      />
+    </div>
+
     <!-- Disclaimer -->
     <div class="text-center mt-4">
       <div class="max-w-3xl mx-auto">
         <p class="mb-2">
           <span v-html="t('disclaimer.text', { strong_start: '<strong>', strong_end: '</strong>' })"></span>
-          <a
-            href="https://github.com/SomethingNew71/classicminidiy/blob/master/components/CompressionCalculator.vue#L344"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary hover:underline"
-          >
-            {{ t('disclaimer.equation_source') }}
-          </a>
         </p>
         <p>
           {{ t('disclaimer.alternate_source') }}
@@ -321,13 +424,31 @@
       "engine_capacity": "Engine Capacity"
     },
     "disclaimer": {
-      "text": "Please note the above figures are {strong_start}approximate values{strong_end}. Before purchasing parts and building your engine we recommend {strong_start}doublechecking{strong_end} your calculations multiple times using more than one source. The mathematical equations used in this tool can be found here:",
-      "equation_source": "Equation Source Code",
+      "text": "Please note the above figures are {strong_start}approximate values{strong_end}. Before purchasing parts and building your engine we recommend {strong_start}doublechecking{strong_end} your calculations multiple times using more than one source.",
       "alternate_source": "Alternate Source:",
       "calver_link": "Calver Compression Ratio",
       "je_pistons_link": "JE Pistons Compression Ratio"
     },
-    "youtube_player_title": "YouTube video player"
+    "youtube_player_title": "YouTube video player",
+    "math": {
+      "bore_radius": "Bore radius",
+      "deck_height": "Deck height in centimetres",
+      "deck_volume": "Deck volume",
+      "ringland": "Ringland volume",
+      "gasket_volume": "Head gasket volume",
+      "gasket_selected_formula": "the gasket you selected",
+      "gasket_custom_formula": "the custom gasket volume you entered",
+      "chamber_volume": "Total combustion chamber volume",
+      "swept_volume": "Swept volume of one cylinder",
+      "ratio": "Compression ratio",
+      "capacity": "Engine capacity",
+      "note_thou": "Deck height is entered in thousandths of an inch; one thou is 0.0254 cm.",
+      "note_ringland": "A fixed allowance calibrated for 18cc Accralite 73.5 mm pistons.",
+      "note_two_decimals": "Rounded to two decimal places, the same as the calculator.",
+      "const_pi": "Pi",
+      "const_thou": "One thousandth of an inch",
+      "const_cylinders": "Cylinders in an A-series engine"
+    }
   },
   "es": {
     "help_button": "¿Cómo mido estos valores?",
@@ -354,13 +475,31 @@
       "engine_capacity": "Capacidad del Motor"
     },
     "disclaimer": {
-      "text": "Ten en cuenta que las cifras anteriores son {strong_start}valores aproximados{strong_end}. Antes de comprar piezas y construir tu motor, recomendamos {strong_start}verificar{strong_end} tus cálculos múltiples veces usando más de una fuente. Las ecuaciones matemáticas usadas en esta herramienta se pueden encontrar aquí:",
-      "equation_source": "Código Fuente de las Ecuaciones",
+      "text": "Ten en cuenta que las cifras anteriores son {strong_start}valores aproximados{strong_end}. Antes de comprar piezas y construir tu motor, recomendamos {strong_start}verificar{strong_end} tus cálculos múltiples veces usando más de una fuente.",
       "alternate_source": "Fuente Alternativa:",
       "calver_link": "Relación de Compresión Calver",
       "je_pistons_link": "Relación de Compresión JE Pistons"
     },
-    "youtube_player_title": "Reproductor de video de YouTube"
+    "youtube_player_title": "Reproductor de video de YouTube",
+    "math": {
+      "bore_radius": "Radio del cilindro",
+      "deck_height": "Altura de plataforma en centímetros",
+      "deck_volume": "Volumen de plataforma",
+      "ringland": "Volumen del portasegmentos",
+      "gasket_volume": "Volumen de la junta de culata",
+      "gasket_selected_formula": "la junta que seleccionaste",
+      "gasket_custom_formula": "el volumen de junta personalizado que introdujiste",
+      "chamber_volume": "Volumen total de la cámara de combustión",
+      "swept_volume": "Cilindrada barrida de un cilindro",
+      "ratio": "Relación de compresión",
+      "capacity": "Cilindrada del motor",
+      "note_thou": "La altura de plataforma se introduce en milésimas de pulgada; una milésima son 0,0254 cm.",
+      "note_ringland": "Una asignación fija calibrada para pistones Accralite de 18cc y 73,5 mm.",
+      "note_two_decimals": "Redondeado a dos decimales, igual que la calculadora.",
+      "const_pi": "Pi",
+      "const_thou": "Una milésima de pulgada",
+      "const_cylinders": "Cilindros en un motor serie A"
+    }
   },
   "fr": {
     "help_button": "Comment mesurer ces valeurs ?",
@@ -387,13 +526,31 @@
       "engine_capacity": "Cylindrée du moteur"
     },
     "disclaimer": {
-      "text": "Veuillez noter que les chiffres ci-dessus sont des {strong_start}valeurs approximatives{strong_end}. Avant d'acheter des pièces et de construire votre moteur, nous recommandons de {strong_start}revérifier{strong_end} vos calculs plusieurs fois en utilisant plus d'une source. Les équations mathématiques utilisées dans cet outil peuvent être trouvées ici :",
-      "equation_source": "Code source des équations",
+      "text": "Veuillez noter que les chiffres ci-dessus sont des {strong_start}valeurs approximatives{strong_end}. Avant d'acheter des pièces et de construire votre moteur, nous recommandons de {strong_start}revérifier{strong_end} vos calculs plusieurs fois en utilisant plus d'une source.",
       "alternate_source": "Source alternative :",
       "calver_link": "Taux de compression Calver",
       "je_pistons_link": "Taux de compression JE Pistons"
     },
-    "youtube_player_title": "Lecteur vidéo YouTube"
+    "youtube_player_title": "Lecteur vidéo YouTube",
+    "math": {
+      "bore_radius": "Rayon d'alésage",
+      "deck_height": "Hauteur de plan de joint en centimètres",
+      "deck_volume": "Volume du plan de joint",
+      "ringland": "Volume de la zone de segments",
+      "gasket_volume": "Volume du joint de culasse",
+      "gasket_selected_formula": "le joint que vous avez sélectionné",
+      "gasket_custom_formula": "le volume de joint personnalisé que vous avez saisi",
+      "chamber_volume": "Volume total de la chambre de combustion",
+      "swept_volume": "Cylindrée d'un cylindre",
+      "ratio": "Rapport volumétrique",
+      "capacity": "Cylindrée du moteur",
+      "note_thou": "La hauteur du plan de joint se saisit en millièmes de pouce ; un millième vaut 0,0254 cm.",
+      "note_ringland": "Une valeur fixe calibrée pour des pistons Accralite 18cc de 73,5 mm.",
+      "note_two_decimals": "Arrondi à deux décimales, comme le calculateur.",
+      "const_pi": "Pi",
+      "const_thou": "Un millième de pouce",
+      "const_cylinders": "Cylindres d'un moteur série A"
+    }
   },
   "de": {
     "help_button": "Wie messe ich diese Werte?",
@@ -420,13 +577,31 @@
       "engine_capacity": "Motorkapazität"
     },
     "disclaimer": {
-      "text": "Bitte beachten Sie, dass die obigen Zahlen {strong_start}Näherungswerte{strong_end} sind. Vor dem Kauf von Teilen und dem Bau Ihres Motors empfehlen wir Ihnen, Ihre Berechnungen {strong_start}mehrfach{strong_end} mit mehr als einer Quelle zu überprüfen. Die in diesem Tool verwendeten mathematischen Gleichungen finden Sie hier:",
-      "equation_source": "Gleichungsquellcode",
+      "text": "Bitte beachten Sie, dass die obigen Zahlen {strong_start}Näherungswerte{strong_end} sind. Vor dem Kauf von Teilen und dem Bau Ihres Motors empfehlen wir Ihnen, Ihre Berechnungen {strong_start}mehrfach{strong_end} mit mehr als einer Quelle zu überprüfen.",
       "alternate_source": "Alternative Quelle:",
       "calver_link": "Calver Verdichtungsverhältnis",
       "je_pistons_link": "JE Pistons Verdichtungsverhältnis"
     },
-    "youtube_player_title": "YouTube-Videoplayer"
+    "youtube_player_title": "YouTube-Videoplayer",
+    "math": {
+      "bore_radius": "Bohrungsradius",
+      "deck_height": "Deckhöhe in Zentimetern",
+      "deck_volume": "Deckvolumen",
+      "ringland": "Ringstegvolumen",
+      "gasket_volume": "Volumen der Zylinderkopfdichtung",
+      "gasket_selected_formula": "die von Ihnen gewählte Dichtung",
+      "gasket_custom_formula": "das von Ihnen eingegebene benutzerdefinierte Dichtungsvolumen",
+      "chamber_volume": "Gesamtvolumen des Brennraums",
+      "swept_volume": "Hubvolumen eines Zylinders",
+      "ratio": "Verdichtungsverhältnis",
+      "capacity": "Hubraum",
+      "note_thou": "Die Deckhöhe wird in Tausendstel Zoll eingegeben; ein Tausendstel sind 0,0254 cm.",
+      "note_ringland": "Ein fester Wert, kalibriert für 18cc Accralite Kolben mit 73,5 mm.",
+      "note_two_decimals": "Auf zwei Nachkommastellen gerundet, genau wie im Rechner.",
+      "const_pi": "Pi",
+      "const_thou": "Ein Tausendstel Zoll",
+      "const_cylinders": "Zylinder eines A-Serien-Motors"
+    }
   },
   "it": {
     "help_button": "Come misuro questi valori?",
@@ -453,13 +628,31 @@
       "engine_capacity": "Cilindrata motore"
     },
     "disclaimer": {
-      "text": "Si prega di notare che le cifre sopra sono {strong_start}valori approssimativi{strong_end}. Prima di acquistare parti e costruire il vostro motore raccomandiamo di {strong_start}ricontrollare{strong_end} i vostri calcoli più volte utilizzando più di una fonte. Le equazioni matematiche utilizzate in questo strumento possono essere trovate qui:",
-      "equation_source": "Codice sorgente equazioni",
+      "text": "Si prega di notare che le cifre sopra sono {strong_start}valori approssimativi{strong_end}. Prima di acquistare parti e costruire il vostro motore raccomandiamo di {strong_start}ricontrollare{strong_end} i vostri calcoli più volte utilizzando più di una fonte.",
       "alternate_source": "Fonte alternativa:",
       "calver_link": "Rapporto di compressione Calver",
       "je_pistons_link": "Rapporto di compressione JE Pistons"
     },
-    "youtube_player_title": "Lettore video YouTube"
+    "youtube_player_title": "Lettore video YouTube",
+    "math": {
+      "bore_radius": "Raggio dell'alesaggio",
+      "deck_height": "Altezza del piano in centimetri",
+      "deck_volume": "Volume del piano",
+      "ringland": "Volume della zona fasce",
+      "gasket_volume": "Volume della guarnizione della testata",
+      "gasket_selected_formula": "la guarnizione che hai selezionato",
+      "gasket_custom_formula": "il volume di guarnizione personalizzato che hai inserito",
+      "chamber_volume": "Volume totale della camera di combustione",
+      "swept_volume": "Cilindrata di un cilindro",
+      "ratio": "Rapporto di compressione",
+      "capacity": "Cilindrata del motore",
+      "note_thou": "L'altezza del piano si inserisce in millesimi di pollice; un millesimo è 0,0254 cm.",
+      "note_ringland": "Un valore fisso calibrato per pistoni Accralite da 18cc e 73,5 mm.",
+      "note_two_decimals": "Arrotondato a due decimali, come fa il calcolatore.",
+      "const_pi": "Pi greco",
+      "const_thou": "Un millesimo di pollice",
+      "const_cylinders": "Cilindri di un motore serie A"
+    }
   },
   "ja": {
     "help_button": "これらの値はどのように測定しますか？",
@@ -486,13 +679,31 @@
       "engine_capacity": "エンジン排気量"
     },
     "disclaimer": {
-      "text": "上記の数値は{strong_start}概算値{strong_end}であることにご注意ください。パーツを購入してエンジンを構築する前に、複数のソースを使用して計算を{strong_start}再確認{strong_end}することをお勧めします。このツールで使用される数学的方程式は以下で確認できます:",
-      "equation_source": "方程式ソースコード",
+      "text": "上記の数値は{strong_start}概算値{strong_end}であることにご注意ください。パーツを購入してエンジンを構築する前に、複数のソースを使用して計算を{strong_start}再確認{strong_end}することをお勧めします。",
       "alternate_source": "代替ソース:",
       "calver_link": "Calver圧縮比",
       "je_pistons_link": "JEピストン圧縮比"
     },
-    "youtube_player_title": "YouTube動画プレーヤー"
+    "youtube_player_title": "YouTube動画プレーヤー",
+    "math": {
+      "bore_radius": "ボア半径",
+      "deck_height": "デッキハイト（センチメートル）",
+      "deck_volume": "デッキ容積",
+      "ringland": "リングランド容積",
+      "gasket_volume": "ヘッドガスケット容積",
+      "gasket_selected_formula": "選択したガスケット",
+      "gasket_custom_formula": "入力したカスタムガスケット容積",
+      "chamber_volume": "燃焼室の総容積",
+      "swept_volume": "1気筒あたりの行程容積",
+      "ratio": "圧縮比",
+      "capacity": "排気量",
+      "note_thou": "デッキハイトは1000分の1インチ単位で入力します。1thouは0.0254 cmです。",
+      "note_ringland": "18cc Accralite 73.5 mm ピストンに合わせた固定値です。",
+      "note_two_decimals": "計算機と同じく、小数点以下2桁に四捨五入しています。",
+      "const_pi": "円周率",
+      "const_thou": "1000分の1インチ",
+      "const_cylinders": "Aシリーズエンジンの気筒数"
+    }
   },
   "ko": {
     "help_button": "이 값들을 어떻게 측정하나요?",
@@ -519,13 +730,31 @@
       "engine_capacity": "엔진 배기량"
     },
     "disclaimer": {
-      "text": "위 수치들은 {strong_start}근사값{strong_end}임을 알려드립니다. 부품을 구매하고 엔진을 제작하기 전에 여러 소스를 사용하여 계산을 {strong_start}여러 번 재확인{strong_end}할 것을 권장합니다. 이 도구에 사용된 수학 공식은 여기에서 찾을 수 있습니다:",
-      "equation_source": "공식 소스 코드",
+      "text": "위 수치들은 {strong_start}근사값{strong_end}임을 알려드립니다. 부품을 구매하고 엔진을 제작하기 전에 여러 소스를 사용하여 계산을 {strong_start}여러 번 재확인{strong_end}할 것을 권장합니다.",
       "alternate_source": "대안 소스:",
       "calver_link": "Calver 압축비",
       "je_pistons_link": "JE Pistons 압축비"
     },
-    "youtube_player_title": "YouTube 비디오 플레이어"
+    "youtube_player_title": "YouTube 비디오 플레이어",
+    "math": {
+      "bore_radius": "보어 반지름",
+      "deck_height": "데크 높이 (센티미터)",
+      "deck_volume": "데크 체적",
+      "ringland": "링랜드 체적",
+      "gasket_volume": "헤드 개스킷 체적",
+      "gasket_selected_formula": "선택하신 개스킷",
+      "gasket_custom_formula": "직접 입력하신 개스킷 체적",
+      "chamber_volume": "연소실 총 체적",
+      "swept_volume": "실린더 1개의 행정 체적",
+      "ratio": "압축비",
+      "capacity": "엔진 배기량",
+      "note_thou": "데크 높이는 1000분의 1인치 단위로 입력합니다. 1 thou는 0.0254 cm입니다.",
+      "note_ringland": "18cc Accralite 73.5 mm 피스톤에 맞춰 보정된 고정값입니다.",
+      "note_two_decimals": "계산기와 동일하게 소수점 둘째 자리까지 반올림합니다.",
+      "const_pi": "원주율",
+      "const_thou": "1000분의 1인치",
+      "const_cylinders": "A 시리즈 엔진의 실린더 수"
+    }
   },
   "pt": {
     "help_button": "Como meço esses valores?",
@@ -552,13 +781,31 @@
       "engine_capacity": "Capacidade do Motor"
     },
     "disclaimer": {
-      "text": "Note que os valores acima são {strong_start}valores aproximados{strong_end}. Antes de comprar peças e construir seu motor, recomendamos {strong_start}verificar novamente{strong_end} seus cálculos múltiplas vezes usando mais de uma fonte. As equações matemáticas usadas nesta ferramenta podem ser encontradas aqui:",
-      "equation_source": "Código Fonte da Equação",
+      "text": "Note que os valores acima são {strong_start}valores aproximados{strong_end}. Antes de comprar peças e construir seu motor, recomendamos {strong_start}verificar novamente{strong_end} seus cálculos múltiplas vezes usando mais de uma fonte.",
       "alternate_source": "Fonte Alternativa:",
       "calver_link": "Taxa de Compressão Calver",
       "je_pistons_link": "Taxa de Compressão JE Pistons"
     },
-    "youtube_player_title": "Reprodutor de vídeo do YouTube"
+    "youtube_player_title": "Reprodutor de vídeo do YouTube",
+    "math": {
+      "bore_radius": "Raio do cilindro",
+      "deck_height": "Altura do plano em centímetros",
+      "deck_volume": "Volume do plano",
+      "ringland": "Volume da zona dos anéis",
+      "gasket_volume": "Volume da junta do cabeçote",
+      "gasket_selected_formula": "a junta que você selecionou",
+      "gasket_custom_formula": "o volume de junta personalizado que você inseriu",
+      "chamber_volume": "Volume total da câmara de combustão",
+      "swept_volume": "Volume deslocado de um cilindro",
+      "ratio": "Taxa de compressão",
+      "capacity": "Cilindrada do motor",
+      "note_thou": "A altura do plano é inserida em milésimos de polegada; um milésimo é 0,0254 cm.",
+      "note_ringland": "Um valor fixo calibrado para pistões Accralite de 18cc e 73,5 mm.",
+      "note_two_decimals": "Arredondado para duas casas decimais, igual à calculadora.",
+      "const_pi": "Pi",
+      "const_thou": "Um milésimo de polegada",
+      "const_cylinders": "Cilindros num motor série A"
+    }
   },
   "ru": {
     "help_button": "Как измерить эти значения?",
@@ -585,13 +832,31 @@
       "engine_capacity": "Объем двигателя"
     },
     "disclaimer": {
-      "text": "Обратите внимание, что вышеуказанные цифры являются {strong_start}приблизительными значениями{strong_end}. Перед покупкой деталей и сборкой двигателя мы рекомендуем {strong_start}перепроверить{strong_end} ваши расчеты несколько раз, используя более одного источника. Математические уравнения, используемые в этом инструменте, можно найти здесь:",
-      "equation_source": "Исходный код уравнений",
+      "text": "Обратите внимание, что вышеуказанные цифры являются {strong_start}приблизительными значениями{strong_end}. Перед покупкой деталей и сборкой двигателя мы рекомендуем {strong_start}перепроверить{strong_end} ваши расчеты несколько раз, используя более одного источника.",
       "alternate_source": "Альтернативный источник:",
       "calver_link": "Calver степень сжатия",
       "je_pistons_link": "JE Pistons степень сжатия"
     },
-    "youtube_player_title": "Видеоплеер YouTube"
+    "youtube_player_title": "Видеоплеер YouTube",
+    "math": {
+      "bore_radius": "Радиус цилиндра",
+      "deck_height": "Высота площадки в сантиметрах",
+      "deck_volume": "Объём площадки",
+      "ringland": "Объём поясов колец",
+      "gasket_volume": "Объём прокладки головки блока",
+      "gasket_selected_formula": "выбранная вами прокладка",
+      "gasket_custom_formula": "введённый вами произвольный объём прокладки",
+      "chamber_volume": "Полный объём камеры сгорания",
+      "swept_volume": "Рабочий объём одного цилиндра",
+      "ratio": "Степень сжатия",
+      "capacity": "Рабочий объём двигателя",
+      "note_thou": "Высота площадки вводится в тысячных дюйма; одна тысячная равна 0,0254 см.",
+      "note_ringland": "Фиксированная поправка, откалиброванная для поршней Accralite 18cc 73,5 мм.",
+      "note_two_decimals": "Округлено до двух знаков после запятой, как и в калькуляторе.",
+      "const_pi": "Пи",
+      "const_thou": "Одна тысячная дюйма",
+      "const_cylinders": "Цилиндров в двигателе серии A"
+    }
   },
   "zh": {
     "help_button": "如何测量这些数值？",
@@ -618,13 +883,31 @@
       "engine_capacity": "发动机排量"
     },
     "disclaimer": {
-      "text": "请注意上述数值为{strong_start}近似值{strong_end}。在购买零件和组装发动机之前，我们建议您{strong_start}反复核对{strong_end}计算结果并使用多个来源验证。此工具使用的数学公式可在此处找到：",
-      "equation_source": "公式源代码",
+      "text": "请注意上述数值为{strong_start}近似值{strong_end}。在购买零件和组装发动机之前，我们建议您{strong_start}反复核对{strong_end}计算结果并使用多个来源验证。",
       "alternate_source": "备选来源：",
       "calver_link": "Calver压缩比",
       "je_pistons_link": "JE活塞压缩比"
     },
-    "youtube_player_title": "YouTube 视频播放器"
+    "youtube_player_title": "YouTube 视频播放器",
+    "math": {
+      "bore_radius": "缸径半径",
+      "deck_height": "缸面高度（厘米）",
+      "deck_volume": "缸面容积",
+      "ringland": "环岸容积",
+      "gasket_volume": "缸垫容积",
+      "gasket_selected_formula": "您选择的缸垫",
+      "gasket_custom_formula": "您输入的自定义缸垫容积",
+      "chamber_volume": "燃烧室总容积",
+      "swept_volume": "单缸工作容积",
+      "ratio": "压缩比",
+      "capacity": "发动机排量",
+      "note_thou": "缸面高度以千分之一英寸输入；1丝等于0.0254厘米。",
+      "note_ringland": "针对 18cc Accralite 73.5 毫米活塞标定的固定值。",
+      "note_two_decimals": "与计算器一致，四舍五入保留两位小数。",
+      "const_pi": "圆周率",
+      "const_thou": "千分之一英寸",
+      "const_cylinders": "A系列发动机的气缸数"
+    }
   }
 }
 </i18n>
