@@ -610,6 +610,29 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   trigger only moves trust counters, so without it the "we'll email you when your
   listing is approved" promise in the submission confirmation goes unkept.
 
+- **Every feed item's `id` must be an absolute IRI, and the feed tests must seed
+  rows before asserting on Atom.** The `feed` package renders the Atom entry id as
+  `sanitizeUrl(item.id ?? item.link)` — i.e. `new URL(id)` — so a bare row id
+  throws `TypeError: Invalid URL` and 500s the route. `rss2()` and `json1()` treat
+  the id as an opaque string and never parse it, so the exact same assembled feed
+  serves 200 as RSS and JSON while every `.atom` sibling is down. That is what
+  happened from the TME cutover until 2026-08-25: all seven Atom endpoints
+  (`/exchange/atom.xml` plus the six `/exchange/feed/*.atom`) 500'd, and
+  `theminiexchange.com/atom.xml` 301'd straight into one of them.
+  `feedItemId()` in `server/utils/exchange/feedBuilder.ts` is the contract — it
+  returns `urn:uuid:<row id>` (all three source tables have UUID PKs, so this is
+  permanent and unique across sources) and falls back to the item permalink for
+  anything that is not a UUID, so it can never produce an unparseable id.
+
+  The RSS `<guid>` is set separately and deliberately keeps the older prefixed
+  strings (`<uuid>`, `external-<uuid>`, `wanted-<uuid>`). Readers dedupe on it, so
+  changing it would re-notify every subscriber with up to 50 "new" items. Don't
+  collapse `guid` into `id`.
+
+  It shipped because the one Atom test ran against an EMPTY feed — rows are reset
+  in `beforeEach` and it seeded none, so there was no entry to serialise. A format
+  assertion with no items proves nothing about item serialisation; seed rows first.
+
 ## Contribution Loop Invariants
 
 The UX cohesion pass turned the archive into a contribution platform. The loop is
