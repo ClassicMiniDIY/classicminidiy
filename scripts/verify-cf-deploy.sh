@@ -120,12 +120,26 @@ mcp_status=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' -X POST "$ORIGIN/mcp"
 echo
 echo "== zone-dependent =="
 if [ "$ZONE_CHECKS" = "1" ]; then
-  # Must use a page whose images carry width/format MODIFIERS: the @nuxt/image
-  # cloudflare provider emits the raw src unchanged when no modifiers are set, so
-  # a bare-image page would pass this check while transformation is entirely off.
-  expect_body "/archive/wheels" '/cdn-cgi/image/[^"]*width=' "images emit /cdn-cgi/image/ WITH modifiers"
+  # Two traps here, both of which this check previously fell into.
+  #
+  # 1. The modifier key is `w=`, NOT `width=`. The @nuxt/image cloudflare provider
+  #    maps width->w, height->h, quality->q, format->f (see its keyMap). Matching
+  #    `width=` fails against a correctly-working deployment.
+  # 2. Match a SAME-ORIGIN src. The finds feature renders scraped third-party
+  #    og_image_url values, and some of those hosts (media.carsandbids.com) also
+  #    use Cloudflare Images — so a bare `/cdn-cgi/image/` substring match, or an
+  #    unanchored grep that strips the host, tests a URL that was never ours.
+  #
+  # The page must also carry MODIFIERS: the provider returns the raw src unchanged
+  # when no modifiers are set, so a bare-image page would pass while transformation
+  # was entirely off.
+  # `w=[0-9]` rather than `width=` (the provider's keyMap is width->w), and no
+  # separator guard before it — the operations segment follows `image/` directly,
+  # so `/cdn-cgi/image/w=128,h=37,f=webp,q=80/...` has no delimiter to anchor on.
+  expect_body "/archive/wheels" 'src="/cdn-cgi/image/[^"]*w=[0-9]' "images emit same-origin /cdn-cgi/image/ WITH modifiers"
   # And prove real transformed BYTES come back, not just the URL shape.
-  img=$(curl -sS -m 30 "$ORIGIN/archive/wheels" 2>/dev/null | grep -oE '/cdn-cgi/image/[^"]+' | head -1)
+  img=$(curl -sS -m 30 "$ORIGIN/archive/wheels" 2>/dev/null \
+        | grep -oE 'src="/cdn-cgi/image/[^"]+' | head -1 | sed 's/^src="//')
   if [ -n "$img" ]; then
     ctype=$(curl -sS -o /dev/null -m 30 -w '%{content_type}' "$ORIGIN$img" 2>/dev/null)
     case "$ctype" in
