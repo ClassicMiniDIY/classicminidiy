@@ -1300,6 +1300,29 @@ All 26 have been imported and verified:
 anything under 60 — clamp to `1` (automatic). Long TXT values are stored by Route 53 as multiple
 quoted strings that must be **concatenated, not space-joined**, or DKIM keys corrupt silently. An
 A+AAAA ALIAS pair maps to ONE CNAME — dedupe or the second insert fails.
+#### 2026-08-25 — TME redirect targets swept: 0 stale, but ALL SEVEN Atom feeds are 500 in production [source: this branch]
+Swept all 28 `theminiexchange.com` redirect targets against production before porting them, on the
+theory that `wheeldictionary.com` had been pointing at a URL that itself 301'd.
+
+| result | count |
+|---|---|
+| 200 | 25 |
+| **3xx (stale target)** | **0** |
+| 4xx/5xx | 3 |
+
+**No stale targets** — the TME map does not have the rot `wheeldictionary.com` had. Port it verbatim.
+
+The three non-200s:
+- `/feed` -> `/exchange/feed` **404** and `/users` -> `/users` **404**. Both are bare PREFIX sources
+  with no index route; the rules exist to serve their sub-paths. Production behaves identically
+  today, so neither is a regression — but `theminiexchange.com/users` does currently redirect to a
+  404, which may be worth a real destination.
+- `/atom.xml` -> `/exchange/atom.xml` **500**. Investigated: **every Atom feed on the site is 500**
+  (`/exchange/atom.xml` plus all six `/exchange/feed/*.atom`), while the RSS and JSON forms of the
+  same feeds return 200. `createFeedHandler` (`server/utils/exchange/feedBuilder.ts:393`) branches
+  `json1()` / `atom1()` / `rss2()` on the same assembled feed, so the fault is inside `atom1()` —
+  most likely a field it requires that `rss2()` tolerates missing. **Pre-existing production bug,
+  unrelated to the migration and out of scope for these branches.** Spawned as its own task.
 
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 

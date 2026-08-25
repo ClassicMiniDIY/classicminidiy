@@ -7,6 +7,11 @@ name: Deploy to Cloudflare Workers
 on:
   workflow_dispatch:
     inputs:
+      site_env:
+        description: 'preview = noindex + no image transforms (safe). production = the real zone deploy.'
+        type: choice
+        options: [preview, production]
+        default: preview
       dry_run:
         description: 'Build and report bundle size without deploying'
         type: boolean
@@ -48,11 +53,12 @@ jobs:
           # silently.
           #
           # It ALSO gates the Cloudflare image provider, which is zone-only.
-          # Both default to the preview/safe behaviour when unset, so this line is
-          # belt-and-braces rather than load-bearing — but Phase 4's production
-          # deploy MUST set it to `production` explicitly, or the zone ships
-          # unoptimized images and a noindex'd site.
-          NUXT_SITE_ENV: preview
+          # Both default to the preview/safe behaviour when unset, so a mistake
+          # here degrades (unoptimized images, noindex) rather than breaking.
+          #
+          # Driven by the workflow input so a production deploy is an explicit,
+          # auditable choice rather than a default someone forgot to change.
+          NUXT_SITE_ENV: ${{ inputs.site_env }}
         run: bun run build
 
       # routeRules and definePageMeta redirects are prerendered as meta-refresh
@@ -77,6 +83,14 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      # A production deploy is verified against the real origin, where the
+      # zone-dependent checks (image transforms, HSTS, indexability) actually arm.
+      # A preview deploy is verified against workers.dev, where they skip.
       - name: Smoke-test the deployment
         if: ${{ !inputs.dry_run }}
-        run: ./scripts/verify-cf-deploy.sh https://classicminidiy.classicminidiy.workers.dev
+        run: |
+          if [ "${{ inputs.site_env }}" = "production" ]; then
+            ./scripts/verify-cf-deploy.sh https://www.classicminidiy.com
+          else
+            ./scripts/verify-cf-deploy.sh https://classicminidiy.classicminidiy.workers.dev
+          fi

@@ -149,10 +149,51 @@ if [ "$ZONE_CHECKS" = "1" ]; then
   else
     bad "no /cdn-cgi/image/ URL found to fetch" ;
   fi
+  # LOCAL-FILE TRANSFORM. This is the shape that broke on Vercel under ipx
+  # (nuxt/image#1281): a transform whose SOURCE is a file in public/, not a remote
+  # URL. ipx resolved it with a filesystem read and 404'd because public/ ships to
+  # the CDN, not the function. On Cloudflare public/ is served by Workers Static
+  # Assets on the same zone, so it SHOULD resolve as a same-zone fetch — but that
+  # could not be tested before a zone existed, so it is an explicit gate here.
+  local_img=$(curl -sS -m 30 "$ORIGIN/" 2>/dev/null \
+              | grep -oE 'src="/cdn-cgi/image/[^"]+' | sed 's/^src="//' \
+              | grep -vE '/https?:' | head -1)
+  if [ -n "$local_img" ]; then
+    lct=$(curl -sS -o /dev/null -m 30 -w '%{content_type}' "$ORIGIN$local_img" 2>/dev/null)
+    case "$lct" in
+      image/*) ok "LOCAL public/ file transforms ($lct)" ;;
+      *)       bad "local public/ transform returned $lct — the nuxt/image#1281 shape is broken" ;;
+    esac
+  else
+    bad "no local-file /cdn-cgi/image/ URL found — cannot verify the #1281 case"
+  fi
+
   hsts=$(curl -sSI -m 30 "$ORIGIN/" 2>/dev/null | grep -ci 'strict-transport-security')
   [ "$hsts" -ge 1 ] && ok "HSTS header present" || bad "HSTS header missing"
+
+  # TME redirect map. Only assertable once theminiexchange.com resolves to
+  # Cloudflare — a Host header against workers.dev is rejected at the edge (403)
+  # before the worker runs, so this cannot be faked from a preview.
+  if [ "$(dig +short NS theminiexchange.com 2>/dev/null | grep -ci cloudflare)" -ge 1 ]; then
+    for probe in "/:exchange" "/listings/abc:exchange/listings/abc" "/terms:legal/marketplace-terms"; do
+      src="${probe%%:*}"; want="${probe##*:}"
+      loc=$(curl -sS -o /dev/null -m 25 -w '%{redirect_url}' "https://www.theminiexchange.com$src" 2>/dev/null)
+      case "$loc" in
+        *"$want"*) ok "TME $src -> $want" ;;
+        *)         bad "TME $src -> $loc (wanted …/$want)" ;;
+      esac
+    done
+    # An unmapped TME path must 404, not blanket-redirect — a catch-all would turn
+    # the whole unmatched URL space into soft-200 redirects.
+    tme404=$(curl -sSL -o /dev/null -m 25 -w '%{http_code}' "https://www.theminiexchange.com/definitely-not-mapped-xyz" 2>/dev/null)
+    [ "$tme404" = "404" ] && ok "unmapped TME path is a real 404" || bad "unmapped TME path -> $tme404, want 404"
+  else
+    skip "TME redirect map"
+  fi
 else
-  skip "images emit /cdn-cgi/image/"
+  skip "images emit /cdn-cgi/image/ WITH modifiers"
+  skip "transformed bytes"
+  skip "LOCAL public/ file transforms"
   skip "HSTS header present"
   skip "TME redirect map"
 fi
