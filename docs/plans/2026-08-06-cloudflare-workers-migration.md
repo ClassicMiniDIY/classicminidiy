@@ -1324,6 +1324,41 @@ The three non-200s:
   most likely a field it requires that `rss2()` tolerates missing. **Pre-existing production bug,
   unrelated to the migration and out of scope for these branches.** Spawned as its own task.
 
+#### 2026-08-25 — theminiexchange.com CUT OVER. B1's asset-shadowing is real, and the Free-plan rule cap is 10 not "fits" [corrects B1 and the plan's rule-count claim] [source: this branch]
+TME is live on Cloudflare: **110/110 probes correct** across all 28 mappings x both hosts x both
+slash forms x deep paths. Query strings preserved, unmapped paths still a real 404, ordering
+correct (`/admin/users` -> `/admin/users`, `/admin/other` -> `/admin/exchange/other`), `server:
+cloudflare` with no Vercel headers, mail untouched.
+
+Getting there corrected two things in the plan.
+
+- **The Free plan caps `http_request_dynamic_redirect` at 10 rules, not "fits free tier".**
+  Measured: `exceeded the maximum number of rules in the phase http_request_dynamic_redirect: 28
+  out of 10`. The plan's fallback was a Bulk Redirects list for the 19 exact sources, but Bulk
+  Redirects are an **account-scoped** resource the migration token deliberately does not hold.
+- **The worker CANNOT serve this map — B1's asset-shadowing is real and was measured.** Routing
+  TME to the worker produced **200 with the CMDIY page** on `/about`, `/contact`, `/privacy`,
+  `/onboarding`, `/` and `/profile`, because those are PRERENDERED assets and the static asset
+  layer runs before the worker. That is precisely the duplicate-content failure the 301s exist to
+  prevent. `run_worker_first` would fix it only by converting the CMDIY homepage and several real
+  pages into per-request SSR forever — which B1 warns against in the same breath.
+- **Resolution: 28 mappings collapse to 8 rules when grouped by TRANSFORM rather than by source.**
+  Fourteen sources share "prepend /exchange to the path", seven share "keep the path at root", and
+  six are one-off static targets. Eight rules, against a cap of ten, with headroom.
+  `scripts/sync-tme-zone-redirects.py` generates them **from `server/utils/tmeRedirects.ts`**, so
+  the table stays the single source of truth for the zone rules, the Nitro middleware and its 78
+  tests alike. Ordering is load-bearing and encoded: exact-source rules are emitted before prefix
+  rules so `/admin/users` cannot be swallowed by the `/admin` prefix.
+
+- **METHODOLOGY WARNING — I almost reported this cutover as broken.** The first verification run
+  said "41 of 55 wrong", every one showing a 308 with the correct target. The cause was entirely
+  local: every resolver returned Cloudflare IPs, but `curl` connected to **216.150.1.193**
+  (Vercel) from a stale local entry, so the probes were measuring the OLD path. Forcing
+  `--resolve` through a Cloudflare IP showed 301s from `server: cloudflare` all along. This is the
+  pathfinder's "local resolver caches produced confident wrong readings" finding reproducing
+  exactly. **Every cutover probe must use `curl --resolve` against a known edge IP.** A 308 where
+  a 301 is expected is the tell that Vercel, not the worker, answered.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
