@@ -415,12 +415,15 @@ describe('useStreamProvider', () => {
         expect(body.assistant_id).toBe('my-assistant');
       });
 
-      it('includes language metadata from locale', async () => {
+      it('includes language metadata from the injected locale', async () => {
         const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
         vi.stubGlobal('fetch', mockFetch);
 
         const { createStreamSession } = await freshModule();
-        const session = createStreamSession('agent');
+        // The locale is injected rather than resolved via useI18n() inside the
+        // session — pass it explicitly so this asserts the plumbing and not
+        // just the 'en' default.
+        const session = createStreamSession('agent', null, undefined, ref('en'));
 
         await session.submit({
           messages: [{ type: 'human', content: 'Test' }],
@@ -429,6 +432,53 @@ describe('useStreamProvider', () => {
         const body = JSON.parse(mockFetch.mock.calls[0][1].body);
         expect(body.metadata.language).toBe('en');
         expect(body.metadata.user_locale).toBe('en');
+        expect(body.metadata.language_instruction).toBe('Please respond in English');
+      });
+
+      it('uses a non-English injected locale for the language instruction', async () => {
+        const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
+        vi.stubGlobal('fetch', mockFetch);
+
+        const { createStreamSession } = await freshModule();
+        const session = createStreamSession('agent', null, undefined, ref('de'));
+
+        await session.submit({ messages: [{ type: 'human', content: 'Test' }] });
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.metadata.language).toBe('de');
+        expect(body.metadata.user_locale).toBe('de');
+        expect(body.metadata.language_instruction).toBe('Bitte antworten Sie auf Deutsch');
+      });
+
+      it('follows a locale change made after the session was created', async () => {
+        const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
+        vi.stubGlobal('fetch', mockFetch);
+
+        const { createStreamSession } = await freshModule();
+        const locale = ref('en');
+        const session = createStreamSession('agent', null, undefined, locale);
+
+        // Switching language mid-conversation must apply to the next message
+        // rather than being frozen at session creation.
+        locale.value = 'ja';
+        await session.submit({ messages: [{ type: 'human', content: 'Test' }] });
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.metadata.language).toBe('ja');
+        expect(body.metadata.language_instruction).toBe('日本語で回答してください');
+      });
+
+      it('falls back to English when an unknown locale is injected', async () => {
+        const mockFetch = vi.fn().mockResolvedValue(createMockFetchResponse(['data: [DONE]', '']));
+        vi.stubGlobal('fetch', mockFetch);
+
+        const { createStreamSession } = await freshModule();
+        const session = createStreamSession('agent', null, undefined, ref('xx'));
+
+        await session.submit({ messages: [{ type: 'human', content: 'Test' }] });
+
+        const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+        expect(body.metadata.language).toBe('xx');
         expect(body.metadata.language_instruction).toBe('Please respond in English');
       });
 
