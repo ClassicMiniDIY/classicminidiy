@@ -174,7 +174,22 @@ if [ "$ZONE_CHECKS" = "1" ]; then
   # TME redirect map. Only assertable once theminiexchange.com resolves to
   # Cloudflare — a Host header against workers.dev is rejected at the edge (403)
   # before the worker runs, so this cannot be faked from a preview.
-  if [ "$(dig +short NS theminiexchange.com 2>/dev/null | grep -ci cloudflare)" -ge 1 ]; then
+  # `dig` is REQUIRED, not optional. If it is missing the guard below cannot tell
+  # "zone not migrated" from "cannot check", and would silently skip the whole
+  # redirect estate while the battery still reports success — the same
+  # false-assurance failure this script already shipped once.
+  #
+  # The query is pinned to a public resolver: the migration plan records that a
+  # cached LOCAL resolver answer produced confident wrong readings during the
+  # pathfinder cutover, and a stale cache here would skip the gate on the one day
+  # it matters.
+  if ! command -v dig >/dev/null 2>&1; then
+    bad "dig is not installed — cannot verify the TME redirect map (install dnsutils/bind-utils)"
+    tme_ns=""
+  else
+    tme_ns=$(dig +short NS theminiexchange.com @1.1.1.1 2>/dev/null | grep -ci cloudflare)
+  fi
+  if [ "${tme_ns:-0}" -ge 1 ]; then
     for probe in "/:exchange" "/listings/abc:exchange/listings/abc" "/terms:legal/marketplace-terms"; do
       src="${probe%%:*}"; want="${probe##*:}"
       loc=$(curl -sS -o /dev/null -m 25 -w '%{redirect_url}' "https://www.theminiexchange.com$src" 2>/dev/null)
