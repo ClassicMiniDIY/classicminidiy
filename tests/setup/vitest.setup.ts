@@ -70,6 +70,17 @@ const __nuxtStateStore: Record<string, ReturnType<typeof ref>> = {};
 
 (global as any).useCookie = vi.fn((_key: string) => ref(null));
 (global as any).$fetch = vi.fn().mockResolvedValue({});
+
+// Unit tests must never touch the network. `$fetch` was stubbed but bare
+// `fetch` was not, so any code path that calls it directly — e.g.
+// createStreamSession() eagerly calling loadThreadHistory() when handed a
+// thread id — issued a REAL request. happy-dom resolves the relative
+// `/api/langgraph/...` URL against localhost:3000, so running the suite while
+// a dev server was up proxied straight through to the live LangGraph
+// deployment and returned 422s for fixture thread ids like 'existing-thread'.
+// Tests that need a specific response still override this with
+// vi.stubGlobal('fetch', ...).
+(global as any).fetch = vi.fn().mockRejectedValue(new Error('Unexpected network call in tests: fetch is stubbed'));
 (global as any).definePageMeta = vi.fn();
 (global as any).useHead = vi.fn();
 (global as any).useSeoMeta = vi.fn();

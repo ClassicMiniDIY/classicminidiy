@@ -91,6 +91,15 @@ export function createStreamSession(
   const proxyApiUrl = '/api/langgraph';
 
   // Load historical messages if thread exists
+  /**
+   * True when the API says the persisted thread cannot be used — it was
+   * deleted server-side, expired, or the stored id is simply not a valid
+   * thread. Callers watch this to drop the id rather than retrying it on every
+   * page load forever, which is what happened before: a bad id sat in
+   * localStorage and re-requested a 422 indefinitely.
+   */
+  const threadMissing = ref(false);
+
   const loadThreadHistory = async () => {
     if (!currentThreadId.value) return;
 
@@ -109,12 +118,32 @@ export function createStreamSession(
             messages.value = threadMessages;
           }
         }
-      } else {
-        console.warn('Failed to load thread history:', response.status, response.statusText);
+        return;
       }
+
+      // 404 = gone, 410 = expired, 422 = the id is not a usable thread id.
+      // None of these get better by retrying, so surface it for cleanup.
+      if ([404, 410, 422].includes(response.status)) {
+        threadMissing.value = true;
+      }
+      console.warn('Failed to load thread history:', response.status, response.statusText);
     } catch (error) {
+      // A network blip is transient — do NOT mark the thread missing here, or
+      // an offline moment would silently discard a good conversation.
       console.warn('Error loading thread history:', error);
     }
+  };
+
+  /**
+   * Switch the session to another existing thread (chat history selection).
+   */
+  const loadThread = async (nextThreadId: string) => {
+    stop();
+    messages.value = [];
+    error.value = null;
+    threadMissing.value = false;
+    currentThreadId.value = nextThreadId;
+    await loadThreadHistory();
   };
 
   // Load history when session is created with existing thread
@@ -576,15 +605,18 @@ export function createStreamSession(
     messages.value = [];
     currentThreadId.value = null;
     error.value = null;
+    threadMissing.value = false;
   };
 
   return {
     messages,
     isLoading,
     error,
+    threadMissing,
     submit,
     stop,
     reset,
+    loadThread,
     threadId: currentThreadId,
     getMessagesMetadata,
   };

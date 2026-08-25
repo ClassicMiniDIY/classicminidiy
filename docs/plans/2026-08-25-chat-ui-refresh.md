@@ -229,8 +229,17 @@ Verified against a dev server at 1280x720 and 375x812, in both themes: no docume
 (`scrollWidth === innerWidth`), streaming renders as one block, New chat resets to the empty
 state. `bun run test` — 4864 passed. `bun run build` — clean.
 
-Not addressed here, and still open from §2: 17 (transcript not keyboard-focusable),
-22 (single 24h thread), 24 (errors as fake assistant turns).
+Not addressed here, and still open from §2: 17 (transcript not keyboard-focusable) and
+24 (errors as fake assistant turns). Item 22 is now partly addressed — see the local chat
+history note in §5.
+
+A related defect found later and fixed: a persisted thread id the API rejects (404/410/422)
+was retried on every page load forever, because `loadThreadHistory()` only warned. The
+session now raises `threadMissing`, and the window drops the id from both the current-thread
+slot and local history. The 422s that surfaced this were actually the unit suite leaking real
+network calls — `fetch` was unstubbed in `tests/setup/vitest.setup.ts`, so a fixture thread id
+was proxied to the live LangGraph deployment whenever the suite ran alongside a dev server.
+`fetch` is now stubbed globally.
 
 ---
 
@@ -240,10 +249,12 @@ Ordered by value against effort. None of these are required for the visual refre
 
 ### Near term
 
-- **Real conversation history.** LangGraph already persists threads and `/api/langgraph/threads`
-  already lists them. Keeping a list of thread ids client-side turns "one thread, 24 hours"
-  into a browsable history immediately, with no schema work. For signed-in users, storing the
-  list against the profile makes it cross-device.
+- ~~**Real conversation history.**~~ **Shipped (local).** `useChatHistory` keeps a list of
+  thread ids in localStorage (max 20, dropped after 30 days) and the header's History dialog
+  reopens any of them — the threads themselves were already server-side in LangGraph, so this
+  needed no schema work. It is per-browser only: clearing site data, another browser or
+  another device all start empty. Making it durable and cross-device is the "signed-in
+  memory" item below, and would mean storing the id list against the profile.
 - **Abort the stream on stop.** An `AbortController` per submit; `stop()` aborts it. Fixes
   defect 21.
 - **Error turns as errors.** A dedicated error state with a Retry button that resubmits the
