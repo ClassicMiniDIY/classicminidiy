@@ -1,3 +1,4 @@
+import type { Ref } from 'vue';
 import type { Message, UseStreamContextProvider } from '../../data/models/chat';
 import { usePersistentThread } from './usePersistentThread';
 
@@ -52,7 +53,22 @@ export function useStreamProvider() {
 export function createStreamSession(
   assistantId: string,
   threadId: string | null = null,
-  onThreadCreated?: (threadId: string) => void
+  onThreadCreated?: (threadId: string) => void,
+  /**
+   * The active locale, injected by the caller.
+   *
+   * This used to be resolved here with its own `useI18n()` call. Because the
+   * only caller (ChatWindow) already calls `useI18n()` in its own setup, that
+   * produced a second local-scope registration and vue-i18n warned on every
+   * /chat load: "Duplicate useI18n calling by local scope". Taking the locale
+   * as a parameter also drops one reason this function had to run during
+   * setup — `provideStreamContext()` is now the only remaining one, and that
+   * constraint still holds (see the chat hydration invariant in CLAUDE.md).
+   *
+   * Accepts a ref so the session follows a locale change mid-conversation;
+   * a plain string is accepted for convenience in tests.
+   */
+  locale: Ref<string> | string = 'en'
 ) {
   const messages = ref<any[]>([]);
   const isLoading = ref(false);
@@ -64,8 +80,9 @@ export function createStreamSession(
   // the reply carried on growing after the user pressed stop.
   let abortController: AbortController | null = null;
 
-  // Get locale at the top level of the composable
-  const { locale } = useI18n();
+  // Read the injected locale at call time, so a mid-conversation language
+  // switch applies to the next message rather than being frozen at creation.
+  const currentLocale = (): string => (typeof locale === 'string' ? locale : (locale?.value ?? 'en'));
 
   // Track message count for thread persistence
   const messageCount = computed(() => messages.value.length);
@@ -150,10 +167,12 @@ export function createStreamSession(
         ko: '한국어로 답변해 주세요',
       };
 
+      const activeLocale = currentLocale();
       const metadata = {
-        language: locale.value,
-        user_locale: locale.value,
-        language_instruction: languageInstructions[locale.value] || languageInstructions.en,
+        language: activeLocale,
+        user_locale: activeLocale,
+        language_instruction:
+          languageInstructions[activeLocale as keyof typeof languageInstructions] || languageInstructions.en,
         ...options.metadata,
       };
       payload.metadata = metadata;

@@ -126,7 +126,10 @@
 </template>
 
 <script setup lang="ts">
-  const { t } = useI18n();
+  // `locale` is read here, once, and injected into createStreamSession below.
+  // Calling useI18n() a second time inside that function triggered vue-i18n's
+  // "Duplicate useI18n calling by local scope" warning on every /chat load.
+  const { t, locale } = useI18n();
   import { useStreamProvider } from '~/composables/useStreamProvider';
   import AssistantMessage from './AssistantMessage.vue';
   import ChatComposer from './ChatComposer.vue';
@@ -251,7 +254,10 @@
           // Callback when new thread is created
           (newThreadId: string) => {
             setThreadId(newThreadId);
-          }
+          },
+          // Passed as the ref, so switching language mid-conversation applies
+          // to the next message rather than being frozen at creation.
+          locale
         );
         provideStreamContext(streamContext);
         streamContextInitialized.value = true;
@@ -308,6 +314,11 @@
 
     input.value = '';
     forcedEmpty.value = false;
+    // Explicit, because the composer's watcher can be skipped on this path:
+    // a starter sets the value and this clears it, and if both land in one
+    // flush Vue sees no net change and never fires the callback, leaving the
+    // field stuck at the height it measured for the prompt.
+    nextTick(() => composerRef.value?.resize());
 
     // Submit message with metadata
     const metadata = {
@@ -341,7 +352,10 @@
     input.value = '';
     forcedEmpty.value = true;
     showScrollButton.value = false;
-    nextTick(() => composerRef.value?.focus());
+    nextTick(() => {
+      composerRef.value?.resize();
+      composerRef.value?.focus();
+    });
   }
 
   function stopGeneration() {

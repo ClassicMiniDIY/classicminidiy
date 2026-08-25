@@ -102,13 +102,32 @@
   function resize() {
     const el = inputRef.value;
     if (!el) return;
+
+    // Never measure a box with no layout. A backgrounded tab, a `display:none`
+    // ancestor or a pane mid-resize gives the field ~0 width, which wraps the
+    // placeholder onto dozens of lines and reports a scrollHeight far past
+    // MAX_HEIGHT — locking an empty composer open at full height. Skipping
+    // leaves the last good height in place until real layout returns.
+    if (el.clientWidth === 0) return;
+
+    // Measure with the scrollbar suppressed and the height unconstrained, so
+    // scrollHeight reports the true content height. The previous version read
+    // scrollHeight again *after* writing the clamped height, by which point it
+    // reports the clamped box rather than the content — so once the field hit
+    // MAX_HEIGHT it reported MAX_HEIGHT forever and could never shrink back.
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT)}px`;
-    el.style.overflowY = el.scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden';
+    el.style.overflowY = 'hidden';
+
+    const contentHeight = el.scrollHeight;
+    el.style.height = `${Math.min(contentHeight, MAX_HEIGHT)}px`;
+    el.style.overflowY = contentHeight > MAX_HEIGHT ? 'auto' : 'hidden';
   }
 
   function onInput(e: Event) {
     emit('update:modelValue', (e.target as HTMLTextAreaElement).value);
+    // Resize from the event as well as from the prop watcher below. Typing is
+    // the common path and must not wait on a round trip through the parent.
+    resize();
   }
 
   function onKeyDown(e: KeyboardEvent) {
@@ -118,11 +137,11 @@
     }
   }
 
-  // Resize after the parent writes a new value (including the reset to '' on send).
-  watch(
-    () => props.modelValue,
-    () => nextTick(resize)
-  );
+  // Resize after the parent writes a new value.
+  //
+  // `flush: 'post'` so the textarea has already been patched with the new value
+  // when this runs — measuring before the patch sizes the field to the OLD text.
+  watch(() => props.modelValue, resize, { flush: 'post' });
 
   function focus() {
     // `preventScroll` because focusing a control near the bottom of the shell
@@ -130,7 +149,12 @@
     inputRef.value?.focus({ preventScroll: true });
   }
 
-  defineExpose({ focus });
+  // `resize` is exposed because the watcher above cannot be relied on for the
+  // send path. Sending sets the value to the prompt and then straight back to
+  // '' — if both land in one flush, Vue sees no net change and skips the
+  // callback entirely, leaving the field stuck at whatever height it last
+  // measured. The parent calls resize() explicitly after clearing.
+  defineExpose({ focus, resize });
 </script>
 
 <i18n lang="json">
