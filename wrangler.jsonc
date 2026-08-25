@@ -55,6 +55,17 @@
     { "pattern": "www.classicminidiy.com/*", "zone_name": "classicminidiy.com" }
   ],
 
+  // MUST stay true, and must stay NEXT TO the routes block so the coupling is
+  // visible. Defining `routes` makes wrangler default `workers_dev` to FALSE,
+  // which silently destroys the workers.dev preview URL. Verified the hard way:
+  // deploying with routes and without this line took the preview URL to 404 and
+  // the verification battery from 16/0 to 3 passed / 13 failed, because the
+  // preview smoke test points at exactly that hostname.
+  //
+  // The preview URL is the only place the migration can be exercised without
+  // touching production, so losing it is worse than not having routes at all.
+  "workers_dev": true,
+
   "observability": {
     "enabled": true
   }
