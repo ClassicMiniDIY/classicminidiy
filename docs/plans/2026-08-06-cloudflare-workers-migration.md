@@ -1101,6 +1101,43 @@ getModelObjectHead (sign + fetch)  PASS  reachedS3=true
   zone is live and routed, and `verify-cf-deploy.sh` correctly keeps the TME assertion behind its
   zone guard rather than pretending otherwise.
 
+#### 2026-08-25 — Image provider implemented with D1's preview split; verified by build diff [implements D1] [source: this branch]
+- **D1's split gating works and was verified by building both ways**, not by reasoning:
+
+  | build | same-origin `/cdn-cgi/image/` in prerendered HTML |
+  |---|---|
+  | `NUXT_SITE_ENV=preview` | **0** — raw remote URLs, unoptimized but RENDERING |
+  | `NUXT_SITE_ENV=production` | **323**, with modifiers (`w=`, `h=`, `f=webp`, `q=80`) |
+
+  Preview must not use the cloudflare provider: `/cdn-cgi/image/` exists only on a zone, and the
+  provider emits host-relative URLs with no fallback, so a workers.dev preview would render broken
+  images on every archive / wheel / listing / model page. The same `NUXT_SITE_ENV` that drives the
+  noindex drives this, so the two cannot disagree.
+- **GOTCHA when checking this — `/cdn-cgi/image/` in the HTML does NOT mean our provider ran.**
+  The preview build contains two files with that string, from
+  `media.carsandbids.com/cdn-cgi/image/...`: third-party `og_image_url` values scraped by the
+  external-listings "finds" feature, which happen to come from a site that also uses Cloudflare
+  Images. Any assertion must match a **same-origin** path (`src="/cdn-cgi/image/`), not the bare
+  substring, or it reports a false positive.
+- **The CLAUDE.md "never set image.provider" invariant is now amended, not contradicted.** Vercel
+  and local dev still leave it unset — everything that invariant documents still applies to them
+  verbatim. It is set ONLY for a zone-backed Cloudflare build. Vercel build re-verified: zero
+  same-origin `/cdn-cgi`, `images` key still emitted, 1761 `/_vercel/image` references intact.
+- **`/cdn-cgi` joins `/_ipx` in `nitro.prerender.ignore`** — the identical crawler trap with a
+  different prefix. Without it, `crawlLinks` follows every same-origin transform URL and tries to
+  prerender it as a route, which is what SIGKILLed the build container before.
+- **UNVERIFIABLE UNTIL THE ZONE IS LIVE — and one case deserves attention.** The production build
+  emits `/cdn-cgi/image/w=600,h=450,f=webp,q=80/brand/mascot-mini.jpg`, i.e. a transform of a LOCAL
+  `public/` file. That is the exact shape that broke on Vercel under ipx (nuxt/image#1281:
+  filesystem read vs CDN static output). On Cloudflare, `public/` is served by Workers Static
+  Assets on the same zone, so it should resolve as a same-zone fetch — but "should" is doing work
+  there, and workers.dev cannot serve `/cdn-cgi/` at all, so it cannot be tested before cutover.
+  **Make a local-image transform an explicit gate in Phase 3 zone verification.**
+- `verify-cf-deploy.sh` now asserts the URL shape **with modifiers** and fetches the bytes to
+  confirm an `image/*` content-type — D1 notes the provider emits the raw src unchanged when no
+  modifiers are set, so a bare-image page would pass a naive check while transformation was
+  entirely off. Both sit behind the existing zone guard and arm at cutover.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on

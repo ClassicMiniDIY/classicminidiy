@@ -120,7 +120,21 @@ mcp_status=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' -X POST "$ORIGIN/mcp"
 echo
 echo "== zone-dependent =="
 if [ "$ZONE_CHECKS" = "1" ]; then
-  expect_body "/models" '/cdn-cgi/image/' "images emit /cdn-cgi/image/"
+  # Must use a page whose images carry width/format MODIFIERS: the @nuxt/image
+  # cloudflare provider emits the raw src unchanged when no modifiers are set, so
+  # a bare-image page would pass this check while transformation is entirely off.
+  expect_body "/archive/wheels" '/cdn-cgi/image/[^"]*width=' "images emit /cdn-cgi/image/ WITH modifiers"
+  # And prove real transformed BYTES come back, not just the URL shape.
+  img=$(curl -sS -m 30 "$ORIGIN/archive/wheels" 2>/dev/null | grep -oE '/cdn-cgi/image/[^"]+' | head -1)
+  if [ -n "$img" ]; then
+    ctype=$(curl -sS -o /dev/null -m 30 -w '%{content_type}' "$ORIGIN$img" 2>/dev/null)
+    case "$ctype" in
+      image/*) ok "transformed bytes returned ($ctype)" ;;
+      *)       bad "transformed image returned $ctype, not an image" ;;
+    esac
+  else
+    bad "no /cdn-cgi/image/ URL found to fetch" ;
+  fi
   hsts=$(curl -sSI -m 30 "$ORIGIN/" 2>/dev/null | grep -ci 'strict-transport-security')
   [ "$hsts" -ge 1 ] && ok "HSTS header present" || bad "HSTS header missing"
 else

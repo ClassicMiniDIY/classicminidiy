@@ -508,7 +508,13 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 
 ### Image Optimization Invariants
 
-- **Never set `image.provider` in `nuxt.config.ts`.** Leaving it unset (`'auto'`) is
+- **Never set `image.provider` in `nuxt.config.ts` — with ONE narrow exception, added for the
+  Cloudflare migration.** A zone-backed Cloudflare build sets `provider: 'cloudflare'` (the
+  platform optimizer there is `/cdn-cgi/image/`, not Vercel's), gated behind `useCloudflareImages`.
+  Vercel and local dev still leave it unset, so everything below still applies to them verbatim.
+  Cloudflare PREVIEW builds also leave it unset on purpose: `/cdn-cgi/image/` exists only on a
+  zone, so a workers.dev preview using that provider renders broken images everywhere.
+  Leaving it unset (`'auto'`) is
   load-bearing: `@nuxt/image` resolves the provider from `std-env`'s deployment detection —
   Vercel's native optimizer in production, `ipx` locally. Pinning it to `'ipx'` broke every
   LOCAL image under `public/` in production with `[404] [IPX_FILE_NOT_FOUND]`
