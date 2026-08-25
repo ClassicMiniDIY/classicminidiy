@@ -633,6 +633,23 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   in `beforeEach` and it seeded none, so there was no entry to serialise. A format
   assertion with no items proves nothing about item serialisation; seed rows first.
 
+- **Enclosure URLs go into the feed RAW, and only if they are absolute.**
+  `rss2()` and `atom1()` both push an enclosure href through `new URL()`, so the
+  same unparseable-URL failure that killed the Atom routes applies to images —
+  and there it takes down the RSS routes too, for every item in the feed, not
+  just the offending one. `og_image_url` is browser-written (the find submit path
+  inserts it through PostgREST, bypassing the rehosting in
+  `parse.post.ts`) and a broken image is invisible in moderation because the admin
+  thumbnail falls back on `@error`, so a relative or malformed URL can reach an
+  approved row. `absoluteFeedUrl()` is the guard: non-absolute or non-http(s)
+  drops that item's enclosure and keeps the feed up.
+
+  Do NOT `escapeHtml()` a URL on its way into an enclosure. The library's
+  `sanitizeUrl()` already escapes `&` and percent-encodes anything that could
+  break out of an XML attribute; pre-escaping double-escapes, so `?w=1&h=2` ships
+  as `&amp;amp;` and every reader resolves an image URL that 404s. escapeHtml
+  still belongs on the `<img>` in the item's HTML content — that really is HTML.
+
 ## Contribution Loop Invariants
 
 The UX cohesion pass turned the archive into a contribution platform. The loop is
