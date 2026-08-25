@@ -30,7 +30,11 @@
         >
           <ChatEmptyState v-if="isChatEmpty" @pick="handleStarter" />
 
-          <div v-else class="space-y-6" role="log">
+          <!-- Deliberately NOT `role="log"`: that role carries an implicit
+               `aria-live="polite"`, which would make a screen reader re-announce
+               the whole reply on every streamed token. The sr-only status region
+               below is the single announcement point. -->
+          <div v-else class="space-y-6">
             <template v-for="message in messages" :key="message.id">
               <HumanMessage v-if="message.type === 'human'" :message="message" :is-loading="isLoading" />
               <AssistantMessage v-else-if="message.type === 'ai'" :message="message" :is-loading="isLoading" />

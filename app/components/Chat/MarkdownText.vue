@@ -8,112 +8,12 @@
 </template>
 
 <script setup lang="ts">
-  import { marked } from 'marked';
-  import { markedHighlight } from 'marked-highlight';
-  import hljs from 'highlight.js';
-  import DOMPurify from 'dompurify';
+  import { renderAssistantMarkdown } from '~/utils/chatMarkdown';
   import type { MarkdownTextProps } from '../../../data/models/chat';
 
   const props = withDefaults(defineProps<MarkdownTextProps & { showCursor?: boolean }>(), {
     showCursor: false,
   });
-
-  // Function to add UTM parameters to URLs
-  function addUtmParameters(url: string): string {
-    try {
-      const urlObj = new URL(url);
-
-      const utmParams = {
-        utm_source: 'diy_chat_bot',
-        utm_medium: 'chat',
-        utm_campaign: 'assistant_recommendation',
-        utm_content: 'chat_response',
-      };
-
-      Object.entries(utmParams).forEach(([key, value]) => {
-        if (!urlObj.searchParams.has(key)) {
-          urlObj.searchParams.set(key, value);
-        }
-      });
-
-      return urlObj.toString();
-    } catch {
-      // Relative links and anything unparseable are left alone.
-      return url;
-    }
-  }
-
-  // Custom renderer for links
-  const renderer = new marked.Renderer();
-  renderer.link = function ({ href, title, tokens }: any) {
-    const processedHref = addUtmParameters(href);
-    const titleAttr = title ? ` title="${title}"` : '';
-    const text = this.parser.parseInline(tokens);
-    return `<a href="${processedHref}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
-  };
-
-  marked.use(
-    markedHighlight({
-      langPrefix: 'language-',
-      highlight(code, lang) {
-        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-        return hljs.highlight(code, { language }).value;
-      },
-    })
-  );
-
-  marked.setOptions({
-    breaks: true,
-    gfm: true,
-    renderer: renderer,
-  });
-
-  // The assistant renders a wider markdown subset than the marketplace message
-  // renderer in `app/utils/markdown.ts` — it needs headings, tables and fenced
-  // code. `class` is allowed because highlight.js marks up tokens with spans.
-  const ALLOWED_TAGS = [
-    'p',
-    'br',
-    'span',
-    'strong',
-    'em',
-    'del',
-    'code',
-    'pre',
-    'ul',
-    'ol',
-    'li',
-    'a',
-    'blockquote',
-    'hr',
-    'img',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ];
-  const ALLOWED_ATTR = ['href', 'title', 'target', 'rel', 'class', 'src', 'alt'];
-
-  let hookInstalled = false;
-  function installLinkHardening() {
-    if (hookInstalled || !import.meta.client) return;
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-      if (node.nodeName === 'A') {
-        const el = node as Element;
-        el.setAttribute('target', '_blank');
-        el.setAttribute('rel', 'noopener noreferrer');
-      }
-    });
-    hookInstalled = true;
-  }
 
   /**
    * The whole message is parsed on every update, as one document.
@@ -124,23 +24,47 @@
    * whenever a stream chunk landed mid-word the settled half closed a paragraph
    * and the rest of the word rendered after it — "I don" / "'t have specific…"
    * as two blocks. Parsing the cumulative content in one pass cannot produce
-   * that; `messages/partial` already sends the full message each time.
+   * that.
+   *
+   * But `messages/partial` is cumulative and arrives roughly per token, so
+   * rendering `props.content` directly would re-parse and re-sanitize the whole
+   * growing message hundreds of times for one answer — quadratic in reply
+   * length, and visible as dropped frames on a phone. While streaming we
+   * therefore coalesce updates onto one animation frame; once the stream ends
+   * the final content is rendered synchronously so nothing is left truncated.
    */
-  const renderedHtml = computed(() => {
-    if (!props.content) return '';
-    const raw = marked.parse(props.content) as string;
+  const displayContent = ref(props.content);
+  let frame: number | null = null;
 
-    if (import.meta.client) {
-      installLinkHardening();
-      return DOMPurify.sanitize(raw, {
-        ALLOWED_TAGS,
-        ALLOWED_ATTR,
-        FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'input'],
-      });
+  function cancelFrame() {
+    if (frame !== null) {
+      cancelAnimationFrame(frame);
+      frame = null;
     }
+  }
 
-    return raw;
-  });
+  watch(
+    () => [props.content, props.showCursor] as const,
+    ([content, streaming]) => {
+      if (!streaming || !import.meta.client) {
+        // Settle immediately: this is the final content for this message.
+        cancelFrame();
+        displayContent.value = content;
+        return;
+      }
+
+      if (frame !== null) return; // An update is already queued for this frame.
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        displayContent.value = props.content;
+      });
+    },
+    { immediate: true }
+  );
+
+  onUnmounted(cancelFrame);
+
+  const renderedHtml = computed(() => renderAssistantMarkdown(displayContent.value));
 </script>
 
 <style scoped>
