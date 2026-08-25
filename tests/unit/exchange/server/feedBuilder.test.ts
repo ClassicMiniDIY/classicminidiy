@@ -46,6 +46,7 @@ import {
   assembleFeed,
   createFeedHandler,
   feedItemId,
+  absoluteFeedUrl,
   FEED_META,
   type FeedType,
 } from '~~/server/utils/exchange/feedBuilder';
@@ -1136,5 +1137,100 @@ describe('createFeedHandler — atom routes with items', () => {
     expect(typeof out).toBe('string');
     expect(out).toContain('<feed');
     expect(setHeaderSpy).toHaveBeenCalledWith(expect.anything(), 'Content-Type', 'application/atom+xml; charset=utf-8');
+  });
+});
+
+// ===========================================================================
+// Enclosure URLs — rss2() AND atom1() push an enclosure href through new URL(),
+// so one unparseable value 500s the whole route. og_image_url is browser-written
+// (useExternalListings inserts it straight through PostgREST), so this is
+// reachable data, not a theoretical one.
+// ===========================================================================
+
+describe('absoluteFeedUrl', () => {
+  it('passes an absolute https URL through unchanged', () => {
+    expect(absoluteFeedUrl('https://cdn.example.com/a.jpg')).toBe('https://cdn.example.com/a.jpg');
+  });
+
+  it('passes an absolute http URL through unchanged', () => {
+    expect(absoluteFeedUrl('http://cdn.example.com/a.jpg')).toBe('http://cdn.example.com/a.jpg');
+  });
+
+  it('preserves a query string verbatim (no escaping — the library escapes)', () => {
+    expect(absoluteFeedUrl('https://cdn.example.com/a.jpg?w=1&h=2')).toBe('https://cdn.example.com/a.jpg?w=1&h=2');
+  });
+
+  it('rejects a relative URL', () => {
+    expect(absoluteFeedUrl('/images/car.jpg')).toBeUndefined();
+  });
+
+  it('rejects a protocol-relative URL', () => {
+    expect(absoluteFeedUrl('//cdn.example.com/a.jpg')).toBeUndefined();
+  });
+
+  it('rejects a non-http(s) scheme', () => {
+    expect(absoluteFeedUrl('javascript:alert(1)')).toBeUndefined();
+    expect(absoluteFeedUrl('data:image/png;base64,iVBOR')).toBeUndefined();
+  });
+
+  it('rejects garbage, null, undefined and empty string', () => {
+    expect(absoluteFeedUrl('not a url')).toBeUndefined();
+    expect(absoluteFeedUrl(null)).toBeUndefined();
+    expect(absoluteFeedUrl(undefined)).toBeUndefined();
+    expect(absoluteFeedUrl('')).toBeUndefined();
+  });
+});
+
+describe('assembleFeed — enclosure hardening', () => {
+  const badFind = (ogImageUrl: string) => ({
+    id: UUID_FIND,
+    title: 'Bad image find',
+    slug: 'bad-image',
+    description: 'desc',
+    og_description: null,
+    og_image_url: ogImageUrl,
+    editor_commentary: null,
+    published_at: '2026-02-02T00:00:00.000Z',
+  });
+
+  it.each(['/images/car.jpg', '//cdn.example.com/a.jpg', 'not a url', 'javascript:alert(1)'])(
+    'does not 500 either serializer on og_image_url %s',
+    async (bad) => {
+      findsRows = [badFind(bad)];
+      const feed = await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE);
+      expect(() => feed.atom1()).not.toThrow();
+      expect(() => feed.rss2()).not.toThrow();
+      // The item itself still ships; only its enclosure is dropped.
+      expect(feed.rss2()).toContain('[Mini Find] Bad image find');
+      expect(feed.rss2()).not.toContain('<enclosure');
+    }
+  );
+
+  it('keeps one bad row from taking down the whole everything feed', async () => {
+    listingsRows = [atomListing];
+    findsRows = [badFind('/relative.jpg')];
+    wantedRows = [atomWanted];
+    const feed = await assembleFeed('everything', mockSupabase as any, RUNTIME_BASE);
+    expect(() => feed.atom1()).not.toThrow();
+    const atom = feed.atom1();
+    expect(atom).toContain('Mk1 Cooper S');
+    expect(atom).toContain('[Wanted] WTB engine');
+  });
+
+  it('emits an ampersand in an image URL escaped exactly once', async () => {
+    findsRows = [{ ...badFind('https://cdn.example.com/a.jpg?w=1&h=2'), title: 'Query image' }];
+    const feed = await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE);
+    for (const out of [feed.rss2(), feed.atom1()]) {
+      expect(out).toContain('https://cdn.example.com/a.jpg?w=1&amp;h=2');
+      // The double-escaped form is what escapeHtml() on the URL used to produce.
+      expect(out).not.toContain('&amp;amp;');
+    }
+  });
+
+  it('still emits a well-formed enclosure for a normal absolute image', async () => {
+    findsRows = [{ ...badFind('https://cdn.example.com/a.png'), title: 'Good image' }];
+    const rss = (await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE)).rss2();
+    expect(rss).toContain('url="https://cdn.example.com/a.png"');
+    expect(rss).toContain('type="image/png"');
   });
 });

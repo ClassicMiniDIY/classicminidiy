@@ -117,6 +117,35 @@ export function imageMimeFromUrl(url: string): string {
   }
 }
 
+/**
+ * Return `url` only if it is an absolute URL the feed serializers can render,
+ * otherwise undefined.
+ *
+ * Both rss2() and atom1() push an enclosure href through `new URL()`, so a
+ * single unparseable value throws and 500s the ENTIRE route — every other item
+ * in the feed included. `og_image_url` is browser-written (the find submit path
+ * inserts it straight through PostgREST, bypassing the rehosting in
+ * `parse.post.ts`), and a broken image is invisible in moderation because the
+ * admin thumbnail falls back on `@error`. So a relative `/img/x.jpg`, a
+ * protocol-relative `//cdn/x.jpg` or plain garbage can reach an approved row
+ * and take the feeds down. Dropping just that item's enclosure is the right
+ * trade: the image still renders from the `<img>` in the item content.
+ *
+ * Pass the RAW url here, never an escaped one — `sanitizeUrl()` inside the
+ * library already escapes `&` and percent-encodes anything that could break out
+ * of an XML attribute. Pre-escaping with escapeHtml() double-escapes instead:
+ * `?w=1&h=2` ships as `&amp;amp;` and the reader resolves a URL that 404s.
+ */
+export function absoluteFeedUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? url : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Order embedded listing_photos: primary first, then display_order. */
 function applyPhotoOrdering<T extends { order: (...args: any[]) => T }>(query: T): T {
   return query
@@ -150,9 +179,15 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * falls back to the item permalink, which is always absolute and parseable.
  *
  * Note this is the id only. Every item also sets an explicit `guid` to the
- * pre-existing prefixed string so RSS `<guid>` values do NOT change — that
- * is what readers dedupe on, and rewriting them would re-notify every
+ * pre-existing prefixed string so RSS `<guid>` values do NOT change — that is
+ * what RSS readers dedupe on, and rewriting them would re-notify every RSS
  * subscriber with up to 50 "new" items.
+ *
+ * That protects RSS ONLY. json1() ignores `guid` and emits this id as the JSON
+ * Feed id, which is the JSON dedupe key, so JSON subscribers DO get a one-time
+ * re-notify. atom1() and json1() read the same field and the library offers no
+ * per-format id beyond RSS's `guid`, so that cost is unavoidable — expect it on
+ * deploy rather than treating it as a new bug.
  */
 export function feedItemId(rowId: string, permalink: string): string {
   return UUID_RE.test(rowId) ? `urn:uuid:${rowId}` : permalink;
@@ -204,12 +239,13 @@ function buildListingItems(listings: any[], supabaseUrl: string, siteUrl: string
       date: new Date(listing.created_at),
     };
 
-    if (imageUrl) {
-      // Don't set feedItem.image: the `feed` lib re-derives the enclosure MIME
-      // from the URL extension for a string image (e.g. .jpg -> image/jpg) and
-      // overrides our explicit type. The image still renders via the <img> in
-      // `content`/`content_html`; the enclosure carries the canonical MIME.
-      feedItem.enclosure = { url: imageUrl, type: imageMimeFromUrl(imageUrl) };
+    // Don't set feedItem.image: the `feed` lib re-derives the enclosure MIME
+    // from the URL extension for a string image (e.g. .jpg -> image/jpg) and
+    // overrides our explicit type. The image still renders via the <img> in
+    // `content`/`content_html`; the enclosure carries the canonical MIME.
+    const enclosureUrl = absoluteFeedUrl(imageUrl);
+    if (enclosureUrl) {
+      feedItem.enclosure = { url: enclosureUrl, type: imageMimeFromUrl(enclosureUrl) };
     }
 
     return { item: feedItem, date: new Date(listing.created_at) };
@@ -240,10 +276,11 @@ function buildFindItems(finds: any[], siteUrl: string): FeedItem[] {
       date: new Date(find.published_at),
     };
 
-    if (find.og_image_url) {
-      // No feedItem.image (see buildListingItems) — keep the canonical enclosure MIME.
-      const safeImageUrl = escapeHtml(find.og_image_url);
-      feedItem.enclosure = { url: safeImageUrl, type: imageMimeFromUrl(find.og_image_url) };
+    // No feedItem.image (see buildListingItems) — keep the canonical enclosure MIME.
+    // Raw url, not escapeHtml'd: see absoluteFeedUrl.
+    const enclosureUrl = absoluteFeedUrl(find.og_image_url);
+    if (enclosureUrl) {
+      feedItem.enclosure = { url: enclosureUrl, type: imageMimeFromUrl(enclosureUrl) };
     }
 
     return { item: feedItem, date: new Date(find.published_at) };
