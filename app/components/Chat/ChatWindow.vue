@@ -441,6 +441,14 @@
     input.value = '';
 
     await streamContext.loadThread(id);
+
+    // The thread may be gone server-side. The threadMissing watcher has
+    // already dropped it from history and cleared the persisted id, so
+    // carrying on here would write the dead id straight back into both and
+    // leave it 422-ing on every future page load — re-creating exactly the
+    // loop threadMissing exists to break.
+    if (streamContext.threadMissing.value) return;
+
     // Make it the active thread so a refresh returns to it.
     setThreadId(id);
     history.record(id, { messageCount: messages.value.length });

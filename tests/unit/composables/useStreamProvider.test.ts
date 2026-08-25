@@ -482,6 +482,81 @@ describe('useStreamProvider', () => {
         expect(body.metadata.language_instruction).toBe('Please respond in English');
       });
 
+      it('discards a thread-history response that arrives after a submit started', async () => {
+        // loadThreadHistory() is fired without await at session creation, so a
+        // slow response can land after the conversation has moved on. Applying
+        // it wiped the user's own message: arriving at /chat?message=... with a
+        // restored thread starts the fetch and auto-submits on the next tick.
+        let releaseHistory: (value: any) => void = () => {};
+        const historyResponse = new Promise((resolve) => {
+          releaseHistory = resolve;
+        });
+
+        const mockFetch = vi.fn().mockImplementation((url: string) => {
+          if (url.includes('/state')) return historyResponse;
+          return Promise.resolve(createMockFetchResponse(['data: [DONE]', '']));
+        });
+        vi.stubGlobal('fetch', mockFetch);
+
+        const { createStreamSession } = await freshModule();
+        // Creating with a thread id kicks off loadThreadHistory().
+        const session = createStreamSession('agent', 'restored-thread');
+
+        // The visitor sends a message before the history request resolves.
+        await session.submit({ messages: [{ type: 'human', content: 'Live message' }] });
+        expect(session.messages.value.some((m: any) => m.content === 'Live message')).toBe(true);
+
+        // The stale history response now arrives with the pre-submission state.
+        releaseHistory({
+          ok: true,
+          status: 200,
+          json: async () => ({ values: { messages: [{ id: 'old-1', type: 'human', content: 'Ancient message' }] } }),
+        });
+        await historyResponse;
+        await Promise.resolve();
+        await Promise.resolve();
+
+        // It must be dropped, not applied over the live conversation.
+        expect(session.messages.value.some((m: any) => m.content === 'Live message')).toBe(true);
+        expect(session.messages.value.some((m: any) => m.content === 'Ancient message')).toBe(false);
+      });
+
+      it('discards a thread-history response for a thread that is no longer current', async () => {
+        let releaseFirst: (value: any) => void = () => {};
+        const firstResponse = new Promise((resolve) => {
+          releaseFirst = resolve;
+        });
+
+        const mockFetch = vi.fn().mockImplementation((url: string) => {
+          if (url.includes('thread-a')) return firstResponse;
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ values: { messages: [{ id: 'b-1', type: 'human', content: 'From B' }] } }),
+          });
+        });
+        vi.stubGlobal('fetch', mockFetch);
+
+        const { createStreamSession } = await freshModule();
+        const session = createStreamSession('agent');
+
+        // Switch to A (response withheld), then to B, which resolves first.
+        const switchToA = session.loadThread('thread-a');
+        await session.loadThread('thread-b');
+        expect(session.messages.value.some((m: any) => m.content === 'From B')).toBe(true);
+
+        // A's response lands late and must not replace B's transcript.
+        releaseFirst({
+          ok: true,
+          status: 200,
+          json: async () => ({ values: { messages: [{ id: 'a-1', type: 'human', content: 'From A' }] } }),
+        });
+        await switchToA;
+
+        expect(session.messages.value.some((m: any) => m.content === 'From B')).toBe(true);
+        expect(session.messages.value.some((m: any) => m.content === 'From A')).toBe(false);
+      });
+
       it('adds error message to messages on fetch failure', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
