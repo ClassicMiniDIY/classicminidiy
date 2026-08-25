@@ -45,7 +45,13 @@ jobs:
           # duplicate-content hazard on a site where SEO is load-bearing, and a
           # second unmonitored public front-end. verify-cf-deploy.sh asserts the
           # noindex, so removing this fails the smoke test rather than shipping
-          # silently. Phase 4 flips this to production for the real cutover.
+          # silently.
+          #
+          # It ALSO gates the Cloudflare image provider, which is zone-only.
+          # Both default to the preview/safe behaviour when unset, so this line is
+          # belt-and-braces rather than load-bearing — but Phase 4's production
+          # deploy MUST set it to `production` explicitly, or the zone ships
+          # unoptimized images and a noindex'd site.
           NUXT_SITE_ENV: preview
         run: bun run build
 

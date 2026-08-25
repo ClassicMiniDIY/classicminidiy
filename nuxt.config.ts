@@ -17,8 +17,15 @@ const isCloudflareBuild = (process.env.NITRO_PRESET || '').includes('cloudflare'
 // Preview therefore leaves the provider unset: raw remote URLs, unoptimized but
 // rendering. The zone deploy sets NUXT_SITE_ENV=production, which turns the
 // provider on. Same env var that drives the noindex, so the two cannot disagree.
-const isCloudflarePreview = isCloudflareBuild && (process.env.NUXT_SITE_ENV || 'production') !== 'production';
-const useCloudflareImages = isCloudflareBuild && !isCloudflarePreview;
+//
+// The default is deliberately PREVIEW, not production. An unset NUXT_SITE_ENV
+// must not opt into zone-only behaviour: `NITRO_PRESET=cloudflare_module bun run
+// build` with no env is a normal thing to type, and if that turned the provider
+// on, the resulting bundle would render broken images anywhere but a live zone.
+// The two failure directions are not symmetric — defaulting to preview ships
+// UNOPTIMIZED images at worst (degraded, working, and caught by the battery's
+// zone checks); defaulting to production ships BROKEN ones.
+const useCloudflareImages = isCloudflareBuild && process.env.NUXT_SITE_ENV === 'production';
 
 const parsedArchive = ArchiveItems.map((item) => {
   return { title: item.title, description: item.description, href: `https://www.classicminidiy.com${item.to}` };
