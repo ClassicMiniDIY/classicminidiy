@@ -133,6 +133,31 @@ function formatServerLocation(listing: any): string {
   return listing.location || '';
 }
 
+/** Matches a canonical RFC 4122 UUID (the PK shape of every table we feed from). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Build the Atom/JSON `id` for a feed item. It MUST be an absolute IRI:
+ * `feed`'s atom1() runs the id through `new URL()` (src/atom1.ts —
+ * `id: sanitizeUrl(item.id ?? item.link)`), so a bare row id like
+ * `3f2504e0-...` or `wanted-3f2504e0-...` throws `TypeError: Invalid URL`
+ * and 500s the whole route. rss2() and json1() use the id as an opaque
+ * string and never parse it, which is why only the .atom routes were down.
+ *
+ * Row ids are UUIDs, so `urn:uuid:` is the correct permanent identifier —
+ * it is stable across slug edits and unique across tables, so the combined
+ * "everything" feed needs no per-source prefix. Anything that is not a UUID
+ * falls back to the item permalink, which is always absolute and parseable.
+ *
+ * Note this is the id only. Every item also sets an explicit `guid` to the
+ * pre-existing prefixed string so RSS `<guid>` values do NOT change — that
+ * is what readers dedupe on, and rewriting them would re-notify every
+ * subscriber with up to 50 "new" items.
+ */
+export function feedItemId(rowId: string, permalink: string): string {
+  return UUID_RE.test(rowId) ? `urn:uuid:${rowId}` : permalink;
+}
+
 interface FeedItem {
   item: any;
   date: Date;
@@ -161,7 +186,8 @@ function buildListingItems(listings: any[], supabaseUrl: string, siteUrl: string
 
     const feedItem: any = {
       title: listing.title,
-      id: listing.id,
+      id: feedItemId(listing.id, listingUrl),
+      guid: String(listing.id),
       link: listingUrl,
       description: `${listing.year} ${safeModel} - ${priceText} - ${safeLocation}\n\n${safeDescription}`,
       content: `
@@ -200,7 +226,8 @@ function buildFindItems(finds: any[], siteUrl: string): FeedItem[] {
 
     const feedItem: any = {
       title: findTitle,
-      id: `external-${find.id}`,
+      id: feedItemId(find.id, findUrl),
+      guid: `external-${find.id}`,
       link: findUrl,
       description: safeContent,
       content: `
@@ -264,7 +291,8 @@ function buildWantedItems(wantedPosts: any[], siteUrl: string): FeedItem[] {
 
     const feedItem: any = {
       title: postTitle,
-      id: `wanted-${post.id}`,
+      id: feedItemId(post.id, postUrl),
+      guid: `wanted-${post.id}`,
       link: postUrl,
       description: `${categoryLabel} — Budget: ${budgetText}${safeLocation ? ` — ${safeLocation}` : ''}\n\n${safeDescription}`,
       content: `

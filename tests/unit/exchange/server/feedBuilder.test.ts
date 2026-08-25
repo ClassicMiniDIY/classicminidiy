@@ -45,6 +45,7 @@ import {
   formatMoney,
   assembleFeed,
   createFeedHandler,
+  feedItemId,
   FEED_META,
   type FeedType,
 } from '~~/server/utils/exchange/feedBuilder';
@@ -939,5 +940,201 @@ describe('createFeedHandler', () => {
     const parsed = JSON.parse(out as string);
     expect(parsed.version).toContain('jsonfeed.org');
     expect(setHeaderSpy).toHaveBeenCalledWith(expect.anything(), 'Content-Type', 'application/json; charset=utf-8');
+  });
+});
+
+// ===========================================================================
+// Atom serialisation — the .atom routes 500'd in production while the .xml and
+// .json siblings served 200 off the identical assembled feed.
+//
+// Cause: `feed`'s atom1() renders the entry id as `sanitizeUrl(item.id ?? item.link)`,
+// and sanitizeUrl() is `new URL(...)`. Our ids were bare row ids ('<uuid>',
+// 'external-<uuid>', 'wanted-<uuid>'), none of which parse as a URL, so every
+// atom1() call with at least one item threw `TypeError: Invalid URL`. rss2()
+// and json1() treat the id as an opaque string and never parse it.
+//
+// The pre-existing atom test above only ever ran against an EMPTY feed (rows are
+// reset in beforeEach and it seeds none), so it had no entry to serialise and
+// passed throughout. Everything here seeds rows first.
+// ===========================================================================
+
+const UUID_LISTING = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+const UUID_FIND = 'a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+const UUID_WANTED = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+
+const atomListing = {
+  id: UUID_LISTING,
+  title: 'Mk1 Cooper S',
+  slug: 'mk1-cooper-s',
+  description: 'A lovely car',
+  price: 12000,
+  year: 1965,
+  model: 'Cooper S',
+  location: '',
+  city: 'Oxford',
+  state_province: null,
+  country: 'United Kingdom',
+  created_at: '2026-01-03T00:00:00.000Z',
+  user: { display_name: 'Jane' },
+  listing_photos: [{ storage_path: 'l1/main.jpg', is_primary: true }],
+};
+
+const atomFind = {
+  id: UUID_FIND,
+  title: 'Spotted online',
+  slug: 'spotted-online',
+  description: 'find desc',
+  og_description: 'og desc',
+  og_image_url: 'https://cdn.example.com/x.png',
+  editor_commentary: 'great find',
+  published_at: '2026-01-02T00:00:00.000Z',
+};
+
+const atomWanted = {
+  id: UUID_WANTED,
+  title: 'WTB engine',
+  description: 'looking for a 1275',
+  category: 'engine',
+  budget_min: 500,
+  budget_max: 1500,
+  currency: 'USD',
+  city: 'Leeds',
+  state_province: null,
+  country: 'United Kingdom',
+  created_at: '2026-01-01T00:00:00.000Z',
+};
+
+/** Seed whichever tables the given feed type reads, so it always has items. */
+function seedAllSources() {
+  listingsRows = [atomListing];
+  findsRows = [atomFind];
+  wantedRows = [atomWanted];
+}
+
+/** Pull every <id> element value out of an Atom document. */
+function atomIds(xml: string): string[] {
+  return [...xml.matchAll(/<id>([^<]*)<\/id>/g)].map((m) => m[1]);
+}
+
+describe('feedItemId', () => {
+  it('maps a UUID row id to a urn:uuid IRI', () => {
+    expect(feedItemId(UUID_LISTING, 'https://x.test/a')).toBe(`urn:uuid:${UUID_LISTING}`);
+  });
+
+  it('accepts an uppercase UUID', () => {
+    const upper = UUID_LISTING.toUpperCase();
+    expect(feedItemId(upper, 'https://x.test/a')).toBe(`urn:uuid:${upper}`);
+  });
+
+  it('falls back to the permalink when the row id is not a UUID', () => {
+    expect(feedItemId('l1', 'https://x.test/exchange/listings/l1')).toBe('https://x.test/exchange/listings/l1');
+  });
+
+  it('does not treat a prefixed UUID as a UUID', () => {
+    expect(feedItemId(`wanted-${UUID_WANTED}`, 'https://x.test/w')).toBe('https://x.test/w');
+  });
+
+  it('always returns something new URL() can parse (what atom1 requires)', () => {
+    for (const rowId of [UUID_LISTING, 'l1', `external-${UUID_FIND}`, '']) {
+      expect(() => new URL(feedItemId(rowId, 'https://x.test/fallback'))).not.toThrow();
+    }
+  });
+});
+
+describe('assembleFeed — Atom serialisation with items present', () => {
+  it.each(Object.keys(FEED_META) as FeedType[])('renders atom1() for the %s feed without throwing', async (type) => {
+    seedAllSources();
+    const feed = await assembleFeed(type, mockSupabase as any, RUNTIME_BASE);
+    let atom = '';
+    expect(() => {
+      atom = feed.atom1();
+    }).not.toThrow();
+    expect(atom).toContain('<feed');
+    // Feed-level id + at least one entry id.
+    expect(atomIds(atom).length).toBeGreaterThan(1);
+  });
+
+  it('emits a urn:uuid entry id for a listing', async () => {
+    listingsRows = [atomListing];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    expect(feed.atom1()).toContain(`<id>urn:uuid:${UUID_LISTING}</id>`);
+  });
+
+  it('emits a urn:uuid entry id for a find', async () => {
+    findsRows = [atomFind];
+    const feed = await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE);
+    expect(feed.atom1()).toContain(`<id>urn:uuid:${UUID_FIND}</id>`);
+  });
+
+  it('emits a urn:uuid entry id for a wanted post', async () => {
+    wantedRows = [atomWanted];
+    const feed = await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE);
+    expect(feed.atom1()).toContain(`<id>urn:uuid:${UUID_WANTED}</id>`);
+  });
+
+  it('gives every entry in the combined feed a distinct, URL-parseable id', async () => {
+    seedAllSources();
+    const feed = await assembleFeed('everything', mockSupabase as any, RUNTIME_BASE);
+    const ids = atomIds(feed.atom1());
+    expect(ids).toHaveLength(4); // feed id + 3 entries
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of ids) expect(() => new URL(id)).not.toThrow();
+  });
+
+  it('falls back to the permalink id when a row id is not a UUID', async () => {
+    listingsRows = [{ ...atomListing, id: 'legacy-1' }];
+    const feed = await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE);
+    expect(feed.atom1()).toContain('<id>https://www.classicminidiy.com/exchange/listings/mk1-cooper-s</id>');
+  });
+});
+
+describe('assembleFeed — RSS guid continuity', () => {
+  // The id change must not reach RSS: readers dedupe on <guid>, so rewriting it
+  // would re-notify every existing subscriber with up to 50 "new" items.
+  it('keeps the bare row id as the listing guid', async () => {
+    listingsRows = [atomListing];
+    const rss = (await assembleFeed('listings', mockSupabase as any, RUNTIME_BASE)).rss2();
+    expect(rss).toContain(`<guid isPermaLink="false">${UUID_LISTING}</guid>`);
+    expect(rss).not.toContain('urn:uuid:');
+  });
+
+  it('keeps the external- prefix as the find guid', async () => {
+    findsRows = [atomFind];
+    const rss = (await assembleFeed('finds', mockSupabase as any, RUNTIME_BASE)).rss2();
+    expect(rss).toContain(`<guid isPermaLink="false">external-${UUID_FIND}</guid>`);
+  });
+
+  it('keeps the wanted- prefix as the wanted guid', async () => {
+    wantedRows = [atomWanted];
+    const rss = (await assembleFeed('wanted', mockSupabase as any, RUNTIME_BASE)).rss2();
+    expect(rss).toContain(`<guid isPermaLink="false">wanted-${UUID_WANTED}</guid>`);
+  });
+});
+
+describe('assembleFeed — JSON Feed ids', () => {
+  it('uses the urn:uuid id and still renders every item', async () => {
+    seedAllSources();
+    const feed = await assembleFeed('everything', mockSupabase as any, RUNTIME_BASE);
+    const parsed = JSON.parse(feed.json1());
+    expect(parsed.items).toHaveLength(3);
+    expect(parsed.items.map((i: any) => i.id)).toEqual([
+      `urn:uuid:${UUID_LISTING}`,
+      `urn:uuid:${UUID_FIND}`,
+      `urn:uuid:${UUID_WANTED}`,
+    ]);
+  });
+});
+
+describe('createFeedHandler — atom routes with items', () => {
+  it.each(Object.keys(FEED_META) as FeedType[])('serves the %s atom route without throwing', async (type) => {
+    seedAllSources();
+    vi.stubGlobal('useRuntimeConfig', () => ({
+      public: { ...RUNTIME_BASE.public, exchangeEnabled: true },
+    }));
+    const handler = createFeedHandler(type, 'atom');
+    const out = await handler({} as any);
+    expect(typeof out).toBe('string');
+    expect(out).toContain('<feed');
+    expect(setHeaderSpy).toHaveBeenCalledWith(expect.anything(), 'Content-Type', 'application/atom+xml; charset=utf-8');
   });
 });
