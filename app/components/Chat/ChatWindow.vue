@@ -14,6 +14,18 @@
       <div class="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-2.5 sm:px-6">
         <h1 class="text-sm font-semibold">{{ t('assistant_name') }}</h1>
         <span class="badge badge-ghost badge-sm">{{ t('beta') }}</span>
+
+        <button type="button" class="btn btn-ghost btn-sm ml-auto gap-2 font-normal" @click="historyOpen = true">
+          <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+          <span class="hidden sm:inline">{{ t('history') }}</span>
+          <span class="sr-only sm:hidden">{{ t('history') }}</span>
+          <!-- Count is rendered only after mount: it comes from localStorage,
+               which the server cannot know, and rendering it during setup is
+               the hydration mismatch documented in CLAUDE.md. -->
+          <span v-if="hasMounted && history.entries.value.length > 0" class="badge badge-sm">
+            {{ history.entries.value.length }}
+          </span>
+        </button>
       </div>
     </header>
 
@@ -122,6 +134,16 @@
         </div>
       </aside>
     </div>
+
+    <ChatHistoryDialog
+      :entries="history.entries.value"
+      :active-thread-id="streamContext?.threadId.value"
+      :open="historyOpen"
+      @select="handleSelectThread"
+      @remove="handleRemoveThread"
+      @clear="handleClearHistory"
+      @close="historyOpen = false"
+    />
   </div>
 </template>
 
@@ -134,6 +156,7 @@
   import AssistantMessage from './AssistantMessage.vue';
   import ChatComposer from './ChatComposer.vue';
   import ChatEmptyState from './ChatEmptyState.vue';
+  import ChatHistoryDialog from './ChatHistoryDialog.vue';
   import HumanMessage from './HumanMessage.vue';
   import UsefulLinks from './UsefulLinks.vue';
   import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
@@ -155,6 +178,9 @@
   const composerRef = ref<InstanceType<typeof ChatComposer>>();
   const messagesContainer = ref<HTMLDivElement>();
   const showScrollButton = ref(false);
+  const historyOpen = ref(false);
+
+  const history = useChatHistory();
 
   // The server never has a persisted thread, so SSR always renders the empty
   // (welcome) branch. The client reads localStorage during setup, so without
@@ -164,6 +190,9 @@
   const hasMounted = ref(false);
   onMounted(() => {
     hasMounted.value = true;
+    // Reads localStorage, so it must run after mount — same rule as
+    // useRecentTools().load(); see CLAUDE.md.
+    history.load();
   });
 
   // Set when the user starts a new chat, so a stale persisted thread cannot
@@ -266,6 +295,38 @@
     { immediate: true }
   );
 
+  // Record the conversation as soon as the thread id exists, rather than only
+  // after the run finishes. `submit()` resolves when the stream closes, so
+  // recording solely there loses the conversation if the visitor navigates
+  // away or closes the tab mid-answer.
+  watch(
+    () => streamContext?.threadId.value,
+    (id) => {
+      if (!id || !hasMounted.value) return;
+      const firstHuman = messages.value.find((m: any) => m.type === 'human');
+      if (!firstHuman) return;
+      history.record(id, {
+        title: history.deriveTitle(getMessageText(firstHuman.content)),
+        messageCount: messages.value.length,
+      });
+    }
+  );
+
+  // A persisted thread id the API rejects (deleted, expired, or never valid)
+  // must be dropped, not retried. Before this, a bad id sat in localStorage and
+  // re-requested a 422 on every single page load.
+  watch(
+    () => streamContext?.threadMissing.value,
+    (missing) => {
+      if (!missing) return;
+      const staleId = streamContext?.threadId.value;
+      if (staleId) history.remove(staleId);
+      createNewThread();
+      streamContext?.reset();
+      forcedEmpty.value = true;
+    }
+  );
+
   // Cleanup on unmount
   onUnmounted(() => {
     if (streamContext) {
@@ -335,6 +396,70 @@
 
     // Update thread usage after submitting a message
     updateThreadUsage();
+    recordCurrentThread(message);
+  }
+
+  /**
+   * Add or refresh this conversation in local history.
+   *
+   * Called after submit, because the thread id does not exist until the run
+   * starts — a brand new conversation only learns its id from the stream.
+   */
+  function recordCurrentThread(firstMessageFallback: string) {
+    const id = streamContext?.threadId.value;
+    if (!id) return;
+
+    const firstHuman = messages.value.find((m: any) => m.type === 'human');
+    const titleSource = firstHuman ? getMessageText(firstHuman.content) : firstMessageFallback;
+
+    history.record(id, {
+      title: history.deriveTitle(titleSource || firstMessageFallback),
+      messageCount: messages.value.length,
+    });
+  }
+
+  function getMessageText(content: any): string {
+    if (typeof content === 'string') return content;
+    if (Array.isArray(content)) {
+      return content
+        .filter((item: any) => item?.type === 'text')
+        .map((item: any) => item.text)
+        .join(' ');
+    }
+    return '';
+  }
+
+  async function handleSelectThread(id: string) {
+    if (!streamContext || id === streamContext.threadId.value) {
+      historyOpen.value = false;
+      return;
+    }
+
+    track('chat_history_thread_opened');
+    historyOpen.value = false;
+    forcedEmpty.value = false;
+    input.value = '';
+
+    await streamContext.loadThread(id);
+    // Make it the active thread so a refresh returns to it.
+    setThreadId(id);
+    history.record(id, { messageCount: messages.value.length });
+    nextTick(() => scrollToBottom(false));
+  }
+
+  function handleRemoveThread(id: string) {
+    history.remove(id);
+    // Removing the conversation you are currently in also ends it, otherwise
+    // the composer would keep appending to a thread no longer listed.
+    if (streamContext?.threadId.value === id) {
+      handleNewChat();
+    }
+  }
+
+  function handleClearHistory() {
+    history.clear();
+    historyOpen.value = false;
+    handleNewChat();
   }
 
   function handleStarter(prompt: string) {
@@ -443,7 +568,8 @@
     "scroll_to_bottom": "Scroll to bottom",
     "sr_generating": "Generating a response",
     "useful_links_region": "Useful links",
-    "useful_links_placeholder": "Links appear here when I search for something"
+    "useful_links_placeholder": "Links appear here when I search for something",
+    "history": "History"
   },
   "es": {
     "assistant_name": "Asistente CMDIY",
@@ -451,7 +577,8 @@
     "scroll_to_bottom": "Desplazar al final",
     "sr_generating": "Generando una respuesta",
     "useful_links_region": "Enlaces útiles",
-    "useful_links_placeholder": "Los enlaces aparecen aquí cuando busco algo"
+    "useful_links_placeholder": "Los enlaces aparecen aquí cuando busco algo",
+    "history": "Historial"
   },
   "fr": {
     "assistant_name": "Assistant CMDIY",
@@ -459,7 +586,8 @@
     "scroll_to_bottom": "Défiler vers le bas",
     "sr_generating": "Génération d'une réponse",
     "useful_links_region": "Liens utiles",
-    "useful_links_placeholder": "Les liens apparaissent ici quand je fais une recherche"
+    "useful_links_placeholder": "Les liens apparaissent ici quand je fais une recherche",
+    "history": "Historique"
   },
   "de": {
     "assistant_name": "CMDIY Assistent",
@@ -467,7 +595,8 @@
     "scroll_to_bottom": "Nach unten scrollen",
     "sr_generating": "Antwort wird erzeugt",
     "useful_links_region": "Nützliche Links",
-    "useful_links_placeholder": "Links erscheinen hier, wenn ich etwas suche"
+    "useful_links_placeholder": "Links erscheinen hier, wenn ich etwas suche",
+    "history": "Verlauf"
   },
   "it": {
     "assistant_name": "Assistente CMDIY",
@@ -475,7 +604,8 @@
     "scroll_to_bottom": "Scorri in basso",
     "sr_generating": "Generazione di una risposta",
     "useful_links_region": "Link utili",
-    "useful_links_placeholder": "I link appaiono qui quando cerco qualcosa"
+    "useful_links_placeholder": "I link appaiono qui quando cerco qualcosa",
+    "history": "Cronologia"
   },
   "pt": {
     "assistant_name": "Assistente CMDIY",
@@ -483,7 +613,8 @@
     "scroll_to_bottom": "Rolar para baixo",
     "sr_generating": "Gerando uma resposta",
     "useful_links_region": "Links úteis",
-    "useful_links_placeholder": "Os links aparecem aqui quando eu pesquiso algo"
+    "useful_links_placeholder": "Os links aparecem aqui quando eu pesquiso algo",
+    "history": "Histórico"
   },
   "ru": {
     "assistant_name": "Помощник CMDIY",
@@ -491,7 +622,8 @@
     "scroll_to_bottom": "Прокрутить вниз",
     "sr_generating": "Формируется ответ",
     "useful_links_region": "Полезные ссылки",
-    "useful_links_placeholder": "Ссылки появятся здесь, когда я что-то найду"
+    "useful_links_placeholder": "Ссылки появятся здесь, когда я что-то найду",
+    "history": "История"
   },
   "ja": {
     "assistant_name": "CMDIYアシスタント",
@@ -499,7 +631,8 @@
     "scroll_to_bottom": "下までスクロール",
     "sr_generating": "回答を生成しています",
     "useful_links_region": "有用なリンク",
-    "useful_links_placeholder": "検索するとここにリンクが表示されます"
+    "useful_links_placeholder": "検索するとここにリンクが表示されます",
+    "history": "履歴"
   },
   "zh": {
     "assistant_name": "CMDIY助手",
@@ -507,7 +640,8 @@
     "scroll_to_bottom": "滚动到底部",
     "sr_generating": "正在生成回复",
     "useful_links_region": "有用链接",
-    "useful_links_placeholder": "当我搜索时，链接会显示在这里"
+    "useful_links_placeholder": "当我搜索时，链接会显示在这里",
+    "history": "历史记录"
   },
   "ko": {
     "assistant_name": "CMDIY 어시스턴트",
@@ -515,7 +649,8 @@
     "scroll_to_bottom": "맨 아래로 스크롤",
     "sr_generating": "응답을 생성하는 중",
     "useful_links_region": "유용한 링크",
-    "useful_links_placeholder": "검색하면 여기에 링크가 표시됩니다"
+    "useful_links_placeholder": "검색하면 여기에 링크가 표시됩니다",
+    "history": "기록"
   }
 }
 </i18n>
