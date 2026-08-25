@@ -1,34 +1,39 @@
 <template>
-  <div v-if="links && links.length > 0" class="mt-4 rounded-lg bg-default border border-default p-4">
-    <div class="flex items-center gap-2 mb-3">
-      <i class="fa-solid fa-link text-primary"></i>
+  <!--
+    NOTE: this component previously styled itself with `bg-default`,
+    `border-default`, `bg-muted` and `text-muted` — Nuxt UI semantic classes
+    that left with `@nuxt/ui`. Nothing in main.css defines them, so the cards
+    had no background, no border and no muted text. These are daisyUI tokens.
+  -->
+  <div v-if="links && links.length > 0" class="rounded-xl border border-base-300 bg-base-200/50 p-4">
+    <div class="mb-3 flex items-center gap-2">
+      <i class="fas fa-link text-primary" aria-hidden="true"></i>
       <h3 class="text-sm font-semibold">{{ t('title') }}</h3>
+      <span class="ml-auto text-xs text-base-content/50">{{ links.length }}</span>
     </div>
     <div class="space-y-2">
       <a
-        v-for="(link, index) in links.slice(0, 3)"
+        v-for="(link, index) in links"
         :key="index"
         :href="addUtmParams(link.url)"
         target="_blank"
         rel="noopener noreferrer"
-        class="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-default hover:border-muted"
+        class="block rounded-lg border border-base-300 bg-base-100 p-3 transition-colors hover:border-primary/40"
         @click="trackOutbound({ destination: link.url, label: link.title, group: 'chat_useful_link' })"
       >
         <div class="flex items-start justify-between gap-2">
-          <div class="flex-1 min-w-0">
-            <div class="font-medium text-sm text-primary hover:text-primary/80 line-clamp-2">
+          <div class="min-w-0 flex-1">
+            <div class="line-clamp-2 text-sm font-medium text-primary">
               {{ link.title }}
             </div>
-            <div class="text-xs text-muted mt-1 line-clamp-2">
+            <div class="mt-1 line-clamp-2 text-xs text-base-content/60">
               {{ link.content }}
             </div>
-            <div class="text-xs text-muted mt-1 truncate">
+            <div class="mt-1 truncate text-xs text-base-content/40">
               {{ link.url }}
             </div>
           </div>
-          <div class="shrink-0 flex items-center gap-2">
-            <i class="fa-solid fa-external-link text-xs text-muted"></i>
-          </div>
+          <i class="fas fa-arrow-up-right-from-square shrink-0 text-xs text-base-content/40" aria-hidden="true"></i>
         </div>
       </a>
     </div>
