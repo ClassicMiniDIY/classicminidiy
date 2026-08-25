@@ -1250,6 +1250,57 @@ measurement; trust `curl -L` hop counts over a one-shot `%{redirect_url}`.
 the scan demonstrably dropped `news.` and `forum.` on classicminidiy.com, and only an enumeration
 can prove there is nothing else.
 
+#### 2026-08-25 — The authoritative dump found 26 MISSING records. C2 was right; my dictionary sweep was 8% effective [C2 CONFIRMED — the most important finding of the migration] [source: this branch]
+With `route53:ListResourceRecordSets` access, the real enumeration ran. Cloudflare's auto-import
+had **15 of 37** record sets for `classicminidiy.com`.
+
+| zone | in Route 53 | Cloudflare had | **missing** |
+|---|---|---|---|
+| `classicminidiy.com` | 35 (excl SOA/apex-NS) | 13 | **22** |
+| `theminiexchange.com` | 14 | 10 | **4** |
+
+**What was missing included the entire mail-authentication layer:**
+
+- **6 SES DKIM CNAMEs** (3 per zone) — random 32-char token labels
+- `fe-e97285d697._domainkey` (forwardemail DKIM), `krs._domainkey.ghost.news` (Ghost DKIM)
+- `noreply.classicminidiy.com` MX + SPF (SES bounce handling)
+- `ghost.news` + `email.ghost.news` — the Ghost newsletter's sending path
+- Two `_acme-challenge.auth.*` TXTs — **certificate renewal validation**
+- Two ACM validation CNAMEs
+- `merch`, `code`, `substack`, `tech`, `toolbox`, `maileri5q`, `fe-bounces` subdomains
+- GitHub Pages challenge TXTs
+
+Flipping NS in that state would have silently broken **DKIM signing on every transactional email**
+from both domains, the newsletter send path, and future certificate renewals — none of which fails
+loudly. Mail would simply start failing DMARC and landing in spam.
+
+**I told Cole earlier that `classicminidiy.com` had ZERO SES DKIM CNAMEs and that C2's gate could
+be struck. That was wrong.** It has three. The claim came from a 74-name dictionary sweep, which
+cannot by construction find labels like `fq46fbrpho2eoavwrnopelwrs7k67wjw._domainkey`. The sweep
+found 2 of the 26 missing records — **8% effective** — and its 0-missing result on
+`theminiexchange.com` was pure luck of naming.
+
+**The lesson, stated plainly: there is no substitute for `list-resource-record-sets`.** Every
+cheaper method shares one structural flaw — comparing "what Cloudflare imported" against the
+source can only ask about names Cloudflare already knows, so a dropped record is invisible to it.
+A perfect diff score means nothing about completeness. **Never flip a zone without the
+enumeration.**
+
+All 26 have been imported and verified:
+- **34/35 record sets present** on classicminidiy.com; the one "gap" is the `substack` A+AAAA
+  ALIAS, correctly translated to a single CNAME (Cloudflare has no ALIAS type and flattens CNAMEs).
+- **14/14** on theminiexchange.com.
+- **Every DKIM and ACME value byte-compared against Route 53: identical.** One apparent mismatch
+  (`resend._domainkey`) was an API display artifact — Cloudflare returns TXT `content` with
+  surrounding quotes for records its own scan created, but serves the correct 218-byte value.
+  Confirmed by resolving both nameservers directly.
+- MX, SPF and DMARC on both zones resolve identically from Route 53 and Cloudflare.
+
+**Import gotchas:** Route 53 permits TTLs below 60 (several were 10 or 30); Cloudflare rejects
+anything under 60 — clamp to `1` (automatic). Long TXT values are stored by Route 53 as multiple
+quoted strings that must be **concatenated, not space-joined**, or DKIM keys corrupt silently. An
+A+AAAA ALIAS pair maps to ONE CNAME — dedupe or the second insert fails.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
