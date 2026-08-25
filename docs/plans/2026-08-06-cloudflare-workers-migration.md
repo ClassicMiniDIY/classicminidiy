@@ -1189,6 +1189,39 @@ replacement for Vercel BotID's behavioural detection. Cole accepted this (the in
 was always the primary defence, and BotID was already removed from checkout for false-positiving
 real buyers). Turnstile on `seller/onboard` remains the escalation if abuse appears.
 
+#### 2026-08-25 — C2 CONFIRMED THE HARD WAY: the auto-import silently dropped two live subdomains [strengthens C2 — HIGH] [source: this branch]
+Cloudflare's scan imported 15 records for `classicminidiy.com`. All 15 matched Route 53 exactly —
+**and the scan had missed two records entirely**:
+
+| record | target | state |
+|---|---|---|
+| `news.classicminidiy.com` | `classic-mini-diy.ghost.io` | **LIVE, returns 200** — the Ghost newsletter |
+| `forum.classicminidiy.com` | `classicminidiy.hosted-by-discourse.com` | present in Route 53 |
+
+Flipping NS without these would have **NXDOMAIN'd the newsletter site**. Both are now added as
+DNS-only (Ghost Pro and Discourse terminate TLS for their own custom domains — proxying would put
+Cloudflare in front of a cert they manage). Post-fix: 17/17 records match Route 53, 0 differences.
+
+- **This is exactly what C2 warned about, and it defeats the cheap verification.** Comparing
+  "everything Cloudflare imported" against Route 53 gives a PERFECT score while records are
+  missing, because the comparison only asks about names Cloudflare already knows. A record the
+  scan dropped is invisible to that method by construction.
+- **A dictionary sweep narrows the gap but cannot close it.** 74 probable names (mail/smtp/blog/
+  api/dev/_dmarc/DKIM selectors/…) found these two. Anything with an unguessable label would still
+  be invisible. **The authoritative `aws route53 list-resource-record-sets` dump is genuinely
+  required before the `classicminidiy.com` flip** — it is the only enumeration source. AWS
+  CloudShell is the low-friction path (browser terminal, already authenticated, no local AWS setup).
+- **Refines the earlier "no SES DKIM" finding.** Correct for `classicminidiy.com`. But
+  `theminiexchange.com` DOES use SES: `mail.theminiexchange.com` carries
+  `v=spf1 include:amazonses.com` and MX `feedback-smtp.us-east-1.amazonses.com`. SES DKIM CNAMEs
+  use random token labels that no dictionary can guess, so **C2's DKIM gate stands for
+  theminiexchange.com** even though it can be struck for classicminidiy.com. The TME sweep found
+  0 missing records, but that is a weaker statement than it sounds, for the reason above.
+- **`.net` flipped; `.org` had NOT propagated at the time of checking** — whois showed Cloudflare
+  while the `.org` registry still returned `ns1/ns2.vercel-dns.com` and both public resolvers
+  agreed. This is the pathfinder's "whois is not propagation" finding reproducing exactly. The
+  change was made correctly; `.org` delegation TTL is 3600.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
