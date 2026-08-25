@@ -1138,6 +1138,57 @@ getModelObjectHead (sign + fetch)  PASS  reachedS3=true
   modifiers are set, so a bare-image page would pass a naive check while transformation was
   entirely off. Both sit behind the existing zone guard and arm at cutover.
 
+#### 2026-08-25 — Phase 3a rehearsal COMPLETE on wheeldictionary.com; four findings for the real zones [source: this branch]
+The rehearsal did its job: it was zero-downtime, and it exposed problems that would have been
+expensive on `classicminidiy.com`.
+
+**Outcome:** `wheeldictionary.com` is live on Cloudflare, proxied, with a zone-edge redirect. Chain
+went from **3 hops to 1**:
+
+| | before (Vercel) | after (Cloudflare) |
+|---|---|---|
+| `http://wheeldictionary.com/` | 308 -> 308 -> 301 | **301 direct** |
+| destination | `/technical/wheels` (which itself 301s) | `/archive/wheels` |
+| hops to a 200 | 3 | **1** |
+
+- **FINDING 1 (HIGH, applies to every zone) — Cloudflare's auto-import proxies EVERY web record.**
+  All five zones came in with 100% of A/AAAA/CNAME records **orange**. The plan's "set every web
+  record DNS-only before the NS flip" is therefore not a formality — it is UNDOING Cloudflare's
+  default, and skipping it puts Cloudflare in the path before a cert exists (the C1 gap the
+  grey-cloud sequence exists to avoid). On `classicminidiy.com` the proxied set included
+  `auth.classicminidiy.com` (the Supabase custom domain — every listing photo, model image and
+  avatar resolves through it), `pm-bounces` (Postmark), and three Shopify CNAMEs. **All four
+  pending zones have now been set DNS-only.** `auth`, `pm-bounces` and the Shopify hosts must stay
+  grey PERMANENTLY, not just for the flip.
+- **FINDING 2 (process) — do not call `activation_check` before verifying proxy state.** Triggering
+  it flipped `wheeldictionary.com` to active while all 7 records were still orange and the cert
+  pack was `pending_validation`. It survived only because Cloudflare already had an edge cert and
+  the domain has no users. On a zone with traffic that is the TLS outage. Verify grey first, flip
+  second.
+- **FINDING 3 (corrects C2) — there are ZERO SES DKIM CNAMEs on `classicminidiy.com`.** C2 named
+  them "the untested case" and made them a hard gate. `_domainkey` returns nothing: mail is
+  `forwardemail.net` MX plus an SPF include, not SES DKIM on this domain. **Strike that gate.** MX,
+  SPF, DMARC and the verification TXTs all imported correctly and were left untouched.
+- **FINDING 4 (SEO, small) — the Vercel redirect target was already stale.** It pointed at
+  `/technical/wheels`, which itself 301s to `/archive/wheels`. The zone rule now targets the real
+  destination. Worth checking the other redirect estates for the same rot before porting them
+  verbatim — a mechanical port would have preserved the dead hop.
+- **Mechanics notes:** ruleset changes take ~10-60s to reach the edge; a test immediately after a
+  PUT reports the OLD behaviour and looks like failure. Cloudflare Free cannot use the `matches`
+  regex operator in WAF expressions, so the AI-crawler rule is built as OR'd `contains` clauses.
+  `wheeldictionary.com` carries CAA records (`letsencrypt.org`, `pki.goog`, and others) which do
+  permit Cloudflare's CAs — but CAA is present, contrary to the plan's "no CAA on either zone"
+  note, which was only ever checked for the other two zones.
+
+**WAF (Phase 3 item) is DONE** — created via API, no dashboard: an AI-crawler block generated from
+`EDGE_DENY_BOTS` in `server/utils/aiBots.ts` (9/9 covered; verified `Googlebot`, `OAI-SearchBot`,
+`Claude-User` and `Mozilla/5.0` do NOT match), and a rate limit on `POST /api/langgraph/*` at
+10 req/10s per IP — deliberately looser than the in-app 40/60s limiter, which stays primary.
+**Accepted limitation:** a Free zone has no bot-score fields, so there is no like-for-like
+replacement for Vercel BotID's behavioural detection. Cole accepted this (the in-app rate limiter
+was always the primary defence, and BotID was already removed from checkout for false-positiving
+real buyers). Turnstile on `seller/onboard` remains the escalation if abuse appears.
+
 ## TRANSFERABILITY REPORT — OpenECUAlliance pathfinder (2026-08-21 → 2026-08-24)
 
 **Outcome: migration complete, zero downtime, no rollback needed.** oecua.org runs on
