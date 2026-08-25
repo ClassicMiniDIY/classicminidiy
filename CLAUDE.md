@@ -168,6 +168,14 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 - **Streaming Responses** - Real-time AI chat with persistent conversation threads
 - **Hydration invariant**: `/chat` is SSR'd and the server always renders the empty/welcome branch. The persisted thread (localStorage, `usePersistentThread`) is read synchronously during setup, so nothing may branch the template on it until after `onMounted` (see `hasMounted` gate in `ChatWindow.vue`) — otherwise refreshing with a <24h-old thread causes a structural hydration mismatch that corrupts the page DOM. Also note `createStreamSession()`/`provideStreamContext()` call `useI18n()`/`provide()` and must keep running synchronously during setup (the `immediate: true` watch), never deferred to post-mount.
 
+- **`/chat`'s full-height shell is CSS-only, keyed off `.chat-shell` with `:has()` in
+  `app/assets/css/main.css` — never `useHead({ bodyAttrs })`.** Setting body attributes from
+  that page's head made `nuxt-schema-org` throw during SSR on a cold dev server (`Cannot read
+  properties of undefined (reading 'webSiteResolver')` out of its resolver preload) and 500 the
+  route until the module warmed up. Measured at 3 failures per cold boot with `bodyAttrs` and 0
+  without, while `/` and `/technical/needles` stayed clean either way — the same
+  `nuxt-schema-org` fragility as the Nuxt 4.5 pin note. Keep the shell out of the head pipeline.
+
 #### Administrative Features (`app/admin`)
 
 - **Registry Review System** (`/admin/registry/review`) - Approve/reject user submissions

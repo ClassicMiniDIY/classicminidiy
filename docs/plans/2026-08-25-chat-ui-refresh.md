@@ -183,10 +183,19 @@ content on a phone.
 
 Structure, per the decisions taken on 2026-08-25:
 
-- **`/chat` is a full-height app surface.** `app/pages/chat.vue` sets `body.chat-fullscreen`
-  via `useHead`; the rules in `app/assets/css/main.css` turn the app wrapper into a flex
-  column, remove the document scroll and hide the site footer. The transcript is the only
+- **`/chat` is a full-height app surface.** The page root carries `.chat-shell`, and the
+  rules in `app/assets/css/main.css` key off it with `:has()` to turn the app wrapper into a
+  flex column, remove the document scroll and hide the site footer. The transcript is the only
   scroll region. Fixes defects 1, 2 and 7.
+
+  **This must not go back to `useHead({ bodyAttrs })`.** That was the first implementation and
+  it made `nuxt-schema-org` throw during SSR on a cold dev server — `Cannot read properties of
+undefined (reading 'webSiteResolver')` from its resolver preload — 500ing `/chat` until the
+  module warmed up. Measured by hammering a freshly booted dev server: 3 failures per cold
+  boot with `bodyAttrs` set, 0 without it, and 0 on `/` and `/technical/needles` either way.
+  Same failure family as the Nuxt 4.5 / `nuxt-schema-org` breakage in the dependency-pin
+  notes. A plain class keeps the shell out of the head pipeline entirely.
+
 - **One composer, one shell.** New `Chat/ChatComposer.vue` is the single instance, pinned
   below the transcript in both states, with the control row _inside_ it — New chat and Report
   an issue on the left, keyboard hint and send/stop on the right. Fixes 3, 4 and 14.

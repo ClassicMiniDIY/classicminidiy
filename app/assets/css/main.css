@@ -665,8 +665,20 @@ body {
 
    `/chat` is an app surface, not an article: the transcript is the only thing
    that scrolls, and the composer stays pinned to the bottom of the viewport.
-   The page opts in by setting this class on <body> via useHead, so nothing
-   here applies to any other route.
+
+   Keyed off `.chat-shell` (the root element of app/pages/chat.vue) with
+   `:has()`, so it applies exactly while that page is mounted and needs no JS,
+   no head entry and no cleanup on navigation.
+
+   It deliberately does NOT use `useHead({ bodyAttrs: { class } })`. That made
+   nuxt-schema-org throw during SSR on a cold dev server — "Cannot read
+   properties of undefined (reading 'webSiteResolver')" from its resolver
+   preload — 500ing /chat until the module warmed up. Measured 3 failures per
+   cold boot with bodyAttrs set and 0 without, while every other route stayed
+   clean. Don't reintroduce it.
+
+   Browsers without `:has()` simply get the ordinary scrolling page with a
+   visible footer, which is a degraded layout rather than a broken one.
 
    Before this, the chat was a fixed-height box inside a normally-scrolling
    document. That gave the surface two scroll regions at once, and because the
@@ -677,23 +689,23 @@ body {
    here override Tailwind utilities already on those elements, and utilities
    sort after every layer.
    --------------------------------------------------------------------------- */
-body.chat-fullscreen {
+body:has(.chat-shell) {
   overflow: hidden;
 }
 
-body.chat-fullscreen .app-wrapper {
+body:has(.chat-shell) .app-wrapper {
   height: 100%;
   min-height: 0;
 }
 
-body.chat-fullscreen .app-content {
+body:has(.chat-shell) .app-content {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
 }
 
-body.chat-fullscreen .app-content > main {
+body:has(.chat-shell) .app-content > main {
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -701,6 +713,6 @@ body.chat-fullscreen .app-content > main {
 /* The site footer is suppressed rather than scrolled past: with no page scroll
    there is no way to reach it, and a partially visible footer under a pinned
    composer reads as a rendering fault. */
-body.chat-fullscreen .app-wrapper > footer {
+body:has(.chat-shell) .app-wrapper > footer {
   display: none;
 }

@@ -1,12 +1,20 @@
 <template>
   <!--
-    The chat fills whatever the site chrome leaves. `body.chat-fullscreen` (set
-    below, styles in app/assets/css/main.css) turns the app wrapper into a flex
-    column, removes the document scroll and hides the footer, so this element
-    resolves to the viewport minus the nav. The visible <h1> lives in
-    ChatWindow's header; the descriptive copy is in the empty state.
+    `chat-shell` is the hook the full-height rules in app/assets/css/main.css
+    key off, via `:has()`. They turn the app wrapper into a flex column, remove
+    the document scroll and hide the footer, so this element resolves to the
+    viewport minus the nav. The visible <h1> lives in ChatWindow's header; the
+    descriptive copy is in the empty state.
+
+    This is a plain class rather than `useHead({ bodyAttrs })` on purpose.
+    Setting bodyAttrs here made nuxt-schema-org throw during SSR on a cold dev
+    server — "Cannot read properties of undefined (reading 'webSiteResolver')"
+    out of its resolver preload — and 500 the page until the module warmed up.
+    Reproduced at 3 failures per cold boot with bodyAttrs, 0 without it, and 0
+    on every other page. Keeping the shell out of the head pipeline entirely
+    sidesteps it, and has the bonus of working with no JS involved at all.
   -->
-  <div class="h-full min-h-0">
+  <div class="chat-shell h-full min-h-0">
     <ChatWindow />
   </div>
 </template>
@@ -18,9 +26,6 @@
 
   // SEO - useHead for title, description, keywords, canonical
   useHead({
-    // Opts this route into the full-height app shell. unhead removes the class
-    // again when the route unmounts, so the rest of the site is untouched.
-    bodyAttrs: { class: 'chat-fullscreen' },
     title: t('title'),
     meta: [
       {
