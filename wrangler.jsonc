@@ -48,8 +48,19 @@
   // production DNS record, so rollback means recreating it under pressure. A route
   // plus a proxied record rolls back with a single `proxied: false` toggle.
   //
-  // theminiexchange.com is NOT here: its 28 redirects are served by zone-edge rules,
-  // which cost no worker invocation and keep working during a worker outage.
+  // theminiexchange.com is NOT here. Its 28 redirects are served by zone-edge
+  // rules, generated from the SAME table (`server/utils/tmeRedirects.ts`) that the
+  // middleware and its 78 tests use, so there is still one source of truth.
+  //
+  // The worker cannot serve them: `/about`, `/contact`, `/privacy`, `/onboarding`,
+  // `/` and `/profile` all exist as PRERENDERED assets, and the static asset layer
+  // runs before the worker — so those TME paths returned 200 with the CMDIY page
+  // instead of redirecting (measured; exactly amendment B1's failure). Forcing the
+  // worker first for those paths would convert the CMDIY homepage and several real
+  // pages into per-request SSR forever, which B1 also warns against.
+  //
+  // 28 mappings collapse to 8 rules once grouped by TRANSFORM rather than by
+  // source, which fits the Free plan's 10-rule cap with headroom.
   "routes": [
     { "pattern": "classicminidiy.com/*", "zone_name": "classicminidiy.com" },
     { "pattern": "www.classicminidiy.com/*", "zone_name": "classicminidiy.com" }
