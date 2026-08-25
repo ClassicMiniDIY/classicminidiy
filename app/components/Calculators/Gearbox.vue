@@ -8,6 +8,7 @@
     type ChartSeriesData,
   } from '../../utils/gearingCalculations';
   import type { GearConfig } from '../../types/gearing';
+  import type { MathStep, MathConstant } from '../../types/mathBreakdown';
   import type { SavedGearConfig } from '../../composables/useGearConfigs';
 
   const { t } = useI18n();
@@ -116,6 +117,9 @@
 
       const speedoMatch = bestMatch ? bestMatch.speedometer : `${closestMatch.speedometer} (${closestMatch.result})`;
       const speedoStatus = bestMatch ? 'text-green' : closestMatch.status;
+      // The row the "recommended speedo" callout is derived from — reused by the
+      // math breakdown so the worked example matches the recommendation shown.
+      const speedoBestRow = bestMatch || closestMatch;
 
       const topGearRow = gearingTable[gearingTable.length - 1];
       const totalRatioTop = `${(config.finalDrive * (topGearRow?.ratio || 1) * config.dropGear).toFixed(3)}:1`;
@@ -128,6 +132,7 @@
         speedoTable,
         speedoMatch,
         speedoStatus,
+        speedoBestRow,
         totalRatioTop,
       };
     });
@@ -222,6 +227,131 @@
     if (!val) return '---';
     return (metric.value ? Math.round(val / kphFactor) : val).toString();
   });
+
+  // ---- Verifiable math breakdown --------------------------------------
+  // Everything below reads the SAME computed values the result cards and
+  // tables render (tireCalcs / primarySpeedoData / primaryGearingTable), so a
+  // reader redoing the arithmetic by hand lands on the numbers on screen. Do
+  // not recompute the results here — a second implementation would drift and
+  // the panel would then be actively misleading rather than merely stale.
+  const primaryConfig = computed(() => configs.value[primaryConfigIndex.value]);
+
+  function fmt(value: number, digits = 4): string {
+    if (!Number.isFinite(value)) return '---';
+    return Number.isInteger(value) ? String(value) : String(parseFloat(value.toFixed(digits)));
+  }
+
+  const mathSteps = computed<MathStep[]>(() => {
+    const tire = tireCalcs.value;
+    const config = primaryConfig.value;
+    const result = configResults.value[primaryConfigIndex.value];
+    if (!config || !result) return [];
+
+    const circMiles = fmt(tire.typeCircInMiles, 7);
+    const steps: MathStep[] = [];
+
+    // 1. Tire diameter — crossply sizes carry a measured diameter instead.
+    if (tireType.value.diameter) {
+      steps.push({
+        label: t('math.tire_diameter'),
+        formula: t('math.tire_diameter_fixed_formula'),
+        substitution: `${fmt(tireType.value.diameter)} mm`,
+        result: `${tire.diameter} mm`,
+        note: t('math.note_fixed_diameter'),
+      });
+    } else {
+      steps.push({
+        label: t('math.tire_diameter'),
+        formula: '(width × profile ÷ 100 × 2) + (size × 25.4)',
+        substitution: `(${tire.width} × ${tire.profile} ÷ 100 × 2) + (${tire.size} × 25.4)`,
+        result: `${tire.diameter} mm`,
+        note: t('math.note_rounded'),
+      });
+    }
+
+    // 2. Circumference
+    steps.push({
+      label: t('math.tire_circumference'),
+      formula: 'π × diameter',
+      substitution: `3.14159 × ${tire.diameter}`,
+      result: `${tire.circ} mm`,
+      note: t('math.note_rounded'),
+    });
+
+    // 3. Circumference expressed in miles
+    steps.push({
+      label: t('math.circumference_in_miles'),
+      formula: 'circumference ÷ (1760 × 914.4)',
+      substitution: `${tire.circ} ÷ (1760 × 914.4)`,
+      result: `${circMiles} mi`,
+      note: t('math.note_yards'),
+    });
+
+    // 4. Tire turns per mile
+    steps.push({
+      label: t('math.tire_turns'),
+      formula: '1760 ÷ (circumference ÷ 914.4)',
+      substitution: `1760 ÷ (${tire.circ} ÷ 914.4)`,
+      result: fmt(tire.tireTurnsPerMile),
+      note: t('math.note_rounded'),
+    });
+
+    // 5. Engine revolutions per mile
+    steps.push({
+      label: t('math.engine_revs'),
+      formula: 'tire turns per mile × final drive × drop gear',
+      substitution: `${tire.tireTurnsPerMile} × ${config.finalDrive} × ${config.dropGear}`,
+      result: fmt(result.speedoData.engineRevsMile),
+      note: metric.value ? t('math.note_metric_distance') : undefined,
+    });
+
+    // 6. Speedo drive turns per mile
+    steps.push({
+      label: t('math.speedo_turns'),
+      formula: 'tire turns per mile × final drive × speedo drive ratio',
+      substitution: `${tire.tireTurnsPerMile} × ${config.finalDrive} × ${speedoDrive.value}`,
+      result: fmt(result.speedoData.turnsPerMile),
+      note: metric.value ? t('math.note_metric_distance') : undefined,
+    });
+
+    // 7. Top speed in the highest gear
+    const topRow = result.gearingTable[result.gearingTable.length - 1];
+    if (topRow) {
+      steps.push({
+        label: t('math.top_speed', { gear: topRow.gear }),
+        formula: '(max RPM ÷ drop gear ÷ gear ratio ÷ final drive) × circumference in miles × 60',
+        substitution: `(${maxRpm.value} ÷ ${config.dropGear} ÷ ${topRow.ratio} ÷ ${config.finalDrive}) × ${circMiles} × 60`,
+        result: topRow.maxSpeed,
+        note: metric.value ? t('math.note_metric_speed', { factor: kphFactor }) : t('math.note_rounded'),
+      });
+    }
+
+    // 8. Speedometer accuracy for the recommended head
+    const speedoRow = result.speedoBestRow;
+    if (speedoRow) {
+      const turnsPer = metric.value ? result.speedoData.turnsPerMile / kphFactor : result.speedoData.turnsPerMile;
+      steps.push({
+        label: t('math.speedo_accuracy', { speedo: speedoRow.speedometer }),
+        formula: '(speedo drive turns ÷ speedometer head turns) × 100 × drop gear',
+        substitution: `(${fmt(turnsPer)} ÷ ${speedoRow.turns}) × 100 × ${config.dropGear}`,
+        result: `${Math.round((turnsPer / speedoRow.turns) * 100 * config.dropGear)}% — ${speedoRow.result}`,
+        note: metric.value ? t('math.note_metric_turns', { factor: kphFactor }) : t('math.note_speedo'),
+      });
+    }
+
+    return steps;
+  });
+
+  const mathConstants = computed<MathConstant[]>(() => [
+    { label: t('math.const_pi'), value: '3.14159' },
+    { label: t('math.const_yards'), value: '1760' },
+    { label: t('math.const_mm_per_yard'), value: '914.4' },
+    { label: t('math.const_inch'), value: '25.4 mm' },
+    { label: t('math.const_kph'), value: String(kphFactor) },
+  ]);
+
+  const MATH_SOURCE_FILE = 'app/utils/gearingCalculations.ts';
+  const MATH_SOURCE_URL = `https://github.com/ClassicMiniDIY/classicminidiy/blob/main/${MATH_SOURCE_FILE}`;
 
   // Config management
   function addConfig() {
@@ -387,19 +517,11 @@
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold"><i class="fad fa-gears mr-2"></i>{{ t('configurations') }}</h3>
         <div class="flex items-center gap-2">
-          <button
-            v-if="isAuthenticated"
-            class="btn btn-outline btn-sm"
-            @click="openLoadModal"
-          >
+          <button v-if="isAuthenticated" class="btn btn-outline btn-sm" @click="openLoadModal">
             <i class="fas fa-folder-open"></i>
             {{ t('load_saved') }}
           </button>
-          <button
-            class="btn btn-outline btn-sm"
-            :disabled="configs.length >= MAX_CONFIGS"
-            @click="addConfig"
-          >
+          <button class="btn btn-outline btn-sm" :disabled="configs.length >= MAX_CONFIGS" @click="addConfig">
             <i class="fas fa-plus"></i>
             {{ t('add_config') }}
           </button>
@@ -420,13 +542,12 @@
       />
     </div>
 
-    <div class="divider my-4"><span class="text-sm opacity-70">{{ t('results_divider') }}</span></div>
+    <div class="divider my-4">
+      <span class="text-sm opacity-70">{{ t('results_divider') }}</span>
+    </div>
 
     <!-- Quick Stats (from first config) -->
-    <div
-      class="grid grid-cols-1 gap-6"
-      :class="configs.length === 1 ? 'md:grid-cols-4' : 'md:grid-cols-3'"
-    >
+    <div class="grid grid-cols-1 gap-6" :class="configs.length === 1 ? 'md:grid-cols-4' : 'md:grid-cols-3'">
       <div class="rounded-lg bg-stone-400 shadow-sm p-6 text-center">
         <h3 class="text-lg text-white opacity-70">
           <i class="fa-jelly-duo fa-regular fa-arrows-rotate fa-spin text-white"></i>
@@ -579,10 +700,23 @@
           </div>
         </div>
         <div class="mt-6">
-          <div class="divider my-4"><span class="text-sm opacity-70">{{ t('support_divider') }}</span></div>
+          <div class="divider my-4">
+            <span class="text-sm opacity-70">{{ t('support_divider') }}</span>
+          </div>
           <patreon-card size="large" />
         </div>
       </div>
+    </div>
+
+    <!-- Verifiable math -->
+    <div class="mt-6">
+      <CalculatorsMathBreakdown
+        calculator="gearbox"
+        :steps="mathSteps"
+        :constants="mathConstants"
+        :source-url="MATH_SOURCE_URL"
+        :source-file="MATH_SOURCE_FILE"
+      />
     </div>
 
     <div class="mt-6 text-center max-w-3xl mx-auto">
@@ -595,13 +729,6 @@
             ><strong>{{ t('disclaimer_doublecheck') }}</strong></template
           >
         </i18n-t>
-        <NuxtLink
-          class="link link-primary"
-          to="https://github.com/SomethingNew71/classicminidiy/blob/dev/components/SpeedoDriveCalculator.vue#L512"
-          target="_blank"
-        >
-          {{ t('equation_source') }}
-        </NuxtLink>
       </p>
     </div>
 
@@ -644,10 +771,32 @@
       "gearing_information": "Gearing Information"
     },
     "support_divider": "Support",
-    "disclaimer": "Please note the above figures are {approximate}. Before purchasing parts and building your engine we recommend {doublecheck} your calculations multiple times using more than one source. The mathematical equations used in this tool can be found here:",
+    "disclaimer": "Please note the above figures are {approximate}. Before purchasing parts and building your engine we recommend {doublecheck} your calculations multiple times using more than one source.",
     "disclaimer_approximate": "approximate values",
     "disclaimer_doublecheck": "doublechecking",
-    "equation_source": "Equation Source Code"
+    "math": {
+      "tire_diameter": "Tire diameter",
+      "tire_diameter_fixed_formula": "published diameter (crossply sizes are listed, not derived)",
+      "tire_circumference": "Tire circumference",
+      "circumference_in_miles": "Circumference in miles",
+      "tire_turns": "Tire turns per mile",
+      "engine_revs": "Engine revolutions per mile",
+      "speedo_turns": "Speedo drive turns per mile",
+      "top_speed": "Top speed in gear {gear}",
+      "speedo_accuracy": "Accuracy of the {speedo} speedometer",
+      "note_rounded": "Rounded to the nearest whole number, the same as the calculator.",
+      "note_yards": "A mile is 1760 yards and a yard is 914.4 mm.",
+      "note_fixed_diameter": "Crossply sizes use a published diameter instead of the width and profile formula.",
+      "note_speedo": "100% reads correctly. Above 100% the speedometer over-reads, below 100% it under-reads.",
+      "note_metric_distance": "Calculated per mile. The result card divides this by 1.60934 to show it per kilometre.",
+      "note_metric_speed": "Calculated in mph first, then multiplied by {factor} for km/h.",
+      "note_metric_turns": "In metric mode the turns per mile are divided by {factor} first.",
+      "const_pi": "Pi",
+      "const_yards": "Yards in a mile",
+      "const_mm_per_yard": "Millimetres in a yard",
+      "const_inch": "One inch",
+      "const_kph": "Miles to kilometres"
+    }
   },
   "es": {
     "configurations": "Configuraciones de Engranajes",
@@ -673,10 +822,32 @@
       "gearing_information": "Información de Engranajes"
     },
     "support_divider": "Apoyo",
-    "disclaimer": "Ten en cuenta que las cifras anteriores son {approximate}. Antes de comprar piezas y construir tu motor, recomendamos {doublecheck} tus cálculos múltiples veces usando más de una fuente. Las ecuaciones matemáticas usadas en esta herramienta se pueden encontrar aquí:",
+    "disclaimer": "Ten en cuenta que las cifras anteriores son {approximate}. Antes de comprar piezas y construir tu motor, recomendamos {doublecheck} tus cálculos múltiples veces usando más de una fuente.",
     "disclaimer_approximate": "valores aproximados",
     "disclaimer_doublecheck": "verificar",
-    "equation_source": "Código Fuente de las Ecuaciones"
+    "math": {
+      "tire_diameter": "Diámetro del neumático",
+      "tire_diameter_fixed_formula": "diámetro publicado (las medidas diagonales vienen tabuladas, no calculadas)",
+      "tire_circumference": "Circunferencia del neumático",
+      "circumference_in_miles": "Circunferencia en millas",
+      "tire_turns": "Vueltas del neumático por milla",
+      "engine_revs": "Revoluciones del motor por milla",
+      "speedo_turns": "Vueltas del mando del velocímetro por milla",
+      "top_speed": "Velocidad máxima en la marcha {gear}",
+      "speedo_accuracy": "Precisión del velocímetro {speedo}",
+      "note_rounded": "Redondeado al número entero más cercano, igual que la calculadora.",
+      "note_yards": "Una milla son 1760 yardas y una yarda son 914,4 mm.",
+      "note_fixed_diameter": "Las medidas diagonales usan un diámetro publicado en vez de la fórmula de ancho y perfil.",
+      "note_speedo": "100% indica correctamente. Por encima del 100% el velocímetro marca de más, por debajo marca de menos.",
+      "note_metric_distance": "Calculado por milla. La tarjeta de resultado lo divide entre 1,60934 para mostrarlo por kilómetro.",
+      "note_metric_speed": "Se calcula primero en mph y luego se multiplica por {factor} para obtener km/h.",
+      "note_metric_turns": "En modo métrico las vueltas por milla se dividen primero entre {factor}.",
+      "const_pi": "Pi",
+      "const_yards": "Yardas en una milla",
+      "const_mm_per_yard": "Milímetros en una yarda",
+      "const_inch": "Una pulgada",
+      "const_kph": "Millas a kilómetros"
+    }
   },
   "fr": {
     "configurations": "Configurations d'Engrenages",
@@ -702,10 +873,32 @@
       "gearing_information": "Informations d'engrenage"
     },
     "support_divider": "Support",
-    "disclaimer": "Veuillez noter que les chiffres ci-dessus sont des {approximate}. Avant d'acheter des pièces et de construire votre moteur, nous recommandons de {doublecheck} vos calculs plusieurs fois en utilisant plus d'une source. Les équations mathématiques utilisées dans cet outil peuvent être trouvées ici :",
+    "disclaimer": "Veuillez noter que les chiffres ci-dessus sont des {approximate}. Avant d'acheter des pièces et de construire votre moteur, nous recommandons de {doublecheck} vos calculs plusieurs fois en utilisant plus d'une source.",
     "disclaimer_approximate": "valeurs approximatives",
     "disclaimer_doublecheck": "revérifier",
-    "equation_source": "Code source des équations"
+    "math": {
+      "tire_diameter": "Diamètre du pneu",
+      "tire_diameter_fixed_formula": "diamètre publié (les tailles diagonales sont listées, pas calculées)",
+      "tire_circumference": "Circonférence du pneu",
+      "circumference_in_miles": "Circonférence en miles",
+      "tire_turns": "Tours de pneu par mile",
+      "engine_revs": "Tours moteur par mile",
+      "speedo_turns": "Tours du pignon de compteur par mile",
+      "top_speed": "Vitesse maximale en {gear}e",
+      "speedo_accuracy": "Précision du compteur {speedo}",
+      "note_rounded": "Arrondi au nombre entier le plus proche, comme le calculateur.",
+      "note_yards": "Un mile fait 1760 yards et un yard fait 914,4 mm.",
+      "note_fixed_diameter": "Les tailles diagonales utilisent un diamètre publié au lieu de la formule largeur et profil.",
+      "note_speedo": "100% indique correctement. Au-dessus de 100% le compteur sur-indique, en dessous il sous-indique.",
+      "note_metric_distance": "Calculé par mile. La carte de résultat divise cette valeur par 1,60934 pour l'afficher par kilomètre.",
+      "note_metric_speed": "Calculé d'abord en mph, puis multiplié par {factor} pour obtenir des km/h.",
+      "note_metric_turns": "En mode métrique, les tours par mile sont d'abord divisés par {factor}.",
+      "const_pi": "Pi",
+      "const_yards": "Yards dans un mile",
+      "const_mm_per_yard": "Millimètres dans un yard",
+      "const_inch": "Un pouce",
+      "const_kph": "Miles vers kilomètres"
+    }
   },
   "de": {
     "configurations": "Getriebe-Konfigurationen",
@@ -731,10 +924,32 @@
       "gearing_information": "Getriebe-Informationen"
     },
     "support_divider": "Unterstützung",
-    "disclaimer": "Bitte beachten Sie, dass die obigen Zahlen {approximate} sind. Vor dem Kauf von Teilen und dem Bau Ihres Motors empfehlen wir, Ihre Berechnungen mehrmals mit mehr als einer Quelle zu {doublecheck}. Die in diesem Tool verwendeten mathematischen Gleichungen finden Sie hier:",
+    "disclaimer": "Bitte beachten Sie, dass die obigen Zahlen {approximate} sind. Vor dem Kauf von Teilen und dem Bau Ihres Motors empfehlen wir, Ihre Berechnungen mehrmals mit mehr als einer Quelle zu {doublecheck}.",
     "disclaimer_approximate": "Näherungswerte",
     "disclaimer_doublecheck": "überprüfen",
-    "equation_source": "Gleichungs-Quellcode"
+    "math": {
+      "tire_diameter": "Reifendurchmesser",
+      "tire_diameter_fixed_formula": "angegebener Durchmesser (Diagonalreifen sind tabelliert, nicht berechnet)",
+      "tire_circumference": "Reifenumfang",
+      "circumference_in_miles": "Umfang in Meilen",
+      "tire_turns": "Reifenumdrehungen pro Meile",
+      "engine_revs": "Motorumdrehungen pro Meile",
+      "speedo_turns": "Umdrehungen des Tachoantriebs pro Meile",
+      "top_speed": "Höchstgeschwindigkeit im {gear}. Gang",
+      "speedo_accuracy": "Genauigkeit des Tachometers {speedo}",
+      "note_rounded": "Auf die nächste ganze Zahl gerundet, genau wie im Rechner.",
+      "note_yards": "Eine Meile hat 1760 Yards, ein Yard hat 914,4 mm.",
+      "note_fixed_diameter": "Diagonalreifen verwenden einen angegebenen Durchmesser statt der Formel aus Breite und Querschnitt.",
+      "note_speedo": "100% zeigt korrekt an. Über 100% zeigt der Tacho zu viel an, unter 100% zu wenig.",
+      "note_metric_distance": "Pro Meile berechnet. Die Ergebniskarte teilt diesen Wert durch 1,60934, um ihn pro Kilometer anzuzeigen.",
+      "note_metric_speed": "Zuerst in mph berechnet, dann mit {factor} multipliziert für km/h.",
+      "note_metric_turns": "Im metrischen Modus werden die Umdrehungen pro Meile zuerst durch {factor} geteilt.",
+      "const_pi": "Pi",
+      "const_yards": "Yards in einer Meile",
+      "const_mm_per_yard": "Millimeter in einem Yard",
+      "const_inch": "Ein Zoll",
+      "const_kph": "Meilen in Kilometer"
+    }
   },
   "it": {
     "configurations": "Configurazioni Ingranaggi",
@@ -760,10 +975,32 @@
       "gearing_information": "Informazioni ingranaggi"
     },
     "support_divider": "Supporto",
-    "disclaimer": "Si prega di notare che le cifre sopra sono {approximate}. Prima di acquistare parti e costruire il vostro motore raccomandiamo di {doublecheck} i vostri calcoli più volte utilizzando più di una fonte. Le equazioni matematiche utilizzate in questo strumento possono essere trovate qui:",
+    "disclaimer": "Si prega di notare che le cifre sopra sono {approximate}. Prima di acquistare parti e costruire il vostro motore raccomandiamo di {doublecheck} i vostri calcoli più volte utilizzando più di una fonte.",
     "disclaimer_approximate": "valori approssimativi",
     "disclaimer_doublecheck": "ricontrollare",
-    "equation_source": "Codice sorgente equazioni"
+    "math": {
+      "tire_diameter": "Diametro del pneumatico",
+      "tire_diameter_fixed_formula": "diametro dichiarato (le misure diagonali sono tabellate, non calcolate)",
+      "tire_circumference": "Circonferenza del pneumatico",
+      "circumference_in_miles": "Circonferenza in miglia",
+      "tire_turns": "Giri del pneumatico per miglio",
+      "engine_revs": "Giri motore per miglio",
+      "speedo_turns": "Giri del rinvio tachimetro per miglio",
+      "top_speed": "Velocità massima in {gear}a marcia",
+      "speedo_accuracy": "Precisione del tachimetro {speedo}",
+      "note_rounded": "Arrotondato al numero intero più vicino, come fa il calcolatore.",
+      "note_yards": "Un miglio è 1760 iarde e una iarda è 914,4 mm.",
+      "note_fixed_diameter": "Le misure diagonali usano un diametro dichiarato invece della formula di larghezza e profilo.",
+      "note_speedo": "100% indica correttamente. Sopra il 100% il tachimetro segna in eccesso, sotto segna in difetto.",
+      "note_metric_distance": "Calcolato per miglio. La scheda del risultato lo divide per 1,60934 per mostrarlo al chilometro.",
+      "note_metric_speed": "Calcolato prima in mph, poi moltiplicato per {factor} per ottenere km/h.",
+      "note_metric_turns": "In modalità metrica i giri per miglio vengono prima divisi per {factor}.",
+      "const_pi": "Pi greco",
+      "const_yards": "Iarde in un miglio",
+      "const_mm_per_yard": "Millimetri in una iarda",
+      "const_inch": "Un pollice",
+      "const_kph": "Miglia in chilometri"
+    }
   },
   "ja": {
     "configurations": "ギア構成",
@@ -789,10 +1026,32 @@
       "gearing_information": "ギア情報"
     },
     "support_divider": "サポート",
-    "disclaimer": "上記の数値は{approximate}であることにご注意ください。部品を購入してエンジンを構築する前に、複数のソースを使用して計算を{doublecheck}することをお勧めします。このツールで使用されている数学的方程式はこちらで見つけることができます：",
+    "disclaimer": "上記の数値は{approximate}であることにご注意ください。部品を購入してエンジンを構築する前に、複数のソースを使用して計算を{doublecheck}することをお勧めします。",
     "disclaimer_approximate": "概算値",
     "disclaimer_doublecheck": "何度も再確認",
-    "equation_source": "方程式ソースコード"
+    "math": {
+      "tire_diameter": "タイヤ直径",
+      "tire_diameter_fixed_formula": "公称直径（バイアスタイヤは計算ではなく表の値を使用）",
+      "tire_circumference": "タイヤ外周",
+      "circumference_in_miles": "外周（マイル換算）",
+      "tire_turns": "1マイルあたりのタイヤ回転数",
+      "engine_revs": "1マイルあたりのエンジン回転数",
+      "speedo_turns": "1マイルあたりのスピードメーター駆動回転数",
+      "top_speed": "{gear}速での最高速度",
+      "speedo_accuracy": "{speedo} スピードメーターの精度",
+      "note_rounded": "計算機と同じく、整数に四捨五入しています。",
+      "note_yards": "1マイルは1760ヤード、1ヤードは914.4 mmです。",
+      "note_fixed_diameter": "バイアスタイヤは幅と扁平率の式ではなく公称直径を使用します。",
+      "note_speedo": "100%が正確な表示です。100%を超えると過大表示、下回ると過小表示になります。",
+      "note_metric_distance": "1マイルあたりで計算しています。結果カードでは1.60934で割り、1キロあたりで表示します。",
+      "note_metric_speed": "まず mph で計算し、次に {factor} を掛けて km/h に換算します。",
+      "note_metric_turns": "メートル法モードでは、1マイルあたりの回転数をまず {factor} で割ります。",
+      "const_pi": "円周率",
+      "const_yards": "1マイルのヤード数",
+      "const_mm_per_yard": "1ヤードのミリメートル数",
+      "const_inch": "1インチ",
+      "const_kph": "マイルからキロメートル"
+    }
   },
   "ko": {
     "configurations": "기어 구성",
@@ -818,10 +1077,32 @@
       "gearing_information": "기어링 정보"
     },
     "support_divider": "지원",
-    "disclaimer": "위 수치들은 {approximate}임을 알려드립니다. 부품을 구매하고 엔진을 제작하기 전에 여러 소스를 사용하여 계산을 {doublecheck}할 것을 권장합니다. 이 도구에 사용된 수학 공식은 여기에서 찾을 수 있습니다:",
+    "disclaimer": "위 수치들은 {approximate}임을 알려드립니다. 부품을 구매하고 엔진을 제작하기 전에 여러 소스를 사용하여 계산을 {doublecheck}할 것을 권장합니다.",
     "disclaimer_approximate": "근사값",
     "disclaimer_doublecheck": "여러 번 재확인",
-    "equation_source": "공식 소스 코드"
+    "math": {
+      "tire_diameter": "타이어 직경",
+      "tire_diameter_fixed_formula": "공칭 직경 (바이어스 규격은 계산이 아니라 표에 명시된 값)",
+      "tire_circumference": "타이어 둘레",
+      "circumference_in_miles": "둘레 (마일 환산)",
+      "tire_turns": "마일당 타이어 회전수",
+      "engine_revs": "마일당 엔진 회전수",
+      "speedo_turns": "마일당 속도계 구동 회전수",
+      "top_speed": "{gear}단 최고 속도",
+      "speedo_accuracy": "{speedo} 속도계의 정확도",
+      "note_rounded": "계산기와 동일하게 가장 가까운 정수로 반올림합니다.",
+      "note_yards": "1마일은 1760야드이고 1야드는 914.4 mm입니다.",
+      "note_fixed_diameter": "바이어스 규격은 폭과 편평비 공식 대신 공칭 직경을 사용합니다.",
+      "note_speedo": "100%가 정확한 표시입니다. 100%를 넘으면 과다 표시, 미만이면 과소 표시입니다.",
+      "note_metric_distance": "마일 단위로 계산합니다. 결과 카드는 이 값을 1.60934로 나누어 킬로미터 단위로 표시합니다.",
+      "note_metric_speed": "먼저 mph로 계산한 뒤 {factor}를 곱해 km/h로 환산합니다.",
+      "note_metric_turns": "미터법 모드에서는 마일당 회전수를 먼저 {factor}로 나눕니다.",
+      "const_pi": "원주율",
+      "const_yards": "1마일의 야드 수",
+      "const_mm_per_yard": "1야드의 밀리미터 수",
+      "const_inch": "1인치",
+      "const_kph": "마일에서 킬로미터"
+    }
   },
   "pt": {
     "configurations": "Configurações de Engrenagens",
@@ -847,10 +1128,32 @@
       "gearing_information": "Informações de Engrenagem"
     },
     "support_divider": "Suporte",
-    "disclaimer": "Por favor, note que os números acima são {approximate}. Antes de comprar peças e construir seu motor, recomendamos {doublecheck} seus cálculos várias vezes usando mais de uma fonte. As equações matemáticas usadas nesta ferramenta podem ser encontradas aqui:",
+    "disclaimer": "Por favor, note que os números acima são {approximate}. Antes de comprar peças e construir seu motor, recomendamos {doublecheck} seus cálculos várias vezes usando mais de uma fonte.",
     "disclaimer_approximate": "valores aproximados",
     "disclaimer_doublecheck": "verificar novamente",
-    "equation_source": "Código Fonte da Equação"
+    "math": {
+      "tire_diameter": "Diâmetro do pneu",
+      "tire_diameter_fixed_formula": "diâmetro publicado (as medidas diagonais são tabeladas, não calculadas)",
+      "tire_circumference": "Circunferência do pneu",
+      "circumference_in_miles": "Circunferência em milhas",
+      "tire_turns": "Voltas do pneu por milha",
+      "engine_revs": "Rotações do motor por milha",
+      "speedo_turns": "Voltas do acionamento do velocímetro por milha",
+      "top_speed": "Velocidade máxima na {gear}ª marcha",
+      "speedo_accuracy": "Precisão do velocímetro {speedo}",
+      "note_rounded": "Arredondado para o número inteiro mais próximo, igual à calculadora.",
+      "note_yards": "Uma milha tem 1760 jardas e uma jarda tem 914,4 mm.",
+      "note_fixed_diameter": "As medidas diagonais usam um diâmetro publicado em vez da fórmula de largura e perfil.",
+      "note_speedo": "100% indica corretamente. Acima de 100% o velocímetro marca a mais, abaixo marca a menos.",
+      "note_metric_distance": "Calculado por milha. O cartão de resultado divide este valor por 1,60934 para mostrá-lo por quilómetro.",
+      "note_metric_speed": "Calculado primeiro em mph e depois multiplicado por {factor} para obter km/h.",
+      "note_metric_turns": "No modo métrico as voltas por milha são primeiro divididas por {factor}.",
+      "const_pi": "Pi",
+      "const_yards": "Jardas numa milha",
+      "const_mm_per_yard": "Milímetros numa jarda",
+      "const_inch": "Uma polegada",
+      "const_kph": "Milhas para quilómetros"
+    }
   },
   "ru": {
     "configurations": "Конфигурации передач",
@@ -876,10 +1179,32 @@
       "gearing_information": "Информация о передачах"
     },
     "support_divider": "Поддержка",
-    "disclaimer": "Обратите внимание, что приведенные выше цифры являются {approximate}. Перед покупкой деталей и сборкой двигателя мы рекомендуем {doublecheck} ваши расчеты несколько раз, используя более одного источника. Математические уравнения, используемые в этом инструменте, можно найти здесь:",
+    "disclaimer": "Обратите внимание, что приведенные выше цифры являются {approximate}. Перед покупкой деталей и сборкой двигателя мы рекомендуем {doublecheck} ваши расчеты несколько раз, используя более одного источника.",
     "disclaimer_approximate": "приблизительными значениями",
     "disclaimer_doublecheck": "перепроверить",
-    "equation_source": "Исходный код уравнения"
+    "math": {
+      "tire_diameter": "Диаметр шины",
+      "tire_diameter_fixed_formula": "паспортный диаметр (диагональные размеры берутся из таблицы, а не вычисляются)",
+      "tire_circumference": "Длина окружности шины",
+      "circumference_in_miles": "Длина окружности в милях",
+      "tire_turns": "Оборотов шины на милю",
+      "engine_revs": "Оборотов двигателя на милю",
+      "speedo_turns": "Оборотов привода спидометра на милю",
+      "top_speed": "Максимальная скорость на {gear}-й передаче",
+      "speedo_accuracy": "Точность спидометра {speedo}",
+      "note_rounded": "Округлено до целого числа, как и в калькуляторе.",
+      "note_yards": "В миле 1760 ярдов, в ярде 914,4 мм.",
+      "note_fixed_diameter": "Для диагональных размеров используется паспортный диаметр вместо формулы ширины и профиля.",
+      "note_speedo": "100% — показания верны. Выше 100% спидометр завышает, ниже 100% занижает.",
+      "note_metric_distance": "Рассчитано на милю. Карточка результата делит это значение на 1,60934, чтобы показать на километр.",
+      "note_metric_speed": "Сначала рассчитывается в милях в час, затем умножается на {factor} для км/ч.",
+      "note_metric_turns": "В метрическом режиме обороты на милю сначала делятся на {factor}.",
+      "const_pi": "Пи",
+      "const_yards": "Ярдов в миле",
+      "const_mm_per_yard": "Миллиметров в ярде",
+      "const_inch": "Один дюйм",
+      "const_kph": "Мили в километры"
+    }
   },
   "zh": {
     "configurations": "齿轮配置",
@@ -905,10 +1230,32 @@
       "gearing_information": "齿轮信息"
     },
     "support_divider": "支持",
-    "disclaimer": "请注意上述数字是{approximate}。在购买零件和制造发动机之前，我们建议使用多个来源{doublecheck}您的计算。此工具中使用的数学方程可以在这里找到：",
+    "disclaimer": "请注意上述数字是{approximate}。在购买零件和制造发动机之前，我们建议使用多个来源{doublecheck}您的计算。",
     "disclaimer_approximate": "近似值",
     "disclaimer_doublecheck": "多次检查",
-    "equation_source": "方程源代码"
+    "math": {
+      "tire_diameter": "轮胎直径",
+      "tire_diameter_fixed_formula": "标称直径（斜交胎为表列值，非计算值）",
+      "tire_circumference": "轮胎周长",
+      "circumference_in_miles": "周长（英里）",
+      "tire_turns": "每英里轮胎转数",
+      "engine_revs": "每英里发动机转数",
+      "speedo_turns": "每英里速度表驱动转数",
+      "top_speed": "{gear}挡最高速度",
+      "speedo_accuracy": "{speedo} 速度表的准确度",
+      "note_rounded": "与计算器一致，四舍五入为整数。",
+      "note_yards": "1英里为1760码，1码为914.4毫米。",
+      "note_fixed_diameter": "斜交胎使用标称直径，而非宽度与扁平比公式。",
+      "note_speedo": "100% 表示读数准确。高于 100% 为读数偏高，低于 100% 为读数偏低。",
+      "note_metric_distance": "按英里计算。结果卡片将其除以 1.60934 后按公里显示。",
+      "note_metric_speed": "先以 mph 计算，再乘以 {factor} 得到 km/h。",
+      "note_metric_turns": "公制模式下，先将每英里转数除以 {factor}。",
+      "const_pi": "圆周率",
+      "const_yards": "1英里的码数",
+      "const_mm_per_yard": "1码的毫米数",
+      "const_inch": "1英寸",
+      "const_kph": "英里换算公里"
+    }
   }
 }
 </i18n>
