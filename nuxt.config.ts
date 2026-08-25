@@ -8,6 +8,18 @@ import { AI_ANSWER_BOTS, AI_TRAINING_BOTS, PRIVATE_DISALLOW } from './server/uti
 // default Vercel build is completely unaffected by the migration work.
 const isCloudflareBuild = (process.env.NITRO_PRESET || '').includes('cloudflare');
 
+// Cloudflare Image Transformations (`/cdn-cgi/image/`) exist ONLY on a zone.
+// workers.dev and version-preview URLs can never serve them, and the @nuxt/image
+// cloudflare provider emits host-relative URLs with no fallback — so a preview
+// build using that provider renders BROKEN images on every archive, wheel,
+// listing and model page, defeating the point of having a preview.
+//
+// Preview therefore leaves the provider unset: raw remote URLs, unoptimized but
+// rendering. The zone deploy sets NUXT_SITE_ENV=production, which turns the
+// provider on. Same env var that drives the noindex, so the two cannot disagree.
+const isCloudflarePreview = isCloudflareBuild && (process.env.NUXT_SITE_ENV || 'production') !== 'production';
+const useCloudflareImages = isCloudflareBuild && !isCloudflarePreview;
+
 const parsedArchive = ArchiveItems.map((item) => {
   return { title: item.title, description: item.description, href: `https://www.classicminidiy.com${item.to}` };
 });
@@ -388,6 +400,12 @@ export default defineNuxtConfig({
     // that host was unlisted, <nuxt-picture> still emitted webp+avif <source> elements
     // whose srcset entries were all the same untouched maxresdefault.jpg — declaring
     // formats it did not serve and offering 3072w of a 1280px file.
+    // NOTE: `provider` stays UNSET on Vercel and in local dev — that is the
+    // load-bearing default documented in CLAUDE.md (pinning it to 'ipx' once
+    // 404'd every public/ image in production, nuxt/image#1281). It is set ONLY
+    // for a zone-backed Cloudflare build, where the platform optimizer is
+    // /cdn-cgi/image/ rather than Vercel's.
+    ...(useCloudflareImages ? { provider: 'cloudflare' as const } : {}),
     domains: [
       'classicminidiy.s3.us-east-1.amazonaws.com',
       'classicminidiy.s3.amazonaws.com',
@@ -730,7 +748,20 @@ export default defineNuxtConfig({
       // sharp's native allocations inflate RSS through the prerender phase, and the
       // Nitro bundling step that follows then couldn't fit in the 8 GB build container
       // and was SIGKILLed by the OOM killer.
-      ignore: ['/admin', '/raw', '/archive/colors/', '/archive/wheels/', '/archive/documents/', '/_ipx'],
+      //
+      // `/cdn-cgi` is here for exactly the same reason as `/_ipx`: on a
+      // Cloudflare build the optimizer rewrites image srcs to same-origin
+      // `/cdn-cgi/image/...` paths, which crawlLinks would then follow and try to
+      // prerender as routes — the identical build-memory trap, different prefix.
+      ignore: [
+        '/admin',
+        '/raw',
+        '/archive/colors/',
+        '/archive/wheels/',
+        '/archive/documents/',
+        '/_ipx',
+        '/cdn-cgi',
+      ],
       routes: [
         '/',
         '/privacy',
