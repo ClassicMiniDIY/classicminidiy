@@ -523,6 +523,14 @@ describe('calculateSpeedometerTable', () => {
       expect(rows[0].result).toBe('Over 44%');
     });
 
+    it('variation matches the percentage quoted in the result string', () => {
+      // The math-breakdown panel prints `variation` next to `result`; if these
+      // two ever disagree the panel contradicts the table beside it.
+      const rows = calculateSpeedometerTable(speedometers, 1440, 1.0, false);
+      expect(rows[0].variation).toBe(144);
+      expect(rows[0].result).toBe(`Over ${rows[0].variation - 100}%`);
+    });
+
     it('result string starts with "Over"', () => {
       const rows = calculateSpeedometerTable(speedometers, 1440, 1.0, false);
       expect(rows[0].result).toMatch(/^Over \d+%$/);
@@ -542,6 +550,11 @@ describe('calculateSpeedometerTable', () => {
     it('returns "Reads correctly!" for an exact match', () => {
       const rows = calculateSpeedometerTable(speedometers, 1280, 1.0, false);
       expect(rows[0].result).toBe('Reads correctly!');
+    });
+
+    it('exposes the raw variation percentage behind the result string', () => {
+      const rows = calculateSpeedometerTable(speedometers, 1280, 1.0, false);
+      expect(rows[0].variation).toBe(100);
     });
   });
 

@@ -117,6 +117,11 @@ export function calculateSpeedometerTable(
       turns: speedometer.turns,
       speed: speedometer.speed,
       result,
+      // The raw percentage behind `result`. Exposed so the "show the math"
+      // panel can quote this number instead of re-deriving it — a second
+      // implementation of this formula would drift from the table it sits
+      // next to and print a percentage that contradicts its own verdict.
+      variation,
     };
   });
 }

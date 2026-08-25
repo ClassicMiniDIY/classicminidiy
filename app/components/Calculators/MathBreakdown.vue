@@ -15,6 +15,9 @@
   const { t } = useI18n();
   const { track } = useAnalytics();
 
+  // Unique per instance so two panels on one page cannot emit duplicate ids
+  // and point both triggers' aria-controls at the first one.
+  const panelId = useId();
   const open = ref(false);
 
   function toggle() {
@@ -32,7 +35,7 @@
         type="button"
         class="flex w-full items-center justify-between gap-4 text-left"
         :aria-expanded="open"
-        aria-controls="math-breakdown-panel"
+        :aria-controls="panelId"
         @click="toggle"
       >
         <span>
@@ -45,7 +48,7 @@
         <i class="fas fa-chevron-down shrink-0 transition-transform" :class="open ? 'rotate-180' : ''"></i>
       </button>
 
-      <div v-show="open" id="math-breakdown-panel" class="mt-4">
+      <div v-show="open" :id="panelId" class="mt-4">
         <ol class="space-y-4">
           <li v-for="(step, index) in steps" :key="index" class="rounded-lg border border-base-300 bg-base-200 p-4">
             <div class="flex items-baseline gap-3">
