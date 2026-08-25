@@ -55,12 +55,34 @@ def call(path, method="GET", body=None):
             return {"success": False, "errors": [{"message": f"HTTP {e.code}"}]}
 
 
+# The map is 19 exact + 9 prefix. Asserted, not assumed: the parser below reads
+# a TypeScript file with a regex, and this repo runs Prettier. A formatting pass
+# that switches those single quotes to double quotes makes the regex match
+# NOTHING — and since applying does a PUT (replace, not merge), a silent parse
+# failure would delete every live redirect and leave theminiexchange.com serving
+# 404s with no error. A floor is therefore as important as the rule-count ceiling.
+EXPECTED_EXACT = 19
+EXPECTED_PREFIX = 9
+
+
 def read_table():
     src = open("server/utils/tmeRedirects.ts").read()
     def pairs(name):
         m = re.search(name + r"[^=]*=\s*\[(.*?)\n\];", src, re.S)
-        return re.findall(r"\['([^']+)',\s*'([^']+)'\]", m.group(1)) if m else []
-    return pairs("TME_EXACT"), pairs("TME_PREFIX")
+        if not m:
+            sys.exit(f"  ABORT: could not locate {name} in server/utils/tmeRedirects.ts "
+                     f"(reformatted or renamed?) — refusing to touch live rules")
+        found = re.findall(r"""\[\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\]""", m.group(1))
+        if not found:
+            sys.exit(f"  ABORT: {name} parsed to ZERO entries — refusing to PUT an empty "
+                     f"ruleset, which would delete all live redirects")
+        return found
+    exact, prefix = pairs("TME_EXACT"), pairs("TME_PREFIX")
+    if (len(exact), len(prefix)) != (EXPECTED_EXACT, EXPECTED_PREFIX):
+        sys.exit(f"  ABORT: expected {EXPECTED_EXACT} exact + {EXPECTED_PREFIX} prefix, got "
+                 f"{len(exact)} + {len(prefix)}. If the map genuinely changed, update "
+                 f"EXPECTED_* deliberately — a shrinking map must never be silent.")
+    return exact, prefix
 
 
 def path_match(src, kind):
@@ -96,6 +118,17 @@ def build():
             _, s, d = key.split("::")
             # Keep whatever follows the prefix: substring() from the prefix length.
             tgt = {"expression": f'concat("{d}", substring(http.request.uri.path, {len(s)}))'}
+        # ACCEPTED TRADE — the trailing slash rides through into the target, so
+        # `/sold/` -> `/exchange/sold/`. Once CMDIY is on Cloudflare that costs one
+        # extra 307 (html_handling is drop-trailing-slash), but it is still a strict
+        # improvement on the baseline: vercel.json had ZERO slash-suffixed sources,
+        # so `/sold/` matched no rule and served a CMDIY page as a 200 — the
+        # duplicate content amendment B1 describes.
+        #
+        # Fixing it properly needs a slash and a no-slash rule for each of the three
+        # concat groups, i.e. 11 rules against a Free-plan cap of 10. Cloudflare's
+        # expression language has no conditional and regex_replace is Business+, so
+        # there is no single-rule form. Revisit if the zone ever goes Pro.
         elif key == "exchange+path":
             tgt = {"expression": f'concat("{BASE}/exchange", http.request.uri.path)'}
         else:
