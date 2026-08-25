@@ -22,7 +22,13 @@ export function usePersistentThread() {
   const currentThreadId = ref<string | null>(null);
   const isThreadLoaded = ref(false);
 
-  // Check if we're in a browser environment (use process.client for Nuxt SSR)
+  // Check if we are in a browser environment.
+  //
+  // NOTE: deliberately `process.client`, not `import.meta.client`. The SSR
+  // guard is covered by tests/unit/composables/usePersistentThread.test.ts,
+  // which simulates the server by setting `process.client = false`. A vitest
+  // plugin in vitest.config.ts rewrites `import.meta.client` to the literal
+  // `(true)`, so switching to it would make that guard permanently untestable.
   const isBrowser = process.client;
 
   /**

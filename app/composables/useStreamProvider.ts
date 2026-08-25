@@ -59,6 +59,11 @@ export function createStreamSession(
   const currentThreadId = ref<string | null>(threadId);
   const error = ref<string | null>(null);
 
+  // Aborts the in-flight run. Without this, `stop()` only flipped `isLoading`
+  // to false while the stream kept arriving and kept mutating `messages`, so
+  // the reply carried on growing after the user pressed stop.
+  let abortController: AbortController | null = null;
+
   // Get locale at the top level of the composable
   const { locale } = useI18n();
 
@@ -101,6 +106,10 @@ export function createStreamSession(
   }
 
   const submit = async (input: any, options: any = {}) => {
+    abortController?.abort();
+    abortController = new AbortController();
+    const signal = abortController.signal;
+
     isLoading.value = true;
     error.value = null;
 
@@ -160,6 +169,7 @@ export function createStreamSession(
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal,
       });
 
       if (!response.body) {
@@ -220,6 +230,11 @@ export function createStreamSession(
         }
       }
     } catch (err: any) {
+      // The user pressing stop is not a failure — say nothing.
+      if (err?.name === 'AbortError' || signal.aborted) {
+        return;
+      }
+
       console.error('Stream submission failed:', err);
       error.value = err.message || 'Failed to send message. Please try again.';
 
@@ -399,7 +414,7 @@ export function createStreamSession(
       }
     } else {
       // Log unhandled events for debugging (only in development)
-      if (process.dev) {
+      if (import.meta.dev) {
         console.debug('Unhandled stream event:', event.event, event);
       }
     }
@@ -524,7 +539,24 @@ export function createStreamSession(
   };
 
   const stop = () => {
+    abortController?.abort();
+    abortController = null;
     isLoading.value = false;
+  };
+
+  /**
+   * Start a fresh conversation in the existing session.
+   *
+   * This is deliberately a method on the session rather than a rebuild of it:
+   * `provideStreamContext()` may only run during setup (see the chat hydration
+   * invariant in CLAUDE.md), so the provided object has to stay the same one
+   * for the life of the component.
+   */
+  const reset = () => {
+    stop();
+    messages.value = [];
+    currentThreadId.value = null;
+    error.value = null;
   };
 
   return {
@@ -533,6 +565,7 @@ export function createStreamSession(
     error,
     submit,
     stop,
+    reset,
     threadId: currentThreadId,
     getMessagesMetadata,
   };

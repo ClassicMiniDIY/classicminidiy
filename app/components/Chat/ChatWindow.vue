@@ -1,179 +1,93 @@
 <template>
-  <!-- Chat Interface -->
-  <div class="flex flex-col h-full bg-base-100">
-    <!-- Experimental Disclaimer (always visible) -->
+  <!--
+    One shell, one scroll region.
 
-    <!-- Welcome Banner (shown when chat is empty) -->
-    <div v-if="isChatEmpty && !isLoading" class="flex-1 flex items-center justify-center px-4">
-      <div class="max-w-2xl mx-auto text-center space-y-6">
-        <!-- Welcome Message -->
-        <div class="card bg-primary/10 border border-primary/20">
-          <div class="card-body">
-            <div class="flex flex-col items-center gap-4">
-              <i class="fa-solid fa-comments text-primary text-4xl"></i>
-              <div>
-                <h3 class="font-semibold text-xl mb-3 text-primary">
-                  {{ t('welcome_title') }}
-                </h3>
-                <p class="text-base opacity-70 leading-relaxed">
-                  I'm your Classic Mini DIY assistant, here to help you with technical questions, decode chassis
-                  numbers, find parts information, navigate the archives, and provide guidance on Classic Mini
-                  restoration and maintenance. Ask me anything about your Classic Mini project!
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Centered Input Area (when chat is empty) -->
-        <div class="w-full max-w-2xl">
-          <form @submit.prevent="handleSubmit" class="relative">
-            <div class="flex items-end gap-3 bg-base-200 rounded-2xl p-3 shadow-sm border border-base-300">
-              <textarea
-                ref="inputRef"
-                v-model="input"
-                @keydown="handleInputKeyDown"
-                :placeholder="t('input_placeholder')"
-                :aria-label="t('input_placeholder')"
-                class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:opacity-60 py-2 leading-6"
-                rows="1"
-              ></textarea>
-
-              <button
-                v-if="isLoading"
-                @click="stopGeneration"
-                type="button"
-                class="btn btn-sm btn-error btn-square"
-                :aria-label="t('stop_generating')"
-              >
-                <i class="fa-solid fa-stop"></i>
-              </button>
-
-              <button
-                v-else
-                type="submit"
-                class="btn btn-sm btn-primary btn-square"
-                :disabled="!input.trim()"
-                :aria-label="t('send_message')"
-              >
-                <i class="fa-solid fa-paper-plane"></i>
-              </button>
-            </div>
-          </form>
-
-          <!-- Report Issue Link Below Centered Input -->
-          <div class="flex justify-center mt-3">
-            <NuxtLink to="/contact">{{ t('report_issue') }}</NuxtLink>
-            <i class="fa-solid fa-envelope text-xs ml-1"></i>
-          </div>
-        </div>
+    The empty and conversation states used to be separate subtrees, each with
+    its own copy of the composer, inside a fixed-height box that itself sat in a
+    scrolling document. That produced two scrollbars, a composer that had to be
+    edited in two places, and a page that scrolled itself out from under the nav
+    on load. Now the transcript is the only thing that scrolls and the composer
+    is a single instance pinned beneath it.
+  -->
+  <div class="flex h-full min-h-0 flex-col bg-base-100">
+    <header class="shrink-0 border-b border-base-300">
+      <div class="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-2.5 sm:px-6">
+        <h1 class="text-sm font-semibold">{{ t('assistant_name') }}</h1>
+        <span class="badge badge-ghost badge-sm">{{ t('beta') }}</span>
       </div>
-    </div>
+    </header>
 
-    <!-- Chat Content (shown when messages exist) -->
-    <div v-else class="flex flex-1 overflow-hidden relative">
-      <!-- Main Chat Area -->
-      <div class="flex flex-1 flex-col">
-        <!-- Messages Area -->
-        <div ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6" @scroll="handleScroll">
-          <div class="space-y-4 break-words max-w-none">
-            <!-- Messages -->
+    <div class="relative flex min-h-0 flex-1 flex-col">
+      <div
+        ref="messagesContainer"
+        class="flex-1 overflow-y-auto"
+        :class="isChatEmpty ? 'flex' : ''"
+        @scroll="handleScroll"
+      >
+        <div
+          class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
+          :class="isChatEmpty ? 'flex flex-col justify-center' : ''"
+        >
+          <ChatEmptyState v-if="isChatEmpty" @pick="handleStarter" />
+
+          <div v-else class="space-y-6" role="log">
             <template v-for="message in messages" :key="message.id">
-              <div class="break-words overflow-wrap-anywhere">
-                <HumanMessage v-if="message.type === 'human'" :message="message" :is-loading="isLoading" />
-                <AssistantMessage v-else-if="message.type === 'ai'" :message="message" :is-loading="isLoading" />
-              </div>
+              <HumanMessage v-if="message.type === 'human'" :message="message" :is-loading="isLoading" />
+              <AssistantMessage v-else-if="message.type === 'ai'" :message="message" :is-loading="isLoading" />
             </template>
 
-            <div v-if="isLoading" class="flex h-8 items-center gap-1 rounded-2xl bg-base-200 px-4 py-2" role="status">
-              <span class="sr-only">Generating response...</span>
-              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-base-content/50"></div>
-              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-base-content/50 animation-delay-500"></div>
-              <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-base-content/50 animation-delay-1000"></div>
+            <!-- Shown only while waiting for the first token. Once text starts
+                 arriving the streaming cursor carries the signal, so the
+                 indicator no longer sits underneath a half-written reply. -->
+            <div v-if="showThinkingIndicator" class="flex items-center gap-3 sm:gap-4">
+              <div
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs text-primary"
+                aria-hidden="true"
+              >
+                <i class="fas fa-comments"></i>
+              </div>
+              <div class="flex items-center gap-1" aria-hidden="true">
+                <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
+                <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
+                <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
+              </div>
             </div>
-            <!-- Useful Links from Tavily Search Results (Mobile Only) -->
-            <UsefulLinks v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" class="md:hidden" />
-          </div>
-        </div>
 
-        <!-- Floating Scroll to Bottom Button -->
-        <button
-          v-if="showScrollButton"
-          @click="scrollToBottom(true)"
-          class="btn btn-sm btn-outline btn-square absolute bottom-24 right-6 lg:right-80 shadow-lg hover:shadow-xl transition-all duration-200 z-10"
-          :title="t('scroll_to_bottom')"
-          :aria-label="t('scroll_to_bottom')"
-        >
-          <i class="fa-solid fa-chevron-down text-sm"></i>
-        </button>
-      </div>
-
-      <!-- Right Sidebar for Useful Links (Desktop/Tablet Only) -->
-      <div class="hidden md:flex md:flex-col md:w-80 md:border-l md:border-base-300 md:bg-base-200/50">
-        <div class="flex-1 overflow-y-auto p-4">
-          <!-- Useful Links Sidebar -->
-          <div v-if="!isLoading && usefulLinks.length > 0" class="sticky top-0">
-            <UsefulLinksSidebar :links="usefulLinks" />
-          </div>
-          <!-- Placeholder when no links -->
-          <div v-else class="text-center opacity-70 mt-8">
-            <i class="fa-solid fa-link text-2xl mb-2 block"></i>
-            <p class="text-sm">{{ t('useful_links_placeholder') }}</p>
+            <!-- Sources sit under the transcript they belong to, at every
+                 breakpoint. The desktop layout previously reserved a permanent
+                 320px rail that held an empty placeholder for most of a session. -->
+            <UsefulLinks v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" />
           </div>
         </div>
       </div>
+
+      <!-- Announces stream state without reading every streamed token aloud. -->
+      <p class="sr-only" role="status" aria-live="polite">
+        {{ isLoading ? t('sr_generating') : '' }}
+      </p>
+
+      <button
+        v-if="showScrollButton"
+        @click="scrollToBottom(true)"
+        class="btn btn-circle btn-sm absolute bottom-4 left-1/2 -translate-x-1/2 border-base-300 bg-base-100 shadow-md"
+        :title="t('scroll_to_bottom')"
+        :aria-label="t('scroll_to_bottom')"
+      >
+        <i class="fas fa-arrow-down text-xs" aria-hidden="true"></i>
+      </button>
     </div>
 
-    <!-- Floating Input Area (when messages exist) -->
-    <div v-if="!isChatEmpty || isLoading" class="p-4 bg-base-100">
-      <form @submit.prevent="handleSubmit" class="relative">
-        <div class="flex items-end gap-3 bg-base-200 rounded-2xl p-3 shadow-sm border border-base-300">
-          <textarea
-            ref="inputRef"
-            v-model="input"
-            @keydown="handleInputKeyDown"
-            :placeholder="t('input_placeholder')"
-            :aria-label="t('input_placeholder')"
-            class="flex-1 bg-transparent resize-none outline-none min-h-6 max-h-32 placeholder:opacity-60 py-2 leading-6"
-            rows="1"
-          ></textarea>
-
-          <button
-            v-if="isLoading"
-            @click="stopGeneration"
-            type="button"
-            class="btn btn-sm btn-error btn-square"
-            :aria-label="t('stop_generating')"
-          >
-            <i class="fa-solid fa-stop"></i>
-          </button>
-
-          <button
-            v-else
-            type="submit"
-            class="btn btn-sm btn-primary btn-square"
-            :disabled="!input.trim()"
-            :aria-label="t('send_message')"
-          >
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
-      </form>
-      <div role="alert" class="alert alert-warning mt-3">
-        <i class="fas fa-triangle-exclamation"></i>
-        <div>
-          <div class="font-semibold">{{ t('experimental_feature') }}</div>
-          <div class="text-sm">
-            {{ t('experimental_disclaimer') }} Always verify critical information with official documentation, qualified
-            mechanics, or experienced Classic Mini enthusiasts.
-          </div>
-        </div>
-      </div>
-
-      <!-- Report Issue Link Below Chat -->
-      <div class="flex justify-center mt-3">
-        <NuxtLink to="/contact">{{ t('report_issue') }}</NuxtLink>
-        <i class="fa-solid fa-envelope text-xs ml-1"></i>
+    <div class="shrink-0 border-t border-base-300 bg-base-100">
+      <div class="mx-auto w-full max-w-3xl px-4 py-3 sm:px-6">
+        <ChatComposer
+          ref="composerRef"
+          v-model="input"
+          :is-loading="isLoading"
+          :disable-new-chat="isChatEmpty && !isLoading"
+          @submit="handleSubmit"
+          @stop="stopGeneration"
+          @new-chat="handleNewChat"
+        />
       </div>
     </div>
   </div>
@@ -182,19 +96,27 @@
 <script setup lang="ts">
   const { t } = useI18n();
   import { useStreamProvider } from '~/composables/useStreamProvider';
-  import type { Message } from '../../../data/models/chat';
   import AssistantMessage from './AssistantMessage.vue';
+  import ChatComposer from './ChatComposer.vue';
+  import ChatEmptyState from './ChatEmptyState.vue';
   import HumanMessage from './HumanMessage.vue';
   import UsefulLinks from './UsefulLinks.vue';
-  import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
 
-  const { assistantId, threadId, isConfigured, isThreadLoaded, setThreadId, updateThreadUsage, getThreadData } =
-    useStreamProvider();
+  const {
+    assistantId,
+    threadId,
+    isConfigured,
+    isThreadLoaded,
+    setThreadId,
+    createNewThread,
+    updateThreadUsage,
+    getThreadData,
+  } = useStreamProvider();
 
   // Reactive state
   const route = useRoute();
   const input = ref('');
-  const inputRef = ref<HTMLTextAreaElement>();
+  const composerRef = ref<InstanceType<typeof ChatComposer>>();
   const messagesContainer = ref<HTMLDivElement>();
   const showScrollButton = ref(false);
 
@@ -208,6 +130,10 @@
     hasMounted.value = true;
   });
 
+  // Set when the user starts a new chat, so a stale persisted thread cannot
+  // pull the view back out of the empty state.
+  const forcedEmpty = ref(false);
+
   // Check if chat is empty (no messages and no persisted thread)
   const isChatEmpty = computed(() => {
     // Match the server-rendered welcome branch during hydration
@@ -218,6 +144,10 @@
     // If we have messages in the current context, chat is not empty
     if (streamContext?.messages.value && streamContext.messages.value.length > 0) {
       return false;
+    }
+
+    if (forcedEmpty.value) {
+      return true;
     }
 
     // If we have a persisted thread with messages, chat is not empty
@@ -267,23 +197,9 @@
     return links.sort((a, b) => b.score - a.score).slice(0, 5);
   });
 
-  // Determine if we should show the loading bubble
-  const shouldShowLoadingBubble = computed(() => {
-    if (!streamContext?.messages.value) return true; // Show if no messages yet
-
-    const messages = streamContext.messages.value;
-    if (messages.length === 0) return true; // Show if empty
-
-    // Don't show loading bubble if the last message is already an AI message being streamed
-    const lastMessage = messages[messages.length - 1];
-    return lastMessage.type !== 'ai' && lastMessage.type !== 'assistant';
-  });
-
   // Stream context
   let streamContext: ReturnType<typeof createStreamSession> | null = null;
   const streamContextInitialized = ref(false);
-
-  // Methods
 
   // Create stream session when configuration is ready
   watch(
@@ -324,6 +240,26 @@
   const messages = computed(() => streamContext?.messages.value || []);
   const isLoading = computed(() => streamContext?.isLoading.value || false);
 
+  // Only while nothing has been written yet — once the assistant is streaming
+  // text, its own cursor is the progress signal.
+  const showThinkingIndicator = computed(() => {
+    if (!isLoading.value) return false;
+    const last = messages.value[messages.value.length - 1];
+    if (!last) return true;
+    if (last.type !== 'ai' && last.type !== 'assistant') return true;
+    const content = last.content;
+    const text =
+      typeof content === 'string'
+        ? content
+        : Array.isArray(content)
+          ? content
+              .filter((c: any) => c.type === 'text')
+              .map((c: any) => c.text)
+              .join('')
+          : '';
+    return text.trim().length === 0;
+  });
+
   const { capture } = usePostHog();
   const { track } = useAnalytics();
 
@@ -338,13 +274,7 @@
     });
 
     input.value = '';
-
-    // Auto-resize textarea
-    nextTick(() => {
-      if (inputRef.value) {
-        inputRef.value.style.height = 'auto';
-      }
-    });
+    forcedEmpty.value = false;
 
     // Submit message with metadata
     const metadata = {
@@ -363,19 +293,22 @@
     updateThreadUsage();
   }
 
-  function handleInputKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
+  function handleStarter(prompt: string) {
+    if (isLoading.value) return;
+    capture('chat_starter_used', { prompt });
+    input.value = prompt;
+    nextTick(() => handleSubmit());
+  }
 
-    // Auto-resize textarea
-    nextTick(() => {
-      if (inputRef.value) {
-        inputRef.value.style.height = 'auto';
-        inputRef.value.style.height = inputRef.value.scrollHeight + 'px';
-      }
-    });
+  function handleNewChat() {
+    if (!streamContext) return;
+    track('chat_new_conversation');
+    streamContext.reset();
+    createNewThread();
+    input.value = '';
+    forcedEmpty.value = true;
+    showScrollButton.value = false;
+    nextTick(() => composerRef.value?.focus());
   }
 
   function stopGeneration() {
@@ -383,15 +316,6 @@
       streamContext.stop();
     }
   }
-  // Auto-resize textarea on input
-  watch(input, () => {
-    nextTick(() => {
-      if (inputRef.value) {
-        inputRef.value.style.height = 'auto';
-        inputRef.value.style.height = inputRef.value.scrollHeight + 'px';
-      }
-    });
-  });
 
   // Scroll to bottom function
   function scrollToBottom(fromButton = false) {
@@ -448,7 +372,6 @@
         // Wait for next tick to ensure everything is fully initialized
         nextTick(() => {
           if (streamContext && input.value.trim()) {
-            console.log('Auto-submitting message from query parameter:', input.value);
             handleSubmit();
           }
         });
@@ -459,11 +382,7 @@
 
   onMounted(() => {
     nextTick(() => {
-      // Just focus and scroll, auto-submission is handled by the watcher above
-      if (inputRef.value) {
-        inputRef.value.focus();
-      }
-      // Initial scroll to bottom
+      composerRef.value?.focus();
       scrollToBottom(false);
     });
   });
@@ -472,151 +391,95 @@
 <i18n lang="json">
 {
   "en": {
-    "experimental_feature": "Experimental Feature:",
-    "experimental_disclaimer": "This AI assistant is in beta and should not be used as your only source of technical information.",
-    "welcome_title": "Welcome to Classic Mini DIY Assistant",
-    "input_placeholder": "Ask me anything about your Classic Mini...",
-    "report_issue": "Report an issue with the chat",
-    "useful_links_placeholder": "Useful links will appear here after I search for information",
-    "loading_chat": "Loading chat...",
-    "send_message": "Send message",
-    "stop_generating": "Stop generating",
-    "scroll_to_bottom": "Scroll to bottom"
+    "assistant_name": "CMDIY Assistant",
+    "beta": "Beta",
+    "scroll_to_bottom": "Scroll to bottom",
+    "sr_generating": "Generating a response"
   },
   "es": {
-    "experimental_feature": "Función Experimental:",
-    "experimental_disclaimer": "Este asistente de IA está en beta y no debe usarse como su única fuente de información técnica.",
-    "welcome_title": "Bienvenido al Asistente de Classic Mini DIY",
-    "input_placeholder": "Pregúntame cualquier cosa sobre tu Classic Mini...",
-    "report_issue": "Reportar un problema con el chat",
-    "useful_links_placeholder": "Los enlaces útiles aparecerán aquí después de que busque información",
-    "loading_chat": "Cargando chat...",
-    "send_message": "Enviar mensaje",
-    "stop_generating": "Detener generación",
-    "scroll_to_bottom": "Desplazar al final"
+    "assistant_name": "Asistente CMDIY",
+    "beta": "Beta",
+    "scroll_to_bottom": "Desplazar al final",
+    "sr_generating": "Generando una respuesta"
   },
   "fr": {
-    "experimental_feature": "Fonctionnalité Expérimentale:",
-    "experimental_disclaimer": "Cet assistant IA est en version bêta et ne doit pas être utilisé comme votre seule source d'informations techniques.",
-    "welcome_title": "Bienvenue dans l'Assistant Classic Mini DIY",
-    "input_placeholder": "Demandez-moi n'importe quoi sur votre Classic Mini...",
-    "report_issue": "Signaler un problème avec le chat",
-    "useful_links_placeholder": "Les liens utiles apparaîtront ici après que j'aie recherché des informations",
-    "loading_chat": "Chargement du chat...",
-    "send_message": "Envoyer le message",
-    "stop_generating": "Arrêter la génération",
-    "scroll_to_bottom": "Défiler vers le bas"
+    "assistant_name": "Assistant CMDIY",
+    "beta": "Bêta",
+    "scroll_to_bottom": "Défiler vers le bas",
+    "sr_generating": "Génération d'une réponse"
   },
   "de": {
-    "experimental_feature": "Experimentelle Funktion:",
-    "experimental_disclaimer": "Dieser KI-Assistent befindet sich in der Beta-Phase und sollte nicht als einzige Quelle für technische Informationen verwendet werden.",
-    "welcome_title": "Willkommen beim Classic Mini DIY Assistenten",
-    "input_placeholder": "Fragen Sie mich alles über Ihren Classic Mini...",
-    "report_issue": "Ein Problem mit dem Chat melden",
-    "useful_links_placeholder": "Nützliche Links erscheinen hier, nachdem ich nach Informationen gesucht habe",
-    "loading_chat": "Chat wird geladen...",
-    "send_message": "Nachricht senden",
-    "stop_generating": "Generierung stoppen",
-    "scroll_to_bottom": "Nach unten scrollen"
+    "assistant_name": "CMDIY Assistent",
+    "beta": "Beta",
+    "scroll_to_bottom": "Nach unten scrollen",
+    "sr_generating": "Antwort wird erzeugt"
   },
   "it": {
-    "experimental_feature": "Funzione Sperimentale:",
-    "experimental_disclaimer": "Questo assistente IA è in beta e non dovrebbe essere usato come unica fonte di informazioni tecniche.",
-    "welcome_title": "Benvenuto nell'Assistente Classic Mini DIY",
-    "input_placeholder": "Chiedimi qualsiasi cosa sul tuo Classic Mini...",
-    "report_issue": "Segnala un problema con la chat",
-    "useful_links_placeholder": "I link utili appariranno qui dopo che avrò cercato informazioni",
-    "loading_chat": "Caricamento chat...",
-    "send_message": "Invia messaggio",
-    "stop_generating": "Interrompi generazione",
-    "scroll_to_bottom": "Scorri in basso"
-  },
-  "ja": {
-    "experimental_feature": "実験的機能:",
-    "experimental_disclaimer": "このAIアシスタントはベータ版であり、技術情報の唯一の情報源として使用すべきではありません。",
-    "welcome_title": "Classic Mini DIY アシスタントへようこそ",
-    "input_placeholder": "あなたのClassic Miniについて何でもお聞きください...",
-    "report_issue": "チャットの問題を報告する",
-    "useful_links_placeholder": "情報を検索した後、有用なリンクがここに表示されます",
-    "loading_chat": "チャットを読み込んでいます...",
-    "send_message": "メッセージを送信",
-    "stop_generating": "生成を停止",
-    "scroll_to_bottom": "下までスクロール"
-  },
-  "ko": {
-    "experimental_feature": "실험적 기능:",
-    "experimental_disclaimer": "이 AI 어시스턴트는 베타 버전이며 기술 정보의 유일한 소스로 사용해서는 안 됩니다.",
-    "welcome_title": "Classic Mini DIY 어시스턴트에 오신 것을 환영합니다",
-    "input_placeholder": "당신의 Classic Mini에 대해 무엇이든 물어보세요...",
-    "report_issue": "채팅 문제 신고",
-    "useful_links_placeholder": "정보를 검색한 후 유용한 링크가 여기에 나타납니다",
-    "loading_chat": "채팅 로딩 중...",
-    "send_message": "메시지 보내기",
-    "stop_generating": "생성 중단",
-    "scroll_to_bottom": "맨 아래로 스크롤"
+    "assistant_name": "Assistente CMDIY",
+    "beta": "Beta",
+    "scroll_to_bottom": "Scorri in basso",
+    "sr_generating": "Generazione di una risposta"
   },
   "pt": {
-    "experimental_feature": "Recurso Experimental:",
-    "experimental_disclaimer": "Este assistente de IA está em beta e não deve ser usado como sua única fonte de informações técnicas.",
-    "welcome_title": "Bem-vindo ao Assistente Classic Mini DIY",
-    "input_placeholder": "Pergunte-me qualquer coisa sobre seu Classic Mini...",
-    "report_issue": "Relatar um problema com o chat",
-    "useful_links_placeholder": "Links úteis aparecerão aqui depois que eu pesquisar informações",
-    "loading_chat": "Carregando chat...",
-    "send_message": "Enviar mensagem",
-    "stop_generating": "Parar geração",
-    "scroll_to_bottom": "Rolar para baixo"
+    "assistant_name": "Assistente CMDIY",
+    "beta": "Beta",
+    "scroll_to_bottom": "Rolar para baixo",
+    "sr_generating": "Gerando uma resposta"
   },
   "ru": {
-    "experimental_feature": "Экспериментальная функция:",
-    "experimental_disclaimer": "Этот ИИ-помощник находится в бета-версии и не должен использоваться как единственный источник технической информации.",
-    "welcome_title": "Добро пожаловать в помощник Classic Mini DIY",
-    "input_placeholder": "Спросите меня что-нибудь о вашем Classic Mini...",
-    "report_issue": "Сообщить о проблеме с чатом",
-    "useful_links_placeholder": "Полезные ссылки появятся здесь после того, как я найду информацию",
-    "loading_chat": "Загрузка чата...",
-    "send_message": "Отправить сообщение",
-    "stop_generating": "Остановить генерацию",
-    "scroll_to_bottom": "Прокрутить вниз"
+    "assistant_name": "Помощник CMDIY",
+    "beta": "Бета",
+    "scroll_to_bottom": "Прокрутить вниз",
+    "sr_generating": "Формируется ответ"
+  },
+  "ja": {
+    "assistant_name": "CMDIYアシスタント",
+    "beta": "ベータ",
+    "scroll_to_bottom": "下までスクロール",
+    "sr_generating": "回答を生成しています"
   },
   "zh": {
-    "experimental_feature": "实验性功能：",
-    "experimental_disclaimer": "这个AI助手处于测试阶段，不应作为技术信息的唯一来源。",
-    "welcome_title": "欢迎使用Classic Mini DIY助手",
-    "input_placeholder": "询问我关于您的Classic Mini的任何问题...",
-    "report_issue": "报告聊天问题",
-    "useful_links_placeholder": "在我搜索信息后，有用的链接将出现在这里",
-    "loading_chat": "加载聊天中...",
-    "send_message": "发送消息",
-    "stop_generating": "停止生成",
-    "scroll_to_bottom": "滚动到底部"
+    "assistant_name": "CMDIY助手",
+    "beta": "测试版",
+    "scroll_to_bottom": "滚动到底部",
+    "sr_generating": "正在生成回复"
+  },
+  "ko": {
+    "assistant_name": "CMDIY 어시스턴트",
+    "beta": "베타",
+    "scroll_to_bottom": "맨 아래로 스크롤",
+    "sr_generating": "응답을 생성하는 중"
   }
 }
 </i18n>
 
 <style scoped>
-  /* Ensure text wrapping in chat messages */
-  .break-words {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    hyphens: auto;
+  .thinking-dot {
+    animation: thinkingPulse 1.4s ease-in-out infinite;
   }
 
-  .overflow-wrap-anywhere {
-    overflow-wrap: anywhere;
+  .thinking-dot:nth-child(2) {
+    animation-delay: 0.2s;
   }
 
-  /* Ensure chat window content doesn't overflow */
-  .chat-content {
-    max-width: 100%;
-    overflow-x: hidden;
+  .thinking-dot:nth-child(3) {
+    animation-delay: 0.4s;
   }
 
-  /* Force text content to wrap within containers */
-  .chat-content * {
-    max-width: 100%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+  @keyframes thinkingPulse {
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .thinking-dot {
+      animation: none;
+      opacity: 0.6;
+    }
   }
 </style>

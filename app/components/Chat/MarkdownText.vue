@@ -1,97 +1,28 @@
 <template>
-  <div class="markdown-content" :class="{ 'streaming-content': showCursor }">
-    <!-- Settled content (already animated) -->
-    <span v-if="settledHtml" v-html="settledHtml"></span>
-    <!-- New content with streaming animation -->
-    <span
-      v-for="(token, index) in animatedTokens"
-      :key="`token-${index}-${token.text.slice(0, 10)}`"
-      :class="['streaming-token', animationClass]"
-      :style="getTokenStyle(index)"
-      v-html="token.html"
-    ></span>
-    <!-- Streaming cursor -->
-    <span v-if="showCursor" class="streaming-cursor"></span>
-  </div>
+  <!--
+    The caret is a pseudo-element on the last rendered block, not a sibling
+    element. Markdown output ends in a block (`<p>`, `<li>`, …), so a sibling
+    span was pushed onto a line of its own beneath the text.
+  -->
+  <div class="markdown-content" :class="{ 'is-streaming': showCursor }" v-html="renderedHtml"></div>
 </template>
 
 <script setup lang="ts">
   import { marked } from 'marked';
   import { markedHighlight } from 'marked-highlight';
   import hljs from 'highlight.js';
+  import DOMPurify from 'dompurify';
   import type { MarkdownTextProps } from '../../../data/models/chat';
 
-  export interface StreamingAnimationOptions {
-    /** Animation type: 'fadeIn' | 'blurIn' | 'typewriter' */
-    animationType?: 'fadeIn' | 'blurIn' | 'typewriter';
-    /** Whether streaming animation is enabled */
-    enableAnimation?: boolean;
-  }
-
-  const props = withDefaults(defineProps<MarkdownTextProps & { showCursor?: boolean } & StreamingAnimationOptions>(), {
+  const props = withDefaults(defineProps<MarkdownTextProps & { showCursor?: boolean }>(), {
     showCursor: false,
-    animationType: 'fadeIn',
-    enableAnimation: true,
   });
-
-  // Animation configuration
-  const ANIMATION_DURATION = 150; // ms - fast fade/blur in
-  const STAGGER_DELAY = 10; // ms between tokens
-  const SETTLE_BUFFER = 50; // extra buffer before settling
-
-  // Track settled content (already animated)
-  const settledContent = ref('');
-  const settledHtml = ref('');
-
-  // Animated tokens for new content
-  interface AnimatedToken {
-    text: string;
-    html: string;
-  }
-  const animatedTokens = ref<AnimatedToken[]>([]);
-
-  // Timer for settling content
-  let settleTimer: ReturnType<typeof setTimeout> | null = null;
-
-  // Get animation class based on type
-  const animationClass = computed(() => {
-    if (!props.enableAnimation || !props.showCursor) return '';
-    switch (props.animationType) {
-      case 'blurIn':
-        return 'animation-blur-in';
-      case 'typewriter':
-        return 'animation-typewriter';
-      case 'fadeIn':
-      default:
-        return 'animation-fade-in';
-    }
-  });
-
-  // Get staggered animation style for each token
-  function getTokenStyle(index: number) {
-    if (!props.enableAnimation || !props.showCursor) return {};
-    return {
-      animationDelay: `${index * STAGGER_DELAY}ms`,
-      animationDuration: `${ANIMATION_DURATION}ms`,
-    };
-  }
-
-  // Parse markdown for a single token/chunk
-  function parseTokenMarkdown(text: string): string {
-    try {
-      // Use parseInline for token-level parsing to avoid wrapping in <p> tags
-      return marked.parseInline(text) as string;
-    } catch {
-      return text;
-    }
-  }
 
   // Function to add UTM parameters to URLs
   function addUtmParameters(url: string): string {
     try {
       const urlObj = new URL(url);
 
-      // UTM parameters for your store
       const utmParams = {
         utm_source: 'diy_chat_bot',
         utm_medium: 'chat',
@@ -99,7 +30,6 @@
         utm_content: 'chat_response',
       };
 
-      // Add UTM parameters if they don't already exist
       Object.entries(utmParams).forEach(([key, value]) => {
         if (!urlObj.searchParams.has(key)) {
           urlObj.searchParams.set(key, value);
@@ -107,9 +37,8 @@
       });
 
       return urlObj.toString();
-    } catch (error) {
-      // If URL parsing fails, return original URL
-      console.warn('Failed to parse URL for UTM parameters:', url);
+    } catch {
+      // Relative links and anything unparseable are left alone.
       return url;
     }
   }
@@ -123,7 +52,6 @@
     return `<a href="${processedHref}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
   };
 
-  // Configure marked with syntax highlighting and custom renderer
   marked.use(
     markedHighlight({
       langPrefix: 'language-',
@@ -134,104 +62,84 @@
     })
   );
 
-  // Configure marked options
   marked.setOptions({
     breaks: true,
     gfm: true,
     renderer: renderer,
   });
 
-  // Process content changes for streaming animation
-  function processContentUpdate(newContent: string, isStreaming: boolean) {
-    if (!isStreaming || !props.enableAnimation) {
-      // Not streaming or animation disabled - render all as settled
-      settledContent.value = newContent;
-      settledHtml.value = marked.parse(newContent) as string;
-      animatedTokens.value = [];
-      return;
-    }
+  // The assistant renders a wider markdown subset than the marketplace message
+  // renderer in `app/utils/markdown.ts` — it needs headings, tables and fenced
+  // code. `class` is allowed because highlight.js marks up tokens with spans.
+  const ALLOWED_TAGS = [
+    'p',
+    'br',
+    'span',
+    'strong',
+    'em',
+    'del',
+    'code',
+    'pre',
+    'ul',
+    'ol',
+    'li',
+    'a',
+    'blockquote',
+    'hr',
+    'img',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
+  ];
+  const ALLOWED_ATTR = ['href', 'title', 'target', 'rel', 'class', 'src', 'alt'];
 
-    // Get new portion of content
-    const newPortion = newContent.slice(settledContent.value.length);
+  let hookInstalled = false;
+  function installLinkHardening() {
+    if (hookInstalled || !import.meta.client) return;
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.nodeName === 'A') {
+        const el = node as Element;
+        el.setAttribute('target', '_blank');
+        el.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+    hookInstalled = true;
+  }
 
-    if (newPortion.length === 0) {
-      return; // No new content
-    }
+  /**
+   * The whole message is parsed on every update, as one document.
+   *
+   * The previous implementation split the message into "settled" HTML plus a
+   * tail of per-word animated spans. Settled content was parsed as a block
+   * (`marked.parse`) while the tail was parsed inline (`marked.parseInline`), so
+   * whenever a stream chunk landed mid-word the settled half closed a paragraph
+   * and the rest of the word rendered after it — "I don" / "'t have specific…"
+   * as two blocks. Parsing the cumulative content in one pass cannot produce
+   * that; `messages/partial` already sends the full message each time.
+   */
+  const renderedHtml = computed(() => {
+    if (!props.content) return '';
+    const raw = marked.parse(props.content) as string;
 
-    // Tokenize new content (split by words and whitespace)
-    const tokenRegex = /(\S+|\s+)/g;
-    const tokens: AnimatedToken[] = [];
-    let match;
-
-    while ((match = tokenRegex.exec(newPortion)) !== null) {
-      tokens.push({
-        text: match[0],
-        html: parseTokenMarkdown(match[0]),
+    if (import.meta.client) {
+      installLinkHardening();
+      return DOMPurify.sanitize(raw, {
+        ALLOWED_TAGS,
+        ALLOWED_ATTR,
+        FORBID_TAGS: ['script', 'style', 'iframe', 'form', 'input'],
       });
     }
 
-    animatedTokens.value = tokens;
-
-    // Schedule settling of animated content
-    if (settleTimer) {
-      clearTimeout(settleTimer);
-    }
-
-    if (tokens.length > 0) {
-      const totalAnimationTime = ANIMATION_DURATION + tokens.length * STAGGER_DELAY + SETTLE_BUFFER;
-      settleTimer = setTimeout(() => {
-        // Move animated content to settled
-        settledContent.value = newContent;
-        settledHtml.value = marked.parse(newContent) as string;
-        animatedTokens.value = [];
-      }, totalAnimationTime);
-    }
-  }
-
-  // Watch for content changes
-  watch(
-    () => props.content,
-    (newContent) => {
-      processContentUpdate(newContent, props.showCursor);
-    },
-    { immediate: true }
-  );
-
-  // When streaming stops, immediately settle all content
-  watch(
-    () => props.showCursor,
-    (isStreaming) => {
-      if (!isStreaming) {
-        // Streaming stopped - settle everything immediately
-        if (settleTimer) {
-          clearTimeout(settleTimer);
-          settleTimer = null;
-        }
-        settledContent.value = props.content;
-        settledHtml.value = marked.parse(props.content) as string;
-        animatedTokens.value = [];
-      }
-    }
-  );
-
-  // Reset state when content is cleared (new message)
-  watch(
-    () => props.content,
-    (newContent, oldContent) => {
-      if (newContent.length < (oldContent?.length || 0) - 10) {
-        // Content was significantly reduced - likely a new message
-        settledContent.value = '';
-        settledHtml.value = '';
-        animatedTokens.value = [];
-      }
-    }
-  );
-
-  // Cleanup timer on unmount
-  onUnmounted(() => {
-    if (settleTimer) {
-      clearTimeout(settleTimer);
-    }
+    return raw;
   });
 </script>
 
@@ -239,66 +147,54 @@
   /* Import highlight.js theme */
   @import 'highlight.js/styles/github-dark.css';
 
+  /* NOTE: colours here use daisyUI 5 variable names (`--color-base-content`,
+     `--color-primary`, …). This block previously used the daisyUI 4 names
+     (`--bc`, `--p`, `--b2`, `--b3`) wrapped in `hsl()`, none of which resolve
+     under daisyUI 5 — every colour, border and code background in this
+     stylesheet was being dropped by the parser. */
+
   .markdown-content {
     font-size: 1rem;
-    line-height: 1.6;
-    color: hsl(var(--bc));
+    line-height: 1.7;
+    color: var(--color-base-content);
+    /* Long part numbers and URLs must wrap rather than push the column wide. */
+    overflow-wrap: anywhere;
   }
 
   /* Headings */
   .markdown-content :deep(h1) {
-    font-size: 1.875rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     margin-top: 1.5rem;
-    color: hsl(var(--bc));
   }
 
   .markdown-content :deep(h2) {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.25rem;
+    font-weight: 700;
     margin-bottom: 0.75rem;
-    margin-top: 1.25rem;
-    color: hsl(var(--bc));
+    margin-top: 1.5rem;
   }
 
   .markdown-content :deep(h3) {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    margin-top: 1rem;
-    color: hsl(var(--bc));
-  }
-
-  .markdown-content :deep(h4) {
     font-size: 1.125rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    margin-top: 0.75rem;
-    color: hsl(var(--bc));
+    margin-top: 1.25rem;
   }
 
-  .markdown-content :deep(h5) {
+  .markdown-content :deep(h4),
+  .markdown-content :deep(h5),
+  .markdown-content :deep(h6) {
     font-size: 1rem;
     font-weight: 600;
-    margin-bottom: 0.25rem;
-    margin-top: 0.5rem;
-    color: hsl(var(--bc));
-  }
-
-  .markdown-content :deep(h6) {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    margin-top: 0.5rem;
-    color: hsl(var(--bc));
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
   }
 
   /* Paragraphs */
   .markdown-content :deep(p) {
     margin-bottom: 1rem;
-    line-height: 1.7;
-    color: hsl(var(--bc));
   }
 
   /* Lists */
@@ -306,55 +202,49 @@
     list-style-type: disc;
     margin-bottom: 1rem;
     padding-left: 1.5rem;
-    color: hsl(var(--bc));
   }
 
   .markdown-content :deep(ol) {
     list-style-type: decimal;
     margin-bottom: 1rem;
     padding-left: 1.5rem;
-    color: hsl(var(--bc));
   }
 
   .markdown-content :deep(li) {
-    margin-bottom: 0.25rem;
-    line-height: 1.6;
+    margin-bottom: 0.375rem;
   }
 
-  /* Nested lists */
   .markdown-content :deep(ul ul),
   .markdown-content :deep(ol ol),
   .markdown-content :deep(ul ol),
   .markdown-content :deep(ol ul) {
-    margin-left: 1rem;
-    margin-top: 0.25rem;
-    margin-bottom: 0.25rem;
+    margin-top: 0.375rem;
+    margin-bottom: 0.375rem;
   }
 
   /* Links */
   .markdown-content :deep(a) {
-    color: hsl(var(--p));
+    color: var(--color-primary);
     text-decoration: underline;
+    text-underline-offset: 2px;
     font-weight: 500;
-    transition: color 0.2s ease;
   }
 
   .markdown-content :deep(a:hover) {
-    color: hsl(var(--pf));
+    text-decoration-thickness: 2px;
   }
 
   /* Code */
   .markdown-content :deep(code) {
-    background-color: hsl(var(--b2));
-    color: hsl(var(--bc));
+    background-color: var(--color-base-200);
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
-    font-size: 0.875rem;
+    font-size: 0.875em;
     font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
   }
 
   .markdown-content :deep(pre) {
-    background-color: #0d1117 !important;
+    background-color: #0d1117;
     color: #f0f6fc;
     padding: 1rem;
     border-radius: 0.5rem;
@@ -367,52 +257,52 @@
     background-color: transparent;
     padding: 0;
     color: inherit;
+    /* A code block scrolls inside itself; it must not wrap like prose. */
+    overflow-wrap: normal;
   }
 
   /* Blockquotes */
   .markdown-content :deep(blockquote) {
-    border-left: 4px solid hsl(var(--b3));
+    border-left: 3px solid var(--color-base-300);
     padding-left: 1rem;
     margin: 1rem 0;
-    font-style: italic;
-    color: hsl(var(--bc) / 0.8);
+    color: color-mix(in oklch, var(--color-base-content) 75%, transparent);
   }
 
-  /* Tables */
+  /* Tables — scroll inside their own container rather than widening the page. */
   .markdown-content :deep(table) {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 1rem;
+    display: block;
+    overflow-x: auto;
   }
 
   .markdown-content :deep(th),
   .markdown-content :deep(td) {
-    border: 1px solid hsl(var(--b3));
+    border: 1px solid var(--color-base-300);
     padding: 0.5rem 0.75rem;
     text-align: left;
   }
 
   .markdown-content :deep(th) {
-    background-color: hsl(var(--b2));
+    background-color: var(--color-base-200);
     font-weight: 600;
   }
 
   /* Horizontal rules */
   .markdown-content :deep(hr) {
     border: none;
-    border-top: 1px solid hsl(var(--b3));
+    border-top: 1px solid var(--color-base-300);
     margin: 1.5rem 0;
   }
 
-  /* Strong and emphasis */
   .markdown-content :deep(strong) {
     font-weight: 700;
-    color: hsl(var(--bc));
   }
 
   .markdown-content :deep(em) {
     font-style: italic;
-    color: hsl(var(--bc));
   }
 
   /* Images */
@@ -432,97 +322,44 @@
     margin-bottom: 0;
   }
 
-  /* Streaming cursor */
-  .streaming-cursor {
+  /* Streaming caret, attached to the end of the last block so it sits on the
+     same line as the final word rather than dropping below it. */
+  .markdown-content.is-streaming :deep(> *:last-child)::after {
+    content: '';
     display: inline-block;
-    width: 0.375rem; /* 1.5 */
+    width: 0.375rem;
     height: 1rem;
-    background-color: hsl(var(--p));
-    animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    margin-left: 0.125rem; /* 0.5 */
+    background-color: var(--color-primary);
+    animation: chatCursorPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    margin-left: 0.125rem;
     vertical-align: text-bottom;
   }
 
-  @keyframes pulse {
+  /* An empty message still shows a caret while the first token is awaited. */
+  .markdown-content.is-streaming:empty::after {
+    content: '';
+    display: inline-block;
+    width: 0.375rem;
+    height: 1rem;
+    background-color: var(--color-primary);
+    animation: chatCursorPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes chatCursorPulse {
     0%,
     100% {
       opacity: 1;
     }
     50% {
-      opacity: 0.5;
+      opacity: 0.25;
     }
   }
 
-  /* ============================================
-     Streaming Token Animations (flowtoken-style)
-     ============================================ */
-
-  .streaming-token {
-    display: inline;
-    animation-fill-mode: both;
-  }
-
-  /* Fade In Animation */
-  .animation-fade-in {
-    animation-name: streamFadeIn;
-    animation-timing-function: ease-out;
-  }
-
-  @keyframes streamFadeIn {
-    0% {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Blur In Animation */
-  .animation-blur-in {
-    animation-name: streamBlurIn;
-    animation-timing-function: ease-out;
-  }
-
-  @keyframes streamBlurIn {
-    0% {
-      opacity: 0;
-      filter: blur(4px);
-    }
-    100% {
-      opacity: 1;
-      filter: blur(0);
-    }
-  }
-
-  /* Typewriter Animation */
-  .animation-typewriter {
-    animation-name: streamTypewriter;
-    animation-timing-function: steps(1, end);
-  }
-
-  @keyframes streamTypewriter {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
-  }
-
-  /* Ensure proper inline display for animated tokens */
-  .streaming-content .streaming-token {
-    white-space: pre-wrap;
-  }
-
-  /* Reduce motion for users who prefer it */
   @media (prefers-reduced-motion: reduce) {
-    .streaming-token {
-      animation: none !important;
-      opacity: 1 !important;
-      filter: none !important;
-      transform: none !important;
+    .markdown-content.is-streaming :deep(> *:last-child)::after,
+    .markdown-content.is-streaming:empty::after {
+      animation: none;
     }
   }
 </style>

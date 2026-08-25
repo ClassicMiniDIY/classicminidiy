@@ -1,17 +1,25 @@
 <template>
-  <div class="mb-6 group flex flex-col items-end">
-    <!-- Message content -->
-    <div v-if="contentString" class="bg-primary text-white rounded-2xl px-4 py-3 max-w-[80%]">
-      <div class="whitespace-pre-wrap">
-        {{ contentString }}
-      </div>
+  <div class="group flex flex-col items-end">
+    <!-- `text-primary-content` rather than a hardcoded `text-white`: the light
+         theme's primary is a mid olive, and white on it fails contrast. -->
+    <div
+      v-if="contentString"
+      class="max-w-[85%] rounded-2xl bg-primary px-4 py-2.5 text-primary-content sm:max-w-[80%]"
+      style="overflow-wrap: anywhere"
+    >
+      <div class="whitespace-pre-wrap">{{ contentString }}</div>
     </div>
 
-    <!-- Action buttons (shown on hover) -->
-    <div class="flex items-center gap-2 mt-2 opacity-0 transition-opacity group-hover:opacity-100 justify-end">
-      <button @click="copyToClipboard(contentString)" class="btn btn-xs btn-ghost">
-        <i class="fa-solid fa-copy h-3 w-3 mr-1" />
-        {{ t('copy_button') }}
+    <div
+      class="mt-1 flex items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+    >
+      <button
+        type="button"
+        @click="copyToClipboard(contentString)"
+        class="btn btn-ghost btn-xs gap-1.5 font-normal text-base-content/60"
+      >
+        <i :class="justCopied ? 'fas fa-check' : 'fas fa-copy'" aria-hidden="true"></i>
+        {{ justCopied ? t('copied') : t('copy_button') }}
       </button>
     </div>
   </div>
@@ -26,7 +34,6 @@
   const props = defineProps<HumanMessageProps>();
   useStreamContext();
 
-  // Helper function to extract content string from message
   function getContentString(content: any): string {
     if (typeof content === 'string') {
       return content;
@@ -42,49 +49,40 @@
 
   const contentString = computed(() => getContentString(props.message.content));
 
+  const justCopied = ref(false);
+  let copyTimer: ReturnType<typeof setTimeout> | null = null;
+
   async function copyToClipboard(text: string) {
     if (!text) return;
 
     try {
       await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
+      justCopied.value = true;
+      if (copyTimer) clearTimeout(copyTimer);
+      copyTimer = setTimeout(() => {
+        justCopied.value = false;
+      }, 2000);
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
     }
   }
+
+  onUnmounted(() => {
+    if (copyTimer) clearTimeout(copyTimer);
+  });
 </script>
 
 <i18n lang="json">
 {
-  "en": {
-    "copy_button": "Copy"
-  },
-  "es": {
-    "copy_button": "Copiar"
-  },
-  "fr": {
-    "copy_button": "Copier"
-  },
-  "de": {
-    "copy_button": "Kopieren"
-  },
-  "it": {
-    "copy_button": "Copia"
-  },
-  "ja": {
-    "copy_button": "コピー"
-  },
-  "ko": {
-    "copy_button": "복사"
-  },
-  "pt": {
-    "copy_button": "Copiar"
-  },
-  "ru": {
-    "copy_button": "Копировать"
-  },
-  "zh": {
-    "copy_button": "复制"
-  }
+  "en": { "copy_button": "Copy", "copied": "Copied" },
+  "es": { "copy_button": "Copiar", "copied": "Copiado" },
+  "fr": { "copy_button": "Copier", "copied": "Copié" },
+  "de": { "copy_button": "Kopieren", "copied": "Kopiert" },
+  "it": { "copy_button": "Copia", "copied": "Copiato" },
+  "ja": { "copy_button": "コピー", "copied": "コピーしました" },
+  "ko": { "copy_button": "복사", "copied": "복사됨" },
+  "pt": { "copy_button": "Copiar", "copied": "Copiado" },
+  "ru": { "copy_button": "Копировать", "copied": "Скопировано" },
+  "zh": { "copy_button": "复制", "copied": "已复制" }
 }
 </i18n>

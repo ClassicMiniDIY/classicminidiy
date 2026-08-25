@@ -659,3 +659,48 @@ body {
 .overflow-x-auto:has(.dropdown:focus-within) {
   overflow: visible;
 }
+
+/* ---------------------------------------------------------------------------
+   Full-height chat shell (`/chat`)
+
+   `/chat` is an app surface, not an article: the transcript is the only thing
+   that scrolls, and the composer stays pinned to the bottom of the viewport.
+   The page opts in by setting this class on <body> via useHead, so nothing
+   here applies to any other route.
+
+   Before this, the chat was a fixed-height box inside a normally-scrolling
+   document. That gave the surface two scroll regions at once, and because the
+   document was taller than the viewport, focusing the composer on mount
+   scrolled the page down and dropped the user in below the nav.
+
+   UNLAYERED, like the dropdown rules above: `overflow`, `display` and `flex`
+   here override Tailwind utilities already on those elements, and utilities
+   sort after every layer.
+   --------------------------------------------------------------------------- */
+body.chat-fullscreen {
+  overflow: hidden;
+}
+
+body.chat-fullscreen .app-wrapper {
+  height: 100%;
+  min-height: 0;
+}
+
+body.chat-fullscreen .app-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+body.chat-fullscreen .app-content > main {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* The site footer is suppressed rather than scrolled past: with no page scroll
+   there is no way to reach it, and a partially visible footer under a pinned
+   composer reads as a rendering fault. */
+body.chat-fullscreen .app-wrapper > footer {
+  display: none;
+}

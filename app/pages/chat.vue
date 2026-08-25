@@ -1,17 +1,13 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
-    <!-- Page Header -->
-    <div class="mb-1">
-      <h1 class="text-3xl font-bold text-base-content mb-2">{{ t('main_heading') }}</h1>
-      <p class="text-base-content/70">
-        {{ t('description_text') }}
-      </p>
-    </div>
-
-    <!-- Chat Interface -->
-    <div class="h-[calc(100vh-200px)] min-h-[600px]">
-      <ChatWindow />
-    </div>
+  <!--
+    The chat fills whatever the site chrome leaves. `body.chat-fullscreen` (set
+    below, styles in app/assets/css/main.css) turns the app wrapper into a flex
+    column, removes the document scroll and hides the footer, so this element
+    resolves to the viewport minus the nav. The visible <h1> lives in
+    ChatWindow's header; the descriptive copy is in the empty state.
+  -->
+  <div class="h-full min-h-0">
+    <ChatWindow />
   </div>
 </template>
 
@@ -22,6 +18,9 @@
 
   // SEO - useHead for title, description, keywords, canonical
   useHead({
+    // Opts this route into the full-height app shell. unhead removes the class
+    // again when the route unmounts, so the rest of the site is untouched.
+    bodyAttrs: { class: 'chat-fullscreen' },
     title: t('title'),
     meta: [
       {
