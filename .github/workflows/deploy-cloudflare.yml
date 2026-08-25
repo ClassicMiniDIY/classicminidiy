@@ -86,11 +86,10 @@ jobs:
       # A production deploy is verified against the real origin, where the
       # zone-dependent checks (image transforms, HSTS, indexability) actually arm.
       # A preview deploy is verified against workers.dev, where they skip.
+      # workers.dev is disabled since the cutover (it served an indexable second
+      # copy of production), so there is no preview hostname to smoke-test any
+      # more. A preview build is verified by the build + dry-run steps above; use
+      # `wrangler versions upload` if a real preview URL is needed.
       - name: Smoke-test the deployment
-        if: ${{ !inputs.dry_run }}
-        run: |
-          if [ "${{ inputs.site_env }}" = "production" ]; then
-            ./scripts/verify-cf-deploy.sh https://www.classicminidiy.com
-          else
-            ./scripts/verify-cf-deploy.sh https://classicminidiy.classicminidiy.workers.dev
-          fi
+        if: ${{ !inputs.dry_run && inputs.site_env == 'production' }}
+        run: ./scripts/verify-cf-deploy.sh https://www.classicminidiy.com
