@@ -880,8 +880,15 @@ s3Base=
   `vitest.config.ts`. happy-dom 20.11.1 is still affected; recheck before "simplifying"
   the env back. The exact pin (no `^`) is deliberate: a DOMPurify bump is a security
   change and should be a visible, tested commit, not a silent range resolution.
-- **`@takumi-rs/core` stays on 1.x.** nuxt-og-image's optional peer range is `^1.x`; 2.x
-  breaks branded OG image rendering.
+- **`@takumi-rs/core` AND `@takumi-rs/wasm` stay on 1.x, at the same version.** 2.x breaks
+  branded OG image rendering. They are a pair: `core` is the native binding used by the Node
+  and Vercel builds, `wasm` is the one the **Cloudflare Workers** preset needs, because a
+  native module cannot be bundled into a worker. `wasm` was missing entirely until 2026-08-26
+  — declared nowhere, installed nowhere — so `NITRO_PRESET=cloudflare_module` died at the
+  Nitro bundling step with `Cannot resolve "@takumi-rs/wasm/no-bundler" ... and externals are
+  not allowed!`. It surfaced only when CI first got far enough to reach bundling; before that
+  the build failed earlier, on the sitemap sources. Keep both on the same version — bumping
+  one alone is untested.
 - **`@types/node` stays on 25.x** while `engines.node` is `^24` (26.x types target Node 26 APIs).
 
 ### Code Quality
