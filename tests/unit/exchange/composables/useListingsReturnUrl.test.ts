@@ -68,6 +68,19 @@ describe('useListingsReturnUrl', () => {
       expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
     });
 
+    it('keeps a stored value carrying a hash or a trailing slash', async () => {
+      window.sessionStorage.setItem(STORAGE_KEY, '/exchange/listings/?page=4#results');
+      const { getListingsReturnUrl } = await loadComposable();
+      expect(getListingsReturnUrl()).toBe('/exchange/listings/?page=4#results');
+    });
+
+    it('falls back to the default when the stored value is a listing detail page', async () => {
+      // The guard must not treat a deeper /exchange/listings/* path as browse.
+      window.sessionStorage.setItem(STORAGE_KEY, '/exchange/listings/1275-gt-shell');
+      const { getListingsReturnUrl } = await loadComposable();
+      expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
+    });
+
     it('falls back to the default when the stored value is some other route', async () => {
       window.sessionStorage.setItem(STORAGE_KEY, '/dashboard/listings');
       const { getListingsReturnUrl } = await loadComposable();
