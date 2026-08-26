@@ -850,6 +850,12 @@ repair them afterwards:
 - `GITHUB_API_KEY`, `YOUTUBE_API_KEY` — `crawlLinks` prerenders `/links` and
   `/maps`, which fetch `/api/{github,youtube}/*` during the build. Unset at
   build time bakes an empty widget into static HTML. **Also runtime secrets.**
+- `NUXT_OG_IMAGE_SECRET` — **must be the SAME value in both places.**
+  nuxt-og-image resolves its signing secret at BUILD time and falls back to a
+  random per-build one when unset, so every `og:image` URL baked into
+  prerendered HTML would carry a throwaway signature. The worker verifies with
+  its own secret and answers `403 Invalid URL signature` for all of them. A
+  mismatch here breaks share previews site-wide and nothing else notices.
 
 **RUNTIME** — `wrangler secret put`, never the build env. Set them with
 `./scripts/set-cf-secrets.sh` (reads your local `.env`, never prints a value):
@@ -871,7 +877,8 @@ already bitten:
 
 `NUXT_OG_IMAGE_SECRET` is the one exception to the whole scheme: nuxt-og-image
 reads `event.context.cloudflare.env.NUXT_OG_IMAGE_SECRET` directly rather than
-through `runtimeConfig`, so that name is literal and no derivation applies.
+through `runtimeConfig`, so that name is literal and no derivation applies. It
+is also the one secret whose two halves must hold the same value — see above.
 
 **Module-scope reads are safe here, but only by accident.** With
 `nodejs_compat` and a `compatibility_date` past 2025-04-01, workerd populates

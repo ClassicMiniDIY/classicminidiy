@@ -173,7 +173,11 @@ put NUXT_CAMINO_API_KEY CAMINO_API_KEY OPTIONAL
 # NOT a runtimeConfig key. nuxt-og-image reads `cloudflare.env.NUXT_OG_IMAGE_SECRET`
 # directly (dist/runtime/server/utils.js), so the name here is literal, with no
 # snakeCase derivation involved.
-put NUXT_OG_IMAGE_SECRET NUXT_OG_IMAGE_SECRET OPTIONAL
+#
+# It must ALSO be in the CI build env, and be the SAME value: the module
+# resolves its signing secret at build time and generates a random one when
+# unset, so build-signed og:image URLs would fail the worker's verification.
+put NUXT_OG_IMAGE_SECRET NUXT_OG_IMAGE_SECRET
 
 echo "set (${#SET[@]}):"
 for n in "${SET[@]:-}"; do [ -n "$n" ] && echo "  + $n"; done

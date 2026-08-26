@@ -698,7 +698,11 @@ export default defineNuxtConfig({
     // makes the Cloudflare secret name mechanical: NUXT_<KEY>. The legacy
     // camelCase env names are still accepted so existing local `.env` files and
     // the Vercel project keep working.
-    GITHUB_API_KEY: process.env.GITHUB_API_KEY || process.env.githubAPIKey || '',
+    // No `|| ''` on the GitHub key: @octokit/request omits an undefined header
+    // but sends an EMPTY one for '', and GitHub answers an empty Authorization
+    // header with 401 rather than serving the request anonymously. Unset must
+    // stay undefined so unauthenticated (rate-limited) access still works.
+    GITHUB_API_KEY: process.env.GITHUB_API_KEY || process.env.githubAPIKey,
     YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY || process.env.youtubeAPIKey || '',
     // Renamed from NUXT_LANGGRAPH_API_URL / NUXT_LANGSMITH_API_KEY. A key that
     // already starts with `NUXT_` is NOT overridable under its own name: the

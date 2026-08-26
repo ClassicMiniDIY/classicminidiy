@@ -104,9 +104,16 @@ jobs:
           NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
           NUXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Build-critical too, so guarded here rather than left to degrade: the
+          # content keys bake into prerendered HTML, and the og-image secret has
+          # to match the one the worker verifies with.
+          GITHUB_API_KEY: ${{ secrets.GH_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          NUXT_OG_IMAGE_SECRET: ${{ secrets.NUXT_OG_IMAGE_SECRET }}
         run: |
           missing=()
-          for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY; do
+          for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY \
+                      GITHUB_API_KEY YOUTUBE_API_KEY NUXT_OG_IMAGE_SECRET; do
             [ -n "${!name}" ] || missing+=("$name")
           done
           if [ ${#missing[@]} -gt 0 ]; then
@@ -186,6 +193,14 @@ jobs:
           # is GH_API_KEY. The runtimeConfig key is GITHUB_API_KEY.
           GITHUB_API_KEY: ${{ secrets.GH_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+
+          # MUST match the worker's NUXT_OG_IMAGE_SECRET. nuxt-og-image resolves
+          # its signing secret at BUILD time and falls back to a RANDOM
+          # per-build one when this is unset, so every og:image URL baked into
+          # prerendered HTML would be signed with a throwaway key. The worker
+          # verifies against its own secret and answers 403 "Invalid URL
+          # signature" for all of them. Build and runtime have to agree.
+          NUXT_OG_IMAGE_SECRET: ${{ secrets.NUXT_OG_IMAGE_SECRET }}
           # MANDATORY. Node caps its own heap well below the runner's RAM, so
           # this is required regardless of runner size. 6144 is NOT enough for
           # this repo — it OOMs with `Reached heap limit`. Measured, not guessed.
