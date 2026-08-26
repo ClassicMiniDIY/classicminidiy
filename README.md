@@ -126,10 +126,10 @@ The platform is designed to be both a real-time working tool for mechanics and e
 
 Classic Mini DIY is part of a broader ecosystem of applications sharing a single Supabase backend:
 
-| Property | Description | URL |
-|---|---|---|
+| Property                         | Description                                                                | URL                                              |
+| -------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
 | **Classic Mini DIY** (this repo) | Knowledgebase, archive, community site, and the marketplace at `/exchange` | [classicminidiy.com](https://classicminidiy.com) |
-| **Classic Mini Toolbox** | iOS and Android mobile apps | App Store / Google Play |
+| **Classic Mini Toolbox**         | iOS and Android mobile apps                                                | App Store / Google Play                          |
 
 > **The Mini Exchange is retired as a standalone property.** The marketplace was consolidated
 > into this repo and went live at [classicminidiy.com/exchange](https://classicminidiy.com/exchange)
@@ -351,14 +351,18 @@ New in v8.0.0 — a unified contribution hub replacing scattered submission page
 
 ### Admin & Moderation
 
-#### Unified Moderation (`/admin`)
+#### Unified Admin (`/admin`)
 
-- **Moderation Queue** (`/admin/queue`) - Single queue for reviewing all submission types (wheels, colors, registry, documents) with approve/reject workflows
+Every admin page shares one shell (`AdminShell`) with a grouped sidebar, so
+navigation is identical wherever you are.
+
+- **Dashboard** (`/admin`) - Triage board: what is waiting for review, and how much of it
+- **Submission Queue** (`/admin/queue`) - The single queue for every submission type (documents, registry, colours, wheels, edit suggestions) with approve / reject / request-changes. The old per-type review pages (`/admin/{registry,wheels,colors}/review`) and `/admin/inbox` all read this same queue and now redirect to it
+- **Marketplace** (`/admin/exchange`) - Listings, moderation, messages, finds, wanted posts, social posting, announcements, newsletter
+- **3D Models** (`/admin/models`) - Model library queue, reports, sellers, sales
 - **User Management** (`/admin/users`) - User administration with trust levels
-- **Registry Review** (`/admin/registry/review`) - Dedicated registry submission review
-- **Wheel Review** (`/admin/wheels/review`) - Dedicated wheel submission review
-- **Chat Threads** - Admin panel for reviewing AI chat threads
-- **Dashboard** - Queue counts and quick access to all admin functions
+- **Discord Roster** (`/admin/discord`) - Members-only Discord reconciled against paid membership
+- **Chat Threads** (`/admin/threads`) - Reviewing AI chat threads
 
 ### E-commerce Integration
 
@@ -406,9 +410,9 @@ The Classic Mini DIY platform exposes 50+ REST API endpoints:
 
 ### Administrative APIs
 
-- `GET /api/admin/registry/review` - Registry submission review and approval
-- `GET /api/admin/wheels/review` - Wheel submission review and management
-- `GET /api/admin/queue/` - Unified moderation queue (list, approve, reject)
+- `GET /api/admin/queue/` - Unified submission queue (list, count, approve, reject, request-changes)
+- `PUT /api/admin/listings/:id` - Correct a listing's content in place, without sending it back through moderation
+- `PUT /api/admin/listings/:id/{status,tier}` - Listing moderation and premium tier
 - `GET /api/admin/users/` - User management and trust levels
 - `POST /api/admin/auth` - Authentication and session management
 
@@ -441,18 +445,18 @@ Classic Mini DIY supports 10 languages with comprehensive internationalization v
 
 ### Supported Languages
 
-| Language | Code | Status |
-|---|---|---|
-| English | `en` | Primary / Reference |
-| German | `de` | Most comprehensive |
-| Spanish | `es` | Complete |
-| French | `fr` | Complete |
-| Italian | `it` | Complete |
-| Portuguese | `pt` | Complete |
-| Russian | `ru` | Complete |
-| Japanese | `ja` | Complete |
-| Chinese | `zh` | Complete |
-| Korean | `ko` | Complete |
+| Language   | Code | Status              |
+| ---------- | ---- | ------------------- |
+| English    | `en` | Primary / Reference |
+| German     | `de` | Most comprehensive  |
+| Spanish    | `es` | Complete            |
+| French     | `fr` | Complete            |
+| Italian    | `it` | Complete            |
+| Portuguese | `pt` | Complete            |
+| Russian    | `ru` | Complete            |
+| Japanese   | `ja` | Complete            |
+| Chinese    | `zh` | Complete            |
+| Korean     | `ko` | Complete            |
 
 ### Features
 

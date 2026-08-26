@@ -1,19 +1,21 @@
 /**
- * The parts of colour approval that BOTH approval routes have to agree on.
+ * The parts of colour approval that the approval route has to get right.
  *
- * Two surfaces approve colour submissions and write to the same `colors` table:
+ * This file exists because there used to be TWO surfaces approving colour
+ * submissions into the same `colors` table — the unified admin inbox
+ * (`server/api/admin/queue/approve.post.ts`) and an older
+ * `/admin/colors/review` page behind `server/api/colors/queue/save.ts`, which
+ * was linked from no nav but reachable by URL. They drifted, and the drift was
+ * invisible until it had already written to a public row: only one of them
+ * honoured `originalColorId`, so approving the same submission from the other
+ * door minted a duplicate colour.
  *
- *  - `server/api/admin/queue/approve.post.ts` — the unified admin inbox, the
- *    one contributors' submissions actually flow through today.
- *  - `server/api/colors/queue/save.ts` — the older `/admin/colors/review` page.
- *    It is not linked from any nav but is reachable by URL, and
- *    `/api/colors/queue/list` spreads `...item.data`, so the same submissions
- *    are approvable from it.
- *
- * They drifted, and the drift was invisible until it had already written to a
- * public row: only one of them honoured `originalColorId`, so approving the
- * same submission from the other door minted a duplicate colour. Anything both
- * routes must decide the same way lives here rather than being copied.
+ * The second door was removed with the admin consolidation (2026-08-26), so
+ * `approve.post.ts` is now the only caller. The logic stays here rather than
+ * being folded back into that route for two reasons: the decisions below are
+ * the ones that were expensive to get wrong, and they are far easier to hold
+ * under test at this level than through a route handler. If a second approval
+ * surface is ever added, it imports from here — it does not copy.
  */
 
 /** Buckets `server/api/archive/upload.ts` is allowed to write to. */

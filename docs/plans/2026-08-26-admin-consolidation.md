@@ -90,10 +90,35 @@ is never ambiguous that you are writing to someone else's row.
 
 ## What is deliberately NOT done
 
-- `server/api/colors/queue/save.ts` stays. Its page is gone, so it is now
-  UI-unreachable, but it is still admin-gated and still covered by tests, and
-  deleting it is a bigger change than this one. `server/utils/archiveApprovals.ts`
-  remains the shared decision layer either way.
 - The owner edit form's inability to clear a field is documented above and left
   alone.
 - No schema change. Nothing here needs a migration.
+
+## Cleaning up after the deleted pages
+
+Removing the four review pages orphaned their backing API routes. An admin-gated
+approval route with no UI in front of it is not harmless — it is a live write
+path nobody is looking at — and two of them were writing bad data, so they go
+with the pages:
+
+| Route                                   | Fate                                                           |
+| --------------------------------------- | -------------------------------------------------------------- |
+| `/api/colors/queue/{list,reject,save}`  | deleted                                                        |
+| `/api/registry/queue/{save,reject}`     | deleted                                                        |
+| `/api/wheels/review/{list,save,delete}` | deleted                                                        |
+| `/api/registry/queue/list`              | **kept** — read by the public `/archive/registry/pending` page |
+
+`wheels/review/save.ts` and `registry/queue/save.ts` inserted approved rows with
+`legacy_submitted_by` only and never `submitted_by`, which is precisely what the
+"Contribution Loop Invariants" section of CLAUDE.md says an approval path must
+never do: the contribution is never linked to the account that made it, so no
+profile stats, no badges, no leaderboard entry. They were reachable by URL until
+today. Deleting them removes the last approval path that could write an
+unattributed row.
+
+`server/utils/archiveApprovals.ts` survives with one caller. Its coverage used to
+come through `tests/unit/server/api/colors/queue-save.test.ts`, which died with
+its route, so the shared logic is now pinned directly in
+`tests/unit/server/utils/archiveApprovals.test.ts` — a better place for it than
+either route test, and the reason a future second approval surface can be added
+safely.
