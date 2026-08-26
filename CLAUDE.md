@@ -792,7 +792,7 @@ parts of it that break silently if you get them wrong.
 
 ## Environment Variables
 
-### Required Runtime Config
+### Local development (`.env`)
 
 ```env
 # AWS Credentials
@@ -802,9 +802,8 @@ s3_id=
 s3_key=
 
 # External APIs
-githubAPIKey=
-youtubeAPIKey=
-validation_key=
+GITHUB_API_KEY=
+YOUTUBE_API_KEY=
 
 # AI Services
 NUXT_LANGGRAPH_API_URL=
@@ -817,6 +816,82 @@ POSTGRES_URL=
 NUXT_PUBLIC_SITE_URL=
 s3Base=
 ```
+
+`githubAPIKey` / `youtubeAPIKey` are still accepted as legacy aliases, so an
+existing `.env` keeps working; new setups should use the uppercase names.
+
+### Build-time vs runtime secrets on Cloudflare Workers
+
+**This split is load-bearing. Moving a value across it silently changes whether
+production can see it.**
+
+Nuxt compiles private `runtimeConfig` DEFAULTS into the JS bundle at build time.
+Nitro then overrides each key at request time from the environment, so on
+Workers a value can come from either place — and an absent value is an **empty
+string, not an error**. That is the whole failure mode. Before this split the
+runtime half did not exist: every private value came from the build env, that
+env carried only a subset of the keys, and everything outside the subset
+resolved to `''` in production. Chat was the visible casualty on 2026-08-26
+(`LANGSMITH_API_KEY` empty, so LangGraph answered `403 Missing authentication
+headers`), together with S3 model uploads, `/mcp` and the marketing unsubscribe
+HMAC. The build, the deploy and the smoke test were all green. Nothing threw.
+That is why the workflow now asserts the runtime half exists rather than
+assuming it.
+
+**BUILD-TIME** — must be in `.github/workflows/deploy-cloudflare.yml`'s build
+`env:`, because they are compiled into the artifact and no runtime secret can
+repair them afterwards:
+
+- Every `NUXT_PUBLIC_*` value. These land in the CLIENT bundle, which the worker
+  never touches.
+- `POSTHOG_PUBLIC_KEY` — same, via `runtimeConfig.public`.
+- `SUPABASE_SERVICE_KEY` — the sitemap sources prerender through
+  `getServiceClient()`. **Also a runtime secret**; it is needed in both places.
+- `GITHUB_API_KEY`, `YOUTUBE_API_KEY` — `crawlLinks` prerenders `/links` and
+  `/maps`, which fetch `/api/{github,youtube}/*` during the build. Unset at
+  build time bakes an empty widget into static HTML. **Also runtime secrets.**
+
+**RUNTIME** — `wrangler secret put`, never the build env. Set them with
+`./scripts/set-cf-secrets.sh` (reads your local `.env`, never prints a value):
+Supabase service key, LangGraph/LangSmith, GitHub/YouTube, MCP, marketing,
+`S3_MODELS_*`, and the optional Microlink/Camino keys.
+
+**The env var name is derived, not chosen.** Nitro computes a key's override
+name as `NUXT_ + snakeCase(key).toUpperCase()`
+(`nitropack/dist/runtime/internal/utils.env.mjs`). Two consequences that have
+already bitten:
+
+- A key that **already starts with `NUXT_`** is not overridable under its own
+  name — `NUXT_LANGSMITH_API_KEY` would need `NUXT_NUXT_LANGSMITH_API_KEY`. The
+  runtimeConfig keys are therefore `LANGGRAPH_API_URL` / `LANGSMITH_API_KEY`,
+  which makes the derived env name come out as the name everything already uses.
+- camelCase keys work but hide their env name (`githubAPIKey` →
+  `NUXT_GITHUB_API_KEY`). All private keys are UPPER_SNAKE so the Cloudflare
+  secret name is mechanically `NUXT_<KEY>`. **Keep it that way when adding one.**
+
+`NUXT_OG_IMAGE_SECRET` is the one exception to the whole scheme: nuxt-og-image
+reads `event.context.cloudflare.env.NUXT_OG_IMAGE_SECRET` directly rather than
+through `runtimeConfig`, so that name is literal and no derivation applies.
+
+**Module-scope reads are safe here, but only by accident.** With
+`nodejs_compat` and a `compatibility_date` past 2025-04-01, workerd populates
+`process.env` from the Worker's secrets BEFORE module evaluation — verified on
+workerd, not assumed — so Nitro's module-scope `_sharedRuntimeConfig` does pick
+them up and an eventless `useRuntimeConfig()` works. Prefer
+`useRuntimeConfig(event)` in new code anyway: it is per-request, it costs
+nothing, and it does not depend on that ordering holding.
+
+**Raw `process.env.*` reads bypass the `NUXT_` scheme entirely.**
+`server/middleware/rate-limit.ts` (`LANGGRAPH_RATELIMIT_*`, `WRITE_RATELIMIT_*`)
+and `server/utils/external-models/render.ts` (`MICROLINK_API_URL`) read
+unprefixed names at module scope. Those need PLAIN Worker vars, not `NUXT_`-
+prefixed ones. All have safe defaults, so they are tuning knobs rather than
+secrets — but do not assume a `NUXT_`-prefixed secret reaches them.
+
+**`nuxt build` auto-loads `.env` from the project root.** A local build bakes
+whatever is in your `.env` into `.output/`, which is why a local artifact is not
+evidence about what CI produces. To reproduce the CI build, pass an explicit
+build-time-only file: `bunx nuxi build --dotenv <file>`.
 
 ## Content Management
 

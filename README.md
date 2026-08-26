@@ -189,9 +189,8 @@ s3_id=your_s3_access_key
 s3_key=your_s3_secret_key
 
 # External APIs
-githubAPIKey=your_github_api_key
-youtubeAPIKey=your_youtube_api_key
-validation_key=your_validation_key
+GITHUB_API_KEY=your_github_api_key
+YOUTUBE_API_KEY=your_youtube_api_key
 
 # AI Services
 NUXT_LANGGRAPH_API_URL=your_langgraph_api_url

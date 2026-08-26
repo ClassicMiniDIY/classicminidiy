@@ -1,19 +1,26 @@
 import { Client } from '@langchain/langgraph-sdk';
 
-const config = useRuntimeConfig();
+// Read the config INSIDE each function, never once at module scope. On
+// Cloudflare Workers the runtime secrets reach `process.env` before module
+// evaluation, so a module-scope snapshot happens to work today — but it also
+// freezes whatever was baked at build time if that ever stops being true, and
+// the failure mode is a silently empty credential rather than an error. The
+// 2026-08-26 chat outage was exactly that shape. Per-call is free here.
+function config() {
+  return useRuntimeConfig();
+}
 
 export function createLangGraphClient() {
-  const apiUrl = config.NUXT_LANGGRAPH_API_URL;
-  const apiKey = config.NUXT_LANGSMITH_API_KEY;
-  return new Client({ apiUrl, apiKey });
+  const c = config();
+  return new Client({ apiUrl: c.LANGGRAPH_API_URL, apiKey: c.LANGSMITH_API_KEY });
 }
 
 export function getApiKey(event: any) {
-  return config.NUXT_LANGSMITH_API_KEY || getHeader(event, 'x-api-key') || '';
+  return config().LANGSMITH_API_KEY || getHeader(event, 'x-api-key') || '';
 }
 
 export function getApiUrl() {
-  return config.NUXT_LANGGRAPH_API_URL;
+  return config().LANGGRAPH_API_URL;
 }
 
 export function forwardHeaders(event: any, headers: Record<string, string>) {

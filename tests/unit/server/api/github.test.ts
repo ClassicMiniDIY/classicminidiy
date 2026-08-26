@@ -14,7 +14,7 @@ const { mockRequest } = vi.hoisted(() => {
     return err;
   };
   (globalThis as any).useRuntimeConfig = () => ({
-    githubAPIKey: 'test-gh-key',
+    GITHUB_API_KEY: 'test-gh-key',
   });
   (globalThis as any).setResponseHeaders = vi.fn();
 

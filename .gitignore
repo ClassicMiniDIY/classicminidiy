@@ -99,3 +99,9 @@ supabase/.temp/
 # Claude Code local state (never commit — worktrees contain full repo copies)
 .claude/launch.json
 .claude/worktrees/
+
+# Local wrangler dev state (miniflare simulated bindings, build temp dirs).
+.wrangler
+# Cloudflare local dev secrets. Never commit.
+.dev.vars
+.dev.vars.*

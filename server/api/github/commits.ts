@@ -35,7 +35,7 @@ export default defineEventHandler(async (event): Promise<any> => {
     const response = (await Promise.race([
       request('GET /repos/{owner}/{repo}/commits', {
         headers: {
-          authorization: config.githubAPIKey,
+          authorization: config.GITHUB_API_KEY,
         },
         owner: 'SomethingNew71',
         repo: 'MiniECUMaps',

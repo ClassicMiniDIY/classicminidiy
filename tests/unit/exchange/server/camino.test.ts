@@ -5,16 +5,16 @@ import { caminoFetch } from '~~/server/utils/exchange/camino';
 const CAMINO_API_BASE = 'https://api.getcamino.ai';
 
 // Build a runtimeConfig stub that mirrors vitest.setup.ts's public defaults but
-// lets us control the private `caminoApiKey` per test (the global stub does NOT
+// lets us control the private `CAMINO_API_KEY` per test (the global stub does NOT
 // include it).
-function stubRuntimeConfig(caminoApiKey: unknown) {
+function stubRuntimeConfig(CAMINO_API_KEY: unknown) {
   vi.stubGlobal('useRuntimeConfig', () => ({
     public: {
       siteUrl: 'https://www.classicminidiy.com',
       supabaseUrl: 'https://test.supabase.co',
       supabaseKey: 'test-anon-key',
     },
-    caminoApiKey,
+    CAMINO_API_KEY,
   }));
 }
 
@@ -34,22 +34,22 @@ describe('caminoFetch', () => {
   });
 
   describe('missing / falsy API key (graceful failure invariant)', () => {
-    it('throws a descriptive error when caminoApiKey is undefined', async () => {
+    it('throws a descriptive error when CAMINO_API_KEY is undefined', async () => {
       stubRuntimeConfig(undefined);
       await expect(caminoFetch('/relationship')).rejects.toThrow('CAMINO_API_KEY is not configured');
     });
 
-    it('throws when caminoApiKey is missing from the config entirely', async () => {
+    it('throws when CAMINO_API_KEY is missing from the config entirely', async () => {
       vi.stubGlobal('useRuntimeConfig', () => ({ public: { siteUrl: 'https://x' } }));
       await expect(caminoFetch('/relationship')).rejects.toThrow('CAMINO_API_KEY is not configured');
     });
 
-    it('throws when caminoApiKey is an empty string (falsy)', async () => {
+    it('throws when CAMINO_API_KEY is an empty string (falsy)', async () => {
       stubRuntimeConfig('');
       await expect(caminoFetch('/query')).rejects.toThrow('CAMINO_API_KEY is not configured');
     });
 
-    it('throws when caminoApiKey is null', async () => {
+    it('throws when CAMINO_API_KEY is null', async () => {
       stubRuntimeConfig(null);
       await expect(caminoFetch('/query')).rejects.toThrow('CAMINO_API_KEY is not configured');
     });

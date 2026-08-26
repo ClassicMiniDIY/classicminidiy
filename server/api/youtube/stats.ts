@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const baseURL = 'https://www.googleapis.com/youtube/v3/channels';
   const id = 'UCZIUfOFhrQ9nrR06IOoAJ2Q';
   const details = 'snippet,contentDetails,statistics';
-  const feed = `${baseURL}?key=${config.youtubeAPIKey}&id=${id}&part=${details}`;
+  const feed = `${baseURL}?key=${config.YOUTUBE_API_KEY}&id=${id}&part=${details}`;
 
   // Set cache headers - cache for 1 hour since YouTube stats change more frequently
   setResponseHeaders(event, {
