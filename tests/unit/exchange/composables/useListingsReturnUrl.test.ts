@@ -12,7 +12,7 @@ const loadComposable = async () => {
 };
 
 const STORAGE_KEY = 'tme:listings-return-url';
-const DEFAULT_URL = '/listings';
+const DEFAULT_URL = '/exchange/listings';
 
 beforeEach(() => {
   vi.resetModules();
@@ -36,31 +36,45 @@ describe('useListingsReturnUrl', () => {
   // getListingsReturnUrl()
   // ---------------------------------------------------------------------------
   describe('getListingsReturnUrl()', () => {
-    it('returns the default /listings when nothing is saved', async () => {
+    it('returns the default /exchange/listings when nothing is saved', async () => {
       const { getListingsReturnUrl } = await loadComposable();
       expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
     });
 
     it('returns a previously saved URL', async () => {
       const { rememberListingsReturnUrl, getListingsReturnUrl } = await loadComposable();
-      rememberListingsReturnUrl('/listings?page=4&manufacturer=rover');
-      expect(getListingsReturnUrl()).toBe('/listings?page=4&manufacturer=rover');
+      rememberListingsReturnUrl('/exchange/listings?page=4&manufacturer=rover');
+      expect(getListingsReturnUrl()).toBe('/exchange/listings?page=4&manufacturer=rover');
     });
 
     it('reads the value directly from sessionStorage under the namespaced key', async () => {
-      window.sessionStorage.setItem(STORAGE_KEY, '/listings?page=9');
+      window.sessionStorage.setItem(STORAGE_KEY, '/exchange/listings?page=9');
       const { getListingsReturnUrl } = await loadComposable();
-      expect(getListingsReturnUrl()).toBe('/listings?page=9');
+      expect(getListingsReturnUrl()).toBe('/exchange/listings?page=9');
     });
 
-    it('falls back to /listings when the stored value is an empty string', async () => {
+    it('falls back to /exchange/listings when the stored value is an empty string', async () => {
       // Exercises the `|| DEFAULT_URL` branch: a stored empty string is falsy.
       window.sessionStorage.setItem(STORAGE_KEY, '');
       const { getListingsReturnUrl } = await loadComposable();
       expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
     });
 
-    it('falls back to /listings when sessionStorage.getItem throws', async () => {
+    it('falls back to the default when the stored value is a pre-cutover /listings path', async () => {
+      // Browse used to live at /listings on theminiexchange.com; a value left in
+      // sessionStorage from then would send "Back to Listings" to a 404.
+      window.sessionStorage.setItem(STORAGE_KEY, '/listings?page=4');
+      const { getListingsReturnUrl } = await loadComposable();
+      expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
+    });
+
+    it('falls back to the default when the stored value is some other route', async () => {
+      window.sessionStorage.setItem(STORAGE_KEY, '/dashboard/listings');
+      const { getListingsReturnUrl } = await loadComposable();
+      expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
+    });
+
+    it('falls back to /exchange/listings when sessionStorage.getItem throws', async () => {
       const { getListingsReturnUrl } = await loadComposable();
       const spy = vi.spyOn(window.sessionStorage, 'getItem').mockImplementation(() => {
         throw new Error('denied');
@@ -76,19 +90,19 @@ describe('useListingsReturnUrl', () => {
   describe('rememberListingsReturnUrl()', () => {
     it('persists and round-trips a URL with query params', async () => {
       const { rememberListingsReturnUrl, getListingsReturnUrl } = await loadComposable();
-      rememberListingsReturnUrl('/listings?page=2&category=engine');
-      expect(window.sessionStorage.getItem(STORAGE_KEY)).toBe('/listings?page=2&category=engine');
-      expect(getListingsReturnUrl()).toBe('/listings?page=2&category=engine');
+      rememberListingsReturnUrl('/exchange/listings?page=2&category=engine');
+      expect(window.sessionStorage.getItem(STORAGE_KEY)).toBe('/exchange/listings?page=2&category=engine');
+      expect(getListingsReturnUrl()).toBe('/exchange/listings?page=2&category=engine');
     });
 
     it('replaces the previous value on subsequent saves', async () => {
       const { rememberListingsReturnUrl, getListingsReturnUrl } = await loadComposable();
-      rememberListingsReturnUrl('/listings?page=2');
-      rememberListingsReturnUrl('/listings?page=5&category=engine');
-      expect(getListingsReturnUrl()).toBe('/listings?page=5&category=engine');
+      rememberListingsReturnUrl('/exchange/listings?page=2');
+      rememberListingsReturnUrl('/exchange/listings?page=5&category=engine');
+      expect(getListingsReturnUrl()).toBe('/exchange/listings?page=5&category=engine');
     });
 
-    it('persists an empty string verbatim (no validation), which reads back as the default', async () => {
+    it('persists a path verbatim (no validation on write), which the getter then vets', async () => {
       const { rememberListingsReturnUrl, getListingsReturnUrl } = await loadComposable();
       rememberListingsReturnUrl('');
       expect(window.sessionStorage.getItem(STORAGE_KEY)).toBe('');
@@ -101,13 +115,13 @@ describe('useListingsReturnUrl', () => {
       const spy = vi.spyOn(window.sessionStorage, 'setItem').mockImplementation(() => {
         throw new Error('QuotaExceededError');
       });
-      expect(() => rememberListingsReturnUrl('/listings?page=3')).not.toThrow();
+      expect(() => rememberListingsReturnUrl('/exchange/listings?page=3')).not.toThrow();
       spy.mockRestore();
     });
 
     it('does not write to localStorage (session-scoped, not persistent)', async () => {
       const { rememberListingsReturnUrl } = await loadComposable();
-      rememberListingsReturnUrl('/listings?page=7');
+      rememberListingsReturnUrl('/exchange/listings?page=7');
       // localStorage is the vi.fn mock from the setup file; it must stay untouched.
       expect(localStorage.setItem).not.toHaveBeenCalled();
     });
@@ -119,7 +133,7 @@ describe('useListingsReturnUrl', () => {
   describe('clearListingsReturnUrl()', () => {
     it('removes the saved URL so the getter returns the default again', async () => {
       const { rememberListingsReturnUrl, getListingsReturnUrl, clearListingsReturnUrl } = await loadComposable();
-      rememberListingsReturnUrl('/listings?page=3');
+      rememberListingsReturnUrl('/exchange/listings?page=3');
       clearListingsReturnUrl();
       expect(window.sessionStorage.getItem(STORAGE_KEY)).toBeNull();
       expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
@@ -147,8 +161,8 @@ describe('useListingsReturnUrl', () => {
   it('supports the full remember/get/clear lifecycle', async () => {
     const { rememberListingsReturnUrl, getListingsReturnUrl, clearListingsReturnUrl } = await loadComposable();
     expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
-    rememberListingsReturnUrl('/listings?page=12&sort=newest');
-    expect(getListingsReturnUrl()).toBe('/listings?page=12&sort=newest');
+    rememberListingsReturnUrl('/exchange/listings?page=12&sort=newest');
+    expect(getListingsReturnUrl()).toBe('/exchange/listings?page=12&sort=newest');
     clearListingsReturnUrl();
     expect(getListingsReturnUrl()).toBe(DEFAULT_URL);
   });

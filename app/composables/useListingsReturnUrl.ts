@@ -1,7 +1,8 @@
 /**
  * Remembers the last listings browse URL (with filters + pagination)
- * so that when a user navigates from /listings → /listings/:slug → back,
- * they land on the exact page/filter state they were on — not page 1.
+ * so that when a user navigates from /exchange/listings →
+ * /exchange/listings/:slug → back, they land on the exact page/filter state
+ * they were on — not page 1.
  *
  * Backed by sessionStorage (per-tab, wiped on tab close, never sent to
  * the server) so SSR and privacy aren't impacted.
@@ -14,7 +15,14 @@
  */
 
 const STORAGE_KEY = 'tme:listings-return-url';
-const DEFAULT_URL = '/listings';
+const DEFAULT_URL = '/exchange/listings';
+
+/**
+ * Only ever hand back a path under the marketplace browse route. A stored value
+ * predating the TME cutover (when browse lived at `/listings`) would otherwise
+ * send "Back to Listings" straight to a 404.
+ */
+const isBrowsePath = (url: string) => url === DEFAULT_URL || url.startsWith(`${DEFAULT_URL}?`);
 
 export const useListingsReturnUrl = () => {
   const rememberListingsReturnUrl = (fullPath: string) => {
@@ -29,7 +37,8 @@ export const useListingsReturnUrl = () => {
   const getListingsReturnUrl = (): string => {
     if (typeof window === 'undefined') return DEFAULT_URL;
     try {
-      return window.sessionStorage.getItem(STORAGE_KEY) || DEFAULT_URL;
+      const stored = window.sessionStorage.getItem(STORAGE_KEY);
+      return stored && isBrowsePath(stored) ? stored : DEFAULT_URL;
     } catch {
       return DEFAULT_URL;
     }
