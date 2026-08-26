@@ -107,9 +107,12 @@ jobs:
           NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
           NUXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          NUXT_LANGGRAPH_API_URL: ${{ secrets.NUXT_LANGGRAPH_API_URL }}
+          NUXT_LANGSMITH_API_KEY: ${{ secrets.NUXT_LANGSMITH_API_KEY }}
         run: |
           missing=()
-          for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY; do
+          for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY \
+                      NUXT_LANGGRAPH_API_URL NUXT_LANGSMITH_API_KEY; do
             [ -n "${!name}" ] || missing+=("$name")
           done
           if [ ${#missing[@]} -gt 0 ]; then
@@ -143,9 +146,33 @@ jobs:
           NUXT_PUBLIC_MODELS_ENABLED: ${{ secrets.NUXT_PUBLIC_MODELS_ENABLED }}
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
 
-          # Server-side, read during prerender.
+          # Server-side. These are NOT read at runtime on Cloudflare — the
+          # worker has no runtime secrets (`wrangler secret list` returns []),
+          # so Nuxt bakes runtimeConfig defaults into the bundle at build time.
+          # Anything absent here is permanently empty in production. Missing
+          # NUXT_LANGSMITH_API_KEY is what took the chat down: the proxy sent no
+          # credentials and LangGraph answered "403 Missing authentication
+          # headers", surfacing as a 500 from our own API.
           NUXT_LANGGRAPH_API_URL: ${{ secrets.NUXT_LANGGRAPH_API_URL }}
+          NUXT_LANGSMITH_API_KEY: ${{ secrets.NUXT_LANGSMITH_API_KEY }}
           NUXT_OG_IMAGE_SECRET: ${{ secrets.NUXT_OG_IMAGE_SECRET }}
+
+          # 3D model library: uploads, downloads and presigning all read these.
+          S3_MODELS_BUCKET: ${{ secrets.S3_MODELS_BUCKET }}
+          S3_MODELS_REGION: ${{ secrets.S3_MODELS_REGION }}
+          S3_MODELS_ACCESS_KEY_ID: ${{ secrets.S3_MODELS_ACCESS_KEY_ID }}
+          S3_MODELS_SECRET_ACCESS_KEY: ${{ secrets.S3_MODELS_SECRET_ACCESS_KEY }}
+
+          # /mcp fails CLOSED without these, so an empty value is safe but
+          # leaves the endpoint rejecting every request.
+          MCP_API_KEY: ${{ secrets.MCP_API_KEY }}
+          MCP_API_KEYS: ${{ secrets.MCP_API_KEYS }}
+
+          # HMAC for one-click unsubscribe links, and the admin allowlist.
+          MARKETING_UNSUB_SECRET: ${{ secrets.MARKETING_UNSUB_SECRET }}
+          MARKETING_ADMIN_EMAILS: ${{ secrets.MARKETING_ADMIN_EMAILS }}
+
+          GITLAB: ${{ secrets.GITLAB }}
           # `GITHUB_*` secret names are reserved by Actions, so this one cannot
           # be called GITHUB_API_KEY. The env var the app reads is unchanged.
           githubAPIKey: ${{ secrets.GH_API_KEY }}
