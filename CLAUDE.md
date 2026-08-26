@@ -711,9 +711,13 @@ Consolidated 2026-08-26. Design doc: `docs/plans/2026-08-26-admin-consolidation.
   301s in `nuxt.config.ts` routeRules now, carrying `?targetType=` so a reviewer
   lands on the subset the old page showed. `/admin/queue` reads that param on
   load; keep it in sync with `targetTypeFilters` if a new target type appears.
-  `server/api/colors/queue/save.ts` survives with no page in front of it — see
-  the note in "Contribution Loop Invariants" about the two colour approval
-  routes; `server/utils/archiveApprovals.ts` is still what stops them drifting.
+  Their backing API routes went with them (`/api/colors/queue/**`,
+  `/api/registry/queue/{save,reject}`, `/api/wheels/review/**`) — an admin-gated
+  approval route with no UI in front of it is still a live write path, and those
+  two `save` routes wrote only `legacy_submitted_by`, which is the exact
+  contributor-credit bug the Contribution Loop invariants below forbid.
+  `/api/registry/queue/list` is the ONE survivor: it is read by the public
+  `/archive/registry/pending` page, not by admin.
 
 - **`/admin` is a triage board, not a launcher.** Navigation is the sidebar's job
   on every page, so the dashboard's job is the count. Marketplace charts stay on
@@ -777,19 +781,21 @@ parts of it that break silently if you get them wrong.
   not already have one — reassigning either steals another contributor's credit
   or overwrites curated data.
 
-- **TWO routes approve colours, and their shared decisions live in
-  `server/utils/archiveApprovals.ts` so they cannot drift again.**
-  `server/api/admin/queue/approve.post.ts` is the admin inbox and the path
-  submissions actually flow through; `server/api/colors/queue/save.ts` is the
-  older `/admin/colors/review` page, unlinked from every nav but reachable by
-  URL — and `/api/colors/queue/list` spreads `...item.data`, so the SAME
-  submissions are approvable from it. They had drifted on all four decisions
-  that matter: honouring `originalColorId`, appending rather than replacing
-  `contributor_images`, pinning asset URLs to this submission's own uploads
-  (`isOwnUploadUrl` — `submission_queue.data` is browser-written), and writing
-  `submitted_by`. Anything both routes must decide identically belongs in that
-  util, not copied into one of them. If you add a third approval surface, it
-  imports from there too.
+- **ONE route approves colours now, and its load-bearing decisions live in
+  `server/utils/archiveApprovals.ts`.** There used to be two —
+  `server/api/admin/queue/approve.post.ts` (the admin inbox, the path
+  submissions actually flow through) and `server/api/colors/queue/save.ts`
+  behind the older `/admin/colors/review` page, unlinked from every nav but
+  reachable by URL, with `/api/colors/queue/list` spreading `...item.data` so
+  the SAME submissions were approvable from it. They drifted on all four
+  decisions that matter: honouring `originalColorId`, appending rather than
+  replacing `contributor_images`, pinning asset URLs to this submission's own
+  uploads (`isOwnUploadUrl` — `submission_queue.data` is browser-written), and
+  writing `submitted_by`. The second door was deleted with the admin
+  consolidation (2026-08-26). The util stays, covered directly by
+  `tests/unit/server/utils/archiveApprovals.test.ts`: **a second approval
+  surface imports from it, it does not copy.** Adding one and reimplementing
+  any of those four decisions re-opens the duplicate-colour bug.
 
 - **`contributor_archive_items` is the single source for every contributor stat.**
   It unions the approved, user-attributed rows of wheels / registry_entries / colors /
