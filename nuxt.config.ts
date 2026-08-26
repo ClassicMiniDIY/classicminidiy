@@ -256,6 +256,10 @@ export default defineNuxtConfig({
       // path a "known route" to the sitemap module, so exclude them explicitly
       // rather than relying on redirect-detection.
       '/technical/calculators/**',
+      // Same treatment for the pre-cutover marketplace browse path, 301'd to
+      // /exchange/listings in routeRules below.
+      '/listings',
+      '/listings/**',
       // Auth-gated submission forms: real pages, but a logged-out crawler gets a
       // login wall, so they're crawl-budget waste and thin-content risk. The
       // browse surfaces (/models, /models/[slug]) carry the discoverable content.
@@ -613,6 +617,14 @@ export default defineNuxtConfig({
     '/archive/wheels/submit': { redirect: { to: '/contribute/wheel', statusCode: 301 } },
     '/submissions': { redirect: { to: '/dashboard', statusCode: 301 } },
     '/submissions/**': { redirect: { to: '/dashboard', statusCode: 301 } },
+    // Pre-cutover marketplace browse path. The theminiexchange.com -> here 301s
+    // are host-conditioned (see server/utils/tmeRedirects.ts), so on this domain
+    // /listings only ever reached the catch-all 404 — which is where stale
+    // sessionStorage state and any old cross-linked URL still point. The `/**`
+    // source makes Nitro strip the matched base, so /listings/<slug>?page=2
+    // lands on /exchange/listings/<slug>?page=2 rather than being flattened.
+    '/listings': { redirect: { to: '/exchange/listings', statusCode: 301 } },
+    '/listings/**': { redirect: { to: '/exchange/listings/**', statusCode: 301 } },
   },
 
   // AI crawler policy (GEO): allow the live answer/search bots that drive
