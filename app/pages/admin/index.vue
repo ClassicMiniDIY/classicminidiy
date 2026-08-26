@@ -18,125 +18,47 @@
     ],
   });
 
-  const supabase = useSupabase();
-  const { getStats, getMessageQueueCount } = useAdmin();
+  const { getStats } = useAdmin();
   const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
 
-  const loading = ref(true);
-
-  const attention = reactive({
-    submissions: 0,
-    listings: 0,
-    finds: 0,
-    wanted: 0,
-    messages: 0,
-    models: 0,
-    reports: 0,
-  });
+  // Shared with <AdminShell>'s sidebar badges — one TTL-cached load feeds both,
+  // rather than each surface querying the same six things on first paint.
+  const { counts: attention, moderation: marketplaceModeration, loading, ready, refresh } = useAdminCounts();
 
   const stats = reactive({
     totalUsers: 0,
     newUsers: 0,
     activeListings: 0,
-    members: 0,
   });
 
-  const marketplaceModeration = computed(() => attention.listings + attention.finds + attention.wanted);
   const totalAttention = computed(
     () =>
-      attention.submissions + marketplaceModeration.value + attention.messages + attention.models + attention.reports
+      attention.value.submissions +
+      marketplaceModeration.value +
+      attention.value.messages +
+      attention.value.models +
+      attention.value.reports
   );
 
-  /**
-   * Every count is loaded independently and swallows its own failure. One
-   * unavailable table must degrade a single tile to zero, not blank the board —
-   * this page is the first thing loaded after signing in.
-   */
-  const loadCounts = async () => {
-    const settle = (p: Promise<unknown>) => p.catch(() => undefined);
-
-    await Promise.all([
-      settle(
-        $adminFetch<{ count: number }>('/api/admin/queue/count').then((r) => {
-          attention.submissions = r?.count || 0;
-        })
-      ),
-      settle(
-        getStats().then((s: any) => {
-          stats.totalUsers = s.totalUsers || 0;
-          stats.newUsers = s.newUsers || 0;
-          stats.activeListings = s.activeListings || 0;
-        })
-      ),
-      settle(
-        supabase
-          .from('subscriptions')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'active')
-          .then(({ count }) => {
-            stats.members = count || 0;
-          })
-      ),
-      settle(
-        supabase
-          .from('models')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending')
-          .then(({ count }) => {
-            attention.models = count || 0;
-          })
-      ),
-      settle(
-        supabase
-          .from('model_reports')
-          .select('id', { count: 'exact', head: true })
-          // Matches the Reports tab on /admin/models — a report being looked at
-          // is still a report waiting on you.
-          .in('status', ['open', 'reviewing'])
-          .then(({ count }) => {
-            attention.reports = count || 0;
-          })
-      ),
-      ...(exchangeEnabled
-        ? [
-            settle(
-              supabase
-                .from('listings')
-                .select('id', { count: 'exact', head: true })
-                .eq('status', 'pending')
-                .then(({ count }) => {
-                  attention.listings = count || 0;
-                })
-            ),
-            settle(
-              supabase
-                .from('external_listings')
-                .select('id', { count: 'exact', head: true })
-                .eq('status', 'pending')
-                .then(({ count }) => {
-                  attention.finds = count || 0;
-                })
-            ),
-            settle(
-              supabase
-                .from('wanted_posts')
-                .select('id', { count: 'exact', head: true })
-                .in('moderation_status', ['pending', 'flagged'])
-                .then(({ count }) => {
-                  attention.wanted = count || 0;
-                })
-            ),
-            settle(
-              getMessageQueueCount().then((n: number) => {
-                attention.messages = n || 0;
-              })
-            ),
-          ]
-        : []),
-    ]);
-
-    loading.value = false;
+  /** Site totals, separate from the queue counts because they are this page's
+   *  alone. Failure is swallowed for the same reason: one unavailable table
+   *  must degrade a tile, not blank the first screen after signing in. */
+  const loadStats = async () => {
+    try {
+      const s: any = await getStats();
+      stats.totalUsers = s.totalUsers || 0;
+      stats.newUsers = s.newUsers || 0;
+      stats.activeListings = s.activeListings || 0;
+    } catch {
+      /* non-critical */
+    }
   };
+
+  const reload = () => Promise.all([refresh(), loadStats()]);
+
+  /** Skeleton while the first load is still outstanding as well as during a
+   *  refresh — `loading` alone is false before the first load starts. */
+  const pending = computed(() => loading.value || !ready.value);
 
   interface QueueTile {
     key: string;
@@ -155,7 +77,7 @@
         hint: 'Documents, registry, colours, wheels, fixes',
         icon: 'fas fa-inbox',
         to: '/admin/queue',
-        count: attention.submissions,
+        count: attention.value.submissions,
       },
     ];
 
@@ -163,7 +85,7 @@
       tiles.push({
         key: 'moderation',
         label: 'Marketplace moderation',
-        hint: `${attention.listings} listings · ${attention.finds} finds · ${attention.wanted} wanted`,
+        hint: `${attention.value.listings} listings · ${attention.value.finds} finds · ${attention.value.wanted} wanted`,
         icon: 'fas fa-shield-halved',
         to: '/admin/exchange/moderation',
         count: marketplaceModeration.value,
@@ -174,30 +96,30 @@
         hint: 'Flagged marketplace conversations',
         icon: 'fas fa-comments',
         to: '/admin/exchange/messages',
-        count: attention.messages,
+        count: attention.value.messages,
       });
     }
 
     tiles.push({
       key: 'models',
       label: '3D model queue',
-      hint: `${attention.reports} open report${attention.reports === 1 ? '' : 's'}`,
+      hint: `${attention.value.reports} open report${attention.value.reports === 1 ? '' : 's'}`,
       icon: 'fas fa-cube',
       to: '/admin/models',
-      count: attention.models + attention.reports,
+      count: attention.value.models + attention.value.reports,
     });
 
     return tiles;
   });
 
-  onMounted(loadCounts);
+  onMounted(reload);
 </script>
 
 <template>
   <AdminShell title="Dashboard" subtitle="What needs review right now across the site">
     <template #actions>
-      <button type="button" class="btn btn-ghost btn-sm" :disabled="loading" @click="loadCounts">
-        <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': loading }"></i>
+      <button type="button" class="btn btn-ghost btn-sm" :disabled="pending" @click="reload">
+        <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': pending }"></i>
         Refresh
       </button>
     </template>
@@ -205,7 +127,7 @@
     <!-- All-clear banner. A queue board that says nothing when empty makes you
          hunt for the emptiness; say it outright. -->
     <div
-      v-if="!loading && totalAttention === 0"
+      v-if="!pending && totalAttention === 0"
       class="alert alert-success mb-6 border border-success/30 bg-success/10"
     >
       <i class="fas fa-circle-check"></i>
@@ -213,7 +135,7 @@
     </div>
 
     <!-- Queues -->
-    <div v-if="loading" class="mb-8 grid gap-4 sm:grid-cols-2">
+    <div v-if="pending" class="mb-8 grid gap-4 sm:grid-cols-2">
       <div v-for="i in 4" :key="i" class="skeleton h-24 w-full rounded-box"></div>
     </div>
     <div v-else class="mb-8 grid gap-4 sm:grid-cols-2">
@@ -252,7 +174,7 @@
     <!-- Site totals. Deliberately four numbers, not a dashboard — the
          marketplace charts live on /admin/exchange. -->
     <h2 class="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/60">Site at a glance</h2>
-    <div v-if="loading" class="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <div v-if="pending" class="grid grid-cols-2 gap-4 md:grid-cols-4">
       <div v-for="i in 4" :key="i" class="skeleton h-24 w-full rounded-box"></div>
     </div>
     <div v-else class="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -277,7 +199,7 @@
       <div class="stat rounded-box bg-base-100 p-4 shadow-sm">
         <div class="stat-figure text-warning"><i class="fas fa-heart text-2xl"></i></div>
         <div class="stat-title text-xs">Sustaining members</div>
-        <div class="stat-value text-2xl text-warning">{{ stats.members }}</div>
+        <div class="stat-value text-2xl text-warning">{{ attention.members }}</div>
         <div class="stat-desc text-xs">Active subscriptions</div>
       </div>
     </div>

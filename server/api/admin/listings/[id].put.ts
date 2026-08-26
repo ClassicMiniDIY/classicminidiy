@@ -114,6 +114,21 @@ const ADMIN_EDITABLE_COLUMNS = new Set([
   'formatted_address',
 ]);
 
+/**
+ * Allowlisted columns that are NOT NULL in Postgres.
+ *
+ * The admin path sends an explicit null for a field the admin cleared — that is
+ * the point of it, `useListings` cannot express "remove this value". For these
+ * columns a null is a 23502 the caller cannot act on: the handler would surface
+ * a raw constraint string as a 500 and the edit would be lost. Refuse them with
+ * a message that says which field, the same way an empty title is refused.
+ *
+ * Keep this in sync with the schema, not with intuition — `description` and
+ * `location` are NOT NULL on `listings` and both are reachable from the seller
+ * edit form.
+ */
+const REQUIRED_COLUMNS = new Set(['title', 'description', 'location', 'listing_type']);
+
 /** Mirrors generateSlug() in app/composables/useListings.ts. A renamed listing
  *  gets a new URL whoever renames it — keeping the old slug on an admin rename
  *  would make the two paths disagree about what a title change means. */
@@ -161,10 +176,24 @@ export default defineEventHandler(async (event) => {
 
   const updates: Record<string, unknown> = { ...requested };
 
-  // An empty title would take the listing's identity and its URL with it.
-  if ('title' in updates) {
-    const title = typeof updates.title === 'string' ? updates.title.trim() : '';
-    if (!title) throw createError({ statusCode: 400, statusMessage: 'title cannot be empty' });
+  // Emptying a NOT NULL column is a 23502 the caller cannot act on. Name the
+  // field instead of letting a raw constraint string come back as a 500.
+  // All four are text/enum columns, so "present and usable" means a non-blank
+  // string. A number or object here would fail on type at the database instead.
+  const emptied = Object.keys(updates).filter(
+    (key) => REQUIRED_COLUMNS.has(key) && (typeof updates[key] !== 'string' || !(updates[key] as string).trim())
+  );
+  if (emptied.length) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Cannot be empty: ${emptied.join(', ')}`,
+    });
+  }
+
+  // A renamed listing gets a new URL. Trim first so the slug is derived from
+  // what actually lands in the column.
+  if (typeof updates.title === 'string') {
+    const title = updates.title.trim();
     updates.title = title;
     if (title !== listing.title) updates.slug = generateSlug(title);
   }

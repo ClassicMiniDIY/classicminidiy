@@ -204,12 +204,46 @@ describe('PUT /api/admin/listings/:id', () => {
   });
 
   it('refuses an empty title rather than stripping the listing of its identity', async () => {
-    for (const title of ['', '   ', 42]) {
+    for (const title of ['', '   ', 42, null]) {
       recorded = [];
       (readBody as any).mockResolvedValue({ changes: { title } });
       await expect(handler(evt())).rejects.toMatchObject({ statusCode: 400 });
       expect(tableCall('listings', 'update')).toBeUndefined();
     }
+  });
+
+  // The admin path sends an explicit null for a field the admin cleared, which
+  // is the point of it — but these columns are NOT NULL, so a null is a 23502
+  // the caller cannot act on. Name the field rather than letting a raw
+  // constraint string come back as a 500 with the edit lost.
+  it.each(['description', 'location', 'listing_type'])('refuses to empty the NOT NULL column %s', async (column) => {
+    for (const value of [null, '', '  ']) {
+      recorded = [];
+      (readBody as any).mockResolvedValue({ changes: { [column]: value } });
+      await expect(handler(evt())).rejects.toMatchObject({
+        statusCode: 400,
+        statusMessage: expect.stringContaining(column),
+      });
+      expect(tableCall('listings', 'update')).toBeUndefined();
+    }
+  });
+
+  it('still allows a NOT NULL column to be corrected to a new value', async () => {
+    (readBody as any).mockResolvedValue({ changes: { description: 'Corrected.' } });
+
+    await handler(evt());
+
+    expect(tableCall('listings', 'update')?.values).toEqual({ description: 'Corrected.' });
+  });
+
+  it('trims the title before deriving the slug from it', async () => {
+    (readBody as any).mockResolvedValue({ changes: { title: '  Corrected Title  ' } });
+
+    await handler(evt());
+
+    const update = tableCall('listings', 'update');
+    expect(update?.values.title).toBe('Corrected Title');
+    expect(update?.values.slug).toMatch(/^corrected-title-[0-9a-f]{8}$/);
   });
 
   it('surfaces a failed update instead of reporting success', async () => {

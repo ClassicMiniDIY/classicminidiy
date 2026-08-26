@@ -124,9 +124,11 @@
   }>();
 
   const route = useRoute();
-  const supabase = useSupabase();
   const { userProfile, signOut } = useAuth();
-  const { getMessageQueueCount } = useAdmin();
+
+  // Shared with the /admin dashboard so the two do not load the same counts
+  // twice, and TTL-cached so moving between admin sections does not refire them.
+  const { counts, moderation, load: loadCounts } = useAdminCounts();
 
   const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
 
@@ -221,50 +223,9 @@
     return best;
   });
 
-  const counts = reactive({ submissions: 0, moderation: 0, messages: 0 });
-  const badgeFor = (entry: NavEntry) => (entry.badge ? counts[entry.badge] || 0 : 0);
-
-  // Every loader swallows its own error on purpose: a badge count is decoration,
-  // and a failing count must not take a working admin page down with it.
-  const loadSubmissionCount = async () => {
-    try {
-      const res = await $adminFetch<{ count: number }>('/api/admin/queue/count');
-      counts.submissions = res?.count || 0;
-    } catch {
-      /* non-critical */
-    }
-  };
-
-  const loadMessageCount = async () => {
-    try {
-      counts.messages = await getMessageQueueCount();
-    } catch {
-      /* non-critical */
-    }
-  };
-
-  const loadModerationCount = async () => {
-    try {
-      const [listings, finds, wanted] = await Promise.all([
-        supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('external_listings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase
-          .from('wanted_posts')
-          .select('id', { count: 'exact', head: true })
-          .in('moderation_status', ['pending', 'flagged']),
-      ]);
-      counts.moderation = (listings.count || 0) + (finds.count || 0) + (wanted.count || 0);
-    } catch {
-      /* non-critical */
-    }
-  };
-
-  const loadCounts = () => {
-    loadSubmissionCount();
-    if (exchangeEnabled) {
-      loadMessageCount();
-      loadModerationCount();
-    }
+  const badgeFor = (entry: NavEntry) => {
+    if (!entry.badge) return 0;
+    return entry.badge === 'moderation' ? moderation.value : counts.value[entry.badge];
   };
 
   const isRoot = computed(() => route.path === '/admin');
@@ -283,6 +244,11 @@
     checkMarketingAccess();
   });
 
-  // Refresh badges when moving between admin sections.
-  watch(() => route.path, loadCounts);
+  // Re-check the badges when moving between admin sections. Wrapped, not passed
+  // by reference: the watcher hands its callback (newPath, oldPath), and
+  // `load(force)` would read that truthy path as force=true and defeat the cache.
+  watch(
+    () => route.path,
+    () => loadCounts()
+  );
 </script>
