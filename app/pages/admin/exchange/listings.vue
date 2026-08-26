@@ -1,16 +1,11 @@
 <template>
-  <AdminExchangeShell>
-    <!-- Page Header -->
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold mb-2">Manage Listings</h1>
-        <p class="text-base-content/70">View and manage all platform listings</p>
-      </div>
+  <AdminShell title="Manage Listings" subtitle="View and manage all platform listings">
+    <template #actions>
       <button class="btn btn-ghost btn-sm" :disabled="loading" @click="loadListings">
         <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': loading }"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <!-- Filters -->
     <div class="card bg-base-100 shadow-sm mb-6">
@@ -20,11 +15,7 @@
             <label for="status-filter" class="label">
               <span class="label-text">Filter by Status</span>
             </label>
-            <select
-              id="status-filter"
-              v-model="selectedStatus"
-              class="select select-bordered w-full max-w-xs"
-            >
+            <select id="status-filter" v-model="selectedStatus" class="select select-bordered w-full max-w-xs">
               <option :value="null">All Statuses</option>
               <option value="pending">Pending Review</option>
               <option value="active">Active</option>
@@ -119,7 +110,16 @@
                   tabindex="0"
                   class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 z-[9999]"
                 >
-                  <li v-if="listing.status !== 'active'">
+                  <!-- Direct content correction. Bypasses review by design: a
+                       wrong price on a live listing is a typo, not a
+                       resubmission. See server/api/admin/listings/[id].put.ts. -->
+                  <li>
+                    <NuxtLink :to="`/exchange/listings/${listing.slug}/edit`">
+                      <i class="fas fa-pen-to-square"></i>
+                      Edit Details
+                    </NuxtLink>
+                  </li>
+                  <li v-if="listing.status !== 'active'" class="border-t border-base-300 mt-1 pt-1">
                     <a @click="confirmChangeStatus(listing.id, 'active')">
                       <i class="fas fa-circle-check"></i>
                       Mark as Active
@@ -194,19 +194,13 @@
                 <th class="cursor-pointer select-none" @click="toggleSort('price')">
                   <span class="flex items-center gap-1">
                     Price
-                    <i
-                      class="text-xs"
-                      :class="[getSortIcon('price'), { 'opacity-30': !isSortedBy('price') }]"
-                    ></i>
+                    <i class="text-xs" :class="[getSortIcon('price'), { 'opacity-30': !isSortedBy('price') }]"></i>
                   </span>
                 </th>
                 <th class="cursor-pointer select-none" @click="toggleSort('status')">
                   <span class="flex items-center gap-1">
                     Status
-                    <i
-                      class="text-xs"
-                      :class="[getSortIcon('status'), { 'opacity-30': !isSortedBy('status') }]"
-                    ></i>
+                    <i class="text-xs" :class="[getSortIcon('status'), { 'opacity-30': !isSortedBy('status') }]"></i>
                   </span>
                 </th>
                 <th class="cursor-pointer select-none" @click="toggleSort('tier')">
@@ -290,7 +284,13 @@
                         tabindex="0"
                         class="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 z-[9999]"
                       >
-                        <li v-if="listing.status !== 'active'">
+                        <li>
+                          <NuxtLink :to="`/exchange/listings/${listing.slug}/edit`">
+                            <i class="fas fa-pen-to-square"></i>
+                            Edit Details
+                          </NuxtLink>
+                        </li>
+                        <li v-if="listing.status !== 'active'" class="border-t border-base-300 mt-1 pt-1">
                           <a @click="confirmChangeStatus(listing.id, 'active')">
                             <i class="fas fa-circle-check"></i>
                             Mark as Active
@@ -417,15 +417,11 @@
         <button>close</button>
       </form>
     </dialog>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
   import type { ListingWithPhotos } from '~/composables/useListings';
-
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useHead({
     title: 'Manage Listings - Admin - The Mini Exchange',

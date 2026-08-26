@@ -336,26 +336,28 @@ export const PAGE_DESCRIPTIONS: PageDescription[] = [
 
   // Admin Pages
   {
-    route: '/admin/wheels/review',
-    title: 'Wheels Review Admin',
-    description: 'Administrative interface for reviewing and approving wheel submissions to the wheels database.',
+    route: '/admin',
+    title: 'Admin Dashboard',
+    description: 'Administrative triage board showing every queue awaiting review across the site.',
     functions: [
-      'Review pending wheel submissions',
-      'Approve or reject wheel entries',
-      'Edit wheel information',
-      'Manage wheel database',
+      'See pending counts for every review queue',
+      'Jump to the queue that needs attention',
+      'Track user and listing totals',
     ],
     category: 'admin',
   },
   {
-    route: '/admin/registry/review',
-    title: 'Registry Review Admin',
-    description: 'Administrative interface for reviewing and managing Classic Mini registry submissions.',
+    // The per-type review screens (/admin/{wheels,registry,colors}/review) were
+    // consolidated into this one queue on 2026-08-26 — they all read the same
+    // submission_queue table, filtered by target_type. Their old paths 301 here.
+    route: '/admin/queue',
+    title: 'Submission Queue',
+    description:
+      'Administrative interface for reviewing community submissions — documents, registry entries, colours, wheels, and edit suggestions.',
     functions: [
-      'Review registry submissions',
-      'Verify Mini information',
-      'Approve or reject entries',
-      'Manage registry database',
+      'Review pending submissions of every type',
+      'Approve, reject, or request changes',
+      'Filter by submission type and status',
     ],
     category: 'admin',
   },

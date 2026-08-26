@@ -1,16 +1,11 @@
 <template>
-  <AdminExchangeShell>
-    <!-- Page Header -->
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold mb-2">Manage Finds</h1>
-        <p class="text-base-content/70">Review and moderate community-submitted finds</p>
-      </div>
+  <AdminShell title="Manage Finds" subtitle="Review and moderate community-submitted finds">
+    <template #actions>
       <button class="btn btn-ghost btn-sm" :disabled="loading" @click="refresh">
         <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': loading }"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <!-- Stats Row -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -524,15 +519,11 @@
         <button>close</button>
       </form>
     </dialog>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
   import type { ExternalListing } from '~/composables/useExternalListings';
-
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useHead({
     title: 'Manage Finds - Admin - The Mini Exchange',

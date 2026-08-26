@@ -1,11 +1,5 @@
 <template>
-  <AdminExchangeShell>
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">Site Announcement</h1>
-      <p class="text-base-content/70">Configure the announcement banner displayed on the home page</p>
-    </div>
-
+  <AdminShell title="Site Announcement" subtitle="Configure the announcement banner displayed on the home page">
     <!-- Loading State -->
     <div v-if="loading" class="skeleton h-96 w-full rounded-lg"></div>
 
@@ -94,14 +88,10 @@
         </div>
       </div>
     </div>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
-  definePageMeta({
-    layout: 'admin',
-  });
-
   useHead({
     title: 'Site Announcement - Admin - The Mini Exchange',
   });

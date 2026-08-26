@@ -8,10 +8,6 @@
     type DiscordRosterRow,
   } from '~/composables/useAdminDiscord';
 
-  definePageMeta({
-    layout: 'admin',
-  });
-
   useHead({
     title: 'Admin - Discord Roster',
     meta: [{ name: 'robots', content: 'noindex, nofollow' }],
@@ -49,9 +45,7 @@
   });
 
   /** Only the classifications actually present, in worst-first order. */
-  const presentClassifications = computed(() =>
-    DISCORD_CLASSIFICATION_ORDER.filter((c) => (counts.value[c] ?? 0) > 0)
-  );
+  const presentClassifications = computed(() => DISCORD_CLASSIFICATION_ORDER.filter((c) => (counts.value[c] ?? 0) > 0));
 
   const filtered = computed(() => {
     const q = search.value.trim().toLowerCase();
@@ -93,14 +87,13 @@
 </script>
 
 <template>
-  <div class="p-4 md:p-6">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
-      <h1 class="text-2xl font-bold">Discord Roster</h1>
+  <AdminShell title="Discord Roster" subtitle="Who is in the members-only Discord, reconciled against paid membership">
+    <template #actions>
       <button type="button" class="btn btn-sm btn-outline" :disabled="loading" @click="load">
         <i class="fas fa-rotate" :class="{ 'fa-spin': loading }"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <p class="text-sm opacity-70 mb-4">
       Who is actually in the members-only Discord, reconciled against paid membership. This page is
@@ -123,8 +116,8 @@
     <div v-else-if="run && !run.complete" role="alert" class="alert alert-warning mb-4">
       <i class="fas fa-triangle-exclamation"></i>
       <span>
-        The last audit did not complete{{ run.last_error ? `: ${run.last_error}` : '' }}. The roster below may
-        be partial &mdash; departures were deliberately not recorded.
+        The last audit did not complete{{ run.last_error ? `: ${run.last_error}` : '' }}. The roster below may be
+        partial &mdash; departures were deliberately not recorded.
       </span>
     </div>
     <div v-else-if="runIsStale" role="alert" class="alert alert-warning mb-4">
@@ -238,5 +231,5 @@
         </tbody>
       </table>
     </div>
-  </div>
+  </AdminShell>
 </template>

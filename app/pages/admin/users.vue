@@ -1,11 +1,6 @@
 <script setup lang="ts">
   import { nextTick } from 'vue';
-  import { BREADCRUMB_VERSIONS } from '../../../data/models/generic';
   import type { AdminMembership } from '~/composables/useAdminMembership';
-
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useHead({
     title: 'Admin - User Management',
@@ -420,7 +415,11 @@
       await toggleUserBan(profile.id, !profile.is_banned);
       profile.is_banned = !profile.is_banned;
       track('admin_action', { item_type: 'user', action: profile.is_banned ? 'user_banned' : 'user_unbanned' });
-      addToast({ title: 'Success', description: profile.is_banned ? 'User banned' : 'User unbanned', color: 'success' });
+      addToast({
+        title: 'Success',
+        description: profile.is_banned ? 'User banned' : 'User unbanned',
+        color: 'success',
+      });
       await refreshData();
     } catch (error: any) {
       addToast({ title: 'Error', description: error?.message || 'Failed to update user', color: 'error' });
@@ -471,24 +470,14 @@
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <!-- Breadcrumb Navigation -->
-    <div class="mb-6">
-      <Breadcrumb page="User Management" :version="BREADCRUMB_VERSIONS.ADMIN" />
-    </div>
-
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <div>
-        <span class="eyebrow">ADMIN</span>
-        <h1 class="text-2xl font-bold">User Management</h1>
-      </div>
-      <button type="button" class="btn btn-primary" :disabled="isLoading" @click="refresh">
+  <AdminShell title="User Management" subtitle="Manage accounts, trust levels, memberships, and admin permissions">
+    <template #actions>
+      <button type="button" class="btn btn-ghost btn-sm" :disabled="isLoading" @click="refresh">
         <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
-        <i v-else class="fa-solid fa-refresh"></i>
+        <i v-else class="fas fa-arrows-rotate"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <!-- Search and Filter Bar -->
     <div class="space-y-4 mb-8">
@@ -1016,7 +1005,12 @@
             </button>
 
             <template v-if="!confirmingDelete">
-              <button type="button" class="btn btn-sm btn-ghost text-error" :disabled="isProcessing" @click="confirmingDelete = true">
+              <button
+                type="button"
+                class="btn btn-sm btn-ghost text-error"
+                :disabled="isProcessing"
+                @click="confirmingDelete = true"
+              >
                 <i class="fas fa-trash"></i>
                 Delete User
               </button>
@@ -1024,7 +1018,12 @@
             <template v-else>
               <div class="flex items-center gap-2">
                 <span class="text-xs text-error">Permanently delete this user + all their listings?</span>
-                <button type="button" class="btn btn-xs btn-ghost" :disabled="isProcessing" @click="confirmingDelete = false">
+                <button
+                  type="button"
+                  class="btn btn-xs btn-ghost"
+                  :disabled="isProcessing"
+                  @click="confirmingDelete = false"
+                >
                   Cancel
                 </button>
                 <button type="button" class="btn btn-xs btn-error" :disabled="isProcessing" @click="handleDeleteUser">
@@ -1041,5 +1040,5 @@
       </div>
       <div class="modal-backdrop" @click="closeDetailsModal"></div>
     </dialog>
-  </div>
+  </AdminShell>
 </template>

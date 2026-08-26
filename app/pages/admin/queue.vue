@@ -1,13 +1,8 @@
 <script setup lang="ts">
   import { nextTick } from 'vue';
-  import { BREADCRUMB_VERSIONS } from '../../../data/models/generic';
-
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useHead({
-    title: 'Admin - Moderation Queue',
+    title: 'Admin - Submission Queue',
     meta: [
       {
         name: 'robots',
@@ -62,8 +57,19 @@
     { label: 'All', value: 'all' },
   ];
 
-  // Filter state
-  const activeTargetType = ref<string | null>(null);
+  // Filter state.
+  // `?targetType=` is honoured on load so the 301s from the retired per-type
+  // review screens (/admin/{registry,wheels,colors}/review) land on the same
+  // subset of the queue those pages used to show, rather than dumping the
+  // reviewer into everything at once.
+  const route = useRoute();
+  const initialTargetType = (() => {
+    const requested = route.query.targetType;
+    const value = Array.isArray(requested) ? requested[0] : requested;
+    return targetTypeFilters.some((filter) => filter.value === value) ? (value as string) : null;
+  })();
+
+  const activeTargetType = ref<string | null>(initialTargetType);
   const activeStatus = ref('pending');
 
   // Build query params
@@ -459,24 +465,17 @@
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <!-- Breadcrumb Navigation -->
-    <div class="mb-6">
-      <Breadcrumb page="Moderation Queue" :version="BREADCRUMB_VERSIONS.ADMIN" />
-    </div>
-
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-      <div>
-        <span class="eyebrow">ADMIN</span>
-        <h1 class="text-2xl font-bold">Moderation Queue</h1>
-      </div>
-      <button type="button" class="btn btn-primary" :disabled="isLoading" @click="refresh">
+  <AdminShell
+    title="Submission Queue"
+    subtitle="Review community submissions — documents, registry entries, colours, wheels, and edit suggestions"
+  >
+    <template #actions>
+      <button type="button" class="btn btn-ghost btn-sm" :disabled="isLoading" @click="refresh">
         <i v-if="isLoading" class="fas fa-spinner fa-spin"></i>
-        <i v-else class="fa-solid fa-refresh mr-2"></i>
+        <i v-else class="fas fa-arrows-rotate"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <!-- Filter Bar -->
     <div class="space-y-4 mb-8">
@@ -822,5 +821,5 @@
       </div>
       <div class="modal-backdrop" @click="closeRejectModal"></div>
     </dialog>
-  </div>
+  </AdminShell>
 </template>

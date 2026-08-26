@@ -241,8 +241,6 @@ export default defineNuxtConfig({
     },
     exclude: [
       '/admin',
-      '/admin/registry/review',
-      '/admin/wheels/review',
       '/login',
       '/auth/callback',
       '/logout',
@@ -580,6 +578,16 @@ export default defineNuxtConfig({
     '/technical/calculators/needles': { redirect: { to: '/technical/needles', statusCode: 301 } },
     '/technical/calculators/gearbox': { redirect: { to: '/technical/gearing', statusCode: 301 } },
     '/admin/**': { prerender: false },
+    // Admin consolidation (2026-08-26). /admin/inbox and the three per-type
+    // review screens all read the SAME `submission_queue` table — the review
+    // pages differed only by a server-side target_type filter — so they are now
+    // one page. These are 301s rather than deletions because the old URLs are
+    // bookmarked, and a routeRule redirect serves a real 301 on Vercel. They
+    // need no sitemap exclusion of their own: '/admin/**' already covers them.
+    '/admin/inbox': { redirect: { to: '/admin/queue', statusCode: 301 } },
+    '/admin/registry/review': { redirect: { to: '/admin/queue?targetType=registry', statusCode: 301 } },
+    '/admin/wheels/review': { redirect: { to: '/admin/queue?targetType=wheel', statusCode: 301 } },
+    '/admin/colors/review': { redirect: { to: '/admin/queue?targetType=color', statusCode: 301 } },
     // /auth/callback must never be prerendered or CDN-cached: each request
     // carries a single-use ?code= that the page reads on mount. If the page
     // is served from a static file or stale CDN cache, the JS bundle may run
@@ -785,15 +793,7 @@ export default defineNuxtConfig({
       // Cloudflare build the optimizer rewrites image srcs to same-origin
       // `/cdn-cgi/image/...` paths, which crawlLinks would then follow and try to
       // prerender as routes — the identical build-memory trap, different prefix.
-      ignore: [
-        '/admin',
-        '/raw',
-        '/archive/colors/',
-        '/archive/wheels/',
-        '/archive/documents/',
-        '/_ipx',
-        '/cdn-cgi',
-      ],
+      ignore: ['/admin', '/raw', '/archive/colors/', '/archive/wheels/', '/archive/documents/', '/_ipx', '/cdn-cgi'],
       routes: [
         '/',
         '/privacy',

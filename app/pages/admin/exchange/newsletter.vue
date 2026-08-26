@@ -1,10 +1,5 @@
 <template>
-  <AdminExchangeShell>
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">Weekly Newsletter</h1>
-      <p class="text-base-content/70">Manage the weekly digest sent to all subscribers</p>
-    </div>
-
+  <AdminShell title="Weekly Newsletter" subtitle="Manage the weekly digest sent to all subscribers">
     <!-- Stats Cards -->
     <div class="grid md:grid-cols-4 gap-4 mb-8">
       <div class="card bg-base-100 shadow">
@@ -164,10 +159,7 @@
                 <th class="cursor-pointer select-none" @click="toggleSort('sent_at')">
                   <span class="flex items-center gap-1">
                     Date
-                    <i
-                      class="text-xs"
-                      :class="[getSortIcon('sent_at'), { 'opacity-30': !isSortedBy('sent_at') }]"
-                    ></i>
+                    <i class="text-xs" :class="[getSortIcon('sent_at'), { 'opacity-30': !isSortedBy('sent_at') }]"></i>
                   </span>
                 </th>
                 <th class="cursor-pointer select-none" @click="toggleSort('recipient_count')">
@@ -183,10 +175,7 @@
                 <th class="cursor-pointer select-none" @click="toggleSort('status')">
                   <span class="flex items-center gap-1">
                     Status
-                    <i
-                      class="text-xs"
-                      :class="[getSortIcon('status'), { 'opacity-30': !isSortedBy('status') }]"
-                    ></i>
+                    <i class="text-xs" :class="[getSortIcon('status'), { 'opacity-30': !isSortedBy('status') }]"></i>
                   </span>
                 </th>
               </tr>
@@ -249,7 +238,8 @@
             This will send the newsletter to <strong>{{ preview?.subscriberCount || 0 }}</strong> subscribers.
           </p>
           <p v-if="preview?.shopifySubscriberCount" class="text-xs text-base-content/50 mt-1 ml-6">
-            {{ preview.profileSubscriberCount }} TME users + {{ preview.shopifySubscriberCount }} Shopify marketing subscribers
+            {{ preview.profileSubscriberCount }} TME users + {{ preview.shopifySubscriberCount }} Shopify marketing
+            subscribers
           </p>
         </div>
         <p class="text-base-content/70 mb-4">
@@ -285,14 +275,10 @@
         <button>close</button>
       </form>
     </dialog>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
-  definePageMeta({
-    layout: 'admin',
-  });
-
   useHead({
     title: 'Weekly Newsletter - Admin - The Mini Exchange',
   });

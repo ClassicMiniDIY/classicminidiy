@@ -1,22 +1,11 @@
 <template>
-  <AdminExchangeShell>
-    <!-- Page Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-3xl font-bold mb-2">Moderation Queue</h1>
-        <p class="text-base-content/70">
-          <template v-if="!loading && totalCount > 0">
-            {{ totalCount }} item{{ totalCount !== 1 ? 's' : '' }} need{{ totalCount === 1 ? 's' : '' }} review
-          </template>
-          <template v-else-if="!loading">No items pending moderation</template>
-          <template v-else>Loading moderation queue...</template>
-        </p>
-      </div>
+  <AdminShell title="Marketplace Moderation" :subtitle="moderationSubtitle">
+    <template #actions>
       <button class="btn btn-ghost btn-sm" :disabled="loading" @click="refreshAll">
         <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': loading }"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <!-- Tab Navigation -->
     <div class="tabs tabs-border mb-6">
@@ -102,6 +91,12 @@
                   >
                     <i class="fas fa-eye"></i>
                     View
+                  </NuxtLink>
+                  <!-- Fix a detail before approving, rather than rejecting the
+                       whole listing over one bad field. -->
+                  <NuxtLink :to="`/exchange/listings/${listing.slug}/edit`" class="btn btn-ghost btn-sm gap-1">
+                    <i class="fas fa-pen-to-square"></i>
+                    Edit
                   </NuxtLink>
                   <button
                     class="btn btn-error btn-sm btn-outline gap-1"
@@ -409,16 +404,13 @@
         <button>close</button>
       </form>
     </dialog>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
   import type { ListingWithPhotos } from '~/composables/useListings';
   import type { ExternalListing } from '~/composables/useExternalListings';
   import type { WantedPost } from '~/composables/useWantedPosts';
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useHead({
     title: 'Moderation Queue - Admin - The Mini Exchange',
@@ -490,6 +482,14 @@
   }));
 
   const totalCount = computed(() => counts.value.listings + counts.value.finds + counts.value.wanted);
+
+  const moderationSubtitle = computed(() => {
+    if (loading.value) return 'Loading moderation queue...';
+    if (totalCount.value === 0) return 'No items pending moderation';
+    return `${totalCount.value} item${totalCount.value !== 1 ? 's' : ''} need${
+      totalCount.value === 1 ? 's' : ''
+    } review`;
+  });
 
   // ---- Tab URL sync ----
   watch(activeTab, (tab) => {

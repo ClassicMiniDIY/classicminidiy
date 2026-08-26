@@ -1,0 +1,288 @@
+<template>
+  <div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="mb-4">
+      <Breadcrumb :page="breadcrumb || title" :version="BREADCRUMB_VERSIONS.ADMIN" :root="isRoot" />
+    </div>
+
+    <!-- Identity strip. Admin is a privileged surface of the same site, so it
+         says so explicitly rather than looking like any other page. -->
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-4">
+      <span
+        class="rounded bg-neutral px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-neutral-content"
+      >
+        Admin
+      </span>
+      <div class="flex items-center gap-4">
+        <span class="text-sm opacity-70">{{ userProfile?.display_name || userProfile?.email }}</span>
+        <button type="button" class="btn btn-ghost btn-sm" @click="handleLogout">
+          <i class="fas fa-arrow-right-from-bracket mr-2"></i>
+          Sign out
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+      <!-- Section nav.
+           Pages here render without a layout (app.vue has no NuxtLayout), so the
+           shell owns the container bounds AND the nav that every /admin page
+           wraps itself in. Admin is English-only — see the i18n notes in
+           CLAUDE.md.
+
+           Below `lg` the same ~20 entries stacked would push the page content
+           clean off the first screen, so the nav collapses to one dropdown
+           labelled with wherever you currently are. -->
+      <div class="lg:hidden">
+        <div class="dropdown w-full">
+          <button tabindex="0" class="btn btn-outline w-full justify-between">
+            <span class="flex items-center gap-2">
+              <i :class="[currentEntry?.icon || 'fas fa-gauge-high', 'w-4']" aria-hidden="true"></i>
+              {{ currentEntry?.label || 'Admin' }}
+            </span>
+            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+          </button>
+          <ul
+            tabindex="0"
+            class="dropdown-content menu z-10 mt-1 w-full rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+          >
+            <template v-for="group in visibleGroups" :key="`m-${group.label}`">
+              <li class="menu-title text-xs uppercase tracking-wider">{{ group.label }}</li>
+              <li v-for="entry in group.entries" :key="`m-${entry.to}`">
+                <NuxtLink :to="entry.to" :exact-active-class="entry.exact ? 'active' : undefined">
+                  <i :class="[entry.icon, 'w-4']" aria-hidden="true"></i>
+                  {{ entry.label }}
+                  <span v-if="badgeFor(entry)" class="badge badge-sm" :class="entry.badgeClass">
+                    {{ badgeFor(entry) }}
+                  </span>
+                </NuxtLink>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="hidden lg:block lg:w-64 lg:flex-shrink-0">
+        <nav aria-label="Admin sections">
+          <ul class="menu w-full rounded-box border border-base-300 bg-base-100 shadow-sm lg:sticky lg:top-24">
+            <template v-for="group in visibleGroups" :key="group.label">
+              <li class="menu-title text-xs uppercase tracking-wider">{{ group.label }}</li>
+              <li v-for="entry in group.entries" :key="entry.to">
+                <NuxtLink
+                  :to="entry.to"
+                  :active-class="entry.exact ? undefined : 'active'"
+                  :exact-active-class="entry.exact ? 'active' : undefined"
+                >
+                  <i :class="[entry.icon, 'w-4']" aria-hidden="true"></i>
+                  {{ entry.label }}
+                  <span v-if="badgeFor(entry)" class="badge badge-sm" :class="entry.badgeClass">
+                    {{ badgeFor(entry) }}
+                  </span>
+                </NuxtLink>
+              </li>
+            </template>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Page content -->
+      <div class="min-w-0 flex-1">
+        <div v-if="title" class="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 class="mb-1 text-3xl font-bold">{{ title }}</h1>
+            <p v-if="subtitle" class="text-base-content/70">{{ subtitle }}</p>
+          </div>
+          <slot name="actions" />
+        </div>
+        <slot />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+  import { BREADCRUMB_VERSIONS } from '../../../data/models/generic';
+
+  interface NavEntry {
+    label: string;
+    to: string;
+    icon: string;
+    /** Highlight only on an exact path match — for section index routes whose
+     *  path is a prefix of every sibling (`/admin`, `/admin/exchange`). */
+    exact?: boolean;
+    badge?: 'submissions' | 'moderation' | 'messages';
+    badgeClass?: string;
+    /** Rendered only when the marketing allowlist probe approves. */
+    marketingOnly?: boolean;
+  }
+
+  defineProps<{
+    /** Page heading. Omit to render your own header inside the slot. */
+    title?: string;
+    subtitle?: string;
+    /** Breadcrumb leaf, when it should differ from `title`. */
+    breadcrumb?: string;
+  }>();
+
+  const route = useRoute();
+  const supabase = useSupabase();
+  const { userProfile, signOut } = useAuth();
+  const { getMessageQueueCount } = useAdmin();
+
+  const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
+
+  const NAV_GROUPS: { label: string; entries: NavEntry[]; exchangeOnly?: boolean }[] = [
+    {
+      label: 'Overview',
+      entries: [{ label: 'Dashboard', to: '/admin', icon: 'fas fa-gauge-high', exact: true }],
+    },
+    {
+      label: 'Review',
+      entries: [
+        {
+          label: 'Submissions',
+          to: '/admin/queue',
+          icon: 'fas fa-inbox',
+          badge: 'submissions',
+          badgeClass: 'badge-primary',
+        },
+        {
+          label: 'Marketplace',
+          to: '/admin/exchange/moderation',
+          icon: 'fas fa-shield-halved',
+          badge: 'moderation',
+          badgeClass: 'badge-warning',
+        },
+        { label: '3D Models', to: '/admin/models', icon: 'fas fa-cube' },
+      ],
+    },
+    {
+      label: 'Marketplace',
+      exchangeOnly: true,
+      entries: [
+        { label: 'Overview', to: '/admin/exchange', icon: 'fas fa-chart-column', exact: true },
+        { label: 'Listings', to: '/admin/exchange/listings', icon: 'fas fa-tag' },
+        {
+          label: 'Messages',
+          to: '/admin/exchange/messages',
+          icon: 'fas fa-comments',
+          badge: 'messages',
+          badgeClass: 'badge-error',
+        },
+        { label: 'Finds', to: '/admin/exchange/finds', icon: 'fas fa-globe' },
+        { label: 'Wanted Posts', to: '/admin/exchange/wanted', icon: 'fas fa-bullhorn' },
+        { label: 'Social Posting', to: '/admin/exchange/promotions', icon: 'fas fa-share-nodes' },
+        { label: 'Announcements', to: '/admin/exchange/announcements', icon: 'fas fa-tower-broadcast' },
+        { label: 'Newsletter', to: '/admin/exchange/newsletter', icon: 'fas fa-newspaper' },
+      ],
+    },
+    {
+      label: 'Community',
+      entries: [
+        { label: 'Users', to: '/admin/users', icon: 'fas fa-users-gear' },
+        { label: 'Discord Roster', to: '/admin/discord', icon: 'fab fa-discord' },
+        { label: 'Chat Threads', to: '/admin/threads', icon: 'fas fa-messages' },
+      ],
+    },
+    {
+      label: 'Email',
+      entries: [
+        {
+          label: 'Marketing',
+          to: '/admin/marketing',
+          icon: 'fas fa-envelope-open-text',
+          marketingOnly: true,
+        },
+      ],
+    },
+  ];
+
+  // Marketing Email is allowlist-gated (MARKETING_ADMIN_EMAILS, server-side) —
+  // only render the entry for admins the access probe approves.
+  const { allowed: marketingAllowed, check: checkMarketingAccess } = useMarketingAccess();
+
+  const visibleGroups = computed(() =>
+    NAV_GROUPS.map((group) => ({
+      ...group,
+      entries: group.entries.filter((entry) => !entry.marketingOnly || marketingAllowed.value === true),
+    })).filter((group) => group.entries.length > 0 && (!group.exchangeOnly || exchangeEnabled))
+  );
+
+  /** The deepest entry whose path matches the current route — used to label the
+   *  mobile dropdown with wherever you actually are. */
+  const currentEntry = computed(() => {
+    const path = route.path;
+    let best: NavEntry | undefined;
+    for (const group of visibleGroups.value) {
+      for (const entry of group.entries) {
+        const matches = entry.exact ? path === entry.to : path === entry.to || path.startsWith(`${entry.to}/`);
+        if (matches && (!best || entry.to.length > best.to.length)) best = entry;
+      }
+    }
+    return best;
+  });
+
+  const counts = reactive({ submissions: 0, moderation: 0, messages: 0 });
+  const badgeFor = (entry: NavEntry) => (entry.badge ? counts[entry.badge] || 0 : 0);
+
+  // Every loader swallows its own error on purpose: a badge count is decoration,
+  // and a failing count must not take a working admin page down with it.
+  const loadSubmissionCount = async () => {
+    try {
+      const res = await $adminFetch<{ count: number }>('/api/admin/queue/count');
+      counts.submissions = res?.count || 0;
+    } catch {
+      /* non-critical */
+    }
+  };
+
+  const loadMessageCount = async () => {
+    try {
+      counts.messages = await getMessageQueueCount();
+    } catch {
+      /* non-critical */
+    }
+  };
+
+  const loadModerationCount = async () => {
+    try {
+      const [listings, finds, wanted] = await Promise.all([
+        supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('external_listings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase
+          .from('wanted_posts')
+          .select('id', { count: 'exact', head: true })
+          .in('moderation_status', ['pending', 'flagged']),
+      ]);
+      counts.moderation = (listings.count || 0) + (finds.count || 0) + (wanted.count || 0);
+    } catch {
+      /* non-critical */
+    }
+  };
+
+  const loadCounts = () => {
+    loadSubmissionCount();
+    if (exchangeEnabled) {
+      loadMessageCount();
+      loadModerationCount();
+    }
+  };
+
+  const isRoot = computed(() => route.path === '/admin');
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    await navigateTo('/login');
+  };
+
+  onMounted(() => {
+    loadCounts();
+    checkMarketingAccess();
+  });
+
+  // Refresh badges when moving between admin sections.
+  watch(() => route.path, loadCounts);
+</script>

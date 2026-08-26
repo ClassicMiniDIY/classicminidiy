@@ -1,16 +1,11 @@
 <template>
-  <AdminExchangeShell>
-    <!-- Page Header -->
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold mb-2">Wanted Post Moderation</h1>
-        <p class="text-base-content/70">Review and moderate wanted posts from the community</p>
-      </div>
+  <AdminShell title="Wanted Post Moderation" subtitle="Review and moderate wanted posts from the community">
+    <template #actions>
       <button class="btn btn-ghost btn-sm" :disabled="loading" @click="loadPosts">
         <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': loading }"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <!-- Filters -->
     <div class="card bg-base-100 shadow-sm mb-6">
@@ -301,15 +296,11 @@
         <button @click="cancelAction">close</button>
       </form>
     </dialog>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
   import type { WantedPost } from '~/composables/useWantedPosts';
-
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useSeoMeta({
     title: 'Wanted Post Moderation - Admin - The Mini Exchange',

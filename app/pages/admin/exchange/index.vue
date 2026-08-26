@@ -1,11 +1,5 @@
 <template>
-  <AdminExchangeShell>
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">Dashboard Overview</h1>
-      <p class="text-base-content/70">Platform statistics and metrics</p>
-    </div>
-
+  <AdminShell title="Marketplace Overview" subtitle="Platform statistics and metrics">
     <!-- Moderation Queue Card -->
     <div v-if="loading" class="skeleton h-20 w-full rounded-lg mb-6"></div>
     <NuxtLink
@@ -21,10 +15,7 @@
       <div class="card-body py-4 flex-row items-center justify-between">
         <div class="flex items-center gap-4">
           <div class="p-3 rounded-full" :class="totalModeration > 0 ? 'bg-warning/20' : 'bg-success/20'">
-            <i
-              class="fas fa-shield-halved text-2xl"
-              :class="totalModeration > 0 ? 'text-warning' : 'text-success'"
-            ></i>
+            <i class="fas fa-shield-halved text-2xl" :class="totalModeration > 0 ? 'text-warning' : 'text-success'"></i>
           </div>
           <div>
             <div class="text-lg font-bold">
@@ -242,14 +233,10 @@
         </div>
       </div>
     </div>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
-  definePageMeta({
-    layout: 'admin',
-  });
-
   useHead({
     title: 'Admin Dashboard - The Mini Exchange',
     meta: [

@@ -1,258 +1,285 @@
 <script setup lang="ts">
-  import { HERO_TYPES } from '../../../data/models/generic';
-
-  // SEO and meta
+  /**
+   * Admin home — a triage board, not a launcher.
+   *
+   * The card grid this replaced was pure navigation: seven links that told you
+   * nothing until you clicked one. Navigation now lives in <AdminShell>'s
+   * sidebar, on every admin page, so this page's job is the thing the sidebar
+   * cannot do — say what is waiting and how big it is.
+   *
+   * Marketplace analytics deliberately stay on /admin/exchange. Duplicating the
+   * charts here is how the two pages drifted apart in the first place.
+   */
   useHead({
     title: 'Admin Dashboard - Classic Mini DIY',
     meta: [
-      {
-        name: 'description',
-        content: 'Admin dashboard for managing Classic Mini DIY submissions and content.',
-      },
-      {
-        name: 'robots',
-        content: 'noindex, nofollow',
-      },
+      { name: 'description', content: 'Admin dashboard for Classic Mini DIY.' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
   });
 
-  // Get user info from Supabase auth
-  const { userProfile, signOut } = useAuth();
-
-  // Marketplace admin is only surfaced when the Exchange section is enabled
+  const supabase = useSupabase();
+  const { getStats, getMessageQueueCount } = useAdmin();
   const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
 
-  // Marketing Email is allowlist-gated (MARKETING_ADMIN_EMAILS, server-side) —
-  // the card only renders for admins the probe approves.
-  const { allowed: marketingAllowed, check: checkMarketingAccess } = useMarketingAccess();
-  onMounted(() => {
-    checkMarketingAccess();
+  const loading = ref(true);
+
+  const attention = reactive({
+    submissions: 0,
+    listings: 0,
+    finds: 0,
+    wanted: 0,
+    messages: 0,
+    models: 0,
+    reports: 0,
   });
 
-  // Fetch pending count — uses useAdminFetch to inject auth header and skip SSR
-  const { data: totalPendingCount } = await useAdminFetch<{ count: number }>('/api/admin/queue/count');
+  const stats = reactive({
+    totalUsers: 0,
+    newUsers: 0,
+    activeListings: 0,
+    members: 0,
+  });
 
-  // Logout handler
-  const handleLogout = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    await navigateTo('/login');
+  const marketplaceModeration = computed(() => attention.listings + attention.finds + attention.wanted);
+  const totalAttention = computed(
+    () =>
+      attention.submissions + marketplaceModeration.value + attention.messages + attention.models + attention.reports
+  );
+
+  /**
+   * Every count is loaded independently and swallows its own failure. One
+   * unavailable table must degrade a single tile to zero, not blank the board —
+   * this page is the first thing loaded after signing in.
+   */
+  const loadCounts = async () => {
+    const settle = (p: Promise<unknown>) => p.catch(() => undefined);
+
+    await Promise.all([
+      settle(
+        $adminFetch<{ count: number }>('/api/admin/queue/count').then((r) => {
+          attention.submissions = r?.count || 0;
+        })
+      ),
+      settle(
+        getStats().then((s: any) => {
+          stats.totalUsers = s.totalUsers || 0;
+          stats.newUsers = s.newUsers || 0;
+          stats.activeListings = s.activeListings || 0;
+        })
+      ),
+      settle(
+        supabase
+          .from('subscriptions')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'active')
+          .then(({ count }) => {
+            stats.members = count || 0;
+          })
+      ),
+      settle(
+        supabase
+          .from('models')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
+          .then(({ count }) => {
+            attention.models = count || 0;
+          })
+      ),
+      settle(
+        supabase
+          .from('model_reports')
+          .select('id', { count: 'exact', head: true })
+          // Matches the Reports tab on /admin/models — a report being looked at
+          // is still a report waiting on you.
+          .in('status', ['open', 'reviewing'])
+          .then(({ count }) => {
+            attention.reports = count || 0;
+          })
+      ),
+      ...(exchangeEnabled
+        ? [
+            settle(
+              supabase
+                .from('listings')
+                .select('id', { count: 'exact', head: true })
+                .eq('status', 'pending')
+                .then(({ count }) => {
+                  attention.listings = count || 0;
+                })
+            ),
+            settle(
+              supabase
+                .from('external_listings')
+                .select('id', { count: 'exact', head: true })
+                .eq('status', 'pending')
+                .then(({ count }) => {
+                  attention.finds = count || 0;
+                })
+            ),
+            settle(
+              supabase
+                .from('wanted_posts')
+                .select('id', { count: 'exact', head: true })
+                .in('moderation_status', ['pending', 'flagged'])
+                .then(({ count }) => {
+                  attention.wanted = count || 0;
+                })
+            ),
+            settle(
+              getMessageQueueCount().then((n: number) => {
+                attention.messages = n || 0;
+              })
+            ),
+          ]
+        : []),
+    ]);
+
+    loading.value = false;
   };
+
+  interface QueueTile {
+    key: string;
+    label: string;
+    hint: string;
+    icon: string;
+    to: string;
+    count: number;
+  }
+
+  const queues = computed<QueueTile[]>(() => {
+    const tiles: QueueTile[] = [
+      {
+        key: 'submissions',
+        label: 'Archive submissions',
+        hint: 'Documents, registry, colours, wheels, fixes',
+        icon: 'fas fa-inbox',
+        to: '/admin/queue',
+        count: attention.submissions,
+      },
+    ];
+
+    if (exchangeEnabled) {
+      tiles.push({
+        key: 'moderation',
+        label: 'Marketplace moderation',
+        hint: `${attention.listings} listings · ${attention.finds} finds · ${attention.wanted} wanted`,
+        icon: 'fas fa-shield-halved',
+        to: '/admin/exchange/moderation',
+        count: marketplaceModeration.value,
+      });
+      tiles.push({
+        key: 'messages',
+        label: 'Reported messages',
+        hint: 'Flagged marketplace conversations',
+        icon: 'fas fa-comments',
+        to: '/admin/exchange/messages',
+        count: attention.messages,
+      });
+    }
+
+    tiles.push({
+      key: 'models',
+      label: '3D model queue',
+      hint: `${attention.reports} open report${attention.reports === 1 ? '' : 's'}`,
+      icon: 'fas fa-cube',
+      to: '/admin/models',
+      count: attention.models + attention.reports,
+    });
+
+    return tiles;
+  });
+
+  onMounted(loadCounts);
 </script>
+
 <template>
-  <div>
-    <!-- Hero Section -->
-    <Hero
-      title="Admin Dashboard"
-      subtitle="Manage submissions and content for Classic Mini DIY"
-      :heroType="HERO_TYPES.TECH"
-      textSize="text-4xl"
-    />
+  <AdminShell title="Dashboard" subtitle="What needs review right now across the site">
+    <template #actions>
+      <button type="button" class="btn btn-ghost btn-sm" :disabled="loading" @click="loadCounts">
+        <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': loading }"></i>
+        Refresh
+      </button>
+    </template>
 
-    <!-- Breadcrumb Navigation -->
-    <div class="container mx-auto px-4 pt-10">
-      <div class="flex justify-between items-center">
-        <div class="breadcrumbs text-sm">
-          <ul>
-            <li>
-              <NuxtLink to="/" class="link link-primary">
-                <i class="fas fa-house mr-1"></i>
-                Home
-              </NuxtLink>
-            </li>
-            <li><span>Admin</span></li>
-          </ul>
-        </div>
-
-        <div class="flex items-center gap-4">
-          <span class="text-sm opacity-70"> Welcome, {{ userProfile?.display_name || userProfile?.email }} </span>
-          <button type="button" class="btn btn-ghost btn-sm" @click="handleLogout">
-            <i class="fad fa-sign-out mr-2"></i>
-            Logout
-          </button>
-        </div>
-      </div>
+    <!-- All-clear banner. A queue board that says nothing when empty makes you
+         hunt for the emptiness; say it outright. -->
+    <div
+      v-if="!loading && totalAttention === 0"
+      class="alert alert-success mb-6 border border-success/30 bg-success/10"
+    >
+      <i class="fas fa-circle-check"></i>
+      <span>All caught up — nothing is waiting for review.</span>
     </div>
 
-    <!-- Admin Components Grid -->
-    <div class="container mx-auto px-4 py-8">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-        <!-- Moderation Queue Card -->
-        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
-          <div class="card-body">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <i class="fad fa-inbox text-2xl text-primary"></i>
-              </div>
-              <div>
-                <h2 class="text-xl font-bold">Moderation Queue</h2>
-                <span v-if="totalPendingCount?.count" class="badge badge-primary badge-sm">
-                  {{ totalPendingCount.count }} pending
-                </span>
-              </div>
+    <!-- Queues -->
+    <div v-if="loading" class="mb-8 grid gap-4 sm:grid-cols-2">
+      <div v-for="i in 4" :key="i" class="skeleton h-24 w-full rounded-box"></div>
+    </div>
+    <div v-else class="mb-8 grid gap-4 sm:grid-cols-2">
+      <NuxtLink
+        v-for="queue in queues"
+        :key="queue.key"
+        :to="queue.to"
+        class="card border shadow-sm transition-colors"
+        :class="
+          queue.count > 0
+            ? 'border-warning/30 bg-warning/10 hover:bg-warning/20'
+            : 'border-base-300 bg-base-100 hover:bg-base-200'
+        "
+      >
+        <div class="card-body flex-row items-center justify-between gap-4 py-4">
+          <div class="flex min-w-0 items-center gap-4">
+            <div
+              class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+              :class="queue.count > 0 ? 'bg-warning/20 text-warning' : 'bg-base-200 text-base-content/50'"
+            >
+              <i :class="[queue.icon, 'text-xl']" aria-hidden="true"></i>
             </div>
-
-            <p class="opacity-70 mb-6">
-              Review all community submissions — documents, registry, colors, wheels, and edit suggestions.
-            </p>
-
-            <div class="card-actions justify-end">
-              <NuxtLink to="/admin/queue" class="btn btn-primary">
-                <i class="fad fa-arrow-right mr-2"></i>
-                Open Queue
-              </NuxtLink>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 font-bold">
+                {{ queue.label }}
+                <span v-if="queue.count > 0" class="badge badge-warning badge-sm">{{ queue.count }}</span>
+              </div>
+              <p class="truncate text-sm text-base-content/60">{{ queue.hint }}</p>
             </div>
           </div>
+          <i class="fas fa-chevron-right text-base-content/40" aria-hidden="true"></i>
         </div>
+      </NuxtLink>
+    </div>
 
-        <!-- 3D Models Card -->
-        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
-          <div class="card-body">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                <i class="fad fa-cube text-2xl text-secondary"></i>
-              </div>
-              <h2 class="text-xl font-bold">3D Models</h2>
-            </div>
-
-            <p class="opacity-70 mb-6">
-              Review the model library queue, handle reports and takedowns, manage sellers, and track sales.
-            </p>
-
-            <div class="card-actions justify-end">
-              <NuxtLink to="/admin/models" class="btn btn-secondary">
-                <i class="fad fa-arrow-right mr-2"></i>
-                Open Models
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-
-        <!-- Chat Threads Card -->
-        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
-          <div class="card-body">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
-                <i class="fad fa-messages text-2xl text-info"></i>
-              </div>
-              <h2 class="text-xl font-bold">Chat Threads</h2>
-            </div>
-
-            <p class="opacity-70 mb-6">
-              View and manage LangGraph chat threads from users interacting with the AI assistant.
-            </p>
-
-            <div class="card-actions justify-end">
-              <NuxtLink to="/admin/threads" class="btn btn-info">
-                <i class="fad fa-arrow-right mr-2"></i>
-                View Threads
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-
-        <!-- User Management Card -->
-        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
-          <div class="card-body">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-                <i class="fad fa-users-cog text-2xl text-warning"></i>
-              </div>
-              <h2 class="text-xl font-bold">User Management</h2>
-            </div>
-
-            <p class="opacity-70 mb-6">Manage users, trust levels, and permissions for the contributor system.</p>
-
-            <div class="card-actions justify-end">
-              <NuxtLink to="/admin/users" class="btn btn-warning">
-                <i class="fad fa-arrow-right mr-2"></i>
-                Manage Users
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-
-        <!-- Discord Roster Card -->
-        <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow">
-          <div class="card-body">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
-                <i class="fab fa-discord text-2xl text-info"></i>
-              </div>
-              <h2 class="text-xl font-bold">Discord Roster</h2>
-            </div>
-
-            <p class="opacity-70 mb-6">
-              See who is in the members-only Discord, matched to accounts by username, and spot anyone still
-              holding the paid role after going free.
-            </p>
-
-            <div class="card-actions justify-end">
-              <NuxtLink to="/admin/discord" class="btn btn-info">
-                <i class="fad fa-arrow-right mr-2"></i>
-                View Roster
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-
-        <!-- Marketing Email Card (allowlisted marketing admins only) -->
-        <div
-          v-if="marketingAllowed === true"
-          class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow"
-        >
-          <div class="card-body">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-                <i class="fad fa-envelope-open-text text-2xl text-success"></i>
-              </div>
-              <h2 class="text-xl font-bold">Marketing Email</h2>
-            </div>
-
-            <p class="opacity-70 mb-6">
-              Compose and send one-off marketing emails to newsletter subscribers, Shopify, Ghost, and Patreon
-              supporters.
-            </p>
-
-            <div class="card-actions justify-end">
-              <NuxtLink to="/admin/marketing" class="btn btn-success">
-                <i class="fad fa-arrow-right mr-2"></i>
-                Open Composer
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-
-        <!-- The Mini Exchange Card -->
-        <div
-          v-if="exchangeEnabled"
-          class="card bg-base-100 shadow-md border border-base-300 hover:shadow-2xl transition-shadow"
-        >
-          <div class="card-body">
-            <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                <i class="fad fa-store text-2xl text-accent"></i>
-              </div>
-              <h2 class="text-xl font-bold">The Mini Exchange</h2>
-            </div>
-
-            <p class="opacity-70 mb-6">
-              Marketplace admin — listings, wanted posts, finds, message moderation, promotions, newsletter, and the
-              site announcement banner.
-            </p>
-
-            <div class="card-actions justify-end">
-              <NuxtLink to="/admin/exchange" class="btn btn-accent">
-                <i class="fad fa-arrow-right mr-2"></i>
-                Open Exchange
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
+    <!-- Site totals. Deliberately four numbers, not a dashboard — the
+         marketplace charts live on /admin/exchange. -->
+    <h2 class="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/60">Site at a glance</h2>
+    <div v-if="loading" class="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div v-for="i in 4" :key="i" class="skeleton h-24 w-full rounded-box"></div>
+    </div>
+    <div v-else class="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div class="stat rounded-box bg-base-100 p-4 shadow-sm">
+        <div class="stat-figure text-primary"><i class="fas fa-users text-2xl"></i></div>
+        <div class="stat-title text-xs">Total users</div>
+        <div class="stat-value text-2xl text-primary">{{ stats.totalUsers }}</div>
+        <div class="stat-desc text-xs">Registered accounts</div>
+      </div>
+      <div class="stat rounded-box bg-base-100 p-4 shadow-sm">
+        <div class="stat-figure text-success"><i class="fas fa-user-plus text-2xl"></i></div>
+        <div class="stat-title text-xs">New users</div>
+        <div class="stat-value text-2xl text-success">{{ stats.newUsers }}</div>
+        <div class="stat-desc text-xs">Last 7 days</div>
+      </div>
+      <div v-if="exchangeEnabled" class="stat rounded-box bg-base-100 p-4 shadow-sm">
+        <div class="stat-figure text-secondary"><i class="fas fa-tag text-2xl"></i></div>
+        <div class="stat-title text-xs">Active listings</div>
+        <div class="stat-value text-2xl text-secondary">{{ stats.activeListings }}</div>
+        <div class="stat-desc text-xs">Currently live</div>
+      </div>
+      <div class="stat rounded-box bg-base-100 p-4 shadow-sm">
+        <div class="stat-figure text-warning"><i class="fas fa-heart text-2xl"></i></div>
+        <div class="stat-title text-xs">Sustaining members</div>
+        <div class="stat-value text-2xl text-warning">{{ stats.members }}</div>
+        <div class="stat-desc text-xs">Active subscriptions</div>
       </div>
     </div>
-  </div>
+  </AdminShell>
 </template>
