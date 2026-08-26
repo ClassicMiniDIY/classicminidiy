@@ -20,11 +20,21 @@
     <section class="py-12">
       <div class="container">
         <div class="max-w-3xl mx-auto">
+          <!-- Authorisation is decided after mount (see the gate in the script),
+               so this is what the server renders and what the first client paint
+               renders. The form below is never in the SSR response. -->
+          <div v-if="!authorised" class="card bg-base-100 shadow-sm">
+            <div class="card-body items-center gap-3 py-16 text-center">
+              <span class="loading loading-spinner loading-lg text-primary"></span>
+              <p class="text-base-content/70">{{ t('checkingAccess') }}</p>
+            </div>
+          </div>
+
           <!-- Admin edit banner. Writing to someone else's row should never be
                ambiguous, so it says whose listing this is and what will and
                will not happen when you save. English-only: this only ever
                renders for an admin, and admin is English-only. -->
-          <div v-if="isAdminEdit" role="alert" class="alert alert-warning mb-6 items-start">
+          <div v-if="authorised && isAdminEdit" role="alert" class="alert alert-warning mb-6 items-start">
             <i class="fas fa-user-shield mt-0.5"></i>
             <div>
               <p class="font-bold">Editing as an admin</p>
@@ -36,7 +46,7 @@
             </div>
           </div>
 
-          <div class="card bg-base-100 shadow-sm">
+          <div v-if="authorised" class="card bg-base-100 shadow-sm">
             <div class="card-body">
               <form @submit.prevent="handleSubmit" class="space-y-8">
                 <!-- Basic Information -->
@@ -899,24 +909,42 @@
 
   const currentUserId = ref<string | null>(null);
   const isAdminEdit = ref(false);
+  /** Gates the FORM, not the page. False through SSR and the first client
+   *  render; see the hydration note below. */
+  const authorised = ref(false);
 
-  if (import.meta.client) {
+  // The gate runs in onMounted, and both halves of that are deliberate.
+  //
+  // Client-side, because the Supabase session lives in localStorage rather than
+  // a cookie: `getUser()` on the server has nothing to read, so the old
+  // setup-time check threw 403 for every server render, the owner's included —
+  // a hard refresh of this page was broken for everyone.
+  //
+  // onMounted rather than an await in setup, because the template branches on
+  // the result. Resolving it during setup makes the client's first render
+  // disagree with the SSR output, which is the structural hydration mismatch
+  // that corrupted /chat (see the hydration invariant in CLAUDE.md). Deciding
+  // after mount means server and first client paint both render the "checking"
+  // branch, and it keeps the populated form out of the SSR response entirely —
+  // this URL answers anonymous requests with a placeholder, not a filled-in
+  // edit form.
+  onMounted(async () => {
     await waitForAuth();
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
 
     currentUserId.value = authUser?.id ?? null;
-    const isOwner = !!authUser && listing.value.user_id === authUser.id;
+    const isOwner = !!authUser && listing.value?.user_id === authUser.id;
     isAdminEdit.value = !isOwner && isAdmin.value;
 
     if (!isOwner && !isAdminEdit.value) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: t('errors.forbidden'),
-      });
+      showError({ statusCode: 403, statusMessage: t('errors.forbidden') });
+      return;
     }
-  }
+
+    authorised.value = true;
+  });
 
   // Category helpers
   const isVehicleOrEngine = computed(() => ['vehicle', 'engine'].includes(listing.value?.listing_category || ''));
@@ -979,7 +1007,11 @@
     dashboard_type: listing.value.dashboard_type || '',
     steering_wheel_type: listing.value.steering_wheel_type || '',
     // Modifications & Condition (vehicle only)
-    factory_options: listing.value.factory_options || [],
+    // Cloned, not aliased. `listing.value.factory_options || []` hands back the
+    // SAME array when the row has values, and the checkboxes mutate it in
+    // place — so the change-diff below compared the array against itself, was
+    // always equal, and silently dropped every factory-option edit.
+    factory_options: [...(listing.value.factory_options || [])],
     engine_mods: listing.value.engine_mods || '',
     suspension_mods: listing.value.suspension_mods || '',
     performance_upgrades: listing.value.performance_upgrades || '',
@@ -1189,6 +1221,16 @@
         const originalValue = listing.value![key as keyof typeof listing.value];
         const newValue = form[key];
 
+        // Arrays are compared by value. Identity is wrong for them twice over:
+        // a cloned array is never `===` its source even when identical, and an
+        // aliased one is always `===` even after being edited.
+        if (Array.isArray(originalValue) || Array.isArray(newValue)) {
+          const before = Array.isArray(originalValue) ? originalValue : [];
+          const after = Array.isArray(newValue) ? newValue : [];
+          if (JSON.stringify(before) !== JSON.stringify(after)) changes[key] = after;
+          return;
+        }
+
         if (originalValue === newValue) return;
 
         if (newValue === null || newValue === undefined || newValue === '') {
@@ -1300,6 +1342,7 @@
 {
   "en": {
     "pageHeading": "Edit Listing",
+    "checkingAccess": "Checking access…",
     "backToListing": "Back to Listing",
     "basicInfo": "Basic Information",
     "listingCategory": "Listing Category",
@@ -1520,6 +1563,7 @@
   },
   "es": {
     "pageHeading": "Editar anuncio",
+    "checkingAccess": "Comprobando acceso…",
     "backToListing": "Volver al anuncio",
     "basicInfo": "Información básica",
     "listingCategory": "Categoría del anuncio",
@@ -1740,6 +1784,7 @@
   },
   "fr": {
     "pageHeading": "Modifier l'annonce",
+    "checkingAccess": "Vérification de l’accès…",
     "backToListing": "Retour à l'annonce",
     "basicInfo": "Informations de base",
     "listingCategory": "Catégorie de l'annonce",
@@ -1960,6 +2005,7 @@
   },
   "de": {
     "pageHeading": "Anzeige bearbeiten",
+    "checkingAccess": "Zugriff wird geprüft…",
     "backToListing": "Zurück zur Anzeige",
     "basicInfo": "Grundlegende Informationen",
     "listingCategory": "Anzeigenkategorie",
@@ -2180,6 +2226,7 @@
   },
   "it": {
     "pageHeading": "Modifica annuncio",
+    "checkingAccess": "Verifica dell’accesso…",
     "backToListing": "Torna all'annuncio",
     "basicInfo": "Informazioni di base",
     "listingCategory": "Categoria dell'annuncio",
@@ -2400,6 +2447,7 @@
   },
   "pt": {
     "pageHeading": "Editar anúncio",
+    "checkingAccess": "A verificar o acesso…",
     "backToListing": "Voltar ao anúncio",
     "basicInfo": "Informações básicas",
     "listingCategory": "Categoria do anúncio",
@@ -2620,6 +2668,7 @@
   },
   "ru": {
     "pageHeading": "Редактировать объявление",
+    "checkingAccess": "Проверка доступа…",
     "backToListing": "Назад к объявлению",
     "basicInfo": "Основная информация",
     "listingCategory": "Категория объявления",
@@ -2840,6 +2889,7 @@
   },
   "ja": {
     "pageHeading": "出品を編集",
+    "checkingAccess": "アクセスを確認しています…",
     "backToListing": "出品に戻る",
     "basicInfo": "基本情報",
     "listingCategory": "出品カテゴリー",
@@ -3060,6 +3110,7 @@
   },
   "zh": {
     "pageHeading": "编辑刊登",
+    "checkingAccess": "正在验证访问权限…",
     "backToListing": "返回刊登",
     "basicInfo": "基本信息",
     "listingCategory": "刊登类别",
@@ -3280,6 +3331,7 @@
   },
   "ko": {
     "pageHeading": "매물 수정",
+    "checkingAccess": "접근 권한을 확인하는 중…",
     "backToListing": "매물로 돌아가기",
     "basicInfo": "기본 정보",
     "listingCategory": "매물 카테고리",
