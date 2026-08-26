@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   // guaranteed to be returned newest-first, so the latest upload could fall
   // outside the first `limit` results. Sort the full buffer, then slice.
   const fetchCount = Math.min(Math.max(limit, 20), 50);
-  const feed = `${baseURL}?key=${config.youtubeAPIKey}&playlistId=${id}&part=${details}&maxResults=${fetchCount}`;
+  const feed = `${baseURL}?key=${config.YOUTUBE_API_KEY}&playlistId=${id}&part=${details}&maxResults=${fetchCount}`;
 
   // Set cache headers - cache for 1 hour since YouTube content changes more frequently
   setResponseHeaders(event, {

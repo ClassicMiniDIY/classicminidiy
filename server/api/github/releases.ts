@@ -19,7 +19,7 @@ export default defineEventHandler(async (event): Promise<IGithubReleaseParsedRes
     // Race between the actual request and the timeout
     const response = await Promise.race([
       request('GET /repos/{owner}/{repo}/releases', {
-        headers: { authorization: config.githubAPIKey },
+        headers: { authorization: config.GITHUB_API_KEY },
         owner: 'SomethingNew71',
         repo: 'MiniECUMaps',
         request: {

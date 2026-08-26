@@ -692,12 +692,21 @@ export default defineNuxtConfig({
     S3_MODELS_REGION: process.env.S3_MODELS_REGION || 'us-east-1',
     S3_MODELS_ACCESS_KEY_ID: process.env.S3_MODELS_ACCESS_KEY_ID || '',
     S3_MODELS_SECRET_ACCESS_KEY: process.env.S3_MODELS_SECRET_ACCESS_KEY || '',
-    githubAPIKey: process.env.githubAPIKey,
-    GITLAB: process.env.GITLAB,
-    youtubeAPIKey: process.env.youtubeAPIKey,
-    validation_key: process.env.validation_key,
-    NUXT_LANGGRAPH_API_URL: process.env.NUXT_LANGGRAPH_API_URL,
-    NUXT_LANGSMITH_API_KEY: process.env.NUXT_LANGSMITH_API_KEY,
+    // Renamed from `githubAPIKey`/`youtubeAPIKey`. Nitro derives the env-override
+    // name as NUXT_ + snakeCase(key).toUpperCase(), so a camelCase key is
+    // overridable but the name is not obvious from reading the key. UPPER_SNAKE
+    // makes the Cloudflare secret name mechanical: NUXT_<KEY>. The legacy
+    // camelCase env names are still accepted so existing local `.env` files and
+    // the Vercel project keep working.
+    GITHUB_API_KEY: process.env.GITHUB_API_KEY || process.env.githubAPIKey || '',
+    YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY || process.env.youtubeAPIKey || '',
+    // Renamed from NUXT_LANGGRAPH_API_URL / NUXT_LANGSMITH_API_KEY. A key that
+    // already starts with `NUXT_` is NOT overridable under its own name: the
+    // override name would be NUXT_NUXT_LANGSMITH_API_KEY. Stripping the prefix
+    // from the KEY makes the env name come out as the name everything already
+    // uses. Consumers read config.LANGSMITH_API_KEY; the env var is unchanged.
+    LANGGRAPH_API_URL: process.env.NUXT_LANGGRAPH_API_URL || '',
+    LANGSMITH_API_KEY: process.env.NUXT_LANGSMITH_API_KEY || '',
     // MCP API Keys — no hardcoded fallback: an unset MCP_API_KEY must resolve to
     // empty so the /mcp middleware fails closed rather than accepting a baked-in
     // default. Set MCP_API_KEY (or MCP_API_KEYS) in .env for local development.
@@ -711,7 +720,7 @@ export default defineNuxtConfig({
     // Camino AI key for the exchange safe-meeting-spot + distance proxies
     // (server/utils/exchange/camino.ts). Optional — the camino routes 502
     // gracefully when unset; set CAMINO_API_KEY in prod to enable.
-    caminoApiKey: process.env.CAMINO_API_KEY || '',
+    CAMINO_API_KEY: process.env.CAMINO_API_KEY || '',
     // Social auto-posting (Meta/Bluesky) lives entirely in the post-listing-social
     // Supabase edge function since PR #649 — its credentials are edge-fn secrets,
     // NOT web runtimeConfig. The web side is only the thin requireAdminAuth proxy

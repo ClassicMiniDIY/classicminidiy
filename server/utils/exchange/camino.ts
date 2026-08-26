@@ -40,7 +40,7 @@ export async function caminoFetch<T = any>(
   } = {}
 ): Promise<T> {
   const config = useRuntimeConfig();
-  const apiKey = config.caminoApiKey;
+  const apiKey = config.CAMINO_API_KEY;
 
   if (!apiKey) {
     throw new Error('CAMINO_API_KEY is not configured');

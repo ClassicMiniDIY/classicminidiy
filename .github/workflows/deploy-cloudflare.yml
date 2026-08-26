@@ -93,36 +93,63 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      # The build BAKES these in — it does not read them at runtime. Runtime env
-      # lives in the Cloudflare dashboard (wrangler.jsonc has no `vars` block),
-      # which is why production works while this workflow's build did not: it
-      # had no env at all, so the sitemap sources 500'd and the build died.
+      # Two different failure modes, so two different checks.
       #
-      # This guard exists because the failure mode without it is WORSE than a
-      # broken build. `NUXT_PUBLIC_*` is compiled into the client bundle, so a
-      # build missing them succeeds and deploys a site whose auth and
-      # marketplace are silently dead. Fail loudly instead.
-      - name: Check build secrets are present
+      # BUILD-TIME values are compiled into the artifact. `NUXT_PUBLIC_*` lands
+      # in the client bundle and cannot be supplied later, so a build missing
+      # them succeeds and deploys a site whose auth and marketplace are silently
+      # dead. Fail loudly instead.
+      - name: Check build-time secrets are present
         env:
           NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
           NUXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          NUXT_LANGGRAPH_API_URL: ${{ secrets.NUXT_LANGGRAPH_API_URL }}
-          NUXT_LANGSMITH_API_KEY: ${{ secrets.NUXT_LANGSMITH_API_KEY }}
         run: |
           missing=()
-          for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY \
-                      NUXT_LANGGRAPH_API_URL NUXT_LANGSMITH_API_KEY; do
+          for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY; do
             [ -n "${!name}" ] || missing+=("$name")
           done
           if [ ${#missing[@]} -gt 0 ]; then
-            echo "::error::Missing required build secrets: ${missing[*]}"
+            echo "::error::Missing required build-time secrets: ${missing[*]}"
             echo "Add them under Settings > Secrets and variables > Actions."
             echo "Without them the build either fails on the sitemap sources or,"
             echo "worse, succeeds and ships a site with auth and /exchange dead."
             exit 1
           fi
-          echo "All required build secrets are present."
+          echo "All required build-time secrets are present."
+
+      # RUNTIME values are Cloudflare Worker secrets, read by Nitro's env
+      # override at request time. They are deliberately NOT in the build env any
+      # more — that is the whole point of this split. But the earlier failure
+      # mode was the runtime half being absent entirely while every build quietly
+      # baked in an empty string, so absence has to be checked, not assumed.
+      # This asserts the NAMES exist; it never reads a value.
+      - name: Check runtime secrets exist on the worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          names=$(bunx wrangler secret list --format json | jq -r '.[].name' | sort)
+          echo "Worker has $(echo "$names" | grep -c . ) secret(s)."
+          missing=()
+          for want in NUXT_SUPABASE_SERVICE_KEY \
+                      NUXT_LANGGRAPH_API_URL NUXT_LANGSMITH_API_KEY \
+                      NUXT_GITHUB_API_KEY NUXT_YOUTUBE_API_KEY \
+                      NUXT_MCP_API_KEY \
+                      NUXT_MARKETING_UNSUB_SECRET NUXT_MARKETING_ADMIN_EMAILS \
+                      NUXT_S3_MODELS_BUCKET NUXT_S3_MODELS_REGION \
+                      NUXT_S3_MODELS_ACCESS_KEY_ID NUXT_S3_MODELS_SECRET_ACCESS_KEY; do
+            grep -qx "$want" <<< "$names" || missing+=("$want")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Worker is missing runtime secrets: ${missing[*]}"
+            echo "Set them with ./scripts/set-cf-secrets.sh (run locally, reads your .env)."
+            echo "A missing one is an empty string at runtime, not an error -- which is"
+            echo "how the 2026-08-26 chat outage shipped green."
+            exit 1
+          fi
+          echo "All required runtime secrets are present on the worker."
 
       - name: Build for Cloudflare Workers
         env:
@@ -145,37 +172,20 @@ jobs:
           NUXT_PUBLIC_MODELS_ENABLED: ${{ secrets.NUXT_PUBLIC_MODELS_ENABLED }}
           POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
 
-          # Server-side. These are NOT read at runtime on Cloudflare — the
-          # worker has no runtime secrets (`wrangler secret list` returns []),
-          # so Nuxt bakes runtimeConfig defaults into the bundle at build time.
-          # Anything absent here is permanently empty in production. Missing
-          # NUXT_LANGSMITH_API_KEY is what took the chat down: the proxy sent no
-          # credentials and LangGraph answered "403 Missing authentication
-          # headers", surfacing as a 500 from our own API.
-          NUXT_LANGGRAPH_API_URL: ${{ secrets.NUXT_LANGGRAPH_API_URL }}
-          NUXT_LANGSMITH_API_KEY: ${{ secrets.NUXT_LANGSMITH_API_KEY }}
-          NUXT_OG_IMAGE_SECRET: ${{ secrets.NUXT_OG_IMAGE_SECRET }}
-
-          # 3D model library: uploads, downloads and presigning all read these.
-          S3_MODELS_BUCKET: ${{ secrets.S3_MODELS_BUCKET }}
-          S3_MODELS_REGION: ${{ secrets.S3_MODELS_REGION }}
-          S3_MODELS_ACCESS_KEY_ID: ${{ secrets.S3_MODELS_ACCESS_KEY_ID }}
-          S3_MODELS_SECRET_ACCESS_KEY: ${{ secrets.S3_MODELS_SECRET_ACCESS_KEY }}
-
-          # /mcp fails CLOSED without these, so an empty value is safe but
-          # leaves the endpoint rejecting every request.
-          MCP_API_KEY: ${{ secrets.MCP_API_KEY }}
-          MCP_API_KEYS: ${{ secrets.MCP_API_KEYS }}
-
-          # HMAC for one-click unsubscribe links, and the admin allowlist.
-          MARKETING_UNSUB_SECRET: ${{ secrets.MARKETING_UNSUB_SECRET }}
-          MARKETING_ADMIN_EMAILS: ${{ secrets.MARKETING_ADMIN_EMAILS }}
-
-          GITLAB: ${{ secrets.GITLAB }}
-          # `GITHUB_*` secret names are reserved by Actions, so this one cannot
-          # be called GITHUB_API_KEY. The env var the app reads is unchanged.
-          githubAPIKey: ${{ secrets.GH_API_KEY }}
-          youtubeAPIKey: ${{ secrets.YOUTUBE_API_KEY }}
+          # Everything else server-side is now a CLOUDFLARE RUNTIME SECRET and is
+          # deliberately absent here — see scripts/set-cf-secrets.sh and the
+          # "Build-time vs runtime secrets" section in CLAUDE.md. Adding one back
+          # would re-bake it into the bundle and undo the split.
+          #
+          # These two are the exception: they are read at BUILD time as well as at
+          # runtime, because crawlLinks prerenders pages that fetch
+          # /api/{github,youtube}/*. Unset here bakes an empty widget into static
+          # HTML, which no runtime secret can repair.
+          #
+          # `GITHUB_*` secret names are reserved by Actions, so the Actions secret
+          # is GH_API_KEY. The runtimeConfig key is GITHUB_API_KEY.
+          GITHUB_API_KEY: ${{ secrets.GH_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           # MANDATORY. Node caps its own heap well below the runner's RAM, so
           # this is required regardless of runner size. 6144 is NOT enough for
           # this repo — it OOMs with `Reached heap limit`. Measured, not guessed.

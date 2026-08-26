@@ -14,7 +14,7 @@ const { mockAxiosGet } = vi.hoisted(() => {
     return err;
   };
   (globalThis as any).useRuntimeConfig = () => ({
-    youtubeAPIKey: 'test-yt-key',
+    YOUTUBE_API_KEY: 'test-yt-key',
   });
   (globalThis as any).setResponseHeaders = vi.fn();
 
