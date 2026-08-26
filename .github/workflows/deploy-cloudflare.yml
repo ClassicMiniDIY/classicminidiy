@@ -1,10 +1,23 @@
 name: Deploy to Cloudflare Workers
 
-# Phase 2: manual only. There is no `push` trigger, because production still
-# runs on Vercel — this deploys to workers.dev so the migration can be exercised
-# without touching live traffic. Phase 4 adds the push-to-main trigger, and even
-# then the actual platform switch is a DNS/proxy change, not this workflow.
+# Cloudflare is production, so a merge to main deploys. This was the one Phase 4
+# item that never landed: the workflow stayed `workflow_dispatch`-only from the
+# Phase 2 era, when production was still Vercel and this only pushed to
+# workers.dev. The cutover happened, workers.dev was disabled, and the smoke
+# test already points at www.classicminidiy.com — but nothing ever triggered it,
+# so merges to main sat undeployed.
+#
+# `workflow_dispatch` is kept for preview builds, dry runs and re-deploys.
 on:
+  push:
+    branches: [main]
+    # Docs and markdown are not part of the built site — there is no `content/`
+    # directory and nothing renders repo markdown — so a docs-only commit does
+    # not need a 30-minute build. Anything that can change the site is NOT
+    # listed here. If you ever add rendered markdown content, drop this.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   workflow_dispatch:
     inputs:
       site_env:
@@ -22,9 +35,53 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Gate the deploy on the same suite the PR check runs. A merge is normally
+  # already green from its PR, but this also covers a direct push to main and a
+  # merge whose result differs from what was tested in isolation.
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Not --frozen-lockfile, for the same bun.lockb/bun.lock transition reason
+      # documented in pr-check.yml.
+      - name: Install dependencies
+        run: bun install
+
+      # tsconfig.json extends the generated .nuxt/tsconfig.json, which is not
+      # committed and is not produced by this repo's overridden postinstall.
+      # Without this every test file fails to load. See pr-check.yml.
+      - name: Prepare Nuxt types
+        run: bunx nuxi prepare
+
+      - name: Run tests
+        run: bun run test
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
+    # `inputs.*` are EMPTY on a push event, so these cannot be read directly in
+    # the steps below. Resolved once here instead:
+    #
+    #   NUXT_SITE_ENV — a push to main is a production deploy. Falling through
+    #   to the unset default would have been actively harmful: unset means the
+    #   PREVIEW behaviour, i.e. `noindex` plus no image transforms, so every
+    #   merge would have published a non-indexable production site.
+    #
+    #   DRY_RUN — false on push; only a manual run can ask for a dry run.
+    env:
+      NUXT_SITE_ENV: ${{ inputs.site_env || 'production' }}
+      DRY_RUN: ${{ inputs.dry_run == true }}
+
     steps:
       - uses: actions/checkout@v6
 
@@ -56,9 +113,9 @@ jobs:
           # Both default to the preview/safe behaviour when unset, so a mistake
           # here degrades (unoptimized images, noindex) rather than breaking.
           #
-          # Driven by the workflow input so a production deploy is an explicit,
-          # auditable choice rather than a default someone forgot to change.
-          NUXT_SITE_ENV: ${{ inputs.site_env }}
+          # Resolved at job level (see the `env:` block above) because a push
+          # event carries no `inputs`. A manual run still chooses explicitly;
+          # a merge to main is always production.
         run: bun run build
 
       # routeRules and definePageMeta redirects are prerendered as meta-refresh
@@ -77,7 +134,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy
-        if: ${{ !inputs.dry_run }}
+        if: env.DRY_RUN != 'true'
         run: bunx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -91,5 +148,5 @@ jobs:
       # more. A preview build is verified by the build + dry-run steps above; use
       # `wrangler versions upload` if a real preview URL is needed.
       - name: Smoke-test the deployment
-        if: ${{ !inputs.dry_run && inputs.site_env == 'production' }}
+        if: env.DRY_RUN != 'true' && env.NUXT_SITE_ENV == 'production'
         run: ./scripts/verify-cf-deploy.sh https://www.classicminidiy.com
