@@ -213,6 +213,28 @@ else
   skip "TME redirect map"
 fi
 
+# The assistant is a headline feature and it depends on a build-baked
+# credential, so a deploy can be green in every other respect while chat is
+# dead for every visitor — which is exactly what happened on the first CI
+# deploy: build, deploy and this smoke test all passed while
+# /api/langgraph/** answered 500 because NUXT_LANGSMITH_API_KEY was empty.
+#
+# This asserts only that OUR side is configured: an upstream auth rejection
+# means we shipped without credentials. Other upstream failures are tolerated,
+# so a LangGraph outage does not fail our deploy.
+chat_body=$(curl -sS -m 30 -X POST "$ORIGIN/api/langgraph/threads/new/runs/stream" \
+  -H 'Content-Type: application/json' \
+  -d '{"assistant_id":"agent","input":{"messages":[{"type":"human","content":"deploy smoke test"}]}}' 2>/dev/null | head -c 2000)
+
+case "$chat_body" in
+  *"Missing authentication headers"*|*"HTTP 401"*|*"HTTP 403"*)
+    bad "chat proxy has no upstream credentials (NUXT_LANGSMITH_API_KEY empty in the build?)"
+    ;;
+  *)
+    ok "chat proxy authenticates upstream"
+    ;;
+esac
+
 echo
 printf 'passed %d, failed %d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1
