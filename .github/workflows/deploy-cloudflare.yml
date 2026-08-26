@@ -93,9 +93,63 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      # The build BAKES these in — it does not read them at runtime. Runtime env
+      # lives in the Cloudflare dashboard (wrangler.jsonc has no `vars` block),
+      # which is why production works while this workflow's build did not: it
+      # had no env at all, so the sitemap sources 500'd and the build died.
+      #
+      # This guard exists because the failure mode without it is WORSE than a
+      # broken build. `NUXT_PUBLIC_*` is compiled into the client bundle, so a
+      # build missing them succeeds and deploys a site whose auth and
+      # marketplace are silently dead. Fail loudly instead.
+      - name: Check build secrets are present
+        env:
+          NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
+          NUXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          missing=()
+          for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required build secrets: ${missing[*]}"
+            echo "Add them under Settings > Secrets and variables > Actions."
+            echo "Without them the build either fails on the sitemap sources or,"
+            echo "worse, succeeds and ships a site with auth and /exchange dead."
+            exit 1
+          fi
+          echo "All required build secrets are present."
+
       - name: Build for Cloudflare Workers
         env:
           NITRO_PRESET: cloudflare_module
+
+          # Supabase: the sitemap sources prerender through getServiceClient(),
+          # and the public pair is baked into the client bundle.
+          NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
+          NUXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+          # Baked into the client bundle. A missing one degrades a feature
+          # silently rather than failing, which is why they are all listed
+          # rather than left to defaults.
+          NUXT_PUBLIC_SITE_URL: ${{ secrets.NUXT_PUBLIC_SITE_URL }}
+          NUXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ${{ secrets.NUXT_PUBLIC_MAPBOX_ACCESS_TOKEN }}
+          NUXT_PUBLIC_STRIPE_PORTAL_URL: ${{ secrets.NUXT_PUBLIC_STRIPE_PORTAL_URL }}
+          NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NUXT_PUBLIC_TURNSTILE_SITE_KEY }}
+          NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: ${{ secrets.NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID }}
+          NUXT_PUBLIC_EXCHANGE_ENABLED: ${{ secrets.NUXT_PUBLIC_EXCHANGE_ENABLED }}
+          NUXT_PUBLIC_MODELS_ENABLED: ${{ secrets.NUXT_PUBLIC_MODELS_ENABLED }}
+          POSTHOG_PUBLIC_KEY: ${{ secrets.POSTHOG_PUBLIC_KEY }}
+
+          # Server-side, read during prerender.
+          NUXT_LANGGRAPH_API_URL: ${{ secrets.NUXT_LANGGRAPH_API_URL }}
+          NUXT_OG_IMAGE_SECRET: ${{ secrets.NUXT_OG_IMAGE_SECRET }}
+          # `GITHUB_*` secret names are reserved by Actions, so this one cannot
+          # be called GITHUB_API_KEY. The env var the app reads is unchanged.
+          githubAPIKey: ${{ secrets.GH_API_KEY }}
+          youtubeAPIKey: ${{ secrets.YOUTUBE_API_KEY }}
           # MANDATORY. Node caps its own heap well below the runner's RAM, so
           # this is required regardless of runner size. 6144 is NOT enough for
           # this repo — it OOMs with `Reached heap limit`. Measured, not guessed.
