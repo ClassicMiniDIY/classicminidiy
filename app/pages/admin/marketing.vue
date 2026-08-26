@@ -1,12 +1,8 @@
 <template>
-  <AdminExchangeShell>
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">Marketing Email</h1>
-      <p class="text-base-content/70">
-        Compose one-off CMDIY marketing emails — sent to newsletter subscribers, Shopify, Ghost, and Patreon supporters
-      </p>
-    </div>
-
+  <AdminShell
+    title="Marketing Email"
+    subtitle="Compose one-off CMDIY marketing emails — sent to newsletter subscribers, Shopify, Ghost, and Patreon supporters"
+  >
     <!-- Active send progress -->
     <div v-if="activeSend" class="alert mb-6" :class="stalledSend ? 'alert-warning' : 'alert-info'">
       <span v-if="!stalledSend" class="loading loading-spinner loading-sm"></span>
@@ -440,14 +436,13 @@
       </div>
       <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
   import draggable from 'vuedraggable';
   import type { MarketingBlock, MarketingEmailRecord } from '~/composables/useMarketingEmail';
 
-  definePageMeta({ layout: 'admin' });
   useHead({ title: 'Marketing Email - Admin - Classic Mini DIY' });
   useSeoMeta({ robots: 'noindex, nofollow' });
 

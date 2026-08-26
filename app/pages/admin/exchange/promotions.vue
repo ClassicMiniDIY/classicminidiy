@@ -1,10 +1,5 @@
 <template>
-  <AdminExchangeShell>
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">Social Posting</h1>
-      <p class="text-base-content/70">Manage social media posts for listings</p>
-    </div>
-
+  <AdminShell title="Social Posting" subtitle="Manage social media posts for listings">
     <!-- Stats Cards -->
     <div class="grid md:grid-cols-3 gap-4 mb-8">
       <div class="card bg-base-100 shadow">
@@ -101,7 +96,11 @@
 
                   <!-- Retry Buttons -->
                   <div class="flex flex-wrap gap-2">
-                    <NuxtLink :to="`/exchange/listings/${item.listing.slug}`" target="_blank" class="btn btn-sm btn-ghost">
+                    <NuxtLink
+                      :to="`/exchange/listings/${item.listing.slug}`"
+                      target="_blank"
+                      class="btn btn-sm btn-ghost"
+                    >
                       <i class="fas fa-eye"></i>
                       View
                     </NuxtLink>
@@ -151,21 +150,25 @@
                     <div class="font-semibold capitalize">{{ platform }} failed</div>
                     <div class="break-words">{{ detail.error }}</div>
                     <details v-if="hasDiagnostics(detail)" class="mt-2">
-                      <summary class="cursor-pointer text-xs opacity-80 hover:opacity-100">
-                        Diagnostic details
-                      </summary>
+                      <summary class="cursor-pointer text-xs opacity-80 hover:opacity-100">Diagnostic details</summary>
                       <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
                         <template v-if="detail.errorCode !== undefined">
                           <dt class="opacity-70">Code</dt>
-                          <dd><code>{{ detail.errorCode }}</code></dd>
+                          <dd>
+                            <code>{{ detail.errorCode }}</code>
+                          </dd>
                         </template>
                         <template v-if="detail.errorSubcode !== undefined">
                           <dt class="opacity-70">Subcode</dt>
-                          <dd><code>{{ detail.errorSubcode }}</code></dd>
+                          <dd>
+                            <code>{{ detail.errorSubcode }}</code>
+                          </dd>
                         </template>
                         <template v-if="detail.errorType">
                           <dt class="opacity-70">Type</dt>
-                          <dd><code>{{ detail.errorType }}</code></dd>
+                          <dd>
+                            <code>{{ detail.errorType }}</code>
+                          </dd>
                         </template>
                         <template v-if="detail.userMessage">
                           <dt class="opacity-70">User msg</dt>
@@ -243,7 +246,11 @@
                   {{ formatDate(listing.created_at) }}
                 </div>
                 <div class="flex gap-2">
-                  <NuxtLink :to="`/exchange/listings/${listing.slug}`" target="_blank" class="btn btn-sm btn-ghost flex-1">
+                  <NuxtLink
+                    :to="`/exchange/listings/${listing.slug}`"
+                    target="_blank"
+                    class="btn btn-sm btn-ghost flex-1"
+                  >
                     <i class="fas fa-eye"></i>
                     View
                   </NuxtLink>
@@ -390,7 +397,10 @@
                     Posted
                     <i
                       class="text-xs"
-                      :class="[getSuccessSortIcon('listing.created_at'), { 'opacity-30': !isSuccessSortedBy('listing.created_at') }]"
+                      :class="[
+                        getSuccessSortIcon('listing.created_at'),
+                        { 'opacity-30': !isSuccessSortedBy('listing.created_at') },
+                      ]"
                     ></i>
                   </span>
                 </th>
@@ -513,7 +523,7 @@
         </div>
       </div>
     </div>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
@@ -529,10 +539,6 @@
 
   // Bluesky handle for constructing post URLs
   const blueskyHandle = useRuntimeConfig().public.blueskyHandle || 'theminiexchange.bsky.social';
-
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useHead({
     title: 'Social Posting - Admin - The Mini Exchange',

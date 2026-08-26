@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { HERO_TYPES } from '~~/data/models/generic';
-
   const supabase = useSupabase();
 
   type Tab = 'queue' | 'library' | 'reports' | 'sellers' | 'sales' | 'external';
@@ -473,533 +471,505 @@
 </script>
 
 <template>
-  <div>
-    <Hero
-      title="3D Models Admin"
-      subtitle="Moderate the model library, reports, sellers, and sales"
-      :heroType="HERO_TYPES.TECH"
-      textSize="text-4xl"
-    />
+  <AdminShell title="3D Models" subtitle="Moderate the model library, reports, sellers, and sales">
+    <!-- Tabs -->
+    <div role="tablist" class="tabs tabs-border mb-6">
+      <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'queue' }" @click="tab = 'queue'">
+        <i class="fas fa-inbox"></i> Queue
+        <span v-if="loaded.queue && queue.length" class="badge badge-warning badge-sm">{{ queue.length }}</span>
+      </button>
+      <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'library' }" @click="tab = 'library'">
+        <i class="fas fa-cubes"></i> All models
+      </button>
+      <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'reports' }" @click="tab = 'reports'">
+        <i class="fas fa-flag"></i> Reports
+        <span v-if="loaded.reports && reports.length" class="badge badge-error badge-sm">{{ reports.length }}</span>
+      </button>
+      <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'sellers' }" @click="tab = 'sellers'">
+        <i class="fas fa-store"></i> Sellers
+      </button>
+      <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'sales' }" @click="tab = 'sales'">
+        <i class="fas fa-chart-line"></i> Sales
+      </button>
+      <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'external' }" @click="tab = 'external'">
+        <i class="fas fa-link"></i> External
+        <span v-if="externalCount" class="badge badge-warning badge-sm">{{ externalCount }}</span>
+      </button>
+    </div>
 
-    <div class="container mx-auto px-4 py-8">
-      <div class="breadcrumbs text-sm mb-4">
-        <ul>
-          <li>
-            <NuxtLink to="/admin" class="link link-primary"><i class="fas fa-gauge mr-1"></i> Admin</NuxtLink>
-          </li>
-          <li><span>3D Models</span></li>
-        </ul>
+    <!-- ================= QUEUE ================= -->
+    <div v-show="tab === 'queue'">
+      <div v-if="queueLoading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
       </div>
-
-      <!-- Tabs -->
-      <div role="tablist" class="tabs tabs-border mb-6">
-        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'queue' }" @click="tab = 'queue'">
-          <i class="fas fa-inbox"></i> Queue
-          <span v-if="loaded.queue && queue.length" class="badge badge-warning badge-sm">{{ queue.length }}</span>
-        </button>
-        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'library' }" @click="tab = 'library'">
-          <i class="fas fa-cubes"></i> All models
-        </button>
-        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'reports' }" @click="tab = 'reports'">
-          <i class="fas fa-flag"></i> Reports
-          <span v-if="loaded.reports && reports.length" class="badge badge-error badge-sm">{{ reports.length }}</span>
-        </button>
-        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'sellers' }" @click="tab = 'sellers'">
-          <i class="fas fa-store"></i> Sellers
-        </button>
-        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'sales' }" @click="tab = 'sales'">
-          <i class="fas fa-chart-line"></i> Sales
-        </button>
-        <button role="tab" class="tab gap-2" :class="{ 'tab-active': tab === 'external' }" @click="tab = 'external'">
-          <i class="fas fa-link"></i> External
-          <span v-if="externalCount" class="badge badge-warning badge-sm">{{ externalCount }}</span>
-        </button>
+      <div v-else-if="queue.length === 0" class="text-center py-16 opacity-60">
+        <i class="fas fa-circle-check text-5xl text-success mb-3 block"></i>
+        <p class="font-semibold">Queue is clear</p>
+        <p class="text-sm">No pending model versions to review.</p>
       </div>
-
-      <!-- ================= QUEUE ================= -->
-      <div v-show="tab === 'queue'">
-        <div v-if="queueLoading" class="flex justify-center py-16">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-        <div v-else-if="queue.length === 0" class="text-center py-16 opacity-60">
-          <i class="fas fa-circle-check text-5xl text-success mb-3 block"></i>
-          <p class="font-semibold">Queue is clear</p>
-          <p class="text-sm">No pending model versions to review.</p>
-        </div>
-        <div v-else class="space-y-4">
-          <div v-for="v in queue" :key="v.id" class="card bg-base-100 border border-base-300 shadow-sm">
-            <div class="card-body gap-3">
-              <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h3 class="font-semibold text-lg">{{ v.model?.title }}</h3>
-                    <span class="badge badge-sm">v{{ v.version_number }}</span>
-                    <span v-if="v.model?.safety_critical" class="badge badge-warning badge-sm gap-1">
-                      <i class="fas fa-triangle-exclamation"></i> Safety-critical
-                    </span>
-                    <span class="badge badge-ghost badge-sm capitalize">{{ v.model?.pricing_mode }}</span>
-                  </div>
-                  <p class="text-xs opacity-60 mt-1">
-                    Submitted {{ fmtDate(v.created_at) }} · License {{ v.model?.license_code }}
-                  </p>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-sm opacity-70">
-                    {{ v.owner?.display_name || v.owner?.username || 'Unknown' }}
+      <div v-else class="space-y-4">
+        <div v-for="v in queue" :key="v.id" class="card bg-base-100 border border-base-300 shadow-sm">
+          <div class="card-body gap-3">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-semibold text-lg">{{ v.model?.title }}</h3>
+                  <span class="badge badge-sm">v{{ v.version_number }}</span>
+                  <span v-if="v.model?.safety_critical" class="badge badge-warning badge-sm gap-1">
+                    <i class="fas fa-triangle-exclamation"></i> Safety-critical
                   </span>
-                  <span
-                    v-if="v.owner"
-                    class="badge badge-sm capitalize"
-                    :class="trustTone[v.owner.trust_level] || 'badge-ghost'"
-                  >
-                    {{ v.owner.trust_level }}
-                  </span>
+                  <span class="badge badge-ghost badge-sm capitalize">{{ v.model?.pricing_mode }}</span>
                 </div>
+                <p class="text-xs opacity-60 mt-1">
+                  Submitted {{ fmtDate(v.created_at) }} · License {{ v.model?.license_code }}
+                </p>
               </div>
-
-              <p v-if="v.model?.summary" class="text-sm opacity-80">{{ v.model.summary }}</p>
-              <p v-if="v.changelog" class="text-sm"><span class="opacity-50">Changelog:</span> {{ v.changelog }}</p>
-
-              <!-- Images -->
-              <div v-if="v.images.length" class="flex gap-2 flex-wrap">
-                <img
-                  v-for="(img, i) in v.images"
-                  :key="i"
-                  :src="imgUrl(img.storage_path)"
-                  :alt="img.alt_text || v.model?.title"
-                  class="w-24 h-24 object-cover rounded-lg border border-base-300"
-                  loading="lazy"
-                />
-              </div>
-
-              <!-- Files -->
-              <div class="flex flex-wrap gap-2">
-                <a
-                  v-for="f in v.files"
-                  :key="f.id"
-                  :href="fileDl(v.model.id, f.id)"
-                  class="btn btn-xs btn-outline gap-1"
-                  :class="{ 'btn-disabled opacity-50': f.upload_status !== 'uploaded' }"
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-sm opacity-70">
+                  {{ v.owner?.display_name || v.owner?.username || 'Unknown' }}
+                </span>
+                <span
+                  v-if="v.owner"
+                  class="badge badge-sm capitalize"
+                  :class="trustTone[v.owner.trust_level] || 'badge-ghost'"
                 >
-                  <i class="fas fa-download"></i>
-                  {{ f.file_name }}
-                  <span class="opacity-60">· {{ f.file_ext }} · {{ fmtBytes(f.size_bytes) }}</span>
-                </a>
-                <span v-if="!v.files.length" class="text-xs text-error">No files uploaded</span>
+                  {{ v.owner.trust_level }}
+                </span>
               </div>
+            </div>
 
-              <div class="card-actions justify-end pt-2 border-t border-base-300">
-                <button class="btn btn-sm btn-error btn-outline" :disabled="busy === v.id" @click="rejectTarget = v">
-                  <i class="fas fa-xmark mr-1"></i> Reject
-                </button>
-                <button class="btn btn-sm btn-success" :disabled="busy === v.id" @click="approve(v)">
-                  <span v-if="busy === v.id" class="loading loading-spinner loading-xs"></span>
-                  <i v-else class="fas fa-check mr-1"></i> Approve &amp; publish
-                </button>
-              </div>
+            <p v-if="v.model?.summary" class="text-sm opacity-80">{{ v.model.summary }}</p>
+            <p v-if="v.changelog" class="text-sm"><span class="opacity-50">Changelog:</span> {{ v.changelog }}</p>
+
+            <!-- Images -->
+            <div v-if="v.images.length" class="flex gap-2 flex-wrap">
+              <img
+                v-for="(img, i) in v.images"
+                :key="i"
+                :src="imgUrl(img.storage_path)"
+                :alt="img.alt_text || v.model?.title"
+                class="w-24 h-24 object-cover rounded-lg border border-base-300"
+                loading="lazy"
+              />
+            </div>
+
+            <!-- Files -->
+            <div class="flex flex-wrap gap-2">
+              <a
+                v-for="f in v.files"
+                :key="f.id"
+                :href="fileDl(v.model.id, f.id)"
+                class="btn btn-xs btn-outline gap-1"
+                :class="{ 'btn-disabled opacity-50': f.upload_status !== 'uploaded' }"
+              >
+                <i class="fas fa-download"></i>
+                {{ f.file_name }}
+                <span class="opacity-60">· {{ f.file_ext }} · {{ fmtBytes(f.size_bytes) }}</span>
+              </a>
+              <span v-if="!v.files.length" class="text-xs text-error">No files uploaded</span>
+            </div>
+
+            <div class="card-actions justify-end pt-2 border-t border-base-300">
+              <button class="btn btn-sm btn-error btn-outline" :disabled="busy === v.id" @click="rejectTarget = v">
+                <i class="fas fa-xmark mr-1"></i> Reject
+              </button>
+              <button class="btn btn-sm btn-success" :disabled="busy === v.id" @click="approve(v)">
+                <span v-if="busy === v.id" class="loading loading-spinner loading-xs"></span>
+                <i v-else class="fas fa-check mr-1"></i> Approve &amp; publish
+              </button>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- ================= ALL MODELS (library) ================= -->
-      <div v-show="tab === 'library'">
-        <div class="flex flex-wrap items-center gap-3 mb-4">
-          <label class="input input-sm">
-            <i class="fas fa-magnifying-glass opacity-50"></i>
-            <input v-model="librarySearch" type="search" placeholder="Search title…" aria-label="Search models" />
-          </label>
-          <select v-model="libraryStatus" class="select select-sm w-auto" aria-label="Filter by status">
-            <option value="all">All statuses</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived (hidden)</option>
-            <option value="pending">Pending</option>
-            <option value="draft">Draft</option>
-            <option value="rejected">Rejected</option>
-            <option value="flagged">Flagged</option>
-            <option value="removed">Removed</option>
-          </select>
-          <span class="text-sm opacity-60 ml-auto">{{ libraryTotal }} total</span>
+    <!-- ================= ALL MODELS (library) ================= -->
+    <div v-show="tab === 'library'">
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <label class="input input-sm">
+          <i class="fas fa-magnifying-glass opacity-50"></i>
+          <input v-model="librarySearch" type="search" placeholder="Search title…" aria-label="Search models" />
+        </label>
+        <select v-model="libraryStatus" class="select select-sm w-auto" aria-label="Filter by status">
+          <option value="all">All statuses</option>
+          <option value="published">Published</option>
+          <option value="archived">Archived (hidden)</option>
+          <option value="pending">Pending</option>
+          <option value="draft">Draft</option>
+          <option value="rejected">Rejected</option>
+          <option value="flagged">Flagged</option>
+          <option value="removed">Removed</option>
+        </select>
+        <span class="text-sm opacity-60 ml-auto">{{ libraryTotal }} total</span>
+      </div>
+
+      <div v-if="libraryLoading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+      <div v-else-if="library.length === 0" class="text-center py-16 opacity-60">
+        <i class="fas fa-cube text-5xl mb-3 block"></i>
+        <p class="font-semibold">No models match</p>
+      </div>
+      <div v-else class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Owner</th>
+              <th>Pricing</th>
+              <th>Status</th>
+              <th class="text-right">DL / ♥</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="m in library" :key="m.id" :class="{ 'opacity-50': m.status === 'removed' }">
+              <td>
+                <div class="font-medium">{{ m.title }}</div>
+                <NuxtLink
+                  v-if="m.status === 'published'"
+                  :to="`/models/${m.slug}`"
+                  target="_blank"
+                  class="text-xs link link-hover opacity-60"
+                >
+                  /models/{{ m.slug }}
+                </NuxtLink>
+                <div v-else class="text-xs opacity-40 font-mono">{{ m.slug }}</div>
+              </td>
+              <td class="text-sm whitespace-nowrap">
+                {{ m.owner?.display_name || m.owner?.username || m.owner_id.slice(0, 8) }}
+              </td>
+              <td>
+                <span class="badge badge-ghost badge-sm capitalize">{{ m.pricing_mode }}</span>
+              </td>
+              <td>
+                <span class="badge badge-sm capitalize" :class="modelStatusTone[m.status] || 'badge-ghost'">{{
+                  m.status
+                }}</span>
+              </td>
+              <td class="text-right text-xs opacity-70 whitespace-nowrap">
+                {{ m.download_count }} / {{ m.like_count }}
+              </td>
+              <td class="text-right">
+                <div class="flex justify-end items-center gap-1.5">
+                  <button
+                    v-if="m.status === 'published'"
+                    class="btn btn-xs btn-outline"
+                    :disabled="busy === m.id"
+                    title="Hide from the library (keeps buyer access)"
+                    @click="setStatus(m, 'archived')"
+                  >
+                    <i class="fas fa-eye-slash"></i> Hide
+                  </button>
+                  <button
+                    v-if="['archived', 'removed', 'flagged'].includes(m.status) && m.current_version_id"
+                    class="btn btn-xs btn-success btn-outline"
+                    :disabled="busy === m.id"
+                    title="Re-publish to the library"
+                    @click="setStatus(m, 'published')"
+                  >
+                    <i class="fas fa-eye"></i> Show
+                  </button>
+                  <button
+                    v-if="m.status !== 'removed'"
+                    class="btn btn-xs btn-error btn-outline"
+                    :disabled="busy === m.id"
+                    title="Remove (takedown — revokes all access, including buyers)"
+                    @click="confirmRemove = m"
+                  >
+                    <i class="fas fa-trash"></i> Remove
+                  </button>
+                  <span v-if="busy === m.id" class="loading loading-spinner loading-xs"></span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div v-if="libraryPages > 1" class="flex justify-center mt-6">
+          <div class="join">
+            <button class="join-item btn btn-sm" :disabled="libraryPage <= 1" @click="goLibraryPage(libraryPage - 1)">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="join-item btn btn-sm btn-disabled">Page {{ libraryPage }} / {{ libraryPages }}</button>
+            <button
+              class="join-item btn btn-sm"
+              :disabled="libraryPage >= libraryPages"
+              @click="goLibraryPage(libraryPage + 1)"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= REPORTS ================= -->
+    <div v-show="tab === 'reports'">
+      <div v-if="reportsLoading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+      <div v-else-if="reports.length === 0" class="text-center py-16 opacity-60">
+        <i class="fas fa-circle-check text-5xl text-success mb-3 block"></i>
+        <p class="font-semibold">No open reports</p>
+      </div>
+      <div v-else class="space-y-4">
+        <div v-for="r in reports" :key="r.id" class="card bg-base-100 border border-base-300 shadow-sm">
+          <div class="card-body gap-2">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="badge badge-sm capitalize" :class="reasonTone[r.reason] || 'badge-ghost'">{{
+                  r.reason
+                }}</span>
+                <NuxtLink
+                  v-if="r.model"
+                  :to="`/models/${r.model.slug}`"
+                  target="_blank"
+                  class="font-semibold link link-hover"
+                >
+                  {{ r.model.title }}
+                </NuxtLink>
+                <span v-if="r.model" class="badge badge-ghost badge-sm capitalize">{{ r.model.status }}</span>
+              </div>
+              <span class="text-xs opacity-50">{{ fmtDate(r.created_at) }}</span>
+            </div>
+            <p class="text-sm whitespace-pre-line">{{ r.details }}</p>
+            <p class="text-xs opacity-50">
+              Reporter: {{ r.reporter_email || (r.reporter_id ? 'registered user' : 'anonymous') }}
+            </p>
+            <div class="card-actions justify-end pt-2 border-t border-base-300">
+              <button class="btn btn-sm btn-outline" @click="resolveTarget = r">
+                <i class="fas fa-gavel mr-1"></i> Resolve
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SELLERS ================= -->
+    <div v-show="tab === 'sellers'">
+      <div v-if="sellersLoading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+      <div v-else-if="sellers.length === 0" class="text-center py-16 opacity-60">
+        <i class="fas fa-store-slash text-5xl mb-3 block"></i>
+        <p class="font-semibold">No sellers onboarded yet</p>
+      </div>
+      <div v-else class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Seller</th>
+              <th>Trust</th>
+              <th>Charges</th>
+              <th>Payouts</th>
+              <th class="text-center">Copyright strikes</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="s in sellers" :key="s.user_id" :class="{ 'opacity-50': s.selling_disabled }">
+              <td>
+                <div class="font-medium">
+                  {{ s.profile?.display_name || s.profile?.username || s.user_id.slice(0, 8) }}
+                </div>
+                <div class="text-xs opacity-50 font-mono">{{ s.stripe_account_id }}</div>
+              </td>
+              <td>
+                <span class="badge badge-sm capitalize" :class="trustTone[s.profile?.trust_level] || 'badge-ghost'">
+                  {{ s.profile?.trust_level || '—' }}
+                </span>
+              </td>
+              <td>
+                <i
+                  :class="s.charges_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'"
+                ></i>
+              </td>
+              <td>
+                <i
+                  :class="s.payouts_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'"
+                ></i>
+              </td>
+              <td class="text-center">
+                <span :class="s.strikes >= 3 ? 'text-error font-bold' : s.strikes > 0 ? 'text-warning' : 'opacity-40'">
+                  {{ s.strikes }}
+                </span>
+              </td>
+              <td class="text-right">
+                <button
+                  class="btn btn-xs"
+                  :class="s.selling_disabled ? 'btn-success btn-outline' : 'btn-error btn-outline'"
+                  :disabled="busy === s.user_id"
+                  @click="toggleSeller(s)"
+                >
+                  <span v-if="busy === s.user_id" class="loading loading-spinner loading-xs"></span>
+                  <template v-else>{{ s.selling_disabled ? 'Re-enable' : 'Disable selling' }}</template>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================= SALES ================= -->
+    <div v-show="tab === 'sales'">
+      <div v-if="salesLoading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+      <template v-else>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
+            <div class="stat-title text-xs">Gross (recent 100)</div>
+            <div class="stat-value text-2xl">{{ fmt(salesTotals.gross) }}</div>
+          </div>
+          <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
+            <div class="stat-title text-xs">Platform commission</div>
+            <div class="stat-value text-2xl text-primary">{{ fmt(salesTotals.fees) }}</div>
+          </div>
+          <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
+            <div class="stat-title text-xs">Refunded</div>
+            <div class="stat-value text-2xl">{{ salesTotals.refunded }}</div>
+          </div>
+          <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
+            <div class="stat-title text-xs">Disputed</div>
+            <div class="stat-value text-2xl" :class="salesTotals.disputed ? 'text-error' : ''">
+              {{ salesTotals.disputed }}
+            </div>
+          </div>
         </div>
 
-        <div v-if="libraryLoading" class="flex justify-center py-16">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-        <div v-else-if="library.length === 0" class="text-center py-16 opacity-60">
-          <i class="fas fa-cube text-5xl mb-3 block"></i>
-          <p class="font-semibold">No models match</p>
+        <div v-if="sales.length === 0" class="text-center py-12 opacity-60">
+          <i class="fas fa-chart-line text-5xl mb-3 block"></i>
+          <p class="font-semibold">No sales yet</p>
         </div>
         <div v-else class="overflow-x-auto">
-          <table class="table">
+          <table class="table table-sm">
             <thead>
               <tr>
                 <th>Model</th>
-                <th>Owner</th>
-                <th>Pricing</th>
+                <th>Type</th>
+                <th class="text-right">Amount</th>
+                <th class="text-right">Fee</th>
                 <th>Status</th>
-                <th class="text-right">DL / ♥</th>
-                <th class="text-right">Actions</th>
+                <th class="text-right">Date</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="m in library" :key="m.id" :class="{ 'opacity-50': m.status === 'removed' }">
+              <tr v-for="p in sales" :key="p.id">
                 <td>
-                  <div class="font-medium">{{ m.title }}</div>
-                  <NuxtLink
-                    v-if="m.status === 'published'"
-                    :to="`/models/${m.slug}`"
-                    target="_blank"
-                    class="text-xs link link-hover opacity-60"
-                  >
-                    /models/{{ m.slug }}
+                  <NuxtLink v-if="p.model" :to="`/models/${p.model.slug}`" target="_blank" class="link link-hover">
+                    {{ p.model.title }}
                   </NuxtLink>
-                  <div v-else class="text-xs opacity-40 font-mono">{{ m.slug }}</div>
-                </td>
-                <td class="text-sm whitespace-nowrap">
-                  {{ m.owner?.display_name || m.owner?.username || m.owner_id.slice(0, 8) }}
+                  <span v-else class="opacity-50">—</span>
                 </td>
                 <td>
-                  <span class="badge badge-ghost badge-sm capitalize">{{ m.pricing_mode }}</span>
+                  <span class="badge badge-xs" :class="p.kind === 'tip' ? 'badge-ghost' : 'badge-primary'">
+                    {{ p.kind === 'tip' ? 'Tip' : 'Sale' }}
+                  </span>
                 </td>
+                <td class="text-right whitespace-nowrap">{{ fmt(p.amount_cents) }}</td>
+                <td class="text-right whitespace-nowrap opacity-70">{{ fmt(p.application_fee_cents) }}</td>
                 <td>
-                  <span class="badge badge-sm capitalize" :class="modelStatusTone[m.status] || 'badge-ghost'">{{
-                    m.status
+                  <span class="badge badge-xs capitalize" :class="statusTone[p.status] || 'badge-ghost'">{{
+                    p.status
                   }}</span>
                 </td>
-                <td class="text-right text-xs opacity-70 whitespace-nowrap">
-                  {{ m.download_count }} / {{ m.like_count }}
-                </td>
-                <td class="text-right">
-                  <div class="flex justify-end items-center gap-1.5">
-                    <button
-                      v-if="m.status === 'published'"
-                      class="btn btn-xs btn-outline"
-                      :disabled="busy === m.id"
-                      title="Hide from the library (keeps buyer access)"
-                      @click="setStatus(m, 'archived')"
-                    >
-                      <i class="fas fa-eye-slash"></i> Hide
-                    </button>
-                    <button
-                      v-if="['archived', 'removed', 'flagged'].includes(m.status) && m.current_version_id"
-                      class="btn btn-xs btn-success btn-outline"
-                      :disabled="busy === m.id"
-                      title="Re-publish to the library"
-                      @click="setStatus(m, 'published')"
-                    >
-                      <i class="fas fa-eye"></i> Show
-                    </button>
-                    <button
-                      v-if="m.status !== 'removed'"
-                      class="btn btn-xs btn-error btn-outline"
-                      :disabled="busy === m.id"
-                      title="Remove (takedown — revokes all access, including buyers)"
-                      @click="confirmRemove = m"
-                    >
-                      <i class="fas fa-trash"></i> Remove
-                    </button>
-                    <span v-if="busy === m.id" class="loading loading-spinner loading-xs"></span>
-                  </div>
-                </td>
+                <td class="text-right whitespace-nowrap text-xs opacity-60">{{ fmtDate(p.created_at) }}</td>
               </tr>
             </tbody>
           </table>
-
-          <div v-if="libraryPages > 1" class="flex justify-center mt-6">
-            <div class="join">
-              <button class="join-item btn btn-sm" :disabled="libraryPage <= 1" @click="goLibraryPage(libraryPage - 1)">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <button class="join-item btn btn-sm btn-disabled">Page {{ libraryPage }} / {{ libraryPages }}</button>
-              <button
-                class="join-item btn btn-sm"
-                :disabled="libraryPage >= libraryPages"
-                @click="goLibraryPage(libraryPage + 1)"
-              >
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
+          <p class="text-xs opacity-50 mt-2">Showing the 100 most recent transactions.</p>
         </div>
+      </template>
+    </div>
+    <!-- ================= EXTERNAL LISTINGS ================= -->
+    <div v-show="tab === 'external'">
+      <div v-if="externalError" role="alert" class="alert alert-error mb-4">
+        <i class="fas fa-circle-exclamation"></i>
+        <span>{{ externalError }}</span>
       </div>
 
-      <!-- ================= REPORTS ================= -->
-      <div v-show="tab === 'reports'">
-        <div v-if="reportsLoading" class="flex justify-center py-16">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-        <div v-else-if="reports.length === 0" class="text-center py-16 opacity-60">
-          <i class="fas fa-circle-check text-5xl text-success mb-3 block"></i>
-          <p class="font-semibold">No open reports</p>
-        </div>
-        <div v-else class="space-y-4">
-          <div v-for="r in reports" :key="r.id" class="card bg-base-100 border border-base-300 shadow-sm">
-            <div class="card-body gap-2">
-              <div class="flex flex-wrap items-start justify-between gap-2">
+      <div v-if="externalLoading" class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+      <div v-else-if="external.length === 0" class="text-center py-16 opacity-60">
+        <i class="fas fa-circle-check text-5xl text-success mb-3 block"></i>
+        <p class="font-semibold">External queue is clear</p>
+        <p class="text-sm">No pending external model links to review.</p>
+      </div>
+      <div v-else class="space-y-4">
+        <div v-for="row in external" :key="row.id" class="card bg-base-100 border border-base-300 shadow-sm">
+          <div class="card-body gap-3">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="badge badge-sm capitalize" :class="reasonTone[r.reason] || 'badge-ghost'">{{
-                    r.reason
-                  }}</span>
-                  <NuxtLink
-                    v-if="r.model"
-                    :to="`/models/${r.model.slug}`"
-                    target="_blank"
-                    class="font-semibold link link-hover"
-                  >
-                    {{ r.model.title }}
-                  </NuxtLink>
-                  <span v-if="r.model" class="badge badge-ghost badge-sm capitalize">{{ r.model.status }}</span>
+                  <h3 class="font-semibold text-lg">{{ row.title }}</h3>
+                  <ModelsSourceBadge :site="row.source_site" />
+                  <span v-if="row.category_slug" class="badge badge-ghost badge-sm">{{ row.category_slug }}</span>
                 </div>
-                <span class="text-xs opacity-50">{{ fmtDate(r.created_at) }}</span>
+                <p class="text-xs opacity-60 mt-1">Submitted {{ fmtDate(row.created_at) }}</p>
               </div>
-              <p class="text-sm whitespace-pre-line">{{ r.details }}</p>
-              <p class="text-xs opacity-50">
-                Reporter: {{ r.reporter_email || (r.reporter_id ? 'registered user' : 'anonymous') }}
-              </p>
-              <div class="card-actions justify-end pt-2 border-t border-base-300">
-                <button class="btn btn-sm btn-outline" @click="resolveTarget = r">
-                  <i class="fas fa-gavel mr-1"></i> Resolve
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ================= SELLERS ================= -->
-      <div v-show="tab === 'sellers'">
-        <div v-if="sellersLoading" class="flex justify-center py-16">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-        <div v-else-if="sellers.length === 0" class="text-center py-16 opacity-60">
-          <i class="fas fa-store-slash text-5xl mb-3 block"></i>
-          <p class="font-semibold">No sellers onboarded yet</p>
-        </div>
-        <div v-else class="overflow-x-auto">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Seller</th>
-                <th>Trust</th>
-                <th>Charges</th>
-                <th>Payouts</th>
-                <th class="text-center">Copyright strikes</th>
-                <th class="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="s in sellers" :key="s.user_id" :class="{ 'opacity-50': s.selling_disabled }">
-                <td>
-                  <div class="font-medium">
-                    {{ s.profile?.display_name || s.profile?.username || s.user_id.slice(0, 8) }}
-                  </div>
-                  <div class="text-xs opacity-50 font-mono">{{ s.stripe_account_id }}</div>
-                </td>
-                <td>
-                  <span class="badge badge-sm capitalize" :class="trustTone[s.profile?.trust_level] || 'badge-ghost'">
-                    {{ s.profile?.trust_level || '—' }}
-                  </span>
-                </td>
-                <td>
-                  <i
-                    :class="
-                      s.charges_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'
-                    "
-                  ></i>
-                </td>
-                <td>
-                  <i
-                    :class="
-                      s.payouts_enabled ? 'fas fa-circle-check text-success' : 'fas fa-circle-xmark text-error/60'
-                    "
-                  ></i>
-                </td>
-                <td class="text-center">
-                  <span
-                    :class="s.strikes >= 3 ? 'text-error font-bold' : s.strikes > 0 ? 'text-warning' : 'opacity-40'"
-                  >
-                    {{ s.strikes }}
-                  </span>
-                </td>
-                <td class="text-right">
-                  <button
-                    class="btn btn-xs"
-                    :class="s.selling_disabled ? 'btn-success btn-outline' : 'btn-error btn-outline'"
-                    :disabled="busy === s.user_id"
-                    @click="toggleSeller(s)"
-                  >
-                    <span v-if="busy === s.user_id" class="loading loading-spinner loading-xs"></span>
-                    <template v-else>{{ s.selling_disabled ? 'Re-enable' : 'Disable selling' }}</template>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ================= SALES ================= -->
-      <div v-show="tab === 'sales'">
-        <div v-if="salesLoading" class="flex justify-center py-16">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-        <template v-else>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-            <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
-              <div class="stat-title text-xs">Gross (recent 100)</div>
-              <div class="stat-value text-2xl">{{ fmt(salesTotals.gross) }}</div>
-            </div>
-            <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
-              <div class="stat-title text-xs">Platform commission</div>
-              <div class="stat-value text-2xl text-primary">{{ fmt(salesTotals.fees) }}</div>
-            </div>
-            <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
-              <div class="stat-title text-xs">Refunded</div>
-              <div class="stat-value text-2xl">{{ salesTotals.refunded }}</div>
-            </div>
-            <div class="stat bg-base-100 border border-base-300 rounded-lg p-4">
-              <div class="stat-title text-xs">Disputed</div>
-              <div class="stat-value text-2xl" :class="salesTotals.disputed ? 'text-error' : ''">
-                {{ salesTotals.disputed }}
-              </div>
-            </div>
-          </div>
-
-          <div v-if="sales.length === 0" class="text-center py-12 opacity-60">
-            <i class="fas fa-chart-line text-5xl mb-3 block"></i>
-            <p class="font-semibold">No sales yet</p>
-          </div>
-          <div v-else class="overflow-x-auto">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Model</th>
-                  <th>Type</th>
-                  <th class="text-right">Amount</th>
-                  <th class="text-right">Fee</th>
-                  <th>Status</th>
-                  <th class="text-right">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="p in sales" :key="p.id">
-                  <td>
-                    <NuxtLink v-if="p.model" :to="`/models/${p.model.slug}`" target="_blank" class="link link-hover">
-                      {{ p.model.title }}
-                    </NuxtLink>
-                    <span v-else class="opacity-50">—</span>
-                  </td>
-                  <td>
-                    <span class="badge badge-xs" :class="p.kind === 'tip' ? 'badge-ghost' : 'badge-primary'">
-                      {{ p.kind === 'tip' ? 'Tip' : 'Sale' }}
-                    </span>
-                  </td>
-                  <td class="text-right whitespace-nowrap">{{ fmt(p.amount_cents) }}</td>
-                  <td class="text-right whitespace-nowrap opacity-70">{{ fmt(p.application_fee_cents) }}</td>
-                  <td>
-                    <span class="badge badge-xs capitalize" :class="statusTone[p.status] || 'badge-ghost'">{{
-                      p.status
-                    }}</span>
-                  </td>
-                  <td class="text-right whitespace-nowrap text-xs opacity-60">{{ fmtDate(p.created_at) }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <p class="text-xs opacity-50 mt-2">Showing the 100 most recent transactions.</p>
-          </div>
-        </template>
-      </div>
-      <!-- ================= EXTERNAL LISTINGS ================= -->
-      <div v-show="tab === 'external'">
-        <div v-if="externalError" role="alert" class="alert alert-error mb-4">
-          <i class="fas fa-circle-exclamation"></i>
-          <span>{{ externalError }}</span>
-        </div>
-
-        <div v-if="externalLoading" class="flex justify-center py-16">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
-        <div v-else-if="external.length === 0" class="text-center py-16 opacity-60">
-          <i class="fas fa-circle-check text-5xl text-success mb-3 block"></i>
-          <p class="font-semibold">External queue is clear</p>
-          <p class="text-sm">No pending external model links to review.</p>
-        </div>
-        <div v-else class="space-y-4">
-          <div v-for="row in external" :key="row.id" class="card bg-base-100 border border-base-300 shadow-sm">
-            <div class="card-body gap-3">
-              <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h3 class="font-semibold text-lg">{{ row.title }}</h3>
-                    <ModelsSourceBadge :site="row.source_site" />
-                    <span v-if="row.category_slug" class="badge badge-ghost badge-sm">{{ row.category_slug }}</span>
-                  </div>
-                  <p class="text-xs opacity-60 mt-1">Submitted {{ fmtDate(row.created_at) }}</p>
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="text-right">
+                  <p class="text-xs opacity-50 leading-tight">Submitted by</p>
+                  <p class="text-sm font-medium leading-tight">
+                    {{ row.submitter?.display_name || row.submitter?.username || 'Unknown' }}
+                  </p>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <div class="text-right">
-                    <p class="text-xs opacity-50 leading-tight">Submitted by</p>
-                    <p class="text-sm font-medium leading-tight">
-                      {{ row.submitter?.display_name || row.submitter?.username || 'Unknown' }}
-                    </p>
-                  </div>
-                  <span
-                    v-if="row.submitter"
-                    class="badge badge-sm capitalize"
-                    :class="trustTone[row.submitter.trust_level] || 'badge-ghost'"
-                  >
-                    {{ row.submitter.trust_level }}
-                  </span>
-                </div>
+                <span
+                  v-if="row.submitter"
+                  class="badge badge-sm capitalize"
+                  :class="trustTone[row.submitter.trust_level] || 'badge-ghost'"
+                >
+                  {{ row.submitter.trust_level }}
+                </span>
               </div>
+            </div>
 
-              <p v-if="row.summary" class="text-sm opacity-80">{{ row.summary }}</p>
+            <p v-if="row.summary" class="text-sm opacity-80">{{ row.summary }}</p>
 
-              <div class="flex flex-wrap items-center gap-3 text-sm">
+            <div class="flex flex-wrap items-center gap-3 text-sm">
+              <a
+                :href="row.source_url"
+                target="_blank"
+                rel="nofollow noopener"
+                class="link link-primary flex items-center gap-1 text-xs"
+              >
+                <i class="fas fa-arrow-up-right-from-square"></i>
+                Open source
+              </a>
+              <span v-if="row.source_license" class="badge badge-neutral badge-sm">
+                {{ row.source_license }}
+              </span>
+              <span v-if="row.source_author_name" class="text-xs opacity-60">
+                Designer:
                 <a
-                  :href="row.source_url"
+                  v-if="row.source_author_url"
+                  :href="row.source_author_url"
                   target="_blank"
                   rel="nofollow noopener"
-                  class="link link-primary flex items-center gap-1 text-xs"
+                  class="link link-hover"
+                  >{{ row.source_author_name }}</a
                 >
-                  <i class="fas fa-arrow-up-right-from-square"></i>
-                  Open source
-                </a>
-                <span v-if="row.source_license" class="badge badge-neutral badge-sm">
-                  {{ row.source_license }}
-                </span>
-                <span v-if="row.source_author_name" class="text-xs opacity-60">
-                  Designer:
-                  <a
-                    v-if="row.source_author_url"
-                    :href="row.source_author_url"
-                    target="_blank"
-                    rel="nofollow noopener"
-                    class="link link-hover"
-                    >{{ row.source_author_name }}</a
-                  >
-                  <template v-else>{{ row.source_author_name }}</template>
-                </span>
-              </div>
+                <template v-else>{{ row.source_author_name }}</template>
+              </span>
+            </div>
 
-              <div class="card-actions justify-end pt-2 border-t border-base-300">
-                <button
-                  class="btn btn-sm btn-error btn-outline"
-                  :disabled="externalBusy === row.id"
-                  @click="openRejectExternal(row)"
-                >
-                  <span v-if="externalBusy === row.id" class="loading loading-spinner loading-xs"></span>
-                  <i v-else class="fas fa-xmark mr-1"></i> Reject
-                </button>
-                <button
-                  class="btn btn-sm btn-success"
-                  :disabled="externalBusy === row.id"
-                  @click="approveExternal(row)"
-                >
-                  <span v-if="externalBusy === row.id" class="loading loading-spinner loading-xs"></span>
-                  <i v-else class="fas fa-check mr-1"></i> Approve
-                </button>
-              </div>
+            <div class="card-actions justify-end pt-2 border-t border-base-300">
+              <button
+                class="btn btn-sm btn-error btn-outline"
+                :disabled="externalBusy === row.id"
+                @click="openRejectExternal(row)"
+              >
+                <span v-if="externalBusy === row.id" class="loading loading-spinner loading-xs"></span>
+                <i v-else class="fas fa-xmark mr-1"></i> Reject
+              </button>
+              <button class="btn btn-sm btn-success" :disabled="externalBusy === row.id" @click="approveExternal(row)">
+                <span v-if="externalBusy === row.id" class="loading loading-spinner loading-xs"></span>
+                <i v-else class="fas fa-check mr-1"></i> Approve
+              </button>
             </div>
           </div>
         </div>
@@ -1141,5 +1111,5 @@
         <span>{{ toast.text }}</span>
       </div>
     </div>
-  </div>
+  </AdminShell>
 </template>

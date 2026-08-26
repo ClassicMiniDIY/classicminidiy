@@ -56,7 +56,7 @@ export interface MarketingDraftPayload {
  * Whether the signed-in admin is on the MARKETING_ADMIN_EMAILS allowlist.
  * Cached per session (useState); `allowed` is null until the first check
  * resolves, so gate UI with `allowed === true`. Used by the admin dashboard
- * card, the ExchangeShell sidebar entry, and the /admin/marketing page guard.
+ * tile, the AdminShell sidebar entry, and the /admin/marketing page guard.
  */
 export const useMarketingAccess = () => {
   const allowed = useState<boolean | null>('marketing:access', () => null);

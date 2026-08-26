@@ -99,8 +99,8 @@ describe('PAGE_DESCRIPTIONS', () => {
 
   it('includes admin routes', () => {
     const routes = PAGE_DESCRIPTIONS.map((p) => p.route);
-    expect(routes).toContain('/admin/wheels/review');
-    expect(routes).toContain('/admin/registry/review');
+    expect(routes).toContain('/admin');
+    expect(routes).toContain('/admin/queue');
   });
 });
 

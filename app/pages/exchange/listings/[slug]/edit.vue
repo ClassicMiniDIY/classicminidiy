@@ -20,6 +20,22 @@
     <section class="py-12">
       <div class="container">
         <div class="max-w-3xl mx-auto">
+          <!-- Admin edit banner. Writing to someone else's row should never be
+               ambiguous, so it says whose listing this is and what will and
+               will not happen when you save. English-only: this only ever
+               renders for an admin, and admin is English-only. -->
+          <div v-if="isAdminEdit" role="alert" class="alert alert-warning mb-6 items-start">
+            <i class="fas fa-user-shield mt-0.5"></i>
+            <div>
+              <p class="font-bold">Editing as an admin</p>
+              <p class="text-sm">
+                This listing belongs to {{ listing.profiles?.display_name || 'another member' }}. Saving corrects it in
+                place and is recorded in the admin audit log — it does not change the listing's status, does not send it
+                back for review, and does not email the seller.
+              </p>
+            </div>
+          </div>
+
           <div class="card bg-base-100 shadow-sm">
             <div class="card-body">
               <form @submit.prevent="handleSubmit" class="space-y-8">
@@ -792,7 +808,9 @@
 
                 <!-- Action Buttons -->
                 <div class="flex gap-3 justify-end pt-4 border-t">
-                  <NuxtLink :to="`/exchange/listings/${listing.slug}`" class="btn btn-ghost"> {{ t('cancel') }} </NuxtLink>
+                  <NuxtLink :to="`/exchange/listings/${listing.slug}`" class="btn btn-ghost">
+                    {{ t('cancel') }}
+                  </NuxtLink>
                   <button type="submit" :disabled="isSubmitting" class="btn btn-primary">
                     <i v-if="isSubmitting" class="fas fa-arrows-rotate animate-spin"></i>
                     <span v-else>{{ t('saveChanges') }}</span>
@@ -863,18 +881,41 @@
     });
   }
 
-  // Check if user owns this listing - runs on both server and client
-  // Use Supabase's getUser() which works with session cookies on both environments
   const supabase = useSupabase();
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
 
-  if (!authUser || listing.value.user_id !== authUser.id) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: t('errors.forbidden'),
-    });
+  // Authorisation gate.
+  //
+  // Two people may reach this form: the seller, and an admin correcting bad
+  // data on a live listing (a wrong price, a description with a phone number
+  // in it). They take DIFFERENT save paths — see handleSubmit — because RLS on
+  // `listings` is owner-scoped, so an admin's PostgREST write silently matches
+  // zero rows.
+  //
+  // The check is client-only on purpose. The Supabase session lives in
+  // localStorage, not a cookie, so `getUser()` on the server has nothing to
+  // read and would fail every visitor identically. `exchange-auth` middleware
+  // takes the same position: SSR passes through, the client decides.
+  const { waitForAuth, isAdmin } = useAuth();
+
+  const currentUserId = ref<string | null>(null);
+  const isAdminEdit = ref(false);
+
+  if (import.meta.client) {
+    await waitForAuth();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    currentUserId.value = authUser?.id ?? null;
+    const isOwner = !!authUser && listing.value.user_id === authUser.id;
+    isAdminEdit.value = !isOwner && isAdmin.value;
+
+    if (!isOwner && !isAdminEdit.value) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: t('errors.forbidden'),
+      });
+    }
   }
 
   // Category helpers
@@ -1134,16 +1175,30 @@
     try {
       isSubmitting.value = true;
 
-      // Build changes object (only include changed fields)
+      // Build changes object (only include changed fields).
+      //
+      // The seller path keeps its long-standing rule that a blank value is "no
+      // change", so emptying a field is a no-op for them. The ADMIN path does
+      // not: clearing bad data ("this chassis number is nonsense, remove it")
+      // is the exact operation an admin came here for, so a blank is sent as an
+      // explicit null. Widening this for sellers too is a behavioural change to
+      // a form they use daily, and belongs in its own commit.
       const changes: Record<string, any> = {};
 
       (Object.keys(form) as Array<keyof typeof form>).forEach((key) => {
         const originalValue = listing.value![key as keyof typeof listing.value];
         const newValue = form[key];
 
-        if (originalValue !== newValue && newValue !== null && newValue !== undefined && newValue !== '') {
-          changes[key] = newValue;
+        if (originalValue === newValue) return;
+
+        if (newValue === null || newValue === undefined || newValue === '') {
+          if (isAdminEdit.value && originalValue !== null && originalValue !== undefined) {
+            changes[key] = null;
+          }
+          return;
         }
+
+        changes[key] = newValue;
       });
 
       // Check parts-specific changes (if applicable)
@@ -1167,14 +1222,28 @@
         return;
       }
 
-      // Update listing directly
-      const { error: updateError } = await supabase
-        .from('listings')
-        .update(changes)
-        .eq('id', listing.value!.id)
-        .eq('user_id', authUser!.id);
+      // Two writers, two paths. RLS on `listings` is owner-scoped, so an
+      // admin's PostgREST update matches zero rows and reports success — the
+      // admin edit has to go through a service-role route instead. That route
+      // touches no status field, so a live listing stays live and never
+      // re-enters moderation.
+      let updatedSlug = slug.value;
 
-      if (updateError) throw updateError;
+      if (isAdminEdit.value) {
+        const result = await $adminFetch<{ slug: string }>(`/api/admin/listings/${listing.value!.id}`, {
+          method: 'PUT',
+          body: { changes },
+        });
+        updatedSlug = result?.slug || updatedSlug;
+      } else {
+        const { error: updateError } = await supabase
+          .from('listings')
+          .update(changes)
+          .eq('id', listing.value!.id)
+          .eq('user_id', currentUserId.value!);
+
+        if (updateError) throw updateError;
+      }
 
       // Fire-and-forget: notify watchers of price drop
       if (changes.price && listing.value?.price && changes.price < listing.value.price) {
@@ -1199,7 +1268,7 @@
         color: 'success',
       });
 
-      await router.push(`/exchange/listings/${slug.value}?edit=success`);
+      await router.push(`/exchange/listings/${updatedSlug || slug.value}?edit=success`);
     } catch (error: any) {
       console.error('Failed to submit edit:', error);
       toast.add({

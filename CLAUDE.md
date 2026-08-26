@@ -171,7 +171,7 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 - **`/chat`'s full-height shell is CSS-only, keyed off `.chat-shell` with `:has()` in
   `app/assets/css/main.css` — never `useHead({ bodyAttrs })`.** Setting body attributes from
   that page's head made `nuxt-schema-org` throw during SSR on a cold dev server (`Cannot read
-  properties of undefined (reading 'webSiteResolver')` out of its resolver preload) and 500 the
+properties of undefined (reading 'webSiteResolver')` out of its resolver preload) and 500 the
   route until the module warmed up. Measured at 3 failures per cold boot with `bodyAttrs` and 0
   without, while `/` and `/technical/needles` stayed clean either way — the same
   `nuxt-schema-org` fragility as the Nuxt 4.5 pin note. Keep the shell out of the head pipeline.
@@ -277,7 +277,7 @@ specific case in dev, fetch the transformed module and look at the vue import li
 - **Don't reintroduce per-component viewport clamps to compensate for hero padding.**
   `HomeSearchBar`'s `max-width: calc(100vw - 5rem)` existed only because the old column
   was padded on one side and overflowed right on phones. With a symmetric container that
-  clamp pulls the field *off* the grid. Same reasoning for anything else placed in a hero.
+  clamp pulls the field _off_ the grid. Same reasoning for anything else placed in a hero.
 
 - **Never size an avatar (or any fixed chrome image) with `h-full w-full`.** A percentage
   height against an auto-height parent resolves to `auto` — the image's INTRINSIC size. If
@@ -334,12 +334,12 @@ specific case in dev, fetch the transformed module and look at the vue import li
   (`:has(.dropdown:focus-within)`).
 
 - **EVERY rule in that block must stay unlayered — placement and sizing included.** The
-  unclip rule overrides `.overflow-x-auto`, a Tailwind *utility*. But the same reasoning
+  unclip rule overrides `.overflow-x-auto`, a Tailwind _utility_. But the same reasoning
   applies to all of them, because **daisyUI 5 ships the whole `.dropdown` component inside
   `@layer utilities`** (see `node_modules/daisyui/components/dropdown.css`), not `components`.
   Utilities sort after `components`, so anything we put in `@layer components` is structurally
   outranked by daisyUI's own declarations no matter how specific it is — layer order beats
-  specificity, and unlayered beats every layer. The placement/size defaults *were* in
+  specificity, and unlayered beats every layer. The placement/size defaults _were_ in
   `@layer components`, which happened to work only because daisyUI sets no `top`/`max-height`
   on `.dropdown-content` for the default case; it was one upstream declaration away from being
   silently overridden. Directional variants (`.dropdown-top` et al) still win because the
@@ -350,7 +350,7 @@ specific case in dev, fetch the transformed module and look at the vue import li
 
 - **`.dropdown { position: relative }` is restated unlayered, and it is load-bearing.** Every
   other rule positions the menu against `.dropdown`. If that declaration ever fails to apply,
-  the menu resolves against the *initial containing block* instead — which pins it to the
+  the menu resolves against the _initial containing block_ instead — which pins it to the
   VIEWPORT edges rather than the trigger: hard against the right edge of the window, and
   vertically wherever the static position lands. daisyUI does set it, but in `utilities`, where
   a stray utility outranks it. `[popover]` dropdowns are excluded because daisyUI deliberately
@@ -370,7 +370,7 @@ specific case in dev, fetch the transformed module and look at the vue import li
   `display`.** daisyUI transitions `display` with `transition-behavior: allow-discrete`. When the
   pane is backgrounded (`document.visibilityState === 'hidden'`, `document.timeline.currentTime`
   stuck at 0) the animation clock never advances, so a closed menu reads as `display: flex;
-  opacity: 0` forever and looks like a stuck-open bug that does not exist.
+opacity: 0` forever and looks like a stuck-open bug that does not exist.
 
 ### Code Standards
 
@@ -421,7 +421,7 @@ straight into `:class`, so it must be `'fas fa-circle-check'`, never `'i-fa6-sol
   `<i class="fas fa-house">` explicitly.
 
 Both exceptions are **pure string manipulation** — they emit an FA class for the Kit to swap and
-never resolve Iconify icon *data*. That is why the `@iconify-json/*` collections could be dropped
+never resolve Iconify icon _data_. That is why the `@iconify-json/*` collections could be dropped
 along with `@nuxt/icon` (the transition-only module for the TME merge) once the last `<Icon>` tag
 was converted. Nothing in `app/` renders `<Icon>` or needs an Iconify collection; don't re-add one
 to "support" these two files.
@@ -477,7 +477,7 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 
 - **`image.domains` in `nuxt.config.ts` is matched on the LITERAL hostname, and a miss is
   silent.** @nuxt/image passes an unlisted URL straight through — no resize, no format
-  conversion — *even inside `<nuxt-img>`*, so the markup looks optimized while shipping the
+  conversion — _even inside `<nuxt-img>`_, so the markup looks optimized while shipping the
   full-size original. Three ways this has bitten us, all fixed 2026-07-31:
   - The asset bucket is referenced by **both** `classicminidiy.s3.amazonaws.com` (~230 call
     sites) and `classicminidiy.s3.us-east-1.amazonaws.com` (~40). Both must stay listed
@@ -513,14 +513,14 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 
 - **`/_ipx` MUST stay in `nitro.prerender.ignore` — this is a build-memory contract, not an
   optimization.** `crawlLinks: true` follows same-origin URLs out of prerendered pages. An
-  unoptimized image is an *absolute* S3/Supabase URL (external → never crawled), but an
+  unoptimized image is an _absolute_ S3/Supabase URL (external → never crawled), but an
   optimized one is a same-origin `/_ipx/...` path, so the crawler treats every variant as a
   route and transcodes it through sharp **at build time**. When this was first missed it was
   **603 of 768 prerendered routes (78%)**, and the resulting RSS inflation pushed the Nitro
   bundling step past the 8 GB build container — SIGKILL, OOM.
 
   Two things make this hard to diagnose, so recognise the shape: the kill lands during Nitro
-  *bundling*, well after prerender reports success, and because the build sits near the
+  _bundling_, well after prerender reports success, and because the build sits near the
   ceiling it can first fail on a commit that touches nothing (it initially tripped on a
   docs-only commit). A `SIGKILL` is the **container** OOM killer, not a V8 heap error — if you
   see `JavaScript heap out of memory` instead, that's a genuinely different problem.
@@ -534,13 +534,13 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 
 - **Never pass a possibly-empty string (or any non-string) to `ogImage` / `twitterImage` in `useSeoMeta`.** unhead's flat-meta unpacking coerces `''` to boolean `true`, and nuxt-og-image's `tags:afterResolve` hook calls `.replaceAll()` on every `og:image`/`twitter:image` content — a truthy non-string 500s the whole SSR render (this took down `/archive/colors/[id]` for months). Derive share images with `computed()` (a lazy `watch` never fires during SSR, so a ref stays at its initial value server-side) and always fall back to a real URL. `app/plugins/seo-tag-guard.server.ts` + `app/utils/seoTagGuards.ts` are the SSR safety net that sanitizes these tags before nuxt-og-image sees them — don't remove them.
 
-- **Every dynamic route must 404 on a miss — `app/pages/[...slug].vue` most of all.** That file is the site-wide catch-all, so *any* unmatched URL on the domain reaches it. Until 2026-07 it answered HTTP 200 with `<title>undefined - Classic Mini Archive</title>` and a self-referencing canonical for literally every unknown path (`/wp-admin`, `/foo/bar/baz`, …) — an unbounded soft-404 space that Google indexes and burns crawl budget on. It, and every `[slug]`/`[id]` detail page, must `throw createError({ statusCode: 404, fatal: true })` when the record isn't found. The one deliberate exception is `/exchange/listings/[slug]`: an SSR miss there can also be a *pending* listing whose RLS row only the signed-in owner can read (SSR has no session), so it sets `setResponseStatus(event, 404)` + `noindex` and still renders, letting the `onMounted` retry recover it for the owner.
+- **Every dynamic route must 404 on a miss — `app/pages/[...slug].vue` most of all.** That file is the site-wide catch-all, so _any_ unmatched URL on the domain reaches it. Until 2026-07 it answered HTTP 200 with `<title>undefined - Classic Mini Archive</title>` and a self-referencing canonical for literally every unknown path (`/wp-admin`, `/foo/bar/baz`, …) — an unbounded soft-404 space that Google indexes and burns crawl budget on. It, and every `[slug]`/`[id]` detail page, must `throw createError({ statusCode: 404, fatal: true })` when the record isn't found. The one deliberate exception is `/exchange/listings/[slug]`: an SSR miss there can also be a _pending_ listing whose RLS row only the signed-in owner can read (SSR has no session), so it sets `setResponseStatus(event, 404)` + `noindex` and still renders, letting the `onMounted` retry recover it for the owner.
 
 - **A routeRule makes a path a "known route" to `@nuxtjs/sitemap`.** `/technical/calculators/{needles,gearbox}` had no page files but kept `prerender: false` routeRules, which was enough to put both dead URLs in the sitemap, where they resolved through the catch-all as `undefined`-titled 200s. If you delete a page, delete or 301 its routeRules too, and add the path to `sitemap.exclude`. (On Vercel these `redirect` routeRules serve real 301s; the meta-refresh `index.html` in `.output/public` is a build artifact the platform routing shadows — same as `/archive/manuals`.)
 
-- **Browse pages with query params must use `useFacetedSeo()`** (`app/composables/useFacetedSeo.ts`). `nuxt-seo-utils` derives the canonical from the *current URL including its query string*, so without it every filter/sort permutation self-canonicalises into its own indexable near-duplicate — a combinatorial crawl trap, and one that swallows `?utm_source=`/`?fbclid=` URLs too. The composable canonicalises to an allowlist of params (default `['page']`) and marks anything else `noindex, follow`. It routes robots through **`useRobotsRule()`**, not `useSeoMeta({ robots })`: the latter *replaces* @nuxtjs/robots' tag and silently drops `max-image-preview:large` / `max-snippet:-1`. Never pass `true` to `useRobotsRule` to "restore" the default — it maps to `robotsEnabledValue` unconditionally and would force `index, follow` onto preview deployments. Not calling it is what leaves the environment default intact.
+- **Browse pages with query params must use `useFacetedSeo()`** (`app/composables/useFacetedSeo.ts`). `nuxt-seo-utils` derives the canonical from the _current URL including its query string_, so without it every filter/sort permutation self-canonicalises into its own indexable near-duplicate — a combinatorial crawl trap, and one that swallows `?utm_source=`/`?fbclid=` URLs too. The composable canonicalises to an allowlist of params (default `['page']`) and marks anything else `noindex, follow`. It routes robots through **`useRobotsRule()`**, not `useSeoMeta({ robots })`: the latter _replaces_ @nuxtjs/robots' tag and silently drops `max-image-preview:large` / `max-snippet:-1`. Never pass `true` to `useRobotsRule` to "restore" the default — it maps to `robotsEnabledValue` unconditionally and would force `index, follow` onto preview deployments. Not calling it is what leaves the environment default intact.
 
-- **There is deliberately NO FAQPage JSON-LD, and no visible FAQ block, on the technical pages.** Google requires FAQ markup to match content that is *visible* on the page, and a visible Q&A section was judged to add nothing for human readers on pages that are already spec tables. Shipping the schema without its on-page counterpart is a structured-data policy violation, so the project ships **neither**: `app/utils/geo/generateFaqs.ts` now feeds only `server/plugins/llms-faq.ts` → **`/llms-full.txt`**, which is the legitimate machine-readable channel (it isn't the page, so it isn't cloaking). Both halves or neither — don't re-add FAQPage schema without rendering the questions.
+- **There is deliberately NO FAQPage JSON-LD, and no visible FAQ block, on the technical pages.** Google requires FAQ markup to match content that is _visible_ on the page, and a visible Q&A section was judged to add nothing for human readers on pages that are already spec tables. Shipping the schema without its on-page counterpart is a structured-data policy violation, so the project ships **neither**: `app/utils/geo/generateFaqs.ts` now feeds only `server/plugins/llms-faq.ts` → **`/llms-full.txt`**, which is the legitimate machine-readable channel (it isn't the page, so it isn't cloaking). Both halves or neither — don't re-add FAQPage schema without rendering the questions.
 
 ### Image Optimization Invariants
 
@@ -607,7 +607,7 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   `status='pending'` only (`/admin/exchange/moderation`) — so the listing exists,
   is complete, and is readable by nobody but its owner via own-row RLS. From the
   2026-07-13 TME cutover until 2026-08-12 every paid listing landed there. It
-  surfaced as a seller reporting his ad had *disappeared*, not that it had never
+  surfaced as a seller reporting his ad had _disappeared_, not that it had never
   published, because the comped confirmation screen claimed "Live Now" in all 10
   locales. Nobody caught it sooner because the paid path also never called
   `/api/exchange/listings/submit`, so no `admin_listing_pending` email ever fired.
@@ -685,6 +685,66 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   break out of an XML attribute; pre-escaping double-escapes, so `?w=1&h=2` ships
   as `&amp;amp;` and every reader resolves an image URL that 404s. escapeHtml
   still belongs on the `<img>` in the item's HTML content — that really is HTML.
+
+## Admin Surface Invariants
+
+Consolidated 2026-08-26. Design doc: `docs/plans/2026-08-26-admin-consolidation.md`.
+
+- **`app/components/admin/Shell.vue` (`<AdminShell>`) is the ONLY admin chrome, and
+  every `/admin/**` page must wrap in it.** Before the consolidation there were
+  three navigations — a card grid on `/admin`, the exchange sidebar, and a third
+  rail on `/admin/inbox` — and which one you got depended on which link you
+  clicked. Adding an admin page means adding it to `NAV_GROUPS` in that file, not
+  building another nav. The shell owns the container bounds, the breadcrumb, the
+  ADMIN identity strip and sign-out, and the `title`/`subtitle`/`#actions`
+  header, so pages render body content only.
+
+- **There is no `app/layouts/` directory, and `definePageMeta({ layout: 'admin' })`
+  never did anything.** `app.vue` renders `<NuxtPage>` with no `<NuxtLayout>`, so
+  four admin pages were declaring a layout that did not exist while hand-rolling
+  their own containers. Do not re-add that meta; wrap in `<AdminShell>` instead.
+
+- **`/admin/queue` is the one submission-review surface.** `/admin/inbox` and
+  `/admin/{registry,wheels,colors}/review` all read the SAME `submission_queue`
+  table — the three `*/review` pages differed only by a `target_type` filter
+  applied server-side in `/api/{registry,wheels,colors}/queue/list` — so they are
+  301s in `nuxt.config.ts` routeRules now, carrying `?targetType=` so a reviewer
+  lands on the subset the old page showed. `/admin/queue` reads that param on
+  load; keep it in sync with `targetTypeFilters` if a new target type appears.
+  `server/api/colors/queue/save.ts` survives with no page in front of it — see
+  the note in "Contribution Loop Invariants" about the two colour approval
+  routes; `server/utils/archiveApprovals.ts` is still what stops them drifting.
+
+- **`/admin` is a triage board, not a launcher.** Navigation is the sidebar's job
+  on every page, so the dashboard's job is the count. Marketplace charts stay on
+  `/admin/exchange` — duplicating them onto `/admin` is how those two pages
+  drifted apart in the first place. Every count on both pages loads independently
+  and swallows its own error: a badge is decoration, and one unavailable table
+  must not blank the first screen an admin sees after signing in.
+
+- **`PUT /api/admin/listings/[id]` corrects listing CONTENT and must never touch
+  review state.** It exists so a wrong price or a phone number in a description
+  can be fixed on a LIVE listing without pushing it back through moderation, so
+  it sets no status field and sends the seller no email — the `admin_audit_log`
+  row is the record. `ADMIN_EDITABLE_COLUMNS` in that file is the security
+  boundary (the `changes` object is browser-written, and the route is
+  service-role so RLS is not standing behind it), in the same spirit as
+  `EDIT_TARGETS` in the queue approve route. `status` and `tier` are deliberately
+  excluded — they have their own routes so those transitions stay observable, and
+  moderation must remain the only path to `active`. Never add ownership, payment,
+  or worker-bookkeeping columns to that set.
+
+- **`/exchange/listings/[slug]/edit` serves two writers on two paths.** RLS on
+  `listings` is owner-scoped, so an admin's PostgREST update matches zero rows
+  and still reports success — the admin save MUST go through the route above.
+  The gate is client-only on purpose: the Supabase session is in localStorage,
+  so `supabase.auth.getUser()` during SSR has nothing to read. It used to throw
+  403 there unconditionally, which made a hard refresh of the page fail for the
+  owner too; SSR now passes through and the client decides, matching what the
+  `exchange-auth` middleware already does. Note the deliberate asymmetry in the
+  change-diff: the seller path still treats a blank as "no change", the admin
+  path sends an explicit null, because clearing bad data is the whole point of
+  the admin edit.
 
 ## Contribution Loop Invariants
 
@@ -968,7 +1028,7 @@ build-time-only file: `bunx nuxi build --dotenv <file>`.
   native module cannot be bundled into a worker. `wasm` was missing entirely until 2026-08-26
   — declared nowhere, installed nowhere — so `NITRO_PRESET=cloudflare_module` died at the
   Nitro bundling step with `Cannot resolve "@takumi-rs/wasm/no-bundler" ... and externals are
-  not allowed!`. It surfaced only when CI first got far enough to reach bundling; before that
+not allowed!`. It surfaced only when CI first got far enough to reach bundling; before that
   the build failed earlier, on the sitemap sources. Keep both on the same version — bumping
   one alone is untested.
 - **`@types/node` stays on 25.x** while `engines.node` is `^24` (26.x types target Node 26 APIs).

@@ -332,7 +332,7 @@
           </li>
 
           <li v-if="isAdmin" class="mt-1">
-            <NuxtLink to="/admin/inbox" @click="closeDropdowns()">
+            <NuxtLink to="/admin" @click="closeDropdowns()">
               <i class="fas fa-shield-check w-4" aria-hidden="true"></i>
               {{ t('profile.admin') }}
             </NuxtLink>
@@ -454,12 +454,7 @@
                 </span>
               </NuxtLink>
 
-              <NuxtLink
-                v-if="isAdmin"
-                to="/admin/inbox"
-                class="drawer-link"
-                @click="goToDrawerLink(t('profile.admin'))"
-              >
+              <NuxtLink v-if="isAdmin" to="/admin" class="drawer-link" @click="goToDrawerLink(t('profile.admin'))">
                 <i class="fas fa-shield-check w-[18px] text-secondary" aria-hidden="true"></i>
                 {{ t('profile.admin') }}
               </NuxtLink>

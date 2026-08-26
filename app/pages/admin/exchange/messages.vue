@@ -1,16 +1,11 @@
 <template>
-  <AdminExchangeShell>
-    <!-- Page Header -->
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-3xl font-bold">Message Management</h1>
-        <p class="text-base-content/70 mt-2">Review reported messages and browse conversations</p>
-      </div>
+  <AdminShell title="Message Management" subtitle="Review reported messages and browse conversations">
+    <template #actions>
       <button class="btn btn-ghost btn-sm" :disabled="loading" @click="refreshCurrentTab">
         <i class="fas fa-arrows-rotate" :class="{ 'animate-spin': loading }"></i>
         Refresh
       </button>
-    </div>
+    </template>
 
     <!-- Tabs -->
     <div role="tablist" class="tabs tabs-border mb-6">
@@ -308,15 +303,11 @@
         <button>close</button>
       </form>
     </dialog>
-  </AdminExchangeShell>
+  </AdminShell>
 </template>
 
 <script setup lang="ts">
   import type { MessageQueueItem, AdminConversation } from '~/composables/useAdmin';
-
-  definePageMeta({
-    layout: 'admin',
-  });
 
   useHead({
     title: 'Message Management - Admin - The Mini Exchange',
