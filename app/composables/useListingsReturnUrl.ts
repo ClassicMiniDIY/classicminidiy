@@ -22,7 +22,8 @@ const DEFAULT_URL = '/exchange/listings';
  * predating the TME cutover (when browse lived at `/listings`) would otherwise
  * send "Back to Listings" straight to a 404.
  */
-const isBrowsePath = (url: string) => url === DEFAULT_URL || url.startsWith(`${DEFAULT_URL}?`);
+const BROWSE_PATH_PATTERN = /^\/exchange\/listings\/?([?#].*)?$/;
+const isBrowsePath = (url: string) => BROWSE_PATH_PATTERN.test(url);
 
 export const useListingsReturnUrl = () => {
   const rememberListingsReturnUrl = (fullPath: string) => {

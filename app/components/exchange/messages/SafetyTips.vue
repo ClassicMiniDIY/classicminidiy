@@ -27,7 +27,7 @@
         </li>
         <li class="flex items-start gap-2">
           <i class="fas fa-check text-success shrink-0 mt-0.5"></i>
-          <span>{{ t('tip4Prefix') }}<NuxtLink to="/safety" class="link link-info">{{ t('tip4Link') }}</NuxtLink>.</span>
+          <span>{{ t('tip4Prefix') }}<NuxtLink to="/exchange/safety" class="link link-info">{{ t('tip4Link') }}</NuxtLink>.</span>
         </li>
       </ul>
     </div>
