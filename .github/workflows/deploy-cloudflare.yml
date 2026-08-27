@@ -252,8 +252,12 @@ jobs:
       - name: Test the MCP transport
         run: ./scripts/test-mcp-transport.sh
         env:
-          # Optional: arms the two Supabase-backed tools. They are skipped
-          # rather than failed when it is absent.
+          # Arms the two Supabase-backed tools. Note this key is already a
+          # REQUIRED build secret, so in CI those tools always run — the script's
+          # skip path only applies to a local run. They assert the transport, not
+          # the database: a tool that cannot reach Postgres still proves the
+          # envelope works and is reported rather than failed, so a Supabase
+          # outage cannot block the deploy that fixes it.
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 
       - name: Deploy
