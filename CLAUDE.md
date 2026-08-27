@@ -203,9 +203,6 @@ properties of undefined (reading 'webSiteResolver')` out of its resolver preload
 
 - `/api/decoders/chassis` - Chassis number decoding by year ranges
 - `/api/decoders/engine` - Engine code interpretation and identification
-- `/api/mcp/compression` - MCP integration for compression calculator
-- `/api/mcp/gearbox` - MCP integration for gearbox calculator
-- `/api/mcp/chassis-decoder` - MCP integration for chassis decoding
 
 #### Database APIs
 
@@ -218,7 +215,12 @@ properties of undefined (reading 'webSiteResolver')` out of its resolver preload
 #### AI & Chat APIs
 
 - `/api/langgraph/` - AI chat integration with streaming responses
-- `/api/mcp/` - Model Context Protocol server for tool integration
+- `/mcp` - Model Context Protocol server. **There are no `/api/mcp/*` routes** —
+  the whole surface is one JSON-RPC endpoint at `/mcp`, served by
+  `@nuxtjs/mcp-toolkit`, which discovers tools from `server/mcp/tools/*.ts`
+  (filename = tool name). Bearer auth via `server/middleware/mcp-auth.ts`.
+  The chat does NOT consume these tools; nothing under `server/api/langgraph/**`
+  references MCP.
 
 #### Administrative APIs
 
@@ -1211,7 +1213,7 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 ## Notable Technical Achievements
 
 1. **Comprehensive Classic Mini Database**: One of the most complete digital archives for Classic Mini information worldwide
-2. **Advanced AI Integration**: Sophisticated LangGraph implementation with MCP server for technical assistance
+2. **Advanced AI Integration**: LangGraph-powered chat, plus a separate MCP server exposing the calculators to external AI clients
 3. **Multi-language Support**: Full internationalization across 10 languages with browser detection
 4. **User-Generated Content System**: Advanced submission and administrative review workflows
 5. **Performance Excellence**: Extensive optimization strategies including PWA, CDN, and caching

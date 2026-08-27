@@ -115,7 +115,7 @@ The platform is designed to be both a real-time working tool for mechanics and e
 - **8 Interactive Technical Calculators** - Compression ratio, gearbox, SU carburetors, and more
 - **Comprehensive Digital Archive** - Workshop manuals, wiring diagrams, historical documents (powered by Supabase)
 - **Community Contributions** - Submit wheels, colors, registry entries, and documents with suggest-edit modals on every detail page
-- **AI-Powered Assistant** - LangGraph-based conversational AI with MCP tool integration
+- **AI-Powered Assistant** - LangGraph-based conversational AI
 - **10-Language Support** - Full internationalization with browser detection
 - **Progressive Web App** - Offline functionality and mobile-optimized experience
 - **Admin Moderation** - Unified queue for reviewing all submission types with user management
@@ -345,7 +345,7 @@ New in v8.0.0 — a unified contribution hub replacing scattered submission page
 #### CMDIY Assistant (`/chat`)
 
 - **Conversational AI** - LangGraph-powered assistant with Classic Mini expertise
-- **Model Context Protocol (MCP) Server** - Direct integration with calculators (compression, gearbox, chassis decoder)
+- **Model Context Protocol (MCP) Server** - A single JSON-RPC endpoint at `/mcp` exposing the calculators (compression, gearbox, chassis decoder) to AI clients
 - **Streaming Responses** - Real-time AI chat with persistent conversation threads
 - **Context Awareness** - Understanding of Classic Mini technical specifications and archive content
 
@@ -391,9 +391,6 @@ The Classic Mini DIY platform exposes 50+ REST API endpoints:
 
 - `GET /api/decoders/chassis` - Chassis number decoding by year ranges
 - `GET /api/decoders/engine` - Engine code interpretation and identification
-- `POST /api/mcp/compression` - MCP integration for compression calculator
-- `POST /api/mcp/gearbox` - MCP integration for gearbox calculator
-- `POST /api/mcp/chassis-decoder` - MCP integration for chassis decoding
 
 ### Database APIs
 
@@ -406,7 +403,7 @@ The Classic Mini DIY platform exposes 50+ REST API endpoints:
 ### AI & Chat APIs
 
 - `POST /api/langgraph/` - AI chat integration with streaming responses
-- `GET/POST /api/mcp/` - Model Context Protocol server for tool integration
+- `POST /mcp` - Model Context Protocol server (JSON-RPC over Streamable HTTP, Bearer auth). See `server/mcp/README.md`
 
 ### Administrative APIs
 

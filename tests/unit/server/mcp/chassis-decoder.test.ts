@@ -18,62 +18,22 @@ const { mockJsonResult, mockErrorResult, mockUseRuntimeConfig } = vi.hoisted(() 
 });
 
 import { chassisRanges } from '~/data/models/decoders';
+import { validateChassisNumber } from '~/server/utils/chassisDecode';
 
 // ---------------------------------------------------------------------------
-// Helper: fetch mock factory. Accepts a response body and returns a mock
-// that resolves to a Response-like object.
+// The tool decodes IN PROCESS via server/utils/chassisDecode. It used to HTTP-PUT
+// the site's own /api/decoders/chassis, and these tests mocked fetch and asserted
+// against a hand-written response fixture — which proved the tool could parse a
+// shape we invented, not that it decodes correctly. They now exercise the real
+// decoder, and globalThis.fetch is stubbed to a throwing spy so any return of the
+// self-fetch fails loudly.
 // ---------------------------------------------------------------------------
-function mockFetchOk(body: any) {
-  return vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    statusText: 'OK',
-    json: async () => body,
-    text: async () => JSON.stringify(body),
-  });
-}
+const fetchSpy = vi.fn(() => {
+  throw new Error('the chassis tool must not make network calls');
+});
+(globalThis as any).fetch = fetchSpy;
 
-function mockFetchErr(status: number, statusText: string, body = 'Bad Request') {
-  return vi.fn().mockResolvedValue({
-    ok: false,
-    status,
-    statusText,
-    json: async () => ({}),
-    text: async () => body,
-  });
-}
-
-const sampleDecoderResponse = {
-  chassisNumber: 'YMA2S1-12345',
-  yearRange: '1961-1978 (Australia)',
-  pattern: 'YMA2S1####',
-  isValid: true,
-  errors: [],
-  decodedPositions: [
-    {
-      position: 1,
-      value: 'Y',
-      name: 'Origin of manufacture: Australia (BMC / Leyland Australia, Zetland NSW)',
-      matched: true,
-    },
-    {
-      position: 2,
-      value: 'M',
-      name: 'Morris (Morris 850, Mini Deluxe, Mini Minor, Mini-Matic Mk1)',
-      matched: true,
-    },
-    { position: 3, value: 'A', name: 'A-series engine, 800–999cc', matched: true },
-    { position: 4, value: '2', name: '2-door body', matched: true },
-    { position: 5, value: 'S', name: 'Saloon (Sedan)', matched: true },
-    {
-      position: 6,
-      value: '1',
-      name: 'Mk1: Morris 850 (YMA2S1) or Morris Cooper (YKA2S1), 1961–1966',
-      matched: true,
-    },
-    { position: 12, value: '12345', name: 'Production sequence number', matched: true },
-  ],
-};
+const AUS = '1961-1978 (Australia)';
 
 // ---------------------------------------------------------------------------
 // Import the tool config once mocks are in place
@@ -82,19 +42,15 @@ let toolConfig: any;
 
 beforeEach(async () => {
   vi.resetModules();
+  fetchSpy.mockClear();
   mockJsonResult.mockClear();
   mockErrorResult.mockClear();
-  mockUseRuntimeConfig.mockClear();
   mockJsonResult.mockImplementation((data: any) => data);
   mockErrorResult.mockImplementation((message: string) => ({ error: true, message }));
-  mockUseRuntimeConfig.mockImplementation(() => ({ public: { siteUrl: 'http://localhost:3000' } }));
   const mod = await import('~/server/mcp/tools/chassis-decoder');
   toolConfig = mod.default;
 });
 
-// ---------------------------------------------------------------------------
-// Tool configuration / metadata
-// ---------------------------------------------------------------------------
 describe('Chassis Decoder MCP Tool — configuration', () => {
   it('has a description string that mentions Australian Minis', () => {
     expect(typeof toolConfig.description).toBe('string');
@@ -164,7 +120,6 @@ describe('Chassis Decoder MCP Tool — input validation', () => {
   });
 
   it('accepts hyphens, spaces, and forward slashes in chassis numbers', async () => {
-    globalThis.fetch = mockFetchOk(sampleDecoderResponse) as any;
     const result = await toolConfig.handler({
       yearRange: '1961-1978 (Australia)',
       chassisNumber: 'YMA2S1 / 12345 - A',
@@ -176,58 +131,39 @@ describe('Chassis Decoder MCP Tool — input validation', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Handler — fetch wiring
+// Handler — in-process decoding
 // ---------------------------------------------------------------------------
-describe('Chassis Decoder MCP Tool — API call', () => {
-  it('calls the chassis decoder API via PUT with JSON body', async () => {
-    const fetchMock = mockFetchOk(sampleDecoderResponse);
-    globalThis.fetch = fetchMock as any;
-
-    await toolConfig.handler({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YMA2S1-12345',
-    });
-
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('http://localhost:3000/api/decoders/chassis');
-    expect(init.method).toBe('PUT');
-    expect(init.headers['Content-Type']).toBe('application/json');
-    const body = JSON.parse(init.body);
-    expect(body).toEqual({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YMA2S1-12345',
-    });
+describe('Chassis Decoder MCP Tool — decoding', () => {
+  it('never makes a network call', async () => {
+    await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('uses siteUrl from runtime config when provided', async () => {
-    mockUseRuntimeConfig.mockImplementation(() => ({
-      public: { siteUrl: 'https://classicminidiy.com' },
-    }));
-    const fetchMock = mockFetchOk(sampleDecoderResponse);
-    globalThis.fetch = fetchMock as any;
+  it('decodes a valid Australian chassis number', async () => {
+    const result = await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
 
-    await toolConfig.handler({
-      yearRange: '1959-1969',
-      chassisNumber: 'A-A2S7L-807922A',
-    });
-
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://classicminidiy.com/api/decoders/chassis');
+    expect(mockErrorResult).not.toHaveBeenCalled();
+    expect(result.results.isValid).toBe(true);
+    expect(result.results.pattern).toBe('YMA2S1####');
+    expect(result.results.decodedPositions.length).toBeGreaterThan(0);
+    expect(result.context.errors).toEqual([]);
   });
 
-  it('falls back to localhost when siteUrl is missing', async () => {
-    mockUseRuntimeConfig.mockImplementation(() => ({ public: {} }));
-    const fetchMock = mockFetchOk(sampleDecoderResponse);
-    globalThis.fetch = fetchMock as any;
+  it('decodes a valid 1959-1969 UK chassis number', async () => {
+    const result = await toolConfig.handler({ yearRange: '1959-1969', chassisNumber: 'A-A2S7L-123A' });
 
-    await toolConfig.handler({
-      yearRange: '1959-1969',
-      chassisNumber: 'A-A2S7L-807922A',
-    });
+    expect(result.results.isValid).toBe(true);
+    expect(result.results.pattern).toBe('A-A2S7L-###A');
+  });
 
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe('http://localhost:3000/api/decoders/chassis');
+  it('agrees with the shared decoder it delegates to', async () => {
+    const range = chassisRanges.find((r) => r.title === AUS)!;
+    const direct = validateChassisNumber('YMA2S1-12345', range);
+    const viaTool = await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
+
+    expect(viaTool.results.isValid).toBe(direct.isValid);
+    expect(viaTool.results.pattern).toBe(direct.pattern);
+    expect(viaTool.results.decodedPositions).toEqual(direct.decodedPositions);
   });
 });
 
@@ -235,12 +171,8 @@ describe('Chassis Decoder MCP Tool — API call', () => {
 // Handler — response shaping
 // ---------------------------------------------------------------------------
 describe('Chassis Decoder MCP Tool — response shaping', () => {
-  it('returns a structured result with inputs, results, context, and humanReadable sections', async () => {
-    globalThis.fetch = mockFetchOk(sampleDecoderResponse) as any;
-    const result = await toolConfig.handler({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YMA2S1-12345',
-    });
+  it('returns inputs, results, context and humanReadable sections', async () => {
+    const result = await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
 
     expect(result).toHaveProperty('inputs');
     expect(result).toHaveProperty('results');
@@ -250,92 +182,39 @@ describe('Chassis Decoder MCP Tool — response shaping', () => {
   });
 
   it('echoes yearRange and chassisNumber into the inputs block', async () => {
-    globalThis.fetch = mockFetchOk(sampleDecoderResponse) as any;
-    const result = await toolConfig.handler({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YMA2S1-12345',
-    });
-    expect(result.inputs.yearRange).toBe('1961-1978 (Australia)');
+    const result = await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
+
+    expect(result.inputs.yearRange).toBe(AUS);
     expect(result.inputs.chassisNumber).toBe('YMA2S1-12345');
   });
 
-  it('surfaces the decoded positions in results.decodedPositions', async () => {
-    globalThis.fetch = mockFetchOk(sampleDecoderResponse) as any;
-    const result = await toolConfig.handler({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YMA2S1-12345',
-    });
-    expect(Array.isArray(result.results.decodedPositions)).toBe(true);
-    expect(result.results.decodedPositions.length).toBe(sampleDecoderResponse.decodedPositions.length);
-  });
+  it('marks a valid number VALID in the formatted text and includes the pattern', async () => {
+    const result = await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
 
-  it('formatted text contains VALID marker and pattern when isValid=true', async () => {
-    globalThis.fetch = mockFetchOk(sampleDecoderResponse) as any;
-    const result = await toolConfig.handler({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YMA2S1-12345',
-    });
     expect(result.formattedText).toContain('VALID');
     expect(result.formattedText).toContain('YMA2S1####');
-    expect(result.formattedText).toContain('YMA2S1-12345');
   });
 
-  it('formatted text breaks down each decoded position', async () => {
-    globalThis.fetch = mockFetchOk(sampleDecoderResponse) as any;
-    const result = await toolConfig.handler({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YMA2S1-12345',
-    });
-    // One line per decoded position, with position number and matched/unmatched marker
-    for (const pos of sampleDecoderResponse.decodedPositions) {
-      expect(result.humanReadable.breakdown).toContain(`Position ${pos.position}:`);
+  it('breaks down every decoded position in the formatted text', async () => {
+    const result = await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
+
+    for (const pos of result.results.decodedPositions) {
+      expect(result.humanReadable.breakdown).toContain(`Position ${pos.position}`);
     }
   });
 
-  it('surfaces errors from the API response when isValid=false', async () => {
-    globalThis.fetch = mockFetchOk({
-      ...sampleDecoderResponse,
-      isValid: false,
-      errors: ['Unknown Make letter at position 2'],
-    }) as any;
+  it('surfaces decoder errors when the number is invalid', async () => {
+    const result = await toolConfig.handler({ yearRange: '1959-1969', chassisNumber: 'ZZZZ' });
 
-    const result = await toolConfig.handler({
-      yearRange: '1961-1978 (Australia)',
-      chassisNumber: 'YZA2S1-12345',
-    });
-
+    expect(result.results.isValid).toBe(false);
+    expect(result.context.errors.length).toBeGreaterThan(0);
     expect(result.formattedText).toContain('INVALID');
-    expect(result.formattedText).toContain('Unknown Make letter at position 2');
-    expect(result.context.validationStatus).toMatch(/Invalid/i);
-    expect(result.context.errors).toEqual(['Unknown Make letter at position 2']);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Handler — error propagation
-// ---------------------------------------------------------------------------
-describe('Chassis Decoder MCP Tool — error handling', () => {
-  it('returns errorResult when the API responds with a non-OK status', async () => {
-    globalThis.fetch = mockFetchErr(400, 'Bad Request', 'Chassis number too short') as any;
-    const result = await toolConfig.handler({
-      yearRange: '1959-1969',
-      chassisNumber: 'A-A',
-    });
-    expect(mockErrorResult).toHaveBeenCalledOnce();
-    expect(result.error).toBe(true);
-    expect(result.message).toMatch(/Chassis decoder API error: 400/);
-    expect(result.message).toContain('Chassis number too short');
+    expect(result.humanReadable.errors).not.toBe('No errors');
   });
 
-  it('returns errorResult when fetch itself throws (network failure)', async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network unreachable')) as any;
-    const result = await toolConfig.handler({
-      yearRange: '1959-1969',
-      chassisNumber: 'A-A2S7L-807922A',
-    });
-    expect(mockErrorResult).toHaveBeenCalledOnce();
-    expect(result.error).toBe(true);
-    expect(result.message).toMatch(/Internal server error/);
-    expect(result.message).toContain('Network unreachable');
+  it('reports no errors for a valid number', async () => {
+    const result = await toolConfig.handler({ yearRange: AUS, chassisNumber: 'YMA2S1-12345' });
+
+    expect(result.humanReadable.errors).toBe('No errors');
   });
 });

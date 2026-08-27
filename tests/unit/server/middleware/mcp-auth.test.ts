@@ -59,7 +59,7 @@ describe('server/middleware/mcp-auth', () => {
 
   // ---------- 2. Reject requests without Bearer token ----------
   it('rejects /mcp requests without Authorization header (401)', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue(undefined);
 
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
@@ -68,7 +68,7 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   it('rejects /mcp requests with non-Bearer Authorization header (401)', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Basic abc123');
 
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
@@ -78,7 +78,7 @@ describe('server/middleware/mcp-auth', () => {
 
   // ---------- 3. Reject invalid Bearer tokens ----------
   it('rejects invalid Bearer tokens (403)', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer wrong-key');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -94,7 +94,7 @@ describe('server/middleware/mcp-auth', () => {
 
   // ---------- 4. Accept valid MCP_API_KEY ----------
   it('accepts a valid MCP_API_KEY', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer my-secret-key');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -109,7 +109,7 @@ describe('server/middleware/mcp-auth', () => {
 
   // ---------- 5. Accept comma-separated MCP_API_KEYS ----------
   it('accepts any key from comma-separated MCP_API_KEYS', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: '',
@@ -123,7 +123,7 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   it('rejects a key not in MCP_API_KEYS', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: '',
@@ -142,7 +142,7 @@ describe('server/middleware/mcp-auth', () => {
   // middleware must reject it in EVERY environment, and with no keys configured
   // every request is rejected (no fail-open when NODE_ENV is unset).
   it('rejects the burned dev key in development when no key is configured (403)', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -160,7 +160,7 @@ describe('server/middleware/mcp-auth', () => {
     const originalEnv = process.env.NODE_ENV;
     delete process.env.NODE_ENV;
 
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -180,7 +180,7 @@ describe('server/middleware/mcp-auth', () => {
   it('rejects the burned dev key in production (403)', async () => {
     process.env.NODE_ENV = 'production';
 
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -195,7 +195,7 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   it('rejects ALL requests when no API keys are configured — fail closed (403)', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer any-key-at-all');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -210,7 +210,7 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   it('still accepts a real configured key in development (dev works via env key)', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer my-local-dev-key');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -224,7 +224,7 @@ describe('server/middleware/mcp-auth', () => {
 
   // ---------- 7. Case-insensitive bearer prefix ----------
   it('handles "bearer" prefix in lowercase', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('bearer my-key');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -237,7 +237,7 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   it('handles "BEARER" prefix in uppercase', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('BEARER my-key');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -250,7 +250,7 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   it('handles "Bearer" prefix with extra whitespace', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('  Bearer   my-key  ');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -263,29 +263,28 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   // ---------- Edge cases ----------
-  it('matches /mcp subpaths like /mcp/sse', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/sse'));
+  // The gate is an exact match on /mcp, the JSON-RPC endpoint. It used to be
+  // startsWith('/mcp'), which 401'd the two routes @nuxtjs/mcp-toolkit registers
+  // to be PUBLICLY linkable — the IDE install deeplink and the README badge —
+  // and also swept up unrelated paths sharing the prefix.
+  it.each(['/mcp/deeplink', '/mcp/badge.svg'])('leaves the public %s route unauthenticated', async (path) => {
+    mockGetRequestURL.mockReturnValue(new URL(`https://example.com${path}`));
     mockGetHeader.mockReturnValue(undefined);
 
-    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
-      statusCode: 401,
-    });
+    await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
+    expect(mockUseRuntimeConfig).not.toHaveBeenCalled();
   });
 
-  it('also matches paths like /mcp-other (startsWith behavior)', async () => {
-    // The source checks startsWith('/mcp') which WOULD match '/mcp-other'
-    // This test documents actual behavior
+  it('does not gate an unrelated path that merely shares the /mcp prefix', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp-other'));
     mockGetHeader.mockReturnValue(undefined);
 
-    // Since '/mcp-other'.startsWith('/mcp') is true, auth IS enforced
-    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
-      statusCode: 401,
-    });
+    await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
+    expect(mockUseRuntimeConfig).not.toHaveBeenCalled();
   });
 
   it('accepts key from MCP_API_KEY even when MCP_API_KEYS also has keys', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer single-key');
 
     mockUseRuntimeConfig.mockReturnValue({
@@ -298,7 +297,7 @@ describe('server/middleware/mcp-auth', () => {
   });
 
   it('rejects empty Bearer token (401 because empty string is falsy)', async () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp/tools'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockGetHeader.mockReturnValue('Bearer ');
 
     mockUseRuntimeConfig.mockReturnValue({

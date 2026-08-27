@@ -157,12 +157,16 @@ Add to `.cursor/mcp.json`:
     "classic-mini-diy": {
       "url": "https://www.classicminidiy.com/mcp",
       "headers": {
-        "X-API-Key": "your-api-key"
+        "Authorization": "Bearer your-api-key"
       }
     }
   }
 }
 ```
+
+`Authorization: Bearer` is the only accepted form. This example used to show an
+`X-API-Key` header, which `server/middleware/mcp-auth.ts` does not read — anyone
+following it got a 401 and no indication why.
 
 ### Custom MCP Client
 
