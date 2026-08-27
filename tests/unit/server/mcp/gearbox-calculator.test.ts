@@ -317,6 +317,17 @@ describe('Gearbox Calculator MCP Tool', () => {
       expect(result.results.topSpeed).toBeLessThan(120);
     });
 
+    it('rejects a negative diameter rather than reporting a negative top speed', () => {
+      const schema = toolConfig.inputSchema.tire_type;
+      expect(schema.safeParse({ width: 145, profile: 80, size: 10, diameter: -477 }).success).toBe(false);
+      expect(schema.safeParse({ width: 145, profile: 80, size: 10, diameter: 477.52 }).success).toBe(true);
+    });
+
+    it('accepts a zero profile, which is how slicks are quoted', () => {
+      const schema = toolConfig.inputSchema.tire_type;
+      expect(schema.safeParse({ width: 19, profile: 0, size: 10, diameter: 477.52 }).success).toBe(true);
+    });
+
     it('still derives the diameter when none is supplied', async () => {
       const result = await toolConfig.handler({
         ...defaultInputs,
