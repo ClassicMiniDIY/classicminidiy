@@ -254,4 +254,13 @@ jobs:
       # `wrangler versions upload` if a real preview URL is needed.
       - name: Smoke-test the deployment
         if: env.DRY_RUN != 'true' && env.NUXT_SITE_ENV == 'production'
+        # MCP_SMOKE_KEY arms the authenticated /mcp assertion. Without it the
+        # battery still runs but that one check SKIPS, which leaves exactly the
+        # blind spot it was written to close: the anonymous check asserts a 401
+        # raised by middleware that runs BEFORE the handler, so it passes whether
+        # the handler works or not. That is how #721 stayed green while every
+        # authenticated call failed. Set it to a key the production origin
+        # accepts (`gh secret set MCP_SMOKE_KEY`).
+        env:
+          MCP_SMOKE_KEY: ${{ secrets.MCP_SMOKE_KEY }}
         run: ./scripts/verify-cf-deploy.sh https://www.classicminidiy.com
