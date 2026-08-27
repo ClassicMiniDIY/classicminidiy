@@ -49,6 +49,35 @@ if ! grep -rqs "agents/mcp\|createLegacyMcpHandler\|createMcpHandler" .output/se
   exit 2
 fi
 
+# Refuse to run if the port is already taken.
+#
+# Checked by BINDING rather than by asking whether something answers HTTP,
+# because the occupant may not speak HTTP at all — and because the dangerous
+# case is an occupant that answers perfectly: a stale `wrangler dev` in this
+# directory serving an OLD .output. wrangler does not fail loudly on a busy
+# port, and it hot-reloads .dev.vars, so that stale worker would pick up the key
+# written below and could take the whole suite green while certifying an
+# artifact that is not the one about to deploy. A liveness check on our own PID
+# does not cover it. Refusing to start does.
+if ! python3 -c "
+import socket, sys
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+try:
+    s.bind(('127.0.0.1', $PORT))
+except OSError:
+    sys.exit(1)
+finally:
+    s.close()
+" 2>/dev/null; then
+  echo "ERROR: port $PORT is already in use."
+  echo "Refusing to run: whatever is listening would answer these requests, and a"
+  echo "stale wrangler serving an older .output can pass them while proving nothing"
+  echo "about the artifact about to deploy."
+  echo "Free the port, or pass another: ./scripts/test-mcp-transport.sh 8801"
+  exit 2
+fi
+
 WORK_DIR=$(mktemp -d)
 DEV_VARS_BACKUP=""
 [ -f .dev.vars ] && DEV_VARS_BACKUP="$WORK_DIR/.dev.vars.bak" && cp .dev.vars "$DEV_VARS_BACKUP"
@@ -80,6 +109,21 @@ if ! curl -s -o /dev/null -m 5 "$ORIGIN/" 2>/dev/null; then
   tail -20 "$WORK_DIR/wrangler.log"
   exit 2
 fi
+
+# Something answering on the port is NOT proof that it is OUR worker. If the port
+# was already held — a previous run killed mid-flight, or a developer's own
+# `wrangler dev` — our process exits on the failed bind while the squatter answers
+# the readiness probe, and the whole suite then certifies an artifact that is not
+# the one about to deploy. Worse, `wrangler dev` hot-reloads .dev.vars, so a stale
+# worker in this directory picks up the key written above and even the
+# authenticated checks go green: a full false pass on the wrong build.
+if ! kill -0 "$WRANGLER_PID" 2>/dev/null; then
+  echo "ERROR: our wrangler process is gone, but something is answering on port $PORT."
+  echo "That is almost certainly a stale worker or another dev server holding the port."
+  echo "Nothing was verified. Free the port (or pass a different one) and re-run."
+  tail -20 "$WORK_DIR/wrangler.log"
+  exit 2
+fi
 echo
 
 # rpc <json-body> [auth: yes|no] -> body on stdout, HTTP status in $STATUS_FILE.
@@ -106,7 +150,18 @@ rpc_status() { cat "$STATUS_FILE" 2>/dev/null || echo "NO-STATUS"; }
 
 # The transport may answer as plain JSON or as an SSE frame; both are valid
 # Streamable HTTP. Normalise so assertions do not depend on which was used.
-payload() { sed -n 's/^data: //p' | head -1; }
+#
+# The fallback is load-bearing, not defensive clutter: stripping only the SSE
+# `data:` prefix yields an EMPTY string for a plain-JSON body, which would fail
+# every downstream assertion and block deploys of a perfectly healthy /mcp. The
+# Cloudflare provider answers SSE today, so that is one upstream change away.
+payload() {
+  local body
+  body=$(cat)
+  local sse
+  sse=$(printf '%s' "$body" | sed -n 's/^data: //p' | head -1)
+  if [ -n "$sse" ]; then printf '%s' "$sse"; else printf '%s' "$body"; fi
+}
 
 jq_get() { python3 -c "
 import sys, json
@@ -212,9 +267,34 @@ call_tool clearances '{"section":"Engine","limit":3}'
 call_tool parts-equivalency '{"query":"K&N","limit":3}'
 call_tool vehicle-weights '{"section":"Electrics","limit":3}'
 
+# The two archive tools read Postgres, so they can fail for a reason that has
+# nothing to do with the transport. This gate blocks deploys, and coupling that
+# to the availability of a third-party database would mean a Supabase outage
+# blocks every deploy — including the fix for the outage.
+#
+# So the assertion is narrowed to what this suite is actually for: a WELL-FORMED
+# JSON-RPC envelope carrying a readable result. A tool reporting isError because
+# it could not reach the database has still proved the transport works end to
+# end, and is reported as a note rather than a failure. A missing or malformed
+# envelope is still a hard failure, because that is a transport fault.
+call_tool_db_backed() {
+  local name="$1" args="$2"
+  local res is_err text
+  res=$(rpc "{\"jsonrpc\":\"2.0\",\"id\":10,\"method\":\"tools/call\",\"params\":{\"name\":\"$name\",\"arguments\":$args}}" yes | payload)
+  is_err=$(printf '%s' "$res" | jq_get 'result.isError')
+  text=$(printf '%s' "$res" | jq_get 'result.content.0.text')
+  if [ -z "$text" ]; then
+    bad "$name -> no result.content[0].text (transport fault): $(printf '%s' "$res" | head -c 90)"
+  elif [ "$is_err" = "True" ] || [ "$is_err" = "true" ]; then
+    note "$name -> transport OK, backend unavailable: $(printf '%s' "$text" | tr -d '\n' | head -c 60)"
+  else
+    ok "$name -> $(printf '%s' "$text" | tr -d '\n' | head -c 58)..."
+  fi
+}
+
 if [ -n "${SUPABASE_SERVICE_KEY:-}" ]; then
-  call_tool wheel-search '{"query":"minilite","limit":3}'
-  call_tool color-lookup '{"query":"green","limit":3}'
+  call_tool_db_backed wheel-search '{"query":"minilite","limit":3}'
+  call_tool_db_backed color-lookup '{"query":"green","limit":3}'
 else
   note "wheel-search / color-lookup (set SUPABASE_SERVICE_KEY to run)"
 fi
