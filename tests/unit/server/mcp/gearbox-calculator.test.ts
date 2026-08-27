@@ -63,8 +63,13 @@ describe('Gearbox Calculator MCP Tool', () => {
       expect(typeof toolConfig.handler).toBe('function');
     });
 
-    it('has a cache setting of 1h', () => {
-      expect(toolConfig.cache).toBe('1h');
+    // Not cached, deliberately. The toolkit's default cache key is
+    // Object.values(args).map(String).join(':'), and tire_type is an object, so
+    // every tire configuration would stringify to the same "[object Object]"
+    // segment and share one entry. Re-adding a cache here needs an explicit
+    // getKey, so this asserts the absence rather than leaving it unstated.
+    it('declares no cache, because its tire_type argument is an object', () => {
+      expect(toolConfig.cache).toBeUndefined();
     });
   });
 

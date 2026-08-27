@@ -202,6 +202,16 @@ ${speedoMatches || 'No close matches found'}`;
     });
   },
 
-  // Cache results for 1 hour since calculations are deterministic
-  cache: '1h',
+  // Deliberately NOT cached. The toolkit's default cache key is
+  // Object.values(args).map(String).join(':') (mcp-toolkit
+  // definitions/tools.js), and tire_type is an OBJECT, so every tire
+  // configuration stringifies to the same "[object Object]" segment and shares
+  // one key. Two callers differing only in tire size would collide.
+  //
+  // Measured as latent rather than live — under wrangler dev --local and against
+  // production, different tire sizes returned correctly different results, so
+  // the cache is not currently serving mismatched values. It is removed rather
+  // than re-keyed because this is pure arithmetic in the microsecond range:
+  // there is nothing to gain, and a wrong answer is a poor trade for it. Any
+  // tool taking an object-valued input needs an explicit getKey if it caches.
 });

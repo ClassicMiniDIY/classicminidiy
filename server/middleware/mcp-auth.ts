@@ -9,8 +9,20 @@
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event);
 
-  // Only protect MCP routes
-  if (!url.pathname.startsWith('/mcp')) {
+  // Gate the JSON-RPC endpoint ONLY.
+  //
+  // This used to be startsWith('/mcp'), which over-matched in both directions.
+  // It caught unrelated paths that merely share the prefix (/mcp-other), and —
+  // the part that mattered — it 401'd the two routes @nuxtjs/mcp-toolkit
+  // registers specifically to be PUBLICLY linkable: /mcp/deeplink (the one-click
+  // IDE install) and /mcp/badge.svg (the README badge image). Both answered 401
+  // in production, so the install affordance the module provides was unusable
+  // and the badge rendered broken wherever it was embedded.
+  //
+  // Neither exposes data: the deeplink returns a client config pointing at this
+  // endpoint, and the badge is a static image. The credential still gates every
+  // route that can read anything.
+  if (url.pathname !== '/mcp') {
     return;
   }
 

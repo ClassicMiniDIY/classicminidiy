@@ -34,6 +34,35 @@ const WRITE_MAX = Number(process.env.WRITE_RATELIMIT_MAX) || 30;
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
+ * The MCP JSON-RPC endpoint. It sits at /mcp, NOT under /api/, so neither policy
+ * below ever covered it — an authenticated caller had unlimited request volume.
+ *
+ * Keyed per API KEY rather than per IP, because MCP clients are servers: a
+ * single key is legitimately used from many addresses, and many keys can share
+ * one address. Per-IP keying would throttle unrelated tenants together and let
+ * one key spread its load across addresses to escape the limit. The default is
+ * generous compared with the chat proxy since callers here hold a credential we
+ * issued.
+ */
+const MCP_WINDOW_MS = Number(process.env.MCP_RATELIMIT_WINDOW_MS) || 60_000;
+const MCP_MAX = Number(process.env.MCP_RATELIMIT_MAX) || 120;
+
+/**
+ * FNV-1a over the bearer token. This is a bucket label, not a security control:
+ * it exists so a credential never lands verbatim in a rate-limit key, which is
+ * held in shared storage and can surface in diagnostics. Synchronous on purpose
+ * — crypto.subtle is async and applyLimit is not.
+ */
+function keyFingerprint(token: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < token.length; i++) {
+    h ^= token.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16);
+}
+
+/**
  * Paths exempt from the mutation throttle. `/api/admin/**` is excluded so a
  * moderator working through the review queue (bulk approve/reject) is never
  * throttled mid-session — admin access is already gated by requireAdminAuth.
@@ -72,6 +101,28 @@ function applyLimit(event: any, key: string, max: number, windowMs: number, mess
 
 export default defineEventHandler((event) => {
   const { pathname } = getRequestURL(event);
+
+  // Policy 0: the MCP JSON-RPC endpoint.
+  //
+  // server/middleware/mcp-auth.ts runs BEFORE this file (Nitro orders global
+  // middleware by filename, and 'mcp-auth' sorts before 'rate-limit'), so an
+  // unauthenticated request is already rejected and never reaches the counter.
+  // Everything counted here therefore presented a valid key, which is what makes
+  // per-key bucketing meaningful. The IP fallback only covers the case where
+  // that ordering ever changes.
+  if (pathname === '/mcp') {
+    const authHeader = getHeader(event, 'authorization')?.trim();
+    const token = authHeader && authHeader.toLowerCase().startsWith('bearer ') ? authHeader.substring(7).trim() : '';
+    const bucket = token ? `key:${keyFingerprint(token)}` : `ip:${clientIp(event)}`;
+    applyLimit(
+      event,
+      `mcp:${bucket}`,
+      MCP_MAX,
+      MCP_WINDOW_MS,
+      'Too many MCP requests for this API key. Please slow down and try again in a minute.'
+    );
+    return;
+  }
 
   // Policy 1: the public AI chat proxy.
   if (pathname.startsWith('/api/langgraph')) {

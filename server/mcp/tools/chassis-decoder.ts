@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { chassisRanges } from '../../../data/models/decoders';
+import { validateChassisNumber } from '../../utils/chassisDecode';
 
 /**
  * Chassis Decoder MCP Tool
@@ -11,7 +12,16 @@ export default defineMcpTool({
 
   inputSchema: {
     yearRange: z
-      .enum(['1959-1969', '1969-1974', '1974-1980', '1980', '1980-1985', '1985-1990', '1990-on', '1961-1978 (Australia)'])
+      .enum([
+        '1959-1969',
+        '1969-1974',
+        '1974-1980',
+        '1980',
+        '1980-1985',
+        '1985-1990',
+        '1990-on',
+        '1961-1978 (Australia)',
+      ])
       .describe(
         'Year range for chassis number format. Each era has a different chassis number structure and decoding rules. Use "1961-1978 (Australia)" for Australian-built Morris / Cooper Minis.'
       ),
@@ -19,7 +29,9 @@ export default defineMcpTool({
       .string()
       .min(1)
       .max(50)
-      .describe('Classic Mini chassis number to decode (e.g., "A-A2S7L-123A" for 1959-1969, or "YMA2S1-12345" for Australian Morris 850)'),
+      .describe(
+        'Classic Mini chassis number to decode (e.g., "A-A2S7L-123A" for 1959-1969, or "YMA2S1-12345" for Australian Morris 850)'
+      ),
   },
 
   async handler({ yearRange, chassisNumber }) {
@@ -39,40 +51,20 @@ export default defineMcpTool({
       );
     }
 
-    // Call the existing chassis decoder API internally
+    // Decode in process. This used to HTTP-PUT the site's own /api/decoders/chassis
+    // via runtimeConfig.public.siteUrl, so a preview deploy decoded against
+    // PRODUCTION and each call spent the write rate limiter on the way back in.
     try {
-      const runtimeConfig = useRuntimeConfig();
-      const apiUrl = runtimeConfig.public.siteUrl || 'http://localhost:3000';
-      const endpoint = `${apiUrl}/api/decoders/chassis`;
-
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          yearRange,
-          chassisNumber,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return errorResult(`Chassis decoder API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const decoderResponse = await response.json();
+      const decoderResponse = validateChassisNumber(chassisNumber, selectedRange);
 
       // Format the response for MCP with human-readable context
       const positionsBreakdown = decoderResponse.decodedPositions
-        .map((pos: any) => `Position ${pos.position}: "${pos.value}" = ${pos.name} ${pos.matched ? '✓' : '✗'}`)
+        .map((pos) => `Position ${pos.position}: "${pos.value}" = ${pos.name} ${pos.matched ? '✓' : '✗'}`)
         .join('\n');
 
       const validationStatus = decoderResponse.isValid ? '✅ VALID' : '❌ INVALID';
       const errorText =
-        decoderResponse.errors && decoderResponse.errors.length > 0
-          ? `\n\n**Validation Errors:**\n${decoderResponse.errors.join('\n')}`
-          : '';
+        decoderResponse.errors.length > 0 ? `\n\n**Validation Errors:**\n${decoderResponse.errors.join('\n')}` : '';
 
       const resultText = `**Chassis Decoder Results**
 
@@ -102,15 +94,12 @@ ${positionsBreakdown}
           yearRange: decoderResponse.yearRange,
           expectedPattern: decoderResponse.pattern,
           validationStatus: decoderResponse.isValid ? 'Valid chassis number' : 'Invalid chassis number',
-          errors: decoderResponse.errors || [],
+          errors: decoderResponse.errors,
         },
         humanReadable: {
           summary: `Chassis number ${decoderResponse.chassisNumber} for ${decoderResponse.yearRange} range is ${decoderResponse.isValid ? 'VALID' : 'INVALID'}`,
           breakdown: positionsBreakdown,
-          errors:
-            decoderResponse.errors && decoderResponse.errors.length > 0
-              ? decoderResponse.errors.join('; ')
-              : 'No errors',
+          errors: decoderResponse.errors.length > 0 ? decoderResponse.errors.join('; ') : 'No errors',
         },
         formattedText: resultText,
       });
