@@ -57,14 +57,27 @@ echo
 # warns about twice below, and the shape of the /mcp bug it failed to catch:
 # a check that cannot distinguish "fine" from "never ran".
 #
-# Curl reports 000 for a DNS, TLS or connection failure, which no live origin
-# returns. Abort loudly instead of scoring it.
-preflight=$(curl -sS -o /dev/null -m 15 -w '%{http_code}' "$ORIGIN/" 2>/dev/null)
+# Curl reports 000 whenever it never got a response line: a malformed URL, a DNS
+# miss, a refused connection, a TLS failure — or a TIMEOUT. The first four mean
+# the origin is wrong, the last can just mean a cold deploy is slow, so the
+# budget matches the 30s every assertion below gets rather than cutting in ahead
+# of them. Curl's exit code separates the cases and is reported, so a slow origin
+# is never described as a typo'd one.
+preflight=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' "$ORIGIN/" 2>/dev/null)
+preflight_rc=$?
 if [ "$preflight" = "000" ]; then
-  printf '  \033[31mABORT\033[0m  %s is unreachable (curl could not connect)\n' "$ORIGIN"
+  case "$preflight_rc" in
+    28) reason="timed out after 30s (resolved, but no response)" ;;
+    6)  reason="could not resolve host" ;;
+    7)  reason="connection refused" ;;
+    35) reason="TLS handshake failed" ;;
+    3)  reason="malformed URL" ;;
+    *)  reason="curl could not connect (exit $preflight_rc)" ;;
+  esac
+  printf '  \033[31mABORT\033[0m  %s: %s\n' "$ORIGIN" "$reason"
   echo
-  echo "Nothing was verified. Check the origin argument — a placeholder like"
-  echo "<preview-origin> is not substituted for you."
+  echo "Nothing was verified. If the origin itself looks wrong, check the"
+  echo "argument — a placeholder like <preview-origin> is not substituted for you."
   exit 2
 fi
 
