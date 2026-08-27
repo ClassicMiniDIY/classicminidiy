@@ -22,6 +22,26 @@
 
         <!-- OAuth + Email form -->
         <div v-else class="space-y-4">
+          <!-- Passkey sign-in. Rendered only after mount: PublicKeyCredential
+               does not exist during SSR, so branching on it in setup would be a
+               structural hydration mismatch. -->
+          <div v-if="passkeyAvailable" class="space-y-3">
+            <button
+              type="button"
+              class="btn btn-primary btn-block"
+              :disabled="isLoading || !turnstileToken"
+              @click="handlePasskeyLogin"
+            >
+              <i v-if="passkeyLoading" class="fas fa-spinner fa-spin"></i>
+              <i v-else class="fad fa-fingerprint"></i>
+              {{ t('sign_in_passkey') }}
+            </button>
+            <p class="text-xs text-center opacity-60">
+              {{ turnstileToken ? t('passkey_hint') : t('passkey_waiting') }}
+            </p>
+            <div class="divider my-4">{{ t('or_divider') }}</div>
+          </div>
+
           <!-- OAuth buttons -->
           <div class="space-y-3">
             <button
@@ -123,7 +143,8 @@
     ],
   });
 
-  const { signInWithEmail, signInWithGoogle, signInWithApple, isAuthenticated } = useAuth();
+  const { signInWithEmail, signInWithGoogle, signInWithApple, signInWithPasskey, isAuthenticated } = useAuth();
+  const { isSupported: passkeysSupported } = usePasskeys();
   const { track } = useAnalytics();
   const route = useRoute();
 
@@ -137,6 +158,20 @@
   const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
   const requestedRedirect = computed(() => sanitizeRedirectPath(route.query.redirect));
 
+  // Read and clear the preserved intent. Passkey sign-in never reaches
+  // /auth/callback, so the stash has to be consumed here instead — leaving it
+  // behind would let a later unrelated sign-in replay it.
+  const consumeStoredRedirect = (): string => {
+    if (requestedRedirect.value) return requestedRedirect.value;
+    try {
+      const value = window.localStorage.getItem(POST_AUTH_REDIRECT_KEY);
+      if (value !== null) window.localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+      return sanitizeRedirectPath(value) || '';
+    } catch {
+      return '';
+    }
+  };
+
   // Reactive state
   const email = ref('');
   const isLoading = ref(false);
@@ -145,11 +180,16 @@
   const turnstileToken = ref('');
   const turnstileRef = ref<{ reset: () => void } | null>(null);
   const hasError = computed(() => !!errorMessage.value);
+  // Set in onMounted, never during setup — see the template comment.
+  const passkeyAvailable = ref(false);
+  const passkeyLoading = ref(false);
 
   // Redirect if already authenticated; otherwise stash the redirect intent so
   // /auth/callback can honor it after the OAuth / magic-link round trip (the
   // Supabase redirect lands on /auth/callback with no room for extra params).
   onMounted(async () => {
+    passkeyAvailable.value = passkeysSupported();
+
     const { initAuth } = useAuth();
     await initAuth();
     if (isAuthenticated.value) {
@@ -203,6 +243,55 @@
       turnstileToken.value = '';
       turnstileRef.value?.reset();
     } finally {
+      isLoading.value = false;
+    }
+  };
+
+  // Passkey handler. This is the one sign-in method that completes in place,
+  // so it repeats the destination logic /auth/callback applies to the OAuth and
+  // magic-link round trips: a preserved intent wins, then admin, then home.
+  const handlePasskeyLogin = async () => {
+    if (!turnstileToken.value) {
+      errorMessage.value = t('captcha_error');
+      return;
+    }
+
+    passkeyLoading.value = true;
+    isLoading.value = true;
+    errorMessage.value = '';
+    track('passkey_login_started');
+
+    try {
+      const signedIn = await signInWithPasskey(turnstileToken.value);
+
+      // The user dismissed the system prompt. Not an error — leave the form as
+      // it was. The challenge already consumed the Turnstile token, so reset
+      // the widget or the next attempt sends a spent one.
+      if (!signedIn) {
+        turnstileToken.value = '';
+        turnstileRef.value?.reset();
+        return;
+      }
+
+      const { waitForAuth, userProfile, isAdmin } = useAuth();
+      await waitForAuth();
+
+      const isFirstTime = !userProfile.value?.display_name;
+      track('login_success', { method: 'passkey', is_first_time: isFirstTime });
+
+      const storedRedirect = consumeStoredRedirect();
+      const destination = storedRedirect || (isAdmin.value ? '/admin' : '/');
+      navigateTo(isFirstTime ? `/welcome?redirect=${encodeURIComponent(destination)}` : destination, {
+        replace: true,
+      });
+    } catch (error: any) {
+      console.error('Passkey login error:', error);
+      errorMessage.value = error.message || t('passkey_error');
+      track('auth_failed', { method: 'passkey', error_message: error.message });
+      turnstileToken.value = '';
+      turnstileRef.value?.reset();
+    } finally {
+      passkeyLoading.value = false;
       isLoading.value = false;
     }
   };
@@ -270,6 +359,10 @@
     "magic_link_description": "We've sent a magic link to your email address. Click the link in the email to sign in.",
     "try_different_email": "Try a different email",
     "back_to_site": "Back to Site",
+    "sign_in_passkey": "Sign in with a passkey",
+    "passkey_hint": "Use Touch ID, Face ID, Windows Hello, or a security key.",
+    "passkey_waiting": "Loading security check...",
+    "passkey_error": "Passkey sign in failed. Please try again.",
     "sign_in_google": "Continue with Google",
     "sign_in_apple": "Continue with Apple",
     "or_divider": "or",
@@ -293,6 +386,10 @@
     "magic_link_description": "Hemos enviado un enlace mágico a tu correo electrónico. Haz clic en el enlace para iniciar sesión.",
     "try_different_email": "Intentar con otro correo",
     "back_to_site": "Volver al Sitio",
+    "sign_in_passkey": "Iniciar sesión con clave de acceso",
+    "passkey_hint": "Usa Touch ID, Face ID, Windows Hello o una llave de seguridad.",
+    "passkey_waiting": "Cargando verificación de seguridad...",
+    "passkey_error": "Error al iniciar sesión con la clave de acceso. Inténtalo de nuevo.",
     "sign_in_google": "Continuar con Google",
     "sign_in_apple": "Continuar con Apple",
     "or_divider": "o",
@@ -316,6 +413,10 @@
     "magic_link_description": "Nous avons envoyé un lien magique à votre adresse email. Cliquez sur le lien pour vous connecter.",
     "try_different_email": "Essayer un autre email",
     "back_to_site": "Retour au Site",
+    "sign_in_passkey": "Se connecter avec une clé d'accès",
+    "passkey_hint": "Utilisez Touch ID, Face ID, Windows Hello ou une clé de sécurité.",
+    "passkey_waiting": "Chargement de la vérification de sécurité...",
+    "passkey_error": "Échec de la connexion par clé d'accès. Veuillez réessayer.",
     "sign_in_google": "Continuer avec Google",
     "sign_in_apple": "Continuer avec Apple",
     "or_divider": "ou",
@@ -339,6 +440,10 @@
     "magic_link_description": "Abbiamo inviato un link magico al tuo indirizzo email. Clicca sul link per accedere.",
     "try_different_email": "Prova con un'altra email",
     "back_to_site": "Torna al Sito",
+    "sign_in_passkey": "Accedi con una passkey",
+    "passkey_hint": "Usa Touch ID, Face ID, Windows Hello o una chiave di sicurezza.",
+    "passkey_waiting": "Caricamento del controllo di sicurezza...",
+    "passkey_error": "Accesso con passkey non riuscito. Riprova.",
     "sign_in_google": "Continua con Google",
     "sign_in_apple": "Continua con Apple",
     "or_divider": "o",
@@ -362,6 +467,10 @@
     "magic_link_description": "Wir haben einen Magic Link an Ihre E-Mail-Adresse gesendet. Klicken Sie auf den Link, um sich anzumelden.",
     "try_different_email": "Andere E-Mail versuchen",
     "back_to_site": "Zurück zur Seite",
+    "sign_in_passkey": "Mit Passkey anmelden",
+    "passkey_hint": "Verwenden Sie Touch ID, Face ID, Windows Hello oder einen Sicherheitsschlüssel.",
+    "passkey_waiting": "Sicherheitsprüfung wird geladen...",
+    "passkey_error": "Anmeldung mit Passkey fehlgeschlagen. Bitte erneut versuchen.",
     "sign_in_google": "Weiter mit Google",
     "sign_in_apple": "Weiter mit Apple",
     "or_divider": "oder",
@@ -385,6 +494,10 @@
     "magic_link_description": "Enviamos um link mágico para seu endereço de email. Clique no link para entrar.",
     "try_different_email": "Tentar outro email",
     "back_to_site": "Voltar ao Site",
+    "sign_in_passkey": "Entrar com uma chave de acesso",
+    "passkey_hint": "Use Touch ID, Face ID, Windows Hello ou uma chave de segurança.",
+    "passkey_waiting": "Carregando verificação de segurança...",
+    "passkey_error": "Falha ao entrar com a chave de acesso. Tente novamente.",
     "sign_in_google": "Continuar com Google",
     "sign_in_apple": "Continuar com Apple",
     "or_divider": "ou",
@@ -408,6 +521,10 @@
     "magic_link_description": "Мы отправили ссылку для входа на ваш email адрес. Нажмите на ссылку, чтобы войти.",
     "try_different_email": "Попробовать другой email",
     "back_to_site": "Назад к Сайту",
+    "sign_in_passkey": "Войти с помощью пароля-ключа",
+    "passkey_hint": "Используйте Touch ID, Face ID, Windows Hello или ключ безопасности.",
+    "passkey_waiting": "Загрузка проверки безопасности...",
+    "passkey_error": "Не удалось войти с помощью пароля-ключа. Попробуйте снова.",
     "sign_in_google": "Продолжить с Google",
     "sign_in_apple": "Продолжить с Apple",
     "or_divider": "или",
@@ -431,6 +548,10 @@
     "magic_link_description": "マジックリンクをメールアドレスに送信しました。メール内のリンクをクリックしてサインインしてください。",
     "try_different_email": "別のメールアドレスを試す",
     "back_to_site": "サイトに戻る",
+    "sign_in_passkey": "パスキーでサインイン",
+    "passkey_hint": "Touch ID、Face ID、Windows Hello、またはセキュリティキーを使用します。",
+    "passkey_waiting": "セキュリティチェックを読み込み中...",
+    "passkey_error": "パスキーでのサインインに失敗しました。もう一度お試しください。",
     "sign_in_google": "Googleで続行",
     "sign_in_apple": "Appleで続行",
     "or_divider": "または",
@@ -454,6 +575,10 @@
     "magic_link_description": "我们已向您的邮箱发送了魔法链接。点击邮件中的链接即可登录。",
     "try_different_email": "尝试其他邮箱",
     "back_to_site": "返回网站",
+    "sign_in_passkey": "使用通行密钥登录",
+    "passkey_hint": "使用 Touch ID、Face ID、Windows Hello 或安全密钥。",
+    "passkey_waiting": "正在加载安全验证...",
+    "passkey_error": "通行密钥登录失败。请重试。",
     "sign_in_google": "使用 Google 继续",
     "sign_in_apple": "使用 Apple 继续",
     "or_divider": "或",
@@ -477,6 +602,10 @@
     "magic_link_description": "이메일 주소로 매직 링크를 보냈습니다. 이메일의 링크를 클릭하여 로그인하세요.",
     "try_different_email": "다른 이메일 시도",
     "back_to_site": "사이트로 돌아가기",
+    "sign_in_passkey": "패스키로 로그인",
+    "passkey_hint": "Touch ID, Face ID, Windows Hello 또는 보안 키를 사용하세요.",
+    "passkey_waiting": "보안 확인을 불러오는 중...",
+    "passkey_error": "패스키 로그인에 실패했습니다. 다시 시도해 주세요.",
     "sign_in_google": "Google로 계속하기",
     "sign_in_apple": "Apple로 계속하기",
     "or_divider": "또는",

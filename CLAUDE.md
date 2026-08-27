@@ -606,6 +606,52 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
 - **`SUPABASE_SERVICE_KEY` is server-only.** It lives in private `runtimeConfig` and is read only via `server/utils/supabase.ts#getServiceClient`. Never import that into `app/` or move the key to `runtimeConfig.public`.
 - **Edit-suggestion field keys are raw column names, gated by an allowlist.** `SuggestEditModal`'s `editable-fields` keys (and the matching `current-data` keys) are written verbatim into `submission_queue.data.changes` **by the browser**, and `applyEditSuggestion()` in `server/api/admin/queue/approve.post.ts` maps them straight onto the UPDATE — there is no camelCase-to-snake_case layer, so every key must be a real snake_case column on the mapped table. Because that JSON is client-controlled, `EDIT_TARGETS` in that file is the security boundary: it is what stops a crafted suggestion from rewriting `status`, `submitted_by`, `reviewed_by`, `legacy_id` or `legacy_submitted_by_email` the moment an admin approves. **Adding a field to any `SuggestEditModal` call site means adding the column name to `EDIT_TARGETS[targetType].columns` too**, or approval is refused outright. Never add ownership/moderation/audit columns or asset paths to those lists. Past instances of getting this wrong: `bodyNum`/`engineNum` (registry, fixed for supabase#65) and `offset` vs `offset_value` (wheels).
 
+### Passkey invariants
+
+- **`auth.experimental.passkey: true` in `app/composables/useSupabase.ts` is a hard
+  requirement, not a feature toggle.** Without it every `registerPasskey()`,
+  `signInWithPasskey()` and `auth.passkey.*` call THROWS instead of returning an
+  error result (`assertPasskeyExperimentalEnabled` in auth-js), so removing it
+  breaks the passkey UI with an exception rather than a graceful fallback.
+
+- **The passkey authentication challenge is captcha-protected; registration is
+  not.** `POST /auth/v1/passkeys/authentication/options` answers
+  `400 captcha_failed` with no `captcha_token`, so `/login` must hand the
+  Turnstile token to `signInWithPasskey()` and keep the button disabled until
+  the widget has produced one. The token is single-use and is spent by the
+  challenge request — so a ceremony the user then dismisses still burns it, and
+  the widget must be reset before a retry. Registration goes the other way:
+  `.../registration/options` is Bearer-gated (`401 no_authorization`) and takes
+  no captcha, which is why the profile card needs no Turnstile widget.
+
+- **Passkey sign-in never reaches `/auth/callback`.** There is no round trip and
+  no code to exchange — auth-js persists the session and emits `SIGNED_IN`
+  in-page. `/login` therefore owns the post-sign-in redirect itself, including
+  consuming the `cmdiy-post-auth-redirect` stash that `/auth/callback` consumes
+  for the OAuth and magic-link paths. Leaving that stash behind lets a later,
+  unrelated sign-in replay it.
+
+- **Never branch a template on WebAuthn support during setup.**
+  `window.PublicKeyCredential` does not exist during SSR, so
+  `usePasskeys().isSupported()` is false server-side and true on the client —
+  rendering directly from it is the same structural hydration mismatch
+  documented for `/chat`. Both `/login` and `ProfilePasskeyManager` set a
+  `mounted`/`passkeyAvailable` ref in `onMounted` and branch on that.
+
+- **A dismissed system prompt is not an error.** Supabase returns cancellation
+  as an `error` (a `NotAllowedError`/`AbortError`), the same channel as a real
+  failure. `usePasskeys().isCancelled()` separates the two; every caller must
+  route through it, or users get an error toast every time they change their
+  mind at the Touch ID sheet.
+
+- **The Relying Party Origins list in the Supabase dashboard is what makes
+  passkeys work per hostname, and a miss fails in the BROWSER, not at our
+  API.** RP ID `classicminidiy.com` covers the subdomain, but the origins
+  allowlist must name every origin users actually sign in from — the canonical
+  host is `https://www.classicminidiy.com` (both it and the apex are served by
+  the worker), plus `http://localhost:3000` for dev. That config lives outside
+  this repo; adding a new public hostname means adding it there too.
+
 ## Trust System Invariants
 
 - **Every human-reviewed approval must feed trust.** Counters + `contributions` ledger + `recalculate_trust_level()` fire DB-side (submission_queue trigger, model-version RPCs, `moderate_external_model`, listings pending→active trigger). If you add a new approval surface, it must do the same — contract: `classicminidiy-supabase/docs/plans/2026-07-13-unified-trust-pipeline.md`.

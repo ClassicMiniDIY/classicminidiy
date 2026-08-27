@@ -238,6 +238,16 @@ export const useAuth = () => {
   const signInWithGoogle = () => signInWithOAuth('google');
   const signInWithApple = () => signInWithOAuth('apple');
 
+  // Sign in with a passkey (WebAuthn). Unlike OAuth and magic link, this never
+  // leaves the page — there is no /auth/callback round trip and no code to
+  // exchange, so the CALLER owns the post-sign-in redirect. Returns false when
+  // the user dismisses the system prompt, which is not an error.
+  // The ceremony itself lives in usePasskeys(); this is the same call surfaced
+  // on the shared auth composable so pages have one place to reach for.
+  const signInWithPasskey = async (captchaToken?: string): Promise<boolean> => {
+    return usePasskeys().signInWithPasskey(captchaToken);
+  };
+
   // Sign out
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -268,6 +278,7 @@ export const useAuth = () => {
     signInWithEmail,
     signInWithGoogle,
     signInWithApple,
+    signInWithPasskey,
     signOut,
     fetchUserProfile,
   };
