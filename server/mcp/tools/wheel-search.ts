@@ -26,6 +26,17 @@ const WHEEL_COLUMNS = [
   'notes',
 ].join(', ');
 
+/**
+ * Postgres/PostgREST errors reach us as prose, but an upstream WAF block arrives
+ * as a full HTML page — dumping that into an MCP result is noise the caller
+ * cannot act on. Keep it to one line.
+ */
+function readableError(message: string): string {
+  const flat = message.replace(/\s+/g, ' ').trim();
+  if (/^<!DOCTYPE|^<html/i.test(flat)) return 'the request was rejected upstream; try simpler search text';
+  return flat.length > 200 ? `${flat.slice(0, 200)}...` : flat;
+}
+
 export default defineMcpTool({
   description:
     'Search the Classic Mini wheel fitment archive. Find wheels by name or manufacturer (e.g. "Minilite", "Revolution"), or filter by diameter in inches (10, 12, 13) and rim width. Returns offset, bolt pattern, centre bore and weight where recorded — the figures needed to judge whether a wheel will clear the arches and hubs. Only approved archive entries are returned.',
@@ -68,13 +79,18 @@ export default defineMcpTool({
       if (size !== undefined) request = request.eq('size', size);
       if (width !== undefined) request = request.eq('width', width);
 
-      const { data, error } = await request.order('name').limit(limit);
+      const { data, error } = await request.order('name').limit(limit + 1);
       if (error) {
         console.error('wheel-search MCP error:', error);
-        return errorResult(`Could not read the wheel archive: ${error.message}`);
+        return errorResult(`Could not read the wheel archive: ${readableError(error.message)}`);
       }
 
-      const rows = (data ?? []) as Record<string, any>[];
+      // One row was over-fetched: its presence is what makes `truncated` exact.
+      // Comparing the returned count to `limit` instead reports truncation on a
+      // complete result set that happens to be exactly `limit` long.
+      const fetched = (data ?? []) as Record<string, any>[];
+      const truncated = fetched.length > limit;
+      const rows = fetched.slice(0, limit);
 
       if (rows.length === 0) {
         return jsonResult({
@@ -103,7 +119,7 @@ export default defineMcpTool({
       return jsonResult({
         inputs: { query: query ?? null, size: size ?? null, width: width ?? null },
         totalMatches: matches.length,
-        truncated: matches.length === limit,
+        truncated,
         matches,
         notes:
           'widthInches, offsetMm, centreBoreMm and weightKg are recorded as free text or left empty on many archive entries, so a null means "not recorded" rather than "zero". Check the entry URL for photos and contributor notes.',
@@ -120,7 +136,7 @@ export default defineMcpTool({
       });
     } catch (error: any) {
       console.error('wheel-search MCP error:', error);
-      return errorResult(`Could not read the wheel archive: ${error.message}`);
+      return errorResult(`Could not read the wheel archive: ${readableError(error.message)}`);
     }
   },
 });
