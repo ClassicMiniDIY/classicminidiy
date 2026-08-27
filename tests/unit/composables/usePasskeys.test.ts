@@ -71,6 +71,25 @@ describe('usePasskeys', () => {
       const { isCancelled } = (await load())();
       expect(isCancelled(new Error('Passkey challenge expired'))).toBe(false);
     });
+
+    // A free-text "cancel" match would swallow this one and show the user
+    // nothing at all.
+    it('does not treat a server error mentioning cancellation as a dismissal', async () => {
+      const { isCancelled } = (await load())();
+      expect(isCancelled(new Error('Subscription cancelled: passkey rejected'))).toBe(false);
+    });
+  });
+
+  describe('clearPasskeys()', () => {
+    it('empties the shared list so the next account cannot see it', async () => {
+      const { listPasskeys, clearPasskeys, passkeys, loading } = (await load())();
+      await listPasskeys();
+      expect(passkeys.value).toHaveLength(1);
+
+      clearPasskeys();
+      expect(passkeys.value).toEqual([]);
+      expect(loading.value).toBe(false);
+    });
   });
 
   describe('listPasskeys()', () => {
@@ -96,8 +115,11 @@ describe('usePasskeys', () => {
       expect(mockPasskeyApi.update).toHaveBeenCalledWith({ passkeyId: 'pk-1', friendlyName: 'Work laptop' });
     });
 
+    // update() RETURNS its error rather than throwing, so the failure has to be
+    // simulated in that shape — a rejected promise exercises a path the real
+    // client never takes.
     it('still reports success when only the rename fails', async () => {
-      mockPasskeyApi.update.mockRejectedValue(new Error('rename blew up'));
+      mockPasskeyApi.update.mockResolvedValue({ data: null, error: new Error('rename blew up') });
       const { registerPasskey } = (await load())();
       await expect(registerPasskey('Work laptop')).resolves.toBeTruthy();
     });
