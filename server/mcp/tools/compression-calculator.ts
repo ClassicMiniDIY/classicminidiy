@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { formOptions } from '../../../data/models/compression';
+import { calculateCompression } from '../../../app/utils/compressionCalculations';
 
 /**
  * Compression Calculator MCP Tool
@@ -30,20 +31,19 @@ export default defineMcpTool({
   },
 
   async handler({ bore, stroke, pistonDish, headVolume, deckHeight, gasket, customGasket, decomp }) {
-    // Calculate compression ratio and engine capacity
-    const pi = Math.PI;
-    const boreRadius = bore / 2;
-    const deck = deckHeight * 0.0254;
-    const deckVolume = boreRadius * boreRadius * (deck / 10) * pi;
-    const ringland = bore * 0.047619; // Correct for 18cc Accrallite 73.5mm pistons
-    const gasketVolume = gasket === 0 ? customGasket : gasket;
-
-    const vc = pistonDish + gasketVolume + headVolume + deckVolume + ringland + decomp;
-    const preRoundratio = (stroke * (boreRadius * boreRadius) * pi + vc) / vc;
-    const ratio = Math.round((preRoundratio + Number.EPSILON) * 100) / 100;
-
-    const preRoundcap = stroke * (boreRadius * boreRadius) * pi * 4;
-    const capacity = Math.round((preRoundcap + Number.EPSILON) * 100) / 100;
+    // Same code the on-site calculator runs (app/utils/compressionCalculations.ts).
+    // This used to be a second copy of the expressions; the gearbox pair, forked
+    // the same way, had already drifted into answering a different question.
+    const { boreRadius, deckVolume, ringland, gasketVolume, vc, sweptVolume, ratio, capacity } = calculateCompression({
+      bore,
+      stroke,
+      pistonDish,
+      headVolume,
+      deckHeight,
+      gasket,
+      customGasket,
+      decomp,
+    });
 
     // Find matching piston and crankshaft options for context
     const matchingPiston = formOptions.pistonOptions.find((p) => p.value === bore);

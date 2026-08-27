@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { formOptions } from '../../../data/models/compression';
+  import { calculateCompression, COMPRESSION_PI } from '../../utils/compressionCalculations';
   import { formatMathValue as fmt } from '../../utils/mathBreakdown';
   import type { MathStep, MathConstant } from '../../types/mathBreakdown';
 
@@ -17,31 +18,34 @@
   const customGasket = ref<number>(0.1);
   const showHelpModal = ref(false);
 
-  const pi = Math.PI;
-  const boreRadius = computed(() => bore.value / 2);
-  const deck = computed(() => deckHeight.value * 0.0254);
-  const deckVolume = computed(() => boreRadius.value * boreRadius.value * (deck.value / 10) * pi);
-  const ringland = computed(() => bore.value * 0.047619); // Correct for 18cc Accrallite 73.5mm pistons
-  const gasketVolume = computed(() => (gasket.value === 0 ? customGasket.value : gasket.value));
+  const pi = COMPRESSION_PI;
 
-  const vc = computed(
-    () => pistonDish.value + gasketVolume.value + headVolume.value + deckVolume.value + ringland.value + decomp.value
+  // The arithmetic lives in app/utils/compressionCalculations.ts so the MCP tool
+  // runs the SAME code rather than its own copy of these expressions. Every
+  // named value below is a projection of this one result — nothing recomputes,
+  // which is what keeps the math-breakdown panel honest (see mathSteps).
+  const result = computed(() =>
+    calculateCompression({
+      bore: bore.value,
+      stroke: stroke.value,
+      pistonDish: pistonDish.value,
+      headVolume: headVolume.value,
+      deckHeight: deckHeight.value,
+      gasket: gasket.value,
+      customGasket: customGasket.value,
+      decomp: decomp.value,
+    })
   );
 
-  // Swept volume of one cylinder. Named so the math breakdown can quote it as
-  // its own step; the expression is unchanged from when it was inlined into
-  // both ratio and capacity, so the floating-point results are identical.
-  const sweptVolume = computed(() => stroke.value * (boreRadius.value * boreRadius.value) * pi);
-
-  const ratio = computed(() => {
-    const preRoundratio = (sweptVolume.value + vc.value) / vc.value;
-    return Math.round((preRoundratio + Number.EPSILON) * 100) / 100;
-  });
-
-  const capacity = computed(() => {
-    const preRoundcap = sweptVolume.value * 4;
-    return Math.round((preRoundcap + Number.EPSILON) * 100) / 100;
-  });
+  const boreRadius = computed(() => result.value.boreRadius);
+  const deck = computed(() => result.value.deck);
+  const deckVolume = computed(() => result.value.deckVolume);
+  const ringland = computed(() => result.value.ringland);
+  const gasketVolume = computed(() => result.value.gasketVolume);
+  const vc = computed(() => result.value.vc);
+  const sweptVolume = computed(() => result.value.sweptVolume);
+  const ratio = computed(() => result.value.ratio);
+  const capacity = computed(() => result.value.capacity);
 
   // ---- Verifiable math breakdown --------------------------------------
   // Printed at full double precision on purpose: this calculator multiplies by

@@ -94,10 +94,11 @@ check that cannot distinguish "healthy" from "never ran".
 
 ## Expansion backlog
 
-Not started. Each item is independent of the above and stands on its own merits.
-Ordered roughly by value per unit of work.
+**Status: hardening and shared math have shipped** (PR #726 and the shared-math
+PR that follows it). New tools and transport-level test coverage remain. Each
+item is independent of the others and of the smoke-test work above.
 
-### Hardening
+### Hardening — SHIPPED (#726)
 
 - **Chassis tool self-fetches production.** `server/mcp/tools/chassis-decoder.ts:44-64`
   HTTP-PUTs its own `/api/decoders/chassis` via `runtimeConfig.public.siteUrl`, so a
@@ -126,7 +127,18 @@ Ordered roughly by value per unit of work.
   `Authorization: Bearer`. The root README and CLAUDE.md describe `/api/mcp/*` REST
   routes and a LangGraph↔MCP integration with no code behind them.
 
-### Shared math
+### Shared math — SHIPPED
+
+Two items in this section were dropped as wrong on inspection: `browserRedirect`
+is not unset (the module defaults it to `/`), and the Australian chassis range
+does decode. The gearbox cache collision was recharacterised as latent, not live.
+
+The shared-math work also turned up a defect not predicted below: the tool's
+`tire_type` schema omitted the optional `diameter` field that `TireValue` has
+always carried, so zod stripped it from any caller who supplied one. For the
+Hoosier 19.0 x 5.0-10 that meant a derived 254mm instead of the real 477.52mm,
+and a top speed of 56mph where the truth is 106mph.
+
 
 The MCP tools re-implement the calculators rather than importing them, and the copies
 have drifted: the gearbox tool uses `Math.PI` where the site uses a `3.14159` literal,
@@ -138,7 +150,7 @@ site's name. Server code can import `app/utils` (precedent: `server/plugins/llms
 `CalculatorsMathBreakdown` invariant holds — the breakdown keeps reading the same
 computeds the result cards read.
 
-### New tools
+### New tools — NOT STARTED
 
 The site's data is its moat and almost none of it is exposed. Each wraps data already
 in the repo, imported directly rather than over HTTP: `needle-compare` (the
@@ -150,7 +162,7 @@ column allowlist from `useWheels.ts:16-37`.
 Tools should take a query and return the matching subset. The site's API routes return
 whole tables because a browser filters client-side; an LLM should not have to.
 
-### Test coverage
+### Test coverage — NOT STARTED
 
 The existing MCP unit tests call `.handler()` directly, so the entire transport layer
 is untested — structurally incapable of catching #721. Integration tests that actually
