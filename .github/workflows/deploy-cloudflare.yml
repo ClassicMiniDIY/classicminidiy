@@ -238,6 +238,24 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      # Speaks JSON-RPC to the built artifact BEFORE it ships. Everything else in
+      # this pipeline can be green while /mcp is dead: the unit tests call tool
+      # handlers directly and never touch routing, auth, mcp-toolkit or the
+      # transport provider, and the provider is chosen at BUILD time from the
+      # Nitro preset — so the Cloudflare path only exists in this artifact and
+      # nowhere in the test suite. #721 was a fault in exactly that provider,
+      # and it reached production because nothing between here and the browser
+      # ever spoke the protocol.
+      #
+      # The post-deploy smoke test covers the same ground against the real
+      # origin, but only AFTER the bad build is live. This one is the gate.
+      - name: Test the MCP transport
+        run: ./scripts/test-mcp-transport.sh
+        env:
+          # Optional: arms the two Supabase-backed tools. They are skipped
+          # rather than failed when it is absent.
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
       - name: Deploy
         if: env.DRY_RUN != 'true'
         run: bunx wrangler deploy
