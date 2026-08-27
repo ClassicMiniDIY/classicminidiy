@@ -325,9 +325,39 @@ Invalid API key:
 
 ## Caching
 
-- Most tools are NOT cached: they search bundled JSON in memory, so a cache round-trip would cost more than the work it replaces. `chassis-decoder` caches for 24h. Any tool taking an OBJECT-valued argument must supply an explicit `getKey` if it caches — the toolkit's default key stringifies objects to `[object Object]`, so every distinct object would share one entry.
-- Compression and gearbox calculators: 1 hour cache
-- Chassis decoder: 24 hour cache
+Only two tools cache: `chassis-decoder` (24h) and `compression-calculator` (1h).
+Everything else is uncached on purpose — the reference tools search bundled JSON
+in memory and the archive tools hit Postgres, so a cache round-trip would cost
+more than the work it replaces.
+
+**A tool taking an OBJECT-valued argument must supply an explicit `getKey` if it
+caches.** The toolkit's default key is `Object.values(args).map(String).join(':')`,
+so every distinct object stringifies to the same `[object Object]` and shares one
+entry. This is why `gearbox-calculator` is uncached: its `tire_type` is an object,
+and two different tire sizes would have collided on one cached top speed.
+
+## Testing
+
+`bun run test` covers the tool logic. It does **not** cover the transport: those
+tests stub `defineMcpTool` and call `.handler()` directly, so they touch no
+routing, no auth middleware, no mcp-toolkit and no JSON-RPC framing.
+
+For the protocol itself:
+
+```bash
+NITRO_PRESET=cloudflare_module bun run build
+./scripts/test-mcp-transport.sh
+```
+
+That speaks real JSON-RPC to the built artifact under `wrangler dev --local`, and
+runs in CI as a pre-deploy gate. It has to be a real worker: mcp-toolkit picks its
+transport provider at **build time** from the Nitro preset, so a Nuxt/Vitest e2e
+test would exercise the Node provider while production runs the Cloudflare one.
+Issue #721 was a fault in exactly that provider — every authenticated call 500'd
+while the whole unit suite stayed green.
+
+Set `SUPABASE_SERVICE_KEY` to include the two archive tools; without it they are
+skipped rather than failed.
 
 ## Support
 

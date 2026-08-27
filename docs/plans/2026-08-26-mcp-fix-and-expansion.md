@@ -15,12 +15,12 @@ not tell a working handler from a broken one.
 
 Against `https://www.classicminidiy.com` on 2026-08-26, with the production key:
 
-| Call | Result |
-|---|---|
-| Unauthenticated `tools/list` | 401 |
-| Authenticated `tools/list` | **200**, full tool catalogue |
-| Authenticated `tools/call` (compression) | **200**, 9.43:1 on 1272.75cc — correct for a stock 1275 |
-| Response headers | `server: cloudflare`, `cf-ray` present, no Vercel headers |
+| Call                                     | Result                                                    |
+| ---------------------------------------- | --------------------------------------------------------- |
+| Unauthenticated `tools/list`             | 401                                                       |
+| Authenticated `tools/list`               | **200**, full tool catalogue                              |
+| Authenticated `tools/call` (compression) | **200**, 9.43:1 on 1272.75cc — correct for a stock 1275   |
+| Response headers                         | `server: cloudflare`, `cf-ray` present, no Vercel headers |
 
 Production is running current `main`, not a stale artifact: the admin consolidation
 from `8a3ad005` is live, including its `/admin/registry/review` →
@@ -30,11 +30,11 @@ from `8a3ad005` is live, including its `/admin/registry/review` →
 Locally, `NITRO_PRESET=cloudflare_module` + `wrangler dev --local`, three
 configurations were tried and **none** reproduced the failure:
 
-| Configuration | Authenticated `tools/list` |
-|---|---|
-| Nitro output bundle, unpatched | 200, with the agents v1 deprecation warning |
-| `wrangler deploy --dry-run` artifact, unpatched | 200 |
-| Nitro output bundle, patched to `createLegacyMcpHandler` | 200 |
+| Configuration                                            | Authenticated `tools/list`                  |
+| -------------------------------------------------------- | ------------------------------------------- |
+| Nitro output bundle, unpatched                           | 200, with the agents v1 deprecation warning |
+| `wrangler deploy --dry-run` artifact, unpatched          | 200                                         |
+| Nitro output bundle, patched to `createLegacyMcpHandler` | 200                                         |
 
 That deprecation warning is the informative part: unpatched, the `instanceof` check
 in `agents`' compat shim **passes**, and `createMcpHandler` delegates to
@@ -76,13 +76,13 @@ check that cannot distinguish "healthy" from "never ran".
 
 1. **An authenticated `/mcp` assertion.** The pre-existing check asserted only that
    an anonymous call gets 401 — and that 401 comes from `server/middleware/mcp-auth.ts`,
-   which runs *before* the handler. It passes whether the handler works or not, which
+   which runs _before_ the handler. It passes whether the handler works or not, which
    is exactly how a 500 on every authenticated call went unnoticed. With `MCP_SMOKE_KEY`
    set, an authenticated `tools/list` must return the catalogue; without it the check
    is skipped rather than silently passing. Confirmed to fail against a deliberately
    broken build.
 
-2. **A preflight reachability gate.** Several checks are satisfied by an *empty*
+2. **A preflight reachability gate.** Several checks are satisfied by an _empty_
    response: the indexable gate greps for a `noindex` tag it will not find, and the
    chat gate falls through its `case` to the `ok` branch. Run against an unreachable
    host the battery reported "passed 6, failed 19" — six green assertions about a
@@ -94,8 +94,8 @@ check that cannot distinguish "healthy" from "never ran".
 
 ## Expansion backlog
 
-**Status: hardening (#726), shared math (#727) and the new tools have shipped.**
-Transport-level test coverage is the remaining item.
+**Status: complete.** Hardening (#726), shared math (#727), the new tools (#730)
+and transport-level test coverage have all shipped.
 
 The tool count went from 3 to 11. Two things the build turned up that the plan
 below did not predict, both found by querying the real data rather than trusting
@@ -146,10 +146,9 @@ always carried, so zod stripped it from any caller who supplied one. For the
 Hoosier 19.0 x 5.0-10 that meant a derived 254mm instead of the real 477.52mm,
 and a top speed of 56mph where the truth is 106mph.
 
-
 The MCP tools re-implement the calculators rather than importing them, and the copies
 have drifted: the gearbox tool uses `Math.PI` where the site uses a `3.14159` literal,
-ignores `tireType.diameter`, and computes a *different quantity* for speedometer
+ignores `tireType.diameter`, and computes a _different quantity_ for speedometer
 accuracy than the site does — it answers a question the site does not ask, in the
 site's name. Server code can import `app/utils` (precedent: `server/plugins/llms-faq.ts`,
 `server/utils/exchange/contentFilter.ts`), so compression math extracts to
@@ -169,7 +168,7 @@ column allowlist from `useWheels.ts:16-37`.
 Tools should take a query and return the matching subset. The site's API routes return
 whole tables because a browser filters client-side; an LLM should not have to.
 
-### Test coverage — NOT STARTED
+### Test coverage — SHIPPED
 
 The existing MCP unit tests call `.handler()` directly, so the entire transport layer
 is untested — structurally incapable of catching #721. Integration tests that actually

@@ -583,6 +583,26 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
 
 - **`/api/langgraph/**` is intentionally UNAUTHENTICATED.** The AI chat must work for every anonymous site visitor (no login). Do NOT add `requireUserAuth`/login to this proxy — it would break public chat. Abuse is mitigated by per-IP rate limiting in `server/middleware/rate-limit.ts` (default 40 req/60s, tune via `LANGGRAPH_RATELIMIT_MAX` / `LANGGRAPH_RATELIMIT_WINDOW_MS`), not by auth. The privileged `NUXT_LANGSMITH_API_KEY` stays server-only (private `runtimeConfig`).
 - **`/mcp` auth fails closed.** Valid keys come ONLY from `MCP_API_KEY` / `MCP_API_KEYS` env vars — there is no hardcoded/default key. The old `dev-mcp-key-classic-mini-diy` default is in public git history and must never be re-accepted in any environment. For local dev, set `MCP_API_KEY` in `.env`.
+- **`/mcp` is only truly tested by `scripts/test-mcp-transport.sh`.** The unit
+  tests under `tests/unit/server/mcp/` stub `defineMcpTool` and call `.handler()`
+  directly, so they exercise tool logic and nothing else — no routing, no auth
+  middleware, no `@nuxtjs/mcp-toolkit`, no JSON-RPC framing, and no transport
+  provider. mcp-toolkit chooses that provider at **build time** from the Nitro
+  preset, so the Cloudflare path exists only in a `cloudflare_module` build and
+  in no test that runs in-process; a Nuxt/Vitest e2e test would exercise the Node
+  provider and prove nothing about production. That gap is how #721 shipped: every
+  authenticated call 500'd for months while the whole suite stayed green. The
+  transport script speaks real JSON-RPC to the built artifact under
+  `wrangler dev --local` and runs as a pre-deploy gate in
+  `deploy-cloudflare.yml`. **Adding a tool means adding a `tools/call` for it
+  there** — a tool with only unit tests is untested against the protocol that
+  actually serves it.
+- **A `/mcp` tool that caches and takes an OBJECT-valued argument must set an
+  explicit `getKey`.** The toolkit's default key is
+  `Object.values(args).map(String).join(':')`, so every object stringifies to
+  `[object Object]` and all of them share one cache entry. `gearbox-calculator`
+  is uncached for this reason: its `tire_type` is an object, and two tire sizes
+  would have collided on one cached top speed.
 - **`SUPABASE_SERVICE_KEY` is server-only.** It lives in private `runtimeConfig` and is read only via `server/utils/supabase.ts#getServiceClient`. Never import that into `app/` or move the key to `runtimeConfig.public`.
 - **Edit-suggestion field keys are raw column names, gated by an allowlist.** `SuggestEditModal`'s `editable-fields` keys (and the matching `current-data` keys) are written verbatim into `submission_queue.data.changes` **by the browser**, and `applyEditSuggestion()` in `server/api/admin/queue/approve.post.ts` maps them straight onto the UPDATE — there is no camelCase-to-snake_case layer, so every key must be a real snake_case column on the mapped table. Because that JSON is client-controlled, `EDIT_TARGETS` in that file is the security boundary: it is what stops a crafted suggestion from rewriting `status`, `submitted_by`, `reviewed_by`, `legacy_id` or `legacy_submitted_by_email` the moment an admin approves. **Adding a field to any `SuggestEditModal` call site means adding the column name to `EDIT_TARGETS[targetType].columns` too**, or approval is refused outright. Never add ownership/moderation/audit columns or asset paths to those lists. Past instances of getting this wrong: `bodyNum`/`engineNum` (registry, fixed for supabase#65) and `offset` vs `offset_value` (wheels).
 
