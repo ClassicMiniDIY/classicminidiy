@@ -628,9 +628,19 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   passkeys work per hostname, and a miss fails in the BROWSER, not at our
   API.** RP ID `classicminidiy.com` covers the subdomain, but the origins
   allowlist must name every origin users actually sign in from — the canonical
-  host is `https://www.classicminidiy.com` (both it and the apex are served by
-  the worker), plus `http://localhost:3000` for dev. That config lives outside
-  this repo; adding a new public hostname means adding it there too.
+  host is `https://www.classicminidiy.com`, and the apex is served by the worker
+  too. That config lives outside this repo; adding a new public hostname means
+  adding it there too.
+
+- **Passkeys cannot be exercised on `localhost`, and that is a property of
+  WebAuthn rather than a missing setting.** An origin must BE the Relying Party
+  ID or a subdomain of it, so no `localhost` origin is compatible with RP ID
+  `classicminidiy.com` — the dashboard rejects it outright. Verify passkey
+  changes on a deployed preview, not `bun run dev`. Everything else on `/login`
+  and the profile card still works locally; only the ceremony itself cannot run,
+  and reaching it would need a `*.classicminidiy.com` hostname pointed at the
+  dev server over HTTPS (WebAuthn requires a secure context, and the
+  localhost exemption does not apply once the hostname is not localhost).
 
 ## Trust System Invariants
 
