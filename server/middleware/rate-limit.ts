@@ -1,3 +1,4 @@
+import { isProtectedMcpPath } from '../utils/mcpRoutes';
 import { consumeRateLimit } from '../utils/rateLimit';
 
 /**
@@ -102,7 +103,7 @@ function applyLimit(event: any, key: string, max: number, windowMs: number, mess
 export default defineEventHandler((event) => {
   const { pathname } = getRequestURL(event);
 
-  // Policy 0: the MCP JSON-RPC endpoint.
+  // Policy 0: the MCP endpoint.
   //
   // server/middleware/mcp-auth.ts runs BEFORE this file (Nitro orders global
   // middleware by filename, and 'mcp-auth' sorts before 'rate-limit'), so an
@@ -110,7 +111,11 @@ export default defineEventHandler((event) => {
   // Everything counted here therefore presented a valid key, which is what makes
   // per-key bucketing meaningful. The IP fallback only covers the case where
   // that ordering ever changes.
-  if (pathname === '/mcp') {
+  //
+  // The path test is shared with mcp-auth (server/utils/mcpRoutes.ts) so the
+  // throttled set and the authenticated set cannot drift apart. An exact
+  // '/mcp' comparison here would leave '/mcp/' uncounted.
+  if (isProtectedMcpPath(pathname)) {
     const authHeader = getHeader(event, 'authorization')?.trim();
     const token = authHeader && authHeader.toLowerCase().startsWith('bearer ') ? authHeader.substring(7).trim() : '';
     const bucket = token ? `key:${keyFingerprint(token)}` : `ip:${clientIp(event)}`;

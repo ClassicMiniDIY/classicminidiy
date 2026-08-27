@@ -275,6 +275,17 @@ describe('server/middleware/mcp-auth', () => {
     expect(mockUseRuntimeConfig).not.toHaveBeenCalled();
   });
 
+  // Nitro folds '/mcp/' onto the '/mcp' handler, so a gate that missed the
+  // trailing slash let an unauthenticated caller reach the JSON-RPC endpoint.
+  it.each(['/mcp/', '/mcp//', '/mcp/sse'])('still gates %s', async (path) => {
+    mockGetRequestURL.mockReturnValue(new URL(`https://example.com${path}`));
+    mockGetHeader.mockReturnValue(undefined);
+
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
+      statusCode: 401,
+    });
+  });
+
   it('does not gate an unrelated path that merely shares the /mcp prefix', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp-other'));
     mockGetHeader.mockReturnValue(undefined);
