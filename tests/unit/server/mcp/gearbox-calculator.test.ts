@@ -252,19 +252,77 @@ describe('Gearbox Calculator MCP Tool', () => {
         expect(speedo).toHaveProperty('speedometer');
         expect(speedo).toHaveProperty('turns');
         expect(speedo).toHaveProperty('speed');
-        expect(speedo).toHaveProperty('expectedSpeed');
-        expect(speedo).toHaveProperty('difference');
-        expect(speedo).toHaveProperty('percentageDiff');
+        expect(speedo).toHaveProperty('variation');
+        expect(speedo).toHaveProperty('readsOverPercent');
+        expect(speedo).toHaveProperty('readsUnderPercent');
         expect(speedo).toHaveProperty('result');
       }
     });
 
-    it('speedometer result is one of Perfect Match, Close Match, or Poor Match', async () => {
+    // The site's semantics: how far the needle reads from true. The tool used to
+    // bucket into Perfect/Close/Poor Match, which answered a question the site
+    // never asks and ignored drop_gear entirely.
+    it('reports how far each speedometer reads from true', async () => {
       const result = await toolConfig.handler(defaultInputs);
-      const validResults = ['Perfect Match', 'Close Match', 'Poor Match'];
       for (const speedo of result.speedometers) {
-        expect(validResults).toContain(speedo.result);
+        expect(speedo.result).toMatch(/^(Over \d+%|Under \d+%|Reads correctly!)$/);
       }
+    });
+
+    it('variation of 100 means the speedometer reads correctly', async () => {
+      const result = await toolConfig.handler(defaultInputs);
+      for (const speedo of result.speedometers) {
+        if (speedo.variation === 100) {
+          expect(speedo.result).toBe('Reads correctly!');
+          expect(speedo.readsOverPercent).toBe(0);
+          expect(speedo.readsUnderPercent).toBe(0);
+        }
+      }
+    });
+
+    it('over- and under-read percentages are mutually exclusive and match the variation', async () => {
+      const result = await toolConfig.handler(defaultInputs);
+      for (const speedo of result.speedometers) {
+        expect(speedo.readsOverPercent === 0 || speedo.readsUnderPercent === 0).toBe(true);
+        expect(speedo.readsOverPercent - speedo.readsUnderPercent).toBe(speedo.variation - 100);
+      }
+    });
+
+    // drop_gear was missing from the old speedo maths entirely, so a dropped-gear
+    // setup got the same assessment as a direct-drive one.
+    it('drop gear changes the speedometer assessment', async () => {
+      const direct = await toolConfig.handler({ ...defaultInputs, drop_gear: 1 });
+      const dropped = await toolConfig.handler({ ...defaultInputs, drop_gear: 1.2 });
+      expect(dropped.speedometers[0].variation).not.toBe(direct.speedometers[0].variation);
+    });
+  });
+
+  // ---- Explicit tire diameter ----
+  describe('explicit tire diameter', () => {
+    // Racing slicks are specified by overall diameter. TireValue has always
+    // carried the field; the tool's schema omitted it, so zod stripped it and
+    // the tool fell back to deriving a diameter from width/profile/size — 254mm
+    // instead of 477.52mm for the Hoosier, and a top speed 47% too low.
+    const HOOSIER = { width: 19, profile: 0, size: 10, diameter: 477.52 };
+
+    it('uses an explicit diameter instead of deriving one', async () => {
+      const result = await toolConfig.handler({ ...defaultInputs, tire_type: HOOSIER });
+      expect(result.tireInfo.diameter).toBe(477.52);
+    });
+
+    it('produces a realistic top speed for a tire given by diameter', async () => {
+      const result = await toolConfig.handler({ ...defaultInputs, tire_type: HOOSIER });
+      // The derived-diameter bug produced 56mph here.
+      expect(result.results.topSpeed).toBeGreaterThan(95);
+      expect(result.results.topSpeed).toBeLessThan(120);
+    });
+
+    it('still derives the diameter when none is supplied', async () => {
+      const result = await toolConfig.handler({
+        ...defaultInputs,
+        tire_type: { width: 145, profile: 80, size: 10 },
+      });
+      expect(result.tireInfo.diameter).toBe(486);
     });
   });
 

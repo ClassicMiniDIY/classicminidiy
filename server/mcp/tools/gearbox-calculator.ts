@@ -1,5 +1,11 @@
 import { z } from 'zod';
 import { options, kphFactor } from '../../../data/models/gearing';
+import {
+  calculateTire,
+  calculateGearingTable,
+  calculateSpeedoData,
+  calculateSpeedometerTable,
+} from '../../../app/utils/gearingCalculations';
 
 /**
  * Gearbox Calculator MCP Tool
@@ -31,83 +37,65 @@ export default defineMcpTool({
         width: z.number().describe('Tire width in mm (e.g., 145)'),
         profile: z.number().describe('Tire profile percentage (e.g., 80 for 80%)'),
         size: z.number().describe('Wheel size in inches (e.g., 10)'),
+        // Racing slicks are sold by overall diameter, not width/profile, so
+        // deriving one from the other is wrong for them. TireValue has carried
+        // this field all along; the schema omitted it, which silently stripped
+        // it from any caller that supplied one and sent the tool back to the
+        // derived figure. For the Hoosier 19.0x5.0-10 that meant 254mm instead
+        // of 477.52mm — a top speed of 56mph where the truth is 106mph.
+        diameter: z
+          .number()
+          .optional()
+          .describe(
+            'Overall tire diameter in mm. Optional; supply it for tires specified by diameter (racing slicks such as the Hoosier 19.0 x 5.0-10, which is 477.52mm). When present it is used directly and width/profile/size are not used to derive it.'
+          ),
       })
       .default({ width: 145, profile: 80, size: 10 })
-      .describe('Tire specifications object with width, profile, and size'),
+      .describe('Tire specifications: width, profile and wheel size, or an explicit overall diameter'),
   },
 
   async handler({ metric, final_drive, gear_ratios, drop_gear, speedo_drive, max_rpm, tire_type }) {
-    // Constants
-    const YARDS_IN_MILE = 1760;
-    const MM_IN_YARD = 914.4;
-    const pi = Math.PI;
+    // All arithmetic comes from app/utils/gearingCalculations.ts — the same code
+    // the on-site calculator runs. This tool used to re-implement it and had
+    // drifted in three ways that changed the answers: Math.PI where the site
+    // deliberately uses a 3.14159 literal, tire_type.diameter ignored so preset
+    // tires that carry an explicit diameter were recomputed from width/profile,
+    // and a speedometer assessment that measured something else entirely AND
+    // dropped drop_gear from the calculation.
+    const tireInfo = calculateTire(tire_type);
+    const typeCircInMiles = tireInfo.typeCircInMiles;
+    const speedoDetails = calculateSpeedoData(tireInfo.tireTurnsPerMile, final_drive, speedo_drive, drop_gear);
 
-    // Calculate tire details
-    const tireInfo = {
-      width: tire_type.width,
-      profile: tire_type.profile,
-      size: tire_type.size,
-      diameter: Math.round(tire_type.width * (tire_type.profile / 100) * 2 + tire_type.size * 25.4),
-      circ: 0,
-      tireTurnsPerMile: 0,
-    };
+    const gearingRows = calculateGearingTable(gear_ratios, final_drive, drop_gear, max_rpm, typeCircInMiles, metric);
 
-    tireInfo.circ = Math.round(pi * tireInfo.diameter); // in mm
-    const typeCircInMiles = tireInfo.circ / (YARDS_IN_MILE * MM_IN_YARD); // in miles
-    tireInfo.tireTurnsPerMile = Math.round(YARDS_IN_MILE / (tireInfo.circ / MM_IN_YARD));
+    const gearingData = gearingRows.map((row) => ({
+      gear: row.gear,
+      ratio: row.ratio,
+      totalRatio: Math.round((row.ratio * final_drive * drop_gear + Number.EPSILON) * 1000) / 1000,
+      maxSpeed: row.maxSpeedRaw,
+      unit: metric ? 'kph' : 'mph',
+    }));
 
-    // Calculate speedometer details
-    const speedoDetails = {
-      turnsPerMile: Math.round(tireInfo.tireTurnsPerMile * final_drive * speedo_drive),
-      engineRevsMile: Math.round(tireInfo.tireTurnsPerMile * final_drive * drop_gear),
-    };
+    // Highest gear is the last entry (4th for a 4-speed, 5th for a 5-speed).
+    const topSpeed = gearingData[gearingData.length - 1]?.maxSpeed || 0;
 
-    // Calculate gearing data
-    const gearingData = gear_ratios.map((ratio, index) => {
-      const gearRatio = ratio * final_drive * drop_gear;
-      const maxSpeedAtRpm = (max_rpm / gearRatio) * typeCircInMiles * 60; // Multiply by 60 to convert from minutes to hours
-      const maxSpeed = metric ? Math.round(maxSpeedAtRpm * kphFactor) : Math.round(maxSpeedAtRpm);
-
-      return {
-        gear: index + 1,
-        ratio: ratio,
-        totalRatio: Math.round((gearRatio + Number.EPSILON) * 1000) / 1000,
-        maxSpeed: maxSpeed,
-        unit: metric ? 'kph' : 'mph',
-      };
-    });
-
-    // Calculate top speed from the highest gear (last entry — 4th for 4-speed, 5th for 5-speed)
-    const topSpeedGear = gearingData[gearingData.length - 1];
-    const topSpeed = topSpeedGear?.maxSpeed || 0;
-
-    // Calculate speedometer compatibility
+    // Speedometer accuracy, in the site's terms: how far the needle reads from
+    // true, as a percentage. The previous "Perfect/Close/Poor Match" verdict
+    // answered a question the site never asks and ignored drop_gear, so a
+    // dropped-gear setup got a confidently wrong assessment.
     const speedometers = metric ? options.speedos.metric : options.speedos.imperial;
-    const factor = metric ? kphFactor : 1;
-    const turnsPer = speedoDetails.turnsPerMile / factor;
-
-    const speedometerData = speedometers.map((speedometer: { turns: number; speed: number; name: string }) => {
-      const calculatedSpeed = Math.round((speedometer.turns / turnsPer) * speedometer.speed);
-      const difference = Math.abs(calculatedSpeed - speedometer.speed);
-      const percentageDiff = Math.round((difference / speedometer.speed) * 100);
-
-      let result = 'Perfect Match';
-      if (percentageDiff > 0 && percentageDiff <= 5) {
-        result = 'Close Match';
-      } else if (percentageDiff > 5) {
-        result = 'Poor Match';
-      }
-
-      return {
-        speedometer: speedometer.name,
-        turns: speedometer.turns,
-        speed: calculatedSpeed,
-        expectedSpeed: speedometer.speed,
-        difference: difference,
-        percentageDiff: percentageDiff,
-        result: result,
-      };
-    });
+    const speedometerData = calculateSpeedometerTable(speedometers, speedoDetails.turnsPerMile, drop_gear, metric).map(
+      (row) => ({
+        speedometer: row.speedometer,
+        turns: row.turns,
+        speed: row.speed,
+        // 100 = reads true. Above reads fast, below reads slow.
+        variation: row.variation,
+        readsOverPercent: row.variation > 100 ? row.variation - 100 : 0,
+        readsUnderPercent: row.variation < 100 ? 100 - row.variation : 0,
+        result: row.result,
+      })
+    );
 
     // Find matching options for context
     const matchingTire = options.tires.find(
@@ -133,11 +121,11 @@ export default defineMcpTool({
       .map((g) => `${g.gear}: ${g.ratio} (${g.totalRatio}:1 total) - Max: ${g.maxSpeed}${g.unit}`)
       .join('\n');
 
-    // Format speedometer matches
-    const speedoMatches = speedometerData
-      .filter((s: any) => s.result === 'Perfect Match' || s.result === 'Close Match')
+    // Closest speedometers first — smallest deviation from a true reading.
+    const speedoMatches = [...speedometerData]
+      .sort((a, b) => Math.abs(a.variation - 100) - Math.abs(b.variation - 100))
       .slice(0, 5)
-      .map((s: any) => `${s.speedometer}: ${s.result} (${s.percentageDiff}% diff)`)
+      .map((s) => `${s.speedometer} (${s.turns} turns): ${s.result}`)
       .join('\n');
 
     const resultText = `**Gearbox Calculator Results**
@@ -164,8 +152,8 @@ ${gearingTable}
 - Circumference: ${tireInfo.circ}mm
 - Turns per Mile: ${tireInfo.tireTurnsPerMile}
 
-**Compatible Speedometers:**
-${speedoMatches || 'No close matches found'}`;
+**Speedometer Accuracy (closest first):**
+${speedoMatches || 'No speedometer data available'}`;
 
     return jsonResult({
       inputs: {
