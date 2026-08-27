@@ -11,6 +11,14 @@ export const useSupabase = () => {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
+          // WebAuthn passkeys. Without this flag every `auth.registerPasskey()`,
+          // `auth.signInWithPasskey()` and `auth.passkey.*` call THROWS rather
+          // than returning an error result (assertPasskeyExperimentalEnabled in
+          // auth-js), so it is a hard requirement of usePasskeys(), not a
+          // feature toggle. Only the browser client needs it — the WebAuthn
+          // ceremony runs in `navigator.credentials`, and the per-request server
+          // client below has no session to register a passkey against.
+          experimental: { passkey: true },
           // Auto-detect is disabled: app/pages/auth/callback.vue calls
           // supabase.auth.exchangeCodeForSession() manually for both OAuth and
           // magic-link PKCE callbacks. Leaving auto-detect on creates a race

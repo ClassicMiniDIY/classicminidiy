@@ -381,6 +381,10 @@
         </div>
       </div>
 
+      <!-- Security. Sits outside the profile form on purpose: passkey changes
+           are written immediately by Supabase Auth, not by this page's Save. -->
+      <ProfilePasskeyManager />
+
       <!-- Actions (full width below the grid) -->
       <div>
         <div class="divider"></div>
