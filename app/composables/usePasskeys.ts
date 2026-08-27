@@ -62,8 +62,12 @@ export const usePasskeys = () => {
   const isCancelled = (error: unknown): boolean => {
     const name = (error as { name?: string } | null)?.name;
     if (name === 'NotAllowedError' || name === 'AbortError') return true;
+    // Supabase wraps some DOMExceptions, losing `name` but keeping the original
+    // in the message. Match the error NAMES only — a free-text "cancel" term
+    // would silently swallow any server error whose message happens to contain
+    // the word, showing the user nothing at all.
     const message = (error as { message?: string } | null)?.message ?? '';
-    return /NotAllowedError|AbortError|cancel/i.test(message);
+    return /NotAllowedError|AbortError/.test(message);
   };
 
   /** List the signed-in user's passkeys. Requires an active session. */
@@ -97,10 +101,12 @@ export const usePasskeys = () => {
     // unnamed passkey is indistinguishable from the user's other passkeys in
     // the list. A failure here is cosmetic — the passkey itself is already
     // registered and usable, so never surface it as a registration failure.
+    // Note the shape: update() RETURNS an error, it does not throw — so this
+    // has to inspect the result. A `try/catch` here would be dead code and the
+    // failure would go unlogged.
     if (friendlyName && data?.id) {
-      try {
-        await supabase.auth.passkey.update({ passkeyId: data.id, friendlyName });
-      } catch (nameError) {
+      const { error: nameError } = await supabase.auth.passkey.update({ passkeyId: data.id, friendlyName });
+      if (nameError) {
         console.error('Passkey registered but naming it failed:', nameError);
       }
     }
@@ -151,9 +157,21 @@ export const usePasskeys = () => {
     return !!data?.session;
   };
 
+  /**
+   * Drop the cached list. MUST run on sign-out: this is shared `useState`, and
+   * without a full page reload the next account to sign in on the same tab
+   * would see the previous user's device names while its own fetch is still in
+   * flight — and keep seeing them if that fetch fails.
+   */
+  const clearPasskeys = () => {
+    passkeys.value = [];
+    loading.value = false;
+  };
+
   return {
     passkeys,
     loading,
+    clearPasskeys,
     isSupported,
     hasPlatformAuthenticator,
     isCancelled,

@@ -162,14 +162,19 @@
   // /auth/callback, so the stash has to be consumed here instead — leaving it
   // behind would let a later unrelated sign-in replay it.
   const consumeStoredRedirect = (): string => {
-    if (requestedRedirect.value) return requestedRedirect.value;
+    // Clear FIRST, unconditionally. onMounted stashed `?redirect=` for the
+    // OAuth and magic-link paths, so returning the query value early without
+    // clearing would leave that copy behind for a later, unrelated sign-in to
+    // replay — the exact surprise (e.g. an unexpected Stripe checkout) the
+    // stash-clearing in onMounted exists to prevent.
+    let stored: string | null = null;
     try {
-      const value = window.localStorage.getItem(POST_AUTH_REDIRECT_KEY);
-      if (value !== null) window.localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
-      return sanitizeRedirectPath(value) || '';
+      stored = window.localStorage.getItem(POST_AUTH_REDIRECT_KEY);
+      if (stored !== null) window.localStorage.removeItem(POST_AUTH_REDIRECT_KEY);
     } catch {
-      return '';
+      // localStorage unavailable — fall through to the query param.
     }
+    return requestedRedirect.value || sanitizeRedirectPath(stored) || '';
   };
 
   // Reactive state

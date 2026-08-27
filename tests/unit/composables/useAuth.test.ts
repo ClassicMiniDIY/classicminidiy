@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockSupabaseClient, mockSession, mockProfile } from '../../setup/mockSupabase';
 
 let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
+let mockClearPasskeys: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -13,6 +14,10 @@ beforeEach(() => {
       siteUrl: 'https://www.classicminidiy.com',
     },
   }));
+  // signOut() clears the shared passkey list. Auto-imports do not exist under
+  // vitest, so the composable has to be stubbed the same way useSupabase is.
+  mockClearPasskeys = vi.fn();
+  vi.stubGlobal('usePasskeys', () => ({ clearPasskeys: mockClearPasskeys }));
 });
 
 afterEach(() => {
@@ -340,6 +345,9 @@ describe('useAuth', () => {
       expect(mockSupabase.auth.signOut).toHaveBeenCalled();
       expect(auth.user.value).toBeNull();
       expect(auth.userProfile.value).toBeNull();
+      // Passkeys are shared state that would otherwise outlive the session and
+      // show the previous user's devices to the next one on this tab.
+      expect(mockClearPasskeys).toHaveBeenCalled();
     });
 
     it('throws when supabase signOut returns an error', async () => {

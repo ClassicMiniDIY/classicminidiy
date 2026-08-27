@@ -254,6 +254,9 @@ export const useAuth = () => {
     if (error) throw error;
     user.value = null;
     userProfile.value = null;
+    // Shared state that outlives the session otherwise — the next account to
+    // sign in on this tab would briefly see the previous user's passkeys.
+    usePasskeys().clearPasskeys();
   };
 
   // Check if user is authenticated

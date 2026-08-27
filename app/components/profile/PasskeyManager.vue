@@ -32,9 +32,11 @@
               <!-- Rename, inline -->
               <div v-if="renamingId === passkey.id" class="flex items-center gap-2">
                 <input
+                  ref="renameInput"
                   v-model="renameValue"
                   type="text"
                   maxlength="120"
+                  :aria-label="t('name_placeholder')"
                   class="input input-bordered input-sm grow"
                   :placeholder="t('name_placeholder')"
                   :disabled="busyId === passkey.id"
@@ -95,7 +97,13 @@
         </ul>
 
         <div class="mt-2">
-          <button type="button" class="btn btn-primary btn-sm" :disabled="registering" @click="addPasskey">
+          <button
+            ref="addButton"
+            type="button"
+            class="btn btn-primary btn-sm"
+            :disabled="registering"
+            @click="addPasskey"
+          >
             <span v-if="registering" class="loading loading-spinner loading-xs"></span>
             <i v-else class="fas fa-plus"></i>
             {{ t('add') }}
@@ -105,9 +113,9 @@
 
       <!-- Delete confirmation. Deleting a passkey is irreversible, and the
            user may have no other credential enrolled on this device. -->
-      <dialog ref="deleteDialog" class="modal">
+      <dialog ref="deleteDialog" class="modal" aria-labelledby="passkey-delete-title" @close="pendingDelete = null">
         <div class="modal-box">
-          <h3 class="text-lg font-bold">{{ t('delete_title') }}</h3>
+          <h3 id="passkey-delete-title" class="text-lg font-bold">{{ t('delete_title') }}</h3>
           <p class="py-4">
             {{ t('delete_confirm', { name: pendingDelete?.friendly_name || t('unnamed') }) }}
           </p>
@@ -143,6 +151,8 @@
   const renameValue = ref('');
   const pendingDelete = ref<PasskeyListItem | null>(null);
   const deleteDialog = ref<HTMLDialogElement | null>(null);
+  const renameInput = ref<HTMLInputElement | null>(null);
+  const addButton = ref<HTMLButtonElement | null>(null);
 
   const formatDate = (value: string) =>
     new Date(value).toLocaleDateString(locale.value, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -192,9 +202,14 @@
     }
   };
 
-  const startRename = (passkey: PasskeyListItem) => {
+  // Switching to the input unmounts the button that had focus, which would
+  // otherwise drop focus to <body> — a keyboard user's next Tab would restart
+  // from the top of the page, and nothing would announce the edit mode.
+  const startRename = async (passkey: PasskeyListItem) => {
     renamingId.value = passkey.id;
     renameValue.value = passkey.friendly_name ?? '';
+    await nextTick();
+    renameInput.value?.select();
   };
 
   const cancelRename = () => {
@@ -228,9 +243,9 @@
     deleteDialog.value?.showModal();
   };
 
+  // `close` on the dialog clears pendingDelete for every path, Esc included.
   const closeDeleteDialog = () => {
     deleteDialog.value?.close();
-    pendingDelete.value = null;
   };
 
   const performDelete = async () => {
@@ -252,6 +267,10 @@
     } finally {
       busyId.value = null;
       pendingDelete.value = null;
+      // The row that was focused is gone. Land somewhere real rather than on
+      // <body>, which would send the next Tab back to the top of the page.
+      await nextTick();
+      addButton.value?.focus();
     }
   };
 </script>
