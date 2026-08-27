@@ -20,7 +20,9 @@ export default defineMcpTool({
     section: z
       .string()
       .optional()
-      .describe('Restrict to one category, e.g. "Air Filters" or "Oil Filters". Use a title from availableSections.'),
+      .describe(
+        'Restrict to one category. The only valid values are "Air Filters", "Oil Filters" and "Alternators" (or the keys airFilters, oilFilters, alternators). Matched exactly.'
+      ),
     limit: z.number().int().positive().max(200).default(50).describe('Maximum rows to return. Default 50.'),
   },
 

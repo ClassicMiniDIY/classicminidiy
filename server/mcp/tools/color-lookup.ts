@@ -34,6 +34,17 @@ function yearsLabel(start: number | null, end: number | null): string | null {
   return null;
 }
 
+/**
+ * Postgres/PostgREST errors reach us as prose, but an upstream WAF block arrives
+ * as a full HTML page — dumping that into an MCP result is noise the caller
+ * cannot act on. Keep it to one line.
+ */
+function readableError(message: string): string {
+  const flat = message.replace(/\s+/g, ' ').trim();
+  if (/^<!DOCTYPE|^<html/i.test(flat)) return 'the request was rejected upstream; try simpler search text';
+  return flat.length > 200 ? `${flat.slice(0, 200)}...` : flat;
+}
+
 export default defineMcpTool({
   description:
     'Look up Classic Mini factory paint colours from the archive. Search by colour name, factory paint code (e.g. "GN37", "BLVC"), or Ditzler/PPG and Dulux cross-reference codes. Returns the codes and a broad colour family. Only approved archive entries are returned.',
@@ -64,13 +75,18 @@ export default defineMcpTool({
         );
       }
 
-      const { data, error } = await request.order('name').limit(limit);
+      const { data, error } = await request.order('name').limit(limit + 1);
       if (error) {
         console.error('color-lookup MCP error:', error);
-        return errorResult(`Could not read the colour archive: ${error.message}`);
+        return errorResult(`Could not read the colour archive: ${readableError(error.message)}`);
       }
 
-      const rows = (data ?? []) as Record<string, any>[];
+      // One row was over-fetched: its presence is what makes `truncated` exact.
+      // Comparing the returned count to `limit` instead reports truncation on a
+      // complete result set that happens to be exactly `limit` long.
+      const fetched = (data ?? []) as Record<string, any>[];
+      const truncated = fetched.length > limit;
+      const rows = fetched.slice(0, limit);
 
       if (rows.length === 0) {
         return jsonResult({
@@ -97,7 +113,7 @@ export default defineMcpTool({
       return jsonResult({
         inputs: { query: query ?? null },
         totalMatches: matches.length,
-        truncated: matches.length === limit,
+        truncated,
         matches,
         notes:
           'colorFamily is a broad grouping ("red", "green", "grey"), NOT a hex code — the archive records families rather than exact values. years is usually null; the archive does not carry per-colour year ranges for most entries.',
@@ -112,7 +128,7 @@ export default defineMcpTool({
       });
     } catch (error: any) {
       console.error('color-lookup MCP error:', error);
-      return errorResult(`Could not read the colour archive: ${error.message}`);
+      return errorResult(`Could not read the colour archive: ${readableError(error.message)}`);
     }
   },
 });

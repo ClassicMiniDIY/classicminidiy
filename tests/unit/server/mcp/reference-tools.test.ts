@@ -76,6 +76,32 @@ describe('reference-table MCP tools', () => {
     expect(tool.cache).toBeUndefined();
   });
 
+  // The schema's own `section` examples must be values that actually match.
+  // lookup() compares exactly, and the torque/clearances section is titled
+  // "Clutch & Gearbox" — an example of "Gearbox" steered a caller straight into
+  // a false "no data".
+  it.each(TOOLS)('$name only names section values that really exist', async ({ name }) => {
+    const tool = (await import(`~/server/mcp/tools/${name}`)).default;
+    const describeText: string = tool.inputSchema.section.description ?? '';
+    const quoted = [...describeText.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    expect(quoted.length).toBeGreaterThan(0);
+
+    const available = (await tool.handler({ limit: 1 })).availableSections;
+    const valid = new Set([...available.map((s: any) => s.title), ...available.map((s: any) => s.section)]);
+    for (const example of quoted) {
+      expect(valid.has(example), `${name}: section example "${example}" matches nothing`).toBe(true);
+    }
+  });
+
+  it.each(TOOLS)('$name returns rows for every section value it advertises', async ({ name }) => {
+    const tool = (await import(`~/server/mcp/tools/${name}`)).default;
+    const describeText: string = tool.inputSchema.section.description ?? '';
+    for (const example of [...describeText.matchAll(/"([^"]+)"/g)].map((m) => m[1])) {
+      const result = await tool.handler({ section: example, limit: 5 });
+      expect(result.totalMatches, `${name}: section "${example}" returned nothing`).toBeGreaterThan(0);
+    }
+  });
+
   it('each tool searches its OWN dataset', async () => {
     const torque = (await import('~/server/mcp/tools/torque-specs')).default;
     const weights = (await import('~/server/mcp/tools/vehicle-weights')).default;

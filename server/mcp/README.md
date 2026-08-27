@@ -1,14 +1,35 @@
 # Classic Mini DIY MCP Server
 
-Model Context Protocol (MCP) server providing Classic Mini calculator tools for LLMs.
+Model Context Protocol (MCP) server exposing the Classic Mini DIY calculators and
+archive to LLMs.
 
 ## Overview
 
-This MCP server exposes three main tools for Classic Mini enthusiasts:
+Eleven tools, in three groups:
 
-- **Compression Calculator**: Calculate compression ratio and engine capacity
-- **Gearbox Calculator**: Calculate gear ratios, top speed, and speedometer compatibility
-- **Chassis Decoder**: Decode and validate Classic Mini chassis numbers
+**Calculators** — the same code the site runs, imported rather than reimplemented
+(`app/utils/*Calculations.ts`, `app/composables/useNeedleCompare.ts`), so a tool
+answer and the on-site answer cannot drift apart.
+
+- **compression-calculator**: compression ratio and engine capacity
+- **gearbox-calculator**: gear ratios, top speed, speedometer accuracy
+- **needle-compare**: SU needle profiles — lookup, compare, or find richer/leaner
+
+**Identification**
+
+- **chassis-decoder**: decode a chassis number (identifies the CAR)
+- **engine-decoder**: decode an engine prefix code (identifies the ENGINE fitted,
+  which is frequently not the original)
+
+**Reference and archive**
+
+- **torque-specs**, **clearances**, **parts-equivalency**, **vehicle-weights**:
+  searchable reference tables
+- **wheel-search**, **color-lookup**: the Supabase archive, approved entries only
+
+Tools take a query and return the matching subset. The site's API routes return
+whole tables because a browser filters client-side; an LLM should not have to
+receive several hundred rows to answer one question.
 
 ## Authentication
 
@@ -166,12 +187,12 @@ implementation (`server/utils/mcpLookup.ts`) over four datasets.
 **Parameters (all four):** `query` (free text; every word must match, so extra words
 narrow), `section` (restrict to one section, by key or title), `limit` (default 50).
 
-| Tool | Covers |
-| --- | --- |
-| `torque-specs` | lb-ft and Nm for Engine (41), Suspension (24), Clutch & Gearbox (22), Electrical (6) |
-| `clearances` | 10 commonly-needed endfloat and clearance tolerances, in thou and mm |
-| `parts-equivalency` | Cross-brand part numbers: oil filters (18), air filters (4), alternators (2) |
-| `vehicle-weights` | Curb weights for 12 variants plus ~530 component weights, in kg |
+| Tool                | Covers                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `torque-specs`      | lb-ft and Nm for Engine (41), Suspension (24), Clutch & Gearbox (22), Electrical (6) |
+| `clearances`        | 10 commonly-needed endfloat and clearance tolerances, in thou and mm                 |
+| `parts-equivalency` | Cross-brand part numbers: oil filters (18), air filters (4), alternators (2)         |
+| `vehicle-weights`   | Curb weights for 12 variants plus ~530 component weights, in kg                      |
 
 Every response carries `availableSections` so a miss is actionable, and `truncated` so a
 caller knows to narrow rather than assume it saw everything.

@@ -20,7 +20,9 @@ export default defineMcpTool({
     section: z
       .string()
       .optional()
-      .describe('Restrict to one section, e.g. "Engine", "Gearbox", "Suspension". Use a title from availableSections.'),
+      .describe(
+        'Restrict to one section. The only valid values are "Engine", "Suspension", "Clutch & Gearbox" and "Electrical" (or the keys engineTable, suspensionTable, gearboxTable, electricalTable). Matched exactly and in full, so a bare Gearbox will not match the Clutch & Gearbox section.'
+      ),
     limit: z.number().int().positive().max(200).default(50).describe('Maximum rows to return. Default 50.'),
   },
 
