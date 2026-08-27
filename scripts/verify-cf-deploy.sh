@@ -47,6 +47,28 @@ expect_body() {
 echo "Verifying: $ORIGIN"
 echo
 
+# Preflight: the origin must actually answer before any assertion runs.
+#
+# Several checks below are satisfied by an EMPTY response — the indexable gate
+# greps for a noindex tag it will not find, and the chat gate falls through its
+# case to the ok branch. Run against an unreachable host they report PASS, so a
+# typo'd or unsubstituted origin produces a partly-green battery describing a
+# deployment nobody contacted. That is the same false assurance this script
+# warns about twice below, and the shape of the /mcp bug it failed to catch:
+# a check that cannot distinguish "fine" from "never ran".
+#
+# Curl reports 000 for a DNS, TLS or connection failure, which no live origin
+# returns. Abort loudly instead of scoring it.
+preflight=$(curl -sS -o /dev/null -m 15 -w '%{http_code}' "$ORIGIN/" 2>/dev/null)
+if [ "$preflight" = "000" ]; then
+  printf '  \033[31mABORT\033[0m  %s is unreachable (curl could not connect)\n' "$ORIGIN"
+  echo
+  echo "Nothing was verified. Check the origin argument — a placeholder like"
+  echo "<preview-origin> is not substituted for you."
+  exit 2
+fi
+
+
 echo "== core routes render =="
 expect_status "/" 200
 expect_status "/models" 200
@@ -113,9 +135,24 @@ mcp_status=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' -X POST "$ORIGIN/mcp"
   --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' 2>/dev/null)
 [ "$mcp_status" = "401" ] && ok "/mcp rejects an unauthenticated call -> 401" \
   || bad "/mcp unauthenticated -> got $mcp_status, want 401"
-# The CF provider does `await import('agents/mcp')` at REQUEST time, so a missing
-# dependency deploys green and only fails when first called. 401 proves the
-# handler actually ran.
+# The 401 comes from server/middleware/mcp-auth.ts, which runs BEFORE the handler
+# — so it proves auth is wired, and nothing about whether the handler works. That
+# is how #721 stayed green: every authenticated call 500'd for months while this
+# check passed. Set MCP_SMOKE_KEY to a key the origin accepts to test the handler.
+if [ -n "${MCP_SMOKE_KEY:-}" ]; then
+  mcp_body=$(curl -sS -m 30 -X POST "$ORIGIN/mcp" \
+    -H "Authorization: Bearer $MCP_SMOKE_KEY" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' 2>/dev/null)
+  if printf '%s' "$mcp_body" | grep -q 'gearbox-calculator'; then
+    ok "/mcp authenticated tools/list returns the tool catalogue"
+  else
+    bad "/mcp authenticated tools/list did not list tools (got: $(printf '%s' "$mcp_body" | head -c 200))"
+  fi
+else
+  printf '  ....  %s\n' "/mcp authenticated tools/list (set MCP_SMOKE_KEY to run)"
+fi
 
 echo
 echo "== zone-dependent =="
