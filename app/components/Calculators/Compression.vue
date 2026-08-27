@@ -126,7 +126,7 @@
     { label: t('math.const_cylinders'), value: '4' },
   ]);
 
-  const MATH_SOURCE_FILE = 'app/components/Calculators/Compression.vue';
+  const MATH_SOURCE_FILE = 'app/utils/compressionCalculations.ts';
   const MATH_SOURCE_URL = `https://github.com/ClassicMiniDIY/classicminidiy/blob/main/${MATH_SOURCE_FILE}`;
 
   const { capture } = usePostHog();

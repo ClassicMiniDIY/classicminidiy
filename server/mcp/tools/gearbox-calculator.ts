@@ -34,9 +34,10 @@ export default defineMcpTool({
     max_rpm: z.number().default(6500).describe('Maximum engine RPM. Typical: 6000-7000 RPM'),
     tire_type: z
       .object({
-        width: z.number().describe('Tire width in mm (e.g., 145)'),
-        profile: z.number().describe('Tire profile percentage (e.g., 80 for 80%)'),
-        size: z.number().describe('Wheel size in inches (e.g., 10)'),
+        width: z.number().positive().describe('Tire width in mm (e.g., 145)'),
+        // 0 is legitimate — slicks are quoted as e.g. 19.0 x 5.0-10 with no profile.
+        profile: z.number().nonnegative().describe('Tire profile percentage (e.g., 80 for 80%)'),
+        size: z.number().positive().describe('Wheel size in inches (e.g., 10)'),
         // Racing slicks are sold by overall diameter, not width/profile, so
         // deriving one from the other is wrong for them. TireValue has carried
         // this field all along; the schema omitted it, which silently stripped
@@ -45,13 +46,16 @@ export default defineMcpTool({
         // of 477.52mm — a top speed of 56mph where the truth is 106mph.
         diameter: z
           .number()
+          .positive()
           .optional()
           .describe(
-            'Overall tire diameter in mm. Optional; supply it for tires specified by diameter (racing slicks such as the Hoosier 19.0 x 5.0-10, which is 477.52mm). When present it is used directly and width/profile/size are not used to derive it.'
+            'Overall tire diameter in mm. Optional. Supply it for tires quoted by diameter rather than profile — racing slicks such as the Hoosier 19.0 x 5.0-10, which is 477.52mm. When present the diameter is used as given; width, profile and size are still REQUIRED and are used to label the tire, but no longer to derive its size.'
           ),
       })
       .default({ width: 145, profile: 80, size: 10 })
-      .describe('Tire specifications: width, profile and wheel size, or an explicit overall diameter'),
+      .describe(
+        'Tire specifications. width, profile and size are always required; add diameter for tires quoted by overall diameter.'
+      ),
   },
 
   async handler({ metric, final_drive, gear_ratios, drop_gear, speedo_drive, max_rpm, tire_type }) {
