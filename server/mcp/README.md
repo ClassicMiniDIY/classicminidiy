@@ -128,6 +128,74 @@ Decode and validate Classic Mini chassis numbers based on year range.
 }
 ```
 
+### 4. engine-decoder
+
+Identify an engine from its prefix code — the letters and numbers cast or stamped on the
+block. Sibling to `chassis-decoder`: the chassis number identifies the CAR, this identifies
+the engine currently in it, which on a Classic Mini is frequently not the original.
+
+**Parameters:** `code` (string, e.g. `"12H"`), `query` (string, free text such as
+`"1275 Cooper S"`), `limit` (number, default 25). Provide one of `code` or `query`.
+
+An exact code match is tried first, then a prefix match — blocks are worn and half-legible,
+so a partial read is the normal case rather than an error.
+
+### 5. needle-compare
+
+Look up and compare SU carburettor needles from 709 profiles, using the same comparison
+logic as the on-site configurator. Richness is measured as **fuel-flow area in mm²**, not
+needle diameter, because area is what meters fuel.
+
+**Parameters:** `mode` (`"lookup" | "compare" | "find"`), `needle` (name, e.g. `"AAA"`),
+`against` (second needle, for `compare`), `direction` (`"richer" | "leaner" | "similar"`),
+`band` (`"low" | "mid" | "high" | "any"`), `sameSizeOnly`, `isolateBand`, `limit`.
+
+Bands are throttle positions: low = stations 1-4 (idle/light), mid = 5-9 (cruise),
+high = 10-15 (full). `isolateBand` (default true) requires the other two bands to stay
+approximately unchanged, which is what makes "richer ONLY down low" answerable.
+
+```json
+{ "mode": "find", "needle": "AAA", "direction": "richer", "band": "low", "limit": 5 }
+```
+
+### 6-9. Reference tables
+
+`torque-specs`, `clearances`, `parts-equivalency` and `vehicle-weights` share one
+implementation (`server/utils/mcpLookup.ts`) over four datasets.
+
+**Parameters (all four):** `query` (free text; every word must match, so extra words
+narrow), `section` (restrict to one section, by key or title), `limit` (default 50).
+
+| Tool | Covers |
+| --- | --- |
+| `torque-specs` | lb-ft and Nm for Engine (41), Suspension (24), Clutch & Gearbox (22), Electrical (6) |
+| `clearances` | 10 commonly-needed endfloat and clearance tolerances, in thou and mm |
+| `parts-equivalency` | Cross-brand part numbers: oil filters (18), air filters (4), alternators (2) |
+| `vehicle-weights` | Curb weights for 12 variants plus ~530 component weights, in kg |
+
+Every response carries `availableSections` so a miss is actionable, and `truncated` so a
+caller knows to narrow rather than assume it saw everything.
+
+### 10-11. Archive lookups
+
+`wheel-search` and `color-lookup` read the Supabase archive. **Only `status='approved'`
+rows are ever returned** — these tools must not expose the moderation queue.
+
+**`wheel-search`** — `query` (name or manufacturer), `size` (diameter in inches: 10, 12, 13),
+`width` (string, matched exactly), `limit`. Returns offset, bolt pattern, centre bore and
+weight where recorded.
+
+> `width` is a **string**, not a number: the archive stores it as free text, so real values
+> include `"4.5"`, `"5"`, `"5j"` and `"5.5-8.5"`. A null dimension means "not recorded",
+> not zero.
+
+**`color-lookup`** — `query` (colour name or paint code such as `"GN37"`), `limit`.
+Returns factory, Ditzler/PPG and Dulux codes.
+
+> `colorFamily` is a broad grouping (`"red"`, `"grey"`), **not a hex code** — the archive
+> records families rather than exact values. There is deliberately no year filter:
+> `year_start` is null on every approved row, so it could only ever return nothing.
+
 ## Using with AI Assistants
 
 ### Claude Desktop / Claude Code
@@ -236,7 +304,7 @@ Invalid API key:
 
 ## Caching
 
-- Tool results are cached for optimal performance
+- Most tools are NOT cached: they search bundled JSON in memory, so a cache round-trip would cost more than the work it replaces. `chassis-decoder` caches for 24h. Any tool taking an OBJECT-valued argument must supply an explicit `getKey` if it caches — the toolkit's default key stringifies objects to `[object Object]`, so every distinct object would share one entry.
 - Compression and gearbox calculators: 1 hour cache
 - Chassis decoder: 24 hour cache
 

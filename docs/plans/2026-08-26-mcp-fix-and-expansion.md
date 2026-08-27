@@ -94,9 +94,16 @@ check that cannot distinguish "healthy" from "never ran".
 
 ## Expansion backlog
 
-**Status: hardening and shared math have shipped** (PR #726 and the shared-math
-PR that follows it). New tools and transport-level test coverage remain. Each
-item is independent of the others and of the smoke-test work above.
+**Status: hardening (#726), shared math (#727) and the new tools have shipped.**
+Transport-level test coverage is the remaining item.
+
+The tool count went from 3 to 11. Two things the build turned up that the plan
+below did not predict, both found by querying the real data rather than trusting
+the schema: `colors.year_start` is NULL on all 297 approved rows, so a planned
+year filter could only ever have returned nothing and was dropped; and
+`colors.hex_value` holds a colour FAMILY name ("red", "grey"), not a hex code,
+so the field is surfaced as `colorFamily`. `wheels.width` is likewise free text
+("5j", "5.5-8.5"), not a number.
 
 ### Hardening — SHIPPED (#726)
 
@@ -150,7 +157,7 @@ site's name. Server code can import `app/utils` (precedent: `server/plugins/llms
 `CalculatorsMathBreakdown` invariant holds — the breakdown keeps reading the same
 computeds the result cards read.
 
-### New tools — NOT STARTED
+### New tools — SHIPPED
 
 The site's data is its moat and almost none of it is exposed. Each wraps data already
 in the repo, imported directly rather than over HTTP: `needle-compare` (the
