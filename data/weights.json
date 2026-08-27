@@ -193,7 +193,7 @@
     ]
   },
   "EngineBay": {
-    "title": "Electrics",
+    "title": "Engine Bay",
     "search": "",
     "items": [
       { "item": "Bonnet Buffers Clubman pair", "weight": 0.015 },
@@ -218,7 +218,7 @@
     ]
   },
   "Engine": {
-    "title": "Electrics",
+    "title": "Engine",
     "search": "",
     "items": [
       { "item": "Air Filter Case & Filter (Single HS2 1959-1974)", "weight": 0.275 },
