@@ -105,7 +105,7 @@ This site shares the Supabase auth and profiles with the other properties. Datab
   - `bun run start` - Preview production build (using `nuxi preview`)
   - `bun run format` - Format code with Prettier
 
-**Note**: A `postinstall` script handles native module compilation for `better-sqlite3` across platforms.
+**Note**: There is no `postinstall` script. `bun install` therefore never runs `nuxt prepare`, so `.nuxt/tsconfig.json` — which the root `tsconfig.json` extends — is absent on a fresh checkout. Run `bunx nuxi prepare` before `bun run test` there; CI does this explicitly in `pr-check.yml` and `deploy-cloudflare.yml`.
 
 ### Key Technologies
 
