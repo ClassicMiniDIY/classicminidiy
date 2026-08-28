@@ -437,7 +437,7 @@ describe('server/middleware/mcp-auth', () => {
     expect(getMcpAuth(fakeEvent)).toMatchObject({ tier: 'free' });
   });
 
-  it('a subscription-RPC failure degrades to free, never to denied or developer', async () => {
+  it('a subscription-RPC failure degrades to free for THIS request and caches nothing', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     setHeaders(`Bearer ${CMDIY_KEY}`);
     mockMaybeSingle.mockResolvedValue({
@@ -448,6 +448,10 @@ describe('server/middleware/mcp-auth', () => {
 
     await (handler as Function)(fakeEvent);
     expect(getMcpAuth(fakeEvent)).toMatchObject({ tier: 'free' });
+    // Caching the degraded tier would lock a PAID key out of its tools for the
+    // full positive TTL over a transient RPC hiccup — the next request must
+    // retry the RPC instead.
+    expect(storageBacking.size).toBe(0);
   });
 
   it('an unknown cmdiy key 403s and caches the negative', async () => {
@@ -500,14 +504,31 @@ describe('server/middleware/mcp-auth', () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
     mockUseRuntimeConfig.mockReturnValue({ MCP_API_KEY: '', MCP_API_KEYS: '', NODE_ENV: 'production' });
 
-    // 30 distinct unknown keys from one address consume the lookup budget...
-    for (let i = 0; i < 30; i++) {
+    // 60 distinct unknown keys from one address consume the lookup budget...
+    for (let i = 0; i < 60; i++) {
       setHeaders(`Bearer ${MCP_KEY_PREFIX}scan${String(i).padStart(36, '0')}`, '198.51.100.9');
       await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 403 });
     }
-    // ...and the 31st is refused before any DB work.
+    // ...and the 61st is refused before any DB work.
     mockMaybeSingle.mockClear();
     setHeaders(`Bearer ${MCP_KEY_PREFIX}scan${'x'.repeat(36)}`, '198.51.100.9');
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 429 });
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('cached-negative replays consume the same budget instead of bypassing every limiter', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    mockUseRuntimeConfig.mockReturnValue({ MCP_API_KEY: '', MCP_API_KEYS: '', NODE_ENV: 'production' });
+    setHeaders(`Bearer ${CMDIY_KEY}`, '198.51.100.10');
+    const hash = await sha256Hex(CMDIY_KEY);
+    storageBacking.set(keyCacheId(hash), { ok: false });
+
+    // Replaying one known-bad key costs a KV read each time — it must settle
+    // at the throttle, not run unmetered because the 403 short-circuits
+    // rate-limit.ts.
+    for (let i = 0; i < 60; i++) {
+      await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 403 });
+    }
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 429 });
     expect(mockMaybeSingle).not.toHaveBeenCalled();
   });

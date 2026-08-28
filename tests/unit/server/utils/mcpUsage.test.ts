@@ -57,13 +57,12 @@ describe('server/utils/mcpUsage', () => {
     expect(event.waitUntil).toHaveBeenCalledTimes(2);
   });
 
-  it('internal tier: no Supabase row to count, PostHog only', () => {
+  it('internal tier: emits nothing — CI and ops calls are not product signal', () => {
     const event = makeEvent({ tier: 'internal' });
     recordMcpUsage(event, 'torque-specs');
 
     expect(mockRpc).not.toHaveBeenCalled();
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect((mockFetch.mock.calls[0] as any[])[1].body.distinct_id).toBe('internal');
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('free tier: Supabase count is exact, PostHog is sampled at 10%', () => {

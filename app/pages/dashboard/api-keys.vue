@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import type { DeveloperKey } from '~/composables/useDeveloperKeys';
+  import { MCP_ENDPOINT, MCP_MAX_ACTIVE_KEYS } from '~~/shared/utils/mcpTiers';
 
   const { t, locale } = useI18n();
   const toast = useToast();
@@ -20,8 +21,6 @@
     fetchSubscription,
   } = useDeveloperKeys();
 
-  const MCP_ENDPOINT = 'https://classicminidiy.com/mcp';
-
   // --- Key CRUD state ---
   const creating = ref(false);
   const newKeyName = ref('');
@@ -37,7 +36,7 @@
   const revealedKey = ref<string | null>(null);
   const revealDialog = ref<HTMLDialogElement | null>(null);
 
-  const atKeyLimit = computed(() => keys.value.length >= MAX_DEVELOPER_KEYS);
+  const atKeyLimit = computed(() => keys.value.length >= MCP_MAX_ACTIVE_KEYS);
   const isDeveloper = computed(() => subscription.value?.is_active === true);
 
   // Same no-code Stripe portal affordance as /membership: only meaningful for
@@ -78,7 +77,7 @@
     } catch (error: any) {
       const limit = error?.statusCode === 409 || error?.response?.status === 409;
       toast.add({
-        title: limit ? t('create_limit_error', { max: MAX_DEVELOPER_KEYS }) : t('create_error'),
+        title: limit ? t('create_limit_error', { max: MCP_MAX_ACTIVE_KEYS }) : t('create_error'),
         color: 'error',
         icon: 'fas fa-triangle-exclamation',
       });
@@ -181,21 +180,32 @@
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
+    // Single pass over the rows into a (tool, day) bucket map — the rows can
+    // span keys, so the same (tool, day) pair appears once per key.
+    const buckets = new Map<string, number>();
+    for (const row of usage.value) {
+      const bucket = `${row.tool}|${row.day}`;
+      buckets.set(bucket, (buckets.get(bucket) ?? 0) + row.call_count);
+    }
     const tools = [...new Set(usage.value.map((row) => row.tool))].sort();
     const series = tools.map((tool) => ({
       name: tool,
       type: 'column' as const,
-      data: days.map((day) =>
-        usage.value.filter((row) => row.tool === tool && row.day === day).reduce((sum, row) => sum + row.call_count, 0)
-      ),
+      data: days.map((day) => buckets.get(`${tool}|${day}`) ?? 0),
     }));
 
     return {
       chart: { type: 'column', height: 280, backgroundColor: 'transparent' },
       title: { text: undefined },
       xAxis: {
+        // timeZone: 'UTC' is load-bearing: the days are UTC dates, and without
+        // it every viewer west of UTC sees each column labeled one day early.
         categories: days.map((day) =>
-          new Date(`${day}T00:00:00Z`).toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
+          new Date(`${day}T00:00:00Z`).toLocaleDateString(locale.value, {
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'UTC',
+          })
         ),
         tickInterval: 7,
       },
@@ -368,7 +378,7 @@
             <i v-else class="fas fa-plus" aria-hidden="true"></i>
             {{ t('create') }}
           </button>
-          <span v-if="atKeyLimit" class="text-xs opacity-60">{{ t('key_limit', { max: MAX_DEVELOPER_KEYS }) }}</span>
+          <span v-if="atKeyLimit" class="text-xs opacity-60">{{ t('key_limit', { max: MCP_MAX_ACTIVE_KEYS }) }}</span>
         </div>
       </div>
     </div>

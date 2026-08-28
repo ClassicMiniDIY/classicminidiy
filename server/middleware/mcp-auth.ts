@@ -24,7 +24,7 @@
 
 import { isProtectedMcpPath } from '../utils/mcpRoutes';
 import {
-  getMcpAuth,
+  DEVELOPER_PRODUCT_ID,
   keyCacheId,
   MCP_KEY_CACHE_TTL_SECONDS,
   MCP_KEY_NEGATIVE_CACHE_TTL_SECONDS,
@@ -38,11 +38,16 @@ import { consumeRateLimit } from '../utils/rateLimit';
 import { getServiceClient } from '../utils/supabase';
 
 /**
- * Cache misses (and only misses) reach Supabase, so this bounds how fast one
- * address can turn unknown keys into database reads. Legitimate traffic is
- * untouched: a real key misses the cache about once per five minutes.
+ * Bounds how fast one address can spend lookup work: cache misses (which reach
+ * Supabase) AND cached-negative replays (which would otherwise cost a billable
+ * KV read each with no limiter at all, since the 403 aborts before
+ * rate-limit.ts runs) consume this budget. Legitimate traffic barely touches
+ * it — a real key misses the cache about once per five minutes — but the max
+ * is deliberately generous so many distinct valid keys revalidating behind ONE
+ * egress IP (a customer's serverless fleet, CI runners behind a NAT) do not
+ * 429 each other.
  */
-const LOOKUP_MAX_PER_MINUTE = 30;
+const LOOKUP_MAX_PER_MINUTE = 60;
 
 const invalidKeyError = () =>
   createError({
@@ -138,6 +143,21 @@ export default defineEventHandler(async (event) => {
 
   if (cached) {
     if (!cached.ok) {
+      // A cached-negative replay still costs a KV read — count it against the
+      // same per-IP budget as misses so a known-bad key replayed at line rate
+      // settles at the throttle instead of bypassing every limiter.
+      const replayLimit = consumeRateLimit(`mcpauth:ip:${clientIp(event)}`, {
+        max: LOOKUP_MAX_PER_MINUTE,
+        windowMs: 60_000,
+      });
+      if (replayLimit.limited) {
+        setHeader(event, 'Retry-After', String(replayLimit.retryAfter));
+        throw createError({
+          statusCode: 429,
+          statusMessage: 'Too Many Requests',
+          message: 'Too many API key attempts from your network. Please slow down and try again in a minute.',
+        });
+      }
       console.error('[MCP Auth] Invalid API key (cached negative).');
       throw invalidKeyError();
     }
@@ -188,22 +208,29 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!keyRow) {
-    await cacheStorage.setItem(
-      keyCacheId(keyHash),
-      { ok: false } satisfies McpKeyCacheEntry,
-      { ttl: MCP_KEY_NEGATIVE_CACHE_TTL_SECONDS }
-    );
+    // Backgrounded: the 403 does not depend on the cache write landing, and a
+    // scan of invalid keys must not serialize KV writes into its responses.
+    const negativeWrite = cacheStorage
+      .setItem(keyCacheId(keyHash), { ok: false } satisfies McpKeyCacheEntry, {
+        ttl: MCP_KEY_NEGATIVE_CACHE_TTL_SECONDS,
+      })
+      .catch(() => {});
+    (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(negativeWrite);
     console.error('[MCP Auth] Invalid API key. No matching api_keys row.');
     throw invalidKeyError();
   }
 
   // The owner's Developer API subscription decides the tier. On an RPC error,
-  // degrade to 'free' rather than deny: the key itself is proven valid, and
-  // free is the conservative tier (same default-false posture as useAuth).
+  // degrade THIS REQUEST to 'free' rather than deny: the key itself is proven
+  // valid, and free is the conservative tier (same default-false posture as
+  // useAuth). Crucially, a degraded resolution is NOT cached — writing
+  // { tier: 'free' } for a paid key during a transient RPC hiccup would lock
+  // the customer out of the paid tools for the full positive TTL; skipping the
+  // write means the very next request retries the RPC.
   let tier: 'free' | 'developer' = 'free';
   const { data: hasSub, error: subErr } = await db.rpc('user_has_subscription', {
     p_user_id: keyRow.user_id,
-    p_product_id: 'developer',
+    p_product_id: DEVELOPER_PRODUCT_ID,
   });
   if (subErr) {
     console.error(`[MCP Auth] user_has_subscription lookup failed: ${subErr.message}`);
@@ -211,14 +238,20 @@ export default defineEventHandler(async (event) => {
     tier = 'developer';
   }
 
-  const entry: McpKeyCacheEntry = {
-    ok: true,
-    keyId: keyRow.id,
-    userId: keyRow.user_id,
-    tier,
-    keyPrefix: keyRow.key_prefix,
-  };
-  await cacheStorage.setItem(keyCacheId(keyHash), entry, { ttl: MCP_KEY_CACHE_TTL_SECONDS });
+  if (!subErr) {
+    const entry: McpKeyCacheEntry = {
+      ok: true,
+      keyId: keyRow.id,
+      userId: keyRow.user_id,
+      tier,
+      keyPrefix: keyRow.key_prefix,
+    };
+    // Backgrounded: the response does not depend on the cache write landing.
+    const positiveWrite = cacheStorage
+      .setItem(keyCacheId(keyHash), entry, { ttl: MCP_KEY_CACHE_TTL_SECONDS })
+      .catch(() => {});
+    (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(positiveWrite);
+  }
   setMcpAuth(event, { tier, keyId: keyRow.id, userId: keyRow.user_id, keyPrefix: keyRow.key_prefix });
 
   // "Roughly when this key was last seen" — updated on cache misses only

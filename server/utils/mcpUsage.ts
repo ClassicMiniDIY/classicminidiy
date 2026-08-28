@@ -14,8 +14,9 @@ import { getServiceClient } from './supabase';
  *  - PostHog `mcp_tool_called` for product dashboards — hand-rolled capture
  *    like server/middleware/bot-analytics.ts (posthog-node stays uninstalled).
  *    FREE-tier events are SAMPLED at ~10% (the one bill that scales per-call);
- *    a sample_rate property lets dashboards re-weight. Supabase counts stay
- *    exact for every tier.
+ *    a sample_rate property lets dashboards re-weight. INTERNAL (env-key)
+ *    traffic emits nothing — it is CI and ops, not product signal. Supabase
+ *    counts stay exact for the key-holding tiers.
  *
  * Gated calls (a free key invoking a paid tool) get their own always-captured
  * `mcp_tool_gated` event: rare, and the clearest upgrade-funnel signal there is.
@@ -78,10 +79,15 @@ export function recordMcpUsage(event: H3Event, toolName: string): void {
     background(event, increment);
   }
 
+  // Internal (env-key) traffic is CI, deploy smokes, and ops calls — it has no
+  // key row, no dashboard, and no product signal, and every transport-test run
+  // would otherwise permanently inflate the exact metrics the event exists for.
+  if (tier === 'internal') return;
+
   const sampled = tier !== 'free' || Math.random() < FREE_TIER_SAMPLE_RATE;
   if (!sampled) return;
 
-  captureToPostHog(event, 'mcp_tool_called', auth?.userId ?? 'internal', {
+  captureToPostHog(event, 'mcp_tool_called', auth?.userId ?? 'unknown', {
     tool: toolName,
     tier,
     key_prefix: auth?.keyPrefix,

@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   FREE_TOOLS,
@@ -55,5 +55,17 @@ describe('server/utils/mcpTiers', () => {
     // the complement of FREE_TOOLS over the real tool files.
     expect([...PAID_ONLY_TOOLS].sort()).toEqual(paid);
     expect(FREE_TOOLS.size + PAID_ONLY_TOOLS.length).toBe(toolFiles.length);
+  });
+
+  // The pre-deploy transport gate asserts that the internal tier lists each
+  // paid tool — but its list is hardcoded in bash. Without this guard, adding
+  // a fifth paid-only tool updates PAID_ONLY_TOOLS (the test above forces it)
+  // while the deploy gate silently keeps checking only the original four —
+  // exactly the unit-green/transport-blind gap that shipped #721.
+  it('the transport script checks every paid-only tool', () => {
+    const script = readFileSync(join(process.cwd(), 'scripts/test-mcp-transport.sh'), 'utf8');
+    for (const tool of PAID_ONLY_TOOLS) {
+      expect(script, `scripts/test-mcp-transport.sh must assert the internal tier lists "${tool}"`).toContain(tool);
+    }
   });
 });

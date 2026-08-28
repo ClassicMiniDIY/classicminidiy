@@ -32,7 +32,7 @@ free-tier calls with a `sample_rate` property so dashboards re-weight).
 | Tier | Who | Tools | Rate limit (default) |
 |---|---|---|---|
 | `free` | any account with a key | 7 calculator/reference tools | 20/min (`MCP_RATELIMIT_FREE_MAX`) |
-| `developer` | active `developer` subscription | all 11 | 240/min (`MCP_RATELIMIT_MAX`) |
+| `developer` | active `developer` subscription | all 11 | 240/min (`MCP_RATELIMIT_DEVELOPER_MAX`) |
 | `internal` | env-var keys (`MCP_API_KEY`/`MCP_API_KEYS`) | all 11 | 600/min (`MCP_RATELIMIT_INTERNAL_MAX`) |
 
 The env-var key path survives unchanged as the `internal` tier — it is what
@@ -148,7 +148,11 @@ mirroring `server/api/membership/checkout.post.ts`).
 - Unchanged worker secrets: `NUXT_MCP_API_KEY(S)` (now = internal tier),
   Supabase service key, PostHog public key.
 - New plain worker vars (module-scope `process.env` reads, matching the existing
-  rate-limit knobs): `MCP_RATELIMIT_FREE_MAX`, `MCP_RATELIMIT_INTERNAL_MAX`.
+  rate-limit knobs): `MCP_RATELIMIT_FREE_MAX`, `MCP_RATELIMIT_DEVELOPER_MAX`,
+  `MCP_RATELIMIT_INTERNAL_MAX`. The pre-tier `MCP_RATELIMIT_MAX` keeps its
+  historical meaning as a fallback for the INTERNAL tier (the traffic it
+  originally governed) — an operator's existing tuning is never silently
+  reassigned to a different tier.
 - Nothing new at build time; nothing new in `runtimeConfig.public`.
 
 ## Tests

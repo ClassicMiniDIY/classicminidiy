@@ -58,6 +58,24 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to create API key' });
   }
 
+  // The count-then-insert above races with itself: two concurrent creates from
+  // a user at cap-1 both read an in-limit count and both insert. There is no
+  // DB-side constraint backing the cap, so re-count after insert and roll this
+  // insert back if the cap is now exceeded — both racers may roll back, which
+  // is safe (the user retries); exceeding the cap silently is not.
+  const { count: afterCount } = await db
+    .from('api_keys')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .is('revoked_at', null);
+  if ((afterCount ?? 0) > MCP_MAX_ACTIVE_KEYS) {
+    await db.from('api_keys').delete().eq('id', data.id);
+    throw createError({
+      statusCode: 409,
+      statusMessage: `Maximum of ${MCP_MAX_ACTIVE_KEYS} active API keys reached`,
+    });
+  }
+
   // A probe of this key BEFORE it existed may have left a negative auth-cache
   // entry (60s TTL on KV; unbounded on the dev memory driver) — clear it so the
   // key works the moment the user pastes it into a client.

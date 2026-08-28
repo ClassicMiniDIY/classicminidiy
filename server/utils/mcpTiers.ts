@@ -1,52 +1,28 @@
 import type { H3Event } from 'h3';
+import type { McpTier } from '../../shared/utils/mcpTiers';
+import { MCP_KEY_PREFIX, MCP_KEY_RANDOM_LENGTH } from '../../shared/utils/mcpTiers';
 
 /**
- * MCP access tiers (Developer API product).
+ * Server-only half of the MCP tier contract (Developer API): key minting,
+ * hashing, the auth cache, and the per-request context accessors.
  * Design doc: docs/plans/2026-08-28-developer-api-subscription.md
  *
- *   free      — any account-minted key without an active 'developer'
- *               subscription: FREE_TOOLS only, low rate limit.
- *   developer — key whose owner has an active 'developer' subscription:
- *               all tools, higher rate limit.
- *   internal  — the env-var keys (MCP_API_KEY / MCP_API_KEYS): all tools,
- *               highest limit. This is the ops/CI path — the transport test and
- *               the deploy smoke authenticate with it — and it must keep
- *               working with no database involved.
+ * The client-safe constants (tier type, FREE_TOOLS/PAID_ONLY_TOOLS, key
+ * format, product id, endpoint) live in shared/utils/mcpTiers.ts so the
+ * /developers pricing table can import them without pulling server plumbing
+ * into the public bundle. Re-exported here so server code keeps one import.
  */
-export type McpTier = 'free' | 'developer' | 'internal';
-
-/**
- * Tools a FREE key may call — the calculators and reference tables. The paid
- * tier adds the identification + archive tools (chassis-decoder,
- * engine-decoder, wheel-search, color-lookup). Names are tool filenames in
- * server/mcp/tools/; a unit test asserts every entry matches a real file so
- * this set cannot drift from the tool catalogue.
- */
-export const FREE_TOOLS: ReadonlySet<string> = new Set([
-  'compression-calculator',
-  'gearbox-calculator',
-  'needle-compare',
-  'torque-specs',
-  'clearances',
-  'parts-equivalency',
-  'vehicle-weights',
-]);
-
-/**
- * The identification + archive tools the paid tier adds. Display-driving
- * counterpart of FREE_TOOLS: the /developers pricing table renders both lists,
- * so the page cannot drift from what the tiering plugin actually gates. The
- * drift-guard test asserts FREE_TOOLS ∪ PAID_ONLY_TOOLS === the tool filenames.
- */
-export const PAID_ONLY_TOOLS: readonly string[] = ['chassis-decoder', 'engine-decoder', 'wheel-search', 'color-lookup'];
-
-/** Self-serve keys are recognisable without a DB hit: 'cmdiy_' + 40 base62. */
-export const MCP_KEY_PREFIX = 'cmdiy_';
-export const MCP_KEY_RANDOM_LENGTH = 40;
-/** First 12 chars ('cmdiy_' + 6) stored for display in the dashboard. */
-export const MCP_KEY_DISPLAY_PREFIX_LENGTH = 12;
-/** Active (non-revoked) keys allowed per account. */
-export const MCP_MAX_ACTIVE_KEYS = 5;
+export {
+  DEVELOPER_PRODUCT_ID,
+  FREE_TOOLS,
+  MCP_ENDPOINT,
+  MCP_KEY_DISPLAY_PREFIX_LENGTH,
+  MCP_KEY_PREFIX,
+  MCP_KEY_RANDOM_LENGTH,
+  MCP_MAX_ACTIVE_KEYS,
+  PAID_ONLY_TOOLS,
+} from '../../shared/utils/mcpTiers';
+export type { McpTier } from '../../shared/utils/mcpTiers';
 
 const BASE62 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 

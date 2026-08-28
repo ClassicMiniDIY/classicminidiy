@@ -34,15 +34,16 @@ interface ToolDef {
   handler: (...args: unknown[]) => unknown;
 }
 
-const UPGRADE_URL = 'https://classicminidiy.com/developers';
-
 function gatedStub(tool: ToolDef, event: H3Event): ToolDef {
+  // Built from siteUrl like every other server-side outbound link, rather than
+  // a hand-maintained origin that rots inside MCP clients' cached descriptions.
+  const upgradeUrl = `${((useRuntimeConfig(event).public.siteUrl as string) || 'https://www.classicminidiy.com').replace(/\/$/, '')}/developers`;
   return {
     ...tool,
     // No cache wrapper for a stub: a cached upsell answer under the tool's old
     // cache key could otherwise be served to a PAID caller of the same tool.
     cache: undefined,
-    description: `${tool.description ?? ''} [Requires the CMDIY Developer API subscription — ${UPGRADE_URL}]`,
+    description: `${tool.description ?? ''} [Requires the CMDIY Developer API subscription — ${upgradeUrl}]`,
     handler: () => {
       try {
         recordMcpGated(event, tool.name);
@@ -55,7 +56,7 @@ function gatedStub(tool: ToolDef, event: H3Event): ToolDef {
             type: 'text',
             text:
               `The "${tool.name}" tool requires a CMDIY Developer API subscription — your key is on the free tier. ` +
-              `Free keys cover the calculators and reference tables; subscribe at ${UPGRADE_URL} to unlock ` +
+              `Free keys cover the calculators and reference tables; subscribe at ${upgradeUrl} to unlock ` +
               `the identification and archive tools and a higher rate limit.`,
           },
         ],
