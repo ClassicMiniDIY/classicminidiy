@@ -80,7 +80,7 @@ The platform is designed to be both a real-time working tool for mechanics and e
 
 ### Built With
 
-[![Nuxt][Nuxt.js]][Nuxt-url] [![Vue][Vue.js]][Vue-url] [![TypeScript][TypeScript]][TypeScript-url] [![TailwindCSS][TailwindCSS]][TailwindCSS-url] [![Supabase][Supabase]][Supabase-url] [![AWS][AWS]][AWS-url] [![Vercel][Vercel]][Vercel-url]
+[![Nuxt][Nuxt.js]][Nuxt-url] [![Vue][Vue.js]][Vue-url] [![TypeScript][TypeScript]][TypeScript-url] [![TailwindCSS][TailwindCSS]][TailwindCSS-url] [![Supabase][Supabase]][Supabase-url] [![AWS][AWS]][AWS-url] [![Cloudflare][Cloudflare]][Cloudflare-url]
 
 **Core Technologies:**
 
@@ -100,7 +100,7 @@ The platform is designed to be both a real-time working tool for mechanics and e
 
 **Infrastructure:**
 
-- **Vercel** - Serverless hosting with global edge deployment
+- **Cloudflare Workers** - Production hosting (Vercel retired)
 - **Supabase** - PostgreSQL database, Auth, Edge Functions, Storage
 - **AWS S3** - Intelligent tiering storage with versioning for archive assets
 - **PostHog** - Analytics (replaced Google Analytics and Vercel Analytics)
@@ -545,7 +545,12 @@ You don't need to write code to contribute! Visit [classicminidiy.com/contribute
 
 ### Production Deployment
 
-The application is deployed on Vercel with the following configuration:
+The application is deployed to **Cloudflare Workers** by
+`.github/workflows/deploy-cloudflare.yml` on every push to `main`. CI owns the deploy — a
+local `wrangler deploy` is reverted by the next merge. Vercel is retired and `vercel.json`
+has been removed.
+
+To build and preview locally:
 
 ```bash
 # Build the application
@@ -687,5 +692,5 @@ Made with love by the Classic Mini community
 [Supabase-url]: https://supabase.com/
 [AWS]: https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white
 [AWS-url]: https://aws.amazon.com/
-[Vercel]: https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white
-[Vercel-url]: https://vercel.com/
+[Cloudflare]: https://img.shields.io/badge/cloudflare-%23F38020.svg?style=for-the-badge&logo=cloudflare&logoColor=white
+[Cloudflare-url]: https://workers.cloudflare.com/
