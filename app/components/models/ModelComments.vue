@@ -13,7 +13,13 @@
   const supabase = useSupabase();
   const { isAuthenticated, user } = useAuth();
 
-  const { data, refresh, pending } = await useFetch(() => `/api/models/${props.modelId}/comments`);
+  // Computed ref, not a getter. Under Nuxt 4.5 the getter form of a useFetch URL
+  // is documented to stop blocking async setup, which SSRs the pending branch and
+  // hangs hydration. useFetch wraps the request in `computed(() => toValue(request))`,
+  // so a computed ref keeps the same reactivity to props.modelId — which matters,
+  // because /models/[slug] reuses this component across model navigations.
+  const commentsUrl = computed(() => `/api/models/${props.modelId}/comments`);
+  const { data, refresh, pending } = await useFetch(commentsUrl);
   const comments = computed(() => data.value?.comments ?? []);
   const total = computed(() => data.value?.total ?? 0);
 
