@@ -81,9 +81,8 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 ### Backend & Infrastructure
 
 - **Hosting**: Vercel with serverless deployment
-- **Database**:
-  - DynamoDB for primary data storage
-  - PostgreSQL for Nuxt Content
+- **Database**: Supabase (PostgreSQL) is the primary store; DynamoDB retains
+  legacy archive data only
 - **Storage**: AWS S3 with intelligent tiering and versioning
 - **CDN**: S3 static assets with custom domain
 - **Analytics**: Google Analytics, Vercel Analytics & Speed Insights
@@ -115,7 +114,6 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 - **daisyUI 5** for UI components (buttons, cards, badges, modals, tabs, alerts) — loaded as a Tailwind 4 plugin via `@plugin "daisyui"` in `app/assets/css/main.css`, not a Nuxt module
 - **TailwindCSS `^4.3.3`** with @tailwindcss/vite for styling
 - **Font Awesome 6** for all icons (exclusive - no Heroicons/Lucide)
-- **Nuxt Content** for content management
 - **AWS SDK v3** (v3.894.0) for cloud services
 - **LangChain/LangGraph SDK** (`^1.9.27`) for AI functionality
 - **Highcharts** (`^13.0.0`) for interactive data visualization
@@ -953,9 +951,6 @@ YOUTUBE_API_KEY=
 NUXT_LANGGRAPH_API_URL=
 NUXT_LANGSMITH_API_KEY=
 
-# Database
-POSTGRES_URL=
-
 # Public URLs
 NUXT_PUBLIC_SITE_URL=
 s3Base=
@@ -1054,7 +1049,6 @@ build-time-only file: `bunx nuxi build --dotenv <file>`.
 
 ### Dynamic Content
 
-- **Nuxt Content**: Markdown-based content with frontmatter
 - **DynamoDB**: User-generated content (registry, wheels)
 - **S3**: File storage for images and documents
 
