@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { requireUserAuth } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
 import { keyCacheId } from '../../../utils/mcpTiers';
@@ -14,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const { user } = await requireUserAuth(event);
   const id = getRouterParam(event, 'id');
 
-  const db = getServiceClient() as unknown as SupabaseClient;
+  const db = getServiceClient();
 
   const { data, error } = await db
     .from('api_keys')

@@ -22,7 +22,6 @@
  * match and no api_keys row means 403, in every environment.
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { isProtectedMcpPath } from '../utils/mcpRoutes';
 import {
   getMcpAuth,
@@ -168,9 +167,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // The generated Database type gains api_keys once the migration deploys and
-  // types regenerate (`bun run gen:types`) — drop this cast then.
-  const db = getServiceClient() as unknown as SupabaseClient;
+  const db = getServiceClient();
 
   const { data: keyRow, error: keyErr } = await db
     .from('api_keys')
