@@ -196,9 +196,6 @@ YOUTUBE_API_KEY=your_youtube_api_key
 NUXT_LANGGRAPH_API_URL=your_langgraph_api_url
 NUXT_LANGSMITH_API_KEY=your_langsmith_api_key
 
-# Database
-POSTGRES_URL=your_postgresql_connection_string
-
 # Analytics
 POSTHOG_PUBLIC_KEY=your_posthog_key
 POSTHOG_HOST=https://us.i.posthog.com
