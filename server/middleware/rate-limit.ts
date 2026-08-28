@@ -52,11 +52,18 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  * paying developers 12x that, and the env-var ops keys the most headroom. The
  * rate limit is the entire enforcement story — there is deliberately no
  * monthly quota (docs/plans/2026-08-28-developer-api-subscription.md).
+ *
+ * Knob names: MCP_RATELIMIT_MAX predates the tiers — it capped ALL /mcp
+ * traffic, which until the Developer API existed was exclusively the env/ops
+ * keys. It therefore keeps governing the INTERNAL tier (as the fallback under
+ * the explicit new name), so an operator's existing tuning still binds the
+ * traffic it was set for. The paid tier gets its own MCP_RATELIMIT_DEVELOPER_MAX.
  */
 const MCP_WINDOW_MS = Number(process.env.MCP_RATELIMIT_WINDOW_MS) || 60_000;
-const MCP_MAX = Number(process.env.MCP_RATELIMIT_MAX) || 240;
+const MCP_DEVELOPER_MAX = Number(process.env.MCP_RATELIMIT_DEVELOPER_MAX) || 240;
 const MCP_FREE_MAX = Number(process.env.MCP_RATELIMIT_FREE_MAX) || 20;
-const MCP_INTERNAL_MAX = Number(process.env.MCP_RATELIMIT_INTERNAL_MAX) || 600;
+const MCP_INTERNAL_MAX =
+  Number(process.env.MCP_RATELIMIT_INTERNAL_MAX) || Number(process.env.MCP_RATELIMIT_MAX) || 600;
 
 /** Requests/window for a resolved tier. A MISSING tier (the middleware
  *  ordering ever changing, or an unauthenticated request reaching here) gets
@@ -66,7 +73,7 @@ function mcpMaxForTier(tier: McpTier | undefined): number {
     case 'internal':
       return MCP_INTERNAL_MAX;
     case 'developer':
-      return MCP_MAX;
+      return MCP_DEVELOPER_MAX;
     default:
       return MCP_FREE_MAX;
   }

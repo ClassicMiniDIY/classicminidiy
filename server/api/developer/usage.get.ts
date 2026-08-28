@@ -9,8 +9,11 @@ import { getServiceClient } from '../../utils/supabase';
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserAuth(event);
 
+  // 29 days back + today = exactly the 30 columns the dashboard chart renders;
+  // a 30-day lookback would return an oldest day the chart never plots, making
+  // the "calls in the last 30 days" total disagree with the bars.
   const since = new Date();
-  since.setUTCDate(since.getUTCDate() - 30);
+  since.setUTCDate(since.getUTCDate() - 29);
   const sinceDay = since.toISOString().slice(0, 10);
 
   const db = getServiceClient();

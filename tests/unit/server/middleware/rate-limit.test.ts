@@ -9,7 +9,11 @@ const { mockGetRequestURL, mockGetRequestIP, mockGetHeader, mockSetHeader } = vi
   process.env.WRITE_RATELIMIT_MAX = '3';
   process.env.WRITE_RATELIMIT_WINDOW_MS = '60000';
   process.env.MCP_RATELIMIT_FREE_MAX = '2';
-  process.env.MCP_RATELIMIT_MAX = '4';
+  process.env.MCP_RATELIMIT_DEVELOPER_MAX = '4';
+  // Legacy knob: pre-tier MCP_RATELIMIT_MAX governed what is now the internal
+  // tier. INTERNAL_MAX is set here and must win over the legacy fallback (the
+  // internal-tier case passing at 6, not 3, asserts that precedence).
+  process.env.MCP_RATELIMIT_MAX = '3';
   process.env.MCP_RATELIMIT_INTERNAL_MAX = '6';
   process.env.MCP_RATELIMIT_WINDOW_MS = '60000';
 

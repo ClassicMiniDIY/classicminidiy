@@ -257,6 +257,13 @@ export const useAuth = () => {
     // Shared state that outlives the session otherwise — the next account to
     // sign in on this tab would briefly see the previous user's passkeys.
     usePasskeys().clearPasskeys();
+    // Same reasoning for the Developer API stores: without this, a logged-out
+    // visitor keeps the previous subscriber's plan state on /developers, and
+    // the next account to sign in briefly sees the previous user's API keys
+    // and usage chart on /dashboard/api-keys.
+    useState('developer-keys').value = [];
+    useState('developer-usage').value = [];
+    useState('developer-subscription').value = null;
   };
 
   // Check if user is authenticated

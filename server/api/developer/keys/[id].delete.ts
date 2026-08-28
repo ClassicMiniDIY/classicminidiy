@@ -12,6 +12,12 @@ import { keyCacheId } from '../../../utils/mcpTiers';
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserAuth(event);
   const id = getRouterParam(event, 'id');
+  // A non-UUID param would reach PostgREST and fail the uuid cast — a 500 with
+  // error-log noise for what is plain bad input. Answer the same 404 an
+  // unknown id gets.
+  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    throw createError({ statusCode: 404, statusMessage: 'API key not found' });
+  }
 
   const db = getServiceClient();
 

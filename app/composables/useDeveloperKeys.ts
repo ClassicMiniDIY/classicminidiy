@@ -28,8 +28,6 @@ export interface DeveloperSubscription {
   billing_interval: 'month' | 'year' | null;
 }
 
-export const MAX_DEVELOPER_KEYS = 5;
-
 export function useDeveloperKeys() {
   const supabase = useSupabase();
 
@@ -92,7 +90,20 @@ export function useDeveloperKeys() {
       });
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
-      subscription.value = row ?? null;
+      if (!row) {
+        subscription.value = null;
+        return;
+      }
+      // The generated RPC type carries billing_interval as a plain string;
+      // normalize to the narrow union at the boundary.
+      subscription.value = {
+        is_active: row.is_active === true,
+        platform: row.platform ?? null,
+        status: row.status ?? null,
+        expires_at: row.expires_at ?? null,
+        billing_interval:
+          row.billing_interval === 'year' ? 'year' : row.billing_interval === 'month' ? 'month' : null,
+      };
     } catch (err) {
       console.error('Failed to load developer subscription:', err);
       subscription.value = null;

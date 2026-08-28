@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-  import { FREE_TOOLS, PAID_ONLY_TOOLS } from '~~/server/utils/mcpTiers';
+  import { FREE_TOOLS, MCP_ENDPOINT, PAID_ONLY_TOOLS } from '~~/shared/utils/mcpTiers';
 
   const { t } = useI18n();
   const route = useRoute();
@@ -10,7 +10,6 @@
   const { isAuthenticated, user, waitForAuth } = useAuth();
   const { subscription, fetchSubscription, refreshEntitlement } = useDeveloperKeys();
 
-  const MCP_ENDPOINT = 'https://classicminidiy.com/mcp';
   const DOCS_URL = 'https://github.com/SomethingNew71/classicminidiy/blob/main/server/mcp/README.md';
 
   // The pricing table renders the SAME lists the tiering plugin enforces —

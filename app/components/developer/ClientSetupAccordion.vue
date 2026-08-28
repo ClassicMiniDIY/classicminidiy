@@ -9,6 +9,8 @@
    * /dashboard/api-keys and pasted in. Product names and code are deliberately
    * untranslated; the surrounding copy lives in the i18n block below.
    */
+  import { MCP_ENDPOINT } from '~~/shared/utils/mcpTiers';
+
   const { t } = useI18n();
   const toast = useToast();
 
@@ -27,7 +29,7 @@
       key: 'claude_code',
       title: 'Claude Code',
       icon: 'fab fa-claude text-[#D97757]',
-      snippet: `claude mcp add --transport http classic-mini-diy https://classicminidiy.com/mcp \\
+      snippet: `claude mcp add --transport http classic-mini-diy ${MCP_ENDPOINT} \\
   --header "Authorization: Bearer cmdiy_YOUR_KEY"`,
     },
     {
@@ -40,7 +42,7 @@
       "command": "npx",
       "args": [
         "-y", "mcp-remote",
-        "https://classicminidiy.com/mcp",
+        "${MCP_ENDPOINT}",
         "--header", "Authorization: Bearer cmdiy_YOUR_KEY"
       ]
     }
@@ -54,7 +56,7 @@
       snippet: `{
   "mcpServers": {
     "classic-mini-diy": {
-      "url": "https://classicminidiy.com/mcp",
+      "url": "${MCP_ENDPOINT}",
       "headers": {
         "Authorization": "Bearer cmdiy_YOUR_KEY"
       }
@@ -70,7 +72,7 @@
   "servers": {
     "classic-mini-diy": {
       "type": "http",
-      "url": "https://classicminidiy.com/mcp",
+      "url": "${MCP_ENDPOINT}",
       "headers": {
         "Authorization": "Bearer cmdiy_YOUR_KEY"
       }
@@ -82,7 +84,7 @@
       key: 'generic',
       title: 'Any MCP client',
       icon: 'fas fa-plug opacity-70',
-      snippet: `curl -X POST https://classicminidiy.com/mcp \\
+      snippet: `curl -X POST ${MCP_ENDPOINT} \\
   -H "Authorization: Bearer cmdiy_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -H "Accept: application/json, text/event-stream" \\
