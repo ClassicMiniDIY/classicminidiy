@@ -843,10 +843,12 @@ export default defineNuxtConfig({
       // classification that Vercel's edge attaches to the request, and on
       // workerd the module's platform hooks resolve to nothing.
       //
-      // WARNING: the stub is FAIL-OPEN. Before any production Cloudflare
-      // cutover the zone WAF rule must exist, or /api/langgraph/* and
-      // /api/models/seller/onboard lose their bot protection silently. Tracked
-      // against Phase 3 in docs/plans/2026-08-06-cloudflare-workers-migration.md.
+      // CONTRACT: the stub does not classify anything, so on Cloudflare a route
+      // must not rely on checkBotId() for its protection. Every route that calls
+      // it needs a zone rate-limit rule AND its in-app limiter coverage in
+      // server/middleware/rate-limit.ts. Adding a checkBotId() call means adding
+      // the matching zone rule in the same change; the rule inventory lives in
+      // Cloudflare, not in this repo.
       ...(isCloudflareBuild
         ? { 'botid/server': fileURLToPath(new URL('./server/stubs/botid-server-stub.mjs', import.meta.url)) }
         : {}),
