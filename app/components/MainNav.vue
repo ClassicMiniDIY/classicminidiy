@@ -315,6 +315,12 @@
               {{ t('profile.membership') }}
             </NuxtLink>
           </li>
+          <li>
+            <NuxtLink to="/dashboard/api-keys" @click="closeDropdowns()">
+              <i class="fas fa-code w-4" aria-hidden="true"></i>
+              {{ t('profile.api_tools') }}
+            </NuxtLink>
+          </li>
 
           <li class="menu-title mt-1">{{ t('language_label') }}</li>
           <li>
@@ -452,6 +458,17 @@
                 <span v-if="unreadCount > 0" class="badge badge-primary badge-sm ml-auto">
                   {{ unreadBadge }}
                 </span>
+              </NuxtLink>
+
+              <NuxtLink
+                v-if="isAuthenticated"
+                to="/dashboard/api-keys"
+                class="drawer-link"
+                :class="{ 'is-active': isActive('/dashboard/api-keys') }"
+                @click="goToDrawerLink(t('profile.api_tools'))"
+              >
+                <i class="fas fa-code w-[18px] text-secondary" aria-hidden="true"></i>
+                {{ t('profile.api_tools') }}
               </NuxtLink>
 
               <NuxtLink v-if="isAdmin" to="/admin" class="drawer-link" @click="goToDrawerLink(t('profile.admin'))">
@@ -671,6 +688,7 @@
       "submissions": "My Submissions",
       "profile": "Profile",
       "membership": "Membership",
+      "api_tools": "API & Dev Tools",
       "dashboard": "Dashboard"
     },
     "language_label": "Language",
@@ -702,6 +720,7 @@
       "submissions": "Mis envíos",
       "profile": "Perfil",
       "membership": "Membresía",
+      "api_tools": "API y herramientas dev",
       "dashboard": "Panel"
     },
     "language_label": "Idioma",
@@ -733,6 +752,7 @@
       "submissions": "Mes soumissions",
       "profile": "Profil",
       "membership": "Adhésion",
+      "api_tools": "API et outils dev",
       "dashboard": "Tableau de bord"
     },
     "language_label": "Langue",
@@ -764,6 +784,7 @@
       "submissions": "Meine Einreichungen",
       "profile": "Profil",
       "membership": "Mitgliedschaft",
+      "api_tools": "API & Dev-Tools",
       "dashboard": "Dashboard"
     },
     "language_label": "Sprache",
@@ -795,6 +816,7 @@
       "submissions": "I miei invii",
       "profile": "Profilo",
       "membership": "Abbonamento",
+      "api_tools": "API e strumenti dev",
       "dashboard": "Dashboard"
     },
     "language_label": "Lingua",
@@ -826,6 +848,7 @@
       "submissions": "Minhas submissões",
       "profile": "Perfil",
       "membership": "Assinatura",
+      "api_tools": "API e ferramentas dev",
       "dashboard": "Painel"
     },
     "language_label": "Idioma",
@@ -857,6 +880,7 @@
       "submissions": "Мои заявки",
       "profile": "Профиль",
       "membership": "Подписка",
+      "api_tools": "API и инструменты разработчика",
       "dashboard": "Панель управления"
     },
     "language_label": "Язык",
@@ -888,6 +912,7 @@
       "submissions": "投稿一覧",
       "profile": "プロフィール",
       "membership": "メンバーシップ",
+      "api_tools": "API・開発ツール",
       "dashboard": "ダッシュボード"
     },
     "language_label": "言語",
@@ -919,6 +944,7 @@
       "submissions": "我的提交",
       "profile": "个人资料",
       "membership": "会员",
+      "api_tools": "API 与开发工具",
       "dashboard": "仪表板"
     },
     "language_label": "语言",
@@ -950,6 +976,7 @@
       "submissions": "내 제출",
       "profile": "프로필",
       "membership": "멤버십",
+      "api_tools": "API 및 개발 도구",
       "dashboard": "대시보드"
     },
     "language_label": "언어",
