@@ -32,6 +32,14 @@ export const FREE_TOOLS: ReadonlySet<string> = new Set([
   'vehicle-weights',
 ]);
 
+/**
+ * The identification + archive tools the paid tier adds. Display-driving
+ * counterpart of FREE_TOOLS: the /developers pricing table renders both lists,
+ * so the page cannot drift from what the tiering plugin actually gates. The
+ * drift-guard test asserts FREE_TOOLS ∪ PAID_ONLY_TOOLS === the tool filenames.
+ */
+export const PAID_ONLY_TOOLS: readonly string[] = ['chassis-decoder', 'engine-decoder', 'wheel-search', 'color-lookup'];
+
 /** Self-serve keys are recognisable without a DB hit: 'cmdiy_' + 40 base62. */
 export const MCP_KEY_PREFIX = 'cmdiy_';
 export const MCP_KEY_RANDOM_LENGTH = 40;

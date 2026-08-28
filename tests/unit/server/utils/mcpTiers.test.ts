@@ -6,6 +6,7 @@ import {
   FREE_TOOLS,
   MCP_KEY_PREFIX,
   MCP_KEY_RANDOM_LENGTH,
+  PAID_ONLY_TOOLS,
   keyCacheId,
   mintApiKey,
   sha256Hex,
@@ -49,5 +50,10 @@ describe('server/utils/mcpTiers', () => {
 
     const paid = toolFiles.filter((name) => !FREE_TOOLS.has(name)).sort();
     expect(paid).toEqual(['chassis-decoder', 'color-lookup', 'engine-decoder', 'wheel-search']);
+
+    // PAID_ONLY_TOOLS drives the /developers pricing table — it must be exactly
+    // the complement of FREE_TOOLS over the real tool files.
+    expect([...PAID_ONLY_TOOLS].sort()).toEqual(paid);
+    expect(FREE_TOOLS.size + PAID_ONLY_TOOLS.length).toBe(toolFiles.length);
   });
 });

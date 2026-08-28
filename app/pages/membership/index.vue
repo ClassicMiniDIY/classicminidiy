@@ -34,38 +34,18 @@
   // Post-checkout activation poll (punch list D1): on return with ?subscribed=1
   // the Stripe webhook may not have written the subscriptions row yet, so a
   // single re-pull can still show the subscribe CTA to the user who just paid.
-  // Poll the membership gate every ~2s for up to ~30s, showing "Activating…"
-  // instead of the CTA; on timeout show a gentle refresh note. (The server-side
-  // double-billing guard is the backend half — punch list B1.)
-  const ACTIVATION_POLL_INTERVAL_MS = 2000;
-  const ACTIVATION_POLL_MAX_ATTEMPTS = 15; // ~30s total
-  const activationState = ref<'idle' | 'polling' | 'timeout'>('idle');
-  let activationStopped = false;
-  onUnmounted(() => {
-    activationStopped = true;
+  // The poll loop itself lives in useSubscriptionPolling (shared with
+  // /developers); this page supplies the membership entitlement check. Signed
+  // out mid-poll = 'abort': nothing to activate for this browser anymore.
+  const { activationState, pollActivation } = useSubscriptionPolling(async () => {
+    if (!user.value) return 'abort';
+    await fetchUserProfile(user.value.id);
+    return isSustainingMember.value ? 'active' : 'pending';
   });
 
   async function pollMembershipActivation() {
     if (!user.value || isSustainingMember.value) return;
-    activationState.value = 'polling';
-    for (let attempt = 0; attempt < ACTIVATION_POLL_MAX_ATTEMPTS; attempt++) {
-      // Signed out (or session expired) mid-poll: there's nothing to activate
-      // for this browser anymore — stop quietly instead of crashing on a null
-      // user.
-      if (!user.value) {
-        activationState.value = 'idle';
-        return;
-      }
-      await fetchUserProfile(user.value.id);
-      if (activationStopped) return;
-      if (isSustainingMember.value) {
-        activationState.value = 'idle';
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, ACTIVATION_POLL_INTERVAL_MS));
-      if (activationStopped) return;
-    }
-    activationState.value = 'timeout';
+    await pollActivation();
   }
 
   // Hero price badge: gate on resolved auth so members never see a
