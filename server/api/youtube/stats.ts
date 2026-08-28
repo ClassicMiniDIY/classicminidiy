@@ -1,5 +1,31 @@
-import axios from 'axios';
 import type { YoutubeStatsFEResponse, YoutubeStatsResponse } from '../../../data/models/youtube';
+
+/**
+ * Fetch JSON with a timeout and bounded retries.
+ *
+ * Replaces axios. axios routes through Node's `http`/`https` modules, which
+ * nitropack lists in `unsupportedNodeModules` and unenv stubs on workerd — so on
+ * Cloudflare Workers every call threw and this endpoint returned 500, while the
+ * identical code kept working on Vercel. `$fetch` (ofetch) is platform-neutral
+ * and behaves the same on Node and on workerd.
+ *
+ * Same failure class as the AWS SDK removal: a Node-transport HTTP client cannot
+ * run in a worker. New server routes should use `$fetch`.
+ */
+async function fetchJsonWithRetry<T>(url: string, timeoutMs = 5000, maxRetries = 3): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await $fetch<T>(url, { timeout: timeoutMs, retry: 0 });
+    } catch (err) {
+      lastError = err;
+      if (attempt === maxRetries - 1) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -15,35 +41,13 @@ export default defineEventHandler(async (event) => {
   });
 
   try {
-    // Create axios instance with timeout
-    const axiosInstance = axios.create({
-      timeout: 5000, // 5 second timeout
-    });
+      const data = await fetchJsonWithRetry<YoutubeStatsResponse>(feed);
 
-    // Implement retry logic
-    let retries = 0;
-    const maxRetries = 3;
-    let response;
-
-    while (retries < maxRetries) {
-      try {
-        response = await axiosInstance.get<YoutubeStatsResponse>(feed);
-        break; // Success, exit retry loop
-      } catch (retryError) {
-        retries++;
-        if (retries >= maxRetries) {
-          throw retryError; // Max retries reached, rethrow
-        }
-        // Wait before retrying (exponential backoff)
-        await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, retries)));
-      }
-    }
-
-    if (!response || !response.data || !response.data.items || !response.data.items[0]) {
+    if (!data || !data.items || !data.items[0]) {
       throw new Error('Invalid response from YouTube API');
     }
 
-    const items = response.data.items[0].statistics;
+    const items = data.items[0].statistics;
     const niceResponse: YoutubeStatsFEResponse = {
       views: Number(items.viewCount).toLocaleString(),
       subscribers: Number(items.subscriberCount).toLocaleString(),
@@ -53,7 +57,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     console.error('YouTube stats API error:', error);
     throw createError({
-      statusCode: error.response?.status || 500,
+      statusCode: error?.statusCode || error?.response?.status || 500,
       statusMessage: `Error with YouTube stats API: ${error.message || 'Unknown error'}`,
     });
   }
