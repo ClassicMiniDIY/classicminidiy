@@ -97,13 +97,46 @@ describe('server/middleware/rate-limit', () => {
     expect(call()).toBeUndefined();
   });
 
-  it('keys on the unspoofable x-real-ip when present, ignoring x-forwarded-for', () => {
+  it('keys on the platform-set header when present, ignoring x-forwarded-for', () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
 
-    // Attacker rotates the spoofable getRequestIP value each request, but the
-    // edge-set x-real-ip stays constant — so the limit must still bind.
-    mockGetHeader.mockReturnValue('192.0.2.50'); // x-real-ip (constant, trusted)
+    // getRequestIP (left-most x-forwarded-for) varies every request, but the
+    // platform-set header stays constant — so the limit must still bind.
+    mockGetHeader.mockImplementation((_e: unknown, name: string) => (name === 'x-real-ip' ? '192.0.2.50' : undefined));
     mockGetRequestIP.mockReturnValueOnce('1.1.1.1').mockReturnValueOnce('2.2.2.2').mockReturnValueOnce('3.3.3.3');
+
+    call();
+    call();
+    call();
+    expect(callCatching()).toMatchObject({ statusCode: 429 });
+  });
+
+  // Production is Cloudflare Workers, which sets cf-connecting-ip and does NOT
+  // set x-real-ip. Anything reaching the worker as x-real-ip therefore came from
+  // the caller, so cf-connecting-ip has to win — otherwise the bucket keys on a
+  // caller-chosen value and the limit does not bind at all.
+  it('prefers cf-connecting-ip over a caller-supplied x-real-ip', () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+
+    let supplied = 0;
+    mockGetHeader.mockImplementation((_e: unknown, name: string) => {
+      if (name === 'cf-connecting-ip') return '192.0.2.99';
+      if (name === 'x-real-ip') return `10.0.0.${++supplied}`;
+      return undefined;
+    });
+    mockGetRequestIP.mockReturnValue('4.4.4.4');
+
+    call();
+    call();
+    call();
+    expect(callCatching()).toMatchObject({ statusCode: 429 });
+  });
+
+  it('falls back to x-real-ip when cf-connecting-ip is absent', () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+
+    mockGetHeader.mockImplementation((_e: unknown, name: string) => (name === 'x-real-ip' ? '192.0.2.77' : undefined));
+    mockGetRequestIP.mockReturnValue('5.5.5.5');
 
     call();
     call();

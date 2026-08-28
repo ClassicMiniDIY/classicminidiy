@@ -73,14 +73,29 @@ function keyFingerprint(token: string): string {
 const WRITE_EXEMPT_PREFIXES = ['/api/langgraph', '/api/admin'];
 
 /**
- * Resolve the client IP for keying. On Vercel, 'x-real-ip' is set by the edge
- * proxy and cannot be spoofed by the client, so it is preferred. The left-most
- * 'x-forwarded-for' entry (what getRequestIP returns) IS client-controllable
- * and would otherwise let an attacker rotate the header to dodge the limit;
- * it is only the fallback for non-Vercel/local environments.
+ * Resolve the client IP for keying. Order matters: the key must come from a
+ * header the SERVING PLATFORM sets, never one the caller can choose, or the
+ * limit binds to a value the caller controls and stops being a limit.
+ *
+ * 'cf-connecting-ip' is first because production is Cloudflare Workers, and
+ * Cloudflare sets it on every request it proxies. This is the authoritative
+ * source here — it was NOT in this list until 2026-08, which meant that after
+ * the move off Vercel nothing in this chain was platform-set in production.
+ *
+ * 'x-real-ip' stays second for non-Cloudflare environments that set it. It is
+ * NOT authoritative on Cloudflare, so it must never be consulted first.
+ *
+ * getRequestIP's left-most 'x-forwarded-for' entry is last and is a
+ * best-effort fallback only: that position is not guaranteed to be
+ * platform-set, so it is a degraded key rather than a trusted one.
  */
 function clientIp(event: any): string {
-  return getHeader(event, 'x-real-ip') || getRequestIP(event, { xForwardedFor: true }) || 'unknown';
+  return (
+    getHeader(event, 'cf-connecting-ip') ||
+    getHeader(event, 'x-real-ip') ||
+    getRequestIP(event, { xForwardedFor: true }) ||
+    'unknown'
+  );
 }
 
 function applyLimit(event: any, key: string, max: number, windowMs: number, message: string) {
