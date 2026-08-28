@@ -260,6 +260,15 @@ jobs:
           # envelope works and is reported rather than failed, so a Supabase
           # outage cannot block the deploy that fixes it.
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Arms the free-tier gating assertions. Everything else here
+          # authenticates with the env key, which is the INTERNAL tier and sees
+          # every tool by design — so without a real free-tier key this gate
+          # cannot tell a working tier boundary from one that never ran. That
+          # is how a fully-gated free tier reached production. Optional like
+          # MCP_SMOKE_KEY: unset, the script notes and skips instead of failing
+          # the deploy. Mint one at /dashboard/api-keys on an account with NO
+          # developer subscription: `gh secret set MCP_FREE_TIER_KEY`.
+          MCP_FREE_TIER_KEY: ${{ secrets.MCP_FREE_TIER_KEY }}
 
       - name: Deploy
         if: env.DRY_RUN != 'true'
