@@ -1,31 +1,5 @@
 import type { YoutubeStatsFEResponse, YoutubeStatsResponse } from '../../../data/models/youtube';
-
-/**
- * Fetch JSON with a timeout and bounded retries.
- *
- * Replaces axios. axios routes through Node's `http`/`https` modules, which
- * nitropack lists in `unsupportedNodeModules` and unenv stubs on workerd — so on
- * Cloudflare Workers every call threw and this endpoint returned 500, while the
- * identical code kept working on Vercel. `$fetch` (ofetch) is platform-neutral
- * and behaves the same on Node and on workerd.
- *
- * Same failure class as the AWS SDK removal: a Node-transport HTTP client cannot
- * run in a worker. New server routes should use `$fetch`.
- */
-async function fetchJsonWithRetry<T>(url: string, timeoutMs = 5000, maxRetries = 3): Promise<T> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await $fetch<T>(url, { timeout: timeoutMs, retry: 0 });
-    } catch (err) {
-      lastError = err;
-      if (attempt === maxRetries - 1) break;
-      await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt + 1)));
-    }
-  }
-  throw lastError;
-}
-
+import { fetchJsonWithRetry } from '../../utils/fetchJsonWithRetry';
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -41,7 +15,7 @@ export default defineEventHandler(async (event) => {
   });
 
   try {
-      const data = await fetchJsonWithRetry<YoutubeStatsResponse>(feed);
+    const data = await fetchJsonWithRetry<YoutubeStatsResponse>(feed);
 
     if (!data || !data.items || !data.items[0]) {
       throw new Error('Invalid response from YouTube API');
