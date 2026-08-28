@@ -88,14 +88,15 @@
     }
   }
 
-  const copyEndpoint = async () => {
+  const copyText = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(MCP_ENDPOINT);
+      await navigator.clipboard.writeText(text);
       addToast({ title: t('copied'), color: 'success', icon: 'fas fa-circle-check' });
     } catch {
       addToast({ title: t('copy_error'), color: 'error', icon: 'fas fa-triangle-exclamation' });
     }
   };
+  const copyEndpoint = () => copyText(MCP_ENDPOINT);
 
   onMounted(async () => {
     await waitForAuth();
@@ -357,6 +358,17 @@
           </div>
         </section>
       </ClientOnly>
+
+      <!-- Getting started: per-client setup (shared with /dashboard/api-keys) -->
+      <section>
+        <p class="eyebrow text-center"><i class="fas fa-rocket mr-1"></i>{{ t('clients.eyebrow') }}</p>
+        <h2 class="text-3xl font-bold text-center pt-2 pb-2">{{ t('clients.title') }}</h2>
+        <p class="text-center opacity-70 pb-8">
+          {{ t('clients.subtitle') }}
+          <NuxtLink to="/dashboard/api-keys" class="link link-primary">{{ t('clients.key_cta') }}</NuxtLink>
+        </p>
+        <DeveloperClientSetupAccordion />
+      </section>
     </div>
   </div>
 </template>
@@ -450,6 +462,12 @@
     "errors": {
       "checkout_title": "Checkout failed",
       "checkout_body": "We could not start checkout. Please try again in a moment."
+    },
+    "clients": {
+      "eyebrow": "GETTING STARTED",
+      "title": "Connect your AI tools",
+      "subtitle": "Pick your client, paste the snippet, and swap in a key from your dashboard.",
+      "key_cta": "Mint one here."
     }
   },
   "es": {
@@ -539,6 +557,12 @@
     "errors": {
       "checkout_title": "Error en el pago",
       "checkout_body": "No pudimos iniciar el pago. Inténtalo de nuevo en un momento."
+    },
+    "clients": {
+      "eyebrow": "PRIMEROS PASOS",
+      "title": "Conecta tus herramientas de IA",
+      "subtitle": "Elige tu cliente, pega el fragmento y sustituye la clave por una de tu panel.",
+      "key_cta": "Crea una aquí."
     }
   },
   "fr": {
@@ -628,6 +652,12 @@
     "errors": {
       "checkout_title": "Échec du paiement",
       "checkout_body": "Impossible de démarrer le paiement. Réessayez dans un instant."
+    },
+    "clients": {
+      "eyebrow": "PREMIERS PAS",
+      "title": "Connectez vos outils d'IA",
+      "subtitle": "Choisissez votre client, collez l'extrait et remplacez la clé par une clé de votre tableau de bord.",
+      "key_cta": "Créez-en une ici."
     }
   },
   "de": {
@@ -717,6 +747,12 @@
     "errors": {
       "checkout_title": "Kauf fehlgeschlagen",
       "checkout_body": "Der Kauf konnte nicht gestartet werden. Bitte versuchen Sie es gleich erneut."
+    },
+    "clients": {
+      "eyebrow": "ERSTE SCHRITTE",
+      "title": "Verbinden Sie Ihre KI-Tools",
+      "subtitle": "Client wählen, Snippet einfügen und den Platzhalter durch einen Schlüssel aus Ihrem Dashboard ersetzen.",
+      "key_cta": "Hier einen erstellen."
     }
   },
   "it": {
@@ -806,6 +842,12 @@
     "errors": {
       "checkout_title": "Pagamento non riuscito",
       "checkout_body": "Impossibile avviare il pagamento. Riprova tra un momento."
+    },
+    "clients": {
+      "eyebrow": "PER INIZIARE",
+      "title": "Collega i tuoi strumenti di IA",
+      "subtitle": "Scegli il client, incolla lo snippet e sostituisci la chiave con una dalla tua dashboard.",
+      "key_cta": "Creane una qui."
     }
   },
   "pt": {
@@ -895,6 +937,12 @@
     "errors": {
       "checkout_title": "Falha no pagamento",
       "checkout_body": "Não foi possível iniciar o pagamento. Tente novamente em instantes."
+    },
+    "clients": {
+      "eyebrow": "COMEÇANDO",
+      "title": "Conecte suas ferramentas de IA",
+      "subtitle": "Escolha seu cliente, cole o trecho e troque a chave por uma do seu painel.",
+      "key_cta": "Crie uma aqui."
     }
   },
   "ru": {
@@ -984,6 +1032,12 @@
     "errors": {
       "checkout_title": "Ошибка оплаты",
       "checkout_body": "Не удалось начать оплату. Повторите попытку через минуту."
+    },
+    "clients": {
+      "eyebrow": "НАЧАЛО РАБОТЫ",
+      "title": "Подключите свои ИИ-инструменты",
+      "subtitle": "Выберите клиент, вставьте фрагмент и замените ключ на ключ из вашей панели.",
+      "key_cta": "Создайте его здесь."
     }
   },
   "ja": {
@@ -1073,6 +1127,12 @@
     "errors": {
       "checkout_title": "購入に失敗しました",
       "checkout_body": "購入を開始できませんでした。しばらくしてからもう一度お試しください。"
+    },
+    "clients": {
+      "eyebrow": "はじめに",
+      "title": "AIツールを接続する",
+      "subtitle": "クライアントを選び、スニペットを貼り付けて、ダッシュボードのキーに置き換えてください。",
+      "key_cta": "ここで作成できます。"
     }
   },
   "zh": {
@@ -1162,6 +1222,12 @@
     "errors": {
       "checkout_title": "结账失败",
       "checkout_body": "无法启动结账。请稍后重试。"
+    },
+    "clients": {
+      "eyebrow": "快速开始",
+      "title": "连接您的 AI 工具",
+      "subtitle": "选择客户端，粘贴代码片段，并换成仪表板中的密钥。",
+      "key_cta": "在此创建。"
     }
   },
   "ko": {
@@ -1251,6 +1317,12 @@
     "errors": {
       "checkout_title": "결제 실패",
       "checkout_body": "결제를 시작할 수 없습니다. 잠시 후 다시 시도해 주세요."
+    },
+    "clients": {
+      "eyebrow": "시작하기",
+      "title": "AI 도구 연결하기",
+      "subtitle": "클라이언트를 고르고 스니펫을 붙여넣은 뒤, 대시보드의 키로 바꾸세요.",
+      "key_cta": "여기서 만들 수 있습니다."
     }
   }
 }
