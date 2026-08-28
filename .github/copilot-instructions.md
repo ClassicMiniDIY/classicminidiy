@@ -73,8 +73,10 @@ silently break the build, the design system, security, or SEO if violated.
 
 Live in production since the 2026-07-13 cutover, when The Mini Exchange was retired as a
 standalone property and folded into this repo. The old `theminiexchange.com` domain 301s to
-classicminidiy.com via the host rules in `vercel.json` — those redirects are load-bearing SEO;
-never remove them. The `TheMiniExchange` repo is retired and takes no further changes.
+classicminidiy.com via `server/middleware/tme-redirects.ts` (map in
+`server/utils/tmeRedirects.ts`, mirrored to Cloudflare zone-edge rules by
+`scripts/sync-tme-zone-redirects.py`) — those redirects are load-bearing SEO; never remove
+them. They previously lived in `vercel.json`, which has been deleted along with Vercel. The `TheMiniExchange` repo is retired and takes no further changes.
 
 The flag below still exists and still gates the routes, so keep it in sync — but note it is
 now **ON** in production; it is no longer a "pre-launch, invisible" switch.

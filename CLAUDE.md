@@ -49,8 +49,11 @@ This repo is part of the Classic Mini DIY property ecosystem. For the full cross
 - ~~**TheMiniExchange**~~ — **RETIRED.** The marketplace was consolidated into this repo and
   lives at `/exchange` on classicminidiy.com (cutover completed 2026-07-13). The
   `TheMiniExchange` repo is retired and its remaining infra is being torn down separately —
-  **make no changes there**. `theminiexchange.com` 301s here via the host rules in `vercel.json`; those
-  redirects are load-bearing SEO and must not be removed.
+  **make no changes there**. `theminiexchange.com` 301s here via
+  `server/middleware/tme-redirects.ts` (map in `server/utils/tmeRedirects.ts`, mirrored to
+  zone-edge rules by `scripts/sync-tme-zone-redirects.py`); those redirects are load-bearing
+  SEO and must not be removed. They used to live in `vercel.json`, which is gone — see
+  "Deployment" below.
 - **Native CMDIY Apps** — iOS (Swift) and Android (Kotlin) mobile apps
 
 This site shares the Supabase auth and profiles with the other properties. Database schema lives in `classicminidiy-supabase`.
@@ -80,12 +83,12 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 
 ### Backend & Infrastructure
 
-- **Hosting**: Vercel with serverless deployment
+- **Hosting**: Cloudflare Workers (Vercel retired — see "Deployment")
 - **Database**: Supabase (PostgreSQL) is the primary store; DynamoDB retains
   legacy archive data only
 - **Storage**: AWS S3 with intelligent tiering and versioning
 - **CDN**: S3 static assets with custom domain
-- **Analytics**: Google Analytics, Vercel Analytics & Speed Insights
+- **Analytics**: PostHog (replaced Google Analytics and Vercel Analytics)
 
 ### AI Integration
 
@@ -547,7 +550,12 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 - **Never set `image.provider` in `nuxt.config.ts` — with ONE narrow exception, added for the
   Cloudflare migration.** A zone-backed Cloudflare build sets `provider: 'cloudflare'` (the
   platform optimizer there is `/cdn-cgi/image/`, not Vercel's), gated behind `useCloudflareImages`.
-  Vercel and local dev still leave it unset, so everything below still applies to them verbatim.
+  Local dev still leaves it unset, so everything below still applies to it verbatim.
+
+  **Vercel is retired**, so the Vercel-specific mechanics described in this section — the
+  native optimizer, `.vercel/output/config.json`, `images.sizes`, `/_vercel/image` — are
+  kept as the REASONING behind the rule, not as a live deployment path. The rule itself is
+  unchanged: leave `provider` unset except behind the Cloudflare gate.
   Cloudflare PREVIEW builds also leave it unset on purpose: `/cdn-cgi/image/` exists only on a
   zone, so a workers.dev preview using that provider renders broken images everywhere.
   Leaving it unset (`'auto'`) is
@@ -1083,21 +1091,34 @@ build-time-only file: `bunx nuxi build --dotenv <file>`.
 
 ## Deployment
 
-### Vercel Configuration
+### Cloudflare Workers
 
-- **Config File**: `vercel.json` with bun commands
-- **Install Command**: `bun install --frozen-lockfile`
-- **Build Command**: `bun run build`
-- **Output Directory**: `.nuxt/dist`
-- **Node Version**: 24.x
-- **Environment**: Production optimizations enabled
+Production is Cloudflare Workers. **Vercel is retired** and `vercel.json` has been
+deleted — nothing reads it. Do not restore it or reason from it.
+
+- **Deployed by**: `.github/workflows/deploy-cloudflare.yml` on every push to `main`.
+  CI owns the deploy; a local `wrangler deploy` is reverted by the next merge.
+- **Install**: `bun install` (deliberately NOT `--frozen-lockfile` — see the comments
+  in that workflow and `pr-check.yml`)
+- **Build**: `NITRO_PRESET=cloudflare_module bun run build`
+- **Pre-deploy gate**: `scripts/test-mcp-transport.sh` runs against the built artifact and
+  fails closed, so a broken `/mcp` aborts the deploy rather than shipping.
+- **Node version**: 24.x
+
+What `vercel.json` used to carry, and what replaced it:
+
+| Was in `vercel.json` | Now |
+| --- | --- |
+| PostHog `/t/*` rewrites | `server/routes/t/[...path].ts` + `posthogHost: '/t'` in `nuxt.config.ts` |
+| `theminiexchange.com` host 301s | `server/middleware/tme-redirects.ts` + zone-edge rules |
+| install/build commands | `deploy-cloudflare.yml` |
 
 ### Performance Features
 
 - **Prerendering**: Static pages cached at build time
 - **Edge Functions**: API routes optimized for global distribution
 - **Asset Optimization**: Compression, minification, tree shaking
-- **Monitoring**: Vercel Analytics and Speed Insights integration
+- **Monitoring**: PostHog (Vercel Analytics and Speed Insights are retired)
 
 ## Testing & Quality
 
@@ -1150,7 +1171,7 @@ not allowed!`. It surfaced only when CI first got far enough to reach bundling; 
 ### Performance
 
 - **Lighthouse**: Regular performance auditing
-- **Core Web Vitals**: Monitoring via Vercel Speed Insights
+- **Core Web Vitals**: Monitoring via PostHog
 - **PWA**: Progressive web app functionality testing
 
 ## Common Tasks
@@ -1306,7 +1327,7 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 
 ### Performance Monitoring
 
-- **Analytics Integration**: Google Analytics, Vercel Analytics, Speed Insights
+- **Analytics Integration**: PostHog
 - **Core Web Vitals**: Real-time performance monitoring
 - **Error Tracking**: Comprehensive error logging and monitoring
 
