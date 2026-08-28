@@ -1116,7 +1116,7 @@ build-time-only file: `bunx nuxi build --dotenv <file>`.
   the pending branch and client hydration hangs (fixed in Needles.vue; check
   `ModelComments.vue`'s reactive getter when unpinning). When #588 is fixed: bump nuxt,
   re-verify JSON-LD is non-empty on a built page, and adopt `experimental.watcher: 'builder'`.
-- **`dompurify` is pinned to an exact version (currently `3.4.12`), and
+- **`dompurify` is pinned to an exact version (currently `3.4.14`), and
   `tests/unit/exchange/utils/markdown.test.ts` MUST stay on `@vitest-environment jsdom`.**
   These two facts are one contract — don't change either in isolation. Since 3.4.8
   DOMPurify walks the DOM with a node iterator that happy-dom mis-implements, and the
@@ -1124,10 +1124,11 @@ build-time-only file: `bunx nuxi build --dotenv <file>`.
   markup with a live `javascript:` href intact, drops allowlisted tags, and never fires
   the `afterSanitizeAttributes` link-hardening hook. Under happy-dom the XSS suite is
   therefore asserting nothing. jsdom reproduces real-browser output byte-for-byte
-  (verified against Chrome on 3.4.12), so that file — and any future test that exercises
-  DOMPurify — runs on jsdom while the rest of the suite keeps the happy-dom default from
-  `vitest.config.ts`. happy-dom 20.11.1 is still affected; recheck before "simplifying"
-  the env back. The exact pin (no `^`) is deliberate: a DOMPurify bump is a security
+  (verified against Chrome on 3.4.12 — the 3.4.14 bump was checked against the 61-test
+  XSS suite on jsdom, not re-compared against Chrome), so that file — and any future test
+  that exercises DOMPurify — runs on jsdom while the rest of the suite keeps the happy-dom
+  default from `vitest.config.ts`. happy-dom 20.11.12 is still affected; recheck before
+  "simplifying" the env back. The exact pin (no `^`) is deliberate: a DOMPurify bump is a security
   change and should be a visible, tested commit, not a silent range resolution.
 - **`@takumi-rs/core` AND `@takumi-rs/wasm` stay on 1.x, at the same version.** 2.x breaks
   branded OG image rendering. They are a pair: `core` is the native binding used by the Node
