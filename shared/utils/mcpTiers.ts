@@ -32,8 +32,13 @@ export type McpTier = 'free' | 'developer' | 'internal';
  */
 export const DEVELOPER_PRODUCT_ID = 'developer';
 
-/** The public MCP endpoint, as shown in setup snippets and pricing copy. */
-export const MCP_ENDPOINT = 'https://classicminidiy.com/mcp';
+/**
+ * The public MCP endpoint, as shown in setup snippets and pricing copy.
+ * MUST be the www canonical host: the apex 301s, and fetch-based MCP clients
+ * either refuse redirects or downgrade the redirected POST to a GET — a
+ * client configured with the apex URL simply does not work.
+ */
+export const MCP_ENDPOINT = 'https://www.classicminidiy.com/mcp';
 
 /**
  * Tools a FREE key may call — the calculators and reference tables. The paid

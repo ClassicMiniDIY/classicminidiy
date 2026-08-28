@@ -28,13 +28,32 @@ import { recordMcpGated, recordMcpUsage } from '../utils/mcpUsage';
 
 /** The subset of a toolkit tool definition this plugin touches. */
 interface ToolDef {
-  name: string;
+  name?: string;
   description?: string;
   cache?: unknown;
+  _meta?: { filename?: string };
   handler: (...args: unknown[]) => unknown;
 }
 
-function gatedStub(tool: ToolDef, event: H3Event): ToolDef {
+/**
+ * Resolve a definition's tool name the way the toolkit itself does. At hook
+ * time the scanned definitions carry NO top-level `name` — the toolkit's
+ * template emits `{ ...def, _meta: { filename } }` and only derives the name
+ * from `_meta.filename` later, inside registerToolFromDefinition (see
+ * enrichNameTitle in @nuxtjs/mcp-toolkit). Reading `tool.name` alone therefore
+ * returned undefined for every tool in a real build, which made
+ * `FREE_TOOLS.has(undefined)` false and gated ALL tools for free keys — while
+ * unit tests (which handed defs WITH names) and the transport gate (whose env
+ * key is internal tier, seeing everything) both stayed green.
+ */
+function toolName(tool: ToolDef): string | undefined {
+  if (tool.name) return tool.name;
+  // Tool filenames are already kebab-case in this repo (filename = tool name);
+  // strip the extension exactly like enrichNameTitle does.
+  return tool._meta?.filename?.replace(/\.(ts|js|mts|mjs)$/, '');
+}
+
+function gatedStub(tool: ToolDef, name: string, event: H3Event): ToolDef {
   // Built from siteUrl like every other server-side outbound link, rather than
   // a hand-maintained origin that rots inside MCP clients' cached descriptions.
   const upgradeUrl = `${((useRuntimeConfig(event).public.siteUrl as string) || 'https://www.classicminidiy.com').replace(/\/$/, '')}/developers`;
@@ -46,7 +65,7 @@ function gatedStub(tool: ToolDef, event: H3Event): ToolDef {
     description: `${tool.description ?? ''} [Requires the CMDIY Developer API subscription — ${upgradeUrl}]`,
     handler: () => {
       try {
-        recordMcpGated(event, tool.name);
+        recordMcpGated(event, name);
       } catch {
         // capture is best-effort; the upsell answer must always be returned
       }
@@ -55,7 +74,7 @@ function gatedStub(tool: ToolDef, event: H3Event): ToolDef {
           {
             type: 'text',
             text:
-              `The "${tool.name}" tool requires a CMDIY Developer API subscription — your key is on the free tier. ` +
+              `The "${name}" tool requires a CMDIY Developer API subscription — your key is on the free tier. ` +
               `Free keys cover the calculators and reference tables; subscribe at ${upgradeUrl} to unlock ` +
               `the identification and archive tools and a higher rate limit.`,
           },
@@ -66,7 +85,7 @@ function gatedStub(tool: ToolDef, event: H3Event): ToolDef {
   };
 }
 
-function withUsage(tool: ToolDef, event: H3Event): ToolDef {
+function withUsage(tool: ToolDef, name: string, event: H3Event): ToolDef {
   const original = tool.handler;
   return {
     ...tool,
@@ -76,7 +95,7 @@ function withUsage(tool: ToolDef, event: H3Event): ToolDef {
       // error result by the toolkit and is not usage. Recording itself is
       // best-effort and must never turn a good result into a failure.
       try {
-        recordMcpUsage(event, tool.name);
+        recordMcpUsage(event, name);
       } catch {
         // swallowed on purpose
       }
@@ -90,9 +109,12 @@ export default defineNitroPlugin((nitroApp) => {
     'mcp:config:resolved',
     ({ config, event }: { config: { tools: ToolDef[] }; event: H3Event }) => {
       const tier = getMcpAuth(event)?.tier ?? 'free';
-      config.tools = config.tools.map((tool) =>
-        tier === 'free' && !FREE_TOOLS.has(tool.name) ? gatedStub(tool, event) : withUsage(tool, event)
-      );
+      config.tools = config.tools.map((tool) => {
+        // Unresolvable name ⇒ treat as paid (gate it): over-restriction is the
+        // safe failure direction for a revenue boundary.
+        const name = toolName(tool) ?? '';
+        return tier === 'free' && !FREE_TOOLS.has(name) ? gatedStub(tool, name, event) : withUsage(tool, name, event);
+      });
     }
   );
 });
