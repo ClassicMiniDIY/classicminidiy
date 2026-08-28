@@ -21,11 +21,17 @@ const { mockAxiosGet } = vi.hoisted(() => {
   return { mockAxiosGet };
 });
 
-vi.mock('axios', () => ({
-  default: {
-    create: () => ({ get: mockAxiosGet }),
-  },
-}));
+// The handlers now use $fetch (ofetch), not axios: axios routes through
+// node:http, which is stubbed on workerd, so these endpoints 500'd on Cloudflare
+// while working on Vercel.
+//
+// The stub unwraps `.data` so every existing mock value below — which is written
+// in axios's `{ data: ... }` response shape — keeps working unchanged. Rejections
+// pass straight through, preserving the `error.response.status` assertions.
+(globalThis as any).$fetch = async (...args: any[]) => {
+  const res = await mockAxiosGet(...args);
+  return res?.data;
+};
 
 vi.mock('lodash', () => ({
   default: {},
