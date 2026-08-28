@@ -8,6 +8,10 @@ const { mockGetRequestURL, mockGetRequestIP, mockGetHeader, mockSetHeader } = vi
   process.env.LANGGRAPH_RATELIMIT_WINDOW_MS = '60000';
   process.env.WRITE_RATELIMIT_MAX = '3';
   process.env.WRITE_RATELIMIT_WINDOW_MS = '60000';
+  process.env.MCP_RATELIMIT_FREE_MAX = '2';
+  process.env.MCP_RATELIMIT_MAX = '4';
+  process.env.MCP_RATELIMIT_INTERNAL_MAX = '6';
+  process.env.MCP_RATELIMIT_WINDOW_MS = '60000';
 
   const mockGetRequestURL = vi.fn();
   const mockGetRequestIP = vi.fn();
@@ -211,6 +215,49 @@ describe('server/middleware/rate-limit', () => {
       // ...the write budget for the same IP is untouched.
       mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/models'));
       expect(callWrite('POST')).toBeUndefined();
+    });
+  });
+
+  // Policy 0: the MCP endpoint — per-key bucket, TIER-AWARE max (Developer
+  // API). mcp-auth runs first and stashes the tier on event.context.mcpAuth;
+  // maxes forced tiny in the hoisted block: free 2, developer 4, internal 6.
+  describe('MCP policy tiers', () => {
+    const mcpCall = (tier?: string, token = 'cmdiy_test-token'): any => {
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+      mockGetHeader.mockImplementation((_e: unknown, name: string) =>
+        name === 'authorization' ? `Bearer ${token}` : undefined
+      );
+      fakeEvent.context = tier ? { mcpAuth: { tier } } : {};
+      try {
+        (handler as Function)(fakeEvent);
+        return undefined;
+      } catch (e) {
+        return e;
+      }
+    };
+
+    it.each([
+      ['free', 2],
+      ['developer', 4],
+      ['internal', 6],
+    ])('the %s tier is limited at its own max', (tier, max) => {
+      for (let i = 0; i < max; i++) {
+        expect(mcpCall(tier, `key-${tier}`)).toBeUndefined();
+      }
+      expect(mcpCall(tier, `key-${tier}`)).toMatchObject({ statusCode: 429 });
+    });
+
+    it('a missing auth context falls back to the FREE max — conservative, never generous', () => {
+      expect(mcpCall(undefined, 'key-noctx')).toBeUndefined();
+      expect(mcpCall(undefined, 'key-noctx')).toBeUndefined();
+      expect(mcpCall(undefined, 'key-noctx')).toMatchObject({ statusCode: 429 });
+    });
+
+    it('buckets are per key: one exhausted key does not throttle another', () => {
+      expect(mcpCall('free', 'key-a')).toBeUndefined();
+      expect(mcpCall('free', 'key-a')).toBeUndefined();
+      expect(mcpCall('free', 'key-a')).toMatchObject({ statusCode: 429 });
+      expect(mcpCall('free', 'key-b')).toBeUndefined();
     });
   });
 });

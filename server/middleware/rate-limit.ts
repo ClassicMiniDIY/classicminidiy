@@ -1,5 +1,7 @@
 import { isProtectedMcpPath } from '../utils/mcpRoutes';
 import { consumeRateLimit } from '../utils/rateLimit';
+import { getMcpAuth, type McpTier } from '../utils/mcpTiers';
+import { clientIp } from '../utils/clientIp';
 
 /**
  * Per-IP rate limiting for two classes of abuse-prone traffic:
@@ -44,9 +46,31 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  * one key spread its load across addresses to escape the limit. The default is
  * generous compared with the chat proxy since callers here hold a credential we
  * issued.
+ *
+ * The max is TIER-AWARE since the Developer API (mcp-auth stashes the resolved
+ * tier on event.context.mcpAuth before this file runs): free keys get a taste,
+ * paying developers 12x that, and the env-var ops keys the most headroom. The
+ * rate limit is the entire enforcement story — there is deliberately no
+ * monthly quota (docs/plans/2026-08-28-developer-api-subscription.md).
  */
 const MCP_WINDOW_MS = Number(process.env.MCP_RATELIMIT_WINDOW_MS) || 60_000;
-const MCP_MAX = Number(process.env.MCP_RATELIMIT_MAX) || 120;
+const MCP_MAX = Number(process.env.MCP_RATELIMIT_MAX) || 240;
+const MCP_FREE_MAX = Number(process.env.MCP_RATELIMIT_FREE_MAX) || 20;
+const MCP_INTERNAL_MAX = Number(process.env.MCP_RATELIMIT_INTERNAL_MAX) || 600;
+
+/** Requests/window for a resolved tier. A MISSING tier (the middleware
+ *  ordering ever changing, or an unauthenticated request reaching here) gets
+ *  the free max — fail conservative, never generous. */
+function mcpMaxForTier(tier: McpTier | undefined): number {
+  switch (tier) {
+    case 'internal':
+      return MCP_INTERNAL_MAX;
+    case 'developer':
+      return MCP_MAX;
+    default:
+      return MCP_FREE_MAX;
+  }
+}
 
 /**
  * FNV-1a over the bearer token. This is a bucket label, not a security control:
@@ -72,31 +96,9 @@ function keyFingerprint(token: string): string {
  */
 const WRITE_EXEMPT_PREFIXES = ['/api/langgraph', '/api/admin'];
 
-/**
- * Resolve the client IP for keying. Order matters: the key must come from a
- * header the SERVING PLATFORM sets, never one the caller can choose, or the
- * limit binds to a value the caller controls and stops being a limit.
- *
- * 'cf-connecting-ip' is first because production is Cloudflare Workers, and
- * Cloudflare sets it on every request it proxies. This is the authoritative
- * source here — it was NOT in this list until 2026-08, which meant that after
- * the move off Vercel nothing in this chain was platform-set in production.
- *
- * 'x-real-ip' stays second for non-Cloudflare environments that set it. It is
- * NOT authoritative on Cloudflare, so it must never be consulted first.
- *
- * getRequestIP's left-most 'x-forwarded-for' entry is last and is a
- * best-effort fallback only: that position is not guaranteed to be
- * platform-set, so it is a degraded key rather than a trusted one.
- */
-function clientIp(event: any): string {
-  return (
-    getHeader(event, 'cf-connecting-ip') ||
-    getHeader(event, 'x-real-ip') ||
-    getRequestIP(event, { xForwardedFor: true }) ||
-    'unknown'
-  );
-}
+// clientIp() moved to server/utils/clientIp.ts — mcp-auth's lookup throttle
+// keys on the same identity, and two copies would drift. The header-precedence
+// rationale (cf-connecting-ip first, platform-set only) lives there.
 
 function applyLimit(event: any, key: string, max: number, windowMs: number, message: string) {
   const result = consumeRateLimit(key, { max, windowMs });
@@ -137,7 +139,7 @@ export default defineEventHandler((event) => {
     applyLimit(
       event,
       `mcp:${bucket}`,
-      MCP_MAX,
+      mcpMaxForTier(getMcpAuth(event)?.tier),
       MCP_WINDOW_MS,
       'Too many MCP requests for this API key. Please slow down and try again in a minute.'
     );
