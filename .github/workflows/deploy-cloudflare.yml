@@ -56,8 +56,9 @@ jobs:
         run: bun install
 
       # tsconfig.json extends the generated .nuxt/tsconfig.json, which is not
-      # committed and is not produced by this repo's overridden postinstall.
-      # Without this every test file fails to load. See pr-check.yml.
+      # committed and is not produced by `bun install` — this repo has no
+      # `postinstall: nuxt prepare`. Without this every test file fails to
+      # load. See pr-check.yml.
       - name: Prepare Nuxt types
         run: bunx nuxi prepare
 

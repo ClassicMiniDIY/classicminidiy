@@ -28,11 +28,11 @@ jobs:
         run: bun install
 
       # Required: tsconfig.json extends ./.nuxt/tsconfig.json, which is
-      # generated rather than committed (.nuxt is gitignored). The repo's
-      # postinstall is overridden for a better-sqlite3 rebuild, so the usual
-      # Nuxt `postinstall: nuxt prepare` never runs and .nuxt is absent on a
-      # fresh checkout. Without this step every test file fails to load with
-      # `Cannot find module './.nuxt/tsconfig.json'` — 147 files, 0 tests run.
+      # generated rather than committed (.nuxt is gitignored). This repo has no
+      # `postinstall: nuxt prepare`, so `bun install` never generates it and
+      # .nuxt is absent on a fresh checkout. Without this step every test file
+      # fails to load with `Cannot find module './.nuxt/tsconfig.json'` — 147
+      # files, 0 tests run.
       # It passes locally only because .nuxt lingers from `bun run dev`.
       - name: Prepare Nuxt types
         run: bunx nuxi prepare

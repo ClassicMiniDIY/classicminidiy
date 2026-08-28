@@ -31,8 +31,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "gen:types": "supabase gen types typescript --project-id psoqirvbujwohemmwplv > types/database.ts",
-    "postinstall": "cd node_modules/better-sqlite3 && npx --yes prebuild-install || npx --yes node-gyp rebuild --release"
+    "gen:types": "supabase gen types typescript --project-id psoqirvbujwohemmwplv > types/database.ts"
   },
   "overrides": {
     "vue": "3.5.40",
@@ -64,7 +63,6 @@
     "agents": "^0.21.0",
     "aws4fetch": "1.0.20",
     "bad-words": "^4.1.3",
-    "better-sqlite3": "^12.11.1",
     "botid": "^1.5.11",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.5.1",
@@ -84,7 +82,6 @@
     "marked-highlight": "^2.2.4",
     "nuxt-llms": "^0.2.0",
     "outdent": "^0.8.0",
-    "pg": "^8.22.0",
     "posthog-js": "^1.404.1",
     "sass": "^1.101.0",
     "tailwindcss": "^4.3.3",
@@ -120,7 +117,6 @@
     "vitest": "^4.1.10"
   },
   "trustedDependencies": [
-    "@parcel/watcher",
-    "better-sqlite3"
+    "@parcel/watcher"
   ]
 }
