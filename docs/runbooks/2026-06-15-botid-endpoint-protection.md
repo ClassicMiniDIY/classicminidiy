@@ -1,5 +1,21 @@
 # Vercel BotID — endpoint protection
 
+> **SUPERSEDED. Do not follow this runbook as current operational guidance.**
+>
+> Vercel BotID is a Vercel-platform feature — `checkBotId()` reads a classification that
+> Vercel's edge attaches to the request. Production moved to Cloudflare Workers in 2026-08 and
+> **Vercel is retired**, so `botid/server` is aliased to `server/stubs/botid-server-stub.mjs` on
+> Cloudflare builds and classifies nothing.
+>
+> **The contract that replaces this document lives beside the code**, in that stub and in
+> `nuxt.config.ts`: on Cloudflare no route may depend on `checkBotId()`, so every caller needs a
+> zone rate-limit rule AND in-app limiter coverage in `server/middleware/rate-limit.ts`, added in
+> the same change. The zone rules are maintained in Cloudflare, per-zone (WAF is never
+> account-level), not in this repo.
+>
+> The route table below is still useful as the record of which endpoints were judged high-value
+> and why. Treat it as that, and nothing more.
+
 Invisible bot protection (Vercel BotID) on the high-value POST endpoints. Complements
 the existing per-IP rate limit (`server/middleware/rate-limit.ts`) and Turnstile — does
 not replace them.

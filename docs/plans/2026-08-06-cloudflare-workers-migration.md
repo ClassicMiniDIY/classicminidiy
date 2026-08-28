@@ -1,5 +1,36 @@
 # classicminidiy: Vercel → Cloudflare Workers Migration
 
+> **STATUS: EXECUTED. This document is a historical record, not a plan.**
+>
+> The migration is complete and Cloudflare Workers has been serving production since 2026-08.
+> **Vercel is retired and `vercel.json` has been deleted.** Read the phases below as an account of
+> what was decided and why — not as outstanding work. Where this document and `CLAUDE.md` disagree
+> about how something works today, `CLAUDE.md` and the code win.
+>
+> Items called "pending", "not yet run", or "before any real cutover" have since been closed. In
+> particular:
+>
+> - Deploys run from `.github/workflows/deploy-cloudflare.yml` on every push to `main`; CI owns the
+>   deploy and a local `wrangler deploy` is reverted by the next merge. There is no preview
+>   deployment, so merging to `main` ships straight to production.
+> - The `theminiexchange.com` 301 map moved out of `vercel.json` into
+>   `server/middleware/tme-redirects.ts` (map in `server/utils/tmeRedirects.ts`), mirrored to
+>   zone-edge rules by `scripts/sync-tme-zone-redirects.py`.
+> - The PostHog `/t/*` rewrites moved to `server/routes/t/[...path].ts` with `posthogHost: '/t'`.
+> - Phase 5's "dead weight" item is done: `better-sqlite3`, `pg`, the `postinstall` rebuild and its
+>   `trustedDependencies` entry are gone.
+> - The zone rate-limit rule covering the endpoints that previously relied on Vercel BotID is in
+>   place. The standing contract now lives next to the code it governs, in
+>   `server/stubs/botid-server-stub.mjs` and `nuxt.config.ts`: on Cloudflare no route may depend on
+>   `checkBotId()`, so every caller needs a zone rate-limit rule and in-app limiter coverage added
+>   in the same change.
+>
+> One correction worth carrying forward: the plan assumed the in-app rate limiter would keep working
+> unchanged. It did not. Its key came from `x-real-ip`, which Vercel's edge set and Cloudflare does
+> not — Cloudflare sets `cf-connecting-ip`. Fixed 2026-08-28. **A rate-limit key must come from a
+> header the serving platform sets; re-check anything that reads a client IP whenever the host
+> changes.**
+
 Assessment + hand-off implementation plan (target executor: Opus 5). Written 2026-08-06.
 
 ## Context
@@ -926,10 +957,12 @@ and any new CMDIY plan changes required.
   fatal, unchased.
 - **Not yet run:** every RUNTIME gate (OG image via wasm, SSE, SSR/JSON-LD parity, `/mcp` with a
   real client, KV, env timing, and A1's `client.send()`). Those need the worker deployed.
-- **Spike-only, NOT production-safe:** `server/stubs/botid-server-stub.mjs` fail-OPENs on
-  Cloudflare builds via a new `isCloudflareBuild` alias gate in `nuxt.config.ts`. A zone WAF rule
-  must exist before any real cutover, or `/api/langgraph/*` and `/api/models/seller/onboard` lose
-  bot protection silently.
+- **Spike-only at the time, since CLOSED:** `server/stubs/botid-server-stub.mjs` classifies
+  nothing on Cloudflare builds, via an `isCloudflareBuild` alias gate in `nuxt.config.ts`, so the
+  cutover was gated on a zone rate-limit rule covering the endpoints that had relied on BotID.
+  That rule is in place. The standing contract is documented beside the code in that stub and in
+  `nuxt.config.ts`: no route may depend on `checkBotId()` on Cloudflare, and a new caller needs its
+  zone rule and in-app limiter coverage in the same change.
 
 #### 2026-08-24 — Phase 0 RUNTIME gates: A3 resolved, A1 confirmed, one site-wide URL bug caught [source: this branch]
 Spike worker: `cmdiy-spike.classicminidiy.workers.dev`, startup 147 ms. Secrets pushed with
