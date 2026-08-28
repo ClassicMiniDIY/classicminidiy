@@ -373,6 +373,18 @@
       </div>
     </div>
 
+    <!-- Getting started: per-client setup (shared with /developers) -->
+    <div class="card bg-base-100 shadow-sm border border-base-300">
+      <div class="card-body">
+        <div class="flex items-center gap-2">
+          <i class="fad fa-rocket" aria-hidden="true"></i>
+          <h2 class="text-lg font-semibold">{{ t('setup_title') }}</h2>
+        </div>
+        <p class="text-sm opacity-70">{{ t('setup_description') }}</p>
+        <DeveloperClientSetupAccordion class="mt-2" />
+      </div>
+    </div>
+
     <!-- Usage -->
     <div class="card bg-base-100 shadow-sm border border-base-300">
       <div class="card-body">
@@ -483,7 +495,9 @@
     "usage_title": "Usage — last 30 days",
     "usage_description": "{count} tool calls in the last 30 days, counted per tool per day.",
     "usage_empty": "No tool calls recorded yet. Point an MCP client at the endpoint above and this chart fills in.",
-    "usage_axis": "Calls per day"
+    "usage_axis": "Calls per day",
+    "setup_title": "Getting started",
+    "setup_description": "Pick your AI client below, paste the snippet, and swap in one of your keys."
   },
   "es": {
     "plan_title": "API para desarrolladores",
@@ -525,7 +539,9 @@
     "usage_title": "Uso — últimos 30 días",
     "usage_description": "{count} llamadas a herramientas en los últimos 30 días, contadas por herramienta y día.",
     "usage_empty": "Aún no hay llamadas registradas. Apunta un cliente MCP al endpoint superior y este gráfico se llenará.",
-    "usage_axis": "Llamadas por día"
+    "usage_axis": "Llamadas por día",
+    "setup_title": "Primeros pasos",
+    "setup_description": "Elige tu cliente de IA abajo, pega el fragmento y sustituye una de tus claves."
   },
   "fr": {
     "plan_title": "API développeur",
@@ -567,7 +583,9 @@
     "usage_title": "Utilisation — 30 derniers jours",
     "usage_description": "{count} appels d'outils sur les 30 derniers jours, comptés par outil et par jour.",
     "usage_empty": "Aucun appel enregistré pour le moment. Pointez un client MCP vers l'endpoint ci-dessus et ce graphique se remplira.",
-    "usage_axis": "Appels par jour"
+    "usage_axis": "Appels par jour",
+    "setup_title": "Premiers pas",
+    "setup_description": "Choisissez votre client d'IA ci-dessous, collez l'extrait et insérez l'une de vos clés."
   },
   "de": {
     "plan_title": "Entwickler-API",
@@ -609,7 +627,9 @@
     "usage_title": "Nutzung — letzte 30 Tage",
     "usage_description": "{count} Tool-Aufrufe in den letzten 30 Tagen, gezählt pro Tool und Tag.",
     "usage_empty": "Noch keine Aufrufe erfasst. Richten Sie einen MCP-Client auf den obigen Endpunkt und dieses Diagramm füllt sich.",
-    "usage_axis": "Aufrufe pro Tag"
+    "usage_axis": "Aufrufe pro Tag",
+    "setup_title": "Erste Schritte",
+    "setup_description": "Wählen Sie unten Ihren KI-Client, fügen Sie das Snippet ein und setzen Sie einen Ihrer Schlüssel ein."
   },
   "it": {
     "plan_title": "API per sviluppatori",
@@ -651,7 +671,9 @@
     "usage_title": "Utilizzo — ultimi 30 giorni",
     "usage_description": "{count} chiamate agli strumenti negli ultimi 30 giorni, contate per strumento e giorno.",
     "usage_empty": "Nessuna chiamata registrata per ora. Punta un client MCP all'endpoint qui sopra e questo grafico si riempirà.",
-    "usage_axis": "Chiamate al giorno"
+    "usage_axis": "Chiamate al giorno",
+    "setup_title": "Per iniziare",
+    "setup_description": "Scegli il tuo client di IA qui sotto, incolla lo snippet e inserisci una delle tue chiavi."
   },
   "pt": {
     "plan_title": "API para desenvolvedores",
@@ -693,7 +715,9 @@
     "usage_title": "Uso — últimos 30 dias",
     "usage_description": "{count} chamadas de ferramentas nos últimos 30 dias, contadas por ferramenta e dia.",
     "usage_empty": "Nenhuma chamada registrada ainda. Aponte um cliente MCP para o endpoint acima e este gráfico será preenchido.",
-    "usage_axis": "Chamadas por dia"
+    "usage_axis": "Chamadas por dia",
+    "setup_title": "Começando",
+    "setup_description": "Escolha seu cliente de IA abaixo, cole o trecho e insira uma das suas chaves."
   },
   "ru": {
     "plan_title": "API для разработчиков",
@@ -735,7 +759,9 @@
     "usage_title": "Использование — последние 30 дней",
     "usage_description": "{count} вызовов инструментов за последние 30 дней, по инструментам и дням.",
     "usage_empty": "Вызовы пока не зарегистрированы. Направьте клиент MCP на endpoint выше, и график заполнится.",
-    "usage_axis": "Вызовы в день"
+    "usage_axis": "Вызовы в день",
+    "setup_title": "Начало работы",
+    "setup_description": "Выберите ниже свой ИИ-клиент, вставьте фрагмент и подставьте один из ваших ключей."
   },
   "ja": {
     "plan_title": "開発者向けAPI",
@@ -777,7 +803,9 @@
     "usage_title": "利用状況 — 過去30日間",
     "usage_description": "過去30日間のツール呼び出しは {count} 回（ツール別・日別に集計）。",
     "usage_empty": "まだ呼び出しは記録されていません。上記エンドポイントに MCP クライアントを接続すると、このグラフに反映されます。",
-    "usage_axis": "1日あたりの呼び出し数"
+    "usage_axis": "1日あたりの呼び出し数",
+    "setup_title": "はじめに",
+    "setup_description": "下から AI クライアントを選び、スニペットを貼り付けて、お持ちのキーに置き換えてください。"
   },
   "zh": {
     "plan_title": "开发者 API",
@@ -819,7 +847,9 @@
     "usage_title": "用量 — 最近 30 天",
     "usage_description": "最近 30 天共 {count} 次工具调用，按工具和日期统计。",
     "usage_empty": "尚未记录任何调用。将 MCP 客户端指向上述端点，此图表就会填充。",
-    "usage_axis": "每日调用次数"
+    "usage_axis": "每日调用次数",
+    "setup_title": "快速开始",
+    "setup_description": "在下方选择您的 AI 客户端，粘贴代码片段，并换成您的密钥之一。"
   },
   "ko": {
     "plan_title": "개발자 API",
@@ -861,7 +891,9 @@
     "usage_title": "사용량 — 최근 30일",
     "usage_description": "최근 30일간 도구 호출 {count}회 (도구·일 단위 집계).",
     "usage_empty": "아직 기록된 호출이 없습니다. 위 엔드포인트에 MCP 클라이언트를 연결하면 이 차트가 채워집니다.",
-    "usage_axis": "일별 호출 수"
+    "usage_axis": "일별 호출 수",
+    "setup_title": "시작하기",
+    "setup_description": "아래에서 AI 클라이언트를 고르고 스니펫을 붙여넣은 뒤, 보유한 키로 바꾸세요."
   }
 }
 </i18n>
