@@ -36,22 +36,29 @@ function hookFn(): Function {
 
 const freeName = [...FREE_TOOLS][0];
 
+// The REAL shape the toolkit hands the hook: scanned definitions carry NO
+// top-level `name` — only `_meta.filename` (the template emits
+// `{ ...def, _meta: { filename } }`, and the display name is derived at
+// registration, AFTER the hook). Tests that handed defs WITH names were
+// exactly how the gate-everything-for-free-keys bug shipped to production.
 function makeTools() {
   return [
     {
-      name: freeName,
+      _meta: { filename: `${freeName}.ts` },
       description: 'a free tool',
       cache: '1h',
       handler: vi.fn(async () => ({ content: [{ type: 'text', text: 'free-result' }] })),
     },
     {
-      name: 'wheel-search',
+      _meta: { filename: 'wheel-search.ts' },
       description: 'a paid tool',
       cache: undefined,
       handler: vi.fn(async () => ({ content: [{ type: 'text', text: 'paid-result' }] })),
     },
   ];
 }
+
+const byFilename = (tools: any[], filename: string) => tools.find((t) => t._meta?.filename === filename);
 
 function eventWithTier(tier?: string) {
   return { context: tier ? { mcpAuth: { tier } } : {} } as any;
@@ -68,7 +75,7 @@ describe('server/plugins/mcp-tiering', () => {
     const config = { tools: [...tools] };
     fn({ config, event: eventWithTier('free') });
 
-    const gated = config.tools.find((t: any) => t.name === 'wheel-search') as any;
+    const gated = byFilename(config.tools, 'wheel-search.ts');
     expect(gated.description).toContain('/developers');
     // The stub must never inherit a cache wrapper — a cached upsell answer
     // under the real tool's key could be served to a paid caller.
@@ -77,6 +84,9 @@ describe('server/plugins/mcp-tiering', () => {
     const result = await gated.handler();
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('/developers');
+    // The name must be derived from _meta.filename — 'The "undefined" tool'
+    // is what production shipped before this derivation existed.
+    expect(result.content[0].text).toContain('"wheel-search"');
     expect(tools[1].handler).not.toHaveBeenCalled();
     expect(mockRecordGated).toHaveBeenCalledWith(expect.anything(), 'wheel-search');
   });
@@ -87,11 +97,28 @@ describe('server/plugins/mcp-tiering', () => {
     const config = { tools: [...tools] };
     fn({ config, event: eventWithTier('free') });
 
-    const free = config.tools.find((t: any) => t.name === freeName) as any;
+    const free = byFilename(config.tools, `${freeName}.ts`);
     const result = await free.handler({ some: 'args' });
     expect(result.content[0].text).toBe('free-result');
     expect(tools[0].handler).toHaveBeenCalledWith({ some: 'args' });
     expect(mockRecordUsage).toHaveBeenCalledWith(expect.anything(), freeName);
+  });
+
+  it('an explicit top-level name still wins over the filename derivation', async () => {
+    const fn = hookFn();
+    const config = {
+      tools: [
+        {
+          name: freeName,
+          _meta: { filename: 'wheel-search.ts' },
+          handler: vi.fn(async () => ({ content: [{ type: 'text', text: 'named-result' }] })),
+        },
+      ],
+    };
+    fn({ config, event: eventWithTier('free') });
+    // Named as a free tool, so it stays live despite the paid-looking filename.
+    const result = await (config.tools[0] as any).handler();
+    expect(result.content[0].text).toBe('named-result');
   });
 
   it.each(['developer', 'internal'])('%s tier: every tool stays live', async (tier) => {
@@ -112,7 +139,7 @@ describe('server/plugins/mcp-tiering', () => {
     const config = { tools: makeTools() };
     fn({ config, event: eventWithTier(undefined) });
 
-    const gated = config.tools.find((t: any) => t.name === 'wheel-search') as any;
+    const gated = byFilename(config.tools, 'wheel-search.ts');
     expect((await gated.handler()).isError).toBe(true);
   });
 
