@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from 'vitest';
 
 // Hoist mock setup so it runs before any imports
 const { mockAxiosGet } = vi.hoisted(() => {
@@ -28,14 +28,18 @@ const { mockAxiosGet } = vi.hoisted(() => {
 // The stub unwraps `.data` so every existing mock value below — which is written
 // in axios's `{ data: ... }` response shape — keeps working unchanged. Rejections
 // pass straight through, preserving the `error.response.status` assertions.
+const originalFetch = (globalThis as any).$fetch;
 (globalThis as any).$fetch = async (...args: any[]) => {
   const res = await mockAxiosGet(...args);
   return res?.data;
 };
 
-vi.mock('lodash', () => ({
-  default: {},
-}));
+// vitest.config.ts sets `fileParallelism: false`, so test files share a worker.
+// Restore the real global so this stub can never bleed into another suite's
+// $fetch mock if per-file isolation is ever relaxed.
+afterAll(() => {
+  (globalThis as any).$fetch = originalFetch;
+});
 
 // Override setTimeout so retry backoff resolves immediately
 const originalSetTimeout = globalThis.setTimeout;
@@ -173,6 +177,47 @@ describe('server/api/youtube/stats', () => {
     } catch (error: any) {
       expect(error.statusCode).toBe(429);
     }
+  });
+
+  // ofetch throws a FetchError carrying `statusCode`, NOT axios's
+  // `response.status`. The axios-shaped tests above only exercise the legacy
+  // fallback branch, so these cover the shape the handlers actually see on
+  // Workers.
+  it('maps an ofetch FetchError statusCode to the thrown status', async () => {
+    const fetchError: any = new Error('Forbidden');
+    fetchError.statusCode = 403;
+    mockAxiosGet.mockRejectedValue(fetchError);
+    try {
+      await handler({});
+      expect.unreachable('should have thrown');
+    } catch (error: any) {
+      expect(error.statusCode).toBe(403);
+    }
+  });
+
+  it('does not retry a deterministic 4xx', async () => {
+    const fetchError: any = new Error('Forbidden');
+    fetchError.statusCode = 403;
+    mockAxiosGet.mockRejectedValue(fetchError);
+    await expect(handler({})).rejects.toThrow();
+    // A quota/bad-key 403 answers identically every time, so retrying it only
+    // adds ~6s of backoff to a request that cannot succeed.
+    expect(mockAxiosGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('does retry a 5xx and a 429', async () => {
+    const serverError: any = new Error('Bad Gateway');
+    serverError.statusCode = 502;
+    mockAxiosGet.mockRejectedValue(serverError);
+    await expect(handler({})).rejects.toThrow();
+    expect(mockAxiosGet).toHaveBeenCalledTimes(3);
+
+    mockAxiosGet.mockReset();
+    const rateLimited: any = new Error('Too Many Requests');
+    rateLimited.statusCode = 429;
+    mockAxiosGet.mockRejectedValue(rateLimited);
+    await expect(handler({})).rejects.toThrow();
+    expect(mockAxiosGet).toHaveBeenCalledTimes(3);
   });
 
   it('retries on failure and succeeds on second attempt', async () => {
