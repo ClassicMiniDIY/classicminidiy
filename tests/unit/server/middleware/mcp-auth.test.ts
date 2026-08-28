@@ -2,10 +2,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---- Nitro global stubs (must be hoisted before source import) ----
-const { mockGetRequestURL, mockGetHeader, mockUseRuntimeConfig } = vi.hoisted(() => {
+const { mockGetRequestURL, mockGetHeader, mockUseRuntimeConfig, mockStorage, storageBacking } = vi.hoisted(() => {
   const mockGetRequestURL = vi.fn();
   const mockGetHeader = vi.fn();
   const mockUseRuntimeConfig = vi.fn();
+
+  // In-memory stand-in for useStorage('cache') (KV in production).
+  const storageBacking = new Map<string, unknown>();
+  const mockStorage = {
+    getItem: vi.fn(async (key: string) => storageBacking.get(key) ?? null),
+    setItem: vi.fn(async (key: string, value: unknown) => {
+      storageBacking.set(key, value);
+    }),
+    removeItem: vi.fn(async (key: string) => {
+      storageBacking.delete(key);
+    }),
+  };
 
   (globalThis as any).defineEventHandler = (handler: Function) => handler;
   (globalThis as any).getRequestURL = mockGetRequestURL;
@@ -16,18 +28,60 @@ const { mockGetRequestURL, mockGetHeader, mockUseRuntimeConfig } = vi.hoisted(()
     return e;
   };
   (globalThis as any).useRuntimeConfig = mockUseRuntimeConfig;
+  (globalThis as any).useStorage = () => mockStorage;
+  (globalThis as any).setHeader = vi.fn();
+  (globalThis as any).getRequestIP = () => undefined;
 
-  return { mockGetRequestURL, mockGetHeader, mockUseRuntimeConfig };
+  return { mockGetRequestURL, mockGetHeader, mockUseRuntimeConfig, mockStorage, storageBacking };
 });
+
+// Service-client fake: each test configures the api_keys row / RPC answer.
+const { mockMaybeSingle, mockRpc, mockUpdateEq } = vi.hoisted(() => ({
+  mockMaybeSingle: vi.fn(),
+  mockRpc: vi.fn(),
+  mockUpdateEq: vi.fn(async () => ({ error: null })),
+}));
+
+vi.mock('~/server/utils/supabase', () => ({
+  getServiceClient: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          is: () => ({ maybeSingle: mockMaybeSingle }),
+        }),
+      }),
+      update: () => ({ eq: mockUpdateEq }),
+    }),
+    rpc: mockRpc,
+  }),
+}));
 
 // Import the handler (defineEventHandler returns the raw function via stub)
 import handler from '~/server/middleware/mcp-auth';
+import { _resetRateLimitStore } from '~/server/utils/rateLimit';
+import { getMcpAuth, sha256Hex, keyCacheId, MCP_KEY_PREFIX } from '~/server/utils/mcpTiers';
+
+/** A plausible self-serve key (prefix + 40 base62 chars). */
+const CMDIY_KEY = `${MCP_KEY_PREFIX}${'a1B2c3D4e5'.repeat(4)}`;
+
+/** getHeader stub covering both the auth header and clientIp's lookups. */
+function setHeaders(authorization: string | undefined, ip = '203.0.113.7') {
+  mockGetHeader.mockImplementation((_event: unknown, name: string) => {
+    if (name === 'authorization') return authorization;
+    if (name === 'cf-connecting-ip') return ip;
+    return undefined;
+  });
+}
 
 describe('server/middleware/mcp-auth', () => {
   const fakeEvent = {} as any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    storageBacking.clear();
+    _resetRateLimitStore();
+    fakeEvent.context = {};
+    delete fakeEvent.waitUntil;
 
     // Default runtime config: no keys configured, production mode
     mockUseRuntimeConfig.mockReturnValue({
@@ -35,6 +89,10 @@ describe('server/middleware/mcp-auth', () => {
       MCP_API_KEYS: '',
       NODE_ENV: 'production',
     });
+
+    // Default DB shape: no api_keys row, no subscription.
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockRpc.mockResolvedValue({ data: false, error: null });
 
     // Ensure process.env.NODE_ENV is production by default
     process.env.NODE_ENV = 'production';
@@ -60,7 +118,7 @@ describe('server/middleware/mcp-auth', () => {
   // ---------- 2. Reject requests without Bearer token ----------
   it('rejects /mcp requests without Authorization header (401)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue(undefined);
+    setHeaders(undefined);
 
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
       statusCode: 401,
@@ -69,7 +127,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('rejects /mcp requests with non-Bearer Authorization header (401)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Basic abc123');
+    setHeaders('Basic abc123');
 
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
       statusCode: 401,
@@ -79,7 +137,7 @@ describe('server/middleware/mcp-auth', () => {
   // ---------- 3. Reject invalid Bearer tokens ----------
   it('rejects invalid Bearer tokens (403)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer wrong-key');
+    setHeaders('Bearer wrong-key');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'correct-key',
@@ -95,7 +153,7 @@ describe('server/middleware/mcp-auth', () => {
   // ---------- 4. Accept valid MCP_API_KEY ----------
   it('accepts a valid MCP_API_KEY', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer my-secret-key');
+    setHeaders('Bearer my-secret-key');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'my-secret-key',
@@ -118,7 +176,7 @@ describe('server/middleware/mcp-auth', () => {
     });
 
     // Try the second key (with whitespace trimming)
-    mockGetHeader.mockReturnValue('Bearer key-beta');
+    setHeaders('Bearer key-beta');
     await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
   });
 
@@ -131,7 +189,7 @@ describe('server/middleware/mcp-auth', () => {
       NODE_ENV: 'production',
     });
 
-    mockGetHeader.mockReturnValue('Bearer key-delta');
+    setHeaders('Bearer key-delta');
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
       statusCode: 403,
     });
@@ -143,7 +201,7 @@ describe('server/middleware/mcp-auth', () => {
   // every request is rejected (no fail-open when NODE_ENV is unset).
   it('rejects the burned dev key in development when no key is configured (403)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
+    setHeaders('Bearer dev-mcp-key-classic-mini-diy');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: '',
@@ -161,7 +219,7 @@ describe('server/middleware/mcp-auth', () => {
     delete process.env.NODE_ENV;
 
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
+    setHeaders('Bearer dev-mcp-key-classic-mini-diy');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: '',
@@ -181,7 +239,7 @@ describe('server/middleware/mcp-auth', () => {
     process.env.NODE_ENV = 'production';
 
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer dev-mcp-key-classic-mini-diy');
+    setHeaders('Bearer dev-mcp-key-classic-mini-diy');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: '',
@@ -196,7 +254,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('rejects ALL requests when no API keys are configured — fail closed (403)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer any-key-at-all');
+    setHeaders('Bearer any-key-at-all');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: '',
@@ -211,7 +269,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('still accepts a real configured key in development (dev works via env key)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer my-local-dev-key');
+    setHeaders('Bearer my-local-dev-key');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'my-local-dev-key',
@@ -225,7 +283,7 @@ describe('server/middleware/mcp-auth', () => {
   // ---------- 7. Case-insensitive bearer prefix ----------
   it('handles "bearer" prefix in lowercase', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('bearer my-key');
+    setHeaders('bearer my-key');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'my-key',
@@ -238,7 +296,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('handles "BEARER" prefix in uppercase', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('BEARER my-key');
+    setHeaders('BEARER my-key');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'my-key',
@@ -251,7 +309,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('handles "Bearer" prefix with extra whitespace', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('  Bearer   my-key  ');
+    setHeaders('  Bearer   my-key  ');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'my-key',
@@ -269,7 +327,7 @@ describe('server/middleware/mcp-auth', () => {
   // and also swept up unrelated paths sharing the prefix.
   it.each(['/mcp/deeplink', '/mcp/badge.svg'])('leaves the public %s route unauthenticated', async (path) => {
     mockGetRequestURL.mockReturnValue(new URL(`https://example.com${path}`));
-    mockGetHeader.mockReturnValue(undefined);
+    setHeaders(undefined);
 
     await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
     expect(mockUseRuntimeConfig).not.toHaveBeenCalled();
@@ -279,7 +337,7 @@ describe('server/middleware/mcp-auth', () => {
   // trailing slash let an unauthenticated caller reach the JSON-RPC endpoint.
   it.each(['/mcp/', '/mcp//', '/mcp/sse'])('still gates %s', async (path) => {
     mockGetRequestURL.mockReturnValue(new URL(`https://example.com${path}`));
-    mockGetHeader.mockReturnValue(undefined);
+    setHeaders(undefined);
 
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
       statusCode: 401,
@@ -288,7 +346,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('does not gate an unrelated path that merely shares the /mcp prefix', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp-other'));
-    mockGetHeader.mockReturnValue(undefined);
+    setHeaders(undefined);
 
     await expect((handler as Function)(fakeEvent)).resolves.toBeUndefined();
     expect(mockUseRuntimeConfig).not.toHaveBeenCalled();
@@ -296,7 +354,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('accepts key from MCP_API_KEY even when MCP_API_KEYS also has keys', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer single-key');
+    setHeaders('Bearer single-key');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'single-key',
@@ -309,7 +367,7 @@ describe('server/middleware/mcp-auth', () => {
 
   it('rejects empty Bearer token (401 because empty string is falsy)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
-    mockGetHeader.mockReturnValue('Bearer ');
+    setHeaders('Bearer ');
 
     mockUseRuntimeConfig.mockReturnValue({
       MCP_API_KEY: 'real-key',
@@ -322,5 +380,135 @@ describe('server/middleware/mcp-auth', () => {
     await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({
       statusCode: 401,
     });
+  });
+
+  // ---------- Self-serve keys (Developer API, 2026-08-28) ----------
+
+  it('env keys resolve to the internal tier with no storage or DB involved', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders('Bearer my-secret-key');
+    mockUseRuntimeConfig.mockReturnValue({ MCP_API_KEY: 'my-secret-key', MCP_API_KEYS: '', NODE_ENV: 'production' });
+
+    await (handler as Function)(fakeEvent);
+    expect(getMcpAuth(fakeEvent)).toEqual({ tier: 'internal' });
+    expect(mockStorage.getItem).not.toHaveBeenCalled();
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('a non-cmdiy invalid key never touches the cache or the database', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders('Bearer totally-made-up');
+    mockUseRuntimeConfig.mockReturnValue({ MCP_API_KEY: 'real-key', MCP_API_KEYS: '', NODE_ENV: 'production' });
+
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 403 });
+    expect(mockStorage.getItem).not.toHaveBeenCalled();
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('cache miss + api_keys row + active subscription resolves the developer tier and caches it', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders(`Bearer ${CMDIY_KEY}`);
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: 'key-1', user_id: 'user-1', key_prefix: CMDIY_KEY.slice(0, 12) },
+      error: null,
+    });
+    mockRpc.mockResolvedValue({ data: true, error: null });
+
+    await (handler as Function)(fakeEvent);
+    expect(getMcpAuth(fakeEvent)).toMatchObject({ tier: 'developer', keyId: 'key-1', userId: 'user-1' });
+    expect(mockRpc).toHaveBeenCalledWith('user_has_subscription', {
+      p_user_id: 'user-1',
+      p_product_id: 'developer',
+    });
+    const hash = await sha256Hex(CMDIY_KEY);
+    expect(storageBacking.get(keyCacheId(hash))).toMatchObject({ ok: true, tier: 'developer' });
+  });
+
+  it('cache miss + api_keys row without a subscription resolves the free tier', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders(`Bearer ${CMDIY_KEY}`);
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: 'key-1', user_id: 'user-1', key_prefix: CMDIY_KEY.slice(0, 12) },
+      error: null,
+    });
+    mockRpc.mockResolvedValue({ data: false, error: null });
+
+    await (handler as Function)(fakeEvent);
+    expect(getMcpAuth(fakeEvent)).toMatchObject({ tier: 'free' });
+  });
+
+  it('a subscription-RPC failure degrades to free, never to denied or developer', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders(`Bearer ${CMDIY_KEY}`);
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: 'key-1', user_id: 'user-1', key_prefix: CMDIY_KEY.slice(0, 12) },
+      error: null,
+    });
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
+
+    await (handler as Function)(fakeEvent);
+    expect(getMcpAuth(fakeEvent)).toMatchObject({ tier: 'free' });
+  });
+
+  it('an unknown cmdiy key 403s and caches the negative', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders(`Bearer ${CMDIY_KEY}`);
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 403 });
+    const hash = await sha256Hex(CMDIY_KEY);
+    expect(storageBacking.get(keyCacheId(hash))).toEqual({ ok: false });
+  });
+
+  it('a cached positive entry authenticates without any DB call', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders(`Bearer ${CMDIY_KEY}`);
+    const hash = await sha256Hex(CMDIY_KEY);
+    storageBacking.set(keyCacheId(hash), {
+      ok: true,
+      keyId: 'key-9',
+      userId: 'user-9',
+      tier: 'developer',
+      keyPrefix: CMDIY_KEY.slice(0, 12),
+    });
+
+    await (handler as Function)(fakeEvent);
+    expect(getMcpAuth(fakeEvent)).toMatchObject({ tier: 'developer', keyId: 'key-9' });
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('a cached negative entry 403s without any DB call', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders(`Bearer ${CMDIY_KEY}`);
+    const hash = await sha256Hex(CMDIY_KEY);
+    storageBacking.set(keyCacheId(hash), { ok: false });
+
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 403 });
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('an api_keys lookup failure answers 503 and caches nothing', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    setHeaders(`Bearer ${CMDIY_KEY}`);
+    mockMaybeSingle.mockResolvedValue({ data: null, error: { message: 'db down' } });
+
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 503 });
+    expect(mockStorage.setItem).not.toHaveBeenCalled();
+  });
+
+  it('throttles cache-miss lookups per IP (429 after the window fills)', async () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/mcp'));
+    mockUseRuntimeConfig.mockReturnValue({ MCP_API_KEY: '', MCP_API_KEYS: '', NODE_ENV: 'production' });
+
+    // 30 distinct unknown keys from one address consume the lookup budget...
+    for (let i = 0; i < 30; i++) {
+      setHeaders(`Bearer ${MCP_KEY_PREFIX}scan${String(i).padStart(36, '0')}`, '198.51.100.9');
+      await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 403 });
+    }
+    // ...and the 31st is refused before any DB work.
+    mockMaybeSingle.mockClear();
+    setHeaders(`Bearer ${MCP_KEY_PREFIX}scan${'x'.repeat(36)}`, '198.51.100.9');
+    await expect((handler as Function)(fakeEvent)).rejects.toMatchObject({ statusCode: 429 });
+    expect(mockMaybeSingle).not.toHaveBeenCalled();
   });
 });

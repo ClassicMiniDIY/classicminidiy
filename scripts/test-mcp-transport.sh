@@ -215,6 +215,18 @@ print('\n'.join(t['name'] for t in d.get('result', {}).get('tools', [])))
 count=$(printf '%s' "$names" | grep -c . || true)
 [ "$count" -ge 11 ] && ok "tools/list returns $count tools" || bad "tools/list returned $count tools, want >= 11"
 
+# The env key resolves to the INTERNAL tier (Developer API tiering,
+# docs/plans/2026-08-28-developer-api-subscription.md), which must see every
+# tool — the paid-only set included. A gated or missing tool here means the
+# tiering plugin misclassified the env key.
+for tool in chassis-decoder engine-decoder wheel-search color-lookup; do
+  if printf '%s\n' "$names" | grep -qx "$tool"; then
+    ok "internal tier lists paid tool $tool"
+  else
+    bad "internal tier is missing paid tool $tool"
+  fi
+done
+
 # Every tool must carry a description and an inputSchema, or a model cannot
 # choose it. A tool that lists but cannot be selected is invisible in practice.
 missing=$(printf '%s' "$list" | python3 -c "
