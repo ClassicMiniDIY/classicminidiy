@@ -338,6 +338,80 @@ else
 fi
 
 echo
+echo "== free-tier gating =="
+# Everything above authenticates with the ENV key, which resolves to the
+# internal tier and sees every tool by design — so none of it can tell a
+# working tier gate from one that never ran. That blind spot shipped a fully
+# gated free tier to production: every tool, calculators included, answered the
+# upsell stub worded 'The "undefined" tool', because the tiering hook read a
+# tool name the toolkit does not populate until AFTER the hook. Only a REAL
+# free-tier key exercises the gate.
+#
+# Optional, exactly like MCP_SMOKE_KEY: absent, this notes and skips rather
+# than failing a deploy on a missing secret. To arm it, mint a key at
+# /dashboard/api-keys on an account with NO developer subscription and set it
+# with `gh secret set MCP_FREE_TIER_KEY`.
+rpc_as() {
+  local key="$1" body="$2"
+  local out
+  out=$(curl -s -m 30 -w '\n%{http_code}' -X POST "$ORIGIN/mcp" \
+    -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+    -H "Authorization: Bearer $key" --data "$body" 2>/dev/null)
+  printf '%s' "${out##*$'\n'}" > "$STATUS_FILE"
+  printf '%s' "${out%$'\n'*}"
+}
+
+if [ -z "${MCP_FREE_TIER_KEY:-}" ]; then
+  note "MCP_FREE_TIER_KEY unset — free-tier gating not exercised (set it to arm)"
+elif [ -z "${SUPABASE_SERVICE_KEY:-}" ]; then
+  note "SUPABASE_SERVICE_KEY unset — worker cannot resolve DB-backed keys; skipping"
+else
+  free_list=$(rpc_as "$MCP_FREE_TIER_KEY" '{"jsonrpc":"2.0","id":20,"method":"tools/list"}' | payload)
+  free_status=$(rpc_status)
+  if [ "$free_status" != "200" ]; then
+    bad "free-tier tools/list -> $free_status, want 200 (is the key valid and unrevoked?)"
+  else
+    # A free key must see SOME tools ungated and the paid ones gated. All-gated
+    # or none-gated both mean the gate is broken.
+    counts=$(printf '%s' "$free_list" | python3 -c "
+import sys, json
+d = json.loads(sys.stdin.read() or '{}')
+tools = d.get('result', {}).get('tools', [])
+gated = [t['name'] for t in tools if 'Requires the CMDIY Developer API subscription' in (t.get('description') or '')]
+print(len(tools), len(gated), ','.join(sorted(gated)))
+")
+    total=$(printf '%s' "$counts" | cut -d' ' -f1)
+    ngated=$(printf '%s' "$counts" | cut -d' ' -f2)
+    gatedlist=$(printf '%s' "$counts" | cut -d' ' -f3)
+    if [ "$ngated" -gt 0 ] && [ "$ngated" -lt "$total" ]; then
+      ok "free tier gates $ngated of $total tools ($gatedlist)"
+    else
+      bad "free tier gated $ngated of $total tools — the gate is inverted or never ran"
+    fi
+
+    # A FREE tool must actually run for a free key.
+    freecall=$(rpc_as "$MCP_FREE_TIER_KEY" '{"jsonrpc":"2.0","id":21,"method":"tools/call","params":{"name":"torque-specs","arguments":{"query":"flywheel"}}}' | payload)
+    if [ "$(printf '%s' "$freecall" | jq_get 'result.isError')" = "True" ]; then
+      bad "free tier cannot call torque-specs: $(printf '%s' "$freecall" | jq_get 'result.content.0.text' | head -c 90)"
+    else
+      ok "free tier can call a free tool (torque-specs)"
+    fi
+
+    # A PAID tool must be refused, and the refusal must NAME the tool — an
+    # 'undefined' here means the name derivation broke again.
+    paidcall=$(rpc_as "$MCP_FREE_TIER_KEY" '{"jsonrpc":"2.0","id":22,"method":"tools/call","params":{"name":"wheel-search","arguments":{"query":"minilite"}}}' | payload)
+    paidtext=$(printf '%s' "$paidcall" | jq_get 'result.content.0.text')
+    if [ "$(printf '%s' "$paidcall" | jq_get 'result.isError')" != "True" ]; then
+      bad "free tier was served the PAID wheel-search tool"
+    elif printf '%s' "$paidtext" | grep -q '"undefined"'; then
+      bad "gated message says \"undefined\" — tool-name derivation is broken"
+    else
+      ok "free tier is refused a paid tool, and the refusal names it"
+    fi
+  fi
+fi
+
+echo
 echo "== public routes stay public =="
 for path in /mcp/badge.svg /mcp/deeplink; do
   status=$(curl -s -o /dev/null -m 20 -w '%{http_code}' "$ORIGIN$path" 2>/dev/null)
