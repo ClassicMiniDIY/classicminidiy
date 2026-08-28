@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { useSubscriptionPolling } from '~/composables/useSubscriptionPolling';
 import {
   ref,
   computed,
@@ -132,6 +133,12 @@ const __nuxtStateStore: Record<string, ReturnType<typeof ref>> = {};
   trackFormSubmitted: vi.fn(),
   trackFormError: vi.fn(),
 }));
+
+// useSubscriptionPolling — registered as the REAL implementation, not a stub:
+// the membership-page tests exercise the activation-poll timing/timeout
+// behavior that used to live inline in the page and now lives in this
+// composable. Stubbing it would turn those tests into tautologies.
+(global as any).useSubscriptionPolling = useSubscriptionPolling;
 
 // ===== h3 / Nitro server auto-imports (for server/api route-handler tests) =====
 // defineEventHandler returns the handler verbatim so a route's `export default`

@@ -31,35 +31,57 @@ Tools take a query and return the matching subset. The site's API routes return
 whole tables because a browser filters client-side; an LLM should not have to
 receive several hundred rows to answer one question.
 
-## Authentication
+## Authentication and tiers
 
 **All MCP endpoints require authentication via Bearer token.**
 
-### Setting Up API Keys
+### Getting a key (self-serve)
 
-Configure API keys via environment variables:
+Sign in at classicminidiy.com and mint a key at
+[/dashboard/api-keys](https://classicminidiy.com/dashboard/api-keys). Keys look
+like `cmdiy_` + 40 characters, are shown exactly once at creation, and only a
+hash is stored — a lost key is replaced, never recovered. Up to 5 active keys
+per account; revocation from the dashboard is immediate.
 
-```bash
-# Single API key
-MCP_API_KEY=your-secure-api-key
+### Tiers
 
-# Multiple API keys (comma-separated)
-MCP_API_KEYS=key1,key2,key3
-```
+| Tier | Who | Tools | Rate limit |
+|---|---|---|---|
+| Free | any signed-in account | the 7 calculators/reference tables | 20 req/min per key |
+| Developer | [Developer API subscribers](https://classicminidiy.com/developers) ($4.99/mo or $47.90/yr) | all 11 (adds `chassis-decoder`, `engine-decoder`, `wheel-search`, `color-lookup`) | 240 req/min per key |
 
-### Development Mode
-
-There is no built-in default key — authentication fails closed in every
-environment. For local development, set `MCP_API_KEY` (or `MCP_API_KEYS`) in your
-`.env` and send that value as the Bearer token.
+The canonical free-tool list is `FREE_TOOLS` in `server/utils/mcpTiers.ts` (a
+unit test pins it to the tool filenames). On a free key the paid tools still
+appear in `tools/list` — their descriptions carry an upgrade note, and calling
+one returns an `isError` result explaining the subscription. A subscription
+change applies to existing keys within ~5 minutes (instantly on upgrade —
+checkout completion purges the key cache).
 
 ### Providing API Keys
 
 API keys must be provided via Authorization header with Bearer token:
 
 ```bash
-curl -H "Authorization: Bearer your-api-key" https://www.classicminidiy.com/mcp
+curl -H "Authorization: Bearer cmdiy_..." https://www.classicminidiy.com/mcp
 ```
+
+### Operator env keys (internal)
+
+`MCP_API_KEY` / `MCP_API_KEYS` (comma-separated) env values remain valid and
+resolve to an internal tier (all tools, highest limit) with no database
+involved. This is the ops/CI path — `scripts/test-mcp-transport.sh` and the
+deploy smoke authenticate with it — not a user-facing mechanism. There is no
+built-in default key; authentication fails closed in every environment. For
+local development, set `MCP_API_KEY` in your `.env` and send that value as the
+Bearer token.
+
+### Usage recording
+
+Successful tool calls are counted per key/tool/day into the usage chart on
+`/dashboard/api-keys` (fire-and-forget; a capture failure never fails a call).
+Known caveat: calls served from the response cache of the two cached tools
+(`chassis-decoder`, `compression-calculator`) are not counted. Rate limiting is
+per-request and unaffected.
 
 ## MCP Server Endpoint
 
@@ -292,10 +314,14 @@ const result = await client.callTool({
 ## Security Best Practices
 
 1. **Keep API Keys Secret**: Never commit API keys to version control
-2. **Use Environment Variables**: Store keys in `.env` files (git-ignored)
-3. **Rotate Keys Regularly**: Change API keys periodically for production use
-4. **Unique Keys per Integration**: Give each LLM integration its own unique API key
-5. **Monitor Usage**: Track API key usage to detect unauthorized access
+2. **Use Environment Variables**: Store keys in `.env` files (git-ignored) or
+   your client's secret storage — never inline in shared config
+3. **Rotate by replacement**: Mint a new key at `/dashboard/api-keys`, move the
+   integration over, revoke the old one (revocation is immediate)
+4. **Unique Keys per Integration**: Give each LLM integration its own key — the
+   per-key usage chart then tells you which integration is doing what
+5. **Monitor Usage**: Watch the usage chart on `/dashboard/api-keys`; calls you
+   don't recognize mean the key leaked — revoke it
 
 ## Error Responses
 
