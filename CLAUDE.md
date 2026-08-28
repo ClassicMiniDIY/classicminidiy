@@ -964,6 +964,35 @@ s3Base=
 `githubAPIKey` / `youtubeAPIKey` are still accepted as legacy aliases, so an
 existing `.env` keeps working; new setups should use the uppercase names.
 
+### A local `wrangler deploy` is not durable — CI owns production
+
+`deploy-cloudflare.yml` deploys `main` on every push, and it deploys the WHOLE
+worker. A local `wrangler deploy` from a feature branch therefore survives only
+until the next merge to `main`, which silently reverts production to `main`'s
+code with no failure anywhere.
+
+This is worth stating because of how it fails when you are debugging. The
+symptom you are chasing reappears, the fix "does not work", and grepping your
+LOCAL `.output/` proves the offending code is absent — because it is absent
+from your build, not from the deployed one. A local deploy was clobbered by a CI
+deploy 18 minutes later during the YouTube/axios fix, and that mismatch is what
+made axios look innocent when it was in fact the cause.
+
+So: verify a worker fix with `wrangler dev --local` against the built artifact,
+and land it through `main` rather than a local deploy. To check what is actually
+live, compare `wrangler deployments list` against
+`gh run list --workflow=deploy-cloudflare.yml` — if a CI run finished after your
+deploy, production is running that run's commit, not yours. `wrangler versions
+upload` uploads without taking traffic, which is the safe way to stage a build.
+
+Corollary for diagnosis: esbuild's `__esm` guard is set BEFORE a module's body
+runs, so a route chunk whose init throws once is never re-initialised. Its
+namespace `default` getter stays `undefined`, and every later request on that
+isolate reports `<ns>.default is not a function` instead of the original error.
+That message means "this module failed to initialise", not "this module is
+missing" — the real error is only visible on the first request after a cold
+start.
+
 ### Build-time vs runtime secrets on Cloudflare Workers
 
 **This split is load-bearing. Moving a value across it silently changes whether
