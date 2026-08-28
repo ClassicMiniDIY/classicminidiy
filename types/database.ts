@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -58,6 +58,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       archive_documents: {
         Row: {
@@ -820,6 +853,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           slug: string
+          sort_order: number
           status: Database["public"]["Enums"]["moderation_status_enum"]
           submitted_by: string | null
           thumbnail_path: string | null
@@ -834,6 +868,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           slug: string
+          sort_order?: number
           status?: Database["public"]["Enums"]["moderation_status_enum"]
           submitted_by?: string | null
           thumbnail_path?: string | null
@@ -848,6 +883,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           slug?: string
+          sort_order?: number
           status?: Database["public"]["Enums"]["moderation_status_enum"]
           submitted_by?: string | null
           thumbnail_path?: string | null
@@ -1609,6 +1645,7 @@ export type Database = {
       }
       listings: {
         Row: {
+          approved_at: string | null
           brake_type: Database["public"]["Enums"]["brake_type_enum"] | null
           build_date: string | null
           bumper_type: Database["public"]["Enums"]["bumper_type_enum"] | null
@@ -1737,6 +1774,7 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          approved_at?: string | null
           brake_type?: Database["public"]["Enums"]["brake_type_enum"] | null
           build_date?: string | null
           bumper_type?: Database["public"]["Enums"]["bumper_type_enum"] | null
@@ -1865,6 +1903,7 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          approved_at?: string | null
           brake_type?: Database["public"]["Enums"]["brake_type_enum"] | null
           build_date?: string | null
           bumper_type?: Database["public"]["Enums"]["bumper_type_enum"] | null
@@ -2244,6 +2283,38 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      mcp_usage_daily: {
+        Row: {
+          call_count: number
+          day: string
+          key_id: string
+          tool: string
+          user_id: string
+        }
+        Insert: {
+          call_count?: number
+          day: string
+          key_id: string
+          tool: string
+          user_id: string
+        }
+        Update: {
+          call_count?: number
+          day?: string
+          key_id?: string
+          tool?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_usage_daily_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_attachments: {
         Row: {
@@ -3963,6 +4034,7 @@ export type Database = {
         Row: {
           apple_original_transaction_id: string | null
           apple_product_id: string | null
+          billing_interval: string | null
           cancelled_at: string | null
           comp_granted_by: string | null
           comp_note: string | null
@@ -3979,6 +4051,7 @@ export type Database = {
           starts_at: string
           status: string
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
           user_id: string
@@ -3986,6 +4059,7 @@ export type Database = {
         Insert: {
           apple_original_transaction_id?: string | null
           apple_product_id?: string | null
+          billing_interval?: string | null
           cancelled_at?: string | null
           comp_granted_by?: string | null
           comp_note?: string | null
@@ -4002,6 +4076,7 @@ export type Database = {
           starts_at?: string
           status?: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
           user_id: string
@@ -4009,6 +4084,7 @@ export type Database = {
         Update: {
           apple_original_transaction_id?: string | null
           apple_product_id?: string | null
+          billing_interval?: string | null
           cancelled_at?: string | null
           comp_granted_by?: string | null
           comp_note?: string | null
@@ -4025,6 +4101,7 @@ export type Database = {
           starts_at?: string
           status?: string
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
           user_id?: string
@@ -4785,6 +4862,16 @@ export type Database = {
           platform: string
         }[]
       }
+      get_my_subscription: {
+        Args: { p_product_id: string }
+        Returns: {
+          billing_interval: string
+          expires_at: string
+          is_active: boolean
+          platform: string
+          status: string
+        }[]
+      }
       get_public_profile_by_id: {
         Args: { p_user_id: string }
         Returns: {
@@ -4857,6 +4944,7 @@ export type Database = {
         Returns: {
           apple_original_transaction_id: string | null
           apple_product_id: string | null
+          billing_interval: string | null
           cancelled_at: string | null
           comp_granted_by: string | null
           comp_note: string | null
@@ -4873,6 +4961,7 @@ export type Database = {
           starts_at: string
           status: string
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
           user_id: string
@@ -4894,6 +4983,10 @@ export type Database = {
       }
       increment_listing_views: {
         Args: { listing_id_param: string }
+        Returns: undefined
+      }
+      increment_mcp_usage: {
+        Args: { p_key_id: string; p_tool: string; p_user_id: string }
         Returns: undefined
       }
       is_account_on_probation: { Args: { p_user_id: string }; Returns: boolean }
@@ -4968,6 +5061,7 @@ export type Database = {
         Returns: {
           apple_original_transaction_id: string | null
           apple_product_id: string | null
+          billing_interval: string | null
           cancelled_at: string | null
           comp_granted_by: string | null
           comp_note: string | null
@@ -4984,6 +5078,7 @@ export type Database = {
           starts_at: string
           status: string
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
           user_id: string
@@ -5051,6 +5146,7 @@ export type Database = {
         Returns: {
           apple_original_transaction_id: string | null
           apple_product_id: string | null
+          billing_interval: string | null
           cancelled_at: string | null
           comp_granted_by: string | null
           comp_note: string | null
@@ -5067,6 +5163,7 @@ export type Database = {
           starts_at: string
           status: string
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
           user_id: string
@@ -5078,6 +5175,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      safe_uuid: { Args: { p_value: string }; Returns: string }
       seller_can_sell: { Args: { p_user_id: string }; Returns: boolean }
       submit_model_version: {
         Args: { p_version_id: string }

@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { requireUserAuth } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
 
@@ -14,7 +13,7 @@ export default defineEventHandler(async (event) => {
   since.setUTCDate(since.getUTCDate() - 30);
   const sinceDay = since.toISOString().slice(0, 10);
 
-  const db = getServiceClient() as unknown as SupabaseClient;
+  const db = getServiceClient();
 
   const { data, error } = await db
     .from('mcp_usage_daily')

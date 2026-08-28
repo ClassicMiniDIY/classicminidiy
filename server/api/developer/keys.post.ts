@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { requireUserAuth } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
 import {
@@ -25,7 +24,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Name must be 1-60 characters' });
   }
 
-  const db = getServiceClient() as unknown as SupabaseClient;
+  const db = getServiceClient();
 
   const { count, error: countError } = await db
     .from('api_keys')

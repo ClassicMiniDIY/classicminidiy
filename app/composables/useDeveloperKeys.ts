@@ -87,9 +87,7 @@ export function useDeveloperKeys() {
    *  resolve to "not subscribed" — the badge is informational, never a gate. */
   const fetchSubscription = async (): Promise<void> => {
     try {
-      // Cast drops once the post-migration `bun run gen:types` lands
-      // get_my_subscription in the generated Database type.
-      const { data, error } = await (supabase.rpc as any)('get_my_subscription', {
+      const { data, error } = await supabase.rpc('get_my_subscription', {
         p_product_id: 'developer',
       });
       if (error) throw error;

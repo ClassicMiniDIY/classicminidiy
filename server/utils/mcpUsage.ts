@@ -1,5 +1,4 @@
 import type { H3Event } from 'h3';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { getMcpAuth } from './mcpTiers';
 import { getServiceClient } from './supabase';
 
@@ -64,10 +63,7 @@ export function recordMcpUsage(event: H3Event, toolName: string): void {
 
   // Exact per-key counts for the dashboard. Internal env keys have no row.
   if (auth?.keyId && auth.userId) {
-    // Cast drops once the post-migration `bun run gen:types` lands api_keys/
-    // increment_mcp_usage in the generated Database type.
-    const db = getServiceClient() as unknown as SupabaseClient;
-    const increment = db
+    const increment = getServiceClient()
       .rpc('increment_mcp_usage', {
         p_key_id: auth.keyId,
         p_user_id: auth.userId,

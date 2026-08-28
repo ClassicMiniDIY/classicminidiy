@@ -1,4 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { requireUserAuth } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
 
@@ -11,9 +10,7 @@ import { getServiceClient } from '../../utils/supabase';
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserAuth(event);
 
-  // Cast drops once the post-migration `bun run gen:types` lands api_keys in
-  // the generated Database type.
-  const db = getServiceClient() as unknown as SupabaseClient;
+  const db = getServiceClient();
 
   const { data, error } = await db
     .from('api_keys')
