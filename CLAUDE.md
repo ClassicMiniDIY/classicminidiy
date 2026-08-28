@@ -59,7 +59,7 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 
 **Classic Mini DIY** is a comprehensive web application serving as both a toolkit and permanent archive for Classic Mini enthusiasts. It provides technical information, calculators, historical documents, and interactive tools for Classic Mini owners and mechanics.
 
-- **Framework**: Nuxt `~4.4.8` (Vue 3.5) with TypeScript — deliberately pinned, see "Intentional dependency pins"
+- **Framework**: Nuxt `~4.5.2` (Vue 3.5) with TypeScript
 - **Purpose**: Classic Mini car enthusiast website and knowledgebase
 - **URL**: https://classicminidiy.com
 - **Repository**: https://github.com/somethingnew71/classicminidiy
@@ -69,7 +69,7 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 
 ### Frontend
 
-- **Framework**: Nuxt `~4.4.8` with TypeScript (pinned — do not bump to 4.5.x)
+- **Framework**: Nuxt `~4.5.2` with TypeScript
 - **UI Components**: **daisyUI 5** (`card`, `btn`, `badge`, `modal`, `tabs`, `alert`, …). `@nuxt/ui` is NOT installed — it was removed in `3c6d6125 refactor: migrate from @nuxt/ui to daisyui 5`, and `<U*>` components do not exist in this codebase
 - **Styling**: TailwindCSS `^4.3.3` with @tailwindcss/vite
 - **Icons**: Font Awesome 6 (exclusive icon library - no Heroicons or Lucide)
@@ -109,7 +109,7 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 
 ### Key Technologies
 
-- **Nuxt `~4.4.8`** with Vue 3.5 Composition API (pinned — do not bump to 4.5.x)
+- **Nuxt `~4.5.2`** with Vue 3.5 Composition API
 - **TypeScript** for type safety
 - **daisyUI 5** for UI components (buttons, cards, badges, modals, tabs, alerts) — loaded as a Tailwind 4 plugin via `@plugin "daisyui"` in `app/assets/css/main.css`, not a Nuxt module
 - **TailwindCSS `^4.3.3`** with @tailwindcss/vite for styling
@@ -1103,19 +1103,26 @@ build-time-only file: `bunx nuxi build --dotenv <file>`.
 
 ### Intentional dependency pins (do not blindly bump)
 
-- **`nuxt` is held at `~4.4.8` — do NOT move to 4.5.x yet.** Nuxt 4.5's head-pipeline
-  change breaks `nuxt-schema-org` (via `@nuxtjs/seo`): every SSR request throws
-  `unhandledRejection ... reading 'resolveGraph'/'push'` and ALL schema.org JSON-LD
-  renders as an EMPTY `<script type="application/ld+json">` — silently killing the GEO
-  structured-data work. Upstream: https://github.com/harlan-zw/nuxt-seo/issues/588 (open).
-  Nuxt 4.5 also surfaced (fixes already landed here, kept forward-compatible):
-  rolldown-vite requires function-form `manualChunks` + `cssMinify: 'esbuild'`
-  (lightningcss chokes on daisyUI `round(to-zero, ...)`), highcharts-vue's UMD default
-  import needs the install-unwrap in `app/plugins/highcharts.ts`, and
-  `await useFetch(() => '/url')` (getter form) stops blocking async setup — SSR renders
-  the pending branch and client hydration hangs (fixed in Needles.vue; check
-  `ModelComments.vue`'s reactive getter when unpinning). When #588 is fixed: bump nuxt,
-  re-verify JSON-LD is non-empty on a built page, and adopt `experimental.watcher: 'builder'`.
+- **`nuxt` is on `~4.5.2`. The 4.4.8 hold is LIFTED — do not reinstate it.** It was held
+  because Nuxt 4.5's head-pipeline change broke `nuxt-schema-org` (via `@nuxtjs/seo`): every
+  SSR request threw `unhandledRejection ... reading 'resolveGraph'/'push'` and ALL schema.org
+  JSON-LD rendered as an EMPTY `<script type="application/ld+json">`, silently killing the GEO
+  structured-data work (upstream: https://github.com/harlan-zw/nuxt-seo/issues/588). That no
+  longer reproduces on nuxt 4.5.2 with the current `@nuxtjs/seo`: a built page carries a full
+  `@graph`, and `/chat` renders two non-empty blocks. **If you touch the nuxt or `@nuxtjs/seo`
+  version, re-verify JSON-LD is non-empty on a BUILT page** — that check is the whole reason
+  this note exists, and an empty `ld+json` is silent.
+
+  The other 4.5 breakages are fixed in-tree, not worked around: rolldown-vite requires
+  function-form `manualChunks` + `cssMinify: 'esbuild'` (lightningcss chokes on daisyUI
+  `round(to-zero, ...)`), highcharts-vue's UMD default import needs the install-unwrap in
+  `app/plugins/highcharts.ts`, and `await useFetch(() => '/url')` — the getter form — stops
+  blocking async setup, so SSR renders the pending branch and hydration hangs. Both call
+  sites are converted: `Needles.vue` to a plain string (its URL was static), and
+  `ModelComments.vue` to a **computed ref**, which it needs rather than a string because
+  `/models/[slug]` reuses that component across model navigations, so `props.modelId`
+  changes in place. `useFetch` wraps its request in `computed(() => toValue(request))`, so a
+  computed ref keeps the reactivity a getter gave. **Do not reintroduce the getter form.**
 - **`dompurify` is pinned to an exact version (currently `3.4.14`), and
   `tests/unit/exchange/utils/markdown.test.ts` MUST stay on `@vitest-environment jsdom`.**
   These two facts are one contract — don't change either in isolation. Since 3.4.8
@@ -1325,7 +1332,7 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 
 **Major Framework Upgrades:**
 
-- **Nuxt 4**: Upgraded from Nuxt 3; now pinned at `~4.4.8` (see "Intentional dependency pins")
+- **Nuxt 4**: Upgraded from Nuxt 3; now on `~4.5.2` (the 4.4.8 hold is lifted)
 - **TailwindCSS v4**: Migration to TailwindCSS 4.x with @tailwindcss/vite for better build performance and developer experience
 - **Node.js 24**: Updated Node.js requirement to v24+ for latest performance improvements
 - **Bun Package Manager**: Migrated from npm to bun for faster dependency installation and script execution
@@ -1342,7 +1349,7 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 **Key Dependencies Updated:**
 
 - `@aws-sdk/*` packages: v3.894.0
-- `nuxt`: `~4.4.8` (pinned)
+- `nuxt`: `~4.5.2`
 - `daisyui`: v5.6.18 (Tailwind 4 plugin — replaced `@nuxt/ui`)
 - `tailwindcss`: `^4.3.3`
 - `fuse.js`: `^7.5.0`

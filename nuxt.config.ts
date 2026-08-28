@@ -310,8 +310,9 @@ export default defineNuxtConfig({
     renderJsonPayloads: true,
     // Enable async context for server composables (required for MCP tools)
     asyncContext: true,
-    // When the nuxt 4.5 hold is lifted (see CLAUDE.md "Intentional dependency
-    // pins"), adopt `watcher: 'builder'` here (4.5 feature, default in v5).
+    // Dev-only file watcher. The 4.5 hold is lifted, so this is now adopted as
+    // planned; it becomes the default in v5.
+    watcher: 'builder',
   },
 
   /*
