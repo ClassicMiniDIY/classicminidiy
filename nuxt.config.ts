@@ -254,6 +254,8 @@ export default defineNuxtConfig({
       // path a "known route" to the sitemap module, so exclude them explicitly
       // rather than relying on redirect-detection.
       '/technical/calculators/**',
+      // Typo-guessable singular of /developers, 301'd in routeRules below.
+      '/developer',
       // Same treatment for the pre-cutover marketplace browse path, 301'd to
       // /exchange/listings in routeRules below.
       '/listings',
@@ -578,6 +580,10 @@ export default defineNuxtConfig({
     // Google. 301 them onto the real tools instead.
     '/technical/calculators/needles': { redirect: { to: '/technical/needles', statusCode: 301 } },
     '/technical/calculators/gearbox': { redirect: { to: '/technical/gearing', statusCode: 301 } },
+    // Guessable singular of the Developer API landing page. Without this the
+    // site-wide catch-all hard-404s it (correctly, but unhelpfully for a typed
+    // URL). Excluded from the sitemap alongside the other routeRule redirects.
+    '/developer': { redirect: { to: '/developers', statusCode: 301 } },
     '/admin/**': { prerender: false },
     // Admin consolidation (2026-08-26). /admin/inbox and the three per-type
     // review screens all read the SAME `submission_queue` table — the review
