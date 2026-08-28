@@ -1049,7 +1049,7 @@ build-time-only file: `bunx nuxi build --dotenv <file>`.
 
 ### Dynamic Content
 
-- **DynamoDB**: User-generated content (registry, wheels)
+- **Supabase**: User-generated content (registry, wheels, colors, submissions)
 - **S3**: File storage for images and documents
 
 ## Deployment
