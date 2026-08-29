@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import type { AdminDeveloperOverview } from '~/composables/useAdminDeveloper';
+
   /**
    * /admin/developer — the fleet view for the Developer API.
    *
@@ -16,7 +18,7 @@
 
   const loading = ref(true);
   const error = ref('');
-  const data = ref<any>(null);
+  const data = ref<AdminDeveloperOverview | null>(null);
 
   onMounted(async () => {
     try {

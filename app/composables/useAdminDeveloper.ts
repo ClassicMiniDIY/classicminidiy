@@ -34,6 +34,25 @@ export interface AdminDeveloperKey {
   last_used_at: string | null;
 }
 
+export interface AdminDeveloperSubscriber {
+  user_id: string;
+  name: string | null;
+  platform: string;
+  billing_interval: string | null;
+  expires_at: string | null;
+  comp_note: string | null;
+  active_keys: number;
+  calls_30d: number;
+}
+
+export interface AdminDeveloperOverview {
+  since: string;
+  subscribers: AdminDeveloperSubscriber[];
+  totals: { subscribers: number; paid: number; comped: number; active_keys: number; calls_30d: number };
+  top_users: { user_id: string; name: string | null; calls: number }[];
+  top_tools: { tool: string; calls: number }[];
+}
+
 export interface AdminUsageRow {
   key_id: string;
   tool: string;
@@ -104,7 +123,15 @@ export const useAdminDeveloper = () => {
     }
   };
 
-  const getOverview = async () => $authFetch<any>('/api/admin/developer/overview');
+  /** Fleet view. Aggregated in SQL: mcp_usage_daily has one row per
+   *  (key, tool, day), so selecting raw rows would silently truncate at
+   *  PostgREST's row cap and under-report every total. Runs under the admin's
+   *  own JWT because is_admin() reads auth.uid(). */
+  const getOverview = async (): Promise<AdminDeveloperOverview> => {
+    const { data, error } = await supabase.rpc('admin_developer_overview');
+    if (error) throw error;
+    return data as unknown as AdminDeveloperOverview; // RPC returns jsonb
+  };
 
   return { getSummary, grantComp, revokeComp, listKeys, issueKey, revokeKey, getUsage, refreshKeyCache, getOverview };
 };

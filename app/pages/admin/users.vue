@@ -1084,22 +1084,33 @@
               <p v-if="devSummary.comp_note" class="text-xs opacity-60 mt-2">Comp note: {{ devSummary.comp_note }}</p>
             </div>
 
-            <!-- Comp controls. A real Stripe subscription is never touched here. -->
-            <div v-if="devSummary.platform === 'stripe'" class="alert alert-info mb-3">
-              <i class="fas fa-circle-info" aria-hidden="true"></i>
-              <span class="text-sm">Paying subscriber — cancel through Stripe, not here. A comp would be redundant.</span>
-            </div>
-            <div v-else class="mb-4">
+            <!-- Comp controls. A real Stripe subscription is never touched here.
+                 Revoke sits OUTSIDE the Stripe branch on purpose: the summary
+                 prefers a real purchase when reporting `platform`, so a user
+                 with both Stripe and a comp reads as 'stripe' while
+                 has_active_comp is still true. Nesting Revoke inside the
+                 non-Stripe branch would make that comp unrevokable, and it
+                 would silently keep granting free access if the Stripe
+                 subscription later lapsed. -->
+            <div v-if="devSummary.has_active_comp" class="mb-3">
               <button
-                v-if="devSummary.has_active_comp"
                 type="button"
-                class="btn btn-outline btn-error btn-sm mb-2"
+                class="btn btn-outline btn-error btn-sm"
                 :disabled="devLoading"
                 @click="submitRevokeDevComp"
               >
                 <i class="fas fa-xmark" aria-hidden="true"></i>
                 Revoke Developer API comp
               </button>
+              <p v-if="devSummary.platform === 'stripe'" class="text-xs opacity-60 mt-1">
+                This user also has an active comp on top of their Stripe subscription.
+              </p>
+            </div>
+            <div v-if="devSummary.platform === 'stripe'" class="alert alert-info mb-3">
+              <i class="fas fa-circle-info" aria-hidden="true"></i>
+              <span class="text-sm">Paying subscriber — cancel through Stripe, not here.</span>
+            </div>
+            <div v-else class="mb-4">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <label class="form-control">
                   <div class="label py-1"><span class="label-text text-xs">Reason / note (optional)</span></div>

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -4554,6 +4554,22 @@ export type Database = {
       }
     }
     Functions: {
+      admin_developer_overview: { Args: never; Returns: Json }
+      admin_get_developer_summary: {
+        Args: { p_user_id: string }
+        Returns: {
+          active_key_count: number
+          billing_interval: string
+          calls_30d: number
+          comp_expires_at: string
+          comp_note: string
+          expires_at: string
+          has_active_comp: boolean
+          is_active: boolean
+          platform: string
+          status: string
+        }[]
+      }
       admin_get_membership: {
         Args: { p_user_id: string }
         Returns: {
@@ -4940,7 +4956,12 @@ export type Database = {
         }[]
       }
       grant_comp_membership: {
-        Args: { p_expires_at?: string; p_note?: string; p_user_id: string }
+        Args: {
+          p_expires_at?: string
+          p_note?: string
+          p_product_id?: string
+          p_user_id: string
+        }
         Returns: {
           apple_original_transaction_id: string | null
           apple_product_id: string | null
@@ -5142,7 +5163,7 @@ export type Database = {
         }
       }
       revoke_comp_membership: {
-        Args: { p_user_id: string }
+        Args: { p_product_id?: string; p_user_id: string }
         Returns: {
           apple_original_transaction_id: string | null
           apple_product_id: string | null
