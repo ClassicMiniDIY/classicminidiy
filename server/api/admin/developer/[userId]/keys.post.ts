@@ -70,6 +70,23 @@ export default defineEventHandler(async (event) => {
     .removeItem(keyCacheId(keyHash))
     .catch(() => {});
 
+  // The count-then-insert above races with itself, and there is no DB-side
+  // constraint behind the cap — recount and roll this insert back if it pushed
+  // the user over. Kept identical to the self-serve route so the two
+  // enforcement paths cannot drift.
+  const { count: afterCount } = await db
+    .from('api_keys')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .is('revoked_at', null);
+  if ((afterCount ?? 0) > MCP_MAX_ACTIVE_KEYS) {
+    await db.from('api_keys').delete().eq('id', data.id);
+    throw createError({
+      statusCode: 409,
+      statusMessage: `User already holds the maximum of ${MCP_MAX_ACTIVE_KEYS} active API keys`,
+    });
+  }
+
   await db.from('admin_audit_log').insert({
     admin_id: admin.id,
     action: 'developer_key_issued',
