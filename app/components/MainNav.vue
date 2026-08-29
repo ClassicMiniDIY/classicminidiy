@@ -21,6 +21,29 @@
   const switchLocalePath = useSwitchLocalePath();
   const { t, locale, locales, setLocale } = useI18n();
   const { user, userProfile, isAuthenticated, isAdmin, signOut } = useAuth();
+
+  /**
+   * SSR/client parity gate. The Supabase session lives in localStorage, so
+   * `isAuthenticated` is ALWAYS false during SSR and flips true on the client
+   * once `initAuth()` restores it. Branching the template straight off it made
+   * the server emit the signed-OUT `v-else` subtree while the client's first
+   * render wanted the signed-IN one — a structural hydration mismatch, the same
+   * class of bug documented for `/chat`. Vue's repair merged the two branches:
+   * the signed-out wrapper survived and the account `<ul class="dropdown-content">`
+   * was patched into it, orphaned from any `.dropdown`. Every daisyUI rule that
+   * positions and hides a menu is scoped `.dropdown … .dropdown-content`, so the
+   * orphan lost `position: absolute` AND its closed-state `display: none` — it
+   * rendered in the header's flex row, permanently visible, spilling off-screen.
+   * The language dropdown next to it was collateral damage.
+   *
+   * Gating on `hasMounted` makes the client's FIRST render identical to SSR
+   * (signed-out), then flips to signed-in as an ordinary reactive update. Never
+   * branch the template on `isAuthenticated`/`isAdmin` directly.
+   */
+  const hasMounted = ref(false);
+  onMounted(() => (hasMounted.value = true));
+  const isSignedIn = computed(() => hasMounted.value && isAuthenticated.value);
+  const showAdminLink = computed(() => hasMounted.value && isAdmin.value);
   const { track, trackOutbound } = useAnalytics();
   const { open: openOmnisearch } = useOmnisearch();
   // Read-only here: `MessagesNavButton` owns the fetch + subscription, and the
@@ -255,12 +278,12 @@
 
       <!-- Inbox, left of the theme toggle. Signed-in only — there is nothing to
            count otherwise, and /exchange/messages is behind `exchange-auth`. -->
-      <MessagesNavButton v-if="isAuthenticated" />
+      <MessagesNavButton v-if="isSignedIn" />
 
       <ColorModeButton size="sm" />
 
       <!-- Account -->
-      <div v-if="isAuthenticated" class="dropdown dropdown-end">
+      <div v-if="isSignedIn" class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="avatar-button" :aria-label="displayName">
           <!-- Sized in px, not `h-full w-full`. A percentage against an
                auto-height parent resolves to `auto`, i.e. the image's INTRINSIC
@@ -337,7 +360,7 @@
             </details>
           </li>
 
-          <li v-if="isAdmin" class="mt-1">
+          <li v-if="showAdminLink" class="mt-1">
             <NuxtLink to="/admin" @click="closeDropdowns()">
               <i class="fas fa-shield-check w-4" aria-hidden="true"></i>
               {{ t('profile.admin') }}
@@ -447,7 +470,7 @@
               <div class="my-2 mx-1.5 h-px bg-base-300"></div>
 
               <NuxtLink
-                v-if="isAuthenticated"
+                v-if="isSignedIn"
                 to="/exchange/messages"
                 class="drawer-link"
                 :class="{ 'is-active': isActive('/exchange/messages') }"
@@ -461,7 +484,7 @@
               </NuxtLink>
 
               <NuxtLink
-                v-if="isAuthenticated"
+                v-if="isSignedIn"
                 to="/dashboard/api-keys"
                 class="drawer-link"
                 :class="{ 'is-active': isActive('/dashboard/api-keys') }"
@@ -471,7 +494,7 @@
                 {{ t('profile.api_tools') }}
               </NuxtLink>
 
-              <NuxtLink v-if="isAdmin" to="/admin" class="drawer-link" @click="goToDrawerLink(t('profile.admin'))">
+              <NuxtLink v-if="showAdminLink" to="/admin" class="drawer-link" @click="goToDrawerLink(t('profile.admin'))">
                 <i class="fas fa-shield-check w-[18px] text-secondary" aria-hidden="true"></i>
                 {{ t('profile.admin') }}
               </NuxtLink>
@@ -497,7 +520,7 @@
             <!-- Profile row, pinned: contributor identity is present everywhere -->
             <div class="border-t border-base-300 p-3.5">
               <NuxtLink
-                v-if="isAuthenticated"
+                v-if="isSignedIn"
                 to="/profile"
                 class="flex items-center gap-3"
                 @click="goToDrawerLink('profile')"
@@ -526,7 +549,7 @@
                 </NuxtLink>
               </template>
               <button
-                v-if="isAuthenticated"
+                v-if="isSignedIn"
                 type="button"
                 class="btn btn-ghost btn-sm btn-block mt-2 justify-start text-error"
                 @click="handleSignOut"
