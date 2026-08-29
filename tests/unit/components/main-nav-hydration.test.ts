@@ -51,7 +51,10 @@ describe('MainNav hydration safety', () => {
   it('never branches structurally on ungated auth state', () => {
     // `v-if`/`v-else-if` change STRUCTURE, so an SSR/client disagreement
     // corrupts the DOM. Route them through a mounted-gated computed instead.
-    const offenders = [...src.matchAll(/v-(?:if|else-if)="([^"]*)"/g)]
+    // Commented-out markup is dead text, not a live hazard — strip it first, or
+    // a refactor that comments out an old branch fails CI for no reason.
+    const live = src.replace(/<!--[\s\S]*?-->/g, '');
+    const offenders = [...live.matchAll(/v-(?:if|else-if)="([^"]*)"/g)]
       .map((m) => m[1] as string)
       .filter((expr) => /\b(isAuthenticated|isAdmin)\b/.test(expr))
       .filter((expr) => !/\bhasMounted\b/.test(expr));
@@ -87,7 +90,10 @@ describe('dropdown structure', () => {
         const isContent = tokens.includes('dropdown-content');
         const isWrapper = tokens.includes('dropdown');
 
-        if (isContent && !insideDropdown && !isWrapper) {
+        // No `!isWrapper` exemption: daisyUI's rules (and ours in main.css) are
+        // all descendant-scoped `.dropdown .dropdown-content`, so stacking both
+        // classes on ONE element still yields no position and no hide rule.
+        if (isContent && !insideDropdown) {
           orphans.push(`${relative(process.cwd(), file)}:${node.loc?.start?.line} (class="${cls}")`);
         }
         for (const child of node.children ?? []) {
