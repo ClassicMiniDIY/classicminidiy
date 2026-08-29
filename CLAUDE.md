@@ -320,6 +320,33 @@ specific case in dev, fetch the transformed module and look at the vue import li
 
 ### Dropdown invariants
 
+- **A "dropdown is always visible and off-screen" report is a HYDRATION bug until proven
+  otherwise — do not start in the CSS.** The Supabase session lives in localStorage, so
+  `useAuth().isAuthenticated` is ALWAYS false during SSR and flips true on the client after
+  `initAuth()`. `MainNav` branched a `v-if`/`v-else` pair straight off it, so the server
+  emitted the signed-OUT subtree while the client's first render wanted the signed-IN one.
+  Vue's hydration repair merged them: the signed-out wrapper survived and the account
+  `<ul class="dropdown-content">` was patched INTO it, orphaned from any `.dropdown`.
+  Because every rule that places or hides a menu is scoped `.dropdown … .dropdown-content`,
+  an orphan loses `position: absolute` (lays out in the header flex row, spills right) AND
+  its closed-state `display: none` (never hides) — one defect, both symptoms. The adjacent
+  language dropdown lost its own menu as collateral, which is the tell that this is
+  structural corruption rather than styling. Fix: gate structural auth branches on a
+  `hasMounted` ref (`isSignedIn`/`showAdminLink` in `MainNav.vue`), never on
+  `isAuthenticated`/`isAdmin` directly — same rule as `/chat` and the passkey UI.
+  `tests/unit/components/main-nav-hydration.test.ts` enforces both halves.
+
+  **~19 other call sites in `app/` still branch structurally on ungated
+  `isAuthenticated`/`isAdmin`** (pages/dashboard, profile, contribute, models/upload,
+  membership, archive detail pages, several calculators). They are latent instances of the
+  same bug; they bite less because they are not sticky chrome with a neighbouring dropdown
+  to clobber. Gate them when you touch them.
+
+- **Verify dropdown fixes in FIREFOX, not only the Chromium preview pane.** This bug was
+  reported on Firefox 154 and every prior verification ran in Chromium, which is why it
+  survived being "fixed" repeatedly. Hydration-mismatch repair is browser- and
+  timing-dependent, so a clean Chromium check is not evidence.
+
 - **Dropdown behaviour is global, in `app/assets/css/main.css`, not per component.** daisyUI 5's
   `.dropdown .dropdown-content` sets ONLY `position: absolute` — no `top`, no `bottom`, no size
   limit — so placement falls out of the static position and a menu taller than the window has no
