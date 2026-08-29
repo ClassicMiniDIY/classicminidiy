@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { nextTick } from 'vue';
   import type { AdminMembership } from '~/composables/useAdminMembership';
+  import type { AdminDeveloperKey, AdminDeveloperSummary, AdminUsageRow } from '~/composables/useAdminDeveloper';
 
   useHead({
     title: 'Admin - User Management',
@@ -327,8 +328,14 @@
     membershipData.value = null;
     compNote.value = '';
     compExpiry.value = '';
+    devSummary.value = null;
+    devKeys.value = [];
+    devUsage.value = [];
+    devIssuedKey.value = null;
+    devPendingRevokeKey.value = null;
+    devError.value = '';
     showMembershipModal.value = true;
-    await loadMembership(userItem.id);
+    await Promise.all([loadMembership(userItem.id), loadDeveloper(userItem.id)]);
   }
 
   async function closeMembershipModal() {
@@ -336,6 +343,11 @@
     await nextTick();
     membershipUser.value = null;
     membershipData.value = null;
+    // The issued plaintext must not survive the modal.
+    devIssuedKey.value = null;
+    devSummary.value = null;
+    devKeys.value = [];
+    devUsage.value = [];
   }
 
   async function submitGrantComp() {
@@ -366,6 +378,136 @@
       membershipError.value = error?.message || 'Failed to revoke comp membership';
     } finally {
       membershipLoading.value = false;
+    }
+  }
+
+  // --- Developer API (paid MCP access) ---
+  // Design doc: docs/plans/2026-08-29-developer-api-admin.md. Comp grant/revoke
+  // reuse the same is_admin()-gated RPCs as Sustaining above, product-scoped to
+  // 'developer'; keys and usage go through /api/admin/developer/** because
+  // issuing and revoking must also purge the worker's KV auth cache.
+  const {
+    getSummary: getDevSummary,
+    grantComp: grantDevComp,
+    revokeComp: revokeDevComp,
+    listKeys: listDevKeys,
+    issueKey: issueDevKey,
+    revokeKey: revokeDevKey,
+    getUsage: getDevUsage,
+  } = useAdminDeveloper();
+
+  const devSummary = ref<AdminDeveloperSummary | null>(null);
+  const devKeys = ref<AdminDeveloperKey[]>([]);
+  const devUsage = ref<AdminUsageRow[]>([]);
+  const devLoading = ref(false);
+  const devError = ref('');
+  const devCompNote = ref('');
+  const devCompExpiry = ref('');
+  const devPendingRevokeKey = ref<AdminDeveloperKey | null>(null);
+  // The plaintext of a just-issued key. Held only while the reveal is on
+  // screen; cleared when the modal closes, exactly like the user-facing flow.
+  const devIssuedKey = ref<string | null>(null);
+
+  /** Total calls per tool over the window, biggest first — the useful shape for
+   *  a support conversation ("what are they actually calling?"). */
+  const devUsageByTool = computed(() => {
+    const totals = new Map<string, number>();
+    for (const row of devUsage.value) totals.set(row.tool, (totals.get(row.tool) ?? 0) + row.call_count);
+    return [...totals.entries()].sort((a, b) => b[1] - a[1]);
+  });
+  const devUsageTotal = computed(() => devUsage.value.reduce((sum, r) => sum + r.call_count, 0));
+
+  async function loadDeveloper(userId: string) {
+    devLoading.value = true;
+    devError.value = '';
+    try {
+      const [summary, keys, usage] = await Promise.all([
+        getDevSummary(userId),
+        listDevKeys(userId),
+        getDevUsage(userId),
+      ]);
+      devSummary.value = summary;
+      devKeys.value = keys;
+      devUsage.value = usage;
+      devCompNote.value = summary.has_active_comp ? (summary.comp_note ?? '') : '';
+      devCompExpiry.value = summary.comp_expires_at ? summary.comp_expires_at.slice(0, 10) : '';
+    } catch (error: any) {
+      devError.value = error?.statusMessage || error?.message || 'Failed to load Developer API status';
+    } finally {
+      devLoading.value = false;
+    }
+  }
+
+  async function submitGrantDevComp() {
+    if (!membershipUser.value) return;
+    devLoading.value = true;
+    devError.value = '';
+    try {
+      const expiresAt = devCompExpiry.value ? new Date(`${devCompExpiry.value}T23:59:59Z`).toISOString() : null;
+      await grantDevComp(membershipUser.value.id, devCompNote.value.trim() || null, expiresAt);
+      track('admin_action', { item_type: 'user', action: 'developer_comp_granted' });
+      await loadDeveloper(membershipUser.value.id);
+    } catch (error: any) {
+      devError.value = error?.message || 'Failed to grant Developer API comp';
+    } finally {
+      devLoading.value = false;
+    }
+  }
+
+  async function submitRevokeDevComp() {
+    if (!membershipUser.value) return;
+    devLoading.value = true;
+    devError.value = '';
+    try {
+      await revokeDevComp(membershipUser.value.id);
+      track('admin_action', { item_type: 'user', action: 'developer_comp_revoked' });
+      await loadDeveloper(membershipUser.value.id);
+    } catch (error: any) {
+      devError.value = error?.message || 'Failed to revoke Developer API comp';
+    } finally {
+      devLoading.value = false;
+    }
+  }
+
+  async function submitIssueDevKey() {
+    if (!membershipUser.value) return;
+    devLoading.value = true;
+    devError.value = '';
+    try {
+      const created = await issueDevKey(membershipUser.value.id);
+      devIssuedKey.value = created.key;
+      track('admin_action', { item_type: 'user', action: 'developer_key_issued' });
+      await loadDeveloper(membershipUser.value.id);
+    } catch (error: any) {
+      devError.value = error?.statusMessage || error?.message || 'Failed to issue API key';
+    } finally {
+      devLoading.value = false;
+    }
+  }
+
+  async function submitRevokeDevKey(key: AdminDeveloperKey) {
+    if (!membershipUser.value) return;
+    devLoading.value = true;
+    devError.value = '';
+    try {
+      await revokeDevKey(key.id);
+      devPendingRevokeKey.value = null;
+      track('admin_action', { item_type: 'user', action: 'developer_key_revoked' });
+      await loadDeveloper(membershipUser.value.id);
+    } catch (error: any) {
+      devError.value = error?.statusMessage || error?.message || 'Failed to revoke API key';
+    } finally {
+      devLoading.value = false;
+    }
+  }
+
+  async function copyIssuedKey() {
+    if (!devIssuedKey.value) return;
+    try {
+      await navigator.clipboard.writeText(devIssuedKey.value);
+      addToast({ title: 'Key copied to clipboard.', color: 'success', icon: 'fas fa-circle-check' });
+    } catch {
+      addToast({ title: 'Could not copy — select the text instead.', color: 'error', icon: 'fas fa-triangle-exclamation' });
     }
   }
 
@@ -771,7 +913,7 @@
 
     <!-- Comp Membership Modal -->
     <dialog class="modal" :class="{ 'modal-open': showMembershipModal }">
-      <div class="modal-box">
+      <div class="modal-box max-w-2xl">
         <h3 class="font-bold text-lg mb-4">Manage Membership</h3>
 
         <!-- User summary -->
@@ -903,6 +1045,169 @@
             </button>
           </div>
         </template>
+
+        <!-- Developer API (paid MCP access) -->
+        <div class="border-t border-base-300 pt-4 mt-4">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-code opacity-70" aria-hidden="true"></i>
+            <h4 class="font-bold">Developer API</h4>
+            <span v-if="devSummary?.is_active" class="badge badge-primary badge-sm">
+              {{ devSummary.platform === 'comp' ? 'Comped' : 'Subscribed' }}
+            </span>
+            <span v-else-if="devSummary" class="badge badge-ghost badge-sm">Free tier</span>
+          </div>
+
+          <div v-if="devError" role="alert" class="alert alert-error mb-3">
+            <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+            <span>{{ devError }}</span>
+          </div>
+
+          <div v-if="devLoading && !devSummary" class="flex justify-center py-6">
+            <span class="loading loading-spinner loading-md"></span>
+          </div>
+
+          <template v-else-if="devSummary">
+            <!-- Status line -->
+            <div class="bg-base-200 rounded-box p-3 mb-3 text-sm">
+              <div class="flex flex-wrap gap-x-6 gap-y-1">
+                <span>
+                  <span class="opacity-60">Access:</span>
+                  <strong>{{ devSummary.is_active ? 'All 11 tools' : '7 free tools' }}</strong>
+                </span>
+                <span v-if="devSummary.platform">
+                  <span class="opacity-60">Via:</span> <strong>{{ devSummary.platform }}</strong>
+                  <template v-if="devSummary.billing_interval"> ({{ devSummary.billing_interval }}ly)</template>
+                </span>
+                <span><span class="opacity-60">Active keys:</span> <strong>{{ devSummary.active_key_count }}</strong></span>
+                <span><span class="opacity-60">Calls (30d):</span> <strong>{{ devSummary.calls_30d }}</strong></span>
+              </div>
+              <p v-if="devSummary.comp_note" class="text-xs opacity-60 mt-2">Comp note: {{ devSummary.comp_note }}</p>
+            </div>
+
+            <!-- Comp controls. A real Stripe subscription is never touched here. -->
+            <div v-if="devSummary.platform === 'stripe'" class="alert alert-info mb-3">
+              <i class="fas fa-circle-info" aria-hidden="true"></i>
+              <span class="text-sm">Paying subscriber — cancel through Stripe, not here. A comp would be redundant.</span>
+            </div>
+            <div v-else class="mb-4">
+              <button
+                v-if="devSummary.has_active_comp"
+                type="button"
+                class="btn btn-outline btn-error btn-sm mb-2"
+                :disabled="devLoading"
+                @click="submitRevokeDevComp"
+              >
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+                Revoke Developer API comp
+              </button>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label class="form-control">
+                  <div class="label py-1"><span class="label-text text-xs">Reason / note (optional)</span></div>
+                  <input
+                    v-model="devCompNote"
+                    type="text"
+                    placeholder="e.g. Contributor, partner, make-good"
+                    class="input input-bordered input-sm w-full"
+                    :disabled="devLoading"
+                  />
+                </label>
+                <label class="form-control">
+                  <div class="label py-1">
+                    <span class="label-text text-xs">Expires (blank = permanent)</span>
+                  </div>
+                  <input v-model="devCompExpiry" type="date" class="input input-bordered input-sm w-full" :disabled="devLoading" />
+                </label>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm btn-block mt-2" :disabled="devLoading" @click="submitGrantDevComp">
+                <i v-if="devLoading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                <i v-else class="fas fa-gift" aria-hidden="true"></i>
+                {{ devSummary.has_active_comp ? 'Update comp' : 'Comp Developer API' }}
+              </button>
+            </div>
+
+            <!-- Keys -->
+            <p class="font-semibold text-sm mb-2">API keys</p>
+            <p v-if="!devKeys.length" class="text-sm opacity-60 mb-2">No active keys.</p>
+            <ul v-else class="divide-y divide-base-300 mb-2">
+              <li v-for="key in devKeys" :key="key.id" class="py-2 flex items-center gap-3">
+                <i class="fas fa-key opacity-60" aria-hidden="true"></i>
+                <div class="grow min-w-0">
+                  <p class="text-sm font-medium truncate">{{ key.name }}</p>
+                  <p class="text-xs opacity-60">
+                    <code>{{ key.key_prefix }}&hellip;</code>
+                    &middot; created {{ formatDate(key.created_at) }}
+                    <template v-if="key.last_used_at"> &middot; last used {{ formatDate(key.last_used_at) }}</template>
+                  </p>
+                </div>
+                <button
+                  v-if="devPendingRevokeKey?.id !== key.id"
+                  type="button"
+                  class="btn btn-ghost btn-xs text-error shrink-0"
+                  :disabled="devLoading"
+                  @click="devPendingRevokeKey = key"
+                >
+                  Revoke
+                </button>
+                <span v-else class="flex items-center gap-1 shrink-0">
+                  <button type="button" class="btn btn-error btn-xs" :disabled="devLoading" @click="submitRevokeDevKey(key)">
+                    Confirm
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-xs" :disabled="devLoading" @click="devPendingRevokeKey = null">
+                    Cancel
+                  </button>
+                </span>
+              </li>
+            </ul>
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              :disabled="devLoading || devKeys.length >= 5"
+              @click="submitIssueDevKey"
+            >
+              <i class="fas fa-plus" aria-hidden="true"></i>
+              Issue a key for this user
+            </button>
+            <p v-if="devKeys.length >= 5" class="text-xs opacity-60 mt-1">
+              User is at the 5-key limit — revoke one first.
+            </p>
+
+            <!-- One-time reveal of an admin-issued key -->
+            <div v-if="devIssuedKey" class="alert alert-warning mt-3 flex-col items-start gap-2">
+              <div class="flex items-start gap-2">
+                <i class="fas fa-triangle-exclamation mt-1" aria-hidden="true"></i>
+                <span class="text-sm">
+                  Shown once. The key is labelled with your name in the user's own dashboard, and this issue was
+                  written to the admin audit log.
+                </span>
+              </div>
+              <div class="flex items-center gap-2 w-full">
+                <code class="bg-base-100 rounded-box p-2 text-xs break-all grow [user-select:all]">{{ devIssuedKey }}</code>
+                <button type="button" class="btn btn-sm shrink-0" @click="copyIssuedKey">
+                  <i class="fas fa-copy" aria-hidden="true"></i>
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <!-- Usage -->
+            <template v-if="devUsageByTool.length">
+              <p class="font-semibold text-sm mt-4 mb-2">Usage &mdash; last 30 days ({{ devUsageTotal }} calls)</p>
+              <div class="max-w-full overflow-x-auto rounded-box border border-base-300">
+                <table class="table table-xs">
+                  <thead>
+                    <tr><th>Tool</th><th class="text-right">Calls</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="[tool, calls] in devUsageByTool" :key="tool">
+                      <td><code>{{ tool }}</code></td>
+                      <td class="text-right">{{ calls }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+          </template>
+        </div>
 
         <!-- Actions -->
         <div class="modal-action">

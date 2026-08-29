@@ -46,7 +46,14 @@ export const useAdminMembership = () => {
     return data as AdminMembership;
   };
 
-  /** Grant/refresh a complimentary membership. expiresAt null = permanent. */
+  /** Grant/refresh a complimentary membership. expiresAt null = permanent.
+   *
+   *  The RPCs became product-scoped with the Developer API admin surface
+   *  (migration 20260829000001): p_product_id defaults to 'sustaining'
+   *  server-side, so omitting it here keeps this composable's meaning exactly
+   *  as it was. Developer API comps go through useAdminDeveloper instead,
+   *  which passes the product explicitly and also purges the worker's key
+   *  cache — a step this Sustaining path does not need. */
   const grantComp = async (userId: string, note: string | null, expiresAt: string | null): Promise<void> => {
     const { error } = await supabase.rpc('grant_comp_membership', {
       p_user_id: userId,
