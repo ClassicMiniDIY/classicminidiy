@@ -181,6 +181,7 @@
       label: 'Community',
       entries: [
         { label: 'Users', to: '/admin/users', icon: 'fas fa-users-gear' },
+        { label: 'Developer API', to: '/admin/developer', icon: 'fas fa-code' },
         { label: 'Discord Roster', to: '/admin/discord', icon: 'fab fa-discord' },
         { label: 'Chat Threads', to: '/admin/threads', icon: 'fas fa-messages' },
       ],
