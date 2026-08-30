@@ -211,25 +211,6 @@
               />
             </label>
           </div>
-
-          <div class="divider my-1"></div>
-
-          <!-- Storage Cleanup -->
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium">Storage Cleanup</p>
-              <p class="text-xs text-base-content/60">Remove orphaned image files from storage</p>
-              <div v-if="cleanupResult" class="text-xs mt-1">
-                <span class="text-success">Deleted {{ cleanupResult.deletedCount }}</span>
-                <span class="text-base-content/60"> / {{ cleanupResult.totalFilesChecked }} checked</span>
-              </div>
-            </div>
-            <button class="btn btn-outline btn-error btn-sm" :disabled="cleaningUp" @click="runStorageCleanup">
-              <i v-if="cleaningUp" class="fas fa-arrows-rotate animate-spin"></i>
-              <i v-else class="fas fa-trash"></i>
-              {{ cleaningUp ? 'Cleaning...' : 'Cleanup' }}
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -247,22 +228,14 @@
     ],
   });
 
-  const { getStats, getTrendData, cleanupOrphanedStorage } = useAdmin();
+  const { getStats, getTrendData } = useAdmin();
   const { showExamples, loadVisibility, setExampleVisibility } = useExampleListings();
   const supabase = useSupabase();
   const toast = useToast();
 
   const loading = ref(true);
-  const cleaningUp = ref(false);
   const togglingExamples = ref(false);
   const examplesVisible = ref(true);
-  const cleanupResult = ref<{
-    totalFilesChecked: number;
-    orphanedFilesFound: number;
-    deletedCount: number;
-    failedCount: number;
-  } | null>(null);
-
   const moderationCounts = ref({
     listings: 0,
     finds: 0,
@@ -391,31 +364,6 @@
       });
     } finally {
       togglingExamples.value = false;
-    }
-  };
-
-  const runStorageCleanup = async () => {
-    cleaningUp.value = true;
-    cleanupResult.value = null;
-
-    try {
-      const result = await cleanupOrphanedStorage();
-      cleanupResult.value = result as any;
-
-      toast.add({
-        title: 'Cleanup Complete',
-        description: `Deleted ${result.deletedCount} orphaned files out of ${result.orphanedFilesFound} found`,
-        color: 'success',
-      });
-    } catch (error: any) {
-      console.error('Error during cleanup:', error);
-      toast.add({
-        title: 'Cleanup Failed',
-        description: error.message || 'Failed to clean up storage',
-        color: 'error',
-      });
-    } finally {
-      cleaningUp.value = false;
     }
   };
 

@@ -231,9 +231,12 @@ export const useAdmin = () => {
 
     const { data, error, count } = await supabase
       .from('profiles')
-      .select(`${PROFILE_PUBLIC_COLUMNS}, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )`, {
-        count: 'exact',
-      })
+      .select(
+        `${PROFILE_PUBLIC_COLUMNS}, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )`,
+        {
+          count: 'exact',
+        }
+      )
       .order('created_at', { ascending: false })
       .range(start, end);
 
@@ -401,7 +404,9 @@ export const useAdmin = () => {
     const [profileResult, listingsResult] = await Promise.all([
       supabase
         .from('profiles')
-        .select(`${PROFILE_PUBLIC_COLUMNS}, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )`)
+        .select(
+          `${PROFILE_PUBLIC_COLUMNS}, profile_private ( email, is_admin, warning_count, auth_provider, firebase_uid )`
+        )
         .eq('id', userId)
         .single(),
       applyPhotoOrdering(
@@ -463,29 +468,6 @@ export const useAdmin = () => {
     if (error) {
       handleError(error, { toastTitle: 'Failed to delete user', rethrow: true });
     }
-  };
-
-  /**
-   * Clean up orphaned storage files (admin only)
-   * Finds and deletes files in storage that don't have database records
-   */
-  const cleanupOrphanedStorage = async () => {
-    const session = await supabase.auth.getSession();
-    const token = session.data.session?.access_token;
-
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
-    const response = await $fetch('/api/admin/storage/cleanup-orphans', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      timeout: 120000, // 2 minute timeout for large storage buckets
-    });
-
-    return response;
   };
 
   /**
@@ -912,7 +894,6 @@ export const useAdmin = () => {
     getUserDetails,
     updateUser,
     deleteUser,
-    cleanupOrphanedStorage,
     getMessageQueue,
     getMessageQueueCount,
     getAdminConversations,
