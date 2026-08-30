@@ -77,7 +77,7 @@ describe('server/api/gear-configs/public/[userId].get', () => {
     vi.resetModules();
 
     // Reset defaults
-    (getRouterParam as any).mockReturnValue('user-abc');
+    (getRouterParam as any).mockReturnValue('99999999-8888-4777-8666-555555555555');
 
     // Re-initialise chain
     mockSelect.mockReturnValue(queryBuilder);
@@ -103,7 +103,7 @@ describe('server/api/gear-configs/public/[userId].get', () => {
 
     await expect(handler(createMockEvent())).rejects.toMatchObject({
       statusCode: 400,
-      message: 'User ID required',
+      message: 'Invalid or missing User ID',
     });
   });
 
@@ -112,7 +112,7 @@ describe('server/api/gear-configs/public/[userId].get', () => {
 
     await expect(handler(createMockEvent())).rejects.toMatchObject({
       statusCode: 400,
-      message: 'User ID required',
+      message: 'Invalid or missing User ID',
     });
   });
 
@@ -145,11 +145,11 @@ describe('server/api/gear-configs/public/[userId].get', () => {
     });
 
     it('filters by the provided userId', async () => {
-      (getRouterParam as any).mockReturnValue('user-xyz');
+      (getRouterParam as any).mockReturnValue('99999999-8888-4777-8666-555555555555');
 
       await handler(createMockEvent());
 
-      expect(mockEq).toHaveBeenCalledWith('user_id', 'user-xyz');
+      expect(mockEq).toHaveBeenCalledWith('user_id', '99999999-8888-4777-8666-555555555555');
     });
 
     it('filters to only public configs', async () => {
@@ -167,8 +167,8 @@ describe('server/api/gear-configs/public/[userId].get', () => {
         {
           id: 'cfg-pub-1',
           name: 'Public Config',
-          tire: { width: 145, aspectRatio: 70, rimDiameter: 10 },
-          gearset: { first: 3.65, second: 2.18, third: 1.43, fourth: 1.0 },
+          tire: '145/70R10',
+          gearset: '3.65, 2.18, 1.43, 1.0',
           final_drive: '3.44',
           drop_gear: '1.0',
           speedo_drive: '1.0',
@@ -202,8 +202,8 @@ describe('server/api/gear-configs/public/[userId].get', () => {
 
     it('returns multiple public configs in order', async () => {
       const configs = [
-        { id: 'cfg-1', name: 'Newest', created_at: '2026-03-01T00:00:00Z' },
-        { id: 'cfg-2', name: 'Oldest', created_at: '2025-01-01T00:00:00Z' },
+        { id: '11111111-2222-4333-8444-555555555555', name: 'Newest', created_at: '2026-03-01T00:00:00Z' },
+        { id: '11111111-2222-4333-8444-555555555555', name: 'Oldest', created_at: '2025-01-01T00:00:00Z' },
       ];
 
       resolveQuery({ data: configs, error: null });

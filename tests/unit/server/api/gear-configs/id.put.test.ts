@@ -67,11 +67,11 @@ function createMockEvent() {
 }
 
 const existingConfig = {
-  id: 'cfg-1',
+  id: '11111111-2222-4333-8444-555555555555',
   user_id: 'user-1',
   name: 'Original Name',
-  tire: { width: 145, aspectRatio: 70, rimDiameter: 10 },
-  gearset: { first: 3.65, second: 2.18, third: 1.43, fourth: 1.0 },
+  tire: '145/70R10',
+  gearset: '3.65, 2.18, 1.43, 1.0',
   final_drive: '3.44',
   drop_gear: '1.0',
   speedo_drive: '1.0',
@@ -92,7 +92,7 @@ describe('server/api/gear-configs/[id].put', () => {
 
     // Reset defaults
     mockRequireUserAuth.mockResolvedValue({ user: { id: 'user-1' } });
-    (getRouterParam as any).mockReturnValue('cfg-1');
+    (getRouterParam as any).mockReturnValue('11111111-2222-4333-8444-555555555555');
     (readBody as any).mockResolvedValue({ name: 'Updated Name' });
 
     // Re-initialise chain
@@ -134,7 +134,7 @@ describe('server/api/gear-configs/[id].put', () => {
 
     await expect(handler(createMockEvent())).rejects.toMatchObject({
       statusCode: 400,
-      message: 'Config ID required',
+      message: 'Invalid or missing Config ID',
     });
   });
 
@@ -143,7 +143,7 @@ describe('server/api/gear-configs/[id].put', () => {
 
     await expect(handler(createMockEvent())).rejects.toMatchObject({
       statusCode: 400,
-      message: 'Config ID required',
+      message: 'Invalid or missing Config ID',
     });
   });
 
@@ -153,7 +153,7 @@ describe('server/api/gear-configs/[id].put', () => {
 
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Name must be 1-100 characters',
+        message: 'Name must be a string',
       });
     });
 
@@ -220,7 +220,9 @@ describe('server/api/gear-configs/[id].put', () => {
     });
 
     it('includes tire when provided', async () => {
-      const tire = { width: 165, aspectRatio: 65, rimDiameter: 12 };
+      // A display label, not an object — the column is text and Gearbox.vue
+      // sends `tireLabel`.
+      const tire = '165/65R12';
       (readBody as any).mockResolvedValue({ tire });
 
       await handler(createMockEvent());
@@ -228,8 +230,13 @@ describe('server/api/gear-configs/[id].put', () => {
       expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ tire }));
     });
 
+    it('rejects a non-string tire', async () => {
+      (readBody as any).mockResolvedValue({ tire: { width: 165 } });
+      await expect(handler(createMockEvent())).rejects.toMatchObject({ statusCode: 400 });
+    });
+
     it('includes gearset when provided', async () => {
-      const gearset = { first: 3.2, second: 2.0, third: 1.4, fourth: 1.0 };
+      const gearset = '2.583, 1.644, 1.25, 1.0';
       (readBody as any).mockResolvedValue({ gearset });
 
       await handler(createMockEvent());
@@ -314,7 +321,7 @@ describe('server/api/gear-configs/[id].put', () => {
 
     it('filters by config id', async () => {
       await handler(createMockEvent());
-      expect(mockEq).toHaveBeenCalledWith('id', 'cfg-1');
+      expect(mockEq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
     });
 
     it('filters by user_id to prevent cross-user updates', async () => {
@@ -347,6 +354,63 @@ describe('server/api/gear-configs/[id].put', () => {
       const result = await handler(createMockEvent());
 
       expect(result).toEqual(updated);
+    });
+  });
+
+  // =========================================================================
+  //  Parity with the alignment-configs twin (issue #754)
+  // =========================================================================
+  describe('validation parity', () => {
+    it('404s when PostgREST reports no matching row', async () => {
+      // .single() raises PGRST116 when nothing matched — a missing id, or a
+      // row that is not the caller's. The route used to check `if (error)`
+      // BEFORE `if (!data)`, so this surfaced as a blanket 500 and the route
+      // could never actually return 404.
+      mockSingle.mockResolvedValue({ data: null, error: { code: 'PGRST116', message: 'No rows found' } });
+      (readBody as any).mockResolvedValue({ name: 'Renamed' });
+
+      await expect(handler(createMockEvent())).rejects.toMatchObject({
+        statusCode: 404,
+        message: 'Config not found',
+      });
+    });
+
+    it('still 500s on a genuine database error', async () => {
+      mockSingle.mockResolvedValue({ data: null, error: { code: '08006', message: 'connection failure' } });
+      (readBody as any).mockResolvedValue({ name: 'Renamed' });
+
+      await expect(handler(createMockEvent())).rejects.toMatchObject({ statusCode: 500 });
+    });
+
+    it('rejects a non-UUID config id with 400, not a database 500', async () => {
+      (getRouterParam as any).mockReturnValue('not-a-uuid');
+      (readBody as any).mockResolvedValue({ name: 'Renamed' });
+
+      await expect(handler(createMockEvent())).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'Invalid or missing Config ID',
+      });
+    });
+
+    it('rejects an over-long tire label', async () => {
+      (readBody as any).mockResolvedValue({ tire: 'x'.repeat(201) });
+      await expect(handler(createMockEvent())).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('rejects a non-finite max_rpm rather than writing NaN', async () => {
+      (readBody as any).mockResolvedValue({ max_rpm: 'lots' });
+      await expect(handler(createMockEvent())).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('rejects a null gearset rather than storing the string "null"', async () => {
+      (readBody as any).mockResolvedValue({ gearset: null });
+      await expect(handler(createMockEvent())).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('accepts a numeric final_drive and stores it as text', async () => {
+      (readBody as any).mockResolvedValue({ final_drive: 3.44 });
+      await handler(createMockEvent());
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ final_drive: '3.44' }));
     });
   });
 });

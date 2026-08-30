@@ -80,7 +80,7 @@ describe('server/api/gear-configs/[id].delete', () => {
 
     // Reset defaults
     mockRequireUserAuth.mockResolvedValue({ user: { id: 'user-1' } });
-    (getRouterParam as any).mockReturnValue('cfg-1');
+    (getRouterParam as any).mockReturnValue('11111111-2222-4333-8444-555555555555');
 
     // Re-initialise chain
     mockEq.mockReturnValue(deleteChain);
@@ -116,7 +116,7 @@ describe('server/api/gear-configs/[id].delete', () => {
 
     await expect(handler(createMockEvent())).rejects.toMatchObject({
       statusCode: 400,
-      message: 'Config ID required',
+      message: 'Invalid or missing Config ID',
     });
   });
 
@@ -125,7 +125,7 @@ describe('server/api/gear-configs/[id].delete', () => {
 
     await expect(handler(createMockEvent())).rejects.toMatchObject({
       statusCode: 400,
-      message: 'Config ID required',
+      message: 'Invalid or missing Config ID',
     });
   });
 
@@ -150,7 +150,7 @@ describe('server/api/gear-configs/[id].delete', () => {
 
     it('filters by the config id', async () => {
       await handler(createMockEvent());
-      expect(mockEq).toHaveBeenCalledWith('id', 'cfg-1');
+      expect(mockEq).toHaveBeenCalledWith('id', '11111111-2222-4333-8444-555555555555');
     });
 
     it('filters by user_id to prevent cross-user deletions', async () => {
@@ -167,11 +167,12 @@ describe('server/api/gear-configs/[id].delete', () => {
     });
 
     it('uses the correct config id from the route param', async () => {
-      (getRouterParam as any).mockReturnValue('cfg-special-123');
+      // Route params are UUID-guarded now, so the fixture is a real one.
+      (getRouterParam as any).mockReturnValue('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee');
 
       await handler(createMockEvent());
 
-      expect(mockEq).toHaveBeenCalledWith('id', 'cfg-special-123');
+      expect(mockEq).toHaveBeenCalledWith('id', 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee');
     });
 
     it('throws 500 when the delete query fails', async () => {

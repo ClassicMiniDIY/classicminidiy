@@ -58,8 +58,8 @@ function createMockEvent() {
 /** A complete valid request body for creating a gear config. */
 const validBody = {
   name: 'My Gearing Setup',
-  tire: { width: 145, aspectRatio: 70, rimDiameter: 10 },
-  gearset: { first: 3.65, second: 2.18, third: 1.43, fourth: 1.0 },
+  tire: '145/70R10',
+  gearset: '3.65, 2.18, 1.43, 1.0',
   final_drive: '3.44',
   drop_gear: '1.0',
   speedo_drive: '1.0',
@@ -129,7 +129,7 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, name: undefined });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Name is required',
       });
     });
 
@@ -137,7 +137,7 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, tire: undefined });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Tire is required',
       });
     });
 
@@ -145,7 +145,7 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, gearset: undefined });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Gearset is required',
       });
     });
 
@@ -153,7 +153,7 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, final_drive: undefined });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Final drive is required',
       });
     });
 
@@ -161,7 +161,7 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, drop_gear: undefined });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Drop gear is required',
       });
     });
 
@@ -169,7 +169,7 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, speedo_drive: undefined });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Speedo drive is required',
       });
     });
 
@@ -177,7 +177,7 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, max_rpm: undefined });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Max RPM must be a number between 1 and 20000',
       });
     });
   });
@@ -187,15 +187,16 @@ describe('server/api/gear-configs/index.post', () => {
       (readBody as any).mockResolvedValue({ ...validBody, name: 42 });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Name must be 1-100 characters',
+        message: 'Name must be a string',
       });
     });
 
     it('throws 400 when name is an empty string', async () => {
+      // Present but empty is a length failure, not a missing field.
       (readBody as any).mockResolvedValue({ ...validBody, name: '' });
       await expect(handler(createMockEvent())).rejects.toMatchObject({
         statusCode: 400,
-        message: 'Missing required fields',
+        message: 'Name must be 1-100 characters',
       });
     });
 

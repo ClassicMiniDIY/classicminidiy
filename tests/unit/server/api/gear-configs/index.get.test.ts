@@ -118,8 +118,18 @@ describe('server/api/gear-configs/index.get', () => {
 
   it('returns the list of configs from the database', async () => {
     const configs = [
-      { id: 'cfg-1', name: 'My Config', user_id: 'user-1', updated_at: '2026-01-01T00:00:00Z' },
-      { id: 'cfg-2', name: 'Another Config', user_id: 'user-1', updated_at: '2025-12-01T00:00:00Z' },
+      {
+        id: '11111111-2222-4333-8444-555555555555',
+        name: 'My Config',
+        user_id: 'user-1',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      {
+        id: '11111111-2222-4333-8444-555555555555',
+        name: 'Another Config',
+        user_id: 'user-1',
+        updated_at: '2025-12-01T00:00:00Z',
+      },
     ];
 
     resolveQuery({ data: configs, error: null });
