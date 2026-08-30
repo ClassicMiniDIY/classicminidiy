@@ -38,8 +38,10 @@ const KNOWN_MISSING_ROUTES: readonly string[] = [];
  * exclusion, so a helper module parked in the route tree becomes a real,
  * publicly reachable route with nothing behind it. Shared helpers belong in
  * `server/utils/`.
+ *
+ * Empty is the goal state, not an oversight.
  */
-const KNOWN_HANDLERLESS_ROUTE_FILES: readonly string[] = ['server/api/langgraph/_utils.ts'];
+const KNOWN_HANDLERLESS_ROUTE_FILES: readonly string[] = [];
 
 interface ServerRoute {
   method: string;

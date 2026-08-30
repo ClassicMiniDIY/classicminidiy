@@ -1,5 +1,5 @@
 import { checkBotId } from 'botid/server';
-import { getApiUrl, getApiKey, forwardHeaders } from './_utils';
+import { getApiUrl, getApiKey, forwardHeaders } from '../../utils/langgraph';
 
 // Fallback handler for any endpoints not covered by specific files
 export default defineEventHandler(async (event) => {

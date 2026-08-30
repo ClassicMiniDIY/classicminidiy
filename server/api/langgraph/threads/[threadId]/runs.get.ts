@@ -1,4 +1,4 @@
-import { getApiUrl, getApiKey, forwardHeaders } from '../../_utils';
+import { getApiUrl, getApiKey, forwardHeaders } from '../../../../utils/langgraph';
 
 export default defineEventHandler(async (event) => {
   try {

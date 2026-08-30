@@ -1,5 +1,5 @@
 import { checkBotId } from 'botid/server';
-import { createLangGraphClient } from './_utils';
+import { createLangGraphClient } from '../../utils/langgraph';
 
 export default defineEventHandler(async (event) => {
   // Vercel BotID — reject classified bots before spending any LangGraph budget.
