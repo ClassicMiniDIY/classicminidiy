@@ -2,8 +2,32 @@
   import { HERO_TYPES, BREADCRUMB_VERSIONS } from '~~/data/models/generic';
 
   const { t } = useI18n();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const route = useRoute();
+
+  /**
+   * Auth state is only knowable AFTER mount, and the template must not branch
+   * on it before then.
+   *
+   * The Supabase session lives in localStorage, so `isAuthenticated` is always
+   * false during SSR and flips true once `initAuth()` runs. Branching a
+   * `v-if`/`v-else` pair straight off it makes the server emit the sign-in gate
+   * while the client's first render wants the dashboard shell — and Vue's
+   * hydration repair MERGES the two subtrees rather than replacing one. That is
+   * the mechanism that orphaned the account dropdown from its `.dropdown`
+   * wrapper in MainNav; see the dropdown invariants in CLAUDE.md.
+   *
+   * This file is the parent layout route, so all 14 `/dashboard/*` children
+   * inherited the mismatch.
+   *
+   * Three states rather than two, so a signed-in user never flashes the
+   * sign-in CTA while the session is still resolving — same shape as
+   * `app/pages/membership/index.vue`.
+   */
+  const hasMounted = ref(false);
+  onMounted(() => (hasMounted.value = true));
+  const authReady = computed(() => hasMounted.value && !authLoading.value);
+  const isSignedIn = computed(() => authReady.value && isAuthenticated.value);
 
   // Marketplace (The Mini Exchange) tabs append only when the consolidation flag
   // is live — their routes are 404'd by exchange-flag.global.ts until then.
@@ -49,8 +73,19 @@
       <PageIntro :eyebrow="t('eyebrow')" :title="t('hero_title')" as="h2" />
     </div>
 
+    <!-- Resolving the session: neither the gate nor the dashboard yet. The
+         server renders this branch too, so SSR and the client's first render
+         agree and hydration has nothing to repair. -->
+    <div v-if="!authReady" class="max-w-lg mx-auto">
+      <div class="card bg-base-100 shadow-sm border border-base-300">
+        <div class="card-body items-center text-center py-12">
+          <i class="fas fa-spinner fa-spin text-3xl text-primary"></i>
+        </div>
+      </div>
+    </div>
+
     <!-- Auth gate -->
-    <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
+    <div v-else-if="!isSignedIn" class="max-w-lg mx-auto">
       <div class="card bg-base-100 shadow-sm border border-base-300">
         <div class="card-body p-6 text-center">
           <div class="mb-4">
