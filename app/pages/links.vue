@@ -233,11 +233,12 @@
             <nuxt-picture
               :src="video.thumbnails.maxres"
               :alt="video.title"
-              class="w-full"
               loading="lazy"
               width="720"
               height="404"
               format="webp"
+              class="block w-full"
+              :img-attrs="{ class: 'w-full' }"
             />
             <span class="absolute inset-0 flex items-center justify-center">
               <span class="rounded-full bg-black/60 text-white w-14 h-14 flex items-center justify-center">

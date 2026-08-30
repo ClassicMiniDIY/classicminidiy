@@ -54,7 +54,7 @@ const KNOWN_MISSING_KEYS: readonly string[] = [];
 const KNOWN_INLINE_MESSAGE_FILES: readonly string[] = ['app/components/Footer.vue', 'app/components/HomeToolCard.vue'];
 
 /** Blocks still written as bare `<i18n>` rather than `<i18n lang="json">`. */
-const KNOWN_UNTYPED_BLOCKS: readonly string[] = ['app/pages/[...slug].vue'];
+const KNOWN_UNTYPED_BLOCKS: readonly string[] = [];
 
 /** Flatten a message object to dotted key paths. Arrays are leaves — an array
  * of FAQ entries is one key, and its length is checked separately below. */
