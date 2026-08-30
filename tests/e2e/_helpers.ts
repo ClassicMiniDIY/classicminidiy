@@ -15,6 +15,16 @@ import type { Page } from '@playwright/test';
  */
 export async function gotoHydrated(page: Page, route: string, { settleMs = 250 } = {}) {
   const response = await page.goto(route, { waitUntil: 'domcontentloaded' });
+  await waitForHydration(page, { settleMs });
+  return response;
+}
+
+/**
+ * Wait for hydration on the page as it stands. Split out of `gotoHydrated` so
+ * a test can inspect the RESPONSE first — checking a deliberate 404 before
+ * committing to a 30s mount wait — and only then wait for Vue.
+ */
+export async function waitForHydration(page: Page, { settleMs = 250 } = {}) {
   await page.waitForFunction(
     () => !!(document.querySelector('#__nuxt') as (HTMLElement & { __vue_app__?: unknown }) | null)?.__vue_app__,
     null,
@@ -23,5 +33,4 @@ export async function gotoHydrated(page: Page, route: string, { settleMs = 250 }
   // A brief settle so post-mount effects (auth init, watchers with
   // `immediate: true`) have run before anything is asserted.
   await page.waitForTimeout(settleMs);
-  return response;
 }

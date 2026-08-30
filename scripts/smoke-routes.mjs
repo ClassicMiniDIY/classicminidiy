@@ -41,9 +41,27 @@ const BASE_URL = (args.find((a) => a.startsWith('http')) ?? 'http://localhost:30
 const STRICT = flag('--strict');
 const ONLY = optionValue('--only');
 const AS_JSON = flag('--json');
+/**
+ * Numeric options are validated rather than coerced. `Number('abc')` is NaN,
+ * and a NaN concurrency makes `Array.from({length: Math.min(NaN, n)})` build
+ * ZERO runners — the pool resolves instantly, nothing is crawled, and the
+ * script exits 0. A typo would silently turn the whole gate into a no-op that
+ * reports success, so it fails loudly instead.
+ */
+const numericOption = (name, fallback) => {
+  const raw = optionValue(name);
+  if (raw === undefined) return fallback;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    console.error(`${name} must be a positive number, got: ${raw}`);
+    process.exit(2);
+  }
+  return value;
+};
+
 /** Concurrency. Kept low: a dev server compiles routes on first hit. */
-const CONCURRENCY = Number(optionValue('--concurrency') ?? 4);
-const TIMEOUT_MS = Number(optionValue('--timeout') ?? 45_000);
+const CONCURRENCY = numericOption('--concurrency', 4);
+const TIMEOUT_MS = numericOption('--timeout', 45_000);
 
 const findings = [];
 const record = (level, route, check, detail) => findings.push({ level, route, check, detail });
@@ -77,8 +95,13 @@ async function get(path, { redirect = 'manual' } = {}) {
  */
 const stripComments = (html) => html.replace(/<!--[\s\S]*?-->/g, '');
 
+/** Drop <script> and <style> bodies. Nuxt serialises page data into a script
+ * tag, so user content containing markup would otherwise be read as page
+ * structure. */
+const stripScripts = (html) => html.replace(/<(script|style)[\s\S]*?<\/\1>/gi, '');
+
 const titleOf = (html) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? null;
-const h1Count = (html) => (html.match(/<h1[\s>]/gi) ?? []).length;
+const h1Count = (html) => (stripScripts(html).match(/<h1[\s>]/gi) ?? []).length;
 const hasCanonical = (html) => /<link[^>]+rel=["']canonical["']/i.test(html);
 const isNoindex = (html) => /<meta[^>]+name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html);
 const ogImage = (html) =>
@@ -96,7 +119,7 @@ function jsonLdBlocks(html) {
  * renders its own path with no warning anywhere.
  */
 function rawI18nKeys(html) {
-  const withoutScripts = html.replace(/<(script|style)[\s\S]*?<\/\1>/gi, '');
+  const withoutScripts = stripScripts(html);
   const keyLike = /> *([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+) *</g;
   const hits = new Set();
   for (const match of withoutScripts.matchAll(keyLike)) {
@@ -184,8 +207,21 @@ async function crawlRedirect({ from, to }) {
       record('error', from, 'must-redirect', `expected 301/302 to ${to}, got ${status}`);
       return;
     }
-    if (location && !location.startsWith(to)) {
-      record('error', from, 'must-redirect', `redirected to ${location}, expected ${to}`);
+    if (!location) {
+      record('error', from, 'must-redirect', `${status} with no Location header`);
+      return;
+    }
+    // Location may be absolute or relative depending on who issues the
+    // redirect (Nuxt middleware vs a Cloudflare zone rule). Compare paths.
+    let target;
+    try {
+      target = new URL(location, BASE_URL).pathname;
+    } catch {
+      record('error', from, 'must-redirect', `unparseable Location: ${location}`);
+      return;
+    }
+    if (!target.startsWith(to)) {
+      record('error', from, 'must-redirect', `redirected to ${target}, expected ${to}`);
     }
   } catch (error) {
     record('error', from, 'fetch', String(error?.message ?? error));
@@ -298,10 +334,14 @@ async function main() {
   }
 
   const failed = errors.length + staleKnown.length + (STRICT ? warnings.length : 0);
-  process.exit(failed > 0 ? 1 : 0);
+  // Not process.exit(): stdout is asynchronous when piped, and exiting
+  // immediately after a write truncates it — which would corrupt `--json`
+  // output redirected to a file in CI. Setting the code lets the process end
+  // once the stream has drained.
+  process.exitCode = failed > 0 ? 1 : 0;
 }
 
 main().catch((error) => {
   console.error(error);
-  process.exit(1);
+  process.exitCode = 1;
 });

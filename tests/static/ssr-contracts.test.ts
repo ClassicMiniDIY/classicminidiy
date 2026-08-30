@@ -56,7 +56,9 @@ describe('dynamic routes 404 on a miss', () => {
     const actual = dynamicPages
       .filter((abs) => !DOCUMENTED_404_EXCEPTIONS.includes(rel(abs)))
       .filter((abs) => {
-        const script = blankComments(parseVue(abs).script?.content ?? '', 'script');
+        // scriptText spans both script blocks, so a createError living in a
+        // plain <script> beside <script setup> is still seen.
+        const script = parseVue(abs).scriptText;
         // `createError({ statusCode: 404 … })` in any formatting, or a
         // pass-through of an upstream status alongside a 404 fallback.
         return !/createError\s*\(\s*\{[^}]*statusCode[^}]*\}/s.test(script);

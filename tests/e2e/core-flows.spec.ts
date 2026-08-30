@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { gotoHydrated } from './_helpers';
+import { gotoHydrated, waitForHydration } from './_helpers';
 
 /**
  * The main user journeys, end to end, anonymously.
@@ -10,7 +10,15 @@ import { gotoHydrated } from './_helpers';
  * the repo ever drives a real browser through a real route.
  *
  * Everything here runs signed out, so the suite needs no credentials and runs
- * on a clean checkout. See `authenticated.spec.ts` for the flows that cannot.
+ * on a clean checkout. That is also the limitation: signed out, the server and
+ * the client agree on `isAuthenticated`, so these specs cannot see the
+ * hydration mismatches that only appear with a session. Authenticated coverage
+ * (listing wizard, admin queue, dashboard tabs) is tracked in the harness
+ * follow-ups issue.
+ *
+ * `h1` assertions use `.first()` deliberately — several pages currently render
+ * two `<h1>` elements, and Playwright's strict mode would throw on the
+ * ambiguity instead of failing on the thing under test.
  */
 
 test.describe('omnisearch', () => {
@@ -62,7 +70,7 @@ test.describe('toolbox calculators', () => {
   test('the gearing calculator computes and publishes its arithmetic', async ({ page }) => {
     await gotoHydrated(page, '/technical/gearing');
 
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
 
     // Every technical calculator publishes a MathBreakdown so a reader can redo
     // the sums by hand. The panel is fed from the calculator's own computed
@@ -83,7 +91,7 @@ test.describe('toolbox calculators', () => {
     expect(await toolLinks.count()).toBeGreaterThan(5);
 
     await gotoHydrated(page, '/technical?category=engine');
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
   });
 });
 
@@ -95,7 +103,7 @@ test.describe('archive', () => {
     await expect(firstDoc).toBeVisible({ timeout: 20_000 });
     await firstDoc.click();
 
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
     // A detail page with no title is the soft-404 shape that used to answer 200
     // for every unknown URL on the domain.
     await expect(page).not.toHaveTitle(/undefined/i);
@@ -109,12 +117,15 @@ test.describe('archive', () => {
 
 test.describe('exchange browse', () => {
   test('listings index renders and a listing opens', async ({ page }) => {
-    const response = await gotoHydrated(page, '/exchange/listings');
-    // The whole marketplace is behind NUXT_PUBLIC_EXCHANGE_ENABLED; when the
-    // flag is off every surface 404s on the server by design.
+    // Status first, hydration second. The whole marketplace is behind
+    // NUXT_PUBLIC_EXCHANGE_ENABLED and every surface 404s on the server when
+    // the flag is off — waiting for Vue to mount before checking that would
+    // burn the full hydration timeout on a deliberate configuration.
+    const response = await page.goto('/exchange/listings', { waitUntil: 'domcontentloaded' });
     test.skip(response?.status() === 404, 'exchange is flag-disabled in this environment');
 
-    await expect(page.locator('h1')).toBeVisible();
+    await waitForHydration(page);
+    await expect(page.locator('h1').first()).toBeVisible();
 
     const firstListing = page.locator('a[href^="/exchange/listings/"]').first();
     if ((await firstListing.count()) === 0) test.skip(true, 'no live listings to open');
@@ -156,7 +167,7 @@ test.describe('i18n', () => {
 test.describe('contribution loop', () => {
   test('the contribute wizard opens and gates anonymous users', async ({ page }) => {
     await gotoHydrated(page, '/contribute');
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
 
     // Signed out, the page shows a sign-in gate rather than the wizard form.
     const signInPrompt = page.getByRole('link', { name: /sign in|log in/i });
@@ -167,7 +178,7 @@ test.describe('contribution loop', () => {
 test.describe('auth entry point', () => {
   test('/login renders its sign-in options', async ({ page }) => {
     await gotoHydrated(page, '/login');
-    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1').first()).toBeVisible();
     // Magic link, OAuth and passkey are the three paths; at least the email
     // field must be present for the page to be usable at all.
     await expect(page.locator('input[type="email"]').first()).toBeVisible();

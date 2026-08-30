@@ -28,7 +28,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { parse as parseTemplate } from '@vue/compiler-dom';
-import { appVueFiles, blankComments, describeViolations, diffAgainstAllowlist, parseVue } from './_scan';
+import { appVueFiles, describeViolations, diffAgainstAllowlist, parseVue } from './_scan';
 
 /** Auth-derived names that are false on the server and true after mount. */
 const CLIENT_ONLY_AUTH_NAMES = ['isAuthenticated', 'isAdmin', 'isSustainingMember', 'userProfile', 'user'] as const;
@@ -95,7 +95,16 @@ function referencesName(expression: string, name: string): boolean {
  */
 function gatedNames(script: string): string[] {
   const names = new Set<string>(['hasMounted', 'mounted', 'isMounted']);
-  const declaration = /const\s+([A-Za-z_$][\w$]*)\s*=[^;\n]*\b(hasMounted|isMounted|mounted)\b/g;
+  // Deliberately spans newlines: prettier wraps at printWidth 120, so a real
+  // gate is often written as
+  //   const isSignedIn = computed(
+  //     () => hasMounted.value && isAuthenticated.value
+  //   );
+  // A single-line-only pattern would call that ungated and push a correctly
+  // written component into the allowlist, where the shrink-only rule would
+  // then keep it forever. `[^;]*` stops at the statement end, so it cannot run
+  // on into an unrelated later declaration.
+  const declaration = /const\s+([A-Za-z_$][\w$]*)\s*=[^;]*?\b(hasMounted|isMounted|mounted)\b[^;]*;/g;
   for (const match of script.matchAll(declaration)) names.add(match[1]!);
   return [...names];
 }
@@ -108,8 +117,9 @@ function scanFile(absPath: string): Violation[] {
   const sfc = parseVue(absPath);
   if (!sfc.template) return [];
 
-  const script = blankComments(sfc.script?.content ?? '', 'script');
-  const gated = gatedNames(script);
+  // scriptText covers BOTH script blocks with comments already blanked — a
+  // gate declared in a plain <script> alongside <script setup> still counts.
+  const gated = gatedNames(sfc.scriptText);
   // A name is only risky if this file has NOT redefined it as mount-aware.
   const risky = CLIENT_ONLY_AUTH_NAMES.filter((name) => !gated.includes(name));
   if (risky.length === 0) return [];
@@ -141,7 +151,13 @@ function scanFile(absPath: string): Violation[] {
       if (prop.type !== 7) continue; // directive
       const expression: string = prop.exp?.content ?? '';
       // A branch on a hasMounted-derived name makes its whole subtree safe.
-      if (['if', 'else-if', 'show'].includes(prop.name) && gated.some((n) => referencesName(expression, n))) {
+      //
+      // `v-show` is deliberately NOT in this list. It only toggles CSS
+      // `display`, so the element and everything under it is rendered on the
+      // server regardless — a descendant `v-if` on client-only state still
+      // mismatches. Treating v-show as a gate would silently exempt exactly
+      // the bug this test exists to catch.
+      if (['if', 'else-if'].includes(prop.name) && gated.some((n) => referencesName(expression, n))) {
         safeHere = true;
       }
     }
