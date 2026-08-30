@@ -38,12 +38,11 @@ const KNOWN_SOFT_404_PAGES: readonly string[] = [
  */
 const DOCUMENTED_404_EXCEPTIONS: readonly string[] = ['app/pages/exchange/listings/[slug]/index.vue'];
 
-/** Remaining getter-form `useFetch` call sites. */
-const KNOWN_GETTER_FORM_USEFETCH: readonly string[] = [
-  'app/pages/models/[slug].vue',
-  'app/pages/models/external/[slug].vue',
-  'app/components/NeedleTable.vue',
-];
+/**
+ * Remaining getter-form `useFetch` call sites. Empty is the goal state — a new
+ * entry here means someone reintroduced the form CLAUDE.md forbids.
+ */
+const KNOWN_GETTER_FORM_USEFETCH: readonly string[] = [];
 
 const dynamicPages = walk('app/pages', '.vue').filter((abs) => /\[[^\]]+\]/.test(rel(abs)));
 

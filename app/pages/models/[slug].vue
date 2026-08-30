@@ -11,7 +11,15 @@
   const { verifyPurchase, downloadFile, downloadAll } = useModelCheckout();
   const { track } = useAnalytics();
 
-  const { data, error } = await useFetch<ModelDetail>(() => `/api/models/${slug.value}`);
+  // Computed ref, NOT a getter. Under Nuxt 4.5 the getter form stops blocking
+  // async setup, so SSR renders the pending branch and hydration never settles
+  // — and worse here, the `error.value` check below then runs before the
+  // request has resolved, so the 404 never fires and every unknown slug
+  // answers 200. useFetch wraps the request in `computed(() => toValue(request))`,
+  // so a computed ref keeps the reactivity this page needs (the component is
+  // reused across model navigations) while still blocking setup.
+  const modelUrl = computed(() => `/api/models/${slug.value}`);
+  const { data, error } = await useFetch<ModelDetail>(modelUrl);
   if (error.value) {
     throw createError({ statusCode: error.value.statusCode || 404, statusMessage: 'Model not found', fatal: true });
   }

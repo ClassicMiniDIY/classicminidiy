@@ -6,7 +6,11 @@
   const route = useRoute();
   const slug = computed(() => String(route.params.slug));
 
-  const { data, error } = await useFetch<ExternalModelDetail>(() => `/api/models/external/${slug.value}`);
+  // Computed ref, not a getter — see the note in app/pages/models/[slug].vue.
+  // The getter form does not block setup, which silently disables the 404 on
+  // the next line as well as hanging hydration.
+  const modelUrl = computed(() => `/api/models/external/${slug.value}`);
+  const { data, error } = await useFetch<ExternalModelDetail>(modelUrl);
   if (error.value) {
     throw createError({ statusCode: error.value.statusCode || 404, statusMessage: 'Model not found', fatal: true });
   }

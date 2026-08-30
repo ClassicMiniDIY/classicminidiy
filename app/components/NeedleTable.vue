@@ -2,7 +2,10 @@
   import type { Item, SuggestedNeedles } from '../../data/models/needles';
 
   const { t } = useI18n();
-  const { data: needlesTables, status } = await useFetch<SuggestedNeedles[]>(() => '/api/needles/suggested');
+  // Plain string, not a getter: the URL is static, and the getter form stops
+  // blocking async setup under Nuxt 4.5 (SSR renders the pending branch and
+  // hydration hangs). Matches app/components/Calculators/Needles.vue.
+  const { data: needlesTables, status } = await useFetch<SuggestedNeedles[]>('/api/needles/suggested');
 
   // Table columns configuration
   const tableColumns = computed<{ accessorKey: keyof Item; header: string }[]>(() => [

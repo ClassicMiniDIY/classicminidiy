@@ -1281,6 +1281,14 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   `/models/[slug]` reuses that component across model navigations, so `props.modelId`
   changes in place. `useFetch` wraps its request in `computed(() => toValue(request))`, so a
   computed ref keeps the reactivity a getter gave. **Do not reintroduce the getter form.**
+
+  This note previously claimed "both call sites are converted". That was wrong — a repo
+  sweep found **three** more (`app/pages/models/[slug].vue`, `models/external/[slug].vue`,
+  `app/components/NeedleTable.vue`), all since converted. Note also that those three were
+  NOT visibly broken: their 404s fired and their pages rendered. The form is forbidden
+  because the breakage is version- and context-dependent and gives no error to search for,
+  not because every instance misbehaves today. `tests/static/ssr-contracts.test.ts` now
+  enforces the rule so the count cannot drift again.
 - **`dompurify` is pinned to an exact version (currently `3.4.14`), and
   `tests/unit/exchange/utils/markdown.test.ts` MUST stay on `@vitest-environment jsdom`.**
   These two facts are one contract — don't change either in isolation. Since 3.4.8
