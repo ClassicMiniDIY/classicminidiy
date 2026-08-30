@@ -1,0 +1,90 @@
+name: E2E Nightly
+
+# Browser tests run on a schedule, not on every PR. Two reasons: a browser
+# download plus a dev-server boot is several minutes of Actions time per PR,
+# and a flaky browser test must never be the thing that blocks a merge. The
+# cheap, deterministic checks (unit + tests/static + the route crawler) gate
+# PRs instead; this catches what only a real browser can see.
+on:
+  schedule:
+    # 07:15 UTC — after the overnight deploys, before the working day.
+    - cron: '15 7 * * *'
+  workflow_dispatch:
+    inputs:
+      crawl_production:
+        description: 'Also crawl the live site'
+        type: boolean
+        default: true
+
+concurrency:
+  group: e2e-nightly
+  cancel-in-progress: false
+
+jobs:
+  browser:
+    name: Playwright (chromium + firefox)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Prepare Nuxt types
+        run: bunx nuxi prepare
+
+      # Firefox is not redundant coverage. The nav dropdown hydration bug
+      # reproduced ONLY in Firefox — every Chromium verification passed while
+      # it was still broken, which is why it survived being "fixed" repeatedly.
+      - name: Install browsers
+        run: bunx playwright install --with-deps chromium firefox
+
+      - name: Run E2E
+        run: bunx playwright test
+        env:
+          # The dev server's SSR worker OOMs partway through a two-browser run
+          # at the default heap, after which every route 500s and the remaining
+          # failures are noise. Measured, not guessed.
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          NUXT_PUBLIC_EXCHANGE_ENABLED: ${{ secrets.NUXT_PUBLIC_EXCHANGE_ENABLED }}
+          NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
+          NUXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  production-routes:
+    name: Crawl production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'schedule' || inputs.crawl_production
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # The crawler is dependency-free by design — it needs the repo for the
+      # route manifest and nothing else, so there is no install step here.
+      # Crawling the LIVE site is what catches the class of defect that only
+      # appears with the production build and real data: an empty schema.org
+      # graph after a module bump, a detail page that 500s on one record, a
+      # redirect that stopped firing at the zone edge.
+      - name: Crawl https://www.classicminidiy.com
+        run: node scripts/smoke-routes.mjs https://www.classicminidiy.com --concurrency 3

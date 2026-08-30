@@ -40,5 +40,80 @@ jobs:
       # Includes tests/unit/data/needles-data-integrity.test.ts, which pins the
       # canonical hash of data/needles.json. The Android and iOS repos pin the
       # same hash, so a drifted copy fails CI in whichever repo drifted.
+      #
+      # Also includes tests/static/**, which enforces the invariants no unit test
+      # can see: i18n locale completeness, hydration-safe auth branches, the
+      # client-to-server API contract, dynamic-route 404s, and the plain Worker
+      # env registry. Each carries a SHRINK-ONLY allowlist of today's known
+      # violations, so a new one fails and a fix that forgets to remove its
+      # entry also fails.
       - name: Run tests
         run: bun run test
+
+      # Catches a local declaration that shadows a Nuxt auto-import. unimport
+      # skips injecting any name it thinks is already provided and does no scope
+      # analysis, so one `const ref = ...` inside a callback strips the
+      # top-level `ref` import for the WHOLE file and every setup-scope `ref()`
+      # throws at runtime. Nothing fails at build time; the component simply
+      # never mounts. This took the SU needle configurator down for months.
+      - name: Check for shadowed auto-imports
+        run: python3 scripts/find-shadowed-autoimports.py
+
+  routes:
+    name: Route Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Prepare Nuxt types
+        run: bunx nuxi prepare
+
+      # Runs against `nuxi dev` rather than a production build on purpose: the
+      # build needs ~8 GB and 5+ minutes, which is not worth paying on every PR
+      # when the defects this catches (SSR 500s, soft-404s, empty schema.org
+      # blocks, hijacked redirects, untranslated keys rendering as raw paths)
+      # all reproduce in dev. The same crawler runs against the real built
+      # artifact in deploy-cloudflare.yml, where the build already exists.
+      - name: Start dev server
+        run: |
+          NODE_OPTIONS=--max-old-space-size=8192 bun run dev > /tmp/dev-server.log 2>&1 &
+          echo $! > /tmp/dev-server.pid
+        env:
+          NUXT_PUBLIC_EXCHANGE_ENABLED: ${{ secrets.NUXT_PUBLIC_EXCHANGE_ENABLED }}
+          NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
+          NUXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+      - name: Wait for the server
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3000/; then
+              echo "dev server up after $((i * 5))s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "dev server never became ready:"
+          tail -50 /tmp/dev-server.log
+          exit 1
+
+      - name: Crawl every route
+        run: bun run test:routes http://localhost:3000 --concurrency 3
+
+      - name: Dev server log on failure
+        if: failure()
+        run: tail -100 /tmp/dev-server.log
+
+      - name: Stop dev server
+        if: always()
+        run: kill "$(cat /tmp/dev-server.pid)" 2>/dev/null || true
