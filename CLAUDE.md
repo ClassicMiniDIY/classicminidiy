@@ -1149,6 +1149,102 @@ What `vercel.json` used to carry, and what replaced it:
 
 ## Testing & Quality
 
+### The three test tiers, and what each one alone cannot see
+
+Design doc: `docs/plans/2026-08-30-hardening-and-e2e.md`.
+
+1. **Unit** (`tests/unit/**`, `bun run test`) — 174 files, 5,000+ assertions.
+   Exercises units. It has never rendered a route, which is the gap the other
+   two tiers exist to close.
+2. **Static invariants** (`tests/static/**`) — filesystem-level contract checks
+   that run inside the same `bun run test`, so they gate PRs at ~1.4s and no CI
+   cost. i18n locale completeness, hydration-safe auth branches, the
+   client↔server API contract, dynamic-route 404s, getter-form `useFetch`, and
+   the plain Worker env registry.
+3. **Rendered** — `scripts/smoke-routes.mjs` (every route, HTML assertions) and
+   `tests/e2e/**` (Playwright, chromium + firefox).
+
+- **Every allowlist in tiers 2 and 3 is SHRINK-ONLY, and that is the whole
+  point.** Each check is seeded with today's known violations so it is green on
+  day one. A NEW violation fails — and an allowlist entry that stops
+  reproducing ALSO fails. So a fix cannot merge without deleting its own entry,
+  and the allowlists stay a live inventory of remaining debt instead of a place
+  things go to be forgotten. `KNOWN_UNGATED`, `KNOWN_MISSING_LOCALES`,
+  `KNOWN_MISSING_ROUTES`, `KNOWN_SOFT_404_PAGES`, `KNOWN_GETTER_FORM_USEFETCH`,
+  `KNOWN_ERRORS`. Never add an entry to make a check pass — the entry is a
+  promise to come back.
+
+- **`hydration-auth-gates.test.ts` walks the real template AST, not a regex.**
+  It must understand nesting: a branch inside `<ClientOnly>`, or inside a
+  subtree already gated by a `hasMounted`-derived name, is safe. A regex version
+  reported `MainNav` as broken, because its `v-if="userProfile?.avatar_url"`
+  sits inside `v-if="isSignedIn"`.
+
+- **Route-crawler manifest: static routes are DERIVED from `app/pages/**`,
+  dynamic ones are sampled from `/api/__sitemap__/*`.** Nothing is hand-listed
+  that a filename or the live site can supply, so the manifest cannot rot. Only
+  expectation overrides and the redirect/404 sets are written by hand.
+  Consequence worth knowing: if a sitemap source endpoint breaks, the crawler
+  reports it — and the sitemap is broken too.
+
+- **Strip HTML comments before any crawler content check.** SSR ships template
+  comments, and `/chat` documents the historical nuxt-schema-org failure in a
+  comment that quotes the error string verbatim. Without stripping, the crawler
+  reports the documentation as the defect.
+
+### E2E is a separate runner, on purpose
+
+- **Playwright has its own `playwright.config.ts`; do NOT fold it into
+  `vitest.config.ts` or reach for `@nuxt/test-utils`.** The unit config maps
+  `~` to the REPO ROOT (real Nuxt maps it to `app/`), sets
+  `fileParallelism: false`, rewrites `import.meta.client` at transform time, and
+  loads a setup file that stubs `fetch` to **reject**. Every one of those is
+  correct for unit tests and fatal for a browser suite. `tests/e2e/**` is
+  excluded from vitest discovery for the same reason — its specs import
+  `@playwright/test`, which has no vitest runtime.
+
+- **The Firefox project is not redundant coverage.** Hydration-mismatch repair
+  is browser- and timing-dependent, and the nav dropdown bug reproduced ONLY in
+  Firefox while every Chromium verification passed. Keep both projects.
+
+- **Never use `waitForLoadState('networkidle')` in these specs — use
+  `gotoHydrated` from `tests/e2e/_helpers.ts`.** `/login` mounts a Turnstile
+  widget that holds a connection open, so the network never idles and the wait
+  burns its full timeout on a page that hydrated in 118 ms. The helper waits for
+  `__vue_app__` on `#__nuxt`, which Vue sets when `app.mount()` completes —
+  exactly when hydration has finished and any mismatch warning has already been
+  logged. Switching took the suite from 1.8 min with 6 failures to 22 s with 0.
+
+- **The dev server needs `NODE_OPTIONS=--max-old-space-size=8192` for a full E2E
+  run.** At the default heap its SSR worker dies partway through with `Worker
+terminated due to reaching memory limit: JS heap out of memory`, after which
+  EVERY route 500s and the remaining failures are noise unrelated to the code
+  under test. Set in `playwright.config.ts` and both workflows. Same class of
+  limit the production build already carries.
+
+- **`/mcp` stays out of E2E scope.** mcp-toolkit picks its transport provider at
+  BUILD time from the Nitro preset, so a dev-server run exercises the Node
+  provider and proves nothing about the deployed Cloudflare one.
+  `scripts/test-mcp-transport.sh` is the only gate that can.
+
+### Runtime traps this pass surfaced
+
+- **A dependency that reads `global.*` at MODULE SCOPE breaks the whole route on
+  Workers.** `vuedraggable@4.1.0` runs `var console = getConsole()` at module
+  scope, falling back to `global.console` when `window` is undefined; workerd's
+  webpack `global` shim resolves to `undefined`, so importing it anywhere in an
+  SSR'd route chunk throws `Cannot read properties of undefined (reading
+'console')` and 500s that route. **Dev is unaffected**, which is exactly why it
+  went unnoticed — only the production crawl found it. When adding a browser-only
+  library to an SSR'd page, import it inside `<ClientOnly>` or behind a dynamic
+  `import()`, and verify the route on a deployed Worker rather than in dev.
+
+- **Nitro registers EVERY file under `server/api/` and `server/routes/` as a
+  route.** Its scan glob is `**/*.{js,mjs,cjs,ts,...}` with no underscore
+  exclusion, so a helper module parked in the route tree becomes a publicly
+  reachable route with no handler behind it. Shared helpers belong in
+  `server/utils/`. `tests/static/api-contract.test.ts` enforces this.
+
 ### Intentional dependency pins (do not blindly bump)
 
 - **`nuxt` is on `~4.5.2`. The 4.4.8 hold is LIFTED — do not reinstate it.** It was held
