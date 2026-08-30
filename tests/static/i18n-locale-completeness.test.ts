@@ -41,22 +41,10 @@ const KNOWN_MISSING_LOCALES: readonly string[] = [
 /**
  * Individual keys present in `en` but missing elsewhere. `file::locale::key`.
  * These render the English string mid-page in an otherwise translated view.
+ *
+ * Empty is the goal state, not an oversight.
  */
-const KNOWN_MISSING_KEYS: readonly string[] = [
-  // Homepage support CTA.
-  ...LOCALES.filter((l) => l !== 'en').map((l) => `app/pages/index.vue::${l}::home.support.member_cta`),
-  // Needle relative-search result labels.
-  ...LOCALES.filter((l) => l !== 'en').flatMap((l) => [
-    `app/components/Calculators/Needles.vue::${l}::relative.size_match`,
-    `app/components/Calculators/Needles.vue::${l}::relative.size_mismatch`,
-  ]),
-  // Gearbox RPM dropdown options — es/fr/de only.
-  ...['es', 'fr', 'de'].flatMap((l) =>
-    [5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000].map(
-      (rpm) => `app/components/Calculators/GearboxSharedSettings.vue::${l}::rpm_options.${rpm}`
-    )
-  ),
-];
+const KNOWN_MISSING_KEYS: readonly string[] = [];
 
 /**
  * Files that legitimately have no `<i18n>` block while still calling `t()`.

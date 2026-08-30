@@ -129,21 +129,54 @@
     "imperial_or_metric": "Imperial o Métrico",
     "tire_size": "Tamaño de Neumático",
     "speedo_drive_ratio": "Relación de Transmisión del Velocímetro",
-    "max_rpm": "RPM Máximo"
+    "max_rpm": "RPM Máximo",
+    "rpm_options": {
+      "5000": "5000 RPM",
+      "5500": "5500 RPM",
+      "6000": "6000 RPM",
+      "6500": "6500 RPM",
+      "7000": "7000 RPM",
+      "7500": "7500 RPM",
+      "8000": "8000 RPM",
+      "8500": "8500 RPM",
+      "9000": "9000 RPM"
+    }
   },
   "fr": {
     "title": "Paramètres Partagés",
     "imperial_or_metric": "Impérial ou métrique",
     "tire_size": "Taille de pneu",
     "speedo_drive_ratio": "Rapport d'entraînement compteur",
-    "max_rpm": "RPM maximum"
+    "max_rpm": "RPM maximum",
+    "rpm_options": {
+      "5000": "5000 RPM",
+      "5500": "5500 RPM",
+      "6000": "6000 RPM",
+      "6500": "6500 RPM",
+      "7000": "7000 RPM",
+      "7500": "7500 RPM",
+      "8000": "8000 RPM",
+      "8500": "8500 RPM",
+      "9000": "9000 RPM"
+    }
   },
   "de": {
     "title": "Gemeinsame Einstellungen",
     "imperial_or_metric": "Imperial oder Metrisch",
     "tire_size": "Reifengröße",
     "speedo_drive_ratio": "Tacho-Antriebsverhältnis",
-    "max_rpm": "Max. Drehzahl"
+    "max_rpm": "Max. Drehzahl",
+    "rpm_options": {
+      "5000": "5000 RPM",
+      "5500": "5500 RPM",
+      "6000": "6000 RPM",
+      "6500": "6500 RPM",
+      "7000": "7000 RPM",
+      "7500": "7500 RPM",
+      "8000": "8000 RPM",
+      "8500": "8500 RPM",
+      "9000": "9000 RPM"
+    }
   },
   "it": {
     "title": "Impostazioni Condivise",

@@ -1012,7 +1012,9 @@
       "cell_mid": "Medio",
       "cell_high": "Alto",
       "add_aria": "Añadir {name} al gráfico",
-      "caveat": "La correspondencia estación → RPM es aproximada y depende del tamaño del carburador y el muelle. Los porcentajes son la riqueza del candidato relativa a tu referencia."
+      "caveat": "La correspondencia estación → RPM es aproximada y depende del tamaño del carburador y el muelle. Los porcentajes son la riqueza del candidato relativa a tu referencia.",
+      "size_match": "Coincide con el tamaño de carburador de referencia",
+      "size_mismatch": "Tamaño de carburador distinto al de referencia"
     },
     "chart": {
       "loading": "El gráfico está cargando"
@@ -1065,7 +1067,9 @@
       "cell_mid": "Milieu",
       "cell_high": "Haut",
       "add_aria": "Ajouter {name} au graphique",
-      "caveat": "La correspondance station → RPM est approximative et dépend de la taille du carburateur et du ressort. Les pourcentages représentent la richesse du candidat par rapport à votre référence."
+      "caveat": "La correspondance station → RPM est approximative et dépend de la taille du carburateur et du ressort. Les pourcentages représentent la richesse du candidat par rapport à votre référence.",
+      "size_match": "Correspond à la taille de carburateur de référence",
+      "size_mismatch": "Taille de carburateur différente de la référence"
     },
     "chart": {
       "loading": "Le graphique se charge"
@@ -1118,7 +1122,9 @@
       "cell_mid": "Mittel",
       "cell_high": "Hoch",
       "add_aria": "{name} zum Diagramm hinzufügen",
-      "caveat": "Die Station-→-RPM-Zuordnung ist näherungsweise und hängt von Vergasergröße und Feder ab. Prozentwerte geben die Gemischfülle des Kandidaten relativ zur Referenz an."
+      "caveat": "Die Station-→-RPM-Zuordnung ist näherungsweise und hängt von Vergasergröße und Feder ab. Prozentwerte geben die Gemischfülle des Kandidaten relativ zur Referenz an.",
+      "size_match": "Entspricht der Vergasergröße Ihrer Referenz",
+      "size_mismatch": "Andere Vergasergröße als Ihre Referenz"
     },
     "chart": {
       "loading": "Diagramm lädt"
@@ -1171,7 +1177,9 @@
       "cell_mid": "Medio",
       "cell_high": "Alto",
       "add_aria": "Aggiungi {name} al grafico",
-      "caveat": "La corrispondenza stazione → RPM è approssimativa e dipende dalla misura del carburatore e dalla molla. Le percentuali rappresentano la ricchezza del candidato rispetto al tuo riferimento."
+      "caveat": "La corrispondenza stazione → RPM è approssimativa e dipende dalla misura del carburatore e dalla molla. Le percentuali rappresentano la ricchezza del candidato rispetto al tuo riferimento.",
+      "size_match": "Corrisponde alla dimensione del carburatore di riferimento",
+      "size_mismatch": "Dimensione del carburatore diversa dal riferimento"
     },
     "chart": {
       "loading": "Il grafico si sta caricando"
@@ -1224,7 +1232,9 @@
       "cell_mid": "中",
       "cell_high": "高",
       "add_aria": "{name} をチャートに追加",
-      "caveat": "ステーション → RPM の対応は近似値であり、キャブサイズやスプリングにより異なります。パーセントは基準に対する候補の濃さの比率です。"
+      "caveat": "ステーション → RPM の対応は近似値であり、キャブサイズやスプリングにより異なります。パーセントは基準に対する候補の濃さの比率です。",
+      "size_match": "基準のキャブレターサイズと一致",
+      "size_mismatch": "基準とはキャブレターサイズが異なります"
     },
     "chart": {
       "loading": "チャートを読み込み中"
@@ -1277,7 +1287,9 @@
       "cell_mid": "중속",
       "cell_high": "고속",
       "add_aria": "차트에 {name} 추가",
-      "caveat": "스테이션 → RPM 매핑은 근사값이며 카브 크기와 스프링에 따라 다릅니다. 백분율은 기준 대비 후보의 농후도를 나타냅니다."
+      "caveat": "스테이션 → RPM 매핑은 근사값이며 카브 크기와 스프링에 따라 다릅니다. 백분율은 기준 대비 후보의 농후도를 나타냅니다.",
+      "size_match": "기준 카뷰레터 크기와 일치",
+      "size_mismatch": "기준과 카뷰레터 크기가 다름"
     },
     "chart": {
       "loading": "차트 로딩 중"
@@ -1330,7 +1342,9 @@
       "cell_mid": "Média",
       "cell_high": "Alta",
       "add_aria": "Adicionar {name} ao gráfico",
-      "caveat": "O mapeamento estação → RPM é aproximado e depende do tamanho do carburador e da mola. Os percentuais representam a riqueza do candidato em relação à sua referência."
+      "caveat": "O mapeamento estação → RPM é aproximado e depende do tamanho do carburador e da mola. Os percentuais representam a riqueza do candidato em relação à sua referência.",
+      "size_match": "Corresponde ao tamanho do carburador de referência",
+      "size_mismatch": "Tamanho de carburador diferente do de referência"
     },
     "chart": {
       "loading": "O gráfico está carregando"
@@ -1383,7 +1397,9 @@
       "cell_mid": "Средний",
       "cell_high": "Высокий",
       "add_aria": "Добавить {name} на график",
-      "caveat": "Соответствие станции → об/мин является приблизительным и зависит от размера карбюратора и пружины. Проценты отражают обогащённость кандидата относительно вашего эталона."
+      "caveat": "Соответствие станции → об/мин является приблизительным и зависит от размера карбюратора и пружины. Проценты отражают обогащённость кандидата относительно вашего эталона.",
+      "size_match": "Совпадает с размером карбюратора эталона",
+      "size_mismatch": "Размер карбюратора отличается от эталона"
     },
     "chart": {
       "loading": "График загружается"
@@ -1436,7 +1452,9 @@
       "cell_mid": "中",
       "cell_high": "高",
       "add_aria": "将 {name} 添加到图表",
-      "caveat": "站点 → RPM 的映射是近似值，取决于化油器尺寸和弹簧。百分比为候选针相对于参考针的混合浓度。"
+      "caveat": "站点 → RPM 的映射是近似值，取决于化油器尺寸和弹簧。百分比为候选针相对于参考针的混合浓度。",
+      "size_match": "与参考化油器尺寸相符",
+      "size_mismatch": "与参考化油器尺寸不同"
     },
     "chart": {
       "loading": "图表加载中"
