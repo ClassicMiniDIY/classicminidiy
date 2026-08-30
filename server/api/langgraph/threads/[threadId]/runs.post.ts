@@ -1,4 +1,4 @@
-import { createLangGraphClient, createThreadIfNeeded } from '../../_utils';
+import { createLangGraphClient, createThreadIfNeeded } from '../../../../utils/langgraph';
 
 export default defineEventHandler(async (event) => {
   const runtimeConfig = useRuntimeConfig();

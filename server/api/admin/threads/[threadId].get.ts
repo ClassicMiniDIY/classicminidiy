@@ -1,4 +1,4 @@
-import { createLangGraphClient } from '../../langgraph/_utils';
+import { createLangGraphClient } from '../../../utils/langgraph';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 
 /**
