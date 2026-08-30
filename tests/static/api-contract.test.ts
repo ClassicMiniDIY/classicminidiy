@@ -19,7 +19,7 @@
  * `[...slug]` matches the rest.
  */
 import { describe, expect, it } from 'vitest';
-import { blankComments, describeViolations, diffAgainstAllowlist, read, rel, walk } from './_scan';
+import { describeViolations, diffAgainstAllowlist, read, rel, searchableSource, walk } from './_scan';
 
 const HTTP_METHOD_SUFFIXES = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'] as const;
 
@@ -112,8 +112,10 @@ function collectClientCalls(): ClientCall[] {
   const calls: ClientCall[] = [];
   for (const abs of files) {
     // Comments carry example paths (`'/api/...'` appears in a Needles.vue note
-    // explaining the useFetch getter-form trap). Blank them first.
-    const source = blankComments(read(abs), 'script');
+    // explaining the useFetch getter-form trap), so they are blanked first —
+    // per block, because `//` is a comment in script and an ordinary
+    // protocol-relative URL in a template.
+    const source = searchableSource(abs);
     const quoted = /(['"])(\/api\/[^'"\n]*)\1/g;
     const templated = /`(\/api\/(?:[^`\\]|\\.)*)`/g;
     for (const pattern of [quoted, templated]) {

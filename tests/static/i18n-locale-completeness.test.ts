@@ -99,7 +99,7 @@ const filesWithBlock = new Set<string>();
 
 for (const abs of appVueFiles()) {
   const sfc = parseVue(abs);
-  const searchable = `${sfc.script?.content ?? ''}\n${sfc.template?.content ?? ''}`;
+  const searchable = `${sfc.scriptText}\n${sfc.template?.content ?? ''}`;
   if (/\buseI18n\s*\(|[^\w$]\$?t\s*\(\s*['"`]/.test(searchable)) filesUsingT.push(rel(abs));
 
   for (const block of sfc.i18n) {

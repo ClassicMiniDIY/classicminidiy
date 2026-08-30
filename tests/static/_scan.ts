@@ -37,7 +37,17 @@ export function walk(dir: string, ext: string): string[] {
     for (const entry of entries) {
       if (SKIP_DIRS.has(entry)) continue;
       const full = join(current, entry);
-      if (statSync(full).isDirectory()) visit(full);
+      // statSync throws on a dangling symlink (a stale worktree link, an
+      // interrupted checkout). Skip the entry rather than taking the whole
+      // suite down with a filesystem error that looks nothing like a contract
+      // failure.
+      let stats;
+      try {
+        stats = statSync(full);
+      } catch {
+        continue;
+      }
+      if (stats.isDirectory()) visit(full);
       else if (entry.endsWith(ext)) out.push(full);
     }
   };
@@ -65,8 +75,21 @@ export interface Sfc {
   file: string;
   raw: string;
   template: SfcBlock | null;
-  /** `<script setup>` and plain `<script>` concatenated for text scanning. */
+  /**
+   * The `<script setup>` block if present, else the plain `<script>`.
+   * Carries real line numbers, so use it when a violation needs a location.
+   */
   script: SfcBlock | null;
+  /**
+   * BOTH script blocks' contents joined, with comments blanked.
+   *
+   * A file may legitimately carry `<script setup>` AND a plain `<script>` (for
+   * named exports). `script` above holds only one of them, so any check that
+   * asks "does this file contain X" must read this instead — otherwise a guard
+   * living in the block we did not pick is invisible, and the check reports a
+   * violation that is not there.
+   */
+  scriptText: string;
   i18n: SfcBlock[];
 }
 
@@ -78,15 +101,37 @@ export function parseVue(absPath: string): Sfc {
   const raw = read(absPath);
   const { descriptor } = parseSFC(raw, { filename: absPath });
   // scriptSetup is what every component in this repo uses; plain <script> is
-  // rare but real (definePageMeta-only blocks), so prefer setup and fall back.
+  // rare but real (named exports alongside setup), so prefer setup for line
+  // numbers and scan the text of both.
   const scriptBlock = descriptor.scriptSetup ?? descriptor.script;
+  const scriptText = [descriptor.scriptSetup?.content, descriptor.script?.content]
+    .filter(Boolean)
+    .map((content) => blankComments(content as string, 'script'))
+    .join('\n');
   return {
     file: rel(absPath),
     raw,
     template: descriptor.template ? toBlock(descriptor.template as any) : null,
     script: scriptBlock ? toBlock(scriptBlock as any) : null,
+    scriptText,
     i18n: descriptor.customBlocks.filter((b) => b.type === 'i18n').map((b) => toBlock(b as any)),
   };
+}
+
+/**
+ * Every `/api/…`-bearing source line of an SFC, with each block's comments
+ * blanked by ITS OWN rules.
+ *
+ * Running the JavaScript comment rule over a whole `.vue` file is unsafe: `//`
+ * is not a comment in a template, so `<a href="//cdn.example.com/x">` would
+ * blank the rest of that line and hide any call that followed it. That is the
+ * false-negative direction — a missing route slipping through the contract
+ * check — so the blocks are handled separately.
+ */
+export function searchableSource(absPath: string): string {
+  if (!absPath.endsWith('.vue')) return blankComments(read(absPath), 'script');
+  const sfc = parseVue(absPath);
+  return [sfc.scriptText, blankComments(sfc.template?.content ?? '', 'template')].join('\n');
 }
 
 /**
@@ -140,9 +185,12 @@ export function describeViolations(title: string, violations: string[]): string 
  */
 export function diffAgainstAllowlist(actual: string[], allowed: readonly string[]) {
   const allowedSet = new Set(allowed);
+  // Dedupe: one file can produce the same violation id twice (two <i18n>
+  // blocks both missing the same locale), and a doubled entry makes the
+  // failure message read as two separate problems.
   const actualSet = new Set(actual);
   return {
-    unexpected: actual.filter((v) => !allowedSet.has(v)).sort(),
+    unexpected: [...actualSet].filter((v) => !allowedSet.has(v)).sort(),
     stale: [...allowedSet].filter((v) => !actualSet.has(v)).sort(),
   };
 }
