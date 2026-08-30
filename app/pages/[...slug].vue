@@ -54,7 +54,7 @@
     });
   }
 
-  await useHead({
+  useHead({
     title: `${currentPostData.value?.title} ${$t('seo.title_suffix')}`,
     meta: [
       {
@@ -92,7 +92,7 @@
     () => currentPostData.value?.image || 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg'
   );
 
-  await useSeoMeta({
+  useSeoMeta({
     ogTitle: `${currentPostData.value?.title} ${$t('seo.og_title_suffix')}`,
     ogDescription:
       currentPostData.value?.description || $t('seo.description_fallback', { title: currentPostData.value?.title }),
@@ -313,7 +313,7 @@
   </div>
 </template>
 
-<i18n>
+<i18n lang="json">
 {
   "en": {
     "breadcrumb_archive": "Archive",

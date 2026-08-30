@@ -65,6 +65,10 @@
     trackSearch('electrical', searchQuery.value, results.length);
   });
 
+  // `?q=` filters the diagram list, so each query is a near-duplicate view.
+  // Same reasoning as /technical — see app/composables/useFacetedSeo.ts.
+  useFacetedSeo('/archive/electrical', { indexableParams: [] });
+
   useHead({
     title: t('title'),
     meta: [
@@ -80,10 +84,6 @@
       },
     ],
     link: [
-      {
-        rel: 'canonical',
-        href: 'https://www.classicminidiy.com/archive/electrical',
-      },
       {
         rel: 'preconnect',
         href: 'https://classicminidiy.s3.amazonaws.com',

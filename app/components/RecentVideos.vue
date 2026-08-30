@@ -24,11 +24,12 @@
         <nuxt-picture
           :src="video.thumbnails.maxres"
           :alt="video.title"
-          class="w-full"
           loading="lazy"
           width="720"
           height="404"
           format="webp"
+          class="block w-full"
+          :img-attrs="{ class: 'w-full' }"
         />
       </figure>
       <div class="card-body">

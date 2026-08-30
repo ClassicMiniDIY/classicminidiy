@@ -35,6 +35,14 @@
   // hydration, the same failure mode /chat hit.
   onMounted(loadRecentTools);
 
+  // `?category=` changes which tools render, so every value is a near-duplicate
+  // of the unfiltered grid. The hardcoded canonical this replaces stopped the
+  // permutations self-canonicalising, but it did not mark them noindex and it
+  // did not route robots through useRobotsRule() — so the page kept advertising
+  // itself as indexable at every facet. `indexableParams: []` canonicalises
+  // everything to the bare path; it also neutralises ?utm_source= / ?fbclid=.
+  useFacetedSeo('/technical', { indexableParams: [] });
+
   useHead({
     title: t('title'),
     meta: [
@@ -50,10 +58,6 @@
       },
     ],
     link: [
-      {
-        rel: 'canonical',
-        href: 'https://www.classicminidiy.com/technical',
-      },
       {
         rel: 'preconnect',
         href: 'https://classicminidiy.s3.amazonaws.com',
