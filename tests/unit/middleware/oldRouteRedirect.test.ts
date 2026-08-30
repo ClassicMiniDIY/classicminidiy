@@ -114,6 +114,50 @@ describe('oldRouteRedirect middleware', () => {
     expect(result).toBeUndefined();
   });
 
+  // --- Regression: substring matching hijacked user-generated slugs ---
+  //
+  // The matcher used `to.path.includes(...)`, so any path CONTAINING one of
+  // these patterns was 301'd. Listing and model slugs are written by sellers,
+  // and an ordinary Classic Mini ad mentioning a heritage registry produced a
+  // slug that was silently redirected off the site — confirmed live in
+  // production before the fix. A 301 also tells Google the listing moved
+  // permanently, so it lost its indexing.
+  it.each([
+    '/exchange/listings/1969-cooper-s-with-heritage-registry-certificate',
+    '/models/registry-plate-bracket',
+    '/exchange/finds/mini-registry-book-for-sale',
+    '/archive/documents/the-mini-registry-handbook',
+  ])('does NOT redirect %s (user-generated slug containing a pattern)', (path) => {
+    const result = middleware({ path }, {});
+    expect(navigateTo).not.toHaveBeenCalled();
+    expect(result).toBeUndefined();
+  });
+
+  it('does NOT redirect /contribute/registry', () => {
+    const result = middleware({ path: '/contribute/registry' }, {});
+    expect(navigateTo).not.toHaveBeenCalled();
+    expect(result).toBeUndefined();
+  });
+
+  // The old matcher fired on a pattern appearing anywhere, so a nested path
+  // that merely contained it was redirected as if it were the moved page.
+  it('does NOT redirect a path that merely contains technical/colors', () => {
+    const result = middleware({ path: '/archive/documents/technical-colors-guide' }, {});
+    expect(navigateTo).not.toHaveBeenCalled();
+    expect(result).toBeUndefined();
+  });
+
+  // Anchored matching still covers everything beneath a moved path.
+  it('redirects sub-paths of a moved section', () => {
+    middleware({ path: '/archive/manuals/haynes-workshop-manual' }, {});
+    expect(navigateTo).toHaveBeenCalledWith('/archive/documents?type=manual', { redirectCode: 301 });
+  });
+
+  it('redirects /registry sub-paths', () => {
+    middleware({ path: '/registry/1959' }, {});
+    expect(navigateTo).toHaveBeenCalledWith('/archive/registry', { redirectCode: 301 });
+  });
+
   it('does NOT redirect /technical/chassis-decoder (already correct path)', () => {
     const result = middleware({ path: '/technical/chassis-decoder' }, {});
     expect(navigateTo).not.toHaveBeenCalled();

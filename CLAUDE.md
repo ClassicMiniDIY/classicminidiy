@@ -566,6 +566,20 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 
 - **Every dynamic route must 404 on a miss — `app/pages/[...slug].vue` most of all.** That file is the site-wide catch-all, so _any_ unmatched URL on the domain reaches it. Until 2026-07 it answered HTTP 200 with `<title>undefined - Classic Mini Archive</title>` and a self-referencing canonical for literally every unknown path (`/wp-admin`, `/foo/bar/baz`, …) — an unbounded soft-404 space that Google indexes and burns crawl budget on. It, and every `[slug]`/`[id]` detail page, must `throw createError({ statusCode: 404, fatal: true })` when the record isn't found. The one deliberate exception is `/exchange/listings/[slug]`: an SSR miss there can also be a _pending_ listing whose RLS row only the signed-in owner can read (SSR has no session), so it sets `setResponseStatus(event, 404)` + `noindex` and still renders, letting the `onMounted` retry recover it for the owner.
 
+- **Every redirect matcher must anchor at a segment boundary from the START of
+  the path — never `path.includes(...)`.** `app/middleware/oldRouteRedirect.global.ts`
+  matched substrings, and its `registry` rule matched the bare word anywhere.
+  Listing and model slugs are USER-GENERATED, so an ordinary ad titled "heritage
+  registry certificate" produced a slug that was silently 301'd to
+  `/archive/registry` — confirmed live in production, and a 301 also tells Google
+  the listing moved permanently, so it lost its indexing. The old rule needed
+  `!includes('archive')` / `!includes('admin')` / `!includes('contribute')`
+  exclusions to stay usable; those exclusions were the tell. An anchored matcher
+  needs none of them, because `/archive/registry` does not start with `/registry`.
+  Use `pathInPrefixes()` from `app/utils/exchangeRoutes.ts` rather than writing a
+  fourth comparison. `MUST_NOT_REDIRECT` in `tests/fixtures/route-manifest.mjs`
+  keeps this honest against a running server.
+
 - **A routeRule makes a path a "known route" to `@nuxtjs/sitemap`.** `/technical/calculators/{needles,gearbox}` had no page files but kept `prerender: false` routeRules, which was enough to put both dead URLs in the sitemap, where they resolved through the catch-all as `undefined`-titled 200s. If you delete a page, delete or 301 its routeRules too, and add the path to `sitemap.exclude`. (On Vercel these `redirect` routeRules serve real 301s; the meta-refresh `index.html` in `.output/public` is a build artifact the platform routing shadows — same as `/archive/manuals`.)
 
 - **Browse pages with query params must use `useFacetedSeo()`** (`app/composables/useFacetedSeo.ts`). `nuxt-seo-utils` derives the canonical from the _current URL including its query string_, so without it every filter/sort permutation self-canonicalises into its own indexable near-duplicate — a combinatorial crawl trap, and one that swallows `?utm_source=`/`?fbclid=` URLs too. The composable canonicalises to an allowlist of params (default `['page']`) and marks anything else `noindex, follow`. It routes robots through **`useRobotsRule()`**, not `useSeoMeta({ robots })`: the latter _replaces_ @nuxtjs/robots' tag and silently drops `max-image-preview:large` / `max-snippet:-1`. Never pass `true` to `useRobotsRule` to "restore" the default — it maps to `robotsEnabledValue` unconditionally and would force `index, follow` onto preview deployments. Not calling it is what leaves the environment default intact.

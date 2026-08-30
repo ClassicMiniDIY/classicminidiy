@@ -102,14 +102,9 @@ export const MUST_NOT_REDIRECT = [
  * `route [check]`. The list is SHRINK-ONLY: the crawler fails if an entry stops
  * reproducing, so a fix cannot merge without deleting its line.
  *
- * Both entries below are the same defect — `oldRouteRedirect.global.ts` matches
- * route substrings, so any user-generated slug containing "registry" is 301'd
- * off the site.
+ * Empty is the goal state, not an oversight.
  */
-export const KNOWN_ERRORS = [
-  '/exchange/listings/1969-cooper-s-with-heritage-registry-certificate [must-not-redirect]',
-  '/models/registry-plate-bracket [must-not-redirect]',
-];
+export const KNOWN_ERRORS = [];
 
 /**
  * Per-route expectation overrides. Anything absent uses the defaults in
