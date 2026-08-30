@@ -1,11 +1,10 @@
 import { getServiceClient } from '../../../utils/supabase';
+import { requireUuidParam } from '../../../utils/validation';
 
 export default defineEventHandler(async (event) => {
-  const userId = getRouterParam(event, 'userId');
-
-  if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: 'User ID required' });
-  }
+  // Guarded rather than passed through: a non-UUID reaches Postgres, fails the
+  // uuid cast and surfaces as a 500 for what is a malformed request.
+  const userId = requireUuidParam(getRouterParam(event, 'userId'), 'User ID');
 
   const supabase = getServiceClient();
 
