@@ -27,15 +27,10 @@ const HTTP_METHOD_SUFFIXES = ['get', 'post', 'put', 'patch', 'delete', 'head', '
  * Client calls that currently resolve to nothing. Each is a user-visible action
  * that silently does not happen. Remove an entry when its route lands (or when
  * the dead caller is deleted).
+ *
+ * Empty is the goal state, not an oversight.
  */
-const KNOWN_MISSING_ROUTES: readonly string[] = [
-  // Admin "clean up orphaned storage" — throws to the UI.
-  'app/composables/useAdmin.ts -> /api/admin/storage/cleanup-orphans',
-  // Watchers are never told a listing sold; the success toast claims they were.
-  'app/pages/dashboard/listings.vue -> /api/exchange/notifications/watchlist-sold',
-  // Price-drop notifications never fire; failure is swallowed by .catch().
-  'app/pages/exchange/listings/[slug]/edit.vue -> /api/exchange/notifications/price-drop',
-];
+const KNOWN_MISSING_ROUTES: readonly string[] = [];
 
 /**
  * Files under `server/api/` or `server/routes/` that export no default handler.
