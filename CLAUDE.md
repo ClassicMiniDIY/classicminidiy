@@ -1246,12 +1246,23 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
 - **A dependency that reads `global.*` at MODULE SCOPE breaks the whole route on
   Workers.** `vuedraggable@4.1.0` runs `var console = getConsole()` at module
   scope, falling back to `global.console` when `window` is undefined; workerd's
-  webpack `global` shim resolves to `undefined`, so importing it anywhere in an
-  SSR'd route chunk throws `Cannot read properties of undefined (reading
-'console')` and 500s that route. **Dev is unaffected**, which is exactly why it
-  went unnoticed — only the production crawl found it. When adding a browser-only
-  library to an SSR'd page, import it inside `<ClientOnly>` or behind a dynamic
-  `import()`, and verify the route on a deployed Worker rather than in dev.
+  webpack `global` shim resolves to `undefined`, so EVALUATING it in an SSR'd
+  route chunk throws `Cannot read properties of undefined (reading 'console')`
+  and 500s that route. It is present in the built artifact as
+  `function r(){return w.console}` inside `chunks/_/vuedraggable.umd.min.mjs`.
+  **Dev is unaffected**, which is exactly why it went unnoticed — only the
+  production route crawl found it. Import such a library behind a dynamic
+  `import()` AND render it inside `<ClientOnly>` (see
+  `app/pages/admin/marketing.vue`), and verify on a real Worker
+  (`wrangler dev .output/server/index.mjs --local`), never in dev.
+
+  **What decides whether it fires is EVALUATION, not import style.**
+  `app/components/exchange/listings/wizard/PhotoUploadSection.vue` still
+  statically imports vuedraggable and `/exchange/listings/new` is fine — because
+  that component sits on a later wizard step and its chunk is never evaluated
+  during SSR. That is a property of the current step layout, not a guarantee:
+  render it on step 1, or hoist it out of its own chunk, and the route 500s the
+  same way. Do not read "the wizard is fine" as "a static import is fine".
 
 - **Nitro registers EVERY file under `server/api/` and `server/routes/` as a
   route.** Its scan glob is `**/*.{js,mjs,cjs,ts,...}` with no underscore

@@ -70,99 +70,106 @@
 
           <div class="divider my-2">Content blocks</div>
 
-          <draggable v-model="form.blocks" item-key="key" handle=".drag-handle" class="flex flex-col gap-3">
-            <template #item="{ element: block, index }">
-              <div class="border border-base-300 rounded-lg p-3 bg-base-200/40">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-2 text-sm font-semibold text-base-content/70">
-                    <i class="fas fa-grip-vertical drag-handle cursor-grab text-base-content/40"></i>
-                    <i :class="blockIcon(block.type)"></i>
-                    {{ blockLabel(block.type) }}
-                  </div>
-                  <button class="btn btn-ghost btn-xs text-error" @click="removeBlock(index)">
-                    <i class="fas fa-xmark"></i>
-                  </button>
-                </div>
-
-                <template v-if="block.type === 'heading'">
-                  <input
-                    v-model="block.text"
-                    type="text"
-                    maxlength="200"
-                    placeholder="Section heading"
-                    class="input input-bordered input-sm w-full"
-                  />
-                </template>
-
-                <template v-else-if="block.type === 'text'">
-                  <textarea
-                    v-model="block.markdown"
-                    rows="4"
-                    maxlength="5000"
-                    placeholder="Write your message…"
-                    class="textarea textarea-bordered w-full text-sm"
-                  ></textarea>
-                  <p class="text-xs text-base-content/50 mt-1">
-                    **bold** &nbsp; *italic* &nbsp; [link text](https://…) &nbsp; blank line = new paragraph
-                  </p>
-                </template>
-
-                <template v-else-if="block.type === 'image'">
-                  <div v-if="block.url" class="mb-2">
-                    <img :src="block.url" alt="" class="max-h-40 rounded-lg border border-base-300 mx-auto" />
-                  </div>
-                  <div class="flex flex-col gap-2">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                      class="file-input file-input-bordered file-input-sm w-full"
-                      :disabled="uploadingIndex === index"
-                      @change="(e) => handleImageUpload(e, index)"
-                    />
-                    <div v-if="uploadingIndex === index" class="flex items-center gap-2 text-sm text-base-content/60">
-                      <span class="loading loading-spinner loading-xs"></span>
-                      Optimizing & uploading…
+          <ClientOnly>
+            <draggable v-model="form.blocks" item-key="key" handle=".drag-handle" class="flex flex-col gap-3">
+              <template #item="{ element: block, index }">
+                <div class="border border-base-300 rounded-lg p-3 bg-base-200/40">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2 text-sm font-semibold text-base-content/70">
+                      <i class="fas fa-grip-vertical drag-handle cursor-grab text-base-content/40"></i>
+                      <i :class="blockIcon(block.type)"></i>
+                      {{ blockLabel(block.type) }}
                     </div>
+                    <button class="btn btn-ghost btn-xs text-error" @click="removeBlock(index)">
+                      <i class="fas fa-xmark"></i>
+                    </button>
+                  </div>
+
+                  <template v-if="block.type === 'heading'">
                     <input
-                      v-model="block.alt"
+                      v-model="block.text"
                       type="text"
                       maxlength="200"
-                      placeholder="Alt text (accessibility)"
+                      placeholder="Section heading"
                       class="input input-bordered input-sm w-full"
                     />
-                    <input
-                      v-model="block.href"
-                      type="url"
-                      placeholder="Optional link when clicked (https://…)"
-                      class="input input-bordered input-sm w-full"
-                    />
-                  </div>
-                </template>
+                  </template>
 
-                <template v-else-if="block.type === 'button'">
-                  <div class="flex flex-col sm:flex-row gap-2">
-                    <input
-                      v-model="block.label"
-                      type="text"
-                      maxlength="80"
-                      placeholder="Button label"
-                      class="input input-bordered input-sm w-full sm:w-1/3"
-                    />
-                    <input
-                      v-model="block.href"
-                      type="url"
-                      placeholder="https://classicminidiy.com/…"
-                      class="input input-bordered input-sm w-full sm:flex-1"
-                    />
-                  </div>
-                </template>
+                  <template v-else-if="block.type === 'text'">
+                    <textarea
+                      v-model="block.markdown"
+                      rows="4"
+                      maxlength="5000"
+                      placeholder="Write your message…"
+                      class="textarea textarea-bordered w-full text-sm"
+                    ></textarea>
+                    <p class="text-xs text-base-content/50 mt-1">
+                      **bold** &nbsp; *italic* &nbsp; [link text](https://…) &nbsp; blank line = new paragraph
+                    </p>
+                  </template>
 
-                <template v-else>
-                  <div class="border-t border-base-300 my-2"></div>
-                </template>
+                  <template v-else-if="block.type === 'image'">
+                    <div v-if="block.url" class="mb-2">
+                      <img :src="block.url" alt="" class="max-h-40 rounded-lg border border-base-300 mx-auto" />
+                    </div>
+                    <div class="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                        class="file-input file-input-bordered file-input-sm w-full"
+                        :disabled="uploadingIndex === index"
+                        @change="(e) => handleImageUpload(e, index)"
+                      />
+                      <div v-if="uploadingIndex === index" class="flex items-center gap-2 text-sm text-base-content/60">
+                        <span class="loading loading-spinner loading-xs"></span>
+                        Optimizing & uploading…
+                      </div>
+                      <input
+                        v-model="block.alt"
+                        type="text"
+                        maxlength="200"
+                        placeholder="Alt text (accessibility)"
+                        class="input input-bordered input-sm w-full"
+                      />
+                      <input
+                        v-model="block.href"
+                        type="url"
+                        placeholder="Optional link when clicked (https://…)"
+                        class="input input-bordered input-sm w-full"
+                      />
+                    </div>
+                  </template>
+
+                  <template v-else-if="block.type === 'button'">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                      <input
+                        v-model="block.label"
+                        type="text"
+                        maxlength="80"
+                        placeholder="Button label"
+                        class="input input-bordered input-sm w-full sm:w-1/3"
+                      />
+                      <input
+                        v-model="block.href"
+                        type="url"
+                        placeholder="https://classicminidiy.com/…"
+                        class="input input-bordered input-sm w-full sm:flex-1"
+                      />
+                    </div>
+                  </template>
+
+                  <template v-else>
+                    <div class="border-t border-base-300 my-2"></div>
+                  </template>
+                </div>
+              </template>
+            </draggable>
+            <template #fallback>
+              <div class="flex flex-col gap-3">
+                <div v-for="block in form.blocks" :key="block.key" class="skeleton h-16 w-full"></div>
               </div>
             </template>
-          </draggable>
+          </ClientOnly>
 
           <div class="flex flex-wrap gap-2 mt-3">
             <button class="btn btn-outline btn-xs" @click="addBlock('heading')">
@@ -440,8 +447,33 @@
 </template>
 
 <script setup lang="ts">
-  import draggable from 'vuedraggable';
   import type { MarketingBlock, MarketingEmailRecord } from '~/composables/useMarketingEmail';
+
+  /**
+   * vuedraggable is loaded ASYNCHRONOUSLY and rendered inside <ClientOnly>,
+   * and both halves are load-bearing.
+   *
+   * A static `import draggable from 'vuedraggable'` 500'd this page in
+   * production while dev stayed green. The package (4.1.0) is a webpack UMD
+   * bundle that runs its console shim at MODULE SCOPE:
+   *
+   *   function getConsole() {
+   *     if (typeof window !== "undefined") return window.console;
+   *     return global.console;
+   *   }
+   *   var console = getConsole();
+   *
+   * `global` comes from webpack's shim, which resolves to `undefined` on
+   * workerd — so merely importing the module during SSR threw
+   * `Cannot read properties of undefined (reading 'console')` and took the
+   * whole route down. Node dev has a real `global`, which is why this was
+   * invisible locally and only the production route crawl found it.
+   *
+   * A dynamic import keeps the module out of the server chunk's evaluation
+   * path; <ClientOnly> keeps the async component from being resolved during
+   * SSR at all. Do not collapse either back into a static import.
+   */
+  const draggable = defineAsyncComponent(() => import('vuedraggable'));
 
   useHead({ title: 'Marketing Email - Admin - Classic Mini DIY' });
   useSeoMeta({ robots: 'noindex, nofollow' });
