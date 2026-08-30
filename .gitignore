@@ -105,3 +105,9 @@ supabase/.temp/
 # Cloudflare local dev secrets. Never commit.
 .dev.vars
 .dev.vars.*
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
