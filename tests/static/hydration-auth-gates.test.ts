@@ -79,7 +79,6 @@ const KNOWN_UNGATED: readonly string[] = [
   'app/pages/contribute/color.vue::isAuthenticated#1',
   'app/pages/contribute/index.vue::isAuthenticated#1',
   'app/pages/contribute/index.vue::userProfile#1',
-  'app/pages/dashboard.vue::isAuthenticated#1',
   'app/pages/exchange/finds/index.vue::isAuthenticated#1',
   'app/pages/exchange/finds/index.vue::isAuthenticated#2',
   'app/pages/models/[slug].vue::isAuthenticated#1',

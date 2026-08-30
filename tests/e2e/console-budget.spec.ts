@@ -31,6 +31,10 @@ const ROUTES = [
   '/login',
   '/membership',
   '/contribute',
+  // The dashboard shell is the parent layout for 14 routes, and it branches on
+  // auth. Signed out it must render its neutral resolving state on both sides,
+  // so hydration has nothing to repair.
+  '/dashboard/models',
 ];
 
 /**
