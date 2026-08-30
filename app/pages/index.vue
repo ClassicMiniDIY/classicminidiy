@@ -529,7 +529,8 @@
       "support": {
         "title": "APOYA LA MISIÓN",
         "heading": "Apoyo",
-        "content": "Classic Mini DIY es apoyado por nuestros espectadores. Si estás interesado en ayudar a mantener el canal vivo, considera apoyar en Patreon o si tienes habilidades en JS y tecnologías web modernas, por favor considera apoyar la base de código de código abierto en github."
+        "content": "Classic Mini DIY es apoyado por nuestros espectadores. Si estás interesado en ayudar a mantener el canal vivo, considera apoyar en Patreon o si tienes habilidades en JS y tecnologías web modernas, por favor considera apoyar la base de código de código abierto en github.",
+        "member_cta": "Hazte Miembro Contribuyente"
       },
       "toolgrid": {
         "eyebrow": "CAJA DE HERRAMIENTAS",
@@ -616,7 +617,8 @@
       "support": {
         "title": "SOUTENIR LA MISSION",
         "heading": "Soutien",
-        "content": "Classic Mini DIY est soutenu par nos spectateurs. Si vous êtes intéressé à aider à maintenir la chaîne en vie, considérez soutenir sur Patreon ou si vous avez des compétences en JS et technologies web modernes, veuillez considérer soutenir la base de code open source sur github."
+        "content": "Classic Mini DIY est soutenu par nos spectateurs. Si vous êtes intéressé à aider à maintenir la chaîne en vie, considérez soutenir sur Patreon ou si vous avez des compétences en JS et technologies web modernes, veuillez considérer soutenir la base de code open source sur github.",
+        "member_cta": "Devenir Membre de Soutien"
       },
       "toolgrid": {
         "eyebrow": "BOÎTE À OUTILS",
@@ -703,7 +705,8 @@
       "support": {
         "title": "SOSTIENI LA MISSIONE",
         "heading": "Supporto",
-        "content": "Classic Mini DIY è supportato dai nostri spettatori. Se sei interessato ad aiutare a mantenere vivo il canale, considera di supportare su Patreon o se hai competenze in JS e tecnologie web moderne, considera di supportare la base di codice open source su github."
+        "content": "Classic Mini DIY è supportato dai nostri spettatori. Se sei interessato ad aiutare a mantenere vivo il canale, considera di supportare su Patreon o se hai competenze in JS e tecnologie web moderne, considera di supportare la base di codice open source su github.",
+        "member_cta": "Diventa Membro Sostenitore"
       },
       "toolgrid": {
         "eyebrow": "CASSETTA ATTREZZI",
@@ -790,7 +793,8 @@
       "support": {
         "title": "UNTERSTÜTZEN SIE DIE MISSION",
         "heading": "Unterstützung",
-        "content": "Classic Mini DIY wird von unseren Zuschauern unterstützt. Wenn Sie daran interessiert sind, den Kanal am Leben zu erhalten, ziehen Sie in Betracht, auf Patreon zu unterstützen, oder wenn Sie Fähigkeiten in JS und modernen Web-Technologien haben, ziehen Sie bitte in Betracht, die Open-Source-Codebasis auf GitHub zu unterstützen."
+        "content": "Classic Mini DIY wird von unseren Zuschauern unterstützt. Wenn Sie daran interessiert sind, den Kanal am Leben zu erhalten, ziehen Sie in Betracht, auf Patreon zu unterstützen, oder wenn Sie Fähigkeiten in JS und modernen Web-Technologien haben, ziehen Sie bitte in Betracht, die Open-Source-Codebasis auf GitHub zu unterstützen.",
+        "member_cta": "Fördermitglied werden"
       },
       "toolgrid": {
         "eyebrow": "WERKZEUGKASTEN",
@@ -877,7 +881,8 @@
       "support": {
         "title": "APOIE A MISSÃO",
         "heading": "Apoio",
-        "content": "Classic Mini DIY é apoiado pelos nossos espectadores. Se você está interessado em ajudar a manter o canal vivo, considere apoiar no Patreon ou se você tem habilidades em JS e tecnologias web modernas, por favor considere apoiar a base de código open source no github."
+        "content": "Classic Mini DIY é apoiado pelos nossos espectadores. Se você está interessado em ajudar a manter o canal vivo, considere apoiar no Patreon ou se você tem habilidades em JS e tecnologias web modernas, por favor considere apoiar a base de código open source no github.",
+        "member_cta": "Torne-se Membro Apoiador"
       },
       "toolgrid": {
         "eyebrow": "CAIXA DE FERRAMENTAS",
@@ -964,7 +969,8 @@
       "support": {
         "title": "ПОДДЕРЖИТЕ МИССИЮ",
         "heading": "Поддержка",
-        "content": "Classic Mini DIY поддерживается нашими зрителями. Если вы заинтересованы в том, чтобы помочь сохранить канал живым, рассмотрите поддержку на Patreon или если у вас есть навыки в JS и современных веб-технологиях, пожалуйста, рассмотрите поддержку базы кода с открытым исходным кодом на github."
+        "content": "Classic Mini DIY поддерживается нашими зрителями. Если вы заинтересованы в том, чтобы помочь сохранить канал живым, рассмотрите поддержку на Patreon или если у вас есть навыки в JS и современных веб-технологиях, пожалуйста, рассмотрите поддержку базы кода с открытым исходным кодом на github.",
+        "member_cta": "Стать участником поддержки"
       },
       "toolgrid": {
         "eyebrow": "ИНСТРУМЕНТЫ",
@@ -1051,7 +1057,8 @@
       "support": {
         "title": "ミッションをサポート",
         "heading": "サポート",
-        "content": "Classic Mini DIYは視聴者によってサポートされています。チャンネルを生き続けるのを手伝うことに興味がある場合は、Patreonでのサポートを検討するか、JSと現代のウェブ技術のスキルがある場合は、githubでオープンソースコードベースのサポートを検討してください。"
+        "content": "Classic Mini DIYは視聴者によってサポートされています。チャンネルを生き続けるのを手伝うことに興味がある場合は、Patreonでのサポートを検討するか、JSと現代のウェブ技術のスキルがある場合は、githubでオープンソースコードベースのサポートを検討してください。",
+        "member_cta": "サポートメンバーになる"
       },
       "toolgrid": {
         "eyebrow": "ツールボックス",
@@ -1138,7 +1145,8 @@
       "support": {
         "title": "支持使命",
         "heading": "支持",
-        "content": "Classic Mini DIY由我们的观众支持。如果您有兴趣帮助保持频道活跃，请考虑在Patreon上支持，或者如果您有JS和现代网络技术技能，请考虑在github上支持开源代码库。"
+        "content": "Classic Mini DIY由我们的观众支持。如果您有兴趣帮助保持频道活跃，请考虑在Patreon上支持，或者如果您有JS和现代网络技术技能，请考虑在github上支持开源代码库。",
+        "member_cta": "成为支持会员"
       },
       "toolgrid": {
         "eyebrow": "工具箱",
@@ -1225,7 +1233,8 @@
       "support": {
         "title": "미션 지원",
         "heading": "지원",
-        "content": "Classic Mini DIY는 시청자들의 지원을 받습니다. 채널을 살려두는 데 도움을 주는 데 관심이 있으시면 Patreon에서 지원을 고려해 주시거나, JS와 현대 웹 기술에 기술이 있으시면 github에서 오픈 소스 코드베이스 지원을 고려해 주세요."
+        "content": "Classic Mini DIY는 시청자들의 지원을 받습니다. 채널을 살려두는 데 도움을 주는 데 관심이 있으시면 Patreon에서 지원을 고려해 주시거나, JS와 현대 웹 기술에 기술이 있으시면 github에서 오픈 소스 코드베이스 지원을 고려해 주세요.",
+        "member_cta": "후원 멤버 되기"
       },
       "toolgrid": {
         "eyebrow": "도구상자",
