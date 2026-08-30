@@ -26,7 +26,10 @@ export default defineConfig({
     // Keep vitest's defaults but also ignore local git worktrees under
     // .claude/ (past sessions leave full repo copies whose duplicate test
     // files would otherwise be discovered and run) and the Nuxt build dir.
-    exclude: [...configDefaults.exclude, '**/.claude/**', '**/.nuxt/**'],
+    // `tests/e2e/**` is Playwright's, not vitest's. Its specs import
+    // `@playwright/test`, which has no vitest runtime — without this exclude
+    // vitest's default `**/*.spec.ts` glob would pick them up and fail.
+    exclude: [...configDefaults.exclude, '**/.claude/**', '**/.nuxt/**', 'tests/e2e/**'],
     fileParallelism: false,
     sequence: { shuffle: false },
     coverage: {
