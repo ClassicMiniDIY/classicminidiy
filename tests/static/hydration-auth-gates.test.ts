@@ -37,7 +37,16 @@ const CLIENT_ONLY_AUTH_NAMES = ['isAuthenticated', 'isAdmin', 'isSustainingMembe
 const CLIENT_ONLY_TAGS = new Set(['ClientOnly', 'client-only', 'NuxtClientFallback', 'nuxt-client-fallback']);
 
 /**
- * Known ungated branches, as `file:line::identifier`.
+ * Known ungated branches, as `file::identifier#ordinal`.
+ *
+ * The id deliberately carries NO line number. An earlier version used
+ * `file:line::identifier`, and any edit ABOVE a violation shifted its line and
+ * made the check report "1 new ungated auth branch" for a branch that had not
+ * moved or changed — sending the reader hunting for a regression that did not
+ * exist, and inviting them to "fix" it by editing a line number. The ordinal is
+ * the Nth occurrence of that identifier in the file, which is stable under
+ * unrelated edits. The current line is still printed in the failure message, so
+ * finding the branch is no harder.
  *
  * These are latent instances of the dropdown bug. They bite less than MainNav
  * did because none is sticky chrome sitting next to another dropdown to
@@ -48,38 +57,38 @@ const CLIENT_ONLY_TAGS = new Set(['ClientOnly', 'client-only', 'NuxtClientFallba
  * whole page, so all 14 `/dashboard/*` routes inherit the mismatch.
  */
 const KNOWN_UNGATED: readonly string[] = [
-  'app/components/Calculators/Alignment.vue:368::isAuthenticated',
-  'app/components/Calculators/Gearbox.vue:516::isAuthenticated',
-  'app/components/Calculators/GearboxConfigCard.vue:150::isAuthenticated',
-  'app/components/exchange/listings/Comment.vue:40::user',
-  'app/components/exchange/listings/Comment.vue:47::user',
-  'app/components/exchange/listings/Comment.vue:58::isAdmin',
-  'app/components/exchange/listings/Comment.vue:69::user',
-  'app/components/exchange/listings/CommentSection.vue:21::user',
-  'app/components/exchange/listings/SaveSearchButton.vue:2::user',
-  'app/components/exchange/listings/wizard/StepPricing.vue:7::isSustainingMember',
-  'app/components/exchange/listings/wizard/StepPricing.vue:73::isSustainingMember',
-  'app/components/exchange/listings/wizard/StepPricing.vue:134::isSustainingMember',
-  'app/components/exchange/listings/wizard/StepPricing.vue:141::isSustainingMember',
-  'app/components/exchange/listings/wizard/StepReview.vue:415::isSustainingMember',
-  'app/components/models/ModelComments.vue:70::isAuthenticated',
-  'app/components/models/ModelComments.vue:120::isAuthenticated',
-  'app/pages/archive/documents/[slug].vue:358::isAuthenticated',
-  'app/pages/archive/documents/[slug].vue:415::isAuthenticated',
-  'app/pages/archive/wheels/[...wheel].vue:257::isAuthenticated',
-  'app/pages/contribute/color.vue:217::isAuthenticated',
-  'app/pages/contribute/index.vue:74::isAuthenticated',
-  'app/pages/contribute/index.vue:125::userProfile',
-  'app/pages/dashboard.vue:53::isAuthenticated',
-  'app/pages/exchange/finds/index.vue:21::isAuthenticated',
-  'app/pages/exchange/finds/index.vue:77::isAuthenticated',
-  'app/pages/models/[slug].vue:361::isAuthenticated',
-  'app/pages/models/submit-external.vue:38::isAuthenticated',
-  'app/pages/models/upload.vue:202::isAuthenticated',
-  'app/pages/profile/edit.vue:215::isAuthenticated',
-  'app/pages/profile/index.vue:92::isAuthenticated',
-  'app/pages/profile/index.vue:134::isSustainingMember',
-  'app/pages/profile/index.vue:187::user',
+  'app/components/Calculators/Alignment.vue::isAuthenticated#1',
+  'app/components/Calculators/Gearbox.vue::isAuthenticated#1',
+  'app/components/Calculators/GearboxConfigCard.vue::isAuthenticated#1',
+  'app/components/exchange/listings/Comment.vue::user#1',
+  'app/components/exchange/listings/Comment.vue::user#2',
+  'app/components/exchange/listings/Comment.vue::isAdmin#1',
+  'app/components/exchange/listings/Comment.vue::user#3',
+  'app/components/exchange/listings/CommentSection.vue::user#1',
+  'app/components/exchange/listings/SaveSearchButton.vue::user#1',
+  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#1',
+  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#2',
+  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#3',
+  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#4',
+  'app/components/exchange/listings/wizard/StepReview.vue::isSustainingMember#1',
+  'app/components/models/ModelComments.vue::isAuthenticated#1',
+  'app/components/models/ModelComments.vue::isAuthenticated#2',
+  'app/pages/archive/documents/[slug].vue::isAuthenticated#1',
+  'app/pages/archive/documents/[slug].vue::isAuthenticated#2',
+  'app/pages/archive/wheels/[...wheel].vue::isAuthenticated#1',
+  'app/pages/contribute/color.vue::isAuthenticated#1',
+  'app/pages/contribute/index.vue::isAuthenticated#1',
+  'app/pages/contribute/index.vue::userProfile#1',
+  'app/pages/dashboard.vue::isAuthenticated#1',
+  'app/pages/exchange/finds/index.vue::isAuthenticated#1',
+  'app/pages/exchange/finds/index.vue::isAuthenticated#2',
+  'app/pages/models/[slug].vue::isAuthenticated#1',
+  'app/pages/models/submit-external.vue::isAuthenticated#1',
+  'app/pages/models/upload.vue::isAuthenticated#1',
+  'app/pages/profile/edit.vue::isAuthenticated#1',
+  'app/pages/profile/index.vue::isAuthenticated#1',
+  'app/pages/profile/index.vue::isSustainingMember#1',
+  'app/pages/profile/index.vue::user#1',
 ];
 
 /** Whole-word match that ignores property access (`foo.user` is not `user`). */
@@ -110,7 +119,10 @@ function gatedNames(script: string): string[] {
 }
 
 interface Violation {
+  /** Line-independent: `file::identifier#ordinal`. */
   id: string;
+  /** Current line, for the failure message only. */
+  line: number;
 }
 
 function scanFile(absPath: string): Violation[] {
@@ -138,6 +150,8 @@ function scanFile(absPath: string): Violation[] {
     templateStart + (sfc.template!.content.slice(0, offset).match(/\n/g)?.length ?? 0);
 
   const found: Violation[] = [];
+  /** Per-identifier occurrence counter, so ids survive edits elsewhere. */
+  const seen = new Map<string, number>();
 
   const visit = (node: any, insideSafeSubtree: boolean) => {
     if (node.type !== 1) {
@@ -168,7 +182,11 @@ function scanFile(absPath: string): Violation[] {
         if (prop.name !== 'if' && prop.name !== 'else-if') continue;
         const expression: string = prop.exp?.content ?? '';
         const hit = risky.find((name) => referencesName(expression, name));
-        if (hit) found.push({ id: `${sfc.file}:${lineFor(prop.loc.start.offset)}::${hit}` });
+        if (hit) {
+          const ordinal = (seen.get(hit) ?? 0) + 1;
+          seen.set(hit, ordinal);
+          found.push({ id: `${sfc.file}::${hit}#${ordinal}`, line: lineFor(prop.loc.start.offset) });
+        }
       }
     }
 
@@ -179,9 +197,11 @@ function scanFile(absPath: string): Violation[] {
   return found;
 }
 
-const violations = appVueFiles()
-  .flatMap(scanFile)
-  .map((v) => v.id);
+const found = appVueFiles().flatMap(scanFile);
+const violations = found.map((v) => v.id);
+/** id -> current line, so failures point at the branch without the id carrying it. */
+const lineById = new Map(found.map((v) => [v.id, v.line]));
+const withLine = (ids: string[]) => ids.map((id) => `${id} (line ${lineById.get(id) ?? '?'})`);
 
 describe('hydration: structural auth branches', () => {
   it('scans a non-trivial number of templates', () => {
@@ -195,7 +215,7 @@ describe('hydration: structural auth branches', () => {
       unexpected,
       describeViolations(
         'new ungated auth branches — gate on a hasMounted ref (see app/components/MainNav.vue)',
-        unexpected
+        withLine(unexpected)
       )
     ).toEqual([]);
     expect(stale, describeViolations('stale KNOWN_UNGATED entries (the gate landed — drop them)', stale)).toEqual([]);
