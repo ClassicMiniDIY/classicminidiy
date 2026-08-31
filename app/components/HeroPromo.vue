@@ -33,9 +33,9 @@
   const promotions: Promotion[] = [
     {
       id: 'mini-exchange-launch',
-      title: 'The Mini Exchange is Live!',
-      subtitle: 'Buy and sell Classic Minis on the brand new marketplace from Classic Mini DIY',
-      ctaText: 'Visit The Mini Exchange',
+      title: 'The Mini Exchange',
+      subtitle: 'Buy and sell Classic Mini vehicles, engines, and parts with enthusiasts worldwide',
+      ctaText: 'Browse the marketplace',
       ctaUrl: '/exchange',
       backgroundImage: '/hero-promos/og-image.jpg',
       expiresAt: '2027-01-01',
