@@ -67,6 +67,45 @@ jobs:
       - name: Check for shadowed auto-imports
         run: python3 scripts/find-shadowed-autoimports.py
 
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # fetch-depth: 0 is required by format:check, which diffs against the
+      # MERGE BASE with the base branch. actions/checkout defaults to a shallow
+      # clone with no other refs, so `git merge-base origin/main HEAD` cannot
+      # resolve and the script exits 2 rather than silently checking nothing.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      # Ratchet, not a gate: the first run reported 1,239 errors across 263
+      # never-type-verified .vue files, and a check that is red before anyone
+      # touches anything teaches people to ignore checks. This fails when an
+      # area's count goes UP, and equally when it goes DOWN without the baseline
+      # in scripts/typecheck.mjs being lowered — so ground gained cannot be
+      # quietly given back. `nuxi prepare` is not optional: tsconfig.json
+      # extends the generated .nuxt/tsconfig.json and .nuxt is gitignored.
+      - name: Typecheck (ratcheted)
+        run: bun run typecheck
+
+      # Scoped to the files the PR changed. Repo-wide `prettier --check` fails
+      # on 225 existing files, and the repo rule forbids `bun run format` on a
+      # branch (it rewrites hundreds of untouched files), so the diff is the
+      # only honest scope.
+      - name: Format check (changed files)
+        run: node scripts/format-check.mjs "origin/${{ github.base_ref }}"
+
   routes:
     name: Route Smoke
     runs-on: ubuntu-latest

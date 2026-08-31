@@ -27,12 +27,14 @@
     "build": "nuxi build",
     "start": "nuxi preview",
     "format": "prettier --write .",
+    "format:check": "node scripts/format-check.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:routes": "node scripts/smoke-routes.mjs",
     "test:e2e": "playwright test",
+    "typecheck": "nuxi prepare && node scripts/typecheck.mjs",
     "gen:types": "supabase gen types typescript --project-id psoqirvbujwohemmwplv > types/database.ts"
   },
   "overrides": {
@@ -117,7 +119,9 @@
     "patch-package": "^8.0.1",
     "prettier": "3.9.6",
     "sass-loader": "^17.0.0",
-    "vitest": "^4.1.10"
+    "typescript": "6.0.3",
+    "vitest": "^4.1.10",
+    "vue-tsc": "3.3.11"
   },
   "trustedDependencies": [
     "@parcel/watcher"
