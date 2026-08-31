@@ -19,6 +19,23 @@ import { rel, read, walk } from './_scan';
  * bridge. The reverse (a bridged name with no file) cannot compile, so it is
  * asserted only for completeness.
  */
+/**
+ * Escape EVERY regex metacharacter, not just the one that happens to appear in
+ * today's tool names.
+ *
+ * This was `name.replace(/[-]/g, '\\-')`, which escaped hyphens and left
+ * backslashes, dots, plus signs and the rest raw — CodeQL flagged it as
+ * incomplete sanitization, correctly. The names come from filenames under
+ * `server/mcp/tools/`, so this is not an injection route, but a partial escape
+ * is still a real hazard here: a tool file named `a.b.ts` would build a pattern
+ * whose `.` matches any character, and this check could then report a tool as
+ * documented when the prompt never mentions it — a silent pass in the one test
+ * whose entire job is to prevent silent drift.
+ */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\-]/g, '\\$&');
+}
+
 describe('agent tool registry', () => {
   const toolFiles = walk('server/mcp/tools', '.ts')
     .map((file) => basename(file).replace(/\.ts$/, ''))
@@ -56,8 +73,7 @@ describe('agent tool registry', () => {
     // quotes from any key that is a valid identifier, so `clearances` is bare
     // while `'torque-specs'` keeps them. Matching only the quoted form reported
     // a false violation for exactly one tool.
-    const documented = (name: string) =>
-      new RegExp(`(^|[\\s{,])'?${name.replace(/[-]/g, '\\-')}'?\\s*:`, 'm').test(prompt);
+    const documented = (name: string) => new RegExp(`(^|[\\s{,])'?${escapeRegExp(name)}'?\\s*:`, 'm').test(prompt);
     const undocumented = toolFiles.filter((name) => !documented(name));
     expect(
       undocumented,
