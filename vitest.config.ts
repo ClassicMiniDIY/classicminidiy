@@ -35,6 +35,35 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       exclude: ['tests/**', 'data/*.json', 'node_modules/**', '*.config.*', '.nuxt/**'],
+      /**
+       * Ratchet, seeded from a real measurement on 2026-08-30 and set a few
+       * points BELOW it so it only ever tightens. Do not raise one to an
+       * aspirational number that fails on the day it lands.
+       *
+       * READ THIS BEFORE TRUSTING THE NUMBER. `all` is not enabled, so the
+       * report covers only files some test actually imports — 204 of the 624
+       * source files in app/, server/, data/ and shared/. The measured 91.9%
+       * is therefore "91.9% of the third of the codebase the tests touch", not
+       * of the codebase. The other 420 files are absent from the denominator
+       * entirely, so adding an untested file does not move this.
+       *
+       * That is deliberate: breadth and depth are different questions, and a
+       * single number that answers neither is worse than one that clearly
+       * answers one. This gate catches tested code getting worse. Breadth is
+       * what tests/static/**, the route crawler and the Playwright tier are
+       * for — they exercise files no unit test imports. Turning on `all: true`
+       * would report a much lower figure and need its own, separate baseline.
+       *
+       * Baselines measured: composables 94.9, server/api 92.2, server/utils
+       * 84.6, app/utils 86.0, global 91.9.
+       */
+      thresholds: {
+        statements: 89,
+        'app/composables/**': { statements: 92 },
+        'app/utils/**': { statements: 83 },
+        'server/api/**': { statements: 90 },
+        'server/utils/**': { statements: 82 },
+      },
     },
   },
   resolve: {
