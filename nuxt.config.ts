@@ -767,6 +767,15 @@ export default defineNuxtConfig({
     ANTHROPIC_API_KEY: process.env.NUXT_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY || '',
     // Cloudflare AI Gateway endpoint for Anthropic. Optional: unset calls
     // Anthropic directly, so a missing gateway costs observability, not uptime.
+    //
+    // EXACT FORM, no trailing slash and no trailing `/v1`:
+    //   https://gateway.ai.cloudflare.com/v1/<account_id>/<gateway_id>/anthropic
+    // @ai-sdk/anthropic defaults its base to `https://api.anthropic.com` and
+    // appends `/v1/messages` itself, so the value above resolves to
+    // `.../anthropic/v1/messages`, which is what the gateway expects. Adding a
+    // `/v1` here yields `.../anthropic/v1/v1/messages` and 404s every call —
+    // and because the route only reads this at request time, that failure shows
+    // up as a broken chat rather than a broken build.
     AI_GATEWAY_ANTHROPIC_URL: process.env.NUXT_AI_GATEWAY_ANTHROPIC_URL || '',
     // Overridable so the model can be changed without a deploy — the whole point
     // of the provider-agnostic SDK. Empty falls back to the default in the route.
