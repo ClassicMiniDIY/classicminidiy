@@ -63,6 +63,16 @@ jobs:
           NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
           NUXT_PUBLIC_SUPABASE_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_KEY }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          # Turns on tests/e2e/authenticated.spec.ts, which is the only place
+          # the suite can observe a hydration mismatch at all: signed out, the
+          # server and the client agree on `isAuthenticated` and no mismatch can
+          # occur. The specs skip themselves when this is unset, so a clean
+          # checkout still runs the anonymous suite with no credentials.
+          #
+          # There is deliberately no password secret. This site has no password
+          # auth — magic link, OAuth and passkey only — so the session is minted
+          # with the service role instead. See tests/e2e/_auth.ts.
+          E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
 
       - name: Upload report
         if: always()
@@ -111,3 +121,16 @@ jobs:
       # or BotID change until that token exists.
       - name: Verify the AI-crawler firewall rule
         run: bash scripts/verify-ai-crawler-firewall.sh https://www.classicminidiy.com
+
+      # Asserts the zone rate-limit rules that stand in for BotID, which is
+      # stubbed on Cloudflare and classifies nothing. The script derives the
+      # routes needing coverage from the SOURCE, so a new checkBotId() call
+      # fails this until the zone rule is extended.
+      #
+      # If this reports it cannot read the ruleset, the deploy token is scoped
+      # to Workers only and needs Zone → Read added; it is read-only either way
+      # and writes nothing.
+      - name: Verify the stubbed-BotID zone rate-limit rules
+        run: python3 scripts/verify-cf-ratelimit.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
