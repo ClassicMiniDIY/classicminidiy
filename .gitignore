@@ -118,3 +118,6 @@ supabase/.temp/
 # logo PNGs, and this repo is public — history is permanent, so the reversible
 # choice is to keep it out. Drop this rule if it should ship with the repo.
 design_handoff_ux_cohesion/
+
+# Playwright signed-in storage state — contains a real access token. Never commit.
+playwright/.auth/
