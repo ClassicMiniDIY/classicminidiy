@@ -322,7 +322,12 @@
                     <p class="font-medium">{{ t('privacy.public_profile') }}</p>
                     <p class="text-sm opacity-60">{{ t('privacy.public_description') }}</p>
                   </div>
-                  <input type="checkbox" v-model="isPublic" class="toggle toggle-primary" @change="track('privacy_setting_changed', { field: 'is_public', value: isPublic })" />
+                  <input
+                    type="checkbox"
+                    v-model="isPublic"
+                    class="toggle toggle-primary"
+                    @change="track('privacy_setting_changed', { field: 'is_public', value: isPublic })"
+                  />
                 </div>
 
                 <div v-if="isPublic" class="flex items-center justify-between">
@@ -330,7 +335,12 @@
                     <p class="font-medium">{{ t('privacy.show_vehicles') }}</p>
                     <p class="text-sm opacity-60">{{ t('privacy.vehicles_description') }}</p>
                   </div>
-                  <input type="checkbox" v-model="showVehicles" class="toggle toggle-primary" @change="track('privacy_setting_changed', { field: 'show_vehicles', value: showVehicles })" />
+                  <input
+                    type="checkbox"
+                    v-model="showVehicles"
+                    class="toggle toggle-primary"
+                    @change="track('privacy_setting_changed', { field: 'show_vehicles', value: showVehicles })"
+                  />
                 </div>
               </div>
             </div>
@@ -401,11 +411,7 @@
           <NuxtLink to="/profile" class="btn btn-ghost">
             {{ t('form.cancel') }}
           </NuxtLink>
-          <button
-            class="btn btn-primary"
-            :disabled="saving || profileLoading"
-            @click="save"
-          >
+          <button class="btn btn-primary" :disabled="saving || profileLoading" @click="save">
             <span v-if="saving" class="loading loading-spinner loading-sm"></span>
             <span v-else>{{ t('form.save') }}</span>
           </button>
@@ -467,7 +473,7 @@
       "title": "Social Links",
       "placeholder": "{platform} URL or handle"
     },
-    "shared_note": "Your profile is shared across classicminidiy.com and theminiexchange.com."
+    "shared_note": "Your profile is shared across all of Classic Mini DIY, including The Mini Exchange and the Toolbox apps."
   },
   "es": {
     "title": "Editar Perfil - Classic Mini DIY",
@@ -519,7 +525,7 @@
       "title": "Redes Sociales",
       "placeholder": "URL o usuario de {platform}"
     },
-    "shared_note": "Tu perfil se comparte entre classicminidiy.com y theminiexchange.com."
+    "shared_note": "Tu perfil se comparte en todo Classic Mini DIY, incluidos The Mini Exchange y las apps Toolbox."
   },
   "fr": {
     "title": "Modifier le Profil - Classic Mini DIY",
@@ -571,7 +577,7 @@
       "title": "Liens Sociaux",
       "placeholder": "URL ou identifiant {platform}"
     },
-    "shared_note": "Votre profil est partagé entre classicminidiy.com et theminiexchange.com."
+    "shared_note": "Votre profil est partagé sur tout Classic Mini DIY, y compris The Mini Exchange et les applis Toolbox."
   },
   "it": {
     "title": "Modifica Profilo - Classic Mini DIY",
@@ -623,7 +629,7 @@
       "title": "Link Social",
       "placeholder": "URL o nome utente {platform}"
     },
-    "shared_note": "Il tuo profilo è condiviso tra classicminidiy.com e theminiexchange.com."
+    "shared_note": "Il tuo profilo è condiviso su tutto Classic Mini DIY, incluse The Mini Exchange e le app Toolbox."
   },
   "de": {
     "title": "Profil Bearbeiten - Classic Mini DIY",
@@ -675,7 +681,7 @@
       "title": "Soziale Links",
       "placeholder": "{platform} URL oder Handle"
     },
-    "shared_note": "Ihr Profil wird zwischen classicminidiy.com und theminiexchange.com geteilt."
+    "shared_note": "Ihr Profil gilt überall bei Classic Mini DIY, einschließlich The Mini Exchange und der Toolbox-Apps."
   },
   "pt": {
     "title": "Editar Perfil - Classic Mini DIY",
@@ -727,7 +733,7 @@
       "title": "Links Sociais",
       "placeholder": "URL ou usuário {platform}"
     },
-    "shared_note": "Seu perfil é compartilhado entre classicminidiy.com e theminiexchange.com."
+    "shared_note": "Seu perfil é compartilhado em todo o Classic Mini DIY, incluindo The Mini Exchange e os apps Toolbox."
   },
   "ru": {
     "title": "Редактировать Профиль - Classic Mini DIY",
@@ -779,7 +785,7 @@
       "title": "Социальные Сети",
       "placeholder": "URL или логин {platform}"
     },
-    "shared_note": "Ваш профиль используется на classicminidiy.com и theminiexchange.com."
+    "shared_note": "Ваш профиль используется во всём Classic Mini DIY, включая The Mini Exchange и приложения Toolbox."
   },
   "ja": {
     "title": "プロフィール編集 - Classic Mini DIY",
@@ -831,7 +837,7 @@
       "title": "ソーシャルリンク",
       "placeholder": "{platform}のURLまたはハンドル"
     },
-    "shared_note": "あなたのプロフィールはclassicminidiy.comとtheminiexchange.comで共有されます。"
+    "shared_note": "プロフィールは The Mini Exchange や Toolbox アプリを含む Classic Mini DIY 全体で共有されます。"
   },
   "zh": {
     "title": "编辑个人资料 - Classic Mini DIY",
@@ -883,7 +889,7 @@
       "title": "社交链接",
       "placeholder": "{platform} URL或用户名"
     },
-    "shared_note": "您的个人资料在classicminidiy.com和theminiexchange.com之间共享。"
+    "shared_note": "您的个人资料在整个 Classic Mini DIY 通用，包括 The Mini Exchange 和 Toolbox 应用。"
   },
   "ko": {
     "title": "프로필 편집 - Classic Mini DIY",
@@ -935,7 +941,7 @@
       "title": "소셜 링크",
       "placeholder": "{platform} URL 또는 핸들"
     },
-    "shared_note": "프로필은 classicminidiy.com과 theminiexchange.com에서 공유됩니다."
+    "shared_note": "프로필은 The Mini Exchange와 Toolbox 앱을 포함한 Classic Mini DIY 전체에서 공유됩니다."
   }
 }
 </i18n>

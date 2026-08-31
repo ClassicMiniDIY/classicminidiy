@@ -36,10 +36,9 @@
       title: 'The Mini Exchange is Live!',
       subtitle: 'Buy and sell Classic Minis on the brand new marketplace from Classic Mini DIY',
       ctaText: 'Visit The Mini Exchange',
-      ctaUrl: 'https://theminiexchange.com',
+      ctaUrl: '/exchange',
       backgroundImage: '/hero-promos/og-image.jpg',
       expiresAt: '2027-01-01',
-      external: true,
     },
     {
       id: 'classic-mini-toolbox-app',
@@ -79,9 +78,7 @@
   // When the feature flag is off, treat the active list as empty so the
   // template falls through to the static <hero>. All downstream code
   // (auto-rotate, analytics, dot indicators) becomes a no-op naturally.
-  const activePromos = ENABLE_PROMOS
-    ? promotions.filter((p) => DateTime.fromISO(p.expiresAt) > today)
-    : [];
+  const activePromos = ENABLE_PROMOS ? promotions.filter((p) => DateTime.fromISO(p.expiresAt) > today) : [];
 
   // Default to first promo during SSR, randomize starting index on client
   const currentIndex = ref(0);

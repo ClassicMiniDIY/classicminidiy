@@ -375,7 +375,7 @@
     "validation_error": "Please enter a valid email address",
     "login_error": "Failed to send magic link. Please try again.",
     "captcha_error": "Please complete the security check",
-    "unified_account_note": "Your account works on both classicminidiy.com and theminiexchange.com"
+    "unified_account_note": "One account across Classic Mini DIY, The Mini Exchange, and the Toolbox apps"
   },
   "es": {
     "page_title": "Iniciar Sesión - Classic Mini DIY",
@@ -402,7 +402,7 @@
     "validation_error": "Por favor ingresa un correo electrónico válido",
     "login_error": "Error al enviar el enlace mágico. Inténtalo de nuevo.",
     "captcha_error": "Por favor completa la verificación de seguridad",
-    "unified_account_note": "Tu cuenta funciona tanto en classicminidiy.com como en theminiexchange.com"
+    "unified_account_note": "Una sola cuenta para Classic Mini DIY, The Mini Exchange y las apps Toolbox"
   },
   "fr": {
     "page_title": "Connexion - Classic Mini DIY",
@@ -429,7 +429,7 @@
     "validation_error": "Veuillez entrer une adresse email valide",
     "login_error": "Échec de l'envoi du lien magique. Veuillez réessayer.",
     "captcha_error": "Veuillez compléter la vérification de sécurité",
-    "unified_account_note": "Votre compte fonctionne sur classicminidiy.com et theminiexchange.com"
+    "unified_account_note": "Un seul compte pour Classic Mini DIY, The Mini Exchange et les applis Toolbox"
   },
   "it": {
     "page_title": "Accedi - Classic Mini DIY",
@@ -456,7 +456,7 @@
     "validation_error": "Inserisci un indirizzo email valido",
     "login_error": "Invio del link magico fallito. Riprova.",
     "captcha_error": "Completa la verifica di sicurezza",
-    "unified_account_note": "Il tuo account funziona sia su classicminidiy.com che su theminiexchange.com"
+    "unified_account_note": "Un solo account per Classic Mini DIY, The Mini Exchange e le app Toolbox"
   },
   "de": {
     "page_title": "Anmelden - Classic Mini DIY",
@@ -483,7 +483,7 @@
     "validation_error": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "login_error": "Magic Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
     "captcha_error": "Bitte schließen Sie die Sicherheitsprüfung ab",
-    "unified_account_note": "Ihr Konto funktioniert sowohl auf classicminidiy.com als auch auf theminiexchange.com"
+    "unified_account_note": "Ein Konto für Classic Mini DIY, The Mini Exchange und die Toolbox-Apps"
   },
   "pt": {
     "page_title": "Entrar - Classic Mini DIY",
@@ -510,7 +510,7 @@
     "validation_error": "Por favor, digite um endereço de email válido",
     "login_error": "Falha ao enviar o link mágico. Tente novamente.",
     "captcha_error": "Por favor, complete a verificação de segurança",
-    "unified_account_note": "Sua conta funciona tanto em classicminidiy.com quanto em theminiexchange.com"
+    "unified_account_note": "Uma só conta para o Classic Mini DIY, The Mini Exchange e os apps Toolbox"
   },
   "ru": {
     "page_title": "Вход - Classic Mini DIY",
@@ -537,7 +537,7 @@
     "validation_error": "Пожалуйста, введите действительный email адрес",
     "login_error": "Не удалось отправить ссылку для входа. Попробуйте снова.",
     "captcha_error": "Пожалуйста, пройдите проверку безопасности",
-    "unified_account_note": "Ваш аккаунт работает как на classicminidiy.com, так и на theminiexchange.com"
+    "unified_account_note": "Один аккаунт для Classic Mini DIY, The Mini Exchange и приложений Toolbox"
   },
   "ja": {
     "page_title": "サインイン - Classic Mini DIY",
@@ -564,7 +564,7 @@
     "validation_error": "有効なメールアドレスを入力してください",
     "login_error": "マジックリンクの送信に失敗しました。もう一度お試しください。",
     "captcha_error": "セキュリティチェックを完了してください",
-    "unified_account_note": "あなたのアカウントはclassicminidiy.comとtheminiexchange.comの両方で使えます"
+    "unified_account_note": "Classic Mini DIY、The Mini Exchange、Toolbox アプリで使えるひとつのアカウント"
   },
   "zh": {
     "page_title": "登录 - Classic Mini DIY",
@@ -591,7 +591,7 @@
     "validation_error": "请输入有效的邮箱地址",
     "login_error": "发送魔法链接失败。请重试。",
     "captcha_error": "请完成安全验证",
-    "unified_account_note": "您的账户可在classicminidiy.com和theminiexchange.com上使用"
+    "unified_account_note": "一个账号即可使用 Classic Mini DIY、The Mini Exchange 和 Toolbox 应用"
   },
   "ko": {
     "page_title": "로그인 - Classic Mini DIY",
@@ -618,7 +618,7 @@
     "validation_error": "유효한 이메일 주소를 입력해주세요",
     "login_error": "매직 링크 전송에 실패했습니다. 다시 시도해주세요.",
     "captcha_error": "보안 확인을 완료해주세요",
-    "unified_account_note": "계정은 classicminidiy.com과 theminiexchange.com 모두에서 사용할 수 있습니다"
+    "unified_account_note": "Classic Mini DIY, The Mini Exchange, Toolbox 앱에서 사용하는 하나의 계정"
   }
 }
 </i18n>
