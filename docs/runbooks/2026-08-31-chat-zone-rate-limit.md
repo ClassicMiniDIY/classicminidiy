@@ -17,6 +17,11 @@ fixed. Run it after any change that moves or adds a money-spending route:
 CLOUDFLARE_API_TOKEN=... python3 scripts/verify-cf-ratelimit.py
 ```
 
+**Status: applied 2026-08-31.** The rule now matches
+`POST /api/chat` and `POST /api/models/seller/onboard`, and
+`scripts/verify-cf-ratelimit.py` reports both `ok` against the live zone. The
+procedure below is kept for the next time a money-spending route moves.
+
 ## Updating the expression
 
 Thresholds and zone identifiers are deliberately absent from this repo — it is
