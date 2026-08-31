@@ -110,39 +110,116 @@ test.describe('chat', () => {
     await expect(transcript(page).filter({ hasText: 'What is the main bearing torque?' }).first()).toBeVisible();
   });
 
-  test('the header shares the transcript column axis on a wide viewport', async ({ page }) => {
-    // The header bar and the transcript each centre a `max-w-3xl` box with
-    // `mx-auto`, and `mx-auto` centres on the PARENT. While the header was a
-    // sibling of the whole two-column row it centred on the shell, and the
-    // transcript on the chat column — so the title and History button sat half
-    // the rail's width (~160px) right of everything beneath them.
+  test('the header, transcript and composer share one column axis', async ({ page }) => {
+    // Everything on this page that holds readable text centres a `max-w-3xl`
+    // box with `mx-auto`, and `mx-auto` centres on the parent's CONTENT box.
+    // The header spans the shell; the transcript and composer live in the chat
+    // column, which is the shell minus the links rail. So without the header
+    // reserving the rail's width as padding it centred on a wider box than
+    // everything beneath it, and the title and History button sat half the
+    // rail's width to the right of the conversation.
     //
-    // This only reproduces from `lg` up. Below it the rail is hidden and the
-    // two axes coincide, which is why it survived every narrow check.
+    // Asserting over ALL the boxes rather than naming two of them is deliberate:
+    // the defect is "these are not one column", and a pairwise check passes
+    // while a third box drifts.
+    //
+    // Only reproduces from `lg` up. Below it there is no rail and the axes
+    // coincide, which is why it survived every narrow check.
+    await stubChat(page);
     await page.setViewportSize({ width: 1440, height: 900 });
     await gotoHydrated(page, '/chat');
 
     const layout = await page.evaluate(() => {
-      const box = (el: Element | null | undefined) => {
-        if (!el) return null;
-        const r = el.getBoundingClientRect();
-        return { x: Math.round(r.x), right: Math.round(r.right) };
-      };
-      const heading = [...document.querySelectorAll('header h1')].find((el) => /Assistant/i.test(el.textContent || ''));
-      const aside = document.querySelector('aside');
+      // Scoped to the chat shell throughout. `aside` and `textarea` are NOT
+      // unique to this page — OnboardingNudge renders an <aside> above <main>
+      // in app.vue, and it would satisfy the rail check below while the real
+      // rail was missing.
+      const shell = document.querySelector('.chat-shell');
+      const rail = shell?.querySelector('aside') ?? null;
       return {
-        header: box(heading?.closest('.max-w-3xl')),
-        composer: box(document.querySelector('textarea')?.closest('.max-w-3xl')),
-        railVisible: !!aside && getComputedStyle(aside).display !== 'none',
+        boxes: [...(shell?.querySelectorAll('.max-w-3xl') ?? [])].map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: Math.round(r.x), right: Math.round(r.right) };
+        }),
+        // Structural, not by heading text: the copy is translated into ten
+        // locales, so matching /Assistant/i would make this a locale test.
+        hasHeading: !!shell?.querySelector('header h1'),
+        hasComposer: !!shell?.querySelector('textarea'),
+        railVisible: !!rail && getComputedStyle(rail).display !== 'none',
       };
     });
 
-    // Guard the guard. With the rail hidden the two boxes share an axis whatever
-    // the markup does, so without this the assertion below could pass while
-    // proving nothing.
+    // Guard the guard, three ways. With the rail hidden every box shares an axis
+    // whatever the markup does; with a rotted selector there is nothing to
+    // compare. Any of those would let the assertion below pass while proving
+    // nothing.
     expect(layout.railVisible).toBe(true);
-    expect(layout.header).not.toBeNull();
-    expect(layout.header).toEqual(layout.composer);
+    expect(layout.hasHeading && layout.hasComposer).toBe(true);
+    expect(layout.boxes.length).toBeGreaterThanOrEqual(3);
+
+    // Every reading box, same axis.
+    expect(new Set(layout.boxes.map((b) => `${b.x}-${b.right}`)).size).toBe(1);
+  });
+
+  test('keeps that axis once the transcript scrolls', async ({ page }) => {
+    // The transcript sits inside the scrollport, so where scrollbars take
+    // LAYOUT space a scrolling conversation narrows its containing block and
+    // re-centres it ~7px left of the header and composer — the same "reading
+    // column is not one column" defect as the header, small enough to read as
+    // sloppiness, and it blinks in and out as the transcript crosses the scroll
+    // threshold. `scrollbar-gutter: stable both-edges` holds the centre.
+    await stubChat(page);
+    await page.setViewportSize({ width: 1440, height: 600 });
+    await gotoHydrated(page, '/chat');
+
+    // Whether this test can prove anything is a property of the BROWSER, not of
+    // the page: with overlay scrollbars (macOS, and the headless Chromium that
+    // runs this suite) nothing is ever taken from the scrollport, so the
+    // assertion below holds with or without the fix. Skip rather than pass —
+    // a green vacuous test is worse than an absent one, because it reads as
+    // coverage of a defect it cannot see.
+    const scrollbarPx = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.style.cssText = 'overflow-y:scroll;width:100px;height:50px;position:absolute;visibility:hidden';
+      document.body.appendChild(probe);
+      const width = probe.offsetWidth - probe.clientWidth;
+      probe.remove();
+      return width;
+    });
+    test.skip(scrollbarPx === 0, 'overlay scrollbars take no layout space, so the drift cannot occur here');
+
+    // Several turns, because one stubbed exchange fits on a screen. The stub's
+    // route persists across sends.
+    for (let turn = 0; turn < 4; turn++) {
+      await composer(page).fill(`What is the main bearing torque, question ${turn}?`);
+      await composer(page).press('Enter');
+      await expect(
+        transcript(page)
+          .filter({ hasText: `question ${turn}` })
+          .first()
+      ).toBeVisible({
+        timeout: 15_000,
+      });
+    }
+
+    const layout = await page.evaluate(() => {
+      const shell = document.querySelector('.chat-shell');
+      const scroller = [...(shell?.querySelectorAll('.overflow-y-auto') ?? [])].find((el) =>
+        el.querySelector('.max-w-3xl')
+      );
+      return {
+        axes: [...(shell?.querySelectorAll('.max-w-3xl') ?? [])].map((el) => {
+          const r = el.getBoundingClientRect();
+          return `${Math.round(r.x)}-${Math.round(r.right)}`;
+        }),
+        // The other half of the guard: without a scrollable transcript there is
+        // no scrollbar, and this would pass for the empty-state reason.
+        scrollable: !!scroller && scroller.scrollHeight > scroller.clientHeight,
+      };
+    });
+
+    expect(layout.scrollable).toBe(true);
+    expect(new Set(layout.axes).size).toBe(1);
   });
 
   test('posts the conversation and the request context', async ({ page }) => {
