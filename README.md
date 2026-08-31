@@ -214,7 +214,7 @@ s3Base=https://classicminidiy.s3.us-east-1.amazonaws.com
 bun run dev          # Start development server
 bun run build        # Build for production
 bun run start        # Preview production build
-bun run format       # Format code with Prettier
+bun run format       # Format with Prettier — WHOLE REPO, see the note below
 bun run test         # Run unit tests with Vitest
 ```
 
@@ -496,7 +496,15 @@ Contributions are what make the open source community such an amazing place to l
    ```bash
    bun run build
    bun run test
-   bun run format
+   ```
+
+   **Format only the files you touched** — do not run `bun run format` on a branch. It
+   rewrites the entire repo, and because contributors resolve slightly different Prettier
+   versions, that reformats hundreds of files you never edited and buries your actual
+   change in the diff:
+
+   ```bash
+   bunx prettier --write path/to/the/files/you/changed
    ```
 
 5. **Commit Your Changes**

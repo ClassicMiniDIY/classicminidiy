@@ -1,16 +1,26 @@
-# Runbook — AI crawler firewall (Vercel WAF)
+# Runbook — AI crawler firewall (Cloudflare WAF)
 
 Companion to `docs/plans/2026-06-14-generative-engine-optimization.md` (Phase 3, edge
-enforcement). The rule has been live and correct since 2026-06-15; this runbook was
-written on 2026-07-30 to document it, because until then the configuration existed
-**only in the Vercel console** with nothing in the repo describing it.
+enforcement). This runbook was written on 2026-07-30 because the configuration existed
+only in a console, with nothing in the repo describing it.
+
+**Platform note (2026-08-30).** The rule was originally a Vercel WAF rule. Vercel is
+retired and the rule now lives in the **Cloudflare zone WAF**. It survived the migration
+intact: `scripts/verify-ai-crawler-firewall.sh` passes all expectations against
+production — 9 training crawlers denied 403, 6 answer bots and 5 search engines allowed
+200, both permission-only tokens allowed, GEO surfaces reachable, no false positives.
+Re-run that script rather than trusting this sentence; it is the only thing that can
+prove the rule is still there.
+
+Cloudflare's WAF is configured **per zone**, never account-wide. A second hostname on a
+different zone gets none of this until the rule is added to that zone too.
 
 ## The policy in one line
 
 **Allow the AI bots that cite you. Block the ones that only harvest you.**
 
 `robots.txt` states that policy politely; the WAF enforces it. Both are generated from
-the same lists in **`server/utils/aiBots.ts`** — except the WAF regex, which the console
+the same lists in **`server/utils/aiBots.ts`** — except the WAF regex, which the zone
 holds as a copy (see [Drift](#drift-the-one-real-hazard)).
 
 ## Why the split isn't arbitrary
@@ -71,28 +81,33 @@ allowed bots reach `/robots.txt` `/sitemap.xml` `/llms.txt` `/llms-full.txt`, an
 false positives on browsers, Slack, Facebook, Twitter, Discord, or an empty UA. Exits
 non-zero on any failure. Pass a preview URL as `$1` to check a preview deployment.
 
-Read the live config without the dashboard:
+Read the live config without the dashboard. The custom-rules entrypoint for the zone
+holds it; `scripts/sync-cf-zone-settings.py` uses the same `zones/{id}/rulesets/...`
+shape for the redirect phase and is the working reference for auth and zone id:
 
 ```bash
-vercel firewall rules inspect rule_block_ai_training_crawlers_nbb6RE
+curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE/rulesets/phases/http_request_firewall_custom/entrypoint" \
+  | jq '.result.rules[] | {description, expression, action}'
 ```
 
 ## Changing the policy
 
 The code is the source of truth, but **editing the code does not change production** —
-the console holds a copy. Do all four steps or the surfaces drift apart:
+the zone holds a copy. Do all four steps or the surfaces drift apart:
 
 1. Edit `EDGE_DENY_BOTS` (and/or `AI_ANSWER_BOTS`) in `server/utils/aiBots.ts`.
 2. Run `bun run test tests/unit/server/utils/aiBots.test.ts`. It will fail on the pinned
    `LIVE_RULE_REGEX` — that failure is the reminder, not a bug. Update the expected
    string to the new `WAF_DENY_REGEX`.
-3. Paste the new `WAF_DENY_REGEX` into the console rule and **publish** it (drafts do
-   nothing until published; `vercel firewall diff` shows unpublished changes).
+3. Update the zone rule's expression with the new `WAF_DENY_REGEX`. On Cloudflare a
+   ruleset write takes effect immediately — there is no draft/publish step to forget,
+   and equally no staging: a bad regex is live the moment the request returns.
 4. Re-run `scripts/verify-ai-crawler-firewall.sh` against production.
 
 Deploying the code alone updates `robots.txt` (advisory) but leaves the edge unchanged.
-Publishing the console rule alone leaves robots.txt silent and `bot_crawl` analytics
-blind. Both, always.
+Updating the zone rule alone leaves robots.txt silent and `bot_crawl` analytics blind.
+Both, always.
 
 ## Drift: the one real hazard
 

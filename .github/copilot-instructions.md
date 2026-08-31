@@ -10,8 +10,10 @@ silently break the build, the design system, security, or SEO if violated.
 
 ## Tech stack (assume these; flag deviations)
 
-- **Nuxt 4** + Vue 3 **`<script setup>`** + TypeScript (strict). Source lives under `app/`
-  (srcDir). Node 24+.
+- **Nuxt 4** + Vue 3 **`<script setup>`** + TypeScript. Source lives under `app/`
+  (srcDir). Node 24+. Note `strict` is on but `noImplicitAny` is **off**, and no typecheck
+  runs in CI — an untyped parameter is not a build error here, so do not assume types have
+  been verified.
 - **Bun** is the package manager. Don't suggest `npm`/`yarn`/`pnpm`.
 - **Tailwind CSS v4** via `@tailwindcss/vite` (not `@nuxtjs/tailwindcss`).
 - **daisyUI 5** is the component library — **NOT Nuxt UI**. (Any older "Nuxt UI" reference is
@@ -103,8 +105,10 @@ now **ON** in production; it is no longer a "pre-launch, invisible" switch.
 - **Conventional Commits**, domain-y scopes: `feat(exchange): …`, `fix(needles): …`,
   `chore(deps): …`. No trailing period on the subject; em-dash (`—`) for clauses.
 - Match surrounding code style — comment density, naming, and idiom.
-- Prefer small, single-purpose PRs into `dev` (the preview/integration branch); `dev` merges to
-  `main` for production.
+- Prefer small, single-purpose PRs from a feature branch **into `main`**. There is no `dev`
+  branch: `pr-check.yml` triggers only on `pull_request` → `main`, so a PR aimed anywhere else
+  runs no tests at all. Merging to `main` deploys straight to production
+  (`deploy-cloudflare.yml`) — there are no preview deploys.
 
 ## Review focus, in priority order
 
