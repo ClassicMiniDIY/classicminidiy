@@ -1,4 +1,6 @@
-type SourceSite = 'bat' | 'carsandbids' | 'copart' | 'craigslist' | 'facebook' | 'ebay' | 'other';
+import { detectFindSourceSite, type FindSourceSite } from '~~/data/models/find-sources';
+
+type SourceSite = FindSourceSite;
 type FindCategory = 'vehicle' | 'engine' | 'parts';
 
 export interface ExternalListing {
@@ -57,25 +59,6 @@ export interface FindFilters {
   sort?: 'newest' | 'most_liked' | 'ending_soon';
   page?: number;
   limit?: number;
-}
-
-/**
- * Detect which source site a URL belongs to based on its hostname.
- * Inline version to avoid importing server utils on the client.
- */
-function detectSourceSite(url: string): SourceSite {
-  try {
-    const hostname = new URL(url).hostname.toLowerCase();
-    if (hostname.includes('bringatrailer.com')) return 'bat';
-    if (hostname.includes('carsandbids.com')) return 'carsandbids';
-    if (hostname.includes('copart.com')) return 'copart';
-    if (hostname.includes('craigslist.org')) return 'craigslist';
-    if (hostname.includes('facebook.com')) return 'facebook';
-    if (hostname.includes('ebay.com') || hostname.includes('ebay.co.uk')) return 'ebay';
-    return 'other';
-  } catch {
-    return 'other';
-  }
 }
 
 /**
@@ -239,7 +222,7 @@ export const useExternalListings = () => {
     submitting.value = true;
     try {
       const slug = generateFindSlug(data.title);
-      const sourceSite = detectSourceSite(data.url);
+      const sourceSite = detectFindSourceSite(data.url);
 
       const insertPayload = {
         source_url: data.url,
@@ -261,11 +244,7 @@ export const useExternalListings = () => {
         metadata_fetched_at: data.og_image_url || data.og_description ? new Date().toISOString() : null,
       };
 
-      let { data: inserted, error } = await supabase
-        .from('external_listings')
-        .insert(insertPayload)
-        .select()
-        .single();
+      let { data: inserted, error } = await supabase.from('external_listings').insert(insertPayload).select().single();
 
       // If the insert fails due to a CHECK constraint on source_site (e.g. 'copart'
       // not yet in the DB enum), retry with 'other' so the find still gets saved.

@@ -21,14 +21,20 @@
  * (Copart's JSON API, Facebook Marketplace's login wall, BaT/eBay live bid +
  * auction-end) yield partial/empty metadata → the user fills it in manually.
  */
-import { fetchExternalPage, parseOpenGraph, parseJsonLd, type OgMetadata } from '../../../utils/external-models/ogParser';
+import {
+  fetchExternalPage,
+  parseOpenGraph,
+  parseJsonLd,
+  type OgMetadata,
+} from '../../../utils/external-models/ogParser';
 import { renderExternalPage } from '../../../utils/external-models/render';
 import { ScrapeError } from '../../../utils/external-models/errors';
 import { safeFetch, readBodyCapped, SsrfError } from '../../../utils/external-models/ssrf';
 import { getServiceClient } from '../../../utils/supabase';
+import { detectFindSourceSite, type FindSourceSite } from '../../../../data/models/find-sources';
 import { createRateLimitMiddleware, RateLimitPresets } from '../../../utils/exchange/rateLimit';
 
-type SourceSite = 'bat' | 'carsandbids' | 'copart' | 'craigslist' | 'facebook' | 'ebay' | 'other';
+type SourceSite = FindSourceSite;
 
 const MIN_PRICE = 50;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -39,24 +45,6 @@ const IMAGE_TYPES: Record<string, string> = {
 };
 
 const rateLimit = createRateLimitMiddleware({ ...RateLimitPresets.lenient, keyPrefix: 'finds-parse' });
-
-/** Host → SourceSite. Byte-identical to the client copy in useExternalListings so
- *  both sides agree (parse returns 'copart' for display even though the DB CHECK
- *  omits it — the composable downgrades to 'other' on insert). */
-function detectFindSourceSite(url: string): SourceSite {
-  try {
-    const h = new URL(url).hostname.toLowerCase();
-    if (h.includes('bringatrailer.com')) return 'bat';
-    if (h.includes('carsandbids.com')) return 'carsandbids';
-    if (h.includes('copart.com')) return 'copart';
-    if (h.includes('craigslist.org')) return 'craigslist';
-    if (h.includes('facebook.com')) return 'facebook';
-    if (h.includes('ebay.com') || h.includes('ebay.co.uk')) return 'ebay';
-    return 'other';
-  } catch {
-    return 'other';
-  }
-}
 
 /** Classic Mini year (1959–2000) + model from free text (heritage-correct terms). */
 function extractYearModel(text: string): { year: number | null; model: string | null } {
