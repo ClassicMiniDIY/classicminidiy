@@ -280,6 +280,34 @@ non-zero on a hit — run it if a component mysteriously never mounts. To confir
 specific case in dev, fetch the transformed module and look at the vue import line:
 `curl -s localhost:3000/_nuxt/components/<Path>.vue | grep -oE 'import \{[^}]*\} from "[^"]*vue.runtime[^"]*"'`
 
+### Module resolution invariants
+
+- **Client code reaches `shared/` through the `~~/` alias, never a relative path.**
+  A relative `../../shared/utils/x` resolves in dev, in vitest and under
+  `vue-tsc`, then fails the PRODUCTION build:
+
+  ```
+  [nitro] RollupError: Could not resolve "../../../../../shared/utils/chatTiers.ts"
+  from ".nuxt/dist/server/_nuxt/chat-CM26o58_.js"
+  ```
+
+  What makes this worth a rule rather than a fix is WHERE it fails. Every PR gate
+  was green — unit suite, typecheck, format, CodeQL, route smoke — so the PR
+  merged, and the deploy then died at the Nitro bundling step. `main` carried
+  code that could not be built, and because a failed deploy leaves the previous
+  Worker serving traffic, **production silently stayed on the older commit**.
+  Nothing was red on the site; the feature simply was not there. Two PRs shipped
+  that way before anyone noticed, and the second was only found because its
+  "successful" merge was followed by a check of the deploy log rather than the
+  site.
+
+  The general shape: a green PR is not evidence of a deployable `main`, because
+  the only gate that runs the production bundler is the deploy itself. If a merge
+  matters, look at the deploy run, not the checks.
+
+  `tests/static/shared-import-alias.test.ts` enforces the import form
+  (shrink-only, currently empty).
+
 ### Component resolution invariants
 
 - **A nested component must be referenced by the name Nuxt registers, which
