@@ -125,7 +125,12 @@ const stripScripts = (html) =>
     // end-of-string is the conservative reading.
     .replace(/<(script|style)(?=[\s>/])[\s\S]*$/gi, '');
 
-const titleOf = (html) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? null;
+// `(?=[\s>])` for the same reason as stripScripts: without it, `<title[^>]*>`
+// matches the prefix of `<titlebar>` and the capture runs on past the real
+// title. Measured: `<titlebar>junk</titlebar><title>Real</title>` returned
+// "junk</titlebar><title>Real". Title is an ERROR-level check here, so a
+// mis-parse is a spurious build failure, not just a wrong warning.
+const titleOf = (html) => html.match(/<title(?=[\s>])[^>]*>([\s\S]*?)<\/title\s*>/i)?.[1]?.trim() ?? null;
 const h1Count = (html) => (stripScripts(html).match(/<h1[\s>]/gi) ?? []).length;
 const hasCanonical = (html) => /<link[^>]+rel=["']canonical["']/i.test(html);
 const isNoindex = (html) => /<meta[^>]+name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html);
