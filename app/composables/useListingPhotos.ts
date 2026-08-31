@@ -1,4 +1,5 @@
 import { optimizeImage, isHeicFile, formatFileSize, type OptimizeResult } from '~/utils/imageOptimizer';
+import { randomToken } from '~/utils/randomId';
 
 // File upload configuration
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
@@ -97,7 +98,10 @@ export const useListingPhotos = () => {
     // Generate unique file path
     const timestamp = Date.now();
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'webp';
-    const fileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    // Same class as the message-attachment path: a storage filename that must
+    // not collide. `Math.random().toString(36).substring(7)` gave ~5 chars of
+    // non-CSPRNG entropy; randomToken is 8 hex chars from getRandomValues.
+    const fileName = `${timestamp}-${randomToken()}.${fileExt}`;
     const storagePath = `${user.value.id}/${listingId}/${category}/${fileName}`;
 
     // Upload file to storage
