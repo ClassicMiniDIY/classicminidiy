@@ -28,14 +28,15 @@ import { spawnSync } from 'node:child_process';
  * to make a build pass.
  */
 const BASELINE = {
-  // NOTE (2026-08-31): `origin/main` measures 372 here, not 368, with main's own
-  // sources AND main's own lockfile — verified by checking both out and
-  // re-running. So this number is either stale or environment-sensitive (see the
-  // scripts/migrate/ note below for the precedent). It is left untouched rather
-  // than quietly raised: raising it to make a branch pass is exactly what this
-  // ratchet exists to prevent, and the discrepancy is worth someone's attention
-  // rather than being absorbed.
-  'app/': 368,
+  // 368 -> 362. The 368 was already stale: `origin/main` measures 372 with its
+  // own sources AND its own lockfile, and CI agreed, so main was failing this
+  // gate before the chat rebuild touched anything. Rather than raise the number
+  // to go green — the one thing this ratchet exists to prevent — the chat
+  // components now import `ref`/`nextTick`/`watch` explicitly from 'vue'. Nuxt's
+  // auto-import declarations resolve to overloads that reject `ref<T>()` and
+  // `nextTick(cb)`, both of which are correct usage; the explicit import takes
+  // the real signatures and clears nine errors.
+  'app/': 362,
   // 64 -> 59. server/utils/runtimeConfig.ts gives `useRuntimeConfig(event)` its
   // real Nitro signature, which removes five identical "Expected 0 arguments,
   // but got 1" errors across bot-analytics, mcp-tiering, mcpUsage and the two
