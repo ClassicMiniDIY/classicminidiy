@@ -67,10 +67,29 @@ marked.use({
 let purifyInstance: typeof import('dompurify').default | null = null;
 let hooksInstalled = false;
 
+/**
+ * Flips true once DOMPurify is loaded, i.e. once `renderMessageMarkdown`
+ * returns FINAL rather than provisional output.
+ *
+ * It is a `ref` so a component can depend on it: reading
+ * `isMarkdownSanitizerReady()` inside a render makes that render re-run when
+ * the sanitizer arrives. Without that, a consumer caching the provisional
+ * result would keep it forever — which is exactly what MessageList did, so the
+ * weaker regex fallback was the output that stuck for every message rendered
+ * before the dynamic import resolved.
+ */
+const purifyReady = ref(false);
+
+/** True when the renderer is producing DOMPurify output rather than the fallback. */
+export function isMarkdownSanitizerReady(): boolean {
+  return purifyReady.value;
+}
+
 async function getPurify() {
   if (purifyInstance) return purifyInstance;
   const mod = await import('dompurify');
   purifyInstance = mod.default;
+  purifyReady.value = true;
   return purifyInstance;
 }
 
@@ -140,6 +159,9 @@ export function renderMessageMarkdown(content: string): string {
     // uses the server output, then the client takes over with full sanitization.
     if (purifyInstance) {
       installLinkHardening(purifyInstance);
+      // Set here too: a caller may have reached the instance through a path
+      // that did not go via getPurify().
+      purifyReady.value = true;
       return purifyInstance.sanitize(rawHtml, {
         ALLOWED_TAGS,
         ALLOWED_ATTR,

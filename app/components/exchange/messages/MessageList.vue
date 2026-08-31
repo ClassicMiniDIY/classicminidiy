@@ -131,7 +131,7 @@
 
 <script setup lang="ts">
   import type { Message } from '~/composables/useMessages';
-  import { renderMessageMarkdown } from '~/utils/markdown';
+  import { createMessageRenderCache } from '~/utils/messageRenderCache';
   import { formatRelativeTime } from '~/utils/formatters';
 
   const { t } = useI18n();
@@ -151,15 +151,10 @@
   const { isBlocked } = useBlockedUsers();
 
   // Memoize rendered markdown per message id to avoid re-parsing on every
-  // re-render (scroll, unread-count updates, etc.).
-  const renderCache = new Map<string, string>();
-  const renderedContent = (message: Message) => {
-    const cached = renderCache.get(message.id);
-    if (cached !== undefined) return cached;
-    const html = renderMessageMarkdown(message.content);
-    renderCache.set(message.id, html);
-    return html;
-  };
+  // re-render (scroll, unread-count updates, etc.). The cache deliberately
+  // stores only post-DOMPurify output — see createMessageRenderCache.
+  const renderCached = createMessageRenderCache();
+  const renderedContent = (message: Message) => renderCached(message.id, message.content);
 
   const { user } = useAuth();
   const messagesContainer = ref<HTMLElement>();
