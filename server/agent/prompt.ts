@@ -24,12 +24,18 @@ import { AGENT_MCP_TOOL_NAMES } from '../utils/agentTools';
  * The corpus keeps its real job: feeding `/llms-full.txt`.
  *
  * ORDERING IS LOAD-BEARING. Anthropic's prompt cache matches on a PREFIX, so
- * everything invariant must come before anything per-request. `buildSystemPrompt`
- * returns the two halves separately for that reason. Caching is not switched on
- * yet — a 5-minute cache WRITE costs 1.25x input, and at current volume writes
- * would miss the window more often than they hit, so it would cost more than it
- * saves. Turn it on when sustained traffic makes a hit likely, and put the
- * breakpoint at the end of `staticPrompt`.
+ * everything invariant must come before anything per-request — which is why
+ * `staticPrompt()` and `dynamicPrompt()` are separate and why
+ * `buildSystemPrompt` always concatenates them in that order. Putting the
+ * locale line first would mean every non-English visitor missed the cache, at
+ * ten times the token price, with no visible symptom.
+ *
+ * Caching IS switched on (see the breakpoint in server/api/chat.post.ts). This
+ * note previously said it was not worth it, reasoning that at ~40 messages a
+ * month a 5-minute write would usually expire unread. That was wrong: it only
+ * considered caching ACROSS requests and missed the tool loop, where a single
+ * turn re-sends the whole prefix on every step seconds apart. Measured, a
+ * two-call turn is 33% cheaper and a three-call turn 52% cheaper.
  */
 
 /** When to reach for each tool. Keyed by the name the model calls. */

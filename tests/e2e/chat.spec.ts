@@ -221,3 +221,90 @@ test.describe('chat', () => {
     expect(warnings, `hydration warnings: ${warnings.join(' | ')}`).toEqual([]);
   });
 });
+
+test.describe('quota limit', () => {
+  /** The 429 the route sends when a ceiling is reached. */
+  const quotaBody = (tier: 'anonymous' | 'free' | 'member') =>
+    JSON.stringify({
+      statusCode: 429,
+      statusMessage: 'Too Many Requests',
+      message: 'You have reached the limit.',
+      data: { tier, used: 15, limit: 15, upgradeUrl: 'https://www.classicminidiy.com/membership' },
+    });
+
+  async function stubQuota(page: import('@playwright/test').Page, tier: 'anonymous' | 'free' | 'member') {
+    await page.route('**/api/chat', (route) =>
+      route.fulfill({ status: 429, contentType: 'application/json', body: quotaBody(tier) })
+    );
+  }
+
+  test('shows an upgrade panel, not a failure, when the ceiling is reached', async ({ page }) => {
+    // The regression this guards: the server sends a structured 429 with an
+    // upgrade pointer and the UI used to render "something went wrong, please
+    // try again" — advice that can never work, at the one moment membership is
+    // genuinely relevant to the reader.
+    await stubQuota(page, 'anonymous');
+    await gotoHydrated(page, '/chat');
+    await composer(page).fill('What is the head torque?');
+    await composer(page).press('Enter');
+
+    await expect(page.getByText(/used today's free messages/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('alert')).toBeHidden();
+  });
+
+  test('asks an anonymous visitor to sign in, not to subscribe', async ({ page }) => {
+    // Selling a subscription to someone who has not made an account skips a
+    // step; signing in is free and trebles their allowance.
+    await stubQuota(page, 'anonymous');
+    await gotoHydrated(page, '/chat');
+    await composer(page).fill('hi');
+    await composer(page).press('Enter');
+
+    await expect(page.getByRole('link', { name: /^Sign in$/ })).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('asks a signed-in free user to become a member', async ({ page }) => {
+    await stubQuota(page, 'free');
+    await gotoHydrated(page, '/chat');
+    await composer(page).fill('hi');
+    await composer(page).press('Enter');
+
+    await expect(page.getByRole('link', { name: /Sustaining Member/i })).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('tells a member when the allowance resets and sells them nothing', async ({ page }) => {
+    await stubQuota(page, 'member');
+    await gotoHydrated(page, '/chat');
+    await composer(page).fill('hi');
+    await composer(page).press('Enter');
+
+    await expect(page.getByText(/resets at the start of next month/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: /Sustaining Member/i })).toBeHidden();
+  });
+
+  test('disables the composer rather than inviting a retry that cannot work', async ({ page }) => {
+    await stubQuota(page, 'anonymous');
+    await gotoHydrated(page, '/chat');
+    await composer(page).fill('hi');
+    await composer(page).press('Enter');
+
+    await expect(page.getByText(/used today's free messages/i)).toBeVisible({ timeout: 15_000 });
+    await expect(composer(page)).toBeDisabled();
+  });
+
+  test('keeps the explanation on screen after New chat', async ({ page }) => {
+    // Emptying the transcript used to send the render down the empty-state
+    // branch and take the panel with it, leaving a disabled composer reading
+    // "Message limit reached" above starter prompts that could not be used.
+    await stubQuota(page, 'anonymous');
+    await gotoHydrated(page, '/chat');
+    await composer(page).fill('hi');
+    await composer(page).press('Enter');
+    await expect(page.getByText(/used today's free messages/i)).toBeVisible({ timeout: 15_000 });
+
+    await page.getByRole('button', { name: /new chat/i }).click();
+
+    await expect(page.getByText(/used today's free messages/i)).toBeVisible();
+    await expect(composer(page)).toBeDisabled();
+  });
+});

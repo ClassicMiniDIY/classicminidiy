@@ -132,6 +132,28 @@ export default defineEventHandler(async (event) => {
   const result = streamText({
     model: anthropic(((config.CHAT_MODEL as string) || 'claude-haiku-4-5-20251001').trim()),
     system: buildSystemPrompt({ locale: body?.locale, pageSlug: body?.pageSlug }),
+    // Cache the tool definitions and the system prompt.
+    //
+    // Anthropic's cache prefix runs tools -> system -> messages, so a breakpoint
+    // on the SYSTEM block covers both — measured at 5,938 tokens here, of which
+    // the twelve tool schemas are 5,042. A breakpoint on a tool instead covers
+    // only the tools, which was verified and is the easy mistake to make.
+    //
+    // Worth it because of the TOOL LOOP, not because of cross-user reuse. Every
+    // step of a single turn re-sends the whole prefix seconds apart, so the
+    // 5-minute window is a guaranteed hit within one answer. Measured against
+    // the live API at Haiku 4.5 pricing: a two-call turn costs $0.0080 cached
+    // against $0.0119 uncached (33% less), a three-call turn 52% less. A turn
+    // that calls NO tool is ~25% worse, since it pays the write and never reads
+    // — but making turns use tools is the entire point of this rebuild, and the
+    // no-tool case is the cheap one anyway.
+    //
+    // (An earlier note here argued the opposite. It reasoned only about
+    // cross-REQUEST caching at ~40 messages/month, where writes do mostly
+    // expire unread, and missed the intra-turn loop entirely.)
+    providerOptions: {
+      anthropic: { cacheControl: { type: 'ephemeral' } },
+    },
     messages: modelMessages,
     tools: buildAgentTools(),
     stopWhen: stepCountIs(MAX_STEPS),
@@ -153,6 +175,17 @@ export default defineEventHandler(async (event) => {
       const outputTokens = usage?.outputTokens ?? 0;
       tracker.observe({ usage_metadata: { input_tokens: inputTokens, output_tokens: outputTokens } });
       recordChatTokens(event, inputTokens, outputTokens);
+
+      // Cache hit rate, on the run event. Turning caching on without measuring
+      // it means a breakpoint that silently stops matching — a reordered
+      // prompt, a tool description edited per-request — would cost 10x on the
+      // prefix with no symptom at all. `cache_read_tokens` at ~0 across a day
+      // is the signal that the prefix stopped being stable.
+      tracker.recordCacheUsage({
+        read: usage?.inputTokenDetails?.cacheReadTokens ?? 0,
+        written: usage?.inputTokenDetails?.cacheWriteTokens ?? 0,
+        uncached: usage?.inputTokenDetails?.noCacheTokens ?? 0,
+      });
       tracker.finish('completed', undefined, {
         tier: getChatAuth(event)?.tier,
         quota_used: verdict.used,
