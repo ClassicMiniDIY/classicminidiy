@@ -7,10 +7,10 @@
  * Nitro derives a runtimeConfig key's override name as
  * `NUXT_ + snakeCase(key).toUpperCase()`, so anything read through
  * `useRuntimeConfig()` is fed by a `NUXT_`-prefixed secret. A raw
- * `process.env.MICROLINK_API_KEY` is not — it needs a PLAIN Worker var of
- * exactly that name. Setting only the `NUXT_`-prefixed one leaves the raw
- * reader unkeyed, and because an absent value is an empty string rather than
- * an error, nothing throws. That is precisely how the 2026-08-26 chat outage
+ * `process.env.MICROLINK_API_URL` is not — it needs a PLAIN Worker var of
+ * exactly that name. Provisioning the wrong one leaves the raw reader on its
+ * default, and because an absent value is an empty string rather than an
+ * error, nothing throws. That is precisely how the 2026-08-26 chat outage
  * shipped green.
  *
  * This test is a registry, not a lint: the list below IS the documentation of
@@ -18,7 +18,7 @@
  * here — and to the CLAUDE.md deployment section — in the same commit.
  */
 import { describe, expect, it } from 'vitest';
-import { read, rel, walk } from './_scan';
+import { blankComments, read, rel, walk } from './_scan';
 
 /**
  * Every env name read directly from `process.env` in `server/**`.
@@ -39,10 +39,15 @@ const PLAIN_WORKER_ENV_NAMES = [
   'MCP_RATELIMIT_INTERNAL_MAX',
   // Analytics ingest host override. Defaults to us.i.posthog.com.
   'POSTHOG_INGEST_HOST',
-  // Microlink render fallback. NOTE: `MICROLINK_API_KEY` is ALSO read through
-  // runtimeConfig elsewhere, so the one credential has two resolution paths
-  // and needs both spellings set, or the raw reader silently runs unkeyed.
-  'MICROLINK_API_KEY',
+  // Microlink render endpoint override. Defaults to the public API.
+  //
+  // The KEY is deliberately absent. It resolves through runtimeConfig only
+  // (`NUXT_MICROLINK_API_KEY`), forwarded to `renderExternalPage` by every
+  // caller. It used to ALSO have a `process.env.MICROLINK_API_KEY` fallback,
+  // which gave one credential two spellings and invited someone to set a plain
+  // var that could never fire — callers always forward a defined string, and an
+  // unset runtimeConfig key is `''`, not `undefined`. If that raw read comes
+  // back this test fails; restore the single path rather than re-adding it here.
   'MICROLINK_API_URL',
 ] as const;
 
@@ -50,7 +55,11 @@ const PLAIN_WORKER_ENV_NAMES = [
 function collectEnvReads(): Map<string, string[]> {
   const found = new Map<string, string[]>();
   for (const abs of walk('server', '.ts')) {
-    const source = read(abs);
+    // Comments are blanked (in place, so line numbers survive) before scanning.
+    // Prose is not a read: a doc comment that MENTIONS `process.env.FOO` used to
+    // register as one, which both kept dead entries alive in the list below and
+    // would fail the build for a name discussed but never read.
+    const source = blankComments(read(abs), 'script');
     for (const match of source.matchAll(/process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g)) {
       const name = match[1]!;
       const line = (source.slice(0, match.index).match(/\n/g)?.length ?? 0) + 1;

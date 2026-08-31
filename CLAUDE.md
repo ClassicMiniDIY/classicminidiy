@@ -1105,12 +1105,45 @@ them up and an eventless `useRuntimeConfig()` works. Prefer
 `useRuntimeConfig(event)` in new code anyway: it is per-request, it costs
 nothing, and it does not depend on that ordering holding.
 
-**Raw `process.env.*` reads bypass the `NUXT_` scheme entirely.**
-`server/middleware/rate-limit.ts` (`LANGGRAPH_RATELIMIT_*`, `WRITE_RATELIMIT_*`)
-and `server/utils/external-models/render.ts` (`MICROLINK_API_URL`) read
-unprefixed names at module scope. Those need PLAIN Worker vars, not `NUXT_`-
-prefixed ones. All have safe defaults, so they are tuning knobs rather than
-secrets — but do not assume a `NUXT_`-prefixed secret reaches them.
+**Raw `process.env.*` reads bypass the `NUXT_` scheme entirely.** These names
+are read unprefixed at module scope and need PLAIN Worker vars — a
+`NUXT_`-prefixed secret does NOT reach them. All have safe in-code defaults, so
+they are tuning knobs rather than secrets; an unset value degrades to the
+default rather than failing, which is exactly why a wrong one is hard to notice.
+
+| Name | Read in | Default |
+| --- | --- | --- |
+| `LANGGRAPH_RATELIMIT_MAX` / `_WINDOW_MS` | `server/middleware/rate-limit.ts` | 40 / 60 000 |
+| `WRITE_RATELIMIT_MAX` / `_WINDOW_MS` | same | 30 / 60 000 |
+| `MCP_RATELIMIT_WINDOW_MS` | same | 60 000 |
+| `MCP_RATELIMIT_FREE_MAX` | same | 20 |
+| `MCP_RATELIMIT_DEVELOPER_MAX` | same | 240 |
+| `MCP_RATELIMIT_INTERNAL_MAX` | same | 600 |
+| `MCP_RATELIMIT_MAX` | same | — legacy, see below |
+| `POSTHOG_INGEST_HOST` | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts` | `https://us.i.posthog.com` |
+| `MICROLINK_API_URL` | `server/utils/external-models/render.ts` | `https://api.microlink.io` |
+
+`MCP_RATELIMIT_MAX` is not a fourth tier — it predates the tiers, when one cap
+covered all `/mcp` traffic, and now survives ONLY as the fallback for
+`MCP_RATELIMIT_INTERNAL_MAX`. Setting it does not raise the free or developer
+tier. Reach for the per-tier name.
+
+The per-tier knobs matter more than "has a default" suggests: without them
+documented, "why is the free tier allowing 20 calls" is unanswerable from the
+dashboard alone, because nothing there mentions the number.
+
+**`MICROLINK_API_KEY` is NOT in that table, and deliberately so.** It is a
+`runtimeConfig` value fed by **`NUXT_MICROLINK_API_KEY`**, forwarded into
+`renderExternalPage()` by every caller. It briefly had a second
+`process.env.MICROLINK_API_KEY` fallback as well, which is the trap this note
+exists to close: one credential with two spellings, where the raw one could
+never actually fire (callers always forward a defined string, and an unset
+runtimeConfig key is `''`, not `undefined`), so a plain var set to key that call
+did nothing at all and reported no error. Set the `NUXT_`-prefixed name only.
+
+`tests/static/worker-env-contract.test.ts` is the enforcement: its
+`PLAIN_WORKER_ENV_NAMES` list must match the raw reads exactly, so adding one
+without documenting it fails the build, and so does leaving a dead name behind.
 
 **`nuxt build` auto-loads `.env` from the project root.** A local build bakes
 whatever is in your `.env` into `.output/`, which is why a local artifact is not

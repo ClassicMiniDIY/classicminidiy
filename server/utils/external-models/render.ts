@@ -6,7 +6,7 @@
  *
  * Backed by Microlink (the approach OEA used): a headless-render API that returns
  * normalized page metadata. Defaults to the free public endpoint; set
- * `MICROLINK_API_KEY` for the pro tier (higher limits + better Cloudflare
+ * `NUXT_MICROLINK_API_KEY` for the pro tier (higher limits + better Cloudflare
  * handling), sent as `x-api-key`. The user URL is fetched by Microlink's infra,
  * not ours — so there's no SSRF concern here (and the direct path already
  * rejects private/loopback addresses before we ever fall back).
@@ -32,15 +32,23 @@ const DEFAULT_ENDPOINT = 'https://api.microlink.io';
 
 /**
  * Render `url` via the service and return OG-shaped metadata, or throw ScrapeError.
- * `apiKey` is forwarded from runtimeConfig by the caller (server-only); it falls
- * back to MICROLINK_API_KEY in the environment so the function stays usable in
- * isolation (e.g. unit tests).
+ *
+ * `apiKey` is forwarded from runtimeConfig by the caller and is the ONLY source
+ * for the credential. It used to fall back to `process.env.MICROLINK_API_KEY`,
+ * which gave one credential two spellings: runtimeConfig is fed by
+ * `NUXT_MICROLINK_API_KEY`, while a raw `process.env` read on Workers needs a
+ * PLAIN var of the unprefixed name. That fallback could never fire in
+ * production anyway — every caller forwards a defined string, and an unset
+ * runtimeConfig key is `''`, not `undefined` — so a plain var set in the hope
+ * of keying this call silently did nothing. One name now, and only one.
+ *
+ * Omitting the argument means "no key": the request goes out on the free tier
+ * rather than reaching for an environment value nobody set deliberately.
  */
 export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, apiKey?: string): Promise<OgMetadata> {
-  // Strict undefined check: a forwarded '' (runtimeConfig default when unset)
-  // means "no key" and must NOT fall through to process.env. Only an omitted
-  // arg (e.g. a direct unit-test call) falls back.
-  const key = apiKey !== undefined ? apiKey : process.env.MICROLINK_API_KEY;
+  // Endpoint override, unlike the key, genuinely IS a raw read and therefore
+  // genuinely needs a PLAIN Worker var — it has no runtimeConfig entry. It is a
+  // test/staging redirect knob with a safe default, not a secret.
   const base = process.env.MICROLINK_API_URL || DEFAULT_ENDPOINT;
   const endpoint = `${base}?url=${encodeURIComponent(url)}`;
   const doFetch = fetchImpl ?? fetch;
@@ -48,7 +56,7 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, 
   let res: Response;
   try {
     res = await doFetch(endpoint, {
-      headers: { Accept: 'application/json', ...(key ? { 'x-api-key': key } : {}) },
+      headers: { Accept: 'application/json', ...(apiKey ? { 'x-api-key': apiKey } : {}) },
     });
   } catch {
     throw new ScrapeError('Couldn’t reach the preview service. Try again in a moment.', 502);
