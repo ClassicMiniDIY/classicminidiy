@@ -37,16 +37,23 @@
         <div v-for="item in queueItems" :key="item.id" class="card bg-base-100 shadow-sm">
           <div class="card-body">
             <!-- Header: sender info + report reason -->
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-3">
+            <!-- Sender addresses and display names are user-supplied and can be
+                 long single words. Without `min-w-0` at every level down to the
+                 text, this header set the card's min-content width and pushed
+                 the page past the viewport (measured 129px of horizontal page
+                 scroll at 390px). -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-3">
                 <div class="avatar placeholder">
                   <div class="bg-neutral text-neutral-content w-10 rounded-full flex items-center justify-center">
                     <span>{{ getInitials(item.sender?.display_name || item.sender?.email) }}</span>
                   </div>
                 </div>
-                <div>
-                  <div class="font-bold">{{ item.sender?.display_name || item.sender?.email || 'Unknown' }}</div>
-                  <div class="text-sm text-base-content/70">{{ item.sender?.email }}</div>
+                <div class="min-w-0">
+                  <div class="truncate font-bold">
+                    {{ item.sender?.display_name || item.sender?.email || 'Unknown' }}
+                  </div>
+                  <div class="break-all text-sm text-base-content/70">{{ item.sender?.email }}</div>
                   <div class="flex gap-1 mt-1">
                     <span v-if="(item.sender?.warning_count || 0) > 0" class="badge badge-warning badge-xs">
                       {{ item.sender?.warning_count }} warning{{ (item.sender?.warning_count || 0) > 1 ? 's' : '' }}
@@ -260,7 +267,11 @@
     <dialog ref="warnModal" class="modal">
       <div class="modal-box">
         <h3 class="font-bold text-lg">Warn User</h3>
-        <p class="py-2 text-base-content/70">
+        <!-- `break-words`: the interpolated address is one unbreakable word, and a
+             modal-box is a grid item whose automatic minimum size is its
+             min-content width, so a long address made the modal itself wider
+             than the phone viewport (452px inside 390px). -->
+        <p class="py-2 break-words text-base-content/70">
           Send a warning to <strong>{{ warnTarget?.sender?.display_name || warnTarget?.sender?.email }}</strong
           >. This will inject a system message into the conversation and increment their warning count.
         </p>
@@ -289,7 +300,7 @@
     <dialog ref="banModal" class="modal">
       <div class="modal-box">
         <h3 class="font-bold text-lg">Ban User</h3>
-        <p class="py-4">
+        <p class="py-4 break-words">
           Are you sure you want to ban
           <strong>{{ banTarget?.display_name || banTarget?.email }}</strong
           >? This will prevent them from logging in and using the platform.

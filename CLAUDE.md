@@ -988,6 +988,51 @@ Consolidated 2026-08-26. Design doc: `docs/plans/2026-08-26-admin-consolidation.
   path sends an explicit null, because clearing bad data is the whole point of
   the admin edit.
 
+### Admin viewport invariants
+
+Audited across all 16 `/admin/**` pages at 390 / 768 / 1024 / 1280 / 1440 / 1920.
+Three distinct root causes were found, and all three are invisible until the data
+is long enough — an empty or short-fixture table proves nothing about them, so
+measure with a realistically long display name, address and title.
+
+- **`AdminShell` deliberately does NOT use `.container`.** That helper is
+  `max-w-7xl` (1280px), which is a reading width. Subtract the 16rem section rail
+  and the gutters and the content column is ~928px, while the widest admin tables
+  need ~1000-1100px — so `/admin/users`, `/admin/exchange/listings` and
+  `.../wanted` clipped their LAST column (the trust-level select, the row action
+  menu) even on a 1440px display. The shell uses `max-w-[1600px]` instead. Admin
+  is an internal tool, not an article; it gets the screen. Below ~1280 these
+  tables still scroll sideways, which is intended and is why the rail collapses
+  to a dropdown under `lg`.
+
+- **A scroll container must wrap the TABLE ONLY, never the table plus its
+  pager.** `/admin/users` had the result count and pagination inside the
+  `overflow-x-auto`, so on every viewport where the table overflowed the pager
+  was laid out at the table's width and "Next" sat off-screen — you had to
+  scroll the table sideways to page the table.
+
+- **`truncate` inside a table cell needs an explicit `max-w-*`, or it makes the
+  column WIDER.** `truncate` implies `white-space: nowrap`, and a column's
+  minimum is its cell's min-content width, so an untruncatable long name set the
+  User column to 430px. `min-w-0` alone does not help here — there is no flex
+  parent to shrink against. Capping the cell took the users table's minimum from
+  1078px to 975px, which is the difference between fitting and not at 1440.
+
+- **A `1fr` grid track is `minmax(auto, 1fr)` and cannot shrink below its item's
+  min-content width.** So one `truncate`d line inside a grid card sets the whole
+  track, and the PAGE scrolls horizontally — `/admin` overflowed by 15px at
+  390px for exactly this reason. Fix is `min-w-0` on the grid ITEM (or
+  `minmax(0,1fr)` on the track), not on anything inside it.
+
+- **User-supplied addresses are single unbreakable words, and they escape the
+  viewport in two places.** In a flex row they set the row's min-content
+  (`/admin/exchange/moderation` and `.../messages` scrolled the page by 108px and
+  129px at 390px); inside a `modal-box` — a grid item whose automatic minimum is
+  its min-content — they made the modal itself wider than the phone. Anywhere an
+  address or URL is interpolated, it needs `break-all`/`break-words`, and its
+  flex ancestors need `min-w-0`. Note that a CLOSED daisyUI modal still lays out,
+  so it contributes to document overflow and can be measured without opening it.
+
 ## Contribution Loop Invariants
 
 The UX cohesion pass turned the archive into a contribution platform. The loop is

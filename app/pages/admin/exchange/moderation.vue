@@ -65,10 +65,17 @@
                   </span>
                 </div>
                 <div class="text-sm text-base-content/50 mb-3">
-                  <span class="flex items-center gap-1">
+                  <!-- An address is one unbreakable word, so a nowrap-by-default
+                       flex row takes its min-content width from the longest one
+                       and pushes the whole page sideways: measured at 390px this
+                       row was 466px in a 326px card and /admin/exchange/moderation
+                       scrolled horizontally by 108px. `min-w-0` + `break-all` on
+                       the address is what keeps a long seller address inside the
+                       card. -->
+                  <span class="flex min-w-0 flex-wrap items-center gap-1">
                     <i class="fas fa-user"></i>
                     {{ listing.profiles?.display_name || 'Unknown' }}
-                    <span v-if="listing.profiles?.email" class="text-base-content/40">
+                    <span v-if="listing.profiles?.email" class="min-w-0 break-all text-base-content/40">
                       ({{ listing.profiles.email }})
                     </span>
                   </span>

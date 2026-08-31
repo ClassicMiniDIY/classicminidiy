@@ -507,7 +507,11 @@
       await navigator.clipboard.writeText(devIssuedKey.value);
       addToast({ title: 'Key copied to clipboard.', color: 'success', icon: 'fas fa-circle-check' });
     } catch {
-      addToast({ title: 'Could not copy — select the text instead.', color: 'error', icon: 'fas fa-triangle-exclamation' });
+      addToast({
+        title: 'Could not copy — select the text instead.',
+        color: 'error',
+        icon: 'fas fa-triangle-exclamation',
+      });
     }
   }
 
@@ -669,130 +673,144 @@
       <span>No users found matching the current filters.</span>
     </div>
 
-    <!-- Users Table -->
-    <div v-else class="overflow-x-auto">
-      <table class="table table-zebra w-full text-sm">
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Trust Level</th>
-            <th class="text-center">Admin</th>
-            <th>Submissions</th>
-            <th>Joined</th>
-            <th class="text-center">Membership</th>
-            <th class="text-center w-48">Change Trust Level</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="userItem in users" :key="userItem.id">
-            <!-- Avatar + Name/Email -->
-            <td>
-              <div class="flex items-center gap-3">
-                <!-- Avatar -->
-                <div v-if="userItem.avatar_url" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                  <img
-                    :src="userItem.avatar_url"
-                    :alt="userItem.display_name || userItem.email"
-                    class="w-full h-full object-cover"
-                  />
-                </div>
-                <div
-                  v-else
-                  class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0"
-                >
-                  {{ getInitials(userItem.display_name) }}
-                </div>
-
-                <div class="min-w-0">
-                  <div class="font-medium truncate">
-                    {{ userItem.display_name || 'No display name' }}
-                    <span v-if="isSelf(userItem)" class="badge badge-soft badge-info badge-xs ml-1">You</span>
+    <!-- Users Table.
+         The scroll container holds the TABLE ONLY. The result count and the
+         pager below used to live inside it, so on any viewport where the table
+         overflowed they were laid out at the table's width rather than the
+         column's — the pager was pushed off to the right and you had to scroll
+         the table sideways to reach "Next". -->
+    <div v-else>
+      <div class="overflow-x-auto rounded-box border border-base-300">
+        <table class="table table-zebra w-full text-sm">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Trust Level</th>
+              <th class="text-center">Admin</th>
+              <th>Submissions</th>
+              <th>Joined</th>
+              <th class="text-center">Membership</th>
+              <th class="text-center">Change Trust Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="userItem in users" :key="userItem.id">
+              <!-- Avatar + Name/Email -->
+              <td>
+                <div class="flex items-center gap-3">
+                  <!-- Avatar -->
+                  <div v-if="userItem.avatar_url" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    <img
+                      :src="userItem.avatar_url"
+                      :alt="userItem.display_name || userItem.email"
+                      class="w-full h-full object-cover"
+                    />
                   </div>
-                  <div class="text-xs opacity-60 truncate">{{ userItem.email }}</div>
+                  <div
+                    v-else
+                    class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0"
+                  >
+                    {{ getInitials(userItem.display_name) }}
+                  </div>
+
+                  <!-- `truncate` needs something to truncate AGAINST. In a table
+                     cell there is no such bound: the column's minimum is the
+                     cell's min-content width, and `truncate` implies
+                     `white-space: nowrap`, so a long display name or address
+                     made this the widest column (430px measured) and pushed the
+                     whole table past the content area. The explicit cap is what
+                     lets the ellipsis do its job. -->
+                  <div class="min-w-0 max-w-[15rem]">
+                    <div class="font-medium truncate">
+                      {{ userItem.display_name || 'No display name' }}
+                      <span v-if="isSelf(userItem)" class="badge badge-soft badge-info badge-xs ml-1">You</span>
+                    </div>
+                    <div class="text-xs opacity-60 truncate" :title="userItem.email">{{ userItem.email }}</div>
+                  </div>
                 </div>
-              </div>
-            </td>
+              </td>
 
-            <!-- Trust Level -->
-            <td>
-              <span class="badge badge-sm" :class="`badge-${getTrustLevelBadgeColor(userItem.trust_level)}`">
-                {{ getTrustLevelLabel(userItem.trust_level) }}
-              </span>
-            </td>
+              <!-- Trust Level -->
+              <td>
+                <span class="badge badge-sm" :class="`badge-${getTrustLevelBadgeColor(userItem.trust_level)}`">
+                  {{ getTrustLevelLabel(userItem.trust_level) }}
+                </span>
+              </td>
 
-            <!-- Admin Toggle -->
-            <td class="text-center">
-              <input
-                type="checkbox"
-                class="toggle toggle-sm toggle-primary"
-                :checked="userItem.is_admin"
-                :disabled="isSelf(userItem) || isProcessing"
-                @change="toggleAdmin(userItem)"
-              />
-            </td>
+              <!-- Admin Toggle -->
+              <td class="text-center">
+                <input
+                  type="checkbox"
+                  class="toggle toggle-sm toggle-primary"
+                  :checked="userItem.is_admin"
+                  :disabled="isSelf(userItem) || isProcessing"
+                  @change="toggleAdmin(userItem)"
+                />
+              </td>
 
-            <!-- Submissions -->
-            <td>
-              <div class="text-xs space-y-0.5">
-                <div>{{ userItem.total_submissions }} total</div>
-                <div class="opacity-70">
-                  <span class="text-success">{{ userItem.approved_submissions }} approved</span>
-                  <span class="mx-1">/</span>
-                  <span class="text-error">{{ userItem.rejected_submissions }} rejected</span>
+              <!-- Submissions -->
+              <td>
+                <div class="text-xs space-y-0.5">
+                  <div>{{ userItem.total_submissions }} total</div>
+                  <div class="opacity-70">
+                    <span class="text-success">{{ userItem.approved_submissions }} approved</span>
+                    <span class="mx-1">/</span>
+                    <span class="text-error">{{ userItem.rejected_submissions }} rejected</span>
+                  </div>
                 </div>
-              </div>
-            </td>
+              </td>
 
-            <!-- Joined -->
-            <td>
-              <span class="text-xs opacity-70">{{ formatDate(userItem.created_at) }}</span>
-            </td>
+              <!-- Joined -->
+              <td>
+                <span class="text-xs opacity-70">{{ formatDate(userItem.created_at) }}</span>
+              </td>
 
-            <!-- Membership / Comp + Marketplace -->
-            <td class="text-center">
-              <div class="flex flex-col gap-1 items-center">
-                <button
-                  type="button"
-                  class="btn btn-ghost btn-xs"
-                  :disabled="isProcessing"
-                  @click="openMembershipModal(userItem)"
-                >
-                  <i class="fas fa-star opacity-70"></i>
-                  Manage
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-ghost btn-xs"
-                  :disabled="isProcessing"
-                  @click="openDetailsModal(userItem)"
-                >
-                  <i class="fas fa-shop opacity-70"></i>
-                  Marketplace
-                </button>
-              </div>
-            </td>
+              <!-- Membership / Comp + Marketplace -->
+              <td class="text-center">
+                <div class="flex flex-col gap-1 items-center">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs"
+                    :disabled="isProcessing"
+                    @click="openMembershipModal(userItem)"
+                  >
+                    <i class="fas fa-star opacity-70"></i>
+                    Manage
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs"
+                    :disabled="isProcessing"
+                    @click="openDetailsModal(userItem)"
+                  >
+                    <i class="fas fa-shop opacity-70"></i>
+                    Marketplace
+                  </button>
+                </div>
+              </td>
 
-            <!-- Actions -->
-            <td class="text-center">
-              <template v-if="!isSelf(userItem)">
-                <select
-                  :value="userItem.trust_level"
-                  class="select select-bordered select-xs w-full max-w-36"
-                  :disabled="isProcessing"
-                  @change="handleTrustLevelSelect(userItem, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option v-for="level in trustLevels" :key="level" :value="level">
-                    {{ getTrustLevelLabel(level) }}
-                  </option>
-                </select>
-              </template>
-              <template v-else>
-                <span class="text-xs opacity-50">Cannot edit self</span>
-              </template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              <!-- Actions -->
+              <td class="text-center">
+                <template v-if="!isSelf(userItem)">
+                  <select
+                    :value="userItem.trust_level"
+                    class="select select-bordered select-xs w-full max-w-40"
+                    :disabled="isProcessing"
+                    @change="handleTrustLevelSelect(userItem, ($event.target as HTMLSelectElement).value)"
+                  >
+                    <option v-for="level in trustLevels" :key="level" :value="level">
+                      {{ getTrustLevelLabel(level) }}
+                    </option>
+                  </select>
+                </template>
+                <template v-else>
+                  <span class="text-xs opacity-50">Cannot edit self</span>
+                </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Result Count -->
       <div class="flex items-center justify-between mt-4 text-sm opacity-70">
@@ -1078,8 +1096,12 @@
                   <span class="opacity-60">Via:</span> <strong>{{ devSummary.platform }}</strong>
                   <template v-if="devSummary.billing_interval"> ({{ devSummary.billing_interval }}ly)</template>
                 </span>
-                <span><span class="opacity-60">Active keys:</span> <strong>{{ devSummary.active_key_count }}</strong></span>
-                <span><span class="opacity-60">Calls (30d):</span> <strong>{{ devSummary.calls_30d }}</strong></span>
+                <span
+                  ><span class="opacity-60">Active keys:</span> <strong>{{ devSummary.active_key_count }}</strong></span
+                >
+                <span
+                  ><span class="opacity-60">Calls (30d):</span> <strong>{{ devSummary.calls_30d }}</strong></span
+                >
               </div>
               <p v-if="devSummary.comp_note" class="text-xs opacity-60 mt-2">Comp note: {{ devSummary.comp_note }}</p>
             </div>
@@ -1126,10 +1148,20 @@
                   <div class="label py-1">
                     <span class="label-text text-xs">Expires (blank = permanent)</span>
                   </div>
-                  <input v-model="devCompExpiry" type="date" class="input input-bordered input-sm w-full" :disabled="devLoading" />
+                  <input
+                    v-model="devCompExpiry"
+                    type="date"
+                    class="input input-bordered input-sm w-full"
+                    :disabled="devLoading"
+                  />
                 </label>
               </div>
-              <button type="button" class="btn btn-primary btn-sm btn-block mt-2" :disabled="devLoading" @click="submitGrantDevComp">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm btn-block mt-2"
+                :disabled="devLoading"
+                @click="submitGrantDevComp"
+              >
                 <i v-if="devLoading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
                 <i v-else class="fas fa-gift" aria-hidden="true"></i>
                 {{ devSummary.has_active_comp ? 'Update comp' : 'Comp Developer API' }}
@@ -1160,10 +1192,20 @@
                   Revoke
                 </button>
                 <span v-else class="flex items-center gap-1 shrink-0">
-                  <button type="button" class="btn btn-error btn-xs" :disabled="devLoading" @click="submitRevokeDevKey(key)">
+                  <button
+                    type="button"
+                    class="btn btn-error btn-xs"
+                    :disabled="devLoading"
+                    @click="submitRevokeDevKey(key)"
+                  >
                     Confirm
                   </button>
-                  <button type="button" class="btn btn-ghost btn-xs" :disabled="devLoading" @click="devPendingRevokeKey = null">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs"
+                    :disabled="devLoading"
+                    @click="devPendingRevokeKey = null"
+                  >
                     Cancel
                   </button>
                 </span>
@@ -1187,12 +1229,14 @@
               <div class="flex items-start gap-2">
                 <i class="fas fa-triangle-exclamation mt-1" aria-hidden="true"></i>
                 <span class="text-sm">
-                  Shown once. The key is labelled with your name in the user's own dashboard, and this issue was
-                  written to the admin audit log.
+                  Shown once. The key is labelled with your name in the user's own dashboard, and this issue was written
+                  to the admin audit log.
                 </span>
               </div>
               <div class="flex items-center gap-2 w-full">
-                <code class="bg-base-100 rounded-box p-2 text-xs break-all grow [user-select:all]">{{ devIssuedKey }}</code>
+                <code class="bg-base-100 rounded-box p-2 text-xs break-all grow [user-select:all]">{{
+                  devIssuedKey
+                }}</code>
                 <button type="button" class="btn btn-sm shrink-0" @click="copyIssuedKey">
                   <i class="fas fa-copy" aria-hidden="true"></i>
                   Copy
@@ -1206,11 +1250,16 @@
               <div class="max-w-full overflow-x-auto rounded-box border border-base-300">
                 <table class="table table-xs">
                   <thead>
-                    <tr><th>Tool</th><th class="text-right">Calls</th></tr>
+                    <tr>
+                      <th>Tool</th>
+                      <th class="text-right">Calls</th>
+                    </tr>
                   </thead>
                   <tbody>
                     <tr v-for="[tool, calls] in devUsageByTool" :key="tool">
-                      <td><code>{{ tool }}</code></td>
+                      <td>
+                        <code>{{ tool }}</code>
+                      </td>
                       <td class="text-right">{{ calls }}</td>
                     </tr>
                   </tbody>
