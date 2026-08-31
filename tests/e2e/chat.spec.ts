@@ -110,6 +110,41 @@ test.describe('chat', () => {
     await expect(transcript(page).filter({ hasText: 'What is the main bearing torque?' }).first()).toBeVisible();
   });
 
+  test('the header shares the transcript column axis on a wide viewport', async ({ page }) => {
+    // The header bar and the transcript each centre a `max-w-3xl` box with
+    // `mx-auto`, and `mx-auto` centres on the PARENT. While the header was a
+    // sibling of the whole two-column row it centred on the shell, and the
+    // transcript on the chat column — so the title and History button sat half
+    // the rail's width (~160px) right of everything beneath them.
+    //
+    // This only reproduces from `lg` up. Below it the rail is hidden and the
+    // two axes coincide, which is why it survived every narrow check.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await gotoHydrated(page, '/chat');
+
+    const layout = await page.evaluate(() => {
+      const box = (el: Element | null | undefined) => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { x: Math.round(r.x), right: Math.round(r.right) };
+      };
+      const heading = [...document.querySelectorAll('header h1')].find((el) => /Assistant/i.test(el.textContent || ''));
+      const aside = document.querySelector('aside');
+      return {
+        header: box(heading?.closest('.max-w-3xl')),
+        composer: box(document.querySelector('textarea')?.closest('.max-w-3xl')),
+        railVisible: !!aside && getComputedStyle(aside).display !== 'none',
+      };
+    });
+
+    // Guard the guard. With the rail hidden the two boxes share an axis whatever
+    // the markup does, so without this the assertion below could pass while
+    // proving nothing.
+    expect(layout.railVisible).toBe(true);
+    expect(layout.header).not.toBeNull();
+    expect(layout.header).toEqual(layout.composer);
+  });
+
   test('posts the conversation and the request context', async ({ page }) => {
     const requests = await stubChat(page);
     await gotoHydrated(page, '/chat');

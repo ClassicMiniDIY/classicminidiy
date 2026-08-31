@@ -9,23 +9,45 @@
     on load. Now the transcript is the only thing that scrolls and the composer
     is a single instance pinned beneath it.
   -->
-  <div class="flex h-full min-h-0 flex-col bg-base-100">
+  <div class="flex h-full min-h-0 flex-col bg-base-100 [--chat-rail:20rem]">
     <header class="shrink-0 border-b border-base-300">
-      <div class="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-2.5 sm:px-6">
-        <h1 class="text-sm font-semibold">{{ t('assistant_name') }}</h1>
-        <span class="badge badge-ghost badge-sm">{{ t('beta') }}</span>
+      <!--
+        The header mirrors the body's two-column shape instead of spanning the
+        shell, and the empty spacer below is what makes it do so.
 
-        <button type="button" class="btn btn-ghost btn-sm ml-auto gap-2 font-normal" @click="historyOpen = true">
-          <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
-          <span class="hidden sm:inline">{{ t('history') }}</span>
-          <span class="sr-only sm:hidden">{{ t('history') }}</span>
-          <!-- Count is rendered only after mount: it comes from localStorage,
-               which the server cannot know, and rendering it during setup is
-               the hydration mismatch documented in CLAUDE.md. -->
-          <span v-if="hasMounted && history.entries.value.length > 0" class="badge badge-sm">
-            {{ history.entries.value.length }}
-          </span>
-        </button>
+        Both this bar and the transcript centre a `max-w-3xl` box with
+        `mx-auto` - but `mx-auto` centres on the PARENT. The transcript's parent
+        is the chat column (the shell minus the rail); this one's was the shell
+        itself, so the title and History button sat half the rail's width
+        (~160px) to the right of everything beneath them. The border-b still
+        spans the full width, so only the alignment changes.
+
+        It was invisible on a laptop: below `lg` the rail is hidden and the two
+        axes coincide, so the drift only appears on the wide screens where it is
+        also most obvious.
+      -->
+      <div class="flex">
+        <div class="min-w-0 flex-1">
+          <div class="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-2.5 sm:px-6">
+            <h1 class="text-sm font-semibold">{{ t('assistant_name') }}</h1>
+            <span class="badge badge-ghost badge-sm">{{ t('beta') }}</span>
+
+            <button type="button" class="btn btn-ghost btn-sm ml-auto gap-2 font-normal" @click="historyOpen = true">
+              <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+              <span class="hidden sm:inline">{{ t('history') }}</span>
+              <span class="sr-only sm:hidden">{{ t('history') }}</span>
+              <!-- Count is rendered only after mount: it comes from localStorage,
+                   which the server cannot know, and rendering it during setup is
+                   the hydration mismatch documented in CLAUDE.md. -->
+              <span v-if="hasMounted && history.entries.value.length > 0" class="badge badge-sm">
+                {{ history.entries.value.length }}
+              </span>
+            </button>
+          </div>
+        </div>
+        <!-- Reserves the rail's gutter. Same custom property as the <aside>, so
+             changing the rail width moves both together. -->
+        <div class="hidden w-[var(--chat-rail)] shrink-0 lg:block" aria-hidden="true"></div>
       </div>
     </header>
 
@@ -152,7 +174,7 @@
         a search returns.
       -->
       <aside
-        class="hidden w-80 shrink-0 overflow-y-auto border-l border-base-300 bg-base-200/40 p-4 lg:block"
+        class="hidden w-[var(--chat-rail)] shrink-0 overflow-y-auto border-l border-base-300 bg-base-200/40 p-4 lg:block"
         :aria-label="t('useful_links_region')"
       >
         <UsefulLinksSidebar v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" />
