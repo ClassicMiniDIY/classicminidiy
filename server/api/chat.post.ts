@@ -3,6 +3,7 @@ import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 
 import { buildAgentTools } from '../agent/tools';
 import { buildSystemPrompt } from '../agent/prompt';
 import { createChatRunTracker } from '../utils/chatUsage';
+import { serverRuntimeConfig } from '../utils/runtimeConfig';
 
 /**
  * The Classic Mini DIY assistant — the agent, in this Worker.
@@ -38,7 +39,7 @@ function textOf(message: UIMessage): string {
 }
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig(event);
+  const config = serverRuntimeConfig(event);
   const apiKey = config.ANTHROPIC_API_KEY as string;
 
   if (!apiKey) {
@@ -78,10 +79,17 @@ export default defineEventHandler(async (event) => {
 
   const tracker = createChatRunTracker(event, String(body?.threadId ?? 'anonymous'), body?.locale);
 
+  // convertToModelMessages is ASYNC in AI SDK v7 (it was synchronous in v6).
+  // Passing the promise straight to streamText fails inside standardizePrompt
+  // with "messages.some is not a function" — a message that names neither the
+  // call nor the missing await, and which only appears at runtime because the
+  // route's own error handler catches it and streams a generic error.
+  const modelMessages = await convertToModelMessages(messages);
+
   const result = streamText({
     model: anthropic(((config.CHAT_MODEL as string) || 'claude-haiku-4-5-20251001').trim()),
     system: buildSystemPrompt({ locale: body?.locale, pageSlug: body?.pageSlug }),
-    messages: convertToModelMessages(messages),
+    messages: modelMessages,
     tools: buildAgentTools(),
     stopWhen: stepCountIs(MAX_STEPS),
     onStepFinish({ toolCalls }) {

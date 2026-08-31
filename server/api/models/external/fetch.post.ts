@@ -11,6 +11,7 @@ import { getServiceClient } from '../../../utils/supabase';
 import { fetchExternalMetadata, normalizeExternalUrl } from '../../../utils/external-models';
 import { ScrapeError } from '../../../utils/external-models/errors';
 import type { ExternalModelPreview } from '../../../../data/models/external-models';
+import { serverRuntimeConfig } from '../../../utils/runtimeConfig';
 
 export default defineEventHandler(async (event): Promise<ExternalModelPreview> => {
   await requireUserAuth(event);
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event): Promise<ExternalModelPreview> =
   const url = typeof body?.url === 'string' ? body.url.trim() : '';
   if (!url) throw createError({ statusCode: 400, message: 'A model URL is required' });
 
-  const microlinkApiKey = useRuntimeConfig(event).MICROLINK_API_KEY as string;
+  const microlinkApiKey = serverRuntimeConfig(event).MICROLINK_API_KEY as string;
   let scraped;
   try {
     scraped = await fetchExternalMetadata(url, { microlinkApiKey });

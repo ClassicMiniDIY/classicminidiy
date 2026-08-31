@@ -1,4 +1,5 @@
 import { matchBot } from '../utils/aiBots';
+import { serverRuntimeConfig } from '../utils/runtimeConfig';
 
 /**
  * GEO measurement: record which AI / search crawlers fetch which pages.
@@ -33,7 +34,7 @@ export default defineEventHandler((event) => {
   const { pathname } = getRequestURL(event);
   if (SKIP_PREFIXES.some((p) => pathname.startsWith(p)) || SKIP_EXT.test(pathname)) return;
 
-  const key = useRuntimeConfig(event).public.posthogPublicKey as string;
+  const key = serverRuntimeConfig(event).public.posthogPublicKey as string;
   if (!key) return;
 
   // Person-less server capture; backgrounded so it never delays the crawler.

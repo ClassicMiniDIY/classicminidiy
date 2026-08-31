@@ -17,6 +17,7 @@ import { slugifyModelTitle } from '../../../utils/models';
 import { fetchExternalMetadata } from '../../../utils/external-models';
 import { ScrapeError } from '../../../utils/external-models/errors';
 import { safeFetch, readBodyCapped, SsrfError } from '../../../utils/external-models/ssrf';
+import { serverRuntimeConfig } from '../../../utils/runtimeConfig';
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // bucket limit
@@ -47,7 +48,7 @@ export default defineEventHandler(async (event) => {
   if (!categorySlug) throw createError({ statusCode: 400, message: 'Category is required' });
 
   // Re-scrape: the source of truth for source_site / id / author / license / images.
-  const microlinkApiKey = useRuntimeConfig(event).MICROLINK_API_KEY as string;
+  const microlinkApiKey = serverRuntimeConfig(event).MICROLINK_API_KEY as string;
   let scraped;
   try {
     scraped = await fetchExternalMetadata(url, { microlinkApiKey });
@@ -73,7 +74,10 @@ export default defineEventHandler(async (event) => {
   }
 
   // Title: user override wins, else scraped.
-  const title = (typeof body?.title === 'string' && body.title.trim() ? body.title.trim() : scraped.title).slice(0, 200);
+  const title = (typeof body?.title === 'string' && body.title.trim() ? body.title.trim() : scraped.title).slice(
+    0,
+    200
+  );
   const description =
     typeof body?.description === 'string' && body.description.trim()
       ? body.description.trim().slice(0, 20000)

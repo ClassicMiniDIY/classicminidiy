@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3';
+import { serverRuntimeConfig } from './runtimeConfig';
 
 /**
  * Per-run telemetry for the AI chat.
@@ -132,7 +133,7 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
       if (done) return;
       done = true;
       try {
-        const key = useRuntimeConfig(event).public.posthogPublicKey as string;
+        const key = serverRuntimeConfig(event).public.posthogPublicKey as string;
         if (!key) return;
 
         const send = $fetch(`${POSTHOG_INGEST_HOST}/capture/`, {
