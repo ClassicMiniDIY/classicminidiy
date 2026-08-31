@@ -54,12 +54,12 @@ test.describe('omnisearch', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
   });
 
-  // The header advertises the shortcut with a `<kbd>/</kbd>` on every page, but
-  // `FloatingChatInput` focuses its textarea on mount and the hotkey handler
-  // correctly ignores keystrokes inside a text field — so the shortcut it
-  // promises is dead on the site's highest-traffic page. Tracked as a bug;
-  // flip this to `test()` when the autofocus is removed or conditioned.
-  test.fixme('the "/" shortcut also works on the homepage', async ({ page }) => {
+  // The header advertises the shortcut with a `<kbd>/</kbd>` on every page.
+  // FloatingChatInput used to focus its textarea on mount, and the hotkey
+  // handler correctly ignores keystrokes inside a text field — so the shortcut
+  // was dead on the site's highest-traffic page. This was a `test.fixme` until
+  // that autofocus was removed; it guards the fix now.
+  test('the "/" shortcut also works on the homepage', async ({ page }) => {
     await gotoHydrated(page, '/');
     await page.keyboard.press('/');
     await expect(page.getByRole('dialog')).toBeVisible();
