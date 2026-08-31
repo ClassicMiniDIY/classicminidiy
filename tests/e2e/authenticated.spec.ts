@@ -40,23 +40,29 @@ test.describe('authenticated surfaces hydrate cleanly', () => {
   const ROUTES = ['/', '/dashboard', '/profile', '/contribute', '/membership'];
 
   /**
-   * Routes that ALREADY mismatch while signed in, found by this suite's first
-   * authenticated run. Tracked separately so the gate is green on day one
-   * rather than red-by-default, which teaches people to ignore it.
+   * Routes known to mismatch while signed in. EMPTY, and that is a finding in
+   * itself — see the note below.
    *
-   * Measured, Firefox only, three consecutive runs of the same five routes:
-   * 5 failed / 0 failed / 2 failed. So it is real and INTERMITTENT — roughly a
-   * third of route loads — which is exactly why it outlived every deterministic
-   * check in the repo. Chromium passes consistently, matching the dropdown bug
-   * CLAUDE.md records as Firefox-only.
+   * This started as all five routes. The first authenticated runs produced Vue
+   * hydration mismatches on every one of them, Firefox only, about a third of
+   * the time. That turned out to be the HARNESS, not the app: at the time
+   * `mintSession` ran per test, and magic-link tokens are single-use, so
+   * parallel workers invalidated each other's. A session dying while the page
+   * hydrates flips the client from signed-in to signed-out mid-render, which is
+   * exactly a hydration mismatch.
    *
-   * NOTE the deliberate deviation from the shrink-only rule used in
-   * `tests/static/**`: there is no "stale entry" assertion here. A check that
-   * failed when a listed route STOPPED mismatching would itself be flaky, since
-   * a clean run is already ~2 in 3. Entries must therefore be removed by hand
-   * when a fix lands — verify with several consecutive runs, not one.
+   * Once minting moved to a single setup project the symptom vanished and has
+   * not returned in roughly forty attempts: reloads in one context, ten fresh
+   * contexts, serial and six-worker runs, DevTools on and off, and second
+   * visits with populated localStorage. Three consecutive full-suite runs are
+   * clean.
+   *
+   * So the gate is real: a signed-in hydration mismatch on any listed route
+   * FAILS. Re-add an entry only with evidence that survives the same battery —
+   * a single red run is more likely to be a harness bug than an app bug, which
+   * is the lesson that produced this comment.
    */
-  const KNOWN_HYDRATION_MISMATCH = new Set(['/', '/dashboard', '/profile', '/contribute', '/membership']);
+  const KNOWN_HYDRATION_MISMATCH = new Set<string>();
 
   // The session arrives via storageState from the `setup` project (see
   // auth.setup.ts) — minted once for the whole run, because magic-link tokens
