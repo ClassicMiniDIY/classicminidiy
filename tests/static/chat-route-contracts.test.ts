@@ -38,6 +38,25 @@ describe('chat route contracts', () => {
     ).toBe(calls.length);
   });
 
+  it('never answers 401', () => {
+    // The invariant in CLAUDE.md: /api/chat is OPTIONALLY authenticated and must
+    // never *require* auth. A 401 would break the surface's reason to exist —
+    // the assistant has to work for every anonymous visitor. An exhausted quota
+    // is a 429 with an upgrade pointer, which is a different thing entirely.
+    expect(source).not.toMatch(/statusCode:\s*401/);
+    expect(source).not.toMatch(/requireUserAuth/);
+  });
+
+  it('consumes the quota BEFORE the model runs', () => {
+    // A quota checked after the stream is not a quota — the tokens are already
+    // spent. Enforce ordering at the source level, since no unit test can see it.
+    const consume = source.indexOf('consumeChatQuota');
+    const stream = source.indexOf('streamText(');
+    expect(consume, 'chat.post.ts no longer consumes a quota').toBeGreaterThan(-1);
+    expect(stream).toBeGreaterThan(-1);
+    expect(consume, 'consumeChatQuota must run before streamText').toBeLessThan(stream);
+  });
+
   it('checks the model credential explicitly rather than trusting truthiness downstream', () => {
     // An absent private runtimeConfig value is an EMPTY STRING, not undefined.
     // Without an explicit check the empty key reaches the provider and comes back
