@@ -24,6 +24,9 @@ export interface RemoteThread {
   updatedAt: string;
 }
 
+/** Matches the list route's limit and the database trigger's cap. */
+const MAX_SYNCED = 20;
+
 export function useChatSync() {
   const supabase = useSupabase();
 
@@ -56,6 +59,11 @@ export function useChatSync() {
         method: (init.method as any) ?? 'GET',
         body: init.body as any,
         headers: { Authorization: `Bearer ${accessToken}` },
+        // Survives page unload. The last push before someone navigates away is
+        // fired from a `pagehide` handler, and an ordinary fetch is cancelled
+        // there — so those final messages reached localStorage and silently
+        // never reached the server.
+        keepalive: true,
       });
       lastError.value = null;
       return result;
@@ -92,8 +100,41 @@ export function useChatSync() {
     });
     if (!saved) return;
     // Keep the local list in step so the dialog does not need a round trip to
-    // show a conversation the user is in the middle of.
-    remote.value = [saved, ...remote.value.filter((entry) => entry.threadId !== threadId)];
+    // show a conversation the user is in the middle of — capped at the same
+    // twenty the list route and the database trigger enforce, so all three
+    // agree. Without the cap the dialog would list conversations the server has
+    // already trimmed, and opening one would 404: an expired conversation
+    // reading as a broken one.
+    remote.value = [saved, ...remote.value.filter((entry) => entry.threadId !== threadId)].slice(0, MAX_SYNCED);
+  }
+
+  /**
+   * Upload conversations that exist only in this browser.
+   *
+   * Without this the feature is invisible to the people most likely to want
+   * it: someone who has been using the assistant, subscribes, opens a second
+   * device and finds nothing, because their existing conversations sit in the
+   * first browser's localStorage and would only sync if that browser happened
+   * to reopen each one and send another message.
+   *
+   * Sequential rather than parallel, and deliberately so — twenty transcripts
+   * fired at once is a burst against the caller's own write throttle, and this
+   * runs in the background where finishing a second later costs nothing. Stops
+   * at the first failure rather than hammering a server that is already
+   * refusing; the next page load retries.
+   */
+  async function backfill(local: Array<{ threadId: string; title: string; messages: UIMessage[] }>): Promise<number> {
+    const known = new Set(remote.value.map((entry) => entry.threadId));
+    const missing = local.filter((entry) => !known.has(entry.threadId) && entry.messages.length > 0);
+
+    let uploaded = 0;
+    for (const entry of missing) {
+      const before = remote.value.length;
+      await push(entry.threadId, entry.title, entry.messages);
+      if (remote.value.length === before) break;
+      uploaded += 1;
+    }
+    return uploaded;
   }
 
   async function remove(threadId: string): Promise<void> {
@@ -106,5 +147,5 @@ export function useChatSync() {
     remote.value = [];
   }
 
-  return { remote, lastError, pull, pullThread, push, remove, clear };
+  return { remote, lastError, pull, pullThread, push, backfill, remove, clear };
 }

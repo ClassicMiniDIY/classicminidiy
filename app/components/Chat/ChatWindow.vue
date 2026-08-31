@@ -248,7 +248,43 @@
    * `initAuth()` — branching on it directly is the structural hydration
    * mismatch documented in CLAUDE.md. Same rule as `MainNav`'s `isSignedIn`.
    */
+  // The server never has stored state, so SSR always renders the welcome
+  // branch. Reading localStorage during setup would flip this on the first
+  // client render — the structural hydration mismatch that mangled this page.
+  const hasMounted = ref(false);
+
   const syncEnabled = computed(() => hasMounted.value && isSustainingMember.value);
+
+  /**
+   * Pull the account's conversations once membership is known, then upload any
+   * that exist only in this browser.
+   *
+   * At setup scope like every other watcher here — `syncEnabled` already folds
+   * in `hasMounted`, so there is nothing to gain from deferring the watcher
+   * itself, and putting it inside `onMounted` implied an ordering requirement
+   * that does not exist.
+   *
+   * Not awaited anywhere: a slow or unavailable sync must never delay the chat
+   * becoming usable, and the local copy is already on screen.
+   */
+  watch(
+    syncEnabled,
+    async (on) => {
+      if (!on) return;
+      const pulled = await sync.pull();
+      if (!pulled) return;
+      // The backfill is what makes the benefit visible to someone who was
+      // already using the assistant before they subscribed.
+      await sync.backfill(
+        history.entries.value.map((entry) => ({
+          threadId: entry.threadId,
+          title: entry.title,
+          messages: entry.messages,
+        }))
+      );
+    },
+    { immediate: true }
+  );
 
   /**
    * The history dialog's list: local conversations plus any that exist only on
@@ -258,6 +294,11 @@
    * fresh as anything the server has — the push is debounced, so the server is
    * by definition a little behind.
    */
+  const asTime = (value: string): number => {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : Date.now();
+  };
+
   const historyEntries = computed(() => {
     const local = history.entries.value;
     if (!syncEnabled.value) return local;
@@ -269,8 +310,12 @@
         threadId: entry.threadId,
         title: entry.title,
         messageCount: entry.messageCount,
-        createdAt: Date.parse(entry.createdAt) || Date.now(),
-        lastUsedAt: Date.parse(entry.updatedAt) || Date.now(),
+        // `Number.isFinite`, not `||`: Date.parse returns NaN for an
+        // unparseable string and 0 for the epoch, and `||` treats both the
+        // same — so a malformed timestamp would sort to the top of the list as
+        // though it were brand new.
+        createdAt: asTime(entry.createdAt),
+        lastUsedAt: asTime(entry.updatedAt),
         messages: [],
       }));
 
@@ -341,21 +386,11 @@
    */
   const quotaExhausted = computed(() => parseQuotaError(error.value));
 
-  // The server never has stored state, so SSR always renders the welcome
-  // branch. Reading localStorage during setup would flip this on the first
-  // client render — the structural hydration mismatch that mangled this page.
-  const hasMounted = ref(false);
-
   onMounted(() => {
     hasMounted.value = true;
     // Reads localStorage, so it must run after mount — same rule as
     // useRecentTools().load(); see CLAUDE.md.
     history.load();
-
-    // Pull the account's conversations once membership is known. Deliberately
-    // not awaited: a slow or unavailable sync must not delay the chat becoming
-    // usable, and the local copy is already on screen.
-    watch(syncEnabled, (on) => on && sync.pull(), { immediate: true });
 
     // Resume the most recent conversation, if there is one.
     const mostRecent = history.entries.value[0];
@@ -478,12 +513,31 @@
     const firstUser = current.find((message) => message.role === 'user');
     const title = history.deriveTitle(messageText(firstUser));
     history.record(threadId.value, { title, messages: current });
-
-    // Fire-and-forget, on the SAME debounce as the local write. The local copy
-    // is the working one, so a failed push costs sync rather than the
-    // conversation — useChatSync swallows its own errors for that reason.
-    if (syncEnabled.value) void sync.push(threadId.value, title, current);
   }
+
+  /**
+   * Upload the conversation. Separate from the local write on purpose.
+   *
+   * The local write has to be frequent — it is what survives a crash or a
+   * navigation mid-answer. The network push does not: pushing on the same
+   * debounce meant a multi-step tool run, whose pauses exceed the debounce
+   * while a tool executes, uploaded the whole growing transcript two or three
+   * times per answer, each upload immediately superseded by the next.
+   *
+   * Fire-and-forget. The local copy is the working one, so a failed push costs
+   * sync rather than the conversation — useChatSync swallows its own errors.
+   */
+  function pushNow() {
+    const current = messages.value as UIMessage[];
+    if (!syncEnabled.value || !threadId.value || current.length === 0) return;
+    const firstUser = current.find((message) => message.role === 'user');
+    void sync.push(threadId.value, history.deriveTitle(messageText(firstUser)), current);
+  }
+
+  // Once the stream closes, and once when the visitor leaves mid-answer.
+  watch(isLoading, (loading, wasLoading) => {
+    if (wasLoading && !loading) pushNow();
+  });
 
   function schedulePersist() {
     if (persistTimer) clearTimeout(persistTimer);
@@ -503,14 +557,23 @@
 
   // A pending debounce must not lose the last tokens of an answer when the
   // visitor navigates away the moment it finishes.
-  onBeforeUnmount(persistNow);
+  onBeforeUnmount(() => {
+    persistNow();
+    pushNow();
+  });
 
   // Same reason, for a tab close or reload, which unmounts nothing.
+  // `keepalive` on the sync request is what lets the push actually leave the
+  // browser here; an ordinary fetch is cancelled by the unload.
+  const flushAll = () => {
+    persistNow();
+    pushNow();
+  };
   onMounted(() => {
-    window.addEventListener('pagehide', persistNow);
+    window.addEventListener('pagehide', flushAll);
   });
   onBeforeUnmount(() => {
-    window.removeEventListener('pagehide', persistNow);
+    window.removeEventListener('pagehide', flushAll);
   });
 
   async function handleSubmit() {

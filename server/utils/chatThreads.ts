@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3';
 import { getServiceClient } from './supabase';
 import { requireUserClient } from './userAuth';
-import { SUSTAINING_PRODUCT_ID } from './chatTiers';
+import { CHAT_TIER_CACHE_TTL_SECONDS, SUSTAINING_PRODUCT_ID, chatTierCacheId } from './chatTiers';
 
 /**
  * Shared guard for the synced-history routes.
@@ -24,6 +24,17 @@ import { SUSTAINING_PRODUCT_ID } from './chatTiers';
 export async function requireChatThreadAccess(event: H3Event) {
   const { user, supabase } = await requireUserClient(event);
 
+  // Cached, the same way chat-auth caches the identical lookup. A push happens
+  // after every answer and a pull on every page load, so without this an active
+  // member generates a steady stream of identical RPCs — and a reader seeing
+  // the cached version next door would reasonably assume this one was too.
+  const cacheStorage = useStorage('cache');
+  const cacheId = chatTierCacheId(`member:${user.id}`);
+  const cached = (await cacheStorage.getItem(cacheId).catch(() => null)) as { member: boolean } | null;
+
+  if (cached?.member === true) return { user, supabase };
+  if (cached?.member === false) throw notAMemberError();
+
   // Membership is checked with the SERVICE client rather than the caller's:
   // `subscriptions` is not readable under the visitor's own RLS, so asking as
   // them would report "no membership" for a paying member.
@@ -45,15 +56,24 @@ export async function requireChatThreadAccess(event: H3Event) {
     });
   }
 
-  if (isMember !== true) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden',
-      message: 'Synced conversation history is a Sustaining Member benefit.',
-    });
-  }
+  // Only a resolved answer is cached. An RPC error above already threw, so a
+  // transient failure is never written as "not a member" and held for the TTL.
+  const write = cacheStorage
+    .setItem(cacheId, { member: isMember === true }, { ttl: CHAT_TIER_CACHE_TTL_SECONDS })
+    .catch(() => {});
+  (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(write);
+
+  if (isMember !== true) throw notAMemberError();
 
   return { user, supabase };
+}
+
+function notAMemberError() {
+  return createError({
+    statusCode: 403,
+    statusMessage: 'Forbidden',
+    message: 'Synced conversation history is a Sustaining Member benefit.',
+  });
 }
 
 /** Row shape the client consumes. `messages` is omitted from list responses. */
