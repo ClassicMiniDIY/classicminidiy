@@ -1256,13 +1256,14 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   `app/pages/admin/marketing.vue`), and verify on a real Worker
   (`wrangler dev .output/server/index.mjs --local`), never in dev.
 
-  **What decides whether it fires is EVALUATION, not import style.**
-  `app/components/exchange/listings/wizard/PhotoUploadSection.vue` still
-  statically imports vuedraggable and `/exchange/listings/new` is fine — because
-  that component sits on a later wizard step and its chunk is never evaluated
-  during SSR. That is a property of the current step layout, not a guarantee:
-  render it on step 1, or hoist it out of its own chunk, and the route 500s the
-  same way. Do not read "the wizard is fine" as "a static import is fine".
+  **What decides whether it fires is EVALUATION, not import style.** For a while
+  `PhotoUploadSection.vue` imported vuedraggable statically and
+  `/exchange/listings/new` was fine — because that component sits on a later
+  wizard step and its chunk was never evaluated during SSR. That was a property
+  of the step layout, not a guarantee: rendering it on step 1, or a bundler
+  hoisting it into the page chunk, would have 500'd the PAID listing flow. Both
+  call sites are now async + `<ClientOnly>`. Do not read "it works today" as "a
+  static import is safe" — verify on a real Worker.
 
 - **Nitro registers EVERY file under `server/api/` and `server/routes/` as a
   route.** Its scan glob is `**/*.{js,mjs,cjs,ts,...}` with no underscore
