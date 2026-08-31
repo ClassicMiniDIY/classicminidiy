@@ -1,4 +1,5 @@
 import { createLangGraphClient, createThreadIfNeeded } from '../../../../../utils/langgraph';
+import { createChatRunTracker } from '../../../../../utils/chatUsage';
 
 /**
  * SSE proxy for a LangGraph run. The only chat transport the UI actually uses.
@@ -57,8 +58,15 @@ export default defineEventHandler(async (event) => {
     const send = (controller: ReadableStreamDefaultController, payload: string) =>
       controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
 
+    // One run summary per stream. This is the only place that can observe which
+    // tools the assistant actually used — see server/utils/chatUsage.ts for why
+    // neither the MCP server nor the upstream agent can report it.
+    const tracker = createChatRunTracker(event, threadId, metadata?.user_locale ?? metadata?.language);
+
     const stream = new ReadableStream({
       async start(controller) {
+        let outcome: 'completed' | 'upstream_error' = 'completed';
+        let failure: string | undefined;
         try {
           // Send thread ID as first event
           send(controller, JSON.stringify({ event: 'thread_id', data: { thread_id: threadId } }));
@@ -81,16 +89,20 @@ export default defineEventHandler(async (event) => {
           const streamResponse = client.runs.stream(threadId, assistant_id, streamOptions);
 
           for await (const chunk of streamResponse) {
+            tracker.observe(chunk);
             send(controller, JSON.stringify(chunk));
           }
         } catch (error: any) {
           console.error('Streaming error:', error);
+          outcome = 'upstream_error';
+          failure = error?.message;
           send(controller, JSON.stringify({ error: error.message }));
         } finally {
           // The client treats this sentinel as end-of-stream, so it must be
           // emitted on the error path too or the composer stays spinning.
           send(controller, '[DONE]');
           controller.close();
+          tracker.finish(outcome, failure);
         }
       },
     });
