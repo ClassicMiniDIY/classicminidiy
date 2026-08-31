@@ -138,12 +138,18 @@
     <div v-if="pending" class="mb-8 grid gap-4 sm:grid-cols-2">
       <div v-for="i in 4" :key="i" class="skeleton h-24 w-full rounded-box"></div>
     </div>
+    <!-- `min-w-0` on the card is load-bearing, not tidying. A grid track sized
+         `1fr` is `minmax(auto, 1fr)`, and `auto` cannot shrink below the item's
+         min-content width — which the `truncate` hint below sets to the FULL
+         hint string, because `truncate` includes `white-space: nowrap`. Without
+         it the single-column mobile track measured 389px inside a 358px column
+         and the whole /admin page scrolled sideways by 15px. -->
     <div v-else class="mb-8 grid gap-4 sm:grid-cols-2">
       <NuxtLink
         v-for="queue in queues"
         :key="queue.key"
         :to="queue.to"
-        class="card border shadow-sm transition-colors"
+        class="card min-w-0 border shadow-sm transition-colors"
         :class="
           queue.count > 0
             ? 'border-warning/30 bg-warning/10 hover:bg-warning/20'
