@@ -38,8 +38,19 @@ if (!mergeBase) {
   process.exit(2);
 }
 
-const changed = (git(['diff', '--name-only', '--diff-filter=ACMR', mergeBase, 'HEAD']) ?? '')
-  .split('\n')
+// Committed changes, PLUS anything still in the working tree or index.
+//
+// Without the second half a local pre-commit run is VACUOUS: `git diff
+// mergeBase HEAD` sees only commits, so running this before committing reports
+// "no formattable files changed" and passes while the very files you are about
+// to push are unformatted. That happened on the first PR after this landed —
+// green locally, red in CI. In CI the two sets are identical (the tree is
+// clean), so this only ever adds coverage.
+const committed = git(['diff', '--name-only', '--diff-filter=ACMR', mergeBase, 'HEAD']) ?? '';
+const working = git(['diff', '--name-only', '--diff-filter=ACMR', 'HEAD']) ?? '';
+const untracked = git(['ls-files', '--others', '--exclude-standard']) ?? '';
+
+const changed = [...new Set(`${committed}\n${working}\n${untracked}`.split('\n'))]
   .filter(Boolean)
   // A file deleted after being edited is listed by name but is gone from disk.
   .filter((file) => EXTENSIONS.test(file) && existsSync(file));

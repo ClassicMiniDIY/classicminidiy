@@ -44,13 +44,10 @@
         await navigateTo(loginWithIntentHref);
         return;
       }
-      const res = await $fetch<{ status?: string; claim_url?: string; discord_url?: string }>(
-        '/api/discord/reissue',
-        {
-          method: 'POST',
-          headers: { authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await $fetch<{ status?: string; claim_url?: string; discord_url?: string }>('/api/discord/reissue', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+      });
       if (res?.status === 'active') {
         discordUrl.value = res.discord_url ?? null;
         state.value = 'active';
