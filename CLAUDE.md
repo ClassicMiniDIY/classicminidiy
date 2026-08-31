@@ -372,11 +372,15 @@ specific case in dev, fetch the transformed module and look at the vue import li
   `isAuthenticated`/`isAdmin` directly — same rule as `/chat` and the passkey UI.
   `tests/unit/components/main-nav-hydration.test.ts` enforces both halves.
 
-  **~19 other call sites in `app/` still branch structurally on ungated
-  `isAuthenticated`/`isAdmin`** (pages/dashboard, profile, contribute, models/upload,
-  membership, archive detail pages, several calculators). They are latent instances of the
-  same bug; they bite less because they are not sticky chrome with a neighbouring dropdown
-  to clobber. Gate them when you touch them.
+  **That backlog is CLEARED.** This note used to say ~19 other call sites in `app/`
+  still branched structurally on ungated `isAuthenticated`/`isAdmin`. They have all
+  been gated: `KNOWN_UNGATED` in `tests/static/hydration-auth-gates.test.ts` is
+  empty and the check passes, and that allowlist is shrink-only, so the count
+  cannot quietly grow again — a new ungated branch fails the build.
+
+  Do not reason from the old number. It sent me hunting the wrong cause for a
+  hydration mismatch that turned out to be a test-harness bug, which is exactly
+  the cost of a stale invariant in this file.
 
 - **Verify dropdown fixes in FIREFOX, not only the Chromium preview pane.** This bug was
   reported on Firefox 154 and every prior verification ran in Chromium, which is why it
