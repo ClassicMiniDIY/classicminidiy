@@ -133,15 +133,30 @@ const stripScripts = (html) =>
 const titleOf = (html) => html.match(/<title(?=[\s>])[^>]*>([\s\S]*?)<\/title\s*>/i)?.[1]?.trim() ?? null;
 const h1Count = (html) => (stripScripts(html).match(/<h1[\s>]/gi) ?? []).length;
 const hasCanonical = (html) => /<link[^>]+rel=["']canonical["']/i.test(html);
-const isNoindex = (html) => /<meta[^>]+name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html);
+const isNoindex = (html) => /<meta(?=[\s])[^>]+name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html);
 const ogImage = (html) =>
   html.match(/<meta[^>]+(?:property|name)=["']og:image["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? null;
 
 function jsonLdBlocks(html) {
-  return [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map((m) =>
-    m[1].trim()
-  );
+  return [
+    ...html.matchAll(/<script(?=[\s])[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script\s*>/gi),
+  ].map((m) => m[1].trim());
 }
+
+/**
+ * Every tag-matching regex in this file pins the tag NAME with a `(?=[\s>/])`
+ * lookahead and accepts whitespace before a closing `>`. Both halves were found
+ * the hard way while fixing a CodeQL alert:
+ *
+ *   `<title[^>]*>` matched the prefix of `<titlebar>`, running the capture past
+ *   the real title; `<meta[^>]+…robots…>` matched `<metadata name="robots">`;
+ *   and `<\/script>` without `\s*` missed `</script >`, which made a present
+ *   schema.org block read as absent.
+ *
+ * These are error- and warning-level checks against LIVE production HTML, so a
+ * mis-parse is a spurious CI failure. If you add a tag regex here, pin it the
+ * same way.
+ */
 
 /**
  * Visible text that looks like an untranslated i18n key — `foo.bar_baz` alone
