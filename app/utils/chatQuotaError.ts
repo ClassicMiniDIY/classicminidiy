@@ -1,4 +1,9 @@
-import { CHAT_QUOTAS, MEMBERSHIP_URL, type ChatTier } from '../../shared/utils/chatTiers';
+// `~~/shared/...`, not a relative path. Every other app file that reaches into
+// shared/ uses the alias, and the relative form does not survive the Cloudflare
+// build: Rollup could not resolve it from the client chunk and the deploy failed
+// at the bundling step — after a green unit suite, a green typecheck and a green
+// dev server, because only the production build resolves that specifier.
+import { CHAT_QUOTAS, MEMBERSHIP_URL, type ChatTier } from '~~/shared/utils/chatTiers';
 
 /**
  * Recognise a quota-exhausted response inside a chat error.
