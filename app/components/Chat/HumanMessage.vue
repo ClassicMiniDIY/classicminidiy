@@ -26,28 +26,14 @@
 </template>
 
 <script setup lang="ts">
-  import type { HumanMessageProps } from '../../../data/models/chat';
-  import { useStreamContext } from '~/composables/useStreamProvider';
+  import type { UIMessage } from 'ai';
+  import { messageText } from '~/utils/chatMessages';
 
   const { t } = useI18n();
 
-  const props = defineProps<HumanMessageProps>();
-  useStreamContext();
+  const props = defineProps<{ message?: UIMessage; isLoading?: boolean }>();
 
-  function getContentString(content: any): string {
-    if (typeof content === 'string') {
-      return content;
-    }
-    if (Array.isArray(content)) {
-      return content
-        .filter((item) => item.type === 'text')
-        .map((item) => item.text)
-        .join('\n');
-    }
-    return '';
-  }
-
-  const contentString = computed(() => getContentString(props.message.content));
+  const contentString = computed(() => messageText(props.message));
 
   const justCopied = ref(false);
   let copyTimer: ReturnType<typeof setTimeout> | null = null;

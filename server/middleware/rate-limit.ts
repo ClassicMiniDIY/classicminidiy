@@ -6,10 +6,11 @@ import { clientIp } from '../utils/clientIp';
 /**
  * Per-IP rate limiting for two classes of abuse-prone traffic:
  *
- *   1. The public, UNAUTHENTICATED LangGraph AI proxy (`/api/langgraph/**`).
- *      The chat is intentionally open to every site visitor (no login), so this
- *      throttle is the only thing between an anonymous scripted caller and
- *      unbounded LLM runs billed to our LangSmith key.
+ *   1. The public, UNAUTHENTICATED AI chat route (`/api/chat`). The assistant
+ *      is intentionally open to every site visitor (no login), so this throttle
+ *      is one of the two things between an anonymous scripted caller and
+ *      unbounded model spend — the other being the Cloudflare zone rate-limit
+ *      rule, which runs at the edge before the Worker bills anything.
  *
  *   2. Mutating requests to the rest of the JSON API (POST/PUT/PATCH/DELETE on
  *      `/api/**`). These are the content-submission surfaces — registry/wheel/
@@ -22,14 +23,19 @@ import { clientIp } from '../utils/clientIp';
  *      POSTs — see docs/runbooks/2026-06-15-botid-endpoint-protection.md.
  *
  * Limits are tunable without a code change via env:
- *   LANGGRAPH_RATELIMIT_MAX / LANGGRAPH_RATELIMIT_WINDOW_MS  (chat)
+ *   CHAT_RATELIMIT_MAX / CHAT_RATELIMIT_WINDOW_MS  (chat; LANGGRAPH_* still read)
  *   WRITE_RATELIMIT_MAX      / WRITE_RATELIMIT_WINDOW_MS      (mutations)
  *
  * Note: the counter is per warm serverless instance (see utils/rateLimit.ts),
  * so this dampens abuse rather than enforcing a precise global quota.
  */
-const LANGGRAPH_WINDOW_MS = Number(process.env.LANGGRAPH_RATELIMIT_WINDOW_MS) || 60_000;
-const LANGGRAPH_MAX = Number(process.env.LANGGRAPH_RATELIMIT_MAX) || 40;
+// Renamed from LANGGRAPH_RATELIMIT_* when the chat moved in-Worker. The old
+// names are still accepted: if one is set in Cloudflare and only the new name
+// were read, the configured limit would silently revert to the default below —
+// an invisible change to the only in-app throttle on a route that spends money.
+const CHAT_WINDOW_MS =
+  Number(process.env.CHAT_RATELIMIT_WINDOW_MS || process.env.LANGGRAPH_RATELIMIT_WINDOW_MS) || 60_000;
+const CHAT_MAX = Number(process.env.CHAT_RATELIMIT_MAX || process.env.LANGGRAPH_RATELIMIT_MAX) || 40;
 
 const WRITE_WINDOW_MS = Number(process.env.WRITE_RATELIMIT_WINDOW_MS) || 60_000;
 const WRITE_MAX = Number(process.env.WRITE_RATELIMIT_MAX) || 30;
@@ -98,10 +104,10 @@ function keyFingerprint(token: string): string {
  * Paths exempt from the mutation throttle. `/api/admin/**` is excluded so a
  * moderator working through the review queue (bulk approve/reject) is never
  * throttled mid-session — admin access is already gated by requireAdminAuth.
- * `/api/langgraph` is handled by its own (stricter, unauthenticated) policy
- * above and must not be double-counted here.
+ * `/api/chat` is handled by its own (stricter, unauthenticated) policy above
+ * and must not be double-counted here.
  */
-const WRITE_EXEMPT_PREFIXES = ['/api/langgraph', '/api/admin'];
+const WRITE_EXEMPT_PREFIXES = ['/api/chat', '/api/admin'];
 
 // clientIp() moved to server/utils/clientIp.ts — mcp-auth's lookup throttle
 // keys on the same identity, and two copies would drift. The header-precedence
@@ -154,12 +160,12 @@ export default defineEventHandler((event) => {
   }
 
   // Policy 1: the public AI chat proxy.
-  if (pathname.startsWith('/api/langgraph')) {
+  if (pathname.startsWith('/api/chat')) {
     applyLimit(
       event,
-      `langgraph:${clientIp(event)}`,
-      LANGGRAPH_MAX,
-      LANGGRAPH_WINDOW_MS,
+      `chat:${clientIp(event)}`,
+      CHAT_MAX,
+      CHAT_WINDOW_MS,
       'Too many AI chat requests from your network. Please wait a moment and try again.'
     );
     return;

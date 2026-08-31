@@ -58,9 +58,23 @@
                below is the single announcement point. -->
               <div v-else class="space-y-6">
                 <template v-for="message in messages" :key="message.id">
-                  <HumanMessage v-if="message.type === 'human'" :message="message" :is-loading="isLoading" />
-                  <AssistantMessage v-else-if="message.type === 'ai'" :message="message" :is-loading="isLoading" />
+                  <HumanMessage v-if="message.role === 'user'" :message="message" :is-loading="isLoading" />
+                  <AssistantMessage
+                    v-else-if="message.role === 'assistant'"
+                    :message="message"
+                    :is-loading="isLoading"
+                    :thread-id="threadId"
+                  />
                 </template>
+
+                <!-- The request itself failed (network, 429, 503). Rendered as
+                     chrome, NOT as an assistant turn: a failure dressed up as a
+                     reply is indistinguishable from the assistant saying
+                     something went wrong, and only one of those is true. -->
+                <div v-if="error" role="alert" class="alert alert-error">
+                  <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                  <span>{{ t('request_failed') }}</span>
+                </div>
 
                 <!-- Shown only while waiting for the first token. Once text starts
                  arriving the streaming cursor carries the signal, so the
@@ -137,7 +151,7 @@
 
     <ChatHistoryDialog
       :entries="history.entries.value"
-      :active-thread-id="streamContext?.threadId.value"
+      :active-thread-id="threadId"
       :open="historyOpen"
       @select="handleSelectThread"
       @remove="handleRemoveThread"
@@ -148,11 +162,8 @@
 </template>
 
 <script setup lang="ts">
-  // `locale` is read here, once, and injected into createStreamSession below.
-  // Calling useI18n() a second time inside that function triggered vue-i18n's
-  // "Duplicate useI18n calling by local scope" warning on every /chat load.
-  const { t, locale } = useI18n();
-  import { useStreamProvider } from '~/composables/useStreamProvider';
+  import { DefaultChatTransport, type UIMessage } from 'ai';
+  import { useChat } from '@ai-sdk/vue';
   import AssistantMessage from './AssistantMessage.vue';
   import ChatComposer from './ChatComposer.vue';
   import ChatEmptyState from './ChatEmptyState.vue';
@@ -161,18 +172,34 @@
   import UsefulLinks from './UsefulLinks.vue';
   import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
 
-  const {
-    assistantId,
-    threadId,
-    isConfigured,
-    isThreadLoaded,
-    setThreadId,
-    createNewThread,
-    updateThreadUsage,
-    getThreadData,
-  } = useStreamProvider();
+  /**
+   * The assistant, talking to `/api/chat` in this Worker.
+   *
+   * What this replaces: a 665-line hand-port of the LangGraph SDK's React-only
+   * `useStream` hook, plus a client-side thread store, plus eight proxy routes.
+   * The AI SDK ships a documented stream protocol and a Vue binding for it, so
+   * all of that is now `useChat`.
+   *
+   * Two things that went away entirely, rather than being ported:
+   *
+   *  - **Remote thread ids.** The agent is stateless between requests, so there
+   *    is no server thread to lose, and with it goes the whole `threadMissing`
+   *    404/410/422 cleanup path that existed to stop a dead id re-requesting
+   *    itself on every page load forever. The id here is generated locally and
+   *    only ever keys local history.
+   *  - **`usePersistentThread`.** Its entire job was holding that remote id.
+   *    `useChatHistory` now stores the transcripts themselves.
+   *
+   * The hydration invariant is UNCHANGED and gets stricter, because more state
+   * is client-only now: the server always renders the empty/welcome branch, so
+   * nothing may branch the template on stored state until after `onMounted`.
+   * See `hasMounted` below and the note in CLAUDE.md.
+   */
 
-  // Reactive state
+  // `locale` is read once here and sent with each request, so switching
+  // language mid-conversation applies to the next message.
+  const { t, locale } = useI18n();
+
   const route = useRoute();
   const input = ref('');
   const composerRef = ref<InstanceType<typeof ChatComposer>>();
@@ -182,67 +209,81 @@
 
   const history = useChatHistory();
 
-  // The server never has a persisted thread, so SSR always renders the empty
-  // (welcome) branch. The client reads localStorage during setup, so without
-  // this gate a restored thread flips isChatEmpty to false on the very first
-  // client render — a structural hydration mismatch that mangles the page DOM
-  // on refresh (chat + footer interleaved). Stay "empty" until after mount.
+  /** Local conversation id. Keys history; never sent to a thread store. */
+  const threadId = ref<string>('');
+
+  function newThreadId(): string {
+    // randomUUID needs a secure context; every browser that can reach /chat
+    // over HTTPS has it, but a fallback keeps local HTTP dev working.
+    return globalThis.crypto?.randomUUID?.() ?? `t-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  /**
+   * NOTE: there is no `setMessages`. `useChat` exposes `messages` as a
+   * ShallowRef you assign directly — `messages.value = [...]`. Destructuring a
+   * `setMessages` that does not exist threw "setMessages is not a function" and
+   * 500'd /chat on any visit that restored a conversation. It went unnoticed
+   * because the return value had been cast to `any`; the cast is gone, so the
+   * compiler catches this class of mistake now.
+   */
+  const { messages, status, error, sendMessage, stop } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      // A getter, so locale and page are read at SEND time rather than frozen
+      // when the transport was constructed.
+      body: () => ({
+        locale: locale.value,
+        pageSlug: route.path,
+        threadId: threadId.value,
+      }),
+    }),
+    onError(err: Error) {
+      console.error('[chat] request failed:', err);
+    },
+  });
+
+  const isLoading = computed(() => status.value === 'submitted' || status.value === 'streaming');
+
+  // The server never has stored state, so SSR always renders the welcome
+  // branch. Reading localStorage during setup would flip this on the first
+  // client render — the structural hydration mismatch that mangled this page.
   const hasMounted = ref(false);
+
   onMounted(() => {
     hasMounted.value = true;
     // Reads localStorage, so it must run after mount — same rule as
     // useRecentTools().load(); see CLAUDE.md.
     history.load();
+
+    // Resume the most recent conversation, if there is one.
+    const mostRecent = history.entries.value[0];
+    if (mostRecent?.messages?.length) {
+      threadId.value = mostRecent.threadId;
+      messages.value = mostRecent.messages;
+    } else {
+      threadId.value = newThreadId();
+    }
+
+    nextTick(() => {
+      composerRef.value?.focus();
+      scrollToBottom(false);
+      maybeAutoSubmit();
+    });
   });
 
-  // Set when the user starts a new chat, so a stale persisted thread cannot
-  // pull the view back out of the empty state.
-  const forcedEmpty = ref(false);
-
-  // Check if chat is empty (no messages and no persisted thread)
   const isChatEmpty = computed(() => {
-    // Match the server-rendered welcome branch during hydration
-    if (!hasMounted.value) {
-      return true;
-    }
-
-    // If we have messages in the current context, chat is not empty
-    if (streamContext?.messages.value && streamContext.messages.value.length > 0) {
-      return false;
-    }
-
-    if (forcedEmpty.value) {
-      return true;
-    }
-
-    // If we have a persisted thread with messages, chat is not empty
-    if (threadId.value && isThreadLoaded.value) {
-      const threadData = getThreadData();
-      if (threadData && threadData.messageCount > 0) {
-        return false;
-      }
-    }
-
-    // Otherwise, chat is empty
-    return true;
+    // Match the server-rendered welcome branch during hydration.
+    if (!hasMounted.value) return true;
+    return messages.value.length === 0;
   });
 
   /**
-   * Links rail, built from whatever search-shaped tool results the assistant
-   * produced this conversation.
+   * Links rail, built from search-shaped tool results in this conversation.
    *
-   * Matched by RESULT SHAPE, not by tool name. This used to require
-   * `message.name === 'tavily_search'`, which coupled the UI to one tool in an
-   * agent that lives in a different repo — renaming or replacing that tool
-   * would have emptied the rail with no error anywhere. Shape-matching also
-   * means the rail starts working for the site-search tool without a second
-   * code path.
-   *
-   * `url` and `title` are the minimum needed to render a link. `content` and
-   * `score` are optional because not every search tool reports them; a missing
-   * score falls back to a value that decreases with position, so a tool that
-   * returns results already ranked keeps its own ordering instead of collapsing
-   * to an arbitrary one.
+   * Matched by result SHAPE rather than tool name. It was coupled to
+   * `tavily_search` — a tool that lived in a different repo — so renaming it
+   * would have emptied the rail with no error anywhere. Shape-matching means
+   * `site-search` populates it without a second code path.
    */
   const MAX_USEFUL_LINKS = 5;
 
@@ -253,242 +294,114 @@
     score: number;
   }
 
-  function parseToolContent(content: unknown): any {
-    try {
-      return JSON.parse(typeof content === 'string' ? content : JSON.stringify(content));
-    } catch {
-      // A tool that answered in prose rather than JSON is normal, not an error.
-      return null;
-    }
-  }
-
   const usefulLinks = computed<UsefulLink[]>(() => {
-    if (!streamContext?.messages.value) return [];
-
     const links: UsefulLink[] = [];
 
-    for (const message of streamContext.messages.value) {
-      if (message.type !== 'tool') continue;
+    for (const message of messages.value as UIMessage[]) {
+      for (const part of message.parts ?? []) {
+        // Tool parts are typed `tool-<name>`; the payload lands on `output`
+        // once the call resolves.
+        const output = (part as any).output;
+        if (!output || !Array.isArray(output.results)) continue;
 
-      const parsed = parseToolContent(message.content);
-      if (!parsed || !Array.isArray(parsed.results)) continue;
-
-      parsed.results.forEach((result: any, index: number) => {
-        if (!result || typeof result.url !== 'string' || typeof result.title !== 'string') return;
-        links.push({
-          url: result.url,
-          title: result.title,
-          content: typeof result.content === 'string' ? result.content : '',
-          // Descending fallback keeps the tool's own ordering when it reports
-          // no score. Staying below 1 means a real score always outranks it.
-          score: typeof result.score === 'number' ? result.score : 1 / (index + 2),
+        output.results.forEach((result: any, index: number) => {
+          if (!result || typeof result.url !== 'string' || typeof result.title !== 'string') return;
+          links.push({
+            url: result.url,
+            title: result.title,
+            content: typeof result.summary === 'string' ? result.summary : (result.content ?? ''),
+            // Descending fallback preserves a tool's own ordering when it
+            // reports no score. Below 1, so a real score always outranks it.
+            score: typeof result.score === 'number' ? result.score : 1 / (index + 2),
+          });
         });
-      });
+      }
     }
 
     return links.sort((a, b) => b.score - a.score).slice(0, MAX_USEFUL_LINKS);
   });
 
-  // Stream context
-  let streamContext: ReturnType<typeof createStreamSession> | null = null;
-  const streamContextInitialized = ref(false);
-
-  // Create stream session when configuration is ready
-  watch(
-    [isConfigured, assistantId, isThreadLoaded],
-    () => {
-      if (
-        isConfigured.value &&
-        isThreadLoaded.value &&
-        !streamContextInitialized.value &&
-        assistantId.value &&
-        typeof assistantId.value === 'string'
-      ) {
-        streamContext = createStreamSession(
-          assistantId.value,
-          threadId.value || '',
-          // Callback when new thread is created
-          (newThreadId: string) => {
-            setThreadId(newThreadId);
-          },
-          // Passed as the ref, so switching language mid-conversation applies
-          // to the next message rather than being frozen at creation.
-          locale
-        );
-        provideStreamContext(streamContext);
-        streamContextInitialized.value = true;
-      }
-    },
-    { immediate: true }
-  );
-
-  // Record the conversation as soon as the thread id exists, rather than only
-  // after the run finishes. `submit()` resolves when the stream closes, so
-  // recording solely there loses the conversation if the visitor navigates
-  // away or closes the tab mid-answer.
-  watch(
-    () => streamContext?.threadId.value,
-    (id) => {
-      if (!id || !hasMounted.value) return;
-      const firstHuman = messages.value.find((m: any) => m.type === 'human');
-      if (!firstHuman) return;
-      history.record(id, {
-        title: history.deriveTitle(getMessageText(firstHuman.content)),
-        messageCount: messages.value.length,
-      });
-    }
-  );
-
-  // A persisted thread id the API rejects (deleted, expired, or never valid)
-  // must be dropped, not retried. Before this, a bad id sat in localStorage and
-  // re-requested a 422 on every single page load.
-  watch(
-    () => streamContext?.threadMissing.value,
-    (missing) => {
-      if (!missing) return;
-      const staleId = streamContext?.threadId.value;
-      if (staleId) history.remove(staleId);
-      createNewThread();
-      streamContext?.reset();
-      forcedEmpty.value = true;
-    }
-  );
-
-  // Cleanup on unmount
-  onUnmounted(() => {
-    if (streamContext) {
-      streamContext.stop();
-      streamContext = null;
-      streamContextInitialized.value = false;
-    }
-  });
-
-  // Computed properties
-  const messages = computed(() => streamContext?.messages.value || []);
-  const isLoading = computed(() => streamContext?.isLoading.value || false);
-
-  // Only while nothing has been written yet — once the assistant is streaming
-  // text, its own cursor is the progress signal.
+  /** Only until the first token — after that the streaming cursor is the signal. */
   const showThinkingIndicator = computed(() => {
     if (!isLoading.value) return false;
-    const last = messages.value[messages.value.length - 1];
-    if (!last) return true;
-    if (last.type !== 'ai' && last.type !== 'assistant') return true;
-    const content = last.content;
-    const text =
-      typeof content === 'string'
-        ? content
-        : Array.isArray(content)
-          ? content
-              .filter((c: any) => c.type === 'text')
-              .map((c: any) => c.text)
-              .join('')
-          : '';
+    const last = messages.value[messages.value.length - 1] as UIMessage | undefined;
+    if (!last || last.role !== 'assistant') return true;
+    const text = (last.parts ?? [])
+      .filter((part: any) => part?.type === 'text')
+      .map((part: any) => part.text)
+      .join('');
     return text.trim().length === 0;
   });
 
   const { capture } = usePostHog();
   const { track } = useAnalytics();
 
-  async function handleSubmit() {
-    if (!input.value.trim() || !streamContext || isLoading.value) return;
-
-    const message = input.value.trim();
-
-    capture('chat_message_sent', {
-      message_length: message.length,
-      is_first_message: isChatEmpty.value,
-    });
-
-    input.value = '';
-    forcedEmpty.value = false;
-    // Explicit, because the composer's watcher can be skipped on this path:
-    // a starter sets the value and this clears it, and if both land in one
-    // flush Vue sees no net change and never fires the callback, leaving the
-    // field stuck at the height it measured for the prompt.
-    nextTick(() => composerRef.value?.resize());
-
-    // Submit message with metadata
-    const metadata = {
-      pageSlug: route.path,
-    };
-
-    await streamContext.submit(
-      { messages: [{ type: 'human', content: message }] },
-      {
-        // Use default streamMode from composable for optimized streaming
-        metadata,
-      }
-    );
-
-    // Update thread usage after submitting a message
-    updateThreadUsage();
-    recordCurrentThread(message);
+  function messageText(message: UIMessage | undefined): string {
+    if (!message) return '';
+    return (message.parts ?? [])
+      .filter((part: any) => part?.type === 'text')
+      .map((part: any) => part.text)
+      .join(' ');
   }
 
   /**
-   * Add or refresh this conversation in local history.
+   * Persist the conversation after every change.
    *
-   * Called after submit, because the thread id does not exist until the run
-   * starts — a brand new conversation only learns its id from the stream.
+   * Deliberately a watcher rather than a call at the end of `sendMessage`: that
+   * promise resolves when the stream closes, so recording only there loses the
+   * conversation if the visitor navigates away mid-answer.
    */
-  function recordCurrentThread(firstMessageFallback: string) {
-    const id = streamContext?.threadId.value;
-    if (!id) return;
+  watch(
+    messages,
+    (current) => {
+      if (!hasMounted.value || !threadId.value || current.length === 0) return;
+      const firstUser = (current as UIMessage[]).find((message) => message.role === 'user');
+      history.record(threadId.value, {
+        title: history.deriveTitle(messageText(firstUser)),
+        messages: current as UIMessage[],
+      });
+    },
+    { deep: true }
+  );
 
-    const firstHuman = messages.value.find((m: any) => m.type === 'human');
-    const titleSource = firstHuman ? getMessageText(firstHuman.content) : firstMessageFallback;
+  async function handleSubmit() {
+    const text = input.value.trim();
+    if (!text || isLoading.value) return;
 
-    history.record(id, {
-      title: history.deriveTitle(titleSource || firstMessageFallback),
-      messageCount: messages.value.length,
+    capture('chat_message_sent', {
+      message_length: text.length,
+      is_first_message: messages.value.length === 0,
     });
+
+    input.value = '';
+    // Explicit, because the composer's watcher can be skipped on this path: a
+    // starter sets the value and this clears it, and if both land in one flush
+    // Vue sees no net change and never fires the callback, leaving the field
+    // stuck at the height it measured for the prompt.
+    nextTick(() => composerRef.value?.resize());
+
+    await sendMessage({ text });
   }
 
-  function getMessageText(content: any): string {
-    if (typeof content === 'string') return content;
-    if (Array.isArray(content)) {
-      return content
-        .filter((item: any) => item?.type === 'text')
-        .map((item: any) => item.text)
-        .join(' ');
-    }
-    return '';
-  }
-
-  async function handleSelectThread(id: string) {
-    if (!streamContext || id === streamContext.threadId.value) {
+  function handleSelectThread(id: string) {
+    if (id === threadId.value) {
       historyOpen.value = false;
       return;
     }
-
     track('chat_history_thread_opened');
     historyOpen.value = false;
-    forcedEmpty.value = false;
     input.value = '';
-
-    await streamContext.loadThread(id);
-
-    // The thread may be gone server-side. The threadMissing watcher has
-    // already dropped it from history and cleared the persisted id, so
-    // carrying on here would write the dead id straight back into both and
-    // leave it 422-ing on every future page load — re-creating exactly the
-    // loop threadMissing exists to break.
-    if (streamContext.threadMissing.value) return;
-
-    // Make it the active thread so a refresh returns to it.
-    setThreadId(id);
-    history.record(id, { messageCount: messages.value.length });
+    stop();
+    threadId.value = id;
+    messages.value = history.getMessages(id);
     nextTick(() => scrollToBottom(false));
   }
 
   function handleRemoveThread(id: string) {
     history.remove(id);
-    // Removing the conversation you are currently in also ends it, otherwise
-    // the composer would keep appending to a thread no longer listed.
-    if (streamContext?.threadId.value === id) {
-      handleNewChat();
-    }
+    // Removing the conversation you are in also ends it, otherwise the composer
+    // would keep appending to one no longer listed.
+    if (threadId.value === id) handleNewChat();
   }
 
   function handleClearHistory() {
@@ -505,12 +418,11 @@
   }
 
   function handleNewChat() {
-    if (!streamContext) return;
     track('chat_new_conversation');
-    streamContext.reset();
-    createNewThread();
+    stop();
+    messages.value = [];
+    threadId.value = newThreadId();
     input.value = '';
-    forcedEmpty.value = true;
     showScrollButton.value = false;
     nextTick(() => {
       composerRef.value?.resize();
@@ -519,80 +431,50 @@
   }
 
   function stopGeneration() {
-    if (streamContext) {
-      streamContext.stop();
-    }
+    stop();
   }
 
-  // Scroll to bottom function
   function scrollToBottom(fromButton = false) {
-    if (fromButton) {
-      track('chat_scroll_to_bottom');
-    }
+    if (fromButton) track('chat_scroll_to_bottom');
     if (messagesContainer.value) {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
   }
 
-  // Handle scroll event to show/hide scroll button
   function handleScroll() {
-    if (messagesContainer.value) {
-      const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      showScrollButton.value = !isNearBottom;
-    }
+    if (!messagesContainer.value) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
+    showScrollButton.value = scrollHeight - scrollTop - clientHeight >= 100;
   }
 
-  // Auto-scroll to bottom when new messages arrive
   watch(
     messages,
     () => {
       nextTick(() => {
-        if (messagesContainer.value && !showScrollButton.value) {
-          scrollToBottom(false);
-        }
+        if (messagesContainer.value && !showScrollButton.value) scrollToBottom(false);
       });
     },
     { deep: true }
   );
 
-  // Handle pre-populated message from query parameter
+  /** `/chat?message=…` from FloatingChatInput. Runs once, after mount. */
   const hasAutoSubmitted = ref(false);
 
-  // Watch for stream context initialization and auto-submit if needed
-  watch(
-    streamContextInitialized,
-    (initialized) => {
-      if (!initialized || hasAutoSubmitted.value) return;
-
-      const queryMessage = route.query.message;
-      if (
-        queryMessage &&
-        typeof queryMessage === 'string' &&
-        queryMessage.trim() &&
-        streamContext &&
-        isConfigured.value
-      ) {
-        hasAutoSubmitted.value = true;
-        input.value = queryMessage.trim();
-
-        // Wait for next tick to ensure everything is fully initialized
-        nextTick(() => {
-          if (streamContext && input.value.trim()) {
-            handleSubmit();
-          }
-        });
-      }
-    },
-    { immediate: true }
-  );
-
-  onMounted(() => {
-    nextTick(() => {
-      composerRef.value?.focus();
-      scrollToBottom(false);
-    });
-  });
+  function maybeAutoSubmit() {
+    if (hasAutoSubmitted.value) return;
+    const queryMessage = route.query.message;
+    if (typeof queryMessage !== 'string' || !queryMessage.trim()) return;
+    hasAutoSubmitted.value = true;
+    // A query message starts a NEW conversation rather than appending to the
+    // one just restored from history, which is what a visitor arriving from the
+    // floating input expects.
+    if (messages.value.length > 0) {
+      messages.value = [];
+      threadId.value = newThreadId();
+    }
+    input.value = queryMessage.trim();
+    nextTick(() => handleSubmit());
+  }
 </script>
 
 <i18n lang="json">
@@ -604,7 +486,8 @@
     "sr_generating": "Generating a response",
     "useful_links_region": "Useful links",
     "useful_links_placeholder": "Links appear here when I search for something",
-    "history": "History"
+    "history": "History",
+    "request_failed": "Something went wrong sending that. Please try again."
   },
   "es": {
     "assistant_name": "Asistente CMDIY",
@@ -613,7 +496,8 @@
     "sr_generating": "Generando una respuesta",
     "useful_links_region": "Enlaces útiles",
     "useful_links_placeholder": "Los enlaces aparecen aquí cuando busco algo",
-    "history": "Historial"
+    "history": "Historial",
+    "request_failed": "Algo salió mal al enviar eso. Inténtalo de nuevo."
   },
   "fr": {
     "assistant_name": "Assistant CMDIY",
@@ -622,7 +506,8 @@
     "sr_generating": "Génération d'une réponse",
     "useful_links_region": "Liens utiles",
     "useful_links_placeholder": "Les liens apparaissent ici quand je fais une recherche",
-    "history": "Historique"
+    "history": "Historique",
+    "request_failed": "Une erreur s'est produite lors de l'envoi. Veuillez réessayer."
   },
   "de": {
     "assistant_name": "CMDIY Assistent",
@@ -631,7 +516,8 @@
     "sr_generating": "Antwort wird erzeugt",
     "useful_links_region": "Nützliche Links",
     "useful_links_placeholder": "Links erscheinen hier, wenn ich etwas suche",
-    "history": "Verlauf"
+    "history": "Verlauf",
+    "request_failed": "Beim Senden ist ein Fehler aufgetreten. Bitte versuche es erneut."
   },
   "it": {
     "assistant_name": "Assistente CMDIY",
@@ -640,7 +526,8 @@
     "sr_generating": "Generazione di una risposta",
     "useful_links_region": "Link utili",
     "useful_links_placeholder": "I link appaiono qui quando cerco qualcosa",
-    "history": "Cronologia"
+    "history": "Cronologia",
+    "request_failed": "Si è verificato un errore durante l'invio. Riprova."
   },
   "pt": {
     "assistant_name": "Assistente CMDIY",
@@ -649,7 +536,8 @@
     "sr_generating": "Gerando uma resposta",
     "useful_links_region": "Links úteis",
     "useful_links_placeholder": "Os links aparecem aqui quando eu pesquiso algo",
-    "history": "Histórico"
+    "history": "Histórico",
+    "request_failed": "Algo deu errado ao enviar. Tente novamente."
   },
   "ru": {
     "assistant_name": "Помощник CMDIY",
@@ -658,7 +546,8 @@
     "sr_generating": "Формируется ответ",
     "useful_links_region": "Полезные ссылки",
     "useful_links_placeholder": "Ссылки появятся здесь, когда я что-то найду",
-    "history": "История"
+    "history": "История",
+    "request_failed": "Не удалось отправить сообщение. Попробуйте ещё раз."
   },
   "ja": {
     "assistant_name": "CMDIYアシスタント",
@@ -667,7 +556,8 @@
     "sr_generating": "回答を生成しています",
     "useful_links_region": "有用なリンク",
     "useful_links_placeholder": "検索するとここにリンクが表示されます",
-    "history": "履歴"
+    "history": "履歴",
+    "request_failed": "送信中に問題が発生しました。もう一度お試しください。"
   },
   "zh": {
     "assistant_name": "CMDIY助手",
@@ -676,7 +566,8 @@
     "sr_generating": "正在生成回复",
     "useful_links_region": "有用链接",
     "useful_links_placeholder": "当我搜索时，链接会显示在这里",
-    "history": "历史记录"
+    "history": "历史记录",
+    "request_failed": "发送时出现问题，请重试。"
   },
   "ko": {
     "assistant_name": "CMDIY 어시스턴트",
@@ -685,7 +576,8 @@
     "sr_generating": "응답을 생성하는 중",
     "useful_links_region": "유용한 링크",
     "useful_links_placeholder": "검색하면 여기에 링크가 표시됩니다",
-    "history": "기록"
+    "history": "기록",
+    "request_failed": "전송 중 문제가 발생했습니다. 다시 시도해 주세요."
   }
 }
 </i18n>

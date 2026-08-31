@@ -750,14 +750,9 @@ export default defineNuxtConfig({
     // stay undefined so unauthenticated (rate-limited) access still works.
     GITHUB_API_KEY: process.env.GITHUB_API_KEY || process.env.githubAPIKey,
     YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY || process.env.youtubeAPIKey || '',
-    // Renamed from NUXT_LANGGRAPH_API_URL / NUXT_LANGSMITH_API_KEY. A key that
-    // already starts with `NUXT_` is NOT overridable under its own name: the
-    // override name would be NUXT_NUXT_LANGSMITH_API_KEY. Stripping the prefix
-    // from the KEY makes the env name come out as the name everything already
-    // uses. Consumers read config.LANGSMITH_API_KEY; the env var is unchanged.
-    LANGGRAPH_API_URL: process.env.NUXT_LANGGRAPH_API_URL || '',
-    LANGSMITH_API_KEY: process.env.NUXT_LANGSMITH_API_KEY || '',
-    // In-Worker chat agent (server/api/chat.post.ts). UPPER_SNAKE so the
+    // In-Worker chat agent (server/api/chat.post.ts). Replaced the LangGraph
+    // proxy's LANGGRAPH_API_URL / LANGSMITH_API_KEY, both removed 2026-08-31.
+    // UPPER_SNAKE so the
     // Cloudflare secret name is mechanically NUXT_<KEY>:
     //   ANTHROPIC_API_KEY       -> NUXT_ANTHROPIC_API_KEY   (runtime secret)
     //   AI_GATEWAY_ANTHROPIC_URL-> NUXT_AI_GATEWAY_ANTHROPIC_URL

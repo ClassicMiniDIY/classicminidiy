@@ -28,6 +28,10 @@ import { blankComments, read, rel, walk } from './_scan';
 const PLAIN_WORKER_ENV_NAMES = [
   // Rate-limit tuning knobs. All have safe in-code defaults, so an unset value
   // degrades to the documented default rather than failing.
+  'CHAT_RATELIMIT_MAX',
+  'CHAT_RATELIMIT_WINDOW_MS',
+  // Legacy aliases, still read so a limit configured in Cloudflare under the old
+  // names does not silently revert to the default when the chat moved in-Worker.
   'LANGGRAPH_RATELIMIT_MAX',
   'LANGGRAPH_RATELIMIT_WINDOW_MS',
   'WRITE_RATELIMIT_MAX',

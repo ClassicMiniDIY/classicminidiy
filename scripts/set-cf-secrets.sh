@@ -134,12 +134,11 @@ echo
 put NUXT_SUPABASE_SERVICE_KEY SUPABASE_SERVICE_KEY
 
 # --- AI chat ---------------------------------------------------------------
-# The 2026-08-26 outage. runtimeConfig keys are LANGGRAPH_API_URL /
-# LANGSMITH_API_KEY (the NUXT_ prefix lives only in the env var name — a key
-# that already began with NUXT_ would have needed NUXT_NUXT_… to override).
-put NUXT_LANGGRAPH_API_URL NUXT_LANGGRAPH_API_URL
-put NUXT_LANGSMITH_API_KEY NUXT_LANGSMITH_API_KEY
-
+# The agent runs in this Worker. NUXT_LANGGRAPH_API_URL / NUXT_LANGSMITH_API_KEY
+# were removed on 2026-08-31 with the LangGraph proxy — DELETE those two secrets
+# from the Worker; nothing reads them, and a stale LangSmith key left in place is
+# a live credential for a third-party account with no consumer.
+#
 # The in-Worker agent (server/api/chat.post.ts). ANTHROPIC_API_KEY is the only
 # required one — without it /api/chat answers 503 rather than failing silently,
 # which is the whole point of the 2026-08-26 lesson above.

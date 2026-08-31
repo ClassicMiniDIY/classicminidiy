@@ -61,9 +61,22 @@ const CLIENT_ONLY_TAGS = new Set(['ClientOnly', 'client-only', 'NuxtClientFallba
  */
 const KNOWN_UNGATED: readonly string[] = [];
 
+/**
+ * Blank single- and double-quoted string literals, preserving length so nothing
+ * downstream shifts.
+ *
+ * A quoted `'user'` is a VALUE, never an identifier, and treating one as an auth
+ * reference is a false positive that costs real time: `v-if="message.role ===
+ * 'user'"` in ChatWindow was reported as an ungated auth branch. Template
+ * literals are deliberately left alone — `${user}` inside one IS a reference.
+ */
+function blankStringLiterals(expression: string): string {
+  return expression.replace(/'[^']*'|"[^"]*"/g, (match) => match.replace(/[^\n]/g, ' '));
+}
+
 /** Whole-word match that ignores property access (`foo.user` is not `user`). */
 function referencesName(expression: string, name: string): boolean {
-  return new RegExp(`(^|[^\\w.$])${name}\\b`).test(expression);
+  return new RegExp(`(^|[^\\w.$])${name}\\b`).test(blankStringLiterals(expression));
 }
 
 /**

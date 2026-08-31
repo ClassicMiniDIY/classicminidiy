@@ -34,6 +34,10 @@ describe('useChatHistory', () => {
     return JSON.parse(calls[calls.length - 1][1]);
   }
 
+  /** Minimal AI SDK UI message. */
+  const msg = (role: 'user' | 'assistant', text: string) =>
+    ({ id: `${role}-${text}`, role, parts: [{ type: 'text', text }] }) as any;
+
   function entry(overrides: Partial<any> = {}) {
     return {
       threadId: 'thread-1',
@@ -41,6 +45,9 @@ describe('useChatHistory', () => {
       createdAt: Date.now(),
       lastUsedAt: Date.now(),
       messageCount: 2,
+      // Required: load() drops entries with no transcript, because those are
+      // pre-cutover rows pointing at a thread store that no longer exists.
+      messages: [msg('user', 'q'), msg('assistant', 'a')],
       ...overrides,
     };
   }
@@ -71,6 +78,18 @@ describe('useChatHistory', () => {
       expect(() => load()).not.toThrow();
       expect(entries.value).toEqual([]);
       warn.mockRestore();
+    });
+
+    it('drops pre-cutover entries that carry no transcript', async () => {
+      // Every visitor with existing history has up to 20 of these: rows written
+      // when conversations lived in a LangGraph deployment, holding a remote
+      // thread id and nothing else. Opening one would show an empty chat with
+      // no explanation, so load() sheds them.
+      stored([entry({ threadId: 'has-transcript' }), { ...entry({ threadId: 'legacy' }), messages: undefined }]);
+      const { entries, load } = (await freshComposable())();
+      load();
+
+      expect(entries.value.map((e) => e.threadId)).toEqual(['has-transcript']);
     });
 
     it('drops entries that are not shaped like history rows', async () => {
@@ -105,10 +124,13 @@ describe('useChatHistory', () => {
       (window.localStorage.getItem as any).mockReturnValue(null);
       const { entries, load, record } = (await freshComposable())();
       load();
-      record('thread-a', { title: 'Needles', messageCount: 2 });
+      // messageCount is DERIVED from the transcript now — entries store the
+      // conversation itself, not just a pointer at a remote thread.
+      record('thread-a', { title: 'Needles', messages: [msg('user', 'hi'), msg('assistant', 'hello')] });
 
       expect(entries.value).toHaveLength(1);
       expect(entries.value[0]).toMatchObject({ threadId: 'thread-a', title: 'Needles', messageCount: 2 });
+      expect(entries.value[0].messages).toHaveLength(2);
       expect(lastWrite()[0].threadId).toBe('thread-a');
     });
 
@@ -116,7 +138,7 @@ describe('useChatHistory', () => {
       stored([entry({ threadId: 'thread-a' })]);
       const { entries, load, record } = (await freshComposable())();
       load();
-      record('thread-a', { messageCount: 8 });
+      record('thread-a', { messages: Array.from({ length: 8 }, (_, i) => msg('user', `q${i}`)) });
 
       expect(entries.value).toHaveLength(1);
       expect(entries.value[0].messageCount).toBe(8);

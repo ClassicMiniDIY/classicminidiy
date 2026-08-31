@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ---- Nitro global stubs + small limit (must be hoisted before source import) ----
 const { mockGetRequestURL, mockGetRequestIP, mockGetHeader, mockSetHeader } = vi.hoisted(() => {
   // Force a tiny limit so we can drive the 429 path in a couple of calls.
-  process.env.LANGGRAPH_RATELIMIT_MAX = '3';
+  process.env.CHAT_RATELIMIT_MAX = '3';
   process.env.LANGGRAPH_RATELIMIT_WINDOW_MS = '60000';
   process.env.WRITE_RATELIMIT_MAX = '3';
   process.env.WRITE_RATELIMIT_WINDOW_MS = '60000';
@@ -50,7 +50,7 @@ describe('server/middleware/rate-limit', () => {
     mockGetRequestIP.mockReturnValue('203.0.113.7');
   });
 
-  it('ignores non-langgraph routes (no-op, no IP lookup)', async () => {
+  it('ignores non-chat routes (no-op, no IP lookup)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/listings'));
 
     const result = await (handler as Function)(fakeEvent);
@@ -72,8 +72,8 @@ describe('server/middleware/rate-limit', () => {
     }
   };
 
-  it('allows langgraph requests under the limit and sets rate-limit headers', () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads/new/runs/stream'));
+  it('allows chat requests under the limit and sets rate-limit headers', () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
 
     expect(call()).toBeUndefined();
     expect(mockSetHeader).toHaveBeenCalledWith(fakeEvent, 'X-RateLimit-Limit', '3');
@@ -81,7 +81,7 @@ describe('server/middleware/rate-limit', () => {
   });
 
   it('throws 429 with Retry-After once the per-IP limit is exceeded', () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
 
     expect(call()).toBeUndefined(); // 1
     expect(call()).toBeUndefined(); // 2
@@ -92,7 +92,7 @@ describe('server/middleware/rate-limit', () => {
   });
 
   it('keeps separate budgets per client IP', () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
 
     mockGetRequestIP.mockReturnValue('198.51.100.1');
     call();
@@ -106,7 +106,7 @@ describe('server/middleware/rate-limit', () => {
   });
 
   it('keys on the platform-set header when present, ignoring x-forwarded-for', () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
 
     // getRequestIP (left-most x-forwarded-for) varies every request, but the
     // platform-set header stays constant — so the limit must still bind.
@@ -124,7 +124,7 @@ describe('server/middleware/rate-limit', () => {
   // the caller, so cf-connecting-ip has to win — otherwise the bucket keys on a
   // caller-chosen value and the limit does not bind at all.
   it('prefers cf-connecting-ip over a caller-supplied x-real-ip', () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
 
     let supplied = 0;
     mockGetHeader.mockImplementation((_e: unknown, name: string) => {
@@ -141,7 +141,7 @@ describe('server/middleware/rate-limit', () => {
   });
 
   it('falls back to x-real-ip when cf-connecting-ip is absent', () => {
-    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
 
     mockGetHeader.mockImplementation((_e: unknown, name: string) => (name === 'x-real-ip' ? '192.0.2.77' : undefined));
     mockGetRequestIP.mockReturnValue('5.5.5.5');
@@ -208,9 +208,9 @@ describe('server/middleware/rate-limit', () => {
       expect(callWriteCatching('POST')).toMatchObject({ statusCode: 429 });
     });
 
-    it('keeps the write budget separate from the langgraph budget', () => {
+    it('keeps the write budget separate from the chat budget', () => {
       // Exhaust the chat budget on one IP...
-      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/langgraph/threads'));
+      mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
       call();
       call();
       call();
