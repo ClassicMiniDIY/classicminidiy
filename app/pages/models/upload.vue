@@ -9,6 +9,11 @@
 
   const { t } = useI18n();
   const { isAuthenticated, user } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const supabase = useSupabase();
 
   // Paid pricing requires a connected Stripe seller (trust ≥ contributor +
@@ -199,7 +204,7 @@
     />
 
     <!-- Not signed in -->
-    <div v-if="!isAuthenticated" class="card bg-base-100 border border-base-300 shadow-sm my-10">
+    <div v-if="!isSignedIn" class="card bg-base-100 border border-base-300 shadow-sm my-10">
       <div class="card-body items-center text-center gap-3">
         <i class="fas fa-right-to-bracket text-4xl text-primary"></i>
         <h2 class="card-title">{{ t('auth.signInTitle') }}</h2>

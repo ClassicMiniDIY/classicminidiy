@@ -7,6 +7,11 @@
   const router = useRouter();
   const slug = computed(() => String(route.params.slug));
   const { isAuthenticated, user } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const supabase = useSupabase();
   const { verifyPurchase, downloadFile, downloadAll } = useModelCheckout();
   const { track } = useAnalytics();
@@ -366,7 +371,7 @@
               </div>
 
               <template v-if="entitled">
-                <template v-if="isAuthenticated">
+                <template v-if="isSignedIn">
                   <!-- Single file: one big "Download <FORMAT>" button -->
                   <button
                     v-if="model.files.length === 1 && model.files[0]"

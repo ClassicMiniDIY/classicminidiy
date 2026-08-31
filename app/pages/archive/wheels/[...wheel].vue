@@ -8,6 +8,11 @@
   const { track } = useAnalytics();
 
   const { isAuthenticated } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client's first render
+  // disagree, and Vue's hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const route = useRoute();
   const wheelId = ref(route.params.wheel);
   const { getWheel } = useWheels();
@@ -259,7 +264,7 @@
                     <span>{{ t('actions.contribute') }}</span>
                   </NuxtLink>
                   <button
-                    v-if="isAuthenticated"
+                    v-if="isSignedIn"
                     type="button"
                     class="btn btn-outline btn-sm"
                     @click="

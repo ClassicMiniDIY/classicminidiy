@@ -12,6 +12,11 @@
   const { t } = useI18n();
   const supabase = useSupabase();
   const { isAuthenticated, user } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
 
   // Computed ref, not a getter. Under Nuxt 4.5 the getter form of a useFetch URL
   // is documented to stop blocking async setup, which SSRs the pending branch and
@@ -67,7 +72,7 @@
       <h2 class="card-title text-lg"><i class="fas fa-comments text-primary mr-1"></i> {{ t('title', { count: total }) }}</h2>
 
       <!-- New comment -->
-      <div v-if="isAuthenticated" class="mb-2">
+      <div v-if="isSignedIn" class="mb-2">
         <textarea
           v-model="draft"
           rows="2"
@@ -117,7 +122,7 @@
               </p>
               <p class="text-sm whitespace-pre-line">{{ c.content }}</p>
               <button
-                v-if="isAuthenticated"
+                v-if="isSignedIn"
                 type="button"
                 class="btn btn-ghost btn-xs mt-1"
                 @click="replyTo = replyTo === c.id ? null : c.id"

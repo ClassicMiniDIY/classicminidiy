@@ -1,5 +1,5 @@
 <template>
-  <div v-if="user">
+  <div v-if="mountedUser">
     <button class="btn btn-outline btn-sm w-full gap-2" @click="showModal = true">
       <i class="fas fa-bell"></i>
       {{ t('saveThisSearch') }}
@@ -56,6 +56,11 @@
   }>();
 
   const { user } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { mountedUser } = useMountedAuth();
   const { createSavedSearch, saving } = useSavedSearches();
 
   const showModal = ref(false);

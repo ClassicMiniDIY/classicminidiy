@@ -37,14 +37,14 @@
       <!-- Actions -->
       <div class="flex items-center gap-3 text-xs">
         <!-- Reply Button -->
-        <button v-if="!isReply && user" @click="showReplyForm = !showReplyForm" class="btn btn-ghost btn-xs">
+        <button v-if="!isReply && mountedUser" @click="showReplyForm = !showReplyForm" class="btn btn-ghost btn-xs">
           <i class="fas fa-comment"></i>
           {{ showReplyForm ? t('cancelReply') : t('reply') }}
         </button>
 
         <!-- Flag Button -->
         <button
-          v-if="user && comment.user_id !== user.id"
+          v-if="mountedUser && comment.user_id !== mountedUser.id"
           @click="handleFlag"
           :disabled="flagging"
           class="btn btn-ghost btn-xs text-warning hover:text-warning"
@@ -55,7 +55,7 @@
 
         <!-- Delete Button (only for comment owner or admin) -->
         <button
-          v-if="user && (comment.user_id === user.id || isAdmin)"
+          v-if="mountedUser && comment.user_id === mountedUser.id"
           @click="handleDelete"
           :disabled="deleting"
           class="btn btn-ghost btn-xs text-error hover:text-error"
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Inline Reply Form -->
-      <div v-if="showReplyForm && user" class="mt-4 space-y-3 bg-base-200 p-4 rounded-lg">
+      <div v-if="showReplyForm && mountedUser" class="mt-4 space-y-3 bg-base-200 p-4 rounded-lg">
         <div class="flex items-center gap-2 text-sm text-base-content/70 mb-2">
           <i class="fas fa-share"></i>
           <span>{{ t('replyingTo', { name: displayName }) }}</span>
@@ -125,6 +125,8 @@
   }>();
 
   const { user } = useAuth();
+  // Mount-gated for the template — see app/composables/useMountedAuth.ts.
+  const { mountedUser } = useMountedAuth();
   const { postComment, flagComment, deleteComment, submitting } = useComments(props.listingId);
 
   const flagging = ref(false);
@@ -136,12 +138,6 @@
   // this component (profiles split; comments API returns display_name only).
   const displayName = computed(() => {
     return props.comment.user.display_name || t('anonymous');
-  });
-
-  // Check if user is admin (you'll need to add this to your useAuth composable)
-  const isAdmin = computed(() => {
-    // This will need to be implemented in your auth system
-    return false; // Placeholder
   });
 
   // Format timestamp as "time ago"

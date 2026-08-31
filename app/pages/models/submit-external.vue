@@ -3,6 +3,11 @@
 
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
 
   // Redirect unauthenticated visitors to login, preserving intent. The Supabase
   // session lives in localStorage, so isAuthenticated is only meaningful on the
@@ -35,7 +40,7 @@
     />
 
     <!-- Auth gate (SSR may not have redirected yet; belt-and-suspenders) -->
-    <div v-if="!isAuthenticated" class="card bg-base-100 border border-base-300 shadow-sm my-10">
+    <div v-if="!isSignedIn" class="card bg-base-100 border border-base-300 shadow-sm my-10">
       <div class="card-body items-center text-center gap-3">
         <i class="fas fa-right-to-bracket text-4xl text-primary"></i>
         <h2 class="card-title">{{ t('auth.title') }}</h2>

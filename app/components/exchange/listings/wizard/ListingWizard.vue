@@ -32,7 +32,7 @@
             v-else-if="currentStep === 1"
             v-model="formData.tier"
             :category="formData.category"
-            :is-sustaining-member="isSustainingMember"
+            :member-pricing-unlocked="memberPricingUnlocked"
             :saving-draft="savingDraft"
             @next="nextStep"
             @back="prevStep"
@@ -71,7 +71,7 @@
             :form-data="formData"
             :photos="photos"
             :location="locationData"
-            :is-sustaining-member="isSustainingMember"
+            :member-pricing-unlocked="memberPricingUnlocked"
             @next="submitListing"
             @back="prevStep"
             @edit="goToStep"
@@ -115,7 +115,15 @@
   const { createListing, updateListing, getPhotoUrl } = useListings();
   const { uploadPhotos } = useListingPhotos();
   const { createCheckoutSession } = usePayments();
-  const { user, userProfile, isSustainingMember } = useAuth();
+  const { user, userProfile } = useAuth();
+  // Mount-gated at the SOURCE. StepPricing and StepReview branch their
+  // templates on this, so an ungated value would make SSR and the client's
+  // first render disagree in both children at once.
+  //
+  // Passed down as `memberPricingUnlocked` rather than `isSustainingMember`:
+  // the children are choosing which PRICING UI to show, not reading the
+  // session, and a prop named after auth state reads as though they were.
+  const { isSustainingMemberUser: memberPricingUnlocked } = useMountedAuth();
   const { SUPPORTED_CURRENCIES } = useCurrency();
   const { capture } = usePostHog();
 

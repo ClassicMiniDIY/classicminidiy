@@ -5,6 +5,11 @@
 
   const { t } = useI18n();
   const { isAuthenticated, user, waitForAuth } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn, isSustainingMemberUser, mountedUser } = useMountedAuth();
   const { track } = useAnalytics();
   const { fetchProfile, getPublicProfile, getPublicProfileVehicles } = useProfile();
   const { fetchPublicConfigs } = useGearConfigs();
@@ -89,7 +94,7 @@
     </div>
 
     <!-- Auth gate -->
-    <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
+    <div v-if="!isSignedIn" class="max-w-lg mx-auto">
       <div class="card bg-base-100 shadow-sm border border-base-300">
         <div class="card-body p-6 text-center">
           <div class="mb-4">
@@ -131,7 +136,7 @@
             <div class="flex-1 text-center sm:text-left min-w-0">
               <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
                 <h2 class="text-xl font-bold">{{ displayName }}</h2>
-                <ProfileSustainingBadge v-if="isSustainingMember" size="sm" />
+                <ProfileSustainingBadge v-if="isSustainingMemberUser" size="sm" />
               </div>
 
               <p v-if="profile?.location" class="text-sm opacity-60 mt-1">
@@ -184,7 +189,7 @@
       <!-- Contribution impact + badges (design S9). Renders nothing until the
            first approved contribution, so a new account is not shown three
            zeroes and an empty badge row. -->
-      <ContributorImpact v-if="user" :user-id="user.id" possessive="your" />
+      <ContributorImpact v-if="mountedUser" :user-id="user.id" possessive="your" />
 
       <!-- Vehicles -->
       <div v-if="profile?.show_vehicles" class="card bg-base-100 shadow-sm border border-base-300">

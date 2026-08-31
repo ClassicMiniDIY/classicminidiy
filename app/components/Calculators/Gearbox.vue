@@ -16,6 +16,11 @@
   const { capture } = usePostHog();
   const { track } = useAnalytics();
   const { user, isAuthenticated } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const {
     configs: savedConfigs,
     loading: savedLoading,
@@ -513,7 +518,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold"><i class="fad fa-gears mr-2"></i>{{ t('configurations') }}</h3>
         <div class="flex items-center gap-2">
-          <button v-if="isAuthenticated" class="btn btn-outline btn-sm" @click="openLoadModal">
+          <button v-if="isSignedIn" class="btn btn-outline btn-sm" @click="openLoadModal">
             <i class="fas fa-folder-open"></i>
             {{ t('load_saved') }}
           </button>
@@ -530,7 +535,7 @@
         :config="config"
         :color-index="index"
         :can-delete="configs.length > 1"
-        :is-authenticated="isAuthenticated"
+        :can-save="isSignedIn"
         :is-saving="savingIndex === index"
         @update:config="updateConfig(index, $event)"
         @delete="removeConfig(index)"

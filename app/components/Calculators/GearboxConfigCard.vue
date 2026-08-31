@@ -8,7 +8,7 @@
     config: GearConfig;
     colorIndex: number;
     canDelete: boolean;
-    isAuthenticated: boolean;
+    canSave: boolean;
     isSaving: boolean;
   }>();
 
@@ -147,7 +147,7 @@
     <!-- Actions -->
     <div class="flex items-center gap-2 shrink-0">
       <button
-        v-if="isAuthenticated"
+        v-if="canSave"
         class="btn btn-ghost btn-sm"
         :disabled="isSaving"
         :title="config.savedId ? t('saved') : t('save')"
