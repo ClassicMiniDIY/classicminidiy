@@ -11,7 +11,7 @@
   import { renderAssistantMarkdown } from '~/utils/chatMarkdown';
   import type { MarkdownTextProps } from '../../../data/models/chat';
 
-  const props = withDefaults(defineProps<MarkdownTextProps & { showCursor?: boolean }>(), {
+  const props = withDefaults(defineProps<MarkdownTextProps>(), {
     showCursor: false,
   });
 

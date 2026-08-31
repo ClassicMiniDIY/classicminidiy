@@ -1,5 +1,5 @@
 <template>
-  <div v-if="message && hasVisibleContent" class="group flex gap-3 sm:gap-4">
+  <div v-if="message && (hasVisibleContent || ranToolsWithoutAnswering)" class="group flex gap-3 sm:gap-4">
     <!-- Assistant identity. The reply itself stays unboxed so the answer, not
          the chrome, carries the visual weight. -->
     <div
@@ -12,7 +12,14 @@
     <!-- min-w-0 is load-bearing: without it this flex child refuses to shrink
          below its content width and long words push the column off-screen. -->
     <div class="min-w-0 flex-1">
-      <MarkdownText :content="contentString" :show-cursor="isLoading" />
+      <MarkdownText v-if="hasVisibleContent" :content="contentString" :show-cursor="isLoading" />
+
+      <!--
+        The run used its whole tool budget and stopped before writing an answer.
+        Without this the turn renders as NOTHING — the question, the thinking
+        dots vanishing, then silence, which is indistinguishable from a hang.
+      -->
+      <p v-else class="text-base-content/70">{{ t('ran_out_of_steps') }}</p>
 
       <!--
         Actions are revealed on hover on pointer devices, but stay visible below
@@ -83,6 +90,20 @@
 
   const hasVisibleContent = computed(() => contentString.value.trim().length > 0);
 
+  /**
+   * A finished assistant turn that called tools but never wrote prose.
+   *
+   * Happens when `stopWhen: stepCountIs(...)` in the chat route halts the loop
+   * on a tool call. Gated on `!isLoading` so a turn that is still streaming its
+   * first token does not flash this — the thinking indicator owns that moment.
+   */
+  const ranToolsWithoutAnswering = computed(
+    () =>
+      !props.isLoading &&
+      !hasVisibleContent.value &&
+      (props.message?.parts ?? []).some((part: any) => typeof part?.type === 'string' && part.type.startsWith('tool-'))
+  );
+
   const justCopied = ref(false);
   let copyTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -140,70 +161,80 @@
     "copied": "Copied",
     "helpful": "Helpful",
     "not_helpful": "Not helpful",
-    "feedback_thanks": "Thanks"
+    "feedback_thanks": "Thanks",
+    "ran_out_of_steps": "I looked that up but ran out of steps before finishing. Try asking again, or narrow the question."
   },
   "es": {
     "copy_button": "Copiar",
     "copied": "Copiado",
     "helpful": "Útil",
     "not_helpful": "No útil",
-    "feedback_thanks": "Gracias"
+    "feedback_thanks": "Gracias",
+    "ran_out_of_steps": "Lo busqué, pero me quedé sin pasos antes de terminar. Vuelve a preguntar o acota la pregunta."
   },
   "fr": {
     "copy_button": "Copier",
     "copied": "Copié",
     "helpful": "Utile",
     "not_helpful": "Pas utile",
-    "feedback_thanks": "Merci"
+    "feedback_thanks": "Merci",
+    "ran_out_of_steps": "J'ai fait la recherche mais je n'ai pas pu terminer. Reposez la question ou précisez-la."
   },
   "de": {
     "copy_button": "Kopieren",
     "copied": "Kopiert",
     "helpful": "Hilfreich",
     "not_helpful": "Nicht hilfreich",
-    "feedback_thanks": "Danke"
+    "feedback_thanks": "Danke",
+    "ran_out_of_steps": "Ich habe nachgeschlagen, konnte aber nicht fertig werden. Frage bitte erneut oder grenze sie ein."
   },
   "it": {
     "copy_button": "Copia",
     "copied": "Copiato",
     "helpful": "Utile",
     "not_helpful": "Non utile",
-    "feedback_thanks": "Grazie"
+    "feedback_thanks": "Grazie",
+    "ran_out_of_steps": "Ho fatto la ricerca ma non sono riuscito a concludere. Riprova o restringi la domanda."
   },
   "ja": {
     "copy_button": "コピー",
     "copied": "コピーしました",
     "helpful": "役に立った",
     "not_helpful": "役に立たなかった",
-    "feedback_thanks": "ありがとうございます"
+    "feedback_thanks": "ありがとうございます",
+    "ran_out_of_steps": "調べましたが、完了する前に上限に達しました。もう一度、または範囲を絞ってお尋ねください。"
   },
   "ko": {
     "copy_button": "복사",
     "copied": "복사됨",
     "helpful": "도움이 됨",
     "not_helpful": "도움이 안 됨",
-    "feedback_thanks": "감사합니다"
+    "feedback_thanks": "감사합니다",
+    "ran_out_of_steps": "조회했지만 완료하기 전에 한도에 도달했습니다. 다시 물어보거나 질문을 좁혀 주세요."
   },
   "pt": {
     "copy_button": "Copiar",
     "copied": "Copiado",
     "helpful": "Útil",
     "not_helpful": "Não útil",
-    "feedback_thanks": "Obrigado"
+    "feedback_thanks": "Obrigado",
+    "ran_out_of_steps": "Fiz a busca, mas não consegui concluir. Pergunte de novo ou restrinja a pergunta."
   },
   "ru": {
     "copy_button": "Копировать",
     "copied": "Скопировано",
     "helpful": "Полезно",
     "not_helpful": "Бесполезно",
-    "feedback_thanks": "Спасибо"
+    "feedback_thanks": "Спасибо",
+    "ran_out_of_steps": "Я выполнил поиск, но не успел закончить. Спросите ещё раз или уточните вопрос."
   },
   "zh": {
     "copy_button": "复制",
     "copied": "已复制",
     "helpful": "有帮助",
     "not_helpful": "没有帮助",
-    "feedback_thanks": "谢谢"
+    "feedback_thanks": "谢谢",
+    "ran_out_of_steps": "我查询了，但未能完成回答。请再问一次，或缩小问题范围。"
   }
 }
 </i18n>

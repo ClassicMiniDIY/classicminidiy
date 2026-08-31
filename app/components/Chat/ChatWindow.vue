@@ -226,6 +226,22 @@
    * because the return value had been cast to `any`; the cast is gone, so the
    * compiler catches this class of mistake now.
    */
+  /**
+   * How many recent messages travel with a request.
+   *
+   * The transcript on screen and in history is never trimmed — only the REQUEST
+   * is windowed. Without this, a long conversation grows past the route's own
+   * limits and every further send 413s, which the UI can only report as
+   * "something went wrong, please try again" — advice that can never work,
+   * leaving the visitor stuck with no way out but New chat and no hint that it
+   * is the way out. Windowing here means the dead end cannot occur; the server
+   * guard stays as defence against a crafted request, not as everyday UX.
+   *
+   * Well under the route's MAX_MESSAGES so a slow client and a strict server
+   * cannot disagree at the boundary.
+   */
+  const REQUEST_MESSAGE_WINDOW = 24;
+
   const { messages, status, error, sendMessage, stop } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
@@ -236,6 +252,9 @@
         pageSlug: route.path,
         threadId: threadId.value,
       }),
+      prepareSendMessagesRequest({ messages: outgoing, body }) {
+        return { body: { ...body, messages: outgoing.slice(-REQUEST_MESSAGE_WINDOW) } };
+      },
     }),
     onError(err: Error) {
       console.error('[chat] request failed:', err);
@@ -345,24 +364,68 @@
   }
 
   /**
-   * Persist the conversation after every change.
+   * Persist the conversation, and keep the transcript scrolled.
    *
-   * Deliberately a watcher rather than a call at the end of `sendMessage`: that
-   * promise resolves when the stream closes, so recording only there loses the
-   * conversation if the visitor navigates away mid-answer.
+   * ONE deep watcher, not two: `messages` grows by a token at a time while
+   * streaming, and a deep watcher walks the whole transcript on every change,
+   * so a second one doubles that traversal on the hottest path in the component.
+   *
+   * The write is DEBOUNCED, which is the load-bearing part. `history.record()`
+   * serialises every stored conversation and calls `localStorage.setItem`
+   * synchronously on the main thread; a measured answer streamed 299 chunks, so
+   * writing per token meant ~300 megabyte-scale serialise-and-write cycles for a
+   * single reply, and visible jank on a phone. Scrolling still runs every tick —
+   * it is cheap and has to track the stream.
+   *
+   * It stays a watcher rather than a call after `sendMessage`, because that
+   * promise resolves when the stream closes: recording only there loses the
+   * conversation if the visitor navigates away mid-answer. The flush on unmount
+   * below covers the debounce window for the same reason.
    */
+  const PERSIST_DEBOUNCE_MS = 500;
+  let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function persistNow() {
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    const current = messages.value as UIMessage[];
+    if (!hasMounted.value || !threadId.value || current.length === 0) return;
+    const firstUser = current.find((message) => message.role === 'user');
+    history.record(threadId.value, {
+      title: history.deriveTitle(messageText(firstUser)),
+      messages: current,
+    });
+  }
+
+  function schedulePersist() {
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(persistNow, PERSIST_DEBOUNCE_MS);
+  }
+
   watch(
     messages,
-    (current) => {
-      if (!hasMounted.value || !threadId.value || current.length === 0) return;
-      const firstUser = (current as UIMessage[]).find((message) => message.role === 'user');
-      history.record(threadId.value, {
-        title: history.deriveTitle(messageText(firstUser)),
-        messages: current as UIMessage[],
+    () => {
+      schedulePersist();
+      nextTick(() => {
+        if (messagesContainer.value && !showScrollButton.value) scrollToBottom(false);
       });
     },
     { deep: true }
   );
+
+  // A pending debounce must not lose the last tokens of an answer when the
+  // visitor navigates away the moment it finishes.
+  onBeforeUnmount(persistNow);
+
+  // Same reason, for a tab close or reload, which unmounts nothing.
+  onMounted(() => {
+    window.addEventListener('pagehide', persistNow);
+  });
+  onBeforeUnmount(() => {
+    window.removeEventListener('pagehide', persistNow);
+  });
 
   async function handleSubmit() {
     const text = input.value.trim();
@@ -446,16 +509,6 @@
     const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
     showScrollButton.value = scrollHeight - scrollTop - clientHeight >= 100;
   }
-
-  watch(
-    messages,
-    () => {
-      nextTick(() => {
-        if (messagesContainer.value && !showScrollButton.value) scrollToBottom(false);
-      });
-    },
-    { deep: true }
-  );
 
   /** `/chat?message=…` from FloatingChatInput. Runs once, after mount. */
   const hasAutoSubmitted = ref(false);

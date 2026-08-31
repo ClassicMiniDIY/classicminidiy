@@ -164,7 +164,25 @@ function searchArchiveSections(query: string): SearchResult[] {
  * box, and `archive_search_misses` is admin-only and promoted by hand, so an
  * anonymous caller still cannot move a number a visitor sees.
  */
-export async function runOmnisearch(rawQuery: unknown, rawLimit?: unknown): Promise<SearchResponse> {
+export interface OmnisearchOptions {
+  /**
+   * Whether a zero-result query is recorded as a Most Wanted signal.
+   *
+   * TRUE only for queries a person typed. The chat agent calls this tool with
+   * keyword strings IT invented, and often rephrases the same question two or
+   * three times — recording those would put model-generated text into
+   * `archive_search_misses`, which `promote_search_miss` turns into public Most
+   * Wanted rows. The signal is supposed to mean "a human wanted this and we did
+   * not have it".
+   */
+  recordMisses?: boolean;
+}
+
+export async function runOmnisearch(
+  rawQuery: unknown,
+  rawLimit?: unknown,
+  { recordMisses = true }: OmnisearchOptions = {}
+): Promise<SearchResponse> {
   const query = String(rawQuery ?? '')
     .trim()
     .replace(/\s+/g, ' ')
@@ -213,7 +231,7 @@ export async function runOmnisearch(rawQuery: unknown, rawLimit?: unknown): Prom
 
   // A miss is the signal that feeds Most Wanted. Fire-and-forget: search must
   // not get slower, or fail, because telemetry did.
-  if (results.length === 0) {
+  if (results.length === 0 && recordMisses) {
     supabase
       .rpc('record_search_miss', { p_query: query })
       .then(({ error: missError }) => {

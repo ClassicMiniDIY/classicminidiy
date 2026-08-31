@@ -170,7 +170,7 @@ This site shares the Supabase auth and profiles with the other properties. Datab
 - **CMDIY Assistant** - LangGraph-powered conversational AI with context awareness
 - **Model Context Protocol (MCP) Server** - AI integration with calculators and tools
 - **Streaming Responses** - Real-time AI chat with persistent conversation threads
-- **Hydration invariant**: `/chat` is SSR'd and the server always renders the empty/welcome branch. The persisted thread (localStorage, `usePersistentThread`) is read synchronously during setup, so nothing may branch the template on it until after `onMounted` (see `hasMounted` gate in `ChatWindow.vue`) — otherwise refreshing with a <24h-old thread causes a structural hydration mismatch that corrupts the page DOM. Also note `createStreamSession()`/`provideStreamContext()` call `useI18n()`/`provide()` and must keep running synchronously during setup (the `immediate: true` watch), never deferred to post-mount.
+- **Hydration invariant**: `/chat` is SSR'd and the server always renders the empty/welcome branch. Stored conversations live in localStorage (`useChatHistory`), so nothing may branch the template on them until after `onMounted` (see the `hasMounted` gate in `ChatWindow.vue`) — otherwise refreshing with a saved conversation causes a structural hydration mismatch that corrupts the page DOM. The rule got STRICTER at the 2026-08-31 cutover, not looser: the transcript itself is client-owned now, so more of the page depends on state the server cannot see. `useChatHistory.load()` and the conversation restore both run in `onMounted`, never during setup.
 
 - **`/chat`'s full-height shell is CSS-only, keyed off `.chat-shell` with `:has()` in
   `app/assets/css/main.css` — never `useHead({ bodyAttrs })`.** Setting body attributes from
@@ -218,7 +218,7 @@ properties of undefined (reading 'webSiteResolver')` out of its resolver preload
 
 #### AI & Chat APIs
 
-- `/api/langgraph/` - AI chat integration with streaming responses
+- `/api/chat` - the AI assistant. The agent runs IN this Worker (`server/api/chat.post.ts`, Vercel AI SDK v7 + Anthropic), calls the eleven `/mcp` tools in-process via `server/utils/agentTools.ts`, and searches the site through `site-search`. It replaced a proxy to an externally hosted LangGraph deployment on 2026-08-31; `server/api/langgraph/**` no longer exists.
 - `/mcp` - Model Context Protocol server. **There are no `/api/mcp/*` routes** —
   the whole surface is one JSON-RPC endpoint at `/mcp`, served by
   `@nuxtjs/mcp-toolkit`, which discovers tools from `server/mcp/tools/*.ts`
@@ -681,7 +681,26 @@ For inline icons in templates, use the traditional Font Awesome class syntax:
 
 Load-bearing contracts — don't "fix" these without understanding why they're this way:
 
-- **`/api/langgraph/**` is intentionally UNAUTHENTICATED.** The AI chat must work for every anonymous site visitor (no login). Do NOT add `requireUserAuth`/login to this proxy — it would break public chat. Abuse is mitigated by per-IP rate limiting in `server/middleware/rate-limit.ts` (default 40 req/60s, tune via `LANGGRAPH_RATELIMIT_MAX` / `LANGGRAPH_RATELIMIT_WINDOW_MS`), not by auth. The privileged `NUXT_LANGSMITH_API_KEY` stays server-only (private `runtimeConfig`).
+- **`/api/chat` is intentionally UNAUTHENTICATED, and must never _require_ auth.**
+  The assistant has to work for every anonymous visitor — that is the point of
+  the surface and why it is indexed. Do NOT add `requireUserAuth` to it. When
+  membership metering lands, the route resolves identity _if present_ and
+  applies a tiered quota; **a 401 is never a valid response from this route**,
+  and an exhausted quota is a 429 carrying an upgrade pointer, the same posture
+  as the MCP free-tier gated result.
+
+  Abuse is held by two things, and only one of them is in this repo: per-IP rate
+  limiting in `server/middleware/rate-limit.ts` (default 40 req/60s, tune via
+  `CHAT_RATELIMIT_MAX` / `CHAT_RATELIMIT_WINDOW_MS`; the old `LANGGRAPH_*` names
+  are still read so a value configured in Cloudflare does not silently revert),
+  and a Cloudflare **zone** rate-limit rule that runs at the edge before the
+  Worker bills anything. **That zone rule does not follow a code change.** Moving
+  or renaming this route without updating the rule leaves the live path
+  unprotected while everything still looks green —
+  `scripts/verify-cf-ratelimit.py` exists to fail in exactly that case, and
+  `docs/runbooks/2026-08-31-chat-zone-rate-limit.md` is the fix. The privileged
+  `NUXT_ANTHROPIC_API_KEY` stays server-only (private `runtimeConfig`).
+
 - **`/mcp` auth fails closed.** Valid keys come ONLY from `MCP_API_KEY` / `MCP_API_KEYS` env vars — there is no hardcoded/default key. The old `dev-mcp-key-classic-mini-diy` default is in public git history and must never be re-accepted in any environment. For local dev, set `MCP_API_KEY` in `.env`.
 - **`/mcp` is only truly tested by `scripts/test-mcp-transport.sh`.** The unit
   tests under `tests/unit/server/mcp/` stub `defineMcpTool` and call `.handler()`
@@ -1050,8 +1069,7 @@ GITHUB_API_KEY=
 YOUTUBE_API_KEY=
 
 # AI Services
-NUXT_LANGGRAPH_API_URL=
-NUXT_LANGSMITH_API_KEY=
+NUXT_ANTHROPIC_API_KEY=
 
 # Public URLs
 NUXT_PUBLIC_SITE_URL=
@@ -1138,9 +1156,10 @@ name as `NUXT_ + snakeCase(key).toUpperCase()`
 already bitten:
 
 - A key that **already starts with `NUXT_`** is not overridable under its own
-  name — `NUXT_LANGSMITH_API_KEY` would need `NUXT_NUXT_LANGSMITH_API_KEY`. The
-  runtimeConfig keys are therefore `LANGGRAPH_API_URL` / `LANGSMITH_API_KEY`,
-  which makes the derived env name come out as the name everything already uses.
+  name — a `NUXT_FOO` runtimeConfig key would need `NUXT_NUXT_FOO`. Strip the
+  prefix from the KEY so the derived env name comes out as the name everything
+  already uses: `ANTHROPIC_API_KEY` in runtimeConfig is fed by
+  `NUXT_ANTHROPIC_API_KEY`.
 - camelCase keys work but hide their env name (`githubAPIKey` →
   `NUXT_GITHUB_API_KEY`). All private keys are UPPER_SNAKE so the Cloudflare
   secret name is mechanically `NUXT_<KEY>`. **Keep it that way when adding one.**
@@ -1164,17 +1183,17 @@ are read unprefixed at module scope and need PLAIN Worker vars — a
 they are tuning knobs rather than secrets; an unset value degrades to the
 default rather than failing, which is exactly why a wrong one is hard to notice.
 
-| Name                                     | Read in                                                                                       | Default                    |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------- |
-| `LANGGRAPH_RATELIMIT_MAX` / `_WINDOW_MS` | `server/middleware/rate-limit.ts`                                                             | 40 / 60 000                |
-| `WRITE_RATELIMIT_MAX` / `_WINDOW_MS`     | same                                                                                          | 30 / 60 000                |
-| `MCP_RATELIMIT_WINDOW_MS`                | same                                                                                          | 60 000                     |
-| `MCP_RATELIMIT_FREE_MAX`                 | same                                                                                          | 20                         |
-| `MCP_RATELIMIT_DEVELOPER_MAX`            | same                                                                                          | 240                        |
-| `MCP_RATELIMIT_INTERNAL_MAX`             | same                                                                                          | 600                        |
-| `MCP_RATELIMIT_MAX`                      | same                                                                                          | — legacy, see below        |
-| `POSTHOG_INGEST_HOST`                    | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts`, `server/utils/chatUsage.ts` | `https://us.i.posthog.com` |
-| `MICROLINK_API_URL`                      | `server/utils/external-models/render.ts`                                                      | `https://api.microlink.io` |
+| Name                                                                       | Read in                                                                                       | Default                    |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------- |
+| `CHAT_RATELIMIT_MAX` / `_WINDOW_MS` (and the legacy `LANGGRAPH_*` aliases) | `server/middleware/rate-limit.ts`                                                             | 40 / 60 000                |
+| `WRITE_RATELIMIT_MAX` / `_WINDOW_MS`                                       | same                                                                                          | 30 / 60 000                |
+| `MCP_RATELIMIT_WINDOW_MS`                                                  | same                                                                                          | 60 000                     |
+| `MCP_RATELIMIT_FREE_MAX`                                                   | same                                                                                          | 20                         |
+| `MCP_RATELIMIT_DEVELOPER_MAX`                                              | same                                                                                          | 240                        |
+| `MCP_RATELIMIT_INTERNAL_MAX`                                               | same                                                                                          | 600                        |
+| `MCP_RATELIMIT_MAX`                                                        | same                                                                                          | — legacy, see below        |
+| `POSTHOG_INGEST_HOST`                                                      | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts`, `server/utils/chatUsage.ts` | `https://us.i.posthog.com` |
+| `MICROLINK_API_URL`                                                        | `server/utils/external-models/render.ts`                                                      | `https://api.microlink.io` |
 
 `MCP_RATELIMIT_MAX` is not a fourth tier — it predates the tiers, when one cap
 covered all `/mcp` traffic, and now survives ONLY as the fallback for

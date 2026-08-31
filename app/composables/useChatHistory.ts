@@ -85,26 +85,50 @@ export function useChatHistory() {
   /**
    * Drop the oldest conversations until the payload fits the budget. Entries
    * arrive newest-first, so this always sheds the least recently used.
+   *
+   * Each entry is measured ONCE and the sizes accumulated. The obvious form —
+   * re-running `JSON.stringify` over the whole array after each drop — is
+   * quadratic in the number of entries shed, over data that can reach 1.5MB.
    */
   function withinBudget(next: ChatHistoryEntry[]): ChatHistoryEntry[] {
-    let trimmed = next;
-    while (trimmed.length > 1 && JSON.stringify(trimmed).length > MAX_STORED_CHARS) {
-      trimmed = trimmed.slice(0, -1);
+    let running = 2; // the enclosing `[]`
+    for (let i = 0; i < next.length; i++) {
+      // +1 for the comma between entries.
+      running += JSON.stringify(next[i]).length + (i > 0 ? 1 : 0);
+      if (running > MAX_STORED_CHARS) {
+        // Always keep at least the current conversation, even if it alone is
+        // over budget — losing the one in progress is the worst outcome.
+        return next.slice(0, Math.max(1, i));
+      }
     }
-    return trimmed;
+    return next;
   }
 
-  function persist(next: ChatHistoryEntry[]) {
-    if (!isBrowser) return;
+  /**
+   * Write the list, and return what was ACTUALLY stored.
+   *
+   * The return value matters: both the budget trim and the quota fallback can
+   * store fewer entries than they were handed, and a caller that assigns the
+   * unfiltered list to `entries` leaves the history dialog listing conversations
+   * that are no longer on disk — they then vanish on the next load with no
+   * explanation.
+   */
+  function persist(next: ChatHistoryEntry[]): ChatHistoryEntry[] {
+    if (!isBrowser) return next;
+    const trimmed = withinBudget(next);
     try {
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(withinBudget(next)));
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(trimmed));
+      return trimmed;
     } catch (error) {
-      // Quota, or a locked-down browser. Retry once with only the current
+      // Quota, or a locked-down browser. Retry with only the current
       // conversation: losing older history beats losing the one in progress.
+      const minimal = trimmed.slice(0, 1);
       try {
-        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next.slice(0, 1)));
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(minimal));
+        return minimal;
       } catch {
         console.warn('Failed to persist chat history:', error);
+        return trimmed;
       }
     }
   }
@@ -183,8 +207,7 @@ export function useChatHistory() {
       .sort((a, b) => b.lastUsedAt - a.lastUsedAt)
       .slice(0, MAX_ENTRIES);
 
-    entries.value = next;
-    persist(next);
+    entries.value = persist(next);
   }
 
   /** The transcript for a conversation, or an empty array if it has none. */
@@ -193,9 +216,7 @@ export function useChatHistory() {
   }
 
   function remove(threadId: string) {
-    const next = entries.value.filter((entry) => entry.threadId !== threadId);
-    entries.value = next;
-    persist(next);
+    entries.value = persist(entries.value.filter((entry) => entry.threadId !== threadId));
   }
 
   function clear() {

@@ -115,6 +115,41 @@ describe('createChatRunTracker', () => {
     expect(lastProps().tool_call_count).toBe(0);
   });
 
+  it('records tool names without disturbing the stream metrics', () => {
+    // recordToolCall must NOT advance chunk_count or stamp first-chunk time.
+    // Routing tool calls through observe() silently redefined both under the
+    // same names, so a dashboard comparing across the cutover compared two
+    // different quantities.
+    const tracker = createChatRunTracker(fakeEvent(), 'thread-1');
+    tracker.recordToolCall('torque-specs');
+    tracker.recordToolCall('clearances');
+    tracker.recordToolCall('torque-specs');
+    tracker.finish('completed');
+
+    expect(lastProps()).toMatchObject({
+      tools_called: ['clearances', 'torque-specs'],
+      chunk_count: 0,
+      time_to_first_chunk_ms: null,
+    });
+  });
+
+  it('ignores an undefined or empty tool name', () => {
+    const tracker = createChatRunTracker(fakeEvent(), 'thread-1');
+    tracker.recordToolCall(undefined);
+    tracker.recordToolCall('');
+    tracker.finish('completed');
+    expect(lastProps().tools_called).toEqual([]);
+  });
+
+  it('records a run the visitor abandoned', () => {
+    // These consumed tokens and were previously recorded nowhere, which is
+    // awkward when abandonment is the metric under investigation.
+    const tracker = createChatRunTracker(fakeEvent(), 'thread-1');
+    tracker.observe({ data: {} });
+    tracker.finish('client_disconnect');
+    expect(lastProps().outcome).toBe('client_disconnect');
+  });
+
   it('records an upstream failure with its message', () => {
     const tracker = createChatRunTracker(fakeEvent(), 'thread-1');
     tracker.finish('upstream_error', 'graph exploded');

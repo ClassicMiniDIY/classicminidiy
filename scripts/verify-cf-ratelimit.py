@@ -54,7 +54,7 @@ API = "https://api.cloudflare.com/client/v4"
 # reason stated so a future reader can judge whether it still holds. Keep this
 # to routes where an anonymous caller can make us spend money or do real work.
 ALWAYS_REQUIRED = {
-    "/api/langgraph/*": "unauthenticated AI chat proxy — every POST bills an LLM run",
+    "/api/chat": "unauthenticated AI chat route — every POST bills a model run",
 }
 
 token = os.environ.get("CLOUDFLARE_API_TOKEN")
