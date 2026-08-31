@@ -16,6 +16,7 @@ let rpcResult: any = { data: [{ allowed: true, used: 1, monthly_limit: 30 }], er
 let rpcThrows = false;
 let cookieValue: string | undefined;
 let storageThrows = false;
+let clientIpValue: string | undefined = '203.0.113.9';
 
 const storage = {
   items: new Map<string, unknown>(),
@@ -50,6 +51,9 @@ vi.stubGlobal('createError', (opts: any) => {
 });
 
 vi.mock('~/server/utils/supabase', () => ({ getServiceClient: vi.fn(() => ({ rpc })) }));
+vi.mock('~/server/utils/runtimeConfig', () => ({
+  serverRuntimeConfig: vi.fn(() => ({ OG_IMAGE_SECRET: 'test-salt' })),
+}));
 
 const { consumeChatQuota, quotaExhaustedError, recordChatTokens } = await import('~~/server/utils/chatQuota');
 const { setChatAuth } = await import('~~/server/utils/chatTiers');
@@ -68,6 +72,7 @@ beforeEach(() => {
   rpcThrows = false;
   storageThrows = false;
   cookieValue = 'anonsession0000000000000000abcd';
+  clientIpValue = '203.0.113.9';
 });
 
 describe('anonymous quota', () => {
@@ -92,7 +97,7 @@ describe('anonymous quota', () => {
     cookieValue = undefined;
     await consumeChatQuota(eventFor('anonymous'));
     expect((globalThis as any).setCookie).toHaveBeenCalledOnce();
-    const opts = (globalThis as any).setCookie.mock.calls[0][3];
+    const opts = (globalThis as any).setCookie.mock.calls[0]![3];
     // httpOnly so a page script cannot read or forge the counter's key.
     expect(opts).toMatchObject({ httpOnly: true, sameSite: 'lax', secure: true });
   });
@@ -101,6 +106,54 @@ describe('anonymous quota', () => {
     cookieValue = '../../etc/passwd';
     await consumeChatQuota(eventFor('anonymous'));
     expect((globalThis as any).setCookie).toHaveBeenCalledOnce();
+  });
+
+  it('still accumulates for a client that never returns the cookie', async () => {
+    // THE bypass this bound exists to close. A curl loop with no cookie jar
+    // would otherwise mint a fresh allowance on every request, making the whole
+    // gate decorative — dropping Set-Cookie would be the cheapest way past it.
+    cookieValue = undefined;
+    const limit = CHAT_QUOTAS.anonymous.perDay!;
+    for (let i = 0; i < limit; i++) {
+      expect((await consumeChatQuota(eventFor('anonymous'))).allowed).toBe(true);
+    }
+    expect((await consumeChatQuota(eventFor('anonymous'))).allowed).toBe(false);
+  });
+
+  it('never puts a raw IP in the counter key', async () => {
+    cookieValue = undefined;
+    await consumeChatQuota(eventFor('anonymous'));
+    const key = storage.setItem.mock.calls[0]![0] as string;
+    expect(key).not.toContain('203.0.113.9');
+  });
+
+  it('does not count a refused call, nor refresh its window', async () => {
+    // Counting refusals would let someone already over the ceiling inflate
+    // their own total, and refreshing the TTL on every retry would turn a 24h
+    // bound into a permanent lockout for anyone who kept clicking.
+    const limit = CHAT_QUOTAS.anonymous.perDay!;
+    const event = eventFor('anonymous');
+    for (let i = 0; i < limit; i++) await consumeChatQuota(event);
+    const writesBefore = storage.setItem.mock.calls.length;
+
+    const refused = await consumeChatQuota(event);
+    expect(refused.allowed).toBe(false);
+    expect(refused.used).toBe(limit);
+    expect(storage.setItem.mock.calls.length).toBe(writesBefore);
+  });
+
+  it('resets rather than locks out when the stored value is unusable', async () => {
+    // A non-numeric entry would make Number() give NaN, and `NaN <= limit` is
+    // false — refusing the caller forever while every retry rewrote NaN.
+    storage.items.set('chat-anon:c:anonsession0000000000000000abcd', 'not-a-number');
+    const verdict = await consumeChatQuota(eventFor('anonymous'));
+    expect(verdict.allowed).toBe(true);
+    expect(verdict.used).toBe(1);
+  });
+
+  it('flags a bypassed ceiling as degraded', async () => {
+    storageThrows = true;
+    expect(await consumeChatQuota(eventFor('anonymous'))).toMatchObject({ allowed: true, degraded: true });
   });
 
   it('allows the request when KV is unavailable', async () => {
@@ -139,7 +192,7 @@ describe('signed-in quota', () => {
 
   it('allows the request when the RPC errors', async () => {
     rpcResult = { data: null, error: { message: 'pg exploded' } };
-    expect((await consumeChatQuota(eventFor('free', 'user-1'))).allowed).toBe(true);
+    expect(await consumeChatQuota(eventFor('free', 'user-1'))).toMatchObject({ allowed: true, degraded: true });
   });
 
   it('allows the request when the RPC throws', async () => {

@@ -16,6 +16,7 @@ let extractedToken: string | undefined;
 let getUserResult: any = { data: { user: { id: 'user-1' } }, error: null };
 let rpcResult: any = { data: true, error: null };
 let getUserThrows = false;
+let isBanned = false;
 
 const storage = {
   items: new Map<string, unknown>(),
@@ -46,6 +47,7 @@ vi.mock('~/server/utils/supabase', () => ({
 }));
 vi.mock('~/server/utils/userAuth', () => ({
   extractAccessToken: vi.fn(() => extractedToken),
+  isUserBanned: vi.fn(async () => isBanned),
 }));
 
 const handler = (await import('~~/server/middleware/chat-auth')).default;
@@ -63,6 +65,7 @@ beforeEach(() => {
   getUserResult = { data: { user: { id: 'user-1' } }, error: null };
   rpcResult = { data: true, error: null };
   getUserThrows = false;
+  isBanned = false;
   (globalThis as any).getRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
 });
 
@@ -71,6 +74,23 @@ describe('chat-auth', () => {
     (globalThis as any).getRequestURL.mockReturnValue(new URL('https://example.com/api/search'));
     const event = await run();
     expect(getChatAuth(event)).toBeUndefined();
+  });
+
+  it('matches the chat route EXACTLY, not by prefix', async () => {
+    // A prefix guard would silently apply chat tiering and the chat quota to a
+    // future /api/chat-export, visible only as unexplained 429s.
+    (globalThis as any).getRequestURL.mockReturnValue(new URL('https://example.com/api/chat-export'));
+    const event = await run();
+    expect(getChatAuth(event)).toBeUndefined();
+  });
+
+  it('drops a banned account to the anonymous tier', async () => {
+    // A valid access token keeps working until it expires even after the ban,
+    // so without this a banned scammer keeps the member allowance on a route
+    // that spends real money.
+    isBanned = true;
+    const event = await run();
+    expect(getChatAuth(event)).toEqual({ tier: 'anonymous' });
   });
 
   it('resolves an active membership to the member tier', async () => {
@@ -121,13 +141,20 @@ describe('chat-auth', () => {
   });
 
   describe('caching', () => {
-    it('caches a resolved tier and reuses it without a second RPC', async () => {
+    it('serves a cache hit without calling getUser at all', async () => {
+      // The cache is keyed on a hash of the TOKEN and checked before getUser,
+      // so a repeat request inside the TTL costs no Supabase round trip. Keying
+      // on the user id meant the expensive call ran every time and the cache
+      // only ever saved the cheap RPC.
       await run();
       expect(storage.setItem).toHaveBeenCalledOnce();
-      const before = storage.setItem.mock.calls.length;
+      const cacheKey = storage.setItem.mock.calls[0]![0] as string;
+      // The plaintext token must never appear in a storage key.
+      expect(cacheKey).not.toContain('token-abc');
+
+      getUserThrows = true; // any getUser call would now throw
       const event = await run();
       expect(getChatAuth(event)).toEqual({ tier: 'member', userId: 'user-1' });
-      expect(storage.setItem.mock.calls.length).toBe(before);
     });
 
     it('does NOT cache a degraded resolution', async () => {

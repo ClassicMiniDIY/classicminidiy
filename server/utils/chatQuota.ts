@@ -1,5 +1,7 @@
 import type { H3Event } from 'h3';
 import { getServiceClient } from './supabase';
+import { clientIp } from './clientIp';
+import { serverRuntimeConfig } from './runtimeConfig';
 import { ANON_CHAT_SESSION_COOKIE, CHAT_QUOTAS, MEMBERSHIP_URL } from '../../shared/utils/chatTiers';
 import { getChatAuth } from './chatTiers';
 
@@ -13,13 +15,15 @@ import { getChatAuth } from './chatTiers';
  *                consistent, last-write-wins) and not in a Durable Object
  *                (real integration cost for a number that changes forty times
  *                a month).
- *   Anonymous  — approximate, in KV, keyed on a random session id in a cookie.
- *                There is no account to count against, and the alternative —
- *                hashing the IP — buys precision with privacy surface for a
- *                bound that only needs to stop casual abuse. Clearing cookies
- *                resets it; that is acceptable, because the scripted case is
- *                held by the Cloudflare zone rule and the in-process limiter,
- *                not by this.
+ *   Anonymous  — approximate, in KV, keyed on a cookie session id for browsers
+ *                and on a SALTED HASH of the IP for everything else. There is
+ *                no account to count against, so the identity has to be
+ *                synthesised, and it must not be synthesised from something the
+ *                caller can simply withhold: a cookie-only key is defeated by
+ *                any client that ignores Set-Cookie, which would make the whole
+ *                gate decorative — signing out, or using curl, would be the
+ *                cheapest way past it. The IP is never stored raw; only a hash
+ *                with a per-deployment salt, in a 24h-TTL KV entry.
  *
  * **Exhausting a quota is a 429, never a 401.** `/api/chat` must stay usable by
  * everyone — see the invariant in CLAUDE.md. The response carries an upgrade
@@ -34,10 +38,43 @@ export interface QuotaVerdict {
   /** Messages used in the window after this call, when known. */
   used?: number;
   limit?: number;
+  /**
+   * The ceiling could not be evaluated and the request was allowed anyway.
+   * Surfaced on `chat_run_completed` so a broken counter is visible as data
+   * rather than as an absence of enforcement nobody notices.
+   */
+  degraded?: boolean;
 }
 
-function anonCounterId(sessionId: string): string {
-  return `chat-anon:${sessionId}`;
+/**
+ * Stable-ish identity for an anonymous caller, and the counter key for it.
+ *
+ * A browser that accepts cookies is counted per browser, which is the friendlier
+ * unit — two people behind one office NAT get their own allowance. Anything that
+ * does NOT return the cookie falls back to a salted hash of the IP, so a
+ * scripted client cannot mint a fresh allowance per request just by dropping
+ * Set-Cookie.
+ *
+ * The salt matters. Without one, a hashed IPv4 is trivially reversible — the
+ * whole space is 2^32 and rainbow-tabling it is minutes of work — so the digest
+ * would be personal data in everything but name. Salted with a server-side
+ * secret it is an opaque bucket id. `NUXT_OG_IMAGE_SECRET` is reused as the salt
+ * rather than adding another secret to provision, since it is already required
+ * on every deployment and never leaves the worker.
+ */
+async function anonBucketId(event: H3Event, salt: string): Promise<string> {
+  const cookieId = getCookie(event, ANON_CHAT_SESSION_COOKIE);
+  if (cookieId && /^[A-Za-z0-9_-]{16,64}$/.test(cookieId)) return `chat-anon:c:${cookieId}`;
+
+  const minted = mintAnonSession(event);
+  const ip = clientIp(event);
+  if (ip === 'unknown') return `chat-anon:c:${minted}`;
+
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}:${ip}`));
+  const hex = Array.from(new Uint8Array(digest).slice(0, 16))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `chat-anon:i:${hex}`;
 }
 
 /**
@@ -48,10 +85,7 @@ function anonCounterId(sessionId: string): string {
  * random opaque id whose only job is to make a daily count possible without
  * storing anything about who the visitor is.
  */
-function anonSessionId(event: H3Event): string {
-  const existing = getCookie(event, ANON_CHAT_SESSION_COOKIE);
-  if (existing && /^[A-Za-z0-9_-]{16,64}$/.test(existing)) return existing;
-
+function mintAnonSession(event: H3Event): string {
   const minted = crypto.randomUUID().replace(/-/g, '');
   setCookie(event, ANON_CHAT_SESSION_COOKIE, minted, {
     httpOnly: true,
@@ -73,46 +107,72 @@ function anonSessionId(event: H3Event): string {
  */
 export async function consumeChatQuota(event: H3Event): Promise<QuotaVerdict> {
   const tier = getChatAuth(event)?.tier ?? 'anonymous';
-  const quota = CHAT_QUOTAS[tier];
 
   if (tier === 'anonymous') {
-    if (quota.perDay === null) return { allowed: true };
+    // Read the tier's OWN entry rather than an indexed union: the quotas are
+    // declared `as const satisfies`, so this is the literal 15 and the
+    // per-tier nullability lives in the type instead of in guards that cannot
+    // fire.
+    const limit = CHAT_QUOTAS.anonymous.perDay;
     try {
       const storage = useStorage('cache');
-      const id = anonCounterId(anonSessionId(event));
-      const used = Number((await storage.getItem(id)) ?? 0) + 1;
-      // TTL is refreshed on every write, so this is a rolling window rather
-      // than a calendar day. That is the friendlier reading for a visitor who
-      // starts chatting late in the evening.
+      const salt = (serverRuntimeConfig(event).OG_IMAGE_SECRET as string) || 'cmdiy-anon-salt';
+      const id = await anonBucketId(event, salt);
+
+      // `Number.isFinite`, not a bare `Number(...)`: a non-numeric entry would
+      // otherwise yield NaN, and `NaN <= limit` is false — refusing the caller
+      // forever while the next write stores NaN again and refreshes the TTL.
+      // A garbage value has to reset the count, not weaponise it.
+      const raw = Number(await storage.getItem(id));
+      const previous = Number.isFinite(raw) && raw >= 0 ? raw : 0;
+
+      if (previous >= limit) {
+        // Do NOT write. Counting a refused attempt lets someone already over
+        // the ceiling inflate their own total, and refreshing the TTL on every
+        // retry would hold the window open indefinitely — turning a 24h bound
+        // into a permanent lockout for anyone who kept clicking. The Postgres
+        // path deliberately behaves the same way.
+        return { allowed: false, used: previous, limit };
+      }
+
+      const used = previous + 1;
+      // TTL is refreshed only on an ALLOWED call, so the window rolls off 24h
+      // after the last accepted message rather than the last attempt.
       await storage.setItem(id, used, { ttl: ANON_WINDOW_SECONDS });
-      return { allowed: used <= quota.perDay, used, limit: quota.perDay };
+      return { allowed: true, used, limit };
     } catch (error: any) {
+      // Fail open for this request, but say so on the run event: a KV binding
+      // that breaks after a deploy would otherwise leave anonymous chat
+      // completely unbounded with nothing but a console line to show for it.
       console.error(`[Chat Quota] anonymous counter unavailable, allowing: ${error?.message ?? error}`);
-      return { allowed: true };
+      return { allowed: true, degraded: true };
     }
   }
 
+  const monthlyLimit = CHAT_QUOTAS[tier].perMonth;
   const userId = getChatAuth(event)?.userId;
-  if (!userId || quota.perMonth === null) return { allowed: true };
+  // A signed-in tier with no user id should be impossible — chat-auth sets them
+  // together — but allowing beats throwing on a route that must stay up.
+  if (!userId) return { allowed: true, degraded: true };
 
   try {
     const { data, error } = await getServiceClient().rpc('consume_chat_quota', {
       p_user_id: userId,
-      p_monthly_limit: quota.perMonth,
+      p_monthly_limit: monthlyLimit,
     });
     if (error) {
       console.error(`[Chat Quota] consume_chat_quota failed, allowing: ${error.message}`);
-      return { allowed: true };
+      return { allowed: true, degraded: true };
     }
     const row = Array.isArray(data) ? data[0] : data;
     return {
       allowed: row?.allowed !== false,
       used: row?.used ?? undefined,
-      limit: quota.perMonth,
+      limit: monthlyLimit,
     };
   } catch (error: any) {
     console.error(`[Chat Quota] consume_chat_quota threw, allowing: ${error?.message ?? error}`);
-    return { allowed: true };
+    return { allowed: true, degraded: true };
   }
 }
 
@@ -165,5 +225,5 @@ export function recordChatTokens(event: H3Event, inputTokens: number, outputToke
       () => {}
     );
 
-  (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(write);
+  (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(Promise.resolve(write));
 }
