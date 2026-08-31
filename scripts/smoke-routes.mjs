@@ -95,10 +95,23 @@ async function get(path, { redirect = 'manual' } = {}) {
  */
 const stripComments = (html) => html.replace(/<!--[\s\S]*?-->/g, '');
 
-/** Drop <script> and <style> bodies. Nuxt serialises page data into a script
+/**
+ * Drop <script> and <style> bodies. Nuxt serialises page data into a script
  * tag, so user content containing markup would otherwise be read as page
- * structure. */
-const stripScripts = (html) => html.replace(/<(script|style)[\s\S]*?<\/\1>/gi, '');
+ * structure.
+ *
+ * The `\s*` before the closing `>` is load-bearing. `</script >` and
+ * `</style\n>` are legal HTML, and without it neither matches at all — so the
+ * ENTIRE body survives the strip and feeds into the <h1> count and the raw-i18n
+ * scan below. Measured: `<script>x</script >` came through untouched.
+ * (Raised by CodeQL js/incomplete-multi-character-sanitization.)
+ *
+ * A dangling `<script` with no close can still survive, which is what CodeQL
+ * also warns about. That leftover is inert for these checks — it is not `<h1`
+ * and not a dotted key — so it is deliberately not chased further here. This is
+ * a test tool reading our own SSR output, not a sanitizer.
+ */
+const stripScripts = (html) => html.replace(/<(script|style)[\s\S]*?<\/\1\s*>/gi, '');
 
 const titleOf = (html) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? null;
 const h1Count = (html) => (stripScripts(html).match(/<h1[\s>]/gi) ?? []).length;
