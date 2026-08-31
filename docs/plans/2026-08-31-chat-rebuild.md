@@ -93,18 +93,27 @@ Even with a better prompt, the current shape cannot carry a paid feature:
 
 No agent changes. Everything here survives the rebuild.
 
-| Item                                                | State                                           |
-| --------------------------------------------------- | ----------------------------------------------- |
-| Remove wildcard CORS from the stream route          | done, `tests/static/no-wildcard-cors.test.ts`   |
-| Encode SSE chunks as `Uint8Array`                   | done                                            |
-| Delete the dead assistant-id runtimeConfig read     | done                                            |
-| Server tests for `stream.post.ts`                   | done, 14 cases                                  |
-| Decouple the links rail from `tavily_search`        | done                                            |
-| `chat_run_completed` telemetry incl. `tools_called` | done, `server/utils/chatUsage.ts`               |
-| Remove BotID from the chat paths                    | done                                            |
-| Zone rate-limit rule on `POST /api/langgraph/*`     | already existed; now asserted on its own merits |
-| Harvest the thread store                            | done                                            |
-| Per-reply thumbs up/down                            | outstanding                                     |
+| Item                                                | State                                            |
+| --------------------------------------------------- | ------------------------------------------------ |
+| Remove wildcard CORS from the stream route          | done, `tests/static/no-wildcard-cors.test.ts`    |
+| Encode SSE chunks as `Uint8Array`                   | done — verified on workerd, 30 events over 4.82s |
+| Delete the dead assistant-id runtimeConfig read     | done                                             |
+| Server tests for `stream.post.ts`                   | done, 14 cases                                   |
+| Decouple the links rail from `tavily_search`        | done                                             |
+| `chat_run_completed` telemetry incl. `tools_called` | done, `server/utils/chatUsage.ts`                |
+| Remove BotID from the chat paths                    | done                                             |
+| Zone rate-limit rule on `POST /api/langgraph/*`     | already existed; now asserted on its own merits  |
+| Harvest the thread store                            | done                                             |
+| Per-reply thumbs up/down                            | done                                             |
+
+**Turnstile on the chat was planned and deliberately not done.** The plan assumed
+removing BotID would leave a gap. It does not: an enabled Cloudflare zone rate-limit
+rule on `POST /api/langgraph/*` was already live and verified, so the edge protection
+Turnstile was meant to supply is already there. Adding a challenge would put friction
+on a surface whose measured problem is that 73% of conversations are a single turn and
+63% of people who open `/chat` never send anything at all — the wrong direction for the
+metric this whole project exists to move. Revisit only if abuse actually shows up in
+`chat_run_completed`, which now exists to show it.
 
 Two notes worth keeping:
 
