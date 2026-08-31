@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 #
-# Verify the Vercel WAF "Block AI Training Crawlers" rule against a live deployment.
+# Verify the "Block AI Training Crawlers" WAF rule against a live deployment.
 #
-# The rule lives in the Vercel console, not in this repo, so nothing in CI can prove
-# it is still correct. This script is that proof — run it after publishing a firewall
-# change, after a domain/project migration, or whenever robots policy changes.
+# The rule lives in the Cloudflare zone WAF (it was a Vercel WAF rule until the 2026-08
+# migration), not in this repo, so nothing in CI can prove it is still correct. This
+# script is that proof — run it after a firewall change, after a domain/zone migration,
+# or whenever robots policy changes. Cloudflare's WAF is per-zone, so a new hostname on
+# a different zone is unprotected until the rule is added there too.
 #
 #   bash scripts/verify-ai-crawler-firewall.sh                        # production
 #   bash scripts/verify-ai-crawler-firewall.sh https://preview.url    # a preview

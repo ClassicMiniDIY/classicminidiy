@@ -111,3 +111,10 @@ supabase/.temp/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Design handoff bundle (UX cohesion pass). Working material, not source: the
+# design it specifies is implemented and its contracts are recorded in
+# CLAUDE.md. Ignored rather than committed because it is ~1MB of canvas HTML and
+# logo PNGs, and this repo is public — history is permanent, so the reversible
+# choice is to keep it out. Drop this rule if it should ship with the repo.
+design_handoff_ux_cohesion/

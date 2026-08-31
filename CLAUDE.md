@@ -106,7 +106,10 @@ This site shares the Supabase auth and profiles with the other properties. Datab
   - `bun run dev` - Start development server (using `nuxi dev`)
   - `bun run build` - Build for production (using `nuxi build`)
   - `bun run start` - Preview production build (using `nuxi preview`)
-  - `bun run format` - Format code with Prettier
+  - `bun run format` - Format code with Prettier. **Formats the WHOLE repo — never run
+    it on a feature branch.** Resolved Prettier versions differ enough between checkouts
+    that it rewrites hundreds of untouched files and buries the real change. Format only
+    your own paths: `bunx prettier --write <paths>`.
 
 **Note**: There is no `postinstall` script. `bun install` therefore never runs `nuxt prepare`, so `.nuxt/tsconfig.json` — which the root `tsconfig.json` extends — is absent on a fresh checkout. Run `bunx nuxi prepare` before `bun run test` there; CI does this explicitly in `pr-check.yml` and `deploy-cloudflare.yml`.
 
