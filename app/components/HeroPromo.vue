@@ -56,7 +56,6 @@
         '/app-promo/screenshot-compression.jpeg',
       ],
       expiresAt: '2027-01-01',
-      external: true,
       secondaryCtas: [
         {
           text: 'Download on App Store',

@@ -264,7 +264,7 @@
     "display_name_placeholder": "¿Cómo debemos llamarte?",
     "bio_label": "Biografía",
     "bio_placeholder": "Cuéntale a la comunidad un poco sobre ti y tu Mini...",
-    "save_success": "¡Perfil guardado correctamente!",
+    "save_success": "¡Perfil guardado exitosamente!",
     "save_error": "Error al guardar el perfil. Inténtalo de nuevo.",
     "what_you_can_do": "Qué Puedes Hacer",
     "feature_archive_title": "Explorar el Archivo",
