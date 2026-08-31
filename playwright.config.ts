@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { AUTH_STATE_PATH } from './tests/e2e/_auth';
 
 /**
  * E2E config, deliberately SEPARATE from vitest.config.ts.
@@ -35,12 +36,44 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // Mints the signed-in session ONCE for the run. Per-test minting raced:
+    // magic-link tokens are single-use, so six workers issuing links for the
+    // same user invalidated each other's — 4 of 6 failed in parallel while all
+    // 6 passed serially. It skips itself when the auth env is absent.
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+
+    // Anonymous projects. `authenticated.spec.ts` is excluded rather than left
+    // to skip itself, so these keep proving the site works with NO session —
+    // which is the majority of real traffic.
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: /authenticated\.spec\.ts/,
+    },
     // Firefox is not redundant coverage. Hydration-mismatch repair is browser-
     // and timing-dependent, and the nav dropdown bug reproduced ONLY in
     // Firefox — every Chromium verification passed while it was still broken.
     // See the dropdown invariants in CLAUDE.md.
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      testIgnore: /authenticated\.spec\.ts/,
+    },
+
+    // Signed-in projects. Both browsers again, for the same reason: the bug
+    // class these exist to catch is the one that only showed up in Firefox.
+    {
+      name: 'chromium-auth',
+      testMatch: /authenticated\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_STATE_PATH },
+    },
+    {
+      name: 'firefox-auth',
+      testMatch: /authenticated\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Firefox'], storageState: AUTH_STATE_PATH },
+    },
   ],
   webServer: {
     command: 'bun run dev',
@@ -60,6 +93,8 @@ export default defineConfig({
       // The marketplace is flag-gated; without this the /exchange specs skip
       // themselves and the suite silently loses that coverage.
       NUXT_PUBLIC_EXCHANGE_ENABLED: process.env.NUXT_PUBLIC_EXCHANGE_ENABLED ?? 'true',
+      // Turns Nuxt DevTools off for this server only — see nuxt.config.ts.
+      PLAYWRIGHT: 'true',
     },
   },
 });

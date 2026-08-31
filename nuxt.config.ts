@@ -35,6 +35,20 @@ const parsedToolbox = ToolboxItems.map((item) => {
 });
 
 export default defineNuxtConfig({
+  // Nuxt DevTools is dev-only tooling, and the E2E suite must not observe it.
+  // Under Firefox its client plugin fails to dynamically import — from TWO
+  // different module paths — which surfaces as an uncaught page error and
+  // failed authenticated specs that had nothing wrong with them.
+  //
+  // Disabled at source rather than filtered in the specs: filtering meant
+  // chasing devtools' internal paths (the first filter missed the second one),
+  // and a broad "ignore dynamic import failures" filter would hide a REAL
+  // dynamic-import failure in app code, which is a genuine production failure
+  // mode here (see the vuedraggable module-scope note in CLAUDE.md).
+  //
+  // Only Playwright sets this; `bun run dev` is unaffected.
+  devtools: { enabled: !process.env.PLAYWRIGHT },
+
   /*
    ** Headers of the page
    */

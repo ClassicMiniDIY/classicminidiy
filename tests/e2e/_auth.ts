@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
+/** Where the setup project writes the signed-in storage state. Gitignored. */
+export const AUTH_STATE_PATH = 'playwright/.auth/user.json';
+
 /**
  * Signing in for E2E, without touching the sign-in UI.
  *
