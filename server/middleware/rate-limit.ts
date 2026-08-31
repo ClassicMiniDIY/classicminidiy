@@ -68,8 +68,7 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const MCP_WINDOW_MS = Number(process.env.MCP_RATELIMIT_WINDOW_MS) || 60_000;
 const MCP_DEVELOPER_MAX = Number(process.env.MCP_RATELIMIT_DEVELOPER_MAX) || 240;
 const MCP_FREE_MAX = Number(process.env.MCP_RATELIMIT_FREE_MAX) || 20;
-const MCP_INTERNAL_MAX =
-  Number(process.env.MCP_RATELIMIT_INTERNAL_MAX) || Number(process.env.MCP_RATELIMIT_MAX) || 600;
+const MCP_INTERNAL_MAX = Number(process.env.MCP_RATELIMIT_INTERNAL_MAX) || Number(process.env.MCP_RATELIMIT_MAX) || 600;
 
 /** Requests/window for a resolved tier. A MISSING tier (the middleware
  *  ordering ever changing, or an unauthenticated request reaching here) gets
