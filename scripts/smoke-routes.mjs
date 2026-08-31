@@ -105,13 +105,16 @@ const stripComments = (html) => html.replace(/<!--[\s\S]*?-->/g, '');
  * ENTIRE body survives the strip and feeds into the <h1> count and the raw-i18n
  * scan below. Measured: `<script>x</script >` came through untouched.
  * (Raised by CodeQL js/incomplete-multi-character-sanitization.)
- *
- * A dangling `<script` with no close can still survive, which is what CodeQL
- * also warns about. That leftover is inert for these checks — it is not `<h1`
- * and not a dotted key — so it is deliberately not chased further here. This is
- * a test tool reading our own SSR output, not a sanitizer.
  */
-const stripScripts = (html) => html.replace(/<(script|style)[\s\S]*?<\/\1\s*>/gi, '');
+const stripScripts = (html) =>
+  html
+    // Matched pairs. `\s*` before the closing `>` is load-bearing — see above.
+    .replace(/<(script|style)[\s\S]*?<\/\1\s*>/gi, '')
+    // Anything still opening a script/style has no close, so as far as any
+    // parser is concerned the rest of the document is inside it. Dropping to
+    // end-of-string is both the conservative reading and what leaves no
+    // `<script` fragment behind for the checks below to misread.
+    .replace(/<(script|style)[\s\S]*$/gi, '');
 
 const titleOf = (html) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? null;
 const h1Count = (html) => (stripScripts(html).match(/<h1[\s>]/gi) ?? []).length;
