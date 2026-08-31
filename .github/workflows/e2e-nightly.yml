@@ -105,20 +105,24 @@ jobs:
       - name: Crawl https://www.classicminidiy.com
         run: node scripts/smoke-routes.mjs https://www.classicminidiy.com --concurrency 3
 
+  # Separate job on purpose. These assert LIVE infrastructure — ~30 real
+  # requests plus a Cloudflare API call — so a transient 5xx or a rate-limited
+  # API response is not evidence about the site's routes. Sharing a job with the
+  # production crawl would let an infra blip fail the crawl's result too, and a
+  # nightly that goes red for unrelated reasons is a nightly people stop reading.
+  infrastructure:
+    name: Verify Cloudflare zone rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'schedule' || inputs.crawl_production
+
+    steps:
+      - uses: actions/checkout@v6
+
       # Asserts the Cloudflare zone WAF rule that blocks AI TRAINING crawlers
-      # while letting the ANSWER bots through — the split that the GEO work
-      # depends on, since blocking OAI-SearchBot or PerplexityBot costs
-      # citations. The rule lives in the Cloudflare dashboard, not this repo, so
-      # nothing in CI could see it and it was human-only to confirm.
-      #
-      # Nightly rather than on PRs: it probes the live site with ~30 requests
-      # and asserts infrastructure a pull request cannot change. It needs no
-      # credentials — it is user-agent probing over plain HTTP.
-      #
-      # Its sibling `verify-cf-ratelimit.py` is deliberately NOT here: that one
-      # reads the zone config through the Cloudflare API and would need
-      # CLOUDFLARE_API_TOKEN as a repository secret. Run it by hand after a zone
-      # or BotID change until that token exists.
+      # while letting the ANSWER bots through — the split the GEO work depends
+      # on, since blocking OAI-SearchBot or PerplexityBot costs citations.
+      # Needs no credentials: it is user-agent probing over plain HTTP.
       - name: Verify the AI-crawler firewall rule
         run: bash scripts/verify-ai-crawler-firewall.sh https://www.classicminidiy.com
 
@@ -128,8 +132,7 @@ jobs:
       # fails this until the zone rule is extended.
       #
       # If this reports it cannot read the ruleset, the deploy token is scoped
-      # to Workers only and needs Zone → Read added; it is read-only either way
-      # and writes nothing.
+      # to Workers only and needs Zone -> Read added; it is read-only either way.
       - name: Verify the stubbed-BotID zone rate-limit rules
         run: python3 scripts/verify-cf-ratelimit.py
         env:

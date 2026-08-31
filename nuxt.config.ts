@@ -46,8 +46,13 @@ export default defineNuxtConfig({
   // dynamic-import failure in app code, which is a genuine production failure
   // mode here (see the vuedraggable module-scope note in CLAUDE.md).
   //
+  // Compared against the literal 'true' rather than checked for truthiness:
+  // `!process.env.PLAYWRIGHT` is false for ANY non-empty value, so someone
+  // setting PLAYWRIGHT=false to mean "not a Playwright run" would silently lose
+  // DevTools in ordinary `bun run dev` with no error and no obvious cause.
+  //
   // Only Playwright sets this; `bun run dev` is unaffected.
-  devtools: { enabled: !process.env.PLAYWRIGHT },
+  devtools: { enabled: process.env.PLAYWRIGHT !== 'true' },
 
   /*
    ** Headers of the page
