@@ -1,4 +1,41 @@
 /**
+ * Apply removal patterns until the string stops changing.
+ *
+ * A single pass is not enough: removal can REASSEMBLE the very pattern it just
+ * removed. `javajavascript:script:` survives one `.replace(/javascript:/gi)`
+ * as `javascript:`, and `<scr<script>ipt>` survives one tag strip as
+ * `<script>`. Looping to a fixpoint closes both.
+ *
+ * Bounded at 8 passes. Real input converges in one or two; the cap only stops a
+ * pathological string from spinning, and stopping early can leave residue but
+ * never hangs. Values from here are rendered as TEXT (see the note on each
+ * function), so residue is inert — this is depth, not the only line of defence.
+ */
+function stripUntilStable(input: string, patterns: RegExp[]): string {
+  let current = input;
+  for (let pass = 0; pass < 8; pass++) {
+    let next = current;
+    for (const pattern of patterns) next = next.replace(pattern, '');
+    if (next === current) return next;
+    current = next;
+  }
+  return current;
+}
+
+/**
+ * Anything that can carry script in a URL position. `javascript:` alone was the
+ * old denylist, which let `data:text/html;base64,…` and `vbscript:` through.
+ * `sanitizeUrl` below uses a protocol ALLOWLIST and is the right shape; these
+ * text fields cannot, because they are prose that may legitimately contain a
+ * colon, so the best available is a denylist of the schemes that execute.
+ */
+const DANGEROUS_PATTERNS: RegExp[] = [
+  /<[^>]*>/g, // HTML tags
+  /(?:javascript|vbscript|data)\s*:/gi, // executable URL schemes
+  /on\w+\s*=/gi, // inline event handlers (onclick=, onerror=…)
+];
+
+/**
  * Sanitize user input to prevent XSS attacks
  * Strips HTML tags and normalizes whitespace, storing raw text.
  * Do NOT HTML-encode here — the render layer (Vue mustache) escapes on output.
@@ -9,17 +46,10 @@ export function sanitizeUserInput(input: string): string {
     return '';
   }
 
-  // Remove HTML tags
-  let sanitized = input.replace(/<[^>]*>/g, '');
-
-  // Remove potential script injection patterns
-  sanitized = sanitized.replace(/javascript:/gi, '');
-  sanitized = sanitized.replace(/on\w+\s*=/gi, ''); // Remove event handlers like onclick=
+  const sanitized = stripUntilStable(input, DANGEROUS_PATTERNS);
 
   // Normalize whitespace
-  sanitized = sanitized.replace(/\s+/g, ' ').trim();
-
-  return sanitized;
+  return sanitized.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -37,17 +67,11 @@ export function sanitizeCommentContent(content: string): string {
   const maxLength = 2000;
   let sanitized = content.slice(0, maxLength);
 
-  // Remove all HTML tags (newlines/whitespace preserved as-is)
-  sanitized = sanitized.replace(/<[^>]*>/g, '');
-
-  // Remove script injection patterns
-  sanitized = sanitized.replace(/javascript:/gi, '');
-  sanitized = sanitized.replace(/on\w+\s*=/gi, '');
+  // Strip markup and executable schemes (newlines/whitespace preserved as-is)
+  sanitized = stripUntilStable(sanitized, DANGEROUS_PATTERNS);
 
   // Trim but preserve paragraph breaks
-  sanitized = sanitized.trim();
-
-  return sanitized;
+  return sanitized.trim();
 }
 
 /**

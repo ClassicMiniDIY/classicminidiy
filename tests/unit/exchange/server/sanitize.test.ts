@@ -367,4 +367,69 @@ describe('isValidEmail', () => {
       expect(isValidEmail(email)).toBe(false);
     });
   });
+
+  // ===========================================================================
+  //  Reassembly and scheme coverage (CodeQL js/incomplete-multi-character-
+  //  sanitization, js/incomplete-url-scheme-check — issue #778)
+  //
+  //  These fields render as TEXT, not v-html, so none of this was a live XSS.
+  //  The functions are named `sanitize*` though, and the next person to render
+  //  one of them will reasonably trust the name — that gap is what these close.
+  // ===========================================================================
+  describe('single-pass reassembly', () => {
+    it.each([
+      ['javajavascript:script:alert(1)', 'javascript:'],
+      ['jajavascript:vascript:alert(1)', 'javascript:'],
+    ])('strips a scheme that a single pass would reassemble: %s', (input, reassembled) => {
+      const out = sanitizeUserInput(input);
+      expect(out.toLowerCase()).not.toContain(reassembled);
+    });
+
+    it('strips a tag that a single pass would reassemble', () => {
+      expect(sanitizeUserInput('<scr<script>ipt>alert(1)')).not.toContain('<script');
+    });
+
+    it('applies the same fixpoint to comment content', () => {
+      expect(sanitizeCommentContent('javajavascript:script:alert(1)').toLowerCase()).not.toContain('javascript:');
+    });
+  });
+
+  describe('executable URL schemes beyond javascript:', () => {
+    it.each([
+      ['data:text/html;base64,PHNjcmlwdD4=', 'data:'],
+      ['vbscript:msgbox(1)', 'vbscript:'],
+      ['JavaScript:alert(1)', 'javascript:'],
+      ['javascript :alert(1)', 'javascript'],
+    ])('removes %s', (input, scheme) => {
+      expect(sanitizeUserInput(input).toLowerCase()).not.toContain(scheme + ':');
+    });
+
+    // Whitespace INSIDE the scheme name ("java script:") is deliberately not
+    // handled. Browsers do strip it in an href, so it is a real vector — but only
+    // where the value reaches an href, and these fields render as text. Matching
+    // it would need /j\s*a\s*v\s*a\s*.../, which mangles ordinary prose to
+    // defend a rendering path that does not exist. If one of these fields ever
+    // becomes markup, use DOMPurify rather than extending this regex.
+    it('does not chase whitespace inside the scheme name', () => {
+      expect(sanitizeUserInput('java script:alert(1)')).toBe('java script:alert(1)');
+    });
+
+    it('leaves an ordinary colon in prose alone', () => {
+      expect(sanitizeUserInput('For sale: 1969 Cooper S')).toBe('For sale: 1969 Cooper S');
+    });
+
+    it('leaves a plain http URL alone', () => {
+      expect(sanitizeUserInput('see https://example.com/x')).toBe('see https://example.com/x');
+    });
+  });
+
+  describe('termination', () => {
+    it('returns for a long adversarial string rather than spinning', () => {
+      const nasty = '<'.repeat(5000) + 'javascript:'.repeat(500);
+      const started = Date.now();
+      const out = sanitizeUserInput(nasty);
+      expect(Date.now() - started).toBeLessThan(2000);
+      expect(typeof out).toBe('string');
+    });
+  });
 });
