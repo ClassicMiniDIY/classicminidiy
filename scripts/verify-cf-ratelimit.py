@@ -6,6 +6,21 @@
 each route which calls it must be covered by BOTH an in-app limiter
 (`server/middleware/rate-limit.ts`) and a Cloudflare **zone** rate-limit rule.
 
+Two sources of demand, because deriving the list from `checkBotId()` alone made
+the assertion accidental rather than principled:
+
+  * routes that call `checkBotId()`, derived from source, and
+  * ALWAYS_REQUIRED below — routes that need a zone rule for a reason that has
+    nothing to do with BotID.
+
+The chat proxy is why the second list exists. It used to call `checkBotId()`, so
+its zone rule was covered here as a side effect; when the call was removed on
+2026-08-31 (it classified nothing and implied a guarantee the platform does not
+provide) the rule would have silently stopped being asserted, even though the
+reason it must exist — an unauthenticated endpoint that spends money on every
+request — was untouched. A route earns a zone rule by what it costs an abuser to
+call, not by which library it happens to import.
+
 The zone half lives in the Cloudflare dashboard, not this repo, so nothing in CI
 could see it and it was a thing only a human could confirm. This script is that
 confirmation, and it derives the list of routes it demands coverage for FROM THE
@@ -34,6 +49,13 @@ import urllib.request
 
 ZONE_NAME = "classicminidiy.com"
 API = "https://api.cloudflare.com/client/v4"
+
+# Routes that must have a zone rate-limit rule regardless of BotID, with the
+# reason stated so a future reader can judge whether it still holds. Keep this
+# to routes where an anonymous caller can make us spend money or do real work.
+ALWAYS_REQUIRED = {
+    "/api/langgraph/*": "unauthenticated AI chat proxy — every POST bills an LLM run",
+}
 
 token = os.environ.get("CLOUDFLARE_API_TOKEN")
 if not token:
@@ -121,27 +143,30 @@ if not resp.get("success"):
 rules = [r for r in (resp.get("result") or {}).get("rules") or [] if r.get("enabled", True)]
 expressions = [r.get("expression", "") for r in rules]
 
-targets = routes_calling_botid()
+botid_routes = routes_calling_botid()
+targets = sorted(set(botid_routes) | set(ALWAYS_REQUIRED))
+
 print(f"Zone {ZONE_NAME}: {len(rules)} enabled rate-limit rule(s)")
-print(f"Routes calling checkBotId() (BotID is stubbed on Cloudflare): {len(targets)}\n")
+print(f"Routes calling checkBotId() (BotID is stubbed on Cloudflare): {len(botid_routes)}")
+print(f"Routes required regardless of BotID: {len(ALWAYS_REQUIRED)}\n")
 
 failed = 0
 for path in targets:
+    why = ALWAYS_REQUIRED.get(path)
+    label = f"{path}  ({why})" if why else path
     if covered(path, expressions):
-        print(f"  ok    {path}")
+        print(f"  ok    {label}")
     else:
-        print(f"  FAIL  {path}  — no enabled zone rate-limit rule matches it")
+        print(f"  FAIL  {label}  — no enabled zone rate-limit rule matches it")
         failed += 1
-
-if not targets:
-    print("  (no route calls checkBotId() any more — this script can be deleted)")
 
 if failed:
     print(
-        f"\n{failed} route(s) call checkBotId(), which does nothing on Cloudflare,\n"
-        "and have no zone rate-limit rule behind them. Add the path to the zone\n"
-        "rule's expression, or drop the checkBotId() call if it is not needed."
+        f"\n{failed} route(s) need a zone rate-limit rule and have none. Add the\n"
+        "path to the zone rule's expression. If the route is in ALWAYS_REQUIRED and\n"
+        "genuinely no longer needs one, remove the entry AND say why — do not just\n"
+        "delete it to make this pass."
     )
     sys.exit(1)
 
-print("\nEvery stubbed-BotID route is covered by an enabled zone rate-limit rule.")
+print("\nEvery route needing a zone rate-limit rule is covered by an enabled one.")
