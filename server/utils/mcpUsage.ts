@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3';
 import { getMcpAuth } from './mcpTiers';
 import { getServiceClient } from './supabase';
+import { serverRuntimeConfig } from './runtimeConfig';
 
 /**
  * Async usage capture for MCP tool calls — never on the hot path, never a
@@ -35,7 +36,7 @@ function background(event: H3Event, promise: Promise<unknown>): void {
 }
 
 function captureToPostHog(event: H3Event, name: string, distinctId: string, properties: Record<string, unknown>): void {
-  const key = useRuntimeConfig(event).public.posthogPublicKey as string;
+  const key = serverRuntimeConfig(event).public.posthogPublicKey as string;
   if (!key) return;
 
   const send = $fetch(`${POSTHOG_INGEST_HOST}/capture/`, {

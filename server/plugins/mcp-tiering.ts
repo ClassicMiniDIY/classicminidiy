@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3';
 import { FREE_TOOLS, getMcpAuth } from '../utils/mcpTiers';
 import { recordMcpGated, recordMcpUsage } from '../utils/mcpUsage';
+import { serverRuntimeConfig } from '../utils/runtimeConfig';
 
 /**
  * Per-request MCP tool tiering + usage capture.
@@ -56,7 +57,7 @@ function toolName(tool: ToolDef): string | undefined {
 function gatedStub(tool: ToolDef, name: string, event: H3Event): ToolDef {
   // Built from siteUrl like every other server-side outbound link, rather than
   // a hand-maintained origin that rots inside MCP clients' cached descriptions.
-  const upgradeUrl = `${((useRuntimeConfig(event).public.siteUrl as string) || 'https://www.classicminidiy.com').replace(/\/$/, '')}/developers`;
+  const upgradeUrl = `${((serverRuntimeConfig(event).public.siteUrl as string) || 'https://www.classicminidiy.com').replace(/\/$/, '')}/developers`;
   return {
     ...tool,
     // No cache wrapper for a stub: a cached upsell answer under the tool's old
@@ -105,16 +106,13 @@ function withUsage(tool: ToolDef, name: string, event: H3Event): ToolDef {
 }
 
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook(
-    'mcp:config:resolved',
-    ({ config, event }: { config: { tools: ToolDef[] }; event: H3Event }) => {
-      const tier = getMcpAuth(event)?.tier ?? 'free';
-      config.tools = config.tools.map((tool) => {
-        // Unresolvable name ⇒ treat as paid (gate it): over-restriction is the
-        // safe failure direction for a revenue boundary.
-        const name = toolName(tool) ?? '';
-        return tier === 'free' && !FREE_TOOLS.has(name) ? gatedStub(tool, name, event) : withUsage(tool, name, event);
-      });
-    }
-  );
+  nitroApp.hooks.hook('mcp:config:resolved', ({ config, event }: { config: { tools: ToolDef[] }; event: H3Event }) => {
+    const tier = getMcpAuth(event)?.tier ?? 'free';
+    config.tools = config.tools.map((tool) => {
+      // Unresolvable name ⇒ treat as paid (gate it): over-restriction is the
+      // safe failure direction for a revenue boundary.
+      const name = toolName(tool) ?? '';
+      return tier === 'free' && !FREE_TOOLS.has(name) ? gatedStub(tool, name, event) : withUsage(tool, name, event);
+    });
+  });
 });

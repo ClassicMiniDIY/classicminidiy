@@ -63,11 +63,20 @@ import wheelSearch from '../mcp/tools/wheel-search';
  * of truth for no gain.
  */
 
-/** The subset of a toolkit definition this bridge reads. */
+/**
+ * The subset of a toolkit definition this bridge reads.
+ *
+ * `extra` is `any` rather than `unknown` on purpose. The toolkit types it as
+ * `McpRequestExtra`, and parameter contravariance means a handler declared with
+ * `unknown` there is NOT assignable from one declared with the real type — all
+ * eleven imports fail to typecheck. `any` is the right escape for a parameter
+ * this bridge deliberately substitutes; NO_MCP_EXTRA below is what actually
+ * enforces that no handler reads it.
+ */
 interface McpToolDefinition {
   description?: string;
-  inputSchema?: Record<string, z.ZodTypeAny>;
-  handler: (args: any, extra: unknown) => unknown;
+  inputSchema?: Readonly<Record<string, z.ZodTypeAny>>;
+  handler: (args: any, extra: any) => unknown;
 }
 
 /**
