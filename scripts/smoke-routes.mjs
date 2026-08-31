@@ -93,7 +93,16 @@ async function get(path, { redirect = 'manual' } = {}) {
  * before any content check, or the crawler reports the documentation as the
  * defect.
  */
-const stripComments = (html) => html.replace(/<!--[\s\S]*?-->/g, '');
+const stripComments = (html) =>
+  html
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // An unterminated `<!--` comments out the rest of the document, so anything
+    // after it must not be read as page structure. Without this, a page with a
+    // dangling comment containing markup counted a COMMENTED-OUT <h1> as real:
+    //   '<h1>Real</h1><!-- <h1>Commented</h1>'  ->  2 headings, should be 1
+    // which would surface as a false finding in the <h1> check below. Same
+    // treatment stripScripts already gives an unterminated <script>.
+    .replace(/<!--[\s\S]*$/g, '');
 
 /**
  * Drop <script> and <style> bodies. Nuxt serialises page data into a script
