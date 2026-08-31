@@ -1,5 +1,6 @@
 <script lang="ts" setup>
   import { HERO_TYPES } from '../../../../data/models/generic';
+  import { stripMarkup } from '~/utils/plainText';
   import { shareWheelItem } from '../../../../data/models/helper-utils';
   import type { IWheelsData } from '../../../../data/models/wheels';
 
@@ -29,8 +30,9 @@
 
   const copied = ref<boolean>(false);
   const showSuggestEdit = ref(false);
-  // Legacy notes may contain embedded HTML; strip tags so they render as plain text rather than escaped markup.
-  const wheelNotes = computed(() => (wheel.value?.notes || '').replace(/<[^>]*>/g, '').trim());
+  // Legacy notes may contain embedded HTML; strip it so they render as plain
+  // text rather than escaped markup. See app/utils/plainText.ts.
+  const wheelNotes = computed(() => stripMarkup(wheel.value?.notes));
   const shareImage = computed(() => {
     if (!wheel.value?.images?.length) return 'no-image';
     return wheel.value.images[0].src;
@@ -137,133 +139,139 @@
           <div class="card bg-base-100 shadow-sm border border-base-300">
             <div class="card-body">
               <div v-if="wheel">
-              <div class="flex flex-col md:flex-row gap-8">
-                <div class="flex-1">
-                  <span class="eyebrow">{{ t('eyebrow') }}</span>
-                  <h2 class="text-3xl font-bold mb-4">{{ wheel.name }}</h2>
-                  <p v-if="wheelNotes" class="text-gray-600 text-lg">{{ wheelNotes }}</p>
-                </div>
+                <div class="flex flex-col md:flex-row gap-8">
+                  <div class="flex-1">
+                    <span class="eyebrow">{{ t('eyebrow') }}</span>
+                    <h2 class="text-3xl font-bold mb-4">{{ wheel.name }}</h2>
+                    <p v-if="wheelNotes" class="text-gray-600 text-lg">{{ wheelNotes }}</p>
+                  </div>
 
-                <div class="w-full md:w-1/3 flex justify-center">
-                  <div class="w-full max-w-sm">
-                    <div
-                      v-if="wheel.images && wheel.images.length > 1"
-                      class="carousel w-full rounded-lg overflow-hidden"
-                    >
+                  <div class="w-full md:w-1/3 flex justify-center">
+                    <div class="w-full max-w-sm">
                       <div
-                        v-for="(image, index) in wheel.images"
-                        :key="index"
-                        :id="`slide${index}`"
-                        class="carousel-item relative w-full aspect-[4/3]"
+                        v-if="wheel.images && wheel.images.length > 1"
+                        class="carousel w-full rounded-lg overflow-hidden"
                       >
-                        <img :src="image.src" class="w-full h-full object-cover" />
-                        <div class="absolute flex justify-between transform -translate-y-1/2 left-2 right-2 top-1/2">
-                          <a
-                            :href="`#slide${index === 0 ? wheel.images.length - 1 : index - 1}`"
-                            class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md"
-                          >
-                            <i class="fas fa-chevron-left"></i>
-                          </a>
-                          <a
-                            :href="`#slide${index === wheel.images.length - 1 ? 0 : index + 1}`"
-                            class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md"
-                          >
-                            <i class="fas fa-chevron-right"></i>
-                          </a>
+                        <div
+                          v-for="(image, index) in wheel.images"
+                          :key="index"
+                          :id="`slide${index}`"
+                          class="carousel-item relative w-full aspect-[4/3]"
+                        >
+                          <img :src="image.src" class="w-full h-full object-cover" />
+                          <div class="absolute flex justify-between transform -translate-y-1/2 left-2 right-2 top-1/2">
+                            <a
+                              :href="`#slide${index === 0 ? wheel.images.length - 1 : index - 1}`"
+                              class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md"
+                            >
+                              <i class="fas fa-chevron-left"></i>
+                            </a>
+                            <a
+                              :href="`#slide${index === wheel.images.length - 1 ? 0 : index + 1}`"
+                              class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md"
+                            >
+                              <i class="fas fa-chevron-right"></i>
+                            </a>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <img
-                      v-else-if="wheel.images && wheel.images[0]"
-                      :alt="t('image_alt', { name: wheel.name })"
-                      class="w-full h-auto rounded-lg shadow-md"
-                      :src="wheel.images[0].src"
-                    />
-                    <div v-else class="w-full aspect-square flex items-center justify-center bg-gray-100 rounded-lg">
-                      <i class="fas fa-image text-6xl text-gray-300" :title="t('no_image_placeholder')"></i>
+                      <img
+                        v-else-if="wheel.images && wheel.images[0]"
+                        :alt="t('image_alt', { name: wheel.name })"
+                        class="w-full h-auto rounded-lg shadow-md"
+                        :src="wheel.images[0].src"
+                      />
+                      <div v-else class="w-full aspect-square flex items-center justify-center bg-gray-100 rounded-lg">
+                        <i class="fas fa-image text-6xl text-gray-300" :title="t('no_image_placeholder')"></i>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="divider my-4"></div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 py-4">
-                <div class="flex flex-col items-center text-center">
-                  <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                    <i class="fad fa-arrow-right-to-line text-xl text-primary"></i>
+                <div class="divider my-4"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 py-4">
+                  <div class="flex flex-col items-center text-center">
+                    <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                      <i class="fad fa-arrow-right-to-line text-xl text-primary"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-600 mb-1">
+                      {{ t('specifications.offset') }}
+                    </h3>
+                    <p v-if="wheel.offset" class="text-lg font-medium">{{ wheel.offset }}</p>
+                    <p v-else class="text-error text-sm">
+                      {{ t('specifications.not_specified') }}
+                    </p>
                   </div>
-                  <h3 class="font-semibold text-gray-600 mb-1">
-                    {{ t('specifications.offset') }}
-                  </h3>
-                  <p v-if="wheel.offset" class="text-lg font-medium">{{ wheel.offset }}</p>
-                  <p v-else class="text-error text-sm">
-                    {{ t('specifications.not_specified') }}
-                  </p>
+                  <div class="flex flex-col items-center text-center">
+                    <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mb-2">
+                      <i class="fad fa-arrows-to-line text-xl text-secondary"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-600 mb-1">
+                      {{ t('specifications.diameter') }}
+                    </h3>
+                    <p v-if="wheel.size" class="text-lg font-medium">{{ wheel.size }}</p>
+                    <p v-else class="text-error text-sm">
+                      {{ t('specifications.not_specified') }}
+                    </p>
+                  </div>
+                  <div class="flex flex-col items-center text-center">
+                    <div class="w-12 h-12 rounded-full bg-info/10 flex items-center justify-center mb-2">
+                      <i class="fad fa-arrows-left-right-to-line text-xl text-info"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-600 mb-1">
+                      {{ t('specifications.width') }}
+                    </h3>
+                    <p v-if="wheel.width" class="text-lg font-medium">{{ wheel.width }}</p>
+                    <p v-else class="text-error text-sm">
+                      {{ t('specifications.not_specified') }}
+                    </p>
+                  </div>
                 </div>
-                <div class="flex flex-col items-center text-center">
-                  <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mb-2">
-                    <i class="fad fa-arrows-to-line text-xl text-secondary"></i>
-                  </div>
-                  <h3 class="font-semibold text-gray-600 mb-1">
-                    {{ t('specifications.diameter') }}
-                  </h3>
-                  <p v-if="wheel.size" class="text-lg font-medium">{{ wheel.size }}</p>
-                  <p v-else class="text-error text-sm">
-                    {{ t('specifications.not_specified') }}
-                  </p>
-                </div>
-                <div class="flex flex-col items-center text-center">
-                  <div class="w-12 h-12 rounded-full bg-info/10 flex items-center justify-center mb-2">
-                    <i class="fad fa-arrows-left-right-to-line text-xl text-info"></i>
-                  </div>
-                  <h3 class="font-semibold text-gray-600 mb-1">
-                    {{ t('specifications.width') }}
-                  </h3>
-                  <p v-if="wheel.width" class="text-lg font-medium">{{ wheel.width }}</p>
-                  <p v-else class="text-error text-sm">
-                    {{ t('specifications.not_specified') }}
-                  </p>
+                <div class="divider my-4"></div>
+                <div class="flex flex-wrap justify-center gap-3 pt-2">
+                  <button v-if="copied" type="button" class="btn btn-neutral btn-lg" disabled>
+                    <i class="fad fa-check text-success mr-2"></i>
+                    <span>{{ t('actions.copied') }}</span>
+                  </button>
+                  <button v-else type="button" class="btn btn-primary btn-lg" @click="copyUrl">
+                    <i class="fad fa-link mr-2"></i>
+                    <span>{{ t('actions.copy_link') }}</span>
+                  </button>
+                  <button
+                    v-if="wheel.name && wheel.uuid"
+                    type="button"
+                    class="btn btn-secondary btn-lg"
+                    @click="
+                      shareWheelItem(wheel.name, wheel.uuid);
+                      track('wheel_shared', { wheel_id: wheel.uuid, method: 'native_share' });
+                    "
+                  >
+                    <i class="fad fa-share mr-2"></i>
+                    <span>{{ t('actions.share') }}</span>
+                  </button>
+                  <NuxtLink
+                    v-if="wheel.uuid"
+                    :to="`/contribute/wheel?uuid=${wheel.uuid}`"
+                    class="btn btn-outline btn-lg"
+                    @click="track('contribute_cta_clicked', { type: 'wheel', location: 'wheel_detail' })"
+                  >
+                    <i class="fad fa-edit mr-2"></i>
+                    <span>{{ t('actions.contribute') }}</span>
+                  </NuxtLink>
+                  <button
+                    v-if="isAuthenticated"
+                    type="button"
+                    class="btn btn-outline btn-sm"
+                    @click="
+                      showSuggestEdit = true;
+                      track('suggest_edit_opened', { wheel_id: wheel.uuid });
+                    "
+                  >
+                    <i class="fad fa-pen-to-square mr-2"></i>
+                    <span>{{ t('suggest_edit') }}</span>
+                  </button>
                 </div>
               </div>
-              <div class="divider my-4"></div>
-              <div class="flex flex-wrap justify-center gap-3 pt-2">
-                <button v-if="copied" type="button" class="btn btn-neutral btn-lg" disabled>
-                  <i class="fad fa-check text-success mr-2"></i>
-                  <span>{{ t('actions.copied') }}</span>
-                </button>
-                <button v-else type="button" class="btn btn-primary btn-lg" @click="copyUrl">
-                  <i class="fad fa-link mr-2"></i>
-                  <span>{{ t('actions.copy_link') }}</span>
-                </button>
-                <button
-                  v-if="wheel.name && wheel.uuid"
-                  type="button"
-                  class="btn btn-secondary btn-lg"
-                  @click="shareWheelItem(wheel.name, wheel.uuid); track('wheel_shared', { wheel_id: wheel.uuid, method: 'native_share' })"
-                >
-                  <i class="fad fa-share mr-2"></i>
-                  <span>{{ t('actions.share') }}</span>
-                </button>
-                <NuxtLink
-                  v-if="wheel.uuid"
-                  :to="`/contribute/wheel?uuid=${wheel.uuid}`"
-                  class="btn btn-outline btn-lg"
-                  @click="track('contribute_cta_clicked', { type: 'wheel', location: 'wheel_detail' })"
-                >
-                  <i class="fad fa-edit mr-2"></i>
-                  <span>{{ t('actions.contribute') }}</span>
-                </NuxtLink>
-                <button
-                  v-if="isAuthenticated"
-                  type="button"
-                  class="btn btn-outline btn-sm"
-                  @click="showSuggestEdit = true; track('suggest_edit_opened', { wheel_id: wheel.uuid })"
-                >
-                  <i class="fad fa-pen-to-square mr-2"></i>
-                  <span>{{ t('suggest_edit') }}</span>
-                </button>
-              </div>
-            </div>
             </div>
           </div>
         </div>

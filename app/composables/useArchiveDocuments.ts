@@ -1,3 +1,4 @@
+import { toPlainSummary } from '~/utils/plainText';
 export interface ArchiveDocumentItem {
   id: string;
   title: string;
@@ -51,15 +52,10 @@ export const useArchiveDocuments = () => {
     return `${config.public.supabaseUrl}/storage/v1/object/public/archive-thumbnails/${path}`;
   };
 
-  // Strip HTML comments, markdown headings, and other artifacts from migrated descriptions
-  const cleanDescription = (raw: string | null): string => {
-    if (!raw) return '';
-    return raw
-      .replace(/<!--.*?-->/g, '') // HTML comments
-      .replace(/^#+\s*/gm, '') // Markdown headings
-      .replace(/\s+/g, ' ') // Collapse whitespace
-      .trim();
-  };
+  // Strip HTML comments, markdown headings, and other artifacts from migrated
+  // descriptions. See app/utils/plainText.ts — the previous inline version
+  // missed multi-line comments, which then displayed as literal text.
+  const cleanDescription = (raw: string | null): string => toPlainSummary(raw);
 
   const mapToArchiveItem = (row: any): ArchiveDocumentItem => ({
     id: row.id,
