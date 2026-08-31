@@ -140,6 +140,18 @@ put NUXT_SUPABASE_SERVICE_KEY SUPABASE_SERVICE_KEY
 put NUXT_LANGGRAPH_API_URL NUXT_LANGGRAPH_API_URL
 put NUXT_LANGSMITH_API_KEY NUXT_LANGSMITH_API_KEY
 
+# The in-Worker agent (server/api/chat.post.ts). ANTHROPIC_API_KEY is the only
+# required one — without it /api/chat answers 503 rather than failing silently,
+# which is the whole point of the 2026-08-26 lesson above.
+#
+# AI_GATEWAY_ANTHROPIC_URL is optional and must NOT carry a trailing /v1:
+#   https://gateway.ai.cloudflare.com/v1/<account_id>/<gateway_id>/anthropic
+# @ai-sdk/anthropic appends /v1/messages itself. CHAT_MODEL is optional too and
+# exists so the model can be changed without a rebuild.
+put NUXT_ANTHROPIC_API_KEY NUXT_ANTHROPIC_API_KEY ANTHROPIC_API_KEY
+put NUXT_AI_GATEWAY_ANTHROPIC_URL NUXT_AI_GATEWAY_ANTHROPIC_URL OPTIONAL
+put NUXT_CHAT_MODEL NUXT_CHAT_MODEL OPTIONAL
+
 # --- Content APIs ----------------------------------------------------------
 # Also build-time: prerendered pages fetch /api/{github,youtube}/* during the
 # crawl, so an unset key at build time bakes an empty widget into static HTML.
