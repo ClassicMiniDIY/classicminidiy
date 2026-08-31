@@ -103,10 +103,15 @@ function keyFingerprint(token: string): string {
  * Paths exempt from the mutation throttle. `/api/admin/**` is excluded so a
  * moderator working through the review queue (bulk approve/reject) is never
  * throttled mid-session — admin access is already gated by requireAdminAuth.
- * `/api/chat` is handled by its own (stricter, unauthenticated) policy above
- * and must not be double-counted here.
+ * `/api/chat` itself is handled by its own (stricter, unauthenticated) policy
+ * above and must not be double-counted here. Its SUBTREE is not exempt —
+ * `/api/chat/threads/**` is an ordinary authenticated write surface.
  */
-const WRITE_EXEMPT_PREFIXES = ['/api/chat', '/api/admin'];
+// `/api/chat` exactly, NOT its subtree: the chat route has its own policy above
+// and must not be double-counted, but `/api/chat/threads/**` is an ordinary
+// authenticated write surface and should be throttled like every other one.
+const WRITE_EXEMPT_EXACT = ['/api/chat'];
+const WRITE_EXEMPT_PREFIXES = ['/api/admin'];
 
 // clientIp() moved to server/utils/clientIp.ts — mcp-auth's lookup throttle
 // keys on the same identity, and two copies would drift. The header-precedence
@@ -158,8 +163,15 @@ export default defineEventHandler((event) => {
     return;
   }
 
-  // Policy 1: the public AI chat proxy.
-  if (pathname.startsWith('/api/chat')) {
+  // Policy 1: the public AI chat route.
+  //
+  // EXACT match, not a prefix. `/api/chat/threads/**` (synced history) sits
+  // under the same path but costs a cheap database read, not a model run —
+  // metering it against the chat budget would let a member's sync on page load
+  // spend a large share of the allowance and 429 the very next thing they
+  // typed. Those routes are authenticated and fall through to the write
+  // throttle below instead.
+  if (pathname === '/api/chat') {
     applyLimit(
       event,
       `chat:${clientIp(event)}`,
@@ -176,6 +188,7 @@ export default defineEventHandler((event) => {
     WRITE_METHODS.has(event.method) &&
     // Match on a path-segment boundary so a prefix of '/api/admin' exempts
     // '/api/admin' and '/api/admin/...' but NOT '/api/admin-foo'.
+    !WRITE_EXEMPT_EXACT.includes(pathname) &&
     !WRITE_EXEMPT_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))
   ) {
     applyLimit(

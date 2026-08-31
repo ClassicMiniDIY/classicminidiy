@@ -50,6 +50,23 @@ describe('server/middleware/rate-limit', () => {
     mockGetRequestIP.mockReturnValue('203.0.113.7');
   });
 
+  it('does not meter the synced-history subtree against the chat budget', async () => {
+    // /api/chat/threads/** costs a cheap database read, not a model run.
+    // Metering it as chat would let a member's sync on page load spend a large
+    // share of the allowance and 429 the very next thing they typed.
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat/threads'));
+    await (handler as Function)({ ...fakeEvent, method: 'GET' });
+    expect(mockSetHeader).not.toHaveBeenCalled();
+  });
+
+  it('still applies the WRITE throttle to synced-history mutations', async () => {
+    // Exempting the whole subtree would leave an authenticated write surface
+    // with no throttle at all.
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat/threads/abc'));
+    await (handler as Function)({ ...fakeEvent, method: 'PUT' });
+    expect(mockSetHeader).toHaveBeenCalledWith(expect.anything(), 'X-RateLimit-Limit', expect.anything());
+  });
+
   it('ignores non-chat routes (no-op, no IP lookup)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/listings'));
 

@@ -164,7 +164,7 @@
     </div>
 
     <ChatHistoryDialog
-      :entries="history.entries.value"
+      :entries="historyEntries"
       :active-thread-id="threadId"
       :open="historyOpen"
       @select="handleSelectThread"
@@ -237,6 +237,45 @@
   const historyOpen = ref(false);
 
   const history = useChatHistory();
+  const sync = useChatSync();
+  const { isSustainingMember } = useAuth();
+
+  /**
+   * Whether this browser is syncing conversations to the account.
+   *
+   * Gated on `hasMounted` as well as membership: `isSustainingMember` reads a
+   * profile loaded client-side, so it is false during SSR and flips true after
+   * `initAuth()` — branching on it directly is the structural hydration
+   * mismatch documented in CLAUDE.md. Same rule as `MainNav`'s `isSignedIn`.
+   */
+  const syncEnabled = computed(() => hasMounted.value && isSustainingMember.value);
+
+  /**
+   * The history dialog's list: local conversations plus any that exist only on
+   * the server (another device, or this browser after its storage was cleared).
+   *
+   * Local wins on a collision. It is the working copy, so it is at least as
+   * fresh as anything the server has — the push is debounced, so the server is
+   * by definition a little behind.
+   */
+  const historyEntries = computed(() => {
+    const local = history.entries.value;
+    if (!syncEnabled.value) return local;
+
+    const localIds = new Set(local.map((entry) => entry.threadId));
+    const remoteOnly = sync.remote.value
+      .filter((entry) => !localIds.has(entry.threadId))
+      .map((entry) => ({
+        threadId: entry.threadId,
+        title: entry.title,
+        messageCount: entry.messageCount,
+        createdAt: Date.parse(entry.createdAt) || Date.now(),
+        lastUsedAt: Date.parse(entry.updatedAt) || Date.now(),
+        messages: [],
+      }));
+
+    return [...local, ...remoteOnly].sort((a, b) => b.lastUsedAt - a.lastUsedAt);
+  });
 
   /** Local conversation id. Keys history; never sent to a thread store. */
   const threadId = ref<string>('');
@@ -312,6 +351,11 @@
     // Reads localStorage, so it must run after mount — same rule as
     // useRecentTools().load(); see CLAUDE.md.
     history.load();
+
+    // Pull the account's conversations once membership is known. Deliberately
+    // not awaited: a slow or unavailable sync must not delay the chat becoming
+    // usable, and the local copy is already on screen.
+    watch(syncEnabled, (on) => on && sync.pull(), { immediate: true });
 
     // Resume the most recent conversation, if there is one.
     const mostRecent = history.entries.value[0];
@@ -432,10 +476,13 @@
     const current = messages.value as UIMessage[];
     if (!hasMounted.value || !threadId.value || current.length === 0) return;
     const firstUser = current.find((message) => message.role === 'user');
-    history.record(threadId.value, {
-      title: history.deriveTitle(messageText(firstUser)),
-      messages: current,
-    });
+    const title = history.deriveTitle(messageText(firstUser));
+    history.record(threadId.value, { title, messages: current });
+
+    // Fire-and-forget, on the SAME debounce as the local write. The local copy
+    // is the working one, so a failed push costs sync rather than the
+    // conversation — useChatSync swallows its own errors for that reason.
+    if (syncEnabled.value) void sync.push(threadId.value, title, current);
   }
 
   function schedulePersist() {
@@ -485,7 +532,7 @@
     await sendMessage({ text });
   }
 
-  function handleSelectThread(id: string) {
+  async function handleSelectThread(id: string) {
     if (id === threadId.value) {
       historyOpen.value = false;
       return;
@@ -495,12 +542,30 @@
     input.value = '';
     stop();
     threadId.value = id;
-    messages.value = history.getMessages(id);
+
+    const local = history.getMessages(id);
+    if (local.length > 0) {
+      messages.value = local;
+    } else if (syncEnabled.value) {
+      // A conversation from another device: the list carries its title but not
+      // its transcript, so fetch it now rather than shipping twenty of them to
+      // render a list.
+      messages.value = [];
+      const remote = await sync.pullThread(id);
+      // Guard against a slow fetch landing after the user moved on again.
+      if (remote && threadId.value === id) messages.value = remote;
+    } else {
+      messages.value = [];
+    }
+
     nextTick(() => scrollToBottom(false));
   }
 
   function handleRemoveThread(id: string) {
     history.remove(id);
+    // A delete that only removes the local copy would resurrect the
+    // conversation on the next pull, which reads as the delete not working.
+    if (syncEnabled.value) void sync.remove(id);
     // Removing the conversation you are in also ends it, otherwise the composer
     // would keep appending to one no longer listed.
     if (threadId.value === id) handleNewChat();
@@ -508,6 +573,7 @@
 
   function handleClearHistory() {
     history.clear();
+    if (syncEnabled.value) void sync.clear();
     historyOpen.value = false;
     handleNewChat();
   }

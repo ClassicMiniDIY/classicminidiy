@@ -461,6 +461,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      chat_threads: {
+        Row: {
+          created_at: string;
+          id: string;
+          message_count: number;
+          messages: Json;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id: string;
+          message_count?: number;
+          messages?: Json;
+          title?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          message_count?: number;
+          messages?: Json;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       chat_usage_daily: {
         Row: {
           day: string;
@@ -5009,6 +5039,7 @@ export type Database = {
         };
       };
       promote_tenured_users: { Args: never; Returns: number };
+      prune_chat_threads: { Args: never; Returns: undefined };
       prune_chat_usage_daily: { Args: never; Returns: undefined };
       publish_model_version: {
         Args: { p_version_id: string };
