@@ -30,6 +30,13 @@ on:
         type: boolean
         default: false
 
+# Least privilege — see the note in pr-check.yml. This is the workflow that
+# matters most: it holds the Cloudflare credentials and runs on every push to
+# main. It deploys via wrangler with its own API token and never writes back to
+# the repository, so GITHUB_TOKEN needs read and nothing else.
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-cloudflare
   cancel-in-progress: false
