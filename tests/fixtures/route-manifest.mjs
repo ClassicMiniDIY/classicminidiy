@@ -69,6 +69,13 @@ export const MUST_404 = [
   '/archive/documents/definitely-not-a-real-document-slug',
   '/wp-admin',
   '/foo/bar/baz',
+  // A well-formed UUID that belongs to nobody. The page still RENDERS (the
+  // owner of a private profile is recovered by its onMounted load), so the
+  // status code is the only thing that distinguishes a miss — which is exactly
+  // what this asserts.
+  '/users/00000000-0000-0000-0000-000000000000',
+  // Malformed id: must be a 404, never a 500 from the RPC rejecting the cast.
+  '/users/not-a-uuid',
 ];
 
 /** `from` must 301 (or 302) to `to`. */
