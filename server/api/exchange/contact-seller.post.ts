@@ -204,7 +204,14 @@ export default defineEventHandler(async (event) => {
     // Recipient = the listing owner; the buyer's email is surfaced in the body
     // (the queue send path has no per-email Reply-To). Unique batch key per
     // inquiry so concurrent inquiries never collapse into one. Fire-and-forget.
-    const inquiryId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    // crypto.randomUUID rather than Math.random: workerd provides it, it is one
+    // call instead of three, and it removes any question about collisions
+    // between concurrent inquiries — which is the whole reason this id exists.
+    // CodeQL also flags Math.random reaching a batch key as js/insecure-randomness.
+    // The practical risk was low (notification_queue is service-role only, so the
+    // key is not attacker-writable and grants nothing), but there is no reason to
+    // argue the point when the strong call is free.
+    const inquiryId = crypto.randomUUID();
     await queueNotification({
       userId: listing.user_id,
       eventType: 'seller_inquiry',
