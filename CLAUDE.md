@@ -701,6 +701,19 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   `docs/runbooks/2026-08-31-chat-zone-rate-limit.md` is the fix. The privileged
   `NUXT_ANTHROPIC_API_KEY` stays server-only (private `runtimeConfig`).
 
+- **`/api/chat`'s tier gate fails OPEN, and that is the deliberate opposite of
+  `/mcp`'s.** `server/middleware/chat-auth.ts` resolves membership when a token
+  is present, but every uncertainty resolves DOWNWARD to a working tier: no
+  token, an unverifiable token, or Supabase being unreachable all yield
+  `anonymous`, and a membership RPC error yields `free` rather than denying an
+  account that is already proven. A Supabase outage therefore degrades a member
+  to anonymous limits — it does not 503 the chat. Do NOT "fix" this into failing
+  closed by pattern-matching on `mcp-auth` next door: for a paid API uncertainty
+  must mean deny, but for a public assistant it must mean "treat as anonymous",
+  because denying breaks the surface's entire reason to exist. A banned account
+  is the one case that resolves to `anonymous` on purpose rather than by
+  degradation.
+
 - **`/mcp` auth fails closed.** Valid keys come ONLY from `MCP_API_KEY` / `MCP_API_KEYS` env vars — there is no hardcoded/default key. The old `dev-mcp-key-classic-mini-diy` default is in public git history and must never be re-accepted in any environment. For local dev, set `MCP_API_KEY` in `.env`.
 - **`/mcp` is only truly tested by `scripts/test-mcp-transport.sh`.** The unit
   tests under `tests/unit/server/mcp/` stub `defineMcpTool` and call `.handler()`

@@ -20,9 +20,16 @@ export type { ChatQuota, ChatTier } from '../../shared/utils/chatTiers';
  */
 export const CHAT_TIER_CACHE_TTL_SECONDS = 300;
 
-/** Storage id for a resolved membership, keyed on the user id. */
-export function chatTierCacheId(userId: string): string {
-  return `chat-tier:${userId}`;
+/**
+ * Storage id for a resolved membership.
+ *
+ * Keyed on a HASH OF THE ACCESS TOKEN, not the user id, so a cache hit can skip
+ * the Supabase `getUser` round trip entirely rather than only the cheaper RPC
+ * behind it. Hashing is what keeps a plaintext credential out of a storage key
+ * — the same reasoning as `keyCacheId` in mcpTiers.
+ */
+export function chatTierCacheId(tokenHash: string): string {
+  return `chat-tier:${tokenHash}`;
 }
 
 /** What `chat-auth` stashes on `event.context` for the route and the limiter. */

@@ -25,7 +25,7 @@ const banCache = new Map<string, { banned: boolean; expiresAt: number }>();
  * only ever block on an explicit `is_banned === true`. Uncertain results are
  * not cached, so the next request re-checks promptly.
  */
-async function isUserBanned(supabase: any, userId: string): Promise<boolean> {
+export async function isUserBanned(supabase: any, userId: string): Promise<boolean> {
   const now = Date.now();
   const cached = banCache.get(userId);
   if (cached && cached.expiresAt > now) return cached.banned;

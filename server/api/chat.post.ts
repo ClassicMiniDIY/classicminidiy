@@ -155,8 +155,13 @@ export default defineEventHandler(async (event) => {
       recordChatTokens(event, inputTokens, outputTokens);
       tracker.finish('completed', undefined, {
         tier: getChatAuth(event)?.tier,
-        quotaUsed: verdict.used,
-        quotaLimit: verdict.limit,
+        quota_used: verdict.used,
+        quota_limit: verdict.limit,
+        // True when the ceiling could not be evaluated and the run was allowed
+        // anyway. A KV binding that breaks after a deploy leaves anonymous chat
+        // unbounded, and without this the only evidence would be a console line
+        // nobody reads.
+        quota_degraded: verdict.degraded === true,
       });
     },
     onAbort() {

@@ -1,5 +1,5 @@
 import { getServiceClient } from '../utils/supabase';
-import { extractAccessToken } from '../utils/userAuth';
+import { extractAccessToken, isUserBanned } from '../utils/userAuth';
 import {
   CHAT_TIER_CACHE_TTL_SECONDS,
   SUSTAINING_PRODUCT_ID,
@@ -7,6 +7,7 @@ import {
   setChatAuth,
   type ChatTier,
 } from '../utils/chatTiers';
+import { sha256Hex } from '../utils/mcpTiers';
 
 /**
  * Resolve who is asking the assistant, for `/api/chat` only.
@@ -43,8 +44,11 @@ import {
  * requests do no I/O at all: no token, no lookup.
  */
 export default defineEventHandler(async (event) => {
+  // Exact match, not a prefix. `startsWith('/api/chat')` would silently apply
+  // chat tiering and the chat quota to a future `/api/chat-export` or
+  // `/api/chatbot-admin`, surfacing only as unexplained 429s.
   const { pathname } = getRequestURL(event);
-  if (!pathname.startsWith('/api/chat')) return;
+  if (pathname !== '/api/chat') return;
 
   // No token is the common case — the assistant is public. Cheapest path first,
   // and it must never touch the database.
@@ -55,6 +59,28 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const cacheStorage = useStorage('cache');
+
+    // Keyed on a HASH OF THE TOKEN, checked BEFORE `getUser`.
+    //
+    // Keying on the user id instead meant every signed-in message paid a full
+    // Supabase auth round trip before the cache was even consulted, so the
+    // cache only ever saved the RPC — a local index lookup — while the
+    // expensive part ran every time, on the request path of a streaming route
+    // whose time-to-first-token is the metric being tracked.
+    //
+    // The token is never stored: only its SHA-256, via the same helper the MCP
+    // key cache uses, so a plaintext credential cannot land in a storage key.
+    const cacheId = chatTierCacheId(await sha256Hex(accessToken));
+    const cached = (await cacheStorage.getItem(cacheId).catch(() => null)) as {
+      tier: ChatTier;
+      userId: string;
+    } | null;
+    if (cached?.tier) {
+      setChatAuth(event, { tier: cached.tier, userId: cached.userId });
+      return;
+    }
+
     const supabase = getServiceClient();
 
     const {
@@ -69,12 +95,14 @@ export default defineEventHandler(async (event) => {
       return;
     }
 
-    const cacheStorage = useStorage('cache');
-    const cacheId = chatTierCacheId(user.id);
-
-    const cached = (await cacheStorage.getItem(cacheId).catch(() => null)) as { tier: ChatTier } | null;
-    if (cached?.tier) {
-      setChatAuth(event, { tier: cached.tier, userId: user.id });
+    // A valid access token keeps working until it expires even after we ban the
+    // account, so without this a banned scammer keeps the member allowance on a
+    // route that spends real money for the rest of the token's life.
+    // `requireUserAuth` gates every other authenticated surface the same way.
+    // Note the fail direction still holds: isUserBanned fails OPEN internally,
+    // so an unavailable ban lookup does not lock anyone out of the chat.
+    if (await isUserBanned(supabase, user.id)) {
+      setChatAuth(event, { tier: 'anonymous' });
       return;
     }
 
@@ -96,7 +124,9 @@ export default defineEventHandler(async (event) => {
     // during a transient RPC hiccup would hold them at the lower quota for the
     // full TTL; skipping the write means the next request retries.
     if (!subErr) {
-      const write = cacheStorage.setItem(cacheId, { tier }, { ttl: CHAT_TIER_CACHE_TTL_SECONDS }).catch(() => {});
+      const write = cacheStorage
+        .setItem(cacheId, { tier, userId: user.id }, { ttl: CHAT_TIER_CACHE_TTL_SECONDS })
+        .catch(() => {});
       (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(write);
     }
 

@@ -62,11 +62,11 @@ export interface ChatQuota {
  * budget on its own — for a difference nobody perceives on a torque lookup.
  * Sell synced history and a higher ceiling instead.
  */
-export const CHAT_QUOTAS: Record<ChatTier, ChatQuota> = {
+export const CHAT_QUOTAS = {
   anonymous: { perDay: 15, perMonth: null },
   free: { perDay: null, perMonth: 30 },
   member: { perDay: null, perMonth: 100 },
-};
+} as const satisfies Record<ChatTier, ChatQuota>;
 
 /** Where a quota-exhausted visitor is sent to upgrade. */
 export const MEMBERSHIP_URL = 'https://www.classicminidiy.com/membership';
