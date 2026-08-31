@@ -5,11 +5,29 @@ import { usePersistentThread } from './usePersistentThread';
 // Injection key for stream context
 const StreamContextKey: InjectionKey<UseStreamContextProvider> = Symbol('StreamContext');
 
+/**
+ * The graph name registered by the upstream LangGraph deployment
+ * (`langgraph.json` maps `"agent"` to the graph factory), so it is a property
+ * of that deployment rather than of this environment.
+ *
+ * This was `runtimeConfig.NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID || 'agent'` until
+ * 2026-08-31, which never read anything: the key was absent from
+ * `runtimeConfig.public`, and the CLIENT config exposes `public` and nothing
+ * else, so the expression always fell through to the literal below. It appeared
+ * to work only because the fallback happens to be the real graph name, and the
+ * unit test that "covered" it stubbed the key flat on the config object — a
+ * shape Nuxt never produces in a browser. The deploy workflow was faithfully
+ * wiring a GitHub secret into a build env var that nothing could read.
+ *
+ * If this ever needs to vary by environment again, add it to
+ * `runtimeConfig.public` in nuxt.config.ts and read `.public.` from it. Do not
+ * reintroduce a flat read.
+ */
+const ASSISTANT_ID = 'agent';
+
 // Vue composition function to replace React's context
 export function useStreamProvider() {
-  const runtimeConfig = useRuntimeConfig();
-  // Configuration state
-  const assistantId = ref(runtimeConfig.NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID || 'agent');
+  const assistantId = ref(ASSISTANT_ID);
   const isConfigured = computed(() => !!assistantId.value);
 
   // Use persistent thread management

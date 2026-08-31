@@ -227,39 +227,66 @@
     return true;
   });
 
-  // Extract useful links from Tavily search results in the current conversation
-  const usefulLinks = computed(() => {
+  /**
+   * Links rail, built from whatever search-shaped tool results the assistant
+   * produced this conversation.
+   *
+   * Matched by RESULT SHAPE, not by tool name. This used to require
+   * `message.name === 'tavily_search'`, which coupled the UI to one tool in an
+   * agent that lives in a different repo — renaming or replacing that tool
+   * would have emptied the rail with no error anywhere. Shape-matching also
+   * means the rail starts working for the site-search tool without a second
+   * code path.
+   *
+   * `url` and `title` are the minimum needed to render a link. `content` and
+   * `score` are optional because not every search tool reports them; a missing
+   * score falls back to a value that decreases with position, so a tool that
+   * returns results already ranked keeps its own ordering instead of collapsing
+   * to an arbitrary one.
+   */
+  const MAX_USEFUL_LINKS = 5;
+
+  interface UsefulLink {
+    url: string;
+    title: string;
+    content: string;
+    score: number;
+  }
+
+  function parseToolContent(content: unknown): any {
+    try {
+      return JSON.parse(typeof content === 'string' ? content : JSON.stringify(content));
+    } catch {
+      // A tool that answered in prose rather than JSON is normal, not an error.
+      return null;
+    }
+  }
+
+  const usefulLinks = computed<UsefulLink[]>(() => {
     if (!streamContext?.messages.value) return [];
 
-    const links: Array<{ url: string; title: string; content: string; score: number }> = [];
+    const links: UsefulLink[] = [];
 
-    // Look through all messages for Tavily search results
     for (const message of streamContext.messages.value) {
-      if (message.type === 'tool' && message.name === 'tavily_search') {
-        try {
-          const content = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
-          const searchData = JSON.parse(content);
+      if (message.type !== 'tool') continue;
 
-          if (searchData.results && Array.isArray(searchData.results)) {
-            for (const result of searchData.results) {
-              if (result.url && result.title && result.content && typeof result.score === 'number') {
-                links.push({
-                  url: result.url,
-                  title: result.title,
-                  content: result.content,
-                  score: result.score,
-                });
-              }
-            }
-          }
-        } catch (error) {
-          // Ignore parsing errors
-        }
-      }
+      const parsed = parseToolContent(message.content);
+      if (!parsed || !Array.isArray(parsed.results)) continue;
+
+      parsed.results.forEach((result: any, index: number) => {
+        if (!result || typeof result.url !== 'string' || typeof result.title !== 'string') return;
+        links.push({
+          url: result.url,
+          title: result.title,
+          content: typeof result.content === 'string' ? result.content : '',
+          // Descending fallback keeps the tool's own ordering when it reports
+          // no score. Staying below 1 means a real score always outranks it.
+          score: typeof result.score === 'number' ? result.score : 1 / (index + 2),
+        });
+      });
     }
 
-    // Sort by score (highest first) and limit to top 5
-    return links.sort((a, b) => b.score - a.score).slice(0, 5);
+    return links.sort((a, b) => b.score - a.score).slice(0, MAX_USEFUL_LINKS);
   });
 
   // Stream context

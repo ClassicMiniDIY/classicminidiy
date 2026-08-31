@@ -100,37 +100,17 @@ describe('useStreamProvider', () => {
     });
 
     describe('assistantId', () => {
-      it('uses runtime config value when available', async () => {
-        vi.stubGlobal(
-          'useRuntimeConfig',
-          vi.fn(() => ({
-            public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
-            NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: 'custom-assistant',
-          }))
-        );
-
-        const { useStreamProvider } = await freshModule();
-        const provider = useStreamProvider();
-
-        expect(provider.assistantId.value).toBe('custom-assistant');
-      });
-
-      it('defaults to "agent" when config is empty', async () => {
-        vi.stubGlobal(
-          'useRuntimeConfig',
-          vi.fn(() => ({
-            public: { supabaseUrl: 'https://test.supabase.co', supabaseKey: 'test-key' },
-            NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID: '',
-          }))
-        );
-
-        const { useStreamProvider } = await freshModule();
-        const provider = useStreamProvider();
-
-        expect(provider.assistantId.value).toBe('agent');
-      });
-
-      it('defaults to "agent" when config property is missing', async () => {
+      /**
+       * There is deliberately no runtimeConfig path here any more.
+       *
+       * The three tests this replaces stubbed `NUXT_PUBLIC_LANGGRAPH_ASSISTANT_ID`
+       * FLAT on the config object and asserted it was read. Nuxt never produces
+       * that shape in a browser — the client only ever sees `runtimeConfig.public`
+       * — so the composable always fell through to the 'agent' literal in
+       * production while the suite reported the config path as covered. The read
+       * is gone; asserting the constant is the honest remaining contract.
+       */
+      it('is the upstream graph name, independent of runtime config', async () => {
         vi.stubGlobal(
           'useRuntimeConfig',
           vi.fn(() => ({
