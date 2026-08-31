@@ -223,8 +223,21 @@ properties of undefined (reading 'webSiteResolver')` out of its resolver preload
   the whole surface is one JSON-RPC endpoint at `/mcp`, served by
   `@nuxtjs/mcp-toolkit`, which discovers tools from `server/mcp/tools/*.ts`
   (filename = tool name). Bearer auth via `server/middleware/mcp-auth.ts`.
-  The chat does NOT consume these tools; nothing under `server/api/langgraph/**`
-  references MCP.
+  Nothing under `server/api/langgraph/**` references MCP — but do NOT read that
+  as "the chat does not use these tools", which is what this note used to say.
+  The externally hosted agent calls `https://www.classicminidiy.com/mcp` from
+  its own side with a Bearer key, so MCP is very much in the chat's path; it is
+  just not in this repo's half of it.
+
+  That distinction matters because the agent's MCP fetch is wrapped in a bare
+  try/except that falls back to an EMPTY tool list, so a bad key degrades the
+  assistant to generic web search with no error anywhere. Neither sink can see
+  it: `recordMcpUsage` skips the Supabase counter for the internal env-key tier
+  (no `api_keys` row) and deliberately emits nothing to PostHog for it. The
+  `tools_called` array on `chat_run_completed`
+  (`server/utils/chatUsage.ts`) is the only signal that reports it — an empty
+  array on a real question means the tool wiring is down, not that the question
+  was unusual.
 
 #### Administrative APIs
 
@@ -1151,17 +1164,17 @@ are read unprefixed at module scope and need PLAIN Worker vars — a
 they are tuning knobs rather than secrets; an unset value degrades to the
 default rather than failing, which is exactly why a wrong one is hard to notice.
 
-| Name                                     | Read in                                                          | Default                    |
-| ---------------------------------------- | ---------------------------------------------------------------- | -------------------------- |
-| `LANGGRAPH_RATELIMIT_MAX` / `_WINDOW_MS` | `server/middleware/rate-limit.ts`                                | 40 / 60 000                |
-| `WRITE_RATELIMIT_MAX` / `_WINDOW_MS`     | same                                                             | 30 / 60 000                |
-| `MCP_RATELIMIT_WINDOW_MS`                | same                                                             | 60 000                     |
-| `MCP_RATELIMIT_FREE_MAX`                 | same                                                             | 20                         |
-| `MCP_RATELIMIT_DEVELOPER_MAX`            | same                                                             | 240                        |
-| `MCP_RATELIMIT_INTERNAL_MAX`             | same                                                             | 600                        |
-| `MCP_RATELIMIT_MAX`                      | same                                                             | — legacy, see below        |
-| `POSTHOG_INGEST_HOST`                    | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts` | `https://us.i.posthog.com` |
-| `MICROLINK_API_URL`                      | `server/utils/external-models/render.ts`                         | `https://api.microlink.io` |
+| Name                                     | Read in                                                                                       | Default                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------- |
+| `LANGGRAPH_RATELIMIT_MAX` / `_WINDOW_MS` | `server/middleware/rate-limit.ts`                                                             | 40 / 60 000                |
+| `WRITE_RATELIMIT_MAX` / `_WINDOW_MS`     | same                                                                                          | 30 / 60 000                |
+| `MCP_RATELIMIT_WINDOW_MS`                | same                                                                                          | 60 000                     |
+| `MCP_RATELIMIT_FREE_MAX`                 | same                                                                                          | 20                         |
+| `MCP_RATELIMIT_DEVELOPER_MAX`            | same                                                                                          | 240                        |
+| `MCP_RATELIMIT_INTERNAL_MAX`             | same                                                                                          | 600                        |
+| `MCP_RATELIMIT_MAX`                      | same                                                                                          | — legacy, see below        |
+| `POSTHOG_INGEST_HOST`                    | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts`, `server/utils/chatUsage.ts` | `https://us.i.posthog.com` |
+| `MICROLINK_API_URL`                      | `server/utils/external-models/render.ts`                                                      | `https://api.microlink.io` |
 
 `MCP_RATELIMIT_MAX` is not a fourth tier — it predates the tiers, when one cap
 covered all `/mcp` traffic, and now survives ONLY as the fallback for
