@@ -1,7 +1,7 @@
 <template>
   <div class="card bg-base-100 shadow-sm">
     <div class="card-body">
-      <h2 class="card-title text-xl mb-4">{{ t('heading') }}</h2>
+      <h1 class="card-title text-xl mb-4">{{ t('heading') }}</h1>
 
       <!-- Step 1: URL Input -->
       <fieldset class="fieldset mb-4">

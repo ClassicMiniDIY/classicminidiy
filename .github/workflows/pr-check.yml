@@ -116,7 +116,11 @@ jobs:
           exit 1
 
       - name: Crawl every route
-        run: bun run test:routes http://localhost:3000 --concurrency 3
+        # --strict promotes warnings to failures. Safe to turn on now that the
+        # heading, canonical, schema.org and raw-i18n-key checks are all clean —
+        # before this, ten <h1> warnings would have blocked every PR. Keeping it
+        # on is what stops that backlog rebuilding.
+        run: bun run test:routes http://localhost:3000 --concurrency 3 --strict
 
       - name: Dev server log on failure
         if: failure()

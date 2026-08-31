@@ -120,8 +120,13 @@ export const ROUTE_EXPECTATIONS = {
   '/login': { noindex: true },
   '/onboarding': { noindex: true },
   '/welcome': { noindex: true },
-  '/membership/claim': { noindex: true },
-  '/discord/connect': { noindex: true },
+  // These three render exactly one <h1> per state branch (redeeming / success /
+  // sign-in / error), so at every moment a user sees, the page has one heading.
+  // The crawler observes zero because the PRE-HYDRATION frame is a spinner —
+  // forcing a heading into a loading state to satisfy the check would be worse
+  // markup, not better.
+  '/membership/claim': { noindex: true, allowNoH1: true },
+  '/discord/connect': { noindex: true, allowNoH1: true },
   '/profile': { noindex: true },
   '/profile/edit': { noindex: true },
   '/dashboard': { noindex: true },
@@ -134,7 +139,7 @@ export const ROUTE_EXPECTATIONS = {
   '/exchange/listings/bulk': { noindex: true },
   '/exchange/finds/submit': { noindex: true },
   '/exchange/wanted/new': { noindex: true },
-  '/exchange/listings/payment/success': { noindex: true, allowNoJsonLd: true },
+  '/exchange/listings/payment/success': { noindex: true, allowNoJsonLd: true, allowNoH1: true },
   '/exchange/listings/payment/cancel': { noindex: true, allowNoJsonLd: true },
   // Tab shells that redirect to their default child.
   '/dashboard': { expectStatus: 302 },

@@ -10,6 +10,19 @@
       type: String,
       default: '',
     },
+    /**
+     * Heading level for the hero title. Defaults to `h1`, which is right for
+     * the ~29 pages whose hero title IS the page name.
+     *
+     * Pass `p` on a page that renders its own `<h1>` in the body — a detail
+     * page whose real name is the record's title, not the section's. Two
+     * `<h1>`s make the page's subject ambiguous to screen readers navigating
+     * by heading, and to search.
+     */
+    titleTag: {
+      type: String,
+      default: 'h1',
+    },
     titleKey: {
       type: String,
       default: '',
@@ -123,7 +136,8 @@
         <p class="eyebrow" :class="{ 'text-center': blog }">
           {{ displaySubtitle }}
         </p>
-        <h1
+        <component
+          :is="titleTag"
           v-if="displayTitle"
           class="fancy-font-bold text-white text-4xl lg:text-5xl mt-2"
           :class="{ 'special-title': special, 'text-center': blog }"
@@ -134,7 +148,7 @@
           <span v-else>
             {{ displayTitle }}
           </span>
-        </h1>
+        </component>
         <!-- Search is the front door on the homepage (design S1). It lives here,
              inside the hero, because the `.spacer.layer` that follows carries a
              -10% (of page width) margin and swallows anything placed between. -->

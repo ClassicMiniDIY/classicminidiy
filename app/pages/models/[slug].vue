@@ -216,7 +216,7 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="t('hero.title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero.title')" title-tag="p" :heroType="HERO_TYPES.ARCHIVE" />
   <div class="container mx-auto px-4" v-if="model">
     <breadcrumb class="my-6" :page="model.title" :subpage="t('breadcrumb.subpage')" subpageHref="/models" />
 
