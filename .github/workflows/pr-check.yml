@@ -4,6 +4,14 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege. Nothing here writes to the repo — it installs, tests and
+# crawls a dev server — so the read scope is all it needs. Set explicitly rather
+# than inherited: the repository default is configured outside these files and
+# can change without any of them changing, which leaves the scope a job runs
+# with invisible in the code that runs. (CodeQL actions/missing-workflow-permissions.)
+permissions:
+  contents: read
+
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true

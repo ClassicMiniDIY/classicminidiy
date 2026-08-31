@@ -16,6 +16,12 @@ on:
         type: boolean
         default: true
 
+# Least privilege — see the note in pr-check.yml. `actions/upload-artifact@v4`
+# uses the runtime token rather than GITHUB_TOKEN, so the report upload needs
+# nothing beyond read here.
+permissions:
+  contents: read
+
 concurrency:
   group: e2e-nightly
   cancel-in-progress: false
