@@ -3,6 +3,8 @@ import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 
 import { buildAgentTools } from '../agent/tools';
 import { buildSystemPrompt } from '../agent/prompt';
 import { createChatRunTracker } from '../utils/chatUsage';
+import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
+import { getChatAuth } from '../utils/chatTiers';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
 
 /**
@@ -15,11 +17,14 @@ import { serverRuntimeConfig } from '../utils/runtimeConfig';
  * and a network hop. The tools it needs live in this Worker; it no longer has to
  * reach back over public HTTP to get at them.
  *
- * Deliberately UNAUTHENTICATED, like the proxy it replaces — the assistant has
- * to work for every anonymous visitor. `server/middleware/rate-limit.ts` and the
- * Cloudflare zone rate-limit rule are what stand in front of it. Metering for
- * the Sustaining Member tier arrives separately and must never turn this into a
- * route that can answer 401.
+ * OPTIONALLY authenticated, and it must never *require* auth. The assistant has
+ * to work for every anonymous visitor — that is the point of the surface and why
+ * it is indexed. `server/middleware/chat-auth.ts` resolves identity IF PRESENT
+ * and fails open to the anonymous tier; this route then meters against that
+ * tier. **A 401 is never a valid response from here.** An exhausted quota is a
+ * 429 carrying an upgrade pointer, the same posture as the MCP free-tier gated
+ * result. Underneath sit the in-process limiter and the Cloudflare zone
+ * rate-limit rule.
  */
 
 /** Ceiling on tool-call rounds per message. Generous enough for a question that
@@ -109,6 +114,12 @@ export default defineEventHandler(async (event) => {
   const rawThreadId = typeof body?.threadId === 'string' ? body.threadId : '';
   const threadId = /^[A-Za-z0-9_-]{1,64}$/.test(rawThreadId) ? rawThreadId : 'anonymous';
 
+  // BEFORE the model runs. A quota checked afterwards is not a quota — the
+  // tokens are already spent. Every failure path inside allows the request, so
+  // an unavailable counter degrades the ceiling rather than the assistant.
+  const verdict = await consumeChatQuota(event);
+  if (!verdict.allowed) throw quotaExhaustedError(event, verdict);
+
   const tracker = createChatRunTracker(event, threadId, body?.locale);
 
   // convertToModelMessages is ASYNC in AI SDK v7 (it was synchronous in v6).
@@ -138,13 +149,15 @@ export default defineEventHandler(async (event) => {
       }
     },
     onFinish({ usage }) {
-      tracker.observe({
-        usage_metadata: {
-          input_tokens: usage?.inputTokens ?? 0,
-          output_tokens: usage?.outputTokens ?? 0,
-        },
+      const inputTokens = usage?.inputTokens ?? 0;
+      const outputTokens = usage?.outputTokens ?? 0;
+      tracker.observe({ usage_metadata: { input_tokens: inputTokens, output_tokens: outputTokens } });
+      recordChatTokens(event, inputTokens, outputTokens);
+      tracker.finish('completed', undefined, {
+        tier: getChatAuth(event)?.tier,
+        quotaUsed: verdict.used,
+        quotaLimit: verdict.limit,
       });
-      tracker.finish('completed');
     },
     onAbort() {
       // The visitor pressed stop or navigated away. These runs consumed tokens

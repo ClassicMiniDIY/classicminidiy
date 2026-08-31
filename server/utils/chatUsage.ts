@@ -109,8 +109,15 @@ export interface ChatRunTracker {
    * redefine both metrics under their existing names.
    */
   recordToolCall(name: string | undefined): void;
-  /** Emit the run summary. Safe to call once; later calls are ignored. */
-  finish(outcome: ChatRunOutcome, errorMessage?: string): void;
+  /**
+   * Emit the run summary. Safe to call once; later calls are ignored.
+   *
+   * `extra` carries membership context — which tier the caller was on and where
+   * they stand against their quota. Without it, `chat_run_completed` cannot
+   * answer the two questions the paid tier exists to raise: whether members
+   * actually use the assistant more, and whether anyone is near a ceiling.
+   */
+  finish(outcome: ChatRunOutcome, errorMessage?: string, extra?: Record<string, unknown>): void;
 }
 
 /**
@@ -142,7 +149,7 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
       if (typeof name === 'string' && name) tools.add(name);
     },
 
-    finish(outcome: ChatRunOutcome, errorMessage?: string) {
+    finish(outcome: ChatRunOutcome, errorMessage?: string, extra?: Record<string, unknown>) {
       if (done) return;
       done = true;
       try {
@@ -170,6 +177,7 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
               output_tokens: usage.output || null,
               locale: locale ?? null,
               error_message: errorMessage ?? null,
+              ...(extra ?? {}),
               $process_person_profile: false,
             },
           },
