@@ -222,6 +222,303 @@
     },
     "contact_question": "Still stuck?",
     "contact_cta": "Contact us"
+  },
+  "es": {
+    "meta": {
+      "title": "Conecta tu Discord — Classic Mini DIY"
+    },
+    "eyebrow": "Discord exclusivo para socios",
+    "checking": "Comprobando tu membresía…",
+    "connecting": {
+      "title": "Conectando tu Discord",
+      "body": "Un momento: te estamos enviando a Discord para autorizar tu acceso exclusivo de socio."
+    },
+    "signin": {
+      "title": "Inicia sesión para reclamar tu acceso",
+      "body": "Inicia sesión con la misma cuenta de Classic Mini DIY que usas en la app Toolbox y conectaremos tu Discord justo después.",
+      "cta": "Iniciar sesión"
+    },
+    "active": {
+      "title": "Ya estás conectado",
+      "body": "Tu Discord está vinculado y tu rol de socio está activo. ¡Nos vemos dentro!",
+      "cta": "Abrir Discord"
+    },
+    "not_member": {
+      "title": "Se requiere membresía",
+      "body": "El Discord exclusivo es una ventaja para Socios Colaboradores. Consulta el estado de tu membresía o hazte socio para entrar.",
+      "cta": "Ver membresía"
+    },
+    "error": {
+      "title": "Algo ha salido mal",
+      "body": "No hemos podido iniciar tu solicitud de Discord. Vuelve a intentarlo en un momento.",
+      "retry": "Reintentar"
+    },
+    "contact_question": "¿Sigues atascado?",
+    "contact_cta": "Contáctanos"
+  },
+  "fr": {
+    "meta": {
+      "title": "Connectez votre Discord — Classic Mini DIY"
+    },
+    "eyebrow": "Discord réservé aux membres",
+    "checking": "Vérification de votre adhésion…",
+    "connecting": {
+      "title": "Connexion de votre Discord",
+      "body": "Un instant : nous vous redirigeons vers Discord pour autoriser votre accès réservé aux membres."
+    },
+    "signin": {
+      "title": "Connectez-vous pour obtenir votre accès",
+      "body": "Connectez-vous avec le même compte Classic Mini DIY que vous utilisez dans l'application Toolbox, et nous connecterons votre Discord juste après.",
+      "cta": "Se connecter"
+    },
+    "active": {
+      "title": "Vous êtes déjà connecté",
+      "body": "Votre Discord est lié et votre rôle de membre est actif. À tout de suite !",
+      "cta": "Ouvrir Discord"
+    },
+    "not_member": {
+      "title": "Adhésion requise",
+      "body": "Le Discord réservé aux membres est un avantage Membre de soutien. Vérifiez le statut de votre adhésion ou devenez membre pour nous rejoindre.",
+      "cta": "Voir l'adhésion"
+    },
+    "error": {
+      "title": "Une erreur est survenue",
+      "body": "Nous n'avons pas pu lancer votre demande Discord. Réessayez dans un instant.",
+      "retry": "Réessayer"
+    },
+    "contact_question": "Toujours bloqué ?",
+    "contact_cta": "Contactez-nous"
+  },
+  "de": {
+    "meta": {
+      "title": "Discord verbinden — Classic Mini DIY"
+    },
+    "eyebrow": "Discord nur für Mitglieder",
+    "checking": "Mitgliedschaft wird geprüft…",
+    "connecting": {
+      "title": "Discord wird verbunden",
+      "body": "Einen Moment – wir leiten dich zu Discord weiter, um deinen Mitgliederzugang zu autorisieren."
+    },
+    "signin": {
+      "title": "Melde dich an, um deinen Zugang zu erhalten",
+      "body": "Melde dich mit demselben Classic-Mini-DIY-Konto an, das du in der Toolbox-App nutzt, und wir verbinden gleich danach dein Discord.",
+      "cta": "Anmelden"
+    },
+    "active": {
+      "title": "Du bist bereits verbunden",
+      "body": "Dein Discord ist verknüpft und deine Mitgliederrolle ist aktiv. Bis gleich!",
+      "cta": "Discord öffnen"
+    },
+    "not_member": {
+      "title": "Mitgliedschaft erforderlich",
+      "body": "Der Discord nur für Mitglieder ist ein Vorteil für Fördermitglieder. Prüfe deinen Mitgliedsstatus oder werde Mitglied, um beizutreten.",
+      "cta": "Mitgliedschaft ansehen"
+    },
+    "error": {
+      "title": "Etwas ist schiefgelaufen",
+      "body": "Wir konnten deine Discord-Anfrage nicht starten. Versuche es gleich noch einmal.",
+      "retry": "Erneut versuchen"
+    },
+    "contact_question": "Kommst du nicht weiter?",
+    "contact_cta": "Kontaktiere uns"
+  },
+  "it": {
+    "meta": {
+      "title": "Collega il tuo Discord — Classic Mini DIY"
+    },
+    "eyebrow": "Discord riservato ai soci",
+    "checking": "Verifica dell'iscrizione in corso…",
+    "connecting": {
+      "title": "Collegamento del tuo Discord",
+      "body": "Un attimo: ti stiamo inviando a Discord per autorizzare il tuo accesso riservato ai soci."
+    },
+    "signin": {
+      "title": "Accedi per ottenere il tuo accesso",
+      "body": "Accedi con lo stesso account Classic Mini DIY che usi nell'app Toolbox e collegheremo il tuo Discord subito dopo.",
+      "cta": "Accedi"
+    },
+    "active": {
+      "title": "Sei già collegato",
+      "body": "Il tuo Discord è collegato e il tuo ruolo da socio è attivo. Ci vediamo dentro!",
+      "cta": "Apri Discord"
+    },
+    "not_member": {
+      "title": "Iscrizione necessaria",
+      "body": "Il Discord riservato ai soci è un vantaggio per i Soci Sostenitori. Controlla lo stato della tua iscrizione o diventa socio per entrare.",
+      "cta": "Vedi l'iscrizione"
+    },
+    "error": {
+      "title": "Qualcosa è andato storto",
+      "body": "Non siamo riusciti ad avviare la tua richiesta Discord. Riprova tra un momento.",
+      "retry": "Riprova"
+    },
+    "contact_question": "Ancora bloccato?",
+    "contact_cta": "Contattaci"
+  },
+  "pt": {
+    "meta": {
+      "title": "Conecte o seu Discord — Classic Mini DIY"
+    },
+    "eyebrow": "Discord exclusivo para membros",
+    "checking": "A verificar a sua adesão…",
+    "connecting": {
+      "title": "A ligar o seu Discord",
+      "body": "Um momento — estamos a enviá-lo para o Discord para autorizar o seu acesso exclusivo de membro."
+    },
+    "signin": {
+      "title": "Inicie sessão para obter o seu acesso",
+      "body": "Inicie sessão com a mesma conta Classic Mini DIY que usa na app Toolbox e ligamos o seu Discord logo a seguir.",
+      "cta": "Iniciar sessão"
+    },
+    "active": {
+      "title": "Já está ligado",
+      "body": "O seu Discord está associado e a sua função de membro está ativa. Até já!",
+      "cta": "Abrir o Discord"
+    },
+    "not_member": {
+      "title": "Adesão necessária",
+      "body": "O Discord exclusivo para membros é uma vantagem de Membro Apoiador. Verifique o estado da sua adesão ou torne-se membro para entrar.",
+      "cta": "Ver adesão"
+    },
+    "error": {
+      "title": "Algo correu mal",
+      "body": "Não conseguimos iniciar o seu pedido de Discord. Tente novamente daqui a pouco.",
+      "retry": "Tentar novamente"
+    },
+    "contact_question": "Continua sem conseguir?",
+    "contact_cta": "Fale connosco"
+  },
+  "ru": {
+    "meta": {
+      "title": "Подключите Discord — Classic Mini DIY"
+    },
+    "eyebrow": "Discord только для участников",
+    "checking": "Проверяем ваше участие…",
+    "connecting": {
+      "title": "Подключаем ваш Discord",
+      "body": "Одну минуту — мы перенаправляем вас в Discord, чтобы подтвердить доступ для участников."
+    },
+    "signin": {
+      "title": "Войдите, чтобы получить доступ",
+      "body": "Войдите в тот же аккаунт Classic Mini DIY, который вы используете в приложении Toolbox, и сразу после этого мы подключим ваш Discord.",
+      "cta": "Войти"
+    },
+    "active": {
+      "title": "Вы уже подключены",
+      "body": "Ваш Discord привязан, роль участника активна. До встречи внутри!",
+      "cta": "Открыть Discord"
+    },
+    "not_member": {
+      "title": "Требуется участие",
+      "body": "Discord только для участников — это привилегия постоянных участников. Проверьте статус участия или станьте участником, чтобы присоединиться.",
+      "cta": "Посмотреть участие"
+    },
+    "error": {
+      "title": "Что-то пошло не так",
+      "body": "Не удалось начать подключение Discord. Повторите попытку через минуту.",
+      "retry": "Повторить"
+    },
+    "contact_question": "Всё ещё не получается?",
+    "contact_cta": "Свяжитесь с нами"
+  },
+  "ja": {
+    "meta": {
+      "title": "Discord を連携 — Classic Mini DIY"
+    },
+    "eyebrow": "メンバー限定 Discord",
+    "checking": "メンバーシップを確認しています…",
+    "connecting": {
+      "title": "Discord を連携しています",
+      "body": "少々お待ちください。メンバー限定アクセスを承認するため Discord に移動します。"
+    },
+    "signin": {
+      "title": "サインインしてアクセスを受け取る",
+      "body": "Toolbox アプリで使用しているものと同じ Classic Mini DIY アカウントでサインインしてください。その直後に Discord を連携します。",
+      "cta": "サインイン"
+    },
+    "active": {
+      "title": "すでに連携済みです",
+      "body": "Discord が連携され、メンバー限定ロールが有効になっています。それではまた中で!",
+      "cta": "Discord を開く"
+    },
+    "not_member": {
+      "title": "メンバーシップが必要です",
+      "body": "メンバー限定 Discord はサステイニングメンバーの特典です。メンバーシップの状態を確認するか、メンバーになってご参加ください。",
+      "cta": "メンバーシップを見る"
+    },
+    "error": {
+      "title": "問題が発生しました",
+      "body": "Discord の連携を開始できませんでした。しばらくしてからもう一度お試しください。",
+      "retry": "再試行"
+    },
+    "contact_question": "解決しませんか?",
+    "contact_cta": "お問い合わせ"
+  },
+  "zh": {
+    "meta": {
+      "title": "连接你的 Discord — Classic Mini DIY"
+    },
+    "eyebrow": "会员专属 Discord",
+    "checking": "正在检查你的会员资格…",
+    "connecting": {
+      "title": "正在连接你的 Discord",
+      "body": "请稍候，我们正将你转到 Discord 以授权你的会员专属访问权限。"
+    },
+    "signin": {
+      "title": "登录以领取访问权限",
+      "body": "请使用你在 Toolbox 应用中使用的同一个 Classic Mini DIY 账号登录，随后我们会立即连接你的 Discord。",
+      "cta": "登录"
+    },
+    "active": {
+      "title": "你已经连接好了",
+      "body": "你的 Discord 已关联，会员专属身份组已生效。里面见!",
+      "cta": "打开 Discord"
+    },
+    "not_member": {
+      "title": "需要会员资格",
+      "body": "会员专属 Discord 是持续支持会员的权益。查看你的会员状态，或成为会员后加入。",
+      "cta": "查看会员资格"
+    },
+    "error": {
+      "title": "出了点问题",
+      "body": "我们无法开始你的 Discord 领取流程。请稍后再试一次。",
+      "retry": "重试"
+    },
+    "contact_question": "还是不行?",
+    "contact_cta": "联系我们"
+  },
+  "ko": {
+    "meta": {
+      "title": "Discord 연결 — Classic Mini DIY"
+    },
+    "eyebrow": "멤버 전용 Discord",
+    "checking": "멤버십을 확인하는 중…",
+    "connecting": {
+      "title": "Discord를 연결하는 중",
+      "body": "잠시만 기다려 주세요. 멤버 전용 접근 권한을 승인하기 위해 Discord로 이동합니다."
+    },
+    "signin": {
+      "title": "로그인하고 접근 권한 받기",
+      "body": "Toolbox 앱에서 사용하는 것과 같은 Classic Mini DIY 계정으로 로그인하시면 바로 이어서 Discord를 연결해 드립니다.",
+      "cta": "로그인"
+    },
+    "active": {
+      "title": "이미 연결되어 있습니다",
+      "body": "Discord가 연결되었고 멤버 전용 역할이 활성화되었습니다. 안에서 뵙겠습니다!",
+      "cta": "Discord 열기"
+    },
+    "not_member": {
+      "title": "멤버십이 필요합니다",
+      "body": "멤버 전용 Discord는 서포팅 멤버 혜택입니다. 멤버십 상태를 확인하거나 멤버가 되어 참여하세요.",
+      "cta": "멤버십 보기"
+    },
+    "error": {
+      "title": "문제가 발생했습니다",
+      "body": "Discord 연결을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      "retry": "다시 시도"
+    },
+    "contact_question": "여전히 해결되지 않나요?",
+    "contact_cta": "문의하기"
   }
 }
 </i18n>

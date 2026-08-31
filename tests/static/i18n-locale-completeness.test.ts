@@ -32,10 +32,6 @@ const LOCALES = ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'zh', 'ko'] as 
 const KNOWN_MISSING_LOCALES: readonly string[] = [
   // /membership — 63 English-only strings on a public, indexable marketing page.
   ...LOCALES.filter((l) => l !== 'en').map((l) => `app/pages/membership/index.vue::${l}`),
-  // /membership/claim — 27 strings, reached from the Discord claim email.
-  ...LOCALES.filter((l) => l !== 'en').map((l) => `app/pages/membership/claim.vue::${l}`),
-  // /discord/connect — 19 strings, the self-serve claim-recovery page.
-  ...LOCALES.filter((l) => l !== 'en').map((l) => `app/pages/discord/connect.vue::${l}`),
 ];
 
 /**
