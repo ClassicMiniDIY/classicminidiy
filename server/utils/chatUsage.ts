@@ -116,7 +116,7 @@ export interface ChatRunTracker {
    * advances chunk_count and stamps first-chunk time, and these numbers arrive
    * once at the end rather than per chunk.
    */
-  recordCacheUsage(usage: { read: number; written: number; uncached: number }): void;
+  recordCacheUsage(tokens: { read: number; written: number; uncached: number }): void;
   /**
    * Emit the run summary. Safe to call once; later calls are ignored.
    *
@@ -158,10 +158,14 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
       if (typeof name === 'string' && name) tools.add(name);
     },
 
-    recordCacheUsage(usage: { read: number; written: number; uncached: number }) {
-      cache.read += usage.read;
-      cache.written += usage.written;
-      cache.uncached += usage.uncached;
+    // Parameter deliberately NOT named `usage`: that would shadow the
+    // closure-scope token accumulator above, and a later line touching
+    // `usage.input` in here would silently record nothing. CLAUDE.md documents
+    // shadowing as a live hazard class in this repo.
+    recordCacheUsage(tokens: { read: number; written: number; uncached: number }) {
+      cache.read += tokens.read;
+      cache.written += tokens.written;
+      cache.uncached += tokens.uncached;
     },
 
     finish(outcome: ChatRunOutcome, errorMessage?: string, extra?: Record<string, unknown>) {

@@ -11,7 +11,8 @@
         :value="modelValue"
         @input="onInput"
         @keydown="onKeyDown"
-        :disabled="disabled"
+        :readonly="disabled"
+        :aria-disabled="disabled || undefined"
         :placeholder="disabled ? t('input_disabled_placeholder') : t('input_placeholder')"
         class="w-full resize-none bg-transparent px-4 pt-3 leading-6 outline-none placeholder:text-base-content/50"
         :style="{ maxHeight: `${MAX_HEIGHT}px` }"
@@ -89,6 +90,14 @@
        * exhausted. Distinct from `isLoading`: that one shows a stop button
        * because a run is in flight, whereas this one has nothing to stop and
        * must not invite a retry that cannot succeed.
+       *
+       * Rendered as `readonly` + `aria-disabled`, NOT `disabled`. A disabled
+       * textarea leaves the tab order entirely and goes unannounced by several
+       * screen readers, so the placeholder explaining WHY it stopped working
+       * would be unreachable by exactly the people most reliant on it — and the
+       * panel above is `role="status"` (polite), so it is not announced on
+       * arrival either. Readonly keeps it focusable and readable while still
+       * refusing input; `onKeyDown` and the send button block the submit.
        */
       disabled?: boolean;
     }>(),

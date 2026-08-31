@@ -24,13 +24,16 @@
       </div>
 
       <div class="min-w-0 flex-1">
-        <h2 class="text-base font-semibold">{{ t(`${copyKey}.title`) }}</h2>
+        <h2 class="text-base font-semibold">{{ t(`${quota.tier}.title`) }}</h2>
 
-        <p v-if="quota.used && quota.limit" class="mt-0.5 text-sm text-base-content/60">
+        <!-- `!== undefined`, not truthiness: a ceiling of 0 is a plausible
+             kill-switch for a tier, and `used && limit` would then hide the
+             numbers and leave the panel saying nothing concrete. -->
+        <p v-if="quota.used !== undefined && quota.limit !== undefined" class="mt-0.5 text-sm text-base-content/60">
           {{ t('used_of', { used: quota.used, limit: quota.limit }) }}
         </p>
 
-        <p class="mt-2 text-sm text-base-content/80">{{ t(`${copyKey}.body`) }}</p>
+        <p class="mt-2 text-sm text-base-content/80">{{ t(`${quota.tier}.body`) }}</p>
 
         <ul v-if="quota.tier !== 'member'" class="mt-3 space-y-1.5 text-sm text-base-content/80">
           <li v-for="benefit in benefits" :key="benefit" class="flex items-start gap-2">
@@ -48,7 +51,7 @@
           -->
           <NuxtLink
             v-if="quota.tier === 'anonymous'"
-            to="/login?redirect=/chat"
+            :to="`/login?redirect=${encodeURIComponent(route.fullPath)}`"
             class="btn btn-primary btn-sm"
             @click="trackCta('sign_in')"
           >
@@ -56,14 +59,14 @@
             {{ t('anonymous.cta') }}
           </NuxtLink>
 
-          <NuxtLink v-else :to="membershipPath" class="btn btn-primary btn-sm" @click="trackCta('membership')">
+          <NuxtLink v-else :to="quota.upgradeUrl" class="btn btn-primary btn-sm" @click="trackCta('membership')">
             <i class="fas fa-star" aria-hidden="true"></i>
             {{ t('free.cta') }}
           </NuxtLink>
 
           <NuxtLink
             v-if="quota.tier === 'anonymous'"
-            :to="membershipPath"
+            :to="quota.upgradeUrl"
             class="btn btn-ghost btn-sm font-normal"
             @click="trackCta('membership_secondary')"
           >
@@ -76,15 +79,13 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted } from 'vue';
+  import { computed, watch } from 'vue';
   import type { QuotaExhausted } from '~/utils/chatQuotaError';
 
   const props = defineProps<{ quota: QuotaExhausted }>();
   const { t } = useI18n();
   const { capture } = usePostHog();
-
-  /** Copy block for this tier. `member` has nothing to sell. */
-  const copyKey = computed(() => (props.quota.tier === 'member' ? 'member' : props.quota.tier));
+  const route = useRoute();
 
   const benefits = computed(() =>
     props.quota.tier === 'anonymous'
@@ -93,23 +94,26 @@
   );
 
   /**
-   * A path, not the absolute URL the server sends. The server has to send an
-   * absolute one — it is also read by native clients — but routing the browser
-   * through NuxtLink keeps it a client-side navigation instead of a full page
-   * load out of the conversation.
+   * The conversion funnel this panel exists for. Without the impression event
+   * the click-through rate has no denominator, and "does hitting the limit sell
+   * memberships" stays unanswerable.
+   *
+   * Keyed on the TIER changing rather than on mount. The panel survives a New
+   * chat without remounting, so a mount-only capture could record a CTA click
+   * against no impression — a funnel whose numerator exceeds its denominator,
+   * which reads as a conversion rate above 100%.
    */
-  const membershipPath = '/membership';
-
-  // The conversion funnel this panel exists for. Without the impression event
-  // the click-through rate has no denominator, and "does hitting the limit sell
-  // memberships" stays unanswerable.
-  onMounted(() => {
-    capture('chat_limit_reached', {
-      tier: props.quota.tier,
-      used: props.quota.used ?? null,
-      limit: props.quota.limit ?? null,
-    });
-  });
+  watch(
+    () => props.quota.tier,
+    (tier) => {
+      capture('chat_limit_reached', {
+        tier,
+        used: props.quota.used ?? null,
+        limit: props.quota.limit ?? null,
+      });
+    },
+    { immediate: true }
+  );
 
   function trackCta(target: string) {
     capture('chat_limit_cta_clicked', { tier: props.quota.tier, target });

@@ -42,7 +42,10 @@ export function parseQuotaError(error: unknown): QuotaExhausted | null {
 
   if (body?.statusCode !== 429) return null;
 
-  const tier: ChatTier = ['anonymous', 'free', 'member'].includes(body?.data?.tier) ? body.data.tier : 'anonymous';
+  // Derived from CHAT_QUOTAS, not restated. A fourth tier added to the shared
+  // contract would otherwise compile clean here and render every 429 for it as
+  // the anonymous copy — the wrong pitch to the wrong audience, with no error.
+  const tier: ChatTier = Object.keys(CHAT_QUOTAS).includes(body?.data?.tier) ? body.data.tier : 'anonymous';
 
   return {
     tier,
