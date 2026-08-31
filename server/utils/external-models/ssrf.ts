@@ -122,13 +122,25 @@ export async function assertPublicUrl(rawUrl: string): Promise<void> {
     addresses = [host];
   } else {
     try {
+      // `node:dns` is one of the thinner parts of `nodejs_compat`, and lookup()
+      // in particular. VERIFIED on workerd 2026-08-30, against a real
+      // cloudflare_module build under `wrangler dev --local`, not assumed: it
+      // resolves. Four unrelated public hosts scraped successfully through this
+      // guard, a hostname resolving to a loopback address was refused, and an
+      // IP literal in a private range was refused.
+      //
+      // If that ever regresses, the failure is CLOSED rather than open — the
+      // catch below turns it into a refusal — so the symptom would be "every
+      // scrape 400s", not an SSRF hole. The fix in that case is DNS-over-HTTPS
+      // (1.1.1.1/dns-query), keeping this same fail-closed shape.
       addresses = (await dns.lookup(host, { all: true })).map((r) => r.address);
     } catch {
       throw new SsrfError('Could not resolve host');
     }
     if (!addresses.length) throw new SsrfError('Could not resolve host');
   }
-  for (const a of addresses) if (isBlockedAddress(a)) throw new SsrfError('Refusing to fetch a private or local address');
+  for (const a of addresses)
+    if (isBlockedAddress(a)) throw new SsrfError('Refusing to fetch a private or local address');
 }
 
 /**
