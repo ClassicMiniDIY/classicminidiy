@@ -1,18 +1,22 @@
-import { checkBotId } from 'botid/server';
 import { getApiUrl, getApiKey, forwardHeaders } from '../../utils/langgraph';
 
-// Fallback handler for any endpoints not covered by specific files
+/**
+ * Fallback proxy for any LangGraph endpoint without a dedicated file. The chat
+ * client reaches `/threads/:id/state` through here.
+ *
+ * Do NOT re-add `checkBotId()`. Production is Cloudflare, where `botid/server`
+ * is aliased to a fail-open stub whose contract states plainly that no route may
+ * depend on it — so the call classified nothing while implying this endpoint was
+ * bot-screened. Note also that the two POST routes that actually spend money
+ * (`runs.post.ts`, `runs/stream.post.ts`) never had the call at all, so the
+ * guard was absent exactly where it would have mattered most.
+ *
+ * What protects this path is an enabled Cloudflare zone rate-limit rule on
+ * POST /api/langgraph/*, asserted from outside by
+ * scripts/verify-cf-ratelimit.py, plus the in-app limiter in
+ * server/middleware/rate-limit.ts.
+ */
 export default defineEventHandler(async (event) => {
-  // Vercel BotID — only POSTs (chat runs/streaming) carry the challenge header
-  // (see app/plugins/botid.client.ts); GET reads (thread state) aren't protected,
-  // so don't bot-check them or they'd 403 for lack of a token. No-op in local dev.
-  if (event.method === 'POST') {
-    const { isBot } = await checkBotId();
-    if (isBot) {
-      throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
-    }
-  }
-
   try {
     const path = getRouterParam(event, 'path') || '';
     const method = event.method;

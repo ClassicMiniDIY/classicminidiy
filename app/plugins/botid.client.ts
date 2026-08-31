@@ -21,9 +21,16 @@ export default defineNuxtPlugin({
   setup() {
     initBotId({
       protect: [
-        // Unauthenticated, expensive AI chat proxy — thread creation + run streaming
-        // (POST). GET reads (thread state/history) are intentionally not protected.
-        { path: '/api/langgraph/*', method: 'POST' },
+        // NOTE: /api/langgraph/* was removed 2026-08-31. BotID is aliased to a
+        // fail-open stub on Cloudflare (server/stubs/botid-server-stub.mjs),
+        // whose own contract says "a route may not depend on it" — so listing
+        // the chat here bought no protection while making every chat POST carry
+        // a challenge header, and it advertised a guarantee the platform does
+        // not provide. The chat's real controls are the enabled zone
+        // rate-limit rule on POST /api/langgraph/* (asserted from outside by
+        // scripts/verify-cf-ratelimit.py) and the in-app limiter. Do not
+        // re-add it without moving off the stub first.
+        //
         // Stripe Connect seller onboarding (web model marketplace).
         //
         // NOTE: /api/models/checkout was deliberately removed from BotID. It

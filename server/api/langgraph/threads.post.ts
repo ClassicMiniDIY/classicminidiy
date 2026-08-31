@@ -1,14 +1,12 @@
-import { checkBotId } from 'botid/server';
 import { createLangGraphClient } from '../../utils/langgraph';
 
+/**
+ * Do NOT re-add `checkBotId()` here — see the note in `[...path].ts`. On
+ * Cloudflare it is a fail-open stub, so it rejected nothing while reading as a
+ * budget guard. The zone rate-limit rule on POST /api/langgraph/* and the
+ * in-app limiter are what stand in front of this.
+ */
 export default defineEventHandler(async (event) => {
-  // Vercel BotID — reject classified bots before spending any LangGraph budget.
-  // Protected in app/plugins/botid.client.ts. No-op (always human) in local dev.
-  const { isBot } = await checkBotId();
-  if (isBot) {
-    throw createError({ statusCode: 403, statusMessage: 'Bot detected' });
-  }
-
   try {
     const client = createLangGraphClient();
     const thread = await client.threads.create();
