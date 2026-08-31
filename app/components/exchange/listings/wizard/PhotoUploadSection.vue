@@ -9,45 +9,52 @@
 
       <!-- Draggable Photo Grid -->
       <div class="mb-4">
-        <draggable
-          v-model="localPhotos"
-          item-key="preview"
-          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
-          ghost-class="opacity-30"
-          animation="200"
-          @end="onDragEnd"
-        >
-          <template #item="{ element: photo, index }">
-            <div
-              class="relative aspect-square rounded-lg overflow-hidden bg-base-300 cursor-grab active:cursor-grabbing"
-            >
-              <img
-                :src="photo.preview"
-                :alt="t('photoAlt', { number: index + 1 })"
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <!-- Primary badge on first photo -->
-              <span v-if="index === 0" class="absolute top-1 left-1 badge badge-primary badge-sm gap-1">
-                <i class="fas fa-star"></i>
-                {{ t('primary') }}
-              </span>
-              <!-- Delete button -->
-              <button
-                type="button"
-                class="absolute top-1 right-1 btn btn-circle btn-xs btn-error"
-                :aria-label="t('removePhoto')"
-                @click.stop="removePhoto(index)"
+        <ClientOnly>
+          <draggable
+            v-model="localPhotos"
+            item-key="preview"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+            ghost-class="opacity-30"
+            animation="200"
+            @end="onDragEnd"
+          >
+            <template #item="{ element: photo, index }">
+              <div
+                class="relative aspect-square rounded-lg overflow-hidden bg-base-300 cursor-grab active:cursor-grabbing"
               >
-                <i class="fas fa-xmark"></i>
-              </button>
-              <!-- Drag handle hint -->
-              <div class="absolute bottom-1 right-1 text-white/60 pointer-events-none">
-                <i class="fas fa-up-right-and-down-left-from-center drop-shadow"></i>
+                <img
+                  :src="photo.preview"
+                  :alt="t('photoAlt', { number: index + 1 })"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <!-- Primary badge on first photo -->
+                <span v-if="index === 0" class="absolute top-1 left-1 badge badge-primary badge-sm gap-1">
+                  <i class="fas fa-star"></i>
+                  {{ t('primary') }}
+                </span>
+                <!-- Delete button -->
+                <button
+                  type="button"
+                  class="absolute top-1 right-1 btn btn-circle btn-xs btn-error"
+                  :aria-label="t('removePhoto')"
+                  @click.stop="removePhoto(index)"
+                >
+                  <i class="fas fa-xmark"></i>
+                </button>
+                <!-- Drag handle hint -->
+                <div class="absolute bottom-1 right-1 text-white/60 pointer-events-none">
+                  <i class="fas fa-up-right-and-down-left-from-center drop-shadow"></i>
+                </div>
               </div>
+            </template>
+          </draggable>
+          <template #fallback>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div v-for="photo in localPhotos" :key="photo.preview" class="skeleton aspect-square rounded-lg"></div>
             </div>
           </template>
-        </draggable>
+        </ClientOnly>
 
         <!-- Add Photo Button -->
         <div
@@ -71,7 +78,29 @@
 </template>
 
 <script setup lang="ts">
-  import draggable from 'vuedraggable';
+  /**
+   * vuedraggable is loaded ASYNCHRONOUSLY and rendered inside <ClientOnly>,
+   * and both halves are load-bearing. Same treatment as
+   * app/pages/admin/marketing.vue, for the same reason.
+   *
+   * The package (4.1.0) is a webpack UMD bundle that runs its console shim at
+   * MODULE SCOPE — `return global.console` when `window` is undefined. `global`
+   * comes from webpack's shim, which resolves to `undefined` on workerd, so
+   * merely EVALUATING the module during SSR throws
+   * `Cannot read properties of undefined (reading 'console')` and 500s the
+   * route. That is what took /admin/marketing down in production (#745).
+   *
+   * This component was not affected only because it sits on a later wizard step,
+   * so its chunk was never evaluated during SSR — a property of the current step
+   * layout, not a guarantee. Render it on step 1, or let a bundler hoist it into
+   * the page chunk, and the listing-creation flow 500s the same way. This is the
+   * PAID listing path, so that is not a risk worth carrying on an accident.
+   *
+   * <ClientOnly> is also the honest shape here regardless: this component
+   * manipulates File objects, object-URL previews and drag events, none of which
+   * SSR usefully.
+   */
+  const draggable = defineAsyncComponent(() => import('vuedraggable'));
   import type { OptimizeResult } from '~/utils/imageOptimizer';
 
   const { t } = useI18n();
