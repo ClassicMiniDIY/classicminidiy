@@ -55,8 +55,16 @@ jobs:
       # env registry. Each carries a SHRINK-ONLY allowlist of today's known
       # violations, so a new one fails and a fix that forgets to remove its
       # entry also fails.
-      - name: Run tests
-        run: bun run test
+      # test:coverage rather than test: it runs the SAME suite and additionally
+      # enforces the thresholds in vitest.config.ts, for 7 seconds more (34s vs
+      # 27s locally). A separate coverage job would have run every test twice.
+      #
+      # The thresholds gate the depth of tested code, not the breadth of the
+      # codebase — `all` is off, so the report covers only files a test imports.
+      # The reasoning is in vitest.config.ts; read it before reacting to the
+      # number.
+      - name: Run tests (with coverage thresholds)
+        run: bun run test:coverage
 
       # Catches a local declaration that shadows a Nuxt auto-import. unimport
       # skips injecting any name it thinks is already provided and does no scope
