@@ -187,7 +187,41 @@ hand-ported streaming composable rather than maintaining it.
 Given the transcript findings, the prompt and tool-selection work is the highest-value
 part of this phase, not the plumbing.
 
-### Phase 2 — replace the transport
+### Phase 2 — replace the transport (done)
+
+Cut over directly, with no feature flag. 18 files deleted: the 665-line
+`useStreamProvider`, `usePersistentThread`, the eight `server/api/langgraph/**`
+routes, `server/utils/langgraph.ts`, the admin thread viewers, and the
+`@langchain/langgraph-sdk` dependency.
+
+`useChatHistory` is now the store rather than an index into a remote one — it
+holds transcripts, with a character budget because localStorage is ~5MB shared
+across the origin, and it sheds pre-cutover entries on load (every existing
+visitor has rows holding only a remote thread id, which would open as an empty
+chat with no explanation).
+
+**Two bugs only running it could find:**
+
+- `useChat` has no `setMessages` — `messages` is a ShallowRef you assign. The
+  destructure 500'd `/chat` on any visit that restored a conversation, and
+  survived because the return had been cast to `any`. The cast is gone.
+- `convertToModelMessages` is async in AI SDK v7 (it was sync in v6). The
+  un-awaited call threw inside `standardizePrompt` with a message naming neither
+  the call nor the omission, and the route's own `onError` turned it into a
+  generic "An error occurred". Build clean, 189 test files green, chat dead.
+  `tests/static/chat-route-contracts.test.ts` guards it now.
+
+**Operational follow-up:** delete `NUXT_LANGGRAPH_API_URL` and
+`NUXT_LANGSMITH_API_KEY` from the Worker. Nothing reads them, and the LangSmith
+key is a live credential for a third-party account on which it holds an Admin
+role.
+
+Verified on the built Cloudflare artifact under `wrangler dev --local`: 4.56 MB
+gzip, tools fire, `clearances` answered a real question. In a browser: the links
+rail now fills from `site-search` with real CMDIY pages, a conversation survives
+a full reload, history lists and reopens, and there are no hydration warnings.
+
+#### Original plan for this phase
 
 Ship Phase 1 behind a `runtimeConfig.public` flag at a new `server/api/chat.post.ts`
 while the old path still serves, then delete: the streaming composable, the 8 proxy
