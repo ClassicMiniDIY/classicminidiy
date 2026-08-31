@@ -93,7 +93,7 @@
                 </div>
 
                 <!-- Submitter & Date -->
-                <div class="text-sm text-base-content/50 mb-2">
+                <div class="text-sm text-base-content/50 mb-2 break-words">
                   Submitted by <strong>{{ find.profiles?.display_name || 'Unknown' }}</strong> on
                   {{ formatDate(find.created_at) }}
                 </div>

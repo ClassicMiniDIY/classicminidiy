@@ -82,10 +82,10 @@
 
             <!-- User and Date Info -->
             <div class="text-sm space-y-1 mb-3">
-              <div class="flex items-center gap-2">
-                <i class="fas fa-user text-base-content/50"></i>
-                <span class="font-medium">{{ post.profiles?.display_name || 'Unknown' }}</span>
-                <span class="text-base-content/50">{{ post.profiles?.email }}</span>
+              <div class="flex min-w-0 flex-wrap items-center gap-2">
+                <i class="fas fa-user shrink-0 text-base-content/50"></i>
+                <span class="min-w-0 truncate font-medium">{{ post.profiles?.display_name || 'Unknown' }}</span>
+                <span class="min-w-0 break-all text-base-content/50">{{ post.profiles?.email }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <i class="fas fa-tag text-base-content/50"></i>
@@ -202,9 +202,13 @@
                   </div>
                 </td>
                 <td>
-                  <div class="text-sm">
-                    <div class="font-medium">{{ post.profiles?.display_name || 'Unknown' }}</div>
-                    <div class="text-base-content/70">{{ post.profiles?.email }}</div>
+                  <div class="max-w-[14rem] text-sm">
+                    <div class="truncate font-medium" :title="post.profiles?.display_name || undefined">
+                      {{ post.profiles?.display_name || 'Unknown' }}
+                    </div>
+                    <div class="truncate text-base-content/70" :title="post.profiles?.email || undefined">
+                      {{ post.profiles?.email }}
+                    </div>
                   </div>
                 </td>
                 <td>

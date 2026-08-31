@@ -562,8 +562,11 @@
               {{ getInitials(item.submitterName) }}
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 text-sm">
-              <span class="font-medium">{{ item.submitterName }}</span>
+            <div class="flex min-w-0 flex-wrap items-center gap-2 text-sm">
+              <!-- `min-w-0` + `break-words`: a submitter name can be one long
+                   unbreakable token, and `flex-wrap` alone does not stop a single
+                   item wider than the row from pushing the page sideways. -->
+              <span class="min-w-0 break-words font-medium">{{ item.submitterName }}</span>
               <span
                 class="badge badge-soft badge-xs"
                 :class="`badge-${getTrustLevelBadgeColor(item.submitterTrustLevel)}`"
@@ -579,8 +582,11 @@
             <div class="bg-base-200 rounded-lg p-3">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
                 <div v-for="field in getPreviewFields(item)" :key="field.label" class="flex gap-2 text-sm py-0.5">
-                  <span class="font-medium opacity-70 min-w-24">{{ field.label }}:</span>
-                  <span>{{ field.value }}</span>
+                  <span class="font-medium opacity-70 min-w-24 shrink-0">{{ field.label }}:</span>
+                  <!-- Submitted field values are arbitrary user text and can be
+                       one unbreakable token; `min-w-0` lets the item shrink so
+                       `break-words` can break it. -->
+                  <span class="min-w-0 break-words">{{ field.value }}</span>
                 </div>
               </div>
             </div>
@@ -655,8 +661,11 @@
             <div class="bg-base-200 rounded-lg p-3">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
                 <div v-for="field in getPreviewFields(item)" :key="field.label" class="flex gap-2 text-sm py-0.5">
-                  <span class="font-medium opacity-70 min-w-24">{{ field.label }}:</span>
-                  <span>{{ field.value }}</span>
+                  <span class="font-medium opacity-70 min-w-24 shrink-0">{{ field.label }}:</span>
+                  <!-- Submitted field values are arbitrary user text and can be
+                       one unbreakable token; `min-w-0` lets the item shrink so
+                       `break-words` can break it. -->
+                  <span class="min-w-0 break-words">{{ field.value }}</span>
                 </div>
               </div>
             </div>

@@ -73,8 +73,8 @@
                        the address is what keeps a long seller address inside the
                        card. -->
                   <span class="flex min-w-0 flex-wrap items-center gap-1">
-                    <i class="fas fa-user"></i>
-                    {{ listing.profiles?.display_name || 'Unknown' }}
+                    <i class="fas fa-user shrink-0"></i>
+                    <span class="min-w-0 break-words">{{ listing.profiles?.display_name || 'Unknown' }}</span>
                     <span v-if="listing.profiles?.email" class="min-w-0 break-all text-base-content/40">
                       ({{ listing.profiles.email }})
                     </span>
