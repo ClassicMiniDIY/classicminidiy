@@ -77,14 +77,24 @@
   // Watch input for auto-resize
   watch(input, autoResizeTextarea);
 
-  // Focus input on mount
-  onMounted(() => {
-    nextTick(() => {
-      if (inputRef.value) {
-        inputRef.value.focus();
-      }
-    });
-  });
+  // Deliberately NOT focused on mount.
+  //
+  // This component renders on the HOMEPAGE (app/pages/index.vue), so an
+  // unconditional focus stole the caret on every visit to the site's most
+  // trafficked page. Two costs:
+  //
+  //   1. It killed the `/` omnisearch shortcut that the header advertises with
+  //      a <kbd>/</kbd> on every page. The handler in MainNav correctly ignores
+  //      keystrokes while the caret is in a text field, so the shortcut was
+  //      dead exactly where it was most likely to be tried. Measured:
+  //        /           focused: TEXTAREA  ->  "/" opened nothing
+  //        /technical  focused: BODY      ->  "/" opened the palette
+  //   2. Moving focus on load without user intent disrupts screen-reader
+  //      reading order and drops a keyboard user past the whole nav and the
+  //      skip link.
+  //
+  // /chat still focuses its composer on arrival — see ChatWindow.vue — which is
+  // the right place for it, because navigating there IS the intent.
 </script>
 
 <style scoped>
