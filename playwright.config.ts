@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { AUTH_STATE_PATH } from './tests/e2e/_auth';
+import { AUTH_STATE_PATH } from './tests/e2e/paths';
 
 /**
  * E2E config, deliberately SEPARATE from vitest.config.ts.

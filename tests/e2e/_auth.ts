@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-/** Where the setup project writes the signed-in storage state. Gitignored. */
-export const AUTH_STATE_PATH = 'playwright/.auth/user.json';
+export { AUTH_STATE_PATH } from './paths';
 
 /**
  * Signing in for E2E, without touching the sign-in UI.
@@ -84,7 +83,14 @@ async function resolveTestUserId(admin: ReturnType<typeof createClient>, email: 
   const { data: row, error: rowError } = await admin
     .from('profile_private')
     .select('user_id')
-    .ilike('email', wanted)
+    // .eq, NOT .ilike. PostgREST passes an ilike value through as a LIKE
+    // PATTERN, so `_` and `%` in the address become wildcards: verified against
+    // the live table that `email ilike '_2e-bot@...'` matches the real
+    // `e2e-bot@...` row, and 12 accounts currently contain an underscore. A
+    // wildcard match could resolve to a DIFFERENT user and mint a session for
+    // their account. Case-insensitivity is not lost by this: all 492 stored
+    // addresses are already lowercase, and `wanted` is lowercased above.
+    .eq('email', wanted)
     .maybeSingle();
 
   if (rowError) {
@@ -177,6 +183,27 @@ export async function assertSessionAdopted(page: import('@playwright/test').Page
       return null;
     }
   }, key);
+
+  if (stored) {
+    // Presence is not validity. The state is minted once per run and reused, so
+    // an expired access_token would still sit under the key while the app
+    // renders signed OUT — every auth-gated assertion would then pass against
+    // the wrong page state and the suite would report green while covering
+    // nothing, which is the exact silent pass this function exists to prevent.
+    let expiresAt: number | undefined;
+    try {
+      expiresAt = (JSON.parse(stored) as { expires_at?: number }).expires_at;
+    } catch {
+      throw new Error(`The session stored under "${key}" is not valid JSON.`);
+    }
+    if (typeof expiresAt === 'number' && expiresAt * 1000 <= Date.now()) {
+      throw new Error(
+        `The session under "${key}" expired at ${new Date(expiresAt * 1000).toISOString()}. ` +
+          'Storage state is minted once per run; a long run can outlive the token.'
+      );
+    }
+    return;
+  }
 
   if (!stored) {
     const keys = await page.evaluate(() => {

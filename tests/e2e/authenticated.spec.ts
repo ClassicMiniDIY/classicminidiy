@@ -60,14 +60,19 @@ test.describe('authenticated surfaces hydrate cleanly', () => {
 
   // The session arrives via storageState from the `setup` project (see
   // auth.setup.ts) — minted once for the whole run, because magic-link tokens
-  // are single-use and per-test minting raced. This only confirms the browser
-  // actually adopted it; a silent miss would make every assertion below pass
-  // against a signed-OUT page, which is the exact failure this suite exists to
-  // catch and so must not be possible within it.
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await assertSessionAdopted(page, storageKeyFor(env!.supabaseUrl));
-  });
+  // are single-use and per-test minting raced.
+  //
+  // Adoption is asserted on the page each test ALREADY loads rather than in a
+  // beforeEach that navigated to '/' first: that cost a full extra Nuxt route
+  // compile per test (~12 per run, twice over for the two tests that also
+  // target '/') against the suite's slowest component, and bought nothing the
+  // in-test check does not.
+  // Computed defensively, NOT `env!.supabaseUrl`. The describe body is
+  // evaluated during collection even when `test.skip()` will skip every test in
+  // it, so dereferencing a null env here crashed the whole file on a clean
+  // checkout — turning a clean skip into a hard error, which is exactly the
+  // zero-setup guarantee this suite is supposed to keep.
+  const authKey = env ? storageKeyFor(env.supabaseUrl) : '';
 
   for (const route of ROUTES) {
     test(`${route} hydrates without a mismatch while signed in`, async ({ page }) => {
@@ -86,6 +91,9 @@ test.describe('authenticated surfaces hydrate cleanly', () => {
 
       await page.goto(route, { waitUntil: 'domcontentloaded' });
       await waitForHydration(page);
+      // A silent miss here would make every assertion below pass against a
+      // signed-OUT page — the exact failure this suite exists to catch.
+      await assertSessionAdopted(page, authKey);
 
       if (KNOWN_HYDRATION_MISMATCH.has(route)) {
         // Report, do not fail. An uncaught page error is still a hard failure
@@ -109,6 +117,7 @@ test.describe('authenticated surfaces hydrate cleanly', () => {
     // closed-state `display: none` at once.
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await waitForHydration(page);
+    await assertSessionAdopted(page, authKey);
 
     const orphans = await page.evaluate(() =>
       [...document.querySelectorAll('.dropdown-content')]
