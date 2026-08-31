@@ -42,6 +42,18 @@ function builder() {
 
 const userClient = { from: vi.fn(() => builder()) };
 
+const storage = {
+  items: new Map<string, unknown>(),
+  getItem: vi.fn(async (k: string) => storage.items.get(k) ?? null),
+  setItem: vi.fn(async (k: string, v: unknown) => {
+    storage.items.set(k, v);
+  }),
+};
+
+vi.stubGlobal(
+  'useStorage',
+  vi.fn(() => storage)
+);
 vi.stubGlobal('defineEventHandler', (h: Function) => h);
 vi.stubGlobal(
   'getRouterParam',
@@ -84,6 +96,7 @@ beforeEach(() => {
   authThrows = false;
   query.rows = [];
   query.error = null;
+  storage.items.clear();
   // Reset BOTH stubbed globals. Leaving them is a setup-asymmetry trap: the
   // non-UUID test below sets getRouterParam to a bad path, and without this
   // every later test in the file rejects on the id before reaching what it
@@ -117,6 +130,26 @@ describe('access', () => {
   it('allows a member', async () => {
     query.rows = [];
     await expect(list(event())).resolves.toEqual({ threads: [] });
+  });
+});
+
+describe('membership caching', () => {
+  it('caches a resolved membership so every push does not re-run the RPC', async () => {
+    // A push happens after every answer and a pull on every page load, so an
+    // uncached lookup means a steady stream of identical RPCs. chat-auth
+    // already solved this the same way.
+    await list(event());
+    expect(storage.setItem).toHaveBeenCalledOnce();
+    await list(event());
+    expect(storage.setItem).toHaveBeenCalledOnce();
+  });
+
+  it('does NOT cache when the lookup failed', async () => {
+    // Writing "not a member" during a transient RPC blip would hold a paying
+    // member out for the full TTL.
+    rpcError = { message: 'rpc down' };
+    await expect(list(event())).rejects.toMatchObject({ statusCode: 503 });
+    expect(storage.setItem).not.toHaveBeenCalled();
   });
 });
 
