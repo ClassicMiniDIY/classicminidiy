@@ -11,7 +11,8 @@
         :value="modelValue"
         @input="onInput"
         @keydown="onKeyDown"
-        :placeholder="t('input_placeholder')"
+        :disabled="disabled"
+        :placeholder="disabled ? t('input_disabled_placeholder') : t('input_placeholder')"
         class="w-full resize-none bg-transparent px-4 pt-3 leading-6 outline-none placeholder:text-base-content/50"
         :style="{ maxHeight: `${MAX_HEIGHT}px` }"
         rows="1"
@@ -57,7 +58,7 @@
           v-else
           type="submit"
           class="ml-auto md:ml-0 btn btn-sm btn-square btn-primary"
-          :disabled="!modelValue.trim()"
+          :disabled="disabled || !modelValue.trim()"
           :aria-label="t('send_message')"
           :title="t('send_message')"
         >
@@ -83,8 +84,15 @@
       modelValue: string;
       isLoading?: boolean;
       disableNewChat?: boolean;
+      /**
+       * Sending is impossible right now — currently only when a quota is
+       * exhausted. Distinct from `isLoading`: that one shows a stop button
+       * because a run is in flight, whereas this one has nothing to stop and
+       * must not invite a retry that cannot succeed.
+       */
+      disabled?: boolean;
     }>(),
-    { isLoading: false, disableNewChat: false }
+    { isLoading: false, disableNewChat: false, disabled: false }
   );
 
   const emit = defineEmits<{
@@ -133,7 +141,7 @@
   function onKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
-      if (!props.isLoading && props.modelValue.trim()) emit('submit');
+      if (!props.isLoading && !props.disabled && props.modelValue.trim()) emit('submit');
     }
   }
 
@@ -166,7 +174,8 @@
     "hint": "Enter to send, Shift+Enter for a new line",
     "send_message": "Send message",
     "stop_generating": "Stop generating",
-    "disclaimer": "The assistant is experimental and can be wrong. Verify anything critical against official documentation or a qualified mechanic."
+    "disclaimer": "The assistant is experimental and can be wrong. Verify anything critical against official documentation or a qualified mechanic.",
+    "input_disabled_placeholder": "Message limit reached"
   },
   "es": {
     "input_placeholder": "Pregúntame cualquier cosa sobre tu Classic Mini...",
@@ -175,7 +184,8 @@
     "hint": "Enter para enviar, Mayús+Enter para nueva línea",
     "send_message": "Enviar mensaje",
     "stop_generating": "Detener generación",
-    "disclaimer": "El asistente es experimental y puede equivocarse. Verifica todo lo crítico con documentación oficial o un mecánico cualificado."
+    "disclaimer": "El asistente es experimental y puede equivocarse. Verifica todo lo crítico con documentación oficial o un mecánico cualificado.",
+    "input_disabled_placeholder": "Límite de mensajes alcanzado"
   },
   "fr": {
     "input_placeholder": "Demandez-moi n'importe quoi sur votre Classic Mini...",
@@ -184,7 +194,8 @@
     "hint": "Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne",
     "send_message": "Envoyer le message",
     "stop_generating": "Arrêter la génération",
-    "disclaimer": "L'assistant est expérimental et peut se tromper. Vérifiez tout élément critique avec la documentation officielle ou un mécanicien qualifié."
+    "disclaimer": "L'assistant est expérimental et peut se tromper. Vérifiez tout élément critique avec la documentation officielle ou un mécanicien qualifié.",
+    "input_disabled_placeholder": "Limite de messages atteinte"
   },
   "de": {
     "input_placeholder": "Fragen Sie mich alles über Ihren Classic Mini...",
@@ -193,7 +204,8 @@
     "hint": "Enter zum Senden, Umschalt+Enter für neue Zeile",
     "send_message": "Nachricht senden",
     "stop_generating": "Generierung stoppen",
-    "disclaimer": "Der Assistent ist experimentell und kann sich irren. Prüfen Sie alles Kritische anhand offizieller Dokumentation oder mit einem qualifizierten Mechaniker."
+    "disclaimer": "Der Assistent ist experimentell und kann sich irren. Prüfen Sie alles Kritische anhand offizieller Dokumentation oder mit einem qualifizierten Mechaniker.",
+    "input_disabled_placeholder": "Nachrichtenlimit erreicht"
   },
   "it": {
     "input_placeholder": "Chiedimi qualsiasi cosa sulla tua Classic Mini...",
@@ -202,7 +214,8 @@
     "hint": "Invio per inviare, Maiusc+Invio per andare a capo",
     "send_message": "Invia messaggio",
     "stop_generating": "Interrompi generazione",
-    "disclaimer": "L'assistente è sperimentale e può sbagliare. Verifica ogni informazione critica con la documentazione ufficiale o un meccanico qualificato."
+    "disclaimer": "L'assistente è sperimentale e può sbagliare. Verifica ogni informazione critica con la documentazione ufficiale o un meccanico qualificato.",
+    "input_disabled_placeholder": "Limite di messaggi raggiunto"
   },
   "pt": {
     "input_placeholder": "Pergunte-me qualquer coisa sobre seu Classic Mini...",
@@ -211,7 +224,8 @@
     "hint": "Enter para enviar, Shift+Enter para nova linha",
     "send_message": "Enviar mensagem",
     "stop_generating": "Parar geração",
-    "disclaimer": "O assistente é experimental e pode errar. Verifique qualquer informação crítica com documentação oficial ou um mecânico qualificado."
+    "disclaimer": "O assistente é experimental e pode errar. Verifique qualquer informação crítica com documentação oficial ou um mecânico qualificado.",
+    "input_disabled_placeholder": "Limite de mensagens atingido"
   },
   "ru": {
     "input_placeholder": "Спросите меня что-нибудь о вашем Classic Mini...",
@@ -220,7 +234,8 @@
     "hint": "Enter — отправить, Shift+Enter — новая строка",
     "send_message": "Отправить сообщение",
     "stop_generating": "Остановить генерацию",
-    "disclaimer": "Помощник экспериментальный и может ошибаться. Проверяйте важную информацию по официальной документации или у квалифицированного механика."
+    "disclaimer": "Помощник экспериментальный и может ошибаться. Проверяйте важную информацию по официальной документации или у квалифицированного механика.",
+    "input_disabled_placeholder": "Достигнут лимит сообщений"
   },
   "ja": {
     "input_placeholder": "あなたのClassic Miniについて何でもお聞きください...",
@@ -229,7 +244,8 @@
     "hint": "Enterで送信、Shift+Enterで改行",
     "send_message": "メッセージを送信",
     "stop_generating": "生成を停止",
-    "disclaimer": "このアシスタントは実験的なもので、誤ることがあります。重要な情報は公式資料か有資格の整備士で確認してください。"
+    "disclaimer": "このアシスタントは実験的なもので、誤ることがあります。重要な情報は公式資料か有資格の整備士で確認してください。",
+    "input_disabled_placeholder": "メッセージの上限に達しました"
   },
   "zh": {
     "input_placeholder": "询问我关于您的Classic Mini的任何问题...",
@@ -238,7 +254,8 @@
     "hint": "Enter 发送，Shift+Enter 换行",
     "send_message": "发送消息",
     "stop_generating": "停止生成",
-    "disclaimer": "此助手为实验性功能，可能出错。重要信息请以官方文档或合格技师为准。"
+    "disclaimer": "此助手为实验性功能，可能出错。重要信息请以官方文档或合格技师为准。",
+    "input_disabled_placeholder": "已达到消息上限"
   },
   "ko": {
     "input_placeholder": "Classic Mini에 대해 무엇이든 물어보세요...",
@@ -247,7 +264,8 @@
     "hint": "Enter로 전송, Shift+Enter로 줄바꿈",
     "send_message": "메시지 보내기",
     "stop_generating": "생성 중단",
-    "disclaimer": "이 어시스턴트는 실험적이며 틀릴 수 있습니다. 중요한 내용은 공식 문서나 자격을 갖춘 정비사에게 확인하세요."
+    "disclaimer": "이 어시스턴트는 실험적이며 틀릴 수 있습니다. 중요한 내용은 공식 문서나 자격을 갖춘 정비사에게 확인하세요.",
+    "input_disabled_placeholder": "메시지 한도에 도달했습니다"
   }
 }
 </i18n>

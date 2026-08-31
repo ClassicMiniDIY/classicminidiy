@@ -110,6 +110,14 @@ export interface ChatRunTracker {
    */
   recordToolCall(name: string | undefined): void;
   /**
+   * Record how much of the prompt came from Anthropic's cache.
+   *
+   * Separate from `observe` for the same reason `recordToolCall` is: `observe`
+   * advances chunk_count and stamps first-chunk time, and these numbers arrive
+   * once at the end rather than per chunk.
+   */
+  recordCacheUsage(usage: { read: number; written: number; uncached: number }): void;
+  /**
    * Emit the run summary. Safe to call once; later calls are ignored.
    *
    * `extra` carries membership context — which tier the caller was on and where
@@ -129,6 +137,7 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
   const startedAt = Date.now();
   const tools = new Set<string>();
   const usage = { input: 0, output: 0 };
+  const cache = { read: 0, written: 0, uncached: 0 };
   let firstChunkAt: number | null = null;
   let chunkCount = 0;
   let done = false;
@@ -147,6 +156,12 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
 
     recordToolCall(name: string | undefined) {
       if (typeof name === 'string' && name) tools.add(name);
+    },
+
+    recordCacheUsage(usage: { read: number; written: number; uncached: number }) {
+      cache.read += usage.read;
+      cache.written += usage.written;
+      cache.uncached += usage.uncached;
     },
 
     finish(outcome: ChatRunOutcome, errorMessage?: string, extra?: Record<string, unknown>) {
@@ -175,6 +190,9 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
               tool_call_count: tools.size,
               input_tokens: usage.input || null,
               output_tokens: usage.output || null,
+              cache_read_tokens: cache.read,
+              cache_write_tokens: cache.written,
+              cache_uncached_tokens: cache.uncached,
               locale: locale ?? null,
               error_message: errorMessage ?? null,
               ...(extra ?? {}),

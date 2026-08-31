@@ -50,7 +50,16 @@
               class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6"
               :class="isChatEmpty ? 'flex flex-col justify-center' : ''"
             >
-              <ChatEmptyState v-if="isChatEmpty" @pick="handleStarter" />
+              <!--
+                `&& !quotaExhausted` is load-bearing. Without it, starting a new
+                chat after hitting the ceiling emptied the transcript, which sent
+                the render down this branch and took the explanation with it —
+                leaving a disabled composer reading "Message limit reached" above
+                starter prompts that could not be used, and nothing saying why.
+                Falling through to the branch below keeps the panel on screen
+                even with no messages.
+              -->
+              <ChatEmptyState v-if="isChatEmpty && !quotaExhausted" @pick="handleStarter" />
 
               <!-- Deliberately NOT `role="log"`: that role carries an implicit
                `aria-live="polite"`, which would make a screen reader re-announce
@@ -71,7 +80,11 @@
                      chrome, NOT as an assistant turn: a failure dressed up as a
                      reply is indistinguishable from the assistant saying
                      something went wrong, and only one of those is true. -->
-                <div v-if="error" role="alert" class="alert alert-error">
+                <!-- Hitting a ceiling is not a failure, so it does not get the
+                     failure treatment. See QuotaLimitPanel. -->
+                <QuotaLimitPanel v-if="quotaExhausted" :quota="quotaExhausted" />
+
+                <div v-else-if="error" role="alert" class="alert alert-error">
                   <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
                   <span>{{ t('request_failed') }}</span>
                 </div>
@@ -122,6 +135,7 @@
               ref="composerRef"
               v-model="input"
               :is-loading="isLoading"
+              :disabled="!!quotaExhausted"
               :disable-new-chat="isChatEmpty && !isLoading"
               @submit="handleSubmit"
               @stop="stopGeneration"
@@ -176,12 +190,14 @@
   // `const ref = ...` suppressing the injection for the whole file.
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
   import { DefaultChatTransport, type UIMessage } from 'ai';
+  import { parseQuotaError } from '~/utils/chatQuotaError';
   import { useChat } from '@ai-sdk/vue';
   import AssistantMessage from './AssistantMessage.vue';
   import ChatComposer from './ChatComposer.vue';
   import ChatEmptyState from './ChatEmptyState.vue';
   import ChatHistoryDialog from './ChatHistoryDialog.vue';
   import HumanMessage from './HumanMessage.vue';
+  import QuotaLimitPanel from './QuotaLimitPanel.vue';
   import UsefulLinks from './UsefulLinks.vue';
   import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
 
@@ -275,6 +291,16 @@
   });
 
   const isLoading = computed(() => status.value === 'submitted' || status.value === 'streaming');
+
+  /**
+   * The quota details when the last failure was a 429, else null.
+   *
+   * The transport puts the response body in the error's message, so the
+   * structured 429 the route sends survives the trip — see
+   * `app/utils/chatQuotaError.ts` for why parsing it matters more than for a
+   * normal error.
+   */
+  const quotaExhausted = computed(() => parseQuotaError(error.value));
 
   // The server never has stored state, so SSR always renders the welcome
   // branch. Reading localStorage during setup would flip this on the first
