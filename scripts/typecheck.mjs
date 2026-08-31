@@ -30,12 +30,26 @@ import { spawnSync } from 'node:child_process';
 const BASELINE = {
   'app/': 368,
   'server/': 64,
-  'scripts/': 3,
+  'scripts/': 0,
   'data/': 1,
 };
 
 /** Counted areas only — see the note above about `tests/`. */
 const AREAS = Object.keys(BASELINE);
+
+/**
+ * Paths whose error count is not a property of this repo's code.
+ *
+ * `scripts/migrate/` is a self-contained one-off migration package with its OWN
+ * `package.json` and `bun.lock`, and its `node_modules` is gitignored and never
+ * installed in CI. So it typechecks against a different dependency graph
+ * depending on where you run it: 3 errors locally, 9 on a runner, where six
+ * imports additionally fail to resolve. A baseline that moves with the machine
+ * is not a baseline — it fails honest PRs while passing on the author's laptop,
+ * which is how this was caught. Checking it against the ROOT project's module
+ * resolution is meaningless in either environment.
+ */
+const IGNORED_PREFIXES = ['scripts/migrate/'];
 
 const result = spawnSync('bunx', ['nuxi', 'typecheck'], {
   encoding: 'utf8',
@@ -46,7 +60,10 @@ const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
 // vue-tsc emits `path/to/file.vue(12,34): error TS2532: ...`. Anchor to the line
 // start so the indented "Type 'X' is not assignable" continuation lines that
 // follow an overload error are not counted as separate errors.
-const errorLines = output.split('\n').filter((line) => /^\S.*\berror TS\d+:/.test(line));
+const errorLines = output
+  .split('\n')
+  .filter((line) => /^\S.*\berror TS\d+:/.test(line))
+  .filter((line) => !IGNORED_PREFIXES.some((prefix) => line.startsWith(prefix)));
 
 const counts = Object.fromEntries(AREAS.map((area) => [area, 0]));
 let uncounted = 0;
@@ -64,7 +81,7 @@ for (const area of AREAS) {
 }
 
 const total = AREAS.reduce((sum, area) => sum + counts[area], 0);
-console.log(`typecheck: ${total} error(s) in counted areas (${errorLines.length} total, ${uncounted} in tests/)`);
+console.log(`typecheck: ${total} error(s) in counted areas (${errorLines.length} checked, ${uncounted} in tests/)`);
 for (const area of AREAS) console.log(`  ${area.padEnd(10)} ${counts[area]}  (baseline ${BASELINE[area]})`);
 
 if (regressions.length) {
