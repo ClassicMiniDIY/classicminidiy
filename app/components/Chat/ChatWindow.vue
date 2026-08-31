@@ -10,44 +10,41 @@
     is a single instance pinned beneath it.
   -->
   <div class="flex h-full min-h-0 flex-col bg-base-100 [--chat-rail:20rem]">
-    <header class="shrink-0 border-b border-base-300">
-      <!--
-        The header mirrors the body's two-column shape instead of spanning the
-        shell, and the empty spacer below is what makes it do so.
+    <!--
+      `lg:pr-[--chat-rail]` is what lines this bar up with the conversation.
 
-        Both this bar and the transcript centre a `max-w-3xl` box with
-        `mx-auto` - but `mx-auto` centres on the PARENT. The transcript's parent
-        is the chat column (the shell minus the rail); this one's was the shell
-        itself, so the title and History button sat half the rail's width
-        (~160px) to the right of everything beneath them. The border-b still
-        spans the full width, so only the alignment changes.
+      The header spans the shell, but everything under it lives in the chat
+      column - the shell MINUS the rail. All three reading boxes (this one, the
+      transcript, the composer) centre themselves with `mx-auto`, and `mx-auto`
+      centres on the parent's CONTENT box. Without the padding this bar centred
+      on the shell while the other two centred on the column, so the title and
+      History button sat half the rail's width right of everything beneath them.
+      Reserving the rail's width as padding makes this content box the same box
+      the chat column is, so all three land on one axis.
 
-        It was invisible on a laptop: below `lg` the rail is hidden and the two
-        axes coincide, so the drift only appears on the wide screens where it is
-        also most obvious.
-      -->
-      <div class="flex">
-        <div class="min-w-0 flex-1">
-          <div class="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-2.5 sm:px-6">
-            <h1 class="text-sm font-semibold">{{ t('assistant_name') }}</h1>
-            <span class="badge badge-ghost badge-sm">{{ t('beta') }}</span>
+      Padding rather than a spacer element on purpose: `border-b` is drawn
+      outside the padding, so it still spans the full width, and there is no
+      empty node to keep in sync with the aside.
 
-            <button type="button" class="btn btn-ghost btn-sm ml-auto gap-2 font-normal" @click="historyOpen = true">
-              <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
-              <span class="hidden sm:inline">{{ t('history') }}</span>
-              <span class="sr-only sm:hidden">{{ t('history') }}</span>
-              <!-- Count is rendered only after mount: it comes from localStorage,
-                   which the server cannot know, and rendering it during setup is
-                   the hydration mismatch documented in CLAUDE.md. -->
-              <span v-if="hasMounted && history.entries.value.length > 0" class="badge badge-sm">
-                {{ history.entries.value.length }}
-              </span>
-            </button>
-          </div>
-        </div>
-        <!-- Reserves the rail's gutter. Same custom property as the <aside>, so
-             changing the rail width moves both together. -->
-        <div class="hidden w-[var(--chat-rail)] shrink-0 lg:block" aria-hidden="true"></div>
+      It was invisible on a laptop - below `lg` there is no rail and the axes
+      coincide, so the drift only shows on wide screens.
+    -->
+    <header class="shrink-0 border-b border-base-300 lg:pr-[var(--chat-rail)]">
+      <div class="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-2.5 sm:px-6">
+        <h1 class="text-sm font-semibold">{{ t('assistant_name') }}</h1>
+        <span class="badge badge-ghost badge-sm">{{ t('beta') }}</span>
+
+        <button type="button" class="btn btn-ghost btn-sm ml-auto gap-2 font-normal" @click="historyOpen = true">
+          <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+          <span class="hidden sm:inline">{{ t('history') }}</span>
+          <span class="sr-only sm:hidden">{{ t('history') }}</span>
+          <!-- Count is rendered only after mount: it comes from localStorage,
+               which the server cannot know, and rendering it during setup is
+               the hydration mismatch documented in CLAUDE.md. -->
+          <span v-if="hasMounted && history.entries.value.length > 0" class="badge badge-sm">
+            {{ history.entries.value.length }}
+          </span>
+        </button>
       </div>
     </header>
 
@@ -62,9 +59,25 @@
            past the viewport instead of wrapping. -->
       <div class="flex min-h-0 min-w-0 flex-1 flex-col">
         <div class="relative flex min-h-0 flex-1 flex-col">
+          <!--
+            `both-edges` rather than a plain `stable`, and it is load-bearing.
+
+            Where scrollbars take layout space (Windows, Linux, and the Linux
+            Chromium that CI runs), a scrollbar narrows this scrollport, so the
+            `max-w-3xl` box inside re-centres 7px left of the header and the
+            composer the moment a conversation grows past one screen — the same
+            "reading column is not one column" defect as the header, just small
+            enough to read as sloppiness rather than a bug, and it appears and
+            disappears as the transcript crosses the scroll threshold.
+
+            Reserving the gutter on BOTH edges keeps the centre where it was, so
+            the axis holds whether or not a scrollbar is showing. Plain `stable`
+            reserves on one side only and would trade the jitter for a permanent
+            offset. Platforms with overlay scrollbars reserve nothing either way.
+          -->
           <div
             ref="messagesContainer"
-            class="flex-1 overflow-y-auto"
+            class="flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]"
             :class="isChatEmpty ? 'flex' : ''"
             @scroll="handleScroll"
           >
