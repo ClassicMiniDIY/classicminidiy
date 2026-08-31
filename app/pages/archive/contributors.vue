@@ -96,7 +96,7 @@
 </script>
 
 <template>
-  <hero :navigation="true" :title="t('hero_title')" :heroType="HERO_TYPES.ARCHIVE" />
+  <hero :navigation="true" :title="t('hero_title')" title-tag="p" :heroType="HERO_TYPES.ARCHIVE" />
 
   <div class="mx-auto w-full max-w-[900px] px-4 py-7 lg:py-9">
     <breadcrumb :version="BREADCRUMB_VERSIONS.ARCHIVE" :page="t('breadcrumb')" />

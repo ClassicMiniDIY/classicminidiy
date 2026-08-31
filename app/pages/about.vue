@@ -61,7 +61,7 @@
         eyebrow="ABOUT"
         title="Made by an enthusiast, for enthusiasts"
         description="Classic Mini DIY is a knowledgebase, toolkit, and permanent archive for Classic Mini Cooper owners — built to help you get out and work on your own car."
-        as="h1"
+        as="h2"
       />
     </div>
 
