@@ -29,10 +29,7 @@ const LOCALES = ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'zh', 'ko'] as 
  * visitor picked. Tracked by the i18n backfill issue; remove an entry when its
  * translations land.
  */
-const KNOWN_MISSING_LOCALES: readonly string[] = [
-  // /membership — 63 English-only strings on a public, indexable marketing page.
-  ...LOCALES.filter((l) => l !== 'en').map((l) => `app/pages/membership/index.vue::${l}`),
-];
+const KNOWN_MISSING_LOCALES: readonly string[] = [];
 
 /**
  * Individual keys present in `en` but missing elsewhere. `file::locale::key`.
