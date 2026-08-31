@@ -30,6 +30,18 @@ import { appVueFiles, blankComments, describeViolations, diffAgainstAllowlist, p
 const RETIRED_DOMAIN = 'theminiexchange.com';
 
 /**
+ * Matched as a case-insensitive pattern rather than `String.includes`, for two
+ * reasons. Copy is prose, so `TheMiniExchange.com` at the start of a sentence
+ * must count. And a bare `.includes('<hostname>')` is the shape CodeQL's
+ * js/incomplete-url-substring-sanitization rule flags: that rule is about
+ * origin allowlists, where a substring match is a real bypass
+ * (`theminiexchange.com.evil.test`). Nothing here gates a request — this is a
+ * text scan over source files, and matching the domain ANYWHERE in a sentence
+ * is precisely the intent.
+ */
+const RETIRED_DOMAIN_PATTERN = /theminiexchange\.com/i;
+
+/**
  * Known surfaces that still name the retired domain. `file::location`.
  *
  * Shrink-only, like every allowlist in this suite: a NEW entry fails as a
@@ -77,14 +89,14 @@ describe('retired theminiexchange.com domain', () => {
         const messages = new Map<string, string>();
         flattenMessages(parsed, '', messages);
         for (const [key, value] of messages) {
-          if (value.includes(RETIRED_DOMAIN)) violations.push(`${name}::i18n::${key}`);
+          if (RETIRED_DOMAIN_PATTERN.test(value)) violations.push(`${name}::i18n::${key}`);
         }
       }
 
       // Comments are blanked first: this file's own explanatory notes name the
       // domain, and prose must not count as copy. Same rule as the Worker env
       // registry and the component-resolution check.
-      if (sfc.template && blankComments(sfc.template.content, 'template').includes(RETIRED_DOMAIN)) {
+      if (sfc.template && RETIRED_DOMAIN_PATTERN.test(blankComments(sfc.template.content, 'template'))) {
         violations.push(`${name}::template`);
       }
     }
