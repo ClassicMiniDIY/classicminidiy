@@ -242,7 +242,77 @@ async function crawlRoute(route) {
   }
   // Only a rendered 200 has a body worth inspecting. A route we expect to
   // redirect has no title, no headings and no schema by definition.
-  if (result.status === 200) checkRenderedPage(route, result.body, expectations);
+  if (result.status === 200) {
+    checkRenderedPage(route, result.body, expectations);
+    collectInternalLinks(route, result.body);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Internal link targets
+// ---------------------------------------------------------------------------
+
+/**
+ * Every internal link target found, mapped to the routes that link to it.
+ *
+ * This is the one thing `nuxt-link-checker` offered that this crawler did not,
+ * and it is why that module stays disabled. It runs at BUILD time through a
+ * prerender hook, where archive detail pages 500 for lack of a Supabase public
+ * env — flooding the log with false `[HEAD] 500`s, which is exactly why it was
+ * turned off (see nuxt.config.ts). Checking the same thing here instead costs
+ * no build coupling and no false positives: the server is live, so a 404 means
+ * a 404.
+ */
+const internalLinks = new Map();
+
+function collectInternalLinks(route, rawHtml) {
+  const html = stripScripts(stripComments(rawHtml));
+  for (const match of html.matchAll(/<a\b[^>]*\shref=["']([^"']+)["']/gi)) {
+    const raw = match[1];
+    // Same-origin paths only. Anything with a scheme, a protocol-relative
+    // prefix, or a bare fragment/mailto/tel is out of scope.
+    if (!raw.startsWith('/') || raw.startsWith('//')) continue;
+    // Drop the fragment and query: a link's TARGET is the path. Query strings
+    // are the crawl trap `useFacetedSeo` exists to contain, and following them
+    // here would multiply the check by every filter permutation on the site.
+    const path = raw.split('#')[0].split('?')[0];
+    if (!path || path === '/') continue;
+    // `/_ipx/`, `/_nuxt/` and friends are build output, not routes.
+    if (path.startsWith('/_')) continue;
+    const sources = internalLinks.get(path) ?? new Set();
+    sources.add(route);
+    internalLinks.set(path, sources);
+  }
+}
+
+/**
+ * Check every linked path that the route crawl did not already cover.
+ *
+ * Already-crawled routes are skipped rather than re-fetched — they have just
+ * been validated, and re-requesting them would roughly double the run for no
+ * new information.
+ */
+async function crawlInternalLinkTargets(alreadyCrawled) {
+  const covered = new Set(alreadyCrawled);
+  const targets = [...internalLinks.keys()].filter((path) => !covered.has(path)).sort();
+  if (!targets.length) return 0;
+
+  await runPool(targets, async (path) => {
+    let status;
+    try {
+      ({ status } = await get(path));
+    } catch (error) {
+      record('error', path, 'link-target', `unreachable: ${String(error?.message ?? error)}`);
+      return;
+    }
+    // 3xx is fine — a link to a redirected path still lands somewhere real,
+    // and MUST_REDIRECT already asserts the important ones go where intended.
+    if (status >= 400) {
+      const from = [...internalLinks.get(path)].sort().slice(0, 3).join(', ');
+      record('error', path, 'link-target', `${status}, linked from ${from}`);
+    }
+  });
+  return targets.length;
 }
 
 async function crawl404(path) {
@@ -344,6 +414,12 @@ async function main() {
   }
 
   await runPool(pageRoutes, crawlRoute);
+
+  // After the routes, not during: the link set is only complete once every
+  // page has been fetched, and deduping against it avoids re-requesting
+  // hundreds of paths the crawl just covered.
+  const linkTargets = ONLY ? 0 : await crawlInternalLinkTargets(pageRoutes);
+
   if (!ONLY) {
     await runPool(MUST_404, crawl404);
     await runPool(MUST_REDIRECT, crawlRedirect);
@@ -382,7 +458,8 @@ async function main() {
       for (const id of staleKnown) console.log(`  ${id}`);
     }
     console.log(
-      `\n${pageRoutes.length} routes crawled — ${errors.length} error(s), ${warnings.length} warning(s), ` +
+      `\n${pageRoutes.length} routes + ${linkTargets} linked target(s) crawled — ` +
+        `${errors.length} error(s), ${warnings.length} warning(s), ` +
         `${known.length} known, ${staleKnown.length} stale, ${skips.length} skipped.`
     );
   }
