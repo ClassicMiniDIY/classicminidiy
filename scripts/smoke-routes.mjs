@@ -104,17 +104,26 @@ const stripComments = (html) => html.replace(/<!--[\s\S]*?-->/g, '');
  * `</style\n>` are legal HTML, and without it neither matches at all — so the
  * ENTIRE body survives the strip and feeds into the <h1> count and the raw-i18n
  * scan below. Measured: `<script>x</script >` came through untouched.
- * (Raised by CodeQL js/incomplete-multi-character-sanitization.)
+ *
+ * The `(?=[\s>/])` lookahead is equally load-bearing, in the other direction:
+ * without it `<(script|style)` matches the PREFIX of `<scriptable>`, and the
+ * second replace then drops the rest of the document. Measured:
+ * `<scriptable>hi</scriptable><h1>t</h1>` collapsed to `''`, losing a real
+ * heading. The lookahead pins the match to a tag-name boundary.
+ *
+ * (Raised by CodeQL js/incomplete-multi-character-sanitization. Note the rule
+ * still fires on the first replace in isolation — it cannot see that the second
+ * removes the residue. Verified by construction that no `<script` survives the
+ * pair; the remaining alert is a false positive and is dismissed as such.)
  */
 const stripScripts = (html) =>
   html
     // Matched pairs. `\s*` before the closing `>` is load-bearing — see above.
-    .replace(/<(script|style)[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<(script|style)(?=[\s>/])[\s\S]*?<\/\1\s*>/gi, '')
     // Anything still opening a script/style has no close, so as far as any
     // parser is concerned the rest of the document is inside it. Dropping to
-    // end-of-string is both the conservative reading and what leaves no
-    // `<script` fragment behind for the checks below to misread.
-    .replace(/<(script|style)[\s\S]*$/gi, '');
+    // end-of-string is the conservative reading.
+    .replace(/<(script|style)(?=[\s>/])[\s\S]*$/gi, '');
 
 const titleOf = (html) => html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? null;
 const h1Count = (html) => (stripScripts(html).match(/<h1[\s>]/gi) ?? []).length;
