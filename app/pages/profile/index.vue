@@ -189,7 +189,7 @@
       <!-- Contribution impact + badges (design S9). Renders nothing until the
            first approved contribution, so a new account is not shown three
            zeroes and an empty badge row. -->
-      <ContributorImpact v-if="mountedUser" :user-id="user.id" possessive="your" />
+      <ProfileContributorImpact v-if="mountedUser" :user-id="user.id" possessive="your" />
 
       <!-- Vehicles -->
       <div v-if="profile?.show_vehicles" class="card bg-base-100 shadow-sm border border-base-300">

@@ -17,6 +17,32 @@
 
   const identifier = route.params.id as string;
 
+  // SSR existence check, purely so the response carries the right STATUS. It
+  // does not change what is rendered — the page still ships its loading state
+  // and the onMounted load below is what fills it in.
+  //
+  // Deliberately NOT `throw createError`, for the same reason
+  // /exchange/listings/[slug] cannot: SSR has no session (the Supabase session
+  // lives in localStorage), so an SSR miss is indistinguishable between a
+  // genuinely absent profile and one that RLS is hiding from an anonymous
+  // caller. `get_public_profile_by_id` returns rows only where
+  // `is_public AND NOT is_banned`, and the `profiles` SELECT policy is
+  // own-row/admin/public-opt-in — so a signed-in owner viewing their OWN
+  // private profile misses here and would be hard-404'd off their own page.
+  // The onMounted load runs with their real session and recovers it.
+  //
+  // So: send a real 404 and noindex, but still render. Monitoring and crawlers
+  // get the truth; the owner still gets their profile after hydration.
+  const { data: ssrProfile } = await useAsyncData(`public-profile-exists-${identifier}`, async () => {
+    const { data } = await supabase.rpc('get_public_profile_by_id', { p_user_id: identifier }).single();
+    return data ? true : null;
+  });
+
+  if (!ssrProfile.value) {
+    if (import.meta.server) setResponseStatus(useRequestEvent()!, 404);
+    useSeoMeta({ robots: 'noindex, nofollow' });
+  }
+
   const profile = ref<PublicProfile | null>(null);
   const vehicles = ref<Vehicle[]>([]);
   const publicConfigs = ref<any[]>([]);
@@ -210,7 +236,7 @@
 
       <!-- Contribution impact + badges (design S9). The public view is the same
            block minus the submission status column, which lives on /dashboard. -->
-      <ContributorImpact v-if="profile?.id" :user-id="profile.id" possessive="their" />
+      <ProfileContributorImpact v-if="profile?.id" :user-id="profile.id" possessive="their" />
 
       <!-- Vehicles -->
       <div

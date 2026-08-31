@@ -24,19 +24,37 @@ import { blankComments, describeViolations, diffAgainstAllowlist, parseVue, read
  * All three carry `noindex`, so the SEO blast radius is contained — but the
  * status code is still wrong and a missing record renders a broken page.
  */
-const KNOWN_SOFT_404_PAGES: readonly string[] = [
+const KNOWN_SOFT_404_PAGES: readonly string[] = [];
+
+/**
+ * Pages that cannot `throw createError` on a miss, because SSR has no session.
+ *
+ * The Supabase session lives in localStorage, so every SSR render is anonymous.
+ * On these routes an "SSR miss" is indistinguishable between a record that does
+ * not exist and one that RLS is hiding from an anonymous caller — and throwing
+ * would lock the legitimate owner out of their own page, which the onMounted
+ * load would otherwise recover.
+ *
+ * The first three answer with a real 404 status + noindex and still render, so
+ * monitoring and crawlers get the truth while the owner still gets their page
+ * after hydration. See CLAUDE.md.
+ *
+ *  - listings/[slug]  — an SSR miss can be a *pending* listing only the owner reads.
+ *  - users/[id]       — `get_public_profile_by_id` returns rows only where
+ *                       `is_public AND NOT is_banned`, and the `profiles` SELECT
+ *                       policy is own-row/admin/public-opt-in, so a signed-in
+ *                       owner viewing their OWN private profile misses here.
+ *
+ * The last two cannot even do that much: their data needs a Bearer token
+ * (`useAdminFetch`) or a participant-scoped RLS read, so the server cannot
+ * determine existence at all and never learns enough to set a status.
+ */
+const DOCUMENTED_404_EXCEPTIONS: readonly string[] = [
+  'app/pages/exchange/listings/[slug]/index.vue',
   'app/pages/users/[id].vue',
   'app/pages/admin/threads/[id].vue',
   'app/pages/exchange/messages/[conversationId].vue',
 ];
-
-/**
- * The one documented exception. An SSR miss on a listing can also be a
- * *pending* listing whose RLS row only the signed-in owner can read, and SSR
- * has no session — so this page sets a 404 status + noindex and still renders,
- * letting the onMounted retry recover it for the owner. See CLAUDE.md.
- */
-const DOCUMENTED_404_EXCEPTIONS: readonly string[] = ['app/pages/exchange/listings/[slug]/index.vue'];
 
 /**
  * Remaining getter-form `useFetch` call sites. Empty is the goal state — a new
