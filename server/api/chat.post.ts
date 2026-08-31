@@ -129,15 +129,31 @@ export default defineEventHandler(async (event) => {
   // route's own error handler catches it and streams a generic error.
   const modelMessages = await convertToModelMessages(messages);
 
+  /**
+   * Cache hit rate, on the run event.
+   *
+   * Turning caching on without measuring it means a breakpoint that silently
+   * stops matching — a reordered prompt, a tool description edited per-request
+   * — would cost 10x on the prefix with no symptom at all. `cache_read_tokens`
+   * at ~0 across a day is the signal that the prefix stopped being stable.
+   */
+  const recordCache = (usage: any) =>
+    tracker.recordCacheUsage({
+      read: usage?.inputTokenDetails?.cacheReadTokens ?? 0,
+      written: usage?.inputTokenDetails?.cacheWriteTokens ?? 0,
+      uncached: usage?.inputTokenDetails?.noCacheTokens ?? 0,
+    });
+
   const result = streamText({
     model: anthropic(((config.CHAT_MODEL as string) || 'claude-haiku-4-5-20251001').trim()),
     system: buildSystemPrompt({ locale: body?.locale, pageSlug: body?.pageSlug }),
     // Cache the tool definitions and the system prompt.
     //
     // Anthropic's cache prefix runs tools -> system -> messages, so a breakpoint
-    // on the SYSTEM block covers both — measured at 5,938 tokens here, of which
-    // the twelve tool schemas are 5,042. A breakpoint on a tool instead covers
-    // only the tools, which was verified and is the easy mistake to make.
+    // on the SYSTEM block covers both — measured at 6,332 tokens written on the
+    // live path, of which the twelve tool schemas are the bulk. A breakpoint on
+    // a tool instead covers only the tools, which was verified and is the easy
+    // mistake to make.
     //
     // Worth it because of the TOOL LOOP, not because of cross-user reuse. Every
     // step of a single turn re-sends the whole prefix seconds apart, so the
@@ -165,10 +181,15 @@ export default defineEventHandler(async (event) => {
     onChunk({ chunk }) {
       tracker.observe(chunk);
     },
-    onStepFinish({ toolCalls }) {
+    onStepFinish({ toolCalls, usage }) {
       for (const call of toolCalls ?? []) {
         tracker.recordToolCall((call as any).toolName);
       }
+      // Per STEP, not only at the end. A run the visitor aborts, or one that
+      // errors on a later step, still paid for the cache write its first step
+      // performed — recording only in onFinish dropped those entirely and made
+      // the read/write ratio read far too optimistic.
+      recordCache(usage);
     },
     onFinish({ usage }) {
       const inputTokens = usage?.inputTokens ?? 0;
@@ -176,16 +197,6 @@ export default defineEventHandler(async (event) => {
       tracker.observe({ usage_metadata: { input_tokens: inputTokens, output_tokens: outputTokens } });
       recordChatTokens(event, inputTokens, outputTokens);
 
-      // Cache hit rate, on the run event. Turning caching on without measuring
-      // it means a breakpoint that silently stops matching — a reordered
-      // prompt, a tool description edited per-request — would cost 10x on the
-      // prefix with no symptom at all. `cache_read_tokens` at ~0 across a day
-      // is the signal that the prefix stopped being stable.
-      tracker.recordCacheUsage({
-        read: usage?.inputTokenDetails?.cacheReadTokens ?? 0,
-        written: usage?.inputTokenDetails?.cacheWriteTokens ?? 0,
-        uncached: usage?.inputTokenDetails?.noCacheTokens ?? 0,
-      });
       tracker.finish('completed', undefined, {
         tier: getChatAuth(event)?.tier,
         quota_used: verdict.used,

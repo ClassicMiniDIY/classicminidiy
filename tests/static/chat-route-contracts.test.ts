@@ -65,3 +65,35 @@ describe('chat route contracts', () => {
     expect(source).toMatch(/if\s*\(\s*!apiKey\s*\)/);
   });
 });
+
+/**
+ * The limit panel must keep emitting its funnel events.
+ *
+ * Deliberately a source assertion rather than an E2E one. PostHog is NOT
+ * initialised under Playwright — `POSTHOG_PUBLIC_KEY` is unset there, so the
+ * plugin returns early, `$posthog` is undefined and `capture` is a permanent
+ * no-op (measured, not assumed). Any browser-level assertion about these events
+ * would therefore pass vacuously forever, which is worse than no test.
+ *
+ * This is a weaker guarantee than a behavioural test, and it is deliberately
+ * matched to the actual risk: the events disappearing in a refactor. Without
+ * `chat_limit_reached` the click-through rate has no denominator, and "does
+ * hitting the limit sell memberships" — the question this panel was built to
+ * answer — silently becomes unanswerable, with the funnel reading zero
+ * impressions rather than reading broken.
+ */
+describe('quota limit panel telemetry', () => {
+  const panel = blankComments(read(join(REPO_ROOT, 'app/components/Chat/QuotaLimitPanel.vue')), 'script');
+
+  it('captures an impression and a CTA click', () => {
+    expect(panel, 'the limit panel no longer records an impression').toContain('chat_limit_reached');
+    expect(panel, 'the limit panel no longer records CTA clicks').toContain('chat_limit_cta_clicked');
+  });
+
+  it('ties the impression to the tier rather than to mount', () => {
+    // The panel survives a New chat without remounting, so a mount-only capture
+    // could record a click against no impression — a funnel whose numerator
+    // exceeds its denominator, which reads as a conversion rate above 100%.
+    expect(panel).not.toMatch(/onMounted\(\s*\(\)\s*=>\s*\{[^}]*chat_limit_reached/s);
+  });
+});

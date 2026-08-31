@@ -282,14 +282,23 @@ test.describe('quota limit', () => {
     await expect(page.getByRole('link', { name: /Sustaining Member/i })).toBeHidden();
   });
 
-  test('disables the composer rather than inviting a retry that cannot work', async ({ page }) => {
+  test('blocks sending without removing the composer from the tab order', async ({ page }) => {
+    // readonly + aria-disabled, NOT disabled: a disabled textarea leaves the tab
+    // order and goes unannounced, so the placeholder explaining why it stopped
+    // working would be unreachable by the people most reliant on it.
     await stubQuota(page, 'anonymous');
     await gotoHydrated(page, '/chat');
     await composer(page).fill('hi');
     await composer(page).press('Enter');
-
     await expect(page.getByText(/used today's free messages/i)).toBeVisible({ timeout: 15_000 });
-    await expect(composer(page)).toBeDisabled();
+
+    await expect(composer(page)).toHaveAttribute('readonly', '');
+    await expect(composer(page)).toHaveAttribute('aria-disabled', 'true');
+    await expect(composer(page)).toBeEditable({ editable: false });
+    // Still focusable — that is the whole point of readonly over disabled.
+    await composer(page).focus();
+    await expect(composer(page)).toBeFocused();
+    await expect(page.getByRole('button', { name: /send message/i })).toBeDisabled();
   });
 
   test('keeps the explanation on screen after New chat', async ({ page }) => {
