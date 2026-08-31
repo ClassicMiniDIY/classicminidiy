@@ -31,11 +31,35 @@ const MAX_STEPS = 6;
 const MAX_MESSAGES = 40;
 const MAX_CHARS = 24_000;
 
-function textOf(message: UIMessage): string {
-  return (message.parts ?? [])
-    .filter((part: any) => part?.type === 'text' && typeof part.text === 'string')
-    .map((part: any) => part.text)
-    .join(' ');
+/**
+ * Approximate the size a message contributes to the prompt.
+ *
+ * Counts EVERY part, not just text. The client replays the whole conversation
+ * each turn, and an assistant turn carries tool parts whose `output` can dwarf
+ * the prose — `wheel-search` and `torque-specs` return dozens of rows, and
+ * `site-search` up to twenty results. Counting text alone let a tool-heavy
+ * conversation read as a few hundred characters while carrying tens of
+ * thousands into the model, so the ceiling this guard exists to enforce did not
+ * hold.
+ */
+function sizeOf(message: UIMessage): number {
+  let total = 0;
+  for (const part of message.parts ?? []) {
+    const anyPart = part as any;
+    if (anyPart?.type === 'text' && typeof anyPart.text === 'string') {
+      total += anyPart.text.length;
+      continue;
+    }
+    // Tool parts, reasoning, files: measure the serialised payload. A part that
+    // cannot be serialised (a cycle) is charged a nominal amount rather than
+    // throwing — this is a size estimate, not a validator.
+    try {
+      total += JSON.stringify(anyPart)?.length ?? 0;
+    } catch {
+      total += 1_000;
+    }
+  }
+  return total;
 }
 
 export default defineEventHandler(async (event) => {
@@ -63,7 +87,7 @@ export default defineEventHandler(async (event) => {
   if (messages.length > MAX_MESSAGES) {
     throw createError({ statusCode: 413, statusMessage: 'Conversation too long — start a new chat' });
   }
-  const totalChars = messages.reduce((sum, message) => sum + textOf(message).length, 0);
+  const totalChars = messages.reduce((sum, message) => sum + sizeOf(message), 0);
   if (totalChars > MAX_CHARS) {
     throw createError({ statusCode: 413, statusMessage: 'Conversation too long — start a new chat' });
   }
@@ -77,7 +101,15 @@ export default defineEventHandler(async (event) => {
     baseURL: (config.AI_GATEWAY_ANTHROPIC_URL as string) || undefined,
   });
 
-  const tracker = createChatRunTracker(event, String(body?.threadId ?? 'anonymous'), body?.locale);
+  // `threadId` is client-supplied and becomes the analytics distinct id, so it
+  // is accepted only in the shape the client actually generates. Anything else
+  // is a scripted caller, and letting it through would let one poison the
+  // `tools_called` data the rebuild is being judged on — either by flooding
+  // distinct ids or by collapsing every run onto one.
+  const rawThreadId = typeof body?.threadId === 'string' ? body.threadId : '';
+  const threadId = /^[A-Za-z0-9_-]{1,64}$/.test(rawThreadId) ? rawThreadId : 'anonymous';
+
+  const tracker = createChatRunTracker(event, threadId, body?.locale);
 
   // convertToModelMessages is ASYNC in AI SDK v7 (it was synchronous in v6).
   // Passing the promise straight to streamText fails inside standardizePrompt
@@ -92,11 +124,17 @@ export default defineEventHandler(async (event) => {
     messages: modelMessages,
     tools: buildAgentTools(),
     stopWhen: stepCountIs(MAX_STEPS),
+    // Every part of the stream, so time-to-first-chunk keeps meaning
+    // time-to-first-token and chunk_count keeps meaning stream length. Feeding
+    // only tool calls here would silently redefine both under the same names,
+    // and the Phase 0 streaming baseline they exist to be compared against
+    // would be measuring something else.
+    onChunk({ chunk }) {
+      tracker.observe(chunk);
+    },
     onStepFinish({ toolCalls }) {
-      // Feed the SAME telemetry the old proxy emitted, so `tools_called` is
-      // comparable across the cutover rather than restarting from zero.
       for (const call of toolCalls ?? []) {
-        tracker.observe({ type: 'ai', tool_calls: [{ name: (call as any).toolName }] });
+        tracker.recordToolCall((call as any).toolName);
       }
     },
     onFinish({ usage }) {
@@ -107,6 +145,12 @@ export default defineEventHandler(async (event) => {
         },
       });
       tracker.finish('completed');
+    },
+    onAbort() {
+      // The visitor pressed stop or navigated away. These runs consumed tokens
+      // and were previously recorded nowhere, which is awkward given
+      // abandonment is the metric the whole rebuild is being judged on.
+      tracker.finish('client_disconnect');
     },
     onError({ error }) {
       console.error('[chat] stream failed:', error);

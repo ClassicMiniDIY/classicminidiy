@@ -98,8 +98,17 @@ function collectUsage(node: unknown, into: { input: number; output: number }, de
 }
 
 export interface ChatRunTracker {
-  /** Feed every chunk as it is proxied. Never throws. */
+  /** Feed every chunk as it streams. Never throws. */
   observe(chunk: unknown): void;
+  /**
+   * Record a tool the run used, when the caller already knows the name and does
+   * not need it dug out of a chunk.
+   *
+   * Separate from `observe` on purpose: `observe` also advances `chunk_count`
+   * and stamps time-to-first-chunk, so routing tool calls through it would
+   * redefine both metrics under their existing names.
+   */
+  recordToolCall(name: string | undefined): void;
   /** Emit the run summary. Safe to call once; later calls are ignored. */
   finish(outcome: ChatRunOutcome, errorMessage?: string): void;
 }
@@ -127,6 +136,10 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
       } catch {
         // Telemetry must never break the stream it is measuring.
       }
+    },
+
+    recordToolCall(name: string | undefined) {
+      if (typeof name === 'string' && name) tools.add(name);
     },
 
     finish(outcome: ChatRunOutcome, errorMessage?: string) {
