@@ -757,6 +757,20 @@ export default defineNuxtConfig({
     // uses. Consumers read config.LANGSMITH_API_KEY; the env var is unchanged.
     LANGGRAPH_API_URL: process.env.NUXT_LANGGRAPH_API_URL || '',
     LANGSMITH_API_KEY: process.env.NUXT_LANGSMITH_API_KEY || '',
+    // In-Worker chat agent (server/api/chat.post.ts). UPPER_SNAKE so the
+    // Cloudflare secret name is mechanically NUXT_<KEY>:
+    //   ANTHROPIC_API_KEY       -> NUXT_ANTHROPIC_API_KEY   (runtime secret)
+    //   AI_GATEWAY_ANTHROPIC_URL-> NUXT_AI_GATEWAY_ANTHROPIC_URL
+    //   CHAT_MODEL              -> NUXT_CHAT_MODEL
+    // All three are RUNTIME-only; nothing prerenders the chat, so none belongs
+    // in the deploy workflow's build env.
+    ANTHROPIC_API_KEY: process.env.NUXT_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY || '',
+    // Cloudflare AI Gateway endpoint for Anthropic. Optional: unset calls
+    // Anthropic directly, so a missing gateway costs observability, not uptime.
+    AI_GATEWAY_ANTHROPIC_URL: process.env.NUXT_AI_GATEWAY_ANTHROPIC_URL || '',
+    // Overridable so the model can be changed without a deploy — the whole point
+    // of the provider-agnostic SDK. Empty falls back to the default in the route.
+    CHAT_MODEL: process.env.NUXT_CHAT_MODEL || '',
     // MCP API Keys — no hardcoded fallback: an unset MCP_API_KEY must resolve to
     // empty so the /mcp middleware fails closed rather than accepting a baked-in
     // default. Set MCP_API_KEY (or MCP_API_KEYS) in .env for local development.
