@@ -39,6 +39,9 @@ const CLIENT_ONLY_TAGS = new Set(['ClientOnly', 'client-only', 'NuxtClientFallba
 /**
  * Known ungated branches, as `file::identifier#ordinal`.
  *
+ * EMPTY is the goal state, and it is now the actual state. A new entry here is
+ * a regression, not a backlog item.
+ *
  * The id deliberately carries NO line number. An earlier version used
  * `file:line::identifier`, and any edit ABOVE a violation shifted its line and
  * made the check report "1 new ungated auth branch" for a branch that had not
@@ -56,39 +59,7 @@ const CLIENT_ONLY_TAGS = new Set(['ClientOnly', 'client-only', 'NuxtClientFallba
  * `app/pages/dashboard.vue` is the highest-value single entry: it swaps the
  * whole page, so all 14 `/dashboard/*` routes inherit the mismatch.
  */
-const KNOWN_UNGATED: readonly string[] = [
-  'app/components/Calculators/Alignment.vue::isAuthenticated#1',
-  'app/components/Calculators/Gearbox.vue::isAuthenticated#1',
-  'app/components/Calculators/GearboxConfigCard.vue::isAuthenticated#1',
-  'app/components/exchange/listings/Comment.vue::user#1',
-  'app/components/exchange/listings/Comment.vue::user#2',
-  'app/components/exchange/listings/Comment.vue::isAdmin#1',
-  'app/components/exchange/listings/Comment.vue::user#3',
-  'app/components/exchange/listings/CommentSection.vue::user#1',
-  'app/components/exchange/listings/SaveSearchButton.vue::user#1',
-  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#1',
-  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#2',
-  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#3',
-  'app/components/exchange/listings/wizard/StepPricing.vue::isSustainingMember#4',
-  'app/components/exchange/listings/wizard/StepReview.vue::isSustainingMember#1',
-  'app/components/models/ModelComments.vue::isAuthenticated#1',
-  'app/components/models/ModelComments.vue::isAuthenticated#2',
-  'app/pages/archive/documents/[slug].vue::isAuthenticated#1',
-  'app/pages/archive/documents/[slug].vue::isAuthenticated#2',
-  'app/pages/archive/wheels/[...wheel].vue::isAuthenticated#1',
-  'app/pages/contribute/color.vue::isAuthenticated#1',
-  'app/pages/contribute/index.vue::isAuthenticated#1',
-  'app/pages/contribute/index.vue::userProfile#1',
-  'app/pages/exchange/finds/index.vue::isAuthenticated#1',
-  'app/pages/exchange/finds/index.vue::isAuthenticated#2',
-  'app/pages/models/[slug].vue::isAuthenticated#1',
-  'app/pages/models/submit-external.vue::isAuthenticated#1',
-  'app/pages/models/upload.vue::isAuthenticated#1',
-  'app/pages/profile/edit.vue::isAuthenticated#1',
-  'app/pages/profile/index.vue::isAuthenticated#1',
-  'app/pages/profile/index.vue::isSustainingMember#1',
-  'app/pages/profile/index.vue::user#1',
-];
+const KNOWN_UNGATED: readonly string[] = [];
 
 /** Whole-word match that ignores property access (`foo.user` is not `user`). */
 function referencesName(expression: string, name: string): boolean {
@@ -114,6 +85,18 @@ function gatedNames(script: string): string[] {
   // on into an unrelated later declaration.
   const declaration = /const\s+([A-Za-z_$][\w$]*)\s*=[^;]*?\b(hasMounted|isMounted|mounted)\b[^;]*;/g;
   for (const match of script.matchAll(declaration)) names.add(match[1]!);
+
+  // Anything destructured from useMountedAuth() is gated by construction —
+  // every value that composable returns folds in the mount check. Handles the
+  // renamed form too (`{ isSignedIn: signedIn }`), where the LOCAL name is what
+  // the template uses.
+  const composable = /const\s*\{([^}]*)\}\s*=\s*useMountedAuth\(\)/g;
+  for (const match of script.matchAll(composable)) {
+    for (const part of match[1]!.split(',')) {
+      const local = (part.split(':')[1] ?? part).trim();
+      if (local) names.add(local);
+    }
+  }
   return [...names];
 }
 

@@ -18,7 +18,7 @@
 
       <!-- Comment Form -->
       <div class="mb-8">
-        <div v-if="user" class="bg-base-200 rounded-lg p-4 space-y-3">
+        <div v-if="mountedUser" class="bg-base-200 rounded-lg p-4 space-y-3">
           <!-- Textarea -->
           <textarea
             v-model="newComment"
@@ -102,6 +102,11 @@
   const { t } = useI18n();
 
   const { user } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { mountedUser } = useMountedAuth();
   const { capture } = usePostHog();
 
   // Determine the target ID and type for comments

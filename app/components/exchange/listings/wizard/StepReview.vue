@@ -412,7 +412,7 @@
           </button>
           <div class="flex items-center gap-3">
             <span
-              v-if="formData.tier === 'paid' && !isSustainingMember"
+              v-if="formData.tier === 'paid' && !memberPricingUnlocked"
               class="text-sm text-base-content/70 hidden sm:block"
             >
               {{ t('submit.paymentNotice') }}
@@ -421,7 +421,7 @@
               <span v-if="submitting" class="loading loading-spinner"></span>
               <template v-else>
                 <i class="fas fa-paper-plane"></i>
-                {{ formData.tier === 'paid' && !isSustainingMember ? t('submit.submitAndPay') : t('submit.submitListing') }}
+                {{ formData.tier === 'paid' && !memberPricingUnlocked ? t('submit.submitAndPay') : t('submit.submitListing') }}
               </template>
             </button>
           </div>
@@ -449,7 +449,7 @@
     };
     location: any;
     submitting: boolean;
-    isSustainingMember?: boolean;
+    memberPricingUnlocked?: boolean;
   }>();
 
   defineEmits<{

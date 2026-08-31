@@ -1,10 +1,10 @@
 <template>
   <div>
     <!-- Tier Selection -->
-    <div class="grid grid-cols-1 gap-6 mb-8" :class="{ 'md:grid-cols-2': !isSustainingMember }">
+    <div class="grid grid-cols-1 gap-6 mb-8" :class="{ 'md:grid-cols-2': !memberPricingUnlocked }">
       <!-- Free Tier — hidden for members (Premium is included with membership) -->
       <button
-        v-if="!isSustainingMember"
+        v-if="!memberPricingUnlocked"
         type="button"
         class="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer border-2 text-left"
         :class="modelValue === 'free' ? 'border-primary ring-2 ring-primary/20' : 'border-transparent'"
@@ -70,7 +70,7 @@
           <div class="flex justify-between items-start mb-4">
             <div>
               <h3 class="text-xl font-bold">{{ t('premium.name') }}</h3>
-              <template v-if="isSustainingMember">
+              <template v-if="memberPricingUnlocked">
                 <p class="text-3xl font-bold text-primary mt-1">{{ t('premium.included') }}</p>
                 <div class="mt-1">
                   <ExchangeProfileSustainingBadge size="sm" />
@@ -131,14 +131,14 @@
     </div>
 
     <!-- Non-member upsell: premium is free for Sustaining Members -->
-    <div v-if="!isSustainingMember" class="text-center text-sm text-base-content/70 mb-6">
+    <div v-if="!memberPricingUnlocked" class="text-center text-sm text-base-content/70 mb-6">
       <i class="far fa-star inline-block text-warning align-text-bottom"></i>
       {{ t('upsell.text') }}
       <NuxtLink to="/membership" class="link link-primary font-medium">{{ t('upsell.learnMore') }}</NuxtLink>
     </div>
 
     <!-- Payment Note -->
-    <div v-if="isSustainingMember" class="alert mb-8 border border-primary/20 bg-primary/10">
+    <div v-if="memberPricingUnlocked" class="alert mb-8 border border-primary/20 bg-primary/10">
       <i class="far fa-star text-primary text-xl"></i>
       <div>
         <p class="font-medium text-primary">{{ t('memberNote.title') }}</p>
@@ -180,7 +180,7 @@
   const props = defineProps<{
     modelValue: 'free' | 'paid';
     category: 'vehicle' | 'engine' | 'parts' | '';
-    isSustainingMember?: boolean;
+    memberPricingUnlocked?: boolean;
     savingDraft?: boolean;
   }>();
 
@@ -218,7 +218,7 @@
   // Sustaining Members only get Premium (the Free card is hidden), so auto-select
   // it — including when membership loads async after the step is already shown.
   watch(
-    () => props.isSustainingMember,
+    () => props.memberPricingUnlocked,
     (isMember) => {
       if (isMember && props.modelValue !== 'paid') {
         emit('update:modelValue', 'paid');

@@ -5,6 +5,11 @@
   const toast = useToast();
   const { track } = useAnalytics();
   const { isAuthenticated, user, userProfile, fetchUserProfile, waitForAuth } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const { fetchProfile, updateProfile, uploadAvatar } = useProfile();
 
   const displayName = ref('');
@@ -212,7 +217,7 @@
     </div>
 
     <!-- Auth gate -->
-    <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
+    <div v-if="!isSignedIn" class="max-w-lg mx-auto">
       <div class="card bg-base-100 shadow-sm border border-base-300">
         <div class="card-body p-6 text-center">
           <div class="mb-4">

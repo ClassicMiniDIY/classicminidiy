@@ -3,6 +3,11 @@
 
   const { t } = useI18n();
   const { isAuthenticated, userProfile } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn, mountedProfile } = useMountedAuth();
   const { track } = useAnalytics();
 
   useHead({
@@ -71,7 +76,7 @@
     </div>
 
     <!-- Auth Gate -->
-    <div v-if="!isAuthenticated" class="max-w-lg mx-auto">
+    <div v-if="!isSignedIn" class="max-w-lg mx-auto">
       <div class="card bg-base-100 shadow-md">
         <div class="card-body p-6 text-center">
           <div class="mb-4">
@@ -122,7 +127,7 @@
       </div>
 
       <!-- User Stats Card -->
-      <div v-if="userProfile" class="max-w-3xl mx-auto mt-8">
+      <div v-if="mountedProfile" class="max-w-3xl mx-auto mt-8">
         <div class="card bg-base-100 shadow-md">
           <div class="card-body">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">

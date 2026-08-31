@@ -18,7 +18,7 @@
       <div class="container">
         <div class="flex flex-wrap items-end gap-3">
           <ExchangeFindsFindFilters v-model="filters" class="contents" />
-          <NuxtLink v-if="isAuthenticated" to="/exchange/finds/submit" class="btn btn-primary btn-sm ml-auto">
+          <NuxtLink v-if="isSignedIn" to="/exchange/finds/submit" class="btn btn-primary btn-sm ml-auto">
             <i class="fas fa-plus"></i>
             {{ t('actions.submit') }}
           </NuxtLink>
@@ -74,7 +74,7 @@
           <p class="text-base-content/70 mb-6">
             {{ t('empty.body') }}
           </p>
-          <NuxtLink v-if="isAuthenticated" to="/exchange/finds/submit" class="btn btn-primary">
+          <NuxtLink v-if="isSignedIn" to="/exchange/finds/submit" class="btn btn-primary">
             {{ t('actions.submit') }}
           </NuxtLink>
         </div>
@@ -89,6 +89,11 @@
   const { t } = useI18n();
   const config = useRuntimeConfig();
   const { user, isAuthenticated } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const { capture } = usePostHog();
   const { finds, loading, totalCount, fetchFinds, loadUserInteractions } = useExternalListings();
 

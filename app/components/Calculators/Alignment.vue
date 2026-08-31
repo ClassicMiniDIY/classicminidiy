@@ -23,6 +23,11 @@
 
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const { track } = useAnalytics();
   const { capture } = usePostHog();
   const { saveConfig } = useAlignmentConfigs();
@@ -365,7 +370,7 @@
         <!-- Save / Load -->
         <div class="card bg-base-100 border border-base-300">
           <div class="card-body p-4">
-            <template v-if="isAuthenticated">
+            <template v-if="isSignedIn">
               <div class="flex flex-wrap gap-2">
                 <button class="btn btn-sm btn-primary" @click="showSaveForm = !showSaveForm">
                   <i class="fas fa-bookmark"></i> {{ t('save.button') }}

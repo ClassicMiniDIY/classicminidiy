@@ -2,6 +2,11 @@
   const { t } = useI18n();
   const { track, trackDownload } = useAnalytics();
   const { isAuthenticated } = useAuth();
+  // Mount-gated auth for the TEMPLATE. The Supabase session is client-only, so
+  // branching a v-if on the raw value makes SSR and the client’s first render
+  // disagree, and Vue’s hydration repair merges the subtrees rather than
+  // replacing one. See app/composables/useMountedAuth.ts.
+  const { isSignedIn } = useMountedAuth();
   const route = useRoute();
   const slug = route.params.slug as string;
 
@@ -355,7 +360,7 @@
             </div>
 
             <!-- Suggest Collection Callout (when doc has no collection) -->
-            <template v-if="!doc.collection && isAuthenticated">
+            <template v-if="!doc.collection && isSignedIn">
               <div class="divider my-6">{{ t('section.suggest_collection') }}</div>
               <div role="alert" class="alert alert-info alert-soft">
                 <i class="fad fa-folder-plus"></i>
@@ -412,7 +417,7 @@
                 </button>
               </ClientOnly>
 
-              <button v-if="isAuthenticated" type="button" class="btn btn-outline" @click="() => { showSuggestEdit = true; track('suggest_edit_opened', { document_id: doc.id }); }">
+              <button v-if="isSignedIn" type="button" class="btn btn-outline" @click="() => { showSuggestEdit = true; track('suggest_edit_opened', { document_id: doc.id }); }">
                 <i class="fad fa-pen-to-square mr-2"></i>
                 {{ t('action.suggest_edit') }}
               </button>
