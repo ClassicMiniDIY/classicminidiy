@@ -149,7 +149,7 @@ jobs:
           echo "Worker has $(echo "$names" | grep -c . ) secret(s)."
           missing=()
           for want in NUXT_SUPABASE_SERVICE_KEY \
-                      NUXT_LANGGRAPH_API_URL NUXT_LANGSMITH_API_KEY \
+                      NUXT_ANTHROPIC_API_KEY \
                       NUXT_GITHUB_API_KEY NUXT_YOUTUBE_API_KEY \
                       NUXT_MCP_API_KEY \
                       NUXT_MARKETING_UNSUB_SECRET NUXT_MARKETING_ADMIN_EMAILS \

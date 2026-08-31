@@ -37,7 +37,7 @@ export function useModelCheckout() {
    * header; the server's checkBotId() fail-closes (403 'Bot detected') without
    * it. Nuxt's $fetch (ofetch) captures its fetch reference before that patch is
    * applied, so $fetch calls SKIP the challenge and every real buyer was being
-   * 403'd. The chat works only because it uses native fetch (useStreamProvider).
+   * 403'd. The chat works only because it uses native fetch.
    * Keep checkout + seller-onboard on native fetch so the challenge attaches.
    *
    * Throws an ofetch-shaped error ({ statusCode, data }) so errMessage() can

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="message && !isToolResult && hasVisibleContent" class="group flex gap-3 sm:gap-4">
+  <div v-if="message && hasVisibleContent" class="group flex gap-3 sm:gap-4">
     <!-- Assistant identity. The reply itself stays unboxed so the answer, not
          the chrome, carries the visual weight. -->
     <div
@@ -62,42 +62,24 @@
           <i :class="rating === 'up' ? 'fas fa-thumbs-up' : 'fas fa-thumbs-down'" aria-hidden="true"></i>
           {{ t('feedback_thanks') }}
         </span>
-
-        <time v-if="message?.created_at" class="text-xs text-base-content/40">{{
-          formatTime(message.created_at)
-        }}</time>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-  import type { AssistantMessageProps } from '../../../data/models/chat';
-  import { useStreamContext } from '~/composables/useStreamProvider';
+  import type { UIMessage } from 'ai';
+  import { messageText } from '~/utils/chatMessages';
 
   import MarkdownText from './MarkdownText.vue';
   const { t } = useI18n();
   const { track } = useAnalytics();
-  const props = defineProps<AssistantMessageProps>();
+  // `threadId` arrives as a prop rather than through inject(): the conversation
+  // id is owned by ChatWindow now, and an explicit prop is one less piece of
+  // hidden coupling in a component that only needs it to label a rating.
+  const props = defineProps<{ message?: UIMessage; isLoading?: boolean; threadId?: string }>();
 
-  const streamContext = useStreamContext();
-
-  function getContentString(content: any): string {
-    if (typeof content === 'string') {
-      return content;
-    }
-    if (Array.isArray(content)) {
-      return content
-        .filter((item) => item.type === 'text')
-        .map((item) => item.text)
-        .join('\n');
-    }
-    return '';
-  }
-
-  const contentString = computed(() => (props.message ? getContentString(props.message.content) : ''));
-
-  const isToolResult = computed(() => props.message?.type === 'tool');
+  const contentString = computed(() => messageText(props.message));
 
   const hasVisibleContent = computed(() => contentString.value.trim().length > 0);
 
@@ -144,19 +126,10 @@
     rating.value = value;
     track('chat_reply_rated', {
       rating: value,
-      thread_id: streamContext?.threadId?.value ?? null,
+      thread_id: props.threadId ?? null,
       message_id: props.message?.id ?? null,
       reply_length: contentString.value.length,
     });
-  };
-
-  const formatTime = (timestamp: string | undefined) => {
-    if (!timestamp) return '';
-    try {
-      return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return '';
-    }
   };
 </script>
 

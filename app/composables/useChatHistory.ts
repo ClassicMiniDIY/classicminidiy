@@ -1,14 +1,24 @@
 import { ref } from 'vue';
+import type { UIMessage } from 'ai';
 
 /**
  * Local chat history for the CMDIY Assistant.
  *
- * Threads themselves live server-side in LangGraph; this only remembers WHICH
- * threads this browser has talked to, so a visitor can get back to a recent
- * conversation. It is intentionally local-only and therefore does not survive
- * clearing site data, a different browser, or a different device — see the
- * "signed-in history" note in docs/plans/2026-08-25-chat-ui-refresh.md for
- * what a durable version would need.
+ * This used to remember only WHICH threads this browser had talked to, because
+ * the conversations themselves lived server-side in a LangGraph deployment. That
+ * deployment is gone: the agent now runs in this Worker and holds no state
+ * between requests, so the browser owns the transcript and this file IS the
+ * store rather than an index into a remote one.
+ *
+ * Client-owned was the deliberate choice over a Supabase table. The assistant
+ * has to work logged out, so a server-side store would mean inventing an
+ * anonymous identifier and taking on a retention obligation for it — real
+ * privacy surface for a feature answering a few dozen questions a month.
+ * Synced, cross-device history is the natural thing to sell with the Sustaining
+ * Member tier later, where every row has a real owner.
+ *
+ * Consequences, all intended: history does not survive clearing site data, and
+ * does not follow a visitor to another browser or device.
  *
  * SSR note: nothing here may be read during component setup. The server has no
  * localStorage and always renders the empty chat, so branching a render on a
@@ -21,10 +31,21 @@ const HISTORY_STORAGE_KEY = 'cmdiy_chat_history';
 /** Keep the list short; this is a convenience, not an archive. */
 const MAX_ENTRIES = 20;
 
-/** Entries older than this are dropped on load. Matches the thread expiry. */
+/** Entries older than this are dropped on load. */
 const ENTRY_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const TITLE_MAX_LENGTH = 70;
+
+/**
+ * Storage budget for the whole history, in characters.
+ *
+ * Now that entries carry full transcripts this is load-bearing rather than
+ * theoretical. localStorage is typically ~5MB PER ORIGIN, shared with every
+ * other key this site sets, and exceeding it throws — which would take out the
+ * write that was in progress. ~1.5M characters leaves the rest of the origin
+ * plenty of room, and the oldest conversations are dropped to stay under it.
+ */
+const MAX_STORED_CHARS = 1_500_000;
 
 export interface ChatHistoryEntry {
   threadId: string;
@@ -32,14 +53,16 @@ export interface ChatHistoryEntry {
   createdAt: number;
   lastUsedAt: number;
   messageCount: number;
+  /** The transcript. Entries without one are dropped on load — see isValidEntry. */
+  messages: UIMessage[];
 }
 
 export function useChatHistory() {
   const entries = ref<ChatHistoryEntry[]>([]);
 
-  // Deliberately `process.client`, matching usePersistentThread — the vitest
-  // plugin rewrites `import.meta.client` to a literal `(true)`, which would
-  // make the SSR guard untestable.
+  // Deliberately `process.client` — the vitest plugin rewrites
+  // `import.meta.client` to a literal `(true)`, which would make the SSR guard
+  // untestable.
   const isBrowser = process.client;
 
   function isValidEntry(value: any): value is ChatHistoryEntry {
@@ -48,18 +71,41 @@ export function useChatHistory() {
       typeof value.threadId === 'string' &&
       value.threadId.length > 0 &&
       typeof value.title === 'string' &&
-      typeof value.lastUsedAt === 'number'
+      typeof value.lastUsedAt === 'number' &&
+      // Entries written before the agent moved in-Worker hold only a REMOTE
+      // thread id — the transcript lived in a LangGraph deployment that no
+      // longer exists, so there is nothing left to restore and opening one
+      // would show an empty conversation with no explanation. Dropping them on
+      // load is the migration: a stale pointer is worse than an absent entry.
+      Array.isArray(value.messages) &&
+      value.messages.length > 0
     );
+  }
+
+  /**
+   * Drop the oldest conversations until the payload fits the budget. Entries
+   * arrive newest-first, so this always sheds the least recently used.
+   */
+  function withinBudget(next: ChatHistoryEntry[]): ChatHistoryEntry[] {
+    let trimmed = next;
+    while (trimmed.length > 1 && JSON.stringify(trimmed).length > MAX_STORED_CHARS) {
+      trimmed = trimmed.slice(0, -1);
+    }
+    return trimmed;
   }
 
   function persist(next: ChatHistoryEntry[]) {
     if (!isBrowser) return;
     try {
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(withinBudget(next)));
     } catch (error) {
-      // Quota or a locked-down browser. History is a convenience; never let it
-      // take the chat down with it.
-      console.warn('Failed to persist chat history:', error);
+      // Quota, or a locked-down browser. Retry once with only the current
+      // conversation: losing older history beats losing the one in progress.
+      try {
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next.slice(0, 1)));
+      } catch {
+        console.warn('Failed to persist chat history:', error);
+      }
     }
   }
 
@@ -106,20 +152,22 @@ export function useChatHistory() {
   }
 
   /**
-   * Insert or update a thread. An existing entry keeps its original title, so
-   * a conversation does not get renamed by later messages.
+   * Insert or update a conversation. An existing entry keeps its original
+   * title, so a conversation is not renamed by later messages.
    */
-  function record(threadId: string, patch: { title?: string; messageCount?: number }) {
+  function record(threadId: string, patch: { title?: string; messages?: UIMessage[] }) {
     if (!isBrowser || !threadId) return;
 
     const now = Date.now();
     const existing = entries.value.find((entry) => entry.threadId === threadId);
+    const messages = patch.messages ?? existing?.messages ?? [];
 
     const updated: ChatHistoryEntry = existing
       ? {
           ...existing,
           lastUsedAt: now,
-          messageCount: patch.messageCount ?? existing.messageCount,
+          messages,
+          messageCount: messages.length,
           title: existing.title || patch.title || '',
         }
       : {
@@ -127,7 +175,8 @@ export function useChatHistory() {
           title: patch.title || '',
           createdAt: now,
           lastUsedAt: now,
-          messageCount: patch.messageCount ?? 0,
+          messages,
+          messageCount: messages.length,
         };
 
     const next = [updated, ...entries.value.filter((entry) => entry.threadId !== threadId)]
@@ -136,6 +185,11 @@ export function useChatHistory() {
 
     entries.value = next;
     persist(next);
+  }
+
+  /** The transcript for a conversation, or an empty array if it has none. */
+  function getMessages(threadId: string): UIMessage[] {
+    return entries.value.find((entry) => entry.threadId === threadId)?.messages ?? [];
   }
 
   function remove(threadId: string) {
@@ -154,5 +208,5 @@ export function useChatHistory() {
     }
   }
 
-  return { entries, load, record, remove, clear, deriveTitle };
+  return { entries, load, record, remove, clear, deriveTitle, getMessages };
 }
