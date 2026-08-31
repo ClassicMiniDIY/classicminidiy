@@ -267,6 +267,39 @@ non-zero on a hit — run it if a component mysteriously never mounts. To confir
 specific case in dev, fetch the transformed module and look at the vue import line:
 `curl -s localhost:3000/_nuxt/components/<Path>.vue | grep -oE 'import \{[^}]*\} from "[^"]*vue.runtime[^"]*"'`
 
+### Component resolution invariants
+
+- **A nested component must be referenced by the name Nuxt registers, which
+  includes its directory prefix.** `app/components/profile/ContributorImpact.vue`
+  registers as **`ProfileContributorImpact`**, not `ContributorImpact`. Getting
+  this wrong does not throw and does not fail the build: Vue logs
+  `[Vue warn]: Failed to resolve component` to the browser console and renders
+  **nothing**, so the feature reads as never-built rather than broken. Same
+  silent-empty-element family as the `i-fa6-*` icon strings above.
+
+  It bit `<ContributorImpact>` on both `/profile` and `/users/[id]`, so the
+  contributor impact panel — the visible payoff of the whole trust and
+  contribution pipeline — was empty space on the two pages that show it. Every
+  sibling in that directory was already referenced with the prefix, which is
+  exactly why it survived review.
+
+  `tests/static/component-resolution.test.ts` enforces it. **It reads
+  `.nuxt/components.d.ts`** rather than deriving names from paths, because
+  deriving means reimplementing Nuxt's rules — including the duplicate-prefix
+  collapse that makes `archive/ArchiveSubnav.vue` into `ArchiveSubnav` and not
+  `ArchiveArchiveSubnav`. A first version that derived them reported 20
+  violations of which 18 were false. Nuxt's own manifest cannot disagree with
+  Nuxt. An explicit `import Foo from './Foo.vue'` still wins over auto-import
+  and is accepted; `Chat/ChatWindow.vue`'s children work that way.
+
+- **Any check that scans source for a call must blank comments first.** Three
+  separate checks in this repo have been wrong because prose counted as code:
+  the Worker env registry (a doc comment naming `process.env.MICROLINK_API_KEY`
+  kept a dead entry alive), the BotID zone verifier (`checkout.post.ts`'s
+  "Do NOT re-add checkBotId()" comment demanded a rule for a route that
+  deliberately has none), and the component check above. `blankComments()` in
+  `tests/static/_scan.ts` blanks in place, so line numbers survive.
+
 ### Layout invariants
 
 - **`hero-content` is a daisyUI class, and it carries `max-width: 80rem; padding: 1rem`.**
@@ -1114,17 +1147,17 @@ are read unprefixed at module scope and need PLAIN Worker vars — a
 they are tuning knobs rather than secrets; an unset value degrades to the
 default rather than failing, which is exactly why a wrong one is hard to notice.
 
-| Name | Read in | Default |
-| --- | --- | --- |
-| `LANGGRAPH_RATELIMIT_MAX` / `_WINDOW_MS` | `server/middleware/rate-limit.ts` | 40 / 60 000 |
-| `WRITE_RATELIMIT_MAX` / `_WINDOW_MS` | same | 30 / 60 000 |
-| `MCP_RATELIMIT_WINDOW_MS` | same | 60 000 |
-| `MCP_RATELIMIT_FREE_MAX` | same | 20 |
-| `MCP_RATELIMIT_DEVELOPER_MAX` | same | 240 |
-| `MCP_RATELIMIT_INTERNAL_MAX` | same | 600 |
-| `MCP_RATELIMIT_MAX` | same | — legacy, see below |
-| `POSTHOG_INGEST_HOST` | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts` | `https://us.i.posthog.com` |
-| `MICROLINK_API_URL` | `server/utils/external-models/render.ts` | `https://api.microlink.io` |
+| Name                                     | Read in                                                          | Default                    |
+| ---------------------------------------- | ---------------------------------------------------------------- | -------------------------- |
+| `LANGGRAPH_RATELIMIT_MAX` / `_WINDOW_MS` | `server/middleware/rate-limit.ts`                                | 40 / 60 000                |
+| `WRITE_RATELIMIT_MAX` / `_WINDOW_MS`     | same                                                             | 30 / 60 000                |
+| `MCP_RATELIMIT_WINDOW_MS`                | same                                                             | 60 000                     |
+| `MCP_RATELIMIT_FREE_MAX`                 | same                                                             | 20                         |
+| `MCP_RATELIMIT_DEVELOPER_MAX`            | same                                                             | 240                        |
+| `MCP_RATELIMIT_INTERNAL_MAX`             | same                                                             | 600                        |
+| `MCP_RATELIMIT_MAX`                      | same                                                             | — legacy, see below        |
+| `POSTHOG_INGEST_HOST`                    | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts` | `https://us.i.posthog.com` |
+| `MICROLINK_API_URL`                      | `server/utils/external-models/render.ts`                         | `https://api.microlink.io` |
 
 `MCP_RATELIMIT_MAX` is not a fourth tier — it predates the tiers, when one cap
 covered all `/mcp` traffic, and now survives ONLY as the fallback for
@@ -1184,11 +1217,11 @@ deleted — nothing reads it. Do not restore it or reason from it.
 
 What `vercel.json` used to carry, and what replaced it:
 
-| Was in `vercel.json` | Now |
-| --- | --- |
-| PostHog `/t/*` rewrites | `server/routes/t/[...path].ts` + `posthogHost: '/t'` in `nuxt.config.ts` |
-| `theminiexchange.com` host 301s | `server/middleware/tme-redirects.ts` + zone-edge rules |
-| install/build commands | `deploy-cloudflare.yml` |
+| Was in `vercel.json`            | Now                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| PostHog `/t/*` rewrites         | `server/routes/t/[...path].ts` + `posthogHost: '/t'` in `nuxt.config.ts` |
+| `theminiexchange.com` host 301s | `server/middleware/tme-redirects.ts` + zone-edge rules                   |
+| install/build commands          | `deploy-cloudflare.yml`                                                  |
 
 ### Performance Features
 
@@ -1337,6 +1370,7 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   because the breakage is version- and context-dependent and gives no error to search for,
   not because every instance misbehaves today. `tests/static/ssr-contracts.test.ts` now
   enforces the rule so the count cannot drift again.
+
 - **`dompurify` is pinned to an exact version (currently `3.4.14`), and
   `tests/unit/exchange/utils/markdown.test.ts` MUST stay on `@vitest-environment jsdom`.**
   These two facts are one contract — don't change either in isolation. Since 3.4.8
