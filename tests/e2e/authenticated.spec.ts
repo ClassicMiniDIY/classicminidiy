@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './_fixtures';
 import { assertSessionAdopted, readAuthEnv, storageKeyFor } from './_auth';
 import { waitForHydration } from './_helpers';
 
