@@ -8,16 +8,12 @@
  */
 
 import type { MessageAttachment } from '~/composables/useMessages';
+import { randomUuid } from '~/utils/randomId';
 
 // Hard cap enforced both in DB constraint and here.
 export const MESSAGE_ATTACHMENT_MAX_BYTES = 1_048_576; // 1 MB
 export const MESSAGE_ATTACHMENT_MAX_COUNT = 4;
-export const MESSAGE_ATTACHMENT_ALLOWED_MIME = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/heic',
-] as const;
+export const MESSAGE_ATTACHMENT_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'] as const;
 
 type AllowedMime = (typeof MESSAGE_ATTACHMENT_ALLOWED_MIME)[number];
 
@@ -175,24 +171,18 @@ export const useMessageAttachments = () => {
     try {
       for (const { file, width, height } of prepared) {
         const ext = (file.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-        // crypto.randomUUID is undefined in non-secure (HTTP) contexts / older browsers.
-        const uuid =
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-                const r = (Math.random() * 16) | 0;
-                const v = c === 'x' ? r : (r & 0x3) | 0x8;
-                return v.toString(16);
-              });
-        const storagePath = `${conversationId}/${uuid}.${ext}`;
+        // randomUuid falls back to crypto.getRandomValues, not Math.random —
+        // crypto.randomUUID is secure-context only, so the fallback is what
+        // actually runs over plain HTTP. This is a storage path with
+        // `upsert: false`, so a collision fails the upload rather than
+        // overwriting, but a CSPRNG is the right source either way.
+        const storagePath = `${conversationId}/${randomUuid()}.${ext}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('message-images')
-          .upload(storagePath, file, {
-            contentType: file.type,
-            cacheControl: '3600',
-            upsert: false,
-          });
+        const { error: uploadError } = await supabase.storage.from('message-images').upload(storagePath, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: false,
+        });
 
         if (uploadError) {
           throw new Error(`Failed to upload image: ${uploadError.message}`);
@@ -210,10 +200,7 @@ export const useMessageAttachments = () => {
         });
       }
 
-      const { data, error: dbError } = await supabase
-        .from('message_attachments')
-        .insert(rowsToInsert)
-        .select('*');
+      const { data, error: dbError } = await supabase.from('message_attachments').insert(rowsToInsert).select('*');
 
       if (dbError) {
         throw new Error(`Failed to save attachment records: ${dbError.message}`);
@@ -225,9 +212,12 @@ export const useMessageAttachments = () => {
       // before the failure, so we don't leak orphans. The cleanup cron is
       // a safety net if this fails too.
       if (uploadedPaths.length > 0) {
-        await supabase.storage.from('message-images').remove(uploadedPaths).catch(() => {
-          /* ignore */
-        });
+        await supabase.storage
+          .from('message-images')
+          .remove(uploadedPaths)
+          .catch(() => {
+            /* ignore */
+          });
       }
       throw err;
     }
@@ -251,9 +241,7 @@ export const useMessageAttachments = () => {
       }
     }
 
-    const { data, error } = await supabase.storage
-      .from('message-images')
-      .createSignedUrl(storagePath, 60 * 60); // 1 hour
+    const { data, error } = await supabase.storage.from('message-images').createSignedUrl(storagePath, 60 * 60); // 1 hour
 
     if (error || !data?.signedUrl) {
       return null;
