@@ -855,6 +855,11 @@ export default defineNuxtConfig({
       // server/middleware/rate-limit.ts. Adding a checkBotId() call means adding
       // the matching zone rule in the same change; the rule inventory lives in
       // Cloudflare, not in this repo.
+      //
+      // `scripts/verify-cf-ratelimit.py` asserts the zone half from the outside.
+      // It derives the routes it demands coverage for from the SOURCE, so a new
+      // checkBotId() call fails it until the zone rule is extended. Verified
+      // green 2026-08-30: all three calling routes are covered.
       ...(isCloudflareBuild
         ? { 'botid/server': fileURLToPath(new URL('./server/stubs/botid-server-stub.mjs', import.meta.url)) }
         : {}),
