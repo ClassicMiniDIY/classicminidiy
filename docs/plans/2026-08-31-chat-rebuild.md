@@ -127,7 +127,43 @@ Two notes worth keeping:
   explicit `ALWAYS_REQUIRED` list. A route earns a zone rule by what it costs an
   abuser to call, not by which library it imports.
 
-### Phase 1 — the in-Worker agent
+### Phase 1 — the in-Worker agent (built; blocked on an API key for the live run)
+
+**Why the "cheap prompt experiment" is not available.** The `cmdiy-shop` prompt is
+pulled from LangSmith Hub at agent import time, and there is no UI access to it.
+Its content was recovered through the LangSmith API and is the confirmation of
+everything above: 5,672 characters that never name a single one of the eleven
+tools, describing a store assistant with product lookups, shop UTM tags,
+upsell/cross-sell content types, and an explicit strategy of "check store memory
+→ `tavily_search` → **ALWAYS** save what you learn". The tools were attached the
+whole time. Nothing ever told the model they existed.
+
+That removes the option of tuning in place, and makes the in-repo rebuild the only
+lever. Which is the right outcome anyway: a prompt that governs the entire product
+surface should not live in a SaaS the owner cannot open.
+
+**What is built and verified**
+
+| Piece                                              | File                                                  |
+| -------------------------------------------------- | ----------------------------------------------------- |
+| Prompt, in git, generated from the tool registry   | `server/agent/prompt.ts`                              |
+| MCP definitions bridged to AI SDK tools in-process | `server/utils/agentTools.ts`                          |
+| `site-search` over the shared `runOmnisearch()`    | `server/agent/tools.ts`, `server/utils/omnisearch.ts` |
+| The route — `streamText` with a 6-step budget      | `server/api/chat.post.ts`                             |
+| Registry pinned to the filesystem and the prompt   | `tests/static/agent-tool-registry.test.ts`            |
+
+Verified against a real `cloudflare_module` build: 4.61 MB gzip (from 4.52), well
+inside the Workers limit, and all twelve tools invoked through a real Nitro server
+— `torque-specs` returned live data and `compression-calculator` returned 9.43:1
+on a 1275 from schema defaults alone, confirming `z.object()` preserves
+`.default()`. That runtime check is not optional: the auto-import failure mode
+(`jsonResult is not defined`, thrown inside a tool call) is invisible to unit tests
+that stub `defineMcpTool`, which is how `/mcp` 500'd for months with a green suite.
+
+**Blocked:** there is no Anthropic API key in the environment, so the agent has not
+yet answered a real question. Set `NUXT_ANTHROPIC_API_KEY` to run it end to end.
+
+**Notes on the build as it stands**
 
 Vercel AI SDK, not LangGraph.js (no topology to justify it) and not the Cloudflare
 Agents SDK (built for durable stateful agents; this is stateless request/response).
