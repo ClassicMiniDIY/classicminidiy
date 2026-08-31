@@ -162,6 +162,19 @@
 </template>
 
 <script setup lang="ts">
+  // Explicit vue imports rather than the auto-imports.
+  //
+  // Nuxt's auto-import declarations resolve to overloads that reject the calls
+  // used here — `ref<T>()` with no argument reports "Expected 1 arguments", and
+  // `nextTick(cb)` reports "Expected 0 arguments". Both are correct Vue usage
+  // and correct at runtime; only the ambient types disagree. Importing from
+  // 'vue' takes the real signatures and clears the errors, the same way the
+  // composables in app/composables/ already do.
+  //
+  // This is an explicit IMPORT, not a local binding — it does not trip the
+  // auto-import shadowing gotcha in CLAUDE.md, which is about a local
+  // `const ref = ...` suppressing the injection for the whole file.
+  import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
   import { DefaultChatTransport, type UIMessage } from 'ai';
   import { useChat } from '@ai-sdk/vue';
   import AssistantMessage from './AssistantMessage.vue';
