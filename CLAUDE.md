@@ -995,15 +995,18 @@ Three distinct root causes were found, and all three are invisible until the dat
 is long enough — an empty or short-fixture table proves nothing about them, so
 measure with a realistically long display name, address and title.
 
-- **`AdminShell` deliberately does NOT use `.container`.** That helper is
-  `max-w-7xl` (1280px), which is a reading width. Subtract the 16rem section rail
-  and the gutters and the content column is ~928px, while the widest admin tables
-  need ~1000-1100px — so `/admin/users`, `/admin/exchange/listings` and
-  `.../wanted` clipped their LAST column (the trust-level select, the row action
-  menu) even on a 1440px display. The shell uses `max-w-[1600px]` instead. Admin
-  is an internal tool, not an article; it gets the screen. Below ~1280 these
-  tables still scroll sideways, which is intended and is why the rail collapses
-  to a dropdown under `lg`.
+- **`AdminShell` deliberately does NOT use `.container`, and its width is pinned
+  to `MainNav`'s.** `.container` is `max-w-7xl` (1280px), a reading width:
+  subtract the 16rem section rail and the gutters and the content column is
+  ~928px, while the widest admin tables need ~1000-1100px, so `/admin/users`,
+  `/admin/exchange/listings` and `.../wanted` clipped their LAST column (the
+  trust-level select, the row action menu) even on a 1440px display. The shell
+  uses `max-w-[1400px]` — **the same value as `MainNav`** — which leaves 1048px
+  for the table. Do not widen it past the nav: at `max-w-[1600px]` the admin body
+  was wider than the site header above it and the ADMIN strip started 100px LEFT
+  of the site logo on a 1920px display. Below ~1280 these tables still scroll
+  sideways, which is intended and is why the rail collapses to a dropdown under
+  `lg`.
 
 - **A scroll container must wrap the TABLE ONLY, never the table plus its
   pager.** `/admin/users` had the result count and pagination inside the
@@ -1024,14 +1027,28 @@ measure with a realistically long display name, address and title.
   390px for exactly this reason. Fix is `min-w-0` on the grid ITEM (or
   `minmax(0,1fr)` on the track), not on anything inside it.
 
-- **User-supplied addresses are single unbreakable words, and they escape the
-  viewport in two places.** In a flex row they set the row's min-content
-  (`/admin/exchange/moderation` and `.../messages` scrolled the page by 108px and
-  129px at 390px); inside a `modal-box` — a grid item whose automatic minimum is
-  its min-content — they made the modal itself wider than the phone. Anywhere an
-  address or URL is interpolated, it needs `break-all`/`break-words`, and its
-  flex ancestors need `min-w-0`. Note that a CLOSED daisyUI modal still lays out,
-  so it contributes to document overflow and can be measured without opening it.
+- **Addresses AND display names are single unbreakable words, and they escape
+  the viewport.** Both are user-supplied, and a display name is as likely to be
+  one long token as an address is — that is the trap, because a fixture name with
+  spaces wraps and hides the bug. In a flex row an unbreakable token sets the
+  row's min-content; `flex-wrap` does NOT save you, since a single item wider
+  than the row still overflows. Measured at 390px with an 87-character
+  single-token name: `/admin/queue` 337px, `/admin/exchange/finds` 238px,
+  `.../listings` and `.../wanted` 219px, `.../moderation` 211px of document
+  scroll. Every interpolated name/address/URL needs `min-w-0` on its flex
+  ancestors plus `truncate` (bounded) or `break-words`/`break-all` (unbounded).
+
+- **Fixture data for a viewport check must contain a long UNBROKEN token.** A
+  realistic-looking name with spaces passed all 16 pages; swapping it for the
+  same length without spaces immediately failed five of them. Test with
+  `ClassicMiniRestorationProjectSaudiArabia1959CooperSMkITwinCarbHydrolastic`,
+  not `Classic Mini Restoration Project`.
+
+- **A `modal-box` wider than the viewport is usually a SYMPTOM, not the bug.**
+  `.modal` is `position: fixed; inset: 0`, so it sizes to the initial containing
+  block — which grows once the document itself scrolls horizontally. Fix the
+  element that overflows the page and the modals come back on their own. A CLOSED
+  daisyUI modal still lays out, so it can be measured without opening it.
 
 ## Contribution Loop Invariants
 

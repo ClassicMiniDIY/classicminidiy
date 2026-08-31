@@ -2,12 +2,18 @@
   <!-- NOT `.container`. That helper caps at max-w-7xl (1280px), which is right
        for reading-width article pages and wrong for a dense internal tool: once
        the 16rem section rail and the gutters come out of 1280 the content column
-       is ~928px, and the widest admin tables need ~1050-1100px. The result was
+       is ~928px, and the widest admin tables need ~1000-1100px. The result was
        that /admin/users, /admin/exchange/listings and .../wanted clipped their
        LAST column — the trust-level select, the row action menu — on a 1440px
        display, so the primary control on each row could only be reached by
-       scrolling the table sideways. Admin is allowed the whole screen. -->
-  <div class="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+       scrolling the table sideways.
+
+       1400px, not wider: that is `MainNav`'s own `max-w-[1400px]`, and the admin
+       body has to line up with the site header above it. At `max-w-[1600px]` the
+       ADMIN strip and breadcrumb started 100px LEFT of the site logo on a 1920px
+       display — the same misalignment this file's hero notes warn about. 1400
+       still leaves 1048px for the table, comfortably over the ~975px it needs. -->
+  <div class="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
     <!-- Breadcrumb -->
     <div class="mb-4">
       <Breadcrumb :page="breadcrumb || title" :version="BREADCRUMB_VERSIONS.ADMIN" :root="isRoot" />

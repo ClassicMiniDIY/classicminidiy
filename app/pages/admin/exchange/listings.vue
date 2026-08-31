@@ -86,9 +86,12 @@
 
             <!-- User and Date Info -->
             <div class="text-sm space-y-1 mb-3">
-              <div class="flex items-center gap-2">
-                <i class="fas fa-user text-base-content/50"></i>
-                <span class="font-medium">{{ listing.profiles?.display_name || 'Unknown' }}</span>
+              <!-- A display name is user-supplied and may be one unbreakable
+                   token, which without `min-w-0` sets this row's min-content and
+                   scrolls the whole page sideways on a phone. -->
+              <div class="flex min-w-0 items-center gap-2">
+                <i class="fas fa-user shrink-0 text-base-content/50"></i>
+                <span class="min-w-0 truncate font-medium">{{ listing.profiles?.display_name || 'Unknown' }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <i class="fas fa-calendar text-base-content/50"></i>
@@ -245,9 +248,16 @@
                   </div>
                 </td>
                 <td>
-                  <div class="text-sm">
-                    <div class="font-medium">{{ listing.profiles?.display_name || 'Unknown' }}</div>
-                    <div class="text-base-content/70">{{ listing.profiles?.email }}</div>
+                  <!-- Capped so `truncate` has a bound: a table column's minimum
+                       is its cell's min-content, so an uncapped long name widens
+                       the whole table instead of ellipsising. -->
+                  <div class="max-w-[14rem] text-sm">
+                    <div class="truncate font-medium" :title="listing.profiles?.display_name || undefined">
+                      {{ listing.profiles?.display_name || 'Unknown' }}
+                    </div>
+                    <div class="truncate text-base-content/70" :title="listing.profiles?.email || undefined">
+                      {{ listing.profiles?.email }}
+                    </div>
                   </div>
                 </td>
                 <td>

@@ -721,9 +721,16 @@
                      whole table past the content area. The explicit cap is what
                      lets the ellipsis do its job. -->
                   <div class="min-w-0 max-w-[15rem]">
-                    <div class="font-medium truncate">
-                      {{ userItem.display_name || 'No display name' }}
-                      <span v-if="isSelf(userItem)" class="badge badge-soft badge-info badge-xs ml-1">You</span>
+                    <div class="flex items-center gap-1">
+                      <!-- The badge is a SIBLING of the truncating name, not
+                           inside it. Inside, `truncate`'s overflow clip removed
+                           it entirely once the name filled the cap, so an admin
+                           with a long display name lost the marker for their own
+                           row. -->
+                      <span class="truncate font-medium" :title="userItem.display_name || undefined">
+                        {{ userItem.display_name || 'No display name' }}
+                      </span>
+                      <span v-if="isSelf(userItem)" class="badge badge-soft badge-info badge-xs shrink-0">You</span>
                     </div>
                     <div class="text-xs opacity-60 truncate" :title="userItem.email">{{ userItem.email }}</div>
                   </div>
