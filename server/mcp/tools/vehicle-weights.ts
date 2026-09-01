@@ -29,12 +29,21 @@ export default defineMcpTool({
   async handler({ query, section, limit }) {
     const result = lookup(data as unknown as LookupData, { query, section, limit });
 
+    // Near-misses an over-narrow AND query excluded. Surfaced in BOTH branches
+    // below, including the zero-match one, where "nothing matched, but these
+    // almost did" is the whole of the useful answer.
+    const relatedNote = result.related.length
+      ? 'Rows in `related` matched every word but one — `excludedBy` names the word that kept each out. Check them before answering: models and variants are named inconsistently, so a precise-sounding query can hide the row that applies.'
+      : undefined;
+
     if (result.totalMatches === 0) {
       return jsonResult({
         query: query ?? null,
         section: section ?? null,
         totalMatches: 0,
         matches: [],
+        related: result.related,
+        relatedNote,
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
       });
@@ -47,6 +56,8 @@ export default defineMcpTool({
       returned: result.matches.length,
       truncated: result.truncated,
       matches: result.matches,
+      related: result.related,
+      relatedNote,
       availableSections: result.availableSections,
       formattedText: [
         `**Vehicle Weights** — ${result.totalMatches} match${result.totalMatches === 1 ? '' : 'es'}` +

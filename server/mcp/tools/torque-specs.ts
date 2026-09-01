@@ -8,14 +8,14 @@ import { lookup, type LookupData } from '../../utils/mcpLookup';
  */
 export default defineMcpTool({
   description:
-    'Look up Classic Mini torque specifications in lb-ft and Nm. Four sections: Engine (41 fasteners), Suspension (24), Clutch & Gearbox (22) and Electrical (6). Search by fastener name (e.g. "main bearing", "flywheel", "cylinder head") or browse a whole section.',
+    "Look up Classic Mini torque specifications in lb-ft and Nm. Four sections: Engine (41 fasteners), Suspension (24), Clutch & Gearbox (22) and Electrical (6). Search by fastener name (e.g. \"main bearing\", \"flywheel\", \"cylinder head\") or browse a whole section. MANY FIGURES ARE ENGINE-SPECIFIC: the same joint has different torques for 848/998 than for 970/1071/1275, and the rows are named differently ('bolts' vs 'nuts' vs 'set screws'). Include the displacement in the query when you know it, and always read each row's `notes` before quoting a figure.",
 
   inputSchema: {
     query: z
       .string()
       .optional()
       .describe(
-        'Fastener or component to find, e.g. "main bearing bolts", "flywheel", "head nut". Every word must match, so extra words narrow the result. Omit to browse a whole section.'
+        'Fastener or component to find, e.g. "main bearing 1275", "flywheel", "head nut". Every word must match, so extra words narrow the result — and a word the archive does not use for that engine will hide the row you want, which is why `related` exists. Prefer the fastener plus the displacement over the fastener plus a guessed fastener type. Omit to browse a whole section.'
       ),
     section: z
       .string()
@@ -29,12 +29,21 @@ export default defineMcpTool({
   async handler({ query, section, limit }) {
     const result = lookup(data as unknown as LookupData, { query, section, limit });
 
+    // Near-misses an over-narrow AND query excluded. Surfaced in BOTH branches
+    // below, including the zero-match one, where "nothing matched, but these
+    // almost did" is the whole of the useful answer.
+    const relatedNote = result.related.length
+      ? 'Rows in `related` matched every word but one — `excludedBy` names the word that kept each out. Read them before answering. The same fastener is often named differently across engine variants (the 848/998 row may say "bolts" where the 1275 row says "nuts" or "set screws"), so an exact-sounding query can return one confident row that does NOT apply to the engine asked about. Always check the `notes` field on each row for the displacement it covers.'
+      : undefined;
+
     if (result.totalMatches === 0) {
       return jsonResult({
         query: query ?? null,
         section: section ?? null,
         totalMatches: 0,
         matches: [],
+        related: result.related,
+        relatedNote,
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
       });
@@ -47,6 +56,8 @@ export default defineMcpTool({
       returned: result.matches.length,
       truncated: result.truncated,
       matches: result.matches,
+      related: result.related,
+      relatedNote,
       availableSections: result.availableSections,
       formattedText: [
         `**Torque Specifications** — ${result.totalMatches} match${result.totalMatches === 1 ? '' : 'es'}` +
