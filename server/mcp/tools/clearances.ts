@@ -1,24 +1,14 @@
 import { z } from 'zod';
 import data from '../../../data/commonClearances.json';
+import { CLEARANCE_UNITS } from '../../../data/models/units';
 import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 
 /**
  * Common Clearances MCP Tool
  * Look up Classic Mini clearance and endfloat specifications
  */
-/**
- * What each clearance column holds.
- *
- * The `thou` column is named for thousandths of an inch but holds INCHES:
- * `0.002` means two thou, not two thousandths of a thou. Read literally it is
- * wrong by a thousand. The field name is kept because the website and the
- * generated FAQ corpus both already read it; what changes here is that the tool
- * no longer leaves a caller to infer the unit from the name.
- */
-const UNITS: UnitMap = {
-  thou: 'INCHES, despite the field name — 0.002 means 0.002 in, i.e. 2 thou',
-  mm: 'millimetres (mm)',
-};
+/** See `data/models/units.ts` — the `thou` column holds INCHES. */
+const UNITS: UnitMap = CLEARANCE_UNITS;
 
 export default defineMcpTool({
   description:

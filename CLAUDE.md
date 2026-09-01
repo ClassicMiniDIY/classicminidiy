@@ -879,6 +879,53 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   dev server over HTTPS (WebAuthn requires a secure context, and the
   localhost exemption does not apply once the hostname is not localhost).
 
+## Reference-data unit invariants
+
+`data/{torqueSpecs,commonClearances,weights}.json` feed the website tables, the
+`/api/{torque,clearance,weights}` routes, four `/mcp` tools and the generated
+FAQ corpus. Two of their columns are actively misleading if read by name, and
+getting one wrong is a wrong figure for a real fastener rather than a cosmetic
+bug.
+
+- **The imperial column is the SOURCE; metric is DERIVED.** The original manuals
+  printed lb-ft (or lb-in); the Nm column is a courtesy this project adds. So
+  where the two disagree, the imperial one is right and the conversion is wrong.
+  `tests/static/torque-unit-consistency.test.ts` holds every row to its own
+  source column and has NO exemptions — a row that cannot be reconciled is
+  removed rather than exempted, because a wrong torque figure is worse than a
+  missing one. Seven of 93 rows disagreed when this was first checked.
+
+- **`lbin` is pound-INCHES, and the Electrical torque table is published in
+  them.** It has no `lbft` column at all. Read as pound-feet it is out by
+  twelve, on alternator brush-box screws and distributor clamp bolts — the
+  fasteners least able to survive it. The whole section had been converted as
+  though it were lb-ft, so every Nm figure was about ten times high.
+
+- **`thou` holds INCHES despite the name.** `0.012` means 12 thou, not 0.012
+  thou. Read literally it is out by a thousand.
+
+- **Vehicle weights are kilograms and say so nowhere in the data.** The rows are
+  bare numbers.
+
+**`data/models/units.ts` is the single source for all of this**, and it lives
+beside the data rather than in any one consumer for a reason: the same fact used
+to be restated in the MCP tool, the page's table headers, that page's Dataset
+JSON-LD and the FAQ generator, and they drifted — the FAQ generator rendered
+clearances as inches while the table header said thou, live, for months. A new
+consumer imports from there; it does not restate the unit.
+
+Corollaries when touching these datasets:
+
+- Every numeric column a caller can see must be described. `unitsForItems()`
+  returns only the columns actually present, because naming a unit that is not
+  in the answer invites a conversion nobody asked for.
+- Never convert between units on the way out. Deliver the figure the source
+  published, in the unit it published it in.
+- A column header must be derived from every row, not from row zero. The
+  Electrical table is uniformly lb-in by luck, not by constraint.
+- The row counts in `torque-specs.ts`'s description are asserted against the
+  data; they are the first thing a model reads about the dataset.
+
 ## Trust System Invariants
 
 - **Every human-reviewed approval must feed trust.** Counters + `contributions` ledger + `recalculate_trust_level()` fire DB-side (submission_queue trigger, model-version RPCs, `moderate_external_model`, listings pending→active trigger). If you add a new approval surface, it must do the same — contract: `classicminidiy-supabase/docs/plans/2026-07-13-unified-trust-pipeline.md`.

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import data from '../../../data/torqueSpecs.json';
+import { TORQUE_UNITS } from '../../../data/models/units';
 import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 
 /**
@@ -7,19 +8,11 @@ import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '
  * Look up Classic Mini torque figures by fastener or system
  */
 /**
- * What each torque column holds, per the source tables.
- *
- * `lbin` is the one that matters. The Electrical section is published in
- * pound-INCHES and has no `lbft` column at all, so a caller that assumes the
- * tool's figures are pound-feet is out by a factor of twelve on exactly the
- * fasteners least able to survive it — alternator brush-box screws and
- * distributor clamp bolts.
+ * Units come from `data/models/units.ts`, beside the data they describe, so the
+ * tool, the website table, that page's JSON-LD and the API routes cannot drift
+ * apart about what a column means. They already had.
  */
-const UNITS: UnitMap = {
-  lbft: 'pound-feet (lb-ft)',
-  lbin: 'pound-INCHES (lb-in). One twelfth of a pound-foot. NOT interchangeable with lb-ft.',
-  nm: 'newton-metres (Nm), as printed in the source table',
-};
+const UNITS: UnitMap = TORQUE_UNITS;
 
 export default defineMcpTool({
   description:

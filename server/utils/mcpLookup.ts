@@ -1,3 +1,4 @@
+import { unitsForItems, type UnitDescriptions } from '../../data/models/units';
 /**
  * Shared search for the reference-table MCP tools.
  *
@@ -149,39 +150,20 @@ function matchesQuery(item: Record<string, unknown>, terms: string[]): boolean {
 }
 
 /**
- * The unit each numeric column of a dataset is published in.
- *
- * Reference tables do not share a unit, and two of them do not even name their
- * columns after the unit they hold. Left implicit, a caller guesses — and the
- * guesses are dangerous rather than merely wrong: the Electrical torque table is
- * in pound-INCHES, so a row read as pound-feet is out by twelve, and the
- * clearance column named `thou` actually holds INCHES, so a row read literally
- * is out by a thousand. Vehicle weights carry no unit anywhere in the data at
- * all.
- *
- * Every tool therefore declares what its columns mean and returns it beside the
- * rows, so the answer never depends on the caller inferring a unit from a field
- * name. Nothing here converts anything: the figure a reader gets is the figure
- * the source published, in the unit the source published it in.
+ * Unit descriptions live in `data/models/units.ts`, beside the data they
+ * describe, because the same fact is needed by the MCP tools, the website
+ * tables, that page's JSON-LD and the public API routes — and when it was
+ * restated in each of them they drifted, disagreeing about the same column by a
+ * factor of a thousand.
  */
-export type UnitMap = Record<string, string>;
+export type UnitMap = UnitDescriptions;
 
-/**
- * The subset of `units` that the returned rows actually use.
- *
- * Sending the whole map would tell a caller about columns it cannot see — and,
- * worse, name units that are not in the answer, which is its own way of
- * inviting a conversion nobody asked for.
- */
+/** `unitsForItems`, for the `{ section, item }` rows this module returns. */
 export function unitsInUse(rows: { item: Record<string, unknown> }[], units: UnitMap): UnitMap | undefined {
-  const present = new Set<string>();
-  for (const row of rows) {
-    for (const [field, value] of Object.entries(row.item)) {
-      if (units[field] && value !== null && value !== undefined && value !== '') present.add(field);
-    }
-  }
-  if (present.size === 0) return undefined;
-  return Object.fromEntries([...present].sort().map((field) => [field, units[field] as string]));
+  return unitsForItems(
+    rows.map((row) => row.item),
+    units
+  );
 }
 
 export function listSections(data: LookupData) {

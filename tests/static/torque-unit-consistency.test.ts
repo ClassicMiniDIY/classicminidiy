@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import torqueSpecs from '../../data/torqueSpecs.json';
+import { read, REPO_ROOT } from './_scan';
 
 /**
  * Every metric torque figure must convert from the imperial one beside it.
@@ -104,7 +104,7 @@ describe('torque figures convert to their own metric column', () => {
     // Removing one row left the description claiming "Electrical (6)". These
     // counts are the first thing the model reads about the dataset, and a stale
     // one tells it rows exist that do not. Nothing else checks them.
-    const description = readFileSync(new URL('../../server/mcp/tools/torque-specs.ts', import.meta.url), 'utf8');
+    const description = read(`${REPO_ROOT}server/mcp/tools/torque-specs.ts`);
     for (const [, table] of Object.entries(torqueSpecs as Record<string, { title?: string; items?: Row[] }>)) {
       const count = table.items?.length ?? 0;
       // The counts are written as "Engine (41 fasteners)" but "Suspension (24)",

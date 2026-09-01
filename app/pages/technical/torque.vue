@@ -116,12 +116,20 @@
     ],
   });
 
-  // Imperial torque column header depends on whether a table uses lb-ft or lb-in
+  // Imperial torque column header depends on whether a table uses lb-ft or lb-in.
+  //
+  // Every row is inspected, not just the first. Reading row zero happened to be
+  // right only because the Electrical table is uniformly lb-in — a property of
+  // today's data, not something the code enforced — and one lb-ft row added to
+  // it would have labelled the whole column pound-feet, which is the twelvefold
+  // misreading this page exists to prevent. A mixed table now falls back to
+  // naming both rather than picking one.
   const imperialHeader = (items: any[]) => {
-    const first = items?.[0];
-    return first && first.lbin != null && first.lbft == null
-      ? t('table_headers.torque_lbin')
-      : t('table_headers.torque_lbft');
+    const rows = items ?? [];
+    const hasLbin = rows.some((row) => row?.lbin != null);
+    const hasLbft = rows.some((row) => row?.lbft != null);
+    if (hasLbin && hasLbft) return `${t('table_headers.torque_lbft')} / ${t('table_headers.torque_lbin')}`;
+    return hasLbin ? t('table_headers.torque_lbin') : t('table_headers.torque_lbft');
   };
 
   // Filter function for table items
