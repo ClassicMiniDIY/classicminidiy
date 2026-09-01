@@ -757,6 +757,30 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   `deploy-cloudflare.yml`. **Adding a tool means adding a `tools/call` for it
   there** — a tool with only unit tests is untested against the protocol that
   actually serves it.
+- **The free-tier fixture key must live on a dedicated account that will never
+  hold a subscription.** `MCP_FREE_TIER_KEY` arms the `free-tier gating`
+  section of that script, which is the ONLY check anywhere that can tell a
+  working tier gate from one that never ran: every other assertion in the
+  script authenticates with the env key, which is the `internal` tier and sees
+  all eleven tools by design. A key's tier is a property of its OWNER, decided
+  per request by `user_has_subscription(owner, 'developer')` — so granting that
+  account a developer subscription, **an admin comp included**, makes the
+  fixture developer-tier, and the section then fails on a fixture rather than a
+  fault. Point the secret at an account nobody uses: never a real person's, and
+  never an admin's.
+
+  **The repair is the dangerous half, not the break.** Deleting the secret
+  clears the failure and leaves every check green, because an unset key makes
+  the section SKIP — the gate quietly drops from 33 assertions to 30 and
+  nothing anywhere says the tier boundary stopped being covered. That is the
+  full 2026-08-31 sequence: the key's owner was comped onto the developer tier
+  deliberately (to give an MCP client the paid tools), the gate failed, and the
+  secret was deleted to unblock deploys. So do not revoke a deliberate comp to
+  satisfy this check, and do not unset the secret to silence it — re-point it
+  at a subscription-free account. A healthy run logs
+  `free tier gates 4 of 11 tools (chassis-decoder,color-lookup,engine-decoder,wheel-search)`
+  followed by `passed 33, failed 0`; `passed 30` means it is unarmed.
+
 - **A `/mcp` tool that caches and takes an OBJECT-valued argument must set an
   explicit `getKey`.** The toolkit's default key is
   `Object.values(args).map(String).join(':')`, so every object stringifies to

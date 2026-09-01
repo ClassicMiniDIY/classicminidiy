@@ -349,8 +349,16 @@ echo "== free-tier gating =="
 #
 # Optional, exactly like MCP_SMOKE_KEY: absent, this notes and skips rather
 # than failing a deploy on a missing secret. To arm it, mint a key at
-# /dashboard/api-keys on an account with NO developer subscription and set it
-# with `gh secret set MCP_FREE_TIER_KEY`.
+# /dashboard/api-keys and set it with `gh secret set MCP_FREE_TIER_KEY`.
+#
+# The account that owns that key must be a DEDICATED fixture account that will
+# never hold a subscription — not a real person's, and never an admin's. The
+# tier is decided per request by user_has_subscription(owner, 'developer'), so
+# granting the owner that subscription (an admin comp counts) makes the key
+# developer-tier and turns this section into a deploy-blocking failure. The
+# tempting fix then is to delete the secret, which is worse than the failure:
+# it silently disarms the only check in the repo that can tell a working tier
+# gate from one that never ran. Both happened on 2026-08-31.
 rpc_as() {
   local key="$1" body="$2"
   local out
@@ -372,7 +380,8 @@ else
     bad "free-tier tools/list -> $free_status, want 200 (is the key valid and unrevoked?)"
   else
     # A free key must see SOME tools ungated and the paid ones gated. All-gated
-    # or none-gated both mean the gate is broken.
+    # and none-gated both mean something is wrong, but they mean DIFFERENT
+    # things, so the two are reported separately below.
     counts=$(printf '%s' "$free_list" | python3 -c "
 import sys, json
 d = json.loads(sys.stdin.read() or '{}')
@@ -383,10 +392,28 @@ print(len(tools), len(gated), ','.join(sorted(gated)))
     total=$(printf '%s' "$counts" | cut -d' ' -f1)
     ngated=$(printf '%s' "$counts" | cut -d' ' -f2)
     gatedlist=$(printf '%s' "$counts" | cut -d' ' -f3)
-    if [ "$ngated" -gt 0 ] && [ "$ngated" -lt "$total" ]; then
+    # Guard the counts before comparing them. An unparseable body leaves both
+    # empty, `[ -eq ]` errors on every branch, and the last one would report an
+    # inverted gate that is not there — the exact wrong-diagnosis failure this
+    # section was just fixed to stop producing.
+    if ! printf '%s' "$total" | grep -qE '^[0-9]+$' || ! printf '%s' "$ngated" | grep -qE '^[0-9]+$'; then
+      bad "could not count tools in the free-tier tools/list body: $(printf '%s' "$free_list" | head -c 120)"
+    elif [ "$ngated" -gt 0 ] && [ "$ngated" -lt "$total" ]; then
       ok "free tier gates $ngated of $total tools ($gatedlist)"
+    elif [ "$ngated" -eq 0 ]; then
+      # Nothing gated is more often a FIXTURE fault than a code one, so name
+      # that first. The tier follows user_has_subscription(owner, 'developer'),
+      # so the moment this key's account gains a developer subscription — an
+      # admin comp counts — the key resolves to the developer tier and sees
+      # every tool ungated, by design. That is what happened on 2026-08-31, and
+      # the message below used to send the reader into the tiering code
+      # instead. Check the account first, the code second.
+      bad "free tier gated 0 of $total tools — does MCP_FREE_TIER_KEY's account hold a 'developer' subscription (an admin comp counts)? Otherwise the gate never ran, or the gated-description marker changed"
     else
-      bad "free tier gated $ngated of $total tools — the gate is inverted or never ran"
+      # Every tool gated is the fault this whole section exists to catch: the
+      # gate ran and over-applied, as when tool-name derivation returns
+      # undefined and FREE_TOOLS therefore matches nothing.
+      bad "free tier gated ALL $total tools — the gate is inverted (tool-name derivation?)"
     fi
 
     # A FREE tool must actually run for a free key.
