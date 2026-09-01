@@ -55,10 +55,23 @@ const TOOL_GUIDANCE: Record<string, string> = {
   'color-lookup': 'factory paint colours by name or code, including BLVC and Ditzler/PPG cross-references',
   'site-search':
     'anything else on classicminidiy.com — guides, archive documents, registry entries, marketplace listings',
+  // Scoped by INTENT, never by topic. "Wheels -> search the store" is what turns
+  // every technical answer into an advert, and is what the shop-bot prompt this
+  // one replaced actually did. See server/agent/tools.ts for the measurement.
+  'store-search':
+    'where to BUY a part: the reader is asking to purchase, not asking a specification. Live price and stock from the Classic Mini DIY store',
 };
 
-/** Every tool the agent is given, including `site-search`, in a stable order. */
-export const AGENT_TOOL_NAMES = [...AGENT_MCP_TOOL_NAMES, 'site-search'].sort();
+/**
+ * Every tool the agent is given, in a stable order.
+ *
+ * The two non-MCP tools are named here rather than derived, because they are
+ * defined in `server/agent/tools.ts` and not under `server/mcp/tools/` — neither
+ * is exposed over `/mcp`. `tests/unit/server/agent/prompt.test.ts` pins this
+ * list to what `buildAgentTools()` actually returns, so the prompt cannot
+ * describe a tool the model does not have, or stay silent about one it does.
+ */
+export const AGENT_TOOL_NAMES = [...AGENT_MCP_TOOL_NAMES, 'site-search', 'store-search'].sort();
 
 function toolCatalogue(): string {
   return AGENT_TOOL_NAMES.filter((name) => TOOL_GUIDANCE[name])
@@ -89,6 +102,7 @@ Rules for using them:
 - Tools take short, keyword-style arguments. "main bearing" beats "what is the torque for the main bearing bolts".
 - If a tool returns no match, say so plainly and suggest a narrower or broader term. Do not fall back to a remembered figure.
 - Use \`site-search\` to point people at the page that covers a topic, and link what it returns.
+- **\`store-search\` only when someone is asking to buy.** A question about a figure, a tolerance or how something works is not a purchase. Never volunteer the shop in an answer nobody asked for, and never let a product stand in for a specification.
 
 ## Answering
 
