@@ -777,9 +777,12 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   deliberately (to give an MCP client the paid tools), the gate failed, and the
   secret was deleted to unblock deploys. So do not revoke a deliberate comp to
   satisfy this check, and do not unset the secret to silence it — re-point it
-  at a subscription-free account. A healthy run logs
-  `free tier gates 4 of 11 tools (chassis-decoder,color-lookup,engine-decoder,wheel-search)`
-  followed by `passed 33, failed 0`; `passed 30` means it is unarmed.
+  at a subscription-free account. A healthy run logs a
+  `free tier gates N of M tools` PASS naming the four paid-only tools; an
+  unarmed one prints the `MCP_FREE_TIER_KEY unset` skip note in its place.
+  Read those two lines rather than the trailing assertion total — that number
+  moves whenever a tool or an assertion is added, so a count written down here
+  would be wrong by the next PR.
 
 - **A `/mcp` tool that caches and takes an OBJECT-valued argument must set an
   explicit `getKey`.** The toolkit's default key is

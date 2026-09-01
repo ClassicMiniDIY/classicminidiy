@@ -315,7 +315,7 @@ jobs:
           # is how a fully-gated free tier reached production. Optional like
           # MCP_SMOKE_KEY: unset, the script notes and skips instead of failing
           # the deploy — which is also the trap: unsetting this secret silences
-          # a failure here and takes the gate from 33 assertions to 30 with
+          # a failure here by turning the whole gating section into a skip, with
           # nothing red. Mint the key at /dashboard/api-keys on a DEDICATED
           # account that will never hold a developer subscription (a comp
           # counts, and flips the key to the paid tier), then
