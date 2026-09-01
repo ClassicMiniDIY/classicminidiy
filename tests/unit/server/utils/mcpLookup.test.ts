@@ -162,6 +162,67 @@ describe('near-miss reporting', () => {
     expect(r.related.every((m) => m.excludedBy === 'studs')).toBe(true);
   });
 
+  it('gives a count-only caller no row payloads through the side door', () => {
+    // `limit <= 0` is documented as "count only — never silently return
+    // everything". Near-miss ROWS are rows, so the contract has to hold for
+    // them too, and asserting only on `matches` would miss it.
+    const r = lookup(VARIANTS, { query: 'main bearing bolts', section: 'Engine', limit: 0 });
+    expect(r.matches).toEqual([]);
+    expect(r.related).toEqual([]);
+    expect(r.totalMatches).toBe(1);
+  });
+
+  it('attributes a row to the term it is actually missing, whatever the word order', () => {
+    // Attribution used to depend on which relaxation reached a row first, so the
+    // same row could be blamed on a different word purely by reordering the
+    // query. It is now a property of the row: the one term it does not contain.
+    const a = lookup(VARIANTS, { query: 'main bearing bolts', section: 'Engine' });
+    const b = lookup(VARIANTS, { query: 'bolts bearing main', section: 'Engine' });
+    const by = (r: typeof a) => r.related.map((m) => `${m.item.name}:${m.excludedBy}`).sort();
+    expect(by(a)).toEqual(by(b));
+    expect(a.related.every((m) => m.excludedBy === 'bolts')).toBe(true);
+  });
+
+  it('does not let the first query word crowd out the rest of the hint', () => {
+    // The bug this replaced: the cap was filled term by term in QUERY order, so
+    // twelve near-misses from dropping the first word consumed the whole budget
+    // and the row from dropping the last word never appeared — on a torque query
+    // the last word is the fastener type, which is the one that matters.
+    // Near-misses are now found in one dataset pass, so no query word is
+    // privileged and rows excluded by different terms appear together.
+    const CROWDED: LookupData = {
+      t: {
+        title: 'T',
+        items: [
+          { name: 'alpha beta wanted' },
+          ...Array.from({ length: 12 }, (_, i) => ({ name: `beta gamma filler ${i}` })),
+        ],
+      },
+    };
+    const r = lookup(CROWDED, { query: 'alpha beta gamma' });
+    expect(r.totalMatches).toBe(0);
+    expect(r.related.map((m) => m.item.name)).toContain('alpha beta wanted');
+    expect(new Set(r.related.map((m) => m.excludedBy))).toEqual(new Set(['gamma', 'alpha']));
+  });
+
+  it('says so when the near-miss list was cut', () => {
+    // Truncation is by dataset order, because there is no principled way to
+    // rank one near-miss above another — so the one thing that must not happen
+    // is doing it silently. Same contract as `truncated` for matches.
+    const MANY: LookupData = {
+      t: { title: 'T', items: Array.from({ length: 25 }, (_, i) => ({ name: `beta gamma row ${i}` })) },
+    };
+    const r = lookup(MANY, { query: 'alpha beta gamma' });
+    expect(r.related).toHaveLength(10);
+    expect(r.relatedTruncated).toBe(true);
+  });
+
+  it('does not claim truncation when the whole hint fits', () => {
+    const r = lookup(VARIANTS, { query: 'main bearing bolts', section: 'Engine' });
+    expect(r.related.length).toBeLessThan(10);
+    expect(r.relatedTruncated).toBe(false);
+  });
+
   it('caps the hint so it cannot swamp the answer', () => {
     const many: LookupData = {
       t: {

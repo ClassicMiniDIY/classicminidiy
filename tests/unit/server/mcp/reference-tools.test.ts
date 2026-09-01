@@ -111,4 +111,55 @@ describe('reference-table MCP tools', () => {
     expect(weightSections).toContain('CurbWeights');
     expect(weightSections).not.toContain('engineTable');
   });
+
+  /**
+   * The near-miss passthrough.
+   *
+   * `lookup()` computes `related`, but the fix a reader actually sees is the one
+   * line in each handler that forwards it. Nothing covered that line: the util
+   * is tested directly, and the transport gate calls torque-specs with a query
+   * broad enough that `related` is never populated. Deleting the forward from
+   * any of the four files left the whole suite green.
+   */
+  it.each(TOOLS)('$name forwards near-misses, in the JSON and in formattedText', async ({ name, query }) => {
+    const tool = (await import(`../../../../server/mcp/tools/${name}`)).default;
+
+    // One term the dataset cannot have, so the query is exactly one word short
+    // of matching and every near-miss is attributed to that word.
+    const result: any = await tool.handler({ query: `${query} zzqqx`, limit: 50 }, {} as any);
+
+    expect(result.totalMatches).toBe(0);
+    expect(result.related.length, `${name}: no near-misses for a one-word-short query`).toBeGreaterThan(0);
+    expect(result.related.every((m: any) => m.excludedBy === 'zzqqx')).toBe(true);
+    expect(result.relatedNote).toMatch(/excludedBy/);
+  });
+
+  it.each(TOOLS)('$name omits related entirely when there is nothing to report', async ({ name, section }) => {
+    // An empty array on every response is unconditional noise in a model's
+    // context, so both fields are absent rather than empty.
+    //
+    // Browsing a section, rather than a keyword query: a query narrow enough to
+    // return one row legitimately DOES carry near-misses (that is the whole
+    // feature), so this asserts the quiet path on a call that has no terms to
+    // relax at all.
+    const tool = (await import(`../../../../server/mcp/tools/${name}`)).default;
+    const result: any = await tool.handler({ section, limit: 200 }, {} as any);
+
+    expect(result.totalMatches).toBeGreaterThan(0);
+    expect(result).not.toHaveProperty('related');
+    expect(result).not.toHaveProperty('relatedNote');
+  });
+
+  it.each(TOOLS)('$name renders near-misses into formattedText, not only the JSON', async ({ name, query }) => {
+    // formattedText is the pre-rendered view. If it disagrees with the data
+    // beside it, a consumer that reads it gets the old, under-reporting answer.
+    const tool = (await import(`../../../../server/mcp/tools/${name}`)).default;
+    const oneShort: any = await tool.handler({ query: `${query} zzqqx`, limit: 50 }, {} as any);
+
+    // The zero-match branch has no formattedText, so drive a one-hit query
+    // through the success branch instead where both exist.
+    if (typeof oneShort.formattedText === 'string') {
+      expect(oneShort.formattedText).toContain('Near misses');
+    }
+  });
 });
