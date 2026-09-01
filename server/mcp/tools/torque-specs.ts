@@ -23,7 +23,7 @@ const UNITS: UnitMap = {
 
 export default defineMcpTool({
   description:
-    "Look up Classic Mini torque specifications. UNITS DIFFER BY SECTION and are named in the `units` field of every response — Engine, Suspension and Clutch & Gearbox are published in pound-feet, but ELECTRICAL is published in pound-INCHES. Quote the figure in the unit `units` gives for that column and never convert between them. Four sections: Engine (41 fasteners), Suspension (24), Clutch & Gearbox (22) and Electrical (6). Search by fastener name (e.g. \"main bearing\", \"flywheel\", \"cylinder head\") or browse a whole section. MANY FIGURES ARE ENGINE-SPECIFIC: the same joint has different torques for 848/998 than for 970/1071/1275, and the rows are named differently ('bolts' vs 'nuts' vs 'set screws'). Include the displacement in the query when you know it, and always read each row's `notes` before quoting a figure.",
+    "Look up Classic Mini torque specifications. UNITS DIFFER BY SECTION and are named in the `units` field of every response — Engine, Suspension and Clutch & Gearbox are published in pound-feet, but ELECTRICAL is published in pound-INCHES. Quote the figure in the unit `units` gives for that column and never convert between them. Four sections: Engine (41 fasteners), Suspension (24), Clutch & Gearbox (22) and Electrical (5). Search by fastener name (e.g. \"main bearing\", \"flywheel\", \"cylinder head\") or browse a whole section. MANY FIGURES ARE ENGINE-SPECIFIC: the same joint has different torques for 848/998 than for 970/1071/1275, and the rows are named differently ('bolts' vs 'nuts' vs 'set screws'). Include the displacement in the query when you know it, and always read each row's `notes` before quoting a figure.",
 
   inputSchema: {
     query: z
