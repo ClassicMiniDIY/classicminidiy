@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1180" viewBox="0 0 1600 1180" role="img" aria-label="Cylinder head nut tightening sequence for the A-series nine-stud head">
+<title>Cylinder Head Nut Tightening Sequence — A-Series Nine-Stud Head</title>
+<desc>Plan view of an A-series cylinder head showing the nine stud nut positions numbered in tightening order: bottom row left to right 8, 4, 1, 5, 9; top row left to right 6, 2, 3, 7. Tighten progressively in that order to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>
+<rect width="1600" height="1180" fill="#ffffff"/>
+<text x="80" y="92" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1c1f24" letter-spacing="-0.4">Cylinder Head Nut Tightening Sequence</text>
+<text x="80" y="132" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="23" font-weight="500" fill="#5b6169">A-Series nine-stud head &#8212; plan view with the rocker gear removed</text>
+<rect x="80" y="158" width="120" height="5" fill="#ed7135"/>
+<text x="1520" y="92" text-anchor="end" font-family="Menlo, DejaVu Sans Mono, Courier New, monospace" font-size="20" fill="#5b6169" letter-spacing="1.5">PLATE 12M0143</text>
+<text x="1520" y="126" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">Classic Mini DIY Archive</text>
+<path d="M 236.0 400.0 L 1284.0 400.0 A 16.0 16.0 0 0 1 1300.0 416.0 L 1300.0 517.44 A 58.0 58.0 0 1 1 1300.0 582.56 L 1300.0 684.0 A 16.0 16.0 0 0 1 1284.0 700.0 L 236.0 700.0 A 16.0 16.0 0 0 1 220.0 684.0 L 220.0 416.0 A 16.0 16.0 0 0 1 236.0 400.0 Z" fill="#f1f2ee" stroke="#3b4148" stroke-width="3.2" stroke-linejoin="round"/>
+<circle cx="1348.0" cy="550.0" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.4"/>
+<g transform="translate(0,-45)">
+<polyline points="760,655 645,445 875,445 530,655 990,655 415,445 1105,445 300,655 1220,655" fill="none" stroke="#ed7135" stroke-width="3" stroke-dasharray="10 8" opacity="0.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="338" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="338" cy="550" r="9" fill="#c7ccd1"/>
+<circle cx="462" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="462" cy="550" r="9" fill="#c7ccd1"/>
+<circle cx="578" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="578" cy="550" r="9" fill="#c7ccd1"/>
+<circle cx="702" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="702" cy="550" r="9" fill="#c7ccd1"/>
+<circle cx="818" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="818" cy="550" r="9" fill="#c7ccd1"/>
+<circle cx="942" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="942" cy="550" r="9" fill="#c7ccd1"/>
+<circle cx="1058" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="1058" cy="550" r="9" fill="#c7ccd1"/>
+<circle cx="1182" cy="550" r="30" fill="#ffffff" stroke="#3b4148" stroke-width="2.2"/>
+<circle cx="1182" cy="550" r="9" fill="#c7ccd1"/>
+<polygon points="788.87,655.00 774.43,680.00 745.57,680.00 731.13,655.00 745.57,630.00 774.43,630.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="760" cy="655" r="10.5" fill="#3b4148"/>
+<line x1="760" y1="738.0" x2="760" y2="687.9" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="760" cy="764" r="26" fill="#ed7135"/>
+<text x="760" y="775" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">1</text>
+<polygon points="673.87,445.00 659.43,470.00 630.57,470.00 616.13,445.00 630.57,420.00 659.43,420.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="645" cy="445" r="10.5" fill="#3b4148"/>
+<line x1="645" y1="366.0" x2="645" y2="412.1" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="645" cy="340" r="26" fill="#ed7135"/>
+<text x="645" y="351" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">2</text>
+<polygon points="903.87,445.00 889.43,470.00 860.57,470.00 846.13,445.00 860.57,420.00 889.43,420.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="875" cy="445" r="10.5" fill="#3b4148"/>
+<line x1="875" y1="366.0" x2="875" y2="412.1" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="875" cy="340" r="26" fill="#ed7135"/>
+<text x="875" y="351" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">3</text>
+<polygon points="558.87,655.00 544.43,680.00 515.57,680.00 501.13,655.00 515.57,630.00 544.43,630.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="530" cy="655" r="10.5" fill="#3b4148"/>
+<line x1="530" y1="738.0" x2="530" y2="687.9" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="530" cy="764" r="26" fill="#ed7135"/>
+<text x="530" y="775" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">4</text>
+<polygon points="1018.87,655.00 1004.43,680.00 975.57,680.00 961.13,655.00 975.57,630.00 1004.43,630.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="990" cy="655" r="10.5" fill="#3b4148"/>
+<line x1="990" y1="738.0" x2="990" y2="687.9" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="990" cy="764" r="26" fill="#ed7135"/>
+<text x="990" y="775" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">5</text>
+<polygon points="443.87,445.00 429.43,470.00 400.57,470.00 386.13,445.00 400.57,420.00 429.43,420.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="415" cy="445" r="10.5" fill="#3b4148"/>
+<line x1="415" y1="366.0" x2="415" y2="412.1" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="415" cy="340" r="26" fill="#ed7135"/>
+<text x="415" y="351" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">6</text>
+<polygon points="1133.87,445.00 1119.43,470.00 1090.57,470.00 1076.13,445.00 1090.57,420.00 1119.43,420.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="1105" cy="445" r="10.5" fill="#3b4148"/>
+<line x1="1105" y1="366.0" x2="1105" y2="412.1" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="1105" cy="340" r="26" fill="#ed7135"/>
+<text x="1105" y="351" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">7</text>
+<polygon points="328.87,655.00 314.43,680.00 285.57,680.00 271.13,655.00 285.57,630.00 314.43,630.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="300" cy="655" r="10.5" fill="#3b4148"/>
+<line x1="300" y1="738.0" x2="300" y2="687.9" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="300" cy="764" r="26" fill="#ed7135"/>
+<text x="300" y="775" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">8</text>
+<polygon points="1248.87,655.00 1234.43,680.00 1205.57,680.00 1191.13,655.00 1205.57,630.00 1234.43,630.00" fill="#ffffff" stroke="#3b4148" stroke-width="3"/>
+<circle cx="1220" cy="655" r="10.5" fill="#3b4148"/>
+<line x1="1220" y1="738.0" x2="1220" y2="687.9" stroke="#ed7135" stroke-width="2.4"/>
+<circle cx="1220" cy="764" r="26" fill="#ed7135"/>
+<text x="1220" y="775" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">9</text>
+<line x1="1348" y1="486" x2="1348" y2="345" stroke="#c7ccd1" stroke-width="2"/>
+<text x="1348" y="330" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" fill="#5b6169">Water outlet</text>
+<line x1="308" y1="550" x2="212" y2="550" stroke="#c7ccd1" stroke-width="2"/>
+<text x="200" y="556" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" fill="#5b6169">Valve seats</text>
+</g>
+<text x="800" y="838" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-style="italic" fill="#5b6169">The order works outwards from the centre of the head &#8212; nut 1 is central, 8 and 9 are the end nuts.</text>
+<rect x="80" y="878.0" width="1440" height="176.0" rx="10" fill="#fbfaf7" stroke="#c7ccd1" stroke-width="2"/>
+<rect x="80" y="878.0" width="6" height="176.0" rx="3" fill="#6b7a52"/>
+<text x="118" y="918" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#6b7a52" letter-spacing="2.2">PROCEDURE</text>
+<text x="118" y="956" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">Lightly oil the cylinder head stud threads, then fit all nuts finger tight.</text>
+<text x="118" y="988" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">Tighten progressively in the order shown, in two passes over the full sequence.</text>
+<text x="118" y="1023" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" fill="#5b6169">Metric figures are as published in the source; imperial equivalents are converted.</text>
+<rect x="940" y="908" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
+<text x="1076" y="936" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FIRST PASS</text>
+<text x="1076" y="982" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">34 Nm</text>
+<text x="1076" y="1008" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">25 lb-ft</text>
+<rect x="1232" y="908" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
+<text x="1368" y="936" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FINAL PASS</text>
+<text x="1368" y="982" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">68 Nm</text>
+<text x="1368" y="1008" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">50 lb-ft</text>
+<line x1="80" y1="1072" x2="1520" y2="1072" stroke="#c7ccd1" stroke-width="2"/>
+<text x="80" y="1100" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Redrawn for legibility from the Rover Mini workshop manual engine section, fig. 12M0143. Torque values apply to the 1275 A+ nine-stud head.</text>
+<text x="80" y="1126" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Other A-series engines, including the 998 A+, use different figures &#8212; check the torque chart first.</text>
+<text x="1520" y="1100" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#6b7a52">classicminidiy.com</text>
+</svg>
