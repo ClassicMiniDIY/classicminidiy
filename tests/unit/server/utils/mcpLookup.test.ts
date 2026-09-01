@@ -86,3 +86,91 @@ describe('server/utils/mcpLookup', () => {
     expect(r.truncated).toBe(true);
   });
 });
+
+/**
+ * AND matching is correct and stays — but it can hide the row the caller wanted,
+ * silently, behind a confident-looking single hit. `data/torqueSpecs.json` names
+ * the same fastener differently across engine variants, so "main bearing bolts"
+ * returns only the 848/998 row while the two 1275 rows (named "set screws" and
+ * "nuts") vanish. That shipped a hedged answer to a real 1275 question.
+ */
+describe('near-miss reporting', () => {
+  const VARIANTS: LookupData = {
+    engineTable: {
+      title: 'Engine',
+      items: [
+        { name: 'Main Bearing Bolts', lbft: '63', notes: '848cc, 998cc' },
+        { name: 'Main Bearing set screws (early type)', lbft: '67', notes: '970cc, 1071cc, 1275cc' },
+        { name: 'Main Bearing nuts (later type)', lbft: '57', notes: '970cc, 1071cc, 1275cc' },
+        { name: 'Camshaft Nut', lbft: '66', notes: '848cc, 998cc' },
+      ],
+    },
+    suspensionTable: {
+      title: 'Suspension',
+      items: [{ name: 'Main Suspension Bolts', lbft: '30' }],
+    },
+  };
+
+  it('surfaces the rows one term excluded, and names the term', () => {
+    const r = lookup(VARIANTS, { query: 'main bearing bolts', section: 'Engine' });
+
+    expect(r.matches).toHaveLength(1);
+    expect(r.matches[0].item.name).toBe('Main Bearing Bolts');
+
+    const related = r.related.map((m) => m.item.name);
+    expect(related).toContain('Main Bearing set screws (early type)');
+    expect(related).toContain('Main Bearing nuts (later type)');
+    expect(r.related.every((m) => m.excludedBy === 'bolts')).toBe(true);
+  });
+
+  it('never repeats a row that already matched', () => {
+    const r = lookup(VARIANTS, { query: 'main bearing bolts', section: 'Engine' });
+    const names = new Set(r.matches.map((m) => m.item.name));
+    expect(r.related.some((m) => names.has(m.item.name as string))).toBe(false);
+  });
+
+  it('respects the section filter, so a hint cannot come from a section the caller excluded', () => {
+    // 'Main Suspension Bolts' matches "main bolts" but lives in another section.
+    const r = lookup(VARIANTS, { query: 'main bearing bolts', section: 'Engine' });
+    expect(r.related.map((m) => m.section)).not.toContain('suspensionTable');
+  });
+
+  it('stays quiet for a single-term query, which cannot be over-narrow', () => {
+    expect(lookup(VARIANTS, { query: 'bearing' }).related).toEqual([]);
+    expect(lookup(VARIANTS, {}).related).toEqual([]);
+  });
+
+  it('stays quiet once the query returned more than one row', () => {
+    // Measured on the real torque data: at two hits the hint is already half
+    // noise, and at three it collapses — "flywheel bolts" yields 22 near-misses
+    // that are just other rows containing "bolts". A hint nobody can trust is a
+    // hint nobody reads, so it is limited to the case that actually failed.
+    const r = lookup(VARIANTS, { query: 'main bearing' });
+    expect(r.totalMatches).toBe(3);
+    expect(r.related).toEqual([]);
+
+    const two = lookup(VARIANTS, { query: 'main bearing 1275', section: 'Engine' });
+    expect(two.totalMatches).toBe(2);
+    expect(two.related).toEqual([]);
+  });
+
+  it('still reports near-misses when NOTHING matched', () => {
+    // "nothing matched, but these almost did" is the whole useful answer here.
+    const r = lookup(VARIANTS, { query: 'main bearing studs', section: 'Engine' });
+    expect(r.totalMatches).toBe(0);
+    expect(r.related.map((m) => m.item.name)).toContain('Main Bearing Bolts');
+    expect(r.related.every((m) => m.excludedBy === 'studs')).toBe(true);
+  });
+
+  it('caps the hint so it cannot swamp the answer', () => {
+    const many: LookupData = {
+      t: {
+        title: 'T',
+        items: Array.from({ length: 40 }, (_, i) => ({ name: `Widget ${i} alpha` })),
+      },
+    };
+    const r = lookup(many, { query: 'alpha zzz' });
+    expect(r.totalMatches).toBe(0);
+    expect(r.related.length).toBeLessThanOrEqual(10);
+  });
+});
