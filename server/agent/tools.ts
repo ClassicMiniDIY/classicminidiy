@@ -7,6 +7,7 @@ import {
   fetchProductByHandle,
   searchCatalogue,
   shopifyConfig,
+  storeRootUrl,
   type CatalogueResult,
   type ShopifyCatalogConfig,
 } from '../utils/shopifyCatalog';
@@ -57,7 +58,7 @@ function forModel(result: {
   };
 }
 
-export function siteSearchTool(): Tool {
+export function siteSearchTool(hooks: AgentToolHooks = {}): Tool {
   return tool({
     description:
       'Search classicminidiy.com across every surface — technical toolbox pages, archive documents and manuals, ' +
@@ -87,6 +88,8 @@ export function siteSearchTool(): Tool {
       } catch (error: any) {
         // Search being down must not abort the run — the model can still answer
         // from the specification tools, which are static data and unaffected.
+        // It must not be SILENT either: see AgentToolHooks below.
+        hooks.onDegraded?.(SITE_SEARCH_DEGRADED_MARKER, error?.message ? String(error.message) : undefined);
         return { query, error: `Site search is unavailable right now (${error?.message ?? 'unknown error'}).` };
       }
     },
@@ -107,17 +110,41 @@ export function siteSearchTool(): Tool {
  * cannot tell "the store had nothing" from "the store was unreachable", because
  * `store-search` appears either way.
  *
- * So a degraded call reports a MARKER — `store-search:unavailable` — which the
- * chat route feeds to `tracker.recordToolCall()`. It lands in the same
- * `tools_called` array, needs no new event, and makes the three states trivially
- * separable in PostHog: the marker absent and `store-search` absent means nobody
- * asked about products; `store-search` alone means the store answered; both
- * means the lookup is broken and has been since whenever the marker started.
+ * So a degraded call reports a MARKER — `store-search:unavailable` — plus the
+ * underlying cause. The chat route collects markers into `tools_degraded` on
+ * `chat_run_completed`, which makes the three states trivially separable: no
+ * marker and no `store-search` means nobody asked about products; `store-search`
+ * alone means the store answered; a marker means the lookup is broken and has
+ * been since whenever it started appearing.
+ *
+ * The marker is deliberately NOT routed into `tools_called`. That array's length
+ * is published as `tool_call_count`, so a degraded call would count as two tool
+ * calls for one invocation, and every consumer that reads those entries as tool
+ * names would see one that is not in `AGENT_TOOL_NAMES`.
+ *
+ * `reason` is separate from the marker rather than folded into it because a
+ * Shopify error string is unbounded — as a marker it would be a high-cardinality
+ * key and useless to group by. It is logged, not counted. Without it an expired
+ * token, a lapsed API version pin, a timeout and an outage are one indistinct
+ * signal, which is only half of what "make the failure visible" asks for.
  */
 export interface AgentToolHooks {
-  /** Called with a `<tool>:<reason>` marker when a tool answered degraded. */
-  onDegraded?: (marker: string) => void;
+  /**
+   * Called when a tool answered degraded, with a `<tool>:<reason>` marker to
+   * count and the underlying cause to log.
+   */
+  onDegraded?: (marker: string, reason?: string) => void;
 }
+
+/**
+ * `site-search` reports here too, and that is the point of a shared hook.
+ *
+ * Omnisearch being down leaves `site-search` in `tools_called` looking exactly
+ * like a search that matched nothing — the same silent degradation this
+ * mechanism exists to close, on the tool that carries far more of the
+ * assistant's traffic than the store ever will.
+ */
+export const SITE_SEARCH_DEGRADED_MARKER = 'site-search:unavailable';
 
 /** Markers `store-search` can report. Exported so a dashboard query has a source of truth. */
 export const STORE_DEGRADED_MARKERS = {
@@ -169,16 +196,23 @@ export function storeSearchTool(config: ShopifyCatalogConfig | null, hooks: Agen
         : await searchCatalogue(query, limit, config);
 
       if (result.outcome !== 'ok') {
-        hooks.onDegraded?.(STORE_DEGRADED_MARKERS[result.outcome]);
+        hooks.onDegraded?.(STORE_DEGRADED_MARKERS[result.outcome], result.reason);
         // The model is told the lookup FAILED, never handed a bare empty list.
         // "We do not sell that" and "I could not check" are different answers,
         // and only one of them is honest here.
+        //
+        // `storeUrl` ships WITH the instruction to link the store. Telling a
+        // model to point somewhere without giving it the address is how it ends
+        // up inventing one: observed live, this branch produced a link to
+        // `classicminidiy.com/store`, which is not a page.
         return {
           checked: false,
           products: [],
+          storeUrl: config ? storeRootUrl(config.domain) : undefined,
           note:
             'The store lookup is unavailable right now, so this says nothing about whether the store stocks it. ' +
-            'Say you could not check the shop and point at the store rather than claiming it is not sold.',
+            'Say you could not check the shop and link `storeUrl` if it is present. Never claim it is not sold, ' +
+            'and never write a store link that did not come from this tool.',
         };
       }
 
@@ -206,7 +240,7 @@ export function storeSearchTool(config: ShopifyCatalogConfig | null, hooks: Agen
 export function buildAgentTools({ event, ...hooks }: AgentToolHooks & { event?: H3Event } = {}): Record<string, Tool> {
   return {
     ...buildMcpTools(),
-    'site-search': siteSearchTool(),
+    'site-search': siteSearchTool(hooks),
     'store-search': storeSearchTool(shopifyConfig(event), hooks),
   };
 }

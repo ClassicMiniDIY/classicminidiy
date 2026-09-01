@@ -13,7 +13,11 @@ const { mockFetch, mockUseRuntimeConfig } = vi.hoisted(() => {
   return { mockFetch, mockUseRuntimeConfig };
 });
 
-const { buildAgentTools, storeSearchTool, STORE_DEGRADED_MARKERS } = await import('~~/server/agent/tools');
+const { mockOmnisearch } = vi.hoisted(() => ({ mockOmnisearch: vi.fn() }));
+vi.mock('~~/server/utils/omnisearch', () => ({ runOmnisearch: mockOmnisearch }));
+
+const { buildAgentTools, siteSearchTool, storeSearchTool, STORE_DEGRADED_MARKERS, SITE_SEARCH_DEGRADED_MARKER } =
+  await import('~~/server/agent/tools');
 
 const CONFIG = { domain: 'store.classicminidiy.com', token: 'storefront-token' };
 
@@ -103,13 +107,26 @@ describe('store-search', () => {
     // web search for fifteen months with no signal in either usage sink. A
     // store lookup that degrades to "no results" has exactly that shape, so the
     // failure has to be counted somewhere a dashboard can see it.
-    it('reports `unavailable` when the store call fails', async () => {
+    it('reports `unavailable` when the store call fails, WITH the cause', async () => {
+      // The marker alone cannot separate an expired token from a lapsed API
+      // version from an outage, and "make the failure visible" is only half
+      // done if the cause is computed and dropped.
       const onDegraded = vi.fn();
-      mockFetch.mockRejectedValue(new Error('timeout'));
+      mockFetch.mockRejectedValue(new Error('401 Unauthorized'));
 
       await run(storeSearchTool(CONFIG, { onDegraded }), { query: 'minilite', limit: 5 });
 
-      expect(onDegraded).toHaveBeenCalledWith(STORE_DEGRADED_MARKERS.unavailable);
+      expect(onDegraded).toHaveBeenCalledWith(STORE_DEGRADED_MARKERS.unavailable, expect.stringContaining('401'));
+    });
+
+    it('hands the model a real store link instead of an order to invent one', async () => {
+      // Observed live: told to "point at the store" with no URL, the model
+      // linked classicminidiy.com/store, which is not a page.
+      mockFetch.mockRejectedValue(new Error('timeout'));
+      const result: any = await run(storeSearchTool(CONFIG), { query: 'minilite', limit: 5 });
+      expect(result.storeUrl).toContain('https://store.classicminidiy.com/');
+      expect(result.storeUrl).toContain('utm_source=classicminidiy');
+      expect(result.note).toMatch(/never write a store link that did not come from this tool/i);
     });
 
     it('reports `not-configured` separately, because the fix is different', async () => {
@@ -117,7 +134,7 @@ describe('store-search', () => {
 
       await run(storeSearchTool(null, { onDegraded }), { query: 'minilite', limit: 5 });
 
-      expect(onDegraded).toHaveBeenCalledWith(STORE_DEGRADED_MARKERS.not_configured);
+      expect(onDegraded).toHaveBeenCalledWith(STORE_DEGRADED_MARKERS.not_configured, expect.anything());
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -153,7 +170,40 @@ describe('store-search', () => {
   });
 });
 
+describe('site-search degradation', () => {
+  it('reports through the same hook as the store tool', async () => {
+    // Omnisearch being down otherwise looks exactly like a search that matched
+    // nothing — the same silent degradation the hook exists to close, on the
+    // tool carrying far more traffic than the store.
+    const onDegraded = vi.fn();
+    mockOmnisearch.mockRejectedValue(new Error('connection refused'));
+
+    const result: any = await run(siteSearchTool({ onDegraded }), { query: 'hydrolastic', limit: 8 });
+
+    expect(onDegraded).toHaveBeenCalledWith(SITE_SEARCH_DEGRADED_MARKER, expect.stringContaining('connection'));
+    expect(result.error).toMatch(/unavailable/i);
+  });
+
+  it('stays silent when search merely matched nothing', async () => {
+    const onDegraded = vi.fn();
+    mockOmnisearch.mockResolvedValue({ results: [], total: 0 });
+
+    await run(siteSearchTool({ onDegraded }), { query: 'nothing', limit: 8 });
+
+    expect(onDegraded).not.toHaveBeenCalled();
+  });
+});
+
 describe('buildAgentTools', () => {
+  it('passes the request event through to the Shopify config', () => {
+    // The seam that already shipped one defect: reading the credentials from
+    // the wrong place still yields a working tool set, so nothing else fails.
+    const event = { context: {}, __marker: 'the-event' } as any;
+    mockUseRuntimeConfig.mockClear();
+    buildAgentTools({ event });
+    expect(mockUseRuntimeConfig).toHaveBeenCalledWith(event);
+  });
+
   it('includes store-search alongside the reference tools', () => {
     const tools = buildAgentTools();
     expect(Object.keys(tools)).toContain('store-search');
@@ -174,6 +224,6 @@ describe('buildAgentTools', () => {
     const onDegraded = vi.fn();
     const tools = buildAgentTools({ onDegraded });
     await run(tools['store-search'], { query: 'minilite', limit: 5 });
-    expect(onDegraded).toHaveBeenCalledWith(STORE_DEGRADED_MARKERS.not_configured);
+    expect(onDegraded).toHaveBeenCalledWith(STORE_DEGRADED_MARKERS.not_configured, expect.anything());
   });
 });

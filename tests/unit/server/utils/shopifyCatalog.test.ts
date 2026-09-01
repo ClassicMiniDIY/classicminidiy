@@ -13,7 +13,9 @@ import {
   fetchProductByHandle,
   searchCatalogue,
   shopifyConfig,
+  isStorefrontHostname,
   storeProductUrl,
+  storeRootUrl,
   toCatalogueProduct,
   STORE_UTM,
 } from '~~/server/utils/shopifyCatalog';
@@ -111,18 +113,61 @@ describe('toCatalogueProduct', () => {
     expect(product.price).toBe('$10.00');
   });
 
-  it('omits the description unless asked, and truncates it when asked', () => {
+  it('omits the description unless asked', () => {
     expect(toCatalogueProduct(node(), CONFIG.domain)!.description).toBeUndefined();
-
-    const long = toCatalogueProduct(node({ description: 'x'.repeat(900) }), CONFIG.domain, {
-      withDescription: true,
-    })!;
-    expect(long.description).toHaveLength(600);
   });
 
   it('drops a node with no handle, because a product with no link is noise', () => {
     expect(toCatalogueProduct(node({ handle: '' }), CONFIG.domain)).toBeNull();
     expect(toCatalogueProduct(node({ title: '' }), CONFIG.domain)).toBeNull();
+  });
+
+  it('never reports a range it did not render', () => {
+    // Shopify does not fix the scale of its decimal strings, so an identically
+    // priced product can arrive as "10.0"/"10.00". Comparing raw amounts made
+    // priceVaries true while price showed one figure — the flag and the string
+    // are now derived together so they cannot disagree.
+    const product = toCatalogueProduct(
+      node({
+        priceRange: {
+          minVariantPrice: { amount: '10.0', currencyCode: 'USD' },
+          maxVariantPrice: { amount: '10.00', currencyCode: 'USD' },
+        },
+      }),
+      CONFIG.domain
+    )!;
+    expect(product.price).toBe('$10.00');
+    expect(product.priceVaries).toBe(false);
+  });
+
+  it('drops a price with no currency rather than quoting a bare number', () => {
+    // "39.99" with no unit is a figure a model presents as dollars. Being wrong
+    // about a price is worse than not quoting one.
+    const product = toCatalogueProduct(
+      node({ priceRange: { minVariantPrice: { amount: '39.99' }, maxVariantPrice: { amount: '39.99' } } }),
+      CONFIG.domain
+    )!;
+    expect(product.price).toBeNull();
+    expect(product.currency).toBeNull();
+  });
+
+  it('reports unknown stock as unknown, not as out of stock', () => {
+    // On a surface whose purpose is completing a sale, an absent field must not
+    // tell a buyer the shop cannot sell them something it can.
+    expect(toCatalogueProduct(node({ availableForSale: undefined }), CONFIG.domain)!.available).toBeNull();
+    expect(toCatalogueProduct(node({ availableForSale: false }), CONFIG.domain)!.available).toBe(false);
+    expect(toCatalogueProduct(node(), CONFIG.domain)!.available).toBe(true);
+  });
+
+  it('marks a truncated description so the model knows text was cut', () => {
+    const long = toCatalogueProduct(node({ description: 'x'.repeat(900) }), CONFIG.domain, {
+      withDescription: true,
+    })!;
+    expect(long.description).toHaveLength(601);
+    expect(long.description!.endsWith('…')).toBe(true);
+
+    const short = toCatalogueProduct(node({ description: 'Short.' }), CONFIG.domain, { withDescription: true })!;
+    expect(short.description).toBe('Short.');
   });
 
   it('survives a missing price rather than throwing mid tool call', () => {
@@ -259,6 +304,35 @@ describe('fetchProductByHandle', () => {
   });
 });
 
+describe('storeRootUrl', () => {
+  it('is attributed like a product link', () => {
+    const url = new URL(storeRootUrl(CONFIG.domain));
+    expect(url.origin).toBe('https://store.classicminidiy.com');
+    for (const [key, value] of Object.entries(STORE_UTM)) expect(url.searchParams.get(key)).toBe(value);
+  });
+});
+
+describe('isStorefrontHostname', () => {
+  it('accepts a bare hostname and nothing else', () => {
+    // This value decides where the Storefront TOKEN is sent, so anything
+    // carrying a scheme, a path or userinfo must be refused before the call.
+    for (const good of ['store.classicminidiy.com', 'shop.example.co.uk', 'a-b.example.com']) {
+      expect(isStorefrontHostname(good), good).toBe(true);
+    }
+    for (const bad of [
+      'store.classicminidiy.com@elsewhere.example',
+      'https://store.classicminidiy.com',
+      'store.classicminidiy.com/api',
+      'store.classicminidiy.com:443',
+      'localhost',
+      '-bad.example.com',
+      '',
+    ]) {
+      expect(isStorefrontHostname(bad), bad).toBe(false);
+    }
+  });
+});
+
 describe('shopifyConfig', () => {
   it('is null unless BOTH halves are present', () => {
     mockUseRuntimeConfig.mockReturnValue({ SHOPIFY_STORE_DOMAIN: 'store.example.com', SHOPIFY_STOREFRONT_TOKEN: '' });
@@ -272,6 +346,14 @@ describe('shopifyConfig', () => {
       SHOPIFY_STOREFRONT_TOKEN: 'tok',
     });
     expect(shopifyConfig()).toEqual({ domain: 'store.example.com', token: 'tok' });
+  });
+
+  it('refuses a domain that is not a bare hostname', () => {
+    mockUseRuntimeConfig.mockReturnValue({
+      SHOPIFY_STORE_DOMAIN: 'store.classicminidiy.com@elsewhere.example',
+      SHOPIFY_STOREFRONT_TOKEN: 'tok',
+    });
+    expect(shopifyConfig()).toBeNull();
   });
 
   it('treats an unset Cloudflare secret (empty string) as unconfigured', () => {
