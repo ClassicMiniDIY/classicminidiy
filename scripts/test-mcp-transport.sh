@@ -33,6 +33,9 @@ FAIL=0
 ok()  { printf '  \033[32mPASS\033[0m  %s\n' "$1"; PASS=$((PASS + 1)); }
 bad() { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; FAIL=$((FAIL + 1)); }
 note() { printf '  ....  %s\n' "$1"; }
+# Unsigned-integer test, used before any [ -eq ] on a value parsed out of a
+# response body. Builtin `case` rather than a grep subprocess.
+is_uint() { case "${1:-}" in '' | *[!0-9]*) return 1 ;; *) return 0 ;; esac; }
 
 if [ ! -f .output/server/index.mjs ]; then
   echo "ERROR: .output/server/index.mjs not found."
@@ -395,9 +398,16 @@ print(len(tools), len(gated), ','.join(sorted(gated)))
     # Guard the counts before comparing them. An unparseable body leaves both
     # empty, `[ -eq ]` errors on every branch, and the last one would report an
     # inverted gate that is not there — the exact wrong-diagnosis failure this
-    # section was just fixed to stop producing.
-    if ! printf '%s' "$total" | grep -qE '^[0-9]+$' || ! printf '%s' "$ngated" | grep -qE '^[0-9]+$'; then
-      bad "could not count tools in the free-tier tools/list body: $(printf '%s' "$free_list" | head -c 120)"
+    # section was just fixed to stop producing. The body is whitespace-collapsed
+    # so a multi-line error page cannot break the one-line PASS/FAIL format.
+    if ! is_uint "$total" || ! is_uint "$ngated"; then
+      bad "could not count tools in the free-tier tools/list body: $(printf '%s' "$free_list" | tr -s '[:space:]' ' ' | head -c 120)"
+    elif [ "$total" -eq 0 ]; then
+      # Zero tools is not a tier fault at all, and must not be reported as one:
+      # the branches below would blame a subscription for what is really the
+      # toolkit registering nothing — the #721 class of failure this whole
+      # script exists to catch.
+      bad "free-tier tools/list returned 0 tools — the toolkit registered none, so this is a discovery/provider fault, not a tier one"
     elif [ "$ngated" -gt 0 ] && [ "$ngated" -lt "$total" ]; then
       ok "free tier gates $ngated of $total tools ($gatedlist)"
     elif [ "$ngated" -eq 0 ]; then

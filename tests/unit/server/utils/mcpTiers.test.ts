@@ -68,4 +68,25 @@ describe('server/utils/mcpTiers', () => {
       expect(script, `scripts/test-mcp-transport.sh must assert the internal tier lists "${tool}"`).toContain(tool);
     }
   });
+
+  // The gate's VALUE is its diagnosis, not its pass/fail. All-gated and
+  // none-gated mean opposite things — an over-applying gate versus a fixture
+  // key whose account gained a subscription — and a zero-tool list means
+  // neither. Collapsing them back into one generic message costs nothing that
+  // any other test can see, so pin the distinctions here, the same way the
+  // paid-tool list above is pinned.
+  it('the transport script keeps its three distinct free-tier diagnoses', () => {
+    const script = readFileSync(join(process.cwd(), 'scripts/test-mcp-transport.sh'), 'utf8');
+    const required: [string, string][] = [
+      [
+        "does MCP_FREE_TIER_KEY's account hold a 'developer' subscription",
+        'none-gated must blame the fixture account first',
+      ],
+      ['the gate is inverted', 'all-gated must point at the gate, not the account'],
+      ['the toolkit registered none', 'an empty tool list must not be reported as a tier fault'],
+    ];
+    for (const [needle, why] of required) {
+      expect(script, `scripts/test-mcp-transport.sh lost a diagnosis: ${why}`).toContain(needle);
+    }
+  });
 });
