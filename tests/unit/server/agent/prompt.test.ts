@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi } from 'vitest';
-import { MEMBERSHIP_URL } from '../../../../shared/utils/chatTiers';
+import { MEMBERSHIP_URL } from '~~/shared/utils/chatTiers';
 
 vi.hoisted(() => {
   (globalThis as any).defineMcpTool = (config: any) => config;
@@ -38,15 +38,22 @@ describe('the system prompt', () => {
     // assistant must not volunteer it over the membership.
     expect(prompt).toContain(MEMBERSHIP_URL);
     expect(prompt.toLowerCase()).toContain('discord');
-    expect(prompt.toLowerCase(), 'the assistant should not volunteer Patreon over the membership').not.toContain(
-      'patreon'
+    // Bans a Patreon LINK, not the word. Patreon is live on the site
+    // (`PatreonCard.vue`, the homepage, `/maps`), so a blanket ban on the
+    // string would also forbid ever telling an existing supporter something
+    // true — and this file would be the thing standing in the way.
+    expect(prompt.toLowerCase(), 'the assistant must not volunteer Patreon over the membership').not.toMatch(
+      /patreon\.com/
     );
   });
 
   it('does not hardcode the membership URL', () => {
     // Same constant the quota panel renders, so the two cannot drift.
     expect(MEMBERSHIP_URL).toMatch(/^https:\/\//);
-    const hardcoded = (staticPrompt().match(/https:\/\/[^\s)]*membership[^\s)]*/g) ?? []).filter(
+    // Any absolute or bare classicminidiy URL, however it is spelled — the
+    // narrow `https://...membership` form missed a scheme-less link and a
+    // renamed path, which is exactly how a second URL drifts in unnoticed.
+    const hardcoded = (staticPrompt().match(/(?:https?:\/\/)?(?:www\.)?classicminidiy\.com\/[^\s)\]]*/gi) ?? []).filter(
       (url) => url !== MEMBERSHIP_URL
     );
     expect(hardcoded, 'a membership URL that is not MEMBERSHIP_URL').toEqual([]);
@@ -56,10 +63,32 @@ describe('the system prompt', () => {
     // The three limits are the whole point of the section: an unconditional
     // pitch is how the old prompt read as a shop bot, and a pitch attached to
     // a brake question sends someone to a chat room instead of a mechanic.
-    const section = prompt.slice(prompt.indexOf('## When the archive falls short'));
-    expect(section.toLowerCase()).toMatch(/only when you could not answer/);
-    expect(section.toLowerCase()).toMatch(/never on a safety-critical question/);
-    expect(section.toLowerCase()).toMatch(/never a salesperson/);
+    const heading = '## When the archive falls short';
+    // `slice(-1)` on a missing heading would leave one character and make all
+    // three assertions below fail confusingly rather than naming the cause.
+    expect(prompt, 'the membership section heading was renamed').toContain(heading);
+    const section = prompt.slice(prompt.indexOf(heading));
+    const lower = section.toLowerCase();
+    // No pitch when anything was answered — including the partial case, which
+    // an earlier wording left genuinely ambiguous.
+    expect(lower).toMatch(/only when you answered nothing/);
+    expect(lower).toMatch(/any part of your reply answers any part/);
+
+    // The safety list must match the Safety section's, which includes major
+    // engine work. An earlier version omitted it, so a knocking big-end — a
+    // mechanic-grade fault the tools cannot diagnose — fell outside the ban.
+    for (const topic of ['brakes', 'steering', 'suspension', 'structural', 'engine']) {
+      expect(lower, `the no-pitch limit does not cover ${topic}`).toContain(topic);
+    }
+
+    // And the limit must govern the MENTION only. Worded as a topic rule it
+    // read as "brakes -> mechanic and nothing else", which would suppress an
+    // answerable brake torque lookup — breaking the assistant's core job in
+    // the name of safety.
+    expect(lower).toMatch(/governs the mention only/);
+    expect(lower).toMatch(/never stops you answering/);
+
+    expect(lower).toMatch(/never a salesperson/);
   });
 
   it('does not resurrect the shop-bot framing', () => {
@@ -89,6 +118,27 @@ describe('the static/dynamic split', () => {
     const dynamic = dynamicPrompt({ locale: 'de' });
     expect(dynamic).toContain('"de"');
     expect(dynamic).toMatch(/never translate|never the data itself/i);
+  });
+
+  it('tells the prompt when the reader already pays for the membership', () => {
+    // The pointer lives in the STATIC half, which is identical for everyone, so
+    // without this a paying member asking an unanswerable question is sold the
+    // subscription they already hold. The tier was already resolved per request
+    // by chat-auth; it just was not reaching the prompt.
+    const dynamic = dynamicPrompt({ isMember: true });
+    expect(dynamic).toMatch(/already a Sustaining Member/i);
+    expect(dynamic).toMatch(/never mention the subscription/i);
+
+    // And nothing extra for everyone else, so the common case stays cache-clean.
+    expect(dynamicPrompt({ isMember: false })).toBe('');
+    expect(dynamicPrompt()).toBe('');
+  });
+
+  it('keeps the member note in the dynamic half, never the cache prefix', () => {
+    // Static is the Anthropic cache prefix. A per-reader line placed there
+    // would give every member a different prefix and silently cost the cache.
+    expect(staticPrompt()).not.toMatch(/already a Sustaining Member/i);
+    expect(buildSystemPrompt({ isMember: true })).toContain(staticPrompt());
   });
 
   it('passes page context through when the client sends it', () => {
