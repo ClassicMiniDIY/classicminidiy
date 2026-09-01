@@ -149,15 +149,27 @@ jobs:
           # does not use Turnstile, so `login_success` kept ticking and only
           # `magic_link_sent` flatlined. Assert the value.
           #
-          # Cloudflare's documented dummy sitekeys all start 1x/2x/3x; real ones
-          # start 0x. Printing a dummy back is safe — they are public constants,
-          # and a sitekey is public by design either way.
+          # Every real Turnstile sitekey starts 0x, so this REQUIRES that rather
+          # than merely rejecting the dummies. A denylist of the known test keys
+          # (1x/2x/3x) would still pass a truncated paste, a value that kept its
+          # surrounding quotes, or the widget's SECRET key set here by mistake —
+          # each of which breaks sign-in exactly like the test key did.
+          #
+          # Only a dummy is ever echoed back. Those are public documented
+          # constants, so quoting one is safe; the catch-all case deliberately
+          # does NOT print the value, because the likeliest way to land there is
+          # pasting the secret key, and this log is public.
           case "${NUXT_PUBLIC_TURNSTILE_SITE_KEY:-}" in
             '')
               echo "::error::NUXT_PUBLIC_TURNSTILE_SITE_KEY is unset. The build would bake Turnstile's test sitekey and ship a login page where email and passkey sign-in fail with 'invalid-input-response'."
               exit 1 ;;
             1x*|2x*|3x*)
               echo "::error::NUXT_PUBLIC_TURNSTILE_SITE_KEY is a Cloudflare TEST sitekey ($NUXT_PUBLIC_TURNSTILE_SITE_KEY). Real sitekeys start with 0x. Set it to the production widget's sitekey, or email and passkey sign-in ship broken."
+              exit 1 ;;
+            0x*)
+              ;;
+            *)
+              echo "::error::NUXT_PUBLIC_TURNSTILE_SITE_KEY does not look like a Turnstile sitekey (real ones start 0x). Value not printed: the likeliest cause is the widget's SECRET key pasted here by mistake. Check also for a truncated paste or stray quotes."
               exit 1 ;;
           esac
 
