@@ -742,6 +742,36 @@ Load-bearing contracts — don't "fix" these without understanding why they're t
   is the one case that resolves to `anonymous` on purpose rather than by
   degradation.
 
+- **The chat's `store-search` tool uses a Shopify STOREFRONT token, never an
+  Admin token.** `/api/chat` is unauthenticated by the invariant above and the
+  MODEL decides when a tool fires, so a credential behind it is reachable by
+  anyone on the internet through a prompt. A Storefront token is public-scoped
+  and read-only over published products; an Admin token can read customers and
+  orders, which makes it a data-exfiltration path rather than a feature. The
+  header name is the tell — `X-Shopify-Storefront-Access-Token`, never
+  `X-Shopify-Access-Token` — and
+  `tests/unit/server/utils/shopifyCatalog.test.ts` asserts it.
+
+  The surface is exactly two read operations, keyword search and one product by
+  handle. Shopify's own Storefront MCP ships cart mutations; do not bridge them.
+
+  It fails to an EMPTY result with an explicit `checked: false`, never a thrown
+  error — but never silently. A failed lookup reports `store-search:unavailable`
+  (or `:not-configured`) into `tools_called` on `chat_run_completed`, because
+  `store-search` appearing in that array cannot otherwise distinguish "the store
+  had nothing" from "the store was unreachable". That distinction is the whole
+  point: the old agent's `/mcp` fetch fell back to an empty tool list inside a
+  bare try/except and demoted the assistant to generic web search for fifteen
+  months with no signal in either usage sink. If those markers start appearing,
+  the store lookup is broken; a stale `API_VERSION` in
+  `server/utils/shopifyCatalog.ts` lands there too, so check it first.
+
+  **Prompt guidance for it is scoped by INTENT, not topic** — "the reader is
+  asking to purchase, not asking a specification". Scoping by topic ("wheels" ->
+  search the store) turns every technical answer into an advert, which is
+  precisely what the `cmdiy-shop` prompt did. Design doc:
+  `docs/plans/2026-09-01-shopify-catalog-tool.md`.
+
 - **`/mcp` auth fails closed.** Valid keys come ONLY from `MCP_API_KEY` / `MCP_API_KEYS` env vars — there is no hardcoded/default key. The old `dev-mcp-key-classic-mini-diy` default is in public git history and must never be re-accepted in any environment. For local dev, set `MCP_API_KEY` in `.env`.
 - **`/mcp` is only truly tested by `scripts/test-mcp-transport.sh`.** The unit
   tests under `tests/unit/server/mcp/` stub `defineMcpTool` and call `.handler()`
@@ -1199,7 +1229,13 @@ GITHUB_API_KEY=
 YOUTUBE_API_KEY=
 
 # AI Services
-NUXT_ANTHROPIC_API_KEY=
+NUXT_ANTHROPIC_API_KEY
+
+# Shopify storefront for the chat's store-search tool. STOREFRONT token only —
+# see Security Invariants. Optional: unset just means the tool reports
+# not-configured. The domain defaults to store.classicminidiy.com.
+SHOPIFY_STOREFRONT_TOKEN=
+SHOPIFY_STORE_DOMAIN=
 
 # Public URLs
 NUXT_PUBLIC_SITE_URL=
@@ -1298,7 +1334,8 @@ repair them afterwards:
 **RUNTIME** — `wrangler secret put`, never the build env. Set them with
 `./scripts/set-cf-secrets.sh` (reads your local `.env`, never prints a value):
 Supabase service key, LangGraph/LangSmith, GitHub/YouTube, MCP, marketing,
-`S3_MODELS_*`, and the optional Microlink/Camino keys.
+`S3_MODELS_*`, `SHOPIFY_STOREFRONT_TOKEN`, and the optional Microlink/Camino
+keys.
 
 **The env var name is derived, not chosen.** Nitro computes a key's override
 name as `NUXT_ + snakeCase(key).toUpperCase()`

@@ -183,7 +183,10 @@ export default defineEventHandler(async (event) => {
       anthropic: { cacheControl: { type: 'ephemeral' } },
     },
     messages: modelMessages,
-    tools: buildAgentTools(),
+    // `event` so the Shopify credentials are read per-request; `onDegraded` so a
+    // store lookup that fails lands in `tools_called` as its own marker instead
+    // of being indistinguishable from a run where nobody asked about products.
+    tools: buildAgentTools({ event, onDegraded: (marker) => tracker.recordToolCall(marker) }),
     stopWhen: stepCountIs(MAX_STEPS),
     // Every part of the stream, so time-to-first-chunk keeps meaning
     // time-to-first-token and chunk_count keeps meaning stream length. Feeding

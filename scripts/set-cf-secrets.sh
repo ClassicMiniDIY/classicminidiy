@@ -151,6 +151,24 @@ put NUXT_ANTHROPIC_API_KEY NUXT_ANTHROPIC_API_KEY ANTHROPIC_API_KEY
 put NUXT_AI_GATEWAY_ANTHROPIC_URL NUXT_AI_GATEWAY_ANTHROPIC_URL OPTIONAL
 put NUXT_CHAT_MODEL NUXT_CHAT_MODEL OPTIONAL
 
+# --- Shopify storefront ----------------------------------------------------
+# The chat agent's `store-search` tool (server/utils/shopifyCatalog.ts).
+#
+# THIS MUST BE A STOREFRONT API TOKEN, NEVER AN ADMIN API TOKEN. /api/chat is
+# unauthenticated by documented invariant and the model decides when the tool
+# fires; an Admin token there can read customers and orders. The Storefront
+# token is public-scoped, read-only, published products only.
+#
+# Optional: unset makes every store lookup report `store-search:not-configured`
+# in `tools_called` and tells the model it could not check the shop. The chat
+# keeps working — the tool just never returns a product, which is why that
+# marker exists rather than a silent empty list.
+#
+# The domain defaults to store.classicminidiy.com in nuxt.config.ts and only
+# needs setting if the storefront ever moves.
+put NUXT_SHOPIFY_STOREFRONT_TOKEN SHOPIFY_STOREFRONT_TOKEN NUXT_SHOPIFY_STOREFRONT_TOKEN OPTIONAL
+put NUXT_SHOPIFY_STORE_DOMAIN SHOPIFY_STORE_DOMAIN OPTIONAL
+
 # --- Content APIs ----------------------------------------------------------
 # Also build-time: prerendered pages fetch /api/{github,youtube}/* during the
 # crawl, so an unset key at build time bakes an empty widget into static HTML.

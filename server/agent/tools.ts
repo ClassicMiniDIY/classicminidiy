@@ -1,11 +1,20 @@
+import type { H3Event } from 'h3';
 import { z } from 'zod';
 import { tool, type Tool } from 'ai';
 import { buildMcpTools } from '../utils/agentTools';
 import { runOmnisearch } from '../utils/omnisearch';
+import {
+  fetchProductByHandle,
+  searchCatalogue,
+  shopifyConfig,
+  type CatalogueResult,
+  type ShopifyCatalogConfig,
+} from '../utils/shopifyCatalog';
 
 /**
  * The agent's full tool set: the eleven `/mcp` reference tools bridged
- * in-process (see server/utils/agentTools.ts) plus `site-search`.
+ * in-process (see server/utils/agentTools.ts), plus `site-search` and
+ * `store-search`.
  *
  * `site-search` is the twelfth because the eleven answer SPECIFICATIONS and
  * nothing else. Without it the assistant has no way to say "that is covered on
@@ -13,6 +22,21 @@ import { runOmnisearch } from '../utils/omnisearch';
  * it is what replaces the generic web search the old agent leaned on for 331 of
  * 473 conversations. It runs the SAME `runOmnisearch()` the site's own search
  * box runs, so results cannot drift between the two.
+ *
+ * `store-search` is the thirteenth, and it is the one that needs justifying,
+ * because the prompt this assistant replaced was a STORE assistant and the
+ * measurement of it is unambiguous: across 473 conversations, generic web
+ * search appeared in 331 threads and all eleven Classic Mini tools combined in
+ * 11. Anything that pushes the assistant back toward selling is a regression.
+ *
+ * It earns its place only under a narrow reading: "where do I buy this" is a
+ * real question the assistant currently answers by guessing or by saying
+ * nothing. So the guidance in server/agent/prompt.ts is scoped by INTENT — the
+ * reader asking to PURCHASE — and never by topic. Scoping by topic ("wheels" ->
+ * search the store) is precisely what turns every technical answer into an
+ * advert. A torque question gets `torque-specs` and nothing else.
+ *
+ * Design doc: docs/plans/2026-09-01-shopify-catalog-tool.md.
  */
 
 /** Trimmed omnisearch row — the model does not need ids or icon classes. */
@@ -69,10 +93,120 @@ export function siteSearchTool(): Tool {
   }) as Tool;
 }
 
-/** Everything the chat agent can call. */
-export function buildAgentTools(): Record<string, Tool> {
+/**
+ * Hooks the tool set reports back through.
+ *
+ * `onDegraded` exists because of one specific failure this codebase has already
+ * paid for. The old agent's `/mcp` fetch sat in a bare try/except that fell back
+ * to an EMPTY TOOL LIST, so a bad key silently demoted the assistant to generic
+ * web search — and neither usage sink could see it, because `recordMcpUsage`
+ * skips the internal tier and PostHog was told to emit nothing for it.
+ *
+ * A tool that degrades to "no results" has the same shape: the run looks
+ * healthy, the answer is just worse. `tools_called` on `chat_run_completed`
+ * cannot tell "the store had nothing" from "the store was unreachable", because
+ * `store-search` appears either way.
+ *
+ * So a degraded call reports a MARKER — `store-search:unavailable` — which the
+ * chat route feeds to `tracker.recordToolCall()`. It lands in the same
+ * `tools_called` array, needs no new event, and makes the three states trivially
+ * separable in PostHog: the marker absent and `store-search` absent means nobody
+ * asked about products; `store-search` alone means the store answered; both
+ * means the lookup is broken and has been since whenever the marker started.
+ */
+export interface AgentToolHooks {
+  /** Called with a `<tool>:<reason>` marker when a tool answered degraded. */
+  onDegraded?: (marker: string) => void;
+}
+
+/** Markers `store-search` can report. Exported so a dashboard query has a source of truth. */
+export const STORE_DEGRADED_MARKERS = {
+  not_configured: 'store-search:not-configured',
+  unavailable: 'store-search:unavailable',
+} as const;
+
+/**
+ * The Classic Mini DIY store, read-only.
+ *
+ * Two operations and no more: keyword search, and one product by handle. No
+ * cart, no checkout, no customer data — see the note in
+ * `server/utils/shopifyCatalog.ts` for why that boundary is not negotiable.
+ */
+export function storeSearchTool(config: ShopifyCatalogConfig | null, hooks: AgentToolHooks = {}): Tool {
+  return tool({
+    // "everything the store sells" rather than "parts and products": on the
+    // behavioural pass the narrower wording made the model REFUSE a direct
+    // purchase question about a t-shirt, reasoning that merchandise was outside
+    // the tool. This widens what the model believes is IN the catalogue; it does
+    // not widen WHEN the tool fires, which is the sentence after it.
+    description:
+      'Search the Classic Mini DIY store for anything it sells — parts, ECU maps, tools, books and merchandise — ' +
+      'with live price and stock. Use it ONLY when someone is asking where to BUY something, never to answer a ' +
+      'specification. Returns a link per product; use that link exactly as given.',
+    // NOTE: no `.optional()` anywhere, and that is a type constraint rather
+    // than a design choice. `ZodOptional` does not satisfy the `ai` package's
+    // schema parameter under this dependency graph — the generic collapses to
+    // `never` and `tool()` reports "no overload matches this call" on the whole
+    // definition, which reads as a mistake in `execute` and is not. `.default()`
+    // is fine and still marks the field not-required in the JSON Schema the
+    // model sees, so an empty `handle` is how "no handle" is expressed.
+    inputSchema: z.object({
+      query: z
+        .string()
+        .min(2)
+        .describe('What the person wants to buy, in keywords, e.g. "Minilite wheels" or "SU needle".'),
+      handle: z
+        .string()
+        .default('')
+        .describe(
+          'Optional. A product handle from an earlier result, to fetch that one product with its full description.'
+        ),
+      limit: z.number().int().positive().max(10).default(5).describe('Maximum products to return. Default 5.'),
+    }),
+    async execute({ query, handle, limit }) {
+      const result: CatalogueResult = handle
+        ? await fetchProductByHandle(handle, config)
+        : await searchCatalogue(query, limit, config);
+
+      if (result.outcome !== 'ok') {
+        hooks.onDegraded?.(STORE_DEGRADED_MARKERS[result.outcome]);
+        // The model is told the lookup FAILED, never handed a bare empty list.
+        // "We do not sell that" and "I could not check" are different answers,
+        // and only one of them is honest here.
+        return {
+          checked: false,
+          products: [],
+          note:
+            'The store lookup is unavailable right now, so this says nothing about whether the store stocks it. ' +
+            'Say you could not check the shop and point at the store rather than claiming it is not sold.',
+        };
+      }
+
+      if (result.products.length === 0) {
+        return {
+          checked: true,
+          products: [],
+          note: 'The store has nothing matching that. Try broader keywords, or say the shop does not carry it.',
+        };
+      }
+
+      return { checked: true, products: result.products };
+    },
+  }) as Tool;
+}
+
+/**
+ * Everything the chat agent can call.
+ *
+ * `event` is optional so tests and any future non-request caller still build a
+ * working tool set; it is passed by the chat route so the Shopify credentials
+ * are read per-request, which is what CLAUDE.md asks for over a module-scope
+ * `useRuntimeConfig()`.
+ */
+export function buildAgentTools({ event, ...hooks }: AgentToolHooks & { event?: H3Event } = {}): Record<string, Tool> {
   return {
     ...buildMcpTools(),
     'site-search': siteSearchTool(),
+    'store-search': storeSearchTool(shopifyConfig(event), hooks),
   };
 }

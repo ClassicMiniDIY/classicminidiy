@@ -775,6 +775,25 @@ export default defineNuxtConfig({
     // Overridable so the model can be changed without a deploy — the whole point
     // of the provider-agnostic SDK. Empty falls back to the default in the route.
     CHAT_MODEL: process.env.NUXT_CHAT_MODEL || '',
+    // Shopify STOREFRONT credentials for the chat agent's `store-search` tool
+    // (server/utils/shopifyCatalog.ts). Design doc:
+    // docs/plans/2026-09-01-shopify-catalog-tool.md.
+    //
+    // MUST be a Storefront API token, NEVER an Admin API token. `/api/chat` is
+    // unauthenticated by documented invariant, and the model decides when the
+    // tool fires — an Admin token there can read customers and orders, which
+    // makes it a data-exfiltration path rather than a feature. The Storefront
+    // token is public-scoped, read-only and sees published products only.
+    //
+    // RUNTIME-only: nothing prerenders the chat, so neither belongs in the
+    // deploy workflow's build env. Set via scripts/set-cf-secrets.sh as
+    // NUXT_SHOPIFY_STOREFRONT_TOKEN.
+    //
+    // The domain is defaulted because it is not a secret — the store is linked
+    // from the nav — and defaulting it means an unset TOKEN is the single
+    // failure mode rather than either of two halves.
+    SHOPIFY_STORE_DOMAIN: process.env.NUXT_SHOPIFY_STORE_DOMAIN || 'store.classicminidiy.com',
+    SHOPIFY_STOREFRONT_TOKEN: process.env.NUXT_SHOPIFY_STOREFRONT_TOKEN || '',
     // MCP API Keys — no hardcoded fallback: an unset MCP_API_KEY must resolve to
     // empty so the /mcp middleware fails closed rather than accepting a baked-in
     // default. Set MCP_API_KEY (or MCP_API_KEYS) in .env for local development.

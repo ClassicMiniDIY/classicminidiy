@@ -9,6 +9,7 @@ vi.hoisted(() => {
 });
 
 const { AGENT_TOOL_NAMES, staticPrompt, dynamicPrompt, buildSystemPrompt } = await import('~~/server/agent/prompt');
+const { buildAgentTools } = await import('~~/server/agent/tools');
 
 describe('the system prompt', () => {
   const prompt = staticPrompt();
@@ -103,6 +104,45 @@ describe('the system prompt', () => {
   it('says which Mini it is about', () => {
     expect(prompt).toMatch(/1959|classic mini/i);
     expect(prompt).toMatch(/not the modern BMW MINI/i);
+  });
+
+  it('describes exactly the tools the agent is actually given', () => {
+    // AGENT_TOOL_NAMES is partly hand-written — `site-search` and
+    // `store-search` live in server/agent/tools.ts, not under server/mcp/tools/,
+    // so `tests/static/agent-tool-registry.test.ts` cannot see them. Without
+    // this pin the prompt could describe a tool the model does not have, or stay
+    // silent about one it does, and neither fails anywhere else.
+    expect(AGENT_TOOL_NAMES).toEqual(Object.keys(buildAgentTools()).sort());
+  });
+
+  it('scopes store-search by INTENT, not by topic', () => {
+    // The single behaviour this change is judged on. Scoping by topic ("wheels"
+    // -> search the store) is what turns every technical answer into an advert,
+    // and is what the shop-bot prompt this one replaced actually did.
+    const line = prompt.split('\n').find((l) => l.startsWith('- `store-search`'));
+    expect(line, 'store-search has no catalogue entry').toBeTruthy();
+    expect(line!.toLowerCase()).toMatch(/buy|purchas/);
+    expect(line!.toLowerCase()).toContain('not asking a specification');
+
+    // Not keyed to any product category — a topic list here is the regression.
+    for (const topic of ['wheel', 'needle', 'gasket', 'oil', 'tyre']) {
+      expect(line!.toLowerCase(), `store-search guidance is scoped by topic ("${topic}")`).not.toContain(topic);
+    }
+  });
+
+  it('states the restraint on store-search as a rule, not only a catalogue line', () => {
+    // One line among thirteen in the catalogue is thin protection for the thing
+    // most likely to go wrong, so the rules block says it again and plainly.
+    expect(prompt).toMatch(/`store-search` only when someone is asking to buy/i);
+    expect(prompt.toLowerCase()).toContain('never volunteer the shop in an answer nobody asked for');
+  });
+
+  it('still never mentions a UTM parameter, now that there are store links', () => {
+    // Covered by the shop-bot test above too, and deliberately restated here:
+    // adding a store tool is exactly the moment someone would be tempted to
+    // "helpfully" tell the model how to tag a link. The tagging is in code —
+    // see storeProductUrl() in server/utils/shopifyCatalog.ts.
+    expect(prompt).not.toContain('utm_');
   });
 });
 
