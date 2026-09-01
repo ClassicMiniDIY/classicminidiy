@@ -272,8 +272,12 @@ jobs:
           # cannot tell a working tier boundary from one that never ran. That
           # is how a fully-gated free tier reached production. Optional like
           # MCP_SMOKE_KEY: unset, the script notes and skips instead of failing
-          # the deploy. Mint one at /dashboard/api-keys on an account with NO
-          # developer subscription: `gh secret set MCP_FREE_TIER_KEY`.
+          # the deploy — which is also the trap: unsetting this secret silences
+          # a failure here and takes the gate from 33 assertions to 30 with
+          # nothing red. Mint the key at /dashboard/api-keys on a DEDICATED
+          # account that will never hold a developer subscription (a comp
+          # counts, and flips the key to the paid tier), then
+          # `gh secret set MCP_FREE_TIER_KEY`. See CLAUDE.md, /mcp invariants.
           MCP_FREE_TIER_KEY: ${{ secrets.MCP_FREE_TIER_KEY }}
 
       - name: Deploy
