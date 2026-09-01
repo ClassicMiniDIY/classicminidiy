@@ -72,21 +72,43 @@ describe('toCatalogueProduct', () => {
     expect(product.title).toBe('Minilite 10x5 Wheel');
     expect(product.price).toBe('£145.00');
     expect(product.priceVaries).toBe(false);
+    expect(product.currency).toBe('GBP');
     expect(product.available).toBe(true);
     expect(product.url).toContain(`utm_source=${STORE_UTM.utm_source}`);
   });
 
-  it('flags a variant price range so a "from" figure is never read as the price', () => {
+  it('renders a variant range as a RANGE, never as the minimum alone', () => {
+    // Checked against the live store: two of the first three products priced
+    // $39.99-$99.99 and $30-$195, so this is the common case here. A model given
+    // the minimum plus a boolean will answer "it costs $39.99" about a $99.99
+    // variant; a range string cannot be misread that way.
     const product = toCatalogueProduct(
       node({
         priceRange: {
-          minVariantPrice: { amount: '145.00', currencyCode: 'GBP' },
-          maxVariantPrice: { amount: '190.00', currencyCode: 'GBP' },
+          minVariantPrice: { amount: '39.99', currencyCode: 'USD' },
+          maxVariantPrice: { amount: '99.99', currencyCode: 'USD' },
         },
       }),
       CONFIG.domain
     )!;
+    expect(product.price).toBe('$39.99 – $99.99');
     expect(product.priceVaries).toBe(true);
+    expect(product.currency).toBe('USD');
+  });
+
+  it('renders USD as "$", not the en-GB "US$" artifact', () => {
+    // The locale is fixed and the store's currency is not, so `narrowSymbol`
+    // keeps a hardcoded locale from leaking into the figure a reader sees.
+    const product = toCatalogueProduct(
+      node({
+        priceRange: {
+          minVariantPrice: { amount: '10.00', currencyCode: 'USD' },
+          maxVariantPrice: { amount: '10.00', currencyCode: 'USD' },
+        },
+      }),
+      CONFIG.domain
+    )!;
+    expect(product.price).toBe('$10.00');
   });
 
   it('omits the description unless asked, and truncates it when asked', () => {
@@ -107,6 +129,32 @@ describe('toCatalogueProduct', () => {
     const product = toCatalogueProduct(node({ priceRange: undefined }), CONFIG.domain)!;
     expect(product.price).toBeNull();
     expect(product.priceVaries).toBe(false);
+    expect(product.currency).toBeNull();
+  });
+
+  it('maps the exact shape the live Storefront API returns', () => {
+    // Captured verbatim from store.classicminidiy.com on the 2026-07 API, so a
+    // field rename upstream fails here rather than in front of a visitor.
+    const live = {
+      title: 'Wheel Speed Sensor Kit - Front CV',
+      handle: 'wheel-speed-sensor-kit-front-cv',
+      productType: 'Parts',
+      availableForSale: true,
+      priceRange: {
+        minVariantPrice: { amount: '39.99', currencyCode: 'USD' },
+        maxVariantPrice: { amount: '99.99', currencyCode: 'USD' },
+      },
+    };
+    expect(toCatalogueProduct(live, CONFIG.domain)).toEqual({
+      title: 'Wheel Speed Sensor Kit - Front CV',
+      handle: 'wheel-speed-sensor-kit-front-cv',
+      productType: 'Parts',
+      available: true,
+      price: '$39.99 – $99.99',
+      priceVaries: true,
+      currency: 'USD',
+      url: storeProductUrl(CONFIG.domain, 'wheel-speed-sensor-kit-front-cv'),
+    });
   });
 });
 
