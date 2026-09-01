@@ -1,14 +1,28 @@
 import { z } from 'zod';
 import data from '../../../data/commonClearances.json';
-import { lookup, relatedNote, type LookupData } from '../../utils/mcpLookup';
+import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 
 /**
  * Common Clearances MCP Tool
  * Look up Classic Mini clearance and endfloat specifications
  */
+/**
+ * What each clearance column holds.
+ *
+ * The `thou` column is named for thousandths of an inch but holds INCHES:
+ * `0.002` means two thou, not two thousandths of a thou. Read literally it is
+ * wrong by a thousand. The field name is kept because the website and the
+ * generated FAQ corpus both already read it; what changes here is that the tool
+ * no longer leaves a caller to infer the unit from the name.
+ */
+const UNITS: UnitMap = {
+  thou: 'INCHES, despite the field name — 0.002 means 0.002 in, i.e. 2 thou',
+  mm: 'millimetres (mm)',
+};
+
 export default defineMcpTool({
   description:
-    'Look up Classic Mini clearance and endfloat specifications in thousandths of an inch and mm. A short reference of 10 commonly-needed tolerances: crankshaft thrust washer endfloat and rocker/valve clearances on the engine side, and primary gear, idler gear, laygear and differential preload figures on the gearbox side. It does NOT cover piston-to-bore or bearing clearances.',
+    'Look up Classic Mini clearance and endfloat specifications. The `thou` column holds INCHES despite its name (0.002 means 0.002 in, i.e. 2 thou); `mm` holds millimetres. Both are named in the `units` field of every response — quote the figure in the unit given there and never convert between them. A short reference of 10 commonly-needed tolerances: crankshaft thrust washer endfloat and rocker/valve clearances on the engine side, and primary gear, idler gear, laygear and differential preload figures on the gearbox side. It does NOT cover piston-to-bore or bearing clearances.',
 
   inputSchema: {
     query: z
@@ -41,6 +55,7 @@ export default defineMcpTool({
         totalMatches: 0,
         matches: [],
         ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+        units: unitsInUse(result.related, UNITS),
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
       });
@@ -54,6 +69,7 @@ export default defineMcpTool({
       truncated: result.truncated,
       matches: result.matches,
       ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+      units: unitsInUse([...result.matches, ...result.related], UNITS),
       availableSections: result.availableSections,
       formattedText: [
         `**Common Clearances** — ${result.totalMatches} match${result.totalMatches === 1 ? '' : 'es'}` +

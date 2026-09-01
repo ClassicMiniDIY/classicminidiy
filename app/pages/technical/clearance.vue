@@ -149,8 +149,8 @@
     variableMeasured: [
       {
         '@type': 'PropertyValue',
-        name: 'Clearance (thou)',
-        unitText: 'thousandths of an inch',
+        name: 'Clearance (in)',
+        unitText: 'inches',
       },
       {
         '@type': 'PropertyValue',
@@ -315,7 +315,7 @@
     "table": {
       "headers": {
         "part": "Part",
-        "clearance_thou": "Clearance/Endfloat (thou)",
+        "clearance_thou": "Clearance/Endfloat (in)",
         "clearance_mm": "Clearance/Endfloat (mm)",
         "expand": ""
       },
@@ -347,7 +347,7 @@
     "table": {
       "headers": {
         "part": "Pieza",
-        "clearance_thou": "Holgura/Juego Axial (thou)",
+        "clearance_thou": "Holgura/Juego Axial (in)",
         "clearance_mm": "Holgura/Juego Axial (mm)",
         "expand": ""
       },
@@ -379,7 +379,7 @@
     "table": {
       "headers": {
         "part": "Pièce",
-        "clearance_thou": "Jeu/Jeu Axial (thou)",
+        "clearance_thou": "Jeu/Jeu Axial (in)",
         "clearance_mm": "Jeu/Jeu Axial (mm)",
         "expand": ""
       },
@@ -411,7 +411,7 @@
     "table": {
       "headers": {
         "part": "Parte",
-        "clearance_thou": "Gioco/Gioco Assiale (thou)",
+        "clearance_thou": "Gioco/Gioco Assiale (in)",
         "clearance_mm": "Gioco/Gioco Assiale (mm)",
         "expand": ""
       },
@@ -443,7 +443,7 @@
     "table": {
       "headers": {
         "part": "Teil",
-        "clearance_thou": "Spiel/Axialspiel (thou)",
+        "clearance_thou": "Spiel/Axialspiel (in)",
         "clearance_mm": "Spiel/Axialspiel (mm)",
         "expand": ""
       },
@@ -475,7 +475,7 @@
     "table": {
       "headers": {
         "part": "Peça",
-        "clearance_thou": "Folga/Folga Axial (thou)",
+        "clearance_thou": "Folga/Folga Axial (in)",
         "clearance_mm": "Folga/Folga Axial (mm)",
         "expand": ""
       },
@@ -507,7 +507,7 @@
     "table": {
       "headers": {
         "part": "Деталь",
-        "clearance_thou": "Зазор/Осевой Зазор (thou)",
+        "clearance_thou": "Зазор/Осевой Зазор (in)",
         "clearance_mm": "Зазор/Осевой Зазор (мм)",
         "expand": ""
       },
@@ -539,7 +539,7 @@
     "table": {
       "headers": {
         "part": "部品",
-        "clearance_thou": "クリアランス/エンドフロート (thou)",
+        "clearance_thou": "クリアランス/エンドフロート (in)",
         "clearance_mm": "クリアランス/エンドフロート (mm)",
         "expand": ""
       },
@@ -571,7 +571,7 @@
     "table": {
       "headers": {
         "part": "部件",
-        "clearance_thou": "间隙/轴向间隙 (thou)",
+        "clearance_thou": "间隙/轴向间隙 (in)",
         "clearance_mm": "间隙/轴向间隙 (mm)",
         "expand": ""
       },
@@ -603,7 +603,7 @@
     "table": {
       "headers": {
         "part": "부품",
-        "clearance_thou": "클리어런스/엔드플로트 (thou)",
+        "clearance_thou": "클리어런스/엔드플로트 (in)",
         "clearance_mm": "클리어런스/엔드플로트 (mm)",
         "expand": ""
       },

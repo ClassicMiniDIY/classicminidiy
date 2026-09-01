@@ -162,4 +162,68 @@ describe('reference-table MCP tools', () => {
       expect(oneShort.formattedText).toContain('Near misses');
     }
   });
+
+  /**
+   * Units are declared, never inferred.
+   *
+   * Three of these datasets carry a column whose name does not state its unit,
+   * and two of those are actively misleading: the Electrical torque table is in
+   * pound-INCHES with no `lbft` column, and the clearance column named `thou`
+   * holds INCHES. Vehicle weights are bare numbers with no unit anywhere. A
+   * caller that guesses is wrong by twelve, by a thousand, or by whatever it
+   * picks.
+   */
+  it('torque: the Electrical section declares pound-inches, not pound-feet', async () => {
+    const tool = (await import('../../../../server/mcp/tools/torque-specs')).default;
+    const r: any = await tool.handler({ query: 'distributor clamp', limit: 5 }, {} as any);
+
+    expect(r.matches.length).toBeGreaterThan(0);
+    expect(r.matches[0].item).toHaveProperty('lbin');
+    expect(r.matches[0].item).not.toHaveProperty('lbft');
+    expect(r.units.lbin).toMatch(/pound-INCHES/);
+    expect(r.units).not.toHaveProperty('lbft');
+  });
+
+  it('torque: a lb-ft section declares lb-ft and never mentions lb-in', async () => {
+    const tool = (await import('../../../../server/mcp/tools/torque-specs')).default;
+    const r: any = await tool.handler({ query: 'main bearing', section: 'Engine', limit: 5 }, {} as any);
+
+    expect(r.units.lbft).toMatch(/pound-feet/);
+    expect(r.units).not.toHaveProperty('lbin');
+  });
+
+  it('clearances: declares the thou column as inches', async () => {
+    const tool = (await import('../../../../server/mcp/tools/clearances')).default;
+    const r: any = await tool.handler({ query: 'rocker stock', limit: 5 }, {} as any);
+
+    expect(r.matches[0].item.thou).toBe('0.012');
+    expect(r.units.thou).toMatch(/INCHES/);
+  });
+
+  it('weights: declares kilograms, which appear nowhere in the data', async () => {
+    const tool = (await import('../../../../server/mcp/tools/vehicle-weights')).default;
+    const r: any = await tool.handler({ query: 'Van', limit: 5 }, {} as any);
+
+    expect(typeof r.matches[0].item.weight).toBe('number');
+    expect(r.units.weight).toMatch(/kilograms/);
+  });
+
+  it('parts: measures nothing, so declares no units', async () => {
+    const tool = (await import('../../../../server/mcp/tools/parts-equivalency')).default;
+    const r: any = await tool.handler({ query: 'K&N', limit: 5 }, {} as any);
+
+    expect(r.matches.length).toBeGreaterThan(0);
+    expect(r.units).toBeUndefined();
+  });
+
+  it.each(TOOLS)('$name never claims a unit for a column it did not return', async ({ name, query }) => {
+    // Naming units that are not in the answer is its own invitation to convert.
+    const tool = (await import(`../../../../server/mcp/tools/${name}`)).default;
+    const r: any = await tool.handler({ query, limit: 50 }, {} as any);
+    const shown = new Set<string>();
+    for (const m of [...r.matches, ...(r.related ?? [])]) for (const k of Object.keys(m.item)) shown.add(k);
+    for (const field of Object.keys(r.units ?? {})) {
+      expect(shown.has(field), `${name}: units names "${field}", absent from every row`).toBe(true);
+    }
+  });
 });

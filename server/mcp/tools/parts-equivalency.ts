@@ -1,11 +1,14 @@
 import { z } from 'zod';
 import data from '../../../data/parts.json';
-import { lookup, relatedNote, type LookupData } from '../../utils/mcpLookup';
+import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 
 /**
  * Parts Equivalency MCP Tool
  * Cross-reference Classic Mini part numbers between brands
  */
+/** Part numbers and brands are identifiers, not measurements. */
+const UNITS: UnitMap = {};
+
 export default defineMcpTool({
   description:
     'Cross-reference Classic Mini service part numbers between brands. Covers three categories only: oil filters (18 entries), air filters (4) and alternators (2). Search by brand, part number, or application (e.g. "K&N", "1275", "SPI").',
@@ -47,6 +50,7 @@ export default defineMcpTool({
         totalMatches: 0,
         matches: [],
         ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+        units: unitsInUse(result.related, UNITS),
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
       });
@@ -60,6 +64,7 @@ export default defineMcpTool({
       truncated: result.truncated,
       matches: result.matches,
       ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+      units: unitsInUse([...result.matches, ...result.related], UNITS),
       availableSections: result.availableSections,
       formattedText: [
         `**Parts Equivalency** — ${result.totalMatches} match${result.totalMatches === 1 ? '' : 'es'}` +
