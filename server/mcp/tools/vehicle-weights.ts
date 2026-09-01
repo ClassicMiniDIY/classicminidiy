@@ -1,21 +1,14 @@
 import { z } from 'zod';
 import data from '../../../data/weights.json';
+import { WEIGHT_UNITS } from '../../../data/models/units';
 import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 
 /**
  * Vehicle Weights MCP Tool
  * Look up Classic Mini component and curb weights
  */
-/**
- * What the weight column holds.
- *
- * Kilograms, and stated nowhere in the data — the rows are bare numbers, so a
- * caller had nothing to go on. The website labels the column "Kg"; this is the
- * same fact, told to the tool's callers.
- */
-const UNITS: UnitMap = {
-  weight: 'kilograms (kg)',
-};
+/** See `data/models/units.ts` — kilograms, stated nowhere in the data itself. */
+const UNITS: UnitMap = WEIGHT_UNITS;
 
 export default defineMcpTool({
   description:

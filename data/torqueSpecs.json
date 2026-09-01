@@ -417,13 +417,13 @@
       },
       {
         "name": "Distributor Clamp Bolt (fixed nut type)",
-        "lbin": 50,
+        "lbin": "50",
         "nm": "5.6",
         "notes": ""
       },
       {
         "name": "Distributor Clamp Bolt (fixed bolt type)",
-        "lbin": 30,
+        "lbin": "30",
         "nm": "3.4",
         "notes": ""
       }

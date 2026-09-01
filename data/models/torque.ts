@@ -1,3 +1,5 @@
+import type { UnitDescriptions } from './units';
+
 export interface TorqueSpecs {
   engineTable: Table;
   suspensionTable: Table;
@@ -10,6 +12,14 @@ export interface ElectricalTable {
   icon: string;
   search: string;
   items: ElectricalTableItem[];
+  /**
+   * What each numeric column of THIS section holds — see `data/models/units.ts`.
+   *
+   * Per section because the unit varies by section: the Electrical torque table
+   * is published in pound-INCHES while the rest are pound-feet. Optional, so a
+   * consumer that never reads it is unaffected.
+   */
+  units?: UnitDescriptions;
 }
 
 export interface ElectricalTableItem {
@@ -24,6 +34,14 @@ export interface Table {
   icon: string;
   search: string;
   items: EngineTableItem[];
+  /**
+   * What each numeric column of THIS section holds — see `data/models/units.ts`.
+   *
+   * Per section because the unit varies by section: the Electrical torque table
+   * is published in pound-INCHES while the rest are pound-feet. Optional, so a
+   * consumer that never reads it is unaffected.
+   */
+  units?: UnitDescriptions;
 }
 
 export interface EngineTableItem {

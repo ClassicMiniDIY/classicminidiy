@@ -1,3 +1,5 @@
+import type { UnitDescriptions } from './units';
+
 export interface Item {
   item: string;
   weight: number | null;
@@ -7,6 +9,14 @@ export interface Table {
   title: string;
   search: string;
   items: Item[];
+  /**
+   * What each numeric column of THIS section holds — see `data/models/units.ts`.
+   *
+   * Per section because the unit varies by section: the Electrical torque table
+   * is published in pound-INCHES while the rest are pound-feet. Optional, so a
+   * consumer that never reads it is unaffected.
+   */
+  units?: UnitDescriptions;
 }
 
 /**
