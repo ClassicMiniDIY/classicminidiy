@@ -122,6 +122,22 @@ export default defineEventHandler(async (event) => {
 
   const tracker = createChatRunTracker(event, threadId, body?.locale);
 
+  /**
+   * Tools that answered degraded this run, e.g. `store-search:unavailable`.
+   *
+   * Reported as its own `tools_degraded` property rather than mixed into
+   * `tools_called`, so neither that array nor `tool_call_count` is distorted by
+   * a failure signal. The `reason` is logged rather than counted: a Shopify or
+   * Postgres error string is unbounded and would be a useless grouping key, but
+   * without it every cause collapses into one indistinct marker.
+   */
+  const degraded = new Set<string>();
+  const recordDegraded = (marker: string, reason?: string) => {
+    degraded.add(marker);
+    console.warn(`[chat] tool degraded: ${marker}${reason ? ` — ${reason}` : ''}`);
+  };
+  const degradedList = () => (degraded.size ? [...degraded].sort() : undefined);
+
   // convertToModelMessages is ASYNC in AI SDK v7 (it was synchronous in v6).
   // Passing the promise straight to streamText fails inside standardizePrompt
   // with "messages.some is not a function" — a message that names neither the
@@ -184,9 +200,11 @@ export default defineEventHandler(async (event) => {
     },
     messages: modelMessages,
     // `event` so the Shopify credentials are read per-request; `onDegraded` so a
-    // store lookup that fails lands in `tools_called` as its own marker instead
-    // of being indistinguishable from a run where nobody asked about products.
-    tools: buildAgentTools({ event, onDegraded: (marker) => tracker.recordToolCall(marker) }),
+    // tool that answers degraded is counted instead of being indistinguishable
+    // from one that simply found nothing. Markers go to their OWN field, never
+    // into `tools_called` — that array's length is published as
+    // `tool_call_count`, so a marker there would count one invocation twice.
+    tools: buildAgentTools({ event, onDegraded: recordDegraded }),
     stopWhen: stepCountIs(MAX_STEPS),
     // Every part of the stream, so time-to-first-chunk keeps meaning
     // time-to-first-token and chunk_count keeps meaning stream length. Feeding
@@ -244,17 +262,20 @@ export default defineEventHandler(async (event) => {
         // unbounded, and without this the only evidence would be a console line
         // nobody reads.
         quota_degraded: verdict.degraded === true,
+        tools_degraded: degradedList(),
       });
     },
     onAbort() {
       // The visitor pressed stop or navigated away. These runs consumed tokens
       // and were previously recorded nowhere, which is awkward given
       // abandonment is the metric the whole rebuild is being judged on.
-      tracker.finish('client_disconnect');
+      tracker.finish('client_disconnect', undefined, { tools_degraded: degradedList() });
     },
     onError({ error }) {
       console.error('[chat] stream failed:', error);
-      tracker.finish('upstream_error', error instanceof Error ? error.message : String(error));
+      tracker.finish('upstream_error', error instanceof Error ? error.message : String(error), {
+        tools_degraded: degradedList(),
+      });
     },
   });
 

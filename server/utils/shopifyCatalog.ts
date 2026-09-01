@@ -61,6 +61,9 @@ const API_VERSION = '2026-07';
 /** Hard ceiling on the outbound call, well inside the chat's own step budget. */
 const TIMEOUT_MS = 2000;
 
+/** Longest product description handed to the model, in characters. */
+const DESCRIPTION_LIMIT = 600;
+
 /**
  * Campaign tags for every link this module hands the model.
  *
@@ -90,8 +93,14 @@ export interface CatalogueProduct {
   priceVaries: boolean;
   /** ISO currency of `price`, so the model can disambiguate "$" when it matters. */
   currency: string | null;
-  /** Live stock, straight from Shopify. The reason this is not a static index. */
-  available: boolean;
+  /**
+   * Live stock, straight from Shopify, or null when Shopify did not say.
+   *
+   * Null rather than false: on a surface whose whole purpose is completing a
+   * sale, reporting an absent field as "out of stock" tells a would-be buyer
+   * the shop cannot sell them something it can.
+   */
+  available: boolean | null;
   productType: string | null;
   /** Present only on a by-handle fetch; search results stay compact. */
   description?: string;
@@ -124,8 +133,23 @@ export function shopifyConfig(event?: H3Event): ShopifyCatalogConfig | null {
   const config = event ? serverRuntimeConfig(event) : useRuntimeConfig();
   const domain = String((config as any).SHOPIFY_STORE_DOMAIN || '').trim();
   const token = String((config as any).SHOPIFY_STOREFRONT_TOKEN || '').trim();
-  if (!domain || !token) return null;
+  if (!domain || !token || !isStorefrontHostname(domain)) return null;
   return { domain, token };
+}
+
+/**
+ * A bare hostname and nothing else.
+ *
+ * `callStorefront` interpolates this straight into the request URL, so an
+ * unvalidated value decides where the Storefront token is SENT. A typo'd or
+ * mispasted secret containing a path, a scheme, or userinfo
+ * (`store.classicminidiy.com@elsewhere.example`) would post the credential to
+ * another host while still reading correctly, and `storeProductUrl()` would
+ * then hand every visitor links to it. The token is low-value by design; the
+ * check costs a line and this module does not get to rely on that.
+ */
+export function isStorefrontHostname(value: string): boolean {
+  return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(value);
 }
 
 /**
@@ -142,19 +166,43 @@ export function storeProductUrl(domain: string, handle: string): string {
 }
 
 /**
- * Money formatting, with a plain-string fallback for an unknown currency code.
+ * The storefront root, attributed the same way a product link is.
+ *
+ * Exists because the DEGRADED branch of `store-search` tells the model to point
+ * at the shop, and a model told to link something it has not been given will
+ * invent a URL — observed live, it produced `classicminidiy.com/store`, which is
+ * not a page. Give it the link rather than the instruction alone.
+ */
+export function storeRootUrl(domain: string): string {
+  const url = new URL(`https://${domain}/`);
+  for (const [key, value] of Object.entries(STORE_UTM)) url.searchParams.set(key, value);
+  return url.toString();
+}
+
+/**
+ * Money formatting.
  *
  * `narrowSymbol` because the locale here is fixed and the store's currency is
  * not: plain `en-GB` renders USD as "US$39.99", which is a formatting artifact
  * of a locale nobody chose rather than a decision. The symbol alone is what a
  * reader expects, and `currency` is returned alongside the string so the model
  * can say "USD" when the reader is not American.
+ *
+ * NOT named `formatMoney`: `server/utils/exchange/feedBuilder.ts` exports that
+ * name, Nitro auto-imports every `server/utils/**` export, and a second money
+ * formatter under the same name is the shadowing hazard CLAUDE.md documents.
+ * The two also disagree — that one rounds to whole units, this one keeps cents —
+ * so a future edit that deleted this definition would silently bind to the
+ * auto-import and drop the cents off every price in the store.
+ *
+ * An unknown currency returns NULL rather than a bare number. "39.99" with no
+ * unit is a figure a model will present as dollars, and being wrong about a
+ * price is worse than not quoting one.
  */
-function formatMoney(amount: string | null | undefined, currency: string | null | undefined): string | null {
-  if (!amount) return null;
+function formatStorefrontMoney(amount: string | null | undefined, currency: string | null | undefined): string | null {
+  if (!amount || !currency) return null;
   const value = Number(amount);
   if (!Number.isFinite(value)) return null;
-  if (!currency) return value.toFixed(2);
   try {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'narrowSymbol' }).format(
       value
@@ -171,26 +219,30 @@ function formatMoney(amount: string | null | undefined, currency: string | null 
  * three real products checked against the live store priced $39.99-$99.99 and
  * $30-$195, so a range is the common case here rather than the edge case — and
  * handing a model `price: "$39.99"` with a separate boolean is an invitation to
- * answer "it costs $39.99" about a $99.99 variant. A string that cannot be read
- * as a single price is the fix; `priceVaries` stays as the machine-readable
- * flag beside it.
+ * answer "it costs $39.99" about a $99.99 variant.
+ *
+ * `varies` is returned FROM here rather than computed beside it, so the flag
+ * and the string cannot disagree. Comparing the raw amounts instead is subtly
+ * wrong: Shopify does not fix the scale of its decimal strings, so a product
+ * priced identically across variants can arrive as min `"10.0"` / max `"10.00"`
+ * — different strings, one formatted price — and the model would be told the
+ * price varies while being shown a single figure.
  */
 function formatPriceRange(
   min: { amount?: string; currencyCode?: string } | undefined,
   max: { amount?: string; currencyCode?: string } | undefined
-): string | null {
-  const low = formatMoney(min?.amount, min?.currencyCode);
-  if (!low) return null;
-  const high = formatMoney(max?.amount, max?.currencyCode);
-  if (!high || high === low) return low;
-  return `${low} – ${high}`;
+): { price: string | null; varies: boolean } {
+  const low = formatStorefrontMoney(min?.amount, min?.currencyCode);
+  if (!low) return { price: null, varies: false };
+  const high = formatStorefrontMoney(max?.amount, max?.currencyCode);
+  if (!high || high === low) return { price: low, varies: false };
+  return { price: `${low} – ${high}`, varies: true };
 }
 
-/** The Shopify product fields this module reads. Kept in one place so the two queries cannot drift. */
-const PRODUCT_FIELDS = `
+/** Fields both queries read. Kept in one place so the two cannot drift. */
+const SHARED_FIELDS = `
   title
   handle
-  description
   productType
   availableForSale
   priceRange {
@@ -199,14 +251,22 @@ const PRODUCT_FIELDS = `
   }
 `;
 
+/**
+ * `description` is selected ONLY by the by-handle query.
+ *
+ * Search discards it — `toCatalogueProduct` is called without `withDescription`
+ * there — so selecting it in the search would pull up to ten full descriptions
+ * (kilobytes of marketing copy each) across a link with a hard 2s budget, and
+ * charge Shopify's query cost for all of them, to throw every one away.
+ */
 const SEARCH_QUERY = `query CatalogueSearch($query: String!, $first: Int!) {
   products(first: $first, query: $query) {
-    nodes { ${PRODUCT_FIELDS} }
+    nodes { ${SHARED_FIELDS} }
   }
 }`;
 
 const PRODUCT_QUERY = `query CatalogueProduct($handle: String!) {
-  product(handle: $handle) { ${PRODUCT_FIELDS} }
+  product(handle: $handle) { ${SHARED_FIELDS} description }
 }`;
 
 interface RawProduct {
@@ -234,21 +294,25 @@ export function toCatalogueProduct(
 
   const min = raw.priceRange?.minVariantPrice;
   const max = raw.priceRange?.maxVariantPrice;
+  const { price, varies } = formatPriceRange(min, max);
 
   const product: CatalogueProduct = {
     title,
     handle,
-    price: formatPriceRange(min, max),
-    priceVaries: Boolean(min?.amount && max?.amount && min.amount !== max.amount),
-    currency: min?.currencyCode || null,
-    available: raw.availableForSale === true,
+    price,
+    priceVaries: varies,
+    currency: price ? min?.currencyCode || null : null,
+    available: typeof raw.availableForSale === 'boolean' ? raw.availableForSale : null,
     productType: raw.productType || null,
     url: storeProductUrl(domain, handle),
   };
 
   if (withDescription && typeof raw.description === 'string' && raw.description.trim()) {
     // Shopify descriptions run long; the model needs the gist, not the copy.
-    product.description = raw.description.trim().slice(0, 600);
+    // The ellipsis is load-bearing — without it the model cannot tell a
+    // sentence that ended from one this cut off, and may quote the stump.
+    const text = raw.description.trim();
+    product.description = text.length > DESCRIPTION_LIMIT ? `${text.slice(0, DESCRIPTION_LIMIT)}…` : text;
   }
 
   return product;
