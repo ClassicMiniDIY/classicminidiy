@@ -1,14 +1,29 @@
 import { z } from 'zod';
 import data from '../../../data/torqueSpecs.json';
-import { lookup, relatedNote, type LookupData } from '../../utils/mcpLookup';
+import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 
 /**
  * Torque Specifications MCP Tool
  * Look up Classic Mini torque figures by fastener or system
  */
+/**
+ * What each torque column holds, per the source tables.
+ *
+ * `lbin` is the one that matters. The Electrical section is published in
+ * pound-INCHES and has no `lbft` column at all, so a caller that assumes the
+ * tool's figures are pound-feet is out by a factor of twelve on exactly the
+ * fasteners least able to survive it — alternator brush-box screws and
+ * distributor clamp bolts.
+ */
+const UNITS: UnitMap = {
+  lbft: 'pound-feet (lb-ft)',
+  lbin: 'pound-INCHES (lb-in). One twelfth of a pound-foot. NOT interchangeable with lb-ft.',
+  nm: 'newton-metres (Nm), as printed in the source table',
+};
+
 export default defineMcpTool({
   description:
-    "Look up Classic Mini torque specifications in lb-ft and Nm. Four sections: Engine (41 fasteners), Suspension (24), Clutch & Gearbox (22) and Electrical (6). Search by fastener name (e.g. \"main bearing\", \"flywheel\", \"cylinder head\") or browse a whole section. MANY FIGURES ARE ENGINE-SPECIFIC: the same joint has different torques for 848/998 than for 970/1071/1275, and the rows are named differently ('bolts' vs 'nuts' vs 'set screws'). Include the displacement in the query when you know it, and always read each row's `notes` before quoting a figure.",
+    "Look up Classic Mini torque specifications. UNITS DIFFER BY SECTION and are named in the `units` field of every response — Engine, Suspension and Clutch & Gearbox are published in pound-feet, but ELECTRICAL is published in pound-INCHES. Quote the figure in the unit `units` gives for that column and never convert between them. Four sections: Engine (41 fasteners), Suspension (24), Clutch & Gearbox (22) and Electrical (6). Search by fastener name (e.g. \"main bearing\", \"flywheel\", \"cylinder head\") or browse a whole section. MANY FIGURES ARE ENGINE-SPECIFIC: the same joint has different torques for 848/998 than for 970/1071/1275, and the rows are named differently ('bolts' vs 'nuts' vs 'set screws'). Include the displacement in the query when you know it, and always read each row's `notes` before quoting a figure.",
 
   inputSchema: {
     query: z
@@ -49,6 +64,7 @@ export default defineMcpTool({
         totalMatches: 0,
         matches: [],
         ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+        units: unitsInUse(result.related, UNITS),
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
       });
@@ -62,6 +78,7 @@ export default defineMcpTool({
       truncated: result.truncated,
       matches: result.matches,
       ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+      units: unitsInUse([...result.matches, ...result.related], UNITS),
       availableSections: result.availableSections,
       formattedText: [
         `**Torque Specifications** — ${result.totalMatches} match${result.totalMatches === 1 ? '' : 'es'}` +

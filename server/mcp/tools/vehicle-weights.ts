@@ -1,11 +1,22 @@
 import { z } from 'zod';
 import data from '../../../data/weights.json';
-import { lookup, relatedNote, type LookupData } from '../../utils/mcpLookup';
+import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 
 /**
  * Vehicle Weights MCP Tool
  * Look up Classic Mini component and curb weights
  */
+/**
+ * What the weight column holds.
+ *
+ * Kilograms, and stated nowhere in the data — the rows are bare numbers, so a
+ * caller had nothing to go on. The website labels the column "Kg"; this is the
+ * same fact, told to the tool's callers.
+ */
+const UNITS: UnitMap = {
+  weight: 'kilograms (kg)',
+};
+
 export default defineMcpTool({
   description:
     'Look up Classic Mini weights in kg. Curb weights for 12 model variants, plus roughly 530 individual component weights across Body, Engine, Transmission, Brakes, Interior, Suspension, Steering, Electrics, Fuel System and Lightweight Replacements. Useful for build planning, weight-saving comparisons and shipping estimates.',
@@ -41,6 +52,7 @@ export default defineMcpTool({
         totalMatches: 0,
         matches: [],
         ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+        units: unitsInUse(result.related, UNITS),
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
       });
@@ -54,6 +66,7 @@ export default defineMcpTool({
       truncated: result.truncated,
       matches: result.matches,
       ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+      units: unitsInUse([...result.matches, ...result.related], UNITS),
       availableSections: result.availableSections,
       formattedText: [
         `**Vehicle Weights** — ${result.totalMatches} match${result.totalMatches === 1 ? '' : 'es'}` +
