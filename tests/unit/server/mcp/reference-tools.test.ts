@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import torqueSpecs from '../../../../data/torqueSpecs.json';
 
 const { mockJsonResult, mockErrorResult } = vi.hoisted(() => {
   const mockJsonResult = vi.fn((data: any) => data);
@@ -173,15 +174,16 @@ describe('reference-table MCP tools', () => {
    * caller that guesses is wrong by twelve, by a thousand, or by whatever it
    * picks.
    */
-  it('torque: the Electrical section declares pound-inches, not pound-feet', async () => {
-    const tool = (await import('../../../../server/mcp/tools/torque-specs')).default;
-    const r: any = await tool.handler({ query: 'distributor clamp', limit: 5 }, {} as any);
-
-    expect(r.matches.length).toBeGreaterThan(0);
-    expect(r.matches[0].item).toHaveProperty('lbin');
-    expect(r.matches[0].item).not.toHaveProperty('lbft');
-    expect(r.units.lbin).toMatch(/pound-INCHES/);
-    expect(r.units).not.toHaveProperty('lbft');
+  it('torque: the Electrical section is pound-feet like every other', () => {
+    // It had been filed as `lbin`, which is what made its metric column look ten
+    // times high. The source publishes it in lb-ft and its kgm column agrees, so
+    // no row anywhere carries an lbin field now.
+    const electrical = (torqueSpecs as any).electricalTable.items;
+    expect(electrical.length).toBeGreaterThan(0);
+    for (const row of electrical) {
+      expect(row).toHaveProperty('lbft');
+      expect(row).not.toHaveProperty('lbin');
+    }
   });
 
   it('torque: a lb-ft section declares lb-ft and never mentions lb-in', async () => {
