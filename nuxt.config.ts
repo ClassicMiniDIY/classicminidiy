@@ -792,8 +792,16 @@ export default defineNuxtConfig({
     // The domain is defaulted because it is not a secret — the store is linked
     // from the nav — and defaulting it means an unset TOKEN is the single
     // failure mode rather than either of two halves.
-    SHOPIFY_STORE_DOMAIN: process.env.NUXT_SHOPIFY_STORE_DOMAIN || 'store.classicminidiy.com',
-    SHOPIFY_STOREFRONT_TOKEN: process.env.NUXT_SHOPIFY_STOREFRONT_TOKEN || '',
+    //
+    // Read the UNPREFIXED name first, like every other key here. Nitro supplies
+    // the NUXT_-prefixed override at request time on Workers, so the name in
+    // this default is what a LOCAL `.env` has to use — and set-cf-secrets.sh
+    // reads the unprefixed name too. Accepting only the prefixed form made the
+    // two halves disagree: production would have worked while local dev silently
+    // saw an empty string and every store lookup reported not-configured.
+    SHOPIFY_STORE_DOMAIN:
+      process.env.SHOPIFY_STORE_DOMAIN || process.env.NUXT_SHOPIFY_STORE_DOMAIN || 'store.classicminidiy.com',
+    SHOPIFY_STOREFRONT_TOKEN: process.env.SHOPIFY_STOREFRONT_TOKEN || process.env.NUXT_SHOPIFY_STOREFRONT_TOKEN || '',
     // MCP API Keys — no hardcoded fallback: an unset MCP_API_KEY must resolve to
     // empty so the /mcp middleware fails closed rather than accepting a baked-in
     // default. Set MCP_API_KEY (or MCP_API_KEYS) in .env for local development.

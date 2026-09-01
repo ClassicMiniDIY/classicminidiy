@@ -81,10 +81,15 @@ export interface CatalogueProduct {
   title: string;
   /** Shopify product handle. Feed it back as `handle` for the full description. */
   handle: string;
-  /** Display price, pre-formatted — models are unreliable at currency formatting. */
+  /**
+   * Display price, pre-formatted. A RANGE ("$39.99 – $99.99") when the variants
+   * differ, so it cannot be misread as a single price. See formatPriceRange().
+   */
   price: string | null;
-  /** True when variants differ in price, so `price` is a "from" figure. */
+  /** True when `price` is a range rather than one figure. */
   priceVaries: boolean;
+  /** ISO currency of `price`, so the model can disambiguate "$" when it matters. */
+  currency: string | null;
   /** Live stock, straight from Shopify. The reason this is not a static index. */
   available: boolean;
   productType: string | null;
@@ -136,17 +141,49 @@ export function storeProductUrl(domain: string, handle: string): string {
   return url.toString();
 }
 
-/** Money formatting, with a plain-string fallback for an unknown currency code. */
-function formatPrice(amount: string | null | undefined, currency: string | null | undefined): string | null {
+/**
+ * Money formatting, with a plain-string fallback for an unknown currency code.
+ *
+ * `narrowSymbol` because the locale here is fixed and the store's currency is
+ * not: plain `en-GB` renders USD as "US$39.99", which is a formatting artifact
+ * of a locale nobody chose rather than a decision. The symbol alone is what a
+ * reader expects, and `currency` is returned alongside the string so the model
+ * can say "USD" when the reader is not American.
+ */
+function formatMoney(amount: string | null | undefined, currency: string | null | undefined): string | null {
   if (!amount) return null;
   const value = Number(amount);
   if (!Number.isFinite(value)) return null;
   if (!currency) return value.toFixed(2);
   try {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(value);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'narrowSymbol' }).format(
+      value
+    );
   } catch {
     return `${value.toFixed(2)} ${currency}`;
   }
+}
+
+/**
+ * The price to put in front of the model.
+ *
+ * A RANGE when the variants differ, never the minimum alone. Two of the first
+ * three real products checked against the live store priced $39.99-$99.99 and
+ * $30-$195, so a range is the common case here rather than the edge case — and
+ * handing a model `price: "$39.99"` with a separate boolean is an invitation to
+ * answer "it costs $39.99" about a $99.99 variant. A string that cannot be read
+ * as a single price is the fix; `priceVaries` stays as the machine-readable
+ * flag beside it.
+ */
+function formatPriceRange(
+  min: { amount?: string; currencyCode?: string } | undefined,
+  max: { amount?: string; currencyCode?: string } | undefined
+): string | null {
+  const low = formatMoney(min?.amount, min?.currencyCode);
+  if (!low) return null;
+  const high = formatMoney(max?.amount, max?.currencyCode);
+  if (!high || high === low) return low;
+  return `${low} – ${high}`;
 }
 
 /** The Shopify product fields this module reads. Kept in one place so the two queries cannot drift. */
@@ -201,8 +238,9 @@ export function toCatalogueProduct(
   const product: CatalogueProduct = {
     title,
     handle,
-    price: formatPrice(min?.amount, min?.currencyCode),
+    price: formatPriceRange(min, max),
     priceVaries: Boolean(min?.amount && max?.amount && min.amount !== max.amount),
+    currency: min?.currencyCode || null,
     available: raw.availableForSale === true,
     productType: raw.productType || null,
     url: storeProductUrl(domain, handle),
