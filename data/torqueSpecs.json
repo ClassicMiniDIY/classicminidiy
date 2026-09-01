@@ -374,8 +374,8 @@
       },
       {
         "name": "Tie rod to Lower Front Suspension Wishbone (Ball Joint Nut)",
-        "lbft": "22",
-        "nm": "30",
+        "lbft": "20",
+        "nm": "27",
         "notes": ""
       },
       {
@@ -399,32 +399,38 @@
     "items": [
       {
         "name": "Alternator (11AC) Brush box fixing screws",
-        "lbin": "10",
-        "nm": "1.1",
+        "lbft": "10",
+        "nm": "14",
         "notes": ""
       },
       {
         "name": "Alternator (11AC) Diode heat sink fixings",
-        "lbin": "25",
-        "nm": "2.8",
+        "lbft": "25",
+        "nm": "34",
         "notes": ""
       },
       {
         "name": "Alternator (11AC) through-bolts",
-        "lbin": "45 to 50",
-        "nm": "5.1 to 5.6",
+        "lbft": "45 to 50",
+        "nm": "61 to 68",
+        "notes": ""
+      },
+      {
+        "name": "Alternator (16ACR) Shaft nut",
+        "lbft": "25 to 30",
+        "nm": "34 to 41",
         "notes": ""
       },
       {
         "name": "Distributor Clamp Bolt (fixed nut type)",
-        "lbin": "50",
-        "nm": "5.6",
+        "lbft": "50",
+        "nm": "68",
         "notes": ""
       },
       {
         "name": "Distributor Clamp Bolt (fixed bolt type)",
-        "lbin": "30",
-        "nm": "3.4",
+        "lbft": "30",
+        "nm": "41",
         "notes": ""
       }
     ]

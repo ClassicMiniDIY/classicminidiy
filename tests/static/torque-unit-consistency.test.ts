@@ -18,15 +18,12 @@ import { read, REPO_ROOT } from './_scan';
  * plausible in isolation. Only the relationship between them is wrong, so the
  * relationship is what gets asserted.
  *
- * There are NO exemptions, deliberately. The one row that could not be resolved
- * by arithmetic — `Alternator (16ACR) Shaft nut`, filed as `"lbin": "25 to 30"`
- * with `"nm": "34 to 41"` — was REMOVED from the dataset rather than exempted.
- * Its metric figure is the exact lb-FT conversion of its imperial one, so either
- * the field name or the value is wrong, and 25-30 lb-in is barely more than
- * finger-tight for a nut holding a pulley against belt tension. A wrong figure
- * for a real fastener is worse than a missing one, and an exemption list is
- * where such a row would quietly live forever. It can be restored once the
- * source manual settles which column is right.
+ * There are NO exemptions, and none is needed. The one row that could not be
+ * reconciled by arithmetic — `Alternator (16ACR) Shaft nut` — turned out to be
+ * a mislabelled COLUMN rather than a bad row: the whole Electrical section had
+ * been filed as `lbin` when the source publishes it in lb-ft, which its kgm
+ * column confirms independently. Correcting the column reconciled that row and
+ * the five beside it, and the row was restored.
  */
 const LBFT_TO_NM = 1.3558179;
 const LBIN_TO_NM = 0.1129848;
@@ -87,17 +84,6 @@ describe('torque figures convert to their own metric column', () => {
     }
 
     expect(wrong, `metric figures that do not convert from their own source column:\n${wrong.join('\n')}`).toEqual([]);
-  });
-
-  it('does not silently regain the row that was removed as bad data', () => {
-    // Re-adding it is fine once the source unit is settled — but it has to come
-    // back with a metric figure that converts, which the check above enforces.
-    // This names it so a reappearance is a deliberate act, not an accident.
-    const readded = rows.find(({ row }) => row.name === 'Alternator (16ACR) Shaft nut');
-    expect(
-      readded,
-      'the 16ACR shaft nut is back: confirm against the source manual whether it is lb-in or lb-ft before keeping it'
-    ).toBeUndefined();
   });
 
   it('the tool description states the real row counts', () => {

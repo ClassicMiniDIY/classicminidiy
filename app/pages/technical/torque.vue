@@ -116,14 +116,14 @@
     ],
   });
 
-  // Imperial torque column header depends on whether a table uses lb-ft or lb-in.
+  // Imperial torque column header, derived from every row rather than the first.
   //
-  // Every row is inspected, not just the first. Reading row zero happened to be
-  // right only because the Electrical table is uniformly lb-in — a property of
-  // today's data, not something the code enforced — and one lb-ft row added to
-  // it would have labelled the whole column pound-feet, which is the twelvefold
-  // misreading this page exists to prevent. A mixed table now falls back to
-  // naming both rather than picking one.
+  // No current row is lb-in: the Electrical section had been filed that way in
+  // error and the source publishes it in lb-ft like every other section. The
+  // branch stays because manuals DO publish small fasteners in pound-inches, and
+  // a row that arrives in them must not be labelled pound-feet — that is a
+  // twelvefold misreading of a torque figure. Inspecting every row rather than
+  // row zero is what makes that safe; a mixed table names both units.
   const imperialHeader = (items: any[]) => {
     const rows = items ?? [];
     const hasLbin = rows.some((row) => row?.lbin != null);
@@ -266,7 +266,7 @@
       "description": "Complete torque specifications for Classic Mini fasteners. Reference chart for engine, suspension, drivetrain, and body fasteners with values in lb/ft and Nm.",
       "dataset_name": "Classic Mini Torque Specifications",
       "dataset_description": "Comprehensive dataset of torque specifications for Classic Mini fasteners",
-      "variable_measured": "Fastener Name, Torque in lb/ft & lb/in, Torque in Nm, Additional Notes"
+      "variable_measured": "Fastener Name, Torque in lb/ft, Torque in Nm, Additional Notes"
     },
     "table_headers": {
       "fastener": "Fastener",
@@ -299,7 +299,7 @@
       "description": "Especificaciones completas de torque para sujetadores Classic Mini. Tabla de referencia para sujetadores de motor, suspensión, tren motriz y carrocería con valores en lb/ft y Nm.",
       "dataset_name": "Especificaciones de Torque Classic Mini",
       "dataset_description": "Conjunto de datos completo de especificaciones de torque para sujetadores Classic Mini",
-      "variable_measured": "Nombre del Sujetador, Torque en lb/ft & lb/in, Torque en Nm, Notas Adicionales"
+      "variable_measured": "Nombre del Sujetador, Torque en lb/ft, Torque en Nm, Notas Adicionales"
     },
     "table_headers": {
       "fastener": "Sujetador",
@@ -332,7 +332,7 @@
       "description": "Spécifications complètes de couple pour les fixations Classic Mini. Tableau de référence pour les fixations moteur, suspension, transmission et carrosserie avec valeurs en lb/ft et Nm.",
       "dataset_name": "Spécifications de Couple Classic Mini",
       "dataset_description": "Jeu de données complet des spécifications de couple pour les fixations Classic Mini",
-      "variable_measured": "Nom de la Fixation, Couple en lb/ft & lb/in, Couple en Nm, Notes Supplémentaires"
+      "variable_measured": "Nom de la Fixation, Couple en lb/ft, Couple en Nm, Notes Supplémentaires"
     },
     "table_headers": {
       "fastener": "Fixation",
@@ -365,7 +365,7 @@
       "description": "Specifiche complete di coppia per elementi di fissaggio Classic Mini. Tabella di riferimento per elementi di fissaggio motore, sospensioni, trasmissione e carrozzeria con valori in lb/ft e Nm.",
       "dataset_name": "Specifiche di Coppia Classic Mini",
       "dataset_description": "Set di dati completo delle specifiche di coppia per elementi di fissaggio Classic Mini",
-      "variable_measured": "Nome Elemento di Fissaggio, Coppia in lb/ft & lb/in, Coppia in Nm, Note Aggiuntive"
+      "variable_measured": "Nome Elemento di Fissaggio, Coppia in lb/ft, Coppia in Nm, Note Aggiuntive"
     },
     "table_headers": {
       "fastener": "Elemento di Fissaggio",
@@ -398,7 +398,7 @@
       "description": "Vollständige Drehmoment-Spezifikationen für Classic Mini Befestigungselemente. Referenztabelle für Motor-, Fahrwerk-, Antriebsstrang- und Karosseriebefestigungen mit Werten in lb/ft und Nm.",
       "dataset_name": "Classic Mini Drehmoment-Spezifikationen",
       "dataset_description": "Umfassender Datensatz von Drehmoment-Spezifikationen für Classic Mini Befestigungselemente",
-      "variable_measured": "Befestigungsname, Drehmoment in lb/ft & lb/in, Drehmoment in Nm, Zusätzliche Hinweise"
+      "variable_measured": "Befestigungsname, Drehmoment in lb/ft, Drehmoment in Nm, Zusätzliche Hinweise"
     },
     "table_headers": {
       "fastener": "Befestigung",
@@ -431,7 +431,7 @@
       "description": "Especificações completas de torque para fixadores Classic Mini. Tabela de referência para fixadores de motor, suspensão, trem de força e carroceria com valores em lb/ft e Nm.",
       "dataset_name": "Especificações de Torque Classic Mini",
       "dataset_description": "Conjunto de dados abrangente de especificações de torque para fixadores Classic Mini",
-      "variable_measured": "Nome do Fixador, Torque em lb/ft & lb/in, Torque em Nm, Notas Adicionais"
+      "variable_measured": "Nome do Fixador, Torque em lb/ft, Torque em Nm, Notas Adicionais"
     },
     "table_headers": {
       "fastener": "Fixador",
@@ -464,7 +464,7 @@
       "description": "Полные спецификации крутящего момента для крепежных элементов Classic Mini. Справочная таблица для крепежных элементов двигателя, подвески, трансмиссии и кузова со значениями в lb/ft и Nm.",
       "dataset_name": "Спецификации Крутящего Момента Classic Mini",
       "dataset_description": "Комплексный набор данных спецификаций крутящего момента для крепежных элементов Classic Mini",
-      "variable_measured": "Название Крепежного Элемента, Крутящий Момент в lb/ft & lb/in, Крутящий Момент в Nm, Дополнительные Примечания"
+      "variable_measured": "Название Крепежного Элемента, Крутящий Момент в lb/ft, Крутящий Момент в Nm, Дополнительные Примечания"
     },
     "table_headers": {
       "fastener": "Крепежный Элемент",
@@ -497,7 +497,7 @@
       "description": "クラシック・ミニ締結具の完全なトルク仕様。エンジン、サスペンション、ドライブトレイン、ボディ締結具のlb/ftおよびNm値を含む参照表。",
       "dataset_name": "クラシック・ミニ トルク仕様",
       "dataset_description": "クラシック・ミニ締結具のトルク仕様の包括的なデータセット",
-      "variable_measured": "締結具名, lb/ft & lb/inでのトルク, Nmでのトルク, 追加注記"
+      "variable_measured": "締結具名, lb/ftでのトルク, Nmでのトルク, 追加注記"
     },
     "table_headers": {
       "fastener": "締結具",
@@ -530,7 +530,7 @@
       "description": "经典迷你紧固件的完整扭矩规格。发动机、悬挂、传动系统和车身紧固件的参考表，包含lb/ft和Nm值。",
       "dataset_name": "经典迷你扭矩规格",
       "dataset_description": "经典迷你紧固件扭矩规格的综合数据集",
-      "variable_measured": "紧固件名称, lb/ft & lb/in扭矩, Nm扭矩, 附加说明"
+      "variable_measured": "紧固件名称, lb/ft扭矩, Nm扭矩, 附加说明"
     },
     "table_headers": {
       "fastener": "紧固件",
@@ -563,7 +563,7 @@
       "description": "클래식 미니 체결구의 완전한 토크 사양. 엔진, 서스펜션, 드라이브트레인 및 차체 체결구의 lb/ft 및 Nm 값을 포함한 참조표.",
       "dataset_name": "클래식 미니 토크 사양",
       "dataset_description": "클래식 미니 체결구 토크 사양의 포괄적인 데이터셋",
-      "variable_measured": "체결구 이름, lb/ft & lb/in 토크, Nm 토크, 추가 참고사항"
+      "variable_measured": "체결구 이름, lb/ft 토크, Nm 토크, 추가 참고사항"
     },
     "table_headers": {
       "fastener": "체결구",

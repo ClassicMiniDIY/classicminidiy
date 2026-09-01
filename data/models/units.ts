@@ -8,14 +8,17 @@
  * inches while the table header said "thou" — a thousandfold disagreement about
  * the same column, live, for months.
  *
- * Two of these columns are actively misleading if read by name:
+ * One column is actively misleading if read by name: `thou` holds INCHES, so
+ * `0.012` means 12 thou, not 0.012 thou — read literally it is out by a
+ * thousand. And one states no unit at all: vehicle weights are bare numbers.
  *
- *  - `lbin` is pound-INCHES. The Electrical torque table is published in them
- *    and has no `lbft` column, so a row read as pound-feet is out by twelve.
- *  - `thou` holds INCHES despite the name: `0.012` means 12 thou, not 0.012
- *    thou. Read literally it is out by a thousand.
- *
- * And one column states no unit at all: vehicle weights are bare numbers.
+ * `lbin` is described but currently unused. The Electrical torque rows were
+ * once filed under it, wrongly — the source publishes that section in lb-ft
+ * like every other, and its kgm column confirms it. The entry stays because
+ * manuals do publish small fasteners in pound-inches, and a future row that
+ * arrives in them must not be described as pound-feet; `unitsForItems` only
+ * ever names columns that are actually present, so an unused entry costs
+ * nothing and a missing one would cost a factor of twelve.
  *
  * The imperial column is the SOURCE — it is what the original manuals printed.
  * Metric is a courtesy this project adds, which makes it derived, and
@@ -27,6 +30,7 @@ export interface UnitDescriptions {
 
 export const TORQUE_UNITS: UnitDescriptions = {
   lbft: 'pound-feet (lb-ft)',
+  // Unused by the current data — see the note above. Do not delete.
   lbin: 'pound-INCHES (lb-in). One twelfth of a pound-foot. NOT interchangeable with lb-ft.',
   nm: 'newton-metres (Nm), converted from the imperial figure beside it',
 };

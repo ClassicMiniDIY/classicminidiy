@@ -895,11 +895,25 @@ bug.
   removed rather than exempted, because a wrong torque figure is worse than a
   missing one. Seven of 93 rows disagreed when this was first checked.
 
-- **`lbin` is pound-INCHES, and the Electrical torque table is published in
-  them.** It has no `lbft` column at all. Read as pound-feet it is out by
-  twelve, on alternator brush-box screws and distributor clamp bolts — the
-  fasteners least able to survive it. The whole section had been converted as
-  though it were lb-ft, so every Nm figure was about ten times high.
+- **Every torque row is pound-feet. The Electrical section was filed as `lbin`
+  in error, and that error cost real figures twice.** Its metric column did not
+  convert, which looked like a bad conversion; correcting the CONVERSION while
+  trusting the field name then made those six fasteners twelvefold too LOW,
+  briefly in production. The source publishes that section in lb-ft like every
+  other, and its kgm column confirms it independently — kgm x 9.80665 and
+  lbft x 1.35582 agree to the rounding on all six rows.
+
+  The lesson is about which column to trust. A field NAME is not evidence; two
+  independent columns agreeing is. When an imperial and a metric figure
+  disagree, work out which reading makes both the metric column and the
+  physical context true before changing either — a distributor clamp bolt
+  cannot be torqued harder than the cylinder head studs, and that check would
+  have caught it in both directions.
+
+  `lbin` remains described in `data/models/units.ts` and handled by the torque
+  page's column header, deliberately, though no row uses it: manuals do publish
+  small fasteners in pound-inches, and one arriving unlabelled is the twelvefold
+  error again.
 
 - **`thou` holds INCHES despite the name.** `0.012` means 12 thou, not 0.012
   thou. Read literally it is out by a thousand.

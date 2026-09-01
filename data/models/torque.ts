@@ -24,8 +24,8 @@ export interface ElectricalTable {
 
 export interface ElectricalTableItem {
   name: string;
-  lbin: number | string;
-  nm: number | string;
+  lbft: string;
+  nm: string;
   notes: string;
 }
 
