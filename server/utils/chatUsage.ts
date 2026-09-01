@@ -118,6 +118,19 @@ export interface ChatRunTracker {
    */
   recordCacheUsage(tokens: { read: number; written: number; uncached: number }): void;
   /**
+   * Note that the reply pointed the reader at the membership.
+   *
+   * The three limits on that pointer (only when nothing was answered, never
+   * beside safety guidance, once then drop) are prompt instructions, and a
+   * prompt instruction is not a guarantee. Without a counter, a drift back
+   * toward pitching on every reply — the failure the old shop-bot prompt
+   * actually shipped — would be invisible until someone read transcripts.
+   *
+   * Separate from `observe` for the same reason the two above are: `observe`
+   * advances chunk_count and stamps first-chunk time.
+   */
+  recordMembershipMention(): void;
+  /**
    * Emit the run summary. Safe to call once; later calls are ignored.
    *
    * `extra` carries membership context — which tier the caller was on and where
@@ -136,6 +149,7 @@ export interface ChatRunTracker {
 export function createChatRunTracker(event: H3Event, threadId: string, locale?: string): ChatRunTracker {
   const startedAt = Date.now();
   const tools = new Set<string>();
+  let membershipMentioned = false;
   const usage = { input: 0, output: 0 };
   const cache = { read: 0, written: 0, uncached: 0 };
   let firstChunkAt: number | null = null;
@@ -162,6 +176,9 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
     // closure-scope token accumulator above, and a later line touching
     // `usage.input` in here would silently record nothing. CLAUDE.md documents
     // shadowing as a live hazard class in this repo.
+    recordMembershipMention() {
+      membershipMentioned = true;
+    },
     recordCacheUsage(tokens: { read: number; written: number; uncached: number }) {
       cache.read += tokens.read;
       cache.written += tokens.written;
@@ -191,6 +208,7 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
               // The reason this file exists. An empty array on a real question
               // means the assistant answered with no Classic Mini tool at all.
               tools_called: [...tools].sort(),
+              membership_mentioned: membershipMentioned,
               tool_call_count: tools.size,
               input_tokens: usage.input || null,
               output_tokens: usage.output || null,

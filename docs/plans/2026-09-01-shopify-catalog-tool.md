@@ -107,9 +107,24 @@ nuxt.config.ts                 + SHOPIFY_STOREFRONT_TOKEN, SHOPIFY_STORE_DOMAIN
 server/agent/prompt.ts         + one TOOL_GUIDANCE entry
 ```
 
-The tool bridges the same way the other twelve do — `server/utils/agentTools.ts`
-is the pattern, and `AGENT_TOOL_NAMES` is derived, so
-`tests/static/agent-tool-registry.test.ts` picks the new tool up without an edit.
+**Nothing picks this tool up automatically — that claim was wrong in an earlier
+draft of this doc and is the most expensive mistake available here.**
+
+`AGENT_MCP_TOOL_NAMES` is `Object.keys(DEFINITIONS)` over `server/mcp/tools/`,
+and `AGENT_TOOL_NAMES` is that list plus a hand-written `'site-search'`.
+`tests/static/agent-tool-registry.test.ts` walks `server/mcp/tools` too. So a
+tool defined in `server/agent/tools.ts` — which is where the sketch above puts
+it, alongside `site-search` — is invisible to the derivation, to the registry
+test, and therefore to `toolCatalogue()` and the "names every tool" unit test.
+
+The result would be a tool the model holds but the prompt never mentions, with
+every test green. That is precisely the 11-calls-in-473-threads failure this
+whole rebuild exists to correct, re-shipped silently.
+
+So either register it under `server/mcp/tools/` (and get the derivation and the
+transport gate for free), or add it to `AGENT_TOOL_NAMES` and `TOOL_GUIDANCE` by
+hand **and** extend the registry test to cover the second source. Decide which
+before writing the tool, not after.
 
 ### Prompt guidance
 

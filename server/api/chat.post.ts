@@ -4,7 +4,7 @@ import { buildAgentTools } from '../agent/tools';
 import { buildSystemPrompt } from '../agent/prompt';
 import { createChatRunTracker } from '../utils/chatUsage';
 import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
-import { getChatAuth } from '../utils/chatTiers';
+import { getChatAuth, MEMBERSHIP_URL } from '../utils/chatTiers';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
 
 /**
@@ -144,9 +144,21 @@ export default defineEventHandler(async (event) => {
       uncached: usage?.inputTokenDetails?.noCacheTokens ?? 0,
     });
 
+  // Carries the last few characters between deltas so a URL split across two
+  // of them is still matched. Bounded by the URL's own length.
+  let membershipTail = '';
+
   const result = streamText({
     model: anthropic(((config.CHAT_MODEL as string) || 'claude-haiku-4-5-20251001').trim()),
-    system: buildSystemPrompt({ locale: body?.locale, pageSlug: body?.pageSlug }),
+    // `isMember` is why the tier is read here and not only for analytics: the
+    // membership pointer lives in the prompt's static half, so without it a
+    // paying member asking an unanswerable question is sold the subscription
+    // they already pay for.
+    system: buildSystemPrompt({
+      locale: body?.locale,
+      pageSlug: body?.pageSlug,
+      isMember: getChatAuth(event)?.tier === 'member',
+    }),
     // Cache the tool definitions and the system prompt.
     //
     // Anthropic's cache prefix runs tools -> system -> messages, so a breakpoint
@@ -180,6 +192,29 @@ export default defineEventHandler(async (event) => {
     // would be measuring something else.
     onChunk({ chunk }) {
       tracker.observe(chunk);
+      // Did this reply point the reader at the membership?
+      //
+      // The three limits on that pointer are prompt instructions, and a prompt
+      // instruction is not a guarantee — so it is counted, and a drift back
+      // toward pitching on every reply shows up in `chat_run_completed`
+      // instead of only in transcripts.
+      //
+      // Two things make the naive version silently never fire, and both were
+      // written wrong here first. The URL is streamed in pieces, so a single
+      // delta almost never contains all of it — hence the carried tail, which
+      // holds exactly enough of the previous delta for a URL straddling the
+      // boundary to be seen, and no more. And the SDK types a text delta with
+      // `text` in one shape and `delta` in another, so reading only one field
+      // yields `undefined` against a live stream while every test that builds
+      // the other shape passes.
+      if (chunk.type === 'text-delta') {
+        const piece = (chunk as { text?: string; delta?: string }).text ?? (chunk as { delta?: string }).delta;
+        if (typeof piece === 'string') {
+          const combined = membershipTail + piece;
+          if (combined.includes(MEMBERSHIP_URL)) tracker.recordMembershipMention();
+          membershipTail = combined.slice(-MEMBERSHIP_URL.length);
+        }
+      }
     },
     onStepFinish({ toolCalls, usage }) {
       for (const call of toolCalls ?? []) {
