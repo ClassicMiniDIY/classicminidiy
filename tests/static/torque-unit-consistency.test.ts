@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import torqueSpecs from '../../data/torqueSpecs.json';
 
 /**
@@ -16,6 +17,16 @@ import torqueSpecs from '../../data/torqueSpecs.json';
  * Nothing catches this by reading the code, because both numbers look
  * plausible in isolation. Only the relationship between them is wrong, so the
  * relationship is what gets asserted.
+ *
+ * There are NO exemptions, deliberately. The one row that could not be resolved
+ * by arithmetic — `Alternator (16ACR) Shaft nut`, filed as `"lbin": "25 to 30"`
+ * with `"nm": "34 to 41"` — was REMOVED from the dataset rather than exempted.
+ * Its metric figure is the exact lb-FT conversion of its imperial one, so either
+ * the field name or the value is wrong, and 25-30 lb-in is barely more than
+ * finger-tight for a nut holding a pulley against belt tension. A wrong figure
+ * for a real fastener is worse than a missing one, and an exemption list is
+ * where such a row would quietly live forever. It can be restored once the
+ * source manual settles which column is right.
  */
 const LBFT_TO_NM = 1.3558179;
 const LBIN_TO_NM = 0.1129848;
@@ -23,20 +34,6 @@ const LBIN_TO_NM = 0.1129848;
 /** Absolute and relative slack, because the published figures are rounded. */
 const ABS_TOLERANCE_NM = 0.55;
 const REL_TOLERANCE = 0.04;
-
-/**
- * Rows whose imperial column is itself in doubt, so the conversion cannot be
- * checked yet. SHRINK-ONLY: an entry that starts converting cleanly fails this
- * test, so a fix cannot land without deleting its own exemption.
- *
- * `Alternator (16ACR) Shaft nut` is filed under `lbin`, but 25-30 lb-in is
- * 2.8-3.4 Nm — barely more than finger-tight for a nut holding a pulley against
- * belt tension — while its stated 34-41 Nm is the exact lb-FT conversion, and
- * 25-30 lb-ft is the figure usually quoted for that alternator. Either the
- * field name or the value is wrong, and picking the wrong one under-torques a
- * pulley nut by twelve. It needs the source manual, not arithmetic.
- */
-const UNRESOLVED_SOURCE_UNIT = ['Alternator (16ACR) Shaft nut'];
 
 interface Row {
   name?: string;
@@ -61,12 +58,10 @@ describe('torque figures convert to their own metric column', () => {
     expect(rows.length).toBeGreaterThanOrEqual(90);
   });
 
-  it('every row converts, except the documented unresolved ones', () => {
+  it('every row converts', () => {
     const wrong: string[] = [];
 
     for (const { section, row } of rows) {
-      if (UNRESOLVED_SOURCE_UNIT.includes(row.name ?? '')) continue;
-
       const field = row.lbft ? 'lbft' : row.lbin ? 'lbin' : null;
       if (!field || row.nm === undefined || row.nm === '') continue;
 
@@ -94,27 +89,29 @@ describe('torque figures convert to their own metric column', () => {
     expect(wrong, `metric figures that do not convert from their own source column:\n${wrong.join('\n')}`).toEqual([]);
   });
 
-  it('keeps the unresolved list shrink-only', () => {
-    // An entry that now converts cleanly means the source unit was settled, and
-    // the exemption must go with it — otherwise the list rots into a place
-    // things are forgotten rather than a list of open questions.
-    for (const name of UNRESOLVED_SOURCE_UNIT) {
-      const entry = rows.find(({ row }) => row.name === name);
-      expect(entry, `"${name}" is exempted but no longer exists in the data`).toBeTruthy();
+  it('does not silently regain the row that was removed as bad data', () => {
+    // Re-adding it is fine once the source unit is settled — but it has to come
+    // back with a metric figure that converts, which the check above enforces.
+    // This names it so a reappearance is a deliberate act, not an accident.
+    const readded = rows.find(({ row }) => row.name === 'Alternator (16ACR) Shaft nut');
+    expect(
+      readded,
+      'the 16ACR shaft nut is back: confirm against the source manual whether it is lb-in or lb-ft before keeping it'
+    ).toBeUndefined();
+  });
 
-      const row = entry?.row as Row;
-      const field = row.lbft ? 'lbft' : 'lbin';
-      const factor = field === 'lbft' ? LBFT_TO_NM : LBIN_TO_NM;
-      const source = numbers(row[field] as string);
-      const metric = numbers(row.nm as string);
-      const converts =
-        source.length === metric.length &&
-        source.every(
-          (v, i) =>
-            Math.abs(v * factor - (metric[i] as number)) <= Math.max(ABS_TOLERANCE_NM, v * factor * REL_TOLERANCE)
-        );
-
-      expect(converts, `"${name}" now converts cleanly — delete it from UNRESOLVED_SOURCE_UNIT`).toBe(false);
+  it('the tool description states the real row counts', () => {
+    // Removing one row left the description claiming "Electrical (6)". These
+    // counts are the first thing the model reads about the dataset, and a stale
+    // one tells it rows exist that do not. Nothing else checks them.
+    const description = readFileSync(new URL('../../server/mcp/tools/torque-specs.ts', import.meta.url), 'utf8');
+    for (const [, table] of Object.entries(torqueSpecs as Record<string, { title?: string; items?: Row[] }>)) {
+      const count = table.items?.length ?? 0;
+      // The counts are written as "Engine (41 fasteners)" but "Suspension (24)",
+      // so match the opening of the parenthetical rather than a fixed suffix.
+      const title = String(table.title).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(`${title} \\(${count}[ )]`);
+      expect(pattern.test(description), `the description does not say "${table.title} (${count}...)"`).toBe(true);
     }
   });
 });
