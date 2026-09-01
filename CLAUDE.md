@@ -1247,6 +1247,26 @@ repair them afterwards:
   prerendered HTML would carry a throwaway signature. The worker verifies with
   its own secret and answers `403 Invalid URL signature` for all of them. A
   mismatch here breaks share previews site-wide and nothing else notices.
+- `NUXT_PUBLIC_TURNSTILE_SITE_KEY` — **an unset value is worse than a missing
+  one, because @nuxtjs/turnstile substitutes Cloudflare's ALWAYS-PASS test
+  sitekey (`1x00000000000000000000AA`) and nothing looks wrong.** The widget
+  renders, goes green, and hands back a dummy token; Supabase then verifies it
+  against the real secret and refuses with `invalid-input-response`, so sign-in
+  fails at the last step with an error that reads like a user problem. The
+  production widget is `CMDIY Platform`; a real sitekey starts `0x`, and every
+  documented dummy starts `1x`/`2x`/`3x`. The value must also pair with the
+  secret configured in Supabase Auth's CAPTCHA settings, which lives outside
+  this repo — changing the widget means changing both halves.
+
+  It shipped exactly that way: the Actions secret was bulk-imported from a local
+  `.env` holding the test key on 2026-08-26, and email and passkey sign-in were
+  dead in production for six days. Note why no gate caught it. The secret
+  EXISTED, so a presence check passes — which is why the build check now asserts
+  the VALUE. And OAuth does not use Turnstile, so `login_success` kept ticking
+  in PostHog while `magic_link_sent` flatlined to zero; the aggregate metric
+  hid a total outage of one sign-in method. **A `.env` is a dev file — never
+  bulk-import one into Actions or Worker secrets without diffing what each
+  value means in production.**
 
 **RUNTIME** — `wrangler secret put`, never the build env. Set them with
 `./scripts/set-cf-secrets.sh` (reads your local `.env`, never prints a value):

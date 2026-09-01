@@ -118,6 +118,8 @@ jobs:
           GITHUB_API_KEY: ${{ secrets.GH_API_KEY }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           NUXT_OG_IMAGE_SECRET: ${{ secrets.NUXT_OG_IMAGE_SECRET }}
+          # Checked by VALUE below, not just for presence — see the note there.
+          NUXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NUXT_PUBLIC_TURNSTILE_SITE_KEY }}
         run: |
           missing=()
           for name in NUXT_PUBLIC_SUPABASE_URL NUXT_PUBLIC_SUPABASE_KEY SUPABASE_SERVICE_KEY \
@@ -131,6 +133,34 @@ jobs:
             echo "worse, succeeds and ships a site with auth and /exchange dead."
             exit 1
           fi
+
+          # Turnstile is the one that presence cannot cover, so it gets its own
+          # check. @nuxtjs/turnstile falls back to Cloudflare's ALWAYS-PASS test
+          # sitekey when the value is unset, and the fallback is indistinguishable
+          # from a working config until a user tries to sign in: the widget
+          # renders, goes green, and issues a dummy token that Supabase then
+          # verifies against the REAL secret and rejects as
+          # `invalid-input-response`.
+          #
+          # This is not hypothetical. The Actions secret was bulk-imported from a
+          # local .env holding the test key on 2026-08-26, and magic-link and
+          # passkey sign-in were dead in production for six days. Nothing went
+          # red: the secret EXISTED, so a presence check would have passed; OAuth
+          # does not use Turnstile, so `login_success` kept ticking and only
+          # `magic_link_sent` flatlined. Assert the value.
+          #
+          # Cloudflare's documented dummy sitekeys all start 1x/2x/3x; real ones
+          # start 0x. Printing a dummy back is safe — they are public constants,
+          # and a sitekey is public by design either way.
+          case "${NUXT_PUBLIC_TURNSTILE_SITE_KEY:-}" in
+            '')
+              echo "::error::NUXT_PUBLIC_TURNSTILE_SITE_KEY is unset. The build would bake Turnstile's test sitekey and ship a login page where email and passkey sign-in fail with 'invalid-input-response'."
+              exit 1 ;;
+            1x*|2x*|3x*)
+              echo "::error::NUXT_PUBLIC_TURNSTILE_SITE_KEY is a Cloudflare TEST sitekey ($NUXT_PUBLIC_TURNSTILE_SITE_KEY). Real sitekeys start with 0x. Set it to the production widget's sitekey, or email and passkey sign-in ship broken."
+              exit 1 ;;
+          esac
+
           echo "All required build-time secrets are present."
 
       # RUNTIME values are Cloudflare Worker secrets, read by Nitro's env
