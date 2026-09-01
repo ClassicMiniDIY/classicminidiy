@@ -158,7 +158,7 @@
       {
         "name": "Oil Filter Housing Bolts",
         "lbft": "15",
-        "nm": "19",
+        "nm": "20",
         "notes": "848cc, 998cc"
       },
       {
@@ -400,19 +400,19 @@
       {
         "name": "Alternator (11AC) Brush box fixing screws",
         "lbin": "10",
-        "nm": "11",
+        "nm": "1.1",
         "notes": ""
       },
       {
         "name": "Alternator (11AC) Diode heat sink fixings",
         "lbin": "25",
-        "nm": "27",
+        "nm": "2.8",
         "notes": ""
       },
       {
         "name": "Alternator (11AC) through-bolts",
         "lbin": "45 to 50",
-        "nm": "49 to 55",
+        "nm": "5.1 to 5.6",
         "notes": ""
       },
       {
@@ -424,13 +424,13 @@
       {
         "name": "Distributor Clamp Bolt (fixed nut type)",
         "lbin": 50,
-        "nm": 55,
+        "nm": "5.6",
         "notes": ""
       },
       {
         "name": "Distributor Clamp Bolt (fixed bolt type)",
         "lbin": 30,
-        "nm": 33,
+        "nm": "3.4",
         "notes": ""
       }
     ]
