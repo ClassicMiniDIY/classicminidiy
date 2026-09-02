@@ -21,7 +21,7 @@ export const REPO_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 /** Directories that are never part of the shipped app. `.claude/worktrees/`
  * holds full repo copies from past sessions — the same reason
  * vitest.config.ts excludes it from test discovery. */
-const SKIP_DIRS = new Set(['node_modules', '.nuxt', '.output', '.git', '.claude', 'coverage', 'dist']);
+export const SKIP_DIRS = new Set(['node_modules', '.nuxt', '.output', '.git', '.claude', 'coverage', 'dist']);
 
 /** Recursively collect files under `dir` (repo-relative) matching `ext`. */
 export function walk(dir: string, ext: string): string[] {

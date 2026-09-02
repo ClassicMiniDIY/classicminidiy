@@ -110,7 +110,7 @@ with the pages:
 
 `wheels/review/save.ts` and `registry/queue/save.ts` inserted approved rows with
 `legacy_submitted_by` only and never `submitted_by`, which is precisely what the
-"Contribution Loop Invariants" section of CLAUDE.md says an approval path must
+`.claude/rules/contributions.md` (Contribution loop rules) says an approval path must
 never do: the contribution is never linked to the account that made it, so no
 profile stats, no badges, no leaderboard entry. They were reachable by URL until
 today. Deleting them removes the last approval path that could write an

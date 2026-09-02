@@ -9,7 +9,7 @@ import { serverRuntimeConfig } from './runtimeConfig';
  * FOUR THINGS HERE ARE NON-NEGOTIABLE, each because of a specific past failure.
  *
  *  1. STOREFRONT API, NEVER THE ADMIN API. `/api/chat` is unauthenticated by
- *     documented invariant (CLAUDE.md, "Security Invariants") — anyone on the
+ *     documented invariant (`.claude/rules/security.md`) — anyone on the
  *     internet can reach it, and the model decides when a tool fires. An Admin
  *     token can read customers and orders, so putting one behind that call is a
  *     data-exfiltration path rather than a feature. The Storefront token is
@@ -127,7 +127,7 @@ export interface ShopifyCatalogConfig {
  * missing, which is the `not_configured` path — distinct from `unavailable` on
  * purpose, because "no secret set" and "Shopify is down" need different fixes
  * and an unset Cloudflare secret resolves to an empty string rather than an
- * error (CLAUDE.md, "Build-time vs runtime secrets").
+ * error (`.claude/rules/cloudflare-env.md`).
  */
 export function shopifyConfig(event?: H3Event): ShopifyCatalogConfig | null {
   const config = event ? serverRuntimeConfig(event) : useRuntimeConfig();

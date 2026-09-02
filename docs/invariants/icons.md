@@ -1,6 +1,6 @@
 # Font Awesome icon rules
 
-Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context budget down. The enforced contract lives in `CLAUDE.md (Icons)` (path-scoped, loads when you touch the matching files); this file keeps the reasoning and the incident history behind it. Update both when a rule changes.
+Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context budget down. The enforced contract is the `Icons` bullet in `CLAUDE.md`, which loads in every session; this file keeps the reasoning and the incident history behind it. Update both when a rule changes.
 
 #### Icons (Font Awesome 6 - EXCLUSIVE)
 

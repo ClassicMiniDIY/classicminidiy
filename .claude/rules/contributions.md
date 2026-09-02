@@ -6,7 +6,8 @@ paths:
   - 'app/components/profile/**'
   - 'server/api/admin/queue/**'
   - 'server/utils/archiveApprovals.ts'
-  - 'server/api/search*'
+  - 'server/api/search/**'
+  - 'app/components/dashboard/**'
   - 'data/models/toolbox-catalog.ts'
   - 'app/composables/useRecentTools.ts'
   - 'app/pages/search.vue'
@@ -26,4 +27,5 @@ Detail and the duplicate-colour incident: `docs/invariants/contributions.md`. Tr
 - `data/models/toolbox-catalog.ts` is keyed on the same `to` paths as `ToolboxItems`; add or move a tool in both. Omnisearch merges Postgres `omnisearch()` (ILIKE on purpose) with the in-process toolbox catalog.
 - `/search` keeps `useFacetedSeo('/search', { indexableParams: [] })`. `useRecentTools().load()` runs in `onMounted` only.
 - `ContributeWizard.vue` is the only archive submission form except `/contribute/color`; the `/contribute/{document,registry,wheel}` routes are launchers that old links depend on. The registry step keeps `trim`, `bodyType`, `engineSize`, and the payload keys `bodyNum`/`engineNum` map by name in `insertApprovedItem()`.
-- Public profile reads go through the `public_profiles` view; `profiles` for another user returns zero rows. Keep `DashboardTrustProgressCard` copy in sync with the DB thresholds.
+- Public profile reads go through the `public_profiles` view; `profiles` for another user returns zero rows.
+- Trust levels: 3 approved → contributor; 10 approved with <20% rejections → trusted; a 30-day tenure path also reaches contributor. `DashboardTrustProgressCard` (`app/components/dashboard/TrustProgressCard.vue`) is the user-facing explanation and its copy must stay in sync with the DB thresholds if they change.

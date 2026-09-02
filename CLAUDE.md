@@ -20,7 +20,9 @@ exploit call; document the rule to uphold, not the route around it, and fix a re
 weakness in code rather than describing it; (3) operational state: what is unfixed,
 infra config outside this repo (WAF rules, env values, dashboard settings), abuse
 thresholds, and incident specifics naming real users. Never commit real user data, not
-even in fixtures. Scrubbing after the fact is partial; history and forks keep it.
+even in fixtures. **If a note is genuinely valuable but fails the above, write it in
+`classicminidiy-supabase`'s CLAUDE.md and leave a pointer here.** Scrubbing after the
+fact is partial; history and forks keep it.
 
 ## Ecosystem
 
@@ -65,7 +67,7 @@ never remove those redirects.
 ## Commands
 
 ```bash
-bun install            # no postinstall: run `bunx nuxi prepare` before tests on a fresh checkout
+bun install            # deliberately NOT --frozen-lockfile (see the workflow comments); no postinstall, so run `bunx nuxi prepare` before tests on a fresh checkout
 bun run dev
 bun run build
 bun run test           # vitest: unit + static invariants (~1.4s for static)
@@ -116,8 +118,12 @@ membership (`/membership`), contribution wizard (`/contribute/*`), dashboard
   is reverted by the next merge.
 - **i18n:** `const { t } = useI18n()` (auto-imported), keys in an `<i18n lang="json">`
   block with ALL ten locales (`en, es, fr, de, it, pt, ru, ja, zh, ko`), no HTML inside
-  message values (hard build failure), named params for dynamic text. There are no
-  `i18n/locales/*.json` files. `/legal/*`, `/about` and `/admin/models` are English-only
+  message values (hard build failure; invalid JSON in the block also breaks the build),
+  named params for dynamic text. There are no `i18n/locales/*.json` files; `i18n.config.ts`
+  is plumbing only. `@nuxtjs/i18n` v10, `strategy: 'no_prefix'` (no `/de/` URLs, so never
+  build locale-prefixed links), locale chosen by the `i18n_redirected` cookie which SSR
+  honours, switched by `LanguageSwitcher.vue`; `i18n.restructureDir: '.'` in
+  `nuxt.config.ts` is what lets the root `i18n.config.ts` resolve without a warning. `/legal/*`, `/about` and `/admin/models` are English-only
   on purpose. Long form: `docs/invariants/i18n.md`.
 - **Chat and MCP are public surfaces with opposite failure postures**: `/api/chat` is
   unauthenticated and its tier gate fails open; `/mcp` fails closed. Never add
