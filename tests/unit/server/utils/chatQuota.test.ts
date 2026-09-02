@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import { readFileSync } from 'node:fs';
+import { blankComments } from '../../../static/_scan';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
@@ -121,7 +122,16 @@ describe('anonymous quota', () => {
      * a forwarded protocol would let a spoofed `Host: localhost` ask production
      * for a non-Secure cookie.
      */
-    const source = readFileSync(new URL('../../../../server/utils/chatQuota.ts', import.meta.url), 'utf8');
+    // Comments are blanked first. CLAUDE.md: "Any check that scans source for a
+    // call must blank comments first" — three earlier checks in this repo were
+    // wrong because prose counted as code, and this would be the fourth: the
+    // natural comment to write beside the fix names the very string this
+    // forbids, so documenting it would fail the suite and invite deleting the
+    // guard rather than the comment. Verified by adding such a comment: it did.
+    const source = blankComments(
+      readFileSync(new URL('../../../../server/utils/chatQuota.ts', import.meta.url), 'utf8'),
+      'script'
+    );
     expect(source).toContain('secure: !import.meta.dev');
     expect(source, 'a hardcoded `secure: true` breaks local dev silently').not.toMatch(/secure:\s*true/);
     expect(source, 'never key the flag on caller-supplied request data').not.toMatch(

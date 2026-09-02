@@ -29,18 +29,32 @@ const LBFT_TO_NM = 1.3558179;
 const LBIN_TO_NM = 0.1129848;
 
 /**
- * Absolute slack, because BOTH figures are rounded independently.
+ * Absolute slack, PER SECTION, because the sections do not all derive their
+ * metric column the same way.
  *
- * An integer imperial figure could be anything within +/-0.5 lb-ft, which is
- * +/-0.68 Nm, and the metric figure carries its own +/-0.5 Nm. So two honestly
- * rounded columns can legitimately disagree by about 1.2 Nm, and a tighter
- * bound flags correct data: the general-fastener table's 1/4 UNF row is 9 Nm
- * and 6 lb-ft, which is 0.87 Nm apart and right.
+ * Everywhere the archive publishes a named fastener, the imperial figure is the
+ * source and the metric one is converted from it, so the two should agree to
+ * little more than rounding. 0.55 Nm is that bound, and it is the one that
+ * caught the oil filter housing row being 1.34 out.
  *
- * It is still far tighter than any real error this has caught. The Electrical
- * section was out by a factor of ten, and the oil filter housing row by 1.34.
+ * `generalTable` is the exception and has to be, because its two columns are
+ * INDEPENDENT: the MPI workshop manual prints both Nm and lb-ft for a general
+ * fastener, each rounded on its own, so nothing is derived from anything. Its
+ * 1/4 UNF row is 9 Nm against 6 lb-ft (8.13 converted) — correct as published,
+ * and 0.87 apart.
+ *
+ * That single row is why this started as one global 1.2, which quietly halved
+ * the guard on the other hundred-odd rows to admit twelve. Scoping the slack
+ * keeps the derived sections held to the tight bound where the invariant
+ * actually applies, and still catches an order-of-magnitude error in the
+ * general table, which is the failure that matters there.
  */
-const ABS_TOLERANCE_NM = 1.2;
+const DEFAULT_ABS_TOLERANCE_NM = 0.55;
+const SECTION_ABS_TOLERANCE_NM: Record<string, number> = { generalTable: 1.25 };
+
+function toleranceFor(section: string): number {
+  return SECTION_ABS_TOLERANCE_NM[section] ?? DEFAULT_ABS_TOLERANCE_NM;
+}
 const REL_TOLERANCE = 0.04;
 
 interface Row {
@@ -86,7 +100,7 @@ describe('torque figures convert to their own metric column', () => {
       for (const [i, value] of source.entries()) {
         const expected = value * factor;
         const actual = metric[i] as number;
-        if (Math.abs(expected - actual) > Math.max(ABS_TOLERANCE_NM, expected * REL_TOLERANCE)) {
+        if (Math.abs(expected - actual) > Math.max(toleranceFor(section), expected * REL_TOLERANCE)) {
           wrong.push(
             `[${section}] ${row.name}: ${value} ${field} is ${expected.toFixed(1)} Nm, but the row says ${actual}`
           );

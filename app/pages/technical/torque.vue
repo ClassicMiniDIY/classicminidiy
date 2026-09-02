@@ -210,17 +210,27 @@
                       <tr v-for="(row, idx) in filterItems(table.items, key)" :key="idx">
                         <td>{{ row.name }}</td>
                         <td>
+                          <!--
+                            `!= null` is not enough: a row can publish an empty
+                            string where the source gives no figure (the M5
+                            fastener lists a spanner size only), and an empty
+                            string is not null — it rendered as a blank coloured
+                            pill, which reads as a value that failed to load
+                            rather than one that does not exist.
+                          -->
                           <span
-                            v-if="row.lbft != null || row.lbin != null"
+                            v-if="row.lbft || row.lbin"
                             class="px-2 py-1 rounded bg-primary/10 text-primary font-medium"
                           >
-                            {{ row.lbft ?? row.lbin }}
+                            {{ row.lbft || row.lbin }}
                           </span>
+                          <span v-else class="text-base-content/60">&mdash;</span>
                         </td>
                         <td>
-                          <span class="px-2 py-1 rounded bg-info/20 text-info font-medium">
+                          <span v-if="row.nm" class="px-2 py-1 rounded bg-info/20 text-info font-medium">
                             {{ row.nm }}
                           </span>
+                          <span v-else class="text-base-content/60">&mdash;</span>
                         </td>
                         <td>{{ row.notes || t('ui.no_notes') }}</td>
                       </tr>

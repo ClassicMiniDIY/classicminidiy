@@ -72,15 +72,20 @@
           >
             {{ t('anonymous.secondary') }}
           </NuxtLink>
+        </div>
 
-          <!--
-            The way out of a panel this component cannot date. An anonymous
-            window rolls 24 hours from the last ACCEPTED message, which the
-            client has no way to know, so a remembered refusal has no reliable
-            expiry — without this, someone whose allowance had genuinely reset
-            would sit behind a stale panel. The server re-adjudicates every
-            send, so the worst case of pressing it is the panel returning.
-          -->
+        <!--
+          OUTSIDE the tier block on purpose. This is the way out of a panel this
+          component cannot date: a window rolls from the last ACCEPTED message,
+          which the client has no way to know, so a remembered refusal has no
+          reliable expiry. A member has no other control here at all — the CTAs
+          above are for anonymous and free tiers — so nesting it left the paying
+          tier facing a buttonless panel and a locked composer with no way back.
+          Their window is monthly, the one most likely to outlive the stored
+          verdict. The server re-adjudicates every send; the worst case of
+          pressing this is the panel returning.
+        -->
+        <div class="mt-4">
           <button type="button" class="btn btn-ghost btn-sm font-normal" @click="emit('dismiss')">
             {{ t('try_again') }}
           </button>
@@ -94,7 +99,7 @@
   import { computed, watch } from 'vue';
   import type { QuotaExhausted } from '~/utils/chatQuotaError';
 
-  const props = defineProps<{ quota: QuotaExhausted }>();
+  const props = defineProps<{ quota: QuotaExhausted; restored?: boolean }>();
   const emit = defineEmits<{ dismiss: [] }>();
   const { t } = useI18n();
   const { capture } = usePostHog();
@@ -115,6 +120,14 @@
    * chat without remounting, so a mount-only capture could record a CTA click
    * against no impression — a funnel whose numerator exceeds its denominator,
    * which reads as a conversion rate above 100%.
+   *
+   * `restored` separates the two ways this panel can appear. It used to mount
+   * only from a live 429, so the event meant "a refusal happened". Now that a
+   * verdict is remembered across navigation, the panel also mounts from storage
+   * on every later visit inside the window — and without this flag one refusal
+   * would emit an event per page view, inflating the count and silently
+   * redefining the metric mid-series. Filter to `restored: false` to keep the
+   * original meaning and comparability with data from before this shipped.
    */
   watch(
     () => props.quota.tier,
@@ -123,6 +136,7 @@
         tier,
         used: props.quota.used ?? null,
         limit: props.quota.limit ?? null,
+        restored: props.restored === true,
       });
     },
     { immediate: true }

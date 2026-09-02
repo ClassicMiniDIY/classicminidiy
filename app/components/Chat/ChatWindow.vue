@@ -117,9 +117,14 @@
                      something went wrong, and only one of those is true. -->
                 <!-- Hitting a ceiling is not a failure, so it does not get the
                      failure treatment. See QuotaLimitPanel. -->
-                <QuotaLimitPanel v-if="quotaExhausted" :quota="quotaExhausted" @dismiss="dismissQuotaPanel" />
+                <QuotaLimitPanel
+                  v-if="quotaExhausted"
+                  :quota="quotaExhausted"
+                  :restored="!parseQuotaError(error)"
+                  @dismiss="dismissQuotaPanel"
+                />
 
-                <div v-else-if="error" role="alert" class="alert alert-error">
+                <div v-else-if="showGenericError" role="alert" class="alert alert-error">
                   <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
                   <span>{{ t('request_failed') }}</span>
                 </div>
@@ -279,7 +284,7 @@
 
   const history = useChatHistory();
   const sync = useChatSync();
-  const { isSustainingMember } = useAuth();
+  const { isSustainingMember, isAuthenticated } = useAuth();
 
   /**
    * Whether this browser is syncing conversations to the account.
@@ -418,16 +423,13 @@
   const isLoading = computed(() => status.value === 'submitted' || status.value === 'streaming');
 
   /**
-   * The quota details when the last failure was a 429, else null.
+   * The quota verdict, from the live error OR from a refusal earlier in the
+   * window.
    *
    * The transport puts the response body in the error's message, so the
    * structured 429 the route sends survives the trip — see
    * `app/utils/chatQuotaError.ts` for why parsing it matters more than for a
    * normal error.
-   */
-  /**
-   * The quota verdict, from the live error OR from a refusal earlier in the
-   * window.
    *
    * It used to be the live error alone, and a `computed` over transient state
    * dies with the component. So leaving /chat and coming back — clicking the
@@ -482,11 +484,42 @@
     clearQuotaVerdict();
   }
 
+  /**
+   * True when a generic failure should be shown.
+   *
+   * NOT simply `error`. `useChat` exposes no way to clear it, so after the quota
+   * panel is dismissed the live 429 is still sitting there and the template's
+   * `v-else-if="error"` fell straight through to the red `role="alert"` — giving
+   * a ceiling exactly the failure treatment the comment above that block says it
+   * must never get. A dismissed quota refusal is not an error; it is a reader
+   * choosing to try again.
+   */
+  const showGenericError = computed(() => !!error.value && !parseQuotaError(error.value));
+
+  /**
+   * A stored refusal belongs to the tier that earned it.
+   *
+   * Signing in is the panel's own primary call to action, and the whole promise
+   * of it is a bigger allowance. Restoring an anonymous verdict afterwards
+   * showed the convert the identical "sign in to treble your allowance" wall
+   * with the composer still locked — the reward for converting being the same
+   * wall. Dropping it on any auth transition costs at most one refused send,
+   * which the server adjudicates anyway and which re-stores the correct verdict.
+   */
+  watch(isAuthenticated, () => {
+    storedQuota.value = null;
+    clearQuotaVerdict();
+    quotaDismissed.value = false;
+  });
+
   onMounted(() => {
     hasMounted.value = true;
     // Reads localStorage, so it must run after mount — same rule as
     // useRecentTools().load(); see CLAUDE.md.
     history.load();
+    // Only a verdict from the tier still in effect. `isAuthenticated` flips
+    // after `initAuth()` resolves, and the watch above clears it then, so a
+    // stale anonymous panel cannot outlive the sign-in that was meant to lift it.
     storedQuota.value = loadQuotaVerdict();
 
     // Resume the most recent conversation, if there is one.
@@ -674,6 +707,9 @@
   });
 
   async function handleSubmit() {
+    // A dismissed panel re-enables the composer on purpose, so this is the one
+    // place that must not assume the UI gate held.
+    if (quotaExhausted.value) return;
     const text = input.value.trim();
     if (!text || isLoading.value) return;
 
@@ -783,6 +819,20 @@
     const queryMessage = route.query.message;
     if (typeof queryMessage !== 'string' || !queryMessage.trim()) return;
     hasAutoSubmitted.value = true;
+
+    // Never auto-send into a quota we already know is spent. Without this the
+    // arrival wipes the restored transcript, fires a message the server will
+    // refuse, and leaves it sitting unanswered — the precise "looks sent,
+    // nothing answers it" failure the stored panel exists to prevent, except
+    // self-inflicted and with the reader's history cleared for it.
+    //
+    // The text is still put in the composer, so pressing "Try again" sends what
+    // they actually typed rather than losing it.
+    if (quotaExhausted.value) {
+      input.value = queryMessage.trim();
+      return;
+    }
+
     // A query message starts a NEW conversation rather than appending to the
     // one just restored from history, which is what a visitor arriving from the
     // floating input expects.
