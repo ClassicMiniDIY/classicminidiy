@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
-"""Archive plate: MPi cylinder head nut tightening sequence (fig. 12M3412).
+"""Archive plate: 1275 A-series cylinder head nut tightening sequence.
 
 The head artwork is NOT redrawn by hand. It is a potrace vectorisation of the
 figure's own 624x1056 CCITT stencil, lifted from the archive's copy of
 RCL0193ENG, so the casting outline, the spark plug wells and the rocker gear are
-the manual's geometry rather than an approximation of it. This script only
-recolours the manual's numerals into the CMDIY accent, drops its baked-in
-"12M3412" caption (the plate header carries it instead), and frames the result.
+the manual's geometry rather than an approximation of it.
+
+What this script changes about the figure, and why:
+
+* It drops all thirteen of the manual's numerals and sets its own in their exact
+  former positions, so the manual's leader lines still point at the right nut.
+* It renumbers. The source numbers all thirteen fasteners 1-13, but only NINE are
+  main head studs; the other four sit on the rocker pedestal castings. Numbering
+  studs 1-9 and lettering the rest A-D is what lets an owner count studs and
+  confirm which head they have. The renumbering is verifiable: taking the studs in
+  the source's order yields top row 6, 2, 3, 7 and bottom row 9, 4, 1, 5, 8 -- the
+  same pattern as fig. 12M0143, mirrored, which views the head from the other end.
+* It drops the artwork's baked-in "12M3412" caption; the plate header carries it.
 
 Re-render with::
 
@@ -19,51 +29,63 @@ import re
 HERE = pathlib.Path(__file__).parent
 TRACE = HERE / "cylinder-head-nut-tightening-sequence.trace.svg"
 
-W, H = 1600, 1390
+W, H = 1600, 1410
 
 INK     = "#1c1f24"
 LINE    = "#111418"
 SUBINK  = "#5b6169"
 RULE    = "#c7ccd1"
-ACCENT  = "#ed7135"   # CMDIY secondary
-OLIVE   = "#6b7a52"   # CMDIY accent, also the four non-stud fixings
 PAPER   = "#ffffff"
+
+# Studs carry the CMDIY secondary. The four non-stud fixings are BLUE rather than
+# the house olive: olive against orange is a red-green pair, which is the single
+# most common confusion for colour-vision deficiency, and it only cleared 4.4:1 on
+# white. This blue is 8.6:1 and stays separable under deuteranopia and protanopia.
+STUD    = "#ed7135"
+FIXING  = "#1e40af"
+OLIVE   = "#6b7a52"   # panel furniture only, never a fastener label
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
 MONO = "Menlo, DejaVu Sans Mono, Courier New, monospace"
 
-# Path indices in the potrace output, verified by rendering the classified
-# figure and reading it. The split is the whole point of this plate: the figure
-# numbers thirteen fasteners, but only NINE of them are main head studs. The
-# other four (3, 5, 9, 11) are the small nuts on the rocker pedestal castings,
-# and they are the entire middle band of numerals in the trace.
-MAIN_STUD_NUMERALS = {0, 1, 2, 3, 4, 50, 51, 52, 53, 54, 55, 56}   # 8 2 4 10 / 13 6 1 7 12
-OTHER_FIXING_NUMERALS = {24, 25, 26, 27, 28}                        # 9 3 5 11
+# Every numeral in the trace is discarded — this plate sets its own. Indices were
+# read off a rendered, colour-classified trace. RE-TRACE THE FIGURE AND THEY ARE
+# MEANINGLESS; re-derive them by looking, do not assume they carried over.
+SOURCE_NUMERALS = {0, 1, 2, 3, 4, 24, 25, 26, 27, 28, 50, 51, 52, 53, 54, 55, 56}
 FIGURE_CAPTION = {57, 58, 59, 60, 61, 62, 63}   # the artwork's own "12M3412"
+DISCARD = SOURCE_NUMERALS | FIGURE_CAPTION
 
-# Native stencil size, and where the figure sits on the plate.
+# Centre of each discarded numeral, in the trace's own 1056x624 coordinates. Placing
+# the replacement label here keeps it on the end of the manual's own leader line.
+# label -> (cx, cy). Bottom-row heights genuinely differ; the leaders are unequal.
+STUDS = {
+    "6": (258.6, 68.4),  "2": (463.0, 68.6),  "3": (674.0, 70.5),  "7": (881.5, 68.5),
+    "9": (185.2, 541.7), "4": (367.8, 573.5), "1": (567.5, 574.5),
+    "5": (772.5, 573.0), "8": (959.0, 570.5),
+}
+FIXINGS = {
+    "C": (256.3, 394.5), "A": (463.2, 393.7), "B": (677.6, 392.1), "D": (881.5, 394.5),
+}
+
 FIG_W, FIG_H = 1056.0, 624.0
 FIG_SCALE = 1300.0 / FIG_W
 FIG_X, FIG_Y = (W - FIG_W * FIG_SCALE) / 2, 188.0
 
+LABEL_SIZE = 46
+CAP_HALF = 0.3585 * LABEL_SIZE      # digit centre sits this far above the baseline
 
-def traced_paths() -> list[str]:
+
+def to_plate(nx, ny):
+    return FIG_X + nx * FIG_SCALE, FIG_Y + ny * FIG_SCALE
+
+
+def traced_paths():
     src = TRACE.read_text()
     paths = re.findall(r'<path d=".*?"\s*/>', src, re.S)
     if len(paths) != 64:
-        raise SystemExit(f"expected 64 traced paths, found {len(paths)} — re-check the index sets")
-    out = []
-    for i, p in enumerate(paths):
-        if i in FIGURE_CAPTION:
-            continue
-        if i in MAIN_STUD_NUMERALS:
-            fill = ACCENT
-        elif i in OTHER_FIXING_NUMERALS:
-            fill = OLIVE
-        else:
-            fill = LINE
-        out.append(p.replace("<path", f'<path fill="{fill}"', 1))
-    return out
+        raise SystemExit(f"expected 64 traced paths, found {len(paths)} — re-derive DISCARD")
+    return [p.replace("<path", f'<path fill="{LINE}"', 1)
+            for i, p in enumerate(paths) if i not in DISCARD]
 
 
 out = []
@@ -71,22 +93,22 @@ add = out.append
 
 add(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
     f'viewBox="0 0 {W} {H}" role="img" '
-    f'aria-label="Cylinder head nut tightening sequence for the A-series nine-stud head">')
-add('<title>Cylinder Head Nut Tightening Sequence — A-Series Nine-Stud Head</title>')
-add('<desc>The A-series nine-stud cylinder head with the rocker gear fitted. Nine main head studs '
-    'are numbered 8, 2, 4, 10 on the upper row and 13, 6, 1, 7, 12 on the lower row. Numbers 9, 3, 5 '
-    'and 11 are a further four fixings on the rocker pedestals and are not main head studs. '
-    'Tighten progressively in order to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>')
+    f'aria-label="Cylinder head nut tightening sequence for the 1275 A-series nine-stud head">')
+add('<title>Cylinder Head Nut Tightening Sequence — 1275 A-Series 9-Stud Head</title>')
+add('<desc>The 1275 A-series cylinder head with the rocker gear fitted. Nine main head studs are '
+    'numbered in tightening order: 6, 2, 3, 7 across the upper row and 9, 4, 1, 5, 8 across the '
+    'lower row. Four further fixings on the rocker pedestal castings are lettered A to D and are '
+    'not head studs. Tighten to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>')
 add(f'<rect width="{W}" height="{H}" fill="{PAPER}"/>')
 
 # ---------------- header ----------------
 add(f'<text x="80" y="92" font-family="{FONT}" font-size="46" font-weight="700" '
     f'fill="{INK}" letter-spacing="-0.4">Cylinder Head Nut Tightening Sequence</text>')
 add(f'<text x="80" y="132" font-family="{FONT}" font-size="23" font-weight="500" '
-    f'fill="{SUBINK}">A-series nine-stud head (MPi 1275) — shown with the rocker gear fitted</text>')
-add(f'<rect x="80" y="158" width="120" height="5" fill="{ACCENT}"/>')
+    f'fill="{SUBINK}">1275 A-series 9-stud head — shown with the rocker gear fitted</text>')
+add(f'<rect x="80" y="158" width="120" height="5" fill="{STUD}"/>')
 add(f'<text x="{W-80}" y="92" text-anchor="end" font-family="{MONO}" font-size="20" '
-    f'fill="{SUBINK}" letter-spacing="1.5">PLATE 12M3412</text>')
+    f'fill="{SUBINK}" letter-spacing="1.5">SOURCE 12M3412</text>')
 add(f'<text x="{W-80}" y="126" text-anchor="end" font-family="{FONT}" font-size="19" '
     f'fill="{SUBINK}">Classic Mini DIY Archive</text>')
 
@@ -96,10 +118,15 @@ add(f'<g transform="translate(0,{FIG_H}) scale(0.1,-0.1)" stroke="none">')
 out.extend(traced_paths())
 add('</g></g>')
 
+# ---------------- our own labels, on the manual's leader lines ----------------
+for group, colour in ((STUDS, STUD), (FIXINGS, FIXING)):
+    for label, (nx, ny) in group.items():
+        px, py = to_plate(nx, ny)
+        add(f'<text x="{px:.1f}" y="{py + CAP_HALF:.1f}" text-anchor="middle" '
+            f'font-family="{FONT}" font-size="{LABEL_SIZE}" font-weight="700" '
+            f'fill="{colour}">{label}</text>')
+
 # ---------------- legend ----------------
-# The figure numbers thirteen fasteners but the head is a NINE-stud head. Naming
-# that split is the whole reason this legend exists: someone looking up a 9-stud
-# head must not count thirteen nuts and conclude they are on the wrong drawing.
 LEG_Y = FIG_Y + FIG_H * FIG_SCALE + 40
 
 
@@ -109,38 +136,40 @@ def legend(x, colour, label):
         f'fill="{INK}">{label}</text>')
 
 
-legend(289, ACCENT, "Nine main head studs &#8212; the 9-stud pattern")
-legend(795, OLIVE, "3, 5, 9 and 11 &#8212; further fixings, not main head studs")
+legend(300, STUD, "1&#8211;9 &#8212; the nine main head studs")
+legend(780, FIXING, "A&#8211;D &#8212; rocker pedestal fixings, not head studs")
 
 CAP_Y = LEG_Y + 46
 add(f'<text x="{W/2:.0f}" y="{CAP_Y:.0f}" text-anchor="middle" font-family="{FONT}" font-size="21" '
     f'font-style="italic" fill="{SUBINK}">'
-    f'The order works outwards from the centre — nut 1 is central on the lower row, '
-    f'and 12 and 13 are the end nuts.</text>')
+    f'The order works outwards from the centre — stud 1 is central on the lower row, '
+    f'and 8 and 9 are the end studs.</text>')
 
-# ---------------- torque panel ----------------
-PY, PH = CAP_Y + 36, 176.0
+# ---------------- procedure panel ----------------
+PY, PH = CAP_Y + 36, 200.0
 add(f'<rect x="80" y="{PY:.0f}" width="{W-160}" height="{PH}" rx="10" fill="#fbfaf7" '
     f'stroke="{RULE}" stroke-width="2"/>')
 add(f'<rect x="80" y="{PY:.0f}" width="6" height="{PH}" rx="3" fill="{OLIVE}"/>')
 add(f'<text x="118" y="{PY+40:.0f}" font-family="{FONT}" font-size="15" font-weight="700" '
     f'fill="{OLIVE}" letter-spacing="2.2">PROCEDURE</text>')
 add(f'<text x="118" y="{PY+78:.0f}" font-family="{FONT}" font-size="21" fill="{INK}">'
-    f'Fit the nuts and tighten progressively in the order shown, in two passes.</text>')
+    f'Tighten progressively in the order shown, in two passes over the sequence.</text>')
 add(f'<text x="118" y="{PY+110:.0f}" font-family="{FONT}" font-size="21" fill="{INK}">'
+    f'A–D are tightened in among the studs: A after 2, B after 3, C after 6, D after 7.</text>')
+add(f'<text x="118" y="{PY+142:.0f}" font-family="{FONT}" font-size="21" fill="{INK}">'
     f'The rocker shaft bracket nuts are separate fasteners — those take 25 Nm.</text>')
-add(f'<text x="118" y="{PY+145:.0f}" font-family="{FONT}" font-size="18" fill="{SUBINK}">'
+add(f'<text x="118" y="{PY+176:.0f}" font-family="{FONT}" font-size="18" fill="{SUBINK}">'
     f'Metric figures are as published in the source; imperial equivalents are converted.</text>')
 
 
 def stage(x, label, nm, lbft):
-    add(f'<rect x="{x}" y="{PY+30:.0f}" width="272" height="116" rx="8" fill="#ffffff" '
+    add(f'<rect x="{x}" y="{PY+42:.0f}" width="272" height="116" rx="8" fill="#ffffff" '
         f'stroke="{RULE}" stroke-width="2"/>')
-    add(f'<text x="{x+136}" y="{PY+58:.0f}" text-anchor="middle" font-family="{FONT}" '
+    add(f'<text x="{x+136}" y="{PY+70:.0f}" text-anchor="middle" font-family="{FONT}" '
         f'font-size="14" font-weight="700" fill="{OLIVE}" letter-spacing="2">{label}</text>')
-    add(f'<text x="{x+136}" y="{PY+104:.0f}" text-anchor="middle" font-family="{FONT}" '
+    add(f'<text x="{x+136}" y="{PY+116:.0f}" text-anchor="middle" font-family="{FONT}" '
         f'font-size="42" font-weight="700" fill="{INK}">{nm}</text>')
-    add(f'<text x="{x+136}" y="{PY+130:.0f}" text-anchor="middle" font-family="{FONT}" '
+    add(f'<text x="{x+136}" y="{PY+142:.0f}" text-anchor="middle" font-family="{FONT}" '
         f'font-size="19" fill="{SUBINK}">{lbft}</text>')
 
 
@@ -154,8 +183,8 @@ add(f'<text x="80" y="{FY+4:.0f}" font-family="{FONT}" font-size="17" fill="{SUB
     f'Vector redraw of fig. 12M3412 from RCL0193ENG Mini Workshop Manual, 2nd Edition '
     f'(Engine, Repairs), held in the Classic Mini DIY archive.</text>')
 add(f'<text x="80" y="{FY+30:.0f}" font-family="{FONT}" font-size="17" fill="{SUBINK}">'
-    f'Figures are for the nine-stud head. The earlier eleven-stud head and the 848/998 '
-    f'engines differ — check the torque chart first.</text>')
+    f'Studs renumbered 1–9 and the other fixings lettered A–D; the source numbers all thirteen '
+    f'1–13. Other A-series heads differ — check the torque chart.</text>')
 add(f'<text x="{W-80}" y="{FY+4:.0f}" text-anchor="end" font-family="{FONT}" font-size="17" '
     f'font-weight="600" fill="{OLIVE}">classicminidiy.com</text>')
 

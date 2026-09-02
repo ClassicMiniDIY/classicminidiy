@@ -44,36 +44,42 @@ restyle only the labelling.
 
 ### `cylinder-head-nut-tightening-sequence`
 
-The tightening order for the **A-series nine-stud head**, from fig. 12M3412 in
+The tightening order for the **1275 A-series nine-stud head**, from fig. 12M3412 in
 RCL0193ENG (2nd Edition, Engine, Repairs, PDF page 64) — the manual is itself in the
 archive, so the plate and its source travel together.
 
 The head artwork is a potrace vectorisation of the figure's own stencil. The
-generator only recolours the manual's numerals and drops its baked-in `12M3412`
-caption, because the plate header carries that instead. Those edits are index sets
-over potrace's path list, and the generator asserts the trace still has 64 paths —
+generator discards all thirteen of the manual's numerals and its baked-in `12M3412`
+caption, then sets its own labels at the discarded numerals' exact former positions
+so the manual's leader lines still point at the right nut. `DISCARD` is an index set
+over potrace's path list and the generator asserts the trace still has 64 paths —
 **re-trace the figure and those indices are meaningless.** Re-derive them by
-rendering the classified figure and looking at it, rather than assuming they carried
-over.
+rendering a colour-classified trace and looking at it.
 
-Load-bearing content, do not trim:
+Load-bearing decisions, do not undo:
 
 - **Nine of the thirteen numbered fasteners are head studs; four are not.** The
-  studs are `8, 2, 4, 10` on the upper row and `13, 6, 1, 7, 12` on the lower row.
-  `3, 5, 9, 11` are further fixings on the rocker pedestal castings. That split is
-  why `MAIN_STUD_NUMERALS` and `OTHER_FIXING_NUMERALS` are separate sets and why the
-  plate carries a legend: owners identify their head by counting studs, so a drawing
-  that shows thirteen nuts without saying which nine are studs actively misleads
-  someone trying to confirm they have a 9-stud head. Do not merge the two sets back
-  into one colour.
+  studs are relabelled `1`–`9` in the source's own order, and the four rocker
+  pedestal fixings become `A`–`D`. Owners identify a head by counting studs, so
+  leaving the source's 1–13 makes a nine-stud head read as a thirteen-stud one.
+  The renumbering is verifiable rather than invented: taking the studs in the
+  source's order gives upper row `6, 2, 3, 7` and lower row `9, 4, 1, 5, 8`, which
+  is fig. 12M0143's sequence for the same head, mirrored — that figure views the
+  head from the other end.
+- **A–D interleave with the studs** — A after 2, B after 3, C after 6, D after 7.
+  The procedure panel says so. Drop that line and the plate implies you tighten
+  1–9 and then the letters, which is not the published order.
+- **A–D are blue, not the house olive.** Olive against the orange is a red-green
+  pair, the most common confusion under colour-vision deficiency, and it only
+  reached 4.4:1 on white. The blue is 8.6:1 and stays separable under deuteranopia
+  and protanopia. Do not "re-brand" it back to olive; olive is panel furniture here,
+  never a fastener label.
 - **The torque figures are nine-stud only** — 34 Nm (25 lb-ft) first pass, 68 Nm
-  (50 lb-ft) final. They are _not_ the eleven-stud or 848/998 figures, both of which
-  are lower and live in `data/torqueSpecs.json`. The footer says so on the plate; a
-  reader who applies 68 Nm to a 998 head is the failure that wording exists to
-  prevent.
+  (50 lb-ft) final. They are _not_ the eleven-stud or 848/998 figures, both lower,
+  in `data/torqueSpecs.json`. A reader who applies 68 Nm to a 998 head is the
+  failure the footer wording exists to prevent.
 - **The rocker shaft bracket nuts are a third fastener set** at 25 Nm, tightened
-  after the sequence. The procedure panel says so because the figure shows them in
-  the same view.
+  after the sequence — distinct from A–D.
 
 Metric is the unit the source publishes; the imperial figures are converted. Same
 rule as the reference-data unit invariants in the root `CLAUDE.md` — deliver the
