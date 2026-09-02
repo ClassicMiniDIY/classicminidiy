@@ -90,7 +90,19 @@ function mintAnonSession(event: H3Event): string {
   setCookie(event, ANON_CHAT_SESSION_COOKIE, minted, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: true,
+    // Secure everywhere except local development.
+    //
+    // Browsers refuse to STORE a Secure cookie sent over http://localhost, so
+    // in dev the cookie never came back, every request fell through to the IP
+    // fallback, and one machine shared a single 15-a-day allowance across every
+    // browser and tab on it — which reads as the quota being broken rather than
+    // as a cookie that was never kept.
+    //
+    // Keyed on the BUILD flag, never on the request's host or forwarded
+    // protocol: those are caller-supplied, so a spoofed `Host: localhost` would
+    // otherwise be enough to ask production for a non-Secure cookie.
+    // `import.meta.dev` is fixed at build time and no request can influence it.
+    secure: !import.meta.dev,
     path: '/',
     maxAge: ANON_WINDOW_SECONDS,
   });

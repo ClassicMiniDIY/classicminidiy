@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
@@ -99,7 +100,33 @@ describe('anonymous quota', () => {
     expect((globalThis as any).setCookie).toHaveBeenCalledOnce();
     const opts = (globalThis as any).setCookie.mock.calls[0]![3];
     // httpOnly so a page script cannot read or forge the counter's key.
+    // `secure` is true here because `import.meta.dev` is false under vitest —
+    // i.e. this asserts the PRODUCTION branch.
     expect(opts).toMatchObject({ httpOnly: true, sameSite: 'lax', secure: true });
+  });
+
+  it('derives `secure` from the build flag rather than hardcoding it', () => {
+    /**
+     * The dev branch is unreachable from CI, so it needs a source-level guard.
+     *
+     * `import.meta.dev` is false in every test run, which means the assertion
+     * above can only ever see `secure: true`. Reverting the line to a literal
+     * `secure: true` would therefore keep the whole suite green while silently
+     * restoring the bug it fixed: browsers refuse to STORE a Secure cookie over
+     * http://localhost, so the cookie never comes back, every dev request falls
+     * through to the IP fallback, and one machine shares a single 15-a-day
+     * allowance across every browser and tab on it.
+     *
+     * The flag must stay a BUILD-time one. Deriving it from the request host or
+     * a forwarded protocol would let a spoofed `Host: localhost` ask production
+     * for a non-Secure cookie.
+     */
+    const source = readFileSync(new URL('../../../../server/utils/chatQuota.ts', import.meta.url), 'utf8');
+    expect(source).toContain('secure: !import.meta.dev');
+    expect(source, 'a hardcoded `secure: true` breaks local dev silently').not.toMatch(/secure:\s*true/);
+    expect(source, 'never key the flag on caller-supplied request data').not.toMatch(
+      /secure:.*(getHeader|host|proto)/i
+    );
   });
 
   it('rejects a malformed cookie rather than keying the counter on it', async () => {
