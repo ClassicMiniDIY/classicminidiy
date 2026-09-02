@@ -5,6 +5,12 @@ export interface TorqueSpecs {
   suspensionTable: Table;
   electricalTable: ElectricalTable;
   gearboxTable: Table;
+  /**
+   * General-purpose figures by thread and spanner size, for a fastener with no
+   * published spec of its own. A named fastener in the other sections always
+   * wins — this is the fallback, not a shortcut.
+   */
+  generalTable: Table;
 }
 
 export interface ElectricalTable {

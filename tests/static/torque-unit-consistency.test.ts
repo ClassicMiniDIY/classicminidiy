@@ -28,8 +28,19 @@ import { read, REPO_ROOT } from './_scan';
 const LBFT_TO_NM = 1.3558179;
 const LBIN_TO_NM = 0.1129848;
 
-/** Absolute and relative slack, because the published figures are rounded. */
-const ABS_TOLERANCE_NM = 0.55;
+/**
+ * Absolute slack, because BOTH figures are rounded independently.
+ *
+ * An integer imperial figure could be anything within +/-0.5 lb-ft, which is
+ * +/-0.68 Nm, and the metric figure carries its own +/-0.5 Nm. So two honestly
+ * rounded columns can legitimately disagree by about 1.2 Nm, and a tighter
+ * bound flags correct data: the general-fastener table's 1/4 UNF row is 9 Nm
+ * and 6 lb-ft, which is 0.87 Nm apart and right.
+ *
+ * It is still far tighter than any real error this has caught. The Electrical
+ * section was out by a factor of ten, and the oil filter housing row by 1.34.
+ */
+const ABS_TOLERANCE_NM = 1.2;
 const REL_TOLERANCE = 0.04;
 
 interface Row {
