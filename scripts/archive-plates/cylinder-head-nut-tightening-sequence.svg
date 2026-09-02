@@ -1,13 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1410" viewBox="0 0 1600 1410" role="img" aria-label="Cylinder head nut tightening sequence for the 1275 A-series nine-stud head">
-<title>Cylinder Head Nut Tightening Sequence — 1275 A-Series 9-Stud Head</title>
-<desc>The 1275 A-series cylinder head with the rocker gear fitted. Nine main head studs are numbered in tightening order: 6, 2, 3, 7 across the upper row and 9, 4, 1, 5, 8 across the lower row. Four further fixings on the rocker pedestal castings are lettered A to D and are not head studs. Tighten to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>
-<rect width="1600" height="1410" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1530" viewBox="0 0 1600 1530" role="img" aria-label="Cylinder head nut tightening sequence for the 1275 A-series nine- and eleven-stud heads">
+<title>Cylinder Head Nut Tightening Sequence — 1275 A-Series</title>
+<desc>The 1275 A-series cylinder head with the rocker gear fitted. Nine main head studs are numbered in tightening order: 6, 2, 3, 7 across the upper row and 9, 4, 1, 5, 8 across the lower row. Four further fixings on the rocker pedestal castings are lettered A to D and are not head studs. The eleven-stud variant runs 9, 5, 1, 4, 8 on the upper row and 10, 6, 2, 3, 7, 11 on the lower. Tighten to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>
+<rect width="1600" height="1530" fill="#ffffff"/>
 <text x="80" y="92" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1c1f24" letter-spacing="-0.4">Cylinder Head Nut Tightening Sequence</text>
-<text x="80" y="132" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="23" font-weight="500" fill="#5b6169">1275 A-series 9-stud head — shown with the rocker gear fitted</text>
+<text x="80" y="132" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="23" font-weight="500" fill="#5b6169">1275 A-series — 9-stud and 11-stud heads, same order and same figures</text>
 <rect x="80" y="158" width="120" height="5" fill="#ed7135"/>
 <text x="1520" y="92" text-anchor="end" font-family="Menlo, DejaVu Sans Mono, Courier New, monospace" font-size="20" fill="#5b6169" letter-spacing="1.5">SOURCE 12M3412</text>
 <text x="1520" y="126" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">Classic Mini DIY Archive</text>
-<g transform="translate(150.0,188.0) scale(1.231061)">
+<text x="200" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#6b7a52" letter-spacing="2.2">NINE-STUD HEAD</text>
+<g transform="translate(200.0,188.0) scale(1.136364)">
 <g transform="translate(0,624.0) scale(0.1,-0.1)" stroke="none">
 <path fill="#111418" d="M2570 4984 l0 -316 -30 -28 c-34 -32 -39 -72 -14 -108 l16 -23 -44 5
 c-23 3 -73 5 -110 5 l-66 1 -31 55 c-36 64 -51 70 -158 62 -52 -4 -81 -11 -95
@@ -800,41 +801,69 @@ m-382 104 c0 -17 -48 -114 -78 -159 -20 -28 -20 -28 -27 -6 -5 16 2 36 26 73
 <path fill="#111418" d="M9675 1305 c-23 -13 -35 -27 -35 -42 l0 -22 300 -1 300 -1 0 36 c0
 20 -6 38 -12 40 -7 2 -127 6 -266 7 -237 3 -254 2 -287 -17z"/>
 </g></g>
-<text x="468.4" y="288.7" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">6</text>
-<text x="720.0" y="288.9" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">2</text>
-<text x="979.7" y="291.3" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">3</text>
-<text x="1235.2" y="288.8" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">7</text>
-<text x="378.0" y="871.4" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">9</text>
-<text x="602.8" y="910.5" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">4</text>
-<text x="848.6" y="911.7" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">1</text>
-<text x="1101.0" y="909.9" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">5</text>
-<text x="1330.6" y="906.8" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">8</text>
-<text x="465.5" y="690.1" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">C</text>
-<text x="720.2" y="689.2" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">A</text>
-<text x="984.2" y="687.2" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">B</text>
-<text x="1235.2" y="690.1" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">D</text>
-<circle cx="309" cy="990" r="9" fill="#ed7135"/>
-<text x="328" y="996" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">1&#8211;9 &#8212; the nine main head studs</text>
-<circle cx="789" cy="990" r="9" fill="#1e40af"/>
-<text x="808" y="996" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">A&#8211;D &#8212; rocker pedestal fixings, not head studs</text>
-<text x="800" y="1042" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-style="italic" fill="#5b6169">The order works outwards from the centre — stud 1 is central on the lower row, and 8 and 9 are the end studs.</text>
-<rect x="80" y="1078" width="1440" height="200.0" rx="10" fill="#fbfaf7" stroke="#c7ccd1" stroke-width="2"/>
-<rect x="80" y="1078" width="6" height="200.0" rx="3" fill="#6b7a52"/>
-<text x="118" y="1118" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#6b7a52" letter-spacing="2.2">PROCEDURE</text>
-<text x="118" y="1156" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">Tighten progressively in the order shown, in two passes over the sequence.</text>
-<text x="118" y="1188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">A–D are tightened in among the studs: A after 2, B after 3, C after 6, D after 7.</text>
-<text x="118" y="1220" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">The rocker shaft bracket nuts are separate fasteners — those take 25 Nm.</text>
-<text x="118" y="1254" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" fill="#5b6169">Metric figures are as published in the source; imperial equivalents are converted.</text>
-<rect x="940" y="1120" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
-<text x="1076" y="1148" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FIRST PASS</text>
-<text x="1076" y="1194" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">34 Nm</text>
-<text x="1076" y="1220" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">25 lb-ft</text>
-<rect x="1232" y="1120" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
-<text x="1368" y="1148" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FINAL PASS</text>
-<text x="1368" y="1194" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">68 Nm</text>
-<text x="1368" y="1220" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">50 lb-ft</text>
-<line x1="80" y1="1316" x2="1520" y2="1316" stroke="#c7ccd1" stroke-width="2"/>
-<text x="80" y="1344" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Vector redraw of fig. 12M3412 from RCL0193ENG Mini Workshop Manual, 2nd Edition (Engine, Repairs), held in the Classic Mini DIY archive.</text>
-<text x="80" y="1370" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Studs renumbered 1–9 and the other fixings lettered A–D; the source numbers all thirteen 1–13. Other A-series heads differ — check the torque chart.</text>
-<text x="1520" y="1344" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#6b7a52">classicminidiy.com</text>
+<text x="493.9" y="282.2" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">6</text>
+<text x="726.1" y="282.4" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">2</text>
+<text x="965.9" y="284.6" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">3</text>
+<text x="1201.7" y="282.3" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">7</text>
+<text x="410.5" y="820.1" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">9</text>
+<text x="618.0" y="856.2" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">4</text>
+<text x="844.9" y="857.3" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">1</text>
+<text x="1077.8" y="855.6" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">5</text>
+<text x="1289.8" y="852.8" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#ed7135">8</text>
+<text x="491.3" y="652.8" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">C</text>
+<text x="726.4" y="651.9" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">A</text>
+<text x="970.0" y="650.1" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">B</text>
+<text x="1201.7" y="652.8" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1e40af">D</text>
+<circle cx="309" cy="931" r="9" fill="#ed7135"/>
+<text x="328" y="937" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">1&#8211;9 &#8212; the nine main head studs</text>
+<circle cx="789" cy="931" r="9" fill="#1e40af"/>
+<text x="808" y="937" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">A&#8211;D &#8212; rocker pedestal fixings, not head studs</text>
+<text x="800" y="983" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-style="italic" fill="#5b6169">The order works outwards from the centre — stud 1 is central on the lower row, and 8 and 9 are the end studs.</text>
+<rect x="80" y="1013" width="1440" height="170.0" rx="10" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
+<rect x="80" y="1013" width="6" height="170.0" rx="3" fill="#6b7a52"/>
+<text x="118" y="1053" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#6b7a52" letter-spacing="2.2">ELEVEN-STUD HEAD</text>
+<text x="118" y="1089" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">Some 1275 heads carry eleven studs — five on the upper row, six on</text>
+<text x="118" y="1117" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">the lower. Same centre-out order, same torque figures.</text>
+<text x="118" y="1151" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Positions below are schematic, not a scale drawing of the casting.</text>
+<circle cx="885" cy="1075" r="22" fill="#ed7135"/>
+<text x="885" y="1083" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">9</text>
+<circle cx="995" cy="1075" r="22" fill="#ed7135"/>
+<text x="995" y="1083" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">5</text>
+<circle cx="1105" cy="1075" r="22" fill="#ed7135"/>
+<text x="1105" y="1083" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">1</text>
+<circle cx="1215" cy="1075" r="22" fill="#ed7135"/>
+<text x="1215" y="1083" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">4</text>
+<circle cx="1325" cy="1075" r="22" fill="#ed7135"/>
+<text x="1325" y="1083" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">8</text>
+<circle cx="830" cy="1137" r="22" fill="#ed7135"/>
+<text x="830" y="1145" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">10</text>
+<circle cx="940" cy="1137" r="22" fill="#ed7135"/>
+<text x="940" y="1145" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">6</text>
+<circle cx="1050" cy="1137" r="22" fill="#ed7135"/>
+<text x="1050" y="1145" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">2</text>
+<circle cx="1160" cy="1137" r="22" fill="#ed7135"/>
+<text x="1160" y="1145" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">3</text>
+<circle cx="1270" cy="1137" r="22" fill="#ed7135"/>
+<text x="1270" y="1145" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">7</text>
+<circle cx="1380" cy="1137" r="22" fill="#ed7135"/>
+<text x="1380" y="1145" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">11</text>
+<rect x="80" y="1211" width="1440" height="200.0" rx="10" fill="#fbfaf7" stroke="#c7ccd1" stroke-width="2"/>
+<rect x="80" y="1211" width="6" height="200.0" rx="3" fill="#6b7a52"/>
+<text x="118" y="1251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#6b7a52" letter-spacing="2.2">PROCEDURE</text>
+<text x="118" y="1289" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">Tighten progressively in the order shown, in two passes over the sequence.</text>
+<text x="118" y="1321" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">A–D are tightened in among the studs: A after 2, B after 3, C after 6, D after 7.</text>
+<text x="118" y="1353" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">The rocker shaft bracket nuts are separate fasteners — those take 25 Nm.</text>
+<text x="118" y="1387" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" fill="#5b6169">Metric figures are as published in the source; imperial equivalents are converted.</text>
+<rect x="940" y="1253" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
+<text x="1076" y="1281" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FIRST PASS</text>
+<text x="1076" y="1327" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">34 Nm</text>
+<text x="1076" y="1353" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">25 lb-ft</text>
+<rect x="1232" y="1253" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
+<text x="1368" y="1281" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FINAL PASS</text>
+<text x="1368" y="1327" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">68 Nm</text>
+<text x="1368" y="1353" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">50 lb-ft</text>
+<line x1="80" y1="1449" x2="1520" y2="1449" stroke="#c7ccd1" stroke-width="2"/>
+<text x="80" y="1477" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Vector redraw of fig. 12M3412 from RCL0193ENG Mini Workshop Manual, 2nd Edition (Engine, Repairs), held in the Classic Mini DIY archive.</text>
+<text x="80" y="1503" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Studs renumbered 1–9 and the other fixings lettered A–D; the source numbers all thirteen 1–13. The 848/998 and Cooper S heads use different figures — check the torque chart.</text>
+<text x="1520" y="1477" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#6b7a52">classicminidiy.com</text>
 </svg>

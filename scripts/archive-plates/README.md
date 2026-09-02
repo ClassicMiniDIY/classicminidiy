@@ -74,10 +74,18 @@ Load-bearing decisions, do not undo:
   reached 4.4:1 on white. The blue is 8.6:1 and stays separable under deuteranopia
   and protanopia. Do not "re-brand" it back to olive; olive is panel furniture here,
   never a fastener label.
-- **The torque figures are nine-stud only** — 34 Nm (25 lb-ft) first pass, 68 Nm
-  (50 lb-ft) final. They are _not_ the eleven-stud or 848/998 figures, both lower,
-  in `data/torqueSpecs.json`. A reader who applies 68 Nm to a 998 head is the
-  failure the footer wording exists to prevent.
+- **The plate covers two heads.** The 1275 came as a nine-stud and an eleven-stud
+  head; the torque figures and the procedure are identical and only the stud count
+  differs, so both belong on one plate rather than two. The eleven-stud rows are
+  `9, 5, 1, 4, 8` upper and `10, 6, 2, 3, 7, 11` lower, and they are drawn as plain
+  numbered dots labelled _schematic_ — there is no traceable factory figure for that
+  variant in the archive, and inventing a casting outline is the exact mistake this
+  plate already had to unwind once. If an eleven-stud figure turns up in a manual we
+  hold, trace it and replace the schematic.
+- **The torque figures are 1275 only** — 34 Nm (25 lb-ft) first pass, 68 Nm
+  (50 lb-ft) final. They are _not_ the 848/998 or Cooper S figures, both lower, in
+  `data/torqueSpecs.json`. A reader who applies 68 Nm to a 998 head is the failure
+  the footer wording exists to prevent.
 - **The rocker shaft bracket nuts are a third fastener set** at 25 Nm, tightened
   after the sequence — distinct from A–D.
 

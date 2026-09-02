@@ -29,7 +29,7 @@ import re
 HERE = pathlib.Path(__file__).parent
 TRACE = HERE / "cylinder-head-nut-tightening-sequence.trace.svg"
 
-W, H = 1600, 1410
+W, H = 1600, 1530
 
 INK     = "#1c1f24"
 LINE    = "#111418"
@@ -67,8 +67,16 @@ FIXINGS = {
     "C": (256.3, 394.5), "A": (463.2, 393.7), "B": (677.6, 392.1), "D": (881.5, 394.5),
 }
 
+# The 11-stud variant of the same head: five studs on the upper row, six on the
+# lower, left to right. Verified as a clean centre-out spiral over 1..11. There is
+# no traceable factory figure for it in the archive, so it is drawn schematically
+# and the plate says so — a fake casting outline is exactly the mistake this plate
+# already had to unwind once.
+ELEVEN_TOP = [9, 5, 1, 4, 8]
+ELEVEN_BOTTOM = [10, 6, 2, 3, 7, 11]
+
 FIG_W, FIG_H = 1056.0, 624.0
-FIG_SCALE = 1300.0 / FIG_W
+FIG_SCALE = 1200.0 / FIG_W
 FIG_X, FIG_Y = (W - FIG_W * FIG_SCALE) / 2, 188.0
 
 LABEL_SIZE = 46
@@ -93,19 +101,20 @@ add = out.append
 
 add(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
     f'viewBox="0 0 {W} {H}" role="img" '
-    f'aria-label="Cylinder head nut tightening sequence for the 1275 A-series nine-stud head">')
-add('<title>Cylinder Head Nut Tightening Sequence — 1275 A-Series 9-Stud Head</title>')
+    f'aria-label="Cylinder head nut tightening sequence for the 1275 A-series nine- and eleven-stud heads">')
+add('<title>Cylinder Head Nut Tightening Sequence — 1275 A-Series</title>')
 add('<desc>The 1275 A-series cylinder head with the rocker gear fitted. Nine main head studs are '
     'numbered in tightening order: 6, 2, 3, 7 across the upper row and 9, 4, 1, 5, 8 across the '
     'lower row. Four further fixings on the rocker pedestal castings are lettered A to D and are '
-    'not head studs. Tighten to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>')
+    'not head studs. The eleven-stud variant runs 9, 5, 1, 4, 8 on the upper row and 10, 6, 2, 3, 7, '
+    '11 on the lower. Tighten to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>')
 add(f'<rect width="{W}" height="{H}" fill="{PAPER}"/>')
 
 # ---------------- header ----------------
 add(f'<text x="80" y="92" font-family="{FONT}" font-size="46" font-weight="700" '
     f'fill="{INK}" letter-spacing="-0.4">Cylinder Head Nut Tightening Sequence</text>')
 add(f'<text x="80" y="132" font-family="{FONT}" font-size="23" font-weight="500" '
-    f'fill="{SUBINK}">1275 A-series 9-stud head — shown with the rocker gear fitted</text>')
+    f'fill="{SUBINK}">1275 A-series — 9-stud and 11-stud heads, same order and same figures</text>')
 add(f'<rect x="80" y="158" width="120" height="5" fill="{STUD}"/>')
 add(f'<text x="{W-80}" y="92" text-anchor="end" font-family="{MONO}" font-size="20" '
     f'fill="{SUBINK}" letter-spacing="1.5">SOURCE 12M3412</text>')
@@ -113,6 +122,8 @@ add(f'<text x="{W-80}" y="126" text-anchor="end" font-family="{FONT}" font-size=
     f'fill="{SUBINK}">Classic Mini DIY Archive</text>')
 
 # ---------------- the figure ----------------
+add(f'<text x="{FIG_X:.0f}" y="225" font-family="{FONT}" font-size="15" font-weight="700" '
+    f'fill="{OLIVE}" letter-spacing="2.2">NINE-STUD HEAD</text>')
 add(f'<g transform="translate({FIG_X:.1f},{FIG_Y:.1f}) scale({FIG_SCALE:.6f})">')
 add(f'<g transform="translate(0,{FIG_H}) scale(0.1,-0.1)" stroke="none">')
 out.extend(traced_paths())
@@ -145,8 +156,34 @@ add(f'<text x="{W/2:.0f}" y="{CAP_Y:.0f}" text-anchor="middle" font-family="{FON
     f'The order works outwards from the centre — stud 1 is central on the lower row, '
     f'and 8 and 9 are the end studs.</text>')
 
+# ---------------- eleven-stud variant ----------------
+P2Y, P2H = CAP_Y + 30, 170.0
+add(f'<rect x="80" y="{P2Y:.0f}" width="{W-160}" height="{P2H}" rx="10" fill="#ffffff" '
+    f'stroke="{RULE}" stroke-width="2"/>')
+add(f'<rect x="80" y="{P2Y:.0f}" width="6" height="{P2H}" rx="3" fill="{OLIVE}"/>')
+add(f'<text x="118" y="{P2Y+40:.0f}" font-family="{FONT}" font-size="15" font-weight="700" '
+    f'fill="{OLIVE}" letter-spacing="2.2">ELEVEN-STUD HEAD</text>')
+add(f'<text x="118" y="{P2Y+76:.0f}" font-family="{FONT}" font-size="19" fill="{INK}">'
+    f'Some 1275 heads carry eleven studs — five on the upper row, six on</text>')
+add(f'<text x="118" y="{P2Y+104:.0f}" font-family="{FONT}" font-size="19" fill="{INK}">'
+    f'the lower. Same centre-out order, same torque figures.</text>')
+add(f'<text x="118" y="{P2Y+138:.0f}" font-family="{FONT}" font-size="17" fill="{SUBINK}">'
+    f'Positions below are schematic, not a scale drawing of the casting.</text>')
+
+
+def stud_dot(cx, cy, n):
+    add(f'<circle cx="{cx}" cy="{cy:.0f}" r="22" fill="{STUD}"/>')
+    add(f'<text x="{cx}" y="{cy+8:.0f}" text-anchor="middle" font-family="{FONT}" '
+        f'font-size="22" font-weight="700" fill="#ffffff">{n}</text>')
+
+
+for i, n in enumerate(ELEVEN_TOP):
+    stud_dot(885 + i * 110, P2Y + 62, n)
+for i, n in enumerate(ELEVEN_BOTTOM):
+    stud_dot(830 + i * 110, P2Y + 124, n)
+
 # ---------------- procedure panel ----------------
-PY, PH = CAP_Y + 36, 200.0
+PY, PH = P2Y + P2H + 28, 200.0
 add(f'<rect x="80" y="{PY:.0f}" width="{W-160}" height="{PH}" rx="10" fill="#fbfaf7" '
     f'stroke="{RULE}" stroke-width="2"/>')
 add(f'<rect x="80" y="{PY:.0f}" width="6" height="{PH}" rx="3" fill="{OLIVE}"/>')
@@ -184,7 +221,7 @@ add(f'<text x="80" y="{FY+4:.0f}" font-family="{FONT}" font-size="17" fill="{SUB
     f'(Engine, Repairs), held in the Classic Mini DIY archive.</text>')
 add(f'<text x="80" y="{FY+30:.0f}" font-family="{FONT}" font-size="17" fill="{SUBINK}">'
     f'Studs renumbered 1–9 and the other fixings lettered A–D; the source numbers all thirteen '
-    f'1–13. Other A-series heads differ — check the torque chart.</text>')
+    f'1–13. The 848/998 and Cooper S heads use different figures — check the torque chart.</text>')
 add(f'<text x="{W-80}" y="{FY+4:.0f}" text-anchor="end" font-family="{FONT}" font-size="17" '
     f'font-weight="600" fill="{OLIVE}">classicminidiy.com</text>')
 
