@@ -564,7 +564,7 @@
         "name": "Transmission Case to Crankcase",
         "lbft": "6",
         "nm": "8",
-        "notes": ""
+        "notes": "Case-to-crankcase joint. Distinct from Transmission Case to Engine (12 lb-ft) and from the case stud nuts — check which fastener you have before using this figure."
       },
       {
         "name": "Transmission Case to Engine",
