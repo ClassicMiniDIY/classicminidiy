@@ -19,22 +19,26 @@ import re
 HERE = pathlib.Path(__file__).parent
 TRACE = HERE / "cylinder-head-nut-tightening-sequence.trace.svg"
 
-W, H = 1600, 1320
+W, H = 1600, 1390
 
 INK     = "#1c1f24"
 LINE    = "#111418"
 SUBINK  = "#5b6169"
 RULE    = "#c7ccd1"
 ACCENT  = "#ed7135"   # CMDIY secondary
-OLIVE   = "#6b7a52"   # CMDIY accent
+OLIVE   = "#6b7a52"   # CMDIY accent, also the four non-stud fixings
 PAPER   = "#ffffff"
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
 MONO = "Menlo, DejaVu Sans Mono, Courier New, monospace"
 
-# Path indices in the potrace output. Verified by rendering the classified
-# figure and reading it: every numeral orange, nothing else touched.
-NUMERALS = {0, 1, 2, 3, 4, 24, 25, 26, 27, 28, 50, 51, 52, 53, 54, 55, 56}
+# Path indices in the potrace output, verified by rendering the classified
+# figure and reading it. The split is the whole point of this plate: the figure
+# numbers thirteen fasteners, but only NINE of them are main head studs. The
+# other four (3, 5, 9, 11) are the small nuts on the rocker pedestal castings,
+# and they are the entire middle band of numerals in the trace.
+MAIN_STUD_NUMERALS = {0, 1, 2, 3, 4, 50, 51, 52, 53, 54, 55, 56}   # 8 2 4 10 / 13 6 1 7 12
+OTHER_FIXING_NUMERALS = {24, 25, 26, 27, 28}                        # 9 3 5 11
 FIGURE_CAPTION = {57, 58, 59, 60, 61, 62, 63}   # the artwork's own "12M3412"
 
 # Native stencil size, and where the figure sits on the plate.
@@ -52,7 +56,12 @@ def traced_paths() -> list[str]:
     for i, p in enumerate(paths):
         if i in FIGURE_CAPTION:
             continue
-        fill = ACCENT if i in NUMERALS else LINE
+        if i in MAIN_STUD_NUMERALS:
+            fill = ACCENT
+        elif i in OTHER_FIXING_NUMERALS:
+            fill = OLIVE
+        else:
+            fill = LINE
         out.append(p.replace("<path", f'<path fill="{fill}"', 1))
     return out
 
@@ -62,18 +71,19 @@ add = out.append
 
 add(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
     f'viewBox="0 0 {W} {H}" role="img" '
-    f'aria-label="Cylinder head nut tightening sequence for the MPi thirteen-nut head">')
-add('<title>Cylinder Head Nut Tightening Sequence — MPi Thirteen-Nut Head</title>')
-add('<desc>The Mini MPi cylinder head with the rocker gear fitted, its thirteen nuts numbered in '
-    'tightening order. Upper row 8, 2, 4, 10; middle row 9, 3, 5, 11; lower row 13, 6, 1, 7, 12. '
-    'Tighten progressively in that order to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>')
+    f'aria-label="Cylinder head nut tightening sequence for the A-series nine-stud head">')
+add('<title>Cylinder Head Nut Tightening Sequence — A-Series Nine-Stud Head</title>')
+add('<desc>The A-series nine-stud cylinder head with the rocker gear fitted. Nine main head studs '
+    'are numbered 8, 2, 4, 10 on the upper row and 13, 6, 1, 7, 12 on the lower row. Numbers 9, 3, 5 '
+    'and 11 are a further four fixings on the rocker pedestals and are not main head studs. '
+    'Tighten progressively in order to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>')
 add(f'<rect width="{W}" height="{H}" fill="{PAPER}"/>')
 
 # ---------------- header ----------------
 add(f'<text x="80" y="92" font-family="{FONT}" font-size="46" font-weight="700" '
     f'fill="{INK}" letter-spacing="-0.4">Cylinder Head Nut Tightening Sequence</text>')
 add(f'<text x="80" y="132" font-family="{FONT}" font-size="23" font-weight="500" '
-    f'fill="{SUBINK}">Mini MPi 1275 — thirteen-nut head, shown with the rocker gear fitted</text>')
+    f'fill="{SUBINK}">A-series nine-stud head (MPi 1275) — shown with the rocker gear fitted</text>')
 add(f'<rect x="80" y="158" width="120" height="5" fill="{ACCENT}"/>')
 add(f'<text x="{W-80}" y="92" text-anchor="end" font-family="{MONO}" font-size="20" '
     f'fill="{SUBINK}" letter-spacing="1.5">PLATE 12M3412</text>')
@@ -86,7 +96,23 @@ add(f'<g transform="translate(0,{FIG_H}) scale(0.1,-0.1)" stroke="none">')
 out.extend(traced_paths())
 add('</g></g>')
 
-CAP_Y = FIG_Y + FIG_H * FIG_SCALE + 44
+# ---------------- legend ----------------
+# The figure numbers thirteen fasteners but the head is a NINE-stud head. Naming
+# that split is the whole reason this legend exists: someone looking up a 9-stud
+# head must not count thirteen nuts and conclude they are on the wrong drawing.
+LEG_Y = FIG_Y + FIG_H * FIG_SCALE + 40
+
+
+def legend(x, colour, label):
+    add(f'<circle cx="{x+9}" cy="{LEG_Y-6:.0f}" r="9" fill="{colour}"/>')
+    add(f'<text x="{x+28}" y="{LEG_Y:.0f}" font-family="{FONT}" font-size="19" '
+        f'fill="{INK}">{label}</text>')
+
+
+legend(289, ACCENT, "Nine main head studs &#8212; the 9-stud pattern")
+legend(795, OLIVE, "3, 5, 9 and 11 &#8212; further fixings, not main head studs")
+
+CAP_Y = LEG_Y + 46
 add(f'<text x="{W/2:.0f}" y="{CAP_Y:.0f}" text-anchor="middle" font-family="{FONT}" font-size="21" '
     f'font-style="italic" fill="{SUBINK}">'
     f'The order works outwards from the centre — nut 1 is central on the lower row, '
@@ -128,8 +154,8 @@ add(f'<text x="80" y="{FY+4:.0f}" font-family="{FONT}" font-size="17" fill="{SUB
     f'Vector redraw of fig. 12M3412 from RCL0193ENG Mini Workshop Manual, 2nd Edition '
     f'(Engine, Repairs), held in the Classic Mini DIY archive.</text>')
 add(f'<text x="80" y="{FY+30:.0f}" font-family="{FONT}" font-size="17" fill="{SUBINK}">'
-    f'Figures are for the MPi thirteen-nut head. Other A-series engines differ — '
-    f'check the torque chart first.</text>')
+    f'Figures are for the nine-stud head. The earlier eleven-stud head and the 848/998 '
+    f'engines differ — check the torque chart first.</text>')
 add(f'<text x="{W-80}" y="{FY+4:.0f}" text-anchor="end" font-family="{FONT}" font-size="17" '
     f'font-weight="600" fill="{OLIVE}">classicminidiy.com</text>')
 
