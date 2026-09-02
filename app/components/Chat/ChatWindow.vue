@@ -117,7 +117,7 @@
                      something went wrong, and only one of those is true. -->
                 <!-- Hitting a ceiling is not a failure, so it does not get the
                      failure treatment. See QuotaLimitPanel. -->
-                <QuotaLimitPanel v-if="quotaExhausted" :quota="quotaExhausted" />
+                <QuotaLimitPanel v-if="quotaExhausted" :quota="quotaExhausted" @dismiss="dismissQuotaPanel" />
 
                 <div v-else-if="error" role="alert" class="alert alert-error">
                   <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
@@ -225,7 +225,13 @@
   // `const ref = ...` suppressing the injection for the whole file.
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
   import { DefaultChatTransport, type UIMessage } from 'ai';
-  import { parseQuotaError } from '~/utils/chatQuotaError';
+  import {
+    parseQuotaError,
+    loadQuotaVerdict,
+    saveQuotaVerdict,
+    clearQuotaVerdict,
+    type QuotaExhausted,
+  } from '~/utils/chatQuotaError';
   import { useChat } from '@ai-sdk/vue';
   import AssistantMessage from './AssistantMessage.vue';
   import ChatComposer from './ChatComposer.vue';
@@ -419,13 +425,69 @@
    * `app/utils/chatQuotaError.ts` for why parsing it matters more than for a
    * normal error.
    */
-  const quotaExhausted = computed(() => parseQuotaError(error.value));
+  /**
+   * The quota verdict, from the live error OR from a refusal earlier in the
+   * window.
+   *
+   * It used to be the live error alone, and a `computed` over transient state
+   * dies with the component. So leaving /chat and coming back — clicking the
+   * panel's own "Sign in" link and pressing back, say — cleared the lockout,
+   * re-enabled the composer, and invited another message into the same
+   * conversation. The server refuses every one of those (the counter is
+   * server-side and was never actually bypassed), but the reader is not told
+   * that: they type, they send, their message lands in the transcript, and
+   * nothing answers it. The panel has to outlive the component that showed it.
+   *
+   * Stored rather than re-fetched because there is no quota-status endpoint,
+   * and adding one to render a panel would put a round trip in front of every
+   * chat load to answer a question that matters to almost nobody.
+   */
+  const storedQuota = ref<QuotaExhausted | null>(null);
+  /**
+   * Set while the reader has dismissed the panel and not yet sent again.
+   *
+   * `useChat` exposes no way to clear its `error`, so without this the live
+   * error would re-assert the panel the instant it was dismissed and the escape
+   * hatch would do nothing. Any new send resets it, so the next refusal shows
+   * the panel again.
+   */
+  const quotaDismissed = ref(false);
+  const quotaExhausted = computed(() =>
+    quotaDismissed.value ? null : (parseQuotaError(error.value) ?? storedQuota.value)
+  );
+
+  watch(
+    () => parseQuotaError(error.value),
+    (verdict) => {
+      if (verdict) {
+        quotaDismissed.value = false;
+        storedQuota.value = verdict;
+        saveQuotaVerdict(verdict);
+      }
+    }
+  );
+
+  /**
+   * Clear the remembered refusal and let one message through.
+   *
+   * Necessary, not a nicety: the stored verdict has no reliable expiry — an
+   * anonymous window rolls 24h from the last ACCEPTED message, which the client
+   * cannot know — so without a way out, a reader whose quota has genuinely
+   * reset would stay locked out by a stale panel. The server is the authority
+   * either way; if it refuses again the panel comes straight back.
+   */
+  function dismissQuotaPanel() {
+    quotaDismissed.value = true;
+    storedQuota.value = null;
+    clearQuotaVerdict();
+  }
 
   onMounted(() => {
     hasMounted.value = true;
     // Reads localStorage, so it must run after mount — same rule as
     // useRecentTools().load(); see CLAUDE.md.
     history.load();
+    storedQuota.value = loadQuotaVerdict();
 
     // Resume the most recent conversation, if there is one.
     const mostRecent = history.entries.value[0];

@@ -65,3 +65,61 @@ export function parseQuotaError(error: unknown): QuotaExhausted | null {
     upgradeUrl: typeof body?.data?.upgradeUrl === 'string' ? body.data.upgradeUrl : MEMBERSHIP_URL,
   };
 }
+
+/**
+ * Remembering a refusal across a page load.
+ *
+ * The quota panel was derived from the chat transport's transient `error`, so
+ * it died with the component: leaving /chat and returning — via the panel's own
+ * "Sign in" link and the back button, say — cleared the lockout and re-enabled
+ * the composer. The server refuses those sends regardless, so nothing was ever
+ * over-served; what broke was the telling. The reader was invited to write a
+ * message that could not be delivered, and it landed in the transcript looking
+ * sent.
+ *
+ * `sessionStorage`, not `localStorage`: a refusal is worth carrying across a
+ * navigation, not across a week. It also means the worst case of a stale entry
+ * is one tab, and closing it is a way out on top of the panel's own dismiss.
+ *
+ * Every accessor is wrapped, because storage throws outright in some contexts
+ * (private windows, blocked site data) and a support panel must never be the
+ * reason the assistant fails to load.
+ */
+const QUOTA_STORAGE_KEY = 'cmdiy-chat-quota';
+
+export function loadQuotaVerdict(): QuotaExhausted | null {
+  try {
+    const raw = sessionStorage.getItem(QUOTA_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Re-validated rather than trusted. Storage is caller-writable, and the
+    // panel indexes translations by `tier` — an unrecognised value would render
+    // an empty upsell with no error to explain it, the same silent-empty failure
+    // `parseQuotaError` guards against for the live path.
+    if (!parsed || !Object.keys(CHAT_QUOTAS).includes(parsed.tier)) return null;
+    return {
+      tier: parsed.tier,
+      used: typeof parsed.used === 'number' ? parsed.used : undefined,
+      limit: typeof parsed.limit === 'number' ? parsed.limit : undefined,
+      upgradeUrl: typeof parsed.upgradeUrl === 'string' ? parsed.upgradeUrl : MEMBERSHIP_URL,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function saveQuotaVerdict(verdict: QuotaExhausted): void {
+  try {
+    sessionStorage.setItem(QUOTA_STORAGE_KEY, JSON.stringify(verdict));
+  } catch {
+    // Non-fatal: the panel still shows for this page view from the live error.
+  }
+}
+
+export function clearQuotaVerdict(): void {
+  try {
+    sessionStorage.removeItem(QUOTA_STORAGE_KEY);
+  } catch {
+    // Non-fatal.
+  }
+}

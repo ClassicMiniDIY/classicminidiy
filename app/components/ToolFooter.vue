@@ -52,7 +52,6 @@
           <button type="button" class="font-bold text-secondary hover:underline" @click="suggestCorrection()">
             {{ t('suggest_correction') }} &rarr;
           </button>
-          {{ t('same_queue') }}
         </p>
       </div>
     </div>
@@ -64,62 +63,52 @@
   "en": {
     "from_archive": "From the archive",
     "spotted_title": "Spotted a wrong value?",
-    "suggest_correction": "Suggest a correction",
-    "same_queue": "Lands in the same review queue as everything else."
+    "suggest_correction": "Suggest a correction"
   },
   "es": {
     "from_archive": "Del archivo",
     "spotted_title": "¿Has visto un valor incorrecto?",
-    "suggest_correction": "Sugerir una corrección",
-    "same_queue": "Llega a la misma cola de revisión que todo lo demás."
+    "suggest_correction": "Sugerir una corrección"
   },
   "fr": {
     "from_archive": "Depuis les archives",
     "spotted_title": "Une valeur erronée ?",
-    "suggest_correction": "Proposer une correction",
-    "same_queue": "Arrive dans la même file de relecture que le reste."
+    "suggest_correction": "Proposer une correction"
   },
   "de": {
     "from_archive": "Aus dem Archiv",
     "spotted_title": "Falscher Wert entdeckt?",
-    "suggest_correction": "Korrektur vorschlagen",
-    "same_queue": "Landet in derselben Prüfliste wie alles andere."
+    "suggest_correction": "Korrektur vorschlagen"
   },
   "it": {
     "from_archive": "Dall'archivio",
     "spotted_title": "Hai notato un valore sbagliato?",
-    "suggest_correction": "Suggerisci una correzione",
-    "same_queue": "Finisce nella stessa coda di revisione di tutto il resto."
+    "suggest_correction": "Suggerisci una correzione"
   },
   "pt": {
     "from_archive": "Do arquivo",
     "spotted_title": "Encontrou um valor errado?",
-    "suggest_correction": "Sugerir uma correção",
-    "same_queue": "Vai para a mesma fila de revisão que tudo o resto."
+    "suggest_correction": "Sugerir uma correção"
   },
   "ru": {
     "from_archive": "Из архива",
     "spotted_title": "Заметили неверное значение?",
-    "suggest_correction": "Предложить исправление",
-    "same_queue": "Попадёт в ту же очередь проверки, что и всё остальное."
+    "suggest_correction": "Предложить исправление"
   },
   "ja": {
     "from_archive": "アーカイブから",
     "spotted_title": "値の誤りを見つけましたか？",
-    "suggest_correction": "修正を提案する",
-    "same_queue": "他の投稿と同じ審査キューに入ります。"
+    "suggest_correction": "修正を提案する"
   },
   "zh": {
     "from_archive": "来自档案馆",
     "spotted_title": "发现数值有误？",
-    "suggest_correction": "提交更正",
-    "same_queue": "会进入与其他提交相同的审核队列。"
+    "suggest_correction": "提交更正"
   },
   "ko": {
     "from_archive": "아카이브에서",
     "spotted_title": "잘못된 값을 발견하셨나요?",
-    "suggest_correction": "수정 제안하기",
-    "same_queue": "다른 제출과 같은 검토 대기열로 들어갑니다."
+    "suggest_correction": "수정 제안하기"
   }
 }
 </i18n>
