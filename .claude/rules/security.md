@@ -1,6 +1,9 @@
 ---
 paths:
   - 'server/api/chat.post.ts'
+  - 'server/api/chat/**'
+  - 'app/composables/useChat*.ts'
+  - 'app/components/FloatingChatInput.vue'
   - 'server/middleware/**'
   - 'server/mcp/**'
   - 'server/utils/agentTools.ts'
@@ -17,14 +20,15 @@ paths:
 
 # Security and chat rules
 
-Detail and incident history: `docs/invariants/security.md`. Chat hydration: `CLAUDE.md`.
+Detail and incident history: `docs/invariants/security.md`; `/chat` hydration and shell: `docs/invariants/chat.md`.
 
 ## `/api/chat`
 
-- **Intentionally UNAUTHENTICATED; never add `requireUserAuth`, a 401 is never valid.** Exhausted quota is a 429 with an upgrade pointer. Abuse is held by `server/middleware/rate-limit.ts` (40 req/60s, `CHAT_RATELIMIT_*`, legacy `LANGGRAPH_*` still read) and a Cloudflare ZONE rule that does not follow code changes; `scripts/verify-cf-ratelimit.py` fails when they diverge, runbook `docs/runbooks/2026-08-31-chat-zone-rate-limit.md`.
+- **Intentionally UNAUTHENTICATED; never add `requireUserAuth`, a 401 is never valid.** Exhausted quota is a 429 with an upgrade pointer. The thread routes under `server/api/chat/` follow the same rule. Abuse is held by `server/middleware/rate-limit.ts` (40 req/60s, `CHAT_RATELIMIT_*`, legacy `LANGGRAPH_*` still read) and a Cloudflare ZONE rule that does not follow code changes; `scripts/verify-cf-ratelimit.py` fails when they diverge, runbook `docs/runbooks/2026-08-31-chat-zone-rate-limit.md`.
 - **The tier gate fails OPEN** (`server/middleware/chat-auth.ts`): no/invalid token or Supabase down resolves to `anonymous`, membership RPC error to `free`. Do not make it fail closed by analogy with `mcp-auth`. A banned account resolves to `anonymous` on purpose.
 - The agent runs IN this Worker (Vercel AI SDK v7 + Anthropic) and calls the eleven `/mcp` tools in-process via `server/utils/agentTools.ts`. `tools_called` on `chat_run_completed` is the only wiring signal: an empty array on a real question means tools are down.
 - `store-search` uses a Shopify STOREFRONT token only (`X-Shopify-Storefront-Access-Token`, asserted in `tests/unit/server/utils/shopifyCatalog.test.ts`); two read operations, no cart mutations. Failure reports `store-search:unavailable`/`:not-configured` into `tools_called`, never a thrown error and never silence. Prompt guidance is scoped by purchase INTENT, not topic.
+- **`/chat` hydration:** the page is SSR'd and the server always renders the empty/welcome branch. Stored conversations live in localStorage (`useChatHistory`), so nothing may branch the template on them until after `onMounted` (the `hasMounted` gate in `ChatWindow.vue`); `useChatHistory.load()` and the conversation restore run in `onMounted`, never during setup. The transcript is client-owned since the 2026-08-31 cutover, so the rule got stricter, not looser. `createStreamSession`/`provideStreamContext` must still run during setup (they call `useI18n`/`provide`).
 - `/chat`'s full-height shell is CSS-only (`.chat-shell` + `:has()` in `main.css`), never `useHead({ bodyAttrs })`, which made nuxt-schema-org 500 the route on cold boot.
 
 ## `/mcp`

@@ -15,7 +15,7 @@
  *
  * This test is a registry, not a lint: the list below IS the documentation of
  * which plain Worker vars production needs. Adding a raw read means adding it
- * here — and to the CLAUDE.md deployment section — in the same commit.
+ * here — and to `.claude/rules/cloudflare-env.md` — in the same commit.
  */
 import { describe, expect, it } from 'vitest';
 import { blankComments, read, rel, walk } from './_scan';

@@ -107,3 +107,9 @@ parts of it that break silently if you get them wrong.
   real `registry_entries` columns, `trim` is a visible `RegistryTable` column, and the
   payload keys have to stay as-is because `insertApprovedItem()` maps them by name
   (`bodyNum` → `body_number`, `engineNum` → `engine_number`).
+
+## Trust System Invariants (archived verbatim)
+
+- **Every human-reviewed approval must feed trust.** Counters + `contributions` ledger + `recalculate_trust_level()` fire DB-side (submission_queue trigger, model-version RPCs, `moderate_external_model`, listings pending→active trigger). If you add a new approval surface, it must do the same — contract: `classicminidiy-supabase/docs/plans/2026-07-13-unified-trust-pipeline.md`.
+- **Public profile reads go through the `public_profiles` view, not `profiles`.** Since the profiles split, `profiles` SELECT is own-row/admin-only; the view carries the community-facing trust columns (`trust_level`, `total_submissions`, `approved_submissions`). Querying `profiles` for another user silently returns zero rows.
+- **Trust visibility:** `DashboardTrustProgressCard` on `/dashboard/submissions` is the user-facing explanation of levels/thresholds (3 approved → contributor; 10 + <20% rejections → trusted; 30-day tenure path to contributor). Keep its copy in sync with the DB thresholds if they change.

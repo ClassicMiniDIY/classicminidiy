@@ -85,8 +85,8 @@
     ],
   });
 
-  // Share image must always be a non-empty STRING — see the "SEO / Head Invariants"
-  // note in CLAUDE.md: unhead coerces '' to boolean `true` and nuxt-og-image's
+  // Share image must always be a non-empty STRING — see the SEO bullet
+  // in `.claude/rules/images-seo.md`: unhead coerces '' to boolean `true` and nuxt-og-image's
   // afterResolve hook then calls .replaceAll() on it, 500ing the whole SSR render.
   const shareImage = computed(
     () => currentPostData.value?.image || 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg'
@@ -193,44 +193,44 @@
         <div class="card bg-base-100 shadow-md w-full max-w-4xl">
           <div class="card-body">
             <div class="px-10 pt-4 pb-6 flex justify-center">
-            <!-- No image case -->
-            <i
-              v-if="!currentPostData.image || currentPostData.image === ''"
-              class="fa-duotone fa-image-slash text-6xl"
-              :aria-label="$t('no_image_alt')"
-            ></i>
-            <!-- Image with download link -->
-            <a
-              v-else-if="currentPostData.download && currentPostData.download !== ''"
-              :href="currentPostData.download"
-              :aria-label="$t('download_aria_label', { title: currentPostData.title || 'file' })"
-              class="block"
-            >
+              <!-- No image case -->
+              <i
+                v-if="!currentPostData.image || currentPostData.image === ''"
+                class="fa-duotone fa-image-slash text-6xl"
+                :aria-label="$t('no_image_alt')"
+              ></i>
+              <!-- Image with download link -->
+              <a
+                v-else-if="currentPostData.download && currentPostData.download !== ''"
+                :href="currentPostData.download"
+                :aria-label="$t('download_aria_label', { title: currentPostData.title || 'file' })"
+                class="block"
+              >
+                <img
+                  :src="currentPostData.image"
+                  class="rounded-xl max-h-50 object-contain"
+                  :alt="
+                    $t('preview_image_alt', {
+                      title: currentPostData.title || $t('fallback_title'),
+                    })
+                  "
+                  loading="lazy"
+                  @error="(e: Event) => handleImageError(e)"
+                />
+              </a>
+              <!-- Image without download link -->
               <img
+                v-else
                 :src="currentPostData.image"
                 class="rounded-xl max-h-50 object-contain"
                 :alt="
-                  $t('preview_image_alt', {
+                  $t('archive_item_alt', {
                     title: currentPostData.title || $t('fallback_title'),
                   })
                 "
                 loading="lazy"
                 @error="(e: Event) => handleImageError(e)"
               />
-            </a>
-            <!-- Image without download link -->
-            <img
-              v-else
-              :src="currentPostData.image"
-              class="rounded-xl max-h-50 object-contain"
-              :alt="
-                $t('archive_item_alt', {
-                  title: currentPostData.title || $t('fallback_title'),
-                })
-              "
-              loading="lazy"
-              @error="(e: Event) => handleImageError(e)"
-            />
             </div>
             <div class="items-center text-center">
               <!-- Title with fallback -->
