@@ -29,7 +29,7 @@ import re
 HERE = pathlib.Path(__file__).parent
 TRACE = HERE / "cylinder-head-nut-tightening-sequence.trace.svg"
 
-W, H = 1600, 1530
+W = 1600
 
 INK     = "#1c1f24"
 LINE    = "#111418"
@@ -79,6 +79,18 @@ FIG_W, FIG_H = 1056.0, 624.0
 FIG_SCALE = 1200.0 / FIG_W
 FIG_X, FIG_Y = (W - FIG_W * FIG_SCALE) / 2, 188.0
 
+# Vertical layout, resolved before anything is emitted so the canvas can be sized
+# from it. H used to be a literal, which meant adding a line to any panel pushed
+# the footer past the viewBox — and SVG clips at the viewBox silently, so the plate
+# would have rendered and uploaded with its source attribution cut off.
+LEG_Y = FIG_Y + FIG_H * FIG_SCALE + 40      # legend row baseline
+CAP_Y = LEG_Y + 46                          # italic caption baseline
+P2Y, P2H = CAP_Y + 30, 170.0                # eleven-stud panel
+PY, PH = P2Y + P2H + 28, 200.0              # procedure panel
+FY = PY + PH + 62                           # footer rule + first footer line
+BOTTOM_MARGIN = 27                          # descender of the last line, plus air
+H = round(FY + 30 + BOTTOM_MARGIN)
+
 LABEL_SIZE = 46
 CAP_HALF = 0.3585 * LABEL_SIZE      # digit centre sits this far above the baseline
 
@@ -88,10 +100,10 @@ def to_plate(nx, ny):
 
 
 def traced_paths():
-    src = TRACE.read_text()
+    src = TRACE.read_text(encoding="utf-8")
     paths = re.findall(r'<path d=".*?"\s*/>', src, re.S)
     if len(paths) != 64:
-        raise SystemExit(f"expected 64 traced paths, found {len(paths)} — re-derive DISCARD")
+        raise SystemExit(f"expected 64 traced paths, found {len(paths)}: re-derive DISCARD")
     return [p.replace("<path", f'<path fill="{LINE}"', 1)
             for i, p in enumerate(paths) if i not in DISCARD]
 
@@ -138,9 +150,6 @@ for group, colour in ((STUDS, STUD), (FIXINGS, FIXING)):
             f'fill="{colour}">{label}</text>')
 
 # ---------------- legend ----------------
-LEG_Y = FIG_Y + FIG_H * FIG_SCALE + 40
-
-
 def legend(x, colour, label):
     add(f'<circle cx="{x+9}" cy="{LEG_Y-6:.0f}" r="9" fill="{colour}"/>')
     add(f'<text x="{x+28}" y="{LEG_Y:.0f}" font-family="{FONT}" font-size="19" '
@@ -150,14 +159,12 @@ def legend(x, colour, label):
 legend(300, STUD, "1&#8211;9 &#8212; the nine main head studs")
 legend(780, FIXING, "A&#8211;D &#8212; rocker pedestal fixings, not head studs")
 
-CAP_Y = LEG_Y + 46
 add(f'<text x="{W/2:.0f}" y="{CAP_Y:.0f}" text-anchor="middle" font-family="{FONT}" font-size="21" '
     f'font-style="italic" fill="{SUBINK}">'
     f'The order works outwards from the centre — stud 1 is central on the lower row, '
     f'and 8 and 9 are the end studs.</text>')
 
 # ---------------- eleven-stud variant ----------------
-P2Y, P2H = CAP_Y + 30, 170.0
 add(f'<rect x="80" y="{P2Y:.0f}" width="{W-160}" height="{P2H}" rx="10" fill="#ffffff" '
     f'stroke="{RULE}" stroke-width="2"/>')
 add(f'<rect x="80" y="{P2Y:.0f}" width="6" height="{P2H}" rx="3" fill="{OLIVE}"/>')
@@ -183,7 +190,6 @@ for i, n in enumerate(ELEVEN_BOTTOM):
     stud_dot(830 + i * 110, P2Y + 124, n)
 
 # ---------------- procedure panel ----------------
-PY, PH = P2Y + P2H + 28, 200.0
 add(f'<rect x="80" y="{PY:.0f}" width="{W-160}" height="{PH}" rx="10" fill="#fbfaf7" '
     f'stroke="{RULE}" stroke-width="2"/>')
 add(f'<rect x="80" y="{PY:.0f}" width="6" height="{PH}" rx="3" fill="{OLIVE}"/>')
@@ -214,7 +220,6 @@ stage(940, "FIRST PASS", "34 Nm", "25 lb-ft")
 stage(1232, "FINAL PASS", "68 Nm", "50 lb-ft")
 
 # ---------------- footer ----------------
-FY = PY + PH + 62
 add(f'<line x1="80" y1="{FY-24:.0f}" x2="{W-80}" y2="{FY-24:.0f}" stroke="{RULE}" stroke-width="2"/>')
 add(f'<text x="80" y="{FY+4:.0f}" font-family="{FONT}" font-size="17" fill="{SUBINK}">'
     f'Vector redraw of fig. 12M3412 from RCL0193ENG Mini Workshop Manual, 2nd Edition '
@@ -228,5 +233,5 @@ add(f'<text x="{W-80}" y="{FY+4:.0f}" text-anchor="end" font-family="{FONT}" fon
 add('</svg>')
 
 OUT = pathlib.Path(__file__).with_suffix(".svg")
-OUT.write_text("\n".join(out))
+OUT.write_text("\n".join(out), encoding="utf-8")
 print(f"wrote {OUT}")
