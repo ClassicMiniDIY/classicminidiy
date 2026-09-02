@@ -72,6 +72,18 @@
           >
             {{ t('anonymous.secondary') }}
           </NuxtLink>
+
+          <!--
+            The way out of a panel this component cannot date. An anonymous
+            window rolls 24 hours from the last ACCEPTED message, which the
+            client has no way to know, so a remembered refusal has no reliable
+            expiry — without this, someone whose allowance had genuinely reset
+            would sit behind a stale panel. The server re-adjudicates every
+            send, so the worst case of pressing it is the panel returning.
+          -->
+          <button type="button" class="btn btn-ghost btn-sm font-normal" @click="emit('dismiss')">
+            {{ t('try_again') }}
+          </button>
         </div>
       </div>
     </div>
@@ -83,6 +95,7 @@
   import type { QuotaExhausted } from '~/utils/chatQuotaError';
 
   const props = defineProps<{ quota: QuotaExhausted }>();
+  const emit = defineEmits<{ dismiss: [] }>();
   const { t } = useI18n();
   const { capture } = usePostHog();
   const route = useRoute();
@@ -146,7 +159,8 @@
       "member_allowance": "100 messages a month",
       "synced_history": "Conversations synced across your devices",
       "supports": "Supports the archive, the videos and the tools"
-    }
+    },
+    "try_again": "Try again"
   },
   "es": {
     "used_of": "{used} de {limit} mensajes usados",
@@ -172,7 +186,8 @@
       "member_allowance": "100 mensajes al mes",
       "synced_history": "Conversaciones sincronizadas entre tus dispositivos",
       "supports": "Apoya el archivo, los vídeos y las herramientas"
-    }
+    },
+    "try_again": "Intentar de nuevo"
   },
   "fr": {
     "used_of": "{used} messages sur {limit} utilisés",
@@ -198,7 +213,8 @@
       "member_allowance": "100 messages par mois",
       "synced_history": "Conversations synchronisées entre vos appareils",
       "supports": "Soutient l'archive, les vidéos et les outils"
-    }
+    },
+    "try_again": "Réessayer"
   },
   "de": {
     "used_of": "{used} von {limit} Nachrichten verwendet",
@@ -224,7 +240,8 @@
       "member_allowance": "100 Nachrichten pro Monat",
       "synced_history": "Unterhaltungen auf allen Geräten synchronisiert",
       "supports": "Unterstützt das Archiv, die Videos und die Werkzeuge"
-    }
+    },
+    "try_again": "Erneut versuchen"
   },
   "it": {
     "used_of": "{used} di {limit} messaggi usati",
@@ -250,7 +267,8 @@
       "member_allowance": "100 messaggi al mese",
       "synced_history": "Conversazioni sincronizzate su tutti i dispositivi",
       "supports": "Sostiene l'archivio, i video e gli strumenti"
-    }
+    },
+    "try_again": "Riprova"
   },
   "ja": {
     "used_of": "{limit} 件中 {used} 件のメッセージを使用しました",
@@ -276,7 +294,8 @@
       "member_allowance": "月100件のメッセージ",
       "synced_history": "会話が全デバイスで同期されます",
       "supports": "アーカイブ、動画、ツールを支援します"
-    }
+    },
+    "try_again": "もう一度試す"
   },
   "ko": {
     "used_of": "{limit}개 중 {used}개 메시지 사용",
@@ -302,7 +321,8 @@
       "member_allowance": "월 100개 메시지",
       "synced_history": "모든 기기에서 대화 동기화",
       "supports": "아카이브와 영상, 도구를 후원합니다"
-    }
+    },
+    "try_again": "다시 시도"
   },
   "pt": {
     "used_of": "{used} de {limit} mensagens usadas",
@@ -328,7 +348,8 @@
       "member_allowance": "100 mensagens por mês",
       "synced_history": "Conversas sincronizadas entre dispositivos",
       "supports": "Apoia o arquivo, os vídeos e as ferramentas"
-    }
+    },
+    "try_again": "Tentar novamente"
   },
   "ru": {
     "used_of": "Использовано {used} из {limit} сообщений",
@@ -354,7 +375,8 @@
       "member_allowance": "100 сообщений в месяц",
       "synced_history": "Переписки синхронизируются между устройствами",
       "supports": "Поддерживает архив, видео и инструменты"
-    }
+    },
+    "try_again": "Попробовать снова"
   },
   "zh": {
     "used_of": "已使用 {used} / {limit} 条消息",
@@ -380,7 +402,8 @@
       "member_allowance": "每月 100 条消息",
       "synced_history": "对话在各设备间同步",
       "supports": "支持档案、视频与工具"
-    }
+    },
+    "try_again": "重试"
   }
 }
 </i18n>
