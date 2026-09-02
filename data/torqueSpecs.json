@@ -447,9 +447,9 @@
         "notes": ""
       },
       {
-        "name": "Clutch Slave to Mounting Plate (Verto)",
-        "lbft": "27",
-        "nm": "37",
+        "name": "Clutch Slave Mounting Plate to Housing M5 Bolts(Verto)",
+        "lbft": "5",
+        "nm": "7",
         "notes": ""
       },
       {
@@ -459,9 +459,9 @@
         "notes": ""
       },
       {
-        "name": "Clutch Slave Mounting Plate to Housing M5 Bolts(Verto)",
-        "lbft": "5",
-        "nm": "7",
+        "name": "Clutch Slave to Mounting Plate (Verto)",
+        "lbft": "27",
+        "nm": "37",
         "notes": ""
       },
       {
@@ -495,6 +495,12 @@
         "notes": ""
       },
       {
+        "name": "First Motion Shaft Nut",
+        "lbft": "153",
+        "nm": "207",
+        "notes": ""
+      },
+      {
         "name": "Flywheel Center Bolt",
         "lbft": "111",
         "nm": "150",
@@ -519,33 +525,27 @@
         "notes": "848cc, 998cc"
       },
       {
-        "name": "Third Motion Shaft bearing retainer screws",
-        "lbft": "13",
-        "nm": "17.6",
-        "notes": ""
-      },
-      {
-        "name": "First Motion Shaft Nut",
-        "lbft": "153",
-        "nm": "207",
-        "notes": ""
-      },
-      {
         "name": "Third Motion Shaft Nut",
         "lbft": "153",
         "nm": "207",
         "notes": ""
       },
       {
-        "name": "Transmission Case to Engine",
-        "lbft": "12",
-        "nm": "16",
+        "name": "Third Motion Shaft bearing retainer screws",
+        "lbft": "13",
+        "nm": "17.6",
         "notes": ""
       },
       {
-        "name": "Transmission Drain Plug",
+        "name": "Transmission Case Stud Nuts 3/8 UNF",
         "lbft": "25",
-        "nm": "34",
+        "nm": "33",
+        "notes": ""
+      },
+      {
+        "name": "Transmission Case Stud Nuts 5/16 UNF",
+        "lbft": "18",
+        "nm": "24.5",
         "notes": ""
       },
       {
@@ -561,16 +561,101 @@
         "notes": ""
       },
       {
-        "name": "Transmission Case Stud Nuts 3/8 UNF",
-        "lbft": "25",
-        "nm": "33",
+        "name": "Transmission Case to Crankcase",
+        "lbft": "6",
+        "nm": "8",
         "notes": ""
       },
       {
-        "name": "Transmission Case Stud Nuts 5/16 UNF",
-        "lbft": "18",
-        "nm": "24.5",
+        "name": "Transmission Case to Engine",
+        "lbft": "12",
+        "nm": "16",
         "notes": ""
+      },
+      {
+        "name": "Transmission Drain Plug",
+        "lbft": "25",
+        "nm": "34",
+        "notes": ""
+      }
+    ]
+  },
+  "generalTable": {
+    "title": "General Purpose Fasteners",
+    "icon": "fad fa-wrench",
+    "search": "",
+    "items": [
+      {
+        "name": "1/4 UNF (7/16 AF spanner, 11.11 mm hex)",
+        "lbft": "6",
+        "nm": "9",
+        "notes": "Grade 5 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "5/16 UNF (1/2 AF spanner, 12.7 mm hex)",
+        "lbft": "18",
+        "nm": "25",
+        "notes": "Grade 5 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "3/8 UNF (9/16 AF spanner, 14.29 mm hex)",
+        "lbft": "29",
+        "nm": "40",
+        "notes": "Grade 5 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "7/16 UNF bolt (5/8 AF spanner, 15.88 mm hex)",
+        "lbft": "55",
+        "nm": "75",
+        "notes": "Grade 5 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "7/16 UNF nut (11/16 AF spanner, 17.46 mm hex)",
+        "lbft": "55",
+        "nm": "75",
+        "notes": "Grade 5 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "1/2 UNF (3/4 AF spanner, 19.05 mm hex)",
+        "lbft": "66",
+        "nm": "90",
+        "notes": "Grade 5 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "9/16 UNF bolt (13/16 AF spanner, 20.64 mm hex)",
+        "lbft": "99",
+        "nm": "135",
+        "notes": "Grade 5 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "M5 (8 mm spanner)",
+        "lbft": "",
+        "nm": "",
+        "notes": "Grade 8.8 tensile. No torque figure is published in the source for this size; the spanner size is listed for identification only."
+      },
+      {
+        "name": "M6 (10 mm spanner)",
+        "lbft": "7",
+        "nm": "10",
+        "notes": "Grade 8.8 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "M8 (13 mm spanner)",
+        "lbft": "18",
+        "nm": "25",
+        "notes": "Grade 8.8 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "M10 (17 mm spanner)",
+        "lbft": "33",
+        "nm": "45",
+        "notes": "Grade 8.8 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
+      },
+      {
+        "name": "M12 (19 mm spanner)",
+        "lbft": "59",
+        "nm": "80",
+        "notes": "Grade 8.8 tensile, dry threads. General-purpose figure — use a named fastener spec instead where one exists."
       }
     ]
   }
