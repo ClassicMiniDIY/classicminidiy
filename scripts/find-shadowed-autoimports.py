@@ -10,7 +10,7 @@ ref() at setup scope then throws "ref is not defined" at runtime.
 
 Nothing catches this: the build succeeds, types pass, and the failure is a
 runtime ReferenceError. It took the SU needle configurator down completely (see
-CLAUDE.md, "Auto-import gotcha: never shadow an auto-imported name").
+CLAUDE.md "Rules that apply everywhere" and .claude/rules/vue-resolution.md).
 
 A composable file exporting its own name (useAuth.ts exporting useAuth) is the
 definition, not a shadow, and is skipped.

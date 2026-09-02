@@ -95,7 +95,7 @@ describe('Cloudflare Worker env contract', () => {
       [
         `${unregistered.length} unregistered process.env read(s) in server/.`,
         'A raw read needs a PLAIN Worker var — a NUXT_-prefixed secret will NOT reach it.',
-        'Add the name to PLAIN_WORKER_ENV_NAMES and to the CLAUDE.md deployment section:',
+        'Add the name to PLAIN_WORKER_ENV_NAMES and to .claude/rules/cloudflare-env.md:',
         ...unregistered.map((u) => `  - ${u}`),
       ].join('\n')
     ).toEqual([]);
