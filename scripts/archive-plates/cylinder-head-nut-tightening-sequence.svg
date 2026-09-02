@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1320" viewBox="0 0 1600 1320" role="img" aria-label="Cylinder head nut tightening sequence for the MPi thirteen-nut head">
-<title>Cylinder Head Nut Tightening Sequence — MPi Thirteen-Nut Head</title>
-<desc>The Mini MPi cylinder head with the rocker gear fitted, its thirteen nuts numbered in tightening order. Upper row 8, 2, 4, 10; middle row 9, 3, 5, 11; lower row 13, 6, 1, 7, 12. Tighten progressively in that order to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>
-<rect width="1600" height="1320" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1390" viewBox="0 0 1600 1390" role="img" aria-label="Cylinder head nut tightening sequence for the A-series nine-stud head">
+<title>Cylinder Head Nut Tightening Sequence — A-Series Nine-Stud Head</title>
+<desc>The A-series nine-stud cylinder head with the rocker gear fitted. Nine main head studs are numbered 8, 2, 4, 10 on the upper row and 13, 6, 1, 7, 12 on the lower row. Numbers 9, 3, 5 and 11 are a further four fixings on the rocker pedestals and are not main head studs. Tighten progressively in order to 34 Nm (25 lb-ft), then finally to 68 Nm (50 lb-ft).</desc>
+<rect width="1600" height="1390" fill="#ffffff"/>
 <text x="80" y="92" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#1c1f24" letter-spacing="-0.4">Cylinder Head Nut Tightening Sequence</text>
-<text x="80" y="132" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="23" font-weight="500" fill="#5b6169">Mini MPi 1275 — thirteen-nut head, shown with the rocker gear fitted</text>
+<text x="80" y="132" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="23" font-weight="500" fill="#5b6169">A-series nine-stud head (MPi 1275) — shown with the rocker gear fitted</text>
 <rect x="80" y="158" width="120" height="5" fill="#ed7135"/>
 <text x="1520" y="92" text-anchor="end" font-family="Menlo, DejaVu Sans Mono, Courier New, monospace" font-size="20" fill="#5b6169" letter-spacing="1.5">PLATE 12M3412</text>
 <text x="1520" y="126" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">Classic Mini DIY Archive</text>
@@ -593,26 +593,26 @@ m-82 0 c62 -62 -34 -154 -103 -100 -32 26 -35 58 -6 94 26 33 79 36 109 6z"/>
 -4 -4 -4 -10z"/>
 <path fill="#111418" d="M4540 2555 c-10 -12 -10 -15 4 -15 9 0 16 7 16 15 0 8 -2 15 -4 15
 -2 0 -9 -7 -16 -15z"/>
-<path fill="#ed7135" d="M6682 2418 c-7 -46 -12 -89 -12 -95 0 -19 25 -16 62 7 18 11 41 20
+<path fill="#6b7a52" d="M6682 2418 c-7 -46 -12 -89 -12 -95 0 -19 25 -16 62 7 18 11 41 20
 51 20 29 0 67 -45 67 -80 0 -39 -39 -80 -76 -80 -16 0 -37 11 -54 30 -52 55
 -86 22 -37 -36 30 -34 108 -45 155 -20 60 31 80 112 42 173 -25 41 -87 62
 -132 45 -30 -11 -30 -11 -24 20 3 17 6 37 6 44 0 11 18 14 75 14 68 0 75 2 75
 20 0 19 -7 20 -93 20 l-94 0 -11 -82z"/>
-<path fill="#ed7135" d="M2480 2443 c-57 -51 -50 -157 11 -188 37 -19 89 -19 117 1 21 14 22
+<path fill="#6b7a52" d="M2480 2443 c-57 -51 -50 -157 11 -188 37 -19 89 -19 117 1 21 14 22
 14 22 -6 0 -41 -28 -89 -55 -96 -33 -8 -71 9 -80 35 -7 24 -45 29 -45 5 0 -42
 53 -84 107 -84 15 0 42 9 60 20 79 48 85 274 9 321 -47 29 -109 25 -146 -8z
 m125 -38 c14 -13 25 -36 25 -50 0 -33 -42 -75 -75 -75 -36 0 -65 33 -65 75 0
 69 68 98 115 50z"/>
-<path fill="#ed7135" d="M4564 2460 c-30 -12 -64 -58 -64 -86 0 -19 5 -24 24 -24 18 0 25 7
+<path fill="#6b7a52" d="M4564 2460 c-30 -12 -64 -58 -64 -86 0 -19 5 -24 24 -24 18 0 25 7
 29 29 8 41 54 58 96 37 34 -18 39 -40 15 -74 -10 -14 -25 -22 -45 -22 -22 0
 -29 -5 -29 -20 0 -14 7 -20 21 -20 23 0 60 -18 71 -34 26 -39 -12 -96 -63 -96
 -43 0 -66 15 -74 50 -5 23 -12 30 -31 30 -13 0 -24 -5 -24 -10 0 -24 30 -79
 51 -94 29 -20 110 -21 148 -2 53 28 67 105 27 153 -24 28 -24 29 -5 52 62 76
 -46 172 -147 131z"/>
-<path fill="#ed7135" d="M8700 2456 c0 -19 -47 -56 -71 -56 -12 0 -19 -7 -19 -20 0 -17 7 -20
+<path fill="#6b7a52" d="M8700 2456 c0 -19 -47 -56 -71 -56 -12 0 -19 -7 -19 -20 0 -17 7 -20
 40 -20 l40 0 0 -120 0 -120 25 0 25 0 0 175 c0 168 -1 175 -20 175 -11 0 -20
 -6 -20 -14z"/>
-<path fill="#ed7135" d="M8980 2456 c0 -19 -47 -56 -71 -56 -12 0 -19 -7 -19 -20 0 -17 7 -20
+<path fill="#6b7a52" d="M8980 2456 c0 -19 -47 -56 -71 -56 -12 0 -19 -7 -19 -20 0 -17 7 -20
 40 -20 l40 0 0 -120 0 -120 25 0 25 0 0 175 c0 168 -1 175 -20 175 -11 0 -20
 -6 -20 -14z"/>
 <path fill="#111418" d="M945 2258 c-130 -72 -141 -253 -20 -328 89 -55 213 -20 261 73 24 46
@@ -871,23 +871,27 @@ m107 -170 c43 -43 13 -130 -44 -130 -33 0 -65 29 -72 67 -12 63 71 108 116 63z"/>
 40 -20 l40 0 0 -120 0 -120 25 0 25 0 0 175 c0 168 -1 175 -20 175 -11 0 -20
 -6 -20 -14z"/>
 </g></g>
-<text x="800" y="1000" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-style="italic" fill="#5b6169">The order works outwards from the centre — nut 1 is central on the lower row, and 12 and 13 are the end nuts.</text>
-<rect x="80" y="1036" width="1440" height="176.0" rx="10" fill="#fbfaf7" stroke="#c7ccd1" stroke-width="2"/>
-<rect x="80" y="1036" width="6" height="176.0" rx="3" fill="#6b7a52"/>
-<text x="118" y="1076" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#6b7a52" letter-spacing="2.2">PROCEDURE</text>
-<text x="118" y="1114" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">Fit the nuts and tighten progressively in the order shown, in two passes.</text>
-<text x="118" y="1146" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">The rocker shaft bracket nuts are separate fasteners — those take 25 Nm.</text>
-<text x="118" y="1181" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" fill="#5b6169">Metric figures are as published in the source; imperial equivalents are converted.</text>
-<rect x="940" y="1066" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
-<text x="1076" y="1094" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FIRST PASS</text>
-<text x="1076" y="1140" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">34 Nm</text>
-<text x="1076" y="1166" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">25 lb-ft</text>
-<rect x="1232" y="1066" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
-<text x="1368" y="1094" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FINAL PASS</text>
-<text x="1368" y="1140" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">68 Nm</text>
-<text x="1368" y="1166" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">50 lb-ft</text>
-<line x1="80" y1="1250" x2="1520" y2="1250" stroke="#c7ccd1" stroke-width="2"/>
-<text x="80" y="1278" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Vector redraw of fig. 12M3412 from RCL0193ENG Mini Workshop Manual, 2nd Edition (Engine, Repairs), held in the Classic Mini DIY archive.</text>
-<text x="80" y="1304" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Figures are for the MPi thirteen-nut head. Other A-series engines differ — check the torque chart first.</text>
-<text x="1520" y="1278" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#6b7a52">classicminidiy.com</text>
+<circle cx="298" cy="990" r="9" fill="#ed7135"/>
+<text x="317" y="996" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">Nine main head studs &#8212; the 9-stud pattern</text>
+<circle cx="804" cy="990" r="9" fill="#6b7a52"/>
+<text x="823" y="996" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#1c1f24">3, 5, 9 and 11 &#8212; further fixings, not main head studs</text>
+<text x="800" y="1042" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" font-style="italic" fill="#5b6169">The order works outwards from the centre — nut 1 is central on the lower row, and 12 and 13 are the end nuts.</text>
+<rect x="80" y="1078" width="1440" height="176.0" rx="10" fill="#fbfaf7" stroke="#c7ccd1" stroke-width="2"/>
+<rect x="80" y="1078" width="6" height="176.0" rx="3" fill="#6b7a52"/>
+<text x="118" y="1118" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#6b7a52" letter-spacing="2.2">PROCEDURE</text>
+<text x="118" y="1156" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">Fit the nuts and tighten progressively in the order shown, in two passes.</text>
+<text x="118" y="1188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="21" fill="#1c1f24">The rocker shaft bracket nuts are separate fasteners — those take 25 Nm.</text>
+<text x="118" y="1223" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" fill="#5b6169">Metric figures are as published in the source; imperial equivalents are converted.</text>
+<rect x="940" y="1108" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
+<text x="1076" y="1136" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FIRST PASS</text>
+<text x="1076" y="1182" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">34 Nm</text>
+<text x="1076" y="1208" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">25 lb-ft</text>
+<rect x="1232" y="1108" width="272" height="116" rx="8" fill="#ffffff" stroke="#c7ccd1" stroke-width="2"/>
+<text x="1368" y="1136" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#6b7a52" letter-spacing="2">FINAL PASS</text>
+<text x="1368" y="1182" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#1c1f24">68 Nm</text>
+<text x="1368" y="1208" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" fill="#5b6169">50 lb-ft</text>
+<line x1="80" y1="1292" x2="1520" y2="1292" stroke="#c7ccd1" stroke-width="2"/>
+<text x="80" y="1320" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Vector redraw of fig. 12M3412 from RCL0193ENG Mini Workshop Manual, 2nd Edition (Engine, Repairs), held in the Classic Mini DIY archive.</text>
+<text x="80" y="1346" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" fill="#5b6169">Figures are for the nine-stud head. The earlier eleven-stud head and the 848/998 engines differ — check the torque chart first.</text>
+<text x="1520" y="1320" text-anchor="end" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#6b7a52">classicminidiy.com</text>
 </svg>
