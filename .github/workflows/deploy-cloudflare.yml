@@ -230,7 +230,7 @@ jobs:
 
           # Everything else server-side is now a CLOUDFLARE RUNTIME SECRET and is
           # deliberately absent here — see scripts/set-cf-secrets.sh and the
-          # "Build-time vs runtime secrets" section in CLAUDE.md. Adding one back
+          # .claude/rules/cloudflare-env.md (build-time vs runtime secrets). Adding one back
           # would re-bake it into the bundle and undo the split.
           #
           # These two are the exception: they are read at BUILD time as well as at
@@ -319,7 +319,7 @@ jobs:
           # nothing red. Mint the key at /dashboard/api-keys on a DEDICATED
           # account that will never hold a developer subscription (a comp
           # counts, and flips the key to the paid tier), then
-          # `gh secret set MCP_FREE_TIER_KEY`. See CLAUDE.md, /mcp invariants.
+          # `gh secret set MCP_FREE_TIER_KEY`. See .claude/rules/security.md, /mcp.
           MCP_FREE_TIER_KEY: ${{ secrets.MCP_FREE_TIER_KEY }}
 
       - name: Deploy
