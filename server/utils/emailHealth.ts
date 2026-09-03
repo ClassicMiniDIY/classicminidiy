@@ -49,17 +49,16 @@ export const MAIL_DOMAINS: DomainSpec[] = [
   {
     domain: 'classicminidiy.com',
     sends: true,
-    // SES is the only confirmed sender. Two includes were dropped from this
-    // list on 2026-09-03 after checking what they actually authorize:
+    // SES is the ONLY sender. Three includes are orphans, confirmed 2026-09-03:
     //
-    //   _spf.google.com   — vestigial. Gmail has NO "send mail as" entry for
-    //                       any custom domain, Google is not the MX, and the
-    //                       account is consumer Gmail, not Workspace. Nothing
-    //                       can send as this domain via Google.
-    //   shops.shopify.com — resolves to bare `v=spf1 ~all`, authorizing nobody.
-    //                       Shopify does send as this domain, so the fix is
-    //                       Shopify's DKIM CNAMEs, not an SPF include that
-    //                       grants nothing. Flagged by the emptyIncludes check.
+    //   spf.forwardemail.net — being retired; costs 5 of the 8 lookups alone.
+    //   _spf.google.com      — vestigial. Gmail has no "send mail as" entry for
+    //                          any custom domain, Google is not the MX, and the
+    //                          account is consumer Gmail, not Workspace.
+    //   shops.shopify.com    — resolves to bare `v=spf1 ~all`, authorizing
+    //                          nobody, AND the store does not send as this
+    //                          domain: its sender is orders@cmdiy.co. So the
+    //                          `maileri5q` mailer CNAME here is an orphan too.
     expectedIncludes: ['amazonses.com'],
   },
   {
@@ -78,11 +77,20 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     // and mailer hosts, plus a Postmark DKIM key and bounce host. This is the
     // Shopify store's authenticated sending domain.
     sends: true,
-    // Left empty deliberately, which makes the page FAIL on the absent SPF —
-    // the correct reading for a sending domain that authorises nobody. The
-    // include to add depends on which senders are still live: Shopify's grants
-    // nothing (see classicminidiy.com below) so Shopify rides on DKIM alone,
-    // and Postmark would need `spf.mtasv.net` only if it still sends.
+    // Empty, and correctly so: there is no SPF include to add.
+    //
+    // Confirmed 2026-09-03: the ONLY sender is Shopify, as `orders@cmdiy.co`,
+    // with Shopify domain authentication reporting "Authenticated". Shopify
+    // authenticates by DKIM — the six CNAMEs in this zone — and its historical
+    // SPF include (`shops.shopify.com`) resolves to bare `v=spf1 ~all`, so it
+    // grants nothing. DMARC passes on DKIM alignment alone; SPF alignment is
+    // not required. Postmark is dead: an abandoned trial from years ago.
+    //
+    // So this domain has no envelope sender to authorise, which is why the
+    // page's "no SPF record" FAIL is a prompt to decide, not a defect to
+    // silence. Do NOT publish `v=spf1 -all` before DMARC aggregate reports
+    // confirm Shopify's envelope domain — a hard fail is weighted heavily by
+    // some receivers even when DKIM aligns.
     expectedIncludes: [],
   },
 ];
@@ -96,6 +104,10 @@ export const SENDER_LABELS: Record<string, string> = {
   'send.resend.com': 'Resend',
   'servers.mcsv.net': 'Mailchimp',
   'sendgrid.net': 'SendGrid',
+  // Postmark is confirmed dead (abandoned trial). Labelled so that if this
+  // include ever reappears in a record, the warning names it rather than
+  // printing a bare hostname nobody recognises.
+  'spf.mtasv.net': 'Postmark',
 };
 
 export function senderLabel(include: string): string {
