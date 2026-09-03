@@ -283,8 +283,7 @@ describe('server/api/exchange/contact-seller.post', () => {
   it('throws 400 when the message contains more than 2 urls', async () => {
     setBody({
       ...VALID_BODY,
-      message:
-        'Tracking links: https://usps.com/a https://ups.com/b https://fedex.com/c all for your reference here',
+      message: 'Tracking links: https://usps.com/a https://ups.com/b https://fedex.com/c all for your reference here',
     });
     await expect(handler({} as any)).rejects.toMatchObject({
       statusCode: 400,
