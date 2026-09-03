@@ -272,6 +272,61 @@ one until DMARC aggregate reports confirm Shopify's envelope domain — some
 receivers weight an SPF hard fail heavily even when DKIM aligns. Turn on `rua=`
 first; that is follow-up 2 and it is free.
 
+## Applied 2026-09-03
+
+### Records: `cmdiy.co` zone migrated
+
+`scripts/migrate-r53-zone-to-cf.py`: **11 changes, 0 failures** — 10 records
+created plus `pm-bounces` unproxied. Verified identical on both `anita` and
+`thomas`; a re-run reports 0 to create, 15 already present.
+
+Nameservers were changed at the registrar the same day. `whois` showed
+`ANITA`/`THOMAS.NS.CLOUDFLARE.COM` immediately while the `.co` TLD servers still
+served the Route 53 delegation on a 3600 s TTL — normal registry propagation
+lag, not a failed change. The Cloudflare zone reports `pending` until it clears.
+
+### SPF and dead-provider cleanup
+
+`scripts/fix-mail-dns.py`: **6 changes, 0 failures.**
+
+| Domain                | Before                                     | After                                      |
+| --------------------- | ------------------------------------------ | ------------------------------------------ |
+| `classicminidiy.com`  | 4 includes, **8 of 10 lookups**            | `v=spf1 include:amazonses.com -all`, **1** |
+| `theminiexchange.com` | `include:send.resend.com ~all`, SES absent | `v=spf1 include:amazonses.com ~all`, **1** |
+
+Deleted: `pm-bounces` on `classicminidiy.com` and `cmdiy.co`, the Postmark DKIM
+key on `cmdiy.co`, and the stale `resend._domainkey` on `theminiexchange.com`.
+All four confirmed gone at Cloudflare's own nameservers and via the API.
+
+**Deviation from the fix table above:** `theminiexchange.com` kept `~all` rather
+than tightening to `-all`. Swapping the include already changes which sender is
+authorised; tightening the qualifier in the same edit would change two variables
+at once on the domain whose senders are least certain. Tighten it once DMARC
+aggregate reports confirm nothing else sends as that domain.
+
+Verified untouched afterwards, because these were the collateral risk:
+
+```
+store / merch / account.classicminidiy.com   still -> shops.myshopify.com
+SES DKIM CNAMEs on both sending domains      still resolve
+MX on both domains                           still Forward Email
+noreply. / send. / mail. SES MAIL FROM SPF   unchanged
+```
+
+Route 53 was deliberately not edited. It is now a frozen pre-change rollback
+snapshot rather than a mirror, so it will read as drifted against Cloudflare.
+
+### Health check now reads
+
+```
+classicminidiy.com   [WARN]  SPF ok, 1 of 10 lookups   MX pending, DMARC p=none
+theminiexchange.com  [WARN]  SPF ok, 1 of 10 lookups   MX pending, DMARC p=none
+cmdiy.co             [FAIL]  no SPF (deliberate)       MX pending, DMARC p=none
+```
+
+Every SPF finding is cleared. The remaining warnings are the two things this
+change deliberately did not do: the MX cutover, and DMARC enforcement.
+
 ## Cutover runbook
 
 Cole's call, 2026-09-03: **no phased soak.** Move the nameservers, pull everything
@@ -322,6 +377,11 @@ They must be **DNS-only**; proxying a mail CNAME through Cloudflare breaks it,
 which is why the script never sets `proxied`.
 
 ### 3. Enable Email Routing on all three zones
+
+**Status 2026-09-03: `unconfigured` on all three zones.** This step cannot be
+scripted end to end — adding a destination address sends a verification email
+that a human must click, and the CMDIY API token has no account-level Email
+Routing permission either. Do it in the Cloudflare dashboard.
 
 Per domain:
 
