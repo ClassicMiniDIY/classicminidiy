@@ -12,6 +12,7 @@ import {
   senderLabel,
   worstOf,
   CF_ROUTING_INCLUDE_HOST,
+  SENDER_LABELS,
   type Check,
   type DomainFacts,
   type DomainSpec,
@@ -551,5 +552,55 @@ describe('worstOf', () => {
     expect(worstOf([c('ok'), c('warn')])).toBe('warn');
     expect(worstOf([c('ok'), c('unknown')])).toBe('ok');
     expect(worstOf([])).toBe('ok');
+  });
+});
+
+describe('truncated SPF evaluations', () => {
+  const facts = (spf: any): DomainFacts => ({
+    mxHosts: ['route1.mx.cloudflare.net'],
+    spfRecord: 'v=spf1 include:a.example -all',
+    spfCount: 1,
+    spf,
+    dmarc: { record: 'r', policy: 'reject', pct: 100, hasReporting: true },
+  });
+  const base = {
+    includes: [],
+    directIncludes: [],
+    emptyIncludes: [],
+    authorizing: 1,
+    allQualifier: '-' as const,
+  };
+  const lookupCheck = (spf: any) =>
+    buildDomainHealth({ domain: 'x', sends: true, expectedIncludes: [] }, facts(spf)).checks.find(
+      (c) => c.id === 'spf-lookups'
+    );
+
+  it('does not grade a partial count as a pass', () => {
+    // The bug this replaces: one SERVFAIL on an include nesting four more
+    // lookups took the real classicminidiy.com record from `[warn] 8 of 10`
+    // to `[ok] 4 of 10` — the alarm inverted into a pass by a DNS blip.
+    const c = lookupCheck({ ...base, lookups: 4, truncated: true });
+    expect(c?.severity).toBe('unknown');
+    expect(c?.detail).toContain('at least 4');
+    expect(c?.detail).toContain('lower bound');
+  });
+
+  it('still grades a complete count normally', () => {
+    expect(lookupCheck({ ...base, lookups: 4, truncated: false })?.severity).toBe('ok');
+    expect(lookupCheck({ ...base, lookups: 8, truncated: false })?.severity).toBe('warn');
+  });
+
+  it('still fails a truncated count that is ALREADY over the limit', () => {
+    // Truncation only ever undercounts, so a figure past the limit stays
+    // meaningful — the true total can only be higher.
+    const c = lookupCheck({ ...base, lookups: 11, truncated: true });
+    expect(c?.severity).toBe('fail');
+    expect(c?.detail).toContain('permerror');
+  });
+});
+
+describe('SENDER_LABELS', () => {
+  it("keys Cloudflare's include off the constant, not a second literal", () => {
+    expect(SENDER_LABELS[CF_ROUTING_INCLUDE_HOST]).toBe('Cloudflare Email Routing');
   });
 });

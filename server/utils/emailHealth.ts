@@ -126,7 +126,9 @@ export const SENDER_LABELS: Record<string, string> = {
   // include ever reappears in a record, the warning names it rather than
   // printing a bare hostname nobody recognises.
   'spf.mtasv.net': 'Postmark',
-  '_spf.mx.cloudflare.net': 'Cloudflare Email Routing',
+  // Computed key, not a literal: the constant exists so this value has exactly
+  // one definition. A second copy here is the drift it was added to prevent.
+  [CF_ROUTING_INCLUDE_HOST]: 'Cloudflare Email Routing',
 };
 
 export function senderLabel(include: string): string {
@@ -450,17 +452,33 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
   // --- SPF lookup budget ---
   // The limit is a cliff, not a gradient: at 11 the whole record is a permerror,
   // so 8 is worth a warning while there is still room to act.
+  //
+  // A truncated walk did not reach every include, so its count is a LOWER BOUND,
+  // not a measurement. Grading it as though it were measured inverts the check:
+  // a transient SERVFAIL on an include that nests four more lookups drops the
+  // reported figure below the warning threshold and turns the alarm into a
+  // pass. Only a count over the limit is still meaningful when truncated —
+  // the real total can only be higher.
   if (facts.spf) {
     const n = facts.spf.lookups;
-    checks.push({
-      id: 'spf-lookups',
-      label: 'SPF lookups',
-      severity: n > SPF_LOOKUP_LIMIT ? 'fail' : n >= SPF_LOOKUP_LIMIT - 2 ? 'warn' : 'ok',
-      detail:
-        n > SPF_LOOKUP_LIMIT
+    const over = n > SPF_LOOKUP_LIMIT;
+    if (facts.spf.truncated && !over) {
+      checks.push({
+        id: 'spf-lookups',
+        label: 'SPF lookups',
+        severity: 'unknown',
+        detail: `at least ${n} of ${SPF_LOOKUP_LIMIT} — an include could not be followed, so this is a lower bound`,
+      });
+    } else {
+      checks.push({
+        id: 'spf-lookups',
+        label: 'SPF lookups',
+        severity: over ? 'fail' : n >= SPF_LOOKUP_LIMIT - 2 ? 'warn' : 'ok',
+        detail: over
           ? `${n} of ${SPF_LOOKUP_LIMIT} — over the limit, the record is a permerror`
           : `${n} of ${SPF_LOOKUP_LIMIT}`,
-    });
+      });
+    }
   }
 
   // --- SPF senders ---
