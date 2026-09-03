@@ -29,6 +29,9 @@ export interface EmailDomainHealth {
     lookups: number;
     includes: string[];
     directIncludes: string[];
+    /** Direct includes that resolve but authorize no sender. */
+    emptyIncludes: string[];
+    authorizing: number;
     allQualifier: string | null;
     truncated: boolean;
   } | null;
