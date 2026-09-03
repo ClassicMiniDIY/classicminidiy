@@ -70,6 +70,19 @@ describe('classifyMx', () => {
   it('ignores the trailing dot and case that dig and DoH disagree about', () => {
     expect(classifyMx(['ROUTE1.MX.CloudFlare.NET.'])).toBe('cloudflare');
   });
+
+  it('anchors at a label boundary, not a bare suffix', () => {
+    // A plain endsWith() matches any host merely ending in those characters.
+    // Flagged by CodeQL as js/incomplete-url-substring-sanitization; low stakes
+    // here because the hosts come from our own zones, but still the wrong test.
+    expect(classifyMx(['notforwardemail.net'])).toBe('other');
+    expect(classifyMx(['evilgoogle.com'])).toBe('other');
+    expect(classifyMx(['fakemx.cloudflare.net.attacker.com'])).toBe('other');
+    // The real hosts, and the bare domains themselves, still classify.
+    expect(classifyMx(['mx1.forwardemail.net'])).toBe('forwardemail');
+    expect(classifyMx(['forwardemail.net'])).toBe('forwardemail');
+    expect(classifyMx(['aspmx.l.google.com'])).toBe('google');
+  });
 });
 
 describe('findSpf', () => {
