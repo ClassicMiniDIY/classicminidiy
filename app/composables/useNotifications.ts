@@ -1,3 +1,17 @@
+import type { Database } from '~~/types/database';
+
+type NotificationPreferencesRow = Database['public']['Tables']['notification_preferences']['Row'];
+
+/**
+ * The toggles this composable manages, as the UI needs them: every one a real
+ * boolean, because each is bound to a `v-model` checkbox.
+ *
+ * Every column is nullable in Postgres, so a row can come back with `null` for
+ * a preference that was never written. `toPreferences` below resolves those to
+ * the same values the insert path seeds, which is what "unset" has always meant
+ * here — the row and this interface disagreed only because nothing translated
+ * between them.
+ */
 export interface NotificationPreferences {
   email_new_messages: boolean;
   email_new_comments: boolean;
@@ -7,6 +21,30 @@ export interface NotificationPreferences {
   push_new_messages: boolean;
   email_saved_search_matches: boolean;
 }
+
+/** Defaults for an unset (`null`) column. Mirrors the insert below. */
+const PREFERENCE_DEFAULTS: NotificationPreferences = {
+  email_new_messages: true,
+  email_new_comments: true,
+  email_comment_replies: true,
+  email_listing_status: true,
+  email_weekly_digest: false,
+  push_new_messages: true,
+  email_saved_search_matches: true,
+};
+
+const toPreferences = (row: NotificationPreferencesRow): NotificationPreferences => ({
+  // Spread the row through: callers have always received the whole record, and
+  // narrowing that here would be a behaviour change unrelated to the nulls.
+  ...row,
+  email_new_messages: row.email_new_messages ?? PREFERENCE_DEFAULTS.email_new_messages,
+  email_new_comments: row.email_new_comments ?? PREFERENCE_DEFAULTS.email_new_comments,
+  email_comment_replies: row.email_comment_replies ?? PREFERENCE_DEFAULTS.email_comment_replies,
+  email_listing_status: row.email_listing_status ?? PREFERENCE_DEFAULTS.email_listing_status,
+  email_weekly_digest: row.email_weekly_digest ?? PREFERENCE_DEFAULTS.email_weekly_digest,
+  push_new_messages: row.push_new_messages ?? PREFERENCE_DEFAULTS.push_new_messages,
+  email_saved_search_matches: row.email_saved_search_matches ?? PREFERENCE_DEFAULTS.email_saved_search_matches,
+});
 
 export const useNotifications = () => {
   const supabase = useSupabase();
@@ -41,27 +79,18 @@ export const useNotifications = () => {
       if (!data) {
         const { data: newPrefs, error: insertError } = await supabase
           .from('notification_preferences')
-          .insert({
-            user_id: user.value.id,
-            email_new_messages: true,
-            email_new_comments: true,
-            email_comment_replies: true,
-            email_listing_status: true,
-            email_weekly_digest: false,
-            push_new_messages: true,
-            email_saved_search_matches: true,
-          })
+          .insert({ user_id: user.value.id, ...PREFERENCE_DEFAULTS })
           .select()
           .single();
 
         if (insertError) throw insertError;
 
-        preferences.value = newPrefs;
-        return newPrefs;
+        preferences.value = toPreferences(newPrefs);
+        return preferences.value;
       }
 
-      preferences.value = data;
-      return data;
+      preferences.value = toPreferences(data);
+      return preferences.value;
     } catch (error: any) {
       console.error('Failed to fetch notification preferences:', error);
       toast.add({

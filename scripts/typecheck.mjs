@@ -36,13 +36,28 @@ const BASELINE = {
   // auto-import declarations resolve to overloads that reject `ref<T>()` and
   // `nextTick(cb)`, both of which are correct usage; the explicit import takes
   // the real signatures and clears nine errors.
-  'app/': 362,
+  // 362 -> 343. All 19 were the profiles split showing up as type errors:
+  // `email` moved to `profile_private`, so the `profiles` shapes in useListings
+  // and useWantedPosts had to declare it optional (the admin queries embed and
+  // flatten it, so the runtime was already correct), and `useAdmin.updateUser`
+  // still accepted `email`/`is_admin` as if they were profile columns. The rest
+  // were hand-written interfaces that had drifted from their generated rows:
+  // NotificationPreferences claimed non-null booleans over nullable columns,
+  // and SavedSearch carried a `notified_listing_ids` no column backs. Both now
+  // derive from the row and normalise on read. `keyof typeof preferences.value`
+  // in dashboard/notifications.vue collapsed to `never` (the ref is `T | null`)
+  // and cost six identical errors on its own.
+  'app/': 343,
   // 64 -> 59. server/utils/runtimeConfig.ts gives `useRuntimeConfig(event)` its
   // real Nitro signature, which removes five identical "Expected 0 arguments,
   // but got 1" errors across bot-analytics, mcp-tiering, mcpUsage and the two
   // external-model routes. The event form is the documented convention in
   // CLAUDE.md, and it now typechecks.
-  'server/': 59,
+  // 59 -> 58. contact-seller.post.ts selected `email` straight off the embedded
+  // profile, which PostgREST rejects outright — so the handler 404'd every
+  // inquiry, not just mistyped one. It now embeds `profile_private ( email )`
+  // like the rest of the admin reads do.
+  'server/': 58,
   'scripts/': 0,
   'data/': 1,
 };

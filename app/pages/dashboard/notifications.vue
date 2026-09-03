@@ -188,6 +188,8 @@
 </template>
 
 <script setup lang="ts">
+  import type { NotificationPreferences } from '~/composables/useNotifications';
+
   const { t } = useI18n();
 
   const { preferences, loading, saving, fetchPreferences, togglePreference, updatePreferences } = useNotifications();
@@ -198,7 +200,10 @@
     await checkExistingSubscription();
   });
 
-  const handleToggle = async (key: keyof typeof preferences.value) => {
+  // `keyof typeof preferences.value` collapses to `never`, because
+  // `preferences.value` is `NotificationPreferences | null` and `keyof` over a
+  // union keeps only the keys common to both members. Name the type directly.
+  const handleToggle = async (key: keyof NotificationPreferences) => {
     await togglePreference(key);
   };
 
