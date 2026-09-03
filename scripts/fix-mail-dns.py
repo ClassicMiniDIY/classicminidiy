@@ -55,10 +55,41 @@ API = "https://api.cloudflare.com/client/v4"
 CF_ROUTING_SPF = "v=spf1 include:_spf.mx.cloudflare.net ~all"
 CF_ROUTING_INCLUDE = "include:_spf.mx.cloudflare.net"
 
-# Where DMARC aggregate reports go. Reachable today because Email Routing's
-# catch-all on classicminidiy.com forwards everything to Gmail.
+# Where DMARC aggregate reports go.
+#
+# Postmark's free DMARC Digests service: it ingests the raw XML and emails a
+# readable weekly summary, which is the part anyone actually wants. Each domain
+# gets its OWN address from their signup — they are not interchangeable, and a
+# domain reported to the wrong address is silently dropped.
+#
+# The self-hosted `reports@classicminidiy.com` destination it replaces still
+# exists and still forwards to Gmail, so switching back is a one-line edit. It
+# is deliberately NOT kept alongside Postmark: the raw reports are daily XML
+# attachments and the digest is the thing being read.
+#
+# `dmarc.postmarkapp.com` publishes the RFC 7489 s7.1 wildcard authorisation
+# (`*._report._dmarc.dmarc.postmarkapp.com` -> "v=DMARC1;"), so no per-domain
+# authorisation record is needed on our side for it. Verified 2026-09-04.
+#
+# The record strings below are Postmark's own, used verbatim so their
+# verification cannot fail on a formatting difference. `pct=100` and `aspf=r`
+# are both defaults and change nothing. `sp=none` is also a no-op while `p=none`
+# — but it becomes load-bearing the moment p is tightened, because it would
+# leave sending subdomains (ghost.news, noreply) at `none` rather than
+# inheriting the stricter policy. Revisit it then, not now.
+POSTMARK_DMARC = {
+    "classicminidiy.com": "v=DMARC1; p=none; pct=100; rua=mailto:re+nykoii9r5fe@dmarc.postmarkapp.com; sp=none; aspf=r;",
+    # theminiexchange.com and cmdiy.co: awaiting their own signup addresses.
+}
+
+# Fallback for any domain not yet signed up with Postmark.
 DMARC_RUA = "reports@classicminidiy.com"
 DMARC_RUA_DOMAIN = "classicminidiy.com"
+
+
+def dmarc_for(domain):
+    """Postmark's record when we have one, else the self-hosted rua."""
+    return POSTMARK_DMARC.get(domain, f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}")
 
 # --- the desired state -------------------------------------------------------
 #
@@ -67,12 +98,12 @@ DMARC_RUA_DOMAIN = "classicminidiy.com"
 CHANGES = [
     {
         "domain": "classicminidiy.com",
+        "dmarc": dmarc_for("classicminidiy.com"),
         # Keeps the existing `-all`. Only the includes change, so this is a
         # minimal diff: one variable, not two.
         # Carries Cloudflare's include so the wizard's record can be collapsed
         # into this one. 2 lookups of 10 — still down from the original 8.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
-        "dmarc": f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}",
         "delete": [
             ("CNAME", "pm-bounces.classicminidiy.com"),  # Postmark, dead
             # Forward Email decommission, 2026-09-03. Inbound moved to
@@ -86,6 +117,7 @@ CHANGES = [
     },
     {
         "domain": "theminiexchange.com",
+        "dmarc": dmarc_for("theminiexchange.com"),
         # Deliberately keeps `~all` rather than tightening to `-all`, which is
         # what the plan's table originally said. Swapping the include already
         # changes which sender is authorised; tightening the qualifier in the
@@ -94,12 +126,12 @@ CHANGES = [
         # Tightened from `~all` to `-all` on 2026-09-04 at Cole's instruction.
         # SES and Cloudflare are the only authorised senders and both are named.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
-        "dmarc": f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}",
         "delete": [("TXT", "resend._domainkey.theminiexchange.com")],  # stale
         "delete_txt_containing": ["forward-email-site-verification"],
     },
     {
         "domain": "cmdiy.co",
+        "dmarc": dmarc_for("cmdiy.co"),
         # Cloudflare's own record, added by Email Routing onboarding on
         # 2026-09-03. cmdiy.co had NO SPF before that, so this became its only
         # one — nothing to merge and no permerror.
@@ -111,7 +143,6 @@ CHANGES = [
         # proposed, which is the right side to err on until DMARC aggregate
         # reports confirm the envelope domain.
         "spf": "v=spf1 include:_spf.mx.cloudflare.net ~all",
-        "dmarc": f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}",
         "delete": [
             ("CNAME", "pm-bounces.cmdiy.co"),
             ("TXT", "20240927014807pm._domainkey.cmdiy.co"),
@@ -308,7 +339,7 @@ def main():
             # the one being reported on, that domain must publish an
             # authorisation record or most reporters silently send nothing.
             # This is the usual reason "I turned on rua and got no reports".
-            if domain != DMARC_RUA_DOMAIN:
+            if domain != DMARC_RUA_DOMAIN and DMARC_RUA in want_dmarc:
                 auth_name = f"{domain}._report._dmarc.{DMARC_RUA_DOMAIN}"
                 rz = cf(f"zones?name={DMARC_RUA_DOMAIN}")
                 rzid = (rz.get("result") or [{}])[0].get("id")
