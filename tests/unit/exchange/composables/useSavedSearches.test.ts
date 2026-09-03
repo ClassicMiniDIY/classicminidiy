@@ -13,8 +13,8 @@ const makeSavedSearch = (overrides: Partial<SavedSearch> = {}): SavedSearch => (
   filters: { model: 'Cooper S', maxPrice: 20000 },
   notify_email: true,
   is_active: true,
-  notified_listing_ids: [],
   created_at: '2026-02-21T00:00:00Z',
+  last_notified_at: null,
   ...overrides,
 });
 
