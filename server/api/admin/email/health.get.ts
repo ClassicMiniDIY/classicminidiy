@@ -31,8 +31,15 @@ interface DohAnswer {
 }
 
 /**
- * One DoH query. Returns the answer `data` strings, or [] for NXDOMAIN/NODATA —
- * "no record" and "no such name" mean the same thing to every check here.
+ * One DoH query.
+ *
+ * NOERROR (0) and NXDOMAIN (3) are both determinations: the name either has
+ * records of this type or it provably does not, and both mean "no record" to
+ * every check here. Every other RCODE — SERVFAIL, REFUSED — is a failure to
+ * determine, and collapsing those to an empty list is how a transient resolver
+ * blip gets rendered as `No MX record: inbound mail is rejected`, which is the
+ * alarm for a total inbound outage. Those throw instead, so the caller can tell
+ * the two apart.
  */
 async function query(name: string, type: 'TXT' | 'MX'): Promise<string[]> {
   const url = `${DOH}?name=${encodeURIComponent(name)}&type=${type}`;
@@ -40,7 +47,10 @@ async function query(name: string, type: 'TXT' | 'MX'): Promise<string[]> {
     headers: { accept: 'application/dns-json' },
     timeout: 5000,
   });
-  if (res.Status !== 0 || !res.Answer) return [];
+  if (res.Status !== 0 && res.Status !== 3) {
+    throw new Error(`DNS lookup for ${type} ${name} failed with RCODE ${res.Status}`);
+  }
+  if (!res.Answer) return [];
   // Filter by type: a CNAME in the chain arrives in the same Answer array.
   const want = type === 'TXT' ? 16 : 15;
   return res.Answer.filter((a) => a.type === want).map((a) => a.data);
@@ -78,23 +88,36 @@ export default defineEventHandler(async (event) => {
     return memo.get(name)!;
   };
 
+  /** Resolve, or report that we could not — never conflate the two. */
+  const attempt = async <T>(p: Promise<T>): Promise<{ ok: true; value: T } | { ok: false }> => {
+    try {
+      return { ok: true, value: await p };
+    } catch {
+      return { ok: false };
+    }
+  };
+
   const domains: DomainHealth[] = await Promise.all(
     MAIL_DOMAINS.map(async (spec) => {
-      const [mxHosts, apexTxt, dmarcTxt] = await Promise.all([
-        mx(spec.domain).catch(() => [] as string[]),
-        resolveTxt(spec.domain).catch(() => [] as string[]),
-        txt(`_dmarc.${spec.domain}`).catch(() => [] as string[]),
+      const [mxRes, apexRes, dmarcRes] = await Promise.all([
+        attempt(mx(spec.domain)),
+        attempt(resolveTxt(spec.domain)),
+        attempt(txt(`_dmarc.${spec.domain}`)),
       ]);
 
+      const apexTxt = apexRes.ok ? apexRes.value : [];
       const { record: spfRecord, count: spfCount } = findSpf(apexTxt);
-      const spf = spfRecord ? await evaluateSpf(spfRecord, resolveTxt).catch(() => null) : null;
+      const spfRes = spfRecord ? await attempt(evaluateSpf(spfRecord, resolveTxt)) : null;
 
       return buildDomainHealth(spec, {
-        mxHosts,
+        mxHosts: mxRes.ok ? mxRes.value : [],
+        mxResolved: mxRes.ok,
         spfRecord,
         spfCount,
-        spf,
-        dmarc: parseDmarc(dmarcTxt),
+        spfResolved: apexRes.ok,
+        spf: spfRes?.ok ? spfRes.value : null,
+        dmarc: dmarcRes.ok ? parseDmarc(dmarcRes.value) : null,
+        dmarcResolved: dmarcRes.ok,
       });
     })
   );
