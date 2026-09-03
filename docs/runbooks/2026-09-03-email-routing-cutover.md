@@ -54,12 +54,21 @@ Routing does not change it.
 
 Do this first and completely. **An unverified destination silently drops mail.**
 
-1. Go to `dash.cloudflare.com` and pick any one of the three domains.
-2. Left sidebar → **Email** → **Email Routing**.
-3. Open the **Destination addresses** tab.
-4. **Add destination address** → `classicminidiy@gmail.com` → Save.
-5. Open Gmail. Find the Cloudflare verification email and click its link.
-6. Return to the tab and confirm the address reads **Verified**.
+There are two Email Routing pages and they look different. Either works:
+
+- **Account-level:** sidebar → **Compute** → **Email Service** → **Email Routing**.
+  Domains are added here with **+ Onboard Domain**, and destination addresses
+  live behind the **Destination Addresses** button, top right.
+- **Per-zone:** pick a domain first, then **Email** → **Email Routing**. This one
+  offers **Get started** for that single zone.
+
+Steps, from the account-level page:
+
+1. `dash.cloudflare.com` → **Compute** → **Email Service** → **Email Routing**.
+2. **Destination Addresses** (top right).
+3. Add `classicminidiy@gmail.com` → Save.
+4. Open Gmail. Find the Cloudflare verification email and click its link.
+5. Confirm the address reads **Verified**.
 
 Destination addresses are account-level, so this covers all three domains. Do
 not continue until it says Verified.
@@ -74,13 +83,14 @@ Order matters — least consequential first, so a mistake is cheap:
 
 For each domain, in that order:
 
-1. Select the domain → **Email** → **Email Routing** → **Get started** / **Enable**.
+1. From the account-level Email Routing page, click **+ Onboard Domain** and
+   pick the domain. (From the per-zone page the same flow is **Get started**.)
 2. Cloudflare shows the DNS records it wants to add. **Accept the three MX
    records** (`route1`/`route2`/`route3.mx.cloudflare.net`) and let it remove the
    two Forward Email MX records — that swap is atomic, which is why it is safer
    than editing MX by hand. **Decline the SPF TXT record** (see the warning
    above).
-3. Go to the **Routing rules** tab → **Catch-all address** → **Edit**.
+3. Go to that domain's **Routing rules** → **Catch-all address** → **Edit**.
 4. Action: **Send to an email**. Destination: `classicminidiy@gmail.com`. Save.
 5. Set the catch-all to **Enabled**.
 6. Verify DNS changed, substituting the domain:
@@ -106,6 +116,11 @@ For each domain, in that order:
    `classicminidiy@gmail.com`.
 
 Do not start the next domain until step 8 has arrived for the current one.
+
+The account-level page invites the opposite: it lists every eligible domain and
+onboarding all three in a row takes seconds. Resist it. Onboarding is the step
+that swaps the MX, so three at once means three simultaneous chances to lose
+inbound mail with no way to tell which one broke.
 
 ## 3. Confirm all three
 
