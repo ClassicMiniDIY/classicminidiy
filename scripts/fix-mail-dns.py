@@ -88,6 +88,17 @@ DMARC_RUA = "reports@classicminidiy.com"
 DMARC_RUA_DOMAIN = "classicminidiy.com"
 
 
+# Authorisation records that this script created and no longer manages, because
+# their domains moved to Postmark. Live in the classicminidiy.com zone, unused,
+# and retained only so a revert to the self-hosted rua needs no DNS work. Listed
+# so they are documented rather than mysterious; delete them if the self-hosted
+# destination is ever retired for good.
+ORPHANED_REPORT_AUTH = [
+    "theminiexchange.com._report._dmarc.classicminidiy.com",
+    "cmdiy.co._report._dmarc.classicminidiy.com",
+]
+
+
 def dmarc_for(domain):
     """Postmark's record when we have one, else the self-hosted rua."""
     return POSTMARK_DMARC.get(domain, f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}")
@@ -119,13 +130,14 @@ CHANGES = [
     {
         "domain": "theminiexchange.com",
         "dmarc": dmarc_for("theminiexchange.com"),
-        # Deliberately keeps `~all` rather than tightening to `-all`, which is
-        # what the plan's table originally said. Swapping the include already
-        # changes which sender is authorised; tightening the qualifier in the
-        # same edit would change two things at once on the domain whose senders
-        # are least certain. Tighten to `-all` once DMARC reports confirm.
-        # Tightened from `~all` to `-all` on 2026-09-04 at Cole's instruction.
-        # SES and Cloudflare are the only authorised senders and both are named.
+        # Tightened from `~all` to `-all` on 2026-09-04. SES and Cloudflare are
+        # the only authorised senders and both are named, so the softfail was no
+        # longer buying anything.
+        #
+        # It was deliberately left at `~all` for one day first: swapping the
+        # include already changed which sender was authorised, and moving the
+        # qualifier in the same edit would have changed two variables at once on
+        # the domain whose senders were least certain.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
         "delete": [("TXT", "resend._domainkey.theminiexchange.com")],  # stale
         "delete_txt_containing": ["forward-email-site-verification"],
@@ -340,6 +352,15 @@ def main():
             # the one being reported on, that domain must publish an
             # authorisation record or most reporters silently send nothing.
             # This is the usual reason "I turned on rua and got no reports".
+            #
+            # Dormant, not dead: it fires for any domain without a Postmark
+            # address, which is the state all three passed through. The records
+            # it created for theminiexchange.com and cmdiy.co are still live on
+            # classicminidiy.com and are now unused, since both moved to
+            # Postmark's own wildcard. They are kept deliberately so reverting
+            # to the self-hosted rua stays a one-line edit — see
+            # ORPHANED_REPORT_AUTH below, which exists so a zone audit can
+            # account for them rather than finding two records nothing explains.
             if domain != DMARC_RUA_DOMAIN and DMARC_RUA in want_dmarc:
                 auth_name = f"{domain}._report._dmarc.{DMARC_RUA_DOMAIN}"
                 rz = cf(f"zones?name={DMARC_RUA_DOMAIN}")
