@@ -378,10 +378,17 @@ which is why the script never sets `proxied`.
 
 ### 3. Enable Email Routing on all three zones
 
-**Status 2026-09-03: `unconfigured` on all three zones.** This step cannot be
+**Step-by-step directions: `docs/runbooks/2026-09-03-email-routing-cutover.md`.**
+
+Status 2026-09-03: `unconfigured` on all three zones. This step cannot be
 scripted end to end — adding a destination address sends a verification email
 that a human must click, and the CMDIY API token has no account-level Email
 Routing permission either. Do it in the Cloudflare dashboard.
+
+The trap the runbook exists to prevent: Cloudflare's wizard offers to add its own
+SPF TXT record, and a second SPF record on one name is a `permerror` that breaks
+SPF for every message the domain sends. Decline it. Email Routing uses SRS and
+needs no include.
 
 Per domain:
 
