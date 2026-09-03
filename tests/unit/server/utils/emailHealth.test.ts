@@ -157,7 +157,8 @@ describe('evaluateSpf', () => {
   });
 
   it('counts a hard-fail-only record as costing nothing', async () => {
-    // cmdiy.co's target state: receive-only, authorises no sender.
+    // `v=spf1 -all` is the shape a domain publishes to say "nothing sends as
+    // me". It costs no lookups and authorises nobody.
     const result = await evaluateSpf('v=spf1 -all', resolver());
     expect(result.lookups).toBe(0);
     expect(result.allQualifier).toBe('-');
@@ -282,10 +283,28 @@ describe('MAIL_DOMAINS', () => {
     expect(cmd.expectedIncludes).toEqual(['amazonses.com']);
   });
 
-  it('expects SES on every sending domain and nothing on the receive-only one', () => {
-    for (const spec of MAIL_DOMAINS) {
-      if (spec.sends) expect(spec.expectedIncludes).toContain('amazonses.com');
-      else expect(spec.expectedIncludes).toEqual([]);
+  it('treats cmdiy.co as a sending domain', () => {
+    // Corrected 2026-09-03 after reading the Route 53 zone: cmdiy.co carries
+    // two sets of Shopify DKIM CNAMEs plus Postmark DKIM and bounce records.
+    // It is the store's sending domain, not a receive-only alias target. It
+    // publishes no SPF, which the page must therefore grade as a failure.
+    const c = MAIL_DOMAINS.find((d) => d.domain === 'cmdiy.co')!;
+    expect(c.sends).toBe(true);
+    const h = buildDomainHealth(c, {
+      mxHosts: ['route1.mx.cloudflare.net'],
+      spfRecord: null,
+      spfCount: 0,
+      spf: null,
+      dmarc: { record: 'v=DMARC1; p=none;', policy: 'none', pct: 100, hasReporting: false },
+    });
+    expect(h.checks.find((x) => x.id === 'spf')?.severity).toBe('fail');
+  });
+
+  it('expects SES on the two domains that send through SES', () => {
+    for (const domain of ['classicminidiy.com', 'theminiexchange.com']) {
+      const spec = MAIL_DOMAINS.find((d) => d.domain === domain)!;
+      expect(spec.sends).toBe(true);
+      expect(spec.expectedIncludes).toContain('amazonses.com');
     }
   });
 });

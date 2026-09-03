@@ -71,8 +71,18 @@ export const MAIL_DOMAINS: DomainSpec[] = [
   },
   {
     domain: 'cmdiy.co',
-    // Receive-only: the domain appears nowhere in this repo's code.
-    sends: false,
+    // SENDS. An earlier revision had this as receive-only, reasoning from the
+    // domain appearing nowhere in this repo's code. That was wrong: the code is
+    // not the only thing that sends mail. The Route 53 zone (comment: "Emailing
+    // from the CMDIY store") carries two complete sets of Shopify DKIM CNAMEs
+    // and mailer hosts, plus a Postmark DKIM key and bounce host. This is the
+    // Shopify store's authenticated sending domain.
+    sends: true,
+    // Left empty deliberately, which makes the page FAIL on the absent SPF —
+    // the correct reading for a sending domain that authorises nobody. The
+    // include to add depends on which senders are still live: Shopify's grants
+    // nothing (see classicminidiy.com below) so Shopify rides on DKIM alone,
+    // and Postmark would need `spf.mtasv.net` only if it still sends.
     expectedIncludes: [],
   },
 ];
