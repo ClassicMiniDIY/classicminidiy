@@ -178,20 +178,23 @@ the zones answered two things that could not be seen from outside:
    DKIM row reporting `unknown` is now a solvable gap rather than an unknowable
    one — see the follow-ups.
 
-2. **Shopify's authenticated sending domain is `cmdiy.co`, not
-   `classicminidiy.com`.** `cmdiy.co` has the full Shopify DKIM CNAME sets.
-   `classicminidiy.com` has a Shopify _mailer_ CNAME but **no Shopify DKIM
-   records at all** — a domain authentication that was started and never
-   finished. This refines defect 2: Shopify mail is properly signed when it goes
-   out as `@cmdiy.co` and unauthenticated if it goes out as
-   `@classicminidiy.com`.
+2. **Shopify's sending domain is `cmdiy.co`, not `classicminidiy.com`.**
+   Confirmed in Shopify admin on 2026-09-03: the store's sender email is
+   `orders@cmdiy.co` and Email domain authentication reads **Authenticated**.
+   The six DKIM CNAMEs in the `cmdiy.co` zone are the live, working path.
+
+   That makes every Shopify record on `classicminidiy.com` an orphan: the
+   `maileri5q` mailer CNAME has no DKIM behind it because nothing was ever
+   meant to send from that domain. Defect 2 is therefore not "Shopify is
+   unauthenticated" — Shopify is fine. It is "`classicminidiy.com` carries
+   Shopify records it does not use, one of which wastes an SPF lookup".
 
 Also found, none of it previously documented:
 
-- **Postmark is in use**, or was. `pm-bounces` hosts on both
-  `classicminidiy.com` and `cmdiy.co`, and a Postmark DKIM key on `cmdiy.co`.
-  Neither domain's SPF authorises Postmark. Nothing in this repo sends through
-  Postmark, so this is likely Shopify-side or legacy — but it is unaudited.
+- **Postmark is dead.** Confirmed by Cole 2026-09-03: an abandoned trial from
+  years ago, not in use. Its remnants are a `pm-bounces` host on both
+  `classicminidiy.com` and `cmdiy.co` plus a DKIM key on `cmdiy.co`. All of it
+  is removable, and one of those records had already gone wrong — see below.
 - **`theminiexchange.com` has SES SPF on the wrong names.** `mail.` and `send.`
   subdomains both carry `v=spf1 include:amazonses.com ~all` with SES bounce MX,
   but the **apex** — the domain mail actually comes from — still names Resend.
@@ -201,14 +204,73 @@ Also found, none of it previously documented:
   DKIM-only. Working as configured, worth knowing.
 - **SES custom MAIL FROM** is set up on `noreply.classicminidiy.com` correctly.
 
+### The `cmdiy.co` record migration — done 2026-09-03
+
+Applied with `scripts/migrate-r53-zone-to-cf.py`: **10 records created,
+`pm-bounces` unproxied, 11 changes, 0 failures.** A re-run reports 0 to create
+and 15 already present, and all 14 names resolve identically on both `anita` and
+`thomas`. The zone is still `pending`, so none of it is live until the NS flip.
+
+**Cloudflare's zone import had turned proxying ON for `pm-bounces.cmdiy.co`.**
+A proxied CNAME resolves to Cloudflare's edge rather than the provider, so a
+proxied bounce host is silently broken. The first version of the migration
+script missed it: the record matched on type, name and content, so it was
+skipped as "already present" and would have survived the nameserver flip in
+that state. The script now checks the proxy flag on every proxyable type and
+fixes it, because nothing it migrates should ever be proxied.
+
+The lesson generalises beyond this zone: **an auto-imported Cloudflare zone is
+not a faithful copy.** Record data can match while a Cloudflare-only attribute
+makes the record behave differently. Any future zone import needs the same
+check.
+
 ### Revised fix list
 
-| Domain                | Fix                                                                       |
-| --------------------- | ------------------------------------------------------------------------- |
-| `classicminidiy.com`  | SPF -> `v=spf1 include:amazonses.com -all` (8 lookups to 1)               |
-| `theminiexchange.com` | apex SPF -> `v=spf1 include:amazonses.com -all`; drop `resend._domainkey` |
-| `cmdiy.co`            | move the zone; then publish an SPF once its senders are confirmed         |
-| all three             | drop `forward-email-site-verification` TXT and `fe-*` hosts               |
+All senders are now identified, so the list is concrete. Nothing below is
+applied yet; every item touches a live zone and needs its own approval.
+
+#### Records that must NOT be touched
+
+Stated first, because "delete the Shopify records" is a sentence that could take
+the store offline. These are live and confirmed Connected in Shopify admin:
+
+```
+store.classicminidiy.com     -> shops.myshopify.com     Online Store (primary)
+merch.classicminidiy.com     -> shops.myshopify.com     Online Store alias
+account.classicminidiy.com   -> shops.myshopify.com     Customer Account (primary)
+```
+
+The six Shopify DKIM CNAMEs and two mailer hosts on `cmdiy.co` are also live —
+they are what makes `orders@cmdiy.co` authenticate. Leave all of them.
+
+The distinction is clean: every live storefront record points at
+`shops.myshopify.com`, and nothing in the fix list below points there.
+
+Removing `include:shops.shopify.com` from an SPF record has no effect on the
+storefront. SPF governs email only.
+
+#### Changes to make
+
+| Domain                | Fix                                                                               |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `classicminidiy.com`  | SPF -> `v=spf1 include:amazonses.com -all` (8 lookups -> 1)                       |
+| `theminiexchange.com` | apex SPF -> `v=spf1 include:amazonses.com -all`; delete stale `resend._domainkey` |
+| `classicminidiy.com`  | delete Postmark `pm-bounces`                                                      |
+| `cmdiy.co`            | delete Postmark `pm-bounces` and its DKIM key                                     |
+| all three             | after cutover: delete `forward-email-site-verification` TXT and `fe-bounces`      |
+
+**`maileri5q.classicminidiy.com` is deliberately NOT on that list.** It is a
+Shopify mailer host for a third mail config (`p116`, distinct from `cmdiy.co`'s
+`p347` and `p813`), almost certainly left from an earlier sender setup. But it
+costs nothing — a CNAME consumes no SPF lookup — so deleting it buys nothing and
+risks something. Leave it unless Shopify admin confirms no sender references it.
+
+`cmdiy.co` gets no SPF in this pass, deliberately. Its only sender is Shopify,
+which authenticates by DKIM and whose SPF include grants nothing, so there is no
+envelope sender to authorise. `v=spf1 -all` is the tempting answer and the wrong
+one until DMARC aggregate reports confirm Shopify's envelope domain — some
+receivers weight an SPF hard fail heavily even when DKIM aligns. Turn on `rua=`
+first; that is follow-up 2 and it is free.
 
 ## Cutover runbook
 
@@ -342,9 +404,10 @@ follow-up below.
 4. **Audit Postmark.** Two domains carry Postmark bounce hosts and one a Postmark
    DKIM key, no SPF authorises it, and nothing in this repo sends through it.
    Establish whether it is live; if not, remove the records.
-5. **Finish or remove Shopify's `classicminidiy.com` domain authentication.**
-   There is a mailer CNAME with no DKIM records behind it. Either complete it in
-   Shopify admin or drop the orphan record.
+5. ~~Finish or remove Shopify's `classicminidiy.com` domain authentication.~~
+   **Answered:** Shopify's sender is `orders@cmdiy.co` and authenticates there.
+   Nothing needs finishing on `classicminidiy.com`; see the `maileri5q` note
+   above for why the leftover mailer CNAME is best left alone.
 6. **Give the two OpenECU zones the same audit.** They are on Cloudflare with
    live Route 53 zones behind them and this token cannot see them, so nobody has
    diffed them.
