@@ -84,10 +84,19 @@ These matter more than the subscription line item.
    Exceeding 10 makes the whole record a `permerror`, which receivers treat as a
    failure. The cleanup takes this from 8 to 1.
 
-4. **`cmdiy.co` publishes no SPF at all**, so nothing states that the domain does
-   not send. It is receive-only: it appears nowhere in this repo's code. (The
-   `cmdiy.com` addresses in `tests/unit/exchange/composables/useNewsletter.test.ts`
-   are fixtures on an unrelated parked domain, not ours.)
+4. **`cmdiy.co` sends mail and publishes no SPF at all.** An earlier revision of
+   this plan called it receive-only, reasoning from the domain appearing nowhere
+   in this repo's code. **That was wrong** — code is not the only thing that
+   sends mail. Reading the Route 53 zone (comment: "Emailing from the CMDIY
+   store") shows it is the Shopify store's authenticated sending domain:
+
+   - two complete sets of Shopify DKIM CNAMEs, from two different Shopify mail
+     configs, plus a mailer host for each
+   - a Postmark DKIM key and a `pm-bounces` host
+   - and no SPF record, so neither sender is SPF-authorised
+
+   This is the domain in the worst shape, not the safest one, and it is the one
+   whose nameservers are about to move.
 
 ## Answered: there is no Gmail send-as to preserve
 
@@ -116,8 +125,13 @@ takes away.
 ```
 classicminidiy.com    MX route*.mx.cloudflare.net   SPF v=spf1 include:amazonses.com -all
 theminiexchange.com   MX route*.mx.cloudflare.net   SPF v=spf1 include:amazonses.com -all
-cmdiy.co              MX route*.mx.cloudflare.net   SPF v=spf1 -all
+cmdiy.co              MX route*.mx.cloudflare.net   SPF see below — NOT `-all`
 ```
+
+`cmdiy.co` cannot take `v=spf1 -all`: it sends. What it should publish depends on
+which of its two senders are still live, which is an open question below. Until
+that is answered, leave its SPF absent rather than publishing `-all` and hard-
+failing the store's own mail.
 
 `classicminidiy.com` drops from 8 lookups to 1. Three includes go:
 `spf.forwardemail.net` (retired), `_spf.google.com` (vestigial),
@@ -129,6 +143,72 @@ impossible to attribute.
 
 Cloudflare Email Routing rewrites the envelope sender (SRS), so forwarding itself
 needs no SPF include on our side.
+
+## Audit of every AWS hosted zone, 2026-09-03
+
+Run at Cole's request while the Route 53 credentials were open, using the
+dump-and-diff the Workers migration plan calls for. `scripts/migrate-r53-zone-to-cf.py`
+carries the reusable half of this.
+
+| Zone                  | R53 records | Actually served by | Migration fidelity     |
+| --------------------- | ----------- | ------------------ | ---------------------- |
+| `classicminidiy.com`  | 37          | Cloudflare         | **identical**          |
+| `theminiexchange.com` | 16          | Cloudflare         | **identical**          |
+| `cmdiy.co`            | 16          | Route 53           | not yet moved          |
+| `ultralog.co`         | 5           | Route 53           | different project      |
+| `oecua.org`           | 4           | Cloudflare         | token has no DNS scope |
+| `openecualliance.org` | 9           | Cloudflare         | token has no DNS scope |
+
+**The migration lost nothing.** Both CMDIY zones on Cloudflare diff clean against
+their Route 53 originals, once Route 53's quoted/chunked TXT encoding and its
+`ALIAS`-versus-`CNAME` representation are normalised. The Route 53 zones are
+still intact as rollback targets.
+
+The two OpenECU zones belong to a different project and the CMDIY token
+deliberately excludes them (`scripts/verify-cf-token.py` lists them as foreign).
+They are not in scope here.
+
+### What the zone contents revealed
+
+Migration fidelity was clean; the _records themselves_ are another matter. Reading
+the zones answered two things that could not be seen from outside:
+
+1. **SES DKIM is fully configured.** `classicminidiy.com` and
+   `theminiexchange.com` each publish three SES DKIM CNAMEs. So the `/admin/email`
+   DKIM row reporting `unknown` is now a solvable gap rather than an unknowable
+   one — see the follow-ups.
+
+2. **Shopify's authenticated sending domain is `cmdiy.co`, not
+   `classicminidiy.com`.** `cmdiy.co` has the full Shopify DKIM CNAME sets.
+   `classicminidiy.com` has a Shopify _mailer_ CNAME but **no Shopify DKIM
+   records at all** — a domain authentication that was started and never
+   finished. This refines defect 2: Shopify mail is properly signed when it goes
+   out as `@cmdiy.co` and unauthenticated if it goes out as
+   `@classicminidiy.com`.
+
+Also found, none of it previously documented:
+
+- **Postmark is in use**, or was. `pm-bounces` hosts on both
+  `classicminidiy.com` and `cmdiy.co`, and a Postmark DKIM key on `cmdiy.co`.
+  Neither domain's SPF authorises Postmark. Nothing in this repo sends through
+  Postmark, so this is likely Shopify-side or legacy — but it is unaudited.
+- **`theminiexchange.com` has SES SPF on the wrong names.** `mail.` and `send.`
+  subdomains both carry `v=spf1 include:amazonses.com ~all` with SES bounce MX,
+  but the **apex** — the domain mail actually comes from — still names Resend.
+  A stale `resend._domainkey` TXT is also still published.
+- **Ghost sends via Mailgun** on `ghost.news.classicminidiy.com`, with its own
+  DKIM key. That subdomain publishes no SPF of its own, so Ghost mail is
+  DKIM-only. Working as configured, worth knowing.
+- **SES custom MAIL FROM** is set up on `noreply.classicminidiy.com` correctly.
+
+### Revised fix list
+
+| Domain                | Fix                                                                       |
+| --------------------- | ------------------------------------------------------------------------- |
+| `classicminidiy.com`  | SPF -> `v=spf1 include:amazonses.com -all` (8 lookups to 1)               |
+| `theminiexchange.com` | apex SPF -> `v=spf1 include:amazonses.com -all`; drop `resend._domainkey` |
+| `cmdiy.co`            | move the zone; then publish an SPF once its senders are confirmed         |
+| all three             | drop `forward-email-site-verification` TXT and `fe-*` hosts               |
 
 ## Cutover runbook
 
@@ -151,13 +231,33 @@ before any MX change** — an unverified destination silently drops mail.
 
 Only this zone needs it; the other two are already on Cloudflare.
 
-1. Create the `cmdiy.co` zone in Cloudflare.
-2. Dump the Route 53 record set and recreate every record **DNS-only (grey
-   cloud)**. Diff record-for-record with `dig` against both nameserver sets
-   before flipping.
-3. Change nameservers at the registrar (Amazon Registrar).
-4. Wait for Cloudflare to report the zone Active. Keep the Route 53 zone intact
+The zone already exists in Cloudflare (`status=pending`, nameservers
+`anita`/`thomas.ns.cloudflare.com`), so only the records and the NS flip remain.
+
+**Blocked on token scope.** `CLOUDFLARE_API_TOKEN` in `.env` is zone-scoped and
+`cmdiy.co` is not among its zone resources — it reads DNS on
+`classicminidiy.com` and `theminiexchange.com` and returns `Authentication error`
+for `cmdiy.co`. Add `cmdiy.co` to the token's zone resources (Cloudflare
+dashboard -> My Profile -> API Tokens), then:
+
+```bash
+set -a; . ./.env; set +a
+AWS_PROFILE=cmdiy-route53 python3 scripts/migrate-r53-zone-to-cf.py \
+    --domain cmdiy.co --r53-zone Z025269833N0YRFKVP2UM          # dry run
+```
+
+The script copies all 14 records DNS-only, skips the apex NS/SOA that Cloudflare
+owns, and is idempotent. Add `--apply` once the plan reads right. Then:
+
+1. Verify against Cloudflare's nameservers _before_ flipping:
+   `dig @anita.ns.cloudflare.com cmdiy.co MX +short` and the DKIM CNAMEs.
+2. Change nameservers at the registrar (Amazon Registrar).
+3. Wait for Cloudflare to report the zone Active. Keep the Route 53 zone intact
    as the rollback target.
+
+Take particular care with the six Shopify DKIM CNAMEs and the two mailer hosts.
+They must be **DNS-only**; proxying a mail CNAME through Cloudflare breaks it,
+which is why the script never sets `proxied`.
 
 ### 3. Enable Email Routing on all three zones
 
@@ -236,4 +336,15 @@ follow-up below.
    It is the only way to see who is actually sending as these domains, and it is
    the evidence needed before `p=quarantine`.
 3. **Store SES DKIM selector tokens** somewhere the admin page can read, so the
-   DKIM row stops being `unknown`.
+   DKIM row stops being `unknown`. The tokens are now known — they are in the
+   Route 53 zones — but they are infra config, and this repo is public, so they
+   belong in an env var or `classicminidiy-supabase`, not committed here.
+4. **Audit Postmark.** Two domains carry Postmark bounce hosts and one a Postmark
+   DKIM key, no SPF authorises it, and nothing in this repo sends through it.
+   Establish whether it is live; if not, remove the records.
+5. **Finish or remove Shopify's `classicminidiy.com` domain authentication.**
+   There is a mailer CNAME with no DKIM records behind it. Either complete it in
+   Shopify admin or drop the orphan record.
+6. **Give the two OpenECU zones the same audit.** They are on Cloudflare with
+   live Route 53 zones behind them and this token cannot see them, so nobody has
+   diffed them.
