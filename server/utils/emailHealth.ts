@@ -19,6 +19,14 @@
 /** RFC 7208 §4.6.4: a policy that needs more than 10 DNS lookups is a permerror. */
 export const SPF_LOOKUP_LIMIT = 10;
 
+/**
+ * Cloudflare Email Routing's SPF include, published on every zone its
+ * onboarding wizard touches. Named here so the domain specs below cannot drift
+ * out of sync with what the cutover actually left in DNS — they did exactly
+ * that once, and the page cried wolf on all three domains at the same time.
+ */
+export const CF_ROUTING_INCLUDE_HOST = '_spf.mx.cloudflare.net';
+
 /** Guard against an include cycle in someone else's record. */
 const MAX_SPF_DEPTH = 10;
 
@@ -59,14 +67,19 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     //                          nobody, AND the store does not send as this
     //                          domain: its sender is orders@cmdiy.co. So the
     //                          `maileri5q` mailer CNAME here is an orphan too.
-    expectedIncludes: ['amazonses.com'],
+    //
+    // `_spf.mx.cloudflare.net` arrived with the Email Routing cutover on
+    // 2026-09-03. Forwarding uses SRS and does not strictly need it, but the
+    // onboarding wizard publishes it with no way to decline, so it is expected
+    // rather than fought.
+    expectedIncludes: ['amazonses.com', CF_ROUTING_INCLUDE_HOST],
   },
   {
     domain: 'theminiexchange.com',
     sends: true,
-    // Currently publishes send.resend.com. Resend is not used anywhere on the
-    // platform — transactional mail is SES.
-    expectedIncludes: ['amazonses.com'],
+    // Was publishing send.resend.com with SES absent entirely; corrected during
+    // the 2026-09-03 cutover, and tightened from `~all` to `-all` the same day.
+    expectedIncludes: ['amazonses.com', CF_ROUTING_INCLUDE_HOST],
   },
   {
     domain: 'cmdiy.co',
@@ -86,12 +99,17 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     // grants nothing. DMARC passes on DKIM alignment alone; SPF alignment is
     // not required. Postmark is dead: an abandoned trial from years ago.
     //
-    // So this domain has no envelope sender to authorise, which is why the
-    // page's "no SPF record" FAIL is a prompt to decide, not a defect to
-    // silence. Do NOT publish `v=spf1 -all` before DMARC aggregate reports
-    // confirm Shopify's envelope domain — a hard fail is weighted heavily by
-    // some receivers even when DKIM aligns.
-    expectedIncludes: [],
+    // The domain had NO SPF at all until Email Routing onboarding published
+    // `v=spf1 include:_spf.mx.cloudflare.net ~all` on 2026-09-03. That became
+    // its only SPF record, so there was nothing to merge and no permerror.
+    //
+    // It does not reach the Shopify store either way: order mail's envelope
+    // runs through mailer4wr/mailer701, which are CNAMEs to Shopify, so SPF is
+    // evaluated against Shopify's host rather than this apex. Do NOT tighten
+    // the `~all` to `-all` before DMARC aggregate reports confirm the real
+    // envelope domain — a hard fail is weighted heavily by some receivers even
+    // when DKIM aligns, and it would land on the store's own mail.
+    expectedIncludes: [CF_ROUTING_INCLUDE_HOST],
   },
 ];
 
@@ -108,6 +126,7 @@ export const SENDER_LABELS: Record<string, string> = {
   // include ever reappears in a record, the warning names it rather than
   // printing a bare hostname nobody recognises.
   'spf.mtasv.net': 'Postmark',
+  '_spf.mx.cloudflare.net': 'Cloudflare Email Routing',
 };
 
 export function senderLabel(include: string): string {
