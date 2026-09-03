@@ -11,6 +11,7 @@ import {
   parseSpfTerms,
   senderLabel,
   worstOf,
+  CF_ROUTING_INCLUDE_HOST,
   type Check,
   type DomainFacts,
   type DomainSpec,
@@ -276,11 +277,29 @@ describe('MAIL_DOMAINS', () => {
     }
   });
 
-  it('expects only SES on classicminidiy.com, after the 2026-09-03 include audit', () => {
+  it('expects SES plus Email Routing on classicminidiy.com', () => {
     const cmd = MAIL_DOMAINS.find((d) => d.domain === 'classicminidiy.com')!;
-    // _spf.google.com: no Gmail send-as exists, Google is not the MX.
-    // shops.shopify.com: resolves to bare `v=spf1 ~all`, grants nobody.
-    expect(cmd.expectedIncludes).toEqual(['amazonses.com']);
+    // Dropped in the 2026-09-03 audit: _spf.google.com (no Gmail send-as
+    // exists, Google is not the MX) and shops.shopify.com (resolves to bare
+    // `v=spf1 ~all`, grants nobody, and the store sends as cmdiy.co anyway).
+    expect(cmd.expectedIncludes).toEqual(['amazonses.com', CF_ROUTING_INCLUDE_HOST]);
+  });
+
+  it('expects Cloudflare Email Routing on every domain post-cutover', () => {
+    // The specs were written before the cutover and initially omitted this,
+    // so the page reported the forwarder we had just deliberately configured
+    // as an unrecognised sender on all three domains at once. A spec that
+    // drifts from DNS turns the page into noise.
+    for (const spec of MAIL_DOMAINS) {
+      expect(spec.expectedIncludes).toContain(CF_ROUTING_INCLUDE_HOST);
+    }
+  });
+
+  it('no longer expects cmdiy.co to be SPF-less', () => {
+    // Email Routing onboarding published its include, which became the
+    // domain's only SPF record.
+    const c = MAIL_DOMAINS.find((d) => d.domain === 'cmdiy.co')!;
+    expect(c.expectedIncludes).toEqual([CF_ROUTING_INCLUDE_HOST]);
   });
 
   it('treats cmdiy.co as a sending domain', () => {
@@ -306,6 +325,10 @@ describe('MAIL_DOMAINS', () => {
       expect(spec.sends).toBe(true);
       expect(spec.expectedIncludes).toContain('amazonses.com');
     }
+    // cmdiy.co sends via Shopify, which authenticates by DKIM and whose SPF
+    // include grants nothing, so it has no SES include and needs none.
+    const c = MAIL_DOMAINS.find((d) => d.domain === 'cmdiy.co')!;
+    expect(c.expectedIncludes).not.toContain('amazonses.com');
   });
 });
 
@@ -313,6 +336,7 @@ describe('senderLabel', () => {
   it('names known providers and passes through unknown ones', () => {
     expect(senderLabel('amazonses.com')).toBe('AWS SES');
     expect(senderLabel('send.resend.com')).toBe('Resend');
+    expect(senderLabel(CF_ROUTING_INCLUDE_HOST)).toBe('Cloudflare Email Routing');
     expect(senderLabel('weird.example')).toBe('weird.example');
   });
 });

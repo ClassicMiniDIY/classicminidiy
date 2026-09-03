@@ -80,7 +80,7 @@ CF_ROUTING_INCLUDE = "include:_spf.mx.cloudflare.net"
 POSTMARK_DMARC = {
     "classicminidiy.com": "v=DMARC1; p=none; pct=100; rua=mailto:re+nykoii9r5fe@dmarc.postmarkapp.com; sp=none; aspf=r;",
     "theminiexchange.com": "v=DMARC1; p=none; pct=100; rua=mailto:re+jsn5589chc9@dmarc.postmarkapp.com; sp=none; aspf=r;",
-    # cmdiy.co: awaiting its own signup address.
+    "cmdiy.co": "v=DMARC1; p=none; pct=100; rua=mailto:re+qzg2ankxcbe@dmarc.postmarkapp.com; sp=none; aspf=r;",
 }
 
 # Fallback for any domain not yet signed up with Postmark.
