@@ -67,7 +67,16 @@ CHANGES = [
         # Carries Cloudflare's include so the wizard's record can be collapsed
         # into this one. 2 lookups of 10 — still down from the original 8.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
-        "delete": [("CNAME", "pm-bounces.classicminidiy.com")],  # Postmark, dead
+        "delete": [
+            ("CNAME", "pm-bounces.classicminidiy.com"),  # Postmark, dead
+            # Forward Email decommission, 2026-09-03. Inbound moved to
+            # Cloudflare Email Routing and all three domains tested working.
+            ("CNAME", "fe-bounces.classicminidiy.com"),
+            ("TXT", "fe-e97285d697._domainkey.classicminidiy.com"),
+        ],
+        # The apex `forward-email-site-verification` TXT shares a name with the
+        # SPF and other verification TXTs, so it is matched on content.
+        "delete_txt_containing": ["forward-email-site-verification"],
     },
     {
         "domain": "theminiexchange.com",
@@ -78,20 +87,26 @@ CHANGES = [
         # are least certain. Tighten to `-all` once DMARC reports confirm.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net ~all",
         "delete": [("TXT", "resend._domainkey.theminiexchange.com")],  # stale
+        "delete_txt_containing": ["forward-email-site-verification"],
     },
     {
         "domain": "cmdiy.co",
-        # No SPF, on purpose. The only sender is Shopify, which authenticates by
-        # DKIM, and whose SPF include grants nothing — so there is no envelope
-        # sender to authorise. `v=spf1 -all` is the tempting answer and the
-        # wrong one until DMARC aggregate reports confirm Shopify's envelope
-        # domain: some receivers weight an SPF hard fail heavily even when DKIM
-        # aligns, and a hard fail here would land on the store's own mail.
-        "spf": None,
+        # Cloudflare's own record, added by Email Routing onboarding on
+        # 2026-09-03. cmdiy.co had NO SPF before that, so this became its only
+        # one — nothing to merge and no permerror.
+        #
+        # It does not affect the Shopify store. Shopify's envelope sender runs
+        # through mailer4wr/mailer701, which are CNAMEs to Shopify, so SPF for
+        # order mail is evaluated against Shopify's host, not this apex. The
+        # `~all` softfail is also weaker than the `-all` this plan once
+        # proposed, which is the right side to err on until DMARC aggregate
+        # reports confirm the envelope domain.
+        "spf": "v=spf1 include:_spf.mx.cloudflare.net ~all",
         "delete": [
             ("CNAME", "pm-bounces.cmdiy.co"),
             ("TXT", "20240927014807pm._domainkey.cmdiy.co"),
         ],
+        "delete_txt_containing": ["forward-email-site-verification"],
     },
 ]
 
@@ -248,6 +263,25 @@ def main():
                     print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
                     failures += 0 if res.get("success") else 1
 
+
+        # --- deletions by TXT content ---
+        # For names that hold several TXT records (an apex holds SPF plus every
+        # provider's verification token), matching on name alone would delete
+        # the wrong thing.
+        for needle in change.get("delete_txt_containing", []):
+            hits = [
+                r for r in records
+                if r["type"] == "TXT" and needle in unquote_txt(r.get("content", ""))
+            ]
+            if not hits:
+                print(f"  del   TXT    ~{needle}  already gone")
+            for rec in hits:
+                print(f"  del   TXT    {rec['name'].rstrip('.'):<44} {unquote_txt(rec['content'])[:44]}")
+                total_ops += 1
+                if args.apply:
+                    res = cf(f"zones/{zid}/dns_records/{rec['id']}", method="DELETE")
+                    print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
+                    failures += 0 if res.get("success") else 1
 
         # --- deletions ---
         for rtype, fqdn in change["delete"]:
