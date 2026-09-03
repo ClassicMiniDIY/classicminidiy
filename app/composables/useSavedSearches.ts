@@ -1,13 +1,29 @@
-export interface SavedSearch {
-  id: string;
-  user_id: string;
-  name: string;
+import type { Database } from '~~/types/database';
+
+type SavedSearchRow = Database['public']['Tables']['saved_searches']['Row'];
+
+/**
+ * A `saved_searches` row as this composable hands it out.
+ *
+ * Derived from the generated row so the shape cannot drift from the table
+ * again: the hand-written version had grown a `notified_listing_ids: string[]`
+ * that no column backs and nothing reads, and had lost `last_notified_at`.
+ * Only `filters` is restated, to narrow the column's `Json` to the object the
+ * search UI actually stores — see `toSavedSearch`.
+ */
+export interface SavedSearch extends Omit<SavedSearchRow, 'filters'> {
   filters: Record<string, any>;
-  notify_email: boolean;
-  is_active: boolean;
-  notified_listing_ids: string[];
-  created_at: string;
 }
+
+/**
+ * `filters` is a `jsonb` column, so its generated type admits any JSON value.
+ * Every writer here stores an object, but a scalar or array in the column would
+ * break every consumer, so narrow it with a real check rather than a cast.
+ */
+const toSavedSearch = (row: SavedSearchRow): SavedSearch => ({
+  ...row,
+  filters: row.filters && typeof row.filters === 'object' && !Array.isArray(row.filters) ? row.filters : {},
+});
 
 const MAX_SAVED_SEARCHES = 10;
 
@@ -41,7 +57,7 @@ export const useSavedSearches = () => {
 
       if (error) throw error;
 
-      savedSearches.value = (data as SavedSearch[]) || [];
+      savedSearches.value = (data || []).map(toSavedSearch);
     } catch (error: any) {
       console.error('Failed to fetch saved searches:', error);
       toast.add({
@@ -92,7 +108,8 @@ export const useSavedSearches = () => {
 
       if (error) throw error;
 
-      savedSearches.value.unshift(data as SavedSearch);
+      const created = toSavedSearch(data);
+      savedSearches.value.unshift(created);
 
       capture('saved_search_created', {
         search_name: name,
@@ -105,7 +122,7 @@ export const useSavedSearches = () => {
         color: 'success',
       });
 
-      return data as SavedSearch;
+      return created;
     } catch (error: any) {
       console.error('Failed to create saved search:', error);
       toast.add({
@@ -126,13 +143,16 @@ export const useSavedSearches = () => {
     if (!user.value) return false;
 
     const index = savedSearches.value.findIndex((s) => s.id === searchId);
-    if (index === -1) return false;
+    // Hold the row itself rather than re-indexing: the index lookup is
+    // `SavedSearch | undefined`, so spreading it yields a partial object.
+    const existing = savedSearches.value[index];
+    if (!existing) return false;
 
-    const previousValue = savedSearches.value[index].is_active;
+    const previousValue = existing.is_active;
     const newValue = !previousValue;
 
     // Optimistic update
-    savedSearches.value[index] = { ...savedSearches.value[index], is_active: newValue };
+    savedSearches.value[index] = { ...existing, is_active: newValue };
 
     try {
       const { error } = await supabase
@@ -145,8 +165,12 @@ export const useSavedSearches = () => {
 
       return true;
     } catch (error: any) {
-      // Revert optimistic update
-      savedSearches.value[index] = { ...savedSearches.value[index], is_active: previousValue };
+      // Revert optimistic update. Re-locate by id rather than reusing `index`:
+      // the list can be mutated while the request is in flight (deleting another
+      // search splices it), and writing the snapshot back into a stale slot
+      // would drop whichever row shifted into that position.
+      const revertIndex = savedSearches.value.findIndex((s) => s.id === searchId);
+      if (revertIndex !== -1) savedSearches.value[revertIndex] = { ...existing, is_active: previousValue };
 
       console.error('Failed to toggle saved search:', error);
       toast.add({

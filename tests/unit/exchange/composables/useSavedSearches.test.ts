@@ -13,8 +13,8 @@ const makeSavedSearch = (overrides: Partial<SavedSearch> = {}): SavedSearch => (
   filters: { model: 'Cooper S', maxPrice: 20000 },
   notify_email: true,
   is_active: true,
-  notified_listing_ids: [],
   created_at: '2026-02-21T00:00:00Z',
+  last_notified_at: null,
   ...overrides,
 });
 
@@ -131,9 +131,7 @@ describe('useSavedSearches', () => {
     });
 
     it('resets loading to false on fetch error', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ data: null, error: { message: 'boom' } })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: { message: 'boom' } }));
 
       const { fetchSavedSearches, loading } = await loadComposable();
       await fetchSavedSearches();
@@ -171,9 +169,7 @@ describe('useSavedSearches', () => {
       const { createSavedSearch } = await loadComposable();
       await createSavedSearch('Test', { model: 'Cooper' });
 
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Search Saved', color: 'success' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Search Saved', color: 'success' }));
     });
 
     it('captures saved_search_created with the filter count', async () => {
@@ -210,9 +206,7 @@ describe('useSavedSearches', () => {
 
       expect(result).toBeNull();
       expect(mockSupabase.from).not.toHaveBeenCalled();
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Limit Reached', color: 'warning' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Limit Reached', color: 'warning' }));
     });
 
     it('allows creating when exactly under the limit (9 existing)', async () => {
@@ -267,9 +261,7 @@ describe('useSavedSearches', () => {
 
     it('sets saving true while the insert is in flight', async () => {
       let release!: (v: any) => void;
-      mockSupabase._mockSingle.mockImplementation(
-        () => new Promise((resolve) => (release = resolve))
-      );
+      mockSupabase._mockSingle.mockImplementation(() => new Promise((resolve) => (release = resolve)));
 
       const { createSavedSearch, saving } = await loadComposable();
       const promise = createSavedSearch('Test', { model: 'Cooper' });
@@ -337,9 +329,7 @@ describe('useSavedSearches', () => {
     });
 
     it('reverts the optimistic update and toasts on failure', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ error: { message: 'Update failed' } })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ error: { message: 'Update failed' } }));
 
       const { toggleActive, savedSearches } = await loadComposable();
       savedSearches.value = [makeSavedSearch({ id: 'search-1', is_active: true })];
@@ -416,9 +406,7 @@ describe('useSavedSearches', () => {
 
       await deleteSavedSearch('search-1');
 
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Deleted', color: 'success' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Deleted', color: 'success' }));
     });
 
     it('returns false and skips the query when not logged in', async () => {
@@ -433,9 +421,7 @@ describe('useSavedSearches', () => {
     });
 
     it('keeps local state and surfaces the message on delete failure', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
-        resolve({ error: { message: 'Delete failed' } })
-      );
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ error: { message: 'Delete failed' } }));
 
       const { deleteSavedSearch, savedSearches } = await loadComposable();
       savedSearches.value = [makeSavedSearch({ id: 'search-1' })];

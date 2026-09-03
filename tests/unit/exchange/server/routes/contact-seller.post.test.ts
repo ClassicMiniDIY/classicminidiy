@@ -43,7 +43,9 @@ const ACTIVE_LISTING = {
   title: 'Cooper S Front Subframe',
   slug: 'cooper-s-front-subframe',
   user_id: 'seller-1',
-  profiles: { email: 'seller@example.com' },
+  // Email lives on `profile_private` since the profiles split, so PostgREST
+  // returns it nested under the embedded profile, not flat on it.
+  profiles: { profile_private: { email: 'seller@example.com' } },
 };
 
 /** Configure the listings lookup result (`.single()` terminal). */
@@ -130,11 +132,17 @@ describe('server/api/exchange/contact-seller.post', () => {
     expect(mockSupabase._mockEq ?? mockSupabase._queryBuilder.eq).toBeTruthy();
     expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'listing-123');
     expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('status', 'active');
-    // Select pulls the nested profiles email (recipient resolution).
+    // Select pulls the seller email through the nested `profile_private` embed
+    // (recipient resolution). Selecting `email` straight off `profiles` makes
+    // PostgREST reject the whole query, which surfaced as a 404 on every
+    // inquiry — so assert the embed, not just that the word "email" appears.
     const selectArg = (mockSupabase._mockSelect as any).mock.calls[0][0];
     expect(selectArg).toContain('user_id');
-    expect(selectArg).toContain('profiles:user_id');
-    expect(selectArg).toContain('email');
+    expect(selectArg).toContain('profiles!listings_user_id_fkey');
+    // Match the embed, not its spacing — `profile_private(email)` is the same
+    // query. What must never come back is `email` selected flat off `profiles`.
+    expect(selectArg).toContain('profile_private');
+    expect(selectArg).not.toMatch(/profiles[^(]*\(\s*email/);
   });
 
   // -------------------------------------------------------------------------
@@ -275,8 +283,7 @@ describe('server/api/exchange/contact-seller.post', () => {
   it('throws 400 when the message contains more than 2 urls', async () => {
     setBody({
       ...VALID_BODY,
-      message:
-        'Tracking links: https://usps.com/a https://ups.com/b https://fedex.com/c all for your reference here',
+      message: 'Tracking links: https://usps.com/a https://ups.com/b https://fedex.com/c all for your reference here',
     });
     await expect(handler({} as any)).rejects.toMatchObject({
       statusCode: 400,
@@ -356,8 +363,14 @@ describe('server/api/exchange/contact-seller.post', () => {
   });
 
   it('throws 400 when the seller profile exists but email is empty', async () => {
-    resolveListing({ data: { ...ACTIVE_LISTING, profiles: { email: '' } }, error: null });
+    resolveListing({ data: { ...ACTIVE_LISTING, profiles: { profile_private: { email: '' } } }, error: null });
     await expect(handler({} as any)).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('throws 400 when the seller has no profile_private row', async () => {
+    resolveListing({ data: { ...ACTIVE_LISTING, profiles: { profile_private: null } }, error: null });
+    await expect(handler({} as any)).rejects.toMatchObject({ statusCode: 400 });
+    expect(mockQueueNotification).not.toHaveBeenCalled();
   });
 
   // -------------------------------------------------------------------------
