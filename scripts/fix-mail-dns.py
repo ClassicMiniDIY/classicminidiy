@@ -46,6 +46,15 @@ import urllib.request
 
 API = "https://api.cloudflare.com/client/v4"
 
+# The SPF record Cloudflare's Email Routing onboarding wizard adds, verbatim.
+# The wizard shows its record set with no way to untick anything, so this WILL
+# appear on every domain that is onboarded. Two SPF records on one name is a
+# permerror (RFC 7208 s4.5) that fails SPF for every message the domain sends,
+# so the fix is to merge rather than to fight the wizard: keep one record
+# carrying both includes.
+CF_ROUTING_SPF = "v=spf1 include:_spf.mx.cloudflare.net ~all"
+CF_ROUTING_INCLUDE = "include:_spf.mx.cloudflare.net"
+
 # --- the desired state -------------------------------------------------------
 #
 # `spf` is the apex SPF record's exact content, or None to leave it absent.
@@ -55,7 +64,9 @@ CHANGES = [
         "domain": "classicminidiy.com",
         # Keeps the existing `-all`. Only the includes change, so this is a
         # minimal diff: one variable, not two.
-        "spf": "v=spf1 include:amazonses.com -all",
+        # Carries Cloudflare's include so the wizard's record can be collapsed
+        # into this one. 2 lookups of 10 — still down from the original 8.
+        "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
         "delete": [("CNAME", "pm-bounces.classicminidiy.com")],  # Postmark, dead
     },
     {
@@ -65,7 +76,7 @@ CHANGES = [
         # changes which sender is authorised; tightening the qualifier in the
         # same edit would change two things at once on the domain whose senders
         # are least certain. Tighten to `-all` once DMARC reports confirm.
-        "spf": "v=spf1 include:amazonses.com ~all",
+        "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net ~all",
         "delete": [("TXT", "resend._domainkey.theminiexchange.com")],  # stale
     },
     {
@@ -164,23 +175,50 @@ def main():
 
         # --- SPF ---
         spf_records = [
-            r for r in records
+            r
+            for r in records
             if r["type"] == "TXT"
             and r["name"].rstrip(".") == domain
             and unquote_txt(r.get("content", "")).lower().startswith("v=spf1")
         ]
         want = change["spf"]
 
-        if want is None:
-            if spf_records:
-                print(f"  spf   present but the plan says none; leaving it alone for review:")
+        # Email Routing onboarding adds its own SPF record alongside any that
+        # already exists, and the wizard gives no way to decline it. Two SPF
+        # records on one name is a permerror, so collapse them: delete exactly
+        # Cloudflare's, and keep ours, which already carries their include.
+        if len(spf_records) > 1:
+            cf_added = [r for r in spf_records if unquote_txt(r["content"]).strip() == CF_ROUTING_SPF]
+            others = [r for r in spf_records if r not in cf_added]
+            if len(cf_added) == 1 and len(others) == 1:
+                print("  spf   PERMERROR: 2 records. Removing the one Email Routing added:")
+                print(f"          {CF_ROUTING_SPF}")
+                total_ops += 1
+                if args.apply:
+                    res = cf(f"zones/{zid}/dns_records/{cf_added[0]['id']}", method="DELETE")
+                    print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
+                    failures += 0 if res.get("success") else 1
+                    spf_records = others
+            else:
+                print(f"  spf   {len(spf_records)} SPF records at the apex — refusing to guess:")
                 for r in spf_records:
                     print(f"          {unquote_txt(r['content'])}")
+                failures += 1
+                spf_records = []
+
+        if want is None:
+            if spf_records:
+                if all(unquote_txt(r["content"]).strip() == CF_ROUTING_SPF for r in spf_records):
+                    # Acceptable to leave: it is the domain's only SPF record,
+                    # it is a softfail, and it authorises the forwarder. Nothing
+                    # here sends with this domain as the envelope.
+                    print("  spf   only Email Routing's record — acceptable, leaving it")
+                else:
+                    print("  spf   present but the plan says none; leaving it for review:")
+                    for r in spf_records:
+                        print(f"          {unquote_txt(r['content'])}")
             else:
                 print("  spf   absent, as intended")
-        elif len(spf_records) > 1:
-            print(f"  spf   {len(spf_records)} SPF records at the apex — refusing to guess. Fix by hand.")
-            failures += 1
         elif not spf_records:
             print(f"  spf   MISSING, will create: {want}")
             total_ops += 1
@@ -209,6 +247,7 @@ def main():
                     )
                     print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
                     failures += 0 if res.get("success") else 1
+
 
         # --- deletions ---
         for rtype, fqdn in change["delete"]:
