@@ -316,6 +316,32 @@ noreply. / send. / mail. SES MAIL FROM SPF   unchanged
 Route 53 was deliberately not edited. It is now a frozen pre-change rollback
 snapshot rather than a mirror, so it will read as drifted against Cloudflare.
 
+### Cutover complete — all three domains, 2026-09-03
+
+```
+classicminidiy.com     routing=True catchall=True action=forward spf=1  MX 3x cloudflare
+theminiexchange.com    routing=True catchall=True action=forward spf=1  MX 3x cloudflare
+cmdiy.co               routing=True catchall=True action=forward spf=1  MX 3x cloudflare
+```
+
+Catch-all to `classicminidiy@gmail.com` on each. Verified intact afterwards:
+SES DKIM on both sending domains, the SES bounce subdomain, Ghost via Mailgun,
+both Shopify DKIM sets on `cmdiy.co`, and the three storefront CNAMEs.
+
+Two Cloudflare behaviours made this harder than the plan assumed, both now in
+the runbook: activation refuses while a foreign MX exists (so Cloudflare does
+NOT swap it for you), and activation leaves the catch-all disabled with action
+`drop`, so mail arrives and is discarded until the rule is set separately.
+
+**One self-inflicted outage, on `classicminidiy.com`.** The cutover script chose
+which of Cloudflare's records to add by comparing content verbatim. The apex SPF
+had been deliberately pre-merged and so did not match Cloudflare's string, the
+script read that as missing, and a second SPF record was created. Cloudflare
+then refused to enable (`Multiple SPF records exist`) while the apex MX already
+pointed at its servers, so inbound failed for about a minute until the duplicate
+was removed and routing enabled. The fix is to filter Cloudflare's record set by
+type and name, never by content: an existing apex SPF means that row is handled.
+
 ### Health check now reads
 
 ```

@@ -10,9 +10,11 @@ permission.
 ## State at the start of this runbook
 
 ```
-classicminidiy.com   zone active   email routing unconfigured   MX -> forwardemail
-theminiexchange.com  DONE 2026-09-03: routing enabled, catch-all -> gmail, MX -> cloudflare
-cmdiy.co             zone active   email routing unconfigured   MX -> forwardemail
+ALL THREE DONE 2026-09-03. Routing enabled, catch-all -> classicminidiy@gmail.com,
+MX -> route1/2/3.mx.cloudflare.net, exactly one SPF record each.
+
+Kept for the next time a zone is onboarded — the two traps below are properties
+of Cloudflare's wizard, not of this particular migration.
 ```
 
 All three are served by Cloudflare. `cmdiy.co` completed its nameserver move on
@@ -53,6 +55,19 @@ Enabling Email Routing leaves the catch-all rule `enabled: false` with action
 bounced, discarded, which is the failure nobody notices. Observed on
 `theminiexchange.com`, 2026-09-03. Setting the catch-all is a separate step and
 it is the step that matters. Do it immediately after activating, not later.
+
+**Never add Cloudflare's SPF record programmatically after pre-merging.** This
+caused the only real outage of the migration. The pre-merged record
+(`v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all`) is not
+byte-equal to Cloudflare's (`v=spf1 include:_spf.mx.cloudflare.net ~all`), so a
+script that decides what to add by comparing content verbatim sees Cloudflare's
+as missing and creates a SECOND SPF record. Cloudflare then refuses to enable —
+`Multiple SPF records exist` — while the apex MX already points at its servers,
+so inbound mail fails until someone notices.
+
+**When adding Cloudflare's record set, filter by TYPE and NAME, never by
+content.** Any existing apex SPF means the SPF row is already handled. On
+`classicminidiy.com`, 2026-09-03, this cost about a minute of failed inbound.
 
 **Cloudflare will not swap the MX for you.** Activation refuses while any
 non-Cloudflare MX exists:
@@ -108,10 +123,17 @@ For each domain, in that order:
    `scripts/fix-mail-dns.py` holds the merged values and collapses a duplicate
    if one appears.
 
-2. **Swap the MX in this order**, so the domain is never without one. Add
-   Cloudflare's three at priorities 69–100 FIRST: Forward Email sits at priority
-   10 and keeps winning, so mail flow does not change. Only then delete Forward
-   Email's two, which hands delivery straight over.
+2. **Swap the MX — but check the priorities first.** Cloudflare assigns them per
+   zone, from `GET /zones/{id}/email/routing/dns`. If all three are numerically
+   HIGHER than Forward Email's 10, add them first: Forward Email keeps winning
+   and mail flow does not change until you delete it. That worked for
+   `theminiexchange.com` (69–100) and `cmdiy.co` (39–88).
+
+   If any is LOWER than 10 it outranks Forward Email, and pre-adding would
+   divert mail to a routing-disabled endpoint. `classicminidiy.com` drew a 3.
+   In that case delete Forward Email's MX first and add Cloudflare's
+   immediately after, in one scripted run — a sub-second gap with no MX, which
+   senders retry through, rather than minutes pointed at a dead endpoint.
 
 3. Click **+ Onboard Domain** and pick the domain. It will activate now that no
    foreign MX remains. (From the per-zone page the same flow is **Get started**.)
