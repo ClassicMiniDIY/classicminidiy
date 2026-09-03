@@ -55,6 +55,11 @@ API = "https://api.cloudflare.com/client/v4"
 CF_ROUTING_SPF = "v=spf1 include:_spf.mx.cloudflare.net ~all"
 CF_ROUTING_INCLUDE = "include:_spf.mx.cloudflare.net"
 
+# Where DMARC aggregate reports go. Reachable today because Email Routing's
+# catch-all on classicminidiy.com forwards everything to Gmail.
+DMARC_RUA = "reports@classicminidiy.com"
+DMARC_RUA_DOMAIN = "classicminidiy.com"
+
 # --- the desired state -------------------------------------------------------
 #
 # `spf` is the apex SPF record's exact content, or None to leave it absent.
@@ -67,6 +72,7 @@ CHANGES = [
         # Carries Cloudflare's include so the wizard's record can be collapsed
         # into this one. 2 lookups of 10 — still down from the original 8.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
+        "dmarc": f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}",
         "delete": [
             ("CNAME", "pm-bounces.classicminidiy.com"),  # Postmark, dead
             # Forward Email decommission, 2026-09-03. Inbound moved to
@@ -85,7 +91,10 @@ CHANGES = [
         # changes which sender is authorised; tightening the qualifier in the
         # same edit would change two things at once on the domain whose senders
         # are least certain. Tighten to `-all` once DMARC reports confirm.
-        "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net ~all",
+        # Tightened from `~all` to `-all` on 2026-09-04 at Cole's instruction.
+        # SES and Cloudflare are the only authorised senders and both are named.
+        "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
+        "dmarc": f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}",
         "delete": [("TXT", "resend._domainkey.theminiexchange.com")],  # stale
         "delete_txt_containing": ["forward-email-site-verification"],
     },
@@ -102,6 +111,7 @@ CHANGES = [
         # proposed, which is the right side to err on until DMARC aggregate
         # reports confirm the envelope domain.
         "spf": "v=spf1 include:_spf.mx.cloudflare.net ~all",
+        "dmarc": f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}",
         "delete": [
             ("CNAME", "pm-bounces.cmdiy.co"),
             ("TXT", "20240927014807pm._domainkey.cmdiy.co"),
@@ -263,6 +273,57 @@ def main():
                     print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
                     failures += 0 if res.get("success") else 1
 
+
+        # --- DMARC ---
+        # Adding `rua=` is purely additive: it changes no policy, it only asks
+        # receivers to send aggregate reports. `p=` is left alone here.
+        want_dmarc = change.get("dmarc")
+        if want_dmarc:
+            name = f"_dmarc.{domain}"
+            cur = [r for r in records if r["type"] == "TXT" and r["name"].rstrip(".") == name]
+            if len(cur) > 1:
+                print(f"  dmarc {len(cur)} records at {name} — refusing to guess")
+                failures += 1
+            elif not cur:
+                print(f"  dmarc MISSING, will create: {want_dmarc}")
+                total_ops += 1
+                if args.apply:
+                    res = cf(f"zones/{zid}/dns_records", method="POST",
+                             body={"type": "TXT", "name": name, "content": want_dmarc, "ttl": 300})
+                    print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
+                    failures += 0 if res.get("success") else 1
+            elif unquote_txt(cur[0]["content"]).strip() == want_dmarc:
+                print(f"  dmarc already correct: {want_dmarc}")
+            else:
+                print(f"  dmarc from: {unquote_txt(cur[0]['content'])}")
+                print(f"          to: {want_dmarc}")
+                total_ops += 1
+                if args.apply:
+                    res = cf(f"zones/{zid}/dns_records/{cur[0]['id']}", method="PATCH",
+                             body={"content": want_dmarc})
+                    print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
+                    failures += 0 if res.get("success") else 1
+
+            # RFC 7489 s7.1: when the rua mailbox is on a DIFFERENT domain than
+            # the one being reported on, that domain must publish an
+            # authorisation record or most reporters silently send nothing.
+            # This is the usual reason "I turned on rua and got no reports".
+            if domain != DMARC_RUA_DOMAIN:
+                auth_name = f"{domain}._report._dmarc.{DMARC_RUA_DOMAIN}"
+                rz = cf(f"zones?name={DMARC_RUA_DOMAIN}")
+                rzid = (rz.get("result") or [{}])[0].get("id")
+                rrecs = cf(f"zones/{rzid}/dns_records?per_page=500").get("result") or []
+                if any(r["type"] == "TXT" and r["name"].rstrip(".") == auth_name for r in rrecs):
+                    print(f"  dmarc report-auth already present: {auth_name}")
+                else:
+                    print(f"  dmarc report-auth MISSING, will create on {DMARC_RUA_DOMAIN}:")
+                    print(f"          {auth_name}  TXT  v=DMARC1")
+                    total_ops += 1
+                    if args.apply:
+                        res = cf(f"zones/{rzid}/dns_records", method="POST",
+                                 body={"type": "TXT", "name": auth_name, "content": "v=DMARC1", "ttl": 300})
+                        print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
+                        failures += 0 if res.get("success") else 1
 
         # --- deletions by TXT content ---
         # For names that hold several TXT records (an apex holds SPF plus every
