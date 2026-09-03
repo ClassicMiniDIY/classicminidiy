@@ -155,16 +155,28 @@ def existing_key(rec):
 PROXYABLE = {"A", "AAAA", "CNAME"}
 
 
-def proxied_wrongly(rec):
-    """True if this existing record is behind the orange cloud.
+def proxied_wrongly(rec, migrated_names):
+    """True if a record WE ARE MIGRATING is behind the orange cloud.
 
     Cloudflare's zone auto-import turns proxying ON for CNAMEs by default. For a
     mail host that is a silent breakage: `pm-bounces` and the Shopify mailer
     hosts must resolve to the provider, and a proxied CNAME resolves to
     Cloudflare's edge instead. The zone stays `pending` so nothing is broken
     yet, which is exactly why this has to be caught before the NS flip.
+
+    `migrated_names` is the guard, and it is not optional. An earlier version
+    scanned every record in the zone on the reasoning that everything this
+    script migrates is a mail record. That is true of the migrated set and false
+    of the zone: run against a zone that also serves a website and it would
+    unproxy the apex and `www`, dropping the site out of Workers routes and the
+    WAF and exposing the origin IP. Only names present in the Route 53 source
+    are eligible.
     """
-    return rec["type"] in PROXYABLE and rec.get("proxied") is True
+    return (
+        rec["type"] in PROXYABLE
+        and rec.get("proxied") is True
+        and rec["name"].rstrip(".") in migrated_names
+    )
 
 
 def planned_key(entry):
@@ -205,10 +217,11 @@ def main():
     todo = [e for e in planned if planned_key(e) not in existing]
     already = len(planned) - len(todo)
 
-    # Records that already exist but sit behind the proxy. Everything this
-    # script migrates is a mail or verification record, so proxied is always
-    # wrong here — see proxied_wrongly().
-    unproxy = [r for r in have["result"] if proxied_wrongly(r)]
+    # Records that already exist but sit behind the proxy. Scoped to the names
+    # this migration actually covers — see proxied_wrongly() for why that scope
+    # is load-bearing rather than tidiness.
+    migrated_names = {e["name"].rstrip(".") for e in planned}
+    unproxy = [r for r in have["result"] if proxied_wrongly(r, migrated_names)]
 
     print(f"\nroute53 yields {len(planned)} record value(s): {len(todo)} to create, {already} already present")
 

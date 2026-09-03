@@ -438,6 +438,67 @@ describe('buildDomainHealth', () => {
     expect(withAll('~')).toBeUndefined();
   });
 
+  it('fails a DMARC record with no p= tag instead of calling it healthy', () => {
+    // `v=DMARC1; rua=mailto:...` with no policy enforces nothing. An earlier
+    // version tested only `policy === 'none'` and let this fall through to
+    // 'ok', rendering the literal text "p=null" as a pass — the exact shape of
+    // green tick this page exists to prevent.
+    const h = buildDomainHealth(
+      spec(),
+      facts({ dmarc: { record: 'v=DMARC1; rua=mailto:r@x.com', policy: null, pct: 100, hasReporting: true } })
+    );
+    expect(check(h, 'dmarc')?.severity).toBe('fail');
+    expect(h.worst).toBe('fail');
+  });
+
+  it('fails an unrecognised DMARC policy', () => {
+    const h = buildDomainHealth(
+      spec(),
+      facts({ dmarc: { record: 'r', policy: 'quarentine', pct: 100, hasReporting: false } })
+    );
+    expect(check(h, 'dmarc')?.severity).toBe('fail');
+  });
+
+  it('reports unknown, not failure, when a lookup did not complete', () => {
+    // A SERVFAIL and an absent record both arrive as an empty value. Grading
+    // them the same way turns a resolver blip into "No MX record: inbound mail
+    // is rejected" — the alarm for a total outage.
+    const h = buildDomainHealth(
+      spec(),
+      facts({
+        mxHosts: [],
+        mxResolved: false,
+        spfRecord: null,
+        spf: null,
+        spfResolved: false,
+        dmarc: null,
+        dmarcResolved: false,
+      })
+    );
+    expect(check(h, 'mx')?.severity).toBe('unknown');
+    expect(check(h, 'spf')?.severity).toBe('unknown');
+    expect(check(h, 'dmarc')?.severity).toBe('unknown');
+    // Nothing actionable was learned, so the row must not read as broken.
+    expect(h.worst).toBe('ok');
+  });
+
+  it('still fails a genuinely absent record when the lookup DID complete', () => {
+    const h = buildDomainHealth(spec(), facts({ mxHosts: [], spfRecord: null, spf: null, dmarc: null }));
+    expect(check(h, 'mx')?.severity).toBe('fail');
+    expect(check(h, 'spf')?.severity).toBe('fail');
+    expect(check(h, 'dmarc')?.severity).toBe('fail');
+  });
+
+  it('does not report senders missing when the SPF record was never evaluated', () => {
+    // spf=null with spfRecord set meant directIncludes was [], so every
+    // expected include was reported missing — contradicting the ok SPF row
+    // directly above that prints a record containing amazonses.com.
+    const h = buildDomainHealth(spec(), facts({ spf: null }));
+    expect(h.missingIncludes).toEqual([]);
+    expect(check(h, 'spf-missing')).toBeUndefined();
+    expect(check(h, 'spf-eval')?.severity).toBe('unknown');
+  });
+
   it('warns on p=none and passes p=reject', () => {
     const dmarc = (policy: string | null) =>
       check(

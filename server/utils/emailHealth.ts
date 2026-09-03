@@ -332,6 +332,18 @@ export interface DomainFacts {
   spfCount: number;
   spf: SpfEvaluation | null;
   dmarc: DmarcEvaluation | null;
+  /**
+   * Whether each lookup actually completed.
+   *
+   * An absent record and a failed lookup produce the same empty value, and they
+   * mean opposite things: "this domain has no MX" is a total inbound outage,
+   * "the resolver returned SERVFAIL" is a blip. Reporting the second as the
+   * first cries wolf on the page whose whole job is to be believed. Default
+   * true so existing callers and fixtures keep the old meaning.
+   */
+  mxResolved?: boolean;
+  spfResolved?: boolean;
+  dmarcResolved?: boolean;
 }
 
 export interface DomainHealth extends DomainFacts {
@@ -371,9 +383,14 @@ export function worstOf(checks: Check[]): Severity {
 export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainHealth {
   const checks: Check[] = [];
   const mxProvider = classifyMx(facts.mxHosts);
+  const mxResolved = facts.mxResolved !== false;
+  const spfResolved = facts.spfResolved !== false;
+  const dmarcResolved = facts.dmarcResolved !== false;
 
   // --- MX ---
-  if (mxProvider === 'cloudflare') {
+  if (!mxResolved) {
+    checks.push({ id: 'mx', label: 'MX', severity: 'unknown', detail: 'DNS lookup failed — not checked' });
+  } else if (mxProvider === 'cloudflare') {
     checks.push({ id: 'mx', label: 'MX', severity: 'ok', detail: 'Cloudflare Email Routing' });
   } else if (mxProvider === 'forwardemail') {
     checks.push({
@@ -389,7 +406,9 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
   }
 
   // --- SPF presence ---
-  if (facts.spfCount > 1) {
+  if (!spfResolved) {
+    checks.push({ id: 'spf', label: 'SPF', severity: 'unknown', detail: 'DNS lookup failed — not checked' });
+  } else if (facts.spfCount > 1) {
     checks.push({
       id: 'spf',
       label: 'SPF',
@@ -426,11 +445,26 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
   }
 
   // --- SPF senders ---
+  // Both lists are derived from a SUCCESSFUL evaluation. When `spf` is null the
+  // record was never walked, so `directIncludes` is unknown rather than empty —
+  // reporting every expected sender as missing would contradict the 'ok' SPF
+  // row directly above it and send someone chasing an authorisation that is
+  // present in the record.
+  const evaluated = facts.spf !== null;
   const direct = facts.spf?.directIncludes ?? [];
-  const unexpectedIncludes = direct.filter((i) => !spec.expectedIncludes.includes(i));
-  const missingIncludes = spec.expectedIncludes.filter((i) => !direct.includes(i));
+  const unexpectedIncludes = evaluated ? direct.filter((i) => !spec.expectedIncludes.includes(i)) : [];
+  const missingIncludes = evaluated ? spec.expectedIncludes.filter((i) => !direct.includes(i)) : [];
 
-  if (facts.spfRecord) {
+  if (facts.spfRecord && spfResolved && !evaluated) {
+    checks.push({
+      id: 'spf-eval',
+      label: 'SPF senders',
+      severity: 'unknown',
+      detail: 'Record could not be evaluated — sender checks skipped',
+    });
+  }
+
+  if (facts.spfRecord && spfResolved) {
     if (unexpectedIncludes.length) {
       checks.push({
         id: 'spf-unexpected',
@@ -470,8 +504,31 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
   }
 
   // --- DMARC ---
-  if (!facts.dmarc) {
+  // Only the three policies RFC 7489 defines count as enforcing. Anything else
+  // — a missing `p=`, or a typo like `p=quarentine` — is not a policy this tool
+  // may call healthy: receivers ignore an unparseable policy, so the record
+  // enforces nothing while looking present. An earlier version tested only
+  // `policy === 'none'` and let everything else fall through to 'ok', which
+  // rendered the literal text "p=null" as a pass.
+  const DMARC_POLICIES = ['none', 'quarantine', 'reject'];
+  if (!dmarcResolved) {
+    checks.push({ id: 'dmarc', label: 'DMARC', severity: 'unknown', detail: 'DNS lookup failed — not checked' });
+  } else if (!facts.dmarc) {
     checks.push({ id: 'dmarc', label: 'DMARC', severity: 'fail', detail: 'No DMARC record' });
+  } else if (facts.dmarc.policy === null) {
+    checks.push({
+      id: 'dmarc',
+      label: 'DMARC',
+      severity: 'fail',
+      detail: 'Record has no `p=` tag, so it enforces nothing',
+    });
+  } else if (!DMARC_POLICIES.includes(facts.dmarc.policy)) {
+    checks.push({
+      id: 'dmarc',
+      label: 'DMARC',
+      severity: 'fail',
+      detail: `Unrecognised policy \`p=${facts.dmarc.policy}\` — receivers ignore it`,
+    });
   } else if (facts.dmarc.policy === 'none') {
     checks.push({
       id: 'dmarc',
