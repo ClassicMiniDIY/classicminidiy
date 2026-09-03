@@ -150,6 +150,23 @@ def existing_key(rec):
     return (rec["type"], rec["name"].rstrip("."), content, prio)
 
 
+# Record types where Cloudflare's proxy can be enabled at all, and therefore
+# where its default can silently be wrong.
+PROXYABLE = {"A", "AAAA", "CNAME"}
+
+
+def proxied_wrongly(rec):
+    """True if this existing record is behind the orange cloud.
+
+    Cloudflare's zone auto-import turns proxying ON for CNAMEs by default. For a
+    mail host that is a silent breakage: `pm-bounces` and the Shopify mailer
+    hosts must resolve to the provider, and a proxied CNAME resolves to
+    Cloudflare's edge instead. The zone stays `pending` so nothing is broken
+    yet, which is exactly why this has to be caught before the NS flip.
+    """
+    return rec["type"] in PROXYABLE and rec.get("proxied") is True
+
+
 def planned_key(entry):
     return (entry["type"], entry["name"], entry["content"], entry.get("priority"))
 
@@ -188,7 +205,17 @@ def main():
     todo = [e for e in planned if planned_key(e) not in existing]
     already = len(planned) - len(todo)
 
+    # Records that already exist but sit behind the proxy. Everything this
+    # script migrates is a mail or verification record, so proxied is always
+    # wrong here — see proxied_wrongly().
+    unproxy = [r for r in have["result"] if proxied_wrongly(r)]
+
     print(f"\nroute53 yields {len(planned)} record value(s): {len(todo)} to create, {already} already present")
+
+    if unproxy:
+        print(f"\nalready present but PROXIED, must become DNS-only ({len(unproxy)}):")
+        for r in unproxy:
+            print(f"  {r['type']:<6} {r['name']:<44} -> {r.get('content','')[:50]}")
 
     if skipped:
         print("\nnot copied:")
@@ -205,21 +232,33 @@ def main():
         print("\nDry run. Re-run with --apply to create these records.")
         return
 
-    if not todo:
+    if not todo and not unproxy:
         print("\nNothing to do.")
         return
 
-    print("\napplying:")
     failures = 0
-    for e in todo:
-        res = cf(f"zones/{zid}/dns_records", method="POST", body=e)
-        if res.get("success"):
-            print(f"  ok      {e['type']:<6} {e['name']}")
-        else:
-            failures += 1
-            print(f"  FAILED  {e['type']:<6} {e['name']}: {errmsg(res)}")
 
-    print(f"\n{len(todo) - failures} created, {failures} failed")
+    if todo:
+        print("\ncreating:")
+        for e in todo:
+            res = cf(f"zones/{zid}/dns_records", method="POST", body=e)
+            if res.get("success"):
+                print(f"  ok      {e['type']:<6} {e['name']}")
+            else:
+                failures += 1
+                print(f"  FAILED  {e['type']:<6} {e['name']}: {errmsg(res)}")
+
+    if unproxy:
+        print("\nturning off the proxy:")
+        for r in unproxy:
+            res = cf(f"zones/{zid}/dns_records/{r['id']}", method="PATCH", body={"proxied": False})
+            if res.get("success"):
+                print(f"  ok      {r['type']:<6} {r['name']}  now DNS-only")
+            else:
+                failures += 1
+                print(f"  FAILED  {r['type']:<6} {r['name']}: {errmsg(res)}")
+
+    print(f"\n{len(todo) + len(unproxy) - failures} change(s) applied, {failures} failed")
     if failures:
         sys.exit(1)
     print(f"\nNext: verify against Cloudflare's nameservers before flipping NS, e.g.")
