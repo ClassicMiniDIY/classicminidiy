@@ -142,16 +142,35 @@ export function senderLabel(include: string): string {
 export type MxProvider = 'cloudflare' | 'forwardemail' | 'google' | 'other' | 'none';
 
 /**
- * Identify the mail host from MX targets. Matched on hostname suffix because
+ * True when `host` IS `domain` or sits beneath it, anchored at a label
+ * boundary.
+ *
+ * A bare `endsWith(domain)` is not that test: it also matches a host that
+ * merely ends in those characters, so `notforwardemail.net` would classify as
+ * Forward Email and `evilgoogle.com` as Google. The same shape is already an
+ * invariant elsewhere in this repo — redirect matchers anchor at a segment
+ * boundary rather than using `includes()` — and CodeQL flags it as
+ * js/incomplete-url-substring-sanitization.
+ *
+ * The stakes here are low: these hosts come from our own zones, so a
+ * misclassification is a wrong label on an admin page rather than a bypass.
+ * It is still the wrong test, and the correct one costs nothing.
+ */
+function underDomain(host: string, domain: string): boolean {
+  return host === domain || host.endsWith(`.${domain}`);
+}
+
+/**
+ * Identify the mail host from MX targets. Matched on the parent domain because
  * Cloudflare Email Routing hands out route1/2/3.mx.cloudflare.net with
  * priorities that vary per zone, so the priority carries no signal.
  */
 export function classifyMx(hosts: string[]): MxProvider {
   const clean = hosts.map((h) => h.toLowerCase().replace(/\.$/, '')).filter(Boolean);
   if (clean.length === 0) return 'none';
-  if (clean.some((h) => h.endsWith('.mx.cloudflare.net'))) return 'cloudflare';
-  if (clean.some((h) => h.endsWith('forwardemail.net'))) return 'forwardemail';
-  if (clean.some((h) => h.endsWith('google.com') || h.endsWith('googlemail.com'))) return 'google';
+  if (clean.some((h) => underDomain(h, 'mx.cloudflare.net'))) return 'cloudflare';
+  if (clean.some((h) => underDomain(h, 'forwardemail.net'))) return 'forwardemail';
+  if (clean.some((h) => underDomain(h, 'google.com') || underDomain(h, 'googlemail.com'))) return 'google';
   return 'other';
 }
 
