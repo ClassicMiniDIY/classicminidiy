@@ -208,6 +208,7 @@
           icon: 'fas fa-envelope-open-text',
           marketingOnly: true,
         },
+        { label: 'Mail DNS', to: '/admin/email', icon: 'fas fa-envelope-circle-check' },
       ],
     },
   ];
