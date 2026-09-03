@@ -49,9 +49,18 @@ export const MAIL_DOMAINS: DomainSpec[] = [
   {
     domain: 'classicminidiy.com',
     sends: true,
-    // _spf.google.com is here for Gmail send-as. It stays until the send-as
-    // question in the design doc is answered; see "The one blocker".
-    expectedIncludes: ['amazonses.com', '_spf.google.com', 'shops.shopify.com'],
+    // SES is the only confirmed sender. Two includes were dropped from this
+    // list on 2026-09-03 after checking what they actually authorize:
+    //
+    //   _spf.google.com   — vestigial. Gmail has NO "send mail as" entry for
+    //                       any custom domain, Google is not the MX, and the
+    //                       account is consumer Gmail, not Workspace. Nothing
+    //                       can send as this domain via Google.
+    //   shops.shopify.com — resolves to bare `v=spf1 ~all`, authorizing nobody.
+    //                       Shopify does send as this domain, so the fix is
+    //                       Shopify's DKIM CNAMEs, not an SPF include that
+    //                       grants nothing. Flagged by the emptyIncludes check.
+    expectedIncludes: ['amazonses.com'],
   },
   {
     domain: 'theminiexchange.com',
@@ -147,6 +156,9 @@ export function parseSpfTerms(record: string): SpfTerm[] {
     });
 }
 
+/** Mechanisms that actually authorize a sender, as opposed to costing a lookup. */
+const AUTHORIZING_MECHANISMS = /^(ip4|ip6|a|mx|exists)$/i;
+
 export interface SpfEvaluation {
   /** Total DNS lookups the record costs, including nested includes. */
   lookups: number;
@@ -154,6 +166,17 @@ export interface SpfEvaluation {
   includes: string[];
   /** Top-level include targets only — what the domain's own record names. */
   directIncludes: string[];
+  /**
+   * Direct includes that resolve to a record authorizing NOBODY.
+   *
+   * `shops.shopify.com` is the live example: it resolves to bare `v=spf1 ~all`,
+   * so it grants no sender while still costing one of the 10 lookups. An include
+   * like this looks correct in the record and does nothing, which is worse than
+   * a missing one — it reads as "Shopify is authorized" when Shopify is not.
+   */
+  emptyIncludes: string[];
+  /** ip4/ip6/a/mx/exists mechanisms in this subtree — what authorizes mail. */
+  authorizing: number;
   /** The record's final `all` qualifier: '-', '~', '?', '+', or null if absent. */
   allQualifier: string | null;
   /** True if recursion was cut short by the depth guard or the lookup limit. */
@@ -178,8 +201,10 @@ export async function evaluateSpf(
   const terms = parseSpfTerms(record);
   const directIncludes: string[] = [];
   const includes: string[] = [];
+  const emptyIncludes: string[] = [];
   let lookups = 0;
   let truncated = false;
+  let authorizing = terms.filter((t) => AUTHORIZING_MECHANISMS.test(t.name)).length;
 
   const allTerm = terms.find((t) => t.name === 'all');
   // parseSpfTerms strips the qualifier, so recover it from the raw record.
@@ -197,6 +222,8 @@ export async function evaluateSpf(
     includes.push(target);
 
     // A cycle, or a nest deeper than any real policy, is not worth chasing.
+    // `seen` is shared across siblings, so a target reached twice is skipped —
+    // do NOT judge such an include empty, because we never looked at it.
     if (seen.has(target) || depth + 1 >= MAX_SPF_DEPTH || lookups > SPF_LOOKUP_LIMIT) {
       truncated = true;
       continue;
@@ -207,20 +234,29 @@ export async function evaluateSpf(
     try {
       nested = await resolveTxt(target);
     } catch {
+      // Unresolvable is unknown, not empty.
       truncated = true;
       continue;
     }
 
     const { record: nestedSpf } = findSpf(nested);
-    if (!nestedSpf) continue;
+    if (!nestedSpf) {
+      // Resolves, but publishes no SPF at all: it authorizes nobody.
+      if (depth === 0) emptyIncludes.push(target);
+      continue;
+    }
 
     const sub = await evaluateSpf(nestedSpf, resolveTxt, depth + 1, seen);
     lookups += sub.lookups;
     includes.push(...sub.includes);
+    authorizing += sub.authorizing;
     truncated ||= sub.truncated;
+
+    // Only a subtree we fully walked can be called empty with confidence.
+    if (depth === 0 && sub.authorizing === 0 && !sub.truncated) emptyIncludes.push(target);
   }
 
-  return { lookups, includes, directIncludes, allQualifier, truncated };
+  return { lookups, includes, directIncludes, emptyIncludes, authorizing, allQualifier, truncated };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -387,6 +423,17 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
         label: 'Missing senders',
         severity: 'fail',
         detail: `${missingIncludes.map(senderLabel).join(', ')} — sends but is not authorised`,
+      });
+    }
+    // An include that grants nothing is worse than an absent one: it reads as
+    // "this provider is authorised" while costing a lookup and authorising
+    // nobody. Fixing it means the provider's DKIM, not a different include.
+    if (facts.spf?.emptyIncludes.length) {
+      checks.push({
+        id: 'spf-empty',
+        label: 'Includes granting nothing',
+        severity: 'warn',
+        detail: `${facts.spf.emptyIncludes.map(senderLabel).join(', ')} — resolves but authorises no sender`,
       });
     }
     // A trailing `+all` authorises the entire internet.

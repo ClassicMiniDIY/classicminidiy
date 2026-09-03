@@ -183,6 +183,47 @@ describe('evaluateSpf', () => {
     expect(result.truncated).toBe(false);
   });
 
+  it('flags shops.shopify.com as an include that authorises nobody', async () => {
+    // The live record. Shopify does send as classicminidiy.com, but this
+    // include grants nothing — the fix is Shopify's DKIM, not SPF.
+    const result = await evaluateSpf(LIVE.classicminidiy, resolver());
+    expect(result.emptyIncludes).toEqual(['shops.shopify.com']);
+  });
+
+  it('counts authorising mechanisms separately from lookups', async () => {
+    // _spf.google.com contributes ip4/ip6 mechanisms; shops.shopify.com none.
+    const google = await evaluateSpf('v=spf1 include:_spf.google.com -all', resolver());
+    expect(google.authorizing).toBeGreaterThan(0);
+    expect(google.emptyIncludes).toEqual([]);
+
+    const shopify = await evaluateSpf('v=spf1 include:shops.shopify.com -all', resolver());
+    expect(shopify.authorizing).toBe(0);
+    expect(shopify.emptyIncludes).toEqual(['shops.shopify.com']);
+  });
+
+  it('treats an include with no SPF record at all as empty', async () => {
+    const map = { 'notspf.example': ['just-a-verification-token'] };
+    const result = await evaluateSpf('v=spf1 include:notspf.example -all', resolver(map));
+    expect(result.emptyIncludes).toEqual(['notspf.example']);
+  });
+
+  it('does not call an unresolvable include empty — that is unknown, not empty', async () => {
+    const result = await evaluateSpf('v=spf1 include:gone.example -all', resolver());
+    expect(result.emptyIncludes).toEqual([]);
+    expect(result.truncated).toBe(true);
+  });
+
+  it('does not flag a nested include as empty, only direct ones', async () => {
+    // shops.shopify.com nested one level down must not surface as a direct
+    // finding on the parent domain.
+    const map = {
+      'mid.example': ['v=spf1 include:shops.shopify.com ip4:9.9.9.9 -all'],
+      'shops.shopify.com': ['v=spf1 ~all'],
+    };
+    const result = await evaluateSpf('v=spf1 include:mid.example -all', resolver(map));
+    expect(result.emptyIncludes).toEqual([]);
+  });
+
   it('counts redirect as a lookup and follows it', async () => {
     const map = { 'r.example': ['v=spf1 include:amazonses.com -all'], 'amazonses.com': CHAIN['amazonses.com'] };
     const result = await evaluateSpf('v=spf1 redirect=r.example', resolver(map));
@@ -234,6 +275,13 @@ describe('MAIL_DOMAINS', () => {
     }
   });
 
+  it('expects only SES on classicminidiy.com, after the 2026-09-03 include audit', () => {
+    const cmd = MAIL_DOMAINS.find((d) => d.domain === 'classicminidiy.com')!;
+    // _spf.google.com: no Gmail send-as exists, Google is not the MX.
+    // shops.shopify.com: resolves to bare `v=spf1 ~all`, grants nobody.
+    expect(cmd.expectedIncludes).toEqual(['amazonses.com']);
+  });
+
   it('expects SES on every sending domain and nothing on the receive-only one', () => {
     for (const spec of MAIL_DOMAINS) {
       if (spec.sends) expect(spec.expectedIncludes).toContain('amazonses.com');
@@ -266,6 +314,8 @@ describe('buildDomainHealth', () => {
       lookups: 1,
       includes: ['amazonses.com'],
       directIncludes: ['amazonses.com'],
+      emptyIncludes: [],
+      authorizing: 2,
       allQualifier: '-',
       truncated: false,
     },
@@ -332,6 +382,8 @@ describe('buildDomainHealth', () => {
           lookups: 1,
           includes: ['send.resend.com'],
           directIncludes: ['send.resend.com'],
+          emptyIncludes: [],
+          authorizing: 1,
           allQualifier: '~',
           truncated: false,
         },
@@ -342,6 +394,20 @@ describe('buildDomainHealth', () => {
     expect(check(h, 'spf-unexpected')?.severity).toBe('warn');
     expect(check(h, 'spf-missing')?.severity).toBe('fail');
     expect(h.worst).toBe('fail');
+  });
+
+  it('warns on an include that resolves but authorises nobody', () => {
+    const h = buildDomainHealth(
+      spec(),
+      facts({ spf: { ...facts().spf!, emptyIncludes: ['shops.shopify.com'], directIncludes: ['amazonses.com'] } })
+    );
+    const c = check(h, 'spf-empty');
+    expect(c?.severity).toBe('warn');
+    expect(h.worst).toBe('warn');
+  });
+
+  it('omits the empty-include check when every include grants something', () => {
+    expect(check(buildDomainHealth(spec(), facts()), 'spf-empty')).toBeUndefined();
   });
 
   it('fails a record ending in +all or with no all mechanism', () => {
