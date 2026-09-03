@@ -145,6 +145,13 @@ membership (`/membership`), contribution wizard (`/contribute/*`), dashboard
 - **Contributions:** every human-reviewed approval must write `submitted_by` and feed
   trust; colour approvals honour `originalColorId`; `server/utils/archiveApprovals.ts` is
   imported, never copied. Public profile reads use the `public_profiles` view.
+- **The profiles split moved `email`, `is_admin`, `warning_count`, `auth_provider`
+  and `firebase_uid` off `profiles` onto `profile_private`.** Selecting one of them
+  from `profiles` does not return `undefined` — PostgREST rejects the whole query,
+  so the read fails entirely. Reach them through a nested embed
+  (`profiles!<fk> ( ..., profile_private ( email ) )`) and flatten, as
+  `useAdmin.flattenProfilePrivate` and `server/api/admin/**` do. Hand-written
+  profile shapes must declare `email` optional: only the embedding queries set it.
 - **Admin:** every `/admin/**` page wraps in `<AdminShell>`; `/admin/queue` is the one
   review surface; edit allowlists (`EDIT_TARGETS`, `ADMIN_EDITABLE_COLUMNS`) are security
   boundaries and never gain ownership, moderation or payment columns.

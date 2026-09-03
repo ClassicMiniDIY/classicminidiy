@@ -175,8 +175,8 @@ export default defineEventHandler(async (event) => {
         title,
         slug,
         user_id,
-        profiles:user_id (
-          email
+        profiles!listings_user_id_fkey (
+          profile_private ( email )
         )
       `
       )
@@ -191,8 +191,14 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // Email moved to profile_private in the profiles split, so it is reached
+    // through a nested embed rather than off the profile row. Selecting
+    // `email` from `profiles` made PostgREST reject the whole query, which
+    // surfaced as the 404 below on every single inquiry.
+    const sellerEmail = listing.profiles?.profile_private?.email;
+
     // Check if seller has email
-    if (!listing.profiles?.email) {
+    if (!sellerEmail) {
       throw createError({
         statusCode: 400,
         message:

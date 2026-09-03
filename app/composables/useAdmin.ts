@@ -438,18 +438,23 @@ export const useAdmin = () => {
   };
 
   /**
-   * Update user profile (admin only)
+   * Update user profile (admin only).
+   *
+   * Only columns that still live on `profiles` are accepted. The signature used
+   * to include `email` and `is_admin`; the profiles split moved both to
+   * `profile_private`, so passing either would have made PostgREST reject the
+   * whole update. `is_admin` in particular is not a generic profile field — it
+   * is flipped through `server/api/admin/users/toggle-admin.post.ts`, which is
+   * where that check belongs.
    */
   const updateUser = async (
     userId: string,
     updates: Partial<{
       display_name: string;
-      email: string;
       avatar_url: string | null;
       location: string;
       bio: string;
       preferred_currency: string;
-      is_admin: boolean;
     }>
   ) => {
     const { error } = await supabase.from('profiles').update(updates).eq('id', userId);

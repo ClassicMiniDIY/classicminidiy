@@ -30,6 +30,10 @@ export interface ListingWithPhotos extends Listing {
     username: string | null;
     location: string | null;
     avatar_url: string | null;
+    // Optional because it lives on `profile_private` since the profiles split,
+    // so only queries that embed `profile_private ( email )` and flatten it
+    // (the admin paths in `useAdmin`) populate it. Public reads leave it unset.
+    email?: string | null;
   } | null;
 }
 

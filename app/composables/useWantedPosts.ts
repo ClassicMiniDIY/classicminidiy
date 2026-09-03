@@ -31,6 +31,9 @@ export interface WantedPost {
     display_name: string | null;
     username: string | null;
     avatar_url: string | null;
+    // Lives on `profile_private` since the profiles split; only the admin
+    // queries that embed `profile_private ( email )` and flatten it set this.
+    email?: string | null;
   } | null;
 }
 
