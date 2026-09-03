@@ -11,7 +11,7 @@ permission.
 
 ```
 classicminidiy.com   zone active   email routing unconfigured   MX -> forwardemail
-theminiexchange.com  zone active   email routing unconfigured   MX -> forwardemail
+theminiexchange.com  DONE 2026-09-03: routing enabled, catch-all -> gmail, MX -> cloudflare
 cmdiy.co             zone active   email routing unconfigured   MX -> forwardemail
 ```
 
@@ -46,7 +46,24 @@ cmdiy.co              (none — deliberate)
 If the wizard adds one anyway, delete the duplicate immediately and confirm with
 step 5 below.
 
-**Second thing to know:** you have no Gmail send-as for these domains, so replies
+**The one way this loses inbound mail: activation does not start forwarding.**
+
+Enabling Email Routing leaves the catch-all rule `enabled: false` with action
+`drop`. The MX now points at Cloudflare, so mail arrives and is discarded — not
+bounced, discarded, which is the failure nobody notices. Observed on
+`theminiexchange.com`, 2026-09-03. Setting the catch-all is a separate step and
+it is the step that matters. Do it immediately after activating, not later.
+
+**Cloudflare will not swap the MX for you.** Activation refuses while any
+non-Cloudflare MX exists:
+
+> Existing non-Cloudflare MX records conflict with Email Routing. Remove or
+> update them and try again.
+
+Remove them first — but in the order below, which never leaves the domain
+without an MX.
+
+**Third thing to know:** you have no Gmail send-as for these domains, so replies
 will go out as `classicminidiy@gmail.com`. That is already true today — Email
 Routing does not change it.
 
@@ -83,16 +100,35 @@ Order matters — least consequential first, so a mistake is cheap:
 
 For each domain, in that order:
 
-1. From the account-level Email Routing page, click **+ Onboard Domain** and
-   pick the domain. (From the per-zone page the same flow is **Get started**.)
-2. Cloudflare shows the DNS records it wants to add. **Accept the three MX
-   records** (`route1`/`route2`/`route3.mx.cloudflare.net`) and let it remove the
-   two Forward Email MX records — that swap is atomic, which is why it is safer
-   than editing MX by hand. **Decline the SPF TXT record** (see the warning
-   above).
-3. Go to that domain's **Routing rules** → **Catch-all address** → **Edit**.
-4. Action: **Send to an email**. Destination: `classicminidiy@gmail.com`. Save.
-5. Set the catch-all to **Enabled**.
+1. **Pre-merge the SPF first**, if the domain has one. The wizard offers its own
+   `v=spf1 include:_spf.mx.cloudflare.net ~all` and gives no way to untick it, so
+   put Cloudflare's include into the existing record beforehand. Then either the
+   wizard skips its record, or it adds a duplicate that is safe to delete —
+   and there is never a window where the real sender loses authorisation.
+   `scripts/fix-mail-dns.py` holds the merged values and collapses a duplicate
+   if one appears.
+
+2. **Swap the MX in this order**, so the domain is never without one. Add
+   Cloudflare's three at priorities 69–100 FIRST: Forward Email sits at priority
+   10 and keeps winning, so mail flow does not change. Only then delete Forward
+   Email's two, which hands delivery straight over.
+
+3. Click **+ Onboard Domain** and pick the domain. It will activate now that no
+   foreign MX remains. (From the per-zone page the same flow is **Get started**.)
+
+4. **Set the catch-all immediately.** This is the step that stops mail being
+   dropped. Either the dashboard — that domain's **Routing rules** →
+   **Catch-all address** → **Edit** → **Send to an email** →
+   `classicminidiy@gmail.com` → Save → **Enabled** — or the API:
+
+   ```
+   PUT /zones/{zone_id}/email/routing/rules/catch_all
+   {"enabled":true,"matchers":[{"type":"all"}],
+    "actions":[{"type":"forward","value":["classicminidiy@gmail.com"]}]}
+   ```
+
+5. Confirm the rule reads `enabled=True` with a `forward` action, NOT `drop`.
+
 6. Verify DNS changed, substituting the domain:
 
    ```bash
@@ -113,7 +149,8 @@ For each domain, in that order:
 8. **Send a real test message** from an outside mailbox (not Gmail — send from
    your phone's carrier address or another provider) to a random address at that
    domain, for example `ping-0903@theminiexchange.com`. Confirm it arrives in
-   `classicminidiy@gmail.com`.
+   `classicminidiy@gmail.com`. This is the only step that proves the catch-all
+   actually forwards; every check before it proves only that DNS is right.
 
 Do not start the next domain until step 8 has arrived for the current one.
 
