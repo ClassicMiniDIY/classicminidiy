@@ -165,8 +165,12 @@ export const useSavedSearches = () => {
 
       return true;
     } catch (error: any) {
-      // Revert optimistic update
-      savedSearches.value[index] = { ...existing, is_active: previousValue };
+      // Revert optimistic update. Re-locate by id rather than reusing `index`:
+      // the list can be mutated while the request is in flight (deleting another
+      // search splices it), and writing the snapshot back into a stale slot
+      // would drop whichever row shifted into that position.
+      const revertIndex = savedSearches.value.findIndex((s) => s.id === searchId);
+      if (revertIndex !== -1) savedSearches.value[revertIndex] = { ...existing, is_active: previousValue };
 
       console.error('Failed to toggle saved search:', error);
       toast.add({

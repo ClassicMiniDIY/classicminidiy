@@ -139,7 +139,10 @@ describe('server/api/exchange/contact-seller.post', () => {
     const selectArg = (mockSupabase._mockSelect as any).mock.calls[0][0];
     expect(selectArg).toContain('user_id');
     expect(selectArg).toContain('profiles!listings_user_id_fkey');
-    expect(selectArg).toContain('profile_private ( email )');
+    // Match the embed, not its spacing — `profile_private(email)` is the same
+    // query. What must never come back is `email` selected flat off `profiles`.
+    expect(selectArg).toContain('profile_private');
+    expect(selectArg).not.toMatch(/profiles[^(]*\(\s*email/);
   });
 
   // -------------------------------------------------------------------------
