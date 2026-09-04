@@ -71,12 +71,20 @@ export default defineEventHandler(async (event) => {
 
   // The private half carries the attribution. Upsert rather than update: a
   // source seeded without a private row must not silently lose the note.
-  const privatePatch: Record<string, unknown> = {
+  const privatePatch: {
+    source_id: string;
+    licence_note: string;
+    licence_changed_by: string;
+    licence_changed_at: string;
+    crawl_enabled?: boolean;
+  } = {
     source_id: sourceId,
     licence_note: reason,
     licence_changed_by: user.id,
     licence_changed_at: new Date().toISOString(),
   };
+  // Only on a decline. Re-granting must not silently restart a crawl that was
+  // deliberately switched off.
   if (status === 'declined') privatePatch.crawl_enabled = false;
 
   const { error: privateError } = await db

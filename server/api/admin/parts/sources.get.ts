@@ -16,6 +16,22 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 
+/**
+ * Null means the count could not be read, NOT zero. The page renders null as
+ * "unknown" — on a kill-switch screen a zero reads as "declining hides nothing",
+ * which is the one wrong answer that makes a destructive action look safe.
+ */
+interface SourceCounts {
+  parts: number | null;
+  diagrams: number | null;
+  callouts: number | null;
+  applicability: number | null;
+  supersessions: number | null;
+  kitContents: number | null;
+  sourceRecords: number | null;
+  publicRows: number | null;
+}
+
 /** Tables that hang off a source directly and are worth counting. */
 const DIRECT_COUNTS = [
   ['parts', 'parts'],
@@ -88,8 +104,20 @@ export default defineEventHandler(async (event) => {
         console.error(`[admin/parts] callout count failed (source ${source.slug}): ${calloutError.message}`);
       }
 
-      const counts: Record<string, number | null> = { callouts: calloutError ? null : (callouts ?? 0) };
-      DIRECT_COUNTS.forEach(([, key], i) => (counts[key] = direct[i] ?? null));
+      // Named rather than a dynamic Record: an index signature makes every read
+      // `number | null | undefined`, which hides the difference between "the
+      // count failed" and "that key was never set" — the exact distinction this
+      // whole change exists to preserve.
+      const counts: SourceCounts = {
+        parts: direct[0] ?? null,
+        diagrams: direct[1] ?? null,
+        applicability: direct[2] ?? null,
+        supersessions: direct[3] ?? null,
+        kitContents: direct[4] ?? null,
+        sourceRecords: direct[5] ?? null,
+        callouts: calloutError ? null : (callouts ?? 0),
+        publicRows: null,
+      };
 
       // What a decline would actually hide from the public archive. Deliberately
       // excludes source_records, which is service-role only and never public.
@@ -97,7 +125,7 @@ export default defineEventHandler(async (event) => {
       // Null if ANY component failed: a partial total is worse than no total,
       // because it looks authoritative. The page shows "unknown" and says the
       // figure could not be read.
-      const publicParts = [
+      const publicParts: (number | null)[] = [
         counts.parts,
         counts.diagrams,
         counts.callouts,
@@ -105,9 +133,9 @@ export default defineEventHandler(async (event) => {
         counts.supersessions,
         counts.kitContents,
       ];
-      counts.publicRows = publicParts.some((n) => n === null)
-        ? null
-        : publicParts.reduce((a, b) => (a as number) + (b as number), 0);
+      counts.publicRows = publicParts.every((n): n is number => n !== null)
+        ? publicParts.reduce((a, b) => a + b, 0)
+        : null;
 
       const setting = settings[source.id] ?? null;
       return {
