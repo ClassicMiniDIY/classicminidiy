@@ -71,6 +71,38 @@ describe('YouTube links become cards', () => {
     }
   });
 
+  it('escapes the href instead of trusting the sanitizer to clean up after it', () => {
+    // REGRESSION. Validation ran against a PARSED copy of the URL while the raw
+    // original was interpolated into the attribute. `v` is a valid 11-character
+    // id here, so the card is built, and the unescaped quotes then break out of
+    // `href="..."`. DOMPurify's ALLOWED_ATTR happens to strip the resulting
+    // handler, but the escaping has to be here rather than resting on that.
+    const html = renderAssistantMarkdown(
+      '[Video](https://www.youtube.com/watch?v=dQw4w9WgXcQ&z="onmouseover="alert(1))'
+    );
+    expect(html).toContain('chat-video-card');
+
+    // Asserted against the DOM, not the string: the characters "onmouseover="
+    // legitimately survive INSIDE the href value as data, and only a parse can
+    // tell that from an attribute. The escaped form is what proves the fix.
+    expect(html).toContain('&quot;onmouseover=&quot;');
+    const host = document.createElement('div');
+    host.innerHTML = html;
+    const anchor = host.querySelector('a.chat-video-card')!;
+    expect(anchor).not.toBeNull();
+    expect(anchor.getAttributeNames().sort()).toEqual(['class', 'href', 'rel', 'target']);
+    expect(anchor.getAttribute('href')).toContain('dQw4w9WgXcQ');
+  });
+
+  it('does not double-escape entities in a card title', () => {
+    // The label arrives as marked's already-escaped inline HTML, so escaping it
+    // a second time would render "Rock & Roll" as "Rock &amp; Roll".
+    const html = renderAssistantMarkdown('[Rock & Roll](https://youtu.be/dQw4w9WgXcQ)');
+    expect(html).toContain('chat-video-card');
+    expect(html).toContain('Rock &amp; Roll');
+    expect(html).not.toContain('&amp;amp;');
+  });
+
   it('strips markup from a link label rather than nesting it in the card', () => {
     const html = renderAssistantMarkdown('[**Bold** title](https://youtu.be/dQw4w9WgXcQ)');
     expect(html).toContain('chat-video-card');

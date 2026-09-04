@@ -347,7 +347,14 @@ export function historyTool(): Tool {
       limit: z.number().int().positive().max(6).default(3).describe('Maximum entries to return. Default 3.'),
     }),
     async execute({ query, category, limit }) {
-      const entries = category ? historyByCategory(category).slice(0, limit) : searchHistory(query, limit);
+      // The category is only honoured if it is REAL. `category` is a free string
+      // — the enum lives in its `describe`, which is documentation, not
+      // validation — so a plausible-but-wrong value like "rally" or "racing"
+      // would otherwise take the branch, match no entries, and discard the query
+      // without ever searching it. The tool would then report that the corpus
+      // has nothing on the Monte Carlo Rally, which it covers in two entries.
+      const known = category && (HISTORY_CATEGORIES as readonly string[]).includes(category);
+      const entries = known ? historyByCategory(category).slice(0, limit) : searchHistory(query, limit);
 
       if (entries.length === 0) {
         return {
@@ -356,7 +363,23 @@ export function historyTool(): Tool {
           note: 'The history corpus has nothing on that. Try `web_search` against the trusted history sources, or say plainly that you are unsure rather than guessing a date.',
         };
       }
-      return { query, entries };
+      // Trimmed for the model, the way `site-search` trims through `forModel()`.
+      // `tags` are the only field dropped, and they are pure search machinery —
+      // "when was the mini made", "first mini". They are worse than useless in a
+      // prompt: they read as content, and a six-entry category call replays them
+      // into every later turn against the MAX_CHARS budget. `id` stays because
+      // it is a short slug that gives the model and the tests a stable handle.
+      return {
+        query,
+        entries: entries.map(({ id, title, category: entryCategory, period, summary, detail }) => ({
+          id,
+          title,
+          category: entryCategory,
+          period,
+          summary,
+          detail,
+        })),
+      };
     },
   }) as Tool;
 }

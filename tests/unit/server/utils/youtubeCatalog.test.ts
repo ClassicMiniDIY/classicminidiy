@@ -81,6 +81,43 @@ describe('fetchVideoIndex', () => {
     expect(index).toHaveLength(2);
   });
 
+  it('survives an item with no publishedAt instead of throwing in the sort', async () => {
+    // REGRESSION. `publishedAt` is typed as a required string, but this walk
+    // already assumes snippets can be incomplete (it guards resourceId and
+    // title) and then feeds this field straight to `.localeCompare`. An item
+    // missing it threw AFTER all ten pages had been fetched, discarding the
+    // whole index and leaving video-search degraded for twelve hours.
+    mockFetchJson.mockResolvedValueOnce({
+      items: [
+        item({ videoId: 'aaaaaaaaaaa' }),
+        {
+          snippet: {
+            title: 'Still processing',
+            description: '',
+            thumbnails: {},
+            resourceId: { videoId: 'bbbbbbbbbbb' },
+          },
+        },
+      ],
+    });
+
+    const index = await fetchVideoIndex('key');
+    expect(index).toHaveLength(2);
+    expect(index.find((v) => v.videoId === 'bbbbbbbbbbb')!.publishedAt).toBe('');
+  });
+
+  it('warns rather than silently truncating at the page ceiling', async () => {
+    // The doc comment on fetchVideoIndex calls a silently partial index the
+    // worst available outcome, and the MAX_PAGES exit was exactly that.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockFetchJson.mockResolvedValue({ items: [item()], nextPageToken: 'always' });
+
+    await fetchVideoIndex('key');
+
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/truncated/i));
+    warn.mockRestore();
+  });
+
   it('truncates descriptions', async () => {
     // Cole's descriptions run to affiliate links and chapter lists. Storing all
     // of it puts ~1MB in KV and makes every match compete against boilerplate

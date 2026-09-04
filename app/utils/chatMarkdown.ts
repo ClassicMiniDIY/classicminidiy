@@ -136,6 +136,25 @@ function youtubeVideoId(href: string): string {
 }
 
 /**
+ * Escape a string for interpolation into an HTML attribute or text node.
+ *
+ * The card is built by string concatenation, so anything interpolated has to be
+ * escaped HERE — the sanitizer runs afterwards and is defence in depth, not the
+ * primary control. Validating a PARSED copy of a URL and then emitting the RAW
+ * original is the specific mistake this closes: `?v=dQw4w9WgXcQ&z="onmouseover="…`
+ * passes the id check (v is a valid 11-character id) while the untouched href
+ * still carries the quotes that break out of the attribute.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * A YouTube link, rendered as a card rather than an underlined URL.
  *
  * Cole's videos are frequently the best answer the assistant can give, and a
@@ -155,10 +174,16 @@ function youtubeVideoId(href: string): string {
  * should matter.
  */
 function youtubeCard(videoId: string, href: string, label: string): string {
+  // `label` arrives as marked's ALREADY-ESCAPED inline HTML with its tags
+  // stripped by the caller, so it must not be escaped a second time — that
+  // would render "Rock &amp; Roll" as "Rock &amp;amp; Roll". `videoId` passed a
+  // strict `[A-Za-z0-9_-]{11}` test, so the thumbnail URL cannot carry anything.
+  // `href` is the one value that is neither escaped nor constrained.
   const safeLabel = label.trim() || 'Watch on Classic Mini DIY';
+  const safeHref = escapeHtml(href);
   const thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
   return (
-    `<a href="${href}" target="_blank" rel="noopener noreferrer" class="chat-video-card">` +
+    `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="chat-video-card">` +
     `<span class="chat-video-card__thumb">` +
     `<img src="${thumbnail}" alt="" loading="lazy" />` +
     `<span class="chat-video-card__play"><i class="fas fa-play"></i></span>` +

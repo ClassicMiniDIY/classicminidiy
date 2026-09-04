@@ -333,6 +333,33 @@ describe('mini-history', () => {
     expect(out.entries.every((e: any) => e.category === 'cooper')).toBe(true);
   });
 
+  it('still searches when the category is not a real one', async () => {
+    // REGRESSION. `category` is a free string — the enum lives in its `describe`,
+    // which is documentation, not validation. Branching on truthiness meant a
+    // plausible-but-wrong value discarded the query without searching it, and
+    // the tool reported the corpus had nothing on the Monte Carlo Rally, which
+    // it covers in two entries.
+    const out: any = await run(historyTool(), {
+      query: 'monte carlo disqualified',
+      category: 'rally',
+      limit: 3,
+    });
+    expect(out.entries[0].id).toBe('monte-carlo-1966-disqualification');
+  });
+
+  it('does not hand the model the search tags', async () => {
+    // Tags exist to be matched, never to be read. They phrase themselves as
+    // questions ("when was the mini made"), so a model that sees them can quote
+    // one back as though it were corpus content — and six of them replay into
+    // every later turn against the MAX_CHARS budget.
+    const out: any = await run(historyTool(), { query: 'issigonis', category: '', limit: 3 });
+    expect(out.entries[0]).not.toHaveProperty('tags');
+    // The fields an answer is actually built from must survive the trim.
+    for (const field of ['id', 'title', 'period', 'summary', 'detail']) {
+      expect(out.entries[0], field).toHaveProperty(field);
+    }
+  });
+
   it('tells the model to search rather than guess when it has nothing', async () => {
     const out: any = await run(historyTool(), { query: 'sourdough starter hydration', category: '', limit: 3 });
     expect(out.entries).toEqual([]);

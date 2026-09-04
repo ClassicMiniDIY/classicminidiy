@@ -119,7 +119,13 @@ export async function fetchVideoIndex(apiKey: string): Promise<IndexedVideo[]> {
         videoId,
         title: snippet.title,
         description: (snippet.description ?? '').slice(0, DESCRIPTION_CHARS),
-        publishedAt: snippet.publishedAt,
+        // Defaulted, like every other snippet field here. It is typed as a
+        // required string but this function already assumes the API can return
+        // incomplete snippets — it guards `resourceId` and `title` — and this
+        // one is dereferenced by `.localeCompare` in the sort below. An item
+        // missing it would throw there, AFTER all ten pages had been fetched,
+        // discarding the whole index and leaving `video-search` degraded.
+        publishedAt: snippet.publishedAt ?? '',
         thumbnail: bestThumbnail(snippet.thumbnails),
         url: `https://www.youtube.com/watch?v=${videoId}`,
       });
@@ -127,6 +133,16 @@ export async function fetchVideoIndex(apiKey: string): Promise<IndexedVideo[]> {
 
     pageToken = data.nextPageToken ?? '';
     if (!pageToken) break;
+
+    // The ceiling was reached with pages still to walk. This is the silently
+    // partial index the doc comment above calls the worst available outcome, so
+    // it must not be silent: the index is still served (better than nothing),
+    // but the oldest videos are missing and only this line says so.
+    if (page === MAX_PAGES - 1) {
+      console.warn(
+        `[youtube] uploads playlist exceeded ${MAX_PAGES} pages — index truncated at ${videos.length} videos, oldest uploads are unsearchable. Raise MAX_PAGES.`
+      );
+    }
   }
 
   // ISO 8601 sorts lexicographically, so this is newest-first without parsing.
