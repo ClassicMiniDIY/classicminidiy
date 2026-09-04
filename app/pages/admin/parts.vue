@@ -10,15 +10,21 @@
    *
    * English-only, like every other /admin page.
    */
+  /**
+   * Null means the count could not be read, NOT zero. The route deliberately
+   * sends null rather than coercing a failed query to 0, because on this screen
+   * a zero reads as "declining hides nothing" — the one wrong answer that makes
+   * a destructive action look safe.
+   */
   interface SourceCounts {
-    parts: number;
-    diagrams: number;
-    callouts: number;
-    applicability: number;
-    supersessions: number;
-    kitContents: number;
-    sourceRecords: number;
-    publicRows: number;
+    parts: number | null;
+    diagrams: number | null;
+    callouts: number | null;
+    applicability: number | null;
+    supersessions: number | null;
+    kitContents: number | null;
+    sourceRecords: number | null;
+    publicRows: number | null;
   }
 
   interface PartSource {
@@ -72,8 +78,13 @@
   }
 
   const numberFormat = new Intl.NumberFormat('en-US');
+  /** Counts only. Renders an unreadable count as "unknown", never as zero. */
   function fmt(n: number | null | undefined) {
-    return numberFormat.format(n ?? 0);
+    return n === null || n === undefined ? 'unknown' : numberFormat.format(n);
+  }
+  /** Budget fields, where a missing value genuinely means "not configured". */
+  function fmtSetting(n: number | null | undefined) {
+    return n === null || n === undefined ? '—' : numberFormat.format(n);
   }
   function fmtDate(value: string | null) {
     if (!value) return '—';
@@ -117,15 +128,31 @@
       flash(
         'success',
         change.status === 'declined'
-          ? `${change.source.name} declined — ${fmt(change.source.counts.publicRows)} rows hidden and its crawl stopped.`
+          ? change.source.counts.publicRows === null
+            ? `${change.source.name} declined — its rows are hidden and its crawl stopped.`
+            : `${change.source.name} declined — ${fmt(change.source.counts.publicRows)} rows hidden and its crawl stopped.`
           : `${change.source.name} set to ${change.status}.`
       );
       cancelChange();
-      await refresh();
     } catch (e: any) {
       flash('error', e?.data?.statusMessage || e?.statusMessage || 'Could not change the licence status.');
+      return;
     } finally {
       busy.value = null;
+    }
+
+    // Reloading the list is a SEPARATE failure from changing the licence. Inside
+    // the try above, a failed refresh reported "Could not change the licence
+    // status" for a change that had already landed — telling an operator a
+    // takedown did not apply when it did, in the one situation where being sure
+    // matters. The change is done; only the view is stale.
+    try {
+      await refresh();
+    } catch {
+      flash(
+        'error',
+        'The change was saved, but the list could not be reloaded. Refresh the page to see current counts.'
+      );
     }
   }
 </script>
@@ -220,18 +247,23 @@
             </div>
           </div>
 
-          <p class="text-sm text-base-content/70">
+          <p v-if="source.counts.publicRows !== null" class="text-sm text-base-content/70">
             <i class="fas fa-eye-slash mr-1" />
             Declining would hide
             <strong>{{ fmt(source.counts.publicRows) }}</strong>
             public rows.
           </p>
+          <p v-else class="text-sm text-warning">
+            <i class="fas fa-triangle-exclamation mr-1" />
+            The row counts could not be read, so the effect of declining this source cannot be shown. Check the server
+            logs before acting.
+          </p>
 
           <!-- Crawl budget -->
           <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-base-content/60">
-            <span>Budget: {{ fmt(source.maxRequestsPerRun) }} req/run</span>
-            <span>{{ fmt(source.maxRequestsPerDay) }} req/day</span>
-            <span>{{ fmt(source.minRequestIntervalMs) }} ms apart</span>
+            <span>Budget: {{ fmtSetting(source.maxRequestsPerRun) }} req/run</span>
+            <span>{{ fmtSetting(source.maxRequestsPerDay) }} req/day</span>
+            <span>{{ fmtSetting(source.minRequestIntervalMs) }} ms apart</span>
             <span>abort over {{ Math.round((source.maxChangeRatio ?? 0) * 100) }}% change</span>
           </div>
 
@@ -282,9 +314,13 @@
 
         <div v-if="pendingChange.status === 'declined'" class="alert alert-warning mb-3">
           <i class="fas fa-eye-slash" />
-          <span class="min-w-0">
+          <span v-if="pendingChange.source.counts.publicRows !== null" class="min-w-0">
             This hides {{ fmt(pendingChange.source.counts.publicRows) }} public rows and stops the crawl. Nothing is
             deleted — you can restore it later.
+          </span>
+          <span v-else class="min-w-0">
+            The row counts could not be read, so how much this hides is unknown. It still hides everything from this
+            source and stops the crawl. Nothing is deleted — you can restore it later.
           </span>
         </div>
         <p v-else class="mb-3 text-sm text-base-content/70">{{ STATUS_HELP[pendingChange.status] }}</p>
