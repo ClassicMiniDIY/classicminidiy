@@ -22,7 +22,7 @@ the design:
 
 1. **Legality is the governing constraint.** All three candidate sources reserve rights
    and require written permission for reuse. Cole's recorded decision is to proceed with
-   mitigations. Section 1 states the position, the risk, and the five mitigations the
+   mitigations. Section 1 states the position, the risk, and the four mitigations the
    design adopts as invariants.
 2. **The data is machine-readable.** Somerford publishes factory parts-list plates as
    structured callout data, not only as pixels. That makes the callout-to-part join a
@@ -98,7 +98,7 @@ The realistic outcome of a dispute is a takedown request or a cease-and-desist l
 not litigation. Every mitigation below costs nothing and is designed so that such a
 request can be honoured in minutes rather than argued about.
 
-### 1.4 The five mitigations, adopted as design invariants
+### 1.4 The four mitigations, adopted as design invariants
 
 These are not aspirations. Each one is a named column, route or setting in the sections
 below, so a later change that drops one shows up in a diff.
@@ -121,10 +121,19 @@ below, so a later change that drops one shows up in a diff.
    and reversed if it is resolved. The switch is a toggle on `/admin/parts` (§7.3), and
    it is **enforced in the database, not in the page** — a kill switch that depends on
    every consumer remembering to filter is not a kill switch.
-5. **A courtesy notice before the first full run.** Somerford is emailed at the address
-   their own terms name, before ingest starts. This is a notice of what is being built
-   and of the link-back, not a permission gate. Mini Spares and Mini Sport get the same
-   note when their ingest starts. Draft in Appendix A.
+   **Not adopted: a courtesy notice before the first run.** An earlier draft of this design
+   made a proactive email to Somerford the fifth mitigation. **Cole's decision, 2026-09-04:
+   do not send it — say nothing until contacted.** Recorded here rather than dropped
+   silently, because the four mitigations above were sized against a risk posture that
+   included it.
+
+What changes without it: the first Somerford hears of the archive is finding it. The
+link-back, the absence of prices and stock, the crawler etiquette and the kill switch all
+still stand on their own, and all four are visible to anyone who looks at a page or at a
+request log — so the good-faith evidence is in the artefact rather than in an email
+nobody may have read. What is lost is the chance to have the conversation on our timing
+instead of theirs. Appendix A keeps the drafted text, repurposed as the prepared reply
+for inbound contact, so a response does not have to be written under time pressure.
 
 **Source priority for ingest:** Somerford first, for the diagrams and callouts. Mini
 Spares second, for alternatives, kits and the deepest coverage. Mini Sport third, for
@@ -240,9 +249,12 @@ only refuses the trivial case.
 > our regular expression was weak.
 
 **`part_diagrams`** — source, title, catalogue section (the factory plate reference
-where it is known), image path in Supabase Storage, image width and height, source URL,
-`image_licence` (`copied`, `linked`, `none`), applicability text, status. The licence
-column is what makes mitigation 4 a switch rather than a migration.
+where it is known), image path in the private Supabase Storage bucket, image width and
+height, source URL, `image_licence` (`copied`, `linked`, `none`), applicability text,
+status. The licence column is what makes mitigation 4 a switch rather than a migration.
+The stored path is never rendered directly: pages resolve it to a signed URL at request
+time (§4), so a declined source's drawings stop being served rather than merely stopping
+being linked.
 
 **`part_diagram_callouts`** — diagram, callout number as text (so "13" and "13A" both
 work), part (nullable, because a callout that cannot be resolved is still worth
@@ -278,17 +290,26 @@ images, however, already live in Supabase Storage and are served through
 
 Ranked:
 
-1. **Copy the drawing into a Supabase Storage bucket. Recommended.** It matches how the
-   wheels and colours archives already work, needs no new entry in `image.domains`, and
-   only requires the new path pattern to be added to the PWA runtime caching rules
-   beside the existing archive buckets. Hotspots are stored as our own coordinates and
-   rendered as our own overlay: the drawing is copied once, the source's interactive
-   widget never is. Every diagram page carries attribution and a link back (mitigation
-   1), and the licence column records that the image was copied, so the kill switch can
-   hide images without touching the callout data underneath.
-2. **Link out only.** The fallback if a source objects. The callout table still renders
-   from our own rows, and the drawing is reached through the source URL. Lower value for
-   the reader, and the reason it is second, not first.
+1. **Copy the drawing into a PRIVATE Supabase Storage bucket, served by signed URL.
+   Decided (Cole, 2026-09-04).** It matches how the wheels and colours archives already
+   work and needs no new entry in `image.domains`. Hotspots are stored as our own
+   coordinates and rendered as our own overlay: the drawing is copied once, the source's
+   interactive widget never is. Every diagram page carries attribution and a link back
+   (mitigation 1), and the licence column records that the image was copied.
+
+   **Private, not public, is what makes the kill switch real.** A public object stays
+   fetchable by anyone holding its URL after the row is hidden, which reduces a takedown
+   to "we stopped linking it". Signed URLs mean declining a source stops the drawings
+   being served, not just being shown. The costs, accepted with the decision: a signing
+   step on render, no plain CDN caching of the object itself, and the PWA runtime caching
+   rules need a signed-URL-aware pattern rather than the plain archive-bucket pattern the
+   other archives use. Settle the URL lifetime in Phase 1 — long enough that a reader
+   scrolling a plate does not see images expire, short enough that a leaked link is not
+   permanent.
+
+2. **Link out only.** The fallback if a source objects but is content to be cited. The
+   callout table still renders from our own rows, and the drawing is reached through the
+   source URL. Lower value for the reader, and the reason it is second, not first.
 3. **Hotlink the source's image. Never.** Fragile, and the one behaviour both terms
    templates single out by name.
 
@@ -444,15 +465,16 @@ optional part reference to a listing. Out of scope.
 
 0. **This change.** Design doc, the trusted-source domain fix, and the private spike
    note. No schema, no crawler.
-1. **Migrations** in `classicminidiy-supabase`: tables, RLS, the two RPCs and the
-   storage bucket. Then `bun run gen:types` here.
+1. **Migrations** in `classicminidiy-supabase`: tables, RLS, the two RPCs, and the
+   **private** `parts-diagrams` bucket with its signed-URL lifetime settled. Then
+   `bun run gen:types` here.
 2. **The kill switch, before any data exists to kill.** `/admin/parts` and its route,
    plus the declined-source exclusion in the public read policy. This is deliberately
    ahead of the ingest: a mitigation that arrives after the material it mitigates is not
    a mitigation, and the window where rows are public with no way to pull them is the one
    window this project cannot afford. It is a small screen over an empty table, which is
    also the easiest time to build it.
-3. **Somerford ingest.** Courtesy email sent first. Then a single local run over roughly
+3. **Somerford ingest.** A single local run over roughly
    372 plates and 12,000 products. Verify the callout-to-part resolution rate and count
    the unresolved callouts **before publishing anything**.
 4. **Consumers.** The lookup tool and the three archive routes.
@@ -462,45 +484,34 @@ optional part reference to a listing. Out of scope.
 
 ---
 
-## Open questions for Cole
+## Decisions taken, and the one question left
 
-1. **Ask Somerford for a licence, or only notify them?** The recommendation is to notify
-   (Appendix A) and not to ask. A request creates a decision point where silence
-   currently costs nothing, and their terms already name the address for one. If the
-   answer to an ask were yes, the licence status column and the storage copy are already
-   built for it.
-2. **Should the lookup tool be free or paid?** Recommendation: free, matching the other
-   archive tools. The Developer API tier is a plausible place for bulk part export
-   later, and that is a different tool.
-3. **Should a trusted-source domain be checked for DNS resolution in CI?** The typo
-   fixed here removed a source from web search for the entire life of the allowlist, and
-   nothing failed. A resolution check would have caught it. It is deliberately **not**
-   added in this change: `tests/static` does no network I/O, and adding it would make a
-   fast offline suite dependent on DNS. The options are a separate scheduled workflow, a
-   manual review item, or accepting the risk.
-4. **Does declining a source have to unpublish its diagram images too?** Almost
-   certainly yes, and the design does not yet say how. Hiding a `part_diagrams` row stops
-   our pages linking the image; it does not make a public storage object unreachable to
-   anyone holding the URL. A takedown that leaves the drawings fetchable is not a
-   takedown. The options are a private bucket with signed URLs (correct, and slower for
-   every reader), a move-on-decline into a quarantine prefix (cheap, reversible, but the
-   old URL 404s rather than being re-servable at the same address), or accepting the gap
-   because the rows are what search engines index. Recommendation: private bucket with
-   signed URLs, decided in Phase 1 while the bucket is still empty and the choice is
-   free.
-5. **Which factory catalogue references should seed `part_sources` as
+1. **The lookup tool is free**, matching the other archive tools. The Developer API tier
+   is a plausible home for a bulk part export later; that is a different tool.
+2. **No DNS resolution check in CI.** The typo fixed here removed a source from web
+   search for the entire life of the allowlist and nothing failed, so a check would have
+   earned its place — but `tests/static` does no network I/O, and making a fast offline
+   suite depend on DNS is the wrong trade. Backlogged as a separate scheduled workflow.
+3. **Diagram images live in a private bucket, served by signed URL** (Cole, 2026-09-04).
+   See §4. Decided in Phase 1 while the bucket is empty, because retrofitting it once 372
+   diagrams are public is not free.
+4. **Which factory catalogue references should seed `part_sources` as
    `factory-catalogue`?** The AKD and AKM parts catalogues outrank every retailer in the
-   precedence order, and having the top precedence tier empty at launch is a choice
-   worth making on purpose.
+   precedence order. **Working answer: leave that tier empty at launch** and add a source
+   when there is an actual copy to work from. Flagged because an empty top precedence tier
+   should be a choice, not an oversight.
 
 ---
 
-## Appendix A — courtesy notice, draft
+## Appendix A — prepared reply to inbound contact, draft
 
-To be sent to Somerford at the address their own terms name, before the first full run.
-Not a permission request.
+**Not sent proactively** — see §1.4. This is the response to have ready if Somerford (or
+either of the other two) contacts us about the archive, so it does not have to be written
+under time pressure. Adjust the opening to answer whatever they actually asked, and if
+the message is a takedown request, pull the switch on `/admin/parts` first and say so in
+the reply.
 
-> Subject: Classic Mini DIY — parts reference, and a link back to you
+> Subject: Re: Classic Mini DIY — parts reference
 >
 > Hello,
 >
@@ -521,8 +532,7 @@ Not a permission request.
 > Cole Gentry
 > Classic Mini DIY
 
-The same note, adjusted for the source, goes to Mini Spares and Mini Sport when their
-ingest starts.
+The same reply, adjusted for the source, covers Mini Spares and Mini Sport.
 
 ## Appendix B — the spike note
 
