@@ -154,7 +154,7 @@ export default defineMcpTool({
 
       // 3. Supersessions, applicability and plate appearances, in three reads
       //    for the whole result set rather than three per part.
-      const [supersessions, applicability, callouts] = await Promise.all([
+      const [supersessions, applicability, callouts, records] = await Promise.all([
         includeSupersessions
           ? supabase
               .from('part_supersessions')
@@ -171,10 +171,17 @@ export default defineMcpTool({
           )
           .in('part_id', ids)
           .eq('part_diagrams.status', 'published'),
+        // The link back to the retailer's own page for the part. This is
+        // mitigation 1 of the design — attribution that sends traffic to the
+        // source rather than replacing it — and it is also the most directly
+        // useful thing in a result, because it is where someone actually buys
+        // the part or sees a photograph of it.
+        supabase.from('part_source_records').select('part_id, source_id, source_url').in('part_id', ids),
       ]);
 
       const supersessionRows = (supersessions.data ?? []) as any[];
       const applicabilityRows = (applicability.data ?? []) as any[];
+      const recordRows = ((records.data ?? []) as any[]).filter((r) => r.source_url && sourceById.has(r.source_id));
       const calloutRows = ((callouts.data ?? []) as any[]).filter(
         (c) => c.diagram && (c.diagram.source_id === null || sourceById.has(c.diagram.source_id))
       );
@@ -210,6 +217,10 @@ export default defineMcpTool({
               calloutNumber: c.callout_number,
             })),
           source: source ? { name: source.name, domain: source.domain } : null,
+          /** Where to see or buy this part, on the source's own site. */
+          sourceUrls: recordRows
+            .filter((r) => r.part_id === p.id)
+            .map((r) => ({ source: sourceById.get(r.source_id)?.name ?? null, url: r.source_url })),
           url: `https://www.classicminidiy.com/archive/parts/${encodeURIComponent(p.part_number_display)}`,
         };
       });
@@ -220,7 +231,7 @@ export default defineMcpTool({
         truncated,
         matches,
         notes:
-          'A part number with entries under `replacedBy` is superseded — quote the replacement alongside it, never on its own. `fits` is the applicability text exactly as the source recorded it and is not normalised. Parts data is compiled from retailer catalogues and credited per match; check the source for current availability.',
+          '`sourceUrls` links to the retailer page for the part — quote it, since that is where a reader sees a photograph and current availability. A part number with entries under `replacedBy` is superseded — quote the replacement alongside it, never on its own. `fits` is the applicability text exactly as the source recorded it and is not normalised. Parts data is compiled from retailer catalogues and credited per match; check the source for current availability.',
         formattedText: [
           `**Parts** — ${matches.length} match${matches.length === 1 ? '' : 'es'}`,
           '',
@@ -233,7 +244,8 @@ export default defineMcpTool({
             const plate = m.appearsOn[0]
               ? ` [plate: ${m.appearsOn[0].plate}, callout ${m.appearsOn[0].calloutNumber}]`
               : '';
-            return `- **${m.partNumber}**${m.description ? ` — ${m.description}` : ''}${chain}${plate}`;
+            const link = m.sourceUrls[0] ? `\n  ${m.sourceUrls[0].source}: ${m.sourceUrls[0].url}` : '';
+            return `- **${m.partNumber}**${m.description ? ` — ${m.description}` : ''}${chain}${plate}${link}`;
           }),
         ].join('\n'),
       });
