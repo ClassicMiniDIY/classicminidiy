@@ -7,6 +7,7 @@ import { createChatRunTracker } from '../utils/chatUsage';
 import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
 import { getChatAuth, MEMBERSHIP_URL } from '../utils/chatTiers';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
+import { CHAT_REQUEST_MAX_CHARS, transcriptChars } from '../../shared/utils/chatTranscript';
 
 /**
  * The Classic Mini DIY assistant — the agent, in this Worker.
@@ -36,62 +37,21 @@ const MAX_STEPS = 6;
 /**
  * Guard the request body before it reaches a model.
  *
+ * The ceiling and the measurement both live in
+ * `shared/utils/chatTranscript.ts`, because `ChatWindow.vue` trims each request
+ * to fit before it sends one. That is the contract: this guard is defence
+ * against a crafted request, never everyday UX, and it can only stay that way
+ * if both ends agree on what a message costs. Restating the number here is how
+ * they would come to disagree.
+ *
  * Measured AFTER `stripStaleWebSearchContent`, because that is the payload the
- * model is actually charged for. The guard exists to bound what a scripted
- * caller can push into a model on an UNAUTHENTICATED endpoint, and what it
- * should bound is the request that gets made, not the one that arrived.
+ * model is actually charged for — and, usefully, that makes the server's total
+ * the smaller of the two, so a client that trimmed to its own target can never
+ * be refused here.
  *
- * The ceiling was 24,000, went to 120,000 when `web_search` was added, and comes
- * back to 40,000 now that a finished search is compacted on replay. Measured on
- * the live path, one conversation, question -> answer -> follow-up:
- *
- *   - a single `tool-web_search` part: **13,734** characters (18,520 in a second
- *     run — it scales with how many results the search returned)
- *   - the first follow-up: **22,666 -> 10,367** characters replayed
- *   - the second: **23,847 -> 11,548**
- *
- * 24,000 was what refused that first follow-up before this change, and it is
- * still the wrong number to go back to: a real search conversation now grows by
- * roughly 1,200 characters per exchange from a ~10,000 base, so 24,000 would cut
- * one off after about nine messages. Conversation LENGTH is what `MAX_MESSAGES`
- * is for. 40,000 leaves that job to it while keeping this one — a bound on a
- * single unauthenticated request — at about 10k tokens. Beyond it sit the
- * per-tier quota in `consumeChatQuota`, the in-process limiter and the
- * Cloudflare zone rule.
+ * `MAX_MESSAGES` is the conversation-LENGTH control and stays separate.
  */
 const MAX_MESSAGES = 40;
-const MAX_CHARS = 40_000;
-
-/**
- * Approximate the size a message contributes to the prompt.
- *
- * Counts EVERY part, not just text. The client replays the whole conversation
- * each turn, and an assistant turn carries tool parts whose `output` can dwarf
- * the prose — `wheel-search` and `torque-specs` return dozens of rows, and
- * `site-search` up to twenty results. Counting text alone let a tool-heavy
- * conversation read as a few hundred characters while carrying tens of
- * thousands into the model, so the ceiling this guard exists to enforce did not
- * hold.
- */
-function sizeOf(message: UIMessage): number {
-  let total = 0;
-  for (const part of message.parts ?? []) {
-    const anyPart = part as any;
-    if (anyPart?.type === 'text' && typeof anyPart.text === 'string') {
-      total += anyPart.text.length;
-      continue;
-    }
-    // Tool parts, reasoning, files: measure the serialised payload. A part that
-    // cannot be serialised (a cycle) is charged a nominal amount rather than
-    // throwing — this is a size estimate, not a validator.
-    try {
-      total += JSON.stringify(anyPart)?.length ?? 0;
-    } catch {
-      total += 1_000;
-    }
-  }
-  return total;
-}
 
 export default defineEventHandler(async (event) => {
   const config = serverRuntimeConfig(event);
@@ -125,8 +85,7 @@ export default defineEventHandler(async (event) => {
   // server/agent/transcript.ts.
   const replayed = stripStaleWebSearchContent(messages);
 
-  const totalChars = replayed.reduce((sum, message) => sum + sizeOf(message), 0);
-  if (totalChars > MAX_CHARS) {
+  if (transcriptChars(replayed) > CHAT_REQUEST_MAX_CHARS) {
     throw createError({ statusCode: 413, statusMessage: 'Conversation too long — start a new chat' });
   }
 
