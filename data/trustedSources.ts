@@ -68,9 +68,9 @@ export const TRUSTED_SOURCES: TrustedSource[] = [
     covers: 'OEM and heritage part numbers, applications by model and year, and superseded-part cross references',
   },
   {
-    id: 'somerford-minis',
-    name: 'Somerford Minis',
-    domain: 'somerfordminis.co.uk',
+    id: 'somerford-mini',
+    name: 'Somerford Mini',
+    domain: 'somerfordmini.co.uk',
     kind: 'oem-parts',
     covers:
       'OEM parts listed against original factory exploded diagrams — the best source when a part has to be identified by where it sits in an assembly',
