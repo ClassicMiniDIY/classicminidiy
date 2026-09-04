@@ -23,12 +23,38 @@ import { getServiceClient } from '../../../utils/supabase';
 /** One hour: longer than reading a plate, short enough that a leaked link lapses. */
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
+/**
+ * Named sizes, rather than an open width parameter.
+ *
+ * An arbitrary `?w=` lets anyone mint unlimited distinct renders, and every
+ * distinct render is a transformation billed and cached separately. Three sizes
+ * keep the cache hot and the bill predictable.
+ *
+ * `full` is deliberately untransformed: these are factory parts plates that a
+ * reader zooms into to read callout numbers off, and resampling is exactly what
+ * destroys that. The thumbnail exists so a list never pays 2 MB for a picture
+ * the size of a stamp.
+ */
+const SIZES = {
+  thumb: { width: 320, quality: 60 },
+  preview: { width: 1000, quality: 75 },
+  full: null,
+} as const;
+
+type SizeName = keyof typeof SIZES;
+
 export default defineEventHandler(async (event) => {
-  const diagramId = getQuery(event).diagram;
+  const query = getQuery(event);
+  const diagramId = query.diagram;
+  const requestedSize = typeof query.size === 'string' ? query.size : 'full';
 
   if (typeof diagramId !== 'string' || !/^[0-9a-f-]{36}$/i.test(diagramId)) {
     throw createError({ statusCode: 400, statusMessage: 'A diagram id is required' });
   }
+  if (!(requestedSize in SIZES)) {
+    throw createError({ statusCode: 400, statusMessage: `size must be one of: ${Object.keys(SIZES).join(', ')}` });
+  }
+  const transform = SIZES[requestedSize as SizeName];
 
   const db = getServiceClient();
 
@@ -51,7 +77,11 @@ export default defineEventHandler(async (event) => {
 
   const { data: signed, error: signError } = await db.storage
     .from('parts-diagrams')
-    .createSignedUrl(diagram.image_path, SIGNED_URL_TTL_SECONDS);
+    .createSignedUrl(
+      diagram.image_path,
+      SIGNED_URL_TTL_SECONDS,
+      transform ? { transform: { width: transform.width, quality: transform.quality, resize: 'contain' } } : undefined
+    );
 
   if (signError || !signed?.signedUrl) {
     throw createError({ statusCode: 500, statusMessage: 'Could not sign the drawing URL' });
