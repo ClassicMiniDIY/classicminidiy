@@ -32,7 +32,8 @@ the design:
    as derived and nullable.
 4. **Everything about extraction stays in the private repo.** The schema, the ingest
    code and the scheduled runner all live in `classicminidiy-supabase`. This repo gains
-   read consumers only.
+   read consumers only — plus one admin screen, `/admin/parts`, which is the licence kill
+   switch (§7.3) and ships in Phase 2, ahead of the first row of data.
 
 A domain typo is also fixed here. The Somerford entry in `data/trustedSources.ts`
 carried a pluralised misspelling of the domain, and that spelling does not resolve — it
@@ -117,7 +118,9 @@ below, so a later change that drops one shows up in a diff.
 4. **A published takedown contact and a per-source kill switch.** `/archive/parts`
    carries the contact. Setting a source's licence status to declined hides every row
    from that source without deleting anything, so a request can be honoured immediately
-   and reversed if it is resolved.
+   and reversed if it is resolved. The switch is a toggle on `/admin/parts` (§7.3), and
+   it is **enforced in the database, not in the page** — a kill switch that depends on
+   every consumer remembering to filter is not a kill switch.
 5. **A courtesy notice before the first full run.** Somerford is emailed at the address
    their own terms name, before ingest starts. This is a notice of what is being built
    and of the link-back, not a permission gate. Mini Spares and Mini Sport get the same
@@ -188,10 +191,17 @@ weighted text-search precedents already present in that repo. Every table is pre
 licence note, terms URL, last reviewed date. Every fact row in every other table carries
 a `source_id`.
 
+The licence status is the kill switch, so the row also records who last changed it, when,
+and why: `licence_changed_by`, `licence_changed_at`, and a required reason captured into
+the licence note. A takedown is the one action here most likely to be asked about months
+later — by the retailer, or by Cole trying to remember what was agreed — and an
+unattributed status flip answers none of those questions. The admin audit log gets the
+same entry; this column pair is the copy that survives beside the data it governs.
+
 > **Provenance is `source_id`, never `submitted_by`.** Scraped and licensed rows must
 > not touch `contributions`, `contributor_archive_items` or any trust counter — see
 > `.claude/rules/contributions.md`. Crediting a scrape to a contributor would corrupt
-> the trust pipeline. Community rows, when they arrive in Phase 5, take the normal
+> the trust pipeline. Community rows, when they arrive in Phase 6, take the normal
 > route: `submitted_by`, the submission queue, and `server/utils/archiveApprovals.ts`
 > imported rather than copied.
 
@@ -248,9 +258,9 @@ number and part: one callout maps to several parts across different applicabilit
 Public read covers `parts`, `part_supersessions`, `part_kit_contents`,
 `part_applicability`, `part_diagrams` and `part_diagram_callouts`, restricted to
 published rows. Writes are service role for the ingest, plus the community path through
-the submission queue in Phase 5. Two RPCs: a lookup that combines trigram matching on
+the submission queue in Phase 6. Two RPCs: a lookup that combines trigram matching on
 the normalised part number with text search over descriptions, and the recursive
-supersession chain. A parts branch is added to `omnisearch()` in Phase 5.
+supersession chain. A parts branch is added to `omnisearch()` in Phase 6.
 
 `data/parts.json` and the existing `parts-equivalency` MCP tool stay exactly as they
 are. Those 24 hand-curated service cross-references are a different thing from a
@@ -326,7 +336,7 @@ Ranked:
    `server/utils/external-models/`.
 2. **A local run Cole triggers.** Best for the first bulk import and for spikes, because
    a human watches it and can stop it. Worst for cadence, because it depends on someone
-   remembering. Phase 2 uses this deliberately.
+   remembering. Phase 3 uses this deliberately.
 3. **n8n.** Good for the alert and approval hop. Poor for a parser over thousands of
    pages: code nodes, no tests, no review. The parser does not go there.
 
@@ -378,7 +388,51 @@ to `ogImage`:
 - `/archive/parts/diagrams/[id]` — the drawing with our own hotspot overlay and the
   callout table beside it, each callout linking to its part.
 
-### 7.3 Other properties
+### 7.3 Admin surface — the licence kill switch
+
+`/admin/parts`, wrapped in `<AdminShell>` like every other admin page, added to the
+shell's `NAV_GROUPS` under **Review** beside 3D Models. One row per source: name, domain,
+kind, current licence status, when it was last reviewed, and live counts of what that
+source currently contributes — parts, diagrams, callouts, applicability rows.
+
+**Those counts are the point of the screen.** The status control matters less than
+knowing, before the click, that declining Somerford hides roughly 12,000 parts and 372
+diagrams. A kill switch nobody dares pull because they cannot see its blast radius does
+not get pulled during the phone call that needs it.
+
+Controls: a four-way status control (`none`, `requested`, `granted`, `declined`) plus a
+required reason. Moving a source **to** `declined` asks for confirmation and states the
+row counts in the confirmation text; every other transition applies directly. Declining
+is reversible by design — it hides rows, it never deletes them, and restoring the
+previous status brings the same rows back with no re-ingest.
+
+**Route:** `server/api/admin/parts/set-licence.post.ts`, modelled directly on
+`server/api/admin/models/set-status.post.ts` — `requireAdminAuth`, service client, an
+allowlist of the four statuses, 404 on an unknown source, a no-op short circuit when the
+status is unchanged, and an `admin_audit_log` insert recording the from-status,
+to-status, reason and source name.
+
+Two invariants this must not violate:
+
+> **It gets its own route. It does not join an edit allowlist.** `licence_status` is a
+> moderation control, and `ADMIN_EDITABLE_COLUMNS` and `EDIT_TARGETS` never gain
+> moderation columns (`CLAUDE.md`, `.claude/rules/admin.md`). The precedent is
+> `users/toggle-admin.post.ts` and `models/set-status.post.ts`: single-purpose routes
+> that validate one transition and write one audit row.
+
+> **Enforcement belongs to the read policy, not to the consumers.** Public reads of the
+> six published tables must already exclude rows whose source is declined, so the MCP
+> lookup tool, the three archive routes, the mobile apps and any future feed all go dark
+> together the moment the toggle flips. If each consumer filters for itself, the switch
+> is only as good as the last consumer someone remembered to update — and the one that
+> forgets is the one quoted back in the complaint.
+
+One operational caveat to settle in Phase 4: if the public parts reads are cached at the
+edge, the toggle must purge that cache or the switch will appear not to work for the
+length of the TTL. "It is hidden, give it fifteen minutes" is not an answer to a takedown
+request.
+
+### 7.4 Other properties
 
 The mobile apps read the public tables through PostgREST and call the lookup RPC. That
 is a contract only; no app work is in scope here. The marketplace may later attach an
@@ -392,13 +446,19 @@ optional part reference to a listing. Out of scope.
    note. No schema, no crawler.
 1. **Migrations** in `classicminidiy-supabase`: tables, RLS, the two RPCs and the
    storage bucket. Then `bun run gen:types` here.
-2. **Somerford ingest.** Courtesy email sent first. Then a single local run over roughly
+2. **The kill switch, before any data exists to kill.** `/admin/parts` and its route,
+   plus the declined-source exclusion in the public read policy. This is deliberately
+   ahead of the ingest: a mitigation that arrives after the material it mitigates is not
+   a mitigation, and the window where rows are public with no way to pull them is the one
+   window this project cannot afford. It is a small screen over an empty table, which is
+   also the easiest time to build it.
+3. **Somerford ingest.** Courtesy email sent first. Then a single local run over roughly
    372 plates and 12,000 products. Verify the callout-to-part resolution rate and count
    the unresolved callouts **before publishing anything**.
-3. **Consumers.** The lookup tool and the three archive routes.
-4. **Scheduled refresh** in the private repo, then Mini Spares and Mini Sport — the
+4. **Consumers.** The lookup tool and the three archive routes.
+5. **Scheduled refresh** in the private repo, then Mini Spares and Mini Sport — the
    alternative and kit relations first, callout tables second.
-5. **Community contributions** and the `omnisearch()` branch.
+6. **Community contributions** and the `omnisearch()` branch.
 
 ---
 
@@ -418,7 +478,17 @@ optional part reference to a listing. Out of scope.
    added in this change: `tests/static` does no network I/O, and adding it would make a
    fast offline suite dependent on DNS. The options are a separate scheduled workflow, a
    manual review item, or accepting the risk.
-4. **Which factory catalogue references should seed `part_sources` as
+4. **Does declining a source have to unpublish its diagram images too?** Almost
+   certainly yes, and the design does not yet say how. Hiding a `part_diagrams` row stops
+   our pages linking the image; it does not make a public storage object unreachable to
+   anyone holding the URL. A takedown that leaves the drawings fetchable is not a
+   takedown. The options are a private bucket with signed URLs (correct, and slower for
+   every reader), a move-on-decline into a quarantine prefix (cheap, reversible, but the
+   old URL 404s rather than being re-servable at the same address), or accepting the gap
+   because the rows are what search engines index. Recommendation: private bucket with
+   signed URLs, decided in Phase 1 while the bucket is still empty and the choice is
+   free.
+5. **Which factory catalogue references should seed `part_sources` as
    `factory-catalogue`?** The AKD and AKM parts catalogues outrank every retailer in the
    precedence order, and having the top precedence tier empty at launch is a choice
    worth making on purpose.
