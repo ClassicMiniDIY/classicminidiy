@@ -1,6 +1,7 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
 import { buildAgentTools, webSearchSupported } from '../agent/tools';
+import { stripStaleWebSearchContent } from '../agent/transcript';
 import { buildSystemPrompt } from '../agent/prompt';
 import { createChatRunTracker } from '../utils/chatUsage';
 import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
@@ -35,29 +36,31 @@ const MAX_STEPS = 6;
 /**
  * Guard the request body before it reaches a model.
  *
- * `MAX_CHARS` was 24,000 and had to move when `web_search` was added, because
- * one legitimate turn no longer fitted inside the whole budget. Measured on the
- * live path, a single `tool-web_search` part serialises to **23,050 characters**
- * — Anthropic returns an opaque `encryptedContent` blob per result, which the
- * client replays with the rest of the conversation on every subsequent message.
- * So a visitor asked one question that triggered a search, got a good answer,
- * and was refused with "Conversation too long" on their very next message.
- * Reproduced, not theorised.
+ * Measured AFTER `stripStaleWebSearchContent`, because that is the payload the
+ * model is actually charged for. The guard exists to bound what a scripted
+ * caller can push into a model on an UNAUTHENTICATED endpoint, and what it
+ * should bound is the request that gets made, not the one that arrived.
  *
- * 120,000 leaves room for roughly four such turns alongside ordinary prose. The
- * guard still does its job: it exists to bound what a scripted caller can push
- * into a model on an UNAUTHENTICATED endpoint, and 120k characters is about 30k
- * tokens — bounded, and bounded again by `MAX_MESSAGES`, the per-tier quota in
- * `consumeChatQuota`, the in-process limiter and the Cloudflare zone rule.
+ * The ceiling was 24,000, went to 120,000 when `web_search` was added, and comes
+ * back to 40,000 now that a finished search is compacted on replay. Measured on
+ * the live path, one conversation, question -> answer -> follow-up:
  *
- * The better fix is to strip `encryptedContent` from PRIOR turns before
- * replaying them — it is ~95% of those bytes and is only needed for citations
- * within the turn that produced it. That is a provider-shape-specific change
- * and wants its own measurement; this is the ceiling that makes the feature
- * usable meanwhile.
+ *   - a single `tool-web_search` part: **13,734** characters (18,520 in a second
+ *     run — it scales with how many results the search returned)
+ *   - the first follow-up: **22,666 -> 10,367** characters replayed
+ *   - the second: **23,847 -> 11,548**
+ *
+ * 24,000 was what refused that first follow-up before this change, and it is
+ * still the wrong number to go back to: a real search conversation now grows by
+ * roughly 1,200 characters per exchange from a ~10,000 base, so 24,000 would cut
+ * one off after about nine messages. Conversation LENGTH is what `MAX_MESSAGES`
+ * is for. 40,000 leaves that job to it while keeping this one — a bound on a
+ * single unauthenticated request — at about 10k tokens. Beyond it sit the
+ * per-tier quota in `consumeChatQuota`, the in-process limiter and the
+ * Cloudflare zone rule.
  */
 const MAX_MESSAGES = 40;
-const MAX_CHARS = 120_000;
+const MAX_CHARS = 40_000;
 
 /**
  * Approximate the size a message contributes to the prompt.
@@ -115,7 +118,14 @@ export default defineEventHandler(async (event) => {
   if (messages.length > MAX_MESSAGES) {
     throw createError({ statusCode: 413, statusMessage: 'Conversation too long — start a new chat' });
   }
-  const totalChars = messages.reduce((sum, message) => sum + sizeOf(message), 0);
+
+  // Before the size guard and before the conversion, so both see the payload
+  // that will actually be sent. A finished `web_search` replays ~14k characters
+  // of encrypted page text that only the turn that ran it could ever use. See
+  // server/agent/transcript.ts.
+  const replayed = stripStaleWebSearchContent(messages);
+
+  const totalChars = replayed.reduce((sum, message) => sum + sizeOf(message), 0);
   if (totalChars > MAX_CHARS) {
     throw createError({ statusCode: 413, statusMessage: 'Conversation too long — start a new chat' });
   }
@@ -166,7 +176,7 @@ export default defineEventHandler(async (event) => {
   // with "messages.some is not a function" — a message that names neither the
   // call nor the missing await, and which only appears at runtime because the
   // route's own error handler catches it and streams a generic error.
-  const modelMessages = await convertToModelMessages(messages);
+  const modelMessages = await convertToModelMessages(replayed);
 
   /**
    * Cache hit rate, on the run event.
