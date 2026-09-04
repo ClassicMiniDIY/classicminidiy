@@ -9,6 +9,7 @@ import engineDecoder from '../mcp/tools/engine-decoder';
 import gearboxCalculator from '../mcp/tools/gearbox-calculator';
 import needleCompare from '../mcp/tools/needle-compare';
 import partsEquivalency from '../mcp/tools/parts-equivalency';
+import partsLookup from '../mcp/tools/parts-lookup';
 import torqueSpecs from '../mcp/tools/torque-specs';
 import vehicleWeights from '../mcp/tools/vehicle-weights';
 import wheelSearch from '../mcp/tools/wheel-search';
@@ -93,6 +94,7 @@ const DEFINITIONS: Record<string, McpToolDefinition> = {
   'gearbox-calculator': gearboxCalculator,
   'needle-compare': needleCompare,
   'parts-equivalency': partsEquivalency,
+  'parts-lookup': partsLookup,
   'torque-specs': torqueSpecs,
   'vehicle-weights': vehicleWeights,
   'wheel-search': wheelSearch,

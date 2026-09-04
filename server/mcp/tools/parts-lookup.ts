@@ -1,0 +1,245 @@
+import { z } from 'zod';
+import { getServiceClient } from '../../utils/supabase';
+
+/**
+ * Part Number MCP Tool
+ *
+ * Looks up a Classic Mini part number: what it is, what it supersedes or is
+ * superseded by, what it fits, and which factory plate it appears on.
+ *
+ * THE KILL SWITCH IS ENFORCED HERE, BY HAND. Every other consumer of this data
+ * gets it from RLS, but this tool runs on the service role and service_role
+ * BYPASSES RLS — so a source set to `declined` on /admin/parts would keep being
+ * served through the public API unless this file filters it out itself. That is
+ * the whole point of the switch, so it is the first thing the handler does and
+ * it fails CLOSED: if the source list cannot be read, nothing is returned.
+ *
+ * Columns are listed explicitly rather than `*`, for the same reason
+ * wheel-search does it: `*` would start returning any column later added for
+ * internal use without anyone revisiting this tool.
+ */
+const PART_COLUMNS = [
+  'id',
+  'part_number_norm',
+  'part_number_display',
+  'description',
+  'kind',
+  'system',
+  'category',
+  'source_id',
+].join(', ');
+
+/** Matches the CHECK on parts.part_number_norm: upper, no spaces/hyphens/dots. */
+function normalise(raw: string): string {
+  return raw.toUpperCase().replace(/[\s\-.]/g, '');
+}
+
+/**
+ * PostgREST's `or()` splits on commas and parentheses, so an unescaped value
+ * silently changes the filter's shape rather than failing.
+ */
+function escapeForOr(value: string): string {
+  return value.replace(/[,()]/g, ' ').trim();
+}
+
+function readableError(message: string): string {
+  const flat = message.replace(/\s+/g, ' ').trim();
+  if (/^<!DOCTYPE|^<html/i.test(flat)) return 'the request was rejected upstream; try simpler search text';
+  return flat.length > 200 ? `${flat.slice(0, 200)}...` : flat;
+}
+
+export default defineMcpTool({
+  description:
+    'Look up a Classic Mini part number in the archive. Give an exact part number (e.g. "12G2994", "ALA6654") or search words from a description (e.g. "idler gear bearing"). Returns what the part is, its supersession chain — what replaced it, or what it replaced — what it fits, and which factory parts-list plate it appears on. Use this before web search for any question about a part number.',
+
+  inputSchema: {
+    query: z
+      .string()
+      .min(2)
+      .max(60)
+      .optional()
+      .describe('Part number or words from the description, e.g. "12G2994" or "idler gear bearing".'),
+    partNumber: z
+      .string()
+      .min(2)
+      .max(40)
+      .optional()
+      .describe(
+        'An exact part number. Spacing, hyphens, dots and case are ignored, so "12g-2994" and "12G2994" are the same part.'
+      ),
+    includeSupersessions: z
+      .boolean()
+      .default(true)
+      .describe(
+        'Include what each part superseded or was superseded by. Leave on: a superseded number quoted without its replacement is a confidently wrong answer.'
+      ),
+    limit: z.number().int().positive().max(50).default(10).describe('Maximum parts to return. Default 10.'),
+  },
+
+  async handler({ query, partNumber, includeSupersessions, limit }) {
+    try {
+      const supabase = getServiceClient();
+
+      if (!query && !partNumber) {
+        return errorResult('Give either `partNumber` for an exact number, or `query` to search descriptions.');
+      }
+
+      // 1. The kill switch. Fails closed — an unreadable source list returns
+      //    nothing rather than everything.
+      const { data: sources, error: sourceError } = await supabase
+        .from('part_sources')
+        .select('id, name, domain, licence_status');
+
+      if (sourceError) {
+        console.error('parts-lookup MCP error (sources):', sourceError);
+        return errorResult(`Could not read the parts archive: ${readableError(sourceError.message)}`);
+      }
+
+      const visible = (sources ?? []).filter((s) => s.licence_status !== 'declined');
+      const visibleIds = visible.map((s) => s.id);
+      const sourceById = new Map(visible.map((s) => [s.id, s]));
+
+      if (visibleIds.length === 0) {
+        return jsonResult({
+          inputs: { query: query ?? null, partNumber: partNumber ?? null },
+          totalMatches: 0,
+          matches: [],
+          hint: 'No part source is currently available.',
+        });
+      }
+
+      // 2. Matches. Exact number first; otherwise a contains-match on the
+      //    normalised number OR the description.
+      let request = supabase
+        .from('parts')
+        .select(PART_COLUMNS)
+        .eq('status', 'published')
+        // A part with no source is ours, not a retailer's, and stays visible —
+        // matching the RLS policy the other consumers read through.
+        .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
+
+      if (partNumber) {
+        request = request.eq('part_number_norm', normalise(partNumber));
+      } else {
+        const norm = normalise(query!);
+        const words = escapeForOr(query!);
+        request = request.or(`part_number_norm.ilike.*${norm}*,description.ilike.*${words}*`);
+      }
+
+      const { data, error } = await request.order('part_number_norm').limit(limit + 1);
+
+      if (error) {
+        console.error('parts-lookup MCP error:', error);
+        return errorResult(`Could not read the parts archive: ${readableError(error.message)}`);
+      }
+
+      // Over-fetch by one so `truncated` is exact rather than reporting
+      // truncation on a complete result that happens to be exactly `limit` long.
+      const fetched = (data ?? []) as Record<string, any>[];
+      const truncated = fetched.length > limit;
+      const rows = fetched.slice(0, limit);
+
+      if (rows.length === 0) {
+        return jsonResult({
+          inputs: { query: query ?? null, partNumber: partNumber ?? null },
+          totalMatches: 0,
+          matches: [],
+          hint: partNumber
+            ? 'No part carries that exact number. Try `query` instead — the number may appear inside a description, or be recorded under a supersession.'
+            : 'Nothing matched. Try a shorter fragment of the number, or fewer words.',
+        });
+      }
+
+      const ids = rows.map((p) => p.id);
+
+      // 3. Supersessions, applicability and plate appearances, in three reads
+      //    for the whole result set rather than three per part.
+      const [supersessions, applicability, callouts] = await Promise.all([
+        includeSupersessions
+          ? supabase
+              .from('part_supersessions')
+              .select(
+                'predecessor_id, successor_id, relation, predecessor:parts!part_supersessions_predecessor_id_fkey(part_number_display), successor:parts!part_supersessions_successor_id_fkey(part_number_display)'
+              )
+              .or(`predecessor_id.in.(${ids.join(',')}),successor_id.in.(${ids.join(',')})`)
+          : Promise.resolve({ data: [], error: null }),
+        supabase.from('part_applicability').select('part_id, qualifier_text').in('part_id', ids),
+        supabase
+          .from('part_diagram_callouts')
+          .select(
+            'part_id, callout_number, diagram:part_diagrams!inner(id, title, catalogue_section, status, source_id)'
+          )
+          .in('part_id', ids)
+          .eq('part_diagrams.status', 'published'),
+      ]);
+
+      const supersessionRows = (supersessions.data ?? []) as any[];
+      const applicabilityRows = (applicability.data ?? []) as any[];
+      const calloutRows = ((callouts.data ?? []) as any[]).filter(
+        (c) => c.diagram && (c.diagram.source_id === null || sourceById.has(c.diagram.source_id))
+      );
+
+      const matches = rows.map((p) => {
+        const source = p.source_id ? sourceById.get(p.source_id) : null;
+
+        const supersedes = supersessionRows
+          .filter((s) => s.predecessor_id === p.id)
+          .map((s) => ({ partNumber: s.successor?.part_number_display ?? null, relation: s.relation }))
+          .filter((s) => s.partNumber);
+        const supersededBy = supersessionRows
+          .filter((s) => s.successor_id === p.id)
+          .map((s) => ({ partNumber: s.predecessor?.part_number_display ?? null, relation: s.relation }))
+          .filter((s) => s.partNumber);
+
+        return {
+          partNumber: p.part_number_display,
+          description: p.description || null,
+          kind: p.kind || null,
+          system: p.system || null,
+          category: p.category || null,
+          /** What this part was replaced BY. */
+          replacedBy: supersedes,
+          /** What this part replaces. */
+          replaces: supersededBy,
+          fits: applicabilityRows.filter((a) => a.part_id === p.id).map((a) => a.qualifier_text),
+          appearsOn: calloutRows
+            .filter((c) => c.part_id === p.id)
+            .map((c) => ({
+              plate: c.diagram.title,
+              catalogueSection: c.diagram.catalogue_section || null,
+              calloutNumber: c.callout_number,
+            })),
+          source: source ? { name: source.name, domain: source.domain } : null,
+          url: `https://www.classicminidiy.com/archive/parts/${encodeURIComponent(p.part_number_display)}`,
+        };
+      });
+
+      return jsonResult({
+        inputs: { query: query ?? null, partNumber: partNumber ?? null },
+        totalMatches: matches.length,
+        truncated,
+        matches,
+        notes:
+          'A part number with entries under `replacedBy` is superseded — quote the replacement alongside it, never on its own. `fits` is the applicability text exactly as the source recorded it and is not normalised. Parts data is compiled from retailer catalogues and credited per match; check the source for current availability.',
+        formattedText: [
+          `**Parts** — ${matches.length} match${matches.length === 1 ? '' : 'es'}`,
+          '',
+          ...matches.map((m) => {
+            const chain = m.replacedBy.length
+              ? ` — SUPERSEDED BY ${m.replacedBy.map((s) => s.partNumber).join(', ')}`
+              : m.replaces.length
+                ? ` — replaces ${m.replaces.map((s) => s.partNumber).join(', ')}`
+                : '';
+            const plate = m.appearsOn[0]
+              ? ` [plate: ${m.appearsOn[0].plate}, callout ${m.appearsOn[0].calloutNumber}]`
+              : '';
+            return `- **${m.partNumber}**${m.description ? ` — ${m.description}` : ''}${chain}${plate}`;
+          }),
+        ].join('\n'),
+      });
+    } catch (error: any) {
+      console.error('parts-lookup MCP error:', error);
+      return errorResult(`Could not read the parts archive: ${readableError(error.message)}`);
+    }
+  },
+});

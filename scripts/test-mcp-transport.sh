@@ -280,6 +280,9 @@ call_tool needle-compare '{"mode":"lookup","needle":"AAA"}'
 call_tool torque-specs '{"query":"main bearing","limit":3}'
 call_tool clearances '{"section":"Engine","limit":3}'
 call_tool parts-equivalency '{"query":"K&N","limit":3}'
+# Exact number, so this exercises the normalisation path (case, hyphens, dots
+# are all stripped before the lookup) as well as the transport.
+call_tool parts-lookup '{"partNumber":"12g-2994","limit":3}'
 call_tool vehicle-weights '{"section":"Electrics","limit":3}'
 
 # The two archive tools read Postgres, so they can fail for a reason that has
