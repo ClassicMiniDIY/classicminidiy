@@ -331,9 +331,15 @@ Ranked:
    being served, not just being shown. The costs, accepted with the decision: a signing
    step on render, no plain CDN caching of the object itself, and the PWA runtime caching
    rules need a signed-URL-aware pattern rather than the plain archive-bucket pattern the
-   other archives use. Settle the URL lifetime in Phase 1 — long enough that a reader
-   scrolling a plate does not see images expire, short enough that a leaked link is not
-   permanent.
+   other archives use.
+
+   **Signed-URL lifetime: one hour** (Cole, 2026-09-04). A signed URL is an ordinary link
+   with an expiry stamped into it — anyone holding it can fetch the image until it lapses,
+   and after that it returns nothing until the page mints a fresh one. An hour is longer
+   than any plausible session spent reading one plate, so no image expires mid-scroll, and
+   short enough that a link pasted somewhere public stops working the same afternoon. It
+   is a render-time parameter rather than schema, so it lands with the diagram pages in
+   Phase 4.
 
 2. **Link out only.** The fallback if a source objects but is content to be cited. The
    callout table still renders from our own rows, and the drawing is reached through the
@@ -530,12 +536,21 @@ optional part reference to a listing. Out of scope.
    back, covering the kill switch on parts, sources and callouts, its reversibility,
    lookup ranking, cycle termination, bucket privacy and crawl-off-by-default. Remaining:
    settle the signed-URL lifetime, apply to remote, then `bun run gen:types` here.
-2. **The kill switch, before any data exists to kill.** `/admin/parts` and its route,
-   plus the declined-source exclusion in the public read policy. This is deliberately
-   ahead of the ingest: a mitigation that arrives after the material it mitigates is not
-   a mitigation, and the window where rows are public with no way to pull them is the one
-   window this project cannot afford. It is a small screen over an empty table, which is
-   also the easiest time to build it.
+2. **The kill switch, before any data exists to kill — BUILT.** `/admin/parts`,
+   `GET /api/admin/parts/sources`, `POST /api/admin/parts/set-licence`, and the
+   declined-source exclusion already enforced in the RLS policies from Phase 1. Ahead of
+   the ingest on purpose: a mitigation that arrives after the material it mitigates is not
+   a mitigation, and a window where rows are public with no way to pull them is the one
+   window this project cannot afford.
+
+   The screen lists every source with a live count of what it contributes — parts,
+   diagrams, callouts, applicability, supersessions, kit contents — because the control is
+   trivial and the blast radius is the part worth knowing before the click. Declining asks
+   for confirmation, states the row count in the confirmation, and requires a reason that
+   is written to the source and to `admin_audit_log`. **Declining also stops the crawl**:
+   hiding a source's rows while still fetching its pages keeps the traffic that prompted
+   the complaint and earns nothing for it.
+
 3. **Somerford ingest.** A single local run over roughly
    372 plates and 12,000 products. Verify the callout-to-part resolution rate and count
    the unresolved callouts **before publishing anything**.

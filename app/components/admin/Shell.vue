@@ -169,6 +169,7 @@
           badgeClass: 'badge-warning',
         },
         { label: '3D Models', to: '/admin/models', icon: 'fas fa-cube' },
+        { label: 'Parts Sources', to: '/admin/parts', icon: 'fas fa-gears' },
       ],
     },
     {
