@@ -1,6 +1,8 @@
 # Classic Mini part-number database — design and feasibility
 
-Status: design + feasibility spike. No code beyond a data fix. Branch
+Status: design + feasibility spike. **Phase 1 built and verified on the local stack,
+not yet applied to the remote project** — migration `20260904000001_parts_number_database.sql`
+in `classicminidiy-supabase`, branch `feature/parts-db-phase-1`. Branch here:
 `feature/parts-number-database`.
 
 Follows `docs/plans/2026-09-04-chat-agent-knowledge-expansion.md`, which gave `/chat`
@@ -196,9 +198,17 @@ weighted text-search precedents already present in that repo. Every table is pre
 ### 3.1 Tables
 
 **`part_sources`** — slug, name, domain, kind (`retailer`, `factory-catalogue`,
-`community`), `licence_status` (`none`, `requested`, `granted`, `declined`),
-licence note, terms URL, last reviewed date. Every fact row in every other table carries
-a `source_id`.
+`community`), `licence_status` (`none`, `requested`, `granted`, `declined`), terms URL,
+precedence, last reviewed date. Publicly readable, because every part and diagram page
+renders the attribution and the link from it. A declined source drops out of this read
+too, so no page can credit a source we were asked to stop using. Every fact row in every
+other table carries a `source_id`.
+
+**`part_source_private`** — the sensitive half, split off on the same reasoning as
+`profiles` / `profile_private`: licence note, who changed the licence status and when,
+contact address, and the crawl budget (§5). No public policy at all. Splitting the table
+rather than granting columns is deliberate — the column-grant regime used by the wheels
+and colours archives breaks `select('*')` and taxes every future column.
 
 The licence status is the kill switch, so the row also records who last changed it, when,
 and why: `licence_changed_by`, `licence_changed_at`, and a required reason captured into
@@ -267,12 +277,30 @@ number and part: one callout maps to several parts across different applicabilit
 
 ### 3.2 Access
 
-Public read covers `parts`, `part_supersessions`, `part_kit_contents`,
-`part_applicability`, `part_diagrams` and `part_diagram_callouts`, restricted to
-published rows. Writes are service role for the ingest, plus the community path through
-the submission queue in Phase 6. Two RPCs: a lookup that combines trigram matching on
-the normalised part number with text search over descriptions, and the recursive
-supersession chain. A parts branch is added to `omnisearch()` in Phase 6.
+Public read covers `part_sources`, `parts`, `part_supersessions`, `part_kit_contents`,
+`part_applicability`, `part_diagrams` and `part_diagram_callouts`, restricted to published
+rows from non-declined sources. Writes are service role for the ingest, plus the community
+path through the submission queue in Phase 6.
+
+> **An RLS policy does not confer the privilege it filters.** A new table in this project
+> lands with no table grants for `anon` or `authenticated`, so a correct `FOR SELECT`
+> policy still returns `42501 permission denied` to every browser client. The migration
+> grants `SELECT` explicitly on the seven public tables and nothing at all on the five
+> private ones. This was found by executing a read as `anon` against the local stack — the
+> full migration applied cleanly first, which is why policy review alone would not have
+> caught it. Recorded as an invariant in the private repo's `CLAUDE.md`.
+
+Two RPCs, both `SECURITY INVOKER` so the caller's RLS — including the kill switch —
+applies rather than being re-implemented inside a definer function: a part lookup, and the
+recursive supersession chain.
+
+The lookup uses **trigram and `ILIKE` with a positional rank, not `tsvector`**, following
+the reasoning already recorded on `omnisearch()`: these queries are part numbers as often
+as words, and stemming actively hurts `12G2994`. Rank is deterministic — exact, then
+prefix, then contains, then description — because a lookup that reorders between identical
+calls is hard to trust. Revisit if this passes roughly 50,000 rows.
+
+A parts branch is added to `omnisearch()` in Phase 6.
 
 `data/parts.json` and the existing `parts-equivalency` MCP tool stay exactly as they
 are. Those 24 hand-curated service cross-references are a different thing from a
@@ -323,6 +351,35 @@ licence column exists.
 
 Weekly, which matches the change frequency Somerford publishes for its own sitemap.
 
+### 5.1 The crawl is a budgeted queue, not a walk
+
+Somerford's first import is roughly 372 plates plus 12,000 products. Run as a single pass
+at one request per second, that is about three and a half hours of unbroken traffic from
+one address. It reads as a scrape in their logs, it is the shape most likely to trip a
+WAF, and it offers no point at which to stop and look at what came back.
+
+So the crawl drains a queue under a budget, in two moves:
+
+- **Discovery** reads the sitemap and upserts one `part_ingest_queue` row per URL — about
+  thirteen requests for the whole Somerford catalogue.
+- **Drain** takes the next `max_requests_per_run` rows, plates before products, spaced by
+  `min_request_interval_ms`, and stops.
+
+An import is therefore a series of small resumable runs rather than one long burst, and
+the same machinery does the weekly refresh afterwards. Progress lives in the queue rather
+than in a cursor, so an interrupted run loses nothing and a re-run never re-fetches what
+it already has.
+
+**The rate limits live in data, not in code.** `part_source_private` carries
+`crawl_enabled`, `max_requests_per_run`, `max_requests_per_day`, `min_request_interval_ms`
+and `max_change_ratio` per source, so throttling a source is an admin edit rather than a
+deploy. `crawl_enabled` defaults to false: adding a source never starts traffic by itself.
+
+`part_ingest_runs` records every run — requests made, records seen, written, unchanged and
+missing, and why it stopped. It does two jobs: it enforces the rolling daily cap, and it
+is the durable evidence that the crawl ran at the rate we said it would, which is the only
+mitigation whose compliance can be demonstrated after the fact.
+
 Change detection is cheap first and expensive second: the sitemap's modification date
 decides whether a page is fetched at all, and a content hash of the normalised record
 decides whether anything is written.
@@ -361,8 +418,9 @@ Ranked:
 3. **n8n.** Good for the alert and approval hop. Poor for a parser over thousands of
    pages: code nodes, no tests, no review. The parser does not go there.
 
-Etiquette, restating mitigation 3 as operational rules: a user agent naming Classic Mini
-DIY with a contact address; robots.txt honoured, including the disallowed catalogue,
+Etiquette, restating mitigation 3 as operational rules — and note that the per-source
+budget in §5.1 is what enforces most of it, in data rather than in a code path someone can
+forget: a user agent naming Classic Mini DIY with a contact address; robots.txt honoured, including the disallowed catalogue,
 search and query-string paths on the two Magento sites and the account and sorting paths
 on Somerford; at most one request per second; driven by sitemaps where they work and by
 category pages where they do not, since one sitemap returns 503 and another 404; and any
@@ -465,9 +523,13 @@ optional part reference to a listing. Out of scope.
 
 0. **This change.** Design doc, the trusted-source domain fix, and the private spike
    note. No schema, no crawler.
-1. **Migrations** in `classicminidiy-supabase`: tables, RLS, the two RPCs, and the
-   **private** `parts-diagrams` bucket with its signed-URL lifetime settled. Then
-   `bun run gen:types` here.
+1. **Migrations** in `classicminidiy-supabase` — **built, verified locally, not yet
+   applied to the remote project.** Twelve tables, RLS on all of them, explicit grants,
+   the two RPCs, and the **private** `parts-diagrams` bucket. Verified by
+   `snippets/verify_20260904_parts_kill_switch.sql`: nine self-seeding checks that roll
+   back, covering the kill switch on parts, sources and callouts, its reversibility,
+   lookup ranking, cycle termination, bucket privacy and crawl-off-by-default. Remaining:
+   settle the signed-URL lifetime, apply to remote, then `bun run gen:types` here.
 2. **The kill switch, before any data exists to kill.** `/admin/parts` and its route,
    plus the declined-source exclusion in the public read policy. This is deliberately
    ahead of the ingest: a mitigation that arrives after the material it mitigates is not
