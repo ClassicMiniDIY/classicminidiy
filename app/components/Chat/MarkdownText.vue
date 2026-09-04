@@ -229,6 +229,96 @@
     font-style: italic;
   }
 
+  /* YouTube cards.
+     Emitted by `youtubeCard()` in app/utils/chatMarkdown.ts when the assistant
+     links one of Cole's videos. `display: flex` on the anchor is what turns it
+     from an inline underlined URL into a card; `text-decoration: none` has to
+     override the link rule above, which is why this block follows it. */
+  .markdown-content :deep(a.chat-video-card) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+    padding: 0.5rem;
+    border: 1px solid var(--color-base-300);
+    border-radius: 0.625rem;
+    background-color: var(--color-base-200);
+    text-decoration: none;
+    font-weight: 400;
+    color: var(--color-base-content);
+    transition: border-color 0.15s ease;
+  }
+
+  .markdown-content :deep(a.chat-video-card:hover) {
+    border-color: var(--color-error);
+    text-decoration: none;
+  }
+
+  .markdown-content :deep(.chat-video-card__thumb) {
+    position: relative;
+    flex-shrink: 0;
+    width: 7.5rem;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    background-color: var(--color-base-300);
+  }
+
+  /* Overrides the generic image rule below — a thumbnail has no bottom margin
+     and must fill its box rather than keep its intrinsic height. */
+  .markdown-content :deep(.chat-video-card__thumb img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    margin-bottom: 0;
+    border-radius: 0;
+  }
+
+  .markdown-content :deep(.chat-video-card__play) {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.75rem;
+  }
+
+  .markdown-content :deep(.chat-video-card__play i) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 9999px;
+    background-color: var(--color-error);
+  }
+
+  .markdown-content :deep(.chat-video-card__body) {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .markdown-content :deep(.chat-video-card__title) {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--color-primary);
+    /* A long video title must not push the transcript column wide. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .markdown-content :deep(.chat-video-card__meta) {
+    font-size: 0.75rem;
+    color: color-mix(in oklch, var(--color-base-content) 60%, transparent);
+  }
+
   /* Images */
   .markdown-content :deep(img) {
     max-width: 100%;

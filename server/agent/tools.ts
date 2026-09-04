@@ -1,8 +1,12 @@
 import type { H3Event } from 'h3';
 import { z } from 'zod';
 import { tool, type Tool } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { buildMcpTools } from '../utils/agentTools';
 import { runOmnisearch } from '../utils/omnisearch';
+import { getVideoIndex, searchVideoIndex } from '../utils/youtubeCatalog';
+import { historyByCategory, searchHistory, HISTORY_CATEGORIES } from '../utils/historySearch';
+import { TRUSTED_DOMAINS } from '../../data/trustedSources';
 import {
   fetchProductByHandle,
   searchCatalogue,
@@ -38,6 +42,20 @@ import {
  * advert. A torque question gets `torque-specs` and nothing else.
  *
  * Design doc: docs/plans/2026-09-01-shopify-catalog-tool.md.
+ *
+ * THREE MORE were added after five of five test conversations ended in a
+ * refusal — see docs/plans/2026-09-04-chat-agent-knowledge-expansion.md. All
+ * three answer the same diagnosis: the agent had no route to anything the
+ * archive did not already hold, so a question about fitting a windscreen, the
+ * coolant route, a grinding synchro or the 1966 Monte Carlo got "that's outside
+ * what I cover" from a site whose entire subject it is.
+ *
+ * `video-search` reaches Cole's own 450+ videos, which is the answer the site
+ * should have been giving first all along.
+ * `mini-history` is a static corpus, so history stops being trivia.
+ * `web_search` is Anthropic's server-side search pinned to the allowlist in
+ * `data/trustedSources.ts` — the specialists Cole would name himself, and
+ * nothing else.
  */
 
 /** Trimmed omnisearch row — the model does not need ids or icon classes. */
@@ -146,6 +164,18 @@ export interface AgentToolHooks {
  */
 export const SITE_SEARCH_DEGRADED_MARKER = 'site-search:unavailable';
 
+/**
+ * `video-search` reports here too, and it matters more than it looks.
+ *
+ * The video index is the one tool here that depends on a THIRD-PARTY quota.
+ * YouTube's Data API allows 10,000 units a day across the whole site, and the
+ * homepage rail spends from the same budget. If that budget is exhausted, or
+ * the key is rotated and not redeployed, this tool starts returning "no videos
+ * matched" — which is indistinguishable from Cole simply never having covered
+ * the subject, and would quietly undo the entire reason the tool exists.
+ */
+export const VIDEO_SEARCH_DEGRADED_MARKER = 'video-search:unavailable';
+
 /** Markers `store-search` can report. Exported so a dashboard query has a source of truth. */
 export const STORE_DEGRADED_MARKERS = {
   not_configured: 'store-search:not-configured',
@@ -230,17 +260,180 @@ export function storeSearchTool(config: ShopifyCatalogConfig | null, hooks: Agen
 }
 
 /**
+ * Cole's YouTube channel, searchable.
+ *
+ * The reason this exists: Cole publishes DIY videos on many of the jobs people
+ * ask about, and the assistant was answering "the archive doesn't have
+ * windshield installation instructions" while a video on the subject existed.
+ * The site had no way to find it — `server/api/youtube/videos.ts` only ever
+ * fetched the newest three uploads for the homepage rail.
+ *
+ * Results come back under `videos`, NOT `results`, and that is load-bearing.
+ * `usefulLinks` in `app/components/Chat/ChatWindow.vue` shape-matches any tool
+ * output with a `results` array of `{ url, title }`, so naming the field
+ * `results` would silently fill the "Useful Links" rail with videos and defeat
+ * the dedicated video rail this tool was built to feed.
+ */
+export function videoSearchTool(apiKey: string, hooks: AgentToolHooks = {}): Tool {
+  return tool({
+    description:
+      "Search Classic Mini DIY's own YouTube channel — over 450 videos by Cole covering repairs, rebuilds, " +
+      'installations, diagnosis and buying advice. Use it whenever someone asks HOW to do a job on the car, ' +
+      'before pointing them anywhere else. Returns a link and thumbnail per video; use the link exactly as given.',
+    inputSchema: z.object({
+      query: z
+        .string()
+        .min(2)
+        .describe('The job or subject, in keywords, e.g. "windscreen replacement" or "subframe removal".'),
+      limit: z.number().int().positive().max(6).default(3).describe('Maximum videos to return. Default 3.'),
+    }),
+    async execute({ query, limit }) {
+      try {
+        const index = await getVideoIndex(apiKey);
+        const videos = searchVideoIndex(index, query, limit);
+
+        if (videos.length === 0) {
+          return {
+            query,
+            checked: true,
+            videos: [],
+            note: 'No video on the channel matches that. Answer from the archive and your own knowledge instead, and do not invent a video link.',
+          };
+        }
+        return { query, checked: true, videos };
+      } catch (error: any) {
+        hooks.onDegraded?.(VIDEO_SEARCH_DEGRADED_MARKER, error?.message ? String(error.message) : undefined);
+        // `checked: false` is the whole point of this branch. "Cole has no video
+        // on this" and "I could not look" are different answers, and only one is
+        // honest. Never let a lookup failure be reported as an absence.
+        return {
+          query,
+          checked: false,
+          videos: [],
+          note: 'The video lookup is unavailable right now, so this says nothing about whether a video exists. Answer the question itself and do not claim the channel has nothing on it.',
+        };
+      }
+    },
+  }) as Tool;
+}
+
+/**
+ * The Classic Mini history corpus.
+ *
+ * Static JSON in `data/miniHistory.json`, so this cannot fail and has no
+ * degraded path — which is exactly why it is worth having alongside web search.
+ * The prompt that preceded this tool told the model "Do not answer general
+ * trivia", and it duly refused to say which year the works Minis were
+ * disqualified from the Monte Carlo Rally.
+ */
+export function historyTool(): Tool {
+  return tool({
+    description:
+      'Look up Classic Mini history — origins and the Issigonis design brief, the Mk1 to Mk7 timeline, Cooper ' +
+      'and Cooper S, rallying and the Monte Carlo results, badge-engineered variants and overseas assembly, ' +
+      'production figures and the end of production. Use it for any question about the past of the car, the ' +
+      'company or the people.',
+    // No `.optional()` anywhere — see the note on store-search's schema for why
+    // ZodOptional breaks `tool()` under this dependency graph. An empty
+    // `category` is how "no category" is expressed.
+    inputSchema: z.object({
+      query: z.string().min(2).describe('Keywords, e.g. "monte carlo disqualified" or "when did production end".'),
+      category: z
+        .string()
+        .default('')
+        .describe(
+          `Optional. Return every entry in one category instead of searching. One of: ${HISTORY_CATEGORIES.join(', ')}.`
+        ),
+      limit: z.number().int().positive().max(6).default(3).describe('Maximum entries to return. Default 3.'),
+    }),
+    async execute({ query, category, limit }) {
+      const entries = category ? historyByCategory(category).slice(0, limit) : searchHistory(query, limit);
+
+      if (entries.length === 0) {
+        return {
+          query,
+          entries: [],
+          note: 'The history corpus has nothing on that. Try `web_search` against the trusted history sources, or say plainly that you are unsure rather than guessing a date.',
+        };
+      }
+      return { query, entries };
+    },
+  }) as Tool;
+}
+
+/**
+ * Web search, restricted to `data/trustedSources.ts`.
+ *
+ * Anthropic executes this one — there is no handler here, no crawler and no
+ * second API key. The provider is imported for its tool DEFINITIONS only, so
+ * the default `anthropic` instance is correct even though the chat route builds
+ * its own client with the gateway base URL; nothing about this call touches
+ * credentials.
+ *
+ * The allowlist is the entire safety argument. Unrestricted search would fix
+ * the refusals and reintroduce the failure the chat rebuild exists to undo — the
+ * agent it replaced reached for generic web search in 331 of 473 conversations
+ * and for the site's own eleven reference tools in 11. Confined to a handful of
+ * Mini specialists, a search cannot become the lazy default: it has nothing to
+ * say about most questions, and everything it does return is a source Cole
+ * would name himself.
+ *
+ * `maxUses` bounds one turn. It is not a cost control — at the measured volume
+ * the spend is under a dollar a month — it is a loop control, the same argument
+ * as MAX_STEPS in the chat route.
+ *
+ * MODEL-GATED. `web_search_20260209` needs Sonnet 4.6 or better; on Haiku the
+ * request is rejected. `CHAT_MODEL` moves to Sonnet 5 with this change, and
+ * `webSearchSupported()` below is what keeps the tool set valid if it is ever
+ * moved back.
+ */
+export function webSearchTool(): Tool {
+  return anthropic.tools.webSearch_20260209({
+    maxUses: 4,
+    allowedDomains: TRUSTED_DOMAINS,
+  }) as unknown as Tool;
+}
+
+/**
+ * Whether a model can be given `web_search_20260209`.
+ *
+ * Deliberately a DENYLIST of the known-unsupported families rather than an
+ * allowlist of supported ones: an allowlist silently drops the tool the day a
+ * newer model id appears in `CHAT_MODEL`, and a silently missing tool is the
+ * precise failure mode this file's `onDegraded` machinery exists to prevent.
+ * Being wrong in this direction produces a loud API error on the first request
+ * after a deploy instead of a quietly worse assistant.
+ */
+export function webSearchSupported(modelId: string): boolean {
+  return !/haiku|claude-3/i.test(modelId);
+}
+
+/**
  * Everything the chat agent can call.
  *
  * `event` is optional so tests and any future non-request caller still build a
  * working tool set; it is passed by the chat route so the Shopify credentials
  * are read per-request, which is what CLAUDE.md asks for over a module-scope
  * `useRuntimeConfig()`.
+ *
+ * `modelId` gates `web_search` only. It defaults to a model that supports the
+ * tool so the DEFAULT tool set is the full one — a test or a caller that omits
+ * it gets the same agent production has, rather than a quietly reduced one.
  */
-export function buildAgentTools({ event, ...hooks }: AgentToolHooks & { event?: H3Event } = {}): Record<string, Tool> {
+export function buildAgentTools({
+  event,
+  youtubeApiKey = '',
+  modelId = 'claude-sonnet-5',
+  ...hooks
+}: AgentToolHooks & { event?: H3Event; youtubeApiKey?: string; modelId?: string } = {}): Record<string, Tool> {
   return {
     ...buildMcpTools(),
+    'mini-history': historyTool(),
     'site-search': siteSearchTool(hooks),
     'store-search': storeSearchTool(shopifyConfig(event), hooks),
+    'video-search': videoSearchTool(youtubeApiKey, hooks),
+    // The key is the tool name Anthropic sees, so it must be exactly
+    // `web_search` — a renamed key is not a renamed tool, it is a 400.
+    ...(webSearchSupported(modelId) ? { web_search: webSearchTool() } : {}),
   };
 }
