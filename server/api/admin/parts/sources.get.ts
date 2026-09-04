@@ -70,6 +70,31 @@ export default defineEventHandler(async (event) => {
 
   const settings = Object.fromEntries((privateRows ?? []).map((r) => [r.source_id, r]));
 
+  // Run state, so the screen can answer "is anything actually happening?".
+  // Without this the page could show `crawlEnabled: true` while nothing had run
+  // for hours, which reads as "it is crawling" and is not.
+  const { data: recentRuns } = await db
+    .from('part_ingest_runs')
+    .select('source_id, phase, status, started_at, finished_at, requests_made, records_written, abort_reason')
+    .order('started_at', { ascending: false })
+    .limit(60);
+
+  const runsBySource = new Map<string, (typeof recentRuns extends (infer R)[] | null ? R : never)[]>();
+  for (const run of recentRuns ?? []) {
+    const list = runsBySource.get(run.source_id) ?? [];
+    if (list.length < 5) list.push(run);
+    runsBySource.set(run.source_id, list);
+  }
+
+  const { data: queueRows } = await db.from('part_ingest_queue').select('source_id, last_fetched_at');
+  const queueBySource = new Map<string, { total: number; remaining: number }>();
+  for (const row of queueRows ?? []) {
+    const agg = queueBySource.get(row.source_id) ?? { total: 0, remaining: 0 };
+    agg.total += 1;
+    if (!row.last_fetched_at) agg.remaining += 1;
+    queueBySource.set(row.source_id, agg);
+  }
+
   // head:true so these are COUNT queries, not row fetches — the largest of them
   // will be counting five figures of parts once Somerford is imported.
   //
@@ -157,6 +182,19 @@ export default defineEventHandler(async (event) => {
         minRequestIntervalMs: setting?.min_request_interval_ms ?? null,
         maxChangeRatio: setting?.max_change_ratio ?? null,
         counts,
+        queue: queueBySource.get(source.id) ?? { total: 0, remaining: 0 },
+        runInFlight: (runsBySource.get(source.id) ?? []).some((r) => r.status === 'running'),
+        lastRun: (runsBySource.get(source.id) ?? [])[0]
+          ? {
+              phase: (runsBySource.get(source.id) ?? [])[0]!.phase,
+              status: (runsBySource.get(source.id) ?? [])[0]!.status,
+              startedAt: (runsBySource.get(source.id) ?? [])[0]!.started_at,
+              finishedAt: (runsBySource.get(source.id) ?? [])[0]!.finished_at,
+              requestsMade: (runsBySource.get(source.id) ?? [])[0]!.requests_made,
+              recordsWritten: (runsBySource.get(source.id) ?? [])[0]!.records_written,
+              abortReason: (runsBySource.get(source.id) ?? [])[0]!.abort_reason,
+            }
+          : null,
       };
     })
   );
