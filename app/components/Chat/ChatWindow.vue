@@ -256,6 +256,7 @@
   import HumanMessage from './HumanMessage.vue';
   import QuotaLimitPanel from './QuotaLimitPanel.vue';
   import { selectRailVideos, type ChatVideo } from '~/utils/chatVideoRail';
+  import { CHAT_REQUEST_TRIM_TARGET, windowTranscript } from '~~/shared/utils/chatTranscript';
   import UsefulLinks from './UsefulLinks.vue';
   import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
   import VideoResults from './VideoResults.vue';
@@ -411,6 +412,15 @@
    *
    * Well under the route's MAX_MESSAGES so a slow client and a strict server
    * cannot disagree at the boundary.
+   *
+   * A COUNT alone does not deliver that promise, which is the half this used to
+   * be missing. The route's other limit is on characters, and twenty-four
+   * messages are not a fixed number of them: an assistant turn that called
+   * `vehicle-weights` or `torque-specs` carries thousands of characters of rows,
+   * so a browsing conversation can cross the character ceiling while sitting
+   * comfortably inside the message one — and every send from then on 413s, which
+   * is exactly the dead end above. `windowTranscript` applies both bounds
+   * against the same measurement the route uses.
    */
   const REQUEST_MESSAGE_WINDOW = 24;
 
@@ -425,7 +435,11 @@
         threadId: threadId.value,
       }),
       prepareSendMessagesRequest({ messages: outgoing, body }) {
-        return { body: { ...body, messages: outgoing.slice(-REQUEST_MESSAGE_WINDOW) } };
+        const windowed = windowTranscript(outgoing, {
+          maxMessages: REQUEST_MESSAGE_WINDOW,
+          maxChars: CHAT_REQUEST_TRIM_TARGET,
+        });
+        return { body: { ...body, messages: windowed } };
       },
     }),
     onError(err: Error) {
