@@ -55,7 +55,7 @@ never remove those redirects.
   Payments: Stripe one-time listing upgrades (`listing_promotions`), Stripe Billing
   membership (`subscriptions`), Stripe Connect model sales; three distinct products.
 - AI: `/api/chat` runs the agent IN this Worker (Vercel AI SDK v7 + Anthropic) and calls
-  the eleven `/mcp` tools in-process. `/mcp` is one JSON-RPC endpoint served by
+  the twelve `/mcp` tools in-process. `/mcp` is one JSON-RPC endpoint served by
   `@nuxtjs/mcp-toolkit` from `server/mcp/tools/*.ts` (filename = tool name), Bearer auth
   in `server/middleware/mcp-auth.ts`. There are no `/api/mcp/*` or `server/api/langgraph`
   routes any more.

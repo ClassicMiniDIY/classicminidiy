@@ -75,7 +75,7 @@ describe('unwrapToolResult', () => {
 describe('buildMcpTools', () => {
   const tools = buildMcpTools();
 
-  it('exposes all eleven reference tools', () => {
+  it('exposes all twelve reference tools', () => {
     expect(AGENT_MCP_TOOL_NAMES).toEqual([
       'chassis-decoder',
       'clearances',
@@ -85,6 +85,7 @@ describe('buildMcpTools', () => {
       'gearbox-calculator',
       'needle-compare',
       'parts-equivalency',
+      'parts-lookup',
       'torque-specs',
       'vehicle-weights',
       'wheel-search',

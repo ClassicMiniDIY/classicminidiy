@@ -55,6 +55,13 @@ export const FREE_TOOLS: ReadonlySet<string> = new Set([
   'clearances',
   'parts-equivalency',
   'vehicle-weights',
+  // parts-lookup is FREE by decision (2026-09-04), and it is the one entry that
+  // does not follow the rule above: it is an archive tool, and every other
+  // archive tool (wheel-search, color-lookup) is paid. Kept free deliberately —
+  // a superseded part number answered wrongly is worse than one not answered —
+  // but flagged here because the split otherwise reads as accidental. Moving it
+  // is a one-line change to PAID_ONLY_TOOLS plus a transport-script check.
+  'parts-lookup',
 ]);
 
 /** The identification + archive tools the paid tier adds. */

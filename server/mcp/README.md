@@ -26,6 +26,10 @@ answer and the on-site answer cannot drift apart.
 - **torque-specs**, **clearances**, **parts-equivalency**, **vehicle-weights**:
   searchable reference tables
 - **wheel-search**, **color-lookup**: the Supabase archive, approved entries only
+- **parts-lookup**: part numbers, supersession chains, applicability and plate
+  callouts from the Supabase archive. Published rows only, and rows from a
+  source whose licence is `declined` are filtered out IN THE TOOL — it runs on
+  the service role, which bypasses the RLS that protects every other consumer.
 
 Tools take a query and return the matching subset. The site's API routes return
 whole tables because a browser filters client-side; an LLM should not have to
@@ -45,10 +49,10 @@ per account; revocation from the dashboard is immediate.
 
 ### Tiers
 
-| Tier | Who | Tools | Rate limit |
-|---|---|---|---|
-| Free | any signed-in account | the 7 calculators/reference tables | 20 req/min per key |
-| Developer | [Developer API subscribers](https://classicminidiy.com/developers) ($4.99/mo or $47.90/yr) | all 11 (adds `chassis-decoder`, `engine-decoder`, `wheel-search`, `color-lookup`) | 240 req/min per key |
+| Tier      | Who                                                                                        | Tools                                                                             | Rate limit          |
+| --------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------- |
+| Free      | any signed-in account                                                                      | the 7 calculators/reference tables                                                | 20 req/min per key  |
+| Developer | [Developer API subscribers](https://classicminidiy.com/developers) ($4.99/mo or $47.90/yr) | all 12 (adds `chassis-decoder`, `engine-decoder`, `wheel-search`, `color-lookup`) | 240 req/min per key |
 
 The canonical free-tool list is `FREE_TOOLS` in `server/utils/mcpTiers.ts` (a
 unit test pins it to the tool filenames). On a free key the paid tools still

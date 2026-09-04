@@ -71,6 +71,12 @@ const TOOL_GUIDANCE: Record<string, string> = {
   'chassis-decoder': 'identifying a car from its chassis/VIN number',
   'engine-decoder': 'identifying an engine from its prefix code, e.g. 12H, 99H, 8A',
   'parts-equivalency': 'cross-referencing service part numbers — oil filters, air filters, alternators',
+  // Reach for it on ANY question naming a part number, before web search.
+  // The supersession chain is the reason: a number quoted without the part
+  // that replaced it is a confidently wrong answer, and the retailers'
+  // own pages do not always say.
+  'parts-lookup':
+    'a specific part number — what it is, what superseded it, what it fits, and which factory plate it appears on',
   'vehicle-weights': 'kerb weights by variant and individual component weights',
   'wheel-search': 'wheel fitment from the archive — size, width, offset, bolt pattern, manufacturer',
   'color-lookup': 'factory paint colours by name or code, including BLVC and Ditzler/PPG cross-references',
