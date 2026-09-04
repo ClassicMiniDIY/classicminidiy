@@ -103,6 +103,31 @@ describe('YouTube links become cards', () => {
     expect(html).not.toContain('&amp;amp;');
   });
 
+  it('never lets a tag reach the card title', () => {
+    // CodeQL raised js/incomplete-multi-character-sanitization (high) against the
+    // previous implementation, which removed `<…>` from parsed HTML in a single
+    // pass — a pass like that can put back the sequence it strips, turning
+    // `<scr<b>ipt>` into `<script>`.
+    //
+    // HONEST NOTE: this assertion passes against BOTH implementations, verified
+    // by reverting the fix. The old one was not reachable here, because the
+    // `html()` renderer drops raw HTML before the strip ever runs. It was fixed
+    // anyway: "safe because another renderer happens to return empty string" is
+    // a coupling no security control should rest on, and it was invisible at the
+    // call site. The label now comes from the TOKENS, so no HTML is built to be
+    // sanitized and the question does not arise. This test pins the property.
+    const html = renderAssistantMarkdown('[scr<b>ipt alert](https://youtu.be/dQw4w9WgXcQ)');
+    expect(html).toContain('chat-video-card');
+    expect(html.toLowerCase()).not.toContain('<script');
+    expect(html.toLowerCase()).not.toContain('<b>');
+
+    const host = document.createElement('div');
+    host.innerHTML = html;
+    expect(host.querySelector('script')).toBeNull();
+    // The title survives as readable text, tags and all, escaped.
+    expect(host.querySelector('.chat-video-card__title')!.textContent).toContain('ipt alert');
+  });
+
   it('strips markup from a link label rather than nesting it in the card', () => {
     const html = renderAssistantMarkdown('[**Bold** title](https://youtu.be/dQw4w9WgXcQ)');
     expect(html).toContain('chat-video-card');
