@@ -46,6 +46,17 @@
     minRequestIntervalMs: number | null;
     maxChangeRatio: number | null;
     counts: SourceCounts;
+    queue: { total: number; remaining: number };
+    runInFlight: boolean;
+    lastRun: {
+      phase: string;
+      status: string;
+      startedAt: string;
+      finishedAt: string | null;
+      requestsMade: number | null;
+      recordsWritten: number | null;
+      abortReason: string | null;
+    } | null;
   }
 
   const STATUSES = ['none', 'requested', 'granted', 'declined'] as const;
@@ -90,6 +101,15 @@
     if (!value) return '—';
     return new Date(value).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
+  function fmtWhen(value: string | null) {
+    if (!value) return 'never';
+    const mins = Math.round((Date.now() - new Date(value).getTime()) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins} min ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return `${hours} h ago`;
+    return fmtDate(value);
+  }
 
   /**
    * The pending change. A decline is confirmed against its own blast radius, so
@@ -124,8 +144,8 @@
       flash(
         'success',
         enabled
-          ? `${source.name} crawl started. It begins on the next run.`
-          : `${source.name} crawl paused. A run in progress stops within one page.`
+          ? `${source.name} crawling allowed. This permits runs — it does not start one.`
+          : `${source.name} crawling paused. A run in progress stops within one page.`
       );
     } catch (e: any) {
       flash('error', e?.data?.statusMessage || e?.statusMessage || 'Could not change the crawl setting.');
@@ -295,27 +315,65 @@
             logs before acting.
           </p>
 
-          <!-- Crawl control -->
-          <div class="flex flex-wrap items-center gap-3 rounded-box bg-base-200 px-3 py-2">
-            <button
-              type="button"
-              class="btn btn-sm"
-              :class="source.crawlEnabled ? 'btn-warning' : 'btn-success'"
-              :disabled="busy === source.id || (!source.crawlEnabled && source.licenceStatus === 'declined')"
-              @click="setCrawl(source, !source.crawlEnabled)"
-            >
-              <i :class="source.crawlEnabled ? 'fas fa-pause' : 'fas fa-play'" />
-              {{ source.crawlEnabled ? 'Pause crawl' : 'Start crawl' }}
-            </button>
-            <span v-if="source.licenceStatus === 'declined'" class="text-xs text-base-content/60">
+          <!-- Crawl permission. NOT a launch button — see the note below. -->
+          <div class="space-y-2 rounded-box bg-base-200 px-3 py-2">
+            <div class="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="source.crawlEnabled ? 'btn-warning' : 'btn-success'"
+                :disabled="busy === source.id || (!source.crawlEnabled && source.licenceStatus === 'declined')"
+                @click="setCrawl(source, !source.crawlEnabled)"
+              >
+                <i :class="source.crawlEnabled ? 'fas fa-pause' : 'fas fa-check'" />
+                {{ source.crawlEnabled ? 'Pause crawling' : 'Allow crawling' }}
+              </button>
+
+              <span v-if="source.runInFlight" class="badge badge-success gap-1" :title="'A run is in progress'">
+                <i class="fas fa-spinner fa-spin" />
+                run in progress
+              </span>
+              <span v-else-if="source.crawlEnabled" class="badge badge-ghost gap-1">
+                <i class="fas fa-circle-check" />
+                allowed — idle
+              </span>
+              <span v-else class="badge badge-ghost gap-1">
+                <i class="fas fa-ban" />
+                paused
+              </span>
+            </div>
+
+            <p v-if="source.licenceStatus === 'declined'" class="text-xs text-base-content/60">
               Declined sources cannot be crawled. Change the licence status first.
-            </span>
-            <span v-else-if="source.crawlEnabled" class="text-xs text-base-content/60">
-              Running or ready. Pausing stops a run in progress within one page.
-            </span>
-            <span v-else class="text-xs text-base-content/60">
-              Paused. No requests are made to this source, not even a dry run.
-            </span>
+            </p>
+            <p v-else-if="source.crawlEnabled && !source.runInFlight" class="text-xs text-base-content/70">
+              <i class="fas fa-circle-info mr-1" />
+              This switch only <strong>permits</strong> crawling — it does not launch one. Runs are started by the
+              ingest job. Nothing is being fetched right now.
+            </p>
+            <p v-else-if="!source.crawlEnabled" class="text-xs text-base-content/60">
+              No requests are made to this source, not even a dry run. Pausing also stops a run already in progress,
+              within one page.
+            </p>
+
+            <p class="text-xs text-base-content/60">
+              Queue: <strong>{{ fmt(source.queue.remaining) }}</strong> of {{ fmt(source.queue.total) }} pages left
+              <template v-if="source.lastRun">
+                <span class="mx-1">·</span>
+                last run {{ source.lastRun.phase }} {{ source.lastRun.status }}
+                {{ fmtWhen(source.lastRun.finishedAt || source.lastRun.startedAt) }} ({{
+                  fmt(source.lastRun.requestsMade)
+                }}
+                requests, {{ fmt(source.lastRun.recordsWritten) }} rows)
+              </template>
+              <template v-else>
+                <span class="mx-1">·</span>
+                never run
+              </template>
+            </p>
+            <p v-if="source.lastRun?.abortReason" class="text-xs text-warning">
+              Last run stopped: {{ source.lastRun.abortReason }}
+            </p>
           </div>
 
           <!-- Crawl budget -->
