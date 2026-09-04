@@ -136,6 +136,32 @@ function youtubeVideoId(href: string): string {
 }
 
 /**
+ * The plain text of a marked inline token tree.
+ *
+ * This replaces `parseInline(tokens).replace(/<[^>]*>/g, '')`, which CodeQL
+ * flagged as `js/incomplete-multi-character-sanitization` at high severity and
+ * was right to: a single pass that removes `<…>` can REINTRODUCE the sequence it
+ * strips. `<scr<b>ipt>` becomes `<script>` after one pass. The defence was an
+ * argument that marked never emits a literal `<` outside a tag it also emits —
+ * true as far as I can tell, and exactly the kind of reasoning about someone
+ * else's output invariants that does not belong under a security control.
+ *
+ * Taking the text from the TOKENS sidesteps the question entirely. There is no
+ * HTML to sanitize, because HTML is never built in the first place — the card's
+ * title is assembled from source text and escaped once by `escapeHtml`.
+ */
+function tokensToText(tokens: any[]): string {
+  return (tokens ?? [])
+    .map((token) => {
+      // A `strong`, `em` or `link` token carries its content in `tokens`;
+      // recursing takes the words and leaves the markup behind.
+      if (Array.isArray(token?.tokens) && token.tokens.length > 0) return tokensToText(token.tokens);
+      return typeof token?.text === 'string' ? token.text : '';
+    })
+    .join('');
+}
+
+/**
  * Escape a string for interpolation into an HTML attribute or text node.
  *
  * The card is built by string concatenation, so anything interpolated has to be
@@ -174,12 +200,12 @@ function escapeHtml(value: string): string {
  * should matter.
  */
 function youtubeCard(videoId: string, href: string, label: string): string {
-  // `label` arrives as marked's ALREADY-ESCAPED inline HTML with its tags
-  // stripped by the caller, so it must not be escaped a second time — that
-  // would render "Rock &amp; Roll" as "Rock &amp;amp; Roll". `videoId` passed a
-  // strict `[A-Za-z0-9_-]{11}` test, so the thumbnail URL cannot carry anything.
-  // `href` is the one value that is neither escaped nor constrained.
-  const safeLabel = label.trim() || 'Watch on Classic Mini DIY';
+  // Both escaped here, and that is only correct because `label` now arrives as
+  // PLAIN SOURCE TEXT from `tokensToText` rather than as marked's already-escaped
+  // HTML. Escaping the old value would have double-escaped it — "Rock & Roll"
+  // rendering as "Rock &amp; Roll". `videoId` passed a strict
+  // `[A-Za-z0-9_-]{11}` test, so the thumbnail URL cannot carry anything.
+  const safeLabel = escapeHtml(label.trim()) || 'Watch on Classic Mini DIY';
   const safeHref = escapeHtml(href);
   const thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
   return (
@@ -217,11 +243,9 @@ marked.use({
       // because a watch URL should reach YouTube with nothing appended.
       const videoId = youtubeVideoId(href);
       if (videoId) {
-        // `text` is already-parsed inline HTML. A card's title is plain text, so
-        // any markup in the link label is stripped rather than nested inside the
-        // card — and stripping it here means the card cannot smuggle a tag past
-        // the tag list.
-        return youtubeCard(videoId, href, text.replace(/<[^>]*>/g, ''));
+        // The card's title is plain text, taken from the TOKENS rather than by
+        // stripping tags back out of `text`. See tokensToText.
+        return youtubeCard(videoId, href, tokensToText(tokens));
       }
 
       const processedHref = addUtmParameters(href);
