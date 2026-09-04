@@ -93,13 +93,25 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await db.from('admin_audit_log').insert({
+  // Checked, not fire-and-forget. The whole reason this route insists on a
+  // reason is that a takedown gets asked about months later; an audit row that
+  // silently failed to write answers that question no better than none at all.
+  // Handled like the licence-note failure above and for the same reason: the
+  // status change stands, but the gap is reported rather than swallowed.
+  const { error: auditError } = await db.from('admin_audit_log').insert({
     admin_id: user.id,
     action: status === 'declined' ? 'part_source_declined' : 'part_source_licence_changed',
     target_type: 'part_source',
     target_id: sourceId,
     details: { from: source.licence_status, to: status, slug: source.slug, name: source.name, reason },
   });
+
+  if (auditError) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Licence status changed to ${status}, but the audit entry could not be written: ${auditError.message}`,
+    });
+  }
 
   return { ok: true, from: source.licence_status, to: status };
 });

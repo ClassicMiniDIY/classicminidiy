@@ -56,37 +56,58 @@ export default defineEventHandler(async (event) => {
 
   // head:true so these are COUNT queries, not row fetches — the largest of them
   // will be counting five figures of parts once Somerford is imported.
+  //
+  // A FAILED COUNT MUST NOT RENDER AS ZERO. On this screen a zero reads as
+  // "declining hides nothing", which is the one wrong answer that makes a
+  // destructive action look safe. Supabase returns `count: null` alongside an
+  // error, so coercing with `?? 0` turns a broken query into a confident lie.
+  // Failures surface as null and the page renders them as unknown instead.
   const counted = await Promise.all(
     rows.map(async (source) => {
       const direct = await Promise.all(
         DIRECT_COUNTS.map(async ([table]) => {
-          const { count } = await db
+          const { count, error: countError } = await db
             .from(table)
             .select('id', { count: 'exact', head: true })
             .eq('source_id', source.id);
+          if (countError) {
+            console.error(`[admin/parts] count failed for ${table} (source ${source.slug}): ${countError.message}`);
+            return null;
+          }
           return count ?? 0;
         })
       );
 
       // Callouts reach their source through the parent diagram, so this one
       // needs the embed rather than a plain column filter.
-      const { count: callouts } = await db
+      const { count: callouts, error: calloutError } = await db
         .from('part_diagram_callouts')
         .select('id, part_diagrams!inner(source_id)', { count: 'exact', head: true })
         .eq('part_diagrams.source_id', source.id);
+      if (calloutError) {
+        console.error(`[admin/parts] callout count failed (source ${source.slug}): ${calloutError.message}`);
+      }
 
-      const counts: Record<string, number> = { callouts: callouts ?? 0 };
-      DIRECT_COUNTS.forEach(([, key], i) => (counts[key] = direct[i] ?? 0));
+      const counts: Record<string, number | null> = { callouts: calloutError ? null : (callouts ?? 0) };
+      DIRECT_COUNTS.forEach(([, key], i) => (counts[key] = direct[i] ?? null));
 
       // What a decline would actually hide from the public archive. Deliberately
       // excludes source_records, which is service-role only and never public.
-      counts.publicRows =
-        counts.parts +
-        counts.diagrams +
-        counts.callouts +
-        counts.applicability +
-        counts.supersessions +
-        counts.kitContents;
+      //
+      // Null if ANY component failed: a partial total is worse than no total,
+      // because it looks authoritative. The page shows "unknown" and says the
+      // figure could not be read.
+      const publicParts = [
+        counts.parts,
+        counts.diagrams,
+        counts.callouts,
+        counts.applicability,
+        counts.supersessions,
+        counts.kitContents,
+      ];
+      counts.publicRows = publicParts.some((n) => n === null)
+        ? null
+        : publicParts.reduce((a, b) => (a as number) + (b as number), 0);
 
       const setting = settings[source.id] ?? null;
       return {

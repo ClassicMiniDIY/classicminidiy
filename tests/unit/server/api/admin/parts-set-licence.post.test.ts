@@ -189,6 +189,19 @@ describe('POST /api/admin/parts/set-licence', () => {
     });
   });
 
+  it('fails loudly when the audit entry cannot be written', async () => {
+    // The route insists on a reason precisely because a takedown gets asked
+    // about months later. An audit row that silently failed to write answers
+    // that question no better than no row at all, so it is surfaced rather than
+    // swallowed — matching how the licence-note failure is handled.
+    canned['admin_audit_log:insert'] = { data: null, error: { message: 'audit write failed' } };
+    body();
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 500 });
+    // The status change itself still landed: it is the part that matters for a
+    // takedown and is deliberately not rolled back.
+    expect(tableCall('part_sources', 'update')?.values).toMatchObject({ licence_status: 'declined' });
+  });
+
   it('fails loudly when the status landed but the reason did not', async () => {
     // The status change is what matters for a takedown, so it is not rolled
     // back — but losing the record of WHY has to be visible, not swallowed.
