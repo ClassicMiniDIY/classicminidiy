@@ -110,17 +110,46 @@ export const AGENT_TOOL_NAMES = [
   'web_search',
 ].sort();
 
-function toolCatalogue(): string {
-  return AGENT_TOOL_NAMES.filter((name) => TOOL_GUIDANCE[name])
+function toolCatalogue(hasWebSearch: boolean): string {
+  return AGENT_TOOL_NAMES.filter((name) => TOOL_GUIDANCE[name] && (hasWebSearch || name !== 'web_search'))
     .map((name) => `- \`${name}\` — ${TOOL_GUIDANCE[name]}`)
     .join('\n');
 }
 
 /**
+ * The trusted-source list, or nothing when the model cannot search.
+ *
+ * Naming eight domains and telling the model to search them, when it has no
+ * search tool, is worse than saying nothing: it invites a claim to have
+ * consulted minispares that never happened.
+ */
+function trustedSourceSection(hasWebSearch: boolean): string {
+  if (!hasWebSearch) return '';
+  return `## Trusted sources
+
+\`web_search\` can only reach these sites. They were chosen by Cole. Say where something came from when you use one.
+
+${trustedSourceCatalogue()}
+
+Use them when the archive and the videos fall short — a part number Cole has not catalogued, a technical question the archive does not cover, a detail of history. Anything outside this list is unreachable, so never claim to have read a page that is not on it, and never invent a URL on a domain that is.
+
+`;
+}
+
+/**
  * The invariant half. Identical for every request and every user, so it can
  * become a cache prefix unchanged.
+ *
+ * `hasWebSearch` is the ONE thing that varies here, and it varies per DEPLOY
+ * rather than per request — it is `webSearchSupported(CHAT_MODEL)` — so the
+ * prefix is still byte-identical across every request and still caches. It has
+ * to be threaded through because `buildAgentTools` withholds `web_search` from
+ * a model that cannot accept `web_search_20260209` (anything below Sonnet 4.6),
+ * and a prompt that describes a tool the model was never given is how an
+ * assistant ends up reporting a search it could not run. Defaults to true so
+ * every caller that does not care gets the full prompt.
  */
-export function staticPrompt(): string {
+export function staticPrompt(hasWebSearch = true): string {
   return `You are the Classic Mini DIY assistant, on classicminidiy.com. You help people work on classic Mini Coopers (1959-2000) — the A-series cars, not the modern BMW MINI.
 
 Classic Mini DIY is a free enthusiast archive built by Cole. It is a reference, not a professional mechanical service.
@@ -129,7 +158,7 @@ Classic Mini DIY is a free enthusiast archive built by Cole. It is a reference, 
 
 You have direct access to Classic Mini DIY's own reference data. It is more accurate and more specific than anything you remember, and using it is the whole reason people ask you rather than a general chatbot.
 
-${toolCatalogue()}
+${toolCatalogue(hasWebSearch)}
 
 Rules for using them:
 
@@ -147,19 +176,11 @@ Three tiers. Getting a question into the right one is the single most important 
 
 **1. Specifications — a tool, or nothing.** Torque figures, clearances, endfloats, gear ratios, part numbers, weights, needle profiles, paint codes, chassis and engine codes. These come from a tool call, always, and never from memory or from a web page. If the tool has no match, say so. People torque real fasteners against these answers.
 
-**2. Procedure, general knowledge and history — answer the question.** How a job is done, how a system works, what a component is for, what the likely options are, and anything about the car's past. This is most of what people ask and you are expected to answer it. Ground it: call \`video-search\` first, because Cole has filmed a great many of these jobs; then \`site-search\`; then \`mini-history\` for anything historical; then \`web_search\` against the trusted sources. If none of them covers it and you still know how the job goes, say so and say plainly that it is general practice rather than a documented Classic Mini procedure. **"I don't have that in the archive" is not an answer on its own.** It is the first half of one — the second half is what you do know, or where to look.
+**2. Procedure, general knowledge and history — answer the question.** How a job is done, how a system works, what a component is for, what the likely options are, and anything about the car's past. This is most of what people ask and you are expected to answer it. Ground it: call \`video-search\` first, because Cole has filmed a great many of these jobs; then \`site-search\`; then \`mini-history\` for anything historical${hasWebSearch ? '; then `web_search` against the trusted sources' : ''}. If none of them covers it and you still know how the job goes, say so and say plainly that it is general practice rather than a documented Classic Mini procedure. **"I don't have that in the archive" is not an answer on its own.** It is the first half of one — the second half is what you do know, or where to look.
 
 **3. Diagnosis — reason it through, then say what would confirm it.** Given a symptom, list the likely causes in order of likelihood and say what would tell them apart. That is genuinely useful and you should do it. What you must not do is claim to know which one it is from a description alone, or talk someone through work that could hurt them — see Safety below.
 
-## Trusted sources
-
-\`web_search\` can only reach these sites. They were chosen by Cole. Say where something came from when you use one.
-
-${trustedSourceCatalogue()}
-
-Use them when the archive and the videos fall short — a part number Cole has not catalogued, a technical question the archive does not cover, a detail of history. Anything outside this list is unreachable, so never claim to have read a page that is not on it, and never invent a URL on a domain that is.
-
-## Cole's videos
+${trustedSourceSection(hasWebSearch)}## Cole's videos
 
 Classic Mini DIY is a YouTube channel before it is anything else, and over 450 videos sit behind \`video-search\`. **Call it on every how-to question.** If a video covers the job, link it and say what it shows — that is more use to someone in a garage than any amount of prose, and it is the thing this site can offer that a general chatbot cannot. Link only what the tool returns, exactly as it returns it. If the tool reports that the lookup failed, answer the question anyway and do not say the channel has nothing on it.
 
@@ -196,7 +217,7 @@ You are a reference tool that occasionally knows where the people are. Never a s
 
 Narrow. If a question has nothing to do with classic Minis — a recipe, a tax question, another car — say so briefly and offer to help with the Mini instead.
 
-Everything about the classic Mini is in scope, including its history: the origins and the Issigonis brief, the model timeline, the Coopers, the rallying, the variants, the factories, the last car. Call \`mini-history\`, and \`web_search\` for what the corpus does not hold. A question about the car's past is not trivia and must never be refused as such.`;
+Everything about the classic Mini is in scope, including its history: the origins and the Issigonis brief, the model timeline, the Coopers, the rallying, the variants, the factories, the last car. Call \`mini-history\`${hasWebSearch ? ', and `web_search` for what the corpus does not hold' : ''}. A question about the car's past is not trivia and must never be refused as such.`;
 }
 
 export interface PromptContext {
@@ -214,6 +235,15 @@ export interface PromptContext {
    * the prompt.
    */
   isMember?: boolean;
+  /**
+   * Whether the model this request runs on can be given `web_search`.
+   *
+   * Belongs to the STATIC half despite living on this context object: it is
+   * `webSearchSupported(CHAT_MODEL)`, constant for the life of a deploy, so it
+   * cannot vary the cache prefix between two requests. It is threaded through
+   * here only because that is where the chat route already assembles context.
+   */
+  hasWebSearch?: boolean;
 }
 
 /**
@@ -245,5 +275,6 @@ export function dynamicPrompt({ locale, pageSlug, isMember }: PromptContext = {}
 /** Convenience for callers that just want the whole system prompt. */
 export function buildSystemPrompt(context: PromptContext = {}): string {
   const dynamic = dynamicPrompt(context);
-  return dynamic ? `${staticPrompt()}\n\n## This request\n\n${dynamic}` : staticPrompt();
+  const invariant = staticPrompt(context.hasWebSearch ?? true);
+  return dynamic ? `${invariant}\n\n## This request\n\n${dynamic}` : invariant;
 }

@@ -159,6 +159,37 @@ describe('the system prompt', () => {
     expect(prompt).toMatch(/never invent a url/i);
   });
 
+  it('drops the web_search guidance when the model cannot be given the tool', () => {
+    // REGRESSION. `buildAgentTools` withholds `web_search` from any model that
+    // cannot accept `web_search_20260209` — anything below Sonnet 4.6 — while
+    // the prompt named the tool and listed eight trusted domains regardless. Set
+    // CHAT_MODEL to Haiku and the model was instructed to search sites it had no
+    // way to reach, which it can only answer by inventing a search it ran.
+    const withoutSearch = staticPrompt(false);
+    expect(withoutSearch).not.toContain('web_search');
+    expect(withoutSearch).not.toContain('## Trusted sources');
+    for (const source of TRUSTED_SOURCES) {
+      expect(withoutSearch, `${source.id} still named without a search tool`).not.toContain(source.domain);
+    }
+
+    // Everything that does not depend on the tool has to survive.
+    expect(withoutSearch).toContain('video-search');
+    expect(withoutSearch).toContain('mini-history');
+    expect(withoutSearch).toContain('## Safety');
+
+    // And the two halves must agree with the tool set for BOTH models.
+    expect(Object.keys(buildAgentTools({ modelId: 'claude-haiku-4-5-20251001' })).sort()).toEqual(
+      AGENT_TOOL_NAMES.filter((name) => name !== 'web_search')
+    );
+  });
+
+  it('threads the flag through buildSystemPrompt, defaulting to the full prompt', () => {
+    // A caller that does not pass it must get the same prompt production gets,
+    // never a quietly reduced one.
+    expect(buildSystemPrompt()).toBe(staticPrompt(true));
+    expect(buildSystemPrompt({ hasWebSearch: false })).toBe(staticPrompt(false));
+  });
+
   it('tells the model to reach for the videos on a how-to question', () => {
     // The whole point of `video-search`. Cole publishes DIY videos on many of
     // these jobs and the assistant was sending people to "a Mini forum".

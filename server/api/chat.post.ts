@@ -1,6 +1,6 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
-import { buildAgentTools } from '../agent/tools';
+import { buildAgentTools, webSearchSupported } from '../agent/tools';
 import { buildSystemPrompt } from '../agent/prompt';
 import { createChatRunTracker } from '../utils/chatUsage';
 import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
@@ -207,10 +207,16 @@ export default defineEventHandler(async (event) => {
     // membership pointer lives in the prompt's static half, so without it a
     // paying member asking an unanswerable question is sold the subscription
     // they already pay for.
+    // `hasWebSearch` keeps the prompt and the tool set telling the same story.
+    // `buildAgentTools` withholds `web_search` from a model that cannot accept
+    // `web_search_20260209`; without this the prompt would still name the tool
+    // and list eight trusted domains, and the model would report searches it had
+    // no way to run. Same predicate, one source of truth.
     system: buildSystemPrompt({
       locale: body?.locale,
       pageSlug: body?.pageSlug,
       isMember: getChatAuth(event)?.tier === 'member',
+      hasWebSearch: webSearchSupported(modelId),
     }),
     // Cache the tool definitions and the system prompt.
     //
