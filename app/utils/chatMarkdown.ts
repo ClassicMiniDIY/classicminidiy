@@ -39,6 +39,11 @@ const ALLOWED_TAGS = [
   'span',
   'strong',
   'em',
+  // `<i>` is here for the Font Awesome glyph inside a YouTube card, not for
+  // italics — marked emits `<em>` for those. CLAUDE.md requires the FA class
+  // form (`<i class="fas fa-play">`), and the Kit needs the element to survive
+  // sanitisation to swap it.
+  'i',
   'del',
   'code',
   'pre',
@@ -92,6 +97,80 @@ function addUtmParameters(url: string): string {
   }
 }
 
+/**
+ * The YouTube video id in a watch or short-form URL, or '' for anything else.
+ *
+ * Parsed with `URL`, never a regex over the raw href. A regex that matches
+ * "youtube.com" anywhere in a string also matches
+ * `https://evil.example/?x=youtube.com/watch?v=…`, which would render an
+ * attacker-chosen thumbnail inside a card that reads as Cole's own video. The
+ * hostname check below is an exact match against a known list, after parsing.
+ *
+ * Only `youtube.com/watch?v=`, `youtu.be/<id>` and `youtube.com/shorts/<id>`
+ * are recognised. A channel page, a playlist or a search URL is left as an
+ * ordinary link, because a card promises a single watchable video.
+ */
+function youtubeVideoId(href: string): string {
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return '';
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+
+  const host = url.hostname.toLowerCase().replace(/^www\./, '');
+  let id = '';
+
+  if (host === 'youtu.be') {
+    id = url.pathname.slice(1);
+  } else if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+    if (url.pathname === '/watch') id = url.searchParams.get('v') ?? '';
+    else if (url.pathname.startsWith('/shorts/')) id = url.pathname.slice('/shorts/'.length);
+  }
+
+  // YouTube ids are 11 characters of URL-safe base64. Anything else is not one,
+  // and the id is interpolated into an <img src>, so this is the check that
+  // keeps it from being interpolated into something else.
+  return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : '';
+}
+
+/**
+ * A YouTube link, rendered as a card rather than an underlined URL.
+ *
+ * Cole's videos are frequently the best answer the assistant can give, and a
+ * bare `https://www.youtube.com/watch?v=…` in the middle of a paragraph reads
+ * as noise. This gives one the thumbnail and a play glyph, so it looks like
+ * what it is.
+ *
+ * Emitted as `<a>`, `<span>` and `<img>` with `href`, `class`, `src` and `alt`
+ * — every one of which is ALREADY in ALLOWED_TAGS/ALLOWED_ATTR above. That is
+ * deliberate: the card needs no change to the sanitizer, so it cannot widen
+ * what an assistant reply is permitted to emit. The `html` renderer still drops
+ * raw HTML, so this markup can only come from here.
+ *
+ * NO UTM PARAMETERS. `addUtmParameters` tags outbound links so store traffic is
+ * attributable; a YouTube watch URL with query parameters appended is a link
+ * YouTube may handle differently, and the video id is the only thing in it that
+ * should matter.
+ */
+function youtubeCard(videoId: string, href: string, label: string): string {
+  const safeLabel = label.trim() || 'Watch on Classic Mini DIY';
+  const thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+  return (
+    `<a href="${href}" target="_blank" rel="noopener noreferrer" class="chat-video-card">` +
+    `<span class="chat-video-card__thumb">` +
+    `<img src="${thumbnail}" alt="" loading="lazy" />` +
+    `<span class="chat-video-card__play"><i class="fas fa-play"></i></span>` +
+    `</span>` +
+    `<span class="chat-video-card__body">` +
+    `<span class="chat-video-card__title">${safeLabel}</span>` +
+    `<span class="chat-video-card__meta">Classic Mini DIY on YouTube</span>` +
+    `</span>` +
+    `</a>`
+  );
+}
+
 const marked = new Marked(
   markedHighlight({
     langPrefix: 'language-',
@@ -107,9 +186,21 @@ marked.use({
   breaks: true,
   renderer: {
     link({ href, title, tokens }: any) {
+      const text = this.parser.parseInline(tokens);
+
+      // A YouTube video becomes a card. Checked BEFORE the UTM tagging below,
+      // because a watch URL should reach YouTube with nothing appended.
+      const videoId = youtubeVideoId(href);
+      if (videoId) {
+        // `text` is already-parsed inline HTML. A card's title is plain text, so
+        // any markup in the link label is stripped rather than nested inside the
+        // card — and stripping it here means the card cannot smuggle a tag past
+        // the tag list.
+        return youtubeCard(videoId, href, text.replace(/<[^>]*>/g, ''));
+      }
+
       const processedHref = addUtmParameters(href);
       const titleAttr = title ? ` title="${title}"` : '';
-      const text = this.parser.parseInline(tokens);
       return `<a href="${processedHref}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
     },
     // Drop raw HTML at the parser. This is what lets us skip a DOMPurify link

@@ -32,9 +32,32 @@ import { serverRuntimeConfig } from '../utils/runtimeConfig';
  *  budget in a loop. */
 const MAX_STEPS = 6;
 
-/** Guard the request body before it reaches a model. */
+/**
+ * Guard the request body before it reaches a model.
+ *
+ * `MAX_CHARS` was 24,000 and had to move when `web_search` was added, because
+ * one legitimate turn no longer fitted inside the whole budget. Measured on the
+ * live path, a single `tool-web_search` part serialises to **23,050 characters**
+ * — Anthropic returns an opaque `encryptedContent` blob per result, which the
+ * client replays with the rest of the conversation on every subsequent message.
+ * So a visitor asked one question that triggered a search, got a good answer,
+ * and was refused with "Conversation too long" on their very next message.
+ * Reproduced, not theorised.
+ *
+ * 120,000 leaves room for roughly four such turns alongside ordinary prose. The
+ * guard still does its job: it exists to bound what a scripted caller can push
+ * into a model on an UNAUTHENTICATED endpoint, and 120k characters is about 30k
+ * tokens — bounded, and bounded again by `MAX_MESSAGES`, the per-tier quota in
+ * `consumeChatQuota`, the in-process limiter and the Cloudflare zone rule.
+ *
+ * The better fix is to strip `encryptedContent` from PRIOR turns before
+ * replaying them — it is ~95% of those bytes and is only needed for citations
+ * within the turn that produced it. That is a provider-shape-specific change
+ * and wants its own measurement; this is the ceiling that makes the feature
+ * usable meanwhile.
+ */
 const MAX_MESSAGES = 40;
-const MAX_CHARS = 24_000;
+const MAX_CHARS = 120_000;
 
 /**
  * Approximate the size a message contributes to the prompt.
@@ -164,8 +187,22 @@ export default defineEventHandler(async (event) => {
   // of them is still matched. Bounded by the URL's own length.
   let membershipTail = '';
 
+  /**
+   * The default moved from Haiku 4.5 to Sonnet 5 on 2026-09-04.
+   *
+   * Not a cost decision — at the measured volume (473 conversations in fifteen
+   * months) the difference is cents. It is a judgement decision. The tier
+   * hierarchy this prompt now depends on asks the model to sort each question
+   * into specification / procedure / diagnosis, and Haiku read a prompt full of
+   * prohibitions conservatively enough to refuse five of five test questions.
+   * Sonnet is also the floor for `web_search_20260209`; `webSearchSupported()`
+   * in server/agent/tools.ts drops that tool rather than 400 if this is ever
+   * moved back down.
+   */
+  const modelId = ((config.CHAT_MODEL as string) || 'claude-sonnet-5').trim();
+
   const result = streamText({
-    model: anthropic(((config.CHAT_MODEL as string) || 'claude-haiku-4-5-20251001').trim()),
+    model: anthropic(modelId),
     // `isMember` is why the tier is read here and not only for analytics: the
     // membership pointer lives in the prompt's static half, so without it a
     // paying member asking an unanswerable question is sold the subscription
@@ -204,7 +241,15 @@ export default defineEventHandler(async (event) => {
     // from one that simply found nothing. Markers go to their OWN field, never
     // into `tools_called` — that array's length is published as
     // `tool_call_count`, so a marker there would count one invocation twice.
-    tools: buildAgentTools({ event, onDegraded: recordDegraded }),
+    // `youtubeApiKey` so `video-search` can page the uploads playlist, and
+    // `modelId` so the Anthropic-executed `web_search` tool is only offered to
+    // a model that accepts it.
+    tools: buildAgentTools({
+      event,
+      youtubeApiKey: (config.YOUTUBE_API_KEY as string) || '',
+      modelId,
+      onDegraded: recordDegraded,
+    }),
     stopWhen: stepCountIs(MAX_STEPS),
     // Every part of the stream, so time-to-first-chunk keeps meaning
     // time-to-first-token and chunk_count keeps meaning stream length. Feeding

@@ -1,0 +1,299 @@
+[
+  {
+    "id": "suez-brief",
+    "title": "The Suez Crisis and the brief for a small car",
+    "category": "origins",
+    "period": "1956–1957",
+    "summary": "Petrol rationing after the 1956 Suez Crisis collapsed demand for large cars and filled British roads with German bubble cars. BMC chairman Leonard Lord told Alec Issigonis to design a proper small car to replace them.",
+    "detail": "The Suez Crisis of late 1956 closed the canal and brought petrol rationing back to Britain. Sales of large saloons fell away and buyers moved to imported bubble cars and microcars, which Leonard Lord, chairman of the British Motor Corporation, reportedly detested. He gave Alec Issigonis a brief that was unusually tight for the period: a car that would carry four adults and their luggage, use an existing BMC engine, and fit inside a box roughly ten feet long, four feet wide and four feet high. The project was designated ADO15. The requirement to reuse the existing A-series engine, rather than design a new one, shaped almost every decision that followed.",
+    "tags": ["suez", "leonard lord", "ado15", "bubble car", "brief", "origins", "why was the mini made"]
+  },
+  {
+    "id": "issigonis-layout",
+    "title": "The Issigonis packaging layout",
+    "category": "origins",
+    "period": "1957–1959",
+    "summary": "Issigonis turned the engine sideways, put the gearbox in the sump beneath it sharing the engine oil, drove the front wheels, and shrank the wheels to ten inches — freeing roughly eighty per cent of the floorplan for passengers and luggage.",
+    "detail": "The layout is why the Mini worked and why it is still copied. Mounting the A-series transversely and stacking the gearbox in the sump underneath it, sharing a single oil supply, compressed the whole powertrain into a few feet at the front of the car. Front-wheel drive removed the propshaft and its transmission tunnel. Ten-inch wheels, made to order by Dunlop, cut the space each wheel arch stole from the cabin. The subframes carrying the powertrain and the rear suspension let a very small monocoque stay stiff. The result put about eighty per cent of the car's footprint at the disposal of its occupants, in a car barely over ten feet long. Sliding windows and door bins were part of the same logic: no winder mechanism meant a thinner door and more shoulder room.",
+    "tags": [
+      "transverse",
+      "gearbox in sump",
+      "front wheel drive",
+      "packaging",
+      "subframe",
+      "10 inch wheels",
+      "layout",
+      "issigonis"
+    ]
+  },
+  {
+    "id": "launch-1959",
+    "title": "Launch — Austin Se7en and Morris Mini-Minor",
+    "category": "models",
+    "period": "26 August 1959",
+    "summary": "The car launched on 26 August 1959 as two badge-engineered models sold through separate dealer networks: the Austin Se7en and the Morris Mini-Minor, both with the 848cc A-series.",
+    "detail": "BMC still ran Austin and Morris as rival dealer networks, so the same car launched under both marques on 26 August 1959 — the Austin Se7en (later spelled Seven) and the Morris Mini-Minor. Both used the 848cc A-series with a single SU carburettor, producing about 34bhp. Early sales were slow. The car was priced close to cost in a deliberate attempt to undercut the bubble cars, and its unconventional layout made conservative buyers cautious. It was adoption by the fashionable and by motorsport in the early 1960s, rather than the launch itself, that turned it into a phenomenon.",
+    "tags": [
+      "1959",
+      "launch",
+      "austin seven",
+      "se7en",
+      "morris mini-minor",
+      "848",
+      "first mini",
+      "when was the mini made"
+    ]
+  },
+  {
+    "id": "rubber-cone-suspension",
+    "title": "Moulton rubber cone suspension",
+    "category": "origins",
+    "period": "1959 onwards",
+    "summary": "Alex Moulton's rubber cone springs replaced conventional steel springs, saving the space a coil or leaf would have taken and giving the Mini its characteristically firm ride.",
+    "detail": "Alex Moulton, a friend of Issigonis and a rubber-suspension specialist, designed a conical rubber spring that worked in compression and packaged into almost no space. It has a rising rate, so the car resists roll well and rides firmly, and it needs no separate spring seat. The cones are a wear item: as the rubber ages the car settles, which is why ride height is a standard check on any Mini of unknown history. Rubber cone suspension is often called 'dry' suspension to distinguish it from Hydrolastic.",
+    "tags": ["moulton", "rubber cone", "dry suspension", "suspension", "ride height", "spring"]
+  },
+  {
+    "id": "hydrolastic",
+    "title": "Hydrolastic suspension",
+    "category": "models",
+    "period": "1964–1971",
+    "summary": "Saloons were fitted with fluid-filled Hydrolastic displacers from 1964, connecting front and rear on each side to level the car over bumps. It was dropped in favour of a return to dry rubber cones from 1971.",
+    "detail": "Hydrolastic replaced the rubber cones on saloons from 1964 with sealed displacer units connected front-to-rear along each side of the car by a fluid pipe. Hitting a bump at one end pushed fluid to the other, which reduced pitching and gave a noticeably softer ride. It was more expensive to build and to service, needed specialist pressurising equipment, and was unpopular with tuners because it complicated ride-height and handling adjustment. BMC reverted to dry rubber cone suspension from 1971, and many surviving Hydrolastic cars have been converted to dry since. Vans, estates and pick-ups stayed dry throughout.",
+    "tags": ["hydrolastic", "displacer", "wet suspension", "1964", "1971", "dry conversion", "suspension"]
+  },
+  {
+    "id": "mini-cooper-1961",
+    "title": "The first Mini Cooper",
+    "category": "cooper",
+    "period": "1961",
+    "summary": "John Cooper, of the Cooper Car Company, saw the Mini's competition potential and persuaded BMC to build a tuned version: the 1961 Mini Cooper, with a 997cc engine, twin SU carburettors and front disc brakes.",
+    "detail": "John Cooper was already building championship-winning Formula One cars and had run Minis privately. He convinced BMC that a homologated performance version would sell and would win. The 997cc Mini Cooper of 1961 lengthened the A-series stroke, added a second SU carburettor and a closer-ratio gearbox, and — significantly for the racing that followed — fitted seven-inch front disc brakes to a car that had run drums. Cooper received a royalty on each car built, an arrangement that continued in various forms and is the reason the name returned when Rover revived the model in 1990.",
+    "tags": ["john cooper", "997", "cooper", "1961", "twin su", "disc brakes", "first cooper"]
+  },
+  {
+    "id": "cooper-s",
+    "title": "Cooper S — 1071, 970 and 1275",
+    "category": "cooper",
+    "period": "1963–1971",
+    "summary": "The Cooper S arrived in 1963 with a 1071cc engine, joined in 1964 by 970cc and 1275cc versions built to suit different competition capacity classes. The 1275 S became the definitive one and ran until 1971.",
+    "detail": "The Cooper S was engineered for homologation as much as for the road. The 1071cc car of 1963 used a strengthened block, a nitrided crankshaft and larger main bearings — the basis of what enthusiasts still call an 'S' bottom end. In 1964 two more capacities appeared, chosen to sit inside particular racing classes: a short-stroke 970cc for the one-litre class and the 1275cc that would define the model. The 970 and 1071 were both dropped in 1965, leaving the 1275 S in production until 1971. Cooper S models are the cars most often faked, so heritage certificates and chassis prefixes matter when buying one.",
+    "tags": ["cooper s", "1275", "1071", "970", "homologation", "s", "1964", "1963"]
+  },
+  {
+    "id": "monte-carlo-wins",
+    "title": "Monte Carlo Rally wins — 1964, 1965 and 1967",
+    "category": "competition",
+    "period": "1964–1967",
+    "summary": "Works Mini Cooper S won the Monte Carlo Rally outright three times: Paddy Hopkirk in 1964 in 33 EJB, Timo Mäkinen in 1965, and Rauno Aaltonen in 1967.",
+    "detail": "The Monte Carlo Rally was the event that made the Mini's reputation, because it pitched a very small car against far more powerful machinery on snow and ice where traction and agility counted for more than outright horsepower. Paddy Hopkirk and Henry Liddon took the first outright win in 1964 in the Cooper S registered 33 EJB, probably the most famous registration in British motorsport. Timo Mäkinen won in 1965 and Rauno Aaltonen in 1967. Together with the 1966 result that was taken away, the works team's Monte record between 1964 and 1967 is four rallies won on the road.",
+    "tags": [
+      "monte carlo",
+      "rally",
+      "hopkirk",
+      "33 ejb",
+      "makinen",
+      "aaltonen",
+      "1964",
+      "1965",
+      "1967",
+      "works",
+      "wins"
+    ]
+  },
+  {
+    "id": "monte-carlo-1966-disqualification",
+    "title": "The 1966 Monte Carlo disqualification",
+    "category": "competition",
+    "period": "January 1966",
+    "summary": "In 1966 works Mini Cooper S finished first, second and third on the road and were then disqualified in post-event scrutineering over their headlamps. The win was awarded to Pauli Toivonen's Citroën DS21.",
+    "detail": "Timo Mäkinen, Rauno Aaltonen and Paddy Hopkirk brought their Cooper S home first, second and third. Scrutineers then ruled the cars' lighting non-compliant: the works Minis ran single-filament quartz-iodine bulbs with a dipping arrangement that the officials held did not match the homologated production specification. Roger Clark's fourth-placed Lotus Cortina, also British, was excluded on the same grounds. The victory passed to Pauli Toivonen in a Citroën DS21. The decision was contested at the time and is still widely regarded as partisan; it did nothing to slow the Mini's reputation, and Aaltonen won the event outright the following year. If someone asks what year the Mini was disqualified from the Monte Carlo Rally, the answer is 1966.",
+    "tags": [
+      "1966",
+      "disqualified",
+      "disqualification",
+      "monte carlo",
+      "headlights",
+      "headlamps",
+      "quartz iodine",
+      "toivonen",
+      "citroen",
+      "scrutineering",
+      "controversy"
+    ]
+  },
+  {
+    "id": "mk1",
+    "title": "Mk1",
+    "category": "models",
+    "period": "1959–1967",
+    "summary": "The original car: external door hinges, sliding windows, a small rear window and floor-mounted starter. The Cooper and Cooper S both arrived during the Mk1 period.",
+    "detail": "Mk1 cars are identified by their external door hinges, sliding side windows with door bins behind them, the small oval rear window and the earlier grille. Early cars have a floor-mounted starter button and the long 'magic wand' gear lever. Detail changed constantly through the run — the moulded rear light clusters, the hydrolastic switch in 1964, the 998cc option — so a Mk1 built in 1966 differs substantially from one built in 1959. Mk1 shells and Mk1 Cooper S cars are the most valuable and the most frequently misrepresented.",
+    "tags": ["mk1", "mark 1", "external hinges", "sliding windows", "magic wand", "1959", "1967"]
+  },
+  {
+    "id": "mk2",
+    "title": "Mk2",
+    "category": "models",
+    "period": "1967–1970",
+    "summary": "The Mk2 brought a larger rear window, a restyled grille and bigger rear lamps, and made the 998cc engine widely available alongside the 848.",
+    "detail": "Announced in 1967, the Mk2 is most easily spotted by its enlarged rear window and the wider, more rounded grille. Rear lamp clusters grew. The 998cc engine, previously reserved for the more expensive variants, became a mainstream option, and the model range simplified. The Mk2 was a short run: the substantially revised Mk3 followed within three years.",
+    "tags": ["mk2", "mark 2", "1967", "998", "rear window", "grille"]
+  },
+  {
+    "id": "mk3",
+    "title": "Mk3, and Mini as a marque",
+    "category": "models",
+    "period": "1969–1976",
+    "summary": "The Mk3 of 1969 brought concealed door hinges and wind-up windows. At the same time Mini stopped being an Austin or a Morris model and became a marque in its own right.",
+    "detail": "The Mk3 body dropped the external door hinges and replaced the sliding windows with wind-up glass, which meant new doors and a redesigned door skin. From 1969 the car was badged simply as a Mini rather than an Austin or Morris, ending a decade of parallel Austin and Morris versions. The Mk3 period also covers the switch back from Hydrolastic to dry rubber cone suspension in 1971, and the change from the long 'magic wand' remote gearchange to the rod-change gearbox in 1973 — a distinction that still governs which gearbox parts fit which car.",
+    "tags": [
+      "mk3",
+      "mark 3",
+      "1969",
+      "wind up windows",
+      "concealed hinges",
+      "marque",
+      "rod change",
+      "1973",
+      "magic wand"
+    ]
+  },
+  {
+    "id": "clubman-and-1275gt",
+    "title": "Clubman and 1275GT",
+    "category": "models",
+    "period": "1969–1980",
+    "summary": "The square-nosed Clubman launched in 1969 as a more modern-looking Mini, and the 1275GT replaced the Cooper S in the range. Both ran until 1980.",
+    "detail": "Roy Haynes restyled the front end into the flat, square Clubman nose, intended to modernise the car and simplify production. The Clubman was sold alongside the round-nose Mini rather than replacing it. The 1275GT used the same body with a single-carburettor 1275cc engine, and took the performance slot in the range when BMC's successor ended the Cooper agreement — it was never as quick as a Cooper S, which is a common point of confusion. The 1275GT was the first Mini offered with twelve-inch wheels, in 1974. Both Clubman and 1275GT were dropped in 1980 when the Metro arrived.",
+    "tags": ["clubman", "1275gt", "1275 gt", "square nose", "1969", "1980", "roy haynes", "12 inch wheels"]
+  },
+  {
+    "id": "later-marks",
+    "title": "Mk4 to Mk7",
+    "category": "models",
+    "period": "1976–2000",
+    "summary": "Mk4 (1976) rubber-mounted the front subframe and revised the interior. Mk5 (1984) brought twelve-inch wheels and front disc brakes across the range. Mk6 (1990) standardised the 1275 engine, with fuel injection from 1991. Mk7 (1996) brought multi-point injection, a front-mounted radiator and a driver's airbag.",
+    "detail": "The later marks are less dramatic than the early ones but matter enormously for parts compatibility. Mk4 from 1976 rubber-mounted the front subframe and brought a new fascia and improved heating. Mk5 from 1984 fitted twelve-inch wheels and front disc brakes as standard, which is the change most often cited when people talk about early versus late braking systems. Mk6 from 1990 made the 1275 engine standard and introduced single-point fuel injection in 1991, ending carburettors on new cars. Mk7 from 1996 moved to multi-point injection, relocated the radiator from the side of the engine bay to the front of the car, and added a driver's airbag and side-impact bars. An SPI and an MPI car differ substantially under the bonnet despite looking similar.",
+    "tags": [
+      "mk4",
+      "mk5",
+      "mk6",
+      "mk7",
+      "1976",
+      "1984",
+      "1990",
+      "1996",
+      "spi",
+      "mpi",
+      "injection",
+      "12 inch",
+      "disc brakes",
+      "airbag"
+    ]
+  },
+  {
+    "id": "riley-elf-wolseley-hornet",
+    "title": "Riley Elf and Wolseley Hornet",
+    "category": "variants",
+    "period": "1961–1969",
+    "summary": "Badge-engineered luxury Minis with a traditional grille, a boot extension and a wood-veneer dashboard, sold through the Riley and Wolseley dealer networks.",
+    "detail": "The Riley Elf and Wolseley Hornet were BMC using its remaining marques to reach buyers who wanted something more formal than a basic Mini. Both added an extended boot with fins, a full-height traditional grille appropriate to the marque, better trim and a wood dashboard. Mechanically they followed the mainstream car, moving from 848cc to 998cc during the run. Both were discontinued in 1969 when the marques were wound down.",
+    "tags": ["riley elf", "wolseley hornet", "badge engineering", "booted", "1961", "1969", "luxury"]
+  },
+  {
+    "id": "bodystyles",
+    "title": "Countryman, Traveller, Van, Pick-up and Moke",
+    "category": "variants",
+    "period": "1960–1983",
+    "summary": "Beyond the saloon the Mini was built as the Austin Countryman and Morris Traveller estates, a van, a pick-up, and the utilitarian Moke.",
+    "detail": "The van arrived in 1960 on a longer wheelbase, and that longer platform underpinned most of the commercial and estate variants. The estate was sold as the Austin Countryman and Morris Traveller, early versions carrying external ash timber framing that was decorative rather than structural. The pick-up followed in 1961. The Moke was conceived as a lightweight military vehicle, rejected by the army for its lack of ground clearance, and sold instead as a civilian beach and utility car — later built in Australia and Portugal. All of the long-wheelbase variants use different panels, glass and suspension components from the saloon.",
+    "tags": [
+      "countryman",
+      "traveller",
+      "estate",
+      "van",
+      "pickup",
+      "pick-up",
+      "moke",
+      "woody",
+      "long wheelbase",
+      "commercial"
+    ]
+  },
+  {
+    "id": "overseas-assembly",
+    "title": "Innocenti, Authi and overseas assembly",
+    "category": "variants",
+    "period": "1960s–1970s",
+    "summary": "Minis were assembled outside Britain under licence — Innocenti in Italy, Authi in Spain, and BMC's own plants in Australia and elsewhere — often with specification differences from UK cars.",
+    "detail": "Innocenti built Minis in Milan from 1965, including its own Mini Cooper versions and later the Bertone-styled Innocenti Mini 90 and 120, which used Mini mechanicals under an entirely different body. Authi assembled cars in Pamplona, Spain. BMC Australia built cars with local content and produced variants never sold in Britain, including the Mini K and a locally engineered Clubman GT. South Africa, Chile, Uruguay, Venezuela, Portugal and others also assembled cars. Overseas-built cars frequently differ in trim, glass, electrical specification and even bodyshell details, which matters when sourcing parts for one.",
+    "tags": ["innocenti", "authi", "australia", "overseas", "assembly", "licence", "bertone", "export", "ckd"]
+  },
+  {
+    "id": "cooper-revival",
+    "title": "The Cooper name returns",
+    "category": "cooper",
+    "period": "1990–2000",
+    "summary": "After nearly two decades out of the catalogue, Rover put the Mini Cooper back into production in 1990, initially with a 1275cc carburettor engine and later with fuel injection.",
+    "detail": "The Cooper had left the range in 1971. Strong sales of limited editions through the 1980s, and a run of Cooper conversion kits sold with John Cooper's blessing, showed there was still demand. Rover returned the Mini Cooper to the price list in 1990 with a 1275cc engine, and the model carried the range through its final decade, gaining injection, and appearing in a long series of special editions. The last Minis built were Cooper Sport models.",
+    "tags": ["cooper revival", "1990", "rover", "rsp", "cooper sport", "special edition", "return"]
+  },
+  {
+    "id": "ownership-chain",
+    "title": "BMC, British Leyland, Rover and BMW",
+    "category": "production",
+    "period": "1959–2000",
+    "summary": "The Mini was launched by BMC, absorbed into British Leyland in 1968, carried through the Austin Rover and Rover Group years, and finished under BMW ownership after 1994.",
+    "detail": "The British Motor Corporation launched the car. The 1968 merger that created British Leyland put the Mini inside a much larger and much less stable group, and the car survived several attempts to replace it — the Metro of 1980 was intended to do so and did not. Ownership passed through Austin Rover and the Rover Group, then to British Aerospace, and in 1994 to BMW. BMW kept the classic car in production while developing its replacement, which launched in 2001 as the new MINI — a different car under a different company, and the reason this site consistently says 'classic Mini'.",
+    "tags": ["bmc", "british leyland", "rover", "bmw", "1968", "1994", "metro", "ownership", "company"]
+  },
+  {
+    "id": "production-and-final-car",
+    "title": "Production total and the last car",
+    "category": "production",
+    "period": "1959–4 October 2000",
+    "summary": "About 5.38 million classic Minis were built over forty-one years. The five millionth came off the line in 1986, and the last car — a red Cooper Sport — was built at Longbridge on 4 October 2000.",
+    "detail": "Roughly 5.38 million classic Minis were built between 1959 and 2000, making it comfortably the most-produced British car. The five millionth was built in 1986. Production ended at Longbridge on 4 October 2000 with a red Cooper Sport, which went into the company's heritage collection rather than to a customer. The final year's cars were Mk7 multi-point-injection models with airbags and side-impact protection, which is a long way from the 848cc car of 1959 and yet recognisably the same design.",
+    "tags": [
+      "production",
+      "5.38 million",
+      "five million",
+      "last mini",
+      "final car",
+      "2000",
+      "longbridge",
+      "cooper sport",
+      "how many were made",
+      "end of production"
+    ]
+  },
+  {
+    "id": "a-series-engine",
+    "title": "The A-series engine",
+    "category": "origins",
+    "period": "1951–2000",
+    "summary": "The A-series predates the Mini — it was designed for the Austin A30 in the early 1950s. Reusing it was a condition of the brief, and it powered every classic Mini from 848cc to 1275cc.",
+    "detail": "The A-series was already in production when ADO15 began, and Leonard Lord's requirement to use an existing engine is why the Mini has one. In the Mini it was turned through ninety degrees and mated to a gearbox in its own sump, sharing one oil supply between engine and transmission — a decision that keeps the package small and is why oil condition and change intervals matter more on a Mini than on a conventional car. Capacities used across the classic Mini's life run 848, 970, 997, 998, 1071 and 1275cc. The engine survived the whole forty-one-year production run, ending as a multi-point injected 1275 with a catalyst.",
+    "tags": [
+      "a-series",
+      "a series",
+      "engine",
+      "848",
+      "998",
+      "1275",
+      "austin a30",
+      "shared oil",
+      "history of the engine"
+    ]
+  },
+  {
+    "id": "italian-job",
+    "title": "The Italian Job and the Mini in culture",
+    "category": "culture",
+    "period": "1969 onwards",
+    "summary": "The 1969 film The Italian Job, with its three Mini Coopers driving through Turin, fixed the car in popular culture and remains the single most recognisable thing about it outside enthusiast circles.",
+    "detail": "The Mini was already fashionable — it crossed class lines in a way few cars have, owned by both factory workers and the London set of the 1960s, and driven by musicians, actors and racing drivers. The Italian Job in 1969 turned that into something permanent: three Coopers in red, white and blue, driven through Turin's arcades, rooftops and sewers. The film's association is strong enough that it still shapes what colours people paint restorations. The car's competition record, its role in 1960s British design alongside the miniskirt and the Beatles, and the sheer number built all contribute, but for most people outside the hobby the film is the reference point.",
+    "tags": ["italian job", "1969", "film", "culture", "turin", "michael caine", "red white blue", "popular culture"]
+  }
+]

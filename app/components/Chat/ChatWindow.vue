@@ -147,7 +147,15 @@
                 </div>
 
                 <!-- Below `lg` there is no room for a rail, so sources fall inline
-                 under the transcript. From `lg` up the rail takes over. -->
+                 under the transcript. From `lg` up the rail takes over.
+                 Videos come FIRST: on a how-to question Cole's own video is the
+                 answer, and the links below it are the supporting material. -->
+                <VideoResults
+                  v-if="!isLoading && videoResults.length > 0"
+                  :videos="videoResults"
+                  variant="inline"
+                  class="lg:hidden"
+                />
                 <UsefulLinks v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" class="lg:hidden" />
               </div>
             </div>
@@ -195,7 +203,10 @@
         class="hidden w-[var(--chat-rail)] shrink-0 overflow-y-auto border-l border-base-300 bg-base-200/40 p-4 lg:block"
         :aria-label="t('useful_links_region')"
       >
-        <UsefulLinksSidebar v-if="!isLoading && usefulLinks.length > 0" :links="usefulLinks" />
+        <div v-if="!isLoading && (videoResults.length > 0 || usefulLinks.length > 0)" class="space-y-6">
+          <VideoResults v-if="videoResults.length > 0" :videos="videoResults" variant="rail" />
+          <UsefulLinksSidebar v-if="usefulLinks.length > 0" :links="usefulLinks" />
+        </div>
         <div v-else class="mt-8 text-center text-base-content/50">
           <i class="fas fa-link mb-2 block text-2xl" aria-hidden="true"></i>
           <p class="text-sm">{{ t('useful_links_placeholder') }}</p>
@@ -246,6 +257,7 @@
   import QuotaLimitPanel from './QuotaLimitPanel.vue';
   import UsefulLinks from './UsefulLinks.vue';
   import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
+  import VideoResults from './VideoResults.vue';
 
   /**
    * The assistant, talking to `/api/chat` in this Worker.
@@ -586,6 +598,78 @@
     }
 
     return links.sort((a, b) => b.score - a.score).slice(0, MAX_USEFUL_LINKS);
+  });
+
+  /**
+   * Video rail, built from `video-search` results in this conversation.
+   *
+   * Matched on `output.videos`, which is why `video-search` returns that key
+   * rather than `results`: `usefulLinks` above matches ANY tool output carrying
+   * a `results` array of `{ url, title }`, so a video tool that used the
+   * conventional name would have silently filled the Useful Links rail with
+   * YouTube links and left this one empty. The two shapes are disjoint on
+   * purpose — see server/agent/tools.ts.
+   *
+   * Deduplicated by `videoId`. A multi-step turn can search the channel twice
+   * with different wording, and the same video appearing twice in the rail
+   * looks like a bug to the reader.
+   */
+  const MAX_VIDEO_RESULTS = 3;
+
+  /**
+   * The rail shows a confident match, or nothing.
+   *
+   * The tool deliberately returns weaker matches than this — the model can read
+   * a title and decide for itself, and it does. The RAIL cannot. It renders a
+   * large thumbnail under "Watch on Classic Mini DIY", which reads as "Cole
+   * covered this", and that claim has to be true.
+   *
+   * Measured on the live channel, the two populations separate cleanly:
+   * "windshield replacement" scored the correct video at 0.570, while every
+   * incidental match across two different questions landed between 0.307 and
+   * 0.339 — a steering rack rebuild offered for a fuel filter question. 0.4
+   * sits in the gap with room on both sides.
+   */
+  const MIN_RAIL_SCORE = 0.4;
+
+  interface ChatVideo {
+    videoId: string;
+    title: string;
+    url: string;
+    thumbnail: string;
+    publishedAt: string;
+    score: number;
+  }
+
+  const videoResults = computed<ChatVideo[]>(() => {
+    const seen = new Set<string>();
+    const videos: ChatVideo[] = [];
+
+    for (const message of messages.value as UIMessage[]) {
+      for (const part of message.parts ?? []) {
+        const output = (part as any).output;
+        if (!output || !Array.isArray(output.videos)) continue;
+
+        for (const video of output.videos) {
+          if (!video || typeof video.videoId !== 'string' || typeof video.url !== 'string') continue;
+          if (typeof video.title !== 'string' || seen.has(video.videoId)) continue;
+          seen.add(video.videoId);
+          videos.push({
+            videoId: video.videoId,
+            title: video.title,
+            url: video.url,
+            thumbnail: typeof video.thumbnail === 'string' ? video.thumbnail : '',
+            publishedAt: typeof video.publishedAt === 'string' ? video.publishedAt : '',
+            score: typeof video.score === 'number' ? video.score : 0,
+          });
+        }
+      }
+    }
+
+    return videos
+      .filter((video) => video.score >= MIN_RAIL_SCORE)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, MAX_VIDEO_RESULTS);
   });
 
   /** Only until the first token — after that the streaming cursor is the signal. */

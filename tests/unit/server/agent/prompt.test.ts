@@ -10,6 +10,7 @@ vi.hoisted(() => {
 
 const { AGENT_TOOL_NAMES, staticPrompt, dynamicPrompt, buildSystemPrompt } = await import('~~/server/agent/prompt');
 const { buildAgentTools } = await import('~~/server/agent/tools');
+const { TRUSTED_SOURCES } = await import('~~/data/trustedSources');
 
 describe('the system prompt', () => {
   const prompt = staticPrompt();
@@ -90,6 +91,82 @@ describe('the system prompt', () => {
     expect(lower).toMatch(/never stops you answering/);
 
     expect(lower).toMatch(/never a salesperson/);
+  });
+
+  it('gives procedure and history a home between "specification" and "refuse"', () => {
+    // THE regression this section exists to prevent. The version before it
+    // sorted every question into specification (tool-only) or out-of-scope
+    // (`Do not answer general trivia`) with nothing in between, and five of
+    // five test conversations ended in a refusal: fitting a windscreen, a fuel
+    // filter for an SPI, a grinding 1-2 shift, the coolant route, and the 1966
+    // Monte Carlo. See docs/plans/2026-09-04-chat-agent-knowledge-expansion.md.
+    const heading = '## What you know, and where it comes from';
+    expect(prompt, 'the knowledge-tier section was renamed').toContain(heading);
+    const section = prompt.slice(prompt.indexOf(heading), prompt.indexOf('## Trusted sources'));
+    const lower = section.toLowerCase();
+
+    // Tier 1 is UNCHANGED and must stay as strict as it was. Loosening the one
+    // rule that keeps people from torquing real fasteners against a
+    // hallucinated number would be a far worse trade than the one being fixed.
+    expect(lower).toMatch(/specifications? — a tool, or nothing/);
+
+    // Tier 2 must say answer, not merely "you may".
+    expect(lower).toMatch(/procedure, general knowledge and history/);
+    expect(lower).toMatch(/answer the question/);
+
+    // Tier 3 must permit reasoning about a fault, which the old safety rule
+    // banned outright.
+    expect(lower).toMatch(/diagnosis/);
+    expect(lower).toMatch(/likel(y|ihood)/);
+
+    // And the sentence that names the actual failure mode.
+    expect(lower).toContain('is not an answer on its own');
+  });
+
+  it('narrows "safety-critical" so an ordinary repair is not refused', () => {
+    // "Do not offer personalised diagnostic advice on a safety-critical fault"
+    // was correct for brakes and read by the model as covering a grinding
+    // synchro. The definition is what stops that.
+    const heading = '## Safety';
+    const section = prompt.slice(prompt.indexOf(heading), prompt.indexOf('## When the archive falls short'));
+    const lower = section.toLowerCase();
+
+    expect(lower).toMatch(/safety-critical means/);
+    expect(lower).toMatch(/does not mean/);
+    // The mechanic recommendation must be additive, never a substitute.
+    expect(lower).toMatch(/not something you write instead/);
+    // And the original guidance has to survive intact.
+    expect(lower).toMatch(/brakes/);
+    expect(lower).toMatch(/qualified mechanic/);
+  });
+
+  it('puts history in scope instead of calling it trivia', () => {
+    const section = prompt.slice(prompt.indexOf('## Out of scope'));
+    expect(section.toLowerCase()).toMatch(/history/);
+    expect(section).toContain('mini-history');
+    // The exact sentence that produced "that's outside what I cover" for a
+    // question about the Monte Carlo Rally.
+    expect(section.toLowerCase(), 'the blanket trivia ban is back').not.toContain('do not answer general trivia');
+    expect(section.toLowerCase()).toMatch(/is not trivia/);
+  });
+
+  it('names every trusted source, so an allowlisted site is actually reachable', () => {
+    // A domain in `allowed_domains` that the prompt never mentions is
+    // searchable in principle and never searched in practice.
+    for (const source of TRUSTED_SOURCES) {
+      expect(prompt, `${source.id} is allowlisted but not named in the prompt`).toContain(source.domain);
+    }
+    expect(prompt).toMatch(/never invent a url/i);
+  });
+
+  it('tells the model to reach for the videos on a how-to question', () => {
+    // The whole point of `video-search`. Cole publishes DIY videos on many of
+    // these jobs and the assistant was sending people to "a Mini forum".
+    expect(prompt).toContain('video-search');
+    expect(prompt.toLowerCase()).toMatch(/call it on every how-to question/);
+    // And it must not be allowed to invent a video link, which is the one way
+    // this tool can do real damage to trust.
+    expect(prompt.toLowerCase()).toMatch(/link only what the tool returns/);
   });
 
   it('does not resurrect the shop-bot framing', () => {

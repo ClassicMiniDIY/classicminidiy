@@ -16,6 +16,10 @@ const { mockFetch, mockUseRuntimeConfig } = vi.hoisted(() => {
 const { mockOmnisearch } = vi.hoisted(() => ({ mockOmnisearch: vi.fn() }));
 vi.mock('~~/server/utils/omnisearch', () => ({ runOmnisearch: mockOmnisearch }));
 
+// `video-search` reaches YouTube through fetchJsonWithRetry, not $fetch.
+const { mockFetchJson } = vi.hoisted(() => ({ mockFetchJson: vi.fn() }));
+vi.mock('~~/server/utils/fetchJsonWithRetry', () => ({ fetchJsonWithRetry: mockFetchJson }));
+
 const { buildAgentTools, siteSearchTool, storeSearchTool, STORE_DEGRADED_MARKERS, SITE_SEARCH_DEGRADED_MARKER } =
   await import('~~/server/agent/tools');
 
@@ -225,5 +229,144 @@ describe('buildAgentTools', () => {
     const tools = buildAgentTools({ onDegraded });
     await run(tools['store-search'], { query: 'minilite', limit: 5 });
     expect(onDegraded).toHaveBeenCalledWith(STORE_DEGRADED_MARKERS.not_configured, expect.anything());
+  });
+});
+
+/**
+ * The three tools added on 2026-09-04, after five of five test conversations
+ * ended in a refusal. See docs/plans/2026-09-04-chat-agent-knowledge-expansion.md.
+ */
+const { videoSearchTool, historyTool, webSearchSupported, VIDEO_SEARCH_DEGRADED_MARKER } =
+  await import('~~/server/agent/tools');
+const { TRUSTED_DOMAINS } = await import('~~/data/trustedSources');
+
+describe('video-search', () => {
+  beforeEach(async () => {
+    // `getVideoIndex` memoises a defineCachedFunction wrapper on first call, so
+    // the Nitro auto-import has to exist before it and the memo has to be
+    // dropped between tests — otherwise one test's stub serves the next.
+    (globalThis as any).defineCachedFunction = (fn: any) => fn;
+    const { resetVideoIndexCache } = await import('~~/server/utils/youtubeCatalog');
+    resetVideoIndexCache();
+    mockFetchJson.mockReset();
+  });
+
+  it('returns Cole videos under `videos`, never `results`', async () => {
+    // LOAD-BEARING. `usefulLinks` in ChatWindow.vue shape-matches ANY tool
+    // output carrying a `results` array of `{ url, title }`. Naming this field
+    // `results` would silently fill the Useful Links rail with YouTube links and
+    // leave the dedicated video rail empty.
+    mockFetchJson.mockResolvedValueOnce({
+      items: [
+        {
+          snippet: {
+            title: 'How To Replace A Classic Mini Windscreen',
+            description: 'Removing the old screen and fitting new rubber.',
+            publishedAt: '2024-05-01T10:00:00Z',
+            thumbnails: { maxres: { url: 'https://i.ytimg.com/vi/aaaaaaaaaaa/maxres.jpg' } },
+            resourceId: { videoId: 'aaaaaaaaaaa' },
+          },
+        },
+      ],
+    });
+
+    const out: any = await run(videoSearchTool('key'), { query: 'windscreen', limit: 3 });
+
+    expect(out.checked).toBe(true);
+    expect(out).not.toHaveProperty('results');
+    expect(out.videos).toHaveLength(1);
+    expect(out.videos[0].url).toBe('https://www.youtube.com/watch?v=aaaaaaaaaaa');
+    expect(out.videos[0].thumbnail).toContain('i.ytimg.com');
+  });
+
+  it('distinguishes "no video covers this" from "I could not look"', async () => {
+    // A successful search that matched nothing must say so as a MATCH failure,
+    // so the model answers from elsewhere instead of claiming the channel is
+    // broken. The degraded case below is the opposite signal.
+    mockFetchJson.mockResolvedValueOnce({
+      items: [
+        {
+          snippet: {
+            title: 'Rebuilding A Classic Mini Gearbox',
+            description: 'Synchro replacement.',
+            publishedAt: '2024-05-01T10:00:00Z',
+            thumbnails: {},
+            resourceId: { videoId: 'bbbbbbbbbbb' },
+          },
+        },
+      ],
+    });
+
+    const out: any = await run(videoSearchTool('key'), { query: 'sourdough hydration', limit: 3 });
+    expect(out.checked).toBe(true);
+    expect(out.videos).toEqual([]);
+    expect(out.note).toMatch(/do not invent/i);
+  });
+
+  it('reports a lookup failure as `checked: false`, not as an absence', async () => {
+    // "Cole has no video on this" and "I could not look" are different answers,
+    // and only one of them is honest. An empty list with no signal would make
+    // the assistant claim the channel has nothing on a subject it covers.
+    const onDegraded = vi.fn();
+    const out: any = await run(videoSearchTool('', { onDegraded }), { query: 'windscreen', limit: 3 });
+
+    expect(out.checked).toBe(false);
+    expect(out.videos).toEqual([]);
+    expect(out.note).toMatch(/unavailable/i);
+    expect(onDegraded).toHaveBeenCalledWith(VIDEO_SEARCH_DEGRADED_MARKER, expect.stringMatching(/not configured/i));
+  });
+});
+
+describe('mini-history', () => {
+  it('answers the question the old prompt refused', async () => {
+    const out: any = await run(historyTool(), {
+      query: 'what year was the mini disqualified from monte carlo',
+      category: '',
+      limit: 3,
+    });
+    expect(out.entries[0].id).toBe('monte-carlo-1966-disqualification');
+  });
+
+  it('returns a whole category when asked for one', async () => {
+    const out: any = await run(historyTool(), { query: 'coopers', category: 'cooper', limit: 6 });
+    expect(out.entries.length).toBeGreaterThan(1);
+    expect(out.entries.every((e: any) => e.category === 'cooper')).toBe(true);
+  });
+
+  it('tells the model to search rather than guess when it has nothing', async () => {
+    const out: any = await run(historyTool(), { query: 'sourdough starter hydration', category: '', limit: 3 });
+    expect(out.entries).toEqual([]);
+    expect(out.note).toMatch(/web_search|unsure/i);
+  });
+});
+
+describe('web_search', () => {
+  it('is offered to a model that supports it, and withheld from one that does not', () => {
+    // `web_search_20260209` needs Sonnet 4.6 or better. On Haiku the request is
+    // rejected outright, so the tool has to be dropped rather than 400 the
+    // whole conversation.
+    expect(Object.keys(buildAgentTools({ modelId: 'claude-sonnet-5' }))).toContain('web_search');
+    expect(Object.keys(buildAgentTools({ modelId: 'claude-haiku-4-5-20251001' }))).not.toContain('web_search');
+    expect(webSearchSupported('claude-opus-5')).toBe(true);
+    expect(webSearchSupported('claude-haiku-4-5-20251001')).toBe(false);
+  });
+
+  it('defaults to including it, so an omitted modelId is not a quiet downgrade', () => {
+    expect(Object.keys(buildAgentTools())).toContain('web_search');
+  });
+
+  it('is pinned to the trusted allowlist, and only to it', () => {
+    const tool: any = buildAgentTools({ modelId: 'claude-sonnet-5' })['web_search'];
+
+    // Anthropic executes this one, so there is no handler to test. What CAN go
+    // wrong is the configuration: an empty or missing allowlist is not a
+    // degraded search, it is unrestricted web access — the exact failure the
+    // chat rebuild exists to undo, arriving silently.
+    expect(tool.isProviderExecuted).toBe(true);
+    expect(tool.id).toBe('anthropic.web_search_20260209');
+    expect(tool.args.allowedDomains).toEqual(TRUSTED_DOMAINS);
+    expect(tool.args.allowedDomains.length).toBeGreaterThan(0);
+    expect(tool.args.maxUses).toBeGreaterThan(0);
+    expect(tool.args.blockedDomains, 'allowed and blocked are mutually exclusive').toBeUndefined();
   });
 });
