@@ -105,6 +105,42 @@
     return null;
   });
 
+  /**
+   * Start or pause a source's crawl.
+   *
+   * Pausing takes effect within one page of a running drain, not just before
+   * the next run — the ingest re-reads the flag between pages. Unlike a licence
+   * change this needs no reason and no confirmation: it is reversible, it hides
+   * nothing, and someone reaching for pause usually wants it to have happened
+   * already.
+   */
+  async function setCrawl(source: PartSource, enabled: boolean) {
+    busy.value = source.id;
+    try {
+      await $adminFetch('/api/admin/parts/set-crawl', {
+        method: 'POST',
+        body: { sourceId: source.id, enabled },
+      });
+      flash(
+        'success',
+        enabled
+          ? `${source.name} crawl started. It begins on the next run.`
+          : `${source.name} crawl paused. A run in progress stops within one page.`
+      );
+    } catch (e: any) {
+      flash('error', e?.data?.statusMessage || e?.statusMessage || 'Could not change the crawl setting.');
+      return;
+    } finally {
+      busy.value = null;
+    }
+
+    try {
+      await refresh();
+    } catch {
+      flash('error', 'The change was saved, but the list could not be reloaded. Refresh the page.');
+    }
+  }
+
   function openChange(source: PartSource, status: Status) {
     if (status === source.licenceStatus) return;
     reason.value = '';
@@ -258,6 +294,29 @@
             The row counts could not be read, so the effect of declining this source cannot be shown. Check the server
             logs before acting.
           </p>
+
+          <!-- Crawl control -->
+          <div class="flex flex-wrap items-center gap-3 rounded-box bg-base-200 px-3 py-2">
+            <button
+              type="button"
+              class="btn btn-sm"
+              :class="source.crawlEnabled ? 'btn-warning' : 'btn-success'"
+              :disabled="busy === source.id || (!source.crawlEnabled && source.licenceStatus === 'declined')"
+              @click="setCrawl(source, !source.crawlEnabled)"
+            >
+              <i :class="source.crawlEnabled ? 'fas fa-pause' : 'fas fa-play'" />
+              {{ source.crawlEnabled ? 'Pause crawl' : 'Start crawl' }}
+            </button>
+            <span v-if="source.licenceStatus === 'declined'" class="text-xs text-base-content/60">
+              Declined sources cannot be crawled. Change the licence status first.
+            </span>
+            <span v-else-if="source.crawlEnabled" class="text-xs text-base-content/60">
+              Running or ready. Pausing stops a run in progress within one page.
+            </span>
+            <span v-else class="text-xs text-base-content/60">
+              Paused. No requests are made to this source, not even a dry run.
+            </span>
+          </div>
 
           <!-- Crawl budget -->
           <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-base-content/60">
