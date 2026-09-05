@@ -38,7 +38,12 @@ export default defineEventHandler(async () => {
   // A MISSING COUNT RENDERS AS ABSENT, NEVER AS ZERO. If the RPC is not
   // deployed yet, or errors, the page omits the figure rather than telling a
   // reader a plate has no parts on it.
-  const { data: counts, error: countError } = await db.rpc('part_plate_part_counts');
+  // The cast is temporary and self-removing: `part_plate_part_counts` lands in
+  // types/database.ts the moment migration 20260904000004 is applied to the
+  // remote project and `bun run gen:types` is re-run. Until then the generated
+  // union does not know the name, and the runtime guard below is what actually
+  // keeps the page correct either way.
+  const { data: counts, error: countError } = await db.rpc('part_plate_part_counts' as never);
   if (countError) console.error('[archive/parts] plate counts unavailable:', countError.message);
   const countsAvailable = !countError;
   const calloutCount = new Map<string, number>();
