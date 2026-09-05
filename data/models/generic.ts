@@ -338,6 +338,22 @@ export const ArchiveItems: ArchiveItem[] = [
     iconHtml:
       '<i class="fa-duotone fa-cube" style="--fa-primary-color: #5c7a3a; --fa-secondary-color: #2b2b2b; --fa-secondary-opacity: 0.6;"></i>',
   },
+  {
+    title: 'Part Numbers',
+    titleKey: 'archive_items.parts',
+    descKey: 'archive_items.parts_desc',
+    kindKey: 'archive_items.kind.database',
+    description: '',
+    image: '',
+    path: '/archive/parts',
+    to: '/archive/parts',
+    iconName: 'fa-gears',
+    iconPrimary: '#2f4858',
+    iconSecondary: '#d98c3f',
+    iconSecondaryOpacity: 0.85,
+    iconHtml:
+      '<i class="fa-duotone fa-gears" style="--fa-primary-color: #2f4858; --fa-secondary-color: #d98c3f; --fa-secondary-opacity: 0.85;"></i>',
+  },
 ];
 
 export const LandingPageToolboxItems = [
