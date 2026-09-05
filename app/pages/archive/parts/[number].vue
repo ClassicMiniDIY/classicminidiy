@@ -17,6 +17,9 @@
     description: string | null;
     kind: string | null;
     system: string | null;
+    category: string | null;
+    sharesCalloutWith: { partNumber: string; slug: string; description: string | null }[];
+    sharesCalloutWithTotal: number;
     notes: string | null;
     replacedBy: Related[];
     replaces: Related[];
@@ -108,6 +111,10 @@
     </nav>
 
     <header class="mb-6">
+      <div v-if="part.system || part.category" class="mb-2 flex flex-wrap items-center gap-2 text-sm">
+        <span v-if="part.system" class="badge badge-neutral">{{ part.system }}</span>
+        <span v-if="part.category" class="text-base-content/60">{{ part.category }}</span>
+      </div>
       <h1 class="font-mono text-3xl font-bold">{{ part.partNumber }}</h1>
       <p class="mt-1 text-lg text-base-content/80">{{ summary }}</p>
     </header>
@@ -196,6 +203,20 @@
         </ul>
       </section>
 
+      <section v-if="part.sharesCalloutWith.length" class="rounded-box border border-base-300 p-4">
+        <h2 class="mb-1 font-semibold">{{ t('siblings_heading') }}</h2>
+        <p class="mb-2 text-xs text-base-content/60">{{ t('siblings_hint') }}</p>
+        <ul class="space-y-1 text-sm">
+          <li v-for="sib in part.sharesCalloutWith" :key="sib.slug">
+            <NuxtLink :to="`/archive/parts/${sib.slug}`" class="link font-mono">{{ sib.partNumber }}</NuxtLink>
+            <span v-if="sib.description" class="text-base-content/70"> — {{ sib.description }}</span>
+          </li>
+        </ul>
+        <p v-if="part.sharesCalloutWithTotal > part.sharesCalloutWith.length" class="mt-2 text-xs text-base-content/60">
+          {{ t('siblings_more', { count: part.sharesCalloutWithTotal - part.sharesCalloutWith.length }) }}
+        </p>
+      </section>
+
       <section v-if="part.sourceUrls.length" class="rounded-box border border-base-300 p-4">
         <h2 class="mb-2 font-semibold">{{ t('where_heading') }}</h2>
         <ul class="space-y-1 text-sm">
@@ -231,7 +252,10 @@
     "where_heading": "Where to find it",
     "attribution": "Part data from {source}.",
     "crop_alt": "Detail of {title} showing callout {number}",
-    "qty": "qty {qty}"
+    "qty": "qty {qty}",
+    "siblings_heading": "Also at this position",
+    "siblings_hint": "Other parts sharing the same numbered callout on the plate.",
+    "siblings_more": "and {count} more"
   },
   "es": {
     "title": "{number} - Número de pieza del Classic Mini",
@@ -247,7 +271,10 @@
     "where_heading": "Dónde encontrarla",
     "attribution": "Datos de pieza de {source}.",
     "crop_alt": "Detalle de {title} mostrando la referencia {number}",
-    "qty": "cant. {qty}"
+    "qty": "cant. {qty}",
+    "siblings_heading": "También en esta posición",
+    "siblings_hint": "Otras piezas que comparten la misma referencia numerada en la lámina.",
+    "siblings_more": "y {count} más"
   },
   "fr": {
     "title": "{number} - Référence de pièce Classic Mini",
@@ -263,7 +290,10 @@
     "where_heading": "Où la trouver",
     "attribution": "Données de pièce fournies par {source}.",
     "crop_alt": "Détail de {title} montrant le repère {number}",
-    "qty": "qté {qty}"
+    "qty": "qté {qty}",
+    "siblings_heading": "Également à ce repère",
+    "siblings_hint": "Autres pièces partageant le même repère numéroté sur la planche.",
+    "siblings_more": "et {count} de plus"
   },
   "de": {
     "title": "{number} - Classic Mini Teilenummer",
@@ -279,7 +309,10 @@
     "where_heading": "Wo erhältlich",
     "attribution": "Teiledaten von {source}.",
     "crop_alt": "Ausschnitt aus {title} mit Position {number}",
-    "qty": "Menge {qty}"
+    "qty": "Menge {qty}",
+    "siblings_heading": "Ebenfalls an dieser Position",
+    "siblings_hint": "Weitere Teile mit derselben nummerierten Position auf der Tafel.",
+    "siblings_more": "und {count} weitere"
   },
   "it": {
     "title": "{number} - Codice ricambio Classic Mini",
@@ -295,7 +328,10 @@
     "where_heading": "Dove trovarlo",
     "attribution": "Dati ricambio da {source}.",
     "crop_alt": "Dettaglio di {title} con il riferimento {number}",
-    "qty": "qtà {qty}"
+    "qty": "qtà {qty}",
+    "siblings_heading": "Anche in questa posizione",
+    "siblings_hint": "Altri ricambi che condividono lo stesso riferimento numerato sulla tavola.",
+    "siblings_more": "e altri {count}"
   },
   "pt": {
     "title": "{number} - Número de peça do Classic Mini",
@@ -311,7 +347,10 @@
     "where_heading": "Onde encontrar",
     "attribution": "Dados de peça de {source}.",
     "crop_alt": "Detalhe de {title} mostrando a referência {number}",
-    "qty": "qtd. {qty}"
+    "qty": "qtd. {qty}",
+    "siblings_heading": "Também nesta posição",
+    "siblings_hint": "Outras peças que partilham a mesma referência numerada na prancha.",
+    "siblings_more": "e mais {count}"
   },
   "ru": {
     "title": "{number} - Номер детали Classic Mini",
@@ -327,7 +366,10 @@
     "where_heading": "Где найти",
     "attribution": "Данные о детали предоставлены {source}.",
     "crop_alt": "Фрагмент {title} с позицией {number}",
-    "qty": "кол-во {qty}"
+    "qty": "кол-во {qty}",
+    "siblings_heading": "Также в этой позиции",
+    "siblings_hint": "Другие детали с тем же номером позиции на схеме.",
+    "siblings_more": "и ещё {count}"
   },
   "ja": {
     "title": "{number} - クラシックミニ 部品番号",
@@ -343,7 +385,10 @@
     "where_heading": "入手先",
     "attribution": "部品データ提供: {source}。",
     "crop_alt": "{title} の図番 {number} 付近",
-    "qty": "数量 {qty}"
+    "qty": "数量 {qty}",
+    "siblings_heading": "この図番の他の部品",
+    "siblings_hint": "同じ図番を共有する他の部品です。",
+    "siblings_more": "他 {count} 件"
   },
   "zh": {
     "title": "{number} - 经典 Mini 零件号",
@@ -359,7 +404,10 @@
     "where_heading": "何处购买",
     "attribution": "零件数据来自 {source}。",
     "crop_alt": "{title} 中图号 {number} 的局部",
-    "qty": "数量 {qty}"
+    "qty": "数量 {qty}",
+    "siblings_heading": "同一图号的其他零件",
+    "siblings_hint": "在图版上共用同一编号的其他零件。",
+    "siblings_more": "以及另外 {count} 项"
   },
   "ko": {
     "title": "{number} - 클래식 미니 부품 번호",
@@ -375,7 +423,10 @@
     "where_heading": "구입처",
     "attribution": "부품 데이터 출처: {source}.",
     "crop_alt": "{title}의 도번 {number} 부분",
-    "qty": "수량 {qty}"
+    "qty": "수량 {qty}",
+    "siblings_heading": "같은 도번의 다른 부품",
+    "siblings_hint": "도판에서 같은 번호를 공유하는 다른 부품입니다.",
+    "siblings_more": "외 {count}건"
   }
 }
 </i18n>
