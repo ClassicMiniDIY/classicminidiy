@@ -403,6 +403,34 @@ a parser regression all look identical from inside the ingest, and all three sho
 the run rather than rewrite the archive. Every run writes a summary to
 `part_change_log`.
 
+### 5.2 What shipped, and where it differs (2026-09-05)
+
+Section 5 above assumes a sitemap with modification dates. Somerford has one. Mini Spares
+and Mini Sport do not, so for those two "has this page changed" is unanswerable without
+fetching the page, and the refresh had to be built on age instead.
+
+- **Age, not lastmod.** `part_source_private.refresh_after_days` (30 by default, 0 for
+  Somerford, which keeps its sitemap path) makes a queue row eligible for re-fetch.
+  Refresh rows are only taken once no unfetched row remains, so turning refresh on cannot
+  slow an incomplete first pass.
+- **Disappearance is decided per cycle, not per page.** A cycle opens when the first
+  refresh row of it is taken and closes when nothing is left to fetch. Only then does a
+  record whose `last_seen_at` predates the cycle count as a miss. One page missing a
+  listing means nothing: retailers move products between categories.
+- **Two misses, not three.** Cycles here run 30 days or longer, so two consecutive misses
+  is already about two months of absence. `gone_after_misses` is per source.
+- **`max_change_ratio` is now enforced**, in the reconcile step only — the one place that
+  mass-mutates records. Over the threshold it marks nothing, aborts, and leaves the cycle
+  open so the next run refuses again rather than proceeding once the evidence has aged
+  out. It does NOT yet queue the admin email described above, and no run writes
+  `part_change_log`; the run row's `abort_reason` and `notes` carry the outcome instead.
+- **A queue row is blocked after three failures.** Previously a 404 left
+  `last_fetched_at` null, so a dead URL was re-fetched on every drain for ever — and,
+  once refresh existed, would have held every cycle open permanently.
+
+Retired records are excluded from every public read (`is_current = true`), which is what
+makes the refresh worth running: the archive stops linking to pages the retailer removed.
+
 ---
 
 ## 6. Where the ingest runs

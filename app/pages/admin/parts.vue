@@ -24,6 +24,7 @@
     supersessions: number | null;
     kitContents: number | null;
     sourceRecords: number | null;
+    retiredRecords: number | null;
     publicRows: number | null;
   }
 
@@ -45,8 +46,11 @@
     maxRequestsPerDay: number | null;
     minRequestIntervalMs: number | null;
     maxChangeRatio: number | null;
+    refreshAfterDays: number | null;
+    goneAfterMisses: number | null;
+    refreshCycleStartedAt: string | null;
     counts: SourceCounts;
-    queue: { total: number; remaining: number };
+    queue: { total: number; remaining: number; blocked: number };
     runInFlight: boolean;
     lastRun: {
       phase: string;
@@ -358,6 +362,10 @@
 
             <p class="text-xs text-base-content/60">
               Queue: <strong>{{ fmt(source.queue.remaining) }}</strong> of {{ fmt(source.queue.total) }} pages left
+              <template v-if="source.queue.blocked">
+                <span class="mx-1">·</span>
+                {{ fmt(source.queue.blocked) }} blocked
+              </template>
               <template v-if="source.lastRun">
                 <span class="mx-1">·</span>
                 last run {{ source.lastRun.phase }} {{ source.lastRun.status }}
@@ -382,7 +390,25 @@
             <span>{{ fmtSetting(source.maxRequestsPerDay) }} req/day</span>
             <span>{{ fmtSetting(source.minRequestIntervalMs) }} ms apart</span>
             <span>abort over {{ Math.round((source.maxChangeRatio ?? 0) * 100) }}% change</span>
+            <span v-if="source.refreshAfterDays">
+              re-read after {{ source.refreshAfterDays }}d, retire after {{ source.goneAfterMisses }} unseen cycles
+            </span>
+            <span v-else>no refresh</span>
           </div>
+
+          <!--
+            The refresh state. A cycle stays open until every page has been read
+            again, so "open since" is the honest way to say it: it is not a run
+            that is stuck, it is a sweep that spans days by design.
+          -->
+          <p v-if="source.refreshCycleStartedAt" class="text-xs text-base-content/60">
+            Refresh cycle open since {{ fmtDate(source.refreshCycleStartedAt) }} — records not seen before it closes are
+            counted as missing.
+          </p>
+          <p v-if="source.counts.retiredRecords" class="text-xs text-base-content/60">
+            {{ fmt(source.counts.retiredRecords) }} records retired: the source no longer lists them, so the archive no
+            longer links to them.
+          </p>
 
           <div v-if="source.licenceNote" class="rounded-box bg-base-200 px-3 py-2 text-sm">
             <span class="font-semibold">Last licence note:</span>
