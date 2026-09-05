@@ -31,6 +31,9 @@ interface SourceCounts {
   sourceRecords: number | null;
   /** Records no longer current, i.e. gone from the source. Never public. */
   retiredRecords: number | null;
+  /** part_change_log entries in the last 30 days, by kind. */
+  recentWithdrawn: number | null;
+  recentChanged: number | null;
   publicRows: number | null;
 }
 
@@ -101,7 +104,7 @@ export default defineEventHandler(async (event) => {
   // for hours, which reads as "it is crawling" and is not.
   const { data: recentRuns } = await db
     .from('part_ingest_runs')
-    .select('source_id, phase, status, started_at, finished_at, requests_made, records_written, abort_reason')
+    .select('source_id, phase, status, started_at, finished_at, requests_made, records_written, abort_reason, notes')
     .order('started_at', { ascending: false })
     .limit(60);
 
@@ -169,6 +172,25 @@ export default defineEventHandler(async (event) => {
         console.error(`[admin/parts] retired count failed (source ${source.slug}): ${retiredError.message}`);
       }
 
+      // What the ingest has actually changed lately. part_change_log has no
+      // source column of its own — it hangs off the record — so this needs the
+      // embed, same as the callout count below.
+      const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+      const changeCount = async (kind: 'withdrawn' | 'changed') => {
+        const { count, error: changeError } = await db
+          .from('part_change_log')
+          .select('id, part_source_records!inner(source_id)', { count: 'exact', head: true })
+          .eq('part_source_records.source_id', source.id)
+          .eq('change_kind', kind)
+          .gte('seen_at', since);
+        if (changeError) {
+          console.error(`[admin/parts] ${kind} count failed (source ${source.slug}): ${changeError.message}`);
+          return null;
+        }
+        return count ?? 0;
+      };
+      const [recentWithdrawn, recentChanged] = await Promise.all([changeCount('withdrawn'), changeCount('changed')]);
+
       // Callouts reach their source through the parent diagram, so this one
       // needs the embed rather than a plain column filter.
       const { count: callouts, error: calloutError } = await db
@@ -191,6 +213,8 @@ export default defineEventHandler(async (event) => {
         kitContents: direct[4] ?? null,
         sourceRecords: direct[5] ?? null,
         retiredRecords: retiredError ? null : (retired ?? 0),
+        recentWithdrawn,
+        recentChanged,
         callouts: calloutError ? null : (callouts ?? 0),
         publicRows: null,
       };
@@ -247,6 +271,9 @@ export default defineEventHandler(async (event) => {
               requestsMade: (runsBySource.get(source.id) ?? [])[0]!.requests_made,
               recordsWritten: (runsBySource.get(source.id) ?? [])[0]!.records_written,
               abortReason: (runsBySource.get(source.id) ?? [])[0]!.abort_reason,
+              // What a completed refresh cycle did, if the run closed one.
+              refreshNote:
+                ((runsBySource.get(source.id) ?? [])[0]!.notes as { refresh?: string } | null)?.refresh ?? null,
             }
           : null,
       };

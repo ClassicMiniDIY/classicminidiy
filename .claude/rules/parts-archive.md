@@ -29,6 +29,9 @@ ingest scripts live in `classicminidiy-supabase`; nothing here writes `part_*`.
   under-report. This has shipped twice: 37,066 callouts counted as 1,000 (eight
   systems reported zero parts) and a queue tally that stopped growing at 1,000.
   Use `{ count: 'exact', head: true }`, an RPC, or `.range()` paging.
+- **`part_change_log` has no source column.** It hangs off `part_source_records`, so
+  filtering by source needs the embed (`part_source_records!inner(source_id)`), the same
+  shape the callout count uses.
 - **A failed count renders as unknown, never as zero.** On `/admin/parts` a zero
   reads as "declining this source hides nothing", which is the one wrong answer
   that makes the kill switch look safe to pull.
