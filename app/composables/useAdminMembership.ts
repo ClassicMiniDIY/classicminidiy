@@ -101,20 +101,6 @@ export type MembershipPlatform = 'apple' | 'google' | 'stripe' | 'comp' | 'ghost
 export const useAdminMembership = () => {
   const supabase = useSupabase();
 
-  /**
-   * The three RPCs below ship in classicminidiy-supabase migration
-   * 20260905000001 and are therefore absent from the generated `Database` type
-   * until `bun run gen:types` is re-run against a project that has it. Calling
-   * them through this narrowed signature keeps the typecheck ratchet flat
-   * without an `any`; once the types are regenerated the cast is redundant and
-   * should be deleted along with this comment.
-   */
-  type PendingRpc = (
-    fn: string,
-    args?: Record<string, unknown>
-  ) => Promise<{ data: unknown; error: { message: string } | null }>;
-  const pendingRpc = supabase.rpc.bind(supabase) as unknown as PendingRpc;
-
   /** Snapshot of a user's membership for the admin UI. */
   const getMembership = async (userId: string): Promise<AdminMembership> => {
     const { data, error } = await supabase.rpc('admin_get_membership', { p_user_id: userId }).single();
@@ -148,10 +134,15 @@ export const useAdminMembership = () => {
   /**
    * Purchases for one product, newest first. Defaults to the Sustaining
    * membership: `subscriptions` also carries the Developer API tier, and an
-   * unscoped list counts those rows as members. Pass null for every product.
+   * unscoped list counts those rows as members.
+   *
+   * The RPC also accepts SQL NULL for "every product", but Supabase generates
+   * defaulted arguments as optional (`string | undefined`), so an explicit null
+   * is not expressible through the typed client. Nothing needs it today; a
+   * caller that does should widen the RPC rather than cast around the type.
    */
-  const listSubscriptions = async (productId: string | null = 'sustaining'): Promise<AdminSubscriptionRow[]> => {
-    const { data, error } = await pendingRpc('admin_list_subscriptions', { p_product_id: productId });
+  const listSubscriptions = async (productId = 'sustaining'): Promise<AdminSubscriptionRow[]> => {
+    const { data, error } = await supabase.rpc('admin_list_subscriptions', { p_product_id: productId });
     if (error) throw error;
     return (data ?? []) as AdminSubscriptionRow[];
   };
@@ -162,16 +153,17 @@ export const useAdminMembership = () => {
    * this list never needs dismissing.
    */
   const listVerificationFailures = async (since?: string): Promise<AdminVerificationFailure[]> => {
-    const { data, error } = await pendingRpc('admin_list_verification_failures', {
-      p_since: since ?? null,
-    });
+    // Omit the argument rather than sending an explicit null: the SQL default is
+    // NULL, which the function turns into "last 30 days", and the generated type
+    // for a defaulted argument does not admit null.
+    const { data, error } = await supabase.rpc('admin_list_verification_failures', since ? { p_since: since } : {});
     if (error) throw error;
     return (data ?? []) as AdminVerificationFailure[];
   };
 
   /** Attempts per day/platform/outcome over the last `days`. */
   const verificationHealth = async (days = 7): Promise<AdminVerificationHealth[]> => {
-    const { data, error } = await pendingRpc('admin_verification_health', { p_days: days });
+    const { data, error } = await supabase.rpc('admin_verification_health', { p_days: days });
     if (error) throw error;
     return (data ?? []) as AdminVerificationHealth[];
   };
