@@ -218,7 +218,8 @@
       </section>
 
       <section v-if="part.sourceUrls.length" class="rounded-box border border-base-300 p-4">
-        <h2 class="mb-2 font-semibold">{{ t('where_heading') }}</h2>
+        <h2 class="mb-1 font-semibold">{{ t('where_heading') }}</h2>
+        <p class="mb-2 text-xs text-base-content/60">{{ t('where_hint') }}</p>
         <ul class="space-y-1 text-sm">
           <li v-for="link in part.sourceUrls" :key="link.url">
             <a :href="link.url" target="_blank" rel="noopener noreferrer nofollow" class="link link-primary">
@@ -255,7 +256,8 @@
     "qty": "qty {qty}",
     "siblings_heading": "Also at this position",
     "siblings_hint": "Other parts sharing the same numbered callout on the plate.",
-    "siblings_more": "and {count} more"
+    "siblings_more": "and {count} more",
+    "where_hint": "Listed in no particular order. We do not rank or recommend suppliers."
   },
   "es": {
     "title": "{number} - Número de pieza del Classic Mini",
@@ -274,7 +276,8 @@
     "qty": "cant. {qty}",
     "siblings_heading": "También en esta posición",
     "siblings_hint": "Otras piezas que comparten la misma referencia numerada en la lámina.",
-    "siblings_more": "y {count} más"
+    "siblings_more": "y {count} más",
+    "where_hint": "Sin ningún orden concreto. No clasificamos ni recomendamos proveedores."
   },
   "fr": {
     "title": "{number} - Référence de pièce Classic Mini",
@@ -293,7 +296,8 @@
     "qty": "qté {qty}",
     "siblings_heading": "Également à ce repère",
     "siblings_hint": "Autres pièces partageant le même repère numéroté sur la planche.",
-    "siblings_more": "et {count} de plus"
+    "siblings_more": "et {count} de plus",
+    "where_hint": "Dans un ordre quelconque. Nous ne classons ni ne recommandons de fournisseurs."
   },
   "de": {
     "title": "{number} - Classic Mini Teilenummer",
@@ -312,7 +316,8 @@
     "qty": "Menge {qty}",
     "siblings_heading": "Ebenfalls an dieser Position",
     "siblings_hint": "Weitere Teile mit derselben nummerierten Position auf der Tafel.",
-    "siblings_more": "und {count} weitere"
+    "siblings_more": "und {count} weitere",
+    "where_hint": "In keiner bestimmten Reihenfolge. Wir bewerten und empfehlen keine Anbieter."
   },
   "it": {
     "title": "{number} - Codice ricambio Classic Mini",
@@ -331,7 +336,8 @@
     "qty": "qtà {qty}",
     "siblings_heading": "Anche in questa posizione",
     "siblings_hint": "Altri ricambi che condividono lo stesso riferimento numerato sulla tavola.",
-    "siblings_more": "e altri {count}"
+    "siblings_more": "e altri {count}",
+    "where_hint": "In ordine casuale. Non classifichiamo né consigliamo fornitori."
   },
   "pt": {
     "title": "{number} - Número de peça do Classic Mini",
@@ -350,7 +356,8 @@
     "qty": "qtd. {qty}",
     "siblings_heading": "Também nesta posição",
     "siblings_hint": "Outras peças que partilham a mesma referência numerada na prancha.",
-    "siblings_more": "e mais {count}"
+    "siblings_more": "e mais {count}",
+    "where_hint": "Sem ordem específica. Não classificamos nem recomendamos fornecedores."
   },
   "ru": {
     "title": "{number} - Номер детали Classic Mini",
@@ -369,7 +376,8 @@
     "qty": "кол-во {qty}",
     "siblings_heading": "Также в этой позиции",
     "siblings_hint": "Другие детали с тем же номером позиции на схеме.",
-    "siblings_more": "и ещё {count}"
+    "siblings_more": "и ещё {count}",
+    "where_hint": "Без определённого порядка. Мы не ранжируем и не рекомендуем поставщиков."
   },
   "ja": {
     "title": "{number} - クラシックミニ 部品番号",
@@ -388,7 +396,8 @@
     "qty": "数量 {qty}",
     "siblings_heading": "この図番の他の部品",
     "siblings_hint": "同じ図番を共有する他の部品です。",
-    "siblings_more": "他 {count} 件"
+    "siblings_more": "他 {count} 件",
+    "where_hint": "順不同です。販売店の順位付けや推奨は行っていません。"
   },
   "zh": {
     "title": "{number} - 经典 Mini 零件号",
@@ -407,7 +416,8 @@
     "qty": "数量 {qty}",
     "siblings_heading": "同一图号的其他零件",
     "siblings_hint": "在图版上共用同一编号的其他零件。",
-    "siblings_more": "以及另外 {count} 项"
+    "siblings_more": "以及另外 {count} 项",
+    "where_hint": "排列不分先后。我们不对供应商排名或推荐。"
   },
   "ko": {
     "title": "{number} - 클래식 미니 부품 번호",
@@ -426,7 +436,8 @@
     "qty": "수량 {qty}",
     "siblings_heading": "같은 도번의 다른 부품",
     "siblings_hint": "도판에서 같은 번호를 공유하는 다른 부품입니다.",
-    "siblings_more": "외 {count}건"
+    "siblings_more": "외 {count}건",
+    "where_hint": "순서는 무작위입니다. 판매처를 순위 매기거나 추천하지 않습니다."
   }
 }
 </i18n>
