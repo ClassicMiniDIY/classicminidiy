@@ -437,6 +437,33 @@ fetching the page, and the refresh had to be built on age instead.
 Retired records are excluded from every public read (`is_current = true`), which is what
 makes the refresh worth running: the archive stops linking to pages the retailer removed.
 
+### 5.3 The change ledger (2026-09-05)
+
+`part_change_log` is written now. It had existed since the first migration and held no
+rows, which was honest but useless: when the valve refuses a cycle, the only thing the run
+row can say is HOW MANY records went unseen, and the question a person actually asks is
+which ones.
+
+- `added` and `changed` come from the ingest, which reads the stored content hashes before
+  the upsert. The upsert cannot tell an insert from an update from a no-op, so this is
+  also the only honest source for the `unchanged` counter — it had reported 0 for every
+  run ever made.
+- `missing` and `withdrawn` come from `reconcile_part_source_cycle`, in the same statement
+  that marks the records. A ledger written separately can disagree with what it records.
+- The diff carries the part number, the title and the source URL, because after a record
+  is retired the row survives but the reason it went does not live anywhere else.
+- **Not backfilled.** Records that predate this have no `added` row.
+
+Every row is still upserted, unchanged ones included: `last_seen_at` is what a refresh
+cycle reads to decide a record was seen, so skipping the write for an unchanged record
+would make the next cycle retire it.
+
+**The admin email is not built.** The design above says a refused run queues one through
+`notification_queue`. That needs a new `event_type` in the table's CHECK constraint and a
+template in the `process-notifications` edge function, and it earns its keep only when
+runs are unattended. Every run today is started by hand. `/admin/parts` shows a refusal as
+an alert instead. Build the email with the scheduled runner, not before.
+
 ---
 
 ## 6. Where the ingest runs

@@ -94,6 +94,15 @@
 
   const numberFormat = new Intl.NumberFormat('en-US');
   /** Counts only. Renders an unreadable count as "unknown", never as zero. */
+  /**
+   * A reconcile refusal means the source looked like it had lost most of its
+   * catalogue and the ingest declined to act on that. It is a decision waiting
+   * for a person, not an ordinary abort, so it gets an alert rather than a line.
+   */
+  function isReconcileRefusal(source: PartSource) {
+    return source.lastRun?.abortReason?.startsWith('reconcile refused') ?? false;
+  }
+
   function fmt(n: number | null | undefined) {
     return n === null || n === undefined ? 'unknown' : numberFormat.format(n);
   }
@@ -408,6 +417,10 @@
           <p v-if="source.counts.retiredRecords" class="text-xs text-base-content/60">
             {{ fmt(source.counts.retiredRecords) }} records retired: the source no longer lists them, so the archive no
             longer links to them.
+          </p>
+          <p v-if="source.counts.recentWithdrawn || source.counts.recentChanged" class="text-xs text-base-content/60">
+            Last 30 days: {{ fmt(source.counts.recentChanged) }} records changed upstream,
+            {{ fmt(source.counts.recentWithdrawn) }} withdrawn.
           </p>
 
           <div v-if="source.licenceNote" class="rounded-box bg-base-200 px-3 py-2 text-sm">
