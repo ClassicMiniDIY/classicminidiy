@@ -35,6 +35,27 @@
     query: computed(() => ({ q: route.query.q ?? '', page: page.value })),
   });
 
+  interface PlateRow {
+    id: string;
+    title: string;
+    page: string | null;
+    hasImage: boolean;
+    parts: number | null;
+  }
+  interface SystemRow {
+    system: string;
+    sections: { section: string; plates: PlateRow[] }[];
+    plateCount: number;
+    partCount: number | null;
+  }
+
+  // Browse is the default view; search is the other way in, not the only one.
+  const { data: browse } = await useFetch<{ systems: SystemRow[]; totalPlates: number; countsAvailable: boolean }>(
+    '/api/archive/parts/sections'
+  );
+  const systems = computed(() => browse.value?.systems ?? []);
+  const searching = computed(() => Boolean(route.query.q));
+
   const parts = computed(() => data.value?.parts ?? []);
   const total = computed(() => data.value?.total ?? 0);
   const totalPages = computed(() => Math.min(200, Math.ceil(total.value / (data.value?.pageSize || 24))));
@@ -79,6 +100,51 @@
       <button type="submit" class="btn btn-primary">{{ t('search_button') }}</button>
     </form>
 
+    <!-- Browse. Shown until a search narrows things down. -->
+    <section v-if="!searching && systems.length" class="mb-10 space-y-8">
+      <div v-for="system in systems" :key="system.system">
+        <h2 class="mb-3 flex flex-wrap items-baseline gap-x-3 text-xl font-bold">
+          {{ system.system }}
+          <span class="text-sm font-normal text-base-content/60">
+            {{ t('system_meta', { plates: system.plateCount }) }}
+            <template v-if="system.partCount !== null">
+              · {{ t('system_parts', { parts: system.partCount }) }}</template
+            >
+          </span>
+        </h2>
+
+        <div v-for="section in system.sections" :key="section.section" class="mb-5">
+          <h3 class="mb-2 text-sm font-semibold text-base-content/80">{{ section.section }}</h3>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <NuxtLink
+              v-for="plate in section.plates"
+              :key="plate.id"
+              :to="`/archive/parts/diagrams/${plate.id}`"
+              class="group block"
+            >
+              <div class="aspect-square overflow-hidden rounded-box border border-base-300 bg-white">
+                <img
+                  v-if="plate.hasImage"
+                  :src="`/api/archive/parts/diagram-image?diagram=${plate.id}&size=thumb`"
+                  :alt="t('plate_alt', { title: plate.title })"
+                  class="h-full w-full object-contain transition-transform group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div v-else class="flex h-full items-center justify-center text-base-content/30">
+                  <i class="fas fa-image text-2xl" />
+                </div>
+              </div>
+              <p class="mt-1 line-clamp-2 text-xs text-base-content/80 group-hover:underline">{{ plate.title }}</p>
+              <p v-if="plate.parts !== null" class="text-xs text-base-content/50">
+                {{ t('plate_parts', { count: plate.parts }) }}
+              </p>
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div v-if="pending" class="flex justify-center py-16">
       <span class="loading loading-spinner loading-lg" />
     </div>
@@ -93,7 +159,7 @@
       <p>{{ t('no_results') }}</p>
     </div>
 
-    <template v-else>
+    <template v-else-if="searching || parts.length">
       <div class="overflow-x-auto rounded-box border border-base-300">
         <table class="table table-zebra">
           <thead>
@@ -154,7 +220,11 @@
     "previous": "Previous",
     "next": "Next",
     "page_of": "Page {page} of {total}",
-    "attribution": "Part data is compiled from public retailer catalogues and credited to its source on each part page."
+    "attribution": "Part data is compiled from public retailer catalogues and credited to its source on each part page.",
+    "system_meta": "{plates} plates",
+    "system_parts": "{parts} parts",
+    "plate_alt": "Parts diagram: {title}",
+    "plate_parts": "{count} parts"
   },
   "es": {
     "title": "Números de pieza del Classic Mini - Classic Mini DIY",
@@ -172,7 +242,11 @@
     "previous": "Anterior",
     "next": "Siguiente",
     "page_of": "Página {page} de {total}",
-    "attribution": "Los datos de piezas provienen de catálogos públicos de minoristas y se acreditan a su fuente en cada página."
+    "attribution": "Los datos de piezas provienen de catálogos públicos de minoristas y se acreditan a su fuente en cada página.",
+    "system_meta": "{plates} láminas",
+    "system_parts": "{parts} piezas",
+    "plate_alt": "Despiece: {title}",
+    "plate_parts": "{count} piezas"
   },
   "fr": {
     "title": "Références de pièces Classic Mini - Classic Mini DIY",
@@ -190,7 +264,11 @@
     "previous": "Précédent",
     "next": "Suivant",
     "page_of": "Page {page} sur {total}",
-    "attribution": "Les données proviennent de catalogues publics de revendeurs et sont créditées sur chaque page."
+    "attribution": "Les données proviennent de catalogues publics de revendeurs et sont créditées sur chaque page.",
+    "system_meta": "{plates} planches",
+    "system_parts": "{parts} pièces",
+    "plate_alt": "Planche de pièces : {title}",
+    "plate_parts": "{count} pièces"
   },
   "de": {
     "title": "Classic Mini Teilenummern - Classic Mini DIY",
@@ -208,7 +286,11 @@
     "previous": "Zurück",
     "next": "Weiter",
     "page_of": "Seite {page} von {total}",
-    "attribution": "Teiledaten stammen aus öffentlichen Händlerkatalogen und werden auf jeder Seite der Quelle zugeordnet."
+    "attribution": "Teiledaten stammen aus öffentlichen Händlerkatalogen und werden auf jeder Seite der Quelle zugeordnet.",
+    "system_meta": "{plates} Tafeln",
+    "system_parts": "{parts} Teile",
+    "plate_alt": "Teilediagramm: {title}",
+    "plate_parts": "{count} Teile"
   },
   "it": {
     "title": "Codici ricambio Classic Mini - Classic Mini DIY",
@@ -226,7 +308,11 @@
     "previous": "Precedente",
     "next": "Successivo",
     "page_of": "Pagina {page} di {total}",
-    "attribution": "I dati provengono da cataloghi pubblici di rivenditori e sono attribuiti alla fonte su ogni pagina."
+    "attribution": "I dati provengono da cataloghi pubblici di rivenditori e sono attribuiti alla fonte su ogni pagina.",
+    "system_meta": "{plates} tavole",
+    "system_parts": "{parts} ricambi",
+    "plate_alt": "Tavola ricambi: {title}",
+    "plate_parts": "{count} ricambi"
   },
   "pt": {
     "title": "Números de peça do Classic Mini - Classic Mini DIY",
@@ -244,7 +330,11 @@
     "previous": "Anterior",
     "next": "Seguinte",
     "page_of": "Página {page} de {total}",
-    "attribution": "Os dados provêm de catálogos públicos de retalhistas e são creditados à fonte em cada página."
+    "attribution": "Os dados provêm de catálogos públicos de retalhistas e são creditados à fonte em cada página.",
+    "system_meta": "{plates} pranchas",
+    "system_parts": "{parts} peças",
+    "plate_alt": "Diagrama de peças: {title}",
+    "plate_parts": "{count} peças"
   },
   "ru": {
     "title": "Номера деталей Classic Mini - Classic Mini DIY",
@@ -262,7 +352,11 @@
     "previous": "Назад",
     "next": "Далее",
     "page_of": "Страница {page} из {total}",
-    "attribution": "Данные собраны из публичных каталогов продавцов и указаны с источником на каждой странице."
+    "attribution": "Данные собраны из публичных каталогов продавцов и указаны с источником на каждой странице.",
+    "system_meta": "схем: {plates}",
+    "system_parts": "деталей: {parts}",
+    "plate_alt": "Схема деталей: {title}",
+    "plate_parts": "деталей: {count}"
   },
   "ja": {
     "title": "クラシックミニ 部品番号 - Classic Mini DIY",
@@ -280,7 +374,11 @@
     "previous": "前へ",
     "next": "次へ",
     "page_of": "{total} ページ中 {page} ページ",
-    "attribution": "部品データは公開されている販売店カタログをもとに、各ページで出典を明記しています。"
+    "attribution": "部品データは公開されている販売店カタログをもとに、各ページで出典を明記しています。",
+    "system_meta": "図版 {plates} 件",
+    "system_parts": "部品 {parts} 件",
+    "plate_alt": "部品図: {title}",
+    "plate_parts": "部品 {count} 件"
   },
   "zh": {
     "title": "经典 Mini 零件号 - Classic Mini DIY",
@@ -298,7 +396,11 @@
     "previous": "上一页",
     "next": "下一页",
     "page_of": "第 {page} 页，共 {total} 页",
-    "attribution": "零件数据整理自公开的零售商目录，并在每个页面标注来源。"
+    "attribution": "零件数据整理自公开的零售商目录，并在每个页面标注来源。",
+    "system_meta": "{plates} 张图版",
+    "system_parts": "{parts} 个零件",
+    "plate_alt": "零件图：{title}",
+    "plate_parts": "{count} 个零件"
   },
   "ko": {
     "title": "클래식 미니 부품 번호 - Classic Mini DIY",
@@ -316,7 +418,11 @@
     "previous": "이전",
     "next": "다음",
     "page_of": "{total} 페이지 중 {page} 페이지",
-    "attribution": "부품 데이터는 공개된 판매점 카탈로그에서 정리했으며 각 페이지에 출처를 표기합니다."
+    "attribution": "부품 데이터는 공개된 판매점 카탈로그에서 정리했으며 각 페이지에 출처를 표기합니다.",
+    "system_meta": "도판 {plates}개",
+    "system_parts": "부품 {parts}개",
+    "plate_alt": "부품 도면: {title}",
+    "plate_parts": "부품 {count}개"
   }
 }
 </i18n>

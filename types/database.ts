@@ -5705,6 +5705,13 @@ export type Database = {
           is_banned: boolean;
         }[];
       };
+      part_plate_part_counts: {
+        Args: never;
+        Returns: {
+          diagram_id: string;
+          part_count: number;
+        }[];
+      };
       part_supersession_chain: {
         Args: { p_part_id: string };
         Returns: {
