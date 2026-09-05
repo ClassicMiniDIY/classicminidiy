@@ -14,6 +14,7 @@
  */
 import { getServiceClient } from '../../../utils/supabase';
 import { hotspotBounds, cropWindow } from '../../../utils/hotspotBounds';
+import { shuffleSourcesForPart } from '../../../../shared/utils/sourceOrder';
 
 const MAX_APPEARS_ON = 40;
 const MAX_FITS = 60;
@@ -171,9 +172,15 @@ export default defineEventHandler(async (event) => {
     fitsTotal: (applicability.data ?? []).length,
     appearsOn: appearsOn.slice(0, MAX_APPEARS_ON),
     appearsOnTotal: appearsOn.length,
-    sourceUrls: ((records.data ?? []) as any[])
-      .filter((r) => r.source_url && sourceById.has(r.source_id))
-      .map((r) => ({ source: sourceById.get(r.source_id)!.name, url: r.source_url })),
+    // Unranked. Seeded by the part number so the order is stable across SSR and
+    // the client but is not insertion order — which would hand first place
+    // permanently to Somerford, purely because it was crawled first.
+    sourceUrls: shuffleSourcesForPart(
+      ((records.data ?? []) as any[])
+        .filter((r) => r.source_url && sourceById.has(r.source_id))
+        .map((r) => ({ source: sourceById.get(r.source_id)!.name, url: r.source_url })),
+      part.part_number_display
+    ),
     source: source ? { name: source.name, domain: source.domain } : null,
   };
 });

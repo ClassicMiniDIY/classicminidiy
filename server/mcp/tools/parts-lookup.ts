@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { getServiceClient } from '../../utils/supabase';
 import { buildPartSearchFilter, safePartNumberPattern } from '../../utils/partSearchFilter';
+import { shuffleSourcesForPart } from '../../../shared/utils/sourceOrder';
 
 /**
  * Part Number MCP Tool
@@ -232,10 +233,12 @@ export default defineMcpTool({
           appearsOnTotal: allAppearsOn.length,
           source: source ? { name: source.name, domain: source.domain } : null,
           /** Where to see or buy this part, on the source's own site. */
-          sourceUrls: recordRows
-            .filter((r) => r.part_id === p.id)
-            .slice(0, MAX_SOURCE_URLS)
-            .map((r) => ({ source: sourceById.get(r.source_id)?.name ?? null, url: r.source_url })),
+          sourceUrls: shuffleSourcesForPart(
+            recordRows
+              .filter((r) => r.part_id === p.id)
+              .map((r) => ({ source: sourceById.get(r.source_id)?.name ?? null, url: r.source_url })),
+            p.part_number_display
+          ).slice(0, MAX_SOURCE_URLS),
           url: `https://www.classicminidiy.com/archive/parts/${encodeURIComponent(p.part_number_display)}`,
         };
       });
