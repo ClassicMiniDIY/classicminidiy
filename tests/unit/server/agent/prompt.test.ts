@@ -33,6 +33,17 @@ describe('the system prompt', () => {
     expect(prompt).toMatch(/qualified mechanic|professional/i);
   });
 
+  it('carries the fixed answer about who taught Cole', () => {
+    // Cole's call, and the one answer that comes from the prompt rather than a
+    // tool. It lives in the STATIC half so it caches, and it has to survive
+    // every future edit to the tier rules above it — those rules would
+    // otherwise push the question into "answer it from what you know", which
+    // is how the model starts improvising an answer to a question with exactly
+    // one right one.
+    expect(prompt).toMatch(/who taught cole/i);
+    expect(prompt).toContain('His best friend and Mini genius Justin');
+  });
+
   it('points at the first-party membership, not Patreon', () => {
     // Cole's call: the Sustaining Member subscription is the first-party
     // product and already CONTAINS what the old prompt sold Patreon for — the
