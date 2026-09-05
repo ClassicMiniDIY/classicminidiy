@@ -29,6 +29,19 @@ const PART_COLUMNS = [
   'source_id',
 ].join(', ');
 
+/**
+ * Caps on the child collections attached to each match.
+ *
+ * These are unbounded in the data, not in theory: a spring washer appears on
+ * 389 callouts and some parts carry 63 applicability rows. Attaching all of
+ * them to 50 matches produces thousands of near-identical lines that flood the
+ * agent's context and bury the supersession chain, which is the actual answer.
+ * The counts are reported alongside so a caller knows what was left out.
+ */
+const MAX_APPEARS_ON = 8;
+const MAX_FITS = 12;
+const MAX_SOURCE_URLS = 3;
+
 /** Matches the CHECK on parts.part_number_norm: upper, no spaces/hyphens/dots. */
 function normalise(raw: string): string {
   return raw.toUpperCase().replace(/[\s\-.]/g, '');
@@ -189,6 +202,15 @@ export default defineMcpTool({
       const matches = rows.map((p) => {
         const source = p.source_id ? sourceById.get(p.source_id) : null;
 
+        const allFits = applicabilityRows.filter((a) => a.part_id === p.id).map((a) => a.qualifier_text);
+        const allAppearsOn = calloutRows
+          .filter((c) => c.part_id === p.id)
+          .map((c) => ({
+            plate: c.diagram.title,
+            catalogueSection: c.diagram.catalogue_section || null,
+            calloutNumber: c.callout_number,
+          }));
+
         const supersedes = supersessionRows
           .filter((s) => s.predecessor_id === p.id)
           .map((s) => ({ partNumber: s.successor?.part_number_display ?? null, relation: s.relation }))
@@ -208,18 +230,15 @@ export default defineMcpTool({
           replacedBy: supersedes,
           /** What this part replaces. */
           replaces: supersededBy,
-          fits: applicabilityRows.filter((a) => a.part_id === p.id).map((a) => a.qualifier_text),
-          appearsOn: calloutRows
-            .filter((c) => c.part_id === p.id)
-            .map((c) => ({
-              plate: c.diagram.title,
-              catalogueSection: c.diagram.catalogue_section || null,
-              calloutNumber: c.callout_number,
-            })),
+          fits: allFits.slice(0, MAX_FITS),
+          fitsTotal: allFits.length,
+          appearsOn: allAppearsOn.slice(0, MAX_APPEARS_ON),
+          appearsOnTotal: allAppearsOn.length,
           source: source ? { name: source.name, domain: source.domain } : null,
           /** Where to see or buy this part, on the source's own site. */
           sourceUrls: recordRows
             .filter((r) => r.part_id === p.id)
+            .slice(0, MAX_SOURCE_URLS)
             .map((r) => ({ source: sourceById.get(r.source_id)?.name ?? null, url: r.source_url })),
           url: `https://www.classicminidiy.com/archive/parts/${encodeURIComponent(p.part_number_display)}`,
         };
@@ -231,7 +250,7 @@ export default defineMcpTool({
         truncated,
         matches,
         notes:
-          '`sourceUrls` links to the retailer page for the part — quote it, since that is where a reader sees a photograph and current availability. A part number with entries under `replacedBy` is superseded — quote the replacement alongside it, never on its own. `fits` is the applicability text exactly as the source recorded it and is not normalised. Parts data is compiled from retailer catalogues and credited per match; check the source for current availability.',
+          '`fits` and `appearsOn` are capped; `fitsTotal` and `appearsOnTotal` give the real counts, and a common fastener genuinely appears on hundreds of plates. `sourceUrls` links to the retailer page for the part — quote it, since that is where a reader sees a photograph and current availability. A part number with entries under `replacedBy` is superseded — quote the replacement alongside it, never on its own. `fits` is the applicability text exactly as the source recorded it and is not normalised. Parts data is compiled from retailer catalogues and credited per match; check the source for current availability.',
         formattedText: [
           `**Parts** — ${matches.length} match${matches.length === 1 ? '' : 'es'}`,
           '',

@@ -24,24 +24,34 @@ import { getServiceClient } from '../../../utils/supabase';
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
 /**
- * Named sizes, rather than an open width parameter.
+ * Named sizes, each a SEPARATE STORED OBJECT written at ingest time.
  *
- * An arbitrary `?w=` lets anyone mint unlimited distinct renders, and every
- * distinct render is a transformation billed and cached separately. Three sizes
- * keep the cache hot and the bill predictable.
+ * Deliberately NOT Supabase image transformation, which is what this route did
+ * first. Transformation is metered per distinct origin image per billing
+ * period, Pro includes 100, and there are 161 plates — and this organisation is
+ * not billed for overages, so passing the quota degrades service rather than
+ * costing money. Thumbnails would have stopped rendering partway through a
+ * month's browsing, silently, which is the worst way for the visuals to fail.
  *
- * `full` is deliberately untransformed: these are factory parts plates that a
- * reader zooms into to read callout numbers off, and resampling is exactly what
- * destroys that. The thumbnail exists so a list never pays 2 MB for a picture
- * the size of a stamp.
+ * Storage has the opposite shape: 0 of 100 GB used, and all the thumbnails
+ * together are about 8 MB. So the derivatives are made once by the ingest and
+ * simply served.
+ *
+ * `full` is the untouched original — a factory plate is something a reader
+ * zooms into to read callout numbers off, and resampling is what destroys that.
  */
-const SIZES = {
-  thumb: { width: 320, quality: 60 },
-  preview: { width: 1000, quality: 75 },
-  full: null,
-} as const;
+const SIZES = ['thumb', 'preview', 'full'] as const;
+type SizeName = (typeof SIZES)[number];
 
-type SizeName = keyof typeof SIZES;
+/**
+ * The stored object for a size. Derivatives sit beside the original with a
+ * `.thumb.jpg` / `.preview.jpg` suffix, always JPEG regardless of the source
+ * format, because that is what the ingest writes.
+ */
+function objectPathFor(imagePath: string, size: SizeName): string {
+  if (size === 'full') return imagePath;
+  return `${imagePath.replace(/\.[^./]+$/, '')}.${size}.jpg`;
+}
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -51,10 +61,10 @@ export default defineEventHandler(async (event) => {
   if (typeof diagramId !== 'string' || !/^[0-9a-f-]{36}$/i.test(diagramId)) {
     throw createError({ statusCode: 400, statusMessage: 'A diagram id is required' });
   }
-  if (!(requestedSize in SIZES)) {
-    throw createError({ statusCode: 400, statusMessage: `size must be one of: ${Object.keys(SIZES).join(', ')}` });
+  if (!SIZES.includes(requestedSize as SizeName)) {
+    throw createError({ statusCode: 400, statusMessage: `size must be one of: ${SIZES.join(', ')}` });
   }
-  const transform = SIZES[requestedSize as SizeName];
+  const size = requestedSize as SizeName;
 
   const db = getServiceClient();
 
@@ -77,11 +87,20 @@ export default defineEventHandler(async (event) => {
 
   const { data: signed, error: signError } = await db.storage
     .from('parts-diagrams')
-    .createSignedUrl(
-      diagram.image_path,
-      SIGNED_URL_TTL_SECONDS,
-      transform ? { transform: { width: transform.width, quality: transform.quality, resize: 'contain' } } : undefined
-    );
+    .createSignedUrl(objectPathFor(diagram.image_path, size), SIGNED_URL_TTL_SECONDS);
+
+  // Fall back to the original when a derivative is missing — a plate imported
+  // before the derivatives existed, or one whose resize failed. Heavier than
+  // intended is better than a broken image.
+  if ((signError || !signed?.signedUrl) && size !== 'full') {
+    const { data: original } = await db.storage
+      .from('parts-diagrams')
+      .createSignedUrl(diagram.image_path, SIGNED_URL_TTL_SECONDS);
+    if (original?.signedUrl) {
+      setHeader(event, 'cache-control', 'private, max-age=1800');
+      return sendRedirect(event, original.signedUrl, 302);
+    }
+  }
 
   if (signError || !signed?.signedUrl) {
     throw createError({ statusCode: 500, statusMessage: 'Could not sign the drawing URL' });
