@@ -4699,6 +4699,63 @@ export type Database = {
           },
         ];
       };
+      subscription_verification_attempts: {
+        Row: {
+          app_version: string | null;
+          attempted_at: string;
+          body_keys: string[] | null;
+          detail: string | null;
+          entitled: boolean | null;
+          error_code: string | null;
+          expires_at: string | null;
+          http_status: number;
+          id: number;
+          outcome: string;
+          platform: string | null;
+          store_product_id: string | null;
+          subscription_status: string | null;
+          token_fingerprint: string | null;
+          user_agent: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          app_version?: string | null;
+          attempted_at?: string;
+          body_keys?: string[] | null;
+          detail?: string | null;
+          entitled?: boolean | null;
+          error_code?: string | null;
+          expires_at?: string | null;
+          http_status: number;
+          id?: number;
+          outcome: string;
+          platform?: string | null;
+          store_product_id?: string | null;
+          subscription_status?: string | null;
+          token_fingerprint?: string | null;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          app_version?: string | null;
+          attempted_at?: string;
+          body_keys?: string[] | null;
+          detail?: string | null;
+          entitled?: boolean | null;
+          error_code?: string | null;
+          expires_at?: string | null;
+          http_status?: number;
+          id?: number;
+          outcome?: string;
+          platform?: string | null;
+          store_product_id?: string | null;
+          subscription_status?: string | null;
+          token_fingerprint?: string | null;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
           apple_original_transaction_id: string | null;
@@ -5265,6 +5322,36 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      admin_list_subscriptions: {
+        Args: { p_product_id?: string };
+        Returns: Database['public']['CompositeTypes']['admin_subscription_row'][];
+        SetofOptions: {
+          from: '*';
+          to: 'admin_subscription_row';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      admin_list_verification_failures: {
+        Args: { p_since?: string };
+        Returns: Database['public']['CompositeTypes']['admin_verification_failure_row'][];
+        SetofOptions: {
+          from: '*';
+          to: 'admin_verification_failure_row';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      admin_verification_health: {
+        Args: { p_days?: number };
+        Returns: Database['public']['CompositeTypes']['admin_verification_health_row'][];
+        SetofOptions: {
+          from: '*';
+          to: 'admin_verification_health_row';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       approve_model_version: {
         Args: { p_notes?: string; p_version_id: string };
         Returns: undefined;
@@ -5766,6 +5853,10 @@ export type Database = {
       promote_tenured_users: { Args: never; Returns: number };
       prune_chat_threads: { Args: never; Returns: undefined };
       prune_chat_usage_daily: { Args: never; Returns: undefined };
+      prune_subscription_verification_attempts: {
+        Args: never;
+        Returns: undefined;
+      };
       publish_model_version: {
         Args: { p_version_id: string };
         Returns: undefined;
@@ -6008,6 +6099,47 @@ export type Database = {
       window_type_enum: 'sliding' | 'wind_up';
     };
     CompositeTypes: {
+      admin_subscription_row: {
+        subscription_id: string | null;
+        user_id: string | null;
+        email: string | null;
+        username: string | null;
+        platform: string | null;
+        product_id: string | null;
+        status: string | null;
+        entitled: boolean | null;
+        starts_at: string | null;
+        expires_at: string | null;
+        cancelled_at: string | null;
+        last_verified_at: string | null;
+        created_at: string | null;
+        comp_note: string | null;
+        discord_link_status: string | null;
+        discord_username: string | null;
+      };
+      admin_verification_failure_row: {
+        user_id: string | null;
+        email: string | null;
+        username: string | null;
+        platform: string | null;
+        outcome: string | null;
+        error_code: string | null;
+        http_status: number | null;
+        detail: string | null;
+        body_keys: string[] | null;
+        user_agent: string | null;
+        attempts: number | null;
+        first_failure_at: string | null;
+        last_failure_at: string | null;
+        entitled_now: boolean | null;
+      };
+      admin_verification_health_row: {
+        day: string | null;
+        platform: string | null;
+        outcome: string | null;
+        attempts: number | null;
+        distinct_users: number | null;
+      };
       discord_roster_row: {
         discord_user_id: string | null;
         username: string | null;
