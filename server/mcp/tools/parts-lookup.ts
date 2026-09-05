@@ -186,7 +186,12 @@ export default defineMcpTool({
         // source rather than replacing it — and it is also the most directly
         // useful thing in a result, because it is where someone actually buys
         // the part or sees a photograph of it.
-        supabase.from('part_source_records').select('part_id, source_id, source_url').in('part_id', ids),
+        // is_current only — a retired record points at a page that is gone.
+        supabase
+          .from('part_source_records')
+          .select('part_id, source_id, source_url')
+          .in('part_id', ids)
+          .eq('is_current', true),
       ]);
 
       const supersessionRows = (supersessions.data ?? []) as any[];

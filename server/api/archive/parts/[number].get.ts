@@ -70,7 +70,10 @@ export default defineEventHandler(async (event) => {
       )
       .eq('part_id', part.id)
       .eq('part_diagrams.status', 'published'),
-    db.from('part_source_records').select('source_id, source_url').eq('part_id', part.id),
+    // is_current only. A record the refresh has retired is a page the retailer
+    // has taken down; still linking to it sends the reader to a 404 and makes
+    // the archive look wrong about a part it is otherwise right about.
+    db.from('part_source_records').select('source_id, source_url').eq('part_id', part.id).eq('is_current', true),
   ]);
 
   // Parts sharing a callout with this one. On a factory plate a single numbered

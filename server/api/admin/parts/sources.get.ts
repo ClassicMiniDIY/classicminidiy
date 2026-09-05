@@ -29,7 +29,26 @@ interface SourceCounts {
   supersessions: number | null;
   kitContents: number | null;
   sourceRecords: number | null;
+  /** Records no longer current, i.e. gone from the source. Never public. */
+  retiredRecords: number | null;
   publicRows: number | null;
+}
+
+/** The columns of `part_source_private` this screen reads. */
+interface SourceSetting {
+  source_id: string;
+  licence_note: string | null;
+  licence_changed_at: string | null;
+  licence_changed_by: string | null;
+  contact_email: string | null;
+  crawl_enabled: boolean;
+  max_requests_per_run: number | null;
+  max_requests_per_day: number | null;
+  min_request_interval_ms: number | null;
+  max_change_ratio: number | null;
+  refresh_after_days: number | null;
+  gone_after_misses: number | null;
+  refresh_cycle_started_at: string | null;
 }
 
 /** Tables that hang off a source directly and are worth counting. */
@@ -58,11 +77,18 @@ export default defineEventHandler(async (event) => {
   const rows = sources ?? [];
   if (rows.length === 0) return { sources: [] };
 
+  // `returns<>` rather than inference: the select list is a concatenation, which
+  // PostgREST's type helper cannot parse, and it names columns the generated
+  // Database types will not carry until `bun run gen:types` runs against the
+  // applied migration. Declaring the shape here keeps the read typed either way.
   const { data: privateRows, error: privateError } = await db
     .from('part_source_private')
     .select(
-      'source_id, licence_note, licence_changed_at, licence_changed_by, contact_email, crawl_enabled, max_requests_per_run, max_requests_per_day, min_request_interval_ms, max_change_ratio'
-    );
+      'source_id, licence_note, licence_changed_at, licence_changed_by, contact_email, crawl_enabled, ' +
+        'max_requests_per_run, max_requests_per_day, min_request_interval_ms, max_change_ratio, ' +
+        'refresh_after_days, gone_after_misses, refresh_cycle_started_at'
+    )
+    .returns<SourceSetting[]>();
 
   if (privateError) {
     throw createError({ statusCode: 500, statusMessage: `Could not read source settings: ${privateError.message}` });
@@ -86,14 +112,24 @@ export default defineEventHandler(async (event) => {
     runsBySource.set(run.source_id, list);
   }
 
-  const { data: queueRows } = await db.from('part_ingest_queue').select('source_id, last_fetched_at');
-  const queueBySource = new Map<string, { total: number; remaining: number }>();
-  for (const row of queueRows ?? []) {
-    const agg = queueBySource.get(row.source_id) ?? { total: 0, remaining: 0 };
-    agg.total += 1;
-    if (!row.last_fetched_at) agg.remaining += 1;
-    queueBySource.set(row.source_id, agg);
-  }
+  // COUNTED, NOT FETCHED. This read used to pull every queue row and tally them
+  // here, which PostgREST truncates at 1000 — the queue passed that as soon as
+  // the second and third sources were seeded, so the screen quietly reported a
+  // smaller queue than exists. Same failure as the callout count before it: a
+  // client-side tally of a server-capped list.
+  const queueBySource = new Map<string, { total: number; remaining: number; blocked: number }>();
+  await Promise.all(
+    rows.map(async (source) => {
+      const base = () =>
+        db.from('part_ingest_queue').select('id', { count: 'exact', head: true }).eq('source_id', source.id);
+      const [{ count: total }, { count: remaining }, { count: blocked }] = await Promise.all([
+        base(),
+        base().is('last_fetched_at', null),
+        base().not('blocked_at', 'is', null),
+      ]);
+      queueBySource.set(source.id, { total: total ?? 0, remaining: remaining ?? 0, blocked: blocked ?? 0 });
+    })
+  );
 
   // head:true so these are COUNT queries, not row fetches — the largest of them
   // will be counting five figures of parts once Somerford is imported.
@@ -119,6 +155,18 @@ export default defineEventHandler(async (event) => {
         })
       );
 
+      // Records the refresh has retired. Public reads filter these out, so this
+      // is the difference between what the source contributed and what it still
+      // contributes — the number that says whether the refresh is working.
+      const { count: retired, error: retiredError } = await db
+        .from('part_source_records')
+        .select('id', { count: 'exact', head: true })
+        .eq('source_id', source.id)
+        .eq('is_current', false);
+      if (retiredError) {
+        console.error(`[admin/parts] retired count failed (source ${source.slug}): ${retiredError.message}`);
+      }
+
       // Callouts reach their source through the parent diagram, so this one
       // needs the embed rather than a plain column filter.
       const { count: callouts, error: calloutError } = await db
@@ -140,6 +188,7 @@ export default defineEventHandler(async (event) => {
         supersessions: direct[3] ?? null,
         kitContents: direct[4] ?? null,
         sourceRecords: direct[5] ?? null,
+        retiredRecords: retiredError ? null : (retired ?? 0),
         callouts: calloutError ? null : (callouts ?? 0),
         publicRows: null,
       };
@@ -181,8 +230,11 @@ export default defineEventHandler(async (event) => {
         maxRequestsPerDay: setting?.max_requests_per_day ?? null,
         minRequestIntervalMs: setting?.min_request_interval_ms ?? null,
         maxChangeRatio: setting?.max_change_ratio ?? null,
+        refreshAfterDays: setting?.refresh_after_days ?? null,
+        goneAfterMisses: setting?.gone_after_misses ?? null,
+        refreshCycleStartedAt: setting?.refresh_cycle_started_at ?? null,
         counts,
-        queue: queueBySource.get(source.id) ?? { total: 0, remaining: 0 },
+        queue: queueBySource.get(source.id) ?? { total: 0, remaining: 0, blocked: 0 },
         runInFlight: (runsBySource.get(source.id) ?? []).some((r) => r.status === 'running'),
         lastRun: (runsBySource.get(source.id) ?? [])[0]
           ? {

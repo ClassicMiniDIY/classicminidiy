@@ -161,21 +161,22 @@ membership (`/membership`), contribution wizard (`/contribute/*`), dashboard
 
 ## Area rules (path-scoped, in `.claude/rules/`)
 
-| File                  | Loads for                                     | Covers                                                                        |
-| --------------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
-| `vue-resolution.md`   | `app/**`, `shared/**`                         | auto-imports, `~~/`, component names, `useFetch` form                         |
-| `layout-dropdowns.md` | `main.css`, nav, hero, admin components       | hero alignment, dropdown CSS layering, hydration gate                         |
-| `calculators.md`      | `Calculators/**`, `/technical`                | math breakdown fed from own computeds                                         |
-| `images-seo.md`       | `nuxt.config.ts`, `app/pages/**`              | image allowlist, ipx, ogImage, 404s, faceted SEO                              |
-| `security.md`         | chat, mcp, middleware, queue approve          | fail-open vs fail-closed, storefront token, tier fixture key, edit allowlists |
-| `passkeys.md`         | `usePasskeys`, `/login`, profile passkey card | experimental flag, captcha, redirect stash, cancellation                      |
-| `reference-data.md`   | torque/clearance/weights data + consumers     | unit contracts                                                                |
-| `marketplace.md`      | `/exchange` pages, api, feeds                 | draft→pending→active, feeds, TME redirects                                    |
-| `admin.md`            | `/admin/**`, `server/api/admin/**`            | AdminShell, queue, viewport rules                                             |
-| `contributions.md`    | contribute wizard, queue approve, search      | trust, `submitted_by`, colour merge, omnisearch                               |
-| `cloudflare-env.md`   | workflows, wrangler, rate-limit               | build-time vs runtime secrets, env naming, CI owns deploy                     |
-| `testing.md`          | `tests/**`, configs, `package.json`           | tiers, shrink-only lists, Playwright, pins                                    |
-| `models-3d.md`        | `/models`, `server/api/models`                | Bearer, edge-fn proxies, Connect, entitlement                                 |
+| File                  | Loads for                                      | Covers                                                                        |
+| --------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- |
+| `vue-resolution.md`   | `app/**`, `shared/**`                          | auto-imports, `~~/`, component names, `useFetch` form                         |
+| `layout-dropdowns.md` | `main.css`, nav, hero, admin components        | hero alignment, dropdown CSS layering, hydration gate                         |
+| `calculators.md`      | `Calculators/**`, `/technical`                 | math breakdown fed from own computeds                                         |
+| `images-seo.md`       | `nuxt.config.ts`, `app/pages/**`               | image allowlist, ipx, ogImage, 404s, faceted SEO                              |
+| `security.md`         | chat, mcp, middleware, queue approve           | fail-open vs fail-closed, storefront token, tier fixture key, edit allowlists |
+| `passkeys.md`         | `usePasskeys`, `/login`, profile passkey card  | experimental flag, captcha, redirect stash, cancellation                      |
+| `reference-data.md`   | torque/clearance/weights data + consumers      | unit contracts                                                                |
+| `marketplace.md`      | `/exchange` pages, api, feeds                  | draft→pending→active, feeds, TME redirects                                    |
+| `admin.md`            | `/admin/**`, `server/api/admin/**`             | AdminShell, queue, viewport rules                                             |
+| `contributions.md`    | contribute wizard, queue approve, search       | trust, `submitted_by`, colour merge, omnisearch                               |
+| `cloudflare-env.md`   | workflows, wrangler, rate-limit                | build-time vs runtime secrets, env naming, CI owns deploy                     |
+| `testing.md`          | `tests/**`, configs, `package.json`            | tiers, shrink-only lists, Playwright, pins                                    |
+| `models-3d.md`        | `/models`, `server/api/models`                 | Bearer, edge-fn proxies, Connect, entitlement                                 |
+| `parts-archive.md`    | `/archive/parts`, `/admin/parts`, `part_*` API | kill switch + `is_current`, PostgREST caps, search allowlist, hotspot fill    |
 
 Design docs in `docs/plans/`, runbooks in `docs/runbooks/`. Membership contract:
 `classicminidiy-supabase/docs/plans/2026-06-07-membership-entitlement-contract.md`.
