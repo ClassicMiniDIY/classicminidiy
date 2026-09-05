@@ -13,6 +13,7 @@
  * holds retailer identifiers and raw payloads. Only the link is exposed here.
  */
 import { getServiceClient } from '../../../utils/supabase';
+import { hotspotBounds, cropWindow } from '../../../utils/hotspotBounds';
 
 const MAX_APPEARS_ON = 40;
 const MAX_FITS = 60;
@@ -63,7 +64,9 @@ export default defineEventHandler(async (event) => {
     db.from('part_applicability').select('qualifier_text, source_id').eq('part_id', part.id),
     db
       .from('part_diagram_callouts')
-      .select('callout_number, diagram:part_diagrams!inner(id, title, catalogue_section, status, source_id)')
+      .select(
+        'callout_number, quantity, hotspot, diagram:part_diagrams!inner(id, title, catalogue_section, status, source_id, image_width, image_height, image_licence, metadata)'
+      )
       .eq('part_id', part.id)
       .eq('part_diagrams.status', 'published'),
     db.from('part_source_records').select('source_id, source_url').eq('part_id', part.id),
@@ -72,12 +75,31 @@ export default defineEventHandler(async (event) => {
   const supersessionRows = (supersessions.data ?? []) as any[];
   const appearsOn = ((callouts.data ?? []) as any[])
     .filter((c) => c.diagram && sourceById.has(c.diagram.source_id))
-    .map((c) => ({
-      diagramId: c.diagram.id,
-      title: c.diagram.title,
-      catalogueSection: c.diagram.catalogue_section,
-      calloutNumber: c.callout_number,
-    }));
+    .map((c) => {
+      const d = c.diagram;
+      const bounds = hotspotBounds(c.hotspot);
+      // The crop is what shows a reader the part rather than its number. It
+      // needs geometry, the drawing's dimensions, and a stored drawing to crop.
+      const crop =
+        bounds && d.image_width && d.image_height && d.image_licence === 'copied'
+          ? {
+              ...cropWindow(bounds, d.image_width, d.image_height),
+              imageWidth: d.image_width,
+              imageHeight: d.image_height,
+              hotspot: bounds,
+            }
+          : null;
+      return {
+        diagramId: d.id,
+        title: d.title,
+        // The section NAME, not the leading page number: "01" is page one of
+        // something, and groups six unrelated systems together.
+        section: (d.metadata?.section_name as string | undefined) ?? null,
+        calloutNumber: c.callout_number,
+        quantity: c.quantity,
+        crop,
+      };
+    });
 
   const source = part.source_id ? sourceById.get(part.source_id) : null;
 
