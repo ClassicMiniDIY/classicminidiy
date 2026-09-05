@@ -22,7 +22,22 @@
     replaces: Related[];
     fits: string[];
     fitsTotal: number;
-    appearsOn: { diagramId: string; title: string; catalogueSection: string | null; calloutNumber: string }[];
+    appearsOn: {
+      diagramId: string;
+      title: string;
+      section: string | null;
+      calloutNumber: string;
+      quantity: string | null;
+      crop: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        imageWidth: number;
+        imageHeight: number;
+        hotspot: { x: number; y: number; width: number; height: number };
+      } | null;
+    }[];
     appearsOnTotal: number;
     sourceUrls: { source: string; url: string }[];
     source: { name: string; domain: string } | null;
@@ -40,6 +55,35 @@
   }
 
   const heading = computed(() => part.value?.partNumber ?? '');
+
+  /** The plate views that can actually be drawn, best first. */
+  const crops = computed(() => (part.value?.appearsOn ?? []).filter((a) => a.crop));
+
+  /**
+   * A crop is rendered by scaling the WHOLE plate inside a fixed square window
+   * and offsetting it, rather than by generating a cropped image. No new
+   * storage, no second request, and the browser already has the preview cached
+   * from any other part on the same plate.
+   */
+  const CROP_BOX = 260;
+  function cropStyle(crop: NonNullable<PartDetail['appearsOn'][number]['crop']>) {
+    const scale = CROP_BOX / crop.width;
+    return {
+      width: `${crop.imageWidth * scale}px`,
+      height: `${crop.imageHeight * scale}px`,
+      transform: `translate(${-crop.x * scale}px, ${-crop.y * scale}px)`,
+    };
+  }
+  /** The hotspot outline, in the same scaled space as the image above it. */
+  function markerStyle(crop: NonNullable<PartDetail['appearsOn'][number]['crop']>) {
+    const scale = CROP_BOX / crop.width;
+    return {
+      left: `${(crop.hotspot.x - crop.x) * scale}px`,
+      top: `${(crop.hotspot.y - crop.y) * scale}px`,
+      width: `${Math.max(crop.hotspot.width * scale, 10)}px`,
+      height: `${Math.max(crop.hotspot.height * scale, 10)}px`,
+    };
+  }
   const summary = computed(() => part.value?.description || t('no_description'));
 
   useHead({
@@ -105,14 +149,49 @@
         </p>
       </section>
 
-      <section v-if="part.appearsOn.length" class="rounded-box border border-base-300 p-4">
-        <h2 class="mb-2 font-semibold">{{ t('plates_heading') }}</h2>
+      <section v-if="part.appearsOn.length" class="rounded-box border border-base-300 p-4 md:col-span-2">
+        <h2 class="mb-3 font-semibold">{{ t('plates_heading') }}</h2>
+
+        <!-- Where the part sits, cropped from the plate it appears on. -->
+        <div v-if="crops.length" class="mb-4 flex flex-wrap gap-4">
+          <NuxtLink
+            v-for="plate in crops.slice(0, 3)"
+            :key="`crop-${plate.diagramId}-${plate.calloutNumber}`"
+            :to="`/archive/parts/diagrams/${plate.diagramId}`"
+            class="group block"
+          >
+            <div
+              class="relative overflow-hidden rounded-box border border-base-300 bg-white"
+              :style="{ width: '260px', height: '260px' }"
+            >
+              <img
+                :src="`/api/archive/parts/diagram-image?diagram=${plate.diagramId}&size=preview`"
+                :alt="t('crop_alt', { title: plate.title, number: plate.calloutNumber })"
+                class="max-w-none origin-top-left"
+                :style="cropStyle(plate.crop!)"
+                loading="lazy"
+                decoding="async"
+              />
+              <span
+                class="pointer-events-none absolute rounded-full ring-2 ring-amber-500 ring-offset-1"
+                :style="markerStyle(plate.crop!)"
+              />
+            </div>
+            <p class="mt-1 max-w-[260px] truncate text-xs text-base-content/70 group-hover:underline">
+              {{ plate.title }} — {{ t('callout', { number: plate.calloutNumber }) }}
+            </p>
+          </NuxtLink>
+        </div>
+
         <ul class="space-y-1 text-sm">
           <li v-for="plate in part.appearsOn" :key="`${plate.diagramId}-${plate.calloutNumber}`">
             <NuxtLink :to="`/archive/parts/diagrams/${plate.diagramId}`" class="link">
               {{ plate.title }}
             </NuxtLink>
-            <span class="text-base-content/60"> — {{ t('callout', { number: plate.calloutNumber }) }}</span>
+            <span class="text-base-content/60">
+              — {{ t('callout', { number: plate.calloutNumber })
+              }}<template v-if="plate.quantity"> · {{ t('qty', { qty: plate.quantity }) }}</template>
+            </span>
           </li>
         </ul>
       </section>
@@ -150,7 +229,9 @@
     "plates_heading": "Appears on",
     "callout": "callout {number}",
     "where_heading": "Where to find it",
-    "attribution": "Part data from {source}."
+    "attribution": "Part data from {source}.",
+    "crop_alt": "Detail of {title} showing callout {number}",
+    "qty": "qty {qty}"
   },
   "es": {
     "title": "{number} - Número de pieza del Classic Mini",
@@ -164,7 +245,9 @@
     "plates_heading": "Aparece en",
     "callout": "referencia {number}",
     "where_heading": "Dónde encontrarla",
-    "attribution": "Datos de pieza de {source}."
+    "attribution": "Datos de pieza de {source}.",
+    "crop_alt": "Detalle de {title} mostrando la referencia {number}",
+    "qty": "cant. {qty}"
   },
   "fr": {
     "title": "{number} - Référence de pièce Classic Mini",
@@ -178,7 +261,9 @@
     "plates_heading": "Apparaît sur",
     "callout": "repère {number}",
     "where_heading": "Où la trouver",
-    "attribution": "Données de pièce fournies par {source}."
+    "attribution": "Données de pièce fournies par {source}.",
+    "crop_alt": "Détail de {title} montrant le repère {number}",
+    "qty": "qté {qty}"
   },
   "de": {
     "title": "{number} - Classic Mini Teilenummer",
@@ -192,7 +277,9 @@
     "plates_heading": "Erscheint auf",
     "callout": "Position {number}",
     "where_heading": "Wo erhältlich",
-    "attribution": "Teiledaten von {source}."
+    "attribution": "Teiledaten von {source}.",
+    "crop_alt": "Ausschnitt aus {title} mit Position {number}",
+    "qty": "Menge {qty}"
   },
   "it": {
     "title": "{number} - Codice ricambio Classic Mini",
@@ -206,7 +293,9 @@
     "plates_heading": "Presente su",
     "callout": "riferimento {number}",
     "where_heading": "Dove trovarlo",
-    "attribution": "Dati ricambio da {source}."
+    "attribution": "Dati ricambio da {source}.",
+    "crop_alt": "Dettaglio di {title} con il riferimento {number}",
+    "qty": "qtà {qty}"
   },
   "pt": {
     "title": "{number} - Número de peça do Classic Mini",
@@ -220,7 +309,9 @@
     "plates_heading": "Aparece em",
     "callout": "referência {number}",
     "where_heading": "Onde encontrar",
-    "attribution": "Dados de peça de {source}."
+    "attribution": "Dados de peça de {source}.",
+    "crop_alt": "Detalhe de {title} mostrando a referência {number}",
+    "qty": "qtd. {qty}"
   },
   "ru": {
     "title": "{number} - Номер детали Classic Mini",
@@ -234,7 +325,9 @@
     "plates_heading": "Встречается на",
     "callout": "позиция {number}",
     "where_heading": "Где найти",
-    "attribution": "Данные о детали предоставлены {source}."
+    "attribution": "Данные о детали предоставлены {source}.",
+    "crop_alt": "Фрагмент {title} с позицией {number}",
+    "qty": "кол-во {qty}"
   },
   "ja": {
     "title": "{number} - クラシックミニ 部品番号",
@@ -248,7 +341,9 @@
     "plates_heading": "掲載図版",
     "callout": "図版番号 {number}",
     "where_heading": "入手先",
-    "attribution": "部品データ提供: {source}。"
+    "attribution": "部品データ提供: {source}。",
+    "crop_alt": "{title} の図番 {number} 付近",
+    "qty": "数量 {qty}"
   },
   "zh": {
     "title": "{number} - 经典 Mini 零件号",
@@ -262,7 +357,9 @@
     "plates_heading": "出现于",
     "callout": "图号 {number}",
     "where_heading": "何处购买",
-    "attribution": "零件数据来自 {source}。"
+    "attribution": "零件数据来自 {source}。",
+    "crop_alt": "{title} 中图号 {number} 的局部",
+    "qty": "数量 {qty}"
   },
   "ko": {
     "title": "{number} - 클래식 미니 부품 번호",
@@ -276,7 +373,9 @@
     "plates_heading": "수록 도판",
     "callout": "도번 {number}",
     "where_heading": "구입처",
-    "attribution": "부품 데이터 출처: {source}."
+    "attribution": "부품 데이터 출처: {source}.",
+    "crop_alt": "{title}의 도번 {number} 부분",
+    "qty": "수량 {qty}"
   }
 }
 </i18n>
