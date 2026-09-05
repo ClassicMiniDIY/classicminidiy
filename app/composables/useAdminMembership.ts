@@ -36,8 +36,82 @@ export interface AdminMembership {
   discord_has_role: boolean;
 }
 
+/** One `subscriptions` row, joined to the member behind it. Every platform. */
+export interface AdminSubscriptionRow {
+  subscription_id: string;
+  user_id: string;
+  email: string | null;
+  username: string | null;
+  platform: MembershipPlatform;
+  product_id: string;
+  status: string;
+  /** Mirrors user_has_subscription() — status is active/grace AND unexpired. */
+  entitled: boolean;
+  starts_at: string | null;
+  expires_at: string | null;
+  cancelled_at: string | null;
+  last_verified_at: string | null;
+  created_at: string;
+  comp_note: string | null;
+  discord_link_status: string | null;
+  discord_username: string | null;
+}
+
+/**
+ * One member whose most recent verify-subscription attempt failed. Collapsed to
+ * one row per user server-side: an app that retries on every launch produces
+ * dozens of identical attempts, and this page needs the person.
+ */
+export interface AdminVerificationFailure {
+  user_id: string | null;
+  email: string | null;
+  username: string | null;
+  /** Platform the client CLAIMED. Null means it never sent one — which is the
+   *  whole diagnosis for the 2026 Android outage. */
+  platform: string | null;
+  outcome: string;
+  error_code: string | null;
+  http_status: number;
+  detail: string | null;
+  /** Top-level JSON keys the client sent. Keys, never values. */
+  body_keys: string[] | null;
+  user_agent: string | null;
+  attempts: number;
+  first_failure_at: string | null;
+  last_failure_at: string | null;
+  /** True when another channel (or a comp) covers them anyway — those rows are
+   *  noise. An unentitled one is somebody who paid and got nothing. */
+  entitled_now: boolean;
+}
+
+/** Daily verify-subscription tally, for the "is something broken now" strip. */
+export interface AdminVerificationHealth {
+  day: string;
+  /** '(none sent)' when the client omitted the platform key. */
+  platform: string;
+  outcome: 'verified' | 'rejected' | 'upstream_error';
+  attempts: number;
+  distinct_users: number;
+}
+
+export type MembershipPlatform = 'apple' | 'google' | 'stripe' | 'comp' | 'ghost' | 'patreon';
+
 export const useAdminMembership = () => {
   const supabase = useSupabase();
+
+  /**
+   * The three RPCs below ship in classicminidiy-supabase migration
+   * 20260905000001 and are therefore absent from the generated `Database` type
+   * until `bun run gen:types` is re-run against a project that has it. Calling
+   * them through this narrowed signature keeps the typecheck ratchet flat
+   * without an `any`; once the types are regenerated the cast is redundant and
+   * should be deleted along with this comment.
+   */
+  type PendingRpc = (
+    fn: string,
+    args?: Record<string, unknown>
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
+  const pendingRpc = supabase.rpc.bind(supabase) as unknown as PendingRpc;
 
   /** Snapshot of a user's membership for the admin UI. */
   const getMembership = async (userId: string): Promise<AdminMembership> => {
@@ -69,5 +143,39 @@ export const useAdminMembership = () => {
     if (error) throw error;
   };
 
-  return { getMembership, grantComp, revokeComp };
+  /** Every purchase, every platform, newest first. */
+  const listSubscriptions = async (): Promise<AdminSubscriptionRow[]> => {
+    const { data, error } = await pendingRpc('admin_list_subscriptions');
+    if (error) throw error;
+    return (data ?? []) as AdminSubscriptionRow[];
+  };
+
+  /**
+   * Members whose verification is currently failing. Defaults to the last 30
+   * days server-side; a user who has since verified drops off on their own, so
+   * this list never needs dismissing.
+   */
+  const listVerificationFailures = async (since?: string): Promise<AdminVerificationFailure[]> => {
+    const { data, error } = await pendingRpc('admin_list_verification_failures', {
+      p_since: since ?? null,
+    });
+    if (error) throw error;
+    return (data ?? []) as AdminVerificationFailure[];
+  };
+
+  /** Attempts per day/platform/outcome over the last `days`. */
+  const verificationHealth = async (days = 7): Promise<AdminVerificationHealth[]> => {
+    const { data, error } = await pendingRpc('admin_verification_health', { p_days: days });
+    if (error) throw error;
+    return (data ?? []) as AdminVerificationHealth[];
+  };
+
+  return {
+    getMembership,
+    grantComp,
+    revokeComp,
+    listSubscriptions,
+    listVerificationFailures,
+    verificationHealth,
+  };
 };
