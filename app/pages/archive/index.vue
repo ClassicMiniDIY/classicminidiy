@@ -22,6 +22,7 @@
       'Wheel Library': 'archive_items.wheel_library',
       'Color Picker': 'archive_items.color_picker',
       Documents: 'archive_items.documents',
+      'Part Numbers': 'archive_items.parts',
     };
     return t(titleMap[title] || title);
   };
@@ -218,7 +219,9 @@
       "wheel_library_desc": "Every wheel ever fitted to a Classic Mini, with offsets and photos.",
       "color_picker_desc": "Paint codes and original swatches from the factory archive.",
       "models": "3D Models",
-      "models_desc": "Community 3D-printable parts with print settings and assembly guides."
+      "models_desc": "Community 3D-printable parts with print settings and assembly guides.",
+      "parts": "Part Numbers",
+      "parts_desc": "Search 10,000 part numbers with factory exploded diagrams, supersessions and what each part fits."
     },
     "eyebrow": "THE ARCHIVE",
     "subnav_label": "ARCHIVE",
@@ -280,7 +283,9 @@
       "wheel_library_desc": "Cada rueda montada en un Classic Mini, con offsets y fotos.",
       "color_picker_desc": "Códigos de pintura y muestras originales del archivo de fábrica.",
       "models": "Modelos 3D",
-      "models_desc": "Piezas imprimibles en 3D de la comunidad con ajustes de impresión y guías de montaje."
+      "models_desc": "Piezas imprimibles en 3D de la comunidad con ajustes de impresión y guías de montaje.",
+      "parts": "Números de pieza",
+      "parts_desc": "Busque 10.000 números de pieza con despieces de fábrica, sustituciones y aplicaciones."
     },
     "eyebrow": "EL ARCHIVO",
     "subnav_label": "ARCHIVO",
@@ -342,7 +347,9 @@
       "wheel_library_desc": "Chaque jante jamais montée sur une Classic Mini, avec offsets et photos.",
       "color_picker_desc": "Codes de peinture et nuanciers originaux des archives d'usine.",
       "models": "Modèles 3D",
-      "models_desc": "Pièces imprimables en 3D de la communauté avec réglages d'impression et guides de montage."
+      "models_desc": "Pièces imprimables en 3D de la communauté avec réglages d'impression et guides de montage.",
+      "parts": "Références de pièces",
+      "parts_desc": "Recherchez 10 000 références avec les planches éclatées d’usine, les remplacements et la compatibilité."
     },
     "eyebrow": "LES ARCHIVES",
     "subnav_label": "ARCHIVE",
@@ -404,7 +411,9 @@
       "wheel_library_desc": "Ogni cerchio mai montato su una Classic Mini, con offset e foto.",
       "color_picker_desc": "Codici colore e campioni originali dagli archivi di fabbrica.",
       "models": "Modelli 3D",
-      "models_desc": "Parti stampabili in 3D della comunità con impostazioni di stampa e guide di montaggio."
+      "models_desc": "Parti stampabili in 3D della comunità con impostazioni di stampa e guide di montaggio.",
+      "parts": "Codici ricambio",
+      "parts_desc": "Cerca 10.000 codici ricambio con tavole esplose di fabbrica, sostituzioni e applicazioni."
     },
     "eyebrow": "L'ARCHIVIO",
     "subnav_label": "ARCHIVIO",
@@ -466,7 +475,9 @@
       "wheel_library_desc": "Jedes jemals an einem Classic Mini montierte Rad, mit Offsets und Fotos.",
       "color_picker_desc": "Lackcodes und Originalmuster aus dem Werksarchiv.",
       "models": "3D-Modelle",
-      "models_desc": "3D-druckbare Teile aus der Community mit Druckeinstellungen und Montageanleitungen."
+      "models_desc": "3D-druckbare Teile aus der Community mit Druckeinstellungen und Montageanleitungen.",
+      "parts": "Teilenummern",
+      "parts_desc": "Durchsuchen Sie 10.000 Teilenummern mit Werks-Explosionszeichnungen, Nachfolgern und Verwendung."
     },
     "eyebrow": "DAS ARCHIV",
     "subnav_label": "ARCHIV",
@@ -528,7 +539,9 @@
       "wheel_library_desc": "Cada roda já montada num Classic Mini, com offsets e fotos.",
       "color_picker_desc": "Códigos de pintura e amostras originais do arquivo de fábrica.",
       "models": "Modelos 3D",
-      "models_desc": "Peças imprimíveis em 3D da comunidade com configurações de impressão e guias de montagem."
+      "models_desc": "Peças imprimíveis em 3D da comunidade com configurações de impressão e guias de montagem.",
+      "parts": "Números de peça",
+      "parts_desc": "Pesquise 10.000 números de peça com desenhos explodidos de fábrica, substituições e aplicações."
     },
     "eyebrow": "O ARQUIVO",
     "subnav_label": "ARQUIVO",
@@ -590,7 +603,9 @@
       "wheel_library_desc": "Каждое колесо, когда-либо устанавливавшееся на Classic Mini, с вылетами и фото.",
       "color_picker_desc": "Цветовые коды и оригинальные образцы из заводского архива.",
       "models": "3D-модели",
-      "models_desc": "Печатаемые на 3D-принтере детали от сообщества с настройками печати и руководствами по сборке."
+      "models_desc": "Печатаемые на 3D-принтере детали от сообщества с настройками печати и руководствами по сборке.",
+      "parts": "Номера деталей",
+      "parts_desc": "Поиск по 10 000 номеров деталей с заводскими схемами, заменами и применимостью."
     },
     "eyebrow": "АРХИВ",
     "subnav_label": "АРХИВ",
@@ -652,7 +667,9 @@
       "wheel_library_desc": "Classic Miniに装着された全てのホイール、オフセットと写真付き。",
       "color_picker_desc": "工場アーカイブからの塗装コードとオリジナルスウォッチ。",
       "models": "3Dモデル",
-      "models_desc": "印刷設定と組み立てガイド付きの、コミュニティによる3Dプリント部品。"
+      "models_desc": "印刷設定と組み立てガイド付きの、コミュニティによる3Dプリント部品。",
+      "parts": "部品番号",
+      "parts_desc": "10,000件の部品番号を工場の分解図・後継品番・適合とあわせて検索できます。"
     },
     "eyebrow": "アーカイブ",
     "subnav_label": "アーカイブ",
@@ -714,7 +731,9 @@
       "wheel_library_desc": "每一只装在 Classic Mini 上的车轮，附带偏距和照片。",
       "color_picker_desc": "来自工厂档案的漆色代码和原始色板。",
       "models": "3D模型",
-      "models_desc": "社区贡献的可3D打印零件，附打印设置和组装指南。"
+      "models_desc": "社区贡献的可3D打印零件，附打印设置和组装指南。",
+      "parts": "零件号",
+      "parts_desc": "搜索 10,000 个零件号，附原厂爆炸图、替代件与适用车型。"
     },
     "eyebrow": "档案",
     "subnav_label": "档案馆",
@@ -776,7 +795,9 @@
       "wheel_library_desc": "Classic Mini에 장착된 모든 휠, 오프셋과 사진 포함.",
       "color_picker_desc": "공장 아카이브의 도색 코드와 원본 스와치.",
       "models": "3D 모델",
-      "models_desc": "인쇄 설정과 조립 가이드가 포함된 커뮤니티 3D 프린트 부품."
+      "models_desc": "인쇄 설정과 조립 가이드가 포함된 커뮤니티 3D 프린트 부품.",
+      "parts": "부품 번호",
+      "parts_desc": "10,000개의 부품 번호를 공장 분해도, 대체 부품, 적용 차종과 함께 검색하세요."
     },
     "eyebrow": "아카이브",
     "subnav_label": "아카이브",

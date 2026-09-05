@@ -196,8 +196,16 @@ describe('ToolboxItems', () => {
 // ArchiveItems
 // ---------------------------------------------------------------------------
 describe('ArchiveItems', () => {
-  it('has 8 items', () => {
-    expect(ArchiveItems).toHaveLength(8);
+  it('has 9 items', () => {
+    expect(ArchiveItems).toHaveLength(9);
+  });
+
+  it('lists the part-number archive, which is only reachable from here', () => {
+    // /archive is the ONLY discovery surface for the archive sections: the
+    // header link is flat, there is no archive dropdown and no subnav. A
+    // section missing from this array is a section nobody can navigate to,
+    // which is exactly what happened to /archive/parts when it shipped.
+    expect(ArchiveItems.map((i) => i.to)).toContain('/archive/parts');
   });
 
   it('each item has title, path, iconHtml, to, description, and image', () => {
