@@ -29,10 +29,14 @@
   const searchTerm = ref(typeof route.query.q === 'string' ? route.query.q : '');
   const page = computed(() => Math.max(1, Number.parseInt(String(route.query.page ?? '1'), 10) || 1));
 
+  /** Declared before either fetch, because both gate their `immediate` on it. */
+  const searching = computed(() => Boolean(route.query.q));
+
   // NOT the getter form of useFetch — that shape is banned in this repo. The
   // query is a reactive object instead, which re-fetches on change.
   const { data, pending, error } = await useFetch<SearchResult>('/api/archive/parts/search', {
     query: computed(() => ({ q: route.query.q ?? '', page: page.value })),
+    immediate: searching.value,
   });
 
   interface PlateRow {
@@ -50,11 +54,16 @@
   }
 
   // Browse is the default view; search is the other way in, not the only one.
+  //
+  // Each view fetches only what it renders. Fetching both unconditionally meant
+  // browsing paid for a paginated count over 10,073 rows it never showed, and
+  // searching paid for every published plate plus the count RPC it never showed
+  // — roughly double the database work on the archive's busiest page.
   const { data: browse } = await useFetch<{ systems: SystemRow[]; totalPlates: number; countsAvailable: boolean }>(
-    '/api/archive/parts/sections'
+    '/api/archive/parts/sections',
+    { immediate: !searching.value, watch: [searching] }
   );
   const systems = computed(() => browse.value?.systems ?? []);
-  const searching = computed(() => Boolean(route.query.q));
 
   const parts = computed(() => data.value?.parts ?? []);
   const total = computed(() => data.value?.total ?? 0);
@@ -145,21 +154,21 @@
       </div>
     </section>
 
-    <div v-if="pending" class="flex justify-center py-16">
+    <div v-if="searching && pending" class="flex justify-center py-16">
       <span class="loading loading-spinner loading-lg" />
     </div>
 
-    <div v-else-if="error" class="alert alert-error">
+    <div v-else-if="searching && error" class="alert alert-error">
       <i class="fas fa-triangle-exclamation" />
       <span>{{ t('load_error') }}</span>
     </div>
 
-    <div v-else-if="parts.length === 0" class="py-16 text-center text-base-content/60">
+    <div v-else-if="searching && parts.length === 0" class="py-16 text-center text-base-content/60">
       <i class="fas fa-magnifying-glass mb-3 block text-3xl" />
       <p>{{ t('no_results') }}</p>
     </div>
 
-    <template v-else-if="searching || parts.length">
+    <template v-else-if="searching">
       <div class="overflow-x-auto rounded-box border border-base-300">
         <table class="table table-zebra">
           <thead>
