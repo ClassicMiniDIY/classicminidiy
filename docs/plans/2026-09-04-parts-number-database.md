@@ -414,9 +414,15 @@ fetching the page, and the refresh had to be built on age instead.
   Refresh rows are only taken once no unfetched row remains, so turning refresh on cannot
   slow an incomplete first pass.
 - **Disappearance is decided per cycle, not per page.** A cycle opens when the first
-  refresh row of it is taken and closes when nothing is left to fetch. Only then does a
-  record whose `last_seen_at` predates the cycle count as a miss. One page missing a
-  listing means nothing: retailers move products between categories.
+  refresh row of it is taken and closes only when every queue row has been re-read since
+  it opened. Only then does a record whose `last_seen_at` predates the cycle count as a
+  miss. One page missing a listing means nothing: retailers move products between
+  categories. Membership is pinned at the open — judging due-ness by rolling age inside a
+  cycle let it close while pages that were not yet old enough had never been re-read, and
+  their live records were then counted as unseen.
+- **Closing a cycle is one SQL function**, `reconcile_part_source_cycle`, so the count,
+  the valve and the marking are one transaction. Done from the script it needed paging
+  around the 1000-row cap, and a throw between two batches counted one absence twice.
 - **Two misses, not three.** Cycles here run 30 days or longer, so two consecutive misses
   is already about two months of absence. `gone_after_misses` is per source.
 - **`max_change_ratio` is now enforced**, in the reconcile step only — the one place that

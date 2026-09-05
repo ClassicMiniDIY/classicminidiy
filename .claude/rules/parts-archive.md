@@ -22,7 +22,8 @@ ingest scripts live in `classicminidiy-supabase`; nothing here writes `part_*`.
   service-role reads bypass RLS, so a route using `getServiceClient` must apply
   it itself. `part_source_records` additionally needs `is_current = true`: the
   refresh retires a record when the retailer stops listing it, and a retired
-  record is a link to a 404.
+  record is a link to a 404. A refresh cycle closes only once every queue row has
+  been re-read since it opened, not once nothing looks old enough.
 - **Never tally a PostgREST list in JavaScript.** The response caps at 1000
   rows with no error, so `rows.length` and any client-side group-by silently
   under-report. This has shipped twice: 37,066 callouts counted as 1,000 (eight

@@ -124,7 +124,9 @@ export default defineEventHandler(async (event) => {
         db.from('part_ingest_queue').select('id', { count: 'exact', head: true }).eq('source_id', source.id);
       const [{ count: total }, { count: remaining }, { count: blocked }] = await Promise.all([
         base(),
-        base().is('last_fetched_at', null),
+        // Blocked rows are excluded: they will never be fetched, so counting
+        // them as "left" overstates the work remaining for ever.
+        base().is('last_fetched_at', null).is('blocked_at', null),
         base().not('blocked_at', 'is', null),
       ]);
       queueBySource.set(source.id, { total: total ?? 0, remaining: remaining ?? 0, blocked: blocked ?? 0 });
