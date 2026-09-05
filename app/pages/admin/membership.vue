@@ -141,6 +141,11 @@
       from <code>subscription_verification_attempts</code>, which records every <code>verify-subscription</code> call.
       Row actions here reuse the existing comp RPCs &mdash; nothing on this page writes a purchase.
     </p>
+    <p class="text-sm opacity-70 mb-4">
+      Scoped to the <strong>Sustaining</strong> product. <code>subscriptions</code> also holds the Developer API tier,
+      which has its own page at <NuxtLink to="/admin/developer" class="link">Developer API</NuxtLink> &mdash; counting
+      both here would report members who are not members.
+    </p>
 
     <div v-if="errorMessage" role="alert" class="alert alert-error mb-4">
       <i class="fas fa-triangle-exclamation"></i>
@@ -163,7 +168,11 @@
       <i class="fas fa-spinner fa-spin text-3xl text-primary"></i>
     </div>
 
-    <template v-else>
+    <!-- Gated on the error too, not just `loading`. With `v-else` alone a failed
+         load rendered the red alert directly above a green "no account failed"
+         and "Paying members 0" — false reassurance on the one page whose job is
+         to stop exactly that. -->
+    <template v-else-if="!errorMessage">
       <!-- Summary -->
       <div class="stats stats-vertical sm:stats-horizontal shadow mb-6 w-full">
         <div class="stat">
@@ -244,7 +253,7 @@
           <tbody>
             <tr v-for="row in failures" :key="`${row.user_id}-${row.last_failure_at}`">
               <td>
-                <div class="text-sm">{{ row.email || 'unauthenticated' }}</div>
+                <div class="text-sm">{{ row.email || row.user_id }}</div>
                 <div v-if="row.user_agent" class="text-xs opacity-60 font-mono">{{ row.user_agent }}</div>
               </td>
               <td>
