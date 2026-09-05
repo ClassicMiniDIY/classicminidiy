@@ -72,6 +72,45 @@ export default defineEventHandler(async (event) => {
     db.from('part_source_records').select('source_id, source_url').eq('part_id', part.id),
   ]);
 
+  // Parts sharing a callout with this one. On a factory plate a single numbered
+  // position often covers a small family — a bolt in three lengths, a grille in
+  // chrome and black — and knowing what the alternatives ARE is most of what a
+  // reader wants when they have found the right position but the wrong variant.
+  const calloutKeys = ((callouts.data ?? []) as any[])
+    .filter((c) => c.diagram && sourceById.has(c.diagram.source_id))
+    .map((c) => ({ diagramId: c.diagram.id, calloutNumber: c.callout_number }))
+    .slice(0, 6);
+
+  const siblings: Array<{ partNumber: string; slug: string; description: string | null }> = [];
+  if (calloutKeys.length > 0) {
+    const { data: siblingRows } = await db
+      .from('part_diagram_callouts')
+      .select('diagram_id, callout_number, part:parts(part_number_display, part_number_norm, description, status)')
+      .in(
+        'diagram_id',
+        calloutKeys.map((k) => k.diagramId)
+      )
+      .in(
+        'callout_number',
+        calloutKeys.map((k) => k.calloutNumber)
+      )
+      .not('part_id', 'is', null);
+
+    const seen = new Set<string>([part.part_number_norm]);
+    for (const row of (siblingRows ?? []) as any[]) {
+      // The `.in` pair is a cross product, so re-check the actual pairing.
+      if (!calloutKeys.some((k) => k.diagramId === row.diagram_id && k.calloutNumber === row.callout_number)) continue;
+      const sib = row.part;
+      if (!sib || sib.status !== 'published' || seen.has(sib.part_number_norm)) continue;
+      seen.add(sib.part_number_norm);
+      siblings.push({
+        partNumber: sib.part_number_display,
+        slug: sib.part_number_norm,
+        description: sib.description,
+      });
+    }
+  }
+
   const supersessionRows = (supersessions.data ?? []) as any[];
   const appearsOn = ((callouts.data ?? []) as any[])
     .filter((c) => c.diagram && sourceById.has(c.diagram.source_id))
@@ -110,6 +149,9 @@ export default defineEventHandler(async (event) => {
     kind: part.kind,
     system: part.system,
     category: part.category,
+    /** Capped: a universal fastener shares its position with a great many parts. */
+    sharesCalloutWith: siblings.slice(0, 12),
+    sharesCalloutWithTotal: siblings.length,
     notes: part.notes,
     replacedBy: supersessionRows
       .filter((s) => s.predecessor_id === part.id && s.successor)
