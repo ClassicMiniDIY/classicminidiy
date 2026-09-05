@@ -63,7 +63,9 @@ export interface AdminSubscriptionRow {
  * dozens of identical attempts, and this page needs the person.
  */
 export interface AdminVerificationFailure {
-  user_id: string | null;
+  /** Never null: the RPC excludes attempts that never authenticated, since they
+   *  name no account and would otherwise all fuse into one row. */
+  user_id: string;
   email: string | null;
   username: string | null;
   /** Platform the client CLAIMED. Null means it never sent one — which is the
@@ -143,9 +145,13 @@ export const useAdminMembership = () => {
     if (error) throw error;
   };
 
-  /** Every purchase, every platform, newest first. */
-  const listSubscriptions = async (): Promise<AdminSubscriptionRow[]> => {
-    const { data, error } = await pendingRpc('admin_list_subscriptions');
+  /**
+   * Purchases for one product, newest first. Defaults to the Sustaining
+   * membership: `subscriptions` also carries the Developer API tier, and an
+   * unscoped list counts those rows as members. Pass null for every product.
+   */
+  const listSubscriptions = async (productId: string | null = 'sustaining'): Promise<AdminSubscriptionRow[]> => {
+    const { data, error } = await pendingRpc('admin_list_subscriptions', { p_product_id: productId });
     if (error) throw error;
     return (data ?? []) as AdminSubscriptionRow[];
   };
