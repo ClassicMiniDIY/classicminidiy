@@ -25,6 +25,8 @@
     kitContents: number | null;
     sourceRecords: number | null;
     retiredRecords: number | null;
+    recentWithdrawn: number | null;
+    recentChanged: number | null;
     publicRows: number | null;
   }
 
@@ -60,6 +62,7 @@
       requestsMade: number | null;
       recordsWritten: number | null;
       abortReason: string | null;
+      refreshNote: string | null;
     } | null;
   }
 
@@ -93,7 +96,7 @@
   }
 
   const numberFormat = new Intl.NumberFormat('en-US');
-  /** Counts only. Renders an unreadable count as "unknown", never as zero. */
+
   /**
    * A reconcile refusal means the source looked like it had lost most of its
    * catalogue and the ingest declined to act on that. It is a decision waiting
@@ -103,6 +106,7 @@
     return source.lastRun?.abortReason?.startsWith('reconcile refused') ?? false;
   }
 
+  /** Counts only. Renders an unreadable count as "unknown", never as zero. */
   function fmt(n: number | null | undefined) {
     return n === null || n === undefined ? 'unknown' : numberFormat.format(n);
   }
@@ -388,8 +392,24 @@
                 never run
               </template>
             </p>
-            <p v-if="source.lastRun?.abortReason" class="text-xs text-warning">
+            <!--
+              A reconcile refusal is not an ordinary abort. It means the source
+              looked like it had lost most of its catalogue and the ingest
+              declined to act on that, which is a decision waiting for a person.
+              It gets an alert; everything else stays a line of text.
+            -->
+            <div v-if="isReconcileRefusal(source)" role="alert" class="alert alert-warning text-sm">
+              <i class="fas fa-triangle-exclamation" />
+              <div>
+                <p class="font-semibold">The refresh refused to close a cycle</p>
+                <p class="text-xs">{{ source.lastRun?.abortReason }}</p>
+              </div>
+            </div>
+            <p v-else-if="source.lastRun?.abortReason" class="text-xs text-warning">
               Last run stopped: {{ source.lastRun.abortReason }}
+            </p>
+            <p v-if="source.lastRun?.refreshNote" class="text-xs text-base-content/60">
+              {{ source.lastRun.refreshNote }}
             </p>
           </div>
 
@@ -418,7 +438,10 @@
             {{ fmt(source.counts.retiredRecords) }} records retired: the source no longer lists them, so the archive no
             longer links to them.
           </p>
-          <p v-if="source.counts.recentWithdrawn || source.counts.recentChanged" class="text-xs text-base-content/60">
+          <p
+            v-if="source.counts.recentWithdrawn !== 0 || source.counts.recentChanged !== 0"
+            class="text-xs text-base-content/60"
+          >
             Last 30 days: {{ fmt(source.counts.recentChanged) }} records changed upstream,
             {{ fmt(source.counts.recentWithdrawn) }} withdrawn.
           </p>
