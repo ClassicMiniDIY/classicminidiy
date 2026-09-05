@@ -14,18 +14,10 @@
  * source list returns nothing rather than everything.
  */
 import { getServiceClient } from '../../../utils/supabase';
+import { buildPartSearchFilter } from '../../../utils/partSearchFilter';
 
 const PAGE_SIZE = 24;
 const MAX_PAGE = 200;
-
-function normalise(raw: string): string {
-  return raw.toUpperCase().replace(/[\s\-.]/g, '');
-}
-
-/** PostgREST splits `or()` on commas and parens, so an unescaped value changes the filter's shape. */
-function escapeForOr(value: string): string {
-  return value.replace(/[,()*]/g, ' ').trim();
-}
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -52,9 +44,11 @@ export default defineEventHandler(async (event) => {
     .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
 
   if (search) {
-    const norm = normalise(search);
-    const words = escapeForOr(search);
-    request = request.or(`part_number_norm.ilike.*${norm}*,description.ilike.*${words}*`);
+    const filter = buildPartSearchFilter(search);
+    // Input that reduces to nothing usable returns no results, rather than
+    // falling through to an unfiltered query that looks like a working search.
+    if (!filter) return { parts: [], total: 0, page, pageSize: PAGE_SIZE, query: search, system: system || null };
+    request = request.or(filter);
   }
   if (system) request = request.eq('system', system);
 

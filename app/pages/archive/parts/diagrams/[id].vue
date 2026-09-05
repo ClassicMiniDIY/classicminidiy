@@ -67,6 +67,10 @@
   /** Only callouts we can both place and link are drawn as hotspots. */
   const drawable = computed(() => (diagram.value?.callouts ?? []).filter((c) => c.hotspot && c.partSlug));
 
+  // `preview` is 1600 wide against a ~1086 CSS-pixel column, so the drawing is
+  // downscaled by the browser rather than upscaled. A 1000-wide preview was
+  // being stretched, and it showed worst on the callout numbers a reader is
+  // trying to read off the plate.
   const imageUrl = computed(() => `/api/archive/parts/diagram-image?diagram=${id.value}&size=preview`);
   const fullUrl = computed(() => `/api/archive/parts/diagram-image?diagram=${id.value}&size=full`);
 

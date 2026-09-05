@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getServiceClient } from '../../utils/supabase';
+import { buildPartSearchFilter, safePartNumberPattern } from '../../utils/partSearchFilter';
 
 /**
  * Part Number MCP Tool
@@ -41,19 +42,6 @@ const PART_COLUMNS = [
 const MAX_APPEARS_ON = 8;
 const MAX_FITS = 12;
 const MAX_SOURCE_URLS = 3;
-
-/** Matches the CHECK on parts.part_number_norm: upper, no spaces/hyphens/dots. */
-function normalise(raw: string): string {
-  return raw.toUpperCase().replace(/[\s\-.]/g, '');
-}
-
-/**
- * PostgREST's `or()` splits on commas and parentheses, so an unescaped value
- * silently changes the filter's shape rather than failing.
- */
-function escapeForOr(value: string): string {
-  return value.replace(/[,()]/g, ' ').trim();
-}
 
 function readableError(message: string): string {
   const flat = message.replace(/\s+/g, ' ').trim();
@@ -132,11 +120,19 @@ export default defineMcpTool({
         .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
 
       if (partNumber) {
-        request = request.eq('part_number_norm', normalise(partNumber));
+        const exact = safePartNumberPattern(partNumber);
+        if (exact.length < 2) {
+          return errorResult('That does not look like a part number. Try `query` to search descriptions instead.');
+        }
+        request = request.eq('part_number_norm', exact);
       } else {
-        const norm = normalise(query!);
-        const words = escapeForOr(query!);
-        request = request.or(`part_number_norm.ilike.*${norm}*,description.ilike.*${words}*`);
+        const filter = buildPartSearchFilter(query!);
+        if (!filter) {
+          return errorResult(
+            'That search reduces to nothing usable. Try letters and digits from the number or the description.'
+          );
+        }
+        request = request.or(filter);
       }
 
       const { data, error } = await request.order('part_number_norm').limit(limit + 1);
