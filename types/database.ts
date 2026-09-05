@@ -3741,6 +3741,7 @@ export type Database = {
           contact_email: string | null;
           crawl_enabled: boolean;
           created_at: string;
+          gone_after_misses: number;
           licence_changed_at: string | null;
           licence_changed_by: string | null;
           licence_note: string | null;
@@ -3748,6 +3749,8 @@ export type Database = {
           max_requests_per_day: number;
           max_requests_per_run: number;
           min_request_interval_ms: number;
+          refresh_after_days: number;
+          refresh_cycle_started_at: string | null;
           source_id: string;
           updated_at: string;
           user_agent: string | null;
@@ -3756,6 +3759,7 @@ export type Database = {
           contact_email?: string | null;
           crawl_enabled?: boolean;
           created_at?: string;
+          gone_after_misses?: number;
           licence_changed_at?: string | null;
           licence_changed_by?: string | null;
           licence_note?: string | null;
@@ -3763,6 +3767,8 @@ export type Database = {
           max_requests_per_day?: number;
           max_requests_per_run?: number;
           min_request_interval_ms?: number;
+          refresh_after_days?: number;
+          refresh_cycle_started_at?: string | null;
           source_id: string;
           updated_at?: string;
           user_agent?: string | null;
@@ -3771,6 +3777,7 @@ export type Database = {
           contact_email?: string | null;
           crawl_enabled?: boolean;
           created_at?: string;
+          gone_after_misses?: number;
           licence_changed_at?: string | null;
           licence_changed_by?: string | null;
           licence_note?: string | null;
@@ -3778,6 +3785,8 @@ export type Database = {
           max_requests_per_day?: number;
           max_requests_per_run?: number;
           min_request_interval_ms?: number;
+          refresh_after_days?: number;
+          refresh_cycle_started_at?: string | null;
           source_id?: string;
           updated_at?: string;
           user_agent?: string | null;
@@ -5896,6 +5905,16 @@ export type Database = {
         };
       };
       recalculate_trust_level: { Args: { user_id: string }; Returns: undefined };
+      reconcile_part_source_cycle: {
+        Args: { p_source_id: string };
+        Returns: {
+          cycle_started_at: string;
+          outcome: string;
+          records_retired: number;
+          records_total: number;
+          records_unseen: number;
+        }[];
+      };
       record_archive_view: {
         Args: {
           p_is_download?: boolean;
