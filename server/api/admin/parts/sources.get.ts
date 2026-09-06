@@ -37,6 +37,17 @@ interface SourceCounts {
   publicRows: number | null;
 }
 
+/**
+ * What the ingest writes into `part_ingest_runs.notes`. JSONB and NOT NULL, so
+ * an absent key is the normal case, not an error.
+ */
+interface RunNotes {
+  /** What a completed refresh cycle did, in one sentence. */
+  refresh?: string;
+  /** Present when reconcile refused to close a cycle. */
+  refusal?: { unseen: number; total: number };
+}
+
 /** The columns of `part_source_private` this screen reads. */
 interface SourceSetting {
   source_id: string;
@@ -259,6 +270,20 @@ export default defineEventHandler(async (event) => {
         refreshAfterDays: setting?.refresh_after_days ?? null,
         goneAfterMisses: setting?.gone_after_misses ?? null,
         refreshCycleStartedAt: setting?.refresh_cycle_started_at ?? null,
+        // THE REFUSAL OUTLIVES THE RUN THAT MADE IT. A refused cycle stays open
+        // by design, so the next --discover, or a drain that stops on its
+        // budget, becomes `lastRun` and the alarm would disappear while the
+        // condition it reported is still true. So it is read from the newest
+        // refusal among the runs we hold, for as long as a cycle is open.
+        //
+        // Read as STRUCTURE. The first cut had the admin page match the opening
+        // words of abort_reason, which made an English sentence in the other
+        // repo into a contract this screen depends on.
+        openRefusal: setting?.refresh_cycle_started_at
+          ? ((runsBySource.get(source.id) ?? [])
+              .map((r) => (r.notes as RunNotes | null)?.refusal)
+              .find((r): r is { unseen: number; total: number } => Boolean(r)) ?? null)
+          : null,
         counts,
         queue: queueBySource.get(source.id) ?? { total: 0, remaining: 0, blocked: 0 },
         runInFlight: (runsBySource.get(source.id) ?? []).some((r) => r.status === 'running'),
@@ -272,8 +297,7 @@ export default defineEventHandler(async (event) => {
               recordsWritten: (runsBySource.get(source.id) ?? [])[0]!.records_written,
               abortReason: (runsBySource.get(source.id) ?? [])[0]!.abort_reason,
               // What a completed refresh cycle did, if the run closed one.
-              refreshNote:
-                ((runsBySource.get(source.id) ?? [])[0]!.notes as { refresh?: string } | null)?.refresh ?? null,
+              refreshNote: ((runsBySource.get(source.id) ?? [])[0]!.notes as RunNotes | null)?.refresh ?? null,
             }
           : null,
       };

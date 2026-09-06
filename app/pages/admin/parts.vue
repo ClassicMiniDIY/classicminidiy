@@ -51,6 +51,8 @@
     refreshAfterDays: number | null;
     goneAfterMisses: number | null;
     refreshCycleStartedAt: string | null;
+    /** Set while a cycle is open that reconcile refused to close. */
+    openRefusal: { unseen: number; total: number } | null;
     counts: SourceCounts;
     queue: { total: number; remaining: number; blocked: number };
     runInFlight: boolean;
@@ -96,15 +98,6 @@
   }
 
   const numberFormat = new Intl.NumberFormat('en-US');
-
-  /**
-   * A reconcile refusal means the source looked like it had lost most of its
-   * catalogue and the ingest declined to act on that. It is a decision waiting
-   * for a person, not an ordinary abort, so it gets an alert rather than a line.
-   */
-  function isReconcileRefusal(source: PartSource) {
-    return source.lastRun?.abortReason?.startsWith('reconcile refused') ?? false;
-  }
 
   /** Counts only. Renders an unreadable count as "unknown", never as zero. */
   function fmt(n: number | null | undefined) {
@@ -398,11 +391,15 @@
               declined to act on that, which is a decision waiting for a person.
               It gets an alert; everything else stays a line of text.
             -->
-            <div v-if="isReconcileRefusal(source)" role="alert" class="alert alert-warning text-sm">
+            <div v-if="source.openRefusal" role="alert" class="alert alert-warning text-sm">
               <i class="fas fa-triangle-exclamation" />
               <div>
                 <p class="font-semibold">The refresh refused to close a cycle</p>
-                <p class="text-xs">{{ source.lastRun?.abortReason }}</p>
+                <p class="text-xs">
+                  {{ fmt(source.openRefusal.unseen) }} of {{ fmt(source.openRefusal.total) }} records were not seen.
+                  Nothing was marked and the cycle is still open, so the next run will refuse again. Check the parser
+                  and the site; if the source really did drop this much, raise the change threshold for one run.
+                </p>
               </div>
             </div>
             <p v-else-if="source.lastRun?.abortReason" class="text-xs text-warning">
@@ -438,11 +435,16 @@
             {{ fmt(source.counts.retiredRecords) }} records retired: the source no longer lists them, so the archive no
             longer links to them.
           </p>
+          <!--
+            `!== 0`, not truthiness: null means the count could not be read and
+            must render as "unknown", the same as every other count here. Only a
+            real zero hides the line.
+          -->
           <p
             v-if="source.counts.recentWithdrawn !== 0 || source.counts.recentChanged !== 0"
             class="text-xs text-base-content/60"
           >
-            Last 30 days: {{ fmt(source.counts.recentChanged) }} records changed upstream,
+            Last 30 days: {{ fmt(source.counts.recentChanged) }} records rewritten,
             {{ fmt(source.counts.recentWithdrawn) }} withdrawn.
           </p>
 
