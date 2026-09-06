@@ -141,7 +141,7 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   not because every instance misbehaves today. `tests/static/ssr-contracts.test.ts` now
   enforces the rule so the count cannot drift again.
 
-- **`dompurify` is pinned to an exact version (currently `3.4.14`), and
+- **`dompurify` is pinned to an exact version (currently `3.4.15`), and
   `tests/unit/exchange/utils/markdown.test.ts` MUST stay on `@vitest-environment jsdom`.**
   These two facts are one contract — don't change either in isolation. Since 3.4.8
   DOMPurify walks the DOM with a node iterator that happy-dom mis-implements, and the
@@ -149,10 +149,10 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   markup with a live `javascript:` href intact, drops allowlisted tags, and never fires
   the `afterSanitizeAttributes` link-hardening hook. Under happy-dom the XSS suite is
   therefore asserting nothing. jsdom reproduces real-browser output byte-for-byte
-  (verified against Chrome on 3.4.12 — the 3.4.14 bump was checked against the 61-test
-  XSS suite on jsdom, not re-compared against Chrome), so that file — and any future test
+  (verified against Chrome on 3.4.12; the 3.4.14 and 3.4.15 bumps were each checked
+  against the 61-test XSS suite on jsdom, not re-compared against Chrome), so that file — and any future test
   that exercises DOMPurify — runs on jsdom while the rest of the suite keeps the happy-dom
-  default from `vitest.config.ts`. happy-dom 20.11.12 is still affected; recheck before
+  default from `vitest.config.ts`. happy-dom 20.14.0 is still affected; recheck before
   "simplifying" the env back. The exact pin (no `^`) is deliberate: a DOMPurify bump is a security
   change and should be a visible, tested commit, not a silent range resolution.
 - **`@takumi-rs/core` AND `@takumi-rs/wasm` stay on 1.x, at the same version.** 2.x breaks
