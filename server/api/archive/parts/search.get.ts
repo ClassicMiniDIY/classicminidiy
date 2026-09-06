@@ -35,7 +35,10 @@ export default defineEventHandler(async (event) => {
   }
   const visible = (sources ?? []).filter((s) => s.licence_status !== 'declined');
   const visibleIds = visible.map((s) => s.id);
-  if (visibleIds.length === 0) return { parts: [], total: 0, page, pageSize: PAGE_SIZE, systems: [] };
+  // catalogueTotal null, not 0: with no visible source the page cannot say how
+  // big the archive is, and 0 would be a claim rather than an admission.
+  if (visibleIds.length === 0)
+    return { parts: [], total: 0, catalogueTotal: null, page, pageSize: PAGE_SIZE, systems: [] };
 
   let request = db
     .from('parts')
@@ -47,13 +50,41 @@ export default defineEventHandler(async (event) => {
     const filter = buildPartSearchFilter(search);
     // Input that reduces to nothing usable returns no results, rather than
     // falling through to an unfiltered query that looks like a working search.
-    if (!filter) return { parts: [], total: 0, page, pageSize: PAGE_SIZE, query: search, system: system || null };
+    if (!filter)
+      return {
+        parts: [],
+        total: 0,
+        catalogueTotal: null,
+        page,
+        pageSize: PAGE_SIZE,
+        query: search,
+        system: system || null,
+      };
     request = request.or(filter);
   }
   if (system) request = request.eq('system', system);
 
   const from = (page - 1) * PAGE_SIZE;
-  const { data, count, error } = await request.order('part_number_norm').range(from, from + PAGE_SIZE - 1);
+
+  // The catalogue size depends only on the visible sources, not on the query,
+  // so it runs alongside the search rather than after it. Awaiting it in
+  // sequence added a round trip to every search for a number that could not
+  // change based on what was typed.
+  const [searchResult, catalogueResult] = await Promise.all([
+    request.order('part_number_norm').range(from, from + PAGE_SIZE - 1),
+    db
+      .from('parts')
+      .select('id', { count: 'exact', head: true })
+      // Published only, matching the listing. A licence takedown can withdraw a
+      // source's parts while leaving the source row alone, and a headline that
+      // counts rows the search cannot return is wrong in exactly that case.
+      .eq('status', 'published')
+      .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`),
+  ]);
+
+  const { data, count, error } = searchResult;
+  const { count: catalogueTotal, error: catalogueError } = catalogueResult;
+  if (catalogueError) console.error('[archive/parts] catalogue total unavailable:', catalogueError.message);
 
   if (error) {
     console.error('parts search error:', error);
@@ -61,20 +92,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const sourceById = new Map(visible.map((s) => [s.id, s]));
-
-  // The size of the whole catalogue, which is a different number from `total`
-  // (this query's matches). The sentence at the top of the page describes the
-  // archive, not the result set, and this view is the only one fetched while a
-  // search is on screen.
-  const { count: catalogueTotal, error: catalogueError } = await db
-    .from('parts')
-    .select('id', { count: 'exact', head: true })
-    // Published only, matching the listing. A licence takedown can withdraw a
-    // source's parts while leaving the source row alone, and a headline that
-    // counts rows the search cannot return is wrong in exactly that case.
-    .eq('status', 'published')
-    .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
-  if (catalogueError) console.error('[archive/parts] catalogue total unavailable:', catalogueError.message);
 
   return {
     parts: (data ?? []).map((p) => ({

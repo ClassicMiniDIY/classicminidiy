@@ -12,17 +12,7 @@
  */
 import { getServiceClient } from '../../../utils/supabase';
 import { cleanSectionName, systemForSection, SYSTEM_ORDER } from '../../../utils/partSections';
-
-/**
- * Matches `objectPathFor` in diagram-image.get.ts: derivatives sit beside the
- * original with a `.thumb.jpg` suffix, always JPEG whatever the source was.
- */
-function thumbPathFor(imagePath: string): string {
-  return `${imagePath.replace(/\.[^./]+$/, '')}.thumb.jpg`;
-}
-
-/** An hour, matching the per-image route. Long enough to browse, short enough to lapse. */
-const SIGNED_URL_TTL_SECONDS = 60 * 60;
+import { SIGNED_URL_TTL_SECONDS, diagramObjectPath } from '../../../utils/partsDiagramPaths';
 
 export default defineEventHandler(async () => {
   const db = getServiceClient();
@@ -131,7 +121,9 @@ export default defineEventHandler(async () => {
   // re-checks, and it is doing so at the moment the list is built. The URLs
   // still expire, and the bucket is still private.
   const thumbPaths = systems.flatMap((sys) =>
-    sys.sections.flatMap((sec) => sec.plates.filter((p: any) => p.imagePath).map((p: any) => thumbPathFor(p.imagePath)))
+    sys.sections.flatMap((sec) =>
+      sec.plates.filter((p: any) => p.imagePath).map((p: any) => diagramObjectPath(p.imagePath, 'thumb'))
+    )
   );
   const signedByPath = new Map<string, string>();
   if (thumbPaths.length > 0) {
@@ -149,7 +141,9 @@ export default defineEventHandler(async () => {
   for (const sys of systems) {
     for (const sec of sys.sections) {
       for (const plate of sec.plates as any[]) {
-        plate.imageUrl = plate.imagePath ? (signedByPath.get(thumbPathFor(plate.imagePath)) ?? null) : null;
+        plate.imageUrl = plate.imagePath
+          ? (signedByPath.get(diagramObjectPath(plate.imagePath, 'thumb')) ?? null)
+          : null;
         delete plate.imagePath;
       }
     }

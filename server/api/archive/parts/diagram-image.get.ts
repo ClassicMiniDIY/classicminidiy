@@ -19,12 +19,17 @@
  * CPU budget to stream multi-megabyte scans.
  */
 import { getServiceClient } from '../../../utils/supabase';
-
-/** One hour: longer than reading a plate, short enough that a leaked link lapses. */
-const SIGNED_URL_TTL_SECONDS = 60 * 60;
+import {
+  DIAGRAM_SIZES,
+  SIGNED_URL_TTL_SECONDS,
+  diagramObjectPath,
+  type DiagramSize,
+} from '../../../utils/partsDiagramPaths';
 
 /**
- * Named sizes, each a SEPARATE STORED OBJECT written at ingest time.
+ * Named sizes and the object-path rule live in `server/utils/partsDiagramPaths.ts`,
+ * because the browse listing bulk-signs the same objects and two copies of a
+ * path rule drift.
  *
  * Deliberately NOT Supabase image transformation, which is what this route did
  * first. Transformation is metered per distinct origin image per billing
@@ -36,22 +41,7 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60;
  * Storage has the opposite shape: 0 of 100 GB used, and all the thumbnails
  * together are about 8 MB. So the derivatives are made once by the ingest and
  * simply served.
- *
- * `full` is the untouched original — a factory plate is something a reader
- * zooms into to read callout numbers off, and resampling is what destroys that.
  */
-const SIZES = ['thumb', 'preview', 'full'] as const;
-type SizeName = (typeof SIZES)[number];
-
-/**
- * The stored object for a size. Derivatives sit beside the original with a
- * `.thumb.jpg` / `.preview.jpg` suffix, always JPEG regardless of the source
- * format, because that is what the ingest writes.
- */
-function objectPathFor(imagePath: string, size: SizeName): string {
-  if (size === 'full') return imagePath;
-  return `${imagePath.replace(/\.[^./]+$/, '')}.${size}.jpg`;
-}
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -61,10 +51,10 @@ export default defineEventHandler(async (event) => {
   if (typeof diagramId !== 'string' || !/^[0-9a-f-]{36}$/i.test(diagramId)) {
     throw createError({ statusCode: 400, statusMessage: 'A diagram id is required' });
   }
-  if (!SIZES.includes(requestedSize as SizeName)) {
-    throw createError({ statusCode: 400, statusMessage: `size must be one of: ${SIZES.join(', ')}` });
+  if (!DIAGRAM_SIZES.includes(requestedSize as DiagramSize)) {
+    throw createError({ statusCode: 400, statusMessage: `size must be one of: ${DIAGRAM_SIZES.join(', ')}` });
   }
-  const size = requestedSize as SizeName;
+  const size = requestedSize as DiagramSize;
 
   const db = getServiceClient();
 
@@ -87,7 +77,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: signed, error: signError } = await db.storage
     .from('parts-diagrams')
-    .createSignedUrl(objectPathFor(diagram.image_path, size), SIGNED_URL_TTL_SECONDS);
+    .createSignedUrl(diagramObjectPath(diagram.image_path, size), SIGNED_URL_TTL_SECONDS);
 
   // Fall back to the original when a derivative is missing — a plate imported
   // before the derivatives existed, or one whose resize failed. Heavier than
