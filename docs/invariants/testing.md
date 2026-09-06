@@ -187,12 +187,22 @@ Type errors were fixed but the baseline was not lowered. Update BASELINE ...
 ```
 
 It asked to set the baseline to zero. Acting on that would have deleted the
-ratchet on the strength of a run that type-checked nothing. The script now
-fails when it sees no diagnostics at all while the baseline is non-zero, and
-prints the tail of the tool's output. **Keep `typescript` and `vue-tsc` moving
-as a pair; TS 7 waits for a vue-tsc that supports it.**
+ratchet on the strength of a run that type-checked nothing.
 
-### vitest 5's default pool silently moved three tests onto the path they were written to avoid
+The script now separates the two cases by **exit status**, not by the baseline:
+`nuxi typecheck` propagates vue-tsc's status, so no diagnostics with a non-zero
+status is a crash and is refused (with the tool's output), while no diagnostics
+with a zero status is a genuinely clean tree and falls through to the normal
+"baseline not lowered" path. Keying on the baseline instead would trap the good
+case — on the day the last counted error is fixed the script would exit 1
+telling you not to lower BASELINE, when lowering it is the only way forward.
+
+**Keep `typescript` and `vue-tsc` moving as a pair; TS 7 waits for a vue-tsc
+that supports it.** (`@nuxt/cli`'s typecheck also accepts `--checker golar`,
+the TS 7 native checker — a possible route that does not wait on vue-tsc, if
+the ratchet's line format survives the switch.)
+
+### vitest 5 silently moved three tests onto the path they were written to avoid
 
 `renderMessageMarkdown` picks its sanitizer from a module-level
 `purifyInstance`: null means the lightweight `serverSanitize` fallback, set
@@ -202,19 +212,28 @@ named the server path and relied on running **before** DOMPurify's lazy
 shuffle made that ordering safe. It did not — neither option controls when a
 dynamic import settles.
 
-Vitest 5 changed the default pool from `forks` to `threads`; coverage
-instrumentation shifts the timing independently. Under either, the import won
-the race and all three tests took the client path. Only the table test failed
-(DOMPurify drops the header row). **The other two passed while exercising none
-of the code they name** — the same silent-nothing failure as above, minus the
-crash to give it away.
+Under vitest 5 the import won that race and all three tests took the client
+path. Only the table test failed (DOMPurify drops the header row). **The other
+two passed while exercising none of the code they name** — the same
+silent-nothing failure as above, minus the crash to give it away.
+`test:coverage` failed the same way, independently.
+
+**The mechanism inside vitest was never identified, and it is NOT the pool.**
+An earlier version of this note claimed vitest 5 changed the default pool from
+`forks` to `threads`. That is false: `createVitest()` resolves `pool: 'forks'`
+on vitest 5 whether or not `--pool` is passed, and the two resolved configs are
+field-for-field identical. Yet the behaviour differs — with the old test,
+`vitest run` failed while `vitest run --pool=forks` passed, reproducibly. The
+failure also needs the entire 213-file suite; every smaller subset tried
+(the file alone, and paired with the other file that imports the same module)
+passed. So do not "fix" a recurrence by pinning the pool. It does not address
+the cause and it does not cover `test:coverage`.
 
 Fixed by making them deterministic: `vi.resetModules()` then
 `await import('~~/app/utils/markdown')` yields a copy whose `purifyInstance` is
-guaranteed null, so the first call always takes the server path. The suite now
-passes under both pools and under coverage, so no `pool` pin is needed — an
-earlier fix that pinned `pool: 'forks'` was reverted, because pinning the pool
-only hides the race and does not cover `test:coverage`.
+guaranteed null, so the first synchronous call always takes the server path.
+That holds regardless of what vitest does with workers. The suite now passes
+bare, under `--pool=forks`, under `--pool=threads`, and under coverage.
 
 **The rule:** never let a test depend on whether an async import has resolved.
 Ask for a fresh module.
