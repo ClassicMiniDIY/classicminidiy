@@ -103,18 +103,26 @@ const errorLines = output
 // "0 error(s) in counted areas (0 checked)" and asked for app/ 343 -> 0.
 // Nothing was red. Taking that suggestion would have deleted the ratchet.
 //
-// So: no diagnostics at all is only believable once the baseline is genuinely
-// all-zero. Until then it means the checker did not run.
-const baselineTotal = AREAS.reduce((sum, area) => sum + BASELINE[area], 0);
+// Distinguishing "the checker crashed" from "the tree is genuinely clean" needs
+// the exit status, not the diagnostic count. `nuxi typecheck` propagates
+// vue-tsc's status, so:
+//
+//   no diagnostics + non-zero status  -> it crashed. Refuse the run.
+//   no diagnostics + zero status      -> the tree really is clean. Fall through
+//                                        to the normal "baseline not lowered"
+//                                        path so the ratchet can be tightened.
+//
+// Keying on the baseline instead would trap the good case: on the day the last
+// counted error is fixed the script would exit 1 demanding you NOT lower
+// BASELINE, while lowering BASELINE is the only way to make it pass again.
 if (result.error) {
   console.error('typecheck: could not run the type-checker at all.');
   console.error(String(result.error));
   process.exit(1);
 }
-if (errorLines.length === 0 && baselineTotal > 0) {
-  console.error('typecheck: the type-checker produced NO diagnostics.');
-  console.error(`The baseline expects ${baselineTotal} error(s) in counted areas, so zero output means the`);
-  console.error('checker crashed or never ran — it does not mean the code became clean.');
+if (errorLines.length === 0 && result.status !== 0) {
+  console.error(`typecheck: the type-checker produced NO diagnostics and exited ${result.status}.`);
+  console.error('That is a crash, not a clean tree — it did not check anything.');
   console.error('Do NOT lower BASELINE on the strength of this run. Last lines of its output:\n');
   const tail = output.split('\n').filter(Boolean).slice(-30);
   for (const line of tail) console.error(`  ${line}`);

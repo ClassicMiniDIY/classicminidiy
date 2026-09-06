@@ -117,13 +117,17 @@ describe('renderMessageMarkdown — disallowed block constructs are downgraded',
   //
   // These used to call the top-level import and depend on reaching it before
   // DOMPurify's lazy `import()` resolved — "the file runs sequentially, so this
-  // ordering holds". It did not hold. Vitest 5 moved the default pool from
-  // 'forks' to 'threads', and coverage instrumentation shifts the timing too;
-  // under either, the import resolved first, the render took the CLIENT path,
-  // and serverSanitize was never exercised. The table test failed outright
-  // (DOMPurify drops the header row) while the other two passed while asserting
-  // nothing about the code they name. Do not reintroduce a timing dependency
-  // here — ask for a fresh module instead.
+  // ordering holds". It did not hold. Under vitest 5 the full-suite run, and
+  // separately `test:coverage`, let the import resolve first: the render took
+  // the CLIENT path and serverSanitize was never exercised. The table test
+  // failed outright (DOMPurify drops the header row) while the other two passed
+  // while asserting nothing about the code they name.
+  //
+  // The mechanism inside vitest was not identified. It is NOT the pool — the
+  // resolved config is `pool: 'forks'` on vitest 5 with or without the flag,
+  // yet an explicit `--pool=forks` passed while the bare run failed, and the
+  // failure needs the whole 213-file suite (any small subset passes). Do not
+  // "fix" a recurrence by pinning the pool; ask for a fresh module instead.
   async function freshRenderer() {
     vi.resetModules();
     const mod = await import('~~/app/utils/markdown');
@@ -316,7 +320,9 @@ describe('stripMessageMarkdown — documented limitations (not a full md->text c
 /**
  * The DOMPurify (client) render path. Until the module-level `purifyInstance`
  * finishes its lazy `import('dompurify')`, every render falls back to
- * serverSanitize/serverHardenLinks (all tests above run on that fallback path).
+ * serverSanitize/serverHardenLinks. Which path the tests ABOVE take is not
+ * guaranteed — only the three that ask for a fresh module are pinned to the
+ * server path; the rest assert path-agnostic security invariants on purpose.
  * Once it loads, renderMessageMarkdown takes the `if (purifyInstance)` branch,
  * which installs the `afterSanitizeAttributes` link-hardening hook and runs the
  * real DOMPurify sanitizer.
