@@ -165,3 +165,56 @@ not allowed!`. It surfaced only when CI first got far enough to reach bundling; 
   the build failed earlier, on the sitemap sources. Keep both on the same version — bumping
   one alone is untested.
 - **`@types/node` stays on 25.x** while `engines.node` is `^24` (26.x types target Node 26 APIs).
+
+## Two gates that reported success while checking nothing (2026-09-06)
+
+Both surfaced during a routine dependency refresh, and both share a shape worth
+recognising: **the tool did not run, and the harness read that as a pass.**
+
+### `typescript` 7 breaks `vue-tsc`, and the typecheck gate called it an improvement
+
+TypeScript 7 is the native (Go) port and no longer exports
+`typescript/lib/tsc`. `vue-tsc` 3.3.11 resolves exactly that path, so it dies
+with `ERR_PACKAGE_PATH_NOT_EXPORTED` before checking a single file.
+
+`scripts/typecheck.mjs` counts lines matching `error TS\d+:`. A crashed checker
+emits none, so the script reported:
+
+```
+typecheck: 0 error(s) in counted areas (0 checked, 0 in tests/)
+  app/       0  (baseline 343)
+Type errors were fixed but the baseline was not lowered. Update BASELINE ...
+```
+
+It asked to set the baseline to zero. Acting on that would have deleted the
+ratchet on the strength of a run that type-checked nothing. The script now
+fails when it sees no diagnostics at all while the baseline is non-zero, and
+prints the tail of the tool's output. **Keep `typescript` and `vue-tsc` moving
+as a pair; TS 7 waits for a vue-tsc that supports it.**
+
+### vitest 5's default pool silently moved three tests onto the path they were written to avoid
+
+`renderMessageMarkdown` picks its sanitizer from a module-level
+`purifyInstance`: null means the lightweight `serverSanitize` fallback, set
+means DOMPurify. Three tests in `tests/unit/exchange/utils/markdown.test.ts`
+named the server path and relied on running **before** DOMPurify's lazy
+`import()` resolved. The comment claimed `fileParallelism: false` plus no
+shuffle made that ordering safe. It did not — neither option controls when a
+dynamic import settles.
+
+Vitest 5 changed the default pool from `forks` to `threads`; coverage
+instrumentation shifts the timing independently. Under either, the import won
+the race and all three tests took the client path. Only the table test failed
+(DOMPurify drops the header row). **The other two passed while exercising none
+of the code they name** — the same silent-nothing failure as above, minus the
+crash to give it away.
+
+Fixed by making them deterministic: `vi.resetModules()` then
+`await import('~~/app/utils/markdown')` yields a copy whose `purifyInstance` is
+guaranteed null, so the first call always takes the server path. The suite now
+passes under both pools and under coverage, so no `pool` pin is needed — an
+earlier fix that pinned `pool: 'forks'` was reverted, because pinning the pool
+only hides the race and does not cover `test:coverage`.
+
+**The rule:** never let a test depend on whether an async import has resolved.
+Ask for a fresh module.
