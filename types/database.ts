@@ -5906,7 +5906,7 @@ export type Database = {
       };
       recalculate_trust_level: { Args: { user_id: string }; Returns: undefined };
       reconcile_part_source_cycle: {
-        Args: { p_source_id: string };
+        Args: { p_run_id?: string; p_source_id: string };
         Returns: {
           cycle_started_at: string;
           outcome: string;
