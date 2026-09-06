@@ -69,6 +69,10 @@ export default defineEventHandler(async (event) => {
   const { count: catalogueTotal, error: catalogueError } = await db
     .from('parts')
     .select('id', { count: 'exact', head: true })
+    // Published only, matching the listing. A licence takedown can withdraw a
+    // source's parts while leaving the source row alone, and a headline that
+    // counts rows the search cannot return is wrong in exactly that case.
+    .eq('status', 'published')
     .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
   if (catalogueError) console.error('[archive/parts] catalogue total unavailable:', catalogueError.message);
 

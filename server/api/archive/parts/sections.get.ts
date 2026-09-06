@@ -30,38 +30,46 @@ export default defineEventHandler(async () => {
   const { data: sources, error: sourceError } = await db.from('part_sources').select('id, licence_status');
   if (sourceError) throw createError({ statusCode: 500, statusMessage: 'Could not read the parts archive' });
   const visibleIds = (sources ?? []).filter((s) => s.licence_status !== 'declined').map((s) => s.id);
-  if (visibleIds.length === 0) return { systems: [], totalPlates: 0, totalParts: 0 };
+  // totalParts NULL, not 0: with every source declined the page should say it
+  // cannot give a figure, not claim the archive is empty.
+  if (visibleIds.length === 0) return { systems: [], totalPlates: 0, totalParts: null };
 
-  const { data: plates, error } = await db
-    .from('part_diagrams')
-    .select('id, title, catalogue_section, image_licence, image_path, metadata, source_id')
-    .eq('status', 'published')
-    .in('source_id', visibleIds);
+  // ONE ROUND TRIP, NOT THREE. The plates, the catalogue size and the per-plate
+  // counts depend on `visibleIds` and on nothing else, so awaiting them in
+  // sequence spends three times the latency for no ordering benefit — on an
+  // endpoint whose entire purpose is to stop this page being slow.
+  const [platesResult, totalResult, countsResult] = await Promise.all([
+    db
+      .from('part_diagrams')
+      .select('id, title, catalogue_section, image_licence, image_path, metadata, source_id')
+      .eq('status', 'published')
+      .in('source_id', visibleIds),
+    db
+      .from('parts')
+      .select('id', { count: 'exact', head: true })
+      // Published only, matching the listing. A licence takedown can withdraw a
+      // source's parts while leaving the source row alone, and a headline that
+      // counts rows the search cannot return is wrong in exactly that case.
+      .eq('status', 'published')
+      .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`),
+    // Parts per plate, via an RPC, because the obvious approach is wrong:
+    // selecting the callouts and counting them client-side hits PostgREST's
+    // 1000-row cap, so 37,066 callouts silently became 1,000 and most systems
+    // reported ZERO parts. Aggregates are disabled on this project, so the
+    // grouping has to happen in the database.
+    db.rpc('part_plate_part_counts'),
+  ]);
 
+  const { data: plates, error } = platesResult;
   if (error) throw createError({ statusCode: 500, statusMessage: 'Could not read the parts archive' });
 
-  // Parts per plate, via an RPC, because the obvious approach is wrong:
-  // selecting the callouts and counting them client-side hits PostgREST's
-  // 1000-row cap, so 37,066 callouts silently became 1,000 and most systems
-  // reported ZERO parts. Aggregates are disabled on this project, so the
-  // grouping has to happen in the database.
-  //
+  const { count: totalParts, error: totalError } = totalResult;
+  if (totalError) console.error('[archive/parts] total count unavailable:', totalError.message);
+
   // A MISSING COUNT RENDERS AS ABSENT, NEVER AS ZERO. If the RPC is not
   // deployed yet, or errors, the page omits the figure rather than telling a
   // reader a plate has no parts on it.
-  // The size of the catalogue, for the sentence at the top of the page. It used
-  // to be read from the SEARCH response, which this view does not fetch, so the
-  // page has been telling every reader it holds 0 part numbers.
-  //
-  // Counted, never tallied: `parts` is five figures and PostgREST caps a
-  // response at 1000 rows.
-  const { count: totalParts, error: totalError } = await db
-    .from('parts')
-    .select('id', { count: 'exact', head: true })
-    .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
-  if (totalError) console.error('[archive/parts] total count unavailable:', totalError.message);
-
-  const { data: counts, error: countError } = await db.rpc('part_plate_part_counts');
+  const { data: counts, error: countError } = countsResult;
   if (countError) console.error('[archive/parts] plate counts unavailable:', countError.message);
   const countsAvailable = !countError;
   const calloutCount = new Map<string, number>();
