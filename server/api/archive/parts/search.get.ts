@@ -62,6 +62,16 @@ export default defineEventHandler(async (event) => {
 
   const sourceById = new Map(visible.map((s) => [s.id, s]));
 
+  // The size of the whole catalogue, which is a different number from `total`
+  // (this query's matches). The sentence at the top of the page describes the
+  // archive, not the result set, and this view is the only one fetched while a
+  // search is on screen.
+  const { count: catalogueTotal, error: catalogueError } = await db
+    .from('parts')
+    .select('id', { count: 'exact', head: true })
+    .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
+  if (catalogueError) console.error('[archive/parts] catalogue total unavailable:', catalogueError.message);
+
   return {
     parts: (data ?? []).map((p) => ({
       partNumber: p.part_number_display,
@@ -72,6 +82,8 @@ export default defineEventHandler(async (event) => {
       source: p.source_id ? (sourceById.get(p.source_id)?.name ?? null) : null,
     })),
     total: count ?? 0,
+    // Null, not 0, when unreadable: "0 part numbers" is a lie a reader believes.
+    catalogueTotal: catalogueError ? null : (catalogueTotal ?? 0),
     page,
     pageSize: PAGE_SIZE,
     query: search || null,

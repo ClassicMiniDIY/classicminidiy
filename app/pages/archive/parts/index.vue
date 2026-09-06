@@ -16,7 +16,10 @@
   }
   interface SearchResult {
     parts: PartRow[];
+    /** Matches for THIS query — not the size of the archive. */
     total: number;
+    /** The size of the archive. Null when the count could not be read. */
+    catalogueTotal: number | null;
     page: number;
     pageSize: number;
     query: string | null;
@@ -44,6 +47,8 @@
     title: string;
     page: string | null;
     hasImage: boolean;
+    /** Pre-signed thumbnail, minted once for the whole page. Null falls back to the per-image route. */
+    imageUrl: string | null;
     parts: number | null;
   }
   interface SystemRow {
@@ -59,14 +64,38 @@
   // browsing paid for a paginated count over 10,073 rows it never showed, and
   // searching paid for every published plate plus the count RPC it never showed
   // — roughly double the database work on the archive's busiest page.
-  const { data: browse } = await useFetch<{ systems: SystemRow[]; totalPlates: number; countsAvailable: boolean }>(
-    '/api/archive/parts/sections',
-    { immediate: !searching.value, watch: [searching] }
-  );
+  const { data: browse } = await useFetch<{
+    systems: SystemRow[];
+    totalPlates: number;
+    totalParts: number | null;
+    countsAvailable: boolean;
+  }>('/api/archive/parts/sections', { immediate: !searching.value, watch: [searching] });
   const systems = computed(() => browse.value?.systems ?? []);
 
   const parts = computed(() => data.value?.parts ?? []);
   const total = computed(() => data.value?.total ?? 0);
+
+  // HOW BIG THE ARCHIVE IS, which is not the same number as `total` (this
+  // search's matches) and is not available from the search response at all when
+  // browsing, because browse does not fetch it. Reading it from there is why the
+  // page told every reader it holds 0 part numbers.
+  const catalogueTotal = computed(() => browse.value?.totalParts ?? data.value?.catalogueTotal ?? null);
+
+  /**
+   * The thumbnail source. The signed URL from the page's one bulk signing call
+   * when there is one; otherwise the per-image route, which signs on demand.
+   * `@error` falls back to the same route, which covers a signed URL that
+   * lapsed while the tab sat open.
+   */
+  function plateImage(plate: PlateRow): string {
+    return plate.imageUrl ?? `/api/archive/parts/diagram-image?diagram=${plate.id}&size=thumb`;
+  }
+  function onThumbError(event: Event, plate: PlateRow) {
+    const img = event.target as HTMLImageElement;
+    const fallback = `/api/archive/parts/diagram-image?diagram=${plate.id}&size=thumb`;
+    if (img.src.endsWith(fallback)) return;
+    img.src = fallback;
+  }
   const totalPages = computed(() => Math.min(200, Math.ceil(total.value / (data.value?.pageSize || 24))));
 
   function submitSearch() {
@@ -92,7 +121,10 @@
   <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
     <header class="mb-6">
       <h1 class="mb-2 text-3xl font-bold">{{ t('heading') }}</h1>
-      <p class="text-base-content/70">{{ t('intro', { count: numberFormat.format(total) }) }}</p>
+      <p v-if="catalogueTotal !== null" class="text-base-content/70">
+        {{ t('intro', { count: numberFormat.format(catalogueTotal) }) }}
+      </p>
+      <p v-else class="text-base-content/70">{{ t('intro_no_count') }}</p>
     </header>
 
     <form class="mb-6 flex flex-wrap gap-2" @submit.prevent="submitSearch">
@@ -134,7 +166,8 @@
               <div class="aspect-square overflow-hidden rounded-box border border-base-300 bg-white">
                 <img
                   v-if="plate.hasImage"
-                  :src="`/api/archive/parts/diagram-image?diagram=${plate.id}&size=thumb`"
+                  :src="plateImage(plate)"
+                  @error="onThumbError($event, plate)"
                   :alt="t('plate_alt', { title: plate.title })"
                   class="h-full w-full object-contain transition-transform group-hover:scale-105"
                   loading="lazy"
@@ -218,6 +251,7 @@
     "description": "Search Classic Mini part numbers, supersessions and what each part fits.",
     "heading": "Part Numbers",
     "intro": "Search {count} Classic Mini part numbers, what replaced them, and what they fit.",
+    "intro_no_count": "Search Classic Mini part numbers, what replaced them, and what they fit.",
     "search_placeholder": "Part number or description, e.g. 12G2994 or idler gear",
     "search_label": "Search part numbers",
     "search_button": "Search",
@@ -240,6 +274,7 @@
     "description": "Busque números de pieza del Classic Mini, sustituciones y a qué modelo corresponde cada pieza.",
     "heading": "Números de pieza",
     "intro": "Busque {count} números de pieza del Classic Mini, sus reemplazos y su aplicación.",
+    "intro_no_count": "Busque números de pieza del Classic Mini, sus reemplazos y su aplicación.",
     "search_placeholder": "Número de pieza o descripción, p. ej. 12G2994 o engranaje intermedio",
     "search_label": "Buscar números de pieza",
     "search_button": "Buscar",
@@ -262,6 +297,7 @@
     "description": "Recherchez les références de pièces Classic Mini, les remplacements et la compatibilité.",
     "heading": "Références de pièces",
     "intro": "Recherchez {count} références de pièces Classic Mini, leurs remplacements et leur compatibilité.",
+    "intro_no_count": "Recherchez les références de pièces Classic Mini, leurs remplacements et leur compatibilité.",
     "search_placeholder": "Référence ou description, par ex. 12G2994 ou pignon intermédiaire",
     "search_label": "Rechercher des références",
     "search_button": "Rechercher",
@@ -284,6 +320,7 @@
     "description": "Suchen Sie Classic Mini Teilenummern, Nachfolger und Verwendung.",
     "heading": "Teilenummern",
     "intro": "Durchsuchen Sie {count} Classic Mini Teilenummern, ihre Nachfolger und ihre Verwendung.",
+    "intro_no_count": "Durchsuchen Sie Classic Mini Teilenummern, ihre Nachfolger und ihre Verwendung.",
     "search_placeholder": "Teilenummer oder Beschreibung, z. B. 12G2994 oder Zwischenrad",
     "search_label": "Teilenummern suchen",
     "search_button": "Suchen",
@@ -306,6 +343,7 @@
     "description": "Cerca i codici ricambio Classic Mini, le sostituzioni e le applicazioni.",
     "heading": "Codici ricambio",
     "intro": "Cerca tra {count} codici ricambio Classic Mini, le sostituzioni e le applicazioni.",
+    "intro_no_count": "Cerca i codici ricambio Classic Mini, le sostituzioni e le applicazioni.",
     "search_placeholder": "Codice o descrizione, es. 12G2994 o ingranaggio folle",
     "search_label": "Cerca codici ricambio",
     "search_button": "Cerca",
@@ -328,6 +366,7 @@
     "description": "Pesquise números de peça do Classic Mini, substituições e aplicações.",
     "heading": "Números de peça",
     "intro": "Pesquise {count} números de peça do Classic Mini, as suas substituições e aplicações.",
+    "intro_no_count": "Pesquise números de peça do Classic Mini, as suas substituições e aplicações.",
     "search_placeholder": "Número de peça ou descrição, ex. 12G2994 ou engrenagem intermédia",
     "search_label": "Pesquisar números de peça",
     "search_button": "Pesquisar",
@@ -350,6 +389,7 @@
     "description": "Поиск номеров деталей Classic Mini, замен и применимости.",
     "heading": "Номера деталей",
     "intro": "Поиск по {count} номерам деталей Classic Mini, их заменам и применимости.",
+    "intro_no_count": "Поиск по номерам деталей Classic Mini, их заменам и применимости.",
     "search_placeholder": "Номер детали или описание, например 12G2994",
     "search_label": "Поиск номеров деталей",
     "search_button": "Найти",
@@ -372,6 +412,7 @@
     "description": "クラシックミニの部品番号、後継品番、適合を検索できます。",
     "heading": "部品番号",
     "intro": "{count} 件のクラシックミニ部品番号、後継品番、適合を検索できます。",
+    "intro_no_count": "クラシックミニの部品番号、後継品番、適合を検索できます。",
     "search_placeholder": "部品番号または説明（例: 12G2994）",
     "search_label": "部品番号を検索",
     "search_button": "検索",
@@ -394,6 +435,7 @@
     "description": "搜索经典 Mini 零件号、替代件及适用车型。",
     "heading": "零件号",
     "intro": "搜索 {count} 个经典 Mini 零件号、替代件及适用车型。",
+    "intro_no_count": "搜索经典 Mini 零件号、替代件及适用车型。",
     "search_placeholder": "零件号或描述，例如 12G2994",
     "search_label": "搜索零件号",
     "search_button": "搜索",
@@ -416,6 +458,7 @@
     "description": "클래식 미니 부품 번호, 대체 부품 및 적용 차종을 검색하세요.",
     "heading": "부품 번호",
     "intro": "{count}개의 클래식 미니 부품 번호와 대체 부품, 적용 차종을 검색하세요.",
+    "intro_no_count": "클래식 미니 부품 번호와 대체 부품, 적용 차종을 검색하세요.",
     "search_placeholder": "부품 번호 또는 설명, 예: 12G2994",
     "search_label": "부품 번호 검색",
     "search_button": "검색",

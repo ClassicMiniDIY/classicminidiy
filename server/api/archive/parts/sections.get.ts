@@ -13,17 +13,28 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { cleanSectionName, systemForSection, SYSTEM_ORDER } from '../../../utils/partSections';
 
+/**
+ * Matches `objectPathFor` in diagram-image.get.ts: derivatives sit beside the
+ * original with a `.thumb.jpg` suffix, always JPEG whatever the source was.
+ */
+function thumbPathFor(imagePath: string): string {
+  return `${imagePath.replace(/\.[^./]+$/, '')}.thumb.jpg`;
+}
+
+/** An hour, matching the per-image route. Long enough to browse, short enough to lapse. */
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
 export default defineEventHandler(async () => {
   const db = getServiceClient();
 
   const { data: sources, error: sourceError } = await db.from('part_sources').select('id, licence_status');
   if (sourceError) throw createError({ statusCode: 500, statusMessage: 'Could not read the parts archive' });
   const visibleIds = (sources ?? []).filter((s) => s.licence_status !== 'declined').map((s) => s.id);
-  if (visibleIds.length === 0) return { systems: [], totalPlates: 0 };
+  if (visibleIds.length === 0) return { systems: [], totalPlates: 0, totalParts: 0 };
 
   const { data: plates, error } = await db
     .from('part_diagrams')
-    .select('id, title, catalogue_section, image_licence, metadata, source_id')
+    .select('id, title, catalogue_section, image_licence, image_path, metadata, source_id')
     .eq('status', 'published')
     .in('source_id', visibleIds);
 
@@ -38,6 +49,18 @@ export default defineEventHandler(async () => {
   // A MISSING COUNT RENDERS AS ABSENT, NEVER AS ZERO. If the RPC is not
   // deployed yet, or errors, the page omits the figure rather than telling a
   // reader a plate has no parts on it.
+  // The size of the catalogue, for the sentence at the top of the page. It used
+  // to be read from the SEARCH response, which this view does not fetch, so the
+  // page has been telling every reader it holds 0 part numbers.
+  //
+  // Counted, never tallied: `parts` is five figures and PostgREST caps a
+  // response at 1000 rows.
+  const { count: totalParts, error: totalError } = await db
+    .from('parts')
+    .select('id', { count: 'exact', head: true })
+    .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
+  if (totalError) console.error('[archive/parts] total count unavailable:', totalError.message);
+
   const { data: counts, error: countError } = await db.rpc('part_plate_part_counts');
   if (countError) console.error('[archive/parts] plate counts unavailable:', countError.message);
   const countsAvailable = !countError;
@@ -65,6 +88,7 @@ export default defineEventHandler(async () => {
       // The page number within the section — useful ordering, useless as a label.
       page: plate.catalogue_section,
       hasImage: plate.image_licence === 'copied',
+      imagePath: plate.image_licence === 'copied' ? plate.image_path : null,
       parts: countsAvailable ? (calloutCount.get(plate.id) ?? 0) : null,
     });
   }
@@ -87,9 +111,48 @@ export default defineEventHandler(async () => {
     };
   });
 
+  // ONE SIGNING CALL FOR THE WHOLE PAGE.
+  //
+  // Every thumbnail used to be an <img> pointed at /api/archive/parts/diagram-image,
+  // which reads the diagram row, checks both gates and mints a signed URL — two
+  // sequential Supabase round trips per image, measured at 1.68s each. With 161
+  // plates on this page that is the whole of its load time, for 20 KB pictures.
+  //
+  // The gates do not weaken. This handler has already filtered to published
+  // plates whose source is not declined, which is exactly what that route
+  // re-checks, and it is doing so at the moment the list is built. The URLs
+  // still expire, and the bucket is still private.
+  const thumbPaths = systems.flatMap((sys) =>
+    sys.sections.flatMap((sec) => sec.plates.filter((p: any) => p.imagePath).map((p: any) => thumbPathFor(p.imagePath)))
+  );
+  const signedByPath = new Map<string, string>();
+  if (thumbPaths.length > 0) {
+    const { data: signed, error: signError } = await db.storage
+      .from('parts-diagrams')
+      .createSignedUrls(thumbPaths, SIGNED_URL_TTL_SECONDS);
+    if (signError) console.error('[archive/parts] thumbnails unsigned:', signError.message);
+    for (const row of signed ?? []) {
+      if (row.signedUrl && row.path) signedByPath.set(row.path, row.signedUrl);
+    }
+  }
+
+  // A plate whose URL could not be signed keeps `imageUrl: null` and the page
+  // falls back to the per-image route. Slower, but it renders.
+  for (const sys of systems) {
+    for (const sec of sys.sections) {
+      for (const plate of sec.plates as any[]) {
+        plate.imageUrl = plate.imagePath ? (signedByPath.get(thumbPathFor(plate.imagePath)) ?? null) : null;
+        delete plate.imagePath;
+      }
+    }
+  }
+
   return {
     systems,
     totalPlates: (plates ?? []).length,
+    // Null, not 0, when the count could not be read: the sentence at the top of
+    // the page says how big the archive is, and "0" is a lie a reader believes.
+    totalParts: totalError ? null : (totalParts ?? 0),
     countsAvailable,
     // Surfaced rather than swallowed: a plate that stops classifying after an
     // upstream rename would otherwise vanish from browse with nothing to notice.
