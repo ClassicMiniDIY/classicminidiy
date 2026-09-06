@@ -93,6 +93,34 @@ const errorLines = output
   .filter((line) => /^\S.*\berror TS\d+:/.test(line))
   .filter((line) => !IGNORED_PREFIXES.some((prefix) => line.startsWith(prefix)));
 
+// A crashed type-checker emits no `error TS...` lines at all, which every
+// counting rule below then reads as "zero errors" — an improvement. That is how
+// a broken toolchain turns into a demand to lower the baseline to 0.
+//
+// Seen for real: `typescript@7` (the native port) no longer exports
+// `typescript/lib/tsc`, so `vue-tsc` died with ERR_PACKAGE_PATH_NOT_EXPORTED
+// before checking a single file. This script printed
+// "0 error(s) in counted areas (0 checked)" and asked for app/ 343 -> 0.
+// Nothing was red. Taking that suggestion would have deleted the ratchet.
+//
+// So: no diagnostics at all is only believable once the baseline is genuinely
+// all-zero. Until then it means the checker did not run.
+const baselineTotal = AREAS.reduce((sum, area) => sum + BASELINE[area], 0);
+if (result.error) {
+  console.error('typecheck: could not run the type-checker at all.');
+  console.error(String(result.error));
+  process.exit(1);
+}
+if (errorLines.length === 0 && baselineTotal > 0) {
+  console.error('typecheck: the type-checker produced NO diagnostics.');
+  console.error(`The baseline expects ${baselineTotal} error(s) in counted areas, so zero output means the`);
+  console.error('checker crashed or never ran — it does not mean the code became clean.');
+  console.error('Do NOT lower BASELINE on the strength of this run. Last lines of its output:\n');
+  const tail = output.split('\n').filter(Boolean).slice(-30);
+  for (const line of tail) console.error(`  ${line}`);
+  process.exit(1);
+}
+
 const counts = Object.fromEntries(AREAS.map((area) => [area, 0]));
 let uncounted = 0;
 for (const line of errorLines) {

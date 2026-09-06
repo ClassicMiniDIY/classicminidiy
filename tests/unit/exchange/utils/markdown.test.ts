@@ -110,12 +110,29 @@ describe('renderMessageMarkdown — disallowed block constructs are downgraded',
   // renderer already blocks raw HTML/headings/images, but GFM still emits a few
   // structural tags (table, hr, task-list <input>) that are outside the
   // allowlist — these exercise the `return ''` removal branch of serverSanitize.
-  // NOTE: these MUST run before DOMPurify finishes its lazy load, otherwise the
-  // render takes the client path and serverSanitize is never called. The file
-  // runs sequentially (fileParallelism: false, no shuffle) and the DOMPurify
-  // path is forced only in the final describe block, so this ordering holds.
-  it('strips non-allowlisted GFM table tags via serverSanitize (server path)', () => {
-    const out = renderMessageMarkdown('| a | b |\n|---|---|\n| 1 | 2 |');
+  //
+  // The server path is only taken while the module-level `purifyInstance` is
+  // still null, so each of these takes a FRESHLY imported copy of the renderer
+  // rather than relying on the shared one still being un-loaded.
+  //
+  // These used to call the top-level import and depend on reaching it before
+  // DOMPurify's lazy `import()` resolved — "the file runs sequentially, so this
+  // ordering holds". It did not hold. Vitest 5 moved the default pool from
+  // 'forks' to 'threads', and coverage instrumentation shifts the timing too;
+  // under either, the import resolved first, the render took the CLIENT path,
+  // and serverSanitize was never exercised. The table test failed outright
+  // (DOMPurify drops the header row) while the other two passed while asserting
+  // nothing about the code they name. Do not reintroduce a timing dependency
+  // here — ask for a fresh module instead.
+  async function freshRenderer() {
+    vi.resetModules();
+    const mod = await import('~~/app/utils/markdown');
+    return mod.renderMessageMarkdown;
+  }
+
+  it('strips non-allowlisted GFM table tags via serverSanitize (server path)', async () => {
+    const render = await freshRenderer();
+    const out = render('| a | b |\n|---|---|\n| 1 | 2 |');
     // The cell *text* survives, but no table structural tag does.
     expect(out).toContain('a');
     expect(out).toContain('1');
@@ -126,13 +143,14 @@ describe('renderMessageMarkdown — disallowed block constructs are downgraded',
     expect(out).not.toMatch(/<t[hd]\b/);
   });
 
-  it('strips a thematic break (<hr>) tag via serverSanitize (server path)', () => {
-    const out = renderMessageMarkdown('---');
-    expect(out).not.toContain('<hr');
+  it('strips a thematic break (<hr>) tag via serverSanitize (server path)', async () => {
+    const render = await freshRenderer();
+    expect(render('---')).not.toContain('<hr');
   });
 
-  it('strips a GFM task-list <input> tag via serverSanitize (server path)', () => {
-    const out = renderMessageMarkdown('- [ ] todo\n- [x] done');
+  it('strips a GFM task-list <input> tag via serverSanitize (server path)', async () => {
+    const render = await freshRenderer();
+    const out = render('- [ ] todo\n- [x] done');
     // The list itself is allowlisted (<ul>/<li>); the injected <input> is not.
     expect(out).not.toContain('<input');
     expect(out).toContain('todo');
