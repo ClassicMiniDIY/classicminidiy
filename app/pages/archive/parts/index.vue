@@ -121,7 +121,12 @@
   <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
     <header class="mb-6">
       <h1 class="mb-2 text-3xl font-bold">{{ t('heading') }}</h1>
-      <p v-if="catalogueTotal !== null" class="text-base-content/70">
+      <!--
+        `> 0`, not just non-null. A genuine zero — every part withdrawn while
+        the sources stay undeclined — would otherwise print "Search 0 Classic
+        Mini part numbers", which is the sentence this fallback exists to avoid.
+      -->
+      <p v-if="catalogueTotal !== null && catalogueTotal > 0" class="text-base-content/70">
         {{ t('intro', { count: numberFormat.format(catalogueTotal) }) }}
       </p>
       <p v-else class="text-base-content/70">{{ t('intro_no_count') }}</p>
