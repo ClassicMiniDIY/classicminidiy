@@ -444,7 +444,7 @@ rows, which was honest but useless: when the valve refuses a cycle, the only thi
 row can say is HOW MANY records went unseen, and the question a person actually asks is
 which ones.
 
-- `added` and `changed` come from the ingest, which reads the stored content hashes before
+- `added` and `changed` come from the **retailer** ingest, which reads the stored record state before
   the upsert. The upsert cannot tell an insert from an update from a no-op, so this is
   also the only honest source for the `unchanged` counter — it had reported 0 for every
   run ever made.
@@ -452,7 +452,16 @@ which ones.
   that marks the records. A ledger written separately can disagree with what it records.
 - The diff carries the part number, the title and the source URL, because after a record
   is retired the row survives but the reason it went does not live anywhere else.
+- A record that comes back — unseen for a cycle, or retired, then relisted — is logged as
+  `changed` with `reappeared: true`, even when its payload is byte-identical. Without that
+  the ledger's last word on it would stay `withdrawn` for ever, because the upsert resets
+  `miss_count` and `is_current` silently.
 - **Not backfilled.** Records that predate this have no `added` row.
+- **Somerford does not write it** and does not run reconcile. Its records can change with
+  no entry, so an empty ledger for that source means "not recorded", never "nothing
+  changed". Porting the classification to the Somerford ingest is the obvious follow-up;
+  it was left out here rather than risk a working 10,000-record import for a source whose
+  sitemap already tells us when a page moved.
 
 Every row is still upserted, unchanged ones included: `last_seen_at` is what a refresh
 cycle reads to decide a record was seen, so skipping the write for an unchanged record
@@ -462,7 +471,9 @@ would make the next cycle retire it.
 `notification_queue`. That needs a new `event_type` in the table's CHECK constraint and a
 template in the `process-notifications` edge function, and it earns its keep only when
 runs are unattended. Every run today is started by hand. `/admin/parts` shows a refusal as
-an alert instead. Build the email with the scheduled runner, not before.
+an alert instead, driven by a structured `notes.refusal` on the run row rather than by
+matching the wording of `abort_reason`, and it stays up for as long as the cycle is open
+rather than only while the refusing run is the most recent one. Build the email with the scheduled runner, not before.
 
 ---
 
