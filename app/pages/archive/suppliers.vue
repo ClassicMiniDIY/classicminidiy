@@ -19,6 +19,7 @@
    * database read, because none of this changes without a commit.
    */
   import suppliersData from '~~/data/suppliers.json';
+  import provenance from '~~/data/suppliers-provenance.json';
   import {
     SUPPLIER_FILTER_TAGS,
     SUPPLIER_GROUP_ORDER,
@@ -35,13 +36,36 @@
   const suppliers = suppliersData as Supplier[];
 
   /**
-   * The filters live in the URL, not in a bare ref.
+   * When the list was last checked, shown to the reader.
+   *
+   * The footer claims every entry was fetched and read "before it was added",
+   * and a claim like that is worth exactly as much as its date. Read from the
+   * provenance file rather than typed here, so the sentence cannot say one thing
+   * while the record says another.
+   */
+  const VERIFIED_AT = provenance.verified_at;
+
+  /**
+   * The two CHIP filters live in the URL, not in a bare ref.
    *
    * Two reasons, and the first is a hard rule in this repo: a template must
    * never branch structurally on state the server cannot see. Query params are
    * on the request, so the filtered view renders identically on the server and
    * the client and there is no hydration repair. The second is that a reader who
    * has narrowed the list to "Japan, trim" can send that link to somebody.
+   *
+   * THAT FIRST REASON DEPENDS ON THIS ROUTE NOT BEING PRERENDERED, and it was.
+   * `crawlLinks` followed the card on /archive and baked a static page holding all
+   * sixty-eight shops, generated with an empty query; the asset router matches on
+   * pathname alone, so a shared filtered link served that file and the client then
+   * collapsed seven sections to one on its first render — the exact mismatch this
+   * design was written to avoid. `nuxt.config.ts` now carries
+   * `'/archive/suppliers': { prerender: false }`, and removing it puts the bug
+   * back without anything failing.
+   *
+   * Both are validated against the declared vocabulary rather than trusted:
+   * `?region=<anything>` from a stray link resolves to null and shows the whole
+   * list, instead of silently filtering to nothing.
    */
   const activeGroup = computed<SupplierGroup | null>(() => {
     const raw = typeof route.query.region === 'string' ? route.query.region : '';
@@ -53,22 +77,46 @@
     return (SUPPLIER_FILTER_TAGS as string[]).includes(raw) ? (raw as SupplierTag) : null;
   });
 
+  /**
+   * The text box is the ONE piece of state that does not go in the URL.
+   *
+   * Writing it there would mean a `router.replace` per keystroke to filter
+   * sixty-eight rows that are already in memory. It is seeded from `?q=` so a
+   * link carrying one still works and so the server and the client agree on the
+   * first render; after that it is local, and `clearFilters` resets it by hand
+   * because dropping the query alone would not.
+   */
   const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
 
-  const filtered = computed(() => {
-    const needle = search.value.trim().toLowerCase();
-    return suppliers.filter((s) => {
-      if (activeGroup.value && s.group !== activeGroup.value) return false;
-      if (activeTag.value && !s.tags.includes(activeTag.value)) return false;
-      if (!needle) return true;
-      return (
-        s.name.toLowerCase().includes(needle) ||
-        (s.nameLocal ?? '').toLowerCase().includes(needle) ||
-        s.speciality.toLowerCase().includes(needle) ||
-        s.country.toLowerCase() === needle
-      );
-    });
-  });
+  const needle = computed(() => search.value.trim().toLowerCase());
+
+  /**
+   * ONE search predicate, shared by the list and by both sets of counts.
+   *
+   * It was inlined in `filtered` and the counts did not apply it, which made
+   * every chip lie the moment anything was typed: with "wheel" in the box, the
+   * chip reading "Engine 16" landed on the empty state, and so did the other
+   * nineteen. Anything that counts results has to count them the same way the
+   * list does, which is only reliable if there is one place that decides.
+   */
+  function matches(s: Supplier, term: string): boolean {
+    if (!term) return true;
+    return (
+      s.name.toLowerCase().includes(term) ||
+      (s.nameLocal ?? '').toLowerCase().includes(term) ||
+      s.speciality.toLowerCase().includes(term) ||
+      s.country.toLowerCase() === term
+    );
+  }
+
+  const filtered = computed(() =>
+    suppliers.filter(
+      (s) =>
+        (!activeGroup.value || s.group === activeGroup.value) &&
+        (!activeTag.value || s.tags.includes(activeTag.value)) &&
+        matches(s, needle.value)
+    )
+  );
 
   /** The filtered list, grouped and in display order. Empty groups are dropped. */
   const grouped = computed(() =>
@@ -79,22 +127,32 @@
   );
 
   /**
-   * How many suppliers each filter would leave.
+   * How many suppliers sit behind each chip, given everything ELSE that is on.
    *
-   * Counted against the OTHER active filters rather than against the whole list,
-   * so a chip showing "12" means twelve results if you press it — not twelve
-   * somewhere in the directory. A count that does not survive being clicked is a
-   * worse guide than no count.
+   * The search term counts. So does the other chip row. What each number does
+   * NOT include is the chip's own filter, which makes it read differently
+   * depending on the chip's state, and both readings are true:
+   *
+   *   an inactive chip — what you get if you press it
+   *   an active chip   — what you have now, which equals the "N shown" line
+   *
+   * Pressing an active chip turns it off and widens the list, so that one number
+   * is a description rather than a prediction. `aria-pressed` is what says which
+   * you are looking at.
    */
   const tagCounts = computed(() => {
-    const base = suppliers.filter((s) => !activeGroup.value || s.group === activeGroup.value);
+    const base = suppliers.filter(
+      (s) => (!activeGroup.value || s.group === activeGroup.value) && matches(s, needle.value)
+    );
     return Object.fromEntries(
       SUPPLIER_FILTER_TAGS.map((tag) => [tag, base.filter((s) => s.tags.includes(tag)).length])
     ) as Record<SupplierTag, number>;
   });
 
   const groupCounts = computed(() => {
-    const base = suppliers.filter((s) => !activeTag.value || s.tags.includes(activeTag.value));
+    const base = suppliers.filter(
+      (s) => (!activeTag.value || s.tags.includes(activeTag.value)) && matches(s, needle.value)
+    );
     return Object.fromEntries(
       SUPPLIER_GROUP_ORDER.map((group) => [group, base.filter((s) => s.group === group).length])
     ) as Record<SupplierGroup, number>;
@@ -102,9 +160,24 @@
 
   const countryCount = computed(() => new Set(suppliers.map((s) => s.country)).size);
 
+  /**
+   * Rewrite the query, taking `q` from the SEARCH BOX rather than from the old URL.
+   *
+   * Spreading `route.query` and letting `q` ride along was wrong in both
+   * directions. A term the reader had deleted came back on the next chip click,
+   * because nothing ever cleared it from the URL; and a term they had just typed
+   * was dropped, because it had never been written there — so the link they
+   * copied showed the recipient a different list from the one on their screen.
+   * Reading the box is what makes the URL describe the screen.
+   */
   function setQuery(patch: Record<string, string | undefined>): void {
+    const next: Record<string, string | undefined> = {
+      ...route.query,
+      q: needle.value ? search.value.trim() : undefined,
+      ...patch,
+    };
     const query: Record<string, string> = {};
-    for (const [key, value] of Object.entries({ ...route.query, ...patch })) {
+    for (const [key, value] of Object.entries(next)) {
       if (typeof value === 'string' && value.length > 0) query[key] = value;
     }
     router.replace({ query });
@@ -211,12 +284,22 @@
         </button>
       </div>
 
-      <div v-if="activeGroup || activeTag || search" class="flex items-center gap-3 text-sm">
-        <span class="text-base-content/70">{{ t('showing', { count: filtered.length }) }}</span>
-        <button type="button" class="btn btn-ghost btn-xs" @click="clearFilters">
-          <i class="fas fa-xmark" />
-          {{ t('clear') }}
-        </button>
+      <!--
+        THE LIVE REGION IS THE WHOLE FEEDBACK CHANNEL for a screen-reader user.
+        Typing rewrites the list silently: sixty-eight results become none with
+        nothing announced, and the empty state below is off-screen from the box
+        being typed in. `aria-live` sits on a wrapper that is always in the DOM,
+        because a region inserted by `v-if` at the same moment its text changes
+        is not reliably announced.
+      -->
+      <div role="status" aria-live="polite" class="flex items-center gap-3 text-sm">
+        <template v-if="activeGroup || activeTag || search">
+          <span class="text-base-content/70">{{ t('showing', { count: filtered.length }) }}</span>
+          <button type="button" class="btn btn-ghost btn-xs" @click="clearFilters">
+            <i class="fas fa-xmark" />
+            {{ t('clear') }}
+          </button>
+        </template>
       </div>
     </section>
 
@@ -244,14 +327,40 @@
           <div class="card-body">
             <h3 class="card-title text-base">
               <!--
-                rel="noopener" because these open in a new tab, and "nofollow"
-                because a directory of sixty-eight outbound links is exactly the
-                shape that reads as link selling. The reader still gets the link.
+                `noopener noreferrer` because these open in a new tab, and
+                `nofollow` because a page of sixty-eight outbound links is exactly
+                the shape that reads as link selling. The reader still gets the
+                link; the search engine is told we are not vouching for it.
+                `noreferrer` also stops sixty-eight shops learning which of their
+                competitors a reader was looking at when they clicked.
+
+                The new tab is ANNOUNCED. Opening one without saying so is WCAG
+                3.2.5, and it is worse here than usually: every link on the page
+                does it, so a reader who does not expect it accumulates tabs.
               -->
-              <a :href="supplier.url" target="_blank" rel="noopener nofollow" class="link link-hover break-words">
+              <a
+                :href="supplier.url"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                class="link link-hover break-words"
+              >
                 {{ supplier.name }}
+                <span class="sr-only">{{ t('opens_new_tab') }}</span>
               </a>
               <span v-if="supplier.ours" class="badge badge-primary badge-sm">{{ t('ours') }}</span>
+              <!--
+                One entry links over plain http, because its https serves a
+                certificate browsers reject. Marked rather than left to surprise
+                somebody: a browser in HTTPS-first mode will upgrade the link and
+                land the reader on an interstitial, which looks like our mistake.
+              -->
+              <span
+                v-if="supplier.url.startsWith('http://')"
+                class="badge badge-warning badge-sm"
+                :title="t('insecure_hint')"
+              >
+                {{ t('insecure') }}
+              </span>
             </h3>
 
             <p v-if="supplier.nameLocal" class="-mt-1 text-sm text-base-content/60">{{ supplier.nameLocal }}</p>
@@ -283,7 +392,7 @@
     </section>
 
     <footer class="mt-10 space-y-2 border-t border-base-300 pt-6 text-xs text-base-content/60">
-      <p>{{ t('provenance') }}</p>
+      <p>{{ t('provenance', { date: VERIFIED_AT }) }}</p>
       <p>
         {{ t('corrections') }}
         <NuxtLink to="/archive/parts" class="link">{{ t('parts_link') }}</NuxtLink>
@@ -309,7 +418,7 @@
     "group_count": "{count} suppliers",
     "ours": "Ours",
     "ships_worldwide": "Ships worldwide",
-    "provenance": "Every entry was fetched and read before it was added. Shops that had closed, moved domain or turned out not to sell Mini parts were left out.",
+    "provenance": "Every entry was fetched and read before it was added, last checked {date}. Shops that had closed, moved domain or turned out not to sell Mini parts were left out.",
     "corrections": "Something missing, moved or closed? Let us know. Looking for a specific part number instead?",
     "parts_link": "Search the part-number archive",
     "group": {
@@ -334,7 +443,9 @@
       "performance": "Performance",
       "restoration": "Restoration",
       "used-parts": "Used parts",
-      "services": "Services"
+      "services": "Services",
+      "tools": "Tools",
+      "archive": "Archive"
     },
     "country": {
       "GB": "United Kingdom",
@@ -349,7 +460,10 @@
       "BE": "Belgium",
       "CH": "Switzerland",
       "IE": "Ireland"
-    }
+    },
+    "opens_new_tab": "(opens in a new tab)",
+    "insecure": "Not secure",
+    "insecure_hint": "This shop serves its site over plain http. Your browser may warn you."
   },
   "es": {
     "title": "Proveedores de piezas del Classic Mini en todo el mundo - Classic Mini DIY",
@@ -366,7 +480,7 @@
     "group_count": "{count} proveedores",
     "ours": "Nuestra",
     "ships_worldwide": "Envía a todo el mundo",
-    "provenance": "Cada entrada fue consultada y leída antes de añadirla. Se excluyeron las tiendas cerradas, con dominio cambiado o que no venden piezas de Mini.",
+    "provenance": "Cada entrada fue consultada y leída antes de añadirla; última comprobación el {date}. Se excluyeron las tiendas cerradas, con dominio cambiado o que no venden piezas de Mini.",
     "corrections": "¿Falta alguna, ha cambiado o ha cerrado? Díganoslo. ¿Busca un número de pieza concreto?",
     "parts_link": "Buscar en el archivo de números de pieza",
     "group": {
@@ -391,7 +505,9 @@
       "performance": "Rendimiento",
       "restoration": "Restauración",
       "used-parts": "Piezas usadas",
-      "services": "Servicios"
+      "services": "Servicios",
+      "tools": "Herramientas",
+      "archive": "Archivo"
     },
     "country": {
       "GB": "Reino Unido",
@@ -406,7 +522,10 @@
       "BE": "Bélgica",
       "CH": "Suiza",
       "IE": "Irlanda"
-    }
+    },
+    "opens_new_tab": "(se abre en una pestaña nueva)",
+    "insecure": "No segura",
+    "insecure_hint": "Esta tienda sirve su sitio por http simple. Su navegador puede avisarle."
   },
   "fr": {
     "title": "Fournisseurs de pièces Classic Mini dans le monde - Classic Mini DIY",
@@ -423,7 +542,7 @@
     "group_count": "{count} fournisseurs",
     "ours": "Le nôtre",
     "ships_worldwide": "Expédie dans le monde entier",
-    "provenance": "Chaque entrée a été consultée et lue avant d'être ajoutée. Les boutiques fermées, ayant changé de domaine ou ne vendant pas de pièces Mini ont été écartées.",
+    "provenance": "Chaque entrée a été consultée et lue avant d’être ajoutée, dernière vérification le {date}. Les boutiques fermées, ayant changé de domaine ou ne vendant pas de pièces Mini ont été écartées.",
     "corrections": "Un manque, un déménagement, une fermeture ? Dites-le-nous. Vous cherchez plutôt une référence précise ?",
     "parts_link": "Rechercher dans les références de pièces",
     "group": {
@@ -448,7 +567,9 @@
       "performance": "Performance",
       "restoration": "Restauration",
       "used-parts": "Pièces d'occasion",
-      "services": "Services"
+      "services": "Services",
+      "tools": "Outils",
+      "archive": "Archives"
     },
     "country": {
       "GB": "Royaume-Uni",
@@ -463,7 +584,10 @@
       "BE": "Belgique",
       "CH": "Suisse",
       "IE": "Irlande"
-    }
+    },
+    "opens_new_tab": "(ouvre un nouvel onglet)",
+    "insecure": "Non sécurisé",
+    "insecure_hint": "Cette boutique sert son site en http simple. Votre navigateur peut vous avertir."
   },
   "de": {
     "title": "Classic Mini Teilehändler weltweit - Classic Mini DIY",
@@ -480,7 +604,7 @@
     "group_count": "{count} Händler",
     "ours": "Unser",
     "ships_worldwide": "Weltweiter Versand",
-    "provenance": "Jeder Eintrag wurde vor der Aufnahme abgerufen und gelesen. Geschlossene Händler, Domainwechsel und Anbieter ohne Mini-Teile blieben außen vor.",
+    "provenance": "Jeder Eintrag wurde vor der Aufnahme abgerufen und gelesen, zuletzt geprüft am {date}. Geschlossene Händler, Domainwechsel und Anbieter ohne Mini-Teile blieben außen vor.",
     "corrections": "Fehlt etwas, ist umgezogen oder geschlossen? Sagen Sie uns Bescheid. Suchen Sie stattdessen eine Teilenummer?",
     "parts_link": "Das Teilenummernarchiv durchsuchen",
     "group": {
@@ -505,7 +629,9 @@
       "performance": "Leistung",
       "restoration": "Restaurierung",
       "used-parts": "Gebrauchtteile",
-      "services": "Dienstleistungen"
+      "services": "Dienstleistungen",
+      "tools": "Werkzeuge",
+      "archive": "Archiv"
     },
     "country": {
       "GB": "Großbritannien",
@@ -520,7 +646,10 @@
       "BE": "Belgien",
       "CH": "Schweiz",
       "IE": "Irland"
-    }
+    },
+    "opens_new_tab": "(öffnet einen neuen Tab)",
+    "insecure": "Nicht sicher",
+    "insecure_hint": "Dieser Händler liefert seine Seite über einfaches http aus. Ihr Browser warnt Sie möglicherweise."
   },
   "it": {
     "title": "Fornitori di ricambi Classic Mini nel mondo - Classic Mini DIY",
@@ -537,7 +666,7 @@
     "group_count": "{count} fornitori",
     "ours": "Nostro",
     "ships_worldwide": "Spedisce in tutto il mondo",
-    "provenance": "Ogni voce è stata consultata e letta prima di essere aggiunta. Sono stati esclusi i negozi chiusi, quelli che hanno cambiato dominio e quelli che non vendono ricambi Mini.",
+    "provenance": "Ogni voce è stata consultata e letta prima di essere aggiunta, ultimo controllo il {date}. Sono stati esclusi i negozi chiusi, quelli che hanno cambiato dominio e quelli che non vendono ricambi Mini.",
     "corrections": "Manca qualcosa, si è spostato o ha chiuso? Faccelo sapere. Cercate invece un numero di ricambio?",
     "parts_link": "Cerca nell'archivio dei numeri di ricambio",
     "group": {
@@ -562,7 +691,9 @@
       "performance": "Prestazioni",
       "restoration": "Restauro",
       "used-parts": "Ricambi usati",
-      "services": "Servizi"
+      "services": "Servizi",
+      "tools": "Strumenti",
+      "archive": "Archivio"
     },
     "country": {
       "GB": "Regno Unito",
@@ -577,7 +708,10 @@
       "BE": "Belgio",
       "CH": "Svizzera",
       "IE": "Irlanda"
-    }
+    },
+    "opens_new_tab": "(si apre in una nuova scheda)",
+    "insecure": "Non sicuro",
+    "insecure_hint": "Questo negozio serve il sito su http semplice. Il browser potrebbe avvisarvi."
   },
   "pt": {
     "title": "Fornecedores de peças Classic Mini no mundo - Classic Mini DIY",
@@ -594,7 +728,7 @@
     "group_count": "{count} fornecedores",
     "ours": "Nosso",
     "ships_worldwide": "Envia para todo o mundo",
-    "provenance": "Cada entrada foi consultada e lida antes de ser adicionada. Lojas encerradas, com domínio alterado ou que não vendem peças de Mini ficaram de fora.",
+    "provenance": "Cada entrada foi consultada e lida antes de ser adicionada, última verificação em {date}. Lojas encerradas, com domínio alterado ou que não vendem peças de Mini ficaram de fora.",
     "corrections": "Falta alguma, mudou ou fechou? Diga-nos. Procura antes um número de peça?",
     "parts_link": "Pesquisar o arquivo de números de peça",
     "group": {
@@ -619,7 +753,9 @@
       "performance": "Desempenho",
       "restoration": "Restauro",
       "used-parts": "Peças usadas",
-      "services": "Serviços"
+      "services": "Serviços",
+      "tools": "Ferramentas",
+      "archive": "Arquivo"
     },
     "country": {
       "GB": "Reino Unido",
@@ -634,7 +770,10 @@
       "BE": "Bélgica",
       "CH": "Suíça",
       "IE": "Irlanda"
-    }
+    },
+    "opens_new_tab": "(abre num separador novo)",
+    "insecure": "Não segura",
+    "insecure_hint": "Esta loja serve o site em http simples. O seu navegador pode avisá-lo."
   },
   "ru": {
     "title": "Поставщики запчастей для Classic Mini по всему миру - Classic Mini DIY",
@@ -651,7 +790,7 @@
     "group_count": "поставщиков: {count}",
     "ours": "Наш",
     "ships_worldwide": "Доставка по всему миру",
-    "provenance": "Каждая запись была загружена и прочитана перед добавлением. Закрытые магазины, сменившие домен и не продающие запчасти для Mini не включены.",
+    "provenance": "Каждая запись была загружена и прочитана перед добавлением, последняя проверка {date}. Закрытые магазины, сменившие домен и не продающие запчасти для Mini не включены.",
     "corrections": "Чего-то не хватает, магазин переехал или закрылся? Сообщите нам. Ищете конкретный номер детали?",
     "parts_link": "Искать в архиве номеров деталей",
     "group": {
@@ -676,7 +815,9 @@
       "performance": "Тюнинг",
       "restoration": "Реставрация",
       "used-parts": "Бывшие в употреблении",
-      "services": "Услуги"
+      "services": "Услуги",
+      "tools": "Инструменты",
+      "archive": "Архив"
     },
     "country": {
       "GB": "Великобритания",
@@ -691,7 +832,10 @@
       "BE": "Бельгия",
       "CH": "Швейцария",
       "IE": "Ирландия"
-    }
+    },
+    "opens_new_tab": "(откроется в новой вкладке)",
+    "insecure": "Не защищено",
+    "insecure_hint": "Этот магазин работает по обычному http. Браузер может показать предупреждение."
   },
   "ja": {
     "title": "世界のクラシックミニ パーツ販売店 - Classic Mini DIY",
@@ -708,7 +852,7 @@
     "group_count": "{count}軒",
     "ours": "当サイト",
     "ships_worldwide": "海外発送あり",
-    "provenance": "掲載前にすべてのサイトを取得して内容を確認しました。閉店した店、ドメインが変わった店、ミニのパーツを扱っていない店は除外しています。",
+    "provenance": "掲載前にすべてのサイトを取得して内容を確認しました。最終確認は {date} です。閉店した店、ドメインが変わった店、ミニのパーツを扱っていない店は除外しています。",
     "corrections": "掲載漏れ、移転、閉店にお気づきですか。ご連絡ください。特定の部品番号をお探しですか。",
     "parts_link": "部品番号アーカイブを検索",
     "group": {
@@ -733,7 +877,9 @@
       "performance": "高性能",
       "restoration": "レストア",
       "used-parts": "中古パーツ",
-      "services": "サービス"
+      "services": "サービス",
+      "tools": "ツール",
+      "archive": "アーカイブ"
     },
     "country": {
       "GB": "英国",
@@ -748,7 +894,10 @@
       "BE": "ベルギー",
       "CH": "スイス",
       "IE": "アイルランド"
-    }
+    },
+    "opens_new_tab": "（新しいタブで開きます）",
+    "insecure": "安全でない接続",
+    "insecure_hint": "この店舗のサイトは http で配信されています。ブラウザが警告を表示する場合があります。"
   },
   "zh": {
     "title": "全球经典 Mini 配件供应商 - Classic Mini DIY",
@@ -765,7 +914,7 @@
     "group_count": "{count} 家",
     "ours": "本站",
     "ships_worldwide": "支持全球配送",
-    "provenance": "每一条在加入前都已抓取并阅读。已停业、更换域名或并不销售 Mini 配件的店铺未予收录。",
+    "provenance": "每一条在加入前都已抓取并阅读，最近核对日期为 {date}。已停业、更换域名或并不销售 Mini 配件的店铺未予收录。",
     "corrections": "有遗漏、迁移或停业的店铺吗？请告诉我们。想查找具体零件号？",
     "parts_link": "搜索零件号档案",
     "group": {
@@ -790,7 +939,9 @@
       "performance": "性能",
       "restoration": "修复",
       "used-parts": "二手件",
-      "services": "服务"
+      "services": "服务",
+      "tools": "工具",
+      "archive": "档案"
     },
     "country": {
       "GB": "英国",
@@ -805,7 +956,10 @@
       "BE": "比利时",
       "CH": "瑞士",
       "IE": "爱尔兰"
-    }
+    },
+    "opens_new_tab": "（在新标签页中打开）",
+    "insecure": "非安全连接",
+    "insecure_hint": "该店铺以普通 http 提供网站，浏览器可能会提示警告。"
   },
   "ko": {
     "title": "전 세계 클래식 미니 부품 공급업체 - Classic Mini DIY",
@@ -822,7 +976,7 @@
     "group_count": "{count}곳",
     "ours": "본 사이트",
     "ships_worldwide": "해외 배송",
-    "provenance": "모든 항목은 추가 전에 직접 접속해 내용을 확인했습니다. 폐업했거나 도메인이 바뀌었거나 미니 부품을 팔지 않는 곳은 제외했습니다.",
+    "provenance": "모든 항목은 추가 전에 직접 접속해 내용을 확인했습니다. 최종 확인일은 {date}입니다. 폐업했거나 도메인이 바뀌었거나 미니 부품을 팔지 않는 곳은 제외했습니다.",
     "corrections": "빠졌거나 이전했거나 문을 닫은 곳이 있나요? 알려주세요. 특정 부품 번호를 찾고 계신가요?",
     "parts_link": "부품 번호 아카이브 검색",
     "group": {
@@ -847,7 +1001,9 @@
       "performance": "퍼포먼스",
       "restoration": "복원",
       "used-parts": "중고 부품",
-      "services": "서비스"
+      "services": "서비스",
+      "tools": "도구",
+      "archive": "아카이브"
     },
     "country": {
       "GB": "영국",
@@ -862,7 +1018,10 @@
       "BE": "벨기에",
       "CH": "스위스",
       "IE": "아일랜드"
-    }
+    },
+    "opens_new_tab": "(새 탭에서 열림)",
+    "insecure": "보안 연결 아님",
+    "insecure_hint": "이 상점은 일반 http로 사이트를 제공합니다. 브라우저가 경고를 표시할 수 있습니다."
   }
 }
 </i18n>

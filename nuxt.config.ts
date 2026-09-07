@@ -603,6 +603,28 @@ export default defineNuxtConfig({
     // site-wide catch-all hard-404s it (correctly, but unhelpfully for a typed
     // URL). Excluded from the sitemap alongside the other routeRule redirects.
     '/developer': { redirect: { to: '/developers', statusCode: 301 } },
+    // The supplier directory is SSR, not static, and that is the whole reason its
+    // filters can live in the URL.
+    //
+    // It was prerendered at first, by `crawlLinks` following the /archive card —
+    // verified: the build emitted a 100 KB `/archive/suppliers/index.html` holding
+    // all 68 shops. A prerendered page is generated with an EMPTY query and the
+    // asset router matches on pathname only, so a shared link like
+    // `?region=japan&tag=trim-interior` served that static file and then let the
+    // client collapse seven <section>s to one on the first render. That is a
+    // structural hydration mismatch on the page whose headline feature is
+    // shareable filtered links, and this repo's rule about those exists because
+    // the repair corrupts the DOM silently and shows up in Firefox when Chromium
+    // looks fine.
+    //
+    // The alternative was to keep the bake and gate the filtered render on
+    // `hasMounted`, which works and makes every shared link flash the full list
+    // first. SSR is the better trade here: the data is a static import with no
+    // database read and no fetch, so a render costs almost nothing, and the
+    // recipient of a filtered link gets the right page from the server. The route
+    // still has a page file, so it stays a real route and stays in the sitemap —
+    // unlike the `prerender: false` entries above it that had no page behind them.
+    '/archive/suppliers': { prerender: false },
     '/admin/**': { prerender: false },
     // Admin consolidation (2026-08-26). /admin/inbox and the three per-type
     // review screens all read the SAME `submission_queue` table — the review
