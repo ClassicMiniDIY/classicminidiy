@@ -123,7 +123,24 @@ describe('supplier directory labels', () => {
     expect(missing, `add these keys to app/pages/archive/suppliers.vue:\n${missing.join('\n')}`).toEqual([]);
   });
 
-  it('has a group and tag label, in every locale, for everything the page offers', () => {
+  it('has a tag label, in every locale, for every tag IN THE DATA', () => {
+    // Follows the data, not SUPPLIER_FILTER_TAGS. Checking the chip list is what
+    // let this ship broken: `tools` and `archive` are carried by the Classic Mini
+    // DIY entry and are deliberately NOT offered as filters, so the old check
+    // never asked for their labels — and the most prominent card on the page
+    // rendered two badges reading literally `tag.tools` and `tag.archive`, in all
+    // ten languages, with missingWarn off so nothing said a word.
+    const messages = pageMessages();
+    const used = [...new Set(rows.flatMap((s) => s.tags))].sort();
+    const missing: string[] = [];
+    for (const [locale, bundle] of Object.entries(messages)) {
+      const tags = (bundle.tag ?? {}) as Record<string, string>;
+      for (const tag of used) if (!tags[tag]) missing.push(`${locale}.tag.${tag}`);
+    }
+    expect(missing, `add these keys to app/pages/archive/suppliers.vue:\n${missing.join('\n')}`).toEqual([]);
+  });
+
+  it('has a group label, and a label for every filter chip, in every locale', () => {
     const messages = pageMessages();
     const missing: string[] = [];
     for (const [locale, bundle] of Object.entries(messages)) {
@@ -135,13 +152,19 @@ describe('supplier directory labels', () => {
     expect(missing, missing.join('\n')).toEqual([]);
   });
 
-  it('carries no country label the data does not use', () => {
+  it('carries no country label the data does not use, in any locale', () => {
     // A stale label is not a rendering bug, but it is how a translation block
-    // grows entries nobody can explain. Fails on the English block only; the
-    // i18n suite holds the other nine to it.
-    const labels = Object.keys((pageMessages().en!.country ?? {}) as Record<string, string>);
+    // grows entries nobody can explain. Checked in every locale, not just
+    // English: removing the last Spanish shop would otherwise leave nine stale
+    // `country.ES` entries that no check ever looks at.
     const used = new Set(rows.map((s) => s.country));
-    expect(labels.filter((code) => !used.has(code))).toEqual([]);
+    const stale: string[] = [];
+    for (const [locale, bundle] of Object.entries(pageMessages())) {
+      for (const code of Object.keys((bundle.country ?? {}) as Record<string, string>)) {
+        if (!used.has(code)) stale.push(`${locale}.country.${code}`);
+      }
+    }
+    expect(stale, stale.join('\n')).toEqual([]);
   });
 
   it('renders a flag for every country code in the data', () => {
@@ -182,6 +205,19 @@ describe('supplier directory provenance', () => {
 
   it('is dated, so a stale directory can be spotted', () => {
     expect(provenance.verified_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('the directory stays server-rendered', () => {
+  it('is excluded from prerendering', () => {
+    // `crawlLinks` follows the card on /archive, so without this routeRule the
+    // build bakes a static page generated with an EMPTY query. A shared link
+    // carrying ?region= then serves that file and the client collapses seven
+    // sections to one on its first render — a structural hydration mismatch on
+    // the page whose headline feature is shareable filtered links. Nothing else
+    // fails when the rule is removed, which is why this test exists.
+    const config = readFileSync(join(REPO_ROOT, 'nuxt.config.ts'), 'utf8');
+    expect(config).toMatch(/'\/archive\/suppliers':\s*\{\s*prerender:\s*false\s*\}/);
   });
 });
 

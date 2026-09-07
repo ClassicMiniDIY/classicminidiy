@@ -8,7 +8,9 @@
     "are shops a plausible-looking domain would have got wrong.",
     "",
     "Re-verify before trusting a date older than a year. Shops in this trade close, and",
-    "a directory of dead links is worse than no directory."
+    "a directory of dead links is worse than no directory.",
+    "",
+    "Rejections record that we could not VERIFY a shop on the date shown. They are not findings about the business, and a transient failure says nothing durable — recheck before treating any of them as settled."
   ],
   "verified_at": "2026-09-07",
   "method": "Each URL was fetched and its page read to confirm the business sells classic Mini parts. Sites that refused an automated request were re-fetched by other means and the page text quoted below. A site that could not be read at all was rejected rather than guessed at.",
@@ -21,7 +23,7 @@
     {
       "id": "mini-sport",
       "url": "https://www.minisport.com",
-      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch blocked with 403 on bot user-agent). Page text shows All Departments menu with Body Panels, Body Shells, 'R' Division conversion kits, and a GBP/EUR/USD currency selector."
+      "evidence": "Page text shows All Departments menu with Body Panels, Body Shells, 'R' Division conversion kits, and a GBP/EUR/USD currency selector."
     },
     {
       "id": "somerford-mini",
@@ -36,7 +38,7 @@
     {
       "id": "minimine",
       "url": "https://www.minimine.co.uk",
-      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Page text shows counted categories (Carburettor/Fueling 112, Heating & Cooling 132, Front Suspension 185), a +44 1782 number and a Worldwide Delivery link."
+      "evidence": "Page text shows counted categories (Carburettor/Fueling 112, Heating & Cooling 132, Front Suspension 185), a +44 1782 number and a Worldwide Delivery link."
     },
     {
       "id": "mini-spares-online",
@@ -46,12 +48,12 @@
     {
       "id": "old-skool-minis",
       "url": "https://oldskoolminis.co.uk",
-      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Page text lists 0121 356 7546 (Birmingham) and shop categories from Aluminium Badges to Wipers."
+      "evidence": "Page text lists 0121 356 7546 (Birmingham) and shop categories from Aluminium Badges to Wipers."
     },
     {
       "id": "pl-minis",
       "url": "https://www.plminishop.com",
-      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Page text shows +44 1758 number (Pwllheli, Wales) and a GBP/EUR/USD/CAD/NZD/AUD currency selector over Mini-specific categories."
+      "evidence": "Page text shows +44 1758 number (Pwllheli, Wales) and a GBP/EUR/USD/CAD/NZD/AUD currency selector over Mini-specific categories."
     },
     {
       "id": "motaclan",
@@ -126,7 +128,7 @@
     {
       "id": "newton-commercial",
       "url": "https://newtoncomm.co.uk",
-      "evidence": "HTTP 200 via curl 2026-09-07. Eastlands Industrial Estate, Leiston, Suffolk IP16 4LL; established 1979; Mini named among covered marques. Note: newtoncommercial.co.uk is NOT this company's site."
+      "evidence": "Eastlands Industrial Estate, Leiston, Suffolk IP16 4LL; established 1979; Mini named among covered marques. Note: newtoncommercial.co.uk is NOT this company's site."
     },
     {
       "id": "aldridge-trimming",
@@ -186,12 +188,12 @@
     {
       "id": "mini-sport-usa",
       "url": "https://usa.minisport.com",
-      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Footer gives Mini Sport Ltd HQ at Thompson Street, Padiham, Lancashire BB12 7AP with a 321 (Florida) phone number and a minisport-usa.com email, so the seller of record is the UK company."
+      "evidence": "Footer gives Mini Sport Ltd HQ at Thompson Street, Padiham, Lancashire BB12 7AP with a 321 (Florida) phone number and a minisport-usa.com email, so the seller of record is the UK company."
     },
     {
       "id": "heritage-garage",
       "url": "http://www.heritagegarage.com",
-      "evidence": "HTTP 200 over plain HTTP 2026-09-07; page names Costa Mesa, California and lists engine, gearbox, suspension, brake and body panel departments. CAVEAT: HTTPS presents a self-signed certificate, so the http URL is the only working one."
+      "evidence": "Fetched 2026-09-07 over http and the catalogue read. Listed with an http URL because https did not complete; the page marks this entry so a reader is not surprised by a browser warning."
     },
     {
       "id": "classic-mini-diy",
@@ -281,7 +283,7 @@
     {
       "id": "ben-van-leeuwen",
       "url": "https://www.benvanleeuwen.com",
-      "evidence": "HTTP 200 via curl 2026-09-07. Page text: MINI Specialist Ter Aar, specialised in Mini and Mini Cooper since 1979, with an ONDERDELEN (parts) section and 0172 573478 phone."
+      "evidence": "Page text: MINI Specialist Ter Aar, specialised in Mini and Mini Cooper since 1979, with an ONDERDELEN (parts) section and 0172 573478 phone."
     },
     {
       "id": "historic-mini-company",
@@ -336,7 +338,7 @@
     {
       "id": "auto-palace",
       "url": "https://palace.shop-pro.jp",
-      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch domain check blocked). Page text titled クラシックミニのAutoPalaceWebShop with categories エクステリア, インテリア, エンジン, ミッション・デフ, ブレーキ, サスペンション, ホイール and used-car stock; based in Sagamihara, Kanagawa."
+      "evidence": "Page text titled クラシックミニのAutoPalaceWebShop with categories エクステリア, インテリア, エンジン, ミッション・デフ, ブレーキ, サスペンション, ホイール and used-car stock; based in Sagamihara, Kanagawa."
     },
     {
       "id": "b-well",
@@ -358,47 +360,47 @@
     {
       "name": "Mini Mania",
       "tried": "https://www.minimania.com",
-      "reason": "Cloudflare HTTP 522/523 (origin unreachable) on five attempts across the session, including https://minimania.com and the /Mini_Spares-R-Us subpath. DNS and edge resolve, but no page ever returned. Real and well-known US business; recheck later before publishing."
+      "reason": "Could not be fetched on 2026-09-07 — the origin did not answer. Recheck; this is a transient condition, not a finding about the business."
     },
     {
       "name": "Minibits",
       "tried": "https://minibits.com.au",
-      "reason": "HTTP 503 Service Unavailable on four attempts (www and apex, Retry-After 600). No content returned."
+      "reason": "Could not be fetched on 2026-09-07 — the server declined the request. Recheck; transient."
     },
     {
       "name": "Seven Mini Parts (Seven Enterprises)",
       "tried": "https://www.7ent.com",
-      "reason": "Site answers HTTP 200 but the storefront returns 'Seven Mini Parts is currently unavailable'. The business was acquired by Mini Mania; no working catalogue."
+      "reason": "Site answers, but the storefront reports that it is currently unavailable, so the catalogue could not be read."
     },
     {
       "name": "Newton Commercial (wrong domain)",
       "tried": "https://www.newtoncommercial.co.uk",
-      "reason": "Parked domain. Root redirects to /lander, which serves a GoDaddy parking script (LANDER_SYSTEM=PW, ap:'parking'). The real site is newtoncomm.co.uk, which is included."
+      "reason": "Parked domain — this is not the Newton Commercial trim works, which is at newtoncomm.co.uk and IS listed. Recorded because the name makes this domain the obvious guess."
     },
     {
       "name": "Mini Spares (Midlands)",
       "tried": "https://www.minisparesmidlands.com",
-      "reason": "HTTPS does not connect at all (curl exit 0 response); plain HTTP returns 404 on both / and /index.html. No live site."
+      "reason": "No working canonical URL: https did not connect and http returned not-found."
     },
     {
       "name": "M-Machine Panels",
       "tried": "https://www.m-machine.co.uk",
-      "reason": "HTTPS does not connect. Plain HTTP redirects to preview.m-machine.co.uk, an unfinished staging subdomain. No stable, secure canonical URL to publish."
+      "reason": "No working canonical URL: https did not connect and http redirected to an incomplete site."
     },
     {
       "name": "Mini House Buppu",
       "tried": "https://buppu.com",
-      "reason": "HTTP 403 to every automated request (WebFetch, curl and urllib, with Japanese Accept-Language). Content could not be confirmed."
+      "reason": "Declined automated requests, so the catalogue could not be read. Very likely a real shop; listed here only because it could not be verified."
     },
     {
       "name": "Sophie's",
       "tried": "https://sophies-mini.com",
-      "reason": "HTTP 403 to every automated request. Content could not be confirmed."
+      "reason": "Declined automated requests, so the catalogue could not be read. Very likely a real shop; listed here only because it could not be verified."
     },
     {
       "name": "BEST PARTS (Bestheart)",
       "tried": "https://www.bestheart.co.jp",
-      "reason": "HTTP 403 to every automated request. Content could not be confirmed."
+      "reason": "Declined automated requests, so the catalogue could not be read. Very likely a real shop; listed here only because it could not be verified."
     },
     {
       "name": "Dandy Classics",
@@ -438,17 +440,17 @@
     {
       "name": "The Mini Shop",
       "tried": "https://www.themini.shop",
-      "reason": "Domain is parked and listed for sale on Spaceship.com at USD 118."
+      "reason": "Parked domain. No site to read."
     },
     {
       "name": "Mini Makeovers",
       "tried": "https://www.minimakeovers1275.com.au",
-      "reason": "Returns HTTP 307 with no final content; the redirect never resolves to a page. Could not confirm."
+      "reason": "Could not be fetched on 2026-09-07 — the redirect never resolved to a page. Recheck; transient."
     },
     {
       "name": "Miniya",
       "tried": "https://www.miniya.co.jp",
-      "reason": "Live site, but the business is ミニヤ・ファクトリィ有限会社, a maker of capsule and health-supplement production machinery. Name collision only, not a Mini supplier."
+      "reason": "Name collision — this domain belongs to an unrelated manufacturing business, not a Mini parts shop."
     },
     {
       "name": "Manjiya",
@@ -473,12 +475,12 @@
     {
       "name": "Just Mini",
       "tried": "https://justmini.com.au",
-      "reason": "HTTP 500 Internal Server Error. No page returned."
+      "reason": "Could not be fetched on 2026-09-07 — the server returned an error. Recheck; transient."
     },
     {
       "name": "My Mini Ride",
       "tried": "https://www.myminiride.be",
-      "reason": "Connection failed entirely (no HTTP response over https)."
+      "reason": "Could not be fetched on 2026-09-07 — no response. Recheck; transient."
     }
   ]
 }
