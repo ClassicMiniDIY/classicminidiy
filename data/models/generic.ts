@@ -354,6 +354,22 @@ export const ArchiveItems: ArchiveItem[] = [
     iconHtml:
       '<i class="fa-duotone fa-gears" style="--fa-primary-color: #2f4858; --fa-secondary-color: #d98c3f; --fa-secondary-opacity: 0.85;"></i>',
   },
+  {
+    title: 'Parts Suppliers',
+    titleKey: 'archive_items.suppliers',
+    descKey: 'archive_items.suppliers_desc',
+    kindKey: 'archive_items.kind.directory',
+    description: '',
+    image: '',
+    path: '/archive/suppliers',
+    to: '/archive/suppliers',
+    iconName: 'fa-shop',
+    iconPrimary: '#2f4858',
+    iconSecondary: '#6aa84f',
+    iconSecondaryOpacity: 0.85,
+    iconHtml:
+      '<i class="fa-duotone fa-shop" style="--fa-primary-color: #2f4858; --fa-secondary-color: #6aa84f; --fa-secondary-opacity: 0.85;"></i>',
+  },
 ];
 
 export const LandingPageToolboxItems = [
