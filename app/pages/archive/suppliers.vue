@@ -19,7 +19,11 @@
    * database read, because none of this changes without a commit.
    */
   import suppliersData from '~~/data/suppliers.json';
-  import provenance from '~~/data/suppliers-provenance.json';
+  // NAMED IMPORT, not a default one. Vite does not tree-shake a default JSON
+  // import, so `import provenance from …` shipped the whole 26 KB provenance
+  // record — every rejection note about every named business — into the client
+  // bundle, to read one date out of it. The named form leaves the rest behind.
+  import { verified_at as VERIFIED_AT } from '~~/data/suppliers-provenance.json';
   import {
     SUPPLIER_FILTER_TAGS,
     SUPPLIER_GROUP_ORDER,
@@ -34,16 +38,6 @@
   const router = useRouter();
 
   const suppliers = suppliersData as Supplier[];
-
-  /**
-   * When the list was last checked, shown to the reader.
-   *
-   * The footer claims every entry was fetched and read "before it was added",
-   * and a claim like that is worth exactly as much as its date. Read from the
-   * provenance file rather than typed here, so the sentence cannot say one thing
-   * while the record says another.
-   */
-  const VERIFIED_AT = provenance.verified_at;
 
   /**
    * The two CHIP filters live in the URL, not in a bare ref.
@@ -171,8 +165,17 @@
    * Reading the box is what makes the URL describe the screen.
    */
   function setQuery(patch: Record<string, string | undefined>): void {
+    // BUILT FROM THE VALIDATED STATE, never spread from the raw query.
+    //
+    // Spreading `route.query` carried junk along for ever: `?region=bogus`
+    // resolves to null, renders the full list, offers no "clear" affordance, and
+    // then rode on the end of every subsequent chip toggle. Seeding from
+    // `activeGroup`/`activeTag` means anything that failed validation is dropped
+    // the first time the reader touches a control, and the URL only ever holds
+    // values the page actually acted on.
     const next: Record<string, string | undefined> = {
-      ...route.query,
+      region: activeGroup.value ?? undefined,
+      tag: activeTag.value ?? undefined,
       q: needle.value ? search.value.trim() : undefined,
       ...patch,
     };
@@ -195,6 +198,39 @@
     search.value = '';
     router.replace({ query: {} });
   }
+
+  /**
+   * Keep the URL describing the screen, without a router write per keystroke.
+   *
+   * Two states used to disagree with the address bar. Deleting the text of a
+   * `?q=` link widened the list to all 68 while the URL still said `wheel`, so
+   * the link the reader copied showed the recipient something else; and an
+   * invalid `?region=` sat there with nothing on screen to explain or remove it.
+   *
+   * Debounced rather than immediate: `setQuery` is a `router.replace`, and one
+   * per keystroke to filter sixty-eight rows already in memory is the cost this
+   * page avoided by keeping the box out of the URL in the first place. 400 ms is
+   * below the point where a reader would copy the link before it settles.
+   *
+   * CLIENT ONLY. It changes nothing that is rendered — the validated computeds
+   * already ignore junk — so it cannot pull the first client render away from
+   * the server's.
+   */
+  const SEARCH_URL_DEBOUNCE_MS = 400;
+  let syncTimer: ReturnType<typeof setTimeout> | undefined;
+
+  onMounted(() => {
+    // One pass on arrival, so a junk or stale param does not survive a visit in
+    // which the reader touches nothing.
+    if (route.query.region !== activeGroup.value || route.query.tag !== activeTag.value) setQuery({});
+  });
+
+  watch(search, () => {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => setQuery({}), SEARCH_URL_DEBOUNCE_MS);
+  });
+
+  onBeforeUnmount(() => clearTimeout(syncTimer));
 
   useHead({
     title: t('title'),
