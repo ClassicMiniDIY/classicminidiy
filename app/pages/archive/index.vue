@@ -23,6 +23,7 @@
       'Color Picker': 'archive_items.color_picker',
       Documents: 'archive_items.documents',
       'Part Numbers': 'archive_items.parts',
+      'Parts Suppliers': 'archive_items.suppliers',
     };
     return t(titleMap[title] || title);
   };
@@ -209,7 +210,8 @@
         "database": "Database",
         "library": "Library",
         "reference": "Reference",
-        "tool": "Tool"
+        "tool": "Tool",
+        "directory": "Directory"
       },
       "mini_registry_desc": "Submit your Classic Mini and search the community-built registry.",
       "engine_sizes_desc": "Bore, stroke, and displacement for every A-series variant.",
@@ -221,7 +223,9 @@
       "models": "3D Models",
       "models_desc": "Community 3D-printable parts with print settings and assembly guides.",
       "parts": "Part Numbers",
-      "parts_desc": "Search 10,000 part numbers with factory exploded diagrams, supersessions and what each part fits."
+      "parts_desc": "Search 10,000 part numbers with factory exploded diagrams, supersessions and what each part fits.",
+      "suppliers": "Parts Suppliers",
+      "suppliers_desc": "Where to buy Mini parts, from the UK to Japan. Every shop checked by hand."
     },
     "eyebrow": "THE ARCHIVE",
     "subnav_label": "ARCHIVE",
@@ -273,7 +277,8 @@
         "database": "Base de datos",
         "library": "Biblioteca",
         "reference": "Referencia",
-        "tool": "Herramienta"
+        "tool": "Herramienta",
+        "directory": "Directorio"
       },
       "mini_registry_desc": "Envía tu Classic Mini y busca en el registro creado por la comunidad.",
       "engine_sizes_desc": "Diámetro, carrera y cilindrada para cada variante del A-series.",
@@ -285,7 +290,9 @@
       "models": "Modelos 3D",
       "models_desc": "Piezas imprimibles en 3D de la comunidad con ajustes de impresión y guías de montaje.",
       "parts": "Números de pieza",
-      "parts_desc": "Busque 10.000 números de pieza con despieces de fábrica, sustituciones y aplicaciones."
+      "parts_desc": "Busque 10.000 números de pieza con despieces de fábrica, sustituciones y aplicaciones.",
+      "suppliers": "Proveedores de piezas",
+      "suppliers_desc": "Dónde comprar piezas de Mini, del Reino Unido a Japón. Cada tienda verificada a mano."
     },
     "eyebrow": "EL ARCHIVO",
     "subnav_label": "ARCHIVO",
@@ -337,7 +344,8 @@
         "database": "Base de données",
         "library": "Bibliothèque",
         "reference": "Référence",
-        "tool": "Outil"
+        "tool": "Outil",
+        "directory": "Annuaire"
       },
       "mini_registry_desc": "Soumets ta Classic Mini et explore le registre construit par la communauté.",
       "engine_sizes_desc": "Alésage, course et cylindrée pour chaque variante du A-series.",
@@ -349,7 +357,9 @@
       "models": "Modèles 3D",
       "models_desc": "Pièces imprimables en 3D de la communauté avec réglages d'impression et guides de montage.",
       "parts": "Références de pièces",
-      "parts_desc": "Recherchez 10 000 références avec les planches éclatées d’usine, les remplacements et la compatibilité."
+      "parts_desc": "Recherchez 10 000 références avec les planches éclatées d’usine, les remplacements et la compatibilité.",
+      "suppliers": "Fournisseurs de pièces",
+      "suppliers_desc": "Où acheter des pièces de Mini, du Royaume-Uni au Japon. Chaque boutique vérifiée à la main."
     },
     "eyebrow": "LES ARCHIVES",
     "subnav_label": "ARCHIVE",
@@ -401,7 +411,8 @@
         "database": "Database",
         "library": "Biblioteca",
         "reference": "Riferimento",
-        "tool": "Strumento"
+        "tool": "Strumento",
+        "directory": "Elenco"
       },
       "mini_registry_desc": "Invia la tua Classic Mini e cerca nel registro costruito dalla comunità.",
       "engine_sizes_desc": "Alesaggio, corsa e cilindrata per ogni variante del A-series.",
@@ -413,7 +424,9 @@
       "models": "Modelli 3D",
       "models_desc": "Parti stampabili in 3D della comunità con impostazioni di stampa e guide di montaggio.",
       "parts": "Codici ricambio",
-      "parts_desc": "Cerca 10.000 codici ricambio con tavole esplose di fabbrica, sostituzioni e applicazioni."
+      "parts_desc": "Cerca 10.000 codici ricambio con tavole esplose di fabbrica, sostituzioni e applicazioni.",
+      "suppliers": "Fornitori di ricambi",
+      "suppliers_desc": "Dove comprare ricambi Mini, dal Regno Unito al Giappone. Ogni negozio verificato a mano."
     },
     "eyebrow": "L'ARCHIVIO",
     "subnav_label": "ARCHIVIO",
@@ -465,7 +478,8 @@
         "database": "Datenbank",
         "library": "Bibliothek",
         "reference": "Referenz",
-        "tool": "Werkzeug"
+        "tool": "Werkzeug",
+        "directory": "Verzeichnis"
       },
       "mini_registry_desc": "Reiche deinen Classic Mini ein und durchsuche das von der Community aufgebaute Register.",
       "engine_sizes_desc": "Bohrung, Hub und Hubraum für jede A-Series Variante.",
@@ -477,7 +491,9 @@
       "models": "3D-Modelle",
       "models_desc": "3D-druckbare Teile aus der Community mit Druckeinstellungen und Montageanleitungen.",
       "parts": "Teilenummern",
-      "parts_desc": "Durchsuchen Sie 10.000 Teilenummern mit Werks-Explosionszeichnungen, Nachfolgern und Verwendung."
+      "parts_desc": "Durchsuchen Sie 10.000 Teilenummern mit Werks-Explosionszeichnungen, Nachfolgern und Verwendung.",
+      "suppliers": "Teilehändler",
+      "suppliers_desc": "Wo man Mini-Teile kauft, von Großbritannien bis Japan. Jeder Händler von Hand geprüft."
     },
     "eyebrow": "DAS ARCHIV",
     "subnav_label": "ARCHIV",
@@ -529,7 +545,8 @@
         "database": "Base de dados",
         "library": "Biblioteca",
         "reference": "Referência",
-        "tool": "Ferramenta"
+        "tool": "Ferramenta",
+        "directory": "Diretório"
       },
       "mini_registry_desc": "Submete a tua Classic Mini e pesquisa no registro construído pela comunidade.",
       "engine_sizes_desc": "Diâmetro, curso e cilindrada para cada variante do A-series.",
@@ -541,7 +558,9 @@
       "models": "Modelos 3D",
       "models_desc": "Peças imprimíveis em 3D da comunidade com configurações de impressão e guias de montagem.",
       "parts": "Números de peça",
-      "parts_desc": "Pesquise 10.000 números de peça com desenhos explodidos de fábrica, substituições e aplicações."
+      "parts_desc": "Pesquise 10.000 números de peça com desenhos explodidos de fábrica, substituições e aplicações.",
+      "suppliers": "Fornecedores de peças",
+      "suppliers_desc": "Onde comprar peças de Mini, do Reino Unido ao Japão. Cada loja verificada à mão."
     },
     "eyebrow": "O ARQUIVO",
     "subnav_label": "ARQUIVO",
@@ -593,7 +612,8 @@
         "database": "База данных",
         "library": "Библиотека",
         "reference": "Справочник",
-        "tool": "Инструмент"
+        "tool": "Инструмент",
+        "directory": "Каталог"
       },
       "mini_registry_desc": "Зарегистрируйте свой Classic Mini и ищите в созданном сообществом реестре.",
       "engine_sizes_desc": "Диаметр цилиндра, ход поршня и рабочий объём для каждого варианта A-series.",
@@ -605,7 +625,9 @@
       "models": "3D-модели",
       "models_desc": "Печатаемые на 3D-принтере детали от сообщества с настройками печати и руководствами по сборке.",
       "parts": "Номера деталей",
-      "parts_desc": "Поиск по 10 000 номеров деталей с заводскими схемами, заменами и применимостью."
+      "parts_desc": "Поиск по 10 000 номеров деталей с заводскими схемами, заменами и применимостью.",
+      "suppliers": "Поставщики запчастей",
+      "suppliers_desc": "Где купить запчасти для Mini, от Великобритании до Японии. Каждый магазин проверен вручную."
     },
     "eyebrow": "АРХИВ",
     "subnav_label": "АРХИВ",
@@ -657,7 +679,8 @@
         "database": "データベース",
         "library": "ライブラリ",
         "reference": "リファレンス",
-        "tool": "ツール"
+        "tool": "ツール",
+        "directory": "ディレクトリ"
       },
       "mini_registry_desc": "あなたの Classic Mini を登録し、コミュニティが作ったレジストリを検索しましょう。",
       "engine_sizes_desc": "A-シリーズの各バリアントのボア、ストローク、排気量。",
@@ -669,7 +692,9 @@
       "models": "3Dモデル",
       "models_desc": "印刷設定と組み立てガイド付きの、コミュニティによる3Dプリント部品。",
       "parts": "部品番号",
-      "parts_desc": "10,000件の部品番号を工場の分解図・後継品番・適合とあわせて検索できます。"
+      "parts_desc": "10,000件の部品番号を工場の分解図・後継品番・適合とあわせて検索できます。",
+      "suppliers": "パーツ販売店",
+      "suppliers_desc": "英国から日本まで、ミニのパーツを買える店。すべて手作業で確認済み。"
     },
     "eyebrow": "アーカイブ",
     "subnav_label": "アーカイブ",
@@ -721,7 +746,8 @@
         "database": "数据库",
         "library": "图书馆",
         "reference": "参考",
-        "tool": "工具"
+        "tool": "工具",
+        "directory": "目录"
       },
       "mini_registry_desc": "提交你的 Classic Mini，搜索由社区共建的注册库。",
       "engine_sizes_desc": "每种 A-Series 变体的缸径、行程和排量。",
@@ -733,7 +759,9 @@
       "models": "3D模型",
       "models_desc": "社区贡献的可3D打印零件，附打印设置和组装指南。",
       "parts": "零件号",
-      "parts_desc": "搜索 10,000 个零件号，附原厂爆炸图、替代件与适用车型。"
+      "parts_desc": "搜索 10,000 个零件号，附原厂爆炸图、替代件与适用车型。",
+      "suppliers": "配件供应商",
+      "suppliers_desc": "从英国到日本，在哪里购买 Mini 配件。每家店铺均经人工核对。"
     },
     "eyebrow": "档案",
     "subnav_label": "档案馆",
@@ -785,7 +813,8 @@
         "database": "데이터베이스",
         "library": "라이브러리",
         "reference": "참조",
-        "tool": "도구"
+        "tool": "도구",
+        "directory": "디렉터리"
       },
       "mini_registry_desc": "Classic Mini를 등록하고 커뮤니티가 만든 등록부를 검색하세요.",
       "engine_sizes_desc": "모든 A-시리즈 변형의 보어, 스트로크, 배기량.",
@@ -797,7 +826,9 @@
       "models": "3D 모델",
       "models_desc": "인쇄 설정과 조립 가이드가 포함된 커뮤니티 3D 프린트 부품.",
       "parts": "부품 번호",
-      "parts_desc": "10,000개의 부품 번호를 공장 분해도, 대체 부품, 적용 차종과 함께 검색하세요."
+      "parts_desc": "10,000개의 부품 번호를 공장 분해도, 대체 부품, 적용 차종과 함께 검색하세요.",
+      "suppliers": "부품 공급업체",
+      "suppliers_desc": "영국부터 일본까지 미니 부품을 살 수 있는 곳. 모든 곳을 직접 확인했습니다."
     },
     "eyebrow": "아카이브",
     "subnav_label": "아카이브",

@@ -1,0 +1,688 @@
+[
+  {
+    "id": "mini-spares",
+    "name": "Mini Spares Centre",
+    "url": "https://www.minispares.com",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Full-range classic Mini parts, original and reproduction, across nine catalogue departments.",
+    "tags": ["full-range", "heritage", "engine", "body-panels"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "mini-sport",
+    "name": "Mini Sport",
+    "url": "https://www.minisport.com",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Full-range Mini parts plus restoration, body shells and its own competition components; trading since 1967.",
+    "tags": ["full-range", "body-panels", "performance", "restoration"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "somerford-mini",
+    "name": "Somerford Mini",
+    "url": "https://www.somerfordmini.co.uk",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Mail-order Mini parts for 1959-2000 cars alongside a workshop doing servicing, re-shells and restoration.",
+    "tags": ["full-range", "restoration", "services"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "bull-motif",
+    "name": "Bull Motif Mini Spares",
+    "url": "https://www.bullmotifminispares.co.uk",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "General classic Mini parts including body panels, engine, electrical and interior, stocking Heritage-branded items.",
+    "tags": ["full-range", "heritage", "body-panels", "trim-interior"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "minimine",
+    "name": "Minimine",
+    "url": "https://www.minimine.co.uk",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Classic Mini parts retailer with a trade and wholesale arm, also trading as Avonbar Racing.",
+    "tags": ["full-range", "engine", "suspension-brakes"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "mini-spares-online",
+    "name": "Huddersfield Spares (Mini Spares Online)",
+    "url": "https://www.minispares-online.co.uk",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Yorkshire classic Mini parts retailer with a physical showroom as well as mail order.",
+    "tags": ["full-range", "body-panels", "trim-interior", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "old-skool-minis",
+    "name": "Old Skool Mini's",
+    "url": "https://oldskoolminis.co.uk",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Family-run West Midlands Mini spares shop covering routine service, chrome, trim and drivetrain parts.",
+    "tags": ["full-range", "body-panels"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "pl-minis",
+    "name": "P&L Minis",
+    "url": "https://www.plminishop.com",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Classic Mini parts across electrical, interior, trim and body panels, priced in several currencies.",
+    "tags": ["full-range", "electrical", "body-panels", "trim-interior"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "motaclan",
+    "name": "Motaclan",
+    "url": "https://motaclan.com/product-category/classic-mini/",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Birmingham trade and retail distributor of British classic parts with a dedicated classic Mini range.",
+    "tags": ["full-range", "electrical"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "m-parts",
+    "name": "M Parts",
+    "url": "https://www.mparts.co.uk",
+    "country": "GB",
+    "group": "uk-generalist",
+    "speciality": "Mini Moke parts specialist covering English, Portuguese and Australian Moke variants.",
+    "tags": ["heritage", "body-panels", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "swiftune",
+    "name": "Swiftune Racing",
+    "url": "https://www.swiftune.com",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "A-series race engine builder and parts maker; camshafts, con-rods, distributors, pistons and LSD units.",
+    "tags": ["engine", "performance", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "kad",
+    "name": "Kent Auto Developments (KAD)",
+    "url": "https://kentautodevelopments.com",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "Manufacturer of A-series performance parts including 16-valve head conversions, brakes and suspension.",
+    "tags": ["engine", "suspension-brakes", "performance"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "maniflow",
+    "name": "Maniflow",
+    "url": "https://maniflow.co.uk",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "Fabricator of inlet and exhaust manifolds and systems, with a long-standing Mini range.",
+    "tags": ["engine", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "med-engineering",
+    "name": "MED Engineering",
+    "url": "https://www.med-engineering.co.uk",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "A-series tuning components from fast road to full race: pistons, cranks, cams, clutches and transmission parts.",
+    "tags": ["engine", "transmission", "performance"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "slark-race-engineering",
+    "name": "Slark Race Engineering",
+    "url": "https://www.slarkraceengineering.co.uk",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "Rolling road tuning, engine mapping and modified A-series cylinder heads; founded 1973 out of Downton Engineering.",
+    "tags": ["engine", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "calver-st",
+    "name": "Calver Special Tuning",
+    "url": "https://www.calverst.com",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "A-series engine and gearbox rebuilds plus re-engineered cylinder heads, road through race spec.",
+    "tags": ["engine", "transmission", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "specialist-components",
+    "name": "Specialist Components",
+    "url": "https://www.specialist-components.co.uk",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "A-series fuel injection and engine management, the TwinKam 16-valve head conversion, and crate engines.",
+    "tags": ["engine", "electrical"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "guessworks",
+    "name": "Guessworks",
+    "url": "https://www.guess-works.com",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "Reconditioned transverse A and A+ gearboxes and internal parts, plus fitting and auto-to-manual conversion.",
+    "tags": ["transmission", "services"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "mccs-race-engines",
+    "name": "MCCS Engineering",
+    "url": "https://www.mccsraceengines.com",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "BMC A-series engine builder with in-house machine shop for boring, honing, porting and balancing.",
+    "tags": ["engine", "performance", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "minilite",
+    "name": "Minilite Wheels",
+    "url": "https://www.minilite.uk",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "Original manufacturer of the Minilite wheel, the design first developed as a competition wheel for the Mini.",
+    "tags": ["heritage", "wheels-tyres", "performance"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "image-wheels",
+    "name": "Image Wheels International",
+    "url": "https://www.imagewheels.co.uk",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "Alloy wheel manufacturer whose RM1 is a Minilite-pattern wheel available from 10 inches upward.",
+    "tags": ["heritage", "wheels-tyres"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "john-brown-wheels",
+    "name": "John Brown Wheels",
+    "url": "https://johnbrownwheels.com/wheels/classic-mini",
+    "country": "GB",
+    "group": "uk-performance",
+    "speciality": "Wheel and tyre retailer with a dedicated classic Mini section, plus steering wheels and period accessories.",
+    "tags": ["trim-interior", "wheels-tyres"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "newton-commercial",
+    "name": "Newton Commercial",
+    "url": "https://newtoncomm.co.uk",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Manufacturer of classic car interior trim, seats and carpets; British Motor Heritage approved.",
+    "tags": ["trim-interior"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "aldridge-trimming",
+    "name": "Aldridge Trimming",
+    "url": "https://www.aldridge.co.uk/brands/mini",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Classic car trim maker and retrimmer with Mini trim kits, seats, door panels and carpet sets.",
+    "tags": ["trim-interior"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "woolies-trim",
+    "name": "Woolies Trim",
+    "url": "https://www.woolies-trim.co.uk",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Trim and upholstery materials: seals, weatherstrip, headlinings, carpets, vinyls and sound deadening.",
+    "tags": ["trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "british-motor-heritage",
+    "name": "British Motor Heritage",
+    "url": "https://www.bmh-ltd.com",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Maker of new Mini bodyshells and body panels on original factory jigs; independent since 2001.",
+    "tags": ["heritage", "body-panels"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "magnum-panels",
+    "name": "Magnum Classic Mini Panels",
+    "url": "https://www.magnumclassicminipanels.co.uk",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Independent manufacturer of replacement Mini body panels for MK1 to MK3, Van, Pick-up, Traveller and Clubman.",
+    "tags": ["heritage", "body-panels"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "autosparks",
+    "name": "Autosparks",
+    "url": "https://www.autosparks.co.uk",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Manufacturer of classic car wiring looms and connectors, with Mini and Clubman harness sets.",
+    "tags": ["heritage", "electrical"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "coh-baines",
+    "name": "COH Baines",
+    "url": "https://coh-baines.co.uk/collections/mini",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Rubber extrusion manufacturer supplying Mini windscreen, quarterlight, window and door seals.",
+    "tags": ["heritage", "trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "icor",
+    "name": "ICOR",
+    "url": "https://www.icor.uk/classic-cars",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Supplier of windscreen rubbers, mouldings, filler strips and glazing tools; Mini named in its range.",
+    "tags": ["trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "moke-panels",
+    "name": "Moke Panels",
+    "url": "https://mokepanels.com",
+    "country": "GB",
+    "group": "uk-trim-body",
+    "speciality": "Manufacturer of replacement Mini Moke panels and complete body shells to original specification.",
+    "tags": ["heritage", "body-panels"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "moss-motors",
+    "name": "Moss Motors",
+    "url": "https://mossmotors.com/classic-mini",
+    "country": "US",
+    "group": "us",
+    "speciality": "Large US British-car parts retailer with a Classic Mini and Classic Mini Clubman catalogue.",
+    "tags": ["full-range", "restoration"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "british-parts-northwest",
+    "name": "British Parts Northwest",
+    "url": "https://bpnorthwest.com/mini/classic/",
+    "country": "US",
+    "group": "us",
+    "speciality": "US classic Mini parts catalogue organised by engine size and variant, covering 1959-2000 cars.",
+    "tags": ["full-range", "engine"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "mini-city",
+    "name": "Mini City, Ltd.",
+    "url": "https://minicityltd.com",
+    "country": "US",
+    "group": "us",
+    "speciality": "US distributor of parts, supplies and accessories for Austin and Morris cars, Mini and Morris Minor.",
+    "tags": ["full-range", "heritage"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "mini-sport-usa",
+    "name": "Mini Sport USA",
+    "url": "https://usa.minisport.com",
+    "country": "GB",
+    "group": "us",
+    "speciality": "US-facing storefront of the UK firm Mini Sport, with US-dollar pricing and a US support number.",
+    "tags": ["full-range", "restoration"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "heritage-garage",
+    "name": "Heritage Garage",
+    "url": "http://www.heritagegarage.com",
+    "country": "US",
+    "group": "us",
+    "speciality": "California classic Mini parts, service, restoration and race preparation; parts shipped worldwide.",
+    "tags": ["full-range", "performance", "services"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "classic-mini-diy",
+    "name": "Classic Mini DIY",
+    "url": "https://classicminidiy.com",
+    "country": "US",
+    "group": "us",
+    "speciality": "Free technical archive, calculators and wheel registry for classic Minis, with a marketplace and parts partners.",
+    "tags": ["tools", "archive"],
+    "shipsInternationally": null,
+    "ours": true
+  },
+  {
+    "id": "classic-motoring-au",
+    "name": "Classic Motoring",
+    "url": "https://classicmotoring.net.au/classic-mini-moke/",
+    "country": "AU",
+    "group": "anz",
+    "speciality": "Australian mail-order supplier of new Mini and Moke parts across engine, brakes, electrical and suspension.",
+    "tags": ["full-range", "heritage"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "minisport-australia",
+    "name": "Minisport Australia",
+    "url": "https://minisport.com.au",
+    "country": "AU",
+    "group": "anz",
+    "speciality": "Australian classic Mini and Moke parts store holding local stock for domestic dispatch.",
+    "tags": ["full-range", "heritage"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "mini-world-australia",
+    "name": "Mini World Australia",
+    "url": "https://www.miniworld.com.au",
+    "country": "AU",
+    "group": "anz",
+    "speciality": "New and used parts for Mini and Moke, plus rebuilt engines, helical gearboxes and trimming work.",
+    "tags": ["full-range", "heritage", "engine", "used-parts"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "mini-and-moke-spares",
+    "name": "Mini and Moke Spares",
+    "url": "https://miniandmokespares.com.au",
+    "country": "AU",
+    "group": "anz",
+    "speciality": "South Australian Mini and Moke parts warehouse, formerly trading as TC Motorsport.",
+    "tags": ["full-range", "heritage", "suspension-brakes"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "classic-mini-spares-nz",
+    "name": "Classic Mini Spares",
+    "url": "https://www.classicminispares.co.nz",
+    "country": "NZ",
+    "group": "anz",
+    "speciality": "New Zealand parts supplier for Austin, Morris, Rover and Leyland Minis built 1959-2000.",
+    "tags": ["full-range", "engine", "trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "minibitz-nz",
+    "name": "Minibitz",
+    "url": "https://www.minibitz.co.nz",
+    "country": "NZ",
+    "group": "anz",
+    "speciality": "Auckland classic Mini parts shop and workshop doing servicing, rebuilds and full restoration.",
+    "tags": ["full-range", "restoration", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "hawkswood-nz",
+    "name": "Hawkswood Classic Car Parts",
+    "url": "https://classiccarparts.co.nz/Mini-parts-spares",
+    "country": "NZ",
+    "group": "anz",
+    "speciality": "Auckland British classic parts supplier with a classic Mini section covering body, brakes, engine and electrics.",
+    "tags": ["full-range"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "palmside-nz",
+    "name": "Palmside",
+    "url": "https://palmside.co.nz/collections/mini-parts-panels",
+    "country": "NZ",
+    "group": "anz",
+    "speciality": "Christchurch motorsport parts and competition wheels retailer with a Mini parts and panels collection.",
+    "tags": ["body-panels", "wheels-tyres", "performance"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "limora",
+    "name": "Limora",
+    "url": "https://www.limora.com",
+    "country": "DE",
+    "group": "europe",
+    "speciality": "Large German supplier of British classic car parts with Mini among its marque categories.",
+    "tags": ["full-range"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "anglo-parts",
+    "name": "Anglo Parts",
+    "url": "https://www.angloparts.com/en/spare-parts/mini",
+    "country": "BE",
+    "group": "europe",
+    "speciality": "Belgian and Italian supplier of British classic parts with a Mini 1969-2000 and Moke range.",
+    "tags": ["full-range", "heritage"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "allbrit",
+    "name": "Allbrit",
+    "url": "https://allbrit.de",
+    "country": "DE",
+    "group": "europe",
+    "speciality": "German supplier of original and reproduction Classic Mini parts, with online exploded-view catalogues.",
+    "tags": ["full-range"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "mini-parts-shop-de",
+    "name": "Mini Parts Shop",
+    "url": "https://www.mini-parts-shop.de",
+    "country": "DE",
+    "group": "europe",
+    "speciality": "German classic Mini parts shop and workshop covering the 1959-2000 range, trading since 1996.",
+    "tags": ["full-range", "used-parts", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "mini-union-classic",
+    "name": "Mini Union Classic",
+    "url": "https://www.miniunion-classic.de",
+    "country": "DE",
+    "group": "europe",
+    "speciality": "German dealer in replacement and tuning parts for Austin, Morris, Rover, Cooper and Innocenti Minis.",
+    "tags": ["full-range", "heritage", "performance"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "classic-mini-onderdelen",
+    "name": "Classic Mini Onderdelen",
+    "url": "https://www.classicminionderdelen.nl",
+    "country": "NL",
+    "group": "europe",
+    "speciality": "Dutch owner-run classic Mini parts shop; visits and collection by appointment only.",
+    "tags": ["full-range", "engine", "body-panels"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "octagon-parts",
+    "name": "Octagon Parts",
+    "url": "https://www.octagonparts.nl/classic-mini/",
+    "country": "NL",
+    "group": "europe",
+    "speciality": "Netherlands online shop for British classic parts with a dedicated Classic Mini catalogue.",
+    "tags": ["full-range"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "tlcc-parts",
+    "name": "TLCC Parts",
+    "url": "https://www.tlccparts.nl",
+    "country": "NL",
+    "group": "europe",
+    "speciality": "Dutch Mini parts specialist since 2007, covering both classic Minis and the later BMW MINI ranges.",
+    "tags": ["full-range", "body-panels"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "ben-van-leeuwen",
+    "name": "Ben van Leeuwen",
+    "url": "https://www.benvanleeuwen.com",
+    "country": "NL",
+    "group": "europe",
+    "speciality": "Dutch Mini specialist in Ter Aar since 1979, with a parts department alongside its workshop.",
+    "tags": ["full-range", "used-parts", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "historic-mini-company",
+    "name": "Historic Mini Company",
+    "url": "https://www.historicminicompany.fr/en/",
+    "country": "FR",
+    "group": "europe",
+    "speciality": "French Austin Mini parts specialist with live stock display and same-day dispatch before 2pm.",
+    "tags": ["full-range", "engine", "performance"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "the-little-car-shop",
+    "name": "TLCS - The Little Car Shop",
+    "url": "https://www.thelittlecarshop.com",
+    "country": "FR",
+    "group": "europe",
+    "speciality": "Normandy supplier of Austin Mini, MG, Triumph and Morris Minor parts, trading since 2004.",
+    "tags": ["full-range"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "nancy-mini-shop",
+    "name": "Nancy Mini Shop",
+    "url": "https://www.nancy-mini-shop.com",
+    "country": "FR",
+    "group": "europe",
+    "speciality": "French Austin Mini parts shop and restoration workshop covering 1959-2000 cars, trading since 1994.",
+    "tags": ["full-range", "restoration", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "tracauto-1950",
+    "name": "Tracauto 1950",
+    "url": "https://www.tracauto-1950.com/5331-rover-austin-mini-cooper",
+    "country": "FR",
+    "group": "europe",
+    "speciality": "French vintage parts dealer with a Rover-Austin-Mini-Cooper category covering 850 through Cooper S.",
+    "tags": ["full-range"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "mokoncept",
+    "name": "Mokoncept",
+    "url": "https://mokoncept.fr/en/",
+    "country": "FR",
+    "group": "europe",
+    "speciality": "French Mini Moke parts shop and restoration workshop with over 2,000 catalogued components.",
+    "tags": ["heritage", "body-panels", "restoration"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "mini-parts-iberica",
+    "name": "Classic Mini Parts Iberica",
+    "url": "https://www.miniparts.es",
+    "country": "ES",
+    "group": "europe",
+    "speciality": "Spanish shop for British classic parts with a Mini range including brake kits and suspension conversions.",
+    "tags": ["full-range", "suspension-brakes"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "jacksons-mini-car-parts",
+    "name": "Jackson's Mini Car Parts",
+    "url": "https://www.jmcp.ch",
+    "country": "CH",
+    "group": "europe",
+    "speciality": "Swiss online shop for Classic Mini parts and accessories, priced in Swiss francs.",
+    "tags": ["full-range", "trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "galway-mini-centre",
+    "name": "Galway Mini Centre",
+    "url": "https://galwayminicentre.com",
+    "country": "IE",
+    "group": "europe",
+    "speciality": "Irish classic Mini engine and gearbox specialist that also stocks new and second-hand parts and panels.",
+    "tags": ["transmission", "performance", "services"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "classic-minis-japan",
+    "name": "Classic Minis Japan",
+    "url": "https://classicminisjapan.com",
+    "country": "JP",
+    "group": "japan",
+    "speciality": "Tokyo-based shop selling Japanese-market Mini parts and accessories, shipping worldwide.",
+    "tags": ["heritage", "electrical", "trim-interior"],
+    "shipsInternationally": true
+  },
+  {
+    "id": "mini-delta",
+    "name": "Mini Delta",
+    "nameLocal": "ミニデルタ",
+    "url": "https://delta-mini.com",
+    "country": "JP",
+    "group": "japan",
+    "speciality": "Rover Mini parts specialist in Osaka with a catalogue of more than 4,000 line items.",
+    "tags": ["full-range", "trim-interior", "performance"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "auto-palace",
+    "name": "Auto Palace Web Shop",
+    "nameLocal": "オートパレス",
+    "url": "https://palace.shop-pro.jp",
+    "country": "JP",
+    "group": "japan",
+    "speciality": "Kanagawa classic Mini shop selling parts and British goods, with counter collection available.",
+    "tags": ["full-range", "trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "b-well",
+    "name": "B-WELL",
+    "nameLocal": "《B-WELL》 ローバーミニ専門オンラインショップ",
+    "url": "https://www.b-well.co.jp",
+    "country": "JP",
+    "group": "japan",
+    "speciality": "Hokkaido online shop for Rover Mini maintenance and consumable parts, plus interior and lighting items.",
+    "tags": ["full-range", "suspension-brakes", "trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "camel-auto-shop",
+    "name": "Camel Auto Online Shop",
+    "nameLocal": "キャメルオート",
+    "url": "https://online-shop.camel-auto.co.jp",
+    "country": "JP",
+    "group": "japan",
+    "speciality": "Parts arm of a Hachioji Rover Mini specialist, strongest on injection and automatic-transmission cars.",
+    "tags": ["full-range", "transmission", "trim-interior"],
+    "shipsInternationally": null
+  },
+  {
+    "id": "afterparts-jp",
+    "name": "Afterparts",
+    "nameLocal": "アフターパーツ",
+    "url": "https://www.afterparts.co.jp/rover/mini.html",
+    "country": "JP",
+    "group": "japan",
+    "speciality": "Japanese aftermarket parts retailer with a Rover Mini section for suspension, exhaust and brake components.",
+    "tags": ["engine", "suspension-brakes"],
+    "shipsInternationally": null
+  }
+]

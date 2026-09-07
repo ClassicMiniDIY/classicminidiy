@@ -245,7 +245,19 @@
       </div>
     </template>
 
-    <p class="mt-8 text-xs text-base-content/50">{{ t('attribution') }}</p>
+    <!--
+      The archive knows three shops. A reader outside the UK searching a part
+      number gets three British links and a customs bill, so the directory is
+      the answer to the question they are actually asking.
+    -->
+    <p class="mt-8 text-sm">
+      <NuxtLink to="/archive/suppliers" class="link link-primary">
+        <i class="fas fa-shop mr-1" />
+        {{ t('suppliers_link') }}
+      </NuxtLink>
+    </p>
+
+    <p class="mt-4 text-xs text-base-content/50">{{ t('attribution') }}</p>
   </div>
 </template>
 
@@ -272,7 +284,8 @@
     "system_meta": "{plates} plates",
     "system_parts": "{parts} parts",
     "plate_alt": "Parts diagram: {title}",
-    "plate_parts": "{count} parts"
+    "plate_parts": "{count} parts",
+    "suppliers_link": "Where to buy Mini parts worldwide"
   },
   "es": {
     "title": "Números de pieza del Classic Mini - Classic Mini DIY",
@@ -295,7 +308,8 @@
     "system_meta": "{plates} láminas",
     "system_parts": "{parts} piezas",
     "plate_alt": "Despiece: {title}",
-    "plate_parts": "{count} piezas"
+    "plate_parts": "{count} piezas",
+    "suppliers_link": "Dónde comprar piezas de Mini en todo el mundo"
   },
   "fr": {
     "title": "Références de pièces Classic Mini - Classic Mini DIY",
@@ -318,7 +332,8 @@
     "system_meta": "{plates} planches",
     "system_parts": "{parts} pièces",
     "plate_alt": "Planche de pièces : {title}",
-    "plate_parts": "{count} pièces"
+    "plate_parts": "{count} pièces",
+    "suppliers_link": "Où acheter des pièces de Mini dans le monde"
   },
   "de": {
     "title": "Classic Mini Teilenummern - Classic Mini DIY",
@@ -341,7 +356,8 @@
     "system_meta": "{plates} Tafeln",
     "system_parts": "{parts} Teile",
     "plate_alt": "Teilediagramm: {title}",
-    "plate_parts": "{count} Teile"
+    "plate_parts": "{count} Teile",
+    "suppliers_link": "Wo man Mini-Teile weltweit kauft"
   },
   "it": {
     "title": "Codici ricambio Classic Mini - Classic Mini DIY",
@@ -364,7 +380,8 @@
     "system_meta": "{plates} tavole",
     "system_parts": "{parts} ricambi",
     "plate_alt": "Tavola ricambi: {title}",
-    "plate_parts": "{count} ricambi"
+    "plate_parts": "{count} ricambi",
+    "suppliers_link": "Dove comprare ricambi Mini nel mondo"
   },
   "pt": {
     "title": "Números de peça do Classic Mini - Classic Mini DIY",
@@ -387,7 +404,8 @@
     "system_meta": "{plates} pranchas",
     "system_parts": "{parts} peças",
     "plate_alt": "Diagrama de peças: {title}",
-    "plate_parts": "{count} peças"
+    "plate_parts": "{count} peças",
+    "suppliers_link": "Onde comprar peças de Mini no mundo"
   },
   "ru": {
     "title": "Номера деталей Classic Mini - Classic Mini DIY",
@@ -410,7 +428,8 @@
     "system_meta": "схем: {plates}",
     "system_parts": "деталей: {parts}",
     "plate_alt": "Схема деталей: {title}",
-    "plate_parts": "деталей: {count}"
+    "plate_parts": "деталей: {count}",
+    "suppliers_link": "Где купить запчасти для Mini по всему миру"
   },
   "ja": {
     "title": "クラシックミニ 部品番号 - Classic Mini DIY",
@@ -433,7 +452,8 @@
     "system_meta": "図版 {plates} 件",
     "system_parts": "部品 {parts} 件",
     "plate_alt": "部品図: {title}",
-    "plate_parts": "部品 {count} 件"
+    "plate_parts": "部品 {count} 件",
+    "suppliers_link": "世界のミニ パーツ販売店を見る"
   },
   "zh": {
     "title": "经典 Mini 零件号 - Classic Mini DIY",
@@ -456,7 +476,8 @@
     "system_meta": "{plates} 张图版",
     "system_parts": "{parts} 个零件",
     "plate_alt": "零件图：{title}",
-    "plate_parts": "{count} 个零件"
+    "plate_parts": "{count} 个零件",
+    "suppliers_link": "查看全球 Mini 配件供应商"
   },
   "ko": {
     "title": "클래식 미니 부품 번호 - Classic Mini DIY",
@@ -479,7 +500,8 @@
     "system_meta": "도판 {plates}개",
     "system_parts": "부품 {parts}개",
     "plate_alt": "부품 도면: {title}",
-    "plate_parts": "부품 {count}개"
+    "plate_parts": "부품 {count}개",
+    "suppliers_link": "전 세계 미니 부품 판매처 보기"
   }
 }
 </i18n>

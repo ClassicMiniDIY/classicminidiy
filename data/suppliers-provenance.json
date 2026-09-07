@@ -1,0 +1,484 @@
+{
+  "//": [
+    "The verification record behind data/suppliers.json. Nothing renders this file.",
+    "",
+    "It exists because the page tells the reader every shop was checked by hand, and a",
+    "claim like that should have something behind it. It is also what stops the next",
+    "person re-researching the same twenty-five dead ends: two of the rejections below",
+    "are shops a plausible-looking domain would have got wrong.",
+    "",
+    "Re-verify before trusting a date older than a year. Shops in this trade close, and",
+    "a directory of dead links is worse than no directory."
+  ],
+  "verified_at": "2026-09-07",
+  "method": "Each URL was fetched and its page read to confirm the business sells classic Mini parts. Sites that refused an automated request were re-fetched by other means and the page text quoted below. A site that could not be read at all was rejected rather than guessed at.",
+  "checked": [
+    {
+      "id": "mini-spares",
+      "url": "https://www.minispares.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Nav lists Engine, Body, Brightwork, Cooling, Electrics, Exhaust, Interior, Steering/Suspension/Brakes, Wheels. Banner states worldwide delivery; currency selector offers GBP/AUD/EUR/JPY/USD."
+    },
+    {
+      "id": "mini-sport",
+      "url": "https://www.minisport.com",
+      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch blocked with 403 on bot user-agent). Page text shows All Departments menu with Body Panels, Body Shells, 'R' Division conversion kits, and a GBP/EUR/USD currency selector."
+    },
+    {
+      "id": "somerford-mini",
+      "url": "https://www.somerfordmini.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Wiltshire address, states 1959-2000 coverage and worldwide shipping, lists body, cooling, electrical, engine, fuel, running gear and transmission categories."
+    },
+    {
+      "id": "bull-motif",
+      "url": "https://www.bullmotifminispares.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Winchcombe, Gloucestershire address; catalogue covers body panels through wheels; site states worldwide shipping from GBP 12.99."
+    },
+    {
+      "id": "minimine",
+      "url": "https://www.minimine.co.uk",
+      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Page text shows counted categories (Carburettor/Fueling 112, Heating & Cooling 132, Front Suspension 185), a +44 1782 number and a Worldwide Delivery link."
+    },
+    {
+      "id": "mini-spares-online",
+      "url": "https://www.minispares-online.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Trading name Huddersfield Spares Limited, 01484 Huddersfield number, categories from brakes to body panels plus complete cars."
+    },
+    {
+      "id": "old-skool-minis",
+      "url": "https://oldskoolminis.co.uk",
+      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Page text lists 0121 356 7546 (Birmingham) and shop categories from Aluminium Badges to Wipers."
+    },
+    {
+      "id": "pl-minis",
+      "url": "https://www.plminishop.com",
+      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Page text shows +44 1758 number (Pwllheli, Wales) and a GBP/EUR/USD/CAD/NZD/AUD currency selector over Mini-specific categories."
+    },
+    {
+      "id": "motaclan",
+      "url": "https://motaclan.com/product-category/classic-mini/",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Birmingham base; classic Mini category alongside MG, Triumph and Austin Healey; consolidates the Leacy Classics and Wood and Pickett brands."
+    },
+    {
+      "id": "m-parts",
+      "url": "https://www.mparts.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Vale of Glamorgan, Wales; holds ex-Cagiva surplus stock acquired 2003; panels, brakes, engines, electrics and suspension listed."
+    },
+    {
+      "id": "swiftune",
+      "url": "https://www.swiftune.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Kent, England; founded 1965; parts shop lists camshafts, con-rods, distributors, pistons and transmission items; historic race support."
+    },
+    {
+      "id": "kad",
+      "url": "https://kentautodevelopments.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. UK manufacturing facility; catalogue covers blocks, heads, pistons, gearbox parts, calipers, alloy drums and billet items."
+    },
+    {
+      "id": "maniflow",
+      "url": "https://maniflow.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Salisbury SP2 7PY address. Mini coverage confirmed by its own product pages, e.g. the KAD large-bore XFLOW manifold listing (KADCLM009)."
+    },
+    {
+      "id": "med-engineering",
+      "url": "https://www.med-engineering.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Lutterworth, Leicestershire LE17 4JA; operating since 1981; states it ships components worldwide."
+    },
+    {
+      "id": "slark-race-engineering",
+      "url": "https://www.slarkraceengineering.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Bristol, England; services listed as power runs, diagnosis, engine mapping, head work and suspension setup; SOR and SR head ranges."
+    },
+    {
+      "id": "calver-st",
+      "url": "https://www.calverst.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Unit 2, Malton Enterprise Park, North Yorkshire; online shop plus engine, gearbox and head services."
+    },
+    {
+      "id": "specialist-components",
+      "url": "https://www.specialist-components.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Carlton Rode, Norfolk; Classic Mini Performance Parts division with throttle body kits, the SC D400 ECU and TwinKam 16v."
+    },
+    {
+      "id": "guessworks",
+      "url": "https://www.guess-works.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. UK VAT-registered with 0800 number; covers Mini, Metro and ADO16 transverse boxes; states worldwide shipping."
+    },
+    {
+      "id": "mccs-race-engines",
+      "url": "https://www.mccsraceengines.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Unit 4k Loughborough Motorway Trading Estate, Shepshed, Leicestershire LE12 9NH; states Classic Mini, Midget, Sprite and Morris Minor coverage."
+    },
+    {
+      "id": "minilite",
+      "url": "https://www.minilite.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Telford, Shropshire; describes itself as the original and genuine Minilite wheel manufacturer, low-pressure die cast and made in England; worldwide shipping offered."
+    },
+    {
+      "id": "image-wheels",
+      "url": "https://www.imagewheels.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Tipton, West Midlands; established 1987; RM1 classic Minilite-design wheel listed in 10 to 16 inch diameters."
+    },
+    {
+      "id": "john-brown-wheels",
+      "url": "https://johnbrownwheels.com/wheels/classic-mini",
+      "evidence": "Fetched 2026-09-07, HTTP 200. +44 1926 number; classic Mini wheel category with alloy and steel options; site advertises international delivery."
+    },
+    {
+      "id": "newton-commercial",
+      "url": "https://newtoncomm.co.uk",
+      "evidence": "HTTP 200 via curl 2026-09-07. Eastlands Industrial Estate, Leiston, Suffolk IP16 4LL; established 1979; Mini named among covered marques. Note: newtoncommercial.co.uk is NOT this company's site."
+    },
+    {
+      "id": "aldridge-trimming",
+      "url": "https://www.aldridge.co.uk/brands/mini",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Drayton Street, Wolverhampton WV2 4EF; Mini brand page with MK1 and MK2 filters; site states worldwide delivery."
+    },
+    {
+      "id": "woolies-trim",
+      "url": "https://www.woolies-trim.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Market Deeping, Peterborough (01778 347347); established 1976; catalogue covers seals, upholstery cloth, carpets and fixings."
+    },
+    {
+      "id": "british-motor-heritage",
+      "url": "https://www.bmh-ltd.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Range Road, Cotswold Business Park, Witney, Oxfordshire OX29 0YB; dedicated Mini body shells section; states use of original assembly jigs."
+    },
+    {
+      "id": "magnum-panels",
+      "url": "https://www.magnumclassicminipanels.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. +44 1706 (Rochdale) number; producing replica panels since 1970; Mini MK1/MK2/MK3 plus commercial variants listed."
+    },
+    {
+      "id": "autosparks",
+      "url": "https://www.autosparks.co.uk",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Sandiacre, Nottingham NG10 5HU. Site search returns Mini-specific items: Mini MK1 Race Harness, Mini 1275GT Wiring Harness Set, Mini Automatic Gearbox Wiring Harness, Mini Clubman 1000 with Dynamo."
+    },
+    {
+      "id": "coh-baines",
+      "url": "https://coh-baines.co.uk/collections/mini",
+      "evidence": "Fetched 2026-09-07, HTTP 200. +44 1892 543311; dedicated Mini collection listing front and rear screen rubbers, quarterlight seals, self-grip seals and a seat diaphragm."
+    },
+    {
+      "id": "icor",
+      "url": "https://www.icor.uk/classic-cars",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Letchworth, Hertfordshire; trading since 1989; range explicitly lists Mini alongside MG and Leyland."
+    },
+    {
+      "id": "moke-panels",
+      "url": "https://mokepanels.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. UK business hours in GMT; states over 40 years supplying Moke panels and shells and delivery worldwide."
+    },
+    {
+      "id": "moss-motors",
+      "url": "https://mossmotors.com/classic-mini",
+      "evidence": "Fetched 2026-09-07, HTTP 200. US 1-800 sales number; Classic Mini and Classic Mini Clubman appear in the vehicle selector and a dedicated engine/performance sub-catalogue exists."
+    },
+    {
+      "id": "british-parts-northwest",
+      "url": "https://bpnorthwest.com/mini/classic/",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Classic Mini section states 794 parts, filtered by 948cc, 998cc, 1275cc and Cooper S; covers engine, suspension, brakes, electrics and body."
+    },
+    {
+      "id": "mini-city",
+      "url": "https://minicityltd.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. 908 area code (New Jersey); site states parts for Austin and Morris cars, Mini and Morris Minor."
+    },
+    {
+      "id": "mini-sport-usa",
+      "url": "https://usa.minisport.com",
+      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch 403). Footer gives Mini Sport Ltd HQ at Thompson Street, Padiham, Lancashire BB12 7AP with a 321 (Florida) phone number and a minisport-usa.com email, so the seller of record is the UK company."
+    },
+    {
+      "id": "heritage-garage",
+      "url": "http://www.heritagegarage.com",
+      "evidence": "HTTP 200 over plain HTTP 2026-09-07; page names Costa Mesa, California and lists engine, gearbox, suspension, brake and body panel departments. CAVEAT: HTTPS presents a self-signed certificate, so the http URL is the only working one."
+    },
+    {
+      "id": "classic-mini-diy",
+      "url": "https://classicminidiy.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Founded 2015 by Cole Gentry; toolbox calculators, technical archive, wheel registry and manufacturer partnerships."
+    },
+    {
+      "id": "classic-motoring-au",
+      "url": "https://classicmotoring.net.au/classic-mini-moke/",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Describes itself as an Australian online business established over 20 years, covering Mini and Moke plus Morris Minor and MG."
+    },
+    {
+      "id": "minisport-australia",
+      "url": "https://minisport.com.au",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Australian storefront titled Classic Mini Parts & Spares; search listing cites over 7,000 spares held locally."
+    },
+    {
+      "id": "mini-world-australia",
+      "url": "https://www.miniworld.com.au",
+      "evidence": "Fetched 2026-09-07, HTTP 200. PO Box 3113, Llandilo 2747 NSW; catalogue spans engine, gearbox, brakes, electrics, trim, wheels and rebuilt 1030cc-1380cc engines."
+    },
+    {
+      "id": "mini-and-moke-spares",
+      "url": "https://miniandmokespares.com.au",
+      "evidence": "Fetched 2026-09-07, HTTP 200. 10 Walsh Ave, St Marys, South Australia 5042; (08) 8125-8115; brakes, engine, steering, suspension, trim, wheels and tools listed."
+    },
+    {
+      "id": "classic-mini-spares-nz",
+      "url": "https://www.classicminispares.co.nz",
+      "evidence": "Fetched 2026-09-07, HTTP 200. 16 Oxford Street, Te Puke 3119, NZ; +64 7 5737233; catalogue states over 3,800 parts. International shipping not stated on site."
+    },
+    {
+      "id": "minibitz-nz",
+      "url": "https://www.minibitz.co.nz",
+      "evidence": "Fetched 2026-09-07, HTTP 200. 14A Corban Avenue, Henderson, Auckland; online and retail parts shop plus engine and gearbox rebuilds and WOF repairs."
+    },
+    {
+      "id": "hawkswood-nz",
+      "url": "https://classiccarparts.co.nz/Mini-parts-spares",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Auckland 09 area code; Classic Mini named in the header and the Find Your Vehicle menu carries Mini categories by component type."
+    },
+    {
+      "id": "palmside-nz",
+      "url": "https://palmside.co.nz/collections/mini-parts-panels",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Islington, Christchurch; online shop and showroom; Mini parts and panels collection alongside its main English Ford range."
+    },
+    {
+      "id": "limora",
+      "url": "https://www.limora.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Industriepark Nord 21b, 53567 Buchholz, Germany; 40 years trading; Mini listed with Jaguar, Austin Healey and Triumph."
+    },
+    {
+      "id": "anglo-parts",
+      "url": "https://www.angloparts.com/en/spare-parts/mini",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Headquarters Mechelen, Belgium; second site Villorba, Treviso, Italy; Mini 1969-2000 and Barn-Mini categories; British Motor Heritage recognised specialist."
+    },
+    {
+      "id": "allbrit",
+      "url": "https://allbrit.de",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Based in Celle, Germany; site states tested original and replacement parts plus accessories and tuning for all Classic Mini."
+    },
+    {
+      "id": "mini-parts-shop-de",
+      "url": "https://www.mini-parts-shop.de",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Run by Bernd Horlacher on the B19; catalogue covers exterior, interior, exhaust, brakes, chassis, wheels, engine, gearbox, motorsport and used parts."
+    },
+    {
+      "id": "mini-union-classic",
+      "url": "https://www.miniunion-classic.de",
+      "evidence": "Fetched 2026-09-07, HTTP 200. German-language shop describing itself as a specialist dealer for Classic Mini parts; states worldwide shipping and free German delivery from EUR 40."
+    },
+    {
+      "id": "classic-mini-onderdelen",
+      "url": "https://www.classicminionderdelen.nl",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Dutch-language catalogue across gaskets, filters, heads, blocks, suspension, brakes, electrics, panels and interior; site states appointment-only collection."
+    },
+    {
+      "id": "octagon-parts",
+      "url": "https://www.octagonparts.nl/classic-mini/",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Klovenier 11-1, 3905 PN Veenendaal, Netherlands; Classic Mini category across engine, transmission, fuel, cooling, suspension, brakes, panels, trim and electrics."
+    },
+    {
+      "id": "tlcc-parts",
+      "url": "https://www.tlccparts.nl",
+      "evidence": "Fetched 2026-09-07, HTTP 200. +31 073 62 19 705, sales@tlcc.nl; header states classic and new Mini Cooper parts specialists since 2007."
+    },
+    {
+      "id": "ben-van-leeuwen",
+      "url": "https://www.benvanleeuwen.com",
+      "evidence": "HTTP 200 via curl 2026-09-07. Page text: MINI Specialist Ter Aar, specialised in Mini and Mini Cooper since 1979, with an ONDERDELEN (parts) section and 0172 573478 phone."
+    },
+    {
+      "id": "historic-mini-company",
+      "url": "https://www.historicminicompany.fr/en/",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Cherisy, France; +33 (0)1 30 59 69 46; catalogue covers engine, ignition, carburation, gearbox, chassis, body, electrics, brakes, interior, wheels and tools."
+    },
+    {
+      "id": "the-little-car-shop",
+      "url": "https://www.thelittlecarshop.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Based in La Haye, Normandy; Mini range spans engine, chassis, electrics, interior, exhaust, wheels and bodywork."
+    },
+    {
+      "id": "nancy-mini-shop",
+      "url": "https://www.nancy-mini-shop.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. 19 avenue du General de Gaulle, 54340 Pompey, France; about 6,000 parts; ships to France, Belgium, Luxembourg, Germany, Switzerland and Italy."
+    },
+    {
+      "id": "tracauto-1950",
+      "url": "https://www.tracauto-1950.com/5331-rover-austin-mini-cooper",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Mini category shows 146 items across 850, 1000, 1275, 1300, Cooper, Cooper S, Countryman and Clubman; site states shipping in France and worldwide."
+    },
+    {
+      "id": "mokoncept",
+      "url": "https://mokoncept.fr/en/",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Tourrettes, 83440, France; over 2,000 parts across upholstery, bodywork, mechanics, electrics and accessories; serves Europe and international customers."
+    },
+    {
+      "id": "mini-parts-iberica",
+      "url": "https://www.miniparts.es",
+      "evidence": "Fetched 2026-09-07, HTTP 200. C/ La Calzada 17B Local 4, 28440 Guadarrama, Madrid; physical shop plus online; states shipping across Europe and beyond."
+    },
+    {
+      "id": "jacksons-mini-car-parts",
+      "url": "https://www.jmcp.ch",
+      "evidence": "Fetched 2026-09-07, HTTP 200. .ch domain with CHF pricing; categories span exterior, engine, brakes, suspension, interior, wheels, tools and accessories."
+    },
+    {
+      "id": "galway-mini-centre",
+      "url": "https://galwayminicentre.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Athenry, County Galway, Ireland; engine and gearbox refurbishment, rally and race prep, plus parts from fasteners to panels and second-hand stock."
+    },
+    {
+      "id": "classic-minis-japan",
+      "url": "https://classicminisjapan.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. States it is based in the western suburbs of Tokyo; range covers ball joints, wiper kits, alloys, throttle bodies, injectors, headlamps and interior items; ships worldwide via Japan Post, DHL and UPS."
+    },
+    {
+      "id": "mini-delta",
+      "url": "https://delta-mini.com",
+      "evidence": "Fetched 2026-09-07, HTTP 200. 大阪府吹田市南金田1丁目4番37号 (Suita, Osaka); site states over 4,000 part types across interior, exterior, electrical, engine, suspension, brakes, wheels and race items. Corporate site: mini-delta.co.jp (also HTTP 200)."
+    },
+    {
+      "id": "auto-palace",
+      "url": "https://palace.shop-pro.jp",
+      "evidence": "HTTP 200 via curl 2026-09-07 (WebFetch domain check blocked). Page text titled クラシックミニのAutoPalaceWebShop with categories エクステリア, インテリア, エンジン, ミッション・デフ, ブレーキ, サスペンション, ホイール and used-car stock; based in Sagamihara, Kanagawa."
+    },
+    {
+      "id": "b-well",
+      "url": "https://www.b-well.co.jp",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Shop metadata reads 《B-WELL》 ローバーミニ専門オンラインショップ; Tomakomai, Hokkaido address; catalogue covers interior trim, mats, seat covers, lighting, brakes and suspension."
+    },
+    {
+      "id": "camel-auto-shop",
+      "url": "https://online-shop.camel-auto.co.jp",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Parent workshop at 八王子市谷野町1186-3, Tokyo; shop lists filters, OEM parts, interior and exterior items, electrics, brakes, transmission parts and complete engines."
+    },
+    {
+      "id": "afterparts-jp",
+      "url": "https://www.afterparts.co.jp/rover/mini.html",
+      "evidence": "Fetched 2026-09-07, HTTP 200. Dedicated ROVER MINI page offering nationwide Japanese mail order for suspension, mufflers, brake pads and rotors from Monroe, Bilstein and Dixcel."
+    }
+  ],
+  "rejected": [
+    {
+      "name": "Mini Mania",
+      "tried": "https://www.minimania.com",
+      "reason": "Cloudflare HTTP 522/523 (origin unreachable) on five attempts across the session, including https://minimania.com and the /Mini_Spares-R-Us subpath. DNS and edge resolve, but no page ever returned. Real and well-known US business; recheck later before publishing."
+    },
+    {
+      "name": "Minibits",
+      "tried": "https://minibits.com.au",
+      "reason": "HTTP 503 Service Unavailable on four attempts (www and apex, Retry-After 600). No content returned."
+    },
+    {
+      "name": "Seven Mini Parts (Seven Enterprises)",
+      "tried": "https://www.7ent.com",
+      "reason": "Site answers HTTP 200 but the storefront returns 'Seven Mini Parts is currently unavailable'. The business was acquired by Mini Mania; no working catalogue."
+    },
+    {
+      "name": "Newton Commercial (wrong domain)",
+      "tried": "https://www.newtoncommercial.co.uk",
+      "reason": "Parked domain. Root redirects to /lander, which serves a GoDaddy parking script (LANDER_SYSTEM=PW, ap:'parking'). The real site is newtoncomm.co.uk, which is included."
+    },
+    {
+      "name": "Mini Spares (Midlands)",
+      "tried": "https://www.minisparesmidlands.com",
+      "reason": "HTTPS does not connect at all (curl exit 0 response); plain HTTP returns 404 on both / and /index.html. No live site."
+    },
+    {
+      "name": "M-Machine Panels",
+      "tried": "https://www.m-machine.co.uk",
+      "reason": "HTTPS does not connect. Plain HTTP redirects to preview.m-machine.co.uk, an unfinished staging subdomain. No stable, secure canonical URL to publish."
+    },
+    {
+      "name": "Mini House Buppu",
+      "tried": "https://buppu.com",
+      "reason": "HTTP 403 to every automated request (WebFetch, curl and urllib, with Japanese Accept-Language). Content could not be confirmed."
+    },
+    {
+      "name": "Sophie's",
+      "tried": "https://sophies-mini.com",
+      "reason": "HTTP 403 to every automated request. Content could not be confirmed."
+    },
+    {
+      "name": "BEST PARTS (Bestheart)",
+      "tried": "https://www.bestheart.co.jp",
+      "reason": "HTTP 403 to every automated request. Content could not be confirmed."
+    },
+    {
+      "name": "Dandy Classics",
+      "tried": "https://www.dandyclassics.com",
+      "reason": "Live site, but it is a classic car dealer whose parts shop covers MG and Triumph. No Mini parts range found."
+    },
+    {
+      "name": "Classic Cars Parts Australia (Hawkswood Australia)",
+      "tried": "https://classiccarpartsaustralia.com.au",
+      "reason": "Live site, but the vehicle menu covers Austin Healey, BMC/Leyland saloons, Ford and Jaguar only. No Mini category despite the search snippet."
+    },
+    {
+      "name": "Rimmer Bros",
+      "tried": "https://www.rimmerbros.com",
+      "reason": "Live site (HTTP 200), but the marque list is Triumph, MG, Rover, Land Rover, Range Rover, Jaguar, Mazda MX5, Morris Minor and Austin Healey. Mini is not covered, and the /Search?searchTerm=mini path 404s."
+    },
+    {
+      "name": "Imparts",
+      "tried": "https://www.imparts.nl",
+      "reason": "Live Dutch British-classics specialist, but the site copy names Jaguar and Triumph models only. The Mini deep link from search results returns 404. Mini coverage not confirmable."
+    },
+    {
+      "name": "Recambios Mini",
+      "tried": "https://www.recambios-mini.es",
+      "reason": "Live, but it is a genuine-parts catalogue for modern BMW MINI (VIN lookup, Recambios Originales MINI). Not a classic Mini 1959-2000 supplier."
+    },
+    {
+      "name": "EurokitShop",
+      "tried": "https://www.eurokitshop.it",
+      "reason": "Live Italian shop, but the Mini listing is a generic 'Air Classic Line' filter range. Could not confirm it is a classic Mini 1959-2000 specialist."
+    },
+    {
+      "name": "Z-Cars",
+      "tried": "https://www.zcars.org.uk",
+      "reason": "Live, but the site states legacy kit sales are discontinued and the business is moving to turnkey restomod cars under a new brand. No longer a parts supplier."
+    },
+    {
+      "name": "The Mini Shop",
+      "tried": "https://www.themini.shop",
+      "reason": "Domain is parked and listed for sale on Spaceship.com at USD 118."
+    },
+    {
+      "name": "Mini Makeovers",
+      "tried": "https://www.minimakeovers1275.com.au",
+      "reason": "Returns HTTP 307 with no final content; the redirect never resolves to a page. Could not confirm."
+    },
+    {
+      "name": "Miniya",
+      "tried": "https://www.miniya.co.jp",
+      "reason": "Live site, but the business is ミニヤ・ファクトリィ有限会社, a maker of capsule and health-supplement production machinery. Name collision only, not a Mini supplier."
+    },
+    {
+      "name": "Manjiya",
+      "tried": "https://manjiya.co.jp",
+      "reason": "Live Okayama classic Mini specialist, but the site advertises car sales, purchase, maintenance and customisation. No parts catalogue, so out of scope for a parts directory."
+    },
+    {
+      "name": "Garage Proud",
+      "tried": "https://www.mini-proud.com",
+      "reason": "Live Tokorozawa classic Mini specialist, but services listed are used-car sales, maintenance, customisation and race support. No parts catalogue."
+    },
+    {
+      "name": "Kingsroad Nagoya",
+      "tried": "https://www.kingsroad32.co.jp",
+      "reason": "Live Rover Mini specialist in Nagoya, but the site covers car sales, test drives, maintenance and owner events. No parts catalogue."
+    },
+    {
+      "name": "IBL",
+      "tried": "https://mini-ibl.com",
+      "reason": "Live Ibaraki Mini specialist, but its own-brand parts are heat-management items for later BMW MINI models; classic Mini offering is parts sourcing through the workshop, not a catalogue."
+    },
+    {
+      "name": "Just Mini",
+      "tried": "https://justmini.com.au",
+      "reason": "HTTP 500 Internal Server Error. No page returned."
+    },
+    {
+      "name": "My Mini Ride",
+      "tried": "https://www.myminiride.be",
+      "reason": "Connection failed entirely (no HTTP response over https)."
+    }
+  ]
+}
