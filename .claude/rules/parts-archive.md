@@ -1,7 +1,7 @@
 ---
 paths:
   - 'app/pages/archive/parts/**'
-  - 'app/pages/admin/parts.vue'
+  - 'app/pages/admin/parts/**'
   - 'server/api/archive/parts/**'
   - 'server/api/admin/parts/**'
   - 'server/utils/partSections.ts'
