@@ -45,7 +45,14 @@
 
   const status = ref<'proposed' | 'approved' | 'rejected'>('proposed');
 
-  const { data, pending, error, refresh } = await useFetch<{
+  /**
+   * `useAdminFetch`, never a bare `useFetch`. The Supabase session lives in
+   * localStorage, so `requireAdminAuth` on the server can only see it if the
+   * token is attached as a Bearer header — which is what this wrapper does, and
+   * it skips SSR for the same reason. A bare useFetch here returned 401 on every
+   * request and the page rendered nothing but its error alert.
+   */
+  const { data, pending, error, refresh } = await useAdminFetch<{
     rows: CorrelationRow[];
     counts: Record<string, number | null>;
     status: string;
@@ -65,7 +72,7 @@
     busy.value = new Set([...busy.value, row.id]);
     delete failed.value[row.id];
     try {
-      await $fetch('/api/admin/parts/review-correlation', {
+      await $adminFetch('/api/admin/parts/review-correlation', {
         method: 'POST',
         body: { id: row.id, approve },
       });
