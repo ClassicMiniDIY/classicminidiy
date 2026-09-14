@@ -42,9 +42,9 @@ import DefaultNeedles from '~/data/default-needles.json';
  * Deliberately duplicated as a literal in the Android and iOS test suites —
  * the whole point is that three independent repos agree on one value.
  */
-const CANONICAL_NEEDLES_SHA256 = 'fa1769214755f4bc0a78d35880e48795f1c1846d05abecf07685c7e962355273';
+const CANONICAL_NEEDLES_SHA256 = 'db883eeae1599d3ffb1971c911cdea1b4a753fbf6eb8e55292beda7b561fde6f';
 
-const EXPECTED_NEEDLE_COUNT = 709;
+const EXPECTED_NEEDLE_COUNT = 710;
 const STATIONS_PER_NEEDLE = 16;
 
 type NeedleRecord = { name: string; size: number; data: number[] };

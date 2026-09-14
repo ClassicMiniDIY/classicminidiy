@@ -189,7 +189,7 @@ so a partial read is the normal case rather than an error.
 
 ### 5. needle-compare
 
-Look up and compare SU carburettor needles from 709 profiles, using the same comparison
+Look up and compare SU carburettor needles from 710 profiles, using the same comparison
 logic as the on-site configurator. Richness is measured as **fuel-flow area in mm²**, not
 needle diameter, because area is what meters fuel.
 
