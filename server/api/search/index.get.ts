@@ -1,4 +1,5 @@
 import { runOmnisearch } from '../../utils/omnisearch';
+import { serverRuntimeConfig } from '../../utils/runtimeConfig';
 
 /**
  * Omnisearch — one query across every surface (design S2/S3).
@@ -12,6 +13,9 @@ import { runOmnisearch } from '../../utils/omnisearch';
  */
 export default defineEventHandler(async (event) => {
   const { q, limit } = getQuery(event);
-  const config = useRuntimeConfig();
+  // The event form: on Workers the no-argument form depends on `process.env`
+  // being populated before module evaluation, and an empty key here would
+  // silently drop the video surface in production while dev looked fine.
+  const config = serverRuntimeConfig(event);
   return runOmnisearch(q, limit, { youtubeApiKey: (config.YOUTUBE_API_KEY as string) || '' });
 });

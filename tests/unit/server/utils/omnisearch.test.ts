@@ -63,6 +63,13 @@ describe('runOmnisearch', () => {
     expect(tools[0]?.url).toBe('/technical/compression');
   });
 
+  it('reaches a hyphenated synonym typed with its hyphen', async () => {
+    // `lb-ft` is a searchTerm on Torque Specs. The query is split like the
+    // text, so the hyphen is a word boundary on both sides.
+    const response = await runOmnisearch('lb-ft');
+    expect(response.results.find((result) => result.surface === 'tools')?.url).toBe('/technical/torque');
+  });
+
   it('does not let one common word drag in every tool', async () => {
     // "spot light bracket": no tool matches two of three words, so no tool
     // should come back merely because a summary contains "light".
