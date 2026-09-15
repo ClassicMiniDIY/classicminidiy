@@ -347,13 +347,16 @@ export const useOmnisearch = () => {
    * spent free allowance goes to the membership page; a spent member
    * allowance has nowhere to go and the row says so.
    */
-  const askBot = () => {
-    const term = query.value.trim();
+  const askBot = (rawTerm: string = query.value) => {
+    const term = rawTerm.trim();
     if (term.length < 2) return;
     const state = askState.value;
+    // The page passes its own term; the intent is recomputed from it rather
+    // than read from the palette's state, which may belong to another query.
+    const termIntent = term === query.value.trim() ? intent.value : analyseQuery(term);
     track('omnisearch_ask_selected', {
-      kind: intent.value.kind,
-      position: intent.value.askPosition,
+      kind: termIntent.kind,
+      position: termIntent.askPosition,
       quota_state: state,
       results: totalResults.value,
     });
@@ -422,6 +425,7 @@ export const useOmnisearch = () => {
     answerOffset,
     quota,
     askState,
+    loadQuota,
     groups,
     flatResults,
     totalResults,

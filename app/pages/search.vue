@@ -24,7 +24,7 @@
   const route = useRoute();
   const router = useRouter();
   const { openWizard } = useContributeWizard();
-  const { rememberSearch, commitMiss } = useOmnisearch();
+  const { rememberSearch, commitMiss, loadQuota } = useOmnisearch();
   const { track, trackOutbound } = useAnalytics();
 
   const query = computed(() => String(route.query.q ?? '').trim());
@@ -96,6 +96,8 @@
   onMounted(() => {
     if (query.value.length >= 2) rememberSearch(query.value);
     commitPageMiss();
+    // For the Ask row's copy. After mount, never blocking the page.
+    void loadQuota();
   });
   watch(status, (value) => {
     if (value === 'success') commitPageMiss();
@@ -128,6 +130,12 @@
     </div>
 
     <template v-else>
+      <!-- The Ask row, at the top of the results column. Always present with
+           a query; the second exit the palette offers, on the page too. -->
+      <div v-if="query.length >= 2" class="mt-6 max-w-[900px]">
+        <SearchAskRow :query="query" />
+      </div>
+
       <!-- Direct answers: the thing itself, above every surface -->
       <div v-if="answers.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
         <NuxtLink

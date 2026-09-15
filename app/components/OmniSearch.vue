@@ -24,8 +24,6 @@
     goTo,
     goToAnswer,
     askBot,
-    askState,
-    quota,
     intent,
     viewAllResults,
     moveHighlight,
@@ -87,28 +85,11 @@
   /**
    * Where the Ask row sits. Above the results for a question, or when there
    * is nothing else to show; below them for a lookup. Always present once
-   * there is a query, never the only option while results exist.
+   * there is a query, never the only option while results exist. Not hidden
+   * while a search is in flight: `hasRows` and `intent` hold the last known
+   * answer, so the row stays put between keystrokes instead of flickering.
    */
   const askOnTop = computed(() => intent.value.askPosition === 'top' || !hasRows.value);
-
-  /** The `⌘` glyph on a Mac, `Ctrl` elsewhere. Client-only; SSR renders the Ctrl form. */
-  const modifierKey = ref('Ctrl');
-  onMounted(() => {
-    if (/Mac|iPhone|iPad/.test(navigator.platform)) modifierKey.value = '⌘';
-  });
-
-  const askCopy = computed(() => {
-    switch (askState.value) {
-      case 'anon-limit':
-        return t('ask_sign_in', { limit: quota.value?.limit ?? 30 });
-      case 'free-limit':
-        return t('ask_member', { limit: quota.value?.limit ?? 100 });
-      case 'member-limit':
-        return t('ask_reset');
-      default:
-        return t('ask_bot', { query: query.value.trim() });
-    }
-  });
 
   /**
    * "Request it" — the miss path that feeds Most Wanted. Sends the user into the
@@ -164,18 +145,7 @@
               query; its copy and target follow the quota state (see
               useOmnisearch.askState). The visitor never picks a mode.
             -->
-            <button
-              v-if="hasQuery && !loading && askOnTop"
-              type="button"
-              class="omnisearch-ask flex min-h-11 w-full items-center gap-3 rounded-field px-3 py-2.5 text-left"
-              :class="{ 'is-limit': askState !== 'available' }"
-              :disabled="askState === 'member-limit'"
-              @click="askBot()"
-            >
-              <i class="fas fa-robot w-[18px] text-center text-secondary" aria-hidden="true"></i>
-              <span class="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{{ askCopy }}</span>
-              <kbd v-if="askState === 'available'" class="kbd kbd-sm hidden sm:inline-flex">{{ modifierKey }}↵</kbd>
-            </button>
+            <SearchAskRow v-if="hasQuery && askOnTop" :query="query" hotkey />
 
             <template v-if="hasQuery && hasRows">
               <!-- Direct answers: the thing itself, before any surface group -->
@@ -237,18 +207,7 @@
               </div>
 
               <!-- The Ask row, below the list, for a lookup -->
-              <button
-                v-if="!loading && !askOnTop"
-                type="button"
-                class="omnisearch-ask mt-1 flex min-h-11 w-full items-center gap-3 rounded-field px-3 py-2.5 text-left"
-                :class="{ 'is-limit': askState !== 'available' }"
-                :disabled="askState === 'member-limit'"
-                @click="askBot()"
-              >
-                <i class="fas fa-robot w-[18px] text-center text-secondary" aria-hidden="true"></i>
-                <span class="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{{ askCopy }}</span>
-                <kbd v-if="askState === 'available'" class="kbd kbd-sm hidden sm:inline-flex">{{ modifierKey }}↵</kbd>
-              </button>
+              <SearchAskRow v-if="!askOnTop" :query="query" hotkey class="mt-1" />
             </template>
 
             <!-- No results -->
@@ -339,21 +298,6 @@
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   }
 
-  .omnisearch-ask {
-    border: 1px dashed color-mix(in srgb, var(--color-secondary) 45%, transparent);
-    background: color-mix(in srgb, var(--color-secondary) 6%, transparent);
-  }
-  .omnisearch-ask:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-secondary) 14%, transparent);
-  }
-  .omnisearch-ask.is-limit {
-    border-style: solid;
-  }
-  .omnisearch-ask:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
   /* 250ms slide + 200ms backdrop fade, matching the drawer motion in MainNav. */
   .omnisearch-enter-active,
   .omnisearch-leave-active {
@@ -400,11 +344,7 @@
     "feeds_most_wanted": "feeds Most Wanted",
     "view_all": "View all {count} results",
     "more_in_surface": "+{count} more in {surface}",
-    "answer": "Answer",
-    "ask_bot": "Ask DIY Mini Bot: \"{query}\"",
-    "ask_sign_in": "Sign in to ask — {limit} questions a month, free",
-    "ask_member": "Become a Sustaining Member — {limit} questions a month",
-    "ask_reset": "Your questions reset on the 1st"
+    "answer": "Answer"
   },
   "es": {
     "aria_label": "Buscar en todo",
@@ -421,11 +361,7 @@
     "feeds_most_wanted": "alimenta Más buscados",
     "view_all": "Ver los {count} resultados",
     "more_in_surface": "+{count} más en {surface}",
-    "answer": "Respuesta",
-    "ask_bot": "Pregunta a DIY Mini Bot: \"{query}\"",
-    "ask_sign_in": "Inicia sesión para preguntar — {limit} preguntas al mes, gratis",
-    "ask_member": "Hazte Miembro Sustentador — {limit} preguntas al mes",
-    "ask_reset": "Tus preguntas se renuevan el día 1"
+    "answer": "Respuesta"
   },
   "fr": {
     "aria_label": "Tout rechercher",
@@ -442,11 +378,7 @@
     "feeds_most_wanted": "alimente Les plus demandés",
     "view_all": "Voir les {count} résultats",
     "more_in_surface": "+{count} de plus dans {surface}",
-    "answer": "Réponse",
-    "ask_bot": "Demander à DIY Mini Bot : « {query} »",
-    "ask_sign_in": "Connectez-vous pour demander — {limit} questions par mois, gratuit",
-    "ask_member": "Devenez Membre Soutien — {limit} questions par mois",
-    "ask_reset": "Vos questions se renouvellent le 1er"
+    "answer": "Réponse"
   },
   "de": {
     "aria_label": "Alles durchsuchen",
@@ -463,11 +395,7 @@
     "feeds_most_wanted": "speist Meistgesucht",
     "view_all": "Alle {count} Ergebnisse anzeigen",
     "more_in_surface": "+{count} weitere in {surface}",
-    "answer": "Antwort",
-    "ask_bot": "DIY Mini Bot fragen: „{query}“",
-    "ask_sign_in": "Anmelden zum Fragen — {limit} Fragen pro Monat, kostenlos",
-    "ask_member": "Sustaining Member werden — {limit} Fragen pro Monat",
-    "ask_reset": "Deine Fragen werden am 1. zurückgesetzt"
+    "answer": "Antwort"
   },
   "it": {
     "aria_label": "Cerca ovunque",
@@ -484,11 +412,7 @@
     "feeds_most_wanted": "alimenta Più richiesti",
     "view_all": "Vedi tutti i {count} risultati",
     "more_in_surface": "+{count} altri in {surface}",
-    "answer": "Risposta",
-    "ask_bot": "Chiedi a DIY Mini Bot: \"{query}\"",
-    "ask_sign_in": "Accedi per chiedere — {limit} domande al mese, gratis",
-    "ask_member": "Diventa Sustaining Member — {limit} domande al mese",
-    "ask_reset": "Le tue domande si rinnovano il giorno 1"
+    "answer": "Risposta"
   },
   "pt": {
     "aria_label": "Pesquisar tudo",
@@ -505,11 +429,7 @@
     "feeds_most_wanted": "alimenta Mais procurados",
     "view_all": "Ver todos os {count} resultados",
     "more_in_surface": "+{count} mais em {surface}",
-    "answer": "Resposta",
-    "ask_bot": "Perguntar ao DIY Mini Bot: \"{query}\"",
-    "ask_sign_in": "Inicie sessão para perguntar — {limit} perguntas por mês, grátis",
-    "ask_member": "Torne-se Sustaining Member — {limit} perguntas por mês",
-    "ask_reset": "As suas perguntas renovam-se no dia 1"
+    "answer": "Resposta"
   },
   "ru": {
     "aria_label": "Искать везде",
@@ -526,11 +446,7 @@
     "feeds_most_wanted": "пополняет «Самое востребованное»",
     "view_all": "Показать все результаты ({count})",
     "more_in_surface": "ещё {count} в разделе «{surface}»",
-    "answer": "Ответ",
-    "ask_bot": "Спросить DIY Mini Bot: «{query}»",
-    "ask_sign_in": "Войдите, чтобы спросить — {limit} вопросов в месяц, бесплатно",
-    "ask_member": "Станьте Sustaining Member — {limit} вопросов в месяц",
-    "ask_reset": "Ваши вопросы обновятся 1-го числа"
+    "answer": "Ответ"
   },
   "ja": {
     "aria_label": "すべてを検索",
@@ -547,11 +463,7 @@
     "feeds_most_wanted": "リクエストの多い項目に反映されます",
     "view_all": "{count}件すべての結果を表示",
     "more_in_surface": "{surface} にあと {count} 件",
-    "answer": "回答",
-    "ask_bot": "DIY Mini Botに質問: 「{query}」",
-    "ask_sign_in": "サインインして質問 — 月{limit}回まで無料",
-    "ask_member": "Sustaining Memberになる — 月{limit}回まで",
-    "ask_reset": "質問回数は毎月1日にリセットされます"
+    "answer": "回答"
   },
   "zh": {
     "aria_label": "搜索全部",
@@ -568,11 +480,7 @@
     "feeds_most_wanted": "会加入最想要列表",
     "view_all": "查看全部 {count} 条结果",
     "more_in_surface": "{surface} 中还有 {count} 条",
-    "answer": "答案",
-    "ask_bot": "向 DIY Mini Bot 提问：“{query}”",
-    "ask_sign_in": "登录后提问 — 每月 {limit} 个问题，免费",
-    "ask_member": "成为 Sustaining Member — 每月 {limit} 个问题",
-    "ask_reset": "你的提问次数将于每月 1 日重置"
+    "answer": "答案"
   },
   "ko": {
     "aria_label": "전체 검색",
@@ -589,11 +497,7 @@
     "feeds_most_wanted": "가장 많이 요청됨 목록에 반영됩니다",
     "view_all": "{count}개 결과 모두 보기",
     "more_in_surface": "{surface}에 {count}건 더",
-    "answer": "답변",
-    "ask_bot": "DIY Mini Bot에게 질문: \"{query}\"",
-    "ask_sign_in": "로그인하고 질문하기 — 매월 {limit}개 질문, 무료",
-    "ask_member": "Sustaining Member 되기 — 매월 {limit}개 질문",
-    "ask_reset": "질문 횟수는 매월 1일에 초기화됩니다"
+    "answer": "답변"
   }
 }
 </i18n>

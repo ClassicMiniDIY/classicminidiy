@@ -39,8 +39,8 @@ vi.stubGlobal(
 );
 vi.stubGlobal('setCookie', vi.fn());
 
-vi.mock('~/server/utils/supabase', () => ({ getServiceClient: vi.fn(() => ({ rpc, from })) }));
-vi.mock('~/server/utils/runtimeConfig', () => ({
+vi.mock('~~/server/utils/supabase', () => ({ getServiceClient: vi.fn(() => ({ rpc, from })) }));
+vi.mock('~~/server/utils/runtimeConfig', () => ({
   serverRuntimeConfig: vi.fn(() => ({ OG_IMAGE_SECRET: 'test-salt' })),
 }));
 
