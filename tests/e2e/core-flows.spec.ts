@@ -55,10 +55,10 @@ test.describe('omnisearch', () => {
   });
 
   // The header advertises the shortcut with a `<kbd>/</kbd>` on every page.
-  // FloatingChatInput used to focus its textarea on mount, and the hotkey
-  // handler correctly ignores keystrokes inside a text field — so the shortcut
-  // was dead on the site's highest-traffic page. This was a `test.fixme` until
-  // that autofocus was removed; it guards the fix now.
+  // The homepage's former floating chat box focused its textarea on mount,
+  // and the hotkey handler correctly ignores keystrokes inside a text field —
+  // so the shortcut was dead on the site's highest-traffic page. The box is
+  // gone now; this still guards the shortcut on the homepage.
   test('the "/" shortcut also works on the homepage', async ({ page }) => {
     await gotoHydrated(page, '/');
     await page.keyboard.press('/');

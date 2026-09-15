@@ -43,12 +43,15 @@ import { sha256Hex } from '../utils/mcpTiers';
  * `useStorage('cache')`, which is the KV binding on Cloudflare. Anonymous
  * requests do no I/O at all: no token, no lookup.
  */
+const CHAT_TIERED_PATHS = new Set(['/api/chat', '/api/chat/quota']);
+
 export default defineEventHandler(async (event) => {
-  // Exact match, not a prefix. `startsWith('/api/chat')` would silently apply
+  // Exact matches, not a prefix. `startsWith('/api/chat')` would silently apply
   // chat tiering and the chat quota to a future `/api/chat-export` or
-  // `/api/chatbot-admin`, surfacing only as unexplained 429s.
+  // `/api/chatbot-admin`, surfacing only as unexplained 429s. The quota peek is
+  // listed because it must answer for the SAME caller the chat route would see.
   const { pathname } = getRequestURL(event);
-  if (pathname !== '/api/chat') return;
+  if (!CHAT_TIERED_PATHS.has(pathname)) return;
 
   // No token is the common case — the assistant is public. Cheapest path first,
   // and it must never touch the database.

@@ -171,10 +171,9 @@
 <template>
   <!-- z-60, not z-50. `sticky` + a z-index makes this header its own stacking
        context, so the menus' `z-[60]` only ranks them INSIDE it — against the
-       rest of the page the header competes as a single z-50 box, and both
-       bottom-right floaters (FloatingChatInput, OnboardingNudge) are also z-50
-       and come later in the DOM, so they painted over any open menu wherever
-       the two overlapped. Still below the mobile drawer (70), the skip link
+       rest of the page the header competes as a single z-50 box, and the
+       bottom-right OnboardingNudge floater is also z-50 and comes later in
+       the DOM, so it painted over any open menu wherever the two overlapped. Still below the mobile drawer (70), the skip link
        (100) and toasts (9999). -->
   <header class="main-nav sticky top-0 z-[60] border-b border-base-300 bg-base-100">
     <div class="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 lg:h-16 lg:gap-3 lg:px-6">
@@ -494,7 +493,12 @@
                 {{ t('profile.api_tools') }}
               </NuxtLink>
 
-              <NuxtLink v-if="showAdminLink" to="/admin" class="drawer-link" @click="goToDrawerLink(t('profile.admin'))">
+              <NuxtLink
+                v-if="showAdminLink"
+                to="/admin"
+                class="drawer-link"
+                @click="goToDrawerLink(t('profile.admin'))"
+              >
                 <i class="fas fa-shield-check w-[18px] text-secondary" aria-hidden="true"></i>
                 {{ t('profile.admin') }}
               </NuxtLink>

@@ -753,6 +753,11 @@
     capture('chat_message_sent', {
       message_length: text.length,
       is_first_message: messages.value.length === 0,
+      // Where the first message came from: the search palette's Ask row sets
+      // `?source=omnisearch`; a message typed here is `chat`. Read on every
+      // send rather than stored, so a thread's later messages still say which
+      // door it came in by.
+      source: typeof route.query.source === 'string' ? route.query.source : 'chat',
     });
 
     input.value = '';
@@ -848,7 +853,7 @@
     showScrollButton.value = scrollHeight - scrollTop - clientHeight >= 100;
   }
 
-  /** `/chat?message=…` from FloatingChatInput. Runs once, after mount. */
+  /** `/chat?message=…` from the search palette's Ask row. Runs once, after mount. */
   const hasAutoSubmitted = ref(false);
 
   function maybeAutoSubmit() {
@@ -871,8 +876,8 @@
     }
 
     // A query message starts a NEW conversation rather than appending to the
-    // one just restored from history, which is what a visitor arriving from the
-    // floating input expects.
+    // one just restored from history, which is what a visitor arriving from
+    // search expects.
     if (messages.value.length > 0) {
       messages.value = [];
       threadId.value = newThreadId();
