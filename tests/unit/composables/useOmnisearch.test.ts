@@ -47,6 +47,7 @@ let useOmnisearch: any;
 
 beforeEach(async () => {
   vi.useFakeTimers();
+  mockRouter.push.mockClear();
   vi.resetModules();
   (global as any).__resetNuxtState();
   fetchMock.mockReset();
@@ -115,6 +116,36 @@ describe('useOmnisearch miss commit', () => {
     await vi.advanceTimersByTimeAsync(1500);
     search.commitMiss('bad wolf', 'page');
     expect(missPosts()).toEqual(['Bad Wolf']);
+  });
+
+  it('askBot with inline returns true only when the quota allows, and never navigates then', async () => {
+    const search = useOmnisearch();
+    search.query.value = 'how do i bleed the brakes';
+    expect(search.askBot('how do i bleed the brakes', { inline: true })).toBe(true);
+    expect(mockRouter.push).not.toHaveBeenCalled();
+
+    search.quota.value = { tier: 'anonymous', used: 15, limit: 15 };
+    expect(search.askBot('how do i bleed the brakes', { inline: true })).toBe(false);
+    expect(mockRouter.push).toHaveBeenCalledWith(expect.objectContaining({ path: '/login' }));
+
+    mockRouter.push.mockClear();
+    search.quota.value = { tier: 'free', used: 30, limit: 30 };
+    expect(search.askBot('how do i bleed the brakes', { inline: true })).toBe(false);
+    expect(mockRouter.push).toHaveBeenCalledWith('/membership');
+
+    mockRouter.push.mockClear();
+    search.quota.value = { tier: 'member', used: 100, limit: 100 };
+    expect(search.askBot('how do i bleed the brakes', { inline: true })).toBe(false);
+    expect(mockRouter.push).not.toHaveBeenCalled();
+  });
+
+  it('askBot without inline hands off to /chat with the source', () => {
+    const search = useOmnisearch();
+    expect(search.askBot('what oil for a 1275')).toBe(false);
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      path: '/chat',
+      query: { message: 'what oil for a 1275', source: 'omnisearch' },
+    });
   });
 
   it('ignores queries under the RPC floor', () => {

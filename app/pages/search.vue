@@ -19,12 +19,13 @@
     type SearchResponse,
     type SearchResult,
   } from '~~/shared/utils/searchIntent';
+  import type { QuotaExhausted } from '~/utils/chatQuotaError';
 
   const { t } = useI18n();
   const route = useRoute();
   const router = useRouter();
   const { openWizard } = useContributeWizard();
-  const { rememberSearch, commitMiss, loadQuota } = useOmnisearch();
+  const { rememberSearch, commitMiss, loadQuota, quota } = useOmnisearch();
   const { track, trackOutbound } = useAnalytics();
 
   const query = computed(() => String(route.query.q ?? '').trim());
@@ -64,16 +65,21 @@
   const answerOpen = ref(false);
   const answerKey = ref(0);
   const openAnswer = () => {
+    if (answerOpen.value) return;
     answerKey.value += 1;
     answerOpen.value = true;
   };
   const closeAnswer = () => {
     answerOpen.value = false;
   };
-  /** The peek was stale and the route refused: close, and let the row re-read its state. */
-  const onAnswerQuota = () => {
+  /**
+   * The peek was stale and the route refused. Close, and seed the row's state
+   * from the route's own verdict rather than re-peeking: a peek that failed
+   * once can fail again, and the row would offer the bot a second time.
+   */
+  const onAnswerQuota = (verdict: QuotaExhausted) => {
     answerOpen.value = false;
-    void loadQuota();
+    quota.value = { tier: verdict.tier, used: verdict.used ?? verdict.limit ?? 0, limit: verdict.limit ?? 0 };
   };
   // A new query is a new question; the old answer does not apply to it.
   watch(query, () => {
@@ -245,12 +251,12 @@
       <!-- ONE mount, moved with `order`: a second copy for the other breakpoint
            would be a second transport, a second request and a second message
            off the quota. Above the results below `lg`, a sticky aside from `lg`. -->
-      <aside
+      <div
         v-if="answerOpen"
         class="order-first mt-6 w-full lg:sticky lg:top-20 lg:order-last lg:w-[380px] lg:shrink-0 xl:w-[440px]"
       >
-        <SearchAnswerPanel :key="answerKey" :query="query" @close="closeAnswer" @quota="onAnswerQuota()" />
-      </aside>
+        <SearchAnswerPanel :key="answerKey" :query="query" @close="closeAnswer" @quota="onAnswerQuota" />
+      </div>
     </div>
   </div>
 </template>
