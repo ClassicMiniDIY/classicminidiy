@@ -80,8 +80,19 @@ function rankWord(word: string, name: string, terms: string[], summary: string):
   return null;
 }
 
+/**
+ * Words that prefix-match everything and mean nothing: a one-letter word
+ * reaches any name starting with that letter, and `the` reaches
+ * `thermostat`. A six-word question needs three matches, so without this
+ * `how do i bleed the brakes` pulled a tool in on `i` + `the` + `brake`.
+ */
+const STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'to', 'in', 'on', 'for', 'and', 'or', 'my', 'do', 'is', 'i']);
+
 function rank(query: string, name: string, terms: string[], summary: string): number | null {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const words = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((word) => word.length >= 2 && !STOP_WORDS.has(word));
   if (words.length === 0) return null;
 
   let matched = 0;
@@ -260,10 +271,9 @@ async function searchVideos(query: string, apiKey: string, limit: number): Promi
  * than a second implementation that drifts — the same import-do-not-reimplement
  * rule the MCP tools already follow for their calculators.
  *
- * Zero-result queries still record a miss. A question the assistant could not
- * answer is exactly as good a Most Wanted signal as one typed into the search
- * box, and `archive_search_misses` is admin-only and promoted by hand, so an
- * anonymous caller still cannot move a number a visitor sees.
+ * Neither caller records a miss here. The visitor's palette posts one on a
+ * commit (`/api/search/miss`); the agent's rewording of a question is never a
+ * Most Wanted signal.
  */
 export interface OmnisearchOptions {
   /**

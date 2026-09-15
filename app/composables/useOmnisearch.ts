@@ -58,6 +58,16 @@ export type MissTrigger = 'enter' | 'close' | 'idle' | 'page';
 
 export const surfaceLabel = (surface: string) => SURFACE_LABELS[surface] ?? surface;
 
+/**
+ * Per-module, not per-call. `useOmnisearch()` is called from four components
+ * (header, hero, mobile icon, the palette) while every piece of state is a
+ * shared `useState`; a timer or request token held in the closure of one
+ * call could not be cleared by another. These are the only two mutable
+ * values that are not `useState`, so they live here as singletons.
+ */
+let requestToken = 0;
+let missIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useOmnisearch = () => {
   const isOpen = useState('omnisearch:open', () => false);
   const query = useState('omnisearch:query', () => '');
@@ -73,6 +83,13 @@ export const useOmnisearch = () => {
    * page that Enter navigates to, is one miss.
    */
   const committedMisses = useState<string[]>('omnisearch:committed-misses', () => []);
+  /**
+   * The query the current `results` belong to. `query` runs ahead of it by up
+   * to the debounce: a miss may only be committed for a term that was
+   * actually searched, or "bad w" (searched, empty) plus "olf" (typed, not
+   * yet searched) commits "bad wolf" without ever asking.
+   */
+  const searchedQuery = useState('omnisearch:searched-query', () => '');
 
   const router = useRouter();
   const { track, trackOutbound } = useAnalytics();
@@ -133,9 +150,6 @@ export const useOmnisearch = () => {
     }
   };
 
-  let requestToken = 0;
-  let missIdleTimer: ReturnType<typeof setTimeout> | null = null;
-
   const clearMissTimer = () => {
     if (missIdleTimer) clearTimeout(missIdleTimer);
     missIdleTimer = null;
@@ -163,7 +177,8 @@ export const useOmnisearch = () => {
     clearMissTimer();
     if (loading.value) return;
     const term = query.value.trim();
-    if (term.length < 2 || results.value.length > 0) return;
+    if (term.length < 2 || term !== searchedQuery.value) return;
+    if (results.value.length > 0) return;
     commitMiss(term, trigger);
   };
 
@@ -176,6 +191,7 @@ export const useOmnisearch = () => {
     if (term.length < 2) {
       results.value = [];
       counts.value = {};
+      searchedQuery.value = '';
       loading.value = false;
       return;
     }
@@ -192,6 +208,7 @@ export const useOmnisearch = () => {
       results.value = response.results;
       counts.value = response.counts;
       intent.value = response.intent;
+      searchedQuery.value = term;
       if (response.results.length === 0) {
         missIdleTimer = setTimeout(() => commitCurrentMiss('idle'), MISS_IDLE_MS);
       }
@@ -199,6 +216,8 @@ export const useOmnisearch = () => {
       if (token !== requestToken) return;
       results.value = [];
       counts.value = {};
+      // A failed search is not a miss: nothing was looked up.
+      searchedQuery.value = '';
     } finally {
       if (token === requestToken) loading.value = false;
     }

@@ -107,14 +107,15 @@ function normaliseCode(raw: string): string {
 }
 
 /**
- * Chassis numbers carry structure a part number does not: two hyphenated
- * groups (`A-A2S7L-123A`), an Australian prefix followed by a four-to-seven
- * digit serial (`YMA2S1-12345`), or, from 1980, a 17-character VIN starting
- * `SAX`. A single hyphen before a SHORT number (`GHF-123`, `12G-940`) is how
- * people write a part number, and stays one.
+ * Chassis numbers carry structure a part number does not: two or three
+ * separated groups (`A-A2S7L-123A`, `A-AB1-L/807922` — a slash separates too),
+ * a prefix followed by a four-to-seven digit serial with an optional plant
+ * letter (`YMA2S1-12345`, `XAU1N-547206A`), or, from 1980, a 17-character
+ * VIN starting `SAX`. A single hyphen before a SHORT number (`GHF-123`,
+ * `12G-940`) is how people write a part number, and stays one.
  */
-const CHASSIS_TWO_HYPHENS = /^[A-Z][A-Z0-9]{0,6}-[A-Z0-9]{1,8}-[A-Z0-9]{1,8}$/i;
-const CHASSIS_ONE_HYPHEN = /^[A-Z][A-Z0-9]{1,6}-\d{4,7}$/i;
+const CHASSIS_TWO_HYPHENS = /^[A-Z][A-Z0-9]{0,6}(?:[-/][A-Z0-9]{1,8}){2,3}$/i;
+const CHASSIS_ONE_HYPHEN = /^[A-Z][A-Z0-9]{1,6}[-/]\d{4,7}[A-Z]?$/i;
 const CHASSIS_VIN = /^SAX[A-Z0-9]{9,14}$/i;
 
 /**
