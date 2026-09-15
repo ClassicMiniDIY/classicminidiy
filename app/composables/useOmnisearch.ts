@@ -349,9 +349,9 @@ export const useOmnisearch = () => {
    * spent free allowance goes to the membership page; a spent member
    * allowance has nowhere to go and the row says so.
    */
-  const askBot = (rawTerm: string = query.value) => {
+  const askBot = (rawTerm: string = query.value, { inline = false } = {}): boolean => {
     const term = rawTerm.trim();
-    if (term.length < 2) return;
+    if (term.length < 2) return false;
     const state = askState.value;
     // The page passes its own term; the intent is recomputed from it rather
     // than read from the palette's state, which may belong to another query.
@@ -361,8 +361,9 @@ export const useOmnisearch = () => {
       position: termIntent.askPosition,
       quota_state: state,
       results: totalResults.value,
+      inline,
     });
-    if (state === 'member-limit') return;
+    if (state === 'member-limit') return false;
     rememberSearch(term);
     close();
     if (state === 'anon-limit') {
@@ -370,13 +371,18 @@ export const useOmnisearch = () => {
         path: '/login',
         query: { redirect: `/chat?message=${encodeURIComponent(term)}&source=omnisearch` },
       });
-      return;
+      return false;
     }
     if (state === 'free-limit') {
       router.push('/membership');
-      return;
+      return false;
     }
+    // `inline`: the caller (the /search page) answers in place. True tells it
+    // the quota allowed the ask; the spent states above already navigated to
+    // their offer instead.
+    if (inline) return true;
     router.push({ path: '/chat', query: { message: term, source: 'omnisearch' } });
+    return false;
   };
 
   /** An answer card's "open": the page that holds the thing, tracked by kind. */
