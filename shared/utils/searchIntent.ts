@@ -50,10 +50,43 @@ export interface SearchResult {
   verified: boolean;
 }
 
+/**
+ * A direct answer: the thing itself, rendered in the palette, rather than a
+ * link to the page that holds it. Each kind is resolved server-side by the
+ * same lookup the matching MCP tool runs (`server/utils/directAnswers.ts`);
+ * `url` is where "open" goes.
+ */
+export type DirectAnswer =
+  | {
+      kind: 'part';
+      partNumber: string;
+      description: string | null;
+      system: string | null;
+      sourceName: string | null;
+      url: string;
+    }
+  | {
+      kind: 'colour';
+      name: string;
+      code: string | null;
+      shortCode: string | null;
+      hex: string | null;
+      years: string | null;
+      url: string;
+    }
+  | { kind: 'chassis'; chassisNumber: string; yearRange: string; fields: { label: string; value: string }[]; url: string }
+  | { kind: 'engine'; code: string; capacityCc: string; variant: string | null; gearbox: string | null; description: string; url: string }
+  | { kind: 'torque'; item: string; section: string; lbft: string; nm: string; notes: string | null; url: string }
+  | { kind: 'clearance'; item: string; section: string; thou: string; mm: string; notes: string | null; url: string };
+
+export type DirectAnswerKind = DirectAnswer['kind'];
+
 export interface SearchResponse {
   query: string;
   /** What the query looks like, and the surface order that follows from it. */
   intent: SearchIntent;
+  /** At most two. Rendered as the first group, before any surface. */
+  answers: DirectAnswer[];
   total: number;
   results: SearchResult[];
   counts: Record<string, number>;

@@ -12,14 +12,20 @@
    * repo already documents. Neither param is on the allowlist — a search results
    * page has nothing to index.
    */
-  import { SURFACES, analyseQuery, type SearchResponse, type SearchResult } from '~~/shared/utils/searchIntent';
+  import {
+    SURFACES,
+    analyseQuery,
+    type DirectAnswer,
+    type SearchResponse,
+    type SearchResult,
+  } from '~~/shared/utils/searchIntent';
 
   const { t } = useI18n();
   const route = useRoute();
   const router = useRouter();
   const { openWizard } = useContributeWizard();
   const { rememberSearch, commitMiss } = useOmnisearch();
-  const { trackOutbound } = useAnalytics();
+  const { track, trackOutbound } = useAnalytics();
 
   const query = computed(() => String(route.query.q ?? '').trim());
   const surface = computed(() => String(route.query.surface ?? '') || 'all');
@@ -35,6 +41,7 @@
         return Promise.resolve({
           query: query.value,
           intent: analyseQuery(''),
+          answers: [],
           total: 0,
           results: [],
           counts: {},
@@ -46,6 +53,8 @@
   );
 
   const allResults = computed<SearchResult[]>(() => data.value?.results ?? []);
+  const answers = computed<DirectAnswer[]>(() => data.value?.answers ?? []);
+  const onAnswerClick = (answer: DirectAnswer) => track('omnisearch_answer_selected', { kind: answer.kind });
   const counts = computed(() => data.value?.counts ?? {});
 
   // Pills follow the query's surface order, the same order the results are in.
@@ -75,7 +84,12 @@
   // that hit the palette. Landing here IS a commit, so an empty result set is a
   // miss — once, `commitMiss` dedupes against the palette's own commit.
   const commitPageMiss = () => {
-    if (query.value.length >= 2 && status.value === 'success' && allResults.value.length === 0) {
+    if (
+      query.value.length >= 2 &&
+      status.value === 'success' &&
+      allResults.value.length === 0 &&
+      answers.value.length === 0
+    ) {
       commitMiss(query.value, 'page');
     }
   };
@@ -113,62 +127,80 @@
       <span class="loading loading-spinner loading-lg opacity-50"></span>
     </div>
 
-    <div v-else-if="results.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
-      <!--
+    <template v-else>
+      <!-- Direct answers: the thing itself, above every surface -->
+      <div v-if="answers.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
+        <NuxtLink
+          v-for="answer in answers"
+          :key="`${answer.kind}-${answer.url}`"
+          :to="answer.url"
+          class="result-card result-card--answer"
+          @click="onAnswerClick(answer)"
+        >
+          <SearchAnswerCard :answer="answer" large />
+        </NuxtLink>
+      </div>
+
+      <div v-if="results.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
+        <!--
         A video is an outbound YouTube link (there is no on-site video page
         yet). NuxtLink renders an external `to` as a plain anchor, so one
         element covers both; only the target and the outbound tracking differ.
       -->
-      <NuxtLink
-        v-for="result in results"
-        :key="`${result.surface}-${result.id}`"
-        :to="result.url"
-        :target="result.surface === 'videos' ? '_blank' : undefined"
-        class="result-card"
-        @click="result.surface === 'videos' && onVideoClick(result)"
-      >
-        <span class="result-thumb">
-          <img
-            v-if="result.surface === 'videos'"
-            :src="result.icon"
-            :alt="''"
-            class="h-full w-full rounded-field object-cover"
-            loading="lazy"
-          />
-          <i v-else :class="[result.icon, 'text-xl text-primary']" aria-hidden="true"></i>
-        </span>
-        <span class="min-w-0 flex-1">
-          <span class="block text-[15px] font-bold lg:text-base">{{ result.title }}</span>
-          <span class="mt-0.5 block text-[13px] opacity-60">
-            {{ result.subtitle }}
-            <template v-if="result.contributorUsername">
-              &middot; {{ t('added_by') }}
-              <span class="font-semibold text-primary">@{{ result.contributorUsername }}</span>
-            </template>
-          </span>
-        </span>
-        <span v-if="result.verified" class="hidden shrink-0 text-xs font-semibold text-success sm:inline">
-          <i class="fas fa-circle-check" aria-hidden="true"></i> {{ t('verified') }}
-        </span>
-        <span
-          v-else-if="result.surface === 'exchange'"
-          class="hidden shrink-0 text-xs font-bold text-secondary sm:inline"
+        <NuxtLink
+          v-for="result in results"
+          :key="`${result.surface}-${result.id}`"
+          :to="result.url"
+          :target="result.surface === 'videos' ? '_blank' : undefined"
+          class="result-card"
+          @click="result.surface === 'videos' && onVideoClick(result)"
         >
-          {{ t('for_sale') }}
-        </span>
-      </NuxtLink>
-    </div>
+          <span class="result-thumb">
+            <img
+              v-if="result.surface === 'videos'"
+              :src="result.icon"
+              :alt="''"
+              class="h-full w-full rounded-field object-cover"
+              loading="lazy"
+            />
+            <i v-else :class="[result.icon, 'text-xl text-primary']" aria-hidden="true"></i>
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-[15px] font-bold lg:text-base">{{ result.title }}</span>
+            <span class="mt-0.5 block text-[13px] opacity-60">
+              {{ result.subtitle }}
+              <template v-if="result.contributorUsername">
+                &middot; {{ t('added_by') }}
+                <span class="font-semibold text-primary">@{{ result.contributorUsername }}</span>
+              </template>
+            </span>
+          </span>
+          <span v-if="result.verified" class="hidden shrink-0 text-xs font-semibold text-success sm:inline">
+            <i class="fas fa-circle-check" aria-hidden="true"></i> {{ t('verified') }}
+          </span>
+          <span
+            v-else-if="result.surface === 'exchange'"
+            class="hidden shrink-0 text-xs font-bold text-secondary sm:inline"
+          >
+            {{ t('for_sale') }}
+          </span>
+        </NuxtLink>
+      </div>
 
-    <!-- Nothing found -->
-    <div v-else class="mt-8 rounded-box border border-base-300 bg-base-200 px-6 py-12 text-center">
-      <i class="fas fa-magnifying-glass mb-3 block text-3xl opacity-30" aria-hidden="true"></i>
-      <p class="text-lg font-bold">{{ query ? t('empty_title', { query }) : t('empty_no_query') }}</p>
-      <p class="mt-1 text-sm opacity-70">{{ t('empty_body') }}</p>
-      <button v-if="query" type="button" class="btn btn-secondary mt-5" @click="requestIt()">
-        <i class="fas fa-hand" aria-hidden="true"></i>
-        {{ t('request_it') }}
-      </button>
-    </div>
+      <!-- Nothing found -->
+      <div
+        v-else-if="!answers.length"
+        class="mt-8 rounded-box border border-base-300 bg-base-200 px-6 py-12 text-center"
+      >
+        <i class="fas fa-magnifying-glass mb-3 block text-3xl opacity-30" aria-hidden="true"></i>
+        <p class="text-lg font-bold">{{ query ? t('empty_title', { query }) : t('empty_no_query') }}</p>
+        <p class="mt-1 text-sm opacity-70">{{ t('empty_body') }}</p>
+        <button v-if="query" type="button" class="btn btn-secondary mt-5" @click="requestIt()">
+          <i class="fas fa-hand" aria-hidden="true"></i>
+          {{ t('request_it') }}
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -207,6 +239,11 @@
   }
   .result-card:hover {
     box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+  }
+
+  .result-card--answer {
+    border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+    background: color-mix(in srgb, var(--color-primary) 5%, var(--color-base-100));
   }
 
   .result-thumb {

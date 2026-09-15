@@ -13,6 +13,8 @@
     query,
     groups,
     flatResults,
+    answers,
+    answerOffset,
     loading,
     highlighted,
     recent,
@@ -20,6 +22,7 @@
     close,
     debouncedSearch,
     goTo,
+    goToAnswer,
     viewAllResults,
     moveHighlight,
     selectHighlighted,
@@ -30,12 +33,16 @@
 
   const inputRef = ref<HTMLInputElement | null>(null);
 
-  /** Index of each result in the flattened list, so highlight survives grouping. */
+  /**
+   * Index of each result in the keyboard order, so highlight survives
+   * grouping. Answers come first, so every result is offset by their count.
+   */
   const flatIndex = (surface: string, id: string) =>
-    flatResults.value.findIndex((result) => result.surface === surface && result.id === id);
+    answerOffset.value + flatResults.value.findIndex((result) => result.surface === surface && result.id === id);
 
   const hasQuery = computed(() => query.value.trim().length >= 2);
-  const isEmpty = computed(() => hasQuery.value && !loading.value && flatResults.value.length === 0);
+  const hasRows = computed(() => flatResults.value.length > 0 || answers.value.length > 0);
+  const isEmpty = computed(() => hasQuery.value && !loading.value && !hasRows.value);
 
   watch(isOpen, async (open) => {
     if (typeof document === 'undefined') return;
@@ -117,7 +124,25 @@
 
           <!-- Results -->
           <div class="flex-1 overflow-y-auto px-2 py-2 sm:max-h-[420px]">
-            <template v-if="hasQuery && flatResults.length > 0">
+            <template v-if="hasQuery && hasRows">
+              <!-- Direct answers: the thing itself, before any surface group -->
+              <div v-if="answers.length" class="mb-1">
+                <p class="mx-3 my-1 text-[11px] font-bold tracking-[0.08em] uppercase opacity-55">
+                  {{ t('answer') }}
+                </p>
+                <button
+                  v-for="(answer, index) in answers"
+                  :key="`${answer.kind}-${answer.url}`"
+                  type="button"
+                  class="omnisearch-row w-full rounded-field px-3 py-2.5 text-left"
+                  :class="{ 'is-active': index === highlighted }"
+                  @mouseenter="highlighted = index"
+                  @click="goToAnswer(answer)"
+                >
+                  <SearchAnswerCard :answer="answer" />
+                </button>
+              </div>
+
               <div v-for="group in groups" :key="group.surface" class="mb-1">
                 <p class="mx-3 my-1 text-[11px] font-bold tracking-[0.08em] uppercase opacity-55">
                   {{ group.label }} &middot; {{ group.total }}
@@ -215,7 +240,7 @@
 
           <!-- Footer -->
           <div
-            v-if="hasQuery && flatResults.length > 0"
+            v-if="hasQuery && hasRows"
             class="flex flex-col gap-2 border-t border-base-300 bg-base-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"
           >
             <span class="text-[13px] opacity-80">
@@ -225,7 +250,9 @@
               </button>
               <span class="hidden sm:inline"> &mdash; {{ t('feeds_most_wanted') }}</span>
             </span>
+            <!-- An answer with no results has nothing to "view all" of. -->
             <button
+              v-if="totalResults > 0"
               type="button"
               class="text-left text-[13px] font-bold text-primary hover:underline"
               @click="viewAllResults()"
@@ -290,7 +317,8 @@
     "request_it": "Request it",
     "feeds_most_wanted": "feeds Most Wanted",
     "view_all": "View all {count} results",
-    "more_in_surface": "+{count} more in {surface}"
+    "more_in_surface": "+{count} more in {surface}",
+    "answer": "Answer"
   },
   "es": {
     "aria_label": "Buscar en todo",
@@ -306,7 +334,8 @@
     "request_it": "Pídelo",
     "feeds_most_wanted": "alimenta Más buscados",
     "view_all": "Ver los {count} resultados",
-    "more_in_surface": "+{count} más en {surface}"
+    "more_in_surface": "+{count} más en {surface}",
+    "answer": "Respuesta"
   },
   "fr": {
     "aria_label": "Tout rechercher",
@@ -322,7 +351,8 @@
     "request_it": "Demandez-le",
     "feeds_most_wanted": "alimente Les plus demandés",
     "view_all": "Voir les {count} résultats",
-    "more_in_surface": "+{count} de plus dans {surface}"
+    "more_in_surface": "+{count} de plus dans {surface}",
+    "answer": "Réponse"
   },
   "de": {
     "aria_label": "Alles durchsuchen",
@@ -338,7 +368,8 @@
     "request_it": "Anfragen",
     "feeds_most_wanted": "speist Meistgesucht",
     "view_all": "Alle {count} Ergebnisse anzeigen",
-    "more_in_surface": "+{count} weitere in {surface}"
+    "more_in_surface": "+{count} weitere in {surface}",
+    "answer": "Antwort"
   },
   "it": {
     "aria_label": "Cerca ovunque",
@@ -354,7 +385,8 @@
     "request_it": "Richiedilo",
     "feeds_most_wanted": "alimenta Più richiesti",
     "view_all": "Vedi tutti i {count} risultati",
-    "more_in_surface": "+{count} altri in {surface}"
+    "more_in_surface": "+{count} altri in {surface}",
+    "answer": "Risposta"
   },
   "pt": {
     "aria_label": "Pesquisar tudo",
@@ -370,7 +402,8 @@
     "request_it": "Peça",
     "feeds_most_wanted": "alimenta Mais procurados",
     "view_all": "Ver todos os {count} resultados",
-    "more_in_surface": "+{count} mais em {surface}"
+    "more_in_surface": "+{count} mais em {surface}",
+    "answer": "Resposta"
   },
   "ru": {
     "aria_label": "Искать везде",
@@ -386,7 +419,8 @@
     "request_it": "Запросить",
     "feeds_most_wanted": "пополняет «Самое востребованное»",
     "view_all": "Показать все результаты ({count})",
-    "more_in_surface": "ещё {count} в разделе «{surface}»"
+    "more_in_surface": "ещё {count} в разделе «{surface}»",
+    "answer": "Ответ"
   },
   "ja": {
     "aria_label": "すべてを検索",
@@ -402,7 +436,8 @@
     "request_it": "リクエストする",
     "feeds_most_wanted": "リクエストの多い項目に反映されます",
     "view_all": "{count}件すべての結果を表示",
-    "more_in_surface": "{surface} にあと {count} 件"
+    "more_in_surface": "{surface} にあと {count} 件",
+    "answer": "回答"
   },
   "zh": {
     "aria_label": "搜索全部",
@@ -418,7 +453,8 @@
     "request_it": "请求收录",
     "feeds_most_wanted": "会加入最想要列表",
     "view_all": "查看全部 {count} 条结果",
-    "more_in_surface": "{surface} 中还有 {count} 条"
+    "more_in_surface": "{surface} 中还有 {count} 条",
+    "answer": "答案"
   },
   "ko": {
     "aria_label": "전체 검색",
@@ -434,7 +470,8 @@
     "request_it": "요청하기",
     "feeds_most_wanted": "가장 많이 요청됨 목록에 반영됩니다",
     "view_all": "{count}개 결과 모두 보기",
-    "more_in_surface": "{surface}에 {count}건 더"
+    "more_in_surface": "{surface}에 {count}건 더",
+    "answer": "답변"
   }
 }
 </i18n>
