@@ -89,9 +89,13 @@ function rankWord(word: string, name: string, terms: string[], summary: string):
 const STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'to', 'in', 'on', 'for', 'and', 'or', 'my', 'do', 'is', 'i']);
 
 function rank(query: string, name: string, terms: string[], summary: string): number | null {
+  // Split the query the way `hasWordPrefix` splits the text, on anything that
+  // is not a letter or digit. Splitting on whitespace alone left `lb-ft` as
+  // one word that could never prefix `lb` or `ft`, so the synonym written for
+  // exactly that spelling was unreachable by it.
   const words = query
     .toLowerCase()
-    .split(/\s+/)
+    .split(/[^a-z0-9]+/)
     .filter((word) => word.length >= 2 && !STOP_WORDS.has(word));
   if (words.length === 0) return null;
 
