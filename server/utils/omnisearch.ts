@@ -315,10 +315,19 @@ export async function runOmnisearch(
   // RPC rather than queue behind it. Parts, videos and the direct answers
   // each swallow their own failure; only the core RPC failing makes search
   // unavailable.
+  // The parts surface skips a query that is nothing but stop words: the
+  // in-process ranking already ignores them, and `the` against a contains-
+  // match on ten thousand descriptions is five random washers.
+  const partsWorthSearching = query
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .some((word) => word.length >= 2 && !STOP_WORDS.has(word));
   const partSources = loadVisiblePartSources(supabase);
   const [{ data, error }, partHits, videoResults, answers] = await Promise.all([
     supabase.rpc('omnisearch', { p_query: query, p_limit: perSurfaceLimit }),
-    partSources.then((sources) => searchVisibleParts(supabase, query, perSurfaceLimit, sources)),
+    partsWorthSearching
+      ? partSources.then((sources) => searchVisibleParts(supabase, query, perSurfaceLimit, sources))
+      : Promise.resolve([]),
     youtubeApiKey ? searchVideos(query, youtubeApiKey, perSurfaceLimit) : Promise.resolve([]),
     partSources.then((sources) => resolveDirectAnswers(supabase, query, intent, { partSources: sources })),
   ]);
