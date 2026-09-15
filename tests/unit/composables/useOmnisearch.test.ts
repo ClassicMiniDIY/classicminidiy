@@ -51,7 +51,7 @@ beforeEach(async () => {
   (global as any).__resetNuxtState();
   fetchMock.mockReset();
   fetchMock.mockImplementation(async (url: string) => (url === '/api/search' ? EMPTY : null));
-  useOmnisearch = (await import('~/app/composables/useOmnisearch')).useOmnisearch;
+  useOmnisearch = (await import('~~/app/composables/useOmnisearch')).useOmnisearch;
 });
 
 afterEach(() => {

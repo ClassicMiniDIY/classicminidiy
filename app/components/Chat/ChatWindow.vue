@@ -754,10 +754,11 @@
       message_length: text.length,
       is_first_message: messages.value.length === 0,
       // Where the first message came from: the search palette's Ask row sets
-      // `?source=omnisearch`; a message typed here is `chat`. Read on every
-      // send rather than stored, so a thread's later messages still say which
-      // door it came in by.
-      source: typeof route.query.source === 'string' ? route.query.source : 'chat',
+      // `?source=omnisearch`; a message typed here is `chat`. Allowlisted, so
+      // the property stays a two-value breakdown in PostHog rather than
+      // whatever a URL carried. Read on every send rather than stored, so a
+      // thread's later messages still say which door it came in by.
+      source: route.query.source === 'omnisearch' ? 'omnisearch' : 'chat',
     });
 
     input.value = '';
