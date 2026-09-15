@@ -1,5 +1,11 @@
 import { useDebounceFn } from '@vueuse/core';
-import { analyseQuery, type SearchIntent, type SearchResponse, type SearchResult } from '~~/shared/utils/searchIntent';
+import {
+  analyseQuery,
+  type DirectAnswer,
+  type SearchIntent,
+  type SearchResponse,
+  type SearchResult,
+} from '~~/shared/utils/searchIntent';
 
 export type { SearchResult };
 
@@ -77,6 +83,8 @@ export const useOmnisearch = () => {
   const highlighted = useState('omnisearch:highlighted', () => 0);
   const recent = useState<string[]>('omnisearch:recent', () => []);
   const intent = useState<SearchIntent>('omnisearch:intent', () => analyseQuery(''));
+  /** Direct answers for the current query, at most two. Rendered before any group. */
+  const answers = useState<DirectAnswer[]>('omnisearch:answers', () => []);
   /**
    * Queries already posted as misses this session. A miss committed by the
    * idle timer and then again by Enter, or by Enter and then by the `/search`
@@ -118,8 +126,15 @@ export const useOmnisearch = () => {
    * Flat list in render order — what the arrow keys walk. Built from the CAPPED
    * group results, so keyboard navigation can never land on a row that is not
    * on screen.
+   *
+   * Direct answers sit ABOVE this list in the keyboard order: `highlighted`
+   * counts answers first (0..answers.length-1), then these results. The
+   * offset is what lets the answer cards be arrow-key rows without being
+   * `SearchResult`s.
    */
   const flatResults = computed(() => groups.value.flatMap((group) => group.results));
+  const answerOffset = computed(() => answers.value.length);
+  const rowCount = computed(() => answerOffset.value + flatResults.value.length);
 
   /** Every match, capped or not — drives the "View all N results" count. */
   const totalResults = computed(() => results.value.length);
@@ -178,7 +193,7 @@ export const useOmnisearch = () => {
     if (loading.value) return;
     const term = query.value.trim();
     if (term.length < 2 || term !== searchedQuery.value) return;
-    if (results.value.length > 0) return;
+    if (results.value.length > 0 || answers.value.length > 0) return;
     commitMiss(term, trigger);
   };
 
@@ -191,6 +206,7 @@ export const useOmnisearch = () => {
     if (term.length < 2) {
       results.value = [];
       counts.value = {};
+      answers.value = [];
       searchedQuery.value = '';
       loading.value = false;
       return;
@@ -208,14 +224,17 @@ export const useOmnisearch = () => {
       results.value = response.results;
       counts.value = response.counts;
       intent.value = response.intent;
+      answers.value = response.answers ?? [];
       searchedQuery.value = term;
-      if (response.results.length === 0) {
+      for (const answer of answers.value) track('omnisearch_answer_shown', { kind: answer.kind });
+      if (response.results.length === 0 && answers.value.length === 0) {
         missIdleTimer = setTimeout(() => commitCurrentMiss('idle'), MISS_IDLE_MS);
       }
     } catch {
       if (token !== requestToken) return;
       results.value = [];
       counts.value = {};
+      answers.value = [];
       // A failed search is not a miss: nothing was looked up.
       searchedQuery.value = '';
     } finally {
@@ -261,6 +280,14 @@ export const useOmnisearch = () => {
     router.push(result.url);
   };
 
+  /** An answer card's "open": the page that holds the thing, tracked by kind. */
+  const goToAnswer = (answer: DirectAnswer) => {
+    rememberSearch(query.value);
+    track('omnisearch_answer_selected', { kind: answer.kind });
+    close();
+    router.push(answer.url);
+  };
+
   const viewAllResults = () => {
     const term = query.value.trim();
     if (!term) return;
@@ -271,13 +298,18 @@ export const useOmnisearch = () => {
   };
 
   const moveHighlight = (delta: number) => {
-    const total = flatResults.value.length;
+    const total = rowCount.value;
     if (total === 0) return;
     highlighted.value = (highlighted.value + delta + total) % total;
   };
 
   const selectHighlighted = () => {
-    const result = flatResults.value[highlighted.value];
+    const answer = answers.value[highlighted.value];
+    if (answer) {
+      goToAnswer(answer);
+      return;
+    }
+    const result = flatResults.value[highlighted.value - answerOffset.value];
     if (result) {
       goTo(result);
       return;
@@ -292,6 +324,8 @@ export const useOmnisearch = () => {
     results,
     counts,
     intent,
+    answers,
+    answerOffset,
     groups,
     flatResults,
     totalResults,
@@ -303,6 +337,7 @@ export const useOmnisearch = () => {
     runSearch,
     debouncedSearch,
     goTo,
+    goToAnswer,
     viewAllResults,
     moveHighlight,
     selectHighlighted,

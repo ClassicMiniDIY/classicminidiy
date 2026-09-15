@@ -1,5 +1,6 @@
 import { getServiceClient } from './supabase';
 import { searchVisibleParts } from './partsSearch';
+import { resolveDirectAnswers } from './directAnswers';
 import { getVideoIndex, searchVideoIndex } from './youtubeCatalog';
 import { analyseQuery, type SearchResponse, type SearchResult, type Surface } from '../../shared/utils/searchIntent';
 import { ToolCatalog, TOOL_CATEGORY_LABELS, ARCHIVE_SEARCH_SECTIONS } from '../../data/models/toolbox-catalog';
@@ -302,18 +303,20 @@ export async function runOmnisearch(
   const intent = analyseQuery(query);
 
   if (query.length < 2) {
-    return { query, intent, total: 0, results: [], counts: {} };
+    return { query, intent, answers: [], total: 0, results: [], counts: {} };
   }
 
   const perSurfaceLimit = Math.min(Math.max(Number(rawLimit) || 20, 1), 60);
   const supabase = getServiceClient();
 
-  // The three network sources run together. Parts and videos each swallow
-  // their own failure; only the core RPC failing makes search unavailable.
-  const [{ data, error }, partHits, videoResults] = await Promise.all([
+  // The network sources run together. Parts, videos and the direct answers
+  // each swallow their own failure; only the core RPC failing makes search
+  // unavailable.
+  const [{ data, error }, partHits, videoResults, answers] = await Promise.all([
     supabase.rpc('omnisearch', { p_query: query, p_limit: perSurfaceLimit }),
     searchVisibleParts(supabase, query, perSurfaceLimit),
     youtubeApiKey ? searchVideos(query, youtubeApiKey, perSurfaceLimit) : Promise.resolve([]),
+    resolveDirectAnswers(supabase, query, intent),
   ]);
 
   if (error) {
@@ -366,5 +369,5 @@ export async function runOmnisearch(
     return acc;
   }, {});
 
-  return { query, intent, total: results.length, results, counts };
+  return { query, intent, answers, total: results.length, results, counts };
 }
