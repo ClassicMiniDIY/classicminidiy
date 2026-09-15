@@ -69,13 +69,13 @@ Renders, top to bottom:
    thinking indicator until the first token.
 3. `<ChatVideoResults variant="inline">` when the rail is non-empty.
 4. `<ChatUsefulLinks>` when non-empty.
-5. A footer: "Continue in chat" (primary) and "Ask another" (clears and
-   focuses the search box).
+5. A footer: "Continue in chat" (primary) and "Done" (closes the panel).
 
 Error states: a 429 cannot happen here (the row does not open the panel at
 limit, and the peek guards it), but a stale peek can be wrong, so the panel
-handles `quotaError` by closing and refreshing the row's state via
-`loadQuota()`. Any other error renders `/chat`'s "Something went wrong" copy
+handles `quotaError` by closing and handing the route's verdict to the page,
+which seeds the row's quota state from it — not by re-peeking, since a peek
+that failed once can fail again and the row would offer the bot twice. Any other error renders `/chat`'s "Something went wrong" copy
 with a retry.
 
 Layout: on `lg+` the results column keeps `max-w-[900px]` and the panel sits
@@ -111,12 +111,12 @@ picks up any recorded entry; nothing new.
 
 ### 5. Analytics
 
-| Event                     | Properties                 |
-| ------------------------- | -------------------------- |
-| `search_answer_opened`    | `kind`, `results`          |
-| `search_answer_completed` | `videos`, `links`, `chars` |
-| `search_answer_continued` | (none)                     |
-| `search_answer_closed`    | `completed` (bool)         |
+| Event                     | Properties                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `search_answer_opened`    | `query_length` (`kind` and `results` are already on `omnisearch_ask_selected`, which fires first with `inline: true`) |
+| `search_answer_completed` | `videos`, `links`, `chars`                                                                                            |
+| `search_answer_continued` | (none)                                                                                                                |
+| `search_answer_closed`    | `completed` (bool)                                                                                                    |
 
 `omnisearch_ask_selected` keeps firing from the row with `inline: true`.
 

@@ -14,8 +14,9 @@
    * a stale peek can be wrong, so a quota error closes the panel and asks the
    * row to refresh rather than rendering a wall /chat already owns.
    */
-  import { ref, computed, watch, onMounted } from 'vue';
+  import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
   import type { UIMessage } from 'ai';
+  import type { QuotaExhausted } from '~/utils/chatQuotaError';
   import AssistantMessage from '../Chat/AssistantMessage.vue';
   import VideoResults from '../Chat/VideoResults.vue';
   import UsefulLinks from '../Chat/UsefulLinks.vue';
@@ -23,7 +24,7 @@
   import { newThreadId, useChatAnswer } from '~/composables/useChatAnswer';
 
   const props = defineProps<{ query: string }>();
-  const emit = defineEmits<{ close: [completed: boolean]; quota: [] }>();
+  const emit = defineEmits<{ close: [completed: boolean]; quota: [verdict: QuotaExhausted] }>();
 
   const { t } = useI18n();
   const route = useRoute();
@@ -46,10 +47,12 @@
   const showThinking = computed(() => isLoading.value && !messageText(answer.value).trim());
 
   const completed = ref(false);
+  /** Set before `stop()`, so a stream cut short is never counted as completed. */
+  const closing = ref(false);
   const showGenericError = computed(() => !!error.value && !quotaError.value);
 
   watch(isLoading, (loading, was) => {
-    if (was && !loading && answer.value && !error.value) {
+    if (was && !loading && answer.value && !error.value && !closing.value) {
       completed.value = true;
       track('search_answer_completed', {
         videos: videos.value.length,
@@ -59,8 +62,10 @@
     }
   });
 
+  // The verdict travels with the event so the row can flip to its spent copy
+  // from the route's answer, not from a peek that may fail again.
   watch(quotaError, (verdict) => {
-    if (verdict) emit('quota');
+    if (verdict) emit('quota', verdict);
   });
 
   const ask = () => {
@@ -90,24 +95,42 @@
     // result, so recording into an unloaded (empty) list would overwrite
     // every other conversation in this browser with this one.
     history.load();
-    history.record(threadId.value, { title: props.query, messages: messages.value as UIMessage[] });
+    history.record(threadId.value, {
+      title: history.deriveTitle(props.query),
+      messages: messages.value as UIMessage[],
+    });
     track('search_answer_continued');
     router.push({ path: '/chat', query: { source: 'search-panel' } });
   };
 
   const close = () => {
+    closing.value = true;
     if (isLoading.value) stop();
     track('search_answer_closed', { completed: completed.value });
     emit('close', completed.value);
   };
+
+  // A new query, a navigation, or "Continue in chat" unmounts the panel
+  // mid-stream. `@ai-sdk/vue` registers no unmount hook of its own, so without
+  // this the fetch stays open and an orphaned Chat keeps writing a detached
+  // ref until the server finishes.
+  onBeforeUnmount(() => {
+    closing.value = true;
+    if (isLoading.value) stop();
+  });
 </script>
 
 <template>
-  <aside
+  <!--
+    Not a live region. The streaming reply is inside, and a live region would
+    re-announce it on every token — the same reason ChatWindow.vue keeps the
+    transcript out of one and uses a single sr-only status line.
+  -->
+  <section
     class="search-answer-panel flex flex-col rounded-box border border-secondary/30 bg-base-100 shadow-sm"
     :aria-label="t('aria_label')"
-    aria-live="polite"
   >
+    <span class="sr-only" role="status" aria-live="polite">{{ isLoading ? t('generating') : '' }}</span>
     <header class="flex items-start gap-3 border-b border-base-300 px-4 py-3">
       <span
         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-secondary"
@@ -137,7 +160,6 @@
           <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
           <span class="thinking-dot h-1.5 w-1.5 rounded-full bg-base-content/40"></span>
         </div>
-        <span class="sr-only">{{ t('generating') }}</span>
       </div>
 
       <AssistantMessage v-if="answer" :message="answer" :is-loading="isLoading" :thread-id="threadId" />
@@ -161,7 +183,7 @@
       </button>
       <button type="button" class="btn btn-ghost btn-sm" @click="close()">{{ t('done') }}</button>
     </footer>
-  </aside>
+  </section>
 </template>
 
 <style scoped>
