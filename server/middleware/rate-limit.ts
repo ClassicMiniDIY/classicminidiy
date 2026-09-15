@@ -12,7 +12,14 @@ import { clientIp } from '../utils/clientIp';
  *      unbounded model spend — the other being the Cloudflare zone rate-limit
  *      rule, which runs at the edge before the Worker bills anything.
  *
- *   2. Mutating requests to the rest of the JSON API (POST/PUT/PATCH/DELETE on
+ *   2. The public search route (`GET /api/search`). Unauthenticated, called on
+ *      every keystroke, and since the unified-search work each call is up to
+ *      four database reads (the omnisearch RPC, the part-source list, a parts
+ *      scan, and a colour or part lookup for a coded query). A person typing
+ *      makes a few requests a second at most; a loop makes hundreds. The
+ *      limit is set well above the first and well below the second.
+ *
+ *   3. Mutating requests to the rest of the JSON API (POST/PUT/PATCH/DELETE on
  *      `/api/**`). These are the content-submission surfaces — registry/wheel/
  *      color/model submissions, comments, gear & alignment configs, uploads.
  *      A spam account that scripts these could flood the moderation queue or
@@ -24,6 +31,7 @@ import { clientIp } from '../utils/clientIp';
  *
  * Limits are tunable without a code change via env:
  *   CHAT_RATELIMIT_MAX / CHAT_RATELIMIT_WINDOW_MS  (chat; LANGGRAPH_* still read)
+ *   SEARCH_RATELIMIT_MAX     / SEARCH_RATELIMIT_WINDOW_MS     (search)
  *   WRITE_RATELIMIT_MAX      / WRITE_RATELIMIT_WINDOW_MS      (mutations)
  *
  * Note: the counter is per warm serverless instance (see utils/rateLimit.ts),
@@ -37,6 +45,8 @@ const CHAT_WINDOW_MS =
   Number(process.env.CHAT_RATELIMIT_WINDOW_MS || process.env.LANGGRAPH_RATELIMIT_WINDOW_MS) || 60_000;
 const CHAT_MAX = Number(process.env.CHAT_RATELIMIT_MAX || process.env.LANGGRAPH_RATELIMIT_MAX) || 40;
 
+const SEARCH_WINDOW_MS = Number(process.env.SEARCH_RATELIMIT_WINDOW_MS) || 60_000;
+const SEARCH_MAX = Number(process.env.SEARCH_RATELIMIT_MAX) || 120;
 const WRITE_WINDOW_MS = Number(process.env.WRITE_RATELIMIT_WINDOW_MS) || 60_000;
 const WRITE_MAX = Number(process.env.WRITE_RATELIMIT_MAX) || 30;
 
@@ -182,7 +192,25 @@ export default defineEventHandler((event) => {
     return;
   }
 
-  // Policy 2: mutating requests to the rest of the API.
+  // Policy 2: the public search route.
+  //
+  // EXACT match: `/api/search/miss` is a POST and belongs to the write throttle
+  // below, and a future `/api/search-something` must not inherit this budget by
+  // accident. The palette debounces at 180ms, so a fast typist sends about five
+  // requests a second in bursts and a few dozen a minute; 120 a minute is room
+  // for that and none for a loop.
+  if (pathname === '/api/search' && event.method === 'GET') {
+    applyLimit(
+      event,
+      `search:${clientIp(event)}`,
+      SEARCH_MAX,
+      SEARCH_WINDOW_MS,
+      'Too many searches from your network. Please slow down and try again in a minute.'
+    );
+    return;
+  }
+
+  // Policy 3: mutating requests to the rest of the API.
   if (
     pathname.startsWith('/api/') &&
     WRITE_METHODS.has(event.method) &&
