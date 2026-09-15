@@ -91,6 +91,18 @@ describe('server/middleware/rate-limit', () => {
     expect(mockSetHeader).toHaveBeenCalledWith(expect.anything(), 'X-RateLimit-Limit', '3');
   });
 
+  it('throttles the quota peek per IP without touching the chat budget', () => {
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat/quota'));
+    const peek = { ...fakeEvent, method: 'GET' };
+    expect((handler as Function)(peek)).toBeUndefined();
+    expect(mockSetHeader).toHaveBeenCalledWith(expect.anything(), 'X-RateLimit-Limit', '60');
+    // The chat route's own budget (3 in this suite) is untouched by the peeks.
+    mockSetHeader.mockClear();
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
+    expect((handler as Function)({ ...fakeEvent, method: 'POST' })).toBeUndefined();
+    expect(mockSetHeader).toHaveBeenCalledWith(expect.anything(), 'X-RateLimit-Remaining', '2');
+  });
+
   it('ignores non-chat routes (no-op, no IP lookup)', async () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/listings'));
 

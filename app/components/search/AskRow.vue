@@ -14,6 +14,8 @@
    * on /search the quota is null until `loadQuota` runs after mount, so SSR
    * and the first client paint both render the "available" copy.
    */
+  import { CHAT_QUOTAS } from '~~/shared/utils/chatTiers';
+
   const props = defineProps<{
     /** The query the row offers to the bot. */
     query: string;
@@ -22,7 +24,7 @@
   }>();
 
   const { t } = useI18n();
-  const { askState, quota, askBot } = useOmnisearch();
+  const { askState, askBot } = useOmnisearch();
 
   const term = computed(() => props.query.trim());
 
@@ -32,12 +34,18 @@
     if (/Mac|iPhone|iPad/.test(navigator.platform)) modifierKey.value = '⌘';
   });
 
+  /**
+   * The number in the offer is the NEXT tier's allowance, from the contract,
+   * never the peek's `limit` — that is the ceiling the caller just hit, and
+   * quoting it understates the upgrade by exactly the amount that makes it
+   * worth doing.
+   */
   const copy = computed(() => {
     switch (askState.value) {
       case 'anon-limit':
-        return t('ask_sign_in', { limit: quota.value?.limit ?? 30 });
+        return t('ask_sign_in', { limit: CHAT_QUOTAS.free.perMonth });
       case 'free-limit':
-        return t('ask_member', { limit: quota.value?.limit ?? 100 });
+        return t('ask_member', { limit: CHAT_QUOTAS.member.perMonth });
       case 'member-limit':
         return t('ask_reset');
       default:

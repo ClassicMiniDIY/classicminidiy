@@ -69,7 +69,11 @@ async function anonBucketId(event: H3Event, salt: string): Promise<string> {
   const minted = mintAnonSession(event);
   const ip = clientIp(event);
   if (ip === 'unknown') return `chat-anon:c:${minted}`;
+  return ipBucketId(ip, salt);
+}
 
+/** The salted-IP bucket, shared by the spend and the peek so they cannot drift. */
+async function ipBucketId(ip: string, salt: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${salt}:${ip}`));
   const hex = Array.from(new Uint8Array(digest).slice(0, 16))
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -206,11 +210,13 @@ export interface QuotaPeek {
  * and never blocks a render.
  *
  * Reads the same counters `consumeChatQuota` writes, and nothing else: an
- * anonymous caller with no session cookie is at zero and is NOT minted one
- * here (a peek must not create state), and a signed-in caller's month is
- * summed from `chat_usage_daily` directly rather than through the consuming
- * RPC. Every failure reads as "unknown", which the client treats as
- * available — the chat route still enforces the real ceiling.
+ * anonymous caller is looked up under the same bucket the spend would use —
+ * the session cookie when the browser kept it, else the salted IP hash — and
+ * is NOT minted a cookie here (a peek must not create state). A signed-in
+ * caller's month is summed from `chat_usage_daily` directly rather than
+ * through the consuming RPC. Every failure reads as "unknown", which the
+ * client treats as available — the chat route still enforces the real
+ * ceiling.
  */
 export async function peekChatQuota(event: H3Event): Promise<QuotaPeek> {
   const auth = getChatAuth(event);
@@ -218,10 +224,23 @@ export async function peekChatQuota(event: H3Event): Promise<QuotaPeek> {
 
   if (tier === 'anonymous') {
     const limit = CHAT_QUOTAS.anonymous.perDay;
-    const cookieId = getCookie(event, ANON_CHAT_SESSION_COOKIE);
-    if (!cookieId || !/^[A-Za-z0-9_-]{16,64}$/.test(cookieId)) return { tier, used: 0, limit };
     try {
-      const raw = Number(await useStorage('cache').getItem(`chat-anon:c:${cookieId}`));
+      // The same bucket the spend uses. A browser that drops Set-Cookie is
+      // counted on its IP by consumeChatQuota, and a peek that answered 0 for
+      // it would offer the bot to someone the chat route is about to refuse.
+      const cookieId = getCookie(event, ANON_CHAT_SESSION_COOKIE);
+      let id: string | null = null;
+      if (cookieId && /^[A-Za-z0-9_-]{16,64}$/.test(cookieId)) {
+        id = `chat-anon:c:${cookieId}`;
+      } else {
+        const ip = clientIp(event);
+        if (ip !== 'unknown') {
+          const salt = (serverRuntimeConfig(event).OG_IMAGE_SECRET as string) || 'cmdiy-anon-salt';
+          id = await ipBucketId(ip, salt);
+        }
+      }
+      if (!id) return { tier, used: 0, limit };
+      const raw = Number(await useStorage('cache').getItem(id));
       return { tier, used: Number.isFinite(raw) && raw >= 0 ? raw : 0, limit };
     } catch (error: any) {
       console.error(`[Chat Quota] anonymous peek unavailable: ${error?.message ?? error}`);

@@ -47,6 +47,8 @@ const CHAT_MAX = Number(process.env.CHAT_RATELIMIT_MAX || process.env.LANGGRAPH_
 
 const SEARCH_WINDOW_MS = Number(process.env.SEARCH_RATELIMIT_WINDOW_MS) || 60_000;
 const SEARCH_MAX = Number(process.env.SEARCH_RATELIMIT_MAX) || 120;
+const QUOTA_PEEK_WINDOW_MS = 60_000;
+const QUOTA_PEEK_MAX = 60;
 const WRITE_WINDOW_MS = Number(process.env.WRITE_RATELIMIT_WINDOW_MS) || 60_000;
 const WRITE_MAX = Number(process.env.WRITE_RATELIMIT_MAX) || 30;
 
@@ -212,6 +214,24 @@ export default defineEventHandler((event) => {
       SEARCH_MAX,
       SEARCH_WINDOW_MS,
       'Too many searches from your network. Please slow down and try again in a minute.'
+    );
+    return;
+  }
+
+  // Policy 2b: the chat quota peek.
+  //
+  // Unauthenticated by design like the chat itself, and the one tiered route
+  // with no other throttle: a forged bearer per request misses the token-hash
+  // cache and costs a Supabase getUser, a ban lookup and the membership RPC
+  // each time. Read once per palette open by a real visitor; 60 a minute is
+  // room for every open a person could manage and none for a loop.
+  if (pathname === '/api/chat/quota' && event.method === 'GET') {
+    applyLimit(
+      event,
+      `quota:${clientIp(event)}`,
+      QUOTA_PEEK_MAX,
+      QUOTA_PEEK_WINDOW_MS,
+      'Too many requests from your network. Please slow down and try again in a minute.'
     );
     return;
   }

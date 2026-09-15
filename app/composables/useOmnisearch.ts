@@ -117,7 +117,6 @@ export const useOmnisearch = () => {
 
   const router = useRouter();
   const { track, trackOutbound } = useAnalytics();
-  const supabase = useSupabase();
 
   /**
    * The chat allowance, read once per palette open, never blocking a render.
@@ -138,7 +137,10 @@ export const useOmnisearch = () => {
   const loadQuota = async () => {
     if (typeof window === 'undefined') return;
     try {
-      const { data } = await supabase.auth.getSession();
+      // Constructed here, on the client, on demand — not in every
+      // useOmnisearch() call, which runs during SSR of every page for the
+      // header, the hero and the results page and would build a client each.
+      const { data } = await useSupabase().auth.getSession();
       const accessToken = data.session?.access_token;
       quota.value = await $fetch<ChatQuotaPeek>('/api/chat/quota', {
         headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
