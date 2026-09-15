@@ -19,6 +19,9 @@ const FIXTURES: { query: string; kind: QueryKind; lead: Surface }[] = [
   { query: 'GHF-123', kind: 'part-number', lead: 'parts' },
   { query: '12G-940', kind: 'part-number', lead: 'parts' },
   { query: 'pd16', kind: 'part-number', lead: 'parts' },
+  // A short prefix, a hyphen, four digits: a part number written with its
+  // hyphen, not an Australian chassis serial (those have 5+ digits).
+  { query: 'ALA-6654', kind: 'part-number', lead: 'parts' },
   { query: '12g 940', kind: 'part-number', lead: 'parts' },
 
   // Colour codes. GN37 is four letters-and-digits, which is also a part shape.
@@ -34,6 +37,10 @@ const FIXTURES: { query: string; kind: QueryKind; lead: Surface }[] = [
   // accident: the slash is a group separator like the hyphen.
   { query: 'A-AB1-L/807922', kind: 'chassis', lead: 'tools' },
   { query: 'XAU1N-547206A', kind: 'chassis', lead: 'tools' },
+  // The 1980-on forms as the decoder's own examples print them, hyphens kept.
+  { query: 'SAX-X-K2S1N-777-A', kind: 'chassis', lead: 'tools' },
+  { query: 'SAX-X-L2S1N20-777-A', kind: 'chassis', lead: 'tools' },
+  { query: 'SAXXN-N-A-Y-B-B-D-777777', kind: 'chassis', lead: 'tools' },
 
   // Engine prefix codes, exact only.
   { query: '12H397', kind: 'engine', lead: 'tools' },
