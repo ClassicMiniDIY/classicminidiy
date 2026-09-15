@@ -7,6 +7,7 @@ const { mockGetRequestURL, mockGetRequestIP, mockGetHeader, mockSetHeader } = vi
   process.env.CHAT_RATELIMIT_MAX = '3';
   process.env.LANGGRAPH_RATELIMIT_WINDOW_MS = '60000';
   process.env.WRITE_RATELIMIT_MAX = '3';
+  process.env.SEARCH_RATELIMIT_MAX = '3';
   process.env.WRITE_RATELIMIT_WINDOW_MS = '60000';
   process.env.MCP_RATELIMIT_FREE_MAX = '2';
   process.env.MCP_RATELIMIT_DEVELOPER_MAX = '4';
@@ -65,6 +66,29 @@ describe('server/middleware/rate-limit', () => {
     mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/chat/threads/abc'));
     await (handler as Function)({ ...fakeEvent, method: 'PUT' });
     expect(mockSetHeader).toHaveBeenCalledWith(expect.anything(), 'X-RateLimit-Limit', expect.anything());
+  });
+
+  it('throttles GET /api/search per IP, exactly, and leaves the miss POST to the write budget', () => {
+    // Every keystroke is a request and up to four database reads; a loop from
+    // one address must hit a ceiling. The miss route is a POST under the same
+    // prefix and is metered as a write, not as a search.
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/search?q=minilite'));
+    const search = { ...fakeEvent, method: 'GET' };
+    (handler as Function)(search);
+    (handler as Function)(search);
+    (handler as Function)(search);
+    let caught: any;
+    try {
+      (handler as Function)(search);
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toMatchObject({ statusCode: 429 });
+
+    mockSetHeader.mockClear();
+    mockGetRequestURL.mockReturnValue(new URL('https://example.com/api/search/miss'));
+    expect((handler as Function)({ ...fakeEvent, method: 'POST' })).toBeUndefined();
+    expect(mockSetHeader).toHaveBeenCalledWith(expect.anything(), 'X-RateLimit-Limit', '3');
   });
 
   it('ignores non-chat routes (no-op, no IP lookup)', async () => {

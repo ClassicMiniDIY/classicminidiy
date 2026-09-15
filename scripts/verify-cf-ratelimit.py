@@ -55,6 +55,7 @@ API = "https://api.cloudflare.com/client/v4"
 # to routes where an anonymous caller can make us spend money or do real work.
 ALWAYS_REQUIRED = {
     "/api/chat": "unauthenticated AI chat route — every POST bills a model run",
+    "/api/search": "unauthenticated search, one request per keystroke, up to four DB reads each",
 }
 
 token = os.environ.get("CLOUDFLARE_API_TOKEN")

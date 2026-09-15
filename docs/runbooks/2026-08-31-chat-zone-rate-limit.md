@@ -52,6 +52,34 @@ A PATCH carrying only `expression` preserves the configured threshold, period
 and action, so the tuning stays where it belongs. Re-run the verifier afterwards;
 it must print `ok /api/chat`.
 
+## 2026-09-15: adding `GET /api/search` (unified search)
+
+The unified-search work (`docs/plans/2026-09-14-unified-search.md`) made every
+keystroke in the palette up to four database reads, and `GET /api/search` had
+no edge rule. `server/middleware/rate-limit.ts` now throttles it in-Worker
+(120/min/IP, `SEARCH_RATELIMIT_*`), and `scripts/verify-cf-ratelimit.py` lists
+`/api/search` as required, so it fails until the zone rule covers it too.
+
+Search is a different shape from chat: bursts of a few requests a second while
+typing, then nothing. Use a SEPARATE rule rather than widening the chat rule's
+expression, so the chat threshold stays tuned for model spend. Suggested
+starting point, tuned in the dashboard and never recorded here: a count in the
+low hundreds per minute per IP, action `block` for a short period. Expression:
+
+```
+(http.request.uri.path eq "/api/search" and http.request.method eq "GET")
+```
+
+Create it with the same API the section above uses, as a NEW rule in the
+`http_ratelimit` entrypoint ruleset (POST to `.../rulesets/$RULESET/rules`
+with `action: "block"`, the expression, and a `ratelimit` block carrying
+`characteristics: ["ip.src"]`, `period`, `requests_per_period` and
+`mitigation_timeout`), or in the dashboard under Security → WAF → Rate limiting
+rules. Then re-run the verifier; it must print `ok /api/search`.
+
+**Status: pending.** The in-Worker throttle is live from the merge of the
+unified-search PRs; the zone rule needs a dashboard change.
+
 ## Why the rule is not in code
 
 Cloudflare rate limiting is per-ZONE and cannot be expressed in
