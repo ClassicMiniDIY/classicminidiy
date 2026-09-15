@@ -114,13 +114,20 @@ describe('colour', () => {
 });
 
 describe('chassis', () => {
-  it('decodes a 1959-1969 number without being told the era', async () => {
+  it('decodes a 1959-1969 number, which only that era accepts', async () => {
     const [answer] = await resolve('A-A2S7L-123A');
     expect(answer?.kind).toBe('chassis');
     if (answer?.kind !== 'chassis') return;
     expect(answer.yearRange).toBe('1959-1969');
     expect(answer.fields.length).toBeGreaterThan(0);
     expect(answer.url).toBe('/technical/chassis-decoder');
+  });
+
+  it('renders nothing for a Mk3/Mk4 number, because three eras accept it with different meanings', async () => {
+    // 1969-1974, 1974-1980 and 1980 share an option table but decode `N` to
+    // "Mini 1000" in one era and "Standard trim" in the next. A merged card
+    // would be a guess, so the visitor gets the decoder, which asks the era.
+    expect(await resolve('X-A2S1N-777-A')).toEqual([]);
   });
 
   it('returns nothing for a string no era accepts', async () => {

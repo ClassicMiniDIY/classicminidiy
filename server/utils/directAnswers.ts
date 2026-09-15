@@ -105,11 +105,17 @@ async function resolveColour(db: ServiceClient, query: string): Promise<DirectAn
 }
 
 /**
- * A chassis number, decoded against every era until one accepts it. The
- * decoder page makes the visitor pick the era first; the palette cannot ask,
- * so it tries them in order and shows the first VALID decode. Two eras that
- * both accept the same string would be a real ambiguity, and the card would
- * be a guess — so that case returns nothing and the visitor gets the tool.
+ * A chassis number, decoded against every era; a card only when exactly ONE
+ * era accepts it.
+ *
+ * The decoder page makes the visitor pick the era first; the palette cannot
+ * ask. Several eras share an option table — 1969-1974, 1974-1980 and 1980
+ * all accept `X-A2S1N-777-A` — and they decode the same letters to DIFFERENT
+ * meanings (`N` is "Mini 1000" in one era and "Standard trim" in the next).
+ * A merged card would be a guess dressed as a fact, so those numbers get no
+ * card and the visitor gets the tool, which asks the era. The 1959-1969 and
+ * 1980-on forms are distinct and do render. Recorded in
+ * `.claude/rules/contributions.md`.
  */
 function resolveChassis(query: string): DirectAnswer | null {
   if (!/^[A-Za-z0-9\-\s/]+$/.test(query)) return null;

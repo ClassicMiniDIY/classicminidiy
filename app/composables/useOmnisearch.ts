@@ -224,9 +224,17 @@ export const useOmnisearch = () => {
       results.value = response.results;
       counts.value = response.counts;
       intent.value = response.intent;
+      const previousAnswerKeys = new Set(answers.value.map((answer) => `${answer.kind}:${answer.url}`));
       answers.value = response.answers ?? [];
       searchedQuery.value = term;
-      for (const answer of answers.value) track('omnisearch_answer_shown', { kind: answer.kind });
+      // Once per distinct card, not once per debounce: "flywheel torque" shows
+      // the same torque card from "flywheel" onward, and eight `shown` events
+      // for one look would deflate every shown-to-selected ratio by typing speed.
+      for (const answer of answers.value) {
+        if (!previousAnswerKeys.has(`${answer.kind}:${answer.url}`)) {
+          track('omnisearch_answer_shown', { kind: answer.kind });
+        }
+      }
       if (response.results.length === 0 && answers.value.length === 0) {
         missIdleTimer = setTimeout(() => commitCurrentMiss('idle'), MISS_IDLE_MS);
       }
