@@ -1,6 +1,6 @@
 # Unified search, phase 2 — the bot answers beside the results
 
-Status: design + implementation plan. Branch `feature/unified-search-phase-2`.
+Status: implemented on `feature/unified-search-phase-2` (2026-09-15). Branch `feature/unified-search-phase-2`.
 Follows `docs/plans/2026-09-14-unified-search.md`, whose phase 1 shipped on
 2026-09-15 (#849, #850, #851, `classicminidiy-supabase#117`). Phase 1 made the
 Ask row hand a question to `/chat`. Phase 2 answers it on `/search`, beside the
