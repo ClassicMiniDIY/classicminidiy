@@ -55,7 +55,12 @@ API = "https://api.cloudflare.com/client/v4"
 # to routes where an anonymous caller can make us spend money or do real work.
 ALWAYS_REQUIRED = {
     "/api/chat": "unauthenticated AI chat route — every POST bills a model run",
-    "/api/search": "unauthenticated search, one request per keystroke, up to four DB reads each",
+    # NOT `/api/search`. It is unauthenticated and one request per keystroke,
+    # but the zone is on the Free plan, which allows ONE rate-limiting rule and
+    # the chat rule holds it at a threshold that would block a person typing.
+    # Search is throttled in-Worker only (SEARCH_RATELIMIT_*); it spends
+    # database reads, not model runs. Add it here the day the plan allows a
+    # second rule. See docs/runbooks/2026-08-31-chat-zone-rate-limit.md.
 }
 
 token = os.environ.get("CLOUDFLARE_API_TOKEN")

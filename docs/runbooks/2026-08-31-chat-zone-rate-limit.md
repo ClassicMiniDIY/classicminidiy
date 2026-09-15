@@ -52,33 +52,27 @@ A PATCH carrying only `expression` preserves the configured threshold, period
 and action, so the tuning stays where it belongs. Re-run the verifier afterwards;
 it must print `ok /api/chat`.
 
-## 2026-09-15: adding `GET /api/search` (unified search)
+## 2026-09-15: `GET /api/search` has no zone rule, on purpose
 
 The unified-search work (`docs/plans/2026-09-14-unified-search.md`) made every
 keystroke in the palette up to four database reads, and `GET /api/search` had
-no edge rule. `server/middleware/rate-limit.ts` now throttles it in-Worker
-(120/min/IP, `SEARCH_RATELIMIT_*`), and `scripts/verify-cf-ratelimit.py` lists
-`/api/search` as required, so it fails until the zone rule covers it too.
+no throttle at all. `server/middleware/rate-limit.ts` now caps it in-Worker at
+120/min/IP (`SEARCH_RATELIMIT_*`).
 
-Search is a different shape from chat: bursts of a few requests a second while
-typing, then nothing. Use a SEPARATE rule rather than widening the chat rule's
-expression, so the chat threshold stays tuned for model spend. Suggested
-starting point, tuned in the dashboard and never recorded here: a count in the
-low hundreds per minute per IP, action `block` for a short period. Expression:
+There is no edge rule for it, and the verifier does not demand one, because
+the zone is on the **Free plan: one rate-limiting rule**, and the chat rule
+holds it. Search cannot share that rule — a person typing sends bursts of a
+few requests a second, and the chat threshold (single digits per ten seconds,
+tuned for model spend) would block them mid-word. One rule cannot carry two
+thresholds.
 
-```
-(http.request.uri.path eq "/api/search" and http.request.method eq "GET")
-```
-
-Create it with the same API the section above uses, as a NEW rule in the
-`http_ratelimit` entrypoint ruleset (POST to `.../rulesets/$RULESET/rules`
-with `action: "block"`, the expression, and a `ratelimit` block carrying
-`characteristics: ["ip.src"]`, `period`, `requests_per_period` and
-`mitigation_timeout`), or in the dashboard under Security → WAF → Rate limiting
-rules. Then re-run the verifier; it must print `ok /api/search`.
-
-**Status: pending.** The in-Worker throttle is live from the merge of the
-unified-search PRs; the zone rule needs a dashboard change.
+Search spends database reads, not model runs, so the in-Worker limit plus
+Cloudflare's free DDoS protection is the accepted posture. If the plan ever
+allows a second rule, add it as a SEPARATE rule (expression
+`(http.request.uri.path eq "/api/search" and http.request.method eq "GET")`,
+a count in the low hundreds per minute per IP, action block) and move
+`/api/search` into `ALWAYS_REQUIRED` in `scripts/verify-cf-ratelimit.py` in
+the same change.
 
 ## Why the rule is not in code
 
