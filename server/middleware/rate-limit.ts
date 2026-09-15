@@ -199,6 +199,12 @@ export default defineEventHandler((event) => {
   // accident. The palette debounces at 180ms, so a fast typist sends about five
   // requests a second in bursts and a few dozen a minute; 120 a minute is room
   // for that and none for a loop.
+  //
+  // KNOWN: an SSR render of `/search?q=` fetches this route internally, with
+  // no client-IP header, so every server-rendered results page on one warm
+  // isolate shares the `search:unknown` bucket. The write limiter has had the
+  // same property since the chassis-decoder fix. Not a problem at today's
+  // volume; if "everyone got a 429 on /search" is ever reported, this is why.
   if (pathname === '/api/search' && event.method === 'GET') {
     applyLimit(
       event,
