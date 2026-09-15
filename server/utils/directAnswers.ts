@@ -7,8 +7,7 @@ import engineCodes from '../../data/engineCodes.json';
 import torqueSpecs from '../../data/torqueSpecs.json';
 import commonClearances from '../../data/commonClearances.json';
 import { validateChassisNumber } from './chassisDecode';
-import { safePartNumberPattern } from './partSearchFilter';
-import { searchVisibleParts } from './partsSearch';
+import { findVisiblePart, type VisiblePartSources } from './partsSearch';
 
 /**
  * Direct answers for the search palette (docs/plans/2026-09-14-unified-search.md §4).
@@ -45,21 +44,24 @@ function normaliseCode(raw: string): string {
 }
 
 /**
- * The part that IS the number typed. `searchVisibleParts` already puts an
- * exact match first, so this is a check on the first hit, not a new query,
- * and the kill switch is the shared one.
+ * The part that IS the number typed: an equality inside the shared kill
+ * switch. The source list is the one omnisearch already loaded for its own
+ * parts surface, so a part-number query costs one extra read, not three.
  */
-async function resolvePart(db: ServiceClient, query: string): Promise<DirectAnswer | null> {
-  const exact = safePartNumberPattern(query);
-  const [first] = await searchVisibleParts(db, query, 1);
-  if (!first || first.slug !== exact) return null;
+async function resolvePart(
+  db: ServiceClient,
+  query: string,
+  sources: VisiblePartSources | null | undefined
+): Promise<DirectAnswer | null> {
+  const part = await findVisiblePart(db, query, sources);
+  if (!part) return null;
   return {
     kind: 'part',
-    partNumber: first.partNumber,
-    description: first.description,
-    system: first.system,
-    sourceName: first.sourceName,
-    url: `${PARTS_URL}?q=${encodeURIComponent(first.partNumber)}`,
+    partNumber: part.partNumber,
+    description: part.description,
+    system: part.system,
+    sourceName: part.sourceName,
+    url: `${PARTS_URL}?q=${encodeURIComponent(part.partNumber)}`,
   };
 }
 
@@ -227,16 +229,26 @@ export function resolveReferenceNoun(query: string): DirectAnswer | null {
   };
 }
 
+export interface DirectAnswerContext {
+  /**
+   * The visible part sources, when the caller has already loaded them.
+   * `undefined` loads them; `null` means the load failed and no part answer
+   * may render.
+   */
+  partSources?: VisiblePartSources | null;
+}
+
 export async function resolveDirectAnswers(
   db: ServiceClient,
   query: string,
-  intent: SearchIntent
+  intent: SearchIntent,
+  { partSources }: DirectAnswerContext = {}
 ): Promise<DirectAnswer[]> {
   const answers: (DirectAnswer | null)[] = [];
   try {
     switch (intent.kind) {
       case 'part-number':
-        answers.push(await resolvePart(db, query));
+        answers.push(await resolvePart(db, query, partSources));
         break;
       case 'colour-code':
         answers.push(await resolveColour(db, query));

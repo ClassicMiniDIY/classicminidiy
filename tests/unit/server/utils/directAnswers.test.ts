@@ -11,12 +11,12 @@ import { analyseQuery } from '~~/shared/utils/searchIntent';
 // run against the real decoder data; parts and colours mock the client.
 // ---------------------------------------------------------------------------
 
-const { mockSearchVisibleParts, mockColourQuery } = vi.hoisted(() => ({
-  mockSearchVisibleParts: vi.fn(),
+const { mockFindVisiblePart, mockColourQuery } = vi.hoisted(() => ({
+  mockFindVisiblePart: vi.fn(),
   mockColourQuery: vi.fn(),
 }));
 
-vi.mock('~~/server/utils/partsSearch', () => ({ searchVisibleParts: mockSearchVisibleParts }));
+vi.mock('~~/server/utils/partsSearch', () => ({ findVisiblePart: mockFindVisiblePart }));
 
 function colourBuilder() {
   const builder: any = {
@@ -41,38 +41,28 @@ const resolve = (query: string) => resolveDirectAnswers(db, query, analyseQuery(
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => {});
-  mockSearchVisibleParts.mockResolvedValue([]);
+  mockFindVisiblePart.mockResolvedValue(null);
   colourResult = { data: [], error: null };
 });
 
 describe('part', () => {
-  it('answers with the part that IS the number, through the shared kill switch', async () => {
-    mockSearchVisibleParts.mockResolvedValue([
-      {
-        partNumber: '12G940',
-        slug: '12G940',
-        description: 'Cylinder head',
-        kind: null,
-        system: 'Engine',
-        sourceName: 'Mini Spares',
-      },
-    ]);
-    const [answer] = await resolve('12g-940');
+  it('answers with the part that IS the number, by exact lookup inside the shared kill switch', async () => {
+    const sources = { visible: [], visibleIds: ['s'], sourceById: new Map() };
+    mockFindVisiblePart.mockResolvedValue({
+      partNumber: '12G940',
+      slug: '12G940',
+      description: 'Cylinder head',
+      kind: null,
+      system: 'Engine',
+      sourceName: 'Mini Spares',
+    });
+    const [answer] = await resolveDirectAnswers(db, '12g-940', analyseQuery('12g-940'), { partSources: sources });
     expect(answer).toMatchObject({ kind: 'part', partNumber: '12G940', url: '/archive/parts?q=12G940' });
-    expect(mockSearchVisibleParts).toHaveBeenCalledWith(db, '12g-940', 1);
+    // The preloaded source list is passed through, so the answer costs one read.
+    expect(mockFindVisiblePart).toHaveBeenCalledWith(db, '12g-940', sources);
   });
 
-  it('does not answer with a part that merely cites the number', async () => {
-    mockSearchVisibleParts.mockResolvedValue([
-      {
-        partNumber: '12G1322',
-        slug: '12G1322',
-        description: 'Valve for 12G940 head',
-        kind: null,
-        system: null,
-        sourceName: null,
-      },
-    ]);
+  it('renders nothing when no part carries the number', async () => {
     expect(await resolve('12g940')).toEqual([]);
   });
 });
@@ -107,6 +97,19 @@ describe('colour', () => {
   it('returns nothing on a read error', async () => {
     colourResult = { data: null, error: { message: 'boom' } };
     expect(await resolve('GN37')).toEqual([]);
+  });
+
+  it('never lets a PostgREST metacharacter reach the or() filter, whatever the intent says', async () => {
+    // The intent regex is the first guard; this makes the strip load-bearing
+    // on its own. A comma or a dot would change the filter's SHAPE, and an
+    // unbalanced parenthesis 500s the request.
+    const hostile = 'gn,3.7(x)%_';
+    await resolveDirectAnswers(db, hostile, { kind: 'colour-code', surfaceOrder: [], askPosition: 'bottom' });
+    expect(mockColourQuery).toHaveBeenCalledTimes(1);
+    const [expression] = mockColourQuery.mock.calls[0]!;
+    for (const clause of expression.split(',')) {
+      expect(clause).toMatch(/^(code|short_code)\.ilike\.[A-Z0-9]+( [A-Z0-9]+)?$/);
+    }
   });
 });
 
@@ -174,7 +177,7 @@ describe('reference nouns', () => {
 
 describe('caps and failure', () => {
   it('never throws out of the search call', async () => {
-    mockSearchVisibleParts.mockRejectedValue(new Error('db down'));
+    mockFindVisiblePart.mockRejectedValue(new Error('db down'));
     expect(await resolve('12g940')).toEqual([]);
   });
 });

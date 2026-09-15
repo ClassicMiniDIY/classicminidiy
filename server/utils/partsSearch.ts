@@ -65,6 +65,15 @@ export function visibleSourceFilter(visibleIds: string[]): string {
 /** The columns omnisearch and the direct-answer card need. Explicit, never `*`. */
 const OMNISEARCH_PART_COLUMNS = 'part_number_display, part_number_norm, description, kind, system, source_id';
 
+interface PartRow {
+  part_number_display: string;
+  part_number_norm: string;
+  description: string | null;
+  kind: string | null;
+  system: string | null;
+  source_id: string | null;
+}
+
 export interface PartHit {
   partNumber: string;
   /** The normalised number, which is also the `/archive/parts` slug. */
@@ -84,8 +93,13 @@ export interface PartHit {
  * request from `loadVisiblePartSources` + `visibleSourceFilter` above, which
  * is the part that must not drift.
  */
-export async function searchVisibleParts(db: ServiceClient, rawQuery: string, limit: number): Promise<PartHit[]> {
-  const sources = await loadVisiblePartSources(db);
+export async function searchVisibleParts(
+  db: ServiceClient,
+  rawQuery: string,
+  limit: number,
+  preloaded?: VisiblePartSources | null
+): Promise<PartHit[]> {
+  const sources = preloaded === undefined ? await loadVisiblePartSources(db) : preloaded;
   if (!sources || sources.visibleIds.length === 0) return [];
 
   const filter = buildPartSearchFilter(rawQuery);
@@ -110,13 +124,48 @@ export async function searchVisibleParts(db: ServiceClient, rawQuery: string, li
   // the number searched for ("gasket for 12G940") can sit above the part
   // that IS 12G940. An exact number goes first; the rest keep their order.
   const exact = safePartNumberPattern(rawQuery);
-  const hits = (data ?? []).map((row) => ({
+  const hits = (data ?? []).map((row) => toHit(row, sources));
+  return [...hits.filter((hit) => hit.slug === exact), ...hits.filter((hit) => hit.slug !== exact)];
+}
+
+function toHit(row: PartRow, sources: VisiblePartSources): PartHit {
+  return {
     partNumber: row.part_number_display,
     slug: row.part_number_norm,
     description: row.description,
     kind: row.kind,
     system: row.system,
     sourceName: row.source_id ? (sources.sourceById.get(row.source_id)?.name ?? null) : null,
-  }));
-  return [...hits.filter((hit) => hit.slug === exact), ...hits.filter((hit) => hit.slug !== exact)];
+  };
+}
+
+/**
+ * The part that IS the number, or null. An equality on the normalised
+ * number inside the kill switch — not the contains-search with a limit of
+ * one, which returned whichever citing part sorted first and so missed the
+ * part itself whenever a description mentioned it.
+ */
+export async function findVisiblePart(
+  db: ServiceClient,
+  rawNumber: string,
+  preloaded?: VisiblePartSources | null
+): Promise<PartHit | null> {
+  const exact = safePartNumberPattern(rawNumber);
+  if (exact.length < 2) return null;
+  const sources = preloaded === undefined ? await loadVisiblePartSources(db) : preloaded;
+  if (!sources || sources.visibleIds.length === 0) return null;
+
+  const { data, error } = await db
+    .from('parts')
+    .select(OMNISEARCH_PART_COLUMNS)
+    .eq('status', 'published')
+    .or(visibleSourceFilter(sources.visibleIds))
+    .eq('part_number_norm', exact)
+    .limit(1);
+  if (error) {
+    console.error('[parts] exact lookup failed:', error.message);
+    return null;
+  }
+  const row = data?.[0];
+  return row ? toHit(row, sources) : null;
 }

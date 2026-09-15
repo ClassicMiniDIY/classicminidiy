@@ -1,5 +1,5 @@
 import { getServiceClient } from './supabase';
-import { searchVisibleParts } from './partsSearch';
+import { loadVisiblePartSources, searchVisibleParts } from './partsSearch';
 import { resolveDirectAnswers } from './directAnswers';
 import { getVideoIndex, searchVideoIndex } from './youtubeCatalog';
 import { analyseQuery, type SearchResponse, type SearchResult, type Surface } from '../../shared/utils/searchIntent';
@@ -309,14 +309,18 @@ export async function runOmnisearch(
   const perSurfaceLimit = Math.min(Math.max(Number(rawLimit) || 20, 1), 60);
   const supabase = getServiceClient();
 
-  // The network sources run together. Parts, videos and the direct answers
+  // The network sources run together. The part-source list (the kill switch)
+  // is read ONCE and handed to both the parts surface and the part answer,
+  // which wait on it inside the same batch, so the round trips overlap the
+  // RPC rather than queue behind it. Parts, videos and the direct answers
   // each swallow their own failure; only the core RPC failing makes search
   // unavailable.
+  const partSources = loadVisiblePartSources(supabase);
   const [{ data, error }, partHits, videoResults, answers] = await Promise.all([
     supabase.rpc('omnisearch', { p_query: query, p_limit: perSurfaceLimit }),
-    searchVisibleParts(supabase, query, perSurfaceLimit),
+    partSources.then((sources) => searchVisibleParts(supabase, query, perSurfaceLimit, sources)),
     youtubeApiKey ? searchVideos(query, youtubeApiKey, perSurfaceLimit) : Promise.resolve([]),
-    resolveDirectAnswers(supabase, query, intent),
+    partSources.then((sources) => resolveDirectAnswers(supabase, query, intent, { partSources: sources })),
   ]);
 
   if (error) {
