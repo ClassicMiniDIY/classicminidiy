@@ -173,6 +173,17 @@ function termMatches(term: string, queryWords: Set<string>): boolean {
 }
 
 /**
+ * Words that say which TABLE the person wants. "spark plug gap" contains the
+ * torque noun "spark plug", but "gap" says clearance, and there is no plug
+ * gap row — so the right answer is no card, not the plug torque. A hint for
+ * the other table vetoes the match; a hint for the same table is neutral.
+ */
+const TABLE_HINTS: Record<ReferenceNoun['table'], string[]> = {
+  torque: ['torque', 'nm', 'lbft', 'lb', 'ft', 'ftlb', 'tighten', 'tightening'],
+  clearance: ['gap', 'clearance', 'clearances', 'endfloat', 'float', 'lash', 'tolerance'],
+};
+
+/**
  * A torque or clearance figure for a short lookup.
  *
  * The longest matching term wins, so "flywheel housing" beats "flywheel"
@@ -195,6 +206,9 @@ export function resolveReferenceNoun(query: string): DirectAnswer | null {
     }
   }
   if (!best) return null;
+
+  const otherTable: ReferenceNoun['table'] = best.noun.table === 'torque' ? 'clearance' : 'torque';
+  if (TABLE_HINTS[otherTable].some((hint) => queryWords.has(hint))) return null;
 
   const { noun } = best;
   const section = REFERENCE_TABLES[noun.table][noun.section];
