@@ -30,6 +30,10 @@ const FIXTURES: { query: string; kind: QueryKind; lead: Surface }[] = [
   { query: 'A-A2S7L-123A', kind: 'chassis', lead: 'tools' },
   { query: 'YMA2S1-12345', kind: 'chassis', lead: 'tools' },
   { query: 'SAXXL2S1220123456', kind: 'chassis', lead: 'tools' },
+  // The slash form the decoder's own test data uses. A decision, not an
+  // accident: the slash is a group separator like the hyphen.
+  { query: 'A-AB1-L/807922', kind: 'chassis', lead: 'tools' },
+  { query: 'XAU1N-547206A', kind: 'chassis', lead: 'tools' },
 
   // Engine prefix codes, exact only.
   { query: '12H397', kind: 'engine', lead: 'tools' },
