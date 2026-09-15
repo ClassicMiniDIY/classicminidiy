@@ -10,11 +10,14 @@
  *
  * THE KILL SWITCH IS ENFORCED HERE, BY HAND. This runs on the service role,
  * which BYPASSES the RLS protecting anon, so a source set to `declined` would
- * still be served unless this route filters it out. Fails closed: an unreadable
- * source list returns nothing rather than everything.
+ * still be served unless this route filters it out. The guard itself lives in
+ * `server/utils/partsSearch.ts` and is imported, never copied: omnisearch and
+ * the MCP tool run the identical check. Fails closed: an unreadable source
+ * list returns nothing rather than everything.
  */
 import { getServiceClient } from '../../../utils/supabase';
 import { buildPartSearchFilter } from '../../../utils/partSearchFilter';
+import { loadVisiblePartSources, visibleSourceFilter } from '../../../utils/partsSearch';
 
 const PAGE_SIZE = 24;
 const MAX_PAGE = 200;
@@ -27,14 +30,11 @@ export default defineEventHandler(async (event) => {
 
   const db = getServiceClient();
 
-  const { data: sources, error: sourceError } = await db
-    .from('part_sources')
-    .select('id, name, domain, licence_status');
-  if (sourceError) {
+  const sources = await loadVisiblePartSources(db);
+  if (!sources) {
     throw createError({ statusCode: 500, statusMessage: 'Could not read the parts archive' });
   }
-  const visible = (sources ?? []).filter((s) => s.licence_status !== 'declined');
-  const visibleIds = visible.map((s) => s.id);
+  const { visibleIds, sourceById } = sources;
   // catalogueTotal null, not 0: with no visible source the page cannot say how
   // big the archive is, and 0 would be a claim rather than an admission.
   if (visibleIds.length === 0)
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     .from('parts')
     .select('part_number_display, part_number_norm, description, kind, system, source_id', { count: 'exact' })
     .eq('status', 'published')
-    .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
+    .or(visibleSourceFilter(visibleIds));
 
   if (search) {
     const filter = buildPartSearchFilter(search);
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
       // source's parts while leaving the source row alone, and a headline that
       // counts rows the search cannot return is wrong in exactly that case.
       .eq('status', 'published')
-      .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`),
+      .or(visibleSourceFilter(visibleIds)),
   ]);
 
   const { data, count, error } = searchResult;
@@ -90,8 +90,6 @@ export default defineEventHandler(async (event) => {
     console.error('parts search error:', error);
     throw createError({ statusCode: 500, statusMessage: 'Could not read the parts archive' });
   }
-
-  const sourceById = new Map(visible.map((s) => [s.id, s]));
 
   return {
     parts: (data ?? []).map((p) => ({

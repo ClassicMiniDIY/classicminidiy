@@ -131,7 +131,15 @@
                   @mouseenter="highlighted = flatIndex(group.surface, result.id)"
                   @click="goTo(result)"
                 >
-                  <i :class="[result.icon, 'w-[18px] text-center text-primary']" aria-hidden="true"></i>
+                  <!-- A video's `icon` is its thumbnail URL, not a Font Awesome class. -->
+                  <img
+                    v-if="result.surface === 'videos'"
+                    :src="result.icon"
+                    :alt="''"
+                    class="h-[18px] w-8 shrink-0 rounded-sm object-cover"
+                    loading="lazy"
+                  />
+                  <i v-else :class="[result.icon, 'w-[18px] text-center text-primary']" aria-hidden="true"></i>
                   <span class="min-w-0 flex-1">
                     <span class="block truncate text-[14.5px] font-semibold">{{ result.title }}</span>
                     <span v-if="result.subtitle" class="block truncate text-xs opacity-60">{{ result.subtitle }}</span>
@@ -217,7 +225,11 @@
               </button>
               <span class="hidden sm:inline"> &mdash; {{ t('feeds_most_wanted') }}</span>
             </span>
-            <button type="button" class="text-left text-[13px] font-bold text-primary hover:underline" @click="viewAllResults()">
+            <button
+              type="button"
+              class="text-left text-[13px] font-bold text-primary hover:underline"
+              @click="viewAllResults()"
+            >
               {{ t('view_all', { count: totalResults }) }} &rarr;
             </button>
           </div>
@@ -240,7 +252,9 @@
   }
   .omnisearch-enter-active .omnisearch-panel,
   .omnisearch-leave-active .omnisearch-panel {
-    transition: transform 0.25s ease, opacity 0.25s ease;
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease;
   }
   .omnisearch-enter-from,
   .omnisearch-leave-to {
