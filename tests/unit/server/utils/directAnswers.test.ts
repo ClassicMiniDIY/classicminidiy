@@ -163,6 +163,17 @@ describe('reference nouns', () => {
     });
   });
 
+  it('renders nothing when the query names the other table', () => {
+    // "spark plug gap" contains the torque noun "spark plug", but "gap" is a
+    // clearance word and there is no plug-gap row. A plug torque here would be
+    // a confident wrong answer.
+    expect(resolveReferenceNoun('spark plug gap')).toBeNull();
+    expect(resolveReferenceNoun('tappet torque')).toBeNull();
+    // A hint for the SAME table is neutral.
+    expect(resolveReferenceNoun('spark plug torque')).toMatchObject({ kind: 'torque' });
+    expect(resolveReferenceNoun('tappet clearance')).toMatchObject({ kind: 'clearance' });
+  });
+
   it('matches whole words only, and gives up past four words', () => {
     expect(resolveReferenceNoun('flywheels')).toBeNull();
     expect(resolveReferenceNoun('what is the flywheel bolt torque')).toBeNull();
