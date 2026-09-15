@@ -61,7 +61,9 @@
     padding: 0 1.125rem;
     background: #fff;
     border-radius: var(--radius-field, 0.5rem);
-    box-shadow: 0 12px 28px rgb(0 0 0 / 0.1), 0 4px 8px rgb(0 0 0 / 0.05);
+    box-shadow:
+      0 12px 28px rgb(0 0 0 / 0.1),
+      0 4px 8px rgb(0 0 0 / 0.05);
     color: #76767c;
     font-size: 16px;
     text-align: left;
@@ -94,44 +96,44 @@
 <i18n lang="json">
 {
   "en": {
-    "placeholder": "Try \"brake bleeding\" or \"10x4.5 minilite\"…",
-    "hint": "Search the toolbox, the archive, and The Mini Exchange at once."
+    "placeholder": "Search or ask anything about your Mini…",
+    "hint": "Tools, the archive, videos, parts and The Mini Exchange at once — or ask DIY Mini Bot."
   },
   "es": {
-    "placeholder": "Prueba \"purga de frenos\" o \"10x4.5 minilite\"…",
-    "hint": "Busca a la vez en las herramientas, el archivo y The Mini Exchange."
+    "placeholder": "Busca o pregunta lo que sea sobre tu Mini…",
+    "hint": "Herramientas, archivo, vídeos, piezas y The Mini Exchange a la vez — o pregunta a DIY Mini Bot."
   },
   "fr": {
-    "placeholder": "Essayez \"purge des freins\" ou \"10x4.5 minilite\"…",
-    "hint": "Cherchez d'un coup dans les outils, les archives et The Mini Exchange."
+    "placeholder": "Cherchez ou demandez n’importe quoi sur votre Mini…",
+    "hint": "Outils, archives, vidéos, pièces et The Mini Exchange d’un coup — ou demandez à DIY Mini Bot."
   },
   "de": {
-    "placeholder": "Versuche \"Bremsen entlüften\" oder \"10x4.5 minilite\"…",
-    "hint": "Durchsuche Werkzeuge, Archiv und The Mini Exchange auf einmal."
+    "placeholder": "Suche oder frag alles über deinen Mini…",
+    "hint": "Werkzeuge, Archiv, Videos, Teile und The Mini Exchange auf einmal — oder frag DIY Mini Bot."
   },
   "it": {
-    "placeholder": "Prova \"spurgo freni\" o \"10x4.5 minilite\"…",
-    "hint": "Cerca in una volta sola tra strumenti, archivio e The Mini Exchange."
+    "placeholder": "Cerca o chiedi qualsiasi cosa sulla tua Mini…",
+    "hint": "Strumenti, archivio, video, ricambi e The Mini Exchange in una volta — o chiedi a DIY Mini Bot."
   },
   "pt": {
-    "placeholder": "Tente \"sangria de travões\" ou \"10x4.5 minilite\"…",
-    "hint": "Pesquise de uma vez nas ferramentas, no arquivo e no The Mini Exchange."
+    "placeholder": "Pesquise ou pergunte o que quiser sobre o seu Mini…",
+    "hint": "Ferramentas, arquivo, vídeos, peças e The Mini Exchange de uma vez — ou pergunte ao DIY Mini Bot."
   },
   "ru": {
-    "placeholder": "Попробуйте «прокачка тормозов» или «10x4.5 minilite»…",
-    "hint": "Ищите сразу по инструментам, архиву и The Mini Exchange."
+    "placeholder": "Ищите или спрашивайте что угодно о вашем Mini…",
+    "hint": "Инструменты, архив, видео, детали и The Mini Exchange сразу — или спросите DIY Mini Bot."
   },
   "ja": {
-    "placeholder": "「ブレーキのエア抜き」や「10x4.5 minilite」など…",
-    "hint": "ツール・アーカイブ・The Mini Exchange をまとめて検索します。"
+    "placeholder": "Mini について何でも検索・質問…",
+    "hint": "ツール・アーカイブ・動画・部品・The Mini Exchange をまとめて検索。DIY Mini Bot への質問も。"
   },
   "zh": {
-    "placeholder": "试试“刹车排气”或“10x4.5 minilite”…",
-    "hint": "一次搜索工具箱、档案馆和 The Mini Exchange。"
+    "placeholder": "搜索或询问关于你的 Mini 的任何问题…",
+    "hint": "一次搜索工具、档案、视频、零件和 The Mini Exchange，或向 DIY Mini Bot 提问。"
   },
   "ko": {
-    "placeholder": "\"브레이크 블리딩\" 또는 \"10x4.5 minilite\" 등…",
-    "hint": "도구상자, 아카이브, The Mini Exchange를 한 번에 검색합니다."
+    "placeholder": "Mini에 대해 무엇이든 검색하거나 질문하세요…",
+    "hint": "도구, 아카이브, 영상, 부품, The Mini Exchange를 한 번에 — 또는 DIY Mini Bot에게 질문하세요."
   }
 }
 </i18n>

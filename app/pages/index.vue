@@ -5,10 +5,6 @@
   const route = useRoute();
   const router = useRouter();
 
-  // Logged-in users who haven't completed onboarding get the OnboardingNudge
-  // (mounted globally in app.vue) in the chat-overlay slot instead of the chat.
-  const { needsOnboarding } = useOnboardingGate();
-
   // The discord-claim Edge Function 302-redirects failed claims to
   // `/?discord_error=<code>` (keystone §12). Surface a friendly, dismissible
   // banner on the home page for the known codes; anything else gets a generic
@@ -135,7 +131,12 @@
         >
           {{ discordErrorCta.label }}
         </NuxtLink>
-        <button type="button" class="btn btn-sm btn-ghost" :aria-label="t('common.dismiss')" @click="discordError = null">
+        <button
+          type="button"
+          class="btn btn-sm btn-ghost"
+          :aria-label="t('common.dismiss')"
+          @click="discordError = null"
+        >
           <i class="fas fa-xmark"></i>
         </button>
       </div>
@@ -276,7 +277,9 @@
             <span class="pip"></span>
             <span>
               {{ wheel.images?.length || 0 }}
-              {{ (wheel.images?.length || 0) === 1 ? t('home.wheel_preview.photo_one') : t('home.wheel_preview.photos') }}
+              {{
+                (wheel.images?.length || 0) === 1 ? t('home.wheel_preview.photo_one') : t('home.wheel_preview.photos')
+              }}
             </span>
           </div>
         </div>
@@ -309,7 +312,9 @@
           rel="noopener"
           href="https://patreon.com/classicminidiy"
           target="_blank"
-          @click="trackOutbound({ destination: 'https://patreon.com/classicminidiy', group: 'support', label: 'patreon' })"
+          @click="
+            trackOutbound({ destination: 'https://patreon.com/classicminidiy', group: 'support', label: 'patreon' })
+          "
         >
           <i class="fab fa-patreon mr-2" />
           {{ t('common.donate') }}
@@ -319,7 +324,13 @@
           rel="noopener"
           href="https://github.com/somethingnew71/classicminidiy"
           target="_blank"
-          @click="trackOutbound({ destination: 'https://github.com/somethingnew71/classicminidiy', group: 'support', label: 'github' })"
+          @click="
+            trackOutbound({
+              destination: 'https://github.com/somethingnew71/classicminidiy',
+              group: 'support',
+              label: 'github',
+            })
+          "
         >
           <i class="fab fa-github mr-2" />
           {{ t('common.contribute') }}
@@ -337,9 +348,9 @@
     </div>
   </div>
 
-  <!-- Floating Chat Input — yields to the OnboardingNudge for logged-in users
-       who haven't finished onboarding (the nudge takes this corner slot). -->
-  <FloatingChatInput v-if="!needsOnboarding" />
+  <!-- The floating chat box that used to sit bottom-right is retired: the
+       hero search box is the single entry, and its "Ask DIY Mini Bot" row
+       is the path to the assistant (docs/plans/2026-09-14-unified-search.md). -->
 </template>
 
 <style lang="scss">
@@ -364,7 +375,9 @@
     cursor: pointer;
     color: var(--fg-1);
     text-decoration: none;
-    transition: transform var(--t-base) var(--ease-out), box-shadow var(--t-base) var(--ease-out);
+    transition:
+      transform var(--t-base) var(--ease-out),
+      box-shadow var(--t-base) var(--ease-out);
   }
   .wheel-card:hover {
     transform: translateY(-2px);
@@ -1181,12 +1194,7 @@
         "kicker": "档案",
         "heading": "技术资料，长久保存。",
         "body": "常用间隙、气门间隙、扭矩值、电路图——那些被翻得卷边的车间手册内容正在从互联网上慢慢消失，全部免费可搜索。",
-        "items": [
-          "常用间隙参考",
-          "发动机缸体和缸盖识别",
-          "按年份和车型的接线图",
-          "化油器针型库（SU HS2/HS4/HIF44）"
-        ],
+        "items": ["常用间隙参考", "发动机缸体和缸盖识别", "按年份和车型的接线图", "化油器针型库（SU HS2/HS4/HIF44）"],
         "cta": "浏览档案",
         "image_alt": "BAD WOLF — Classic Mini DIY 的橄榄绿吉祥物 Mini"
       },

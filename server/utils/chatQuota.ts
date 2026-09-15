@@ -2,7 +2,7 @@ import type { H3Event } from 'h3';
 import { getServiceClient } from './supabase';
 import { clientIp } from './clientIp';
 import { serverRuntimeConfig } from './runtimeConfig';
-import { ANON_CHAT_SESSION_COOKIE, CHAT_QUOTAS, MEMBERSHIP_URL } from '../../shared/utils/chatTiers';
+import { ANON_CHAT_SESSION_COOKIE, CHAT_QUOTAS, MEMBERSHIP_URL, type ChatTier } from '../../shared/utils/chatTiers';
 import { getChatAuth } from './chatTiers';
 
 /**
@@ -185,6 +185,71 @@ export async function consumeChatQuota(event: H3Event): Promise<QuotaVerdict> {
   } catch (error: any) {
     console.error(`[Chat Quota] consume_chat_quota threw, allowing: ${error?.message ?? error}`);
     return { allowed: true, degraded: true };
+  }
+}
+
+export interface QuotaPeek {
+  tier: ChatTier;
+  /** Messages used in the current window, or null when the counter could not be read. */
+  used: number | null;
+  limit: number;
+}
+
+/**
+ * Read the caller's quota WITHOUT consuming from it.
+ *
+ * Exists for the search palette's "Ask DIY Mini Bot" row, which changes its
+ * copy and target when the allowance is spent (sign in / become a member /
+ * resets on the 1st) — the moment of intent is the moment the offer lands.
+ * `ChatWindow.vue` deliberately has no status read in front of every chat
+ * load; this is fetched once per palette open, after the input has focus,
+ * and never blocks a render.
+ *
+ * Reads the same counters `consumeChatQuota` writes, and nothing else: an
+ * anonymous caller with no session cookie is at zero and is NOT minted one
+ * here (a peek must not create state), and a signed-in caller's month is
+ * summed from `chat_usage_daily` directly rather than through the consuming
+ * RPC. Every failure reads as "unknown", which the client treats as
+ * available — the chat route still enforces the real ceiling.
+ */
+export async function peekChatQuota(event: H3Event): Promise<QuotaPeek> {
+  const auth = getChatAuth(event);
+  const tier = auth?.tier ?? 'anonymous';
+
+  if (tier === 'anonymous') {
+    const limit = CHAT_QUOTAS.anonymous.perDay;
+    const cookieId = getCookie(event, ANON_CHAT_SESSION_COOKIE);
+    if (!cookieId || !/^[A-Za-z0-9_-]{16,64}$/.test(cookieId)) return { tier, used: 0, limit };
+    try {
+      const raw = Number(await useStorage('cache').getItem(`chat-anon:c:${cookieId}`));
+      return { tier, used: Number.isFinite(raw) && raw >= 0 ? raw : 0, limit };
+    } catch (error: any) {
+      console.error(`[Chat Quota] anonymous peek unavailable: ${error?.message ?? error}`);
+      return { tier, used: null, limit };
+    }
+  }
+
+  const limit = CHAT_QUOTAS[tier].perMonth;
+  if (!auth?.userId) return { tier, used: null, limit };
+
+  try {
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    const { data, error } = await getServiceClient()
+      .from('chat_usage_daily')
+      .select('messages')
+      .eq('user_id', auth.userId)
+      .gte('day', monthStart.toISOString().slice(0, 10));
+    if (error) {
+      console.error(`[Chat Quota] peek failed: ${error.message}`);
+      return { tier, used: null, limit };
+    }
+    // At most one row per day, so this sum never meets the PostgREST row cap.
+    const used = (data ?? []).reduce((sum, row) => sum + (row.messages ?? 0), 0);
+    return { tier, used, limit };
+  } catch (error: any) {
+    console.error(`[Chat Quota] peek threw: ${error?.message ?? error}`);
+    return { tier, used: null, limit };
   }
 }
 

@@ -51,7 +51,9 @@ const BASELINE = {
   // and `/search` from `server/api/search/index.get`, which never exported
   // them. They now live in `shared/utils/searchIntent.ts` and both import
   // through `~~/shared`.
-  'app/': 339,
+  // 339 -> 337. FloatingChatInput.vue is deleted with the unified search
+  // (the hero search box is the single entry); its two errors went with it.
+  'app/': 337,
   // 64 -> 59. server/utils/runtimeConfig.ts gives `useRuntimeConfig(event)` its
   // real Nitro signature, which removes five identical "Expected 0 arguments,
   // but got 1" errors across bot-analytics, mcp-tiering, mcpUsage and the two

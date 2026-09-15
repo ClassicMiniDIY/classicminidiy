@@ -62,6 +62,22 @@ const MISS_IDLE_MS = 1500;
 
 export type MissTrigger = 'enter' | 'close' | 'idle' | 'page';
 
+/** The shape `GET /api/chat/quota` returns; mirrored here so `app/` never imports from `server/`. */
+export interface ChatQuotaPeek {
+  tier: 'anonymous' | 'free' | 'member';
+  used: number | null;
+  limit: number;
+}
+
+/**
+ * What the Ask row does, from the quota peek.
+ *
+ * `unknown` (peek pending or failed) reads as `available`: the chat route
+ * still enforces the real ceiling, and a row that refuses on a guess would
+ * hide the bot from someone who could use it.
+ */
+export type AskState = 'available' | 'anon-limit' | 'free-limit' | 'member-limit';
+
 export const surfaceLabel = (surface: string) => SURFACE_LABELS[surface] ?? surface;
 
 /**
@@ -101,6 +117,37 @@ export const useOmnisearch = () => {
 
   const router = useRouter();
   const { track, trackOutbound } = useAnalytics();
+  const supabase = useSupabase();
+
+  /**
+   * The chat allowance, read once per palette open, never blocking a render.
+   * Client-only state: the tier depends on the Supabase session in
+   * localStorage, so this is null during SSR and on the first client paint,
+   * and the Ask row renders its "available" copy until it arrives.
+   */
+  const quota = useState<ChatQuotaPeek | null>('omnisearch:quota', () => null);
+
+  const askState = computed<AskState>(() => {
+    const peek = quota.value;
+    if (!peek || peek.used === null || peek.used < peek.limit) return 'available';
+    if (peek.tier === 'anonymous') return 'anon-limit';
+    if (peek.tier === 'free') return 'free-limit';
+    return 'member-limit';
+  });
+
+  const loadQuota = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+      quota.value = await $fetch<ChatQuotaPeek>('/api/chat/quota', {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      });
+    } catch {
+      // Unknown reads as available; the chat route holds the real ceiling.
+      quota.value = null;
+    }
+  };
 
   /**
    * Results grouped by surface, preserving the order the API returned them in
@@ -258,6 +305,9 @@ export const useOmnisearch = () => {
     isOpen.value = true;
     track('omnisearch_opened', { has_query: Boolean(query.value) });
     if (query.value.trim().length >= 2) runSearch();
+    // After the open, never before it: the peek is one request the visitor
+    // does not wait on.
+    void loadQuota();
   };
 
   const close = () => {
@@ -286,6 +336,42 @@ export const useOmnisearch = () => {
       return;
     }
     router.push(result.url);
+  };
+
+  /**
+   * The Ask row: hand the query to the bot, or to the step that unlocks it.
+   *
+   * `/chat?message=` is the same handoff the retired homepage chat box used;
+   * `source=omnisearch` lets `chat_message_sent` be split by origin. A spent
+   * anonymous allowance goes to sign-in with the chat as the return path; a
+   * spent free allowance goes to the membership page; a spent member
+   * allowance has nowhere to go and the row says so.
+   */
+  const askBot = () => {
+    const term = query.value.trim();
+    if (term.length < 2) return;
+    const state = askState.value;
+    track('omnisearch_ask_selected', {
+      kind: intent.value.kind,
+      position: intent.value.askPosition,
+      quota_state: state,
+      results: totalResults.value,
+    });
+    if (state === 'member-limit') return;
+    rememberSearch(term);
+    close();
+    if (state === 'anon-limit') {
+      router.push({
+        path: '/login',
+        query: { redirect: `/chat?message=${encodeURIComponent(term)}&source=omnisearch` },
+      });
+      return;
+    }
+    if (state === 'free-limit') {
+      router.push('/membership');
+      return;
+    }
+    router.push({ path: '/chat', query: { message: term, source: 'omnisearch' } });
   };
 
   /** An answer card's "open": the page that holds the thing, tracked by kind. */
@@ -334,6 +420,8 @@ export const useOmnisearch = () => {
     intent,
     answers,
     answerOffset,
+    quota,
+    askState,
     groups,
     flatResults,
     totalResults,
@@ -346,6 +434,7 @@ export const useOmnisearch = () => {
     debouncedSearch,
     goTo,
     goToAnswer,
+    askBot,
     viewAllResults,
     moveHighlight,
     selectHighlighted,
