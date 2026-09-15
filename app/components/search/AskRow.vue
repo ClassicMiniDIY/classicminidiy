@@ -21,7 +21,16 @@
     query: string;
     /** Show the Cmd/Ctrl+Enter hint. Only the palette binds that key. */
     hotkey?: boolean;
+    /**
+     * Answer in place instead of navigating to /chat. The row emits `ask` when
+     * the quota allows it; the spent states keep their own targets. Only the
+     * /search page passes this; the palette hands off as in phase 1.
+     */
+    inline?: boolean;
+    /** The panel is open: the row reads as its header and does not fire again. */
+    active?: boolean;
   }>();
+  const emit = defineEmits<{ ask: [] }>();
 
   const { t } = useI18n();
   const { askState, askBot } = useOmnisearch();
@@ -40,6 +49,11 @@
    * quoting it understates the upgrade by exactly the amount that makes it
    * worth doing.
    */
+  const select = () => {
+    if (props.active) return;
+    if (askBot(term.value, { inline: props.inline === true })) emit('ask');
+  };
+
   const copy = computed(() => {
     switch (askState.value) {
       case 'anon-limit':
@@ -58,9 +72,10 @@
   <button
     type="button"
     class="search-ask-row flex min-h-11 w-full items-center gap-3 rounded-field px-3 py-2.5 text-left"
-    :class="{ 'is-limit': askState !== 'available' }"
+    :class="{ 'is-limit': askState !== 'available', 'is-active': active }"
     :disabled="askState === 'member-limit' || term.length < 2"
-    @click="askBot(term)"
+    :aria-pressed="inline ? active === true : undefined"
+    @click="select()"
   >
     <i class="fas fa-robot w-[18px] text-center text-secondary" aria-hidden="true"></i>
     <span class="min-w-0 flex-1 truncate text-[14.5px] font-semibold">{{ copy }}</span>
@@ -78,6 +93,11 @@
   }
   .search-ask-row.is-limit {
     border-style: solid;
+  }
+  .search-ask-row.is-active {
+    border-style: solid;
+    background: color-mix(in srgb, var(--color-secondary) 14%, transparent);
+    cursor: default;
   }
   .search-ask-row:disabled {
     opacity: 0.6;

@@ -55,6 +55,30 @@
   const allResults = computed<SearchResult[]>(() => data.value?.results ?? []);
   const answers = computed<DirectAnswer[]>(() => data.value?.answers ?? []);
   const onAnswerClick = (answer: DirectAnswer) => track('omnisearch_answer_selected', { kind: answer.kind });
+
+  /**
+   * The inline answer (phase 2). Opened by the Ask row when the quota allows
+   * it; closed by the panel. One panel instance per (query, open), keyed so a
+   * new query or a re-open starts a fresh thread rather than reusing one.
+   */
+  const answerOpen = ref(false);
+  const answerKey = ref(0);
+  const openAnswer = () => {
+    answerKey.value += 1;
+    answerOpen.value = true;
+  };
+  const closeAnswer = () => {
+    answerOpen.value = false;
+  };
+  /** The peek was stale and the route refused: close, and let the row re-read its state. */
+  const onAnswerQuota = () => {
+    answerOpen.value = false;
+    void loadQuota();
+  };
+  // A new query is a new question; the old answer does not apply to it.
+  watch(query, () => {
+    answerOpen.value = false;
+  });
   const counts = computed(() => data.value?.counts ?? {});
 
   // Pills follow the query's surface order, the same order the results are in.
@@ -129,86 +153,105 @@
       <span class="loading loading-spinner loading-lg opacity-50"></span>
     </div>
 
-    <template v-else>
-      <!-- The Ask row, at the top of the results column. Always present with
-           a query; the second exit the palette offers, on the page too. -->
-      <div v-if="query.length >= 2" class="mt-6 max-w-[900px]">
-        <SearchAskRow :query="query" />
-      </div>
+    <!--
+      Two columns from `lg`: the results (left, unchanged width) and, when the
+      visitor has asked, the bot's answer in a sticky aside (right). Below `lg`
+      the aside stacks ABOVE the results, so the answer is not a screen away
+      on a phone. The aside mounts only after a click, so SSR never has it.
+    -->
+    <div v-else class="flex flex-col lg:flex-row lg:items-start lg:gap-8">
+      <div class="min-w-0 flex-1">
+        <!-- The Ask row, at the top of the results column. Always present with
+           a query; the second exit the palette offers, on the page too. On
+           this page it answers in place. -->
+        <div v-if="query.length >= 2" class="mt-6 max-w-[900px]">
+          <SearchAskRow :query="query" inline :active="answerOpen" @ask="openAnswer()" />
+        </div>
 
-      <!-- Direct answers: the thing itself, above every surface -->
-      <div v-if="answers.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
-        <NuxtLink
-          v-for="answer in answers"
-          :key="`${answer.kind}-${answer.url}`"
-          :to="answer.url"
-          class="result-card result-card--answer"
-          @click="onAnswerClick(answer)"
-        >
-          <SearchAnswerCard :answer="answer" large />
-        </NuxtLink>
-      </div>
+        <!-- Direct answers: the thing itself, above every surface -->
+        <div v-if="answers.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
+          <NuxtLink
+            v-for="answer in answers"
+            :key="`${answer.kind}-${answer.url}`"
+            :to="answer.url"
+            class="result-card result-card--answer"
+            @click="onAnswerClick(answer)"
+          >
+            <SearchAnswerCard :answer="answer" large />
+          </NuxtLink>
+        </div>
 
-      <div v-if="results.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
-        <!--
+        <div v-if="results.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
+          <!--
         A video is an outbound YouTube link (there is no on-site video page
         yet). NuxtLink renders an external `to` as a plain anchor, so one
         element covers both; only the target and the outbound tracking differ.
       -->
-        <NuxtLink
-          v-for="result in results"
-          :key="`${result.surface}-${result.id}`"
-          :to="result.url"
-          :target="result.surface === 'videos' ? '_blank' : undefined"
-          class="result-card"
-          @click="result.surface === 'videos' && onVideoClick(result)"
-        >
-          <span class="result-thumb">
-            <img
-              v-if="result.surface === 'videos'"
-              :src="result.icon"
-              :alt="''"
-              class="h-full w-full rounded-field object-cover"
-              loading="lazy"
-            />
-            <i v-else :class="[result.icon, 'text-xl text-primary']" aria-hidden="true"></i>
-          </span>
-          <span class="min-w-0 flex-1">
-            <span class="block text-[15px] font-bold lg:text-base">{{ result.title }}</span>
-            <span class="mt-0.5 block text-[13px] opacity-60">
-              {{ result.subtitle }}
-              <template v-if="result.contributorUsername">
-                &middot; {{ t('added_by') }}
-                <span class="font-semibold text-primary">@{{ result.contributorUsername }}</span>
-              </template>
-            </span>
-          </span>
-          <span v-if="result.verified" class="hidden shrink-0 text-xs font-semibold text-success sm:inline">
-            <i class="fas fa-circle-check" aria-hidden="true"></i> {{ t('verified') }}
-          </span>
-          <span
-            v-else-if="result.surface === 'exchange'"
-            class="hidden shrink-0 text-xs font-bold text-secondary sm:inline"
+          <NuxtLink
+            v-for="result in results"
+            :key="`${result.surface}-${result.id}`"
+            :to="result.url"
+            :target="result.surface === 'videos' ? '_blank' : undefined"
+            class="result-card"
+            @click="result.surface === 'videos' && onVideoClick(result)"
           >
-            {{ t('for_sale') }}
-          </span>
-        </NuxtLink>
+            <span class="result-thumb">
+              <img
+                v-if="result.surface === 'videos'"
+                :src="result.icon"
+                :alt="''"
+                class="h-full w-full rounded-field object-cover"
+                loading="lazy"
+              />
+              <i v-else :class="[result.icon, 'text-xl text-primary']" aria-hidden="true"></i>
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-[15px] font-bold lg:text-base">{{ result.title }}</span>
+              <span class="mt-0.5 block text-[13px] opacity-60">
+                {{ result.subtitle }}
+                <template v-if="result.contributorUsername">
+                  &middot; {{ t('added_by') }}
+                  <span class="font-semibold text-primary">@{{ result.contributorUsername }}</span>
+                </template>
+              </span>
+            </span>
+            <span v-if="result.verified" class="hidden shrink-0 text-xs font-semibold text-success sm:inline">
+              <i class="fas fa-circle-check" aria-hidden="true"></i> {{ t('verified') }}
+            </span>
+            <span
+              v-else-if="result.surface === 'exchange'"
+              class="hidden shrink-0 text-xs font-bold text-secondary sm:inline"
+            >
+              {{ t('for_sale') }}
+            </span>
+          </NuxtLink>
+        </div>
+
+        <!-- Nothing found -->
+        <div
+          v-else-if="!answers.length"
+          class="mt-8 rounded-box border border-base-300 bg-base-200 px-6 py-12 text-center"
+        >
+          <i class="fas fa-magnifying-glass mb-3 block text-3xl opacity-30" aria-hidden="true"></i>
+          <p class="text-lg font-bold">{{ query ? t('empty_title', { query }) : t('empty_no_query') }}</p>
+          <p class="mt-1 text-sm opacity-70">{{ t('empty_body') }}</p>
+          <button v-if="query" type="button" class="btn btn-secondary mt-5" @click="requestIt()">
+            <i class="fas fa-hand" aria-hidden="true"></i>
+            {{ t('request_it') }}
+          </button>
+        </div>
       </div>
 
-      <!-- Nothing found -->
-      <div
-        v-else-if="!answers.length"
-        class="mt-8 rounded-box border border-base-300 bg-base-200 px-6 py-12 text-center"
+      <!-- ONE mount, moved with `order`: a second copy for the other breakpoint
+           would be a second transport, a second request and a second message
+           off the quota. Above the results below `lg`, a sticky aside from `lg`. -->
+      <aside
+        v-if="answerOpen"
+        class="order-first mt-6 w-full lg:sticky lg:top-20 lg:order-last lg:w-[380px] lg:shrink-0 xl:w-[440px]"
       >
-        <i class="fas fa-magnifying-glass mb-3 block text-3xl opacity-30" aria-hidden="true"></i>
-        <p class="text-lg font-bold">{{ query ? t('empty_title', { query }) : t('empty_no_query') }}</p>
-        <p class="mt-1 text-sm opacity-70">{{ t('empty_body') }}</p>
-        <button v-if="query" type="button" class="btn btn-secondary mt-5" @click="requestIt()">
-          <i class="fas fa-hand" aria-hidden="true"></i>
-          {{ t('request_it') }}
-        </button>
-      </div>
-    </template>
+        <SearchAnswerPanel :key="answerKey" :query="query" @close="closeAnswer" @quota="onAnswerQuota()" />
+      </aside>
+    </div>
   </div>
 </template>
 

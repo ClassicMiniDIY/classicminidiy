@@ -658,7 +658,8 @@
       // the property stays a two-value breakdown in PostHog rather than
       // whatever a URL carried. Read on every send rather than stored, so a
       // thread's later messages still say which door it came in by.
-      source: route.query.source === 'omnisearch' ? 'omnisearch' : 'chat',
+      source:
+        route.query.source === 'omnisearch' || route.query.source === 'search-panel' ? route.query.source : 'chat',
     });
 
     input.value = '';
