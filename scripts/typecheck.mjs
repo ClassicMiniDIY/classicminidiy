@@ -47,7 +47,11 @@ const BASELINE = {
   // derive from the row and normalise on read. `keyof typeof preferences.value`
   // in dashboard/notifications.vue collapsed to `never` (the ref is `T | null`)
   // and cost six identical errors on its own.
-  'app/': 343,
+  // 343 -> 339. `SearchResult`/`SearchResponse` were imported by the palette
+  // and `/search` from `server/api/search/index.get`, which never exported
+  // them. They now live in `shared/utils/searchIntent.ts` and both import
+  // through `~~/shared`.
+  'app/': 339,
   // 64 -> 59. server/utils/runtimeConfig.ts gives `useRuntimeConfig(event)` its
   // real Nitro signature, which removes five identical "Expected 0 arguments,
   // but got 1" errors across bot-analytics, mcp-tiering, mcpUsage and the two
@@ -57,7 +61,9 @@ const BASELINE = {
   // profile, which PostgREST rejects outright — so the handler 404'd every
   // inquiry, not just mistyped one. It now embeds `profile_private ( email )`
   // like the rest of the admin reads do.
-  'server/': 58,
+  // 58 -> 57. The search route now imports the wire types from `shared`
+  // rather than re-declaring them.
+  'server/': 57,
   'scripts/': 0,
   'data/': 1,
 };

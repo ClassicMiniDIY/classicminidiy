@@ -20,7 +20,9 @@ ingest scripts live in `classicminidiy-supabase`; nothing here writes `part_*`.
 - **Two filters on every public read of source-derived rows**, not one. The
   licence kill switch (`licence_status <> 'declined'`) is enforced by RLS, but
   service-role reads bypass RLS, so a route using `getServiceClient` must apply
-  it itself. `part_source_records` additionally needs `is_current = true`: the
+  it itself — through `loadVisiblePartSources` + `visibleSourceFilter` in
+  `server/utils/partsSearch.ts`, imported, never copied. The parts route, the
+  `parts-lookup` MCP tool and omnisearch all use it; a fourth consumer must too. `part_source_records` additionally needs `is_current = true`: the
   refresh retires a record when the retailer stops listing it, and a retired
   record is a link to a 404. A refresh cycle closes only once every queue row has
   been re-read since it opened, not once nothing looks old enough.

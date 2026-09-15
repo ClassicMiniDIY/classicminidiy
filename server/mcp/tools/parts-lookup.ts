@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { getServiceClient } from '../../utils/supabase';
 import { buildPartSearchFilter, safePartNumberPattern } from '../../utils/partSearchFilter';
+import { loadVisiblePartSources, visibleSourceFilter } from '../../utils/partsSearch';
 import { shuffleSourcesForPart } from '../../../shared/utils/sourceOrder';
 
 /**
@@ -14,7 +15,10 @@ import { shuffleSourcesForPart } from '../../../shared/utils/sourceOrder';
  * BYPASSES RLS — so a source set to `declined` on /admin/parts would keep being
  * served through the public API unless this file filters it out itself. That is
  * the whole point of the switch, so it is the first thing the handler does and
- * it fails CLOSED: if the source list cannot be read, nothing is returned.
+ * it fails CLOSED: if the source list cannot be read, nothing is returned. The
+ * guard is `loadVisiblePartSources` in `server/utils/partsSearch.ts`, shared
+ * with the `/archive/parts` route and omnisearch, and imported rather than
+ * copied so the three cannot drift.
  *
  * Columns are listed explicitly rather than `*`, for the same reason
  * wheel-search does it: `*` would start returning any column later added for
@@ -88,18 +92,11 @@ export default defineMcpTool({
 
       // 1. The kill switch. Fails closed — an unreadable source list returns
       //    nothing rather than everything.
-      const { data: sources, error: sourceError } = await supabase
-        .from('part_sources')
-        .select('id, name, domain, licence_status');
-
-      if (sourceError) {
-        console.error('parts-lookup MCP error (sources):', sourceError);
-        return errorResult(`Could not read the parts archive: ${readableError(sourceError.message)}`);
+      const sources = await loadVisiblePartSources(supabase);
+      if (!sources) {
+        return errorResult('Could not read the parts archive: the source list is unavailable');
       }
-
-      const visible = (sources ?? []).filter((s) => s.licence_status !== 'declined');
-      const visibleIds = visible.map((s) => s.id);
-      const sourceById = new Map(visible.map((s) => [s.id, s]));
+      const { visibleIds, sourceById } = sources;
 
       if (visibleIds.length === 0) {
         return jsonResult({
@@ -116,9 +113,7 @@ export default defineMcpTool({
         .from('parts')
         .select(PART_COLUMNS)
         .eq('status', 'published')
-        // A part with no source is ours, not a retailer's, and stays visible —
-        // matching the RLS policy the other consumers read through.
-        .or(`source_id.is.null,source_id.in.(${visibleIds.join(',')})`);
+        .or(visibleSourceFilter(visibleIds));
 
       if (partNumber) {
         const exact = safePartNumberPattern(partNumber);

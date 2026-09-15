@@ -1,5 +1,5 @@
 import { useDebounceFn } from '@vueuse/core';
-import type { SearchResponse, SearchResult } from '../../server/api/search/index.get';
+import { analyseQuery, type SearchIntent, type SearchResponse, type SearchResult } from '~~/shared/utils/searchIntent';
 
 export type { SearchResult };
 
@@ -38,7 +38,23 @@ const SURFACE_LABELS: Record<string, string> = {
   archive: 'Archive',
   models: 'Models',
   exchange: 'Exchange',
+  parts: 'Parts',
+  suppliers: 'Suppliers',
+  videos: 'Videos',
 };
+
+/**
+ * How long an empty result set sits before it counts as a miss.
+ *
+ * Misses feed Most Wanted, and they used to be recorded by the search call
+ * itself on the 180ms debounce — so `bad wo`, `bad wol` and `bad wolf` were
+ * three rows. A miss is now COMMITTED: on Enter, on close, or after this much
+ * idle time with nothing on screen. Long enough to finish a word; short
+ * enough that walking away still counts.
+ */
+const MISS_IDLE_MS = 1500;
+
+export type MissTrigger = 'enter' | 'close' | 'idle' | 'page';
 
 export const surfaceLabel = (surface: string) => SURFACE_LABELS[surface] ?? surface;
 
@@ -50,9 +66,16 @@ export const useOmnisearch = () => {
   const loading = useState('omnisearch:loading', () => false);
   const highlighted = useState('omnisearch:highlighted', () => 0);
   const recent = useState<string[]>('omnisearch:recent', () => []);
+  const intent = useState<SearchIntent>('omnisearch:intent', () => analyseQuery(''));
+  /**
+   * Queries already posted as misses this session. A miss committed by the
+   * idle timer and then again by Enter, or by Enter and then by the `/search`
+   * page that Enter navigates to, is one miss.
+   */
+  const committedMisses = useState<string[]>('omnisearch:committed-misses', () => []);
 
   const router = useRouter();
-  const { track } = useAnalytics();
+  const { track, trackOutbound } = useAnalytics();
 
   /**
    * Results grouped by surface, preserving the order the API returned them in
@@ -111,10 +134,44 @@ export const useOmnisearch = () => {
   };
 
   let requestToken = 0;
+  let missIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const clearMissTimer = () => {
+    if (missIdleTimer) clearTimeout(missIdleTimer);
+    missIdleTimer = null;
+  };
+
+  /**
+   * Record a zero-result query as a Most Wanted signal, once.
+   *
+   * Fire-and-forget: telemetry never slows or fails the thing the visitor is
+   * doing. Under three characters is the RPC's own floor, mirrored here so a
+   * rejected call never costs a request.
+   */
+  const commitMiss = (term: string, trigger: MissTrigger) => {
+    const trimmed = term.trim();
+    if (trimmed.length < 3) return;
+    const key = trimmed.toLowerCase();
+    if (committedMisses.value.includes(key)) return;
+    committedMisses.value = [...committedMisses.value, key];
+    track('omnisearch_miss_committed', { kind: analyseQuery(trimmed).kind, trigger });
+    $fetch('/api/search/miss', { method: 'POST', body: { q: trimmed } }).catch(() => {});
+  };
+
+  /** The current query is a miss if the last response for it came back empty. */
+  const commitCurrentMiss = (trigger: MissTrigger) => {
+    clearMissTimer();
+    if (loading.value) return;
+    const term = query.value.trim();
+    if (term.length < 2 || results.value.length > 0) return;
+    commitMiss(term, trigger);
+  };
 
   const runSearch = async () => {
     const term = query.value.trim();
     highlighted.value = 0;
+    clearMissTimer();
+    intent.value = analyseQuery(term);
 
     if (term.length < 2) {
       results.value = [];
@@ -134,6 +191,10 @@ export const useOmnisearch = () => {
       if (token !== requestToken) return;
       results.value = response.results;
       counts.value = response.counts;
+      intent.value = response.intent;
+      if (response.results.length === 0) {
+        missIdleTimer = setTimeout(() => commitCurrentMiss('idle'), MISS_IDLE_MS);
+      }
     } catch {
       if (token !== requestToken) return;
       results.value = [];
@@ -154,13 +215,30 @@ export const useOmnisearch = () => {
   };
 
   const close = () => {
+    commitCurrentMiss('close');
     isOpen.value = false;
   };
 
+  /**
+   * A video result is an outbound link to YouTube — there is no on-site video
+   * page — so it opens in a new tab rather than through the router, and is
+   * tracked as outbound like the chat's video cards.
+   */
   const goTo = (result: SearchResult) => {
     rememberSearch(query.value);
-    track('omnisearch_result_selected', { surface: result.surface, url: result.url });
+    const position = flatResults.value.findIndex((item) => item.surface === result.surface && item.id === result.id);
+    track('omnisearch_result_selected', {
+      surface: result.surface,
+      url: result.url,
+      kind: intent.value.kind,
+      position,
+    });
     close();
+    if (result.surface === 'videos') {
+      trackOutbound({ destination: result.url, label: result.title, group: 'omnisearch_video' });
+      if (typeof window !== 'undefined') window.open(result.url, '_blank', 'noopener');
+      return;
+    }
     router.push(result.url);
   };
 
@@ -181,8 +259,12 @@ export const useOmnisearch = () => {
 
   const selectHighlighted = () => {
     const result = flatResults.value[highlighted.value];
-    if (result) goTo(result);
-    else viewAllResults();
+    if (result) {
+      goTo(result);
+      return;
+    }
+    commitCurrentMiss('enter');
+    viewAllResults();
   };
 
   return {
@@ -190,6 +272,7 @@ export const useOmnisearch = () => {
     query,
     results,
     counts,
+    intent,
     groups,
     flatResults,
     totalResults,
@@ -206,5 +289,6 @@ export const useOmnisearch = () => {
     selectHighlighted,
     rememberSearch,
     loadRecent,
+    commitMiss,
   };
 };

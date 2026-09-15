@@ -91,9 +91,11 @@ export function siteSearchTool(hooks: AgentToolHooks = {}): Tool {
     }),
     async execute({ query, limit }) {
       try {
-        // recordMisses: false — these queries are the model's wording, not a
-        // visitor's, and archive_search_misses feeds the public Most Wanted list.
-        const { results, total } = await runOmnisearch(query, limit, { recordMisses: false });
+        // No YouTube key on purpose: `video-search` below owns videos and has
+        // its own rail. And nothing here records a miss — search misses are
+        // posted by the client on a visitor's commit, never from the model's
+        // own rewording of a question.
+        const { results, total } = await runOmnisearch(query, limit);
         if (total === 0) {
           return {
             query,

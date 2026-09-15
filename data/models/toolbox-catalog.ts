@@ -59,7 +59,19 @@ export const ToolCatalog: ToolCatalogEntry[] = [
     summary: 'CR for any combo of bore, stroke, head cc and deck height.',
     category: 'calculator',
     icon: 'fas fa-gauge',
-    searchTerms: ['cr', 'compression', 'bore', 'stroke', 'head cc', 'deck height', 'gasket', 'squish'],
+    searchTerms: [
+      'cr',
+      'compression',
+      'comp ratio',
+      'bore',
+      'stroke',
+      'head cc',
+      'deck height',
+      'gasket',
+      'squish',
+      'piston',
+      'dish',
+    ],
     relatedArchive: [
       { icon: 'fas fa-table', label: 'Standard engine specs table', to: '/archive/engines' },
       { icon: 'fas fa-id-card', label: 'Engine number decoder', to: '/technical/engine-decoder' },
@@ -72,7 +84,19 @@ export const ToolCatalog: ToolCatalogEntry[] = [
     summary: 'Final-drive math across SPi, MPi, and pre-Verto cars.',
     category: 'calculator',
     icon: 'fas fa-cogs',
-    searchTerms: ['gear ratio', 'gearing', 'final drive', 'diff', 'drop gears', 'speedo', 'mph', 'rpm'],
+    searchTerms: [
+      'gear ratio',
+      'gearing',
+      'final drive',
+      'diff',
+      'drop gears',
+      'speedo',
+      'mph',
+      'rpm',
+      'tyre size',
+      'rod change',
+      'magic wand',
+    ],
     relatedArchive: [
       { icon: 'fas fa-table', label: 'Standard engine specs table', to: '/archive/engines' },
       { icon: 'fas fa-weight-hanging', label: 'Vehicle weights reference', to: '/archive/weights' },
@@ -140,7 +164,21 @@ export const ToolCatalog: ToolCatalogEntry[] = [
     summary: 'Every torque value for the A-series and aux components.',
     category: 'reference',
     icon: 'fas fa-screwdriver-wrench',
-    searchTerms: ['torque', 'nm', 'lb-ft', 'ft-lb', 'tightening', 'fasteners', 'bolts', 'head bolts', 'flywheel'],
+    searchTerms: [
+      'torque',
+      'nm',
+      'lb-ft',
+      'ft-lb',
+      'tightening',
+      'fasteners',
+      'bolts',
+      'head bolts',
+      'flywheel',
+      'wheel nuts',
+      'hub nut',
+      'drain plug',
+      'spark plug',
+    ],
     relatedArchive: [
       { icon: 'fas fa-ruler', label: 'Common clearances', to: '/technical/clearance' },
       { icon: 'fas fa-books', label: 'Workshop manuals', to: '/archive/documents' },
@@ -153,7 +191,18 @@ export const ToolCatalog: ToolCatalogEntry[] = [
     summary: 'Tappet gaps, bearing tolerances, and assembly clearances.',
     category: 'reference',
     icon: 'fas fa-ruler',
-    searchTerms: ['clearance', 'tappet', 'valve gap', 'bearing', 'tolerance', 'end float', 'shim'],
+    searchTerms: [
+      'clearance',
+      'tappet',
+      'valve gap',
+      'bearing',
+      'tolerance',
+      'end float',
+      'shim',
+      'spark plug gap',
+      'points gap',
+      'plug gap',
+    ],
     relatedArchive: [
       { icon: 'fas fa-screwdriver-wrench', label: 'Torque specifications', to: '/technical/torque' },
       { icon: 'fas fa-table', label: 'Engine sizes reference', to: '/archive/engines' },
@@ -178,8 +227,7 @@ export const ToolCatalog: ToolCatalogEntry[] = [
 export const toolBySlug = (slug: string): ToolCatalogEntry | undefined =>
   ToolCatalog.find((tool) => tool.slug === slug);
 
-export const toolByPath = (path: string): ToolCatalogEntry | undefined =>
-  ToolCatalog.find((tool) => tool.to === path);
+export const toolByPath = (path: string): ToolCatalogEntry | undefined => ToolCatalog.find((tool) => tool.to === path);
 
 /**
  * Toolbox row-2 subnav (design S4). `to` carries a `?category=` filter rather
@@ -223,7 +271,22 @@ export const ARCHIVE_SEARCH_SECTIONS: ArchiveSectionSearchEntry[] = [
     summary: 'Wiring diagrams by model, year and ground polarity.',
     to: '/archive/electrical',
     icon: 'fas fa-bolt',
-    searchTerms: ['wiring', 'wiring diagram', 'electrical', 'loom', 'harness', 'schematic', 'earth', 'ground'],
+    searchTerms: [
+      'wiring',
+      'wiring diagram',
+      'electrical',
+      'loom',
+      'harness',
+      'schematic',
+      'earth',
+      'ground',
+      'fuse',
+      'fuse box',
+      'voltage',
+      'gauge',
+      'lights',
+      'bulb',
+    ],
   },
   {
     key: 'engines',
@@ -231,7 +294,20 @@ export const ARCHIVE_SEARCH_SECTIONS: ArchiveSectionSearchEntry[] = [
     summary: 'Bore, stroke, power and torque for every A-series displacement.',
     to: '/archive/engines',
     icon: 'fas fa-engine',
-    searchTerms: ['engine size', 'displacement', 'bore', 'stroke', 'a-series', '850', '997', '998', '1100', '1275', 'bhp', 'torque'],
+    searchTerms: [
+      'engine size',
+      'displacement',
+      'bore',
+      'stroke',
+      'a-series',
+      '850',
+      '997',
+      '998',
+      '1100',
+      '1275',
+      'bhp',
+      'torque',
+    ],
   },
   {
     key: 'weights',
@@ -247,7 +323,16 @@ export const ARCHIVE_SEARCH_SECTIONS: ArchiveSectionSearchEntry[] = [
     summary: 'Scanned manuals, adverts, catalogues and tuning guides.',
     to: '/archive/documents',
     icon: 'fas fa-books',
-    searchTerms: ['manual', 'manuals', 'workshop manual', 'handbook', 'catalogue', 'advert', 'brochure', 'tuning guide'],
+    searchTerms: [
+      'manual',
+      'manuals',
+      'workshop manual',
+      'handbook',
+      'catalogue',
+      'advert',
+      'brochure',
+      'tuning guide',
+    ],
   },
   {
     key: 'registry',

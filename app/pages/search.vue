@@ -12,13 +12,14 @@
    * repo already documents. Neither param is on the allowlist — a search results
    * page has nothing to index.
    */
-  import type { SearchResponse, SearchResult } from '../../server/api/search/index.get';
+  import { SURFACES, analyseQuery, type SearchResponse, type SearchResult } from '~~/shared/utils/searchIntent';
 
   const { t } = useI18n();
   const route = useRoute();
   const router = useRouter();
   const { openWizard } = useContributeWizard();
-  const { rememberSearch } = useOmnisearch();
+  const { rememberSearch, commitMiss } = useOmnisearch();
+  const { trackOutbound } = useAnalytics();
 
   const query = computed(() => String(route.query.q ?? '').trim());
   const surface = computed(() => String(route.query.surface ?? '') || 'all');
@@ -31,7 +32,13 @@
     'omnisearch-results',
     () => {
       if (query.value.length < 2) {
-        return Promise.resolve({ query: query.value, total: 0, results: [], counts: {} } as SearchResponse);
+        return Promise.resolve({
+          query: query.value,
+          intent: analyseQuery(''),
+          total: 0,
+          results: [],
+          counts: {},
+        } as SearchResponse);
       }
       return $fetch<SearchResponse>('/api/search', { query: { q: query.value, limit: 60 } });
     },
@@ -41,8 +48,10 @@
   const allResults = computed<SearchResult[]>(() => data.value?.results ?? []);
   const counts = computed(() => data.value?.counts ?? {});
 
+  // Pills follow the query's surface order, the same order the results are in.
   const filters = computed(() => {
-    const surfaces = ['tools', 'wheels', 'archive', 'models', 'exchange'].filter((key) => (counts.value[key] ?? 0) > 0);
+    const order = data.value?.intent.surfaceOrder ?? SURFACES;
+    const surfaces = order.filter((key) => (counts.value[key] ?? 0) > 0);
     return [
       { key: 'all', label: t('filters.all'), count: allResults.value.length },
       ...surfaces.map((key) => ({ key, label: surfaceLabel(key), count: counts.value[key] ?? 0 })),
@@ -59,10 +68,23 @@
 
   const requestIt = () => openWizard({ mode: 'request', requestTitle: query.value, origin: 'search_results' });
 
+  const onVideoClick = (result: SearchResult) =>
+    trackOutbound({ destination: result.url, label: result.title, group: 'search_page_video' });
+
   // Only remember a search that actually reached this page, not every keystroke
-  // that hit the palette.
+  // that hit the palette. Landing here IS a commit, so an empty result set is a
+  // miss — once, `commitMiss` dedupes against the palette's own commit.
+  const commitPageMiss = () => {
+    if (query.value.length >= 2 && status.value === 'success' && allResults.value.length === 0) {
+      commitMiss(query.value, 'page');
+    }
+  };
   onMounted(() => {
     if (query.value.length >= 2) rememberSearch(query.value);
+    commitPageMiss();
+  });
+  watch(status, (value) => {
+    if (value === 'success') commitPageMiss();
   });
 </script>
 
@@ -92,14 +114,28 @@
     </div>
 
     <div v-else-if="results.length" class="mt-6 flex max-w-[900px] flex-col gap-3">
+      <!--
+        A video is an outbound YouTube link (there is no on-site video page
+        yet). NuxtLink renders an external `to` as a plain anchor, so one
+        element covers both; only the target and the outbound tracking differ.
+      -->
       <NuxtLink
         v-for="result in results"
         :key="`${result.surface}-${result.id}`"
         :to="result.url"
+        :target="result.surface === 'videos' ? '_blank' : undefined"
         class="result-card"
+        @click="result.surface === 'videos' && onVideoClick(result)"
       >
         <span class="result-thumb">
-          <i :class="[result.icon, 'text-xl text-primary']" aria-hidden="true"></i>
+          <img
+            v-if="result.surface === 'videos'"
+            :src="result.icon"
+            :alt="''"
+            class="h-full w-full rounded-field object-cover"
+            loading="lazy"
+          />
+          <i v-else :class="[result.icon, 'text-xl text-primary']" aria-hidden="true"></i>
         </span>
         <span class="min-w-0 flex-1">
           <span class="block text-[15px] font-bold lg:text-base">{{ result.title }}</span>
@@ -114,7 +150,10 @@
         <span v-if="result.verified" class="hidden shrink-0 text-xs font-semibold text-success sm:inline">
           <i class="fas fa-circle-check" aria-hidden="true"></i> {{ t('verified') }}
         </span>
-        <span v-else-if="result.surface === 'exchange'" class="hidden shrink-0 text-xs font-bold text-secondary sm:inline">
+        <span
+          v-else-if="result.surface === 'exchange'"
+          class="hidden shrink-0 text-xs font-bold text-secondary sm:inline"
+        >
           {{ t('for_sale') }}
         </span>
       </NuxtLink>
