@@ -151,8 +151,8 @@
                  Videos come FIRST: on a how-to question Cole's own video is the
                  answer, and the links below it are the supporting material. -->
                 <VideoResults
-                  v-if="!isLoading && videoResults.length > 0"
-                  :videos="videoResults"
+                  v-if="!isLoading && videos.length > 0"
+                  :videos="videos"
                   variant="inline"
                   class="lg:hidden"
                 />
@@ -203,8 +203,8 @@
         class="hidden w-[var(--chat-rail)] shrink-0 overflow-y-auto border-l border-base-300 bg-base-200/40 p-4 lg:block"
         :aria-label="t('useful_links_region')"
       >
-        <div v-if="!isLoading && (videoResults.length > 0 || usefulLinks.length > 0)" class="space-y-6">
-          <VideoResults v-if="videoResults.length > 0" :videos="videoResults" variant="rail" />
+        <div v-if="!isLoading && (videos.length > 0 || usefulLinks.length > 0)" class="space-y-6">
+          <VideoResults v-if="videos.length > 0" :videos="videos" variant="rail" />
           <UsefulLinksSidebar v-if="usefulLinks.length > 0" :links="usefulLinks" />
         </div>
         <div v-else class="mt-8 text-center text-base-content/50">
@@ -240,7 +240,7 @@
   // auto-import shadowing gotcha in CLAUDE.md, which is about a local
   // `const ref = ...` suppressing the injection for the whole file.
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-  import { DefaultChatTransport, type UIMessage } from 'ai';
+  import type { UIMessage } from 'ai';
   import {
     parseQuotaError,
     loadQuotaVerdict,
@@ -248,15 +248,13 @@
     clearQuotaVerdict,
     type QuotaExhausted,
   } from '~/utils/chatQuotaError';
-  import { useChat } from '@ai-sdk/vue';
   import AssistantMessage from './AssistantMessage.vue';
   import ChatComposer from './ChatComposer.vue';
   import ChatEmptyState from './ChatEmptyState.vue';
   import ChatHistoryDialog from './ChatHistoryDialog.vue';
   import HumanMessage from './HumanMessage.vue';
   import QuotaLimitPanel from './QuotaLimitPanel.vue';
-  import { selectRailVideos, type ChatVideo } from '~/utils/chatVideoRail';
-  import { CHAT_REQUEST_TRIM_TARGET, windowTranscript } from '~~/shared/utils/chatTranscript';
+  import { newThreadId, useChatAnswer } from '~/composables/useChatAnswer';
   import UsefulLinks from './UsefulLinks.vue';
   import UsefulLinksSidebar from './UsefulLinksSidebar.vue';
   import VideoResults from './VideoResults.vue';
@@ -267,7 +265,8 @@
    * What this replaces: a 665-line hand-port of the LangGraph SDK's React-only
    * `useStream` hook, plus a client-side thread store, plus eight proxy routes.
    * The AI SDK ships a documented stream protocol and a Vue binding for it, so
-   * all of that is now `useChat`.
+   * all of that is now `useChat` — wrapped in `useChatAnswer`, which the
+   * `/search` answer panel shares, so there is one transport definition.
    *
    * Two things that went away entirely, rather than being ported:
    *
@@ -285,9 +284,7 @@
    * See `hasMounted` below and the note in CLAUDE.md.
    */
 
-  // `locale` is read once here and sent with each request, so switching
-  // language mid-conversation applies to the next message.
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
 
   const route = useRoute();
   const input = ref('');
@@ -385,12 +382,6 @@
   /** Local conversation id. Keys history; never sent to a thread store. */
   const threadId = ref<string>('');
 
-  function newThreadId(): string {
-    // randomUUID needs a secure context; every browser that can reach /chat
-    // over HTTPS has it, but a fallback keeps local HTTP dev working.
-    return globalThis.crypto?.randomUUID?.() ?? `t-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  }
-
   /**
    * NOTE: there is no `setMessages`. `useChat` exposes `messages` as a
    * ShallowRef you assign directly — `messages.value = [...]`. Destructuring a
@@ -399,55 +390,10 @@
    * because the return value had been cast to `any`; the cast is gone, so the
    * compiler catches this class of mistake now.
    */
-  /**
-   * How many recent messages travel with a request.
-   *
-   * The transcript on screen and in history is never trimmed — only the REQUEST
-   * is windowed. Without this, a long conversation grows past the route's own
-   * limits and every further send 413s, which the UI can only report as
-   * "something went wrong, please try again" — advice that can never work,
-   * leaving the visitor stuck with no way out but New chat and no hint that it
-   * is the way out. Windowing here means the dead end cannot occur; the server
-   * guard stays as defence against a crafted request, not as everyday UX.
-   *
-   * Well under the route's MAX_MESSAGES so a slow client and a strict server
-   * cannot disagree at the boundary.
-   *
-   * A COUNT alone does not deliver that promise, which is the half this used to
-   * be missing. The route's other limit is on characters, and twenty-four
-   * messages are not a fixed number of them: an assistant turn that called
-   * `vehicle-weights` or `torque-specs` carries thousands of characters of rows,
-   * so a browsing conversation can cross the character ceiling while sitting
-   * comfortably inside the message one — and every send from then on 413s, which
-   * is exactly the dead end above. `windowTranscript` applies both bounds
-   * against the same measurement the route uses.
-   */
-  const REQUEST_MESSAGE_WINDOW = 24;
-
-  const { messages, status, error, sendMessage, stop } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      // A getter, so locale and page are read at SEND time rather than frozen
-      // when the transport was constructed.
-      body: () => ({
-        locale: locale.value,
-        pageSlug: route.path,
-        threadId: threadId.value,
-      }),
-      prepareSendMessagesRequest({ messages: outgoing, body }) {
-        const windowed = windowTranscript(outgoing, {
-          maxMessages: REQUEST_MESSAGE_WINDOW,
-          maxChars: CHAT_REQUEST_TRIM_TARGET,
-        });
-        return { body: { ...body, messages: windowed } };
-      },
-    }),
-    onError(err: Error) {
-      console.error('[chat] request failed:', err);
-    },
+  const { messages, status, error, isLoading, sendMessage, stop, videos, usefulLinks } = useChatAnswer({
+    threadId,
+    pageSlug: () => route.path,
   });
-
-  const isLoading = computed(() => status.value === 'submitted' || status.value === 'streaming');
 
   /**
    * The quota verdict, from the live error OR from a refusal earlier in the
@@ -579,52 +525,6 @@
    * would have emptied the rail with no error anywhere. Shape-matching means
    * `site-search` populates it without a second code path.
    */
-  const MAX_USEFUL_LINKS = 5;
-
-  interface UsefulLink {
-    url: string;
-    title: string;
-    content: string;
-    score: number;
-  }
-
-  const usefulLinks = computed<UsefulLink[]>(() => {
-    const links: UsefulLink[] = [];
-
-    for (const message of messages.value as UIMessage[]) {
-      for (const part of message.parts ?? []) {
-        // Tool parts are typed `tool-<name>`; the payload lands on `output`
-        // once the call resolves.
-        const output = (part as any).output;
-        if (!output || !Array.isArray(output.results)) continue;
-
-        output.results.forEach((result: any, index: number) => {
-          if (!result || typeof result.url !== 'string' || typeof result.title !== 'string') return;
-          links.push({
-            url: result.url,
-            title: result.title,
-            content: typeof result.summary === 'string' ? result.summary : (result.content ?? ''),
-            // Descending fallback preserves a tool's own ordering when it
-            // reports no score. Below 1, so a real score always outranks it.
-            score: typeof result.score === 'number' ? result.score : 1 / (index + 2),
-          });
-        });
-      }
-    }
-
-    return links.sort((a, b) => b.score - a.score).slice(0, MAX_USEFUL_LINKS);
-  });
-
-  /**
-   * Video rail, built from the latest answer's `video-search` results.
-   *
-   * The selection rule lives in `app/utils/chatVideoRail.ts` as a pure function
-   * so it can be tested — it was written wrong once (scoped to the last message
-   * WITH videos rather than the last answer, which leaves a stale rail beside an
-   * unrelated answer) and this component has no test harness to have caught it.
-   */
-  const videoResults = computed<ChatVideo[]>(() => selectRailVideos(messages.value as UIMessage[]));
-
   /** Only until the first token — after that the streaming cursor is the signal. */
   const showThinkingIndicator = computed(() => {
     if (!isLoading.value) return false;
