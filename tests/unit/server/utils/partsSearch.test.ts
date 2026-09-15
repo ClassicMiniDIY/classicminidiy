@@ -1,6 +1,11 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { loadVisiblePartSources, visibleSourceFilter, searchVisibleParts } from '~~/server/utils/partsSearch';
+import {
+  loadVisiblePartSources,
+  visibleSourceFilter,
+  searchVisibleParts,
+  findVisiblePart,
+} from '~~/server/utils/partsSearch';
 
 // ---------------------------------------------------------------------------
 // The parts kill switch, now in one place.
@@ -112,6 +117,36 @@ describe('searchVisibleParts', () => {
 
   it('returns nothing for input the filter builder rejects, rather than an unfiltered query', async () => {
     expect(await searchVisibleParts(db, '%%', 10)).toEqual([]);
+    expect(partsFilters).toEqual([]);
+  });
+
+  it('uses a preloaded source list without reading part_sources again', async () => {
+    const preloaded = { visible: [LIVE], visibleIds: [LIVE.id], sourceById: new Map([[LIVE.id, LIVE]]) };
+    tables.part_sources = { data: null, error: { message: 'must not be read' } };
+    const hits = await searchVisibleParts(db, '12g940', 10, preloaded);
+    expect(hits).toHaveLength(1);
+  });
+});
+
+describe('findVisiblePart', () => {
+  it('matches the normalised number by equality inside the kill switch', async () => {
+    const hit = await findVisiblePart(db, '12g-940');
+    expect(hit?.slug).toBe('12G940');
+    expect(partsFilters).toContainEqual(['eq', 'status=published']);
+    expect(partsFilters).toContainEqual(['or', `source_id.is.null,source_id.in.(${LIVE.id})`]);
+    expect(partsFilters).toContainEqual(['eq', 'part_number_norm=12G940']);
+  });
+
+  it('is null when the sources cannot be read, when none are visible, or when preloaded null', async () => {
+    tables.part_sources = { data: null, error: { message: 'boom' } };
+    expect(await findVisiblePart(db, '12G940')).toBeNull();
+    tables.part_sources = { data: [DECLINED], error: null };
+    expect(await findVisiblePart(db, '12G940')).toBeNull();
+    expect(await findVisiblePart(db, '12G940', null)).toBeNull();
+  });
+
+  it('is null for a number that reduces to nothing', async () => {
+    expect(await findVisiblePart(db, '-')).toBeNull();
     expect(partsFilters).toEqual([]);
   });
 });

@@ -12,18 +12,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // the client on a commit — see server/api/search/miss.post.ts).
 // ---------------------------------------------------------------------------
 
-const { mockRpc, mockSearchVisibleParts, mockGetVideoIndex, mockSearchVideoIndex } = vi.hoisted(() => ({
-  mockRpc: vi.fn(),
-  mockSearchVisibleParts: vi.fn(),
-  mockGetVideoIndex: vi.fn(),
-  mockSearchVideoIndex: vi.fn(),
-}));
+const { mockRpc, mockLoadSources, mockSearchVisibleParts, mockGetVideoIndex, mockSearchVideoIndex } = vi.hoisted(
+  () => ({
+    mockRpc: vi.fn(),
+    mockLoadSources: vi.fn(),
+    mockSearchVisibleParts: vi.fn(),
+    mockGetVideoIndex: vi.fn(),
+    mockSearchVideoIndex: vi.fn(),
+  })
+);
 
 vi.mock('~~/server/utils/supabase', () => ({
   getServiceClient: () => ({ rpc: mockRpc }),
 }));
 vi.mock('~~/server/utils/partsSearch', () => ({
+  loadVisiblePartSources: mockLoadSources,
   searchVisibleParts: mockSearchVisibleParts,
+  findVisiblePart: vi.fn().mockResolvedValue(null),
 }));
 vi.mock('~~/server/utils/youtubeCatalog', () => ({
   getVideoIndex: mockGetVideoIndex,
@@ -31,6 +36,8 @@ vi.mock('~~/server/utils/youtubeCatalog', () => ({
 }));
 
 const { runOmnisearch } = await import('~~/server/utils/omnisearch');
+
+const SOURCES = { visible: [], visibleIds: ['src-1'], sourceById: new Map() };
 
 const VIDEO = {
   videoId: 'abc123',
@@ -44,6 +51,7 @@ const VIDEO = {
 beforeEach(() => {
   vi.clearAllMocks();
   mockRpc.mockResolvedValue({ data: [], error: null });
+  mockLoadSources.mockResolvedValue(SOURCES);
   mockSearchVisibleParts.mockResolvedValue([]);
   mockGetVideoIndex.mockResolvedValue([VIDEO]);
   mockSearchVideoIndex.mockReturnValue([]);
@@ -98,7 +106,9 @@ describe('runOmnisearch', () => {
     const parts = response.results.filter((result) => result.surface === 'parts');
     expect(parts).toHaveLength(1);
     expect(parts[0]).toMatchObject({ title: '12G940', tag: 'Mini Spares', url: '/archive/parts?q=12G940' });
-    expect(mockSearchVisibleParts).toHaveBeenCalledWith(expect.anything(), '12g940', expect.any(Number));
+    // The source list is read once and handed in; the surface does not reload it.
+    expect(mockLoadSources).toHaveBeenCalledTimes(1);
+    expect(mockSearchVisibleParts).toHaveBeenCalledWith(expect.anything(), '12g940', expect.any(Number), SOURCES);
     // A part number leads with parts.
     expect(response.results[0]?.surface).toBe('parts');
     expect(response.counts.parts).toBe(1);
