@@ -74,8 +74,22 @@ export type DirectAnswer =
       years: string | null;
       url: string;
     }
-  | { kind: 'chassis'; chassisNumber: string; yearRange: string; fields: { label: string; value: string }[]; url: string }
-  | { kind: 'engine'; code: string; capacityCc: string; variant: string | null; gearbox: string | null; description: string; url: string }
+  | {
+      kind: 'chassis';
+      chassisNumber: string;
+      yearRange: string;
+      fields: { label: string; value: string }[];
+      url: string;
+    }
+  | {
+      kind: 'engine';
+      code: string;
+      capacityCc: string;
+      variant: string | null;
+      gearbox: string | null;
+      description: string;
+      url: string;
+    }
   | { kind: 'torque'; item: string; section: string; lbft: string; nm: string; notes: string | null; url: string }
   | { kind: 'clearance'; item: string; section: string; thou: string; mm: string; notes: string | null; url: string };
 
