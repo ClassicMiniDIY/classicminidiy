@@ -19,7 +19,9 @@ const storage = {
     if (storageThrows) throw new Error('kv down');
     return storage.items.get(key) ?? null;
   }),
-  setItem: vi.fn(),
+  setItem: vi.fn(async (key: string, value: unknown) => {
+    storage.items.set(key, value);
+  }),
 };
 
 const rpc = vi.fn();
@@ -43,8 +45,10 @@ vi.mock('~~/server/utils/supabase', () => ({ getServiceClient: vi.fn(() => ({ rp
 vi.mock('~~/server/utils/runtimeConfig', () => ({
   serverRuntimeConfig: vi.fn(() => ({ OG_IMAGE_SECRET: 'test-salt' })),
 }));
+let ipValue = 'unknown';
+vi.mock('~~/server/utils/clientIp', () => ({ clientIp: vi.fn(() => ipValue) }));
 
-const { peekChatQuota } = await import('~~/server/utils/chatQuota');
+const { peekChatQuota, consumeChatQuota } = await import('~~/server/utils/chatQuota');
 const { setChatAuth } = await import('~~/server/utils/chatTiers');
 const { CHAT_QUOTAS } = await import('~~/shared/utils/chatTiers');
 
@@ -72,12 +76,31 @@ describe('anonymous', () => {
     expect(globalThis.setCookie).not.toHaveBeenCalled();
   });
 
-  it('is at zero with no session cookie, and mints none', async () => {
+  it('is at zero with no session cookie and no usable IP, and mints none', async () => {
     cookieValue = undefined;
+    ipValue = 'unknown';
     const peek = await peekChatQuota(eventFor('anonymous'));
     expect(peek.used).toBe(0);
     expect(storage.getItem).not.toHaveBeenCalled();
     expect(globalThis.setCookie).not.toHaveBeenCalled();
+  });
+
+  it('reads the same IP bucket the spend uses when the browser kept no cookie', async () => {
+    // A browser that drops Set-Cookie is counted on its salted IP by
+    // consumeChatQuota. The peek must look there too, or it offers the bot to
+    // someone the chat route is about to refuse.
+    cookieValue = undefined;
+    ipValue = '203.0.113.9';
+    const spend: any = { context: {}, waitUntil: vi.fn() };
+    setChatAuth(spend, { tier: 'anonymous' });
+    await consumeChatQuota(spend);
+    await consumeChatQuota(spend);
+    const [bucket] = [...storage.items.keys()];
+    expect(bucket).toMatch(/^chat-anon:i:/);
+
+    const peek = await peekChatQuota(eventFor('anonymous'));
+    expect(peek.used).toBe(2);
+    expect(globalThis.setCookie).toHaveBeenCalledTimes(2); // the spends minted, the peek did not
   });
 
   it('reports unknown when the counter cannot be read', async () => {
