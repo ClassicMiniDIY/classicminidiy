@@ -31,7 +31,7 @@
     // /archive/colors and /models all 307'd while production served all three
     // as 200. With it, the no-slash form is 200 and the slashed form redirects
     // back to it — matching Vercel exactly. Do not remove.
-    "html_handling": "drop-trailing-slash"
+    "html_handling": "drop-trailing-slash",
   },
 
   // Nitro's cached handlers write to `cache:`. On workers the default storage is
@@ -41,8 +41,8 @@
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "7563084adc0845469b5a5ec60226d3b0"
-    }
+      "id": "7563084adc0845469b5a5ec60226d3b0",
+    },
   ],
 
   // Worker routes. These are what put the worker in front of production traffic —
@@ -69,7 +69,7 @@
   // source, which fits the Free plan's 10-rule cap with headroom.
   "routes": [
     { "pattern": "classicminidiy.com/*", "zone_name": "classicminidiy.com" },
-    { "pattern": "www.classicminidiy.com/*", "zone_name": "classicminidiy.com" }
+    { "pattern": "www.classicminidiy.com/*", "zone_name": "classicminidiy.com" },
   ],
 
   // OFF since the cutover. classicminidiy.com is served through the routes above,
@@ -85,6 +85,6 @@
   "workers_dev": false,
 
   "observability": {
-    "enabled": true
-  }
+    "enabled": true,
+  },
 }
