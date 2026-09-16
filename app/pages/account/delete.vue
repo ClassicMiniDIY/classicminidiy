@@ -108,6 +108,8 @@
       state.value = 'done';
     } catch (err: any) {
       const status = err?.statusCode ?? err?.status ?? err?.response?.status;
+      // 502 = GoTrue unreachable (AUTH_UNAVAILABLE): keep the session, show
+      // the retryable error. Only a rejected token (401/404) signs out.
       if (status === 401 || status === 404) {
         // The local session looked valid but the server rejected the token.
         // Clear it first so /login does not bounce straight back here.
@@ -397,7 +399,7 @@
       "intro": "When you confirm, we remove:",
       "items": [
         "Your profile, sign-in methods and passkeys",
-        "Marketplace messages, watchlist, saved searches and any listing that was not sold",
+        "Marketplace messages, watchlist, saved searches, and listings that were neither sold nor paid for",
         "Garage vehicles, maintenance records and saved calculator setups from the Toolbox apps",
         "AI chat history and Developer API keys",
         "Your Discord link and members-only role",
@@ -408,7 +410,7 @@
       "title": "What we keep, and why",
       "intro": "Some records must stay for legal and accounting reasons. The link to your account is removed from all of them.",
       "items": [
-        "Records of sold listings and of every payment (listing upgrades, memberships, 3D model purchases), kept for up to 7 years for accounting and dispute handling",
+        "Sold listings and listings you paid to upgrade (closed, with your name and location details removed), plus every payment record (listing upgrades, memberships, 3D model purchases), kept for up to 7 years for accounting and dispute handling",
         "Archive contributions that were approved and published (registry entries, colours, wheels, documents), which stay published without your name",
         "3D models that other people have paid for, so buyers keep what they bought"
       ],
@@ -470,7 +472,7 @@
       "intro": "Cuando confirmes, eliminaremos:",
       "items": [
         "Tu perfil, métodos de inicio de sesión y passkeys",
-        "Mensajes del mercado, lista de seguimiento, búsquedas guardadas y cualquier anuncio no vendido",
+        "Mensajes del mercado, lista de seguimiento, búsquedas guardadas y los anuncios que no se vendieron ni se pagaron",
         "Vehículos del garaje, registros de mantenimiento y configuraciones guardadas de las calculadoras de las apps Toolbox",
         "Historial del chat de IA y claves de la API para desarrolladores",
         "Tu vínculo con Discord y el rol exclusivo para miembros",
@@ -481,7 +483,7 @@
       "title": "Qué conservamos y por qué",
       "intro": "Algunos registros deben conservarse por motivos legales y contables. El vínculo con tu cuenta se elimina de todos ellos.",
       "items": [
-        "Registros de anuncios vendidos y de cada pago (mejoras de anuncios, membresías, compras de modelos 3D), conservados hasta 7 años para contabilidad y gestión de disputas",
+        "Anuncios vendidos y anuncios que pagaste por mejorar (cerrados, sin tu nombre ni datos de ubicación), más cada registro de pago (mejoras de anuncios, membresías, compras de modelos 3D), conservados hasta 7 años para contabilidad y gestión de disputas",
         "Contribuciones al archivo aprobadas y publicadas (entradas del registro, colores, llantas, documentos), que siguen publicadas sin tu nombre",
         "Modelos 3D que otras personas han pagado, para que los compradores conserven lo que compraron"
       ],
@@ -543,7 +545,7 @@
       "intro": "Lorsque vous confirmez, nous supprimons :",
       "items": [
         "Votre profil, vos méthodes de connexion et vos passkeys",
-        "Les messages de la place de marché, la liste de suivi, les recherches enregistrées et toute annonce non vendue",
+        "Les messages de la place de marché, la liste de suivi, les recherches enregistrées et les annonces ni vendues ni payées",
         "Les véhicules du garage, les carnets d'entretien et les réglages de calculateurs enregistrés dans les applications Toolbox",
         "L'historique du chat IA et les clés de l'API développeur",
         "Votre lien Discord et le rôle réservé aux membres",
@@ -554,7 +556,7 @@
       "title": "Ce que nous conservons, et pourquoi",
       "intro": "Certains enregistrements doivent être conservés pour des raisons légales et comptables. Le lien avec votre compte est retiré de chacun d'eux.",
       "items": [
-        "Les enregistrements des annonces vendues et de chaque paiement (options d'annonce, adhésions, achats de modèles 3D), conservés jusqu'à 7 ans pour la comptabilité et le traitement des litiges",
+        "Les annonces vendues et celles dont vous avez payé l'option (clôturées, sans votre nom ni vos données de localisation), plus chaque enregistrement de paiement (options d'annonce, adhésions, achats de modèles 3D), conservés jusqu'à 7 ans pour la comptabilité et le traitement des litiges",
         "Les contributions aux archives approuvées et publiées (entrées du registre, couleurs, jantes, documents), qui restent publiées sans votre nom",
         "Les modèles 3D que d'autres personnes ont achetés, afin que les acheteurs conservent leur achat"
       ],
@@ -616,7 +618,7 @@
       "intro": "Nach deiner Bestätigung entfernen wir:",
       "items": [
         "Dein Profil, deine Anmeldemethoden und Passkeys",
-        "Marktplatz-Nachrichten, Merkliste, gespeicherte Suchen und alle nicht verkauften Anzeigen",
+        "Marktplatz-Nachrichten, Merkliste, gespeicherte Suchen und alle Anzeigen, die weder verkauft noch bezahlt wurden",
         "Garagen-Fahrzeuge, Wartungseinträge und gespeicherte Rechner-Einstellungen aus den Toolbox-Apps",
         "KI-Chatverlauf und Entwickler-API-Schlüssel",
         "Deine Discord-Verknüpfung und die Mitgliederrolle",
@@ -627,7 +629,7 @@
       "title": "Was wir behalten und warum",
       "intro": "Einige Datensätze müssen aus rechtlichen und buchhalterischen Gründen bleiben. Die Verknüpfung zu deinem Konto wird aus allen entfernt.",
       "items": [
-        "Datensätze zu verkauften Anzeigen und zu jeder Zahlung (Anzeigen-Upgrades, Mitgliedschaften, 3D-Modell-Käufe), bis zu 7 Jahre für Buchhaltung und Streitfälle",
+        "Verkaufte Anzeigen und Anzeigen mit bezahltem Upgrade (geschlossen, ohne Ihren Namen und Standortdaten) sowie jeder Zahlungsdatensatz (Anzeigen-Upgrades, Mitgliedschaften, 3D-Modell-Käufe), bis zu 7 Jahre für Buchhaltung und Streitfälle",
         "Genehmigte und veröffentlichte Archivbeiträge (Registereinträge, Farben, Felgen, Dokumente), die ohne deinen Namen veröffentlicht bleiben",
         "3D-Modelle, die andere Personen gekauft haben, damit Käufer behalten, was sie gekauft haben"
       ],
@@ -689,7 +691,7 @@
       "intro": "Quando confermi, rimuoviamo:",
       "items": [
         "Il tuo profilo, i metodi di accesso e le passkey",
-        "Messaggi del mercatino, lista dei preferiti, ricerche salvate e qualsiasi annuncio non venduto",
+        "Messaggi del mercatino, lista dei preferiti, ricerche salvate e gli annunci né venduti né a pagamento",
         "Veicoli del garage, registri di manutenzione e configurazioni salvate dei calcolatori delle app Toolbox",
         "Cronologia della chat IA e chiavi API per sviluppatori",
         "Il tuo collegamento Discord e il ruolo riservato ai membri",
@@ -700,7 +702,7 @@
       "title": "Cosa conserviamo e perché",
       "intro": "Alcuni dati devono restare per motivi legali e contabili. Il collegamento al tuo account viene rimosso da tutti.",
       "items": [
-        "Registrazioni degli annunci venduti e di ogni pagamento (potenziamenti degli annunci, abbonamenti, acquisti di modelli 3D), conservate fino a 7 anni per contabilità e gestione delle controversie",
+        "Annunci venduti e annunci per cui hai pagato un potenziamento (chiusi, senza il tuo nome e i dati di posizione), più ogni registrazione di pagamento (potenziamenti degli annunci, abbonamenti, acquisti di modelli 3D), conservati fino a 7 anni per contabilità e gestione delle controversie",
         "Contributi all'archivio approvati e pubblicati (voci del registro, colori, cerchi, documenti), che restano pubblicati senza il tuo nome",
         "Modelli 3D che altre persone hanno pagato, così gli acquirenti conservano ciò che hanno comprato"
       ],
@@ -762,7 +764,7 @@
       "intro": "Quando você confirmar, removemos:",
       "items": [
         "Seu perfil, métodos de login e passkeys",
-        "Mensagens do marketplace, lista de acompanhamento, buscas salvas e qualquer anúncio não vendido",
+        "Mensagens do marketplace, lista de acompanhamento, buscas salvas e anúncios que não foram vendidos nem pagos",
         "Veículos da garagem, registros de manutenção e configurações de calculadoras salvas nos apps Toolbox",
         "Histórico do chat de IA e chaves da API de desenvolvedor",
         "Seu vínculo com o Discord e o cargo exclusivo para membros",
@@ -773,7 +775,7 @@
       "title": "O que mantemos e por quê",
       "intro": "Alguns registros precisam ficar por motivos legais e contábeis. O vínculo com sua conta é removido de todos eles.",
       "items": [
-        "Registros de anúncios vendidos e de cada pagamento (upgrades de anúncio, assinaturas, compras de modelos 3D), mantidos por até 7 anos para contabilidade e disputas",
+        "Anúncios vendidos e anúncios com upgrade pago (encerrados, sem seu nome e dados de localização), além de cada registro de pagamento (upgrades de anúncio, assinaturas, compras de modelos 3D), mantidos por até 7 anos para contabilidade e disputas",
         "Contribuições ao arquivo aprovadas e publicadas (entradas do registro, cores, rodas, documentos), que continuam publicadas sem o seu nome",
         "Modelos 3D pelos quais outras pessoas pagaram, para que os compradores mantenham o que compraram"
       ],
@@ -835,7 +837,7 @@
       "intro": "После подтверждения мы удалим:",
       "items": [
         "Ваш профиль, способы входа и ключи доступа (passkeys)",
-        "Сообщения на площадке, список отслеживания, сохранённые поиски и все непроданные объявления",
+        "Сообщения на площадке, список отслеживания, сохранённые поиски и объявления, которые не были ни проданы, ни оплачены",
         "Автомобили в гараже, записи о обслуживании и сохранённые настройки калькуляторов из приложений Toolbox",
         "Историю ИИ-чата и ключи API для разработчиков",
         "Вашу привязку Discord и роль участника",
@@ -846,7 +848,7 @@
       "title": "Что мы сохраняем и почему",
       "intro": "Некоторые записи должны остаться по юридическим и бухгалтерским причинам. Связь с вашим аккаунтом удаляется из всех них.",
       "items": [
-        "Записи о проданных объявлениях и о каждом платеже (улучшения объявлений, членство, покупки 3D-моделей) хранятся до 7 лет для бухгалтерии и разрешения споров",
+        "Проданные объявления и объявления с оплаченным улучшением (закрытые, без вашего имени и данных о местоположении), а также каждая запись о платеже (улучшения объявлений, членство, покупки 3D-моделей) хранятся до 7 лет для бухгалтерии и разрешения споров",
         "Одобренные и опубликованные вклады в архив (записи реестра, цвета, диски, документы) остаются опубликованными без вашего имени",
         "3D-модели, за которые заплатили другие люди, чтобы покупатели сохранили купленное"
       ],
@@ -908,7 +910,7 @@
       "intro": "確認すると、次のものを削除します：",
       "items": [
         "プロフィール、ログイン方法、パスキー",
-        "マーケットプレイスのメッセージ、ウォッチリスト、保存した検索、未売却の出品",
+        "マーケットプレイスのメッセージ、ウォッチリスト、保存した検索、売却も有料アップグレードもされていない出品",
         "Toolboxアプリのガレージ車両、メンテナンス記録、保存した計算機の設定",
         "AIチャット履歴と開発者APIキー",
         "Discordの連携とメンバー限定ロール",
@@ -919,7 +921,7 @@
       "title": "保持するものとその理由",
       "intro": "一部の記録は法律上・会計上の理由で保持する必要があります。それらからアカウントとの紐付けは削除されます。",
       "items": [
-        "売却済み出品と各支払い（出品アップグレード、メンバーシップ、3Dモデル購入）の記録は、会計と紛争対応のため最長7年間保持されます",
+        "売却済み出品と有料アップグレードした出品（終了済み、氏名と位置情報は削除）、および各支払いの記録（出品アップグレード、メンバーシップ、3Dモデル購入）は、会計と紛争対応のため最長7年間保持されます",
         "承認・公開済みのアーカイブ投稿（登録エントリ、カラー、ホイール、資料）は、氏名なしで公開され続けます",
         "他の方が購入した3Dモデルは、購入者が入手したものを保持できるよう残されます"
       ],
@@ -981,7 +983,7 @@
       "intro": "确认后，我们将删除：",
       "items": [
         "您的个人资料、登录方式和通行密钥",
-        "交易市场消息、关注列表、已保存的搜索以及所有未售出的商品",
+        "交易市场消息、关注列表、已保存的搜索，以及既未售出也未付费的商品",
         "Toolbox应用中的车库车辆、保养记录和已保存的计算器设置",
         "AI聊天记录和开发者API密钥",
         "您的Discord关联和会员专属角色",
@@ -992,7 +994,7 @@
       "title": "我们保留的内容及原因",
       "intro": "出于法律和会计原因，部分记录必须保留。这些记录中与您账户的关联都会被移除。",
       "items": [
-        "已售商品和每笔付款（商品升级、会员资格、3D模型购买）的记录，出于会计和争议处理需要最长保留7年",
+        "已售商品和您付费升级过的商品（已关闭，并移除您的姓名和位置信息），以及每笔付款记录（商品升级、会员资格、3D模型购买），出于会计和争议处理需要最长保留7年",
         "已审核并发布的档案贡献（登记条目、颜色、轮毂、文档）将继续发布，但不显示您的姓名",
         "其他人已付费购买的3D模型，以便买家保留所购内容"
       ],
@@ -1054,7 +1056,7 @@
       "intro": "확인하시면 다음 항목을 제거합니다:",
       "items": [
         "프로필, 로그인 방법, 패스키",
-        "마켓플레이스 메시지, 관심 목록, 저장된 검색, 판매되지 않은 모든 매물",
+        "마켓플레이스 메시지, 관심 목록, 저장된 검색, 그리고 판매되지도 결제되지도 않은 매물",
         "Toolbox 앱의 차고 차량, 정비 기록, 저장된 계산기 설정",
         "AI 채팅 기록 및 개발자 API 키",
         "Discord 연결 및 회원 전용 역할",
@@ -1065,7 +1067,7 @@
       "title": "보관하는 항목과 그 이유",
       "intro": "일부 기록은 법적·회계상 이유로 보관해야 합니다. 모든 기록에서 계정과의 연결은 제거됩니다.",
       "items": [
-        "판매된 매물과 모든 결제(매물 업그레이드, 멤버십, 3D 모델 구매) 기록은 회계 및 분쟁 처리를 위해 최대 7년간 보관됩니다",
+        "판매된 매물과 유료 업그레이드한 매물(종료됨, 이름과 위치 정보 제거), 그리고 모든 결제 기록(매물 업그레이드, 멤버십, 3D 모델 구매)은 회계 및 분쟁 처리를 위해 최대 7년간 보관됩니다",
         "승인되어 게시된 아카이브 기여(등록 항목, 색상, 휠, 문서)는 이름 없이 계속 게시됩니다",
         "다른 사람이 구매한 3D 모델은 구매자가 구매한 것을 유지할 수 있도록 남습니다"
       ],
