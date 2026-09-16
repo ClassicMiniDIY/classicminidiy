@@ -72,3 +72,23 @@ The Pro plan has no `botScore` field in GraphQL. What works:
 `firewallEventsAdaptive` to see which rule produced a 403; `source` is
 `firewallCustom` for these rules and `firewallManaged` for Cloudflare's own
 AI-bot and managed rules.
+
+## Cloudflare's managed AI-bot layer must stay off
+
+While verifying, `scripts/verify-ai-crawler-firewall.sh` failed on answer bots
+that the 2026-07-30 policy allows. The 403s came from Cloudflare's **managed**
+AI-crawler controls (`firewallEventsAdaptive.source = firewallManaged`), not
+from any custom rule. Two things to know:
+
+- **Bot Preference Sync** (Cloudflare, 2026-08-21) turns the zone's "AI
+  training: disallow" preference into an edge block for every crawler that
+  *Cloudflare* classes as training. That list is broader than
+  `server/utils/aiBots.ts` and includes bots the GEO policy relies on for
+  citations. The policy is expressed in two places that this repo owns, the
+  origin `robots.txt` (nuxt-robots) and the "Block AI training crawlers" custom
+  rule, so the managed layer is redundant and must stay disabled. If the
+  verifier ever reports an allowed bot getting 403 with a `firewallManaged`
+  source, someone re-enabled it.
+- `PUT /zones/{id}/bot_management` **replaces the whole settings object.** A
+  body with one field resets every other field to its default. Always read the
+  current object first and send it back in full with the one change applied.
