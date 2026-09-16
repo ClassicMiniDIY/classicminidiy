@@ -1,6 +1,15 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { collectToolNames, createChatRunTracker } from '~~/server/utils/chatUsage';
+import {
+  CHAT_CLIENT_HEADER,
+  CHAT_ENTRY_POINTS,
+  captureChatQuotaRefused,
+  collectToolNames,
+  createChatRunTracker,
+  normalizeChatEntryPoint,
+  parseChatClient,
+  readChatClient,
+} from '~~/server/utils/chatUsage';
 
 // ---------------------------------------------------------------------------
 // Chat run telemetry. The load-bearing assertion here is `tools_called`: it is
@@ -25,7 +34,8 @@ vi.stubGlobal(
   })
 );
 
-const fakeEvent = () => ({ waitUntil }) as any;
+const fakeEvent = (headers: Record<string, string> = {}, chatAuth?: { tier: string; userId?: string }) =>
+  ({ waitUntil, node: { req: { headers } }, context: chatAuth ? { chatAuth } : {} }) as any;
 
 /** The event body of the single capture this run produced. */
 const lastProps = () => captured.at(-1)!.properties;
@@ -217,6 +227,130 @@ describe('createChatRunTracker', () => {
   it('survives a runtime with no waitUntil', () => {
     const tracker = createChatRunTracker({} as any, 'thread-1');
     expect(() => tracker.finish('completed')).not.toThrow();
+    expect(captured).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The native-app contract: which client asked, from which screen, and the
+// refusal event. toolbox-ios/docs/plans/2026-09-15-native-ai-chat.md §5.1, §9.1.
+// ---------------------------------------------------------------------------
+
+describe('parseChatClient', () => {
+  it('accepts the two app platforms with a lenient version', () => {
+    expect(parseChatClient('ios/1.2.3')).toBe('ios');
+    expect(parseChatClient('android/2.18.0')).toBe('android');
+    // TestFlight / beta suffixes and build metadata survive.
+    expect(parseChatClient('ios/2.15.0-beta')).toBe('ios');
+    expect(parseChatClient('android/2.18.0+42')).toBe('android');
+    expect(parseChatClient('  ios/2.15.0 ')).toBe('ios');
+  });
+
+  it('resolves everything else to web', () => {
+    expect(parseChatClient(undefined)).toBe('web');
+    expect(parseChatClient(null)).toBe('web');
+    expect(parseChatClient('')).toBe('web');
+    expect(parseChatClient('curl/8')).toBe('web');
+    expect(parseChatClient('ios')).toBe('web');
+    expect(parseChatClient('ios/')).toBe('web');
+    expect(parseChatClient('IOS/1.0')).toBe('web');
+    expect(parseChatClient('windows/1.0')).toBe('web');
+    // A scripted caller cannot mint a fourth platform via the version field.
+    expect(parseChatClient('ios/1.0 android/2.0')).toBe('web');
+    expect(parseChatClient(`ios/${'9'.repeat(33)}`)).toBe('web');
+  });
+
+  it('is read from the x-cmdiy-client header', () => {
+    expect(CHAT_CLIENT_HEADER).toBe('x-cmdiy-client');
+    expect(readChatClient(fakeEvent({ 'x-cmdiy-client': 'android/2.18.0' }))).toBe('android');
+    expect(readChatClient(fakeEvent({}))).toBe('web');
+    // A bare event with no request object is `web`, not a thrown error.
+    expect(readChatClient({} as any)).toBe('web');
+  });
+});
+
+describe('normalizeChatEntryPoint', () => {
+  it('keeps the allowlisted screens', () => {
+    for (const point of CHAT_ENTRY_POINTS) expect(normalizeChatEntryPoint(point)).toBe(point);
+    expect([...CHAT_ENTRY_POINTS]).toEqual([
+      'tile',
+      'history',
+      'compression',
+      'gearbox',
+      'needles',
+      'torque',
+      'clearances',
+      'wiring',
+      'maintenance',
+    ]);
+  });
+
+  it('is null when absent and unknown when off the list', () => {
+    // Absent is the web today (its context is `pageSlug`); off-list is a new
+    // app screen that should show up as a count, not as a free-text key.
+    expect(normalizeChatEntryPoint(undefined)).toBeNull();
+    expect(normalizeChatEntryPoint(null)).toBeNull();
+    expect(normalizeChatEntryPoint('settings')).toBe('unknown');
+    expect(normalizeChatEntryPoint('')).toBe('unknown');
+    expect(normalizeChatEntryPoint(42)).toBe('unknown');
+    expect(normalizeChatEntryPoint({ tile: true })).toBe('unknown');
+  });
+});
+
+describe('createChatRunTracker client and entry point', () => {
+  it('defaults to web with no entry point', () => {
+    const tracker = createChatRunTracker(fakeEvent(), 'thread-1', 'en');
+    tracker.finish('completed');
+    expect(lastProps()).toMatchObject({ client: 'web', entry_point: null });
+  });
+
+  it.each(['completed', 'upstream_error', 'client_disconnect'] as const)(
+    'stamps client and entry_point on a %s outcome',
+    (outcome) => {
+      // Through the constructor, the same path `locale` takes, so an
+      // abandoned app run is never counted as a web abandonment.
+      const tracker = createChatRunTracker(fakeEvent(), 'thread-1', 'en', 'ios', 'compression');
+      tracker.finish(outcome, outcome === 'upstream_error' ? 'boom' : undefined);
+      expect(lastProps()).toMatchObject({ outcome, client: 'ios', entry_point: 'compression' });
+    }
+  );
+
+  it('never uses a property named source', () => {
+    const tracker = createChatRunTracker(fakeEvent(), 'thread-1', 'en', 'android', 'tile');
+    tracker.finish('completed');
+    expect(Object.keys(lastProps())).not.toContain('source');
+  });
+});
+
+describe('captureChatQuotaRefused', () => {
+  it('emits chat_quota_refused with the tier, client and entry point', () => {
+    const event = fakeEvent({ 'x-cmdiy-client': 'ios/2.15.0' }, { tier: 'free', userId: 'u-1' });
+    captureChatQuotaRefused(event, { allowed: false, used: 30, limit: 30 }, 'ios', 'gearbox', 'thread-9');
+    expect(captured).toHaveLength(1);
+    expect(captured[0].event).toBe('chat_quota_refused');
+    expect(captured[0].distinct_id).toBe('thread-9');
+    expect(lastProps()).toEqual({
+      tier: 'free',
+      client: 'ios',
+      entry_point: 'gearbox',
+      quota_used: 30,
+      quota_limit: 30,
+      $process_person_profile: false,
+    });
+  });
+
+  it('resolves a missing tier to anonymous and a missing threadId to the anonymous id', () => {
+    captureChatQuotaRefused(fakeEvent(), { allowed: false }, 'web', null);
+    expect(captured[0].distinct_id).toBe('anonymous');
+    expect(lastProps()).toMatchObject({ tier: 'anonymous', client: 'web', entry_point: null, quota_used: null });
+  });
+
+  it('backgrounds the send and sends nothing without a PostHog key', () => {
+    captureChatQuotaRefused(fakeEvent(), { allowed: false, used: 100, limit: 100 }, 'android', 'tile');
+    expect(waitUntil).toHaveBeenCalledOnce();
+
+    (globalThis as any).useRuntimeConfig.mockReturnValueOnce({ public: { posthogPublicKey: '' } });
+    captureChatQuotaRefused(fakeEvent(), { allowed: false }, 'android', 'tile');
     expect(captured).toHaveLength(1);
   });
 });

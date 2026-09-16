@@ -2,6 +2,7 @@ import type { H3Event } from 'h3';
 import { getServiceClient } from './supabase';
 import { requireUserClient } from './userAuth';
 import { CHAT_TIER_CACHE_TTL_SECONDS, SUSTAINING_PRODUCT_ID, chatTierCacheId } from './chatTiers';
+import { logNativeChatClient } from './chatUsage';
 
 /**
  * Shared guard for the synced-history routes.
@@ -22,6 +23,9 @@ import { CHAT_TIER_CACHE_TTL_SECONDS, SUSTAINING_PRODUCT_ID, chatTierCacheId } f
  * adds a query and forgets the filter — and these rows are what people typed.
  */
 export async function requireChatThreadAccess(event: H3Event) {
+  // Log only: the native apps sync through these routes and have no other
+  // footprint here. The web sends no header and is not logged.
+  logNativeChatClient(event, `threads ${event.method}`);
   const { user, supabase } = await requireUserClient(event);
 
   // Cached, the same way chat-auth caches the identical lookup. A push happens

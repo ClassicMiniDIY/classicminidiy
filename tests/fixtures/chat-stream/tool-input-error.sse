@@ -1,0 +1,28 @@
+data: {"type":"start"}
+
+data: {"type":"start-step"}
+
+data: {"type":"tool-input-start","toolCallId":"call-video-2","toolName":"video-search"}
+
+data: {"type":"tool-input-delta","toolCallId":"call-video-2","inputTextDelta":"{\"query\":\"\",\"limit\":\"three\"}"}
+
+data: {"type":"tool-input-error","toolCallId":"call-video-2","toolName":"video-search","input":{"query":"","limit":"three"},"errorText":"An error occurred."}
+
+data: {"type":"tool-output-error","toolCallId":"call-video-2","errorText":"An error occurred."}
+
+data: {"type":"finish-step"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"txt-3"}
+
+data: {"type":"text-delta","id":"txt-3","delta":"I could not run the video search just now. Try asking for a specific job."}
+
+data: {"type":"text-end","id":"txt-3"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+

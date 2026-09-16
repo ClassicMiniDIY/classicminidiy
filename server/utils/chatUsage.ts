@@ -1,5 +1,8 @@
 import type { H3Event } from 'h3';
+import { getRequestHeader } from 'h3';
 import { serverRuntimeConfig } from './runtimeConfig';
+import { getChatAuth } from './chatTiers';
+import type { QuotaVerdict } from './chatQuota';
 
 /**
  * Per-run telemetry for the AI chat.
@@ -31,6 +34,139 @@ import { serverRuntimeConfig } from './runtimeConfig';
  */
 
 const POSTHOG_INGEST_HOST = process.env.POSTHOG_INGEST_HOST || 'https://us.i.posthog.com';
+
+/**
+ * Which client asked. `x-cmdiy-client` is sent by the native Toolbox apps as
+ * `<platform>/<version>` (`ios/2.15.0`, `android/2.18.0-beta`); the web sends
+ * nothing and is `web`. The platform prefix is validated strictly and the
+ * version leniently, so a TestFlight or beta suffix survives but a scripted
+ * caller cannot mint a fourth platform and split the dashboards.
+ *
+ * Design: toolbox-ios/docs/plans/2026-09-15-native-ai-chat.md §5.1.
+ */
+export const CHAT_CLIENT_HEADER = 'x-cmdiy-client';
+
+export type ChatClient = 'ios' | 'android' | 'web';
+
+const CHAT_CLIENT_PATTERN = /^(ios|android)\/[A-Za-z0-9.+-]{1,32}$/;
+
+export function parseChatClient(raw: string | null | undefined): ChatClient {
+  if (typeof raw !== 'string') return 'web';
+  const match = CHAT_CLIENT_PATTERN.exec(raw.trim());
+  return match ? (match[1] as ChatClient) : 'web';
+}
+
+export function readChatClient(event: H3Event): ChatClient {
+  // Never throws: this feeds a log line and an analytics property, and a
+  // request shape the header reader does not expect must not take a route
+  // down (the thread-route unit tests build a bare event with no `node.req`).
+  try {
+    return parseChatClient(getRequestHeader(event, CHAT_CLIENT_HEADER));
+  } catch {
+    return 'web';
+  }
+}
+
+/**
+ * Note a native client on a chat route that emits no analytics of its own.
+ *
+ * The quota peek and the thread routes have no PostHog capture (a peek is not
+ * a run), so a Worker log line is the only place app traffic on them is
+ * visible. Web traffic is not logged: it is the bulk, and it is already
+ * measured client-side.
+ */
+export function logNativeChatClient(event: H3Event, route: string): ChatClient {
+  const client = readChatClient(event);
+  if (client !== 'web') console.info(`[chat] ${route} from ${client}`);
+  return client;
+}
+
+/**
+ * Where in an app the question was asked from.
+ *
+ * Named `entryPoint` on the wire and `entry_point` on the event — never
+ * `source`. The apps register `source` as their PostHog super property
+ * (`ios` / `android`), and a property with that name would overwrite it.
+ * Absent → `null`; present but not on the list → `unknown`, so a new screen
+ * shows up as a count to investigate rather than as a free-text grouping key.
+ */
+export const CHAT_ENTRY_POINTS = [
+  'tile',
+  'history',
+  'compression',
+  'gearbox',
+  'needles',
+  'torque',
+  'clearances',
+  'wiring',
+  'maintenance',
+] as const;
+
+export type ChatEntryPoint = (typeof CHAT_ENTRY_POINTS)[number] | 'unknown';
+
+export function normalizeChatEntryPoint(raw: unknown): ChatEntryPoint | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== 'string') return 'unknown';
+  return (CHAT_ENTRY_POINTS as readonly string[]).includes(raw) ? (raw as ChatEntryPoint) : 'unknown';
+}
+
+/**
+ * One PostHog capture, backgrounded through `waitUntil` and fully swallowed.
+ *
+ * Every event this file emits goes through here so the two things that must
+ * never vary — the key check and the fire-and-forget posture — are written
+ * once. `$process_person_profile: false` is set by the caller because it is
+ * part of what each event promises, not a transport detail.
+ */
+function captureServerEvent(event: H3Event, name: string, distinctId: string, properties: Record<string, unknown>) {
+  try {
+    const key = serverRuntimeConfig(event).public.posthogPublicKey as string;
+    if (!key) return;
+
+    const send = $fetch(`${POSTHOG_INGEST_HOST}/capture/`, {
+      method: 'POST',
+      body: {
+        api_key: key,
+        event: name,
+        distinct_id: distinctId,
+        properties,
+      },
+      timeout: 2000,
+    }).catch(() => {
+      // best-effort: capture must never affect serving
+    });
+
+    (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(send);
+  } catch {
+    // swallowed on purpose
+  }
+}
+
+/**
+ * A quota refusal, as an event.
+ *
+ * The 429 is thrown before the run tracker starts, so without this a refusal
+ * emits nothing and the question the native quota wall exists to answer —
+ * do refusals turn into memberships — has no numerator. `distinct_id` is the
+ * thread id, the same convention as `chat_run_completed`, so a refusal
+ * correlates with the runs that led to it.
+ */
+export function captureChatQuotaRefused(
+  event: H3Event,
+  verdict: QuotaVerdict,
+  client: ChatClient,
+  entryPoint: ChatEntryPoint | null,
+  threadId = 'anonymous'
+): void {
+  captureServerEvent(event, 'chat_quota_refused', threadId, {
+    tier: getChatAuth(event)?.tier ?? 'anonymous',
+    client,
+    entry_point: entryPoint,
+    quota_used: verdict.used ?? null,
+    quota_limit: verdict.limit ?? null,
+    $process_person_profile: false,
+  });
+}
 
 /** How a run ended. `client_disconnect` is a user pressing stop or navigating. */
 export type ChatRunOutcome = 'completed' | 'upstream_error' | 'client_disconnect';
@@ -142,11 +278,22 @@ export interface ChatRunTracker {
 }
 
 /**
- * Start tracking a run. `threadId` is the LangGraph thread UUID — used as the
+ * Start tracking a run. `threadId` is the client-minted thread id — used as the
  * distinct id so a conversation's runs correlate, with person profiles off so
  * this never builds a person timeline out of anonymous chat traffic.
+ *
+ * `client` and `entryPoint` ride in here beside `locale`, not in the `finish`
+ * extra bag, so every outcome (`completed`, `upstream_error`,
+ * `client_disconnect`) carries them. An abandoned app run that lost its
+ * `client` would be counted as a web abandonment.
  */
-export function createChatRunTracker(event: H3Event, threadId: string, locale?: string): ChatRunTracker {
+export function createChatRunTracker(
+  event: H3Event,
+  threadId: string,
+  locale?: string,
+  client: ChatClient = 'web',
+  entryPoint: ChatEntryPoint | null = null
+): ChatRunTracker {
   const startedAt = Date.now();
   const tools = new Set<string>();
   let membershipMentioned = false;
@@ -188,48 +335,30 @@ export function createChatRunTracker(event: H3Event, threadId: string, locale?: 
     finish(outcome: ChatRunOutcome, errorMessage?: string, extra?: Record<string, unknown>) {
       if (done) return;
       done = true;
-      try {
-        const key = serverRuntimeConfig(event).public.posthogPublicKey as string;
-        if (!key) return;
-
-        const send = $fetch(`${POSTHOG_INGEST_HOST}/capture/`, {
-          method: 'POST',
-          body: {
-            api_key: key,
-            event: 'chat_run_completed',
-            distinct_id: threadId,
-            properties: {
-              outcome,
-              // The streaming baseline. If these two are equal the response was
-              // buffered, however incremental the upstream looked.
-              time_to_first_chunk_ms: firstChunkAt === null ? null : firstChunkAt - startedAt,
-              duration_ms: Date.now() - startedAt,
-              chunk_count: chunkCount,
-              // The reason this file exists. An empty array on a real question
-              // means the assistant answered with no Classic Mini tool at all.
-              tools_called: [...tools].sort(),
-              membership_mentioned: membershipMentioned,
-              tool_call_count: tools.size,
-              input_tokens: usage.input || null,
-              output_tokens: usage.output || null,
-              cache_read_tokens: cache.read,
-              cache_write_tokens: cache.written,
-              cache_uncached_tokens: cache.uncached,
-              locale: locale ?? null,
-              error_message: errorMessage ?? null,
-              ...(extra ?? {}),
-              $process_person_profile: false,
-            },
-          },
-          timeout: 2000,
-        }).catch(() => {
-          // best-effort: capture must never affect serving
-        });
-
-        (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(send);
-      } catch {
-        // swallowed on purpose
-      }
+      captureServerEvent(event, 'chat_run_completed', threadId, {
+        outcome,
+        // The streaming baseline. If these two are equal the response was
+        // buffered, however incremental the upstream looked.
+        time_to_first_chunk_ms: firstChunkAt === null ? null : firstChunkAt - startedAt,
+        duration_ms: Date.now() - startedAt,
+        chunk_count: chunkCount,
+        // The reason this file exists. An empty array on a real question
+        // means the assistant answered with no Classic Mini tool at all.
+        tools_called: [...tools].sort(),
+        membership_mentioned: membershipMentioned,
+        tool_call_count: tools.size,
+        input_tokens: usage.input || null,
+        output_tokens: usage.output || null,
+        cache_read_tokens: cache.read,
+        cache_write_tokens: cache.written,
+        cache_uncached_tokens: cache.uncached,
+        locale: locale ?? null,
+        client,
+        entry_point: entryPoint,
+        error_message: errorMessage ?? null,
+        ...(extra ?? {}),
+        $process_person_profile: false,
+      });
     },
   };
 }
