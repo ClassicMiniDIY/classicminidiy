@@ -11,7 +11,13 @@
   "name": "classicminidiy",
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-08-01",
-  "compatibility_flags": ["nodejs_compat"],
+  // `enable_request_signal`: without it the incoming Request's `signal` is a
+  // real AbortSignal that never fires, so /api/chat's abort wiring is inert in
+  // production, `onAbort` never runs and `client_disconnect` reads zero while
+  // a backgrounded phone leaves the model running to MAX_STEPS. Do NOT add
+  // `request_signal_passthrough`: streamText already forwards the abort to the
+  // Anthropic subrequest itself.
+  "compatibility_flags": ["nodejs_compat", "enable_request_signal"],
 
   "assets": {
     "directory": ".output/public",

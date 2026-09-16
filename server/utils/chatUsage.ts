@@ -294,6 +294,9 @@ export function createChatRunTracker(
   client: ChatClient = 'web',
   entryPoint: ChatEntryPoint | null = null
 ): ChatRunTracker {
+  // Same argument as `client`: an aborted or errored run with no tier on its
+  // event makes "member abandonment rate" uncomputable. Read once, here.
+  const tier = getChatAuth(event)?.tier ?? 'anonymous';
   const startedAt = Date.now();
   const tools = new Set<string>();
   let membershipMentioned = false;
@@ -355,6 +358,7 @@ export function createChatRunTracker(
         locale: locale ?? null,
         client,
         entry_point: entryPoint,
+        tier,
         error_message: errorMessage ?? null,
         ...(extra ?? {}),
         $process_person_profile: false,

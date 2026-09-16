@@ -315,6 +315,21 @@ describe('createChatRunTracker client and entry point', () => {
     }
   );
 
+  it.each(['completed', 'upstream_error', 'client_disconnect'] as const)(
+    'stamps the tier on a %s outcome',
+    (outcome) => {
+      const tracker = createChatRunTracker(fakeEvent({}, { tier: 'member', userId: 'u-1' }), 'thread-1');
+      tracker.finish(outcome);
+      expect(lastProps().tier).toBe('member');
+    }
+  );
+
+  it('reports anonymous when the request carried no resolved tier', () => {
+    const tracker = createChatRunTracker(fakeEvent(), 'thread-1');
+    tracker.finish('completed');
+    expect(lastProps().tier).toBe('anonymous');
+  });
+
   it('never uses a property named source', () => {
     const tracker = createChatRunTracker(fakeEvent(), 'thread-1', 'en', 'android', 'tile');
     tracker.finish('completed');

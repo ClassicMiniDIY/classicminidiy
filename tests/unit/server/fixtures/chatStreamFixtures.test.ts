@@ -5,6 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { readUIMessageStream, uiMessageChunkSchema, type UIMessage, type UIMessageChunk } from 'ai';
 import { CHAT_QUOTAS, MEMBERSHIP_URL } from '~~/shared/utils/chatTiers';
+import {
+  quota429Body,
+  renderScenarioExpected,
+  renderScenarioSse,
+  scenarios,
+} from '~~/tests/fixtures/chat-stream/scenarios';
 
 /**
  * The recorded `/api/chat` stream fixtures are the parity contract with the
@@ -79,6 +85,7 @@ describe('chat stream fixtures', () => {
       'error-mid-stream.expected.json',
       'error-mid-stream.sse',
       'quota-429.json',
+      'scenarios.ts',
       'text-only.expected.json',
       'text-only.sse',
       'tool-call-video.expected.json',
@@ -101,6 +108,17 @@ describe('chat stream fixtures', () => {
       const message = await parse(raw);
       expect(message.role).toBe('assistant');
       expect(message.parts).toEqual(expected.parts);
+    });
+
+    it('is still exactly what the installed SDK writes for this scenario', async () => {
+      // The writer-side half of the tripwire. Re-reading the committed bytes
+      // (above) proves the SDK still tolerates them; this proves it still
+      // PRODUCES them. A renamed field or a new chunk the reader shrugs off
+      // would otherwise pass here and break a native parser on live traffic.
+      const scenario = scenarios.find((entry) => entry.name === name);
+      expect(scenario, `no scenario named ${name} in scenarios.ts`).toBeDefined();
+      expect(await renderScenarioSse(scenario!)).toBe(raw);
+      expect((await renderScenarioExpected(scenario!)).parts).toEqual(expected.parts);
     });
 
     it('opens with a step-start so the web replays the turn boundaries', () => {
@@ -168,6 +186,7 @@ describe('chat stream fixtures', () => {
 
   it('quota-429.json is the production 429 body the apps classify', () => {
     const body = JSON.parse(read('quota-429.json'));
+    expect(body).toEqual(quota429Body);
     expect(body).toMatchObject({
       error: true,
       statusCode: 429,
