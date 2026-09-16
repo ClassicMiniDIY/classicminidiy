@@ -92,7 +92,10 @@ Surfaces: technical toolbox (`/technical/*` calculators and decoders), archive
 (`/archive/*` manuals, wiring, registry, wheels, colours, engines, weights), marketplace
 (`/exchange`), 3D model library (`/models`), AI chat (`/chat`), admin (`/admin/**`),
 membership (`/membership`), contribution wizard (`/contribute/*`), dashboard
-(`/dashboard`). Ten locales via per-component `<i18n lang="json">` blocks.
+(`/dashboard`), account deletion (`/account/delete`: the URL on the Google Play Data
+Safety form, so it must stay public, logged-out readable and at that path; the
+deletion contract lives in `classicminidiy-supabase`). Ten locales via
+per-component `<i18n lang="json">` blocks.
 
 ## Rules that apply everywhere
 
