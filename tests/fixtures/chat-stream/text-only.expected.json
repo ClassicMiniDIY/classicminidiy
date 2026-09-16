@@ -1,0 +1,14 @@
+{
+  "id": "",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "The cylinder head nuts on an A-series 1275 torque to **42 lb-ft** (57 Nm), in the sequence from the centre outwards.",
+      "state": "done"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-video-search",
+      "toolCallId": "call-video-2",
+      "state": "output-error",
+      "rawInput": {
+        "query": "",
+        "limit": "three"
+      },
+      "errorText": "An error occurred."
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "I could not run the video search just now. Try asking for a specific job.",
+      "state": "done"
+    }
+  ]
+}

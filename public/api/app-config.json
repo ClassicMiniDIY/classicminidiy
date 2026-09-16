@@ -1,5 +1,11 @@
 {
   "backend": "supabase",
   "rollout_percent": 100,
-  "tme_free_listings": true
+  "tme_free_listings": true,
+  "chat": {
+    "enabled": {
+      "ios": true,
+      "android": true
+    }
+  }
 }

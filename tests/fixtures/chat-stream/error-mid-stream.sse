@@ -1,0 +1,16 @@
+data: {"type":"start"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"txt-4"}
+
+data: {"type":"text-delta","id":"txt-4","delta":"For a 998 with a stage one kit on an HS4, "}
+
+data: {"type":"error","errorText":"An error occurred."}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"error"}
+
+data: [DONE]
+

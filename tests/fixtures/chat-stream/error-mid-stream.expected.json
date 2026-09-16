@@ -1,0 +1,14 @@
+{
+  "id": "",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "For a 998 with a stage one kit on an HS4, ",
+      "state": "streaming"
+    }
+  ]
+}

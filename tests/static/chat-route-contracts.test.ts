@@ -64,6 +64,53 @@ describe('chat route contracts', () => {
     // green build and deploy included.
     expect(source).toMatch(/if\s*\(\s*!apiKey\s*\)/);
   });
+
+  /**
+   * The native-app contract (toolbox-ios/docs/plans/2026-09-15-native-ai-chat.md
+   * §5.1, §9.1). Each of these is a field the apps send or an event the §10
+   * metrics read, and each is invisible to the unit suite because the route
+   * itself is not unit-tested.
+   */
+  describe('native client contract', () => {
+    it('reads the client header and the entry point through chatUsage helpers', () => {
+      expect(source, 'chat.post.ts no longer reads x-cmdiy-client').toMatch(/readChatClient\s*\(\s*event\s*\)/);
+      expect(source, 'chat.post.ts no longer normalises entryPoint').toMatch(
+        /normalizeChatEntryPoint\s*\(\s*body\?\.entryPoint\s*\)/
+      );
+      // Never `source`: the apps register `source` as their PostHog super
+      // property, and a body field of that name would overwrite it.
+      expect(source).not.toMatch(/body\?\.source\b/);
+    });
+
+    it('threads client and entryPoint into the run tracker, not the finish extra bag', () => {
+      // Through the constructor, the same path `locale` takes, so every
+      // outcome carries them — an abandoned app run that lost its `client`
+      // would be counted as a web abandonment.
+      expect(source).toMatch(
+        /createChatRunTracker\s*\(\s*event\s*,\s*threadId\s*,\s*body\?\.locale\s*,\s*client\s*,\s*entryPoint\s*\)/
+      );
+    });
+
+    it('captures a quota refusal beside the 429 throw', () => {
+      // The run tracker never starts for a refusal, so this is the only
+      // capture a walled question produces — and the numerator of the
+      // refused → membership conversion metric.
+      const capture = source.indexOf('captureChatQuotaRefused(');
+      const refusal = source.indexOf('throw quotaExhaustedError(');
+      expect(capture, 'chat.post.ts no longer captures chat_quota_refused').toBeGreaterThan(-1);
+      expect(refusal).toBeGreaterThan(-1);
+      expect(capture, 'captureChatQuotaRefused must run before the 429 is thrown').toBeLessThan(refusal);
+    });
+
+    it('passes an abort signal to streamText', () => {
+      // Without it `onAbort` never fires, `client_disconnect` is a permanent
+      // zero, and a stopped or backgrounded app run keeps spending tokens.
+      expect(source).toMatch(/abortSignal:\s*abort\.signal/);
+      const stream = source.indexOf('streamText(');
+      const signal = source.indexOf('abortSignal:');
+      expect(signal).toBeGreaterThan(stream);
+    });
+  });
 });
 
 /**

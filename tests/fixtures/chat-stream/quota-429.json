@@ -1,0 +1,13 @@
+{
+  "error": true,
+  "url": "https://www.classicminidiy.com/api/chat",
+  "statusCode": 429,
+  "statusMessage": "Too Many Requests",
+  "message": "You have reached the monthly message limit. Sustaining Members get a much higher allowance — https://www.classicminidiy.com/membership",
+  "data": {
+    "tier": "free",
+    "used": 30,
+    "limit": 30,
+    "upgradeUrl": "https://www.classicminidiy.com/membership"
+  }
+}

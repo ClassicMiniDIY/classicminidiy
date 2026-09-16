@@ -3,7 +3,12 @@ import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 
 import { buildAgentTools, webSearchSupported } from '../agent/tools';
 import { stripStaleWebSearchContent } from '../agent/transcript';
 import { buildSystemPrompt } from '../agent/prompt';
-import { createChatRunTracker } from '../utils/chatUsage';
+import {
+  captureChatQuotaRefused,
+  createChatRunTracker,
+  normalizeChatEntryPoint,
+  readChatClient,
+} from '../utils/chatUsage';
 import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
 import { getChatAuth, MEMBERSHIP_URL } from '../utils/chatTiers';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
@@ -69,6 +74,7 @@ export default defineEventHandler(async (event) => {
     locale?: string;
     pageSlug?: string;
     threadId?: string;
+    entryPoint?: string;
   }>(event);
   const messages = body?.messages;
 
@@ -106,13 +112,58 @@ export default defineEventHandler(async (event) => {
   const rawThreadId = typeof body?.threadId === 'string' ? body.threadId : '';
   const threadId = /^[A-Za-z0-9_-]{1,64}$/.test(rawThreadId) ? rawThreadId : 'anonymous';
 
+  // Who asked and from where, for analytics only. The native Toolbox apps send
+  // `x-cmdiy-client: <platform>/<version>` and an `entryPoint` (the screen the
+  // question came from); the web sends neither and is `web` / `null`. Both are
+  // parsed here, before the quota check, because a refusal is stamped with them
+  // too. See server/utils/chatUsage.ts for the two allowlists.
+  const client = readChatClient(event);
+  const entryPoint = normalizeChatEntryPoint(body?.entryPoint);
+
   // BEFORE the model runs. A quota checked afterwards is not a quota — the
   // tokens are already spent. Every failure path inside allows the request, so
   // an unavailable counter degrades the ceiling rather than the assistant.
   const verdict = await consumeChatQuota(event);
-  if (!verdict.allowed) throw quotaExhaustedError(event, verdict);
+  if (!verdict.allowed) {
+    // The run tracker never starts for a refusal, so this is the only capture
+    // a walled question produces — and the numerator of the app conversion
+    // metric (refused → membership within 24h).
+    captureChatQuotaRefused(event, verdict, client, entryPoint, threadId);
+    throw quotaExhaustedError(event, verdict);
+  }
 
-  const tracker = createChatRunTracker(event, threadId, body?.locale);
+  const tracker = createChatRunTracker(event, threadId, body?.locale, client, entryPoint);
+
+  /**
+   * The client going away, as a signal the model loop can see.
+   *
+   * `streamText` only ever runs `onAbort` when its `abortSignal` fires, and
+   * before this was wired nothing fired it: a visitor pressing stop or an app
+   * going to the background left the loop running to completion on the
+   * Worker's clock, recorded as `completed`, and `client_disconnect` was a
+   * permanent zero. Two sources feed one controller because the route runs
+   * under two runtimes:
+   *
+   *  - Cloudflare hands the original `Request` through the event context, and
+   *    its `signal` aborts when the client disconnects.
+   *  - The Node dev server has no such request; `close` on the response fires
+   *    when the socket drops before `end()`. The `writableFinished === false`
+   *    guard keeps a normal completion (where `close` follows `end`) from
+   *    aborting a stream that has already finished, and keeps a shim without
+   *    the flag from ever aborting at all.
+   */
+  const abort = new AbortController();
+  const platformRequest = (event.context as { cloudflare?: { request?: Request } }).cloudflare?.request;
+  const platformSignal = platformRequest?.signal;
+  if (platformSignal) {
+    if (platformSignal.aborted) abort.abort();
+    else platformSignal.addEventListener('abort', () => abort.abort(), { once: true });
+  }
+  const res = event.node?.res as
+    { once?: (name: string, fn: () => void) => void; writableFinished?: boolean } | undefined;
+  res?.once?.('close', () => {
+    if (res.writableFinished === false) abort.abort();
+  });
 
   /**
    * Tools that answered degraded this run, e.g. `store-search:unavailable`.
@@ -226,6 +277,7 @@ export default defineEventHandler(async (event) => {
       onDegraded: recordDegraded,
     }),
     stopWhen: stepCountIs(MAX_STEPS),
+    abortSignal: abort.signal,
     // Every part of the stream, so time-to-first-chunk keeps meaning
     // time-to-first-token and chunk_count keeps meaning stream length. Feeding
     // only tool calls here would silently redefine both under the same names,

@@ -1,0 +1,56 @@
+{
+  "id": "",
+  "role": "assistant",
+  "parts": [
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "tool-video-search",
+      "toolCallId": "call-video-1",
+      "state": "output-available",
+      "input": {
+        "query": "brake bleeding",
+        "limit": 3
+      },
+      "output": {
+        "query": "brake bleeding",
+        "checked": true,
+        "videos": [
+          {
+            "videoId": "fx1Kq9ZQ8xA",
+            "title": "How to bleed the brakes on a Classic Mini",
+            "url": "https://www.youtube.com/watch?v=fx1Kq9ZQ8xA",
+            "thumbnail": "https://i.ytimg.com/vi/fx1Kq9ZQ8xA/hqdefault.jpg",
+            "publishedAt": "2023-04-12T14:00:00Z",
+            "score": 0.61
+          },
+          {
+            "videoId": "Qm2vT7rYz0c",
+            "title": "Classic Mini rear brake adjustment",
+            "url": "https://www.youtube.com/watch?v=Qm2vT7rYz0c",
+            "thumbnail": "https://i.ytimg.com/vi/Qm2vT7rYz0c/hqdefault.jpg",
+            "publishedAt": "2022-09-03T10:30:00Z",
+            "score": 0.47
+          },
+          {
+            "videoId": "Lp0aXd3wN9E",
+            "title": "Steering rack rebuild",
+            "url": "https://www.youtube.com/watch?v=Lp0aXd3wN9E",
+            "thumbnail": "https://i.ytimg.com/vi/Lp0aXd3wN9E/hqdefault.jpg",
+            "publishedAt": "2021-01-19T09:00:00Z",
+            "score": 0.31
+          }
+        ]
+      }
+    },
+    {
+      "type": "step-start"
+    },
+    {
+      "type": "text",
+      "text": "Start at the wheel furthest from the master cylinder (rear nearside), then work towards it. Cole has a video on the whole job.",
+      "state": "done"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+data: {"type":"start"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"txt-1"}
+
+data: {"type":"text-delta","id":"txt-1","delta":"The cylinder head nuts on an A-series 1275 torque to "}
+
+data: {"type":"text-delta","id":"txt-1","delta":"**42 lb-ft** (57 Nm), in the sequence from the centre outwards."}
+
+data: {"type":"text-end","id":"txt-1"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish","finishReason":"stop"}
+
+data: [DONE]
+
