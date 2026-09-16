@@ -337,10 +337,26 @@ export default defineEventHandler(async (event) => {
         tools_degraded: degradedList(),
       });
     },
-    onAbort() {
+    onAbort({ steps }) {
       // The visitor pressed stop or navigated away. These runs consumed tokens
       // and were previously recorded nowhere, which is awkward given
       // abandonment is the metric the whole rebuild is being judged on.
+      //
+      // `onFinish` does not run for an aborted stream, so the tokens the
+      // finished steps already paid for are summed here and recorded the same
+      // way, or an account's token accounting would silently under-count every
+      // run the phone backgrounded. The step that was in flight when the abort
+      // landed has no usage yet and is not counted.
+      let inputTokens = 0;
+      let outputTokens = 0;
+      for (const step of steps ?? []) {
+        inputTokens += step.usage?.inputTokens ?? 0;
+        outputTokens += step.usage?.outputTokens ?? 0;
+      }
+      if (inputTokens || outputTokens) {
+        tracker.observe({ usage_metadata: { input_tokens: inputTokens, output_tokens: outputTokens } });
+        recordChatTokens(event, inputTokens, outputTokens);
+      }
       tracker.finish('client_disconnect', undefined, { tools_degraded: degradedList() });
     },
     onError({ error }) {
