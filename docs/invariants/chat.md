@@ -35,9 +35,13 @@ and the quota. Three things were added for them and each has a reason worth keep
   this nothing fired it. A visitor pressing stop left the model running to completion on the
   Worker's clock, recorded as `completed`, and `client_disconnect` was a permanent zero. Two
   sources feed one controller: the Cloudflare `Request.signal` (production) and the Node
-  response `close` event guarded by `writableFinished === false` (dev). Verified in PostHog
-  from a dev run; the Workers path should be confirmed by reading `client_disconnect` counts
-  after the first deploy. Aborted runs record the finished steps' tokens from `onAbort`'s
+  response `close` event guarded by `writableFinished === false` (dev). **On Workers the
+  Request signal only fires with the `enable_request_signal` compatibility flag in
+  `wrangler.jsonc`**; without it the signal is a real `AbortSignal` that never aborts and the
+  Node listener is inert there too (unenv's `ServerResponse` has no socket, so h3 never calls
+  `end()`). The Node guard cannot misfire on a normal completion on either runtime: `close`
+  follows `end()` with `writableFinished === true`. Confirm by reading `client_disconnect`
+  counts after the first deploy. Aborted runs record the finished steps' tokens from `onAbort`'s
   `steps`, since `onFinish` does not run for them.
 - The recorded stream fixtures are produced through the real `streamText →
 toUIMessageStreamResponse()` pipeline with a scripted model, not a live recording: the bytes

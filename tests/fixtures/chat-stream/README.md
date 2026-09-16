@@ -8,9 +8,12 @@ is fed the `.sse` bytes and must produce the matching `.expected.json`, which is
 the `UIMessage` the web's `useChat` stores after the same stream. Two parsers
 that agree with these files agree with each other.
 
-`tests/unit/server/fixtures/chatStreamFixtures.test.ts` re-parses every `.sse`
-with the installed AI SDK, so an SDK upgrade that changes the wire format fails
-here before either app finds out. Re-record after such an upgrade with:
+The scenarios and the rendering pipeline live in `scenarios.ts` beside the
+files. `tests/unit/server/fixtures/chatStreamFixtures.test.ts` both re-parses
+every `.sse` with the installed AI SDK and regenerates it from `scenarios.ts`,
+asserting the bytes are identical, so an SDK upgrade that changes the wire
+format in either direction fails here before either app finds out. Re-record
+after such an upgrade with:
 
 ```bash
 bun run scripts/record-chat-stream-fixtures.ts
@@ -18,7 +21,8 @@ bun run scripts/record-chat-stream-fixtures.ts
 
 The recorder drives the real `streamText` → `toUIMessageStreamResponse()`
 pipeline with a scripted model, so the bytes are deterministic and the two
-failure cases can be produced on demand.
+failure cases can be produced on demand. The apps copy the data files only;
+`scenarios.ts` and this README are the Worker's.
 
 ## Files
 

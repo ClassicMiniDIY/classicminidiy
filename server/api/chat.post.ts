@@ -326,7 +326,6 @@ export default defineEventHandler(async (event) => {
       recordChatTokens(event, inputTokens, outputTokens);
 
       tracker.finish('completed', undefined, {
-        tier: getChatAuth(event)?.tier,
         quota_used: verdict.used,
         quota_limit: verdict.limit,
         // True when the ceiling could not be evaluated and the run was allowed
