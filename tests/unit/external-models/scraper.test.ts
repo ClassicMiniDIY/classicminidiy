@@ -672,6 +672,16 @@ describe('fetchPrintablesModel — reader fallback (Worker egress is throttled)'
     ).toBeNull();
   });
 
+  it('does not retry a GraphQL (schema) error through the reader — the API was reached', async () => {
+    const reader = printablesReader({ data: { print: PRINT_NODE } });
+    const m = await fetchPrintablesModel('1', {
+      apiImpl: printablesApi({ errors: [{ message: "Cannot query field 'x'" }] }).impl,
+      readerImpl: reader.impl,
+    });
+    expect(m).toBeNull();
+    expect(reader.calls).toHaveLength(0);
+  });
+
   it('never reaches the real reader when a test injects only the direct fetch', async () => {
     const realFetch = globalThis.fetch;
     const spy = vi.fn(async () => {
