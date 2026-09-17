@@ -6,9 +6,10 @@
  * rendering service (`renderExternalPage`). Direct path stays the default, so
  * non-blocked sites (Thingiverse) never hit the third-party.
  *
- * Printables is special-cased: its pages are behind a Cloudflare challenge
- * since 2026-09, but its public GraphQL API is not, so `fetchPrintablesModel`
- * runs FIRST and the HTML + render chain is only the fallback for it.
+ * Two sites have a first-party API adapter that runs FIRST (`API_ADAPTERS`):
+ * Printables (pages challenged since 2026-09, public GraphQL API is not) and
+ * Cults3D (challenged on every path we have; authenticated GraphQL API). For
+ * those the HTML + render chain is only the fallback.
  *
  * Re-exports the shared detection helpers so server code has one import.
  */
@@ -25,7 +26,8 @@ import {
 import { fetchExternalPage, parseOpenGraph, type OgMetadata } from './ogParser';
 import { renderExternalPage } from './render';
 import { fetchPrintablesModel } from './printables';
-import { enrich } from './enrichers';
+import { fetchCults3dModel, type Cults3dCredentials } from './cults3d';
+import { enrich, type EnrichedFields } from './enrichers';
 import { ScrapeError } from './errors';
 
 export { detectSourceSite, extractExternalId, isValidExternalUrl, normalizeExternalUrl };
@@ -55,11 +57,24 @@ export interface ScrapeDeps {
   fetchImpl?: typeof fetch;
   /** Injected for tests — stands in for the render-service fetch. */
   renderImpl?: typeof fetch;
-  /** Injected for tests — stands in for the Printables GraphQL fetch. */
-  printablesApiImpl?: typeof fetch;
+  /** Injected for tests — stands in for a first-party API fetch (Printables / Cults3D). */
+  apiImpl?: typeof fetch;
   /** Render-service (Jina Reader) API key, forwarded from runtimeConfig by the route. */
   readerApiKey?: string;
+  /** Cults3D API credentials, forwarded from runtimeConfig by the route. */
+  cults3d?: Cults3dCredentials;
 }
+
+/** Per-site first-party API adapters, keyed by the id the site's `urlPattern` captures. */
+const API_ADAPTERS: Partial<
+  Record<
+    ExternalSourceSite,
+    (externalId: string, deps: ScrapeDeps) => Promise<{ fields: EnrichedFields; images: string[] } | null>
+  >
+> = {
+  printables: (id, deps) => fetchPrintablesModel(id, deps.apiImpl),
+  cults3d: (id, deps) => fetchCults3dModel(id, deps.cults3d ?? {}, deps.apiImpl),
+};
 
 /**
  * Scrape an external 3D-model page into normalized listing fields. Throws a
@@ -76,12 +91,13 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
   const forceRender = sourceConfig(site).requiresRender === true;
   const externalId = extractExternalId(sourceUrl, site);
 
-  // 0) Printables: ask its GraphQL API before touching the page. Runs in
-  //    production (no injected fetchImpl) or when a test supplies
-  //    `printablesApiImpl`. A `null` here means "API unavailable / shape drift",
-  //    and the page + render chain below has its turn; a missing model throws 404.
-  if (site === 'printables' && externalId && (!deps.fetchImpl || deps.printablesApiImpl)) {
-    const api = await fetchPrintablesModel(externalId, deps.printablesApiImpl);
+  // 0) First-party API before touching the page. Runs in production (no
+  //    injected fetchImpl) or when a test supplies `apiImpl`. A `null` here
+  //    means "API unavailable / no credentials / shape drift", and the page +
+  //    render chain below has its turn; a missing model throws 404.
+  const adapter = API_ADAPTERS[site];
+  if (adapter && externalId && (!deps.fetchImpl || deps.apiImpl)) {
+    const api = await adapter(externalId, deps);
     if (api) {
       return {
         sourceSite: site,

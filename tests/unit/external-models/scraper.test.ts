@@ -16,6 +16,8 @@ import { fetchExternalMetadata } from '~~/server/utils/external-models';
 import { ScrapeError } from '~~/server/utils/external-models/errors';
 import { renderExternalPage } from '~~/server/utils/external-models/render';
 import { fetchPrintablesModel, mapPrintablesPrint } from '~~/server/utils/external-models/printables';
+import { fetchCults3dModel, mapCults3dCreation } from '~~/server/utils/external-models/cults3d';
+import { normalizeLicenseLabel } from '~~/server/utils/external-models/license';
 
 // --- external-sources: detection / id / normalization -----------------------
 
@@ -589,7 +591,7 @@ describe('fetchExternalMetadata — Printables API wiring', () => {
         rendered = true;
         return fakeJsonFetch({})();
       }) as unknown as typeof fetch,
-      printablesApiImpl: printablesApi({ data: { print: PRINT_NODE } }).impl,
+      apiImpl: printablesApi({ data: { print: PRINT_NODE } }).impl,
     });
     expect(pageHit).toBe(false);
     expect(rendered).toBe(false);
@@ -610,7 +612,7 @@ describe('fetchExternalMetadata — Printables API wiring', () => {
       fetchImpl: fakeFetch(
         '<meta property="og:title" content="Needle Plate by fisherbt | Download free STL model | Printables.com"><meta property="og:image" content="https://cdn.test/p.jpg">'
       ),
-      printablesApiImpl: printablesApi({}, 503).impl,
+      apiImpl: printablesApi({}, 503).impl,
     });
     expect(result.title).toBe('Needle Plate');
     expect(result.authorName).toBe('fisherbt');
@@ -625,9 +627,211 @@ describe('fetchExternalMetadata — Printables API wiring', () => {
           rendered = true;
           return fakeJsonFetch({})();
         }) as unknown as typeof fetch,
-        printablesApiImpl: printablesApi({ data: { print: null } }).impl,
+        apiImpl: printablesApi({ data: { print: null } }).impl,
       })
     ).rejects.toMatchObject({ statusCode: 404 });
     expect(rendered).toBe(false);
+  });
+});
+
+// --- Cults3D GraphQL API path -----------------------------------------------
+
+const CULTS_URL = 'https://cults3d.com/en/3d-model/various/john-cooper-logo';
+const CULTS_CREDS = { user: 'cmdiy', apiKey: 'k' };
+
+function cultsApi(payload: unknown, status = 200) {
+  const calls: { url: string; headers: Record<string, string>; body: unknown }[] = [];
+  const impl = (async (url: string, init?: RequestInit) => {
+    calls.push({
+      url,
+      headers: init?.headers as Record<string, string>,
+      body: init?.body ? JSON.parse(String(init.body)) : null,
+    });
+    return { ok: status >= 200 && status < 300, status, json: async () => payload } as unknown as Response;
+  }) as unknown as typeof fetch;
+  return { impl, calls };
+}
+
+const CREATION_NODE = {
+  slug: 'john-cooper-logo',
+  name: 'CLASSIC MINI COOPER JOHN COOPER BADGE EMBLEM',
+  url: CULTS_URL,
+  description: 'John Cooper LOGO for the classic mini cooper.\r\n',
+  details: 'For exterior car emblem print solid. No supports.\r\nResize in slicer.',
+  illustrationImageUrl:
+    'https://images.cults3d.com/a=/516x516/filters:no_upscale()/https://fbi.cults3d.com/u/1/front.png',
+  illustrations: [
+    { imageUrl: 'https://images.cults3d.com/a=/516x516/filters:no_upscale()/https://fbi.cults3d.com/u/1/front.png' },
+    { imageUrl: 'https://images.cults3d.com/b=/516x516/filters:no_upscale()/https://fbi.cults3d.com/u/1/side.jpg' },
+  ],
+  creator: { nick: 'Go-Ballistic', url: 'https://cults3d.com/en/users/Go-Ballistic' },
+  license: {
+    code: 'cults_pu',
+    name: 'CULTS PU - Private Use',
+    spdxId: 'LicenseRef-Cults-PU',
+    allowsCommercialUse: false,
+  },
+  tags: ['john cooper', 'classic mini cooper', '1275gt'],
+  category: { name: 'Various' },
+  safe: true,
+  visibility: 'PUBLIC',
+};
+
+describe('license helpers', () => {
+  it('normalizes CC labels and SPDX ids to the stored abbreviation', () => {
+    expect(normalizeLicenseLabel('CC-BY-NC-4.0')).toBe('CC-BY-NC');
+    expect(normalizeLicenseLabel('CC BY-SA - Attribution - Share alike')).toBe('CC-BY-SA');
+    expect(normalizeLicenseLabel('Creative Commons — Attribution — Noncommercial — Share Alike')).toBe('CC-BY-NC-SA');
+    expect(normalizeLicenseLabel('CC0-1.0')).toBe('CC0');
+    expect(normalizeLicenseLabel('CULTS PU - Private Use')).toBe('CULTS PU - Private Use');
+    expect(normalizeLicenseLabel('  ')).toBeNull();
+  });
+});
+
+describe('mapCults3dCreation', () => {
+  it('maps the API node to listing fields', () => {
+    const m = mapCults3dCreation(CREATION_NODE);
+    expect(m.fields.title).toBe('CLASSIC MINI COOPER JOHN COOPER BADGE EMBLEM');
+    expect(m.fields.description).toBe(
+      'John Cooper LOGO for the classic mini cooper.\n\nFor exterior car emblem print solid. No supports.\nResize in slicer.'
+    );
+    expect(m.fields.summary).toBe('John Cooper LOGO for the classic mini cooper.');
+    expect(m.fields.authorName).toBe('Go-Ballistic');
+    expect(m.fields.authorUrl).toBe('https://cults3d.com/en/users/Go-Ballistic');
+    expect(m.fields.license).toBe('CULTS PU - Private Use');
+    expect(m.fields.remixesAllowed).toBe(false);
+    expect(m.fields.commercialUseAllowed).toBe(false);
+    expect(m.fields.tags).toEqual(['john cooper', 'classic mini cooper', '1275gt']);
+    expect(m.images).toHaveLength(2); // primary de-duplicated against the gallery
+    expect(m.images[0]).toContain('front.png');
+  });
+
+  it('derives flags per Cults license family', () => {
+    const flags = (license: (typeof CREATION_NODE)['license']) => {
+      const f = mapCults3dCreation({ name: 'x', license }).fields;
+      return [f.license, f.remixesAllowed, f.commercialUseAllowed];
+    };
+    expect(
+      flags({ code: 'cc_by_nc_nd', name: 'CC BY-NC-ND', spdxId: 'CC-BY-NC-ND-4.0', allowsCommercialUse: false })
+    ).toEqual(['CC-BY-NC-ND', false, false]);
+    expect(flags({ code: 'cc_by', name: 'CC BY', spdxId: 'CC-BY-4.0', allowsCommercialUse: true })).toEqual([
+      'CC-BY',
+      true,
+      true,
+    ]);
+    // Cults marks CC0 non-commercial; the SPDX id wins.
+    expect(flags({ code: 'cc_pddc', name: 'CC0', spdxId: 'CC0-1.0', allowsCommercialUse: false })).toEqual([
+      'CC0',
+      true,
+      true,
+    ]);
+    expect(
+      flags({
+        code: 'cults_cu',
+        name: 'CULTS CU - Commercial Use',
+        spdxId: 'LicenseRef-Cults-CU',
+        allowsCommercialUse: true,
+      })
+    ).toEqual(['CULTS CU - Commercial Use', true, true]);
+    expect(
+      flags({ code: 'cults_cu_nd', name: 'CULTS CU-ND', spdxId: 'LicenseRef-Cults-CU-ND', allowsCommercialUse: true })
+    ).toEqual(['CULTS CU-ND', false, true]);
+    expect(flags({ code: 'gpl', name: 'GNU GPL', spdxId: 'GPL-3.0-or-later', allowsCommercialUse: false })).toEqual([
+      'GNU GPL',
+      true,
+      false,
+    ]);
+    expect(flags(null)).toEqual(['CC-BY-NC', true, false]); // registry default
+  });
+});
+
+describe('fetchCults3dModel', () => {
+  it('POSTs the slug with Basic auth and maps the result', async () => {
+    const api = cultsApi({ data: { creation: CREATION_NODE } });
+    const m = await fetchCults3dModel('john-cooper-logo', CULTS_CREDS, api.impl);
+    expect(m?.fields.title).toContain('JOHN COOPER');
+    expect(api.calls[0].url).toBe('https://cults3d.com/graphql');
+    expect(api.calls[0].headers.Authorization).toBe(`Basic ${btoa('cmdiy:k')}`);
+    expect(api.calls[0].headers['User-Agent']).toContain('ClassicMiniDIY');
+    expect((api.calls[0].body as { variables: { slug: string } }).variables.slug).toBe('john-cooper-logo');
+  });
+
+  it('returns null without credentials and never calls the API', async () => {
+    const api = cultsApi({ data: { creation: CREATION_NODE } });
+    expect(await fetchCults3dModel('john-cooper-logo', {}, api.impl)).toBeNull();
+    expect(await fetchCults3dModel('john-cooper-logo', { user: 'u' }, api.impl)).toBeNull();
+    expect(api.calls).toHaveLength(0);
+  });
+
+  it('throws 404 when the creation is missing, 422 when NSFW or not public', async () => {
+    await expect(
+      fetchCults3dModel('gone', CULTS_CREDS, cultsApi({ data: { creation: null } }).impl)
+    ).rejects.toMatchObject({
+      statusCode: 404,
+    });
+    await expect(
+      fetchCults3dModel('x', CULTS_CREDS, cultsApi({ data: { creation: { ...CREATION_NODE, safe: false } } }).impl)
+    ).rejects.toMatchObject({ statusCode: 422 });
+    await expect(
+      fetchCults3dModel(
+        'x',
+        CULTS_CREDS,
+        cultsApi({ data: { creation: { ...CREATION_NODE, visibility: 'PRIVATE' } } }).impl
+      )
+    ).rejects.toMatchObject({ statusCode: 422 });
+  });
+
+  it('returns null (fall back) on 401, GraphQL errors, and transport failure', async () => {
+    expect(await fetchCults3dModel('x', CULTS_CREDS, cultsApi({}, 401).impl)).toBeNull();
+    expect(await fetchCults3dModel('x', CULTS_CREDS, cultsApi({ errors: [{ message: 'nope' }] }).impl)).toBeNull();
+    expect(
+      await fetchCults3dModel('x', CULTS_CREDS, (async () => {
+        throw new TypeError('fetch failed');
+      }) as unknown as typeof fetch)
+    ).toBeNull();
+    expect(
+      await fetchCults3dModel('bad slug!', CULTS_CREDS, cultsApi({ data: { creation: CREATION_NODE } }).impl)
+    ).toBeNull();
+  });
+});
+
+describe('fetchExternalMetadata — Cults3D API wiring', () => {
+  it('uses the API with the forwarded credentials and skips the page and render', async () => {
+    let pageHit = false;
+    let rendered = false;
+    const api = cultsApi({ data: { creation: CREATION_NODE } });
+    const result = await fetchExternalMetadata(CULTS_URL, {
+      fetchImpl: (async (url: string) => {
+        pageHit = true;
+        return { text: async () => '<title>Just a moment...</title>', url, status: 403 } as unknown as Response;
+      }) as unknown as typeof fetch,
+      renderImpl: (async () => {
+        rendered = true;
+        return fakeJsonFetch({})();
+      }) as unknown as typeof fetch,
+      apiImpl: api.impl,
+      cults3d: CULTS_CREDS,
+    });
+    expect(pageHit).toBe(false);
+    expect(rendered).toBe(false);
+    expect(result.sourceSite).toBe('cults3d');
+    expect(result.externalId).toBe('john-cooper-logo');
+    expect(result.authorName).toBe('Go-Ballistic');
+    expect(result.images[0].isPrimary).toBe(true);
+  });
+
+  it('falls through to the page path when no credentials are configured', async () => {
+    let pageHit = false;
+    await expect(
+      fetchExternalMetadata(CULTS_URL, {
+        fetchImpl: (async (url: string) => {
+          pageHit = true;
+          return { text: async () => '', url, status: 403 } as unknown as Response;
+        }) as unknown as typeof fetch,
+        apiImpl: cultsApi({ data: { creation: CREATION_NODE } }).impl,
+        renderImpl: fakeJsonFetch(jinaPage({}, { title: 'Just a moment...' })) as unknown as typeof fetch,
+      })
+    ).rejects.toMatchObject({ statusCode: 422 });
+    expect(pageHit).toBe(true);
   });
 });
