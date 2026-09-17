@@ -89,7 +89,7 @@ describe('runClassifier', () => {
     ask.mockReturnValue(new Promise(() => {}));
     runClassifier(event, { messages, tools });
     expect(ask).toHaveBeenCalledTimes(1);
-    const [, state] = ask.mock.calls[0]!;
+    const state = ask.mock.calls[0]![1] as { message: string; previous: string };
     expect(state.message).toBe('main bearing torque?');
     expect(state.previous).toBe('first');
   });
@@ -139,11 +139,40 @@ describe('runClassifier', () => {
     vi.useRealTimers();
   });
 
-  it('reports what it has so far for a run that ends early', async () => {
-    ask.mockResolvedValue(goodAnswer());
+  it('cancel() aborts the in-flight call so a refused request stops paying and logs skipped, not error', async () => {
+    let signal: AbortSignal | undefined;
+    ask.mockImplementation((_e: unknown, _s: unknown, _q: unknown, meta: { signal?: AbortSignal }) => {
+      signal = meta.signal;
+      return new Promise((_, reject) => meta.signal?.addEventListener('abort', () => reject(new Error('aborted'))));
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const run = runClassifier(event, { messages, tools });
-    expect(run.analyticsSoFar()).toEqual({ classifier: 'skipped' });
-    await run.collect();
-    expect(run.analyticsSoFar()).toMatchObject({ classifier: 'hint', classified_tier: 'specification' });
+    run.cancel();
+    expect(signal?.aborted).toBe(true);
+    expect((await run.collect()).analytics).toMatchObject({ classifier: 'skipped' });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('asks for no retries: a retry could only be dispatched and then aborted inside the ceiling', () => {
+    ask.mockReturnValue(new Promise(() => {}));
+    runClassifier(event, { messages, tools });
+    expect(ask.mock.calls[0]![3]).toMatchObject({ retry: { maxRetries: 0 } });
+  });
+
+  it('a malformed messages array is an error shape, never a throw', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const run = runClassifier(event, { messages: [null] as any, tools });
+    expect((await run.collect()).analytics).toEqual({ classifier: 'error' });
+    expect(ask).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('clips a long page slug and ignores a non-string one', () => {
+    ask.mockReturnValue(new Promise(() => {}));
+    runClassifier(event, { messages, tools, pageSlug: 'p'.repeat(600) });
+    expect((ask.mock.calls[0]![1] as { page: string }).page.length).toBeLessThanOrEqual(201);
+    runClassifier(event, { messages, tools, pageSlug: { evil: true } as any });
+    expect((ask.mock.calls[1]![1] as { page: string }).page).toBe('');
   });
 });

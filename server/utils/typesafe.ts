@@ -80,7 +80,7 @@ export async function askTypeSafe<const Q extends Questions>(
   event: H3Event,
   state: Parameters<TypeSafeClient['systemOne']>[0]['state'],
   questions: Q,
-  meta: { caller: string; signal?: AbortSignal }
+  meta: { caller: string; signal?: AbortSignal; retry?: { maxRetries: number } }
 ): Promise<TypeSafeAnswer<Q>> {
   const apiKey = ((serverRuntimeConfig(event).TYPESAFE_API_KEY as string) || '').trim();
   if (!apiKey) throw new Error('TYPESAFE_API_KEY is not set');
@@ -88,7 +88,7 @@ export async function askTypeSafe<const Q extends Questions>(
   const started = Date.now();
   const result = await clientFor(apiKey).systemOne(
     { state, questions, model: TYPESAFE_MODEL },
-    meta.signal ? { signal: meta.signal } : {}
+    { ...(meta.signal ? { signal: meta.signal } : {}), ...(meta.retry ? { retry: meta.retry } : {}) }
   );
   const durationMs = Date.now() - started;
   if (!result.model || ALIASES.has(result.model)) {
