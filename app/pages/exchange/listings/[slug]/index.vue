@@ -637,7 +637,9 @@
 
                       <!-- Visitor Actions (hide for example and sold listings) -->
                       <template v-else-if="!isExampleListing && listing.status !== 'sold'">
+                        <!-- A listing retained after its owner deleted their account has no seller to message -->
                         <button
+                          v-if="listing.user_id"
                           @click="handleContactSeller"
                           class="btn btn-primary btn-block"
                           :disabled="contactingLoading"
@@ -957,7 +959,9 @@
   };
 
   const handleContactSeller = async () => {
-    if (!listing.value) return;
+    // A retained listing whose owner deleted their account has user_id NULL:
+    // the button is hidden for it, and there is no recipient to message.
+    if (!listing.value?.user_id) return;
 
     // Track contact seller click
     capture('contact_seller_clicked', {

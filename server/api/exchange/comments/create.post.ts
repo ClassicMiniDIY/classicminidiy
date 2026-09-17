@@ -214,8 +214,9 @@ export default defineEventHandler(async (event) => {
                 }),
               });
             }
-          } else if (listingInfo.user_id !== user.id) {
-            // Top-level comment — notify the listing owner
+          } else if (listingInfo.user_id && listingInfo.user_id !== user.id) {
+            // Top-level comment — notify the listing owner. A retained listing
+            // whose owner deleted their account has user_id NULL: nobody to notify.
             await queueNotification({
               userId: listingInfo.user_id,
               eventType: 'new_comment',

@@ -197,8 +197,11 @@ export default defineEventHandler(async (event) => {
     // surfaced as the 404 below on every single inquiry.
     const sellerEmail = listing.profiles?.profile_private?.email;
 
-    // Check if seller has email
-    if (!sellerEmail) {
+    // Check if there is a seller to reach. `user_id` is NULL on a listing
+    // retained after its owner deleted their account; those are sold or
+    // cancelled so the `status = active` filter above already excludes them,
+    // but the type is nullable and there is nobody to email either way.
+    if (!listing.user_id || !sellerEmail) {
       throw createError({
         statusCode: 400,
         message:

@@ -75,10 +75,14 @@ export default defineEventHandler(async (event) => {
   return text;
 });
 
-/** Owner or admin may view the license for an unpublished version. */
-async function canViewUnpublished(event: any, ownerId: string): Promise<boolean> {
+/**
+ * Owner or admin may view the license for an unpublished version. `ownerId`
+ * is NULL on a model retained after its owner deleted their account, so only
+ * an admin can view it then.
+ */
+async function canViewUnpublished(event: any, ownerId: string | null): Promise<boolean> {
   const token = extractAccessToken(event);
-  if (token) {
+  if (token && ownerId) {
     const { data } = await getServiceClient().auth.getUser(token);
     if (data?.user?.id === ownerId) return true;
   }
