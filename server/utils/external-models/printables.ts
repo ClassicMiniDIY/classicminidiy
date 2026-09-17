@@ -76,14 +76,19 @@ export interface PrintablesModel {
   images: string[];
 }
 
+/** Remove tags until none remain, so nested input like `<scr<script>ipt>` cannot survive one pass. */
+function stripTags(input: string): string {
+  let out = input;
+  for (;;) {
+    const next = out.replace(/<[^>]*>/g, '');
+    if (next === out) return out;
+    out = next;
+  }
+}
+
 /** Turn the API's HTML description into the plain text the listing stores. */
 function htmlToText(html: string): string {
-  return decodeHtmlEntities(
-    html
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
-      .replace(/<[^>]+>/g, '')
-  )
+  return decodeHtmlEntities(stripTags(html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|h[1-6])>/gi, '\n')))
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
