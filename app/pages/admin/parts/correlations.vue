@@ -82,6 +82,8 @@
   const failed = ref<Record<string, string>>({});
   /** Cards whose alternatives are unfolded. */
   const expanded = ref<Set<string>>(new Set());
+  /** Listings reopened this visit: they leave Closed now and return to Proposed on the next scorer pass. */
+  const reopened = ref(0);
 
   function toggle(recordId: string): void {
     const next = new Set(expanded.value);
@@ -100,7 +102,11 @@
     } catch (e) {
       // Surfaced on the card, not in a toast. A failed decision that vanishes is
       // one the reviewer believes they made.
-      failed.value = { ...failed.value, [key]: (e as Error)?.message ?? 'Could not save that decision' };
+      const err = e as { data?: { statusMessage?: string }; statusMessage?: string; message?: string };
+      failed.value = {
+        ...failed.value,
+        [key]: err?.data?.statusMessage || err?.statusMessage || err?.message || 'Could not save that decision',
+      };
     } finally {
       const next = new Set(busy.value);
       next.delete(key);
@@ -125,10 +131,11 @@
     );
   }
 
-  function reopen(group: CorrelationGroup): Promise<void> {
-    return withBusy(group.recordId, () =>
+  async function reopen(group: CorrelationGroup): Promise<void> {
+    await withBusy(group.recordId, () =>
       $adminFetch('/api/admin/parts/reopen-correlation', { method: 'POST', body: { recordId: group.recordId } })
     );
+    if (!failed.value[group.recordId]) reopened.value += 1;
   }
 
   /**
@@ -204,6 +211,14 @@
           title="Proposals the second-stage model has not scored yet. They sort after the scored ones."
         >
           {{ counts.unscored }} awaiting model score
+        </span>
+      </div>
+
+      <div v-if="status === 'closed' && reopened > 0" class="mb-4 alert alert-success py-2">
+        <i class="fas fa-rotate-left" />
+        <span class="text-sm">
+          Reopened {{ reopened }}. The scorer proposes again on its next pass, within a few minutes; the listing then
+          shows under Proposed.
         </span>
       </div>
 

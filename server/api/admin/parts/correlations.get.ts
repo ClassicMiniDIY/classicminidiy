@@ -167,6 +167,43 @@ function byBest(a: CorrelationRow, b: CorrelationRow): number {
   return (a.rank ?? 99) - (b.rank ?? 99) || b.confidence - a.confidence;
 }
 
+type Db = ReturnType<typeof getServiceClient>;
+
+/**
+ * Counts per tab, so the screen can say how much is waiting without fetching
+ * it. Null rather than zero on failure: "nothing to review" is a conclusion,
+ * and a failed count must not be able to state it. Independent, so they run
+ * together. Every response carries all of them, whichever tab asked, or the
+ * badges on the other tabs would blank when the reviewer switches.
+ */
+async function loadCounts(db: Db): Promise<Record<string, number | null>> {
+  const head = { count: 'exact' as const, head: true };
+  const [proposed, approved, rejected, closed, unscored] = await Promise.all([
+    db.from('part_number_correlations').select('id', head).eq('status', 'proposed'),
+    db.from('part_number_correlations').select('id', head).eq('status', 'approved'),
+    db.from('part_number_correlations').select('id', head).eq('status', 'rejected'),
+    db
+      .from('part_source_records')
+      .select('id', head)
+      .eq('correlation_state', 'no_factory_equivalent')
+      .eq('is_current', true),
+    db.from('part_number_correlations').select('id', head).eq('status', 'proposed').is('model_scored_at', null),
+  ]);
+  const n = (r: { count: number | null; error: unknown }) => (r.error ? null : (r.count ?? 0));
+  return {
+    proposed: n(proposed),
+    approved: n(approved),
+    rejected: n(rejected),
+    closed: n(closed),
+    // How far the second stage has got, so the screen can say "unscored"
+    // rather than leave a missing number to be read as zero.
+    unscored: n(unscored),
+  };
+}
+
+/** PostgREST `in()` lists ride in the URL; ~100 uuids is a safe request line. */
+const IN_CHUNK = 100;
+
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event);
   const query = getQuery(event);
@@ -187,6 +224,8 @@ export default defineEventHandler(async (event) => {
       .from('part_source_records')
       .select('id, title, part_number_as_listed, source_url, part_sources ( name )')
       .eq('correlation_state', 'no_factory_equivalent')
+      // A retired record is a link to a 404 and nothing to reopen.
+      .eq('is_current', true)
       .order('updated_at', { ascending: false })
       .limit(limit);
     if (error) {
@@ -210,11 +249,7 @@ export default defineEventHandler(async (event) => {
       noneFit: null,
       candidates: [],
     }));
-    const { count, error: countError } = await db
-      .from('part_source_records')
-      .select('id', { count: 'exact', head: true })
-      .eq('correlation_state', 'no_factory_equivalent');
-    return { groups, counts: { closed: countError ? null : (count ?? 0) }, status };
+    return { groups, counts: await loadCounts(db), status };
   }
 
   // Read 1: which records lead. Model-scored rows first, best P(same) first;
@@ -245,18 +280,20 @@ export default defineEventHandler(async (event) => {
   }
 
   // Read 2: every row of exactly those records, so no alternative is cut off.
-  let raws: RawRow[] = [];
-  if (recordIds.length > 0) {
+  // Chunked, because the id list travels in the query string and 200 uuids
+  // overrun an 8 KB request line at the gateway.
+  const raws: RawRow[] = [];
+  for (let i = 0; i < recordIds.length; i += IN_CHUNK) {
     const { data, error } = await db
       .from('part_number_correlations')
       .select(ROW_SELECT)
       .eq('status', status)
-      .in('source_record_id', recordIds);
+      .in('source_record_id', recordIds.slice(i, i + IN_CHUNK));
     if (error) {
       console.error('[admin/parts/correlations] read failed:', error.message);
       throw createError({ statusCode: 502, statusMessage: 'Could not read the correlation queue' });
     }
-    raws = (data ?? []) as unknown as RawRow[];
+    raws.push(...((data ?? []) as unknown as RawRow[]));
   }
 
   const byRecord = new Map<string, CorrelationGroup>();
@@ -285,33 +322,7 @@ export default defineEventHandler(async (event) => {
     .filter((g): g is CorrelationGroup => g !== undefined)
     .map((g) => ({ ...g, candidates: [...g.candidates].sort(byBest) }));
 
-  // Counts per status, so the screen can say how much is waiting without
-  // fetching it. Null rather than zero on failure: "nothing to review" is a
-  // conclusion, and a failed count must not be able to state it.
-  const counts: Record<string, number | null> = {};
-  for (const s of ['proposed', 'approved', 'rejected'] as const) {
-    const { count, error: countError } = await db
-      .from('part_number_correlations')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', s);
-    counts[s] = countError ? null : (count ?? 0);
-  }
-  {
-    const { count, error: countError } = await db
-      .from('part_source_records')
-      .select('id', { count: 'exact', head: true })
-      .eq('correlation_state', 'no_factory_equivalent');
-    counts.closed = countError ? null : (count ?? 0);
-  }
-
-  // How far the second stage has got, so the screen can say "unscored" rather
-  // than leave a missing number to be read as zero.
-  const { count: unscored, error: unscoredError } = await db
-    .from('part_number_correlations')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'proposed')
-    .is('model_scored_at', null);
-  counts.unscored = unscoredError ? null : (unscored ?? 0);
+  const counts = await loadCounts(db);
 
   return { groups, counts, status };
 });
