@@ -25,6 +25,7 @@ import type { EnrichedFields } from './enrichers';
 import { truncateSummary } from './enrichers';
 import { decodeHtmlEntities } from './ogParser';
 import { ScrapeError } from './errors';
+import { licenseFlags } from './license';
 
 const PRINTABLES_GRAPHQL_ENDPOINT = 'https://api.printables.com/graphql/';
 /** Gallery images are served from the public media CDN as `<base>/<filePath>`. */
@@ -99,27 +100,6 @@ function mediaUrl(filePath: string | null | undefined): string | null {
   return PRINTABLES_MEDIA_BASE + filePath.replace(/^\/+/, '');
 }
 
-/**
- * Derive the two listing flags from a Creative Commons abbreviation. The OG path
- * never had the license and had to fall back to the site registry; the API gives
- * the real one, so honour it: `ND` forbids remixes, `NC` forbids commercial use,
- * and the permissive CC variants allow both. Anything else (Printables' own
- * "Standard Digital File License", or a blank) keeps the registry defaults.
- */
-function licenseFlags(abbreviation: string | null): {
-  remixesAllowed: boolean | null;
-  commercialUseAllowed: boolean | null;
-} {
-  const cfg = sourceConfig('printables');
-  const fallback = { remixesAllowed: cfg.defaultLicense ? true : null, commercialUseAllowed: cfg.commercialUseAllowed };
-  if (!abbreviation) return fallback;
-  const code = abbreviation.toUpperCase().replace(/[^A-Z0-9]+/g, '-');
-  if (code === 'CC0' || code === 'CC0-1-0') return { remixesAllowed: true, commercialUseAllowed: true };
-  if (!code.startsWith('CC-BY')) return fallback;
-  const parts = new Set(code.split('-'));
-  return { remixesAllowed: !parts.has('ND'), commercialUseAllowed: !parts.has('NC') };
-}
-
 /** Exported for tests: pure mapping from an API `print` node to listing fields. */
 export function mapPrintablesPrint(print: PrintablesPrint): PrintablesModel {
   const cfg = sourceConfig('printables');
@@ -156,7 +136,7 @@ export function mapPrintablesPrint(print: PrintablesPrint): PrintablesModel {
       authorName: username,
       authorUrl: handle ? `https://www.printables.com/@${handle}` : null,
       license,
-      ...licenseFlags(license),
+      ...licenseFlags(license, 'printables'),
       tags: (print.tags ?? [])
         .map((t) => t?.name?.trim())
         .filter((n): n is string => !!n)

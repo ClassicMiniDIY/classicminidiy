@@ -48,10 +48,12 @@ export default defineEventHandler(async (event) => {
   if (!categorySlug) throw createError({ statusCode: 400, message: 'Category is required' });
 
   // Re-scrape: the source of truth for source_site / id / author / license / images.
-  const readerApiKey = serverRuntimeConfig(event).JINA_API_KEY as string;
+  const cfg = serverRuntimeConfig(event);
+  const readerApiKey = cfg.JINA_API_KEY as string;
+  const cults3d = { user: cfg.CULTS_3D_USER as string, apiKey: cfg.CULTS_3D_API_KEY as string };
   let scraped;
   try {
-    scraped = await fetchExternalMetadata(url, { readerApiKey });
+    scraped = await fetchExternalMetadata(url, { readerApiKey, cults3d });
   } catch (err) {
     if (err instanceof ScrapeError) throw createError({ statusCode: err.statusCode, message: err.message });
     throw createError({ statusCode: 502, message: 'Could not read that page. Try again.' });

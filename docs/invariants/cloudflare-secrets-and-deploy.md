@@ -91,7 +91,7 @@ repair them afterwards:
 **RUNTIME** — `wrangler secret put`, never the build env. Set them with
 `./scripts/set-cf-secrets.sh` (reads your local `.env`, never prints a value):
 Supabase service key, LangGraph/LangSmith, GitHub/YouTube, MCP, marketing,
-`S3_MODELS_*`, `SHOPIFY_STOREFRONT_TOKEN`, and the optional Jina Reader/Camino
+`S3_MODELS_*`, `SHOPIFY_STOREFRONT_TOKEN`, and the optional Jina Reader/Cults3D/Camino
 keys.
 
 **The env var name is derived, not chosen.** Nitro computes a key's override

@@ -66,3 +66,21 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
   result with no title at all (MakerWorld's soft-404 has a default share image and no title).
   The exchange Finds parser (`server/api/exchange/external-listings/parse.post.ts`) shares
   this renderer and inherits the change.
+- **Cults3D goes through its authenticated GraphQL API (2026-09-17).** Cults3D pages are
+  Cloudflare-challenged for a plain fetch AND for the Jina render ("Just a moment..." with
+  upstream 200), so `server/utils/external-models/cults3d.ts` is the only working path. The
+  API (`cults3d.com/graphql`, introspection enabled) takes HTTP Basic auth with a Cults3D
+  username + the account's API key: runtimeConfig `CULTS_3D_USER` / `CULTS_3D_API_KEY`,
+  Worker secrets `NUXT_CULTS_3D_USER` / `NUXT_CULTS_3D_API_KEY`. Lookup is `creation(slug:)`
+  with the slug the site `urlPattern` already captures as the external id. Findings that
+  shaped the adapter: `description` + `details` are CRLF plain text (joined for the listing);
+  `license` carries Cults' own `code`, an SPDX id and `allowsCommercialUse`, and Cults marks
+  CC0 non-commercial, so CC licenses derive from the SPDX id via `license.ts` and only the
+  Cults-specific codes (`cults_pu` = no remix/no commercial, `cults_cu`, `cults_cu_nd`) use
+  the flag; the `version: DEFAULT` originals on `fbi.cults3d.com` are served
+  `application/octet-stream`, which the submit route's image re-host skips, so the adapter
+  keeps the 516px `images.cults3d.com` thumbnails; Cults' Cloudflare rules 1010-blocked
+  Python's default User-Agent, so the request sends an explicit product UA. `safe: false`
+  (NSFW) and non-`PUBLIC` visibility are refused with 422 rather than queued for moderation.
+  `API_ADAPTERS` in `index.ts` is the table both adapters hang off; `deps.apiImpl` is the
+  single test seam for either.

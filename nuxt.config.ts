@@ -834,6 +834,11 @@ export default defineNuxtConfig({
     // works but is capped at 20 req/min per IP; the free key lifts that to 200.
     // Read server-side only and forwarded to renderExternalPage().
     JINA_API_KEY: process.env.JINA_API_KEY || '',
+    // Cults3D GraphQL API (HTTP Basic: account username + API key). Its pages
+    // are Cloudflare-challenged on every path, so without these Cults3D links
+    // cannot be listed. Optional — the adapter returns null when unset.
+    CULTS_3D_USER: process.env.CULTS_3D_USER || '',
+    CULTS_3D_API_KEY: process.env.CULTS_3D_API_KEY || '',
     // Camino AI key for the exchange safe-meeting-spot + distance proxies
     // (server/utils/exchange/camino.ts). Optional — the camino routes 502
     // gracefully when unset; set CAMINO_API_KEY in prod to enable.
