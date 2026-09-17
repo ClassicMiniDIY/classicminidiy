@@ -797,6 +797,16 @@ export default defineNuxtConfig({
     // Overridable so the model can be changed without a deploy — the whole point
     // of the provider-agnostic SDK. Empty falls back to the default in the route.
     CHAT_MODEL: process.env.NUXT_CHAT_MODEL || '',
+    // TypeSafe (Jev) — typed judgments beside the chat model, never in place
+    // of it. server/utils/typesafe.ts is the only reader of the key. Both are
+    // RUNTIME-only secrets:
+    //   TYPESAFE_API_KEY   -> NUXT_TYPESAFE_API_KEY
+    //   TYPESAFE_CHAT_MODE -> NUXT_TYPESAFE_CHAT_MODE  ('off' | 'shadow' | 'hint')
+    // Unset is off: no call, no prompt change. `shadow` classifies and stamps
+    // analytics only; `hint` also adds one paragraph to the dynamic prompt.
+    // Design: the private supabase repo's typesafe phase 2 doc.
+    TYPESAFE_API_KEY: process.env.NUXT_TYPESAFE_API_KEY || '',
+    TYPESAFE_CHAT_MODE: process.env.NUXT_TYPESAFE_CHAT_MODE || '',
     // Shopify STOREFRONT credentials for the chat agent's `store-search` tool
     // (server/utils/shopifyCatalog.ts). Design doc:
     // docs/plans/2026-09-01-shopify-catalog-tool.md.

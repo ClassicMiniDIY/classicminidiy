@@ -2,7 +2,8 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai';
 import { buildAgentTools, webSearchSupported } from '../agent/tools';
 import { stripStaleWebSearchContent } from '../agent/transcript';
-import { buildSystemPrompt } from '../agent/prompt';
+import { buildSystemPrompt, toolGuidanceList } from '../agent/prompt';
+import { runClassifier, type ClassifierRun } from '../agent/classifierRun';
 import {
   captureChatQuotaRefused,
   createChatRunTracker,
@@ -120,6 +121,18 @@ export default defineEventHandler(async (event) => {
   const client = readChatClient(event);
   const entryPoint = normalizeChatEntryPoint(body?.entryPoint);
 
+  // The pre-classifier (server/agent/classifier.ts) starts here, BEFORE the
+  // quota write, so its round trip overlaps the KV/Postgres one and costs the
+  // happy path nothing. It is awaited, with a ceiling, just before the model
+  // runs. Off by default; `TYPESAFE_CHAT_MODE` is the switch. A refused
+  // request below simply never collects it.
+  const modelIdForTools = ((config.CHAT_MODEL as string) || 'claude-sonnet-5').trim();
+  const classifierRun: ClassifierRun = runClassifier(event, {
+    messages: replayed,
+    pageSlug: body?.pageSlug,
+    tools: toolGuidanceList(webSearchSupported(modelIdForTools)),
+  });
+
   // BEFORE the model runs. A quota checked afterwards is not a quota — the
   // tokens are already spent. Every failure path inside allows the request, so
   // an unavailable counter degrades the ceiling rather than the assistant.
@@ -226,7 +239,13 @@ export default defineEventHandler(async (event) => {
    * in server/agent/tools.ts drops that tool rather than 400 if this is ever
    * moved back down.
    */
-  const modelId = ((config.CHAT_MODEL as string) || 'claude-sonnet-5').trim();
+  const modelId = modelIdForTools;
+
+  // Collect the classification now, or go without it. In `hint` mode this is
+  // the one paragraph the dynamic prompt gets; in `shadow` mode it is analytics
+  // only; when the classifier is off, slow, or failed, `hint` is null and the
+  // run says so.
+  const classified = await classifierRun.collect();
 
   /**
    * Tokens the finished steps have paid for so far, summed per step.
@@ -245,7 +264,10 @@ export default defineEventHandler(async (event) => {
       tracker.observe({ usage_metadata: { input_tokens: stepTokens.input, output_tokens: stepTokens.output } });
       recordChatTokens(event, stepTokens.input, stepTokens.output);
     }
-    tracker.finish('client_disconnect', undefined, { tools_degraded: degradedList() });
+    tracker.finish('client_disconnect', undefined, {
+      tools_degraded: degradedList(),
+      ...classifierRun.analyticsSoFar(),
+    });
   };
   // Runs on the controller's own abort, whichever source fired it. Idempotent
   // against `tracker.finish`, so a run that already completed or errored
@@ -268,6 +290,7 @@ export default defineEventHandler(async (event) => {
       pageSlug: body?.pageSlug,
       isMember: getChatAuth(event)?.tier === 'member',
       hasWebSearch: webSearchSupported(modelId),
+      classifierHint: classified.hint ?? undefined,
     }),
     // Cache the tool definitions and the system prompt.
     //
@@ -368,6 +391,7 @@ export default defineEventHandler(async (event) => {
         // nobody reads.
         quota_degraded: verdict.degraded === true,
         tools_degraded: degradedList(),
+        ...classified.analytics,
       });
     },
     onAbort() {
@@ -381,6 +405,7 @@ export default defineEventHandler(async (event) => {
       console.error('[chat] stream failed:', error);
       tracker.finish('upstream_error', error instanceof Error ? error.message : String(error), {
         tools_degraded: degradedList(),
+        ...classifierRun.analyticsSoFar(),
       });
     },
   });

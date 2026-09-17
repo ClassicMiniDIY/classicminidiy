@@ -118,7 +118,7 @@ export function normalizeChatEntryPoint(raw: unknown): ChatEntryPoint | null {
  * once. `$process_person_profile: false` is set by the caller because it is
  * part of what each event promises, not a transport detail.
  */
-function captureServerEvent(event: H3Event, name: string, distinctId: string, properties: Record<string, unknown>) {
+export function captureServerEvent(event: H3Event, name: string, distinctId: string, properties: Record<string, unknown>) {
   try {
     const key = serverRuntimeConfig(event).public.posthogPublicKey as string;
     if (!key) return;

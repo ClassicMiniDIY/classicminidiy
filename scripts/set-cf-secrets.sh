@@ -150,6 +150,11 @@ put NUXT_SUPABASE_SERVICE_KEY SUPABASE_SERVICE_KEY
 put NUXT_ANTHROPIC_API_KEY NUXT_ANTHROPIC_API_KEY ANTHROPIC_API_KEY
 put NUXT_AI_GATEWAY_ANTHROPIC_URL NUXT_AI_GATEWAY_ANTHROPIC_URL OPTIONAL
 put NUXT_CHAT_MODEL NUXT_CHAT_MODEL OPTIONAL
+# TypeSafe pre-classifier for the chat (server/utils/typesafe.ts). Both
+# optional: unset means no classifier call at all. MODE is 'off', 'shadow'
+# (analytics only) or 'hint' (one paragraph in the prompt).
+put NUXT_TYPESAFE_API_KEY NUXT_TYPESAFE_API_KEY TYPESAFE_API_KEY OPTIONAL
+put NUXT_TYPESAFE_CHAT_MODE NUXT_TYPESAFE_CHAT_MODE OPTIONAL
 
 # --- Shopify storefront ----------------------------------------------------
 # The chat agent's `store-search` tool (server/utils/shopifyCatalog.ts).
