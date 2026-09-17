@@ -10,7 +10,7 @@ import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit
 // It is an UNAUTHENTICATED, per-IP rate-limited link-preview scraper. Pipeline:
 //   readBody -> require url (400) -> rateLimit(event) -> require http(s) (400)
 //   -> detect source site -> fetchExternalPage (SSRF-guarded OG/JSON-LD)
-//   -> Microlink render fallback -> derive year/model/price/auctionEnd/category
+//   -> Jina Reader render fallback -> derive year/model/price/auctionEnd/category
 //   -> rehost the OG image to Supabase Storage.
 //
 // What we mock vs. exercise for real:
@@ -320,7 +320,7 @@ describe('server/api/exchange/external-listings/parse.post', () => {
     });
 
     it('does NOT hard-throw for a non-400 ScrapeError — falls through to render', async () => {
-      // 422 (non-HTML) / 413 (oversized) / 4xx-5xx are recoverable -> Microlink.
+      // 422 (non-HTML) / 413 (oversized) / 4xx-5xx are recoverable -> render service.
       (fetchExternalPage as any).mockRejectedValue(new ScrapeError('non-html', 422));
       (renderExternalPage as any).mockResolvedValue(og({ title: 'Rendered Mini' }));
       const res: any = await handler(evt());
@@ -330,29 +330,25 @@ describe('server/api/exchange/external-listings/parse.post', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Microlink render fallback
+  // Render-service fallback
   // -------------------------------------------------------------------------
-  describe('Microlink render fallback', () => {
+  describe('render-service fallback', () => {
     it('falls back to render when the direct fetch yields no OG', async () => {
       // page <400 but parseOpenGraph returns nothing usable -> og stays null.
       pageOk('<html></html>', 200);
       (parseOpenGraph as any).mockReturnValue(emptyOg());
-      (renderExternalPage as any).mockResolvedValue(og({ title: 'Via Microlink', image: 'https://img/x.jpg' }));
+      (renderExternalPage as any).mockResolvedValue(og({ title: 'Via render', image: 'https://img/x.jpg' }));
       const res: any = await handler(evt());
       expect(renderExternalPage).toHaveBeenCalledTimes(1);
-      expect(res.metadata.title).toBe('Via Microlink');
+      expect(res.metadata.title).toBe('Via render');
     });
 
-    it('forwards MICROLINK_API_KEY from runtimeConfig (undefined here) to renderExternalPage', async () => {
+    it('forwards JINA_API_KEY from runtimeConfig (undefined here) to renderExternalPage', async () => {
       (parseOpenGraph as any).mockReturnValue(emptyOg());
       (renderExternalPage as any).mockResolvedValue(og({ title: 't' }));
       await handler(evt());
-      // useRuntimeConfig (global stub) has no MICROLINK_API_KEY -> undefined.
-      expect(renderExternalPage).toHaveBeenCalledWith(
-        'https://bringatrailer.com/listing/abc',
-        undefined,
-        undefined
-      );
+      // useRuntimeConfig (global stub) has no JINA_API_KEY -> undefined.
+      expect(renderExternalPage).toHaveBeenCalledWith('https://bringatrailer.com/listing/abc', undefined, undefined);
     });
 
     it('does NOT call render when the direct fetch already produced OG', async () => {
@@ -652,9 +648,7 @@ describe('server/api/exchange/external-listings/parse.post', () => {
           image: 'https://img.test/full.jpg',
         })
       );
-      (parseJsonLd as any).mockReturnValue([
-        { offers: { price: 42000, priceValidUntil: '2026-06-30T00:00:00Z' } },
-      ]);
+      (parseJsonLd as any).mockReturnValue([{ offers: { price: 42000, priceValidUntil: '2026-06-30T00:00:00Z' } }]);
       wireImageFetch('image/jpeg', true);
 
       const res: any = await handler(evt());

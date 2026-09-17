@@ -3,10 +3,9 @@
  * answers every server-side page fetch with a Cloudflare managed challenge
  * (`cf-mitigated: challenge`, 403 "Just a moment..."), so the OG/JSON-LD parse
  * never sees the page and every Printables submission fell through to the
- * Microlink render fallback. On the free tier that either 429s (the quota is
- * per egress IP, and Workers share theirs) or answers `EPROXYNEEDED` because the
- * page "uses antibot protection". Either way the user saw an error for a model
- * that is plainly public.
+ * render fallback (then Microlink, whose free tier either 429'd on the shared
+ * Workers egress quota or refused antibot-protected pages). Either way the user
+ * saw an error for a model that is plainly public.
  *
  * `api.printables.com/graphql/` is the same endpoint the Printables front end
  * uses. It is unauthenticated for public models, is NOT behind the challenge,

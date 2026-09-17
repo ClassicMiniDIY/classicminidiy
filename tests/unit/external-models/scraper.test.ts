@@ -250,54 +250,107 @@ describe('fetchExternalMetadata', () => {
   });
 });
 
-// --- render-service fallback ------------------------------------------------
+// --- render-service fallback (Jina Reader) ---------------------------------
 
 function fakeJsonFetch(payload: unknown, status = 200) {
   return async () => ({ status, json: async () => payload }) as unknown as Response;
 }
 
+/** A Jina Reader success envelope for a page whose `<head>` carried `meta`. */
+function jinaPage(meta: Record<string, string>, extra: Record<string, unknown> = {}) {
+  return {
+    code: 200,
+    status: 20000,
+    data: { title: meta['og:title'] ?? '', httpStatus: 200, metadata: meta, ...extra },
+  };
+}
+
 describe('renderExternalPage (fallback)', () => {
-  it('maps a successful render response to OG metadata', async () => {
+  it('maps the rendered page metadata to OG metadata', async () => {
+    const calls: { url: string; headers: Record<string, string> }[] = [];
     const og = await renderExternalPage(
       'https://makerworld.com/en/models/1',
-      fakeJsonFetch({
-        status: 'success',
-        data: {
-          title: 'Mount - MakerWorld',
-          description: 'd',
-          author: 'Bob',
-          publisher: 'MakerWorld',
-          image: { url: 'https://cdn.test/x.jpg' },
-        },
-      })
+      (async (url: string, init?: RequestInit) => {
+        calls.push({ url, headers: init?.headers as Record<string, string> });
+        return fakeJsonFetch(
+          jinaPage({
+            'og:title': 'Mount - MakerWorld',
+            'og:description': 'd',
+            'og:site_name': 'MakerWorld',
+            'og:image': 'https://cdn.test/x.jpg',
+            'twitter:image': 'https://cdn.test/x.jpg',
+            author: 'Bob',
+            keywords: 'mini, bracket',
+          })
+        )();
+      }) as unknown as typeof fetch,
+      'jina_test_key'
     );
     expect(og.title).toBe('Mount - MakerWorld');
+    expect(og.description).toBe('d');
     expect(og.image).toBe('https://cdn.test/x.jpg');
+    expect(og.images).toEqual(['https://cdn.test/x.jpg']); // de-duplicated
     expect(og.author).toBe('Bob');
+    expect(og.siteName).toBe('MakerWorld');
+    expect(og.keywords).toEqual(['mini', 'bracket']);
+    // URL is passed as the path; metadata-only render; key as Bearer.
+    expect(calls[0].url).toBe('https://r.jina.ai/https://makerworld.com/en/models/1');
+    expect(calls[0].headers['X-Target-Selector']).toBe('head');
+    expect(calls[0].headers.Authorization).toBe('Bearer jina_test_key');
   });
 
-  it('throws ScrapeError when the service cannot render', async () => {
-    await expect(renderExternalPage('https://x/y', fakeJsonFetch({ status: 'fail' }))).rejects.toBeInstanceOf(
-      ScrapeError
-    );
+  it('sends no Authorization header without a key', async () => {
+    let headers: Record<string, string> = {};
+    await renderExternalPage('https://x/y', (async (_u: string, init?: RequestInit) => {
+      headers = init?.headers as Record<string, string>;
+      return fakeJsonFetch(jinaPage({ 'og:title': 't' }))();
+    }) as unknown as typeof fetch);
+    expect(headers.Authorization).toBeUndefined();
+  });
+
+  it('throws ScrapeError when the service cannot render (4xx envelope)', async () => {
+    await expect(
+      renderExternalPage('https://x/y', fakeJsonFetch({ code: 422, message: 'Failed to render' }, 422))
+    ).rejects.toBeInstanceOf(ScrapeError);
   });
 
   it('throws ScrapeError when rate-limited', async () => {
-    await expect(renderExternalPage('https://x/y', fakeJsonFetch({}, 429))).rejects.toBeInstanceOf(ScrapeError);
+    await expect(renderExternalPage('https://x/y', fakeJsonFetch({}, 429))).rejects.toMatchObject({
+      statusCode: 429,
+    });
   });
 
-  it('throws ScrapeError when the rendered page errored upstream (statusCode >= 400)', async () => {
-    // Microlink reports success but the upstream page was a CloudFront 403 error.
+  it('throws ScrapeError when the rendered page errored upstream (httpStatus >= 400)', async () => {
+    // Jina reports success but the upstream page was a CloudFront 403 error.
     await expect(
       renderExternalPage(
         'https://grabcad.com/library/x',
-        fakeJsonFetch({
-          status: 'success',
-          statusCode: 403,
-          data: { title: 'ERROR: The request could not be satisfied', logo: { url: 'https://t3.gstatic.com/favicon' } },
-        })
+        fakeJsonFetch(
+          jinaPage(
+            { 'og:image': 'https://t3.gstatic.com/favicon' },
+            { title: 'ERROR: The request could not be satisfied', httpStatus: 403 }
+          )
+        )
       )
     ).rejects.toBeInstanceOf(ScrapeError);
+  });
+
+  it('treats a Cloudflare interstitial as blocked even though it renders as 200', async () => {
+    await expect(
+      renderExternalPage(
+        'https://cults3d.com/en/3d-model/x',
+        fakeJsonFetch(jinaPage({}, { title: 'Just a moment...' }))
+      )
+    ).rejects.toMatchObject({ statusCode: 422 });
+  });
+
+  it('requires a title — an image-only render is a soft-404 share card, not a model', async () => {
+    await expect(
+      renderExternalPage(
+        'https://makerworld.com/en/models/999',
+        fakeJsonFetch(jinaPage({ 'og:image': 'https://cdn.test/default.jpg' }))
+      )
+    ).rejects.toMatchObject({ statusCode: 422 });
   });
 });
 
@@ -305,14 +358,13 @@ describe('fetchExternalMetadata — render fallback wiring', () => {
   it('falls back to the render service when the direct fetch is blocked (403)', async () => {
     const result = await fetchExternalMetadata('https://makerworld.com/en/models/1830846-foo', {
       fetchImpl: fakeFetch('', 403), // Cloudflare block
-      renderImpl: fakeJsonFetch({
-        status: 'success',
-        data: {
-          title: 'Classic Mini Gauge Mount - Free 3D Print Model - MakerWorld',
+      renderImpl: fakeJsonFetch(
+        jinaPage({
+          'og:title': 'Classic Mini Gauge Mount - Free 3D Print Model - MakerWorld',
           author: 'Dana',
-          image: { url: 'https://cdn.test/m.jpg' },
-        },
-      }) as unknown as typeof fetch,
+          'og:image': 'https://cdn.test/m.jpg',
+        })
+      ) as unknown as typeof fetch,
     });
     expect(result.sourceSite).toBe('makerworld');
     expect(result.title).toBe('Classic Mini Gauge Mount'); // enricher stripped the MakerWorld suffix
@@ -359,11 +411,9 @@ describe('fetchExternalMetadata — requiresRender (GrabCAD SPA)', () => {
           status: 200,
         } as unknown as Response;
       }) as unknown as typeof fetch,
-      renderImpl: fakeJsonFetch({
-        status: 'success',
-        statusCode: 200,
-        data: { title: 'Classic Mini Boot | GrabCAD', author: 'Bob', image: { url: 'https://cdn.test/boot.jpg' } },
-      }) as unknown as typeof fetch,
+      renderImpl: fakeJsonFetch(
+        jinaPage({ 'og:title': 'Classic Mini Boot | GrabCAD', author: 'Bob', 'og:image': 'https://cdn.test/boot.jpg' })
+      ) as unknown as typeof fetch,
     });
     expect(directHit).toBe(false);
     expect(result.sourceSite).toBe('grabcad');
@@ -375,11 +425,12 @@ describe('fetchExternalMetadata — requiresRender (GrabCAD SPA)', () => {
     await expect(
       fetchExternalMetadata('https://grabcad.com/library/classic-mini-rear-trailing-arm-1', {
         fetchImpl: fakeFetch('', 200),
-        renderImpl: fakeJsonFetch({
-          status: 'success',
-          statusCode: 403,
-          data: { title: 'ERROR: The request could not be satisfied', logo: { url: 'https://t3.gstatic.com/fav' } },
-        }) as unknown as typeof fetch,
+        renderImpl: fakeJsonFetch(
+          jinaPage(
+            { 'og:image': 'https://t3.gstatic.com/fav' },
+            { title: 'ERROR: The request could not be satisfied', httpStatus: 403 }
+          )
+        ) as unknown as typeof fetch,
       })
     ).rejects.toBeInstanceOf(ScrapeError);
   });

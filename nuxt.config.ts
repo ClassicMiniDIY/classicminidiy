@@ -829,11 +829,11 @@ export default defineNuxtConfig({
     // default. Set MCP_API_KEY (or MCP_API_KEYS) in .env for local development.
     MCP_API_KEY: process.env.MCP_API_KEY || '',
     MCP_API_KEYS: process.env.MCP_API_KEYS || '',
-    // Microlink render-service key for the external-model scraper fallback
-    // (Cloudflare-blocked sites — MakerWorld etc.). Optional: the free public
-    // endpoint works without it but is rate-limited (~50 req/day). Set for the
-    // pro tier. Read server-side only and forwarded to renderExternalPage().
-    MICROLINK_API_KEY: process.env.MICROLINK_API_KEY || '',
+    // Jina Reader key for the external-model / Finds scraper render fallback
+    // (Cloudflare-blocked sites — MakerWorld etc.). Optional: the keyless tier
+    // works but is capped at 20 req/min per IP; the free key lifts that to 200.
+    // Read server-side only and forwarded to renderExternalPage().
+    JINA_API_KEY: process.env.JINA_API_KEY || '',
     // Camino AI key for the exchange safe-meeting-spot + distance proxies
     // (server/utils/exchange/camino.ts). Optional — the camino routes 502
     // gracefully when unset; set CAMINO_API_KEY in prod to enable.
