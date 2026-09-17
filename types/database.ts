@@ -2350,6 +2350,11 @@ export type Database = {
           report_reason: string | null;
           reported_at: string | null;
           reported_by: string[] | null;
+          screen_at: string | null;
+          screen_attempts: number;
+          screen_decision: string | null;
+          screen_scores: Json | null;
+          screen_version: string | null;
           sender_id: string;
           updated_at: string | null;
         };
@@ -2366,6 +2371,11 @@ export type Database = {
           report_reason?: string | null;
           reported_at?: string | null;
           reported_by?: string[] | null;
+          screen_at?: string | null;
+          screen_attempts?: number;
+          screen_decision?: string | null;
+          screen_scores?: Json | null;
+          screen_version?: string | null;
           sender_id: string;
           updated_at?: string | null;
         };
@@ -2382,6 +2392,11 @@ export type Database = {
           report_reason?: string | null;
           reported_at?: string | null;
           reported_by?: string[] | null;
+          screen_at?: string | null;
+          screen_attempts?: number;
+          screen_decision?: string | null;
+          screen_scores?: Json | null;
+          screen_version?: string | null;
           sender_id?: string;
           updated_at?: string | null;
         };
@@ -3027,6 +3042,9 @@ export type Database = {
           reviewed_by: string | null;
           safety_ack: boolean;
           safety_critical: boolean;
+          safety_model_at: string | null;
+          safety_model_p: number | null;
+          safety_model_version: string | null;
           search: unknown;
           slug: string;
           source_url: string | null;
@@ -3061,6 +3079,9 @@ export type Database = {
           reviewed_by?: string | null;
           safety_ack?: boolean;
           safety_critical?: boolean;
+          safety_model_at?: string | null;
+          safety_model_p?: number | null;
+          safety_model_version?: string | null;
           search?: unknown;
           slug: string;
           source_url?: string | null;
@@ -3095,6 +3116,9 @@ export type Database = {
           reviewed_by?: string | null;
           safety_ack?: boolean;
           safety_critical?: boolean;
+          safety_model_at?: string | null;
+          safety_model_p?: number | null;
+          safety_model_version?: string | null;
           search?: unknown;
           slug?: string;
           source_url?: string | null;
@@ -4215,6 +4239,24 @@ export type Database = {
           raw?: Json | null;
           status?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      platform_settings: {
+        Row: {
+          key: string;
+          updated_at: string;
+          value: Json;
+        };
+        Insert: {
+          key: string;
+          updated_at?: string;
+          value: Json;
+        };
+        Update: {
+          key?: string;
+          updated_at?: string;
+          value?: Json;
         };
         Relationships: [];
       };
@@ -5592,6 +5634,10 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      dispatch_message_screen: {
+        Args: { p_message_id: string };
+        Returns: undefined;
+      };
       find_user_id_by_email: { Args: { p_email: string }; Returns: string };
       generate_location_string: {
         Args: { p_city: string; p_country: string; p_state_province: string };
@@ -5927,6 +5973,8 @@ export type Database = {
         Args: { p_conversation_id: string; p_user_id: string };
         Returns: undefined;
       };
+      message_needs_screen: { Args: { p_message_id: string }; Returns: boolean };
+      message_screen_mode: { Args: never; Returns: string };
       moderate_external_model: {
         Args: { p_id: string; p_notes?: string; p_status: string };
         Returns: undefined;
@@ -6108,6 +6156,20 @@ export type Database = {
         };
         Returns: undefined;
       };
+      record_message_screen: {
+        Args: {
+          p_decision: string;
+          p_message_id: string;
+          p_scores: Json;
+          p_tags?: string[];
+          p_version: string;
+        };
+        Returns: {
+          new_status: string;
+          previous_status: string;
+          released: boolean;
+        }[];
+      };
       record_part_correlation_model_scores: {
         Args: {
           p_record_id: string;
@@ -6233,6 +6295,10 @@ export type Database = {
           model_status: string;
           version_status: string;
         }[];
+      };
+      sweep_message_screen: {
+        Args: { p_limit?: number; p_older_than?: string };
+        Returns: number;
       };
       sync_instances: {
         Args: { p_last_sync: string; p_vehicle_id: string };

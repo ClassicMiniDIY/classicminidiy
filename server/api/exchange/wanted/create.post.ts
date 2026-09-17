@@ -1,5 +1,6 @@
 import { sanitizeUserInput } from '../../../utils/exchange/sanitize';
 import { moderateMessage } from '../../../utils/exchange/contentFilter';
+import { screenMarketplaceText } from '../../../utils/exchange/screen';
 import { createRateLimitMiddleware, RateLimitPresets } from '../../../utils/exchange/rateLimit';
 import { VALID_CATEGORIES, VALID_CONDITION_PREFERENCES, MAX_CONTENT_LENGTH } from '~/utils/constants';
 import { validateBudgetValue, validateBudgetRange } from '../../../utils/exchange/validators';
@@ -98,9 +99,36 @@ export default defineEventHandler(async (event) => {
     const descriptionModeration = moderateMessage(sanitizedDescription);
 
     // Determine overall moderation status (worst of the two)
-    const isFlagged =
+    let isFlagged =
       titleModeration.moderationStatus === 'flagged' || descriptionModeration.moderationStatus === 'flagged';
     const moderationIssues = [...new Set([...titleModeration.issues, ...descriptionModeration.issues])];
+
+    // The semantic read (TypeSafe), behind the same switch as private
+    // messages. In `hold` mode a tripped threshold flags the post exactly as
+    // the regex layer does; in `shadow` it is logged and changes nothing;
+    // off, unconfigured or slow means the regex verdict stands alone.
+    const screen = await screenMarketplaceText(event, `${sanitizedTitle}\n\n${sanitizedDescription}`, {
+      caller: 'wanted-post-create',
+      context: 'A wanted post: a member asking the marketplace for a part or a car',
+      title: sanitizedTitle,
+    });
+    if (screen.decision === 'hold' && screen.mode === 'hold') {
+      isFlagged = true;
+      for (const tag of screen.tags) if (!moderationIssues.includes(tag)) moderationIssues.push(tag);
+    }
+    if (screen.decision !== 'skipped') {
+      console.log(
+        JSON.stringify({
+          event: 'wanted_post_screened',
+          mode: screen.mode,
+          decision: screen.decision,
+          tags: screen.tags,
+          scores: screen.scores,
+          held: screen.decision === 'hold' && screen.mode === 'hold',
+          duration_ms: screen.durationMs,
+        })
+      );
+    }
 
     // Check if user is banned
     const { data: profile, error: profileError } = await supabase

@@ -807,6 +807,12 @@ export default defineNuxtConfig({
     // Design: the private supabase repo's typesafe phase 2 doc.
     TYPESAFE_API_KEY: process.env.NUXT_TYPESAFE_API_KEY || '',
     TYPESAFE_CHAT_MODE: process.env.NUXT_TYPESAFE_CHAT_MODE || '',
+    //   TYPESAFE_MODELS_MODE -> NUXT_TYPESAFE_MODELS_MODE ('off' | 'on')
+    // `on` reads P(safety-critical) for a 3D model at creation and on content
+    // edits (server/utils/models/safetyRead.ts). The marketplace text screen
+    // (wanted posts, seller inquiries) has no env switch: it reads the same
+    // platform_settings row as the private-message screen.
+    TYPESAFE_MODELS_MODE: process.env.NUXT_TYPESAFE_MODELS_MODE || '',
     // Shopify STOREFRONT credentials for the chat agent's `store-search` tool
     // (server/utils/shopifyCatalog.ts). Design doc:
     // docs/plans/2026-09-01-shopify-catalog-tool.md.

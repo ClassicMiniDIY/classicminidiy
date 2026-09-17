@@ -13,6 +13,7 @@
 import { randomUUID } from 'node:crypto';
 import { requireUserClient } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
+import { readModelSafety } from '../../utils/models/safetyRead';
 import {
   slugifyModelTitle,
   isPricingMode,
@@ -109,6 +110,12 @@ export default defineEventHandler(async (event) => {
     console.error('[models/create] version insert failed:', versionError?.message);
     throw createError({ statusCode: 500, statusMessage: 'Created the model but could not create its first version' });
   }
+
+  // The TypeSafe safety read, backgrounded: the seller's checkbox is what they
+  // told us, this is what the description says. The detail page shows the
+  // strong disclaimer on either. Never delays the response, never fails it.
+  const safetyRead = readModelSafety(event, model.id, { title, description, category: categorySlug });
+  (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(safetyRead);
 
   return { modelId: model.id, slug: model.slug, versionId: version.id, versionNumber: version.version_number };
 });

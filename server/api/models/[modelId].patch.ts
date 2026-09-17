@@ -8,6 +8,7 @@
  */
 import type { Database } from '~~/types/database';
 import { requireUserClient } from '../../utils/userAuth';
+import { readModelSafety } from '../../utils/models/safetyRead';
 import {
   isPricingMode,
   normalizePricing,
@@ -80,10 +81,26 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'No editable fields provided' });
   }
 
-  const { error } = await supabase.from('models').update(update).eq('id', modelId).select('id').single();
+  const { data: updated, error } = await supabase
+    .from('models')
+    .update(update)
+    .eq('id', modelId)
+    .select('id, title, description, category_slug')
+    .single();
   if (error) {
     console.error('[models/patch] update failed:', error.message);
     throw createError({ statusCode: 400, statusMessage: error.message || 'Could not update model' });
+  }
+
+  // A changed title, description or category changes what the part IS, so
+  // the safety read runs again, backgrounded. Pricing or license edits do not.
+  if (updated && ('title' in update || 'description' in update || 'category_slug' in update)) {
+    const safetyRead = readModelSafety(event, modelId, {
+      title: updated.title,
+      description: updated.description,
+      category: updated.category_slug,
+    });
+    (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(safetyRead);
   }
 
   return { ok: true };

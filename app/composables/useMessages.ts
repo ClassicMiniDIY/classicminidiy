@@ -485,7 +485,7 @@ export const useMessages = () => {
         toast.add({
           title: 'Message Pending Review',
           description:
-            "Because your account is new, messages containing links are checked before the other person sees them. This lifts as your account ages — your message will appear once it's approved.",
+            "Because your account is new, some messages are checked before the other person sees them. Most clear within a minute; this lifts as your account ages. Your message will appear once it's approved.",
           color: 'info',
           duration: 9000,
         });
@@ -558,7 +558,11 @@ export const useMessages = () => {
       };
     }
 
-    if (lower.includes('new accounts are limited') || lower.includes('conversations per') || lower.includes('24 hours')) {
+    if (
+      lower.includes('new accounts are limited') ||
+      lower.includes('conversations per') ||
+      lower.includes('24 hours')
+    ) {
       return {
         title: 'New-Account Message Limit',
         description:

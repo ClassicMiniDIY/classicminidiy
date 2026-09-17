@@ -155,6 +155,7 @@ put NUXT_CHAT_MODEL NUXT_CHAT_MODEL OPTIONAL
 # (analytics only) or 'hint' (one paragraph in the prompt).
 put NUXT_TYPESAFE_API_KEY NUXT_TYPESAFE_API_KEY TYPESAFE_API_KEY OPTIONAL
 put NUXT_TYPESAFE_CHAT_MODE NUXT_TYPESAFE_CHAT_MODE OPTIONAL
+put NUXT_TYPESAFE_MODELS_MODE NUXT_TYPESAFE_MODELS_MODE OPTIONAL
 
 # --- Shopify storefront ----------------------------------------------------
 # The chat agent's `store-search` tool (server/utils/shopifyCatalog.ts).
