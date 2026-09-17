@@ -537,6 +537,12 @@ describe('mapPrintablesPrint', () => {
     expect(m.images).toEqual(['https://cdn.example/x.jpg']);
   });
 
+  it('strips nested tags completely', () => {
+    const m = mapPrintablesPrint({ name: 'T', description: '<p>safe <scr<script>ipt>alert(1)</script> text</p>' });
+    expect(m.fields.description).not.toMatch(/<[^>]*>/);
+    expect(m.fields.description).toContain('safe');
+  });
+
   it('falls back to registry defaults and derives a summary when the API is sparse', () => {
     const m = mapPrintablesPrint({ name: 'Bare', description: '<p>' + 'x'.repeat(400) + '</p>' });
     expect(m.fields.license).toBe('CC-BY-NC-SA');
