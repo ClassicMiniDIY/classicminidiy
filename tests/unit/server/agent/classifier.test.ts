@@ -155,6 +155,16 @@ describe('hintFor', () => {
     }
   });
 
+  it('calls a question off topic only when the about-Mini read agrees', () => {
+    const disagree = interpret(answers({ tier: choiceAnswer('off_topic', 0.9), about_mini: noulAnswer(0.6) }), names);
+    expect(hintFor(disagree) ?? '').not.toContain('off topic');
+    const agree = interpret(
+      answers({ tier: choiceAnswer('off_topic', 0.9), about_mini: noulAnswer(0.1), tool: choiceAnswer('none', 0.9) }),
+      names
+    );
+    expect(hintFor(agree)).toContain('off topic');
+  });
+
   it('adds the safety line at the threshold and the injection line as a reminder, not a block', () => {
     const c = interpret(answers({ safety_critical: noulAnswer(0.7), injection: noulAnswer(0.7) }), names);
     const hint = hintFor(c)!;

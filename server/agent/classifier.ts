@@ -52,6 +52,8 @@ export const TIER_CONFIDENCE_MIN = 0.6;
 export const TOOL_PROBABILITY_MIN = 0.5;
 export const SAFETY_MIN = 0.7;
 export const GUARDRAIL_MIN = 0.7;
+/** An off-topic hint needs BOTH judgments to agree; one alone is a false positive waiting to happen. */
+export const OFF_TOPIC_ABOUT_MINI_MAX = 0.3;
 export const SEVERITY_FLAG = 2;
 
 export interface ClassifierInput {
@@ -219,7 +221,14 @@ const TIER_LABEL: Record<Tier, string> = {
 export function hintFor(c: Classification): string | null {
   const lines: string[] = [];
 
-  if (c.tierConfidence >= TIER_CONFIDENCE_MIN && c.tier !== 'other') {
+  // "Off topic" is the one tier whose hint nudges toward declining, so it is
+  // held to a higher bar: the tier read AND the separate about-Mini read must
+  // agree. A Morris Minor gearbox going into a Mini is about a Mini.
+  const tierUsable =
+    c.tierConfidence >= TIER_CONFIDENCE_MIN &&
+    c.tier !== 'other' &&
+    (c.tier !== 'off_topic' || c.aboutMini <= OFF_TOPIC_ABOUT_MINI_MAX);
+  if (tierUsable) {
     let line = `A pre-classifier read this message as ${TIER_LABEL[c.tier]} (confidence ${c.tierConfidence.toFixed(2)}).`;
     if (c.tool && c.toolProbability >= TOOL_PROBABILITY_MIN) {
       line += ` The tool most likely to answer it is \`${c.tool}\`; call it before answering.`;
