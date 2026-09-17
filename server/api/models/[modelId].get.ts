@@ -117,20 +117,24 @@ export default defineEventHandler(async (event): Promise<ModelDetail> => {
     isPrimary: img.is_primary,
   }));
 
-  // Author.
+  // Author. `owner_id` is NULL on a model retained after its owner deleted
+  // their account (it had sales, so the buyers keep it); the page and the
+  // cards already skip the author block when it is null.
   let author: ModelDetail['author'] = null;
-  const { data: profile } = await service
-    .from('profiles')
-    .select('id, display_name, username, avatar_url')
-    .eq('id', model.owner_id)
-    .maybeSingle();
-  if (profile) {
-    author = {
-      id: profile.id,
-      displayName: profile.display_name,
-      username: profile.username,
-      avatarUrl: profile.avatar_url,
-    };
+  if (model.owner_id) {
+    const { data: profile } = await service
+      .from('profiles')
+      .select('id, display_name, username, avatar_url')
+      .eq('id', model.owner_id)
+      .maybeSingle();
+    if (profile) {
+      author = {
+        id: profile.id,
+        displayName: profile.display_name,
+        username: profile.username,
+        avatarUrl: profile.avatar_url,
+      };
+    }
   }
 
   return {
