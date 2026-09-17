@@ -55,7 +55,7 @@ export interface ScrapedExternalModel {
 export interface ScrapeDeps {
   /** Injected for tests — exercises the direct fetch path in isolation. */
   fetchImpl?: typeof fetch;
-  /** Injected for tests — stands in for the render-service fetch. */
+  /** Injected for tests — stands in for the render-service fetch (also the Printables reader proxy). */
   renderImpl?: typeof fetch;
   /** Injected for tests — stands in for a first-party API fetch (Printables / Cults3D). */
   apiImpl?: typeof fetch;
@@ -72,7 +72,8 @@ const API_ADAPTERS: Partial<
     (externalId: string, deps: ScrapeDeps) => Promise<{ fields: EnrichedFields; images: string[] } | null>
   >
 > = {
-  printables: (id, deps) => fetchPrintablesModel(id, deps.apiImpl),
+  printables: (id, deps) =>
+    fetchPrintablesModel(id, { apiImpl: deps.apiImpl, readerImpl: deps.renderImpl, readerApiKey: deps.readerApiKey }),
   cults3d: (id, deps) => fetchCults3dModel(id, deps.cults3d ?? {}, deps.apiImpl),
 };
 

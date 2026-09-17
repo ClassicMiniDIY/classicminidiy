@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   detectSourceSite,
   extractExternalId,
@@ -556,7 +556,7 @@ describe('mapPrintablesPrint', () => {
 describe('fetchPrintablesModel', () => {
   it('POSTs the id to the GraphQL endpoint and maps the result', async () => {
     const api = printablesApi({ data: { print: PRINT_NODE } });
-    const m = await fetchPrintablesModel('1843117', api.impl);
+    const m = await fetchPrintablesModel('1843117', { apiImpl: api.impl });
     expect(m?.fields.title).toBe('Classic Mini SU Carburetor Needle Marking Plate');
     expect(api.calls[0].url).toBe('https://api.printables.com/graphql/');
     expect((api.calls[0].body as { variables: { id: string } }).variables.id).toBe('1843117');
@@ -564,7 +564,7 @@ describe('fetchPrintablesModel', () => {
 
   it('throws a 404 ScrapeError when the API says the print does not exist', async () => {
     await expect(
-      fetchPrintablesModel('999999999', printablesApi({ data: { print: null } }).impl)
+      fetchPrintablesModel('999999999', { apiImpl: printablesApi({ data: { print: null } }).impl })
     ).rejects.toMatchObject({
       name: 'ScrapeError',
       statusCode: 404,
@@ -573,29 +573,117 @@ describe('fetchPrintablesModel', () => {
 
   it('returns null (fall back) on GraphQL errors, non-2xx, bad JSON and transport failure', async () => {
     expect(
-      await fetchPrintablesModel('1', printablesApi({ errors: [{ message: "Cannot query field 'x'" }] }, 400).impl)
+      await fetchPrintablesModel('1', {
+        apiImpl: printablesApi({ errors: [{ message: "Cannot query field 'x'" }] }, 400).impl,
+      })
     ).toBeNull();
-    expect(await fetchPrintablesModel('1', printablesApi({ errors: [{ message: 'nope' }] }).impl)).toBeNull();
-    expect(await fetchPrintablesModel('1', printablesApi({}, 503).impl)).toBeNull();
     expect(
-      await fetchPrintablesModel(
-        '1',
-        (async () =>
+      await fetchPrintablesModel('1', { apiImpl: printablesApi({ errors: [{ message: 'nope' }] }).impl })
+    ).toBeNull();
+    expect(await fetchPrintablesModel('1', { apiImpl: printablesApi({}, 503).impl })).toBeNull();
+    expect(
+      await fetchPrintablesModel('1', {
+        apiImpl: (async () =>
           ({
             ok: true,
             status: 200,
             json: async () => {
               throw new Error('x');
             },
-          }) as unknown as Response) as unknown as typeof fetch
-      )
+          }) as unknown as Response) as unknown as typeof fetch,
+      })
     ).toBeNull();
     expect(
-      await fetchPrintablesModel('1', (async () => {
-        throw new TypeError('fetch failed');
-      }) as unknown as typeof fetch)
+      await fetchPrintablesModel('1', {
+        apiImpl: (async () => {
+          throw new TypeError('fetch failed');
+        }) as unknown as typeof fetch,
+      })
     ).toBeNull();
-    expect(await fetchPrintablesModel('not-digits', printablesApi({ data: { print: PRINT_NODE } }).impl)).toBeNull();
+    expect(
+      await fetchPrintablesModel('not-digits', { apiImpl: printablesApi({ data: { print: PRINT_NODE } }).impl })
+    ).toBeNull();
+  });
+});
+
+/** Jina Reader GET-proxy stand-in: what `r.jina.ai/<url>` answers with `X-Return-Format: text`. */
+function printablesReader(upstream: unknown, httpStatus = 200, readerStatus = 200) {
+  const calls: { url: string; headers: Record<string, string> }[] = [];
+  const impl = (async (url: string, init?: RequestInit) => {
+    calls.push({ url, headers: (init?.headers ?? {}) as Record<string, string> });
+    return {
+      ok: readerStatus >= 200 && readerStatus < 300,
+      status: readerStatus,
+      json: async () => ({
+        code: readerStatus,
+        data: { text: typeof upstream === 'string' ? upstream : JSON.stringify(upstream), httpStatus },
+      }),
+    } as unknown as Response;
+  }) as unknown as typeof fetch;
+  return { impl, calls };
+}
+
+describe('fetchPrintablesModel — reader fallback (Worker egress is throttled)', () => {
+  it('retries the same query as a GET through the reader when the direct POST is throttled', async () => {
+    const api = printablesApi('Request was throttled.', 429);
+    const reader = printablesReader({ data: { print: PRINT_NODE } });
+    const m = await fetchPrintablesModel('1843117', { apiImpl: api.impl, readerImpl: reader.impl, readerApiKey: 'k' });
+    expect(m?.fields.title).toBe('Classic Mini SU Carburetor Needle Marking Plate');
+    expect(api.calls).toHaveLength(1);
+    expect(reader.calls).toHaveLength(1);
+    const proxied = new URL(reader.calls[0].url.replace(/^https:\/\/r\.jina\.ai\//, ''));
+    expect(proxied.origin + proxied.pathname).toBe('https://api.printables.com/graphql/');
+    expect(proxied.searchParams.get('query')).toContain('print(id: $id)');
+    expect(proxied.searchParams.get('variables')).toBe('{"id":"1843117"}');
+    expect(reader.calls[0].headers['X-Return-Format']).toBe('text');
+    expect(reader.calls[0].headers.Authorization).toBe('Bearer k');
+  });
+
+  it('also falls back on a direct transport failure', async () => {
+    const reader = printablesReader({ data: { print: PRINT_NODE } });
+    const m = await fetchPrintablesModel('1843117', {
+      apiImpl: (async () => {
+        throw new TypeError('fetch failed');
+      }) as unknown as typeof fetch,
+      readerImpl: reader.impl,
+    });
+    expect(m?.fields.authorName).toBe('fisherbt');
+  });
+
+  it('a 404 through the reader is still a 404', async () => {
+    await expect(
+      fetchPrintablesModel('999999999', {
+        apiImpl: printablesApi({}, 429).impl,
+        readerImpl: printablesReader({ data: { print: null } }).impl,
+      })
+    ).rejects.toMatchObject({ name: 'ScrapeError', statusCode: 404 });
+  });
+
+  it('returns null when the reader path fails too (upstream 4xx, reader 429, non-JSON body)', async () => {
+    const throttled = () => printablesApi({}, 429).impl;
+    expect(
+      await fetchPrintablesModel('1', { apiImpl: throttled(), readerImpl: printablesReader('throttled', 429).impl })
+    ).toBeNull();
+    expect(
+      await fetchPrintablesModel('1', { apiImpl: throttled(), readerImpl: printablesReader({}, 200, 429).impl })
+    ).toBeNull();
+    expect(
+      await fetchPrintablesModel('1', { apiImpl: throttled(), readerImpl: printablesReader('Just a moment...').impl })
+    ).toBeNull();
+  });
+
+  it('never reaches the real reader when a test injects only the direct fetch', async () => {
+    const realFetch = globalThis.fetch;
+    const spy = vi.fn(async () => {
+      throw new Error('network must not be touched');
+    });
+    globalThis.fetch = spy as unknown as typeof fetch;
+    try {
+      expect(await fetchPrintablesModel('1', { apiImpl: printablesApi({}, 429).impl })).toBeNull();
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+    expect(spy).not.toHaveBeenCalled();
   });
 });
 
