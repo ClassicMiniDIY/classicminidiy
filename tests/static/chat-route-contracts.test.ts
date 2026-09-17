@@ -103,12 +103,21 @@ describe('chat route contracts', () => {
     });
 
     it('passes an abort signal to streamText', () => {
-      // Without it `onAbort` never fires, `client_disconnect` is a permanent
-      // zero, and a stopped or backgrounded app run keeps spending tokens.
+      // Without it a stopped or backgrounded app run keeps spending tokens.
       expect(source).toMatch(/abortSignal:\s*abort\.signal/);
       const stream = source.indexOf('streamText(');
       const signal = source.indexOf('abortSignal:');
       expect(signal).toBeGreaterThan(stream);
+    });
+
+    it('records the abandonment from the controller, not only from the SDK callback', () => {
+      // On Workers the runtime cancels the response stream the moment the
+      // client leaves, so the SDK's `pull` never observes the signal and
+      // `onAbort` never runs. Measured on the first production deploy: an
+      // aborted run produced no event at all. The controller's own abort
+      // listener is the recording path; `onAbort` only shares the guard.
+      expect(source).toMatch(/abort\.signal\.addEventListener\(\s*'abort'\s*,\s*recordAbandonment/);
+      expect(source).toMatch(/onAbort\(\)\s*\{[^}]*recordAbandonment\(\)/s);
     });
   });
 });

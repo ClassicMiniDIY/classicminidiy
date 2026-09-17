@@ -137,20 +137,27 @@ export default defineEventHandler(async (event) => {
   /**
    * The client going away, as a signal the model loop can see.
    *
-   * `streamText` only ever runs `onAbort` when its `abortSignal` fires, and
-   * before this was wired nothing fired it: a visitor pressing stop or an app
-   * going to the background left the loop running to completion on the
-   * Worker's clock, recorded as `completed`, and `client_disconnect` was a
-   * permanent zero. Two sources feed one controller because the route runs
-   * under two runtimes:
+   * Two sources feed one controller because the route runs under two runtimes:
    *
    *  - Cloudflare hands the original `Request` through the event context, and
-   *    its `signal` aborts when the client disconnects.
+   *    its `signal` aborts when the client disconnects — but only with the
+   *    `enable_request_signal` compatibility flag in `wrangler.jsonc`.
    *  - The Node dev server has no such request; `close` on the response fires
    *    when the socket drops before `end()`. The `writableFinished === false`
    *    guard keeps a normal completion (where `close` follows `end`) from
    *    aborting a stream that has already finished, and keeps a shim without
    *    the flag from ever aborting at all.
+   *
+   * The signal is passed to `streamText` so the Anthropic subrequest is
+   * cancelled and the tool loop stops spending. But the RECORDING of the
+   * abandonment does not rely on the SDK's `onAbort`: that callback runs only
+   * when the SDK's own `pull` observes the signal, and on Workers the runtime
+   * cancels the response stream at the same moment the signal fires, so `pull`
+   * is never called again and no callback runs at all. Measured on the first
+   * production deploy: an aborted probe produced NO event, not even a
+   * `completed` one. `recordAbandonment` below is therefore wired to the
+   * controller directly; the SDK's `onAbort` calls the same guarded function,
+   * so whichever fires first records once and the other is a no-op.
    */
   const abort = new AbortController();
   const platformRequest = (event.context as { cloudflare?: { request?: Request } }).cloudflare?.request;
@@ -220,6 +227,30 @@ export default defineEventHandler(async (event) => {
    * moved back down.
    */
   const modelId = ((config.CHAT_MODEL as string) || 'claude-sonnet-5').trim();
+
+  /**
+   * Tokens the finished steps have paid for so far, summed per step.
+   *
+   * `onFinish` never runs for an abandoned stream, and neither does the SDK's
+   * `onAbort` on Workers (see above), so the only reliable source of an
+   * abandoned run's cost is what `onStepFinish` has already seen. The step in
+   * flight when the client left has no usage yet and is not counted.
+   */
+  const stepTokens = { input: 0, output: 0 };
+  let abandonmentRecorded = false;
+  const recordAbandonment = () => {
+    if (abandonmentRecorded) return;
+    abandonmentRecorded = true;
+    if (stepTokens.input || stepTokens.output) {
+      tracker.observe({ usage_metadata: { input_tokens: stepTokens.input, output_tokens: stepTokens.output } });
+      recordChatTokens(event, stepTokens.input, stepTokens.output);
+    }
+    tracker.finish('client_disconnect', undefined, { tools_degraded: degradedList() });
+  };
+  // Runs on the controller's own abort, whichever source fired it. Idempotent
+  // against `tracker.finish`, so a run that already completed or errored
+  // before the socket closed records nothing extra.
+  abort.signal.addEventListener('abort', recordAbandonment, { once: true });
 
   const result = streamText({
     model: anthropic(modelId),
@@ -316,8 +347,11 @@ export default defineEventHandler(async (event) => {
       // Per STEP, not only at the end. A run the visitor aborts, or one that
       // errors on a later step, still paid for the cache write its first step
       // performed — recording only in onFinish dropped those entirely and made
-      // the read/write ratio read far too optimistic.
+      // the read/write ratio read far too optimistic. Token totals are kept per
+      // step for the same reason: they are all an abandoned run can report.
       recordCache(usage);
+      stepTokens.input += usage?.inputTokens ?? 0;
+      stepTokens.output += usage?.outputTokens ?? 0;
     },
     onFinish({ usage }) {
       const inputTokens = usage?.inputTokens ?? 0;
@@ -336,27 +370,12 @@ export default defineEventHandler(async (event) => {
         tools_degraded: degradedList(),
       });
     },
-    onAbort({ steps }) {
-      // The visitor pressed stop or navigated away. These runs consumed tokens
-      // and were previously recorded nowhere, which is awkward given
-      // abandonment is the metric the whole rebuild is being judged on.
-      //
-      // `onFinish` does not run for an aborted stream, so the tokens the
-      // finished steps already paid for are summed here and recorded the same
-      // way, or an account's token accounting would silently under-count every
-      // run the phone backgrounded. The step that was in flight when the abort
-      // landed has no usage yet and is not counted.
-      let inputTokens = 0;
-      let outputTokens = 0;
-      for (const step of steps ?? []) {
-        inputTokens += step.usage?.inputTokens ?? 0;
-        outputTokens += step.usage?.outputTokens ?? 0;
-      }
-      if (inputTokens || outputTokens) {
-        tracker.observe({ usage_metadata: { input_tokens: inputTokens, output_tokens: outputTokens } });
-        recordChatTokens(event, inputTokens, outputTokens);
-      }
-      tracker.finish('client_disconnect', undefined, { tools_degraded: degradedList() });
+    onAbort() {
+      // The visitor pressed stop or navigated away. The recording itself lives
+      // in `recordAbandonment`, which the controller's abort listener also
+      // calls: on Workers this callback usually never runs (see the abort
+      // wiring above), and when it does the shared guard keeps it to one event.
+      recordAbandonment();
     },
     onError({ error }) {
       console.error('[chat] stream failed:', error);
