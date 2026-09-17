@@ -110,6 +110,9 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, 
   // The render "succeeded" but the page itself was an error (GrabCAD behind
   // CloudFront answers 403 with an "ERROR: The request could not be satisfied"
   // body) or a bot interstitial. Never store either as model metadata.
+  if (d.httpStatus === 404 || d.httpStatus === 410) {
+    throw new ScrapeError('That model page couldn’t be found (404). It may have been removed.', 404);
+  }
   if (typeof d.httpStatus === 'number' && d.httpStatus >= 400) {
     throw new ScrapeError(BLOCKED, 422);
   }
