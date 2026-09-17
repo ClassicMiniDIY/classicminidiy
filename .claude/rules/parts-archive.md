@@ -48,6 +48,14 @@ ingest scripts live in `classicminidiy-supabase`; nothing here writes `part_*`.
   `shuffleSourcesForPart()` keys off the part number so server and client agree;
   a random order corrupts hydration, and any fixed order is a ranking of
   retailers we do not intend to make.
+- **The correlation queue shows two scores and writes neither.** `confidence` is
+  trigram similarity; `model_confidence` is P(same part) from the
+  `part-correlation-model` edge function in `classicminidiy-supabase` (TypeSafe
+  programme doc lives there, private). The web reads both, sorts by the model
+  number when present, and the only writes are the review RPCs
+  (`review_part_correlation`, `reopen_part_correlation`). Never write `model_*`,
+  `part_id` or `correlation_state` from this repo, and never treat a missing
+  model score as zero: render it as "not yet scored".
 - **No price, no stock, ever** — not in `raw`, not in a title. The archive is
   part numbers and drawings; storing commercial data is the thing the sources
   would object to.

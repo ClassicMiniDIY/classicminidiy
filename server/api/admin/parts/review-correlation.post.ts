@@ -17,16 +17,24 @@
  * the threshold — and is now rejected clears the `part_id` it set. Otherwise
  * "reject" would remove the row from the queue and leave the wrong buy link on
  * the page, which is the failure the queue exists to prevent, made permanent.
+ *
+ * A THIRD ANSWER: NOTHING HERE FITS. `noEquivalent` says the listing is a tool,
+ * a consumable, a kit, or a part the archive does not model. The SQL function
+ * closes every open proposal for that record and marks the record so the scorer
+ * stops re-proposing it. It is a human's verdict; the second-stage model only
+ * ever suggests it. Reopening is `reopen-correlation`.
  */
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
-  const body = await readBody<{ id?: string; approve?: boolean; note?: string }>(event);
+  const body = await readBody<{ id?: string; approve?: boolean; note?: string; noEquivalent?: boolean }>(event);
 
   const id = body?.id;
-  const approve = body?.approve;
+  const noEquivalent = body?.noEquivalent === true;
+  // "No equivalent" is neither approve nor reject; the flag stands on its own.
+  const approve = noEquivalent ? false : body?.approve;
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing id' });
   if (typeof approve !== 'boolean') {
     throw createError({ statusCode: 400, statusMessage: 'approve must be true or false' });
@@ -57,6 +65,7 @@ export default defineEventHandler(async (event) => {
     // The generated signature has `p_note?: string`, so a null has to become an
     // absent argument rather than an explicit null — the SQL default handles it.
     ...(note ? { p_note: note } : {}),
+    ...(noEquivalent ? { p_no_equivalent: true } : {}),
   });
 
   if (error) {
@@ -75,7 +84,11 @@ export default defineEventHandler(async (event) => {
   // decision that gets questioned later.
   const { error: auditError } = await db.from('admin_audit_log').insert({
     admin_id: user.id,
-    action: approve ? 'part_correlation_approved' : 'part_correlation_rejected',
+    action: noEquivalent
+      ? 'part_correlation_no_equivalent'
+      : approve
+        ? 'part_correlation_approved'
+        : 'part_correlation_rejected',
     target_type: 'part_correlation',
     target_id: id,
     details: {
@@ -89,5 +102,5 @@ export default defineEventHandler(async (event) => {
   });
   if (auditError) console.warn('[admin/parts/review-correlation] audit write failed:', auditError.message);
 
-  return { ok: true, id, status: approve ? 'approved' : 'rejected' };
+  return { ok: true, id, status: noEquivalent ? 'no_factory_equivalent' : approve ? 'approved' : 'rejected' };
 });
