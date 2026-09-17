@@ -177,18 +177,20 @@ export function mapPrintablesPrint(print: PrintablesPrint): PrintablesModel {
  * - `{ model }` on success.
  * - `{ notFound: true }` when the API answers `print: null` — the model is gone
  *   or was never public, and no amount of rendering will change that.
- * - `null` on a GraphQL error (field drift) or an unusable shape.
+ * - `{ schemaError: true }` on a GraphQL error (field drift). The API was
+ *   reached, so the other transport would only repeat the same answer.
+ * - `null` on an unusable shape.
  */
 function interpretResponse(
   body: PrintablesGraphqlResponse,
   via: 'direct' | 'reader'
-): { model: PrintablesModel } | { notFound: true } | null {
+): { model: PrintablesModel } | { notFound: true } | { schemaError: true } | null {
   if (body.errors?.length) {
     console.warn(
       `[external/printables] GraphQL error (${via}) — falling back to page scrape:`,
       body.errors[0]?.message
     );
-    return null;
+    return { schemaError: true };
   }
   if (!body.data || !('print' in body.data)) return null;
   if (body.data.print === null) return { notFound: true };
@@ -287,6 +289,7 @@ export async function fetchPrintablesModel(
     if (!body) continue;
     const result = interpretResponse(body, i === 0 ? 'direct' : 'reader');
     if (!result) continue;
+    if ('schemaError' in result) return null;
     if ('notFound' in result) {
       throw new ScrapeError('That model page couldn’t be found (404). It may have been removed.', 404, 'printables');
     }
