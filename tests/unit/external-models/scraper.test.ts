@@ -15,6 +15,7 @@ import { enrich } from '~~/server/utils/external-models/enrichers';
 import { fetchExternalMetadata } from '~~/server/utils/external-models';
 import { ScrapeError } from '~~/server/utils/external-models/errors';
 import { renderExternalPage } from '~~/server/utils/external-models/render';
+import { fetchPrintablesModel, mapPrintablesPrint } from '~~/server/utils/external-models/printables';
 
 // --- external-sources: detection / id / normalization -----------------------
 
@@ -381,5 +382,172 @@ describe('fetchExternalMetadata — requiresRender (GrabCAD SPA)', () => {
         }) as unknown as typeof fetch,
       })
     ).rejects.toBeInstanceOf(ScrapeError);
+  });
+});
+
+// --- Printables GraphQL API path --------------------------------------------
+
+const PRINTABLES_URL = 'https://www.printables.com/model/1843117-classic-mini-su-carburetor-needle-marking-plate';
+
+function printablesApi(payload: unknown, status = 200) {
+  const calls: { url: string; body: unknown }[] = [];
+  const impl = (async (url: string, init?: RequestInit) => {
+    calls.push({ url, body: init?.body ? JSON.parse(String(init.body)) : null });
+    return { ok: status >= 200 && status < 300, status, json: async () => payload } as unknown as Response;
+  }) as unknown as typeof fetch;
+  return { impl, calls };
+}
+
+const PRINT_NODE = {
+  id: '1843117',
+  name: 'Classic Mini SU Carburetor Needle Marking Plate',
+  summary: 'Holds an SU needle so you can mark the stations.',
+  description:
+    '<p>Holds an SU needle in a repeatable position.&nbsp; Stations every .125&quot;.<br>See <em>The SU Carburettor High-Performance Manual</em>.</p>',
+  user: { publicUsername: 'fisherbt', handle: 'fisherbt_330466' },
+  license: { abbreviation: 'CC-BY-NC-SA' },
+  tags: [{ name: 'classic mini' }, { name: 'su carb' }],
+  image: { filePath: 'media/prints/a/images/1/front.jpg' },
+  images: [{ filePath: 'media/prints/a/images/1/front.jpg' }, { filePath: '/media/prints/b/images/2/back.jpg' }],
+  layerHeights: [0.2],
+  nozzleDiameters: ['0.4'],
+  materials: [{ name: 'PLA' }, { name: 'PETG' }],
+};
+
+describe('mapPrintablesPrint', () => {
+  it('maps the API node to listing fields', () => {
+    const m = mapPrintablesPrint(PRINT_NODE);
+    expect(m.fields.title).toBe('Classic Mini SU Carburetor Needle Marking Plate');
+    expect(m.fields.description).toBe(
+      'Holds an SU needle in a repeatable position. Stations every .125".\nSee The SU Carburettor High-Performance Manual.'
+    );
+    expect(m.fields.summary).toBe('Holds an SU needle so you can mark the stations.');
+    expect(m.fields.authorName).toBe('fisherbt');
+    expect(m.fields.authorUrl).toBe('https://www.printables.com/@fisherbt_330466'); // handle, not display name
+    expect(m.fields.license).toBe('CC-BY-NC-SA');
+    expect(m.fields.commercialUseAllowed).toBe(false);
+    expect(m.fields.tags).toEqual(['classic mini', 'su carb']);
+    expect(m.fields.printSettings).toEqual({
+      recommendedMaterial: 'PLA',
+      alternativeMaterials: ['PETG'],
+      layerHeight: 0.2,
+      nozzleSize: 0.4,
+    });
+    // primary first, de-duplicated, leading slash tolerated
+    expect(m.images).toEqual([
+      'https://media.printables.com/media/prints/a/images/1/front.jpg',
+      'https://media.printables.com/media/prints/b/images/2/back.jpg',
+    ]);
+  });
+
+  it('falls back to registry defaults and derives a summary when the API is sparse', () => {
+    const m = mapPrintablesPrint({ name: 'Bare', description: '<p>' + 'x'.repeat(400) + '</p>' });
+    expect(m.fields.license).toBe('CC-BY-NC-SA');
+    expect(m.fields.summary?.length).toBe(280);
+    expect(m.fields.authorUrl).toBeNull();
+    expect(m.fields.printSettings).toEqual({});
+    expect(m.images).toEqual([]);
+  });
+});
+
+describe('fetchPrintablesModel', () => {
+  it('POSTs the id to the GraphQL endpoint and maps the result', async () => {
+    const api = printablesApi({ data: { print: PRINT_NODE } });
+    const m = await fetchPrintablesModel('1843117', api.impl);
+    expect(m?.fields.title).toBe('Classic Mini SU Carburetor Needle Marking Plate');
+    expect(api.calls[0].url).toBe('https://api.printables.com/graphql/');
+    expect((api.calls[0].body as { variables: { id: string } }).variables.id).toBe('1843117');
+  });
+
+  it('throws a 404 ScrapeError when the API says the print does not exist', async () => {
+    await expect(
+      fetchPrintablesModel('999999999', printablesApi({ data: { print: null } }).impl)
+    ).rejects.toMatchObject({
+      name: 'ScrapeError',
+      statusCode: 404,
+    });
+  });
+
+  it('returns null (fall back) on GraphQL errors, non-2xx, bad JSON and transport failure', async () => {
+    expect(
+      await fetchPrintablesModel('1', printablesApi({ errors: [{ message: "Cannot query field 'x'" }] }, 400).impl)
+    ).toBeNull();
+    expect(await fetchPrintablesModel('1', printablesApi({ errors: [{ message: 'nope' }] }).impl)).toBeNull();
+    expect(await fetchPrintablesModel('1', printablesApi({}, 503).impl)).toBeNull();
+    expect(
+      await fetchPrintablesModel(
+        '1',
+        (async () =>
+          ({
+            ok: true,
+            status: 200,
+            json: async () => {
+              throw new Error('x');
+            },
+          }) as unknown as Response) as unknown as typeof fetch
+      )
+    ).toBeNull();
+    expect(
+      await fetchPrintablesModel('1', (async () => {
+        throw new TypeError('fetch failed');
+      }) as unknown as typeof fetch)
+    ).toBeNull();
+    expect(await fetchPrintablesModel('not-digits', printablesApi({ data: { print: PRINT_NODE } }).impl)).toBeNull();
+  });
+});
+
+describe('fetchExternalMetadata — Printables API wiring', () => {
+  it('uses the API and never fetches the (challenged) page or the render service', async () => {
+    let pageHit = false;
+    let rendered = false;
+    const result = await fetchExternalMetadata(PRINTABLES_URL, {
+      fetchImpl: (async (url: string) => {
+        pageHit = true;
+        return { text: async () => '<title>Just a moment...</title>', url, status: 403 } as unknown as Response;
+      }) as unknown as typeof fetch,
+      renderImpl: (async () => {
+        rendered = true;
+        return fakeJsonFetch({})();
+      }) as unknown as typeof fetch,
+      printablesApiImpl: printablesApi({ data: { print: PRINT_NODE } }).impl,
+    });
+    expect(pageHit).toBe(false);
+    expect(rendered).toBe(false);
+    expect(result.sourceSite).toBe('printables');
+    expect(result.externalId).toBe('1843117');
+    expect(result.sourceUrl).toBe(PRINTABLES_URL);
+    expect(result.title).toBe('Classic Mini SU Carburetor Needle Marking Plate');
+    expect(result.authorName).toBe('fisherbt');
+    expect(result.images[0]).toEqual({
+      url: 'https://media.printables.com/media/prints/a/images/1/front.jpg',
+      isPrimary: true,
+    });
+    expect(result.images[1].isPrimary).toBe(false);
+  });
+
+  it('falls through to the page scrape when the API is unavailable', async () => {
+    const result = await fetchExternalMetadata(PRINTABLES_URL, {
+      fetchImpl: fakeFetch(
+        '<meta property="og:title" content="Needle Plate by fisherbt | Download free STL model | Printables.com"><meta property="og:image" content="https://cdn.test/p.jpg">'
+      ),
+      printablesApiImpl: printablesApi({}, 503).impl,
+    });
+    expect(result.title).toBe('Needle Plate');
+    expect(result.authorName).toBe('fisherbt');
+  });
+
+  it('surfaces the API 404 without rendering', async () => {
+    let rendered = false;
+    await expect(
+      fetchExternalMetadata('https://www.printables.com/model/999999999-gone', {
+        fetchImpl: fakeFetch('', 403),
+        renderImpl: (async () => {
+          rendered = true;
+          return fakeJsonFetch({})();
+        }) as unknown as typeof fetch,
+        printablesApiImpl: printablesApi({ data: { print: null } }).impl,
+      })
+    ).rejects.toMatchObject({ statusCode: 404 });
+    expect(rendered).toBe(false);
   });
 });

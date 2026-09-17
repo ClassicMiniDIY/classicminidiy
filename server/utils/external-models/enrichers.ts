@@ -37,6 +37,12 @@ function truncate(text: string, max: number): string {
   return `${clean.slice(0, max - 1).trimEnd()}…`;
 }
 
+/** The listing `summary` is the description cut to the card length (280). Shared
+ *  with the Printables API path so both routes produce the same summary shape. */
+export function truncateSummary(text: string): string {
+  return truncate(text, 280);
+}
+
 /** JSON-LD sometimes exposes `material`; otherwise print settings stay empty. */
 function printSettingsFromJsonLd(jsonLd: unknown[]): PrintSettings {
   for (const node of jsonLd) {

@@ -4,7 +4,11 @@
  * into a normalized `ScrapedExternalModel`. When the direct fetch is blocked or
  * empty — e.g. Cloudflare bot-managed sites like MakerWorld — it falls back to a
  * rendering service (`renderExternalPage`). Direct path stays the default, so
- * non-blocked sites (Thingiverse / Printables) never hit the third-party.
+ * non-blocked sites (Thingiverse) never hit the third-party.
+ *
+ * Printables is special-cased: its pages are behind a Cloudflare challenge
+ * since 2026-09, but its public GraphQL API is not, so `fetchPrintablesModel`
+ * runs FIRST and the HTML + render chain is only the fallback for it.
  *
  * Re-exports the shared detection helpers so server code has one import.
  */
@@ -20,6 +24,7 @@ import {
 } from '../../../data/models/external-sources';
 import { fetchExternalPage, parseOpenGraph, type OgMetadata } from './ogParser';
 import { renderExternalPage } from './render';
+import { fetchPrintablesModel } from './printables';
 import { enrich } from './enrichers';
 import { ScrapeError } from './errors';
 
@@ -50,6 +55,8 @@ export interface ScrapeDeps {
   fetchImpl?: typeof fetch;
   /** Injected for tests — stands in for the render-service fetch. */
   renderImpl?: typeof fetch;
+  /** Injected for tests — stands in for the Printables GraphQL fetch. */
+  printablesApiImpl?: typeof fetch;
   /** Render-service API key, forwarded from runtimeConfig by the route. */
   microlinkApiKey?: string;
 }
@@ -67,6 +74,24 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
   const sourceUrl = normalizeExternalUrl(rawUrl);
   const site = detectSourceSite(sourceUrl) ?? 'other';
   const forceRender = sourceConfig(site).requiresRender === true;
+  const externalId = extractExternalId(sourceUrl, site);
+
+  // 0) Printables: ask its GraphQL API before touching the page. Runs in
+  //    production (no injected fetchImpl) or when a test supplies
+  //    `printablesApiImpl`. A `null` here means "API unavailable / shape drift",
+  //    and the page + render chain below has its turn; a missing model throws 404.
+  if (site === 'printables' && externalId && (!deps.fetchImpl || deps.printablesApiImpl)) {
+    const api = await fetchPrintablesModel(externalId, deps.printablesApiImpl);
+    if (api) {
+      return {
+        sourceSite: site,
+        sourceUrl,
+        externalId,
+        ...api.fields,
+        images: api.images.map((url, i) => ({ url, isPrimary: i === 0 })),
+      };
+    }
+  }
 
   // 1) Self-hosted direct fetch + OG/JSON-LD parse. Skipped entirely for sites
   //    flagged `requiresRender` (client-rendered SPAs whose static HTML is only
@@ -110,7 +135,6 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
     );
   }
 
-  const externalId = extractExternalId(sourceUrl, site);
   const fields = enrich(og, { url: sourceUrl, site, externalId });
   const images = og.images.map((url, i) => ({ url, isPrimary: i === 0 }));
 
