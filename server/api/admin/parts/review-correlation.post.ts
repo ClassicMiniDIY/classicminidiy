@@ -48,8 +48,8 @@ export default defineEventHandler(async (event) => {
   const { data: existing, error: readError } = await db
     .from('part_number_correlations')
     .select(
-      `id, status, confidence,
-       part_source_records!inner ( part_number_as_listed, title ),
+      `id, status, confidence, source_record_id,
+       part_source_records!inner ( part_number_as_listed, title, part_id ),
        parts!inner ( part_number_display )`
     )
     .eq('id', id)
@@ -57,6 +57,16 @@ export default defineEventHandler(async (event) => {
 
   if (readError || !existing) {
     throw createError({ statusCode: 404, statusMessage: 'Correlation not found' });
+  }
+
+  const recordForGuard = existing.part_source_records as unknown as { part_id: string | null } | null;
+  if (noEquivalent && recordForGuard?.part_id) {
+    // The SQL function refuses this too; saying why here keeps the reason on
+    // the reviewer's screen instead of in the Worker log.
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'This listing is already attached to a part. Reject that approved correlation first.',
+    });
   }
 
   const { error } = await db.rpc('review_part_correlation', {
@@ -82,24 +92,37 @@ export default defineEventHandler(async (event) => {
   // Audited like every other moderation action. This one attaches a commercial
   // link to an archive record on a human's say-so, which is exactly the kind of
   // decision that gets questioned later.
-  const { error: auditError } = await db.from('admin_audit_log').insert({
-    admin_id: user.id,
-    action: noEquivalent
-      ? 'part_correlation_no_equivalent'
-      : approve
-        ? 'part_correlation_approved'
-        : 'part_correlation_rejected',
-    target_type: 'part_correlation',
-    target_id: id,
-    details: {
-      listed_number: record?.part_number_as_listed ?? null,
-      listed_as: record?.title ?? null,
-      part_number: part?.part_number_display ?? null,
-      confidence: Number(existing.confidence),
-      previous_status: existing.status,
-      note,
-    },
-  });
+  // "No equivalent" is a verdict on the RECORD, not on the candidate whose id
+  // carried the request, so the audit row targets the record and names no part:
+  // a log line that read "no_equivalent, part 21A1234" would look like a match.
+  const { error: auditError } = await db.from('admin_audit_log').insert(
+    noEquivalent
+      ? {
+          admin_id: user.id,
+          action: 'part_correlation_no_equivalent',
+          target_type: 'part_source_record',
+          target_id: existing.source_record_id as string,
+          details: {
+            listed_number: record?.part_number_as_listed ?? null,
+            listed_as: record?.title ?? null,
+            note,
+          },
+        }
+      : {
+          admin_id: user.id,
+          action: approve ? 'part_correlation_approved' : 'part_correlation_rejected',
+          target_type: 'part_correlation',
+          target_id: id,
+          details: {
+            listed_number: record?.part_number_as_listed ?? null,
+            listed_as: record?.title ?? null,
+            part_number: part?.part_number_display ?? null,
+            confidence: Number(existing.confidence),
+            previous_status: existing.status,
+            note,
+          },
+        }
+  );
   if (auditError) console.warn('[admin/parts/review-correlation] audit write failed:', auditError.message);
 
   return { ok: true, id, status: noEquivalent ? 'no_factory_equivalent' : approve ? 'approved' : 'rejected' };
