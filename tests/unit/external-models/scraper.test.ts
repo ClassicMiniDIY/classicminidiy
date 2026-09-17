@@ -301,6 +301,21 @@ describe('renderExternalPage (fallback)', () => {
     expect(calls[0].headers.Authorization).toBe('Bearer jina_test_key');
   });
 
+  it('tolerates array meta values from repeated tags and keeps every image', async () => {
+    const og = await renderExternalPage(
+      'https://x/y',
+      fakeJsonFetch(
+        jinaPage({} as Record<string, string>, {
+          title: 'Fallback title',
+          metadata: { 'og:image': ['https://cdn.test/1.jpg', 'https://cdn.test/2.jpg'], keywords: ['a, b'] },
+        })
+      )
+    );
+    expect(og.title).toBe('Fallback title');
+    expect(og.images).toEqual(['https://cdn.test/1.jpg', 'https://cdn.test/2.jpg']);
+    expect(og.keywords).toEqual(['a', 'b']);
+  });
+
   it('sends no Authorization header without a key', async () => {
     let headers: Record<string, string> = {};
     await renderExternalPage('https://x/y', (async (_u: string, init?: RequestInit) => {
@@ -513,8 +528,8 @@ describe('mapPrintablesPrint', () => {
     expect(flags('CC-BY-ND')).toEqual([false, true]);
     expect(flags('CC-BY-NC-ND')).toEqual([false, false]);
     expect(flags('CC0')).toEqual([true, true]);
-    expect(flags('Standard Digital File License')).toEqual([true, false]); // registry default
-    expect(flags(null)).toEqual([true, false]);
+    expect(flags('Standard Digital File License')).toEqual([null, null]); // reported but not understood
+    expect(flags(null)).toEqual([true, false]); // registry default only when nothing was reported
   });
 
   it('keeps an absolute image filePath as-is instead of double-prefixing it', () => {
