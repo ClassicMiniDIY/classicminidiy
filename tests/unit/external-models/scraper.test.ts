@@ -335,6 +335,15 @@ describe('renderExternalPage (fallback)', () => {
     ).rejects.toBeInstanceOf(ScrapeError);
   });
 
+  it('maps a rendered upstream 404 to the not-found error, not "blocked"', async () => {
+    await expect(
+      renderExternalPage(
+        'https://www.myminifactory.com/object/gone-1',
+        fakeJsonFetch(jinaPage({ 'og:title': 'Page not found' }, { httpStatus: 404 }))
+      )
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+
   it('treats a Cloudflare interstitial as blocked even though it renders as 200', async () => {
     await expect(
       renderExternalPage(
