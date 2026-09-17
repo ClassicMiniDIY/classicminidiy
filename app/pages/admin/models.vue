@@ -57,7 +57,7 @@
     const { data: versions, error } = await supabase
       .from('model_versions')
       .select(
-        'id, version_number, label, changelog, created_at, status, models!model_versions_model_id_fkey(id, title, slug, status, owner_id, pricing_mode, price_cents, suggested_price_cents, min_price_cents, currency, safety_critical, license_code, summary)'
+        'id, version_number, label, changelog, created_at, status, models!model_versions_model_id_fkey(id, title, slug, status, owner_id, pricing_mode, price_cents, suggested_price_cents, min_price_cents, currency, safety_critical, safety_model_p, license_code, summary)'
       )
       .eq('status', 'pending')
       .order('created_at', { ascending: true });
@@ -517,6 +517,30 @@
                   <span class="badge badge-sm">v{{ v.version_number }}</span>
                   <span v-if="v.model?.safety_critical" class="badge badge-warning badge-sm gap-1">
                     <i class="fas fa-triangle-exclamation"></i> Safety-critical
+                  </span>
+                  <!--
+                    The model's read beside the seller's flag. Disagreement is the
+                    case worth a look: the seller said no and the model says
+                    probably; the reviewer sets the real flag before publishing.
+                  -->
+                  <span
+                    v-if="
+                      typeof v.model?.safety_model_p === 'number' &&
+                      !v.model?.safety_critical &&
+                      v.model.safety_model_p >= 0.7
+                    "
+                    class="badge badge-error badge-sm gap-1"
+                    title="Seller did not tick safety-critical; the model reads it as one"
+                  >
+                    <i class="fas fa-triangle-exclamation"></i> Model: safety-critical
+                    {{ Math.round(v.model.safety_model_p * 100) }}%
+                  </span>
+                  <span
+                    v-else-if="typeof v.model?.safety_model_p === 'number'"
+                    class="badge badge-ghost badge-sm"
+                    title="P(safety-critical) from the model read"
+                  >
+                    model {{ Math.round(v.model.safety_model_p * 100) }}%
                   </span>
                   <span class="badge badge-ghost badge-sm capitalize">{{ v.model?.pricing_mode }}</span>
                 </div>

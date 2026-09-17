@@ -1,5 +1,7 @@
 import { sanitizeUserInput } from '../../utils/exchange/sanitize';
 import { moderateMessage } from '../../utils/exchange/contentFilter';
+import { screenMarketplaceText } from '../../utils/exchange/screen';
+import { captureServerEvent } from '../../utils/chatUsage';
 import { checkRateLimit } from '../../utils/exchange/rateLimit';
 import { getServiceClient } from '../../utils/supabase';
 import { queueNotification, buildBatchKey } from '../../utils/exchange/notificationQueue';

@@ -8,6 +8,7 @@
  * frozen license (with derived flags), and author. Owner/admin preview of
  * unpublished models is deferred to the upload-wizard PR.
  */
+import { isSafetyCritical } from '../../utils/models/safetyRead';
 import { getServiceClient } from '../../utils/supabase';
 import type {
   ModelDetail,
@@ -32,7 +33,7 @@ export default defineEventHandler(async (event): Promise<ModelDetail> => {
   const { data: model, error: modelError } = await service
     .from('models')
     .select(
-      'id, slug, title, summary, description, category_slug, tags, pricing_mode, price_cents, suggested_price_cents, min_price_cents, currency, safety_critical, source_url, license_code, current_version_id, owner_id, like_count, comment_count, download_count, version_count, created_at'
+      'id, slug, title, summary, description, category_slug, tags, pricing_mode, price_cents, suggested_price_cents, min_price_cents, currency, safety_critical, safety_model_p, source_url, license_code, current_version_id, owner_id, like_count, comment_count, download_count, version_count, created_at'
     )
     .eq('status', 'published')
     .eq(UUID_RE.test(idOrSlug) ? 'id' : 'slug', idOrSlug)
@@ -150,7 +151,9 @@ export default defineEventHandler(async (event): Promise<ModelDetail> => {
     suggestedPriceCents: model.suggested_price_cents,
     minPriceCents: model.min_price_cents,
     currency: model.currency,
-    safetyCritical: model.safety_critical,
+    // The seller's flag OR the model's read: the disclaimer and the download
+    // interstitial only ever gain caution from the model, never lose it.
+    safetyCritical: isSafetyCritical(model.safety_critical, model.safety_model_p),
     sourceUrl: model.source_url,
     likeCount: model.like_count,
     commentCount: model.comment_count,

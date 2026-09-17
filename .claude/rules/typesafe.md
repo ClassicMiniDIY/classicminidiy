@@ -5,6 +5,12 @@ paths:
   - 'server/agent/classifierRun.ts'
   - 'server/api/chat.post.ts'
   - 'server/agent/prompt.ts'
+  - 'server/utils/exchange/screen.ts'
+  - 'server/utils/models/safetyRead.ts'
+  - 'server/api/exchange/wanted/**'
+  - 'server/api/exchange/contact-seller.post.ts'
+  - 'server/api/models/index.post.ts'
+  - 'server/api/models/*.patch.ts'
 ---
 
 # TypeSafe (Jev) rules
@@ -46,3 +52,15 @@ that must survive any phase.
   not reuse `chat-classifier`.
 - The stream contract the native apps parse carries no classifier data. The
   fixtures in `tests/fixtures/chat-stream` must not change for this feature.
+- **The marketplace text screen (`server/utils/exchange/screen.ts`) reads the
+  same `platform_settings.message_screen_mode` row as the private-message
+  screen in the supabase repo**, cached a minute per isolate. `hold` flags a
+  wanted post exactly as the regex layer does (`status`/`moderation_status` =
+  `flagged`, tags into `moderation_issues`); `shadow` logs; a seller inquiry is
+  an email with nothing to hold and is only logged (`contact_seller_screened`).
+  A `skipped` verdict means the route proceeds as it did before the screen.
+- **The model safety read (`server/utils/models/safetyRead.ts`) writes
+  `models.safety_model_p` through the service client only** and never
+  `safety_critical`. The detail page shows the strong disclaimer on
+  `isSafetyCritical(flag, p)` = seller flag OR `p >= 0.7`; the model only ever
+  adds caution. Off unless `TYPESAFE_MODELS_MODE=on`.

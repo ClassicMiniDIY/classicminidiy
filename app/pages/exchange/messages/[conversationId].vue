@@ -21,140 +21,151 @@
       <!-- Conversation -->
       <div v-else class="flex flex-col lg:flex-row lg:gap-6">
         <div class="space-y-6 min-w-0 flex-1">
-        <!-- Listing Info Header -->
-        <div class="card bg-base-100 shadow-sm">
-          <div class="card-body p-4">
-            <!-- Listing-linked conversation -->
-            <div v-if="conversation.listing" class="flex gap-4">
-              <!-- Listing image -->
-              <NuxtLink :to="`/exchange/listings/${conversation.listing.slug}`" class="avatar flex-shrink-0">
-                <div class="w-20 h-20 rounded">
-                  <img
-                    v-if="listingImage"
-                    :src="listingImage"
-                    :alt="conversation.listing.title"
-                    class="object-cover w-full h-full"
-                    loading="lazy"
-                  />
-                  <div v-else class="w-full h-full bg-base-300 flex items-center justify-center">
-                    <i class="fas fa-image text-2xl text-base-content/30"></i>
+          <!-- Listing Info Header -->
+          <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4">
+              <!-- Listing-linked conversation -->
+              <div v-if="conversation.listing" class="flex gap-4">
+                <!-- Listing image -->
+                <NuxtLink :to="`/exchange/listings/${conversation.listing.slug}`" class="avatar flex-shrink-0">
+                  <div class="w-20 h-20 rounded">
+                    <img
+                      v-if="listingImage"
+                      :src="listingImage"
+                      :alt="conversation.listing.title"
+                      class="object-cover w-full h-full"
+                      loading="lazy"
+                    />
+                    <div v-else class="w-full h-full bg-base-300 flex items-center justify-center">
+                      <i class="fas fa-image text-2xl text-base-content/30"></i>
+                    </div>
                   </div>
-                </div>
-              </NuxtLink>
-
-              <!-- Listing details -->
-              <div class="flex-1 min-w-0">
-                <NuxtLink
-                  :to="`/exchange/listings/${conversation.listing.slug}`"
-                  class="link link-hover text-lg font-semibold mb-1 block"
-                >
-                  {{ conversation.listing.title }}
                 </NuxtLink>
 
-                <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm">
-                  <span class="font-bold text-primary text-lg">
-                    ${{ conversation.listing.price?.toLocaleString() }}
-                  </span>
-                  <span class="text-base-content/60">{{ t('chattingWith', { name: otherParticipantName }) }}</span>
-                  <span v-if="counterpartyIsNew" class="badge badge-warning badge-sm gap-1" :title="t('newAccountTitle')">
-                    <i class="fas fa-wand-magic-sparkles"></i>
-                    {{ t('newAccount') }}
-                  </span>
-                </div>
-              </div>
+                <!-- Listing details -->
+                <div class="flex-1 min-w-0">
+                  <NuxtLink
+                    :to="`/exchange/listings/${conversation.listing.slug}`"
+                    class="link link-hover text-lg font-semibold mb-1 block"
+                  >
+                    {{ conversation.listing.title }}
+                  </NuxtLink>
 
-              <!-- Per-user controls -->
-              <div v-if="otherParticipantId" class="flex-shrink-0">
-                <button
-                  v-if="!isCounterpartyBlocked"
-                  class="btn btn-ghost btn-sm text-base-content/60"
-                  :title="t('blockTitle')"
-                  @click="handleBlock"
-                >
-                  <i class="fas fa-ban"></i>
-                  {{ t('block') }}
-                </button>
-                <button v-else class="btn btn-ghost btn-sm text-error" :title="t('unblockTitle')" @click="handleUnblock">
-                  <i class="fas fa-ban"></i>
-                  {{ t('unblock') }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Orphan / wanted conversation (no associated listing) -->
-            <div v-else class="flex gap-4">
-              <div class="avatar flex-shrink-0">
-                <div class="w-20 h-20 rounded">
-                  <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                    <i class="fas fa-comments text-2xl text-base-content/30"></i>
+                  <div class="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm">
+                    <span class="font-bold text-primary text-lg">
+                      ${{ conversation.listing.price?.toLocaleString() }}
+                    </span>
+                    <span class="text-base-content/60">{{ t('chattingWith', { name: otherParticipantName }) }}</span>
+                    <span
+                      v-if="counterpartyIsNew"
+                      class="badge badge-warning badge-sm gap-1"
+                      :title="t('newAccountTitle')"
+                    >
+                      <i class="fas fa-wand-magic-sparkles"></i>
+                      {{ t('newAccount') }}
+                    </span>
                   </div>
                 </div>
+
+                <!-- Per-user controls -->
+                <div v-if="otherParticipantId" class="flex-shrink-0">
+                  <button
+                    v-if="!isCounterpartyBlocked"
+                    class="btn btn-ghost btn-sm text-base-content/60"
+                    :title="t('blockTitle')"
+                    @click="handleBlock"
+                  >
+                    <i class="fas fa-ban"></i>
+                    {{ t('block') }}
+                  </button>
+                  <button
+                    v-else
+                    class="btn btn-ghost btn-sm text-error"
+                    :title="t('unblockTitle')"
+                    @click="handleUnblock"
+                  >
+                    <i class="fas fa-ban"></i>
+                    {{ t('unblock') }}
+                  </button>
+                </div>
               </div>
 
-              <div class="flex-1">
-                <p class="text-lg font-semibold mb-1">{{ t('noListing') }}</p>
-                <span class="text-base-content/60 text-sm">{{ t('chattingWith', { name: otherParticipantName }) }}</span>
+              <!-- Orphan / wanted conversation (no associated listing) -->
+              <div v-else class="flex gap-4">
+                <div class="avatar flex-shrink-0">
+                  <div class="w-20 h-20 rounded">
+                    <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                      <i class="fas fa-comments text-2xl text-base-content/30"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex-1">
+                  <p class="text-lg font-semibold mb-1">{{ t('noListing') }}</p>
+                  <span class="text-base-content/60 text-sm">{{
+                    t('chattingWith', { name: otherParticipantName })
+                  }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Safety Tips (dismissible) -->
-        <ExchangeMessagesSafetyTips :conversation-id="conversationId" />
+          <!-- Safety Tips (dismissible) -->
+          <ExchangeMessagesSafetyTips :conversation-id="conversationId" />
 
-        <!-- Meeting Spot Suggestions -->
-        <ExchangeMessagesMeetingSpotSuggestions
-          v-if="conversation.listing?.latitude && conversation.listing?.longitude"
-          :seller-lat="Number(conversation.listing.latitude)"
-          :seller-lon="Number(conversation.listing.longitude)"
-          :conversation-id="conversationId"
-          @spot-suggested="handleMessageSent"
-        />
+          <!-- Meeting Spot Suggestions -->
+          <ExchangeMessagesMeetingSpotSuggestions
+            v-if="conversation.listing?.latitude && conversation.listing?.longitude"
+            :seller-lat="Number(conversation.listing.latitude)"
+            :seller-lon="Number(conversation.listing.longitude)"
+            :conversation-id="conversationId"
+            @spot-suggested="handleMessageSent"
+          />
 
-        <!-- Messages -->
-        <div class="card bg-base-100 shadow-sm">
-          <div class="card-body p-6">
-            <h2 class="card-title mb-4">
-              <i class="fas fa-comments text-xl"></i>
-              {{ t('conversation') }}
-            </h2>
+          <!-- Messages -->
+          <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-6">
+              <h2 class="card-title mb-4">
+                <i class="fas fa-comments text-xl"></i>
+                {{ t('conversation') }}
+              </h2>
 
-            <div class="max-h-[500px] overflow-y-auto mb-6">
-              <div v-if="hasOlderMessages" class="text-center py-2">
-                <button class="btn btn-ghost btn-sm" @click="loadOlderMessages" :disabled="loadingOlder">
-                  <span v-if="loadingOlder" class="loading loading-spinner loading-xs"></span>
-                  {{ t('loadOlder') }}
-                </button>
+              <div class="max-h-[500px] overflow-y-auto mb-6">
+                <div v-if="hasOlderMessages" class="text-center py-2">
+                  <button class="btn btn-ghost btn-sm" @click="loadOlderMessages" :disabled="loadingOlder">
+                    <span v-if="loadingOlder" class="loading loading-spinner loading-xs"></span>
+                    {{ t('loadOlder') }}
+                  </button>
+                </div>
+                <ExchangeMessagesMessageList
+                  :messages="messages"
+                  :loading="messagesLoading"
+                  :conversation-id="conversationId"
+                  :counterparty-id="otherParticipantId"
+                  :counterparty-is-new="counterpartyIsNew"
+                />
               </div>
-              <ExchangeMessagesMessageList
-                :messages="messages"
-                :loading="messagesLoading"
+
+              <!-- Blocked notice (replaces the composer) -->
+              <div v-if="isCounterpartyBlocked" class="alert alert-warning">
+                <i class="fas fa-ban text-xl"></i>
+                <div class="text-sm">
+                  <p class="font-medium">{{ t('blockedNotice.title', { name: otherParticipantName }) }}</p>
+                  <p class="opacity-80">{{ t('blockedNotice.body') }}</p>
+                </div>
+                <button class="btn btn-sm btn-ghost" @click="handleUnblock">{{ t('unblock') }}</button>
+              </div>
+
+              <!-- Message Composer -->
+              <ExchangeMessagesMessageComposer
+                v-else
                 :conversation-id="conversationId"
-                :counterparty-id="otherParticipantId"
-                :counterparty-is-new="counterpartyIsNew"
+                :listing-id="conversation.listing?.id"
+                :message-count="messages.length"
+                @sent="handleMessageSent"
               />
             </div>
-
-            <!-- Blocked notice (replaces the composer) -->
-            <div v-if="isCounterpartyBlocked" class="alert alert-warning">
-              <i class="fas fa-ban text-xl"></i>
-              <div class="text-sm">
-                <p class="font-medium">{{ t('blockedNotice.title', { name: otherParticipantName }) }}</p>
-                <p class="opacity-80">{{ t('blockedNotice.body') }}</p>
-              </div>
-              <button class="btn btn-sm btn-ghost" @click="handleUnblock">{{ t('unblock') }}</button>
-            </div>
-
-            <!-- Message Composer -->
-            <ExchangeMessagesMessageComposer
-              v-else
-              :conversation-id="conversationId"
-              :listing-id="conversation.listing?.id"
-              :message-count="messages.length"
-              @sent="handleMessageSent"
-            />
           </div>
-        </div>
         </div>
 
         <!-- Desktop-only shared images sidebar -->
@@ -312,33 +323,31 @@
   const supabase = useSupabase();
 
   onMounted(() => {
+    // A message arrives either as an INSERT or, when the shared backend held it
+    // for review and then released it (moderation_status pending → approved),
+    // as an UPDATE the recipient sees for the first time. RLS hides the pending
+    // row, so the UPDATE is the recipient's first sight of it; both events
+    // append once and mark the thread read.
+    const appendIfNew = async (payload: any) => {
+      const newMessage = payload.new;
+      if (!newMessage || newMessage.moderation_status === 'pending') return;
+      // Only append if this message isn't already in our list
+      if (!messages.value.some((m: any) => m.id === newMessage.id)) {
+        // Attach sender info from conversation participants
+        if (conversation.value) {
+          const sender =
+            newMessage.sender_id === conversation.value.buyer_id ? conversation.value.buyer : conversation.value.seller;
+          newMessage.sender = sender || null;
+        }
+        messages.value = [...messages.value, newMessage];
+      }
+      await markAsRead(conversationId.value);
+    };
+    const filter = `conversation_id=eq.${conversationId.value}`;
     const channel = supabase
       .channel(`conversation_${conversationId.value}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId.value}`,
-        },
-        async (payload: any) => {
-          const newMessage = payload.new;
-          // Only append if this message isn't already in our list
-          if (newMessage && !messages.value.some((m: any) => m.id === newMessage.id)) {
-            // Attach sender info from conversation participants
-            if (conversation.value) {
-              const sender =
-                newMessage.sender_id === conversation.value.buyer_id
-                  ? conversation.value.buyer
-                  : conversation.value.seller;
-              newMessage.sender = sender || null;
-            }
-            messages.value = [...messages.value, newMessage];
-          }
-          await markAsRead(conversationId.value);
-        }
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter }, appendIfNew)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter }, appendIfNew)
       .subscribe();
 
     // Cleanup on unmount

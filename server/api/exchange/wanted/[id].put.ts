@@ -1,5 +1,6 @@
 import { sanitizeUserInput } from '../../../utils/exchange/sanitize';
 import { moderateMessage } from '../../../utils/exchange/contentFilter';
+import { screenMarketplaceText } from '../../../utils/exchange/screen';
 import { createRateLimitMiddleware, RateLimitPresets } from '../../../utils/exchange/rateLimit';
 import { VALID_CATEGORIES, VALID_CONDITION_PREFERENCES, MAX_CONTENT_LENGTH } from '~/utils/constants';
 import { validateBudgetValue, validateBudgetRange } from '../../../utils/exchange/validators';
@@ -51,7 +52,7 @@ export default defineEventHandler(async (event) => {
     // Fetch the existing wanted post to verify ownership
     const { data: existingPost, error: fetchError } = await supabase
       .from('wanted_posts')
-      .select('id, user_id, status, moderation_status, budget_min, budget_max')
+      .select('id, user_id, status, moderation_status, budget_min, budget_max, title, description')
       .eq('id', postId)
       .single();
 
@@ -214,6 +215,37 @@ export default defineEventHandler(async (event) => {
         statusCode: 400,
         message: 'No fields provided to update',
       });
+    }
+
+    // The semantic read on the text as it will stand after this edit, behind
+    // the same switch as private messages. Only when text actually changed.
+    if (title !== undefined || description !== undefined) {
+      const screen = await screenMarketplaceText(
+        event,
+        `${updateData.title ?? existingPost.title ?? ''}\n\n${updateData.description ?? existingPost.description ?? ''}`,
+        {
+          caller: 'wanted-post-edit',
+          context: 'A wanted post: a member asking the marketplace for a part or a car',
+          title: (updateData.title as string | undefined) ?? existingPost.title ?? null,
+        }
+      );
+      if (screen.decision === 'hold' && screen.mode === 'hold') {
+        isFlagged = true;
+        allModerationIssues.push(...screen.tags);
+      }
+      if (screen.decision !== 'skipped') {
+        console.log(
+          JSON.stringify({
+            event: 'wanted_post_screened',
+            mode: screen.mode,
+            decision: screen.decision,
+            tags: screen.tags,
+            scores: screen.scores,
+            held: screen.decision === 'hold' && screen.mode === 'hold',
+            duration_ms: screen.durationMs,
+          })
+        );
+      }
     }
 
     // Update moderation status if content was flagged
