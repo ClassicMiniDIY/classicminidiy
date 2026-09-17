@@ -195,7 +195,7 @@ put NUXT_S3_MODELS_ACCESS_KEY_ID S3_MODELS_ACCESS_KEY_ID
 put NUXT_S3_MODELS_SECRET_ACCESS_KEY S3_MODELS_SECRET_ACCESS_KEY
 
 # --- Optional third-party --------------------------------------------------
-put NUXT_MICROLINK_API_KEY MICROLINK_API_KEY OPTIONAL
+put NUXT_JINA_API_KEY JINA_API_KEY OPTIONAL
 put NUXT_CAMINO_API_KEY CAMINO_API_KEY OPTIONAL
 
 # --- nuxt-og-image ---------------------------------------------------------

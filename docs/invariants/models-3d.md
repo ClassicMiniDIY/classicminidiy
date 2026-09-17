@@ -41,9 +41,9 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
   service is busy right now (rate-limited)". Cause: `printables.com` had started answering
   every server-side page fetch with a Cloudflare managed challenge (`cf-mitigated: challenge`,
   403 "Just a moment..."), so the OG/JSON-LD parse saw nothing and every Printables URL fell
-  through to the Microlink render fallback. `NUXT_MICROLINK_API_KEY` is not set on the Worker,
-  so that call ran on Microlink's free tier, which is quota'd per egress IP (Workers share
-  theirs) and answers `EPROXYNEEDED` for antibot-protected pages anyway. Fix:
+  through to the render fallback, then Microlink. `NUXT_MICROLINK_API_KEY` was never set on the
+  Worker, so that call ran on Microlink's free tier, which is quota'd per egress IP (Workers
+  share theirs) and answers `EPROXYNEEDED` for antibot-protected pages anyway. Fix:
   `server/utils/external-models/printables.ts` queries `api.printables.com/graphql/` (the
   endpoint the Printables front end uses; unauthenticated for public models; not challenged)
   and maps the node straight to listing fields, with richer data than OG ever had (license
@@ -52,3 +52,17 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
   render chain still gets a turn. Introspection is disabled on that endpoint, so the query's
   field list was verified by hand; a removed field 400s the whole query, which is the fallback
   trigger. Tests: `tests/unit/external-models/scraper.test.ts` ("Printables GraphQL API").
+- **Render fallback is Jina Reader, not Microlink (2026-09-17).** Same incident. Microlink's
+  paid tier was the only way past its antibot refusal and was not worth the price for this
+  feature. `server/utils/external-models/render.ts` now calls `r.jina.ai/<url>` with
+  `Accept: application/json` and `X-Target-Selector: head`: the body is ~25 tokens and
+  `data.metadata` still carries the full `<meta>` set, so the free 10M-token allowance is
+  effectively unlimited here. `NUXT_JINA_API_KEY` (runtimeConfig `JINA_API_KEY`) lifts the
+  keyless 20 req/min cap to 200; `JINA_READER_URL` is the plain-var endpoint override. Live
+  result on cutover day: MakerWorld and MyMiniFactory render through the Cloudflare challenge;
+  Cults3D still returns the "Just a moment..." interstitial (with upstream 200, so the title
+  is the only tell) and GrabCAD is still CloudFront-403. The renderer therefore rejects three
+  shapes rather than storing them: upstream `httpStatus >= 400`, an interstitial title, and a
+  result with no title at all (MakerWorld's soft-404 has a default share image and no title).
+  The exchange Finds parser (`server/api/exchange/external-listings/parse.post.ts`) shares
+  this renderer and inherits the change.

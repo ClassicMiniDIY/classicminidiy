@@ -91,7 +91,7 @@ repair them afterwards:
 **RUNTIME** — `wrangler secret put`, never the build env. Set them with
 `./scripts/set-cf-secrets.sh` (reads your local `.env`, never prints a value):
 Supabase service key, LangGraph/LangSmith, GitHub/YouTube, MCP, marketing,
-`S3_MODELS_*`, `SHOPIFY_STOREFRONT_TOKEN`, and the optional Microlink/Camino
+`S3_MODELS_*`, `SHOPIFY_STOREFRONT_TOKEN`, and the optional Jina Reader/Camino
 keys.
 
 **The env var name is derived, not chosen.** Nitro computes a key's override
@@ -137,7 +137,7 @@ default rather than failing, which is exactly why a wrong one is hard to notice.
 | `MCP_RATELIMIT_INTERNAL_MAX`                                               | same                                                                                          | 600                        |
 | `MCP_RATELIMIT_MAX`                                                        | same                                                                                          | — legacy, see below        |
 | `POSTHOG_INGEST_HOST`                                                      | `server/middleware/bot-analytics.ts`, `server/utils/mcpUsage.ts`, `server/utils/chatUsage.ts` | `https://us.i.posthog.com` |
-| `MICROLINK_API_URL`                                                        | `server/utils/external-models/render.ts`                                                      | `https://api.microlink.io` |
+| `JINA_READER_URL`                                                          | `server/utils/external-models/render.ts`                                                      | `https://r.jina.ai`        |
 
 `MCP_RATELIMIT_MAX` is not a fourth tier — it predates the tiers, when one cap
 covered all `/mcp` traffic, and now survives ONLY as the fallback for
@@ -148,10 +148,11 @@ The per-tier knobs matter more than "has a default" suggests: without them
 documented, "why is the free tier allowing 20 calls" is unanswerable from the
 dashboard alone, because nothing there mentions the number.
 
-**`MICROLINK_API_KEY` is NOT in that table, and deliberately so.** It is a
-`runtimeConfig` value fed by **`NUXT_MICROLINK_API_KEY`**, forwarded into
-`renderExternalPage()` by every caller. It briefly had a second
-`process.env.MICROLINK_API_KEY` fallback as well, which is the trap this note
+**`JINA_API_KEY` is NOT in that table, and deliberately so.** It is a
+`runtimeConfig` value fed by **`NUXT_JINA_API_KEY`**, forwarded into
+`renderExternalPage()` by every caller. (Jina Reader replaced Microlink as the
+render service on 2026-09-17; the names changed with it.) Its predecessor
+briefly had a second `process.env.MICROLINK_API_KEY` fallback, which is the trap this note
 exists to close: one credential with two spellings, where the raw one could
 never actually fire (callers always forward a defined string, and an unset
 runtimeConfig key is `''`, not `undefined`), so a plain var set to key that call

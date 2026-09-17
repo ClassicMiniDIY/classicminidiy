@@ -3,7 +3,7 @@
  *
  * "Finds" link-preview scraper, CONVERGED off TheMiniExchange's Puppeteer +
  * per-site parsers onto CMDIY's lighter external-models pipeline: SSRF-guarded
- * OG/JSON-LD fetch → Microlink render fallback → re-host image. No headless
+ * OG/JSON-LD fetch → Jina Reader render fallback → re-host image. No headless
  * browser, no per-site parser dispatch — every host flows through the same
  * pipeline; the host only drives the display badge + the price-label heuristic.
  *
@@ -189,13 +189,13 @@ export default defineEventHandler(async (event) => {
     if (err instanceof SsrfError || (err instanceof ScrapeError && err.statusCode === 400)) {
       throw createError({ statusCode: 400, message: 'That URL could not be fetched' });
     }
-    // Other ScrapeErrors (non-HTML, oversized, 4xx/5xx) → fall through to Microlink.
+    // Other ScrapeErrors (non-HTML, oversized, 4xx/5xx) → fall through to the render service.
   }
 
-  // 2) Microlink render fallback (Cloudflare/JS-only). No html/JSON-LD on this path.
+  // 2) Jina Reader render fallback (Cloudflare/JS-only). No html/JSON-LD on this path.
   if (!og) {
     try {
-      const rendered = await renderExternalPage(url, undefined, config.MICROLINK_API_KEY as string | undefined);
+      const rendered = await renderExternalPage(url, undefined, config.JINA_API_KEY as string | undefined);
       if (rendered.title || rendered.image) og = rendered;
     } catch {
       og = null;

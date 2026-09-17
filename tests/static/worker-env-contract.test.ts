@@ -7,7 +7,7 @@
  * Nitro derives a runtimeConfig key's override name as
  * `NUXT_ + snakeCase(key).toUpperCase()`, so anything read through
  * `useRuntimeConfig()` is fed by a `NUXT_`-prefixed secret. A raw
- * `process.env.MICROLINK_API_URL` is not — it needs a PLAIN Worker var of
+ * `process.env.JINA_READER_URL` is not — it needs a PLAIN Worker var of
  * exactly that name. Provisioning the wrong one leaves the raw reader on its
  * default, and because an absent value is an empty string rather than an
  * error, nothing throws. That is precisely how the 2026-08-26 chat outage
@@ -45,16 +45,16 @@ const PLAIN_WORKER_ENV_NAMES = [
   'MCP_RATELIMIT_INTERNAL_MAX',
   // Analytics ingest host override. Defaults to us.i.posthog.com.
   'POSTHOG_INGEST_HOST',
-  // Microlink render endpoint override. Defaults to the public API.
+  // Jina Reader render endpoint override. Defaults to the public API.
   //
   // The KEY is deliberately absent. It resolves through runtimeConfig only
-  // (`NUXT_MICROLINK_API_KEY`), forwarded to `renderExternalPage` by every
-  // caller. It used to ALSO have a `process.env.MICROLINK_API_KEY` fallback,
+  // (`NUXT_JINA_API_KEY`), forwarded to `renderExternalPage` by every
+  // caller. Its predecessor (Microlink) once ALSO had a `process.env` fallback,
   // which gave one credential two spellings and invited someone to set a plain
   // var that could never fire — callers always forward a defined string, and an
   // unset runtimeConfig key is `''`, not `undefined`. If that raw read comes
   // back this test fails; restore the single path rather than re-adding it here.
-  'MICROLINK_API_URL',
+  'JINA_READER_URL',
 ] as const;
 
 /** `server/utils/**` is scanned too — the reads are not all in middleware. */

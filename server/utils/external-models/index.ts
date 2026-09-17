@@ -57,8 +57,8 @@ export interface ScrapeDeps {
   renderImpl?: typeof fetch;
   /** Injected for tests — stands in for the Printables GraphQL fetch. */
   printablesApiImpl?: typeof fetch;
-  /** Render-service API key, forwarded from runtimeConfig by the route. */
-  microlinkApiKey?: string;
+  /** Render-service (Jina Reader) API key, forwarded from runtimeConfig by the route. */
+  readerApiKey?: string;
 }
 
 /**
@@ -122,7 +122,7 @@ export async function fetchExternalMetadata(rawUrl: string, deps: ScrapeDeps = {
   // 2) Render-service fallback for blocked / JS-only / empty pages. Runs in
   //    production (no injected fetchImpl) or when a test supplies `renderImpl`.
   if (!og && (!deps.fetchImpl || deps.renderImpl)) {
-    og = await renderExternalPage(sourceUrl, deps.renderImpl, deps.microlinkApiKey); // throws ScrapeError if it also fails
+    og = await renderExternalPage(sourceUrl, deps.renderImpl, deps.readerApiKey); // throws ScrapeError if it also fails
   }
 
   // A 404 already threw above; reaching here means the page (or render) yielded
