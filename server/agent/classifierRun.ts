@@ -4,9 +4,12 @@
  *
  * The pure half (state, questions, interpretation, the hint text) is
  * `server/agent/classifier.ts`; this file is the part that touches config,
- * the transcript and the network, and it is written so that NO failure here
+ * the transcript and the network, and it is written so that no failure here
  * can reach the reader: off, misconfigured, slow, thrown, or malformed all
- * collapse to "no hint" and a status stamped on the run.
+ * collapse to "no hint" and a status stamped on the run. (A malformed
+ * `messages` array throws synchronously in `userTurns`, as it would a few
+ * lines later in `convertToModelMessages`; that is the request being wrong,
+ * not the classifier, and is caught here into the `error` shape anyway.)
  *
  * Timing. `runClassifier` is called before the quota write and returns at
  * once; `collect()` is awaited just before `streamText`. The TypeSafe round
@@ -41,8 +44,13 @@ export interface ClassifierResult {
 export interface ClassifierRun {
   /** The result, or the "went without it" shape, within the ceiling. */
   collect(): Promise<ClassifierResult>;
-  /** For a run that ended before `collect()` was awaited (disconnect, upstream error). */
-  analyticsSoFar(): Record<string, unknown>;
+  /**
+   * Stop a call whose answer nobody will read: the quota refused the request
+   * before `collect()`. Aborts the subrequest so the SDK stops retrying and
+   * the failure is logged as skipped, not as an outage. The request body has
+   * already left, so TypeSafe may still bill the attempt.
+   */
+  cancel(): void;
 }
 
 /** The text of a UIMessage, text parts only. Tool parts and files are not the question. */
@@ -78,49 +86,61 @@ export function runClassifier(
   event: H3Event,
   input: { messages: UIMessage[]; pageSlug?: string | null; tools: { name: string; use: string }[] }
 ): ClassifierRun {
-  const mode = parseClassifierMode(serverRuntimeConfig(event).TYPESAFE_CHAT_MODE);
-  if (mode === 'off' || !typesafeConfigured(event)) {
-    const off = mode === 'off' ? OFF : { ...OFF, analytics: analyticsFields('skipped', null) };
-    return { collect: () => Promise.resolve(off), analyticsSoFar: () => off.analytics };
-  }
-
-  const { latest, previous } = userTurns(input.messages);
-  if (!latest.trim()) {
-    const empty = { ...OFF, mode, analytics: analyticsFields('skipped', null) };
-    return { collect: () => Promise.resolve(empty), analyticsSoFar: () => empty.analytics };
-  }
-
-  const { state, questions, toolNames } = buildClassifierRequest({
-    message: latest,
-    previous,
-    pageSlug: input.pageSlug ?? null,
-    tools: input.tools,
+  const settledRun = (result: ClassifierResult): ClassifierRun => ({
+    collect: () => Promise.resolve(result),
+    cancel: () => {},
   });
 
+  const mode = parseClassifierMode(serverRuntimeConfig(event).TYPESAFE_CHAT_MODE);
+  if (mode === 'off') return settledRun(OFF);
+  if (!typesafeConfigured(event)) return settledRun({ ...OFF, mode, analytics: analyticsFields('skipped', null) });
+
+  let request: ReturnType<typeof buildClassifierRequest>;
+  try {
+    const { latest, previous } = userTurns(input.messages);
+    if (!latest.trim()) return settledRun({ ...OFF, mode, analytics: analyticsFields('skipped', null) });
+    request = buildClassifierRequest({
+      message: latest,
+      previous,
+      pageSlug: typeof input.pageSlug === 'string' ? input.pageSlug : null,
+      tools: input.tools,
+    });
+  } catch (error) {
+    console.warn(
+      '[chat] classifier could not read the request:',
+      error instanceof Error ? error.message : String(error)
+    );
+    return settledRun({ ...OFF, mode, analytics: analyticsFields('error', null) });
+  }
+  const { state, questions, toolNames } = request;
+
   // Started now, not in collect(): the point is to overlap the quota write.
+  // Every duration below is measured from here, so a skipped run and a
+  // completed run report the same thing: time from dispatch to outcome.
   const controller = new AbortController();
-  let settled: ClassifierResult | null = null;
   const started = Date.now();
+  const elapsed = () => Date.now() - started;
 
   const inflight: Promise<ClassifierResult> = askTypeSafe(event, state, questions, {
     caller: 'chat-classifier',
     signal: controller.signal,
+    // No retry: the default backoff alone outlasts the ceiling, so a retry
+    // could only ever be dispatched and then aborted.
+    retry: { maxRetries: 0 },
   })
     .then((answer) => {
       const classification = interpret(answer.answers as Parameters<typeof interpret>[0], toolNames);
       const hint = mode === 'hint' ? hintFor(classification) : null;
-      const result: ClassifierResult = {
+      return {
         mode,
         classification,
         hint,
         analytics: analyticsFields(mode, classification, {
-          durationMs: answer.durationMs,
+          durationMs: elapsed(),
           inputTokens: answer.inputTokens,
           hinted: Boolean(hint),
         }),
-      };
-      settled = result;
-      return result;
+      } satisfies ClassifierResult;
     })
     .catch((error: unknown) => {
       // Logged, never surfaced. A classifier outage must look like the
@@ -128,16 +148,12 @@ export function runClassifier(
       if (!controller.signal.aborted) {
         console.warn('[chat] classifier failed:', error instanceof Error ? error.message : String(error));
       }
-      const result: ClassifierResult = {
+      return {
         mode,
         classification: null,
         hint: null,
-        analytics: analyticsFields(controller.signal.aborted ? 'skipped' : 'error', null, {
-          durationMs: Date.now() - started,
-        }),
-      };
-      settled = result;
-      return result;
+        analytics: analyticsFields(controller.signal.aborted ? 'skipped' : 'error', null, { durationMs: elapsed() }),
+      } satisfies ClassifierResult;
     });
 
   return {
@@ -152,7 +168,7 @@ export function runClassifier(
             mode,
             classification: null,
             hint: null,
-            analytics: analyticsFields('skipped', null, { durationMs: Date.now() - started }),
+            analytics: analyticsFields('skipped', null, { durationMs: elapsed() }),
           });
         }, CLASSIFIER_CEILING_MS);
       });
@@ -162,8 +178,8 @@ export function runClassifier(
         if (timer) clearTimeout(timer);
       }
     },
-    analyticsSoFar() {
-      return settled?.analytics ?? analyticsFields('skipped', null);
+    cancel() {
+      controller.abort();
     },
   };
 }

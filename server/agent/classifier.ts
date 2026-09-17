@@ -45,6 +45,7 @@ export type Tier = (typeof TIERS)[number];
 /** How much of the message Jev sees. A question is short; a pasted manual is not the question. */
 const MESSAGE_CHARS = 1500;
 const PREVIOUS_CHARS = 500;
+const PAGE_CHARS = 200;
 
 /** Confidence below which a hint line is worse than none. */
 export const TIER_CONFIDENCE_MIN = 0.6;
@@ -71,7 +72,7 @@ export function buildClassifierRequest(input: ClassifierInput) {
   const state = {
     message: clip(input.message, MESSAGE_CHARS),
     previous: input.previous ? clip(input.previous, PREVIOUS_CHARS) : '',
-    page: input.pageSlug ?? '',
+    page: input.pageSlug ? clip(input.pageSlug, PAGE_CHARS) : '',
     tools: input.tools,
   };
 

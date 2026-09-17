@@ -138,6 +138,9 @@ export default defineEventHandler(async (event) => {
   // an unavailable counter degrades the ceiling rather than the assistant.
   const verdict = await consumeChatQuota(event);
   if (!verdict.allowed) {
+    // Nobody will read the classification of a refused message; stop paying
+    // for it and keep the failure out of the classifier's error count.
+    classifierRun.cancel();
     // The run tracker never starts for a refusal, so this is the only capture
     // a walled question produces — and the numerator of the app conversion
     // metric (refused → membership within 24h).
@@ -266,7 +269,7 @@ export default defineEventHandler(async (event) => {
     }
     tracker.finish('client_disconnect', undefined, {
       tools_degraded: degradedList(),
-      ...classifierRun.analyticsSoFar(),
+      ...classified.analytics,
     });
   };
   // Runs on the controller's own abort, whichever source fired it. Idempotent
@@ -405,7 +408,7 @@ export default defineEventHandler(async (event) => {
       console.error('[chat] stream failed:', error);
       tracker.finish('upstream_error', error instanceof Error ? error.message : String(error), {
         tools_degraded: degradedList(),
-        ...classifierRun.analyticsSoFar(),
+        ...classified.analytics,
       });
     },
   });
