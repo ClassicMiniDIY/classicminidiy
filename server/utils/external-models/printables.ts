@@ -96,13 +96,36 @@ function toNumber(value: unknown): number | null {
 
 function mediaUrl(filePath: string | null | undefined): string | null {
   if (!filePath) return null;
+  if (/^https?:\/\//i.test(filePath)) return filePath;
   return PRINTABLES_MEDIA_BASE + filePath.replace(/^\/+/, '');
+}
+
+/**
+ * Derive the two listing flags from a Creative Commons abbreviation. The OG path
+ * never had the license and had to fall back to the site registry; the API gives
+ * the real one, so honour it: `ND` forbids remixes, `NC` forbids commercial use,
+ * and the permissive CC variants allow both. Anything else (Printables' own
+ * "Standard Digital File License", or a blank) keeps the registry defaults.
+ */
+function licenseFlags(abbreviation: string | null): {
+  remixesAllowed: boolean | null;
+  commercialUseAllowed: boolean | null;
+} {
+  const cfg = sourceConfig('printables');
+  const fallback = { remixesAllowed: cfg.defaultLicense ? true : null, commercialUseAllowed: cfg.commercialUseAllowed };
+  if (!abbreviation) return fallback;
+  const code = abbreviation.toUpperCase().replace(/[^A-Z0-9]+/g, '-');
+  if (code === 'CC0' || code === 'CC0-1-0') return { remixesAllowed: true, commercialUseAllowed: true };
+  if (!code.startsWith('CC-BY')) return fallback;
+  const parts = new Set(code.split('-'));
+  return { remixesAllowed: !parts.has('ND'), commercialUseAllowed: !parts.has('NC') };
 }
 
 /** Exported for tests: pure mapping from an API `print` node to listing fields. */
 export function mapPrintablesPrint(print: PrintablesPrint): PrintablesModel {
   const cfg = sourceConfig('printables');
   const title = print.name?.trim() || 'Untitled';
+  const license = print.license?.abbreviation?.trim() || cfg.defaultLicense;
   const description = print.description ? htmlToText(print.description) : (print.summary?.trim() ?? '');
   const summary = print.summary?.trim() || (description ? truncateSummary(description) : null);
 
@@ -133,9 +156,8 @@ export function mapPrintablesPrint(print: PrintablesPrint): PrintablesModel {
       summary,
       authorName: username,
       authorUrl: handle ? `https://www.printables.com/@${handle}` : null,
-      license: print.license?.abbreviation?.trim() || cfg.defaultLicense,
-      remixesAllowed: cfg.defaultLicense ? true : null,
-      commercialUseAllowed: cfg.commercialUseAllowed,
+      license,
+      ...licenseFlags(license),
       tags: (print.tags ?? [])
         .map((t) => t?.name?.trim())
         .filter((n): n is string => !!n)
