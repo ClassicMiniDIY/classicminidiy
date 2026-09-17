@@ -36,7 +36,10 @@ export function normalizeLicenseLabel(label: string | null | undefined): string 
 /**
  * Derive the two listing flags from a license abbreviation: `ND` forbids
  * remixes, `NC` forbids commercial use, the permissive CC variants allow both.
- * Anything that is not a CC abbreviation keeps the site registry defaults.
+ * No license at all keeps the site registry defaults (the best guess when the
+ * site said nothing). A license the site DID report but we do not understand
+ * (Printables "Standard Digital File License") is `null`/`null`: unknown, which
+ * the detail page renders as no chip rather than as a wrong green one.
  */
 export function licenseFlags(abbreviation: string | null, site: ExternalSourceSite): LicenseFlags {
   const cfg = sourceConfig(site);
@@ -47,7 +50,7 @@ export function licenseFlags(abbreviation: string | null, site: ExternalSourceSi
   if (!abbreviation) return fallback;
   const code = abbreviation.toUpperCase().replace(/[^A-Z0-9]+/g, '-');
   if (code === 'CC0' || code === 'CC0-1-0') return { remixesAllowed: true, commercialUseAllowed: true };
-  if (!code.startsWith('CC-BY')) return fallback;
+  if (!code.startsWith('CC-BY')) return { remixesAllowed: null, commercialUseAllowed: null };
   const parts = new Set(code.split('-'));
   return { remixesAllowed: !parts.has('ND'), commercialUseAllowed: !parts.has('NC') };
 }

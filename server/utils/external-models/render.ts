@@ -37,8 +37,9 @@ interface JinaReaderResponse {
     url?: string;
     /** Upstream HTTP status of the rendered page. */
     httpStatus?: number;
-    /** Every `<meta>` on the page keyed by name/property, plus `lang`. */
-    metadata?: Record<string, string | undefined>;
+    /** Every `<meta>` on the page keyed by name/property, plus `lang`. A
+     *  repeated tag may come back as an array; `metaStr` takes the first. */
+    metadata?: Record<string, string | string[] | undefined>;
   } | null;
 }
 
@@ -53,6 +54,12 @@ const REQUEST_TIMEOUT_MS = 30_000;
 const INTERSTITIAL_TITLE = /^(just a moment|attention required|access denied|please verify you are a human)/i;
 
 const BLOCKED = 'That site blocks automated previews and we couldn’t render it.';
+
+/** First string value of a meta entry, trimmed; '' when absent or not a string. */
+function metaStr(value: string | string[] | undefined): string {
+  const v = Array.isArray(value) ? value.find((x) => typeof x === 'string') : value;
+  return typeof v === 'string' ? v.trim() : '';
+}
 
 /**
  * Render `url` via the service and return OG-shaped metadata, or throw ScrapeError.
@@ -105,7 +112,8 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, 
   }
 
   const d = body.data;
-  const meta = d.metadata ?? {};
+  const raw = d.metadata ?? {};
+  const meta = (key: string) => metaStr(raw[key]);
 
   // The render "succeeded" but the page itself was an error (GrabCAD behind
   // CloudFront answers 403 with an "ERROR: The request could not be satisfied"
@@ -116,13 +124,17 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, 
   if (typeof d.httpStatus === 'number' && d.httpStatus >= 400) {
     throw new ScrapeError(BLOCKED, 422);
   }
-  const title = (meta['og:title'] || meta['twitter:title'] || d.title || '').trim() || null;
+  const title = meta('og:title') || meta('twitter:title') || (d.title ?? '').trim() || null;
   if (title && INTERSTITIAL_TITLE.test(title)) {
     throw new ScrapeError(BLOCKED, 422);
   }
 
-  const images = [meta['og:image'], meta['og:image:secure_url'], meta['twitter:image'], meta['twitter:image:src']]
-    .map((u) => (u ?? '').trim())
+  const images = [
+    ...[raw['og:image'], raw['og:image:secure_url'], raw['twitter:image'], raw['twitter:image:src']].flatMap((v) =>
+      Array.isArray(v) ? v : [v]
+    ),
+  ]
+    .map((u) => metaStr(u))
     .filter((u, i, all) => /^https?:\/\//i.test(u) && all.indexOf(u) === i);
   const image = images[0] ?? null;
 
@@ -132,14 +144,9 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, 
     throw new ScrapeError('We couldn’t read any model details from that page, even with rendering.', 422);
   }
 
-  const description = (
-    meta['og:description'] ||
-    meta['twitter:description'] ||
-    meta.description ||
-    d.description ||
-    ''
-  ).trim();
-  const keywords = (meta.keywords ?? '')
+  const description =
+    meta('og:description') || meta('twitter:description') || meta('description') || (d.description ?? '').trim();
+  const keywords = meta('keywords')
     .split(',')
     .map((k) => k.trim())
     .filter(Boolean);
@@ -149,8 +156,8 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, 
     description: description || null,
     image,
     images,
-    siteName: meta['og:site_name']?.trim() || null,
-    author: (meta.author || meta['article:author'] || meta['twitter:creator'] || '').trim() || null,
+    siteName: meta('og:site_name') || null,
+    author: meta('author') || meta('article:author') || meta('twitter:creator') || null,
     keywords,
     license: null,
     jsonLd: [],
