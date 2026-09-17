@@ -52,6 +52,23 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
   render chain still gets a turn. Introspection is disabled on that endpoint, so the query's
   field list was verified by hand; a removed field 400s the whole query, which is the fallback
   trigger. Tests: `tests/unit/external-models/scraper.test.ts` ("Printables GraphQL API").
+- **The Printables API is throttled per egress IP, so the Worker reaches it through Jina
+  Reader (2026-09-17, same day).** After the API adapter shipped, the same "Fetch details"
+  still failed in production, now with "That site blocks automated previews". `wrangler tail`
+  showed no adapter log line (the null paths were silent then). A probe Worker run on the
+  edge with `wrangler dev --remote` answered the cause: every POST to
+  `api.printables.com/graphql/` from Workers egress gets `429 Request was throttled.` (a
+  DRF anonymous throttle keyed on client IP; Workers share a pool that other tenants have
+  already exhausted), while the identical call from a residential IP succeeds, and the
+  User-Agent makes no difference. So there is NO direct path from the Worker to that API.
+  `fetchPrintablesModel` now tries the direct POST first (free; works from `bun run dev`) and
+  on any non-2xx or transport failure re-sends the same query as a GET through
+  `readThroughReader` in `render.ts` (`r.jina.ai/<api url>?query=…&variables=…` with
+  `X-Return-Format: text`, which hands back the raw JSON in `data.text`). Jina's egress is not
+  throttled by that API. Every null path in the adapter logs its reason now, so the next
+  regression shows in `wrangler tail`. Client-side fetch was ruled out: the API's CORS only
+  allows `printables.com`. Tests: "reader fallback" block in `scraper.test.ts`; a test that
+  injects only `apiImpl` stays offline by contract.
 - **Render fallback is Jina Reader, not Microlink (2026-09-17).** Same incident. Microlink's
   paid tier was the only way past its antibot refusal and was not worth the price for this
   feature. `server/utils/external-models/render.ts` now calls `r.jina.ai/<url>` with

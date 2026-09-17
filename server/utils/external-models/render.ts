@@ -22,6 +22,11 @@
  * is fetched by Jina's infra, not ours — so there's no SSRF concern here (and
  * the direct path already rejects private/loopback addresses before we ever
  * fall back).
+ *
+ * `readThroughReader` is the second use of the same service: a plain GET proxy
+ * that hands back the response body as text. The Printables GraphQL adapter
+ * uses it because the Worker's shared egress IPs are throttled by that API
+ * ("Request was throttled.", 429) while Jina's are not.
  */
 import type { OgMetadata } from './ogParser';
 import { ScrapeError } from './errors';
@@ -40,11 +45,31 @@ interface JinaReaderResponse {
     /** Every `<meta>` on the page keyed by name/property, plus `lang`. A
      *  repeated tag may come back as an array; `metaStr` takes the first. */
     metadata?: Record<string, string | string[] | undefined>;
+    /** Response body as plain text when `X-Return-Format: text` was sent. */
+    text?: string;
   } | null;
 }
 
 const DEFAULT_ENDPOINT = 'https://r.jina.ai';
 const REQUEST_TIMEOUT_MS = 30_000;
+
+/**
+ * Endpoint override, unlike the key, genuinely IS a raw read and therefore
+ * genuinely needs a PLAIN Worker var — it has no runtimeConfig entry. It is a
+ * test/staging redirect knob with a safe default, not a secret.
+ */
+function readerEndpoint(url: string): string {
+  const base = (process.env.JINA_READER_URL || DEFAULT_ENDPOINT).replace(/\/+$/, '');
+  return `${base}/${url}`;
+}
+
+function readerHeaders(apiKey: string | undefined, extra: Record<string, string>): Record<string, string> {
+  return {
+    Accept: 'application/json',
+    ...extra,
+    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+  };
+}
 
 /**
  * Titles that mean "you got the bot wall, not the page". Cloudflare's managed
@@ -73,23 +98,14 @@ function metaStr(value: string | string[] | undefined): string {
  * key": the request goes out on the keyless tier.
  */
 export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, apiKey?: string): Promise<OgMetadata> {
-  // Endpoint override, unlike the key, genuinely IS a raw read and therefore
-  // genuinely needs a PLAIN Worker var — it has no runtimeConfig entry. It is a
-  // test/staging redirect knob with a safe default, not a secret.
-  const base = (process.env.JINA_READER_URL || DEFAULT_ENDPOINT).replace(/\/+$/, '');
-  const endpoint = `${base}/${url}`;
   const doFetch = fetchImpl ?? fetch;
 
   let res: Response;
   try {
-    res = await doFetch(endpoint, {
-      headers: {
-        Accept: 'application/json',
-        // Metadata only: the `<head>` renders to a near-empty markdown body, but
-        // `data.metadata` is still the full meta set for the page.
-        'X-Target-Selector': 'head',
-        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-      },
+    res = await doFetch(readerEndpoint(url), {
+      // Metadata only: the `<head>` renders to a near-empty markdown body, but
+      // `data.metadata` is still the full meta set for the page.
+      headers: readerHeaders(apiKey, { 'X-Target-Selector': 'head' }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch {
@@ -162,4 +178,44 @@ export async function renderExternalPage(url: string, fetchImpl?: typeof fetch, 
     license: null,
     jsonLd: [],
   };
+}
+
+/**
+ * GET `url` through the reader and return the upstream status plus the raw
+ * response body as text (`X-Return-Format: text`), or `null` when the reader
+ * itself could not be reached, rate-limited us, or answered without a body.
+ * The caller decides what an upstream non-2xx means; nothing is thrown here
+ * because every caller treats this as a best-effort fallback.
+ *
+ * `url` must be a fixed, non-attacker-steerable address (the Printables
+ * adapter builds it from a digits-only id): the reader fetches it from Jina's
+ * infrastructure, so the direct path's SSRF guard never sees it.
+ */
+export async function readThroughReader(
+  url: string,
+  fetchImpl?: typeof fetch,
+  apiKey?: string
+): Promise<{ httpStatus: number; text: string } | null> {
+  const doFetch = fetchImpl ?? fetch;
+  let res: Response;
+  try {
+    res = await doFetch(readerEndpoint(url), {
+      headers: readerHeaders(apiKey, { 'X-Return-Format': 'text' }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch {
+    return null;
+  }
+  if (!res.ok) {
+    console.warn(`[external/reader] GET proxy failed: HTTP ${res.status}`);
+    return null;
+  }
+  let body: JinaReaderResponse;
+  try {
+    body = (await res.json()) as JinaReaderResponse;
+  } catch {
+    return null;
+  }
+  if (!body.data || typeof body.data.text !== 'string') return null;
+  return { httpStatus: body.data.httpStatus ?? 200, text: body.data.text };
 }
