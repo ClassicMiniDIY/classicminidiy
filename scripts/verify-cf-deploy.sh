@@ -21,6 +21,19 @@ case "$ORIGIN" in
   *)             ZONE_CHECKS=1 ;;
 esac
 
+# Every request goes through cf_curl so it carries a named User-Agent. The zone
+# WAF Managed-Challenges GET requests for page documents (no `/api/`, no `/mcp`,
+# no file extension) whose UA is a script client — curl, wget, python, go,
+# scrapy, node http clients — and curl's DEFAULT UA is `curl/x.y.z`. From
+# 2026-09-16 that answered every HTML assertion here with a 403 challenge page
+# while the JSON and dotted routes kept passing; the deploy itself had already
+# succeeded. The nightly crawler (`scripts/smoke-routes.mjs`) and the crawler
+# firewall verifier both already send their own UA, which is why only this
+# script went red. A bare `curl` in this file is a regression;
+# `tests/static/ci-probe-user-agent.test.ts` enforces it.
+SMOKE_UA="${SMOKE_UA:-cmdiy-verify-cf-deploy/1.0 (+https://github.com/ClassicMiniDIY/classicminidiy)}"
+cf_curl() { curl -A "$SMOKE_UA" "$@"; }
+
 PASS=0; FAIL=0
 ok()   { printf '  \033[32mPASS\033[0m  %s\n' "$1"; PASS=$((PASS+1)); }
 bad()  { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; FAIL=$((FAIL+1)); }
@@ -30,14 +43,14 @@ skip() { printf '  ....  %s (zone-only)\n' "$1"; }
 expect_status() {
   local path="$1" want="$2" label="${3:-$1}"
   local got
-  got=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' "$ORIGIN$path" 2>/dev/null)
+  got=$(cf_curl -sS -o /dev/null -m 30 -w '%{http_code}' "$ORIGIN$path" 2>/dev/null)
   [ "$got" = "$want" ] && ok "$label -> $got" || bad "$label -> got $got, want $want"
 }
 
 # expect_body <path> <grep-pattern> <label>
 expect_body() {
   local path="$1" pat="$2" label="$3"
-  if curl -sS -m 30 "$ORIGIN$path" 2>/dev/null | grep -qE "$pat"; then
+  if cf_curl -sS -m 30 "$ORIGIN$path" 2>/dev/null | grep -qE "$pat"; then
     ok "$label"
   else
     bad "$label (pattern not found: $pat)"
@@ -63,7 +76,7 @@ echo
 # budget matches the 30s every assertion below gets rather than cutting in ahead
 # of them. Curl's exit code separates the cases and is reported, so a slow origin
 # is never described as a typo'd one.
-preflight=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' "$ORIGIN/" 2>/dev/null)
+preflight=$(cf_curl -sS -o /dev/null -m 30 -w '%{http_code}' "$ORIGIN/" 2>/dev/null)
 preflight_rc=$?
 if [ "$preflight" = "000" ]; then
   case "$preflight_rc" in
@@ -122,19 +135,19 @@ echo "== deployment must not be indexable =="
 # Asserted here because a battery that only checks "robots.txt returns 200"
 # passes identically whether it says `Allow: /` or `Disallow: /`.
 if [ "$ZONE_CHECKS" = "0" ]; then
-  if curl -sS -m 30 "$ORIGIN/technical/torque" 2>/dev/null | grep -qiE '<meta[^>]*name="robots"[^>]*content="[^"]*noindex'; then
+  if cf_curl -sS -m 30 "$ORIGIN/technical/torque" 2>/dev/null | grep -qiE '<meta[^>]*name="robots"[^>]*content="[^"]*noindex'; then
     ok "non-production origin emits noindex"
   else
     bad "non-production origin is INDEXABLE — set NUXT_SITE_ENV=preview on the build"
   fi
-  if curl -sS -m 30 "$ORIGIN/robots.txt" 2>/dev/null | grep -qi 'indexable'; then
+  if cf_curl -sS -m 30 "$ORIGIN/robots.txt" 2>/dev/null | grep -qi 'indexable'; then
     bad "robots.txt advertises the indexable variant on a non-production origin"
   else
     ok "robots.txt is not the indexable variant"
   fi
 else
   # On the real origin the opposite is required: it MUST be indexable.
-  if curl -sS -m 30 "$ORIGIN/technical/torque" 2>/dev/null | grep -qiE '<meta[^>]*name="robots"[^>]*content="[^"]*noindex'; then
+  if cf_curl -sS -m 30 "$ORIGIN/technical/torque" 2>/dev/null | grep -qiE '<meta[^>]*name="robots"[^>]*content="[^"]*noindex'; then
     bad "PRODUCTION origin is noindex — NUXT_SITE_ENV is wrong for this deploy"
   else
     ok "production origin is indexable"
@@ -143,7 +156,7 @@ fi
 
 echo
 echo "== MCP (fails closed) =="
-mcp_status=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' -X POST "$ORIGIN/mcp" \
+mcp_status=$(cf_curl -sS -o /dev/null -m 30 -w '%{http_code}' -X POST "$ORIGIN/mcp" \
   -H 'Content-Type: application/json' \
   --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' 2>/dev/null)
 [ "$mcp_status" = "401" ] && ok "/mcp rejects an unauthenticated call -> 401" \
@@ -153,7 +166,7 @@ mcp_status=$(curl -sS -o /dev/null -m 30 -w '%{http_code}' -X POST "$ORIGIN/mcp"
 # is how #721 stayed green: every authenticated call 500'd for months while this
 # check passed. Set MCP_SMOKE_KEY to a key the origin accepts to test the handler.
 if [ -n "${MCP_SMOKE_KEY:-}" ]; then
-  mcp_body=$(curl -sS -m 30 -X POST "$ORIGIN/mcp" \
+  mcp_body=$(cf_curl -sS -m 30 -X POST "$ORIGIN/mcp" \
     -H "Authorization: Bearer $MCP_SMOKE_KEY" \
     -H 'Content-Type: application/json' \
     -H 'Accept: application/json, text/event-stream' \
@@ -188,10 +201,10 @@ if [ "$ZONE_CHECKS" = "1" ]; then
   # so `/cdn-cgi/image/w=128,h=37,f=webp,q=80/...` has no delimiter to anchor on.
   expect_body "/archive/wheels" 'src="/cdn-cgi/image/[^"]*w=[0-9]' "images emit same-origin /cdn-cgi/image/ WITH modifiers"
   # And prove real transformed BYTES come back, not just the URL shape.
-  img=$(curl -sS -m 30 "$ORIGIN/archive/wheels" 2>/dev/null \
+  img=$(cf_curl -sS -m 30 "$ORIGIN/archive/wheels" 2>/dev/null \
         | grep -oE 'src="/cdn-cgi/image/[^"]+' | head -1 | sed 's/^src="//')
   if [ -n "$img" ]; then
-    ctype=$(curl -sS -o /dev/null -m 30 -w '%{content_type}' "$ORIGIN$img" 2>/dev/null)
+    ctype=$(cf_curl -sS -o /dev/null -m 30 -w '%{content_type}' "$ORIGIN$img" 2>/dev/null)
     case "$ctype" in
       image/*) ok "transformed bytes returned ($ctype)" ;;
       *)       bad "transformed image returned $ctype, not an image" ;;
@@ -205,11 +218,11 @@ if [ "$ZONE_CHECKS" = "1" ]; then
   # the CDN, not the function. On Cloudflare public/ is served by Workers Static
   # Assets on the same zone, so it SHOULD resolve as a same-zone fetch — but that
   # could not be tested before a zone existed, so it is an explicit gate here.
-  local_img=$(curl -sS -m 30 "$ORIGIN/" 2>/dev/null \
+  local_img=$(cf_curl -sS -m 30 "$ORIGIN/" 2>/dev/null \
               | grep -oE 'src="/cdn-cgi/image/[^"]+' | sed 's/^src="//' \
               | grep -vE '/https?:' | head -1)
   if [ -n "$local_img" ]; then
-    lct=$(curl -sS -o /dev/null -m 30 -w '%{content_type}' "$ORIGIN$local_img" 2>/dev/null)
+    lct=$(cf_curl -sS -o /dev/null -m 30 -w '%{content_type}' "$ORIGIN$local_img" 2>/dev/null)
     case "$lct" in
       image/*) ok "LOCAL public/ file transforms ($lct)" ;;
       *)       bad "local public/ transform returned $lct — the nuxt/image#1281 shape is broken" ;;
@@ -218,7 +231,7 @@ if [ "$ZONE_CHECKS" = "1" ]; then
     bad "no local-file /cdn-cgi/image/ URL found — cannot verify the #1281 case"
   fi
 
-  hsts=$(curl -sSI -m 30 "$ORIGIN/" 2>/dev/null | grep -ci 'strict-transport-security')
+  hsts=$(cf_curl -sSI -m 30 "$ORIGIN/" 2>/dev/null | grep -ci 'strict-transport-security')
   [ "$hsts" -ge 1 ] && ok "HSTS header present" || bad "HSTS header missing"
 
   # TME redirect map. Only assertable once theminiexchange.com resolves to
@@ -242,7 +255,7 @@ if [ "$ZONE_CHECKS" = "1" ]; then
   if [ "${tme_ns:-0}" -ge 1 ]; then
     for probe in "/:exchange" "/listings/abc:exchange/listings/abc" "/terms:legal/marketplace-terms"; do
       src="${probe%%:*}"; want="${probe##*:}"
-      loc=$(curl -sS -o /dev/null -m 25 -w '%{redirect_url}' "https://www.theminiexchange.com$src" 2>/dev/null)
+      loc=$(cf_curl -sS -o /dev/null -m 25 -w '%{redirect_url}' "https://www.theminiexchange.com$src" 2>/dev/null)
       case "$loc" in
         *"$want"*) ok "TME $src -> $want" ;;
         *)         bad "TME $src -> $loc (wanted …/$want)" ;;
@@ -250,7 +263,7 @@ if [ "$ZONE_CHECKS" = "1" ]; then
     done
     # An unmapped TME path must 404, not blanket-redirect — a catch-all would turn
     # the whole unmatched URL space into soft-200 redirects.
-    tme404=$(curl -sSL -o /dev/null -m 25 -w '%{http_code}' "https://www.theminiexchange.com/definitely-not-mapped-xyz" 2>/dev/null)
+    tme404=$(cf_curl -sSL -o /dev/null -m 25 -w '%{http_code}' "https://www.theminiexchange.com/definitely-not-mapped-xyz" 2>/dev/null)
     [ "$tme404" = "404" ] && ok "unmapped TME path is a real 404" || bad "unmapped TME path -> $tme404, want 404"
   else
     skip "TME redirect map"
@@ -272,7 +285,7 @@ fi
 # This asserts only that OUR side is configured: an upstream auth rejection
 # means we shipped without credentials. Other upstream failures are tolerated,
 # so a LangGraph outage does not fail our deploy.
-chat_body=$(curl -sS -m 30 -X POST "$ORIGIN/api/langgraph/threads/new/runs/stream" \
+chat_body=$(cf_curl -sS -m 30 -X POST "$ORIGIN/api/langgraph/threads/new/runs/stream" \
   -H 'Content-Type: application/json' \
   -d '{"assistant_id":"agent","input":{"messages":[{"type":"human","content":"deploy smoke test"}]}}' 2>/dev/null | head -c 2000)
 

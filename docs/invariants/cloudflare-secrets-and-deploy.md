@@ -31,6 +31,50 @@ That message means "this module failed to initialise", not "this module is
 missing" — the real error is only visible on the first request after a cold
 start.
 
+#### CI probes must not look like script clients at the edge
+
+On 2026-09-16 two WAF custom rules went live on the zone (runbook:
+`docs/runbooks/2026-09-16-scanner-block-and-script-challenge.md`). One of
+them Managed-Challenges `GET` requests for page documents — no `/api/`, no
+`/mcp`, no `/cdn-cgi/`, no file extension — whose User-Agent is a known
+script client: curl, wget, python, go, scrapy, axios, node-fetch. Nothing
+legitimate fetches an HTML page with those UAs, except our own CI.
+
+`scripts/verify-cf-deploy.sh` did. Its curl calls sent curl's default
+`User-Agent: curl/8.x`, so from the next deploy every HTML assertion in the
+battery got a 403 whose body is the challenge page (`cf-mitigated: challenge`).
+The failure pattern was the rule's exclusion list drawn in reverse: `/`,
+`/models`, `/technical/torque`, `/archive/colors`, the 404 probe and the
+`/cdn-cgi/image/` discovery all failed; `/api/torque`, `/mcp`, `robots.txt`,
+`sitemap.xml`, `llms.txt`, the `HEAD` for HSTS and the TME host redirects
+(zone redirect rules run before the WAF) all passed. The challenge page also
+carries `noindex`, so "PRODUCTION origin is noindex — NUXT_SITE_ENV is wrong"
+was a false alarm from the same cause. Every run of `deploy-cloudflare.yml`
+went red for a day while production was in fact updated and healthy, since the
+smoke step runs after the deploy step.
+
+Two things were true at once and both mattered:
+
+- The nightly `scripts/smoke-routes.mjs` and `scripts/verify-ai-crawler-firewall.sh`
+  kept passing, because each already sets its own UA (`cmdiy-smoke-routes/1.0`
+  and the bot UA under test). That is why the nightly was green while the
+  deploy was red, and why the diagnosis is "which UA" and not "which route".
+- The fix is on the repo side, not the zone. Every request in
+  `verify-cf-deploy.sh` now goes through `cf_curl`, which adds
+  `-A "$SMOKE_UA"` (default `cmdiy-verify-cf-deploy/1.0 (+repo url)`,
+  overridable from the environment). The zone rule was not loosened: a skip
+  rule keyed on a shared secret or on an allowlisted UA would have to be
+  maintained in the dashboard, where no test can see it, to protect a script
+  that only needs to stop announcing itself as curl.
+
+`tests/static/ci-probe-user-agent.test.ts` pins the wrapper (no bare `curl`
+may land in that script), pins the default UA away from the challenged tokens,
+and checks the two other probes keep naming themselves. If a future zone rule
+starts challenging ALL non-browser UAs, that test will still pass and the smoke
+will go red again; the answer then is a WAF skip rule scoped to `GET` on the
+smoke paths and keyed on a header the script sends from an Actions secret,
+documented in the runbook, not a browser UA in the script.
+
 #### Build-time vs runtime secrets on Cloudflare Workers
 
 **This split is load-bearing. Moving a value across it silently changes whether
