@@ -64,6 +64,7 @@
     "@takumi-rs/wasm": "^1.8.7",
     "@types/node": "^25.9.5",
     "@types/youtube": "^0.3.0",
+    "@typesafe-ai/sdk": "0.6.0",
     "@vueuse/core": "^14.4.0",
     "agents": "^0.22.0",
     "ai": "7.0.93",

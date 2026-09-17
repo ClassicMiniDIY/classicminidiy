@@ -116,6 +116,19 @@ export const AGENT_TOOL_NAMES = [
   'web_search',
 ].sort();
 
+/**
+ * The tools the model can call this request, each with the one line the
+ * prompt prints about it. The chat classifier (`server/agent/classifier.ts`)
+ * shows Jev this same list, so the classifier and the model are told the same
+ * thing about every tool and the classifier can never name one the model does
+ * not have.
+ */
+export function toolGuidanceList(hasWebSearch: boolean): { name: string; use: string }[] {
+  return AGENT_TOOL_NAMES.filter((name) => TOOL_GUIDANCE[name] && (hasWebSearch || name !== 'web_search')).map(
+    (name) => ({ name, use: TOOL_GUIDANCE[name]! })
+  );
+}
+
 function toolCatalogue(hasWebSearch: boolean): string {
   return AGENT_TOOL_NAMES.filter((name) => TOOL_GUIDANCE[name] && (hasWebSearch || name !== 'web_search'))
     .map((name) => `- \`${name}\` — ${TOOL_GUIDANCE[name]}`)
@@ -256,13 +269,20 @@ export interface PromptContext {
    * here only because that is where the chat route already assembles context.
    */
   hasWebSearch?: boolean;
+  /**
+   * One paragraph from the TypeSafe pre-classifier (`server/agent/classifier.ts`),
+   * or nothing. Lives in the DYNAMIC half on purpose: it changes per message,
+   * so it must sit after the cached prefix, and it is a hint the model reads
+   * beside its own rules, never a rule that overrides them.
+   */
+  classifierHint?: string;
 }
 
 /**
  * The per-request half. Small on purpose — everything here defeats a cache
  * prefix, so it must earn its place.
  */
-export function dynamicPrompt({ locale, pageSlug, isMember }: PromptContext = {}): string {
+export function dynamicPrompt({ locale, pageSlug, isMember, classifierHint }: PromptContext = {}): string {
   const parts: string[] = [];
 
   if (isMember) {
@@ -279,6 +299,10 @@ export function dynamicPrompt({ locale, pageSlug, isMember }: PromptContext = {}
 
   if (pageSlug) {
     parts.push(`The reader is on the page "${pageSlug}". Prefer it for context when the question is ambiguous.`);
+  }
+
+  if (classifierHint) {
+    parts.push(classifierHint);
   }
 
   return parts.join('\n\n');
