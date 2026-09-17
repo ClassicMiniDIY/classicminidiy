@@ -36,3 +36,19 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 - New web env: `S3_MODELS_BUCKET`, `S3_MODELS_ACCESS_KEY_ID`, `S3_MODELS_SECRET_ACCESS_KEY`
   (dedicated IAM user, separate bucket from static assets). Launch steps:
   `docs/runbooks/2026-06-12-model-library-launch-checklist.md`.
+- **External-model scraper: Printables goes through its GraphQL API, not the page.**
+  Bug report 2026-09-17: "Fetch Details" on a public Printables model returned "The preview
+  service is busy right now (rate-limited)". Cause: `printables.com` had started answering
+  every server-side page fetch with a Cloudflare managed challenge (`cf-mitigated: challenge`,
+  403 "Just a moment..."), so the OG/JSON-LD parse saw nothing and every Printables URL fell
+  through to the Microlink render fallback. `NUXT_MICROLINK_API_KEY` is not set on the Worker,
+  so that call ran on Microlink's free tier, which is quota'd per egress IP (Workers share
+  theirs) and answers `EPROXYNEEDED` for antibot-protected pages anyway. Fix:
+  `server/utils/external-models/printables.ts` queries `api.printables.com/graphql/` (the
+  endpoint the Printables front end uses; unauthenticated for public models; not challenged)
+  and maps the node straight to listing fields, with richer data than OG ever had (license
+  abbreviation, tags, materials, layer heights, gallery images from `media.printables.com`).
+  `print: null` is a terminal 404; transport / GraphQL errors return `null` so the old page +
+  render chain still gets a turn. Introspection is disabled on that endpoint, so the query's
+  field list was verified by hand; a removed field 400s the whole query, which is the fallback
+  trigger. Tests: `tests/unit/external-models/scraper.test.ts` ("Printables GraphQL API").

@@ -2,7 +2,9 @@
  * Rendering-service fallback for sites whose Cloudflare bot-management blocks a
  * plain server-side fetch (MakerWorld, Cults3D, Thangs, MyMiniFactory). Used by
  * `fetchExternalMetadata` ONLY when the self-hosted direct fetch is blocked or
- * empty — so the free direct path still serves Thingiverse / Printables.
+ * empty — so the free direct path still serves Thingiverse. (Printables pages
+ * are challenged too since 2026-09, but its GraphQL API is not; see
+ * `./printables.ts`, which runs before either path.)
  *
  * Backed by Microlink (the approach OEA used): a headless-render API that returns
  * normalized page metadata. Defaults to the free public endpoint; set
