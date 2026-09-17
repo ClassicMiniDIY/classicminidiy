@@ -425,6 +425,7 @@ describe('mapPrintablesPrint', () => {
     expect(m.fields.authorName).toBe('fisherbt');
     expect(m.fields.authorUrl).toBe('https://www.printables.com/@fisherbt_330466'); // handle, not display name
     expect(m.fields.license).toBe('CC-BY-NC-SA');
+    expect(m.fields.remixesAllowed).toBe(true);
     expect(m.fields.commercialUseAllowed).toBe(false);
     expect(m.fields.tags).toEqual(['classic mini', 'su carb']);
     expect(m.fields.printSettings).toEqual({
@@ -438,6 +439,25 @@ describe('mapPrintablesPrint', () => {
       'https://media.printables.com/media/prints/a/images/1/front.jpg',
       'https://media.printables.com/media/prints/b/images/2/back.jpg',
     ]);
+  });
+
+  it('derives remix/commercial flags from the real license, defaults for unknown ones', () => {
+    const flags = (abbreviation: string | null) => {
+      const f = mapPrintablesPrint({ name: 'L', license: { abbreviation } }).fields;
+      return [f.remixesAllowed, f.commercialUseAllowed];
+    };
+    expect(flags('CC-BY')).toEqual([true, true]);
+    expect(flags('CC-BY-SA')).toEqual([true, true]);
+    expect(flags('CC-BY-ND')).toEqual([false, true]);
+    expect(flags('CC-BY-NC-ND')).toEqual([false, false]);
+    expect(flags('CC0')).toEqual([true, true]);
+    expect(flags('Standard Digital File License')).toEqual([true, false]); // registry default
+    expect(flags(null)).toEqual([true, false]);
+  });
+
+  it('keeps an absolute image filePath as-is instead of double-prefixing it', () => {
+    const m = mapPrintablesPrint({ name: 'A', image: { filePath: 'https://cdn.example/x.jpg' } });
+    expect(m.images).toEqual(['https://cdn.example/x.jpg']);
   });
 
   it('falls back to registry defaults and derives a summary when the API is sparse', () => {
