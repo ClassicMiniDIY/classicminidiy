@@ -1788,7 +1788,7 @@ export type Database = {
           transmission: Database['public']['Enums']['gearbox_type_enum'] | null;
           underside_condition: Database['public']['Enums']['underside_condition_enum'] | null;
           updated_at: string | null;
-          user_id: string;
+          user_id: string | null;
           variant: Database['public']['Enums']['variant_enum'] | null;
           views_count: number | null;
           vin_number: string | null;
@@ -1893,7 +1893,7 @@ export type Database = {
           transmission?: Database['public']['Enums']['gearbox_type_enum'] | null;
           underside_condition?: Database['public']['Enums']['underside_condition_enum'] | null;
           updated_at?: string | null;
-          user_id: string;
+          user_id?: string | null;
           variant?: Database['public']['Enums']['variant_enum'] | null;
           views_count?: number | null;
           vin_number?: string | null;
@@ -1998,7 +1998,7 @@ export type Database = {
           transmission?: Database['public']['Enums']['gearbox_type_enum'] | null;
           underside_condition?: Database['public']['Enums']['underside_condition_enum'] | null;
           updated_at?: string | null;
-          user_id?: string;
+          user_id?: string | null;
           variant?: Database['public']['Enums']['variant_enum'] | null;
           views_count?: number | null;
           vin_number?: string | null;
@@ -2773,7 +2773,7 @@ export type Database = {
         Row: {
           amount_cents: number;
           application_fee_cents: number;
-          buyer_id: string;
+          buyer_id: string | null;
           commission_bps: number;
           created_at: string;
           currency: string;
@@ -2781,7 +2781,7 @@ export type Database = {
           kind: string;
           model_id: string;
           refunded_at: string | null;
-          seller_id: string;
+          seller_id: string | null;
           status: string;
           stripe_account_id: string;
           stripe_checkout_session_id: string;
@@ -2790,7 +2790,7 @@ export type Database = {
         Insert: {
           amount_cents: number;
           application_fee_cents?: number;
-          buyer_id: string;
+          buyer_id?: string | null;
           commission_bps: number;
           created_at?: string;
           currency?: string;
@@ -2798,7 +2798,7 @@ export type Database = {
           kind: string;
           model_id: string;
           refunded_at?: string | null;
-          seller_id: string;
+          seller_id?: string | null;
           status?: string;
           stripe_account_id: string;
           stripe_checkout_session_id: string;
@@ -2807,7 +2807,7 @@ export type Database = {
         Update: {
           amount_cents?: number;
           application_fee_cents?: number;
-          buyer_id?: string;
+          buyer_id?: string | null;
           commission_bps?: number;
           created_at?: string;
           currency?: string;
@@ -2815,7 +2815,7 @@ export type Database = {
           kind?: string;
           model_id?: string;
           refunded_at?: string | null;
-          seller_id?: string;
+          seller_id?: string | null;
           status?: string;
           stripe_account_id?: string;
           stripe_checkout_session_id?: string;
@@ -3017,7 +3017,7 @@ export type Database = {
           license_code: string;
           like_count: number;
           min_price_cents: number | null;
-          owner_id: string;
+          owner_id: string | null;
           price_cents: number | null;
           pricing_mode: string;
           purchase_count: number;
@@ -3051,7 +3051,7 @@ export type Database = {
           license_code: string;
           like_count?: number;
           min_price_cents?: number | null;
-          owner_id: string;
+          owner_id?: string | null;
           price_cents?: number | null;
           pricing_mode?: string;
           purchase_count?: number;
@@ -3085,7 +3085,7 @@ export type Database = {
           license_code?: string;
           like_count?: number;
           min_price_cents?: number | null;
-          owner_id?: string;
+          owner_id?: string | null;
           price_cents?: number | null;
           pricing_mode?: string;
           purchase_count?: number;
@@ -3742,6 +3742,10 @@ export type Database = {
           confidence: number;
           created_at: string;
           id: string;
+          model_confidence: number | null;
+          model_scored_at: string | null;
+          model_separation: number | null;
+          model_version: string | null;
           note: string | null;
           part_id: string;
           reviewed_at: string | null;
@@ -3757,6 +3761,10 @@ export type Database = {
           confidence: number;
           created_at?: string;
           id?: string;
+          model_confidence?: number | null;
+          model_scored_at?: string | null;
+          model_separation?: number | null;
+          model_version?: string | null;
           note?: string | null;
           part_id: string;
           reviewed_at?: string | null;
@@ -3772,6 +3780,10 @@ export type Database = {
           confidence?: number;
           created_at?: string;
           id?: string;
+          model_confidence?: number | null;
+          model_scored_at?: string | null;
+          model_separation?: number | null;
+          model_version?: string | null;
           note?: string | null;
           part_id?: string;
           reviewed_at?: string | null;
@@ -3804,6 +3816,7 @@ export type Database = {
           adapter: string;
           auto_approve_confidence: number;
           auto_approve_margin: number;
+          auto_approve_source: string;
           contact_email: string | null;
           crawl_enabled: boolean;
           crawl_lease_token: string | null;
@@ -3815,6 +3828,7 @@ export type Database = {
           licence_changed_by: string | null;
           licence_note: string | null;
           max_change_ratio: number;
+          max_queue_rows: number;
           max_requests_per_day: number;
           max_requests_per_hour: number;
           max_requests_per_run: number;
@@ -3839,6 +3853,7 @@ export type Database = {
           adapter?: string;
           auto_approve_confidence?: number;
           auto_approve_margin?: number;
+          auto_approve_source?: string;
           contact_email?: string | null;
           crawl_enabled?: boolean;
           crawl_lease_token?: string | null;
@@ -3850,6 +3865,7 @@ export type Database = {
           licence_changed_by?: string | null;
           licence_note?: string | null;
           max_change_ratio?: number;
+          max_queue_rows?: number;
           max_requests_per_day?: number;
           max_requests_per_hour?: number;
           max_requests_per_run?: number;
@@ -3874,6 +3890,7 @@ export type Database = {
           adapter?: string;
           auto_approve_confidence?: number;
           auto_approve_margin?: number;
+          auto_approve_source?: string;
           contact_email?: string | null;
           crawl_enabled?: boolean;
           crawl_lease_token?: string | null;
@@ -3885,6 +3902,7 @@ export type Database = {
           licence_changed_by?: string | null;
           licence_note?: string | null;
           max_change_ratio?: number;
+          max_queue_rows?: number;
           max_requests_per_day?: number;
           max_requests_per_hour?: number;
           max_requests_per_run?: number;
@@ -3918,6 +3936,8 @@ export type Database = {
       part_source_records: {
         Row: {
           content_hash: string;
+          correlation_scored_at: string | null;
+          correlation_state: string;
           created_at: string;
           description: string | null;
           first_seen_at: string;
@@ -3937,6 +3957,8 @@ export type Database = {
         };
         Insert: {
           content_hash: string;
+          correlation_scored_at?: string | null;
+          correlation_state?: string;
           created_at?: string;
           description?: string | null;
           first_seen_at?: string;
@@ -3956,6 +3978,8 @@ export type Database = {
         };
         Update: {
           content_hash?: string;
+          correlation_scored_at?: string | null;
+          correlation_state?: string;
           created_at?: string;
           description?: string | null;
           first_seen_at?: string;
@@ -4903,7 +4927,7 @@ export type Database = {
           stripe_price_id: string | null;
           stripe_subscription_id: string | null;
           updated_at: string;
-          user_id: string;
+          user_id: string | null;
         };
         Insert: {
           apple_original_transaction_id?: string | null;
@@ -4928,7 +4952,7 @@ export type Database = {
           stripe_price_id?: string | null;
           stripe_subscription_id?: string | null;
           updated_at?: string;
-          user_id: string;
+          user_id?: string | null;
         };
         Update: {
           apple_original_transaction_id?: string | null;
@@ -4953,7 +4977,7 @@ export type Database = {
           stripe_price_id?: string | null;
           stripe_subscription_id?: string | null;
           updated_at?: string;
-          user_id?: string;
+          user_id?: string | null;
         };
         Relationships: [];
       };
@@ -5475,6 +5499,10 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      apply_part_correlation_gate: {
+        Args: { p_record_id: string };
+        Returns: boolean;
+      };
       approve_model_version: {
         Args: { p_notes?: string; p_version_id: string };
         Returns: undefined;
@@ -5553,6 +5581,7 @@ export type Database = {
         Args: { p_sender: string };
         Returns: number;
       };
+      delete_my_account: { Args: { p_user_id: string }; Returns: Json };
       discord_roster_classified: {
         Args: never;
         Returns: Database['public']['CompositeTypes']['discord_roster_row'][];
@@ -5862,7 +5891,7 @@ export type Database = {
           stripe_price_id: string | null;
           stripe_subscription_id: string | null;
           updated_at: string;
-          user_id: string;
+          user_id: string | null;
         };
         SetofOptions: {
           from: '*';
@@ -6008,6 +6037,7 @@ export type Database = {
       };
       prune_chat_threads: { Args: never; Returns: undefined };
       prune_chat_usage_daily: { Args: never; Returns: undefined };
+      prune_cron_job_run_details: { Args: never; Returns: undefined };
       prune_subscription_verification_attempts: {
         Args: never;
         Returns: undefined;
@@ -6041,7 +6071,7 @@ export type Database = {
           stripe_price_id: string | null;
           stripe_subscription_id: string | null;
           updated_at: string;
-          user_id: string;
+          user_id: string | null;
         };
         SetofOptions: {
           from: '*';
@@ -6078,6 +6108,18 @@ export type Database = {
         };
         Returns: undefined;
       };
+      record_part_correlation_model_scores: {
+        Args: {
+          p_record_id: string;
+          p_reviewed?: boolean;
+          p_scores: Json;
+          p_version: string;
+        };
+        Returns: {
+          gate_approved: boolean;
+          rows_scored: number;
+        }[];
+      };
       record_search_miss: { Args: { p_query: string }; Returns: undefined };
       reject_model_version: {
         Args: { p_reason: string; p_version_id: string };
@@ -6086,6 +6128,10 @@ export type Database = {
       release_part_source_lease: {
         Args: { p_source_id: string; p_token: string };
         Returns: boolean;
+      };
+      reopen_part_correlation: {
+        Args: { p_record_id: string };
+        Returns: undefined;
       };
       report_message: {
         Args: { p_message_id: string; p_reason: string };
@@ -6123,8 +6169,17 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      reset_part_correlation_scoring: {
+        Args: { p_source_id: string };
+        Returns: number;
+      };
       review_part_correlation: {
-        Args: { p_approve: boolean; p_correlation_id: string; p_note?: string };
+        Args: {
+          p_approve: boolean;
+          p_correlation_id: string;
+          p_no_equivalent?: boolean;
+          p_note?: string;
+        };
         Returns: undefined;
       };
       revoke_comp_membership: {
@@ -6152,7 +6207,7 @@ export type Database = {
           stripe_price_id: string | null;
           stripe_subscription_id: string | null;
           updated_at: string;
-          user_id: string;
+          user_id: string | null;
         };
         SetofOptions: {
           from: '*';
@@ -6160,6 +6215,15 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      run_due_part_correlations: {
+        Args: { p_batch?: number };
+        Returns: {
+          auto_approved: number;
+          proposals_written: number;
+          records_scored: number;
+          source_slug: string;
+        }[];
       };
       safe_uuid: { Args: { p_value: string }; Returns: string };
       seller_can_sell: { Args: { p_user_id: string }; Returns: boolean };

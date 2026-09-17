@@ -12,12 +12,21 @@
  * `part_source_records.part_id`, and that is what puts a buy link on a factory
  * part's page.
  *
- * THE SCREEN SHOWS THE EVIDENCE, NOT THE SCORE. A reviewer asked to trust a
- * number cannot catch the case this pipeline exists for: asked to place "FUEL
- * CAP, locking", the archive offers a locking vented cap and a locking non-vented
- * one, and the descriptions are near-identical. What separates them is the
- * qualifiers each side stated, so those are what the row renders — the score is
- * a sort order, not an argument.
+ * ONE CARD PER RECORD, UP TO THREE CANDIDATES. The scorer proposes the top three
+ * factory parts for a listing, so the reviewer's job is "confirm the best one or
+ * pick another", not "search for it". Rows are grouped by the retailer record
+ * here, in two reads: the first picks which records lead (see the ordering
+ * below), the second fetches every open proposal for exactly those records, so
+ * a record's alternatives are never cut off by the page limit.
+ *
+ * TWO SCORES, AND WHICH ONE LEADS. `confidence` is trigram similarity: 0.95
+ * means the names are 95% alike, not that the match is 95% likely to be right.
+ * `modelConfidence` is a second-stage P(same part) written by a Supabase edge
+ * function, and it IS a probability. When a record has one, the queue sorts by
+ * it; until then it falls back to the trigram order (hardest first, by
+ * separation). Neither number is an argument: the card still leads with what
+ * each side said about locking, venting, body style, polarity, because that is
+ * the comparison a reviewer is actually making.
  *
  * Service role, because `part_number_correlations`, `part_source_records` and
  * `part_source_private` carry no grant for any browser role.
@@ -25,8 +34,9 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 
-/** What the scorer recorded about how it arrived at a number. */
+/** What the trigram scorer recorded about how it arrived at a number. */
 interface Signals {
+  rank?: number;
   similarity?: number;
   listed_as?: string;
   candidate?: string;
@@ -36,6 +46,12 @@ interface Signals {
   qualifiers_agreed?: number;
   runner_up_score?: number;
   scored_at?: string;
+  /** What the second stage recorded, when it has run. */
+  model?: {
+    levels?: { different?: number; related?: number; same?: number };
+    qualifiers?: Record<string, number>;
+    none_fit?: number;
+  };
 }
 
 export interface CorrelationRow {
@@ -45,11 +61,8 @@ export interface CorrelationRow {
   separation: number;
   status: string;
   autoApproved: boolean;
-  /** What the retailer calls it, and its own catalogue number. */
-  listedAs: string | null;
-  listedNumber: string | null;
-  sourceUrl: string | null;
-  sourceName: string | null;
+  /** 1 is the trigram scorer's own pick; 2 and 3 are its alternatives. */
+  rank: number | null;
   /** The factory part being proposed. */
   partNumber: string | null;
   partDescription: string | null;
@@ -60,75 +73,217 @@ export interface CorrelationRow {
   qualifiersCandidate: string[];
   qualifiersAgreed: number;
   runnerUpScore: number | null;
+  /** Second stage: P(same part), or null until the model has looked. */
+  modelConfidence: number | null;
+  modelSeparation: number | null;
+  modelVersion: string | null;
+  /** P(different) / P(related) / P(same), when scored. */
+  modelLevels: { different: number; related: number; same: number } | null;
+  /** Per qualifier dimension, P(both sides agree). */
+  modelQualifiers: Record<string, number>;
+}
+
+export interface CorrelationGroup {
+  recordId: string;
+  /** What the retailer calls it, and its own catalogue number. */
+  listedAs: string | null;
+  listedNumber: string | null;
+  sourceUrl: string | null;
+  sourceName: string | null;
+  /** P(no candidate is the listed part), from the second stage; null until scored. */
+  noneFit: number | null;
+  /** Best first: by modelConfidence when present, else by rank. */
+  candidates: CorrelationRow[];
+}
+
+const STATUSES = ['proposed', 'approved', 'rejected', 'superseded', 'closed'] as const;
+type Status = (typeof STATUSES)[number];
+
+const ROW_SELECT = `id, source_record_id, confidence, separation, status, auto_approved, signals,
+  model_confidence, model_separation, model_version, model_scored_at,
+  part_source_records!inner ( part_number_as_listed, title, source_url,
+    part_sources!inner ( name ) ),
+  parts!inner ( part_number_display, part_number_norm, description )`;
+
+interface RawRow {
+  id: string;
+  source_record_id: string;
+  confidence: number;
+  separation: number;
+  status: string;
+  auto_approved: boolean;
+  signals: Signals | null;
+  model_confidence: number | null;
+  model_separation: number | null;
+  model_version: string | null;
+  model_scored_at: string | null;
+  part_source_records: {
+    part_number_as_listed: string | null;
+    title: string | null;
+    source_url: string | null;
+    part_sources: { name: string | null } | null;
+  } | null;
+  parts: {
+    part_number_display: string | null;
+    part_number_norm: string | null;
+    description: string | null;
+  } | null;
+}
+
+function toRow(raw: RawRow): CorrelationRow {
+  const signals = raw.signals ?? {};
+  const levels = signals.model?.levels;
+  return {
+    id: raw.id,
+    confidence: Number(raw.confidence),
+    separation: Number(raw.separation),
+    status: raw.status,
+    autoApproved: Boolean(raw.auto_approved),
+    rank: typeof signals.rank === 'number' ? signals.rank : null,
+    partNumber: raw.parts?.part_number_display ?? null,
+    partDescription: raw.parts?.description ?? null,
+    partSlug: raw.parts?.part_number_norm ?? null,
+    similarity: typeof signals.similarity === 'number' ? signals.similarity : null,
+    qualifiersListed: signals.qualifiers_listed ?? [],
+    qualifiersCandidate: signals.qualifiers_candidate ?? [],
+    qualifiersAgreed: signals.qualifiers_agreed ?? 0,
+    runnerUpScore: typeof signals.runner_up_score === 'number' ? signals.runner_up_score : null,
+    modelConfidence: raw.model_confidence === null ? null : Number(raw.model_confidence),
+    modelSeparation: raw.model_separation === null ? null : Number(raw.model_separation),
+    modelVersion: raw.model_version,
+    modelLevels:
+      levels && typeof levels.same === 'number'
+        ? { different: levels.different ?? 0, related: levels.related ?? 0, same: levels.same }
+        : null,
+    modelQualifiers: signals.model?.qualifiers ?? {},
+  };
+}
+
+/** Best candidate first: the model's number when it exists, the scorer's rank otherwise. */
+function byBest(a: CorrelationRow, b: CorrelationRow): number {
+  if (a.modelConfidence !== null || b.modelConfidence !== null) {
+    return (b.modelConfidence ?? -1) - (a.modelConfidence ?? -1);
+  }
+  return (a.rank ?? 99) - (b.rank ?? 99) || b.confidence - a.confidence;
 }
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event);
   const query = getQuery(event);
 
-  const status = typeof query.status === 'string' ? query.status : 'proposed';
-  if (!['proposed', 'approved', 'rejected', 'superseded'].includes(status)) {
+  const status = (typeof query.status === 'string' ? query.status : 'proposed') as Status;
+  if (!STATUSES.includes(status)) {
     throw createError({ statusCode: 400, statusMessage: 'Unknown status' });
   }
   const limit = Math.min(200, Math.max(1, Number.parseInt(String(query.limit ?? '50'), 10) || 50));
 
   const db = getServiceClient();
 
-  const { data, error } = await db
+  // `closed` is not a correlation status but a record state: a human said the
+  // listing has no factory equivalent. Rendered as a group with no candidates so
+  // the same card can offer "reopen".
+  if (status === 'closed') {
+    const { data, error } = await db
+      .from('part_source_records')
+      .select('id, title, part_number_as_listed, source_url, part_sources ( name )')
+      .eq('correlation_state', 'no_factory_equivalent')
+      .order('updated_at', { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error('[admin/parts/correlations] closed read failed:', error.message);
+      throw createError({ statusCode: 502, statusMessage: 'Could not read the closed records' });
+    }
+    const groups: CorrelationGroup[] = (
+      (data ?? []) as unknown as {
+        id: string;
+        title: string | null;
+        part_number_as_listed: string | null;
+        source_url: string | null;
+        part_sources: { name: string | null } | null;
+      }[]
+    ).map((r) => ({
+      recordId: r.id,
+      listedAs: r.title,
+      listedNumber: r.part_number_as_listed,
+      sourceUrl: r.source_url,
+      sourceName: r.part_sources?.name ?? null,
+      noneFit: null,
+      candidates: [],
+    }));
+    const { count, error: countError } = await db
+      .from('part_source_records')
+      .select('id', { count: 'exact', head: true })
+      .eq('correlation_state', 'no_factory_equivalent');
+    return { groups, counts: { closed: countError ? null : (count ?? 0) }, status };
+  }
+
+  // Read 1: which records lead. Model-scored rows first, best P(same) first;
+  // unscored rows after them, hardest first (a near-tie is the proposal most
+  // likely to be wrong). Over-fetched three-fold because a record can own up to
+  // three rows and only its first appearance decides its place.
+  const { data: lead, error: leadError } = await db
     .from('part_number_correlations')
-    .select(
-      `id, confidence, separation, status, auto_approved, signals,
-       part_source_records!inner ( part_number_as_listed, title, source_url,
-         part_sources!inner ( name ) ),
-       parts!inner ( part_number_display, part_number_norm, description )`
-    )
+    .select('source_record_id, model_confidence, separation')
     .eq('status', status)
-    // Hardest cases first. A proposal whose runner-up scored almost as well is
-    // the one most likely to be wrong and the one a reviewer should see while
-    // they are still paying attention — not buried under fifty easy ones.
+    .order('model_confidence', { ascending: false, nullsFirst: false })
     .order('separation', { ascending: true })
     .order('confidence', { ascending: false })
-    .limit(limit);
+    .limit(limit * 3);
 
-  if (error) {
-    console.error('[admin/parts/correlations] read failed:', error.message);
+  if (leadError) {
+    console.error('[admin/parts/correlations] lead read failed:', leadError.message);
     throw createError({ statusCode: 502, statusMessage: 'Could not read the correlation queue' });
   }
 
-  const rows: CorrelationRow[] = (data ?? []).map((row) => {
-    const record = row.part_source_records as unknown as {
-      part_number_as_listed: string | null;
-      title: string | null;
-      source_url: string | null;
-      part_sources: { name: string | null } | null;
-    };
-    const part = row.parts as unknown as {
-      part_number_display: string | null;
-      part_number_norm: string | null;
-      description: string | null;
-    };
-    const signals = (row.signals ?? {}) as Signals;
+  const recordIds: string[] = [];
+  const seen = new Set<string>();
+  for (const row of (lead ?? []) as { source_record_id: string }[]) {
+    if (seen.has(row.source_record_id)) continue;
+    seen.add(row.source_record_id);
+    recordIds.push(row.source_record_id);
+    if (recordIds.length >= limit) break;
+  }
 
-    return {
-      id: row.id as string,
-      confidence: Number(row.confidence),
-      separation: Number(row.separation),
-      status: row.status as string,
-      autoApproved: Boolean(row.auto_approved),
-      listedAs: record?.title ?? null,
-      listedNumber: record?.part_number_as_listed ?? null,
-      sourceUrl: record?.source_url ?? null,
-      sourceName: record?.part_sources?.name ?? null,
-      partNumber: part?.part_number_display ?? null,
-      partDescription: part?.description ?? null,
-      partSlug: part?.part_number_norm ?? null,
-      similarity: typeof signals.similarity === 'number' ? signals.similarity : null,
-      qualifiersListed: signals.qualifiers_listed ?? [],
-      qualifiersCandidate: signals.qualifiers_candidate ?? [],
-      qualifiersAgreed: signals.qualifiers_agreed ?? 0,
-      runnerUpScore: typeof signals.runner_up_score === 'number' ? signals.runner_up_score : null,
-    };
-  });
+  // Read 2: every row of exactly those records, so no alternative is cut off.
+  let raws: RawRow[] = [];
+  if (recordIds.length > 0) {
+    const { data, error } = await db
+      .from('part_number_correlations')
+      .select(ROW_SELECT)
+      .eq('status', status)
+      .in('source_record_id', recordIds);
+    if (error) {
+      console.error('[admin/parts/correlations] read failed:', error.message);
+      throw createError({ statusCode: 502, statusMessage: 'Could not read the correlation queue' });
+    }
+    raws = (data ?? []) as unknown as RawRow[];
+  }
+
+  const byRecord = new Map<string, CorrelationGroup>();
+  for (const raw of raws) {
+    let group = byRecord.get(raw.source_record_id);
+    if (!group) {
+      const record = raw.part_source_records;
+      group = {
+        recordId: raw.source_record_id,
+        listedAs: record?.title ?? null,
+        listedNumber: record?.part_number_as_listed ?? null,
+        sourceUrl: record?.source_url ?? null,
+        sourceName: record?.part_sources?.name ?? null,
+        noneFit: null,
+        candidates: [],
+      };
+      byRecord.set(raw.source_record_id, group);
+    }
+    group.candidates.push(toRow(raw));
+    const noneFit = raw.signals?.model?.none_fit;
+    if (typeof noneFit === 'number') group.noneFit = noneFit;
+  }
+
+  const groups: CorrelationGroup[] = recordIds
+    .map((id) => byRecord.get(id))
+    .filter((g): g is CorrelationGroup => g !== undefined)
+    .map((g) => ({ ...g, candidates: [...g.candidates].sort(byBest) }));
 
   // Counts per status, so the screen can say how much is waiting without
   // fetching it. Null rather than zero on failure: "nothing to review" is a
@@ -141,6 +296,22 @@ export default defineEventHandler(async (event) => {
       .eq('status', s);
     counts[s] = countError ? null : (count ?? 0);
   }
+  {
+    const { count, error: countError } = await db
+      .from('part_source_records')
+      .select('id', { count: 'exact', head: true })
+      .eq('correlation_state', 'no_factory_equivalent');
+    counts.closed = countError ? null : (count ?? 0);
+  }
 
-  return { rows, counts, status };
+  // How far the second stage has got, so the screen can say "unscored" rather
+  // than leave a missing number to be read as zero.
+  const { count: unscored, error: unscoredError } = await db
+    .from('part_number_correlations')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'proposed')
+    .is('model_scored_at', null);
+  counts.unscored = unscoredError ? null : (unscored ?? 0);
+
+  return { groups, counts, status };
 });
