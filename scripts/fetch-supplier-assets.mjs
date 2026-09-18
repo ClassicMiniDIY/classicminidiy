@@ -112,11 +112,11 @@ const attr = (tag, name) => {
   const m = tag.match(new RegExp(`\\b${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
   return m ? (m[2] ?? m[3] ?? m[4] ?? '').trim() : null;
 };
-const decode = (s) =>
-  s
-    .replace(/&amp;/g, '&')
-    .replace(/&#0?39;/g, "'")
-    .replace(/&quot;/g, '"');
+// ONE PASS. Decoding `&amp;` first and `&quot;` second turns `&amp;quot;` into
+// `"` — a double-unescape (CodeQL js/double-escaping). A single regex with a
+// lookup decodes each entity exactly once.
+const ENTITIES = { amp: '&', quot: '"', '#39': "'", '#039': "'" };
+const decode = (s) => s.replace(/&(amp|quot|#0?39);/g, (m, e) => ENTITIES[e] ?? m);
 
 function metaContent(html, prop) {
   for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
