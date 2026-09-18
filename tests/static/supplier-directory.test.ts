@@ -17,10 +17,12 @@
  * one was checked by hand" — expressed as things that must stay true.
  */
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import suppliers from '../../data/suppliers.json';
 import provenance from '../../data/suppliers-provenance.json';
+import assets from '../../data/suppliers-assets.json';
+import overrides from '../../data/suppliers-assets.overrides.json';
 import { SUPPLIER_FILTER_TAGS, SUPPLIER_GROUP_ORDER, flagFor, type Supplier } from '../../data/models/suppliers';
 import { REPO_ROOT, parseVue } from './_scan';
 
@@ -205,6 +207,50 @@ describe('supplier directory provenance', () => {
 
   it('is dated, so a stale directory can be spotted', () => {
     expect(provenance.verified_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe('supplier directory assets', () => {
+  const ids = new Set(rows.map((s) => s.id));
+  const assetRows = assets as Record<string, { logo?: string | null; cover?: string | null }>;
+
+  it('names only shops that are in the directory', () => {
+    const strays = Object.keys(assetRows).filter((id) => !ids.has(id));
+    expect(strays, 'assets for shops that are not listed — rerun scripts/fetch-supplier-assets.mjs').toEqual([]);
+    const strayOverrides = Object.keys(overrides).filter((id) => id !== '//' && !ids.has(id));
+    expect(strayOverrides, 'overrides for shops that are not listed').toEqual([]);
+  });
+
+  it('points every logo and cover at a file that exists under public/', () => {
+    const missing: string[] = [];
+    for (const [id, row] of Object.entries(assetRows)) {
+      for (const kind of ['logo', 'cover'] as const) {
+        const path = row[kind];
+        if (!path) continue;
+        expect(path, `${id} ${kind} must be served from /suppliers/`).toMatch(
+          /^\/suppliers\/[a-z0-9-]+-(logo|cover)\.webp$/
+        );
+        if (!existsSync(join(REPO_ROOT, 'public', path))) missing.push(`${id} ${kind}: ${path}`);
+      }
+    }
+    expect(missing, missing.join('\n')).toEqual([]);
+  });
+
+  it('has no orphan files under public/suppliers/', () => {
+    const referenced = new Set(
+      Object.values(assetRows)
+        .flatMap((r) => [r.logo, r.cover])
+        .filter((p): p is string => !!p)
+    );
+    const orphans = readdirSync(join(REPO_ROOT, 'public', 'suppliers'))
+      .filter((f) => f.endsWith('.webp'))
+      .filter((f) => !referenced.has(`/suppliers/${f}`));
+    expect(orphans, 'files nothing references — delete them or rerun the fetch').toEqual([]);
+  });
+
+  it('gives most shops a logo — the page was redesigned around them', () => {
+    const withLogo = rows.filter((s) => assetRows[s.id]?.logo).length;
+    expect(withLogo / rows.length).toBeGreaterThan(0.8);
   });
 });
 

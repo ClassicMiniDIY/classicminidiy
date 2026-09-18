@@ -1,0 +1,54 @@
+{
+  "//": [
+    "Hand-picked image URLs for shops whose homepage markup gives the fetch script nothing usable, or the wrong thing.",
+    "scripts/fetch-supplier-assets.mjs tries these BEFORE anything it reads off the page. A path starting with / is a file under public/."
+  ],
+  "old-skool-minis": {
+    "logo": "https://oldskoolminis.co.uk/wp-content/uploads/2020/10/LogoV3.png"
+  },
+  "calver-st": {
+    "logo": "https://www.calverst.com/_webedit/cached-images/88.png"
+  },
+  "woolies-trim": {
+    "logo": "https://www.woolies-trim.co.uk/images/thumbs/0000139_woolies_logo.png"
+  },
+  "classic-mini-diy": {
+    "logo": "/brand/cmdiy-mark.jpg"
+  },
+  "minisport-australia": {
+    "logo": "https://minisport.com.au/cdn/shop/files/MinisportLOGOemail_300x@2x.jpg"
+  },
+  "classic-mini-spares-nz": {
+    "logo": "https://www.classicminispares.co.nz/sites/default/files/black_website_cms_500x250.png"
+  },
+  "palmside-nz": {
+    "logo": "https://palmside.co.nz/cdn/shop/files/palmside-logo_6428b579-a0b1-4e9b-ab45-7742ac88af48_305x.png"
+  },
+  "mini-union-classic": {
+    "logo": "https://image.jimcdn.com/app/cms/image/transf/dimension=379x10000:format=png/path/se8c4b03ccdf1399e/image/i328efcb504cba193/version/1640008158/image.png"
+  },
+  "auto-palace": {
+    "logo": "https://img09.shop-pro.jp/PA01045/621/PA01045621.png"
+  },
+  "b-well": {
+    "logo": "https://img07.shop-pro.jp/PA01441/151/PA01441151.gif"
+  },
+  "moke-panels": {
+    "logo": "https://mokepanels.com/wp-content/uploads/2019/07/logo-e1563053556914.png"
+  },
+  "mini-parts-iberica": {
+    "logo": "https://static.wixstatic.com/media/e44d2f_26f3347ef56e41f7beb90e1830c480d9~mv2.png"
+  },
+  "m-parts": {
+    "logo": null
+  },
+  "mini-delta": {
+    "logo": null
+  },
+  "moss-motors": {
+    "cover": null
+  },
+  "limora": {
+    "cover": null
+  }
+}
