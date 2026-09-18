@@ -4836,6 +4836,9 @@ export type Database = {
         Row: {
           created_at: string;
           data: Json;
+          duplicate_at: string | null;
+          duplicate_hint: Json | null;
+          duplicate_version: string | null;
           id: string;
           reviewed_at: string | null;
           reviewed_by: string | null;
@@ -4849,6 +4852,9 @@ export type Database = {
         Insert: {
           created_at?: string;
           data?: Json;
+          duplicate_at?: string | null;
+          duplicate_hint?: Json | null;
+          duplicate_version?: string | null;
           id?: string;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
@@ -4862,6 +4868,9 @@ export type Database = {
         Update: {
           created_at?: string;
           data?: Json;
+          duplicate_at?: string | null;
+          duplicate_hint?: Json | null;
+          duplicate_version?: string | null;
           id?: string;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
@@ -5653,6 +5662,17 @@ export type Database = {
         Args: { p_message_id: string };
         Returns: undefined;
       };
+      find_submission_duplicates: {
+        Args: { p_limit?: number; p_submission_id: string };
+        Returns: {
+          code: string;
+          detail: string;
+          exact_code: boolean;
+          id: string;
+          name: string;
+          sim: number;
+        }[];
+      };
       find_user_id_by_email: { Args: { p_email: string }; Returns: string };
       generate_location_string: {
         Args: { p_city: string; p_country: string; p_state_province: string };
@@ -6206,6 +6226,10 @@ export type Database = {
           p_query: string;
           p_version?: string;
         };
+        Returns: boolean;
+      };
+      record_submission_duplicate_hint: {
+        Args: { p_hint: Json; p_submission_id: string; p_version: string };
         Returns: boolean;
       };
       reject_model_version: {

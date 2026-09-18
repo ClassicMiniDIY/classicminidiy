@@ -14,6 +14,13 @@ paths:
   - 'server/utils/searchTriage.ts'
   - 'server/api/search/miss.post.ts'
   - 'server/api/search/index.get.ts'
+  - 'server/utils/queueDuplicates.ts'
+  - 'server/utils/mcpRelatedPick.ts'
+  - 'server/api/admin/queue/list.ts'
+  - 'server/mcp/tools/torque-specs.ts'
+  - 'server/mcp/tools/clearances.ts'
+  - 'server/mcp/tools/vehicle-weights.ts'
+  - 'server/mcp/tools/parts-equivalency.ts'
 ---
 
 # TypeSafe (Jev) rules
@@ -76,3 +83,17 @@ that must survive any phase.
   response, the surface order, or `shared/utils/searchIntent.ts`; a reorder
   from a model answer is a later change with its own switch.
   `promote_search_miss()` stays a human act.
+- **The queue duplicate hint scores only candidates code found.**
+  `server/utils/queueDuplicates.ts` asks one Score per row that
+  `find_submission_duplicates` (exact code, then trigram name) returned and
+  stores the result once per pending submission (`TYPESAFE_QUEUE_MODE=on`).
+  The card shows it; the approve route still inserts unless the admin picks
+  "attach", which sends the existing `editedData.originalColorId`. No
+  auto-merge, no auto-reject, colours and wheels only.
+- **`relatedPick` is a hint beside `related`, never a filter on it.**
+  `server/utils/mcpRelatedPick.ts` runs only when a table tool's near-miss
+  list has two or more rows, only with a request event (`extra.event`, the one
+  key a tool may read from its MCP context; the tiering plugin and the chat
+  bridge both attach it) and only with `TYPESAFE_MCP_MODE=on`. `lookup()` in
+  `mcpLookup.ts` stays synchronous and pure; the rows and their order do not
+  change; a pick under `RELATED_PICK_MIN` is no pick.

@@ -452,7 +452,7 @@ export function buildAgentTools({
   ...hooks
 }: AgentToolHooks & { event?: H3Event; youtubeApiKey?: string; modelId?: string } = {}): Record<string, Tool> {
   return {
-    ...buildMcpTools(),
+    ...buildMcpTools(event),
     'mini-history': historyTool(),
     'site-search': siteSearchTool(hooks),
     'store-search': storeSearchTool(shopifyConfig(event), hooks),

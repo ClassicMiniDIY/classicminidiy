@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3';
 import { z } from 'zod';
 import { tool, type Tool } from 'ai';
 
@@ -106,18 +107,27 @@ export const AGENT_MCP_TOOL_NAMES = Object.keys(DEFINITIONS).sort();
 /**
  * Stand-in for the MCP request context. Throws rather than returning undefined
  * so a handler that starts depending on it is caught immediately.
+ *
+ * One key is let through: `extra.event`, the H3 request event, which the
+ * `/mcp` tiering plugin also attaches. It is the only thing a tool may read
+ * from `extra`, and it is optional (undefined here when the bridge was built
+ * without one, as in tests): a tool that gets no event must answer the same
+ * way it would with one, minus whatever the event enabled.
  */
-const NO_MCP_EXTRA = new Proxy(
-  {},
-  {
-    get(_target, property) {
-      throw new Error(
-        `MCP tool tried to read \`extra.${String(property)}\`, which does not exist when the tool ` +
-          `runs in-process from the chat agent. Give the tool what it needs through its inputSchema instead.`
-      );
-    },
-  }
-);
+function mcpExtra(event?: H3Event) {
+  return new Proxy(
+    {},
+    {
+      get(_target, property) {
+        if (property === 'event') return event;
+        throw new Error(
+          `MCP tool tried to read \`extra.${String(property)}\`, which does not exist when the tool ` +
+            `runs in-process from the chat agent. Give the tool what it needs through its inputSchema instead.`
+        );
+      },
+    }
+  );
+}
 
 /**
  * Turn a toolkit result into something worth putting in front of a model.
@@ -151,18 +161,19 @@ export function unwrapToolResult(result: unknown): unknown {
 }
 
 /** Adapt one toolkit definition to an AI SDK tool. */
-export function toAiTool(name: string, definition: McpToolDefinition): Tool {
+export function toAiTool(name: string, definition: McpToolDefinition, event?: H3Event): Tool {
+  const extra = mcpExtra(event);
   return tool({
     description: definition.description,
     inputSchema: z.object(definition.inputSchema ?? {}),
     async execute(args: unknown) {
-      const result = await definition.handler(args, NO_MCP_EXTRA);
+      const result = await definition.handler(args, extra);
       return unwrapToolResult(result);
     },
   }) as Tool;
 }
 
 /** Every Classic Mini reference tool, keyed by the name the model calls. */
-export function buildMcpTools(): Record<string, Tool> {
-  return Object.fromEntries(Object.entries(DEFINITIONS).map(([name, def]) => [name, toAiTool(name, def)]));
+export function buildMcpTools(event?: H3Event): Record<string, Tool> {
+  return Object.fromEntries(Object.entries(DEFINITIONS).map(([name, def]) => [name, toAiTool(name, def, event)]));
 }

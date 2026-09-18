@@ -28,6 +28,11 @@
     submitterEmail: string | null;
     submitterAvatar: string | null;
     submitterTrustLevel: 'new' | 'contributor' | 'trusted' | 'moderator' | 'admin';
+    /** TypeSafe's read of which archive rows a new colour/wheel duplicates. A hint; approve does what you click. */
+    duplicateHint: {
+      candidates: { id: string; name: string; code: string | null; level: string; p_same: number; p_variant: number }[];
+      top: { id: string; level: string; p: number } | null;
+    } | null;
   }
 
   interface TargetTypeFilter {
@@ -356,6 +361,7 @@
   function openApproveModal(item: QueueItem) {
     selectedItem.value = item;
     reviewerNotes.value = '';
+    attachToId.value = null;
     showApproveModal.value = true;
   }
 
@@ -370,6 +376,7 @@
     await nextTick();
     selectedItem.value = null;
     reviewerNotes.value = '';
+    attachToId.value = null;
   }
 
   async function closeRejectModal() {
@@ -377,6 +384,24 @@
     await nextTick();
     selectedItem.value = null;
     reviewerNotes.value = '';
+  }
+
+  /**
+   * The archive row a colour submission should attach to instead of inserting
+   * a new one; the approve route already honours `data.originalColorId`, this
+   * only sets it. Wheels have no attach path, so the hint is read-only there.
+   */
+  const attachToId = ref<string | null>(null);
+
+  function duplicateTop(item: QueueItem) {
+    const hint = item.duplicateHint;
+    if (!hint?.top) return null;
+    const candidate = hint.candidates.find((c) => c.id === hint.top!.id);
+    return candidate ? { ...candidate, level: hint.top.level, p: hint.top.p } : null;
+  }
+
+  function archiveHref(item: QueueItem, id: string) {
+    return item.targetType === 'wheel' ? `/archive/wheels/${id}` : `/archive/colors/${id}`;
   }
 
   async function approveItem() {
@@ -390,15 +415,17 @@
     errorMessage.value = '';
 
     try {
+      const attach = itemToApprove.targetType === 'color' && attachToId.value ? attachToId.value : null;
       await $adminFetch('/api/admin/queue/approve', {
         method: 'POST',
         body: {
           id: itemToApprove.id,
           reviewerNotes: reviewerNotes.value || null,
+          ...(attach ? { editedData: { ...itemToApprove.data, originalColorId: attach } } : {}),
         },
       });
 
-      track('admin_action', { item_type: 'queue', action: 'approve' });
+      track('admin_action', { item_type: 'queue', action: 'approve', attach_existing: Boolean(attach) });
 
       // Update item status locally
       if (items.value) {
@@ -592,6 +619,27 @@
             </div>
           </div>
 
+          <!-- Possible duplicate (TypeSafe hint over code-found candidates; never acted on by itself) -->
+          <div
+            v-if="item.status === 'pending' && duplicateTop(item)"
+            class="alert alert-warning alert-soft mb-4 py-2 text-sm"
+            role="note"
+          >
+            <i class="fas fa-clone"></i>
+            <span class="min-w-0 break-words">
+              Possible duplicate of
+              <NuxtLink :to="archiveHref(item, duplicateTop(item)!.id)" class="link font-medium" target="_blank">
+                {{ duplicateTop(item)!.name
+                }}<template v-if="duplicateTop(item)!.code"> ({{ duplicateTop(item)!.code }})</template>
+              </NuxtLink>
+              — read as {{ duplicateTop(item)!.level === 'same' ? 'the same' : 'a variant' }} at
+              {{ duplicateTop(item)!.p.toFixed(2) }}.
+              <template v-if="item.targetType === 'color'">
+                Approve offers to attach the photos to it instead.</template
+              >
+            </span>
+          </div>
+
           <!-- Uploaded Images Preview -->
           <div v-if="getUploadedImages(item).length > 0" class="mb-4">
             <p class="text-sm font-medium opacity-70 mb-2">Uploaded Files</p>
@@ -737,6 +785,27 @@
             </div>
           </div>
         </div>
+
+        <!-- Attach to an existing colour instead of inserting a new row -->
+        <fieldset
+          v-if="selectedItem && selectedItem.targetType === 'color' && duplicateTop(selectedItem)"
+          class="fieldset mb-4 rounded-lg border border-warning/40 bg-warning/5 p-3"
+        >
+          <legend class="fieldset-legend">Possible duplicate</legend>
+          <label class="label cursor-pointer justify-start gap-3">
+            <input v-model="attachToId" type="radio" class="radio radio-sm" :value="null" />
+            <span class="label-text">Insert as a new colour</span>
+          </label>
+          <label class="label cursor-pointer justify-start gap-3">
+            <input v-model="attachToId" type="radio" class="radio radio-sm" :value="duplicateTop(selectedItem)!.id" />
+            <span class="label-text">
+              Attach the photos to
+              <strong>{{ duplicateTop(selectedItem)!.name }}</strong>
+              <template v-if="duplicateTop(selectedItem)!.code"> ({{ duplicateTop(selectedItem)!.code }})</template>
+              instead
+            </span>
+          </label>
+        </fieldset>
 
         <!-- Reviewer Notes -->
         <label class="form-control w-full mb-4">

@@ -140,4 +140,14 @@ describe('the MCP request context stub', () => {
     });
     await expect((nosy as any).execute({})).rejects.toThrow(/extra\.requestId/);
   });
+
+  it('lets `extra.event` through, as the request event or undefined', async () => {
+    const reader = {
+      description: 'reads the event',
+      inputSchema: {},
+      handler: (_args: unknown, extra: any) => ({ hasEvent: extra.event !== undefined }),
+    };
+    expect(await (toAiTool('r', reader) as any).execute({})).toEqual({ hasEvent: false });
+    expect(await (toAiTool('r', reader, {} as any) as any).execute({})).toEqual({ hasEvent: true });
+  });
 });
