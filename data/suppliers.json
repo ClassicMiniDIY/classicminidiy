@@ -160,16 +160,6 @@
     "shipsInternationally": null
   },
   {
-    "id": "specialist-components",
-    "name": "Specialist Components",
-    "url": "https://www.specialist-components.co.uk",
-    "country": "GB",
-    "group": "uk-performance",
-    "speciality": "A-series fuel injection and engine management, the TwinKam 16-valve head conversion, and crate engines.",
-    "tags": ["engine", "electrical"],
-    "shipsInternationally": null
-  },
-  {
     "id": "guessworks",
     "name": "Guessworks",
     "url": "https://www.guess-works.com",
