@@ -498,8 +498,11 @@ by-design DKIM row opted out via `informational`.
 the confirmation was made without evidence: the deciding fact was that nothing
 in this repo sends through Postmark, and this repo is not the only thing that
 sends mail — the same mistake this plan already records making about
-`cmdiy.co` being receive-only. Postmark sends the store's **purchase orders to
-suppliers** as `sales@cmdiy.co` (Feedback-ID `…:postmark` in the headers).
+`cmdiy.co` being receive-only. The **Auto Purchase Orders** Shopify app sends the store's purchase orders to
+suppliers as `sales@cmdiy.co`, and Postmark is that app's carrier (Feedback-ID
+`…:postmark` in the headers). There is no Postmark account of our own; the
+app's "Email domain settings" page is where DKIM and Return-Path verification
+live, and it re-verified on its own once the records were back.
 `scripts/fix-mail-dns.py` deleted its DKIM selector
 (`20240927014807pm._domainkey.cmdiy.co`) and return-path host
 (`pm-bounces.cmdiy.co`) on 3 September. From the PO copies in Gmail:
@@ -521,9 +524,11 @@ Fixes, same day:
   frozen Route 53 zone, verbatim) instead of deleting them, and its DMARC step
   composes the record around Cloudflare DMARC Management's `rua` rather than
   Postmark's digest addresses.
-- `MAIL_DOMAINS` gained `providerRecords`: the six Shopify DKIM CNAMEs, the
+- `MAIL_DOMAINS` gained `providerRecords`: the six CNAMEs Shopify's
+  authentication page lists (two DKIM pairs and two mailer hosts — three of
+  which were never in the zone and are now created by the script), the
   Postmark selector and the Postmark return-path on `cmdiy.co`. The page now
-  grades DKIM for real on that domain and adds a "Postmark return-path" row.
+  grades DKIM for real on that domain and adds a return-path row per host.
   Before the records were restored it read `fail` on both, which is the alarm
   that was missing on 3 September.
 
