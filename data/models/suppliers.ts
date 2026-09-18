@@ -62,6 +62,15 @@ export type SupplierTag =
   | 'tools'
   | 'archive';
 
+/**
+ * Logos and cover photos are NOT fields here. They live in
+ * `data/suppliers-assets.json`, keyed by `id`, and the files under
+ * `public/suppliers/`, both written by `scripts/fetch-supplier-assets.mjs`
+ * from each shop's own homepage; hand-picked URLs go in
+ * `data/suppliers-assets.overrides.json`. Never hand-edit the assets JSON or
+ * drop a file into that folder: the static test refuses a path that has no
+ * file and a file that no row references, and the script prunes both.
+ */
 export interface Supplier {
   /** Stable kebab-case key. Used for the anchor and as the list key. */
   id: string;

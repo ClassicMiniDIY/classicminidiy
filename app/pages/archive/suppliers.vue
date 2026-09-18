@@ -24,6 +24,10 @@
   // record — every rejection note about every named business — into the client
   // bundle, to read one date out of it. The named form leaves the rest behind.
   import { verified_at as VERIFIED_AT } from '~~/data/suppliers-provenance.json';
+  // Logos and covers, fetched from each shop's own homepage by
+  // `scripts/fetch-supplier-assets.mjs` and committed under public/suppliers/.
+  // A shop with no row, or a null, renders its initials on a brand gradient.
+  import suppliersAssets from '~~/data/suppliers-assets.json';
   import {
     SUPPLIER_FILTER_TAGS,
     SUPPLIER_GROUP_ORDER,
@@ -38,6 +42,25 @@
   const router = useRouter();
 
   const suppliers = suppliersData as Supplier[];
+
+  type SupplierAssets = { logo: string | null; cover: string | null };
+  const assets = suppliersAssets as Record<string, Partial<SupplierAssets> & Record<string, unknown>>;
+  const logoOf = (s: Supplier): string | null => assets[s.id]?.logo ?? null;
+  const coverOf = (s: Supplier): string | null => assets[s.id]?.cover ?? null;
+
+  /** "Mini Spares Centre" → "MS"; "KAD" → "KA". The tile a shop gets when it has no logo image. */
+  function initialsOf(s: Supplier): string {
+    const words = s.name
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (words.length >= 2) return (words[0]![0]! + words[1]![0]!).toUpperCase();
+    return (words[0] ?? '?').slice(0, 2).toUpperCase();
+  }
+
+  /** The bare host, for the small print under the button: "minispares.com". */
+  const hostOf = (s: Supplier): string => new URL(s.url).host.replace(/^www\./, '');
 
   /**
    * The two CHIP filters live in the URL, not in a bare ref.
@@ -352,75 +375,145 @@
         </span>
       </h2>
 
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <!--
+          THE CARD IS A PROFILE, not a table row: the shop's own cover photo
+          across the top, its logo overlapping the cover's lower edge, then the
+          facts. Both images come off the shop's homepage (og:image or its hero
+          for the cover; JSON-LD, header <img> or apple-touch-icon for the logo)
+          via scripts/fetch-supplier-assets.mjs, and a shop that has neither
+          gets initials on the brand gradient. Plain <img>, not <NuxtImg>: the
+          files are already webp, sized once at fetch time, and served from
+          public/, which is the one place the image provider rule does not reach.
+        -->
         <article
           v-for="supplier in section.entries"
           :id="supplier.id"
           :key="supplier.id"
-          class="card card-compact border border-base-300 bg-base-100"
+          class="supplier-card card overflow-hidden border border-base-300 bg-base-100 shadow-sm transition-shadow duration-200 hover:shadow-lg"
           :class="supplier.ours ? 'border-primary' : ''"
         >
-          <div class="card-body">
-            <h3 class="card-title text-base">
+          <div class="relative h-28 sm:h-32">
+            <img
+              v-if="coverOf(supplier)"
+              :src="coverOf(supplier)!"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width="1200"
+              height="450"
+              class="h-full w-full object-cover"
+            />
+            <div
+              v-else
+              class="supplier-cover-fallback flex h-full w-full items-center justify-center"
+              aria-hidden="true"
+            >
+              <i class="fas fa-screwdriver-wrench text-5xl text-primary-content/20" />
+            </div>
+            <!-- Scrim, so the logo tile and the country badge read on any photo. -->
+            <div
+              class="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-base-100 to-transparent"
+            />
+            <span class="badge badge-sm absolute right-3 top-3 gap-1 border-0 bg-base-100/85 shadow-sm backdrop-blur">
+              <span aria-hidden="true">{{ flagFor(supplier.country) }}</span>
+              {{ t(`country.${supplier.country}`) }}
+            </span>
+          </div>
+
+          <div class="card-body gap-2 pt-0">
+            <div class="relative z-10 -mt-9 flex items-end justify-between gap-3">
+              <!--
+                A plate, not a circle: half these logos are wordmarks (320×44),
+                and a wordmark in a circle is a sliver. The plate is a fixed
+                height and grows to the logo's width, up to a cap, so a square
+                mark and a wide one both read at the same height.
+              -->
+              <div
+                class="flex h-[4.5rem] min-w-[4.5rem] max-w-[12rem] shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-base-100 bg-white px-2 py-1.5 shadow-md"
+              >
+                <img
+                  v-if="logoOf(supplier)"
+                  :src="logoOf(supplier)!"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  class="h-full w-auto max-w-full object-contain"
+                />
+                <span
+                  v-else
+                  class="supplier-initials flex h-full w-14 items-center justify-center rounded-lg bg-primary text-xl text-primary-content"
+                  aria-hidden="true"
+                >
+                  {{ initialsOf(supplier) }}
+                </span>
+              </div>
+              <div class="flex flex-wrap justify-end gap-1 pb-1">
+                <span v-if="supplier.ours" class="badge badge-primary badge-sm">{{ t('ours') }}</span>
+                <!--
+                  One entry links over plain http, because its https serves a
+                  certificate browsers reject. Marked rather than left to surprise
+                  somebody: a browser in HTTPS-first mode will upgrade the link and
+                  land the reader on an interstitial, which looks like our mistake.
+                -->
+                <span
+                  v-if="supplier.url.startsWith('http://')"
+                  class="badge badge-warning badge-sm"
+                  :title="t('insecure_hint')"
+                >
+                  {{ t('insecure') }}
+                </span>
+              </div>
+            </div>
+
+            <h3 class="supplier-name mt-1 text-lg leading-tight">
               <!--
                 `noopener noreferrer` because these open in a new tab, and
-                `nofollow` because a page of sixty-eight outbound links is exactly
+                `nofollow` because a page of sixty-odd outbound links is exactly
                 the shape that reads as link selling. The reader still gets the
                 link; the search engine is told we are not vouching for it.
-                `noreferrer` also stops sixty-eight shops learning which of their
+                `noreferrer` also stops sixty-odd shops learning which of their
                 competitors a reader was looking at when they clicked.
 
                 The new tab is ANNOUNCED. Opening one without saying so is WCAG
                 3.2.5, and it is worse here than usually: every link on the page
                 does it, so a reader who does not expect it accumulates tabs.
               -->
-              <a
-                :href="supplier.url"
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                class="link link-hover break-words"
-              >
+              <a :href="supplier.url" target="_blank" rel="noopener noreferrer nofollow" class="link-hover break-words">
                 {{ supplier.name }}
                 <span class="sr-only">{{ t('opens_new_tab') }}</span>
               </a>
-              <span v-if="supplier.ours" class="badge badge-primary badge-sm">{{ t('ours') }}</span>
-              <!--
-                One entry links over plain http, because its https serves a
-                certificate browsers reject. Marked rather than left to surprise
-                somebody: a browser in HTTPS-first mode will upgrade the link and
-                land the reader on an interstitial, which looks like our mistake.
-              -->
-              <span
-                v-if="supplier.url.startsWith('http://')"
-                class="badge badge-warning badge-sm"
-                :title="t('insecure_hint')"
-              >
-                {{ t('insecure') }}
-              </span>
             </h3>
-
             <p v-if="supplier.nameLocal" class="-mt-1 text-sm text-base-content/60">{{ supplier.nameLocal }}</p>
 
             <p class="text-sm text-base-content/80">{{ supplier.speciality }}</p>
 
-            <div class="mt-1 flex flex-wrap items-center gap-1.5">
-              <span class="badge badge-ghost badge-sm gap-1">
-                <span aria-hidden="true">{{ flagFor(supplier.country) }}</span>
-                {{ t(`country.${supplier.country}`) }}
-              </span>
+            <div class="flex flex-wrap items-center gap-1.5">
               <!--
                 Rendered only when the site SAYS it ships worldwide. Null means it
                 did not say, which is the commonest case — showing "does not ship
                 internationally" there would tell a reader in Japan that a shop
                 which ships everywhere does not.
               -->
-              <span v-if="supplier.shipsInternationally === true" class="badge badge-ghost badge-sm gap-1">
+              <span
+                v-if="supplier.shipsInternationally === true"
+                class="badge badge-secondary badge-sm gap-1 whitespace-nowrap"
+              >
                 <i class="fas fa-earth-americas" />
                 {{ t('ships_worldwide') }}
               </span>
               <span v-for="tag in supplier.tags" :key="tag" class="badge badge-outline badge-sm">
                 {{ t(`tag.${tag}`) }}
               </span>
+            </div>
+
+            <div class="card-actions mt-1 items-center justify-between border-t border-base-300 pt-3">
+              <span class="truncate text-xs text-base-content/50">{{ hostOf(supplier) }}</span>
+              <a :href="supplier.url" target="_blank" rel="noopener noreferrer nofollow" class="btn btn-primary btn-sm">
+                {{ t('visit') }}
+                <i class="fas fa-arrow-up-right-from-square text-xs" aria-hidden="true" />
+                <span class="sr-only">{{ t('opens_new_tab') }}</span>
+              </a>
             </div>
           </div>
         </article>
@@ -452,6 +545,7 @@
     "clear": "Clear filters",
     "no_results": "No suppliers match those filters.",
     "group_count": "{count} suppliers",
+    "visit": "Visit shop",
     "ours": "Ours",
     "ships_worldwide": "Ships worldwide",
     "provenance": "Every entry was fetched and read before it was added, last checked {date}. Shops that had closed, moved domain or turned out not to sell Mini parts were left out.",
@@ -514,6 +608,7 @@
     "clear": "Borrar filtros",
     "no_results": "Ningún proveedor coincide con esos filtros.",
     "group_count": "{count} proveedores",
+    "visit": "Visitar tienda",
     "ours": "Nuestra",
     "ships_worldwide": "Envía a todo el mundo",
     "provenance": "Cada entrada fue consultada y leída antes de añadirla; última comprobación el {date}. Se excluyeron las tiendas cerradas, con dominio cambiado o que no venden piezas de Mini.",
@@ -576,6 +671,7 @@
     "clear": "Effacer les filtres",
     "no_results": "Aucun fournisseur ne correspond à ces filtres.",
     "group_count": "{count} fournisseurs",
+    "visit": "Visiter la boutique",
     "ours": "Le nôtre",
     "ships_worldwide": "Expédie dans le monde entier",
     "provenance": "Chaque entrée a été consultée et lue avant d’être ajoutée, dernière vérification le {date}. Les boutiques fermées, ayant changé de domaine ou ne vendant pas de pièces Mini ont été écartées.",
@@ -638,6 +734,7 @@
     "clear": "Filter zurücksetzen",
     "no_results": "Kein Händler passt zu diesen Filtern.",
     "group_count": "{count} Händler",
+    "visit": "Zum Shop",
     "ours": "Unser",
     "ships_worldwide": "Weltweiter Versand",
     "provenance": "Jeder Eintrag wurde vor der Aufnahme abgerufen und gelesen, zuletzt geprüft am {date}. Geschlossene Händler, Domainwechsel und Anbieter ohne Mini-Teile blieben außen vor.",
@@ -700,6 +797,7 @@
     "clear": "Azzera i filtri",
     "no_results": "Nessun fornitore corrisponde a questi filtri.",
     "group_count": "{count} fornitori",
+    "visit": "Visita il negozio",
     "ours": "Nostro",
     "ships_worldwide": "Spedisce in tutto il mondo",
     "provenance": "Ogni voce è stata consultata e letta prima di essere aggiunta, ultimo controllo il {date}. Sono stati esclusi i negozi chiusi, quelli che hanno cambiato dominio e quelli che non vendono ricambi Mini.",
@@ -762,6 +860,7 @@
     "clear": "Limpar filtros",
     "no_results": "Nenhum fornecedor corresponde a esses filtros.",
     "group_count": "{count} fornecedores",
+    "visit": "Visitar loja",
     "ours": "Nosso",
     "ships_worldwide": "Envia para todo o mundo",
     "provenance": "Cada entrada foi consultada e lida antes de ser adicionada, última verificação em {date}. Lojas encerradas, com domínio alterado ou que não vendem peças de Mini ficaram de fora.",
@@ -824,6 +923,7 @@
     "clear": "Сбросить фильтры",
     "no_results": "Нет поставщиков, подходящих под эти фильтры.",
     "group_count": "поставщиков: {count}",
+    "visit": "Перейти в магазин",
     "ours": "Наш",
     "ships_worldwide": "Доставка по всему миру",
     "provenance": "Каждая запись была загружена и прочитана перед добавлением, последняя проверка {date}. Закрытые магазины, сменившие домен и не продающие запчасти для Mini не включены.",
@@ -886,6 +986,7 @@
     "clear": "絞り込みを解除",
     "no_results": "条件に合う販売店がありません。",
     "group_count": "{count}軒",
+    "visit": "ショップを見る",
     "ours": "当サイト",
     "ships_worldwide": "海外発送あり",
     "provenance": "掲載前にすべてのサイトを取得して内容を確認しました。最終確認は {date} です。閉店した店、ドメインが変わった店、ミニのパーツを扱っていない店は除外しています。",
@@ -948,6 +1049,7 @@
     "clear": "清除筛选",
     "no_results": "没有符合条件的供应商。",
     "group_count": "{count} 家",
+    "visit": "访问商店",
     "ours": "本站",
     "ships_worldwide": "支持全球配送",
     "provenance": "每一条在加入前都已抓取并阅读，最近核对日期为 {date}。已停业、更换域名或并不销售 Mini 配件的店铺未予收录。",
@@ -1010,6 +1112,7 @@
     "clear": "필터 지우기",
     "no_results": "조건에 맞는 공급업체가 없습니다.",
     "group_count": "{count}곳",
+    "visit": "상점 방문",
     "ours": "본 사이트",
     "ships_worldwide": "해외 배송",
     "provenance": "모든 항목은 추가 전에 직접 접속해 내용을 확인했습니다. 최종 확인일은 {date}입니다. 폐업했거나 도메인이 바뀌었거나 미니 부품을 팔지 않는 곳은 제외했습니다.",
@@ -1061,3 +1164,25 @@
   }
 }
 </i18n>
+
+<style scoped>
+  /* The shop's name in the display face, like every other card title on the site. */
+  .supplier-name,
+  .supplier-initials {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  /*
+   * No cover photo: the brand sage, with a faint diagonal weave so the block
+   * reads as a designed surface rather than a missing image. Both theme
+   * variants set --color-primary / --color-accent, so it follows dark mode.
+   */
+  .supplier-cover-fallback {
+    background-color: var(--color-primary);
+    background-image:
+      linear-gradient(135deg, var(--color-accent) 0%, transparent 60%),
+      repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.07) 0 6px, transparent 6px 14px);
+  }
+</style>
