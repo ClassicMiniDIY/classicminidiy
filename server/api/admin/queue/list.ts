@@ -1,5 +1,6 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
+import { hintSubmissionDuplicates, queueDuplicatesEnabled, type DuplicateHint } from '../../../utils/queueDuplicates';
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event);
@@ -44,8 +45,32 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // The duplicate hint for new colour/wheel submissions, filled once per row
+  // on the first list load that finds it empty (a few rows at most; the queue
+  // is small and each is one TypeSafe call). A row that fails stays empty and
+  // is tried again next load. Off unless TYPESAFE_QUEUE_MODE is on.
+  const hints = new Map<string, DuplicateHint | null>();
+  if (queueDuplicatesEnabled(event)) {
+    const wanting = (data || []).filter(
+      (item: any) =>
+        item.status === 'pending' &&
+        item.type === 'new_item' &&
+        (item.target_type === 'color' || item.target_type === 'wheel') &&
+        item.duplicate_hint == null
+    );
+    await Promise.all(
+      wanting.slice(0, 5).map(async (item: any) => {
+        hints.set(
+          item.id,
+          await hintSubmissionDuplicates(event, { id: item.id, targetType: item.target_type, data: item.data || {} })
+        );
+      })
+    );
+  }
+
   return (data || []).map((item: any) => ({
     id: item.id,
+    duplicateHint: (hints.get(item.id) ?? item.duplicate_hint ?? null) as DuplicateHint | null,
     type: item.type,
     targetType: item.target_type,
     targetId: item.target_id,

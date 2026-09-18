@@ -2,6 +2,7 @@ import { z } from 'zod';
 import data from '../../../data/torqueSpecs.json';
 import { TORQUE_UNITS } from '../../../data/models/units';
 import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
+import { eventFromExtra, pickRelated, relatedPickNote } from '../../utils/mcpRelatedPick';
 
 /**
  * Torque Specifications MCP Tool
@@ -34,8 +35,13 @@ export default defineMcpTool({
     limit: z.number().int().positive().max(200).default(50).describe('Maximum rows to return. Default 50.'),
   },
 
-  async handler({ query, section, limit }) {
+  async handler({ query, section, limit }, extra) {
     const result = lookup(data as unknown as LookupData, { query, section, limit });
+    // The near-miss pick: a hint naming which `related` row the query most
+    // likely meant. Null unless TYPESAFE_MCP_MODE is on and there are two or
+    // more rows to choose between; the list itself is never touched.
+    const pick = await pickRelated(eventFromExtra(extra), 'torque-specs', 'fastener', query, result.related);
+    const pickNote = relatedPickNote(pick, result.related);
 
     // Near-misses an over-narrow AND query excluded. Surfaced in BOTH branches
     // below, including the zero-match one, where "nothing matched, but these
@@ -47,7 +53,7 @@ export default defineMcpTool({
             'where the 1275 row says "nuts" or "set screws"), so an exact-sounding query can return one confident ' +
             'row that does NOT apply to the engine asked about. Always check the `notes` field for the ' +
             'displacement a row covers.'
-        )
+        ) + (pickNote ? ` ${pickNote}` : '')
       : undefined;
 
     if (result.totalMatches === 0) {
@@ -56,7 +62,9 @@ export default defineMcpTool({
         section: section ?? null,
         totalMatches: 0,
         matches: [],
-        ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+        ...(note
+          ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note, relatedPick: pick }
+          : {}),
         units: unitsInUse(result.related, UNITS),
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
@@ -70,7 +78,9 @@ export default defineMcpTool({
       returned: result.matches.length,
       truncated: result.truncated,
       matches: result.matches,
-      ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+      ...(note
+        ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note, relatedPick: pick }
+        : {}),
       units: unitsInUse([...result.matches, ...result.related], UNITS),
       availableSections: result.availableSections,
       formattedText: [

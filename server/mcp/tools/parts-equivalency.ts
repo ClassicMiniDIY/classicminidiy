@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import data from '../../../data/parts.json';
 import { lookup, relatedNote, type LookupData } from '../../utils/mcpLookup';
+import { eventFromExtra, pickRelated, relatedPickNote } from '../../utils/mcpRelatedPick';
 
 /**
  * Parts Equivalency MCP Tool
@@ -26,8 +27,13 @@ export default defineMcpTool({
     limit: z.number().int().positive().max(200).default(50).describe('Maximum rows to return. Default 50.'),
   },
 
-  async handler({ query, section, limit }) {
+  async handler({ query, section, limit }, extra) {
     const result = lookup(data as unknown as LookupData, { query, section, limit });
+    // The near-miss pick: a hint naming which `related` row the query most
+    // likely meant. Null unless TYPESAFE_MCP_MODE is on and there are two or
+    // more rows to choose between; the list itself is never touched.
+    const pick = await pickRelated(eventFromExtra(extra), 'parts-equivalency', 'part', query, result.related);
+    const pickNote = relatedPickNote(pick, result.related);
 
     // Near-misses an over-narrow AND query excluded. Surfaced in BOTH branches
     // below, including the zero-match one, where "nothing matched, but these
@@ -37,7 +43,7 @@ export default defineMcpTool({
           'part',
           'Brands name the same part differently, so an exact-sounding query can hide the equivalent you were ' +
             'looking for.'
-        )
+        ) + (pickNote ? ` ${pickNote}` : '')
       : undefined;
 
     if (result.totalMatches === 0) {
@@ -46,7 +52,9 @@ export default defineMcpTool({
         section: section ?? null,
         totalMatches: 0,
         matches: [],
-        ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+        ...(note
+          ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note, relatedPick: pick }
+          : {}),
         availableSections: result.availableSections,
         hint: 'No rows matched. Try fewer words, or browse a section from availableSections.',
       });
@@ -59,7 +67,9 @@ export default defineMcpTool({
       returned: result.matches.length,
       truncated: result.truncated,
       matches: result.matches,
-      ...(note ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note } : {}),
+      ...(note
+        ? { related: result.related, relatedTruncated: result.relatedTruncated, relatedNote: note, relatedPick: pick }
+        : {}),
       availableSections: result.availableSections,
       formattedText: [
         `**Parts Equivalency** — ${result.totalMatches} match${result.totalMatches === 1 ? '' : 'es'}` +

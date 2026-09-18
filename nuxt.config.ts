@@ -819,6 +819,14 @@ export default defineNuxtConfig({
     // (server/utils/searchTriage.ts); the response never changes. The
     // search-miss triage has no switch: it runs whenever the key is set.
     TYPESAFE_SEARCH_MODE: process.env.NUXT_TYPESAFE_SEARCH_MODE || '',
+    //   TYPESAFE_QUEUE_MODE -> NUXT_TYPESAFE_QUEUE_MODE ('off' | 'on')
+    // `on` labels new colour/wheel submissions on the admin queue with the
+    // archive rows they may duplicate (server/utils/queueDuplicates.ts).
+    //   TYPESAFE_MCP_MODE -> NUXT_TYPESAFE_MCP_MODE ('off' | 'on')
+    // `on` adds `relatedPick` to the four table tools' near-miss lists
+    // (server/utils/mcpRelatedPick.ts); the lists themselves never change.
+    TYPESAFE_QUEUE_MODE: process.env.NUXT_TYPESAFE_QUEUE_MODE || '',
+    TYPESAFE_MCP_MODE: process.env.NUXT_TYPESAFE_MCP_MODE || '',
     // Shopify STOREFRONT credentials for the chat agent's `store-search` tool
     // (server/utils/shopifyCatalog.ts). Design doc:
     // docs/plans/2026-09-01-shopify-catalog-tool.md.

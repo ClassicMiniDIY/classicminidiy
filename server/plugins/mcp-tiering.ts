@@ -90,8 +90,12 @@ function withUsage(tool: ToolDef, name: string, event: H3Event): ToolDef {
   const original = tool.handler;
   return {
     ...tool,
+    // The request event rides along as `extra.event`, the one key a tool may
+    // read from its context (the chat bridge in agentTools.ts attaches the
+    // same). Today only the table tools' near-miss pick uses it.
     handler: async (...args: unknown[]) => {
-      const result = await original(...args);
+      const [toolArgs, extra] = args;
+      const result = await original(toolArgs, { ...((extra as object | undefined) ?? {}), event });
       // Only a call that produced a result counts; a throw is normalized to an
       // error result by the toolkit and is not usage. Recording itself is
       // best-effort and must never turn a good result into a failure.

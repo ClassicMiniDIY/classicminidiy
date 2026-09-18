@@ -98,9 +98,14 @@ describe('server/plugins/mcp-tiering', () => {
     fn({ config, event: eventWithTier('free') });
 
     const free = byFilename(config.tools, `${freeName}.ts`);
-    const result = await free.handler({ some: 'args' });
+    const result = await free.handler({ some: 'args' }, { requestId: 'r1' });
     expect(result.content[0].text).toBe('free-result');
-    expect(tools[0].handler).toHaveBeenCalledWith({ some: 'args' });
+    // The wrapper hands the tool its args untouched and adds the request
+    // event to `extra`, the one key a tool may read from its context.
+    expect(tools[0].handler).toHaveBeenCalledWith(
+      { some: 'args' },
+      expect.objectContaining({ requestId: 'r1', event: expect.objectContaining({ context: expect.anything() }) })
+    );
     expect(mockRecordUsage).toHaveBeenCalledWith(expect.anything(), freeName);
   });
 
