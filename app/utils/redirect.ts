@@ -1,3 +1,6 @@
+/** localStorage slot /login writes and /auth/callback consumes (read + clear). */
+export const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
+
 /**
  * Post-auth redirect validation (pre-launch punch list D1).
  *
@@ -14,9 +17,6 @@
  *  - control characters (tab/newline/NUL) — stripped by browser URL parsers,
  *    which could resurrect a rejected shape
  */
-/** localStorage slot /login writes and /auth/callback consumes (read + clear). */
-export const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
-
 const CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 
 export function sanitizeRedirectPath(value: unknown): string | null {
