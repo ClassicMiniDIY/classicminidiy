@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3';
-import { FREE_TOOLS, getMcpAuth } from '../utils/mcpTiers';
+import { FREE_TOOLS } from '../../shared/utils/mcpTiers';
+import { getMcpAuth } from '../utils/mcpTiers';
 import { recordMcpGated, recordMcpUsage } from '../utils/mcpUsage';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
 

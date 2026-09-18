@@ -2,15 +2,8 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  FREE_TOOLS,
-  MCP_KEY_PREFIX,
-  MCP_KEY_RANDOM_LENGTH,
-  PAID_ONLY_TOOLS,
-  keyCacheId,
-  mintApiKey,
-  sha256Hex,
-} from '~/server/utils/mcpTiers';
+import { FREE_TOOLS, MCP_KEY_PREFIX, MCP_KEY_RANDOM_LENGTH, PAID_ONLY_TOOLS } from '~~/shared/utils/mcpTiers';
+import { keyCacheId, mintApiKey, sha256Hex } from '~/server/utils/mcpTiers';
 
 describe('server/utils/mcpTiers', () => {
   it('mints keys as cmdiy_ + 40 base62 chars', () => {

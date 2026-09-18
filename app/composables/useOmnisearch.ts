@@ -7,8 +7,6 @@ import {
   type SearchResult,
 } from '~~/shared/utils/searchIntent';
 
-export type { SearchResult };
-
 /**
  * Omnisearch state (design S2).
  *

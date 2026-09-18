@@ -59,7 +59,8 @@ vi.mock('~/server/utils/supabase', () => ({
 // Import the handler (defineEventHandler returns the raw function via stub)
 import handler from '~/server/middleware/mcp-auth';
 import { _resetRateLimitStore } from '~/server/utils/rateLimit';
-import { getMcpAuth, sha256Hex, keyCacheId, MCP_KEY_PREFIX } from '~/server/utils/mcpTiers';
+import { MCP_KEY_PREFIX } from '~~/shared/utils/mcpTiers';
+import { getMcpAuth, sha256Hex, keyCacheId } from '~/server/utils/mcpTiers';
 
 /** A plausible self-serve key (prefix + 40 base62 chars). */
 const CMDIY_KEY = `${MCP_KEY_PREFIX}${'a1B2c3D4e5'.repeat(4)}`;

@@ -1,5 +1,5 @@
 import { AGENT_MCP_TOOL_NAMES } from '../utils/agentTools';
-import { MEMBERSHIP_URL } from '../utils/chatTiers';
+import { MEMBERSHIP_URL } from '../../shared/utils/chatTiers';
 import { trustedSourceCatalogue } from '../../data/trustedSources';
 
 /**

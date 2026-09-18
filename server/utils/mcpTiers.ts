@@ -10,19 +10,12 @@ import { MCP_KEY_PREFIX, MCP_KEY_RANDOM_LENGTH } from '../../shared/utils/mcpTie
  * The client-safe constants (tier type, FREE_TOOLS/PAID_ONLY_TOOLS, key
  * format, product id, endpoint) live in shared/utils/mcpTiers.ts so the
  * /developers pricing table can import them without pulling server plumbing
- * into the public bundle. Re-exported here so server code keeps one import.
+ * into the public bundle. Server code imports them from there directly: this
+ * file must NOT re-export them. Nitro auto-imports both `shared/utils` and
+ * `server/utils`, so a re-export registers every name twice and the build
+ * logs a "Duplicated imports" warning per name
+ * (tests/static/auto-import-collisions.test.ts).
  */
-export {
-  DEVELOPER_PRODUCT_ID,
-  FREE_TOOLS,
-  MCP_ENDPOINT,
-  MCP_KEY_DISPLAY_PREFIX_LENGTH,
-  MCP_KEY_PREFIX,
-  MCP_KEY_RANDOM_LENGTH,
-  MCP_MAX_ACTIVE_KEYS,
-  PAID_ONLY_TOOLS,
-} from '../../shared/utils/mcpTiers';
-export type { McpTier } from '../../shared/utils/mcpTiers';
 
 const BASE62 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
