@@ -1,10 +1,9 @@
 import type { Database } from '~~/types/database';
+import { featuredUntilFromNow } from '~~/shared/utils/listingPromotion';
 
 type Listing = Database['public']['Tables']['listings']['Row'];
 type ListingInsert = Database['public']['Tables']['listings']['Insert'];
 type ListingUpdate = Database['public']['Tables']['listings']['Update'];
-
-const FEATURED_DURATION_DAYS = 30;
 
 export interface ListingWithPhotos extends Listing {
   // Geocoding fields (added via migration, may not be in generated types yet)
@@ -384,8 +383,7 @@ export const useListings = () => {
       tracking_number: null,
       tracking_carrier: null,
       promoted_on_social_at: null,
-      featured_until:
-        tier === 'paid' ? new Date(Date.now() + FEATURED_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString() : null,
+      featured_until: tier === 'paid' ? featuredUntilFromNow() : null,
     };
 
     if (newPrice !== undefined) {

@@ -21,6 +21,7 @@
  */
 import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
+import { featuredUntilFromNow } from '../../../../../shared/utils/listingPromotion';
 
 /** Statuses an admin may set. Mirrors the options the admin listings UI actually
  *  offers, including its "Set Example (Free/Paid)" actions — `example_*` rows are
@@ -31,18 +32,7 @@ import { requireAdminAuth } from '../../../../utils/adminAuth';
  *  `draft` is deliberately absent: it is the seller's pre-submission state, not a
  *  moderation verdict, and pushing a listing back to draft would drop it out of
  *  the queue with no way back in. */
-const ALLOWED = [
-  'pending',
-  'active',
-  'sold',
-  'expired',
-  'cancelled',
-  'example_free',
-  'example_paid',
-] as const;
-
-/** Mirrors FEATURED_DURATION_DAYS in app/composables/useListings.ts. */
-const FEATURED_DURATION_DAYS = 30;
+const ALLOWED = ['pending', 'active', 'sold', 'expired', 'cancelled', 'example_free', 'example_paid'] as const;
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -93,10 +83,7 @@ export default defineEventHandler(async (event) => {
     updates.tracking_number = null;
     updates.tracking_carrier = null;
     updates.promoted_on_social_at = null;
-    updates.featured_until =
-      listing.tier === 'paid'
-        ? new Date(Date.now() + FEATURED_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
-        : null;
+    updates.featured_until = listing.tier === 'paid' ? featuredUntilFromNow() : null;
   }
 
   const { error: upErr } = await db.from('listings').update(updates).eq('id', id);
