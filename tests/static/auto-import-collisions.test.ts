@@ -2,7 +2,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { REPO_ROOT, describeViolations, diffAgainstAllowlist, read, rel, walk } from './_scan';
+import { REPO_ROOT, blankComments, describeViolations, diffAgainstAllowlist, read, rel, walk } from './_scan';
 
 /**
  * No exported name may exist in two files of the same auto-import scope.
@@ -32,14 +32,18 @@ import { REPO_ROOT, describeViolations, diffAgainstAllowlist, read, rel, walk } 
 const KNOWN_COLLISIONS: readonly string[] = [];
 
 /**
- * Nuxt scans `shared/utils`, `app/utils` and `app/composables` one level deep
- * (a nested directory joins only via its `index.ts`); Nitro scans
- * `server/utils` recursively. Mirror that, not a guess at it.
+ * Nuxt scans `shared/utils`, `shared/types`, `app/utils` and `app/composables`
+ * one level deep (a nested directory joins only via its `index.ts`); Nitro
+ * scans `server/utils` recursively. Mirror that, not a guess at it. Declaration
+ * files are not scanned by unimport, so they are not scanned here.
  */
+const SHARED = () => [...topLevel('shared/utils'), ...topLevel('shared/types')];
 const SCOPES: Record<string, () => string[]> = {
-  nitro: () => [...walk('server/utils', '.ts'), ...topLevel('shared/utils')],
-  app: () => [...topLevel('app/utils'), ...topLevel('app/composables'), ...topLevel('shared/utils')],
+  nitro: () => [...walk('server/utils', '.ts').filter(isSource), ...SHARED()],
+  app: () => [...topLevel('app/utils'), ...topLevel('app/composables'), ...SHARED()],
 };
+
+const isSource = (file: string) => file.endsWith('.ts') && !file.endsWith('.d.ts');
 
 function topLevel(dir: string): string[] {
   const abs = join(REPO_ROOT, dir);
@@ -52,14 +56,22 @@ function topLevel(dir: string): string[] {
   const out: string[] = [];
   for (const entry of entries) {
     const full = join(abs, entry);
-    if (statSync(full).isDirectory()) {
+    // statSync throws on a dangling symlink; skip it like walk() does rather
+    // than failing the suite with a filesystem error.
+    let stats;
+    try {
+      stats = statSync(full);
+    } catch {
+      continue;
+    }
+    if (stats.isDirectory()) {
       const index = join(full, 'index.ts');
       try {
         if (statSync(index).isFile()) out.push(index);
       } catch {
         /* no index: the directory is not auto-imported */
       }
-    } else if (entry.endsWith('.ts') && !entry.endsWith('.d.ts')) {
+    } else if (isSource(entry)) {
       out.push(full);
     }
   }
@@ -72,7 +84,10 @@ const DECLARATION =
 /** `export { a, b as c }` and `export { a } from '…'` — the re-export form is the one that bites. */
 const LIST = /^export\s+(?:type\s+)?\{([^}]*)\}/gm;
 
-function exportedNames(source: string): string[] {
+function exportedNames(raw: string): string[] {
+  // A doc comment quoting `export const X` at column 0 is prose, not an export
+  // (server/utils/exchange/feedBuilder.ts has one).
+  const source = blankComments(raw, 'script');
   const names = new Set<string>();
   for (const m of source.matchAll(DECLARATION)) names.add(m[1]!);
   for (const m of source.matchAll(LIST)) {
@@ -120,6 +135,10 @@ describe('auto-import scopes', () => {
       "export type { T } from '../../shared/utils/x';",
       'export const local = 1;',
       'export async function fn() {}',
+      '/**',
+      ' * Not an export:',
+      'export const quoted = 1;',
+      ' */',
     ].join('\n');
     expect(exportedNames(source).sort()).toEqual(['A', 'C', 'T', 'fn', 'local']);
   });
