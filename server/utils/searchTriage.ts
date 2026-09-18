@@ -200,6 +200,7 @@ export function shadowSearchIntent(event: H3Event, query: string, regex: { kind:
       const modelLead = answer.answers.lead.choice;
       captureServerEvent(event, 'search_intent_shadow', 'search:intent', {
         $process_person_profile: false,
+        outcome: 'answered',
         regex_kind: regex.kind,
         model_kind: QUERY_KINDS.includes(modelKind as QueryKind) ? modelKind : 'other',
         model_kind_p: Math.round(answer.answers.kind.confidence * 1000) / 1000,
@@ -212,7 +213,14 @@ export function shadowSearchIntent(event: H3Event, query: string, regex: { kind:
       });
     })
     .catch(() => {
-      // Dropped past the ceiling or failed: a shadow that says nothing.
+      // Past the ceiling or failed. The timeout share is half of what decides
+      // whether a reorder is worth the wait, so it is counted, not dropped.
+      captureServerEvent(event, 'search_intent_shadow', 'search:intent', {
+        $process_person_profile: false,
+        outcome: controller.signal.aborted ? 'timeout' : 'error',
+        regex_kind: regex.kind,
+        regex_lead: regex.lead,
+      });
     })
     .finally(() => clearTimeout(timer));
   (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(run);
