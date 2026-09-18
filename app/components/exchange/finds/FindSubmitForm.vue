@@ -190,10 +190,13 @@
       .filter((t) => t.length > 0);
   });
 
-  // Detect when the site blocked our metadata fetch (title is just the URL, no image/description)
+  // Detect when the site blocked our metadata fetch: no image AND no
+  // description. The title alone is not evidence of a real parse: the parser
+  // falls back to the URL, and a login wall (Facebook Marketplace) answers
+  // with the site's own name as the title.
   const metadataBlocked = computed(() => {
     if (!preview.value) return false;
-    return !preview.value.imageUrl && !preview.value.description && preview.value.title === url.value.trim();
+    return !preview.value.imageUrl && !preview.value.description;
   });
 
   // Validation
@@ -219,8 +222,9 @@
 
       if (response.success && response.metadata) {
         preview.value = response.metadata;
-        // Pre-populate title from metadata
-        title.value = response.metadata.title || '';
+        // Pre-populate title from metadata, unless the parse was blocked: a
+        // URL or a bare site name as the title is worse than an empty field.
+        title.value = metadataBlocked.value ? '' : response.metadata.title || '';
         // Pre-populate category from metadata if detected
         if (response.metadata.category) {
           category.value = response.metadata.category;
