@@ -332,15 +332,17 @@
       const newMessage = payload.new;
       if (!newMessage || newMessage.moderation_status === 'pending') return;
       // Only append if this message isn't already in our list
-      if (!messages.value.some((m: any) => m.id === newMessage.id)) {
-        // Attach sender info from conversation participants
-        if (conversation.value) {
-          const sender =
-            newMessage.sender_id === conversation.value.buyer_id ? conversation.value.buyer : conversation.value.seller;
-          newMessage.sender = sender || null;
-        }
-        messages.value = [...messages.value, newMessage];
+      if (messages.value.some((m: any) => m.id === newMessage.id)) return;
+      // Attach sender info from conversation participants
+      if (conversation.value) {
+        const sender =
+          newMessage.sender_id === conversation.value.buyer_id ? conversation.value.buyer : conversation.value.seller;
+        newMessage.sender = sender || null;
       }
+      messages.value = [...messages.value, newMessage];
+      // Only for an append. mark_messages_as_read flips is_read on N rows, and
+      // each of those is itself an UPDATE event; calling it on every UPDATE
+      // would be O(unread) round trips per page open.
       await markAsRead(conversationId.value);
     };
     const filter = `conversation_id=eq.${conversationId.value}`;

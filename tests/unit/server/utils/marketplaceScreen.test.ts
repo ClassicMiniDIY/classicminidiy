@@ -131,6 +131,21 @@ describe('screenMarketplaceText', () => {
     warn.mockRestore();
   });
 
+  it('keeps the last good mode when the settings read fails, instead of flipping the switch', async () => {
+    ask.mockResolvedValue(goodAnswers({ deposit: n(0.95) }));
+    expect((await screen.screenMarketplaceText(event, 'a', { caller: 'x', context: 'c' })).mode).toBe('hold');
+    // Force a re-read that fails.
+    settingsRows.mockReturnValue({ data: null, error: { message: 'boom' } });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.now() + 61_000);
+    const v = await screen.screenMarketplaceText(event, 'b', { caller: 'x', context: 'c' });
+    vi.useRealTimers();
+    warn.mockRestore();
+    expect(v.mode).toBe('hold');
+    expect(v.decision).toBe('hold');
+  });
+
   it('caches the settings row for a minute', async () => {
     ask.mockResolvedValue(goodAnswers());
     await screen.screenMarketplaceText(event, 'a', { caller: 'x', context: 'c' });

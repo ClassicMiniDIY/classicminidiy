@@ -81,12 +81,28 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'No editable fields provided' });
   }
 
-  const { data: updated, error } = await supabase
+  // What the part IS, before the edit, so the safety read runs only when one
+  // of those three fields actually changes and not on every wizard step.
+  type Identity = { title: string; description: string | null; category_slug: string };
+  let before: Identity | null = null;
+  try {
+    const { data } = await supabase
+      .from('models')
+      .select('title, description, category_slug')
+      .eq('id', modelId)
+      .maybeSingle();
+    before = (data as unknown as Identity | null) ?? null;
+  } catch {
+    before = null; // unknown: fall back to "one of the three fields was sent"
+  }
+
+  const { data: updatedRow, error } = await supabase
     .from('models')
     .update(update)
     .eq('id', modelId)
     .select('id, title, description, category_slug')
     .single();
+  const updated = (updatedRow as unknown as Identity | null) ?? null;
   if (error) {
     console.error('[models/patch] update failed:', error.message);
     throw createError({ statusCode: 400, statusMessage: error.message || 'Could not update model' });
@@ -94,7 +110,14 @@ export default defineEventHandler(async (event) => {
 
   // A changed title, description or category changes what the part IS, so
   // the safety read runs again, backgrounded. Pricing or license edits do not.
-  if (updated && ('title' in update || 'description' in update || 'category_slug' in update)) {
+  const identityChanged =
+    updated &&
+    (before
+      ? updated.title !== before.title ||
+        (updated.description ?? null) !== (before.description ?? null) ||
+        updated.category_slug !== before.category_slug
+      : 'title' in update || 'description' in update || 'category_slug' in update);
+  if (identityChanged && updated) {
     const safetyRead = readModelSafety(event, modelId, {
       title: updated.title,
       description: updated.description,
