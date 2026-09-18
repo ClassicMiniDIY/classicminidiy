@@ -157,7 +157,7 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     //   carrier; we hold no Postmark account, and the app's "Email domain
     //   settings" page is where DKIM/Return-Path verification lives. Found
     //   2026-09-18 from the POs' own headers. Authenticates by
-    //   DKIM (selector `20240927014807pm`) and by SPF on its own return-path
+    //   DKIM (selector below) and by SPF on its own return-path
     //   host (`pm-bounces`, a CNAME inheriting pm.mtasv.net's SPF). An earlier
     //   revision called Postmark "dead, an abandoned trial" and the 2026-09-03
     //   migration deleted both records on that basis; every PO after that
@@ -194,11 +194,13 @@ export const MAIL_DOMAINS: DomainSpec[] = [
         ['mailerl71', 'b413469e422d.p339.email.myshopify.com']
       ),
       {
-        name: '20240927014807pm._domainkey.cmdiy.co',
+        // Minted 2026-09-18 when the domain was re-added in the app; the
+        // restored 2024 selector is still in the zone but no longer signs.
+        name: '20260918181434pm._domainkey.cmdiy.co',
         type: 'TXT',
         provider: 'Postmark',
         role: 'dkim',
-        expect: 'k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCPGhwf3LbRbD7iEpMQlsSaBcnzijTHS',
+        expect: 'k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCtBpRESgmXXCW6UkNPBsBiRUy3IWjPU2Hh',
       },
       {
         name: 'pm-bounces.cmdiy.co',
