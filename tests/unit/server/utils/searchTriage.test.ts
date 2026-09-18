@@ -162,13 +162,26 @@ describe('shadowSearchIntent', () => {
     });
   });
 
-  it('swallows a failure', async () => {
+  it('counts a failure as an error outcome and never throws', async () => {
     config.TYPESAFE_SEARCH_MODE = 'shadow';
     const waits: Promise<unknown>[] = [];
     const ev = { waitUntil: (p: Promise<unknown>) => waits.push(p) } as any;
-    ask.mockRejectedValue(new Error('timeout'));
+    ask.mockRejectedValue(new Error('boom'));
     triage.shadowSearchIntent(ev, 'wiper motor', { kind: 'lookup', lead: 'archive' });
     await expect(Promise.all(waits)).resolves.toBeDefined();
-    expect(capture).not.toHaveBeenCalled();
+    expect(capture.mock.calls[0]![3]).toMatchObject({ outcome: 'error', regex_kind: 'lookup', regex_lead: 'archive' });
+  });
+
+  it('counts the ceiling as a timeout outcome', async () => {
+    config.TYPESAFE_SEARCH_MODE = 'shadow';
+    const waits: Promise<unknown>[] = [];
+    const ev = { waitUntil: (p: Promise<unknown>) => waits.push(p) } as any;
+    ask.mockImplementation(
+      (_e: unknown, _s: unknown, _q: unknown, meta: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => meta.signal.addEventListener('abort', () => reject(new Error('aborted'))))
+    );
+    triage.shadowSearchIntent(ev, 'wiper motor', { kind: 'lookup', lead: 'archive' });
+    await Promise.all(waits);
+    expect(capture.mock.calls[0]![3]).toMatchObject({ outcome: 'timeout' });
   });
 });
