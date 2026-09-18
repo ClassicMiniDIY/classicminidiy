@@ -98,24 +98,33 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
   as `&amp;amp;` and every reader resolves an image URL that 404s. escapeHtml
   still belongs on the `<img>` in the item's HTML content — that really is HTML.
 
-## Finds link previews: Facebook needs an honest User-Agent (2026-09-18)
+## Finds link previews: Facebook needs a phone browser User-Agent (2026-09-18)
 
 The Stage 6 convergence (2026-06-23) replaced TheMiniExchange's Puppeteer scraper with the
 SSRF-guarded OG fetch and recorded Facebook Marketplace as a known loss: "login wall, degrades
-to manual entry". That was true only because the fetch pretended to be desktop Chrome. Measured
-against a live listing: the Chrome UA gets a 400 "Error" page; `facebookexternalhit`,
-`Twitterbot`, Discord's and Slack's preview bots, an iPhone Safari UA, and
-`Mozilla/5.0 (compatible; ClassicMiniDIY-LinkPreview/1.0; +https://classicminidiy.com/exchange/finds)`
-all get HTTP 200 with `og:title`, `og:description` and `og:image`, which is exactly what a share
-preview sees. So the parser sends its own name to Facebook (`requestHeadersFor` in
-`parse.post.ts`, threaded through `fetchExternalPage`'s new `headers` argument) and keeps the
-browser defaults everywhere else. The same honest UA was neutral on BaT, Craigslist, Thingiverse
-and the sites that 403 a residential curl either way (Cars & Bids, eBay, Copart, Printables),
-so it could become the global default later; it is per-source for now to keep the blast radius
-to Facebook.
+to manual entry". The wall is keyed on the User-Agent AND on the egress IP, and two findings
+in the same afternoon disagreed until both were measured from the right place:
 
-One trap: Facebook's crawler-facing HTML embeds a "similar listings" rail as JSON with THOSE
-items' `formatted_price` values, and the listing's own price is not in the payload. The
-`$`-regex over the raw HTML therefore returned a neighbour's `$180` for a Mini. `extractPrice`
-scans title + description only for Facebook. Tests: "request headers" block in
+- From a residential IP (curl, `bun run dev`): desktop Chrome gets a 400 "Error" page; an
+  honest link-preview UA (`ClassicMiniDIY-LinkPreview/1.0`), `facebookexternalhit`,
+  `Twitterbot`, Slack, Discord, Googlebot and iPhone Safari ALL get HTTP 200 with `og:title`,
+  `og:description` and `og:image`. The first fix shipped the honest UA on that evidence and
+  changed nothing in production.
+- From Cloudflare's egress (a throwaway Worker on workers.dev, eight UAs, `www.` and `m.`
+  hosts, repeated): desktop Chrome gets the 400; EVERY bot identity gets a 200 login wall
+  (`<title>Facebook</title>` after a 302 to `/login/?next=…`); and mobile Safari is the only
+  UA that gets the OG head. Jina Reader's renderer gets the wall too, so the render fallback
+  does not rescue it.
+
+So `requestHeadersFor` in `parse.post.ts` sends an iPhone Safari UA to Facebook, threaded
+through `fetchExternalPage`'s `headers` argument, and keeps the desktop defaults everywhere
+else. A residential-proxy fetch service was considered and is not needed while the phone UA
+works; if Facebook closes that too, a proxy is the next step, not another UA. The probe
+Worker was deleted after the run; it is small enough to recreate: fetch the listing with each
+UA and report status, final URL, `<title>` and whether `og:title` / `og:image` are present.
+
+One trap: Facebook's HTML embeds a "similar listings" rail as JSON with THOSE items'
+`formatted_price` values, and the listing's own price is not in the payload. The `$`-regex
+over the raw HTML therefore returned a neighbour's `$180` for a Mini. `extractPrice` scans
+title + description only for Facebook. Tests: "request headers" block in
 `tests/unit/exchange/server/routes/external-listings-parse.post.test.ts`.

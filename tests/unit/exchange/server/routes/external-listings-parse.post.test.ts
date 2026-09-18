@@ -301,7 +301,7 @@ describe('server/api/exchange/external-listings/parse.post', () => {
   // Per-source request headers
   // -------------------------------------------------------------------------
   describe('request headers', () => {
-    it('identifies as the link-preview bot to Facebook (its login wall is keyed on the UA)', async () => {
+    it('fetches Facebook as mobile Safari (the only UA its login wall lets through from a datacenter)', async () => {
       (readBody as any).mockResolvedValue({ url: 'https://www.facebook.com/marketplace/item/1/' });
       pageOk();
       (parseOpenGraph as any).mockReturnValue(og({ title: '1983 Classic Mini Cooper' }));
@@ -309,7 +309,7 @@ describe('server/api/exchange/external-listings/parse.post', () => {
       await handler(evt());
       expect(fetchExternalPage).toHaveBeenCalledWith('https://www.facebook.com/marketplace/item/1/', undefined, {
         'User-Agent':
-          'Mozilla/5.0 (compatible; ClassicMiniDIY-LinkPreview/1.0; +https://classicminidiy.com/exchange/finds)',
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
       });
     });
 
