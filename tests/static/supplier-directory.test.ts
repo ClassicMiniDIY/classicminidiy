@@ -23,6 +23,7 @@ import suppliers from '../../data/suppliers.json';
 import provenance from '../../data/suppliers-provenance.json';
 import assets from '../../data/suppliers-assets.json';
 import overrides from '../../data/suppliers-assets.overrides.json';
+import assetProvenance from '../../data/suppliers-assets-provenance.json';
 import { SUPPLIER_FILTER_TAGS, SUPPLIER_GROUP_ORDER, flagFor, type Supplier } from '../../data/models/suppliers';
 import { REPO_ROOT, parseVue } from './_scan';
 
@@ -246,6 +247,15 @@ describe('supplier directory assets', () => {
       .filter((f) => f.endsWith('.webp'))
       .filter((f) => !referenced.has(`/suppliers/${f}`));
     expect(orphans, 'files nothing references — delete them or rerun the fetch').toEqual([]);
+  });
+
+  it('ships the page nothing but the two paths per shop — provenance lives in its own file', () => {
+    // The page imports suppliers-assets.json whole, so anything else in a row
+    // (source URLs, dates) rides into the client bundle.
+    for (const [id, row] of Object.entries(assetRows)) {
+      expect(Object.keys(row).sort(), `${id} carries more than logo/cover`).toEqual(['cover', 'logo']);
+    }
+    expect(Object.keys(assetProvenance).sort()).toEqual(Object.keys(assetRows).sort());
   });
 
   it('gives most shops a logo — the page was redesigned around them', () => {

@@ -367,7 +367,7 @@
       {{ t('no_results') }}
     </p>
 
-    <section v-for="section in grouped" :key="section.group" class="mb-10">
+    <section v-for="(section, sectionIndex) in grouped" :key="section.group" class="mb-10">
       <h2 class="mb-3 flex flex-wrap items-baseline gap-x-3 text-xl font-bold">
         {{ t(`group.${section.group}`) }}
         <span class="text-sm font-normal text-base-content/60">
@@ -387,18 +387,19 @@
           public/, which is the one place the image provider rule does not reach.
         -->
         <article
-          v-for="supplier in section.entries"
+          v-for="(supplier, index) in section.entries"
           :id="supplier.id"
           :key="supplier.id"
           class="supplier-card card overflow-hidden border border-base-300 bg-base-100 shadow-sm transition-shadow duration-200 hover:shadow-lg"
           :class="supplier.ours ? 'border-primary' : ''"
         >
           <div class="relative h-28 sm:h-32">
+            <!-- The first row is above the fold: lazy-loading it only delays the largest paint. -->
             <img
               v-if="coverOf(supplier)"
               :src="coverOf(supplier)!"
               alt=""
-              loading="lazy"
+              :loading="sectionIndex === 0 && index < 3 ? 'eager' : 'lazy'"
               decoding="async"
               width="1200"
               height="450"
@@ -436,7 +437,7 @@
                   v-if="logoOf(supplier)"
                   :src="logoOf(supplier)!"
                   alt=""
-                  loading="lazy"
+                  :loading="sectionIndex === 0 && index < 3 ? 'eager' : 'lazy'"
                   decoding="async"
                   class="h-full w-auto max-w-full object-contain"
                 />
