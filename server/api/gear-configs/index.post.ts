@@ -1,13 +1,9 @@
 import { requireUserAuth } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
 import { requireBoundedString, requireNumberInRange, requireNumericText } from '../../utils/validation';
+import { GEAR_CONFIG_LIMITS } from '../../utils/gearConfigs';
 
-/** Field bounds shared with [id].put.ts — see the note there on why `tire` and
- * `gearset` are bounded strings rather than allowlisted values. */
-const MAX_LABEL = 200;
-const MAX_DRIVE = 50;
-const RPM_MIN = 1;
-const RPM_MAX = 20000;
+const { nameMaxLength, labelMaxLength, driveMaxLength, rpmMin, rpmMax, maxPerUser } = GEAR_CONFIG_LIMITS;
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserAuth(event);
@@ -16,18 +12,18 @@ export default defineEventHandler(async (event) => {
   // Validated per field rather than a truthiness sweep: the old
   // `!name || !tire || ...` check let any non-empty value of any TYPE through,
   // so an object or a number landed in a text column via String() coercion.
-  const name = requireBoundedString(body?.name, 'Name', 100);
-  const tire = requireBoundedString(body?.tire, 'Tire', MAX_LABEL);
-  const gearset = requireBoundedString(body?.gearset, 'Gearset', MAX_LABEL);
-  const final_drive = requireNumericText(body?.final_drive, 'Final drive', MAX_DRIVE);
-  const drop_gear = requireNumericText(body?.drop_gear, 'Drop gear', MAX_DRIVE);
-  const speedo_drive = requireNumericText(body?.speedo_drive, 'Speedo drive', MAX_DRIVE);
-  const max_rpm = requireNumberInRange(body?.max_rpm, 'Max RPM', RPM_MIN, RPM_MAX);
+  const name = requireBoundedString(body?.name, 'Name', nameMaxLength);
+  const tire = requireBoundedString(body?.tire, 'Tire', labelMaxLength);
+  const gearset = requireBoundedString(body?.gearset, 'Gearset', labelMaxLength);
+  const final_drive = requireNumericText(body?.final_drive, 'Final drive', driveMaxLength);
+  const drop_gear = requireNumericText(body?.drop_gear, 'Drop gear', driveMaxLength);
+  const speedo_drive = requireNumericText(body?.speedo_drive, 'Speedo drive', driveMaxLength);
+  const max_rpm = requireNumberInRange(body?.max_rpm, 'Max RPM', rpmMin, rpmMax);
   const is_public = body?.is_public === true;
 
   const supabase = getServiceClient();
 
-  // Enforce max 25 configs per user
+  // Enforce the per-user cap
   const { count, error: countError } = await supabase
     .from('saved_gear_configs')
     .select('*', { count: 'exact', head: true })
@@ -37,8 +33,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Failed to check config count' });
   }
 
-  if ((count ?? 0) >= 25) {
-    throw createError({ statusCode: 400, statusMessage: 'Maximum of 25 saved configurations reached' });
+  if ((count ?? 0) >= maxPerUser) {
+    throw createError({ statusCode: 400, statusMessage: `Maximum of ${maxPerUser} saved configurations reached` });
   }
 
   const { data, error } = await supabase
