@@ -19,6 +19,7 @@ import engineCodes from '../../data/engineCodes.json';
  */
 
 export const SURFACES = ['tools', 'wheels', 'archive', 'models', 'exchange', 'parts', 'suppliers', 'videos'] as const;
+export type Surface = (typeof SURFACES)[number];
 
 /** Longest query the search surfaces accept; `/api/search` and the miss log both cut here. */
 export const SEARCH_QUERY_MAX_LENGTH = 120;
@@ -34,7 +35,6 @@ export function normaliseSearchQuery(raw: unknown): string {
     .replace(/\s+/g, ' ')
     .slice(0, SEARCH_QUERY_MAX_LENGTH);
 }
-export type Surface = (typeof SURFACES)[number];
 
 export type QueryKind = 'part-number' | 'colour-code' | 'chassis' | 'engine' | 'question' | 'lookup';
 
