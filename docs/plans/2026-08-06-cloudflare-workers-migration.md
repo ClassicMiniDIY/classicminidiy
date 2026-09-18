@@ -61,6 +61,7 @@ strategic, not cost. If the current migration load (mobile Firebase Phase 5, Gho
 Phases 0–2 are zero-production-risk and can be done now while the cutover (Phase 4) waits.
 
 **Pros**
+
 - **Fixes real weaknesses today:** the unauthenticated `/api/langgraph` proxy is throttled only by
   per-warm-instance memory (near-no-op under distributed abuse) — a CF WAF rate rule enforces at the
   edge. The GEO initiative's Phase 3 (AI-crawler firewall, "needs Cole" on Vercel) becomes
@@ -85,6 +86,7 @@ Phases 0–2 are zero-production-risk and can be done now while the cutover (Pha
   browser→S3 presigned; downloads are 302 presigns; Stripe/email are Supabase Edge Function proxies.
 
 **Cons / costs**
+
 - Re-validates every SEO invariant (redirects, canonicals, prerender parity, JSON-LD, OG images) on
   a new platform — the highest-risk area, mitigated by a scripted verification battery.
 - New platform semantics to learn: assets-served-before-worker (would silently break all redirects
@@ -123,9 +125,9 @@ Verified via Vercel API, DNS, and file-level audits — trust these over CLAUDE.
   cutover migrates a live, indexed redirect estate; treat every TME check as production SEO.
 - **BotID** is the only Vercel platform package: dep + `botid/nuxt` module (injects 2 hidden
   routeRules proxying api.vercel.com) + [app/plugins/botid.client.ts](app/plugins/botid.client.ts)
-  + `checkBotId()` in `server/api/langgraph/[...path].ts`, `server/api/langgraph/threads.post.ts`,
-  `server/api/models/seller/onboard.post.ts` + `nitro.alias['next/headers']` →
-  `server/stubs/next-headers-stub.mjs` (exists solely for botid).
+  - `checkBotId()` in `server/api/langgraph/[...path].ts`, `server/api/langgraph/threads.post.ts`,
+    `server/api/models/seller/onboard.post.ts` + `nitro.alias['next/headers']` →
+    `server/stubs/next-headers-stub.mjs` (exists solely for botid).
 - **Workers-runtime blockers (corrected 2026-08-08):** the REAL blocker is
   [server/utils/s3Models.ts:130,147](server/utils/s3Models.ts) — two live `client.send()` calls
   (HeadObject + ranged GetObject for magic-byte sniffing) used by upload finalize go through
@@ -173,20 +175,20 @@ Verified via Vercel API, DNS, and file-level audits — trust these over CLAUDE.
 This plan was written for 2 zones. Cole owns **5**, and the other 3 are not the trivial
 follow-up the "Out of scope" section assumed.
 
-| Domain | Authoritative NS | Role | Mail | Zone-move risk |
-|---|---|---|---|---|
-| `classicminidiy.com` | Route 53 | Primary site (apex `A` → Vercel; `www` CNAME `…vercel-dns-017.com`) | MX forwardemail.net ×2, plus SPF / apple / pinterest / google / forward-email verification TXTs | **HIGH** — the real cutover |
-| `theminiexchange.com` | Route 53 | 28-redirect estate → cmdiy (see B1) | MX forwardemail.net ×2, `v=spf1 include:send.resend.com ~all` | **MED** — mail records + redirect map |
-| `classicminidiy.net` | **`ns1/ns2.vercel-dns.com`** | Redirect → primary | none | LOW |
-| `classicminidiy.org` | **`ns1/ns2.vercel-dns.com`** | Redirect → primary | none | LOW |
-| `wheeldictionary.com` | **`ns1/ns2.vercel-dns.com`** | Redirect → primary | none | LOW |
+| Domain                | Authoritative NS             | Role                                                                | Mail                                                                                            | Zone-move risk                        |
+| --------------------- | ---------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `classicminidiy.com`  | Route 53                     | Primary site (apex `A` → Vercel; `www` CNAME `…vercel-dns-017.com`) | MX forwardemail.net ×2, plus SPF / apple / pinterest / google / forward-email verification TXTs | **HIGH** — the real cutover           |
+| `theminiexchange.com` | Route 53                     | 28-redirect estate → cmdiy (see B1)                                 | MX forwardemail.net ×2, `v=spf1 include:send.resend.com ~all`                                   | **MED** — mail records + redirect map |
+| `classicminidiy.net`  | **`ns1/ns2.vercel-dns.com`** | Redirect → primary                                                  | none                                                                                            | LOW                                   |
+| `classicminidiy.org`  | **`ns1/ns2.vercel-dns.com`** | Redirect → primary                                                  | none                                                                                            | LOW                                   |
+| `wheeldictionary.com` | **`ns1/ns2.vercel-dns.com`** | Redirect → primary                                                  | none                                                                                            | LOW                                   |
 
 ### The finding that changes the plan: three zones are hosted on Vercel DNS
 
 The redirect domains delegate to `vercel-dns.com` — they are not Route 53 zones. Phase 5
 ("remove the domains, delete the projects, downgrade or cancel the plan") therefore **cannot
 run while those three still point at Vercel**: deleting or downgrading removes their
-*nameservers*, so they go NXDOMAIN — not merely un-redirected. This promotes them from
+_nameservers_, so they go NXDOMAIN — not merely un-redirected. This promotes them from
 "future work" to an **in-scope Phase 5 blocker**, and it is the one dependency that decides
 whether this migration can actually end with Vercel switched off.
 
@@ -254,19 +256,19 @@ can be revoked at Phase 5 without collateral damage.
 
 ## Platform mapping
 
-| Vercel today | Cloudflare after |
-|---|---|
-| Nitro `vercel` preset (auto-detected) | `cloudflare_module` preset + Workers Static Assets, `nodejs_compat`, current `compatibility_date`, Workers Paid ($5/mo) |
+| Vercel today                              | Cloudflare after                                                                                                                                                                                                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nitro `vercel` preset (auto-detected)     | `cloudflare_module` preset + Workers Static Assets, `nodejs_compat`, current `compatibility_date`, Workers Paid ($5/mo)                                                                                                                                               |
 | Vercel image optimizer (`/_vercel/image`) | CF Image Transformations (`/cdn-cgi/image/`) via `@nuxt/image` `cloudflare` provider — **CF builds only**; ipx stays in dev; `/cdn-cgi` added to `prerender.ignore` (same crawler-trap class as `/_ipx`); zone transformations enabled + the 7 remote origins allowed |
-| vercel.json TME host 301s | Nitro server middleware `00.tme-host-redirect.ts` (version-controlled, unit-tested) + `run_worker_first` so static assets can't shadow it |
-| vercel.json PostHog rewrites | Deleted — existing Nitro `/t/**` proxy routes take over |
-| BotID | Removed entirely; CF WAF rate-limiting rule on `POST /api/langgraph/*` + in-app limits |
-| `x-real-ip` trust | `CF-Connecting-IP` on CF builds (build-target-keyed helper), `x-real-ip` on Vercel builds (rollback safety) |
-| Vercel CDN `s-maxage` | KV-backed `defineCachedEventHandler` for quota-protecting routes; `nitro.storage.cache` → `cloudflare-kv-binding` |
-| Vercel Git deploys + previews | GH Actions (bun build + `wrangler deploy`); dev branch → persistent `classicminidiy-preview` worker (`NUXT_SITE_ENV=preview` → noindex); PRs → `wrangler versions upload` preview URLs |
-| Vercel env vars | wrangler vars/secrets with **`NUXT_`-prefixed names** for runtimeConfig keys (mapping table in Phase 2) |
-| Vercel WAF AI-bot rule (GEO Phase 3) | CF WAF custom rule generated from `EDGE_DENY_BOTS` in `server/utils/aiBots.ts` |
-| OG images (takumi native) | `@takumi-rs/wasm` pinned **1.8.7 exact** (locked pair with `@takumi-rs/core` per the 1.x pin) |
+| vercel.json TME host 301s                 | Nitro server middleware `00.tme-host-redirect.ts` (version-controlled, unit-tested) + `run_worker_first` so static assets can't shadow it                                                                                                                             |
+| vercel.json PostHog rewrites              | Deleted — existing Nitro `/t/**` proxy routes take over                                                                                                                                                                                                               |
+| BotID                                     | Removed entirely; CF WAF rate-limiting rule on `POST /api/langgraph/*` + in-app limits                                                                                                                                                                                |
+| `x-real-ip` trust                         | `CF-Connecting-IP` on CF builds (build-target-keyed helper), `x-real-ip` on Vercel builds (rollback safety)                                                                                                                                                           |
+| Vercel CDN `s-maxage`                     | KV-backed `defineCachedEventHandler` for quota-protecting routes; `nitro.storage.cache` → `cloudflare-kv-binding`                                                                                                                                                     |
+| Vercel Git deploys + previews             | GH Actions (bun build + `wrangler deploy`); dev branch → persistent `classicminidiy-preview` worker (`NUXT_SITE_ENV=preview` → noindex); PRs → `wrangler versions upload` preview URLs                                                                                |
+| Vercel env vars                           | wrangler vars/secrets with **`NUXT_`-prefixed names** for runtimeConfig keys (mapping table in Phase 2)                                                                                                                                                               |
+| Vercel WAF AI-bot rule (GEO Phase 3)      | CF WAF custom rule generated from `EDGE_DENY_BOTS` in `server/utils/aiBots.ts`                                                                                                                                                                                        |
+| OG images (takumi native)                 | `@takumi-rs/wasm` pinned **1.8.7 exact** (locked pair with `@takumi-rs/core` per the 1.x pin)                                                                                                                                                                         |
 
 ## Implementation plan
 
@@ -286,6 +288,7 @@ bunx wrangler deploy
 ```
 
 Go/no-go checks (all must pass):
+
 1. **Bundle size** `bunx wrangler deploy --dry-run` gzip < 9 MB; no `.node` files, no sharp/ipx in
    `.output/server` (`grep -rl 'sharp\|ipx' .output/server/chunks`).
 2. **OG image** renders via wasm on workers.dev (`image/png`, >10 KB). If not auto-selected, set
@@ -444,15 +447,15 @@ and the Vercel-compatible config gating remain until Phase 5. Worst case: repoin
   2. Backend & Infrastructure — hosting = Cloudflare Workers; purge stale DynamoDB/"Nuxt
      Content"/"Vercel Analytics" claims (already false today).
   3. Package management — postinstall note gone. 4. Key Technologies — drop Nuxt Content.
-  5. Performance/CDN phrasing. 6. **Image Optimization Invariants** (both sections): "never set
-  image.provider" inverts to "provider is `cloudflare` on CF builds, ipx in dev"; verification
-  recipe becomes `/cdn-cgi/image/` emission; screens loses its Vercel-allowlist role; `/_ipx`
-  contract gains the `/cdn-cgi` sibling. 7. **SEO/Head Invariants**: meta-refresh-shadow note
-  becomes the **`run_worker_first` contract — adding a routeRules redirect means adding its source
-  to wrangler.jsonc**. 8. Security Invariants — BotID gone, WAF rule, "per isolate", IP-helper
-  contract. 9. Dependency pins — takumi pin covers core+wasm locked at 1.8.7. 10. Environment
-  Variables — the `NUXT_`-prefix secret mapping table. 11. Deployment sections — wrangler/GH
-  Actions/KV/previews/rollback. 12. Advanced Features → monitoring.
+  4. Performance/CDN phrasing. 6. **Image Optimization Invariants** (both sections): "never set
+     image.provider" inverts to "provider is `cloudflare` on CF builds, ipx in dev"; verification
+     recipe becomes `/cdn-cgi/image/` emission; screens loses its Vercel-allowlist role; `/_ipx`
+     contract gains the `/cdn-cgi` sibling. 7. **SEO/Head Invariants**: meta-refresh-shadow note
+     becomes the **`run_worker_first` contract — adding a routeRules redirect means adding its source
+     to wrangler.jsonc**. 8. Security Invariants — BotID gone, WAF rule, "per isolate", IP-helper
+     contract. 9. Dependency pins — takumi pin covers core+wasm locked at 1.8.7. 10. Environment
+     Variables — the `NUXT_`-prefix secret mapping table. 11. Deployment sections — wrangler/GH
+     Actions/KV/previews/rollback. 12. Advanced Features → monitoring.
 - Update `Development/CLAUDE.md` (TME section references vercel.json host rules) and the user-level
   CLAUDE.md Vercel mentions; check `.github/copilot-instructions.md` for Vercel references.
 - Re-verify memory files that reference Vercel behavior (deploy-stall, BotID, ipx-on-Vercel) —
@@ -460,28 +463,28 @@ and the Vercel-compatible config gating remain until Phase 5. Worst case: repoin
 
 ## Repos touched
 
-| Repo | Work |
-|---|---|
-| `classicminidiy` | Everything above (all phases) |
-| `classicminidiy-supabase` | Edge-function origin allowlists + Supabase Auth redirect URLs gain preview/workers.dev origins; runbook/doc touch-ups. No migrations. |
-| `Development/CLAUDE.md`, user CLAUDE.md | Invariant rewrites (Phase 5) |
-| Native apps, TheMiniExchange | **No changes** |
-| OpenECUAlliance | Out of scope now — appendix below for later |
+| Repo                                    | Work                                                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `classicminidiy`                        | Everything above (all phases)                                                                                                         |
+| `classicminidiy-supabase`               | Edge-function origin allowlists + Supabase Auth redirect URLs gain preview/workers.dev origins; runbook/doc touch-ups. No migrations. |
+| `Development/CLAUDE.md`, user CLAUDE.md | Invariant rewrites (Phase 5)                                                                                                          |
+| Native apps, TheMiniExchange            | **No changes**                                                                                                                        |
+| OpenECUAlliance                         | Out of scope now — appendix below for later                                                                                           |
 
 ## Risk register
 
-| Risk | Severity | Mitigation |
-|---|---|---|
-| Static assets shadow redirects (TME + routeRules 301s become 200s) | High (SEO) | `run_worker_first` list + battery asserts 301s; CLAUDE.md invariant |
-| Silent image regression (unoptimized or broken remotes) | High | Per-domain byte checks in battery; zone origin allowlist mirrors `image.domains` |
-| `/cdn-cgi` prerender crawl trap (repeat of the /_ipx OOM) | High (build) | `prerender.ignore` entry ships in Phase 2, before any CF build matters |
-| SSE regression breaks chat | Med | Phase 1 rewrite soaks on Vercel first; spike check #3 |
-| GitHub/YouTube quota burn without CDN cache | Med | KV-backed cached handlers (Phase 2), quota dashboards in soak |
-| Rate limiting weaker per-isolate | Med | WAF edge rule; in-app stays; revisit Durable Objects only if abuse observed |
-| Bundle > 10 MB after takumi-wasm | Med | Spike gate #1; fallback satori/prerender OG |
-| DNS record drift during zone import (MX/SPF/DKIM) | Med (email) | Record-for-record dig diff; R53 kept intact |
-| Preview URLs indexed | Low | `NUXT_SITE_ENV=preview` → noindex, asserted in battery |
-| Supabase auth breaks on preview origins | Low | Allowlist updates in Phase 2 step 8 |
+| Risk                                                               | Severity     | Mitigation                                                                       |
+| ------------------------------------------------------------------ | ------------ | -------------------------------------------------------------------------------- |
+| Static assets shadow redirects (TME + routeRules 301s become 200s) | High (SEO)   | `run_worker_first` list + battery asserts 301s; CLAUDE.md invariant              |
+| Silent image regression (unoptimized or broken remotes)            | High         | Per-domain byte checks in battery; zone origin allowlist mirrors `image.domains` |
+| `/cdn-cgi` prerender crawl trap (repeat of the /_ipx OOM)          | High (build) | `prerender.ignore` entry ships in Phase 2, before any CF build matters           |
+| SSE regression breaks chat                                         | Med          | Phase 1 rewrite soaks on Vercel first; spike check #3                            |
+| GitHub/YouTube quota burn without CDN cache                        | Med          | KV-backed cached handlers (Phase 2), quota dashboards in soak                    |
+| Rate limiting weaker per-isolate                                   | Med          | WAF edge rule; in-app stays; revisit Durable Objects only if abuse observed      |
+| Bundle > 10 MB after takumi-wasm                                   | Med          | Spike gate #1; fallback satori/prerender OG                                      |
+| DNS record drift during zone import (MX/SPF/DKIM)                  | Med (email)  | Record-for-record dig diff; R53 kept intact                                      |
+| Preview URLs indexed                                               | Low          | `NUXT_SITE_ENV=preview` → noindex, asserted in battery                           |
+| Supabase auth breaks on preview origins                            | Low          | Allowlist updates in Phase 2 step 8                                              |
 
 ## Out of scope / future
 
@@ -521,7 +524,7 @@ inspection; evidence cited inline.
   `unenv/dist/runtime/node/http.mjs:11`). workerd's native node:http client doesn't help — the
   bundler aliases at build time. **Fix (Phase 1, platform-neutral):** replace both calls with
   `fetch()` against presigned URLs (presigned HeadObject; presigned GetObject + `Range:
-  bytes=0-511`). Add "model upload finalize succeeds" to the Phase 0 spike checklist and a
+bytes=0-511`). Add "model upload finalize succeeds" to the Phase 0 spike checklist and a
   `client.send(` grep to CI.
 - **A2 — SUPERSEDED 2026-09-18: the DoH rewrite shipped after all.** workerd's `dns.lookup` returns CNAME targets as addresses, which the guard refuses; the spike only tested apex hosts. See `docs/invariants/models-3d.md`. Original note kept for the record:
 - **A2 (plan overcorrection, REFUTED blocker) — node:dns is fine.** `dns`, `net`, `tls` are in
@@ -578,7 +581,7 @@ inspection; evidence cited inline.
 - **C2 (HIGH) — Zone import must be BIND-export, never quick-scan.** CF's scan guesses names and
   will miss SES DKIM CNAMEs (`<token>._domainkey`), `_dmarc`, verification TXTs. SPF here is
   `-all` (hard fail) and there was a recent SES bounce-rate scare. **Fix:** `aws route53
-  list-resource-record-sets` → BIND file → import-by-file; diff iterates the R53 export as source
+list-resource-record-sets` → BIND file → import-by-file; diff iterates the R53 export as source
   of truth; explicit checklist for SES DKIM, SPF, `_dmarc`, MX (forwardemail.net, both zones),
   google-site-verification, resend SPF (TME). "Search Console still verified" joins the battery.
   (Verified: no CAA records on either zone — nothing blocks cert issuance.)
@@ -702,158 +705,184 @@ changes into the amendments). When the OECUA migration completes, append a final
 and any new CMDIY plan changes required.
 
 #### 2026-08-21 — Vercel HSTS + http→https confirmed platform-wide on OECUA [validates C3] [transfers-to-cmdiy: yes]
+
 - Plan said: C3 — http→https 308 + `strict-transport-security: max-age=63072000` are Vercel platform behaviors set nowhere in the repo.
 - Observed: identical on all 4 OECUA hostnames (`curl -sI http://…` → 308 with Refresh header; every https response carries the same HSTS value). Captured in `OpenECUAlliance/docs/baselines/2026-08-21-vercel-baseline/hostname-headers.txt`.
 - Resolution: OECUA Phase 3 will enable Always Use HTTPS + zone HSTS max-age=63072000 and battery-assert both, exactly as C3 prescribes.
 - CMDIY impact: none — C3 stands as written.
 
 #### 2026-08-21 — Vercel apex→canonical-host redirect is 307, not 308/301 [new-gotcha] [transfers-to-cmdiy: partial]
+
 - Plan said: B2 — Vercel serves the TME map as 308s; Phase 3 mirrors "Vercel's current apex behavior" with a 301 Single Redirect.
 - Observed: OECUA's apex→www redirect (both domains) is **307 Temporary** (`https://openecualliance.org/` → 307 → www), while http→https is 308. Query strings and paths are preserved (validates C4's preserve_query_string requirement). So "Vercel emits 308" is true for vercel.json `permanent: true` redirects but NOT for the platform's implicit apex→primary-domain redirect.
 - Resolution: OECUA replaces the 307 with an intentional 301 at the CF zone edge (SEO improvement, made deliberate + battery-noted like B2's 308→301 note).
 - CMDIY impact: baseline-snapshot classicminidiy.com's apex→www status code before cutover — the plan's "mirror Vercel's current apex behavior" with a 301 may be a status-code change (307→301) worth recording in the battery expectations, same class as B2.
 
 #### 2026-08-21 — Secondary domain is a full duplicate-content mirror [new-gotcha] [transfers-to-cmdiy: partial]
+
 - Plan said: not covered (OECUA appendix didn't mention oecua.org).
 - Observed: `https://www.oecua.org/` serves the entire site as 200s — a duplicate-content mirror, not a redirect; `oecua.org` apex 307s to **www.oecua.org**, never to openecualliance.org. Every page on both hosts emits the same hardcoded canonical `https://openecualliance.org` (the known global-canonical bug — the only thing accidentally mitigating the duplicate-content issue).
 - Resolution: Cole decision queued: redirect oecua.org/* → primary at the CF zone edge (recommended) vs keep mirroring. The canonical fix (Phase 1) must land BEFORE or WITH any change that stops the mirror sharing canonicals.
 - CMDIY impact: audit ALL domains attached to each Vercel project for mirror-vs-redirect behavior during baseline — a domain attached without vercel.json host rules mirrors silently. (theminiexchange.com has explicit rules; verify nothing else is attached bare.)
 
 #### 2026-08-21 — SES inbound MX exists on openecualliance.org [validates C2] [transfers-to-cmdiy: yes]
+
 - Plan said: C2 — BIND-file import only; explicit checklist for MX/DKIM/SPF because quick-scan misses mail records.
 - Observed: `dig +short MX openecualliance.org` → `10 inbound-smtp.us-east-1.amazonaws.com` (SES inbound receiving). No TXT/SPF at either apex; oecua.org has no MX.
 - Resolution: OECUA Phase 3 zone import uses `aws route53 list-resource-record-sets` → BIND file, with MX preservation as a named gate.
 - CMDIY impact: none — C2 stands; OECUA now exercises it for real before CMDIY's higher-stakes zones.
 
 #### 2026-08-21 — Site serves at www while canonical/sitemap/site.url say apex [new-gotcha] [transfers-to-cmdiy: no]
+
 - Plan said: OECUA appendix — "fix its hardcoded global homepage canonical while in there."
-- Observed: the bug is worse than a wrong canonical: `site.url` = apex, sitemap lists apex URLs, canonicals point at the apex — but the apex 307s to www, so the declared primary host redirects to the real serving host with a *temporary* status. Google's view of the primary host is currently ambiguous.
+- Observed: the bug is worse than a wrong canonical: `site.url` = apex, sitemap lists apex URLs, canonicals point at the apex — but the apex 307s to www, so the declared primary host redirects to the real serving host with a _temporary_ status. Google's view of the primary host is currently ambiguous.
 - Resolution: Cole decision queued (primary host apex vs www) before Phase 1's canonical fix; the fix will align canonical + site.url + sitemap + the zone-edge redirect direction to one host.
 - CMDIY impact: none (classicminidiy.com's www-primary setup is consistent) — but the battery's canonical checks should assert host-consistency, not just non-emptiness.
 
 #### 2026-08-23 — Module-scope setInterval aborts worker BOOT, not just the request [new-gotcha] [transfers-to-cmdiy: yes]
+
 - Plan said: the module-scope inventory (ground truth + A-series) lists `useRuntimeConfig()` and `process.env` reads, but never module-scope TIMERS.
 - Observed: OECUA `server/middleware/02.security.ts:200` had a module-scope `setInterval` (hourly map cleanup) behind a `typeof setInterval !== 'undefined'` guard. On workerd the guard PASSES but the call throws `Disallowed operation called within global scope` — and the entire worker fails to start (`wrangler dev` exits; every route dead), it does not degrade per-request.
 - Resolution: replaced with a lazy once-per-hour sweep inside the request path (OECUA commit 70d33ad); platform-neutral, ships via Vercel first.
 - CMDIY impact: add to Phase 0 spike checks + CI grep: `grep -rn "setInterval\|setTimeout" server/` for module scope — cmdiy's `rate-limit.ts`, `bot-analytics.ts`, and any cache-eviction util are the suspects. A single surviving module-scope timer = total outage on deploy, the worst failure class found so far.
 
 #### 2026-08-23 — Workers Static Assets html_handling diverges from Vercel URL shapes [new-gotcha] [transfers-to-cmdiy: yes]
+
 - Plan said: B1 covers assets shadowing redirects; nothing covers trailing-slash handling of prerendered `page/index.html` files.
 - Observed: with the default `html_handling: auto-trailing-slash`, `/spec` → **307 → `/spec/`** on workerd, while Vercel serves `/spec` directly as 200 (and Vercel's `/spec/` 302s to `/login` — a pre-existing bug, see next entry). Every prerendered route gains a redirect hop on its canonical no-slash URL.
 - Resolution: OECUA sets `assets.html_handling: "drop-trailing-slash"` in wrangler.jsonc → `/spec` 200, `/spec/` redirects back. Battery asserts both slash forms per prerendered route.
 - CMDIY impact: cmdiy's wrangler.jsonc (Phase 2.1) needs an explicit `html_handling` decision + baseline capture of Vercel's slash behavior for its prerendered pages; add both slash forms of every prerendered route to the battery (same spirit as B1's "both slash forms" for TME).
 
 #### 2026-08-23 — Vercel slash-variants of prerendered pages 302 to /login today [new-gotcha] [transfers-to-cmdiy: partial]
+
 - Plan said: not covered.
 - Observed: on Vercel prod, `/spec/` (trailing slash) misses the prerendered asset, falls through to SSR, fails @nuxtjs/supabase's EXACT-match exclude list, and 302s to `/login`. Same for unknown URLs (no real 404 — parity on both platforms, so not a migration regression, but a soft-404 SEO issue).
 - Resolution: OECUA's drop-trailing-slash config fixes the slash-variant case at the asset layer; the auth-redirect-as-404 behavior is logged but out of migration scope.
 - CMDIY impact: partial — cmdiy doesn't use @nuxtjs/supabase's redirect middleware, but the battery's "unknown URL → real 404" check (Phase 4.3) is validated as load-bearing; also check cmdiy prerendered-page slash variants against whatever its SSR fallback does.
 
 #### 2026-08-23 — NUXT_-prefixed worker vars override build-baked runtimeConfig at runtime [validates Phase 2.7] [transfers-to-cmdiy: yes]
+
 - Plan said: Phase 2.7 — runtimeConfig keys need `NUXT_`-prefixed names as wrangler vars/secrets; "verify each empirically on preview."
 - Observed: OECUA bakes rateLimit config from `process.env` at build (baked value 30/min). `wrangler dev --var NUXT_RATE_LIMIT_LIST_PER_MINUTE:99` → `x-ratelimit-limit-minute: 99` at runtime. Nitro's env-override layer works on workerd exactly as the plan assumed (nested camelCase key ← SCREAMING_SNAKE env).
 - Resolution: OECUA Phase 2 sets secrets/tunables as `NUXT_*` worker vars; build-time baking remains only the fallback default.
 - CMDIY impact: none — Phase 2.7 stands, now empirically proven on workerd.
 
 #### 2026-08-23 — wrangler 4.x auto-loads .env into local dev bindings [validates E4, simpler than planned] [transfers-to-cmdiy: yes]
+
 - Plan said: E4 — add a `bun run build:cf && wrangler dev` recipe + gitignored `.dev.vars` template.
 - Observed: wrangler 4.125.0 prints `Using secrets defined in .env` and exposes the repo's existing `.env` values as local bindings automatically — no `.dev.vars` duplication needed.
 - Resolution: OECUA's E4 recipe is just `NITRO_PRESET=cloudflare_module bun run build && bunx wrangler dev` (wrangler.jsonc carries main/assets config).
 - CMDIY impact: E4's `.dev.vars` template step can be dropped if cmdiy's `.env` already holds the right names; verify the same auto-load on its wrangler version.
 
 #### 2026-08-23 — serverAssets/useStorage('assets') fully works on workerd; shiki never runs there [validates OECUA appendix, corrects one item] [transfers-to-cmdiy: partial]
+
 - Plan said: OECUA appendix — "verify `useStorage('assets')` specs reads + shiki on workerd."
 - Observed: all three call shapes green on workerd (`getKeys` list, `getItem` YAML parse incl. `?version=`, `getItemRaw` binary PNG + YAML download with correct content-disposition) — specs are inlined as JS modules under `chunks/raw/`. Shiki: every `CodeBlock.vue` use sits on a prerendered route, so shiki executes at build time and client-side only; highlighted markup verified intact in prerendered assets served by workerd. Bundle: 3.54 MB gzip (16 MB raw incl. the 1.6 MB specs) — over the 3 MiB free-plan cap (deploy rejected, code 10027), fine for paid.
 - Resolution: spike core checks passed; Workers Paid activation queued to Cole.
 - CMDIY impact: none directly (cmdiy doesn't use serverAssets at this scale) — but "free plan won't fit a real Nuxt SSR bundle" is now measured: budget Workers Paid for any Nuxt property.
 
 #### 2026-08-23 — Preview auth dies at the APP layer before allowlists even matter [new-gotcha] [transfers-to-cmdiy: yes]
+
 - Plan said: Phase 2.8/D4 treat Supabase allowlists as the thing standing between previews and working auth.
 - Observed: OECUA's `useAuth.ts` built `emailRedirectTo` from `siteConfig.url` (build-baked production URL) — every magic link requested from workers.dev pointed back to production. This bug predates the migration: Vercel preview logins have been silently bouncing to prod all along. Only after fixing the app (current-origin redirect, OECUA commit fb3d74c) did the allowlist question become testable at all.
 - Resolution: platform-neutral fix committed; allowlist test now pending the correct project's config.
 - CMDIY impact: before trusting D2/D4's allowlist work, grep cmdiy's auth flows for `site.url`/hardcoded-origin redirect construction — an app-level pin makes the allowlist step appear broken (or silently masks it).
 
 #### 2026-08-23 — GoTrue's allowlist rejection is a SILENT fallback with a readable signature [new-gotcha] [transfers-to-cmdiy: yes]
+
 - Plan said: D-series — "verify each empirically"; nothing describes what allowlist failure looks like.
 - Observed: when `redirect_to` is not allowlisted, GoTrue returns success, sends the email, and swaps the redirect for bare `SITE_URL` — the failure signature in the delivered link is `redirect_to=<SITE_URL>` with the requested `/auth/callback` path STRIPPED. No error surfaces anywhere client-side.
 - Resolution: OECUA battery gains a magic-link email inspection step (request from target origin → assert `redirect_to` echoes that origin + path).
 - CMDIY impact: Phase 2.8 verification should use this exact probe; a "login works" smoke test can pass via the SITE_URL fallback chain while previews are actually broken.
 
 #### 2026-08-23 — OECUA auth is its OWN Supabase project, not the shared CMDIY instance [contradicts ecosystem docs] [transfers-to-cmdiy: no]
+
 - Plan said: not covered (Development/CLAUDE.md implies all properties share `auth.classicminidiy.com`).
 - Observed: OECUA's SUPABASE_URL is `ljigjawvlwvciqvegptp.supabase.co` — its own project, email-magic-link only (every OAuth provider disabled). The allowlist edit Cole made on the shared ClassicMiniDIY project therefore had no effect here.
 - Resolution: allowlist entry redirected to the correct project; OECUA docs updated at Phase 5.
 - CMDIY impact: none for the migration itself — but the ecosystem CLAUDE.md's shared-auth claim needs a footnote that OECUA is outside it.
 
 #### 2026-08-23 — Phase 0 spike COMPLETE: all gates passed [validates Phase 0 design] [transfers-to-cmdiy: yes]
+
 - Plan said: Phase 0 go/no-go on workers.dev with no prod risk.
 - Observed: full pass on the deployed worker — serverAssets (all 3 useStorage shapes), rate-limit middleware, sitemap parity, prerendered pages incl. shiki markup, SSR pages, NUXT_ env overrides, and the full Supabase magic-link PKCE flow: email link carried the workers.dev redirect after the allowlist entry landed, callback exchanged the code, and a fresh SSR document request to /profile served the authenticated page (cookie SSR auth works on workerd). Two platform-neutral fixes were required to get here (module-scope setInterval, app-pinned auth redirect) — both committed and headed to main via Vercel first, exactly the Phase 1 soak pattern the plan prescribes.
 - Resolution: OECUA proceeds to Phase 1.
 - CMDIY impact: the spike-first sequencing is validated — both blockers found here would have been cutover-day outages if discovered on live DNS.
 
 #### 2026-08-23 — Cole decisions: OECUA primary domain becomes oecua.org; CMDIY NS change stays viable [new-gotcha for OECUA scope; validates cutover mechanics for CMDIY] [transfers-to-cmdiy: partial]
+
 - Plan said: OECUA appendix assumed openecualliance.org stays primary; CMDIY Phase 4 depends on an NS change at Amazon Registrar.
 - Observed: Cole chose oecua.org (apex) as the go-forward primary — a full domain change with openecualliance.org 301-ing into it (accepted: site has minimal traffic and auth has been effectively broken for months, so re-index risk is negligible). Separately, Cole clarified his Cloudflare constraint for CMDIY is NO REGISTRAR TRANSFER only — the NS change the plan requires is acceptable.
 - Resolution: OECUA Phases 1-4 target oecua.org as canonical host (site.url, canonicals, sitemap, zone redirects: all *.openecualliance.org + www.oecua.org → oecua.org). Registration stays at Amazon Registrar for all domains.
 - CMDIY impact: none to the mechanics — but record the constraint: Cloudflare Registrar consolidation is permanently out of scope for classicminidiy.com.
 
 #### 2026-08-23 — Apex-level dig sweeps miss most mail records; C2 is stronger than written [validates C2, strengthened] [transfers-to-cmdiy: yes]
+
 - Plan said: C2 — use a BIND export, never CF's quick-scan, because the scan misses SES DKIM CNAMEs, `_dmarc`, verification TXTs.
 - Observed: OECUA's Phase-0 baseline used `dig MX/TXT` **at the apex only** and concluded "no TXT records, no SPF — nothing sends mail from these domains." The Route 53 console listing proved that wrong: 5 of 9 records are mail, and 4 sit on subdomains an apex sweep never touches — `_dmarc` TXT, `resend._domainkey` TXT (DKIM), `send.` MX (`feedback-smtp.us-east-1.amazonses.com`), `send.` TXT (SPF `include:amazonses.com`). The site's magic-link email sends from `no-reply@openecualliance.org` through Resend, so losing any of them breaks login delivery, not just marketing mail.
 - Resolution: full inventory committed to `OpenECUAlliance/docs/plans/dns-record-inventory.md`; `scripts/verify-cf-deploy.sh` asserts all five mail records resolve from the CF nameservers as a cutover gate.
 - CMDIY impact: **C2 should be widened — an authoritative record dump (BIND export or console listing) is mandatory, and dig-based verification is NOT an acceptable substitute for discovery.** cmdiy has more mail surface (SES DKIM ×3, forwardemail.net MX, resend SPF on TME) and a recent bounce-rate scare; a dig sweep that "finds nothing" there would be a false all-clear.
 
 #### 2026-08-23 — Account API tokens need account-level Zone:Edit to CREATE zones [new-gotcha] [transfers-to-cmdiy: yes]
+
 - Plan said: Phase 3.1 "Create the CF zones" with a Cole-provisioned API token; token scoping listed Workers/DNS/SSL/Rules.
 - Observed: a token with Zone:Read + DNS:Edit + Workers can list zones and edit records but `POST /zones` fails with `Requires permission "com.cloudflare.api.account.zone.create"`. Zone creation is an ACCOUNT-scope permission distinct from every zone-scope permission, and it is easy to omit because the token UI groups "Zone" under both scopes.
 - Resolution: Cole adds Account → Zone → Edit to the existing token (zones cannot be created until then).
 - CMDIY impact: put account-level **Zone:Edit** explicitly in the Phase 3 token checklist, and validate the token with a `POST /zones` dry attempt BEFORE cutover week — discovering it during the DNS window costs a dashboard round-trip at the worst time.
 
 #### 2026-08-23 — Verification battery is portable and worth writing at Phase 2, not Phase 4 [contradicts phase ordering] [transfers-to-cmdiy: yes]
+
 - Plan said: the battery lives in-repo as `scripts/verify-cf-deploy.sh` and runs at Phase 4 against prod.
 - Observed: writing it at Phase 2 with an origin argument (defaulting to prod, accepting a workers.dev origin) made it immediately useful — it caught a stale worker deployment and two of its own assertion bugs while still on preview, and it now gates every deploy via the GH Actions smoke step. Zone-dependent checks (redirects, HSTS, mail records) sit behind an origin guard and arm automatically at cutover.
 - Resolution: OECUA's battery passes 24/24 against the preview worker today; the same script becomes the cutover gate unchanged.
 - CMDIY impact: move battery authoring into Phase 2 and parameterize by origin. A battery first exercised on cutover day is a battery whose own bugs surface at the worst moment — both of OECUA's assertion bugs would have read as production failures.
 
 #### 2026-08-24 — "GH Actions' 16 GB ends the OOM class" is FALSE without NODE_OPTIONS [contradicts plan] [transfers-to-cmdiy: yes]
+
 - Plan said: pros list — "build moves to GH Actions (16 GB, ends the 8 GB build-container OOM class permanently)."
 - Observed: OECUA's very first post-merge deploy died at the Nitro bundling step with `FATAL ERROR: Ineffective mark-compacts near heap limit`, capping around 2 GB (`Mark-Compact 2035.7 (2092.0) -> 2034.8 MB`). Node caps its own old-space near 2 GB regardless of host RAM, so the runner's 16 GB is unreachable without raising it. The same build succeeds locally on macOS, where Node's default heap is larger — so this failure appears ONLY in CI, after merge.
 - Resolution: `NODE_OPTIONS=--max-old-space-size=6144` in the workflow's build step env (OECUA branch `fix/ci-build-heap-limit`).
 - CMDIY impact: **correct the pros claim** — GH Actions removes the container-size ceiling but not the V8 heap ceiling. cmdiy already carries `--max-old-space-size=6144` in its vercel.json build command; Phase 2.6 must carry it into `deploy.yml`'s build step or the first post-cutover deploy fails the same way. cmdiy's bundle is far larger than OECUA's, so treat this as a certainty, not a risk.
 
 #### 2026-08-24 — Account-owned tokens appear unable to grant zone-create [new-gotcha, unresolved] [transfers-to-cmdiy: yes]
+
 - Plan said: Phase 3.1 assumes an API token can create the zones.
 - Observed: the account-owned token's new categorized permission UI has a "DNS & Zones" category containing only Account DNS Settings, DNS Firewall, DNS View, Registrar Domains, Registrar Sandbox Domains — **no "Zone" permission**, which is what grants `com.cloudflare.api.account.zone.create`. `POST /zones` keeps failing with that exact permission error. The permission-group catalog endpoints (`/user/tokens/permission_groups`, `/accounts/{id}/tokens/permission_groups`) are both unreadable by an account-owned token, so the catalog cannot be introspected to confirm.
 - Resolution: creating the two zones through the dashboard instead; the token then only needs a zone-scoped policy for DNS/SSL/Settings/Redirects.
 - CMDIY impact: do NOT plan on API-driven zone creation. Either create zones in the dashboard as a Cole step, or use a user-owned token for that one call. Also note account-owned tokens need an explicitly zone-scoped policy — an account-scoped policy alone leaves DNS/SSL/Zone-Settings reads denied even on existing zones (verified against the pre-existing deathlyhallows.co zone).
 
 #### 2026-08-24 — C1's cert pre-provisioning mitigation does NOT apply to full-setup zones [contradicts C1 — HIGH for cmdiy] [transfers-to-cmdiy: yes]
+
 - Plan said: C1 — "while zones are pending, add Cloudflare's DCV TXT/CNAME records into Route 53 so certs are Active BEFORE the NS change; make 'cert status Active' a hard gate."
 - Observed: the documented DCV pre-validation flow is scoped to **partial (CNAME) setups**. Cloudflare's Universal SSL page states a full-setup zone "automatically receive[s] its Universal SSL certificate within 15 minutes to 24 hours of domain activation" — i.e. AFTER the NS change, not before. Delegated DCV is explicitly unavailable for pending zones ("works as long as the zone is active on Cloudflare"), so the `_acme-challenge` CNAME trick cannot pre-validate a pending full zone either. Both OECUA zones were created as `type: full`.
 - Resolution (OECUA): accepted, because the site has negligible traffic — the plan is to flip NS, then watch cert status and hold the battery until certificates report Active. Documented as a known window rather than an engineered-away risk.
 - CMDIY impact: **this is the highest-value finding so far and it needs a decision before cmdiy's cutover, because classicminidiy.com cannot absorb a TLS gap.** Options, in order of preference: (1) create the cmdiy zones as **partial/CNAME setups** first, pre-validate via DCV records in Route 53, confirm certs Active, then convert to full and flip NS; (2) **upload a custom certificate** to Cloudflare before the flip (Cloudflare's own documented "minimize downtime" path — needs a real cert for classicminidiy.com + www + TME hostnames); (3) accept a 15-min-to-24-h risk window on a high-traffic production domain — not acceptable. C1's hard gate ("cert Active before NS change") is still the right gate; only its stated mechanism is wrong for full zones.
 
 #### 2026-08-24 — Cloudflare's auto-scan imported all 7 records correctly, but only the inventory could prove it [partially contradicts C2] [transfers-to-cmdiy: partial]
+
 - Plan said: C2 — CF's scan "guesses names and will miss SES DKIM CNAMEs, `_dmarc`, verification TXTs"; use a BIND import instead.
 - Observed: for OECUA the dashboard "Add a site" scan imported **all 7 importable records correctly** — apex A, www CNAME, both MX with priority 10, `_dmarc` TXT, `send.` SPF TXT, and the 218-character `resend._domainkey` DKIM TXT **byte-for-byte identical**, all correctly dns-only (unproxied). Verified programmatically against the committed inventory.
 - Resolution: no repairs needed; the inventory did its job as the verification oracle rather than as an import source.
 - CMDIY impact: soften C2's claim from "the scan WILL miss records" to "the scan CANNOT BE TRUSTED to be complete — you need an independent record list to verify against." The authoritative dump is still mandatory, but its role is verification, and a scan-then-verify flow is acceptable and less work than a BIND import. Note OECUA's zone had no CNAME-type DKIM (Resend uses a TXT here); cmdiy's SES DKIM **CNAMEs** are the case C2 was actually written about and remain untested.
 
 #### 2026-08-24 — Grey-cloud cutover eliminates the C1 cert gap entirely; supersedes the partial-zone workaround [supersedes the previous C1 entry] [transfers-to-cmdiy: yes — RECOMMENDED]
+
 - Plan said: C1 — pre-provision certs before the NS flip; C5 — attaching a Worker custom domain replaces the DNS record and IS the cutover step.
 - Observed: a full-setup zone cannot pre-validate (previous entry), but the gap is avoidable without partial zones or custom certs. Cloudflare imported the apex/www records **proxied**; flipping NS in that state would send traffic to Cloudflare before a cert exists → TLS failure. Setting those same records **DNS-only (grey cloud)** makes Cloudflare answer DNS while traffic continues straight to Vercel on Vercel's own TLS — so the NS flip becomes a pure DNS-authority change with **zero user-visible effect**, and the cert issues in the background on the now-active zone.
 - Resolution (OECUA): all four web records (apex + www × both zones) set DNS-only before the flip; mail records untouched. Cutover becomes two independent, individually reversible steps: (1) NS flip — invisible, still Vercel-served; (2) after the cert reports Active, attach the Worker custom domain / proxy the redirect hostnames — the actual traffic switch. Rollback from step 2 is a single record edit back to DNS-only Vercel, no NS involvement.
 - CMDIY impact: **adopt this as the default cutover sequence — it is strictly better than all three options in the previous entry** and needs neither a partial-zone dance nor a purchased certificate. It also decouples "DNS moved" from "traffic moved," which shrinks C6's scary ~48 h dual-serve window into a period where every resolver, old or new, still reaches the same Vercel origin. Caveat to carry over: Single Redirects only fire on proxied hostnames (C4), so redirect rules stay dormant until step 2 — during step 1 the legacy hosts keep their existing Vercel behavior, which is the correct no-regression default.
 
 #### 2026-08-24 — .org registry delegation TTL is 3600, not ~2 days; and whois updates instantly [contradicts C6] [transfers-to-cmdiy: partial]
+
 - Plan said: C6 — "Registry NS TTL is ~2 days; lowering R53 record TTLs only helps the intra-zone rollback path, not the NS flip," implying a ~48 h dual-serve window.
 - Observed: minutes after the registrar change, `whois` already returned the Cloudflare nameservers for both domains, while the .org TLD servers still served the AWS delegation with **TTL 3600 (1 hour)**, not 172800. So the propagation ceiling here is registry-push latency plus one hour, not two days. Also note the two views disagree during the window — whois reflects the registrar's record, TLD DNS reflects what resolvers actually follow; **whois showing the new NS is NOT evidence of propagation**, and only the TLD/registry DNS answer is.
 - Resolution: OECUA monitors zone activation via the CF API rather than estimating from TTL.
 - CMDIY impact: verify the actual delegation TTL for classicminidiy.com/theminiexchange.com with `dig +norecurse NS <domain> @<tld-ns>` before cutover rather than assuming 48 h — .com may differ from .org, but the "~2 days" figure should be measured, not assumed. Keep C6's "don't chase transient symptoms" advice; just size the window from evidence. (With the grey-cloud sequence above, the window is harmless regardless of length.)
 
 #### 2026-08-24 — CUTOVER COMPLETE; and a verification-methodology warning [validates the amended plan] [transfers-to-cmdiy: yes]
+
 - Plan said: Phase 4 — flip, verify with the scripted battery, soak.
-- Observed: oecua.org went live on Workers with **zero downtime**. Sequence that worked: grey-cloud NS flip (invisible) → confirm cert valid → Worker **route** + proxy the redirect hostnames (the actual switch). Battery 36/37; the single failure was a stale *local* resolver cache, disproved with `curl --resolve` against the edge IP and by 1.1.1.1/8.8.8.8 both already returning Cloudflare. Mail proven intact by Google's own `Authentication-Results` (`dkim=pass s=resend`, `spf=pass`, `dmarc=pass`) on a message delivered AFTER the flip.
+- Observed: oecua.org went live on Workers with **zero downtime**. Sequence that worked: grey-cloud NS flip (invisible) → confirm cert valid → Worker **route** + proxy the redirect hostnames (the actual switch). Battery 36/37; the single failure was a stale _local_ resolver cache, disproved with `curl --resolve` against the edge IP and by 1.1.1.1/8.8.8.8 both already returning Cloudflare. Mail proven intact by Google's own `Authentication-Results` (`dkim=pass s=resend`, `spf=pass`, `dmarc=pass`) on a message delivered AFTER the flip.
 - Two methodology lessons, both of which produced false failure reports before being caught: (1) **the operator's own resolver cache is not ground truth** — always confirm a "broken" hostname with `curl --resolve <host>:443:<edge-ip>` and a public resolver before believing it; (2) **mailbox search is not a delivery oracle** — the Gmail index lagged so far behind reality that it never surfaced magic-link emails the user had already received and deleted, even minutes later and including trash. Verifying auth delivery by searching an inbox produced a confident, wrong "emails are not being delivered" conclusion.
 - Resolution: both false alarms corrected in the OECUA repo; the battery now documents the `--resolve` technique.
 - CMDIY impact: bake both into the cmdiy cutover runbook. On a high-traffic domain a false "it's broken" reading is worse than a missed check — it invites an unnecessary rollback mid-cutover. Every negative battery result must be confirmed against the edge before it is treated as real.
@@ -863,10 +892,11 @@ and any new CMDIY plan changes required.
 ### CMDIY implementation log (appended by the cmdiy migration session)
 
 #### 2026-08-23 — Token verified; A-series recon done before the spike [validates A1 scope-down, confirms A3] [source: this branch]
+
 - **Token:** `cmdiy-cf-migration` verified by `scripts/verify-cf-token.py`. Five zones reachable,
   OECUA's three zones denied, all five required zone permissions plus Workers Scripts/KV present.
   **Gotcha for the next person:** `GET /zones` returns zones covered by the ACCOUNT-scope policy
-  too, so a token correctly limited to five zones can still *list* eight. Listing is not access —
+  too, so a token correctly limited to five zones can still _list_ eight. Listing is not access —
   probe `dns_records` per zone to tell them apart. Bulk Redirect Lists is NOT granted; add it only
   if B1's 19 exact sources ship as a Bulk Redirects list.
 - **Module-scope timers: CLEAR.** Five `setTimeout` calls in `server/`, all inside request
@@ -892,6 +922,7 @@ and any new CMDIY plan changes required.
   battery explicitly.
 
 #### 2026-08-24 — MCP Server Portals evaluated and REJECTED; we are already on the first-party path [decision] [source: this branch]
+
 - Question raised: should `/mcp` move to Cloudflare's first-party "MCP Server Portals" / MCP
   server features?
 - **Portals: no.** They are a **Cloudflare One / Zero Trust** feature — a centralized gateway
@@ -901,7 +932,7 @@ and any new CMDIY plan changes required.
   document **no anonymous or API-key public access**. cmdiy's `/mcp` is a PUBLIC product surface
   for enthusiasts' AI clients, gated by `MCP_API_KEY`; a Portal would force every user into our
   Zero Trust org and break the feature. Portals would only ever be relevant to governing which
-  MCP servers *we* connect our own tooling to — a workstation-security question, not a platform one.
+  MCP servers _we_ connect our own tooling to — a workstation-security question, not a platform one.
 - **First-party hosting: already adopted.** Cloudflare's current recommendation for remote MCP
   servers is `createMcpHandler` on **standard Workers**, now graduated into the official MCP
   TypeScript SDK. That is precisely what `@nuxtjs/mcp-toolkit` invokes via
@@ -922,6 +953,7 @@ and any new CMDIY plan changes required.
   unless the Cloudflare-preset bundle size forces the split. Do not split preemptively.
 
 #### 2026-08-24 — Phase 0 static gates PASS; three plan errors found in the build command alone [contradicts Phase 0 text] [source: this branch]
+
 - **The documented build command does not work, in two independent ways.**
   1. `NITRO_PRESET=cloudflare_module` on nitropack **2.13.4** silently selects the **LEGACY**
      Workers Sites runtime and dies with
@@ -966,6 +998,7 @@ and any new CMDIY plan changes required.
   zone rule and in-app limiter coverage in the same change.
 
 #### 2026-08-24 — Phase 0 RUNTIME gates: A3 resolved, A1 confirmed, one site-wide URL bug caught [source: this branch]
+
 Spike worker: `cmdiy-spike.classicminidiy.workers.dev`, startup 147 ms. Secrets pushed with
 `wrangler secret put` (encrypted at rest, runtime-only bindings). Deliberately NOT on the spike:
 `SUPABASE_SERVICE_KEY`, real S3 keys, `MARKETING_UNSUB_SECRET`, `GITLAB` — no gate needs them and
@@ -1002,6 +1035,7 @@ they carry the real blast radius.
   checks.
 
 #### 2026-08-24 — A1 ROOT CAUSE: `new S3Client()` itself fails; A1's scope AND mechanism are both wrong [contradicts A1 — raises severity] [source: this branch]
+
 Isolating each SDK step on an UNMINIFIED worker build gave the real failure:
 
 ```
@@ -1042,6 +1076,7 @@ halves of the SDK to different builds.
   `docs/runbooks/2026-06-12-model-library-launch-checklist.md` covers. **This is a Cole decision.**
 
 Also settled this round:
+
 - **GATE 6 PASS — KV works.** `useStorage('cache')` write/read round-trips against a real KV
   namespace bound as `CACHE`, mounted via `nitro.storage` gated on `isCloudflareBuild`.
 - **GATE 3 (partial) — SSE transport works.** `/mcp` streams `event: message` frames correctly.
@@ -1051,16 +1086,17 @@ Also settled this round:
   live Supabase rows using only worker-provided secrets).
 
 #### 2026-08-24 — A1 RESOLVED. aws4fetch works on workerd; all four S3 operations pass [closes A1] [source: this branch]
+
 Amendment A1 is now closed. `server/utils/s3Models.ts` no longer imports the AWS SDK at all.
 
 **Verified against the real S3 bucket BEFORE writing any code** — the open question was whether
 signing `content-length` reproduces the POST policy's `['content-length-range', 1, max]`:
 
-| probe | result |
-|---|---|
-| unsigned length, 1 KiB body | 200 |
+| probe                          | result                          |
+| ------------------------------ | ------------------------------- |
+| unsigned length, 1 KiB body    | 200                             |
 | **signed len=1024, sent 4096** | **403 `SignatureDoesNotMatch`** |
-| signed len=1024, sent 1024 | 200 |
+| signed len=1024, sent 1024     | 200                             |
 
 It does. So the upload moved from presigned POST to **presigned PUT**, which removes bespoke
 crypto from the design entirely — the earlier "hand-roll the POST policy" plan is withdrawn.
@@ -1097,15 +1133,17 @@ getModelObjectHead (sign + fetch)  PASS  reachedS3=true
   them. **The app now has no AWS SDK dependency at all.**
 
 #### 2026-08-24 — B1 implemented; the meta-refresh count was 7 for routeRules but 9 in total [refines B1] [source: this branch]
+
 - **The shadowing is real and was measured on a live deployment**, not inferred:
 
-  | | `/archive/manuals` |
-  |---|---|
-  | Cloudflare worker (before the fix) | **200 + meta-refresh HTML** |
-  | Vercel production | **301** -> `/archive/documents?type=manual` |
+  |                                    | `/archive/manuals`                          |
+  | ---------------------------------- | ------------------------------------------- |
+  | Cloudflare worker (before the fix) | **200 + meta-refresh HTML**                 |
+  | Vercel production                  | **301** -> `/archive/documents?type=manual` |
 
   The static asset layer wins on Workers, so the routeRules 301 never runs and the redirect silently
   degrades to a soft one.
+
 - **B1 said 7 meta-refresh artifacts; there are 9.** The 7 from `routeRules` are exactly as B1
   listed (needles, gearbox, manuals, adverts, catalogues, tuning, submissions). The two B1 missed
   come from **`definePageMeta({ redirect })`** rather than routeRules: `/dashboard` and
@@ -1130,23 +1168,25 @@ getModelObjectHead (sign + fetch)  PASS  reachedS3=true
   middleware is the Cloudflare-side implementation and the version-controlled spec the Phase 3
   zone-edge rules will be generated from.
 - **LIMITATION — the TME middleware cannot be tested end-to-end yet.** `curl -H 'Host:
-  theminiexchange.com'` against workers.dev returns **403**: Cloudflare's routing rejects a
+theminiexchange.com'` against workers.dev returns **403**: Cloudflare's routing rejects a
   mismatched Host before the request reaches the worker. Only the unit tests cover it until the
   zone is live and routed, and `verify-cf-deploy.sh` correctly keeps the TME assertion behind its
   zone guard rather than pretending otherwise.
 
 #### 2026-08-25 — Image provider implemented with D1's preview split; verified by build diff [implements D1] [source: this branch]
+
 - **D1's split gating works and was verified by building both ways**, not by reasoning:
 
-  | build | same-origin `/cdn-cgi/image/` in prerendered HTML |
-  |---|---|
-  | `NUXT_SITE_ENV=preview` | **0** — raw remote URLs, unoptimized but RENDERING |
+  | build                      | same-origin `/cdn-cgi/image/` in prerendered HTML      |
+  | -------------------------- | ------------------------------------------------------ |
+  | `NUXT_SITE_ENV=preview`    | **0** — raw remote URLs, unoptimized but RENDERING     |
   | `NUXT_SITE_ENV=production` | **323**, with modifiers (`w=`, `h=`, `f=webp`, `q=80`) |
 
   Preview must not use the cloudflare provider: `/cdn-cgi/image/` exists only on a zone, and the
   provider emits host-relative URLs with no fallback, so a workers.dev preview would render broken
   images on every archive / wheel / listing / model page. The same `NUXT_SITE_ENV` that drives the
   noindex drives this, so the two cannot disagree.
+
 - **GOTCHA when checking this — `/cdn-cgi/image/` in the HTML does NOT mean our provider ran.**
   The preview build contains two files with that string, from
   `media.carsandbids.com/cdn-cgi/image/...`: third-party `og_image_url` values scraped by the
@@ -1173,17 +1213,18 @@ getModelObjectHead (sign + fetch)  PASS  reachedS3=true
   entirely off. Both sit behind the existing zone guard and arm at cutover.
 
 #### 2026-08-25 — Phase 3a rehearsal COMPLETE on wheeldictionary.com; four findings for the real zones [source: this branch]
+
 The rehearsal did its job: it was zero-downtime, and it exposed problems that would have been
 expensive on `classicminidiy.com`.
 
 **Outcome:** `wheeldictionary.com` is live on Cloudflare, proxied, with a zone-edge redirect. Chain
 went from **3 hops to 1**:
 
-| | before (Vercel) | after (Cloudflare) |
-|---|---|---|
-| `http://wheeldictionary.com/` | 308 -> 308 -> 301 | **301 direct** |
-| destination | `/technical/wheels` (which itself 301s) | `/archive/wheels` |
-| hops to a 200 | 3 | **1** |
+|                               | before (Vercel)                         | after (Cloudflare) |
+| ----------------------------- | --------------------------------------- | ------------------ |
+| `http://wheeldictionary.com/` | 308 -> 308 -> 301                       | **301 direct**     |
+| destination                   | `/technical/wheels` (which itself 301s) | `/archive/wheels`  |
+| hops to a 200                 | 3                                       | **1**              |
 
 - **FINDING 1 (HIGH, applies to every zone) — Cloudflare's auto-import proxies EVERY web record.**
   All five zones came in with 100% of A/AAAA/CNAME records **orange**. The plan's "set every web
@@ -1224,13 +1265,14 @@ was always the primary defence, and BotID was already removed from checkout for 
 real buyers). Turnstile on `seller/onboard` remains the escalation if abuse appears.
 
 #### 2026-08-25 — C2 CONFIRMED THE HARD WAY: the auto-import silently dropped two live subdomains [strengthens C2 — HIGH] [source: this branch]
+
 Cloudflare's scan imported 15 records for `classicminidiy.com`. All 15 matched Route 53 exactly —
 **and the scan had missed two records entirely**:
 
-| record | target | state |
-|---|---|---|
-| `news.classicminidiy.com` | `classic-mini-diy.ghost.io` | **LIVE, returns 200** — the Ghost newsletter |
-| `forum.classicminidiy.com` | `classicminidiy.hosted-by-discourse.com` | present in Route 53 |
+| record                     | target                                   | state                                        |
+| -------------------------- | ---------------------------------------- | -------------------------------------------- |
+| `news.classicminidiy.com`  | `classic-mini-diy.ghost.io`              | **LIVE, returns 200** — the Ghost newsletter |
+| `forum.classicminidiy.com` | `classicminidiy.hosted-by-discourse.com` | present in Route 53                          |
 
 Flipping NS without these would have **NXDOMAIN'd the newsletter site**. Both are now added as
 DNS-only (Ghost Pro and Discourse terminate TLS for their own custom domains — proxying would put
@@ -1257,13 +1299,14 @@ Cloudflare in front of a cert they manage). Post-fix: 17/17 records match Route 
   change was made correctly; `.org` delegation TTL is 3600.
 
 #### 2026-08-25 — Phase 3a COMPLETE: all three redirect domains live on Cloudflare [source: this branch]
+
 `wheeldictionary.com`, `classicminidiy.net` and `classicminidiy.org` are all served from the
 Cloudflare edge with zone-level Single Redirects. Vercel is out of the path for all three.
 
-| domain | before | after |
-|---|---|---|
-| `classicminidiy.net` | 3 hops -> `www.classicminidiy.com` | **1 hop, 301** |
-| `classicminidiy.org` | 3 hops -> `www.classicminidiy.com` | **1 hop, 301** |
+| domain                | before                              | after                               |
+| --------------------- | ----------------------------------- | ----------------------------------- |
+| `classicminidiy.net`  | 3 hops -> `www.classicminidiy.com`  | **1 hop, 301**                      |
+| `classicminidiy.org`  | 3 hops -> `www.classicminidiy.com`  | **1 hop, 301**                      |
 | `wheeldictionary.com` | 3 hops -> stale `/technical/wheels` | **1 hop, 301** -> `/archive/wheels` |
 
 Verified for every domain across both hosts, http and https, and with a deep path + query (all
@@ -1285,13 +1328,14 @@ the scan demonstrably dropped `news.` and `forum.` on classicminidiy.com, and on
 can prove there is nothing else.
 
 #### 2026-08-25 — The authoritative dump found 26 MISSING records. C2 was right; my dictionary sweep was 8% effective [C2 CONFIRMED — the most important finding of the migration] [source: this branch]
+
 With `route53:ListResourceRecordSets` access, the real enumeration ran. Cloudflare's auto-import
 had **15 of 37** record sets for `classicminidiy.com`.
 
-| zone | in Route 53 | Cloudflare had | **missing** |
-|---|---|---|---|
-| `classicminidiy.com` | 35 (excl SOA/apex-NS) | 13 | **22** |
-| `theminiexchange.com` | 14 | 10 | **4** |
+| zone                  | in Route 53           | Cloudflare had | **missing** |
+| --------------------- | --------------------- | -------------- | ----------- |
+| `classicminidiy.com`  | 35 (excl SOA/apex-NS) | 13             | **22**      |
+| `theminiexchange.com` | 14                    | 10             | **4**       |
 
 **What was missing included the entire mail-authentication layer:**
 
@@ -1321,6 +1365,7 @@ A perfect diff score means nothing about completeness. **Never flip a zone witho
 enumeration.**
 
 All 26 have been imported and verified:
+
 - **34/35 record sets present** on classicminidiy.com; the one "gap" is the `substack` A+AAAA
   ALIAS, correctly translated to a single CNAME (Cloudflare has no ALIAS type and flattens CNAMEs).
 - **14/14** on theminiexchange.com.
@@ -1334,19 +1379,22 @@ All 26 have been imported and verified:
 anything under 60 — clamp to `1` (automatic). Long TXT values are stored by Route 53 as multiple
 quoted strings that must be **concatenated, not space-joined**, or DKIM keys corrupt silently. An
 A+AAAA ALIAS pair maps to ONE CNAME — dedupe or the second insert fails.
+
 #### 2026-08-25 — TME redirect targets swept: 0 stale, but ALL SEVEN Atom feeds are 500 in production [source: this branch]
+
 Swept all 28 `theminiexchange.com` redirect targets against production before porting them, on the
 theory that `wheeldictionary.com` had been pointing at a URL that itself 301'd.
 
-| result | count |
-|---|---|
-| 200 | 25 |
+| result                 | count |
+| ---------------------- | ----- |
+| 200                    | 25    |
 | **3xx (stale target)** | **0** |
-| 4xx/5xx | 3 |
+| 4xx/5xx                | 3     |
 
 **No stale targets** — the TME map does not have the rot `wheeldictionary.com` had. Port it verbatim.
 
 The three non-200s:
+
 - `/feed` -> `/exchange/feed` **404** and `/users` -> `/users` **404**. Both are bare PREFIX sources
   with no index route; the rules exist to serve their sub-paths. Production behaves identically
   today, so neither is a regression — but `theminiexchange.com/users` does currently redirect to a
@@ -1359,6 +1407,7 @@ The three non-200s:
   unrelated to the migration and out of scope for these branches.** Spawned as its own task.
 
 #### 2026-08-25 — theminiexchange.com CUT OVER. B1's asset-shadowing is real, and the Free-plan rule cap is 10 not "fits" [corrects B1 and the plan's rule-count claim] [source: this branch]
+
 TME is live on Cloudflare: **110/110 probes correct** across all 28 mappings x both hosts x both
 slash forms x deep paths. Query strings preserved, unmapped paths still a real 404, ordering
 correct (`/admin/users` -> `/admin/users`, `/admin/other` -> `/admin/exchange/other`), `server:
@@ -1368,7 +1417,7 @@ Getting there corrected two things in the plan.
 
 - **The Free plan caps `http_request_dynamic_redirect` at 10 rules, not "fits free tier".**
   Measured: `exceeded the maximum number of rules in the phase http_request_dynamic_redirect: 28
-  out of 10`. The plan's fallback was a Bulk Redirects list for the 19 exact sources, but Bulk
+out of 10`. The plan's fallback was a Bulk Redirects list for the 19 exact sources, but Bulk
   Redirects are an **account-scoped** resource the migration token deliberately does not hold.
 - **The worker CANNOT serve this map — B1's asset-shadowing is real and was measured.** Routing
   TME to the worker produced **200 with the CMDIY page** on `/about`, `/contact`, `/privacy`,
@@ -1406,7 +1455,7 @@ Ranked by what they would have cost on a high-traffic production domain.
 
 1. **C1's cert pre-provisioning does not work for full-setup zones — but the gap is
    avoidable.** DCV pre-validation is a partial-zone feature; a full zone gets its cert
-   15 min–24 h *after* activation. The fix that worked: **grey-cloud every web record
+   15 min–24 h _after_ activation. The fix that worked: **grey-cloud every web record
    before the NS flip.** Cloudflare then answers DNS while traffic still reaches the old
    origin on the old TLS, so the flip is invisible; proxy the records only after the cert
    is Active. This splits cutover into two independently reversible steps and shrinks C6's
@@ -1422,7 +1471,7 @@ Ranked by what they would have cost on a high-traffic production domain.
    after merge.** cmdiy's bundle is larger — treat `NODE_OPTIONS=--max-old-space-size=6144`
    in the workflow as mandatory, not optional.
 4. **Verification instruments lie, and false alarms are more dangerous than missed checks.**
-   Two confident-but-wrong failure reports: a stale *local* resolver claimed a hostname was
+   Two confident-but-wrong failure reports: a stale _local_ resolver claimed a hostname was
    broken while the edge served a correct 301, and Gmail's search index claimed auth emails
    weren't delivering while three sat in the user's inbox. On cmdiy, either would invite an
    unnecessary mid-cutover rollback. **Rule: confirm every negative against the edge
@@ -1436,19 +1485,19 @@ Ranked by what they would have cost on a high-traffic production domain.
 
 ### Amendments exercised and their verdicts
 
-| Amendment | Verdict |
-|---|---|
-| C1 (cert gap) | **Contradicted** — mechanism invalid for full zones; superseded by grey-cloud cutover |
-| C2 (BIND import, never quick-scan) | **Softened** — CF's scan imported all 7 records byte-perfect incl. a 218-char DKIM TXT. But only an independent record list could *prove* it. Keep the authoritative dump as the verification oracle, not the import source. cmdiy's SES DKIM **CNAMEs** remain untested — C2's actual worry |
-| C3 (Always Use HTTPS + HSTS) | **Validated verbatim** — Vercel's `max-age=63072000` is a platform behavior set nowhere in the repo; matched it exactly |
-| C4 (preserve_query_string, proxied-only rules) | **Validated** — Single Redirects fire only on proxied hostnames; query preservation must be explicit |
-| C5 (custom domain replaces DNS) | **Sidestepped** — a Worker **route** + proxied dummy origin avoids the destructive record deletion and makes rollback a single `proxied` toggle. Prefer routes over custom domains |
-| C6 (~48 h dual-serve) | **Contradicted** — .org delegation TTL was 3600, propagation ~1 h. Measure it (`dig +norecurse NS <domain> @<tld-ns>`); don't assume. Also: **whois updating is not propagation** |
-| C8 (Phase 5 preconditions) | **Validated and used** — NS on Cloudflare + battery green were exactly the right gates |
-| E4 (local workerd loop) | **Simplified** — wrangler 4.x auto-loads `.env`; no `.dev.vars` needed |
-| E5 (pin wrangler with compat date) | **Validated** — pinned in devDependencies and in the workflow |
-| Phase 2.7 (`NUXT_`-prefixed secrets) | **Validated empirically** — a `NUXT_*` worker var overrode a build-baked runtimeConfig value at runtime on workerd |
-| A-series, B-series, D-series | **Not exercised** — OECUA has no AWS SDK writes, no host-redirect estate, no preview-environment requirement. B1's reasoning was indirectly confirmed: with no host redirects, assets-first needed no `run_worker_first` at all |
+| Amendment                                      | Verdict                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1 (cert gap)                                  | **Contradicted** — mechanism invalid for full zones; superseded by grey-cloud cutover                                                                                                                                                                                                        |
+| C2 (BIND import, never quick-scan)             | **Softened** — CF's scan imported all 7 records byte-perfect incl. a 218-char DKIM TXT. But only an independent record list could _prove_ it. Keep the authoritative dump as the verification oracle, not the import source. cmdiy's SES DKIM **CNAMEs** remain untested — C2's actual worry |
+| C3 (Always Use HTTPS + HSTS)                   | **Validated verbatim** — Vercel's `max-age=63072000` is a platform behavior set nowhere in the repo; matched it exactly                                                                                                                                                                      |
+| C4 (preserve_query_string, proxied-only rules) | **Validated** — Single Redirects fire only on proxied hostnames; query preservation must be explicit                                                                                                                                                                                         |
+| C5 (custom domain replaces DNS)                | **Sidestepped** — a Worker **route** + proxied dummy origin avoids the destructive record deletion and makes rollback a single `proxied` toggle. Prefer routes over custom domains                                                                                                           |
+| C6 (~48 h dual-serve)                          | **Contradicted** — .org delegation TTL was 3600, propagation ~1 h. Measure it (`dig +norecurse NS <domain> @<tld-ns>`); don't assume. Also: **whois updating is not propagation**                                                                                                            |
+| C8 (Phase 5 preconditions)                     | **Validated and used** — NS on Cloudflare + battery green were exactly the right gates                                                                                                                                                                                                       |
+| E4 (local workerd loop)                        | **Simplified** — wrangler 4.x auto-loads `.env`; no `.dev.vars` needed                                                                                                                                                                                                                       |
+| E5 (pin wrangler with compat date)             | **Validated** — pinned in devDependencies and in the workflow                                                                                                                                                                                                                                |
+| Phase 2.7 (`NUXT_`-prefixed secrets)           | **Validated empirically** — a `NUXT_*` worker var overrode a build-baked runtimeConfig value at runtime on workerd                                                                                                                                                                           |
+| A-series, B-series, D-series                   | **Not exercised** — OECUA has no AWS SDK writes, no host-redirect estate, no preview-environment requirement. B1's reasoning was indirectly confirmed: with no host redirects, assets-first needed no `run_worker_first` at all                                                              |
 
 ### Things cmdiy has that OECUA did not — still unproven
 
@@ -1457,13 +1506,13 @@ AWS SDK `client.send()` on workerd (A1), takumi-wasm OG rendering and the 10 MB 
 ceiling, KV-backed cached handlers and the `swr` coalescing question (E1), the 28-redirect
 TME estate and `run_worker_first` (B1), preview environments and their secret sets (D2/D3),
 SES DKIM **CNAME** import, and localStorage-based Supabase auth (OECUA used cookie SSR auth
-— the *opposite* model, and its auth bug was app-level, not platform-level).
+— the _opposite_ model, and its auth bug was app-level, not platform-level).
 
 ### Cost
 
 **No savings realized.** The Vercel Pro seat stays for classicminidiy.com, so removing OECUA
 changes nothing on the invoice; the predicted ~$15/mo materializes only when cmdiy also
-leaves. Cloudflare adds **Workers Paid $5/mo** — a real, if small, *increase* until then.
+leaves. Cloudflare adds **Workers Paid $5/mo** — a real, if small, _increase_ until then.
 Bundle measured at 3.54 MB gzip, which **exceeds the 3 MiB free-plan cap** (deploy rejected,
 error 10027): budget Workers Paid for any real Nuxt SSR property.
 
