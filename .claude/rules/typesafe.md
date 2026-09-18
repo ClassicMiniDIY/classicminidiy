@@ -1,6 +1,9 @@
 ---
 paths:
   - 'server/utils/typesafe.ts'
+  - 'server/utils/typesafeModes.ts'
+  - 'server/api/admin/typesafe/**'
+  - 'app/pages/admin/typesafe.vue'
   - 'server/agent/classifier.ts'
   - 'server/agent/classifierRun.ts'
   - 'server/api/chat.post.ts'
@@ -97,3 +100,14 @@ that must survive any phase.
   bridge both attach it) and only with `TYPESAFE_MCP_MODE=on`. `lookup()` in
   `mcpLookup.ts` stays synchronous and pure; the rows and their order do not
   change; a pick under `RELATED_PICK_MIN` is no pick.
+- **A surface's mode is `typesafeMode(event, surface)` from
+  `server/utils/typesafeModes.ts`, never the env directly.** A
+  `platform_settings` row (`typesafe_<surface>_mode`, written only by the
+  private repo's `set_typesafe_mode()`) beats the `TYPESAFE_*_MODE` env; an
+  absent row is the env; rows are cached a minute per isolate and a failed
+  read keeps the last good values. `/admin/typesafe` is the page that flips
+  them and reads `typesafe_readout()`; its bars are constants in the page.
+- **`typesafe_events` gets numbers, enums and ids only.** The mirror behind
+  `captureServerEvent` uses the per-event allowlist in `typesafeModes.ts`;
+  adding a text property (a message, a query, the state) to that list is the
+  one change it must refuse.

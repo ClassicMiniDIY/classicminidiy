@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3';
 import { getRequestHeader } from 'h3';
 import { serverRuntimeConfig } from './runtimeConfig';
+import { mirrorTypesafeEvent } from './typesafeModes';
 import { getChatAuth } from './chatTiers';
 import type { QuotaVerdict } from './chatQuota';
 
@@ -145,6 +146,8 @@ export function captureServerEvent(
   } catch {
     // swallowed on purpose
   }
+  // The readout's copy: allowlisted properties only (server/utils/typesafeModes.ts).
+  mirrorTypesafeEvent(event, name, properties);
 }
 
 /**

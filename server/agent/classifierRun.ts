@@ -20,7 +20,6 @@
 import type { H3Event } from 'h3';
 import type { UIMessage } from 'ai';
 import { askTypeSafe, typesafeConfigured } from '../utils/typesafe';
-import { serverRuntimeConfig } from '../utils/runtimeConfig';
 import {
   analyticsFields,
   buildClassifierRequest,
@@ -84,14 +83,20 @@ const OFF: ClassifierResult = {
 
 export function runClassifier(
   event: H3Event,
-  input: { messages: UIMessage[]; pageSlug?: string | null; tools: { name: string; use: string }[] }
+  input: {
+    messages: UIMessage[];
+    pageSlug?: string | null;
+    tools: { name: string; use: string }[];
+    /** The effective TYPESAFE_CHAT_MODE, resolved by the caller (settings row, else env). */
+    mode: string;
+  }
 ): ClassifierRun {
   const settledRun = (result: ClassifierResult): ClassifierRun => ({
     collect: () => Promise.resolve(result),
     cancel: () => {},
   });
 
-  const mode = parseClassifierMode(serverRuntimeConfig(event).TYPESAFE_CHAT_MODE);
+  const mode = parseClassifierMode(input.mode);
   if (mode === 'off') return settledRun(OFF);
   if (!typesafeConfigured(event)) return settledRun({ ...OFF, mode, analytics: analyticsFields('skipped', null) });
 

@@ -18,6 +18,35 @@ vi.mock('~~/server/utils/typesafe', async () => {
   };
 });
 vi.mock('~~/server/utils/runtimeConfig', () => ({ serverRuntimeConfig: () => config }));
+vi.mock('~~/server/utils/typesafeModes', () => ({
+  typesafeMode: async (_e: unknown, surface: string) =>
+    (
+      ({
+        chat: 'TYPESAFE_CHAT_MODE',
+        models: 'TYPESAFE_MODELS_MODE',
+        search: 'TYPESAFE_SEARCH_MODE',
+        queue: 'TYPESAFE_QUEUE_MODE',
+        mcp: 'TYPESAFE_MCP_MODE',
+      }) as Record<string, string>
+    )[surface]
+      ? (
+          config[
+            (
+              {
+                chat: 'TYPESAFE_CHAT_MODE',
+                models: 'TYPESAFE_MODELS_MODE',
+                search: 'TYPESAFE_SEARCH_MODE',
+                queue: 'TYPESAFE_QUEUE_MODE',
+                mcp: 'TYPESAFE_MCP_MODE',
+              } as Record<string, string>
+            )[surface]!
+          ] || 'off'
+        )
+          .trim()
+          .toLowerCase()
+      : 'off',
+  mirrorTypesafeEvent: () => {},
+}));
 vi.mock('~~/server/utils/chatUsage', () => ({ captureServerEvent: (...a: unknown[]) => capture(...a) }));
 
 // The toolkit's auto-imports, stubbed the same way the agent bridge tests do.

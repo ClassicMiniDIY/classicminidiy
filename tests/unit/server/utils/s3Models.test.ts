@@ -80,7 +80,11 @@ describe('server/utils/s3Models — contentDisposition', () => {
  */
 describe('server/utils/s3Models — presigned PUT (upload cap)', () => {
   it('signs content-length, which is what enforces the size cap', async () => {
-    const res = await createModelUploadUrl({ key: 'models/m/v1/f/a.stl', contentType: 'application/octet-stream', sizeBytes: 1024 });
+    const res = await createModelUploadUrl({
+      key: 'models/m/v1/f/a.stl',
+      contentType: 'application/octet-stream',
+      sizeBytes: 1024,
+    });
     expect(res.method).toBe('PUT');
     expect(res.headers['content-length']).toBe('1024');
     // The signature must actually cover it — otherwise the cap is decorative.
@@ -89,19 +93,30 @@ describe('server/utils/s3Models — presigned PUT (upload cap)', () => {
   });
 
   it('signs the storage class so it cannot be downgraded by the client', async () => {
-    const res = await createModelUploadUrl({ key: 'models/m/v1/f/a.stl', contentType: 'application/octet-stream', sizeBytes: 10 });
+    const res = await createModelUploadUrl({
+      key: 'models/m/v1/f/a.stl',
+      contentType: 'application/octet-stream',
+      sizeBytes: 10,
+    });
     expect(res.headers['x-amz-storage-class']).toBe('INTELLIGENT_TIERING');
     expect(new URL(res.url).searchParams.get('X-Amz-SignedHeaders')).toContain('x-amz-storage-class');
   });
 
   it('sets an explicit 15-minute expiry (aws4fetch defaults s3 to 24h)', async () => {
-    const res = await createModelUploadUrl({ key: 'models/m/v1/f/a.stl', contentType: 'application/octet-stream', sizeBytes: 10 });
+    const res = await createModelUploadUrl({
+      key: 'models/m/v1/f/a.stl',
+      contentType: 'application/octet-stream',
+      sizeBytes: 10,
+    });
     expect(new URL(res.url).searchParams.get('X-Amz-Expires')).toBe('900');
   });
 
   it('binds the sha256 checksum when supplied', async () => {
     const res = await createModelUploadUrl({
-      key: 'models/m/v1/f/a.stl', contentType: 'application/octet-stream', sizeBytes: 10, checksumSha256: 'YmFzZTY0',
+      key: 'models/m/v1/f/a.stl',
+      contentType: 'application/octet-stream',
+      sizeBytes: 10,
+      checksumSha256: 'YmFzZTY0',
     });
     expect(res.headers['x-amz-checksum-sha256']).toBe('YmFzZTY0');
     expect(new URL(res.url).searchParams.get('X-Amz-SignedHeaders')).toContain('x-amz-checksum-sha256');
@@ -109,7 +124,7 @@ describe('server/utils/s3Models — presigned PUT (upload cap)', () => {
 });
 
 describe('server/utils/s3Models — presigned GET (download)', () => {
-  it('defaults to a 60-second expiry, not aws4fetch\'s 24-hour s3 default', async () => {
+  it("defaults to a 60-second expiry, not aws4fetch's 24-hour s3 default", async () => {
     const url = await createModelDownloadUrl({ key: 'models/m/v1/f/a.stl', fileName: 'a.stl' });
     expect(new URL(url).searchParams.get('X-Amz-Expires')).toBe('60');
   });
@@ -185,7 +200,7 @@ describe('server/utils/s3Models — headModelObject error mapping', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('gives up after 3 attempts on 5xx rather than aws4fetch\'s default 10 retries', async () => {
+  it("gives up after 3 attempts on 5xx rather than aws4fetch's default 10 retries", async () => {
     // Regression guard: the default (retries:10, initRetryMs:50) spends ~51s
     // retrying inside a single request, past any serverless timeout.
     stubFetch(async () => mockS3Response(500));

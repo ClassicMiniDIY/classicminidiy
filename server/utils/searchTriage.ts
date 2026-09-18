@@ -17,9 +17,9 @@
  */
 import type { H3Event } from 'h3';
 import { askTypeSafe, choice, typesafeConfigured } from './typesafe';
-import { serverRuntimeConfig } from './runtimeConfig';
 import { getServiceClient } from './supabase';
 import { captureServerEvent } from './chatUsage';
+import { typesafeMode } from './typesafeModes';
 import { SURFACES, type QueryKind, type Surface } from '~~/shared/utils/searchIntent';
 import { ToolCatalog, ARCHIVE_SEARCH_SECTIONS } from '~~/data/models/toolbox-catalog';
 
@@ -44,9 +44,8 @@ export const SURFACE_COVERS: Record<Surface, string> = {
   videos: "Cole's YouTube videos: how-to repairs, removals, rebuilds",
 };
 
-export function searchIntentShadowEnabled(event: H3Event): boolean {
-  const raw = (serverRuntimeConfig(event).TYPESAFE_SEARCH_MODE as string) || '';
-  return raw.trim().toLowerCase() === 'shadow' && typesafeConfigured(event);
+export async function searchIntentShadowEnabled(event: H3Event): Promise<boolean> {
+  return typesafeConfigured(event) && (await typesafeMode(event, 'search')) === 'shadow';
 }
 
 /** Character bigram similarity, enough to shortlist what a typo was probably aiming at. */
@@ -185,17 +184,23 @@ export function buildIntentRequest(query: string) {
  * nothing the caller could use, on purpose.
  */
 export function shadowSearchIntent(event: H3Event, query: string, regex: { kind: QueryKind; lead: Surface }): void {
-  if (!searchIntentShadowEnabled(event)) return;
   if (regex.kind !== 'lookup' && regex.kind !== 'question') return;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), INTENT_SHADOW_CEILING_MS);
-  const { state, questions } = buildIntentRequest(query);
-  const run = askTypeSafe(event, state, questions, {
-    caller: 'search-intent-shadow',
-    signal: controller.signal,
-    retry: { maxRetries: 0 },
-  })
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const run = searchIntentShadowEnabled(event)
+    .then((enabled) => {
+      if (!enabled) return null;
+      // The ceiling starts with the request, not with the settings read.
+      timer = setTimeout(() => controller.abort(), INTENT_SHADOW_CEILING_MS);
+      const { state, questions } = buildIntentRequest(query);
+      return askTypeSafe(event, state, questions, {
+        caller: 'search-intent-shadow',
+        signal: controller.signal,
+        retry: { maxRetries: 0 },
+      });
+    })
     .then((answer) => {
+      if (!answer) return;
       const modelKind = answer.answers.kind.choice;
       const modelLead = answer.answers.lead.choice;
       captureServerEvent(event, 'search_intent_shadow', 'search:intent', {
@@ -222,6 +227,8 @@ export function shadowSearchIntent(event: H3Event, query: string, regex: { kind:
         regex_lead: regex.lead,
       });
     })
-    .finally(() => clearTimeout(timer));
+    .finally(() => {
+      if (timer) clearTimeout(timer);
+    });
   (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(run);
 }

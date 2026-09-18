@@ -4,6 +4,7 @@ import { buildAgentTools, webSearchSupported } from '../agent/tools';
 import { stripStaleWebSearchContent } from '../agent/transcript';
 import { buildSystemPrompt, toolGuidanceList } from '../agent/prompt';
 import { runClassifier, type ClassifierRun } from '../agent/classifierRun';
+import { typesafeMode } from '../utils/typesafeModes';
 import {
   captureChatQuotaRefused,
   createChatRunTracker,
@@ -131,6 +132,9 @@ export default defineEventHandler(async (event) => {
     messages: replayed,
     pageSlug: body?.pageSlug,
     tools: toolGuidanceList(webSearchSupported(modelIdForTools)),
+    // A settings row first, the env second; cached a minute per isolate, so
+    // this await is a memory read on every request but the first.
+    mode: await typesafeMode(event, 'chat'),
   });
 
   // BEFORE the model runs. A quota checked afterwards is not a quota — the

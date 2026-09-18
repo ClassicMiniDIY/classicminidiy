@@ -12,8 +12,8 @@
  */
 import type { H3Event } from 'h3';
 import { askTypeSafe, choice, typesafeConfigured } from './typesafe';
-import { serverRuntimeConfig } from './runtimeConfig';
 import { captureServerEvent } from './chatUsage';
+import { typesafeMode } from './typesafeModes';
 import type { LookupRelated } from './mcpLookup';
 
 export const RELATED_PICK_CEILING_MS = 700;
@@ -38,10 +38,9 @@ export function eventFromExtra(extra: unknown): H3Event | undefined {
   return event && typeof event === 'object' ? (event as H3Event) : undefined;
 }
 
-export function mcpPickEnabled(event: H3Event | undefined): event is H3Event {
-  if (!event) return false;
-  const raw = (serverRuntimeConfig(event).TYPESAFE_MCP_MODE as string) || '';
-  return raw.trim().toLowerCase() === 'on' && typesafeConfigured(event);
+export async function mcpPickEnabled(event: H3Event | undefined): Promise<boolean> {
+  if (!event || !typesafeConfigured(event)) return false;
+  return (await typesafeMode(event, 'mcp')) === 'on';
 }
 
 /** One line per row: section, then the item's fields as `key: value`, clipped. */
@@ -84,7 +83,7 @@ export async function pickRelated(
   query: string | undefined,
   related: LookupRelated[]
 ): Promise<RelatedPick | null> {
-  if (!query || related.length < 2 || !mcpPickEnabled(event)) return null;
+  if (!event || !query || related.length < 2 || !(await mcpPickEnabled(event))) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), RELATED_PICK_CEILING_MS);
   try {

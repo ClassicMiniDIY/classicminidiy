@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
   // is small and each is one TypeSafe call). A row that fails stays empty and
   // is tried again next load. Off unless TYPESAFE_QUEUE_MODE is on.
   const hints = new Map<string, DuplicateHint | null>();
-  if (queueDuplicatesEnabled(event)) {
+  if (await queueDuplicatesEnabled(event)) {
     const wanting = (data || []).filter(
       (item: any) =>
         item.status === 'pending' &&
