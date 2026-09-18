@@ -12,10 +12,9 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireUserAuth } from '../../../utils/userAuth';
 import { detectMimeFromMagic, generateSafeFilename, type DetectedMime } from '../../../utils/uploadValidation';
+import { MODEL_IMAGE_MAX_BYTES, MODEL_MAX_IMAGES } from '../../../../shared/utils/modelLimits';
 
 const ALLOWED: DetectedMime[] = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_BYTES = 10 * 1024 * 1024; // 10 MiB (keystone Migration F)
-const MAX_IMAGES = 12; // keystone §4 (≤12/model, also trigger-enforced)
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserAuth(event);
@@ -40,7 +39,7 @@ export default defineEventHandler(async (event) => {
   const form = await readMultipartFormData(event);
   const file = form?.find((f) => f.data && f.filename);
   if (!file?.data) throw createError({ statusCode: 400, statusMessage: 'No image uploaded' });
-  if (file.data.length > MAX_BYTES) {
+  if (file.data.length > MODEL_IMAGE_MAX_BYTES) {
     throw createError({ statusCode: 413, statusMessage: 'Image exceeds the 10 MB limit' });
   }
 
@@ -52,8 +51,8 @@ export default defineEventHandler(async (event) => {
   // Count existing images (cap + sort_order + first-is-primary).
   const { data: existing } = await service.from('model_images').select('id, is_primary').eq('model_id', modelId);
   const count = existing?.length ?? 0;
-  if (count >= MAX_IMAGES) {
-    throw createError({ statusCode: 400, statusMessage: `A model may have at most ${MAX_IMAGES} images` });
+  if (count >= MODEL_MAX_IMAGES) {
+    throw createError({ statusCode: 400, statusMessage: `A model may have at most ${MODEL_MAX_IMAGES} images` });
   }
   const isPrimary = count === 0; // first image is primary by default
 

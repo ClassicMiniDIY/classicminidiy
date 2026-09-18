@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MODEL_FILE_MAX_BYTES, MODEL_VERSION_MAX_TOTAL_BYTES } from '~/server/utils/models';
+import { MODEL_FILE_MAX_BYTES, MODEL_VERSION_MAX_TOTAL_BYTES } from '~~/shared/utils/modelLimits';
 
 // --- mock supabase (user-scoped) chains ------------------------------------
 const versionSingle = vi.fn();
