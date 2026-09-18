@@ -199,6 +199,16 @@
     return !preview.value.imageUrl && !preview.value.description;
   });
 
+  // A title worth prefilling is one that is neither the URL echoed back nor
+  // the bare site name. An OG-less page with a real <title> still prefills.
+  const usefulTitle = (metadata: { title: string; sourceSite: string | null }): string => {
+    const title = metadata.title?.trim() || '';
+    if (!title || title === url.value.trim()) return '';
+    const siteName = metadata.sourceSite ? sourceSiteDisplayNames[metadata.sourceSite] : undefined;
+    if (siteName && title.toLowerCase() === siteName.toLowerCase()) return '';
+    return title;
+  };
+
   // Validation
   const canSubmit = computed(() => {
     return url.value.trim().length > 0 && title.value.trim().length > 0 && description.value.length <= 2000;
@@ -222,9 +232,9 @@
 
       if (response.success && response.metadata) {
         preview.value = response.metadata;
-        // Pre-populate title from metadata, unless the parse was blocked: a
-        // URL or a bare site name as the title is worse than an empty field.
-        title.value = metadataBlocked.value ? '' : response.metadata.title || '';
+        // Pre-populate the title unless it is junk (the URL, or a bare site
+        // name from a login wall): an empty field beats one the user must clear.
+        title.value = usefulTitle(response.metadata);
         // Pre-populate category from metadata if detected
         if (response.metadata.category) {
           category.value = response.metadata.category;
