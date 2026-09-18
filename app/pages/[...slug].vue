@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { HERO_TYPES } from '../../data/models/generic';
+  import { SITE_DEFAULT_OG_IMAGE } from '~/utils/constants';
   import { determineArchiveType, shareArchiveItem, submitArchiveFile } from '../../data/models/helper-utils';
 
   const { path, fullPath } = useRoute();
@@ -88,9 +89,7 @@
   // Share image must always be a non-empty STRING — see the SEO bullet
   // in `.claude/rules/images-seo.md`: unhead coerces '' to boolean `true` and nuxt-og-image's
   // afterResolve hook then calls .replaceAll() on it, 500ing the whole SSR render.
-  const shareImage = computed(
-    () => currentPostData.value?.image || 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg'
-  );
+  const shareImage = computed(() => currentPostData.value?.image || SITE_DEFAULT_OG_IMAGE);
 
   useSeoMeta({
     ogTitle: `${currentPostData.value?.title} ${$t('seo.og_title_suffix')}`,

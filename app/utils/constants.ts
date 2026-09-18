@@ -5,6 +5,13 @@
  * updated in one place instead of many.
  */
 
+/**
+ * Site-wide share image, used whenever a page has no image of its own. Must
+ * stay a non-empty string: nuxt-og-image 500s the SSR render on '' (see
+ * `.claude/rules/images-seo.md`). Mirrors the og:image in nuxt.config head.
+ */
+export const SITE_DEFAULT_OG_IMAGE = 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg';
+
 /** Maximum content length for messages, comments, and descriptions */
 export const MAX_CONTENT_LENGTH = 2000;
 

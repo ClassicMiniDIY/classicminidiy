@@ -1,4 +1,5 @@
 import { type ModelDetail, priceLabel } from '~~/data/models/model-library';
+import { SITE_DEFAULT_OG_IMAGE } from '~/utils/constants';
 
 /**
  * Centralizes SEO + social metadata for a 3D Model Library detail page
@@ -12,9 +13,6 @@ import { type ModelDetail, priceLabel } from '~~/data/models/model-library';
  * the fallbacks only surface for thin records.
  */
 
-// Site-wide default OG image (mirrors nuxt.config head) — used when a model has
-// no uploaded photo so a share never renders an empty image.
-const SITE_DEFAULT_OG = 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg';
 const BRAND = 'Classic Mini DIY';
 
 function excerpt(s: string | null | undefined, max = 160): string {
@@ -90,7 +88,7 @@ export function useModelSeo(opts: {
       '@type': 'Product',
       name: m.title,
       description: description.value,
-      image: photo.value ? [photo.value] : [SITE_DEFAULT_OG],
+      image: photo.value ? [photo.value] : [SITE_DEFAULT_OG_IMAGE],
       category: m.categorySlug,
       url: canonical.value,
       brand: { '@type': 'Brand', name: BRAND },
