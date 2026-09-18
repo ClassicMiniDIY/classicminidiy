@@ -1,6 +1,13 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import { analyseQuery, SURFACES, type QueryKind, type Surface } from '~~/shared/utils/searchIntent';
+import {
+  analyseQuery,
+  normaliseSearchQuery,
+  SEARCH_QUERY_MAX_LENGTH,
+  SURFACES,
+  type QueryKind,
+  type Surface,
+} from '~~/shared/utils/searchIntent';
 
 /**
  * A fixture table, not a set of hand-written cases per rule.
@@ -112,5 +119,18 @@ describe('analyseQuery', () => {
       'suppliers',
       'videos',
     ]);
+  });
+});
+
+describe('normaliseSearchQuery', () => {
+  it('trims, collapses whitespace and caps at SEARCH_QUERY_MAX_LENGTH', () => {
+    expect(normaliseSearchQuery('  bad   wolf\t turbo ')).toBe('bad wolf turbo');
+    expect(normaliseSearchQuery('x'.repeat(500))).toHaveLength(SEARCH_QUERY_MAX_LENGTH);
+  });
+
+  it('treats a missing or non-string body value as the empty query', () => {
+    expect(normaliseSearchQuery(undefined)).toBe('');
+    expect(normaliseSearchQuery(null)).toBe('');
+    expect(normaliseSearchQuery(42)).toBe('42');
   });
 });

@@ -2,7 +2,13 @@ import { getServiceClient } from './supabase';
 import { loadVisiblePartSources, searchVisibleParts } from './partsSearch';
 import { resolveDirectAnswers } from './directAnswers';
 import { getVideoIndex, searchVideoIndex } from './youtubeCatalog';
-import { analyseQuery, type SearchResponse, type SearchResult, type Surface } from '../../shared/utils/searchIntent';
+import {
+  analyseQuery,
+  normaliseSearchQuery,
+  type SearchResponse,
+  type SearchResult,
+  type Surface,
+} from '../../shared/utils/searchIntent';
 import { ToolCatalog, TOOL_CATEGORY_LABELS, ARCHIVE_SEARCH_SECTIONS } from '../../data/models/toolbox-catalog';
 import type { Supplier } from '../../data/models/suppliers';
 import suppliersData from '../../data/suppliers.json';
@@ -37,8 +43,6 @@ import wiringDiagrams from '../../data/wiringDiagrams.json';
  * three Most Wanted candidates. The client now posts a miss to
  * `/api/search/miss` on a commit — Enter, a click, a close, or 1.5s idle.
  */
-
-const MAX_QUERY_LENGTH = 120;
 
 /**
  * Shared ranking for the in-process sources, ONE WORD AT A TIME.
@@ -295,10 +299,7 @@ export async function runOmnisearch(
   rawLimit?: unknown,
   { youtubeApiKey }: OmnisearchOptions = {}
 ): Promise<SearchResponse> {
-  const query = String(rawQuery ?? '')
-    .trim()
-    .replace(/\s+/g, ' ')
-    .slice(0, MAX_QUERY_LENGTH);
+  const query = normaliseSearchQuery(rawQuery);
 
   const intent = analyseQuery(query);
 

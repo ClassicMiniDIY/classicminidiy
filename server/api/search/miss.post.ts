@@ -1,5 +1,6 @@
 import { getServiceClient } from '../../utils/supabase';
 import { triageSearchMiss } from '../../utils/searchTriage';
+import { normaliseSearchQuery } from '../../../shared/utils/searchIntent';
 
 /**
  * POST /api/search/miss — a person searched, committed, and got nothing.
@@ -22,14 +23,9 @@ import { triageSearchMiss } from '../../utils/searchTriage';
  * Wanted candidates sort by what they are. The label never delays the 204
  * and nothing public reads it. Design: the private repo's typesafe phase 4 doc.
  */
-const MAX_QUERY_LENGTH = 120;
-
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ q?: unknown }>(event).catch(() => ({}) as { q?: unknown });
-  const query = String(body?.q ?? '')
-    .trim()
-    .replace(/\s+/g, ' ')
-    .slice(0, MAX_QUERY_LENGTH);
+  const query = normaliseSearchQuery(body?.q);
 
   // Mirrors the RPC's own floor so a rejected call never costs a round trip.
   if (query.length < 3) {
