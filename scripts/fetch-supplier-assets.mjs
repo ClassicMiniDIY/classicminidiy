@@ -18,9 +18,10 @@
  *
  * WHAT IT WRITES: `public/suppliers/<id>-logo.webp` (≤ 320 px, alpha kept),
  * `public/suppliers/<id>-cover.webp` (1200 px wide, quality 72), and
- * `data/suppliers-assets.json` — one row per shop: which files exist, where
- * each came from, and when. The page reads the JSON; a shop with no row, or a
- * null, renders its fallback (initials on a brand gradient) and nothing breaks.
+ * `data/suppliers-assets.json` — one row per shop, the two paths only, which
+ * the page imports — and `data/suppliers-assets-provenance.json`, where each
+ * came from and when. A shop with no row, or a null, renders its fallback
+ * (initials on a brand gradient) and nothing breaks.
  *
  * Every image is fetched with the archive's named user agent, one shop at a
  * time, two requests each at most beyond the homepage. Nothing here is a crawl.
@@ -38,6 +39,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'public', 'suppliers');
 const DATA = join(ROOT, 'data', 'suppliers.json');
 const ASSETS = join(ROOT, 'data', 'suppliers-assets.json');
+// Where each image came from, and when. Kept OUT of suppliers-assets.json
+// because the page imports that file and Vite ships a default JSON import
+// whole: sixty-odd third-party URLs would ride in the client bundle to read
+// two paths per shop.
+const PROVENANCE = join(ROOT, 'data', 'suppliers-assets-provenance.json');
 const OVERRIDES = join(ROOT, 'data', 'suppliers-assets.overrides.json');
 
 const UA = 'ClassicMiniDIY-archive/1.0 (+https://www.classicminidiy.com; classicminidiy@gmail.com)';
@@ -50,8 +56,10 @@ const only = new Set(argv.filter((a) => !a.startsWith('--')));
 
 const suppliers = JSON.parse(await readFile(DATA, 'utf8'));
 let assets = {};
+let provenance = {};
 try {
   assets = JSON.parse(await readFile(ASSETS, 'utf8'));
+  provenance = JSON.parse(await readFile(PROVENANCE, 'utf8'));
 } catch {
   /* first run */
 }
@@ -278,7 +286,8 @@ for (const s of suppliers) {
   }
   const base = page.url;
   const html = page.body;
-  const row = { ...(have ?? {}), fetched_at: today };
+  const row = { logo: have?.logo ?? null, cover: have?.cover ?? null };
+  const prov = { fetched_at: today, logo_source: null, cover_source: null };
 
   // ---- logo ----
   const candidates = [];
@@ -294,7 +303,6 @@ for (const s of suppliers) {
   for (const icon of linkIcons(html)) candidates.push({ url: abs(icon.href, base), source: icon.kind });
 
   row.logo = null;
-  row.logo_source = null;
   for (const c of 'logo' in ov && ov.logo === null ? [] : candidates) {
     if (!c.url) continue;
     const img = c.source === 'override' ? await getOverride(c.url) : await get(c.url, 'bytes');
@@ -303,14 +311,13 @@ for (const s of suppliers) {
     const saved = await saveLogo(img.body, file);
     if (saved) {
       row.logo = `/suppliers/${s.id}-logo.webp`;
-      row.logo_source = `${c.source} ${c.url}`;
+      prov.logo_source = `${c.source} ${c.url}`;
       break;
     }
   }
 
   // ---- cover ----
   row.cover = null;
-  row.cover_source = null;
   const og =
     metaContent(html, 'og:image') ?? metaContent(html, 'og:image:secure_url') ?? metaContent(html, 'twitter:image');
   const coverCandidates = [];
@@ -318,21 +325,22 @@ for (const s of suppliers) {
   if (og) coverCandidates.push({ url: abs(og, base), source: 'og:image' });
   for (const h of heroCandidates(html)) coverCandidates.push({ url: abs(h, base), source: 'hero-img' });
   for (const c of ov.cover === null ? [] : coverCandidates) {
-    if (!c.url || (row.logo_source ?? '').endsWith(c.url)) continue;
+    if (!c.url || (prov.logo_source ?? '').endsWith(c.url)) continue;
     const img = c.source === 'override' ? await getOverride(c.url) : await get(c.url, 'bytes');
     if (!img) continue;
     const file = join(OUT_DIR, `${s.id}-cover.webp`);
     const saved = await saveCover(img.body, file);
     if (saved) {
       row.cover = `/suppliers/${s.id}-cover.webp`;
-      row.cover_source = `${c.source} ${c.url}`;
+      prov.cover_source = `${c.source} ${c.url}`;
       break;
     }
   }
 
   assets[s.id] = row;
+  provenance[s.id] = prov;
   report.push(
-    `${s.id}: logo ${row.logo ? 'ok (' + row.logo_source.split(' ')[0] + ')' : 'NONE'}, cover ${row.cover ? 'ok' : 'NONE'}`
+    `${s.id}: logo ${row.logo ? 'ok (' + prov.logo_source.split(' ')[0] + ')' : 'NONE'}, cover ${row.cover ? 'ok' : 'NONE'}`
   );
 }
 
@@ -341,6 +349,7 @@ for (const s of suppliers) {
 // the directory, must not leave its image behind (the static test refuses orphans).
 const ids = new Set(suppliers.map((s) => s.id));
 for (const id of Object.keys(assets)) if (!ids.has(id)) delete assets[id];
+for (const id of Object.keys(provenance)) if (!ids.has(id)) delete provenance[id];
 const referenced = new Set(
   Object.values(assets)
     .flatMap((r) => [r.logo, r.cover])
@@ -350,8 +359,10 @@ for (const f of await readdir(OUT_DIR)) {
   if (f.endsWith('.webp') && !referenced.has(`/suppliers/${f}`)) await unlink(join(OUT_DIR, f));
 }
 
-const ordered = Object.fromEntries(Object.entries(assets).sort(([a], [b]) => a.localeCompare(b)));
+const sorted = (o) => Object.fromEntries(Object.entries(o).sort(([a], [b]) => a.localeCompare(b)));
+const ordered = sorted(assets);
 await writeFile(ASSETS, JSON.stringify(ordered, null, 2) + '\n');
+await writeFile(PROVENANCE, JSON.stringify(sorted(provenance), null, 2) + '\n');
 console.log(report.join('\n'));
 const rows = Object.values(ordered);
 console.log(

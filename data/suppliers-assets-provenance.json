@@ -1,0 +1,337 @@
+{
+  "afterparts-jp": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.afterparts.co.jp/images/logo.png",
+    "cover_source": null
+  },
+  "aldridge-trimming": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.aldridge.co.uk/assets/images/site/logo.png",
+    "cover_source": null
+  },
+  "allbrit": {
+    "fetched_at": "2026-09-18",
+    "logo_source": null,
+    "cover_source": null
+  },
+  "anglo-parts": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.angloparts.com/_next/image?url=%2Fimages%2Flogo.png&w=256&q=75",
+    "cover_source": null
+  },
+  "auto-palace": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://img09.shop-pro.jp/PA01045/621/PA01045621.png",
+    "cover_source": "hero-img https://img09.shop-pro.jp/PA01045/621/slideshow/slideshow_img_976a1b.JPG?cmsp_timestamp=20220719135049"
+  },
+  "autosparks": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.autosparks.co.uk/static/version1789033563/frontend/WilliamsCommerce/autosparks/en_GB/images/logo.svg",
+    "cover_source": "hero-img https://www.autosparks.co.uk/media/wysiwyg/SAMPLEBANNER7.jpg"
+  },
+  "b-well": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://img07.shop-pro.jp/PA01441/151/PA01441151.gif",
+    "cover_source": "hero-img https://img07.shop-pro.jp/PA01441/151/slideshow/slideshow_img_d3f07b.jpg?cmsp_timestamp=20200325162205"
+  },
+  "ben-van-leeuwen": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.benvanleeuwen.com/images/logo-nav.png",
+    "cover_source": "hero-img https://www.benvanleeuwen.com/images/Website_Header_hoog_uitzwaaien.jpg"
+  },
+  "british-motor-heritage": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.bmh-ltd.com/wp-content/themes/kwd-custom-theme/img/logos/british-motor-heritage/header-mobile.png",
+    "cover_source": "og:image https://www.bmh-ltd.com/wp-content/uploads/2023/01/Factory-Mini-night-shot.jpg"
+  },
+  "british-parts-northwest": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://cdn11.bigcommerce.com/s-sda4xku1s1/images/stencil/160x120/bpnw_logo_m_1678928585__83438.original.png",
+    "cover_source": null
+  },
+  "bull-motif": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.bullmotifminispares.co.uk/wp-content/uploads/2025/05/banner1.jpg",
+    "cover_source": "hero-img https://www.bullmotifminispares.co.uk/wp-content/uploads/2025/07/20221013_174101_Grimselpass-002-scaled.jpg"
+  },
+  "calver-st": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://www.calverst.com/_webedit/cached-images/88.png",
+    "cover_source": null
+  },
+  "camel-auto-shop": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://shop8-makeshop.akamaized.net/shopimages/camel3939/logo.png",
+    "cover_source": "hero-img https://shop8-makeshop.akamaized.net/shopimages/camel3939/slide1.jpg?MjAyMy0wMS0xMyAxNzozMDowMg=="
+  },
+  "classic-mini-diy": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override /brand/cmdiy-mark.jpg",
+    "cover_source": "hero-img https://classicminidiy.s3.amazonaws.com/misc/backdrop2.webp"
+  },
+  "classic-mini-onderdelen": {
+    "fetched_at": "2026-09-18",
+    "logo_source": null,
+    "cover_source": null
+  },
+  "classic-mini-spares-nz": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://www.classicminispares.co.nz/sites/default/files/black_website_cms_500x250.png",
+    "cover_source": null
+  },
+  "classic-minis-japan": {
+    "fetched_at": "2026-09-18",
+    "logo_source": null,
+    "cover_source": "og:image https://classicminisjapan.com/wp-content/uploads/2020/02/engine.jpg"
+  },
+  "classic-motoring-au": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://cdn11.bigcommerce.com/s-ol6f1s6oxy/images/stencil/125x135/classic-motoring-logo-150px_1787531141__56359.original.png",
+    "cover_source": null
+  },
+  "coh-baines": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://coh-baines.co.uk/cdn/shop/files/coh_bains_logo_with_strapline_290x@2x.png?v=1634181298",
+    "cover_source": "og:image http://coh-baines.co.uk/cdn/shop/collections/Mini_Cooper_green-min.jpg?v=1636300324"
+  },
+  "galway-mini-centre": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://img1.wsimg.com/isteam/ip/67b15127-30d1-4e54-885a-656c7edbb78b/mini%20logo.jpg/:/rs=h:93,cg:true,m/qt=q:100/ll",
+    "cover_source": "og:image https://img1.wsimg.com/isteam/ip/67b15127-30d1-4e54-885a-656c7edbb78b/mini%20day-france%2010%20002.JPG"
+  },
+  "guessworks": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.guess-works.com/common/images/gw_logo_big.png",
+    "cover_source": null
+  },
+  "hawkswood-nz": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://classiccarparts.co.nz/image/cache/catalog/aLogo/Hawkswood-NZ-Logo-268x118.jpeg",
+    "cover_source": "og:image https://classiccarparts.co.nz/image/cache/catalog/Range%20Icons/P1010655-600x315.JPG"
+  },
+  "heritage-garage": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img http://www.heritagegarage.com/images/masthead_logo_type_photo_phone2.png",
+    "cover_source": null
+  },
+  "historic-mini-company": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.historicminicompany.fr/img/logo-17126490082.jpg",
+    "cover_source": "hero-img https://www.historicminicompany.fr/img/bienvenue-chez-hmc_66423e2e78a99.png"
+  },
+  "icor": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://static.wixstatic.com/media/28cb93_9ac4cdb81cb74c94a58e9a3694edd270~mv2.webp/v1/fill/w_264,h_97,al_c,q_80,enc_avif,quality_auto/logo-icor-2048x623-1.webp",
+    "cover_source": null
+  },
+  "image-wheels": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.imagewheels.co.uk/wp-content/uploads/2015/07/image-wheels-internation-ltd.jpg",
+    "cover_source": null
+  },
+  "jacksons-mini-car-parts": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.jmcp.ch/images/logos/jmcp_klebeband_logo.jpg",
+    "cover_source": null
+  },
+  "john-brown-wheels": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://johnbrownwheels.com/img/logo.svg",
+    "cover_source": null
+  },
+  "kad": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://kentautodevelopments.com/cdn/shop/files/KAD_LOGO_BW_25_4731c176-da48-49f0-b8cd-27f7d84bcc11.png?v=1752762972&width=500",
+    "cover_source": "hero-img https://kentautodevelopments.com/cdn/shop/files/DTH4.jpg?v=1613179095&width=3840"
+  },
+  "limora": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.limora.com/theme/5174c2eca4164c099b1989748c3bb840/assets/icon/dhl_responsive_logo.svg?1789698359",
+    "cover_source": null
+  },
+  "m-parts": {
+    "fetched_at": "2026-09-18",
+    "logo_source": null,
+    "cover_source": "hero-img https://www.mparts.co.uk/user/banner%201.jpg"
+  },
+  "magnum-panels": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.magnumclassicminipanels.co.uk/skin/frontend/default/MINI/images/logo.png",
+    "cover_source": null
+  },
+  "maniflow": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://maniflow.co.uk/wp-content/uploads/2026/04/hdlogo.jpg",
+    "cover_source": "hero-img https://maniflow.co.uk/wp-content/uploads/2021/02/s01.jpg"
+  },
+  "mccs-race-engines": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://static.wixstatic.com/media/abe5d9_3ecd1f14a94f4f8987327062b4ab4b1b~mv2.jpg/v1/fill/w_282,h_89,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/radiator%20logo.jpg",
+    "cover_source": "og:image https://static.wixstatic.com/media/abe5d9_2278f17806d24b5598a8ed94df48c008~mv2.jpg/v1/fill/w_2500,h_1530,al_c/abe5d9_2278f17806d24b5598a8ed94df48c008~mv2.jpg"
+  },
+  "med-engineering": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.med-engineering.co.uk/cdn/shop/files/MED--logo_71fa0259-9e30-4d73-8734-64228060aa29.svg?v=1677755749&width=564",
+    "cover_source": "hero-img https://www.med-engineering.co.uk/cdn/shop/files/HomeBanner33.jpg?v=1786521696&width=3840"
+  },
+  "mini-and-moke-spares": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://miniandmokespares.com.au/wp-content/uploads/2026/03/MINI-MOKE-SPARES-LOGO-300.png#26343",
+    "cover_source": null
+  },
+  "mini-city": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://minicityltd.com/miniCityLogo/minicityltdbxlogo.jpg",
+    "cover_source": null
+  },
+  "mini-delta": {
+    "fetched_at": "2026-09-18",
+    "logo_source": null,
+    "cover_source": "hero-img https://delta-mini.com/wp-content/uploads/2023/06/top_banner_kaitori.jpg"
+  },
+  "mini-parts-iberica": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://static.wixstatic.com/media/e44d2f_26f3347ef56e41f7beb90e1830c480d9~mv2.png",
+    "cover_source": null
+  },
+  "mini-parts-shop-de": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.mini-parts-shop.de/cdn/shop/files/EST._1996svg.svg?v=1708110933&width=500",
+    "cover_source": null
+  },
+  "mini-spares": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.minispares.com/static/frontend/MiniSpares/default/en_GB/Magento_Theme/logo.png",
+    "cover_source": null
+  },
+  "mini-spares-online": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://cdn11.bigcommerce.com/s-kcmnhr5/images/stencil/original/min_ispares_logo_wide_new_1761997016__89744.original.jpg",
+    "cover_source": "hero-img https://cdn11.bigcommerce.com/s-kcmnhr5/images/stencil/original/carousel/433/EXHAUSTS....jpg?c=2"
+  },
+  "mini-sport": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.minisport.com/media/logo/stores/1/mini-sport-logo-.jpg",
+    "cover_source": "hero-img https://www.minisport.com/media/easyslide/click-collect-beaulieu-banner-hero.jpg"
+  },
+  "mini-sport-usa": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://usa.minisport.com/media/logo/stores/6/mini-sport-usa-logo.png",
+    "cover_source": "hero-img https://usa.minisport.com/media/easyslide/click-collect-beaulieu-banner-hero.jpg"
+  },
+  "mini-union-classic": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://image.jimcdn.com/app/cms/image/transf/dimension=379x10000:format=png/path/se8c4b03ccdf1399e/image/i328efcb504cba193/version/1640008158/image.png",
+    "cover_source": null
+  },
+  "mini-world-australia": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://static.wixstatic.com/media/ef3437_4fdd512aa1a74a0a894402fcfc1e147e~mv2.jpeg/v1/fill/w_388,h_210,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo%20Ute.jpeg",
+    "cover_source": null
+  },
+  "minibitz-nz": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.minibitz.co.nz/images/Minibitz_business_card.jpg",
+    "cover_source": "hero-img https://www.minibitz.co.nz/images/home_page_image.jpeg"
+  },
+  "minilite": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://static.wixstatic.com/media/4017c7_dca34a1907a340df84563788ac42d594~mv2.png/v1/fill/w_551,h_202,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/4017c7_dca34a1907a340df84563788ac42d594~mv2.png",
+    "cover_source": null
+  },
+  "minimine": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.minimine.co.uk/image/cache/catalog/logo/logo-1b-958x200.png",
+    "cover_source": "hero-img https://www.minimine.co.uk/image/cache/catalog/slideshow/car-slide-1-1536x1000.jpg"
+  },
+  "minisport-australia": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://minisport.com.au/cdn/shop/files/MinisportLOGOemail_300x@2x.jpg",
+    "cover_source": "hero-img https://minisport.com.au//cdn//shop//files//226_MT_FRI-2.jpg?v=1764128503\\u0026width=2000"
+  },
+  "moke-panels": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://mokepanels.com/wp-content/uploads/2019/07/logo-e1563053556914.png",
+    "cover_source": "hero-img https://mokepanels.com/wp-content/uploads/2019/07/slider.jpg"
+  },
+  "mokoncept": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://mokoncept.fr/img/logo-1766160942.jpg",
+    "cover_source": "hero-img https://mokoncept.fr/modules/ps_imageslider/images/e795abd054b7c8ebfa45a84f4774a124adfabfc3_40b87e2f32c3d3b3922966108bb1c1e7fb795d6b.jpg"
+  },
+  "moss-motors": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://mossmotors.com/static/version1681935968/frontend/MossMotors/mms/en_US/images/logo.svg",
+    "cover_source": null
+  },
+  "motaclan": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://motaclan.com/wp-content/uploads/2022/09/motaclan_mark_only.png",
+    "cover_source": null
+  },
+  "nancy-mini-shop": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.nancy-mini-shop.com/wp-content/uploads/2018/03/xlogo-nancy-mini-shop-V4-1.png.pagespeed.ic.4zyGXglibn.png",
+    "cover_source": null
+  },
+  "newton-commercial": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://newtoncomm.co.uk/cdn/shop/files/logo_400x200_57c3f999-3747-4927-ab57-cafb10291db5_250x.png?v=1739285989",
+    "cover_source": null
+  },
+  "octagon-parts": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.octagonparts.nl/wp-content/uploads/2020/03/Octagon_watermark.png?v=1584090541",
+    "cover_source": null
+  },
+  "old-skool-minis": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://oldskoolminis.co.uk/wp-content/uploads/2020/10/LogoV3.png",
+    "cover_source": null
+  },
+  "palmside-nz": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://palmside.co.nz/cdn/shop/files/palmside-logo_6428b579-a0b1-4e9b-ab45-7742ac88af48_305x.png",
+    "cover_source": null
+  },
+  "pl-minis": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.plminishop.com/assets/images/logo.png",
+    "cover_source": "hero-img https://www.plminishop.com/assets/images/slideshow/demo1-banner1.jpg"
+  },
+  "slark-race-engineering": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.slarkraceengineering.co.uk/wp-content/uploads/2021/04/Slark-Tuning-Logo21.jpg",
+    "cover_source": null
+  },
+  "somerford-mini": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.somerfordmini.co.uk/themes/somerfordmini/img/sm_corporate_main_logo.svg",
+    "cover_source": "hero-img https://www.somerfordmini.co.uk/images/banners/247/Restoration%20.png"
+  },
+  "swiftune": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.swiftune.com/wp-content/uploads/2022/01/swiftune-logo-bird-png.png",
+    "cover_source": "hero-img https://www.swiftune.com/media/wysiwyg/desktop_1.png"
+  },
+  "the-little-car-shop": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.thelittlecarshop.com/img/tlcs-logo-1778837443.jpg",
+    "cover_source": "hero-img https://www.thelittlecarshop.com/modules/ps_imageslider/images/63a046e0b7f26f5e7c3ce6204b9a465285e85bd5_GABARIT%20-%20SLIDER%20SITE.jpg"
+  },
+  "tlcc-parts": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "header-img https://www.tlccparts.nl/wp-content/uploads/2021/08/logo-tlcc.png",
+    "cover_source": null
+  },
+  "tracauto-1950": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "json-ld https://www.tracauto-1950.com/img/logo-1764932513.jpg",
+    "cover_source": null
+  },
+  "woolies-trim": {
+    "fetched_at": "2026-09-18",
+    "logo_source": "override https://www.woolies-trim.co.uk/images/thumbs/0000139_woolies_logo.png",
+    "cover_source": "hero-img https://www.woolies-trim.co.uk/images/thumbs/0001514_0001444_Main%20banner%20cars%20canva%20text%20middle.png"
+  }
+}
