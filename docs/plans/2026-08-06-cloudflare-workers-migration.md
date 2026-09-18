@@ -523,6 +523,7 @@ inspection; evidence cited inline.
   `fetch()` against presigned URLs (presigned HeadObject; presigned GetObject + `Range:
   bytes=0-511`). Add "model upload finalize succeeds" to the Phase 0 spike checklist and a
   `client.send(` grep to CI.
+- **A2 — SUPERSEDED 2026-09-18: the DoH rewrite shipped after all.** workerd's `dns.lookup` returns CNAME targets as addresses, which the guard refuses; the spike only tested apex hosts. See `docs/invariants/models-3d.md`. Original note kept for the record:
 - **A2 (plan overcorrection, REFUTED blocker) — node:dns is fine.** `dns`, `net`, `tls` are in
   nitropack's `builtnNodeModules` (kept external) and workerd implements them natively under
   `nodejs_compat` (shipped 2025-01-28). **Fix:** demote Phase 1 item 1 from mandatory rewrite to

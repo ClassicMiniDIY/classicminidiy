@@ -7,10 +7,39 @@
  *
  * `isBlockedAddress` is pure and unit-tested; the DNS/redirect layers wrap it.
  */
-import { promises as dns } from 'node:dns';
 import net from 'node:net';
 
 const MAX_REDIRECTS = 5;
+
+/**
+ * Resolution is DNS-over-HTTPS, NOT `node:dns`.
+ *
+ * workerd's `dns.lookup()` returns every record in the DoH answer section as
+ * an "address", CNAME targets included: `www.facebook.com` came back as
+ * `[{ address: 'star-mini.c10r.facebook.com.' }, { address: '57.144.252.1' }]`.
+ * `isBlockedAddress` refuses a non-IP (fail closed), so every host that sits
+ * behind a CNAME — Facebook, eBay, Copart, Craigslist, Wikipedia, `www.` of
+ * almost anything — was rejected with "That URL could not be fetched", while
+ * apex hosts with bare A records (BaT, Cars & Bids) worked. Reproduced with
+ * `wrangler dev --local` on 2026-09-18. Querying DoH directly and keeping only
+ * A (1) and AAAA (28) records is the fix; a CNAME arrives in the same Answer
+ * array and is dropped by the type filter.
+ */
+const DOH = 'https://cloudflare-dns.com/dns-query';
+const DOH_TIMEOUT_MS = 5000;
+const DNS_TYPE_A = 1;
+const DNS_TYPE_AAAA = 28;
+
+interface DohAnswer {
+  name: string;
+  type: number;
+  data: string;
+}
+
+interface DohResponse {
+  Status: number;
+  Answer?: DohAnswer[];
+}
 
 export class SsrfError extends Error {
   constructor(message: string) {
@@ -106,8 +135,39 @@ export function isBlockedAddress(ip: string): boolean {
   return true; // not an IP (shouldn't reach here — DNS returns IPs)
 }
 
+/**
+ * Resolve `host` to its A + AAAA addresses over DoH. Fails CLOSED: a transport
+ * error, a non-NOERROR/NXDOMAIN RCODE, or an empty answer all throw SsrfError,
+ * so a resolver outage reads as "every scrape 400s", never as an SSRF hole.
+ * `fetchImpl` is injectable for tests only.
+ */
+export async function resolveHost(host: string, fetchImpl: typeof fetch = fetch): Promise<string[]> {
+  const query = async (type: 'A' | 'AAAA', want: number): Promise<string[]> => {
+    const res = await fetchImpl(`${DOH}?name=${encodeURIComponent(host)}&type=${type}`, {
+      headers: { accept: 'application/dns-json' },
+      signal: AbortSignal.timeout(DOH_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new SsrfError('Could not resolve host');
+    const body = (await res.json()) as DohResponse;
+    // 0 = NOERROR, 3 = NXDOMAIN: both are determinations. Anything else
+    // (SERVFAIL, REFUSED) is a failure to determine.
+    if (body.Status !== 0 && body.Status !== 3) throw new SsrfError('Could not resolve host');
+    return (body.Answer ?? []).filter((a) => a.type === want).map((a) => a.data);
+  };
+
+  let addresses: string[];
+  try {
+    const [v4, v6] = await Promise.all([query('A', DNS_TYPE_A), query('AAAA', DNS_TYPE_AAAA)]);
+    addresses = [...v4, ...v6];
+  } catch {
+    throw new SsrfError('Could not resolve host');
+  }
+  if (!addresses.length) throw new SsrfError('Could not resolve host');
+  return addresses;
+}
+
 /** Throw SsrfError unless `rawUrl` is http(s) and resolves only to public IPs. */
-export async function assertPublicUrl(rawUrl: string): Promise<void> {
+export async function assertPublicUrl(rawUrl: string, fetchImpl: typeof fetch = fetch): Promise<void> {
   let u: URL;
   try {
     u = new URL(rawUrl);
@@ -117,28 +177,7 @@ export async function assertPublicUrl(rawUrl: string): Promise<void> {
   if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new SsrfError('Only http(s) URLs are allowed');
 
   const host = u.hostname.replace(/^\[|\]$/g, '');
-  let addresses: string[];
-  if (net.isIP(host)) {
-    addresses = [host];
-  } else {
-    try {
-      // `node:dns` is one of the thinner parts of `nodejs_compat`, and lookup()
-      // in particular. VERIFIED on workerd 2026-08-30, against a real
-      // cloudflare_module build under `wrangler dev --local`, not assumed: it
-      // resolves. Four unrelated public hosts scraped successfully through this
-      // guard, a hostname resolving to a loopback address was refused, and an
-      // IP literal in a private range was refused.
-      //
-      // If that ever regresses, the failure is CLOSED rather than open — the
-      // catch below turns it into a refusal — so the symptom would be "every
-      // scrape 400s", not an SSRF hole. The fix in that case is DNS-over-HTTPS
-      // (1.1.1.1/dns-query), keeping this same fail-closed shape.
-      addresses = (await dns.lookup(host, { all: true })).map((r) => r.address);
-    } catch {
-      throw new SsrfError('Could not resolve host');
-    }
-    if (!addresses.length) throw new SsrfError('Could not resolve host');
-  }
+  const addresses = net.isIP(host) ? [host] : await resolveHost(host, fetchImpl);
   for (const a of addresses)
     if (isBlockedAddress(a)) throw new SsrfError('Refusing to fetch a private or local address');
 }

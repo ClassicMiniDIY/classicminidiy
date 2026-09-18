@@ -83,6 +83,24 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
   result with no title at all (MakerWorld's soft-404 has a default share image and no title).
   The exchange Finds parser (`server/api/exchange/external-listings/parse.post.ts`) shares
   this renderer and inherits the change.
+- **SSRF guard: DNS-over-HTTPS, not `node:dns` (2026-09-18).** The exchange Finds submit
+  form failed instantly with "That URL could not be fetched" for a Facebook Marketplace link,
+  and had done so since the Cloudflare cutover. Probing production showed the split: Bring a
+  Trailer, Cars & Bids, example.com and github.com parsed; www.facebook.com, facebook.com
+  (a 301 to www), www.ebay.com, www.copart.com, www.github.com and www.wikipedia.org all
+  400'd in ~70ms. The common factor was a CNAME in the DNS answer. A throwaway Worker under
+  `wrangler dev --local` made the mechanism explicit: workerd's `dns.lookup(host, { all:
+true })` returns EVERY record in the DoH answer section as an `address`, CNAME targets
+  included (`{ address: 'star-mini.c10r.facebook.com.', family: 4 }` next to the real A),
+  and `isBlockedAddress` refuses a non-IP on purpose, so the guard threw `SsrfError` and the
+  parser mapped it to its hard 400. The migration plan's A2 note ("node:dns is fine") was
+  verified against apex hosts only. `assertPublicUrl` now calls `resolveHost`, which
+  queries `cloudflare-dns.com/dns-query` for A and AAAA and keeps only record types 1 and
+  28, with the same fail-closed shape: transport error, SERVFAIL/REFUSED, or an empty
+  answer all throw. `fetchImpl` is injectable so `tests/unit/external-models/ssrf.test.ts`
+  feeds a real CNAME-then-A chain and a loopback A record without network. The same guard
+  fronts `server/api/models/external/submit.post.ts`, so external-model links behind a CNAME
+  were failing the same way.
 - **Cults3D goes through its authenticated GraphQL API (2026-09-17).** Cults3D pages are
   Cloudflare-challenged for a plain fetch AND for the Jina render ("Just a moment..." with
   upstream 200), so `server/utils/external-models/cults3d.ts` is the only working path. The
