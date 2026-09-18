@@ -21,7 +21,9 @@ confirming with Cole:
   cmdiy.co             sends via Shopify as orders@cmdiy.co, authenticated by
                        DKIM. Gets NO SPF — see below.
                        ALSO sends via Postmark as sales@cmdiy.co: the purchase
-                       orders the store emails to suppliers. Found 2026-09-18
+                       orders the "Auto Purchase Orders" Shopify app emails to
+                       suppliers (Postmark is that app's carrier; there is no
+                       Postmark account of our own). Found 2026-09-18
                        from the POs' own headers, AFTER this script had deleted
                        Postmark's DKIM key and return-path host as "dead" on
                        2026-09-03. Every PO since then failed DMARC and landed
@@ -202,6 +204,39 @@ CHANGES = [
         # verbatim. If Postmark ever rotates the key, its dashboard is the
         # source and this constant must follow.
         "create": [
+            # Shopify's "Email domain authentication" page for orders@cmdiy.co
+            # lists six CNAMEs (read 2026-09-18). Three were never in the zone:
+            # a second DKIM pair under a second mailer host. Shopify still
+            # reported "Authenticated" on the `4wr` set alone, so these are
+            # not the PO fix; they are what Shopify asks for, added so the
+            # page and the zone agree. The `701`/`mailer701` set that is also
+            # in the zone is no longer on Shopify's list. It is left alone:
+            # deleting a DKIM record on a hunch is how this file got its
+            # Postmark paragraph.
+            {
+                "type": "CNAME",
+                "name": "pdk1._domainkey.mailerl71.cmdiy.co",
+                "content": "dkim3.b413469e422d.p339.email.myshopify.com",
+                "proxied": False,
+                "ttl": 300,
+                "comment": "Shopify DKIM (orders@cmdiy.co), second mail config",
+            },
+            {
+                "type": "CNAME",
+                "name": "pdk2._domainkey.mailerl71.cmdiy.co",
+                "content": "dkim4.b413469e422d.p339.email.myshopify.com",
+                "proxied": False,
+                "ttl": 300,
+                "comment": "Shopify DKIM (orders@cmdiy.co), second mail config",
+            },
+            {
+                "type": "CNAME",
+                "name": "mailerl71.cmdiy.co",
+                "content": "b413469e422d.p339.email.myshopify.com",
+                "proxied": False,  # mail host: proxying it breaks SPF
+                "ttl": 300,
+                "comment": "Shopify envelope/return-path host, second mail config",
+            },
             {
                 "type": "CNAME",
                 "name": "pm-bounces.cmdiy.co",

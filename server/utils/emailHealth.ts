@@ -72,15 +72,30 @@ export interface DomainSpec {
   providerRecords?: ProviderRecord[];
 }
 
-/** Shopify's three DKIM CNAMEs for one mail config, given the selector prefix and store host. */
-function shopifyDkim(domain: string, prefix: string, host: string): ProviderRecord[] {
-  return [1, 2, 3].map((n) => ({
-    name: `${prefix}${n === 1 ? '' : n}._domainkey.${domain}`,
-    type: 'CNAME' as const,
-    provider: 'Shopify',
-    role: 'dkim' as const,
-    expect: `dkim${n}.${host}`,
-  }));
+/**
+ * What Shopify's "Email domain authentication" page lists for a domain, as
+ * read on 2026-09-18: two DKIM CNAMEs and one mailer (envelope) host per mail
+ * config. Shopify has changed this shape before — the zone also holds an
+ * older `701`/`mailer701` set that is no longer on the page — so this mirrors
+ * the page, not the zone.
+ */
+function shopifyConfig(domain: string, dkim: [string, string][], mailer: [string, string]): ProviderRecord[] {
+  return [
+    ...dkim.map(([name, target]) => ({
+      name: `${name}.${domain}`,
+      type: 'CNAME' as const,
+      provider: 'Shopify',
+      role: 'dkim' as const,
+      expect: target,
+    })),
+    {
+      name: `${mailer[0]}.${domain}`,
+      type: 'CNAME' as const,
+      provider: 'Shopify',
+      role: 'return-path' as const,
+      expect: mailer[1],
+    },
+  ];
 }
 
 /**
@@ -137,8 +152,11 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     //   six CNAMEs below); its historical SPF include (`shops.shopify.com`)
     //   resolves to bare `v=spf1 ~all` and grants nothing.
     //
-    //   Postmark, as `sales@cmdiy.co` — the store's purchase orders to
-    //   suppliers. Found 2026-09-18 from the POs' own headers. Authenticates by
+    //   Postmark, as `sales@cmdiy.co` — the purchase orders the "Auto Purchase
+    //   Orders" Shopify app sends to suppliers. Postmark is that app's
+    //   carrier; we hold no Postmark account, and the app's "Email domain
+    //   settings" page is where DKIM/Return-Path verification lives. Found
+    //   2026-09-18 from the POs' own headers. Authenticates by
     //   DKIM (selector `20240927014807pm`) and by SPF on its own return-path
     //   host (`pm-bounces`, a CNAME inheriting pm.mtasv.net's SPF). An earlier
     //   revision called Postmark "dead, an abandoned trial" and the 2026-09-03
@@ -159,8 +177,22 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     // when DKIM aligns, and it would land on the store's own mail.
     expectedIncludes: [CF_ROUTING_INCLUDE_HOST],
     providerRecords: [
-      ...shopifyDkim('cmdiy.co', '4wr', 'a1df6a69b770.p347.email.myshopify.com'),
-      ...shopifyDkim('cmdiy.co', '701', '6ff5c41a084a.p813.email.myshopify.com'),
+      ...shopifyConfig(
+        'cmdiy.co',
+        [
+          ['4wr._domainkey', 'dkim1.a1df6a69b770.p347.email.myshopify.com'],
+          ['4wr2._domainkey', 'dkim2.a1df6a69b770.p347.email.myshopify.com'],
+        ],
+        ['mailer4wr', 'a1df6a69b770.p347.email.myshopify.com']
+      ),
+      ...shopifyConfig(
+        'cmdiy.co',
+        [
+          ['pdk1._domainkey.mailerl71', 'dkim3.b413469e422d.p339.email.myshopify.com'],
+          ['pdk2._domainkey.mailerl71', 'dkim4.b413469e422d.p339.email.myshopify.com'],
+        ],
+        ['mailerl71', 'b413469e422d.p339.email.myshopify.com']
+      ),
       {
         name: '20240927014807pm._domainkey.cmdiy.co',
         type: 'TXT',
@@ -684,7 +716,8 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
   }
 
   // --- Provider records: DKIM selectors and return-path hosts ---
-  // Graded per provider so the row names who breaks, not which CNAME. A record
+  // DKIM is graded per provider so the row names who breaks, not which CNAME;
+  // return-path hosts get a row each, since a provider can have several. A record
   // that is present but points somewhere else is a fail like a missing one:
   // the receiver's DKIM verify fails either way.
   const providerRecords = spec.providerRecords ?? [];
@@ -724,21 +757,21 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
       const got = facts.providerRecords?.[r.name];
       if (!got || !got.resolved) {
         checks.push({
-          id: `rp-${r.provider.toLowerCase()}`,
+          id: `rp:${r.name}`,
           label: `${r.provider} return-path`,
           severity: 'unknown',
           detail: 'DNS lookup failed — not checked',
         });
       } else if (missing.includes(r) || wrong.includes(r)) {
         checks.push({
-          id: `rp-${r.provider.toLowerCase()}`,
+          id: `rp:${r.name}`,
           label: `${r.provider} return-path`,
           severity: 'fail',
           detail: `${r.name} ${missing.includes(r) ? 'is missing' : `does not point at ${r.expect}`} — ${provider} mail fails SPF alignment`,
         });
       } else {
         checks.push({
-          id: `rp-${r.provider.toLowerCase()}`,
+          id: `rp:${r.name}`,
           label: `${r.provider} return-path`,
           severity: 'ok',
           detail: `${r.name} → ${r.expect}`,

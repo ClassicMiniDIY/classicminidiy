@@ -353,9 +353,20 @@ describe('MAIL_DOMAINS', () => {
     const names = (c.providerRecords ?? []).map((r) => r.name);
     expect(names).toContain('pm-bounces.cmdiy.co');
     expect(names).toContain('20240927014807pm._domainkey.cmdiy.co');
-    // Two Shopify mail configs, three selectors each.
-    expect(names.filter((n) => n.startsWith('4wr')).length).toBe(3);
-    expect(names.filter((n) => n.startsWith('701')).length).toBe(3);
+    // Shopify's authentication page, 2026-09-18: two mail configs, each a
+    // DKIM pair plus a mailer host.
+    expect(names).toEqual(
+      expect.arrayContaining([
+        '4wr._domainkey.cmdiy.co',
+        '4wr2._domainkey.cmdiy.co',
+        'mailer4wr.cmdiy.co',
+        'pdk1._domainkey.mailerl71.cmdiy.co',
+        'pdk2._domainkey.mailerl71.cmdiy.co',
+        'mailerl71.cmdiy.co',
+      ])
+    );
+    expect(c.providerRecords!.filter((r) => r.provider === 'Shopify' && r.role === 'dkim').length).toBe(4);
+    expect(c.providerRecords!.filter((r) => r.provider === 'Shopify' && r.role === 'return-path').length).toBe(2);
     expect(c.providerRecords!.find((r) => r.name === 'pm-bounces.cmdiy.co')?.expect).toBe('pm.mtasv.net');
   });
 });
@@ -450,7 +461,7 @@ describe('buildDomainHealth', () => {
       );
       expect(check(h, 'dkim')?.severity).toBe('ok');
       expect(check(h, 'dkim')?.informational).toBeUndefined();
-      expect(check(h, 'rp-postmark')?.severity).toBe('ok');
+      expect(check(h, 'rp:pm-bounces.example.com')?.severity).toBe('ok');
       expect(h.worst).toBe('ok');
     });
 
@@ -468,7 +479,7 @@ describe('buildDomainHealth', () => {
       expect(check(h, 'dkim')?.severity).toBe('fail');
       expect(check(h, 'dkim')?.detail).toContain('Postmark');
       expect(check(h, 'dkim')?.detail).not.toContain('Shopify');
-      expect(check(h, 'rp-postmark')?.severity).toBe('fail');
+      expect(check(h, 'rp:pm-bounces.example.com')?.severity).toBe('fail');
       expect(h.worst).toBe('fail');
     });
 
