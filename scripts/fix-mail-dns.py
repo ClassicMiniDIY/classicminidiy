@@ -73,16 +73,23 @@ CF_ROUTING_INCLUDE = "include:_spf.mx.cloudflare.net"
 # `dmarc-reports.cloudflare.net`. Cloudflare then writes that mailbox into the
 # zone's `_dmarc` record itself.
 #
-# So this script does not carry the Cloudflare addresses as constants. It reads
-# the zone's current `_dmarc`, and if a `dmarc-reports.cloudflare.net` mailbox
-# is present it composes the canonical record around it, dropping every other
-# `rua` destination. If none is present it leaves the record alone and says so:
-# the fix is to enable DMARC Management, not to guess.
+# The mailboxes it minted on 2026-09-18 are pinned below, so this script can
+# restore them if anything strips them again — which happened once: step 3 of
+# the runbook was run from `main` with the previous version of this script,
+# which knew only Postmark's addresses and "corrected" the record back to them.
+# For a zone not listed here it falls back to reading the mailbox out of the
+# current `_dmarc` record; if neither yields one it leaves the record alone and
+# says so: the fix is to enable DMARC Management, not to guess.
 #
 # Postmark's DMARC Digests carried the reports from 2026-09-04 to 2026-09-18 as
 # a stopgap. Its addresses are kept below only so the transition is visible in
 # a dry run; once every zone reports `dmarc via Cloudflare` they can go.
 CF_DMARC_RUA_DOMAIN = "dmarc-reports.cloudflare.net"
+CF_DMARC_RUA = {
+    "classicminidiy.com": f"06aa511942f64669b5b8fd43bc3811d0@{CF_DMARC_RUA_DOMAIN}",
+    "theminiexchange.com": f"b8449acbe5774671ab39db0ab6b65c44@{CF_DMARC_RUA_DOMAIN}",
+    "cmdiy.co": f"773c1a7d02b34a4888b722bed05cb9ca@{CF_DMARC_RUA_DOMAIN}",
+}
 
 # The policy this script will publish, per domain, once the Cloudflare mailbox
 # is known. `p=none` until the reports have been read: see the ladder in
@@ -125,7 +132,7 @@ def cloudflare_rua(current_record):
 
 def dmarc_for(domain, current_record):
     """The record to publish, or None when Cloudflare's mailbox is not yet known."""
-    rua = cloudflare_rua(current_record)
+    rua = CF_DMARC_RUA.get(domain) or cloudflare_rua(current_record)
     if not rua:
         return None
     return f"v=DMARC1; {DMARC_POLICY[domain]}; rua=mailto:{rua};"
