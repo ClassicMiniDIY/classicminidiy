@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-  import { sanitizeRedirectPath } from '../../utils/redirect';
+  import { POST_AUTH_REDIRECT_KEY, sanitizeRedirectPath } from '../../utils/redirect';
 
   const { t } = useI18n();
 
@@ -40,7 +40,6 @@
   // Post-auth redirect intent stashed by /login (?redirect=<internal path>).
   // Consumed (read + cleared) only on a successful sign-in; re-validated here
   // so a tampered localStorage value can't become an open redirect.
-  const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
   function consumeStoredRedirect(): string | null {
     try {
       const value = window.localStorage.getItem(POST_AUTH_REDIRECT_KEY);

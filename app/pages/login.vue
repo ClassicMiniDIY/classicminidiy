@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-  import { sanitizeRedirectPath } from '../utils/redirect';
+  import { POST_AUTH_REDIRECT_KEY, sanitizeRedirectPath } from '../utils/redirect';
 
   const { t } = useI18n();
 
@@ -155,7 +155,6 @@
   // rejects absolute URLs, protocol-relative //host, backslash variants
   // (browsers normalize \ to /), and control characters, so the param can't
   // be abused as an open redirect.
-  const POST_AUTH_REDIRECT_KEY = 'cmdiy-post-auth-redirect';
   const requestedRedirect = computed(() => sanitizeRedirectPath(route.query.redirect));
 
   // Read and clear the preserved intent. Passkey sign-in never reaches
