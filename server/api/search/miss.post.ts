@@ -1,4 +1,5 @@
 import { getServiceClient } from '../../utils/supabase';
+import { triageSearchMiss } from '../../utils/searchTriage';
 
 /**
  * POST /api/search/miss — a person searched, committed, and got nothing.
@@ -15,6 +16,11 @@ import { getServiceClient } from '../../utils/supabase';
  * chars, whitespace collapsed), so an anonymous caller cannot influence
  * anything a visitor sees. The write rate limit in
  * `server/middleware/rate-limit.ts` covers this like every other POST.
+ *
+ * After the row lands, the miss is labelled by TypeSafe (typo / synonym /
+ * missing content / question / junk) in the background, so the admin's Most
+ * Wanted candidates sort by what they are. The label never delays the 204
+ * and nothing public reads it. Design: the private repo's typesafe phase 4 doc.
  */
 const MAX_QUERY_LENGTH = 120;
 
@@ -35,6 +41,8 @@ export default defineEventHandler(async (event) => {
   if (error) {
     // Telemetry never surfaces as a failure to the person searching.
     console.error('[search] record_search_miss failed:', error.message);
+  } else {
+    (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(triageSearchMiss(event, query));
   }
 
   setResponseStatus(event, 204);

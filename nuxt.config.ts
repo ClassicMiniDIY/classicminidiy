@@ -813,6 +813,12 @@ export default defineNuxtConfig({
     // (wanted posts, seller inquiries) has no env switch: it reads the same
     // platform_settings row as the private-message screen.
     TYPESAFE_MODELS_MODE: process.env.NUXT_TYPESAFE_MODELS_MODE || '',
+    //   TYPESAFE_SEARCH_MODE -> NUXT_TYPESAFE_SEARCH_MODE ('off' | 'shadow')
+    // `shadow` asks for the query kind and lead surface beside every lookup
+    // or question search and logs the answer next to the regex one
+    // (server/utils/searchTriage.ts); the response never changes. The
+    // search-miss triage has no switch: it runs whenever the key is set.
+    TYPESAFE_SEARCH_MODE: process.env.NUXT_TYPESAFE_SEARCH_MODE || '',
     // Shopify STOREFRONT credentials for the chat agent's `store-search` tool
     // (server/utils/shopifyCatalog.ts). Design doc:
     // docs/plans/2026-09-01-shopify-catalog-tool.md.

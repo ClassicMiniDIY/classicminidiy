@@ -361,6 +361,11 @@ export type Database = {
           normalized_query: string | null;
           promoted_request_id: string | null;
           query: string;
+          triage_at: string | null;
+          triage_corrected: string | null;
+          triage_kind: string | null;
+          triage_p: number | null;
+          triage_version: string | null;
         };
         Insert: {
           dismissed_at?: string | null;
@@ -371,6 +376,11 @@ export type Database = {
           normalized_query?: string | null;
           promoted_request_id?: string | null;
           query: string;
+          triage_at?: string | null;
+          triage_corrected?: string | null;
+          triage_kind?: string | null;
+          triage_p?: number | null;
+          triage_version?: string | null;
         };
         Update: {
           dismissed_at?: string | null;
@@ -381,6 +391,11 @@ export type Database = {
           normalized_query?: string | null;
           promoted_request_id?: string | null;
           query?: string;
+          triage_at?: string | null;
+          triage_corrected?: string | null;
+          triage_kind?: string | null;
+          triage_p?: number | null;
+          triage_version?: string | null;
         };
         Relationships: [
           {
@@ -6183,6 +6198,16 @@ export type Database = {
         }[];
       };
       record_search_miss: { Args: { p_query: string }; Returns: undefined };
+      record_search_miss_triage: {
+        Args: {
+          p_corrected?: string;
+          p_kind: string;
+          p_p: number;
+          p_query: string;
+          p_version?: string;
+        };
+        Returns: boolean;
+      };
       reject_model_version: {
         Args: { p_reason: string; p_version_id: string };
         Returns: undefined;
