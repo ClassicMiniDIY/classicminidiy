@@ -96,11 +96,6 @@
       "evidence": "Fetched 2026-09-07, HTTP 200. Unit 2, Malton Enterprise Park, North Yorkshire; online shop plus engine, gearbox and head services."
     },
     {
-      "id": "specialist-components",
-      "url": "https://www.specialist-components.co.uk",
-      "evidence": "Fetched 2026-09-07, HTTP 200. Carlton Rode, Norfolk; Classic Mini Performance Parts division with throttle body kits, the SC D400 ECU and TwinKam 16v."
-    },
-    {
       "id": "guessworks",
       "url": "https://www.guess-works.com",
       "evidence": "Fetched 2026-09-07, HTTP 200. UK VAT-registered with 0800 number; covers Mini, Metro and ADO16 transverse boxes; states worldwide shipping."
@@ -481,6 +476,11 @@
       "name": "My Mini Ride",
       "tried": "https://www.myminiride.be",
       "reason": "Could not be fetched on 2026-09-07 — no response. Recheck; transient."
+    },
+    {
+      "name": "Specialist Components",
+      "tried": "https://www.specialist-components.co.uk",
+      "reason": "Removed from the directory 2026-09-18 at the editor's discretion. Not a fetch failure; do not re-add without asking."
     }
   ]
 }
