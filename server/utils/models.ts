@@ -4,16 +4,8 @@
  * finalize, and download routes agree on limits.
  */
 
-// --- File limits (mirror marketplace_config seeds; keystone §4/§5) -----------
-
-/** Per-file hard cap: 200 MiB. Mirrors `model_files.size_bytes <= 209715200`. */
-export const MODEL_FILE_MAX_BYTES = 209_715_200;
-
-/** Per-version file count cap. Mirrors `marketplace_config.max_files_per_version`. */
-export const MODEL_VERSION_MAX_FILES = 20;
-
-/** Per-version total-bytes cap: 500 MiB (keystone §5 step 1). */
-export const MODEL_VERSION_MAX_TOTAL_BYTES = 524_288_000;
+// File and image limits live in shared/utils/modelLimits.ts so the upload
+// wizard enforces the same numbers as the routes.
 
 /**
  * Allowed file extensions, lowercase only — the DB `file_ext` check constraint

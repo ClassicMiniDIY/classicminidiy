@@ -19,6 +19,12 @@ import {
   MODEL_FILE_EXTS,
   MODEL_VIEWER_MAX_BYTES,
 } from '~~/data/models/model-library';
+import {
+  MODEL_FILE_MAX_BYTES,
+  MODEL_IMAGE_MAX_BYTES,
+  MODEL_MAX_IMAGES,
+  MODEL_VERSION_MAX_FILES,
+} from '~~/shared/utils/modelLimits';
 
 export interface WizardFile {
   fileId: string;
@@ -38,11 +44,6 @@ export interface WizardImage {
   status: 'uploading' | 'uploaded' | 'error';
   error?: string;
 }
-
-const FILE_MAX_BYTES = 209_715_200; // 200 MiB (mirrors model_files cap)
-const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
-const MAX_FILES = 20;
-const MAX_IMAGES = 12;
 
 export function useModelUpload() {
   const supabase = useSupabase();
@@ -159,8 +160,8 @@ export function useModelUpload() {
       return;
     }
     for (const file of fileList) {
-      if (files.value.length >= MAX_FILES) {
-        error.value = `A version may have at most ${MAX_FILES} files`;
+      if (files.value.length >= MODEL_VERSION_MAX_FILES) {
+        error.value = `A version may have at most ${MODEL_VERSION_MAX_FILES} files`;
         break;
       }
       const ext = extOf(file.name);
@@ -168,7 +169,7 @@ export function useModelUpload() {
         error.value = `Unsupported file type: .${ext}`;
         continue;
       }
-      if (file.size < 1 || file.size > FILE_MAX_BYTES) {
+      if (file.size < 1 || file.size > MODEL_FILE_MAX_BYTES) {
         error.value = `${file.name} is too large (200 MB max)`;
         continue;
       }
@@ -193,14 +194,11 @@ export function useModelUpload() {
       const presign = await $fetch<{
         fileId: string;
         upload: { url: string; method: 'PUT'; headers: Record<string, string> };
-      }>(
-        '/api/models/uploads/presign',
-        {
-          method: 'POST',
-          headers,
-          body: { versionId: versionId.value, fileName: file.name, ext: entry.ext, sizeBytes: file.size },
-        }
-      );
+      }>('/api/models/uploads/presign', {
+        method: 'POST',
+        headers,
+        body: { versionId: versionId.value, fileName: file.name, ext: entry.ext, sizeBytes: file.size },
+      });
       entry.fileId = presign.fileId;
       await putToS3(presign.upload, file, (p) => (entry.progress = p));
       entry.status = 'verifying';
@@ -265,11 +263,11 @@ export function useModelUpload() {
       return;
     }
     for (const file of fileList) {
-      if (images.value.length >= MAX_IMAGES) {
-        error.value = `A model may have at most ${MAX_IMAGES} images`;
+      if (images.value.length >= MODEL_MAX_IMAGES) {
+        error.value = `A model may have at most ${MODEL_MAX_IMAGES} images`;
         break;
       }
-      if (file.size > IMAGE_MAX_BYTES) {
+      if (file.size > MODEL_IMAGE_MAX_BYTES) {
         error.value = `${file.name} is too large (10 MB max)`;
         continue;
       }
@@ -487,10 +485,10 @@ export function useModelUpload() {
     loadExisting,
     next,
     prev,
-    // constants
-    MAX_FILES,
-    MAX_IMAGES,
-    FILE_MAX_BYTES,
+    // constants (keys kept for the wizard template)
+    MAX_FILES: MODEL_VERSION_MAX_FILES,
+    MAX_IMAGES: MODEL_MAX_IMAGES,
+    FILE_MAX_BYTES: MODEL_FILE_MAX_BYTES,
     MODEL_VIEWER_MAX_BYTES,
   };
 }

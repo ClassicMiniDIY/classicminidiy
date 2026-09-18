@@ -20,6 +20,8 @@ import {
   MODEL_FILE_MAX_BYTES,
   MODEL_VERSION_MAX_FILES,
   MODEL_VERSION_MAX_TOTAL_BYTES,
+} from '../../../../shared/utils/modelLimits';
+import {
   MODEL_FILE_KINDS,
   type ModelFileKind,
   normalizeExt,
