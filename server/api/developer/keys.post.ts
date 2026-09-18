@@ -1,12 +1,7 @@
 import { requireUserAuth } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
-import {
-  keyCacheId,
-  MCP_KEY_DISPLAY_PREFIX_LENGTH,
-  MCP_MAX_ACTIVE_KEYS,
-  mintApiKey,
-  sha256Hex,
-} from '../../utils/mcpTiers';
+import { MCP_KEY_DISPLAY_PREFIX_LENGTH, MCP_MAX_ACTIVE_KEYS } from '../../../shared/utils/mcpTiers';
+import { keyCacheId, mintApiKey, sha256Hex } from '../../utils/mcpTiers';
 
 /**
  * Mint a new API key for the caller (Developer API). The response is the ONLY

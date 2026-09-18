@@ -24,15 +24,14 @@
 
 import { isProtectedMcpPath } from '../utils/mcpRoutes';
 import {
-  DEVELOPER_PRODUCT_ID,
   keyCacheId,
   MCP_KEY_CACHE_TTL_SECONDS,
   MCP_KEY_NEGATIVE_CACHE_TTL_SECONDS,
-  MCP_KEY_PREFIX,
   type McpKeyCacheEntry,
   setMcpAuth,
   sha256Hex,
 } from '../utils/mcpTiers';
+import { DEVELOPER_PRODUCT_ID, MCP_KEY_PREFIX } from '../../shared/utils/mcpTiers';
 import { clientIp } from '../utils/clientIp';
 import { consumeRateLimit } from '../utils/rateLimit';
 import { getServiceClient } from '../utils/supabase';

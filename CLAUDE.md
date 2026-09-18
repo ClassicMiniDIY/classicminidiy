@@ -102,6 +102,12 @@ per-component `<i18n lang="json">` blocks.
 - **Never shadow an auto-import.** A local `const ref = …` anywhere in a `<script setup>`
   strips `import { ref }` for the whole file and the component never mounts, with no
   build error. `python3 scripts/find-shadowed-autoimports.py` sweeps for it.
+  Its mirror: **never export one name from two files in the same auto-import
+  scope** (`app/utils` + `app/composables` + `shared/utils` on the client;
+  `server/utils/**` + `shared/utils` on Nitro). A `server/utils` file that
+  re-exports its `shared/utils` twin, or a composable that redeclares a shared
+  constant, makes unimport drop one copy and log `Duplicated imports` per name.
+  Server code imports `shared/` directly. `tests/static/auto-import-collisions.test.ts`.
 - **Never branch a template structurally on state the server cannot see.** The Supabase
   session lives in localStorage, so `isAuthenticated`/`isAdmin`, localStorage reads
   (`useChatHistory`, `useRecentTools`) and `window.*` feature checks are all false during

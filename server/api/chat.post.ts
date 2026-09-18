@@ -12,7 +12,8 @@ import {
   readChatClient,
 } from '../utils/chatUsage';
 import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
-import { getChatAuth, MEMBERSHIP_URL } from '../utils/chatTiers';
+import { MEMBERSHIP_URL } from '../../shared/utils/chatTiers';
+import { getChatAuth } from '../utils/chatTiers';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
 import { CHAT_REQUEST_MAX_CHARS, transcriptChars } from '../../shared/utils/chatTranscript';
 

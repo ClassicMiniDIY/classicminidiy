@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3';
 import { getServiceClient } from './supabase';
 import { requireUserClient } from './userAuth';
-import { CHAT_TIER_CACHE_TTL_SECONDS, SUSTAINING_PRODUCT_ID, chatTierCacheId } from './chatTiers';
+import { SUSTAINING_PRODUCT_ID } from '../../shared/utils/chatTiers';
+import { CHAT_TIER_CACHE_TTL_SECONDS, chatTierCacheId } from './chatTiers';
 import { logNativeChatClient } from './chatUsage';
 
 /**

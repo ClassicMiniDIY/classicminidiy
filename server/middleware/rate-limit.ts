@@ -1,6 +1,7 @@
 import { isProtectedMcpPath } from '../utils/mcpRoutes';
 import { consumeRateLimit } from '../utils/rateLimit';
-import { getMcpAuth, type McpTier } from '../utils/mcpTiers';
+import type { McpTier } from '../../shared/utils/mcpTiers';
+import { getMcpAuth } from '../utils/mcpTiers';
 import { clientIp } from '../utils/clientIp';
 
 /**

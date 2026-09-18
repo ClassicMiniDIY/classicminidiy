@@ -76,6 +76,35 @@ specific case in dev, fetch the transformed module and look at the vue import li
   Nuxt. An explicit `import Foo from './Foo.vue'` still wins over auto-import
   and is accepted; `Chat/ChatWindow.vue`'s children work that way.
 
+- **One exported name, one file per auto-import scope.** Nuxt feeds unimport
+  two overlapping scan sets: the client gets `app/utils`, `app/composables` and
+  `shared/utils`; Nitro gets `server/utils/**` (recursive) and `shared/utils`.
+  unimport keys its registry on the exported name, so two files in one set that
+  export the same name are a collision, not an error: it keeps one, drops the
+  other, and logs one line per name —
+
+  ```
+  Duplicated imports "McpTier", the one from ".../shared/utils/mcpTiers.ts"
+  has been ignored and ".../server/utils/mcpTiers.ts" is used
+  ```
+
+  Both `server/utils/mcpTiers.ts` and `server/utils/chatTiers.ts` re-exported
+  their `shared/utils` twins "so server code keeps one import": fourteen
+  names, logged three times each on every Cloudflare build, for weeks. On the
+  client side `useOmnisearch.ts` re-exported `SearchResult` and
+  `useAdminDeveloper.ts` had its own `export const DEVELOPER_PRODUCT_ID`
+  alongside the shared one. Nothing failed, which is why nobody read the
+  warning. It is still a latent bug: which copy wins is an unimport ordering
+  detail, and the two copies are only identical until someone edits one.
+
+  The fix is the boring one. A `server/utils` file holds server-only code and
+  imports client-safe constants from `shared/` by relative path (the server
+  convention; client code uses `~~/`). Nothing re-exports. Type re-exports
+  count too: unimport registers `export type { X } from` like a value.
+  `tests/static/auto-import-collisions.test.ts` reimplements the two scan sets
+  (top-level plus `index.ts` for the client dirs, recursive for `server/utils`)
+  and fails on any name owned by two files.
+
 - **Any check that scans source for a call must blank comments first.** Three
   separate checks in this repo have been wrong because prose counted as code:
   the Worker env registry (a doc comment naming `process.env.MICROLINK_API_KEY`

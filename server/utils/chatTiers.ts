@@ -4,11 +4,11 @@ import type { ChatTier } from '../../shared/utils/chatTiers';
 /**
  * Server-only half of the chat tier contract: the per-request context
  * accessors and the cache key. The client-safe constants live in
- * `shared/utils/chatTiers.ts` and are re-exported here so server code keeps a
- * single import path.
+ * `shared/utils/chatTiers.ts`; server code imports them from there directly.
+ * This file must NOT re-export them: Nitro auto-imports both `shared/utils`
+ * and `server/utils`, so a re-export registers every name twice
+ * (tests/static/auto-import-collisions.test.ts).
  */
-export { CHAT_QUOTAS, MEMBERSHIP_URL, SUSTAINING_PRODUCT_ID } from '../../shared/utils/chatTiers';
-export type { ChatQuota, ChatTier } from '../../shared/utils/chatTiers';
 
 /**
  * Cache TTLs, reused from the MCP contract rather than invented.

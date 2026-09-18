@@ -1,12 +1,7 @@
 import { getServiceClient } from '../utils/supabase';
 import { extractAccessToken, isUserBanned } from '../utils/userAuth';
-import {
-  CHAT_TIER_CACHE_TTL_SECONDS,
-  SUSTAINING_PRODUCT_ID,
-  chatTierCacheId,
-  setChatAuth,
-  type ChatTier,
-} from '../utils/chatTiers';
+import { SUSTAINING_PRODUCT_ID, type ChatTier } from '../../shared/utils/chatTiers';
+import { CHAT_TIER_CACHE_TTL_SECONDS, chatTierCacheId, setChatAuth } from '../utils/chatTiers';
 import { sha256Hex } from '../utils/mcpTiers';
 
 /**

@@ -18,7 +18,7 @@ vi.mock('~/server/utils/mcpUsage', () => ({
 }));
 
 import plugin from '~/server/plugins/mcp-tiering';
-import { FREE_TOOLS } from '~/server/utils/mcpTiers';
+import { FREE_TOOLS } from '~~/shared/utils/mcpTiers';
 
 /** Register the plugin against a fake nitroApp and return the hook fn. */
 function hookFn(): Function {

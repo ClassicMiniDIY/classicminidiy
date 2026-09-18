@@ -12,6 +12,7 @@
  * After any entitlement change, call refreshKeyCache(userId): the tier is
  * cached per key, so without it the change is invisible for up to the cache TTL.
  */
+import { DEVELOPER_PRODUCT_ID } from '~~/shared/utils/mcpTiers';
 
 export interface AdminDeveloperSummary {
   is_active: boolean;
@@ -59,8 +60,6 @@ export interface AdminUsageRow {
   day: string;
   call_count: number;
 }
-
-export const DEVELOPER_PRODUCT_ID = 'developer';
 
 export const useAdminDeveloper = () => {
   const supabase = useSupabase();
