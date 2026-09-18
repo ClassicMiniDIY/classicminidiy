@@ -11,6 +11,9 @@ paths:
   - 'server/api/exchange/contact-seller.post.ts'
   - 'server/api/models/index.post.ts'
   - 'server/api/models/*.patch.ts'
+  - 'server/utils/searchTriage.ts'
+  - 'server/api/search/miss.post.ts'
+  - 'server/api/search/index.get.ts'
 ---
 
 # TypeSafe (Jev) rules
@@ -64,3 +67,12 @@ that must survive any phase.
   `safety_critical`. The detail page shows the strong disclaimer on
   `isSafetyCritical(flag, p)` = seller flag OR `p >= 0.7`; the model only ever
   adds caution. Off unless `TYPESAFE_MODELS_MODE=on`.
+- **The search surface stays regex on every path a visitor waits on.**
+  `server/utils/searchTriage.ts` runs only after the fact: the miss triage
+  labels a row `record_search_miss()` already wrote (`triage_*` columns, via
+  `record_search_miss_triage`), and the intent shadow (`TYPESAFE_SEARCH_MODE
+= shadow`) logs `search_intent_shadow` beside the regex kind with a
+  `INTENT_SHADOW_CEILING_MS` ceiling. Neither changes `/api/search`'s
+  response, the surface order, or `shared/utils/searchIntent.ts`; a reorder
+  from a model answer is a later change with its own switch.
+  `promote_search_miss()` stays a human act.
