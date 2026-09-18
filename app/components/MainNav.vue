@@ -77,6 +77,26 @@
     { label: t('navigation.chat'), icon: 'fas fa-comments', to: '/chat', external: false },
   ]);
 
+  /**
+   * The Exchange's sub-destinations. On desktop they hang off the Exchange
+   * link as a hover/focus dropdown (the link itself still goes to `/exchange`,
+   * so the headline "find the marketplace" path is unchanged); in the drawer
+   * they render indented under it. Wanted and Finds had NO inbound link
+   * anywhere in the chrome before this — the only way to reach them was a
+   * typed URL.
+   */
+  const exchangeLinks = computed(() => [
+    { label: t('navigation.exchange_listings'), icon: 'fas fa-car', to: '/exchange/listings' },
+    { label: t('navigation.exchange_wanted'), icon: 'fas fa-bullhorn', to: '/exchange/wanted' },
+    { label: t('navigation.exchange_finds'), icon: 'fas fa-binoculars', to: '/exchange/finds' },
+    { label: t('navigation.exchange_sold'), icon: 'fas fa-box-archive', to: '/exchange/sold' },
+  ]);
+  const exchangeSell = computed(() => ({
+    label: t('navigation.exchange_sell'),
+    icon: 'fas fa-plus',
+    to: '/exchange/listings/new',
+  }));
+
   /** The More dropdown, and the second block of the mobile drawer. */
   const secondaryLinks = computed(() => [
     { label: t('navigation.models'), icon: 'fas fa-cube', to: '/models', external: false },
@@ -206,17 +226,70 @@
 
       <!-- Desktop: primary links + More -->
       <nav class="ml-1 hidden items-center gap-0.5 lg:flex" :aria-label="t('primary_nav')">
-        <NuxtLink
-          v-for="link in primaryLinks"
-          :key="link.to"
-          :to="link.to"
-          class="nav-link"
-          :class="{ 'is-active': isActive(link.to as string) }"
-          @click="track('nav_item_clicked', { label: link.label, surface: 'desktop' })"
-        >
-          <i :class="[link.icon, 'nav-link-icon']" aria-hidden="true"></i>
-          {{ link.label }}
-        </NuxtLink>
+        <template v-for="link in primaryLinks" :key="link.to">
+          <!-- Exchange: the link navigates, hover/focus reveals the sections.
+               `dropdown-hover` so a pointer user never has to choose between
+               "open the menu" and "go to the marketplace"; `:focus-within`
+               opens it for keyboard users on Tab. -->
+          <div v-if="link.to === '/exchange'" class="dropdown dropdown-hover">
+            <NuxtLink
+              :to="link.to"
+              class="nav-link"
+              :class="{ 'is-active': isActive(link.to as string) }"
+              @click="
+                closeDropdowns();
+                track('nav_item_clicked', { label: link.label, surface: 'desktop' });
+              "
+            >
+              <i :class="[link.icon, 'nav-link-icon']" aria-hidden="true"></i>
+              {{ link.label }}
+              <i class="fas fa-chevron-down text-[10px] opacity-60" aria-hidden="true"></i>
+            </NuxtLink>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu z-[60] mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+            >
+              <li v-for="sub in exchangeLinks" :key="sub.to">
+                <NuxtLink
+                  :to="sub.to"
+                  class="font-semibold"
+                  :class="{ 'menu-active': isActive(sub.to) }"
+                  @click="
+                    closeDropdowns();
+                    track('nav_item_clicked', { label: sub.label, surface: 'desktop' });
+                  "
+                >
+                  <i :class="[sub.icon, 'w-4 text-secondary']" aria-hidden="true"></i>
+                  {{ sub.label }}
+                </NuxtLink>
+              </li>
+              <li class="mt-1 border-t border-base-300 pt-1">
+                <NuxtLink
+                  :to="exchangeSell.to"
+                  class="font-semibold text-primary"
+                  @click="
+                    closeDropdowns();
+                    track('nav_item_clicked', { label: exchangeSell.label, surface: 'desktop' });
+                  "
+                >
+                  <i :class="[exchangeSell.icon, 'w-4']" aria-hidden="true"></i>
+                  {{ exchangeSell.label }}
+                </NuxtLink>
+              </li>
+            </ul>
+          </div>
+
+          <NuxtLink
+            v-else
+            :to="link.to"
+            class="nav-link"
+            :class="{ 'is-active': isActive(link.to as string) }"
+            @click="track('nav_item_clicked', { label: link.label, surface: 'desktop' })"
+          >
+            <i :class="[link.icon, 'nav-link-icon']" aria-hidden="true"></i>
+            {{ link.label }}
+          </NuxtLink>
+        </template>
 
         <div class="dropdown">
           <div tabindex="0" role="button" class="nav-link" :class="{ 'is-active': isMoreActive }">
@@ -428,17 +501,30 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-2.5">
-              <NuxtLink
-                v-for="link in primaryLinks"
-                :key="link.to"
-                :to="link.to"
-                class="drawer-link is-primary"
-                :class="{ 'is-active': isActive(link.to as string) }"
-                @click="goToDrawerLink(link.label)"
-              >
-                <i :class="[link.icon, 'w-[18px] text-secondary']" aria-hidden="true"></i>
-                {{ link.label }}
-              </NuxtLink>
+              <template v-for="link in primaryLinks" :key="link.to">
+                <NuxtLink
+                  :to="link.to"
+                  class="drawer-link is-primary"
+                  :class="{ 'is-active': isActive(link.to as string) }"
+                  @click="goToDrawerLink(link.label)"
+                >
+                  <i :class="[link.icon, 'w-[18px] text-secondary']" aria-hidden="true"></i>
+                  {{ link.label }}
+                </NuxtLink>
+                <template v-if="link.to === '/exchange'">
+                  <NuxtLink
+                    v-for="sub in [...exchangeLinks, exchangeSell]"
+                    :key="sub.to"
+                    :to="sub.to"
+                    class="drawer-link is-nested"
+                    :class="{ 'is-active': isActive(sub.to) }"
+                    @click="goToDrawerLink(sub.label)"
+                  >
+                    <i :class="[sub.icon, 'w-[18px] text-secondary']" aria-hidden="true"></i>
+                    {{ sub.label }}
+                  </NuxtLink>
+                </template>
+              </template>
 
               <div class="my-2 mx-1.5 h-px bg-base-300"></div>
 
@@ -661,6 +747,14 @@
     font-weight: 700;
     color: var(--color-base-content);
   }
+  /* Section children (the Exchange sub-pages): shorter, indented past the
+     parent's icon, lighter weight so the parent row still reads as the group. */
+  .drawer-link.is-nested {
+    min-height: 38px;
+    padding-left: 2.75rem;
+    font-size: 14px;
+    font-weight: 500;
+  }
   .drawer-link:hover,
   .drawer-link.is-active {
     background: var(--color-base-200);
@@ -699,6 +793,11 @@
       "toolbox": "Toolbox",
       "archive": "Archive",
       "exchange": "Exchange",
+      "exchange_listings": "Browse Listings",
+      "exchange_wanted": "Wanted",
+      "exchange_finds": "Finds",
+      "exchange_sold": "Sold Archive",
+      "exchange_sell": "Sell a Mini or Parts",
       "chat": "Chat",
       "more": "More",
       "models": "Models",
@@ -731,6 +830,11 @@
       "toolbox": "Herramientas",
       "archive": "Archivo",
       "exchange": "Mercado",
+      "exchange_listings": "Explorar anuncios",
+      "exchange_wanted": "Se busca",
+      "exchange_finds": "Hallazgos",
+      "exchange_sold": "Archivo de vendidos",
+      "exchange_sell": "Vender un Mini o piezas",
       "chat": "Chat",
       "more": "Más",
       "models": "Modelos",
@@ -763,6 +867,11 @@
       "toolbox": "Outils",
       "archive": "Archive",
       "exchange": "Marché",
+      "exchange_listings": "Parcourir les annonces",
+      "exchange_wanted": "Recherché",
+      "exchange_finds": "Trouvailles",
+      "exchange_sold": "Archive des ventes",
+      "exchange_sell": "Vendre une Mini ou des pièces",
       "chat": "Chat",
       "more": "Plus",
       "models": "Modèles",
@@ -795,6 +904,11 @@
       "toolbox": "Werkzeuge",
       "archive": "Archiv",
       "exchange": "Marktplatz",
+      "exchange_listings": "Anzeigen durchsuchen",
+      "exchange_wanted": "Gesucht",
+      "exchange_finds": "Funde",
+      "exchange_sold": "Verkauft-Archiv",
+      "exchange_sell": "Mini oder Teile verkaufen",
       "chat": "Chat",
       "more": "Mehr",
       "models": "Modelle",
@@ -827,6 +941,11 @@
       "toolbox": "Strumenti",
       "archive": "Archivio",
       "exchange": "Mercato",
+      "exchange_listings": "Sfoglia annunci",
+      "exchange_wanted": "Cercasi",
+      "exchange_finds": "Trovate",
+      "exchange_sold": "Archivio venduti",
+      "exchange_sell": "Vendi una Mini o ricambi",
       "chat": "Chat",
       "more": "Altro",
       "models": "Modelli",
@@ -859,6 +978,11 @@
       "toolbox": "Ferramentas",
       "archive": "Arquivo",
       "exchange": "Mercado",
+      "exchange_listings": "Explorar anúncios",
+      "exchange_wanted": "Procura-se",
+      "exchange_finds": "Achados",
+      "exchange_sold": "Arquivo de vendidos",
+      "exchange_sell": "Vender um Mini ou peças",
       "chat": "Chat",
       "more": "Mais",
       "models": "Modelos",
@@ -891,6 +1015,11 @@
       "toolbox": "Инструменты",
       "archive": "Архив",
       "exchange": "Барахолка",
+      "exchange_listings": "Объявления",
+      "exchange_wanted": "Куплю",
+      "exchange_finds": "Находки",
+      "exchange_sold": "Архив проданных",
+      "exchange_sell": "Продать Mini или запчасти",
       "chat": "Чат",
       "more": "Ещё",
       "models": "Модели",
@@ -923,6 +1052,11 @@
       "toolbox": "ツールボックス",
       "archive": "アーカイブ",
       "exchange": "マーケット",
+      "exchange_listings": "出品を見る",
+      "exchange_wanted": "求む",
+      "exchange_finds": "ファインド",
+      "exchange_sold": "売却済みアーカイブ",
+      "exchange_sell": "Mini・パーツを出品",
       "chat": "チャット",
       "more": "その他",
       "models": "モデル",
@@ -955,6 +1089,11 @@
       "toolbox": "工具箱",
       "archive": "档案",
       "exchange": "交易市场",
+      "exchange_listings": "浏览刊登",
+      "exchange_wanted": "求购",
+      "exchange_finds": "发现",
+      "exchange_sold": "已售存档",
+      "exchange_sell": "出售 Mini 或零件",
       "chat": "聊天",
       "more": "更多",
       "models": "模型",
@@ -987,6 +1126,11 @@
       "toolbox": "도구상자",
       "archive": "아카이브",
       "exchange": "마켓",
+      "exchange_listings": "매물 둘러보기",
+      "exchange_wanted": "구합니다",
+      "exchange_finds": "파인드",
+      "exchange_sold": "판매 완료 아카이브",
+      "exchange_sell": "Mini 또는 부품 판매",
       "chat": "채팅",
       "more": "더보기",
       "models": "모델",
