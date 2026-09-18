@@ -22,11 +22,13 @@
  * metadata → the user fills it in manually.
  *
  * Facebook Marketplace is NOT in that list any more. Its login wall is keyed
- * on the User-Agent: a browser UA gets the wall (or a 400 "Error" page), while
- * a link-preview UA — ours, Slack's, Discord's — gets the full OG head with
- * title, description and image, exactly as a share preview would. So the
- * parser identifies itself honestly to Facebook instead of pretending to be
- * Chrome. Measured 2026-09-18 against a live listing.
+ * on the User-Agent AND the egress IP. From a residential IP a link-preview
+ * UA (ours, Slack's, Discord's) gets the full OG head; from Cloudflare's
+ * egress every bot identity gets the wall and the ONLY UA that gets the OG
+ * head (title, description, image) is mobile Safari. Measured 2026-09-18
+ * with a throwaway Worker on workers.dev against a live listing, eight UAs,
+ * both www. and m. hosts. So Facebook gets the phone UA; every other source
+ * keeps the desktop-browser defaults.
  */
 import {
   fetchExternalPage,
@@ -53,13 +55,13 @@ const IMAGE_TYPES: Record<string, string> = {
 
 const rateLimit = createRateLimitMiddleware({ ...RateLimitPresets.lenient, keyPrefix: 'finds-parse' });
 
-/** Honest link-preview identity. Facebook serves OG metadata to this shape. */
-const LINK_PREVIEW_USER_AGENT =
-  'Mozilla/5.0 (compatible; ClassicMiniDIY-LinkPreview/1.0; +https://classicminidiy.com/exchange/finds)';
+/** The one UA Facebook serves OG metadata to from a datacenter egress. */
+const FACEBOOK_USER_AGENT =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
 /** Per-source request headers. Only Facebook needs anything beyond the defaults. */
 function requestHeadersFor(site: SourceSite): Record<string, string> | undefined {
-  return site === 'facebook' ? { 'User-Agent': LINK_PREVIEW_USER_AGENT } : undefined;
+  return site === 'facebook' ? { 'User-Agent': FACEBOOK_USER_AGENT } : undefined;
 }
 
 /** Classic Mini year (1959–2000) + model from free text (heritage-correct terms). */

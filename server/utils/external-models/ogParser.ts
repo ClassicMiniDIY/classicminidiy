@@ -257,7 +257,7 @@ const REQUEST_HEADERS = {
  * caps the body to avoid OOM on huge/streaming bodies. A `fetchImpl` may be
  * injected for tests, which bypasses the network-safety layer (no real I/O).
  * `headers` override the browser-shaped defaults per request (the Finds parser
- * sends its link-preview User-Agent to Facebook).
+ * sends a mobile Safari User-Agent to Facebook).
  */
 export async function fetchExternalPage(
   url: string,
