@@ -352,7 +352,7 @@ describe('MAIL_DOMAINS', () => {
     const c = MAIL_DOMAINS.find((d) => d.domain === 'cmdiy.co')!;
     const names = (c.providerRecords ?? []).map((r) => r.name);
     expect(names).toContain('pm-bounces.cmdiy.co');
-    expect(names).toContain('20240927014807pm._domainkey.cmdiy.co');
+    expect(names).toContain('20260918181434pm._domainkey.cmdiy.co');
     // Shopify's authentication page, 2026-09-18: two mail configs, each a
     // DKIM pair plus a mailer host.
     expect(names).toEqual(

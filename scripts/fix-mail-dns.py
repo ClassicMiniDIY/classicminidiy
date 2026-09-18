@@ -200,9 +200,14 @@ CHANGES = [
         # This script DELETED both on 2026-09-03 on the belief that Postmark
         # was an abandoned trial. It was not: the PO headers from before and
         # after show `dmarc=pass` turning into `dmarc=fail` on that date.
-        # Values are from the frozen Route 53 zone (Z025269833N0YRFKVP2UM),
-        # verbatim. If Postmark ever rotates the key, its dashboard is the
-        # source and this constant must follow.
+        # The original key (selector 20240927014807pm) was restored from the
+        # frozen Route 53 zone on 2026-09-18, but Postmark kept signing with
+        # its fallback domain, so the domain was removed and re-added in the
+        # app the same day. That minted the selector below; the app's "Email
+        # domain settings" page is the source if it ever rotates again. The
+        # old TXT is still in the zone and harmless; it is not deleted here
+        # because deleting DKIM records on a hunch is how this paragraph
+        # came to exist.
         "create": [
             # Shopify's "Email domain authentication" page for orders@cmdiy.co
             # lists six CNAMEs (read 2026-09-18). Three were never in the zone:
@@ -247,14 +252,10 @@ CHANGES = [
             },
             {
                 "type": "TXT",
-                "name": "20240927014807pm._domainkey.cmdiy.co",
-                "content": (
-                    "k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCPGhwf3LbRbD7iEpMQlsSaBcnzijTHS/sa/"
-                    "MrF0fuUpEJohNYuQDfqL4xYuNPNGZaBKoJK6pXScPwXphJKr7ojiK3WagvnHXv4xQ0su7Bq9oHI1KBPKsCx1ciQna63"
-                    "Kiic2fuwaa/E4ylUKOAyX4HXNJCy4hGI7yn2ObJgdvAggQIDAQAB"
-                ),
+                "name": "20260918181434pm._domainkey.cmdiy.co",
+                "content": "k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCtBpRESgmXXCW6UkNPBsBiRUy3IWjPU2HhVxaw32m7e1grwLDEjubN6rhGlWCbxwFrxF99Jc/MNEnzsKCKhkbcYPWpqGyJ18mEPRu9VKXQfBHqDWhSe8qTBUNG2XGWHBoITKawtVVDmll1ddnQf1ToGHPjXGBPv3oD9/YLmsPM9wIDAQAB",
                 "ttl": 300,
-                "comment": "Postmark DKIM for sales@cmdiy.co purchase orders",
+                "comment": "Postmark DKIM for sales@cmdiy.co purchase orders (Auto Purchase Orders app)",
             },
         ],
         "delete": [],
