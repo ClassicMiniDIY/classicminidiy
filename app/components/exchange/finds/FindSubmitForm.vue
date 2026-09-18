@@ -1,8 +1,6 @@
 <template>
   <div class="card bg-base-100 shadow-sm">
     <div class="card-body">
-      <h1 class="card-title text-xl mb-4">{{ t('heading') }}</h1>
-
       <!-- Step 1: URL Input -->
       <fieldset class="fieldset mb-4">
         <legend class="fieldset-legend">{{ t('urlLabel') }}</legend>
@@ -294,7 +292,6 @@
 <i18n lang="json">
 {
   "en": {
-    "heading": "Submit a Find",
     "urlLabel": "Listing URL",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "Fetch Preview",
@@ -318,7 +315,6 @@
     "fetchErrorFallback": "Failed to fetch metadata from the provided URL. You can still submit manually."
   },
   "es": {
-    "heading": "Enviar un hallazgo",
     "urlLabel": "URL del anuncio",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "Obtener vista previa",
@@ -342,7 +338,6 @@
     "fetchErrorFallback": "No se pudieron obtener los metadatos de la URL proporcionada. Aún puedes enviarlo manualmente."
   },
   "fr": {
-    "heading": "Soumettre une trouvaille",
     "urlLabel": "URL de l'annonce",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "Charger l'aperçu",
@@ -366,7 +361,6 @@
     "fetchErrorFallback": "Échec de la récupération des métadonnées depuis l'URL fournie. Vous pouvez tout de même soumettre manuellement."
   },
   "de": {
-    "heading": "Einen Fund einreichen",
     "urlLabel": "Anzeigen-URL",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "Vorschau laden",
@@ -390,7 +384,6 @@
     "fetchErrorFallback": "Metadaten konnten nicht von der angegebenen URL abgerufen werden. Du kannst trotzdem manuell einreichen."
   },
   "it": {
-    "heading": "Invia una scoperta",
     "urlLabel": "URL dell'annuncio",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "Carica anteprima",
@@ -414,7 +407,6 @@
     "fetchErrorFallback": "Impossibile recuperare i metadati dall'URL fornito. Puoi comunque inviare manualmente."
   },
   "pt": {
-    "heading": "Enviar um achado",
     "urlLabel": "URL do anúncio",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "Carregar pré-visualização",
@@ -438,7 +430,6 @@
     "fetchErrorFallback": "Falha ao obter os metadados da URL fornecida. Você ainda pode enviar manualmente."
   },
   "ru": {
-    "heading": "Отправить находку",
     "urlLabel": "URL объявления",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "Загрузить предпросмотр",
@@ -462,7 +453,6 @@
     "fetchErrorFallback": "Не удалось получить метаданные с указанного URL. Вы по-прежнему можете отправить вручную."
   },
   "ja": {
-    "heading": "見つけたものを投稿",
     "urlLabel": "出品URL",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "プレビューを取得",
@@ -486,7 +476,6 @@
     "fetchErrorFallback": "指定されたURLからメタデータを取得できませんでした。手動で投稿することもできます。"
   },
   "zh": {
-    "heading": "提交发现",
     "urlLabel": "刊登链接",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "获取预览",
@@ -510,7 +499,6 @@
     "fetchErrorFallback": "无法从提供的链接获取元数据。您仍然可以手动提交。"
   },
   "ko": {
-    "heading": "발견 제출",
     "urlLabel": "매물 URL",
     "urlPlaceholder": "https://bringatrailer.com/listing/...",
     "fetchPreview": "미리보기 가져오기",
