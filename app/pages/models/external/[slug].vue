@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { HERO_TYPES } from '~~/data/models/generic';
+  import { SITE_DEFAULT_OG_IMAGE } from '~/utils/constants';
   import type { ExternalModelDetail } from '~~/data/models/external-models';
 
   const { t } = useI18n();
@@ -17,7 +18,6 @@
   const model = computed(() => data.value);
 
   // ── SEO ──────────────────────────────────────────────────────────────────────
-  const SITE_DEFAULT_OG = 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg';
 
   const seoTitle = computed(() => (model.value ? `${model.value.title} | Classic Mini DIY` : t('meta.defaultTitle')));
   const seoDesc = computed(() => {
@@ -29,8 +29,8 @@
   });
   const seoImage = computed(() => {
     const m = model.value;
-    if (!m) return SITE_DEFAULT_OG;
-    return m.images.find((i) => i.isPrimary)?.url ?? m.images[0]?.url ?? SITE_DEFAULT_OG;
+    if (!m) return SITE_DEFAULT_OG_IMAGE;
+    return m.images.find((i) => i.isPrimary)?.url ?? m.images[0]?.url ?? SITE_DEFAULT_OG_IMAGE;
   });
 
   useHead(() => ({ title: seoTitle.value }));

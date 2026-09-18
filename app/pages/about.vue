@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { HERO_TYPES } from '../../data/models/generic';
+  import { SITE_DEFAULT_OG_IMAGE } from '~/utils/constants';
 
   // English-only by design (like /legal/*): this is authoritative identity / E-E-A-T
   // content for the founder entity, so it isn't run through the per-locale <i18n>
@@ -18,11 +19,11 @@
     ogDescription: description,
     ogUrl: canonical,
     ogType: 'profile',
-    ogImage: 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg',
+    ogImage: SITE_DEFAULT_OG_IMAGE,
     twitterCard: 'summary_large_image',
     twitterTitle: 'About Classic Mini DIY',
     twitterDescription: description,
-    twitterImage: 'https://classicminidiy.s3.us-east-1.amazonaws.com/misc/seo-images/avatar.jpg',
+    twitterImage: SITE_DEFAULT_OG_IMAGE,
   });
 
   useHead({ link: [{ rel: 'canonical', href: canonical }] });
