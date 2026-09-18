@@ -223,6 +223,12 @@ Mail resumes on the old path within the MX TTL.
 
 ## Afterwards: DMARC reporting
 
+> **2026-09-18:** reporting now goes to Cloudflare DMARC Management. Enable it
+> per zone in the dashboard (Email → DMARC Management), then run
+> `python3 scripts/fix-mail-dns.py --apply` to normalise the `_dmarc` record.
+> Do not tighten `p=` until the dashboard shows Postmark passing on `cmdiy.co`:
+> it sends the purchase orders. The rest of this section is the original plan.
+
 Not part of the cutover, but it is the next thing worth doing and it is free.
 Adding `rua=` to each `_dmarc` record produces daily aggregate reports naming
 every IP sending as these domains. That evidence is what unblocks two decisions

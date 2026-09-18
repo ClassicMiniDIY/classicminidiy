@@ -20,10 +20,18 @@ confirming with Cole:
                        anywhere on the platform; SES was absent entirely.
   cmdiy.co             sends via Shopify as orders@cmdiy.co, authenticated by
                        DKIM. Gets NO SPF — see below.
+                       ALSO sends via Postmark as sales@cmdiy.co: the purchase
+                       orders the store emails to suppliers. Found 2026-09-18
+                       from the POs' own headers, AFTER this script had deleted
+                       Postmark's DKIM key and return-path host as "dead" on
+                       2026-09-03. Every PO since then failed DMARC and landed
+                       in suppliers' spam. Both records are now in `create`.
 
 Deliberately NOT touched, because they are live:
   store / merch / account.classicminidiy.com  -> shops.myshopify.com (storefront)
   the six Shopify DKIM CNAMEs on cmdiy.co     -> what makes orders@ authenticate
+  pm-bounces / 20240927014807pm._domainkey    -> what makes sales@ authenticate
+    on cmdiy.co                                  (Postmark; recreated by `create`)
   maileri5q.classicminidiy.com                -> orphan, but a CNAME costs no
                                                  SPF lookup, so removing it buys
                                                  nothing and risks something
@@ -40,6 +48,7 @@ The Cloudflare token is read from CLOUDFLARE_API_TOKEN and never printed.
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -57,60 +66,80 @@ CF_ROUTING_INCLUDE = "include:_spf.mx.cloudflare.net"
 
 # Where DMARC aggregate reports go.
 #
-# Postmark's free DMARC Digests service: it ingests the raw XML and emails a
-# readable weekly summary, which is the part anyone actually wants. Each domain
-# gets its OWN address from their signup — they are not interchangeable, and a
-# domain reported to the wrong address is silently dropped.
+# Cloudflare DMARC Management (zone -> Email -> DMARC Management). All three
+# zones are on Cloudflare, so its dashboard is the one place the reports can be
+# read without a second vendor. Enabling it is dashboard-only: there is no
+# public API for it, and enabling is what mints the per-zone `rua` mailbox at
+# `dmarc-reports.cloudflare.net`. Cloudflare then writes that mailbox into the
+# zone's `_dmarc` record itself.
 #
-# The self-hosted `reports@classicminidiy.com` destination it replaces still
-# exists and still forwards to Gmail, so switching back is a one-line edit. It
-# is deliberately NOT kept alongside Postmark: the raw reports are daily XML
-# attachments and the digest is the thing being read.
+# So this script does not carry the Cloudflare addresses as constants. It reads
+# the zone's current `_dmarc`, and if a `dmarc-reports.cloudflare.net` mailbox
+# is present it composes the canonical record around it, dropping every other
+# `rua` destination. If none is present it leaves the record alone and says so:
+# the fix is to enable DMARC Management, not to guess.
 #
-# `dmarc.postmarkapp.com` publishes the RFC 7489 s7.1 wildcard authorisation
-# (`*._report._dmarc.dmarc.postmarkapp.com` -> "v=DMARC1;"), so no per-domain
-# authorisation record is needed on our side for it. Verified 2026-09-04.
+# Postmark's DMARC Digests carried the reports from 2026-09-04 to 2026-09-18 as
+# a stopgap. Its addresses are kept below only so the transition is visible in
+# a dry run; once every zone reports `dmarc via Cloudflare` they can go.
+CF_DMARC_RUA_DOMAIN = "dmarc-reports.cloudflare.net"
+
+# The policy this script will publish, per domain, once the Cloudflare mailbox
+# is known. `p=none` until the reports have been read: see the ladder in
+# docs/plans/2026-09-03-forward-email-retirement.md.
 #
-# The record strings below are Postmark's own, used verbatim so their
-# verification cannot fail on a formatting difference. `pct=100` and `aspf=r`
-# are both defaults and change nothing. `sp=none` is also a no-op while `p=none`
-# — but it becomes load-bearing the moment p is tightened, because it would
-# leave sending subdomains (ghost.news, noreply) at `none` rather than
-# inheriting the stricter policy. Revisit it then, not now.
+# `sp` is deliberately absent. classicminidiy.com has two sending subdomains
+# (`ghost.news.` on Mailgun for Ghost, `noreply.` on SES) and neither has been
+# confirmed DKIM-aligned by a report yet, so `sp=reject` would be a guess with
+# the newsletter as the stake. With `sp` absent, subdomains inherit `p`.
+DMARC_POLICY = {
+    "classicminidiy.com": "p=none",
+    "theminiexchange.com": "p=none",
+    "cmdiy.co": "p=none",
+}
+
+# Retired 2026-09-18 in favour of Cloudflare DMARC Management. Left so a dry
+# run against a zone that has not been switched yet prints a recognisable
+# "from:" line rather than an unexplained mailbox.
 POSTMARK_DMARC = {
     "classicminidiy.com": "v=DMARC1; p=none; pct=100; rua=mailto:re+nykoii9r5fe@dmarc.postmarkapp.com; sp=none; aspf=r;",
     "theminiexchange.com": "v=DMARC1; p=none; pct=100; rua=mailto:re+jsn5589chc9@dmarc.postmarkapp.com; sp=none; aspf=r;",
     "cmdiy.co": "v=DMARC1; p=none; pct=100; rua=mailto:re+qzg2ankxcbe@dmarc.postmarkapp.com; sp=none; aspf=r;",
 }
 
-# Fallback for any domain not yet signed up with Postmark.
-DMARC_RUA = "reports@classicminidiy.com"
-DMARC_RUA_DOMAIN = "classicminidiy.com"
-
-
-# Authorisation records that this script created and no longer manages, because
-# their domains moved to Postmark. Live in the classicminidiy.com zone, unused,
-# and retained only so a revert to the self-hosted rua needs no DNS work. Listed
-# so they are documented rather than mysterious; delete them if the self-hosted
-# destination is ever retired for good.
+# Authorisation records an earlier revision of this script created when the
+# rua was a self-hosted `reports@classicminidiy.com` mailbox. They live in the
+# classicminidiy.com zone, unused since 2026-09-04, and are listed so a zone
+# audit can account for them. Safe to delete; nothing depends on them.
 ORPHANED_REPORT_AUTH = [
     "theminiexchange.com._report._dmarc.classicminidiy.com",
     "cmdiy.co._report._dmarc.classicminidiy.com",
 ]
 
 
-def dmarc_for(domain):
-    """Postmark's record when we have one, else the self-hosted rua."""
-    return POSTMARK_DMARC.get(domain, f"v=DMARC1; p=none; rua=mailto:{DMARC_RUA}")
+def cloudflare_rua(current_record):
+    """The Cloudflare DMARC Management mailbox in a `_dmarc` record, or None."""
+    m = re.search(r"mailto:([^,;\s]+@" + re.escape(CF_DMARC_RUA_DOMAIN) + ")", current_record or "", re.I)
+    return m.group(1) if m else None
+
+
+def dmarc_for(domain, current_record):
+    """The record to publish, or None when Cloudflare's mailbox is not yet known."""
+    rua = cloudflare_rua(current_record)
+    if not rua:
+        return None
+    return f"v=DMARC1; {DMARC_POLICY[domain]}; rua=mailto:{rua};"
 
 # --- the desired state -------------------------------------------------------
 #
 # `spf` is the apex SPF record's exact content, or None to leave it absent.
+# `create` is records that must exist, as Cloudflare API bodies; matched on
+# (type, name) and created only when absent, never overwritten.
 # `delete` is (type, fqdn) pairs to remove.
+# DMARC is not listed per domain: see DMARC_POLICY and dmarc_for().
 CHANGES = [
     {
         "domain": "classicminidiy.com",
-        "dmarc": dmarc_for("classicminidiy.com"),
         # Keeps the existing `-all`. Only the includes change, so this is a
         # minimal diff: one variable, not two.
         # Carries Cloudflare's include so the wizard's record can be collapsed
@@ -129,7 +158,6 @@ CHANGES = [
     },
     {
         "domain": "theminiexchange.com",
-        "dmarc": dmarc_for("theminiexchange.com"),
         # Tightened from `~all` to `-all` on 2026-09-04. SES and Cloudflare are
         # the only authorised senders and both are named, so the softfail was no
         # longer buying anything.
@@ -144,7 +172,6 @@ CHANGES = [
     },
     {
         "domain": "cmdiy.co",
-        "dmarc": dmarc_for("cmdiy.co"),
         # Cloudflare's own record, added by Email Routing onboarding on
         # 2026-09-03. cmdiy.co had NO SPF before that, so this became its only
         # one — nothing to merge and no permerror.
@@ -156,10 +183,39 @@ CHANGES = [
         # proposed, which is the right side to err on until DMARC aggregate
         # reports confirm the envelope domain.
         "spf": "v=spf1 include:_spf.mx.cloudflare.net ~all",
-        "delete": [
-            ("CNAME", "pm-bounces.cmdiy.co"),
-            ("TXT", "20240927014807pm._domainkey.cmdiy.co"),
+        # Postmark sends the store's purchase orders as sales@cmdiy.co. It
+        # authenticates by DKIM (this selector) and by SPF on its own
+        # return-path host (`pm-bounces`, a CNAME that inherits pm.mtasv.net's
+        # SPF), so the apex SPF above is not involved and needs no include.
+        #
+        # This script DELETED both on 2026-09-03 on the belief that Postmark
+        # was an abandoned trial. It was not: the PO headers from before and
+        # after show `dmarc=pass` turning into `dmarc=fail` on that date.
+        # Values are from the frozen Route 53 zone (Z025269833N0YRFKVP2UM),
+        # verbatim. If Postmark ever rotates the key, its dashboard is the
+        # source and this constant must follow.
+        "create": [
+            {
+                "type": "CNAME",
+                "name": "pm-bounces.cmdiy.co",
+                "content": "pm.mtasv.net",
+                "proxied": False,  # mail host: proxying it breaks SPF
+                "ttl": 300,
+                "comment": "Postmark return-path for sales@cmdiy.co purchase orders",
+            },
+            {
+                "type": "TXT",
+                "name": "20240927014807pm._domainkey.cmdiy.co",
+                "content": (
+                    "k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCPGhwf3LbRbD7iEpMQlsSaBcnzijTHS/sa/"
+                    "MrF0fuUpEJohNYuQDfqL4xYuNPNGZaBKoJK6pXScPwXphJKr7ojiK3WagvnHXv4xQ0su7Bq9oHI1KBPKsCx1ciQna63"
+                    "Kiic2fuwaa/E4ylUKOAyX4HXNJCy4hGI7yn2ObJgdvAggQIDAQAB"
+                ),
+                "ttl": 300,
+                "comment": "Postmark DKIM for sales@cmdiy.co purchase orders",
+            },
         ],
+        "delete": [],
         "delete_txt_containing": ["forward-email-site-verification"],
     },
 ]
@@ -220,7 +276,7 @@ def main():
     if not plan:
         sys.exit(f"no change defined for {args.domain}")
 
-    total_ops, failures = 0, 0
+    total_ops, failures, manual = 0, 0, 0
 
     for change in plan:
         domain = change["domain"]
@@ -321,10 +377,16 @@ def main():
         # --- DMARC ---
         # Adding `rua=` is purely additive: it changes no policy, it only asks
         # receivers to send aggregate reports. `p=` is left alone here.
-        want_dmarc = change.get("dmarc")
+        name = f"_dmarc.{domain}"
+        cur = [r for r in records if r["type"] == "TXT" and r["name"].rstrip(".") == name]
+        current_dmarc = unquote_txt(cur[0]["content"]).strip() if len(cur) == 1 else ""
+        want_dmarc = dmarc_for(domain, current_dmarc)
+        if not want_dmarc and len(cur) <= 1:
+            print(f"  dmarc no {CF_DMARC_RUA_DOMAIN} mailbox in the record — enable DMARC Management")
+            print(f"        in the dashboard (zone -> Email -> DMARC Management) and re-run.")
+            print(f"        current: {current_dmarc or '(absent)'}")
+            manual += 1
         if want_dmarc:
-            name = f"_dmarc.{domain}"
-            cur = [r for r in records if r["type"] == "TXT" and r["name"].rstrip(".") == name]
             if len(cur) > 1:
                 print(f"  dmarc {len(cur)} records at {name} — refusing to guess")
                 failures += 1
@@ -336,10 +398,10 @@ def main():
                              body={"type": "TXT", "name": name, "content": want_dmarc, "ttl": 300})
                     print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
                     failures += 0 if res.get("success") else 1
-            elif unquote_txt(cur[0]["content"]).strip() == want_dmarc:
-                print(f"  dmarc already correct: {want_dmarc}")
+            elif current_dmarc == want_dmarc:
+                print(f"  dmarc via Cloudflare, already correct: {want_dmarc}")
             else:
-                print(f"  dmarc from: {unquote_txt(cur[0]['content'])}")
+                print(f"  dmarc from: {current_dmarc}")
                 print(f"          to: {want_dmarc}")
                 total_ops += 1
                 if args.apply:
@@ -348,35 +410,28 @@ def main():
                     print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
                     failures += 0 if res.get("success") else 1
 
-            # RFC 7489 s7.1: when the rua mailbox is on a DIFFERENT domain than
-            # the one being reported on, that domain must publish an
-            # authorisation record or most reporters silently send nothing.
-            # This is the usual reason "I turned on rua and got no reports".
-            #
-            # Dormant, not dead: it fires for any domain without a Postmark
-            # address, which is the state all three passed through. The records
-            # it created for theminiexchange.com and cmdiy.co are still live on
-            # classicminidiy.com and are now unused, since both moved to
-            # Postmark's own wildcard. They are kept deliberately so reverting
-            # to the self-hosted rua stays a one-line edit — see
-            # ORPHANED_REPORT_AUTH below, which exists so a zone audit can
-            # account for them rather than finding two records nothing explains.
-            if domain != DMARC_RUA_DOMAIN and DMARC_RUA in want_dmarc:
-                auth_name = f"{domain}._report._dmarc.{DMARC_RUA_DOMAIN}"
-                rz = cf(f"zones?name={DMARC_RUA_DOMAIN}")
-                rzid = (rz.get("result") or [{}])[0].get("id")
-                rrecs = cf(f"zones/{rzid}/dns_records?per_page=500").get("result") or []
-                if any(r["type"] == "TXT" and r["name"].rstrip(".") == auth_name for r in rrecs):
-                    print(f"  dmarc report-auth already present: {auth_name}")
-                else:
-                    print(f"  dmarc report-auth MISSING, will create on {DMARC_RUA_DOMAIN}:")
-                    print(f"          {auth_name}  TXT  v=DMARC1")
-                    total_ops += 1
-                    if args.apply:
-                        res = cf(f"zones/{rzid}/dns_records", method="POST",
-                                 body={"type": "TXT", "name": auth_name, "content": "v=DMARC1", "ttl": 300})
-                        print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
-                        failures += 0 if res.get("success") else 1
+            # RFC 7489 s7.1 external-destination authorisation is not needed:
+            # Cloudflare publishes the wildcard `*._report._dmarc` record on
+            # dmarc-reports.cloudflare.net itself.
+
+        # --- creations ---
+        for body in change.get("create", []):
+            rtype, fqdn = body["type"], body["name"]
+            matches = [r for r in records if r["type"] == rtype and r["name"].rstrip(".") == fqdn]
+            if matches:
+                have_content = str(matches[0].get("content", ""))
+                if rtype == "TXT":
+                    have_content = unquote_txt(have_content)
+                same = have_content.strip() == body["content"].strip()
+                print(f"  add   {rtype:<6} {fqdn}  present{'' if same else ' BUT DIFFERENT — review by hand'}")
+                failures += 0 if same else 1
+                continue
+            print(f"  add   {rtype:<6} {fqdn}  -> {body['content'][:44]}")
+            total_ops += 1
+            if args.apply:
+                res = cf(f"zones/{zid}/dns_records", method="POST", body=body)
+                print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
+                failures += 0 if res.get("success") else 1
 
         # --- deletions by TXT content ---
         # For names that hold several TXT records (an apex holds SPF plus every
@@ -416,6 +471,8 @@ def main():
         print(f"Dry run: {total_ops} change(s) pending. Re-run with --apply.")
     else:
         print(f"{total_ops - failures} change(s) applied, {failures} failed")
+    if manual:
+        print(f"{manual} zone(s) still need DMARC Management enabled in the dashboard")
     if failures:
         sys.exit(1)
 

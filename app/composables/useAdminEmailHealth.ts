@@ -36,6 +36,8 @@ export interface EmailDomainHealth {
     truncated: boolean;
   } | null;
   dmarc: { record: string; policy: string | null; pct: number; hasReporting: boolean } | null;
+  /** DKIM selectors and return-path hosts declared for this domain's senders, by name. */
+  providerRecords?: Record<string, { resolved: boolean; values: string[] }>;
   unexpectedIncludes: string[];
   missingIncludes: string[];
   checks: EmailCheck[];
