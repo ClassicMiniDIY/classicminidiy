@@ -298,6 +298,44 @@ describe('server/api/exchange/external-listings/parse.post', () => {
   });
 
   // -------------------------------------------------------------------------
+  // Per-source request headers
+  // -------------------------------------------------------------------------
+  describe('request headers', () => {
+    it('identifies as the link-preview bot to Facebook (its login wall is keyed on the UA)', async () => {
+      (readBody as any).mockResolvedValue({ url: 'https://www.facebook.com/marketplace/item/1/' });
+      pageOk();
+      (parseOpenGraph as any).mockReturnValue(og({ title: '1983 Classic Mini Cooper' }));
+      (parseJsonLd as any).mockReturnValue([]);
+      await handler(evt());
+      expect(fetchExternalPage).toHaveBeenCalledWith('https://www.facebook.com/marketplace/item/1/', undefined, {
+        'User-Agent':
+          'Mozilla/5.0 (compatible; ClassicMiniDIY-LinkPreview/1.0; +https://classicminidiy.com/exchange/finds)',
+      });
+    });
+
+    it('does not read a price out of Facebook HTML (the similar-listings rail carries other prices)', async () => {
+      (readBody as any).mockResolvedValue({ url: 'https://www.facebook.com/marketplace/item/1/' });
+      pageOk('<html>{"listing_price":{"amount":"180.00"},"formatted_price":{"text":"$180"}}</html>');
+      (parseOpenGraph as any).mockReturnValue(
+        og({ title: '1983 Classic Mini Cooper', description: 'Rust on the A post' })
+      );
+      (parseJsonLd as any).mockReturnValue([]);
+      const res = await handler(evt());
+      expect(res.metadata.price).toBeNull();
+      expect(res.metadata.priceLabel).toBeNull();
+    });
+
+    it('sends the default headers to every other source', async () => {
+      (readBody as any).mockResolvedValue({ url: 'https://bringatrailer.com/listing/x/' });
+      pageOk();
+      (parseOpenGraph as any).mockReturnValue(og({ title: 'Mini' }));
+      (parseJsonLd as any).mockReturnValue([]);
+      await handler(evt());
+      expect(fetchExternalPage).toHaveBeenCalledWith('https://bringatrailer.com/listing/x/', undefined, undefined);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // SSRF / bad-scheme hard-throw (400) — NEVER falls through to render
   // -------------------------------------------------------------------------
   describe('SSRF / blocked host hard-throw', () => {

@@ -18,8 +18,15 @@
  * private-address / bad-scheme hard-throws 400.
  *
  * Known coverage tradeoff vs the old Puppeteer scraper: bot-blocked sites
- * (Copart's JSON API, Facebook Marketplace's login wall, BaT/eBay live bid +
- * auction-end) yield partial/empty metadata → the user fills it in manually.
+ * (Copart's JSON API, BaT/eBay live bid + auction-end) yield partial/empty
+ * metadata → the user fills it in manually.
+ *
+ * Facebook Marketplace is NOT in that list any more. Its login wall is keyed
+ * on the User-Agent: a browser UA gets the wall (or a 400 "Error" page), while
+ * a link-preview UA — ours, Slack's, Discord's — gets the full OG head with
+ * title, description and image, exactly as a share preview would. So the
+ * parser identifies itself honestly to Facebook instead of pretending to be
+ * Chrome. Measured 2026-09-18 against a live listing.
  */
 import {
   fetchExternalPage,
@@ -45,6 +52,15 @@ const IMAGE_TYPES: Record<string, string> = {
 };
 
 const rateLimit = createRateLimitMiddleware({ ...RateLimitPresets.lenient, keyPrefix: 'finds-parse' });
+
+/** Honest link-preview identity. Facebook serves OG metadata to this shape. */
+const LINK_PREVIEW_USER_AGENT =
+  'Mozilla/5.0 (compatible; ClassicMiniDIY-LinkPreview/1.0; +https://classicminidiy.com/exchange/finds)';
+
+/** Per-source request headers. Only Facebook needs anything beyond the defaults. */
+function requestHeadersFor(site: SourceSite): Record<string, string> | undefined {
+  return site === 'facebook' ? { 'User-Agent': LINK_PREVIEW_USER_AGENT } : undefined;
+}
 
 /** Classic Mini year (1959–2000) + model from free text (heritage-correct terms). */
 function extractYearModel(text: string): { year: number | null; model: string | null } {
@@ -75,7 +91,11 @@ function extractPrice(
     }
   }
 
-  const haystack = [og.title, og.description, html].filter(Boolean).join(' ');
+  // Facebook's crawler-facing page embeds a "similar listings" rail with THEIR
+  // prices in JSON, and the listing's own price is not in that payload, so a
+  // scan of the HTML returns a neighbour's price. Title + description only.
+  const bodyText = site === 'facebook' ? null : html;
+  const haystack = [og.title, og.description, bodyText].filter(Boolean).join(' ');
   if (price === null && haystack) {
     const m = haystack.match(/\$\s?([\d,]{2,})/);
     if (m) {
@@ -176,7 +196,7 @@ export default defineEventHandler(async (event) => {
 
   // 1) Direct SSRF-guarded fetch + OG/JSON-LD parse.
   try {
-    const page = await fetchExternalPage(url);
+    const page = await fetchExternalPage(url, undefined, requestHeadersFor(sourceSite));
     if (page.status === 404) return { success: true, metadata: minimal };
     if (page.status < 400) {
       html = page.html;

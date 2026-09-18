@@ -256,17 +256,24 @@ const REQUEST_HEADERS = {
  * (`safeFetch` validates every redirect hop) and refuses non-HTML responses +
  * caps the body to avoid OOM on huge/streaming bodies. A `fetchImpl` may be
  * injected for tests, which bypasses the network-safety layer (no real I/O).
+ * `headers` override the browser-shaped defaults per request (the Finds parser
+ * sends its link-preview User-Agent to Facebook).
  */
-export async function fetchExternalPage(url: string, fetchImpl?: typeof fetch): Promise<FetchedPage> {
+export async function fetchExternalPage(
+  url: string,
+  fetchImpl?: typeof fetch,
+  headers: Record<string, string> = {}
+): Promise<FetchedPage> {
+  const requestHeaders = { ...REQUEST_HEADERS, ...headers };
   if (fetchImpl) {
-    const res = await fetchImpl(url, { redirect: 'follow', headers: REQUEST_HEADERS });
+    const res = await fetchImpl(url, { redirect: 'follow', headers: requestHeaders });
     const html = await res.text();
     return { html, finalUrl: res.url || url, status: res.status };
   }
 
   let res: Response;
   try {
-    res = await safeFetch(url, { headers: REQUEST_HEADERS });
+    res = await safeFetch(url, { headers: requestHeaders });
   } catch (e) {
     if (e instanceof SsrfError) {
       throw new ScrapeError('That address can’t be fetched — it points somewhere private or unreachable.', 400);
