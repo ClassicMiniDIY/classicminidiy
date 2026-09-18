@@ -364,6 +364,12 @@ export interface Check {
   label: string;
   severity: Severity;
   detail: string;
+  /**
+   * Excluded from the row badge. For a check that is `unknown` by design
+   * (DKIM, whose selector tokens this repo does not hold) rather than because
+   * a lookup failed. Only `worstOf` reads it.
+   */
+  informational?: boolean;
 }
 
 export interface DomainFacts {
@@ -399,19 +405,23 @@ export interface DomainHealth extends DomainFacts {
   worst: Severity;
 }
 
-const RANK: Record<Severity, number> = { ok: 0, unknown: 0, warn: 1, fail: 2 };
+const RANK: Record<Severity, number> = { ok: 0, unknown: 1, warn: 2, fail: 3 };
 
 /**
- * The row's headline severity: the worst *actionable* check.
+ * The row's headline severity: the worst check that is not informational.
  *
- * `unknown` deliberately ranks alongside `ok` rather than between `ok` and
- * `warn`. The only unknown is DKIM, which is never checked, so ranking it higher
- * would pin every row — including a fully migrated, fully healthy one — to
- * "unknown" permanently, and a badge that never goes green is a badge nobody
- * reads. The DKIM caveat is stated once on the page instead.
+ * `unknown` ranks above `ok`: a row whose MX, SPF and DMARC lookups all failed
+ * is not healthy, it is unmeasured, and the badge must say so. An earlier
+ * version ranked `unknown` alongside `ok` so that the DKIM row — unknown by
+ * design, never by failure — could not pin every healthy domain to grey. That
+ * had the opposite defect: when the DoH client broke, all three domains read
+ * "Healthy" with every check failed. DKIM is now excluded by `informational`
+ * instead, so a healthy row still reaches green and a blind one cannot.
  */
 export function worstOf(checks: Check[]): Severity {
-  return checks.reduce<Severity>((acc, c) => (RANK[c.severity] > RANK[acc] ? c.severity : acc), 'ok');
+  return checks
+    .filter((c) => !c.informational)
+    .reduce<Severity>((acc, c) => (RANK[c.severity] > RANK[acc] ? c.severity : acc), 'ok');
 }
 
 /**
@@ -610,6 +620,7 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
     label: 'DKIM',
     severity: 'unknown',
     detail: 'Not checked — SES selector tokens are not stored in this repo',
+    informational: true,
   });
 
   return {
