@@ -102,6 +102,36 @@
     mcp: { minAvgP: 0.6 },
   } as const;
 
+  // One card at a time. The two-column grid hid table columns; a tab strip
+  // gives each card the full width. The choice is a per-viewer convenience.
+  const TABS = [
+    { key: 'chat', label: 'Chat classifier', icon: 'fas fa-comments' },
+    { key: 'screen', label: 'Message screen', icon: 'fas fa-shield-halved' },
+    { key: 'search', label: 'Search', icon: 'fas fa-magnifying-glass' },
+    { key: 'parts', label: 'Part correlations', icon: 'fas fa-link' },
+    { key: 'mcp', label: 'MCP pick', icon: 'fas fa-crosshairs' },
+    { key: 'queue', label: 'Queue + models', icon: 'fas fa-clone' },
+    { key: 'saved', label: 'Saved searches', icon: 'fas fa-bell' },
+  ] as const;
+  type TabKey = (typeof TABS)[number]['key'];
+  const TAB_STORAGE = 'admin-typesafe-tab';
+  const tab = ref<TabKey>('chat');
+  onMounted(() => {
+    try {
+      const saved = localStorage.getItem(TAB_STORAGE);
+      if (saved && TABS.some((t) => t.key === saved)) tab.value = saved as TabKey;
+    } catch {
+      // storage unavailable: the default tab is fine
+    }
+  });
+  watch(tab, (v: TabKey) => {
+    try {
+      localStorage.setItem(TAB_STORAGE, v);
+    } catch {
+      // swallowed on purpose
+    }
+  });
+
   const days = ref<7 | 30 | 90>(7);
   const data = ref<Readout | null>(null);
   const loading = ref(true);
@@ -298,6 +328,13 @@
     };
   });
 
+  const tabGrade = computed<Partial<Record<TabKey, Grade>>>(() => ({
+    chat: chatGrade.value,
+    screen: screenGrade.value,
+    search: searchGrade.value,
+    parts: partsGrade.value,
+  }));
+
   function gradeClass(g: Grade) {
     return { 'no-data': 'badge-ghost', below: 'badge-warning', ready: 'badge-success', info: 'badge-info' }[g.state];
   }
@@ -428,9 +465,26 @@
         </div>
       </section>
 
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div role="tablist" class="tabs tabs-lift mb-4 overflow-x-auto flex-nowrap">
+        <button
+          v-for="t in TABS"
+          :key="t.key"
+          role="tab"
+          type="button"
+          class="tab whitespace-nowrap gap-2"
+          :class="{ 'tab-active': tab === t.key }"
+          :aria-selected="tab === t.key"
+          @click="tab = t.key"
+        >
+          <i :class="t.icon"></i>
+          {{ t.label }}
+          <span v-if="tabGrade[t.key]" class="badge badge-xs" :class="gradeClass(tabGrade[t.key]!)"></span>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-6">
         <!-- Chat classifier -->
-        <section class="card bg-base-100 border border-base-300 shadow-sm">
+        <section v-show="tab === 'chat'" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body">
             <div class="flex flex-wrap items-start justify-between gap-2">
               <h2 class="card-title text-lg"><i class="fas fa-comments text-primary"></i> Chat classifier</h2>
@@ -482,7 +536,7 @@
         </section>
 
         <!-- Message screen -->
-        <section class="card bg-base-100 border border-base-300 shadow-sm">
+        <section v-show="tab === 'screen'" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body">
             <div class="flex flex-wrap items-start justify-between gap-2">
               <h2 class="card-title text-lg">
@@ -542,7 +596,7 @@
         </section>
 
         <!-- Search -->
-        <section class="card bg-base-100 border border-base-300 shadow-sm">
+        <section v-show="tab === 'search'" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body">
             <div class="flex flex-wrap items-start justify-between gap-2">
               <h2 class="card-title text-lg">
@@ -626,7 +680,7 @@
         </section>
 
         <!-- Parts -->
-        <section class="card bg-base-100 border border-base-300 shadow-sm">
+        <section v-show="tab === 'parts'" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body">
             <div class="flex flex-wrap items-start justify-between gap-2">
               <h2 class="card-title text-lg"><i class="fas fa-link text-info"></i> Part correlations</h2>
@@ -733,7 +787,7 @@
         </section>
 
         <!-- MCP pick -->
-        <section class="card bg-base-100 border border-base-300 shadow-sm">
+        <section v-show="tab === 'mcp'" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body">
             <h2 class="card-title text-lg"><i class="fas fa-crosshairs text-success"></i> MCP near-miss pick</h2>
             <p class="text-sm opacity-70">
@@ -781,7 +835,7 @@
         </section>
 
         <!-- Queue hint + models -->
-        <section class="card bg-base-100 border border-base-300 shadow-sm">
+        <section v-show="tab === 'queue'" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body">
             <h2 class="card-title text-lg">
               <i class="fas fa-clone text-warning"></i> Queue duplicate hint and model safety read
@@ -833,7 +887,7 @@
         </section>
 
         <!-- Saved search -->
-        <section class="card bg-base-100 border border-base-300 shadow-sm xl:col-span-2">
+        <section v-show="tab === 'saved'" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body">
             <h2 class="card-title text-lg"><i class="fas fa-bell text-primary"></i> Saved-search semantic fallback</h2>
             <p class="text-sm opacity-70">
