@@ -223,6 +223,29 @@ export default defineEventHandler(async (event) => {
     // key is not attacker-writable and grants nothing), but there is no reason to
     // argue the point when the strong call is free.
     const inquiryId = crypto.randomUUID();
+
+    // Screened and LOGGED, never blocked: an inquiry is an email with nothing
+    // to hold, and the regex layer above already refused what is refusable.
+    // The rate of flags decides whether blocking is ever worth building. No
+    // inquirer detail leaves the platform: the model sees the message text
+    // and the listing title only. After the listing lookup so a 404 does not
+    // spend a read; before the enqueue so a flag is logged beside the send.
+    const screen = await screenMarketplaceText(event, sanitizedMessage, {
+      caller: 'contact-seller',
+      context: 'An inquiry a visitor sent to a seller about a listing',
+      title: listing.title,
+    });
+    if (screen.decision !== 'skipped') {
+      captureServerEvent(event, 'contact_seller_screened', `screen:${inquiryId}`, {
+        $process_person_profile: false,
+        mode: screen.mode,
+        decision: screen.decision,
+        tags: screen.tags,
+        ...(screen.scores ?? {}),
+        duration_ms: screen.durationMs,
+      });
+    }
+
     await queueNotification({
       userId: listing.user_id,
       eventType: 'seller_inquiry',

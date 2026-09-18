@@ -90,11 +90,17 @@ export async function loadScreenSettings(): Promise<{ mode: ScreenMode; threshol
       thresholds: parseThresholds(map.get('message_screen_thresholds')),
     };
   } catch (e) {
+    // A transient read failure must not flip the switch: keep the last good
+    // value for another minute. With nothing cached yet the screen is off,
+    // which is the same posture the private-message screen has for an
+    // unscored row in shadow mode.
     console.warn(
-      '[screen] platform_settings read failed; screen off for a minute:',
+      `[screen] platform_settings read failed; keeping ${settingsCache ? `'${settingsCache.mode}'` : "'off'"} for a minute:`,
       e instanceof Error ? e.message : String(e)
     );
-    settingsCache = { at: now, mode: 'off', thresholds: DEFAULT_THRESHOLDS };
+    settingsCache = settingsCache
+      ? { ...settingsCache, at: now }
+      : { at: now, mode: 'off', thresholds: DEFAULT_THRESHOLDS };
   }
   return settingsCache;
 }

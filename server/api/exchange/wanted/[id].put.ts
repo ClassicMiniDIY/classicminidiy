@@ -219,6 +219,7 @@ export default defineEventHandler(async (event) => {
 
     // The semantic read on the text as it will stand after this edit, behind
     // the same switch as private messages. Only when text actually changed.
+    let screenCleared = true;
     if (title !== undefined || description !== undefined) {
       const screen = await screenMarketplaceText(
         event,
@@ -233,6 +234,11 @@ export default defineEventHandler(async (event) => {
         isFlagged = true;
         allModerationIssues.push(...screen.tags);
       }
+      // In hold mode only a verdict the model actually gave can lift a hold.
+      // A `skipped` read (slow, unconfigured, settings outage) must not turn
+      // into an approval: the owner could otherwise retry a one-character edit
+      // until one read times out and the post walked out of the queue unseen.
+      screenCleared = screen.mode !== 'hold' || screen.decision === 'clear';
       if (screen.decision !== 'skipped') {
         console.log(
           JSON.stringify({
@@ -253,7 +259,11 @@ export default defineEventHandler(async (event) => {
       updateData.status = 'flagged';
       updateData.moderation_status = 'flagged';
       updateData.moderation_issues = [...new Set(allModerationIssues)];
-    } else if (existingPost.moderation_status === 'flagged' && (title !== undefined || description !== undefined)) {
+    } else if (
+      existingPost.moderation_status === 'flagged' &&
+      (title !== undefined || description !== undefined) &&
+      screenCleared
+    ) {
       // Content was re-checked and passed moderation — clear the flagged status
       updateData.status = 'active';
       updateData.moderation_status = 'approved';

@@ -103,6 +103,32 @@ export default defineEventHandler(async (event) => {
       titleModeration.moderationStatus === 'flagged' || descriptionModeration.moderationStatus === 'flagged';
     const moderationIssues = [...new Set([...titleModeration.issues, ...descriptionModeration.issues])];
 
+    // Check if user is banned
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, is_banned, display_name')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      throw createError({
+        statusCode: 404,
+        message: 'User profile not found',
+      });
+    }
+
+    if (profile.is_banned) {
+      throw createError({
+        statusCode: 403,
+        message: 'Your account has been suspended. You cannot create wanted posts.',
+      });
+    }
+
+    // Validate budget range
+    validateBudgetValue(budgetMin, 'Minimum budget');
+    validateBudgetValue(budgetMax, 'Maximum budget');
+    validateBudgetRange(budgetMin, budgetMax);
+
     // The semantic read (TypeSafe), behind the same switch as private
     // messages. In `hold` mode a tripped threshold flags the post exactly as
     // the regex layer does; in `shadow` it is logged and changes nothing;
@@ -129,32 +155,6 @@ export default defineEventHandler(async (event) => {
         })
       );
     }
-
-    // Check if user is banned
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, is_banned, display_name')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile) {
-      throw createError({
-        statusCode: 404,
-        message: 'User profile not found',
-      });
-    }
-
-    if (profile.is_banned) {
-      throw createError({
-        statusCode: 403,
-        message: 'Your account has been suspended. You cannot create wanted posts.',
-      });
-    }
-
-    // Validate budget range
-    validateBudgetValue(budgetMin, 'Minimum budget');
-    validateBudgetValue(budgetMax, 'Maximum budget');
-    validateBudgetRange(budgetMin, budgetMax);
 
     // Insert the wanted post
     const { data: post, error: insertError } = await supabase
