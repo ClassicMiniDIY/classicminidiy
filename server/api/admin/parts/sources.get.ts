@@ -14,7 +14,7 @@
  * crawl budgets are deliberately unreachable from a session.
  *
  * THREE QUERIES, NOT FOUR HUNDRED. The counts come from the
- * `admin_part_source_stats` view (classicminidiy-supabase, 20260918000012),
+ * `admin_part_source_stats` view (classicminidiy-supabase, 20260918000014),
  * one row per source with every figure this screen shows and its last five
  * ingest runs. The first version of this route ran thirteen exact COUNTs per
  * source through PostgREST — ~480 round trips at 37 sources — and the page
@@ -73,22 +73,27 @@ interface SourceSetting {
   refresh_cycle_started_at: string | null;
 }
 
-/** One row of `admin_part_source_stats`. bigint comes back as a number through PostgREST. */
+/**
+ * One row of `admin_part_source_stats`. The counts are bigint; PostgREST emits
+ * int8 as a JSON number, but a proxy or a future PostgREST setting could make
+ * it a string, and `"12000" + 372` on the public total would then read
+ * "12000372". Every count goes through `num()` below.
+ */
 interface SourceStats {
   source_id: string;
-  parts: number;
-  diagrams: number;
-  applicability: number;
-  supersessions: number;
-  kit_contents: number;
-  source_records: number;
-  retired_records: number;
-  recent_withdrawn: number;
-  recent_changed: number;
-  callouts: number;
-  queue_total: number;
-  queue_remaining: number;
-  queue_blocked: number;
+  parts: number | string;
+  diagrams: number | string;
+  applicability: number | string;
+  supersessions: number | string;
+  kit_contents: number | string;
+  source_records: number | string;
+  retired_records: number | string;
+  recent_withdrawn: number | string;
+  recent_changed: number | string;
+  callouts: number | string;
+  queue_total: number | string;
+  queue_remaining: number | string;
+  queue_blocked: number | string;
   /** Newest first, at most five. */
   recent_runs: RecentRun[];
 }
@@ -102,6 +107,13 @@ interface RecentRun {
   records_written: number | null;
   abort_reason: string | null;
   notes: RunNotes | null;
+}
+
+/** A count as a number, or null when it is absent or not numeric. Never a string, never NaN. */
+function num(v: number | string | null | undefined): number | null {
+  if (v === null || v === undefined) return null;
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 export default defineEventHandler(async (event) => {
@@ -161,19 +173,19 @@ export default defineEventHandler(async (event) => {
     // `number | null | undefined`, which hides the difference between "the
     // count failed" and "that key was never set".
     const counts: SourceCounts = {
-      parts: st?.parts ?? null,
-      diagrams: st?.diagrams ?? null,
-      applicability: st?.applicability ?? null,
-      supersessions: st?.supersessions ?? null,
-      kitContents: st?.kit_contents ?? null,
-      sourceRecords: st?.source_records ?? null,
+      parts: num(st?.parts),
+      diagrams: num(st?.diagrams),
+      applicability: num(st?.applicability),
+      supersessions: num(st?.supersessions),
+      kitContents: num(st?.kit_contents),
+      sourceRecords: num(st?.source_records),
       // Records the refresh has retired. Public reads filter these out, so this
       // is the difference between what the source contributed and what it still
       // contributes — the number that says whether the refresh is working.
-      retiredRecords: st?.retired_records ?? null,
-      recentWithdrawn: st?.recent_withdrawn ?? null,
-      recentChanged: st?.recent_changed ?? null,
-      callouts: st?.callouts ?? null,
+      retiredRecords: num(st?.retired_records),
+      recentWithdrawn: num(st?.recent_withdrawn),
+      recentChanged: num(st?.recent_changed),
+      callouts: num(st?.callouts),
       publicRows: null,
     };
 
@@ -232,9 +244,9 @@ export default defineEventHandler(async (event) => {
       // Blocked rows are excluded from `remaining`: they will never be fetched,
       // so counting them as "left" overstates the work remaining for ever.
       queue: {
-        total: st?.queue_total ?? 0,
-        remaining: st?.queue_remaining ?? 0,
-        blocked: st?.queue_blocked ?? 0,
+        total: num(st?.queue_total) ?? 0,
+        remaining: num(st?.queue_remaining) ?? 0,
+        blocked: num(st?.queue_blocked) ?? 0,
       },
       runInFlight: runs.some((r) => r.status === 'running'),
       lastRun: lastRun

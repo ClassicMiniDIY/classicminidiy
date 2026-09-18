@@ -164,6 +164,19 @@ describe('GET /api/admin/parts/sources', () => {
     expect(s.openRefusal).toBeNull();
   });
 
+  it('coerces counts that arrive as strings, so the public total adds rather than concatenates', async () => {
+    canned.admin_part_source_stats = {
+      data: [{ ...STATS, parts: '12000', diagrams: '372', queue_total: '500', callouts: 'not-a-number' }],
+      error: null,
+    };
+    const { sources } = await handler(evt());
+    expect(sources[0].counts.parts).toBe(12000);
+    expect(sources[0].counts.callouts).toBeNull();
+    // One unknown component makes the total unknown.
+    expect(sources[0].counts.publicRows).toBeNull();
+    expect(sources[0].queue.total).toBe(500);
+  });
+
   it('a source with no stats row (brand new, nothing crawled) gets null counts, not a fabricated zero', async () => {
     canned.admin_part_source_stats = { data: [], error: null };
     const { sources } = await handler(evt());
