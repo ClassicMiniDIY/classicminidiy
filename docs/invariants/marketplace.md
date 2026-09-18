@@ -97,3 +97,25 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
   break out of an XML attribute; pre-escaping double-escapes, so `?w=1&h=2` ships
   as `&amp;amp;` and every reader resolves an image URL that 404s. escapeHtml
   still belongs on the `<img>` in the item's HTML content — that really is HTML.
+
+## Finds link previews: Facebook needs an honest User-Agent (2026-09-18)
+
+The Stage 6 convergence (2026-06-23) replaced TheMiniExchange's Puppeteer scraper with the
+SSRF-guarded OG fetch and recorded Facebook Marketplace as a known loss: "login wall, degrades
+to manual entry". That was true only because the fetch pretended to be desktop Chrome. Measured
+against a live listing: the Chrome UA gets a 400 "Error" page; `facebookexternalhit`,
+`Twitterbot`, Discord's and Slack's preview bots, an iPhone Safari UA, and
+`Mozilla/5.0 (compatible; ClassicMiniDIY-LinkPreview/1.0; +https://classicminidiy.com/exchange/finds)`
+all get HTTP 200 with `og:title`, `og:description` and `og:image`, which is exactly what a share
+preview sees. So the parser sends its own name to Facebook (`requestHeadersFor` in
+`parse.post.ts`, threaded through `fetchExternalPage`'s new `headers` argument) and keeps the
+browser defaults everywhere else. The same honest UA was neutral on BaT, Craigslist, Thingiverse
+and the sites that 403 a residential curl either way (Cars & Bids, eBay, Copart, Printables),
+so it could become the global default later; it is per-source for now to keep the blast radius
+to Facebook.
+
+One trap: Facebook's crawler-facing HTML embeds a "similar listings" rail as JSON with THOSE
+items' `formatted_price` values, and the listing's own price is not in the payload. The
+`$`-regex over the raw HTML therefore returned a neighbour's `$180` for a Mini. `extractPrice`
+scans title + description only for Facebook. Tests: "request headers" block in
+`tests/unit/exchange/server/routes/external-listings-parse.post.test.ts`.
