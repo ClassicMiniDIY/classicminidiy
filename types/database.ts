@@ -3433,6 +3433,13 @@ export type Database = {
             foreignKeyName: 'part_applicability_source_id_fkey';
             columns: ['source_id'];
             isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
+          },
+          {
+            foreignKeyName: 'part_applicability_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
             referencedRelation: 'part_sources';
             referencedColumns: ['id'];
           },
@@ -3594,6 +3601,13 @@ export type Database = {
             foreignKeyName: 'part_diagrams_source_id_fkey';
             columns: ['source_id'];
             isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
+          },
+          {
+            foreignKeyName: 'part_diagrams_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
             referencedRelation: 'part_sources';
             referencedColumns: ['id'];
           },
@@ -3652,6 +3666,13 @@ export type Database = {
           url?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'part_ingest_queue_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
+          },
           {
             foreignKeyName: 'part_ingest_queue_source_id_fkey';
             columns: ['source_id'];
@@ -3718,6 +3739,13 @@ export type Database = {
             foreignKeyName: 'part_ingest_runs_source_id_fkey';
             columns: ['source_id'];
             isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
+          },
+          {
+            foreignKeyName: 'part_ingest_runs_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
             referencedRelation: 'part_sources';
             referencedColumns: ['id'];
           },
@@ -3765,6 +3793,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'parts';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'part_kit_contents_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
           },
           {
             foreignKeyName: 'part_kit_contents_source_id_fkey';
@@ -3976,6 +4011,13 @@ export type Database = {
             foreignKeyName: 'part_source_private_source_id_fkey';
             columns: ['source_id'];
             isOneToOne: true;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
+          },
+          {
+            foreignKeyName: 'part_source_private_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: true;
             referencedRelation: 'part_sources';
             referencedColumns: ['id'];
           },
@@ -4058,6 +4100,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'parts';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'part_source_records_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
           },
           {
             foreignKeyName: 'part_source_records_source_id_fkey';
@@ -4153,6 +4202,13 @@ export type Database = {
             foreignKeyName: 'part_supersessions_source_id_fkey';
             columns: ['source_id'];
             isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
+          },
+          {
+            foreignKeyName: 'part_supersessions_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
             referencedRelation: 'part_sources';
             referencedColumns: ['id'];
           },
@@ -4215,6 +4271,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'parts_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
+            referencedRelation: 'admin_part_source_stats';
+            referencedColumns: ['source_id'];
+          },
           {
             foreignKeyName: 'parts_source_id_fkey';
             columns: ['source_id'];
@@ -5381,6 +5444,26 @@ export type Database = {
       };
     };
     Views: {
+      admin_part_source_stats: {
+        Row: {
+          applicability: number | null;
+          callouts: number | null;
+          diagrams: number | null;
+          kit_contents: number | null;
+          parts: number | null;
+          queue_blocked: number | null;
+          queue_remaining: number | null;
+          queue_total: number | null;
+          recent_changed: number | null;
+          recent_runs: Json | null;
+          recent_withdrawn: number | null;
+          retired_records: number | null;
+          source_id: string | null;
+          source_records: number | null;
+          supersessions: number | null;
+        };
+        Relationships: [];
+      };
       contributor_archive_items: {
         Row: {
           created_at: string | null;

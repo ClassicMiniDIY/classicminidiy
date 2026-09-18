@@ -12,6 +12,14 @@
  * Service role, because part_source_private and part_source_records carry no
  * grant for any browser role — licence correspondence, retailer identifiers and
  * crawl budgets are deliberately unreachable from a session.
+ *
+ * THREE QUERIES, NOT FOUR HUNDRED. The counts come from the
+ * `admin_part_source_stats` view (classicminidiy-supabase, 20260918000012),
+ * one row per source with every figure this screen shows and its last five
+ * ingest runs. The first version of this route ran thirteen exact COUNTs per
+ * source through PostgREST — ~480 round trips at 37 sources — and the page
+ * took long enough that pagination was proposed. The rows were never the
+ * cost. The view is service-role only: it exposes queue sizes and run notes.
  */
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
@@ -65,15 +73,36 @@ interface SourceSetting {
   refresh_cycle_started_at: string | null;
 }
 
-/** Tables that hang off a source directly and are worth counting. */
-const DIRECT_COUNTS = [
-  ['parts', 'parts'],
-  ['part_diagrams', 'diagrams'],
-  ['part_applicability', 'applicability'],
-  ['part_supersessions', 'supersessions'],
-  ['part_kit_contents', 'kitContents'],
-  ['part_source_records', 'sourceRecords'],
-] as const;
+/** One row of `admin_part_source_stats`. bigint comes back as a number through PostgREST. */
+interface SourceStats {
+  source_id: string;
+  parts: number;
+  diagrams: number;
+  applicability: number;
+  supersessions: number;
+  kit_contents: number;
+  source_records: number;
+  retired_records: number;
+  recent_withdrawn: number;
+  recent_changed: number;
+  callouts: number;
+  queue_total: number;
+  queue_remaining: number;
+  queue_blocked: number;
+  /** Newest first, at most five. */
+  recent_runs: RecentRun[];
+}
+
+interface RecentRun {
+  phase: string;
+  status: string;
+  started_at: string;
+  finished_at: string | null;
+  requests_made: number | null;
+  records_written: number | null;
+  abort_reason: string | null;
+  notes: RunNotes | null;
+}
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event);
@@ -95,214 +124,134 @@ export default defineEventHandler(async (event) => {
   // PostgREST's type helper cannot parse, and it names columns the generated
   // Database types will not carry until `bun run gen:types` runs against the
   // applied migration. Declaring the shape here keeps the read typed either way.
-  const { data: privateRows, error: privateError } = await db
-    .from('part_source_private')
-    .select(
-      'source_id, licence_note, licence_changed_at, licence_changed_by, contact_email, crawl_enabled, ' +
-        'max_requests_per_run, max_requests_per_day, min_request_interval_ms, max_change_ratio, ' +
-        'refresh_after_days, gone_after_misses, refresh_cycle_started_at'
-    )
-    .returns<SourceSetting[]>();
+  const [{ data: privateRows, error: privateError }, { data: statRows, error: statsError }] = await Promise.all([
+    db
+      .from('part_source_private')
+      .select(
+        'source_id, licence_note, licence_changed_at, licence_changed_by, contact_email, crawl_enabled, ' +
+          'max_requests_per_run, max_requests_per_day, min_request_interval_ms, max_change_ratio, ' +
+          'refresh_after_days, gone_after_misses, refresh_cycle_started_at'
+      )
+      .returns<SourceSetting[]>(),
+    db.from('admin_part_source_stats').select('*').returns<SourceStats[]>(),
+  ]);
 
   if (privateError) {
     throw createError({ statusCode: 500, statusMessage: `Could not read source settings: ${privateError.message}` });
   }
 
-  const settings = Object.fromEntries((privateRows ?? []).map((r) => [r.source_id, r]));
-
-  // Run state, so the screen can answer "is anything actually happening?".
-  // Without this the page could show `crawlEnabled: true` while nothing had run
-  // for hours, which reads as "it is crawling" and is not.
-  const { data: recentRuns } = await db
-    .from('part_ingest_runs')
-    .select('source_id, phase, status, started_at, finished_at, requests_made, records_written, abort_reason, notes')
-    .order('started_at', { ascending: false })
-    .limit(60);
-
-  const runsBySource = new Map<string, (typeof recentRuns extends (infer R)[] | null ? R : never)[]>();
-  for (const run of recentRuns ?? []) {
-    const list = runsBySource.get(run.source_id) ?? [];
-    if (list.length < 5) list.push(run);
-    runsBySource.set(run.source_id, list);
-  }
-
-  // COUNTED, NOT FETCHED. This read used to pull every queue row and tally them
-  // here, which PostgREST truncates at 1000 — the queue passed that as soon as
-  // the second and third sources were seeded, so the screen quietly reported a
-  // smaller queue than exists. Same failure as the callout count before it: a
-  // client-side tally of a server-capped list.
-  const queueBySource = new Map<string, { total: number; remaining: number; blocked: number }>();
-  await Promise.all(
-    rows.map(async (source) => {
-      const base = () =>
-        db.from('part_ingest_queue').select('id', { count: 'exact', head: true }).eq('source_id', source.id);
-      const [{ count: total }, { count: remaining }, { count: blocked }] = await Promise.all([
-        base(),
-        // Blocked rows are excluded: they will never be fetched, so counting
-        // them as "left" overstates the work remaining for ever.
-        base().is('last_fetched_at', null).is('blocked_at', null),
-        base().not('blocked_at', 'is', null),
-      ]);
-      queueBySource.set(source.id, { total: total ?? 0, remaining: remaining ?? 0, blocked: blocked ?? 0 });
-    })
-  );
-
-  // head:true so these are COUNT queries, not row fetches — the largest of them
-  // will be counting five figures of parts once Somerford is imported.
-  //
   // A FAILED COUNT MUST NOT RENDER AS ZERO. On this screen a zero reads as
   // "declining hides nothing", which is the one wrong answer that makes a
-  // destructive action look safe. Supabase returns `count: null` alongside an
-  // error, so coercing with `?? 0` turns a broken query into a confident lie.
-  // Failures surface as null and the page renders them as unknown instead.
-  const counted = await Promise.all(
-    rows.map(async (source) => {
-      const direct = await Promise.all(
-        DIRECT_COUNTS.map(async ([table]) => {
-          const { count, error: countError } = await db
-            .from(table)
-            .select('id', { count: 'exact', head: true })
-            .eq('source_id', source.id);
-          if (countError) {
-            console.error(`[admin/parts] count failed for ${table} (source ${source.slug}): ${countError.message}`);
-            return null;
-          }
-          return count ?? 0;
-        })
-      );
+  // destructive action look safe. If the stats view cannot be read, the screen
+  // still renders — licence controls have to work during the phone call that
+  // needs them — but every count is null, which the page shows as "unknown".
+  if (statsError) {
+    console.error(`[admin/parts] admin_part_source_stats failed: ${statsError.message}`);
+  }
+  const stats = new Map((statRows ?? []).map((r) => [r.source_id, r]));
 
+  const settings = Object.fromEntries((privateRows ?? []).map((r) => [r.source_id, r]));
+
+  const list = rows.map((source) => {
+    const st = statsError ? undefined : stats.get(source.id);
+    const runs: RecentRun[] = st?.recent_runs ?? [];
+    const lastRun = runs[0];
+
+    // Named rather than a dynamic Record: an index signature makes every read
+    // `number | null | undefined`, which hides the difference between "the
+    // count failed" and "that key was never set".
+    const counts: SourceCounts = {
+      parts: st?.parts ?? null,
+      diagrams: st?.diagrams ?? null,
+      applicability: st?.applicability ?? null,
+      supersessions: st?.supersessions ?? null,
+      kitContents: st?.kit_contents ?? null,
+      sourceRecords: st?.source_records ?? null,
       // Records the refresh has retired. Public reads filter these out, so this
       // is the difference between what the source contributed and what it still
       // contributes — the number that says whether the refresh is working.
-      const { count: retired, error: retiredError } = await db
-        .from('part_source_records')
-        .select('id', { count: 'exact', head: true })
-        .eq('source_id', source.id)
-        .eq('is_current', false);
-      if (retiredError) {
-        console.error(`[admin/parts] retired count failed (source ${source.slug}): ${retiredError.message}`);
-      }
+      retiredRecords: st?.retired_records ?? null,
+      recentWithdrawn: st?.recent_withdrawn ?? null,
+      recentChanged: st?.recent_changed ?? null,
+      callouts: st?.callouts ?? null,
+      publicRows: null,
+    };
 
-      // What the ingest has actually changed lately. part_change_log has no
-      // source column of its own — it hangs off the record — so this needs the
-      // embed, same as the callout count below.
-      const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-      const changeCount = async (kind: 'withdrawn' | 'changed') => {
-        const { count, error: changeError } = await db
-          .from('part_change_log')
-          .select('id, part_source_records!inner(source_id)', { count: 'exact', head: true })
-          .eq('part_source_records.source_id', source.id)
-          .eq('change_kind', kind)
-          .gte('seen_at', since);
-        if (changeError) {
-          console.error(`[admin/parts] ${kind} count failed (source ${source.slug}): ${changeError.message}`);
-          return null;
-        }
-        return count ?? 0;
-      };
-      const [recentWithdrawn, recentChanged] = await Promise.all([changeCount('withdrawn'), changeCount('changed')]);
+    // What a decline would actually hide from the public archive. Deliberately
+    // excludes source_records, which is service-role only and never public.
+    //
+    // Null if ANY component failed: a partial total is worse than no total,
+    // because it looks authoritative.
+    const publicParts: (number | null)[] = [
+      counts.parts,
+      counts.diagrams,
+      counts.callouts,
+      counts.applicability,
+      counts.supersessions,
+      counts.kitContents,
+    ];
+    counts.publicRows = publicParts.every((n): n is number => n !== null)
+      ? publicParts.reduce((a, b) => a + b, 0)
+      : null;
 
-      // Callouts reach their source through the parent diagram, so this one
-      // needs the embed rather than a plain column filter.
-      const { count: callouts, error: calloutError } = await db
-        .from('part_diagram_callouts')
-        .select('id, part_diagrams!inner(source_id)', { count: 'exact', head: true })
-        .eq('part_diagrams.source_id', source.id);
-      if (calloutError) {
-        console.error(`[admin/parts] callout count failed (source ${source.slug}): ${calloutError.message}`);
-      }
-
-      // Named rather than a dynamic Record: an index signature makes every read
-      // `number | null | undefined`, which hides the difference between "the
-      // count failed" and "that key was never set" — the exact distinction this
-      // whole change exists to preserve.
-      const counts: SourceCounts = {
-        parts: direct[0] ?? null,
-        diagrams: direct[1] ?? null,
-        applicability: direct[2] ?? null,
-        supersessions: direct[3] ?? null,
-        kitContents: direct[4] ?? null,
-        sourceRecords: direct[5] ?? null,
-        retiredRecords: retiredError ? null : (retired ?? 0),
-        recentWithdrawn,
-        recentChanged,
-        callouts: calloutError ? null : (callouts ?? 0),
-        publicRows: null,
-      };
-
-      // What a decline would actually hide from the public archive. Deliberately
-      // excludes source_records, which is service-role only and never public.
+    const setting = settings[source.id] ?? null;
+    return {
+      id: source.id,
+      slug: source.slug,
+      name: source.name,
+      domain: source.domain,
+      kind: source.kind,
+      licenceStatus: source.licence_status,
+      termsUrl: source.terms_url,
+      precedence: source.precedence,
+      lastReviewedAt: source.last_reviewed_at,
+      licenceNote: setting?.licence_note ?? null,
+      licenceChangedAt: setting?.licence_changed_at ?? null,
+      contactEmail: setting?.contact_email ?? null,
+      crawlEnabled: setting?.crawl_enabled ?? false,
+      maxRequestsPerRun: setting?.max_requests_per_run ?? null,
+      maxRequestsPerDay: setting?.max_requests_per_day ?? null,
+      minRequestIntervalMs: setting?.min_request_interval_ms ?? null,
+      maxChangeRatio: setting?.max_change_ratio ?? null,
+      refreshAfterDays: setting?.refresh_after_days ?? null,
+      goneAfterMisses: setting?.gone_after_misses ?? null,
+      refreshCycleStartedAt: setting?.refresh_cycle_started_at ?? null,
+      // THE REFUSAL OUTLIVES THE RUN THAT MADE IT. A refused cycle stays open
+      // by design, so the next --discover, or a drain that stops on its
+      // budget, becomes `lastRun` and the alarm would disappear while the
+      // condition it reported is still true. So it is read from the newest
+      // refusal among the runs we hold, for as long as a cycle is open.
       //
-      // Null if ANY component failed: a partial total is worse than no total,
-      // because it looks authoritative. The page shows "unknown" and says the
-      // figure could not be read.
-      const publicParts: (number | null)[] = [
-        counts.parts,
-        counts.diagrams,
-        counts.callouts,
-        counts.applicability,
-        counts.supersessions,
-        counts.kitContents,
-      ];
-      counts.publicRows = publicParts.every((n): n is number => n !== null)
-        ? publicParts.reduce((a, b) => a + b, 0)
-        : null;
+      // Read as STRUCTURE. The first cut had the admin page match the opening
+      // words of abort_reason, which made an English sentence in the other
+      // repo into a contract this screen depends on.
+      openRefusal: setting?.refresh_cycle_started_at
+        ? (runs.map((r) => r.notes?.refusal).find((r): r is { unseen: number; total: number } => Boolean(r)) ?? null)
+        : null,
+      counts,
+      // Blocked rows are excluded from `remaining`: they will never be fetched,
+      // so counting them as "left" overstates the work remaining for ever.
+      queue: {
+        total: st?.queue_total ?? 0,
+        remaining: st?.queue_remaining ?? 0,
+        blocked: st?.queue_blocked ?? 0,
+      },
+      runInFlight: runs.some((r) => r.status === 'running'),
+      lastRun: lastRun
+        ? {
+            phase: lastRun.phase,
+            status: lastRun.status,
+            startedAt: lastRun.started_at,
+            finishedAt: lastRun.finished_at,
+            requestsMade: lastRun.requests_made,
+            recordsWritten: lastRun.records_written,
+            abortReason: lastRun.abort_reason,
+            // What a completed refresh cycle did, if the run closed one.
+            refreshNote: lastRun.notes?.refresh ?? null,
+          }
+        : null,
+    };
+  });
 
-      const setting = settings[source.id] ?? null;
-      return {
-        id: source.id,
-        slug: source.slug,
-        name: source.name,
-        domain: source.domain,
-        kind: source.kind,
-        licenceStatus: source.licence_status,
-        termsUrl: source.terms_url,
-        precedence: source.precedence,
-        lastReviewedAt: source.last_reviewed_at,
-        licenceNote: setting?.licence_note ?? null,
-        licenceChangedAt: setting?.licence_changed_at ?? null,
-        contactEmail: setting?.contact_email ?? null,
-        crawlEnabled: setting?.crawl_enabled ?? false,
-        maxRequestsPerRun: setting?.max_requests_per_run ?? null,
-        maxRequestsPerDay: setting?.max_requests_per_day ?? null,
-        minRequestIntervalMs: setting?.min_request_interval_ms ?? null,
-        maxChangeRatio: setting?.max_change_ratio ?? null,
-        refreshAfterDays: setting?.refresh_after_days ?? null,
-        goneAfterMisses: setting?.gone_after_misses ?? null,
-        refreshCycleStartedAt: setting?.refresh_cycle_started_at ?? null,
-        // THE REFUSAL OUTLIVES THE RUN THAT MADE IT. A refused cycle stays open
-        // by design, so the next --discover, or a drain that stops on its
-        // budget, becomes `lastRun` and the alarm would disappear while the
-        // condition it reported is still true. So it is read from the newest
-        // refusal among the runs we hold, for as long as a cycle is open.
-        //
-        // Read as STRUCTURE. The first cut had the admin page match the opening
-        // words of abort_reason, which made an English sentence in the other
-        // repo into a contract this screen depends on.
-        openRefusal: setting?.refresh_cycle_started_at
-          ? ((runsBySource.get(source.id) ?? [])
-              .map((r) => (r.notes as RunNotes | null)?.refusal)
-              .find((r): r is { unseen: number; total: number } => Boolean(r)) ?? null)
-          : null,
-        counts,
-        queue: queueBySource.get(source.id) ?? { total: 0, remaining: 0, blocked: 0 },
-        runInFlight: (runsBySource.get(source.id) ?? []).some((r) => r.status === 'running'),
-        lastRun: (runsBySource.get(source.id) ?? [])[0]
-          ? {
-              phase: (runsBySource.get(source.id) ?? [])[0]!.phase,
-              status: (runsBySource.get(source.id) ?? [])[0]!.status,
-              startedAt: (runsBySource.get(source.id) ?? [])[0]!.started_at,
-              finishedAt: (runsBySource.get(source.id) ?? [])[0]!.finished_at,
-              requestsMade: (runsBySource.get(source.id) ?? [])[0]!.requests_made,
-              recordsWritten: (runsBySource.get(source.id) ?? [])[0]!.records_written,
-              abortReason: (runsBySource.get(source.id) ?? [])[0]!.abort_reason,
-              // What a completed refresh cycle did, if the run closed one.
-              refreshNote: ((runsBySource.get(source.id) ?? [])[0]!.notes as RunNotes | null)?.refresh ?? null,
-            }
-          : null,
-      };
-    })
-  );
-
-  return { sources: counted };
+  return { sources: list };
 });
