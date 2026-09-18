@@ -5047,6 +5047,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      typesafe_events: {
+        Row: {
+          at: string;
+          event: string;
+          id: number;
+          props: Json;
+          source: string;
+        };
+        Insert: {
+          at?: string;
+          event: string;
+          id?: number;
+          props?: Json;
+          source: string;
+        };
+        Update: {
+          at?: string;
+          event?: string;
+          id?: number;
+          props?: Json;
+          source?: string;
+        };
+        Relationships: [];
+      };
       user_badges: {
         Row: {
           awarded_at: string;
@@ -6125,6 +6149,7 @@ export type Database = {
         Args: never;
         Returns: undefined;
       };
+      prune_typesafe_events: { Args: { p_keep?: string }; Returns: number };
       publish_model_version: {
         Args: { p_version_id: string };
         Returns: undefined;
@@ -6338,6 +6363,19 @@ export type Database = {
       };
       safe_uuid: { Args: { p_value: string }; Returns: string };
       seller_can_sell: { Args: { p_user_id: string }; Returns: boolean };
+      set_part_source_auto_approve: {
+        Args: {
+          p_confidence: number;
+          p_margin?: number;
+          p_source: string;
+          p_source_id: string;
+        };
+        Returns: Json;
+      };
+      set_typesafe_mode: {
+        Args: { p_key: string; p_value: string };
+        Returns: Json;
+      };
       submit_model_version: {
         Args: { p_version_id: string };
         Returns: {
@@ -6362,6 +6400,8 @@ export type Database = {
         Returns: Json;
       };
       truncate_all_tables: { Args: never; Returns: undefined };
+      typesafe_mode_values: { Args: { p_key: string }; Returns: string[] };
+      typesafe_readout: { Args: { p_days?: number }; Returns: Json };
       user_has_subscription: {
         Args: { p_product_id?: string; p_user_id: string };
         Returns: boolean;

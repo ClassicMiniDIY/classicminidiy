@@ -16,16 +16,15 @@
  */
 import type { H3Event } from 'h3';
 import { askTypeSafe, noul, typesafeConfigured } from '../typesafe';
-import { serverRuntimeConfig } from '../runtimeConfig';
 import { getServiceClient } from '../supabase';
+import { typesafeMode } from '../typesafeModes';
 
 /** Threshold at which the model's read alone shows the strong disclaimer. */
 export const SAFETY_MODEL_MIN = 0.7;
 const CEILING_MS = 1500;
 
-export function modelsSafetyReadEnabled(event: H3Event): boolean {
-  const raw = (serverRuntimeConfig(event).TYPESAFE_MODELS_MODE as string) || '';
-  return raw.trim().toLowerCase() === 'on' && typesafeConfigured(event);
+export async function modelsSafetyReadEnabled(event: H3Event): Promise<boolean> {
+  return typesafeConfigured(event) && (await typesafeMode(event, 'models')) === 'on';
 }
 
 /** True when either the seller's flag or the model's read says the part is safety-critical. */
@@ -55,7 +54,7 @@ export async function readModelSafety(
   modelId: string,
   fields: { title: string; description?: string | null; category?: string | null }
 ): Promise<{ p: number; model: string } | null> {
-  if (!modelsSafetyReadEnabled(event)) return null;
+  if (!(await modelsSafetyReadEnabled(event))) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CEILING_MS);
   try {

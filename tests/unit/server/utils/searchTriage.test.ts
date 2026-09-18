@@ -20,6 +20,35 @@ vi.mock('~~/server/utils/typesafe', async () => {
   };
 });
 vi.mock('~~/server/utils/runtimeConfig', () => ({ serverRuntimeConfig: () => config }));
+vi.mock('~~/server/utils/typesafeModes', () => ({
+  typesafeMode: async (_e: unknown, surface: string) =>
+    (
+      ({
+        chat: 'TYPESAFE_CHAT_MODE',
+        models: 'TYPESAFE_MODELS_MODE',
+        search: 'TYPESAFE_SEARCH_MODE',
+        queue: 'TYPESAFE_QUEUE_MODE',
+        mcp: 'TYPESAFE_MCP_MODE',
+      }) as Record<string, string>
+    )[surface]
+      ? (
+          config[
+            (
+              {
+                chat: 'TYPESAFE_CHAT_MODE',
+                models: 'TYPESAFE_MODELS_MODE',
+                search: 'TYPESAFE_SEARCH_MODE',
+                queue: 'TYPESAFE_QUEUE_MODE',
+                mcp: 'TYPESAFE_MCP_MODE',
+              } as Record<string, string>
+            )[surface]!
+          ] || 'off'
+        )
+          .trim()
+          .toLowerCase()
+      : 'off',
+  mirrorTypesafeEvent: () => {},
+}));
 vi.mock('~~/server/utils/supabase', () => ({ getServiceClient: () => ({ rpc: (...a: unknown[]) => rpc(...a) }) }));
 vi.mock('~~/server/utils/chatUsage', () => ({ captureServerEvent: (...a: unknown[]) => capture(...a) }));
 
@@ -122,21 +151,29 @@ describe('triageSearchMiss', () => {
 });
 
 describe('shadowSearchIntent', () => {
-  it('is off unless the mode is shadow', () => {
-    triage.shadowSearchIntent(event, 'wiper motor', { kind: 'lookup', lead: 'archive' });
+  it('is off unless the mode is shadow', async () => {
+    const waits: Promise<unknown>[] = [];
+    const ev = { waitUntil: (p: Promise<unknown>) => waits.push(p) } as any;
+    triage.shadowSearchIntent(ev, 'wiper motor', { kind: 'lookup', lead: 'archive' });
+    await Promise.all(waits);
     expect(ask).not.toHaveBeenCalled();
     config.TYPESAFE_SEARCH_MODE = 'shadow';
     config.TYPESAFE_API_KEY = '';
-    triage.shadowSearchIntent(event, 'wiper motor', { kind: 'lookup', lead: 'archive' });
+    triage.shadowSearchIntent(ev, 'wiper motor', { kind: 'lookup', lead: 'archive' });
+    await Promise.all(waits);
     expect(ask).not.toHaveBeenCalled();
   });
 
-  it('runs only for lookup and question kinds', () => {
+  it('runs only for lookup and question kinds', async () => {
     config.TYPESAFE_SEARCH_MODE = 'shadow';
     ask.mockResolvedValue(answer({ kind: c('lookup'), lead: c('archive') }));
-    triage.shadowSearchIntent(event, '12G940', { kind: 'part-number', lead: 'parts' });
+    const waits: Promise<unknown>[] = [];
+    const ev = { waitUntil: (p: Promise<unknown>) => waits.push(p) } as any;
+    triage.shadowSearchIntent(ev, '12G940', { kind: 'part-number', lead: 'parts' });
+    await Promise.all(waits);
     expect(ask).not.toHaveBeenCalled();
-    triage.shadowSearchIntent(event, 'wiper motor', { kind: 'lookup', lead: 'archive' });
+    triage.shadowSearchIntent(ev, 'wiper motor', { kind: 'lookup', lead: 'archive' });
+    await Promise.all(waits);
     expect(ask).toHaveBeenCalledTimes(1);
   });
 

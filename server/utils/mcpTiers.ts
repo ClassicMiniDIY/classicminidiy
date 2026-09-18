@@ -72,8 +72,7 @@ export const MCP_KEY_NEGATIVE_CACHE_TTL_SECONDS = 60;
 
 /** What the auth cache holds for a hash. */
 export type McpKeyCacheEntry =
-  | { ok: false }
-  | { ok: true; keyId: string; userId: string; tier: 'free' | 'developer'; keyPrefix: string };
+  { ok: false } | { ok: true; keyId: string; userId: string; tier: 'free' | 'developer'; keyPrefix: string };
 
 /** What mcp-auth stashes on event.context for rate-limit / tiering / usage. */
 export interface McpAuthContext {

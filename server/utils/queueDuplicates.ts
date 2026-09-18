@@ -12,8 +12,8 @@
  */
 import type { H3Event } from 'h3';
 import { askTypeSafe, score, typesafeConfigured } from './typesafe';
-import { serverRuntimeConfig } from './runtimeConfig';
 import { getServiceClient } from './supabase';
+import { typesafeMode } from './typesafeModes';
 import type { Json } from '~~/types/database';
 
 export const DUPLICATE_TOP_MIN = 0.6;
@@ -51,9 +51,8 @@ interface CandidateRow {
   sim: number;
 }
 
-export function queueDuplicatesEnabled(event: H3Event): boolean {
-  const raw = (serverRuntimeConfig(event).TYPESAFE_QUEUE_MODE as string) || '';
-  return raw.trim().toLowerCase() === 'on' && typesafeConfigured(event);
+export async function queueDuplicatesEnabled(event: H3Event): Promise<boolean> {
+  return typesafeConfigured(event) && (await typesafeMode(event, 'queue')) === 'on';
 }
 
 function submissionSummary(targetType: string, data: Record<string, unknown>): Record<string, string> {
@@ -115,7 +114,7 @@ function topLevel(p: Record<DuplicateLevel, number>): DuplicateLevel {
  * throws. A null leaves the column empty so the next list load tries again.
  */
 export async function hintSubmissionDuplicates(event: H3Event, sub: DuplicateSource): Promise<DuplicateHint | null> {
-  if (!queueDuplicatesEnabled(event)) return null;
+  if (!(await queueDuplicatesEnabled(event))) return null;
   if (sub.targetType !== 'color' && sub.targetType !== 'wheel') return null;
   const supabase = getServiceClient();
   const controller = new AbortController();
