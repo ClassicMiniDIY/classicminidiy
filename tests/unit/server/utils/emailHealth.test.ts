@@ -344,6 +344,20 @@ describe('MAIL_DOMAINS', () => {
     const c = MAIL_DOMAINS.find((d) => d.domain === 'cmdiy.co')!;
     expect(c.expectedIncludes).not.toContain('amazonses.com');
   });
+
+  it('declares the provider records cmdiy.co senders depend on', () => {
+    // The 2026-09-03 migration deleted Postmark's records on the belief the
+    // account was dead. It sends the store's purchase orders. Pinning them
+    // here means the page fails loudly if they ever disappear again.
+    const c = MAIL_DOMAINS.find((d) => d.domain === 'cmdiy.co')!;
+    const names = (c.providerRecords ?? []).map((r) => r.name);
+    expect(names).toContain('pm-bounces.cmdiy.co');
+    expect(names).toContain('20240927014807pm._domainkey.cmdiy.co');
+    // Two Shopify mail configs, three selectors each.
+    expect(names.filter((n) => n.startsWith('4wr')).length).toBe(3);
+    expect(names.filter((n) => n.startsWith('701')).length).toBe(3);
+    expect(c.providerRecords!.find((r) => r.name === 'pm-bounces.cmdiy.co')?.expect).toBe('pm.mtasv.net');
+  });
 });
 
 describe('senderLabel', () => {
@@ -380,7 +394,7 @@ describe('buildDomainHealth', () => {
     ...over,
   });
 
-  const check = (h: { checks: { id: string; severity: string }[] }, id: string) => h.checks.find((c) => c.id === id);
+  const check = (h: { checks: Check[] }, id: string) => h.checks.find((c) => c.id === id);
 
   it('grades a fully migrated domain as healthy', () => {
     const h = buildDomainHealth(spec(), facts());
@@ -393,6 +407,104 @@ describe('buildDomainHealth', () => {
     const h = buildDomainHealth(spec(), facts());
     expect(check(h, 'dkim')?.severity).toBe('unknown');
     expect(h.worst).toBe('ok');
+  });
+
+  describe('provider records', () => {
+    const postmark = (): DomainSpec =>
+      spec({
+        providerRecords: [
+          {
+            name: 'pmsel._domainkey.example.com',
+            type: 'TXT',
+            provider: 'Postmark',
+            role: 'dkim',
+            expect: 'k=rsa; p=ABC',
+          },
+          {
+            name: 'pm-bounces.example.com',
+            type: 'CNAME',
+            provider: 'Postmark',
+            role: 'return-path',
+            expect: 'pm.mtasv.net',
+          },
+          {
+            name: 'shop._domainkey.example.com',
+            type: 'CNAME',
+            provider: 'Shopify',
+            role: 'dkim',
+            expect: 'dkim1.store.example.net',
+          },
+        ],
+      });
+
+    it('grades DKIM ok when every declared selector resolves to its expected value', () => {
+      const h = buildDomainHealth(
+        postmark(),
+        facts({
+          providerRecords: {
+            'pmsel._domainkey.example.com': { resolved: true, values: ['k=rsa; p=ABC'] },
+            'pm-bounces.example.com': { resolved: true, values: ['pm.mtasv.net'] },
+            'shop._domainkey.example.com': { resolved: true, values: ['dkim1.store.example.net.'] },
+          },
+        })
+      );
+      expect(check(h, 'dkim')?.severity).toBe('ok');
+      expect(check(h, 'dkim')?.informational).toBeUndefined();
+      expect(check(h, 'rp-postmark')?.severity).toBe('ok');
+      expect(h.worst).toBe('ok');
+    });
+
+    it('fails DKIM and the return-path when a provider’s records are missing — the PO regression', () => {
+      const h = buildDomainHealth(
+        postmark(),
+        facts({
+          providerRecords: {
+            'pmsel._domainkey.example.com': { resolved: true, values: [] },
+            'pm-bounces.example.com': { resolved: true, values: [] },
+            'shop._domainkey.example.com': { resolved: true, values: ['dkim1.store.example.net'] },
+          },
+        })
+      );
+      expect(check(h, 'dkim')?.severity).toBe('fail');
+      expect(check(h, 'dkim')?.detail).toContain('Postmark');
+      expect(check(h, 'dkim')?.detail).not.toContain('Shopify');
+      expect(check(h, 'rp-postmark')?.severity).toBe('fail');
+      expect(h.worst).toBe('fail');
+    });
+
+    it('treats a CNAME pointing elsewhere as wrong, not present', () => {
+      const h = buildDomainHealth(
+        postmark(),
+        facts({
+          providerRecords: {
+            'pmsel._domainkey.example.com': { resolved: true, values: ['k=rsa; p=ABC'] },
+            'pm-bounces.example.com': { resolved: true, values: ['pm.mtasv.net'] },
+            'shop._domainkey.example.com': { resolved: true, values: ['dkim1.other.example.net'] },
+          },
+        })
+      );
+      expect(check(h, 'dkim')?.severity).toBe('fail');
+      expect(check(h, 'dkim')?.detail).toContain('Shopify');
+    });
+
+    it('reports unknown, not ok, when a selector lookup failed or was skipped', () => {
+      const h = buildDomainHealth(
+        postmark(),
+        facts({
+          providerRecords: {
+            'pmsel._domainkey.example.com': { resolved: false, values: [] },
+            'pm-bounces.example.com': { resolved: true, values: ['pm.mtasv.net'] },
+            'shop._domainkey.example.com': { resolved: true, values: ['dkim1.store.example.net'] },
+          },
+        })
+      );
+      expect(check(h, 'dkim')?.severity).toBe('unknown');
+      expect(h.worst).toBe('unknown');
+      // No lookups at all: still unknown, still not informational.
+      const none = buildDomainHealth(postmark(), facts());
+      expect(check(none, 'dkim')?.severity).toBe('unknown');
+      expect(check(none, 'dkim')?.informational).toBeUndefined();
+    });
   });
 
   it('warns while a domain is still on Forward Email', () => {

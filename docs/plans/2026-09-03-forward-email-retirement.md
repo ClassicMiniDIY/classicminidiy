@@ -482,6 +482,80 @@ unknown rather than implying a pass.
 Note that DKIM is exactly where defect 2 lives, so this gap is not free — see the
 follow-up below.
 
+## Correction, 2026-09-18: Postmark was live, and the page was blind
+
+Two things went wrong after the 3 September cutover, and they compounded.
+
+**The admin page never worked.** cloudflare-dns.com answers with
+`Content-Type: application/dns-json`, which ofetch does not parse as JSON, so
+`res.Status` was undefined and every lookup threw. The page rendered "DNS
+lookup failed — not checked" on every row and, because `unknown` ranked
+alongside `ok` in the badge, showed all three domains as **Healthy**. Fixed in
+PR #868: `responseType: 'json'`, and `unknown` now outranks `ok` with the
+by-design DKIM row opted out via `informational`.
+
+**Postmark is not dead.** "Abandoned trial, confirmed by Cole" was wrong, and
+the confirmation was made without evidence: the deciding fact was that nothing
+in this repo sends through Postmark, and this repo is not the only thing that
+sends mail — the same mistake this plan already records making about
+`cmdiy.co` being receive-only. Postmark sends the store's **purchase orders to
+suppliers** as `sales@cmdiy.co` (Feedback-ID `…:postmark` in the headers).
+`scripts/fix-mail-dns.py` deleted its DKIM selector
+(`20240927014807pm._domainkey.cmdiy.co`) and return-path host
+(`pm-bounces.cmdiy.co`) on 3 September. From the PO copies in Gmail:
+
+|                   | 3 Aug                          | 15 Sep                      |
+| ----------------- | ------------------------------ | --------------------------- |
+| DKIM `d=cmdiy.co` | pass                           | absent (selector NXDOMAIN)  |
+| Return-Path       | `pm-bounces.cmdiy.co`, aligned | fell back to `pm.mtasv.net` |
+| DMARC             | **pass**                       | **fail**                    |
+
+Suppliers started reporting POs in spam within two weeks. Had DMARC been at
+`p=quarantine` they would not have arrived at all — which is why the
+enforcement ladder below must not start until this is fixed and confirmed by a
+report.
+
+Fixes, same day:
+
+- `scripts/fix-mail-dns.py` now **creates** both records (values from the
+  frozen Route 53 zone, verbatim) instead of deleting them, and its DMARC step
+  composes the record around Cloudflare DMARC Management's `rua` rather than
+  Postmark's digest addresses.
+- `MAIL_DOMAINS` gained `providerRecords`: the six Shopify DKIM CNAMEs, the
+  Postmark selector and the Postmark return-path on `cmdiy.co`. The page now
+  grades DKIM for real on that domain and adds a "Postmark return-path" row.
+  Before the records were restored it read `fail` on both, which is the alarm
+  that was missing on 3 September.
+
+The lesson for the "Deliberately not checked" section above: the reason DKIM
+was skipped (SES tokens are per-identity) does not apply to Shopify or
+Postmark, whose selector names are fixed and whose values are public DNS.
+Skipping all of DKIM because one provider's is hard was the gap the outage
+walked through.
+
+### DMARC reporting moved to Cloudflare, 2026-09-18
+
+Postmark's DMARC Digests carried the reports from 4 to 18 September. All three
+zones are on Cloudflare, so its **DMARC Management** (zone → Email → DMARC
+Management) is the one place to read them without a second vendor. Enabling it
+is dashboard-only — there is no public API, and enabling is what mints the
+per-zone `rua` mailbox — after which `fix-mail-dns.py --apply` normalises the
+record to `v=DMARC1; p=none; rua=mailto:<zone>@dmarc-reports.cloudflare.net;`.
+
+Enforcement ladder, per domain, only after the dashboard shows a week of data
+with every legitimate source passing (SES on the two `.com`s; Shopify **and
+Postmark** on `cmdiy.co`; Mailgun for `ghost.news.classicminidiy.com`):
+
+1. `p=quarantine; pct=25` — hold one week
+2. `p=quarantine` (pct=100) — hold one week
+3. `p=reject`
+
+`sp=` stays absent throughout. `classicminidiy.com` has two sending
+subdomains (`ghost.news.` on Mailgun, `noreply.` on SES) whose alignment has
+not been confirmed by a report, so `sp=reject` would be a guess with the
+newsletter as the stake. Subdomains inherit `p` when `sp` is absent, which is
+the right default here.
+
 ## Follow-ups, out of scope here
 
 1. **Authenticate Shopify's sending domain** (defect 2). Shopify admin →
@@ -494,9 +568,9 @@ follow-up below.
    DKIM row stops being `unknown`. The tokens are now known — they are in the
    Route 53 zones — but they are infra config, and this repo is public, so they
    belong in an env var or `classicminidiy-supabase`, not committed here.
-4. **Audit Postmark.** Two domains carry Postmark bounce hosts and one a Postmark
-   DKIM key, no SPF authorises it, and nothing in this repo sends through it.
-   Establish whether it is live; if not, remove the records.
+4. ~~**Audit Postmark.**~~ Done the hard way — see the 2026-09-18 correction
+   above. It is live (purchase orders) and its records are now declared in
+   `providerRecords` and created by `fix-mail-dns.py`.
 5. ~~Finish or remove Shopify's `classicminidiy.com` domain authentication.~~
    **Answered:** Shopify's sender is `orders@cmdiy.co` and authenticates there.
    Nothing needs finishing on `classicminidiy.com`; see the `maileri5q` note

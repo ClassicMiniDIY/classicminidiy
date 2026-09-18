@@ -41,7 +41,7 @@ interface DohAnswer {
  * alarm for a total inbound outage. Those throw instead, so the caller can tell
  * the two apart.
  */
-async function query(name: string, type: 'TXT' | 'MX'): Promise<string[]> {
+async function query(name: string, type: 'TXT' | 'MX' | 'CNAME'): Promise<string[]> {
   const url = `${DOH}?name=${encodeURIComponent(name)}&type=${type}`;
   // `responseType: 'json'` is load-bearing. The endpoint answers with
   // `Content-Type: application/dns-json`, which ofetch's JSON sniff does not
@@ -58,7 +58,7 @@ async function query(name: string, type: 'TXT' | 'MX'): Promise<string[]> {
   }
   if (!res.Answer) return [];
   // Filter by type: a CNAME in the chain arrives in the same Answer array.
-  const want = type === 'TXT' ? 16 : 15;
+  const want = { TXT: 16, MX: 15, CNAME: 5 }[type];
   return res.Answer.filter((a) => a.type === want).map((a) => a.data);
 }
 
@@ -76,6 +76,11 @@ function unquoteTxt(data: string): string {
 
 async function txt(name: string): Promise<string[]> {
   return (await query(name, 'TXT')).map(unquoteTxt);
+}
+
+/** CNAME targets arrive with a trailing dot. */
+async function cname(name: string): Promise<string[]> {
+  return (await query(name, 'CNAME')).map((d) => d.trim().replace(/\.$/, ''));
 }
 
 /** MX answers arrive as "<priority> <host>". Only the host matters here. */
@@ -105,10 +110,16 @@ export default defineEventHandler(async (event) => {
 
   const domains: DomainHealth[] = await Promise.all(
     MAIL_DOMAINS.map(async (spec) => {
-      const [mxRes, apexRes, dmarcRes] = await Promise.all([
+      const [mxRes, apexRes, dmarcRes, providerRes] = await Promise.all([
         attempt(mx(spec.domain)),
         attempt(resolveTxt(spec.domain)),
         attempt(txt(`_dmarc.${spec.domain}`)),
+        Promise.all(
+          (spec.providerRecords ?? []).map(async (r) => {
+            const res = await attempt(r.type === 'CNAME' ? cname(r.name) : txt(r.name));
+            return [r.name, res.ok ? { resolved: true, values: res.value } : { resolved: false, values: [] }] as const;
+          })
+        ),
       ]);
 
       const apexTxt = apexRes.ok ? apexRes.value : [];
@@ -124,6 +135,7 @@ export default defineEventHandler(async (event) => {
         spf: spfRes?.ok ? spfRes.value : null,
         dmarc: dmarcRes.ok ? parseDmarc(dmarcRes.value) : null,
         dmarcResolved: dmarcRes.ok,
+        providerRecords: Object.fromEntries(providerRes),
       });
     })
   );

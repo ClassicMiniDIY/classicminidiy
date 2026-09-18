@@ -32,6 +32,26 @@ const MAX_SPF_DEPTH = 10;
 
 export type Severity = 'ok' | 'warn' | 'fail' | 'unknown';
 
+/**
+ * A DNS record a sending provider depends on: a DKIM selector or a custom
+ * return-path host. These are the records that do not appear in the apex SPF
+ * and so are invisible to every other check on this page — which is exactly
+ * how the 2026-09-03 zone migration deleted Postmark's DKIM key and bounce
+ * host on cmdiy.co and nobody noticed until suppliers reported purchase
+ * orders in spam two weeks later.
+ */
+export interface ProviderRecord {
+  /** Fully qualified record name. */
+  name: string;
+  type: 'CNAME' | 'TXT';
+  /** Which sender breaks if this record is missing, for the UI. */
+  provider: string;
+  /** What the record authenticates: 'dkim' rolls up into the DKIM row. */
+  role: 'dkim' | 'return-path';
+  /** CNAME: the exact target. TXT: a substring the record must contain. */
+  expect: string;
+}
+
 export interface DomainSpec {
   domain: string;
   /** Whether this domain sends mail. Receive-only domains should publish `v=spf1 -all`. */
@@ -43,6 +63,24 @@ export interface DomainSpec {
    * discover a mail path by breaking it.
    */
   expectedIncludes: string[];
+  /**
+   * Provider records that must exist for this domain's senders to
+   * authenticate. Empty when the selectors are not knowable from this repo
+   * (SES issues per-identity tokens), in which case the DKIM row stays
+   * informational.
+   */
+  providerRecords?: ProviderRecord[];
+}
+
+/** Shopify's three DKIM CNAMEs for one mail config, given the selector prefix and store host. */
+function shopifyDkim(domain: string, prefix: string, host: string): ProviderRecord[] {
+  return [1, 2, 3].map((n) => ({
+    name: `${prefix}${n === 1 ? '' : n}._domainkey.${domain}`,
+    type: 'CNAME' as const,
+    provider: 'Shopify',
+    role: 'dkim' as const,
+    expect: `dkim${n}.${host}`,
+  }));
 }
 
 /**
@@ -92,12 +130,22 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     sends: true,
     // Empty, and correctly so: there is no SPF include to add.
     //
-    // Confirmed 2026-09-03: the ONLY sender is Shopify, as `orders@cmdiy.co`,
-    // with Shopify domain authentication reporting "Authenticated". Shopify
-    // authenticates by DKIM — the six CNAMEs in this zone — and its historical
-    // SPF include (`shops.shopify.com`) resolves to bare `v=spf1 ~all`, so it
-    // grants nothing. DMARC passes on DKIM alignment alone; SPF alignment is
-    // not required. Postmark is dead: an abandoned trial from years ago.
+    // Two senders, neither of which touches the apex SPF:
+    //
+    //   Shopify, as `orders@cmdiy.co` — confirmed 2026-09-03, domain
+    //   authentication reporting "Authenticated". Authenticates by DKIM (the
+    //   six CNAMEs below); its historical SPF include (`shops.shopify.com`)
+    //   resolves to bare `v=spf1 ~all` and grants nothing.
+    //
+    //   Postmark, as `sales@cmdiy.co` — the store's purchase orders to
+    //   suppliers. Found 2026-09-18 from the POs' own headers. Authenticates by
+    //   DKIM (selector `20240927014807pm`) and by SPF on its own return-path
+    //   host (`pm-bounces`, a CNAME inheriting pm.mtasv.net's SPF). An earlier
+    //   revision called Postmark "dead, an abandoned trial" and the 2026-09-03
+    //   migration deleted both records on that basis; every PO after that
+    //   failed DMARC. `providerRecords` exists so that cannot happen silently.
+    //
+    // DMARC passes on DKIM alignment alone; SPF alignment is not required.
     //
     // The domain had NO SPF at all until Email Routing onboarding published
     // `v=spf1 include:_spf.mx.cloudflare.net ~all` on 2026-09-03. That became
@@ -110,6 +158,24 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     // envelope domain — a hard fail is weighted heavily by some receivers even
     // when DKIM aligns, and it would land on the store's own mail.
     expectedIncludes: [CF_ROUTING_INCLUDE_HOST],
+    providerRecords: [
+      ...shopifyDkim('cmdiy.co', '4wr', 'a1df6a69b770.p347.email.myshopify.com'),
+      ...shopifyDkim('cmdiy.co', '701', '6ff5c41a084a.p813.email.myshopify.com'),
+      {
+        name: '20240927014807pm._domainkey.cmdiy.co',
+        type: 'TXT',
+        provider: 'Postmark',
+        role: 'dkim',
+        expect: 'k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCPGhwf3LbRbD7iEpMQlsSaBcnzijTHS',
+      },
+      {
+        name: 'pm-bounces.cmdiy.co',
+        type: 'CNAME',
+        provider: 'Postmark',
+        role: 'return-path',
+        expect: 'pm.mtasv.net',
+      },
+    ],
   },
 ];
 
@@ -122,9 +188,9 @@ export const SENDER_LABELS: Record<string, string> = {
   'send.resend.com': 'Resend',
   'servers.mcsv.net': 'Mailchimp',
   'sendgrid.net': 'SendGrid',
-  // Postmark is confirmed dead (abandoned trial). Labelled so that if this
-  // include ever reappears in a record, the warning names it rather than
-  // printing a bare hostname nobody recognises.
+  // Postmark sends cmdiy.co's purchase orders, but via its own return-path
+  // host, so this include is not expected on any apex. Labelled so that if it
+  // appears the warning names it rather than printing a bare hostname.
   'spf.mtasv.net': 'Postmark',
   // Computed key, not a literal: the constant exists so this value has exactly
   // one definition. A second copy here is the drift it was added to prevent.
@@ -390,6 +456,12 @@ export interface DomainFacts {
   mxResolved?: boolean;
   spfResolved?: boolean;
   dmarcResolved?: boolean;
+  /**
+   * Lookup results for `spec.providerRecords`, keyed by record name. A name
+   * absent from the map was not looked up (unknown); `resolved: false` is a
+   * failed lookup; an empty `values` with `resolved: true` is NXDOMAIN.
+   */
+  providerRecords?: Record<string, { resolved: boolean; values: string[] }>;
 }
 
 export interface DomainHealth extends DomainFacts {
@@ -611,17 +683,102 @@ export function buildDomainHealth(spec: DomainSpec, facts: DomainFacts): DomainH
     });
   }
 
+  // --- Provider records: DKIM selectors and return-path hosts ---
+  // Graded per provider so the row names who breaks, not which CNAME. A record
+  // that is present but points somewhere else is a fail like a missing one:
+  // the receiver's DKIM verify fails either way.
+  const providerRecords = spec.providerRecords ?? [];
+  const byProvider = new Map<string, ProviderRecord[]>();
+  for (const r of providerRecords) byProvider.set(r.provider, [...(byProvider.get(r.provider) ?? []), r]);
+
+  const dkimProblems: string[] = [];
+  let dkimUnknown = false;
+  for (const [provider, recs] of byProvider) {
+    const missing: ProviderRecord[] = [];
+    const wrong: ProviderRecord[] = [];
+    let unresolved = false;
+    for (const r of recs) {
+      const got = facts.providerRecords?.[r.name];
+      if (!got || !got.resolved) {
+        unresolved = true;
+        continue;
+      }
+      const values = got.values.map((v) => v.toLowerCase().replace(/\.$/, ''));
+      const expect = r.expect.toLowerCase();
+      const present = r.type === 'CNAME' ? values.includes(expect) : values.some((v) => v.includes(expect));
+      if (got.values.length === 0) missing.push(r);
+      else if (!present) wrong.push(r);
+    }
+    const dkimRecs = recs.filter((r) => r.role === 'dkim');
+    const dkimBad = [...missing, ...wrong].filter((r) => r.role === 'dkim');
+    if (dkimRecs.length && dkimBad.length) {
+      dkimProblems.push(
+        `${provider}: ${dkimBad.length} of ${dkimRecs.length} selector${dkimRecs.length === 1 ? '' : 's'} ${
+          missing.some((r) => r.role === 'dkim') ? 'missing' : 'wrong'
+        } (${dkimBad.map((r) => r.name.split('.')[0]).join(', ')})`
+      );
+    } else if (dkimRecs.length && unresolved) {
+      dkimUnknown = true;
+    }
+    for (const r of recs.filter((x) => x.role === 'return-path')) {
+      const got = facts.providerRecords?.[r.name];
+      if (!got || !got.resolved) {
+        checks.push({
+          id: `rp-${r.provider.toLowerCase()}`,
+          label: `${r.provider} return-path`,
+          severity: 'unknown',
+          detail: 'DNS lookup failed — not checked',
+        });
+      } else if (missing.includes(r) || wrong.includes(r)) {
+        checks.push({
+          id: `rp-${r.provider.toLowerCase()}`,
+          label: `${r.provider} return-path`,
+          severity: 'fail',
+          detail: `${r.name} ${missing.includes(r) ? 'is missing' : `does not point at ${r.expect}`} — ${provider} mail fails SPF alignment`,
+        });
+      } else {
+        checks.push({
+          id: `rp-${r.provider.toLowerCase()}`,
+          label: `${r.provider} return-path`,
+          severity: 'ok',
+          detail: `${r.name} → ${r.expect}`,
+        });
+      }
+    }
+  }
+
   // --- DKIM ---
-  // SES DKIM lives at three CNAMEs on per-identity tokens that cannot be derived
-  // from the domain name. Reporting 'unknown' is honest; reporting 'ok' because
-  // we did not look would be worse than not having the row at all.
-  checks.push({
-    id: 'dkim',
-    label: 'DKIM',
-    severity: 'unknown',
-    detail: 'Not checked — SES selector tokens are not stored in this repo',
-    informational: true,
-  });
+  // Graded from `providerRecords` when the domain declares any DKIM selectors.
+  // SES DKIM lives at three CNAMEs on per-identity tokens that cannot be
+  // derived from the domain name, so domains that only send via SES stay
+  // informational: reporting 'unknown' is honest; reporting 'ok' because we
+  // did not look would be worse than not having the row at all.
+  const dkimProviders = [...byProvider.entries()].filter(([, recs]) => recs.some((r) => r.role === 'dkim'));
+  if (dkimProviders.length === 0) {
+    checks.push({
+      id: 'dkim',
+      label: 'DKIM',
+      severity: 'unknown',
+      detail: 'Not checked — SES selector tokens are not stored in this repo',
+      informational: true,
+    });
+  } else if (dkimProblems.length) {
+    checks.push({
+      id: 'dkim',
+      label: 'DKIM',
+      severity: 'fail',
+      detail: `${dkimProblems.join('; ')} — that sender fails DMARC`,
+    });
+  } else if (dkimUnknown) {
+    checks.push({ id: 'dkim', label: 'DKIM', severity: 'unknown', detail: 'DNS lookup failed — not checked' });
+  } else {
+    checks.push({
+      id: 'dkim',
+      label: 'DKIM',
+      severity: 'ok',
+      detail: dkimProviders.map(([p, recs]) => `${p} (${recs.filter((r) => r.role === 'dkim').length})`).join(', '),
+    });
+  }
 
   return {
     domain: spec.domain,
