@@ -245,38 +245,43 @@
               {{ link.label }}
               <i class="fas fa-chevron-down text-[10px] opacity-60" aria-hidden="true"></i>
             </NuxtLink>
-            <ul
-              tabindex="0"
-              class="dropdown-content menu z-[60] mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
-            >
-              <li v-for="sub in exchangeLinks" :key="sub.to">
-                <NuxtLink
-                  :to="sub.to"
-                  class="font-semibold"
-                  :class="{ 'menu-active': isActive(sub.to) }"
-                  @click="
-                    closeDropdowns();
-                    track('nav_item_clicked', { label: sub.label, surface: 'desktop' });
-                  "
-                >
-                  <i :class="[sub.icon, 'w-4 text-secondary']" aria-hidden="true"></i>
-                  {{ sub.label }}
-                </NuxtLink>
-              </li>
-              <li class="mt-1 border-t border-base-300 pt-1">
-                <NuxtLink
-                  :to="exchangeSell.to"
-                  class="font-semibold text-primary"
-                  @click="
-                    closeDropdowns();
-                    track('nav_item_clicked', { label: exchangeSell.label, surface: 'desktop' });
-                  "
-                >
-                  <i :class="[exchangeSell.icon, 'w-4']" aria-hidden="true"></i>
-                  {{ exchangeSell.label }}
-                </NuxtLink>
-              </li>
-            </ul>
+            <!-- The 8px gap under the trigger is PADDING on the dropdown-content
+                 wrapper, not a margin on the menu. A margin sits outside the
+                 `.dropdown` hover box, so the pointer crossing it dropped
+                 `:hover` and the menu closed before anything could be picked.
+                 The click-to-open More menu keeps its `mt-2`: it stays open on
+                 focus, so the gap is harmless there. -->
+            <div class="dropdown-content z-[60] pt-2">
+              <ul tabindex="0" class="menu w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
+                <li v-for="sub in exchangeLinks" :key="sub.to">
+                  <NuxtLink
+                    :to="sub.to"
+                    class="font-semibold"
+                    :class="{ 'menu-active': isActive(sub.to) }"
+                    @click="
+                      closeDropdowns();
+                      track('nav_item_clicked', { label: sub.label, surface: 'desktop' });
+                    "
+                  >
+                    <i :class="[sub.icon, 'w-4 text-secondary']" aria-hidden="true"></i>
+                    {{ sub.label }}
+                  </NuxtLink>
+                </li>
+                <li class="mt-1 border-t border-base-300 pt-1">
+                  <NuxtLink
+                    :to="exchangeSell.to"
+                    class="font-semibold text-primary"
+                    @click="
+                      closeDropdowns();
+                      track('nav_item_clicked', { label: exchangeSell.label, surface: 'desktop' });
+                    "
+                  >
+                    <i :class="[exchangeSell.icon, 'w-4']" aria-hidden="true"></i>
+                    {{ exchangeSell.label }}
+                  </NuxtLink>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <NuxtLink
