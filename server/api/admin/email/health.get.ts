@@ -43,8 +43,14 @@ interface DohAnswer {
  */
 async function query(name: string, type: 'TXT' | 'MX'): Promise<string[]> {
   const url = `${DOH}?name=${encodeURIComponent(name)}&type=${type}`;
+  // `responseType: 'json'` is load-bearing. The endpoint answers with
+  // `Content-Type: application/dns-json`, which ofetch's JSON sniff does not
+  // recognise (it wants `application/json` or `+json`), so without it the body
+  // comes back as text, `res.Status` is undefined, and every lookup throws —
+  // the page then reports all three domains as "not checked" forever.
   const res = await $fetch<{ Status: number; Answer?: DohAnswer[] }>(url, {
     headers: { accept: 'application/dns-json' },
+    responseType: 'json',
     timeout: 5000,
   });
   if (res.Status !== 0 && res.Status !== 3) {

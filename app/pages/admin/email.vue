@@ -66,7 +66,7 @@
     ok: 'Healthy',
     warn: 'Needs attention',
     fail: 'Broken',
-    unknown: 'Unknown',
+    unknown: 'Not checked',
   };
 
   /** Broken first — the page should open on whatever is actually wrong. */

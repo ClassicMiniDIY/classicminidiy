@@ -516,8 +516,10 @@ describe('buildDomainHealth', () => {
     expect(check(h, 'mx')?.severity).toBe('unknown');
     expect(check(h, 'spf')?.severity).toBe('unknown');
     expect(check(h, 'dmarc')?.severity).toBe('unknown');
-    // Nothing actionable was learned, so the row must not read as broken.
-    expect(h.worst).toBe('ok');
+    // A domain nobody could look at is not "Healthy". This is the regression
+    // the page shipped with: every lookup failed and all three rows went green.
+    // Nothing was learned either way, so it must not read as broken either.
+    expect(h.worst).toBe('unknown');
   });
 
   it('still fails a genuinely absent record when the lookup DID complete', () => {
@@ -559,12 +561,25 @@ describe('buildDomainHealth', () => {
 });
 
 describe('worstOf', () => {
-  it('ranks fail over warn over ok, and ignores unknown', () => {
+  it('ranks fail over warn over unknown over ok', () => {
     const c = (severity: Severity): Check => ({ id: severity, label: severity, severity, detail: '' });
     expect(worstOf([c('ok'), c('warn'), c('fail')])).toBe('fail');
     expect(worstOf([c('ok'), c('warn')])).toBe('warn');
-    expect(worstOf([c('ok'), c('unknown')])).toBe('ok');
+    expect(worstOf([c('ok'), c('unknown')])).toBe('unknown');
+    expect(worstOf([c('unknown'), c('warn')])).toBe('warn');
     expect(worstOf([])).toBe('ok');
+  });
+
+  it('ignores informational checks so a by-design unknown cannot pin the badge', () => {
+    const c = (severity: Severity, informational = false): Check => ({
+      id: severity,
+      label: severity,
+      severity,
+      detail: '',
+      informational,
+    });
+    expect(worstOf([c('ok'), c('unknown', true)])).toBe('ok');
+    expect(worstOf([c('unknown', true)])).toBe('ok');
   });
 });
 
