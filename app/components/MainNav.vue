@@ -251,7 +251,7 @@
                  `:hover` and the menu closed before anything could be picked.
                  The click-to-open More menu keeps its `mt-2`: it stays open on
                  focus, so the gap is harmless there. -->
-            <div class="dropdown-content z-[60] pt-2">
+            <div class="dropdown-content hover-menu z-[60] pt-2">
               <ul tabindex="0" class="menu w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
                 <li v-for="sub in exchangeLinks" :key="sub.to">
                   <NuxtLink
@@ -686,6 +686,14 @@
   }
   .nav-link-icon {
     color: var(--color-secondary);
+  }
+  /* The global `.dropdown-content` rule sets `overflow: auto` so a tall menu
+     scrolls. On this WRAPPER that clips the inner menu's drop shadow (a box's
+     own shadow escapes its overflow; a child's does not). Five items never
+     need to scroll, so the wrapper stays visible. Scoped selector outranks the
+     unlayered global rule by specificity. */
+  .hover-menu {
+    overflow: visible;
   }
   .nav-link.is-active {
     background: var(--color-base-200);
