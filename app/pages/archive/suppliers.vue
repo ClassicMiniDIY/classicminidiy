@@ -59,7 +59,7 @@
     return (words[0] ?? '?').slice(0, 2).toUpperCase();
   }
 
-  /** The bare host, for the small print under the button: "minispares.com". */
+  /** The bare host, for the button's title: "minispares.com". */
   const hostOf = (s: Supplier): string => new URL(s.url).host.replace(/^www\./, '');
 
   /**
@@ -142,6 +142,12 @@
       entries: filtered.value.filter((s) => s.group === group),
     })).filter((section) => section.entries.length > 0)
   );
+
+  /**
+   * The first row is above the fold: lazy-loading its images only delays the
+   * largest paint. Three ids, from the first group shown, whatever the filter.
+   */
+  const eagerIds = computed(() => new Set((grouped.value[0]?.entries ?? []).slice(0, 3).map((s) => s.id)));
 
   /**
    * How many suppliers sit behind each chip, given everything ELSE that is on.
@@ -367,7 +373,7 @@
       {{ t('no_results') }}
     </p>
 
-    <section v-for="(section, sectionIndex) in grouped" :key="section.group" class="mb-10">
+    <section v-for="section in grouped" :key="section.group" class="mb-10">
       <h2 class="mb-3 flex flex-wrap items-baseline gap-x-3 text-xl font-bold">
         {{ t(`group.${section.group}`) }}
         <span class="text-sm font-normal text-base-content/60">
@@ -387,7 +393,7 @@
           public/, which is the one place the image provider rule does not reach.
         -->
         <article
-          v-for="(supplier, index) in section.entries"
+          v-for="supplier in section.entries"
           :id="supplier.id"
           :key="supplier.id"
           class="supplier-card card overflow-hidden border border-base-300 bg-base-100 shadow-sm transition-shadow duration-200 hover:shadow-lg"
@@ -399,7 +405,7 @@
               v-if="coverOf(supplier)"
               :src="coverOf(supplier)!"
               alt=""
-              :loading="sectionIndex === 0 && index < 3 ? 'eager' : 'lazy'"
+              :loading="eagerIds.has(supplier.id) ? 'eager' : 'lazy'"
               decoding="async"
               width="1200"
               height="450"
@@ -437,7 +443,7 @@
                   v-if="logoOf(supplier)"
                   :src="logoOf(supplier)!"
                   alt=""
-                  :loading="sectionIndex === 0 && index < 3 ? 'eager' : 'lazy'"
+                  :loading="eagerIds.has(supplier.id) ? 'eager' : 'lazy'"
                   decoding="async"
                   class="h-full w-auto max-w-full object-contain"
                 />
@@ -508,9 +514,19 @@
               </span>
             </div>
 
-            <div class="card-actions mt-1 items-center justify-between border-t border-base-300 pt-3">
-              <span class="truncate text-xs text-base-content/50">{{ hostOf(supplier) }}</span>
-              <a :href="supplier.url" target="_blank" rel="noopener noreferrer nofollow" class="btn btn-primary btn-sm">
+            <!--
+              No host in small print: the route crawler reads "minispares.com" as a
+              raw i18n key (`word.word`), and the button already carries the link;
+              the host is on it as a title for anyone who hovers.
+            -->
+            <div class="card-actions mt-1 justify-end border-t border-base-300 pt-3">
+              <a
+                :href="supplier.url"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                class="btn btn-primary btn-sm"
+                :title="hostOf(supplier)"
+              >
                 {{ t('visit') }}
                 <i class="fas fa-arrow-up-right-from-square text-xs" aria-hidden="true" />
                 <span class="sr-only">{{ t('opens_new_tab') }}</span>
