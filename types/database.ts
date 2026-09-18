@@ -3852,10 +3852,13 @@ export type Database = {
       };
       part_source_private: {
         Row: {
+          accept_unnumbered: boolean;
           adapter: string;
           auto_approve_confidence: number;
           auto_approve_margin: number;
           auto_approve_source: string;
+          auto_close_confidence: number;
+          auto_close_none_fit: number;
           contact_email: string | null;
           crawl_enabled: boolean;
           crawl_lease_token: string | null;
@@ -3889,10 +3892,13 @@ export type Database = {
           user_agent: string | null;
         };
         Insert: {
+          accept_unnumbered?: boolean;
           adapter?: string;
           auto_approve_confidence?: number;
           auto_approve_margin?: number;
           auto_approve_source?: string;
+          auto_close_confidence?: number;
+          auto_close_none_fit?: number;
           contact_email?: string | null;
           crawl_enabled?: boolean;
           crawl_lease_token?: string | null;
@@ -3926,10 +3932,13 @@ export type Database = {
           user_agent?: string | null;
         };
         Update: {
+          accept_unnumbered?: boolean;
           adapter?: string;
           auto_approve_confidence?: number;
           auto_approve_margin?: number;
           auto_approve_source?: string;
+          auto_close_confidence?: number;
+          auto_close_none_fit?: number;
           contact_email?: string | null;
           crawl_enabled?: boolean;
           crawl_lease_token?: string | null;
@@ -3975,6 +3984,7 @@ export type Database = {
       part_source_records: {
         Row: {
           content_hash: string;
+          correlation_closed_by: string | null;
           correlation_scored_at: string | null;
           correlation_state: string;
           created_at: string;
@@ -3985,6 +3995,7 @@ export type Database = {
           last_seen_at: string;
           miss_count: number;
           missing_since: string | null;
+          model_close_overridden_at: string | null;
           part_id: string | null;
           part_number_as_listed: string | null;
           raw: Json;
@@ -3996,6 +4007,7 @@ export type Database = {
         };
         Insert: {
           content_hash: string;
+          correlation_closed_by?: string | null;
           correlation_scored_at?: string | null;
           correlation_state?: string;
           created_at?: string;
@@ -4006,6 +4018,7 @@ export type Database = {
           last_seen_at?: string;
           miss_count?: number;
           missing_since?: string | null;
+          model_close_overridden_at?: string | null;
           part_id?: string | null;
           part_number_as_listed?: string | null;
           raw?: Json;
@@ -4017,6 +4030,7 @@ export type Database = {
         };
         Update: {
           content_hash?: string;
+          correlation_closed_by?: string | null;
           correlation_scored_at?: string | null;
           correlation_state?: string;
           created_at?: string;
@@ -4027,6 +4041,7 @@ export type Database = {
           last_seen_at?: string;
           miss_count?: number;
           missing_since?: string | null;
+          model_close_overridden_at?: string | null;
           part_id?: string | null;
           part_number_as_listed?: string | null;
           raw?: Json;
@@ -5589,6 +5604,10 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      apply_part_correlation_close: {
+        Args: { p_record_id: string };
+        Returns: boolean;
+      };
       apply_part_correlation_gate: {
         Args: { p_record_id: string };
         Returns: boolean;
@@ -6363,8 +6382,10 @@ export type Database = {
       };
       safe_uuid: { Args: { p_value: string }; Returns: string };
       seller_can_sell: { Args: { p_user_id: string }; Returns: boolean };
-      set_part_source_auto_approve: {
+      set_part_source_gate: {
         Args: {
+          p_close_confidence?: number;
+          p_close_none_fit?: number;
           p_confidence: number;
           p_margin?: number;
           p_source: string;
@@ -6387,6 +6408,11 @@ export type Database = {
         Args: { p_limit?: number; p_older_than?: string };
         Returns: number;
       };
+      sweep_part_correlation_gate: {
+        Args: { p_limit?: number; p_source_id: string };
+        Returns: Json;
+      };
+      sweep_part_correlation_gates: { Args: never; Returns: Json };
       sync_instances: {
         Args: { p_last_sync: string; p_vehicle_id: string };
         Returns: Json;
