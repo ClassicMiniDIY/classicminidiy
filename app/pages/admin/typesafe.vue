@@ -75,6 +75,9 @@
         unscored_proposed: number;
         human_reviewed: number;
         precision: { threshold: number; at_or_above: number; approved: number }[];
+        bands: { records?: number; lt30?: number; b30_60?: number; b60_85?: number; ge85?: number; closable?: number };
+        model_closed: number;
+        model_closes_reopened: number;
         sources: {
           id: string;
           name: string;
@@ -82,8 +85,12 @@
           auto_approve_source: string;
           auto_approve_confidence: number;
           auto_approve_margin: number;
+          auto_close_confidence: number;
+          auto_close_none_fit: number;
+          open_records: number;
           proposed: number;
           auto_approved: number;
+          auto_closed: number;
         }[];
       };
       mcp: { tool: string; calls: number; picked: number; avg_p: number | null; avg_ms: number | null }[];
@@ -167,23 +174,46 @@
     }
   }
 
-  const gateEdits = reactive<Record<string, { source: string; confidence: string }>>({});
-  function gateEdit(s: Readout['readout']['parts']['sources'][number]) {
+  type SourceRow = Readout['readout']['parts']['sources'][number];
+  const gateEdits = reactive<Record<string, { source: string; confidence: string; floor: string }>>({});
+  function gateEdit(s: SourceRow) {
     if (!gateEdits[s.id]) {
-      gateEdits[s.id] = { source: s.auto_approve_source, confidence: String(s.auto_approve_confidence) };
+      gateEdits[s.id] = {
+        source: s.auto_approve_source,
+        confidence: String(s.auto_approve_confidence),
+        floor: String(s.auto_close_confidence),
+      };
     }
     return gateEdits[s.id]!;
   }
-  async function saveGate(s: Readout['readout']['parts']['sources'][number]) {
+  function gateDirty(s: SourceRow) {
+    const e = gateEdit(s);
+    return (
+      e.source !== s.auto_approve_source ||
+      Number(e.confidence) !== Number(s.auto_approve_confidence) ||
+      Number(e.floor) !== Number(s.auto_close_confidence)
+    );
+  }
+  async function saveGate(s: SourceRow) {
     const edit = gateEdit(s);
     busyKey.value = `gate:${s.id}`;
     notice.value = '';
     try {
-      await $adminFetch('/api/admin/typesafe/part-gate', {
-        method: 'POST',
-        body: { sourceId: s.id, source: edit.source, confidence: Number(edit.confidence) },
-      });
-      notice.value = `${s.name}: gate reads ${edit.source} at ${Number(edit.confidence).toFixed(3)}.`;
+      const res = await $adminFetch<{ result: { auto_approved_now: number; auto_closed_now: number } }>(
+        '/api/admin/typesafe/part-gate',
+        {
+          method: 'POST',
+          body: {
+            sourceId: s.id,
+            source: edit.source,
+            confidence: Number(edit.confidence),
+            closeConfidence: Number(edit.floor),
+          },
+        }
+      );
+      notice.value =
+        `${s.name}: gate reads ${edit.source} at ${Number(edit.confidence).toFixed(3)}, floor ${Number(edit.floor).toFixed(2)}. ` +
+        `Swept now: ${res.result.auto_approved_now} approved, ${res.result.auto_closed_now} closed.`;
       delete gateEdits[s.id];
       await load();
     } catch (error: any) {
@@ -693,6 +723,33 @@
               approved. The gate refuses 1.000 by design, so the first step below "review everything" is the threshold
               this card names, on one source, then ten auto-approvals checked by hand.
             </p>
+            <p class="text-sm opacity-70">
+              <strong>Two dials per source.</strong> The <em>gate</em> links a listing when the model's best candidate
+              is at or above the threshold (and beats the runner-up by the margin). The <em>floor</em> closes a listing
+              as "no factory equivalent" when its best candidate is under the floor and the model also says none fit (≥
+              0.70). Everything between the two is your queue. A floor close links nothing and is undone by Reopen on
+              the correlations page; the count of those undos is the floor's error rate.
+            </p>
+            <div class="stats stats-vertical sm:stats-horizontal bg-base-200 text-sm">
+              <div class="stat py-2">
+                <div class="stat-title">Open records by best score</div>
+                <div class="stat-value text-base">
+                  &lt;0.30: {{ data.readout.parts.bands.lt30 ?? 0 }} · 0.30–0.60:
+                  {{ data.readout.parts.bands.b30_60 ?? 0 }} · 0.60–0.85: {{ data.readout.parts.bands.b60_85 ?? 0 }} ·
+                  ≥0.85: {{ data.readout.parts.bands.ge85 ?? 0 }}
+                </div>
+                <div class="stat-desc">
+                  {{ data.readout.parts.bands.closable ?? 0 }} under 0.30 with "none fit" ≥ 0.70 (closable)
+                </div>
+              </div>
+              <div class="stat py-2">
+                <div class="stat-title">Closed by the floor</div>
+                <div class="stat-value text-xl">{{ data.readout.parts.model_closed }}</div>
+                <div class="stat-desc" :class="data.readout.parts.model_closes_reopened ? 'text-warning' : ''">
+                  {{ data.readout.parts.model_closes_reopened }} reopened by a human
+                </div>
+              </div>
+            </div>
             <p class="text-sm"><strong>Verdict:</strong> {{ partsGrade.text }}</p>
             <div class="stats stats-vertical sm:stats-horizontal bg-base-200 text-sm">
               <div class="stat py-2">
@@ -738,9 +795,11 @@
                   <tr>
                     <th>Source</th>
                     <th>Gate reads</th>
-                    <th>Auto-approve at</th>
-                    <th class="text-right">Proposed</th>
+                    <th>Approve at</th>
+                    <th>Close under</th>
+                    <th class="text-right">Open</th>
                     <th class="text-right">Auto-approved</th>
+                    <th class="text-right">Auto-closed</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -763,17 +822,25 @@
                         class="input input-xs w-24"
                       />
                     </td>
-                    <td class="text-right">{{ s.proposed }}</td>
+                    <td>
+                      <input
+                        v-model="gateEdit(s).floor"
+                        type="number"
+                        min="0"
+                        max="0.95"
+                        step="0.05"
+                        class="input input-xs w-20"
+                        title="0 = off"
+                      />
+                    </td>
+                    <td class="text-right">{{ s.open_records }}</td>
                     <td class="text-right">{{ s.auto_approved }}</td>
+                    <td class="text-right">{{ s.auto_closed }}</td>
                     <td class="text-right">
                       <button
                         type="button"
                         class="btn btn-xs btn-outline"
-                        :disabled="
-                          busyKey === `gate:${s.id}` ||
-                          (gateEdit(s).source === s.auto_approve_source &&
-                            Number(gateEdit(s).confidence) === Number(s.auto_approve_confidence))
-                        "
+                        :disabled="busyKey === `gate:${s.id}` || !gateDirty(s)"
                         @click="saveGate(s)"
                       >
                         Save
