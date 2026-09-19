@@ -112,12 +112,17 @@
     meta: [{ key: 'description', name: 'description', content: t('description') }],
   });
 
-  // og:url deliberately, because the site default is the root. The share card
-  // is the illustrated one on S3, like every other archive hub page.
+  // The page takes ?q= and ?page=. Only `page` stays indexable — a canonical
+  // for every search term would spray thin duplicates into the index.
+  const { canonical } = useFacetedSeo('/archive/parts');
+
+  // og:url follows the canonical, so /archive/parts?page=2 shares as page 2
+  // and not as page 1 (Facebook and LinkedIn key the preview on og:url). The
+  // share card is the illustrated one on S3, like every other archive hub page.
   useSeoMeta({
     ogTitle: () => t('heading'),
     ogDescription: () => t('description'),
-    ogUrl: 'https://www.classicminidiy.com/archive/parts',
+    ogUrl: () => canonical.value,
     ogType: 'website',
     ogImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/parts.png',
     twitterCard: 'summary_large_image',
@@ -125,10 +130,6 @@
     twitterDescription: () => t('description'),
     twitterImage: 'https://classicminidiy.s3.amazonaws.com/social-share/archive/parts.png',
   });
-
-  // The page takes ?q= and ?page=. Only `page` stays indexable — a canonical
-  // for every search term would spray thin duplicates into the index.
-  useFacetedSeo('/archive/parts');
 </script>
 
 <template>
