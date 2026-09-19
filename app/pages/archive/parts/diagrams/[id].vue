@@ -74,12 +74,45 @@
   const imageUrl = computed(() => `/api/archive/parts/diagram-image?diagram=${id.value}&size=preview`);
   const fullUrl = computed(() => `/api/archive/parts/diagram-image?diagram=${id.value}&size=full`);
 
+  const pageTitle = computed(() => t('title', { title: diagram.value?.title ?? '' }));
+  const metaDescription = computed(() => t('description', { title: diagram.value?.title ?? '' }));
+  const canonical = computed(() => `https://www.classicminidiy.com/archive/parts/diagrams/${diagram.value?.id}`);
+
   useHead({
-    title: t('title', { title: diagram.value?.title ?? '' }),
-    meta: [
-      { key: 'description', name: 'description', content: t('description', { title: diagram.value?.title ?? '' }) },
-    ],
-    link: [{ rel: 'canonical', href: `https://www.classicminidiy.com/archive/parts/diagrams/${diagram.value?.id}` }],
+    title: pageTitle.value,
+    meta: [{ key: 'description', name: 'description', content: metaDescription.value }],
+    link: [{ rel: 'canonical', href: canonical.value }],
+  });
+
+  // Without these the page inherits the ROOT og:title/og:url from nuxt.config.
+  // og:image is owned by defineOgImageComponent below; never set ogImage here.
+  useSeoMeta({
+    ogTitle: () => pageTitle.value,
+    ogDescription: () => metaDescription.value,
+    ogUrl: () => canonical.value,
+    ogType: 'article',
+    twitterCard: 'summary_large_image',
+    twitterTitle: () => pageTitle.value,
+    twitterDescription: () => metaDescription.value,
+  });
+
+  // Branded share card, text only: the plate itself stays behind the signed-URL
+  // route (see ArchiveCard.takumi.vue for why). `diagram` is non-null here
+  // because the 404 guard above throws first.
+  const plate = diagram.value;
+  const applicability = (plate.applicabilityText || '').trim();
+  const callouts = plate.callouts.length;
+  defineOgImageComponent('ArchiveCard', {
+    eyebrow: 'CLASSIC MINI DIY · FACTORY PARTS PLATE',
+    title: plate.title.slice(0, 90),
+    // Applicability usually just restates the title; say what a plate IS instead.
+    subtitle:
+      applicability && applicability !== plate.title
+        ? applicability.slice(0, 110)
+        : 'Factory parts-list drawing with every numbered callout linked to its part number.',
+    badges: plate.catalogueSection ? [`Section ${plate.catalogueSection}`] : [],
+    footerLeft: `${callouts} numbered callout${callouts === 1 ? '' : 's'}`,
+    footerRight: `Plate: ${plate.source.name}`,
   });
 </script>
 

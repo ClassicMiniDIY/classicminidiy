@@ -270,16 +270,27 @@
   // warns — correctly — that a canonical of /archive/suppliers beside an og:url
   // of / describes two different pages to two different readers.
   //
-  // NO ogImage. There is no share card for this page yet, and the two wrong
-  // answers are both worse than none: an empty string, which unhead coerces to
-  // `true` and nuxt-og-image then 500s the whole SSR render on, and an invented
-  // S3 path, which would 404 silently in every social preview. Omitting it lets
-  // the site default stand.
+  // NO ogImage here. Until the illustrated `social-share/archive/suppliers.png`
+  // card exists on S3, the branded component below owns og:image; an invented
+  // S3 path would 404 silently in every social preview, and an empty string
+  // is coerced to `true` by unhead and 500s the whole SSR render. When the
+  // file lands, swap the component call for an `ogImage` here, never both.
   useSeoMeta({
     ogTitle: t('heading'),
     ogDescription: t('description'),
     ogUrl: 'https://www.classicminidiy.com/archive/suppliers',
     ogType: 'website',
+    twitterCard: 'summary_large_image',
+    twitterTitle: t('heading'),
+    twitterDescription: t('description'),
+  });
+
+  defineOgImageComponent('ArchiveCard', {
+    eyebrow: 'CLASSIC MINI DIY · SUPPLIER DIRECTORY',
+    title: 'Where to Buy Mini Parts',
+    subtitle: `${suppliers.length} classic Mini parts suppliers across ${countryCount.value} countries, each one checked by hand.`,
+    footerLeft: 'UK · USA · Australia · NZ · Europe · Japan',
+    footerRight: 'classicminidiy.com/archive/suppliers',
   });
 
   // Region and tag are filters, so they must not be indexable: a canonical per
