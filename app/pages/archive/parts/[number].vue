@@ -88,17 +88,47 @@
     };
   }
   const summary = computed(() => part.value?.description || t('no_description'));
+  const canonical = computed(() => `https://www.classicminidiy.com/archive/parts/${part.value?.slug}`);
+  const metaDescription = computed(() => t('description', { number: heading.value, summary: summary.value }));
 
   useHead({
     title: t('title', { number: heading.value }),
-    meta: [
-      {
-        key: 'description',
-        name: 'description',
-        content: t('description', { number: heading.value, summary: summary.value }),
-      },
-    ],
-    link: [{ rel: 'canonical', href: `https://www.classicminidiy.com/archive/parts/${part.value?.slug}` }],
+    meta: [{ key: 'description', name: 'description', content: metaDescription.value }],
+    link: [{ rel: 'canonical', href: canonical.value }],
+  });
+
+  // Without these the page inherits the ROOT og:title/og:url from nuxt.config,
+  // so a shared part link previewed as the homepage. og:image is owned by
+  // defineOgImageComponent below; never set ogImage here as well.
+  useSeoMeta({
+    ogTitle: () => t('title', { number: heading.value }),
+    ogDescription: () => metaDescription.value,
+    ogUrl: () => canonical.value,
+    ogType: 'article',
+    twitterCard: 'summary_large_image',
+    twitterTitle: () => t('title', { number: heading.value }),
+    twitterDescription: () => metaDescription.value,
+  });
+
+  // Branded share card (app/components/OgImage/ArchiveCard.takumi.vue). Card copy
+  // is English like the rest of the card family: one image per URL, not per
+  // locale. `part` is non-null here because the 404 guard above throws first.
+  const detail = part.value;
+  const superseded = detail.replacedBy[0]?.partNumber;
+  // A catalogue description of "USE: XXX" only repeats the supersession notice.
+  const cardSubtitle =
+    superseded && /^use\b/i.test(detail.description || '') ? '' : (detail.description || '').slice(0, 110);
+  // `fits` holds plate titles, not model names, so it is too long for a card;
+  // the plate count says the same thing in three words.
+  const plates = detail.appearsOnTotal;
+  defineOgImageComponent('ArchiveCard', {
+    eyebrow: 'CLASSIC MINI DIY · PART NUMBER',
+    title: detail.partNumber,
+    subtitle: cardSubtitle,
+    badges: [detail.system, detail.category].filter((x): x is string => Boolean(x)),
+    notice: superseded ? `Superseded — use ${superseded}` : '',
+    footerLeft: plates ? `On ${plates} factory plate${plates === 1 ? '' : 's'}` : '',
+    footerRight: detail.source ? `Data: ${detail.source.name}` : '',
   });
 </script>
 

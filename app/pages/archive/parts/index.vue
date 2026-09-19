@@ -112,6 +112,32 @@
     meta: [{ key: 'description', name: 'description', content: t('description') }],
   });
 
+  // og:url deliberately, because the site default is the root. og:image is
+  // owned by defineOgImageComponent below until the illustrated
+  // `social-share/archive/parts.png` card exists on S3; when it does, replace
+  // the component call with an `ogImage` here, never both.
+  useSeoMeta({
+    ogTitle: () => t('heading'),
+    ogDescription: () => t('description'),
+    ogUrl: 'https://www.classicminidiy.com/archive/parts',
+    ogType: 'website',
+    twitterCard: 'summary_large_image',
+    twitterTitle: () => t('heading'),
+    twitterDescription: () => t('description'),
+  });
+
+  // Interim branded card. The subtitle carries the archive size only when the
+  // count actually came back; a "0 part numbers" card is worse than none.
+  defineOgImageComponent('ArchiveCard', {
+    eyebrow: 'CLASSIC MINI DIY · PARTS ARCHIVE',
+    title: 'Classic Mini Part Numbers',
+    subtitle: catalogueTotal.value
+      ? `Search ${numberFormat.format(catalogueTotal.value)} part numbers, what replaced them, and what they fit.`
+      : 'Search part numbers, what replaced them, and what they fit.',
+    footerLeft: browse.value?.totalPlates ? `${browse.value.totalPlates} factory plates` : '',
+    footerRight: 'classicminidiy.com/archive/parts',
+  });
+
   // The page takes ?q= and ?page=. Only `page` stays indexable — a canonical
   // for every search term would spray thin duplicates into the index.
   useFacetedSeo('/archive/parts');
