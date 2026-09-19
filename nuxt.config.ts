@@ -625,6 +625,11 @@ export default defineNuxtConfig({
     // still has a page file, so it stays a real route and stays in the sitemap —
     // unlike the `prerender: false` entries above it that had no page behind them.
     '/archive/suppliers': { prerender: false },
+    // Same reasoning for the part-number index: `?q=` search results, the
+    // `noindex` on filtered views and the per-page og:url/canonical only exist
+    // if the server renders the request. A baked copy answered every query
+    // string with page 1 and `index, follow`.
+    '/archive/parts': { prerender: false },
     '/admin/**': { prerender: false },
     // Admin consolidation (2026-08-26). /admin/inbox and the three per-type
     // review screens all read the SAME `submission_queue` table — the review
@@ -921,7 +926,23 @@ export default defineNuxtConfig({
       // Cloudflare build the optimizer rewrites image srcs to same-origin
       // `/cdn-cgi/image/...` paths, which crawlLinks would then follow and try to
       // prerender as routes — the identical build-memory trap, different prefix.
-      ignore: ['/admin', '/raw', '/archive/colors/', '/archive/wheels/', '/archive/documents/', '/_ipx', '/cdn-cgi'],
+      //
+      // `/archive/parts/` joins the DB-backed detail class for a second reason:
+      // each part and plate page defines a takumi share card, and a prerendered
+      // page queues its card as an extra route rendered serially at 2-7 s each.
+      // The crawl reached 10,201 of them from the plate listings, which is hours
+      // of renders against the deploy job's 30-minute timeout. At runtime the
+      // card is a signed `/_og/d/...` render on the Worker instead.
+      ignore: [
+        '/admin',
+        '/raw',
+        '/archive/colors/',
+        '/archive/wheels/',
+        '/archive/documents/',
+        '/archive/parts/',
+        '/_ipx',
+        '/cdn-cgi',
+      ],
       routes: [
         '/',
         '/privacy',

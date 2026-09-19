@@ -104,11 +104,11 @@
   const callouts = plate.callouts.length;
   defineOgImageComponent('ArchiveCard', {
     eyebrow: 'CLASSIC MINI DIY · FACTORY PARTS PLATE',
-    title: plate.title.slice(0, 90),
+    title: cardExcerpt(plate.title, 90),
     // Applicability usually just restates the title; say what a plate IS instead.
     subtitle:
       applicability && applicability !== plate.title
-        ? applicability.slice(0, 110)
+        ? cardExcerpt(applicability, 110)
         : 'Factory parts-list drawing with every numbered callout linked to its part number.',
     badges: plate.catalogueSection ? [`Section ${plate.catalogueSection}`] : [],
     footerLeft: `${callouts} numbered callout${callouts === 1 ? '' : 's'}`,

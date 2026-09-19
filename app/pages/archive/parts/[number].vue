@@ -117,7 +117,7 @@
   const superseded = detail.replacedBy[0]?.partNumber;
   // A catalogue description of "USE: XXX" only repeats the supersession notice.
   const cardSubtitle =
-    superseded && /^use\b/i.test(detail.description || '') ? '' : (detail.description || '').slice(0, 110);
+    superseded && /^use\b/i.test(detail.description || '') ? '' : cardExcerpt(detail.description, 110);
   // `fits` holds plate titles, not model names, so it is too long for a card;
   // the plate count says the same thing in three words.
   const plates = detail.appearsOnTotal;
