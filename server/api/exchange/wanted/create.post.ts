@@ -1,6 +1,7 @@
 import { sanitizeUserInput } from '../../../utils/exchange/sanitize';
 import { moderateMessage } from '../../../utils/exchange/contentFilter';
 import { screenMarketplaceText } from '../../../utils/exchange/screen';
+import { reviewWanted } from '../../../utils/review/surfaces';
 import { createRateLimitMiddleware, RateLimitPresets } from '../../../utils/exchange/rateLimit';
 import { VALID_CATEGORIES, VALID_CONDITION_PREFERENCES, MAX_CONTENT_LENGTH } from '~/utils/constants';
 import { validateBudgetValue, validateBudgetRange } from '../../../utils/exchange/validators';
@@ -186,6 +187,11 @@ export default defineEventHandler(async (event) => {
         message: 'Failed to create wanted post',
       });
     }
+
+    // The review card, in the background: a label on the admin item.
+    (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(
+      reviewWanted(event, post.id).catch(() => null)
+    );
 
     // Notify admins of the pending wanted post (batched digest, flags content
     // -moderation hits). Fire-and-forget; never blocks the create response.

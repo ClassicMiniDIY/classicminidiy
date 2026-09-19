@@ -48,6 +48,8 @@
   // ===================== QUEUE =====================
   const queue = ref<any[]>([]);
   const queueLoading = ref(false);
+  const reviewCards = useReviewCards('models');
+
   async function loadQueue() {
     queueLoading.value = true;
     // Pin the FK on the models embed: models<->model_versions has TWO
@@ -86,6 +88,7 @@
     const files = (filesRes.data ?? []) as any[];
     const images = (imagesRes.data ?? []) as any[];
     const profiles = Object.fromEntries(((profRes.data ?? []) as any[]).map((p) => [p.id, p]));
+    void reviewCards.fill(rows.map((r) => r.models?.id).filter((id): id is string => Boolean(id)));
     queue.value = rows.map((r) => ({
       ...r,
       model: r.models,
@@ -510,6 +513,7 @@
       <div v-else class="space-y-4">
         <div v-for="v in queue" :key="v.id" class="card bg-base-100 border border-base-300 shadow-sm">
           <div class="card-body gap-3">
+            <AdminReviewCard :card="(v.model?.id && reviewCards.cards.value[v.model.id]) || null" compact />
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">

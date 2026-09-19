@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { requireUserClient } from '../../utils/userAuth';
 import { getServiceClient } from '../../utils/supabase';
 import { readModelSafety } from '../../utils/models/safetyRead';
+import { reviewModel } from '../../utils/review/surfaces';
 import {
   slugifyModelTitle,
   isPricingMode,
@@ -116,6 +117,8 @@ export default defineEventHandler(async (event) => {
   // strong disclaimer on either. Never delays the response, never fails it.
   const safetyRead = readModelSafety(event, model.id, { title, description, category: categorySlug });
   (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(safetyRead);
+  // The review card, beside the safety read. Models never auto-publish.
+  (event as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil?.(reviewModel(event, model.id).catch(() => null));
 
   return { modelId: model.id, slug: model.slug, versionId: version.id, versionNumber: version.version_number };
 });

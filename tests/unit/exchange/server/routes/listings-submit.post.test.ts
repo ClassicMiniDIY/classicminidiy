@@ -9,6 +9,9 @@ import { createMockSupabaseClient, type MockSupabaseClient } from '../../../../s
 //   queueNotification, queueAdminNotification, buildBatchKey
 //                                from '../../../utils/exchange/notificationQueue'
 // Resolved from the repo root via the `~~` alias.
+// The review card is its own unit (tests/unit/server/utils/reviewCard.test.ts);
+// here it reads nothing and approves nothing, so the route's own queries stay countable.
+vi.mock('~~/server/utils/review/surfaces', () => ({ reviewListing: async () => null }));
 vi.mock('~~/server/utils/userAuth', () => ({
   requireUserClient: vi.fn(),
   requireUserAuth: vi.fn(),
@@ -28,11 +31,7 @@ vi.mock('~~/server/utils/exchange/notificationQueue', () => ({
 
 import { requireUserClient } from '~~/server/utils/userAuth';
 import { getServiceClient } from '~~/server/utils/supabase';
-import {
-  queueNotification,
-  queueAdminNotification,
-  buildBatchKey,
-} from '~~/server/utils/exchange/notificationQueue';
+import { queueNotification, queueAdminNotification, buildBatchKey } from '~~/server/utils/exchange/notificationQueue';
 
 const OWNER_ID = 'owner-user-id';
 const OWNER_EMAIL = 'owner@example.com';
@@ -79,9 +78,7 @@ afterEach(() => {
 describe('POST /api/exchange/listings/submit', () => {
   // --- Auth -----------------------------------------------------------------
   it('delegates auth to requireUserClient (propagates a thrown 401)', async () => {
-    (requireUserClient as any).mockRejectedValue(
-      createError({ statusCode: 401, statusMessage: 'Unauthorized' })
-    );
+    (requireUserClient as any).mockRejectedValue(createError({ statusCode: 401, statusMessage: 'Unauthorized' }));
     const handler = await loadHandler();
     await expect(handler({} as any)).rejects.toMatchObject({ statusCode: 401 });
     // Never proceeds to the body / DB / enqueue when auth rejects.

@@ -196,6 +196,7 @@
 </template>
 
 <script setup lang="ts">
+  import type { ListingWithPhotos } from '~/composables/useListings';
   import { buildItemList } from '~/utils/schema/itemList';
 
   const { t } = useI18n();
@@ -332,9 +333,14 @@
   const viewMode = ref<'grid' | 'map'>('grid');
 
   // Filter listings with valid coordinates for map display
-  const listingsWithCoordinates = computed(() => {
-    return listings.value.filter(
-      (listing) =>
+  // The parameter is typed by hand: inferring it from the generated row type
+  // (which carries recursive Json columns) hits TS2589 once the listings
+  // table is wide enough, and it crossed that line with the review columns.
+  const listingsWithCoordinates = computed<ListingWithPhotos[]>(() => {
+    const out: ListingWithPhotos[] = [];
+    const rows = listings.value as unknown as ListingWithPhotos[];
+    for (const listing of rows) {
+      if (
         listing.latitude != null &&
         listing.longitude != null &&
         !isNaN(listing.latitude) &&
@@ -343,7 +349,10 @@
         listing.latitude <= 90 &&
         listing.longitude >= -180 &&
         listing.longitude <= 180
-    );
+      )
+        out.push(listing);
+    }
+    return out;
   });
 
   // Check if we're on desktop (for SSR compatibility)

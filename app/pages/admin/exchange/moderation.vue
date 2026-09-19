@@ -38,6 +38,7 @@
       <div v-else-if="pendingListings.length > 0" class="space-y-4">
         <div v-for="listing in pendingListings" :key="listing.id" class="card bg-base-100 shadow-sm">
           <div class="card-body p-4">
+            <AdminReviewCard :card="listingCards.cards.value[listing.id] ?? null" compact class="mb-3" />
             <div class="flex flex-col md:flex-row gap-4">
               <!-- Thumbnail -->
               <div class="shrink-0">
@@ -149,6 +150,7 @@
       <div v-else-if="pendingFinds.length > 0" class="space-y-4">
         <div v-for="find in pendingFinds" :key="find.id" class="card bg-base-100 shadow-sm">
           <div class="card-body p-4">
+            <AdminReviewCard :card="findCards.cards.value[find.id] ?? null" compact class="mb-3" />
             <div class="flex flex-col md:flex-row gap-4">
               <!-- Thumbnail -->
               <div class="shrink-0">
@@ -436,6 +438,9 @@
   const toast = useToast();
   const { getAllListings, updateListingStatus, deleteListing } = useAdmin();
   const { pendingFinds, fetchPending, approve, reject, refetchMetadata, deleteFind } = useExternalListingAdmin();
+  const listingCards = useReviewCards('listings');
+  const findCards = useReviewCards('finds');
+  watch(pendingFinds, (rows: { id: string }[]) => findCards.fill(rows.map((r) => r.id)), { deep: false });
   const {
     formatPrice,
     formatDate,
@@ -510,6 +515,7 @@
       const result = await getAllListings(1, 100, 'pending');
       pendingListings.value = result.listings;
       listingsTotalCount.value = result.total;
+      void listingCards.fill(result.listings.map((l) => l.id));
     } catch (error: any) {
       console.error('Error loading pending listings:', error);
       tabErrors.value.listings = 'Failed to load pending listings';

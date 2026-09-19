@@ -50,6 +50,7 @@
       <div class="md:hidden space-y-4">
         <div v-for="post in filteredPosts" :key="post.id" class="card bg-base-100 shadow-sm">
           <div class="card-body p-4">
+            <AdminReviewCard :card="reviewCards.cards.value[post.id] ?? null" compact class="mb-3" />
             <!-- Header -->
             <div class="flex items-start gap-3 mb-3">
               <div class="flex-1 min-w-0">
@@ -385,6 +386,8 @@
   /**
    * Filter posts by local search query.
    */
+  const reviewCards = useReviewCards('wanted');
+
   const filteredPosts = computed(() => {
     let filtered = posts.value;
 
@@ -434,6 +437,7 @@
         const { profile_private: priv, ...profile } = p.profiles;
         return { ...p, profiles: { ...profile, email: priv?.email ?? null } };
       }) as WantedPost[];
+      void reviewCards.fill(posts.value.map((p) => p.id));
     } catch (error) {
       handleError(error, { toastTitle: 'Failed to load wanted posts' });
     } finally {

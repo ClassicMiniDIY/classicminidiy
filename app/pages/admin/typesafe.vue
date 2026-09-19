@@ -37,6 +37,14 @@
     avg_confidence: number | null;
     hint_tool_used: number;
   }
+  interface ReviewStats {
+    hints: number;
+    clear: number;
+    flag: number;
+    auto: number;
+    approved_despite_flag: number;
+    rejected_despite_clear: number;
+  }
   interface Readout {
     days: number;
     modes: ModeRow[];
@@ -96,17 +104,53 @@
       mcp: { tool: string; calls: number; picked: number; avg_p: number | null; avg_ms: number | null }[];
       queue: { hinted: number; with_top: number; pending_hinted: number; attached: number };
       saved_search: { per_day: { day: string; n: number }[]; semantic_calls: number };
+      review: {
+        gates: Record<string, string>;
+        listings: ReviewStats;
+        finds: ReviewStats;
+        wanted: ReviewStats;
+        archive: ReviewStats;
+        models: ReviewStats;
+      } | null;
     };
   }
 
   // -- The bars -------------------------------------------------------------
   // From docs/plans/2026-09-18-typesafe-readout.md in the private repo.
+  const REVIEW_SURFACES = [
+    { key: 'listings', label: 'Exchange listings', options: ['off', 'hint', 'auto'] },
+    { key: 'finds', label: 'Finds', options: ['off', 'hint', 'auto'] },
+    { key: 'wanted', label: 'Wanted posts', options: ['off', 'hint', 'auto'] },
+    { key: 'archive', label: 'Archive submissions', options: ['off', 'hint', 'auto'] },
+    { key: 'models', label: '3D models', options: ['off', 'hint'] },
+  ] as const;
+  function reviewGrade(s: ReviewStats | undefined, canAuto: boolean): Grade {
+    if (!s) return { state: 'no-data', text: '' };
+    if (!canAuto) return { state: 'info', text: 'Hint only in this phase.' };
+    if (s.hints < BARS.review.minHints)
+      return { state: 'no-data', text: `${s.hints} of ${BARS.review.minHints} cards.` };
+    if (s.rejected_despite_clear > 0) {
+      return {
+        state: 'below',
+        text: `${s.rejected_despite_clear} rejected by you despite a clear card. Auto would have published them.`,
+      };
+    }
+    if (share(s.approved_despite_flag, s.flag) > BARS.review.maxFlagApprovedShare) {
+      return {
+        state: 'below',
+        text: `${pct(s.approved_despite_flag, s.flag)} of flags you approved anyway: the card flags too much.`,
+      };
+    }
+    return { state: 'ready', text: 'No clear card rejected, few needless flags. Auto is safe for trusted submitters.' };
+  }
+
   const BARS = {
     chat: { minRuns: 100, maxTimeoutShare: 0.2, maxSpecToolRate: 0.6, minConfidence: 0.7 },
     screen: { minScreened: 30, maxHeldApprovedShare: 0.2 },
     search: { minAnswered: 300, maxTimeoutShare: 0.3, leadAgreeLow: 0.5, leadAgreeHigh: 0.85 },
     parts: { minReviewed: 50, minPrecision: 0.95 },
     mcp: { minAvgP: 0.6 },
+    review: { minHints: 30, maxFlagApprovedShare: 0.2 },
   } as const;
 
   // One card at a time. The two-column grid hid table columns; a tab strip
@@ -119,6 +163,7 @@
     { key: 'mcp', label: 'MCP pick', icon: 'fas fa-crosshairs' },
     { key: 'queue', label: 'Queue + models', icon: 'fas fa-clone' },
     { key: 'saved', label: 'Saved searches', icon: 'fas fa-bell' },
+    { key: 'review', label: 'Submission review', icon: 'fas fa-clipboard-check' },
   ] as const;
   type TabKey = (typeof TABS)[number]['key'];
   const TAB_STORAGE = 'admin-typesafe-tab';
@@ -948,6 +993,92 @@
               :options="['off', 'on']"
               :busy="busyKey"
               :ready="false"
+              @set="setMode"
+            />
+          </div>
+        </section>
+
+        <!-- Submission review -->
+        <section v-show="tab === 'review'" class="card bg-base-100 border border-base-300 shadow-sm">
+          <div class="card-body">
+            <h2 class="card-title text-lg"><i class="fas fa-clipboard-check text-secondary"></i> Submission review</h2>
+            <p class="text-sm opacity-70">
+              <strong>Measures:</strong> every submission gets one card (on-topic, prohibited, scam, quality, category,
+              and a few checks per surface). <em>hint</em> shows the card on the admin item. <em>auto</em> approves a
+              submission from a trusted member through the surface's own approval path when every check clears; anything
+              else waits with the card saying why. Nothing is ever rejected automatically. The two numbers that decide
+              <em>auto</em>: <strong>rejected despite clear</strong> (the card would have published something you
+              refused) and <strong>approved despite flag</strong> (the card cries wolf).
+            </p>
+            <div v-if="data.readout.review" class="overflow-x-auto">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Surface</th>
+                    <th class="text-right">Cards</th>
+                    <th class="text-right">Clear</th>
+                    <th class="text-right">Flag</th>
+                    <th class="text-right">Auto</th>
+                    <th class="text-right">Rejected despite clear</th>
+                    <th class="text-right">Approved despite flag</th>
+                    <th>Verdict</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="s in REVIEW_SURFACES" :key="s.key">
+                    <td>{{ s.label }}</td>
+                    <td class="text-right">{{ data.readout.review[s.key]?.hints ?? 0 }}</td>
+                    <td class="text-right">{{ data.readout.review[s.key]?.clear ?? 0 }}</td>
+                    <td class="text-right">{{ data.readout.review[s.key]?.flag ?? 0 }}</td>
+                    <td class="text-right">{{ data.readout.review[s.key]?.auto ?? 0 }}</td>
+                    <td
+                      class="text-right"
+                      :class="data.readout.review[s.key]?.rejected_despite_clear ? 'text-error' : ''"
+                    >
+                      {{ data.readout.review[s.key]?.rejected_despite_clear ?? 0 }}
+                    </td>
+                    <td class="text-right">{{ data.readout.review[s.key]?.approved_despite_flag ?? 0 }}</td>
+                    <td>
+                      <span
+                        class="badge badge-sm"
+                        :class="
+                          gradeClass(
+                            reviewGrade(data.readout.review[s.key], (s.options as readonly string[]).includes('auto'))
+                          )
+                        "
+                      >
+                        {{
+                          gradeLabel(
+                            reviewGrade(data.readout.review[s.key], (s.options as readonly string[]).includes('auto'))
+                          )
+                        }}
+                      </span>
+                      <span class="ml-2 text-xs opacity-70">{{
+                        reviewGrade(data.readout.review[s.key], (s.options as readonly string[]).includes('auto')).text
+                      }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <AdminTypesafeModeSwitch
+              v-for="s in REVIEW_SURFACES"
+              :key="s.key"
+              :row="{
+                surface: s.key,
+                key: `review_gate_${s.key}`,
+                row: data.readout.review?.gates?.[`review_gate_${s.key}`] ?? 'off',
+                env: 'off',
+                effective: data.readout.review?.gates?.[`review_gate_${s.key}`] ?? 'off',
+                updatedAt: null,
+              }"
+              :options="s.options"
+              :busy="busyKey"
+              :ready="
+                reviewGrade(data.readout.review?.[s.key], (s.options as readonly string[]).includes('auto')).state ===
+                'ready'
+              "
+              :no-fallback="true"
               @set="setMode"
             />
           </div>
