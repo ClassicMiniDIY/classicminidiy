@@ -15,9 +15,17 @@ export default defineEventHandler(async (event) => {
   const raw = Number(getQuery(event).days);
   const days = raw === 30 || raw === 90 ? raw : 7;
 
-  const { data, error } = await getServiceClient().rpc('typesafe_readout', { p_days: days });
+  const db = getServiceClient();
+  const [{ data, error }, reviewRes] = await Promise.all([
+    db.rpc('typesafe_readout', { p_days: days }),
+    db.rpc('typesafe_review_readout', { p_days: days }),
+  ]);
   if (error) throw createError({ statusCode: 500, statusMessage: error.message });
-  const readout = (data ?? {}) as Record<string, unknown>;
+  if (reviewRes.error) console.warn('[typesafe] review readout failed:', reviewRes.error.message);
+  const readout: Record<string, unknown> = {
+    ...((data ?? {}) as Record<string, unknown>),
+    review: reviewRes.data ?? null,
+  };
   const settings = (readout.settings ?? {}) as Record<string, { value: unknown; updated_at: string }>;
 
   const modes = TYPESAFE_SURFACES.map((surface) => {

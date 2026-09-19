@@ -29,6 +29,7 @@
     submitterAvatar: string | null;
     submitterTrustLevel: 'new' | 'contributor' | 'trusted' | 'moderator' | 'admin';
     /** TypeSafe's read of which archive rows a new colour/wheel duplicates. A hint; approve does what you click. */
+    reviewHint: { hint: Record<string, unknown> | null; decision: string | null } | null;
     duplicateHint: {
       candidates: { id: string; name: string; code: string | null; level: string; p_same: number; p_variant: number }[];
       top: { id: string; level: string; p: number } | null;
@@ -618,6 +619,8 @@
               </div>
             </div>
           </div>
+
+          <AdminReviewCard v-if="item.status === 'pending'" :card="item.reviewHint" class="mb-4" />
 
           <!-- Possible duplicate (TypeSafe hint over code-found candidates; never acted on by itself) -->
           <div

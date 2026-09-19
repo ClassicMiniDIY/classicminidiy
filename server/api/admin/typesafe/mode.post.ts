@@ -2,6 +2,7 @@ import { requireAdminAuth } from '../../../utils/adminAuth';
 import { getServiceClient } from '../../../utils/supabase';
 import { _resetTypesafeModesCache } from '../../../utils/typesafeModes';
 import { _resetScreenSettingsCache } from '../../../utils/exchange/screen';
+import { _resetReviewSettingsCache } from '../../../utils/review/card';
 
 /**
  * POST /api/admin/typesafe/mode  { key, value }
@@ -20,6 +21,11 @@ const KEYS = new Set([
   'typesafe_mcp_mode',
   'message_screen_mode',
   'saved_search_semantic_mode',
+  'review_gate_listings',
+  'review_gate_finds',
+  'review_gate_wanted',
+  'review_gate_archive',
+  'review_gate_models',
 ]);
 
 export default defineEventHandler(async (event) => {
@@ -38,6 +44,7 @@ export default defineEventHandler(async (event) => {
 
   _resetTypesafeModesCache();
   _resetScreenSettingsCache();
+  _resetReviewSettingsCache();
 
   await db.from('admin_audit_log').insert({
     admin_id: user.id,

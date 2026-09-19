@@ -1183,6 +1183,10 @@ export type Database = {
           price: number | null;
           price_label: string | null;
           published_at: string | null;
+          review_at: string | null;
+          review_decision: string | null;
+          review_hint: Json | null;
+          review_version: string | null;
           slug: string;
           source_site: string;
           source_url: string;
@@ -1211,6 +1215,10 @@ export type Database = {
           price?: number | null;
           price_label?: string | null;
           published_at?: string | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           slug: string;
           source_site: string;
           source_url: string;
@@ -1239,6 +1247,10 @@ export type Database = {
           price?: number | null;
           price_label?: string | null;
           published_at?: string | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           slug?: string;
           source_site?: string;
           source_url?: string;
@@ -1779,6 +1791,10 @@ export type Database = {
           quantity_available: number | null;
           restoration_details: string | null;
           restoration_status: Database['public']['Enums']['restoration_status_enum'] | null;
+          review_at: string | null;
+          review_decision: string | null;
+          review_hint: Json | null;
+          review_version: string | null;
           roof_color: string | null;
           rust_condition: Database['public']['Enums']['rust_condition_enum'] | null;
           seat_type: Database['public']['Enums']['seat_type_enum'] | null;
@@ -1884,6 +1900,10 @@ export type Database = {
           quantity_available?: number | null;
           restoration_details?: string | null;
           restoration_status?: Database['public']['Enums']['restoration_status_enum'] | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           roof_color?: string | null;
           rust_condition?: Database['public']['Enums']['rust_condition_enum'] | null;
           seat_type?: Database['public']['Enums']['seat_type_enum'] | null;
@@ -1989,6 +2009,10 @@ export type Database = {
           quantity_available?: number | null;
           restoration_details?: string | null;
           restoration_status?: Database['public']['Enums']['restoration_status_enum'] | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           roof_color?: string | null;
           rust_condition?: Database['public']['Enums']['rust_condition_enum'] | null;
           seat_type?: Database['public']['Enums']['seat_type_enum'] | null;
@@ -3053,6 +3077,10 @@ export type Database = {
           purchase_count: number;
           rejection_reason: string | null;
           remix_of_model_id: string | null;
+          review_at: string | null;
+          review_decision: string | null;
+          review_hint: Json | null;
+          review_version: string | null;
           reviewed_at: string | null;
           reviewed_by: string | null;
           safety_ack: boolean;
@@ -3090,6 +3118,10 @@ export type Database = {
           purchase_count?: number;
           rejection_reason?: string | null;
           remix_of_model_id?: string | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
           safety_ack?: boolean;
@@ -3127,6 +3159,10 @@ export type Database = {
           purchase_count?: number;
           rejection_reason?: string | null;
           remix_of_model_id?: string | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
           safety_ack?: boolean;
@@ -4918,6 +4954,10 @@ export type Database = {
           duplicate_hint: Json | null;
           duplicate_version: string | null;
           id: string;
+          review_at: string | null;
+          review_decision: string | null;
+          review_hint: Json | null;
+          review_version: string | null;
           reviewed_at: string | null;
           reviewed_by: string | null;
           reviewer_notes: string | null;
@@ -4934,6 +4974,10 @@ export type Database = {
           duplicate_hint?: Json | null;
           duplicate_version?: string | null;
           id?: string;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
           reviewer_notes?: string | null;
@@ -4950,6 +4994,10 @@ export type Database = {
           duplicate_hint?: Json | null;
           duplicate_version?: string | null;
           id?: string;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
           reviewer_notes?: string | null;
@@ -5233,6 +5281,10 @@ export type Database = {
           moderation_issues: string[] | null;
           moderation_status: string;
           parts_subcategory: Database['public']['Enums']['parts_subcategory_enum'] | null;
+          review_at: string | null;
+          review_decision: string | null;
+          review_hint: Json | null;
+          review_version: string | null;
           state_province: string | null;
           status: string;
           title: string;
@@ -5254,6 +5306,10 @@ export type Database = {
           moderation_issues?: string[] | null;
           moderation_status?: string;
           parts_subcategory?: Database['public']['Enums']['parts_subcategory_enum'] | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           state_province?: string | null;
           status?: string;
           title: string;
@@ -5275,6 +5331,10 @@ export type Database = {
           moderation_issues?: string[] | null;
           moderation_status?: string;
           parts_subcategory?: Database['public']['Enums']['parts_subcategory_enum'] | null;
+          review_at?: string | null;
+          review_decision?: string | null;
+          review_hint?: Json | null;
+          review_version?: string | null;
           state_province?: string | null;
           status?: string;
           title?: string;
@@ -6344,6 +6404,16 @@ export type Database = {
           rows_scored: number;
         }[];
       };
+      record_review_hint: {
+        Args: {
+          p_decision: string;
+          p_hint: Json;
+          p_id: string;
+          p_surface: string;
+          p_version: string;
+        };
+        Returns: boolean;
+      };
       record_search_miss: { Args: { p_query: string }; Returns: undefined };
       record_search_miss_triage: {
         Args: {
@@ -6511,6 +6581,7 @@ export type Database = {
       truncate_all_tables: { Args: never; Returns: undefined };
       typesafe_mode_values: { Args: { p_key: string }; Returns: string[] };
       typesafe_readout: { Args: { p_days?: number }; Returns: Json };
+      typesafe_review_readout: { Args: { p_days?: number }; Returns: Json };
       user_has_subscription: {
         Args: { p_product_id?: string; p_user_id: string };
         Returns: boolean;

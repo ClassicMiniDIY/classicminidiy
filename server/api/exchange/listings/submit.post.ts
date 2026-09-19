@@ -19,6 +19,7 @@
 import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
 import { queueNotification, queueAdminNotification, buildBatchKey } from '../../../utils/exchange/notificationQueue';
+import { reviewListing } from '../../../utils/review/surfaces';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserClient(event);
@@ -48,6 +49,12 @@ export default defineEventHandler(async (event) => {
   // Both are fire-and-forget (never throw); awaited so they run before the
   // serverless function freezes after the response.
   const sellerName = (listing as { profiles?: { display_name?: string | null } }).profiles?.display_name || 'a seller';
+  // The review card (server/utils/review). Awaited so an `auto` approval,
+  // when that gate is on, is known before the admin digest goes out: an
+  // auto-approved listing is not pending and the admin is not paged for it.
+  // A failed or skipped read changes nothing below.
+  const review = await reviewListing(event, listing.id).catch(() => null);
+  const autoApproved = review?.decision === 'auto';
   await Promise.all([
     queueNotification({
       userId: listing.user_id,
@@ -55,11 +62,13 @@ export default defineEventHandler(async (event) => {
       payload: { listingTitle: listing.title, listingSlug: listing.slug },
       batchKey: buildBatchKey('listing_submitted', { listingId: listing.id }),
     }),
-    queueAdminNotification({
-      eventType: 'admin_listing_pending',
-      payload: { listingTitle: listing.title, sellerName },
-    }),
+    autoApproved
+      ? Promise.resolve()
+      : queueAdminNotification({
+          eventType: 'admin_listing_pending',
+          payload: { listingTitle: listing.title, sellerName },
+        }),
   ]);
 
-  return { success: true, message: 'Listing submitted for review' };
+  return { success: true, message: autoApproved ? 'Listing published' : 'Listing submitted for review' };
 });

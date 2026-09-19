@@ -1,6 +1,8 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
 import { hintSubmissionDuplicates, queueDuplicatesEnabled, type DuplicateHint } from '../../../utils/queueDuplicates';
+import { reviewArchiveSubmission } from '../../../utils/review/surfaces';
+import { loadReviewSettings } from '../../../utils/review/card';
 
 export default defineEventHandler(async (event) => {
   await requireAdminAuth(event);
@@ -68,9 +70,31 @@ export default defineEventHandler(async (event) => {
     );
   }
 
+  // The review card, filled lazily for pending rows that have none (the
+  // insert is client-side, so there is no server hook at submit time).
+  const reviews = new Map<string, unknown>();
+  const { gates } = await loadReviewSettings();
+  if (gates.archive !== 'off') {
+    const unreviewed = (data || []).filter((item: any) => item.status === 'pending' && item.review_hint == null);
+    await Promise.all(
+      unreviewed.slice(0, 5).map(async (item: any) => {
+        const out = await reviewArchiveSubmission(event, {
+          id: item.id,
+          submitted_by: item.submitted_by,
+          target_type: item.target_type,
+          type: item.type,
+          data: item.data || {},
+        }).catch(() => null);
+        if (out?.hint) reviews.set(item.id, { hint: out.hint, decision: out.decision });
+      })
+    );
+  }
+
   return (data || []).map((item: any) => ({
     id: item.id,
     duplicateHint: (hints.get(item.id) ?? item.duplicate_hint ?? null) as DuplicateHint | null,
+    reviewHint:
+      reviews.get(item.id) ?? (item.review_hint ? { hint: item.review_hint, decision: item.review_decision } : null),
     type: item.type,
     targetType: item.target_type,
     targetId: item.target_id,

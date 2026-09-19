@@ -13,6 +13,7 @@ import { requireUserClient } from '../../../utils/userAuth';
 import { getServiceClient } from '../../../utils/supabase';
 import { createRateLimitMiddleware, RateLimitPresets } from '../../../utils/exchange/rateLimit';
 import { queueAdminNotification } from '../../../utils/exchange/notificationQueue';
+import { reviewFind } from '../../../utils/review/surfaces';
 
 const rateLimitMiddleware = createRateLimitMiddleware({ ...RateLimitPresets.moderate, keyPrefix: 'finds-notify' });
 
@@ -39,7 +40,15 @@ export default defineEventHandler(async (event) => {
   // Notify admins of the pending find (batched digest). Ownership verified above,
   // so submitted_by === user.id; resolve the submitter's display name for the
   // email. Fire-and-forget — never blocks submission.
-  const { data: submitter } = await supabase.from('profiles').select('display_name').eq('id', find.submitted_by).maybeSingle();
+  // The review card; an `auto` approval means there is no pending find to page about.
+  const review = await reviewFind(event, find.id).catch(() => null);
+  if (review?.decision === 'auto') return { success: true, published: true };
+
+  const { data: submitter } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', find.submitted_by)
+    .maybeSingle();
   await queueAdminNotification({
     eventType: 'admin_find_pending',
     payload: {

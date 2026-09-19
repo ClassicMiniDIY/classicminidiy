@@ -13,6 +13,9 @@ import { _resetExchangeRateLimitStore } from '~~/server/utils/exchange/rateLimit
 // stubbed) so the moderate preset (10/min) genuinely gates; we reset its store
 // in beforeEach.
 // ---------------------------------------------------------------------------
+// The review card is its own unit (tests/unit/server/utils/reviewCard.test.ts);
+// here it reads nothing and approves nothing, so the route's own queries stay countable.
+vi.mock('~~/server/utils/review/surfaces', () => ({ reviewFind: async () => null }));
 vi.mock('~~/server/utils/userAuth', () => ({
   requireUserClient: vi.fn(),
   requireUserAuth: vi.fn(),

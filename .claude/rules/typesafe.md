@@ -2,6 +2,10 @@
 paths:
   - 'server/utils/typesafe.ts'
   - 'server/utils/typesafeModes.ts'
+  - 'server/utils/review/**'
+  - 'server/api/admin/review/**'
+  - 'app/components/admin/ReviewCard.vue'
+  - 'app/composables/useReviewCards.ts'
   - 'server/api/admin/typesafe/**'
   - 'app/pages/admin/typesafe.vue'
   - 'server/agent/classifier.ts'
@@ -111,3 +115,14 @@ that must survive any phase.
   `captureServerEvent` uses the per-event allowlist in `typesafeModes.ts`;
   adding a text property (a message, a query, the state) to that list is the
   one change it must refuse.
+- **The review card (`server/utils/review/`) is a hint on every submission;
+  `auto` is only the surface's own approval path running.** `reviewSubmission`
+  writes `review_hint` through `record_review_hint()` and returns
+  `autoEligible`; the per-surface adapter in `surfaces.ts` then does exactly
+  what the human route does (listings: status + published_at + audit + seller
+  email; finds: status + published_at) or nothing (wanted, archive, models
+  have no auto path; models never will here). A card never rejects. Gates are
+  `platform_settings.review_gate_<surface>`, thresholds one row; a failed
+  read keeps last values. State carries the submitter's trust level as a
+  word and never a name, email or id; years and formats are checked in code
+  and passed as findings.
