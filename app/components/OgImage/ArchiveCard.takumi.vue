@@ -1,9 +1,9 @@
 <script setup lang="ts">
   /**
-   * Branded social card for the parts archive: the part-number index, one part,
-   * one plate, and the supplier directory (rendered by nuxt-og-image / takumi at
-   * 1200x600). Sibling of ModelCard: same gradient, accent and column layout, so
-   * the site has one card family.
+   * Branded social card for one part number or one factory plate (rendered by
+   * nuxt-og-image / takumi at 1200x600). The archive hub pages use illustrated
+   * cards on S3 like every other hub. Sibling of ModelCard: same gradient,
+   * accent and column layout, so the site has one card family.
    *
    * Text only on purpose. The plate scans live in a PRIVATE bucket behind the
    * licence kill switch, and Discord/Facebook/Slack cache OG PNGs indefinitely,
