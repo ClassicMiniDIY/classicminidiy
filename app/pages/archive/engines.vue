@@ -231,7 +231,6 @@
     "main_heading": "Engine Specifications",
     "description_text": "Explore our comprehensive database of Classic Mini engine specifications. Find detailed information about bore sizes, stroke lengths, power outputs, and more for various Classic Mini engines.",
     "table_headers": {
-      "size": "Size",
       "original_block": "Original Block",
       "engine_size": "Engine Size",
       "bore_size": "Bore Size",
@@ -281,7 +280,6 @@
     "main_heading": "Especificaciones de Motor",
     "description_text": "Explora nuestra base de datos completa de especificaciones de motores Classic Mini. Encuentra información detallada sobre tamaños de cilindro, longitudes de carrera, potencias de salida y más para varios motores Classic Mini.",
     "table_headers": {
-      "size": "Tamaño",
       "original_block": "Bloque Original",
       "engine_size": "Tamaño de Motor",
       "bore_size": "Tamaño de Cilindro",
@@ -331,7 +329,6 @@
     "main_heading": "Spécifications de Moteur",
     "description_text": "Explorez notre base de données complète des spécifications de moteurs Classic Mini. Trouvez des informations détaillées sur les tailles d'alésage, les longueurs de course, les puissances de sortie et plus pour divers moteurs Classic Mini.",
     "table_headers": {
-      "size": "Taille",
       "original_block": "Bloc Original",
       "engine_size": "Taille de Moteur",
       "bore_size": "Taille d'Alésage",
@@ -381,7 +378,6 @@
     "main_heading": "Specifiche Motore",
     "description_text": "Esplora il nostro database completo delle specifiche dei motori Classic Mini. Trova informazioni dettagliate su dimensioni alesaggio, lunghezze corsa, potenze di uscita e altro per vari motori Classic Mini.",
     "table_headers": {
-      "size": "Dimensione",
       "original_block": "Blocco Originale",
       "engine_size": "Dimensione Motore",
       "bore_size": "Dimensione Alesaggio",
@@ -431,7 +427,6 @@
     "main_heading": "Motorspezifikationen",
     "description_text": "Erkunden Sie unsere umfassende Datenbank mit Classic Mini Motorspezifikationen. Finden Sie detaillierte Informationen über Bohrungsgrößen, Hublängen, Leistungsabgaben und mehr für verschiedene Classic Mini Motoren.",
     "table_headers": {
-      "size": "Größe",
       "original_block": "Original Block",
       "engine_size": "Motorgröße",
       "bore_size": "Bohrungsgröße",
@@ -481,7 +476,6 @@
     "main_heading": "Especificações do Motor",
     "description_text": "Explore nossa base de dados abrangente de especificações de motores Classic Mini. Encontre informações detalhadas sobre tamanhos de cilindro, comprimentos de curso, potências de saída e mais para vários motores Classic Mini.",
     "table_headers": {
-      "size": "Tamanho",
       "original_block": "Bloco Original",
       "engine_size": "Tamanho do Motor",
       "bore_size": "Tamanho do Cilindro",
@@ -531,7 +525,6 @@
     "main_heading": "Спецификации Двигателя",
     "description_text": "Изучите нашу комплексную базу данных спецификаций двигателей Classic Mini. Найдите подробную информацию о размерах цилиндров, длинах хода, выходных мощностях и многом другом для различных двигателей Classic Mini.",
     "table_headers": {
-      "size": "Размер",
       "original_block": "Оригинальный Блок",
       "engine_size": "Размер Двигателя",
       "bore_size": "Размер Цилиндра",
@@ -581,7 +574,6 @@
     "main_heading": "エンジン仕様",
     "description_text": "Classic Miniエンジン仕様の包括的なデータベースを探索してください。様々なClassic Miniエンジンのボアサイズ、ストローク長、出力などの詳細情報を見つけてください。",
     "table_headers": {
-      "size": "サイズ",
       "original_block": "オリジナルブロック",
       "engine_size": "エンジンサイズ",
       "bore_size": "ボアサイズ",
@@ -631,7 +623,6 @@
     "main_heading": "发动机规格",
     "description_text": "探索我们的Classic Mini发动机规格综合数据库。查找各种Classic Mini发动机的缸径尺寸、行程长度、功率输出等详细信息。",
     "table_headers": {
-      "size": "尺寸",
       "original_block": "原装缸体",
       "engine_size": "发动机尺寸",
       "bore_size": "缸径尺寸",
@@ -681,7 +672,6 @@
     "main_heading": "엔진 사양",
     "description_text": "Classic Mini 엔진 사양의 포괄적인 데이터베이스를 탐색하세요. 다양한 Classic Mini 엔진의 보어 크기, 스트로크 길이, 출력 등에 대한 자세한 정보를 찾아보세요.",
     "table_headers": {
-      "size": "크기",
       "original_block": "원본 블록",
       "engine_size": "엔진 크기",
       "bore_size": "보어 크기",
