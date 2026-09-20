@@ -6,8 +6,8 @@
   "message": "You have reached the monthly message limit. Sustaining Members get a much higher allowance — https://www.classicminidiy.com/membership",
   "data": {
     "tier": "free",
-    "used": 30,
-    "limit": 30,
+    "used": 20,
+    "limit": 20,
     "upgradeUrl": "https://www.classicminidiy.com/membership"
   }
 }

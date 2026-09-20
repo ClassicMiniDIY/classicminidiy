@@ -243,13 +243,13 @@ the Ask row from anywhere. Selecting it calls `router.push({ path: '/chat', quer
 **Quota state.** The row's copy and action depend on the visitor's tier and how
 much of the quota is used:
 
-| State                            | Row copy                                    | Action                  |
-| -------------------------------- | ------------------------------------------- | ----------------------- |
-| Quota available (any tier)       | Ask DIY Mini Bot: "…"                       | `/chat?message=`        |
-| Anonymous, at limit              | Sign in to ask — 30 questions a month, free | `/login?redirect=/chat` |
-| Free account, at limit           | Become a Sustaining Member — 100 a month    | `/membership`           |
-| Member, at limit                 | Questions reset on the 1st                  | Disabled row            |
-| Unknown (peek failed or pending) | Ask DIY Mini Bot: "…"                       | `/chat?message=`        |
+| State                            | Row copy                                                                                                   | Action                  |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Quota available (any tier)       | Ask DIY Mini Bot: "…"                                                                                      | `/chat?message=`        |
+| Anonymous, at limit              | Sign in to ask — {free} questions a month, free (the number comes from `CHAT_QUOTAS`; 20 since 2026-09-19) | `/login?redirect=/chat` |
+| Free account, at limit           | Become a Sustaining Member — 100 a month                                                                   | `/membership`           |
+| Member, at limit                 | Questions reset on the 1st                                                                                 | Disabled row            |
+| Unknown (peek failed or pending) | Ask DIY Mini Bot: "…"                                                                                      | `/chat?message=`        |
 
 The state comes from a new read-only route, `GET /api/chat/quota`, that returns
 `{ tier, used, limit }` without consuming a message. `chatQuota.ts` gains a

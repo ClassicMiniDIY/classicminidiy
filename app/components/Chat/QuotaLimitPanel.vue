@@ -98,6 +98,7 @@
 <script setup lang="ts">
   import { computed, watch } from 'vue';
   import type { QuotaExhausted } from '~/utils/chatQuotaError';
+  import { CHAT_QUOTAS } from '~~/shared/utils/chatTiers';
 
   const props = defineProps<{ quota: QuotaExhausted; restored?: boolean }>();
   const emit = defineEmits<{ dismiss: [] }>();
@@ -105,10 +106,17 @@
   const { capture } = usePostHog();
   const route = useRoute();
 
+  // The allowances come from the shared constant so the copy can never drift
+  // from what the route enforces; the locale strings carry named params.
+  const allowances = {
+    anon: CHAT_QUOTAS.anonymous.perDay,
+    free: CHAT_QUOTAS.free.perMonth,
+    member: CHAT_QUOTAS.member.perMonth,
+  };
   const benefits = computed(() =>
     props.quota.tier === 'anonymous'
-      ? [t('benefit.free_allowance'), t('benefit.history'), t('benefit.free_forever')]
-      : [t('benefit.member_allowance'), t('benefit.synced_history'), t('benefit.supports')]
+      ? [t('benefit.free_allowance', allowances), t('benefit.history'), t('benefit.free_forever')]
+      : [t('benefit.member_allowance', allowances), t('benefit.synced_history'), t('benefit.supports')]
   );
 
   /**
@@ -167,10 +175,10 @@
       "body": "Your allowance resets at the start of next month. Thanks for supporting Classic Mini DIY."
     },
     "benefit": {
-      "free_allowance": "30 messages a month instead of 15 a day",
+      "free_allowance": "{free} messages a month instead of {anon} a day",
       "history": "Your conversations saved to your account",
       "free_forever": "Free — no card needed",
-      "member_allowance": "100 messages a month",
+      "member_allowance": "{member} messages a month",
       "synced_history": "Conversations synced across your devices",
       "supports": "Supports the archive, the videos and the tools"
     },
@@ -194,10 +202,10 @@
       "body": "Tu límite se restablece al inicio del próximo mes. Gracias por apoyar a Classic Mini DIY."
     },
     "benefit": {
-      "free_allowance": "30 mensajes al mes en vez de 15 al día",
+      "free_allowance": "{free} mensajes al mes en vez de {anon} al día",
       "history": "Tus conversaciones guardadas en tu cuenta",
       "free_forever": "Gratis — sin tarjeta",
-      "member_allowance": "100 mensajes al mes",
+      "member_allowance": "{member} mensajes al mes",
       "synced_history": "Conversaciones sincronizadas entre tus dispositivos",
       "supports": "Apoya el archivo, los vídeos y las herramientas"
     },
@@ -221,10 +229,10 @@
       "body": "Votre quota se réinitialise au début du mois prochain. Merci de soutenir Classic Mini DIY."
     },
     "benefit": {
-      "free_allowance": "30 messages par mois au lieu de 15 par jour",
+      "free_allowance": "{free} messages par mois au lieu de {anon} par jour",
       "history": "Vos conversations enregistrées sur votre compte",
       "free_forever": "Gratuit — sans carte bancaire",
-      "member_allowance": "100 messages par mois",
+      "member_allowance": "{member} messages par mois",
       "synced_history": "Conversations synchronisées entre vos appareils",
       "supports": "Soutient l'archive, les vidéos et les outils"
     },
@@ -248,10 +256,10 @@
       "body": "Dein Kontingent wird zu Beginn des nächsten Monats zurückgesetzt. Danke für deine Unterstützung."
     },
     "benefit": {
-      "free_allowance": "30 Nachrichten pro Monat statt 15 pro Tag",
+      "free_allowance": "{free} Nachrichten pro Monat statt {anon} pro Tag",
       "history": "Deine Unterhaltungen in deinem Konto gespeichert",
       "free_forever": "Kostenlos — keine Karte nötig",
-      "member_allowance": "100 Nachrichten pro Monat",
+      "member_allowance": "{member} Nachrichten pro Monat",
       "synced_history": "Unterhaltungen auf allen Geräten synchronisiert",
       "supports": "Unterstützt das Archiv, die Videos und die Werkzeuge"
     },
@@ -275,10 +283,10 @@
       "body": "Il tuo limite si azzera all'inizio del mese prossimo. Grazie per il supporto."
     },
     "benefit": {
-      "free_allowance": "30 messaggi al mese invece di 15 al giorno",
+      "free_allowance": "{free} messaggi al mese invece di {anon} al giorno",
       "history": "Le tue conversazioni salvate sul tuo account",
       "free_forever": "Gratis — senza carta",
-      "member_allowance": "100 messaggi al mese",
+      "member_allowance": "{member} messaggi al mese",
       "synced_history": "Conversazioni sincronizzate su tutti i dispositivi",
       "supports": "Sostiene l'archivio, i video e gli strumenti"
     },
@@ -302,10 +310,10 @@
       "body": "来月の初めにリセットされます。ご支援ありがとうございます。"
     },
     "benefit": {
-      "free_allowance": "1日15件ではなく、月30件",
+      "free_allowance": "1日{anon}件ではなく、月{free}件",
       "history": "会話がアカウントに保存されます",
       "free_forever": "無料 — カード不要",
-      "member_allowance": "月100件のメッセージ",
+      "member_allowance": "月{member}件のメッセージ",
       "synced_history": "会話が全デバイスで同期されます",
       "supports": "アーカイブ、動画、ツールを支援します"
     },
@@ -329,10 +337,10 @@
       "body": "다음 달 초에 초기화됩니다. 후원해 주셔서 감사합니다."
     },
     "benefit": {
-      "free_allowance": "하루 15개 대신 월 30개",
+      "free_allowance": "하루 {anon}개 대신 월 {free}개",
       "history": "대화가 계정에 저장됩니다",
       "free_forever": "무료 — 카드 불필요",
-      "member_allowance": "월 100개 메시지",
+      "member_allowance": "월 {member}개 메시지",
       "synced_history": "모든 기기에서 대화 동기화",
       "supports": "아카이브와 영상, 도구를 후원합니다"
     },
@@ -356,10 +364,10 @@
       "body": "Seu limite é renovado no início do próximo mês. Obrigado pelo apoio."
     },
     "benefit": {
-      "free_allowance": "30 mensagens por mês em vez de 15 por dia",
+      "free_allowance": "{free} mensagens por mês em vez de {anon} por dia",
       "history": "Suas conversas salvas na sua conta",
       "free_forever": "Grátis — sem cartão",
-      "member_allowance": "100 mensagens por mês",
+      "member_allowance": "{member} mensagens por mês",
       "synced_history": "Conversas sincronizadas entre dispositivos",
       "supports": "Apoia o arquivo, os vídeos e as ferramentas"
     },
@@ -383,10 +391,10 @@
       "body": "Лимит обновится в начале следующего месяца. Спасибо за поддержку."
     },
     "benefit": {
-      "free_allowance": "30 сообщений в месяц вместо 15 в день",
+      "free_allowance": "{free} сообщений в месяц вместо {anon} в день",
       "history": "Ваши переписки сохраняются в аккаунте",
       "free_forever": "Бесплатно — карта не нужна",
-      "member_allowance": "100 сообщений в месяц",
+      "member_allowance": "{member} сообщений в месяц",
       "synced_history": "Переписки синхронизируются между устройствами",
       "supports": "Поддерживает архив, видео и инструменты"
     },
@@ -410,10 +418,10 @@
       "body": "您的额度将在下月初重置。感谢您的支持。"
     },
     "benefit": {
-      "free_allowance": "每月 30 条，而不是每天 15 条",
+      "free_allowance": "每月 {free} 条，而不是每天 {anon} 条",
       "history": "对话保存到您的账户",
       "free_forever": "免费 — 无需银行卡",
-      "member_allowance": "每月 100 条消息",
+      "member_allowance": "每月 {member} 条消息",
       "synced_history": "对话在各设备间同步",
       "supports": "支持档案、视频与工具"
     },

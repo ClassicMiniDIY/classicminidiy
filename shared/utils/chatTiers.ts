@@ -64,8 +64,13 @@ export interface ChatQuota {
  */
 export const CHAT_QUOTAS = {
   anonymous: { perDay: 15, perMonth: null },
-  free: { perDay: null, perMonth: 30 },
-  member: { perDay: null, perMonth: 100 },
+  // 2026-09-19: free 30 → 20, member 100 → 75. Measured on Sonnet 5 a run
+  // costs ~$0.03 (cache hitting) to ~$0.05 (not), so 100 member runs cost
+  // more than the $1.99 the membership brings in after the store cut, and
+  // the native apps put the bot front and centre. The apps read `limit`
+  // from the peek and the 429, so this is the single place to tune.
+  free: { perDay: null, perMonth: 20 },
+  member: { perDay: null, perMonth: 75 },
 } as const satisfies Record<ChatTier, ChatQuota>;
 
 /** Where a quota-exhausted visitor is sent to upgrade. */
