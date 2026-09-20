@@ -93,18 +93,23 @@ CF_DMARC_RUA = {
     "cmdiy.co": f"773c1a7d02b34a4888b722bed05cb9ca@{CF_DMARC_RUA_DOMAIN}",
 }
 
-# The policy this script will publish, per domain, once the Cloudflare mailbox
-# is known. `p=none` until the reports have been read: see the ladder in
+# The policy this script will publish, per domain. Ladder and evidence in
 # docs/plans/2026-09-03-forward-email-retirement.md.
+#
+# Stage 1 (`p=quarantine; pct=25`) applied 2026-09-20 after reading two days
+# of Cloudflare DMARC reports (GraphQL `dmarcReportsAdaptive`): SES on both
+# .com zones, Shopify-via-SendGrid and Postmark on cmdiy.co all pass on DKIM;
+# the only failures were the pre-fix Postmark POs and a supplier forwarder
+# whose DKIM still passes. Next: pct=100 after a week, then p=reject.
 #
 # `sp` is deliberately absent. classicminidiy.com has two sending subdomains
 # (`ghost.news.` on Mailgun for Ghost, `noreply.` on SES) and neither has been
 # confirmed DKIM-aligned by a report yet, so `sp=reject` would be a guess with
 # the newsletter as the stake. With `sp` absent, subdomains inherit `p`.
 DMARC_POLICY = {
-    "classicminidiy.com": "p=none",
-    "theminiexchange.com": "p=none",
-    "cmdiy.co": "p=none",
+    "classicminidiy.com": "p=quarantine; pct=25",
+    "theminiexchange.com": "p=quarantine; pct=25",
+    "cmdiy.co": "p=quarantine; pct=25",
 }
 
 # Retired 2026-09-18 in favour of Cloudflare DMARC Management. Left so a dry
