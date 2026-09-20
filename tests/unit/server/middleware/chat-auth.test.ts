@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let extractedToken: string | undefined;
 let getUserResult: any = { data: { user: { id: 'user-1' } }, error: null };
-let rpcResult: any = { data: true, error: null };
+let rpcResult: any = { data: 'base', error: null };
 let getUserThrows = false;
 let isBanned = false;
 
@@ -63,7 +63,7 @@ beforeEach(() => {
   storage.items.clear();
   extractedToken = 'token-abc';
   getUserResult = { data: { user: { id: 'user-1' } }, error: null };
-  rpcResult = { data: true, error: null };
+  rpcResult = { data: 'base', error: null };
   getUserThrows = false;
   isBanned = false;
   (globalThis as any).getRequestURL.mockReturnValue(new URL('https://example.com/api/chat'));
@@ -93,15 +93,40 @@ describe('chat-auth', () => {
     expect(getChatAuth(event)).toEqual({ tier: 'anonymous' });
   });
 
-  it('resolves an active membership to the member tier', async () => {
+  it('resolves an active base-plan membership to the member tier', async () => {
+    rpcResult = { data: 'base', error: null };
     const event = await run();
     expect(getChatAuth(event)).toEqual({ tier: 'member', userId: 'user-1' });
   });
 
-  it('resolves a signed-in non-member to the free tier', async () => {
-    rpcResult = { data: false, error: null };
+  it('resolves the Plus and Pro plans to their own tiers', async () => {
+    for (const plan of ['plus', 'pro'] as const) {
+      storage.items.clear();
+      rpcResult = { data: plan, error: null };
+      const event = await run();
+      expect(getChatAuth(event)).toEqual({ tier: plan, userId: 'user-1' });
+    }
+  });
+
+  it('resolves a signed-in non-member (NULL plan) to the free tier', async () => {
+    rpcResult = { data: null, error: null };
     const event = await run();
     expect(getChatAuth(event)).toEqual({ tier: 'free', userId: 'user-1' });
+  });
+
+  it('treats a plan it does not know as the base member tier, never free', async () => {
+    // A paying member on a plan added after this build must keep a paid
+    // allowance; the size is the only thing in doubt.
+    rpcResult = { data: 'ultra', error: null };
+    const event = await run();
+    expect(getChatAuth(event)).toEqual({ tier: 'member', userId: 'user-1' });
+  });
+
+  it('calls get_membership_plan, not user_has_subscription', async () => {
+    const { getServiceClient } = await import('~/server/utils/supabase');
+    await run();
+    const client = (getServiceClient as any).mock.results.at(-1)!.value;
+    expect(client.rpc).toHaveBeenCalledWith('get_membership_plan', { p_user_id: 'user-1' });
   });
 
   describe('failing OPEN', () => {

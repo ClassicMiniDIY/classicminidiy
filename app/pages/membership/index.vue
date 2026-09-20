@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+  import { CHAT_QUOTAS, MEMBERSHIP_PLANS, type MembershipPlan } from '~~/shared/utils/chatTiers';
   const { t } = useI18n();
   const route = useRoute();
   const router = useRouter();
@@ -28,8 +29,26 @@
   // through sign-in with the intent preserved as ?subscribe=1, so after auth
   // they land back here and checkout auto-starts (see onMounted). The login
   // page persists the redirect across the OAuth/magic-link round trip.
-  const SUBSCRIBE_INTENT_PATH = '/membership?subscribe=1';
-  const loginWithIntentHref = `/login?redirect=${encodeURIComponent(SUBSCRIBE_INTENT_PATH)}`;
+  // `plan` rides along so the plan chosen before sign-in is the one checked out.
+  const loginWithIntentHref = (plan: MembershipPlan = 'base') =>
+    `/login?redirect=${encodeURIComponent(`/membership?subscribe=1&plan=${plan}`)}`;
+
+  /**
+   * The three plans as sold (design: classicminidiy-supabase
+   * docs/plans/2026-09-19-chat-tiers.md). Every plan is the same membership —
+   * same badge, sync, Discord, listings — and differs in exactly one thing:
+   * the monthly DIY Mini Bot allowance, which comes from the shared quota
+   * contract so this page can never quote a number the chat does not enforce.
+   */
+  const plans = MEMBERSHIP_PLANS.map((p) => ({
+    plan: p.plan,
+    usd: p.usd,
+    questions: CHAT_QUOTAS[p.tier].perMonth ?? 0,
+  }));
+  const planLabel = (plan: string | null | undefined) =>
+    plan === 'plus' || plan === 'pro' ? t(`plans.${plan}.name`) : t('plans.base.name');
+  const planQuestions = (plan: string | null | undefined) =>
+    plans.find((p) => p.plan === plan)?.questions ?? plans[0]!.questions;
 
   // Post-checkout activation poll (punch list D1): on return with ?subscribed=1
   // the Stripe webhook may not have written the subscriptions row yet, so a
@@ -65,37 +84,44 @@
   // Subscribe via Stripe Checkout (keystone §9): a logged-in user hits the
   // checkout proxy → create-membership-checkout → Stripe Checkout URL. Logged-out
   // users are routed through sign-in first so the webhook can attribute the row.
-  async function subscribe() {
+  const checkoutPlan = ref<MembershipPlan | null>(null);
+  async function subscribe(plan: MembershipPlan = 'base') {
     if (!isAuthenticated.value) {
-      navigateTo(loginWithIntentHref);
+      navigateTo(loginWithIntentHref(plan));
       return;
     }
     checkoutLoading.value = true;
-    track('membership_checkout_started', { source: 'web' });
+    checkoutPlan.value = plan;
+    track('membership_checkout_started', { source: 'web', plan });
     try {
       const token = await getAccessToken();
       if (!token) {
         // Session evaporated between the auth check and checkout — send them
         // back through sign-in with the subscribe intent preserved.
-        navigateTo(loginWithIntentHref);
+        navigateTo(loginWithIntentHref(plan));
         return;
       }
       const res = await $fetch<{ url?: string }>('/api/membership/checkout', {
         method: 'POST',
         headers: { authorization: `Bearer ${token}` },
+        body: { plan },
       });
       if (!res?.url) throw new Error('Missing checkout URL');
       await navigateTo(res.url, { external: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Membership checkout failed:', error);
+      // The edge function answers 503 PLAN_UNAVAILABLE for a plan whose Stripe
+      // price is not configured yet: a rollout gap, not a failure to retry.
+      const unavailable = error?.statusCode === 503 || error?.data?.code === 'PLAN_UNAVAILABLE';
       addToast({
         title: t('errors.checkout_title'),
-        description: t('errors.checkout_body'),
+        description: unavailable ? t('errors.plan_unavailable', { plan: planLabel(plan) }) : t('errors.checkout_body'),
         color: 'error',
         icon: 'fas fa-triangle-exclamation',
       });
     } finally {
       checkoutLoading.value = false;
+      checkoutPlan.value = null;
     }
   }
 
@@ -141,16 +167,19 @@
   // deployed yet — in which case we hide the Stripe link (the safe default for
   // comp/Apple/Google members).
   const membershipPlatform = ref<string | null>(null);
+  // The plan on the granting row (base | plus | pro); null until loaded or for
+  // a row written before plans existed, which the server treats as base.
+  const membershipPlan = ref<string | null>(null);
   async function loadMembershipPlatform() {
     if (!user.value) return;
     try {
-      // Cast the RPC name until types/database.ts is regenerated post-deploy.
-      const { data, error } = await supabase.rpc('get_my_membership' as any).single();
+      const { data, error } = await supabase.rpc('get_my_membership').single();
       if (error) {
         console.error('Error loading membership platform:', error);
         return;
       }
-      membershipPlatform.value = (data as { platform?: string | null })?.platform ?? null;
+      membershipPlatform.value = data?.platform ?? null;
+      membershipPlan.value = data?.plan ?? null;
     } catch (err) {
       console.error('Error loading membership platform:', err);
     }
@@ -237,9 +266,10 @@
         !route.query.canceled &&
         isAuthenticated.value &&
         !isSustainingMember.value;
-      const { subscribed: _subscribed, canceled: _canceled, subscribe: _subscribe, ...rest } = route.query;
+      const intentPlan = plans.find((p) => p.plan === route.query.plan)?.plan ?? 'base';
+      const { subscribed: _subscribed, canceled: _canceled, subscribe: _subscribe, plan: _plan, ...rest } = route.query;
       router.replace({ query: rest });
-      if (shouldAutoSubscribe) subscribe();
+      if (shouldAutoSubscribe) subscribe(intentPlan);
     }
   });
 
@@ -308,6 +338,15 @@
               <h2 class="text-2xl font-bold">{{ t('member.title') }}</h2>
             </div>
             <p class="opacity-70">{{ t('member.subtitle') }}</p>
+            <p class="text-sm mt-1">
+              <i class="fas fa-comments mr-2 text-primary"></i
+              >{{
+                t('member.plan_line', {
+                  plan: planLabel(membershipPlan),
+                  count: planQuestions(membershipPlan ?? 'base'),
+                })
+              }}
+            </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <!-- Discord connection status (live via discord_links SELECT-own
@@ -361,7 +400,9 @@
                   {{ t('member.manage') }}
                 </a>
               </div>
-              <p class="text-xs opacity-60 mt-2">{{ t('member.manage_note_stripe') }}</p>
+              <p class="text-xs opacity-60 mt-2">
+                {{ t('member.manage_note_stripe') }} {{ t('member.change_plan_stripe') }}
+              </p>
             </template>
             <p v-else-if="membershipPlatform === 'comp'" class="text-sm opacity-70 mt-4">
               <i class="fas fa-gift mr-2 text-primary"></i>{{ t('member.comp_note') }}
@@ -371,6 +412,7 @@
               class="text-sm opacity-70 mt-4"
             >
               <i class="fas fa-mobile-screen mr-2 text-primary"></i>{{ t('member.manage_note_store') }}
+              {{ t('member.change_plan_store') }}
             </p>
             <p v-else-if="membershipPlatform === 'ghost'" class="text-sm opacity-70 mt-4">
               <i class="fas fa-book-open mr-2 text-primary"></i>{{ t('member.manage_note_ghost') }}
@@ -417,21 +459,54 @@
             <h2 class="text-2xl font-bold">{{ t('cta.title') }}</h2>
             <p class="opacity-70 max-w-lg">{{ t('cta.subtitle') }}</p>
 
-            <div class="mt-4">
-              <button
-                v-if="isAuthenticated"
-                class="btn btn-primary btn-lg"
-                :disabled="checkoutLoading"
-                @click="subscribe"
+            <!-- Plan picker. One membership, three allowances: the only line
+                 that differs between the cards is the DIY Mini Bot count. -->
+            <div class="plan-grid grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 w-full">
+              <div
+                v-for="p in plans"
+                :key="p.plan"
+                class="card border shadow-sm text-left"
+                :class="p.plan === 'plus' ? 'border-primary bg-primary/5' : 'border-base-300 bg-base-100'"
               >
-                <i v-if="checkoutLoading" class="fas fa-spinner fa-spin"></i>
-                <i v-else class="fas fa-star"></i>
-                {{ t('cta.subscribe') }}
-              </button>
-              <NuxtLink v-else :to="loginWithIntentHref" class="btn btn-primary btn-lg">
-                <i class="fas fa-right-to-bracket"></i>
-                {{ t('cta.signin') }}
-              </NuxtLink>
+                <div class="card-body p-5 gap-2">
+                  <p class="eyebrow">
+                    {{ t(`plans.${p.plan}.name`) }}
+                    <span v-if="p.plan === 'plus'" class="badge badge-primary badge-sm ml-1">{{
+                      t('plans.popular')
+                    }}</span>
+                  </p>
+                  <p class="text-3xl font-bold">
+                    ${{ p.usd.toFixed(2)
+                    }}<span class="text-sm font-normal opacity-60">{{ t('plans.per_month') }}</span>
+                  </p>
+                  <p class="text-sm">
+                    <i class="fas fa-comments mr-1 text-primary"></i>{{ t('plans.questions', { count: p.questions }) }}
+                  </p>
+                  <p class="text-xs opacity-60">{{ t('plans.same_benefits') }}</p>
+                  <div class="card-actions mt-2">
+                    <button
+                      v-if="isAuthenticated"
+                      class="btn btn-sm w-full"
+                      :class="p.plan === 'plus' ? 'btn-primary' : 'btn-outline btn-primary'"
+                      :disabled="checkoutLoading"
+                      @click="subscribe(p.plan)"
+                    >
+                      <i v-if="checkoutLoading && checkoutPlan === p.plan" class="fas fa-spinner fa-spin"></i>
+                      <i v-else class="fas fa-star"></i>
+                      {{ t('plans.choose', { plan: t(`plans.${p.plan}.name`) }) }}
+                    </button>
+                    <NuxtLink
+                      v-else
+                      :to="loginWithIntentHref(p.plan)"
+                      class="btn btn-sm w-full"
+                      :class="p.plan === 'plus' ? 'btn-primary' : 'btn-outline btn-primary'"
+                    >
+                      <i class="fas fa-right-to-bracket"></i>
+                      {{ t('cta.signin') }}
+                    </NuxtLink>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <p class="text-sm opacity-60 mt-3"><i class="fas fa-mobile-screen mr-1"></i>{{ t('cta.also_apps') }}</p>
@@ -469,7 +544,7 @@
     "hero": {
       "eyebrow": "SUSTAINING MEMBER",
       "title": "One membership, every Classic Mini DIY property",
-      "price": "$1.99/month",
+      "price": "From $1.99/month",
       "subtitle": "Subscribe here, or in the iOS and Android apps — same price, same benefits everywhere."
     },
     "benefits": {
@@ -504,13 +579,12 @@
     },
     "cta": {
       "title": "Become a Sustaining Member",
-      "subtitle": "$1.99/month, cancel anytime. Your membership unlocks benefits across every Classic Mini DIY property.",
+      "subtitle": "From $1.99/month, cancel anytime. Every plan unlocks the same benefits across every Classic Mini DIY property — pick the DIY Mini Bot allowance that fits.",
       "checking": "Checking your membership…",
       "activating_title": "Activating your membership…",
       "activating_body": "Payment received — we're switching on your benefits. This usually takes a few seconds.",
       "activation_timeout_title": "Taking longer than expected",
       "activation_timeout_body": "Your payment went through, but activation is taking a little longer than usual. Refresh this page in a minute — if your membership still isn't active, reach out via the contact page and we'll sort it out.",
-      "subscribe": "Become a Sustaining Member — $1.99/mo",
       "signin": "Sign in to become a member",
       "also_apps": "Also available in the iOS and Android apps."
     },
@@ -543,11 +617,15 @@
       "manage_note_store": "Manage or cancel your subscription in the App Store or Google Play, wherever you subscribed.",
       "manage_note_ghost": "Manage your membership through your Ghost account billing email.",
       "manage_note_patreon": "Manage your pledge on Patreon.",
-      "active_fallback": "Your membership is active."
+      "active_fallback": "Your membership is active.",
+      "plan_line": "Your plan: {plan} — {count} DIY Mini Bot questions a month.",
+      "change_plan_stripe": "You can switch plans there too.",
+      "change_plan_store": "Switch plans from your App Store or Google Play subscription settings."
     },
     "errors": {
       "checkout_title": "Checkout unavailable",
-      "checkout_body": "We couldn't start your membership checkout. Please try again in a moment."
+      "checkout_body": "We couldn't start your membership checkout. Please try again in a moment.",
+      "plan_unavailable": "{plan} isn't available to buy yet. Please try again soon or pick another plan."
     },
     "toasts": {
       "subscribed_title": "Welcome, Sustaining Member!",
@@ -556,7 +634,23 @@
       "canceled_body": "No charge was made. You can become a Sustaining Member whenever you're ready."
     },
     "tip_jar_note": "Looking to leave a one-time tip instead? Patreon is a separate tip jar.",
-    "tip_jar_link": "See ways to support →"
+    "tip_jar_link": "See ways to support →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "Most popular",
+      "per_month": "/month",
+      "questions": "{count} DIY Mini Bot questions a month",
+      "same_benefits": "Every other benefit is identical on all plans.",
+      "choose": "Choose {plan}"
+    }
   },
   "es": {
     "meta": {
@@ -566,7 +660,7 @@
     "hero": {
       "eyebrow": "SOCIO COLABORADOR",
       "title": "Una membresía, todos los sitios de Classic Mini DIY",
-      "price": "1,99 $/mes",
+      "price": "Desde $1.99/mes",
       "subtitle": "Suscríbete aquí o en las apps de iOS y Android: mismo precio y mismas ventajas en todas partes."
     },
     "benefits": {
@@ -601,13 +695,12 @@
     },
     "cta": {
       "title": "Hazte Socio Colaborador",
-      "subtitle": "1,99 $/mes, cancela cuando quieras. Tu membresía desbloquea ventajas en todos los sitios de Classic Mini DIY.",
+      "subtitle": "Desde $1.99/mes, cancela cuando quieras. Todos los planes desbloquean los mismos beneficios en todas las propiedades de Classic Mini DIY — elige el límite del DIY Mini Bot que te convenga.",
       "checking": "Comprobando tu membresía…",
       "activating_title": "Activando tu membresía…",
       "activating_body": "Pago recibido: estamos activando tus ventajas. Suele tardar unos segundos.",
       "activation_timeout_title": "Está tardando más de lo previsto",
       "activation_timeout_body": "Tu pago se ha completado, pero la activación está tardando algo más de lo normal. Actualiza esta página en un minuto; si tu membresía sigue sin estar activa, escríbenos desde la página de contacto y lo solucionamos.",
-      "subscribe": "Hazte Socio Colaborador — 1,99 $/mes",
       "signin": "Inicia sesión para hacerte socio",
       "also_apps": "También disponible en las apps de iOS y Android."
     },
@@ -640,11 +733,15 @@
       "manage_note_store": "Gestiona o cancela tu suscripción en la App Store o en Google Play, según dónde te suscribieras.",
       "manage_note_ghost": "Gestiona tu membresía con el correo de facturación de tu cuenta de Ghost.",
       "manage_note_patreon": "Gestiona tu aportación en Patreon.",
-      "active_fallback": "Tu membresía está activa."
+      "active_fallback": "Tu membresía está activa.",
+      "plan_line": "Tu plan: {plan} — {count} preguntas al DIY Mini Bot al mes.",
+      "change_plan_stripe": "Ahí también puedes cambiar de plan.",
+      "change_plan_store": "Cambia de plan desde los ajustes de suscripción del App Store o Google Play."
     },
     "errors": {
       "checkout_title": "Pago no disponible",
-      "checkout_body": "No hemos podido iniciar el pago de tu membresía. Inténtalo de nuevo en un momento."
+      "checkout_body": "No hemos podido iniciar el pago de tu membresía. Inténtalo de nuevo en un momento.",
+      "plan_unavailable": "{plan} aún no está disponible. Inténtalo de nuevo pronto o elige otro plan."
     },
     "toasts": {
       "subscribed_title": "¡Bienvenido, Socio Colaborador!",
@@ -653,7 +750,23 @@
       "canceled_body": "No se ha realizado ningún cargo. Puedes hacerte Socio Colaborador cuando quieras."
     },
     "tip_jar_note": "¿Prefieres dejar una propina puntual? Patreon es un bote de propinas aparte.",
-    "tip_jar_link": "Ver formas de apoyar →"
+    "tip_jar_link": "Ver formas de apoyar →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "Más popular",
+      "per_month": "/mes",
+      "questions": "{count} preguntas al DIY Mini Bot al mes",
+      "same_benefits": "Los demás beneficios son idénticos en todos los planes.",
+      "choose": "Elegir {plan}"
+    }
   },
   "fr": {
     "meta": {
@@ -663,7 +776,7 @@
     "hero": {
       "eyebrow": "MEMBRE DE SOUTIEN",
       "title": "Une adhésion, tous les sites Classic Mini DIY",
-      "price": "1,99 $/mois",
+      "price": "À partir de 1,99 $/mois",
       "subtitle": "Abonnez-vous ici ou dans les applis iOS et Android : même prix, mêmes avantages partout."
     },
     "benefits": {
@@ -698,13 +811,12 @@
     },
     "cta": {
       "title": "Devenir membre de soutien",
-      "subtitle": "1,99 $/mois, annulable à tout moment. Votre adhésion débloque des avantages sur tous les sites Classic Mini DIY.",
+      "subtitle": "À partir de 1,99 $/mois, résiliable à tout moment. Chaque formule débloque les mêmes avantages sur toutes les propriétés Classic Mini DIY — choisissez le quota DIY Mini Bot qui vous convient.",
       "checking": "Vérification de votre adhésion…",
       "activating_title": "Activation de votre adhésion…",
       "activating_body": "Paiement reçu — nous activons vos avantages. Cela prend généralement quelques secondes.",
       "activation_timeout_title": "Cela prend plus de temps que prévu",
       "activation_timeout_body": "Votre paiement est bien passé, mais l'activation prend un peu plus de temps que d'habitude. Actualisez cette page dans une minute ; si votre adhésion n'est toujours pas active, écrivez-nous via la page de contact et nous réglerons ça.",
-      "subscribe": "Devenir membre de soutien — 1,99 $/mois",
       "signin": "Connectez-vous pour devenir membre",
       "also_apps": "Également disponible dans les applis iOS et Android."
     },
@@ -737,11 +849,15 @@
       "manage_note_store": "Gérez ou annulez votre abonnement dans l'App Store ou sur Google Play, selon l'endroit où vous vous êtes abonné.",
       "manage_note_ghost": "Gérez votre adhésion via l'e-mail de facturation de votre compte Ghost.",
       "manage_note_patreon": "Gérez votre contribution sur Patreon.",
-      "active_fallback": "Votre adhésion est active."
+      "active_fallback": "Votre adhésion est active.",
+      "plan_line": "Votre formule : {plan} — {count} questions au DIY Mini Bot par mois.",
+      "change_plan_stripe": "Vous pouvez aussi y changer de formule.",
+      "change_plan_store": "Changez de formule depuis les réglages d'abonnement de l'App Store ou de Google Play."
     },
     "errors": {
       "checkout_title": "Paiement indisponible",
-      "checkout_body": "Nous n'avons pas pu lancer le paiement de votre adhésion. Réessayez dans un instant."
+      "checkout_body": "Nous n'avons pas pu lancer le paiement de votre adhésion. Réessayez dans un instant.",
+      "plan_unavailable": "{plan} n'est pas encore disponible à l'achat. Réessayez bientôt ou choisissez une autre formule."
     },
     "toasts": {
       "subscribed_title": "Bienvenue, membre de soutien !",
@@ -750,7 +866,23 @@
       "canceled_body": "Aucun débit n'a été effectué. Vous pourrez devenir membre de soutien quand vous le souhaiterez."
     },
     "tip_jar_note": "Vous préférez laisser un pourboire ponctuel ? Patreon est une cagnotte distincte.",
-    "tip_jar_link": "Voir comment soutenir →"
+    "tip_jar_link": "Voir comment soutenir →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "Le plus populaire",
+      "per_month": "/mois",
+      "questions": "{count} questions au DIY Mini Bot par mois",
+      "same_benefits": "Tous les autres avantages sont identiques pour chaque formule.",
+      "choose": "Choisir {plan}"
+    }
   },
   "de": {
     "meta": {
@@ -760,7 +892,7 @@
     "hero": {
       "eyebrow": "FÖRDERMITGLIED",
       "title": "Eine Mitgliedschaft, alle Classic-Mini-DIY-Seiten",
-      "price": "1,99 $/Monat",
+      "price": "Ab 1,99 $/Monat",
       "subtitle": "Abonniere hier oder in den iOS- und Android-Apps – gleicher Preis, gleiche Vorteile überall."
     },
     "benefits": {
@@ -795,13 +927,12 @@
     },
     "cta": {
       "title": "Fördermitglied werden",
-      "subtitle": "1,99 $/Monat, jederzeit kündbar. Deine Mitgliedschaft schaltet Vorteile auf allen Classic-Mini-DIY-Seiten frei.",
+      "subtitle": "Ab 1,99 $/Monat, jederzeit kündbar. Jeder Plan schaltet dieselben Vorteile auf allen Classic-Mini-DIY-Angeboten frei — wähle das DIY-Mini-Bot-Kontingent, das zu dir passt.",
       "checking": "Mitgliedschaft wird geprüft…",
       "activating_title": "Mitgliedschaft wird aktiviert…",
       "activating_body": "Zahlung eingegangen – wir schalten deine Vorteile frei. Das dauert meist nur ein paar Sekunden.",
       "activation_timeout_title": "Dauert länger als erwartet",
       "activation_timeout_body": "Deine Zahlung ist durchgegangen, aber die Aktivierung dauert etwas länger als üblich. Lade diese Seite in einer Minute neu – falls deine Mitgliedschaft dann immer noch nicht aktiv ist, melde dich über die Kontaktseite und wir klären das.",
-      "subscribe": "Fördermitglied werden — 1,99 $/Monat",
       "signin": "Zum Mitgliedwerden anmelden",
       "also_apps": "Auch in den iOS- und Android-Apps verfügbar."
     },
@@ -834,11 +965,15 @@
       "manage_note_store": "Verwalte oder kündige dein Abo im App Store oder bei Google Play – dort, wo du es abgeschlossen hast.",
       "manage_note_ghost": "Verwalte deine Mitgliedschaft über die Rechnungs-E-Mail deines Ghost-Kontos.",
       "manage_note_patreon": "Verwalte deinen Beitrag auf Patreon.",
-      "active_fallback": "Deine Mitgliedschaft ist aktiv."
+      "active_fallback": "Deine Mitgliedschaft ist aktiv.",
+      "plan_line": "Dein Plan: {plan} — {count} DIY-Mini-Bot-Fragen pro Monat.",
+      "change_plan_stripe": "Dort kannst du auch den Plan wechseln.",
+      "change_plan_store": "Den Plan wechselst du in den Abo-Einstellungen des App Store oder von Google Play."
     },
     "errors": {
       "checkout_title": "Bezahlung nicht verfügbar",
-      "checkout_body": "Wir konnten den Bezahlvorgang für deine Mitgliedschaft nicht starten. Bitte versuche es gleich noch einmal."
+      "checkout_body": "Wir konnten den Bezahlvorgang für deine Mitgliedschaft nicht starten. Bitte versuche es gleich noch einmal.",
+      "plan_unavailable": "{plan} ist noch nicht verfügbar. Versuche es bald erneut oder wähle einen anderen Plan."
     },
     "toasts": {
       "subscribed_title": "Willkommen, Fördermitglied!",
@@ -847,7 +982,23 @@
       "canceled_body": "Es wurde nichts abgebucht. Du kannst jederzeit Fördermitglied werden, wenn du so weit bist."
     },
     "tip_jar_note": "Lieber einmalig etwas geben? Patreon ist ein separates Trinkgeldglas.",
-    "tip_jar_link": "Wege zu unterstützen ansehen →"
+    "tip_jar_link": "Wege zu unterstützen ansehen →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "Am beliebtesten",
+      "per_month": "/Monat",
+      "questions": "{count} DIY-Mini-Bot-Fragen pro Monat",
+      "same_benefits": "Alle anderen Vorteile sind bei allen Plänen gleich.",
+      "choose": "{plan} wählen"
+    }
   },
   "it": {
     "meta": {
@@ -857,7 +1008,7 @@
     "hero": {
       "eyebrow": "SOCIO SOSTENITORE",
       "title": "Un'unica iscrizione, tutti i siti Classic Mini DIY",
-      "price": "1,99 $/mese",
+      "price": "Da $1.99/mese",
       "subtitle": "Iscriviti qui oppure dalle app iOS e Android: stesso prezzo, stessi vantaggi ovunque."
     },
     "benefits": {
@@ -892,13 +1043,12 @@
     },
     "cta": {
       "title": "Diventa Socio Sostenitore",
-      "subtitle": "1,99 $/mese, disdici quando vuoi. La tua iscrizione sblocca vantaggi su tutti i siti Classic Mini DIY.",
+      "subtitle": "Da $1.99/mese, disdici quando vuoi. Ogni piano sblocca gli stessi vantaggi su tutte le proprietà Classic Mini DIY — scegli il limite del DIY Mini Bot che fa per te.",
       "checking": "Verifica dell'iscrizione in corso…",
       "activating_title": "Attivazione dell'iscrizione…",
       "activating_body": "Pagamento ricevuto: stiamo attivando i tuoi vantaggi. Di solito bastano pochi secondi.",
       "activation_timeout_title": "Ci sta mettendo più del previsto",
       "activation_timeout_body": "Il pagamento è andato a buon fine, ma l'attivazione sta richiedendo un po' più del solito. Ricarica questa pagina tra un minuto; se l'iscrizione non risulta ancora attiva, scrivici dalla pagina dei contatti e sistemiamo tutto.",
-      "subscribe": "Diventa Socio Sostenitore — 1,99 $/mese",
       "signin": "Accedi per diventare socio",
       "also_apps": "Disponibile anche nelle app iOS e Android."
     },
@@ -931,11 +1081,15 @@
       "manage_note_store": "Gestisci o disdici l'abbonamento nell'App Store o su Google Play, dove ti sei iscritto.",
       "manage_note_ghost": "Gestisci l'iscrizione tramite l'email di fatturazione del tuo account Ghost.",
       "manage_note_patreon": "Gestisci il tuo contributo su Patreon.",
-      "active_fallback": "La tua iscrizione è attiva."
+      "active_fallback": "La tua iscrizione è attiva.",
+      "plan_line": "Il tuo piano: {plan} — {count} domande al DIY Mini Bot al mese.",
+      "change_plan_stripe": "Lì puoi anche cambiare piano.",
+      "change_plan_store": "Cambia piano dalle impostazioni abbonamento dell'App Store o di Google Play."
     },
     "errors": {
       "checkout_title": "Pagamento non disponibile",
-      "checkout_body": "Non siamo riusciti ad avviare il pagamento dell'iscrizione. Riprova tra un momento."
+      "checkout_body": "Non siamo riusciti ad avviare il pagamento dell'iscrizione. Riprova tra un momento.",
+      "plan_unavailable": "{plan} non è ancora acquistabile. Riprova tra poco o scegli un altro piano."
     },
     "toasts": {
       "subscribed_title": "Benvenuto, Socio Sostenitore!",
@@ -944,7 +1098,23 @@
       "canceled_body": "Non è stato effettuato alcun addebito. Puoi diventare Socio Sostenitore quando vuoi."
     },
     "tip_jar_note": "Preferisci lasciare una mancia una tantum? Patreon è un salvadanaio separato.",
-    "tip_jar_link": "Scopri come sostenerci →"
+    "tip_jar_link": "Scopri come sostenerci →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "Il più scelto",
+      "per_month": "/mese",
+      "questions": "{count} domande al DIY Mini Bot al mese",
+      "same_benefits": "Tutti gli altri vantaggi sono identici in ogni piano.",
+      "choose": "Scegli {plan}"
+    }
   },
   "pt": {
     "meta": {
@@ -954,7 +1124,7 @@
     "hero": {
       "eyebrow": "MEMBRO APOIADOR",
       "title": "Uma adesão, todos os sites Classic Mini DIY",
-      "price": "1,99 $/mês",
+      "price": "A partir de $1.99/mês",
       "subtitle": "Subscreva aqui ou nas apps iOS e Android: mesmo preço e mesmas vantagens em todo o lado."
     },
     "benefits": {
@@ -989,13 +1159,12 @@
     },
     "cta": {
       "title": "Torne-se Membro Apoiador",
-      "subtitle": "1,99 $/mês, cancele quando quiser. A sua adesão desbloqueia vantagens em todos os sites Classic Mini DIY.",
+      "subtitle": "A partir de $1.99/mês, cancele quando quiser. Todos os planos liberam os mesmos benefícios em todas as propriedades Classic Mini DIY — escolha o limite do DIY Mini Bot que combina com você.",
       "checking": "A verificar a sua adesão…",
       "activating_title": "A ativar a sua adesão…",
       "activating_body": "Pagamento recebido — estamos a ligar as suas vantagens. Normalmente demora alguns segundos.",
       "activation_timeout_title": "Está a demorar mais do que o esperado",
       "activation_timeout_body": "O seu pagamento foi concluído, mas a ativação está a demorar um pouco mais do que o habitual. Atualize esta página dentro de um minuto; se a adesão continuar inativa, contacte-nos pela página de contacto e resolvemos.",
-      "subscribe": "Torne-se Membro Apoiador — 1,99 $/mês",
       "signin": "Inicie sessão para se tornar membro",
       "also_apps": "Também disponível nas apps iOS e Android."
     },
@@ -1028,11 +1197,15 @@
       "manage_note_store": "Faça a gestão ou cancele a subscrição na App Store ou no Google Play, onde a tiver feito.",
       "manage_note_ghost": "Faça a gestão da adesão através do email de faturação da sua conta Ghost.",
       "manage_note_patreon": "Faça a gestão do seu contributo no Patreon.",
-      "active_fallback": "A sua adesão está ativa."
+      "active_fallback": "A sua adesão está ativa.",
+      "plan_line": "Seu plano: {plan} — {count} perguntas ao DIY Mini Bot por mês.",
+      "change_plan_stripe": "Você também pode trocar de plano por lá.",
+      "change_plan_store": "Troque de plano nas configurações de assinatura da App Store ou do Google Play."
     },
     "errors": {
       "checkout_title": "Pagamento indisponível",
-      "checkout_body": "Não conseguimos iniciar o pagamento da sua adesão. Tente novamente daqui a pouco."
+      "checkout_body": "Não conseguimos iniciar o pagamento da sua adesão. Tente novamente daqui a pouco.",
+      "plan_unavailable": "{plan} ainda não está disponível para compra. Tente novamente em breve ou escolha outro plano."
     },
     "toasts": {
       "subscribed_title": "Bem-vindo, Membro Apoiador!",
@@ -1041,7 +1214,23 @@
       "canceled_body": "Não foi feita qualquer cobrança. Pode tornar-se Membro Apoiador quando quiser."
     },
     "tip_jar_note": "Prefere deixar um donativo único? O Patreon é um mealheiro à parte.",
-    "tip_jar_link": "Ver formas de apoiar →"
+    "tip_jar_link": "Ver formas de apoiar →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "Mais popular",
+      "per_month": "/mês",
+      "questions": "{count} perguntas ao DIY Mini Bot por mês",
+      "same_benefits": "Todos os outros benefícios são iguais em todos os planos.",
+      "choose": "Escolher {plan}"
+    }
   },
   "ru": {
     "meta": {
@@ -1051,7 +1240,7 @@
     "hero": {
       "eyebrow": "ПОСТОЯННЫЙ УЧАСТНИК",
       "title": "Одно участие — все ресурсы Classic Mini DIY",
-      "price": "1,99 $ в месяц",
+      "price": "От $1.99/мес",
       "subtitle": "Оформите подписку здесь или в приложениях для iOS и Android — цена и привилегии везде одинаковые."
     },
     "benefits": {
@@ -1086,13 +1275,12 @@
     },
     "cta": {
       "title": "Стать постоянным участником",
-      "subtitle": "1,99 $ в месяц, отмена в любой момент. Участие открывает привилегии на всех ресурсах Classic Mini DIY.",
+      "subtitle": "От $1.99/мес, отмена в любой момент. Каждый план открывает одни и те же преимущества во всех сервисах Classic Mini DIY — выберите лимит DIY Mini Bot, который вам подходит.",
       "checking": "Проверяем ваше участие…",
       "activating_title": "Активируем ваше участие…",
       "activating_body": "Платёж получен — включаем ваши привилегии. Обычно это занимает несколько секунд.",
       "activation_timeout_title": "Занимает больше времени, чем обычно",
       "activation_timeout_body": "Платёж прошёл, но активация занимает чуть больше времени, чем обычно. Обновите страницу через минуту; если участие всё ещё не активно, напишите нам через страницу контактов, и мы всё решим.",
-      "subscribe": "Стать постоянным участником — 1,99 $ в месяц",
       "signin": "Войдите, чтобы стать участником",
       "also_apps": "Также доступно в приложениях для iOS и Android."
     },
@@ -1125,11 +1313,15 @@
       "manage_note_store": "Управляйте подпиской или отмените её в App Store или Google Play — там, где вы её оформили.",
       "manage_note_ghost": "Управляйте участием через платёжную почту вашего аккаунта Ghost.",
       "manage_note_patreon": "Управляйте своим взносом на Patreon.",
-      "active_fallback": "Ваше участие активно."
+      "active_fallback": "Ваше участие активно.",
+      "plan_line": "Ваш план: {plan} — {count} вопросов DIY Mini Bot в месяц.",
+      "change_plan_stripe": "Там же можно сменить план.",
+      "change_plan_store": "Сменить план можно в настройках подписки App Store или Google Play."
     },
     "errors": {
       "checkout_title": "Оплата недоступна",
-      "checkout_body": "Не удалось начать оплату участия. Попробуйте ещё раз через минуту."
+      "checkout_body": "Не удалось начать оплату участия. Попробуйте ещё раз через минуту.",
+      "plan_unavailable": "{plan} пока недоступен для покупки. Попробуйте позже или выберите другой план."
     },
     "toasts": {
       "subscribed_title": "Добро пожаловать, постоянный участник!",
@@ -1138,7 +1330,23 @@
       "canceled_body": "Списаний не было. Вы можете стать постоянным участником в любой момент."
     },
     "tip_jar_note": "Хотите вместо этого оставить разовые чаевые? Patreon — это отдельная копилка.",
-    "tip_jar_link": "Посмотреть способы поддержки →"
+    "tip_jar_link": "Посмотреть способы поддержки →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "Самый популярный",
+      "per_month": "/мес",
+      "questions": "{count} вопросов DIY Mini Bot в месяц",
+      "same_benefits": "Все остальные преимущества одинаковы для всех планов.",
+      "choose": "Выбрать {plan}"
+    }
   },
   "ja": {
     "meta": {
@@ -1148,7 +1356,7 @@
     "hero": {
       "eyebrow": "サステイニングメンバー",
       "title": "ひとつのメンバーシップで、Classic Mini DIY のすべてを",
-      "price": "月額 1.99 ドル",
+      "price": "月額 $1.99 から",
       "subtitle": "こちらからでも、iOS・Android アプリからでも登録できます。価格も特典もどこでも同じです。"
     },
     "benefits": {
@@ -1183,13 +1391,12 @@
     },
     "cta": {
       "title": "サステイニングメンバーになる",
-      "subtitle": "月額 1.99 ドル、いつでも解約できます。メンバーシップは Classic Mini DIY のすべてのサイトで特典を解放します。",
+      "subtitle": "月額 $1.99 から、いつでも解約可能。どのプランでも Classic Mini DIY の全サービスで同じ特典が使えます。DIY Mini Bot の利用回数で選んでください。",
       "checking": "メンバーシップを確認しています…",
       "activating_title": "メンバーシップを有効化しています…",
       "activating_body": "お支払いを受け取りました。特典を有効にしています。通常は数秒で完了します。",
       "activation_timeout_title": "想定より時間がかかっています",
       "activation_timeout_body": "お支払いは完了していますが、有効化にいつもより少し時間がかかっています。1 分ほどしてからこのページを再読み込みしてください。それでもメンバーシップが有効にならない場合は、お問い合わせページからご連絡ください。こちらで対応します。",
-      "subscribe": "サステイニングメンバーになる — 月額 1.99 ドル",
       "signin": "サインインしてメンバーになる",
       "also_apps": "iOS・Android アプリでもご利用いただけます。"
     },
@@ -1222,11 +1429,15 @@
       "manage_note_store": "登録した場所に応じて、App Store または Google Play でサブスクリプションの管理・解約ができます。",
       "manage_note_ghost": "Ghost アカウントの請求先メールアドレスからメンバーシップを管理できます。",
       "manage_note_patreon": "Patreon で支援内容を管理できます。",
-      "active_fallback": "メンバーシップは有効です。"
+      "active_fallback": "メンバーシップは有効です。",
+      "plan_line": "現在のプラン: {plan} — DIY Mini Bot への質問 月{count}件。",
+      "change_plan_stripe": "プランの変更もそちらから行えます。",
+      "change_plan_store": "プランの変更は App Store または Google Play のサブスクリプション設定から行えます。"
     },
     "errors": {
       "checkout_title": "お支払い手続きを利用できません",
-      "checkout_body": "メンバーシップのお支払い手続きを開始できませんでした。しばらくしてからもう一度お試しください。"
+      "checkout_body": "メンバーシップのお支払い手続きを開始できませんでした。しばらくしてからもう一度お試しください。",
+      "plan_unavailable": "{plan} はまだ購入できません。しばらくしてから再度お試しいただくか、別のプランをお選びください。"
     },
     "toasts": {
       "subscribed_title": "ようこそ、サステイニングメンバー!",
@@ -1235,7 +1446,23 @@
       "canceled_body": "請求は発生していません。準備ができたらいつでもサステイニングメンバーになれます。"
     },
     "tip_jar_note": "代わりに一回きりの支援をお考えですか? Patreon は別のチップ用の窓口です。",
-    "tip_jar_link": "支援の方法を見る →"
+    "tip_jar_link": "支援の方法を見る →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "人気",
+      "per_month": "/月",
+      "questions": "DIY Mini Bot への質問 月{count}件",
+      "same_benefits": "その他の特典はすべてのプランで同じです。",
+      "choose": "{plan} を選ぶ"
+    }
   },
   "zh": {
     "meta": {
@@ -1245,7 +1472,7 @@
     "hero": {
       "eyebrow": "持续支持会员",
       "title": "一份会员资格,通行所有 Classic Mini DIY 站点",
-      "price": "每月 1.99 美元",
+      "price": "每月 $1.99 起",
       "subtitle": "可在此订阅,也可在 iOS 和 Android 应用中订阅——价格相同,权益一致。"
     },
     "benefits": {
@@ -1280,13 +1507,12 @@
     },
     "cta": {
       "title": "成为持续支持会员",
-      "subtitle": "每月 1.99 美元,随时可取消。会员资格将解锁所有 Classic Mini DIY 站点的权益。",
+      "subtitle": "每月 $1.99 起，随时取消。所有方案在 Classic Mini DIY 的全部服务中享有相同权益 — 请按 DIY Mini Bot 的用量选择。",
       "checking": "正在检查你的会员资格…",
       "activating_title": "正在激活你的会员资格…",
       "activating_body": "已收到付款——我们正在为你开启权益,通常只需几秒钟。",
       "activation_timeout_title": "耗时比预期长",
       "activation_timeout_body": "你的付款已成功,但激活比平时稍慢一些。请过一分钟后刷新本页;如果会员资格仍未生效,请通过联系页面告诉我们,我们会帮你处理。",
-      "subscribe": "成为持续支持会员 — 每月 1.99 美元",
       "signin": "登录以成为会员",
       "also_apps": "iOS 和 Android 应用中同样可用。"
     },
@@ -1319,11 +1545,15 @@
       "manage_note_store": "请在你订阅所在的 App Store 或 Google Play 中管理或取消订阅。",
       "manage_note_ghost": "通过你的 Ghost 账号账单邮箱管理会员资格。",
       "manage_note_patreon": "在 Patreon 上管理你的支持。",
-      "active_fallback": "你的会员资格已生效。"
+      "active_fallback": "你的会员资格已生效。",
+      "plan_line": "您的方案：{plan} — 每月 {count} 个 DIY Mini Bot 问题。",
+      "change_plan_stripe": "您也可以在那里更换方案。",
+      "change_plan_store": "可在 App Store 或 Google Play 的订阅设置中更换方案。"
     },
     "errors": {
       "checkout_title": "暂时无法结账",
-      "checkout_body": "我们无法开始你的会员结账流程。请稍后再试。"
+      "checkout_body": "我们无法开始你的会员结账流程。请稍后再试。",
+      "plan_unavailable": "{plan} 暂时无法购买。请稍后再试或选择其他方案。"
     },
     "toasts": {
       "subscribed_title": "欢迎你,持续支持会员!",
@@ -1332,7 +1562,23 @@
       "canceled_body": "未产生任何扣款。你随时都可以成为持续支持会员。"
     },
     "tip_jar_note": "想改为一次性打赏? Patreon 是一个独立的打赏渠道。",
-    "tip_jar_link": "查看支持方式 →"
+    "tip_jar_link": "查看支持方式 →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "最受欢迎",
+      "per_month": "/月",
+      "questions": "每月 {count} 个 DIY Mini Bot 问题",
+      "same_benefits": "其他权益在所有方案中完全相同。",
+      "choose": "选择 {plan}"
+    }
   },
   "ko": {
     "meta": {
@@ -1342,7 +1588,7 @@
     "hero": {
       "eyebrow": "서포팅 멤버",
       "title": "멤버십 하나로 Classic Mini DIY 전체를",
-      "price": "월 1.99달러",
+      "price": "월 $1.99부터",
       "subtitle": "여기에서도, iOS·Android 앱에서도 구독하실 수 있습니다. 가격도 혜택도 어디서나 같습니다."
     },
     "benefits": {
@@ -1377,13 +1623,12 @@
     },
     "cta": {
       "title": "서포팅 멤버 되기",
-      "subtitle": "월 1.99달러, 언제든 해지 가능합니다. 멤버십은 모든 Classic Mini DIY 사이트의 혜택을 열어 줍니다.",
+      "subtitle": "월 $1.99부터, 언제든 해지 가능. 모든 플랜은 Classic Mini DIY의 모든 서비스에서 동일한 혜택을 제공합니다 — DIY Mini Bot 사용량에 맞는 플랜을 선택하세요.",
       "checking": "멤버십을 확인하는 중…",
       "activating_title": "멤버십을 활성화하는 중…",
       "activating_body": "결제가 확인되었습니다. 혜택을 켜는 중이며, 보통 몇 초면 끝납니다.",
       "activation_timeout_title": "예상보다 오래 걸리고 있습니다",
       "activation_timeout_body": "결제는 정상 처리되었지만 활성화가 평소보다 조금 오래 걸리고 있습니다. 1분 뒤 이 페이지를 새로고침해 주세요. 그래도 멤버십이 활성화되지 않으면 문의 페이지로 연락 주시면 처리해 드리겠습니다.",
-      "subscribe": "서포팅 멤버 되기 — 월 1.99달러",
       "signin": "로그인하고 멤버 되기",
       "also_apps": "iOS·Android 앱에서도 이용하실 수 있습니다."
     },
@@ -1416,11 +1661,15 @@
       "manage_note_store": "구독하신 곳에 따라 App Store 또는 Google Play에서 구독을 관리하거나 해지하실 수 있습니다.",
       "manage_note_ghost": "Ghost 계정의 청구 이메일을 통해 멤버십을 관리하실 수 있습니다.",
       "manage_note_patreon": "Patreon에서 후원을 관리하실 수 있습니다.",
-      "active_fallback": "멤버십이 활성화되어 있습니다."
+      "active_fallback": "멤버십이 활성화되어 있습니다.",
+      "plan_line": "내 플랜: {plan} — 월 DIY Mini Bot 질문 {count}개.",
+      "change_plan_stripe": "플랜 변경도 그곳에서 할 수 있습니다.",
+      "change_plan_store": "플랜 변경은 App Store 또는 Google Play 구독 설정에서 할 수 있습니다."
     },
     "errors": {
       "checkout_title": "결제를 이용할 수 없습니다",
-      "checkout_body": "멤버십 결제를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요."
+      "checkout_body": "멤버십 결제를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      "plan_unavailable": "{plan}은 아직 구매할 수 없습니다. 잠시 후 다시 시도하거나 다른 플랜을 선택하세요."
     },
     "toasts": {
       "subscribed_title": "환영합니다, 서포팅 멤버님!",
@@ -1429,7 +1678,23 @@
       "canceled_body": "청구된 금액은 없습니다. 준비되시면 언제든 서포팅 멤버가 되실 수 있습니다."
     },
     "tip_jar_note": "대신 일회성 후원을 원하시나요? Patreon은 별도의 후원 창구입니다.",
-    "tip_jar_link": "후원 방법 보기 →"
+    "tip_jar_link": "후원 방법 보기 →",
+    "plans": {
+      "base": {
+        "name": "Member"
+      },
+      "plus": {
+        "name": "Member Plus"
+      },
+      "pro": {
+        "name": "Member Pro"
+      },
+      "popular": "인기",
+      "per_month": "/월",
+      "questions": "월 DIY Mini Bot 질문 {count}개",
+      "same_benefits": "그 외 혜택은 모든 플랜에서 동일합니다.",
+      "choose": "{plan} 선택"
+    }
   }
 }
 </i18n>

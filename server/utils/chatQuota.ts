@@ -2,7 +2,13 @@ import type { H3Event } from 'h3';
 import { getServiceClient } from './supabase';
 import { clientIp } from './clientIp';
 import { serverRuntimeConfig } from './runtimeConfig';
-import { ANON_CHAT_SESSION_COOKIE, CHAT_QUOTAS, MEMBERSHIP_URL, type ChatTier } from '../../shared/utils/chatTiers';
+import {
+  ANON_CHAT_SESSION_COOKIE,
+  CHAT_QUOTAS,
+  MEMBERSHIP_URL,
+  nextTier,
+  type ChatTier,
+} from '../../shared/utils/chatTiers';
 import { getChatAuth } from './chatTiers';
 
 /**
@@ -273,6 +279,28 @@ export async function peekChatQuota(event: H3Event): Promise<QuotaPeek> {
 }
 
 /**
+ * The human-readable half of the 429. Always names the tier ABOVE the one
+ * just hit (design invariant 5): quoting the ceiling the caller already has
+ * understates the upgrade by exactly the amount that makes it worth doing.
+ * Pro has nowhere to go, so it gets the reset date instead.
+ */
+export function quotaExhaustedMessage(tier: ChatTier): string {
+  const window = tier === 'anonymous' ? 'daily' : 'monthly';
+  const next = nextTier(tier);
+  if (!next) {
+    return 'You have reached this month’s message limit. It resets at the start of next month.';
+  }
+  const nextLimit = CHAT_QUOTAS[next].perMonth;
+  const offer =
+    next === 'free'
+      ? `Sign in for ${nextLimit} messages a month`
+      : next === 'member'
+        ? `Sustaining Members get ${nextLimit} messages a month`
+        : `Member ${next === 'plus' ? 'Plus' : 'Pro'} gets ${nextLimit} messages a month`;
+  return `You have reached the ${window} message limit. ${offer} — ${MEMBERSHIP_URL}`;
+}
+
+/**
  * The 429 a quota-exhausted caller receives.
  *
  * Deliberately not a 401 and deliberately not silent: it names the ceiling and
@@ -281,11 +309,7 @@ export async function peekChatQuota(event: H3Event): Promise<QuotaPeek> {
  */
 export function quotaExhaustedError(event: H3Event, verdict: QuotaVerdict) {
   const tier = getChatAuth(event)?.tier ?? 'anonymous';
-  const upgrade =
-    tier === 'member'
-      ? 'You have reached this month’s message limit. It resets at the start of next month.'
-      : `You have reached the ${tier === 'anonymous' ? 'daily' : 'monthly'} message limit. ` +
-        `Sustaining Members get a much higher allowance — ${MEMBERSHIP_URL}`;
+  const upgrade = quotaExhaustedMessage(tier);
 
   return createError({
     statusCode: 429,

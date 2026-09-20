@@ -20,13 +20,62 @@
  *               the point of the surface and why it is indexed. Bounded at the
  *               edge only, never counted in Postgres.
  *   free      — signed in, no active membership.
- *   member    — active Sustaining Member.
+ *   member    — active Sustaining Member on the base plan ($1.99).
+ *   plus      — Sustaining Member on the Plus plan ($4.99).
+ *   pro       — Sustaining Member on the Pro plan ($9.99).
+ *
+ * The three paid tiers are ONE membership (same badge, sync, Discord, listings)
+ * that differs in exactly one thing: this allowance. Design and the schema
+ * behind it: `classicminidiy-supabase/docs/plans/2026-09-19-chat-tiers.md`.
  */
-export type ChatTier = 'anonymous' | 'free' | 'member';
+export type ChatTier = 'anonymous' | 'free' | 'member' | 'plus' | 'pro';
+
+/**
+ * Cheapest to dearest. Every wall quotes the tier ABOVE the one just hit
+ * (`nextTier`), never the ceiling the caller already has.
+ */
+export const CHAT_TIER_ORDER: readonly ChatTier[] = ['anonymous', 'free', 'member', 'plus', 'pro'];
+
+/** The tier a quota-exhausted caller is offered, or null at the top. */
+export function nextTier(tier: ChatTier): ChatTier | null {
+  const i = CHAT_TIER_ORDER.indexOf(tier);
+  return i >= 0 && i < CHAT_TIER_ORDER.length - 1 ? CHAT_TIER_ORDER[i + 1]! : null;
+}
+
+/** Any paying tier: what "is a Sustaining Member" means for the chat. */
+export function isPaidChatTier(tier: ChatTier | null | undefined): boolean {
+  return tier === 'member' || tier === 'plus' || tier === 'pro';
+}
+
+/**
+ * `subscriptions.plan` on the granting row, as `get_membership_plan(uid)`
+ * returns it (NULL = not a member). Only chat-tier resolution reads it.
+ */
+export type MembershipPlan = 'base' | 'plus' | 'pro';
+
+/** plan → tier. Anything unrecognised is treated as the base plan: a paying
+ *  member on an unknown plan must never be dropped to `free`. */
+export function chatTierForPlan(plan: string | null | undefined): ChatTier {
+  if (plan === 'plus' || plan === 'pro') return plan;
+  if (plan === 'base') return 'member';
+  return plan ? 'member' : 'free';
+}
+
+/**
+ * The three plans as sold, for copy only (the price a store or Stripe charges
+ * is the store's, never restated from here into a purchase). `tier` is what
+ * chat resolution yields for a member on that plan.
+ */
+export const MEMBERSHIP_PLANS = [
+  { plan: 'base', tier: 'member', usd: 1.99 },
+  { plan: 'plus', tier: 'plus', usd: 4.99 },
+  { plan: 'pro', tier: 'pro', usd: 9.99 },
+] as const satisfies ReadonlyArray<{ plan: MembershipPlan; tier: ChatTier; usd: number }>;
 
 /**
  * The `subscriptions.product_id` that grants the tier. Matches the default of
- * the `user_has_subscription` RPC, which is `'sustaining'`.
+ * the `user_has_subscription` RPC, which is `'sustaining'`; all three plans
+ * share it.
  */
 export const SUSTAINING_PRODUCT_ID = 'sustaining';
 
@@ -46,11 +95,9 @@ export interface ChatQuota {
 /**
  * Per-tier quotas.
  *
- * These are ABUSE CEILINGS, not expected spend. Measured usage is ~1.2 messages
- * per conversation and about forty messages a month across the whole site, so
- * nobody reaches these in normal use — they exist to bound the tail. At roughly
- * $0.01 a message on Haiku 4.5, the member ceiling caps one abusive account at
- * about $1/month against ~$1.69 of net revenue after the store cut.
+ * These are cost ceilings, not expected spend. Median usage is far below any
+ * of them; they exist so that the tail — one account using every question at
+ * worst-case cost — still clears what its plan brings in after the store cut.
  *
  * **The anonymous tier is bounded on purpose, and it has to be.** Leaving it
  * unlimited would make the whole gate decorative: signing out would be the
@@ -64,13 +111,18 @@ export interface ChatQuota {
  */
 export const CHAT_QUOTAS = {
   anonymous: { perDay: 15, perMonth: null },
-  // 2026-09-19: free 30 → 20, member 100 → 75. Measured on Sonnet 5 a run
-  // costs ~$0.03 (cache hitting) to ~$0.05 (not), so 100 member runs cost
-  // more than the $1.99 the membership brings in after the store cut, and
-  // the native apps put the bot front and centre. The apps read `limit`
-  // from the peek and the 429, so this is the single place to tune.
+  // 2026-09-19: free 30 → 20, member 100 → 75; then with the plans, member
+  // 75 → 25 and Plus 65 / Pro 135. Measured on Sonnet 5 a run costs ~$0.03
+  // (cache hitting) to ~$0.05 (not); each paid cap is the break-even at
+  // $0.05/run and a 30% store cut, rounded down (design §3), so no plan loses
+  // money on a subscriber who uses every question. The native apps put the
+  // bot front and centre and read `limit` from the peek and the 429, so this
+  // is the single place to tune. Re-tune from `chat_run_completed` token
+  // averages, never by feel.
   free: { perDay: null, perMonth: 20 },
-  member: { perDay: null, perMonth: 75 },
+  member: { perDay: null, perMonth: 25 },
+  plus: { perDay: null, perMonth: 65 },
+  pro: { perDay: null, perMonth: 135 },
 } as const satisfies Record<ChatTier, ChatQuota>;
 
 /** Where a quota-exhausted visitor is sent to upgrade. */

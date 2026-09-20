@@ -1,4 +1,5 @@
 import { useDebounceFn } from '@vueuse/core';
+import { nextTier } from '~~/shared/utils/chatTiers';
 import {
   analyseQuery,
   type DirectAnswer,
@@ -74,7 +75,12 @@ export interface ChatQuotaPeek {
  * still enforces the real ceiling, and a row that refuses on a guess would
  * hide the bot from someone who could use it.
  */
-export type AskState = 'available' | 'anon-limit' | 'free-limit' | 'member-limit';
+/**
+ * `upgrade-limit`: a member on the base or Plus plan at their ceiling, who is
+ * offered the plan above on /membership. `member-limit` is the top plan (Pro),
+ * which only resets. The two split so the offer copy can quote the next tier.
+ */
+export type AskState = 'available' | 'anon-limit' | 'free-limit' | 'upgrade-limit' | 'member-limit';
 
 export const surfaceLabel = (surface: string) => SURFACE_LABELS[surface] ?? surface;
 
@@ -129,6 +135,7 @@ export const useOmnisearch = () => {
     if (!peek || peek.used === null || peek.used < peek.limit) return 'available';
     if (peek.tier === 'anonymous') return 'anon-limit';
     if (peek.tier === 'free') return 'free-limit';
+    if (nextTier(peek.tier)) return 'upgrade-limit';
     return 'member-limit';
   });
 
@@ -371,7 +378,7 @@ export const useOmnisearch = () => {
       });
       return false;
     }
-    if (state === 'free-limit') {
+    if (state === 'free-limit' || state === 'upgrade-limit') {
       router.push('/membership');
       return false;
     }

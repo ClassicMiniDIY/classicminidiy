@@ -12,7 +12,7 @@ import {
   readChatClient,
 } from '../utils/chatUsage';
 import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../utils/chatQuota';
-import { MEMBERSHIP_URL } from '../../shared/utils/chatTiers';
+import { isPaidChatTier, MEMBERSHIP_URL } from '../../shared/utils/chatTiers';
 import { getChatAuth } from '../utils/chatTiers';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
 import { CHAT_REQUEST_MAX_CHARS, transcriptChars } from '../../shared/utils/chatTranscript';
@@ -296,7 +296,7 @@ export default defineEventHandler(async (event) => {
     system: buildSystemPrompt({
       locale: body?.locale,
       pageSlug: body?.pageSlug,
-      isMember: getChatAuth(event)?.tier === 'member',
+      isMember: isPaidChatTier(getChatAuth(event)?.tier),
       hasWebSearch: webSearchSupported(modelId),
       classifierHint: classified.hint ?? undefined,
     }),
