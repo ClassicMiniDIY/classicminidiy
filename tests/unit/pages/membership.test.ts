@@ -307,8 +307,14 @@ describe('subscribe intent preservation', () => {
     await flushPromises();
     await nextTick();
 
-    const signin = wrapper.find(`a[href="/login?redirect=${encodeURIComponent('/membership?subscribe=1')}"]`);
-    expect(signin.exists()).toBe(true);
+    // One sign-in link per plan, each carrying the plan it was chosen from so
+    // the post-login auto-checkout buys the right one.
+    for (const plan of ['base', 'plus', 'pro']) {
+      const signin = wrapper.find(
+        `a[href="/login?redirect=${encodeURIComponent(`/membership?subscribe=1&plan=${plan}`)}"]`
+      );
+      expect(signin.exists(), plan).toBe(true);
+    }
   });
 
   it('auto-starts checkout when an authenticated non-member returns with ?subscribe=1', async () => {

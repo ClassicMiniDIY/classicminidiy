@@ -9,10 +9,11 @@
     try again" wasted that and, worse, was untrue: the retry it invited could
     never succeed.
 
-    Three audiences, three asks. An anonymous visitor may not have an account at
-    all, so selling them a subscription skips a step; a signed-in free user
-    already has one and needs the upgrade; a member has nothing left to buy and
-    just needs to know when their allowance returns.
+    One ask per tier, always the tier above. An anonymous visitor may not have
+    an account at all, so selling them a subscription skips a step; a signed-in
+    free user already has one and needs the membership; a member on the base or
+    Plus plan is offered the next plan up; a Pro member has nothing left to buy
+    and just needs to know when their allowance returns.
   -->
   <div role="status" class="rounded-2xl border border-base-300 bg-base-200/60 p-5">
     <div class="flex items-start gap-3">
@@ -20,7 +21,7 @@
         class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
         aria-hidden="true"
       >
-        <i :class="quota.tier === 'member' ? 'fas fa-hourglass-half' : 'fas fa-star'"></i>
+        <i :class="next ? 'fas fa-star' : 'fas fa-hourglass-half'"></i>
       </div>
 
       <div class="min-w-0 flex-1">
@@ -35,14 +36,14 @@
 
         <p class="mt-2 text-sm text-base-content/80">{{ t(`${quota.tier}.body`) }}</p>
 
-        <ul v-if="quota.tier !== 'member'" class="mt-3 space-y-1.5 text-sm text-base-content/80">
+        <ul v-if="next" class="mt-3 space-y-1.5 text-sm text-base-content/80">
           <li v-for="benefit in benefits" :key="benefit" class="flex items-start gap-2">
             <i class="fas fa-check mt-1 text-xs text-primary" aria-hidden="true"></i>
             <span>{{ benefit }}</span>
           </li>
         </ul>
 
-        <div v-if="quota.tier !== 'member'" class="mt-4 flex flex-wrap items-center gap-2">
+        <div v-if="next" class="mt-4 flex flex-wrap items-center gap-2">
           <!--
             An anonymous visitor is sent to sign-in, not to checkout: signing in
             is free, trebles their allowance, and is the step that has to happen
@@ -59,9 +60,14 @@
             {{ t('anonymous.cta') }}
           </NuxtLink>
 
+          <!--
+            A member on the base or Plus plan is offered the plan ABOVE, never
+            the ceiling just hit. Plan changes happen on /membership (the Stripe
+            Customer Portal for web members; the store for app members).
+          -->
           <NuxtLink v-else :to="quota.upgradeUrl" class="btn btn-primary btn-sm" @click="trackCta('membership')">
             <i class="fas fa-star" aria-hidden="true"></i>
-            {{ t('free.cta') }}
+            {{ quota.tier === 'free' ? t('free.cta') : t('upgrade.cta', { plan: nextPlanName }) }}
           </NuxtLink>
 
           <NuxtLink
@@ -98,7 +104,7 @@
 <script setup lang="ts">
   import { computed, watch } from 'vue';
   import type { QuotaExhausted } from '~/utils/chatQuotaError';
-  import { CHAT_QUOTAS } from '~~/shared/utils/chatTiers';
+  import { CHAT_QUOTAS, nextTier } from '~~/shared/utils/chatTiers';
 
   const props = defineProps<{ quota: QuotaExhausted; restored?: boolean }>();
   const emit = defineEmits<{ dismiss: [] }>();
@@ -113,11 +119,31 @@
     free: CHAT_QUOTAS.free.perMonth,
     member: CHAT_QUOTAS.member.perMonth,
   };
-  const benefits = computed(() =>
-    props.quota.tier === 'anonymous'
-      ? [t('benefit.free_allowance', allowances), t('benefit.history'), t('benefit.free_forever')]
-      : [t('benefit.member_allowance', allowances), t('benefit.synced_history'), t('benefit.supports')]
-  );
+
+  /**
+   * The tier this panel sells: the one ABOVE the tier just hit, never the
+   * ceiling itself (a Pro member has nowhere to go and gets the reset date).
+   * Everything conditional in the template keys off this, so a new tier in
+   * the shared contract changes the pitch here without a template edit.
+   */
+  const next = computed(() => nextTier(props.quota.tier));
+  const nextPlanName = computed(() => (next.value === 'plus' || next.value === 'pro' ? t(`plan.${next.value}`) : ''));
+  const benefits = computed(() => {
+    switch (props.quota.tier) {
+      case 'anonymous':
+        return [t('benefit.free_allowance', allowances), t('benefit.history'), t('benefit.free_forever')];
+      case 'free':
+        return [t('benefit.member_allowance', allowances), t('benefit.synced_history'), t('benefit.supports')];
+      case 'member':
+      case 'plus':
+        return [
+          t('benefit.next_allowance', { plan: nextPlanName.value, limit: CHAT_QUOTAS[next.value!].perMonth }),
+          t('benefit.same_membership'),
+        ];
+      default:
+        return [];
+    }
+  });
 
   /**
    * The conversion funnel this panel exists for. Without the impression event
@@ -172,7 +198,7 @@
     },
     "member": {
       "title": "You've used this month's messages",
-      "body": "Your allowance resets at the start of next month. Thanks for supporting Classic Mini DIY."
+      "body": "Member {plan} gets {limit} messages a month. Same membership, same benefits — only the allowance changes."
     },
     "benefit": {
       "free_allowance": "{free} messages a month instead of {anon} a day",
@@ -180,9 +206,26 @@
       "free_forever": "Free — no card needed",
       "member_allowance": "{member} messages a month",
       "synced_history": "Conversations synced across your devices",
-      "supports": "Supports the archive, the videos and the tools"
+      "supports": "Supports the archive, the videos and the tools",
+      "next_allowance": "{limit} messages a month with Member {plan}",
+      "same_membership": "Everything in your membership stays the same"
     },
-    "try_again": "Try again"
+    "try_again": "Try again",
+    "pro": {
+      "title": "You've used this month's messages",
+      "body": "Your allowance resets at the start of next month. Thanks for supporting Classic Mini DIY."
+    },
+    "plus": {
+      "title": "You've used this month's messages",
+      "body": "Member {plan} gets {limit} messages a month. Same membership, same benefits — only the allowance changes."
+    },
+    "upgrade": {
+      "cta": "Upgrade to Member {plan}"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "es": {
     "used_of": "{used} de {limit} mensajes usados",
@@ -199,7 +242,7 @@
     },
     "member": {
       "title": "Has usado los mensajes de este mes",
-      "body": "Tu límite se restablece al inicio del próximo mes. Gracias por apoyar a Classic Mini DIY."
+      "body": "Member {plan} tiene {limit} mensajes al mes. Misma membresía, mismos beneficios — solo cambia el límite."
     },
     "benefit": {
       "free_allowance": "{free} mensajes al mes en vez de {anon} al día",
@@ -207,9 +250,26 @@
       "free_forever": "Gratis — sin tarjeta",
       "member_allowance": "{member} mensajes al mes",
       "synced_history": "Conversaciones sincronizadas entre tus dispositivos",
-      "supports": "Apoya el archivo, los vídeos y las herramientas"
+      "supports": "Apoya el archivo, los vídeos y las herramientas",
+      "next_allowance": "{limit} mensajes al mes con Member {plan}",
+      "same_membership": "Todo lo demás de tu membresía sigue igual"
     },
-    "try_again": "Intentar de nuevo"
+    "try_again": "Intentar de nuevo",
+    "pro": {
+      "title": "Has usado los mensajes de este mes",
+      "body": "Tu límite se restablece al inicio del próximo mes. Gracias por apoyar a Classic Mini DIY."
+    },
+    "plus": {
+      "title": "Has usado los mensajes de este mes",
+      "body": "Member {plan} tiene {limit} mensajes al mes. Misma membresía, mismos beneficios — solo cambia el límite."
+    },
+    "upgrade": {
+      "cta": "Pasar a Member {plan}"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "fr": {
     "used_of": "{used} messages sur {limit} utilisés",
@@ -226,7 +286,7 @@
     },
     "member": {
       "title": "Vous avez utilisé vos messages du mois",
-      "body": "Votre quota se réinitialise au début du mois prochain. Merci de soutenir Classic Mini DIY."
+      "body": "Member {plan} donne droit à {limit} messages par mois. Même adhésion, mêmes avantages — seul le quota change."
     },
     "benefit": {
       "free_allowance": "{free} messages par mois au lieu de {anon} par jour",
@@ -234,9 +294,26 @@
       "free_forever": "Gratuit — sans carte bancaire",
       "member_allowance": "{member} messages par mois",
       "synced_history": "Conversations synchronisées entre vos appareils",
-      "supports": "Soutient l'archive, les vidéos et les outils"
+      "supports": "Soutient l'archive, les vidéos et les outils",
+      "next_allowance": "{limit} messages par mois avec Member {plan}",
+      "same_membership": "Tout le reste de votre adhésion reste identique"
     },
-    "try_again": "Réessayer"
+    "try_again": "Réessayer",
+    "pro": {
+      "title": "Vous avez utilisé vos messages du mois",
+      "body": "Votre quota se réinitialise au début du mois prochain. Merci de soutenir Classic Mini DIY."
+    },
+    "plus": {
+      "title": "Vous avez utilisé vos messages du mois",
+      "body": "Member {plan} donne droit à {limit} messages par mois. Même adhésion, mêmes avantages — seul le quota change."
+    },
+    "upgrade": {
+      "cta": "Passer à Member {plan}"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "de": {
     "used_of": "{used} von {limit} Nachrichten verwendet",
@@ -253,7 +330,7 @@
     },
     "member": {
       "title": "Du hast die Nachrichten dieses Monats verbraucht",
-      "body": "Dein Kontingent wird zu Beginn des nächsten Monats zurückgesetzt. Danke für deine Unterstützung."
+      "body": "Member {plan} bietet {limit} Nachrichten pro Monat. Gleiche Mitgliedschaft, gleiche Vorteile — nur das Kontingent ändert sich."
     },
     "benefit": {
       "free_allowance": "{free} Nachrichten pro Monat statt {anon} pro Tag",
@@ -261,9 +338,26 @@
       "free_forever": "Kostenlos — keine Karte nötig",
       "member_allowance": "{member} Nachrichten pro Monat",
       "synced_history": "Unterhaltungen auf allen Geräten synchronisiert",
-      "supports": "Unterstützt das Archiv, die Videos und die Werkzeuge"
+      "supports": "Unterstützt das Archiv, die Videos und die Werkzeuge",
+      "next_allowance": "{limit} Nachrichten pro Monat mit Member {plan}",
+      "same_membership": "Alles andere an deiner Mitgliedschaft bleibt gleich"
     },
-    "try_again": "Erneut versuchen"
+    "try_again": "Erneut versuchen",
+    "pro": {
+      "title": "Du hast die Nachrichten dieses Monats verbraucht",
+      "body": "Dein Kontingent wird zu Beginn des nächsten Monats zurückgesetzt. Danke für deine Unterstützung."
+    },
+    "plus": {
+      "title": "Du hast die Nachrichten dieses Monats verbraucht",
+      "body": "Member {plan} bietet {limit} Nachrichten pro Monat. Gleiche Mitgliedschaft, gleiche Vorteile — nur das Kontingent ändert sich."
+    },
+    "upgrade": {
+      "cta": "Auf Member {plan} wechseln"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "it": {
     "used_of": "{used} di {limit} messaggi usati",
@@ -280,7 +374,7 @@
     },
     "member": {
       "title": "Hai usato i messaggi di questo mese",
-      "body": "Il tuo limite si azzera all'inizio del mese prossimo. Grazie per il supporto."
+      "body": "Member {plan} include {limit} messaggi al mese. Stessa iscrizione, stessi vantaggi — cambia solo il limite."
     },
     "benefit": {
       "free_allowance": "{free} messaggi al mese invece di {anon} al giorno",
@@ -288,9 +382,26 @@
       "free_forever": "Gratis — senza carta",
       "member_allowance": "{member} messaggi al mese",
       "synced_history": "Conversazioni sincronizzate su tutti i dispositivi",
-      "supports": "Sostiene l'archivio, i video e gli strumenti"
+      "supports": "Sostiene l'archivio, i video e gli strumenti",
+      "next_allowance": "{limit} messaggi al mese con Member {plan}",
+      "same_membership": "Tutto il resto della tua iscrizione resta uguale"
     },
-    "try_again": "Riprova"
+    "try_again": "Riprova",
+    "pro": {
+      "title": "Hai usato i messaggi di questo mese",
+      "body": "Il tuo limite si azzera all'inizio del mese prossimo. Grazie per il supporto."
+    },
+    "plus": {
+      "title": "Hai usato i messaggi di questo mese",
+      "body": "Member {plan} include {limit} messaggi al mese. Stessa iscrizione, stessi vantaggi — cambia solo il limite."
+    },
+    "upgrade": {
+      "cta": "Passa a Member {plan}"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "ja": {
     "used_of": "{limit} 件中 {used} 件のメッセージを使用しました",
@@ -307,7 +418,7 @@
     },
     "member": {
       "title": "今月のメッセージを使い切りました",
-      "body": "来月の初めにリセットされます。ご支援ありがとうございます。"
+      "body": "Member {plan} なら月{limit}件のメッセージが使えます。メンバーシップも特典も同じで、上限だけが変わります。"
     },
     "benefit": {
       "free_allowance": "1日{anon}件ではなく、月{free}件",
@@ -315,9 +426,26 @@
       "free_forever": "無料 — カード不要",
       "member_allowance": "月{member}件のメッセージ",
       "synced_history": "会話が全デバイスで同期されます",
-      "supports": "アーカイブ、動画、ツールを支援します"
+      "supports": "アーカイブ、動画、ツールを支援します",
+      "next_allowance": "Member {plan} で月{limit}件のメッセージ",
+      "same_membership": "メンバーシップのその他の内容はそのままです"
     },
-    "try_again": "もう一度試す"
+    "try_again": "もう一度試す",
+    "pro": {
+      "title": "今月のメッセージを使い切りました",
+      "body": "来月の初めにリセットされます。ご支援ありがとうございます。"
+    },
+    "plus": {
+      "title": "今月のメッセージを使い切りました",
+      "body": "Member {plan} なら月{limit}件のメッセージが使えます。メンバーシップも特典も同じで、上限だけが変わります。"
+    },
+    "upgrade": {
+      "cta": "Member {plan} にアップグレード"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "ko": {
     "used_of": "{limit}개 중 {used}개 메시지 사용",
@@ -334,7 +462,7 @@
     },
     "member": {
       "title": "이번 달 메시지를 모두 사용했습니다",
-      "body": "다음 달 초에 초기화됩니다. 후원해 주셔서 감사합니다."
+      "body": "Member {plan}은 월 {limit}개 메시지를 제공합니다. 같은 멤버십, 같은 혜택 — 한도만 달라집니다."
     },
     "benefit": {
       "free_allowance": "하루 {anon}개 대신 월 {free}개",
@@ -342,9 +470,26 @@
       "free_forever": "무료 — 카드 불필요",
       "member_allowance": "월 {member}개 메시지",
       "synced_history": "모든 기기에서 대화 동기화",
-      "supports": "아카이브와 영상, 도구를 후원합니다"
+      "supports": "아카이브와 영상, 도구를 후원합니다",
+      "next_allowance": "Member {plan}으로 월 {limit}개 메시지",
+      "same_membership": "멤버십의 나머지 내용은 그대로입니다"
     },
-    "try_again": "다시 시도"
+    "try_again": "다시 시도",
+    "pro": {
+      "title": "이번 달 메시지를 모두 사용했습니다",
+      "body": "다음 달 초에 초기화됩니다. 후원해 주셔서 감사합니다."
+    },
+    "plus": {
+      "title": "이번 달 메시지를 모두 사용했습니다",
+      "body": "Member {plan}은 월 {limit}개 메시지를 제공합니다. 같은 멤버십, 같은 혜택 — 한도만 달라집니다."
+    },
+    "upgrade": {
+      "cta": "Member {plan}으로 업그레이드"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "pt": {
     "used_of": "{used} de {limit} mensagens usadas",
@@ -361,7 +506,7 @@
     },
     "member": {
       "title": "Você usou as mensagens deste mês",
-      "body": "Seu limite é renovado no início do próximo mês. Obrigado pelo apoio."
+      "body": "Member {plan} inclui {limit} mensagens por mês. Mesma assinatura, mesmos benefícios — só o limite muda."
     },
     "benefit": {
       "free_allowance": "{free} mensagens por mês em vez de {anon} por dia",
@@ -369,9 +514,26 @@
       "free_forever": "Grátis — sem cartão",
       "member_allowance": "{member} mensagens por mês",
       "synced_history": "Conversas sincronizadas entre dispositivos",
-      "supports": "Apoia o arquivo, os vídeos e as ferramentas"
+      "supports": "Apoia o arquivo, os vídeos e as ferramentas",
+      "next_allowance": "{limit} mensagens por mês com Member {plan}",
+      "same_membership": "Todo o resto da sua assinatura continua igual"
     },
-    "try_again": "Tentar novamente"
+    "try_again": "Tentar novamente",
+    "pro": {
+      "title": "Você usou as mensagens deste mês",
+      "body": "Seu limite é renovado no início do próximo mês. Obrigado pelo apoio."
+    },
+    "plus": {
+      "title": "Você usou as mensagens deste mês",
+      "body": "Member {plan} inclui {limit} mensagens por mês. Mesma assinatura, mesmos benefícios — só o limite muda."
+    },
+    "upgrade": {
+      "cta": "Mudar para Member {plan}"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "ru": {
     "used_of": "Использовано {used} из {limit} сообщений",
@@ -388,7 +550,7 @@
     },
     "member": {
       "title": "Вы использовали сообщения за этот месяц",
-      "body": "Лимит обновится в начале следующего месяца. Спасибо за поддержку."
+      "body": "Member {plan} даёт {limit} сообщений в месяц. То же членство, те же преимущества — меняется только лимит."
     },
     "benefit": {
       "free_allowance": "{free} сообщений в месяц вместо {anon} в день",
@@ -396,9 +558,26 @@
       "free_forever": "Бесплатно — карта не нужна",
       "member_allowance": "{member} сообщений в месяц",
       "synced_history": "Переписки синхронизируются между устройствами",
-      "supports": "Поддерживает архив, видео и инструменты"
+      "supports": "Поддерживает архив, видео и инструменты",
+      "next_allowance": "{limit} сообщений в месяц с Member {plan}",
+      "same_membership": "Всё остальное в вашем членстве остаётся прежним"
     },
-    "try_again": "Попробовать снова"
+    "try_again": "Попробовать снова",
+    "pro": {
+      "title": "Вы использовали сообщения за этот месяц",
+      "body": "Лимит обновится в начале следующего месяца. Спасибо за поддержку."
+    },
+    "plus": {
+      "title": "Вы использовали сообщения за этот месяц",
+      "body": "Member {plan} даёт {limit} сообщений в месяц. То же членство, те же преимущества — меняется только лимит."
+    },
+    "upgrade": {
+      "cta": "Перейти на Member {plan}"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   },
   "zh": {
     "used_of": "已使用 {used} / {limit} 条消息",
@@ -415,7 +594,7 @@
     },
     "member": {
       "title": "您已用完本月的消息",
-      "body": "您的额度将在下月初重置。感谢您的支持。"
+      "body": "Member {plan} 每月可用 {limit} 条消息。会员资格与权益不变，只有额度不同。"
     },
     "benefit": {
       "free_allowance": "每月 {free} 条，而不是每天 {anon} 条",
@@ -423,9 +602,26 @@
       "free_forever": "免费 — 无需银行卡",
       "member_allowance": "每月 {member} 条消息",
       "synced_history": "对话在各设备间同步",
-      "supports": "支持档案、视频与工具"
+      "supports": "支持档案、视频与工具",
+      "next_allowance": "Member {plan} 每月 {limit} 条消息",
+      "same_membership": "您会员资格的其他内容保持不变"
     },
-    "try_again": "重试"
+    "try_again": "重试",
+    "pro": {
+      "title": "您已用完本月的消息",
+      "body": "您的额度将在下月初重置。感谢您的支持。"
+    },
+    "plus": {
+      "title": "您已用完本月的消息",
+      "body": "Member {plan} 每月可用 {limit} 条消息。会员资格与权益不变，只有额度不同。"
+    },
+    "upgrade": {
+      "cta": "升级到 Member {plan}"
+    },
+    "plan": {
+      "plus": "Plus",
+      "pro": "Pro"
+    }
   }
 }
 </i18n>

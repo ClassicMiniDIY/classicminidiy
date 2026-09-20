@@ -1,6 +1,6 @@
 import { getServiceClient } from '../utils/supabase';
 import { extractAccessToken, isUserBanned } from '../utils/userAuth';
-import { SUSTAINING_PRODUCT_ID, type ChatTier } from '../../shared/utils/chatTiers';
+import { chatTierForPlan, type ChatTier } from '../../shared/utils/chatTiers';
 import { CHAT_TIER_CACHE_TTL_SECONDS, chatTierCacheId, setChatAuth } from '../utils/chatTiers';
 import { sha256Hex } from '../utils/mcpTiers';
 
@@ -19,6 +19,7 @@ import { sha256Hex } from '../utils/mcpTiers';
  *   - a token we cannot verify → anonymous
  *   - Supabase unreachable     → anonymous
  *   - membership RPC errors    → free (the account is proven, the perk is not)
+ *   - a plan we do not know    → member (paid is proven, the size is not)
  *
  * A Supabase outage therefore degrades a member to anonymous limits. It does
  * not 503 the chat. Denying would break the surface's entire reason to exist,
@@ -105,17 +106,20 @@ export default defineEventHandler(async (event) => {
     }
 
     // The account is proven at this point, so the floor is 'free'. Only the
-    // membership perk is in question.
+    // membership perk is in question. `get_membership_plan` is the
+    // `user_has_subscription` predicate returning the granting row's plan
+    // instead of a boolean, so one round trip yields both "is a member" and
+    // "which allowance": NULL → free, base → member, plus / pro → themselves.
+    // It is service-role only, which this client is.
     let tier: ChatTier = 'free';
-    const { data: hasSub, error: subErr } = await supabase.rpc('user_has_subscription', {
+    const { data: plan, error: subErr } = await supabase.rpc('get_membership_plan', {
       p_user_id: user.id,
-      p_product_id: SUSTAINING_PRODUCT_ID,
     });
 
     if (subErr) {
-      console.error(`[Chat Auth] user_has_subscription lookup failed: ${subErr.message}`);
-    } else if (hasSub === true) {
-      tier = 'member';
+      console.error(`[Chat Auth] get_membership_plan lookup failed: ${subErr.message}`);
+    } else {
+      tier = chatTierForPlan(plan);
     }
 
     // A degraded resolution is NOT cached. Writing { tier: 'free' } for a member

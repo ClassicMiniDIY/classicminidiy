@@ -251,10 +251,30 @@ describe('the exhausted response', () => {
     expect(err.data.upgradeUrl).toMatch(/\/membership$/);
   });
 
-  it('tells a member when their allowance resets instead of selling to them', () => {
+  it('offers a base-plan member the Plus allowance, never the ceiling just hit', () => {
     const err: any = quotaExhaustedError(eventFor('member', 'user-1'), { allowed: false });
+    expect(err.message).toMatch(/Member Plus gets 65 messages a month/);
+    expect(err.message).not.toMatch(/ 25 /);
+    expect(err.data.tier).toBe('member');
+  });
+
+  it('offers a Plus member the Pro allowance', () => {
+    const err: any = quotaExhaustedError(eventFor('plus', 'user-1'), { allowed: false });
+    expect(err.message).toMatch(/Member Pro gets 135 messages a month/);
+    expect(err.data.tier).toBe('plus');
+  });
+
+  it('tells a Pro member when their allowance resets instead of selling to them', () => {
+    const err: any = quotaExhaustedError(eventFor('pro', 'user-1'), { allowed: false });
     expect(err.message).toMatch(/next month/i);
-    expect(err.message).not.toMatch(/Sustaining Members get/);
+    expect(err.message).not.toMatch(/gets/);
+    // The 429 shape is a native-client contract and does not change with plans.
+    expect(Object.keys(err.data).sort()).toEqual(['limit', 'tier', 'upgradeUrl', 'used']);
+  });
+
+  it('offers a free account the base member allowance', () => {
+    const err: any = quotaExhaustedError(eventFor('free', 'user-1'), { allowed: false });
+    expect(err.message).toMatch(/Sustaining Members get 25 messages a month/);
   });
 });
 

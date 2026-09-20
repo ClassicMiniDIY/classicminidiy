@@ -5110,6 +5110,7 @@ export type Database = {
           google_purchase_token: string | null;
           id: string;
           last_verified_at: string | null;
+          plan: string;
           platform: string;
           product_id: string;
           raw_receipt: Json | null;
@@ -5135,6 +5136,7 @@ export type Database = {
           google_purchase_token?: string | null;
           id?: string;
           last_verified_at?: string | null;
+          plan?: string;
           platform: string;
           product_id?: string;
           raw_receipt?: Json | null;
@@ -5160,6 +5162,7 @@ export type Database = {
           google_purchase_token?: string | null;
           id?: string;
           last_verified_at?: string | null;
+          plan?: string;
           platform?: string;
           product_id?: string;
           raw_receipt?: Json | null;
@@ -5687,6 +5690,7 @@ export type Database = {
           discord_username: string;
           has_active_comp: boolean;
           is_member: boolean;
+          plan: string;
         }[];
       };
       admin_increment_warning_count: {
@@ -5999,6 +6003,7 @@ export type Database = {
           year: number;
         }[];
       };
+      get_membership_plan: { Args: { p_user_id: string }; Returns: string };
       get_model_sales_summary: {
         Args: never;
         Returns: {
@@ -6048,6 +6053,7 @@ export type Database = {
         Returns: {
           expires_at: string;
           is_member: boolean;
+          plan: string;
           platform: string;
         }[];
       };
@@ -6149,6 +6155,7 @@ export type Database = {
           google_purchase_token: string | null;
           id: string;
           last_verified_at: string | null;
+          plan: string;
           platform: string;
           product_id: string;
           raw_receipt: Json | null;
@@ -6332,6 +6339,7 @@ export type Database = {
           google_purchase_token: string | null;
           id: string;
           last_verified_at: string | null;
+          plan: string;
           platform: string;
           product_id: string;
           raw_receipt: Json | null;
@@ -6506,6 +6514,7 @@ export type Database = {
           google_purchase_token: string | null;
           id: string;
           last_verified_at: string | null;
+          plan: string;
           platform: string;
           product_id: string;
           raw_receipt: Json | null;

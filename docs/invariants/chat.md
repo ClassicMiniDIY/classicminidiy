@@ -48,3 +48,37 @@ toUIMessageStreamResponse()` pipeline with a scripted model, not a live recordin
   are deterministic and the two failure cases can be produced on demand. Two facts they pin
   that the design doc's wording did not: `error` is followed by `finish-step` and `finish`
   (`finishReason: "error"`), and a rejected tool input is stored as `rawInput`, not `input`.
+
+## Member / Plus / Pro plans (2026-09-20)
+
+The DIY Mini Bot costs real money per question and the native apps put it on
+the home screen, so the membership grew three plans that differ in exactly one
+thing: the monthly allowance (25 / 65 / 135 at $1.99 / $4.99 / $9.99; free
+stays 20, anonymous 15 a day). Each paid cap is the break-even at the
+worst-case cost per run and a 30% store cut, rounded down, so no plan loses
+money on a subscriber who uses every question. The design, the money table and
+the schema live in the private repo:
+`classicminidiy-supabase/docs/plans/2026-09-19-chat-tiers.md`.
+
+What that means in this repo:
+
+- `ChatTier` gained `plus` and `pro`. `CHAT_QUOTAS` is still the single place
+  the caps live; the apps mirror the numbers for copy only and read `limit`
+  from the peek and the 429.
+- `chat-auth` calls `get_membership_plan` (service role) instead of
+  `user_has_subscription`, because one round trip must yield both "is a
+  member" and "which allowance". The cache entry and TTL are unchanged. An
+  unknown plan string resolves to `member`: a paying member on a plan this
+  build does not know must never be dropped to `free`.
+- Every wall — the 429 message, `QuotaLimitPanel.vue`, the search palette's
+  Ask row — quotes `nextTier(tier)`. Quoting the ceiling the caller already
+  has understates the upgrade by exactly the amount that makes it worth
+  doing. Pro has nowhere to go and gets the reset date.
+- `/membership` sells the three plans through the same checkout proxy with a
+  `plan` body field (absent = base). A plan whose Stripe price is not configured
+  yet answers 503 `PLAN_UNAVAILABLE`, which the page turns into a toast rather
+  than a sale. Existing web members change plan in the Stripe Customer Portal;
+  app members in the store. The page never offers a second checkout to a
+  member (the 409 already-member guard at the edge is correct and stays).
+- Nothing outside chat may branch on the plan: the badge, sync, Discord,
+  listings and every RLS policy still key on `user_has_subscription`.

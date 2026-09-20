@@ -133,8 +133,19 @@ describe('useOmnisearch miss commit', () => {
     expect(search.askBot('how do i bleed the brakes', { inline: true })).toBe(false);
     expect(mockRouter.push).toHaveBeenCalledWith('/membership');
 
+    // A member on the base or Plus plan is sent to /membership for the plan
+    // above; only Pro, with nowhere to go, stays put.
+    for (const tier of ['member', 'plus']) {
+      mockRouter.push.mockClear();
+      search.quota.value = { tier, used: 25, limit: 25 };
+      expect(search.askState.value).toBe('upgrade-limit');
+      expect(search.askBot('how do i bleed the brakes', { inline: true })).toBe(false);
+      expect(mockRouter.push).toHaveBeenCalledWith('/membership');
+    }
+
     mockRouter.push.mockClear();
-    search.quota.value = { tier: 'member', used: 100, limit: 100 };
+    search.quota.value = { tier: 'pro', used: 135, limit: 135 };
+    expect(search.askState.value).toBe('member-limit');
     expect(search.askBot('how do i bleed the brakes', { inline: true })).toBe(false);
     expect(mockRouter.push).not.toHaveBeenCalled();
   });
