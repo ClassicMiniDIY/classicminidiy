@@ -5,12 +5,16 @@
   const { track } = useAnalytics();
 
   const { data, status } = await useFetch('/api/engines');
+  // Column order is load-bearing for search snippets: Google keeps the
+  // leftmost columns of a table and drops the rest, so "Over Bore" sits
+  // directly after "Original Block". A 998 +060 row must never be
+  // truncated into "998 = 1046cc". The colour legend lives inside the
+  // first cell rather than in its own header-less column for the same reason.
   const tableHeaders: any[] = [
-    { title: t('table_headers.size'), key: 'color' },
     { title: t('table_headers.original_block'), key: 'group' },
+    { title: t('table_headers.over_bore'), key: 'overBore' },
     { title: t('table_headers.engine_size'), key: 'engineSize' },
     { title: t('table_headers.bore_size'), key: 'boreSize' },
-    { title: t('table_headers.over_bore'), key: 'overBore' },
     { title: t('table_headers.stroke'), key: 'stroke' },
     { title: t('table_headers.estimated_power'), key: 'power' },
     { title: t('table_headers.estimated_torque'), key: 'torque' },
@@ -125,9 +129,9 @@
                       </figure>
                     </div>
                     <div>
-                      <h2 class="text-lg font-semibold">
+                      <span class="block text-lg font-semibold">
                         {{ t('compression_card.title') }}
-                      </h2>
+                      </span>
                       <p>{{ t('compression_card.description') }}</p>
                     </div>
                   </div>
@@ -150,14 +154,19 @@
             <div class="card-title">
               <div class="flex items-center">
                 <i class="fad fa-engine mr-2"></i>
-                <span class="font-semibold text-lg">{{ t('table_title') }}</span>
+                <h2 class="font-semibold text-lg">{{ t('table_title') }}</h2>
               </div>
             </div>
             <div class="overflow-x-auto" v-if="data?.engines">
               <table class="table w-full text-sm" :class="{ 'opacity-60': status === 'pending' }">
+                <caption class="sr-only">
+                  {{
+                    t('table_caption')
+                  }}
+                </caption>
                 <thead>
                   <tr class="border-b border-base-300">
-                    <th v-for="header in tableHeaders" :key="header.key" class="text-left p-2 font-medium">
+                    <th v-for="header in tableHeaders" :key="header.key" scope="col" class="text-left p-2 font-medium">
                       {{ header.title }}
                     </th>
                   </tr>
@@ -168,13 +177,12 @@
                     :key="index"
                     class="border-b border-base-300 last:border-0 hover:bg-base-200 transition-colors"
                   >
-                    <td class="p-2">
-                      <i class="fas fa-circle" :class="item.color"></i>
+                    <td class="p-2 whitespace-nowrap">
+                      <i class="fas fa-circle mr-2" :class="item.color" aria-hidden="true"></i>{{ item.group }}
                     </td>
-                    <td class="p-2">{{ item.group }}</td>
+                    <td class="p-2">{{ item.overBore === '----' ? t('standard_bore') : item.overBore }}</td>
                     <td class="p-2">{{ item.engineSize }}</td>
                     <td class="p-2">{{ item.boreSize }}</td>
-                    <td class="p-2">{{ item.overBore }}</td>
                     <td class="p-2">{{ item.stroke }}</td>
                     <td class="p-2">{{ item.power }}</td>
                     <td class="p-2">{{ item.torque }}</td>
@@ -244,6 +252,8 @@
       "different_stroke": "Different stroke"
     },
     "table_title": "Engine Specifications",
+    "table_caption": "Classic Mini A-series engine sizes by original block, overbore and bore size",
+    "standard_bore": "Standard",
     "loading_text": "Loading engine data...",
     "support_divider": "Support",
     "seo": {
@@ -292,6 +302,8 @@
       "different_stroke": "Carrera diferente"
     },
     "table_title": "Especificaciones de Motor",
+    "table_caption": "Cilindradas de motores Classic Mini serie A por bloque original, sobremedida y diámetro",
+    "standard_bore": "Estándar",
     "loading_text": "Cargando datos de motor...",
     "support_divider": "Soporte",
     "seo": {
@@ -340,6 +352,8 @@
       "different_stroke": "Course différente"
     },
     "table_title": "Spécifications de Moteur",
+    "table_caption": "Cylindrées des moteurs Classic Mini série A par bloc d'origine, réalésage et alésage",
+    "standard_bore": "Standard",
     "loading_text": "Chargement des données moteur...",
     "support_divider": "Support",
     "seo": {
@@ -388,6 +402,8 @@
       "different_stroke": "Corsa diversa"
     },
     "table_title": "Specifiche Motore",
+    "table_caption": "Cilindrate dei motori Classic Mini serie A per blocco originale, maggiorazione e alesaggio",
+    "standard_bore": "Standard",
     "loading_text": "Caricamento dati motore...",
     "support_divider": "Supporto",
     "seo": {
@@ -436,6 +452,8 @@
       "different_stroke": "Anderer Hub"
     },
     "table_title": "Motorspezifikationen",
+    "table_caption": "Hubräume der Classic Mini A-Serie nach Originalblock, Übermaß und Bohrung",
+    "standard_bore": "Standard",
     "loading_text": "Motordaten werden geladen...",
     "support_divider": "Support",
     "seo": {
@@ -484,6 +502,8 @@
       "different_stroke": "Curso diferente"
     },
     "table_title": "Especificações do Motor",
+    "table_caption": "Cilindradas dos motores Classic Mini série A por bloco original, sobremedida e diâmetro",
+    "standard_bore": "Padrão",
     "loading_text": "Carregando dados do motor...",
     "support_divider": "Suporte",
     "seo": {
@@ -532,6 +552,8 @@
       "different_stroke": "Другой ход"
     },
     "table_title": "Спецификации Двигателя",
+    "table_caption": "Объёмы двигателей Classic Mini серии A по исходному блоку, расточке и диаметру цилиндра",
+    "standard_bore": "Стандарт",
     "loading_text": "Загрузка данных двигателя...",
     "support_divider": "Поддержка",
     "seo": {
@@ -580,6 +602,8 @@
       "different_stroke": "異なるストローク"
     },
     "table_title": "エンジン仕様",
+    "table_caption": "元ブロック、オーバーボア、ボア径別のClassic Mini Aシリーズエンジン排気量",
+    "standard_bore": "標準",
     "loading_text": "エンジンデータを読み込み中...",
     "support_divider": "サポート",
     "seo": {
@@ -628,6 +652,8 @@
       "different_stroke": "不同行程"
     },
     "table_title": "发动机规格",
+    "table_caption": "按原始缸体、扩缸量和缸径列出的Classic Mini A系列发动机排量",
+    "standard_bore": "标准",
     "loading_text": "正在加载发动机数据...",
     "support_divider": "支持",
     "seo": {
@@ -676,6 +702,8 @@
       "different_stroke": "다른 스트로크"
     },
     "table_title": "엔진 사양",
+    "table_caption": "원래 블록, 오버보어, 보어 크기별 Classic Mini A시리즈 엔진 배기량",
+    "standard_bore": "표준",
     "loading_text": "엔진 데이터 로딩 중...",
     "support_divider": "지원",
     "seo": {
