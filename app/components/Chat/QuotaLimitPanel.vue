@@ -34,7 +34,9 @@
           {{ t('used_of', { used: quota.used, limit: quota.limit }) }}
         </p>
 
-        <p class="mt-2 text-sm text-base-content/80">{{ t(`${quota.tier}.body`) }}</p>
+        <!-- The member / plus bodies name the next plan and its allowance;
+             the other tiers' bodies take no params and ignore them. -->
+        <p class="mt-2 text-sm text-base-content/80">{{ t(`${quota.tier}.body`, bodyParams) }}</p>
 
         <ul v-if="next" class="mt-3 space-y-1.5 text-sm text-base-content/80">
           <li v-for="benefit in benefits" :key="benefit" class="flex items-start gap-2">
@@ -128,6 +130,10 @@
    */
   const next = computed(() => nextTier(props.quota.tier));
   const nextPlanName = computed(() => (next.value === 'plus' || next.value === 'pro' ? t(`plan.${next.value}`) : ''));
+  const bodyParams = computed(() => ({
+    plan: nextPlanName.value,
+    limit: next.value ? (CHAT_QUOTAS[next.value].perMonth ?? '') : '',
+  }));
   const benefits = computed(() => {
     switch (props.quota.tier) {
       case 'anonymous':

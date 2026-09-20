@@ -1,5 +1,5 @@
 import { useDebounceFn } from '@vueuse/core';
-import { nextTier } from '~~/shared/utils/chatTiers';
+import { nextTier, type ChatTier } from '~~/shared/utils/chatTiers';
 import {
   analyseQuery,
   type DirectAnswer,
@@ -63,7 +63,7 @@ export type MissTrigger = 'enter' | 'close' | 'idle' | 'page';
 
 /** The shape `GET /api/chat/quota` returns; mirrored here so `app/` never imports from `server/`. */
 export interface ChatQuotaPeek {
-  tier: 'anonymous' | 'free' | 'member';
+  tier: ChatTier;
   used: number | null;
   limit: number;
 }

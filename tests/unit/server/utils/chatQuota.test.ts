@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { blankComments } from '../../../static/_scan';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ChatTier } from '~~/shared/utils/chatTiers';
 
 // ---------------------------------------------------------------------------
 // server/utils/chatQuota.ts
@@ -61,7 +62,7 @@ const { consumeChatQuota, quotaExhaustedError, recordChatTokens } = await import
 const { setChatAuth } = await import('~~/server/utils/chatTiers');
 const { CHAT_QUOTAS } = await import('~~/shared/utils/chatTiers');
 
-function eventFor(tier: 'anonymous' | 'free' | 'member', userId?: string) {
+function eventFor(tier: ChatTier, userId?: string) {
   const event: any = { context: {}, waitUntil: vi.fn() };
   setChatAuth(event, { tier, userId });
   return event;
