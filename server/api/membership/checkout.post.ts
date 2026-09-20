@@ -37,7 +37,14 @@ export default defineEventHandler(async (event) => {
   // docs/plans/2026-09-19-chat-tiers.md). Validated HERE against the shared
   // list, not only at the edge function, so a bad value is a 400 from this
   // Worker rather than a round trip; absent = base, as it always was.
-  const body = (await readBody(event).catch(() => null)) as { plan?: unknown } | null;
+  // An absent body is the pre-plans caller and means base; a body that does
+  // not parse is a client bug and must not silently buy the base plan.
+  let body: { plan?: unknown } | null;
+  try {
+    body = (await readBody(event)) ?? null;
+  } catch {
+    throw createError({ statusCode: 400, statusMessage: 'Body must be JSON' });
+  }
   const plan = body?.plan === undefined || body?.plan === null ? 'base' : body.plan;
   if (typeof plan !== 'string' || !MEMBERSHIP_PLANS.some((p) => p.plan === plan)) {
     throw createError({ statusCode: 400, statusMessage: 'plan must be base, plus or pro' });
