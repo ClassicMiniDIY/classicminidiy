@@ -179,7 +179,11 @@
                   <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
                 </div>
               </div>
-              <NuxtLink to="/contribute/color" class="btn btn-primary btn-outline btn-sm" @click="track('contribute_cta_clicked', { type: 'color', location: 'archive_colors' })">
+              <NuxtLink
+                to="/contribute/color"
+                class="btn btn-primary btn-outline btn-sm"
+                @click="track('contribute_cta_clicked', { type: 'color', location: 'archive_colors' })"
+              >
                 {{ t('contribute_banner_button') }}
               </NuxtLink>
             </div>
@@ -194,7 +198,14 @@
             </p>
             <p>
               {{ t('description_text') }}
-              <a href="http://mini-colours.co.uk" class="link link-primary" @click="trackOutbound({ destination: 'http://mini-colours.co.uk', group: 'partner', label: 'mini-colours' })">{{ t('partner_link') }}</a>
+              <a
+                href="http://mini-colours.co.uk"
+                class="link link-primary"
+                @click="
+                  trackOutbound({ destination: 'http://mini-colours.co.uk', group: 'partner', label: 'mini-colours' })
+                "
+                >{{ t('partner_link') }}</a
+              >
               {{ t('description_text_2') }}
             </p>
           </template>
@@ -345,7 +356,12 @@
               type="button"
               class="btn btn-outline join-item"
               :disabled="currentPage === 1"
-              @click="() => { currentPage = Math.max(1, currentPage - 1); track('list_paginated', { surface: 'colors', page: currentPage }); }"
+              @click="
+                () => {
+                  currentPage = Math.max(1, currentPage - 1);
+                  track('list_paginated', { surface: 'colors', page: currentPage });
+                }
+              "
             >
               «
             </button>
@@ -356,7 +372,12 @@
               type="button"
               class="btn btn-outline join-item"
               :disabled="currentPage >= totalPages"
-              @click="() => { currentPage = Math.min(totalPages, currentPage + 1); track('list_paginated', { surface: 'colors', page: currentPage }); }"
+              @click="
+                () => {
+                  currentPage = Math.min(totalPages, currentPage + 1);
+                  track('list_paginated', { surface: 'colors', page: currentPage });
+                }
+              "
             >
               »
             </button>
@@ -370,12 +391,12 @@
 <i18n lang="json">
 {
   "en": {
-    "title": "Color Picker",
-    "description": "Find the perfect color for your Classic Mini with our comprehensive color picker.",
+    "title": "Classic Mini Paint Codes & Colours",
+    "description": "Classic Mini paint codes and colour names by year, with swatches, BMC and Rover codes and known applications. Search the full colour chart or add a colour that is missing.",
     "keywords": "Classic Mini colors, Mini Cooper paint codes, BMC color codes, Ditzler PPG codes, Dulux paint codes, vintage Mini colors, paint color database",
-    "hero_title": "Color Picker",
+    "hero_title": "Classic Mini Paint Codes",
     "breadcrumb_title": "Color Swatches",
-    "main_heading": "Classic Mini Color Picker",
+    "main_heading": "Classic Mini Paint Codes & Colour Picker",
     "subtitle": "colors in our database",
     "description_text": "In an effort to make more information available, Classic Mini DIY has partnered with",
     "description_text_2": "to provide you with a comprehensive list of the colors used on the Classic Mini throughout the years.",
@@ -403,20 +424,20 @@
     "contribute_banner_description": "Help grow the archive with your knowledge.",
     "contribute_banner_button": "Contribute",
     "seo": {
-      "og_title": "Classic Mini Color Picker | Classic Mini DIY",
-      "og_description": "Find the perfect color for your Classic Mini with our comprehensive color picker and paint code reference.",
-      "twitter_title": "Classic Mini Color Picker | Classic Mini DIY",
-      "twitter_description": "Find the perfect color for your Classic Mini with our comprehensive color picker and paint code reference."
+      "og_title": "Classic Mini Paint Codes & Colours",
+      "og_description": "Classic Mini paint codes and colour names by year, with swatches, BMC and Rover codes and known applications. Search the full colour chart or add a colour that is missing.",
+      "twitter_title": "Classic Mini Paint Codes & Colours",
+      "twitter_description": "Classic Mini paint codes and colour names by year, with swatches, BMC and Rover codes and known applications. Search the full colour chart or add a colour that is missing."
     },
     "eyebrow": "COLOR LIBRARY"
   },
   "es": {
-    "title": "Selector de Color",
-    "description": "Encuentra el color perfecto para tu Classic Mini con nuestro completo selector de colores.",
+    "title": "Códigos de Pintura y Colores Classic Mini",
+    "description": "Códigos de pintura y nombres de colores Classic Mini por año, con muestras, códigos BMC y Rover y aplicaciones conocidas. Busca en la carta de colores completa o añade un color que falte.",
     "keywords": "colores Classic Mini, códigos de pintura Mini Cooper, códigos de color BMC, códigos Ditzler PPG, códigos Dulux, colores Mini vintage, base de datos de colores de pintura",
-    "hero_title": "Selector de Color",
+    "hero_title": "Códigos de Pintura Classic Mini",
     "breadcrumb_title": "Muestras de Color",
-    "main_heading": "Selector de Color Classic Mini",
+    "main_heading": "Códigos de Pintura y Selector de Color Classic Mini",
     "subtitle": "colores en nuestra base de datos",
     "description_text": "En un esfuerzo por hacer más información disponible, Classic Mini DIY se ha asociado con",
     "description_text_2": "para ofrecerte una lista completa de los colores utilizados en el Classic Mini a lo largo de los años.",
@@ -444,20 +465,20 @@
     "contribute_banner_description": "Ayuda a ampliar el archivo con tu conocimiento.",
     "contribute_banner_button": "Contribuir",
     "seo": {
-      "og_title": "Selector de Color Classic Mini | Classic Mini DIY",
-      "og_description": "Encuentra el color perfecto para tu Classic Mini con nuestro completo selector de colores y referencia de códigos de pintura.",
-      "twitter_title": "Selector de Color Classic Mini | Classic Mini DIY",
-      "twitter_description": "Encuentra el color perfecto para tu Classic Mini con nuestro completo selector de colores y referencia de códigos de pintura."
+      "og_title": "Códigos de Pintura y Colores Classic Mini",
+      "og_description": "Códigos de pintura y nombres de colores Classic Mini por año, con muestras, códigos BMC y Rover y aplicaciones conocidas. Busca en la carta de colores completa o añade un color que falte.",
+      "twitter_title": "Códigos de Pintura y Colores Classic Mini",
+      "twitter_description": "Códigos de pintura y nombres de colores Classic Mini por año, con muestras, códigos BMC y Rover y aplicaciones conocidas. Busca en la carta de colores completa o añade un color que falte."
     },
     "eyebrow": "BIBLIOTECA DE COLORES"
   },
   "fr": {
-    "title": "Sélecteur de Couleur",
-    "description": "Trouvez la couleur parfaite pour votre Classic Mini avec notre sélecteur de couleurs complet.",
+    "title": "Codes Peinture et Couleurs Classic Mini",
+    "description": "Codes peinture et noms de couleurs Classic Mini par année, avec nuanciers, codes BMC et Rover et applications connues. Parcourez le nuancier complet ou ajoutez une couleur manquante.",
     "keywords": "couleurs Classic Mini, codes peinture Mini Cooper, codes couleur BMC, codes Ditzler PPG, codes Dulux, couleurs Mini vintage, base de données couleurs peinture",
-    "hero_title": "Sélecteur de Couleur",
+    "hero_title": "Codes Peinture Classic Mini",
     "breadcrumb_title": "Échantillons de Couleur",
-    "main_heading": "Sélecteur de Couleur Classic Mini",
+    "main_heading": "Codes Peinture et Sélecteur de Couleur Classic Mini",
     "subtitle": "couleurs dans notre base de données",
     "description_text": "Dans un effort pour rendre plus d'informations disponibles, Classic Mini DIY s'est associé à",
     "description_text_2": "pour vous fournir une liste complète des couleurs utilisées sur la Classic Mini au fil des années.",
@@ -485,20 +506,20 @@
     "contribute_banner_description": "Aidez à enrichir l'archive avec vos connaissances.",
     "contribute_banner_button": "Contribuer",
     "seo": {
-      "og_title": "Sélecteur de Couleur Classic Mini | Classic Mini DIY",
-      "og_description": "Trouvez la couleur parfaite pour votre Classic Mini avec notre sélecteur de couleurs complet et la référence des codes peinture.",
-      "twitter_title": "Sélecteur de Couleur Classic Mini | Classic Mini DIY",
-      "twitter_description": "Trouvez la couleur parfaite pour votre Classic Mini avec notre sélecteur de couleurs complet et la référence des codes peinture."
+      "og_title": "Codes Peinture et Couleurs Classic Mini",
+      "og_description": "Codes peinture et noms de couleurs Classic Mini par année, avec nuanciers, codes BMC et Rover et applications connues. Parcourez le nuancier complet ou ajoutez une couleur manquante.",
+      "twitter_title": "Codes Peinture et Couleurs Classic Mini",
+      "twitter_description": "Codes peinture et noms de couleurs Classic Mini par année, avec nuanciers, codes BMC et Rover et applications connues. Parcourez le nuancier complet ou ajoutez une couleur manquante."
     },
     "eyebrow": "BIBLIOTHÈQUE DE COULEURS"
   },
   "it": {
-    "title": "Selettore Colore",
-    "description": "Trova il colore perfetto per la tua Classic Mini con il nostro selettore colori completo.",
+    "title": "Codici Vernice e Colori Classic Mini",
+    "description": "Codici vernice e nomi dei colori Classic Mini per anno, con campioni, codici BMC e Rover e applicazioni note. Cerca nella cartella colori completa o aggiungi un colore mancante.",
     "keywords": "colori Classic Mini, codici vernice Mini Cooper, codici colore BMC, codici Ditzler PPG, codici Dulux, colori Mini vintage, database colori vernice",
-    "hero_title": "Selettore Colore",
+    "hero_title": "Codici Vernice Classic Mini",
     "breadcrumb_title": "Campioni di Colore",
-    "main_heading": "Selettore Colore Classic Mini",
+    "main_heading": "Codici Vernice e Selettore Colori Classic Mini",
     "subtitle": "colori nel nostro database",
     "description_text": "Nel tentativo di rendere disponibili più informazioni, Classic Mini DIY ha collaborato con",
     "description_text_2": "per fornirti un elenco completo dei colori utilizzati sulla Classic Mini nel corso degli anni.",
@@ -526,20 +547,20 @@
     "contribute_banner_description": "Aiuta ad arricchire l'archivio con le tue conoscenze.",
     "contribute_banner_button": "Contribuisci",
     "seo": {
-      "og_title": "Selettore Colore Classic Mini | Classic Mini DIY",
-      "og_description": "Trova il colore perfetto per la tua Classic Mini con il nostro selettore colori completo e la guida ai codici vernice.",
-      "twitter_title": "Selettore Colore Classic Mini | Classic Mini DIY",
-      "twitter_description": "Trova il colore perfetto per la tua Classic Mini con il nostro selettore colori completo e la guida ai codici vernice."
+      "og_title": "Codici Vernice e Colori Classic Mini",
+      "og_description": "Codici vernice e nomi dei colori Classic Mini per anno, con campioni, codici BMC e Rover e applicazioni note. Cerca nella cartella colori completa o aggiungi un colore mancante.",
+      "twitter_title": "Codici Vernice e Colori Classic Mini",
+      "twitter_description": "Codici vernice e nomi dei colori Classic Mini per anno, con campioni, codici BMC e Rover e applicazioni note. Cerca nella cartella colori completa o aggiungi un colore mancante."
     },
     "eyebrow": "LIBRERIA COLORI"
   },
   "de": {
-    "title": "Farbauswahl",
-    "description": "Finden Sie die perfekte Farbe für Ihren Classic Mini mit unserem umfassenden Farbwähler.",
+    "title": "Classic Mini Lackcodes & Farben",
+    "description": "Classic Mini Lackcodes und Farbnamen nach Baujahr, mit Farbmustern, BMC- und Rover-Codes und bekannten Verwendungen. Durchsuche die vollständige Farbtabelle oder ergänze eine fehlende Farbe.",
     "keywords": "Classic Mini Farben, Mini Cooper Lackcodes, BMC Farbcodes, Ditzler PPG Codes, Dulux Lackcodes, Oldtimer Mini Farben, Lackfarben-Datenbank",
-    "hero_title": "Farbauswahl",
+    "hero_title": "Classic Mini Lackcodes",
     "breadcrumb_title": "Farbmuster",
-    "main_heading": "Classic Mini Farbauswahl",
+    "main_heading": "Classic Mini Lackcodes & Farbwähler",
     "subtitle": "Farben in unserer Datenbank",
     "description_text": "Um mehr Informationen bereitzustellen, hat Classic Mini DIY eine Partnerschaft mit",
     "description_text_2": "geschlossen, um Ihnen eine umfassende Liste der Farben zu bieten, die im Laufe der Jahre am Classic Mini verwendet wurden.",
@@ -567,20 +588,20 @@
     "contribute_banner_description": "Helfen Sie, das Archiv mit Ihrem Wissen zu erweitern.",
     "contribute_banner_button": "Beitragen",
     "seo": {
-      "og_title": "Classic Mini Farbauswahl | Classic Mini DIY",
-      "og_description": "Finden Sie die perfekte Farbe für Ihren Classic Mini mit unserem umfassenden Farbwähler und der Lackcodes-Referenz.",
-      "twitter_title": "Classic Mini Farbauswahl | Classic Mini DIY",
-      "twitter_description": "Finden Sie die perfekte Farbe für Ihren Classic Mini mit unserem umfassenden Farbwähler und der Lackcodes-Referenz."
+      "og_title": "Classic Mini Lackcodes & Farben",
+      "og_description": "Classic Mini Lackcodes und Farbnamen nach Baujahr, mit Farbmustern, BMC- und Rover-Codes und bekannten Verwendungen. Durchsuche die vollständige Farbtabelle oder ergänze eine fehlende Farbe.",
+      "twitter_title": "Classic Mini Lackcodes & Farben",
+      "twitter_description": "Classic Mini Lackcodes und Farbnamen nach Baujahr, mit Farbmustern, BMC- und Rover-Codes und bekannten Verwendungen. Durchsuche die vollständige Farbtabelle oder ergänze eine fehlende Farbe."
     },
     "eyebrow": "FARB-BIBLIOTHEK"
   },
   "pt": {
-    "title": "Seletor de Cor",
-    "description": "Encontre a cor perfeita para o seu Classic Mini com o nosso seletor de cores abrangente.",
+    "title": "Códigos de Tinta e Cores Classic Mini",
+    "description": "Códigos de tinta e nomes de cores Classic Mini por ano, com amostras, códigos BMC e Rover e aplicações conhecidas. Pesquise a tabela de cores completa ou adicione uma cor em falta.",
     "keywords": "cores Classic Mini, códigos de tinta Mini Cooper, códigos de cor BMC, códigos Ditzler PPG, códigos Dulux, cores Mini vintage, banco de dados de cores de tinta",
-    "hero_title": "Seletor de Cor",
+    "hero_title": "Códigos de Tinta Classic Mini",
     "breadcrumb_title": "Amostras de Cor",
-    "main_heading": "Seletor de Cor Classic Mini",
+    "main_heading": "Códigos de Tinta e Seletor de Cores Classic Mini",
     "subtitle": "cores na nossa base de dados",
     "description_text": "Num esforço para disponibilizar mais informação, o Classic Mini DIY estabeleceu uma parceria com",
     "description_text_2": "para fornecer uma lista abrangente das cores utilizadas no Classic Mini ao longo dos anos.",
@@ -608,20 +629,20 @@
     "contribute_banner_description": "Ajude a expandir o arquivo com o seu conhecimento.",
     "contribute_banner_button": "Contribuir",
     "seo": {
-      "og_title": "Seletor de Cor Classic Mini | Classic Mini DIY",
-      "og_description": "Encontre a cor perfeita para o seu Classic Mini com o nosso seletor de cores abrangente e referência de códigos de tinta.",
-      "twitter_title": "Seletor de Cor Classic Mini | Classic Mini DIY",
-      "twitter_description": "Encontre a cor perfeita para o seu Classic Mini com o nosso seletor de cores abrangente e referência de códigos de tinta."
+      "og_title": "Códigos de Tinta e Cores Classic Mini",
+      "og_description": "Códigos de tinta e nomes de cores Classic Mini por ano, com amostras, códigos BMC e Rover e aplicações conhecidas. Pesquise a tabela de cores completa ou adicione uma cor em falta.",
+      "twitter_title": "Códigos de Tinta e Cores Classic Mini",
+      "twitter_description": "Códigos de tinta e nomes de cores Classic Mini por ano, com amostras, códigos BMC e Rover e aplicações conhecidas. Pesquise a tabela de cores completa ou adicione uma cor em falta."
     },
     "eyebrow": "BIBLIOTECA DE CORES"
   },
   "ru": {
-    "title": "Выбор цвета",
-    "description": "Найдите идеальный цвет для вашего Classic Mini с нашим полным подборщиком цветов.",
+    "title": "Коды краски и цвета Classic Mini",
+    "description": "Коды краски и названия цветов Classic Mini по годам, с образцами, кодами BMC и Rover и известным применением. Ищите по полной таблице цветов или добавьте недостающий цвет.",
     "keywords": "цвета Classic Mini, коды краски Mini Cooper, коды цветов BMC, коды Ditzler PPG, коды Dulux, цвета ретро Mini, база данных цветов краски",
-    "hero_title": "Выбор цвета",
+    "hero_title": "Коды краски Classic Mini",
     "breadcrumb_title": "Образцы цветов",
-    "main_heading": "Подборщик цветов Classic Mini",
+    "main_heading": "Коды краски и подбор цвета Classic Mini",
     "subtitle": "цветов в нашей базе данных",
     "description_text": "Стремясь сделать больше информации доступной, Classic Mini DIY наладил партнёрство с",
     "description_text_2": "чтобы предоставить вам исчерпывающий список цветов, использовавшихся на Classic Mini на протяжении многих лет.",
@@ -649,20 +670,20 @@
     "contribute_banner_description": "Помогите пополнить архив своими знаниями.",
     "contribute_banner_button": "Внести вклад",
     "seo": {
-      "og_title": "Подборщик цветов Classic Mini | Classic Mini DIY",
-      "og_description": "Найдите идеальный цвет для вашего Classic Mini с нашим полным подборщиком цветов и справочником кодов краски.",
-      "twitter_title": "Подборщик цветов Classic Mini | Classic Mini DIY",
-      "twitter_description": "Найдите идеальный цвет для вашего Classic Mini с нашим полным подборщиком цветов и справочником кодов краски."
+      "og_title": "Коды краски и цвета Classic Mini",
+      "og_description": "Коды краски и названия цветов Classic Mini по годам, с образцами, кодами BMC и Rover и известным применением. Ищите по полной таблице цветов или добавьте недостающий цвет.",
+      "twitter_title": "Коды краски и цвета Classic Mini",
+      "twitter_description": "Коды краски и названия цветов Classic Mini по годам, с образцами, кодами BMC и Rover и известным применением. Ищите по полной таблице цветов или добавьте недостающий цвет."
     },
     "eyebrow": "БИБЛИОТЕКА ЦВЕТОВ"
   },
   "ja": {
-    "title": "カラーピッカー",
-    "description": "充実したカラーピッカーで、あなたのClassic Miniに最適な色を見つけましょう。",
+    "title": "Classic Miniペイントコード・カラー一覧",
+    "description": "年式別のClassic Miniペイントコードとカラー名を、色見本、BMC・Roverコード、適用車種とともに収録。全カラーチャートを検索、または未収録の色を追加できます。",
     "keywords": "Classic Miniカラー, Mini Cooperペイントコード, BMCカラーコード, Ditzler PPGコード, Duluxペイントコード, ヴィンテージMiniカラー, ペイントカラーデータベース",
-    "hero_title": "カラーピッカー",
+    "hero_title": "Classic Miniペイントコード",
     "breadcrumb_title": "カラースウォッチ",
-    "main_heading": "Classic Mini カラーピッカー",
+    "main_heading": "Classic Miniペイントコード・カラーピッカー",
     "subtitle": "件のカラーがデータベースに登録されています",
     "description_text": "より多くの情報を提供するため、Classic Mini DIYは",
     "description_text_2": "と提携し、Classic Miniに長年使用されてきたカラーの包括的なリストをお届けします。",
@@ -690,20 +711,20 @@
     "contribute_banner_description": "あなたの知識でアーカイブを充実させてください。",
     "contribute_banner_button": "情報を提供する",
     "seo": {
-      "og_title": "Classic Mini カラーピッカー | Classic Mini DIY",
-      "og_description": "充実したカラーピッカーとペイントコード参照で、あなたのClassic Miniに最適な色を見つけましょう。",
-      "twitter_title": "Classic Mini カラーピッカー | Classic Mini DIY",
-      "twitter_description": "充実したカラーピッカーとペイントコード参照で、あなたのClassic Miniに最適な色を見つけましょう。"
+      "og_title": "Classic Miniペイントコード・カラー一覧",
+      "og_description": "年式別のClassic Miniペイントコードとカラー名を、色見本、BMC・Roverコード、適用車種とともに収録。全カラーチャートを検索、または未収録の色を追加できます。",
+      "twitter_title": "Classic Miniペイントコード・カラー一覧",
+      "twitter_description": "年式別のClassic Miniペイントコードとカラー名を、色見本、BMC・Roverコード、適用車種とともに収録。全カラーチャートを検索、または未収録の色を追加できます。"
     },
     "eyebrow": "カラーライブラリ"
   },
   "zh": {
-    "title": "颜色选择器",
-    "description": "使用我们全面的颜色选择器，为您的Classic Mini找到完美的颜色。",
+    "title": "Classic Mini漆码与颜色",
+    "description": "按年份整理的Classic Mini漆码和颜色名称，附色样、BMC和Rover代码及已知应用车型。搜索完整色卡，或添加缺失的颜色。",
     "keywords": "Classic Mini颜色, Mini Cooper油漆代码, BMC颜色代码, Ditzler PPG代码, Dulux油漆代码, 复古Mini颜色, 油漆颜色数据库",
-    "hero_title": "颜色选择器",
+    "hero_title": "Classic Mini漆码",
     "breadcrumb_title": "色板样本",
-    "main_heading": "Classic Mini 颜色选择器",
+    "main_heading": "Classic Mini漆码与颜色选择器",
     "subtitle": "种颜色收录于我们的数据库",
     "description_text": "为了提供更多信息，Classic Mini DIY 已与",
     "description_text_2": "合作，为您提供历年来Classic Mini所使用颜色的完整列表。",
@@ -731,20 +752,20 @@
     "contribute_banner_description": "用您的知识帮助扩充档案库。",
     "contribute_banner_button": "贡献信息",
     "seo": {
-      "og_title": "Classic Mini 颜色选择器 | Classic Mini DIY",
-      "og_description": "使用我们全面的颜色选择器和油漆代码参考，为您的Classic Mini找到完美的颜色。",
-      "twitter_title": "Classic Mini 颜色选择器 | Classic Mini DIY",
-      "twitter_description": "使用我们全面的颜色选择器和油漆代码参考，为您的Classic Mini找到完美的颜色。"
+      "og_title": "Classic Mini漆码与颜色",
+      "og_description": "按年份整理的Classic Mini漆码和颜色名称，附色样、BMC和Rover代码及已知应用车型。搜索完整色卡，或添加缺失的颜色。",
+      "twitter_title": "Classic Mini漆码与颜色",
+      "twitter_description": "按年份整理的Classic Mini漆码和颜色名称，附色样、BMC和Rover代码及已知应用车型。搜索完整色卡，或添加缺失的颜色。"
     },
     "eyebrow": "颜色库"
   },
   "ko": {
-    "title": "컬러 피커",
-    "description": "종합적인 컬러 피커로 Classic Mini에 딱 맞는 색상을 찾아보세요.",
+    "title": "Classic Mini 페인트 코드 및 색상",
+    "description": "연식별 Classic Mini 페인트 코드와 색상명을 색상 견본, BMC 및 Rover 코드, 적용 차종과 함께 수록. 전체 색상표를 검색하거나 누락된 색상을 추가하세요.",
     "keywords": "Classic Mini 색상, Mini Cooper 도료 코드, BMC 색상 코드, Ditzler PPG 코드, Dulux 도료 코드, 빈티지 Mini 색상, 도료 색상 데이터베이스",
-    "hero_title": "컬러 피커",
+    "hero_title": "Classic Mini 페인트 코드",
     "breadcrumb_title": "컬러 스워치",
-    "main_heading": "Classic Mini 컬러 피커",
+    "main_heading": "Classic Mini 페인트 코드 및 색상 선택기",
     "subtitle": "개의 색상이 데이터베이스에 등록되어 있습니다",
     "description_text": "더 많은 정보를 제공하기 위해 Classic Mini DIY는",
     "description_text_2": "와 파트너십을 맺어 Classic Mini에 사용된 색상의 포괄적인 목록을 제공합니다.",
@@ -772,10 +793,10 @@
     "contribute_banner_description": "여러분의 지식으로 아카이브를 풍성하게 만들어 주세요.",
     "contribute_banner_button": "기여하기",
     "seo": {
-      "og_title": "Classic Mini 컬러 피커 | Classic Mini DIY",
-      "og_description": "종합적인 컬러 피커와 도료 코드 참조로 Classic Mini에 딱 맞는 색상을 찾아보세요.",
-      "twitter_title": "Classic Mini 컬러 피커 | Classic Mini DIY",
-      "twitter_description": "종합적인 컬러 피커와 도료 코드 참조로 Classic Mini에 딱 맞는 색상을 찾아보세요."
+      "og_title": "Classic Mini 페인트 코드 및 색상",
+      "og_description": "연식별 Classic Mini 페인트 코드와 색상명을 색상 견본, BMC 및 Rover 코드, 적용 차종과 함께 수록. 전체 색상표를 검색하거나 누락된 색상을 추가하세요.",
+      "twitter_title": "Classic Mini 페인트 코드 및 색상",
+      "twitter_description": "연식별 Classic Mini 페인트 코드와 색상명을 색상 견본, BMC 및 Rover 코드, 적용 차종과 함께 수록. 전체 색상표를 검색하거나 누락된 색상을 추가하세요."
     },
     "eyebrow": "색상 라이브러리"
   }

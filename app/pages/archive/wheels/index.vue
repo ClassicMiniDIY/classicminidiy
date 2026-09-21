@@ -106,12 +106,7 @@
 
       <div class="grid grid-cols-12 gap-4 items-center">
         <div class="col-span-12 md:col-span-8">
-          <PageIntro
-              :eyebrow="t('eyebrow')"
-              :title="t('main_heading')"
-              :description="t('description_text')"
-              as="h2"
-            />
+          <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')" as="h2" />
         </div>
         <div class="col-span-12 md:col-span-4">
           <NuxtLink
@@ -167,8 +162,8 @@
 <i18n lang="json">
 {
   "en": {
-    "title": "Classic Mini Wheels Archive - Classic Mini DIY",
-    "description": "Browse and contribute to the Classic Mini wheels database",
+    "title": "Classic Mini Wheels: Sizes, Offsets & Photos",
+    "description": "Every Classic Mini wheel in one archive: 10, 12 and 13 inch steel and alloy wheels with width, offset and photos. Search by name or size, or add a wheel that is missing.",
     "keywords": "Classic Mini wheels, Mini Cooper wheels, wheel fitment, wheel database, aftermarket wheels, factory wheels, wheel offset, bolt pattern",
     "hero_title": "Classic Mini Wheels",
     "breadcrumb_title": "Wheels",
@@ -187,16 +182,16 @@
       "description": "This database was originally sourced from the now-defunct"
     },
     "seo": {
-      "og_title": "Classic Mini Wheels Archive - Classic Mini DIY",
-      "og_description": "Browse and contribute to the Classic Mini wheels database",
-      "twitter_title": "Classic Mini Wheels Archive - Classic Mini DIY",
-      "twitter_description": "Browse and contribute to the Classic Mini wheels database"
+      "og_title": "Classic Mini Wheels: Sizes, Offsets & Photos",
+      "og_description": "Every Classic Mini wheel in one archive: 10, 12 and 13 inch steel and alloy wheels with width, offset and photos. Search by name or size, or add a wheel that is missing.",
+      "twitter_title": "Classic Mini Wheels: Sizes, Offsets & Photos",
+      "twitter_description": "Every Classic Mini wheel in one archive: 10, 12 and 13 inch steel and alloy wheels with width, offset and photos. Search by name or size, or add a wheel that is missing."
     },
     "eyebrow": "WHEEL LIBRARY"
   },
   "es": {
-    "title": "Archivo de Llantas Classic Mini - Classic Mini DIY",
-    "description": "Explora y contribuye a la base de datos de llantas del Classic Mini",
+    "title": "Llantas Classic Mini: Medidas, Offsets y Fotos",
+    "description": "Todas las llantas Classic Mini en un archivo: llantas de acero y aleación de 10, 12 y 13 pulgadas con ancho, offset y fotos. Busca por nombre o medida, o añade una llanta que falte.",
     "keywords": "llantas Classic Mini, llantas Mini Cooper, fitment de llantas, base de datos de llantas, llantas aftermarket, llantas de fábrica, offset de llantas, patrón de tornillos",
     "hero_title": "Llantas Classic Mini",
     "breadcrumb_title": "Llantas",
@@ -215,16 +210,16 @@
       "description": "Esta base de datos fue obtenida originalmente del ya desaparecido"
     },
     "seo": {
-      "og_title": "Archivo de Llantas Classic Mini - Classic Mini DIY",
-      "og_description": "Explora y contribuye a la base de datos de llantas del Classic Mini",
-      "twitter_title": "Archivo de Llantas Classic Mini - Classic Mini DIY",
-      "twitter_description": "Explora y contribuye a la base de datos de llantas del Classic Mini"
+      "og_title": "Llantas Classic Mini: Medidas, Offsets y Fotos",
+      "og_description": "Todas las llantas Classic Mini en un archivo: llantas de acero y aleación de 10, 12 y 13 pulgadas con ancho, offset y fotos. Busca por nombre o medida, o añade una llanta que falte.",
+      "twitter_title": "Llantas Classic Mini: Medidas, Offsets y Fotos",
+      "twitter_description": "Todas las llantas Classic Mini en un archivo: llantas de acero y aleación de 10, 12 y 13 pulgadas con ancho, offset y fotos. Busca por nombre o medida, o añade una llanta que falte."
     },
     "eyebrow": "BIBLIOTECA DE RUEDAS"
   },
   "fr": {
-    "title": "Archive des Jantes Classic Mini - Classic Mini DIY",
-    "description": "Parcourez et contribuez à la base de données des jantes Classic Mini",
+    "title": "Jantes Classic Mini : Tailles, Déports et Photos",
+    "description": "Toutes les jantes Classic Mini dans une seule archive : jantes acier et alliage de 10, 12 et 13 pouces avec largeur, déport et photos. Recherchez par nom ou taille, ou ajoutez une jante manquante.",
     "keywords": "jantes Classic Mini, jantes Mini Cooper, fitment de jantes, base de données de jantes, jantes aftermarket, jantes d'origine, offset de jante, entraxe",
     "hero_title": "Jantes Classic Mini",
     "breadcrumb_title": "Jantes",
@@ -243,16 +238,16 @@
       "description": "Cette base de données a été initialement extraite du site aujourd'hui disparu"
     },
     "seo": {
-      "og_title": "Archive des Jantes Classic Mini - Classic Mini DIY",
-      "og_description": "Parcourez et contribuez à la base de données des jantes Classic Mini",
-      "twitter_title": "Archive des Jantes Classic Mini - Classic Mini DIY",
-      "twitter_description": "Parcourez et contribuez à la base de données des jantes Classic Mini"
+      "og_title": "Jantes Classic Mini : Tailles, Déports et Photos",
+      "og_description": "Toutes les jantes Classic Mini dans une seule archive : jantes acier et alliage de 10, 12 et 13 pouces avec largeur, déport et photos. Recherchez par nom ou taille, ou ajoutez une jante manquante.",
+      "twitter_title": "Jantes Classic Mini : Tailles, Déports et Photos",
+      "twitter_description": "Toutes les jantes Classic Mini dans une seule archive : jantes acier et alliage de 10, 12 et 13 pouces avec largeur, déport et photos. Recherchez par nom ou taille, ou ajoutez une jante manquante."
     },
     "eyebrow": "BIBLIOTHÈQUE DE JANTES"
   },
   "it": {
-    "title": "Archivio Cerchi Classic Mini - Classic Mini DIY",
-    "description": "Sfoglia e contribuisci al database dei cerchi Classic Mini",
+    "title": "Cerchi Classic Mini: Misure, Offset e Foto",
+    "description": "Tutti i cerchi Classic Mini in un unico archivio: cerchi in acciaio e lega da 10, 12 e 13 pollici con larghezza, offset e foto. Cerca per nome o misura, oppure aggiungi un cerchio mancante.",
     "keywords": "cerchi Classic Mini, cerchi Mini Cooper, fitment cerchi, database cerchi, cerchi aftermarket, cerchi originali, offset cerchio, bullonatura",
     "hero_title": "Cerchi Classic Mini",
     "breadcrumb_title": "Cerchi",
@@ -271,16 +266,16 @@
       "description": "Questo database è stato originalmente ricavato dal defunto"
     },
     "seo": {
-      "og_title": "Archivio Cerchi Classic Mini - Classic Mini DIY",
-      "og_description": "Sfoglia e contribuisci al database dei cerchi Classic Mini",
-      "twitter_title": "Archivio Cerchi Classic Mini - Classic Mini DIY",
-      "twitter_description": "Sfoglia e contribuisci al database dei cerchi Classic Mini"
+      "og_title": "Cerchi Classic Mini: Misure, Offset e Foto",
+      "og_description": "Tutti i cerchi Classic Mini in un unico archivio: cerchi in acciaio e lega da 10, 12 e 13 pollici con larghezza, offset e foto. Cerca per nome o misura, oppure aggiungi un cerchio mancante.",
+      "twitter_title": "Cerchi Classic Mini: Misure, Offset e Foto",
+      "twitter_description": "Tutti i cerchi Classic Mini in un unico archivio: cerchi in acciaio e lega da 10, 12 e 13 pollici con larghezza, offset e foto. Cerca per nome o misura, oppure aggiungi un cerchio mancante."
     },
     "eyebrow": "LIBRERIA CERCHI"
   },
   "de": {
-    "title": "Classic Mini Felgen-Archiv - Classic Mini DIY",
-    "description": "Durchsuchen und erweitern Sie die Classic Mini Felgen-Datenbank",
+    "title": "Classic Mini Felgen: Größen, Einpresstiefen & Fotos",
+    "description": "Alle Classic Mini Felgen in einem Archiv: Stahl- und Alufelgen in 10, 12 und 13 Zoll mit Breite, Einpresstiefe und Fotos. Suche nach Name oder Größe oder ergänze eine fehlende Felge.",
     "keywords": "Classic Mini Felgen, Mini Cooper Felgen, Felgen-Fitment, Felgen-Datenbank, Aftermarket-Felgen, Serienfelgen, Felgeneinpresstiefe, Lochkreis",
     "hero_title": "Classic Mini Felgen",
     "breadcrumb_title": "Felgen",
@@ -299,16 +294,16 @@
       "description": "Diese Datenbank wurde ursprünglich von der inzwischen eingestellten Website bezogen"
     },
     "seo": {
-      "og_title": "Classic Mini Felgen-Archiv - Classic Mini DIY",
-      "og_description": "Durchsuchen und erweitern Sie die Classic Mini Felgen-Datenbank",
-      "twitter_title": "Classic Mini Felgen-Archiv - Classic Mini DIY",
-      "twitter_description": "Durchsuchen und erweitern Sie die Classic Mini Felgen-Datenbank"
+      "og_title": "Classic Mini Felgen: Größen, Einpresstiefen & Fotos",
+      "og_description": "Alle Classic Mini Felgen in einem Archiv: Stahl- und Alufelgen in 10, 12 und 13 Zoll mit Breite, Einpresstiefe und Fotos. Suche nach Name oder Größe oder ergänze eine fehlende Felge.",
+      "twitter_title": "Classic Mini Felgen: Größen, Einpresstiefen & Fotos",
+      "twitter_description": "Alle Classic Mini Felgen in einem Archiv: Stahl- und Alufelgen in 10, 12 und 13 Zoll mit Breite, Einpresstiefe und Fotos. Suche nach Name oder Größe oder ergänze eine fehlende Felge."
     },
     "eyebrow": "RAD-BIBLIOTHEK"
   },
   "pt": {
-    "title": "Arquivo de Rodas Classic Mini - Classic Mini DIY",
-    "description": "Navegue e contribua para a base de dados de rodas do Classic Mini",
+    "title": "Jantes Classic Mini: Medidas, Offsets e Fotos",
+    "description": "Todas as jantes Classic Mini num único arquivo: jantes de aço e liga leve de 10, 12 e 13 polegadas com largura, offset e fotos. Pesquise por nome ou medida, ou adicione uma jante em falta.",
     "keywords": "rodas Classic Mini, rodas Mini Cooper, fitment de rodas, base de dados de rodas, rodas aftermarket, rodas de fábrica, offset de roda, padrão de parafusos",
     "hero_title": "Rodas Classic Mini",
     "breadcrumb_title": "Rodas",
@@ -327,16 +322,16 @@
       "description": "Esta base de dados foi originalmente retirada do extinto"
     },
     "seo": {
-      "og_title": "Arquivo de Rodas Classic Mini - Classic Mini DIY",
-      "og_description": "Navegue e contribua para a base de dados de rodas do Classic Mini",
-      "twitter_title": "Arquivo de Rodas Classic Mini - Classic Mini DIY",
-      "twitter_description": "Navegue e contribua para a base de dados de rodas do Classic Mini"
+      "og_title": "Jantes Classic Mini: Medidas, Offsets e Fotos",
+      "og_description": "Todas as jantes Classic Mini num único arquivo: jantes de aço e liga leve de 10, 12 e 13 polegadas com largura, offset e fotos. Pesquise por nome ou medida, ou adicione uma jante em falta.",
+      "twitter_title": "Jantes Classic Mini: Medidas, Offsets e Fotos",
+      "twitter_description": "Todas as jantes Classic Mini num único arquivo: jantes de aço e liga leve de 10, 12 e 13 polegadas com largura, offset e fotos. Pesquise por nome ou medida, ou adicione uma jante em falta."
     },
     "eyebrow": "BIBLIOTECA DE RODAS"
   },
   "ru": {
-    "title": "Архив дисков Classic Mini - Classic Mini DIY",
-    "description": "Просматривайте и пополняйте базу данных дисков Classic Mini",
+    "title": "Диски Classic Mini: размеры, вылет и фото",
+    "description": "Все диски Classic Mini в одном архиве: стальные и легкосплавные диски 10, 12 и 13 дюймов с шириной, вылетом и фото. Ищите по названию или размеру или добавьте недостающий диск.",
     "keywords": "диски Classic Mini, диски Mini Cooper, подбор дисков, база данных дисков, тюнинговые диски, заводские диски, вылет диска, болтовой рисунок",
     "hero_title": "Диски Classic Mini",
     "breadcrumb_title": "Диски",
@@ -355,16 +350,16 @@
       "description": "Эта база данных изначально была получена с ныне несуществующего сайта"
     },
     "seo": {
-      "og_title": "Архив дисков Classic Mini - Classic Mini DIY",
-      "og_description": "Просматривайте и пополняйте базу данных дисков Classic Mini",
-      "twitter_title": "Архив дисков Classic Mini - Classic Mini DIY",
-      "twitter_description": "Просматривайте и пополняйте базу данных дисков Classic Mini"
+      "og_title": "Диски Classic Mini: размеры, вылет и фото",
+      "og_description": "Все диски Classic Mini в одном архиве: стальные и легкосплавные диски 10, 12 и 13 дюймов с шириной, вылетом и фото. Ищите по названию или размеру или добавьте недостающий диск.",
+      "twitter_title": "Диски Classic Mini: размеры, вылет и фото",
+      "twitter_description": "Все диски Classic Mini в одном архиве: стальные и легкосплавные диски 10, 12 и 13 дюймов с шириной, вылетом и фото. Ищите по названию или размеру или добавьте недостающий диск."
     },
     "eyebrow": "БИБЛИОТЕКА КОЛЁС"
   },
   "ja": {
-    "title": "クラシックミニ ホイール アーカイブ - Classic Mini DIY",
-    "description": "クラシックミニのホイールデータベースを閲覧・投稿する",
+    "title": "Classic Miniホイール：サイズ・オフセット・写真",
+    "description": "Classic Miniのホイールを一つのアーカイブに。10、12、13インチのスチール・アルミホイールを幅、オフセット、写真付きで収録。名前やサイズで検索、または未収録のホイールを追加できます。",
     "keywords": "クラシックミニ ホイール, ミニクーパー ホイール, ホイールフィットメント, ホイールデータベース, アフターマーケット ホイール, 純正ホイール, ホイールオフセット, ボルトパターン",
     "hero_title": "クラシックミニ ホイール",
     "breadcrumb_title": "ホイール",
@@ -383,16 +378,16 @@
       "description": "このデータベースは現在閉鎖された以下のサイトを元に作成されました"
     },
     "seo": {
-      "og_title": "クラシックミニ ホイール アーカイブ - Classic Mini DIY",
-      "og_description": "クラシックミニのホイールデータベースを閲覧・投稿する",
-      "twitter_title": "クラシックミニ ホイール アーカイブ - Classic Mini DIY",
-      "twitter_description": "クラシックミニのホイールデータベースを閲覧・投稿する"
+      "og_title": "Classic Miniホイール：サイズ・オフセット・写真",
+      "og_description": "Classic Miniのホイールを一つのアーカイブに。10、12、13インチのスチール・アルミホイールを幅、オフセット、写真付きで収録。名前やサイズで検索、または未収録のホイールを追加できます。",
+      "twitter_title": "Classic Miniホイール：サイズ・オフセット・写真",
+      "twitter_description": "Classic Miniのホイールを一つのアーカイブに。10、12、13インチのスチール・アルミホイールを幅、オフセット、写真付きで収録。名前やサイズで検索、または未収録のホイールを追加できます。"
     },
     "eyebrow": "ホイールライブラリ"
   },
   "zh": {
-    "title": "经典迷你轮毂档案 - Classic Mini DIY",
-    "description": "浏览并为经典迷你轮毂数据库做出贡献",
+    "title": "Classic Mini轮毂：尺寸、偏距与图片",
+    "description": "所有Classic Mini轮毂尽在一个档案库：10、12和13英寸钢制与合金轮毂，附宽度、偏距和图片。按名称或尺寸搜索，或添加缺失的轮毂。",
     "keywords": "经典迷你轮毂, 迷你库珀轮毂, 轮毂匹配, 轮毂数据库, 改装轮毂, 原厂轮毂, 轮毂偏距, 螺栓孔距",
     "hero_title": "经典迷你轮毂",
     "breadcrumb_title": "轮毂",
@@ -411,16 +406,16 @@
       "description": "该数据库最初来源于现已停运的"
     },
     "seo": {
-      "og_title": "经典迷你轮毂档案 - Classic Mini DIY",
-      "og_description": "浏览并为经典迷你轮毂数据库做出贡献",
-      "twitter_title": "经典迷你轮毂档案 - Classic Mini DIY",
-      "twitter_description": "浏览并为经典迷你轮毂数据库做出贡献"
+      "og_title": "Classic Mini轮毂：尺寸、偏距与图片",
+      "og_description": "所有Classic Mini轮毂尽在一个档案库：10、12和13英寸钢制与合金轮毂，附宽度、偏距和图片。按名称或尺寸搜索，或添加缺失的轮毂。",
+      "twitter_title": "Classic Mini轮毂：尺寸、偏距与图片",
+      "twitter_description": "所有Classic Mini轮毂尽在一个档案库：10、12和13英寸钢制与合金轮毂，附宽度、偏距和图片。按名称或尺寸搜索，或添加缺失的轮毂。"
     },
     "eyebrow": "车轮库"
   },
   "ko": {
-    "title": "클래식 미니 휠 아카이브 - Classic Mini DIY",
-    "description": "클래식 미니 휠 데이터베이스를 탐색하고 기여하세요",
+    "title": "Classic Mini 휠: 크기, 오프셋, 사진",
+    "description": "모든 Classic Mini 휠을 하나의 아카이브에: 10, 12, 13인치 스틸 및 알로이 휠의 폭, 오프셋, 사진 수록. 이름이나 크기로 검색하거나 누락된 휠을 추가하세요.",
     "keywords": "클래식 미니 휠, 미니 쿠퍼 휠, 휠 피트먼트, 휠 데이터베이스, 애프터마켓 휠, 순정 휠, 휠 오프셋, 볼트 패턴",
     "hero_title": "클래식 미니 휠",
     "breadcrumb_title": "휠",
@@ -439,10 +434,10 @@
       "description": "이 데이터베이스는 현재 폐쇄된 다음 사이트에서 원래 제공받았습니다"
     },
     "seo": {
-      "og_title": "클래식 미니 휠 아카이브 - Classic Mini DIY",
-      "og_description": "클래식 미니 휠 데이터베이스를 탐색하고 기여하세요",
-      "twitter_title": "클래식 미니 휠 아카이브 - Classic Mini DIY",
-      "twitter_description": "클래식 미니 휠 데이터베이스를 탐색하고 기여하세요"
+      "og_title": "Classic Mini 휠: 크기, 오프셋, 사진",
+      "og_description": "모든 Classic Mini 휠을 하나의 아카이브에: 10, 12, 13인치 스틸 및 알로이 휠의 폭, 오프셋, 사진 수록. 이름이나 크기로 검색하거나 누락된 휠을 추가하세요.",
+      "twitter_title": "Classic Mini 휠: 크기, 오프셋, 사진",
+      "twitter_description": "모든 Classic Mini 휠을 하나의 아카이브에: 10, 12, 13인치 스틸 및 알로이 휠의 폭, 오프셋, 사진 수록. 이름이나 크기로 검색하거나 누락된 휠을 추가하세요."
     },
     "eyebrow": "휠 라이브러리"
   }
