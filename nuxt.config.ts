@@ -522,6 +522,30 @@ export default defineNuxtConfig({
         ],
       },
       {
+        title: 'ECU Maps',
+        description:
+          'Free base ECU tuning maps and WireViz wiring diagrams for Classic Mini A-series engines (5-port and 16V, turbo and drive-by-wire). Not plug and play: every map needs dyno tuning for the individual car.',
+        links: [
+          {
+            title: 'Classic Mini ECU Maps',
+            description:
+              'Haltech, Speeduino, MegaSquirt, Emerald, ECUMaster, MaxxECU, DTAFast, and MegaJolt base maps with a feature support table',
+            href: 'https://www.classicminidiy.com/maps',
+          },
+          {
+            title: 'ECU Maps catalog (maps.json)',
+            description:
+              'Machine-readable list of every map file (ECU, engine, role, software version), the support matrix, and wiring diagram outputs',
+            href: 'https://raw.githubusercontent.com/ClassicMiniDIY/MiniECUMaps/main/maps.json',
+          },
+          {
+            title: 'ECU Maps source repository',
+            description: 'GitHub repository with all map files, dyno logs, and wiring diagrams',
+            href: 'https://github.com/ClassicMiniDIY/MiniECUMaps',
+          },
+        ],
+      },
+      {
         title: '3D Model Library',
         description:
           'Community 3D-printable parts for the Classic Mini — a marketplace of downloadable model files (STL and more) for restoration, repair, and upgrades.',
