@@ -24,14 +24,14 @@ export const PAGE_DESCRIPTIONS: PageDescription[] = [
   },
   {
     route: '/maps',
-    title: 'Interactive Maps',
+    title: 'ECU Maps',
     description:
-      'Interactive mapping system for locating Classic Mini related businesses, services, and points of interest worldwide.',
+      'Base ECU tuning maps for Classic Mini engines across Haltech, Speeduino, MegaSquirt, Emerald, ECUMaster, MaxxECU, DTAFast, and MegaJolt. Not plug and play — every map needs dyno tuning.',
     functions: [
-      'Display interactive world map',
-      'Show Mini-related businesses and services',
-      'Filter locations by type and region',
-      'Provide contact information for businesses',
+      'Show the per-ECU feature support table (read from maps.json in the ECU maps repo)',
+      'Link to the paid store copy and the free GitHub download',
+      'List recent map commits and releases',
+      'Show the not-plug-and-play disclaimer',
     ],
     category: 'utility',
   },
