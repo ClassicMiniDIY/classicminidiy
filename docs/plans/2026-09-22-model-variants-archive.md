@@ -300,7 +300,7 @@ guessing."
 - `omnisearch()` (private repo) gets a `variants` union branch; intent ordering in
   `server/utils/searchTriage.ts` sends model-shaped queries ("mini 1275 gt specs",
   "cooper s 1071") to variants first.
-- `ARCHIVE_SEARCH_SECTIONS` terms: `models`, `variants`, `mark`, `mk1`…`mk7`, `cooper`,
+- `ARCHIVE_SEARCH_SECTIONS` terms: `model variants`, `model specs`, `variants` (never bare `models`: that is the 3D library), `mark`, `mk1`…`mk7`, `cooper`,
   `cooper s`, `clubman`, `1275 gt`, `innocenti`, `authi`, `limited edition`, `specs`.
 
 ## 6. Mobile

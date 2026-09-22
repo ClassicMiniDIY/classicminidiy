@@ -58,8 +58,7 @@
     if (value) next[key] = value;
     else delete next[key];
     router.replace({ query: next });
-    if (key === 'q') trackSearch('variants', value ?? '', filtered.value.length);
-    else track('archive_filter_changed', { section: 'variants', filter: key, value: value ?? '' });
+    if (key !== 'q') track('archive_filter_changed', { section: 'variants', filter: key, value: value ?? '' });
   };
   const clearFilters = () => router.replace({ query: {} });
   const hasFilters = computed(() =>
@@ -73,14 +72,20 @@
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => setParam('q', value.trim() || null), 250);
   });
+  // Tracked after the route settles so the count is this query's, not the last one's.
   watch(query, (value) => {
+    if (value) trackSearch('variants', value, filtered.value.length);
     // Compare trimmed: the URL never carries the trailing space the user is
     // mid-way through typing, and resetting the box would eat it.
     if (value !== searchText.value.trim()) searchText.value = value;
   });
 
   /** Word-prefix match, never substring — the same builder the API and MCP tool use. */
-  const matches = (v: ModelVariantCard) => matchesEveryWord(variantSearchWords(v), query.value);
+  // Built once per data load, not per keystroke: the same words the API matches on.
+  const searchWords = computed(
+    () => new Map((data.value?.variants ?? []).map((v) => [v.slug, variantSearchWords(v)] as const))
+  );
+  const matches = (v: ModelVariantCard) => matchesEveryWord(searchWords.value.get(v.slug) ?? [], query.value);
 
   const filtered = computed(() =>
     (data.value?.variants ?? []).filter((v) => {
@@ -245,42 +250,47 @@
         </label>
         <select
           class="select select-bordered w-auto"
-          :value="marque"
           :aria-label="t('filters.marque')"
           @change="setParam('marque', ($event.target as HTMLSelectElement).value || null)"
         >
-          <option value="">{{ t('filters.marque') }}</option>
-          <option v-for="o in marqueOptions" :key="o.value" :value="o.value">{{ o.label }} ({{ o.count }})</option>
+          <option value="" :selected="!marque">{{ t('filters.marque') }}</option>
+          <option v-for="o in marqueOptions" :key="o.value" :value="o.value" :selected="o.value === marque">
+            {{ o.label }} ({{ o.count }})
+          </option>
         </select>
         <select
           class="select select-bordered w-auto"
-          :value="mark"
           :aria-label="t('filters.era')"
           @change="setParam('mark', ($event.target as HTMLSelectElement).value || null)"
         >
-          <option value="">{{ t('filters.era') }}</option>
-          <option v-for="n in MARK_NUMBERS" :key="n" :value="String(n)">
+          <option value="" :selected="!mark">{{ t('filters.era') }}</option>
+          <option v-for="n in MARK_NUMBERS" :key="n" :value="String(n)" :selected="String(n) === mark">
             Mk {{ MARK_RANGES[n]!.roman }} · {{ MARK_RANGES[n]!.start }}–{{ MARK_RANGES[n]!.end }}
           </option>
-          <option :value="OVERSEAS_GROUP">{{ t('group_overseas') }}</option>
+          <option :value="OVERSEAS_GROUP" :selected="mark === OVERSEAS_GROUP">{{ t('group_overseas') }}</option>
         </select>
         <select
           class="select select-bordered w-auto"
-          :value="body"
           :aria-label="t('filters.body')"
           @change="setParam('body', ($event.target as HTMLSelectElement).value || null)"
         >
-          <option value="">{{ t('filters.body') }}</option>
-          <option v-for="o in bodyOptions" :key="o.value" :value="o.value">{{ o.label }} ({{ o.count }})</option>
+          <option value="" :selected="!body">{{ t('filters.body') }}</option>
+          <option v-for="o in bodyOptions" :key="o.value" :value="o.value" :selected="o.value === body">
+            {{ o.label }} ({{ o.count }})
+          </option>
         </select>
         <select
           class="select select-bordered w-auto"
-          :value="engine"
           :aria-label="t('filters.engine')"
           @change="setParam('engine', ($event.target as HTMLSelectElement).value || null)"
         >
-          <option value="">{{ t('filters.engine') }}</option>
-          <option v-for="o in engineOptions" :key="o.value" :value="String(o.value)">
+          <option value="" :selected="!engine">{{ t('filters.engine') }}</option>
+          <option
+            v-for="o in engineOptions"
+            :key="o.value"
+            :value="String(o.value)"
+            :selected="String(o.value) === engine"
+          >
             {{ o.value }} cc ({{ o.count }})
           </option>
         </select>
@@ -314,7 +324,19 @@
             :to="`/archive/variants/${v.slug}`"
             class="card bg-base-100 border border-base-300 shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
           >
-            <div class="aspect-[16/10] bg-base-200 flex flex-col items-center justify-center gap-1.5 text-center px-3">
+            <figure v-if="v.photo_url" class="aspect-[16/10] bg-base-200 overflow-hidden m-0">
+              <NuxtImg
+                :src="v.photo_url"
+                :alt="v.name"
+                format="webp"
+                loading="lazy"
+                class="w-full h-full object-cover"
+              />
+            </figure>
+            <div
+              v-else
+              class="aspect-[16/10] bg-base-200 flex flex-col items-center justify-center gap-1.5 text-center px-3"
+            >
               <i class="fas fa-camera text-2xl text-secondary" aria-hidden="true"></i>
               <span class="text-xs font-semibold text-secondary">{{ t('card.missing_photos') }}</span>
             </div>

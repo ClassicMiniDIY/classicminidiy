@@ -47,11 +47,11 @@
   const photos = computed(() => variant.value.images.filter((i) => i.url));
   const hasPhotos = computed(() => photos.value.length > 0);
 
-  // ---- Source chips ---------------------------------------------------------
-  // Every row from the seed cites source 1 (the archived page). Contributions
-  // add sources in order; the chip index is 1-based to read like a footnote.
+  // ---- Sources ---------------------------------------------------------------
+  // Per-field provenance arrives with Phase 4 contributions. Until then each
+  // spec group cites the variant's sources once, in its heading, rather than
+  // stamping every row with a chip that would go stale on the first correction.
   const sources = computed(() => variant.value.sources ?? []);
-  const seedChip = 'S1';
 
   const fmt = (n: number, digits = 0) => n.toLocaleString('en-GB', { maximumFractionDigits: digits });
 
@@ -179,7 +179,11 @@
   };
 
   // ---- SEO ------------------------------------------------------------------
-  const title = computed(() => t('seo.title', { name: variant.value.name, years: years.value || '1959–2000' }));
+  const title = computed(() =>
+    years.value
+      ? t('seo.title', { name: variant.value.name, years: years.value })
+      : t('seo.title_no_years', { name: variant.value.name })
+  );
   const description = computed(() => {
     const v = variant.value;
     const bits = [
@@ -347,6 +351,14 @@
               <div class="flex items-center mb-1">
                 <h2 class="text-xs font-bold tracking-[0.08em] uppercase opacity-70 flex-1 m-0">
                   <i :class="group.icon" class="text-primary" aria-hidden="true"></i>&ensp;{{ group.title }}
+                  <a
+                    v-for="(s, i) in sources"
+                    :key="i"
+                    :href="`#source-${Number(i) + 1}`"
+                    class="src-chip ml-1 normal-case"
+                    :title="s.title"
+                    >S{{ Number(i) + 1 }}</a
+                  >
                 </h2>
                 <button
                   type="button"
@@ -362,7 +374,6 @@
                     <td class="spec-label">{{ row.label }}</td>
                     <td>
                       {{ row.value }}
-                      <a :href="`#source-1`" class="src-chip" :title="sources[0]?.title">{{ seedChip }}</a>
                       <NuxtLink
                         v-if="row.link"
                         :to="row.link.to"
@@ -403,7 +414,6 @@
                 >
                   <i class="fas fa-droplet text-xs" aria-hidden="true"></i>{{ colour }}
                 </NuxtLink>
-                <a href="#source-1" class="src-chip self-center">{{ seedChip }}</a>
               </div>
               <p v-else class="text-sm opacity-60 m-0">{{ t('sections.no_colours') }}</p>
               <p v-if="variant.notes" class="text-sm opacity-70 mt-3 mb-0">{{ variant.notes }}</p>
@@ -451,13 +461,18 @@
             </div>
           </div>
 
-          <div id="source-1" class="card bg-base-100 border border-base-300 shadow-md scroll-mt-24">
+          <div class="card bg-base-100 border border-base-300 shadow-md">
             <div class="card-body p-5">
               <p class="text-xs font-bold tracking-[0.08em] uppercase opacity-70 m-0 mb-2">
                 {{ t('sections.sources') }}
               </p>
               <ol class="m-0 p-0 list-none flex flex-col gap-2">
-                <li v-for="(s, i) in sources" :key="i" class="text-sm leading-snug flex gap-2">
+                <li
+                  v-for="(s, i) in sources"
+                  :id="`source-${Number(i) + 1}`"
+                  :key="i"
+                  class="text-sm leading-snug flex gap-2 scroll-mt-24"
+                >
                   <span class="src-chip shrink-0">S{{ Number(i) + 1 }}</span>
                   <span>
                     <a
@@ -614,6 +629,7 @@
     },
     "seo": {
       "title": "{name} ({years}): Specs, Production & Colours",
+      "title_no_years": "{name}: Specs, Production & Colours",
       "description": "{name} {years} factory specifications: {specs}. Engine, power, torque, gearing, wheels, tyres, weight, top speed, production numbers and factory colours from the Classic Mini DIY archive.",
       "keywords": "{name}, Classic Mini specs, Mini production numbers, Mini factory colours, Mini model history",
       "built": "{n} built"
@@ -699,6 +715,7 @@
     },
     "seo": {
       "title": "{name} ({years}): Especificaciones, producción y colores",
+      "title_no_years": "{name}: Especificaciones, producción y colores",
       "description": "Especificaciones de fábrica del {name} {years}: {specs}. Motor, potencia, par, desarrollo, llantas, neumáticos, peso, velocidad máxima, producción y colores de fábrica del archivo Classic Mini DIY.",
       "keywords": "{name}, especificaciones Classic Mini, producción Mini, colores de fábrica Mini, historia de modelos Mini",
       "built": "{n} fabricados"
@@ -784,6 +801,7 @@
     },
     "seo": {
       "title": "{name} ({years}) : fiche technique, production et couleurs",
+      "title_no_years": "{name} : fiche technique, production et couleurs",
       "description": "Fiche technique d'usine de la {name} {years} : {specs}. Moteur, puissance, couple, pont, jantes, pneus, poids, vitesse maxi, production et couleurs d'usine, depuis l'archive Classic Mini DIY.",
       "keywords": "{name}, fiche technique Classic Mini, production Mini, couleurs d'usine Mini, histoire des modèles Mini",
       "built": "{n} produits"
@@ -869,6 +887,7 @@
     },
     "seo": {
       "title": "{name} ({years}): Technische Daten, Produktion und Farben",
+      "title_no_years": "{name}: Technische Daten, Produktion und Farben",
       "description": "Werksdaten des {name} {years}: {specs}. Motor, Leistung, Drehmoment, Übersetzung, Räder, Reifen, Gewicht, Höchstgeschwindigkeit, Stückzahlen und Werksfarben aus dem Classic Mini DIY Archiv.",
       "keywords": "{name}, Classic Mini technische Daten, Mini Stückzahlen, Mini Werksfarben, Mini Modellgeschichte",
       "built": "{n} gebaut"
@@ -954,6 +973,7 @@
     },
     "seo": {
       "title": "{name} ({years}): scheda tecnica, produzione e colori",
+      "title_no_years": "{name}: scheda tecnica, produzione e colori",
       "description": "Scheda tecnica di fabbrica della {name} {years}: {specs}. Motore, potenza, coppia, rapporti, cerchi, pneumatici, peso, velocità massima, produzione e colori di fabbrica dall'archivio Classic Mini DIY.",
       "keywords": "{name}, scheda tecnica Classic Mini, produzione Mini, colori di fabbrica Mini, storia dei modelli Mini",
       "built": "{n} prodotte"
@@ -1039,6 +1059,7 @@
     },
     "seo": {
       "title": "{name} ({years}): especificações, produção e cores",
+      "title_no_years": "{name}: especificações, produção e cores",
       "description": "Especificações de fábrica do {name} {years}: {specs}. Motor, potência, binário, relações, jantes, pneus, peso, velocidade máxima, produção e cores de fábrica do arquivo Classic Mini DIY.",
       "keywords": "{name}, especificações Classic Mini, produção Mini, cores de fábrica Mini, história dos modelos Mini",
       "built": "{n} produzidos"
@@ -1124,6 +1145,7 @@
     },
     "seo": {
       "title": "{name} ({years}): характеристики, тираж и цвета",
+      "title_no_years": "{name}: характеристики, тираж и цвета",
       "description": "Заводские характеристики {name} {years}: {specs}. Двигатель, мощность, момент, передачи, колёса, шины, масса, максимальная скорость, тираж и заводские цвета из архива Classic Mini DIY.",
       "keywords": "{name}, характеристики Classic Mini, тираж Mini, заводские цвета Mini, история моделей Mini",
       "built": "выпущено {n}"
@@ -1209,6 +1231,7 @@
     },
     "seo": {
       "title": "{name}（{years}）：スペック・生産台数・カラー",
+      "title_no_years": "{name}：スペック・生産台数・カラー",
       "description": "{name} {years}の工場スペック：{specs}。エンジン、出力、トルク、ギア比、ホイール、タイヤ、重量、最高速度、生産台数、工場カラーをClassic Mini DIYアーカイブから。",
       "keywords": "{name}, クラシックMini スペック, Mini 生産台数, Mini 工場カラー, Mini モデル史",
       "built": "{n}台生産"
@@ -1294,6 +1317,7 @@
     },
     "seo": {
       "title": "{name}（{years}）：参数、产量与颜色",
+      "title_no_years": "{name}：参数、产量与颜色",
       "description": "{name} {years}原厂参数：{specs}。来自Classic Mini DIY档案的发动机、功率、扭矩、齿比、车轮、轮胎、重量、最高时速、产量和原厂颜色。",
       "keywords": "{name}, 经典Mini参数, Mini产量, Mini原厂颜色, Mini车型历史",
       "built": "生产{n}辆"
@@ -1379,6 +1403,7 @@
     },
     "seo": {
       "title": "{name} ({years}): 제원, 생산 대수 및 색상",
+      "title_no_years": "{name}: 제원, 생산 대수 및 색상",
       "description": "{name} {years} 공장 제원: {specs}. Classic Mini DIY 아카이브의 엔진, 출력, 토크, 기어비, 휠, 타이어, 중량, 최고 속도, 생산 대수 및 공장 색상.",
       "keywords": "{name}, 클래식 Mini 제원, Mini 생산 대수, Mini 공장 색상, Mini 모델 역사",
       "built": "{n}대 생산"

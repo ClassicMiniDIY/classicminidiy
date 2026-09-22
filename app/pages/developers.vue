@@ -238,11 +238,15 @@
             </thead>
             <tbody>
               <tr v-for="tool in allTools" :key="tool">
-                <td><code>{{ tool }}</code></td>
+                <td>
+                  <code>{{ tool }}</code>
+                </td>
                 <td class="text-center">
                   <i v-if="FREE_TOOLS.has(tool)" class="fas fa-circle-check text-success" aria-hidden="true"></i>
                   <i v-else class="fas fa-circle-xmark opacity-30" aria-hidden="true"></i>
-                  <span class="sr-only">{{ FREE_TOOLS.has(tool) ? t('tools.included') : t('tools.not_included') }}</span>
+                  <span class="sr-only">{{
+                    FREE_TOOLS.has(tool) ? t('tools.included') : t('tools.not_included')
+                  }}</span>
                 </td>
                 <td class="text-center">
                   <i class="fas fa-circle-check text-success" aria-hidden="true"></i>
@@ -275,9 +279,11 @@
         <!-- Active subscriber -->
         <section v-else-if="isSubscribed" class="card bg-base-100 border border-primary/40 shadow-md">
           <div class="card-body items-center text-center">
-            <span class="badge badge-primary badge-lg gap-1"><i class="fas fa-code"></i>{{ t('subscriber.badge') }}</span>
+            <span class="badge badge-primary badge-lg gap-1"
+              ><i class="fas fa-code"></i>{{ t('subscriber.badge') }}</span
+            >
             <h2 class="text-2xl font-bold mt-2">{{ t('subscriber.title') }}</h2>
-            <p class="opacity-70 max-w-lg">{{ t('subscriber.subtitle') }}</p>
+            <p class="opacity-70 max-w-lg">{{ t('subscriber.subtitle', { n: allTools.length }) }}</p>
             <div class="card-actions mt-4">
               <NuxtLink to="/dashboard/api-keys" class="btn btn-primary">
                 <i class="fas fa-key" aria-hidden="true"></i>
@@ -308,7 +314,7 @@
         <section v-else class="card bg-base-100 border border-base-300 shadow-md">
           <div class="card-body items-center text-center">
             <h2 class="text-2xl font-bold">{{ t('cta.title') }}</h2>
-            <p class="opacity-70 max-w-lg">{{ t('cta.subtitle') }}</p>
+            <p class="opacity-70 max-w-lg">{{ t('cta.subtitle', { n: allTools.length }) }}</p>
 
             <div v-if="showPriceCard" class="join mt-4">
               <input
@@ -436,7 +442,7 @@
     "cta": {
       "checking": "Checking your account…",
       "title": "Unlock the full toolset",
-      "subtitle": "Subscribe once, and every key on your account gets all 11 tools and the higher rate limit.",
+      "subtitle": "Subscribe once, and every key on your account gets all {n} tools and the higher rate limit.",
       "subscribe": "Subscribe",
       "sign_in_subscribe": "Sign in to subscribe",
       "free_tier_note": "Just want the calculators?",
@@ -449,7 +455,7 @@
     "subscriber": {
       "badge": "Developer",
       "title": "You have the full toolset",
-      "subtitle": "All 11 tools and the 240/min limit are active on every key you hold.",
+      "subtitle": "All {n} tools and the 240/min limit are active on every key you hold.",
       "manage_keys": "Manage API keys"
     },
     "toasts": {
@@ -531,7 +537,7 @@
     "cta": {
       "checking": "Comprobando tu cuenta…",
       "title": "Desbloquea todas las herramientas",
-      "subtitle": "Suscríbete una vez y cada clave de tu cuenta tendrá las 11 herramientas y el límite superior.",
+      "subtitle": "Suscríbete una vez y cada clave de tu cuenta tendrá las {n} herramientas y el límite superior.",
       "subscribe": "Suscribirse",
       "sign_in_subscribe": "Inicia sesión para suscribirte",
       "free_tier_note": "¿Solo quieres las calculadoras?",
@@ -544,7 +550,7 @@
     "subscriber": {
       "badge": "Desarrollador",
       "title": "Tienes todas las herramientas",
-      "subtitle": "Las 11 herramientas y el límite de 240/min están activos en todas tus claves.",
+      "subtitle": "Las {n} herramientas y el límite de 240/min están activos en todas tus claves.",
       "manage_keys": "Gestionar claves de API"
     },
     "toasts": {
@@ -626,7 +632,7 @@
     "cta": {
       "checking": "Vérification de votre compte…",
       "title": "Débloquez l'ensemble des outils",
-      "subtitle": "Abonnez-vous une fois, et chaque clé de votre compte obtient les 11 outils et la limite supérieure.",
+      "subtitle": "Abonnez-vous une fois, et chaque clé de votre compte obtient les {n} outils et la limite supérieure.",
       "subscribe": "S'abonner",
       "sign_in_subscribe": "Connectez-vous pour vous abonner",
       "free_tier_note": "Vous ne voulez que les calculateurs ?",
@@ -639,7 +645,7 @@
     "subscriber": {
       "badge": "Développeur",
       "title": "Vous avez tous les outils",
-      "subtitle": "Les 11 outils et la limite de 240/min sont actifs sur chacune de vos clés.",
+      "subtitle": "Les {n} outils et la limite de 240/min sont actifs sur chacune de vos clés.",
       "manage_keys": "Gérer les clés d'API"
     },
     "toasts": {
@@ -721,7 +727,7 @@
     "cta": {
       "checking": "Konto wird geprüft…",
       "title": "Schalten Sie alle Tools frei",
-      "subtitle": "Einmal abonnieren, und jeder Schlüssel Ihres Kontos erhält alle 11 Tools und das höhere Limit.",
+      "subtitle": "Einmal abonnieren, und jeder Schlüssel Ihres Kontos erhält alle {n} Tools und das höhere Limit.",
       "subscribe": "Abonnieren",
       "sign_in_subscribe": "Anmelden und abonnieren",
       "free_tier_note": "Nur die Rechner gewünscht?",
@@ -734,7 +740,7 @@
     "subscriber": {
       "badge": "Entwickler",
       "title": "Sie haben alle Tools",
-      "subtitle": "Alle 11 Tools und das 240/Min-Limit sind auf jedem Ihrer Schlüssel aktiv.",
+      "subtitle": "Alle {n} Tools und das 240/Min-Limit sind auf jedem Ihrer Schlüssel aktiv.",
       "manage_keys": "API-Schlüssel verwalten"
     },
     "toasts": {
@@ -816,7 +822,7 @@
     "cta": {
       "checking": "Verifica dell'account…",
       "title": "Sblocca tutti gli strumenti",
-      "subtitle": "Abbonati una volta e ogni chiave del tuo account avrà tutti gli 11 strumenti e il limite superiore.",
+      "subtitle": "Abbonati una volta e ogni chiave del tuo account avrà tutti gli {n} strumenti e il limite superiore.",
       "subscribe": "Abbonati",
       "sign_in_subscribe": "Accedi per abbonarti",
       "free_tier_note": "Vuoi solo i calcolatori?",
@@ -829,7 +835,7 @@
     "subscriber": {
       "badge": "Sviluppatore",
       "title": "Hai tutti gli strumenti",
-      "subtitle": "Tutti gli 11 strumenti e il limite di 240/min sono attivi su ogni tua chiave.",
+      "subtitle": "Tutti gli {n} strumenti e il limite di 240/min sono attivi su ogni tua chiave.",
       "manage_keys": "Gestisci le chiavi API"
     },
     "toasts": {
@@ -911,7 +917,7 @@
     "cta": {
       "checking": "Verificando sua conta…",
       "title": "Desbloqueie o conjunto completo",
-      "subtitle": "Assine uma vez e cada chave da sua conta recebe as 11 ferramentas e o limite maior.",
+      "subtitle": "Assine uma vez e cada chave da sua conta recebe as {n} ferramentas e o limite maior.",
       "subscribe": "Assinar",
       "sign_in_subscribe": "Entre para assinar",
       "free_tier_note": "Só quer as calculadoras?",
@@ -924,7 +930,7 @@
     "subscriber": {
       "badge": "Desenvolvedor",
       "title": "Você tem o conjunto completo",
-      "subtitle": "As 11 ferramentas e o limite de 240/min estão ativos em todas as suas chaves.",
+      "subtitle": "As {n} ferramentas e o limite de 240/min estão ativos em todas as suas chaves.",
       "manage_keys": "Gerenciar chaves de API"
     },
     "toasts": {
@@ -1006,7 +1012,7 @@
     "cta": {
       "checking": "Проверяем ваш аккаунт…",
       "title": "Откройте полный набор инструментов",
-      "subtitle": "Подпишитесь один раз — и каждый ключ вашего аккаунта получит все 11 инструментов и повышенный лимит.",
+      "subtitle": "Подпишитесь один раз — и каждый ключ вашего аккаунта получит все {n} инструментов и повышенный лимит.",
       "subscribe": "Подписаться",
       "sign_in_subscribe": "Войдите, чтобы подписаться",
       "free_tier_note": "Нужны только калькуляторы?",
@@ -1019,7 +1025,7 @@
     "subscriber": {
       "badge": "Разработчик",
       "title": "У вас полный набор инструментов",
-      "subtitle": "Все 11 инструментов и лимит 240/мин активны на каждом вашем ключе.",
+      "subtitle": "Все {n} инструментов и лимит 240/мин активны на каждом вашем ключе.",
       "manage_keys": "Управлять ключами API"
     },
     "toasts": {
@@ -1101,7 +1107,7 @@
     "cta": {
       "checking": "アカウントを確認中…",
       "title": "フルツールセットを解放",
-      "subtitle": "一度サブスクリプションに登録すれば、アカウントのすべてのキーで11個のツールと高いレート上限が使えます。",
+      "subtitle": "一度サブスクリプションに登録すれば、アカウントのすべてのキーで{n}個のツールと高いレート上限が使えます。",
       "subscribe": "登録する",
       "sign_in_subscribe": "ログインして登録",
       "free_tier_note": "計算ツールだけで十分ですか？",
@@ -1114,7 +1120,7 @@
     "subscriber": {
       "badge": "開発者",
       "title": "フルツールセットが有効です",
-      "subtitle": "11個すべてのツールと毎分240の上限が、お持ちのすべてのキーで有効です。",
+      "subtitle": "{n}個すべてのツールと毎分240の上限が、お持ちのすべてのキーで有効です。",
       "manage_keys": "APIキーを管理"
     },
     "toasts": {
@@ -1196,7 +1202,7 @@
     "cta": {
       "checking": "正在检查您的账户…",
       "title": "解锁全套工具",
-      "subtitle": "订阅一次，账户中的每个密钥都将获得全部 11 个工具和更高的速率上限。",
+      "subtitle": "订阅一次，账户中的每个密钥都将获得全部 {n} 个工具和更高的速率上限。",
       "subscribe": "订阅",
       "sign_in_subscribe": "登录后订阅",
       "free_tier_note": "只需要计算器？",
@@ -1209,7 +1215,7 @@
     "subscriber": {
       "badge": "开发者",
       "title": "您已拥有全套工具",
-      "subtitle": "全部 11 个工具和每分钟 240 次的上限已在您的所有密钥上生效。",
+      "subtitle": "全部 {n} 个工具和每分钟 240 次的上限已在您的所有密钥上生效。",
       "manage_keys": "管理 API 密钥"
     },
     "toasts": {
@@ -1291,7 +1297,7 @@
     "cta": {
       "checking": "계정 확인 중…",
       "title": "전체 도구 세트를 잠금 해제하세요",
-      "subtitle": "한 번 구독하면 계정의 모든 키에서 11개 도구와 더 높은 속도 한도를 사용할 수 있습니다.",
+      "subtitle": "한 번 구독하면 계정의 모든 키에서 {n}개 도구와 더 높은 속도 한도를 사용할 수 있습니다.",
       "subscribe": "구독하기",
       "sign_in_subscribe": "로그인하고 구독하기",
       "free_tier_note": "계산기만 필요하신가요?",
@@ -1304,7 +1310,7 @@
     "subscriber": {
       "badge": "개발자",
       "title": "전체 도구 세트를 보유 중입니다",
-      "subtitle": "11개 도구 전체와 분당 240회 한도가 모든 키에서 활성화되어 있습니다.",
+      "subtitle": "{n}개 도구 전체와 분당 240회 한도가 모든 키에서 활성화되어 있습니다.",
       "manage_keys": "API 키 관리"
     },
     "toasts": {
