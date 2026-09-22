@@ -6897,6 +6897,10 @@ export type Database = {
         Args: { p_key: string; p_value: string };
         Returns: Json;
       };
+      set_variant_primary_photo: {
+        Args: { p_photo_id: string };
+        Returns: string;
+      };
       submit_model_version: {
         Args: { p_version_id: string };
         Returns: {
