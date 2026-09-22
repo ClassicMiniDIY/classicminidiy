@@ -137,7 +137,7 @@
     variantCardsLoaded.value = true;
     try {
       const res = await $fetch<{ variants: ModelVariantCard[] }>('/api/archive/variants');
-      variantCards.value = res.variants;
+      variantCards.value = res?.variants ?? [];
     } catch {
       variantCardsLoaded.value = false; // The picker is optional; the owner can still submit.
     }
@@ -205,6 +205,7 @@
 
   const resetForm = () => {
     step.value = 1;
+    resetValidation();
     files.value = [];
     Object.keys(form).forEach((key) => {
       form[key] = FIELD_DEFAULTS[key] ?? '';
@@ -263,59 +264,119 @@
     if (typeof document !== 'undefined') document.body.style.overflow = '';
   });
 
-  const errors = computed<string[]>(() => {
-    const problems: string[] = [];
+  /**
+   * Every problem, keyed by the field it belongs to, so the message renders
+   * under that field. `errors` (the flat list) still gates Continue/Submit.
+   */
+  const fieldErrors = computed<Record<string, string>>(() => {
+    const problems: Record<string, string> = {};
     if (isRequestMode.value) {
-      if (requestTitle.value.trim().length < 3) problems.push(t('errors.request_title'));
+      if (requestTitle.value.trim().length < 3) problems.requestTitle = t('errors.request_title');
       return problems;
     }
 
     if (kind.value === 'document') {
-      if (!form.title.trim()) problems.push(t('errors.title'));
-      if (files.value.length === 0) problems.push(t('errors.file'));
+      if (!form.title.trim()) problems.title = t('errors.title');
+      if (files.value.length === 0) problems.files = t('errors.file');
     } else if (kind.value === 'registry') {
-      if (!/^\d{4}$/.test(form.year.trim())) problems.push(t('errors.year'));
-      if (!form.model.trim()) problems.push(t('errors.model'));
+      if (!/^\d{4}$/.test(form.year.trim())) problems.year = t('errors.year');
+      if (!form.model.trim()) problems.model = t('errors.model');
     } else if (kind.value === 'wheel') {
-      if (isGapFill.value) {
-        if (files.value.length === 0) problems.push(t('errors.photo'));
-      } else {
-        if (!form.name.trim()) problems.push(t('errors.name'));
-        if (!form.size.trim()) problems.push(t('errors.size'));
-        if (files.value.length === 0) problems.push(t('errors.photo'));
+      if (!isGapFill.value) {
+        if (!form.name.trim()) problems.name = t('errors.name');
+        if (!form.size.trim()) problems.size = t('errors.size');
       }
+      if (files.value.length === 0) problems.files = t('errors.photo');
     } else if (kind.value === 'variant') {
       if (variantMode.value === 'photos') {
-        if (files.value.length === 0) problems.push(t('errors.photo'));
+        if (files.value.length === 0) problems.files = t('errors.photo');
       } else {
         if (variantMode.value === 'new') {
-          if (!vform.name?.trim()) problems.push(t('variant.errors.name'));
-          if (!vform.marque || !vform.family || !vform.body_style) problems.push(t('variant.errors.class'));
-          if (!/^(19[5-9]\d|2000)$/.test(vform.year_start?.trim() ?? '')) problems.push(t('variant.errors.year'));
-          if (NEW_VARIANT_FIELDS.some((k) => isNumericField(k) && !numberOk(k, vform[k] ?? '')))
-            problems.push(t('variant.errors.number'));
+          if (!vform.name?.trim()) problems['v.name'] = t('variant.errors.name');
+          for (const key of ['marque', 'family', 'body_style']) {
+            if (!vform[key]) problems[`v.${key}`] = t('variant.errors.class');
+          }
+          if (!/^(19[5-9]\d|2000)$/.test(vform.year_start?.trim() ?? ''))
+            problems['v.year_start'] = t('variant.errors.year');
+          for (const key of NEW_VARIANT_FIELDS) {
+            if (key !== 'mark' && isNumericField(key) && !numberOk(key, vform[key] ?? '')) {
+              problems[`v.${key}`] ??= t('variant.errors.number');
+            }
+          }
           const ys = Number(vform.year_start);
           const ye = Number(vform.year_end);
-          if (vform.year_end?.trim() && ye < ys) problems.push(t('variant.errors.years_order'));
+          if (vform.year_end?.trim() && ye < ys) problems['v.year_end'] ??= t('variant.errors.years_order');
         } else {
           const next = variantValue.value.trim();
-          if (!next || next === currentValue.value.trim()) problems.push(t('variant.errors.value'));
+          if (!next || next === currentValue.value.trim()) problems.variantValue = t('variant.errors.value');
           else if (isNumericField(variantField.value) && !numberOk(variantField.value, next))
-            problems.push(t('variant.errors.number'));
-          else if (variantField.value === 'name' && next.length > 160) problems.push(t('variant.errors.name'));
+            problems.variantValue = t('variant.errors.number');
+          else if (variantField.value === 'name' && next.length > 160) problems.variantValue = t('variant.errors.name');
         }
-        if (source.title.trim().length < 3) problems.push(t('variant.errors.source'));
+        if (source.title.trim().length < 3) problems.sourceTitle = t('variant.errors.source');
       }
     } else if (kind.value === 'fix') {
-      if (form.reason.trim().length < 10) problems.push(t('errors.reason'));
+      if (form.reason.trim().length < 10) problems.reason = t('errors.reason');
     }
     return problems;
   });
+  const errors = computed(() => [...new Set(Object.values(fieldErrors.value))]);
+
+  /**
+   * A field's error shows once the person has left that field (blur, or a
+   * change for selects and files), or after they press Continue/Submit with
+   * problems left. Never on first render: a form that opens full of red
+   * reads as "you already did something wrong".
+   */
+  const touched = reactive<Record<string, boolean>>({});
+  const attempted = ref(false);
+  const touch = (key: string) => {
+    touched[key] = true;
+  };
+  const resetValidation = () => {
+    Object.keys(touched).forEach((key) => delete touched[key]);
+    attempted.value = false;
+  };
+  const shownError = (key: string): string | undefined =>
+    touched[key] || attempted.value ? fieldErrors.value[key] : undefined;
+  const errorId = (key: string) => `contribute-error-${key.replace(/\W/g, '-')}`;
+  /** Spread onto a control: error styling, aria wiring and the touch on blur. */
+  const fieldAttrs = (key: string, control: 'input' | 'select' | 'textarea' = 'input') => {
+    const shown = Boolean(shownError(key));
+    return {
+      class: shown ? `${control}-error` : undefined,
+      'aria-invalid': shown ? true : undefined,
+      'aria-describedby': shown ? errorId(key) : undefined,
+      onBlur: () => touch(key),
+      ...(control === 'select' ? { onChange: () => touch(key) } : {}),
+    };
+  };
+
+  const wizardBody = useTemplateRef<HTMLElement>('wizardBody');
+  /** Reveal every problem and put the cursor on the first one. */
+  const revealProblems = async () => {
+    attempted.value = true;
+    await nextTick();
+    wizardBody.value?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  };
+
+  const onFilesChange = (next: File[]) => {
+    files.value = next;
+    touch('files');
+  };
+
+  // A different form: nothing in it has been touched yet.
+  watch(kind, resetValidation);
 
   const canContinue = computed(() => (step.value === 1 ? true : errors.value.length === 0));
 
   const goNext = () => {
-    if (step.value < totalSteps && canContinue.value) step.value += 1;
+    if (step.value >= totalSteps) return;
+    if (!canContinue.value) {
+      void revealProblems();
+      return;
+    }
+    step.value += 1;
   };
   const goBack = () => {
     if (step.value > 1) step.value -= 1;
@@ -451,7 +512,11 @@
   };
 
   const submit = async () => {
-    if (submitting.value || errors.value.length > 0) return;
+    if (submitting.value) return;
+    if (errors.value.length > 0) {
+      void revealProblems();
+      return;
+    }
 
     if (!isAuthenticated.value) {
       closeWizard();
@@ -606,13 +671,25 @@
             ></div>
           </div>
 
-          <div class="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+          <div ref="wizardBody" class="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
             <!-- Request-it short path -->
             <template v-if="isRequestMode">
               <p class="mb-4 text-sm opacity-75">{{ t('request_body') }}</p>
               <label class="form-control mb-3 block">
                 <span class="mb-1 block text-sm font-semibold">{{ t('fields.request_title') }}</span>
-                <input v-model="requestTitle" type="text" class="input input-bordered w-full" maxlength="160" />
+                <input
+                  v-model="requestTitle"
+                  type="text"
+                  class="input input-bordered w-full"
+                  maxlength="160"
+                  v-bind="fieldAttrs('requestTitle')"
+                />
+                <span
+                  v-if="shownError('requestTitle')"
+                  :id="errorId('requestTitle')"
+                  class="mt-1 block text-xs text-error"
+                  >{{ shownError('requestTitle') }}</span
+                >
               </label>
               <label class="form-control block">
                 <span class="mb-1 block text-sm font-semibold">{{ t('fields.request_notes') }}</span>
@@ -661,7 +738,15 @@
               <div v-if="kind === 'document'" class="grid gap-3 sm:grid-cols-2">
                 <label class="form-control sm:col-span-2">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.title') }} *</span>
-                  <input v-model="form.title" type="text" class="input input-bordered w-full" />
+                  <input
+                    v-model="form.title"
+                    type="text"
+                    class="input input-bordered w-full"
+                    v-bind="fieldAttrs('title')"
+                  />
+                  <span v-if="shownError('title')" :id="errorId('title')" class="mt-1 block text-xs text-error">{{
+                    shownError('title')
+                  }}</span>
                 </label>
                 <label class="form-control">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.doc_type') }}</span>
@@ -690,11 +775,28 @@
               <div v-else-if="kind === 'registry'" class="grid gap-3 sm:grid-cols-2">
                 <label class="form-control">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.year') }} *</span>
-                  <input v-model="form.year" type="text" inputmode="numeric" class="input input-bordered w-full" />
+                  <input
+                    v-model="form.year"
+                    type="text"
+                    inputmode="numeric"
+                    class="input input-bordered w-full"
+                    v-bind="fieldAttrs('year')"
+                  />
+                  <span v-if="shownError('year')" :id="errorId('year')" class="mt-1 block text-xs text-error">{{
+                    shownError('year')
+                  }}</span>
                 </label>
                 <label class="form-control">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.model') }} *</span>
-                  <input v-model="form.model" type="text" class="input input-bordered w-full" />
+                  <input
+                    v-model="form.model"
+                    type="text"
+                    class="input input-bordered w-full"
+                    v-bind="fieldAttrs('model')"
+                  />
+                  <span v-if="shownError('model')" :id="errorId('model')" class="mt-1 block text-xs text-error">{{
+                    shownError('model')
+                  }}</span>
                 </label>
                 <label class="form-control">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.trim') }}</span>
@@ -760,11 +862,28 @@
                 <template v-if="!isGapFill">
                   <label class="form-control sm:col-span-2">
                     <span class="mb-1 block text-sm font-semibold">{{ t('fields.name') }} *</span>
-                    <input v-model="form.name" type="text" class="input input-bordered w-full" />
+                    <input
+                      v-model="form.name"
+                      type="text"
+                      class="input input-bordered w-full"
+                      v-bind="fieldAttrs('name')"
+                    />
+                    <span v-if="shownError('name')" :id="errorId('name')" class="mt-1 block text-xs text-error">{{
+                      shownError('name')
+                    }}</span>
                   </label>
                   <label class="form-control">
                     <span class="mb-1 block text-sm font-semibold">{{ t('fields.size') }} *</span>
-                    <input v-model="form.size" type="text" class="input input-bordered w-full" placeholder="10" />
+                    <input
+                      v-model="form.size"
+                      type="text"
+                      class="input input-bordered w-full"
+                      placeholder="10"
+                      v-bind="fieldAttrs('size')"
+                    />
+                    <span v-if="shownError('size')" :id="errorId('size')" class="mt-1 block text-xs text-error">{{
+                      shownError('size')
+                    }}</span>
                   </label>
                   <label class="form-control">
                     <span class="mb-1 block text-sm font-semibold">{{ t('fields.width') }}</span>
@@ -810,6 +929,7 @@
                         v-model="variantValue"
                         rows="3"
                         class="textarea textarea-bordered w-full"
+                        v-bind="fieldAttrs('variantValue', 'textarea')"
                         :placeholder="variantField === 'colours' ? t('variant.colours_hint') : ''"
                       ></textarea>
                       <input
@@ -818,7 +938,14 @@
                         type="text"
                         :inputmode="isNumericField(variantField) ? 'decimal' : 'text'"
                         class="input input-bordered w-full"
+                        v-bind="fieldAttrs('variantValue')"
                       />
+                      <span
+                        v-if="shownError('variantValue')"
+                        :id="errorId('variantValue')"
+                        class="mt-1 block text-xs text-error"
+                        >{{ shownError('variantValue') }}</span
+                      >
                     </label>
                   </div>
                   <div v-else class="grid gap-3 sm:grid-cols-2">
@@ -855,28 +982,67 @@
                 <div v-else class="grid gap-3 sm:grid-cols-2">
                   <label class="form-control sm:col-span-2">
                     <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.name') }} *</span>
-                    <input v-model="vform.name" type="text" maxlength="160" class="input input-bordered w-full" />
+                    <input
+                      v-model="vform.name"
+                      type="text"
+                      maxlength="160"
+                      class="input input-bordered w-full"
+                      v-bind="fieldAttrs('v.name')"
+                    />
+                    <span v-if="shownError('v.name')" :id="errorId('v.name')" class="mt-1 block text-xs text-error">{{
+                      shownError('v.name')
+                    }}</span>
                   </label>
                   <label class="form-control">
                     <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.marque') }} *</span>
-                    <select v-model="vform.marque" class="select select-bordered w-full">
+                    <select
+                      v-model="vform.marque"
+                      class="select select-bordered w-full"
+                      v-bind="fieldAttrs('v.marque', 'select')"
+                    >
                       <option value="" disabled>—</option>
                       <option v-for="m in VARIANT_MARQUES" :key="m" :value="m">{{ MARQUE_LABELS[m] }}</option>
                     </select>
+                    <span
+                      v-if="shownError('v.marque')"
+                      :id="errorId('v.marque')"
+                      class="mt-1 block text-xs text-error"
+                      >{{ shownError('v.marque') }}</span
+                    >
                   </label>
                   <label class="form-control">
                     <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.family') }} *</span>
-                    <select v-model="vform.family" class="select select-bordered w-full">
+                    <select
+                      v-model="vform.family"
+                      class="select select-bordered w-full"
+                      v-bind="fieldAttrs('v.family', 'select')"
+                    >
                       <option value="" disabled>—</option>
                       <option v-for="f in VARIANT_FAMILIES" :key="f" :value="f">{{ FAMILY_LABELS[f] }}</option>
                     </select>
+                    <span
+                      v-if="shownError('v.family')"
+                      :id="errorId('v.family')"
+                      class="mt-1 block text-xs text-error"
+                      >{{ shownError('v.family') }}</span
+                    >
                   </label>
                   <label class="form-control">
                     <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.body_style') }} *</span>
-                    <select v-model="vform.body_style" class="select select-bordered w-full">
+                    <select
+                      v-model="vform.body_style"
+                      class="select select-bordered w-full"
+                      v-bind="fieldAttrs('v.body_style', 'select')"
+                    >
                       <option value="" disabled>—</option>
                       <option v-for="b in VARIANT_BODIES" :key="b" :value="b">{{ BODY_LABELS[b] }}</option>
                     </select>
+                    <span
+                      v-if="shownError('v.body_style')"
+                      :id="errorId('v.body_style')"
+                      class="mt-1 block text-xs text-error"
+                      >{{ shownError('v.body_style') }}</span
+                    >
                   </label>
                   <label class="form-control">
                     <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.mark') }}</span>
@@ -903,7 +1069,14 @@
                       inputmode="numeric"
                       maxlength="4"
                       class="input input-bordered w-full"
+                      v-bind="fieldAttrs(`v.${key}`)"
                     />
+                    <span
+                      v-if="shownError(`v.${key}`)"
+                      :id="errorId(`v.${key}`)"
+                      class="mt-1 block text-xs text-error"
+                      >{{ shownError(`v.${key}`) }}</span
+                    >
                   </label>
                   <label
                     v-for="key in [
@@ -926,7 +1099,14 @@
                       type="text"
                       :inputmode="isNumericField(key) ? 'decimal' : 'text'"
                       class="input input-bordered w-full"
+                      v-bind="fieldAttrs(`v.${key}`)"
                     />
+                    <span
+                      v-if="shownError(`v.${key}`)"
+                      :id="errorId(`v.${key}`)"
+                      class="mt-1 block text-xs text-error"
+                      >{{ shownError(`v.${key}`) }}</span
+                    >
                   </label>
                   <label class="form-control sm:col-span-2">
                     <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.colours') }}</span>
@@ -966,6 +1146,7 @@
                       class="input input-bordered w-full"
                       :placeholder="t('variant.source_title_hint')"
                       :aria-label="t('variant.source_title')"
+                      v-bind="fieldAttrs('sourceTitle')"
                     />
                     <input
                       v-model="source.url"
@@ -976,6 +1157,12 @@
                       :aria-label="t('variant.source_url')"
                     />
                   </div>
+                  <span
+                    v-if="shownError('sourceTitle')"
+                    :id="errorId('sourceTitle')"
+                    class="mt-1 block text-xs text-error"
+                    >{{ shownError('sourceTitle') }}</span
+                  >
                 </div>
               </div>
 
@@ -996,7 +1183,11 @@
                     rows="5"
                     class="textarea textarea-bordered w-full"
                     :placeholder="t('reason_placeholder')"
+                    v-bind="fieldAttrs('reason', 'textarea')"
                   ></textarea>
+                  <span v-if="shownError('reason')" :id="errorId('reason')" class="mt-1 block text-xs text-error">{{
+                    shownError('reason')
+                  }}</span>
                 </label>
               </div>
 
@@ -1005,8 +1196,11 @@
                   :accept="kind === 'document' ? 'application/pdf,image/jpeg,image/png' : 'image/jpeg,image/png'"
                   :max-files="kind === 'document' ? 3 : 5"
                   :max-size-mb="kind === 'document' ? 10 : kind === 'variant' ? 5 : 3"
-                  @update:files="files = $event"
+                  @update:files="onFilesChange"
                 />
+                <span v-if="shownError('files')" :id="errorId('files')" class="mt-1 block text-xs text-error">{{
+                  shownError('files')
+                }}</span>
               </div>
             </template>
 
@@ -1026,7 +1220,7 @@
               <p class="mt-4 text-[13px] opacity-70">{{ t('review_note') }}</p>
             </template>
 
-            <ul v-if="errors.length && step > 1" class="mt-4 space-y-1">
+            <ul v-if="attempted && errors.length && (step > 1 || isRequestMode)" class="mt-4 space-y-1" role="alert">
               <li v-for="problem in errors" :key="problem" class="flex items-center gap-2 text-sm text-error">
                 <i class="fas fa-circle-exclamation" aria-hidden="true"></i>{{ problem }}
               </li>
@@ -1046,18 +1240,11 @@
               v-if="!isRequestMode && step < totalSteps"
               type="button"
               class="btn btn-secondary"
-              :disabled="!canContinue"
               @click="goNext()"
             >
               {{ t('continue') }}<i class="fas fa-arrow-right" aria-hidden="true"></i>
             </button>
-            <button
-              v-else
-              type="button"
-              class="btn btn-secondary"
-              :disabled="submitting || errors.length > 0"
-              @click="submit()"
-            >
+            <button v-else type="button" class="btn btn-secondary" :disabled="submitting" @click="submit()">
               <span v-if="submitting" class="loading loading-spinner loading-xs"></span>
               {{ isRequestMode ? t('send_request') : t('submit') }}
             </button>
