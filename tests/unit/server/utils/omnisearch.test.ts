@@ -12,15 +12,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // the client on a commit — see server/api/search/miss.post.ts).
 // ---------------------------------------------------------------------------
 
-const { mockRpc, mockLoadSources, mockSearchVisibleParts, mockGetVideoIndex, mockSearchVideoIndex } = vi.hoisted(
-  () => ({
+const { mockRpc, mockLoadSources, mockSearchVisibleParts, mockGetVideoIndex, mockSearchVideoIndex, mockLoadVariants } =
+  vi.hoisted(() => ({
     mockRpc: vi.fn(),
     mockLoadSources: vi.fn(),
     mockSearchVisibleParts: vi.fn(),
     mockGetVideoIndex: vi.fn(),
     mockSearchVideoIndex: vi.fn(),
-  })
-);
+    mockLoadVariants: vi.fn(),
+  }));
 
 vi.mock('~~/server/utils/supabase', () => ({
   getServiceClient: () => ({ rpc: mockRpc }),
@@ -30,6 +30,7 @@ vi.mock('~~/server/utils/partsSearch', () => ({
   searchVisibleParts: mockSearchVisibleParts,
   findVisiblePart: vi.fn().mockResolvedValue(null),
 }));
+vi.mock('~~/server/utils/modelVariants', () => ({ loadModelVariants: mockLoadVariants }));
 vi.mock('~~/server/utils/youtubeCatalog', () => ({
   getVideoIndex: mockGetVideoIndex,
   searchVideoIndex: mockSearchVideoIndex,
@@ -48,6 +49,32 @@ const VIDEO = {
   url: 'https://www.youtube.com/watch?v=abc123',
 };
 
+const variant = (slug: string, name: string, extra: Record<string, unknown> = {}) => ({
+  slug,
+  name,
+  marque: 'austin_morris',
+  family: 'cooper_s',
+  market: 'uk',
+  mark: 1,
+  engine_cc: 1275,
+  year_start: 1964,
+  year_end: 1967,
+  is_limited_edition: false,
+  ...extra,
+});
+const VARIANTS = [
+  variant('austin-morris-mini-cooper-s-1275-mk1', 'Austin / Morris Mini Cooper S 1275'),
+  variant('innocenti-mini-cooper-1300', 'Innocenti Mini Cooper 1300', {
+    marque: 'innocenti',
+    family: 'cooper',
+    market: 'italy',
+    mark: null,
+    engine_cc: 1275,
+    year_start: 1972,
+    year_end: 1975,
+  }),
+];
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockRpc.mockResolvedValue({ data: [], error: null });
@@ -55,6 +82,7 @@ beforeEach(() => {
   mockSearchVisibleParts.mockResolvedValue([]);
   mockGetVideoIndex.mockResolvedValue([VIDEO]);
   mockSearchVideoIndex.mockReturnValue([]);
+  mockLoadVariants.mockResolvedValue(VARIANTS);
 });
 
 describe('runOmnisearch', () => {
@@ -174,6 +202,34 @@ describe('runOmnisearch', () => {
     const response = await runOmnisearch('minilite');
     const surfaces = response.results.map((result) => result.surface);
     expect(surfaces.indexOf('wheels')).toBeLessThan(surfaces.indexOf('exchange'));
+  });
+
+  it('finds model variants by name, marque and mark, linking to the variant page', async () => {
+    const byName = await runOmnisearch('cooper s 1275');
+    const hit = byName.results.find((r) => r.id === 'variant-austin-morris-mini-cooper-s-1275-mk1');
+    expect(hit).toMatchObject({ surface: 'archive', url: '/archive/variants/austin-morris-mini-cooper-s-1275-mk1' });
+    expect(hit?.subtitle).toContain('1275 cc');
+
+    const byMarque = await runOmnisearch('innocenti');
+    expect(byMarque.results.some((r) => r.id === 'variant-innocenti-mini-cooper-1300')).toBe(true);
+
+    const spaced = await runOmnisearch('mk 1 cooper');
+    expect(spaced.results.some((r) => r.id === 'variant-innocenti-mini-cooper-1300')).toBe(false);
+
+    const byMark = await runOmnisearch('mk1 cooper');
+    expect(byMark.results.some((r) => r.id === 'variant-austin-morris-mini-cooper-s-1275-mk1')).toBe(true);
+    expect(byMark.results.some((r) => r.id === 'variant-innocenti-mini-cooper-1300')).toBe(false);
+  });
+
+  it('does not match every variant on generic words', async () => {
+    const res = await runOmnisearch('specs');
+    expect(res.results.some((r) => r.id.startsWith('variant-'))).toBe(false);
+  });
+
+  it('survives the variants archive being unavailable', async () => {
+    mockLoadVariants.mockRejectedValue(new Error('down'));
+    const res = await runOmnisearch('cooper s');
+    expect(res.results.some((r) => r.id.startsWith('variant-'))).toBe(false);
   });
 
   it('fails the search only when the core RPC fails', async () => {
