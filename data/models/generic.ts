@@ -291,6 +291,22 @@ export const ArchiveItems: ArchiveItem[] = [
       '<i class="fa-duotone fa-car-battery" style="--fa-secondary-color: #ff424d; --fa-secondary-opacity: 0.9;"></i>',
   },
   {
+    title: 'Model Variants',
+    titleKey: 'archive_items.model_variants',
+    descKey: 'archive_items.model_variants_desc',
+    kindKey: 'archive_items.kind.database',
+    description: '',
+    image: 'https://classicminidiy.s3.amazonaws.com/social-share/archive.png',
+    path: '/archive/variants',
+    to: '/archive/variants',
+    iconName: 'fa-car-side',
+    iconPrimary: '#242424',
+    iconSecondary: '#ED7135',
+    iconSecondaryOpacity: 0.9,
+    iconHtml:
+      '<i class="fa-duotone fa-car-side" style="--fa-primary-color: #242424; --fa-secondary-color: #ED7135; --fa-secondary-opacity: 0.9;"></i>',
+  },
+  {
     title: 'Wheel Library',
     titleKey: 'archive_items.wheel_library',
     descKey: 'archive_items.wheel_library_desc',

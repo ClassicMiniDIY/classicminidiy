@@ -216,13 +216,13 @@ d = json.loads(sys.stdin.read() or '{}')
 print('\n'.join(t['name'] for t in d.get('result', {}).get('tools', [])))
 ")
 count=$(printf '%s' "$names" | grep -c . || true)
-[ "$count" -ge 11 ] && ok "tools/list returns $count tools" || bad "tools/list returned $count tools, want >= 11"
+[ "$count" -ge 13 ] && ok "tools/list returns $count tools" || bad "tools/list returned $count tools, want >= 13"
 
 # The env key resolves to the INTERNAL tier (Developer API tiering,
 # docs/plans/2026-08-28-developer-api-subscription.md), which must see every
 # tool — the paid-only set included. A gated or missing tool here means the
 # tiering plugin misclassified the env key.
-for tool in chassis-decoder engine-decoder wheel-search color-lookup; do
+for tool in chassis-decoder engine-decoder wheel-search color-lookup model-variants; do
   if printf '%s\n' "$names" | grep -qx "$tool"; then
     ok "internal tier lists paid tool $tool"
   else
@@ -284,6 +284,10 @@ call_tool parts-equivalency '{"query":"K&N","limit":3}'
 # are all stripped before the lookup) as well as the transport.
 call_tool parts-lookup '{"partNumber":"12g-2994","limit":3}'
 call_tool vehicle-weights '{"section":"Electrics","limit":3}'
+# Bundled JSON today (data/modelVariants.json), so it is a plain call_tool; when
+# Phase 1 of docs/plans/2026-09-22-model-variants-archive.md moves it to Postgres
+# it joins call_tool_db_backed below.
+call_tool model-variants '{"query":"cooper s 1275","limit":3}'
 
 # The two archive tools read Postgres, so they can fail for a reason that has
 # nothing to do with the transport. This gate blocks deploys, and coupling that

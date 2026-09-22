@@ -53,7 +53,6 @@
       "Fiesta Yellow"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -160,7 +159,6 @@
       "Fiesta Yellow"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -275,7 +273,6 @@
       "Marigold"
     ],
     "notes": "AUSTIN MINI COUNTRYMAN 1962 - 1967 MORRIS MINI TRAVELLER 1960 - 1967",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -365,7 +362,6 @@
       "White"
     ],
     "notes": "AUSTIN MINIVAN 1962 - 1969 MORRIS MINIVAN 1960 - 1969",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -405,7 +401,7 @@
   },
   {
     "slug": "austin-morris-mini-cooper-997-mk1",
-    "name": "Austin - Morris Mini Cooper 997",
+    "name": "Austin / Morris Mini Cooper 997",
     "source_slug": "cooper997",
     "marque": "austin_morris",
     "family": "cooper",
@@ -452,7 +448,6 @@
       "Fiesta Yellow"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "997cc",
@@ -536,7 +531,6 @@
       "White"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -605,7 +599,6 @@
     "top_speed_mph": 73.3,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -708,7 +701,6 @@
     "top_speed_mph": 73.3,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -762,7 +754,7 @@
   },
   {
     "slug": "austin-morris-mini-cooper-s-1071-mk1",
-    "name": "Austin - Morris Mini Cooper S 1071",
+    "name": "Austin / Morris Mini Cooper S 1071",
     "source_slug": "1071",
     "marque": "austin_morris",
     "family": "cooper_s",
@@ -811,7 +803,6 @@
       "Old English White"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1071cc",
@@ -856,7 +847,7 @@
   },
   {
     "slug": "austin-morris-mini-cooper-998-mk1",
-    "name": "Austin - Morris Mini Cooper 998",
+    "name": "Austin / Morris Mini Cooper 998",
     "source_slug": "cooper998mk1",
     "marque": "austin_morris",
     "family": "cooper",
@@ -903,7 +894,6 @@
       "Fiesta Yellow"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -938,7 +928,7 @@
   },
   {
     "slug": "austin-morris-mini-cooper-s-1275-mk1",
-    "name": "Austin - Morris Mini Cooper S 1275",
+    "name": "Austin / Morris Mini Cooper S 1275",
     "source_slug": "1275Smk1",
     "marque": "austin_morris",
     "family": "cooper_s",
@@ -986,7 +976,6 @@
       "Snowberry White"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -1026,7 +1015,7 @@
   },
   {
     "slug": "austin-morris-mini-cooper-s-970-mk1",
-    "name": "Austin - Morris Mini Cooper S 970",
+    "name": "Austin / Morris Mini Cooper S 970",
     "source_slug": "970",
     "marque": "austin_morris",
     "family": "cooper_s",
@@ -1075,7 +1064,6 @@
       "Old English White"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "970cc",
@@ -1151,11 +1139,8 @@
     "tyres": "Dunlop C41 5,20x10",
     "kerb_weight_kg": 534.0,
     "top_speed_mph": 65.2,
-    "colors": [
-      "Spurce Green"
-    ],
+    "colors": ["Spurce Green"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -1257,7 +1242,6 @@
       "Fiesta Yellow"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -1334,17 +1318,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 660.0,
     "top_speed_mph": 74.6,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -1421,17 +1396,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 635.0,
     "top_speed_mph": 72.1,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -1515,7 +1481,6 @@
     "top_speed_mph": 85.7,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -1565,7 +1530,7 @@
   },
   {
     "slug": "austin-morris-mini-850-mk2",
-    "name": "Austin - Morris Mini 850",
+    "name": "Austin / Morris Mini 850",
     "source_slug": "850 mk2",
     "marque": "austin_morris",
     "family": "saloon",
@@ -1612,7 +1577,6 @@
       "White"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -1662,7 +1626,7 @@
   },
   {
     "slug": "austin-morris-mini-cooper-1000-mk2",
-    "name": "Austin - Morris Mini Cooper 1000",
+    "name": "Austin / Morris Mini Cooper 1000",
     "source_slug": "cooper998mk2",
     "marque": "austin_morris",
     "family": "cooper",
@@ -1698,16 +1662,8 @@
     "tyres": "Dunlop SP41 145 SR10",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 85.7,
-    "colors": [
-      "El Paso Beige",
-      "Sandy Beige",
-      "Island Blue",
-      "Almond Green",
-      "Tartan Red",
-      "Snowberry White"
-    ],
+    "colors": ["El Paso Beige", "Sandy Beige", "Island Blue", "Almond Green", "Tartan Red", "Snowberry White"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -1757,7 +1713,7 @@
   },
   {
     "slug": "austin-morris-mini-cooper-s-1275-mk2",
-    "name": "Austin - Morris Mini Cooper S 1275",
+    "name": "Austin / Morris Mini Cooper S 1275",
     "source_slug": "1275 s mk2",
     "marque": "austin_morris",
     "family": "cooper_s",
@@ -1793,16 +1749,8 @@
     "tyres": "Dunlop SP41 145 SR10",
     "kerb_weight_kg": 640.0,
     "top_speed_mph": 98.8,
-    "colors": [
-      "El Paso Beige",
-      "Sandy Beige",
-      "Island Blue",
-      "Almond Green",
-      "Tartan Red",
-      "Snowberry White"
-    ],
+    "colors": ["El Paso Beige", "Sandy Beige", "Island Blue", "Almond Green", "Tartan Red", "Snowberry White"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -1899,17 +1847,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 660.0,
     "top_speed_mph": 74.6,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -1991,17 +1930,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 635.0,
     "top_speed_mph": 72.1,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -2083,14 +2013,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 625.0,
     "top_speed_mph": 82.0,
-    "colors": [
-      "Verde Competicion",
-      "Blanco Viejo Ingles",
-      "Rojo Navarra",
-      "Azul Anade"
-    ],
+    "colors": ["Verde Competicion", "Blanco Viejo Ingles", "Rojo Navarra", "Azul Anade"],
     "notes": "AUTHI MINI 1000 DELUXE 1968 - 1969",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -2129,16 +2053,16 @@
     "legacy_submitted_by": "austinminiwebsearch.com"
   },
   {
-    "slug": "mini-1000-1000gl-mk3",
-    "name": "Mini 1000 - 1000GL",
+    "slug": "mini-1000-1000-gl-mk3",
+    "name": "Mini 1000 / 1000 GL",
     "source_slug": "1000mk3",
     "marque": "mini",
     "family": "saloon",
     "body_style": "saloon",
     "mark": 3,
     "market": "uk",
-    "year_start": 1000,
-    "year_end": 1000,
+    "year_start": 1969,
+    "year_end": 1976,
     "is_limited_edition": false,
     "edition_size": null,
     "production_total": 1439819,
@@ -2200,8 +2124,7 @@
       "Champagne",
       "Snapdragon"
     ],
-    "notes": null,
-    "free_text": null,
+    "notes": "",
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -2336,7 +2259,6 @@
       "Astral Blue Met"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -2447,7 +2369,6 @@
       "Champagne"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -2468,29 +2389,25 @@
         "original_url": "http://austinminiwebsearch.com/image/van1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042638/http://www.austinminiwebsearch.com/image/van1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/leyland-minivan-1000-mk3/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/van2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042639/http://www.austinminiwebsearch.com/image/van2.jpg",
         "alt": "van_1",
-        "archived": true,
-        "local_file": "images/leyland-minivan-1000-mk3/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042640/http://www.austinminiwebsearch.com/image/vanpickup1.jpg",
         "alt": "van_2",
-        "archived": true,
-        "local_file": "images/leyland-minivan-1000-mk3/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042643/http://www.austinminiwebsearch.com/image/vanpickup2.jpg",
         "alt": "van_3",
-        "archived": true,
-        "local_file": "images/leyland-minivan-1000-mk3/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/van3.jpg",
@@ -2576,7 +2493,6 @@
       "Champagne"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -2597,29 +2513,25 @@
         "original_url": "http://austinminiwebsearch.com/image/van1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042638/http://www.austinminiwebsearch.com/image/van1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/leyland-minivan-850-mk3/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/van2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042639/http://www.austinminiwebsearch.com/image/van2.jpg",
         "alt": "van_1",
-        "archived": true,
-        "local_file": "images/leyland-minivan-850-mk3/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042640/http://www.austinminiwebsearch.com/image/vanpickup1.jpg",
         "alt": "van_2",
-        "archived": true,
-        "local_file": "images/leyland-minivan-850-mk3/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042643/http://www.austinminiwebsearch.com/image/vanpickup2.jpg",
         "alt": "van_3",
-        "archived": true,
-        "local_file": "images/leyland-minivan-850-mk3/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/van3.jpg",
@@ -2715,7 +2627,6 @@
       "Oyster"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -2825,7 +2736,6 @@
       "Astral Blue Met"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -2950,7 +2860,6 @@
       "Astral Blue Met"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -3056,7 +2965,6 @@
       "Champagne"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -3077,36 +2985,31 @@
         "original_url": "http://austinminiwebsearch.com/image/pickup1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042649/http://www.austinminiwebsearch.com/image/pickup1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-pick-up-1000-mk3/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/pickup2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042652/http://www.austinminiwebsearch.com/image/pickup2.jpg",
         "alt": "pickup_1",
-        "archived": true,
-        "local_file": "images/mini-pick-up-1000-mk3/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/pickup3.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042653/http://www.austinminiwebsearch.com/image/pickup3.jpg",
         "alt": "pickup_2",
-        "archived": true,
-        "local_file": "images/mini-pick-up-1000-mk3/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042640/http://www.austinminiwebsearch.com/image/vanpickup1.jpg",
         "alt": "pickup_3",
-        "archived": true,
-        "local_file": "images/mini-pick-up-1000-mk3/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042643/http://www.austinminiwebsearch.com/image/vanpickup2.jpg",
         "alt": "van_3",
-        "archived": true,
-        "local_file": "images/mini-pick-up-1000-mk3/05.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/pickup1979.jpg",
@@ -3182,7 +3085,6 @@
       "Champagne"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -3203,36 +3105,31 @@
         "original_url": "http://austinminiwebsearch.com/image/pickup1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042649/http://www.austinminiwebsearch.com/image/pickup1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-pick-up-850-mk3/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/pickup2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042652/http://www.austinminiwebsearch.com/image/pickup2.jpg",
         "alt": "pickup_1",
-        "archived": true,
-        "local_file": "images/mini-pick-up-850-mk3/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/pickup3.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042653/http://www.austinminiwebsearch.com/image/pickup3.jpg",
         "alt": "pickup_2",
-        "archived": true,
-        "local_file": "images/mini-pick-up-850-mk3/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042640/http://www.austinminiwebsearch.com/image/vanpickup1.jpg",
         "alt": "pickup_3",
-        "archived": true,
-        "local_file": "images/mini-pick-up-850-mk3/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/vanpickup2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042643/http://www.austinminiwebsearch.com/image/vanpickup2.jpg",
         "alt": "van_3",
-        "archived": true,
-        "local_file": "images/mini-pick-up-850-mk3/05.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -3274,14 +3171,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 625.0,
     "top_speed_mph": 82.0,
-    "colors": [
-      "Verde Competicion",
-      "Blanco Viejo Ingles",
-      "Rojo Navarra",
-      "Azul Anade"
-    ],
+    "colors": ["Verde Competicion", "Blanco Viejo Ingles", "Rojo Navarra", "Azul Anade"],
     "notes": "AUTHI MINI 1000 DELUXE 1970 - 1975",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -3302,8 +3193,7 @@
         "original_url": "http://austinminiwebsearch.com/image/authi1000mk3.jpg",
         "wayback_url": "https://web.archive.org/web/20131217165526/http://austinminiwebsearch.com/image/authi1000mk3.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/authi-mini-1000-mk3/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi1000mk3_1.jpg",
@@ -3365,14 +3255,8 @@
     "tyres": "Michelin 145-10 ZX",
     "kerb_weight_kg": 600.0,
     "top_speed_mph": 71.5,
-    "colors": [
-      "Verde Competicion",
-      "Blanco Viejo Ingles",
-      "Rojo Navarra",
-      "Azul Anade"
-    ],
+    "colors": ["Verde Competicion", "Blanco Viejo Ingles", "Rojo Navarra", "Azul Anade"],
     "notes": "AUTHI MINI 850 DELUXE 1970 - 1975",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -3393,57 +3277,49 @@
         "original_url": "http://austinminiwebsearch.com/image/authi850mk3_0.jpg",
         "wayback_url": "https://web.archive.org/web/20131217171232/http://austinminiwebsearch.com/image/authi850mk3_0.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi1000mk3.jpg",
         "wayback_url": "https://web.archive.org/web/20131217165526/http://austinminiwebsearch.com/image/authi1000mk3.jpg",
         "alt": "authi850mk3_0",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi850mk3_1.jpg",
         "wayback_url": "https://web.archive.org/web/20131217171754/http://austinminiwebsearch.com/image/authi850mk3_1.jpg",
         "alt": "Authi Mini 1970",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi850mk3_2.jpg",
         "wayback_url": "https://web.archive.org/web/20131217165029/http://austinminiwebsearch.com/image/authi850mk3_2.jpg",
         "alt": "authi 850 mk 3",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi850mk3_3.jpg",
         "wayback_url": "https://web.archive.org/web/20131217165643/http://austinminiwebsearch.com/image/authi850mk3_3.jpg",
         "alt": "authi850 mk3",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/05.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi850mk3_4.jpg",
         "wayback_url": "https://web.archive.org/web/20131217165756/http://austinminiwebsearch.com/image/authi850mk3_4.jpg",
         "alt": "authi 850 mk3",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/06.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi850mk3_5.jpg",
         "wayback_url": "https://web.archive.org/web/20131217165106/http://austinminiwebsearch.com/image/authi850mk3_5.jpg",
         "alt": "authi 850 mk3",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/07.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authi850deluxe_8.jpg",
         "wayback_url": "https://web.archive.org/web/20131217165258/http://austinminiwebsearch.com/image/authi850deluxe_8.jpg",
         "alt": "authi 850 mk3",
-        "archived": true,
-        "local_file": "images/authi-mini-850-mk3/08.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -3490,17 +3366,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 635.0,
     "top_speed_mph": 72.1,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": "source: AROnline",
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -3604,7 +3471,6 @@
       "Bedouin"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -3625,8 +3491,7 @@
         "original_url": "http://austinminiwebsearch.com/image/coopersmk3_1.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140416/http://www.austinminiwebsearch.com/image/coopersmk3_1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-cooper-s-1275-mk3/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/coopersmk3_2.jpg",
@@ -3688,17 +3553,8 @@
     "tyres": "145/70 SR10",
     "kerb_weight_kg": 660.0,
     "top_speed_mph": 90.1,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -3815,7 +3671,6 @@
       "Champagne"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1098cc",
@@ -3887,12 +3742,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 620.0,
     "top_speed_mph": 75.2,
-    "colors": [
-      "Brooklands Green",
-      "Glacier White"
-    ],
+    "colors": ["Brooklands Green", "Glacier White"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -3976,7 +3827,6 @@
     "top_speed_mph": 82.0,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -4077,7 +3927,6 @@
       "Oyster"
     ],
     "notes": "AUSTIN ROVER MINI 1000 GL 1977 - 1979 AUSTIN ROVER MINI 1000 SUPER 1979 - 1980",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -4151,7 +4000,6 @@
     "top_speed_mph": 82.0,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -4172,36 +4020,31 @@
         "original_url": "http://austinminiwebsearch.com/image/ima-1.jpg",
         "wayback_url": "https://web.archive.org/web/20160331165803/http://austinminiwebsearch.com/image/ima-1.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/ima-estate-mk4/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/ima-2.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140437/http://www.austinminiwebsearch.com/image/ima-2.jpg",
         "alt": "IMA mini estate",
-        "archived": true,
-        "local_file": "images/ima-estate-mk4/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/ima-3.jpg",
         "wayback_url": "https://web.archive.org/web/20160331171634/http://austinminiwebsearch.com/image/ima-3.jpg",
         "alt": "IMA mini estate",
-        "archived": true,
-        "local_file": "images/ima-estate-mk4/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/ima-4.jpg",
         "wayback_url": "https://web.archive.org/web/20160331171325/http://austinminiwebsearch.com/image/ima-4.jpg",
         "alt": "IMA mini estate",
-        "archived": true,
-        "local_file": "images/ima-estate-mk4/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/ima-5.jpg",
         "wayback_url": "https://web.archive.org/web/20160331170615/http://austinminiwebsearch.com/image/ima-5.jpg",
         "alt": "IMA mini estate",
-        "archived": true,
-        "local_file": "images/ima-estate-mk4/05.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -4270,7 +4113,6 @@
       "Champagne"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1098cc",
@@ -4411,7 +4253,6 @@
       "Oyster"
     ],
     "notes": "MINI 850 CITY 1979 - 1980 MINI 850 SUPER DELUXE 1979 - 1980",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "848cc",
@@ -4488,11 +4329,8 @@
     "tyres": "145/70 SR10",
     "kerb_weight_kg": 620.0,
     "top_speed_mph": 75.2,
-    "colors": [
-      "Black"
-    ],
+    "colors": ["Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -4564,12 +4402,8 @@
     "tyres": "Dunlop SP41 145 SR10",
     "kerb_weight_kg": 640.0,
     "top_speed_mph": 82.0,
-    "colors": [
-      "Silver Met",
-      "Rose Met"
-    ],
+    "colors": ["Silver Met", "Rose Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1098cc",
@@ -4590,8 +4424,7 @@
         "original_url": "http://austinminiwebsearch.com/image/1100special20_1.jpg",
         "wayback_url": "https://web.archive.org/web/20170627230636/http://www.austinminiwebsearch.com/image/1100special20_1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/austin-rover-mini-1100-special-20-mk4/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/1100special20_2.jpg",
@@ -4653,11 +4486,8 @@
     "tyres": "145/70 SR10",
     "kerb_weight_kg": 640.0,
     "top_speed_mph": 82.0,
-    "colors": [
-      "Beige met"
-    ],
+    "colors": ["Beige met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -4678,15 +4508,13 @@
         "original_url": "http://austinminiwebsearch.com/image/printemps_1.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042655/http://www.austinminiwebsearch.com/image/printemps_1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-printemps-mk4/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/printemps_2.jpg",
         "wayback_url": "https://web.archive.org/web/20230524042723/http://www.austinminiwebsearch.com/image/printemps_2.jpg",
         "alt": "printemps_1",
-        "archived": true,
-        "local_file": "images/mini-printemps-mk4/02.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -4750,7 +4578,6 @@
       "Zircon"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -4844,7 +4671,6 @@
       "Zircon"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -4931,7 +4757,6 @@
       "Zircon"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5003,11 +4828,8 @@
     "tyres": "Dunlop 145 SR10",
     "kerb_weight_kg": null,
     "top_speed_mph": null,
-    "colors": [
-      "Gold with wood style 3M stickers"
-    ],
+    "colors": ["Gold with wood style 3M stickers"],
     "notes": "KOELLIKER CLUBMAN TEN SPECIAL 1981 - 1982 KOELLIKER CLUBMAN TEN GOLDEN SPECIAL 1981 - 1982",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5105,7 +4927,6 @@
       "Targa Red"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5126,8 +4947,7 @@
         "original_url": "http://austinminiwebsearch.com/image/moonraker.jpg",
         "wayback_url": "https://web.archive.org/web/20200602132930/http://www.austinminiwebsearch.com/image/moonraker.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/austin-mini-mayfair-mk4/01.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -5185,7 +5005,6 @@
       "Targa Red"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5273,7 +5092,6 @@
       "Targa Red"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5382,7 +5200,6 @@
     "top_speed_mph": 82.0,
     "colors": [],
     "notes": null,
-    "free_text": "Pictures by Mini and British Lifestyle Trussardi Design history",
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5403,15 +5220,13 @@
         "original_url": "http://austinminiwebsearch.com/image/mini%20trussardi.jpg",
         "wayback_url": "https://web.archive.org/web/20161202170330/http://austinminiwebsearch.com/image/mini%20trussardi.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/austin-mini-by-trussardi-mk4/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/mini%20trussardi-1.jpg",
         "wayback_url": "https://web.archive.org/web/20150819125347/http://austinminiwebsearch.com/image/mini%20trussardi-1.jpg",
         "alt": "mini by trussardi",
-        "archived": true,
-        "local_file": "images/austin-mini-by-trussardi-mk4/02.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -5474,7 +5289,6 @@
       "Targa Red"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5551,11 +5365,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Silver Leaf Met"
-    ],
+    "colors": ["Silver Leaf Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5662,7 +5473,6 @@
       "Diamond White"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5703,8 +5513,7 @@
         "original_url": "http://austinminiwebsearch.com/image/mayfair_5.jpg",
         "wayback_url": "https://web.archive.org/web/20140605134359/http://www.austinminiwebsearch.com/image/mayfair_5.jpg",
         "alt": "mayfair_4",
-        "archived": true,
-        "local_file": "images/austin-mini-mayfair-mk5/05.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/mayfair_6.jpg",
@@ -5761,11 +5570,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Silver Leaf Met"
-    ],
+    "colors": ["Silver Leaf Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5882,7 +5688,6 @@
       "Burgundy"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -5984,7 +5789,6 @@
       "Diamond White"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6063,7 +5867,6 @@
     "top_speed_mph": 80.8,
     "colors": [],
     "notes": "MOKE 1991 - 1993 MOKE SE 1991 - 1993",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6135,11 +5938,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Cashmere Gold Met"
-    ],
+    "colors": ["Cashmere Gold Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6211,14 +6011,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Targa Red",
-      "Oporto (Japan)",
-      "Azure Blue (Japan)",
-      "Moonraker (Japan)"
-    ],
+    "colors": ["Targa Red", "Oporto (Japan)", "Azure Blue (Japan)", "Moonraker (Japan)"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6295,11 +6089,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Diamond White"
-    ],
+    "colors": ["Diamond White"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6391,11 +6182,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Black"
-    ],
+    "colors": ["Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6471,12 +6259,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Bright Red",
-      "Black"
-    ],
+    "colors": ["Bright Red", "Black"],
     "notes": "AUSTIN MINI JET BLACK 1988",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6548,11 +6332,8 @@
     "tyres": "165/60 R12",
     "kerb_weight_kg": null,
     "top_speed_mph": null,
-    "colors": [
-      "Flame Red"
-    ],
+    "colors": ["Flame Red"],
     "notes": null,
-    "free_text": "Pictures courtesy of: Michael T Standring Managing Director Wood & Pickett Coachbuilders Ltd 01372 388248 www.woodandpickett.com",
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -6644,12 +6425,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Black",
-      "Diamond White"
-    ],
+    "colors": ["Black", "Diamond White"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6721,14 +6498,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Diamond White",
-      "Flame Red",
-      "Black",
-      "Quicksilver"
-    ],
+    "colors": ["Diamond White", "Flame Red", "Black", "Quicksilver"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6795,12 +6566,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Black",
-      "Pearlescent Cherry Red"
-    ],
+    "colors": ["Black", "Pearlescent Cherry Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6841,8 +6608,7 @@
         "original_url": "http://austinminiwebsearch.com/image/30_7.jpg",
         "wayback_url": "https://web.archive.org/web/20140605133327/http://www.austinminiwebsearch.com/image/30_7.jpg",
         "alt": "30_6",
-        "archived": true,
-        "local_file": "images/mini-30-mk5/05.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/30_8.jpg",
@@ -6894,13 +6660,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Black",
-      "British Racing Green",
-      "Flame Red"
-    ],
+    "colors": ["Black", "British Racing Green", "Flame Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -6941,8 +6702,7 @@
         "original_url": "http://austinminiwebsearch.com/image/check_5.jpg",
         "wayback_url": "https://web.archive.org/web/20160404214021/http://austinminiwebsearch.com/image/check_5.jpg",
         "alt": "check_4",
-        "archived": true,
-        "local_file": "images/mini-racing-green-flame-red-check-mate-mk5/05.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/check_6.jpg",
@@ -7008,11 +6768,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Diamond White"
-    ],
+    "colors": ["Diamond White"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -7033,8 +6790,7 @@
         "original_url": "http://austinminiwebsearch.com/image/sky.jpg",
         "wayback_url": "https://web.archive.org/web/20150317190528/http://www.austinminiwebsearch.com/image/sky.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-sky-mini-rose-mk5/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/rose.jpg",
@@ -7088,7 +6844,6 @@
     "top_speed_mph": null,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": "multiple engine options listed",
     "specs_source": {
       "engine": "998cc or 1275cc",
@@ -7188,13 +6943,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Black",
-      "British Racing Green",
-      "Flame Red"
-    ],
+    "colors": ["Black", "British Racing Green", "Flame Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -7230,8 +6980,7 @@
         "original_url": "http://austinminiwebsearch.com/image/cooper92_2.jpg",
         "wayback_url": "https://web.archive.org/web/20140602080120/http://www.austinminiwebsearch.com/image/cooper92_2.jpg",
         "alt": "cooper92fr_1",
-        "archived": true,
-        "local_file": "images/rover-mini-cooper-rsp-1990-mk5/04.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -7278,11 +7027,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Nordic Blue Met"
-    ],
+    "colors": ["Nordic Blue Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -7344,11 +7090,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "British Racing Green"
-    ],
+    "colors": ["British Racing Green"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -7415,12 +7158,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "Black (Deutschland)",
-      "British Racing Green"
-    ],
+    "colors": ["Black (Deutschland)", "British Racing Green"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -7507,13 +7246,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Storm Grey (France)",
-      "Black (GB)",
-      "Nordic Blue Met (GB)"
-    ],
+    "colors": ["Storm Grey (France)", "Black (GB)", "Nordic Blue Met (GB)"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -7592,7 +7326,6 @@
     "top_speed_mph": 92.0,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -7669,14 +7402,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Flame Red",
-      "Diamond White",
-      "British Racing Green",
-      "Electric Blue"
-    ],
+    "colors": ["Flame Red", "Diamond White", "British Racing Green", "Electric Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -7760,7 +7487,6 @@
       "Carribean Blue"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -7827,15 +7553,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Maraschino Black",
-      "Pulsar Silver",
-      "Diamond White",
-      "Nightfire Red",
-      "Caribbean Blue"
-    ],
+    "colors": ["Maraschino Black", "Pulsar Silver", "Diamond White", "Nightfire Red", "Caribbean Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -7861,8 +7580,7 @@
         "original_url": "http://austinminiwebsearch.com/image/sprite_2.jpg",
         "wayback_url": "https://web.archive.org/web/20160405023340/http://austinminiwebsearch.com/image/sprite_2.jpg",
         "alt": "sprite_1",
-        "archived": true,
-        "local_file": "images/rover-mini-sprite-mk6/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/sprite_3.jpg",
@@ -7914,12 +7632,8 @@
     "tyres": "165/60 R12",
     "kerb_weight_kg": 730.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Perlescent Nightfire Red",
-      "Perlescent Carribean Blue"
-    ],
+    "colors": ["Perlescent Nightfire Red", "Perlescent Carribean Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8011,13 +7725,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "Black (Deutschland)",
-      "British Racing Green",
-      "Charcoal Met (1996)"
-    ],
+    "colors": ["Black (Deutschland)", "British Racing Green", "Charcoal Met (1996)"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8048,8 +7757,7 @@
         "original_url": "http://austinminiwebsearch.com/image/british%20open%202_3.jpg",
         "wayback_url": "https://web.archive.org/web/20160509175051/http://www.austinminiwebsearch.com/image/british%20open%202_3.jpg",
         "alt": "british open 2_2",
-        "archived": true,
-        "local_file": "images/rover-mini-british-open-ii-mk6/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/british%20open%202_4.jpg",
@@ -8106,13 +7814,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Polynesian Turquoise met",
-      "Black",
-      "Pearlescent Carribean Blue"
-    ],
+    "colors": ["Polynesian Turquoise met", "Black", "Pearlescent Carribean Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8133,29 +7836,25 @@
         "original_url": "http://austinminiwebsearch.com/image/rio_0.jpg",
         "wayback_url": "https://web.archive.org/web/20160326050143/http://austinminiwebsearch.com/image/rio_0.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/rover-mini-rio-gb-mk6/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/rio_3.jpg",
         "wayback_url": "https://web.archive.org/web/20160326045050/http://austinminiwebsearch.com/image/rio_3.jpg",
         "alt": "Rover Mini Rio 1993",
-        "archived": true,
-        "local_file": "images/rover-mini-rio-gb-mk6/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/rio_1.jpg",
         "wayback_url": "https://web.archive.org/web/20160326052258/http://austinminiwebsearch.com/image/rio_1.jpg",
         "alt": "Rover Mini Rio 1993",
-        "archived": true,
-        "local_file": "images/rover-mini-rio-gb-mk6/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/rio_2.jpg",
         "wayback_url": "https://web.archive.org/web/20160326043217/http://austinminiwebsearch.com/image/rio_2.jpg",
         "alt": "Rover Mini Rio 1993",
-        "archived": true,
-        "local_file": "images/rover-mini-rio-gb-mk6/04.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -8197,11 +7896,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Black"
-    ],
+    "colors": ["Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8273,12 +7969,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Electric Blue",
-      "Nightfire Red"
-    ],
+    "colors": ["Electric Blue", "Nightfire Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8360,13 +8052,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "Arizona Blue Met",
-      "White Diamond",
-      "Perlescent Nevada Red"
-    ],
+    "colors": ["Arizona Blue Met", "White Diamond", "Perlescent Nevada Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8453,12 +8140,8 @@
     "tyres": "165/60 R12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Black",
-      "Flame Red"
-    ],
+    "colors": ["Black", "Flame Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8550,13 +8233,8 @@
     "tyres": "165/60 R12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Black",
-      "British Racing Green",
-      "Flame Red"
-    ],
+    "colors": ["Black", "British Racing Green", "Flame Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8633,11 +8311,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Polynesian Turquoise met"
-    ],
+    "colors": ["Polynesian Turquoise met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8658,8 +8333,7 @@
         "original_url": "http://austinminiwebsearch.com/image/seaway_1.jpg",
         "wayback_url": "https://web.archive.org/web/20160326041959/http://austinminiwebsearch.com/image/seaway_1.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/rover-mini-seaway-mk6/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/seaway_3.jpg",
@@ -8716,12 +8390,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "British Racing Green",
-      "Nightfire Red (Deutschland)"
-    ],
+    "colors": ["British Racing Green", "Nightfire Red (Deutschland)"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8798,13 +8468,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 680.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "Kingfisher Blue",
-      "Charcoal Met",
-      "White Diamond"
-    ],
+    "colors": ["Kingfisher Blue", "Charcoal Met", "White Diamond"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8906,7 +8571,6 @@
       "Surf Blue"
     ],
     "notes": "MINI CHIC 1996 - 2000 MINI CHIC FOR EVER - 2000",
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -8937,8 +8601,7 @@
         "original_url": "http://austinminiwebsearch.com/image/chic_3.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140449/http://www.austinminiwebsearch.com/image/chic_3.jpg",
         "alt": "chic_2",
-        "archived": true,
-        "local_file": "images/mini-mk7/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/chic_4.jpg",
@@ -9000,7 +8663,6 @@
       "Surf Blue"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9021,8 +8683,7 @@
         "original_url": "http://austinminiwebsearch.com/image/cooper%20mpi_1.jpg",
         "wayback_url": "https://web.archive.org/web/20170628092836/http://www.austinminiwebsearch.com/image/cooper%20mpi_1.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-cooper-mpi-mk7/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/cooper%20mpi_2.jpg",
@@ -9084,7 +8745,6 @@
       "Surf Blue"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9151,11 +8811,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Tahiti Blue"
-    ],
+    "colors": ["Tahiti Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9247,11 +8904,8 @@
     "tyres": "165/60 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Almond Green 2"
-    ],
+    "colors": ["Almond Green 2"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9323,11 +8977,8 @@
     "tyres": null,
     "kerb_weight_kg": null,
     "top_speed_mph": null,
-    "colors": [
-      "Flame Red"
-    ],
+    "colors": ["Flame Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9409,13 +9060,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "Amaranth Pearlescent",
-      "Charcoal Met",
-      "Platinum Silver Met"
-    ],
+    "colors": ["Amaranth Pearlescent", "Charcoal Met", "Platinum Silver Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9507,11 +9153,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 83.9,
-    "colors": [
-      "Black (Deutschland)"
-    ],
+    "colors": ["Black (Deutschland)"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9578,11 +9221,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 715.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Tahiti Blue"
-    ],
+    "colors": ["Tahiti Blue"],
     "notes": null,
-    "free_text": "Thank you to CSI Ignition for this 2 last pictures:",
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9664,12 +9304,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "Paul Smith Blue",
-      "Black (Japan)"
-    ],
+    "colors": ["Paul Smith Blue", "Black (Japan)"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9695,8 +9331,7 @@
         "original_url": "http://austinminiwebsearch.com/image/paul%20smith_6.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140505/http://www.austinminiwebsearch.com/image/paul%20smith_6.jpg",
         "alt": "paulsmith_5",
-        "archived": true,
-        "local_file": "images/mini-paul-smith-mk7/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/paul%20smith_7.jpg",
@@ -9758,11 +9393,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 83.9,
-    "colors": [
-      "Tahiti Blue"
-    ],
+    "colors": ["Tahiti Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9783,8 +9415,7 @@
         "original_url": "http://austinminiwebsearch.com/image/monza_1.jpg",
         "wayback_url": "https://web.archive.org/web/20170627064658/http://www.austinminiwebsearch.com/image/monza_1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/monza-mk7/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/monza_2.jpg",
@@ -9846,15 +9477,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 83.9,
-    "colors": [
-      "Platinum Silver",
-      "Island Blue",
-      "Mulberry Red",
-      "Old English White",
-      "Epson Green"
-    ],
+    "colors": ["Platinum Silver", "Island Blue", "Mulberry Red", "Old English White", "Epson Green"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9951,11 +9575,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 83.9,
-    "colors": [
-      "British Racing Green"
-    ],
+    "colors": ["British Racing Green"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -9976,15 +9597,13 @@
         "original_url": "http://austinminiwebsearch.com/image/mini%20fujifilm%20mr%20bean-2.jpg",
         "wayback_url": "https://web.archive.org/web/20150819021256/http://austinminiwebsearch.com/image/mini%20fujifilm%20mr%20bean-2.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-cooper-fujifilm-mister-bean-mk7/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/mini%20fujifilm%20mr%20bean-1.jpg",
         "wayback_url": "https://web.archive.org/web/20150819031332/http://austinminiwebsearch.com/image/mini%20fujifilm%20mr%20bean-1.jpg",
         "alt": "Mini Fujifilm Mister Bean 1999",
-        "archived": true,
-        "local_file": "images/mini-cooper-fujifilm-mister-bean-mk7/02.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -10031,11 +9650,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 83.9,
-    "colors": [
-      "Brooklands Green"
-    ],
+    "colors": ["Brooklands Green"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -10117,11 +9733,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 83.9,
-    "colors": [
-      "Anthracite"
-    ],
+    "colors": ["Anthracite"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -10193,13 +9806,8 @@
     "tyres": "175/50 VR13",
     "kerb_weight_kg": 720.0,
     "top_speed_mph": 83.9,
-    "colors": [
-      "Sienna Gold",
-      "British Racing Green 3",
-      "Black"
-    ],
+    "colors": ["Sienna Gold", "British Racing Green 3", "Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -10286,7 +9894,6 @@
       "Surf Blue"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -10307,15 +9914,13 @@
         "original_url": "http://austinminiwebsearch.com/image/seven-1.jpg",
         "wayback_url": "https://web.archive.org/web/20160401073315/http://austinminiwebsearch.com/image/seven-1.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-seven-2000-mk7/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/seven-2.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140433/http://www.austinminiwebsearch.com/image/seven-2.jpg",
         "alt": "seven mpi",
-        "archived": true,
-        "local_file": "images/mini-seven-2000-mk7/02.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -10357,11 +9962,8 @@
     "tyres": "5,20x10 (145 SR10 optional)",
     "kerb_weight_kg": 617.0,
     "top_speed_mph": 82.0,
-    "colors": [
-      "Pimento Red"
-    ],
+    "colors": ["Pimento Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -10392,8 +9994,7 @@
         "original_url": "http://austinminiwebsearch.com/image/MiniLE_NZ_3.jpg",
         "wayback_url": "https://web.archive.org/web/20160405023313/http://austinminiwebsearch.com/image/MiniLE_NZ_3.jpg",
         "alt": "Mini LE_2 scan by Louis Prouting",
-        "archived": true,
-        "local_file": "images/mini-1000-le-new-zealand/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/MiniLE_NZ_4.jpg",
@@ -10455,14 +10056,8 @@
     "tyres": "Michelin 145-10 ZX",
     "kerb_weight_kg": 557.0,
     "top_speed_mph": 96.3,
-    "colors": [
-      "Verde Competicion",
-      "Blanco Viejo Ingles",
-      "Rojo Navarra",
-      "Azul Anade"
-    ],
+    "colors": ["Verde Competicion", "Blanco Viejo Ingles", "Rojo Navarra", "Azul Anade"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -10566,7 +10161,6 @@
     "top_speed_mph": null,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -10587,15 +10181,13 @@
         "original_url": "http://austinminiwebsearch.com/image/wolseley%201000.jpg",
         "wayback_url": "https://web.archive.org/web/20150820011458/http://austinminiwebsearch.com/image/wolseley%201000.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/wolseley-1000-south-africa/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/wolseley%201000_1.jpg",
         "wayback_url": "https://web.archive.org/web/20150820005345/http://austinminiwebsearch.com/image/wolseley%201000_1.jpg",
         "alt": "wolseley mini 1000 south africa",
-        "archived": true,
-        "local_file": "images/wolseley-1000-south-africa/02.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -10644,7 +10236,6 @@
     "top_speed_mph": 85.7,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -10665,8 +10256,7 @@
         "original_url": "http://austinminiwebsearch.com/image/Authi1275GT_2.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140444/http://www.austinminiwebsearch.com/image/Authi1275GT_2.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/authi-mini-clubman-1275-gt/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/Authi1275GT_3.jpg",
@@ -10718,17 +10308,8 @@
     "tyres": "145/70 SR10",
     "kerb_weight_kg": 660.0,
     "top_speed_mph": 90.1,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -10819,18 +10400,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 670.0,
     "top_speed_mph": 99.4,
-    "colors": [
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra",
-      "castoro",
-      "bianco avorio",
-      "bluette",
-      "prugna"
-    ],
+    "colors": ["verde chiaro", "rosso", "blu scuro", "giallo ocra", "castoro", "bianco avorio", "bluette", "prugna"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -10921,17 +10492,8 @@
     "tyres": "145/70 SR10",
     "kerb_weight_kg": 675.0,
     "top_speed_mph": 77.7,
-    "colors": [
-      "grigio",
-      "amaranto",
-      "sabbia",
-      "verde chiaro",
-      "rosso",
-      "blu scuro",
-      "giallo ocra"
-    ],
+    "colors": ["grigio", "amaranto", "sabbia", "verde chiaro", "rosso", "blu scuro", "giallo ocra"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -10962,8 +10524,7 @@
         "original_url": "http://austinminiwebsearch.com/image/verdechiaro_1.jpg",
         "wayback_url": "https://web.archive.org/web/20160405015526/http://austinminiwebsearch.com/image/verdechiaro_1.jpg",
         "alt": "matic_1",
-        "archived": true,
-        "local_file": "images/innocenti-mini-matic/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/innomatic_2.jpg",
@@ -11020,14 +10581,8 @@
     "tyres": "145 SR 10",
     "kerb_weight_kg": 640.0,
     "top_speed_mph": 99.4,
-    "colors": [
-      "Verde Competicion",
-      "Blanco Viejo Ingles",
-      "Rojo Navarra",
-      "Azul Anade"
-    ],
+    "colors": ["Verde Competicion", "Blanco Viejo Ingles", "Rojo Navarra", "Azul Anade"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -11048,36 +10603,31 @@
         "original_url": "http://austinminiwebsearch.com/image/authicooper_1.jpg",
         "wayback_url": "https://web.archive.org/web/20160402094525/http://austinminiwebsearch.com/image/authicooper_1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/authi-mini-cooper-1300/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authicooper_2.jpg",
         "wayback_url": "https://web.archive.org/web/20160402092937/http://austinminiwebsearch.com/image/authicooper_2.jpg",
         "alt": "Authi Mini Cooper 1300",
-        "archived": true,
-        "local_file": "images/authi-mini-cooper-1300/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authicooper_3.jpg",
         "wayback_url": "https://web.archive.org/web/20160402093755/http://austinminiwebsearch.com/image/authicooper_3.jpg",
         "alt": "Authi Mini Cooper 1300",
-        "archived": true,
-        "local_file": "images/authi-mini-cooper-1300/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authicooper_4.jpg",
         "wayback_url": "https://web.archive.org/web/20160402093331/http://austinminiwebsearch.com/image/authicooper_4.jpg",
         "alt": "Authi Mini Cooper 1300",
-        "archived": true,
-        "local_file": "images/authi-mini-cooper-1300/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/authicooper_5.jpg",
         "wayback_url": "https://web.archive.org/web/20160402092737/http://austinminiwebsearch.com/image/authicooper_5.jpg",
         "alt": "Authi Mini Cooper 1300",
-        "archived": true,
-        "local_file": "images/authi-mini-cooper-1300/05.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -11119,11 +10669,8 @@
     "tyres": "Goodyear 10\"",
     "kerb_weight_kg": 620.0,
     "top_speed_mph": null,
-    "colors": [
-      "rosso"
-    ],
+    "colors": ["rosso"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -11210,7 +10757,6 @@
       "Zircon"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -11231,29 +10777,25 @@
         "original_url": "http://austinminiwebsearch.com/image/clubman%20gts%201973_1.jpg",
         "wayback_url": "https://web.archive.org/web/20160702034349/http://austinminiwebsearch.com/image/clubman%20gts%201973_1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/leyland-mini-clubman-gts-south-africa/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/clubman%20gts%201973_2.jpg",
         "wayback_url": "https://web.archive.org/web/20181127180006/http://austinminiwebsearch.com/image/clubman%20gts%201973_2.jpg",
         "alt": "mini clubman GTS 1973",
-        "archived": true,
-        "local_file": "images/leyland-mini-clubman-gts-south-africa/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/clubman%20gts%201973_3.jpg",
         "wayback_url": "https://web.archive.org/web/20160702020353/http://austinminiwebsearch.com/image/clubman%20gts%201973_3.jpg",
         "alt": "mini clubman GTS 1973",
-        "archived": true,
-        "local_file": "images/leyland-mini-clubman-gts-south-africa/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/clubman%20gts.jpg",
         "wayback_url": "https://web.archive.org/web/20160702185236/http://austinminiwebsearch.com/image/clubman%20gts.jpg",
         "alt": "mini clubman GTS 1973",
-        "archived": true,
-        "local_file": "images/leyland-mini-clubman-gts-south-africa/04.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -11297,7 +10839,6 @@
     "top_speed_mph": 75.2,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -11361,7 +10902,6 @@
     "top_speed_mph": null,
     "colors": [],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -11382,8 +10922,7 @@
         "original_url": "http://austinminiwebsearch.com/image/clubmanLS998autralie1977.jpg",
         "wayback_url": "https://web.archive.org/web/20131217170751/http://austinminiwebsearch.com/image/clubmanLS998autralie1977.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/leyland-mini-clubman-ls-1000-australia/01.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -11425,11 +10964,8 @@
     "tyres": "Dunlop SP Sport 165/70 R10",
     "kerb_weight_kg": 640.0,
     "top_speed_mph": 82.0,
-    "colors": [
-      "Black"
-    ],
+    "colors": ["Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1098cc",
@@ -11450,8 +10986,7 @@
         "original_url": "http://austinminiwebsearch.com/image/mini%20JPS.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140441/http://www.austinminiwebsearch.com/image/mini%20JPS.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-jps-deutschland/01.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -11493,11 +11028,8 @@
     "tyres": "145 SR10",
     "kerb_weight_kg": 640.0,
     "top_speed_mph": 79.5,
-    "colors": [
-      "bronze metallic"
-    ],
+    "colors": ["bronze metallic"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1098cc",
@@ -11579,11 +11111,8 @@
     "tyres": "145/70 SR10",
     "kerb_weight_kg": 620.0,
     "top_speed_mph": 75.2,
-    "colors": [
-      "Black"
-    ],
+    "colors": ["Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -11660,11 +11189,8 @@
     "tyres": "145/70 SR10",
     "kerb_weight_kg": 620.0,
     "top_speed_mph": 75.2,
-    "colors": [
-      "Dark Blue"
-    ],
+    "colors": ["Dark Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -11685,8 +11211,7 @@
         "original_url": "http://austinminiwebsearch.com/image/minis_1.jpg",
         "wayback_url": "https://web.archive.org/web/20140506145543/http://austinminiwebsearch.com/image/minis_1.jpg",
         "alt": "Austin mini websearch",
-        "archived": true,
-        "local_file": "images/austin-rover-mini-s-f/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/minis_2.jpg",
@@ -11750,7 +11275,6 @@
     "top_speed_mph": 82.0,
     "colors": [],
     "notes": null,
-    "free_text": "Source: Fisacar",
     "engine_note": null,
     "specs_source": {
       "engine": "1098cc",
@@ -11771,36 +11295,31 @@
         "original_url": "http://austinminiwebsearch.com/image/minisport1100_1.jpg",
         "wayback_url": "https://web.archive.org/web/20170305142439/http://www.austinminiwebsearch.com/image/minisport1100_1.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/mini-sport-1100-portugal/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/minisport1100_3.jpg",
         "wayback_url": "https://web.archive.org/web/20200618131850/http://www.austinminiwebsearch.com/image/minisport1100_3.jpg",
         "alt": "british leyland portugal mini sport 1100 1980",
-        "archived": true,
-        "local_file": "images/mini-sport-1100-portugal/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/minisport1100_5.jpg",
         "wayback_url": "https://web.archive.org/web/20200618131852/http://www.austinminiwebsearch.com/image/minisport1100_5.jpg",
         "alt": "british leyland portugal mini sport 1100 1980",
-        "archived": true,
-        "local_file": "images/mini-sport-1100-portugal/03.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/minisport1100_8.jpg",
         "wayback_url": "https://web.archive.org/web/20170305141701/http://www.austinminiwebsearch.com/image/minisport1100_8.jpg",
         "alt": "british leyland portugal mini sport 1100 1980",
-        "archived": true,
-        "local_file": "images/mini-sport-1100-portugal/04.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/minisport1100_9.jpg",
         "wayback_url": "https://web.archive.org/web/20170305142427/http://www.austinminiwebsearch.com/image/minisport1100_9.jpg",
         "alt": "british leyland portugal mini sport 1100 1980",
-        "archived": true,
-        "local_file": "images/mini-sport-1100-portugal/05.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -11858,7 +11377,6 @@
       "Targa Red"
     ],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -11940,16 +11458,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 625.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Primula",
-      "Opaline",
-      "Silver Leaf Met",
-      "Black",
-      "Eclipse",
-      "Targa Red"
-    ],
+    "colors": ["Primula", "Opaline", "Silver Leaf Met", "Black", "Eclipse", "Targa Red"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -11970,22 +11480,19 @@
         "original_url": "http://austinminiwebsearch.com/image/mayfairjapan-1.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140421/http://www.austinminiwebsearch.com/image/mayfairjapan-1.jpg",
         "alt": "austin mini websearch",
-        "archived": true,
-        "local_file": "images/austin-mini-mayfair-japan/01.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/mayfairjapan-2.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140424/http://www.austinminiwebsearch.com/image/mayfairjapan-2.jpg",
         "alt": "mayfair japan",
-        "archived": true,
-        "local_file": "images/austin-mini-mayfair-japan/02.jpg"
+        "archived": true
       },
       {
         "original_url": "http://austinminiwebsearch.com/image/mayfairjapan-3.jpg",
         "wayback_url": "https://web.archive.org/web/20140808140428/http://www.austinminiwebsearch.com/image/mayfairjapan-3.jpg",
         "alt": "mayfair japan",
-        "archived": true,
-        "local_file": "images/austin-mini-mayfair-japan/03.jpg"
+        "archived": true
       }
     ],
     "sources": [
@@ -12034,7 +11541,6 @@
     "top_speed_mph": null,
     "colors": [],
     "notes": "MINI CORD BA 1993 - 1994 MINI CORD SB 1991 - 1993 MINI CORD SA 1991 - 1993 MINI CORD FA 1991 - 1993 (VENEZUELA)",
-    "free_text": "All pictures and informations, courtesy of minipassionmini",
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -12106,11 +11612,8 @@
     "tyres": "145/70 SR12",
     "kerb_weight_kg": 690.0,
     "top_speed_mph": 80.2,
-    "colors": [
-      "Black"
-    ],
+    "colors": ["Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -12187,11 +11690,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Black"
-    ],
+    "colors": ["Black"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -12273,12 +11773,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Black (France)",
-      "Polynesian Turquoise met (Deutschland)"
-    ],
+    "colors": ["Black (France)", "Polynesian Turquoise met (Deutschland)"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -12365,11 +11861,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 650.0,
     "top_speed_mph": 87.0,
-    "colors": [
-      "Tahiti Blue"
-    ],
+    "colors": ["Tahiti Blue"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -12451,11 +11944,8 @@
     "tyres": "175/50 R13",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "British Racing Green"
-    ],
+    "colors": ["British Racing Green"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -12527,11 +12017,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "Charcoal Met"
-    ],
+    "colors": ["Charcoal Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -12615,7 +12102,6 @@
     "top_speed_mph": null,
     "colors": [],
     "notes": null,
-    "free_text": "All pictures and informations, courtesy of minipassionmini",
     "engine_note": null,
     "specs_source": {
       "engine": "998cc",
@@ -12697,11 +12183,8 @@
     "tyres": "175/50 R13",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Silver"
-    ],
+    "colors": ["Silver"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -12778,11 +12261,8 @@
     "tyres": "165/60 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 92.0,
-    "colors": [
-      "Almond Green 2"
-    ],
+    "colors": ["Almond Green 2"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",
@@ -12859,13 +12339,8 @@
     "tyres": "145/70 R12",
     "kerb_weight_kg": 700.0,
     "top_speed_mph": 88.9,
-    "colors": [
-      "British Racing Green",
-      "Nightfire Red",
-      "Charcoal Met"
-    ],
+    "colors": ["British Racing Green", "Nightfire Red", "Charcoal Met"],
     "notes": null,
-    "free_text": null,
     "engine_note": null,
     "specs_source": {
       "engine": "1275cc",

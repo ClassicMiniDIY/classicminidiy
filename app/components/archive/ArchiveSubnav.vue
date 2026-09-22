@@ -56,6 +56,7 @@
     "contribute": "Contribute",
     "sections": {
       "registry": "Registry",
+      "variants": "Models",
       "documents": "Documents",
       "wheels": "Wheels",
       "colors": "Colours",
@@ -69,6 +70,7 @@
     "contribute": "Contribuir",
     "sections": {
       "registry": "Registro",
+      "variants": "Modelos",
       "documents": "Documentos",
       "wheels": "Ruedas",
       "colors": "Colores",
@@ -82,6 +84,7 @@
     "contribute": "Contribuer",
     "sections": {
       "registry": "Registre",
+      "variants": "Modèles",
       "documents": "Documents",
       "wheels": "Jantes",
       "colors": "Couleurs",
@@ -95,6 +98,7 @@
     "contribute": "Beitragen",
     "sections": {
       "registry": "Register",
+      "variants": "Modelle",
       "documents": "Dokumente",
       "wheels": "Räder",
       "colors": "Farben",
@@ -108,6 +112,7 @@
     "contribute": "Contribuisci",
     "sections": {
       "registry": "Registro",
+      "variants": "Modelli",
       "documents": "Documenti",
       "wheels": "Cerchi",
       "colors": "Colori",
@@ -121,6 +126,7 @@
     "contribute": "Contribuir",
     "sections": {
       "registry": "Registo",
+      "variants": "Modelos",
       "documents": "Documentos",
       "wheels": "Jantes",
       "colors": "Cores",
@@ -134,6 +140,7 @@
     "contribute": "Внести вклад",
     "sections": {
       "registry": "Реестр",
+      "variants": "Модели",
       "documents": "Документы",
       "wheels": "Диски",
       "colors": "Цвета",
@@ -147,6 +154,7 @@
     "contribute": "貢献する",
     "sections": {
       "registry": "レジストリ",
+      "variants": "モデル",
       "documents": "資料",
       "wheels": "ホイール",
       "colors": "カラー",
@@ -160,6 +168,7 @@
     "contribute": "贡献",
     "sections": {
       "registry": "注册库",
+      "variants": "车型",
       "documents": "文档",
       "wheels": "轮毂",
       "colors": "颜色",
@@ -173,6 +182,7 @@
     "contribute": "기여하기",
     "sections": {
       "registry": "레지스트리",
+      "variants": "모델",
       "documents": "문서",
       "wheels": "휠",
       "colors": "색상",

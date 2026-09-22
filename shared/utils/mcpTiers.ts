@@ -65,7 +65,13 @@ export const FREE_TOOLS: ReadonlySet<string> = new Set([
 ]);
 
 /** The identification + archive tools the paid tier adds. */
-export const PAID_ONLY_TOOLS: readonly string[] = ['chassis-decoder', 'engine-decoder', 'wheel-search', 'color-lookup'];
+export const PAID_ONLY_TOOLS: readonly string[] = [
+  'chassis-decoder',
+  'engine-decoder',
+  'wheel-search',
+  'color-lookup',
+  'model-variants',
+];
 
 /** Self-serve keys are recognisable without a DB hit: 'cmdiy_' + 40 base62. */
 export const MCP_KEY_PREFIX = 'cmdiy_';

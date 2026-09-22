@@ -8,6 +8,7 @@ import colorLookup from '../mcp/tools/color-lookup';
 import compressionCalculator from '../mcp/tools/compression-calculator';
 import engineDecoder from '../mcp/tools/engine-decoder';
 import gearboxCalculator from '../mcp/tools/gearbox-calculator';
+import modelVariants from '../mcp/tools/model-variants';
 import needleCompare from '../mcp/tools/needle-compare';
 import partsEquivalency from '../mcp/tools/parts-equivalency';
 import partsLookup from '../mcp/tools/parts-lookup';
@@ -93,6 +94,7 @@ const DEFINITIONS: Record<string, McpToolDefinition> = {
   'compression-calculator': compressionCalculator,
   'engine-decoder': engineDecoder,
   'gearbox-calculator': gearboxCalculator,
+  'model-variants': modelVariants,
   'needle-compare': needleCompare,
   'parts-equivalency': partsEquivalency,
   'parts-lookup': partsLookup,

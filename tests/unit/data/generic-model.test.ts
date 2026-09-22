@@ -196,8 +196,8 @@ describe('ToolboxItems', () => {
 // ArchiveItems
 // ---------------------------------------------------------------------------
 describe('ArchiveItems', () => {
-  it('has 10 items', () => {
-    expect(ArchiveItems).toHaveLength(10);
+  it('has 11 items', () => {
+    expect(ArchiveItems).toHaveLength(11);
   });
 
   it('lists the sections that are only reachable from here', () => {

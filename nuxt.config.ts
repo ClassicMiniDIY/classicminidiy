@@ -244,6 +244,7 @@ export default defineNuxtConfig({
       '/api/__sitemap__/colors',
       '/api/__sitemap__/wheels',
       '/api/__sitemap__/documents',
+      '/api/__sitemap__/variants',
       // Marketplace URLs (flag-gated inside the source — empty pre-cutover).
       '/api/__sitemap__/exchange',
     ],
@@ -630,6 +631,12 @@ export default defineNuxtConfig({
     // if the server renders the request. A baked copy answered every query
     // string with page 1 and `index, follow`.
     '/archive/parts': { prerender: false },
+    // The Model Variants index keeps its facets (marque, era, body, engine) in
+    // the URL, so it is SSR for the same reason as /archive/suppliers above:
+    // a baked copy would hydrate every filtered link into the full list. The
+    // detail pages are SSR too and enter the sitemap via
+    // /api/__sitemap__/variants.
+    '/archive/variants': { prerender: false },
     '/admin/**': { prerender: false },
     // Admin consolidation (2026-08-26). /admin/inbox and the three per-type
     // review screens all read the SAME `submission_queue` table — the review

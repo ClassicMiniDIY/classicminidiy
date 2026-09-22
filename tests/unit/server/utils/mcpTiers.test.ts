@@ -32,7 +32,7 @@ describe('server/utils/mcpTiers', () => {
   // Drift guard: FREE_TOOLS names are tool FILENAMES. A renamed or removed tool
   // must fail here, not silently stop matching in the tiering plugin (where a
   // stale name would silently gate a tool that should be free).
-  it('every FREE_TOOLS entry is a real tool file, and the paid set is exactly the four identification/archive tools', () => {
+  it('every FREE_TOOLS entry is a real tool file, and the paid set is exactly the five identification/archive tools', () => {
     const toolFiles = readdirSync(join(process.cwd(), 'server/mcp/tools'))
       .filter((f) => f.endsWith('.ts'))
       .map((f) => f.replace(/\.ts$/, ''));
@@ -42,7 +42,7 @@ describe('server/utils/mcpTiers', () => {
     }
 
     const paid = toolFiles.filter((name) => !FREE_TOOLS.has(name)).sort();
-    expect(paid).toEqual(['chassis-decoder', 'color-lookup', 'engine-decoder', 'wheel-search']);
+    expect(paid).toEqual(['chassis-decoder', 'color-lookup', 'engine-decoder', 'model-variants', 'wheel-search']);
 
     // PAID_ONLY_TOOLS drives the /developers pricing table — it must be exactly
     // the complement of FREE_TOOLS over the real tool files.

@@ -80,6 +80,12 @@ const TOOL_GUIDANCE: Record<string, string> = {
   'vehicle-weights': 'kerb weights by variant and individual component weights',
   'wheel-search': 'wheel fitment from the archive — size, width, offset, bolt pattern, manufacturer',
   'color-lookup': 'factory paint colours by name or code, including BLVC and Ditzler/PPG cross-references',
+  // Reach for it before mini-history on any question about a specific model,
+  // trim, mark, year range, engine or limited edition: it answers with the
+  // archived spec sheet and a page to cite. Say when a field is missing rather
+  // than guessing a figure.
+  'model-variants':
+    'the factory spec sheet for a specific Mini model or trim — engine, power, torque, gearing, wheels, weight, top speed, production numbers, colours — by name, mark, year or engine size',
   'site-search':
     'anything else on classicminidiy.com — guides, archive documents, registry entries, marketplace listings',
   // Reach for it on HOW questions, before anything external. Cole has published

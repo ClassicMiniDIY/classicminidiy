@@ -26,6 +26,9 @@ answer and the on-site answer cannot drift apart.
 - **torque-specs**, **clearances**, **parts-equivalency**, **vehicle-weights**:
   searchable reference tables
 - **wheel-search**, **color-lookup**: the Supabase archive, approved entries only
+- **model-variants**: every Classic Mini model variant 1959–2000 with its factory spec
+  sheet, production numbers and colours (seeded from the archived
+  austinminiwebsearch.com library; design doc `docs/plans/2026-09-22-model-variants-archive.md`)
 - **parts-lookup**: part numbers, supersession chains, applicability and plate
   callouts from the Supabase archive. Published rows only, and rows from a
   source whose licence is `declined` are filtered out IN THE TOOL — it runs on
@@ -49,10 +52,10 @@ per account; revocation from the dashboard is immediate.
 
 ### Tiers
 
-| Tier      | Who                                                                                        | Tools                                                                             | Rate limit          |
-| --------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------- |
-| Free      | any signed-in account                                                                      | the 7 calculators/reference tables                                                | 20 req/min per key  |
-| Developer | [Developer API subscribers](https://classicminidiy.com/developers) ($4.99/mo or $47.90/yr) | all 12 (adds `chassis-decoder`, `engine-decoder`, `wheel-search`, `color-lookup`) | 240 req/min per key |
+| Tier      | Who                                                                                        | Tools                                                                                               | Rate limit          |
+| --------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------- |
+| Free      | any signed-in account                                                                      | the 8 calculators/reference tables                                                                  | 20 req/min per key  |
+| Developer | [Developer API subscribers](https://classicminidiy.com/developers) ($4.99/mo or $47.90/yr) | all 13 (adds `chassis-decoder`, `engine-decoder`, `wheel-search`, `color-lookup`, `model-variants`) | 240 req/min per key |
 
 The canonical free-tool list is `FREE_TOOLS` in `server/utils/mcpTiers.ts` (a
 unit test pins it to the tool filenames). On a free key the paid tools still
@@ -242,6 +245,21 @@ Returns factory, Ditzler/PPG and Dulux codes.
 > `colorFamily` is a broad grouping (`"red"`, `"grey"`), **not a hex code** — the archive
 > records families rather than exact values. There is deliberately no year filter:
 > `year_start` is null on every approved row, so it could only ever return nothing.
+
+### 13. Model variants
+
+**`model-variants`** — `query` (name fragment; every word prefix-matches), `marque`,
+`family`, `body`, `market`, `mark` (1–7), `year` (in production that year), `engine_cc`
+(exact), `limit` (default 10). Returns one object per variant: identity (marque, family,
+body, mark, market, years, limited-edition flag), `specs` (engine_cc, compression_ratio,
+power_bhp + derived PS/kW, torque_lbft + derived Nm, fuel_system, carburettor,
+final_drive, wheels, tyres, kerb_weight_kg + lb, top_speed_mph + km/h), `production`
+(per-marque counts and total), `colors`, `sources` and the archive `url` to cite.
+
+> Stored figures are the SOURCE unit (bhp, lb-ft, kg, mph); the metric figures beside
+> them are derived. A null field means the source did not record it, never zero. Overseas
+> cars (Innocenti, Authi, Leyland Australia) carry `mark: null`. Reads the bundled seed
+> today and the `model_variants` table after Phase 1 of the design doc.
 
 ## Using with AI Assistants
 

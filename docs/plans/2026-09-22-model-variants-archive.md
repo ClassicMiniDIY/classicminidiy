@@ -1,7 +1,10 @@
 # Model Variants archive — design
 
-Status: design. Nothing built. Data preservation spike done (see §8).
-Branch here: `claude/mini-model-archive-f61ebf`.
+Status: Phase 2 (pages) and Phase 5 (MCP tool) built on the bundled seed, ahead of the
+Phase 1 migration; the read path is `server/utils/modelVariants.ts` and swaps to the
+`model_variants` table without the pages or the tool changing. Data preservation spike
+done (§8). Branch here: `claude/mini-model-archive-f61ebf`. Rules:
+`.claude/rules/model-variants.md`.
 
 Related: `docs/plans/2026-03-01-phase6-contribution-system.md` (submission queue + trust),
 `docs/plans/2026-09-04-parts-number-database.md` (process template: schema → ingest → surface),
@@ -40,16 +43,16 @@ The working title was "Model Registry". Two names are already taken:
 
 "Model Registry" reads as either of those. The design uses **variant** everywhere:
 
-| Thing               | Name                                                 |
-| ------------------- | ---------------------------------------------------- |
-| Route               | `/archive/variants`, `/archive/variants/[slug]`       |
-| Section label       | "Model Variants" (subnav key `variants`)             |
-| Table               | `model_variants` (+ `model_variant_photos`, `model_variant_colors`) |
-| `target_type_enum`  | `variant`                                            |
-| `ContributionKind`  | `variant`                                            |
-| Storage bucket      | `archive-variants`                                   |
-| MCP tool            | `server/mcp/tools/model-variants.ts`                 |
-| Wizard payload key  | `variant`                                            |
+| Thing              | Name                                                                |
+| ------------------ | ------------------------------------------------------------------- |
+| Route              | `/archive/variants`, `/archive/variants/[slug]`                     |
+| Section label      | "Model Variants" (subnav key `variants`)                            |
+| Table              | `model_variants` (+ `model_variant_photos`, `model_variant_colors`) |
+| `target_type_enum` | `variant`                                                           |
+| `ContributionKind` | `variant`                                                           |
+| Storage bucket     | `archive-variants`                                                  |
+| MCP tool           | `server/mcp/tools/model-variants.ts`                                |
+| Wizard payload key | `variant`                                                           |
 
 `variant` is already the site's word: `variant_enum` on `listings`, and the `variants`
 history category in `data/miniHistory.json`. The design file (`Model Registry.dc.html`)
@@ -66,62 +69,62 @@ regenerates `types/database.ts` and reads. Column names below are the contract.
 
 Identity and classification:
 
-| Column               | Type                     | Notes                                                                                      |
-| -------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
-| `id`                 | uuid pk                  |                                                                                            |
-| `slug`               | text unique              | `cooper-s-1275-mk1`, `innocenti-cooper-1300-export`. URL key. Never changes once approved. |
-| `name`               | text                     | Display name: "Austin / Morris Mini Cooper S 1275 Mk1".                                    |
-| `marque`             | `variant_marque_enum`    | `austin`, `morris`, `austin_morris`, `mini` (post-1969 marque), `rover`, `innocenti`, `authi`, `riley`, `wolseley`, `leyland`, `other` |
-| `family`             | `variant_family_enum`    | `saloon`, `cooper`, `cooper_s`, `clubman`, `clubman_estate`, `1275_gt`, `countryman_traveller`, `van`, `pickup`, `moke`, `elf_hornet`, `cabriolet`, `limited_edition`, `special` |
-| `body_style`         | `variant_body_enum`      | `saloon`, `estate`, `van`, `pickup`, `moke`, `cabriolet`                                   |
-| `mark`               | smallint null            | 1–7. Null for cars outside the UK mark sequence (Innocenti, Authi).                        |
-| `market`             | `variant_market_enum`    | `uk`, `europe`, `italy`, `spain`, `france`, `germany`, `japan`, `south_africa`, `australia`, `new_zealand`, `usa`, `other` |
-| `year_start`         | smallint                 |                                                                                            |
-| `year_end`           | smallint null            | Null = single model year or unknown.                                                       |
-| `is_limited_edition` | boolean                  |                                                                                            |
-| `edition_size`       | integer null             | Announced run for limited editions.                                                        |
-| `production_total`   | integer null             | Sum across marques where known.                                                            |
-| `production`         | jsonb                    | `[{"marque":"austin","count":12395},{"marque":"morris","count":12465}]`. Source of `production_total`. |
-| `based_on_id`        | uuid null fk self        | Limited edition → the base variant (Mini Sprite 1983 → Mini City E).                       |
-| `description`        | text null                | Free prose. Markdown allowed; rendered with the existing sanitiser.                        |
-| `distinguishing`     | text[]                   | Short bullets: "Twin fuel tanks", "Hydrolastic from 1964". Feeds the chat tool.            |
+| Column               | Type                  | Notes                                                                                                                                                                            |
+| -------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | uuid pk               |                                                                                                                                                                                  |
+| `slug`               | text unique           | `cooper-s-1275-mk1`, `innocenti-cooper-1300-export`. URL key. Never changes once approved.                                                                                       |
+| `name`               | text                  | Display name: "Austin / Morris Mini Cooper S 1275 Mk1".                                                                                                                          |
+| `marque`             | `variant_marque_enum` | `austin`, `morris`, `austin_morris`, `mini` (post-1969 marque), `rover`, `innocenti`, `authi`, `riley`, `wolseley`, `leyland`, `other`                                           |
+| `family`             | `variant_family_enum` | `saloon`, `cooper`, `cooper_s`, `clubman`, `clubman_estate`, `1275_gt`, `countryman_traveller`, `van`, `pickup`, `moke`, `elf_hornet`, `cabriolet`, `limited_edition`, `special` |
+| `body_style`         | `variant_body_enum`   | `saloon`, `estate`, `van`, `pickup`, `moke`, `cabriolet`                                                                                                                         |
+| `mark`               | smallint null         | 1–7. Null for cars outside the UK mark sequence (Innocenti, Authi).                                                                                                              |
+| `market`             | `variant_market_enum` | `uk`, `europe`, `italy`, `spain`, `france`, `germany`, `japan`, `south_africa`, `australia`, `new_zealand`, `usa`, `other`                                                       |
+| `year_start`         | smallint              |                                                                                                                                                                                  |
+| `year_end`           | smallint null         | Null = single model year or unknown.                                                                                                                                             |
+| `is_limited_edition` | boolean               |                                                                                                                                                                                  |
+| `edition_size`       | integer null          | Announced run for limited editions.                                                                                                                                              |
+| `production_total`   | integer null          | Sum across marques where known.                                                                                                                                                  |
+| `production`         | jsonb                 | `[{"marque":"austin","count":12395},{"marque":"morris","count":12465}]`. Source of `production_total`.                                                                           |
+| `based_on_id`        | uuid null fk self     | Limited edition → the base variant (Mini Sprite 1983 → Mini City E).                                                                                                             |
+| `description`        | text null             | Free prose. Markdown allowed; rendered with the existing sanitiser.                                                                                                              |
+| `distinguishing`     | text[]                | Short bullets: "Twin fuel tanks", "Hydrolastic from 1964". Feeds the chat tool.                                                                                                  |
 
 Spec sheet (typed; the source strings are kept in `specs_source`):
 
-| Column               | Type          | Unit rule (`.claude/rules/reference-data.md`)                       |
-| -------------------- | ------------- | ------------------------------------------------------------------- |
-| `engine_cc`          | smallint null |                                                                     |
-| `engine_code`        | text null     | Factory prefix, cross-links `/technical/engine-decoder`.            |
-| `bore_mm`            | numeric null  |                                                                     |
-| `stroke_mm`          | numeric null  |                                                                     |
-| `compression_ratio`  | numeric null  | 9.0 for "9 : 1".                                                    |
-| `power_bhp`          | numeric null  | Source unit. Metric (PS/kW) derived on read.                        |
-| `power_rpm`          | smallint null |                                                                     |
-| `torque_lbft`        | numeric null  | Source unit. The site gave mkg; converted on import (×7.233).       |
-| `torque_rpm`         | smallint null |                                                                     |
-| `fuel_system`        | `variant_fuel_enum` | `carb_single`, `carb_twin`, `spi`, `mpi`                       |
-| `carburettor`        | text null     | "Twin SU HS2", "SU HS4". Cross-links `/technical/needles`.          |
-| `gearbox`            | text null     | "4-speed manual", "AP automatic".                                   |
-| `final_drive`        | numeric null  | 3.765                                                               |
-| `suspension`         | `variant_suspension_enum` null | `rubber_cone`, `hydrolastic`                       |
-| `brakes_front`       | text null     | "7-inch drum", "7.5-inch disc", "8.4-inch disc".                     |
-| `brakes_rear`        | text null     |                                                                     |
-| `wheels`             | text null     | "Steel 3.5J x 10". Free text; cross-links `/archive/wheels` by search. |
-| `tyres`              | text null     | "Dunlop Gold Seal 5.20 x 10".                                       |
-| `kerb_weight_kg`     | numeric null  | Kilograms per the weights rule.                                     |
-| `top_speed_mph`      | numeric null  | Source unit. km/h derived on read.                                  |
-| `length_mm` / `width_mm` / `height_mm` / `wheelbase_mm` | numeric null | Not in the seed; here for contributions. |
-| `specs_source`       | jsonb         | The raw label→value pairs from the source page, verbatim.           |
+| Column                                                  | Type                           | Unit rule (`.claude/rules/reference-data.md`)                          |
+| ------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------- |
+| `engine_cc`                                             | smallint null                  |                                                                        |
+| `engine_code`                                           | text null                      | Factory prefix, cross-links `/technical/engine-decoder`.               |
+| `bore_mm`                                               | numeric null                   |                                                                        |
+| `stroke_mm`                                             | numeric null                   |                                                                        |
+| `compression_ratio`                                     | numeric null                   | 9.0 for "9 : 1".                                                       |
+| `power_bhp`                                             | numeric null                   | Source unit. Metric (PS/kW) derived on read.                           |
+| `power_rpm`                                             | smallint null                  |                                                                        |
+| `torque_lbft`                                           | numeric null                   | Source unit. The site gave mkg; converted on import (×7.233).          |
+| `torque_rpm`                                            | smallint null                  |                                                                        |
+| `fuel_system`                                           | `variant_fuel_enum`            | `carb_single`, `carb_twin`, `spi`, `mpi`                               |
+| `carburettor`                                           | text null                      | "Twin SU HS2", "SU HS4". Cross-links `/technical/needles`.             |
+| `gearbox`                                               | text null                      | "4-speed manual", "AP automatic".                                      |
+| `final_drive`                                           | numeric null                   | 3.765                                                                  |
+| `suspension`                                            | `variant_suspension_enum` null | `rubber_cone`, `hydrolastic`                                           |
+| `brakes_front`                                          | text null                      | "7-inch drum", "7.5-inch disc", "8.4-inch disc".                       |
+| `brakes_rear`                                           | text null                      |                                                                        |
+| `wheels`                                                | text null                      | "Steel 3.5J x 10". Free text; cross-links `/archive/wheels` by search. |
+| `tyres`                                                 | text null                      | "Dunlop Gold Seal 5.20 x 10".                                          |
+| `kerb_weight_kg`                                        | numeric null                   | Kilograms per the weights rule.                                        |
+| `top_speed_mph`                                         | numeric null                   | Source unit. km/h derived on read.                                     |
+| `length_mm` / `width_mm` / `height_mm` / `wheelbase_mm` | numeric null                   | Not in the seed; here for contributions.                               |
+| `specs_source`                                          | jsonb                          | The raw label→value pairs from the source page, verbatim.              |
 
 Provenance and moderation (same shape as `wheels`):
 
-| Column                | Type                        | Notes                                                                   |
-| --------------------- | --------------------------- | ----------------------------------------------------------------------- |
-| `sources`             | jsonb                       | `[{"type":"web_archive","url":"…","title":"…","accessed":"2026-09-22"}]` |
-| `status`              | `moderation_status_enum`    | Only `approved` is ever public.                                         |
-| `submitted_by`        | uuid null fk profiles       | Trust ledger. Every approval writes it.                                 |
-| `legacy_submitted_by` | text null                   | `austinminiwebsearch.com` for the seed.                                 |
-| `created_at`, `updated_at`, `reviewed_by`, `reviewed_at` |         |                                                       |
+| Column                                                   | Type                     | Notes                                                                    |
+| -------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------ |
+| `sources`                                                | jsonb                    | `[{"type":"web_archive","url":"…","title":"…","accessed":"2026-09-22"}]` |
+| `status`                                                 | `moderation_status_enum` | Only `approved` is ever public.                                          |
+| `submitted_by`                                           | uuid null fk profiles    | Trust ledger. Every approval writes it.                                  |
+| `legacy_submitted_by`                                    | text null                | `austinminiwebsearch.com` for the seed.                                  |
+| `created_at`, `updated_at`, `reviewed_by`, `reviewed_at` |                          |                                                                          |
 
 Constraints: `year_start <= year_end`, `mark between 1 and 7`, `slug ~ '^[a-z0-9-]+$'`,
 `edition_size > 0`. A unique index on `(marque, name, year_start)` stops the duplicate
@@ -129,32 +132,32 @@ problem the colours archive had (`docs/invariants/contributions.md`).
 
 ### 1.2 `model_variant_photos`
 
-| Column         | Type                     | Notes                                                          |
-| -------------- | ------------------------ | -------------------------------------------------------------- |
-| `id`           | uuid pk                  |                                                                |
-| `variant_id`   | uuid fk → model_variants |                                                                |
-| `url`          | text                     | Public storage URL in `archive-variants`.                      |
+| Column         | Type                      | Notes                                                                   |
+| -------------- | ------------------------- | ----------------------------------------------------------------------- |
+| `id`           | uuid pk                   |                                                                         |
+| `variant_id`   | uuid fk → model_variants  |                                                                         |
+| `url`          | text                      | Public storage URL in `archive-variants`.                               |
 | `kind`         | `variant_photo_kind_enum` | `brochure`, `factory`, `period`, `owner`, `interior`, `engine`, `badge` |
-| `caption`      | text null                |                                                                |
-| `credit`       | text null                | Free text credit line.                                         |
-| `is_primary`   | boolean                  | One per variant (partial unique index).                        |
-| `sort_order`   | smallint                 |                                                                |
-| `status`       | `moderation_status_enum` |                                                                |
-| `submitted_by` | uuid null                |                                                                |
-| `source`       | jsonb null               | Same shape as `sources` above.                                 |
+| `caption`      | text null                 |                                                                         |
+| `credit`       | text null                 | Free text credit line.                                                  |
+| `is_primary`   | boolean                   | One per variant (partial unique index).                                 |
+| `sort_order`   | smallint                  |                                                                         |
+| `status`       | `moderation_status_enum`  |                                                                         |
+| `submitted_by` | uuid null                 |                                                                         |
+| `source`       | jsonb null                | Same shape as `sources` above.                                          |
 
 Separate table, not a `photos text[]` column, because each photo has its own status,
 credit and kind, and because a photo can be rejected without touching the variant.
 
 ### 1.3 `model_variant_colors`
 
-| Column         | Type                     | Notes                                                                 |
-| -------------- | ------------------------ | --------------------------------------------------------------------- |
-| `variant_id`   | uuid fk                  |                                                                       |
-| `color_id`     | uuid null fk → colors    | Set when the name resolves to an approved colour.                     |
-| `color_name`   | text                     | Always kept. "Island Blue". Resolved lazily; unresolved rows still render. |
-| `year_start`, `year_end` | smallint null  | Colour availability inside the variant's run, when known.             |
-| `sort_order`   | smallint                 |                                                                       |
+| Column                   | Type                  | Notes                                                                      |
+| ------------------------ | --------------------- | -------------------------------------------------------------------------- |
+| `variant_id`             | uuid fk               |                                                                            |
+| `color_id`               | uuid null fk → colors | Set when the name resolves to an approved colour.                          |
+| `color_name`             | text                  | Always kept. "Island Blue". Resolved lazily; unresolved rows still render. |
+| `year_start`, `year_end` | smallint null         | Colour availability inside the variant's run, when known.                  |
+| `sort_order`             | smallint              |                                                                            |
 
 Primary key `(variant_id, color_name)`. This is the join that makes the colour pages
 show "available on" and the variant pages link into `/archive/colors`. The seed writes
@@ -177,12 +180,12 @@ approved colours and leaves the rest for contributors.
 
 All through `ContributeWizard.vue` (the only archive form) and `submission_queue`.
 
-| Flow                | `submission_queue.type` | `target_type` | `target_id` | `data` payload                                                 | Approval effect                                                                 |
-| ------------------- | ----------------------- | ------------- | ----------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| New variant         | `new_item`              | `variant`     | null        | Full §1.1 shape (typed fields), `colors[]`, `uploadedFiles[]`  | Insert `model_variants` + photos + colours; write `submitted_by`; trust ledger. |
-| Spec edit           | `edit_suggestion`       | `variant`     | variant id  | `changes: { power_bhp: 76, torque_lbft: 79 }` + `reason`       | Column-allowlisted update (`EDIT_TARGETS.variant`).                             |
-| Add photo           | `edit_suggestion`       | `variant`     | variant id  | `uploadedFiles[]` only, plus `photoKind`, `caption`, `credit`  | Insert `model_variant_photos` (`PHOTO_APPEND_TARGETS.variant`).                 |
-| Add / remove colour | `edit_suggestion`       | `variant`     | variant id  | `changes: { colors: [...] }`                                   | Replace the colour set (treated as one allowlisted "column").                   |
+| Flow                | `submission_queue.type` | `target_type` | `target_id` | `data` payload                                                | Approval effect                                                                 |
+| ------------------- | ----------------------- | ------------- | ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| New variant         | `new_item`              | `variant`     | null        | Full §1.1 shape (typed fields), `colors[]`, `uploadedFiles[]` | Insert `model_variants` + photos + colours; write `submitted_by`; trust ledger. |
+| Spec edit           | `edit_suggestion`       | `variant`     | variant id  | `changes: { power_bhp: 76, torque_lbft: 79 }` + `reason`      | Column-allowlisted update (`EDIT_TARGETS.variant`).                             |
+| Add photo           | `edit_suggestion`       | `variant`     | variant id  | `uploadedFiles[]` only, plus `photoKind`, `caption`, `credit` | Insert `model_variant_photos` (`PHOTO_APPEND_TARGETS.variant`).                 |
+| Add / remove colour | `edit_suggestion`       | `variant`     | variant id  | `changes: { colors: [...] }`                                  | Replace the colour set (treated as one allowlisted "column").                   |
 
 `EDIT_TARGETS.variant.columns` = every spec column in §1.1 plus `name`, `description`,
 `distinguishing`, `year_start`, `year_end`, `production`, `edition_size`, `based_on_id`,
@@ -308,14 +311,14 @@ Not in scope. When wanted, the iOS/Android apps read the same tables through Pos
 
 ## 7. Phases
 
-| Phase | Repo                     | Work                                                                                                          | Gate                                        |
-| ----- | ------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Phase | Repo                      | Work                                                                                                                                                                           | Gate                                        |
+| ----- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
 | 1     | `classicminidiy-supabase` | Migration: enums, three tables, RLS, grants, `target_type_enum`, view branch, bucket, omnisearch branch. Seed migration from §8 JSON (specs + colours, `legacy_submitted_by`). | Local stack green; Cole approves `db push`. |
-| 2     | this repo                 | `bun run gen:types`; `useVariants()`; index + detail pages from the design file; six-place registration; static tests (i18n × 10, hydration gate, auto-import collisions). | PR, code review pass.                        |
-| 3     | this repo                 | Photo import job (§8.3) into `archive-variants`; `model_variant_photos` rows with `source`.                     | Copyright decision (§8.4).                  |
-| 4     | this repo                 | Contribution: wizard step, upload bucket, approve branches, review findings, `CLAUDE.md` rule in `.claude/rules/contributions.md`. | PR, code review pass.                        |
-| 5     | this repo                 | MCP tool + agent guidance + tier partition + transport script + README.                                         | `scripts/test-mcp-transport.sh` green.       |
-| 6     | this repo                 | Colour resolution job; "available on" block on `/archive/colors/[id]`; search triage.                          |                                             |
+| 2     | this repo                 | `bun run gen:types`; `useVariants()`; index + detail pages from the design file; six-place registration; static tests (i18n × 10, hydration gate, auto-import collisions).     | PR, code review pass.                       |
+| 3     | this repo                 | Photo import job (§8.3) into `archive-variants`; `model_variant_photos` rows with `source`.                                                                                    | Copyright decision (§8.4).                  |
+| 4     | this repo                 | Contribution: wizard step, upload bucket, approve branches, review findings, `CLAUDE.md` rule in `.claude/rules/contributions.md`.                                             | PR, code review pass.                       |
+| 5     | this repo                 | MCP tool + agent guidance + tier partition + transport script + README.                                                                                                        | `scripts/test-mcp-transport.sh` green.      |
+| 6     | this repo                 | Colour resolution job; "available on" block on `/archive/colors/[id]`; search triage.                                                                                          |                                             |
 
 Phase 2 can ship with seed data and no contribution UI. Phase 4 and 5 are independent.
 
@@ -363,7 +366,7 @@ Committed next to this doc in `docs/plans/data/`:
   every source string in `specs_source`, splits colours, derives `slug`, `marque`,
   `family`, `body_style`, `mark` (explicit, else from the UK year ranges), `market`,
   years, production, and `is_limited_edition`.
-- `2026-09-22-model-variants-seed.json` — the seed: **141 variants**, every one with a
+- `data/modelVariants.json` (repo root `data/`) — the seed: **141 variants**, every one with a
   Wayback `sources` entry and `legacy_submitted_by`.
 
 Field coverage of the seed (non-null / 141):
@@ -416,8 +419,7 @@ The page design lives at `claude.ai/design/p/a64318a5-…?file=Model+Registry.dc
 (with `colors_and_type.css`, `support.js`, `assets/logo-wheel-black.png`). The design
 MCP (`DesignSync`) refuses every call from the desktop Code tab: it needs a one-time
 `/design-login` from an interactive `claude` terminal session on this machine, after
-which headless sessions reuse the grant. `/design-consent` from the Code tab returned
-403. Fallback: export the four files from Claude Design and drop them in
+which headless sessions reuse the grant. `/design-consent` from the Code tab returned 403. Fallback: export the four files from Claude Design and drop them in
 `docs/plans/design/model-registry/`. Phase 2 starts by importing that file. Until then §3.1 is the structural contract
 and the design file is the visual one.
 
