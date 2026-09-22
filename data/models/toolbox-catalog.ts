@@ -350,7 +350,7 @@ export const ARCHIVE_SEARCH_SECTIONS: ArchiveSectionSearchEntry[] = [
     icon: 'fas fa-car-side',
     searchTerms: [
       'model variants',
-      'models',
+      'model specs',
       'variants',
       'mark',
       'mk1',

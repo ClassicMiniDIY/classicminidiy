@@ -257,6 +257,8 @@ export interface ModelVariantCard {
   is_limited_edition: boolean;
   engine_cc: number | null;
   photo_count: number;
+  /** First hosted photo, or null. Drives the card image vs. the gap state. */
+  photo_url: string | null;
   /** How many of the twelve source spec rows carry a value. */
   spec_count: number;
 }

@@ -34,6 +34,8 @@ export default defineEventHandler((event) => {
     limitedOnly: str(q.limited) === '1' || str(q.limited) === 'true',
   }).map(toModelVariantCard);
 
+  // `total` counts this (possibly filtered) list; `facets` always describe the
+  // whole archive (facets.total), so a client can offer every option.
   return {
     variants,
     facets: modelVariantFacets(),

@@ -64,6 +64,7 @@ export function toModelVariantCard(v: ModelVariant): ModelVariantCard {
     is_limited_edition: v.is_limited_edition,
     engine_cc: v.engine_cc,
     photo_count: v.images.filter((i) => Boolean(i.url)).length,
+    photo_url: v.images.find((i) => i.url)?.url ?? null,
     spec_count: countSourcedSpecs(v),
   };
 }
@@ -113,8 +114,15 @@ export function relatedModelVariants(variant: ModelVariant, limit = 6): ModelVar
     .map(toModelVariantCard);
 }
 
-/** Distinct values present in the archive, for the index page's filter chips. */
+/**
+ * Distinct values across the WHOLE archive, for the index page's filter
+ * controls. Deliberately not narrowed by a request's filters; computed once.
+ */
+let FACETS: ReturnType<typeof buildFacets> | null = null;
 export function modelVariantFacets() {
+  return (FACETS ??= buildFacets());
+}
+function buildFacets() {
   const count = <K extends string | number>(pick: (v: ModelVariant) => K | null) => {
     const m = new Map<K, number>();
     for (const v of ALL) {
