@@ -261,6 +261,10 @@ export interface ModelVariant {
   height_mm: number | null;
   wheelbase_mm: number | null;
   colors: VariantColor[];
+  /** Other names the same car was sold under ("Sold as Austin Mini 1962–1967"). */
+  distinguishing: string[];
+  /** Approved registry cars linked to this variant (`registry_entries.variant_id`). */
+  registered_count: number;
   notes: string | null;
   engine_note: string | null;
   /** The source page's label → value pairs, verbatim. */
@@ -278,6 +282,8 @@ export type ModelVariantSeedRow = Omit<
   | 'colors'
   | 'photos'
   | 'updated_at'
+  | 'distinguishing'
+  | 'registered_count'
   | 'description'
   | 'engine_code'
   | 'bore_mm'
@@ -418,6 +424,8 @@ export interface ModelVariantCard {
   photo_count: number;
   /** First hosted photo, or null. Drives the card image vs. the gap state. */
   photo_url: string | null;
+  /** Approved registry cars linked to this variant. */
+  registered_count: number;
   /** How many of the twelve source spec rows carry a value. */
   spec_count: number;
 }

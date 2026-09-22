@@ -106,6 +106,8 @@ describe('useRegistry', () => {
         notes: 'Numbers matching',
         submittedBy: 'John Doe',
         ownerId: null,
+        variantSlug: null,
+        variantName: null,
         status: 'A',
       });
     });
@@ -147,6 +149,8 @@ describe('useRegistry', () => {
         notes: '',
         submittedBy: '',
         ownerId: null,
+        variantSlug: null,
+        variantName: null,
         status: 'A',
       });
     });

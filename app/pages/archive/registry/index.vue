@@ -18,6 +18,24 @@
     openWizard({ kind: 'registry', origin: '/archive/registry' });
   };
 
+  // `/archive/registry?variant=<slug>` (from a Model Variants page) narrows the
+  // table to the cars linked to that variant. Read after mount: this page may
+  // be served prerendered with an empty query, and seeding the filter during
+  // setup would make the baked HTML and the first client render disagree.
+  const route = useRoute();
+  const variantFilter = ref<string | null>(null);
+  onMounted(() => {
+    const v = Array.isArray(route.query.variant) ? route.query.variant[0] : route.query.variant;
+    if (typeof v === 'string' && /^[a-z0-9-]{1,120}$/.test(v)) variantFilter.value = v;
+  });
+  const variantFilterName = computed(
+    () => (registryItems.value ?? []).find((item) => item.variantSlug === variantFilter.value)?.variantName ?? null
+  );
+  const clearVariantFilter = () => {
+    variantFilter.value = null;
+    navigateTo(route.path, { replace: true });
+  };
+
   // Define table columns
   const tableHeaders = [
     { title: t('table_headers.year'), key: 'year' },
@@ -181,7 +199,18 @@
              submitted from their confirmed email address. -->
         <RegistryClaimPrompt @claimed="refresh()" />
 
+        <div v-if="variantFilter" class="alert alert-info alert-soft mb-4 flex flex-wrap items-center gap-2">
+          <i class="fas fa-car-side" aria-hidden="true"></i>
+          <span>{{ t('variant_filter', { name: variantFilterName || variantFilter }) }}</span>
+          <NuxtLink :to="`/archive/variants/${variantFilter}`" class="link link-primary text-sm">{{
+            t('variant_filter_open')
+          }}</NuxtLink>
+          <button type="button" class="btn btn-ghost btn-xs ml-auto" @click="clearVariantFilter">
+            <i class="fas fa-xmark" aria-hidden="true"></i> {{ t('variant_filter_clear') }}
+          </button>
+        </div>
         <RegistryTable
+          :variant-slug="variantFilter"
           :items="registryItems || []"
           :loading="status === 'pending'"
           :tableHeaders="tableHeaders"
@@ -234,7 +263,10 @@
       "twitter_title": "Classic Mini Registry - Classic Mini DIY",
       "twitter_description": "Browse and contribute to the Classic Mini registry database"
     },
-    "eyebrow": "REGISTRY"
+    "eyebrow": "REGISTRY",
+    "variant_filter": "Showing cars registered as {name}",
+    "variant_filter_open": "Open the model",
+    "variant_filter_clear": "Show all cars"
   },
   "de": {
     "title": "Classic Mini Registry - Classic Mini DIY",
@@ -270,7 +302,10 @@
       "twitter_title": "Classic Mini Registry - Classic Mini DIY",
       "twitter_description": "Durchsuchen und beitragen zur Classic Mini Registry-Datenbank"
     },
-    "eyebrow": "REGISTER"
+    "eyebrow": "REGISTER",
+    "variant_filter": "Registrierte Autos: {name}",
+    "variant_filter_open": "Modell öffnen",
+    "variant_filter_clear": "Alle anzeigen"
   },
   "es": {
     "title": "Registro Classic Mini - Classic Mini DIY",
@@ -306,7 +341,10 @@
       "twitter_title": "Registro Classic Mini - Classic Mini DIY",
       "twitter_description": "Navega y contribuye a la base de datos del registro Classic Mini"
     },
-    "eyebrow": "REGISTRO"
+    "eyebrow": "REGISTRO",
+    "variant_filter": "Mostrando coches registrados como {name}",
+    "variant_filter_open": "Abrir el modelo",
+    "variant_filter_clear": "Mostrar todos"
   },
   "fr": {
     "title": "Registre Classic Mini - Classic Mini DIY",
@@ -342,7 +380,10 @@
       "twitter_title": "Registre Classic Mini - Classic Mini DIY",
       "twitter_description": "Parcourez et contribuez à la base de données du registre Classic Mini"
     },
-    "eyebrow": "REGISTRE"
+    "eyebrow": "REGISTRE",
+    "variant_filter": "Voitures enregistrées comme {name}",
+    "variant_filter_open": "Ouvrir le modèle",
+    "variant_filter_clear": "Tout afficher"
   },
   "it": {
     "title": "Registro Classic Mini - Classic Mini DIY",
@@ -378,7 +419,10 @@
       "twitter_title": "Registro Classic Mini - Classic Mini DIY",
       "twitter_description": "Sfoglia e contribuisci al database del registro Classic Mini"
     },
-    "eyebrow": "REGISTRO"
+    "eyebrow": "REGISTRO",
+    "variant_filter": "Auto registrate come {name}",
+    "variant_filter_open": "Apri il modello",
+    "variant_filter_clear": "Mostra tutte"
   },
   "pt": {
     "title": "Registro Classic Mini - Classic Mini DIY",
@@ -414,7 +458,10 @@
       "twitter_title": "Registro Classic Mini - Classic Mini DIY",
       "twitter_description": "Navegue e contribua para o banco de dados do registro Classic Mini"
     },
-    "eyebrow": "REGISTRO"
+    "eyebrow": "REGISTRO",
+    "variant_filter": "A mostrar carros registados como {name}",
+    "variant_filter_open": "Abrir o modelo",
+    "variant_filter_clear": "Mostrar todos"
   },
   "ru": {
     "title": "Реестр Classic Mini - Classic Mini DIY",
@@ -450,7 +497,10 @@
       "twitter_title": "Реестр Classic Mini - Classic Mini DIY",
       "twitter_description": "Просматривайте и вносите вклад в базу данных реестра Classic Mini"
     },
-    "eyebrow": "РЕЕСТР"
+    "eyebrow": "РЕЕСТР",
+    "variant_filter": "Машины в реестре как {name}",
+    "variant_filter_open": "Открыть модель",
+    "variant_filter_clear": "Показать все"
   },
   "ja": {
     "title": "クラシックミニ レジストリ - Classic Mini DIY",
@@ -486,7 +536,10 @@
       "twitter_title": "クラシックミニ レジストリ - Classic Mini DIY",
       "twitter_description": "クラシックミニ レジストリ データベースを閲覧・投稿する"
     },
-    "eyebrow": "レジストリ"
+    "eyebrow": "レジストリ",
+    "variant_filter": "{name} として登録された車",
+    "variant_filter_open": "モデルを開く",
+    "variant_filter_clear": "すべて表示"
   },
   "zh": {
     "title": "经典迷你注册表 - Classic Mini DIY",
@@ -522,7 +575,10 @@
       "twitter_title": "经典迷你注册表 - Classic Mini DIY",
       "twitter_description": "浏览并为经典迷你注册数据库做出贡献"
     },
-    "eyebrow": "注册库"
+    "eyebrow": "注册库",
+    "variant_filter": "登记为 {name} 的车辆",
+    "variant_filter_open": "打开车型",
+    "variant_filter_clear": "显示全部"
   },
   "ko": {
     "title": "클래식 미니 레지스트리 - Classic Mini DIY",
@@ -558,7 +614,10 @@
       "twitter_title": "클래식 미니 레지스트리 - Classic Mini DIY",
       "twitter_description": "클래식 미니 레지스트리 데이터베이스 탐색 및 기여"
     },
-    "eyebrow": "등록부"
+    "eyebrow": "등록부",
+    "variant_filter": "{name}(으)로 등록된 차량",
+    "variant_filter_open": "모델 열기",
+    "variant_filter_clear": "전체 보기"
   }
 }
 </i18n>

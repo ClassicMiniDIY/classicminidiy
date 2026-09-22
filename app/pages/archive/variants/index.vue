@@ -143,6 +143,7 @@
       v.engine_cc ? `${v.engine_cc} cc` : '',
       t(`labels.body.${v.body_style}`),
       v.photo_count > 0 ? t('card.photos', { n: v.photo_count }) : t('card.no_photos'),
+      v.registered_count > 0 ? t('card.registered', { n: v.registered_count }) : '',
     ]
       .filter(Boolean)
       .join(' · ');
@@ -427,7 +428,8 @@
       "preserved": "Full spec sheet",
       "specs_partial": "{n} of 12 specs",
       "limited": "Limited edition",
-      "limited_short": "LE"
+      "limited_short": "LE",
+      "registered": "{n} registered"
     },
     "submit_tile": "Know a {group} variant we're missing?",
     "submit_link": "Submit it →",
@@ -482,7 +484,8 @@
       "preserved": "Ficha completa",
       "specs_partial": "{n} de 12 datos",
       "limited": "Edición limitada",
-      "limited_short": "EL"
+      "limited_short": "EL",
+      "registered": "{n} registrados"
     },
     "submit_tile": "¿Conoces una variante {group} que nos falta?",
     "submit_link": "Envíala →",
@@ -537,7 +540,8 @@
       "preserved": "Fiche complète",
       "specs_partial": "{n} sur 12 données",
       "limited": "Série limitée",
-      "limited_short": "SL"
+      "limited_short": "SL",
+      "registered": "{n} enregistrées"
     },
     "submit_tile": "Vous connaissez une variante {group} qui nous manque ?",
     "submit_link": "Proposez-la →",
@@ -592,7 +596,8 @@
       "preserved": "Vollständiges Datenblatt",
       "specs_partial": "{n} von 12 Werten",
       "limited": "Sondermodell",
-      "limited_short": "SM"
+      "limited_short": "SM",
+      "registered": "{n} registriert"
     },
     "submit_tile": "Kennen Sie eine {group} Variante, die uns fehlt?",
     "submit_link": "Einreichen →",
@@ -647,7 +652,8 @@
       "preserved": "Scheda completa",
       "specs_partial": "{n} di 12 dati",
       "limited": "Edizione limitata",
-      "limited_short": "EL"
+      "limited_short": "EL",
+      "registered": "{n} registrate"
     },
     "submit_tile": "Conosci una variante {group} che ci manca?",
     "submit_link": "Inviala →",
@@ -702,7 +708,8 @@
       "preserved": "Ficha completa",
       "specs_partial": "{n} de 12 dados",
       "limited": "Edição limitada",
-      "limited_short": "EL"
+      "limited_short": "EL",
+      "registered": "{n} registados"
     },
     "submit_tile": "Conhece uma variante {group} que nos falta?",
     "submit_link": "Envie-a →",
@@ -757,7 +764,8 @@
       "preserved": "Полная спецификация",
       "specs_partial": "{n} из 12 параметров",
       "limited": "Лимитированная серия",
-      "limited_short": "ЛС"
+      "limited_short": "ЛС",
+      "registered": "в реестре: {n}"
     },
     "submit_tile": "Знаете модификацию {group}, которой у нас нет?",
     "submit_link": "Отправить →",
@@ -812,7 +820,8 @@
       "preserved": "スペック完備",
       "specs_partial": "12項目中{n}項目",
       "limited": "限定車",
-      "limited_short": "限定"
+      "limited_short": "限定",
+      "registered": "登録{n}台"
     },
     "submit_tile": "未掲載の{group}バリエーションをご存じですか？",
     "submit_link": "投稿する →",
@@ -867,7 +876,8 @@
       "preserved": "参数完整",
       "specs_partial": "12项中的{n}项",
       "limited": "限量版",
-      "limited_short": "限量"
+      "limited_short": "限量",
+      "registered": "已登记{n}辆"
     },
     "submit_tile": "知道我们缺少的{group}变体吗？",
     "submit_link": "提交 →",
@@ -922,7 +932,8 @@
       "preserved": "제원 완비",
       "specs_partial": "12개 중 {n}개",
       "limited": "한정판",
-      "limited_short": "한정"
+      "limited_short": "한정",
+      "registered": "등록 {n}대"
     },
     "submit_tile": "누락된 {group} 변형을 알고 계신가요?",
     "submit_link": "제출하기 →",

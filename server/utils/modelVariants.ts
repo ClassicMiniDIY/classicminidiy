@@ -79,6 +79,7 @@ const VARIANT_COLUMNS = [
   'width_mm',
   'height_mm',
   'wheelbase_mm',
+  'distinguishing',
   'specs_source',
   'sources',
   'legacy_submitted_by',
@@ -165,6 +166,8 @@ export function mapModelVariantRow(r: any): ModelVariant {
     height_mm: num(r.height_mm),
     wheelbase_mm: num(r.wheelbase_mm),
     colors,
+    distinguishing: Array.isArray(r.distinguishing) ? r.distinguishing : [],
+    registered_count: Number(r.registered_count ?? 0),
     notes: r.notes ?? null,
     engine_note: r.engine_note ?? null,
     specs_source: r.specs_source && typeof r.specs_source === 'object' ? r.specs_source : {},
@@ -204,7 +207,22 @@ async function fetchSnapshot(): Promise<Snapshot> {
     all.push(...(data ?? []));
     if (!data || data.length < 1000) break;
   }
-  return buildSnapshot(all.map(mapModelVariantRow));
+  // Registry cars per variant, counted from the approved rows' variant_id.
+  // Paged like the variants: the list is capped at 1000 rows silently.
+  const registered = new Map<string, number>();
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from('registry_entries')
+      .select('variant_id')
+      .eq('status', 'approved')
+      .not('variant_id', 'is', null)
+      .range(from, from + 999);
+    // A failed count is not a failed archive: show the cars without numbers.
+    if (error) break;
+    for (const r of data ?? []) registered.set(r.variant_id, (registered.get(r.variant_id) ?? 0) + 1);
+    if (!data || data.length < 1000) break;
+  }
+  return buildSnapshot(all.map((r) => mapModelVariantRow({ ...r, registered_count: registered.get(r.id) ?? 0 })));
 }
 
 async function current(): Promise<Snapshot> {
@@ -308,6 +326,7 @@ export function toModelVariantCard(v: ModelVariant): ModelVariantCard {
     engine_cc: v.engine_cc,
     photo_count: v.photos.length,
     photo_url: v.photos[0]?.url ?? null,
+    registered_count: v.registered_count,
     spec_count: countSourcedSpecs(v),
   };
 }

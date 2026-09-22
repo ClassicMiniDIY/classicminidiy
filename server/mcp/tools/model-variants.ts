@@ -89,6 +89,8 @@ function describe(v: ModelVariant) {
     notes: [v.notes, v.engine_note].filter(Boolean).join(' ') || null,
     sources: v.sources.map((s) => ({ type: s.type, title: s.title, url: s.url ?? null })),
     photo_count: v.photos.length,
+    also_sold_as: v.distinguishing,
+    registered_on_site: v.registered_count,
     url: `${SITE}/archive/variants/${v.slug}`,
   };
 }

@@ -30,6 +30,11 @@ const REGISTRY_COLUMNS = [
   // for everyone who claims later.
   'submitted_by',
   'status',
+  // The Model Variant this car is (classicminidiy-supabase 20260923000001).
+  // Granted per column to anon; the embed reads model_variants through its own
+  // approved-only RLS policy.
+  'variant_id',
+  'variant:model_variants(slug, name)',
 ].join(', ');
 
 export const useRegistry = () => {
@@ -49,6 +54,8 @@ export const useRegistry = () => {
     notes: row.notes || '',
     submittedBy: row.legacy_submitted_by || '',
     ownerId: row.submitted_by ?? null,
+    variantSlug: row.variant?.slug ?? null,
+    variantName: row.variant?.name ?? null,
     // No submittedByEmail: the register never rendered it, and the column is no
     // longer readable by anon/authenticated. Admin surfaces read submitter
     // contact details from submission_queue via the service client instead.

@@ -28,7 +28,9 @@
     VARIANT_PHOTO_KINDS,
     VARIANT_SOURCE_TYPES,
     variantNumberProblem,
+    type ModelVariantCard,
   } from '~~/data/models/variants';
+  import { matchRegistryToVariant } from '~~/shared/utils/variantMatch';
 
   const { t } = useI18n();
   const { isOpen, context, closeWizard } = useContributeWizard();
@@ -75,6 +77,8 @@
     notes: '',
     fixArea: 'document',
     reason: '',
+    /** Registry: the Model Variant slug the owner picked ('' = not sure). */
+    variant: '',
   });
 
   // ---- Model variants (design R3) --------------------------------------------
@@ -123,6 +127,47 @@
     const n = Number(raw.replace(',', '.'));
     return Number.isFinite(n) && variantNumberProblem(key, n) === null;
   };
+
+  // ---- Registry → Model Variant (design R2 "I own one") -----------------------
+  /** The archive's variants, fetched once when a registry form is first shown. */
+  const variantCards = ref<ModelVariantCard[]>([]);
+  const variantCardsLoaded = ref(false);
+  const loadVariantCards = async () => {
+    if (variantCardsLoaded.value) return;
+    variantCardsLoaded.value = true;
+    try {
+      const res = await $fetch<{ variants: ModelVariantCard[] }>('/api/archive/variants');
+      variantCards.value = res.variants;
+    } catch {
+      variantCardsLoaded.value = false; // The picker is optional; the owner can still submit.
+    }
+  };
+  /** The shared matcher's top picks for what the owner has typed so far. */
+  const variantSuggestions = computed(() => {
+    if (!variantCards.value.length) return [];
+    const { ranked } = matchRegistryToVariant(
+      {
+        year: Number(form.year) || null,
+        model: form.model ?? '',
+        trim: form.trim ?? '',
+        engine_size: Number(form.engineSize) || null,
+        body_type: form.bodyType ?? '',
+      },
+      variantCards.value,
+      4
+    );
+    const bySlug = new Map(variantCards.value.map((c) => [c.slug, c]));
+    return ranked.map((m) => bySlug.get(m.slug)).filter((c): c is ModelVariantCard => Boolean(c));
+  });
+  const variantOptionLabel = (c: ModelVariantCard) =>
+    [c.name, [c.year_start, c.year_end].filter(Boolean).join('–')].filter(Boolean).join(' · ');
+  const pickedVariantName = computed(
+    () =>
+      variantCards.value.find((c) => c.slug === form.variant)?.name ?? context.value.currentValues?.variantName ?? ''
+  );
+  watch([kind, step], ([k, st]) => {
+    if (k === 'registry' && st === 2) void loadVariantCards();
+  });
 
   const requestTitle = ref('');
   const requestNotes = ref('');
@@ -194,6 +239,9 @@
       form.name = ctx.targetTitle;
     }
     if (ctx.targetType && ctx.targetType !== 'variant') form.fixArea = ctx.targetType;
+    // "I own one" on a variant page opens the registry form with that variant chosen.
+    if (ctx.kind === 'registry' && ctx.currentValues?.variant) form.variant = ctx.currentValues.variant;
+    if (ctx.kind === 'registry' && step.value === 2) void loadVariantCards();
     if (ctx.kind === 'variant') {
       if (ctx.variantFocus) variantField.value = ctx.variantFocus;
       if (!ctx.targetId) {
@@ -327,6 +375,8 @@
         color: form.color.trim() || undefined,
         location: form.location.trim() || undefined,
         notes: form.notes.trim() || undefined,
+        // Slug only; the approve route resolves it against approved variants.
+        variantSlug: form.variant || undefined,
       };
     }
     if (kind.value === 'wheel') {
@@ -486,6 +536,7 @@
       push(t('fields.body_number'), form.bodyNumber);
       push(t('fields.engine_number'), form.engineNumber);
       push(t('fields.location'), form.location);
+      push(t('fields.variant'), form.variant ? pickedVariantName.value : t('variant_picker.unsure'));
     } else if (kind.value === 'wheel') {
       push(t('fields.name'), form.name || context.value.targetTitle || '');
       push(t('fields.size'), form.size);
@@ -682,6 +733,26 @@
                 <label class="form-control sm:col-span-2">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.notes') }}</span>
                   <textarea v-model="form.notes" rows="3" class="textarea textarea-bordered w-full"></textarea>
+                </label>
+                <label class="form-control sm:col-span-2">
+                  <span class="mb-1 block text-sm font-semibold">{{ t('fields.variant') }}</span>
+                  <select v-model="form.variant" class="select select-bordered w-full">
+                    <option value="">{{ t('variant_picker.unsure') }}</option>
+                    <optgroup v-if="variantSuggestions.length" :label="t('variant_picker.suggested')">
+                      <option v-for="c in variantSuggestions" :key="`s-${c.slug}`" :value="c.slug">
+                        {{ variantOptionLabel(c) }}
+                      </option>
+                    </optgroup>
+                    <optgroup v-if="variantCards.length" :label="t('variant_picker.all')">
+                      <option v-for="c in variantCards" :key="c.slug" :value="c.slug">
+                        {{ variantOptionLabel(c) }}
+                      </option>
+                    </optgroup>
+                    <option v-else-if="form.variant" :value="form.variant">
+                      {{ pickedVariantName || form.variant }}
+                    </option>
+                  </select>
+                  <span class="mt-1 block text-xs opacity-60">{{ t('variant_picker.hint') }}</span>
                 </label>
               </div>
 
@@ -1126,7 +1197,8 @@
       "request_notes": "Anything that would help someone find it",
       "trim": "Trim",
       "body_type": "Body type",
-      "engine_size": "Engine size"
+      "engine_size": "Engine size",
+      "variant": "Which model is it?"
     },
     "errors": {
       "title": "Add a title.",
@@ -1229,6 +1301,12 @@
         "source": "Cite a source (at least a few characters).",
         "years_order": "The last year cannot be before the first year."
       }
+    },
+    "variant_picker": {
+      "unsure": "Not sure — leave it for us",
+      "suggested": "Suggested from what you entered",
+      "all": "All models",
+      "hint": "Links your car to its page in the Model Variants archive. If you are not sure, we will suggest one."
     }
   },
   "es": {
@@ -1307,7 +1385,8 @@
       "request_notes": "Cualquier detalle que ayude a encontrarlo",
       "trim": "Acabado",
       "body_type": "Carrocería",
-      "engine_size": "Cilindrada"
+      "engine_size": "Cilindrada",
+      "variant": "¿Qué modelo es?"
     },
     "errors": {
       "title": "Añade un título.",
@@ -1410,6 +1489,12 @@
         "source": "Cita una fuente (al menos unos caracteres).",
         "years_order": "El último año no puede ser anterior al primero."
       }
+    },
+    "variant_picker": {
+      "unsure": "No estoy seguro — lo dejamos a vosotros",
+      "suggested": "Sugeridos según lo que escribiste",
+      "all": "Todos los modelos",
+      "hint": "Vincula tu coche a su página en el archivo de variantes. Si no estás seguro, sugeriremos uno."
     }
   },
   "fr": {
@@ -1488,7 +1573,8 @@
       "request_notes": "Tout ce qui aiderait à le retrouver",
       "trim": "Finition",
       "body_type": "Carrosserie",
-      "engine_size": "Cylindrée"
+      "engine_size": "Cylindrée",
+      "variant": "Quel modèle est-ce ?"
     },
     "errors": {
       "title": "Ajoutez un titre.",
@@ -1591,6 +1677,12 @@
         "source": "Citez une source (quelques caractères au moins).",
         "years_order": "La dernière année ne peut pas précéder la première."
       }
+    },
+    "variant_picker": {
+      "unsure": "Je ne sais pas — laissez-nous choisir",
+      "suggested": "Suggestions selon votre saisie",
+      "all": "Tous les modèles",
+      "hint": "Relie votre voiture à sa page dans l'archive des variantes. En cas de doute, nous en proposerons un."
     }
   },
   "de": {
@@ -1669,7 +1761,8 @@
       "request_notes": "Alles, was beim Finden hilft",
       "trim": "Ausstattung",
       "body_type": "Karosserie",
-      "engine_size": "Hubraum"
+      "engine_size": "Hubraum",
+      "variant": "Welches Modell ist es?"
     },
     "errors": {
       "title": "Titel ergänzen.",
@@ -1772,6 +1865,12 @@
         "source": "Geben Sie eine Quelle an (mindestens einige Zeichen).",
         "years_order": "Das letzte Jahr darf nicht vor dem ersten liegen."
       }
+    },
+    "variant_picker": {
+      "unsure": "Nicht sicher — wir kümmern uns darum",
+      "suggested": "Vorschläge nach Ihren Angaben",
+      "all": "Alle Modelle",
+      "hint": "Verknüpft Ihr Auto mit seiner Seite im Modellvarianten-Archiv. Wenn Sie unsicher sind, schlagen wir eines vor."
     }
   },
   "it": {
@@ -1850,7 +1949,8 @@
       "request_notes": "Qualsiasi dettaglio utile a trovarlo",
       "trim": "Allestimento",
       "body_type": "Carrozzeria",
-      "engine_size": "Cilindrata"
+      "engine_size": "Cilindrata",
+      "variant": "Che modello è?"
     },
     "errors": {
       "title": "Aggiungi un titolo.",
@@ -1953,6 +2053,12 @@
         "source": "Cita una fonte (almeno qualche carattere).",
         "years_order": "L'ultimo anno non può precedere il primo."
       }
+    },
+    "variant_picker": {
+      "unsure": "Non sono sicuro — ci pensiamo noi",
+      "suggested": "Suggeriti in base ai dati inseriti",
+      "all": "Tutti i modelli",
+      "hint": "Collega la tua auto alla sua pagina nell'archivio delle varianti. Se non sei sicuro, ne suggeriremo uno."
     }
   },
   "pt": {
@@ -2031,7 +2137,8 @@
       "request_notes": "Qualquer detalhe que ajude a encontrar",
       "trim": "Acabamento",
       "body_type": "Carroçaria",
-      "engine_size": "Cilindrada"
+      "engine_size": "Cilindrada",
+      "variant": "Que modelo é?"
     },
     "errors": {
       "title": "Adicione um título.",
@@ -2134,6 +2241,12 @@
         "source": "Cite uma fonte (pelo menos alguns caracteres).",
         "years_order": "O último ano não pode ser anterior ao primeiro."
       }
+    },
+    "variant_picker": {
+      "unsure": "Não tenho a certeza — deixo convosco",
+      "suggested": "Sugeridos pelo que escreveu",
+      "all": "Todos os modelos",
+      "hint": "Liga o seu carro à respetiva página no arquivo de variantes. Se não tiver a certeza, sugerimos um."
     }
   },
   "ru": {
@@ -2212,7 +2325,8 @@
       "request_notes": "Всё, что поможет это найти",
       "trim": "Комплектация",
       "body_type": "Тип кузова",
-      "engine_size": "Объём двигателя"
+      "engine_size": "Объём двигателя",
+      "variant": "Какая это модель?"
     },
     "errors": {
       "title": "Добавьте название.",
@@ -2315,6 +2429,12 @@
         "source": "Укажите источник (хотя бы несколько символов).",
         "years_order": "Последний год не может быть раньше первого."
       }
+    },
+    "variant_picker": {
+      "unsure": "Не уверен — решите вы",
+      "suggested": "Подсказки по введённым данным",
+      "all": "Все модели",
+      "hint": "Связывает вашу машину с её страницей в архиве модификаций. Если не уверены, мы подскажем."
     }
   },
   "ja": {
@@ -2393,7 +2513,8 @@
       "request_notes": "見つける手がかりになること",
       "trim": "グレード",
       "body_type": "ボディタイプ",
-      "engine_size": "排気量"
+      "engine_size": "排気量",
+      "variant": "どのモデルですか？"
     },
     "errors": {
       "title": "タイトルを入力してください。",
@@ -2496,6 +2617,12 @@
         "source": "出典を記入してください（数文字以上）。",
         "years_order": "最終年は初年より前にできません。"
       }
+    },
+    "variant_picker": {
+      "unsure": "わからない（おまかせ）",
+      "suggested": "入力内容からの候補",
+      "all": "すべてのモデル",
+      "hint": "あなたの車をモデルバリエーションのページに紐づけます。わからなければ候補を提案します。"
     }
   },
   "zh": {
@@ -2574,7 +2701,8 @@
       "request_notes": "任何有助于找到它的信息",
       "trim": "配置",
       "body_type": "车身型式",
-      "engine_size": "排量"
+      "engine_size": "排量",
+      "variant": "是哪款车型？"
     },
     "errors": {
       "title": "请填写标题。",
@@ -2677,6 +2805,12 @@
         "source": "请注明来源（至少几个字符）。",
         "years_order": "末年不能早于首年。"
       }
+    },
+    "variant_picker": {
+      "unsure": "不确定——交给我们",
+      "suggested": "根据您的输入推荐",
+      "all": "所有车型",
+      "hint": "将您的车关联到车型变体档案中的页面。不确定的话，我们会推荐一个。"
     }
   },
   "ko": {
@@ -2755,7 +2889,8 @@
       "request_notes": "찾는 데 도움이 될 만한 정보",
       "trim": "트림",
       "body_type": "바디 타입",
-      "engine_size": "배기량"
+      "engine_size": "배기량",
+      "variant": "어떤 모델인가요?"
     },
     "errors": {
       "title": "제목을 입력하세요.",
@@ -2858,6 +2993,12 @@
         "source": "출처를 입력하세요(몇 글자 이상).",
         "years_order": "마지막 연도는 첫 연도보다 앞설 수 없습니다."
       }
+    },
+    "variant_picker": {
+      "unsure": "잘 모르겠음 — 맡기기",
+      "suggested": "입력하신 내용 기반 추천",
+      "all": "모든 모델",
+      "hint": "내 차를 모델 변형 아카이브의 해당 페이지에 연결합니다. 잘 모르면 저희가 추천합니다."
     }
   }
 }
