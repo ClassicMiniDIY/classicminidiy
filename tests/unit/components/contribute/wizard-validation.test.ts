@@ -88,7 +88,7 @@ describe('ContributeWizard validation', () => {
     expect(w.text()).toContain('step_of');
     expect(field(w, 'fields.year').exists()).toBe(true);
     expect(shown(w)).toEqual([]);
-    expect(w.find('ul[role="alert"]').exists()).toBe(false);
+    expect(w.find('ul[aria-live]').exists()).toBe(false);
     w.unmount();
   });
 
@@ -109,7 +109,7 @@ describe('ContributeWizard validation', () => {
     expect(button(w, 'continue').attributes('disabled')).toBeUndefined();
     await press(w, 'continue');
     expect(shown(w)).toEqual(['errors.year', 'errors.model']);
-    expect(w.find('ul[role="alert"]').exists()).toBe(true);
+    expect(w.find('ul[aria-live]').exists()).toBe(true);
     expect(document.activeElement?.getAttribute('aria-describedby')).toBe('contribute-error-year');
     w.unmount();
   });
@@ -268,6 +268,15 @@ describe('ContributeWizard submission', () => {
       'v-1',
       expect.objectContaining({ changes: { power_bhp: { from: '42', to: '44' } } })
     );
+  });
+
+  it('a spec field switch starts that field clean', async () => {
+    const w = await openWizard({ kind: 'variant', targetId: 'v-1', targetTitle: 'Mini Thirty', currentValues: {} });
+    await w.find('input[inputmode="decimal"]').trigger('blur');
+    expect(shown(w)).toEqual(['variant.errors.value']);
+    await field(w, 'variant.update_what').setValue('colours');
+    expect(shown(w)).toEqual([]);
+    w.unmount();
   });
 
   it('adds photos to an existing variant without a source', async () => {
