@@ -144,6 +144,13 @@ test.describe('exchange browse', () => {
     await expect
       .poll(async () => (await cards.count()) > 0 || (await emptyState.count()) > 0, { timeout: 30_000 })
       .toBe(true);
+
+    // A FAILED search renders that same empty state: performSearch's catch
+    // blanks `listings` and raises a toast, so "no listings" and "the query
+    // 500'd" are the same DOM. Skipping on both would let an expired anon key
+    // or an RLS regression empty the whole marketplace and still report a pass.
+    // The toast is the one thing that tells them apart.
+    await expect(page.getByRole('alert'), 'the listings search errored').toBeHidden();
     if ((await cards.count()) === 0) test.skip(true, 'no live listings to open');
 
     await cards.first().click();

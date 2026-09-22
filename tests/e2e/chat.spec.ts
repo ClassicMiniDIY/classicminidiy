@@ -393,12 +393,23 @@ test.describe('quota limit', () => {
     // exactly what broke the nightly: this tier's copy moved from "your
     // allowance resets" to an upgrade pitch, and a test hardcoded to `member`
     // kept asserting the old wording.
+    //
+    // So the plan NAME comes from the ladder too, not from a literal "Plus".
+    // `CHAT_TIER_ORDER` exists to be extended, and a tier inserted between
+    // `member` and `plus` would otherwise turn this red on correct code — the
+    // same trap, one rung down.
+    const above = nextTier('member');
+    expect(above, 'the base member tier must have a plan above it to sell').not.toBeNull();
+    const planName = above!.charAt(0).toUpperCase() + above!.slice(1);
+
     await stubQuota(page, 'member');
     await gotoHydrated(page, '/chat');
     await composer(page).fill('hi');
     await composer(page).press('Enter');
 
-    await expect(page.getByRole('link', { name: /Upgrade to Member Plus/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('link', { name: new RegExp(`Upgrade to Member ${planName}`, 'i') })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test('tells the top tier when the allowance resets and sells them nothing', async ({ page }) => {
