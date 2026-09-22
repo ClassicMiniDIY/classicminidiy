@@ -15,8 +15,7 @@
   const { openWizard } = useContributeWizard();
   const { requests: mostWanted, load: loadMostWanted, requestItem, submitting } = useArchiveRequests();
 
-  type LatestAddition =
-    Database['public']['Functions']['get_archive_latest_additions']['Returns'][number];
+  type LatestAddition = Database['public']['Functions']['get_archive_latest_additions']['Returns'][number];
 
   const latest = ref<LatestAddition[]>([]);
   const monthStats = ref<{
@@ -52,6 +51,7 @@
     registry: 'fas fa-clipboard-list',
     color: 'fas fa-brush',
     document: 'fas fa-file-lines',
+    variant: 'fas fa-car-side',
   };
 
   const ENTRY_URLS: Record<string, (id: string) => string> = {
@@ -59,6 +59,8 @@
     color: (id) => `/archive/colors/${id}`,
     registry: () => '/archive/registry',
     document: () => '/archive/documents',
+    // By id: the detail route 301s a variant id to its slug.
+    variant: (id) => `/archive/variants/${id}`,
   };
 
   const entryUrl = (row: LatestAddition) =>
@@ -127,7 +129,10 @@
       <p class="mb-3 text-xs font-bold uppercase tracking-[0.08em] opacity-55">{{ t('latest_additions') }}</p>
       <div v-if="latest.length" class="flex flex-col gap-2.5">
         <div v-for="row in latest" :key="`${row.target_type}-${row.target_id}`" class="flex items-center gap-3">
-          <i :class="[ICONS[row.target_type as string] ?? 'fas fa-box-archive', 'w-[18px] text-center text-primary']" aria-hidden="true"></i>
+          <i
+            :class="[ICONS[row.target_type as string] ?? 'fas fa-box-archive', 'w-[18px] text-center text-primary']"
+            aria-hidden="true"
+          ></i>
           <NuxtLink :to="entryUrl(row)" class="min-w-0 flex-1 truncate text-[14.5px] font-semibold hover:underline">
             {{ row.title }}
           </NuxtLink>

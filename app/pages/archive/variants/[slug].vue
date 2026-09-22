@@ -14,6 +14,7 @@
     MARKET_LABELS,
     MARQUE_LABELS,
     SPEC_ROW_COUNT,
+    VARIANT_EDITABLE_COLUMNS,
     countSourcedSpecs,
     markLabel,
     toKmh,
@@ -39,12 +40,18 @@
     throw createError({ statusCode: 404, statusMessage: 'Variant not found', fatal: true });
   }
 
+  // Reached by id (activity feed, contribution ledger): send people and
+  // crawlers to the one canonical slug URL.
+  if (data.value.variant.slug !== slug) {
+    await navigateTo(`/archive/variants/${data.value.variant.slug}`, { redirectCode: 301, replace: true });
+  }
+
   const variant = computed(() => data.value!.variant);
   const related = computed<ModelVariantCard[]>(() => data.value?.related ?? []);
 
   const years = computed(() => yearsLabel(variant.value.year_start, variant.value.year_end));
   const specsSourced = computed(() => countSourcedSpecs(variant.value));
-  const photos = computed(() => variant.value.images.filter((i) => i.url));
+  const photos = computed(() => variant.value.photos);
   const hasPhotos = computed(() => photos.value.length > 0);
 
   // ---- Sources ---------------------------------------------------------------
@@ -164,7 +171,9 @@
     return rows;
   });
 
-  const colourLink = (name: string) => `/archive/colors?q=${encodeURIComponent(name)}`;
+  // A resolved colour links to its archive page; an unresolved name searches for it.
+  const colourLink = (c: { name: string; color_id: string | null }) =>
+    c.color_id ? `/archive/colors/${c.color_id}` : `/archive/colors?q=${encodeURIComponent(c.name)}`;
 
   const eyebrow = computed(() =>
     [MARQUE_LABELS[variant.value.marque], markLabel(variant.value.mark), MARKET_LABELS[variant.value.market]]
@@ -173,9 +182,36 @@
   );
 
   // ---- Actions --------------------------------------------------------------
+  /**
+   * Opens the wizard on this variant. `area` pre-selects what is being changed
+   * (a spec group, 'photos' or 'colours'); `currentValues` lets step 2 show the
+   * CURRENT value beside the correction (design R3) without a second fetch.
+   */
+  const AREA_FOCUS: Record<string, string> = {
+    engine: 'power_bhp',
+    drivetrain: 'kerb_weight_kg',
+    production: 'production_total',
+    photos: 'photos',
+    colours: 'colours',
+  };
   const submitUpdate = (area: string) => {
     track('contribute_cta_clicked', { type: 'variant_fix', location: `variant_detail_${area}` });
-    openWizard({ kind: 'fix', origin: `variant_detail_${area}`, targetTitle: `${variant.value.name} (${slug})` });
+    const v = variant.value;
+    const currentValues: Record<string, string> = {};
+    for (const key of VARIANT_EDITABLE_COLUMNS) {
+      const value = (v as unknown as Record<string, unknown>)[key];
+      if (value !== null && value !== undefined && value !== '') currentValues[key] = String(value);
+    }
+    currentValues.colours = v.colors.map((c) => c.name).join(', ');
+    openWizard({
+      kind: 'variant',
+      origin: `variant_detail_${area}`,
+      targetType: 'variant',
+      targetId: v.id,
+      targetTitle: v.name,
+      variantFocus: AREA_FOCUS[area] ?? 'power_bhp',
+      currentValues,
+    });
   };
 
   // ---- SEO ------------------------------------------------------------------
@@ -199,7 +235,7 @@
   const shareImage = computed(
     () => photos.value[0]?.url ?? 'https://classicminidiy.s3.amazonaws.com/social-share/archive.png'
   );
-  const canonical = `https://www.classicminidiy.com/archive/variants/${slug}`;
+  const canonical = `https://www.classicminidiy.com/archive/variants/${data.value.variant.slug}`;
 
   useHead({
     title,
@@ -299,21 +335,27 @@
         <div class="lg:col-span-2 flex flex-col gap-4">
           <!-- Photos -->
           <div v-if="hasPhotos" class="grid grid-cols-3 gap-2.5">
-            <figure class="col-span-2 aspect-video rounded-xl overflow-hidden bg-base-200">
+            <figure class="col-span-2 aspect-video rounded-xl overflow-hidden bg-base-200 relative m-0">
               <NuxtImg
                 :src="photos[0]!.url"
-                :alt="photos[0]!.alt || variant.name"
+                :alt="photos[0]!.caption || variant.name"
                 format="webp"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-contain"
               />
+              <figcaption
+                v-if="photos[0]!.credit"
+                class="absolute bottom-0 inset-x-0 bg-black/55 text-white text-[11px] px-2.5 py-1 font-semibold tracking-wide"
+              >
+                {{ photos[0]!.credit }}
+              </figcaption>
             </figure>
             <div class="grid grid-rows-2 gap-2.5">
-              <figure v-if="photos[1]" class="rounded-xl overflow-hidden bg-base-200">
+              <figure v-if="photos[1]" class="rounded-xl overflow-hidden bg-base-200 m-0">
                 <NuxtImg
                   :src="photos[1]!.url"
-                  :alt="photos[1]!.alt || variant.name"
+                  :alt="photos[1]!.caption || variant.name"
                   format="webp"
-                  class="w-full h-full object-cover"
+                  class="w-full h-full object-contain"
                 />
               </figure>
               <button
@@ -324,6 +366,24 @@
                 <i class="fas fa-camera" aria-hidden="true"></i>
                 <span class="text-xs font-semibold">{{ t('actions.add_photos') }}</span>
               </button>
+            </div>
+            <div v-if="photos.length > 2" class="col-span-3 grid grid-cols-4 sm:grid-cols-6 gap-2">
+              <a
+                v-for="(photo, i) in photos.slice(2)"
+                :key="photo.url"
+                :href="photo.url"
+                target="_blank"
+                rel="noopener"
+                class="aspect-[4/3] rounded-lg overflow-hidden bg-base-200 block"
+              >
+                <NuxtImg
+                  :src="photo.url"
+                  :alt="photo.caption || `${variant.name} ${Number(i) + 3}`"
+                  format="webp"
+                  loading="lazy"
+                  class="w-full h-full object-cover"
+                />
+              </a>
             </div>
           </div>
           <button
@@ -407,12 +467,13 @@
               <div v-if="variant.colors.length" class="flex flex-wrap gap-2">
                 <NuxtLink
                   v-for="colour in variant.colors"
-                  :key="colour"
+                  :key="colour.name"
                   :to="colourLink(colour)"
-                  class="badge badge-outline badge-lg gap-1 hover:badge-primary"
-                  :title="t('links.colour_archive', { name: colour })"
+                  class="badge badge-lg gap-1 hover:badge-primary"
+                  :class="colour.color_id ? 'badge-primary badge-soft' : 'badge-outline'"
+                  :title="t('links.colour_archive', { name: colour.name })"
                 >
-                  <i class="fas fa-droplet text-xs" aria-hidden="true"></i>{{ colour }}
+                  <i class="fas fa-droplet text-xs" aria-hidden="true"></i>{{ colour.name }}
                 </NuxtLink>
               </div>
               <p v-else class="text-sm opacity-60 m-0">{{ t('sections.no_colours') }}</p>

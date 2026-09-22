@@ -1,10 +1,10 @@
 # Model Variants archive — design
 
-Status: Phase 2 (pages) and Phase 5 (MCP tool) built on the bundled seed, ahead of the
-Phase 1 migration; the read path is `server/utils/modelVariants.ts` and swaps to the
-`model_variants` table without the pages or the tool changing. Data preservation spike
-done (§8). Branch here: `claude/mini-model-archive-f61ebf`. Rules:
-`.claude/rules/model-variants.md`.
+Status: LIVE. Phase 1 (schema + seed, supabase #143), Phase 2 (pages) and Phase 5 (MCP
+tool, web #890) shipped 2026-09-22. Phases 3 (photos), 4 (contributions) and 6 (colour
+links) ship in the phase-2 PRs: pages read the tables through
+`server/utils/modelVariants.ts`, approvals go through `server/utils/variantApprovals.ts`.
+Rules: `.claude/rules/model-variants.md`.
 
 Related: `docs/plans/2026-03-01-phase6-contribution-system.md` (submission queue + trust),
 `docs/plans/2026-09-04-parts-number-database.md` (process template: schema → ingest → surface),
@@ -366,7 +366,7 @@ Committed next to this doc in `docs/plans/data/`:
   every source string in `specs_source`, splits colours, derives `slug`, `marque`,
   `family`, `body_style`, `mark` (explicit, else from the UK year ranges), `market`,
   years, production, and `is_limited_edition`.
-- `data/modelVariants.json` (repo root `data/`) — the seed: **141 variants**, every one with a
+- `docs/plans/data/2026-09-22-model-variants-seed.json` — the seed: **141 variants**, every one with a
   Wayback `sources` entry and `legacy_submitted_by`.
 
 Field coverage of the seed (non-null / 141):

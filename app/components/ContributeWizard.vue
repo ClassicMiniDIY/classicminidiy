@@ -12,6 +12,22 @@
    * fit the shared step 2. The archive colours page links there directly.
    */
   import type { ContributionKind } from '../composables/useContributeWizard';
+  import {
+    BODY_LABELS,
+    FAMILY_LABELS,
+    MARK_RANGES,
+    MARK_NUMBERS,
+    MARKET_LABELS,
+    MARQUE_LABELS,
+    VARIANT_BODIES,
+    VARIANT_EDITABLE_COLUMNS,
+    VARIANT_FAMILIES,
+    VARIANT_MARKETS,
+    VARIANT_MARQUES,
+    VARIANT_NUMERIC_COLUMNS,
+    VARIANT_PHOTO_KINDS,
+    VARIANT_SOURCE_TYPES,
+  } from '~~/data/models/variants';
 
   const { t } = useI18n();
   const { isOpen, context, closeWizard } = useContributeWizard();
@@ -26,6 +42,7 @@
     { kind: 'document', icon: 'fas fa-file-lines' },
     { kind: 'registry', icon: 'fas fa-clipboard-list' },
     { kind: 'wheel', icon: 'fas fa-ring' },
+    { kind: 'variant', icon: 'fas fa-car-side' },
     { kind: 'fix', icon: 'fas fa-wrench' },
   ];
 
@@ -59,6 +76,47 @@
     reason: '',
   });
 
+  // ---- Model variants (design R3) --------------------------------------------
+  /** Fields of a NEW variant. Keys are the model_variants column names the approve route reads. */
+  const NEW_VARIANT_FIELDS = [
+    'name',
+    'marque',
+    'family',
+    'body_style',
+    'mark',
+    'market',
+    'year_start',
+    'year_end',
+    'engine_cc',
+    'power_bhp',
+    'torque_lbft',
+    'carburettor',
+    'final_drive',
+    'wheels',
+    'tyres',
+    'kerb_weight_kg',
+    'top_speed_mph',
+    'notes',
+  ] as const;
+  const blankVariant = () =>
+    Object.fromEntries(NEW_VARIANT_FIELDS.map((k) => [k, k === 'market' ? 'uk' : ''])) as Record<string, string>;
+  const vform = reactive<Record<string, string>>(blankVariant());
+  const variantColours = ref('');
+  /** Spec-fix target: an editable column, 'colours', or 'photos'. */
+  const variantField = ref<string>('power_bhp');
+  const variantValue = ref('');
+  const source = reactive({ type: 'brochure', title: '', url: '' });
+  const photoMeta = reactive({ kind: 'owner', caption: '', credit: '' });
+
+  const isVariantEdit = computed(() => kind.value === 'variant' && Boolean(context.value.targetId));
+  const variantMode = computed<'new' | 'spec' | 'photos'>(() =>
+    !isVariantEdit.value ? 'new' : variantField.value === 'photos' ? 'photos' : 'spec'
+  );
+  const currentValue = computed(() => context.value.currentValues?.[variantField.value] ?? '');
+  const VARIANT_EDIT_OPTIONS = ['photos', 'colours', ...VARIANT_EDITABLE_COLUMNS] as const;
+  const isNumericField = (key: string) => VARIANT_NUMERIC_COLUMNS.has(key) || key === 'mark';
+  const numberOk = (value: string) => value.trim() === '' || Number.isFinite(Number(value.trim().replace(',', '.')));
+
   const requestTitle = ref('');
   const requestNotes = ref('');
 
@@ -91,6 +149,12 @@
     Object.keys(form).forEach((key) => {
       form[key] = FIELD_DEFAULTS[key] ?? '';
     });
+    Object.assign(vform, blankVariant());
+    variantColours.value = '';
+    variantField.value = 'power_bhp';
+    variantValue.value = '';
+    Object.assign(source, { type: 'brochure', title: '', url: '' });
+    Object.assign(photoMeta, { kind: 'owner', caption: '', credit: '' });
   };
 
   watch(isOpen, (open) => {
@@ -114,7 +178,22 @@
       form.title = ctx.targetTitle;
       form.name = ctx.targetTitle;
     }
-    if (ctx.targetType) form.fixArea = ctx.targetType;
+    if (ctx.targetType && ctx.targetType !== 'variant') form.fixArea = ctx.targetType;
+    if (ctx.kind === 'variant') {
+      if (ctx.variantFocus) variantField.value = ctx.variantFocus;
+      if (!ctx.targetId) {
+        // New variant: currentValues is a prefill (e.g. the mark of the group tile).
+        for (const [key, value] of Object.entries(ctx.currentValues ?? {})) if (key in vform) vform[key] = value;
+      } else {
+        // The watcher below only fires on a CHANGE of field; seed the first one here.
+        variantValue.value = currentValue.value;
+      }
+    }
+  });
+
+  // Picking a different field starts the correction from that field's current value.
+  watch(variantField, () => {
+    variantValue.value = currentValue.value;
   });
 
   onBeforeUnmount(() => {
@@ -142,6 +221,23 @@
         if (!form.size.trim()) problems.push(t('errors.size'));
         if (files.value.length === 0) problems.push(t('errors.photo'));
       }
+    } else if (kind.value === 'variant') {
+      if (variantMode.value === 'photos') {
+        if (files.value.length === 0) problems.push(t('errors.photo'));
+      } else {
+        if (variantMode.value === 'new') {
+          if (!vform.name?.trim()) problems.push(t('variant.errors.name'));
+          if (!vform.marque || !vform.family || !vform.body_style) problems.push(t('variant.errors.class'));
+          if (!/^(19[5-9]\d|2000)$/.test(vform.year_start?.trim() ?? '')) problems.push(t('variant.errors.year'));
+          if (NEW_VARIANT_FIELDS.some((k) => isNumericField(k) && !numberOk(vform[k] ?? '')))
+            problems.push(t('variant.errors.number'));
+        } else {
+          const next = variantValue.value.trim();
+          if (!next || next === currentValue.value.trim()) problems.push(t('variant.errors.value'));
+          else if (isNumericField(variantField.value) && !numberOk(next)) problems.push(t('variant.errors.number'));
+        }
+        if (source.title.trim().length < 3) problems.push(t('variant.errors.source'));
+      }
     } else if (kind.value === 'fix') {
       if (form.reason.trim().length < 10) problems.push(t('errors.reason'));
     }
@@ -158,16 +254,19 @@
   };
 
   /** Maps the wizard's four tiles onto submission_queue target types. */
-  const targetTypeForKind = (): 'document' | 'registry' | 'wheel' | 'color' => {
+  const targetTypeForKind = (): 'document' | 'registry' | 'wheel' | 'color' | 'variant' => {
     if (kind.value === 'wheel') return 'wheel';
+    if (kind.value === 'variant') return 'variant';
     if (kind.value === 'registry') return 'registry';
     if (kind.value === 'fix') return (form.fixArea as any) || 'document';
     return 'document';
   };
 
-  const bucketForKind = (): 'archive-documents' | 'archive-wheels' | null => {
+  const bucketForKind = (): 'archive-documents' | 'archive-wheels' | 'archive-variants' | null => {
     if (kind.value === 'document') return 'archive-documents';
     if (kind.value === 'wheel') return 'archive-wheels';
+    // A spec fix carries a citation, not files; a new variant or a photo addition can carry photos.
+    if (kind.value === 'variant') return variantMode.value === 'spec' ? null : 'archive-variants';
     // Fixes and registry entries have no upload target today; evidence photos on
     // a fix would need a bucket of their own rather than borrowing one.
     return null;
@@ -220,6 +319,41 @@
         offset: form.offset.trim() || undefined,
         manufacturer: form.manufacturer.trim() || undefined,
         notes: form.notes.trim() || undefined,
+      };
+    }
+    if (kind.value === 'variant') {
+      const cite = {
+        type: source.type,
+        title: source.title.trim(),
+        ...(source.url.trim() ? { url: source.url.trim() } : {}),
+      };
+      if (variantMode.value === 'photos') {
+        return {
+          ...base,
+          title: t('variant.photos_title', { target: context.value.targetTitle ?? '' }),
+          photo_kind: photoMeta.kind,
+          photo_caption: photoMeta.caption.trim() || undefined,
+          photo_credit: photoMeta.credit.trim() || undefined,
+        };
+      }
+      if (variantMode.value === 'spec') {
+        return {
+          ...base,
+          title: t('fix_title_with_target', { target: context.value.targetTitle ?? '' }),
+          // Keys are raw column names (or 'colours'); the approve route allowlists them.
+          changes: { [variantField.value]: { from: currentValue.value || null, to: variantValue.value.trim() } },
+          source: cite,
+        };
+      }
+      const variant: Record<string, string> = {};
+      for (const key of NEW_VARIANT_FIELDS) if (vform[key]?.trim()) variant[key] = vform[key].trim();
+      return {
+        ...base,
+        title: (vform.name ?? '').trim(),
+        variant,
+        colours: variantColours.value,
+        source: cite,
+        photo_kind: 'owner',
       };
     }
     return {
@@ -338,6 +472,22 @@
       push(t('fields.width'), form.width);
       push(t('fields.offset'), form.offset);
       push(t('fields.manufacturer'), form.manufacturer);
+    } else if (kind.value === 'variant') {
+      if (variantMode.value === 'new') {
+        for (const key of NEW_VARIANT_FIELDS) push(t(`variant.fields.${key}`), vform[key]);
+        push(t('variant.fields.colours'), variantColours.value);
+      } else {
+        push(t('fields.target'), context.value.targetTitle ?? '');
+        if (variantMode.value === 'spec') {
+          push(t('variant.update_what'), t(`variant.fields.${variantField.value}`));
+          push(t('variant.current'), currentValue.value || t('variant.not_recorded'));
+          push(t('variant.your_value'), variantValue.value);
+        } else {
+          push(t('variant.photo_kind'), t(`variant.photo_kinds.${photoMeta.kind}`));
+          push(t('variant.photo_credit'), photoMeta.credit);
+        }
+      }
+      if (variantMode.value !== 'photos') push(t('variant.source'), source.title);
     } else {
       push(t('fields.target'), context.value.targetTitle ?? t('fix_no_target'));
       push(t('fields.reason'), form.reason);
@@ -365,7 +515,12 @@
             <span v-if="!isRequestMode" class="text-[13px] font-semibold opacity-60">
               {{ t('step_of', { step, total: totalSteps }) }}
             </span>
-            <button type="button" class="btn btn-ghost btn-sm btn-square" :aria-label="t('close')" @click="closeWizard()">
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-square"
+              :aria-label="t('close')"
+              @click="closeWizard()"
+            >
               <i class="fas fa-xmark" aria-hidden="true"></i>
             </button>
           </div>
@@ -390,7 +545,12 @@
               </label>
               <label class="form-control block">
                 <span class="mb-1 block text-sm font-semibold">{{ t('fields.request_notes') }}</span>
-                <textarea v-model="requestNotes" rows="3" class="textarea textarea-bordered w-full" maxlength="1000"></textarea>
+                <textarea
+                  v-model="requestNotes"
+                  rows="3"
+                  class="textarea textarea-bordered w-full"
+                  maxlength="1000"
+                ></textarea>
               </label>
             </template>
 
@@ -534,6 +694,200 @@
                 </label>
               </div>
 
+              <div v-else-if="kind === 'variant'" class="grid gap-3">
+                <!-- Existing variant: what is being changed -->
+                <template v-if="isVariantEdit">
+                  <label class="form-control">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.update_what') }}</span>
+                    <select v-model="variantField" class="select select-bordered w-full">
+                      <option v-for="option in VARIANT_EDIT_OPTIONS" :key="option" :value="option">
+                        {{ t(`variant.fields.${option}`) }}
+                      </option>
+                    </select>
+                  </label>
+                  <div v-if="variantMode === 'spec'" class="grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-field border border-base-300 bg-base-200 px-3.5 py-3">
+                      <p class="mb-0.5 text-[11px] font-bold tracking-wide opacity-60">{{ t('variant.current') }}</p>
+                      <p class="text-[15px] break-words">{{ currentValue || t('variant.not_recorded') }}</p>
+                    </div>
+                    <label class="form-control">
+                      <span class="mb-1 block text-[11px] font-bold tracking-wide text-primary">{{
+                        t('variant.your_value')
+                      }}</span>
+                      <textarea
+                        v-if="variantField === 'colours' || variantField === 'description' || variantField === 'notes'"
+                        v-model="variantValue"
+                        rows="3"
+                        class="textarea textarea-bordered w-full"
+                        :placeholder="variantField === 'colours' ? t('variant.colours_hint') : ''"
+                      ></textarea>
+                      <input
+                        v-else
+                        v-model="variantValue"
+                        type="text"
+                        :inputmode="isNumericField(variantField) ? 'decimal' : 'text'"
+                        class="input input-bordered w-full"
+                      />
+                    </label>
+                  </div>
+                  <div v-else class="grid gap-3 sm:grid-cols-2">
+                    <label class="form-control">
+                      <span class="mb-1 block text-sm font-semibold">{{ t('variant.photo_kind') }}</span>
+                      <select v-model="photoMeta.kind" class="select select-bordered w-full">
+                        <option v-for="k in VARIANT_PHOTO_KINDS" :key="k" :value="k">
+                          {{ t(`variant.photo_kinds.${k}`) }}
+                        </option>
+                      </select>
+                    </label>
+                    <label class="form-control">
+                      <span class="mb-1 block text-sm font-semibold">{{ t('variant.photo_credit') }}</span>
+                      <input
+                        v-model="photoMeta.credit"
+                        type="text"
+                        maxlength="120"
+                        class="input input-bordered w-full"
+                      />
+                    </label>
+                    <label class="form-control sm:col-span-2">
+                      <span class="mb-1 block text-sm font-semibold">{{ t('variant.photo_caption') }}</span>
+                      <input
+                        v-model="photoMeta.caption"
+                        type="text"
+                        maxlength="200"
+                        class="input input-bordered w-full"
+                      />
+                    </label>
+                  </div>
+                </template>
+
+                <!-- New variant -->
+                <div v-else class="grid gap-3 sm:grid-cols-2">
+                  <label class="form-control sm:col-span-2">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.name') }} *</span>
+                    <input v-model="vform.name" type="text" maxlength="160" class="input input-bordered w-full" />
+                  </label>
+                  <label class="form-control">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.marque') }} *</span>
+                    <select v-model="vform.marque" class="select select-bordered w-full">
+                      <option value="" disabled>—</option>
+                      <option v-for="m in VARIANT_MARQUES" :key="m" :value="m">{{ MARQUE_LABELS[m] }}</option>
+                    </select>
+                  </label>
+                  <label class="form-control">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.family') }} *</span>
+                    <select v-model="vform.family" class="select select-bordered w-full">
+                      <option value="" disabled>—</option>
+                      <option v-for="f in VARIANT_FAMILIES" :key="f" :value="f">{{ FAMILY_LABELS[f] }}</option>
+                    </select>
+                  </label>
+                  <label class="form-control">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.body_style') }} *</span>
+                    <select v-model="vform.body_style" class="select select-bordered w-full">
+                      <option value="" disabled>—</option>
+                      <option v-for="b in VARIANT_BODIES" :key="b" :value="b">{{ BODY_LABELS[b] }}</option>
+                    </select>
+                  </label>
+                  <label class="form-control">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.mark') }}</span>
+                    <select v-model="vform.mark" class="select select-bordered w-full">
+                      <option value="">{{ t('variant.overseas') }}</option>
+                      <option v-for="n in MARK_NUMBERS" :key="n" :value="String(n)">
+                        Mk {{ MARK_RANGES[n]!.roman }} · {{ MARK_RANGES[n]!.start }}–{{ MARK_RANGES[n]!.end }}
+                      </option>
+                    </select>
+                  </label>
+                  <label class="form-control">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.market') }}</span>
+                    <select v-model="vform.market" class="select select-bordered w-full">
+                      <option v-for="m in VARIANT_MARKETS" :key="m" :value="m">{{ MARKET_LABELS[m] }}</option>
+                    </select>
+                  </label>
+                  <label v-for="key in ['year_start', 'year_end']" :key="key" class="form-control">
+                    <span class="mb-1 block text-sm font-semibold"
+                      >{{ t(`variant.fields.${key}`) }}{{ key === 'year_start' ? ' *' : '' }}</span
+                    >
+                    <input
+                      v-model="vform[key]"
+                      type="text"
+                      inputmode="numeric"
+                      maxlength="4"
+                      class="input input-bordered w-full"
+                    />
+                  </label>
+                  <label
+                    v-for="key in [
+                      'engine_cc',
+                      'power_bhp',
+                      'torque_lbft',
+                      'carburettor',
+                      'final_drive',
+                      'kerb_weight_kg',
+                      'top_speed_mph',
+                      'wheels',
+                      'tyres',
+                    ]"
+                    :key="key"
+                    class="form-control"
+                  >
+                    <span class="mb-1 block text-sm font-semibold">{{ t(`variant.fields.${key}`) }}</span>
+                    <input
+                      v-model="vform[key]"
+                      type="text"
+                      :inputmode="isNumericField(key) ? 'decimal' : 'text'"
+                      class="input input-bordered w-full"
+                    />
+                  </label>
+                  <label class="form-control sm:col-span-2">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.colours') }}</span>
+                    <textarea
+                      v-model="variantColours"
+                      rows="2"
+                      class="textarea textarea-bordered w-full"
+                      :placeholder="t('variant.colours_hint')"
+                    ></textarea>
+                  </label>
+                  <label class="form-control sm:col-span-2">
+                    <span class="mb-1 block text-sm font-semibold">{{ t('variant.fields.notes') }}</span>
+                    <textarea v-model="vform.notes" rows="2" class="textarea textarea-bordered w-full"></textarea>
+                  </label>
+                </div>
+
+                <!-- Source: required on every spec change and every new variant -->
+                <div v-if="variantMode !== 'photos'">
+                  <p class="mb-1.5 text-sm font-semibold">
+                    {{ t('variant.source') }} <span class="text-error">*</span>
+                    <span class="font-normal opacity-60">— {{ t('variant.source_required') }}</span>
+                  </p>
+                  <div class="grid gap-3 sm:grid-cols-[180px_1fr]">
+                    <select
+                      v-model="source.type"
+                      class="select select-bordered w-full"
+                      :aria-label="t('variant.source_type')"
+                    >
+                      <option v-for="s in VARIANT_SOURCE_TYPES" :key="s" :value="s">
+                        {{ t(`variant.source_types.${s}`) }}
+                      </option>
+                    </select>
+                    <input
+                      v-model="source.title"
+                      type="text"
+                      maxlength="300"
+                      class="input input-bordered w-full"
+                      :placeholder="t('variant.source_title_hint')"
+                      :aria-label="t('variant.source_title')"
+                    />
+                    <input
+                      v-model="source.url"
+                      type="url"
+                      maxlength="500"
+                      class="input input-bordered w-full sm:col-span-2"
+                      :placeholder="t('variant.source_url_hint')"
+                      :aria-label="t('variant.source_url')"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div v-else class="grid gap-3">
                 <label v-if="!context.targetType" class="form-control">
                   <span class="mb-1 block text-sm font-semibold">{{ t('fields.fix_area') }}</span>
@@ -559,7 +913,7 @@
                 <ContributeFileUpload
                   :accept="kind === 'document' ? 'application/pdf,image/jpeg,image/png' : 'image/jpeg,image/png'"
                   :max-files="kind === 'document' ? 3 : 5"
-                  :max-size-mb="kind === 'document' ? 10 : 3"
+                  :max-size-mb="kind === 'document' ? 10 : kind === 'variant' ? 5 : 3"
                   @update:files="files = $event"
                 />
               </div>
@@ -634,7 +988,9 @@
     border-radius: var(--radius-box, 0.75rem);
     background: transparent;
     cursor: pointer;
-    transition: border-color 120ms ease, background-color 120ms ease;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease;
   }
   .wizard-tile:hover {
     border-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
@@ -651,7 +1007,9 @@
   }
   .wizard-enter-active .wizard-panel,
   .wizard-leave-active .wizard-panel {
-    transition: transform 0.25s ease, opacity 0.25s ease;
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease;
   }
   .wizard-enter-from,
   .wizard-leave-to {
@@ -700,12 +1058,14 @@
       "document": "Manual or document",
       "registry": "Registry entry",
       "wheel": "Wheel + fitment",
+      "variant": "Model variant",
       "fix": "Fix or addition"
     },
     "kind_hints": {
       "document": "Scans, guides, spec sheets, diagrams.",
       "registry": "Your car, chassis plate, or engine number.",
       "wheel": "New wheel, or photos/specs for an existing one.",
+      "variant": "A Mini model or trim: specs, colours, photos.",
       "fix": "Correct a value, fill a gap, improve an entry."
     },
     "doc_types": {
@@ -767,6 +1127,87 @@
       "clubman": "Clubman",
       "van": "Van",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "Photos",
+        "colours": "Factory colours",
+        "name": "Name",
+        "marque": "Marque",
+        "family": "Family",
+        "body_style": "Body style",
+        "mark": "Mark",
+        "market": "Home market",
+        "year_start": "First year",
+        "year_end": "Last year",
+        "edition_size": "Edition size",
+        "production_total": "Units built",
+        "description": "Description",
+        "notes": "Notes",
+        "engine_cc": "Engine (cc)",
+        "engine_code": "Engine code",
+        "bore_mm": "Bore (mm)",
+        "stroke_mm": "Stroke (mm)",
+        "compression_ratio": "Compression ratio (:1)",
+        "power_bhp": "Power (bhp)",
+        "power_rpm": "Power at (rpm)",
+        "torque_lbft": "Torque (lb-ft)",
+        "torque_rpm": "Torque at (rpm)",
+        "carburettor": "Carburation",
+        "gearbox": "Gearbox",
+        "final_drive": "Final drive (:1)",
+        "brakes_front": "Front brakes",
+        "brakes_rear": "Rear brakes",
+        "wheels": "Wheels",
+        "tyres": "Tyres",
+        "kerb_weight_kg": "Kerb weight (kg)",
+        "top_speed_mph": "Top speed (mph)",
+        "length_mm": "Length (mm)",
+        "width_mm": "Width (mm)",
+        "height_mm": "Height (mm)",
+        "wheelbase_mm": "Wheelbase (mm)"
+      },
+      "update_what": "What are you updating?",
+      "current": "CURRENT",
+      "your_value": "YOUR CORRECTION",
+      "not_recorded": "Not recorded",
+      "source": "Source",
+      "source_required": "required for every spec edit",
+      "source_type": "Source type",
+      "source_title": "Citation",
+      "source_url": "Link",
+      "source_title_hint": "e.g. BMC Service Sheet A/12, 1965, p.4",
+      "source_url_hint": "Link to the source (optional)",
+      "source_types": {
+        "book": "Book",
+        "brochure": "Brochure",
+        "period_document": "Period document",
+        "link": "Web link",
+        "other": "Other"
+      },
+      "photo_kind": "Photo type",
+      "photo_caption": "Caption",
+      "photo_credit": "Credit (who took it, or where it is from)",
+      "photo_kinds": {
+        "brochure": "Brochure",
+        "factory": "Factory",
+        "period": "Period",
+        "owner": "Owner",
+        "interior": "Interior",
+        "engine": "Engine bay",
+        "badge": "Badge"
+      },
+      "colours_hint": "Comma-separated, e.g. Tartan Red, Almond Green",
+      "overseas": "Overseas / not in the UK sequence",
+      "photos_title": "Photos — {target}",
+      "errors": {
+        "name": "Add the variant name.",
+        "class": "Choose the marque, family and body style.",
+        "year": "Enter the first year (1959–2000).",
+        "number": "Numeric fields take a number only.",
+        "value": "Enter a new value that differs from the current one.",
+        "source": "Cite a source (at least a few characters)."
+      }
     }
   },
   "es": {
@@ -797,12 +1238,14 @@
       "document": "Manual o documento",
       "registry": "Entrada del registro",
       "wheel": "Rueda y montaje",
+      "variant": "Variante de modelo",
       "fix": "Corrección o añadido"
     },
     "kind_hints": {
       "document": "Escaneos, guías, fichas técnicas, diagramas.",
       "registry": "Tu coche, placa de chasis o número de motor.",
       "wheel": "Rueda nueva, o fotos/datos de una existente.",
+      "variant": "Un modelo o acabado de Mini: datos, colores, fotos.",
       "fix": "Corrige un valor, cubre un hueco, mejora una entrada."
     },
     "doc_types": {
@@ -864,6 +1307,87 @@
       "clubman": "Clubman",
       "van": "Furgoneta",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "Fotos",
+        "colours": "Colores de fábrica",
+        "name": "Nombre",
+        "marque": "Marca",
+        "family": "Familia",
+        "body_style": "Carrocería",
+        "mark": "Mark",
+        "market": "Mercado de origen",
+        "year_start": "Primer año",
+        "year_end": "Último año",
+        "edition_size": "Tirada",
+        "production_total": "Unidades fabricadas",
+        "description": "Descripción",
+        "notes": "Notas",
+        "engine_cc": "Motor (cc)",
+        "engine_code": "Código de motor",
+        "bore_mm": "Diámetro (mm)",
+        "stroke_mm": "Carrera (mm)",
+        "compression_ratio": "Relación de compresión (:1)",
+        "power_bhp": "Potencia (bhp)",
+        "power_rpm": "Potencia a (rpm)",
+        "torque_lbft": "Par (lb-ft)",
+        "torque_rpm": "Par a (rpm)",
+        "carburettor": "Carburación",
+        "gearbox": "Caja de cambios",
+        "final_drive": "Relación final (:1)",
+        "brakes_front": "Frenos delanteros",
+        "brakes_rear": "Frenos traseros",
+        "wheels": "Llantas",
+        "tyres": "Neumáticos",
+        "kerb_weight_kg": "Peso en vacío (kg)",
+        "top_speed_mph": "Velocidad máxima (mph)",
+        "length_mm": "Longitud (mm)",
+        "width_mm": "Anchura (mm)",
+        "height_mm": "Altura (mm)",
+        "wheelbase_mm": "Batalla (mm)"
+      },
+      "update_what": "¿Qué quieres actualizar?",
+      "current": "ACTUAL",
+      "your_value": "TU CORRECCIÓN",
+      "not_recorded": "Sin registrar",
+      "source": "Fuente",
+      "source_required": "obligatoria en cada corrección de datos",
+      "source_type": "Tipo de fuente",
+      "source_title": "Referencia",
+      "source_url": "Enlace",
+      "source_title_hint": "p. ej. BMC Service Sheet A/12, 1965, p. 4",
+      "source_url_hint": "Enlace a la fuente (opcional)",
+      "source_types": {
+        "book": "Libro",
+        "brochure": "Folleto",
+        "period_document": "Documento de época",
+        "link": "Enlace web",
+        "other": "Otro"
+      },
+      "photo_kind": "Tipo de foto",
+      "photo_caption": "Pie de foto",
+      "photo_credit": "Crédito (autor u origen)",
+      "photo_kinds": {
+        "brochure": "Folleto",
+        "factory": "Fábrica",
+        "period": "Época",
+        "owner": "Propietario",
+        "interior": "Interior",
+        "engine": "Vano motor",
+        "badge": "Emblema"
+      },
+      "colours_hint": "Separados por comas, p. ej. Tartan Red, Almond Green",
+      "overseas": "Extranjero / fuera de la secuencia británica",
+      "photos_title": "Fotos — {target}",
+      "errors": {
+        "name": "Añade el nombre de la variante.",
+        "class": "Elige marca, familia y carrocería.",
+        "year": "Indica el primer año (1959–2000).",
+        "number": "Los campos numéricos solo admiten números.",
+        "value": "Introduce un valor nuevo distinto del actual.",
+        "source": "Cita una fuente (al menos unos caracteres)."
+      }
     }
   },
   "fr": {
@@ -894,12 +1418,14 @@
       "document": "Manuel ou document",
       "registry": "Entrée de registre",
       "wheel": "Jante + montage",
+      "variant": "Variante de modèle",
       "fix": "Correction ou ajout"
     },
     "kind_hints": {
       "document": "Scans, guides, fiches techniques, schémas.",
       "registry": "Votre voiture, plaque de châssis ou numéro de moteur.",
       "wheel": "Nouvelle jante, ou photos/spécifications d'une existante.",
+      "variant": "Un modèle ou une finition de Mini : données, couleurs, photos.",
       "fix": "Corriger une valeur, combler un manque, améliorer une entrée."
     },
     "doc_types": {
@@ -961,6 +1487,87 @@
       "clubman": "Clubman",
       "van": "Fourgonnette",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "Photos",
+        "colours": "Couleurs d'usine",
+        "name": "Nom",
+        "marque": "Marque",
+        "family": "Famille",
+        "body_style": "Carrosserie",
+        "mark": "Mark",
+        "market": "Marché d'origine",
+        "year_start": "Première année",
+        "year_end": "Dernière année",
+        "edition_size": "Taille de la série",
+        "production_total": "Exemplaires produits",
+        "description": "Description",
+        "notes": "Notes",
+        "engine_cc": "Moteur (cc)",
+        "engine_code": "Code moteur",
+        "bore_mm": "Alésage (mm)",
+        "stroke_mm": "Course (mm)",
+        "compression_ratio": "Taux de compression (:1)",
+        "power_bhp": "Puissance (bhp)",
+        "power_rpm": "Puissance à (rpm)",
+        "torque_lbft": "Couple (lb-ft)",
+        "torque_rpm": "Couple à (rpm)",
+        "carburettor": "Alimentation",
+        "gearbox": "Boîte de vitesses",
+        "final_drive": "Rapport de pont (:1)",
+        "brakes_front": "Freins avant",
+        "brakes_rear": "Freins arrière",
+        "wheels": "Jantes",
+        "tyres": "Pneus",
+        "kerb_weight_kg": "Poids à vide (kg)",
+        "top_speed_mph": "Vitesse maxi (mph)",
+        "length_mm": "Longueur (mm)",
+        "width_mm": "Largeur (mm)",
+        "height_mm": "Hauteur (mm)",
+        "wheelbase_mm": "Empattement (mm)"
+      },
+      "update_what": "Que mettez-vous à jour ?",
+      "current": "ACTUEL",
+      "your_value": "VOTRE CORRECTION",
+      "not_recorded": "Non renseigné",
+      "source": "Source",
+      "source_required": "obligatoire pour chaque correction",
+      "source_type": "Type de source",
+      "source_title": "Référence",
+      "source_url": "Lien",
+      "source_title_hint": "ex. BMC Service Sheet A/12, 1965, p. 4",
+      "source_url_hint": "Lien vers la source (facultatif)",
+      "source_types": {
+        "book": "Livre",
+        "brochure": "Brochure",
+        "period_document": "Document d'époque",
+        "link": "Lien web",
+        "other": "Autre"
+      },
+      "photo_kind": "Type de photo",
+      "photo_caption": "Légende",
+      "photo_credit": "Crédit (auteur ou provenance)",
+      "photo_kinds": {
+        "brochure": "Brochure",
+        "factory": "Usine",
+        "period": "Époque",
+        "owner": "Propriétaire",
+        "interior": "Intérieur",
+        "engine": "Compartiment moteur",
+        "badge": "Badge"
+      },
+      "colours_hint": "Séparées par des virgules, ex. Tartan Red, Almond Green",
+      "overseas": "Export / hors séquence britannique",
+      "photos_title": "Photos — {target}",
+      "errors": {
+        "name": "Ajoutez le nom de la variante.",
+        "class": "Choisissez la marque, la famille et la carrosserie.",
+        "year": "Indiquez la première année (1959–2000).",
+        "number": "Les champs numériques n'acceptent que des nombres.",
+        "value": "Saisissez une nouvelle valeur différente de l'actuelle.",
+        "source": "Citez une source (quelques caractères au moins)."
+      }
     }
   },
   "de": {
@@ -991,12 +1598,14 @@
       "document": "Handbuch oder Dokument",
       "registry": "Registereintrag",
       "wheel": "Rad + Passung",
+      "variant": "Modellvariante",
       "fix": "Korrektur oder Ergänzung"
     },
     "kind_hints": {
       "document": "Scans, Anleitungen, Datenblätter, Diagramme.",
       "registry": "Dein Auto, Fahrgestellschild oder Motornummer.",
       "wheel": "Neues Rad oder Fotos/Daten zu einem vorhandenen.",
+      "variant": "Ein Mini-Modell oder eine Ausstattung: Daten, Farben, Fotos.",
       "fix": "Wert korrigieren, Lücke füllen, Eintrag verbessern."
     },
     "doc_types": {
@@ -1058,6 +1667,87 @@
       "clubman": "Clubman",
       "van": "Kastenwagen",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "Fotos",
+        "colours": "Werksfarben",
+        "name": "Name",
+        "marque": "Marke",
+        "family": "Baureihe",
+        "body_style": "Karosserie",
+        "mark": "Mark",
+        "market": "Heimatmarkt",
+        "year_start": "Erstes Jahr",
+        "year_end": "Letztes Jahr",
+        "edition_size": "Auflage",
+        "production_total": "Stückzahl",
+        "description": "Beschreibung",
+        "notes": "Notizen",
+        "engine_cc": "Motor (cc)",
+        "engine_code": "Motorcode",
+        "bore_mm": "Bohrung (mm)",
+        "stroke_mm": "Hub (mm)",
+        "compression_ratio": "Verdichtung (:1)",
+        "power_bhp": "Leistung (bhp)",
+        "power_rpm": "Leistung bei (rpm)",
+        "torque_lbft": "Drehmoment (lb-ft)",
+        "torque_rpm": "Drehmoment bei (rpm)",
+        "carburettor": "Gemischaufbereitung",
+        "gearbox": "Getriebe",
+        "final_drive": "Achsübersetzung (:1)",
+        "brakes_front": "Bremsen vorn",
+        "brakes_rear": "Bremsen hinten",
+        "wheels": "Räder",
+        "tyres": "Reifen",
+        "kerb_weight_kg": "Leergewicht (kg)",
+        "top_speed_mph": "Höchstgeschwindigkeit (mph)",
+        "length_mm": "Länge (mm)",
+        "width_mm": "Breite (mm)",
+        "height_mm": "Höhe (mm)",
+        "wheelbase_mm": "Radstand (mm)"
+      },
+      "update_what": "Was möchten Sie aktualisieren?",
+      "current": "AKTUELL",
+      "your_value": "IHRE KORREKTUR",
+      "not_recorded": "Nicht erfasst",
+      "source": "Quelle",
+      "source_required": "bei jeder Datenkorrektur Pflicht",
+      "source_type": "Quellentyp",
+      "source_title": "Quellenangabe",
+      "source_url": "Link",
+      "source_title_hint": "z. B. BMC Service Sheet A/12, 1965, S. 4",
+      "source_url_hint": "Link zur Quelle (optional)",
+      "source_types": {
+        "book": "Buch",
+        "brochure": "Prospekt",
+        "period_document": "Zeitgenössisches Dokument",
+        "link": "Weblink",
+        "other": "Sonstiges"
+      },
+      "photo_kind": "Fototyp",
+      "photo_caption": "Bildunterschrift",
+      "photo_credit": "Urheber (wer hat es aufgenommen, woher stammt es)",
+      "photo_kinds": {
+        "brochure": "Prospekt",
+        "factory": "Werk",
+        "period": "Zeitgenössisch",
+        "owner": "Besitzer",
+        "interior": "Innenraum",
+        "engine": "Motorraum",
+        "badge": "Emblem"
+      },
+      "colours_hint": "Durch Kommas getrennt, z. B. Tartan Red, Almond Green",
+      "overseas": "Übersee / außerhalb der britischen Reihe",
+      "photos_title": "Fotos — {target}",
+      "errors": {
+        "name": "Geben Sie den Namen der Variante ein.",
+        "class": "Wählen Sie Marke, Baureihe und Karosserie.",
+        "year": "Geben Sie das erste Jahr ein (1959–2000).",
+        "number": "Zahlenfelder akzeptieren nur Zahlen.",
+        "value": "Geben Sie einen neuen, abweichenden Wert ein.",
+        "source": "Geben Sie eine Quelle an (mindestens einige Zeichen)."
+      }
     }
   },
   "it": {
@@ -1088,12 +1778,14 @@
       "document": "Manuale o documento",
       "registry": "Voce del registro",
       "wheel": "Cerchio + montaggio",
+      "variant": "Variante di modello",
       "fix": "Correzione o aggiunta"
     },
     "kind_hints": {
       "document": "Scansioni, guide, schede tecniche, schemi.",
       "registry": "La tua auto, targhetta telaio o numero motore.",
       "wheel": "Cerchio nuovo, o foto/dati di uno esistente.",
+      "variant": "Un modello o allestimento Mini: dati, colori, foto.",
       "fix": "Correggi un valore, colma una lacuna, migliora una voce."
     },
     "doc_types": {
@@ -1155,6 +1847,87 @@
       "clubman": "Clubman",
       "van": "Furgone",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "Foto",
+        "colours": "Colori di fabbrica",
+        "name": "Nome",
+        "marque": "Marca",
+        "family": "Famiglia",
+        "body_style": "Carrozzeria",
+        "mark": "Mark",
+        "market": "Mercato di origine",
+        "year_start": "Primo anno",
+        "year_end": "Ultimo anno",
+        "edition_size": "Tiratura",
+        "production_total": "Esemplari prodotti",
+        "description": "Descrizione",
+        "notes": "Note",
+        "engine_cc": "Motore (cc)",
+        "engine_code": "Codice motore",
+        "bore_mm": "Alesaggio (mm)",
+        "stroke_mm": "Corsa (mm)",
+        "compression_ratio": "Rapporto di compressione (:1)",
+        "power_bhp": "Potenza (bhp)",
+        "power_rpm": "Potenza a (rpm)",
+        "torque_lbft": "Coppia (lb-ft)",
+        "torque_rpm": "Coppia a (rpm)",
+        "carburettor": "Alimentazione",
+        "gearbox": "Cambio",
+        "final_drive": "Rapporto al ponte (:1)",
+        "brakes_front": "Freni anteriori",
+        "brakes_rear": "Freni posteriori",
+        "wheels": "Cerchi",
+        "tyres": "Pneumatici",
+        "kerb_weight_kg": "Peso a vuoto (kg)",
+        "top_speed_mph": "Velocità massima (mph)",
+        "length_mm": "Lunghezza (mm)",
+        "width_mm": "Larghezza (mm)",
+        "height_mm": "Altezza (mm)",
+        "wheelbase_mm": "Passo (mm)"
+      },
+      "update_what": "Cosa stai aggiornando?",
+      "current": "ATTUALE",
+      "your_value": "LA TUA CORREZIONE",
+      "not_recorded": "Non registrato",
+      "source": "Fonte",
+      "source_required": "obbligatoria per ogni correzione",
+      "source_type": "Tipo di fonte",
+      "source_title": "Riferimento",
+      "source_url": "Link",
+      "source_title_hint": "es. BMC Service Sheet A/12, 1965, p. 4",
+      "source_url_hint": "Link alla fonte (facoltativo)",
+      "source_types": {
+        "book": "Libro",
+        "brochure": "Depliant",
+        "period_document": "Documento d'epoca",
+        "link": "Link web",
+        "other": "Altro"
+      },
+      "photo_kind": "Tipo di foto",
+      "photo_caption": "Didascalia",
+      "photo_credit": "Crediti (autore o provenienza)",
+      "photo_kinds": {
+        "brochure": "Depliant",
+        "factory": "Fabbrica",
+        "period": "Epoca",
+        "owner": "Proprietario",
+        "interior": "Interni",
+        "engine": "Vano motore",
+        "badge": "Stemma"
+      },
+      "colours_hint": "Separati da virgole, es. Tartan Red, Almond Green",
+      "overseas": "Estero / fuori dalla sequenza britannica",
+      "photos_title": "Foto — {target}",
+      "errors": {
+        "name": "Aggiungi il nome della variante.",
+        "class": "Scegli marca, famiglia e carrozzeria.",
+        "year": "Inserisci il primo anno (1959–2000).",
+        "number": "I campi numerici accettano solo numeri.",
+        "value": "Inserisci un nuovo valore diverso dall'attuale.",
+        "source": "Cita una fonte (almeno qualche carattere)."
+      }
     }
   },
   "pt": {
@@ -1185,12 +1958,14 @@
       "document": "Manual ou documento",
       "registry": "Entrada de registo",
       "wheel": "Jante + montagem",
+      "variant": "Variante de modelo",
       "fix": "Correção ou adição"
     },
     "kind_hints": {
       "document": "Digitalizações, guias, fichas técnicas, esquemas.",
       "registry": "O seu carro, chapa do chassi ou número do motor.",
       "wheel": "Jante nova, ou fotos/dados de uma existente.",
+      "variant": "Um modelo ou versão Mini: dados, cores, fotos.",
       "fix": "Corrigir um valor, preencher uma lacuna, melhorar uma entrada."
     },
     "doc_types": {
@@ -1252,6 +2027,87 @@
       "clubman": "Clubman",
       "van": "Van",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "Fotos",
+        "colours": "Cores de fábrica",
+        "name": "Nome",
+        "marque": "Marca",
+        "family": "Família",
+        "body_style": "Carroçaria",
+        "mark": "Mark",
+        "market": "Mercado de origem",
+        "year_start": "Primeiro ano",
+        "year_end": "Último ano",
+        "edition_size": "Tiragem",
+        "production_total": "Unidades produzidas",
+        "description": "Descrição",
+        "notes": "Notas",
+        "engine_cc": "Motor (cc)",
+        "engine_code": "Código do motor",
+        "bore_mm": "Diâmetro (mm)",
+        "stroke_mm": "Curso (mm)",
+        "compression_ratio": "Taxa de compressão (:1)",
+        "power_bhp": "Potência (bhp)",
+        "power_rpm": "Potência a (rpm)",
+        "torque_lbft": "Binário (lb-ft)",
+        "torque_rpm": "Binário a (rpm)",
+        "carburettor": "Carburação",
+        "gearbox": "Caixa de velocidades",
+        "final_drive": "Relação final (:1)",
+        "brakes_front": "Travões dianteiros",
+        "brakes_rear": "Travões traseiros",
+        "wheels": "Jantes",
+        "tyres": "Pneus",
+        "kerb_weight_kg": "Peso em ordem de marcha (kg)",
+        "top_speed_mph": "Velocidade máxima (mph)",
+        "length_mm": "Comprimento (mm)",
+        "width_mm": "Largura (mm)",
+        "height_mm": "Altura (mm)",
+        "wheelbase_mm": "Distância entre eixos (mm)"
+      },
+      "update_what": "O que está a atualizar?",
+      "current": "ATUAL",
+      "your_value": "A SUA CORREÇÃO",
+      "not_recorded": "Não registado",
+      "source": "Fonte",
+      "source_required": "obrigatória em cada correção",
+      "source_type": "Tipo de fonte",
+      "source_title": "Referência",
+      "source_url": "Ligação",
+      "source_title_hint": "ex. BMC Service Sheet A/12, 1965, p. 4",
+      "source_url_hint": "Ligação para a fonte (opcional)",
+      "source_types": {
+        "book": "Livro",
+        "brochure": "Folheto",
+        "period_document": "Documento de época",
+        "link": "Ligação web",
+        "other": "Outro"
+      },
+      "photo_kind": "Tipo de foto",
+      "photo_caption": "Legenda",
+      "photo_credit": "Crédito (autor ou origem)",
+      "photo_kinds": {
+        "brochure": "Folheto",
+        "factory": "Fábrica",
+        "period": "Época",
+        "owner": "Proprietário",
+        "interior": "Interior",
+        "engine": "Compartimento do motor",
+        "badge": "Emblema"
+      },
+      "colours_hint": "Separadas por vírgulas, ex. Tartan Red, Almond Green",
+      "overseas": "Estrangeiro / fora da sequência britânica",
+      "photos_title": "Fotos — {target}",
+      "errors": {
+        "name": "Adicione o nome da variante.",
+        "class": "Escolha a marca, a família e a carroçaria.",
+        "year": "Indique o primeiro ano (1959–2000).",
+        "number": "Os campos numéricos só aceitam números.",
+        "value": "Introduza um valor novo, diferente do atual.",
+        "source": "Cite uma fonte (pelo menos alguns caracteres)."
+      }
     }
   },
   "ru": {
@@ -1282,12 +2138,14 @@
       "document": "Руководство или документ",
       "registry": "Запись в реестре",
       "wheel": "Диск и параметры установки",
+      "variant": "Модификация",
       "fix": "Исправление или дополнение"
     },
     "kind_hints": {
       "document": "Сканы, руководства, спецификации, схемы.",
       "registry": "Ваш автомобиль, шильдик кузова или номер двигателя.",
       "wheel": "Новый диск либо фото и данные для существующего.",
+      "variant": "Модель или комплектация Mini: характеристики, цвета, фото.",
       "fix": "Исправить значение, закрыть пробел, улучшить запись."
     },
     "doc_types": {
@@ -1349,6 +2207,87 @@
       "clubman": "Clubman",
       "van": "Фургон",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "Фото",
+        "colours": "Заводские цвета",
+        "name": "Название",
+        "marque": "Марка",
+        "family": "Семейство",
+        "body_style": "Кузов",
+        "mark": "Mark",
+        "market": "Домашний рынок",
+        "year_start": "Первый год",
+        "year_end": "Последний год",
+        "edition_size": "Тираж серии",
+        "production_total": "Выпущено",
+        "description": "Описание",
+        "notes": "Примечания",
+        "engine_cc": "Двигатель (cc)",
+        "engine_code": "Код двигателя",
+        "bore_mm": "Диаметр цилиндра (mm)",
+        "stroke_mm": "Ход поршня (mm)",
+        "compression_ratio": "Степень сжатия (:1)",
+        "power_bhp": "Мощность (bhp)",
+        "power_rpm": "Мощность при (rpm)",
+        "torque_lbft": "Крутящий момент (lb-ft)",
+        "torque_rpm": "Момент при (rpm)",
+        "carburettor": "Питание",
+        "gearbox": "Коробка передач",
+        "final_drive": "Главная передача (:1)",
+        "brakes_front": "Передние тормоза",
+        "brakes_rear": "Задние тормоза",
+        "wheels": "Колёса",
+        "tyres": "Шины",
+        "kerb_weight_kg": "Снаряжённая масса (kg)",
+        "top_speed_mph": "Максимальная скорость (mph)",
+        "length_mm": "Длина (mm)",
+        "width_mm": "Ширина (mm)",
+        "height_mm": "Высота (mm)",
+        "wheelbase_mm": "Колёсная база (mm)"
+      },
+      "update_what": "Что вы обновляете?",
+      "current": "СЕЙЧАС",
+      "your_value": "ВАШЕ ИСПРАВЛЕНИЕ",
+      "not_recorded": "Не указано",
+      "source": "Источник",
+      "source_required": "обязателен для каждой правки",
+      "source_type": "Тип источника",
+      "source_title": "Ссылка на источник",
+      "source_url": "URL",
+      "source_title_hint": "напр. BMC Service Sheet A/12, 1965, с. 4",
+      "source_url_hint": "Ссылка на источник (необязательно)",
+      "source_types": {
+        "book": "Книга",
+        "brochure": "Брошюра",
+        "period_document": "Документ эпохи",
+        "link": "Веб-ссылка",
+        "other": "Другое"
+      },
+      "photo_kind": "Тип фото",
+      "photo_caption": "Подпись",
+      "photo_credit": "Автор (кто снял или откуда)",
+      "photo_kinds": {
+        "brochure": "Брошюра",
+        "factory": "Заводское",
+        "period": "Эпохи",
+        "owner": "Владельца",
+        "interior": "Салон",
+        "engine": "Моторный отсек",
+        "badge": "Эмблема"
+      },
+      "colours_hint": "Через запятую, напр. Tartan Red, Almond Green",
+      "overseas": "Зарубежные / вне британской серии",
+      "photos_title": "Фото — {target}",
+      "errors": {
+        "name": "Укажите название модификации.",
+        "class": "Выберите марку, семейство и кузов.",
+        "year": "Укажите первый год (1959–2000).",
+        "number": "Числовые поля принимают только числа.",
+        "value": "Введите новое значение, отличное от текущего.",
+        "source": "Укажите источник (хотя бы несколько символов)."
+      }
     }
   },
   "ja": {
@@ -1379,12 +2318,14 @@
       "document": "マニュアルまたは資料",
       "registry": "レジストリ登録",
       "wheel": "ホイールとフィットメント",
+      "variant": "モデルバリエーション",
       "fix": "修正または追記"
     },
     "kind_hints": {
       "document": "スキャン、ガイド、仕様書、図面。",
       "registry": "あなたの車、シャシープレート、エンジン番号。",
       "wheel": "新しいホイール、または既存のものの写真・仕様。",
+      "variant": "Miniのモデルやグレード：スペック、カラー、写真。",
       "fix": "値の訂正、不足の補完、内容の改善。"
     },
     "doc_types": {
@@ -1446,6 +2387,87 @@
       "clubman": "クラブマン",
       "van": "バン",
       "hornet": "ホーネット"
+    },
+    "variant": {
+      "fields": {
+        "photos": "写真",
+        "colours": "工場カラー",
+        "name": "名称",
+        "marque": "メーカー",
+        "family": "ファミリー",
+        "body_style": "ボディ",
+        "mark": "Mark",
+        "market": "本国市場",
+        "year_start": "初年",
+        "year_end": "最終年",
+        "edition_size": "限定台数",
+        "production_total": "生産台数",
+        "description": "説明",
+        "notes": "メモ",
+        "engine_cc": "エンジン (cc)",
+        "engine_code": "エンジンコード",
+        "bore_mm": "ボア (mm)",
+        "stroke_mm": "ストローク (mm)",
+        "compression_ratio": "圧縮比 (:1)",
+        "power_bhp": "出力 (bhp)",
+        "power_rpm": "出力回転数 (rpm)",
+        "torque_lbft": "トルク (lb-ft)",
+        "torque_rpm": "トルク回転数 (rpm)",
+        "carburettor": "燃料供給",
+        "gearbox": "ギアボックス",
+        "final_drive": "ファイナルギア比 (:1)",
+        "brakes_front": "フロントブレーキ",
+        "brakes_rear": "リアブレーキ",
+        "wheels": "ホイール",
+        "tyres": "タイヤ",
+        "kerb_weight_kg": "車両重量 (kg)",
+        "top_speed_mph": "最高速度 (mph)",
+        "length_mm": "全長 (mm)",
+        "width_mm": "全幅 (mm)",
+        "height_mm": "全高 (mm)",
+        "wheelbase_mm": "ホイールベース (mm)"
+      },
+      "update_what": "何を更新しますか？",
+      "current": "現在",
+      "your_value": "修正内容",
+      "not_recorded": "未記録",
+      "source": "出典",
+      "source_required": "スペック修正には必須",
+      "source_type": "出典の種類",
+      "source_title": "引用",
+      "source_url": "リンク",
+      "source_title_hint": "例：BMC Service Sheet A/12、1965年、4ページ",
+      "source_url_hint": "出典へのリンク（任意）",
+      "source_types": {
+        "book": "書籍",
+        "brochure": "カタログ",
+        "period_document": "当時の資料",
+        "link": "ウェブリンク",
+        "other": "その他"
+      },
+      "photo_kind": "写真の種類",
+      "photo_caption": "キャプション",
+      "photo_credit": "クレジット（撮影者または出所）",
+      "photo_kinds": {
+        "brochure": "カタログ",
+        "factory": "工場",
+        "period": "当時",
+        "owner": "オーナー",
+        "interior": "内装",
+        "engine": "エンジンルーム",
+        "badge": "エンブレム"
+      },
+      "colours_hint": "カンマ区切り 例：Tartan Red, Almond Green",
+      "overseas": "海外／英国の系列外",
+      "photos_title": "写真 — {target}",
+      "errors": {
+        "name": "バリエーション名を入力してください。",
+        "class": "メーカー、ファミリー、ボディを選択してください。",
+        "year": "初年を入力してください（1959〜2000）。",
+        "number": "数値欄には数値のみ入力できます。",
+        "value": "現在と異なる新しい値を入力してください。",
+        "source": "出典を記入してください（数文字以上）。"
+      }
     }
   },
   "zh": {
@@ -1476,12 +2498,14 @@
       "document": "手册或文档",
       "registry": "注册条目",
       "wheel": "轮毂与安装数据",
+      "variant": "车型变体",
       "fix": "更正或补充"
     },
     "kind_hints": {
       "document": "扫描件、指南、规格表、图纸。",
       "registry": "你的车、车架铭牌或发动机号。",
       "wheel": "新轮毂，或现有轮毂的照片/参数。",
+      "variant": "某款Mini车型或配置：参数、颜色、照片。",
       "fix": "更正数值、补上缺失、完善条目。"
     },
     "doc_types": {
@@ -1543,6 +2567,87 @@
       "clubman": "Clubman",
       "van": "厢式车",
       "hornet": "Hornet"
+    },
+    "variant": {
+      "fields": {
+        "photos": "照片",
+        "colours": "原厂颜色",
+        "name": "名称",
+        "marque": "品牌",
+        "family": "系列",
+        "body_style": "车身",
+        "mark": "Mark",
+        "market": "本土市场",
+        "year_start": "首年",
+        "year_end": "末年",
+        "edition_size": "限量数量",
+        "production_total": "生产数量",
+        "description": "描述",
+        "notes": "备注",
+        "engine_cc": "发动机 (cc)",
+        "engine_code": "发动机代码",
+        "bore_mm": "缸径 (mm)",
+        "stroke_mm": "行程 (mm)",
+        "compression_ratio": "压缩比 (:1)",
+        "power_bhp": "功率 (bhp)",
+        "power_rpm": "功率转速 (rpm)",
+        "torque_lbft": "扭矩 (lb-ft)",
+        "torque_rpm": "扭矩转速 (rpm)",
+        "carburettor": "供油方式",
+        "gearbox": "变速箱",
+        "final_drive": "主减速比 (:1)",
+        "brakes_front": "前制动器",
+        "brakes_rear": "后制动器",
+        "wheels": "车轮",
+        "tyres": "轮胎",
+        "kerb_weight_kg": "整备质量 (kg)",
+        "top_speed_mph": "最高时速 (mph)",
+        "length_mm": "长度 (mm)",
+        "width_mm": "宽度 (mm)",
+        "height_mm": "高度 (mm)",
+        "wheelbase_mm": "轴距 (mm)"
+      },
+      "update_what": "您要更新什么？",
+      "current": "当前",
+      "your_value": "您的修正",
+      "not_recorded": "未记录",
+      "source": "来源",
+      "source_required": "每次参数修改都必须提供",
+      "source_type": "来源类型",
+      "source_title": "引用",
+      "source_url": "链接",
+      "source_title_hint": "例如 BMC Service Sheet A/12，1965年，第4页",
+      "source_url_hint": "来源链接（可选）",
+      "source_types": {
+        "book": "书籍",
+        "brochure": "宣传册",
+        "period_document": "当年文献",
+        "link": "网页链接",
+        "other": "其他"
+      },
+      "photo_kind": "照片类型",
+      "photo_caption": "说明",
+      "photo_credit": "署名（拍摄者或出处）",
+      "photo_kinds": {
+        "brochure": "宣传册",
+        "factory": "原厂",
+        "period": "当年",
+        "owner": "车主",
+        "interior": "内饰",
+        "engine": "发动机舱",
+        "badge": "车标"
+      },
+      "colours_hint": "用逗号分隔，例如 Tartan Red, Almond Green",
+      "overseas": "海外 / 不在英国序列中",
+      "photos_title": "照片 — {target}",
+      "errors": {
+        "name": "请填写变体名称。",
+        "class": "请选择品牌、系列和车身。",
+        "year": "请填写首年（1959–2000）。",
+        "number": "数字字段只能填写数字。",
+        "value": "请输入与当前值不同的新值。",
+        "source": "请注明来源（至少几个字符）。"
+      }
     }
   },
   "ko": {
@@ -1573,12 +2678,14 @@
       "document": "매뉴얼 또는 문서",
       "registry": "레지스트리 항목",
       "wheel": "휠 + 장착 정보",
+      "variant": "모델 변형",
       "fix": "수정 또는 추가"
     },
     "kind_hints": {
       "document": "스캔본, 가이드, 사양서, 도면.",
       "registry": "내 차, 섀시 플레이트, 엔진 번호.",
       "wheel": "새 휠, 또는 기존 휠의 사진·사양.",
+      "variant": "Mini 모델 또는 트림: 제원, 색상, 사진.",
       "fix": "값을 고치고, 빈 곳을 채우고, 항목을 개선합니다."
     },
     "doc_types": {
@@ -1640,6 +2747,87 @@
       "clubman": "클럽맨",
       "van": "밴",
       "hornet": "호넷"
+    },
+    "variant": {
+      "fields": {
+        "photos": "사진",
+        "colours": "공장 색상",
+        "name": "이름",
+        "marque": "브랜드",
+        "family": "계열",
+        "body_style": "차체",
+        "mark": "Mark",
+        "market": "본국 시장",
+        "year_start": "첫 연도",
+        "year_end": "마지막 연도",
+        "edition_size": "한정 수량",
+        "production_total": "생산 대수",
+        "description": "설명",
+        "notes": "메모",
+        "engine_cc": "엔진 (cc)",
+        "engine_code": "엔진 코드",
+        "bore_mm": "보어 (mm)",
+        "stroke_mm": "스트로크 (mm)",
+        "compression_ratio": "압축비 (:1)",
+        "power_bhp": "출력 (bhp)",
+        "power_rpm": "출력 회전수 (rpm)",
+        "torque_lbft": "토크 (lb-ft)",
+        "torque_rpm": "토크 회전수 (rpm)",
+        "carburettor": "연료 공급",
+        "gearbox": "변속기",
+        "final_drive": "종감속비 (:1)",
+        "brakes_front": "앞 브레이크",
+        "brakes_rear": "뒤 브레이크",
+        "wheels": "휠",
+        "tyres": "타이어",
+        "kerb_weight_kg": "공차 중량 (kg)",
+        "top_speed_mph": "최고 속도 (mph)",
+        "length_mm": "전장 (mm)",
+        "width_mm": "전폭 (mm)",
+        "height_mm": "전고 (mm)",
+        "wheelbase_mm": "휠베이스 (mm)"
+      },
+      "update_what": "무엇을 업데이트하시나요?",
+      "current": "현재",
+      "your_value": "수정 값",
+      "not_recorded": "기록 없음",
+      "source": "출처",
+      "source_required": "모든 제원 수정에 필수",
+      "source_type": "출처 유형",
+      "source_title": "인용",
+      "source_url": "링크",
+      "source_title_hint": "예: BMC Service Sheet A/12, 1965, 4쪽",
+      "source_url_hint": "출처 링크(선택)",
+      "source_types": {
+        "book": "책",
+        "brochure": "카탈로그",
+        "period_document": "당시 문서",
+        "link": "웹 링크",
+        "other": "기타"
+      },
+      "photo_kind": "사진 유형",
+      "photo_caption": "캡션",
+      "photo_credit": "크레딧(촬영자 또는 출처)",
+      "photo_kinds": {
+        "brochure": "카탈로그",
+        "factory": "공장",
+        "period": "당시",
+        "owner": "오너",
+        "interior": "실내",
+        "engine": "엔진룸",
+        "badge": "엠블럼"
+      },
+      "colours_hint": "쉼표로 구분, 예: Tartan Red, Almond Green",
+      "overseas": "해외 / 영국 계열 외",
+      "photos_title": "사진 — {target}",
+      "errors": {
+        "name": "변형 이름을 입력하세요.",
+        "class": "브랜드, 계열, 차체를 선택하세요.",
+        "year": "첫 연도를 입력하세요(1959–2000).",
+        "number": "숫자 필드에는 숫자만 입력할 수 있습니다.",
+        "value": "현재 값과 다른 새 값을 입력하세요.",
+        "source": "출처를 입력하세요(몇 글자 이상)."
+      }
     }
   }
 }

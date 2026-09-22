@@ -2,10 +2,9 @@
  * Model Variants archive — types, closed vocabularies and unit contracts.
  *
  * Design: docs/plans/2026-09-22-model-variants-archive.md. The row shape here is
- * the §1.1 contract; today it is served from `data/modelVariants.json` (the
- * austinminiwebsearch.com seed) through `server/utils/modelVariants.ts`, and the
- * same shape moves to the `model_variants` table in Phase 1 without the pages
- * or the MCP tool changing.
+ * the §1.1 contract, served from the `model_variants` table through
+ * `server/utils/modelVariants.ts`. The recovered seed lives in
+ * `docs/plans/data/2026-09-22-model-variants-seed.json`.
  *
  * Units follow `.claude/rules/reference-data.md`: the stored column is the
  * source unit (bhp, lb-ft, kg, mph) and metric is derived on read by the
@@ -182,15 +181,32 @@ export interface VariantProductionEntry {
   count: number;
 }
 
-export interface VariantImage {
-  /** Public URL once the photo is hosted (Phase 3). Nothing renders without it. */
-  url?: string;
+/** Photo-import bookkeeping on the SEED file only (docs/plans/data). */
+export interface VariantSeedImage {
   original_url: string;
   /** Present only when `archived` is true: the exact Wayback capture. */
   wayback_url?: string;
   alt: string;
-  /** False when the Wayback Machine never captured the file. Nothing renders it then. */
+  /** False when the Wayback Machine never captured the file. */
   archived: boolean;
+}
+
+export const VARIANT_PHOTO_KINDS = ['brochure', 'factory', 'period', 'owner', 'interior', 'engine', 'badge'] as const;
+export type VariantPhotoKind = (typeof VARIANT_PHOTO_KINDS)[number];
+
+/** An approved, hosted photo (`model_variant_photos`). */
+export interface VariantPhoto {
+  url: string;
+  kind: VariantPhotoKind;
+  caption: string | null;
+  credit: string | null;
+  is_primary: boolean;
+}
+
+/** A factory colour as printed, linked to the colours archive when it resolves. */
+export interface VariantColor {
+  name: string;
+  color_id: string | null;
 }
 
 export interface VariantSource {
@@ -200,8 +216,9 @@ export interface VariantSource {
   accessed?: string;
 }
 
-/** One row of the archive — the §1.1 contract. */
+/** One row of the archive — the §1.1 contract, as `server/utils/modelVariants.ts` serves it. */
 export interface ModelVariant {
+  id: string;
   slug: string;
   name: string;
   /** The source page's file name, kept for provenance. */
@@ -232,16 +249,87 @@ export interface ModelVariant {
   tyres: string | null;
   kerb_weight_kg: number | null;
   top_speed_mph: number | null;
-  /** Factory colour names as printed. Linked to `/archive/colors` by name search. */
-  colors: string[];
+  colors: VariantColor[];
   notes: string | null;
   engine_note: string | null;
   /** The source page's label → value pairs, verbatim. */
   specs_source: Record<string, string>;
-  images: VariantImage[];
+  photos: VariantPhoto[];
   sources: VariantSource[];
   legacy_submitted_by: string | null;
+  updated_at: string;
 }
+
+/** A row of the recovered seed file, `docs/plans/data/2026-09-22-model-variants-seed.json`. */
+export type ModelVariantSeedRow = Omit<ModelVariant, 'id' | 'colors' | 'photos' | 'updated_at'> & {
+  colors: string[];
+  images: VariantSeedImage[];
+};
+
+/**
+ * Columns a contributor may change through a reviewed spec fix — the web
+ * approve route's `EDIT_TARGETS.variant`. Never slug, status, provenance or
+ * classification (marque / family / mark / market): reclassifying a car is a
+ * moderation act, done by an admin, not a suggestion.
+ */
+export const VARIANT_EDITABLE_COLUMNS = [
+  'name',
+  'year_start',
+  'year_end',
+  'edition_size',
+  'production_total',
+  'description',
+  'notes',
+  'engine_cc',
+  'engine_code',
+  'bore_mm',
+  'stroke_mm',
+  'compression_ratio',
+  'power_bhp',
+  'power_rpm',
+  'torque_lbft',
+  'torque_rpm',
+  'carburettor',
+  'gearbox',
+  'final_drive',
+  'brakes_front',
+  'brakes_rear',
+  'wheels',
+  'tyres',
+  'kerb_weight_kg',
+  'top_speed_mph',
+  'length_mm',
+  'width_mm',
+  'height_mm',
+  'wheelbase_mm',
+] as const;
+export type VariantEditableColumn = (typeof VARIANT_EDITABLE_COLUMNS)[number];
+
+/** Which editable columns are numbers (the rest are text). */
+export const VARIANT_NUMERIC_COLUMNS: ReadonlySet<string> = new Set([
+  'year_start',
+  'year_end',
+  'edition_size',
+  'production_total',
+  'engine_cc',
+  'bore_mm',
+  'stroke_mm',
+  'compression_ratio',
+  'power_bhp',
+  'power_rpm',
+  'torque_lbft',
+  'torque_rpm',
+  'final_drive',
+  'kerb_weight_kg',
+  'top_speed_mph',
+  'length_mm',
+  'width_mm',
+  'height_mm',
+  'wheelbase_mm',
+]);
+
+/** A contributor's citation. Required on every spec change and every new variant. */
+export const VARIANT_SOURCE_TYPES = ['book', 'brochure', 'period_document', 'link', 'other'] as const;
 
 /** The subset the index page and search results carry. */
 export interface ModelVariantCard {

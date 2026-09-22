@@ -12,6 +12,7 @@
 import type { H3Event } from 'h3';
 import { getServiceClient } from '../supabase';
 import { recordReviewHint, reviewSubmission, trustLevelOf, type ReviewInput, type ReviewOutcome } from './card';
+import { KNOWN_ENGINE_CC } from '../../../data/models/variants';
 
 const EXCHANGE_CATEGORIES: Record<string, string> = {
   vehicle: 'A whole car: a Mini, Cooper, Clubman, Moke, van, estate, pickup, or a rolling shell.',
@@ -212,6 +213,8 @@ const ARCHIVE_TYPES: Record<string, string> = {
   registry: 'A registry entry: one real car by body number, year and model.',
   document: 'A reference document: a manual, a wiring diagram, a brochure, a parts list.',
   collection: 'A collection of documents.',
+  variant:
+    'A Classic Mini model variant: its factory spec sheet, production numbers, colours or photos, with a cited source.',
 };
 export async function reviewArchiveSubmission(
   event: H3Event,
@@ -241,6 +244,21 @@ export async function reviewArchiveSubmission(
     if (d[k] !== undefined && d[k] !== null && str(d[k]).trim()) fields[k] = str(d[k]).slice(0, 120);
   }
   const findings: string[] = [];
+  if (sub.target_type === 'variant') {
+    const v = (d.variant ?? {}) as Record<string, unknown>;
+    const changes = (d.changes ?? {}) as Record<string, { from?: unknown; to?: unknown }>;
+    for (const [k, val] of Object.entries(v))
+      if (val !== null && val !== undefined && str(val).trim()) fields[k] = str(val).slice(0, 120);
+    for (const [k, diff] of Object.entries(changes))
+      fields[k] = `${str(diff?.from ?? '—')} → ${str(diff?.to ?? '')}`.slice(0, 160);
+    const src = d.source as { type?: unknown; title?: unknown } | undefined;
+    if (src?.title) fields.source = `${str(src.type)}: ${str(src.title)}`.slice(0, 160);
+    findings.push(...yearFinding(v.year_start ?? changes.year_start?.to));
+    const cc = Number(v.engine_cc ?? changes.engine_cc?.to);
+    if (Number.isFinite(cc) && cc > 0 && !KNOWN_ENGINE_CC.includes(cc as (typeof KNOWN_ENGINE_CC)[number]))
+      findings.push(`engine ${cc} cc is not a factory A-series capacity`);
+    if ((d.variant || d.changes) && !src?.title) findings.push('no source cited');
+  }
   if (sub.target_type === 'registry') findings.push(...yearFinding(d.year));
   if (sub.target_type === 'color' && d.hexValue && !/^#?[0-9a-f]{6}$/i.test(str(d.hexValue)))
     findings.push('hex value is not a colour');

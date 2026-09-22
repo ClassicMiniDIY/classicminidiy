@@ -7,6 +7,7 @@ import {
   isOwnUploadUrl,
   resolveColorTarget,
 } from '../../../utils/archiveApprovals';
+import { applyVariantEdit, insertApprovedVariant } from '../../../utils/variantApprovals';
 
 /**
  * Where each submission target_type writes, and which of that table's columns a
@@ -142,13 +143,12 @@ export default defineEventHandler(async (event) => {
 
   // For edit_suggestion submissions, apply the changes to the target
   if (submission.type === 'edit_suggestion' && submission.target_id) {
-    const applyError = await applyEditSuggestion(
-      supabase,
-      submission.target_type,
-      submission.target_id,
-      itemData,
-      submission.id
-    );
+    // Model variants validate and apply their own edits (typed columns, a
+    // required source, colour sets, photos) — see server/utils/variantApprovals.ts.
+    const applyError =
+      submission.target_type === 'variant'
+        ? await applyVariantEdit(supabase, submission.target_id, itemData, submission.submitted_by, submission.id)
+        : await applyEditSuggestion(supabase, submission.target_type, submission.target_id, itemData, submission.id);
     if (applyError) {
       throw createError({ statusCode: 500, statusMessage: applyError });
     }
@@ -287,6 +287,9 @@ async function insertApprovedItem(
         submitted_by: submittedBy,
       }));
       break;
+
+    case 'variant':
+      return insertApprovedVariant(supabase, data, submittedBy, submissionId);
 
     default:
       return `Unsupported target type: ${targetType}`;

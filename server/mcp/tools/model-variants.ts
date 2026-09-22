@@ -21,7 +21,7 @@ import {
   yearsLabel,
   type ModelVariant,
 } from '../../../data/models/variants';
-import { listModelVariants, relatedModelVariants } from '../../utils/modelVariants';
+import { listModelVariants, relatedModelVariantsFor } from '../../utils/modelVariants';
 
 /**
  * Model Variants MCP Tool
@@ -32,9 +32,9 @@ import { listModelVariants, relatedModelVariants } from '../../utils/modelVarian
  * austinminiwebsearch.com library (preserved via the Wayback Machine) and
  * corrected by contributors; every row links back to its archive page.
  *
- * Reads through `server/utils/modelVariants.ts`, which today serves the bundled
- * seed and in Phase 1 serves the `model_variants` table (approved rows only).
- * The tool's shape does not change when that happens.
+ * Reads through `server/utils/modelVariants.ts` (the `model_variants` table,
+ * approved rows only, cached per isolate). Never query the tables directly
+ * here: that module owns the approved-only filter.
  *
  * Units are stated in `units` on every response — stored figures are the
  * source unit (bhp, lb-ft, kg, mph) and the metric figures beside them are
@@ -85,10 +85,10 @@ function describe(v: ModelVariant) {
     production: v.production,
     specs: specSheet(v),
     specs_sourced: `${countSourcedSpecs(v)} of ${SPEC_ROW_COUNT}`,
-    colors: v.colors,
+    colors: v.colors.map((c) => c.name),
     notes: [v.notes, v.engine_note].filter(Boolean).join(' ') || null,
     sources: v.sources.map((s) => ({ type: s.type, title: s.title, url: s.url ?? null })),
-    photo_count: v.images.filter((i) => Boolean(i.url)).length,
+    photo_count: v.photos.length,
     url: `${SITE}/archive/variants/${v.slug}`,
   };
 }
@@ -106,7 +106,7 @@ function line(v: ModelVariant): string {
     v.production_total !== null ? `${v.production_total.toLocaleString('en-GB')} built` : null,
   ].filter(Boolean);
   const years = yearsLabel(v.year_start, v.year_end);
-  return `- **${v.name}**${years ? ` (${years})` : ''}${v.mark ? ` · ${markLabel(v.mark)}` : ''} · ${MARKET_LABELS[v.market]}\n  ${bits.join(' · ')}${v.colors.length ? `\n  Colours: ${v.colors.join(', ')}` : ''}\n  ${SITE}/archive/variants/${v.slug}`;
+  return `- **${v.name}**${years ? ` (${years})` : ''}${v.mark ? ` · ${markLabel(v.mark)}` : ''} · ${MARKET_LABELS[v.market]}\n  ${bits.join(' · ')}${v.colors.length ? `\n  Colours: ${v.colors.map((c) => c.name).join(', ')}` : ''}\n  ${SITE}/archive/variants/${v.slug}`;
 }
 
 export default defineMcpTool({
@@ -143,7 +143,13 @@ export default defineMcpTool({
   },
 
   async handler({ query, marque, family, body, market, mark, year, engine_cc, limit }) {
-    const all = listModelVariants({ query, marque, family, body, market, mark: mark ?? null, year, engine_cc });
+    let all;
+    try {
+      all = await listModelVariants({ query, marque, family, body, market, mark: mark ?? null, year, engine_cc });
+    } catch (err) {
+      console.error('model-variants MCP error:', err);
+      return errorResult('The model variants archive is unavailable right now; try again shortly.');
+    }
     const matches = all.slice(0, limit);
     const truncated = all.length > matches.length;
 
@@ -160,7 +166,7 @@ export default defineMcpTool({
 
     // One exact-looking hit gets its siblings so the agent can offer "did you
     // mean the Mk II" without a second call.
-    const related = matches.length === 1 ? relatedModelVariants(matches[0]!, 5) : [];
+    const related = matches.length === 1 ? await relatedModelVariantsFor(matches[0]!, 5) : [];
 
     return jsonResult({
       query: query ?? null,
@@ -175,7 +181,7 @@ export default defineMcpTool({
         : {}),
       units: VARIANT_UNITS,
       source:
-        'Seeded from austinminiwebsearch.com (Wayback Machine, 2023 capture), corrected by Classic Mini DIY contributors. Cite the archive page url.',
+        'Classic Mini DIY archive, seeded from austinminiwebsearch.com (Wayback Machine, 2023 capture) and corrected by reviewed contributions. Cite the archive page url.',
       formattedText: [
         `**Model Variants** — ${all.length} match${all.length === 1 ? '' : 'es'}` +
           (truncated ? ` (showing ${matches.length})` : ''),

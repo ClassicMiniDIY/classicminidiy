@@ -1,7 +1,7 @@
 export interface SubmissionItem {
   id: string;
   type: 'new_item' | 'edit_suggestion' | 'new_collection';
-  targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel';
+  targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'variant';
   targetId: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'changes_requested';
   data: Record<string, any>;
@@ -47,7 +47,7 @@ export const useSubmissions = () => {
   };
 
   const submitNewItem = async (
-    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
+    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'variant',
     itemData: Record<string, any>
   ): Promise<SubmissionItem> => {
     if (!user.value) throw new Error('Must be authenticated to submit');
@@ -69,7 +69,7 @@ export const useSubmissions = () => {
   };
 
   const submitEditSuggestion = async (
-    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
+    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'variant',
     targetId: string,
     changes: Record<string, { from: any; to: any }>,
     reason: string
@@ -107,7 +107,7 @@ export const useSubmissions = () => {
    */
   const submitContribution = async (
     type: 'new_item' | 'edit_suggestion',
-    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel',
+    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'variant',
     targetId: string | null,
     data: Record<string, any>
   ): Promise<SubmissionItem> => {
