@@ -57,7 +57,8 @@ Schema (`model_variants`, `model_variant_photos`, `model_variant_colors`) lives 
   limited to `ADMIN_VARIANT_COLUMNS` (`server/utils/variantAdmin.ts`); `status`, `slug`,
   `sources` and provenance never join it. Every route writes `admin_audit_log` through
   `auditVariantAction`, which also calls `invalidateModelVariants()`. An admin registry
-  link is `variant_match = 'reviewed'`; a colour-name link matches rows with
-  `literalIlike` (escaped `%`/`_`), never a raw `ilike`.
+  link is `variant_match = 'reviewed'`. A colour-name link groups rows by
+  `lower(trim(color_name))` in code and updates with `.in()`, never `ilike` (whose `%`,
+  `_` and `*` widen the match). `replaceColours` keeps a kept name's `color_id`.
 - **The seed normaliser drops extra header names** (see its docstring). Never regenerate
   the seed from it without re-applying migration `20260923000001`'s corrections.

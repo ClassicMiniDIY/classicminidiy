@@ -27,7 +27,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = getServiceClient();
-  const { data: before } = await db.from('model_variants').select('slug, name, status').eq('id', id).maybeSingle();
+  const { data: before, error: readError } = await db
+    .from('model_variants')
+    .select('slug, name, status')
+    .eq('id', id)
+    .maybeSingle();
+  if (readError) throw createError({ statusCode: 500, statusMessage: readError.message });
   if (!before) throw createError({ statusCode: 404, statusMessage: 'Variant not found' });
   if (before.status === status) return { success: true, unchanged: true };
 

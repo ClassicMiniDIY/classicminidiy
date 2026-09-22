@@ -18,7 +18,8 @@ export default defineEventHandler(async (event) => {
   const names = parseColourList(body?.colours);
 
   const db = getServiceClient();
-  const { data: variant } = await db.from('model_variants').select('slug').eq('id', id).maybeSingle();
+  const { data: variant, error: readError } = await db.from('model_variants').select('slug').eq('id', id).maybeSingle();
+  if (readError) throw createError({ statusCode: 500, statusMessage: readError.message });
   if (!variant) throw createError({ statusCode: 404, statusMessage: 'Variant not found' });
 
   const error = await replaceColours(db, id, names);
