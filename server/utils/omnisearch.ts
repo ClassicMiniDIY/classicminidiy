@@ -2,6 +2,15 @@ import { getServiceClient } from './supabase';
 import { loadVisiblePartSources, searchVisibleParts } from './partsSearch';
 import { resolveDirectAnswers } from './directAnswers';
 import { getVideoIndex, searchVideoIndex } from './youtubeCatalog';
+import { loadModelVariants } from './modelVariants';
+import {
+  FAMILY_LABELS,
+  MARKET_LABELS,
+  MARQUE_LABELS,
+  MARK_RANGES,
+  markLabel,
+  yearsLabel,
+} from '../../data/models/variants';
 import {
   analyseQuery,
   normaliseSearchQuery,
@@ -18,7 +27,7 @@ import wiringDiagrams from '../../data/wiringDiagrams.json';
  * Omnisearch — one query across every surface (design S2/S3; unified search in
  * docs/plans/2026-09-14-unified-search.md).
  *
- * SIX sources are merged here rather than in the database:
+ * SEVEN sources are merged here rather than in the database:
  *   * `omnisearch()` in Postgres covers the data surfaces (wheels, colours,
  *     documents, registry, exchange listings, models).
  *   * The Toolbox is a static catalog in the web repo, so it is matched in
@@ -30,6 +39,8 @@ import wiringDiagrams from '../../data/wiringDiagrams.json';
  *   * The parts archive, through `partsSearch.ts` so the licence kill switch
  *     is the same guard the parts route and the MCP tool run.
  *   * The supplier directory, static JSON.
+ *   * Model variants, through `server/utils/modelVariants.ts` (the cached,
+ *     approved-only read path the variants pages and MCP tool share).
  *   * Cole's YouTube channel, through the same KV-cached index the chat
  *     agent's `video-search` tool reads. Half of the recorded search misses
  *     were how-to jobs the channel already covers.
@@ -209,6 +220,55 @@ function searchArchiveSections(query: string): SearchResult[] {
 }
 
 /**
+ * Model variants, one result per variant. The name is the name; marque,
+ * family, market, mark ("mk1", "mk i") and engine capacity are the synonyms,
+ * so `cooper s 1275`, `innocenti` and `mk3 van` all land on cars. A failed
+ * archive read returns no rows rather than failing the search.
+ */
+async function searchVariants(query: string, limit: number): Promise<SearchResult[]> {
+  let rows;
+  try {
+    rows = await loadModelVariants();
+  } catch (error: any) {
+    console.error('[search] model variants unavailable:', error?.message ?? error);
+    return [];
+  }
+  // `mk 1` / `mark 1` would lose the one-character digit in `rank()`; close the gap
+  // so it reaches the `mk1` term like the unspaced form does.
+  const q = query.replace(/\b(mk|mark)\s+(\d)\b/gi, 'mk$2');
+  return rows
+    .map((v) => {
+      const terms = [
+        MARQUE_LABELS[v.marque],
+        FAMILY_LABELS[v.family],
+        MARKET_LABELS[v.market],
+        v.mark ? `mk${v.mark} mk ${MARK_RANGES[v.mark]?.roman ?? ''} mark ${v.mark}` : '',
+        v.engine_cc ? `${v.engine_cc} ${v.engine_cc}cc` : '',
+        v.is_limited_edition ? 'limited edition' : '',
+        // Riley Elf, Wolseley Hornet and Austin Seven do not say "Mini" in their names.
+        'mini',
+      ].filter(Boolean) as string[];
+      const years = yearsLabel(v.year_start, v.year_end);
+      const score = rank(q, v.name, terms, years);
+      return score === null ? null : { v, score, years };
+    })
+    .filter((hit): hit is NonNullable<typeof hit> => hit !== null)
+    .sort((a, b) => a.score - b.score || a.v.name.localeCompare(b.v.name))
+    .slice(0, limit)
+    .map(({ v, years }) => ({
+      surface: 'archive' as const,
+      id: `variant-${v.slug}`,
+      title: v.name,
+      subtitle: [years, v.engine_cc ? `${v.engine_cc} cc` : '', markLabel(v.mark)].filter(Boolean).join(' · ') || null,
+      url: `/archive/variants/${v.slug}`,
+      icon: 'fas fa-car-side',
+      tag: 'Model variant',
+      contributorUsername: null,
+      verified: true,
+    }));
+}
+
+/**
  * The supplier directory. Static, curated, dated — see `data/models/suppliers.ts`
  * for what it deliberately is not. Tags and the region group are the synonyms,
  * so `body panels` and `japan` both find shops.
@@ -316,21 +376,22 @@ export async function runOmnisearch(
   // RPC rather than queue behind it. Parts, videos and the direct answers
   // each swallow their own failure; only the core RPC failing makes search
   // unavailable.
-  // The parts surface skips a query that is nothing but stop words: the
+  // Parts and variants skip a query that is nothing but stop words: the
   // in-process ranking already ignores them, and `the` against a contains-
   // match on ten thousand descriptions is five random washers.
-  const partsWorthSearching = query
+  const hasSearchableWord = query
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .some((word) => word.length >= 2 && !STOP_WORDS.has(word));
   const partSources = loadVisiblePartSources(supabase);
-  const [{ data, error }, partHits, videoResults, answers] = await Promise.all([
+  const [{ data, error }, partHits, videoResults, answers, variantResults] = await Promise.all([
     supabase.rpc('omnisearch', { p_query: query, p_limit: perSurfaceLimit }),
-    partsWorthSearching
+    hasSearchableWord
       ? partSources.then((sources) => searchVisibleParts(supabase, query, perSurfaceLimit, sources))
       : Promise.resolve([]),
     youtubeApiKey ? searchVideos(query, youtubeApiKey, perSurfaceLimit) : Promise.resolve([]),
     partSources.then((sources) => resolveDirectAnswers(supabase, query, intent, { partSources: sources })),
+    hasSearchableWord ? searchVariants(query, perSurfaceLimit) : Promise.resolve([]),
   ]);
 
   if (error) {
@@ -371,6 +432,7 @@ export async function runOmnisearch(
   const results = [
     ...searchTools(query),
     ...searchDiagrams(query),
+    ...variantResults,
     ...dbResults,
     ...partResults,
     ...searchSuppliers(query),
