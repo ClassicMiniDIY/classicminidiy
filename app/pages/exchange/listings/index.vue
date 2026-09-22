@@ -181,7 +181,7 @@
               </div>
 
               <!-- Empty State -->
-              <div v-else-if="!loading && listings.length === 0" class="text-center py-16">
+              <div v-else-if="!loading && listings.length === 0" data-testid="listings-empty" class="text-center py-16">
                 <i class="fas fa-inbox text-6xl mb-4 text-base-content/30"></i>
                 <h3 class="text-xl font-semibold mb-2">{{ t('emptyTitle') }}</h3>
                 <p class="text-base-content/70 mb-6">{{ t('emptyBody') }}</p>

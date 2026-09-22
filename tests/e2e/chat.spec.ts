@@ -1,5 +1,8 @@
 import { expect, test } from './_fixtures';
 import { gotoHydrated } from './_helpers';
+// Imported from the shared contract on purpose: the tier ladder is the thing
+// under test, so the test must move when the ladder does rather than repeat it.
+import { CHAT_TIER_ORDER, nextTier, type ChatTier } from '../../shared/utils/chatTiers';
 
 /**
  * The chat, end to end.
@@ -336,7 +339,7 @@ test.describe('chat', () => {
 
 test.describe('quota limit', () => {
   /** The 429 the route sends when a ceiling is reached. */
-  const quotaBody = (tier: 'anonymous' | 'free' | 'member') =>
+  const quotaBody = (tier: ChatTier) =>
     JSON.stringify({
       statusCode: 429,
       statusMessage: 'Too Many Requests',
@@ -344,7 +347,7 @@ test.describe('quota limit', () => {
       data: { tier, used: 15, limit: 15, upgradeUrl: 'https://www.classicminidiy.com/membership' },
     });
 
-  async function stubQuota(page: import('@playwright/test').Page, tier: 'anonymous' | 'free' | 'member') {
+  async function stubQuota(page: import('@playwright/test').Page, tier: ChatTier) {
     await page.route('**/api/chat', (route) =>
       route.fulfill({ status: 429, contentType: 'application/json', body: quotaBody(tier) })
     );
@@ -384,14 +387,37 @@ test.describe('quota limit', () => {
     await expect(page.getByRole('link', { name: /Sustaining Member/i })).toBeVisible({ timeout: 15_000 });
   });
 
-  test('tells a member when the allowance resets and sells them nothing', async ({ page }) => {
+  test('offers a base member the plan above, never the one they already hit', async ({ page }) => {
+    // The panel sells the tier ABOVE the ceiling reached. `member` stopped
+    // being the top tier when Plus and Pro shipped (2026-09-20), which is
+    // exactly what broke the nightly: this tier's copy moved from "your
+    // allowance resets" to an upgrade pitch, and a test hardcoded to `member`
+    // kept asserting the old wording.
     await stubQuota(page, 'member');
     await gotoHydrated(page, '/chat');
     await composer(page).fill('hi');
     await composer(page).press('Enter');
 
+    await expect(page.getByRole('link', { name: /Upgrade to Member Plus/i })).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('tells the top tier when the allowance resets and sells them nothing', async ({ page }) => {
+    // Derived from the shared tier order, NOT written as 'pro'. The only thing
+    // this test is about is "the tier with nothing above it", and naming a tier
+    // literally is what made its predecessor go stale the day a tier was added
+    // on top. Adding a tier above Pro moves this test with the contract.
+    const topTier = CHAT_TIER_ORDER[CHAT_TIER_ORDER.length - 1]!;
+    expect(nextTier(topTier), 'the last tier in the order must have nothing above it').toBeNull();
+
+    await stubQuota(page, topTier);
+    await gotoHydrated(page, '/chat');
+    await composer(page).fill('hi');
+    await composer(page).press('Enter');
+
     await expect(page.getByText(/resets at the start of next month/i)).toBeVisible({ timeout: 15_000 });
+    // Nothing left to buy: no CTA row renders at all.
     await expect(page.getByRole('link', { name: /Sustaining Member/i })).toBeHidden();
+    await expect(page.getByRole('link', { name: /Upgrade to Member/i })).toBeHidden();
   });
 
   test('blocks sending without removing the composer from the tab order', async ({ page }) => {

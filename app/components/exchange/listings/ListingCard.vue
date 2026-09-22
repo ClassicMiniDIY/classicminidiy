@@ -14,6 +14,7 @@
 
     <NuxtLink
       :to="listingUrl"
+      data-testid="listing-card"
       class="card bg-base-100 shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer h-full"
       :class="isFeatured && !isExample ? 'ring-2 ring-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.25)]' : ''"
     >
@@ -179,6 +180,7 @@
   <NuxtLink
     v-else-if="variant === 'horizontal'"
     :to="listingUrl"
+    data-testid="listing-card"
     class="card card-side bg-base-100 shadow-sm hover:shadow-md transition-shadow"
   >
     <figure class="w-48 sm:w-64 bg-base-300 shrink-0">
@@ -259,6 +261,7 @@
   <NuxtLink
     v-else
     :to="listingUrl"
+    data-testid="listing-card"
     class="card card-side bg-base-200/50 hover:bg-base-200 shadow-sm hover:shadow-md transition-all"
   >
     <figure class="w-32 sm:w-40 bg-base-300 shrink-0">

@@ -127,10 +127,27 @@ test.describe('exchange browse', () => {
     await waitForHydration(page);
     await expect(page.locator('h1').first()).toBeVisible();
 
-    const firstListing = page.locator('a[href^="/exchange/listings/"]').first();
-    if ((await firstListing.count()) === 0) test.skip(true, 'no live listings to open');
+    // `a[href^="/exchange/listings/"]` is NOT a listing. It also matches the
+    // header's Post-a-listing CTA and, since the Exchange nav dropdown shipped
+    // (2026-09-18), the Sell link inside the closed menu — which is in the DOM,
+    // earlier in document order, and permanently invisible. `.first()` resolved
+    // to that link and the test spent its whole 90s waiting for a menu item to
+    // become clickable. Only the card carries `listing-card`.
+    const cards = page.getByTestId('listing-card');
+    const emptyState = page.getByTestId('listings-empty');
 
-    await firstListing.click();
+    // The results region is ClientOnly and fetched in onMounted, so a bare
+    // count() right after hydration reads zero on a slow run and the test skips
+    // itself — a silent false pass, the worse failure of the two. Wait for the
+    // fetch to LAND on one of its two outcomes, and skip only on the one that
+    // actually means "nothing to open".
+    await expect
+      .poll(async () => (await cards.count()) > 0 || (await emptyState.count()) > 0, { timeout: 30_000 })
+      .toBe(true);
+    if ((await cards.count()) === 0) test.skip(true, 'no live listings to open');
+
+    await cards.first().click();
+    await expect(page).toHaveURL(/\/exchange\/listings\/[^/]+$/);
     await expect(page).not.toHaveTitle(/undefined/i);
   });
 });
