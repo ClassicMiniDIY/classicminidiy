@@ -258,6 +258,8 @@
   // Picking a different field starts the correction from that field's current value.
   watch(variantField, () => {
     variantValue.value = currentValue.value;
+    // A different field is a fresh input: its error waits for a new blur.
+    delete touched.variantValue;
   });
 
   onBeforeUnmount(() => {
@@ -299,6 +301,7 @@
           if (!/^(19[5-9]\d|2000)$/.test(vform.year_start?.trim() ?? ''))
             problems['v.year_start'] = t('variant.errors.year');
           for (const key of NEW_VARIANT_FIELDS) {
+            // `mark` is a closed select (no free text, no error span), so it skips the range check.
             if (key !== 'mark' && isNumericField(key) && !numberOk(key, vform[key] ?? '')) {
               problems[`v.${key}`] ??= t('variant.errors.number');
             }
@@ -357,7 +360,11 @@
   const revealProblems = async () => {
     attempted.value = true;
     await nextTick();
-    wizardBody.value?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    const control = wizardBody.value?.querySelector<HTMLElement>('[aria-invalid="true"]');
+    if (control) control.focus();
+    // A files-only problem has no focusable control; bring its message into view.
+    else
+      wizardBody.value?.querySelector<HTMLElement>('[id^="contribute-error-"]')?.scrollIntoView?.({ block: 'nearest' });
   };
 
   const onFilesChange = (next: File[]) => {
@@ -380,6 +387,8 @@
   };
   const goBack = () => {
     if (step.value > 1) step.value -= 1;
+    // Back on the type picker: whatever is picked next starts clean.
+    if (step.value === 1) resetValidation();
   };
 
   /** Maps the wizard's four tiles onto submission_queue target types. */
@@ -1220,7 +1229,11 @@
               <p class="mt-4 text-[13px] opacity-70">{{ t('review_note') }}</p>
             </template>
 
-            <ul v-if="attempted && errors.length && (step > 1 || isRequestMode)" class="mt-4 space-y-1" role="alert">
+            <ul
+              v-if="attempted && errors.length && (step > 1 || isRequestMode)"
+              class="mt-4 space-y-1"
+              aria-live="polite"
+            >
               <li v-for="problem in errors" :key="problem" class="flex items-center gap-2 text-sm text-error">
                 <i class="fas fa-circle-exclamation" aria-hidden="true"></i>{{ problem }}
               </li>
