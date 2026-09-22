@@ -109,7 +109,8 @@
           type: 'commit',
           date: commit.committedAt || '',
           displayDate: commit.date,
-          message: commit.message.split('\n')[0] ?? '',
+          // `?? ''` guards a browser-cached response from the old untrimmed shape.
+          message: (commit.message ?? '').split('\n')[0] ?? '',
           sha: commit.sha,
           url: `${ECU_MAPS_REPO.url}/commit/${commit.sha}`,
         });
