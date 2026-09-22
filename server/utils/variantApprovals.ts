@@ -61,7 +61,10 @@ export function parseVariantNumber(v: unknown): { ok: true; value: number | null
 }
 
 /** A number for `column`, range-checked against the table's CHECK constraints. */
-function numberFor(column: string, raw: unknown): { ok: true; value: number | null } | { ok: false; error: string } {
+export function numberFor(
+  column: string,
+  raw: unknown
+): { ok: true; value: number | null } | { ok: false; error: string } {
   const parsed = parseVariantNumber(raw);
   if (!parsed.ok) return { ok: false, error: `"${column}" must be a number` };
   if (parsed.value === null) return parsed;
@@ -69,7 +72,7 @@ function numberFor(column: string, raw: unknown): { ok: true; value: number | nu
   return problem ? { ok: false, error: problem } : parsed;
 }
 
-const textFor = (column: string, raw: unknown) => text(raw, VARIANT_TEXT_MAX[column] ?? 2000);
+export const textFor = (column: string, raw: unknown) => text(raw, VARIANT_TEXT_MAX[column] ?? 2000);
 
 export interface VariantSourceInput {
   type: (typeof VARIANT_SOURCE_TYPES)[number];
@@ -159,7 +162,7 @@ async function resolveColourIds(db: Db, names: string[]): Promise<Map<string, st
  * then delete only the names that dropped out. A failure part-way leaves the
  * old and new names together, never none.
  */
-async function replaceColours(db: Db, variantId: string, names: string[]): Promise<string | null> {
+export async function replaceColours(db: Db, variantId: string, names: string[]): Promise<string | null> {
   const ids = await resolveColourIds(db, names);
   if (names.length) {
     const { error } = await db.from('model_variant_colors').upsert(
