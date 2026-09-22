@@ -41,6 +41,17 @@ describe('matchRegistryToVariant', () => {
     expect(result.confident).toBe(true);
   });
 
+  it('never scores connective words in a multi-name variant as an edition', () => {
+    const saloon = match(car(1963, 'Austin Mini', 'red and white', 850));
+    expect(saloon.best?.slug).toBe('austin-seven-mk1');
+    expect(match(car(1966, 'Austin and Morris Mini', '', 848)).best?.slug).not.toBe('austin-seven-countryman-mk1');
+  });
+
+  it('reads "Thirty Five" as the 35, not the 30', () => {
+    const { ranked } = match(car(1994, 'Mini Thirty Five', ''));
+    expect(ranked[0]!.slug).toMatch(/35/);
+  });
+
   it('is not confident on a changeover year that two marks share', () => {
     expect(match(car(1984, 'Mini', 'Mayfair', 998)).confident).toBe(false);
     expect(match(car(1967, 'Morris Cooper S', 'Tartan Red', 1275)).confident).toBe(false);
