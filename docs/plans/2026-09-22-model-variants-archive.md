@@ -55,7 +55,7 @@ The working title was "Model Registry". Two names are already taken:
 history category in `data/miniHistory.json`. The design file (`Model Registry.dc.html`)
 keeps its title; the page it describes ships at `/archive/variants`.
 
-**Decision for Cole:** confirm `variants` over `models`. Everything below assumes it.
+**Decided 2026-09-22:** `variants`. Confirmed by Cole.
 
 ## 1. Data model (lives in `classicminidiy-supabase`)
 
@@ -407,26 +407,30 @@ precedent:
   update.
 - Never strip the credit. Never claim the photos.
 
-**Decision for Cole:** import the photos in Phase 3 under this position, or hold them
-and seed photos from contributors only.
+**Decided 2026-09-22:** import the 72 recovered photos in Phase 3 under this position.
+Confirmed by Cole.
 
 ## 9. Design file
 
 The page design lives at `claude.ai/design/p/a64318a5-…?file=Model+Registry.dc.html`
 (with `colors_and_type.css`, `support.js`, `assets/logo-wheel-black.png`). The design
-MCP requires `/design-login` from an interactive session; this session could not read
-it. Phase 2 starts by importing that file. Until then §3.1 is the structural contract
+MCP (`DesignSync`) refuses every call from the desktop Code tab: it needs a one-time
+`/design-login` from an interactive `claude` terminal session on this machine, after
+which headless sessions reuse the grant. `/design-consent` from the Code tab returned
+403. Fallback: export the four files from Claude Design and drop them in
+`docs/plans/design/model-registry/`. Phase 2 starts by importing that file. Until then §3.1 is the structural contract
 and the design file is the visual one.
 
 ## 10. Open questions
 
-1. `variants` vs `models` for the route and label (§0).
-2. Photo import position (§8.4).
+1. ~~`variants` vs `models`~~ decided (§0).
+2. ~~Photo import position~~ decided (§8.4).
 3. Should `mark` be an enum with the year ranges baked in (`mk1`…`mk7`) so the timeline
    strip needs no lookup table? Proposal: keep `smallint` and put the ranges in
    `data/models/variants.ts` as `MARK_RANGES`.
 4. Should the seed include Innocenti/Authi cars with `mark = null` or map them to the
    UK mark they were derived from? Proposal: `null`, with `based_on_id` pointing at the
    UK car where the source says so.
-5. Tier for the MCP tool: paid (consistent) or free (a public-good reference table)?
-   Proposal: paid, like `color-lookup`.
+5. ~~Tier for the MCP tool~~ **Decided 2026-09-22:** paid for direct `/mcp` key access
+   (`PAID_ONLY_TOOLS`), and always available to the `/chat` agent through
+   `buildAgentTools()`, which is not tier-gated. Same as `color-lookup`.
