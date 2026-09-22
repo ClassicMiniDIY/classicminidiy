@@ -187,6 +187,7 @@ per-component `<i18n lang="json">` blocks.
 | `models-3d.md`        | `/models`, `server/api/models`                 | Bearer, edge-fn proxies, Connect, entitlement                                 |
 | `parts-archive.md`    | `/archive/parts`, `/admin/parts`, `part_*` API | kill switch + `is_current`, PostgREST caps, search allowlist, hotspot fill    |
 | `model-variants.md`   | `/archive/variants`, its api, tool, seed       | one read path, seed provenance, source units, SSR index, hosted photos only   |
+| `ecu-maps.md`         | `/maps`, `server/api/github/**`                | support table from MiniECUMaps `maps.json`, repo coords, disclaimer           |
 
 Design docs in `docs/plans/`, runbooks in `docs/runbooks/`. Membership contract:
 `classicminidiy-supabase/docs/plans/2026-06-07-membership-entitlement-contract.md`.
