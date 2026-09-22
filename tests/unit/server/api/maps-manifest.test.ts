@@ -101,6 +101,39 @@ describe('server/api/github/maps-manifest', () => {
     });
   });
 
+  it('serves a second request from the per-instance cache', async () => {
+    mockFetch.mockResolvedValueOnce(manifest);
+    await handler({});
+    const result = await handler({});
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result.platforms).toHaveLength(2);
+  });
+
+  it('does not set the 30 minute cache headers on a 502', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('boom'));
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 502 });
+    expect((globalThis as any).setResponseHeaders).not.toHaveBeenCalled();
+  });
+
+  it('serves the last good manifest when a refresh fails', async () => {
+    vi.useFakeTimers();
+    try {
+      mockFetch.mockResolvedValueOnce(manifest);
+      await handler({});
+      vi.advanceTimersByTime(31 * 60 * 1000);
+      mockFetch.mockRejectedValueOnce(new Error('429 Too Many Requests'));
+      const event = { id: 'stale' };
+      const result = await handler(event);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(result.platforms).toHaveLength(2);
+      expect((globalThis as any).setResponseHeaders).toHaveBeenLastCalledWith(event, {
+        'Cache-Control': 'public, max-age=60',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('throws 502 when features or platforms are missing', async () => {
     mockFetch.mockResolvedValueOnce({ schemaVersion: 1, features: [] });
     await expect(handler({})).rejects.toMatchObject({ statusCode: 502 });
