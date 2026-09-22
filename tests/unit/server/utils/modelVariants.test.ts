@@ -3,12 +3,16 @@ import {
   allModelVariants,
   getModelVariant,
   listModelVariants,
-  matchesEveryWord,
   modelVariantFacets,
   relatedModelVariants,
-  toCard,
+  toModelVariantCard,
 } from '../../../../server/utils/modelVariants';
-import { countSourcedSpecs, SPEC_ROW_COUNT } from '../../../../data/models/variants';
+import {
+  countSourcedSpecs,
+  matchesEveryWord,
+  SPEC_ROW_COUNT,
+  variantSearchWords,
+} from '../../../../data/models/variants';
 
 describe('modelVariants read side', () => {
   it('serves the whole seed and finds a row by slug', () => {
@@ -67,11 +71,31 @@ describe('modelVariants read side', () => {
 
   it('builds cards with the sourced-spec count and hosted photos only', () => {
     const v = allModelVariants()[0]!;
-    const card = toCard(v);
+    const card = toModelVariantCard(v);
     expect(card.spec_count).toBe(countSourcedSpecs(v));
     expect(card.spec_count).toBeLessThanOrEqual(SPEC_ROW_COUNT);
     // Wayback-only images are not hosted, so they do not count as photos yet.
     expect(card.photo_count).toBe(v.images.filter((i) => i.url).length);
+  });
+
+  it('ranks identically on the server and over cards (index page parity)', () => {
+    const cards = allModelVariants().map(toModelVariantCard);
+    for (const q of ['italy', 'spain', 'twin', 'le', 'cooper s', 'mk3 van', 'clubman 1100', 'sprite', 'x']) {
+      const server = listModelVariants({ query: q })
+        .map((v) => v.slug)
+        .sort();
+      const client = cards
+        .filter((c) => matchesEveryWord(variantSearchWords(c), q))
+        .map((c) => c.slug)
+        .sort();
+      expect(client, q).toEqual(server);
+    }
+  });
+
+  it('treats a missing end year as open-ended', () => {
+    const openEnded = allModelVariants().find((v) => v.year_start && v.year_end === null);
+    expect(openEnded).toBeDefined();
+    expect(listModelVariants({ year: openEnded!.year_start! + 1 }).some((v) => v.slug === openEnded!.slug)).toBe(true);
   });
 
   it('reports facets that add up to the archive', () => {

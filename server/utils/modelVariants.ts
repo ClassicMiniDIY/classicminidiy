@@ -13,12 +13,9 @@
  */
 import rows from '../../data/modelVariants.json';
 import {
-  BODY_LABELS,
-  FAMILY_LABELS,
-  MARK_RANGES,
-  MARQUE_LABELS,
-  MARKET_LABELS,
   countSourcedSpecs,
+  matchesEveryWord,
+  variantSearchWords,
   type ModelVariant,
   type ModelVariantCard,
   type VariantBody,
@@ -43,48 +40,17 @@ export interface ModelVariantFilters {
   limitedOnly?: boolean;
 }
 
-function words(text: string): string[] {
-  return text
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .split(/[^a-z0-9]+/)
-    .filter(Boolean);
-}
+/** The words a query may prefix-match. Built once per row from the same builder the index page uses. */
+const HAYSTACK = new Map<string, string[]>(ALL.map((v) => [v.slug, variantSearchWords(toModelVariantCard(v))]));
 
-/** The words a query may prefix-match. Built once per row. */
-const HAYSTACK = new Map<string, string[]>(
-  ALL.map((v) => {
-    const parts = [
-      v.name,
-      MARQUE_LABELS[v.marque],
-      FAMILY_LABELS[v.family],
-      BODY_LABELS[v.body_style],
-      MARKET_LABELS[v.market],
-      v.mark ? `mk${v.mark} mk${MARK_RANGES[v.mark]?.roman ?? ''} mark${v.mark}` : '',
-      v.engine_cc ? `${v.engine_cc} ${v.engine_cc}cc` : '',
-      v.year_start ? String(v.year_start) : '',
-      v.year_end ? String(v.year_end) : '',
-      v.is_limited_edition ? 'limited edition le' : '',
-      v.carburettor ?? '',
-    ];
-    return [v.slug, words(parts.join(' '))];
-  })
-);
-
-export function matchesEveryWord(haystack: readonly string[], query: string): boolean {
-  const needles = words(query);
-  if (needles.length === 0) return true;
-  return needles.every((needle) => haystack.some((w) => w.startsWith(needle)));
-}
-
+/** An unknown `year_end` is treated as open-ended: the source often recorded only the launch year. */
 function inProduction(v: ModelVariant, year: number): boolean {
   if (!v.year_start) return false;
-  const end = v.year_end ?? v.year_start;
+  const end = v.year_end ?? 2000;
   return v.year_start <= year && year <= end;
 }
 
-export function toCard(v: ModelVariant): ModelVariantCard {
+export function toModelVariantCard(v: ModelVariant): ModelVariantCard {
   return {
     slug: v.slug,
     name: v.name,
@@ -142,7 +108,9 @@ export function relatedModelVariants(variant: ModelVariant, limit = 6): ModelVar
   const sameMark = ALL.filter(
     (v) => v.slug !== variant.slug && v.family !== variant.family && v.mark !== null && v.mark === variant.mark
   );
-  return [...sameFamily.sort(compareVariants), ...sameMark.sort(compareVariants)].slice(0, limit).map(toCard);
+  return [...sameFamily.sort(compareVariants), ...sameMark.sort(compareVariants)]
+    .slice(0, limit)
+    .map(toModelVariantCard);
 }
 
 /** Distinct values present in the archive, for the index page's filter chips. */
