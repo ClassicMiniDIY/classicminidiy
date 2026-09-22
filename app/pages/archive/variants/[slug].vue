@@ -79,6 +79,13 @@
         value: `A-series ${fmt(v.engine_cc)} cc${v.engine_note ? ` · ${v.engine_note}` : ''}`,
         link: { to: '/technical/engine-decoder', label: t('links.engine_decoder'), icon: 'fas fa-engine' },
       });
+    if (v.engine_code) rows.push({ key: 'engine_code', label: t('rows.engine_code'), value: v.engine_code });
+    if (v.bore_mm !== null || v.stroke_mm !== null)
+      rows.push({
+        key: 'bore_stroke',
+        label: t('rows.bore_stroke'),
+        value: `${v.bore_mm ?? '?'} × ${v.stroke_mm ?? '?'} mm`,
+      });
     if (v.compression_ratio !== null)
       rows.push({
         key: 'compression',
@@ -118,7 +125,14 @@
   const drivetrainRows = computed<SpecRow[]>(() => {
     const v = variant.value;
     const rows: SpecRow[] = [];
+    if (v.gearbox) rows.push({ key: 'gearbox', label: t('rows.gearbox'), value: v.gearbox });
     if (v.final_drive !== null) rows.push({ key: 'fd', label: t('rows.final_drive'), value: `${v.final_drive} : 1` });
+    if (v.brakes_front || v.brakes_rear)
+      rows.push({
+        key: 'brakes',
+        label: t('rows.brakes'),
+        value: [v.brakes_front, v.brakes_rear].map((b) => b ?? '?').join(' / '),
+      });
     if (v.wheels)
       rows.push({
         key: 'wheels',
@@ -141,6 +155,20 @@
         value: `${fmt(v.top_speed_mph)} mph (${toKmh(v.top_speed_mph)} km/h)`,
       });
     return rows;
+  });
+
+  const dimensionRows = computed<SpecRow[]>(() => {
+    const v = variant.value;
+    return (
+      [
+        ['length', v.length_mm],
+        ['width', v.width_mm],
+        ['height', v.height_mm],
+        ['wheelbase', v.wheelbase_mm],
+      ] as const
+    )
+      .filter(([, mm]) => mm !== null)
+      .map(([key, mm]) => ({ key, label: t(`rows.${key}`), value: `${fmt(mm!)} mm (${fmt(mm! / 25.4, 1)} in)` }));
   });
 
   const productionRows = computed<SpecRow[]>(() => {
@@ -191,6 +219,7 @@
     engine: 'power_bhp',
     drivetrain: 'kerb_weight_kg',
     production: 'production_total',
+    dimensions: 'length_mm',
     photos: 'photos',
     colours: 'colours',
   };
@@ -397,12 +426,26 @@
             <span class="text-sm opacity-70 max-w-md px-4">{{ t('photos.gap_body') }}</span>
           </button>
 
+          <p v-if="variant.description" class="text-[15px] leading-relaxed opacity-90 m-0 whitespace-pre-line">
+            {{ variant.description }}
+          </p>
+
           <!-- Spec groups -->
           <section
             v-for="group in [
               { key: 'engine', icon: 'fas fa-gauge', title: t('sections.engine'), rows: engineRows },
               { key: 'drivetrain', icon: 'fas fa-gears', title: t('sections.drivetrain'), rows: drivetrainRows },
               { key: 'production', icon: 'fas fa-id-card', title: t('sections.production'), rows: productionRows },
+              ...(dimensionRows.length
+                ? [
+                    {
+                      key: 'dimensions',
+                      icon: 'fas fa-ruler-combined',
+                      title: t('sections.dimensions'),
+                      rows: dimensionRows,
+                    },
+                  ]
+                : []),
             ]"
             :key="group.key"
             class="card bg-base-100 border border-base-300 shadow-md"
@@ -637,7 +680,8 @@
       "sources": "Sources",
       "related": "Also see",
       "empty": "Nothing recorded yet for this group.",
-      "no_colours": "No factory colours recorded yet."
+      "no_colours": "No factory colours recorded yet.",
+      "dimensions": "Dimensions"
     },
     "rows": {
       "engine": "Engine",
@@ -654,7 +698,15 @@
       "units_built": "Units built",
       "edition_size": "Edition size",
       "market": "Home market",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "Engine code",
+      "bore_stroke": "Bore × stroke",
+      "gearbox": "Gearbox",
+      "brakes": "Brakes (front / rear)",
+      "length": "Length",
+      "width": "Width",
+      "height": "Height",
+      "wheelbase": "Wheelbase"
     },
     "links": {
       "engine_decoder": "Decode an engine",
@@ -723,7 +775,8 @@
       "sources": "Fuentes",
       "related": "Ver también",
       "empty": "Todavía no hay datos en este grupo.",
-      "no_colours": "Todavía no hay colores de fábrica registrados."
+      "no_colours": "Todavía no hay colores de fábrica registrados.",
+      "dimensions": "Dimensiones"
     },
     "rows": {
       "engine": "Motor",
@@ -740,7 +793,15 @@
       "units_built": "Unidades fabricadas",
       "edition_size": "Tirada de la edición",
       "market": "Mercado de origen",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "Código de motor",
+      "bore_stroke": "Diámetro × carrera",
+      "gearbox": "Caja de cambios",
+      "brakes": "Frenos (del. / tras.)",
+      "length": "Longitud",
+      "width": "Anchura",
+      "height": "Altura",
+      "wheelbase": "Batalla"
     },
     "links": {
       "engine_decoder": "Decodificar un motor",
@@ -809,7 +870,8 @@
       "sources": "Sources",
       "related": "Voir aussi",
       "empty": "Rien d'enregistré pour ce groupe pour l'instant.",
-      "no_colours": "Aucune couleur d'usine enregistrée pour l'instant."
+      "no_colours": "Aucune couleur d'usine enregistrée pour l'instant.",
+      "dimensions": "Dimensions"
     },
     "rows": {
       "engine": "Moteur",
@@ -826,7 +888,15 @@
       "units_built": "Exemplaires produits",
       "edition_size": "Taille de la série",
       "market": "Marché d'origine",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "Code moteur",
+      "bore_stroke": "Alésage × course",
+      "gearbox": "Boîte de vitesses",
+      "brakes": "Freins (av. / arr.)",
+      "length": "Longueur",
+      "width": "Largeur",
+      "height": "Hauteur",
+      "wheelbase": "Empattement"
     },
     "links": {
       "engine_decoder": "Décoder un moteur",
@@ -895,7 +965,8 @@
       "sources": "Quellen",
       "related": "Siehe auch",
       "empty": "Für diese Gruppe ist noch nichts erfasst.",
-      "no_colours": "Noch keine Werksfarben erfasst."
+      "no_colours": "Noch keine Werksfarben erfasst.",
+      "dimensions": "Abmessungen"
     },
     "rows": {
       "engine": "Motor",
@@ -912,7 +983,15 @@
       "units_built": "Stückzahl",
       "edition_size": "Auflage",
       "market": "Heimatmarkt",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "Motorcode",
+      "bore_stroke": "Bohrung × Hub",
+      "gearbox": "Getriebe",
+      "brakes": "Bremsen (vorn / hinten)",
+      "length": "Länge",
+      "width": "Breite",
+      "height": "Höhe",
+      "wheelbase": "Radstand"
     },
     "links": {
       "engine_decoder": "Motor entschlüsseln",
@@ -981,7 +1060,8 @@
       "sources": "Fonti",
       "related": "Vedi anche",
       "empty": "Nessun dato registrato per questo gruppo.",
-      "no_colours": "Nessun colore di fabbrica registrato."
+      "no_colours": "Nessun colore di fabbrica registrato.",
+      "dimensions": "Dimensioni"
     },
     "rows": {
       "engine": "Motore",
@@ -998,7 +1078,15 @@
       "units_built": "Esemplari prodotti",
       "edition_size": "Tiratura",
       "market": "Mercato di origine",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "Codice motore",
+      "bore_stroke": "Alesaggio × corsa",
+      "gearbox": "Cambio",
+      "brakes": "Freni (ant. / post.)",
+      "length": "Lunghezza",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "wheelbase": "Passo"
     },
     "links": {
       "engine_decoder": "Decodifica un motore",
@@ -1067,7 +1155,8 @@
       "sources": "Fontes",
       "related": "Ver também",
       "empty": "Ainda nada registado para este grupo.",
-      "no_colours": "Ainda sem cores de fábrica registadas."
+      "no_colours": "Ainda sem cores de fábrica registadas.",
+      "dimensions": "Dimensões"
     },
     "rows": {
       "engine": "Motor",
@@ -1084,7 +1173,15 @@
       "units_built": "Unidades produzidas",
       "edition_size": "Tiragem",
       "market": "Mercado de origem",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "Código do motor",
+      "bore_stroke": "Diâmetro × curso",
+      "gearbox": "Caixa de velocidades",
+      "brakes": "Travões (fr. / tr.)",
+      "length": "Comprimento",
+      "width": "Largura",
+      "height": "Altura",
+      "wheelbase": "Distância entre eixos"
     },
     "links": {
       "engine_decoder": "Descodificar um motor",
@@ -1153,7 +1250,8 @@
       "sources": "Источники",
       "related": "См. также",
       "empty": "Для этой группы пока ничего не записано.",
-      "no_colours": "Заводские цвета пока не записаны."
+      "no_colours": "Заводские цвета пока не записаны.",
+      "dimensions": "Размеры"
     },
     "rows": {
       "engine": "Двигатель",
@@ -1170,7 +1268,15 @@
       "units_built": "Выпущено",
       "edition_size": "Тираж серии",
       "market": "Домашний рынок",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "Код двигателя",
+      "bore_stroke": "Диаметр × ход",
+      "gearbox": "Коробка передач",
+      "brakes": "Тормоза (перед / зад)",
+      "length": "Длина",
+      "width": "Ширина",
+      "height": "Высота",
+      "wheelbase": "Колёсная база"
     },
     "links": {
       "engine_decoder": "Расшифровать двигатель",
@@ -1239,7 +1345,8 @@
       "sources": "出典",
       "related": "関連モデル",
       "empty": "このグループにはまだ記録がありません。",
-      "no_colours": "工場カラーはまだ記録されていません。"
+      "no_colours": "工場カラーはまだ記録されていません。",
+      "dimensions": "寸法"
     },
     "rows": {
       "engine": "エンジン",
@@ -1256,7 +1363,15 @@
       "units_built": "生産台数",
       "edition_size": "限定台数",
       "market": "本国市場",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "エンジンコード",
+      "bore_stroke": "ボア × ストローク",
+      "gearbox": "ギアボックス",
+      "brakes": "ブレーキ（前／後）",
+      "length": "全長",
+      "width": "全幅",
+      "height": "全高",
+      "wheelbase": "ホイールベース"
     },
     "links": {
       "engine_decoder": "エンジン番号を解読",
@@ -1325,7 +1440,8 @@
       "sources": "来源",
       "related": "另请参阅",
       "empty": "该组暂无记录。",
-      "no_colours": "暂无原厂颜色记录。"
+      "no_colours": "暂无原厂颜色记录。",
+      "dimensions": "尺寸"
     },
     "rows": {
       "engine": "发动机",
@@ -1342,7 +1458,15 @@
       "units_built": "生产数量",
       "edition_size": "限量数量",
       "market": "本土市场",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "发动机代码",
+      "bore_stroke": "缸径 × 行程",
+      "gearbox": "变速箱",
+      "brakes": "制动器（前 / 后）",
+      "length": "长度",
+      "width": "宽度",
+      "height": "高度",
+      "wheelbase": "轴距"
     },
     "links": {
       "engine_decoder": "解码发动机",
@@ -1411,7 +1535,8 @@
       "sources": "출처",
       "related": "함께 보기",
       "empty": "이 그룹에는 아직 기록이 없습니다.",
-      "no_colours": "아직 기록된 공장 색상이 없습니다."
+      "no_colours": "아직 기록된 공장 색상이 없습니다.",
+      "dimensions": "치수"
     },
     "rows": {
       "engine": "엔진",
@@ -1428,7 +1553,15 @@
       "units_built": "생산 대수",
       "edition_size": "한정 수량",
       "market": "본국 시장",
-      "mark": "Mark"
+      "mark": "Mark",
+      "engine_code": "엔진 코드",
+      "bore_stroke": "보어 × 스트로크",
+      "gearbox": "변속기",
+      "brakes": "브레이크(앞 / 뒤)",
+      "length": "전장",
+      "width": "전폭",
+      "height": "전고",
+      "wheelbase": "휠베이스"
     },
     "links": {
       "engine_decoder": "엔진 번호 해독",

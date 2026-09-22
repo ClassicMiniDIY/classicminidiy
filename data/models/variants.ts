@@ -249,6 +249,17 @@ export interface ModelVariant {
   tyres: string | null;
   kerb_weight_kg: number | null;
   top_speed_mph: number | null;
+  description: string | null;
+  engine_code: string | null;
+  bore_mm: number | null;
+  stroke_mm: number | null;
+  gearbox: string | null;
+  brakes_front: string | null;
+  brakes_rear: string | null;
+  length_mm: number | null;
+  width_mm: number | null;
+  height_mm: number | null;
+  wheelbase_mm: number | null;
   colors: VariantColor[];
   notes: string | null;
   engine_note: string | null;
@@ -261,7 +272,24 @@ export interface ModelVariant {
 }
 
 /** A row of the recovered seed file, `docs/plans/data/2026-09-22-model-variants-seed.json`. */
-export type ModelVariantSeedRow = Omit<ModelVariant, 'id' | 'colors' | 'photos' | 'updated_at'> & {
+export type ModelVariantSeedRow = Omit<
+  ModelVariant,
+  | 'id'
+  | 'colors'
+  | 'photos'
+  | 'updated_at'
+  | 'description'
+  | 'engine_code'
+  | 'bore_mm'
+  | 'stroke_mm'
+  | 'gearbox'
+  | 'brakes_front'
+  | 'brakes_rear'
+  | 'length_mm'
+  | 'width_mm'
+  | 'height_mm'
+  | 'wheelbase_mm'
+> & {
   colors: string[];
   images: VariantSeedImage[];
 };
@@ -327,6 +355,49 @@ export const VARIANT_NUMERIC_COLUMNS: ReadonlySet<string> = new Set([
   'height_mm',
   'wheelbase_mm',
 ]);
+
+/**
+ * The model_variants CHECK constraints and column types, mirrored so the
+ * wizard and the approve route reject a bad number with a readable message
+ * instead of a Postgres 500 at approval. Keep in step with migration
+ * 20260922000002 in classicminidiy-supabase.
+ */
+export const VARIANT_RANGES: Record<string, { min?: number; max?: number; integer?: boolean; positive?: boolean }> = {
+  mark: { min: 1, max: 7, integer: true },
+  year_start: { min: 1959, max: 2000, integer: true },
+  year_end: { min: 1959, max: 2000, integer: true },
+  edition_size: { positive: true, integer: true, max: 2_000_000 },
+  production_total: { positive: true, integer: true, max: 10_000_000 },
+  engine_cc: { min: 500, max: 2000, integer: true },
+  bore_mm: { positive: true, max: 9999 },
+  stroke_mm: { positive: true, max: 9999 },
+  compression_ratio: { min: 5, max: 15 },
+  power_bhp: { positive: true, max: 99999 },
+  power_rpm: { positive: true, max: 32767, integer: true },
+  torque_lbft: { positive: true, max: 99999 },
+  torque_rpm: { positive: true, max: 32767, integer: true },
+  final_drive: { positive: true, max: 99 },
+  kerb_weight_kg: { positive: true, max: 99999 },
+  top_speed_mph: { positive: true, max: 9999 },
+  length_mm: { positive: true, max: 99999 },
+  width_mm: { positive: true, max: 99999 },
+  height_mm: { positive: true, max: 99999 },
+  wheelbase_mm: { positive: true, max: 99999 },
+};
+
+/** Null when `value` fits `column`'s range, else a short English reason. */
+export function variantNumberProblem(column: string, value: number): string | null {
+  const r = VARIANT_RANGES[column];
+  if (!r) return null;
+  if (r.integer && !Number.isInteger(value)) return `${column} must be a whole number`;
+  if (r.positive && value <= 0) return `${column} must be greater than zero`;
+  if (r.min !== undefined && value < r.min) return `${column} must be at least ${r.min}`;
+  if (r.max !== undefined && value > r.max) return `${column} must be at most ${r.max}`;
+  return null;
+}
+
+/** The text columns' length caps (name is CHECKed at 160 in the table). */
+export const VARIANT_TEXT_MAX: Record<string, number> = { name: 160 };
 
 /** A contributor's citation. Required on every spec change and every new variant. */
 export const VARIANT_SOURCE_TYPES = ['book', 'brochure', 'period_document', 'link', 'other'] as const;
@@ -420,6 +491,39 @@ export function matchesEveryWord(haystack: readonly string[], query: string): bo
 }
 
 /** How many of the twelve source rows are filled — the "N of 12 specs sourced" figure. */
-export function countSourcedSpecs(variant: Pick<ModelVariant, 'specs_source'>): number {
-  return Object.values(variant.specs_source ?? {}).filter((v) => typeof v === 'string' && v.trim() !== '').length;
+export function countSourcedSpecs(
+  variant: Pick<
+    ModelVariant,
+    | 'engine_cc'
+    | 'compression_ratio'
+    | 'power_bhp'
+    | 'torque_lbft'
+    | 'carburettor'
+    | 'fuel_system'
+    | 'final_drive'
+    | 'wheels'
+    | 'tyres'
+    | 'kerb_weight_kg'
+    | 'top_speed_mph'
+    | 'production_total'
+  > & { colors: readonly unknown[] }
+): number {
+  // Counted from the TYPED columns — the twelve rows of the original spec
+  // sheet — so a contributed variant or a sourced correction counts too.
+  // (Every value on the page is cited: the seed row and each approved fix
+  // append to `sources`.)
+  const filled = [
+    variant.engine_cc,
+    variant.compression_ratio,
+    variant.power_bhp,
+    variant.torque_lbft,
+    variant.carburettor ?? variant.fuel_system,
+    variant.final_drive,
+    variant.wheels,
+    variant.tyres,
+    variant.kerb_weight_kg,
+    variant.top_speed_mph,
+    variant.production_total,
+  ].filter((v) => v !== null && v !== undefined && v !== '').length;
+  return filled + (variant.colors.length > 0 ? 1 : 0);
 }

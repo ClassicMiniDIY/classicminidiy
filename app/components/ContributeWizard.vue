@@ -27,6 +27,7 @@
     VARIANT_NUMERIC_COLUMNS,
     VARIANT_PHOTO_KINDS,
     VARIANT_SOURCE_TYPES,
+    variantNumberProblem,
   } from '~~/data/models/variants';
 
   const { t } = useI18n();
@@ -108,21 +109,35 @@
   const source = reactive({ type: 'brochure', title: '', url: '' });
   const photoMeta = reactive({ kind: 'owner', caption: '', credit: '' });
 
-  const isVariantEdit = computed(() => kind.value === 'variant' && Boolean(context.value.targetId));
+  const isVariantEdit = computed(() => kind.value === 'variant' && Boolean(targetId.value));
   const variantMode = computed<'new' | 'spec' | 'photos'>(() =>
     !isVariantEdit.value ? 'new' : variantField.value === 'photos' ? 'photos' : 'spec'
   );
   const currentValue = computed(() => context.value.currentValues?.[variantField.value] ?? '');
   const VARIANT_EDIT_OPTIONS = ['photos', 'colours', ...VARIANT_EDITABLE_COLUMNS] as const;
   const isNumericField = (key: string) => VARIANT_NUMERIC_COLUMNS.has(key) || key === 'mark';
-  const numberOk = (value: string) => value.trim() === '' || Number.isFinite(Number(value.trim().replace(',', '.')));
+  /** Blank, or a number inside the column's database range (VARIANT_RANGES). */
+  const numberOk = (key: string, value: string) => {
+    const raw = value.trim();
+    if (raw === '') return true;
+    const n = Number(raw.replace(',', '.'));
+    return Number.isFinite(n) && variantNumberProblem(key, n) === null;
+  };
 
   const requestTitle = ref('');
   const requestNotes = ref('');
 
   const isRequestMode = computed(() => context.value.mode === 'request');
+  /**
+   * The launch target belongs to the tile it was launched with. Going Back and
+   * picking another tile must not carry a wheel's id into a variant edit (or
+   * the reverse): the approval would target the wrong table and fail.
+   */
+  const targetId = computed(() =>
+    !context.value.kind || kind.value === context.value.kind ? (context.value.targetId ?? null) : null
+  );
   /** A gap-filler attaches photos to an entry that already exists. */
-  const isGapFill = computed(() => Boolean(context.value.targetId && kind.value !== 'fix'));
+  const isGapFill = computed(() => Boolean(targetId.value && kind.value !== 'fix'));
 
   const totalSteps = 3;
 
@@ -229,12 +244,17 @@
           if (!vform.name?.trim()) problems.push(t('variant.errors.name'));
           if (!vform.marque || !vform.family || !vform.body_style) problems.push(t('variant.errors.class'));
           if (!/^(19[5-9]\d|2000)$/.test(vform.year_start?.trim() ?? '')) problems.push(t('variant.errors.year'));
-          if (NEW_VARIANT_FIELDS.some((k) => isNumericField(k) && !numberOk(vform[k] ?? '')))
+          if (NEW_VARIANT_FIELDS.some((k) => isNumericField(k) && !numberOk(k, vform[k] ?? '')))
             problems.push(t('variant.errors.number'));
+          const ys = Number(vform.year_start);
+          const ye = Number(vform.year_end);
+          if (vform.year_end?.trim() && ye < ys) problems.push(t('variant.errors.years_order'));
         } else {
           const next = variantValue.value.trim();
           if (!next || next === currentValue.value.trim()) problems.push(t('variant.errors.value'));
-          else if (isNumericField(variantField.value) && !numberOk(next)) problems.push(t('variant.errors.number'));
+          else if (isNumericField(variantField.value) && !numberOk(variantField.value, next))
+            problems.push(t('variant.errors.number'));
+          else if (variantField.value === 'name' && next.length > 160) problems.push(t('variant.errors.name'));
         }
         if (source.title.trim().length < 3) problems.push(t('variant.errors.source'));
       }
@@ -413,7 +433,7 @@
       const submission = await submitContribution(
         isEdit ? 'edit_suggestion' : 'new_item',
         targetType,
-        isEdit ? (context.value.targetId ?? null) : null,
+        isEdit ? targetId.value : null,
         payload
       );
       const submissionId = submission.id;
@@ -1204,9 +1224,10 @@
         "name": "Add the variant name.",
         "class": "Choose the marque, family and body style.",
         "year": "Enter the first year (1959–2000).",
-        "number": "Numeric fields take a number only.",
+        "number": "That number is outside what the archive accepts for this field (e.g. years 1959–2000, engine 500–2000 cc, compression 5–15, whole numbers where counted).",
         "value": "Enter a new value that differs from the current one.",
-        "source": "Cite a source (at least a few characters)."
+        "source": "Cite a source (at least a few characters).",
+        "years_order": "The last year cannot be before the first year."
       }
     }
   },
@@ -1384,9 +1405,10 @@
         "name": "Añade el nombre de la variante.",
         "class": "Elige marca, familia y carrocería.",
         "year": "Indica el primer año (1959–2000).",
-        "number": "Los campos numéricos solo admiten números.",
+        "number": "Ese número está fuera de lo que el archivo acepta para este campo (p. ej. años 1959–2000, motor 500–2000 cc, compresión 5–15, números enteros donde se cuentan).",
         "value": "Introduce un valor nuevo distinto del actual.",
-        "source": "Cita una fuente (al menos unos caracteres)."
+        "source": "Cita una fuente (al menos unos caracteres).",
+        "years_order": "El último año no puede ser anterior al primero."
       }
     }
   },
@@ -1564,9 +1586,10 @@
         "name": "Ajoutez le nom de la variante.",
         "class": "Choisissez la marque, la famille et la carrosserie.",
         "year": "Indiquez la première année (1959–2000).",
-        "number": "Les champs numériques n'acceptent que des nombres.",
+        "number": "Ce nombre est hors des limites acceptées pour ce champ (ex. années 1959–2000, moteur 500–2000 cc, compression 5–15, nombres entiers pour les quantités).",
         "value": "Saisissez une nouvelle valeur différente de l'actuelle.",
-        "source": "Citez une source (quelques caractères au moins)."
+        "source": "Citez une source (quelques caractères au moins).",
+        "years_order": "La dernière année ne peut pas précéder la première."
       }
     }
   },
@@ -1744,9 +1767,10 @@
         "name": "Geben Sie den Namen der Variante ein.",
         "class": "Wählen Sie Marke, Baureihe und Karosserie.",
         "year": "Geben Sie das erste Jahr ein (1959–2000).",
-        "number": "Zahlenfelder akzeptieren nur Zahlen.",
+        "number": "Diese Zahl liegt außerhalb dessen, was das Archiv für dieses Feld annimmt (z. B. Jahre 1959–2000, Motor 500–2000 cc, Verdichtung 5–15, ganze Zahlen bei Stückzahlen).",
         "value": "Geben Sie einen neuen, abweichenden Wert ein.",
-        "source": "Geben Sie eine Quelle an (mindestens einige Zeichen)."
+        "source": "Geben Sie eine Quelle an (mindestens einige Zeichen).",
+        "years_order": "Das letzte Jahr darf nicht vor dem ersten liegen."
       }
     }
   },
@@ -1924,9 +1948,10 @@
         "name": "Aggiungi il nome della variante.",
         "class": "Scegli marca, famiglia e carrozzeria.",
         "year": "Inserisci il primo anno (1959–2000).",
-        "number": "I campi numerici accettano solo numeri.",
+        "number": "Quel numero è fuori dai limiti accettati per questo campo (es. anni 1959–2000, motore 500–2000 cc, compressione 5–15, numeri interi per le quantità).",
         "value": "Inserisci un nuovo valore diverso dall'attuale.",
-        "source": "Cita una fonte (almeno qualche carattere)."
+        "source": "Cita una fonte (almeno qualche carattere).",
+        "years_order": "L'ultimo anno non può precedere il primo."
       }
     }
   },
@@ -2104,9 +2129,10 @@
         "name": "Adicione o nome da variante.",
         "class": "Escolha a marca, a família e a carroçaria.",
         "year": "Indique o primeiro ano (1959–2000).",
-        "number": "Os campos numéricos só aceitam números.",
+        "number": "Esse número está fora do que o arquivo aceita para este campo (ex. anos 1959–2000, motor 500–2000 cc, compressão 5–15, números inteiros nas contagens).",
         "value": "Introduza um valor novo, diferente do atual.",
-        "source": "Cite uma fonte (pelo menos alguns caracteres)."
+        "source": "Cite uma fonte (pelo menos alguns caracteres).",
+        "years_order": "O último ano não pode ser anterior ao primeiro."
       }
     }
   },
@@ -2284,9 +2310,10 @@
         "name": "Укажите название модификации.",
         "class": "Выберите марку, семейство и кузов.",
         "year": "Укажите первый год (1959–2000).",
-        "number": "Числовые поля принимают только числа.",
+        "number": "Это число вне допустимого диапазона для поля (напр. годы 1959–2000, двигатель 500–2000 см³, сжатие 5–15, целые числа для количеств).",
         "value": "Введите новое значение, отличное от текущего.",
-        "source": "Укажите источник (хотя бы несколько символов)."
+        "source": "Укажите источник (хотя бы несколько символов).",
+        "years_order": "Последний год не может быть раньше первого."
       }
     }
   },
@@ -2464,9 +2491,10 @@
         "name": "バリエーション名を入力してください。",
         "class": "メーカー、ファミリー、ボディを選択してください。",
         "year": "初年を入力してください（1959〜2000）。",
-        "number": "数値欄には数値のみ入力できます。",
+        "number": "この欄で受け付ける範囲外の数値です（例：年1959〜2000、排気量500〜2000cc、圧縮比5〜15、台数は整数）。",
         "value": "現在と異なる新しい値を入力してください。",
-        "source": "出典を記入してください（数文字以上）。"
+        "source": "出典を記入してください（数文字以上）。",
+        "years_order": "最終年は初年より前にできません。"
       }
     }
   },
@@ -2644,9 +2672,10 @@
         "name": "请填写变体名称。",
         "class": "请选择品牌、系列和车身。",
         "year": "请填写首年（1959–2000）。",
-        "number": "数字字段只能填写数字。",
+        "number": "该数字超出此字段允许的范围（例如年份1959–2000、排量500–2000 cc、压缩比5–15、数量须为整数）。",
         "value": "请输入与当前值不同的新值。",
-        "source": "请注明来源（至少几个字符）。"
+        "source": "请注明来源（至少几个字符）。",
+        "years_order": "末年不能早于首年。"
       }
     }
   },
@@ -2824,9 +2853,10 @@
         "name": "변형 이름을 입력하세요.",
         "class": "브랜드, 계열, 차체를 선택하세요.",
         "year": "첫 연도를 입력하세요(1959–2000).",
-        "number": "숫자 필드에는 숫자만 입력할 수 있습니다.",
+        "number": "이 필드에서 허용하는 범위를 벗어난 숫자입니다(예: 연도 1959–2000, 배기량 500–2000cc, 압축비 5–15, 수량은 정수).",
         "value": "현재 값과 다른 새 값을 입력하세요.",
-        "source": "출처를 입력하세요(몇 글자 이상)."
+        "source": "출처를 입력하세요(몇 글자 이상).",
+        "years_order": "마지막 연도는 첫 연도보다 앞설 수 없습니다."
       }
     }
   }

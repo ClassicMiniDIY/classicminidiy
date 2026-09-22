@@ -34,6 +34,8 @@ import {
   VARIANT_NUMERIC_COLUMNS,
   VARIANT_PHOTO_KINDS,
   VARIANT_SOURCE_TYPES,
+  VARIANT_TEXT_MAX,
+  variantNumberProblem,
 } from '../../data/models/variants';
 
 type Db = any;
@@ -56,6 +58,17 @@ export function parseVariantNumber(v: unknown): { ok: true; value: number | null
   const n = typeof v === 'number' ? v : Number(String(v).trim().replace(',', '.'));
   return Number.isFinite(n) ? { ok: true, value: n } : { ok: false };
 }
+
+/** A number for `column`, range-checked against the table's CHECK constraints. */
+function numberFor(column: string, raw: unknown): { ok: true; value: number | null } | { ok: false; error: string } {
+  const parsed = parseVariantNumber(raw);
+  if (!parsed.ok) return { ok: false, error: `"${column}" must be a number` };
+  if (parsed.value === null) return parsed;
+  const problem = variantNumberProblem(column, parsed.value);
+  return problem ? { ok: false, error: problem } : parsed;
+}
+
+const textFor = (column: string, raw: unknown) => text(raw, VARIANT_TEXT_MAX[column] ?? 2000);
 
 export interface VariantSourceInput {
   type: (typeof VARIANT_SOURCE_TYPES)[number];
@@ -94,7 +107,7 @@ export function parseColourList(raw: unknown): string[] {
 export function slugifyVariant(name: string, mark: number | null): string {
   const base = `${name}${mark && !/\bmk\s?\d\b/i.test(name) ? ` mk${mark}` : ''}`
     .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
@@ -109,36 +122,65 @@ async function uniqueSlug(db: Db, base: string): Promise<string> {
   for (let i = 2; ; i += 1) if (!taken.has(`${base}-${i}`)) return `${base}-${i}`;
 }
 
-/** Colour names → approved colours-archive ids, oldest row per name (the archive has same-name duplicates). */
+/**
+ * Colour names → approved colours-archive ids, matched on lower(trim(name))
+ * exactly as migration 20260922000004 linked the seed, oldest row per name
+ * (the archive has same-name duplicates). Reads the approved names once per
+ * call; the colours archive is a few hundred rows.
+ */
 async function resolveColourIds(db: Db, names: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   if (!names.length) return out;
-  const { data } = await db
-    .from('colors')
-    .select('id, name, created_at')
-    .eq('status', 'approved')
-    .in('name', names)
-    .order('created_at', { ascending: true });
-  for (const c of data ?? []) {
-    const key = String(c.name).trim().toLowerCase();
-    if (!out.has(key)) out.set(key, c.id);
+  const wanted = new Set(names.map((n) => n.trim().toLowerCase()));
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db
+      .from('colors')
+      .select('id, name, created_at')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + 999);
+    if (error) break; // Unlinked names still render; linking is best-effort.
+    for (const c of data ?? []) {
+      const key = String(c.name ?? '')
+        .trim()
+        .toLowerCase();
+      if (wanted.has(key) && !out.has(key)) out.set(key, c.id);
+    }
+    if (!data || data.length < 1000) break;
   }
   return out;
 }
 
+/**
+ * Make the variant's colour set exactly `names`, without a window in which it
+ * is empty: upsert the new list on the (variant_id, color_name) key first,
+ * then delete only the names that dropped out. A failure part-way leaves the
+ * old and new names together, never none.
+ */
 async function replaceColours(db: Db, variantId: string, names: string[]): Promise<string | null> {
   const ids = await resolveColourIds(db, names);
-  const { error: delError } = await db.from('model_variant_colors').delete().eq('variant_id', variantId);
-  if (delError) return delError.message;
-  if (!names.length) return null;
-  const { error } = await db.from('model_variant_colors').insert(
-    names.map((name, i) => ({
-      variant_id: variantId,
-      color_name: name,
-      color_id: ids.get(name.toLowerCase()) ?? null,
-      sort_order: i,
-    }))
-  );
+  if (names.length) {
+    const { error } = await db.from('model_variant_colors').upsert(
+      names.map((name, i) => ({
+        variant_id: variantId,
+        color_name: name,
+        color_id: ids.get(name.trim().toLowerCase()) ?? null,
+        sort_order: i,
+      })),
+      { onConflict: 'variant_id,color_name' }
+    );
+    if (error) return error.message;
+  }
+  const { data: existing, error: readError } = await db
+    .from('model_variant_colors')
+    .select('color_name')
+    .eq('variant_id', variantId);
+  if (readError) return readError.message;
+  const keep = new Set(names);
+  const drop = (existing ?? []).map((r: { color_name: string }) => r.color_name).filter((n: string) => !keep.has(n));
+  if (!drop.length) return null;
+  const { error } = await db.from('model_variant_colors').delete().eq('variant_id', variantId).in('color_name', drop);
   return error?.message ?? null;
 }
 
@@ -162,32 +204,30 @@ async function insertPhotos(
   submittedBy: string | null
 ): Promise<string | null> {
   if (!urls.length) return null;
-  const { count } = await db
+  const { data: existing, error: readError } = await db
     .from('model_variant_photos')
-    .select('id', { count: 'exact', head: true })
-    .eq('variant_id', variantId)
-    .eq('is_primary', true);
-  const { data: last } = await db
-    .from('model_variant_photos')
-    .select('sort_order')
-    .eq('variant_id', variantId)
-    .order('sort_order', { ascending: false })
-    .limit(1);
-  const start = (last?.[0]?.sort_order ?? -1) + 1;
+    .select('sort_order, is_primary')
+    .eq('variant_id', variantId);
+  if (readError) return readError.message;
+  const start = Math.max(-1, ...(existing ?? []).map((p: { sort_order: number }) => p.sort_order ?? 0)) + 1;
+  const hasPrimary = (existing ?? []).some((p: { is_primary: boolean }) => p.is_primary);
   const kind = oneOf(VARIANT_PHOTO_KINDS, data.photo_kind) ?? 'owner';
-  const { error } = await db.from('model_variant_photos').insert(
+  const rows = (primary: boolean) =>
     urls.map((url, i) => ({
       variant_id: variantId,
       url,
       kind,
       caption: text(data.photo_caption, 200),
       credit: text(data.photo_credit, 120),
-      is_primary: !count && i === 0,
+      is_primary: primary && i === 0,
       sort_order: start + i,
       status: 'approved',
       submitted_by: submittedBy,
-    }))
-  );
+    }));
+  let { error } = await db.from('model_variant_photos').insert(rows(!hasPrimary));
+  // Another approval took the primary slot between our read and write
+  // (model_variant_photos_one_primary): the photos still belong, just not first.
+  if (error?.code === '23505' && !hasPrimary) ({ error } = await db.from('model_variant_photos').insert(rows(false)));
   return error?.message ?? null;
 }
 
@@ -229,14 +269,27 @@ export async function insertApprovedVariant(
   for (const col of VARIANT_EDITABLE_COLUMNS) {
     if (col === 'name' || !(col in v)) continue;
     if (VARIANT_NUMERIC_COLUMNS.has(col)) {
-      const parsed = parseVariantNumber(v[col]);
-      if (!parsed.ok) return `"${col}" must be a number`;
+      const parsed = numberFor(col, v[col]);
+      if (!parsed.ok) return parsed.error;
       row[col] = parsed.value;
     } else {
-      row[col] = text(v[col], 2000);
+      row[col] = textFor(col, v[col]);
     }
   }
   if (row.year_start === undefined || row.year_start === null) return 'A new variant needs a start year';
+  if (typeof row.year_end === 'number' && row.year_end < (row.year_start as number))
+    return 'The last year cannot be before the first year';
+
+  // The table is unique on (marque, name, year_start); say so readably
+  // instead of letting the insert fail with a constraint name.
+  const { data: twin } = await db
+    .from('model_variants')
+    .select('slug')
+    .eq('marque', marque)
+    .eq('name', name)
+    .eq('year_start', row.year_start)
+    .maybeSingle();
+  if (twin?.slug) return `This variant already exists as /archive/variants/${twin.slug}`;
 
   row.slug = await uniqueSlug(db, slugifyVariant(name, mark));
   const { data: created, error } = await db.from('model_variants').insert(row).select('id').single();
@@ -283,22 +336,26 @@ export async function applyVariantEdit(
     }
     if (!EDITABLE.has(field)) return `Suggestion targets a field that is not user-editable on a variant: ${field}`;
     if (VARIANT_NUMERIC_COLUMNS.has(field)) {
-      const parsed = parseVariantNumber(to);
-      if (!parsed.ok) return `"${field}" must be a number`;
+      const parsed = numberFor(field, to);
+      if (!parsed.ok) return parsed.error;
       updates[field] = parsed.value;
     } else {
-      updates[field] = text(to, 2000);
+      updates[field] = textFor(field, to);
     }
   }
   if (!Object.keys(updates).length && colours === null) return 'No changes provided';
   if (updates.name === null) return 'A variant name cannot be cleared';
+  if ('year_start' in updates && updates.year_start === null) return 'The first year cannot be cleared';
 
   const { data: current, error: readError } = await db
     .from('model_variants')
-    .select('sources')
+    .select('sources, year_start, year_end')
     .eq('id', variantId)
     .single();
   if (readError) return readError.message;
+  const start = ('year_start' in updates ? updates.year_start : current?.year_start) as number | null;
+  const end = ('year_end' in updates ? updates.year_end : current?.year_end) as number | null;
+  if (start !== null && end !== null && end < start) return 'The last year cannot be before the first year';
   updates.sources = [...(Array.isArray(current?.sources) ? current.sources : []), source];
 
   const { error } = await db.from('model_variants').update(updates).eq('id', variantId);

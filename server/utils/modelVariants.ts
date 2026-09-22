@@ -68,6 +68,17 @@ const VARIANT_COLUMNS = [
   'tyres',
   'kerb_weight_kg',
   'top_speed_mph',
+  'description',
+  'engine_code',
+  'bore_mm',
+  'stroke_mm',
+  'gearbox',
+  'brakes_front',
+  'brakes_rear',
+  'length_mm',
+  'width_mm',
+  'height_mm',
+  'wheelbase_mm',
   'specs_source',
   'sources',
   'legacy_submitted_by',
@@ -87,6 +98,12 @@ interface Snapshot {
 
 let snapshot: Snapshot | null = null;
 let inflight: Promise<Snapshot> | null = null;
+/**
+ * Bumped by `invalidateModelVariants()`. A fetch that STARTED before the bump
+ * may have read pre-approval rows, so its result is served to the callers
+ * already waiting on it but not kept as the snapshot.
+ */
+let generation = 0;
 
 const num = (v: unknown): number | null => (v === null || v === undefined || v === '' ? null : Number(v));
 
@@ -136,6 +153,17 @@ export function mapModelVariantRow(r: any): ModelVariant {
     tyres: r.tyres ?? null,
     kerb_weight_kg: num(r.kerb_weight_kg),
     top_speed_mph: num(r.top_speed_mph),
+    description: r.description ?? null,
+    engine_code: r.engine_code ?? null,
+    bore_mm: num(r.bore_mm),
+    stroke_mm: num(r.stroke_mm),
+    gearbox: r.gearbox ?? null,
+    brakes_front: r.brakes_front ?? null,
+    brakes_rear: r.brakes_rear ?? null,
+    length_mm: num(r.length_mm),
+    width_mm: num(r.width_mm),
+    height_mm: num(r.height_mm),
+    wheelbase_mm: num(r.wheelbase_mm),
     colors,
     notes: r.notes ?? null,
     engine_note: r.engine_note ?? null,
@@ -181,8 +209,13 @@ async function fetchSnapshot(): Promise<Snapshot> {
 
 async function current(): Promise<Snapshot> {
   if (snapshot && Date.now() - snapshot.loadedAt < TTL_MS) return snapshot;
-  inflight ??= fetchSnapshot()
-    .then((s) => (snapshot = s))
+  if (inflight) return inflight;
+  const startedAt = generation;
+  const pending: Promise<Snapshot> = fetchSnapshot()
+    .then((s) => {
+      if (startedAt === generation) snapshot = s;
+      return s;
+    })
     .catch((err) => {
       // A stale archive beats an error page; only fail with nothing to serve.
       if (snapshot) {
@@ -192,14 +225,23 @@ async function current(): Promise<Snapshot> {
       throw err;
     })
     .finally(() => {
-      inflight = null;
+      // Only clear our own slot: an invalidate may already have detached us.
+      if (inflight === pending) inflight = null;
     });
-  return inflight;
+  inflight = pending;
+  return pending;
 }
 
-/** Drop the cached snapshot on this isolate (called after an approval). */
+/**
+ * Expire the cached snapshot on this isolate (called after an approval). It is
+ * expired, not dropped, so a Supabase error on the next read still falls back
+ * to the last good archive; an in-flight fetch is detached for the same reason
+ * a stale one is not kept (see `generation`).
+ */
 export function invalidateModelVariants(): void {
-  snapshot = null;
+  generation += 1;
+  if (snapshot) snapshot = { ...snapshot, loadedAt: 0 };
+  inflight = null;
 }
 
 export interface ModelVariantFilters {
