@@ -1,16 +1,15 @@
 /**
- * Integrity of the Model Variants seed, `data/modelVariants.json`.
+ * Integrity of the Model Variants seed, `docs/plans/data/2026-09-22-model-variants-seed.json`.
  *
  * The seed is the one-off artefact recovered from the Wayback copy of
  * austinminiwebsearch.com (design doc `docs/plans/2026-09-22-model-variants-archive.md`
- * §8). It is read by the pages, the sitemap and the `model-variants` MCP tool
- * through `server/utils/modelVariants.ts`, and it becomes the Phase 1 seed
- * migration in `classicminidiy-supabase`. These checks are the contract that
- * migration will assume: unique URL slugs, closed vocabularies, sane years,
- * source units, and a citation on every row.
+ * §8). It is the input to the seed migration `20260922000003` in
+ * classicminidiy-supabase and the fixture the read-side unit tests run on.
+ * These checks are the contract that migration assumed: unique URL slugs,
+ * closed vocabularies, sane years, source units, and a citation on every row.
  */
 import { describe, expect, it } from 'vitest';
-import rows from '../../data/modelVariants.json';
+import rows from '../../docs/plans/data/2026-09-22-model-variants-seed.json';
 import {
   KNOWN_ENGINE_CC,
   VARIANT_BODIES,
@@ -18,12 +17,12 @@ import {
   VARIANT_FUEL_SYSTEMS,
   VARIANT_MARKETS,
   VARIANT_MARQUES,
-  type ModelVariant,
+  type ModelVariantSeedRow,
 } from '../../data/models/variants';
 
-const seed = rows as unknown as ModelVariant[];
+const seed = rows as unknown as ModelVariantSeedRow[];
 
-describe('data/modelVariants.json', () => {
+describe('model variants seed', () => {
   it('has unique, URL-safe slugs', () => {
     const slugs = seed.map((v) => v.slug);
     expect(new Set(slugs).size).toBe(slugs.length);

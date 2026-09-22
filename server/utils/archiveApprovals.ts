@@ -19,7 +19,13 @@
  */
 
 /** Buckets `server/api/archive/upload.ts` is allowed to write to. */
-export const UPLOAD_BUCKETS = ['archive-documents', 'archive-thumbnails', 'archive-colors', 'archive-wheels'] as const;
+export const UPLOAD_BUCKETS = [
+  'archive-documents',
+  'archive-thumbnails',
+  'archive-colors',
+  'archive-wheels',
+  'archive-variants',
+] as const;
 
 /**
  * True only for URLs this app minted for THIS submission.

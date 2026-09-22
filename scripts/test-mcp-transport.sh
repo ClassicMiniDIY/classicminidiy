@@ -284,10 +284,6 @@ call_tool parts-equivalency '{"query":"K&N","limit":3}'
 # are all stripped before the lookup) as well as the transport.
 call_tool parts-lookup '{"partNumber":"12g-2994","limit":3}'
 call_tool vehicle-weights '{"section":"Electrics","limit":3}'
-# Bundled JSON today (data/modelVariants.json), so it is a plain call_tool; when
-# Phase 1 of docs/plans/2026-09-22-model-variants-archive.md moves it to Postgres
-# it joins call_tool_db_backed below.
-call_tool model-variants '{"query":"cooper s 1275","limit":3}'
 
 # The two archive tools read Postgres, so they can fail for a reason that has
 # nothing to do with the transport. This gate blocks deploys, and coupling that
@@ -317,8 +313,9 @@ call_tool_db_backed() {
 if [ -n "${SUPABASE_SERVICE_KEY:-}" ]; then
   call_tool_db_backed wheel-search '{"query":"minilite","limit":3}'
   call_tool_db_backed color-lookup '{"query":"green","limit":3}'
+  call_tool_db_backed model-variants '{"query":"cooper s 1275","limit":3}'
 else
-  note "wheel-search / color-lookup (set SUPABASE_SERVICE_KEY to run)"
+  note "wheel-search / color-lookup / model-variants (set SUPABASE_SERVICE_KEY to run)"
 fi
 
 echo

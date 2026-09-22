@@ -3,12 +3,13 @@ import type { Database } from '~~/types/database';
 type TargetType = Database['public']['Enums']['target_type_enum'];
 
 /**
- * The four contribution tiles in step 1 (design S8). `fix` is the odd one out:
+ * The contribution tiles in step 1 (design S8). `fix` is the odd one out:
  * it produces an `edit_suggestion` against an existing entry rather than a new
  * item, which is why the wizard carries `targetType`/`targetId` separately from
- * the tile choice.
+ * the tile choice. `variant` (Model Variants, design R3) is a new variant with
+ * no `targetId`, and a spec fix / colour fix / photo addition with one.
  */
-export type ContributionKind = 'document' | 'registry' | 'wheel' | 'fix';
+export type ContributionKind = 'document' | 'registry' | 'wheel' | 'variant' | 'fix';
 
 export interface ContributeWizardContext {
   /**
@@ -28,6 +29,13 @@ export interface ContributeWizardContext {
   requestTitle?: string | null;
   /** Where the launch happened, for analytics. */
   origin?: string;
+  /** `variant` only: which column (or 'photos' / 'colours') step 2 opens on. */
+  variantFocus?: string | null;
+  /**
+   * `variant` only: the entry's current values, keyed by column, so a spec fix
+   * shows CURRENT beside the correction; for a new variant, a prefill (e.g. mark).
+   */
+  currentValues?: Record<string, string> | null;
 }
 
 /**

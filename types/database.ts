@@ -2991,6 +2991,331 @@ export type Database = {
           },
         ];
       };
+      model_variant_colors: {
+        Row: {
+          color_id: string | null;
+          color_name: string;
+          created_at: string;
+          sort_order: number;
+          variant_id: string;
+          year_end: number | null;
+          year_start: number | null;
+        };
+        Insert: {
+          color_id?: string | null;
+          color_name: string;
+          created_at?: string;
+          sort_order?: number;
+          variant_id: string;
+          year_end?: number | null;
+          year_start?: number | null;
+        };
+        Update: {
+          color_id?: string | null;
+          color_name?: string;
+          created_at?: string;
+          sort_order?: number;
+          variant_id?: string;
+          year_end?: number | null;
+          year_start?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'model_variant_colors_color_id_fkey';
+            columns: ['color_id'];
+            isOneToOne: false;
+            referencedRelation: 'colors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'model_variant_colors_variant_id_fkey';
+            columns: ['variant_id'];
+            isOneToOne: false;
+            referencedRelation: 'model_variants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      model_variant_photos: {
+        Row: {
+          caption: string | null;
+          created_at: string;
+          credit: string | null;
+          id: string;
+          is_primary: boolean;
+          kind: Database['public']['Enums']['variant_photo_kind_enum'];
+          sort_order: number;
+          source: Json | null;
+          status: Database['public']['Enums']['moderation_status_enum'];
+          submitted_by: string | null;
+          updated_at: string;
+          url: string;
+          variant_id: string;
+        };
+        Insert: {
+          caption?: string | null;
+          created_at?: string;
+          credit?: string | null;
+          id?: string;
+          is_primary?: boolean;
+          kind?: Database['public']['Enums']['variant_photo_kind_enum'];
+          sort_order?: number;
+          source?: Json | null;
+          status?: Database['public']['Enums']['moderation_status_enum'];
+          submitted_by?: string | null;
+          updated_at?: string;
+          url: string;
+          variant_id: string;
+        };
+        Update: {
+          caption?: string | null;
+          created_at?: string;
+          credit?: string | null;
+          id?: string;
+          is_primary?: boolean;
+          kind?: Database['public']['Enums']['variant_photo_kind_enum'];
+          sort_order?: number;
+          source?: Json | null;
+          status?: Database['public']['Enums']['moderation_status_enum'];
+          submitted_by?: string | null;
+          updated_at?: string;
+          url?: string;
+          variant_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'model_variant_photos_submitted_by_fkey';
+            columns: ['submitted_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'model_variant_photos_submitted_by_fkey';
+            columns: ['submitted_by'];
+            isOneToOne: false;
+            referencedRelation: 'public_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'model_variant_photos_variant_id_fkey';
+            columns: ['variant_id'];
+            isOneToOne: false;
+            referencedRelation: 'model_variants';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      model_variants: {
+        Row: {
+          based_on_id: string | null;
+          body_style: Database['public']['Enums']['variant_body_enum'];
+          bore_mm: number | null;
+          brakes_front: string | null;
+          brakes_rear: string | null;
+          carburettor: string | null;
+          compression_ratio: number | null;
+          created_at: string;
+          description: string | null;
+          distinguishing: string[];
+          edition_size: number | null;
+          engine_cc: number | null;
+          engine_code: string | null;
+          engine_note: string | null;
+          family: Database['public']['Enums']['variant_family_enum'];
+          final_drive: number | null;
+          fuel_system: Database['public']['Enums']['variant_fuel_enum'] | null;
+          gearbox: string | null;
+          height_mm: number | null;
+          id: string;
+          is_limited_edition: boolean;
+          kerb_weight_kg: number | null;
+          legacy_submitted_by: string | null;
+          length_mm: number | null;
+          mark: number | null;
+          market: Database['public']['Enums']['variant_market_enum'];
+          marque: Database['public']['Enums']['variant_marque_enum'];
+          name: string;
+          notes: string | null;
+          power_bhp: number | null;
+          power_rpm: number | null;
+          power_standard: string | null;
+          production: Json;
+          production_total: number | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          slug: string;
+          source_images: Json;
+          source_slug: string | null;
+          sources: Json;
+          specs_source: Json;
+          status: Database['public']['Enums']['moderation_status_enum'];
+          stroke_mm: number | null;
+          submitted_by: string | null;
+          suspension: Database['public']['Enums']['variant_suspension_enum'] | null;
+          top_speed_mph: number | null;
+          torque_lbft: number | null;
+          torque_rpm: number | null;
+          tyres: string | null;
+          updated_at: string;
+          wheelbase_mm: number | null;
+          wheels: string | null;
+          width_mm: number | null;
+          year_end: number | null;
+          year_start: number | null;
+        };
+        Insert: {
+          based_on_id?: string | null;
+          body_style: Database['public']['Enums']['variant_body_enum'];
+          bore_mm?: number | null;
+          brakes_front?: string | null;
+          brakes_rear?: string | null;
+          carburettor?: string | null;
+          compression_ratio?: number | null;
+          created_at?: string;
+          description?: string | null;
+          distinguishing?: string[];
+          edition_size?: number | null;
+          engine_cc?: number | null;
+          engine_code?: string | null;
+          engine_note?: string | null;
+          family: Database['public']['Enums']['variant_family_enum'];
+          final_drive?: number | null;
+          fuel_system?: Database['public']['Enums']['variant_fuel_enum'] | null;
+          gearbox?: string | null;
+          height_mm?: number | null;
+          id?: string;
+          is_limited_edition?: boolean;
+          kerb_weight_kg?: number | null;
+          legacy_submitted_by?: string | null;
+          length_mm?: number | null;
+          mark?: number | null;
+          market?: Database['public']['Enums']['variant_market_enum'];
+          marque: Database['public']['Enums']['variant_marque_enum'];
+          name: string;
+          notes?: string | null;
+          power_bhp?: number | null;
+          power_rpm?: number | null;
+          power_standard?: string | null;
+          production?: Json;
+          production_total?: number | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          slug: string;
+          source_images?: Json;
+          source_slug?: string | null;
+          sources?: Json;
+          specs_source?: Json;
+          status?: Database['public']['Enums']['moderation_status_enum'];
+          stroke_mm?: number | null;
+          submitted_by?: string | null;
+          suspension?: Database['public']['Enums']['variant_suspension_enum'] | null;
+          top_speed_mph?: number | null;
+          torque_lbft?: number | null;
+          torque_rpm?: number | null;
+          tyres?: string | null;
+          updated_at?: string;
+          wheelbase_mm?: number | null;
+          wheels?: string | null;
+          width_mm?: number | null;
+          year_end?: number | null;
+          year_start?: number | null;
+        };
+        Update: {
+          based_on_id?: string | null;
+          body_style?: Database['public']['Enums']['variant_body_enum'];
+          bore_mm?: number | null;
+          brakes_front?: string | null;
+          brakes_rear?: string | null;
+          carburettor?: string | null;
+          compression_ratio?: number | null;
+          created_at?: string;
+          description?: string | null;
+          distinguishing?: string[];
+          edition_size?: number | null;
+          engine_cc?: number | null;
+          engine_code?: string | null;
+          engine_note?: string | null;
+          family?: Database['public']['Enums']['variant_family_enum'];
+          final_drive?: number | null;
+          fuel_system?: Database['public']['Enums']['variant_fuel_enum'] | null;
+          gearbox?: string | null;
+          height_mm?: number | null;
+          id?: string;
+          is_limited_edition?: boolean;
+          kerb_weight_kg?: number | null;
+          legacy_submitted_by?: string | null;
+          length_mm?: number | null;
+          mark?: number | null;
+          market?: Database['public']['Enums']['variant_market_enum'];
+          marque?: Database['public']['Enums']['variant_marque_enum'];
+          name?: string;
+          notes?: string | null;
+          power_bhp?: number | null;
+          power_rpm?: number | null;
+          power_standard?: string | null;
+          production?: Json;
+          production_total?: number | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          slug?: string;
+          source_images?: Json;
+          source_slug?: string | null;
+          sources?: Json;
+          specs_source?: Json;
+          status?: Database['public']['Enums']['moderation_status_enum'];
+          stroke_mm?: number | null;
+          submitted_by?: string | null;
+          suspension?: Database['public']['Enums']['variant_suspension_enum'] | null;
+          top_speed_mph?: number | null;
+          torque_lbft?: number | null;
+          torque_rpm?: number | null;
+          tyres?: string | null;
+          updated_at?: string;
+          wheelbase_mm?: number | null;
+          wheels?: string | null;
+          width_mm?: number | null;
+          year_end?: number | null;
+          year_start?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'model_variants_based_on_id_fkey';
+            columns: ['based_on_id'];
+            isOneToOne: false;
+            referencedRelation: 'model_variants';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'model_variants_reviewed_by_fkey';
+            columns: ['reviewed_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'model_variants_reviewed_by_fkey';
+            columns: ['reviewed_by'];
+            isOneToOne: false;
+            referencedRelation: 'public_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'model_variants_submitted_by_fkey';
+            columns: ['submitted_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'model_variants_submitted_by_fkey';
+            columns: ['submitted_by'];
+            isOneToOne: false;
+            referencedRelation: 'public_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       model_versions: {
         Row: {
           assembly: Json;
@@ -6642,9 +6967,18 @@ export type Database = {
       steering_wheel_type_enum: 'original' | 'momo' | 'moto_lita' | 'wood_rim' | 'sports' | 'custom' | 'other';
       submission_type_enum: 'new_item' | 'edit_suggestion' | 'new_collection';
       target_type_enum:
-        'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'model_version' | 'external_model' | 'listing';
+        | 'document'
+        | 'collection'
+        | 'registry'
+        | 'color'
+        | 'wheel'
+        | 'model_version'
+        | 'external_model'
+        | 'listing'
+        | 'variant';
       trust_level_enum: 'new' | 'contributor' | 'trusted' | 'moderator' | 'admin';
       underside_condition_enum: 'excellent' | 'good' | 'fair' | 'needs_work';
+      variant_body_enum: 'saloon' | 'estate' | 'van' | 'pickup' | 'moke' | 'cabriolet';
       variant_enum:
         | 'standard'
         | 'cooper'
@@ -6658,6 +6992,53 @@ export type Database = {
         | 'riley_elf'
         | 'wolseley_hornet'
         | 'other';
+      variant_family_enum:
+        | 'saloon'
+        | 'cooper'
+        | 'cooper_s'
+        | 'clubman'
+        | 'clubman_estate'
+        | '1275_gt'
+        | 'countryman_traveller'
+        | 'van'
+        | 'pickup'
+        | 'moke'
+        | 'elf_hornet'
+        | 'cabriolet'
+        | 'limited_edition'
+        | 'special';
+      variant_fuel_enum: 'carb_single' | 'carb_twin' | 'spi' | 'mpi';
+      variant_market_enum:
+        | 'uk'
+        | 'europe'
+        | 'italy'
+        | 'spain'
+        | 'france'
+        | 'germany'
+        | 'netherlands'
+        | 'switzerland'
+        | 'portugal'
+        | 'japan'
+        | 'south_africa'
+        | 'australia'
+        | 'new_zealand'
+        | 'venezuela'
+        | 'usa'
+        | 'other';
+      variant_marque_enum:
+        | 'austin'
+        | 'morris'
+        | 'austin_morris'
+        | 'mini'
+        | 'rover'
+        | 'innocenti'
+        | 'authi'
+        | 'riley'
+        | 'wolseley'
+        | 'leyland'
+        | 'other';
+      variant_photo_kind_enum: 'brochure' | 'factory' | 'period' | 'owner' | 'interior' | 'engine' | 'badge';
+      variant_suspension_enum: 'rubber_cone' | 'hydrolastic';
       vehicle_color:
         | 'red'
         | 'orange'
@@ -6920,9 +7301,11 @@ export const Constants = {
         'model_version',
         'external_model',
         'listing',
+        'variant',
       ],
       trust_level_enum: ['new', 'contributor', 'trusted', 'moderator', 'admin'],
       underside_condition_enum: ['excellent', 'good', 'fair', 'needs_work'],
+      variant_body_enum: ['saloon', 'estate', 'van', 'pickup', 'moke', 'cabriolet'],
       variant_enum: [
         'standard',
         'cooper',
@@ -6937,6 +7320,56 @@ export const Constants = {
         'wolseley_hornet',
         'other',
       ],
+      variant_family_enum: [
+        'saloon',
+        'cooper',
+        'cooper_s',
+        'clubman',
+        'clubman_estate',
+        '1275_gt',
+        'countryman_traveller',
+        'van',
+        'pickup',
+        'moke',
+        'elf_hornet',
+        'cabriolet',
+        'limited_edition',
+        'special',
+      ],
+      variant_fuel_enum: ['carb_single', 'carb_twin', 'spi', 'mpi'],
+      variant_market_enum: [
+        'uk',
+        'europe',
+        'italy',
+        'spain',
+        'france',
+        'germany',
+        'netherlands',
+        'switzerland',
+        'portugal',
+        'japan',
+        'south_africa',
+        'australia',
+        'new_zealand',
+        'venezuela',
+        'usa',
+        'other',
+      ],
+      variant_marque_enum: [
+        'austin',
+        'morris',
+        'austin_morris',
+        'mini',
+        'rover',
+        'innocenti',
+        'authi',
+        'riley',
+        'wolseley',
+        'leyland',
+        'other',
+      ],
+      variant_photo_kind_enum: ['brochure', 'factory', 'period', 'owner', 'interior', 'engine', 'badge'],
+      variant_suspension_enum: ['rubber_cone', 'hydrolastic'],
       vehicle_color: [
         'red',
         'orange',

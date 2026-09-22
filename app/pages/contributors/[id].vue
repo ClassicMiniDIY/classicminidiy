@@ -76,6 +76,7 @@
       model_version: 'fa-cube',
       external_model: 'fa-up-right-from-square',
       listing: 'fa-store',
+      variant: 'fa-car-side',
     };
     return icons[targetType] || 'fa-file';
   };

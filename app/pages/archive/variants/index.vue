@@ -147,15 +147,16 @@
       .filter(Boolean)
       .join(' · ');
 
-  const suggestVariant = (group?: string) => {
+  /** Opens the wizard on "new variant", pre-filling the mark when launched from a group tile. */
+  const suggestVariant = (groupKey?: string) => {
     track('contribute_cta_clicked', {
       type: 'variant',
-      location: group ? 'archive_variants_group' : 'archive_variants',
+      location: groupKey ? 'archive_variants_group' : 'archive_variants',
     });
     openWizard({
-      kind: 'fix',
+      kind: 'variant',
       origin: 'archive_variants',
-      targetTitle: group ? `Model Variants — ${group}` : 'Model Variants',
+      currentValues: groupKey && groupKey !== OVERSEAS_GROUP ? { mark: groupKey } : {},
     });
   };
 
@@ -360,7 +361,7 @@
           <button
             type="button"
             class="rounded-xl border border-dashed border-base-300 flex flex-col items-center justify-center gap-2 p-6 text-center opacity-80 hover:opacity-100 hover:border-secondary transition-colors min-h-40"
-            @click="suggestVariant(group.label)"
+            @click="suggestVariant(group.key)"
           >
             <i class="fas fa-plus text-xl text-secondary" aria-hidden="true"></i>
             <span class="text-sm font-semibold">{{ t('submit_tile', { group: group.label }) }}</span>

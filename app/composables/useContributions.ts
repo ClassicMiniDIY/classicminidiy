@@ -1,7 +1,16 @@
 export interface ContributionItem {
   id: string;
   action: 'submitted' | 'edited' | 'approved' | 'rejected';
-  targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'model_version' | 'external_model' | 'listing';
+  targetType:
+    | 'document'
+    | 'collection'
+    | 'registry'
+    | 'color'
+    | 'wheel'
+    | 'model_version'
+    | 'external_model'
+    | 'listing'
+    | 'variant';
   targetId: string;
   targetTitle: string | null;
   details: string | null;

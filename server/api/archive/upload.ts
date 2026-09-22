@@ -2,7 +2,13 @@ import { getServiceClient } from '../../utils/supabase';
 import { requireUserAuth } from '../../utils/userAuth';
 import { detectMimeFromMagic, generateSafeFilename, type DetectedMime } from '../../utils/uploadValidation';
 
-const ALLOWED_BUCKETS = ['archive-documents', 'archive-thumbnails', 'archive-colors', 'archive-wheels'] as const;
+const ALLOWED_BUCKETS = [
+  'archive-documents',
+  'archive-thumbnails',
+  'archive-colors',
+  'archive-wheels',
+  'archive-variants',
+] as const;
 type AllowedBucket = (typeof ALLOWED_BUCKETS)[number];
 
 interface BucketConfig {
@@ -26,6 +32,12 @@ const BUCKET_CONFIGS: Record<AllowedBucket, BucketConfig> = {
   'archive-wheels': {
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
     maxSizeBytes: 3 * 1024 * 1024,
+  },
+  // Model variant photos: brochure scans run larger than wheel snaps. The
+  // bucket's own file_size_limit (migration 20260922000004) is 5 MB too.
+  'archive-variants': {
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    maxSizeBytes: 5 * 1024 * 1024,
   },
 };
 

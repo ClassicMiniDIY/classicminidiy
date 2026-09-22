@@ -15,7 +15,7 @@
   interface QueueItem {
     id: string;
     type: 'new_item' | 'edit_suggestion' | 'new_collection';
-    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel';
+    targetType: 'document' | 'collection' | 'registry' | 'color' | 'wheel' | 'variant';
     targetId: string | null;
     status: 'pending' | 'approved' | 'rejected';
     data: Record<string, any>;
@@ -54,6 +54,7 @@
     { label: 'Registry', value: 'registry', icon: 'fad fa-clipboard-list' },
     { label: 'Colors', value: 'color', icon: 'fad fa-palette' },
     { label: 'Wheels', value: 'wheel', icon: 'fad fa-tire' },
+    { label: 'Variants', value: 'variant', icon: 'fad fa-car-side' },
   ];
 
   const statusFilters: StatusFilter[] = [
@@ -152,6 +153,8 @@
         return 'secondary';
       case 'collection':
         return 'info';
+      case 'variant':
+        return 'accent';
       default:
         return 'neutral';
     }
@@ -169,6 +172,8 @@
         return 'Wheel';
       case 'collection':
         return 'Collection';
+      case 'variant':
+        return 'Model variant';
       default:
         return targetType;
     }
@@ -289,6 +294,21 @@
           fields.push({ label: 'Body Number', value: data.bodyNum || data.body_number });
         if (data.color) fields.push({ label: 'Color', value: data.color });
         break;
+      case 'variant': {
+        const v = data.variant || {};
+        if (v.name) fields.push({ label: 'Name', value: v.name });
+        if (v.marque) fields.push({ label: 'Marque', value: v.marque });
+        if (v.year_start) fields.push({ label: 'Years', value: [v.year_start, v.year_end].filter(Boolean).join('–') });
+        if (v.engine_cc) fields.push({ label: 'Engine', value: `${v.engine_cc} cc` });
+        if (data.photo_kind) fields.push({ label: 'Photo kind', value: data.photo_kind });
+        if (data.photo_credit) fields.push({ label: 'Credit', value: data.photo_credit });
+        if (data.source?.title)
+          fields.push({
+            label: 'Source',
+            value: `${data.source.type}: ${data.source.title}${data.source.url ? ` (${data.source.url})` : ''}`,
+          });
+        break;
+      }
       case 'document':
         if (data.title) fields.push({ label: 'Title', value: data.title });
         if (data.type) fields.push({ label: 'Type', value: data.type });
