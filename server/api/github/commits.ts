@@ -1,8 +1,8 @@
 import { request } from '@octokit/request';
-import * as _ from 'lodash';
 import { DateTime } from 'luxon';
+import { ECU_MAPS_REPO, type EcuMapsCommit } from '../../../data/models/github';
 
-export default defineEventHandler(async (event): Promise<any> => {
+export default defineEventHandler(async (event): Promise<EcuMapsCommit[]> => {
   const config = useRuntimeConfig();
 
   // Set cache headers - cache for 30 minutes since GitHub data changes occasionally
@@ -19,12 +19,13 @@ export default defineEventHandler(async (event): Promise<any> => {
 
     // Define response type
     interface GitHubCommit {
+      sha: string;
       commit?: {
+        message?: string;
         committer?: {
           date?: string;
         };
       };
-      [key: string]: any;
     }
 
     interface GitHubResponse {
@@ -37,8 +38,8 @@ export default defineEventHandler(async (event): Promise<any> => {
         headers: {
           authorization: config.GITHUB_API_KEY,
         },
-        owner: 'SomethingNew71',
-        repo: 'MiniECUMaps',
+        owner: ECU_MAPS_REPO.owner,
+        repo: ECU_MAPS_REPO.repo,
         request: {
           timeout: 8000, // 8 second timeout
         },
@@ -46,11 +47,15 @@ export default defineEventHandler(async (event): Promise<any> => {
       timeoutPromise,
     ])) as GitHubResponse;
 
-    // Process the data
+    // Return only what /maps renders. The raw GitHub commit object (tree, parents,
+    // verification, author/committer users) is ~2 KB each and was serialized into
+    // the SSR payload for every page view.
     return response.data.map((item: GitHubCommit) => {
       const date = item?.commit?.committer?.date;
       return {
-        ...item,
+        sha: item.sha,
+        message: item?.commit?.message ?? '',
+        committedAt: date ?? null,
         date: date ? DateTime.fromISO(date).toFormat('LLL dd') : 'Missing',
       };
     });
