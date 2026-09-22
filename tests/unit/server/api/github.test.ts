@@ -137,6 +137,19 @@ describe('server/api/github/commits', () => {
     });
   });
 
+  it('keeps only the subject line of a multi-line commit message', async () => {
+    const commits = [makeCommit('m1', 'fix: subject\n\nLong body paragraph', '2024-01-15T10:30:00Z')];
+    mockRequest.mockResolvedValueOnce({ data: commits });
+    const result = await handler({});
+    expect(result[0].message).toBe('fix: subject');
+  });
+
+  it('does not set cache headers when the GitHub call fails', async () => {
+    mockRequest.mockRejectedValueOnce(new Error('boom'));
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 500 });
+    expect((globalThis as any).setResponseHeaders).not.toHaveBeenCalled();
+  });
+
   it('returns an empty message and null committedAt when commit data is missing', async () => {
     mockRequest.mockResolvedValueOnce({ data: [{ sha: 'bare' }] });
     const result = await handler({});
@@ -405,6 +418,12 @@ describe('server/api/github/releases', () => {
     mockRequest.mockResolvedValueOnce({ data: [release] });
     const result = await handler({});
     expect(result.latestRelease).toBeNull();
+  });
+
+  it('does not set cache headers when the GitHub call fails', async () => {
+    mockRequest.mockRejectedValueOnce(Object.assign(new Error('nope'), { status: 404 }));
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 404 });
+    expect((globalThis as any).setResponseHeaders).not.toHaveBeenCalled();
   });
 
   it('drops draft releases so an unpublished tag is never shown', async () => {

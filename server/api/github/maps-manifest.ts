@@ -1,4 +1,4 @@
-import { ECU_MAPS_REPO, type EcuMapsManifest } from '../../../data/models/github';
+import { ECU_MAPS_REPO, GITHUB_ROUTE_CACHE_HEADERS, type EcuMapsManifest } from '../../../data/models/github';
 
 /**
  * The /maps support table, read from maps.json on the ECU maps repo's main branch.
@@ -12,6 +12,8 @@ import { ECU_MAPS_REPO, type EcuMapsManifest } from '../../../data/models/github
  */
 const SUPPORTED_SCHEMA_VERSION = 1;
 const CACHE_TTL_MS = 30 * 60 * 1000;
+/** After a failed refresh, serve stale this long before trying GitHub again. */
+const RETRY_AFTER_FAILURE_MS = 60 * 1000;
 
 let cached: { manifest: EcuMapsManifest; expiresAt: number } | null = null;
 let inFlight: Promise<EcuMapsManifest> | null = null;
@@ -47,16 +49,9 @@ async function loadManifest(): Promise<EcuMapsManifest> {
   };
 }
 
-function setCacheHeaders(event: Parameters<typeof setResponseHeaders>[0]) {
-  setResponseHeaders(event, {
-    'Cache-Control': 'public, max-age=1800, s-maxage=1800',
-    'CDN-Cache-Control': 'public, max-age=1800',
-  });
-}
-
 export default defineEventHandler(async (event): Promise<EcuMapsManifest> => {
   if (cached && cached.expiresAt > Date.now()) {
-    setCacheHeaders(event);
+    setResponseHeaders(event, GITHUB_ROUTE_CACHE_HEADERS);
     return cached.manifest;
   }
 
@@ -74,12 +69,14 @@ export default defineEventHandler(async (event): Promise<EcuMapsManifest> => {
 
   try {
     const manifest = await inFlight;
-    setCacheHeaders(event);
+    setResponseHeaders(event, GITHUB_ROUTE_CACHE_HEADERS);
     return manifest;
   } catch (error: any) {
     console.error('Error getting ECU maps manifest:', error);
     if (cached) {
-      // Stale beats an empty table. Short max-age so the next request retries.
+      // Stale beats an empty table. Push the expiry out briefly so an outage costs one
+      // upstream timeout per minute, not one per page view.
+      cached.expiresAt = Date.now() + RETRY_AFTER_FAILURE_MS;
       setResponseHeaders(event, { 'Cache-Control': 'public, max-age=60' });
       return cached.manifest;
     }
