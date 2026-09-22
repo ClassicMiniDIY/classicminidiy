@@ -37,10 +37,13 @@
   const tab = ref<Tab>('variants');
 
   const toast = ref<{ type: 'success' | 'error'; text: string } | null>(null);
+  let toastSeq = 0;
   function flash(type: 'success' | 'error', text: string) {
+    const seq = ++toastSeq;
     toast.value = { type, text };
     setTimeout(() => {
-      if (toast.value?.text === text) toast.value = null;
+      // Only the latest message clears itself; a repeat restarts the timer.
+      if (seq === toastSeq) toast.value = null;
     }, 5000);
   }
   const errorText = (e: any, fallback: string) => e?.data?.statusMessage || e?.statusMessage || fallback;
@@ -139,6 +142,9 @@
     statusReason.value = '';
     try {
       const res = await $adminFetch<any>(`/api/admin/variants/${row.id}`);
+      // Closed, or another variant opened, while this one loaded: never bind
+      // one variant's fields to another's id.
+      if (editing.value?.id !== row.id) return;
       detail.value = res;
       const v = res.variant;
       const snapshot: Record<string, any> = {};
@@ -151,8 +157,25 @@
       original.value = { ...snapshot };
       coloursText.value = res.colours.map((c: any) => c.color_name).join(', ');
     } catch (e) {
+      if (editing.value?.id !== row.id) return;
       flash('error', errorText(e, 'Could not load the variant.'));
       editing.value = null;
+    }
+  }
+
+  /**
+   * Re-read photos and colours after a photo or colour action WITHOUT
+   * rebuilding the form, so unsaved field edits survive.
+   */
+  async function refreshDetailLists(id: string) {
+    try {
+      const res = await $adminFetch<any>(`/api/admin/variants/${id}`);
+      if (editing.value?.id !== id || !detail.value) return;
+      detail.value.photos = res.photos;
+      detail.value.colours = res.colours;
+      coloursText.value = res.colours.map((c: any) => c.color_name).join(', ');
+    } catch (e) {
+      flash('error', errorText(e, 'Saved, but could not reload the variant.'));
     }
   }
   const closeEdit = () => {
@@ -180,6 +203,7 @@
       });
       report(res, 'Variant saved.');
       original.value = { ...form };
+      if (detail.value) detail.value.variant.name = form.name;
       await refreshList();
     } catch (e) {
       flash('error', errorText(e, 'Could not save the variant.'));
@@ -216,7 +240,7 @@
         { method: 'PUT', body: { colours: coloursText.value } }
       );
       report(res, `Colours saved (${res.count}).`);
-      await openEdit({ id: editing.value.id } as VariantRow);
+      await refreshDetailLists(editing.value.id);
       await refreshList();
     } catch (e) {
       flash('error', errorText(e, 'Could not save the colours.'));
@@ -233,7 +257,7 @@
         body: { action },
       });
       report(res, action === 'primary' ? 'Primary photo set.' : action === 'hide' ? 'Photo hidden.' : 'Photo shown.');
-      if (editing.value) await openEdit({ id: editing.value.id } as VariantRow);
+      if (editing.value) await refreshDetailLists(editing.value.id);
       await refreshList();
     } catch (e) {
       flash('error', errorText(e, 'Could not update the photo.'));

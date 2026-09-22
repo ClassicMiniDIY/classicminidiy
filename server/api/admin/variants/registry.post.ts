@@ -7,7 +7,6 @@
  */
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
-import { getModelVariantById } from '../../../utils/modelVariants';
 import { auditVariantAction, UUID_RE } from '../../../utils/variantAdmin';
 
 export default defineEventHandler(async (event) => {
@@ -19,17 +18,32 @@ export default defineEventHandler(async (event) => {
   if (variantId !== null && !UUID_RE.test(variantId)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid variant' });
   }
-  // Only an approved (public) variant can be linked; the snapshot holds exactly those.
-  const variant = variantId ? await getModelVariantById(variantId) : null;
-  if (variantId && !variant) throw createError({ statusCode: 400, statusMessage: 'That variant is not public' });
-
   const db = getServiceClient();
-  const { data: entry } = await db
+  // Only an approved (public) variant can be linked. Read the row, not the
+  // per-isolate snapshot, so a variant hidden elsewhere a minute ago is refused.
+  let variant: { id: string; name: string } | null = null;
+  if (variantId) {
+    const { data, error: variantError } = await db
+      .from('model_variants')
+      .select('id, name')
+      .eq('id', variantId)
+      .eq('status', 'approved')
+      .maybeSingle();
+    if (variantError) throw createError({ statusCode: 500, statusMessage: variantError.message });
+    if (!data) throw createError({ statusCode: 400, statusMessage: 'That variant is not public' });
+    variant = data;
+  }
+
+  const { data: entry, error: entryError } = await db
     .from('registry_entries')
-    .select('id, year, model, variant_id, variant_match')
+    .select('id, year, model, variant_id, variant_match, status')
     .eq('id', entryId)
     .maybeSingle();
-  if (!entry) throw createError({ statusCode: 404, statusMessage: 'Registry entry not found' });
+  if (entryError) throw createError({ statusCode: 500, statusMessage: entryError.message });
+  // The tab lists approved cars only; the route holds the same line.
+  if (!entry || entry.status !== 'approved') {
+    throw createError({ statusCode: 404, statusMessage: 'Registry entry not found' });
+  }
 
   const { error } = await db
     .from('registry_entries')

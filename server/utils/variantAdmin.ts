@@ -116,8 +116,3 @@ export async function auditVariantAction(
 }
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Escape PostgREST ilike wildcards so a colour name matches literally. */
-export function literalIlike(value: string): string {
-  return value.trim().replace(/[\\%_]/g, (c) => `\\${c}`);
-}

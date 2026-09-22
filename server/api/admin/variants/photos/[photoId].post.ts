@@ -23,11 +23,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = getServiceClient();
-  const { data: photo } = await db
+  const { data: photo, error: readError } = await db
     .from('model_variant_photos')
     .select('id, variant_id, url, status, is_primary')
     .eq('id', photoId)
     .maybeSingle();
+  if (readError) throw createError({ statusCode: 500, statusMessage: readError.message });
   if (!photo) throw createError({ statusCode: 404, statusMessage: 'Photo not found' });
 
   let error;
@@ -35,12 +36,36 @@ export default defineEventHandler(async (event) => {
     if (photo.status !== 'approved') {
       throw createError({ statusCode: 400, statusMessage: 'Show the photo before making it primary' });
     }
-    ({ error } = await db
+    // Two statements (PostgREST has no conditional SET): clear, then set.
+    // If the set fails, put the old primary back so the variant is never left
+    // without one because of this request.
+    const { data: cleared, error: clearError } = await db
       .from('model_variant_photos')
       .update({ is_primary: false })
       .eq('variant_id', photo.variant_id)
-      .eq('is_primary', true));
-    if (!error) ({ error } = await db.from('model_variant_photos').update({ is_primary: true }).eq('id', photoId));
+      .eq('is_primary', true)
+      .select('id');
+    error = clearError;
+    if (!error) {
+      ({ error } = await db.from('model_variant_photos').update({ is_primary: true }).eq('id', photoId));
+      if (error && cleared?.length) {
+        await db
+          .from('model_variant_photos')
+          .update({ is_primary: true })
+          .in(
+            'id',
+            cleared.map((r: { id: string }) => r.id)
+          );
+      }
+      // model_variant_photos_one_primary: another admin set a primary between
+      // our two statements. Nothing is half-done; ask for a retry.
+      if (error?.code === '23505') {
+        throw createError({
+          statusCode: 409,
+          statusMessage: "Another change to this variant's photos landed first. Reload and try again.",
+        });
+      }
+    }
   } else {
     ({ error } = await db
       .from('model_variant_photos')

@@ -160,29 +160,34 @@ async function resolveColourIds(db: Db, names: string[]): Promise<Map<string, st
  * Make the variant's colour set exactly `names`, without a window in which it
  * is empty: upsert the new list on the (variant_id, color_name) key first,
  * then delete only the names that dropped out. A failure part-way leaves the
- * old and new names together, never none.
+ * old and new names together, never none. A kept name keeps its existing
+ * `color_id`: an admin may have linked it by hand to a colour whose name
+ * differs, and re-saving the list must not undo that.
  */
 export async function replaceColours(db: Db, variantId: string, names: string[]): Promise<string | null> {
+  const { data: existing, error: readError } = await db
+    .from('model_variant_colors')
+    .select('color_name, color_id')
+    .eq('variant_id', variantId);
+  if (readError) return readError.message;
+  const linked = new Map<string, string | null>(
+    (existing ?? []).map((r: { color_name: string; color_id: string | null }) => [r.color_name, r.color_id])
+  );
   const ids = await resolveColourIds(db, names);
   if (names.length) {
     const { error } = await db.from('model_variant_colors').upsert(
       names.map((name, i) => ({
         variant_id: variantId,
         color_name: name,
-        color_id: ids.get(name.trim().toLowerCase()) ?? null,
+        color_id: linked.get(name) ?? ids.get(name.trim().toLowerCase()) ?? null,
         sort_order: i,
       })),
       { onConflict: 'variant_id,color_name' }
     );
     if (error) return error.message;
   }
-  const { data: existing, error: readError } = await db
-    .from('model_variant_colors')
-    .select('color_name')
-    .eq('variant_id', variantId);
-  if (readError) return readError.message;
   const keep = new Set(names);
-  const drop = (existing ?? []).map((r: { color_name: string }) => r.color_name).filter((n: string) => !keep.has(n));
+  const drop = [...linked.keys()].filter((n) => !keep.has(n));
   if (!drop.length) return null;
   const { error } = await db.from('model_variant_colors').delete().eq('variant_id', variantId).in('color_name', drop);
   return error?.message ?? null;

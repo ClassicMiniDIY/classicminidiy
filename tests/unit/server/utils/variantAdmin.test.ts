@@ -9,7 +9,6 @@ vi.mock('../../../../server/utils/modelVariants', async (orig) => ({
 import {
   ADMIN_VARIANT_COLUMNS,
   auditVariantAction,
-  literalIlike,
   validateAdminVariantChanges,
 } from '../../../../server/utils/variantAdmin';
 import { invalidateModelVariants } from '../../../../server/utils/modelVariants';
@@ -94,8 +93,44 @@ describe('auditVariantAction', () => {
   });
 });
 
-describe('literalIlike', () => {
-  it('escapes PostgREST wildcards so a name matches literally', () => {
-    expect(literalIlike(' 100%_Red ')).toBe('100\\%\\_Red');
+describe('replaceColours', () => {
+  it('keeps a hand-made link on a kept name and prunes dropped names', async () => {
+    const { replaceColours } = await import('../../../../server/utils/variantApprovals');
+    const upsert = vi.fn(async () => ({ error: null }));
+    const del = vi.fn();
+    const chain = (result: unknown) => {
+      const c: any = {};
+      for (const m of ['select', 'eq', 'order', 'range', 'in']) c[m] = vi.fn(() => c);
+      c.then = (ok: (v: unknown) => unknown) => Promise.resolve(result).then(ok);
+      return c;
+    };
+    const db: any = {
+      from: vi.fn((table: string) => {
+        if (table === 'colors') return chain({ data: [{ id: 'auto-red', name: 'Tartan Red' }], error: null });
+        return {
+          ...chain({
+            data: [
+              { color_name: 'Tweed Grey', color_id: 'hand-linked' },
+              { color_name: 'Old Gold', color_id: null },
+            ],
+            error: null,
+          }),
+          upsert,
+          delete: () => {
+            del();
+            return chain({ error: null });
+          },
+        };
+      }),
+    };
+    expect(await replaceColours(db, 'v1', ['Tweed Grey', 'Tartan Red'])).toBeNull();
+    expect(upsert).toHaveBeenCalledWith(
+      [
+        { variant_id: 'v1', color_name: 'Tweed Grey', color_id: 'hand-linked', sort_order: 0 },
+        { variant_id: 'v1', color_name: 'Tartan Red', color_id: 'auto-red', sort_order: 1 },
+      ],
+      { onConflict: 'variant_id,color_name' }
+    );
+    expect(del).toHaveBeenCalledOnce();
   });
 });

@@ -20,11 +20,7 @@ export default defineEventHandler(async (event) => {
   if (!valid.ok) throw createError({ statusCode: 400, statusMessage: valid.error });
 
   const db = getServiceClient();
-  const { data: before, error: readError } = await db
-    .from('model_variants')
-    .select('id, slug, name, year_start, year_end')
-    .eq('id', id)
-    .maybeSingle();
+  const { data: before, error: readError } = await db.from('model_variants').select('*').eq('id', id).maybeSingle();
   if (readError) throw createError({ statusCode: 500, statusMessage: readError.message });
   if (!before) throw createError({ statusCode: 404, statusMessage: 'Variant not found' });
 
@@ -43,7 +39,9 @@ export default defineEventHandler(async (event) => {
     // Readable for the one constraint an admin can hit by renaming.
     const msg = error.message.includes('model_variants_identity_unique')
       ? 'Another variant already has this marque, name and first year'
-      : error.message;
+      : error.message.includes('model_variants_years_ordered')
+        ? 'The years are out of order; set the first year as well'
+        : error.message;
     throw createError({ statusCode: 400, statusMessage: msg });
   }
 
@@ -51,6 +49,10 @@ export default defineEventHandler(async (event) => {
     slug: before.slug,
     name: before.name,
     fields: Object.keys(valid.updates),
+    // Reversible: the value each field held before, and what it became.
+    changes: Object.fromEntries(
+      Object.entries(valid.updates).map(([k, to]) => [k, { from: (before as Record<string, unknown>)[k] ?? null, to }])
+    ),
   });
   return { success: true, warning: auditError };
 });
