@@ -349,7 +349,7 @@ Production                    AUSTIN: 12395 ex, MORRIS: 12465 ex
 Couleurs / Colors             Island Blue, Almond Green, …
 ```
 
-plus a title line (name + mark), a year range, and one to three brochure photos.
+plus a title line (name + mark), a year range, and one to eight brochure photos.
 Limited-edition pages add an edition size and sometimes a paragraph of prose.
 
 ### 8.3 Pipeline and outputs
@@ -382,8 +382,12 @@ Distribution: 76 limited editions; marques mini 47, rover 37, austin 18, innocen
 austin_morris 8, authi 6, leyland 6, wolseley 2, riley 1, morris 1, other 4 (IMA,
 Koelliker, JCG prototype, Monza); markets uk 101, italy 11, spain 6, germany 6, france 4,
 south_africa 3, plus nl/jp/ve/nz/au/ch/pt. 187 distinct colour names for §1.3
-resolution. 551 image references, fetched through the `im_` Wayback endpoint into a
-tarball held outside the repo (§8.4).
+resolution. 551 image references (532 distinct files), but **the Wayback Machine only
+captured 72 of them**: the 2023 page crawl did not fetch the photos, and the domain has
+been parked since 2026. Each seed image carries `archived: true|false` and, when true,
+the exact capture URL and `local_file`. The 72 recovered files (84 references across
+38 variants) are in a tarball held outside the repo (§8.4). The other 460 are lost unless a contributor has the brochure; the photo
+contribution flow (§2) is the recovery path.
 
 The derived classification columns are heuristics from the page titles. Expect the
 first contributions to be corrections to `market`, `family` and `mark` on the
@@ -397,7 +401,7 @@ precedent:
 
 - Import specs as data with `legacy_submitted_by = 'austinminiwebsearch.com'` and a
   `sources` entry to the Wayback URL on every row.
-- Import photos into `model_variant_photos` with `kind = 'brochure'`,
+- Import the 72 recovered photos into `model_variant_photos` with `kind = 'brochure'`,
   `credit = 'via austinminiwebsearch.com (Wayback Machine)'`, and the Wayback URL in
   `source`. Photos render with the credit line. A takedown is one `status = 'rejected'`
   update.
