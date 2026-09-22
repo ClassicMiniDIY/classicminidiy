@@ -305,7 +305,7 @@ def main():
             free_text=(r["free_text"] or None),
             engine_note=("multiple engine options listed" if multi else None),
             specs_source=specs_src,
-            images=[{"original_url": u, "wayback_url": WAYBACK + "im_/" + u, "alt": a} for u, a in zip(r["images"], r["image_alts"] + [""] * len(r["images"]))],
+            images=[{"original_url": u, "wayback_url": WAYBACK.replace("/20230129061027/", "/20230129061027im_/") + u, "alt": a} for u, a in zip(r["images"], r["image_alts"] + [""] * len(r["images"]))],
             sources=[{"type": "web_archive", "title": "austinminiwebsearch.com — " + name_line, "url": WAYBACK + r["source_url"], "accessed": ACCESSED}],
             legacy_submitted_by="austinminiwebsearch.com",
         )
