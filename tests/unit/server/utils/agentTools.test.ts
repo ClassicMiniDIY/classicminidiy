@@ -75,7 +75,7 @@ describe('unwrapToolResult', () => {
 describe('buildMcpTools', () => {
   const tools = buildMcpTools();
 
-  it('exposes all twelve reference tools', () => {
+  it('exposes all thirteen reference tools', () => {
     expect(AGENT_MCP_TOOL_NAMES).toEqual([
       'chassis-decoder',
       'clearances',
@@ -83,6 +83,7 @@ describe('buildMcpTools', () => {
       'compression-calculator',
       'engine-decoder',
       'gearbox-calculator',
+      'model-variants',
       'needle-compare',
       'parts-equivalency',
       'parts-lookup',
@@ -93,11 +94,11 @@ describe('buildMcpTools', () => {
     expect(Object.keys(tools).sort()).toEqual(AGENT_MCP_TOOL_NAMES);
   });
 
-  it('includes the four paid-only tools', () => {
+  it('includes the five paid-only tools', () => {
     // The Developer API paywall gates third-party programmatic access, not the
     // site's own assistant. Wrapping this registry in the mcp-tiering gate would
     // silently remove identification and archive lookups from the chat.
-    for (const name of ['chassis-decoder', 'engine-decoder', 'wheel-search', 'color-lookup']) {
+    for (const name of ['chassis-decoder', 'engine-decoder', 'wheel-search', 'color-lookup', 'model-variants']) {
       expect(tools[name], `${name} must be available to the chat agent`).toBeDefined();
     }
   });

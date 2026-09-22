@@ -40,7 +40,7 @@ def slugify(s):
 
 def parse_years(lines):
     text = " ".join(lines)
-    m = re.search(r"(\d{4})\s*-\s*(\d{4})", text)
+    m = re.search(r"\b(19[5-9]\d|2000)\s*-\s*(19[5-9]\d|2000)\b", text)
     if m:
         return int(m.group(1)), int(m.group(2))
     m = re.search(r"\b(19[5-9]\d|2000)\b", text)

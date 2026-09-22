@@ -55,7 +55,7 @@ never remove those redirects.
   Payments: Stripe one-time listing upgrades (`listing_promotions`), Stripe Billing
   membership (`subscriptions`), Stripe Connect model sales; three distinct products.
 - AI: `/api/chat` runs the agent IN this Worker (Vercel AI SDK v7 + Anthropic) and calls
-  the twelve `/mcp` tools in-process. `/mcp` is one JSON-RPC endpoint served by
+  the thirteen `/mcp` tools in-process. `/mcp` is one JSON-RPC endpoint served by
   `@nuxtjs/mcp-toolkit` from `server/mcp/tools/*.ts` (filename = tool name), Bearer auth
   in `server/middleware/mcp-auth.ts`. There are no `/api/mcp/*` or `server/api/langgraph`
   routes any more.
@@ -186,6 +186,7 @@ per-component `<i18n lang="json">` blocks.
 | `testing.md`          | `tests/**`, configs, `package.json`            | tiers, shrink-only lists, Playwright, pins                                    |
 | `models-3d.md`        | `/models`, `server/api/models`                 | Bearer, edge-fn proxies, Connect, entitlement                                 |
 | `parts-archive.md`    | `/archive/parts`, `/admin/parts`, `part_*` API | kill switch + `is_current`, PostgREST caps, search allowlist, hotspot fill    |
+| `model-variants.md`   | `/archive/variants`, its api, tool, seed       | one read path, seed provenance, source units, SSR index, hosted photos only   |
 
 Design docs in `docs/plans/`, runbooks in `docs/runbooks/`. Membership contract:
 `classicminidiy-supabase/docs/plans/2026-06-07-membership-entitlement-contract.md`.

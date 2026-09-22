@@ -25,6 +25,16 @@
     if (searchTimeout) clearTimeout(searchTimeout);
   });
 
+  // `/archive/variants/[slug]` links each factory colour here as `?q=<name>`.
+  // This page is prerendered, so the query may only reach the template after
+  // hydration: seeding `search` during setup would make the baked HTML and the
+  // client's first render disagree (the hydration rule in CLAUDE.md).
+  const route = useRoute();
+  onMounted(() => {
+    const q = Array.isArray(route.query.q) ? route.query.q[0] : route.query.q;
+    if (typeof q === 'string' && q.trim()) search.value = q.trim();
+  });
+
   // Build all images for a color (swatch + community photos) for carousel
   const getColorImages = (color: Color): string[] => {
     const images: string[] = [];
