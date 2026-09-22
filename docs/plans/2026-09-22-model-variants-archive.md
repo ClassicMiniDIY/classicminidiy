@@ -468,3 +468,25 @@ the column-grant regime.
 
 Archive gaps the registry exposed (contribution targets): a Mk2 Countryman/Traveller,
 the Australian Cooper S, the 1995 UK Kensington and Tartan editions.
+
+## 12. Gaps filled and admin management (2026-09-23)
+
+- **Gaps filled** by `classicminidiy-supabase` migration `20260923000002`: a Mk2
+  Countryman/Traveller, the Australian Mk1 and Mk2 Cooper S, and the Sidewalk
+  renamed "Sidewalk / Tartan" (one UK run under two names). The Kensington is a
+  1996–1997 continental edition, so the 1995 Kensington car in the registry stays
+  unlinked until an admin decides; the archive now has 144 variants.
+- **`/admin/variants`** (Review group in `AdminShell`) has three tabs:
+  - _Variants_: every variant in any status. Manage opens the full record:
+    classification and spec fields, `distinguishing`, hide/restore (with a reason),
+    photo primary/hide/show, and the colour list.
+  - _Registry links_: every approved registry car, its link and the matcher's top
+    three suggestions. An admin link is stored as `reviewed`; clearing nulls both
+    columns.
+  - _Colour links_: each colour name (case-insensitive) with how many rows point at
+    an archive colour; one action links or unlinks every row with that name.
+- **Boundaries.** Admin edits pass `ADMIN_VARIANT_COLUMNS` in
+  `server/utils/variantAdmin.ts`: the contributor allowlist plus classification.
+  `status`, `slug`, `sources` and provenance columns are never in it; status has
+  its own route that records `reviewed_by`. Every write lands in `admin_audit_log`
+  and expires the read-path cache.

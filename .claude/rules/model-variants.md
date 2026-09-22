@@ -4,6 +4,9 @@ paths:
   - 'app/composables/useModelVariants.ts'
   - 'server/utils/modelVariants.ts'
   - 'server/utils/variantApprovals.ts'
+  - 'server/utils/variantAdmin.ts'
+  - 'server/api/admin/variants/**'
+  - 'app/pages/admin/variants.vue'
   - 'server/api/archive/variants/**'
   - 'server/api/__sitemap__/variants.ts'
   - 'server/mcp/tools/model-variants.ts'
@@ -50,5 +53,11 @@ Schema (`model_variants`, `model_variant_photos`, `model_variant_colors`) lives 
   (`resolveRegistryVariant`: owner's pick, else confident `auto` only) and the wizard's
   suggestions. Never auto-link an unconfident score; unlinked is correct. A new
   `registry_entries` column needs a per-column `GRANT SELECT` in the private repo.
+- **Admin writes go through `/api/admin/variants/**`** (page `/admin/variants`). Edits are
+  limited to `ADMIN_VARIANT_COLUMNS` (`server/utils/variantAdmin.ts`); `status`, `slug`,
+  `sources` and provenance never join it. Every route writes `admin_audit_log` through
+  `auditVariantAction`, which also calls `invalidateModelVariants()`. An admin registry
+  link is `variant_match = 'reviewed'`; a colour-name link matches rows with
+  `literalIlike` (escaped `%`/`_`), never a raw `ilike`.
 - **The seed normaliser drops extra header names** (see its docstring). Never regenerate
   the seed from it without re-applying migration `20260923000001`'s corrections.
