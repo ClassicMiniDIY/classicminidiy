@@ -8,6 +8,9 @@ paths:
   - 'server/api/__sitemap__/variants.ts'
   - 'server/mcp/tools/model-variants.ts'
   - 'data/models/variants.ts'
+  - 'shared/utils/variantMatch.ts'
+  - 'app/components/RegistryTable.vue'
+  - 'app/composables/useRegistry.ts'
 ---
 
 # Model Variants archive (`/archive/variants`)
@@ -42,3 +45,10 @@ Schema (`model_variants`, `model_variant_photos`, `model_variant_colors`) lives 
   the credit. A takedown is `status = 'rejected'` on the row.
 - **The MCP tool is paid** (`PAID_ONLY_TOOLS`) and always available to `/chat` through
   `buildAgentTools()`. It is a `call_tool_db_backed` check in the transport script.
+- **Registry cars link through `registry_entries.variant_id`** (`variant_match` says how).
+  One matcher, `shared/utils/variantMatch.ts`, serves the backfill, the approve route
+  (`resolveRegistryVariant`: owner's pick, else confident `auto` only) and the wizard's
+  suggestions. Never auto-link an unconfident score; unlinked is correct. A new
+  `registry_entries` column needs a per-column `GRANT SELECT` in the private repo.
+- **The seed normaliser drops extra header names** (see its docstring). Never regenerate
+  the seed from it without re-applying migration `20260923000001`'s corrections.

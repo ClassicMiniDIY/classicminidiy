@@ -436,3 +436,35 @@ and the design file is the visual one.
 5. ~~Tier for the MCP tool~~ **Decided 2026-09-22:** paid for direct `/mcp` key access
    (`PAID_ONLY_TOOLS`), and always available to the `/chat` agent through
    `buildAgentTools()`, which is not tier-gated. Same as `color-lookup`.
+
+## 11. Registry cars linked to variants (shipped 2026-09-23)
+
+Design R2's "Owners' registry — N on the road". `registry_entries` gains `variant_id`
+and `variant_match` (`auto` | `reviewed` | `owner`, paired by a CHECK) in
+classicminidiy-supabase `20260923000001`, granted per column because that table is in
+the column-grant regime.
+
+- **One matcher**, `shared/utils/variantMatch.ts`, used by the backfill, the approve
+  route and the wizard. Year, named-edition words, family, body and marque are the
+  strong signals; the engine field is weak (owners fit bigger engines) except on a
+  Cooper or Cooper S, where the capacity is the variant. A limited edition only wins
+  with its own name in the text. `confident` needs a year and a clear margin.
+- **Backfill.** All 43 approved registry cars were scored and every result reviewed by
+  hand: 32 auto links kept, 1 human decision (a Morris-badged 1969 van), 2 confident
+  scores overruled (a Mk2 Countryman and an Australian Cooper S, neither in the
+  archive), 10 unlinked in all.
+- **Seed corrections found on the way.** 21 source pages list several names and year
+  ranges; the normaliser kept only the first line ("Austin Seven" ended in 1961 and
+  the Austin Mini did not exist). The same migration restores full names and spans
+  from the same captured pages; slugs did not change. The other names are in
+  `distinguishing` and shown under the title.
+- **New registry cars.** The wizard's registry form offers "Which model is it?" with
+  the matcher's suggestions first; the approve route stores the owner's pick
+  (`owner`), else links only a confident match (`auto`).
+- **Surfaces.** Variant pages show the count, up to eight cars and a link to
+  `/archive/registry?variant=<slug>`; index cards show "N registered"; the registry
+  table links each car to its variant; the MCP tool returns `registered_on_site` and
+  `also_sold_as`.
+
+Archive gaps the registry exposed (contribution targets): a Mk2 Countryman/Traveller,
+the Australian Cooper S, the 1995 UK Kensington and Tartan editions.

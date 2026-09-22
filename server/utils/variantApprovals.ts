@@ -22,7 +22,8 @@
  *   photos        { photo_kind, photo_caption?, photo_credit? } + uploadedFiles
  */
 import { isOwnUploadUrl } from './archiveApprovals';
-import { invalidateModelVariants } from './modelVariants';
+import { invalidateModelVariants, loadModelVariants, toModelVariantCard } from './modelVariants';
+import { matchRegistryToVariant } from '../../shared/utils/variantMatch';
 import {
   MARK_RANGES,
   VARIANT_BODIES,
@@ -366,4 +367,41 @@ export async function applyVariantEdit(
   }
   invalidateModelVariants();
   return null;
+}
+
+/**
+ * The Model Variant a newly approved REGISTRY car links to.
+ *
+ * The owner's pick (`data.variantSlug`, from the wizard) wins when it names an
+ * approved variant; otherwise the shared matcher links only a confident match
+ * (`auto`). Anything else stays unlinked for a human. Never throws: a registry
+ * approval must not fail because the variants archive is unreachable.
+ */
+export async function resolveRegistryVariant(
+  data: Record<string, any>
+): Promise<{ variant_id: string; variant_match: 'owner' | 'auto' } | Record<string, never>> {
+  let rows;
+  try {
+    rows = await loadModelVariants();
+  } catch {
+    return {};
+  }
+  const slug = typeof data.variantSlug === 'string' ? data.variantSlug : null;
+  const picked = slug ? rows.find((v) => v.slug === slug) : undefined;
+  if (picked) return { variant_id: picked.id, variant_match: 'owner' };
+
+  const year = Number(data.year);
+  const { best, confident } = matchRegistryToVariant(
+    {
+      year: Number.isFinite(year) && year > 0 ? year : null,
+      model: typeof data.model === 'string' ? data.model : null,
+      trim: typeof data.trim === 'string' ? data.trim : null,
+      engine_size: Number(data.engineSize ?? data.engine_size) || null,
+      body_type: typeof (data.bodyType ?? data.body_type) === 'string' ? (data.bodyType ?? data.body_type) : null,
+    },
+    rows.map(toModelVariantCard)
+  );
+  if (!confident || !best) return {};
+  const match = rows.find((v) => v.slug === best.slug);
+  return match ? { variant_id: match.id, variant_match: 'auto' } : {};
 }

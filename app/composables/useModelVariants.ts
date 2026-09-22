@@ -19,6 +19,8 @@ export interface ModelVariantListResponse {
 export interface ModelVariantDetailResponse {
   variant: ModelVariant;
   related: ModelVariantCard[];
+  /** Up to 8 approved registry cars linked to this variant; `variant.registered_count` is the total. */
+  registry: { id: string; year: number | null; model: string | null; color: string | null; trim: string | null }[];
 }
 
 /**

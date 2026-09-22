@@ -10,6 +10,8 @@
     loading?: boolean;
     tableHeaders?: { title: string; key: string; width?: string }[];
     defaultPageSize?: number;
+    /** Only cars linked to this Model Variant (from `/archive/registry?variant=`). */
+    variantSlug?: string | null;
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -89,8 +91,8 @@
   const filteredItems = computed(() => {
     if (!props.items) return null;
 
-    // First filter by search term if provided
-    let result = props.items;
+    // First filter by variant, then by search term if provided
+    let result = props.variantSlug ? props.items.filter((item) => item.variantSlug === props.variantSlug) : props.items;
     if (debouncedSearch.value) {
       const search = debouncedSearch.value.toLowerCase();
       result = result.filter((item) => {
@@ -279,6 +281,18 @@
                         {{ getStatusText(item.status) }}
                       </span>
                     </template>
+                    <template v-else-if="header.key === 'model'">
+                      {{ item.model || t('no_data') }}
+                      <NuxtLink
+                        v-if="item.variantSlug"
+                        :to="`/archive/variants/${item.variantSlug}`"
+                        class="block text-xs font-semibold text-primary no-underline hover:underline"
+                        :title="t('variant_link_title')"
+                        @click.stop
+                      >
+                        <i class="fas fa-car-side" aria-hidden="true"></i> {{ item.variantName }}
+                      </NuxtLink>
+                    </template>
                     <template v-else>{{ item[header.key] || t('no_data') }}</template>
                   </td>
                 </tr>
@@ -439,7 +453,8 @@
       "field_notes": "Notes"
     },
     "no_items_found": "No items found",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "Open this model in the Model Variants archive"
   },
   "de": {
     "search_placeholder": "Suche nach beliebigen Details",
@@ -474,7 +489,8 @@
       "field_notes": "Notizen"
     },
     "no_items_found": "Keine Elemente gefunden",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "Dieses Modell im Modellvarianten-Archiv öffnen"
   },
   "es": {
     "search_placeholder": "Buscar cualquier detalle",
@@ -509,7 +525,8 @@
       "field_notes": "Notas"
     },
     "no_items_found": "No se encontraron elementos",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "Abrir este modelo en el archivo de variantes"
   },
   "fr": {
     "search_placeholder": "Rechercher n'importe quel détail",
@@ -544,7 +561,8 @@
       "field_notes": "Notes"
     },
     "no_items_found": "Aucun élément trouvé",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "Ouvrir ce modèle dans l'archive des variantes"
   },
   "it": {
     "search_placeholder": "Cerca qualsiasi dettaglio",
@@ -579,7 +597,8 @@
       "field_notes": "Note"
     },
     "no_items_found": "Nessun elemento trovato",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "Apri questo modello nell'archivio delle varianti"
   },
   "pt": {
     "search_placeholder": "Pesquisar por qualquer detalhe",
@@ -614,7 +633,8 @@
       "field_notes": "Notas"
     },
     "no_items_found": "Nenhum item encontrado",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "Abrir este modelo no arquivo de variantes"
   },
   "ru": {
     "search_placeholder": "Поиск по любым деталям",
@@ -649,7 +669,8 @@
       "field_notes": "Примечания"
     },
     "no_items_found": "Элементы не найдены",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "Открыть модель в архиве модификаций"
   },
   "ja": {
     "search_placeholder": "詳細を検索",
@@ -684,7 +705,8 @@
       "field_notes": "備考"
     },
     "no_items_found": "項目が見つかりません",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "このモデルをモデルバリエーションで開く"
   },
   "zh": {
     "search_placeholder": "搜索任何详细信息",
@@ -719,7 +741,8 @@
       "field_notes": "备注"
     },
     "no_items_found": "未找到项目",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "在车型变体档案中打开此车型"
   },
   "ko": {
     "search_placeholder": "모든 세부사항 검색",
@@ -754,7 +777,8 @@
       "field_notes": "메모"
     },
     "no_items_found": "항목을 찾을 수 없습니다",
-    "no_data": "---"
+    "no_data": "---",
+    "variant_link_title": "모델 변형 아카이브에서 이 모델 열기"
   }
 }
 </i18n>

@@ -4900,6 +4900,8 @@ export type Database = {
           submitted_by: string | null;
           trim: string | null;
           updated_at: string;
+          variant_id: string | null;
+          variant_match: string | null;
           year: number;
         };
         Insert: {
@@ -4925,6 +4927,8 @@ export type Database = {
           submitted_by?: string | null;
           trim?: string | null;
           updated_at?: string;
+          variant_id?: string | null;
+          variant_match?: string | null;
           year: number;
         };
         Update: {
@@ -4950,6 +4954,8 @@ export type Database = {
           submitted_by?: string | null;
           trim?: string | null;
           updated_at?: string;
+          variant_id?: string | null;
+          variant_match?: string | null;
           year?: number;
         };
         Relationships: [
@@ -4979,6 +4985,13 @@ export type Database = {
             columns: ['submitted_by'];
             isOneToOne: false;
             referencedRelation: 'public_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'registry_entries_variant_id_fkey';
+            columns: ['variant_id'];
+            isOneToOne: false;
+            referencedRelation: 'model_variants';
             referencedColumns: ['id'];
           },
         ];

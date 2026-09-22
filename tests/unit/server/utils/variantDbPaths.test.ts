@@ -31,6 +31,10 @@ function fakeDb(tables: Record<string, Row[]>, opts: { failInsertOnce?: { table:
         return b;
       },
       in: (col: string, vals: unknown[]) => (filters.push((r) => vals.includes(r[col])), b),
+      not: (col: string, op: string, val: unknown) => (
+        filters.push((r) => (op === 'is' && val === null ? r[col] !== null && r[col] !== undefined : r[col] !== val)),
+        b
+      ),
       like: (col: string, pat: string) => (filters.push((r) => String(r[col]).startsWith(pat.replace('%', ''))), b),
       order: () => b,
       limit: () => b,

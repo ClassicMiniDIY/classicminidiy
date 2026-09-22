@@ -11,6 +11,9 @@ export interface RegistryItem extends Record<string, any> {
    */
   submittedByEmail?: string;
   engineNum: string;
+  /** The linked Model Variant, when the car has been matched to one. */
+  variantSlug?: string | null;
+  variantName?: string | null;
   notes: string;
   year: number;
   uniqueId: string;

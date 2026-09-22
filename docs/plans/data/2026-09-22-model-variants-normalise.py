@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""models_raw.json -> model_variants_seed.json (schema in docs/plans/2026-09-22-model-variants-archive.md §1)."""
+"""models_raw.json -> model_variants_seed.json (schema in docs/plans/2026-09-22-model-variants-archive.md §1).
+
+KNOWN GAP (fixed in data, not here): 21 pages list several names and year
+ranges in their header ("AUSTIN SEVEN 1959 - 1961 / AUSTIN MINI 1962 - 1967").
+This script names the variant from the FIRST header line and takes its years
+from the first range only. The corrected names and spans were applied to the
+seed JSON and to production by classicminidiy-supabase migration
+20260923000001; re-running this script would undo them.
+"""
 import json
 import os
 import re

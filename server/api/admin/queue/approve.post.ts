@@ -7,7 +7,8 @@ import {
   isOwnUploadUrl,
   resolveColorTarget,
 } from '../../../utils/archiveApprovals';
-import { applyVariantEdit, insertApprovedVariant } from '../../../utils/variantApprovals';
+import { applyVariantEdit, insertApprovedVariant, resolveRegistryVariant } from '../../../utils/variantApprovals';
+import { invalidateModelVariants } from '../../../utils/modelVariants';
 
 /**
  * Where each submission target_type writes, and which of that table's columns a
@@ -250,6 +251,8 @@ async function insertApprovedItem(
 
     case 'registry':
       ({ error } = await supabase.from('registry_entries').insert({
+        // The Model Variant link: the owner's pick, else a confident match only.
+        ...(await resolveRegistryVariant(data)),
         year: data.year || 0,
         model: data.model || '',
         body_number: data.bodyNum || data.body_number || '',
@@ -267,6 +270,8 @@ async function insertApprovedItem(
         legacy_submitted_by: data.submittedBy || data.legacy_submitted_by || null,
         legacy_submitted_by_email: data.submittedByEmail || data.legacy_submitted_by_email || null,
       }));
+      // A linked car changes that variant's "N registered" count.
+      if (!error) invalidateModelVariants();
       break;
 
     case 'document':

@@ -48,6 +48,17 @@
 
   const variant = computed(() => data.value!.variant);
   const related = computed<ModelVariantCard[]>(() => data.value?.related ?? []);
+  const registry = computed(() => data.value?.registry ?? []);
+
+  /** "I own one": the registry wizard, with this variant already chosen. */
+  const registerMine = () => {
+    track('contribute_cta_clicked', { type: 'registry', location: 'variant_detail' });
+    openWizard({
+      kind: 'registry',
+      origin: 'variant_detail_registry',
+      currentValues: { variant: variant.value.slug, variantName: variant.value.name },
+    });
+  };
 
   const years = computed(() => yearsLabel(variant.value.year_start, variant.value.year_end));
   const specsSourced = computed(() => countSourcedSpecs(variant.value));
@@ -353,8 +364,11 @@
             <span aria-hidden="true">·</span>
             <span>{{ t('meta.specs_sourced', { n: specsSourced, total: SPEC_ROW_COUNT }) }}</span>
           </p>
+          <p v-if="variant.distinguishing.length" class="text-xs opacity-70 m-0 mt-1.5">
+            {{ variant.distinguishing.join(' · ') }}
+          </p>
         </div>
-        <button type="button" class="btn btn-secondary shrink-0" @click="submitUpdate('header')">
+        <button type="button" class="btn btn-secondary shrink-0 md:order-last" @click="submitUpdate('header')">
           <i class="fas fa-paper-plane" aria-hidden="true"></i> {{ t('actions.submit_update') }}
         </button>
       </div>
@@ -554,14 +568,28 @@
           <div class="card bg-primary/10 border border-primary/25">
             <div class="card-body p-5">
               <p class="text-xs font-bold tracking-[0.08em] uppercase text-primary m-0">{{ t('registry.title') }}</p>
-              <p class="text-sm opacity-80 my-2">{{ t('registry.body') }}</p>
-              <NuxtLink
-                to="/contribute/registry"
-                class="btn btn-primary btn-sm self-start"
-                @click="track('contribute_cta_clicked', { type: 'registry', location: 'variant_detail' })"
-              >
+              <template v-if="variant.registered_count > 0">
+                <p class="text-2xl font-extrabold m-0 mt-1">
+                  {{ t('registry.count', { n: variant.registered_count }) }}
+                  <span class="text-sm font-semibold opacity-70">{{ t('registry.registered') }}</span>
+                </p>
+                <ul class="m-0 mt-2 p-0 list-none flex flex-col gap-1">
+                  <li v-for="car in registry" :key="car.id" class="text-sm flex items-center gap-2">
+                    <i class="fas fa-car-side text-primary text-xs" aria-hidden="true"></i>
+                    <span>{{ [car.year, car.color || car.trim].filter(Boolean).join(' · ') || car.model }}</span>
+                  </li>
+                </ul>
+                <NuxtLink
+                  :to="`/archive/registry?variant=${variant.slug}`"
+                  class="link link-primary text-sm font-semibold no-underline hover:underline mt-2"
+                  >{{ t('registry.see_all') }}</NuxtLink
+                >
+              </template>
+              <p v-else class="text-sm opacity-80 my-2">{{ t('registry.body') }}</p>
+              <button type="button" class="btn btn-primary btn-sm self-start mt-2" @click="registerMine">
                 <i class="fas fa-car-side" aria-hidden="true"></i> {{ t('registry.cta') }}
-              </NuxtLink>
+              </button>
+              <p class="text-xs opacity-70 m-0 mt-1">{{ t('registry.links_note') }}</p>
             </div>
           </div>
 
@@ -719,8 +747,12 @@
     },
     "registry": {
       "title": "Owners' registry",
-      "body": "Own one? Add your car to the register so this model page links to the cars still on the road.",
-      "cta": "I own one →"
+      "body": "No cars linked yet. Own one? Add it to the registry and it appears here.",
+      "cta": "I own one →",
+      "count": "{n}",
+      "registered": "registered",
+      "see_all": "See them in the registry →",
+      "links_note": "Adds your car to the registry, linked to this model."
     },
     "sources": {
       "accessed": "Accessed {date}",
@@ -814,8 +846,12 @@
     },
     "registry": {
       "title": "Registro de propietarios",
-      "body": "¿Tienes uno? Añade tu coche al registro para que esta página enlace con los coches que siguen en la carretera.",
-      "cta": "Tengo uno →"
+      "body": "Aún no hay coches vinculados. ¿Tienes uno? Añádelo al registro y aparecerá aquí.",
+      "cta": "Tengo uno →",
+      "count": "{n}",
+      "registered": "registrados",
+      "see_all": "Verlos en el registro →",
+      "links_note": "Añade tu coche al registro, vinculado a este modelo."
     },
     "sources": {
       "accessed": "Consultado el {date}",
@@ -909,8 +945,12 @@
     },
     "registry": {
       "title": "Registre des propriétaires",
-      "body": "Vous en possédez une ? Ajoutez votre voiture au registre pour que cette page renvoie aux exemplaires encore sur la route.",
-      "cta": "J'en ai une →"
+      "body": "Aucune voiture liée pour l'instant. Vous en avez une ? Ajoutez-la au registre et elle apparaîtra ici.",
+      "cta": "J'en ai une →",
+      "count": "{n}",
+      "registered": "enregistrées",
+      "see_all": "Les voir dans le registre →",
+      "links_note": "Ajoute votre voiture au registre, liée à ce modèle."
     },
     "sources": {
       "accessed": "Consulté le {date}",
@@ -1004,8 +1044,12 @@
     },
     "registry": {
       "title": "Besitzerregister",
-      "body": "Besitzen Sie einen? Tragen Sie Ihr Auto ins Register ein, damit diese Modellseite auf die noch fahrenden Exemplare verweist.",
-      "cta": "Ich habe einen →"
+      "body": "Noch keine Autos verknüpft. Besitzen Sie einen? Tragen Sie ihn ins Register ein, dann erscheint er hier.",
+      "cta": "Ich habe einen →",
+      "count": "{n}",
+      "registered": "registriert",
+      "see_all": "Im Register ansehen →",
+      "links_note": "Trägt Ihr Auto ins Register ein, verknüpft mit diesem Modell."
     },
     "sources": {
       "accessed": "Abgerufen am {date}",
@@ -1099,8 +1143,12 @@
     },
     "registry": {
       "title": "Registro proprietari",
-      "body": "Ne possiedi una? Aggiungi la tua auto al registro così questa pagina rimanda alle auto ancora in circolazione.",
-      "cta": "Ne ho una →"
+      "body": "Nessuna auto collegata per ora. Ne possiedi una? Aggiungila al registro e comparirà qui.",
+      "cta": "Ne ho una →",
+      "count": "{n}",
+      "registered": "registrate",
+      "see_all": "Vedile nel registro →",
+      "links_note": "Aggiunge la tua auto al registro, collegata a questo modello."
     },
     "sources": {
       "accessed": "Consultato il {date}",
@@ -1194,8 +1242,12 @@
     },
     "registry": {
       "title": "Registo de proprietários",
-      "body": "Tem um? Adicione o seu carro ao registo para que esta página ligue aos carros ainda em circulação.",
-      "cta": "Tenho um →"
+      "body": "Ainda sem carros ligados. Tem um? Adicione-o ao registo e aparecerá aqui.",
+      "cta": "Tenho um →",
+      "count": "{n}",
+      "registered": "registados",
+      "see_all": "Ver no registo →",
+      "links_note": "Adiciona o seu carro ao registo, ligado a este modelo."
     },
     "sources": {
       "accessed": "Consultado em {date}",
@@ -1289,8 +1341,12 @@
     },
     "registry": {
       "title": "Реестр владельцев",
-      "body": "У вас есть такой? Добавьте машину в реестр, чтобы эта страница ссылалась на автомобили, которые ещё на ходу.",
-      "cta": "У меня есть →"
+      "body": "Пока нет связанных машин. У вас есть такая? Добавьте её в реестр, и она появится здесь.",
+      "cta": "У меня есть →",
+      "count": "{n}",
+      "registered": "в реестре",
+      "see_all": "Смотреть в реестре →",
+      "links_note": "Добавляет вашу машину в реестр со ссылкой на эту модель."
     },
     "sources": {
       "accessed": "Дата обращения: {date}",
@@ -1384,8 +1440,12 @@
     },
     "registry": {
       "title": "オーナー登録",
-      "body": "お持ちですか？レジストリに登録すると、このモデルページから現役の車両にリンクされます。",
-      "cta": "持っています →"
+      "body": "まだ紐づいた車はありません。お持ちですか？レジストリに登録するとここに表示されます。",
+      "cta": "持っています →",
+      "count": "{n}台",
+      "registered": "登録済み",
+      "see_all": "レジストリで見る →",
+      "links_note": "あなたの車をこのモデルに紐づけてレジストリに登録します。"
     },
     "sources": {
       "accessed": "閲覧日 {date}",
@@ -1479,8 +1539,12 @@
     },
     "registry": {
       "title": "车主登记",
-      "body": "拥有一辆？把你的车加入登记册，让本页链接到仍在路上的车。",
-      "cta": "我有一辆 →"
+      "body": "尚无关联车辆。您有一辆吗？加入登记册后会显示在这里。",
+      "cta": "我有一辆 →",
+      "count": "{n}辆",
+      "registered": "已登记",
+      "see_all": "在登记册中查看 →",
+      "links_note": "将您的车加入登记册并关联到此车型。"
     },
     "sources": {
       "accessed": "访问日期 {date}",
@@ -1574,8 +1638,12 @@
     },
     "registry": {
       "title": "오너 등록부",
-      "body": "보유하고 계신가요? 등록부에 차량을 추가하면 이 모델 페이지가 아직 달리고 있는 차량들과 연결됩니다.",
-      "cta": "보유 중입니다 →"
+      "body": "아직 연결된 차량이 없습니다. 보유하고 계신가요? 등록부에 추가하면 여기에 표시됩니다.",
+      "cta": "보유 중입니다 →",
+      "count": "{n}대",
+      "registered": "등록됨",
+      "see_all": "등록부에서 보기 →",
+      "links_note": "내 차를 이 모델에 연결해 등록부에 추가합니다."
     },
     "sources": {
       "accessed": "접근일 {date}",
