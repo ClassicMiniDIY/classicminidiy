@@ -1,5 +1,5 @@
 import { request } from '@octokit/request';
-import type { IGithubReleaseParsedResponse, ReleaseItem } from '../../../data/models/github';
+import { ECU_MAPS_REPO, type IGithubReleaseParsedResponse, type ReleaseItem } from '../../../data/models/github';
 
 export default defineEventHandler(async (event): Promise<IGithubReleaseParsedResponse> => {
   const config = useRuntimeConfig();
@@ -20,8 +20,8 @@ export default defineEventHandler(async (event): Promise<IGithubReleaseParsedRes
     const response = await Promise.race([
       request('GET /repos/{owner}/{repo}/releases', {
         headers: { authorization: config.GITHUB_API_KEY },
-        owner: 'SomethingNew71',
-        repo: 'MiniECUMaps',
+        owner: ECU_MAPS_REPO.owner,
+        repo: ECU_MAPS_REPO.repo,
         request: {
           timeout: 8000, // 8 second timeout
         },
@@ -30,10 +30,13 @@ export default defineEventHandler(async (event): Promise<IGithubReleaseParsedRes
     ]);
 
     // Type assertion to any as an intermediate step to avoid type errors
-    const responseData = (response as any).data as ReleaseItem[];
+    // Drafts are only visible to a token with push access. Never surface them —
+    // they are unpublished by definition.
+    const responseData = ((response as any).data as ReleaseItem[]).filter((release) => !release.draft);
 
     const parsed: IGithubReleaseParsedResponse = {
-      latestRelease: responseData[0]?.tag_name || 'No releases',
+      // null (not a placeholder string) so /maps can hide the "Latest Release" line.
+      latestRelease: responseData[0]?.tag_name || null,
       releases: responseData,
     };
     return parsed;

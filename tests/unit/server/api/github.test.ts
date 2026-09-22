@@ -125,13 +125,22 @@ describe('server/api/github/commits', () => {
     expect(result[0].date).toBe('Missing');
   });
 
-  it('preserves original commit fields via spread', async () => {
+  it('returns only the trimmed fields the page renders', async () => {
     const commits = [makeCommit('abc123', 'Fix bug', '2024-01-15T10:30:00Z')];
     mockRequest.mockResolvedValueOnce({ data: commits });
     const result = await handler({});
-    expect(result[0].sha).toBe('abc123');
-    expect(result[0].commit.message).toBe('Fix bug');
-    expect(result[0].html_url).toContain('abc123');
+    expect(result[0]).toEqual({
+      sha: 'abc123',
+      message: 'Fix bug',
+      committedAt: '2024-01-15T10:30:00Z',
+      date: 'Jan 15',
+    });
+  });
+
+  it('returns an empty message and null committedAt when commit data is missing', async () => {
+    mockRequest.mockResolvedValueOnce({ data: [{ sha: 'bare' }] });
+    const result = await handler({});
+    expect(result[0]).toEqual({ sha: 'bare', message: '', committedAt: null, date: 'Missing' });
   });
 
   it('sets cache headers with 30 minute max-age', async () => {
@@ -231,7 +240,7 @@ describe('server/api/github/commits', () => {
         headers: expect.objectContaining({
           authorization: 'test-gh-key',
         }),
-        owner: 'SomethingNew71',
+        owner: 'ClassicMiniDIY',
         repo: 'MiniECUMaps',
       })
     );
@@ -315,10 +324,10 @@ describe('server/api/github/releases', () => {
     expect(result.releases).toHaveLength(1);
   });
 
-  it('returns "No releases" when releases array is empty', async () => {
+  it('returns null latestRelease when releases array is empty', async () => {
     mockRequest.mockResolvedValueOnce({ data: [] });
     const result = await handler({});
-    expect(result.latestRelease).toBe('No releases');
+    expect(result.latestRelease).toBeNull();
     expect(result.releases).toEqual([]);
   });
 
@@ -395,7 +404,23 @@ describe('server/api/github/releases', () => {
     release.tag_name = null as any;
     mockRequest.mockResolvedValueOnce({ data: [release] });
     const result = await handler({});
-    expect(result.latestRelease).toBe('No releases');
+    expect(result.latestRelease).toBeNull();
+  });
+
+  it('drops draft releases so an unpublished tag is never shown', async () => {
+    const draft = { ...makeRelease('v4.0.0', 'Draft', 4), draft: true };
+    mockRequest.mockResolvedValueOnce({ data: [draft, makeRelease('v3.0.0', 'Published', 3)] });
+    const result = await handler({});
+    expect(result.latestRelease).toBe('v3.0.0');
+    expect(result.releases.map((r: any) => r.tag_name)).toEqual(['v3.0.0']);
+  });
+
+  it('returns null latestRelease when every release is a draft', async () => {
+    const draft = { ...makeRelease('v4.0.0', 'Draft', 4), draft: true };
+    mockRequest.mockResolvedValueOnce({ data: [draft] });
+    const result = await handler({});
+    expect(result.latestRelease).toBeNull();
+    expect(result.releases).toEqual([]);
   });
 
   it('passes authorization header and correct repo in request', async () => {
@@ -407,7 +432,7 @@ describe('server/api/github/releases', () => {
         headers: expect.objectContaining({
           authorization: 'test-gh-key',
         }),
-        owner: 'SomethingNew71',
+        owner: 'ClassicMiniDIY',
         repo: 'MiniECUMaps',
       })
     );
