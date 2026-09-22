@@ -5,8 +5,8 @@
  *
  * `hide` is the takedown path for the recovered brochure scans and for
  * contributed photos: status -> rejected, nothing deleted, reversible with
- * `show`. `primary` clears the current primary first because
- * model_variant_photos_one_primary allows only one per variant.
+ * `show`. `primary` calls set_variant_primary_photo, which swaps the primary
+ * in one transaction (model_variant_photos_one_primary allows one per variant).
  */
 import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
@@ -33,39 +33,12 @@ export default defineEventHandler(async (event) => {
 
   let error;
   if (action === 'primary') {
-    if (photo.status !== 'approved') {
-      throw createError({ statusCode: 400, statusMessage: 'Show the photo before making it primary' });
-    }
-    // Two statements (PostgREST has no conditional SET): clear, then set.
-    // If the set fails, put the old primary back so the variant is never left
-    // without one because of this request.
-    const { data: cleared, error: clearError } = await db
-      .from('model_variant_photos')
-      .update({ is_primary: false })
-      .eq('variant_id', photo.variant_id)
-      .eq('is_primary', true)
-      .select('id');
-    error = clearError;
-    if (!error) {
-      ({ error } = await db.from('model_variant_photos').update({ is_primary: true }).eq('id', photoId));
-      if (error && cleared?.length) {
-        await db
-          .from('model_variant_photos')
-          .update({ is_primary: true })
-          .in(
-            'id',
-            cleared.map((r: { id: string }) => r.id)
-          );
-      }
-      // model_variant_photos_one_primary: another admin set a primary between
-      // our two statements. Nothing is half-done; ask for a retry.
-      if (error?.code === '23505') {
-        throw createError({
-          statusCode: 409,
-          statusMessage: "Another change to this variant's photos landed first. Reload and try again.",
-        });
-      }
-    }
+    // One transaction in the database (set_variant_primary_photo, in
+    // classicminidiy-supabase): clear and set together, variant row locked,
+    // so concurrent swaps queue instead of hitting the one-primary index.
+    ({ error } = await db.rpc('set_variant_primary_photo', { p_photo_id: photoId }));
+    if (error?.code === '22023') throw createError({ statusCode: 400, statusMessage: error.message });
+    if (error?.code === 'P0002') throw createError({ statusCode: 404, statusMessage: 'Photo not found' });
   } else {
     ({ error } = await db
       .from('model_variant_photos')

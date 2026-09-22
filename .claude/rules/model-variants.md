@@ -59,6 +59,8 @@ Schema (`model_variants`, `model_variant_photos`, `model_variant_colors`) lives 
   `auditVariantAction`, which also calls `invalidateModelVariants()`. An admin registry
   link is `variant_match = 'reviewed'`. A colour-name link groups rows by
   `lower(trim(color_name))` in code and updates with `.in()`, never `ilike` (whose `%`,
-  `_` and `*` widen the match). `replaceColours` keeps a kept name's `color_id`.
+  `_` and `*` widen the match). `replaceColours` keeps a kept name's `color_id`. The primary photo
+  changes only through the `set_variant_primary_photo` RPC (one transaction); never
+  clear-then-set over PostgREST.
 - **The seed normaliser drops extra header names** (see its docstring). Never regenerate
   the seed from it without re-applying migration `20260923000001`'s corrections.
