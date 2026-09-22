@@ -1,9 +1,10 @@
 <script lang="ts" setup>
   import { DateTime } from 'luxon';
   import { HERO_TYPES } from '../../data/models/generic';
+  import { ECU_MAPS_REPO, type EcuMapsCommit } from '../../data/models/github';
 
   const { capture } = usePostHog();
-  const { t } = useI18n();
+  const { t, te } = useI18n();
 
   useHead({
     title: t('seo.title'),
@@ -49,13 +50,12 @@
     '@type': 'Product',
     name: 'Classic Mini ECU Maps Collection',
     description:
-      'Professional ECU maps for Classic Mini engines. Compatible with multiple ECU brands including Haltech, Speeduino, MegaSquirt, Emerald, and more.',
+      'Base ECU maps for Classic Mini engines, a starting point for a dyno tune. Not plug and play. Compatible with multiple ECU brands including Haltech, Speeduino, MegaSquirt, Emerald, and more.',
     image: 'https://classicminidiy.s3.amazonaws.com/social-share/maps.png',
     offers: {
       '@type': 'Offer',
       price: '0.00',
       priceCurrency: 'USD',
-      priceValidUntil: '2025-12-31',
       availability: 'https://schema.org/InStock',
       url: 'https://www.classicminidiy.com/maps',
       seller: {
@@ -67,18 +67,8 @@
       '@type': 'Brand',
       name: 'Classic Mini DIY',
     },
-    review: {
-      '@type': 'Review',
-      reviewRating: {
-        '@type': 'Rating',
-        ratingValue: '5',
-        bestRating: '5',
-      },
-      author: {
-        '@type': 'Person',
-        name: 'Classic Mini DIY Community',
-      },
-    },
+    // No `review` / `aggregateRating`: a rating authored by the seller is a
+    // self-serving review under Google's structured-data policy.
   };
 
   // Add JSON-LD structured data to head
@@ -91,7 +81,12 @@
     ],
   });
   const { data: releases, status: releasesLoading, error: releaseError } = await useFetch('/api/github/releases');
-  const { data: commits, status: commitsLoading, error: commitError } = await useFetch('/api/github/commits');
+  const {
+    data: commits,
+    status: commitsLoading,
+    error: commitError,
+  } = await useFetch<EcuMapsCommit[]>('/api/github/commits');
+  const { data: manifest, status: manifestLoading, error: manifestError } = await useFetch('/api/github/maps-manifest');
 
   // Merge releases and commits chronologically
   interface UpdateItem {
@@ -112,11 +107,11 @@
       commits.value.forEach((commit) => {
         updates.push({
           type: 'commit',
-          date: commit.commit?.committer?.date || commit.date,
+          date: commit.committedAt || '',
           displayDate: commit.date,
-          message: commit.commit?.message || '',
+          message: commit.message.split('\n')[0] ?? '',
           sha: commit.sha,
-          url: `https://github.com/SomethingNew71/MiniECUMaps/commit/${commit.sha}`,
+          url: `${ECU_MAPS_REPO.url}/commit/${commit.sha}`,
         });
       });
     }
@@ -130,7 +125,7 @@
           displayDate: release.published_at ? DateTime.fromISO(release.published_at).toFormat('LLL dd') : 'Unknown',
           message: release.name || release.tag_name || 'New Release',
           tagName: release.tag_name || undefined,
-          url: release.html_url || `https://github.com/SomethingNew71/MiniECUMaps/releases/tag/${release.tag_name}`,
+          url: release.html_url || `${ECU_MAPS_REPO.url}/releases/tag/${release.tag_name}`,
         });
       });
     }
@@ -149,12 +144,17 @@
   const legend = computed(() => [
     {
       name: t('legend.included.name'),
-      id: 'yes',
+      id: 'included',
       description: t('legend.included.description'),
     },
     {
+      name: t('legend.started.name'),
+      id: 'started',
+      description: t('legend.started.description'),
+    },
+    {
       name: t('legend.notIncluded.name'),
-      id: 'no',
+      id: 'not-included',
       description: t('legend.notIncluded.description'),
     },
     {
@@ -168,107 +168,23 @@
       description: t('legend.workInProgress.description'),
     },
   ]);
-  const items = computed(() => [
-    {
-      features: t('table.ignitionMap'),
-      haltech: 'yes',
-      speeduino: 'yes',
-      megasquirt: 'yes',
-      emerald: 'yes',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'yes',
-      megaJolt: 'yes',
-    },
-    {
-      features: t('table.fuelMap'),
-      haltech: 'yes',
-      speeduino: 'yes',
-      megasquirt: 'yes',
-      emerald: 'yes',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'na',
-      megaJolt: 'na',
-    },
-    {
-      features: t('table.veTable'),
-      haltech: 'yes',
-      speeduino: 'yes',
-      megasquirt: 'yes',
-      emerald: 'na',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'na',
-      megaJolt: 'na',
-    },
-    {
-      features: t('table.targetAfr'),
-      haltech: 'yes',
-      speeduino: 'yes',
-      megasquirt: 'yes',
-      emerald: 'yes',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'yes',
-      megaJolt: 'yes',
-    },
-    {
-      features: t('table.throttleEnrichment'),
-      haltech: 'yes',
-      speeduino: 'no',
-      megasquirt: 'no',
-      emerald: 'na',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'na',
-      megaJolt: 'na',
-    },
-    {
-      features: t('table.driveByWire'),
-      haltech: 'yes',
-      speeduino: 'no',
-      megasquirt: 'no',
-      emerald: 'na',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'na',
-      megaJolt: 'na',
-    },
-    {
-      features: t('table.boostControl'),
-      haltech: 'yes',
-      speeduino: 'no',
-      megasquirt: 'no',
-      emerald: 'na',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'na',
-      megaJolt: 'na',
-    },
-    {
-      features: t('table.idleMap'),
-      haltech: 'yes',
-      speeduino: 'no',
-      megasquirt: 'no',
-      emerald: 'na',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'na',
-      megaJolt: 'na',
-    },
-    {
-      features: t('table.sixteenVEngine'),
-      haltech: 'yes',
-      speeduino: 'yes',
-      megasquirt: 'yes',
-      emerald: 'yes',
-      ecuMaster: 'wip',
-      maxxEcu: 'wip',
-      dtaFast: 'wip',
-      megaJolt: 'wip',
-    },
-  ]);
+  const statusLabels = computed<Record<string, string>>(() =>
+    Object.fromEntries(legend.value.map((item) => [item.id, item.name]))
+  );
+
+  // Support table rows come from maps.json in the ECU maps repo (see
+  // server/api/github/maps-manifest.ts). Labels use this page's i18n keys by feature id,
+  // falling back to the manifest's English label for a feature added upstream.
+  const featureRows = computed(() =>
+    (manifest.value?.features ?? []).map((feature) => ({
+      id: feature.id,
+      label: te(`table.${feature.id}`) ? t(`table.${feature.id}`) : feature.label,
+      statuses: (manifest.value?.platforms ?? []).map((platform) => ({
+        platformId: platform.id,
+        status: platform.features[feature.id] ?? 'na',
+      })),
+    }))
+  );
 </script>
 
 <template>
@@ -288,6 +204,13 @@
           <p class="lead">
             {{ t('description') }}
           </p>
+          <div role="alert" class="alert alert-warning text-left mt-6">
+            <i class="fad fa-triangle-exclamation text-2xl" aria-hidden="true"></i>
+            <div>
+              <h3 class="font-bold">{{ t('disclaimer.title') }}</h3>
+              <p class="text-sm">{{ t('disclaimer.body') }}</p>
+            </div>
+          </div>
         </div>
         <div class="col-span-12 md:col-span-10 md:col-start-2 py-10">
           <div class="flex flex-wrap justify-center gap-8">
@@ -317,7 +240,9 @@
                 <i class="fad fa-credit-card text-3xl pb-3"></i>
               </div>
               <h3 class="fancy-font-bold text-2xl">{{ t('options.purchase.title') }}</h3>
-              <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
+              <h4 v-if="releases?.latestRelease" class="fancy-font-bold text-xl">
+                {{ t('options.latestRelease') }}: {{ releases.latestRelease }}
+              </h4>
               <p class="py-3">
                 {{ t('options.purchase.description') }}
               </p>
@@ -342,13 +267,15 @@
                 <i class="fad fa-download text-3xl pb-3"></i>
               </div>
               <h3 class="fancy-font-bold text-2xl">{{ t('options.download.title') }}</h3>
-              <h4 class="fancy-font-bold text-xl">{{ t('options.latestRelease') }}: {{ releases?.latestRelease }}</h4>
+              <h4 v-if="releases?.latestRelease" class="fancy-font-bold text-xl">
+                {{ t('options.latestRelease') }}: {{ releases.latestRelease }}
+              </h4>
               <p class="py-3">
                 {{ t('options.download.description') }}
               </p>
               <div class="flex justify-center gap-2">
                 <a
-                  href="https://github.com/SomethingNew71/MiniECUMaps/archive/refs/heads/master.zip"
+                  :href="ECU_MAPS_REPO.zipUrl"
                   class="btn btn-primary"
                   target="_blank"
                   rel="noopener"
@@ -357,7 +284,7 @@
                   <i class="fad fa-download mr-2"></i> {{ t('options.download.button') }}
                 </a>
                 <a
-                  href="https://github.com/SomethingNew71/MiniECUMaps"
+                  :href="ECU_MAPS_REPO.url"
                   class="btn btn-neutral"
                   target="_blank"
                   rel="noopener"
@@ -377,54 +304,45 @@
         <div class="col-span-12">
           <div class="card bg-base-100 shadow-md">
             <div class="card-body">
-              <div class="overflow-x-auto">
+              <div v-if="manifestLoading === 'pending'" class="flex justify-center p-4">
+                <div class="loading loading-spinner loading-md text-primary"></div>
+              </div>
+              <div v-else-if="manifestError || !featureRows.length" role="alert" class="alert alert-warning">
+                <i class="fad fa-exclamation-triangle" aria-hidden="true"></i>
+                <span>{{ t('table.error') }}</span>
+              </div>
+              <div v-else class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="border-b border-base-300">
                       <th class="text-left p-2 font-medium">{{ t('table.features') }}</th>
-                      <th class="text-center p-2 font-medium">Haltech</th>
-                      <th class="text-center p-2 font-medium">Speeduino</th>
-                      <th class="text-center p-2 font-medium">MegaSquirt</th>
-                      <th class="text-center p-2 font-medium">Emerald</th>
-                      <th class="text-center p-2 font-medium">ECUMaster</th>
-                      <th class="text-center p-2 font-medium">MaxxECU</th>
-                      <th class="text-center p-2 font-medium">DTAFast</th>
-                      <th class="text-center p-2 font-medium">MegaJolt</th>
+                      <th
+                        v-for="platform in manifest?.platforms"
+                        :key="platform.id"
+                        class="text-center p-2 font-medium"
+                      >
+                        {{ platform.name }}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr
-                      v-for="row in items"
+                      v-for="row in featureRows"
+                      :key="row.id"
                       class="border-b border-base-300 last:border-0 hover:bg-base-200 transition-colors"
                     >
-                      <td class="text-center py-3 p-2" v-for="(ecu, index) in row" :key="ecu">
-                        <p class="text-left" v-if="index === 'features'">
-                          {{ ecu }}
-                        </p>
-                        <i v-if="ecu === 'yes'" class="text-lg fa-solid fa-check" style="color: #4a7023"></i>
-                        <i v-if="ecu === 'no'" class="text-lg fa-solid fa-xmark" style="color: #b22222"></i>
-                        <i
-                          v-if="ecu === 'wip'"
-                          class="text-h6 pr-3 fa-sharp-duotone fa-solid fa-road-barrier"
-                          style="--fa-primary-color: #562b00; --fa-secondary-color: #f5c147; --fa-secondary-opacity: 1"
-                        ></i>
-                        <i v-if="ecu === 'na'" class="text-lg fa-solid fa-dash"></i>
+                      <td class="text-left py-3 p-2">{{ row.label }}</td>
+                      <td v-for="cell in row.statuses" :key="cell.platformId" class="text-center py-3 p-2">
+                        <maps-status-icon :status="cell.status" :label="statusLabels[cell.status]" />
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-5">
-                <div v-for="item in legend" class="flex items-center p-2">
+              <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-5">
+                <div v-for="item in legend" :key="item.id" class="flex items-center p-2">
                   <div class="mr-3">
-                    <i v-if="item.id === 'yes'" class="text-lg fa-solid fa-check" style="color: #4a7023"></i>
-                    <i v-if="item.id === 'no'" class="text-lg fa-solid fa-xmark" style="color: #b22222"></i>
-                    <i
-                      v-if="item.id === 'wip'"
-                      class="text-h6 pr-3 fa-sharp-duotone fa-solid fa-road-barrier"
-                      style="--fa-primary-color: #562b00; --fa-secondary-color: #f5c147; --fa-secondary-opacity: 1"
-                    ></i>
-                    <i v-if="item.id === 'na'" class="text-lg fa-solid fa-dash"></i>
+                    <maps-status-icon :status="item.id" />
                   </div>
                   <div>
                     <div class="font-bold">{{ item.name }}</div>
@@ -511,12 +429,7 @@
                   </div>
                 </div>
                 <div class="flex justify-center p-4">
-                  <a
-                    href="https://github.com/SomethingNew71/MiniECUMaps"
-                    class="btn btn-neutral w-full"
-                    target="_blank"
-                    rel="noopener"
-                  >
+                  <a :href="ECU_MAPS_REPO.url" class="btn btn-neutral w-full" target="_blank" rel="noopener">
                     <i class="fad fa-code-branch mr-2"></i> {{ t('updates.viewAllCommits') }}
                   </a>
                 </div>
@@ -614,19 +527,23 @@
   "en": {
     "seo": {
       "title": "Classic Mini ECU Maps | Tuning Files for Multiple ECUs | Classic Mini DIY",
-      "description": "Download professionally tuned ECU maps for Classic Mini engines. Compatible with Haltech, Speeduino, MegaSquirt, Emerald, and more. Pay what you want for lifetime updates.",
+      "description": "Free base ECU maps for Classic Mini engines, a starting point for your own dyno tune. Haltech, Speeduino, MegaSquirt, Emerald, and more. Pay what you want for lifetime updates.",
       "keywords": "Classic Mini ECU maps, Mini Cooper tuning, Haltech maps, Speeduino maps, MegaSquirt maps, Emerald ECU, engine tuning, fuel maps, ignition maps",
       "ogTitle": "Classic Mini ECU Maps | Tuning Files for Multiple ECUs",
       "twitterTitle": "Classic Mini ECU Maps | Multiple ECU Support",
-      "twitterDescription": "Professional ECU maps for Classic Mini engines with lifetime updates."
+      "twitterDescription": "Base ECU maps for Classic Mini engines with lifetime updates. Dyno tuning required."
     },
     "breadcrumb": "ECU Maps",
     "hero": {
       "title": "Classic Mini DIY ECU Maps",
-      "subtitle": "Pay what your want, always"
+      "subtitle": "Pay what you want, always"
     },
     "mainTitle": "The Classic Mini ECU Map",
     "description": "After years of tuning Classic Mini engines, building custom harnesses, and mapping multiple ECU's, I am proud to release my collection of ECU maps with two options for access. Offering support for many popular ECU's used on Classic Minis, with more added in the future.",
+    "disclaimer": {
+      "title": "Not plug and play",
+      "body": "These are base maps, a starting point for your own tune. Every map must be configured for your vehicle and validated on a dyno or rolling road before any meaningful driving. Using a map without proper tuning can cause catastrophic engine failure."
+    },
     "features": {
       "lifetimeUpdates": "Lifetime Updates",
       "multipleEcus": "Multiple ECU's",
@@ -658,12 +575,17 @@
       "driveByWire": "Drive by Wire Ready",
       "boostControl": "Boost Control Map",
       "idleMap": "Idle Map",
-      "sixteenVEngine": "16V Engine Version"
+      "sixteenVEngine": "16V Engine Version",
+      "error": "Could not load the support table from GitHub."
     },
     "legend": {
       "included": {
         "name": "Included",
         "description": "Included in Map"
+      },
+      "started": {
+        "name": "Started",
+        "description": "Base file checked in, not yet validated"
       },
       "notIncluded": {
         "name": "Not included",
@@ -694,11 +616,11 @@
   "es": {
     "seo": {
       "title": "Mapas de ECU Classic Mini | Archivos de Afinación para Múltiples ECUs | Classic Mini DIY",
-      "description": "Descarga mapas de ECU afinados profesionalmente para motores Classic Mini. Compatible con Haltech, Speeduino, MegaSquirt, Emerald y más. Paga lo que quieras por actualizaciones de por vida.",
+      "description": "Mapas base de ECU gratuitos para motores Classic Mini, un punto de partida para tu propia puesta a punto en dinamómetro. Haltech, Speeduino, MegaSquirt, Emerald y más. Paga lo que quieras por actualizaciones de por vida.",
       "keywords": "Mapas de ECU Classic Mini, afinación Mini Cooper, mapas Haltech, mapas Speeduino, mapas MegaSquirt, ECU Emerald, afinación de motor, mapas de combustible, mapas de encendido",
       "ogTitle": "Mapas de ECU Classic Mini | Archivos de Afinación para Múltiples ECUs",
       "twitterTitle": "Mapas de ECU Classic Mini | Soporte para Múltiples ECUs",
-      "twitterDescription": "Mapas de ECU profesionales para motores Classic Mini con actualizaciones de por vida."
+      "twitterDescription": "Mapas base de ECU para motores Classic Mini con actualizaciones de por vida. Requiere puesta a punto en dinamómetro."
     },
     "breadcrumb": "Mapas de ECU",
     "hero": {
@@ -707,6 +629,10 @@
     },
     "mainTitle": "El Mapa de ECU Classic Mini",
     "description": "Después de años de afinar motores Classic Mini, construir arneses personalizados y mapear múltiples ECUs, estoy orgulloso de lanzar mi colección de mapas de ECU con dos opciones de acceso. Ofreciendo soporte para muchas ECUs populares usadas en Classic Minis, con más agregadas en el futuro.",
+    "disclaimer": {
+      "title": "No es plug and play",
+      "body": "Estos son mapas base, un punto de partida para tu propia puesta a punto. Cada mapa debe configurarse para tu vehículo y validarse en un dinamómetro o banco de rodillos antes de conducir. Usar un mapa sin una puesta a punto adecuada puede causar una falla catastrófica del motor."
+    },
     "features": {
       "lifetimeUpdates": "Actualizaciones de por Vida",
       "multipleEcus": "Múltiples ECUs",
@@ -738,12 +664,17 @@
       "driveByWire": "Listo para Drive by Wire",
       "boostControl": "Mapa de Control de Boost",
       "idleMap": "Mapa de Ralentí",
-      "sixteenVEngine": "Versión Motor 16V"
+      "sixteenVEngine": "Versión Motor 16V",
+      "error": "No se pudo cargar la tabla de compatibilidad desde GitHub."
     },
     "legend": {
       "included": {
         "name": "Incluido",
         "description": "Incluido en el Mapa"
+      },
+      "started": {
+        "name": "Iniciado",
+        "description": "Archivo base incluido, aún no validado"
       },
       "notIncluded": {
         "name": "No incluido",
@@ -774,11 +705,11 @@
   "fr": {
     "seo": {
       "title": "Cartes ECU Classic Mini | Fichiers de réglage pour plusieurs ECUs | Classic Mini DIY",
-      "description": "Téléchargez des cartes ECU réglées professionnellement pour moteurs Classic Mini. Compatible avec Haltech, Speeduino, MegaSquirt, Emerald, et plus. Payez ce que vous voulez pour des mises à jour à vie.",
+      "description": "Cartes ECU de base gratuites pour moteurs Classic Mini, un point de départ pour votre propre réglage au banc. Haltech, Speeduino, MegaSquirt, Emerald et plus. Payez ce que vous voulez pour des mises à jour à vie.",
       "keywords": "Cartes ECU Classic Mini, réglage Mini Cooper, cartes Haltech, cartes Speeduino, cartes MegaSquirt, ECU Emerald, réglage moteur, cartes carburant, cartes allumage",
       "ogTitle": "Cartes ECU Classic Mini | Fichiers de réglage pour plusieurs ECUs",
       "twitterTitle": "Cartes ECU Classic Mini | Support d'ECUs multiples",
-      "twitterDescription": "Cartes ECU professionnelles pour moteurs Classic Mini avec mises à jour à vie."
+      "twitterDescription": "Cartes ECU de base pour moteurs Classic Mini avec mises à jour à vie. Réglage au banc requis."
     },
     "breadcrumb": "Cartes ECU",
     "hero": {
@@ -787,6 +718,10 @@
     },
     "mainTitle": "La carte ECU Classic Mini",
     "description": "Après des années de réglage de moteurs Classic Mini, construction de faisceaux personnalisés et cartographie de multiples ECUs, je suis fier de publier ma collection de cartes ECU avec deux options d'accès. Offrant un support pour de nombreux ECUs populaires utilisés sur les Classic Minis, avec plus ajoutés à l'avenir.",
+    "disclaimer": {
+      "title": "Pas plug and play",
+      "body": "Ce sont des cartes de base, un point de départ pour votre propre réglage. Chaque carte doit être configurée pour votre véhicule et validée sur un banc de puissance avant toute conduite sérieuse. Utiliser une carte sans réglage adéquat peut provoquer une casse moteur catastrophique."
+    },
     "features": {
       "lifetimeUpdates": "Mises à jour à vie",
       "multipleEcus": "ECUs multiples",
@@ -818,12 +753,17 @@
       "driveByWire": "Prêt drive by wire",
       "boostControl": "Carte contrôle boost",
       "idleMap": "Carte ralenti",
-      "sixteenVEngine": "Version moteur 16V"
+      "sixteenVEngine": "Version moteur 16V",
+      "error": "Impossible de charger le tableau de compatibilité depuis GitHub."
     },
     "legend": {
       "included": {
         "name": "Inclus",
         "description": "Inclus dans la carte"
+      },
+      "started": {
+        "name": "Commencé",
+        "description": "Fichier de base ajouté, pas encore validé"
       },
       "notIncluded": {
         "name": "Non inclus",
@@ -854,11 +794,11 @@
   "de": {
     "seo": {
       "title": "Classic Mini ECU Karten | Tuning-Dateien für mehrere ECUs | Classic Mini DIY",
-      "description": "Laden Sie professionell abgestimmte ECU-Karten für Classic Mini-Motoren herunter. Kompatibel mit Haltech, Speeduino, MegaSquirt, Emerald und mehr. Zahlen Sie was Sie wollen für lebenslange Updates.",
+      "description": "Kostenlose Basis-ECU-Karten für Classic Mini-Motoren, ein Ausgangspunkt für Ihre eigene Abstimmung auf dem Prüfstand. Haltech, Speeduino, MegaSquirt, Emerald und mehr. Zahlen Sie was Sie wollen für lebenslange Updates.",
       "keywords": "Classic Mini ECU Karten, Mini Cooper Tuning, Haltech Karten, Speeduino Karten, MegaSquirt Karten, Emerald ECU, Motor Tuning, Kraftstoffkarten, Zündkarten",
       "ogTitle": "Classic Mini ECU Karten | Tuning-Dateien für mehrere ECUs",
       "twitterTitle": "Classic Mini ECU Karten | Mehrere ECU-Unterstützung",
-      "twitterDescription": "Professionelle ECU-Karten für Classic Mini-Motoren mit lebenslangen Updates."
+      "twitterDescription": "Basis-ECU-Karten für Classic Mini-Motoren mit lebenslangen Updates. Prüfstandsabstimmung erforderlich."
     },
     "breadcrumb": "ECU Karten",
     "hero": {
@@ -867,6 +807,10 @@
     },
     "mainTitle": "Die Classic Mini ECU Karte",
     "description": "Nach Jahren des Tunings von Classic Mini-Motoren, dem Bau von benutzerdefinierten Kabelbäumen und der Programmierung mehrerer ECUs bin ich stolz darauf, meine Sammlung von ECU-Karten mit zwei Zugangsmöglichkeiten zu veröffentlichen. Bietet Unterstützung für viele beliebte ECUs, die bei Classic Minis verwendet werden, mit mehr in der Zukunft.",
+    "disclaimer": {
+      "title": "Nicht Plug-and-Play",
+      "body": "Dies sind Basiskarten, ein Ausgangspunkt für Ihre eigene Abstimmung. Jede Karte muss für Ihr Fahrzeug konfiguriert und auf einem Leistungsprüfstand validiert werden, bevor Sie ernsthaft fahren. Eine Karte ohne richtige Abstimmung kann zu einem katastrophalen Motorschaden führen."
+    },
     "features": {
       "lifetimeUpdates": "Lebenslange Updates",
       "multipleEcus": "Mehrere ECUs",
@@ -898,12 +842,17 @@
       "driveByWire": "Drive-by-Wire bereit",
       "boostControl": "Ladedruckkarte",
       "idleMap": "Leerlaufkarte",
-      "sixteenVEngine": "16V Motor Version"
+      "sixteenVEngine": "16V Motor Version",
+      "error": "Die Unterstützungstabelle konnte nicht von GitHub geladen werden."
     },
     "legend": {
       "included": {
         "name": "Enthalten",
         "description": "In Karte enthalten"
+      },
+      "started": {
+        "name": "Begonnen",
+        "description": "Basisdatei eingecheckt, noch nicht validiert"
       },
       "notIncluded": {
         "name": "Nicht enthalten",
@@ -934,11 +883,11 @@
   "it": {
     "seo": {
       "title": "Mappe ECU Classic Mini | File di mappatura per più ECU | Classic Mini DIY",
-      "description": "Scarica mappe ECU professionalmente mappate per motori Classic Mini. Compatibili con Haltech, Speeduino, MegaSquirt, Emerald e altri. Paga quello che vuoi per aggiornamenti a vita.",
+      "description": "Mappe ECU base gratuite per motori Classic Mini, un punto di partenza per la tua messa a punto al banco. Haltech, Speeduino, MegaSquirt, Emerald e altri. Paga quello che vuoi per aggiornamenti a vita.",
       "keywords": "Mappe ECU Classic Mini, mappatura Mini Cooper, mappe Haltech, mappe Speeduino, mappe MegaSquirt, ECU Emerald, mappatura motore, mappe carburante, mappe accensione",
       "ogTitle": "Mappe ECU Classic Mini | File di mappatura per più ECU",
       "twitterTitle": "Mappe ECU Classic Mini | Supporto per più ECU",
-      "twitterDescription": "Mappe ECU professionali per motori Classic Mini con aggiornamenti a vita."
+      "twitterDescription": "Mappe ECU base per motori Classic Mini con aggiornamenti a vita. Richiede messa a punto al banco."
     },
     "breadcrumb": "Mappe ECU",
     "hero": {
@@ -947,6 +896,10 @@
     },
     "mainTitle": "La mappa ECU Classic Mini",
     "description": "Dopo anni di mappatura di motori Classic Mini, costruzione di cablaggi personalizzati e mappatura di più ECU, sono orgoglioso di rilasciare la mia collezione di mappe ECU con due opzioni di accesso. Offrendo supporto per molte ECU popolari utilizzate sulle Classic Mini, con altre aggiunte in futuro.",
+    "disclaimer": {
+      "title": "Non plug and play",
+      "body": "Queste sono mappe base, un punto di partenza per la tua messa a punto. Ogni mappa deve essere configurata per il tuo veicolo e validata al banco prova prima di una guida seria. Usare una mappa senza una messa a punto adeguata può causare un guasto catastrofico del motore."
+    },
     "features": {
       "lifetimeUpdates": "Aggiornamenti a vita",
       "multipleEcus": "Più ECU",
@@ -978,12 +931,17 @@
       "driveByWire": "Pronto drive by wire",
       "boostControl": "Mappa controllo pressione",
       "idleMap": "Mappa minimo",
-      "sixteenVEngine": "Versione motore 16V"
+      "sixteenVEngine": "Versione motore 16V",
+      "error": "Impossibile caricare la tabella di compatibilità da GitHub."
     },
     "legend": {
       "included": {
         "name": "Incluso",
         "description": "Incluso nella mappa"
+      },
+      "started": {
+        "name": "Iniziato",
+        "description": "File base caricato, non ancora validato"
       },
       "notIncluded": {
         "name": "Non incluso",
@@ -1014,11 +972,11 @@
   "ja": {
     "seo": {
       "title": "Classic Mini ECUマップ | 複数ECU用チューニングファイル | Classic Mini DIY",
-      "description": "Classic MiniエンジンのプロフェッショナルにチューンされたECUマップをダウンロード。Haltech、Speeduino、MegaSquirt、Emeraldなどと互換性。生涯アップデートに支払いたい分だけ。",
+      "description": "Classic Miniエンジン用の無料ベースECUマップ。ご自身のダイナモセッティングの出発点です。Haltech、Speeduino、MegaSquirt、Emeraldなどに対応。好きな金額で生涯アップデート。",
       "keywords": "Classic Mini ECUマップ、Mini Cooperチューニング、Haltechマップ、Speeduinoマップ、MegaSquirtマップ、Emerald ECU、エンジンチューニング、燃料マップ、点火マップ",
       "ogTitle": "Classic Mini ECUマップ | 複数ECU用チューニングファイル",
       "twitterTitle": "Classic Mini ECUマップ | 複数ECUサポート",
-      "twitterDescription": "生涯アップデート付きClassic MiniエンジンのプロフェッショナルECUマップ。"
+      "twitterDescription": "生涯アップデート付きClassic Miniエンジン用ベースECUマップ。ダイナモでのセッティングが必要です。"
     },
     "breadcrumb": "ECUマップ",
     "hero": {
@@ -1027,6 +985,10 @@
     },
     "mainTitle": "Classic Mini ECUマップ",
     "description": "数年間Classic Miniエンジンをチューニング、カスタムハーネスを構築、複数のECUをマッピングした後、2つのアクセスオプションでECUマップのコレクションをリリースできることを誇りに思います。Classic Miniで使用される多くの人気ECUをサポートし、将来さらに追加予定です。",
+    "disclaimer": {
+      "title": "プラグアンドプレイではありません",
+      "body": "これらはベースマップであり、ご自身のセッティングの出発点です。本格的に走行する前に、すべてのマップを車両に合わせて設定し、ダイナモまたはシャシーダイナモで検証する必要があります。適切なセッティングなしでマップを使用すると、エンジンが深刻な損傷を受ける可能性があります。"
+    },
     "features": {
       "lifetimeUpdates": "生涯アップデート",
       "multipleEcus": "複数のECU",
@@ -1058,12 +1020,17 @@
       "driveByWire": "ドライブバイワイヤ対応",
       "boostControl": "ブーストコントロールマップ",
       "idleMap": "アイドルマップ",
-      "sixteenVEngine": "16Vエンジンバージョン"
+      "sixteenVEngine": "16Vエンジンバージョン",
+      "error": "GitHubから対応表を読み込めませんでした。"
     },
     "legend": {
       "included": {
         "name": "含まれる",
         "description": "マップに含まれる"
+      },
+      "started": {
+        "name": "開始済み",
+        "description": "ベースファイル追加済み、未検証"
       },
       "notIncluded": {
         "name": "含まれない",
@@ -1094,11 +1061,11 @@
   "ko": {
     "seo": {
       "title": "Classic Mini ECU 맵 | 다중 ECU용 튜닝 파일 | Classic Mini DIY",
-      "description": "Classic Mini 엔진용 전문적으로 튜닝된 ECU 맵을 다운로드하세요. Haltech, Speeduino, MegaSquirt, Emerald 등과 호환됩니다. 평생 업데이트를 원하는 만큼 지불하세요.",
+      "description": "Classic Mini 엔진용 무료 베이스 ECU 맵. 직접 다이노 튜닝을 위한 출발점입니다. Haltech, Speeduino, MegaSquirt, Emerald 등 지원. 원하는 만큼 지불하고 평생 업데이트를 받으세요.",
       "keywords": "Classic Mini ECU 맵, Mini Cooper 튜닝, Haltech 맵, Speeduino 맵, MegaSquirt 맵, Emerald ECU, 엔진 튜닝, 연료 맵, 점화 맵",
       "ogTitle": "Classic Mini ECU 맵 | 다중 ECU용 튜닝 파일",
       "twitterTitle": "Classic Mini ECU 맵 | 다중 ECU 지원",
-      "twitterDescription": "평생 업데이트가 포함된 Classic Mini 엔진용 전문 ECU 맵."
+      "twitterDescription": "평생 업데이트가 포함된 Classic Mini 엔진용 베이스 ECU 맵. 다이노 튜닝이 필요합니다."
     },
     "breadcrumb": "ECU 맵",
     "hero": {
@@ -1107,6 +1074,10 @@
     },
     "mainTitle": "Classic Mini ECU 맵",
     "description": "수년간 Classic Mini 엔진을 튜닝하고, 맞춤 하네스를 제작하며, 여러 ECU를 매핑한 후, 저는 두 가지 액세스 옵션으로 ECU 맵 컬렉션을 자랑스럽게 출시합니다. Classic Mini에서 사용되는 많은 인기 ECU를 지원하며, 앞으로 더 많이 추가될 예정입니다.",
+    "disclaimer": {
+      "title": "플러그 앤 플레이가 아닙니다",
+      "body": "이 맵은 직접 튜닝을 위한 출발점인 베이스 맵입니다. 본격적인 주행 전에 모든 맵을 차량에 맞게 설정하고 다이노 또는 섀시 다이노에서 검증해야 합니다. 적절한 튜닝 없이 맵을 사용하면 엔진에 치명적인 손상이 발생할 수 있습니다."
+    },
     "features": {
       "lifetimeUpdates": "평생 업데이트",
       "multipleEcus": "다중 ECU",
@@ -1138,12 +1109,17 @@
       "driveByWire": "드라이브 바이 와이어 준비",
       "boostControl": "부스트 컨트롤 맵",
       "idleMap": "공회전 맵",
-      "sixteenVEngine": "16V 엔진 버전"
+      "sixteenVEngine": "16V 엔진 버전",
+      "error": "GitHub에서 지원 표를 불러올 수 없습니다."
     },
     "legend": {
       "included": {
         "name": "포함됨",
         "description": "맵에 포함됨"
+      },
+      "started": {
+        "name": "시작됨",
+        "description": "베이스 파일 추가됨, 아직 검증되지 않음"
       },
       "notIncluded": {
         "name": "포함되지 않음",
@@ -1174,11 +1150,11 @@
   "pt": {
     "seo": {
       "title": "Mapas ECU Classic Mini | Arquivos de Sintonia para Múltiplas ECUs | Classic Mini DIY",
-      "description": "Baixe mapas ECU profissionalmente sintonizados para motores Classic Mini. Compatível com Haltech, Speeduino, MegaSquirt, Emerald e mais. Pague o que quiser por atualizações vitalícias.",
+      "description": "Mapas base de ECU gratuitos para motores Classic Mini, um ponto de partida para o seu próprio acerto em dinamômetro. Haltech, Speeduino, MegaSquirt, Emerald e mais. Pague o que quiser por atualizações vitalícias.",
       "keywords": "Mapas ECU Classic Mini, sintonia Mini Cooper, mapas Haltech, mapas Speeduino, mapas MegaSquirt, ECU Emerald, sintonia de motor, mapas de combustível, mapas de ignição",
       "ogTitle": "Mapas ECU Classic Mini | Arquivos de Sintonia para Múltiplas ECUs",
       "twitterTitle": "Mapas ECU Classic Mini | Suporte a Múltiplas ECUs",
-      "twitterDescription": "Mapas ECU profissionais para motores Classic Mini com atualizações vitalícias."
+      "twitterDescription": "Mapas base de ECU para motores Classic Mini com atualizações vitalícias. Requer acerto em dinamômetro."
     },
     "breadcrumb": "Mapas ECU",
     "hero": {
@@ -1187,6 +1163,10 @@
     },
     "mainTitle": "O Mapa ECU Classic Mini",
     "description": "Após anos sintonizando motores Classic Mini, construindo chicotes personalizados e mapeando múltiplas ECUs, tenho o orgulho de lançar minha coleção de mapas ECU com duas opções de acesso. Oferecendo suporte para muitas ECUs populares usadas em Classic Minis, com mais a serem adicionadas no futuro.",
+    "disclaimer": {
+      "title": "Não é plug and play",
+      "body": "Estes são mapas base, um ponto de partida para o seu próprio acerto. Cada mapa deve ser configurado para o seu veículo e validado em um dinamômetro antes de qualquer condução séria. Usar um mapa sem o acerto adequado pode causar uma falha catastrófica do motor."
+    },
     "features": {
       "lifetimeUpdates": "Atualizações Vitalícias",
       "multipleEcus": "Múltiplas ECUs",
@@ -1218,12 +1198,17 @@
       "driveByWire": "Pronto para Drive by Wire",
       "boostControl": "Mapa de Controle de Boost",
       "idleMap": "Mapa de Marcha Lenta",
-      "sixteenVEngine": "Versão Motor 16V"
+      "sixteenVEngine": "Versão Motor 16V",
+      "error": "Não foi possível carregar a tabela de compatibilidade do GitHub."
     },
     "legend": {
       "included": {
         "name": "Incluído",
         "description": "Incluído no Mapa"
+      },
+      "started": {
+        "name": "Iniciado",
+        "description": "Arquivo base incluído, ainda não validado"
       },
       "notIncluded": {
         "name": "Não incluído",
@@ -1254,11 +1239,11 @@
   "ru": {
     "seo": {
       "title": "Карты ECU Classic Mini | Файлы настройки для множества ECU | Classic Mini DIY",
-      "description": "Скачайте профессионально настроенные карты ECU для двигателей Classic Mini. Совместимо с Haltech, Speeduino, MegaSquirt, Emerald и другими. Платите сколько хотите за пожизненные обновления.",
+      "description": "Бесплатные базовые карты ECU для двигателей Classic Mini — отправная точка для вашей собственной настройки на стенде. Haltech, Speeduino, MegaSquirt, Emerald и другие. Платите сколько хотите за пожизненные обновления.",
       "keywords": "Карты ECU Classic Mini, настройка Mini Cooper, карты Haltech, карты Speeduino, карты MegaSquirt, ECU Emerald, настройка двигателя, карты топлива, карты зажигания",
       "ogTitle": "Карты ECU Classic Mini | Файлы настройки для множества ECU",
       "twitterTitle": "Карты ECU Classic Mini | Поддержка множества ECU",
-      "twitterDescription": "Профессиональные карты ECU для двигателей Classic Mini с пожизненными обновлениями."
+      "twitterDescription": "Базовые карты ECU для двигателей Classic Mini с пожизненными обновлениями. Требуется настройка на стенде."
     },
     "breadcrumb": "Карты ECU",
     "hero": {
@@ -1267,6 +1252,10 @@
     },
     "mainTitle": "Карта ECU Classic Mini",
     "description": "После лет настройки двигателей Classic Mini, создания пользовательских жгутов проводов и настройки множества ECU, я горжусь тем, что представляю свою коллекцию карт ECU с двумя вариантами доступа. Предлагая поддержку многих популярных ECU, используемых на Classic Mini, с добавлением большего количества в будущем.",
+    "disclaimer": {
+      "title": "Не готово к использованию «из коробки»",
+      "body": "Это базовые карты — отправная точка для вашей собственной настройки. Каждую карту нужно настроить под ваш автомобиль и проверить на мощностном стенде перед серьёзной ездой. Использование карты без должной настройки может привести к катастрофическому отказу двигателя."
+    },
     "features": {
       "lifetimeUpdates": "Пожизненные обновления",
       "multipleEcus": "Множество ECU",
@@ -1298,12 +1287,17 @@
       "driveByWire": "Готовность Drive by Wire",
       "boostControl": "Карта контроля наддува",
       "idleMap": "Карта холостого хода",
-      "sixteenVEngine": "Версия 16V двигателя"
+      "sixteenVEngine": "Версия 16V двигателя",
+      "error": "Не удалось загрузить таблицу поддержки с GitHub."
     },
     "legend": {
       "included": {
         "name": "Включено",
         "description": "Включено в карту"
+      },
+      "started": {
+        "name": "Начато",
+        "description": "Базовый файл добавлен, ещё не проверен"
       },
       "notIncluded": {
         "name": "Не включено",
@@ -1334,11 +1328,11 @@
   "zh": {
     "seo": {
       "title": "Classic Mini ECU地图 | 多种ECU的调校文件 | Classic Mini DIY",
-      "description": "下载专业调校的Classic Mini发动机ECU地图。兼容Haltech、Speeduino、MegaSquirt、Emerald等。按您的意愿付费，享受终身更新。",
+      "description": "免费的Classic Mini发动机基础ECU地图，是您自行上功率台调校的起点。支持Haltech、Speeduino、MegaSquirt、Emerald等。按您的意愿付费，享受终身更新。",
       "keywords": "Classic Mini ECU地图, Mini Cooper调校, Haltech地图, Speeduino地图, MegaSquirt地图, Emerald ECU, 发动机调校, 燃油地图, 点火地图",
       "ogTitle": "Classic Mini ECU地图 | 多种ECU的调校文件",
       "twitterTitle": "Classic Mini ECU地图 | 多ECU支持",
-      "twitterDescription": "Classic Mini发动机的专业ECU地图，享受终身更新。"
+      "twitterDescription": "Classic Mini发动机基础ECU地图，享受终身更新。需要上功率台调校。"
     },
     "breadcrumb": "ECU地图",
     "hero": {
@@ -1347,6 +1341,10 @@
     },
     "mainTitle": "Classic Mini ECU地图",
     "description": "经过多年调校Classic Mini发动机、构建定制线束和映射多种ECU，我自豪地发布我的ECU地图集合，提供两种访问选项。支持Classic Mini上使用的许多流行ECU，未来还会增加更多。",
+    "disclaimer": {
+      "title": "并非即插即用",
+      "body": "这些是基础地图，是您自行调校的起点。在正式驾驶之前，每张地图都必须针对您的车辆进行配置，并在功率台上验证。未经适当调校就使用地图可能导致发动机严重损坏。"
+    },
     "features": {
       "lifetimeUpdates": "终身更新",
       "multipleEcus": "多种ECU",
@@ -1378,12 +1376,17 @@
       "driveByWire": "电子油门就绪",
       "boostControl": "增压控制地图",
       "idleMap": "怠速地图",
-      "sixteenVEngine": "16V发动机版本"
+      "sixteenVEngine": "16V发动机版本",
+      "error": "无法从GitHub加载支持表。"
     },
     "legend": {
       "included": {
         "name": "包含",
         "description": "包含在地图中"
+      },
+      "started": {
+        "name": "已开始",
+        "description": "基础文件已上传，尚未验证"
       },
       "notIncluded": {
         "name": "不包含",
