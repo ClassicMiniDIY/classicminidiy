@@ -249,8 +249,8 @@ export async function insertApprovedVariant(
   const source = parseVariantSource(data.source);
   if (!source) return 'A new variant needs a source (type and citation)';
 
-  const markRaw = parseVariantNumber(v.mark);
-  const mark = markRaw.ok && markRaw.value !== null && MARK_RANGES[markRaw.value] ? markRaw.value : null;
+  const parsedMark = parseVariantNumber(v.mark);
+  const mark = parsedMark.ok && parsedMark.value !== null && MARK_RANGES[parsedMark.value] ? parsedMark.value : null;
 
   const row: Record<string, unknown> = {
     name,
