@@ -123,22 +123,33 @@ const GENERIC = new Set([
   'special',
   'limited',
   'edition',
+  // Connectives the corrected multi-name variants carry ("… Countryman and
+  // Morris Mini Traveller", "Chic For Ever"): never evidence of an edition.
+  'and',
+  'or',
+  'for',
+  'ever',
+  'with',
+  'of',
 ]);
 
 function normalise(text: string): string {
-  return ` ${text} `
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/1275\s*gts?\b/g, '1275 gt')
-    .replace(/\bthirty\b/g, '30')
-    .replace(/\bthirty[\s-]?five\b/g, '35')
-    .replace(/\bforty\b/g, '40')
-    .replace(/\bcheck\s*mate\b/g, 'check mate')
-    .replace(/\bde\s*luxe\b/g, 'deluxe')
-    .replace(/\bmayfield\b/g, 'mayfair')
-    .replace(/\bsixty\b/g, '60')
-    .replace(/[^a-z0-9]+/g, ' ');
+  return (
+    ` ${text} `
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/1275\s*gts?\b/g, '1275 gt')
+      // Longest phrase first, or "thirty five" becomes "30 five".
+      .replace(/\bthirty[\s-]?five\b/g, '35')
+      .replace(/\bthirty\b/g, '30')
+      .replace(/\bforty\b/g, '40')
+      .replace(/\bcheck\s*mate\b/g, 'check mate')
+      .replace(/\bde\s*luxe\b/g, 'deluxe')
+      .replace(/\bmayfield\b/g, 'mayfair')
+      .replace(/\bsixty\b/g, '60')
+      .replace(/[^a-z0-9]+/g, ' ')
+  );
 }
 
 const has = (text: string, phrase: string) => text.includes(` ${phrase} `);

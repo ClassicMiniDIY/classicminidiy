@@ -1,5 +1,7 @@
 import { getServiceClient } from '../../../utils/supabase';
 import { requireAdminAuth } from '../../../utils/adminAuth';
+import { resolveRegistryVariant } from '../../../utils/variantApprovals';
+import { invalidateModelVariants } from '../../../utils/modelVariants';
 
 /**
  * Approve or reject a pending row that lives directly on `registry_entries`.
@@ -34,7 +36,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: entry, error: fetchError } = await supabase
     .from('registry_entries')
-    .select('id, status, submitted_by')
+    .select('id, status, submitted_by, variant_id, year, model, trim, engine_size, body_type')
     .eq('id', id)
     .single();
 
@@ -56,7 +58,12 @@ export default defineEventHandler(async (event) => {
 
   const { error: updateError } = await supabase
     .from('registry_entries')
-    .update({ status: action === 'approve' ? 'approved' : 'rejected' })
+    .update({
+      status: action === 'approve' ? 'approved' : 'rejected',
+      // Legacy pending cars get the same confident-only Model Variant link as
+      // queue approvals (there is no owner pick on this path).
+      ...(action === 'approve' && !entry.variant_id ? await resolveRegistryVariant(entry) : {}),
+    })
     .eq('id', id)
     // Re-assert both guards in the write itself: without this, two admins acting
     // at once could both pass the checks above and the second would silently
@@ -68,5 +75,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: updateError.message });
   }
 
+  // An approved (or newly rejected) linked car changes a variant's "N registered".
+  invalidateModelVariants();
   return { success: true, id, status: action === 'approve' ? 'approved' : 'rejected' };
 });

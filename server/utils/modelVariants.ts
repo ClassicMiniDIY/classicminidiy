@@ -213,12 +213,19 @@ async function fetchSnapshot(): Promise<Snapshot> {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from('registry_entries')
-      .select('variant_id')
+      .select('id, variant_id')
       .eq('status', 'approved')
       .not('variant_id', 'is', null)
+      // A stable order, or page windows can overlap or skip rows.
+      .order('id')
       .range(from, from + 999);
-    // A failed count is not a failed archive: show the cars without numbers.
-    if (error) break;
+    // A failed count is not a failed archive, but a partial one is a wrong
+    // one: show the cars without numbers rather than undercount them.
+    if (error) {
+      console.error('[modelVariants] registry counts unavailable:', error.message);
+      registered.clear();
+      break;
+    }
     for (const r of data ?? []) registered.set(r.variant_id, (registered.get(r.variant_id) ?? 0) + 1);
     if (!data || data.length < 1000) break;
   }

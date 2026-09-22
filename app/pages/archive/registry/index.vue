@@ -24,10 +24,23 @@
   // setup would make the baked HTML and the first client render disagree.
   const route = useRoute();
   const variantFilter = ref<string | null>(null);
-  onMounted(() => {
+  const readVariantQuery = () => {
     const v = Array.isArray(route.query.variant) ? route.query.variant[0] : route.query.variant;
-    if (typeof v === 'string' && /^[a-z0-9-]{1,120}$/.test(v)) variantFilter.value = v;
+    variantFilter.value = typeof v === 'string' && /^[a-z0-9-]{1,120}$/.test(v) ? v : null;
+  };
+  const filterMounted = ref(false);
+  onMounted(() => {
+    readVariantQuery();
+    filterMounted.value = true;
   });
+  // The page component survives a query-only change (Back/Forward between the
+  // filtered and unfiltered URL), so follow the query once mounted.
+  watch(
+    () => route.query.variant,
+    () => {
+      if (filterMounted.value) readVariantQuery();
+    }
+  );
   const variantFilterName = computed(
     () => (registryItems.value ?? []).find((item) => item.variantSlug === variantFilter.value)?.variantName ?? null
   );
