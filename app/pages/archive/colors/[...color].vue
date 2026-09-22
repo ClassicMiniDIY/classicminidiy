@@ -18,7 +18,10 @@
   }
 
   // Model variants this colour was offered on (model_variant_colors.color_id).
-  // Non-blocking: a failure leaves the block out rather than failing the page.
+  // Server-rendered on purpose, so crawlers follow colour → variant links; it
+  // blocks SSR on /api/archive/variants, which is one cached in-memory filter
+  // per isolate (server/utils/modelVariants.ts). An API error does not fail the
+  // page: `default` applies and the block's v-if hides it.
   const { data: offeredOn } = await useFetch<{ variants: ModelVariantCard[] }>('/api/archive/variants', {
     key: `color-variants-${colorId}`,
     query: { color: colorId },

@@ -71,6 +71,16 @@ describe('variantApprovals', () => {
     ).toMatch(/must be a number/);
   });
 
+  it('refuses numbers the table CHECK constraints would reject, before touching the database', async () => {
+    const edit = (field: string, to: string) =>
+      applyVariantEdit(untouchable, 'v1', { changes: { [field]: { to } }, source: SOURCE }, 'u1', 's1');
+    expect(await edit('year_end', '1958')).toMatch(/at least 1959/);
+    expect(await edit('engine_cc', '2500')).toMatch(/at most 2000/);
+    expect(await edit('compression_ratio', '20')).toMatch(/at most 15/);
+    expect(await edit('power_rpm', '5500.5')).toMatch(/whole number/);
+    expect(await edit('kerb_weight_kg', '0')).toMatch(/greater than zero/);
+  });
+
   it('refuses a photo addition whose URLs are not this submission’s own uploads', async () => {
     const error = await applyVariantEdit(
       untouchable,

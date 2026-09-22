@@ -364,7 +364,8 @@
         "wheel": "Wheel",
         "model_version": "3D Model",
         "external_model": "External Find",
-        "listing": "Exchange Listing"
+        "listing": "Exchange Listing",
+        "variant": "Model Variant"
       }
     },
     "stats_breakdown": {
@@ -421,7 +422,8 @@
         "wheel": "Felge",
         "model_version": "3D-Modell",
         "external_model": "Externer Fund",
-        "listing": "Exchange-Anzeige"
+        "listing": "Exchange-Anzeige",
+        "variant": "Modellvariante"
       }
     },
     "stats_breakdown": {
@@ -478,7 +480,8 @@
         "wheel": "Rueda",
         "model_version": "Modelo 3D",
         "external_model": "Hallazgo Externo",
-        "listing": "Anuncio del Exchange"
+        "listing": "Anuncio del Exchange",
+        "variant": "Variante de modelo"
       }
     },
     "stats_breakdown": {
@@ -535,7 +538,8 @@
         "wheel": "Roue",
         "model_version": "Modèle 3D",
         "external_model": "Trouvaille Externe",
-        "listing": "Annonce Exchange"
+        "listing": "Annonce Exchange",
+        "variant": "Variante de modèle"
       }
     },
     "stats_breakdown": {
@@ -592,7 +596,8 @@
         "wheel": "Ruota",
         "model_version": "Modello 3D",
         "external_model": "Scoperta Esterna",
-        "listing": "Annuncio Exchange"
+        "listing": "Annuncio Exchange",
+        "variant": "Variante di modello"
       }
     },
     "stats_breakdown": {
@@ -649,7 +654,8 @@
         "wheel": "Roda",
         "model_version": "Modelo 3D",
         "external_model": "Achado Externo",
-        "listing": "Anúncio do Exchange"
+        "listing": "Anúncio do Exchange",
+        "variant": "Variante de modelo"
       }
     },
     "stats_breakdown": {
@@ -706,7 +712,8 @@
         "wheel": "Колесо",
         "model_version": "3D-модель",
         "external_model": "Внешняя находка",
-        "listing": "Объявление Exchange"
+        "listing": "Объявление Exchange",
+        "variant": "Модификация"
       }
     },
     "stats_breakdown": {
@@ -763,7 +770,8 @@
         "wheel": "ホイール",
         "model_version": "3Dモデル",
         "external_model": "外部リンク",
-        "listing": "Exchange出品"
+        "listing": "Exchange出品",
+        "variant": "モデルバリエーション"
       }
     },
     "stats_breakdown": {
@@ -820,7 +828,8 @@
         "wheel": "轮毂",
         "model_version": "3D 模型",
         "external_model": "外部发现",
-        "listing": "Exchange 商品"
+        "listing": "Exchange 商品",
+        "variant": "车型变体"
       }
     },
     "stats_breakdown": {
@@ -877,7 +886,8 @@
         "wheel": "휠",
         "model_version": "3D 모델",
         "external_model": "외부 발견",
-        "listing": "Exchange 판매글"
+        "listing": "Exchange 판매글",
+        "variant": "모델 변형"
       }
     },
     "stats_breakdown": {
