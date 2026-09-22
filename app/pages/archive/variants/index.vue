@@ -11,11 +11,12 @@
    */
   import { HERO_TYPES } from '../../../../data/models/generic';
   import {
-    BODY_LABELS,
     MARK_NUMBERS,
     MARK_RANGES,
     MARQUE_LABELS,
     OVERSEAS_GROUP,
+    matchesEveryWord,
+    variantSearchWords,
     yearsLabel,
     type ModelVariantCard,
     type VariantBody,
@@ -23,7 +24,7 @@
   } from '../../../../data/models/variants';
 
   const { t } = useI18n();
-  const { track } = useAnalytics();
+  const { track, trackSearch } = useAnalytics();
   const { openWizard } = useContributeWizard();
   const route = useRoute();
   const router = useRouter();
@@ -57,7 +58,8 @@
     if (value) next[key] = value;
     else delete next[key];
     router.replace({ query: next });
-    track('archive_filter_changed', { section: 'variants', filter: key, value: value ?? '' });
+    if (key === 'q') trackSearch('variants', value ?? '', filtered.value.length);
+    else track('archive_filter_changed', { section: 'variants', filter: key, value: value ?? '' });
   };
   const clearFilters = () => router.replace({ query: {} });
   const hasFilters = computed(() =>
@@ -72,38 +74,13 @@
     searchTimer = setTimeout(() => setParam('q', value.trim() || null), 250);
   });
   watch(query, (value) => {
-    if (value !== searchText.value) searchText.value = value;
+    // Compare trimmed: the URL never carries the trailing space the user is
+    // mid-way through typing, and resetting the box would eat it.
+    if (value !== searchText.value.trim()) searchText.value = value;
   });
 
-  const words = (text: string) =>
-    text
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .split(/[^a-z0-9]+/)
-      .filter(Boolean);
-
-  const cardWords = (v: ModelVariantCard) =>
-    words(
-      [
-        v.name,
-        MARQUE_LABELS[v.marque],
-        BODY_LABELS[v.body_style],
-        v.mark ? `mk${v.mark} mk${MARK_RANGES[v.mark]?.roman ?? ''}` : '',
-        v.engine_cc ? `${v.engine_cc} ${v.engine_cc}cc` : '',
-        v.year_start ? String(v.year_start) : '',
-        v.year_end ? String(v.year_end) : '',
-        v.is_limited_edition ? 'limited edition' : '',
-      ].join(' ')
-    );
-
-  /** Word-prefix match, never substring — the rule every in-process search follows. */
-  const matches = (v: ModelVariantCard) => {
-    const needles = words(query.value);
-    if (needles.length === 0) return true;
-    const hay = cardWords(v);
-    return needles.every((n) => hay.some((w) => w.startsWith(n)));
-  };
+  /** Word-prefix match, never substring — the same builder the API and MCP tool use. */
+  const matches = (v: ModelVariantCard) => matchesEveryWord(variantSearchWords(v), query.value);
 
   const filtered = computed(() =>
     (data.value?.variants ?? []).filter((v) => {

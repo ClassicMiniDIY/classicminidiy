@@ -129,7 +129,15 @@ export default defineMcpTool({
     body: z.enum(VARIANT_BODIES).optional().describe('Restrict to one body style.'),
     market: z.enum(VARIANT_MARKETS).optional().describe('Restrict to one home market, e.g. "italy" for Innocenti.'),
     mark: z.number().int().min(1).max(7).optional().describe('UK mark number 1–7. Overseas cars carry no mark.'),
-    year: z.number().int().min(1959).max(2000).optional().describe('A year the variant was in production.'),
+    year: z
+      .number()
+      .int()
+      .min(1959)
+      .max(2000)
+      .optional()
+      .describe(
+        'A year the variant was in production. A variant with no recorded end year is treated as open-ended to 2000.'
+      ),
     engine_cc: z.number().int().optional().describe('Exact engine capacity: 848, 970, 997, 998, 1071, 1098 or 1275.'),
     limit: z.number().int().positive().max(50).default(10).describe('Maximum variants to return. Default 10.'),
   },

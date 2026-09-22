@@ -291,6 +291,44 @@ export function toKmh(mph: number): number {
   return Math.round(mph * 1.609344);
 }
 
+/**
+ * The words a search query may prefix-match, built from the fields a CARD
+ * carries so the index page (client) and `server/utils/modelVariants.ts`
+ * (API + MCP tool) rank identically. Word-prefix AND, never substring.
+ */
+export function variantSearchWords(v: ModelVariantCard): string[] {
+  const text = [
+    v.name,
+    MARQUE_LABELS[v.marque],
+    FAMILY_LABELS[v.family],
+    BODY_LABELS[v.body_style],
+    MARKET_LABELS[v.market],
+    v.mark ? `mk${v.mark} mk${MARK_RANGES[v.mark]?.roman ?? ''} mark${v.mark}` : '',
+    v.engine_cc ? `${v.engine_cc} ${v.engine_cc}cc` : '',
+    v.year_start ? String(v.year_start) : '',
+    v.year_end ? String(v.year_end) : '',
+    v.is_limited_edition ? 'limited edition le' : '',
+  ].join(' ');
+  return text
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+/** Every query word must prefix-match some word of the row. Empty query matches all. */
+export function matchesEveryWord(haystack: readonly string[], query: string): boolean {
+  const needles = query
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  if (needles.length === 0) return true;
+  return needles.every((needle) => haystack.some((w) => w.startsWith(needle)));
+}
+
 /** How many of the twelve source rows are filled — the "N of 12 specs sourced" figure. */
 export function countSourcedSpecs(variant: Pick<ModelVariant, 'specs_source'>): number {
   return Object.values(variant.specs_source ?? {}).filter((v) => typeof v === 'string' && v.trim() !== '').length;

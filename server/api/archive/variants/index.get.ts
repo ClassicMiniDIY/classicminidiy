@@ -7,7 +7,7 @@
  * route serves the MCP-free callers (mobile, curl) that want a narrowed list.
  */
 import { getQuery } from 'h3';
-import { listModelVariants, modelVariantFacets, toCard } from '../../../utils/modelVariants';
+import { listModelVariants, modelVariantFacets, toModelVariantCard } from '../../../utils/modelVariants';
 
 function str(v: unknown): string | undefined {
   const s = Array.isArray(v) ? v[0] : v;
@@ -32,7 +32,7 @@ export default defineEventHandler((event) => {
     year: int(q.year),
     engine_cc: int(q.engine),
     limitedOnly: str(q.limited) === '1' || str(q.limited) === 'true',
-  }).map(toCard);
+  }).map(toModelVariantCard);
 
   return {
     variants,

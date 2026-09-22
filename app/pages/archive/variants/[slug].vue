@@ -418,7 +418,7 @@
                 v-for="r in related"
                 :key="r.slug"
                 :to="`/archive/variants/${r.slug}`"
-                class="card card-compact bg-base-100 border border-base-300 hover:shadow-md transition-shadow"
+                class="card card-sm bg-base-100 border border-base-300 hover:shadow-md transition-shadow"
               >
                 <div class="card-body">
                   <p class="font-semibold m-0 leading-snug">{{ r.name }}</p>
