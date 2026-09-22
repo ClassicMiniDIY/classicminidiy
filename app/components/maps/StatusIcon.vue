@@ -5,7 +5,7 @@
 </script>
 
 <template>
-  <span :title="label">
+  <span>
     <i v-if="status === 'included'" class="text-lg fa-solid fa-check" style="color: #4a7023" aria-hidden="true"></i>
     <i v-else-if="status === 'started'" class="text-lg fad fa-hourglass-start" aria-hidden="true"></i>
     <i

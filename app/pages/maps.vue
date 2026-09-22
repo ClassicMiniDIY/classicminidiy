@@ -80,13 +80,16 @@
       },
     ],
   });
-  const { data: releases, status: releasesLoading, error: releaseError } = await useFetch('/api/github/releases');
-  const {
-    data: commits,
-    status: commitsLoading,
-    error: commitError,
-  } = await useFetch<EcuMapsCommit[]>('/api/github/commits');
-  const { data: manifest, status: manifestLoading, error: manifestError } = await useFetch('/api/github/maps-manifest');
+  // Started together so SSR waits for the slowest upstream, not the sum of all three.
+  const [
+    { data: releases, status: releasesLoading, error: releaseError },
+    { data: commits, status: commitsLoading, error: commitError },
+    { data: manifest, status: manifestLoading, error: manifestError },
+  ] = await Promise.all([
+    useFetch('/api/github/releases'),
+    useFetch<EcuMapsCommit[]>('/api/github/commits'),
+    useFetch('/api/github/maps-manifest'),
+  ]);
 
   // Merge releases and commits chronologically
   interface UpdateItem {
@@ -110,7 +113,7 @@
           date: commit.committedAt || '',
           displayDate: commit.date,
           // `?? ''` guards a browser-cached response from the old untrimmed shape.
-          message: (commit.message ?? '').split('\n')[0] ?? '',
+          message: commit.message ?? '',
           sha: commit.sha,
           url: `${ECU_MAPS_REPO.url}/commit/${commit.sha}`,
         });
@@ -182,7 +185,8 @@
       label: te(`table.${feature.id}`) ? t(`table.${feature.id}`) : feature.label,
       statuses: (manifest.value?.platforms ?? []).map((platform) => ({
         platformId: platform.id,
-        status: platform.features[feature.id] ?? 'na',
+        // A missing cell is unknown, not 'na' — 'na' claims the ECU cannot do it.
+        status: platform.features[feature.id] ?? 'unknown',
       })),
     }))
   );
@@ -205,7 +209,7 @@
           <p class="lead">
             {{ t('description') }}
           </p>
-          <div role="alert" class="alert alert-warning text-left mt-6">
+          <div role="note" class="alert alert-warning text-left mt-6">
             <i class="fad fa-triangle-exclamation text-2xl" aria-hidden="true"></i>
             <div>
               <h3 class="font-bold">{{ t('disclaimer.title') }}</h3>

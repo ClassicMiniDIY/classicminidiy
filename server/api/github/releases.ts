@@ -1,14 +1,13 @@
 import { request } from '@octokit/request';
-import { ECU_MAPS_REPO, type IGithubReleaseParsedResponse, type ReleaseItem } from '../../../data/models/github';
+import {
+  ECU_MAPS_REPO,
+  GITHUB_ROUTE_CACHE_HEADERS,
+  type IGithubReleaseParsedResponse,
+  type ReleaseItem,
+} from '../../../data/models/github';
 
 export default defineEventHandler(async (event): Promise<IGithubReleaseParsedResponse> => {
   const config = useRuntimeConfig();
-
-  // Set cache headers - cache for 30 minutes since GitHub data changes occasionally
-  setResponseHeaders(event, {
-    'Cache-Control': 'public, max-age=1800, s-maxage=1800',
-    'CDN-Cache-Control': 'public, max-age=1800',
-  });
 
   try {
     // Create a promise that will reject after timeout
@@ -39,6 +38,7 @@ export default defineEventHandler(async (event): Promise<IGithubReleaseParsedRes
       latestRelease: responseData[0]?.tag_name || null,
       releases: responseData,
     };
+    setResponseHeaders(event, GITHUB_ROUTE_CACHE_HEADERS);
     return parsed;
   } catch (error: any) {
     console.error('Error getting GitHub releases:', error);

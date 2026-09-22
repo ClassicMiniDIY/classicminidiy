@@ -1,15 +1,9 @@
 import { request } from '@octokit/request';
 import { DateTime } from 'luxon';
-import { ECU_MAPS_REPO, type EcuMapsCommit } from '../../../data/models/github';
+import { ECU_MAPS_REPO, GITHUB_ROUTE_CACHE_HEADERS, type EcuMapsCommit } from '../../../data/models/github';
 
 export default defineEventHandler(async (event): Promise<EcuMapsCommit[]> => {
   const config = useRuntimeConfig();
-
-  // Set cache headers - cache for 30 minutes since GitHub data changes occasionally
-  setResponseHeaders(event, {
-    'Cache-Control': 'public, max-age=1800, s-maxage=1800',
-    'CDN-Cache-Control': 'public, max-age=1800',
-  });
 
   try {
     // Create a promise that will reject after timeout
@@ -50,15 +44,18 @@ export default defineEventHandler(async (event): Promise<EcuMapsCommit[]> => {
     // Return only what /maps renders. The raw GitHub commit object (tree, parents,
     // verification, author/committer users) is ~2 KB each and was serialized into
     // the SSR payload for every page view.
-    return response.data.map((item: GitHubCommit) => {
+    const commits = response.data.map((item: GitHubCommit) => {
       const date = item?.commit?.committer?.date;
       return {
         sha: item.sha,
-        message: item?.commit?.message ?? '',
+        // Subject line only — bodies (review-feedback, merge notes) are never shown.
+        message: (item?.commit?.message ?? '').split('\n')[0] ?? '',
         committedAt: date ?? null,
         date: date ? DateTime.fromISO(date).toFormat('LLL dd') : 'Missing',
       };
     });
+    setResponseHeaders(event, GITHUB_ROUTE_CACHE_HEADERS);
+    return commits;
   } catch (error: any) {
     console.error(`Error getting GitHub commits:`, error);
 

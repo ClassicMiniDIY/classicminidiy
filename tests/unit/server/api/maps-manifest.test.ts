@@ -129,6 +129,11 @@ describe('server/api/github/maps-manifest', () => {
       expect((globalThis as any).setResponseHeaders).toHaveBeenLastCalledWith(event, {
         'Cache-Control': 'public, max-age=60',
       });
+
+      // Backs off: a request inside the next minute serves stale without refetching.
+      vi.advanceTimersByTime(30 * 1000);
+      await handler({});
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     } finally {
       vi.useRealTimers();
     }
