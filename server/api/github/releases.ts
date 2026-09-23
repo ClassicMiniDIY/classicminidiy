@@ -31,7 +31,15 @@ export default defineEventHandler(async (event): Promise<IGithubReleaseParsedRes
     // Type assertion to any as an intermediate step to avoid type errors
     // Drafts are only visible to a token with push access. Never surface them —
     // they are unpublished by definition.
-    const responseData = ((response as any).data as ReleaseItem[]).filter((release) => !release.draft);
+    const responseData = ((response as any).data as ReleaseItem[])
+      .filter((release) => !release.draft)
+      .map(({ tag_name, name, html_url, published_at, created_at }) => ({
+        tag_name,
+        name,
+        html_url,
+        published_at,
+        created_at,
+      }));
 
     const parsed: IGithubReleaseParsedResponse = {
       // null (not a placeholder string) so /maps can hide the "Latest Release" line.
