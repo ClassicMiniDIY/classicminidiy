@@ -1,7 +1,14 @@
 export interface IGithubReleaseParsedResponse {
   latestRelease: string | null;
-  releases: ReleaseItem[];
+  releases: EcuMapsRelease[];
 }
+
+/**
+ * Trimmed release shape returned by /api/github/releases. The raw GitHub object carries
+ * the full release notes and the author's user profile, all serialized into the /maps
+ * SSR payload; the page reads only these fields.
+ */
+export type EcuMapsRelease = Pick<ReleaseItem, 'tag_name' | 'name' | 'html_url' | 'published_at' | 'created_at'>;
 
 export interface GithubRawResponseRelease {
   data: ReleaseItem[];

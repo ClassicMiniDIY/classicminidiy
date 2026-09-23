@@ -457,17 +457,17 @@ describe('server/api/github/releases', () => {
     );
   });
 
-  it('response structure matches IGithubReleaseParsedResponse shape', async () => {
+  it('returns only the trimmed release fields the page renders', async () => {
     const releases = [makeRelease('v1.0.0', 'First', 1)];
     mockRequest.mockResolvedValueOnce({ data: releases });
     const result = await handler({});
     expect(typeof result.latestRelease).toBe('string');
-    expect(Array.isArray(result.releases)).toBe(true);
-    const release = result.releases[0];
-    expect(release).toHaveProperty('tag_name');
-    expect(release).toHaveProperty('name');
-    expect(release).toHaveProperty('id');
-    expect(release).toHaveProperty('draft');
-    expect(release).toHaveProperty('prerelease');
+    expect(result.releases[0]).toEqual({
+      tag_name: 'v1.0.0',
+      name: 'First',
+      html_url: releases[0].html_url,
+      published_at: '2024-01-01T00:00:00Z',
+      created_at: '2024-01-01T00:00:00Z',
+    });
   });
 });
