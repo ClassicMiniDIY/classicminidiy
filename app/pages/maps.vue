@@ -102,6 +102,14 @@
     url: string;
   }
 
+  // 'Sep 23' for this year, 'Oct 09 2022' otherwise — the log mixes years since the
+  // back catalogue of releases was published.
+  function formatUpdateDate(iso: string | null | undefined, fallback: string): string {
+    if (!iso) return fallback;
+    const date = DateTime.fromISO(iso);
+    return date.toFormat(date.hasSame(DateTime.now(), 'year') ? 'LLL dd' : 'LLL dd yyyy');
+  }
+
   const mergedUpdates = computed(() => {
     const updates: UpdateItem[] = [];
 
@@ -111,7 +119,7 @@
         updates.push({
           type: 'commit',
           date: commit.committedAt || '',
-          displayDate: commit.date,
+          displayDate: formatUpdateDate(commit.committedAt, commit.date),
           // `?? ''` guards a browser-cached response from the old untrimmed shape.
           message: commit.message ?? '',
           sha: commit.sha,
@@ -125,8 +133,11 @@
       releases.value.releases.forEach((release) => {
         updates.push({
           type: 'release',
-          date: release.published_at || release.created_at || '',
-          displayDate: release.published_at ? DateTime.fromISO(release.published_at).toFormat('LLL dd') : 'Unknown',
+          // created_at, not published_at: for this repo created_at is the original release
+          // date, while published_at is when the old drafts were published (2026-09-22).
+          // GitHub does not allow published_at to be set.
+          date: release.created_at || release.published_at || '',
+          displayDate: formatUpdateDate(release.created_at || release.published_at, 'Unknown'),
           message: release.name || release.tag_name || 'New Release',
           tagName: release.tag_name || undefined,
           url: release.html_url || `${ECU_MAPS_REPO.url}/releases/tag/${release.tag_name}`,

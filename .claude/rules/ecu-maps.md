@@ -22,5 +22,8 @@ paths:
   contract.
 - **Releases:** draft releases are filtered out and `latestRelease` is `null` when none are
   published — the page hides the "Latest Release" line on `null`.
+- **Release dates use `created_at`, never `published_at`.** All 14 MiniECUMaps releases were
+  drafts published on 2026-09-22, so `published_at` is that day for every one. `created_at`
+  holds the original 2021–2025 dates, and GitHub does not allow `published_at` to be set.
 - **The disclaimer is load-bearing.** The page must keep the "Not plug and play" alert and
   must not call the maps "professionally tuned" or ready to flash.
