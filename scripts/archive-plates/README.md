@@ -84,7 +84,7 @@ Load-bearing decisions, do not undo:
   hold, trace it and replace the schematic.
 - **The torque figures are 1275 only** — 34 Nm (25 lb-ft) first pass, 68 Nm
   (50 lb-ft) final. They are _not_ the 848/998 or Cooper S figures, both lower, in
-  `data/torqueSpecs.json`. A reader who applies 68 Nm to a 998 head is the failure
+  the `torque_specs` reference data. A reader who applies 68 Nm to a 998 head is the failure
   the footer wording exists to prevent.
 - **The rocker shaft bracket nuts are a third fastener set** at 25 Nm, tightened
   after the sequence — distinct from A–D.

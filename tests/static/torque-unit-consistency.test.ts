@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import torqueSpecs from '../../data/torqueSpecs.json';
+import { getReferenceDataset } from '~~/server/utils/referenceData';
+
+// Published reference data (fixtures, or the live snapshot under
+// REFERENCE_SOURCE=snapshot). publish-reference-data enforces the same
+// conversion rule at publish time; this keeps the web's own guard on what it serves.
+const torqueSpecs = (await getReferenceDataset('torque_specs')).value;
 import { read, REPO_ROOT } from './_scan';
 
 /**

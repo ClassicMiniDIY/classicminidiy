@@ -45,9 +45,10 @@ jobs:
       - name: Prepare Nuxt types
         run: bunx nuxi prepare
 
-      # Includes tests/unit/data/needles-data-integrity.test.ts, which pins the
-      # canonical hash of data/needles.json. The Android and iOS repos pin the
-      # same hash, so a drifted copy fails CI in whichever repo drifted.
+      # Reference data (needles, torque, clearances) is no longer a file in this
+      # repo: it is published in Supabase and its rules run at publish time
+      # (classicminidiy-supabase). Unit tests read tests/fixtures/reference/;
+      # the deploy job re-runs the data-dependent tests against live data.
       #
       # Also includes tests/static/**, which enforces the invariants no unit test
       # can see: i18n locale completeness, hydration-safe auth branches, the

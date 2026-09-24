@@ -6079,6 +6079,47 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      admin_reference_datasets: {
+        Args: never;
+        Returns: {
+          bytes: number;
+          current_version: number;
+          key: string;
+          live_schema_versions: number[];
+          note: string;
+          publish_enabled: boolean;
+          published_at: string;
+          published_by: string;
+          source: string;
+          title: string;
+        }[];
+      };
+      admin_reference_history: {
+        Args: { p_dataset: string };
+        Returns: {
+          bytes: number;
+          note: string;
+          published_at: string;
+          published_by: string;
+          schema_version: number;
+          sha256: string;
+          version: number;
+        }[];
+      };
+      admin_reference_version: {
+        Args: { p_dataset: string; p_schema_version: number; p_version: number };
+        Returns: {
+          bytes: number;
+          dataset: string;
+          note: string;
+          payload: string;
+          published_at: string;
+          published_by: string;
+          schema_version: number;
+          sha256: string;
+          version: number;
+        }[];
+      };
       admin_verification_health: {
         Args: { p_days?: number };
         Returns: Database['public']['CompositeTypes']['admin_verification_health_row'][];
@@ -6439,6 +6480,22 @@ export type Database = {
           social_links: Json;
           updated_at: string;
           username: string;
+        }[];
+      };
+      get_reference_dataset: {
+        Args: {
+          p_dataset: string;
+          p_known_sha256?: string;
+          p_max_schema_version: number;
+        };
+        Returns: {
+          bytes: number;
+          dataset: string;
+          payload: string;
+          published_at: string;
+          schema_version: number;
+          sha256: string;
+          version: number;
         }[];
       };
       get_related_listings: {

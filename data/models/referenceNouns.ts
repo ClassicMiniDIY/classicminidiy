@@ -4,7 +4,7 @@
  * The torque and clearance direct-answer cards (docs/plans/2026-09-14-unified-search.md)
  * render a figure in the search palette instead of a link to the table. That
  * needs a map from the words a person uses ("flywheel torque", "tappet gap")
- * to ONE row in `data/torqueSpecs.json` or `data/commonClearances.json`. The
+ * to ONE row in the published `torque_specs` or `common_clearances` reference data. The
  * map is data, here, so a new noun is a row and not a deploy of logic.
  *
  * RULES THE STATIC TEST ENFORCES (`tests/static/reference-nouns.test.ts`):

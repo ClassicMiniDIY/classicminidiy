@@ -21,8 +21,6 @@
  * Pure + deterministic → unit-tested in tests/unit/utils/generate-faqs.test.ts.
  */
 import { chassisRanges, type ChassisRange } from '../../../data/models/decoders';
-import torqueSpecs from '../../../data/torqueSpecs.json';
-import commonClearances from '../../../data/commonClearances.json';
 import engineCodes from '../../../data/engineCodes.json';
 
 /** One generated question/answer pair. */
@@ -82,8 +80,14 @@ const TORQUE_PICKS = [
   'Road Wheel',
 ];
 
-export function torqueFaqs(): Faq[] {
-  const data = torqueSpecs as unknown as Record<string, SpecTable>;
+/**
+ * `torqueSpecs` and `commonClearances` are the published reference datasets,
+ * passed in by the server caller (server/plugins/llms-faq.ts loads them through
+ * server/utils/referenceData.ts): this file is app code and cannot import a
+ * server loader, and no JSON copy of that data exists in the repo any more.
+ */
+export function torqueFaqs(torqueSpecs: unknown): Faq[] {
+  const data = torqueSpecs as Record<string, SpecTable>;
   const out: Faq[] = [];
   const seen = new Set<string>();
   for (const pick of TORQUE_PICKS) {
@@ -109,8 +113,8 @@ const CLEARANCE_PICKS = [
   'Baulk Ring Clearance',
 ];
 
-export function clearanceFaqs(): Faq[] {
-  const data = commonClearances as unknown as Record<string, SpecTable>;
+export function clearanceFaqs(commonClearances: unknown): Faq[] {
+  const data = commonClearances as Record<string, SpecTable>;
   const out: Faq[] = [];
   const seen = new Set<string>();
   for (const pick of CLEARANCE_PICKS) {

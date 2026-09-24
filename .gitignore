@@ -123,3 +123,6 @@ design_handoff_ux_cohesion/
 
 # Playwright signed-in storage state — contains a real access token. Never commit.
 playwright/.auth/
+
+# Reference-data build snapshot (scripts/pull-reference-data.mjs)
+.reference-snapshot/

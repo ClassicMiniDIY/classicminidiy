@@ -172,6 +172,7 @@
         { label: 'Parts Sources', to: '/admin/parts', icon: 'fas fa-gears' },
         { label: 'Part Correlations', to: '/admin/parts/correlations', icon: 'fas fa-link' },
         { label: 'Model Variants', to: '/admin/variants', icon: 'fas fa-car-side' },
+        { label: 'Reference Data', to: '/admin/reference', icon: 'fas fa-table-list' },
       ],
     },
     {

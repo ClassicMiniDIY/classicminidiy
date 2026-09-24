@@ -2,7 +2,7 @@ import { unitsForItems, type UnitDescriptions } from '../../data/models/units';
 /**
  * Shared search for the reference-table MCP tools.
  *
- * `data/torqueSpecs.json`, `commonClearances.json`, `parts.json` and
+ * the `torque_specs` and `common_clearances` reference datasets, `parts.json` and
  * `weights.json` all share one shape — an object of sections, each with a title
  * and an `items` array — but their item fields differ (`lbft`/`nm`, `thou`/`mm`,
  * `brand`/`part`, `weight`). Matching every string field rather than a named one
@@ -116,7 +116,7 @@ export interface LookupResult {
    * Rows that matched every term BUT ONE, when the full query was narrow.
    *
    * This exists because AND matching can silently hide the row the caller
-   * actually wanted. `data/torqueSpecs.json` names the same fastener differently
+   * actually wanted. The torque reference data names the same fastener differently
    * across engine variants — the 848/998 row is "Main Bearing Bolts" while the
    * 970/1071/1275 rows are "set screws" and "nuts" — so the obvious query "main
    * bearing bolts" returns ONE confident-looking row that does not apply to a

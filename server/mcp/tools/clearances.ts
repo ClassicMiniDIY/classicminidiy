@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import data from '../../../data/commonClearances.json';
+import { getReferenceDataset } from '../../utils/referenceData';
 import { CLEARANCE_UNITS } from '../../../data/models/units';
 import { lookup, relatedNote, unitsInUse, type LookupData, type UnitMap } from '../../utils/mcpLookup';
 import { eventFromExtra, pickRelated, relatedPickNote } from '../../utils/mcpRelatedPick';
@@ -32,7 +32,8 @@ export default defineMcpTool({
   },
 
   async handler({ query, section, limit }, extra) {
-    const result = lookup(data as unknown as LookupData, { query, section, limit });
+    const data = (await getReferenceDataset<LookupData>('common_clearances')).value;
+    const result = lookup(data, { query, section, limit });
     // The near-miss pick: a hint naming which `related` row the query most
     // likely meant. Null unless TYPESAFE_MCP_MODE is on and there are two or
     // more rows to choose between; the list itself is never touched.

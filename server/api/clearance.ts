@@ -1,19 +1,18 @@
-import specs from '../../data/commonClearances.json';
 import { withUnits, CLEARANCE_UNITS } from '../../data/models/units';
+import { getReferenceDataset, setReferenceCacheHeaders } from '../utils/referenceData';
 
-export default defineEventHandler((event) => {
+type ClearanceTables = Record<string, { items?: readonly unknown[] }>;
+
+export default defineEventHandler(async (event) => {
   try {
-    // Set cache headers for better performance - cache for 1 day
-    setResponseHeaders(event, {
-      'Cache-Control': 'public, max-age=86400, s-maxage=86400',
-      'CDN-Cache-Control': 'public, max-age=86400',
-    });
+    setReferenceCacheHeaders(event);
+    const specs = (await getReferenceDataset<ClearanceTables>('common_clearances')).value;
 
     // `units` describes what each numeric column holds. Two of these columns
     // mislead when read by name — `lbin` is pound-INCHES, and clearance `thou`
     // holds inches — and weights state no unit at all, so a consumer holding
-    // only the raw table has to guess. The native apps read these routes, and
-    // they are the consumer this repo cannot check.
+    // only the raw table has to guess. withUnits returns a new object; the
+    // loader's shared value is never mutated.
     return withUnits(specs, CLEARANCE_UNITS);
   } catch (error: any) {
     console.error('Error fetching clearance specs:', error);

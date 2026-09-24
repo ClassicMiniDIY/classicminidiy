@@ -1,0 +1,27 @@
+{
+  "needles": {
+    "version": 1,
+    "schemaVersion": 1,
+    "sha256": "49180d0e254f9c37c22476201fd229579ef56fe5533f1ddc7fb3eb9d3715b978"
+  },
+  "default_needles": {
+    "version": 1,
+    "schemaVersion": 1,
+    "sha256": "148934416d5ec32b245cacf33cd20f3199b0358152f3047b1c2c5a3101c2d75f"
+  },
+  "suggested_needles": {
+    "version": 1,
+    "schemaVersion": 1,
+    "sha256": "4341d8e40b702a225163292a1f55c549156bea2fff7621ccaf6a117c17b60913"
+  },
+  "torque_specs": {
+    "version": 1,
+    "schemaVersion": 1,
+    "sha256": "4722041ee8384e54651b3e03d0c95c882e99c01d7c153cec1b28dba169dd9351"
+  },
+  "common_clearances": {
+    "version": 1,
+    "schemaVersion": 1,
+    "sha256": "9ef158254b241adc2c45cb2494113ec09ff84d3e8fd7dbc7bddddc8142f150bf"
+  }
+}

@@ -96,6 +96,8 @@ describe('server/utils/adminAuth', () => {
 
       expect(mockGetUser).toHaveBeenCalledWith(token);
       expect(result.user).toEqual({ id: 'user-2' });
+      // Header-only routes (reference-data publish) refuse this source.
+      expect(result.tokenSource).toBe('cookie');
     });
 
     it('extracts token from Supabase auth cookie (JSON array format)', async () => {
@@ -221,7 +223,7 @@ describe('server/utils/adminAuth', () => {
       });
     });
 
-    it('returns { user, profile } on success', async () => {
+    it('returns { user, profile, accessToken, tokenSource } on success', async () => {
       const event = createMockEvent();
       const user = { id: 'admin-user', email: 'admin@example.com' };
       const profile = { is_admin: true };
@@ -242,7 +244,7 @@ describe('server/utils/adminAuth', () => {
 
       const result = await requireAdminAuth(event);
 
-      expect(result).toEqual({ user, profile });
+      expect(result).toEqual({ user, profile, accessToken: 'good-token', tokenSource: 'header' });
       expect(mockFrom).toHaveBeenCalledWith('profile_private');
       expect(mockSelect).toHaveBeenCalledWith('is_admin');
       expect(mockEq).toHaveBeenCalledWith('user_id', 'admin-user');

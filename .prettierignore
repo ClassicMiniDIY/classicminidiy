@@ -1,1 +1,4 @@
 static/sw.js
+# Reference data: exact published bytes (hashed). Never format.
+tests/fixtures/reference/
+.reference-snapshot/

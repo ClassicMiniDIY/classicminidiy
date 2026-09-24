@@ -101,14 +101,22 @@ expect_status "/models" 200
 expect_status "/technical/torque" 200
 expect_status "/archive/colors" 200
 expect_status "/api/torque" 200
+# Reference data read from Supabase through server/utils/referenceData.ts (SWR).
+expect_status "/technical/needles" 200
+expect_status "/technical/clearance" 200
+expect_status "/api/needles/list" 200
+expect_status "/api/needles/suggested" 200
+expect_status "/api/clearance" 200
 
 echo
 echo "== URL shape (the html_handling contract) =="
 # Vercel serves prerendered routes at their NO-SLASH url as 200. The Workers
 # assets default would 307 to the slashed form, breaking every canonical and
 # sitemap entry. wrangler.jsonc sets html_handling: drop-trailing-slash.
-expect_status "/technical/torque" 200 "no-slash form is 200"
-expect_status "/technical/torque/" 307 "slashed form redirects back"
+# /technical/torque was the example here until it became an SWR page (reference
+# data, 2026-09); /archive/engines is still a prerendered asset.
+expect_status "/archive/engines" 200 "no-slash form is 200"
+expect_status "/archive/engines/" 307 "slashed form redirects back"
 
 echo
 echo "== 404 handling =="

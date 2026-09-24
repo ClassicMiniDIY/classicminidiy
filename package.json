@@ -35,7 +35,8 @@
     "test:routes": "node scripts/smoke-routes.mjs",
     "test:e2e": "playwright test",
     "typecheck": "nuxi prepare && node scripts/typecheck.mjs",
-    "gen:types": "supabase gen types typescript --project-id psoqirvbujwohemmwplv > types/database.ts"
+    "gen:types": "supabase gen types typescript --project-id psoqirvbujwohemmwplv > types/database.ts",
+    "test:reference-live": "REFERENCE_SOURCE=snapshot vitest run tests/static/reference-nouns.test.ts tests/static/torque-unit-consistency.test.ts tests/unit/data/needles-data-integrity.test.ts tests/unit/server/utils/directAnswers.test.ts tests/unit/utils/generate-faqs.test.ts tests/unit/server/mcp/reference-tools.test.ts tests/unit/server/mcp/needle-compare.test.ts"
   },
   "overrides": {
     "vue": "3.5.42",

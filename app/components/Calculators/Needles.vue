@@ -504,7 +504,7 @@
   //
   //   1. Pass `reactiveChartOptions.value` rather than the raw
   //      `getChartOptionsForMode()` return. The latter spreads the base
-  //      chartOptions which still carries `series: StarterNeedles`, and
+  //      chartOptions (whose `series` is the empty base, not the selection), and
   //      combined with `oneToOne: true` it would wipe every selected
   //      needle on each theme toggle. `reactiveChartOptions.value` already
   //      contains the current series via buildSeries().

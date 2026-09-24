@@ -89,7 +89,7 @@ describe('server/utils/mcpLookup', () => {
 
 /**
  * AND matching is correct and stays — but it can hide the row the caller wanted,
- * silently, behind a confident-looking single hit. `data/torqueSpecs.json` names
+ * silently, behind a confident-looking single hit. The torque reference data names
  * the same fastener differently across engine variants, so "main bearing bolts"
  * returns only the 848/998 row while the two 1275 rows (named "set screws" and
  * "nuts") vanish. That shipped a hedged answer to a real 1275 question.
