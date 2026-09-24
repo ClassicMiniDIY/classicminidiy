@@ -188,7 +188,7 @@ per-component `<i18n lang="json">` blocks.
 | `parts-archive.md`      | `/archive/parts`, `/admin/parts`, `part_*` API        | kill switch + `is_current`, PostgREST caps, search allowlist, hotspot fill    |
 | `model-variants.md`     | `/archive/variants`, its api, tool, seed              | one read path, seed provenance, source units, SSR index, hosted photos only   |
 | `ecu-maps.md`           | `/maps`, `server/api/github/**`                       | support table from MiniECUMaps `maps.json`, repo coords, disclaimer           |
-| `push-notifications.md` | push composable + util, `useAuth`, notifications page | shared-browser endpoints, sign-out order, never claim on reconcile            |
+| `push-notifications.md` | push composable + util, `useAuth`, pref page, `sw.ts` | shared-browser endpoints, sign-out order, no claim on reconcile, push-only SW |
 
 Design docs in `docs/plans/`, runbooks in `docs/runbooks/`. Membership contract:
 `classicminidiy-supabase/docs/plans/2026-06-07-membership-entitlement-contract.md`.

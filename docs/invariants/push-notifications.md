@@ -58,6 +58,28 @@ recovery path. It is not automatic: an automatic re-subscribe would claim an end
 without the user asking, which the claim rule forbids. The user still finds out only when
 they open the page. Design: `docs/plans/2026-09-23-per-device-push-toggle.md`.
 
+## Web Push had no service worker (2024-03 to 2026-09-23)
+
+`nuxt.config.ts` set `pwa.selfDestroying: true` on 2024-03-14 (`71f75a98`, to get rid of
+caching and path problems from the Workbox worker). That builds a `sw.js` which
+unregisters itself on activate. The config also set `client: { installPrompt: true }`
+without `registerPlugin`, so the @vite-pwa/nuxt register plugin never loaded and nothing
+registered even that worker. On 2026-09-23 `navigator.serviceWorker.getRegistrations()`
+on classicminidiy.com returned `[]`, and no code handled a `push` event.
+
+So for two and a half years `subscribe()` awaited `serviceWorker.ready`, which never
+resolves without a registration: turning the toggle ON waited forever with no message,
+and no browser could receive a push. The pre-PR review of the device status line found
+it, because the new line would have said "not active on this device" to every user.
+
+The fix is a push-only worker (`service-worker/sw.ts`): `push` shows the notification,
+`notificationclick` focuses or opens the payload URL (http(s) only), `activate` deletes
+Cache Storage left by the old Workbox worker, and there is no `fetch` handler, so no
+request is ever served from cache. `ensurePushServiceWorker()` registers it only when a
+user turns push on, and waits at most 10 s for it to activate. No `clients.claim()`:
+workbox-window style update code reloads pages the worker takes over, and a reload
+loses unsaved form input.
+
 ## Deploy order
 
 The web build calls the RPC, so the migration must be live before the web change merges.

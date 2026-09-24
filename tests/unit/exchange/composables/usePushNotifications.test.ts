@@ -429,18 +429,83 @@ describe('usePushNotifications', () => {
       expect(mockPushManager.subscribe).not.toHaveBeenCalled();
     });
 
-    it('returns false without a prompt when no service worker is registered', async () => {
-      // serviceWorker.ready would never resolve here and leave the caller busy.
+    it('registers the push service worker when this browser has none', async () => {
       navigator.serviceWorker.getRegistration = vi.fn().mockResolvedValue(undefined);
+      (navigator.serviceWorker as any).register = vi.fn().mockResolvedValue(mockRegistration);
 
       const usePushNotifications = await importComposable();
       const { subscribe } = usePushNotifications();
 
-      expect(await subscribe()).toBe(false);
-      expect((global as any).Notification.requestPermission).not.toHaveBeenCalled();
-      expect(mockPushManager.subscribe).not.toHaveBeenCalled();
+      expect(await subscribe()).toBe(true);
+      expect(navigator.serviceWorker.register).toHaveBeenCalledWith('/sw.js', { scope: '/' });
+      expect(mockPushManager.subscribe).toHaveBeenCalled();
+    });
+
+    it('asks for permission before it registers the worker', async () => {
+      const order: string[] = [];
+      (global as any).Notification.requestPermission = vi.fn(async () => {
+        order.push('permission');
+        return 'granted';
+      });
+      navigator.serviceWorker.getRegistration = vi.fn(async () => {
+        order.push('registration');
+        return mockRegistration;
+      });
+
+      const usePushNotifications = await importComposable();
+      await usePushNotifications().subscribe();
+
+      expect(order).toEqual(['permission', 'registration']);
+    });
+
+    it('does not register a worker when permission is refused', async () => {
+      (global as any).Notification.requestPermission.mockResolvedValue('denied');
+      (navigator.serviceWorker as any).register = vi.fn();
+
+      const usePushNotifications = await importComposable();
+      await usePushNotifications().subscribe();
+
+      expect(navigator.serviceWorker.getRegistration).not.toHaveBeenCalled();
+      expect(navigator.serviceWorker.register).not.toHaveBeenCalled();
+    });
+
+    it('fails with an error, not a hang, when the worker never activates', async () => {
+      vi.useFakeTimers();
+      try {
+        Object.defineProperty(navigator, 'serviceWorker', {
+          value: {
+            ready: new Promise(() => {}),
+            getRegistration: vi.fn().mockResolvedValue({ active: null, pushManager: mockPushManager }),
+            register: vi.fn(),
+          },
+          writable: true,
+          configurable: true,
+        });
+
+        const usePushNotifications = await importComposable();
+        const pending = usePushNotifications().subscribe();
+        await vi.advanceTimersByTimeAsync(10000);
+
+        expect(await pending).toBe(false);
+        expect(mockHandleError).toHaveBeenCalledWith(
+          expect.objectContaining({ message: expect.stringContaining('did not activate') }),
+          expect.objectContaining({ toastTitle: 'Failed to enable push notifications' })
+        );
+        expect(mockPushManager.subscribe).not.toHaveBeenCalled();
+        expect(mockSupabase.rpc).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('fails with an error when the worker cannot be registered', async () => {
+      navigator.serviceWorker.getRegistration = vi.fn().mockResolvedValue(undefined);
+      (navigator.serviceWorker as any).register = vi.fn().mockRejectedValue(new Error('404'));
+
+      const usePushNotifications = await importComposable();
+      expect(await usePushNotifications().subscribe()).toBe(false);
+      expect(mockHandleError).toHaveBeenCalled();
       expect(mockSupabase.rpc).not.toHaveBeenCalled();
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Not Available' }));
     });
 
     it('records the permission the prompt returned', async () => {

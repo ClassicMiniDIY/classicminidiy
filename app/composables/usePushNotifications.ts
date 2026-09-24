@@ -8,6 +8,7 @@
 import {
   claimPushSubscription,
   dropUnownedPushSubscription,
+  ensurePushServiceWorker,
   getBrowserPushSubscription,
   isWebPushSupported,
   removePushSubscription,
@@ -112,19 +113,8 @@ export function usePushNotifications() {
     }
 
     try {
-      // `serviceWorker.ready` never resolves without a registration, and the
-      // caller's busy state would then never clear. Check first, and before
-      // the permission prompt: without a worker, push cannot work here.
-      if (!(await navigator.serviceWorker.getRegistration())) {
-        toast.add({
-          title: 'Not Available',
-          description: 'Push notifications are not available on this device right now.',
-          color: 'warning',
-        });
-        return false;
-      }
-
-      // Request notification permission
+      // Request notification permission first: Safari only shows the prompt
+      // while the click's user activation is still fresh.
       const result = await Notification.requestPermission();
       permission.value = result;
 
@@ -141,8 +131,9 @@ export function usePushNotifications() {
         return false;
       }
 
-      // Subscribe to push via service worker
-      const registration = await navigator.serviceWorker.ready;
+      // Subscribe to push via the push service worker, registering it now if
+      // this browser has none. Time-boxed, so the caller's busy state clears.
+      const registration = await ensurePushServiceWorker();
       const pushSub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),

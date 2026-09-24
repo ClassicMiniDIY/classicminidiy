@@ -28,6 +28,39 @@ export async function getBrowserPushSubscription(): Promise<PushSubscription | n
   return (await registration?.pushManager.getSubscription()) ?? null;
 }
 
+/** The push-only service worker, built from `service-worker/sw.ts` by @vite-pwa/nuxt. */
+export const PUSH_SERVICE_WORKER_URL = '/sw.js';
+
+/** Upper bound on waiting for a newly registered worker to activate. */
+export const PUSH_SERVICE_WORKER_TIMEOUT_MS = 10000;
+
+/**
+ * This origin's service worker registration, registering the push worker
+ * first when there is none, and waiting until it is active (pushManager
+ * refuses to subscribe before that). Call it only from an explicit user action
+ * (turning push on): no visitor gets a worker otherwise. `serviceWorker.ready`
+ * alone waits forever when nothing is registered or the install fails, so the
+ * wait is time-boxed. Rejects on a failed registration or the timeout.
+ */
+export async function ensurePushServiceWorker(
+  timeoutMs: number = PUSH_SERVICE_WORKER_TIMEOUT_MS
+): Promise<ServiceWorkerRegistration> {
+  const registration =
+    (await navigator.serviceWorker.getRegistration()) ??
+    (await navigator.serviceWorker.register(PUSH_SERVICE_WORKER_URL, { scope: '/' }));
+  if (registration.active) return registration;
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('The push service worker did not activate in time')), timeoutMs);
+  });
+  try {
+    return await Promise.race([navigator.serviceWorker.ready, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Save `sub` as the signed-in user's push subscription. The RPC takes the
  * endpoint over from any previous owner; a browser keeps its endpoint across

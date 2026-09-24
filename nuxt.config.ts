@@ -1129,8 +1129,24 @@ export default defineNuxtConfig({
     },
   },
 
+  // The service worker is push-only (service-worker/sw.ts): no fetch handler,
+  // no precache, no runtime caching, so it never serves a request. It replaced
+  // `selfDestroying: true`, which shipped a worker that unregistered itself and
+  // left Web Push with nothing to deliver to. No register plugin: only
+  // ensurePushServiceWorker() registers it, when a user turns push on. Rules:
+  // .claude/rules/push-notifications.md. If a fetch handler is ever added, it
+  // must never serve /auth/callback, /membership/claim or /discord/* from a
+  // cached shell (their single-use ?code=/?token= would be lost); the old
+  // Workbox denylist for them is in this file's git history.
   pwa: {
-    registerType: 'autoUpdate',
+    strategies: 'injectManifest',
+    srcDir: fileURLToPath(new URL('./service-worker', import.meta.url)),
+    filename: 'sw.ts',
+    injectRegister: false,
+    injectManifest: {
+      // No precache manifest: the worker caches nothing.
+      injectionPoint: undefined,
+    },
     manifest: {
       name: 'Classic Mini Toolbox',
       short_name: 'CMDIY Toolbox',
@@ -1160,95 +1176,8 @@ export default defineNuxtConfig({
         },
       ],
     },
-    selfDestroying: true,
-    workbox: {
-      navigateFallback: '/',
-      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-      // Exclude Highcharts routes from service worker caching
-      // to prevent issues with client-side rendering
-      // /auth/callback is denylisted so the SW never serves the precached '/'
-      // shell when Supabase redirects there with a single-use ?code= — the
-      // shell HTML has no callback markup and the URL/code can be lost.
-      navigateFallbackDenylist: [
-        /\/technical\/calculators\/needles/,
-        /\/technical\/calculators\/gearbox/,
-        /^\/t\//,
-        /^\/auth\/callback/,
-        // Single-use emailed claim links — the precached '/' shell must never
-        // swallow their ?code=/?token= (see /auth/callback note above).
-        /^\/membership\/claim/,
-        // Also covers /discord/connect (the session-dependent self-serve page
-        // bare app hits redirect to) — keep the whole claim chain SW-free.
-        /^\/discord\//,
-      ],
-      // Customize caching strategies
-      runtimeCaching: [
-        {
-          // Matches the asset bucket under both its regional and bare virtual-hosted
-          // names, and the archive bucket. Keep in sync with `image.domains` above —
-          // a host that resolves images but isn't matched here silently loses offline
-          // caching for every raw <img> still pointed straight at S3.
-          urlPattern: /^https:\/\/(?:classicminidiy|cmdiy-archive)\.s3\.(?:us-east-1\.)?amazonaws\.com\/.*/i,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 's3-assets',
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-            },
-          },
-        },
-        {
-          // Same custom-domain caveat as `image.domains`: storage URLs are built from
-          // NUXT_PUBLIC_SUPABASE_URL (auth.classicminidiy.com), so the project-ref host
-          // alone cached nothing. Match both.
-          urlPattern: /^https:\/\/(?:auth\.classicminidiy\.com|psoqirvbujwohemmwplv\.supabase\.co)\/storage\/.*/i,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'supabase-storage',
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-            },
-          },
-        },
-        {
-          urlPattern: /\.(?:png|jpg|jpeg|svg|webp)$/i,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'images',
-            expiration: {
-              maxEntries: 60,
-              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-            },
-          },
-        },
-        {
-          urlPattern: /\.(?:js|css)$/i,
-          handler: 'StaleWhileRevalidate',
-          options: {
-            cacheName: 'static-resources',
-            expiration: {
-              maxEntries: 60,
-              maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-            },
-          },
-        },
-        {
-          urlPattern: /^https:\/\/fonts\.googleapis\.com/i,
-          handler: 'StaleWhileRevalidate',
-          options: {
-            cacheName: 'google-fonts',
-            expiration: {
-              maxEntries: 30,
-              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-            },
-          },
-        },
-      ],
-    },
     client: {
-      installPrompt: true,
+      registerPlugin: false,
     },
   },
   // nitropack 2.13.4 will only resolve the MODERN Cloudflare Workers preset when

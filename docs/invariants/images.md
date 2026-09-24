@@ -18,9 +18,10 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
     images and avatars ALL depend on the custom domain being listed.
   - `i.ytimg.com` (YouTube thumbnails) and `cmdiy-archive.s3.us-east-1.amazonaws.com`.
 
-  Adding a new remote image host means adding it here **and** to the PWA `runtimeCaching`
-  `urlPattern` (which had the same regional-only / project-ref-only bugs), **and** a
-  `preconnect`/`dns-prefetch` hint if it's a new origin. Verify by rendering a real page and
+  Adding a new remote image host means adding it here **and** a `preconnect`/`dns-prefetch`
+  hint if it's a new origin. (The PWA `runtimeCaching` pattern that also needed it, and had
+  the same regional-only / project-ref-only bugs, was removed on 2026-09-23 when the service
+  worker became push-only.) Verify by rendering a real page and
   confirming the `src` starts with `/_ipx/` — do not trust the config.
 
 - **`<NuxtImg>` ignores the `image.format` list; only `<NuxtPicture>` uses it.** NuxtImg emits

@@ -17,7 +17,7 @@ Detail and incident history: `docs/invariants/images.md`, `docs/invariants/seo.m
 
 ## Images
 
-- `image.domains` in `nuxt.config.ts` matches the LITERAL hostname and a miss is silent: the original ships unoptimized even inside `<nuxt-img>`. Both S3 hosts (`classicminidiy.s3.amazonaws.com` and `…s3.us-east-1…`), `auth.classicminidiy.com` (Supabase Storage via the custom domain), `i.ytimg.com` and `cmdiy-archive.s3.us-east-1.amazonaws.com` must stay listed. A new host also goes into the PWA `runtimeCaching` pattern and a preconnect hint. Verify by checking a rendered `src` starts with `/_ipx/` (dev) or `/cdn-cgi/image/` (zone build).
+- `image.domains` in `nuxt.config.ts` matches the LITERAL hostname and a miss is silent: the original ships unoptimized even inside `<nuxt-img>`. Both S3 hosts (`classicminidiy.s3.amazonaws.com` and `…s3.us-east-1…`), `auth.classicminidiy.com` (Supabase Storage via the custom domain), `i.ytimg.com` and `cmdiy-archive.s3.us-east-1.amazonaws.com` must stay listed. A new host also gets a preconnect hint. (There is no PWA `runtimeCaching` any more: the service worker is push-only.) Verify by checking a rendered `src` starts with `/_ipx/` (dev) or `/cdn-cgi/image/` (zone build).
 - `<NuxtImg>` ignores `image.format`; pass `format="webp"` explicitly. `<NuxtPicture>` puts `class`/`@error` on the `<picture>` root; use `:img-attrs`.
 - `exchange/finds/FindCard.vue` and blob/data upload previews are raw `<img>` on purpose (arbitrary hosts). Don't "fix" them.
 - **`/_ipx` must stay in `nitro.prerender.ignore`**: crawlLinks once prerendered 603 of 768 routes through sharp and SIGKILLed the build container.
