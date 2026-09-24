@@ -12,6 +12,13 @@
 export const DEFAULT_NOTIFICATION_TITLE = 'Classic Mini DIY';
 export const DEFAULT_NOTIFICATION_ICON = '/icon.png';
 
+/**
+ * Hosts whose links open on this site. process-notifications builds URLs from
+ * SITE_URL, which defaults to the bare domain, while the site (and so the
+ * worker) lives on www; the bare domain 301s there.
+ */
+export const SITE_HOSTS = ['classicminidiy.com', 'www.classicminidiy.com'];
+
 /** The push payload as sent; any field may be missing or of the wrong type. */
 export interface PushPayload {
   title?: unknown;
@@ -39,6 +46,7 @@ export function parsePushData(data: PushDataLike | null | undefined): PushPayloa
   if (!data) return {};
   try {
     const parsed = data.json();
+    if (typeof parsed === 'string') return parsed ? { body: parsed } : {};
     return parsed && typeof parsed === 'object' ? (parsed as PushPayload) : {};
   } catch {
     const text = data.text();
@@ -64,17 +72,26 @@ export function buildNotification(payload: PushPayload): NotificationSpec {
 }
 
 /**
- * The page to open when the user clicks a notification: the payload URL when
- * it is http(s), else the site root. A relative URL resolves against the
- * worker's origin. Any other scheme (javascript:, data:) falls back to root.
+ * The page to open when the user clicks a notification, always on the worker's
+ * own origin. A relative URL, or an http(s) URL on one of SITE_HOSTS or on the
+ * worker's host, keeps its path, query and hash, rebuilt on `origin` (so a
+ * bare-domain link opens on www without a redirect and can match an open tab).
+ * Anything else (another site, javascript:, data:) opens the site root.
  */
 export function resolveClickUrl(raw: unknown, origin: string): string {
-  const fallback = new URL('/', origin).href;
-  if (typeof raw !== 'string' || !raw) return fallback;
+  const base = new URL('/', origin);
+  if (typeof raw !== 'string' || !raw) return base.href;
   try {
     const url = new URL(raw, origin);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : fallback;
+    const web = url.protocol === 'https:' || url.protocol === 'http:';
+    const ours = url.host === base.host || SITE_HOSTS.includes(url.hostname);
+    return web && ours ? new URL(url.pathname + url.search + url.hash, origin).href : base.href;
   } catch {
-    return fallback;
+    return base.href;
   }
+}
+
+/** True when two URLs name the same page, ignoring the #fragment. */
+export function isSamePage(a: string, b: string): boolean {
+  return a.split('#')[0] === b.split('#')[0];
 }

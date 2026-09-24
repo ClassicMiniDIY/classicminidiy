@@ -117,6 +117,25 @@ echo "== 404 handling =="
 expect_status "/definitely-not-a-real-page-xyz" 404 "unknown URL is a real 404"
 
 echo
+echo "== Web Push service worker =="
+# service-worker/sw.ts, built to /sw.js. register() rejects anything that is not
+# JavaScript (a WAF challenge page, a 404), and then every "turn on push" fails
+# with a toast while nothing else goes red. It must also not be the 2024-2026
+# self-destroying stub, which unregistered itself and left push with no worker.
+sw_ctype=$(cf_curl -sS -o /dev/null -m 30 -w '%{http_code} %{content_type}' "$ORIGIN/sw.js" 2>/dev/null)
+if [[ "$sw_ctype" == 200\ *javascript* ]]; then
+  ok "/sw.js is 200 JavaScript"
+else
+  bad "/sw.js is 200 JavaScript (got: ${sw_ctype:-no response})"
+fi
+sw_body=$(cf_curl -sS -m 30 "$ORIGIN/sw.js" 2>/dev/null)
+if grep -qE "addEventListener\\([\"']push" <<<"$sw_body" && ! grep -q 'registration.unregister' <<<"$sw_body"; then
+  ok "/sw.js is the push worker, not the self-destroying stub"
+else
+  bad "/sw.js is the push worker, not the self-destroying stub"
+fi
+
+echo
 echo "== SEO invariants =="
 # nuxt is pinned at ~4.4.8 because 4.5 renders EMPTY schema.org JSON-LD. This is
 # the canary for that pin.

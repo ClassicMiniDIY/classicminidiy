@@ -291,4 +291,14 @@ describe('/dashboard/notifications device push status', () => {
     expect(wrapper.find(inactiveLine).exists()).toBe(true);
     wrapper.unmount();
   });
+
+  it('removes its visibilitychange listener on unmount', async () => {
+    stubPage({ preferenceOn: true, owned: false, permission: 'denied' });
+    const remove = vi.spyOn(document, 'removeEventListener');
+    const wrapper = await mountPage();
+
+    wrapper.unmount();
+
+    expect(remove).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
+  });
 });

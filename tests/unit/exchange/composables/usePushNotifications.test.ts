@@ -441,6 +441,22 @@ describe('usePushNotifications', () => {
       expect(mockPushManager.subscribe).toHaveBeenCalled();
     });
 
+    it('uses an already active registration without waiting on ready', async () => {
+      Object.defineProperty(navigator, 'serviceWorker', {
+        value: {
+          ready: new Promise(() => {}),
+          getRegistration: vi.fn().mockResolvedValue({ active: {}, pushManager: mockPushManager }),
+          register: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const usePushNotifications = await importComposable();
+      expect(await usePushNotifications().subscribe()).toBe(true);
+      expect(navigator.serviceWorker.register).not.toHaveBeenCalled();
+    });
+
     it('asks for permission before it registers the worker', async () => {
       const order: string[] = [];
       (global as any).Notification.requestPermission = vi.fn(async () => {
