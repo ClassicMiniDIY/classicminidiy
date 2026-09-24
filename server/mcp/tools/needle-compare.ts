@@ -50,7 +50,7 @@ function summarise(n: Needle) {
 
 export default defineMcpTool({
   description:
-    'Look up and compare SU carburettor needles for the Classic Mini, from a database of 710 needle profiles. Three modes: `lookup` a single needle\'s profile, `compare` two needles band by band, or `find` needles that are richer/leaner/similar to a reference — optionally isolated to one throttle band, which is the usual tuning question ("richer at low throttle, unchanged elsewhere"). Richness is measured as fuel-flow area in mm², not needle diameter, because area is what meters fuel.',
+    'Look up and compare SU carburettor needles for the Classic Mini, from a database of over 700 needle profiles. Three modes: `lookup` a single needle\'s profile, `compare` two needles band by band, or `find` needles that are richer/leaner/similar to a reference — optionally isolated to one throttle band, which is the usual tuning question ("richer at low throttle, unchanged elsewhere"). Richness is measured as fuel-flow area in mm², not needle diameter, because area is what meters fuel.',
 
   inputSchema: {
     mode: z
