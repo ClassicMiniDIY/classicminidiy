@@ -5,7 +5,7 @@
  * requesting permission, subscribing/unsubscribing, and persisting subscription
  * data to the push_subscriptions table in Supabase.
  */
-import { dropUnownedPushSubscription, removePushSubscription } from '~/utils/pushSubscription';
+import { dropUnownedPushSubscription, isWebPushSupported, removePushSubscription } from '~/utils/pushSubscription';
 
 /**
  * Decode a base64url-encoded VAPID public key into the Uint8Array that
@@ -34,10 +34,7 @@ export function usePushNotifications() {
   const subscription = ref<PushSubscription | null>(null);
 
   // Browser support detection - false on server, checks APIs on client
-  const isSupported = computed(() => {
-    if (import.meta.server) return false;
-    return 'serviceWorker' in navigator && 'PushManager' in window;
-  });
+  const isSupported = computed(() => isWebPushSupported());
 
   /**
    * Check if the user already has an active push subscription

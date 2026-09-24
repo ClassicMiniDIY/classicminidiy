@@ -10,6 +10,23 @@ import type { Database } from '~~/types/database';
 /** Upper bound on push cleanup during sign-out. Sign-out never waits longer. */
 export const PUSH_SIGN_OUT_CLEANUP_TIMEOUT_MS = 3000;
 
+/** True in a browser that supports Web Push; false during SSR. */
+export function isWebPushSupported(): boolean {
+  return import.meta.client && 'serviceWorker' in navigator && 'PushManager' in window;
+}
+
+/**
+ * This browser's current push subscription, or null when Web Push is not
+ * supported or there is none. Uses getRegistration(), which resolves at once
+ * when no service worker is registered; `serviceWorker.ready` would wait
+ * forever. May reject.
+ */
+export async function getBrowserPushSubscription(): Promise<PushSubscription | null> {
+  if (!isWebPushSupported()) return null;
+  const registration = await navigator.serviceWorker.getRegistration();
+  return (await registration?.pushManager.getSubscription()) ?? null;
+}
+
 export interface PushRemovalResult {
   /** The row delete failed; the row may still exist. */
   deleteError: unknown;
@@ -63,17 +80,12 @@ export async function removeBrowserPushSubscription(
   supabase: SupabaseClient<Database>,
   timeoutMs: number = PUSH_SIGN_OUT_CLEANUP_TIMEOUT_MS
 ): Promise<void> {
-  if (!import.meta.client) return;
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!isWebPushSupported()) return;
 
   const controller = new AbortController();
 
   const cleanup = async () => {
-    // getRegistration() resolves undefined at once when no service worker is
-    // registered; `serviceWorker.ready` would wait for the full timeout.
-    const registration = await navigator.serviceWorker.getRegistration();
-    if (!registration || controller.signal.aborted) return;
-    const sub = await registration.pushManager.getSubscription();
+    const sub = await getBrowserPushSubscription();
     if (!sub || controller.signal.aborted) return;
 
     const { deleteError, unsubscribeError } = await removePushSubscription(supabase, sub, controller.signal);
@@ -111,12 +123,8 @@ export async function removeBrowserPushSubscription(
  * to turn push on again. Never throws.
  */
 export async function unsubscribeBrowserPush(): Promise<void> {
-  if (!import.meta.client) return;
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
   try {
-    const registration = await navigator.serviceWorker.getRegistration();
-    const sub = await registration?.pushManager.getSubscription();
+    const sub = await getBrowserPushSubscription();
     await sub?.unsubscribe();
   } catch (e) {
     console.warn('Push unsubscribe without a session failed:', e);
@@ -158,12 +166,8 @@ export async function dropUnownedPushSubscription(
  * subscription when the signed-in user does not own it. Never throws.
  */
 export async function reconcileBrowserPush(supabase: SupabaseClient<Database>): Promise<void> {
-  if (!import.meta.client) return;
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
   try {
-    const registration = await navigator.serviceWorker.getRegistration();
-    const sub = await registration?.pushManager.getSubscription();
+    const sub = await getBrowserPushSubscription();
     if (sub) await dropUnownedPushSubscription(supabase, sub);
   } catch (e) {
     console.warn('Push ownership check failed:', e);
