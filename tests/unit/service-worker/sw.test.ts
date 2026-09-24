@@ -82,10 +82,10 @@ describe('push service worker', () => {
     expect(scope.registration.showNotification).toHaveBeenCalledWith('Classic Mini DIY', expect.any(Object));
   });
 
-  it('focuses an open tab on the notification URL', async () => {
-    const tab = { url: 'https://www.classicminidiy.com/exchange/messages/c1', focus: vi.fn() };
+  it('focuses an open tab on the notification URL, for the bare-domain URL the server sends', async () => {
+    const tab = { url: 'https://www.classicminidiy.com/exchange/listings/abc', focus: vi.fn() };
     scope.clients.matchAll.mockResolvedValue([tab]);
-    const notification = { close: vi.fn(), data: { url: '/exchange/messages/c1' } };
+    const notification = { close: vi.fn(), data: { url: 'https://classicminidiy.com/exchange/listings/abc#comments' } };
     const event = extendable({ notification });
     listeners.notificationclick!(event);
     await Promise.all(event.pending);

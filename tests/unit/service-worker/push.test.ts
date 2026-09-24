@@ -3,6 +3,7 @@ import {
   buildNotification,
   DEFAULT_NOTIFICATION_ICON,
   DEFAULT_NOTIFICATION_TITLE,
+  isSamePage,
   parsePushData,
   resolveClickUrl,
 } from '../../../service-worker/push';
@@ -20,8 +21,10 @@ describe('parsePushData', () => {
     expect(parsePushData(data('{"title":"Hi","body":"There"}'))).toEqual({ title: 'Hi', body: 'There' });
   });
 
-  it('uses plain text as the body', () => {
+  it('uses plain text, or a bare JSON string, as the body', () => {
     expect(parsePushData(data('hello'))).toEqual({ body: 'hello' });
+    expect(parsePushData(data('"hello"'))).toEqual({ body: 'hello' });
+    expect(parsePushData(data('""'))).toEqual({});
   });
 
   it('returns {} for no data, empty text, or a JSON non-object', () => {
@@ -70,11 +73,29 @@ describe('buildNotification', () => {
 describe('resolveClickUrl', () => {
   const origin = 'https://www.classicminidiy.com';
 
-  it('keeps an absolute http(s) URL, including another origin', () => {
+  it('keeps a www URL', () => {
     expect(resolveClickUrl('https://www.classicminidiy.com/exchange/messages/c1', origin)).toBe(
       'https://www.classicminidiy.com/exchange/messages/c1'
     );
-    expect(resolveClickUrl('https://models.example.com/models/x', origin)).toBe('https://models.example.com/models/x');
+  });
+
+  it('rebuilds a bare-domain URL (the SITE_URL default) on the worker origin', () => {
+    expect(resolveClickUrl('https://classicminidiy.com/exchange/listings/abc?x=1#comments', origin)).toBe(
+      'https://www.classicminidiy.com/exchange/listings/abc?x=1#comments'
+    );
+  });
+
+  it('keeps a URL on the worker host itself (local builds)', () => {
+    expect(resolveClickUrl('http://localhost:4173/dashboard', 'http://localhost:4173')).toBe(
+      'http://localhost:4173/dashboard'
+    );
+  });
+
+  it('opens the site root for another site', () => {
+    expect(resolveClickUrl('https://evil.example.com/login', origin)).toBe('https://www.classicminidiy.com/');
+    expect(resolveClickUrl('https://classicminidiy.com.evil.example/x', origin)).toBe(
+      'https://www.classicminidiy.com/'
+    );
   });
 
   it('resolves a relative URL against the origin', () => {
@@ -85,5 +106,13 @@ describe('resolveClickUrl', () => {
     for (const raw of [undefined, null, '', 42, 'javascript:alert(1)', 'data:text/html,x']) {
       expect(resolveClickUrl(raw, origin)).toBe('https://www.classicminidiy.com/');
     }
+  });
+});
+
+describe('isSamePage', () => {
+  it('ignores the fragment only', () => {
+    expect(isSamePage('https://a.test/x#comments', 'https://a.test/x')).toBe(true);
+    expect(isSamePage('https://a.test/x?p=1', 'https://a.test/x')).toBe(false);
+    expect(isSamePage('https://a.test/x', 'https://a.test/y')).toBe(false);
   });
 });

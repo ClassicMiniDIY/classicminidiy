@@ -8,7 +8,7 @@
  * Registered only by `ensurePushServiceWorker()` when a user turns push on;
  * visitors who never do get no worker at all.
  */
-import { buildNotification, parsePushData, resolveClickUrl } from './push';
+import { buildNotification, isSamePage, parsePushData, resolveClickUrl } from './push';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -35,7 +35,7 @@ sw.addEventListener('notificationclick', (event) => {
   const url = resolveClickUrl(event.notification.data?.url, sw.location.origin);
   event.waitUntil(
     sw.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
-      const open = windows.find((w) => w.url === url);
+      const open = windows.find((w) => isSamePage(w.url, url));
       return open ? open.focus() : sw.clients.openWindow(url);
     })
   );
