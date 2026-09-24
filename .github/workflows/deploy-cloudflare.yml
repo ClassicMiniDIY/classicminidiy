@@ -230,6 +230,10 @@ jobs:
       - name: Build for Cloudflare Workers
         env:
           NITRO_PRESET: cloudflare_module
+          # The Worker must bundle the PULLED data as its last fallback, never
+          # the fixtures: a missing .reference-snapshot/ fails the build here
+          # (scripts/reference-snapshot-module.mjs). Only this step sets it.
+          REFERENCE_SNAPSHOT_REQUIRED: 'true'
 
           # Supabase: the sitemap sources prerender through getServiceClient(),
           # and the public pair is baked into the client bundle.
