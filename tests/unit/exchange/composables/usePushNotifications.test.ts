@@ -195,9 +195,7 @@ describe('usePushNotifications', () => {
   // subscribe
   // =========================================================================
   describe('subscribe', () => {
-    it('subscribes successfully, upserts to the DB, and shows a success toast', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
-
+    it('subscribes successfully, claims the endpoint via RPC, and shows a success toast', async () => {
       const usePushNotifications = await importComposable();
       const { subscribe, subscription } = usePushNotifications();
 
@@ -213,16 +211,14 @@ describe('usePushNotifications', () => {
         applicationServerKey: expect.any(Uint8Array),
       });
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('push_subscriptions');
-      expect(mockSupabase._queryBuilder.upsert).toHaveBeenCalledWith(
-        {
-          user_id: 'test-user-id',
-          endpoint: 'https://push.example.com/subscription/abc123',
-          keys: { p256dh: 'test-p256dh-key', auth: 'test-auth-key' },
-          user_agent: navigator.userAgent,
-        },
-        { onConflict: 'endpoint' }
-      );
+      // The claim RPC, not a direct upsert: a browser keeps its endpoint across
+      // sign-ins, and an upsert on another user's endpoint fails RLS.
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('claim_push_subscription', {
+        p_endpoint: 'https://push.example.com/subscription/abc123',
+        p_keys: { p256dh: 'test-p256dh-key', auth: 'test-auth-key' },
+        p_user_agent: navigator.userAgent,
+      });
+      expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
 
       expect(mockToast.add).toHaveBeenCalledWith({
         title: 'Notifications Enabled',
@@ -232,8 +228,6 @@ describe('usePushNotifications', () => {
     });
 
     it('decodes the base64url VAPID key into a non-empty Uint8Array', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
-
       const usePushNotifications = await importComposable();
       const { subscribe } = usePushNotifications();
       await subscribe();
@@ -342,10 +336,8 @@ describe('usePushNotifications', () => {
       expect(mockPushManager.subscribe).not.toHaveBeenCalled();
     });
 
-    it('handles DB upsert errors via handleError and returns false', async () => {
-      mockSupabase._queryBuilder.upsert = vi
-        .fn()
-        .mockResolvedValue({ data: null, error: { message: 'Database error', code: '500' } });
+    it('handles claim RPC errors via handleError and returns false', async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: 'Database error', code: '500' } });
 
       const usePushNotifications = await importComposable();
       const { subscribe, subscription } = usePushNotifications();
@@ -382,7 +374,6 @@ describe('usePushNotifications', () => {
   // =========================================================================
   describe('unsubscribe', () => {
     it('unsubscribes a live subscription and deletes by endpoint', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
       mockSupabase._queryBuilder.eq = vi.fn().mockResolvedValue({ data: null, error: null });
 
       const usePushNotifications = await importComposable();
@@ -467,7 +458,6 @@ describe('usePushNotifications', () => {
     });
 
     it('handles push unsubscribe() API errors via handleError and returns false', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
       mockPushSubscription.unsubscribe.mockRejectedValue(new Error('Unsubscribe failed'));
 
       const usePushNotifications = await importComposable();
@@ -485,8 +475,6 @@ describe('usePushNotifications', () => {
     });
 
     it('deletes the row before unsubscribing the browser', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
-
       const usePushNotifications = await importComposable();
       const { subscribe, unsubscribe } = usePushNotifications();
       await subscribe();
@@ -498,8 +486,6 @@ describe('usePushNotifications', () => {
     });
 
     it('still unsubscribes the browser when the row delete fails, and clears local state', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
-
       const usePushNotifications = await importComposable();
       const { subscribe, unsubscribe, subscription } = usePushNotifications();
       await subscribe();
@@ -521,7 +507,6 @@ describe('usePushNotifications', () => {
     });
 
     it('clears local state when the row is gone but the browser unsubscribe fails', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
       mockPushSubscription.unsubscribe.mockRejectedValue(new Error('Unsubscribe failed'));
 
       const usePushNotifications = await importComposable();
@@ -535,8 +520,6 @@ describe('usePushNotifications', () => {
     });
 
     it('keeps local state when both the delete and the browser unsubscribe fail', async () => {
-      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
-
       const usePushNotifications = await importComposable();
       const { subscribe, unsubscribe, subscription } = usePushNotifications();
       await subscribe();
