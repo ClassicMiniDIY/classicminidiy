@@ -5,7 +5,12 @@
  * requesting permission, subscribing/unsubscribing, and persisting subscription
  * data to the push_subscriptions table in Supabase.
  */
-import { dropUnownedPushSubscription, isWebPushSupported, removePushSubscription } from '~/utils/pushSubscription';
+import {
+  claimPushSubscription,
+  dropUnownedPushSubscription,
+  isWebPushSupported,
+  removePushSubscription,
+} from '~/utils/pushSubscription';
 
 /**
  * Decode a base64url-encoded VAPID public key into the Uint8Array that
@@ -117,18 +122,9 @@ export function usePushNotifications() {
         applicationServerKey: urlBase64ToUint8Array(vapidKey),
       });
 
-      // Extract subscription data for storage
-      const subJson = pushSub.toJSON();
-
-      // Save the subscription for the signed-in user. A browser keeps its
-      // endpoint across sign-ins, so this RPC takes the row over from any
-      // previous owner; a direct upsert on another user's endpoint fails RLS.
-      const { error: claimError } = await supabase.rpc('claim_push_subscription', {
-        p_endpoint: pushSub.endpoint,
-        p_keys: subJson.keys as Record<string, string>,
-        p_user_agent: navigator.userAgent,
-      });
-
+      // Save it for the signed-in user, taking the endpoint over from a
+      // previous user of this browser if there is one.
+      const { error: claimError } = await claimPushSubscription(supabase, pushSub);
       if (claimError) throw claimError;
 
       subscription.value = pushSub;
@@ -165,10 +161,10 @@ export function usePushNotifications() {
         if (!deleteError || !unsubscribeError) subscription.value = null;
         if (deleteError) throw deleteError;
         if (unsubscribeError) throw unsubscribeError;
-      } else {
-        const { error: deleteError } = await supabase.from('push_subscriptions').delete().eq('user_id', user.value.id);
-        if (deleteError) throw deleteError;
       }
+      // No subscription on this device: nothing to remove here. Never fall
+      // back to deleting by user_id, which would turn push off on every other
+      // device the user has.
 
       subscription.value = null;
 

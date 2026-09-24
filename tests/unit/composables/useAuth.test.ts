@@ -352,12 +352,16 @@ describe('useAuth', () => {
 
     describe('push subscription cleanup', () => {
       const ENDPOINT = 'https://push.example.com/subscription/shared-browser';
-      let mockPushSub: { endpoint: string; unsubscribe: ReturnType<typeof vi.fn> };
+      let mockPushSub: { endpoint: string; unsubscribe: ReturnType<typeof vi.fn>; toJSON: () => unknown };
       let getRegistration: ReturnType<typeof vi.fn>;
       let swDescriptor: PropertyDescriptor | undefined;
 
       beforeEach(() => {
-        mockPushSub = { endpoint: ENDPOINT, unsubscribe: vi.fn().mockResolvedValue(true) };
+        mockPushSub = {
+          endpoint: ENDPOINT,
+          unsubscribe: vi.fn().mockResolvedValue(true),
+          toJSON: () => ({ endpoint: ENDPOINT, keys: { p256dh: 'p-key', auth: 'a-key' } }),
+        };
         getRegistration = vi.fn().mockResolvedValue({
           pushManager: { getSubscription: vi.fn().mockResolvedValue(mockPushSub) },
         });
@@ -376,19 +380,49 @@ describe('useAuth', () => {
         delete (window as any).PushManager;
       });
 
-      it('deletes the push row by endpoint and unsubscribes before the session ends', async () => {
+      it('deletes the push row before the session ends and unsubscribes after it', async () => {
         const { useAuth } = await import('~/app/composables/useAuth');
         await useAuth().signOut();
+        await vi.advanceTimersByTimeAsync(0);
 
         expect(mockSupabase.from).toHaveBeenCalledWith('push_subscriptions');
-        expect(mockSupabase._queryBuilder.delete).toHaveBeenCalled();
         expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('endpoint', ENDPOINT);
         expect(mockPushSub.unsubscribe).toHaveBeenCalled();
         // RLS only lets the owner delete the row, so it must go while the
-        // session is still valid.
-        expect(mockSupabase._queryBuilder.delete.mock.invocationCallOrder[0]).toBeLessThan(
-          mockSupabase.auth.signOut.mock.invocationCallOrder[0]
-        );
+        // session is still valid; the browser goes only once sign-out succeeded.
+        const deletedAt = mockSupabase._queryBuilder.delete.mock.invocationCallOrder[0];
+        const signedOutAt = mockSupabase.auth.signOut.mock.invocationCallOrder[0];
+        expect(deletedAt).toBeLessThan(signedOutAt);
+        expect(mockPushSub.unsubscribe.mock.invocationCallOrder[0]).toBeGreaterThan(signedOutAt);
+      });
+
+      it('restores the push row and keeps the browser subscribed when sign-out fails', async () => {
+        const authError = { message: 'Server error', status: 500 };
+        mockSupabase.auth.signOut.mockResolvedValue({ error: authError });
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        await expect(useAuth().signOut()).rejects.toEqual(authError);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(mockSupabase.rpc).toHaveBeenCalledWith('claim_push_subscription', {
+          p_endpoint: ENDPOINT,
+          p_keys: { p256dh: 'p-key', auth: 'a-key' },
+          p_user_agent: navigator.userAgent,
+        });
+        expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+      });
+
+      it('does not restore anything when sign-out fails but the row delete had failed too', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        mockSupabase._queryBuilder.eq = vi.fn().mockResolvedValue({ data: null, error: { message: 'RLS denied' } });
+        mockSupabase.auth.signOut.mockResolvedValue({ error: { message: 'Server error', status: 500 } });
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        await expect(useAuth().signOut()).rejects.toBeTruthy();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(mockSupabase.rpc).not.toHaveBeenCalledWith('claim_push_subscription', expect.anything());
+        expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
       });
 
       it('does nothing to push when this browser has no subscription', async () => {
@@ -519,9 +553,9 @@ describe('useAuth', () => {
         });
       });
 
-      it('does not touch the push row or endpoint when a stalled cleanup resumes after the timeout', async () => {
-        // A late cleanup would run under the NEXT user's session on the shared
-        // client and could delete their freshly upserted row for this endpoint.
+      it('skips the row delete when a stalled lookup resumes after the timeout', async () => {
+        // A late delete would run under the NEXT user's session on the shared
+        // client and could delete the row they just claimed for this endpoint.
         let resumeRegistration!: (value: unknown) => void;
         getRegistration.mockReturnValue(new Promise((resolve) => (resumeRegistration = resolve)));
 
@@ -534,7 +568,27 @@ describe('useAuth', () => {
         await vi.advanceTimersByTimeAsync(0);
 
         expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
+        // Nobody signed in meanwhile, so the post-sign-out unsubscribe still runs.
+        expect(mockPushSub.unsubscribe).toHaveBeenCalled();
+      });
+
+      it('does not unsubscribe when someone signed in before a stalled lookup resumed', async () => {
+        let resumeRegistration!: (value: unknown) => void;
+        getRegistration.mockReturnValue(new Promise((resolve) => (resumeRegistration = resolve)));
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        const auth = useAuth();
+        const done = auth.signOut();
+        await vi.advanceTimersByTimeAsync(3000);
+        await done;
+
+        // User B signs in on the same tab and may already have claimed the endpoint.
+        auth.user.value = { id: 'user-b' } as any;
+        resumeRegistration({ pushManager: { getSubscription: vi.fn().mockResolvedValue(mockPushSub) } });
+        await vi.advanceTimersByTimeAsync(0);
+
         expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+        expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
       });
     });
 

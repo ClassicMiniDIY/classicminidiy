@@ -1,5 +1,10 @@
 import type { User } from '@supabase/supabase-js';
-import { reconcileBrowserPush, removeBrowserPushSubscription, unsubscribeBrowserPush } from '~/utils/pushSubscription';
+import {
+  claimPushSubscription,
+  detachBrowserPushRow,
+  reconcileBrowserPush,
+  unsubscribeBrowserPush,
+} from '~/utils/pushSubscription';
 
 interface UserProfile {
   is_admin: boolean;
@@ -166,7 +171,7 @@ export const useAuth = () => {
           // No session means any push subscription here is orphaned: the
           // session ended without signOut() (expired or revoked token, another
           // tab, or while no tab was open). After signOut() this is a no-op.
-          void unsubscribeBrowserPush();
+          void unsubscribeBrowserPush(() => !user.value);
         }
       });
 
@@ -263,10 +268,20 @@ export const useAuth = () => {
   const signOut = async () => {
     // Drop this browser's push row while the session can still pass RLS.
     // Best-effort and time-boxed: it never blocks or fails the sign-out.
-    await removeBrowserPushSubscription(supabase);
+    const detachedPush = await detachBrowserPushRow(supabase);
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error) {
+      // Still signed in: put the row back so push keeps working here.
+      if (detachedPush) {
+        void claimPushSubscription(supabase, detachedPush).then(({ error: restoreError }) => {
+          if (restoreError) console.warn('Restoring the push row after a failed sign-out failed:', restoreError);
+        });
+      }
+      throw error;
+    }
     user.value = null;
+    // The browser is unsubscribed only now that the sign-out has succeeded.
+    void unsubscribeBrowserPush(() => !user.value);
     userProfile.value = null;
     // Shared state that outlives the session otherwise — the next account to
     // sign in on this tab would briefly see the previous user's passkeys.

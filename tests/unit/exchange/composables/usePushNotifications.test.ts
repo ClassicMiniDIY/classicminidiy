@@ -20,8 +20,8 @@ import { createMockUser, setupGlobalMocks, cleanupGlobalMocks } from '../../../s
 //     branch exists when it is missing (TME has no such branch).
 //   - applicationServerKey is passed as a *decoded Uint8Array*
 //     (urlBase64ToUint8Array), NOT the raw base64 string.
-//   - delete() filters by endpoint when a local subscription exists, else by
-//     user_id.
+//   - unsubscribe() deletes by endpoint when a local subscription exists and
+//     deletes nothing otherwise (never by user_id: other devices keep push).
 // ---------------------------------------------------------------------------
 
 let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
@@ -453,9 +453,7 @@ describe('usePushNotifications', () => {
       expect(mockPushSubscription.unsubscribe).not.toHaveBeenCalled();
     });
 
-    it('deletes by user_id when there is no local subscription', async () => {
-      mockSupabase._queryBuilder.eq = vi.fn().mockResolvedValue({ data: null, error: null });
-
+    it('removes nothing when there is no subscription on this device', async () => {
       const usePushNotifications = await importComposable();
       const { unsubscribe, subscription } = usePushNotifications();
 
@@ -465,27 +463,9 @@ describe('usePushNotifications', () => {
 
       expect(result).toBe(true);
       expect(mockPushSubscription.unsubscribe).not.toHaveBeenCalled();
-      expect(mockSupabase.from).toHaveBeenCalledWith('push_subscriptions');
-      expect(mockSupabase._queryBuilder.delete).toHaveBeenCalled();
-      // Filters by user_id (not endpoint) when no device subscription exists.
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', 'test-user-id');
-    });
-
-    it('handles DB delete errors via handleError and returns false', async () => {
-      mockSupabase._queryBuilder.eq = vi
-        .fn()
-        .mockResolvedValue({ data: null, error: { message: 'Delete failed', code: '500' } });
-
-      const usePushNotifications = await importComposable();
-      const { unsubscribe } = usePushNotifications();
-
-      const result = await unsubscribe();
-
-      expect(result).toBe(false);
-      expect(mockHandleError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Delete failed' }),
-        expect.objectContaining({ toastTitle: 'Failed to disable push notifications' })
-      );
+      // Never a delete by user_id: that would turn push off on the user's other devices.
+      expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
+      expect(mockSupabase._queryBuilder.delete).not.toHaveBeenCalled();
     });
 
     it('handles push unsubscribe() API errors via handleError and returns false', async () => {

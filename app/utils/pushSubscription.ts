@@ -2,9 +2,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '~~/types/database';
 
 /**
- * Web Push teardown shared by usePushNotifications().unsubscribe and
- * useAuth().signOut. Lives in utils, not in the composable, so useAuth does
- * not have to call usePushNotifications (which itself calls useAuth).
+ * Web Push lifecycle shared by usePushNotifications and useAuth. Lives in
+ * utils, not in the composable, so useAuth does not have to call
+ * usePushNotifications (which itself calls useAuth). Contract:
+ * .claude/rules/push-notifications.md.
  */
 
 /** Upper bound on push cleanup during sign-out. Sign-out never waits longer. */
@@ -27,6 +28,19 @@ export async function getBrowserPushSubscription(): Promise<PushSubscription | n
   return (await registration?.pushManager.getSubscription()) ?? null;
 }
 
+/**
+ * Save `sub` as the signed-in user's push subscription. The RPC takes the
+ * endpoint over from any previous owner; a browser keeps its endpoint across
+ * sign-ins, so a direct upsert on another user's endpoint would fail RLS.
+ */
+export async function claimPushSubscription(supabase: SupabaseClient<Database>, sub: PushSubscription) {
+  return supabase.rpc('claim_push_subscription', {
+    p_endpoint: sub.endpoint,
+    p_keys: sub.toJSON().keys as Record<string, string>,
+    p_user_agent: navigator.userAgent,
+  });
+}
+
 export interface PushRemovalResult {
   /** The row delete failed; the row may still exist. */
   deleteError: unknown;
@@ -44,68 +58,69 @@ export interface PushRemovalResult {
  *
  * Never throws. Either step succeeding stops delivery, so callers decide what
  * a partial failure means from the returned errors.
- *
- * `signal`: when aborted before the delete returns, the browser unsubscribe is
- * skipped, so a late cleanup cannot kill an endpoint the next user now owns.
  */
 export async function removePushSubscription(
   supabase: SupabaseClient<Database>,
-  sub: PushSubscription,
-  signal?: AbortSignal
+  sub: PushSubscription
 ): Promise<PushRemovalResult> {
   const { error: deleteError } = await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
 
   let unsubscribeError: unknown = null;
-  if (!signal?.aborted) {
-    try {
-      await sub.unsubscribe();
-    } catch (e) {
-      unsubscribeError = e;
-    }
+  try {
+    await sub.unsubscribe();
+  } catch (e) {
+    unsubscribeError = e;
   }
 
   return { deleteError, unsubscribeError };
 }
 
 /**
- * Best-effort push cleanup for sign-out. Call it BEFORE auth.signOut(), while
- * the session is still valid. Without it the endpoint row stays owned by the
- * previous user: their notifications keep reaching this browser, and the next
- * user's upsert on the same endpoint fails RLS.
+ * Sign-out step 1, BEFORE auth.signOut() while the session can still pass RLS:
+ * delete this browser's push row. Without it the row stays owned by the
+ * previous user and their notifications keep reaching this browser.
  *
- * Never throws and never takes longer than `timeoutMs`. After the timeout the
- * cleanup stops at its next step instead of running on under a later session.
+ * Returns the subscription whose row was deleted, so the caller can put the
+ * row back with claimPushSubscription() if auth.signOut() then fails. Returns
+ * null when there was nothing to delete, the delete failed, or the timeout
+ * won. It does NOT unsubscribe the browser: that happens only after a
+ * successful sign-out (unsubscribeBrowserPush), so a failed sign-out leaves
+ * push working.
+ *
+ * Never throws and never takes longer than `timeoutMs`. After the timeout it
+ * skips the delete instead of running on under a later session.
  */
-export async function removeBrowserPushSubscription(
+export async function detachBrowserPushRow(
   supabase: SupabaseClient<Database>,
   timeoutMs: number = PUSH_SIGN_OUT_CLEANUP_TIMEOUT_MS
-): Promise<void> {
-  if (!isWebPushSupported()) return;
+): Promise<PushSubscription | null> {
+  if (!isWebPushSupported()) return null;
 
-  const controller = new AbortController();
-
-  const cleanup = async () => {
+  let timedOut = false;
+  const detach = async (): Promise<PushSubscription | null> => {
     const sub = await getBrowserPushSubscription();
-    if (!sub || controller.signal.aborted) return;
-
-    const { deleteError, unsubscribeError } = await removePushSubscription(supabase, sub, controller.signal);
-    if (deleteError || unsubscribeError) {
-      console.warn('Push subscription cleanup on sign-out was partial:', { deleteError, unsubscribeError });
+    if (!sub || timedOut) return null;
+    const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+    if (error) {
+      console.warn('Deleting the push row on sign-out failed:', error);
+      return null;
     }
+    return sub;
   };
 
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<void>((resolve) => {
+  const timeout = new Promise<null>((resolve) => {
     timer = setTimeout(() => {
-      controller.abort();
-      resolve();
+      timedOut = true;
+      resolve(null);
     }, timeoutMs);
   });
 
   try {
-    await Promise.race([cleanup(), timeout]);
+    return await Promise.race([detach(), timeout]);
   } catch (e) {
-    console.warn('Push subscription cleanup on sign-out failed:', e);
+    console.warn('Push cleanup on sign-out failed:', e);
+    return null;
   } finally {
     clearTimeout(timer);
   }
@@ -120,12 +135,15 @@ export async function removeBrowserPushSubscription(
  * delete by then. A dead endpoint is enough: the push service stops delivery,
  * process-notifications prunes the row on the 410, and the next subscribe()
  * gets a fresh endpoint. Trade-off: after an involuntary sign-out the user has
- * to turn push on again. Never throws.
+ * to turn push on again. Also sign-out step 2, after a successful
+ * auth.signOut(). Never throws.
  */
-export async function unsubscribeBrowserPush(): Promise<void> {
+export async function unsubscribeBrowserPush(isStillSignedOut: () => boolean = () => true): Promise<void> {
   try {
     const sub = await getBrowserPushSubscription();
-    await sub?.unsubscribe();
+    // A lookup that stalled until someone signed in again must not kill the
+    // subscription that user may have just claimed.
+    if (sub && isStillSignedOut()) await sub.unsubscribe();
   } catch (e) {
     console.warn('Push unsubscribe without a session failed:', e);
   }
