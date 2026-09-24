@@ -88,11 +88,39 @@ so it has unit tests without mounting the page.
 - The status line is gated on a `hasMounted` ref as well as on `checked`, so SSR and the
   first client render emit the same DOM.
 
+### Service worker (added after the pre-PR review)
+
+The review found that production has no service worker: `pwa.selfDestroying: true` and
+no register plugin. So no browser could receive push, and the status line would have
+said "not active" to every user with the preference ON. Cole delegated the fix to this
+session. Decision:
+
+- A push-only worker in `service-worker/sw.ts`, built by @vite-pwa/nuxt with
+  `strategies: 'injectManifest'` and `injectionPoint: undefined` (no precache). Handlers:
+  `push` (always shows a notification), `notificationclick` (focus a tab on the URL or
+  open one; http(s) only), `activate` (delete Cache Storage left by the old Workbox
+  worker). No `fetch` handler and no `clients.claim()`.
+- Registration only in `subscribe()`, after the permission prompt (Safari needs the
+  prompt close to the click), through `ensurePushServiceWorker()`, which time-boxes the
+  wait for activation at 10 s. `injectRegister: false` and `client.registerPlugin: false`.
+- The Workbox `runtimeCaching` and `navigateFallbackDenylist` config is removed; it only
+  applied to a caching worker. The reasons for the denylist are kept in the
+  `nuxt.config.ts` comment.
+- Rejected: re-enabling the Workbox caching worker (it is what `selfDestroying` was
+  added to remove), and registering the worker on every page load (every visitor would
+  get a worker for a feature few use).
+
+Verified: `NITRO_PRESET=cloudflare_module bun run build` emits `.output/public/sw.js`
+(about 1 KB, no imports). On a local static serve of `.output/public` it registers,
+activates, deletes an existing cache, and stays registered after a reload.
+
 ## Out of scope
 
 - Telling the user on other pages that push was turned off by an involuntary sign-out.
 - A per-device toggle (option c) or a list of the user's registered browsers.
 - Server changes. None are needed.
+- `pushsubscriptionchange`: the worker has no session, so a rotated endpoint is dropped
+  at the next visit and the status line offers the button.
 
 ## Implementation plan
 
@@ -105,4 +133,5 @@ so it has unit tests without mounting the page.
    the line and the button.
 5. Update `.claude/rules/push-notifications.md` and `docs/invariants/push-notifications.md`
    (the "toggle shows the preference" trade-off is now handled).
-6. `bun run test`.
+6. Push-only service worker, config, static contract test, worker unit tests.
+7. `bun run test`, `bun run typecheck`, production build.
