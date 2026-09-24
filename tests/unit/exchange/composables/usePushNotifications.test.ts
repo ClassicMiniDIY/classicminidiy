@@ -277,6 +277,15 @@ describe('usePushNotifications', () => {
       expect(permission.value).toBe('denied');
     });
 
+    it('refreshPermission() re-reads Notification.permission', async () => {
+      const usePushNotifications = await importComposable();
+      const { refreshPermission, permission } = usePushNotifications();
+
+      (global as any).Notification.permission = 'granted';
+      refreshPermission();
+      expect(permission.value).toBe('granted');
+    });
+
     it('leaves checked false when push is not supported', async () => {
       delete (window as any).PushManager;
 
@@ -418,6 +427,20 @@ describe('usePushNotifications', () => {
         color: 'warning',
       });
       expect(mockPushManager.subscribe).not.toHaveBeenCalled();
+    });
+
+    it('returns false without a prompt when no service worker is registered', async () => {
+      // serviceWorker.ready would never resolve here and leave the caller busy.
+      navigator.serviceWorker.getRegistration = vi.fn().mockResolvedValue(undefined);
+
+      const usePushNotifications = await importComposable();
+      const { subscribe } = usePushNotifications();
+
+      expect(await subscribe()).toBe(false);
+      expect((global as any).Notification.requestPermission).not.toHaveBeenCalled();
+      expect(mockPushManager.subscribe).not.toHaveBeenCalled();
+      expect(mockSupabase.rpc).not.toHaveBeenCalled();
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Not Available' }));
     });
 
     it('records the permission the prompt returned', async () => {
@@ -637,6 +660,7 @@ describe('usePushNotifications', () => {
       expect(result).toHaveProperty('subscription');
       expect(result).toHaveProperty('checked');
       expect(result).toHaveProperty('permission');
+      expect(typeof result.refreshPermission).toBe('function');
       expect(typeof result.checkExistingSubscription).toBe('function');
       expect(typeof result.subscribe).toBe('function');
       expect(typeof result.unsubscribe).toBe('function');
