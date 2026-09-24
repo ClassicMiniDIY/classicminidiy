@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js';
+import { removeBrowserPushSubscription } from '~/utils/pushSubscription';
 
 interface UserProfile {
   is_admin: boolean;
@@ -250,6 +251,9 @@ export const useAuth = () => {
 
   // Sign out
   const signOut = async () => {
+    // Drop this browser's push row while the session can still pass RLS.
+    // Best-effort and time-boxed: it never blocks or fails the sign-out.
+    await removeBrowserPushSubscription(supabase);
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     user.value = null;

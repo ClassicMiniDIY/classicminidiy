@@ -5,6 +5,8 @@
  * requesting permission, subscribing/unsubscribing, and persisting subscription
  * data to the push_subscriptions table in Supabase.
  */
+import { removePushSubscription } from '~/utils/pushSubscription';
+
 /**
  * Decode a base64url-encoded VAPID public key into the Uint8Array that
  * PushManager.subscribe() requires for `applicationServerKey`. Passing the raw
@@ -153,18 +155,14 @@ export function usePushNotifications() {
     if (!user.value) return false;
 
     try {
-      // Unsubscribe from push if we have an active subscription
       if (subscription.value) {
-        await subscription.value.unsubscribe();
+        // Remove this device's row by endpoint and unsubscribe it at the push
+        // service. Shared with the sign-out cleanup in useAuth.
+        await removePushSubscription(supabase, subscription.value);
+      } else {
+        const { error: deleteError } = await supabase.from('push_subscriptions').delete().eq('user_id', user.value.id);
+        if (deleteError) throw deleteError;
       }
-
-      // Remove this specific device's subscription from the database
-      const endpoint = subscription.value?.endpoint;
-      const { error: deleteError } = endpoint
-        ? await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
-        : await supabase.from('push_subscriptions').delete().eq('user_id', user.value.id);
-
-      if (deleteError) throw deleteError;
 
       subscription.value = null;
 

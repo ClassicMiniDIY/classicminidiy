@@ -350,6 +350,95 @@ describe('useAuth', () => {
       expect(mockClearPasskeys).toHaveBeenCalled();
     });
 
+    describe('push subscription cleanup', () => {
+      const ENDPOINT = 'https://push.example.com/subscription/shared-browser';
+      let mockPushSub: { endpoint: string; unsubscribe: ReturnType<typeof vi.fn> };
+      let getRegistration: ReturnType<typeof vi.fn>;
+      let swDescriptor: PropertyDescriptor | undefined;
+
+      beforeEach(() => {
+        mockPushSub = { endpoint: ENDPOINT, unsubscribe: vi.fn().mockResolvedValue(true) };
+        getRegistration = vi.fn().mockResolvedValue({
+          pushManager: { getSubscription: vi.fn().mockResolvedValue(mockPushSub) },
+        });
+        swDescriptor = Object.getOwnPropertyDescriptor(navigator, 'serviceWorker');
+        Object.defineProperty(navigator, 'serviceWorker', {
+          value: { getRegistration },
+          writable: true,
+          configurable: true,
+        });
+        (window as any).PushManager = class MockPushManager {};
+      });
+
+      afterEach(() => {
+        if (swDescriptor) Object.defineProperty(navigator, 'serviceWorker', swDescriptor);
+        else delete (navigator as any).serviceWorker;
+        delete (window as any).PushManager;
+      });
+
+      it('deletes the push row by endpoint and unsubscribes before the session ends', async () => {
+        const { useAuth } = await import('~/app/composables/useAuth');
+        await useAuth().signOut();
+
+        expect(mockSupabase.from).toHaveBeenCalledWith('push_subscriptions');
+        expect(mockSupabase._queryBuilder.delete).toHaveBeenCalled();
+        expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('endpoint', ENDPOINT);
+        expect(mockPushSub.unsubscribe).toHaveBeenCalled();
+        // RLS only lets the owner delete the row, so it must go while the
+        // session is still valid.
+        expect(mockSupabase._queryBuilder.delete.mock.invocationCallOrder[0]).toBeLessThan(
+          mockSupabase.auth.signOut.mock.invocationCallOrder[0]
+        );
+      });
+
+      it('does nothing to push when this browser has no subscription', async () => {
+        getRegistration.mockResolvedValue({ pushManager: { getSubscription: vi.fn().mockResolvedValue(null) } });
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        await useAuth().signOut();
+
+        expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
+        expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+      });
+
+      it('skips push cleanup when the browser does not support Web Push', async () => {
+        delete (window as any).PushManager;
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        await useAuth().signOut();
+
+        expect(getRegistration).not.toHaveBeenCalled();
+        expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+      });
+
+      it('still unsubscribes and signs out when the row delete fails', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        mockSupabase._queryBuilder.eq = vi.fn().mockResolvedValue({ data: null, error: { message: 'RLS denied' } });
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        const auth = useAuth();
+        await expect(auth.signOut()).resolves.toBeUndefined();
+
+        expect(mockPushSub.unsubscribe).toHaveBeenCalled();
+        expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+        expect(auth.user.value).toBeNull();
+      });
+
+      it('signs out after the timeout when push cleanup hangs', async () => {
+        getRegistration.mockReturnValue(new Promise(() => {}));
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        const done = useAuth().signOut();
+
+        await vi.advanceTimersByTimeAsync(2999);
+        expect(mockSupabase.auth.signOut).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(1);
+        await done;
+        expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+      });
+    });
+
     it('throws when supabase signOut returns an error', async () => {
       const authError = { message: 'Server error', status: 500 };
       mockSupabase.auth.signOut.mockResolvedValue({ error: authError });
