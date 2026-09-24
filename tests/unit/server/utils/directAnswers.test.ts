@@ -34,7 +34,10 @@ function colourBuilder() {
 let colourResult: { data: unknown; error: unknown } = { data: [], error: null };
 const db = { from: () => colourBuilder() } as any;
 
-const { resolveDirectAnswers, resolveReferenceNoun } = await import('~~/server/utils/directAnswers');
+const { resolveDirectAnswers, resolveReferenceNoun, loadReferenceTables } =
+  await import('~~/server/utils/directAnswers');
+// The reference tables come from the fixtures (tests/setup mocks the loader).
+const tables = await loadReferenceTables();
 
 const resolve = (query: string) => resolveDirectAnswers(db, query, analyseQuery(query));
 
@@ -149,7 +152,7 @@ describe('engine', () => {
 
 describe('reference nouns', () => {
   it('answers a torque figure for a short lookup', () => {
-    const answer = resolveReferenceNoun('flywheel torque');
+    const answer = resolveReferenceNoun('flywheel torque', tables);
     expect(answer).toMatchObject({ kind: 'torque', item: 'Flywheel Center Bolt', url: '/technical/torque' });
     if (answer?.kind !== 'torque') return;
     expect(answer.lbft).toMatch(/^\d/);
@@ -157,12 +160,14 @@ describe('reference nouns', () => {
   });
 
   it('prefers the longest matching term', () => {
-    expect(resolveReferenceNoun('flywheel housing bolts')).toMatchObject({ item: "Flywheel Housing 'Wok' Bolts" });
-    expect(resolveReferenceNoun('torque flywheel')).toMatchObject({ item: 'Flywheel Center Bolt' });
+    expect(resolveReferenceNoun('flywheel housing bolts', tables)).toMatchObject({
+      item: "Flywheel Housing 'Wok' Bolts",
+    });
+    expect(resolveReferenceNoun('torque flywheel', tables)).toMatchObject({ item: 'Flywheel Center Bolt' });
   });
 
   it('answers a clearance in both units', () => {
-    const answer = resolveReferenceNoun('tappet gap');
+    const answer = resolveReferenceNoun('tappet gap', tables);
     expect(answer).toMatchObject({
       kind: 'clearance',
       item: 'Rocker/Valve Clearance - Stock',
@@ -174,16 +179,16 @@ describe('reference nouns', () => {
     // "spark plug gap" contains the torque noun "spark plug", but "gap" is a
     // clearance word and there is no plug-gap row. A plug torque here would be
     // a confident wrong answer.
-    expect(resolveReferenceNoun('spark plug gap')).toBeNull();
-    expect(resolveReferenceNoun('tappet torque')).toBeNull();
+    expect(resolveReferenceNoun('spark plug gap', tables)).toBeNull();
+    expect(resolveReferenceNoun('tappet torque', tables)).toBeNull();
     // A hint for the SAME table is neutral.
-    expect(resolveReferenceNoun('spark plug torque')).toMatchObject({ kind: 'torque' });
-    expect(resolveReferenceNoun('tappet clearance')).toMatchObject({ kind: 'clearance' });
+    expect(resolveReferenceNoun('spark plug torque', tables)).toMatchObject({ kind: 'torque' });
+    expect(resolveReferenceNoun('tappet clearance', tables)).toMatchObject({ kind: 'clearance' });
   });
 
   it('matches whole words only, and gives up past four words', () => {
-    expect(resolveReferenceNoun('flywheels')).toBeNull();
-    expect(resolveReferenceNoun('what is the flywheel bolt torque')).toBeNull();
+    expect(resolveReferenceNoun('flywheels', tables)).toBeNull();
+    expect(resolveReferenceNoun('what is the flywheel bolt torque', tables)).toBeNull();
   });
 
   it('runs for a lookup and a short question, never for a code', async () => {

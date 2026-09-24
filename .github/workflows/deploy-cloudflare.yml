@@ -208,6 +208,25 @@ jobs:
           fi
           echo "All required runtime secrets are present on the worker."
 
+      # Reference data (needles, torque, clearances) is published in Supabase, not
+      # committed. The build bundles the current published texts as the loader's
+      # last fallback (#reference-snapshot), so the pull must succeed: with CI=true
+      # a failure exits 1 and the previous Worker keeps serving.
+      - name: Pull reference data
+        env:
+          NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: bun scripts/pull-reference-data.mjs
+
+      # The data-dependent tests (reference nouns, direct answers, FAQs, MCP tool
+      # counts, needle integrity) against the data this build will SERVE. The
+      # test job ran them against the fixtures; an admin publish can change the
+      # live data since, and a renamed row must block the deploy, not ship.
+      - name: Prepare Nuxt types
+        run: bunx nuxi prepare
+      - name: Reference data live check
+        run: bun run test:reference-live
+
       - name: Build for Cloudflare Workers
         env:
           NITRO_PRESET: cloudflare_module

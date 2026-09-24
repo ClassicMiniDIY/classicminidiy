@@ -87,25 +87,25 @@ describe('server/api/needles/suggested', () => {
     handler = mod.default;
   });
 
-  it('returns truthy data', () => {
-    const result = handler({});
+  it('returns truthy data', async () => {
+    const result = await handler({});
     expect(result).toBeTruthy();
   });
 
-  it('returns an object', () => {
-    const result = handler({});
+  it('returns an object', async () => {
+    const result = await handler({});
     expect(typeof result).toBe('object');
   });
 
-  it('has keyed sections for different carb types', () => {
-    const result = handler({});
-    // The suggestedNeedles.json has keys like SingleHS2, etc.
+  it('has keyed sections for different carb types', async () => {
+    const result = await handler({});
+    // Sections are keyed by carburettor (SingleHS2, …).
     const keys = Object.keys(result);
     expect(keys.length).toBeGreaterThan(0);
   });
 
-  it('each section has title and items', () => {
-    const result = handler({});
+  it('each section has title and items', async () => {
+    const result = await handler({});
     const keys = Object.keys(result);
     const firstSection = result[keys[0]];
     expect(firstSection).toHaveProperty('title');
@@ -113,8 +113,8 @@ describe('server/api/needles/suggested', () => {
     expect(Array.isArray(firstSection.items)).toBe(true);
   });
 
-  it('suggested needle items have expected fields', () => {
-    const result = handler({});
+  it('suggested needle items have expected fields', async () => {
+    const result = await handler({});
     const keys = Object.keys(result);
     const firstSection = result[keys[0]];
     const firstItem = firstSection.items[0];
@@ -125,9 +125,9 @@ describe('server/api/needles/suggested', () => {
     expect(firstItem).toHaveProperty('springType');
   });
 
-  it('calls setResponseHeaders with cache headers', () => {
+  it('calls setResponseHeaders with cache headers', async () => {
     const mockEvent = { id: 'test' };
-    handler(mockEvent);
+    await handler(mockEvent);
     expect(setResponseHeaders).toHaveBeenCalledWith(
       mockEvent,
       expect.objectContaining({

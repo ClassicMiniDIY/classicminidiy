@@ -1,4 +1,3 @@
-import StarterNeedles from '../../data/default-needles.json';
 export const chartOptions = {
   chart: {
     // `zooming.*` is the modern Highcharts ≥11 config block; `zoomType` is
@@ -35,8 +34,10 @@ export const chartOptions = {
   subtitle: {
     text: 'Source: <a target="_blank" href="http://www.mintylamb.co.uk/suneedle/">http://www.mintylamb.co.uk/suneedle/</a>',
   },
-  // This is the data decleration
-  series: StarterNeedles,
+  // Empty on purpose: the starter set is reference data (`default_needles`),
+  // served by /api/needles/list as `initial`, and Needles.vue builds every
+  // series from its selection (buildSeries). No JSON copy is bundled here.
+  series: [],
   yAxis: {
     title: { text: 'Needle Diameter (mm)' },
     labels: {

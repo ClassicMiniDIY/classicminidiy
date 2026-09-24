@@ -42,9 +42,9 @@ structured query against the full needle catalogue:
 
 The TR6 request above maps to two passes of the same tool:
 
-- `band = low,  direction = richer,  isolateBand = true`  → needles that push
+- `band = low,  direction = richer,  isolateBand = true` → needles that push
   more fuel at off-idle without materially shifting mid or top.
-- `band = high, direction = richer,  isolateBand = true`  → needles that push
+- `band = high, direction = richer,  isolateBand = true` → needles that push
   more fuel near redline without materially shifting low or mid.
 
 The `isolateBand` flag is the key piece of behaviour — it is what turns
@@ -57,13 +57,13 @@ The `isolateBand` flag is the key piece of behaviour — it is what turns
 ### The `Needle` shape
 
 Source of truth: [`data/models/needles.ts`](../data/models/needles.ts) and
-[`data/needles.json`](../data/needles.json).
+the published `needles` reference dataset (served by `/api/needles/list`; source of truth in Supabase since 2026-09).
 
 ```ts
 export interface Needle {
-  name: string;    // e.g. "AAA", "M", "6", "BBW"
-  size: number;    // carb throat size in inches: 0.09 (HS4 / 1.25") or 0.1 (HIF44 / 1.5")
-  data: number[];  // 13–16 station samples, each the needle DIAMETER in mm
+  name: string; // e.g. "AAA", "M", "6", "BBW"
+  size: number; // carb throat size in inches: 0.09 (HS4 / 1.25") or 0.1 (HIF44 / 1.5")
+  data: number[]; // 13–16 station samples, each the needle DIAMETER in mm
 }
 ```
 
@@ -76,12 +76,12 @@ export interface Needle {
 - **Smaller diameter = richer mixture.** More air can pull more fuel around a
   thinner needle. Conversely, a thicker needle at a given station chokes off
   fuel and leans the mixture.
-- The chart Y-axis is therefore **reversed**: richer needles plot *higher* on
+- The chart Y-axis is therefore **reversed**: richer needles plot _higher_ on
   screen, which is the intuition everyone already has.
 
 ### Sample
 
-A real row from `data/needles.json`:
+A real row from the `needles` reference dataset:
 
 ```json
 {
@@ -126,17 +126,17 @@ engine displacement — but it is the same mental model every experienced
 SU tuner applies when reading a needle profile, and it is precise enough
 for relative ranking.
 
-| Band   | Stations inclusive | Approximate RPM range       |
-| ------ | ------------------ | --------------------------- |
-| —      | `0`                | idle anchor (excluded)      |
-| Low    | `1..4`             | off-idle → ~2500 rpm        |
-| Mid    | `5..9`             | cruise → ~4000 rpm          |
-| High   | `10..15`           | WOT → redline               |
+| Band | Stations inclusive | Approximate RPM range  |
+| ---- | ------------------ | ---------------------- |
+| —    | `0`                | idle anchor (excluded) |
+| Low  | `1..4`             | off-idle → ~2500 rpm   |
+| Mid  | `5..9`             | cruise → ~4000 rpm     |
+| High | `10..15`           | WOT → redline          |
 
 ```ts
 export const NEEDLE_BANDS = {
-  low:  { start: 1,  end: 4  },
-  mid:  { start: 5,  end: 9  },
+  low: { start: 1, end: 4 },
+  mid: { start: 5, end: 9 },
   high: { start: 10, end: 15 },
 } as const;
 ```
@@ -214,7 +214,7 @@ fuel-flow area (mm²)** within `[start, end]` inclusive, **excluding
 stations with value `0`** and **excluding station `0`** (which is outside
 every band's range anyway).
 
-Critically, areas are computed *per station first, then averaged* — not
+Critically, areas are computed _per station first, then averaged_ — not
 diameters averaged then converted, which would discard the non-linear area
 response and produce the wrong answer on uneven profiles.
 
@@ -223,8 +223,8 @@ band — that band returns `null` rather than `0` or `NaN`.
 
 ```ts
 export interface BandAverages {
-  low:  number | null;  // mean fuel-flow area in this band, mm²
-  mid:  number | null;
+  low: number | null; // mean fuel-flow area in this band, mm²
+  mid: number | null;
   high: number | null;
 }
 
@@ -261,8 +261,8 @@ All deltas are expressed **from the candidate's perspective** and in
     meaningful metric at any band or jet size.
 
 Note the **sign-convention flip from the diameter-era algorithm**: we used
-to compute `ref - cand` because *smaller diameter* meant richer. In
-area space, *larger area* means richer, so the natural subtraction is
+to compute `ref - cand` because _smaller diameter_ meant richer. In
+area space, _larger area_ means richer, so the natural subtraction is
 `cand - ref`. The external semantics (positive → candidate richer) are
 preserved; the math under them changed.
 
@@ -275,24 +275,24 @@ Flags on the full comparison:
 
 ```ts
 export interface BandDelta {
-  reference:   number | null;
-  candidate:   number | null;
-  richness:    number | null;
+  reference: number | null;
+  candidate: number | null;
+  richness: number | null;
   richnessPct: number | null;
 }
 
 export interface NeedleComparison {
-  candidate:        Needle;
-  reference:        Needle;
-  sameSize:         boolean;
-  bands:            Record<NeedleBand, BandDelta>;
-  overallDistance:  number;
-  uniformlyRicher:  boolean;
-  uniformlyLeaner:  boolean;
+  candidate: Needle;
+  reference: Needle;
+  sameSize: boolean;
+  bands: Record<NeedleBand, BandDelta>;
+  overallDistance: number;
+  uniformlyRicher: boolean;
+  uniformlyLeaner: boolean;
 }
 
 export function compareNeedles(reference: Needle, candidate: Needle): NeedleComparison {
-  const refBands  = bandAverages(reference);
+  const refBands = bandAverages(reference);
   const candBands = bandAverages(candidate);
   const bands = {} as Record<NeedleBand, BandDelta>;
   const richnessValues: number[] = [];
@@ -300,19 +300,17 @@ export function compareNeedles(reference: Needle, candidate: Needle): NeedleComp
   (Object.keys(NEEDLE_BANDS) as NeedleBand[]).forEach((band) => {
     const r = refBands[band];
     const c = candBands[band];
-    let richness:    number | null = null;
+    let richness: number | null = null;
     let richnessPct: number | null = null;
     if (r !== null && c !== null) {
-      richness    = c - r; // area-based: positive → candidate richer
+      richness = c - r; // area-based: positive → candidate richer
       richnessPct = r !== 0 ? (richness / r) * 100 : null;
       richnessValues.push(Math.abs(richness));
     }
     bands[band] = { reference: r, candidate: c, richness, richnessPct };
   });
 
-  const overallDistance = richnessValues.length
-    ? richnessValues.reduce((a, b) => a + b, 0) / richnessValues.length
-    : 0;
+  const overallDistance = richnessValues.length ? richnessValues.reduce((a, b) => a + b, 0) / richnessValues.length : 0;
 
   const signed = (Object.keys(bands) as NeedleBand[])
     .map((b) => bands[b].richness)
@@ -340,13 +338,13 @@ additional `score` field — lower is better).
 
 ```ts
 export interface FindRelativeOptions {
-  band:                NeedleBand | 'any'; // 'low' | 'mid' | 'high' | 'any'
-  direction:           'richer' | 'leaner' | 'similar';
-  sameSizeOnly?:       boolean;  // default true
-  tolerance?:          number;   // default 0.04 for 'similar', 0.01 for 'richer'/'leaner'
-  isolateBand?:        boolean;  // default true
-  isolationTolerance?: number;   // default 0.04 (mm²)
-  limit?:              number;   // default 10
+  band: NeedleBand | 'any'; // 'low' | 'mid' | 'high' | 'any'
+  direction: 'richer' | 'leaner' | 'similar';
+  sameSizeOnly?: boolean; // default true
+  tolerance?: number; // default 0.04 for 'similar', 0.01 for 'richer'/'leaner'
+  isolateBand?: boolean; // default true
+  isolationTolerance?: number; // default 0.04 (mm²)
+  limit?: number; // default 10
 }
 ```
 
@@ -396,13 +394,13 @@ Goal: find needles that move **only** in the requested direction, **only**
 
 ```ts
 const wantPositive = direction === 'richer';
-const targetDelta  = cmp.bands[band].richness;
+const targetDelta = cmp.bands[band].richness;
 
 // Must have data in the target band
 if (targetDelta === null) continue;
 
 // Must move at least `tolerance` mm in the requested direction
-if ( wantPositive && targetDelta <  tolerance) continue;
+if (wantPositive && targetDelta < tolerance) continue;
 if (!wantPositive && targetDelta > -tolerance) continue;
 
 // Isolation check on the other two bands
@@ -438,23 +436,19 @@ Notes on the soft-vs-hard isolation behaviour:
 - The **hard disqualification** (`overflow > 2 * isolationTolerance`, i.e. the
   non-target band drifted by more than `3 * isolationTolerance` total) prevents
   obviously-wrong results from cluttering the list. A needle that is richer in
-  Low by 0.01 mm but *also* richer in High by 0.05 mm is not a useful answer
+  Low by 0.01 mm but _also_ richer in High by 0.05 mm is not a useful answer
   to "richer only in the low range" — it's a different query entirely.
 
 ##### `direction === 'richer' | 'leaner'` on `band === 'any'`
 
-Goal: find needles that move uniformly in the requested direction across *all*
+Goal: find needles that move uniformly in the requested direction across _all_
 bands.
 
 ```ts
-if ( wantPositive && !cmp.uniformlyRicher) continue;
+if (wantPositive && !cmp.uniformlyRicher) continue;
 if (!wantPositive && !cmp.uniformlyLeaner) continue;
 
-const movement = meanAbs([
-  cmp.bands.low.richness,
-  cmp.bands.mid.richness,
-  cmp.bands.high.richness,
-]);
+const movement = meanAbs([cmp.bands.low.richness, cmp.bands.mid.richness, cmp.bands.high.richness]);
 
 if (movement < tolerance) continue; // default 0.01 mm²
 ranked.push({ ...cmp, score: -movement }); // biggest mover wins
@@ -481,8 +475,8 @@ a reference needle and layers a candidate on top, the region between the two
 curves is shaded to show **where** the candidate is richer and **where** it is
 leaner.
 
-> **Important split**: the ranking math (§4) operates in *fuel-flow area*
-> (mm²), but the diff overlay operates in *diameter* (mm). The chart's Y
+> **Important split**: the ranking math (§4) operates in _fuel-flow area_
+> (mm²), but the diff overlay operates in _diameter_ (mm). The chart's Y
 > axis is literally labelled "Needle Diameter (mm)", so the overlay shades
 > the area between two diameter curves — not between two fuel-area curves.
 > Both are correct; they are two views onto the same physical change. The
@@ -537,7 +531,7 @@ in the rendered shaded region. Skipping the entry entirely would cause
 Highcharts (and Swift Charts / Compose) to interpolate across the gap, which
 paints a fill where no data exists.
 
-The rule: if *either* needle lacks a real reading at station `i`, both
+The rule: if _either_ needle lacks a real reading at station `i`, both
 `richer[i]` and `leaner[i]` must be `[i, null, null]`. Real data on one side
 is not enough — you need both curves to compute a fill between them.
 
@@ -1086,19 +1080,19 @@ stub the event emitter; the property shape must still match.
 
 ### Web source of truth
 
-| File | Purpose |
-| ---- | ------- |
-| [`app/composables/useNeedleCompare.ts`](../app/composables/useNeedleCompare.ts) | Pure logic — `bandAverages`, `compareNeedles`, `findRelativeNeedles`, `buildDiffSeriesData`, `effectiveStations`, `bandLabel`, `NEEDLE_BANDS` constants. **Single source of truth.** If the web and mobile implementations diverge, this file wins and the mobile ports must be updated to match. |
-| [`app/components/Calculators/Needles.vue`](../app/components/Calculators/Needles.vue) | UI wiring — search panel, result list, chart integration, PostHog event emission. Template for the mobile screens but not a direct port target. |
-| [`tests/unit/composables/useNeedleCompare.test.ts`](../tests/unit/composables/useNeedleCompare.test.ts) | Vitest unit tests for the pure logic. **The mobile ports should mirror these test cases** (XCTest on iOS, JUnit/kotest on Android) — parity at the test-case level is the easiest way to guarantee parity of behaviour. |
-| [`app/plugins/highcharts.ts`](../app/plugins/highcharts.ts) | Registers `highcharts/highcharts-more` so the `arearange` series type (used by the diff overlay) is available. Mobile-equivalent setup is the charting library's own region/area-fill primitive — see §5. |
+| File                                                                                                    | Purpose                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`app/composables/useNeedleCompare.ts`](../app/composables/useNeedleCompare.ts)                         | Pure logic — `bandAverages`, `compareNeedles`, `findRelativeNeedles`, `buildDiffSeriesData`, `effectiveStations`, `bandLabel`, `NEEDLE_BANDS` constants. **Single source of truth.** If the web and mobile implementations diverge, this file wins and the mobile ports must be updated to match. |
+| [`app/components/Calculators/Needles.vue`](../app/components/Calculators/Needles.vue)                   | UI wiring — search panel, result list, chart integration, PostHog event emission. Template for the mobile screens but not a direct port target.                                                                                                                                                   |
+| [`tests/unit/composables/useNeedleCompare.test.ts`](../tests/unit/composables/useNeedleCompare.test.ts) | Vitest unit tests for the pure logic. **The mobile ports should mirror these test cases** (XCTest on iOS, JUnit/kotest on Android) — parity at the test-case level is the easiest way to guarantee parity of behaviour.                                                                           |
+| [`app/plugins/highcharts.ts`](../app/plugins/highcharts.ts)                                             | Registers `highcharts/highcharts-more` so the `arearange` series type (used by the diff overlay) is available. Mobile-equivalent setup is the charting library's own region/area-fill primitive — see §5.                                                                                         |
 
 ### Data
 
-| File | Purpose |
-| ---- | ------- |
-| [`data/needles.json`](../data/needles.json) | Full catalogue. Every SU needle the tool knows about, as an array of `Needle` objects. Ship this file with the mobile apps (or fetch it once on first launch and cache) — the algorithm is useless without the pool. |
-| [`data/models/needles.ts`](../data/models/needles.ts) | TypeScript interface for the `Needle` shape and related helpers. Mirrors the Swift `struct Needle` / Kotlin `data class Needle` in §6 and §7. |
+| File                                                      | Purpose                                                                                                                                                                                         |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `needles` reference dataset (`/api/needles/list` → `all`) | Full catalogue. Every SU needle the tool knows about, as an array of `Needle` objects. The mobile apps sync it from Supabase (with a bundled seed) — the algorithm is useless without the pool. |
+| [`data/models/needles.ts`](../data/models/needles.ts)     | TypeScript interface for the `Needle` shape and related helpers. Mirrors the Swift `struct Needle` / Kotlin `data class Needle` in §6 and §7.                                                   |
 
 ---
 
@@ -1108,31 +1102,33 @@ All values below are in **mm² of fuel-flow area**. Jet area for a 0.090"
 jet: `π × (0.09 × 25.4 / 2)² ≈ 4.10435 mm²`.
 
 Reference needle: **"6"** (size 0.09")
+
 ```
 data = [2.261, 2.159, 2.068, 1.994, 1.918, 1.842, 1.768, 1.692, 1.615, 1.539, 1.466, 1.397, 1.321, 0, 0, 0]
 ```
 
 Band averages (mean of per-station fuel areas):
 
-- Low  (stations 1..4):   **0.84642 mm²**
-- Mid  (stations 5..9):   **1.84886 mm²**
+- Low (stations 1..4): **0.84642 mm²**
+- Mid (stations 5..9): **1.84886 mm²**
 - High (stations 10..12): **2.57427 mm²**
 
 Candidate needle: **"7"** (size 0.09")
+
 ```
 data = [2.261, 2.159, 2.068, 1.994, 1.918, 1.829, 1.742, 1.651, 1.575, 1.491, 1.405, 1.321, 1.245, 0, 0, 0]
 ```
 
 Band averages:
 
-- Low:  **0.84642 mm²** (stations 1..4 are identical to needle "6")
-- Mid:  **1.93522 mm²**
+- Low: **0.84642 mm²** (stations 1..4 are identical to needle "6")
+- Mid: **1.93522 mm²**
 - High: **2.72526 mm²**
 
 Richness (candidate − reference):
 
-- Low:  0.84642 − 0.84642 = **0.000 mm²** → 0.0%
-- Mid:  1.93522 − 1.84886 = **+0.0864 mm²** → +4.67% (candidate richer)
+- Low: 0.84642 − 0.84642 = **0.000 mm²** → 0.0%
+- Mid: 1.93522 − 1.84886 = **+0.0864 mm²** → +4.67% (candidate richer)
 - High: 2.72526 − 2.57427 = **+0.1510 mm²** → +5.87% (candidate clearly richer)
 
 Overall distance: mean(|0|, |0.0864|, |0.1510|) = **0.0791 mm²**.
@@ -1140,16 +1136,16 @@ Overall distance: mean(|0|, |0.0864|, |0.1510|) = **0.0791 mm²**.
 Interpreting this against the TR6 use-case ("richer low, same mid, more up top"):
 
 - Candidate "7" against reference "6" with `band = high, direction = richer,
-  isolateBand = true, isolationTolerance = 0.04`:
+isolateBand = true, isolationTolerance = 0.04`:
   - Low overflow: |0.000| − 0.04 = −0.04 → no penalty
-  - Mid overflow: |0.0864| − 0.04 = 0.0464 → penalty = 0.0464 × 5 = 0.232; *and*
+  - Mid overflow: |0.0864| − 0.04 = 0.0464 → penalty = 0.0464 × 5 = 0.232; _and_
     0.0464 > 2 × 0.04 = 0.08? No (0.0464 < 0.08) — not disqualified.
   - Target delta (High) = +0.1510 mm², passes `>= 0.01` threshold.
   - Score = −|0.1510| + 0.232 = **+0.081** (higher = worse; this candidate
     isn't great because mid drifted a bit).
 
 - Candidate "7" against reference "6" with `band = high, direction = richer,
-  isolateBand = false`:
+isolateBand = false`:
   - Score = −|0.1510| = **−0.151** (much better ranking).
 
 This illustrates the value of `isolateBand`: with it on, needle "7" is visibly

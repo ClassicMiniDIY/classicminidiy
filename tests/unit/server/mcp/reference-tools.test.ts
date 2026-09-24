@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import torqueSpecs from '../../../../data/torqueSpecs.json';
+import { getReferenceDataset } from '~~/server/utils/referenceData';
+
+const torqueSpecs = (await getReferenceDataset('torque_specs')).value;
 
 const { mockJsonResult, mockErrorResult } = vi.hoisted(() => {
   const mockJsonResult = vi.fn((data: any) => data);

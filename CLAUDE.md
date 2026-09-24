@@ -145,9 +145,14 @@ per-component `<i18n lang="json">` blocks.
 - **SEO:** never pass a possibly-empty string to `ogImage`; every dynamic route 404s on a
   miss; browse pages with query params use `useFacetedSeo()`; redirect matchers anchor at
   a segment boundary via `pathInPrefixes()`, never `path.includes()`.
-- **Reference data:** the imperial column is the source and metric is derived; every
-  torque row is lb-ft; `thou` holds inches; weights are kilograms; units come from
-  `data/models/units.ts`, never restated.
+- **Reference data:** needles, torque and clearances are published in Supabase and read
+  only through `server/utils/referenceData.ts`; never re-add a `data/*.json` copy, and
+  never re-serialise a payload (bytes are hashed). The imperial column is the source and
+  metric is derived; every torque row is lb-ft; `thou` holds inches; weights are
+  kilograms; units come from `data/models/units.ts`, never restated.
+  `.claude/rules/reference-data.md`.
+- **`SUPABASE_SERVICE_KEY`** exception: `scripts/pull-reference-data.mjs` reads it from the
+  build env (no Nitro runtime in a build step).
 - **Marketplace:** a paid listing is born `draft`; only the payment path promotes it to
   `pending`; only moderation (the admin status route) makes it `active`. Feed item ids
   are absolute IRIs.

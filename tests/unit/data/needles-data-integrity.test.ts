@@ -1,71 +1,34 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { resolve } from 'node:path';
-import Needles from '~/data/needles.json';
-import DefaultNeedles from '~/data/default-needles.json';
+import { getReferenceDataset } from '~~/server/utils/referenceData';
 
 // ---------------------------------------------------------------------------
 // Why this file exists
 //
-// `data/needles.json` is the canonical SU needle dataset. Each `data` array is
-// a POSITIONAL series — 16 stations down the needle — so the ordering IS the
-// data. A reordered array is not a formatting difference, it is a different
-// needle, and every number in it still looks plausible.
+// SU needle data is a POSITIONAL series: each `data` array is 16 stations down
+// the needle, so the ordering IS the data. A DynamoDB Number Set once scrambled
+// every row and dropped repeated values (16 in, 14 out), and every number still
+// looked plausible (ClassicMiniDIY/classicminidiy-supabase#64).
 //
-// This was not hypothetical. A DynamoDB `needles` table stored `data` as a
-// Number Set (`NS`), which is unordered and deduplicating. All 54 of its rows
-// came back scrambled, and because 410 of the 709 needles legitimately repeat a
-// value (usually trailing zeros), an `NS` round-trip also silently DROPPED
-// entries — 16 values in, 14 out. That table was deleted in July 2026 and was
-// never used as a migration source. See ClassicMiniDIY/classicminidiy-supabase#64.
-//
-// Three byte-identical copies of this file ship today:
-//   classicminidiy/data/needles.json                                (canonical)
-//   ClassicMiniToolbox-android/app/src/main/assets/needles.json
-//   Classic Mini DIY Toolbox/Data/needles.json                      (iOS)
-//
-// Each repo pins the SAME canonical hash below, so drift in any one copy fails
-// that repo's CI. If you legitimately change needle data, update the hash in
-// ALL THREE repos in the same change, and re-run the copy scripts in
-// `Native CMDIY Apps/shared-data/`.
+// The data is published in Supabase (reference dataset `needles`), and the same
+// rules are enforced at PUBLISH time by publish-reference-data, so a bad needle
+// never reaches here. This file keeps the web's own check on what it serves:
+// the fixtures in unit runs, the live snapshot in the deploy job
+// (`bun run test:reference-live`). The whitespace-stripped hash pin and the
+// fixed count of 710 are gone: the count changes when a needle is published,
+// and the editor shows it in the diff instead.
 // ---------------------------------------------------------------------------
 
-/**
- * Whitespace-stripped SHA-256 of `data/needles.json`.
- *
- * Whitespace is stripped so that a prettier reformat (which has happened three
- * times in this file's history) does not fail CI, while any change to a value,
- * to array ordering, or to record ordering does. Safe to do byte-wise here
- * because no needle name contains whitespace and the file is pure ASCII.
- *
- * Deliberately duplicated as a literal in the Android and iOS test suites —
- * the whole point is that three independent repos agree on one value.
- */
-const CANONICAL_NEEDLES_SHA256 = '42d0fbb306430b26846b82c9eceab4d8a596f7d5b53382a7741f44426e7aa086';
-
-const EXPECTED_NEEDLE_COUNT = 710;
 const STATIONS_PER_NEEDLE = 16;
 
 type NeedleRecord = { name: string; size: number; data: number[] };
 
-const needles = Needles as NeedleRecord[];
-
-function canonicalHash(filePath: string): string {
-  const raw = readFileSync(resolve(process.cwd(), filePath), 'utf8');
-  return createHash('sha256').update(raw.replace(/\s+/g, '')).digest('hex');
-}
+const needles = (await getReferenceDataset<NeedleRecord[]>('needles')).value;
+const defaultNeedles = (await getReferenceDataset<NeedleRecord[]>('default_needles')).value;
 
 // ---------------------------------------------------------------------------
 // Ordering integrity — the checks that would have caught the DynamoDB bug
 // ---------------------------------------------------------------------------
-describe('needles.json ordering integrity', () => {
-  it('matches the canonical whitespace-stripped hash', () => {
-    // If this fails, needle data changed. That is allowed — but it must be
-    // deliberate, and the Android and iOS copies must change with it.
-    expect(canonicalHash('data/needles.json')).toBe(CANONICAL_NEEDLES_SHA256);
-  });
-
+describe('needles ordering integrity', () => {
   it('has not been sorted — arrays are in taper order, not numeric order', () => {
     // A Number Set round-trip returns values in set order. The single loudest
     // symptom is that arrays come back sorted. Real taper data is not.
@@ -96,11 +59,7 @@ describe('needles.json ordering integrity', () => {
 // ---------------------------------------------------------------------------
 // Shape invariants
 // ---------------------------------------------------------------------------
-describe('needles.json shape', () => {
-  it(`contains exactly ${EXPECTED_NEEDLE_COUNT} needles`, () => {
-    expect(needles).toHaveLength(EXPECTED_NEEDLE_COUNT);
-  });
-
+describe('needles shape', () => {
   it(`gives every needle exactly ${STATIONS_PER_NEEDLE} stations`, () => {
     const wrongLength = needles
       .filter((n) => n.data.length !== STATIONS_PER_NEEDLE)
@@ -129,16 +88,16 @@ describe('needles.json shape', () => {
 // ---------------------------------------------------------------------------
 // Starter set consistency
 // ---------------------------------------------------------------------------
-describe('default-needles.json', () => {
+describe('default_needles', () => {
   it('references needles that exist in the canonical set', () => {
     const canonical = new Map(needles.map((n) => [n.name, n]));
-    const missing = (DefaultNeedles as NeedleRecord[]).filter((n) => !canonical.has(n.name)).map((n) => n.name);
+    const missing = defaultNeedles.filter((n) => !canonical.has(n.name)).map((n) => n.name);
     expect(missing).toEqual([]);
   });
 
   it('carries data identical to the canonical record, in order', () => {
     const canonical = new Map(needles.map((n) => [n.name, n]));
-    for (const starter of DefaultNeedles as NeedleRecord[]) {
+    for (const starter of defaultNeedles) {
       expect(starter.data).toEqual(canonical.get(starter.name)?.data);
     }
   });

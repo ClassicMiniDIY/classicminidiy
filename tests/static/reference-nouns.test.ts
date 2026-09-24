@@ -1,12 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { REFERENCE_NOUNS } from '~~/data/models/referenceNouns';
-import torqueSpecs from '~~/data/torqueSpecs.json';
-import commonClearances from '~~/data/commonClearances.json';
+import { getReferenceDataset } from '~~/server/utils/referenceData';
+
+// Published reference data: the fixtures, or the live snapshot under
+// REFERENCE_SOURCE=snapshot (`bun run test:reference-live`, run by the deploy
+// job before every deploy, so a published rename cannot ship a broken noun).
+const torqueSpecs = (await getReferenceDataset('torque_specs')).value;
+const commonClearances = (await getReferenceDataset('common_clearances')).value;
 
 /**
  * `data/models/referenceNouns.ts` maps what people type to ONE row of the
  * torque or clearance tables, and the search palette renders that row's
- * figure as a direct answer. A row name that drifts from the JSON would
+ * figure as a direct answer. A row name that drifts from the published data would
  * render a wrong number as an answer — worse than no card — so this walks
  * every entry against the live data and fails the build instead.
  */

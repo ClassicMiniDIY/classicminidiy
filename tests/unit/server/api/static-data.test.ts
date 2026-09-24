@@ -18,25 +18,25 @@ describe('server/api/clearance', () => {
     handler = mod.default;
   });
 
-  it('returns truthy data', () => {
-    const result = handler({});
+  it('returns truthy data', async () => {
+    const result = await handler({});
     expect(result).toBeTruthy();
   });
 
-  it('returns data with engineTable key', () => {
-    const result = handler({});
+  it('returns data with engineTable key', async () => {
+    const result = await handler({});
     expect(result).toHaveProperty('engineTable');
   });
 
-  it('engineTable has a title', () => {
-    const result = handler({});
+  it('engineTable has a title', async () => {
+    const result = await handler({});
     expect(result.engineTable).toHaveProperty('title');
     expect(typeof result.engineTable.title).toBe('string');
   });
 
-  it('calls setResponseHeaders with cache headers', () => {
+  it('calls setResponseHeaders with cache headers', async () => {
     const mockEvent = { id: 'test' };
-    handler(mockEvent);
+    await handler(mockEvent);
     expect(setResponseHeaders).toHaveBeenCalledWith(
       mockEvent,
       expect.objectContaining({
@@ -45,11 +45,11 @@ describe('server/api/clearance', () => {
     );
   });
 
-  it('throws createError when setResponseHeaders throws', () => {
+  it('throws createError when setResponseHeaders throws', async () => {
     vi.mocked(setResponseHeaders).mockImplementationOnce(() => {
       throw new Error('header error');
     });
-    expect(() => handler({})).toThrow();
+    await expect(handler({})).rejects.toThrow();
   });
 });
 
@@ -102,35 +102,35 @@ describe('server/api/torque', () => {
     handler = mod.default;
   });
 
-  it('returns truthy data', () => {
-    const result = handler({});
+  it('returns truthy data', async () => {
+    const result = await handler({});
     expect(result).toBeTruthy();
   });
 
-  it('returns data with engineTable key', () => {
-    const result = handler({});
+  it('returns data with engineTable key', async () => {
+    const result = await handler({});
     expect(result).toHaveProperty('engineTable');
   });
 
-  it('engineTable has items array', () => {
-    const result = handler({});
+  it('engineTable has items array', async () => {
+    const result = await handler({});
     expect(result.engineTable).toHaveProperty('items');
     expect(Array.isArray(result.engineTable.items)).toBe(true);
   });
 
-  it('torque items have name, lbft, and nm fields', () => {
-    const result = handler({});
+  it('torque items have name, lbft, and nm fields', async () => {
+    const result = await handler({});
     const first = result.engineTable.items[0];
     expect(first).toHaveProperty('name');
     expect(first).toHaveProperty('lbft');
     expect(first).toHaveProperty('nm');
   });
 
-  it('throws createError when setResponseHeaders throws', () => {
+  it('throws createError when setResponseHeaders throws', async () => {
     vi.mocked(setResponseHeaders).mockImplementationOnce(() => {
       throw new Error('header error');
     });
-    expect(() => handler({})).toThrow();
+    await expect(handler({})).rejects.toThrow();
   });
 });
 

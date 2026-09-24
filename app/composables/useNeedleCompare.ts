@@ -10,7 +10,8 @@ import type { Needle } from '../../data/models/needles';
  * (no Vue reactivity) so the same logic can be ported 1:1 to the native iOS
  * (Swift) and Android (Kotlin) Classic Mini Toolbox apps.
  *
- * Data model recap (see `data/models/needles.ts` and `data/needles.json`):
+ * Data model recap (see `data/models/needles.ts`; the needles are the `needles`
+ * reference dataset, served by /api/needles/list):
  *   - Each needle has `data: number[]` — a profile of needle *diameter in mm*
  *     at fixed stations (positions) along the needle. 13–16 stations total.
  *   - A value of `0` at a station means the needle simply doesn't extend that
@@ -270,11 +271,7 @@ function meanAbs(values: (number | null)[]): number {
  *       * candidate must be uniformly in that direction across bands,
  *       * score = -mean |richness| across bands (biggest mover wins).
  */
-export function findRelativeNeedles(
-  reference: Needle,
-  pool: Needle[],
-  options: FindRelativeOptions
-): RankedNeedle[] {
+export function findRelativeNeedles(reference: Needle, pool: Needle[], options: FindRelativeOptions): RankedNeedle[] {
   const {
     band,
     direction,

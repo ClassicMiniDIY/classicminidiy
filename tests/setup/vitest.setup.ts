@@ -15,6 +15,12 @@ import {
 
 const isBrowserEnv = typeof window !== 'undefined';
 
+// ===== Reference data =====
+// Every test reads reference data (needles, torque, clearances) from the
+// committed fixtures through a stand-in loader; nothing reaches Supabase or KV.
+// tests/unit/server/utils/referenceData.test.ts unmocks the real loader.
+vi.mock('~~/server/utils/referenceData', () => import('~~/tests/fixtures/reference/fixtureLoader'));
+
 // ===== Nuxt auto-imports =====
 (global as any).navigateTo = vi.fn();
 

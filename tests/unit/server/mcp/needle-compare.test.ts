@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import needlesData from '~/data/needles.json';
+import { getReferenceDataset } from '~~/server/utils/referenceData';
+
+const needlesData = (await getReferenceDataset('needles')).value;
 import { compareNeedles } from '~/app/composables/useNeedleCompare';
 
 const { mockJsonResult, mockErrorResult } = vi.hoisted(() => {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import needlesData from '../../../data/needles.json';
+import { getReferenceDataset } from '../../utils/referenceData';
 import {
   bandAverages,
   compareNeedles,
@@ -22,12 +22,10 @@ import type { Needle } from '../../../data/models/needles';
  * raw diameter, because area is what actually meters fuel.
  */
 
-const needles = needlesData as Needle[];
-
 const BAND_DESCRIPTION =
   'Throttle band: "low" = stations 1-4 (idle and light throttle), "mid" = stations 5-9 (cruise and part throttle), "high" = stations 10-15 (full throttle), "any" = across all three.';
 
-function findNeedle(name: string): Needle | undefined {
+function findNeedle(needles: readonly Needle[], name: string): Needle | undefined {
   const needle = name.trim().toLowerCase();
   return (
     needles.find((n) => n.name.toLowerCase() === needle) ??
@@ -95,7 +93,8 @@ export default defineMcpTool({
   },
 
   async handler({ mode, needle, against, direction, band, sameSizeOnly, isolateBand, limit }) {
-    const reference = findNeedle(needle);
+    const needles = (await getReferenceDataset<Needle[]>('needles')).value;
+    const reference = findNeedle(needles, needle);
     if (!reference) {
       return errorResult(
         `Unknown needle "${needle}". Names are short SU codes such as AAA, ABB, BQ or M. ${needles.length} needles are available.`
@@ -117,7 +116,7 @@ export default defineMcpTool({
       if (!against) {
         return errorResult('mode="compare" requires `against` — the second needle name to compare with.');
       }
-      const candidate = findNeedle(against);
+      const candidate = findNeedle(needles, against);
       if (!candidate) {
         return errorResult(`Unknown needle "${against}". Names are short SU codes such as AAA, ABB, BQ or M.`);
       }

@@ -1,4 +1,5 @@
 import { torqueFaqs, clearanceFaqs, engineCodeFaqs, chassisFaqs, type Faq } from '../../app/utils/geo/generateFaqs';
+import { getReferenceDataset } from '../utils/referenceData';
 
 /**
  * Pushes the generated technical Q&A into /llms-full.txt (nuxt-llms calls the
@@ -17,12 +18,17 @@ function renderSection(title: string, faqs: Faq[]): string {
 }
 
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook('llms:generate:full', (_event: unknown, _llms: unknown, contents: string[]) => {
+  // nuxt-llms awaits this hook (llms-full.txt.get.js), so it may load data.
+  nitroApp.hooks.hook('llms:generate:full', async (_event: unknown, _llms: unknown, contents: string[]) => {
+    const [torque, clearance] = await Promise.all([
+      getReferenceDataset('torque_specs'),
+      getReferenceDataset('common_clearances'),
+    ]);
     const doc = [
       '# Classic Mini DIY — Technical Reference Q&A',
       'Answer-first reference for the Classic Mini A-series (1959–2000), generated from the Classic Mini DIY toolbox data.',
-      renderSection('Torque specifications', torqueFaqs()),
-      renderSection('Clearances and endfloats', clearanceFaqs()),
+      renderSection('Torque specifications', torqueFaqs(torque.value)),
+      renderSection('Clearances and endfloats', clearanceFaqs(clearance.value)),
       renderSection('Engine codes', engineCodeFaqs()),
       renderSection('Chassis / VIN number decoding', chassisFaqs()),
     ]

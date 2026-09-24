@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { torqueFaqs, clearanceFaqs, engineCodeFaqs, chassisFaqs } from '~/app/utils/geo/generateFaqs';
+import { getReferenceDataset } from '~~/server/utils/referenceData';
+
+// Published reference data, from the fixtures (tests/setup mocks the loader).
+const torqueSpecs = (await getReferenceDataset('torque_specs')).value;
+const commonClearances = (await getReferenceDataset('common_clearances')).value;
 
 describe('torqueFaqs', () => {
-  const faqs = torqueFaqs();
+  const faqs = torqueFaqs(torqueSpecs);
   it('produces FAQs from real torque data', () => {
     expect(faqs.length).toBeGreaterThan(3);
   });
@@ -19,7 +24,7 @@ describe('torqueFaqs', () => {
 });
 
 describe('clearanceFaqs', () => {
-  const faqs = clearanceFaqs();
+  const faqs = clearanceFaqs(commonClearances);
   it('produces FAQs from real clearance data', () => {
     expect(faqs.length).toBeGreaterThan(2);
   });

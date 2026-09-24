@@ -73,6 +73,9 @@ export default defineConfig({
       // app subtrees explicitly first so source files that import `~/utils/*`,
       // `~/composables/*`, etc. resolve to `app/` as they do at runtime. More
       // specific keys are matched before the bare `~` fallback.
+      // Build-time virtual module (nitro.virtual in nuxt.config.ts); tests read
+      // the fixtures, or .reference-snapshot/ with REFERENCE_SOURCE=snapshot.
+      '#reference-snapshot': fileURLToPath(new URL('./tests/fixtures/reference/snapshot.ts', import.meta.url)),
       '~/utils': fileURLToPath(new URL('./app/utils', import.meta.url)),
       '~/composables': fileURLToPath(new URL('./app/composables', import.meta.url)),
       '~': fileURLToPath(new URL('./', import.meta.url)),

@@ -4,8 +4,7 @@ import type { DirectAnswer, SearchIntent } from '../../shared/utils/searchIntent
 import { REFERENCE_NOUNS, type ReferenceNoun } from '../../data/models/referenceNouns';
 import { chassisRanges } from '../../data/models/decoders';
 import engineCodes from '../../data/engineCodes.json';
-import torqueSpecs from '../../data/torqueSpecs.json';
-import commonClearances from '../../data/commonClearances.json';
+import { getReferenceDataset } from './referenceData';
 import { validateChassisNumber } from './chassisDecode';
 import { findVisiblePart, type VisiblePartSources } from './partsSearch';
 
@@ -162,11 +161,16 @@ interface ReferenceRow {
   mm?: string;
 }
 type ReferenceTable = Record<string, { title?: string; items?: ReferenceRow[] }>;
+export type ReferenceTables = Record<ReferenceNoun['table'], ReferenceTable>;
 
-const REFERENCE_TABLES: Record<ReferenceNoun['table'], ReferenceTable> = {
-  torque: torqueSpecs as ReferenceTable,
-  clearance: commonClearances as ReferenceTable,
-};
+/** The two tables reference nouns point into, from the reference-data loader. */
+export async function loadReferenceTables(): Promise<ReferenceTables> {
+  const [torque, clearance] = await Promise.all([
+    getReferenceDataset<ReferenceTable>('torque_specs'),
+    getReferenceDataset<ReferenceTable>('common_clearances'),
+  ]);
+  return { torque: torque.value, clearance: clearance.value };
+}
 
 /**
  * Whole-word containment: every word of the term appears in the query as a
@@ -193,10 +197,11 @@ const TABLE_HINTS: Record<ReferenceNoun['table'], string[]> = {
  * A torque or clearance figure for a short lookup.
  *
  * The longest matching term wins, so "flywheel housing" beats "flywheel"
- * when both appear. The row is looked up by exact name; the static test
- * guarantees it exists, so a miss here is a data edit that skipped the test.
+ * when both appear. The row is looked up by exact name; the reference-live
+ * check in the deploy job asserts every noun resolves against the published
+ * data, so a miss here is a publish that has not been deployed against yet.
  */
-export function resolveReferenceNoun(query: string): DirectAnswer | null {
+export function resolveReferenceNoun(query: string, tables: ReferenceTables): DirectAnswer | null {
   const words = query
     .toLowerCase()
     .split(/[^a-z0-9/-]+/)
@@ -217,7 +222,7 @@ export function resolveReferenceNoun(query: string): DirectAnswer | null {
   if (TABLE_HINTS[otherTable].some((hint) => queryWords.has(hint))) return null;
 
   const { noun } = best;
-  const section = REFERENCE_TABLES[noun.table][noun.section];
+  const section = tables[noun.table][noun.section];
   const row = section?.items?.find((item) => item.name === noun.item);
   if (!row) {
     console.error(`[search] reference noun "${noun.item}" has no row in ${noun.table}/${noun.section}`);
@@ -281,7 +286,7 @@ export async function resolveDirectAnswers(
         break;
       case 'lookup':
       case 'question':
-        answers.push(resolveReferenceNoun(query));
+        answers.push(resolveReferenceNoun(query, await loadReferenceTables()));
         break;
     }
   } catch (error: any) {

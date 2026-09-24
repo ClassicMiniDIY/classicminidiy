@@ -4,6 +4,7 @@ export async function requireAdminAuth(event: any) {
   // Try to get the access token from the Authorization header
   const authHeader = getHeader(event, 'authorization');
   let accessToken: string | undefined;
+  let tokenSource: 'header' | 'cookie' = 'header';
 
   if (authHeader?.startsWith('Bearer ')) {
     accessToken = authHeader.slice(7);
@@ -28,6 +29,7 @@ export async function requireAdminAuth(event: any) {
       try {
         const decoded = JSON.parse(decodeURIComponent(cookies[authCookieKey]));
         accessToken = decoded?.access_token || decoded?.[0];
+        tokenSource = 'cookie';
       } catch {
         // Not valid JSON, skip
       }
@@ -68,7 +70,10 @@ export async function requireAdminAuth(event: any) {
     });
   }
 
-  return { user, profile };
+  // accessToken and its source let a route forward the admin's OWN token to an
+  // Edge Function that checks is_admin itself (reference-data publish), and
+  // refuse the cookie path there (CSRF is then impossible by construction).
+  return { user, profile, accessToken, tokenSource };
 }
 
 export async function isAdminAuthenticated(event: any): Promise<boolean> {
