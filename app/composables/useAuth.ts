@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js';
-import { removeBrowserPushSubscription, unsubscribeBrowserPush } from '~/utils/pushSubscription';
+import { reconcileBrowserPush, removeBrowserPushSubscription, unsubscribeBrowserPush } from '~/utils/pushSubscription';
 
 interface UserProfile {
   is_admin: boolean;
@@ -153,14 +153,20 @@ export const useAuth = () => {
           setTimeout(() => {
             fetchUserProfile(session.user.id).then(() => syncPostHogIdentity(session.user.id));
           }, 0);
+          // A browser keeps its push endpoint across sign-ins: drop one this
+          // user does not own (a previous user's). Deferred like the profile
+          // fetch because it queries Supabase.
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+            setTimeout(() => void reconcileBrowserPush(supabase), 0);
+          }
         } else {
           userProfile.value = null;
           // Signed out — clear identity so the next session isn't merged in.
           resetIdentity();
-          // Covers a session that ended without signOut() (expired refresh
-          // token, sign-out in another tab): the row can no longer be deleted,
-          // but a dead endpoint stops delivery. After signOut() this is a no-op.
-          if (event === 'SIGNED_OUT') void unsubscribeBrowserPush();
+          // No session means any push subscription here is orphaned: the
+          // session ended without signOut() (expired or revoked token, another
+          // tab, or while no tab was open). After signOut() this is a no-op.
+          void unsubscribeBrowserPush();
         }
       });
 

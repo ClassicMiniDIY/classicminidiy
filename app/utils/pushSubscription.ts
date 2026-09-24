@@ -101,11 +101,14 @@ export async function removeBrowserPushSubscription(
 
 /**
  * Unsubscribe this browser from Web Push without touching the database. For
- * the SIGNED_OUT auth event, which also fires when the session is already gone
- * (an expired refresh token, a sign-out in another tab), so RLS would refuse a
- * row delete. A dead endpoint is enough: the push service stops delivery,
+ * any auth event that arrives without a session. subscribe() needs a signed-in
+ * user, so a subscription with no session behind it belongs to a session that
+ * ended without signOut() (an expired or revoked refresh token, a sign-out in
+ * another tab, or one that died while no tab was open). RLS would refuse a row
+ * delete by then. A dead endpoint is enough: the push service stops delivery,
  * process-notifications prunes the row on the 410, and the next subscribe()
- * gets a fresh endpoint. Never throws.
+ * gets a fresh endpoint. Trade-off: after an involuntary sign-out the user has
+ * to turn push on again. Never throws.
  */
 export async function unsubscribeBrowserPush(): Promise<void> {
   if (!import.meta.client) return;
@@ -116,6 +119,53 @@ export async function unsubscribeBrowserPush(): Promise<void> {
     const sub = await registration?.pushManager.getSubscription();
     await sub?.unsubscribe();
   } catch (e) {
-    console.warn('Push unsubscribe on SIGNED_OUT failed:', e);
+    console.warn('Push unsubscribe without a session failed:', e);
+  }
+}
+
+/**
+ * Unsubscribe `sub` when the signed-in user does not own its row. A browser
+ * keeps its endpoint across sign-ins, so a subscription the current user has
+ * no row for was made by a previous user of this browser, and that user's
+ * notifications may still reach it. It is dropped, never claimed: claiming
+ * would turn push on for the new user without their consent.
+ *
+ * Returns true when the subscription was dropped. When ownership cannot be
+ * read (a network or query error) the subscription is left alone.
+ */
+export async function dropUnownedPushSubscription(
+  supabase: SupabaseClient<Database>,
+  sub: PushSubscription
+): Promise<boolean> {
+  // RLS returns only the caller's own rows, so "no row" means "not mine".
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .select('id')
+    .eq('endpoint', sub.endpoint)
+    .maybeSingle();
+  if (error || data) return false;
+
+  try {
+    await sub.unsubscribe();
+  } catch (e) {
+    console.warn('Unsubscribing a push subscription this user does not own failed:', e);
+  }
+  return true;
+}
+
+/**
+ * Session-start check for the auth listener: drop this browser's push
+ * subscription when the signed-in user does not own it. Never throws.
+ */
+export async function reconcileBrowserPush(supabase: SupabaseClient<Database>): Promise<void> {
+  if (!import.meta.client) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const sub = await registration?.pushManager.getSubscription();
+    if (sub) await dropUnownedPushSubscription(supabase, sub);
+  } catch (e) {
+    console.warn('Push ownership check failed:', e);
   }
 }
