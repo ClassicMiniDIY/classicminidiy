@@ -437,6 +437,24 @@ describe('useAuth', () => {
         await done;
         expect(mockSupabase.auth.signOut).toHaveBeenCalled();
       });
+
+      it('does not touch the push row or endpoint when a stalled cleanup resumes after the timeout', async () => {
+        // A late cleanup would run under the NEXT user's session on the shared
+        // client and could delete their freshly upserted row for this endpoint.
+        let resumeRegistration!: (value: unknown) => void;
+        getRegistration.mockReturnValue(new Promise((resolve) => (resumeRegistration = resolve)));
+
+        const { useAuth } = await import('~/app/composables/useAuth');
+        const done = useAuth().signOut();
+        await vi.advanceTimersByTimeAsync(3000);
+        await done;
+
+        resumeRegistration({ pushManager: { getSubscription: vi.fn().mockResolvedValue(mockPushSub) } });
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
+        expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+      });
     });
 
     it('throws when supabase signOut returns an error', async () => {
