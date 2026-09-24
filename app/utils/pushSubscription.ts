@@ -98,3 +98,24 @@ export async function removeBrowserPushSubscription(
     clearTimeout(timer);
   }
 }
+
+/**
+ * Unsubscribe this browser from Web Push without touching the database. For
+ * the SIGNED_OUT auth event, which also fires when the session is already gone
+ * (an expired refresh token, a sign-out in another tab), so RLS would refuse a
+ * row delete. A dead endpoint is enough: the push service stops delivery,
+ * process-notifications prunes the row on the 410, and the next subscribe()
+ * gets a fresh endpoint. Never throws.
+ */
+export async function unsubscribeBrowserPush(): Promise<void> {
+  if (!import.meta.client) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const sub = await registration?.pushManager.getSubscription();
+    await sub?.unsubscribe();
+  } catch (e) {
+    console.warn('Push unsubscribe on SIGNED_OUT failed:', e);
+  }
+}

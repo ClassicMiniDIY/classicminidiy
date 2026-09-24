@@ -6144,6 +6144,10 @@ export type Database = {
         Args: { p_source_id: string; p_ttl_seconds?: number };
         Returns: string;
       };
+      claim_push_subscription: {
+        Args: { p_endpoint: string; p_keys: Json; p_user_agent?: string };
+        Returns: undefined;
+      };
       claim_registry_entry: {
         Args: { p_entry_id: string };
         Returns: {

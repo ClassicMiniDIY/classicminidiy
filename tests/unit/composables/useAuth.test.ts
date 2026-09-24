@@ -438,6 +438,43 @@ describe('useAuth', () => {
         expect(mockSupabase.auth.signOut).toHaveBeenCalled();
       });
 
+      const captureAuthChange = () => {
+        let callback: ((event: string, session: unknown) => void) | null = null;
+        mockSupabase.auth.onAuthStateChange.mockImplementation((cb: any) => {
+          callback = cb;
+          return { data: { subscription: { unsubscribe: vi.fn() } } };
+        });
+        return () => callback!;
+      };
+
+      it('unsubscribes the browser on SIGNED_OUT without a DB call (session already gone)', async () => {
+        const getCallback = captureAuthChange();
+        const { useAuth } = await import('~/app/composables/useAuth');
+        await useAuth().initAuth();
+        mockSupabase.from.mockClear();
+
+        getCallback()('SIGNED_OUT', null);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(mockPushSub.unsubscribe).toHaveBeenCalled();
+        // RLS would refuse a delete without the owner's session; the dead
+        // endpoint is pruned by process-notifications on its 410 instead.
+        expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
+      });
+
+      it('leaves push alone for a session-less event other than SIGNED_OUT', async () => {
+        mockSupabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
+        const getCallback = captureAuthChange();
+        const { useAuth } = await import('~/app/composables/useAuth');
+        await useAuth().initAuth();
+
+        getCallback()('INITIAL_SESSION', null);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(getRegistration).not.toHaveBeenCalled();
+        expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+      });
+
       it('does not touch the push row or endpoint when a stalled cleanup resumes after the timeout', async () => {
         // A late cleanup would run under the NEXT user's session on the shared
         // client and could delete their freshly upserted row for this endpoint.

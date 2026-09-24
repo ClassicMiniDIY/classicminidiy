@@ -117,18 +117,16 @@ export function usePushNotifications() {
       // Extract subscription data for storage
       const subJson = pushSub.toJSON();
 
-      // Upsert subscription into database
-      const { error: upsertError } = await supabase.from('push_subscriptions').upsert(
-        {
-          user_id: user.value.id,
-          endpoint: pushSub.endpoint,
-          keys: subJson.keys as Record<string, string>,
-          user_agent: navigator.userAgent,
-        },
-        { onConflict: 'endpoint' }
-      );
+      // Save the subscription for the signed-in user. A browser keeps its
+      // endpoint across sign-ins, so this RPC takes the row over from any
+      // previous owner; a direct upsert on another user's endpoint fails RLS.
+      const { error: claimError } = await supabase.rpc('claim_push_subscription', {
+        p_endpoint: pushSub.endpoint,
+        p_keys: subJson.keys as Record<string, string>,
+        p_user_agent: navigator.userAgent,
+      });
 
-      if (upsertError) throw upsertError;
+      if (claimError) throw claimError;
 
       subscription.value = pushSub;
 

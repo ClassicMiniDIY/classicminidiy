@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js';
-import { removeBrowserPushSubscription } from '~/utils/pushSubscription';
+import { removeBrowserPushSubscription, unsubscribeBrowserPush } from '~/utils/pushSubscription';
 
 interface UserProfile {
   is_admin: boolean;
@@ -157,6 +157,10 @@ export const useAuth = () => {
           userProfile.value = null;
           // Signed out — clear identity so the next session isn't merged in.
           resetIdentity();
+          // Covers a session that ended without signOut() (expired refresh
+          // token, sign-out in another tab): the row can no longer be deleted,
+          // but a dead endpoint stops delivery. After signOut() this is a no-op.
+          if (event === 'SIGNED_OUT') void unsubscribeBrowserPush();
         }
       });
 
