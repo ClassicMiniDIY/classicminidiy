@@ -158,7 +158,12 @@ export function usePushNotifications() {
       if (subscription.value) {
         // Remove this device's row by endpoint and unsubscribe it at the push
         // service. Shared with the sign-out cleanup in useAuth.
-        await removePushSubscription(supabase, subscription.value);
+        const { deleteError, unsubscribeError } = await removePushSubscription(supabase, subscription.value);
+        // Either step alone stops delivery (no row to send to, or a dead
+        // endpoint), so the local state must not keep saying "enabled".
+        if (!deleteError || !unsubscribeError) subscription.value = null;
+        if (deleteError) throw deleteError;
+        if (unsubscribeError) throw unsubscribeError;
       } else {
         const { error: deleteError } = await supabase.from('push_subscriptions').delete().eq('user_id', user.value.id);
         if (deleteError) throw deleteError;

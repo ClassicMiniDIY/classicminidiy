@@ -289,7 +289,9 @@ describe('usePushNotifications', () => {
       const result = await subscribe();
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Not Configured', color: 'warning' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Not Configured', color: 'warning' })
+      );
       expect(Notification.requestPermission).not.toHaveBeenCalled();
       expect(mockPushManager.subscribe).not.toHaveBeenCalled();
     });
@@ -303,7 +305,9 @@ describe('usePushNotifications', () => {
       const result = await subscribe();
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Not Configured', color: 'warning' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Not Configured', color: 'warning' })
+      );
     });
 
     it('returns false and warns when permission is denied', async () => {
@@ -478,6 +482,74 @@ describe('usePushNotifications', () => {
         expect.any(Error),
         expect.objectContaining({ toastTitle: 'Failed to disable push notifications' })
       );
+    });
+
+    it('deletes the row before unsubscribing the browser', async () => {
+      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
+
+      const usePushNotifications = await importComposable();
+      const { subscribe, unsubscribe } = usePushNotifications();
+      await subscribe();
+      await unsubscribe();
+
+      expect(mockSupabase._queryBuilder.delete.mock.invocationCallOrder[0]).toBeLessThan(
+        mockPushSubscription.unsubscribe.mock.invocationCallOrder[0]
+      );
+    });
+
+    it('still unsubscribes the browser when the row delete fails, and clears local state', async () => {
+      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
+
+      const usePushNotifications = await importComposable();
+      const { subscribe, unsubscribe, subscription } = usePushNotifications();
+      await subscribe();
+
+      mockSupabase._queryBuilder.eq = vi
+        .fn()
+        .mockResolvedValue({ data: null, error: { message: 'Delete failed', code: '500' } });
+
+      const result = await unsubscribe();
+
+      expect(result).toBe(false);
+      expect(mockPushSubscription.unsubscribe).toHaveBeenCalled();
+      // The endpoint is dead, so delivery has stopped: the UI must not say "enabled".
+      expect(subscription.value).toBeNull();
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Delete failed' }),
+        expect.objectContaining({ toastTitle: 'Failed to disable push notifications' })
+      );
+    });
+
+    it('clears local state when the row is gone but the browser unsubscribe fails', async () => {
+      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
+      mockPushSubscription.unsubscribe.mockRejectedValue(new Error('Unsubscribe failed'));
+
+      const usePushNotifications = await importComposable();
+      const { subscribe, unsubscribe, subscription } = usePushNotifications();
+      await subscribe();
+
+      const result = await unsubscribe();
+
+      expect(result).toBe(false);
+      expect(subscription.value).toBeNull();
+    });
+
+    it('keeps local state when both the delete and the browser unsubscribe fail', async () => {
+      mockSupabase._queryBuilder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
+
+      const usePushNotifications = await importComposable();
+      const { subscribe, unsubscribe, subscription } = usePushNotifications();
+      await subscribe();
+
+      mockSupabase._queryBuilder.eq = vi
+        .fn()
+        .mockResolvedValue({ data: null, error: { message: 'Delete failed', code: '500' } });
+      mockPushSubscription.unsubscribe.mockRejectedValue(new Error('Unsubscribe failed'));
+
+      const result = await unsubscribe();
+
+      expect(result).toBe(false);
+      expect(subscription.value).toEqual(mockPushSubscription);
     });
   });
 
