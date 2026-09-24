@@ -29,7 +29,7 @@ beforeEach(async () => {
     location: { origin: 'https://www.classicminidiy.com' },
   };
   cacheStore = {
-    keys: vi.fn().mockResolvedValue(['workbox-precache-v2', 'images']),
+    keys: vi.fn().mockResolvedValue(['workbox-precache-v2', 'images', 'my-future-cache']),
     delete: vi.fn().mockResolvedValue(true),
   };
   vi.stubGlobal('self', scope);
@@ -61,6 +61,7 @@ describe('push service worker', () => {
     await Promise.all(event.pending);
     expect(cacheStore.delete).toHaveBeenCalledWith('workbox-precache-v2');
     expect(cacheStore.delete).toHaveBeenCalledWith('images');
+    expect(cacheStore.delete).not.toHaveBeenCalledWith('my-future-cache');
   });
 
   it('shows a notification for every push, inside waitUntil', async () => {

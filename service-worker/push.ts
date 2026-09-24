@@ -91,6 +91,14 @@ export function resolveClickUrl(raw: unknown, origin: string): string {
   }
 }
 
+/** Runtime cache names of the pre-2024-03 Workbox worker (nuxt.config.ts history). */
+const LEGACY_RUNTIME_CACHES = ['s3-assets', 'supabase-storage', 'images', 'static-resources', 'google-fonts'];
+
+/** True for a Cache Storage name the old Workbox worker created. */
+export function isLegacyWorkboxCache(name: string): boolean {
+  return name.startsWith('workbox-') || LEGACY_RUNTIME_CACHES.includes(name);
+}
+
 /** True when two URLs name the same page, ignoring the #fragment. */
 export function isSamePage(a: string, b: string): boolean {
   return a.split('#')[0] === b.split('#')[0];

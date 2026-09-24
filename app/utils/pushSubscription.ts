@@ -62,16 +62,27 @@ export async function ensurePushServiceWorker(
 }
 
 /**
+ * Endpoints this page has claimed (or is claiming). An ownership check whose
+ * read ran before the claim landed sees "no row" and must not unsubscribe one
+ * of these: that would kill the push the user just turned on. Cleared when the
+ * browser subscription is removed.
+ */
+const claimedEndpoints = new Set<string>();
+
+/**
  * Save `sub` as the signed-in user's push subscription. The RPC takes the
  * endpoint over from any previous owner; a browser keeps its endpoint across
  * sign-ins, so a direct upsert on another user's endpoint would fail RLS.
  */
 export async function claimPushSubscription(supabase: SupabaseClient<Database>, sub: PushSubscription) {
-  return supabase.rpc('claim_push_subscription', {
+  claimedEndpoints.add(sub.endpoint);
+  const result = await supabase.rpc('claim_push_subscription', {
     p_endpoint: sub.endpoint,
     p_keys: sub.toJSON().keys as Record<string, string>,
     p_user_agent: navigator.userAgent,
   });
+  if (result.error) claimedEndpoints.delete(sub.endpoint);
+  return result;
 }
 
 export interface PushRemovalResult {
@@ -97,6 +108,7 @@ export async function removePushSubscription(
   sub: PushSubscription
 ): Promise<PushRemovalResult> {
   const { error: deleteError } = await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+  claimedEndpoints.delete(sub.endpoint);
 
   let unsubscribeError: unknown = null;
   try {
@@ -176,7 +188,10 @@ export async function unsubscribeBrowserPush(isStillSignedOut: () => boolean = (
     const sub = await getBrowserPushSubscription();
     // A lookup that stalled until someone signed in again must not kill the
     // subscription that user may have just claimed.
-    if (sub && isStillSignedOut()) await sub.unsubscribe();
+    if (sub && isStillSignedOut()) {
+      claimedEndpoints.delete(sub.endpoint);
+      await sub.unsubscribe();
+    }
   } catch (e) {
     console.warn('Push unsubscribe without a session failed:', e);
   }
@@ -203,6 +218,8 @@ export async function dropUnownedPushSubscription(
     .eq('endpoint', sub.endpoint)
     .maybeSingle();
   if (error || data) return false;
+  // Claimed by this page after the read was sent: it is ours now.
+  if (claimedEndpoints.has(sub.endpoint)) return false;
 
   try {
     await sub.unsubscribe();

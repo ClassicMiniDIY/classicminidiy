@@ -8,7 +8,7 @@
  * Registered only by `ensurePushServiceWorker()` when a user turns push on;
  * visitors who never do get no worker at all.
  */
-import { buildNotification, isSamePage, parsePushData, resolveClickUrl } from './push';
+import { buildNotification, isLegacyWorkboxCache, isSamePage, parsePushData, resolveClickUrl } from './push';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -20,9 +20,11 @@ sw.addEventListener('install', () => {
 });
 
 // Clear Cache Storage left by the old Workbox worker in browsers that never ran
-// the self-destroying one. This worker stores nothing there itself.
+// the self-destroying one. Only its cache names, so a future cache is kept.
 sw.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name)))));
+  event.waitUntil(
+    caches.keys().then((names) => Promise.all(names.filter(isLegacyWorkboxCache).map((name) => caches.delete(name))))
+  );
 });
 
 sw.addEventListener('push', (event) => {
