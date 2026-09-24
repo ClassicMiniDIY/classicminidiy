@@ -83,8 +83,10 @@ dist
 .idea
 .editorconfig
 
-# Service worker
+# Service worker: generated output only. The source is service-worker/sw.ts.
 sw.*
+!/service-worker/sw.ts
+!/tests/unit/service-worker/sw.test.ts
 
 # Mac OSX
 .DS_Store
