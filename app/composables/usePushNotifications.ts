@@ -112,6 +112,18 @@ export function usePushNotifications() {
     }
 
     try {
+      // `serviceWorker.ready` never resolves without a registration, and the
+      // caller's busy state would then never clear. Check first, and before
+      // the permission prompt: without a worker, push cannot work here.
+      if (!(await navigator.serviceWorker.getRegistration())) {
+        toast.add({
+          title: 'Not Available',
+          description: 'Push notifications are not available on this device right now.',
+          color: 'warning',
+        });
+        return false;
+      }
+
       // Request notification permission
       const result = await Notification.requestPermission();
       permission.value = result;
@@ -204,6 +216,7 @@ export function usePushNotifications() {
 
     // Methods
     checkExistingSubscription,
+    refreshPermission: readPermission,
     subscribe,
     unsubscribe,
   };

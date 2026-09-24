@@ -53,7 +53,7 @@
                   v-model="preferences.push_new_messages"
                   @change="handlePushToggle"
                   class="toggle toggle-primary"
-                  :disabled="saving || pushBusy || !isSupported"
+                  :disabled="saving || pushBusy || checkingDevice || !isSupported"
                 />
               </div>
               <!-- This device: the preference is on, but this browser receives nothing -->
@@ -224,19 +224,46 @@
   const { t } = useI18n();
 
   const { preferences, loading, saving, fetchPreferences, togglePreference, updatePreferences } = useNotifications();
-  const { isSupported, subscription, checked, permission, subscribe, unsubscribe, checkExistingSubscription } =
-    usePushNotifications();
+  const {
+    isSupported,
+    subscription,
+    checked,
+    permission,
+    subscribe,
+    unsubscribe,
+    checkExistingSubscription,
+    refreshPermission,
+  } = usePushNotifications();
 
   // The device state below exists only in the browser; gate on mount so SSR
   // and the first client render emit the same DOM.
   const hasMounted = ref(false);
   // A subscribe/unsubscribe started from this page is in progress.
   const pushBusy = ref(false);
+  // The device check is running. The push toggle waits for it: unsubscribe()
+  // needs the subscription it finds, and a subscribe() during its ownership
+  // read could be undone by it.
+  const checkingDevice = ref(true);
+
+  // The blocked hint tells the user to change site settings; re-read the
+  // permission when they come back to the tab.
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') refreshPermission();
+  };
 
   onMounted(async () => {
     hasMounted.value = true;
+    document.addEventListener('visibilitychange', onVisibilityChange);
     await fetchPreferences();
-    await checkExistingSubscription();
+    try {
+      await checkExistingSubscription();
+    } finally {
+      checkingDevice.value = false;
+    }
+  });
+
+  onBeforeUnmount(() => {
+    document.removeEventListener('visibilitychange', onVisibilityChange);
   });
 
   // The toggle is the per-user preference (all devices). This says whether THIS

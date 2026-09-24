@@ -19,6 +19,8 @@ interface PushStubOptions {
   checkFails?: boolean;
   subscribeResult?: boolean;
   subscribeGrants?: NotificationPermission;
+  /** The device check waits for this before it finishes. */
+  checkGate?: Promise<void>;
 }
 
 let prefs: ReturnType<typeof ref<any>>;
@@ -33,6 +35,7 @@ function stubPage({
   checkFails = false,
   subscribeResult = true,
   subscribeGrants = 'granted',
+  checkGate,
 }: PushStubOptions = {}) {
   prefs = ref<any>(null);
   updatePreferences = vi.fn().mockResolvedValue(true);
@@ -78,6 +81,7 @@ function stubPage({
     checked: readonly(checked),
     permission: readonly(permissionRef),
     checkExistingSubscription: vi.fn(async () => {
+      if (checkGate) await checkGate;
       if (checkFails) return;
       permissionRef.value = permission;
       subscription.value = owned ? { endpoint: 'https://push.example.com/owned' } : null;
@@ -85,6 +89,9 @@ function stubPage({
     }),
     subscribe,
     unsubscribe,
+    refreshPermission: vi.fn(() => {
+      permissionRef.value = (global as any).Notification?.permission ?? null;
+    }),
   }));
   vi.stubGlobal('pushDeviceStatus', pushDeviceStatus);
 }
@@ -111,6 +118,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  delete (global as any).Notification;
 });
 
 describe('/dashboard/notifications device push status', () => {
@@ -227,5 +235,60 @@ describe('/dashboard/notifications device push status', () => {
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(updatePreferences).toHaveBeenCalledWith({ push_new_messages: false });
     expect(wrapper.find(inactiveLine).exists()).toBe(false);
+  });
+
+  it('disables the push toggle until the device check finishes', async () => {
+    let release!: () => void;
+    stubPage({ preferenceOn: true, owned: true, checkGate: new Promise<void>((r) => (release = r)) });
+    const wrapper = await mountPage();
+
+    expect((pushToggle(wrapper).element as HTMLInputElement).disabled).toBe(true);
+
+    release();
+    await flushPromises();
+
+    expect((pushToggle(wrapper).element as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it('enables the push toggle after a failed device check', async () => {
+    stubPage({ preferenceOn: true, owned: false, checkFails: true });
+    const wrapper = await mountPage();
+
+    expect((pushToggle(wrapper).element as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it('disables the toggle and the button while the button subscribe runs', async () => {
+    stubPage({ preferenceOn: true, owned: false });
+    let release!: (v: boolean) => void;
+    subscribe.mockImplementationOnce(() => new Promise<boolean>((r) => (release = r)));
+    const wrapper = await mountPage();
+
+    await wrapper.find(`${inactiveLine} button`).trigger('click');
+    await flushPromises();
+
+    expect((pushToggle(wrapper).element as HTMLInputElement).disabled).toBe(true);
+    // Busy hides the line (unknown state), so the button cannot be clicked twice.
+    expect(wrapper.find(inactiveLine).exists()).toBe(false);
+
+    release(false);
+    await flushPromises();
+
+    expect((pushToggle(wrapper).element as HTMLInputElement).disabled).toBe(false);
+    expect(wrapper.find(inactiveLine).exists()).toBe(true);
+  });
+
+  it('re-reads the permission when the tab becomes visible again', async () => {
+    stubPage({ preferenceOn: true, owned: false, permission: 'denied' });
+    const wrapper = await mountPage();
+    expect(wrapper.find(blockedLine).exists()).toBe(true);
+
+    // The user allows notifications in site settings and comes back.
+    (global as any).Notification = { permission: 'default' };
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+
+    expect(wrapper.find(blockedLine).exists()).toBe(false);
+    expect(wrapper.find(inactiveLine).exists()).toBe(true);
+    wrapper.unmount();
   });
 });
