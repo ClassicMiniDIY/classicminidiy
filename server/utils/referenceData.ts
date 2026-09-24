@@ -63,7 +63,8 @@ interface MemoEntry {
 
 const memo = new Map<ReferenceKey, MemoEntry>();
 const inflight = new Map<ReferenceKey, Promise<ReferenceDataset>>();
-const parsedBySha = new Map<string, unknown>();
+/** Bumped by invalidate: a refresh that started before it must not write the memo. */
+const generation = new Map<ReferenceKey, number>();
 
 const manifestKey = (key: ReferenceKey) => `reference:manifest:${key}`;
 const payloadKey = (key: ReferenceKey, schemaVersion: number, version: number) =>
@@ -91,11 +92,10 @@ function build(
   text: string,
   source: ReferenceDataset['source']
 ): ReferenceDataset {
-  let value = parsedBySha.get(m.sha256);
-  if (value === undefined) {
-    value = JSON.parse(text);
-    parsedBySha.set(m.sha256, value);
-  }
+  // Reuse the memo's parsed value when the bytes are the same: one parsed copy
+  // per dataset, never a growing map of every version seen.
+  const cached = memo.get(key)?.dataset;
+  const value = cached && cached.sha256 === m.sha256 ? cached.value : JSON.parse(text);
   return { key, version: m.version, schemaVersion: m.schemaVersion, sha256: m.sha256, text, value, source };
 }
 
@@ -140,7 +140,7 @@ async function rpc(key: ReferenceKey, knownSha: string | null) {
   return row as typeof row & { payload: string | null };
 }
 
-async function refresh(key: ReferenceKey): Promise<ReferenceDataset> {
+async function refresh(key: ReferenceKey, startedAt: number): Promise<ReferenceDataset> {
   const cached = memo.get(key)?.dataset;
   const kvManifest = await readKvManifest(key);
 
@@ -172,10 +172,22 @@ async function refresh(key: ReferenceKey): Promise<ReferenceDataset> {
     throw new Error(`get_reference_dataset(${key}): payload does not match sha256 ${m.sha256}`);
   }
 
-  // Payload before manifest: a reader that sees the manifest finds the bytes.
   const storage = useStorage('cache');
-  await kvSet(() => storage.setItemRaw(payloadKey(key, m.schemaVersion, m.version), text));
-  await kvSet(() => storage.setItem(manifestKey(key), { ...m, fetchedAt: Date.now() } satisfies Manifest));
+  // The payload key is immutable: write it only when these bytes came from the
+  // RPC. An "unchanged" answer means KV (or the memo) already holds them.
+  // Payload before manifest, so a reader that sees the manifest finds the bytes.
+  if (row.payload !== null) {
+    await kvSet(() => storage.setItemRaw(payloadKey(key, m.schemaVersion, m.version), text));
+  }
+  // The manifest only needs a write when it moved on or went stale; every
+  // isolate rewriting it on every refresh just contends for one key (1 write/s).
+  // Skipped if a publish invalidated this key since the refresh began: the
+  // bytes read before it must not look freshly checked to other isolates.
+  const now = Date.now();
+  const invalidated = (generation.get(key) ?? 0) !== startedAt;
+  if (!invalidated && (!kvManifest || kvManifest.sha256 !== m.sha256 || now - kvManifest.fetchedAt >= TTL_MS)) {
+    await kvSet(() => storage.setItem(manifestKey(key), { ...m, fetchedAt: now } satisfies Manifest));
+  }
   return build(key, m, text, row.payload !== null ? 'rpc' : cached?.sha256 === m.sha256 ? 'memo' : 'kv');
 }
 
@@ -209,10 +221,13 @@ export async function getReferenceDataset<T = unknown>(key: ReferenceKey): Promi
   const running = inflight.get(key);
   if (running) return (await running) as ReferenceDataset<T>;
 
-  const pending = refresh(key)
+  const startedAt = generation.get(key) ?? 0;
+  const pending = refresh(key, startedAt)
     .catch((err) => stale(key, err))
     .then((dataset) => {
-      memo.set(key, { dataset, checkedAt: Date.now() });
+      // An invalidate (a publish) since this started: serve the result to this
+      // caller, but do not cache pre-publish data as fresh.
+      if ((generation.get(key) ?? 0) === startedAt) memo.set(key, { dataset, checkedAt: Date.now() });
       return dataset;
     })
     .finally(() => {
@@ -229,6 +244,7 @@ export async function getReferenceDataset<T = unknown>(key: ReferenceKey): Promi
  */
 export async function invalidateReferenceDatasets(keys: readonly ReferenceKey[]): Promise<void> {
   for (const key of keys) {
+    generation.set(key, (generation.get(key) ?? 0) + 1);
     const entry = memo.get(key);
     if (entry) memo.set(key, { ...entry, checkedAt: 0 });
     inflight.delete(key);
@@ -239,8 +255,9 @@ export async function invalidateReferenceDatasets(keys: readonly ReferenceKey[])
 
 /**
  * Cache headers for a route that serves reference data. A publish reaches the
- * web in at most ~10 minutes: 5 for the loader's TTL, 5 for this max-age
- * (design §7); stale-while-revalidate keeps the edge answering meanwhile.
+ * API in at most ~10 minutes: 5 for the loader's TTL, 5 for this max-age
+ * (design §7); the pages render per request, so they follow the loader's 5.
+ * stale-while-revalidate keeps the edge answering meanwhile.
  * No ETag: every route reshapes the data (withUnits, the needles wrapper), so
  * the dataset hash is not a validator for the response body.
  */
@@ -253,5 +270,5 @@ export function setReferenceCacheHeaders(event: Parameters<typeof setResponseHea
 export function resetReferenceDataCache(): void {
   memo.clear();
   inflight.clear();
-  parsedBySha.clear();
+  generation.clear();
 }

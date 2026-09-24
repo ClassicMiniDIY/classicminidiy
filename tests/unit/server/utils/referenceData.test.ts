@@ -136,6 +136,22 @@ describe('getReferenceDataset', () => {
     expect([d.version, d.text]).toEqual([2, TEXT2]);
   });
 
+  it('does not rewrite the immutable payload key when the RPC says "unchanged"', async () => {
+    storage.raw.set('reference:payload:needles:1:1', TEXT);
+    await storage.setItem('reference:manifest:needles', {
+      version: 1,
+      schemaVersion: 1,
+      sha256: sha(TEXT),
+      fetchedAt: 0,
+    });
+    const setRaw = vi.spyOn(storage, 'setItemRaw');
+    rpc.mockResolvedValue(row(null));
+    await mod.getReferenceDataset('needles');
+    expect(setRaw).not.toHaveBeenCalled();
+    // The stale manifest is moved on, once.
+    expect((await storage.getItem('reference:manifest:needles')).fetchedAt).toBeGreaterThan(0);
+  });
+
   it('ignores KV write failures (429) and still serves', async () => {
     storage.failWrites = true;
     rpc.mockResolvedValue(row(TEXT));
@@ -195,6 +211,17 @@ describe('stale on error', () => {
 });
 
 describe('invalidateReferenceDatasets', () => {
+  it('a refresh that started before a publish does not cache the old data as fresh', async () => {
+    let release!: (v: unknown) => void;
+    rpc.mockImplementationOnce(() => new Promise((r) => (release = r))).mockResolvedValueOnce(row(TEXT2, 2));
+    const first = mod.getReferenceDataset('needles');
+    await Promise.resolve();
+    await mod.invalidateReferenceDatasets(['needles']);
+    release(row(TEXT));
+    expect((await first).version).toBe(1); // that caller still gets its answer
+    expect((await mod.getReferenceDataset('needles')).version).toBe(2); // but it was not memoised
+  });
+
   it('expires the memo and the KV manifest, so the next read refreshes', async () => {
     rpc.mockResolvedValueOnce(row(TEXT)).mockResolvedValueOnce(row(TEXT2, 2));
     await mod.getReferenceDataset('needles');

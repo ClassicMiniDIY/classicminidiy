@@ -615,15 +615,18 @@ export default defineNuxtConfig({
     '/archive/colors': { prerender: true },
     '/privacy': { prerender: true },
     '/technical/parts': { prerender: true },
-    // Reference-data pages are SWR, not prerendered: their data is published in
-    // Supabase and can change without a deploy. A prerendered page would bake
-    // the build's data in (payloads are inlined, payloadExtraction is off) and
-    // never pick up a publish. 300 s here + 5 min in the loader = a publish is
-    // live within ~10 minutes (.claude/rules/reference-data.md). Also in
-    // nitro.prerender.ignore below, or crawlLinks bakes them anyway.
-    '/technical/torque': { swr: 300 },
-    '/technical/needles': { swr: 300 },
-    '/technical/clearance': { swr: 300 },
+    // Reference-data pages (/technical/torque, /technical/needles,
+    // /technical/clearance) are rendered per request, NOT prerendered and NOT
+    // swr/isr: their data is published in Supabase and changes without a deploy,
+    // and the loader's 5-minute memo keeps the render cheap. They are in
+    // nitro.prerender.ignore below so crawlLinks does not bake them.
+    //
+    // Why no `swr`: nitro's extendMiddlewareWithRuleOverlaps binds a cached route
+    // to the first WILDCARD handler whose prefix is a plain string prefix of it,
+    // with no segment boundary, and `/technical/...` starts with `/t` — the
+    // PostHog proxy `server/routes/t/[...path].ts`. With `swr` all three pages
+    // were served by the PostHog proxy (hang, or PostHog's 404). Never give a
+    // route under `/t…` a cache/swr/isr rule (.claude/rules/reference-data.md).
     // Legacy calculator URLs. The pages moved to /technical/{needles,gearing} long
     // ago; these entries survived as `prerender: false` rules, which was actively
     // harmful — a routeRule counts as a known route, so @nuxtjs/sitemap emitted
@@ -982,7 +985,7 @@ export default defineNuxtConfig({
         '/archive/parts/',
         '/_ipx',
         '/cdn-cgi',
-        // SWR reference-data pages (routeRules above): never baked at build.
+        // Reference-data pages, rendered per request (routeRules above).
         '/technical/torque',
         '/technical/needles',
         '/technical/clearance',
