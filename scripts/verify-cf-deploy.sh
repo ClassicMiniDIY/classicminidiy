@@ -128,11 +128,23 @@ if [[ "$sw_ctype" == 200\ *javascript* ]]; then
 else
   bad "/sw.js is 200 JavaScript (got: ${sw_ctype:-no response})"
 fi
-sw_body=$(cf_curl -sS -m 30 "$ORIGIN/sw.js" 2>/dev/null)
-if grep -qE "addEventListener\\([\"']push" <<<"$sw_body" && ! grep -q 'registration.unregister' <<<"$sw_body"; then
+# The zone's edge cache can keep the previous /sw.js for a short time after a
+# deploy (seen 2026-09-24: cf-cache-status HIT on the old stub seconds after
+# Deploy). Browsers get that same copy, so this checks what they get: retry
+# for up to ~2 minutes before calling it a failure.
+is_push_worker() {
+  grep -qE "addEventListener\\([\"']push" <<<"$1" && ! grep -q 'registration.unregister' <<<"$1"
+}
+sw_ok=0
+for attempt in 1 2 3 4 5 6 7; do
+  sw_body=$(cf_curl -sS -m 30 "$ORIGIN/sw.js" 2>/dev/null)
+  if is_push_worker "$sw_body"; then sw_ok=1; break; fi
+  [ "$attempt" -lt 7 ] && sleep 20
+done
+if [ "$sw_ok" = 1 ]; then
   ok "/sw.js is the push worker, not the self-destroying stub"
 else
-  bad "/sw.js is the push worker, not the self-destroying stub"
+  bad "/sw.js is the push worker, not the self-destroying stub (still stale after ~2 min)"
 fi
 
 echo
