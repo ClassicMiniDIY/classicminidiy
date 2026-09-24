@@ -60,7 +60,7 @@
     (payload) => {
       if (payload !== undefined && draft.value === '') draft.value = payload;
     },
-    { immediate: true },
+    { immediate: true }
   );
 
   const dirty = computed(() => data.value?.current != null && draft.value !== data.value.current.payload);
@@ -91,7 +91,7 @@
     try {
       const res = await $adminFetch<{ ok: boolean; results: { errors: RuleError[]; warnings: RuleError[] }[] }>(
         '/api/admin/reference/validate',
-        { method: 'POST', body: request() },
+        { method: 'POST', body: request() }
       );
       errors.value = res.results.flatMap((r) => r.errors);
       warnings.value = res.results.flatMap((r) => r.warnings);
@@ -109,7 +109,7 @@
     try {
       const res = await $adminFetch<{ results: { version: number; changed: boolean }[] }>(
         '/api/admin/reference/publish',
-        { method: 'POST', body: request() },
+        { method: 'POST', body: request() }
       );
       const r = res.results[0];
       message.value = r?.changed
@@ -143,11 +143,14 @@
     busy.value = true;
     try {
       const res = await $adminFetch<{ version: VersionRow & { payload: string } }>(
-        `/api/admin/reference/${key}/${v.version}?schema=${v.schema_version}`,
+        `/api/admin/reference/${key}/${v.version}?schema=${v.schema_version}`
       );
       draft.value = res.version.payload;
       note.value = `Revert to version ${v.version}`;
-      message.value = { type: 'info', text: `Loaded version ${v.version} into the draft. Publishing it creates a new version.` };
+      message.value = {
+        type: 'info',
+        text: `Loaded version ${v.version} into the draft. Publishing it creates a new version.`,
+      };
     } catch (e) {
       message.value = { type: 'error', text: errorText(e) };
     } finally {
@@ -222,7 +225,9 @@
             <div class="card-body p-4">
               <h3 class="font-semibold">Validation</h3>
               <p v-if="validated === null" class="text-sm opacity-70">Not validated since the last edit.</p>
-              <p v-else-if="validated" class="text-sm text-success"><i class="fas fa-circle-check mr-1"></i>Every rule passes.</p>
+              <p v-else-if="validated" class="text-sm text-success">
+                <i class="fas fa-circle-check mr-1"></i>Every rule passes.
+              </p>
               <ul v-if="errors.length" class="text-sm space-y-1">
                 <li v-for="(e, i) in errors" :key="`e${i}`" class="text-error break-words">
                   <span class="font-mono">{{ e.path || '(root)' }}</span> — {{ e.message }}
@@ -246,7 +251,11 @@
                 <li v-for="(d, i) in diff" :key="i" class="break-words">
                   <span
                     class="badge badge-xs mr-1"
-                    :class="{ 'badge-success': d.kind === 'added', 'badge-error': d.kind === 'removed', 'badge-info': d.kind === 'changed' }"
+                    :class="{
+                      'badge-success': d.kind === 'added',
+                      'badge-error': d.kind === 'removed',
+                      'badge-info': d.kind === 'changed',
+                    }"
                     >{{ d.kind }}</span
                   >
                   <span class="font-mono">{{ d.path }}</span>
@@ -259,11 +268,17 @@
             <div class="card-body p-4">
               <h3 class="font-semibold">History</h3>
               <ul class="text-sm space-y-2 max-h-64 overflow-y-auto">
-                <li v-for="v in history.data.value?.versions ?? []" :key="`${v.version}-${v.schema_version}`" class="min-w-0">
+                <li
+                  v-for="v in history.data.value?.versions ?? []"
+                  :key="`${v.version}-${v.schema_version}`"
+                  class="min-w-0"
+                >
                   <div class="flex items-center gap-2">
                     <span class="font-medium">v{{ v.version }}</span>
                     <span class="opacity-60 text-xs">{{ when(v.published_at) }}</span>
-                    <button class="btn btn-ghost btn-xs ml-auto" :disabled="busy" @click="loadVersion(v)">Load into draft</button>
+                    <button class="btn btn-ghost btn-xs ml-auto" :disabled="busy" @click="loadVersion(v)">
+                      Load into draft
+                    </button>
                   </div>
                   <div class="opacity-70 break-words">{{ v.note }}</div>
                 </li>

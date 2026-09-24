@@ -5,8 +5,11 @@
  * never be an empty page).
  *
  * Reads `.reference-snapshot/` (written by scripts/pull-reference-data.mjs).
- * In CI a missing snapshot is an error: the deploy job runs the pull first.
- * Locally it falls back to the committed fixtures with a warning.
+ * With REFERENCE_SNAPSHOT_REQUIRED=true (set ONLY on the deploy build step) a
+ * missing snapshot is an error: the deploy runs the pull first. Everywhere else
+ * (local dev, and the PR route-smoke dev server, which also runs with CI=true)
+ * it falls back to the committed fixtures with a warning. Keying this on CI hung
+ * the PR smoke job's dev server on 2026-09-24.
  *
  * The texts are embedded as JSON string literals, so the runtime string is the
  * exact published text; nothing parses and re-serialises it.
@@ -19,7 +22,7 @@ import { REFERENCE_KEYS } from '../shared/referenceDataKeys.ts';
 export function buildReferenceSnapshotModule(rootDir) {
   let dir = join(rootDir, '.reference-snapshot');
   if (!existsSync(join(dir, 'manifest.json'))) {
-    if (process.env.CI === 'true') {
+    if (process.env.REFERENCE_SNAPSHOT_REQUIRED === 'true') {
       throw new Error(
         '[reference-snapshot] .reference-snapshot/ is missing; run scripts/pull-reference-data.mjs before the build'
       );

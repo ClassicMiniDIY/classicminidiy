@@ -57,7 +57,9 @@
             <td>
               <span v-if="d.source === 'derived'" class="badge badge-ghost">derived</span>
               <span v-else-if="d.publish_enabled" class="badge badge-success">on</span>
-              <span v-else class="badge badge-warning" title="Off until every app reads the data from Supabase">off</span>
+              <span v-else class="badge badge-warning" title="Off until every app reads the data from Supabase"
+                >off</span
+              >
             </td>
           </tr>
         </tbody>
