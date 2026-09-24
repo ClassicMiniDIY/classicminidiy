@@ -3,6 +3,7 @@ import {
   buildNotification,
   DEFAULT_NOTIFICATION_ICON,
   DEFAULT_NOTIFICATION_TITLE,
+  isLegacyWorkboxCache,
   isSamePage,
   parsePushData,
   resolveClickUrl,
@@ -114,5 +115,21 @@ describe('isSamePage', () => {
     expect(isSamePage('https://a.test/x#comments', 'https://a.test/x')).toBe(true);
     expect(isSamePage('https://a.test/x?p=1', 'https://a.test/x')).toBe(false);
     expect(isSamePage('https://a.test/x', 'https://a.test/y')).toBe(false);
+  });
+});
+
+describe('isLegacyWorkboxCache', () => {
+  it('matches only the old Workbox cache names', () => {
+    for (const name of [
+      'workbox-precache-v2-https://x/',
+      's3-assets',
+      'supabase-storage',
+      'images',
+      'static-resources',
+      'google-fonts',
+    ]) {
+      expect(isLegacyWorkboxCache(name)).toBe(true);
+    }
+    expect(isLegacyWorkboxCache('my-future-cache')).toBe(false);
   });
 });

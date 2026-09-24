@@ -730,6 +730,26 @@ describe('usePushNotifications', () => {
   });
 
   // =========================================================================
+  // claim vs. a concurrent ownership check
+  // =========================================================================
+  describe('claim race', () => {
+    it('never drops an endpoint this page just claimed, even when the ownership read saw no row', async () => {
+      const usePushNotifications = await importComposable();
+      const { subscribe, checkExistingSubscription, subscription } = usePushNotifications();
+
+      expect(await subscribe()).toBe(true);
+
+      // An ownership read sent before the claim landed returns no row.
+      mockPushManager.getSubscription.mockResolvedValue(mockPushSubscription);
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+      await checkExistingSubscription();
+
+      expect(mockPushSubscription.unsubscribe).not.toHaveBeenCalled();
+      expect(subscription.value).toEqual(mockPushSubscription);
+    });
+  });
+
+  // =========================================================================
   // returned interface
   // =========================================================================
   describe('returned interface', () => {

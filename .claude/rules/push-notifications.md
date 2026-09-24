@@ -24,5 +24,6 @@ Detail: `docs/invariants/push-notifications.md`. Server contract (the claim RPC,
 - Only `ensurePushServiceWorker()`, called from `subscribe()` AFTER the permission prompt, registers the worker. Nothing registers it on page load (`injectRegister: false`, `client.registerPlugin: false`), so visitors who never turn push on get no worker.
 - `pushsubscriptionchange` is not handled: the worker has no session to save a rotated endpoint with. The next visit's ownership check drops it as unowned, and the status line offers the button.
 - Click URLs open on the worker's own origin only: relative, or an http(s) URL on `SITE_HOSTS` (bare domain and www), rebuilt on the origin; anything else opens the root. The server's `SITE_URL` defaults to the bare domain, which 301s to www.
-- The worker's `activate` deletes ALL Cache Storage on every new version. Page code must not use Cache Storage while that is so.
+- The worker's `activate` deletes only the old Workbox caches (`isLegacyWorkboxCache`); other Cache Storage is kept.
+- `claimPushSubscription()` marks the endpoint claimed for the page's lifetime, and `dropUnownedPushSubscription()` never drops a marked one: an ownership read sent before the claim landed would otherwise kill the push the user just turned on.
 - `bun run dev` serves no `/sw.js`, so turning push on fails locally. Test push on a build (`bun run build && bun run start`). `scripts/verify-cf-deploy.sh` checks the live `/sw.js` after each deploy.
