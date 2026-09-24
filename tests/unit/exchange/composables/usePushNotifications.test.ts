@@ -75,7 +75,11 @@ beforeEach(() => {
   mockRegistration = { pushManager: mockPushManager };
 
   Object.defineProperty(navigator, 'serviceWorker', {
-    value: { ready: Promise.resolve(mockRegistration), register: vi.fn() },
+    value: {
+      ready: Promise.resolve(mockRegistration),
+      getRegistration: vi.fn().mockResolvedValue(mockRegistration),
+      register: vi.fn(),
+    },
     writable: true,
     configurable: true,
   });
@@ -213,12 +217,75 @@ describe('usePushNotifications', () => {
       mockPushManager.getSubscription.mockRejectedValue(new Error('SW error'));
 
       const usePushNotifications = await importComposable();
-      const { checkExistingSubscription } = usePushNotifications();
+      const { checkExistingSubscription, checked } = usePushNotifications();
 
       await checkExistingSubscription();
 
       expect(mockHandleError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ showToast: false }));
       expect(mockToast.add).not.toHaveBeenCalled();
+      // A failed check is "unknown", so the page must not claim the device is off.
+      expect(checked.value).toBe(false);
+    });
+
+    it('reads through getRegistration(), not serviceWorker.ready', async () => {
+      // `ready` never resolves when no service worker is registered; the
+      // check must still finish and report "no subscription".
+      Object.defineProperty(navigator, 'serviceWorker', {
+        value: {
+          ready: new Promise(() => {}),
+          getRegistration: vi.fn().mockResolvedValue(undefined),
+          register: vi.fn(),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const usePushNotifications = await importComposable();
+      const { checkExistingSubscription, subscription, checked } = usePushNotifications();
+
+      await checkExistingSubscription();
+
+      expect(subscription.value).toBeNull();
+      expect(checked.value).toBe(true);
+    });
+
+    it('marks the check done after an owned, a dropped, or no subscription', async () => {
+      const usePushNotifications = await importComposable();
+
+      for (const [sub, row] of [
+        [mockPushSubscription, { id: 'own-row' }],
+        [mockPushSubscription, null],
+        [null, null],
+      ] as const) {
+        mockPushManager.getSubscription.mockResolvedValue(sub);
+        mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({ data: row, error: null });
+        const { checkExistingSubscription, checked } = usePushNotifications();
+        expect(checked.value).toBe(false);
+        await checkExistingSubscription();
+        expect(checked.value).toBe(true);
+      }
+    });
+
+    it('reads Notification.permission', async () => {
+      (global as any).Notification.permission = 'denied';
+
+      const usePushNotifications = await importComposable();
+      const { checkExistingSubscription, permission } = usePushNotifications();
+
+      expect(permission.value).toBeNull();
+      await checkExistingSubscription();
+      expect(permission.value).toBe('denied');
+    });
+
+    it('leaves checked false when push is not supported', async () => {
+      delete (window as any).PushManager;
+
+      const usePushNotifications = await importComposable();
+      const { checkExistingSubscription, checked } = usePushNotifications();
+
+      await checkExistingSubscription();
+
+      expect(checked.value).toBe(false);
     });
   });
 
@@ -351,6 +418,17 @@ describe('usePushNotifications', () => {
         color: 'warning',
       });
       expect(mockPushManager.subscribe).not.toHaveBeenCalled();
+    });
+
+    it('records the permission the prompt returned', async () => {
+      (global as any).Notification.requestPermission.mockResolvedValue('denied');
+
+      const usePushNotifications = await importComposable();
+      const { subscribe, permission } = usePushNotifications();
+
+      await subscribe();
+
+      expect(permission.value).toBe('denied');
     });
 
     it('returns false silently when permission is dismissed (default)', async () => {
@@ -557,6 +635,8 @@ describe('usePushNotifications', () => {
 
       expect(result).toHaveProperty('isSupported');
       expect(result).toHaveProperty('subscription');
+      expect(result).toHaveProperty('checked');
+      expect(result).toHaveProperty('permission');
       expect(typeof result.checkExistingSubscription).toBe('function');
       expect(typeof result.subscribe).toBe('function');
       expect(typeof result.unsubscribe).toBe('function');

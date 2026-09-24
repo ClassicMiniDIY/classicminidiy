@@ -191,3 +191,38 @@ export async function reconcileBrowserPush(supabase: SupabaseClient<Database>): 
     console.warn('Push ownership check failed:', e);
   }
 }
+
+/** What the notifications page says about THIS device's push delivery. */
+export type PushDeviceStatus = 'hidden' | 'inactive' | 'blocked';
+
+export interface PushDeviceStatusInput {
+  /** The page has mounted; false during SSR and the first client render. */
+  mounted: boolean;
+  /** Web Push works in this browser. */
+  supported: boolean;
+  /** The device subscription check finished without an error. */
+  checked: boolean;
+  /** A subscribe or unsubscribe for this page is in progress. */
+  busy: boolean;
+  /** The per-user `push_new_messages` preference (all devices). */
+  preferenceOn: boolean;
+  /** This device has a push subscription the signed-in user owns. */
+  subscribed: boolean;
+  /** `Notification.permission`, or null when it could not be read. */
+  permission: NotificationPermission | null;
+}
+
+/**
+ * Whether to tell the user that THIS device receives no push although the
+ * preference is on. The preference switches push for all devices; a device
+ * receives only while it also has an owned subscription, which sign-out and the
+ * session-start ownership check can remove without touching the preference.
+ * 'inactive' offers a button to subscribe this device; 'blocked' means the
+ * browser refuses permission, so a button would do nothing. Unknown states
+ * (not mounted, check pending or failed, busy) are 'hidden', never a guess.
+ */
+export function pushDeviceStatus(input: PushDeviceStatusInput): PushDeviceStatus {
+  if (!input.mounted || !input.supported || !input.checked || input.busy) return 'hidden';
+  if (!input.preferenceOn || input.subscribed) return 'hidden';
+  return input.permission === 'denied' ? 'blocked' : 'inactive';
+}

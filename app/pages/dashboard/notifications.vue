@@ -39,21 +39,50 @@
             </div>
 
             <!-- Push notifications for new messages -->
-            <div class="flex items-center justify-between py-4">
-              <div>
-                <h3 class="font-semibold mb-1">{{ t('messages.pushNew.title') }}</h3>
-                <p class="text-sm text-base-content/70">{{ t('messages.pushNew.description') }}</p>
-                <p v-if="!isSupported" class="text-xs text-warning mt-1">
-                  {{ t('messages.pushNew.unsupported') }}
-                </p>
+            <div class="py-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-semibold mb-1">{{ t('messages.pushNew.title') }}</h3>
+                  <p class="text-sm text-base-content/70">{{ t('messages.pushNew.description') }}</p>
+                  <p v-if="!isSupported" class="text-xs text-warning mt-1">
+                    {{ t('messages.pushNew.unsupported') }}
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  v-model="preferences.push_new_messages"
+                  @change="handlePushToggle"
+                  class="toggle toggle-primary"
+                  :disabled="saving || pushBusy || !isSupported"
+                />
               </div>
-              <input
-                type="checkbox"
-                v-model="preferences.push_new_messages"
-                @change="handlePushToggle"
-                class="toggle toggle-primary"
-                :disabled="saving || !isSupported"
-              />
+              <!-- This device: the preference is on, but this browser receives nothing -->
+              <div
+                v-if="deviceStatus === 'inactive'"
+                class="flex flex-wrap items-center gap-3 mt-3 text-sm text-warning"
+                data-testid="push-device-inactive"
+              >
+                <span>
+                  <i class="fas fa-triangle-exclamation mr-1"></i>
+                  {{ t('messages.pushNew.deviceInactive') }}
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline btn-warning"
+                  :disabled="saving || pushBusy"
+                  @click="enableThisDevice"
+                >
+                  {{ t('messages.pushNew.enableDevice') }}
+                </button>
+              </div>
+              <p
+                v-else-if="deviceStatus === 'blocked'"
+                class="mt-3 text-sm text-warning"
+                data-testid="push-device-blocked"
+              >
+                <i class="fas fa-ban mr-1"></i>
+                {{ t('messages.pushNew.deviceBlocked') }}
+              </p>
             </div>
           </div>
         </div>
@@ -195,12 +224,34 @@
   const { t } = useI18n();
 
   const { preferences, loading, saving, fetchPreferences, togglePreference, updatePreferences } = useNotifications();
-  const { isSupported, subscribe, unsubscribe, checkExistingSubscription } = usePushNotifications();
+  const { isSupported, subscription, checked, permission, subscribe, unsubscribe, checkExistingSubscription } =
+    usePushNotifications();
+
+  // The device state below exists only in the browser; gate on mount so SSR
+  // and the first client render emit the same DOM.
+  const hasMounted = ref(false);
+  // A subscribe/unsubscribe started from this page is in progress.
+  const pushBusy = ref(false);
 
   onMounted(async () => {
+    hasMounted.value = true;
     await fetchPreferences();
     await checkExistingSubscription();
   });
+
+  // The toggle is the per-user preference (all devices). This says whether THIS
+  // device actually receives push. Contract: .claude/rules/push-notifications.md.
+  const deviceStatus = computed(() =>
+    pushDeviceStatus({
+      mounted: hasMounted.value,
+      supported: isSupported.value,
+      checked: checked.value,
+      busy: pushBusy.value,
+      preferenceOn: !!preferences.value?.push_new_messages,
+      subscribed: !!subscription.value,
+      permission: permission.value,
+    })
+  );
 
   // `keyof typeof preferences.value` collapses to `never`, because
   // `preferences.value` is `NotificationPreferences | null` and `keyof` over a
@@ -212,21 +263,37 @@
   const handlePushToggle = async () => {
     if (!preferences.value) return;
 
-    if (preferences.value.push_new_messages) {
-      // User just toggled ON — subscribe
-      const success = await subscribe();
-      if (!success) {
-        // Permission denied or error — revert toggle
-        preferences.value.push_new_messages = false;
-        return;
+    pushBusy.value = true;
+    try {
+      if (preferences.value.push_new_messages) {
+        // User just toggled ON — subscribe
+        const success = await subscribe();
+        if (!success) {
+          // Permission denied or error — revert toggle
+          preferences.value.push_new_messages = false;
+          return;
+        }
+      } else {
+        // User toggled OFF — unsubscribe
+        await unsubscribe();
       }
-    } else {
-      // User toggled OFF — unsubscribe
-      await unsubscribe();
-    }
 
-    // Persist the preference to DB
-    await updatePreferences({ push_new_messages: preferences.value.push_new_messages });
+      // Persist the preference to DB
+      await updatePreferences({ push_new_messages: preferences.value.push_new_messages });
+    } finally {
+      pushBusy.value = false;
+    }
+  };
+
+  // The preference is already on; subscribe only this device. An explicit user
+  // action, so claiming the endpoint is allowed. Never done automatically.
+  const enableThisDevice = async () => {
+    pushBusy.value = true;
+    try {
+      await subscribe();
+    } finally {
+      pushBusy.value = false;
+    }
   };
 
   useSeoMeta({
@@ -251,8 +318,11 @@
       },
       "pushNew": {
         "title": "Push notifications for new messages",
-        "description": "Receive browser push notifications for new messages",
-        "unsupported": "Push notifications are not supported in this browser"
+        "description": "Browser push alerts for new messages, on all your signed-in browsers",
+        "unsupported": "Push notifications are not supported in this browser",
+        "deviceInactive": "Not active on this device, so this browser receives no push alerts.",
+        "enableDevice": "Turn on for this device",
+        "deviceBlocked": "Blocked in this browser's settings. Allow notifications for this site to receive push alerts here."
       }
     },
     "listings": {
@@ -299,8 +369,11 @@
       },
       "pushNew": {
         "title": "Notificaciones push para nuevos mensajes",
-        "description": "Recibe notificaciones push del navegador para nuevos mensajes",
-        "unsupported": "Las notificaciones push no son compatibles con este navegador"
+        "description": "Alertas push del navegador para nuevos mensajes, en todos los navegadores donde hayas iniciado sesión",
+        "unsupported": "Las notificaciones push no son compatibles con este navegador",
+        "deviceInactive": "No está activo en este dispositivo, así que este navegador no recibe alertas push.",
+        "enableDevice": "Activar en este dispositivo",
+        "deviceBlocked": "Bloqueado en la configuración de este navegador. Permite las notificaciones de este sitio para recibir alertas push aquí."
       }
     },
     "listings": {
@@ -350,8 +423,11 @@
       },
       "pushNew": {
         "title": "Notifications push pour les nouveaux messages",
-        "description": "Recevez des notifications push du navigateur pour les nouveaux messages",
-        "unsupported": "Les notifications push ne sont pas prises en charge par ce navigateur"
+        "description": "Alertes push du navigateur pour les nouveaux messages, sur tous les navigateurs où vous êtes connecté",
+        "unsupported": "Les notifications push ne sont pas prises en charge par ce navigateur",
+        "deviceInactive": "Inactif sur cet appareil : ce navigateur ne reçoit aucune alerte push.",
+        "enableDevice": "Activer sur cet appareil",
+        "deviceBlocked": "Bloqué dans les paramètres de ce navigateur. Autorisez les notifications pour ce site afin de recevoir des alertes push ici."
       }
     },
     "listings": {
@@ -401,8 +477,11 @@
       },
       "pushNew": {
         "title": "Push-Benachrichtigungen für neue Nachrichten",
-        "description": "Erhalte Browser-Push-Benachrichtigungen für neue Nachrichten",
-        "unsupported": "Push-Benachrichtigungen werden in diesem Browser nicht unterstützt"
+        "description": "Browser-Push-Benachrichtigungen für neue Nachrichten, in allen Browsern, in denen du angemeldet bist",
+        "unsupported": "Push-Benachrichtigungen werden in diesem Browser nicht unterstützt",
+        "deviceInactive": "Auf diesem Gerät nicht aktiv, daher erhält dieser Browser keine Push-Benachrichtigungen.",
+        "enableDevice": "Für dieses Gerät aktivieren",
+        "deviceBlocked": "In den Einstellungen dieses Browsers blockiert. Erlaube Benachrichtigungen für diese Website, um hier Push-Benachrichtigungen zu erhalten."
       }
     },
     "listings": {
@@ -452,8 +531,11 @@
       },
       "pushNew": {
         "title": "Notifiche push per nuovi messaggi",
-        "description": "Ricevi notifiche push del browser per i nuovi messaggi",
-        "unsupported": "Le notifiche push non sono supportate in questo browser"
+        "description": "Avvisi push del browser per i nuovi messaggi, su tutti i browser in cui hai effettuato l'accesso",
+        "unsupported": "Le notifiche push non sono supportate in questo browser",
+        "deviceInactive": "Non attivo su questo dispositivo, quindi questo browser non riceve avvisi push.",
+        "enableDevice": "Attiva su questo dispositivo",
+        "deviceBlocked": "Bloccato nelle impostazioni di questo browser. Consenti le notifiche per questo sito per ricevere avvisi push qui."
       }
     },
     "listings": {
@@ -503,8 +585,11 @@
       },
       "pushNew": {
         "title": "Notificações push para novas mensagens",
-        "description": "Receba notificações push do navegador para novas mensagens",
-        "unsupported": "As notificações push não são compatíveis com este navegador"
+        "description": "Alertas push do navegador para novas mensagens, em todos os navegadores em que você está conectado",
+        "unsupported": "As notificações push não são compatíveis com este navegador",
+        "deviceInactive": "Não está ativo neste dispositivo, então este navegador não recebe alertas push.",
+        "enableDevice": "Ativar neste dispositivo",
+        "deviceBlocked": "Bloqueado nas configurações deste navegador. Permita notificações deste site para receber alertas push aqui."
       }
     },
     "listings": {
@@ -554,8 +639,11 @@
       },
       "pushNew": {
         "title": "Push-уведомления о новых сообщениях",
-        "description": "Получайте push-уведомления браузера о новых сообщениях",
-        "unsupported": "Push-уведомления не поддерживаются в этом браузере"
+        "description": "Push-уведомления браузера о новых сообщениях во всех браузерах, где вы вошли в аккаунт",
+        "unsupported": "Push-уведомления не поддерживаются в этом браузере",
+        "deviceInactive": "Не активно на этом устройстве, поэтому этот браузер не получает push-уведомления.",
+        "enableDevice": "Включить на этом устройстве",
+        "deviceBlocked": "Заблокировано в настройках этого браузера. Разрешите уведомления для этого сайта, чтобы получать push-уведомления здесь."
       }
     },
     "listings": {
@@ -602,8 +690,11 @@
       },
       "pushNew": {
         "title": "新着メッセージのプッシュ通知",
-        "description": "新着メッセージのブラウザプッシュ通知を受け取ります",
-        "unsupported": "このブラウザではプッシュ通知はサポートされていません"
+        "description": "新着メッセージのブラウザプッシュ通知（サインインしているすべてのブラウザが対象）",
+        "unsupported": "このブラウザではプッシュ通知はサポートされていません",
+        "deviceInactive": "このデバイスでは有効になっていないため、このブラウザにはプッシュ通知が届きません。",
+        "enableDevice": "このデバイスで有効にする",
+        "deviceBlocked": "このブラウザの設定でブロックされています。ここでプッシュ通知を受け取るには、このサイトの通知を許可してください。"
       }
     },
     "listings": {
@@ -647,8 +738,11 @@
       "emailNew": { "title": "新消息的邮件通知", "description": "当有人给你发送消息时收到通知" },
       "pushNew": {
         "title": "新消息的推送通知",
-        "description": "接收新消息的浏览器推送通知",
-        "unsupported": "此浏览器不支持推送通知"
+        "description": "新消息的浏览器推送通知，适用于你已登录的所有浏览器",
+        "unsupported": "此浏览器不支持推送通知",
+        "deviceInactive": "此设备上未启用，因此此浏览器不会收到推送通知。",
+        "enableDevice": "在此设备上开启",
+        "deviceBlocked": "已在此浏览器的设置中被阻止。请允许此网站的通知，以便在此处接收推送通知。"
       }
     },
     "listings": {
@@ -677,8 +771,11 @@
       "emailNew": { "title": "새 메시지 이메일 알림", "description": "누군가 메시지를 보내면 알림을 받습니다" },
       "pushNew": {
         "title": "새 메시지 푸시 알림",
-        "description": "새 메시지에 대한 브라우저 푸시 알림을 받습니다",
-        "unsupported": "이 브라우저에서는 푸시 알림이 지원되지 않습니다"
+        "description": "새 메시지에 대한 브라우저 푸시 알림을 로그인한 모든 브라우저에서 받습니다",
+        "unsupported": "이 브라우저에서는 푸시 알림이 지원되지 않습니다",
+        "deviceInactive": "이 기기에서는 활성화되어 있지 않아 이 브라우저는 푸시 알림을 받지 않습니다.",
+        "enableDevice": "이 기기에서 켜기",
+        "deviceBlocked": "이 브라우저 설정에서 차단되어 있습니다. 여기에서 푸시 알림을 받으려면 이 사이트의 알림을 허용하세요."
       }
     },
     "listings": {

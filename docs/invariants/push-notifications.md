@@ -43,9 +43,20 @@ Each layer covers a case the one before cannot.
 
 - After an involuntary sign-out (revoked or rate-limited refresh, `session_not_found`),
   push stays off on that browser until the user turns it on again. Nothing tells them.
-- The notifications toggle reflects the per-user preference, not this device, so it can
-  show ON on a device whose subscription was cleaned up. Turning it OFF then ON
-  re-subscribes the device. Turning it OFF no longer deletes other devices' rows.
+- The notifications toggle reflects the per-user preference, which the server applies
+  to every device. Turning it OFF stops push on all devices and deletes only this
+  device's row, never other devices' rows.
+
+## The device status line (2026-09-23)
+
+Before this, the toggle could show ON on a device whose subscription the cleanup layers
+above had removed, and the only recovery was OFF then ON, with nothing telling the user.
+`/dashboard/notifications` now shows a line under the toggle when the preference is ON
+and this device has no owned subscription, with a "Turn on for this device" button, or a
+"blocked in this browser's settings" hint when permission is denied. The button is the
+recovery path. It is not automatic: an automatic re-subscribe would claim an endpoint
+without the user asking, which the claim rule forbids. The user still finds out only when
+they open the page. Design: `docs/plans/2026-09-23-per-device-push-toggle.md`.
 
 ## Deploy order
 

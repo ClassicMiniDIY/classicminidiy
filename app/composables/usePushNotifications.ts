@@ -8,6 +8,7 @@
 import {
   claimPushSubscription,
   dropUnownedPushSubscription,
+  getBrowserPushSubscription,
   isWebPushSupported,
   removePushSubscription,
 } from '~/utils/pushSubscription';
@@ -37,6 +38,15 @@ export function usePushNotifications() {
 
   // Reactive state
   const subscription = ref<PushSubscription | null>(null);
+  // True once checkExistingSubscription() has read this device without an
+  // error. Until then `subscription === null` means "unknown", not "none".
+  const checked = ref(false);
+  // Notification.permission as last read; null when it cannot be read.
+  const permission = ref<NotificationPermission | null>(null);
+
+  function readPermission(): void {
+    permission.value = typeof Notification === 'undefined' ? null : Notification.permission;
+  }
 
   // Browser support detection - false on server, checks APIs on client
   const isSupported = computed(() => isWebPushSupported());
@@ -49,15 +59,18 @@ export function usePushNotifications() {
     if (!isSupported.value) return;
 
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const existingSub = await registration.pushManager.getSubscription();
+      readPermission();
+      // getRegistration(), not serviceWorker.ready: `ready` never resolves
+      // when no service worker is registered, and the page would wait forever.
+      const existingSub = await getBrowserPushSubscription();
       // A subscription left by a previous user of this browser is not "enabled"
       // for this one; drop it rather than show it as on.
       if (existingSub && user.value && (await dropUnownedPushSubscription(supabase, existingSub))) {
         subscription.value = null;
-        return;
+      } else {
+        subscription.value = existingSub;
       }
-      subscription.value = existingSub;
+      checked.value = true;
     } catch (e) {
       handleError(e, { toastTitle: 'Failed to check push subscription', showToast: false });
     }
@@ -100,9 +113,10 @@ export function usePushNotifications() {
 
     try {
       // Request notification permission
-      const permission = await Notification.requestPermission();
+      const result = await Notification.requestPermission();
+      permission.value = result;
 
-      if (permission === 'denied') {
+      if (result === 'denied') {
         toast.add({
           title: 'Notifications Blocked',
           description: 'Enable notifications in your browser settings to receive push alerts.',
@@ -111,7 +125,7 @@ export function usePushNotifications() {
         return false;
       }
 
-      if (permission !== 'granted') {
+      if (result !== 'granted') {
         return false;
       }
 
@@ -185,6 +199,8 @@ export function usePushNotifications() {
     // State
     isSupported,
     subscription: readonly(subscription),
+    checked: readonly(checked),
+    permission: readonly(permission),
 
     // Methods
     checkExistingSubscription,
