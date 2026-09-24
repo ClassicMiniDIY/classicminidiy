@@ -144,8 +144,9 @@ describe('usePushNotifications', () => {
   // checkExistingSubscription
   // =========================================================================
   describe('checkExistingSubscription', () => {
-    it('finds and stores an existing push subscription', async () => {
+    it('finds and stores an existing push subscription the user owns', async () => {
       mockPushManager.getSubscription.mockResolvedValue(mockPushSubscription);
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({ data: { id: 'own-row' }, error: null });
 
       const usePushNotifications = await importComposable();
       const { checkExistingSubscription, subscription } = usePushNotifications();
@@ -153,7 +154,37 @@ describe('usePushNotifications', () => {
       await checkExistingSubscription();
 
       expect(mockPushManager.getSubscription).toHaveBeenCalled();
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('endpoint', mockPushSubscription.endpoint);
       expect(subscription.value).toEqual(mockPushSubscription);
+      expect(mockPushSubscription.unsubscribe).not.toHaveBeenCalled();
+    });
+
+    it('drops a subscription left by a previous user of this browser', async () => {
+      mockPushManager.getSubscription.mockResolvedValue(mockPushSubscription);
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+
+      const usePushNotifications = await importComposable();
+      const { checkExistingSubscription, subscription } = usePushNotifications();
+
+      await checkExistingSubscription();
+
+      // Shown as off and unsubscribed, not claimed for the new user.
+      expect(subscription.value).toBeNull();
+      expect(mockPushSubscription.unsubscribe).toHaveBeenCalled();
+      expect(mockSupabase.rpc).not.toHaveBeenCalled();
+    });
+
+    it('keeps the subscription when ownership cannot be read', async () => {
+      mockPushManager.getSubscription.mockResolvedValue(mockPushSubscription);
+      mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({ data: null, error: { message: 'network' } });
+
+      const usePushNotifications = await importComposable();
+      const { checkExistingSubscription, subscription } = usePushNotifications();
+
+      await checkExistingSubscription();
+
+      expect(subscription.value).toEqual(mockPushSubscription);
+      expect(mockPushSubscription.unsubscribe).not.toHaveBeenCalled();
     });
 
     it('sets subscription to null when none exists', async () => {

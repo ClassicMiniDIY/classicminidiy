@@ -462,7 +462,9 @@ describe('useAuth', () => {
         expect(mockSupabase.from).not.toHaveBeenCalledWith('push_subscriptions');
       });
 
-      it('leaves push alone for a session-less event other than SIGNED_OUT', async () => {
+      it('unsubscribes an orphaned browser on INITIAL_SESSION without a session', async () => {
+        // The session died while no tab was open, so the listener never saw
+        // SIGNED_OUT (auth-js emits it inside initialize(), before we subscribe).
         mockSupabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
         const getCallback = captureAuthChange();
         const { useAuth } = await import('~/app/composables/useAuth');
@@ -471,8 +473,50 @@ describe('useAuth', () => {
         getCallback()('INITIAL_SESSION', null);
         await vi.advanceTimersByTimeAsync(0);
 
-        expect(getRegistration).not.toHaveBeenCalled();
-        expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+        expect(mockPushSub.unsubscribe).toHaveBeenCalled();
+      });
+
+      describe('ownership check at session start', () => {
+        const signIn = async (event: string, row: unknown, error: unknown = null) => {
+          const getCallback = captureAuthChange();
+          const { useAuth } = await import('~/app/composables/useAuth');
+          await useAuth().initAuth();
+          mockSupabase._queryBuilder.maybeSingle.mockResolvedValue({ data: row, error });
+          mockSupabase._queryBuilder.eq.mockClear();
+
+          getCallback()(event, mockSession);
+          await vi.advanceTimersByTimeAsync(0);
+        };
+
+        it('drops a subscription the signed-in user does not own (a previous user of this browser)', async () => {
+          await signIn('SIGNED_IN', null);
+
+          expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('endpoint', ENDPOINT);
+          expect(mockPushSub.unsubscribe).toHaveBeenCalled();
+          // Dropped, never claimed: claiming would enrol the new user without consent.
+          expect(mockSupabase.rpc).not.toHaveBeenCalledWith('claim_push_subscription', expect.anything());
+        });
+
+        it('keeps a subscription the signed-in user owns', async () => {
+          await signIn('INITIAL_SESSION', { id: 'own-row' });
+
+          expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('endpoint', ENDPOINT);
+          expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+        });
+
+        it('keeps the subscription when ownership cannot be read', async () => {
+          vi.spyOn(console, 'warn').mockImplementation(() => {});
+          await signIn('SIGNED_IN', null, { message: 'network' });
+
+          expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+        });
+
+        it('does not re-check on TOKEN_REFRESHED', async () => {
+          await signIn('TOKEN_REFRESHED', null);
+
+          expect(mockSupabase._queryBuilder.eq).not.toHaveBeenCalledWith('endpoint', ENDPOINT);
+          expect(mockPushSub.unsubscribe).not.toHaveBeenCalled();
+        });
       });
 
       it('does not touch the push row or endpoint when a stalled cleanup resumes after the timeout', async () => {

@@ -5,7 +5,7 @@
  * requesting permission, subscribing/unsubscribing, and persisting subscription
  * data to the push_subscriptions table in Supabase.
  */
-import { removePushSubscription } from '~/utils/pushSubscription';
+import { dropUnownedPushSubscription, removePushSubscription } from '~/utils/pushSubscription';
 
 /**
  * Decode a base64url-encoded VAPID public key into the Uint8Array that
@@ -49,6 +49,12 @@ export function usePushNotifications() {
     try {
       const registration = await navigator.serviceWorker.ready;
       const existingSub = await registration.pushManager.getSubscription();
+      // A subscription left by a previous user of this browser is not "enabled"
+      // for this one; drop it rather than show it as on.
+      if (existingSub && user.value && (await dropUnownedPushSubscription(supabase, existingSub))) {
+        subscription.value = null;
+        return;
+      }
       subscription.value = existingSub;
     } catch (e) {
       handleError(e, { toastTitle: 'Failed to check push subscription', showToast: false });
