@@ -147,6 +147,11 @@
       both here would report members who are not members.
     </p>
 
+    <!-- Support lookup. Independent of the page load below: it has its own
+         route, loading and error states, so a failed purchases load does not
+         take it down. -->
+    <AdminMemberLookup class="mb-6" />
+
     <div v-if="errorMessage" role="alert" class="alert alert-error mb-4">
       <i class="fas fa-triangle-exclamation"></i>
       <span>{{ errorMessage }}</span>
