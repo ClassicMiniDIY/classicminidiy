@@ -128,7 +128,7 @@ export default defineEventHandler(async (event) => {
   // happy path nothing. It is awaited, with a ceiling, just before the model
   // runs. Off by default; `TYPESAFE_CHAT_MODE` is the switch. A refused
   // request below simply never collects it.
-  const modelIdForTools = ((config.CHAT_MODEL as string) || 'claude-sonnet-5').trim();
+  const modelIdForTools = ((config.CHAT_MODEL as string) || 'claude-sonnet-5-5').trim();
   const classifierRun: ClassifierRun = runClassifier(event, {
     messages: replayed,
     pageSlug: body?.pageSlug,
@@ -236,7 +236,8 @@ export default defineEventHandler(async (event) => {
   let membershipTail = '';
 
   /**
-   * The default moved from Haiku 4.5 to Sonnet 5 on 2026-09-04.
+   * The default moved from Haiku 4.5 to Sonnet 5 on 2026-09-04, and to Sonnet 5.5
+   * on 2026-09-28.
    *
    * Not a cost decision — at the measured volume (473 conversations in fifteen
    * months) the difference is cents. It is a judgement decision. The tier
