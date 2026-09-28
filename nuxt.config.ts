@@ -290,6 +290,7 @@ export default defineNuxtConfig({
       // Transient claim-chain pages (noindex via useHead, which the sitemap
       // module can't see — exclude them here too to avoid mixed signals).
       '/membership/claim',
+      '/membership/youtube',
       '/discord/connect',
       // All admin sub-pages are private/noindex — keep them out of the sitemap
       // (the bare `/admin` above only matched the index).
@@ -709,6 +710,13 @@ export default defineNuxtConfig({
     // Session-dependent claim-chain page (self-serve Discord connect for the
     // mobile apps' bare /discord/claim hits) — same no-static treatment.
     '/discord/connect': {
+      prerender: false,
+      headers: { 'cache-control': 'no-store, must-revalidate' },
+    },
+    // YouTube member bridge: Supabase linkIdentity returns here with a
+    // single-use ?code= (and GoTrue error params). Same no-static treatment;
+    // /membership links here, so crawlLinks would otherwise prerender it.
+    '/membership/youtube': {
       prerender: false,
       headers: { 'cache-control': 'no-store, must-revalidate' },
     },
