@@ -85,6 +85,7 @@
     account_email: 'account email',
     pending_email: 'claim email',
     discord_username: 'Discord username',
+    discord_user_id: 'Discord user id',
     ghost_email: 'Ghost email',
     external_ref: 'external ref',
     stripe_customer_id: 'Stripe customer',
@@ -102,6 +103,7 @@
     comp: 'badge-warning',
     ghost: 'badge-secondary',
     patreon: 'badge-accent',
+    youtube: 'badge-error',
   };
   const platformBadge = (platform: string) => PLATFORM_BADGES[platform] ?? 'badge-ghost';
 

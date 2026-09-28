@@ -108,6 +108,7 @@
     comp: 'badge-warning',
     ghost: 'badge-secondary',
     patreon: 'badge-accent',
+    youtube: 'badge-error',
   };
 
   function platformBadge(platform: string) {

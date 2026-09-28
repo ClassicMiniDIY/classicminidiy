@@ -96,7 +96,7 @@ export interface AdminVerificationHealth {
   distinct_users: number;
 }
 
-export type MembershipPlatform = 'apple' | 'google' | 'stripe' | 'comp' | 'ghost' | 'patreon';
+export type MembershipPlatform = 'apple' | 'google' | 'stripe' | 'comp' | 'ghost' | 'patreon' | 'youtube';
 
 export const useAdminMembership = () => {
   const supabase = useSupabase();
