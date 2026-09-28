@@ -72,6 +72,7 @@ function makeSupabaseStub({ platform = null as string | null, plan = null as str
 
 const mountStubs = {
   ProfileSustainingBadge: true,
+  MembershipWaysToJoin: { name: 'MembershipWaysToJoin', template: '<div data-testid="ways-to-join-body" />' },
   NuxtLink: { name: 'NuxtLink', template: '<a :href="to"><slot /></a>', props: ['to'] },
   ClientOnly: { name: 'ClientOnly', template: '<div><slot /></div>' },
 };
@@ -412,5 +413,30 @@ describe('member view copy', () => {
   it('ghost members are told to use their blog account', async () => {
     const wrapper = await mountMember({ platform: 'ghost', plan: null });
     expect(wrapper.text()).toContain('Manage billing and cancellation from your Classic Mini DIY blog account.');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// /membership#ways-to-join (membership clarity §4.1)
+// ---------------------------------------------------------------------------
+describe('ways-to-join anchor', () => {
+  it.each([
+    ['logged out', { user: null }],
+    ['a non-member', { member: false }],
+    ['a member', { member: true }],
+  ] as const)('renders #ways-to-join for %s', async (_label, opts) => {
+    const auth = makeAuthStub(opts as AuthStubOptions);
+    stubEnvironment({ auth, supabase: makeSupabaseStub({ platform: 'stripe', plan: 'base' }) });
+    const wrapper = mountPage();
+    await flushPromises();
+    const section = wrapper.find('section#ways-to-join');
+    expect(section.exists()).toBe(true);
+    expect(section.find('[data-testid="ways-to-join-body"]').exists()).toBe(true);
+  });
+
+  it('sits outside ClientOnly, so the server-rendered page carries the anchor', () => {
+    const source = readFileSync('app/pages/membership/index.vue', 'utf8');
+    const template = source.slice(source.indexOf('<template>'), source.indexOf('<i18n'));
+    expect(template.indexOf('id="ways-to-join"')).toBeGreaterThan(template.lastIndexOf('</ClientOnly>'));
   });
 });

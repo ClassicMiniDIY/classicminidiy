@@ -536,6 +536,14 @@
           </section>
         </template>
       </ClientOnly>
+
+      <!-- /membership#ways-to-join: the one page support replies, the YouTube and
+           Patreon level descriptions and the apps link to (membership clarity
+           §4.1). Server-rendered, outside ClientOnly, so the anchor resolves on
+           first load. Do not rename the id. -->
+      <section id="ways-to-join" class="scroll-mt-24">
+        <MembershipWaysToJoin />
+      </section>
     </div>
   </div>
 </template>
