@@ -6,9 +6,10 @@
  * Covers:
  *  - signed out → sign-in card that returns here
  *  - no Discord identity → Link Discord calls linkIdentity('discord') with a
- *    redirect back to /membership/youtube?linked=1
+ *    redirect back to /membership/youtube (no query string: the allowlist
+ *    matches the whole address)
  *  - Discord already linked → "Check my YouTube membership" instead
- *  - ?linked=1&code= → PKCE exchange, URL cleaned, sync runs at once
+ *  - ?code= → PKCE exchange, URL cleaned, sync runs at once
  *  - every sync status and error status renders its own outcome
  *  - linkIdentity errors: identity already linked elsewhere / linking disabled
  *
@@ -132,7 +133,7 @@ describe('no Discord identity yet', () => {
     await flushPromises();
     expect(supabase.auth.linkIdentity).toHaveBeenCalledWith({
       provider: 'discord',
-      options: { redirectTo: `${window.location.origin}/membership/youtube?linked=1` },
+      options: { redirectTo: `${window.location.origin}/membership/youtube` },
     });
   });
 
@@ -189,11 +190,11 @@ describe('Discord already linked', () => {
   });
 });
 
-describe('return from Discord (?linked=1)', () => {
+describe('return from Discord (?code=)', () => {
   it('exchanges the code, cleans the URL and syncs at once', async () => {
     const { supabase } = stubEnvironment({
       supabase: makeSupabaseStub({ providers: ['discord'] }),
-      query: { linked: '1', code: 'abc' },
+      query: { code: 'abc' },
       fetchImpl: () => Promise.resolve({ status: 'linked', plan: 'pro' }),
     });
     const wrapper = await mountPage();
@@ -207,7 +208,7 @@ describe('return from Discord (?linked=1)', () => {
     const supabase = makeSupabaseStub({ providers: ['discord'] });
     supabase.auth.exchangeCodeForSession.mockResolvedValue({ data: { session: null }, error: { message: 'x' } } as any);
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    stubEnvironment({ supabase, query: { linked: '1', code: 'abc' } });
+    stubEnvironment({ supabase, query: { code: 'abc' } });
     await mountPage();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

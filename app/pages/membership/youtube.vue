@@ -13,7 +13,7 @@
    * `youtube-bridge-sync` Edge Function (via POST /api/membership/youtube-sync)
    * then reads the role and attaches the membership.
    *
-   * Redirect: `linkIdentity` comes back HERE (`?linked=1&code=…`), not to
+   * Redirect: `linkIdentity` comes back HERE (`?code=…`), not to
    * /auth/callback. The callback has no redirect parameter (it uses the /login
    * localStorage stash), it records a `login_success` and can divert a user to
    * /welcome, and on a GoTrue error redirect it drops the `error_code` that tells
@@ -168,7 +168,11 @@
     try {
       const { error } = await supabase.auth.linkIdentity({
         provider: 'discord',
-        options: { redirectTo: `${window.location.origin}${SELF_PATH}?linked=1` },
+        // No query string: Supabase matches redirectTo against the Redirect URLs
+        // allowlist as a whole address, so `?linked=1` failed the exact entry and
+        // GoTrue fell back to the Site URL (seen 2026-09-28). The returned
+        // `code` / `error_code` already mark the return.
+        options: { redirectTo: `${window.location.origin}${SELF_PATH}` },
       });
       if (error) {
         outcome.value = outcomeForLinkError((error as { code?: string }).code, error.message);
