@@ -254,14 +254,16 @@ describe('the exhausted response', () => {
 
   it('offers a base-plan member the Plus allowance, never the ceiling just hit', () => {
     const err: any = quotaExhaustedError(eventFor('member', 'user-1'), { allowed: false });
-    expect(err.message).toMatch(/Member Plus gets 65 messages a month/);
+    expect(err.message).toMatch(/The Plus level gets 65 messages a month/);
+    expect(err.message).not.toMatch(/Member Plus/);
     expect(err.message).not.toMatch(/ 25 /);
     expect(err.data.tier).toBe('member');
   });
 
   it('offers a Plus member the Pro allowance', () => {
     const err: any = quotaExhaustedError(eventFor('plus', 'user-1'), { allowed: false });
-    expect(err.message).toMatch(/Member Pro gets 135 messages a month/);
+    expect(err.message).toMatch(/The Pro level gets 135 messages a month/);
+    expect(err.message).not.toMatch(/Member Pro/);
     expect(err.data.tier).toBe('plus');
   });
 
