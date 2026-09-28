@@ -43,7 +43,12 @@
 
     <!-- The table scrolls inside its own box at phone width (never the page);
          the row labels stay pinned on the left so each row stays readable. -->
-    <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+    <div
+      class="overflow-x-auto rounded-box border border-base-300 bg-base-100"
+      role="region"
+      tabindex="0"
+      :aria-label="t('caption')"
+    >
       <table class="table min-w-[40rem]">
         <caption class="sr-only">
           {{

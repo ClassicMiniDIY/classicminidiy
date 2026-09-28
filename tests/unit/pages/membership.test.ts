@@ -440,3 +440,91 @@ describe('ways-to-join anchor', () => {
     expect(template.indexOf('id="ways-to-join"')).toBeGreaterThan(template.lastIndexOf('</ClientOnly>'));
   });
 });
+
+// ---------------------------------------------------------------------------
+// Review round 1: the plan line waits for get_my_membership(), and the
+// #ways-to-join anchor survives the ClientOnly card growing above it.
+// ---------------------------------------------------------------------------
+describe('member plan line', () => {
+  function mountWithRealCopy(supabase: ReturnType<typeof makeSupabaseStub>) {
+    stubEnvironment({ auth: makeAuthStub({ member: true }), supabase });
+    vi.stubGlobal('useI18n', () => ({ t: realT, locale: ref('en') }));
+    return mountPage();
+  }
+
+  it('is hidden until get_my_membership() answers', async () => {
+    const supabase = makeSupabaseStub({ platform: 'stripe', plan: 'pro' });
+    supabase._rpcSingle.mockReturnValue(new Promise(() => {}));
+    const wrapper = mountWithRealCopy(supabase);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="member-plan-line"]').exists()).toBe(false);
+  });
+
+  it('shows the real plan once loaded', async () => {
+    const wrapper = mountWithRealCopy(makeSupabaseStub({ platform: 'stripe', plan: 'pro' }));
+    await flushPromises();
+    await nextTick();
+    expect(wrapper.find('[data-testid="member-plan-line"]').text()).toContain('Your plan: Pro');
+  });
+
+  it('on an RPC error shows neither the level nor the plan line', async () => {
+    const supabase = makeSupabaseStub({ platform: 'stripe', plan: 'pro' });
+    supabase._rpcSingle.mockResolvedValue({ data: null, error: { message: 'boom' } });
+    const wrapper = mountWithRealCopy(supabase);
+    await flushPromises();
+    await nextTick();
+    expect(wrapper.find('[data-testid="member-plan-line"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="member-title"]').text()).toBe("You're a Sustaining Member");
+  });
+});
+
+describe('#ways-to-join re-scroll after auth resolves', () => {
+  let scrollSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    scrollSpy = vi.fn();
+    Element.prototype.scrollIntoView = scrollSpy as any;
+    window.history.replaceState(null, '', '/membership#ways-to-join');
+  });
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+    document.body.innerHTML = '';
+  });
+
+  function mountAttached(waitForAuth: () => Promise<boolean>) {
+    stubEnvironment({ auth: makeAuthStub({ user: null, waitForAuth }) });
+    return mount(MembershipPage, { global: { stubs: mountStubs }, attachTo: document.body });
+  }
+
+  it('scrolls the section back into view once, after authReady flips', async () => {
+    let resolveAuth!: (v: boolean) => void;
+    mountAttached(() => new Promise<boolean>((r) => (resolveAuth = r)));
+    await flushPromises();
+    expect(scrollSpy).not.toHaveBeenCalled();
+    resolveAuth(true);
+    await flushPromises();
+    await nextTick();
+    expect(scrollSpy).toHaveBeenCalledTimes(1);
+    expect((scrollSpy.mock.contexts[0] as HTMLElement).id).toBe('ways-to-join');
+  });
+
+  it('leaves the page alone when the visitor scrolled first', async () => {
+    let resolveAuth!: (v: boolean) => void;
+    mountAttached(() => new Promise<boolean>((r) => (resolveAuth = r)));
+    await flushPromises();
+    window.dispatchEvent(new Event('wheel'));
+    resolveAuth(true);
+    await flushPromises();
+    await nextTick();
+    expect(scrollSpy).not.toHaveBeenCalled();
+  });
+
+  it('does nothing without the hash', async () => {
+    window.history.replaceState(null, '', '/membership');
+    mountAttached(() => Promise.resolve(true));
+    await flushPromises();
+    await nextTick();
+    expect(scrollSpy).not.toHaveBeenCalled();
+  });
+});

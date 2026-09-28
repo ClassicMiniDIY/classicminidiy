@@ -237,9 +237,31 @@
     { immediate: true }
   );
 
+  // /membership#ways-to-join: the browser scrolls to the anchor on load, but the
+  // ClientOnly card above it is a short spinner until auth resolves and then
+  // grows, which pushes the section down (seen on iOS Safari). Re-scroll ONCE
+  // after that, unless the visitor has already scrolled themselves.
+  const WAYS_TO_JOIN_HASH = '#ways-to-join';
+  const USER_SCROLL_EVENTS = ['wheel', 'touchmove', 'keydown', 'mousedown'] as const;
+  function keepWaysToJoinInView(): () => Promise<void> {
+    if (window.location.hash !== WAYS_TO_JOIN_HASH) return async () => {};
+    let userScrolled = false;
+    const mark = () => (userScrolled = true);
+    for (const e of USER_SCROLL_EVENTS) window.addEventListener(e, mark, { passive: true, once: true });
+    return async () => {
+      for (const e of USER_SCROLL_EVENTS) window.removeEventListener(e, mark);
+      await nextTick();
+      if (!userScrolled && window.location.hash === WAYS_TO_JOIN_HASH) {
+        document.getElementById('ways-to-join')?.scrollIntoView();
+      }
+    };
+  }
+
   onMounted(async () => {
+    const rescrollToWaysToJoin = keepWaysToJoinInView();
     await waitForAuth();
     authReady.value = true;
+    rescrollToWaysToJoin();
 
     // Stripe returns to /membership?subscribed=1 or ?canceled=1; sign-in
     // returns with ?subscribe=1 (preserved intent). Process once, then strip
@@ -350,7 +372,9 @@
               </h2>
             </div>
             <p class="opacity-70">{{ t('member.subtitle') }}</p>
-            <p class="text-sm mt-1">
+            <!-- Gated like the headline: before get_my_membership() answers the
+                 plan is unknown, and on an RPC error neither line guesses. -->
+            <p v-if="membershipLoaded" class="text-sm mt-1" data-testid="member-plan-line">
               <i class="fas fa-comments mr-2 text-primary"></i
               >{{
                 t('member.plan_line', {

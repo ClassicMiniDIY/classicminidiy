@@ -176,6 +176,49 @@ describe('AdminMemberLookup', () => {
     expect(results[2]!.findAll('[data-testid="lookup-subscription"]')).toHaveLength(1);
   });
 
+  it('renders two unclaimed rows that share one email (Patreon and Ghost) as two results', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const stage = (provider: string, ref: string) => ({
+      user_id: null,
+      email: 'same@example.com',
+      display_name: null,
+      matched_on: ['pending_email' as const],
+      subscriptions: [],
+      pending_claims: [
+        {
+          provider,
+          external_ref: ref,
+          email: 'same@example.com',
+          status: 'pending',
+          plan: null,
+          claim_issued_at: null,
+        },
+      ],
+      discord: null,
+    });
+    const account = (id: string) => ({ ...TWO_ROWS.results[0]!, user_id: id });
+    // Vue checks keys only when it reorders a list on UPDATE, so search twice
+    // with the rows moved around.
+    adminFetch
+      .mockResolvedValueOnce({
+        truncated: false,
+        results: [account('u1'), stage('patreon', '111'), stage('ghost', 'g-2')],
+      })
+      .mockResolvedValueOnce({
+        truncated: false,
+        results: [account('u2'), stage('ghost', 'g-2'), stage('patreon', '111'), account('u1')],
+      });
+    const wrapper = mount(MemberLookup);
+    await search(wrapper, 'same@example.com');
+    await search(wrapper, 'same@example.co');
+    const results = wrapper.findAll('[data-testid="lookup-result"]');
+    expect(results).toHaveLength(4);
+    expect(results[1]!.text()).toContain('ghost');
+    expect(results[2]!.text()).toContain('patreon');
+    expect(warn.mock.calls.flat().join(' ')).not.toMatch(/Duplicate keys/);
+    warn.mockRestore();
+  });
+
   it('says when more members matched than are shown', async () => {
     adminFetch.mockResolvedValue({ ...TWO_ROWS, truncated: true });
     const wrapper = mount(MemberLookup);
