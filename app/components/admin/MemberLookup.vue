@@ -118,8 +118,17 @@
     return !!value && new Date(value).getTime() < Date.now();
   }
 
-  const rowKey = (row: MemberLookupRow, i: number) =>
-    row.user_id ?? row.email ?? `deleted-${row.subscriptions[0]?.external_ref ?? i}`;
+  // One email can back two unclaimed rows (a Patreon and a Ghost stage), so the
+  // email is not a key. Kind + provider/platform + external_ref; index last.
+  function rowKey(row: MemberLookupRow, i: number) {
+    const kind = memberLookupKind(row);
+    if (row.user_id) return `${kind}:${row.user_id}`;
+    const sub = row.subscriptions[0];
+    const claim = row.pending_claims[0];
+    const source = sub?.platform ?? claim?.provider;
+    const ref = sub?.external_ref ?? claim?.external_ref;
+    return source && ref ? `${kind}:${source}:${ref}` : `${kind}:${i}`;
+  }
 </script>
 
 <template>

@@ -112,6 +112,13 @@ describe('WaysToJoin', () => {
     expect(wrapper.find('table').element.parentElement!.classList.contains('overflow-x-auto')).toBe(true);
   });
 
+  it('makes the scroll box a focusable, named region (axe scrollable-region-focusable)', () => {
+    const box = mountIn().find('table').element.parentElement!;
+    expect(box.getAttribute('role')).toBe('region');
+    expect(box.getAttribute('tabindex')).toBe('0');
+    expect(box.getAttribute('aria-label')).toBe('Ways to join, compared by platform');
+  });
+
   it('uses one Spanish term for Sustaining Member', () => {
     expect(mountIn('es').text()).toContain('La insignia de Socio Colaborador');
   });
