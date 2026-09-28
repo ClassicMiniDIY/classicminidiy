@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+  import type { UserIdentity } from '@supabase/supabase-js';
   import type { MembershipPlan } from '~~/shared/utils/chatTiers';
 
   /**
@@ -32,7 +33,7 @@
   const loginHref = `/login?redirect=${encodeURIComponent(SELF_PATH)}`;
   const YOUTUBE_MEMBERSHIPS_URL = 'https://www.youtube.com/paid_memberships';
 
-  type PageState = 'checking' | 'signin' | 'ready' | 'linking' | 'syncing';
+  type PageState = 'checking' | 'signin' | 'ready' | 'linking' | 'syncing' | 'unlinking';
   type Outcome =
     | 'linked'
     | 'no_identity'
@@ -42,14 +43,19 @@
     | 'too_many_requests'
     | 'unavailable'
     | 'link_failed'
+    | 'unlinked'
+    | 'unlink_last'
+    | 'unlink_failed'
     | 'error';
 
   const state = ref<PageState>('checking');
   const hasDiscord = ref(false);
+  // The linked Discord identity, kept so "Unlink" can pass it to unlinkIdentity.
+  const discordIdentity = ref<UserIdentity | null>(null);
   const outcome = ref<Outcome | null>(null);
   const linkedPlan = ref<MembershipPlan | null>(null);
 
-  const busy = computed(() => state.value === 'linking' || state.value === 'syncing');
+  const busy = computed(() => state.value === 'linking' || state.value === 'syncing' || state.value === 'unlinking');
 
   const OUTCOME_ALERT: Record<Outcome, { alert: string; icon: string }> = {
     linked: { alert: 'alert-success', icon: 'fas fa-circle-check' },
@@ -60,8 +66,20 @@
     too_many_requests: { alert: 'alert-info', icon: 'fas fa-clock' },
     unavailable: { alert: 'alert-info', icon: 'fas fa-hourglass-half' },
     link_failed: { alert: 'alert-error', icon: 'fas fa-link-slash' },
+    unlinked: { alert: 'alert-info', icon: 'fab fa-discord' },
+    unlink_last: { alert: 'alert-warning', icon: 'fas fa-user-lock' },
+    unlink_failed: { alert: 'alert-error', icon: 'fas fa-triangle-exclamation' },
     error: { alert: 'alert-error', icon: 'fas fa-triangle-exclamation' },
   };
+
+  const CONTACT_OUTCOMES: Outcome[] = ['conflict', 'error', 'unlink_last', 'unlink_failed'];
+
+  const liveMessage = computed(() => {
+    if (state.value === 'linking') return t('linking');
+    if (state.value === 'syncing') return t('syncing');
+    if (state.value === 'unlinking') return t('unlinking');
+    return '';
+  });
 
   const outcomeBody = computed(() => {
     if (outcome.value === 'linked') {
@@ -93,14 +111,54 @@
     try {
       const { data, error } = await supabase.auth.getUserIdentities();
       if (!error && data?.identities) {
-        hasDiscord.value = data.identities.some((identity) => identity.provider === 'discord');
+        discordIdentity.value = data.identities.find((identity) => identity.provider === 'discord') ?? null;
+        hasDiscord.value = !!discordIdentity.value;
         return;
       }
     } catch (err) {
       console.error('[membership/youtube] getUserIdentities failed:', err);
     }
     // Fall back to the identities on the cached user object.
-    hasDiscord.value = (user.value?.identities ?? []).some((identity) => identity.provider === 'discord');
+    discordIdentity.value = (user.value?.identities ?? []).find((identity) => identity.provider === 'discord') ?? null;
+    hasDiscord.value = !!discordIdentity.value;
+  }
+
+  /**
+   * Unlink the linked Discord identity, so a member who linked the wrong
+   * Discord account can link the right one. GoTrue refuses to remove the last
+   * identity on an account (single_identity_not_deletable): that is a
+   * Discord-only sign-in, and it keeps its link.
+   */
+  async function unlinkDiscord() {
+    outcome.value = null;
+    state.value = 'unlinking';
+    try {
+      if (!discordIdentity.value) await loadHasDiscord();
+      const identity = discordIdentity.value;
+      if (!identity) {
+        hasDiscord.value = false;
+        outcome.value = 'unlinked';
+      } else {
+        const { error } = await supabase.auth.unlinkIdentity(identity);
+        if (error) {
+          const code = (error as { code?: string }).code;
+          outcome.value =
+            code === 'single_identity_not_deletable' || /at least 1 identity/i.test(error.message)
+              ? 'unlink_last'
+              : 'unlink_failed';
+          if (outcome.value === 'unlink_failed') console.error('[membership/youtube] unlink failed:', error);
+        } else {
+          discordIdentity.value = null;
+          hasDiscord.value = false;
+          outcome.value = 'unlinked';
+        }
+      }
+    } catch (err) {
+      console.error('[membership/youtube] unlinkIdentity threw:', err);
+      outcome.value = 'unlink_failed';
+    }
+    track('youtube_bridge_unlink', { source: 'web', result: outcome.value });
+    state.value = 'ready';
   }
 
   async function linkDiscord() {
@@ -136,12 +194,15 @@
         return;
       }
       const res = await $fetch<{
-        status: Exclude<Outcome, 'conflict' | 'too_many_requests' | 'unavailable' | 'link_failed' | 'error'>;
+        status: 'linked' | 'no_identity' | 'not_in_server' | 'no_level_role';
         plan?: MembershipPlan | null;
       }>('/api/membership/youtube-sync', { method: 'POST', headers: { authorization: `Bearer ${token}` } });
       outcome.value = res.status;
       linkedPlan.value = res.status === 'linked' ? (res.plan ?? null) : null;
-      if (res.status === 'no_identity') hasDiscord.value = false;
+      if (res.status === 'no_identity') {
+        hasDiscord.value = false;
+        discordIdentity.value = null;
+      }
       if (res.status === 'linked' && user.value) {
         // Pick up the Sustaining Member badge without a reload.
         void fetchUserProfile?.(user.value.id);
@@ -152,7 +213,9 @@
       if (status === 401) {
         // The server rejected a token the browser still holds. Clear it so
         // /login does not bounce straight back here in a loop.
-        await supabase.auth.signOut().catch(() => {});
+        // Local scope: clear this browser only. A global sign-out would end
+        // the user's sessions on every device over one rejected request.
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
         state.value = 'signin';
         return;
       }
@@ -313,11 +376,22 @@
                   <p class="text-sm opacity-70" data-testid="yt-discord-linked">
                     <i class="fas fa-circle-check text-success mr-1"></i>{{ t('discord_linked') }}
                   </p>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    :disabled="busy"
+                    data-testid="yt-unlink"
+                    @click="unlinkDiscord"
+                  >
+                    <span v-if="state === 'unlinking'" class="loading loading-spinner loading-xs"></span>
+                    <i v-else class="fas fa-link-slash"></i>
+                    {{ t('cta.unlink') }}
+                  </button>
                 </template>
               </div>
 
               <p class="sr-only" aria-live="polite">
-                {{ state === 'linking' ? t('linking') : state === 'syncing' ? t('syncing') : '' }}
+                {{ liveMessage }}
               </p>
 
               <!-- Result of the last link or check -->
@@ -341,7 +415,7 @@
                     >{{ t('result.linked.cta') }}</NuxtLink
                   >
                   <NuxtLink
-                    v-else-if="outcome === 'conflict' || outcome === 'error'"
+                    v-else-if="CONTACT_OUTCOMES.includes(outcome)"
                     to="/contact"
                     class="link font-semibold text-sm mt-1 inline-block"
                     >{{ t('contact_cta') }}</NuxtLink
@@ -405,11 +479,13 @@
     "cta": {
       "link": "Link Discord",
       "check": "Check my YouTube membership",
-      "check_again": "Check again"
+      "check_again": "Check again",
+      "unlink": "Unlink this Discord account"
     },
     "discord_linked": "Your Discord account is linked.",
     "linking": "Opening Discord...",
     "syncing": "Checking your YouTube membership...",
+    "unlinking": "Unlinking Discord...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -428,7 +504,7 @@
       },
       "no_level_role": {
         "title": "We could not find your YouTube membership",
-        "body": "Connect YouTube in Discord with the Google account that has your membership. Wait a few minutes, then check again."
+        "body": "Connect YouTube in Discord with the Google account that has your membership. Wait a few minutes, then check again. If you linked a different Discord account, unlink it and link the correct one."
       },
       "conflict": {
         "title": "We cannot match that Discord account",
@@ -445,6 +521,18 @@
       "link_failed": {
         "title": "Discord did not complete the link",
         "body": "Press Link Discord to try again."
+      },
+      "unlinked": {
+        "title": "Discord account unlinked",
+        "body": "Now link the Discord account that has your YouTube connection."
+      },
+      "unlink_last": {
+        "title": "You cannot unlink this Discord account",
+        "body": "It is the only way you sign in to this account. Contact us to change it."
+      },
+      "unlink_failed": {
+        "title": "Discord was not unlinked",
+        "body": "Try again in a minute, or contact us."
       },
       "error": {
         "title": "Something went wrong",
@@ -479,11 +567,13 @@
     "cta": {
       "link": "Vincular Discord",
       "check": "Comprobar mi membresía de YouTube",
-      "check_again": "Comprobar de nuevo"
+      "check_again": "Comprobar de nuevo",
+      "unlink": "Desvincular esta cuenta de Discord"
     },
     "discord_linked": "Tu cuenta de Discord está vinculada.",
     "linking": "Abriendo Discord...",
     "syncing": "Comprobando tu membresía de YouTube...",
+    "unlinking": "Desvinculando Discord...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -502,7 +592,7 @@
       },
       "no_level_role": {
         "title": "No encontramos tu membresía de YouTube",
-        "body": "Conecta YouTube en Discord con la cuenta de Google que tiene tu membresía. Espera unos minutos y comprueba de nuevo."
+        "body": "Conecta YouTube en Discord con la cuenta de Google que tiene tu membresía. Espera unos minutos y comprueba de nuevo. Si vinculaste otra cuenta de Discord, desvincúlala y vincula la correcta."
       },
       "conflict": {
         "title": "No podemos asociar esa cuenta de Discord",
@@ -519,6 +609,18 @@
       "link_failed": {
         "title": "Discord no completó la vinculación",
         "body": "Pulsa Vincular Discord para intentarlo de nuevo."
+      },
+      "unlinked": {
+        "title": "Cuenta de Discord desvinculada",
+        "body": "Ahora vincula la cuenta de Discord que tiene tu conexión de YouTube."
+      },
+      "unlink_last": {
+        "title": "No puedes desvincular esta cuenta de Discord",
+        "body": "Es la única forma en que inicias sesión en esta cuenta. Contáctanos para cambiarlo."
+      },
+      "unlink_failed": {
+        "title": "No se desvinculó Discord",
+        "body": "Inténtalo de nuevo en un minuto o contáctanos."
       },
       "error": {
         "title": "Algo salió mal",
@@ -553,11 +655,13 @@
     "cta": {
       "link": "Lier Discord",
       "check": "Vérifier mon abonnement YouTube",
-      "check_again": "Vérifier à nouveau"
+      "check_again": "Vérifier à nouveau",
+      "unlink": "Délier ce compte Discord"
     },
     "discord_linked": "Votre compte Discord est lié.",
     "linking": "Ouverture de Discord...",
     "syncing": "Vérification de votre abonnement YouTube...",
+    "unlinking": "Déliaison de Discord...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -576,7 +680,7 @@
       },
       "no_level_role": {
         "title": "Nous n'avons pas trouvé votre abonnement YouTube",
-        "body": "Connectez YouTube dans Discord avec le compte Google qui a votre abonnement. Attendez quelques minutes, puis vérifiez à nouveau."
+        "body": "Connectez YouTube dans Discord avec le compte Google qui a votre abonnement. Attendez quelques minutes, puis vérifiez à nouveau. Si vous avez lié un autre compte Discord, déliez-le et liez le bon."
       },
       "conflict": {
         "title": "Nous ne pouvons pas associer ce compte Discord",
@@ -593,6 +697,18 @@
       "link_failed": {
         "title": "Discord n'a pas terminé la liaison",
         "body": "Appuyez sur Lier Discord pour réessayer."
+      },
+      "unlinked": {
+        "title": "Compte Discord délié",
+        "body": "Liez maintenant le compte Discord qui a votre connexion YouTube."
+      },
+      "unlink_last": {
+        "title": "Vous ne pouvez pas délier ce compte Discord",
+        "body": "C'est votre seul moyen de connexion à ce compte. Contactez-nous pour le changer."
+      },
+      "unlink_failed": {
+        "title": "Discord n'a pas été délié",
+        "body": "Réessayez dans une minute, ou contactez-nous."
       },
       "error": {
         "title": "Un problème est survenu",
@@ -627,11 +743,13 @@
     "cta": {
       "link": "Discord verknüpfen",
       "check": "Meine YouTube-Mitgliedschaft prüfen",
-      "check_again": "Erneut prüfen"
+      "check_again": "Erneut prüfen",
+      "unlink": "Dieses Discord-Konto trennen"
     },
     "discord_linked": "Dein Discord-Konto ist verknüpft.",
     "linking": "Discord wird geöffnet...",
     "syncing": "Deine YouTube-Mitgliedschaft wird geprüft...",
+    "unlinking": "Discord wird getrennt...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -650,7 +768,7 @@
       },
       "no_level_role": {
         "title": "Wir haben deine YouTube-Mitgliedschaft nicht gefunden",
-        "body": "Verknüpfe YouTube in Discord mit dem Google-Konto, das deine Mitgliedschaft hat. Warte ein paar Minuten und prüfe dann erneut."
+        "body": "Verknüpfe YouTube in Discord mit dem Google-Konto, das deine Mitgliedschaft hat. Warte ein paar Minuten und prüfe dann erneut. Wenn du ein anderes Discord-Konto verknüpft hast, trenne es und verknüpfe das richtige."
       },
       "conflict": {
         "title": "Wir können dieses Discord-Konto nicht zuordnen",
@@ -667,6 +785,18 @@
       "link_failed": {
         "title": "Discord hat die Verknüpfung nicht abgeschlossen",
         "body": "Tippe auf Discord verknüpfen, um es erneut zu versuchen."
+      },
+      "unlinked": {
+        "title": "Discord-Konto getrennt",
+        "body": "Verknüpfe jetzt das Discord-Konto mit deiner YouTube-Verknüpfung."
+      },
+      "unlink_last": {
+        "title": "Du kannst dieses Discord-Konto nicht trennen",
+        "body": "Es ist deine einzige Anmeldemethode für dieses Konto. Kontaktiere uns, um das zu ändern."
+      },
+      "unlink_failed": {
+        "title": "Discord wurde nicht getrennt",
+        "body": "Versuche es in einer Minute erneut oder kontaktiere uns."
       },
       "error": {
         "title": "Etwas ist schiefgelaufen",
@@ -701,11 +831,13 @@
     "cta": {
       "link": "Collega Discord",
       "check": "Verifica il mio abbonamento YouTube",
-      "check_again": "Verifica di nuovo"
+      "check_again": "Verifica di nuovo",
+      "unlink": "Scollega questo account Discord"
     },
     "discord_linked": "Il tuo account Discord è collegato.",
     "linking": "Apertura di Discord...",
     "syncing": "Verifica del tuo abbonamento YouTube...",
+    "unlinking": "Scollegamento di Discord...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -724,7 +856,7 @@
       },
       "no_level_role": {
         "title": "Non abbiamo trovato il tuo abbonamento YouTube",
-        "body": "Collega YouTube in Discord con l'account Google che ha il tuo abbonamento. Attendi qualche minuto, poi verifica di nuovo."
+        "body": "Collega YouTube in Discord con l'account Google che ha il tuo abbonamento. Attendi qualche minuto, poi verifica di nuovo. Se hai collegato un altro account Discord, scollegalo e collega quello giusto."
       },
       "conflict": {
         "title": "Non possiamo associare quell'account Discord",
@@ -741,6 +873,18 @@
       "link_failed": {
         "title": "Discord non ha completato il collegamento",
         "body": "Premi Collega Discord per riprovare."
+      },
+      "unlinked": {
+        "title": "Account Discord scollegato",
+        "body": "Ora collega l'account Discord che ha la tua connessione YouTube."
+      },
+      "unlink_last": {
+        "title": "Non puoi scollegare questo account Discord",
+        "body": "È l'unico modo con cui accedi a questo account. Contattaci per cambiarlo."
+      },
+      "unlink_failed": {
+        "title": "Discord non è stato scollegato",
+        "body": "Riprova tra un minuto, oppure contattaci."
       },
       "error": {
         "title": "Qualcosa è andato storto",
@@ -775,11 +919,13 @@
     "cta": {
       "link": "Ligar Discord",
       "check": "Verificar a minha subscrição do YouTube",
-      "check_again": "Verificar novamente"
+      "check_again": "Verificar novamente",
+      "unlink": "Desligar esta conta do Discord"
     },
     "discord_linked": "A sua conta do Discord está ligada.",
     "linking": "A abrir o Discord...",
     "syncing": "A verificar a sua subscrição do YouTube...",
+    "unlinking": "A desligar o Discord...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -798,7 +944,7 @@
       },
       "no_level_role": {
         "title": "Não encontrámos a sua subscrição do YouTube",
-        "body": "Ligue o YouTube no Discord com a conta Google que tem a sua subscrição. Aguarde alguns minutos e verifique novamente."
+        "body": "Ligue o YouTube no Discord com a conta Google que tem a sua subscrição. Aguarde alguns minutos e verifique novamente. Se ligou outra conta do Discord, desligue-a e ligue a correta."
       },
       "conflict": {
         "title": "Não conseguimos associar essa conta do Discord",
@@ -815,6 +961,18 @@
       "link_failed": {
         "title": "O Discord não concluiu a ligação",
         "body": "Prima Ligar Discord para tentar novamente."
+      },
+      "unlinked": {
+        "title": "Conta do Discord desligada",
+        "body": "Agora ligue a conta do Discord que tem a sua ligação ao YouTube."
+      },
+      "unlink_last": {
+        "title": "Não pode desligar esta conta do Discord",
+        "body": "É a única forma de iniciar sessão nesta conta. Contacte-nos para alterar isto."
+      },
+      "unlink_failed": {
+        "title": "O Discord não foi desligado",
+        "body": "Tente novamente dentro de um minuto ou contacte-nos."
       },
       "error": {
         "title": "Algo correu mal",
@@ -849,11 +1007,13 @@
     "cta": {
       "link": "Привязать Discord",
       "check": "Проверить моё спонсорство YouTube",
-      "check_again": "Проверить снова"
+      "check_again": "Проверить снова",
+      "unlink": "Отвязать этот аккаунт Discord"
     },
     "discord_linked": "Ваш аккаунт Discord привязан.",
     "linking": "Открываем Discord...",
     "syncing": "Проверяем ваше спонсорство YouTube...",
+    "unlinking": "Отвязываем Discord...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -872,7 +1032,7 @@
       },
       "no_level_role": {
         "title": "Мы не нашли ваше спонсорство YouTube",
-        "body": "Подключите YouTube в Discord с аккаунтом Google, с которым оформлено спонсорство. Подождите несколько минут и проверьте снова."
+        "body": "Подключите YouTube в Discord с аккаунтом Google, с которым оформлено спонсорство. Подождите несколько минут и проверьте снова. Если вы привязали другой аккаунт Discord, отвяжите его и привяжите нужный."
       },
       "conflict": {
         "title": "Мы не можем сопоставить этот аккаунт Discord",
@@ -889,6 +1049,18 @@
       "link_failed": {
         "title": "Discord не завершил привязку",
         "body": "Нажмите Привязать Discord, чтобы попробовать снова."
+      },
+      "unlinked": {
+        "title": "Аккаунт Discord отвязан",
+        "body": "Теперь привяжите аккаунт Discord с интеграцией YouTube."
+      },
+      "unlink_last": {
+        "title": "Этот аккаунт Discord нельзя отвязать",
+        "body": "Это единственный способ входа в этот аккаунт. Свяжитесь с нами, чтобы изменить это."
+      },
+      "unlink_failed": {
+        "title": "Discord не отвязан",
+        "body": "Попробуйте через минуту или свяжитесь с нами."
       },
       "error": {
         "title": "Что-то пошло не так",
@@ -923,11 +1095,13 @@
     "cta": {
       "link": "Discord を連携",
       "check": "YouTube メンバーシップを確認",
-      "check_again": "もう一度確認"
+      "check_again": "もう一度確認",
+      "unlink": "この Discord アカウントの連携を解除"
     },
     "discord_linked": "Discord アカウントは連携済みです。",
     "linking": "Discord を開いています...",
     "syncing": "YouTube メンバーシップを確認中...",
+    "unlinking": "Discord の連携を解除しています...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -946,7 +1120,7 @@
       },
       "no_level_role": {
         "title": "YouTube メンバーシップが見つかりませんでした",
-        "body": "メンバーシップのある Google アカウントで Discord に YouTube を接続してください。数分待ってから、もう一度確認してください。"
+        "body": "メンバーシップのある Google アカウントで Discord に YouTube を接続してください。数分待ってから、もう一度確認してください。別の Discord アカウントを連携した場合は、連携を解除して正しいアカウントを連携してください。"
       },
       "conflict": {
         "title": "その Discord アカウントを照合できません",
@@ -963,6 +1137,18 @@
       "link_failed": {
         "title": "Discord で連携が完了しませんでした",
         "body": "Discord を連携 を押して、もう一度お試しください。"
+      },
+      "unlinked": {
+        "title": "Discord アカウントの連携を解除しました",
+        "body": "YouTube と接続した Discord アカウントを連携してください。"
+      },
+      "unlink_last": {
+        "title": "この Discord アカウントの連携は解除できません",
+        "body": "このアカウントにログインする唯一の方法です。変更するにはお問い合わせください。"
+      },
+      "unlink_failed": {
+        "title": "Discord の連携を解除できませんでした",
+        "body": "1 分後にもう一度お試しいただくか、お問い合わせください。"
       },
       "error": {
         "title": "問題が発生しました",
@@ -997,11 +1183,13 @@
     "cta": {
       "link": "关联 Discord",
       "check": "检查我的 YouTube 会员",
-      "check_again": "再次检查"
+      "check_again": "再次检查",
+      "unlink": "解除关联此 Discord 账号"
     },
     "discord_linked": "你的 Discord 账号已关联。",
     "linking": "正在打开 Discord...",
     "syncing": "正在检查你的 YouTube 会员...",
+    "unlinking": "正在解除关联 Discord...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -1020,7 +1208,7 @@
       },
       "no_level_role": {
         "title": "我们没有找到你的 YouTube 会员",
-        "body": "在 Discord 中用开通会员的 Google 账号连接 YouTube。等几分钟后再次检查。"
+        "body": "在 Discord 中用开通会员的 Google 账号连接 YouTube。等几分钟后再次检查。如果你关联了另一个 Discord 账号,请解除关联并关联正确的账号。"
       },
       "conflict": {
         "title": "我们无法匹配该 Discord 账号",
@@ -1037,6 +1225,18 @@
       "link_failed": {
         "title": "Discord 未完成关联",
         "body": "点击 关联 Discord 重试。"
+      },
+      "unlinked": {
+        "title": "已解除关联 Discord 账号",
+        "body": "现在请关联已连接 YouTube 的 Discord 账号。"
+      },
+      "unlink_last": {
+        "title": "无法解除关联此 Discord 账号",
+        "body": "这是你登录此账号的唯一方式。如需更改,请联系我们。"
+      },
+      "unlink_failed": {
+        "title": "Discord 未解除关联",
+        "body": "请一分钟后再试,或联系我们。"
       },
       "error": {
         "title": "出现问题",
@@ -1071,11 +1271,13 @@
     "cta": {
       "link": "Discord 연결",
       "check": "내 YouTube 멤버십 확인",
-      "check_again": "다시 확인"
+      "check_again": "다시 확인",
+      "unlink": "이 Discord 계정 연결 해제"
     },
     "discord_linked": "Discord 계정이 연결되어 있습니다.",
     "linking": "Discord를 여는 중...",
     "syncing": "YouTube 멤버십을 확인하는 중...",
+    "unlinking": "Discord 연결을 해제하는 중...",
     "levels": { "base": "Member", "plus": "Plus", "pro": "Pro" },
     "result": {
       "linked": {
@@ -1094,7 +1296,7 @@
       },
       "no_level_role": {
         "title": "YouTube 멤버십을 찾지 못했습니다",
-        "body": "멤버십이 있는 Google 계정으로 Discord에 YouTube를 연결하세요. 몇 분 기다린 뒤 다시 확인하세요."
+        "body": "멤버십이 있는 Google 계정으로 Discord에 YouTube를 연결하세요. 몇 분 기다린 뒤 다시 확인하세요. 다른 Discord 계정을 연결했다면 연결을 해제하고 올바른 계정을 연결하세요."
       },
       "conflict": {
         "title": "해당 Discord 계정을 확인할 수 없습니다",
@@ -1111,6 +1313,18 @@
       "link_failed": {
         "title": "Discord에서 연결이 완료되지 않았습니다",
         "body": "Discord 연결을 눌러 다시 시도하세요."
+      },
+      "unlinked": {
+        "title": "Discord 계정 연결이 해제되었습니다",
+        "body": "이제 YouTube가 연결된 Discord 계정을 연결하세요."
+      },
+      "unlink_last": {
+        "title": "이 Discord 계정은 연결을 해제할 수 없습니다",
+        "body": "이 계정에 로그인하는 유일한 방법입니다. 변경하시려면 문의해 주세요."
+      },
+      "unlink_failed": {
+        "title": "Discord 연결이 해제되지 않았습니다",
+        "body": "1분 후에 다시 시도하시거나 문의해 주세요."
       },
       "error": {
         "title": "문제가 발생했습니다",

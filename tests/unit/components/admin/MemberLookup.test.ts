@@ -291,7 +291,8 @@ describe('AdminMemberLookup', () => {
         .slice(0, 4)
     ).toEqual(['youtube', 'Plus', 'active', 'No expiry']);
     const badge = sub.find('.badge');
-    expect(badge.classes()).toContain('badge-error');
+    expect(badge.classes()).toContain('badge-neutral');
+    expect(badge.classes()).not.toContain('badge-error');
     expect(badge.classes()).not.toContain('badge-ghost');
     expect(wrapper.text()).toContain('Matched on: Discord user id');
   });

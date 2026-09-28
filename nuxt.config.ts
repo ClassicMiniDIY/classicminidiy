@@ -1158,9 +1158,9 @@ export default defineNuxtConfig({
   // left Web Push with nothing to deliver to. No register plugin: only
   // ensurePushServiceWorker() registers it, when a user turns push on. Rules:
   // .claude/rules/push-notifications.md. If a fetch handler is ever added, it
-  // must never serve /auth/callback, /membership/claim or /discord/* from a
-  // cached shell (their single-use ?code=/?token= would be lost); the old
-  // Workbox denylist for them is in this file's git history.
+  // must never serve /auth/callback, /membership/claim, /membership/youtube
+  // or /discord/* from a cached shell (their single-use ?code=/?token= would
+  // be lost); the old Workbox denylist for them is in this file's git history.
   pwa: {
     strategies: 'injectManifest',
     srcDir: fileURLToPath(new URL('./service-worker', import.meta.url)),

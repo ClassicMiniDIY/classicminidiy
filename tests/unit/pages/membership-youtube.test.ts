@@ -17,7 +17,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { ref, computed } from 'vue';
+import { readFileSync } from 'node:fs';
 import YoutubePage from '~/app/pages/membership/youtube.vue';
+
+const MESSAGES = JSON.parse(
+  readFileSync('app/pages/membership/youtube.vue', 'utf8').match(/<i18n lang="json">\n([\s\S]*?)<\/i18n>/)![1]!
+);
 
 const baseUser = { id: 'user-1', email: 'member@example.com', identities: [] as { provider: string }[] };
 
@@ -35,13 +40,16 @@ function makeSupabaseStub({
   providers = [] as string[],
   accessToken = 'tok-123' as string | null,
   linkError = null as null | { code?: string; message: string },
+  unlinkError = null as null | { code?: string; message: string },
 } = {}) {
   return {
     auth: {
       getSession: vi.fn().mockResolvedValue({ data: { session: accessToken ? { access_token: accessToken } : null } }),
-      getUserIdentities: vi
-        .fn()
-        .mockResolvedValue({ data: { identities: providers.map((provider) => ({ provider })) }, error: null }),
+      getUserIdentities: vi.fn().mockResolvedValue({
+        data: { identities: providers.map((provider) => ({ provider, identity_id: `${provider}-identity` })) },
+        error: null,
+      }),
+      unlinkIdentity: vi.fn().mockResolvedValue({ data: {}, error: unlinkError }),
       linkIdentity: vi.fn().mockResolvedValue({ data: { url: null }, error: linkError }),
       exchangeCodeForSession: vi.fn().mockResolvedValue({ data: { session: {} }, error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
@@ -334,7 +342,86 @@ describe('sync outcomes', () => {
       fetchImpl: () => Promise.reject(Object.assign(new Error('x'), { statusCode: 401 })),
     });
     const wrapper = await mountPage();
-    expect(supabase.auth.signOut).toHaveBeenCalled();
+    // Local scope: one rejected request must not end the user's other sessions.
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
     expect(wrapper.find('[data-testid="yt-signin"]').exists()).toBe(true);
+  });
+});
+
+describe('unlinking the wrong Discord account', () => {
+  it('offers Unlink when Discord is linked, and not before', async () => {
+    stubEnvironment();
+    expect((await mountPage()).find('[data-testid="yt-unlink"]').exists()).toBe(false);
+    vi.unstubAllGlobals();
+    stubEnvironment({ supabase: makeSupabaseStub({ providers: ['google', 'discord'] }) });
+    expect((await mountPage()).find('[data-testid="yt-unlink"]').exists()).toBe(true);
+  });
+
+  it('unlinks the Discord identity and shows the Link button again', async () => {
+    const { supabase } = stubEnvironment({ supabase: makeSupabaseStub({ providers: ['google', 'discord'] }) });
+    const wrapper = await mountPage();
+    await wrapper.find('[data-testid="yt-unlink"]').trigger('click');
+    await flushPromises();
+    expect(supabase.auth.unlinkIdentity).toHaveBeenCalledWith({
+      provider: 'discord',
+      identity_id: 'discord-identity',
+    });
+    expect(wrapper.find('[data-testid="yt-outcome"]').attributes('data-outcome')).toBe('unlinked');
+    expect(wrapper.find('[data-testid="yt-link-discord"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="yt-check"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="yt-unlink"]').exists()).toBe(false);
+  });
+
+  it('the only sign-in identity cannot be unlinked: plain copy, and Discord stays linked', async () => {
+    stubEnvironment({
+      supabase: makeSupabaseStub({
+        providers: ['discord'],
+        unlinkError: {
+          code: 'single_identity_not_deletable',
+          message: 'User must have at least 1 identity after unlinking',
+        },
+      }),
+    });
+    const wrapper = await mountPage();
+    await wrapper.find('[data-testid="yt-unlink"]').trigger('click');
+    await flushPromises();
+    const outcome = wrapper.find('[data-testid="yt-outcome"]');
+    expect(outcome.attributes('data-outcome')).toBe('unlink_last');
+    expect(outcome.text()).toContain('result.unlink_last.body');
+    expect(outcome.find('a[href="/contact"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="yt-check"]').exists()).toBe(true);
+  });
+
+  it('any other unlink error → unlink_failed, still linked', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    stubEnvironment({
+      supabase: makeSupabaseStub({ providers: ['google', 'discord'], unlinkError: { message: 'boom' } }),
+    });
+    const wrapper = await mountPage();
+    await wrapper.find('[data-testid="yt-unlink"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="yt-outcome"]').attributes('data-outcome')).toBe('unlink_failed');
+    expect(wrapper.find('[data-testid="yt-unlink"]').exists()).toBe(true);
+  });
+});
+
+describe('copy', () => {
+  it('every locale has the same keys as English', () => {
+    const keys = (node: Record<string, unknown>, prefix = ''): string[] =>
+      Object.entries(node).flatMap(([k, v]) =>
+        v && typeof v === 'object' ? keys(v as Record<string, unknown>, `${prefix}${k}.`) : [`${prefix}${k}`]
+      );
+    const en = keys(MESSAGES.en).sort();
+    expect(Object.keys(MESSAGES).sort()).toEqual(['de', 'en', 'es', 'fr', 'it', 'ja', 'ko', 'pt', 'ru', 'zh']);
+    for (const locale of Object.keys(MESSAGES)) expect(keys(MESSAGES[locale]).sort()).toEqual(en);
+  });
+
+  it('no_level_role names a different Discord account as a cause', () => {
+    expect(MESSAGES.en.result.no_level_role.body).toContain('different Discord account');
+    for (const locale of Object.keys(MESSAGES)) {
+      expect(MESSAGES[locale].result.no_level_role.body).not.toBe(
+        'Connect YouTube in Discord with the Google account that has your membership. Wait a few minutes, then check again.'
+      );
+    }
   });
 });

@@ -73,7 +73,9 @@
         // The local session looked valid but the server rejected the token
         // (deleted user, auth incident). Clear it first — otherwise /login
         // sees isAuthenticated, bounces straight back here, and we loop.
-        await supabase.auth.signOut().catch(() => {});
+        // Local scope: clear this browser only. A global sign-out would end
+        // the user's sessions on every device over one rejected request.
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
         await navigateTo(loginWithIntentHref);
         return;
       }
