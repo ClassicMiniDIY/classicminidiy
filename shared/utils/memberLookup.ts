@@ -10,7 +10,9 @@
  * Contract, as the RPC returns it:
  * - Case-insensitive substring match on the account email, a pending claim
  *   email, the Discord username, the Ghost email, a subscription external_ref,
- *   the Stripe customer id, or the user id. **Never on a name** (decision 13:
+ *   the Stripe customer id, or the user id; exact match on a Discord user id
+ *   (claim link or linked Discord identity, `discord_user_id`, from the YouTube
+ *   member bridge). **Never on a name** (decision 13:
  *   names differ across platforms, and Patreon masks them). Do not add a name
  *   filter here or in the UI.
  * - A query shorter than 3 characters is refused with SQLSTATE 22023.
@@ -39,6 +41,7 @@ export type MemberLookupMatch =
   | 'account_email'
   | 'pending_email'
   | 'discord_username'
+  | 'discord_user_id'
   | 'ghost_email'
   | 'external_ref'
   | 'stripe_customer_id'

@@ -254,4 +254,45 @@ describe('AdminMemberLookup', () => {
     expect(wrapper.findAll('[data-testid="lookup-result"]')).toHaveLength(0);
     expect(wrapper.find('[data-testid="lookup-empty"]').exists()).toBe(true);
   });
+
+  it('renders a youtube row with its own badge and names a Discord user id match', async () => {
+    adminFetch.mockResolvedValue({
+      truncated: false,
+      results: [
+        {
+          user_id: '33333333-3333-3333-3333-333333333333',
+          email: 'viewer@example.com',
+          display_name: null,
+          matched_on: ['discord_user_id'],
+          subscriptions: [
+            {
+              platform: 'youtube',
+              product_id: 'sustaining',
+              status: 'active',
+              plan: 'plus',
+              expires_at: null,
+              external_ref: 'discord:123456789012345678',
+              updated_at: null,
+            },
+          ],
+          pending_claims: [],
+          discord: null,
+        },
+      ],
+    } satisfies MemberLookupResponse);
+    const wrapper = mount(MemberLookup);
+    await search(wrapper, '123456789012345678');
+
+    const sub = wrapper.find('[data-testid="lookup-subscription"]');
+    expect(
+      sub
+        .findAll('td')
+        .map((td) => td.text())
+        .slice(0, 4)
+    ).toEqual(['youtube', 'Plus', 'active', 'No expiry']);
+    const badge = sub.find('.badge');
+    expect(badge.classes()).toContain('badge-error');
+    expect(badge.classes()).not.toContain('badge-ghost');
+    expect(wrapper.text()).toContain('Matched on: Discord user id');
+  });
 });
