@@ -90,6 +90,7 @@ describe('POST /api/membership/youtube-sync', () => {
   it.each([
     [401, 'unauthorized'],
     [409, 'identity_conflict'],
+    [429, 'too_many_requests'],
     [503, 'not_configured'],
     [500, 'sync_failed'],
   ])('keeps the edge function status %i and its code %s', async (status, code) => {

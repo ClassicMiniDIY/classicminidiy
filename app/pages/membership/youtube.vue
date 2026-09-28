@@ -34,7 +34,15 @@
 
   type PageState = 'checking' | 'signin' | 'ready' | 'linking' | 'syncing';
   type Outcome =
-    'linked' | 'no_identity' | 'not_in_server' | 'no_level_role' | 'conflict' | 'unavailable' | 'link_failed' | 'error';
+    | 'linked'
+    | 'no_identity'
+    | 'not_in_server'
+    | 'no_level_role'
+    | 'conflict'
+    | 'too_many_requests'
+    | 'unavailable'
+    | 'link_failed'
+    | 'error';
 
   const state = ref<PageState>('checking');
   const hasDiscord = ref(false);
@@ -49,6 +57,7 @@
     not_in_server: { alert: 'alert-warning', icon: 'fab fa-discord' },
     no_level_role: { alert: 'alert-warning', icon: 'fab fa-youtube' },
     conflict: { alert: 'alert-error', icon: 'fas fa-user-lock' },
+    too_many_requests: { alert: 'alert-info', icon: 'fas fa-clock' },
     unavailable: { alert: 'alert-info', icon: 'fas fa-hourglass-half' },
     link_failed: { alert: 'alert-error', icon: 'fas fa-link-slash' },
     error: { alert: 'alert-error', icon: 'fas fa-triangle-exclamation' },
@@ -127,7 +136,7 @@
         return;
       }
       const res = await $fetch<{
-        status: Exclude<Outcome, 'conflict' | 'unavailable' | 'link_failed' | 'error'>;
+        status: Exclude<Outcome, 'conflict' | 'too_many_requests' | 'unavailable' | 'link_failed' | 'error'>;
         plan?: MembershipPlan | null;
       }>('/api/membership/youtube-sync', { method: 'POST', headers: { authorization: `Bearer ${token}` } });
       outcome.value = res.status;
@@ -147,7 +156,11 @@
         state.value = 'signin';
         return;
       }
-      outcome.value = status === 409 ? 'conflict' : status === 503 ? 'unavailable' : 'error';
+      // 409 covers a Discord account tied to another site account AND two
+      // Discord identities on this one. 429: checked under 30 s ago; the
+      // button stays usable, so the member can press it again after the wait.
+      outcome.value =
+        status === 409 ? 'conflict' : status === 429 ? 'too_many_requests' : status === 503 ? 'unavailable' : 'error';
       if (outcome.value === 'error') console.error('[membership/youtube] sync failed:', err);
       track('youtube_bridge_sync_failed', { source: 'web', reason: outcome.value });
     }
@@ -418,8 +431,12 @@
         "body": "Connect YouTube in Discord with the Google account that has your membership. Wait a few minutes, then check again."
       },
       "conflict": {
-        "title": "That Discord account is linked to a different account",
-        "body": "It belongs to another Classic Mini DIY account. Sign in with that account, or contact us."
+        "title": "We cannot match that Discord account",
+        "body": "It is linked to a different Classic Mini DIY account, or your account has more than one Discord account linked. Contact us and we will fix it."
+      },
+      "too_many_requests": {
+        "title": "You just checked",
+        "body": "Wait a moment and try again."
       },
       "unavailable": {
         "title": "Not available yet",
@@ -488,8 +505,12 @@
         "body": "Conecta YouTube en Discord con la cuenta de Google que tiene tu membresía. Espera unos minutos y comprueba de nuevo."
       },
       "conflict": {
-        "title": "Esa cuenta de Discord está vinculada a otra cuenta",
-        "body": "Pertenece a otra cuenta de Classic Mini DIY. Inicia sesión con esa cuenta o contáctanos."
+        "title": "No podemos asociar esa cuenta de Discord",
+        "body": "Está vinculada a otra cuenta de Classic Mini DIY, o tu cuenta tiene más de una cuenta de Discord vinculada. Contáctanos y lo solucionaremos."
+      },
+      "too_many_requests": {
+        "title": "Acabas de comprobarlo",
+        "body": "Espera un momento e inténtalo de nuevo."
       },
       "unavailable": {
         "title": "Aún no disponible",
@@ -558,8 +579,12 @@
         "body": "Connectez YouTube dans Discord avec le compte Google qui a votre abonnement. Attendez quelques minutes, puis vérifiez à nouveau."
       },
       "conflict": {
-        "title": "Ce compte Discord est lié à un autre compte",
-        "body": "Il appartient à un autre compte Classic Mini DIY. Connectez-vous avec ce compte, ou contactez-nous."
+        "title": "Nous ne pouvons pas associer ce compte Discord",
+        "body": "Il est lié à un autre compte Classic Mini DIY, ou votre compte a plus d'un compte Discord lié. Contactez-nous et nous corrigerons cela."
+      },
+      "too_many_requests": {
+        "title": "Vous venez de vérifier",
+        "body": "Attendez un instant et réessayez."
       },
       "unavailable": {
         "title": "Pas encore disponible",
@@ -628,8 +653,12 @@
         "body": "Verknüpfe YouTube in Discord mit dem Google-Konto, das deine Mitgliedschaft hat. Warte ein paar Minuten und prüfe dann erneut."
       },
       "conflict": {
-        "title": "Dieses Discord-Konto ist mit einem anderen Konto verknüpft",
-        "body": "Es gehört zu einem anderen Classic Mini DIY Konto. Melde dich mit diesem Konto an oder kontaktiere uns."
+        "title": "Wir können dieses Discord-Konto nicht zuordnen",
+        "body": "Es ist mit einem anderen Classic Mini DIY Konto verknüpft, oder dein Konto hat mehr als ein verknüpftes Discord-Konto. Kontaktiere uns, und wir beheben das."
+      },
+      "too_many_requests": {
+        "title": "Du hast gerade erst geprüft",
+        "body": "Warte einen Moment und versuche es erneut."
       },
       "unavailable": {
         "title": "Noch nicht verfügbar",
@@ -698,8 +727,12 @@
         "body": "Collega YouTube in Discord con l'account Google che ha il tuo abbonamento. Attendi qualche minuto, poi verifica di nuovo."
       },
       "conflict": {
-        "title": "Quell'account Discord è collegato a un altro account",
-        "body": "Appartiene a un altro account Classic Mini DIY. Accedi con quell'account, oppure contattaci."
+        "title": "Non possiamo associare quell'account Discord",
+        "body": "È collegato a un altro account Classic Mini DIY, oppure il tuo account ha più di un account Discord collegato. Contattaci e lo sistemeremo."
+      },
+      "too_many_requests": {
+        "title": "Hai appena verificato",
+        "body": "Attendi un momento e riprova."
       },
       "unavailable": {
         "title": "Non ancora disponibile",
@@ -768,8 +801,12 @@
         "body": "Ligue o YouTube no Discord com a conta Google que tem a sua subscrição. Aguarde alguns minutos e verifique novamente."
       },
       "conflict": {
-        "title": "Essa conta do Discord está ligada a outra conta",
-        "body": "Pertence a outra conta Classic Mini DIY. Inicie sessão com essa conta ou contacte-nos."
+        "title": "Não conseguimos associar essa conta do Discord",
+        "body": "Está ligada a outra conta Classic Mini DIY, ou a sua conta tem mais do que uma conta do Discord ligada. Contacte-nos e resolvemos."
+      },
+      "too_many_requests": {
+        "title": "Acabou de verificar",
+        "body": "Aguarde um momento e tente novamente."
       },
       "unavailable": {
         "title": "Ainda não disponível",
@@ -838,8 +875,12 @@
         "body": "Подключите YouTube в Discord с аккаунтом Google, с которым оформлено спонсорство. Подождите несколько минут и проверьте снова."
       },
       "conflict": {
-        "title": "Этот аккаунт Discord привязан к другому аккаунту",
-        "body": "Он принадлежит другому аккаунту Classic Mini DIY. Войдите в тот аккаунт или свяжитесь с нами."
+        "title": "Мы не можем сопоставить этот аккаунт Discord",
+        "body": "Он привязан к другому аккаунту Classic Mini DIY, или к вашему аккаунту привязано несколько аккаунтов Discord. Свяжитесь с нами, и мы всё исправим."
+      },
+      "too_many_requests": {
+        "title": "Вы только что проверяли",
+        "body": "Подождите немного и попробуйте снова."
       },
       "unavailable": {
         "title": "Пока недоступно",
@@ -908,8 +949,12 @@
         "body": "メンバーシップのある Google アカウントで Discord に YouTube を接続してください。数分待ってから、もう一度確認してください。"
       },
       "conflict": {
-        "title": "その Discord アカウントは別のアカウントに連携されています",
-        "body": "別の Classic Mini DIY アカウントのものです。そのアカウントでログインするか、お問い合わせください。"
+        "title": "その Discord アカウントを照合できません",
+        "body": "別の Classic Mini DIY アカウントに連携されているか、このアカウントに複数の Discord アカウントが連携されています。お問い合わせいただければ修正します。"
+      },
+      "too_many_requests": {
+        "title": "確認したばかりです",
+        "body": "少し待ってから、もう一度お試しください。"
       },
       "unavailable": {
         "title": "まだご利用いただけません",
@@ -978,8 +1023,12 @@
         "body": "在 Discord 中用开通会员的 Google 账号连接 YouTube。等几分钟后再次检查。"
       },
       "conflict": {
-        "title": "该 Discord 账号已关联到其他账号",
-        "body": "它属于另一个 Classic Mini DIY 账号。请用该账号登录,或联系我们。"
+        "title": "我们无法匹配该 Discord 账号",
+        "body": "它已关联到另一个 Classic Mini DIY 账号,或者你的账号关联了多个 Discord 账号。请联系我们,我们会处理。"
+      },
+      "too_many_requests": {
+        "title": "你刚刚检查过",
+        "body": "请稍等片刻再试。"
       },
       "unavailable": {
         "title": "暂不可用",
@@ -1048,8 +1097,12 @@
         "body": "멤버십이 있는 Google 계정으로 Discord에 YouTube를 연결하세요. 몇 분 기다린 뒤 다시 확인하세요."
       },
       "conflict": {
-        "title": "해당 Discord 계정은 다른 계정에 연결되어 있습니다",
-        "body": "다른 Classic Mini DIY 계정의 것입니다. 그 계정으로 로그인하시거나 문의해 주세요."
+        "title": "해당 Discord 계정을 확인할 수 없습니다",
+        "body": "다른 Classic Mini DIY 계정에 연결되어 있거나, 이 계정에 Discord 계정이 두 개 이상 연결되어 있습니다. 문의해 주시면 해결해 드리겠습니다."
+      },
+      "too_many_requests": {
+        "title": "방금 확인하셨습니다",
+        "body": "잠시 기다린 뒤 다시 시도해 주세요."
       },
       "unavailable": {
         "title": "아직 이용할 수 없습니다",

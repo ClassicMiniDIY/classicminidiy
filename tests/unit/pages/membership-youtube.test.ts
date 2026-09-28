@@ -284,6 +284,7 @@ describe('sync outcomes', () => {
 
   it.each([
     [409, 'conflict'],
+    [429, 'too_many_requests'],
     [503, 'unavailable'],
     [500, 'error'],
     [502, 'error'],
@@ -298,6 +299,31 @@ describe('sync outcomes', () => {
     const wrapper = await mountWithSync(() => Promise.reject(Object.assign(new Error('x'), { statusCode: 409 })));
     expect(wrapper.text()).toContain('result.conflict.body');
     expect(wrapper.find('a[href="/contact"]').exists()).toBe(true);
+  });
+
+  it('429 → "you just checked", and the check button stays usable for a retry after the wait', async () => {
+    let calls = 0;
+    stubEnvironment({
+      supabase: makeSupabaseStub({ providers: ['discord'] }),
+      query: { linked: '1' },
+      fetchImpl: () =>
+        ++calls === 1
+          ? Promise.reject(Object.assign(new Error('x'), { statusCode: 429, data: { error: 'too_many_requests' } }))
+          : Promise.resolve({ status: 'linked', plan: 'pro' }),
+    });
+    const wrapper = await mountPage();
+    const outcome = wrapper.find('[data-testid="yt-outcome"]');
+    expect(outcome.attributes('data-outcome')).toBe('too_many_requests');
+    expect(outcome.classes()).toContain('alert-info');
+    expect(outcome.text()).toContain('result.too_many_requests.title');
+    expect(outcome.text()).toContain('result.too_many_requests.body');
+
+    const button = wrapper.find('[data-testid="yt-check"]');
+    expect(button.attributes('disabled')).toBeUndefined();
+    await button.trigger('click');
+    await flushPromises();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(wrapper.find('[data-testid="yt-outcome"]').attributes('data-outcome')).toBe('linked');
   });
 
   it('401 → clears the stale session and shows the sign-in card', async () => {

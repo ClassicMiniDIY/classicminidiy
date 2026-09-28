@@ -12,7 +12,10 @@
  * The web never writes `subscriptions`; the edge function owns that row.
  *
  * 200 answers pass through as `{ status, plan? }`. Error answers keep the edge
- * function's status (401 / 409 / 503 / 5xx) with `data.error` set to its code,
+ * function's status (401 / 409 / 429 / 503 / 5xx) with `data.error` set to its
+ * code (409 identity_conflict: the Discord account is tied to another site
+ * account, or this account holds two Discord identities; 429
+ * too_many_requests: the same user checked under 30 s ago),
  * so the page can branch on the status alone. Same pattern as
  * /api/discord/reissue.
  */
@@ -23,7 +26,8 @@ type YoutubeSyncStatus = (typeof SYNC_STATUSES)[number];
 
 const ERROR_MESSAGES: Record<number, string> = {
   401: 'Sign in again to link your YouTube membership',
-  409: 'That Discord account is linked to another Classic Mini DIY account',
+  409: 'That Discord account cannot be matched to this account',
+  429: 'You just checked. Wait a moment and try again',
   503: 'Linking YouTube memberships is not available yet',
 };
 
