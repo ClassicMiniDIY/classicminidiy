@@ -296,7 +296,7 @@ export function quotaExhaustedMessage(tier: ChatTier): string {
       ? `Sign in for ${nextLimit} messages a month`
       : next === 'member'
         ? `Sustaining Members get ${nextLimit} messages a month`
-        : `Member ${next === 'plus' ? 'Plus' : 'Pro'} gets ${nextLimit} messages a month`;
+        : `The ${next === 'plus' ? 'Plus' : 'Pro'} level gets ${nextLimit} messages a month`;
   return `You have reached the ${window} message limit. ${offer} — ${MEMBERSHIP_URL}`;
 }
 
