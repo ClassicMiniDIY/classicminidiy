@@ -30,16 +30,6 @@
     youtube: { base: 1.99, plus: 4.99, pro: 9.99, supporter: 24.99 },
   };
 
-  // What YouTube and Patreon still call each level until the renames in §4.4
-  // land (design step 1, done by hand on those platforms). Shown in brackets so
-  // a visitor can match this table to the level list they see there. Delete
-  // this map, and the line that renders it, once the platforms show
-  // Member / Plus / Pro / Pro Supporter. Proper nouns: not translated.
-  const CURRENT_PLATFORM_NAMES: Partial<Record<Channel, Record<Level, string>>> = {
-    patreon: { base: '850cc+', plus: '998cc', pro: '1275cc', supporter: 'Bad Wolf' },
-    youtube: { base: '850cc', plus: '998cc', pro: '1100cc', supporter: '1275cc' },
-  };
-
   const coreBenefits = ['badge', 'discord', 'blog', 'early_access', 'listings', 'sync', 'bot'] as const;
 
   const fmtUsd = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
@@ -90,12 +80,7 @@
             <td v-for="c in channels" :key="c" class="align-top" :data-channel="c">
               <ul class="space-y-1">
                 <li v-for="l in levels" :key="l" class="flex justify-between gap-3">
-                  <span
-                    >{{ t(`levels.${l}`)
-                    }}<span v-if="CURRENT_PLATFORM_NAMES[c]" class="text-xs opacity-60 ml-1" data-testid="platform-name"
-                      >({{ CURRENT_PLATFORM_NAMES[c]![l] }})</span
-                    ></span
-                  >
+                  <span>{{ t(`levels.${l}`) }}</span>
                   <span v-if="PRICES[c][l] !== null" class="font-semibold whitespace-nowrap"
                     >{{ fmtUsd(PRICES[c][l]!) }}{{ t('per_month') }}</span
                   >
