@@ -2,16 +2,16 @@
 // level, so the cutover flag-gate and the onboarding gate can't drift apart.
 //
 // EXCHANGE_PREFIXES — the marketplace surfaces the cutover flag hides pre-launch:
-// the /exchange section plus the user's own marketplace management tabs under
-// /dashboard. These are open to BROWSE for everyone once live; onboarding is NOT
+// the /exchange section, the user's own marketplace management tabs under
+// /dashboard, and the marketplace notification preferences under /settings. These are open to BROWSE for everyone once live; onboarding is NOT
 // required to view them (see EXCHANGE_ONBOARDING_PREFIXES for what actually needs
 // a completed profile).
 export const EXCHANGE_PREFIXES = [
   '/exchange',
   '/dashboard/listings',
   '/dashboard/wanted',
-  '/dashboard/notifications',
   '/dashboard/saved-searches',
+  '/settings/notifications',
 ];
 
 // Routes that the cutover flag must ALSO hide pre-launch, but that the

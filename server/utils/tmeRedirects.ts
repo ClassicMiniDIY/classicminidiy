@@ -24,8 +24,8 @@ export const TME_HOSTS = ['theminiexchange.com', 'www.theminiexchange.com'] as c
 /** Exact-path sources. Key is the path with no trailing slash (except the root). */
 export const TME_EXACT: ReadonlyArray<readonly [string, string]> = [
   ['/admin/users', 'https://www.classicminidiy.com/admin/users'],
-  ['/settings/membership', 'https://www.classicminidiy.com/membership'],
-  ['/settings/notifications', 'https://www.classicminidiy.com/dashboard/notifications'],
+  ['/settings/membership', 'https://www.classicminidiy.com/settings/membership'],
+  ['/settings/notifications', 'https://www.classicminidiy.com/settings/notifications'],
   ['/settings/saved-searches', 'https://www.classicminidiy.com/dashboard/saved-searches'],
   ['/terms', 'https://www.classicminidiy.com/legal/marketplace-terms'],
   ['/feed.xml', 'https://www.classicminidiy.com/exchange/feed.xml'],

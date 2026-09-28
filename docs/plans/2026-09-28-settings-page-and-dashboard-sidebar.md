@@ -74,7 +74,7 @@ after merge.
 
 ## Currency
 
-`app/plugins/currency.client.ts` calls `initUserCurrency()` on `app:mounted` (after
+`app/app.vue` calls `initUserCurrency()` in `onMounted` (after
 hydration, so server-rendered USD prices do not mismatch) and again when the signed-in
 user changes. The selector calls `setUserCurrency(code, userId)`, which writes
 localStorage and `profiles.preferred_currency`.
