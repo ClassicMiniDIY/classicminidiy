@@ -286,7 +286,8 @@
       return;
     }
 
-    if (back.linked) {
+    // Back from Discord: the code (or the legacy ?linked=1) marks the return.
+    if (back.linked || back.code) {
       await checkMembership();
       return;
     }
