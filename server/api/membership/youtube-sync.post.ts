@@ -60,8 +60,16 @@ export default defineEventHandler(async (event) => {
     });
   } catch (error: any) {
     // Keep the edge function's status and its error code, never its raw body.
-    const status = error?.statusCode || error?.status || error?.response?.status || 502;
-    const code = typeof error?.data?.error === 'string' ? error.data.error : 'sync_failed';
+    let status: number = error?.statusCode || error?.status || error?.response?.status || 502;
+    let code: string = typeof error?.data?.error === 'string' ? error.data.error : 'sync_failed';
+    // The page signs the browser out on a 401, so pass one through only when
+    // the function itself rejected the token. A 401 without that body (the
+    // gateway, a proxy, a transient auth outage) is not proof the session is
+    // dead: report it as a failed sync the user can retry.
+    if (status === 401 && code !== 'unauthorized') {
+      status = 502;
+      code = 'sync_failed';
+    }
     console.error('[membership/youtube-sync] edge function error:', error?.data || error?.message || error);
     throw createError({
       statusCode: status,

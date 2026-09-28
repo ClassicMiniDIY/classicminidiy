@@ -34,9 +34,7 @@ function makeAuthStub({ user = baseUser }: { user?: typeof baseUser | null } = {
 function makeSupabaseStub(accessToken: string | null = 'access-token') {
   return {
     auth: {
-      getSession: vi
-        .fn()
-        .mockResolvedValue({ data: { session: accessToken ? { access_token: accessToken } : null } }),
+      getSession: vi.fn().mockResolvedValue({ data: { session: accessToken ? { access_token: accessToken } : null } }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
   };
@@ -172,7 +170,8 @@ describe('signed in', () => {
     mountPage();
     await flushPromises();
 
-    expect(supabase.auth.signOut).toHaveBeenCalled();
+    // Local scope only: one rejected request must not end every device's session.
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
     expect(navigateToMock).toHaveBeenCalledWith(`/login?redirect=${encodeURIComponent('/discord/connect')}`);
   });
 

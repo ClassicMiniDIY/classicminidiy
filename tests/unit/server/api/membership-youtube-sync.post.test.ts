@@ -88,7 +88,6 @@ describe('POST /api/membership/youtube-sync', () => {
   });
 
   it.each([
-    [401, 'unauthorized'],
     [409, 'identity_conflict'],
     [429, 'too_many_requests'],
     [503, 'not_configured'],
@@ -96,6 +95,20 @@ describe('POST /api/membership/youtube-sync', () => {
   ])('keeps the edge function status %i and its code %s', async (status, code) => {
     fetchMock.mockRejectedValue(edgeError(status, { error: code }));
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: status, data: { error: code } });
+  });
+
+  it('passes a 401 through only when the function says unauthorized', async () => {
+    fetchMock.mockRejectedValue(edgeError(401, { error: 'unauthorized' }));
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 401, data: { error: 'unauthorized' } });
+  });
+
+  it.each([
+    ['a gateway body', { code: 401, message: 'Invalid JWT' }],
+    ['another error code', { error: 'something_else' }],
+    ['no body', undefined],
+  ])('turns a 401 with %s into a retryable 502, so the page does not sign the user out', async (_label, body) => {
+    fetchMock.mockRejectedValue(edgeError(401, body));
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 502, data: { error: 'sync_failed' } });
   });
 
   it('falls back to 502 and sync_failed on a network error', async () => {

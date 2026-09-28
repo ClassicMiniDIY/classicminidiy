@@ -103,7 +103,7 @@
     comp: 'badge-warning',
     ghost: 'badge-secondary',
     patreon: 'badge-accent',
-    youtube: 'badge-error',
+    youtube: 'badge-neutral',
   };
   const platformBadge = (platform: string) => PLATFORM_BADGES[platform] ?? 'badge-ghost';
 
