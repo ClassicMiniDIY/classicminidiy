@@ -22,7 +22,9 @@ function tFor(locale: string) {
 
 function mountIn(locale = 'en') {
   vi.stubGlobal('useI18n', () => ({ t: tFor(locale), locale: ref(locale) }));
-  return mount(WaysToJoin);
+  return mount(WaysToJoin, {
+    global: { stubs: { NuxtLink: { name: 'NuxtLink', template: '<a :href="to"><slot /></a>', props: ['to'] } } },
+  });
 }
 
 afterEach(() => {
@@ -88,8 +90,28 @@ describe('WaysToJoin', () => {
     expect(wrapper.find('td[data-link="web"]').text()).toBe('Automatic.');
     expect(wrapper.find('td[data-link="patreon"]').text()).toContain('Patreon email matches your account');
     expect(wrapper.find('td[data-link="patreon"]').text()).toContain('claim email');
-    expect(wrapper.find('td[data-link="youtube"]').text()).toBe('Coming soon');
+    expect(wrapper.find('td[data-link="youtube"]').text()).toContain('Link it once, through Discord.');
+    expect(wrapper.find('td[data-link="youtube"]').text()).not.toMatch(/coming soon/i);
   });
+
+  it('links the YouTube cell to /membership/youtube', () => {
+    const link = mountIn().find('td[data-link="youtube"] [data-testid="ways-link-youtube"]');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes('href')).toBe('/membership/youtube');
+    expect(link.text()).toBe('Link your YouTube membership');
+    expect(link.find('i.fab.fa-youtube').exists()).toBe(true);
+  });
+
+  it.each(['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'zh', 'ko'])(
+    '%s: the YouTube link cell has its own copy and link text, and no "coming soon"',
+    (locale) => {
+      expect(BLOCK[locale].link.youtube).toBeTruthy();
+      expect(BLOCK[locale].link.youtube_cta).toBeTruthy();
+      if (locale !== 'en') expect(BLOCK[locale].link.youtube_cta).not.toBe(BLOCK.en.link.youtube_cta);
+      const link = mountIn(locale).find('[data-testid="ways-link-youtube"]');
+      expect(link.text()).toBe(BLOCK[locale].link.youtube_cta);
+    }
+  );
 
   it('shows the three rules', () => {
     const wrapper = mountIn();
