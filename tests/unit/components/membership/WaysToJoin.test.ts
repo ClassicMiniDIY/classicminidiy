@@ -60,9 +60,9 @@ describe('WaysToJoin', () => {
     expect(cell('web')).toContain('Plus$4.99/month');
     expect(cell('web')).toContain('Pro$9.99/month');
     expect(cell('web')).toContain('Pro SupporterNot offered');
-    expect(cell('patreon')).toContain('Member$2/month');
-    expect(cell('patreon')).toContain('Pro Supporter$25/month');
-    expect(cell('youtube')).toContain('Pro Supporter$24.99/month');
+    expect(cell('patreon')).toContain('Member(850cc+)$2/month');
+    expect(cell('patreon')).toContain('Pro Supporter(Bad Wolf)$25/month');
+    expect(cell('youtube')).toContain('Pro Supporter(1275cc)$24.99/month');
   });
 
   it('lists the core benefits once, across all three columns', () => {
@@ -110,6 +110,16 @@ describe('WaysToJoin', () => {
   it('keeps the table in its own scroll box, never the page', () => {
     const wrapper = mountIn();
     expect(wrapper.find('table').element.parentElement!.classList.contains('overflow-x-auto')).toBe(true);
+  });
+
+  it("shows YouTube's and Patreon's current level names beside ours until the renames land", () => {
+    const w = mountIn();
+    const patreon = w.find('[data-channel="patreon"]').text();
+    const youtube = w.find('[data-channel="youtube"]').text();
+    for (const name of ['850cc+', '998cc', '1275cc', 'Bad Wolf']) expect(patreon).toContain(`(${name})`);
+    for (const name of ['850cc', '998cc', '1100cc', '1275cc']) expect(youtube).toContain(`(${name})`);
+    // The website sells under our names only.
+    expect(w.find('[data-channel="web"]').findAll('[data-testid="platform-name"]')).toHaveLength(0);
   });
 
   it('makes the scroll box a focusable, named region (axe scrollable-region-focusable)', () => {

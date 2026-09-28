@@ -1,5 +1,8 @@
 /**
- * GET /api/admin/membership/find?q=…  →  { results, truncated }
+ * POST /api/admin/membership/find  { q }  →  { results, truncated }
+ *
+ * POST, not GET: the query is usually an email, and a query string would copy
+ * it into Worker request logs, log drains and browser history.
  *
  * Support lookup for /admin/membership (membership clarity §8). Finds a person
  * by any email they use, a Discord username, a store or Stripe reference, or a
@@ -33,7 +36,8 @@ type UntypedRpc = (
 export default defineEventHandler(async (event): Promise<MemberLookupResponse> => {
   await requireAdminAuth(event);
 
-  const q = normaliseMemberLookupQuery(getQuery(event).q);
+  const body = await readBody<{ q?: unknown } | null>(event);
+  const q = normaliseMemberLookupQuery(body?.q);
   if (q === null) {
     throw createError({
       statusCode: 400,
