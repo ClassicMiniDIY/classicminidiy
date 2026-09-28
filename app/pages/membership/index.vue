@@ -178,6 +178,11 @@
   // only after that, so a Pro member never sees "· Member" flash first.
   const membershipLoaded = ref(false);
   async function loadMembershipPlatform() {
+    // A reload (for example after switching account) must not show the
+    // previous answer while it runs, nor keep it if this one fails.
+    membershipLoaded.value = false;
+    membershipPlatform.value = null;
+    membershipPlan.value = null;
     if (!user.value) return;
     try {
       const { data, error } = await supabase.rpc('get_my_membership').single();
@@ -243,19 +248,25 @@
   // after that, unless the visitor has already scrolled themselves.
   const WAYS_TO_JOIN_HASH = '#ways-to-join';
   const USER_SCROLL_EVENTS = ['wheel', 'touchmove', 'keydown', 'mousedown'] as const;
+  let stopWatchingUserScroll = () => {};
   function keepWaysToJoinInView(): () => Promise<void> {
     if (window.location.hash !== WAYS_TO_JOIN_HASH) return async () => {};
     let userScrolled = false;
     const mark = () => (userScrolled = true);
     for (const e of USER_SCROLL_EVENTS) window.addEventListener(e, mark, { passive: true, once: true });
-    return async () => {
+    stopWatchingUserScroll = () => {
       for (const e of USER_SCROLL_EVENTS) window.removeEventListener(e, mark);
+    };
+    return async () => {
+      stopWatchingUserScroll();
       await nextTick();
       if (!userScrolled && window.location.hash === WAYS_TO_JOIN_HASH) {
         document.getElementById('ways-to-join')?.scrollIntoView();
       }
     };
   }
+  // Leaving before auth resolves must not leave the listeners on window.
+  onBeforeUnmount(() => stopWatchingUserScroll());
 
   onMounted(async () => {
     const rescrollToWaysToJoin = keepWaysToJoinInView();

@@ -42,7 +42,10 @@
     loading.value = true;
     errorMessage.value = '';
     try {
-      const res = await $adminFetch<MemberLookupResponse>('/api/admin/membership/find', { query: { q } });
+      const res = await $adminFetch<MemberLookupResponse>('/api/admin/membership/find', {
+        method: 'POST',
+        body: { q },
+      });
       if (mine !== seq) return;
       results.value = res?.results ?? [];
       truncated.value = !!res?.truncated;

@@ -130,7 +130,7 @@ describe('AdminMemberLookup', () => {
     await vi.advanceTimersByTimeAsync(400);
     await flushPromises();
     expect(adminFetch).toHaveBeenCalledTimes(1);
-    expect(adminFetch).toHaveBeenCalledWith('/api/admin/membership/find', { query: { q: 'teresa' } });
+    expect(adminFetch).toHaveBeenCalledWith('/api/admin/membership/find', { method: 'POST', body: { q: 'teresa' } });
   });
 
   it('lists every subscription row with its own platform, plan, status and expiry', async () => {
