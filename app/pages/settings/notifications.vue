@@ -1,9 +1,9 @@
 <template>
-  <div class="container mx-auto py-8">
-    <div class="max-w-3xl mx-auto">
+  <div>
+    <div class="max-w-3xl">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold mb-2">{{ t('header.title') }}</h1>
+        <h2 class="text-xl font-semibold mb-2">{{ t('header.title') }}</h2>
         <p class="text-base-content/70">{{ t('header.subtitle') }}</p>
       </div>
 
@@ -220,6 +220,10 @@
 
 <script setup lang="ts">
   import type { NotificationPreferences } from '~/composables/useNotifications';
+
+  // Account section: settings.vue renders the sign-in card in its place when
+  // there is no session. Moved from /dashboard/notifications, which 301s here.
+  definePageMeta({ settingsAuth: true });
 
   const { t } = useI18n();
 

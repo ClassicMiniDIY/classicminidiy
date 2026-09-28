@@ -82,6 +82,7 @@ export const SEARCH_BOTS = ['Googlebot', 'Bingbot', 'DuckDuckBot', 'Applebot', '
 export const PRIVATE_DISALLOW = [
   '/admin',
   '/dashboard',
+  '/settings',
   '/profile',
   '/auth',
   '/login',

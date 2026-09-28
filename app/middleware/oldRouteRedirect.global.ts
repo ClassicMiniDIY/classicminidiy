@@ -47,6 +47,10 @@ const redirects: { from: string; to: string }[] = [
   // /archive/registry, /admin/registry and /contribute/registry are all
   // untouched without needing to be named.
   { from: '/registry', to: '/archive/registry' },
+  // Account settings moved from /dashboard tabs to /settings. Also exact-path
+  // routeRules in nuxt.config.ts; emails link to the old paths, so both stay.
+  { from: '/dashboard/api-keys', to: '/settings/api-keys' },
+  { from: '/dashboard/notifications', to: '/settings/notifications' },
 ];
 
 export default defineNuxtRouteMiddleware((to) => {

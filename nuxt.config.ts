@@ -271,6 +271,8 @@ export default defineNuxtConfig({
       '/contribute/**',
       '/welcome',
       '/profile/**',
+      '/settings',
+      '/settings/**',
       // Legacy calculator paths — 301'd in routeRules below. A routeRule makes the
       // path a "known route" to the sitemap module, so exclude them explicitly
       // rather than relying on redirect-detection.
@@ -729,6 +731,11 @@ export default defineNuxtConfig({
     '/archive/wheels/submit': { redirect: { to: '/contribute/wheel', statusCode: 301 } },
     '/submissions': { redirect: { to: '/dashboard', statusCode: 301 } },
     '/submissions/**': { redirect: { to: '/dashboard', statusCode: 301 } },
+    // Account settings moved from /dashboard tabs to /settings (2026-09-28).
+    // PERMANENT: transactional emails from classicminidiy-supabase and the
+    // published MCP README link to the old paths. Never remove.
+    '/dashboard/api-keys': { redirect: { to: '/settings/api-keys', statusCode: 301 } },
+    '/dashboard/notifications': { redirect: { to: '/settings/notifications', statusCode: 301 } },
     // Pre-cutover marketplace browse path. The theminiexchange.com -> here 301s
     // are host-conditioned (see server/utils/tmeRedirects.ts), so on this domain
     // /listings only ever reached the catch-all 404 — which is where stale

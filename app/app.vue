@@ -9,7 +9,8 @@
   );
 
   // Initialize Supabase auth state on app mount
-  const { initAuth } = useAuth();
+  const { initAuth, user } = useAuth();
+  const { initUserCurrency } = useCurrency();
   // Initialize color mode on client
   useColorMode();
 
@@ -67,6 +68,17 @@
 
   onMounted(() => {
     initAuth();
+    // The saved display currency (localStorage, then the signed-in user's
+    // profile) is read only after mount: the server renders USD, and switching
+    // before hydration would make every converted price a mismatch. Re-runs when
+    // the signed-in user changes; initUserCurrency syncs once per user id.
+    watch(
+      () => user.value?.id,
+      (userId) => {
+        void initUserCurrency(userId);
+      },
+      { immediate: true }
+    );
   });
 </script>
 

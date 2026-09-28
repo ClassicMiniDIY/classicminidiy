@@ -2,6 +2,10 @@
   import type { DeveloperKey } from '~/composables/useDeveloperKeys';
   import { MCP_ENDPOINT, MCP_MAX_ACTIVE_KEYS } from '~~/shared/utils/mcpTiers';
 
+  // Account section: settings.vue renders the sign-in card in its place when
+  // there is no session. Moved from /dashboard/api-keys, which 301s here.
+  definePageMeta({ settingsAuth: true });
+
   const { t, locale } = useI18n();
   const toast = useToast();
   const { track } = useAnalytics();
@@ -56,7 +60,9 @@
     isAuthenticated,
     (authed) => {
       if (!authed) return;
-      fetchKeys().catch(() => toast.add({ title: t('load_error'), color: 'error', icon: 'fas fa-triangle-exclamation' }));
+      fetchKeys().catch(() =>
+        toast.add({ title: t('load_error'), color: 'error', icon: 'fas fa-triangle-exclamation' })
+      );
       fetchUsage().catch(() => {});
       fetchSubscription();
     },

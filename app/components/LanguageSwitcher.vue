@@ -1,140 +1,135 @@
 <script setup lang="ts">
+  // The language picker. It is the only one on the site: it lives on
+  // /settings/preferences (MainNav links there). `setLocale` writes the
+  // `i18n_redirected` cookie, which SSR honours on the next request.
   const { locale, locales, setLocale } = useI18n({ useScope: 'global' });
   const { t } = useI18n();
   const switchLocalePath = useSwitchLocalePath();
-
-  const currentLocale = computed(() => {
-    return locales.value.find((i) => i.code === locale.value);
-  });
-
-  const availableLocales = computed(() => {
-    return locales.value.filter((i) => i.code !== locale.value);
-  });
-
   const { capture } = usePostHog();
 
+  const pending = ref<string | null>(null);
+
   const handleLanguageChange = async (localeCode: string) => {
+    if (localeCode === locale.value || pending.value) return;
+    pending.value = localeCode;
     capture('language_changed', {
       from_language: locale.value,
       to_language: localeCode,
     });
-
-    // Set the locale which will persist in cookie/localStorage
-    await setLocale(localeCode as any);
-
-    // Navigate to the new locale path
-    await navigateTo(switchLocalePath(localeCode as any));
-  };
-
-  // Function to close dropdown on mobile
-  const closeDropdown = () => {
-    const activeElement = document.activeElement;
-    if (activeElement && 'blur' in activeElement) {
-      (activeElement as any).blur();
+    try {
+      await setLocale(localeCode as any);
+      await navigateTo(switchLocalePath(localeCode as any));
+    } finally {
+      pending.value = null;
     }
   };
 
-  // Language names in their native languages for better UX
-  const getLanguageName = (localeCode: string): string => {
-    const nativeNames: Record<string, string> = {
-      en: 'English',
-      de: 'Deutsch',
-      es: 'Español',
-      fr: 'Français',
-      it: 'Italiano',
-      pt: 'Português',
-      ru: 'Русский',
-      ja: '日本語',
-      zh: '中文',
-      ko: '한국어',
-    };
-    return nativeNames[localeCode] || localeCode;
+  // Language names in their own language, so a reader can find theirs.
+  const NATIVE_NAMES: Record<string, string> = {
+    en: 'English',
+    de: 'Deutsch',
+    es: 'Español',
+    fr: 'Français',
+    it: 'Italiano',
+    pt: 'Português',
+    ru: 'Русский',
+    ja: '日本語',
+    zh: '中文',
+    ko: '한국어',
   };
+  const getLanguageName = (localeCode: string): string => NATIVE_NAMES[localeCode] || localeCode;
 </script>
 
 <template>
-  <div class="dropdown dropdown-end" :aria-label="t('language_menu_aria')">
-    <div
-      tabindex="0"
-      role="button"
-      class="btn btn-ghost btn-sm w-20"
-      :aria-label="t('language_button_aria')"
-      :title="t('language_button_title')"
-    >
-      <i class="fad fa-globe shrink-0"></i>
-      <span class="text-xs font-medium">{{ currentLocale?.code?.toUpperCase() || 'EN' }}</span>
-      <i class="fad fa-chevron-down text-xs shrink-0"></i>
+  <fieldset class="fieldset" data-testid="language-switcher">
+    <legend class="fieldset-legend text-base">{{ t('title') }}</legend>
+    <p class="mb-3 text-sm opacity-70">{{ t('description') }}</p>
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <button
+        v-for="loc in locales"
+        :key="loc.code"
+        type="button"
+        class="btn btn-sm justify-start"
+        :class="loc.code === locale ? 'btn-primary' : 'btn-ghost border-base-300'"
+        :aria-pressed="loc.code === locale"
+        :aria-label="
+          loc.code === locale
+            ? `${t('current')}: ${getLanguageName(loc.code)}`
+            : t('switch_to_language', { language: getLanguageName(loc.code) })
+        "
+        :lang="loc.code"
+        :data-testid="`language-option-${loc.code}`"
+        :disabled="pending !== null"
+        @click="handleLanguageChange(loc.code)"
+      >
+        <i v-if="pending === loc.code" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+        <i v-else-if="loc.code === locale" class="fas fa-check" aria-hidden="true"></i>
+        {{ getLanguageName(loc.code) }}
+      </button>
     </div>
-    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow">
-      <li v-for="loc in availableLocales" :key="loc.code">
-        <button type="button" @click="handleLanguageChange(loc.code); closeDropdown()">
-          {{ getLanguageName(loc.code) }}
-        </button>
-      </li>
-    </ul>
-  </div>
+  </fieldset>
 </template>
 
 <i18n lang="json">
 {
   "en": {
-    "language_button_aria": "Select language",
-    "language_button_title": "Change language",
-    "language_menu_aria": "Language selection menu",
+    "title": "Language",
+    "description": "Choose the language for menus and pages on this site.",
+    "current": "Current language",
     "switch_to_language": "Switch to {language}"
   },
-  "de": {
-    "language_button_aria": "Sprache auswählen",
-    "language_button_title": "Sprache ändern",
-    "language_menu_aria": "Sprachauswahlmenü",
-    "switch_to_language": "Wechseln zu {language}"
-  },
   "es": {
-    "language_button_aria": "Seleccionar idioma",
-    "language_button_title": "Cambiar idioma",
-    "language_menu_aria": "Menú de selección de idioma",
+    "title": "Idioma",
+    "description": "Elige el idioma de los menús y las páginas de este sitio.",
+    "current": "Idioma actual",
     "switch_to_language": "Cambiar a {language}"
   },
   "fr": {
-    "language_button_aria": "Sélectionner la langue",
-    "language_button_title": "Changer de langue",
-    "language_menu_aria": "Menu de sélection de langue",
+    "title": "Langue",
+    "description": "Choisissez la langue des menus et des pages de ce site.",
+    "current": "Langue actuelle",
     "switch_to_language": "Passer à {language}"
   },
+  "de": {
+    "title": "Sprache",
+    "description": "Wählen Sie die Sprache für Menüs und Seiten dieser Website.",
+    "current": "Aktuelle Sprache",
+    "switch_to_language": "Wechseln zu {language}"
+  },
   "it": {
-    "language_button_aria": "Seleziona lingua",
-    "language_button_title": "Cambia lingua",
-    "language_menu_aria": "Menu di selezione lingua",
+    "title": "Lingua",
+    "description": "Scegli la lingua dei menu e delle pagine di questo sito.",
+    "current": "Lingua attuale",
     "switch_to_language": "Passa a {language}"
   },
   "pt": {
-    "language_button_aria": "Selecionar idioma",
-    "language_button_title": "Alterar idioma",
-    "language_menu_aria": "Menu de seleção de idioma",
+    "title": "Idioma",
+    "description": "Escolha o idioma dos menus e das páginas deste site.",
+    "current": "Idioma atual",
     "switch_to_language": "Mudar para {language}"
   },
   "ru": {
-    "language_button_aria": "Выбрать язык",
-    "language_button_title": "Изменить язык",
-    "language_menu_aria": "Меню выбора языка",
+    "title": "Язык",
+    "description": "Выберите язык меню и страниц этого сайта.",
+    "current": "Текущий язык",
     "switch_to_language": "Переключиться на {language}"
   },
   "ja": {
-    "language_button_aria": "言語を選択",
-    "language_button_title": "言語を変更",
-    "language_menu_aria": "言語選択メニュー",
+    "title": "言語",
+    "description": "このサイトのメニューとページの言語を選択します。",
+    "current": "現在の言語",
     "switch_to_language": "{language}に切り替え"
   },
   "zh": {
-    "language_button_aria": "选择语言",
-    "language_button_title": "更改语言",
-    "language_menu_aria": "语言选择菜单",
+    "title": "语言",
+    "description": "选择本网站菜单和页面的语言。",
+    "current": "当前语言",
     "switch_to_language": "切换到{language}"
   },
   "ko": {
-    "language_button_aria": "언어 선택",
-    "language_button_title": "언어 변경",
-    "language_menu_aria": "언어 선택 메뉴",
+    "title": "언어",
+    "description": "이 사이트의 메뉴와 페이지 언어를 선택하세요.",
+    "current": "현재 언어",
     "switch_to_language": "{language}로 전환"
   }
 }
