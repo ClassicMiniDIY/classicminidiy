@@ -129,8 +129,8 @@
     const sub = row.subscriptions[0];
     const claim = row.pending_claims[0];
     const source = sub?.platform ?? claim?.provider;
-    const ref = sub?.external_ref ?? claim?.external_ref;
-    return source && ref ? `${kind}:${source}:${ref}` : `${kind}:${i}`;
+    const extRef = sub?.external_ref ?? claim?.external_ref;
+    return source && extRef ? `${kind}:${source}:${extRef}` : `${kind}:${i}`;
   }
 </script>
 
