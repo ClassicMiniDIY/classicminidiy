@@ -448,7 +448,7 @@ export function webSearchSupported(modelId: string): boolean {
 export function buildAgentTools({
   event,
   youtubeApiKey = '',
-  modelId = 'claude-sonnet-5',
+  modelId = 'claude-sonnet-5-5',
   ...hooks
 }: AgentToolHooks & { event?: H3Event; youtubeApiKey?: string; modelId?: string } = {}): Record<string, Tool> {
   return {

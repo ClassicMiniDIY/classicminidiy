@@ -372,7 +372,7 @@ describe('web_search', () => {
     // `web_search_20260209` needs Sonnet 4.6 or better. On Haiku the request is
     // rejected outright, so the tool has to be dropped rather than 400 the
     // whole conversation.
-    expect(Object.keys(buildAgentTools({ modelId: 'claude-sonnet-5' }))).toContain('web_search');
+    expect(Object.keys(buildAgentTools({ modelId: 'claude-sonnet-5-5' }))).toContain('web_search');
     expect(Object.keys(buildAgentTools({ modelId: 'claude-haiku-4-5-20251001' }))).not.toContain('web_search');
     expect(webSearchSupported('claude-opus-5')).toBe(true);
     expect(webSearchSupported('claude-haiku-4-5-20251001')).toBe(false);
@@ -383,7 +383,7 @@ describe('web_search', () => {
   });
 
   it('is pinned to the trusted allowlist, and only to it', () => {
-    const tool: any = buildAgentTools({ modelId: 'claude-sonnet-5' })['web_search'];
+    const tool: any = buildAgentTools({ modelId: 'claude-sonnet-5-5' })['web_search'];
 
     // Anthropic executes this one, so there is no handler to test. What CAN go
     // wrong is the configuration: an empty or missing allowlist is not a
