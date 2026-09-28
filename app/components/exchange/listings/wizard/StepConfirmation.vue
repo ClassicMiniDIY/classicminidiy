@@ -157,7 +157,10 @@
     "comped": {
       "premiumApplied": { "title": "Premium Applied", "desc": "Included with your Sustaining membership" },
       "review": { "title": "Admin Review", "desc": "Our team reviews all listings for quality (24-48 hours)" },
-      "featured": { "title": "Featured for 30 Days", "desc": "Once approved: priority search placement and homepage carousel exposure" }
+      "featured": {
+        "title": "Featured for 30 Days",
+        "desc": "Once approved: priority search placement and homepage carousel exposure"
+      }
     },
     "paid": {
       "payment": { "title": "Complete Payment", "desc": "Click below to securely pay via Stripe" },
@@ -185,16 +188,28 @@
     "nextSteps": { "heading": "¿Qué sucede ahora?" },
     "comped": {
       "premiumApplied": { "title": "Premium aplicado", "desc": "Incluido con tu membresía de Socio Colaborador" },
-      "review": { "title": "Revisión del administrador", "desc": "Nuestro equipo revisa todos los anuncios por calidad (24-48 horas)" },
-      "featured": { "title": "Destacado durante 30 días", "desc": "Una vez aprobado: posición prioritaria en búsquedas y aparición en el carrusel de la página de inicio" }
+      "review": {
+        "title": "Revisión del administrador",
+        "desc": "Nuestro equipo revisa todos los anuncios por calidad (24-48 horas)"
+      },
+      "featured": {
+        "title": "Destacado durante 30 días",
+        "desc": "Una vez aprobado: posición prioritaria en búsquedas y aparición en el carrusel de la página de inicio"
+      }
     },
     "paid": {
       "payment": { "title": "Completar el pago", "desc": "Haz clic abajo para pagar de forma segura con Stripe" },
-      "review": { "title": "Revisión del administrador", "desc": "Nuestro equipo revisa todos los anuncios por calidad" },
+      "review": {
+        "title": "Revisión del administrador",
+        "desc": "Nuestro equipo revisa todos los anuncios por calidad"
+      },
       "live": { "title": "¡Sale en vivo!", "desc": "Tu anuncio se publica con posición destacada" }
     },
     "free": {
-      "review": { "title": "Revisión del administrador", "desc": "Nuestro equipo revisa todos los anuncios por calidad (24-48 horas)" },
+      "review": {
+        "title": "Revisión del administrador",
+        "desc": "Nuestro equipo revisa todos los anuncios por calidad (24-48 horas)"
+      },
       "email": { "title": "Notificación por correo", "desc": "Te enviaremos un correo cuando se apruebe tu anuncio" },
       "live": { "title": "¡Sale en vivo!", "desc": "Tu anuncio se vuelve visible para todos los compradores" }
     },
@@ -214,17 +229,35 @@
     "nextSteps": { "heading": "Que se passe-t-il ensuite ?" },
     "comped": {
       "premiumApplied": { "title": "Premium appliqué", "desc": "Inclus avec votre abonnement Sustaining" },
-      "review": { "title": "Examen par l'administrateur", "desc": "Notre équipe examine la qualité de toutes les annonces (24-48 heures)" },
-      "featured": { "title": "Mis en avant pendant 30 jours", "desc": "Après approbation : placement prioritaire dans la recherche et exposition dans le carrousel de la page d'accueil" }
+      "review": {
+        "title": "Examen par l'administrateur",
+        "desc": "Notre équipe examine la qualité de toutes les annonces (24-48 heures)"
+      },
+      "featured": {
+        "title": "Mis en avant pendant 30 jours",
+        "desc": "Après approbation : placement prioritaire dans la recherche et exposition dans le carrousel de la page d'accueil"
+      }
     },
     "paid": {
-      "payment": { "title": "Finaliser le paiement", "desc": "Cliquez ci-dessous pour payer en toute sécurité via Stripe" },
-      "review": { "title": "Examen par l'administrateur", "desc": "Notre équipe examine la qualité de toutes les annonces" },
+      "payment": {
+        "title": "Finaliser le paiement",
+        "desc": "Cliquez ci-dessous pour payer en toute sécurité via Stripe"
+      },
+      "review": {
+        "title": "Examen par l'administrateur",
+        "desc": "Notre équipe examine la qualité de toutes les annonces"
+      },
       "live": { "title": "Mise en ligne !", "desc": "Votre annonce est mise en ligne avec un placement en vedette" }
     },
     "free": {
-      "review": { "title": "Examen par l'administrateur", "desc": "Notre équipe examine la qualité de toutes les annonces (24-48 heures)" },
-      "email": { "title": "Notification par e-mail", "desc": "Nous vous enverrons un e-mail lorsque votre annonce sera approuvée" },
+      "review": {
+        "title": "Examen par l'administrateur",
+        "desc": "Notre équipe examine la qualité de toutes les annonces (24-48 heures)"
+      },
+      "email": {
+        "title": "Notification par e-mail",
+        "desc": "Nous vous enverrons un e-mail lorsque votre annonce sera approuvée"
+      },
       "live": { "title": "Mise en ligne !", "desc": "Votre annonce devient visible par tous les acheteurs" }
     },
     "payNow": "Payer 10 $ maintenant",
@@ -244,7 +277,10 @@
     "comped": {
       "premiumApplied": { "title": "Premium angewendet", "desc": "In deiner Sustaining-Mitgliedschaft enthalten" },
       "review": { "title": "Admin-Prüfung", "desc": "Unser Team prüft alle Anzeigen auf Qualität (24-48 Stunden)" },
-      "featured": { "title": "30 Tage hervorgehoben", "desc": "Nach der Genehmigung: vorrangige Platzierung in der Suche und Anzeige im Karussell der Startseite" }
+      "featured": {
+        "title": "30 Tage hervorgehoben",
+        "desc": "Nach der Genehmigung: vorrangige Platzierung in der Suche und Anzeige im Karussell der Startseite"
+      }
     },
     "paid": {
       "payment": { "title": "Zahlung abschließen", "desc": "Klicke unten, um sicher über Stripe zu bezahlen" },
@@ -253,7 +289,10 @@
     },
     "free": {
       "review": { "title": "Admin-Prüfung", "desc": "Unser Team prüft alle Anzeigen auf Qualität (24-48 Stunden)" },
-      "email": { "title": "E-Mail-Benachrichtigung", "desc": "Wir senden dir eine E-Mail, sobald deine Anzeige genehmigt ist" },
+      "email": {
+        "title": "E-Mail-Benachrichtigung",
+        "desc": "Wir senden dir eine E-Mail, sobald deine Anzeige genehmigt ist"
+      },
       "live": { "title": "Geht live!", "desc": "Deine Anzeige wird für alle Käufer sichtbar" }
     },
     "payNow": "Jetzt 10 $ zahlen",
@@ -272,16 +311,31 @@
     "nextSteps": { "heading": "Cosa succede ora?" },
     "comped": {
       "premiumApplied": { "title": "Premium applicato", "desc": "Incluso con il tuo abbonamento Sustaining" },
-      "review": { "title": "Revisione dell'amministratore", "desc": "Il nostro team controlla la qualità di tutti gli annunci (24-48 ore)" },
-      "featured": { "title": "In evidenza per 30 giorni", "desc": "Una volta approvato: posizionamento prioritario nelle ricerche ed esposizione nel carosello della home page" }
+      "review": {
+        "title": "Revisione dell'amministratore",
+        "desc": "Il nostro team controlla la qualità di tutti gli annunci (24-48 ore)"
+      },
+      "featured": {
+        "title": "In evidenza per 30 giorni",
+        "desc": "Una volta approvato: posizionamento prioritario nelle ricerche ed esposizione nel carosello della home page"
+      }
     },
     "paid": {
-      "payment": { "title": "Completa il pagamento", "desc": "Clicca qui sotto per pagare in sicurezza tramite Stripe" },
-      "review": { "title": "Revisione dell'amministratore", "desc": "Il nostro team controlla la qualità di tutti gli annunci" },
+      "payment": {
+        "title": "Completa il pagamento",
+        "desc": "Clicca qui sotto per pagare in sicurezza tramite Stripe"
+      },
+      "review": {
+        "title": "Revisione dell'amministratore",
+        "desc": "Il nostro team controlla la qualità di tutti gli annunci"
+      },
       "live": { "title": "Va online!", "desc": "Il tuo annuncio va online con posizionamento in evidenza" }
     },
     "free": {
-      "review": { "title": "Revisione dell'amministratore", "desc": "Il nostro team controlla la qualità di tutti gli annunci (24-48 ore)" },
+      "review": {
+        "title": "Revisione dell'amministratore",
+        "desc": "Il nostro team controlla la qualità di tutti gli annunci (24-48 ore)"
+      },
       "email": { "title": "Notifica via email", "desc": "Ti invieremo un'email quando il tuo annuncio sarà approvato" },
       "live": { "title": "Va online!", "desc": "Il tuo annuncio diventa visibile a tutti gli acquirenti" }
     },
@@ -301,8 +355,14 @@
     "nextSteps": { "heading": "O que acontece a seguir?" },
     "comped": {
       "premiumApplied": { "title": "Premium aplicado", "desc": "Incluído na sua assinatura Sustaining" },
-      "review": { "title": "Revisão do administrador", "desc": "Nossa equipe revisa a qualidade de todos os anúncios (24-48 horas)" },
-      "featured": { "title": "Destaque por 30 dias", "desc": "Após a aprovação: posição prioritária na busca e exposição no carrossel da página inicial" }
+      "review": {
+        "title": "Revisão do administrador",
+        "desc": "Nossa equipe revisa a qualidade de todos os anúncios (24-48 horas)"
+      },
+      "featured": {
+        "title": "Destaque por 30 dias",
+        "desc": "Após a aprovação: posição prioritária na busca e exposição no carrossel da página inicial"
+      }
     },
     "paid": {
       "payment": { "title": "Concluir pagamento", "desc": "Clique abaixo para pagar com segurança via Stripe" },
@@ -310,7 +370,10 @@
       "live": { "title": "Vai ao ar!", "desc": "Seu anúncio vai ao ar com posição de destaque" }
     },
     "free": {
-      "review": { "title": "Revisão do administrador", "desc": "Nossa equipe revisa a qualidade de todos os anúncios (24-48 horas)" },
+      "review": {
+        "title": "Revisão do administrador",
+        "desc": "Nossa equipe revisa a qualidade de todos os anúncios (24-48 horas)"
+      },
       "email": { "title": "Notificação por e-mail", "desc": "Enviaremos um e-mail quando seu anúncio for aprovado" },
       "live": { "title": "Vai ao ar!", "desc": "Seu anúncio fica visível para todos os compradores" }
     },
@@ -330,8 +393,14 @@
     "nextSteps": { "heading": "Что дальше?" },
     "comped": {
       "premiumApplied": { "title": "Premium применён", "desc": "Включён в вашу подписку Sustaining" },
-      "review": { "title": "Проверка администратором", "desc": "Наша команда проверяет качество всех объявлений (24-48 часов)" },
-      "featured": { "title": "Выделение на 30 дней", "desc": "После одобрения: приоритетное место в поиске и показ в карусели на главной странице" }
+      "review": {
+        "title": "Проверка администратором",
+        "desc": "Наша команда проверяет качество всех объявлений (24-48 часов)"
+      },
+      "featured": {
+        "title": "Выделение на 30 дней",
+        "desc": "После одобрения: приоритетное место в поиске и показ в карусели на главной странице"
+      }
     },
     "paid": {
       "payment": { "title": "Завершить оплату", "desc": "Нажмите ниже, чтобы безопасно оплатить через Stripe" },
@@ -339,8 +408,14 @@
       "live": { "title": "Публикуется!", "desc": "Ваше объявление публикуется с приоритетным размещением" }
     },
     "free": {
-      "review": { "title": "Проверка администратором", "desc": "Наша команда проверяет качество всех объявлений (24-48 часов)" },
-      "email": { "title": "Уведомление по электронной почте", "desc": "Мы отправим вам письмо, когда объявление будет одобрено" },
+      "review": {
+        "title": "Проверка администратором",
+        "desc": "Наша команда проверяет качество всех объявлений (24-48 часов)"
+      },
+      "email": {
+        "title": "Уведомление по электронной почте",
+        "desc": "Мы отправим вам письмо, когда объявление будет одобрено"
+      },
       "live": { "title": "Публикуется!", "desc": "Ваше объявление становится видимым всем покупателям" }
     },
     "payNow": "Оплатить 10 $ сейчас",

@@ -959,8 +959,16 @@
       "draftLoaded": { "title": "Draft Loaded", "description": "Continue editing your listing" },
       "draftSaved": { "title": "Draft Saved", "description": "Your listing has been saved as a draft" },
       "missingInfo": { "title": "Missing Information", "description": "Please fill in all required fields" },
-      "premiumApplied": { "title": "Premium Applied", "description": "Premium is included with your Sustaining membership." },
-      "error": { "title": "Error", "loadDraft": "Failed to load draft", "saveDraft": "Failed to save draft", "submitListing": "Failed to submit listing" }
+      "premiumApplied": {
+        "title": "Premium Applied",
+        "description": "Premium is included with your Sustaining membership."
+      },
+      "error": {
+        "title": "Error",
+        "loadDraft": "Failed to load draft",
+        "saveDraft": "Failed to save draft",
+        "submitListing": "Failed to submit listing"
+      }
     }
   },
   "es": {
@@ -992,21 +1000,41 @@
       "photoRequired": "Se requiere al menos una foto"
     },
     "toast": {
-      "draftNotFound": { "title": "Borrador no encontrado", "description": "No se pudo cargar el borrador del anuncio" },
+      "draftNotFound": {
+        "title": "Borrador no encontrado",
+        "description": "No se pudo cargar el borrador del anuncio"
+      },
       "draftLoaded": { "title": "Borrador cargado", "description": "Continúa editando tu anuncio" },
       "draftSaved": { "title": "Borrador guardado", "description": "Tu anuncio se ha guardado como borrador" },
-      "missingInfo": { "title": "Información faltante", "description": "Por favor completa todos los campos obligatorios" },
-      "premiumApplied": { "title": "Premium aplicado", "description": "Premium está incluido con tu membresía de Socio Colaborador." },
-      "error": { "title": "Error", "loadDraft": "No se pudo cargar el borrador", "saveDraft": "No se pudo guardar el borrador", "submitListing": "No se pudo enviar el anuncio" }
+      "missingInfo": {
+        "title": "Información faltante",
+        "description": "Por favor completa todos los campos obligatorios"
+      },
+      "premiumApplied": {
+        "title": "Premium aplicado",
+        "description": "Premium está incluido con tu membresía de Socio Colaborador."
+      },
+      "error": {
+        "title": "Error",
+        "loadDraft": "No se pudo cargar el borrador",
+        "saveDraft": "No se pudo guardar el borrador",
+        "submitListing": "No se pudo enviar el anuncio"
+      }
     }
   },
   "fr": {
     "loadingDraft": "Chargement de votre brouillon...",
     "steps": {
       "category": { "title": "Que vendez-vous ?", "description": "Sélectionnez le type d'annonce" },
-      "pricing": { "title": "Choisissez votre formule", "description": "Sélectionnez le niveau d'annonce et fixez votre prix" },
+      "pricing": {
+        "title": "Choisissez votre formule",
+        "description": "Sélectionnez le niveau d'annonce et fixez votre prix"
+      },
       "required": { "title": "Informations requises", "description": "Ajoutez les détails essentiels et les photos" },
-      "extras": { "title": "Détails supplémentaires", "description": "Informations facultatives pour faire ressortir votre annonce" },
+      "extras": {
+        "title": "Détails supplémentaires",
+        "description": "Informations facultatives pour faire ressortir votre annonce"
+      },
       "review": { "title": "Vérifiez votre annonce", "description": "Assurez-vous que tout est correct" },
       "confirm": { "title": "Presque terminé !", "description": "Finalisez votre annonce" }
     },
@@ -1029,21 +1057,44 @@
       "photoRequired": "Au moins une photo est requise"
     },
     "toast": {
-      "draftNotFound": { "title": "Brouillon introuvable", "description": "Impossible de charger le brouillon de l'annonce" },
+      "draftNotFound": {
+        "title": "Brouillon introuvable",
+        "description": "Impossible de charger le brouillon de l'annonce"
+      },
       "draftLoaded": { "title": "Brouillon chargé", "description": "Continuez à modifier votre annonce" },
-      "draftSaved": { "title": "Brouillon enregistré", "description": "Votre annonce a été enregistrée comme brouillon" },
+      "draftSaved": {
+        "title": "Brouillon enregistré",
+        "description": "Votre annonce a été enregistrée comme brouillon"
+      },
       "missingInfo": { "title": "Informations manquantes", "description": "Veuillez remplir tous les champs requis" },
-      "premiumApplied": { "title": "Premium appliqué", "description": "Premium est inclus avec votre adhésion Sustaining." },
-      "error": { "title": "Erreur", "loadDraft": "Échec du chargement du brouillon", "saveDraft": "Échec de l'enregistrement du brouillon", "submitListing": "Échec de l'envoi de l'annonce" }
+      "premiumApplied": {
+        "title": "Premium appliqué",
+        "description": "Premium est inclus avec votre adhésion Sustaining."
+      },
+      "error": {
+        "title": "Erreur",
+        "loadDraft": "Échec du chargement du brouillon",
+        "saveDraft": "Échec de l'enregistrement du brouillon",
+        "submitListing": "Échec de l'envoi de l'annonce"
+      }
     }
   },
   "de": {
     "loadingDraft": "Entwurf wird geladen...",
     "steps": {
       "category": { "title": "Was verkaufen Sie?", "description": "Wählen Sie die Art der Anzeige" },
-      "pricing": { "title": "Wählen Sie Ihren Plan", "description": "Wählen Sie die Anzeigenstufe und legen Sie Ihren Preis fest" },
-      "required": { "title": "Erforderliche Informationen", "description": "Fügen Sie die wesentlichen Details und Fotos hinzu" },
-      "extras": { "title": "Zusätzliche Details", "description": "Optionale Informationen, damit Ihre Anzeige auffällt" },
+      "pricing": {
+        "title": "Wählen Sie Ihren Plan",
+        "description": "Wählen Sie die Anzeigenstufe und legen Sie Ihren Preis fest"
+      },
+      "required": {
+        "title": "Erforderliche Informationen",
+        "description": "Fügen Sie die wesentlichen Details und Fotos hinzu"
+      },
+      "extras": {
+        "title": "Zusätzliche Details",
+        "description": "Optionale Informationen, damit Ihre Anzeige auffällt"
+      },
       "review": { "title": "Überprüfen Sie Ihre Anzeige", "description": "Stellen Sie sicher, dass alles korrekt ist" },
       "confirm": { "title": "Fast geschafft!", "description": "Schließen Sie Ihre Anzeige ab" }
     },
@@ -1066,21 +1117,41 @@
       "photoRequired": "Mindestens ein Foto ist erforderlich"
     },
     "toast": {
-      "draftNotFound": { "title": "Entwurf nicht gefunden", "description": "Der Anzeigenentwurf konnte nicht geladen werden" },
+      "draftNotFound": {
+        "title": "Entwurf nicht gefunden",
+        "description": "Der Anzeigenentwurf konnte nicht geladen werden"
+      },
       "draftLoaded": { "title": "Entwurf geladen", "description": "Bearbeiten Sie Ihre Anzeige weiter" },
       "draftSaved": { "title": "Entwurf gespeichert", "description": "Ihre Anzeige wurde als Entwurf gespeichert" },
-      "missingInfo": { "title": "Fehlende Informationen", "description": "Bitte füllen Sie alle erforderlichen Felder aus" },
-      "premiumApplied": { "title": "Premium angewendet", "description": "Premium ist in Ihrer Sustaining-Mitgliedschaft enthalten." },
-      "error": { "title": "Fehler", "loadDraft": "Entwurf konnte nicht geladen werden", "saveDraft": "Entwurf konnte nicht gespeichert werden", "submitListing": "Anzeige konnte nicht gesendet werden" }
+      "missingInfo": {
+        "title": "Fehlende Informationen",
+        "description": "Bitte füllen Sie alle erforderlichen Felder aus"
+      },
+      "premiumApplied": {
+        "title": "Premium angewendet",
+        "description": "Premium ist in Ihrer Sustaining-Mitgliedschaft enthalten."
+      },
+      "error": {
+        "title": "Fehler",
+        "loadDraft": "Entwurf konnte nicht geladen werden",
+        "saveDraft": "Entwurf konnte nicht gespeichert werden",
+        "submitListing": "Anzeige konnte nicht gesendet werden"
+      }
     }
   },
   "it": {
     "loadingDraft": "Caricamento della bozza...",
     "steps": {
       "category": { "title": "Cosa stai vendendo?", "description": "Seleziona il tipo di annuncio" },
-      "pricing": { "title": "Scegli il tuo piano", "description": "Seleziona il livello dell'annuncio e imposta il prezzo" },
+      "pricing": {
+        "title": "Scegli il tuo piano",
+        "description": "Seleziona il livello dell'annuncio e imposta il prezzo"
+      },
       "required": { "title": "Informazioni richieste", "description": "Aggiungi i dettagli essenziali e le foto" },
-      "extras": { "title": "Dettagli aggiuntivi", "description": "Informazioni facoltative per far risaltare il tuo annuncio" },
+      "extras": {
+        "title": "Dettagli aggiuntivi",
+        "description": "Informazioni facoltative per far risaltare il tuo annuncio"
+      },
       "review": { "title": "Rivedi il tuo annuncio", "description": "Assicurati che tutto sia corretto" },
       "confirm": { "title": "Ci siamo quasi!", "description": "Completa il tuo annuncio" }
     },
@@ -1107,8 +1178,16 @@
       "draftLoaded": { "title": "Bozza caricata", "description": "Continua a modificare il tuo annuncio" },
       "draftSaved": { "title": "Bozza salvata", "description": "Il tuo annuncio è stato salvato come bozza" },
       "missingInfo": { "title": "Informazioni mancanti", "description": "Compila tutti i campi obbligatori" },
-      "premiumApplied": { "title": "Premium applicato", "description": "Premium è incluso nella tua iscrizione Sustaining." },
-      "error": { "title": "Errore", "loadDraft": "Impossibile caricare la bozza", "saveDraft": "Impossibile salvare la bozza", "submitListing": "Impossibile inviare l'annuncio" }
+      "premiumApplied": {
+        "title": "Premium applicato",
+        "description": "Premium è incluso nella tua iscrizione Sustaining."
+      },
+      "error": {
+        "title": "Errore",
+        "loadDraft": "Impossibile caricare la bozza",
+        "saveDraft": "Impossibile salvare la bozza",
+        "submitListing": "Impossibile inviare l'annuncio"
+      }
     }
   },
   "pt": {
@@ -1140,12 +1219,26 @@
       "photoRequired": "É necessária pelo menos uma foto"
     },
     "toast": {
-      "draftNotFound": { "title": "Rascunho não encontrado", "description": "Não foi possível carregar o rascunho do anúncio" },
+      "draftNotFound": {
+        "title": "Rascunho não encontrado",
+        "description": "Não foi possível carregar o rascunho do anúncio"
+      },
       "draftLoaded": { "title": "Rascunho carregado", "description": "Continue editando seu anúncio" },
       "draftSaved": { "title": "Rascunho salvo", "description": "Seu anúncio foi salvo como rascunho" },
-      "missingInfo": { "title": "Informações faltando", "description": "Por favor, preencha todos os campos obrigatórios" },
-      "premiumApplied": { "title": "Premium aplicado", "description": "O Premium está incluído na sua assinatura Sustaining." },
-      "error": { "title": "Erro", "loadDraft": "Falha ao carregar o rascunho", "saveDraft": "Falha ao salvar o rascunho", "submitListing": "Falha ao enviar o anúncio" }
+      "missingInfo": {
+        "title": "Informações faltando",
+        "description": "Por favor, preencha todos os campos obrigatórios"
+      },
+      "premiumApplied": {
+        "title": "Premium aplicado",
+        "description": "O Premium está incluído na sua assinatura Sustaining."
+      },
+      "error": {
+        "title": "Erro",
+        "loadDraft": "Falha ao carregar o rascunho",
+        "saveDraft": "Falha ao salvar o rascunho",
+        "submitListing": "Falha ao enviar o anúncio"
+      }
     }
   },
   "ru": {
@@ -1154,7 +1247,10 @@
       "category": { "title": "Что вы продаёте?", "description": "Выберите тип объявления" },
       "pricing": { "title": "Выберите план", "description": "Выберите уровень объявления и установите цену" },
       "required": { "title": "Обязательная информация", "description": "Добавьте основные сведения и фотографии" },
-      "extras": { "title": "Дополнительные сведения", "description": "Необязательная информация, чтобы выделить ваше объявление" },
+      "extras": {
+        "title": "Дополнительные сведения",
+        "description": "Необязательная информация, чтобы выделить ваше объявление"
+      },
       "review": { "title": "Проверьте ваше объявление", "description": "Убедитесь, что всё в порядке" },
       "confirm": { "title": "Почти готово!", "description": "Завершите ваше объявление" }
     },
@@ -1182,7 +1278,12 @@
       "draftSaved": { "title": "Черновик сохранён", "description": "Ваше объявление сохранено как черновик" },
       "missingInfo": { "title": "Не хватает информации", "description": "Пожалуйста, заполните все обязательные поля" },
       "premiumApplied": { "title": "Premium применён", "description": "Premium включён в ваше членство Sustaining." },
-      "error": { "title": "Ошибка", "loadDraft": "Не удалось загрузить черновик", "saveDraft": "Не удалось сохранить черновик", "submitListing": "Не удалось отправить объявление" }
+      "error": {
+        "title": "Ошибка",
+        "loadDraft": "Не удалось загрузить черновик",
+        "saveDraft": "Не удалось сохранить черновик",
+        "submitListing": "Не удалось отправить объявление"
+      }
     }
   },
   "ja": {
@@ -1218,8 +1319,16 @@
       "draftLoaded": { "title": "下書きを読み込みました", "description": "出品の編集を続けてください" },
       "draftSaved": { "title": "下書きを保存しました", "description": "出品が下書きとして保存されました" },
       "missingInfo": { "title": "情報が不足しています", "description": "必須項目をすべて入力してください" },
-      "premiumApplied": { "title": "プレミアムを適用しました", "description": "プレミアムはSustainingメンバーシップに含まれています。" },
-      "error": { "title": "エラー", "loadDraft": "下書きの読み込みに失敗しました", "saveDraft": "下書きの保存に失敗しました", "submitListing": "出品の送信に失敗しました" }
+      "premiumApplied": {
+        "title": "プレミアムを適用しました",
+        "description": "プレミアムはSustainingメンバーシップに含まれています。"
+      },
+      "error": {
+        "title": "エラー",
+        "loadDraft": "下書きの読み込みに失敗しました",
+        "saveDraft": "下書きの保存に失敗しました",
+        "submitListing": "出品の送信に失敗しました"
+      }
     }
   },
   "zh": {
@@ -1256,7 +1365,12 @@
       "draftSaved": { "title": "草稿已保存", "description": "您的刊登已保存为草稿" },
       "missingInfo": { "title": "信息缺失", "description": "请填写所有必填字段" },
       "premiumApplied": { "title": "已应用高级版", "description": "高级版已包含在您的Sustaining会员资格中。" },
-      "error": { "title": "错误", "loadDraft": "加载草稿失败", "saveDraft": "保存草稿失败", "submitListing": "提交刊登失败" }
+      "error": {
+        "title": "错误",
+        "loadDraft": "加载草稿失败",
+        "saveDraft": "保存草稿失败",
+        "submitListing": "提交刊登失败"
+      }
     }
   },
   "ko": {
@@ -1292,8 +1406,16 @@
       "draftLoaded": { "title": "초안 불러옴", "description": "매물 편집을 계속하세요" },
       "draftSaved": { "title": "초안 저장됨", "description": "매물이 초안으로 저장되었습니다" },
       "missingInfo": { "title": "정보 누락", "description": "모든 필수 항목을 입력해 주세요" },
-      "premiumApplied": { "title": "프리미엄 적용됨", "description": "프리미엄은 Sustaining 멤버십에 포함되어 있습니다." },
-      "error": { "title": "오류", "loadDraft": "초안 불러오기 실패", "saveDraft": "초안 저장 실패", "submitListing": "매물 제출 실패" }
+      "premiumApplied": {
+        "title": "프리미엄 적용됨",
+        "description": "프리미엄은 Sustaining 멤버십에 포함되어 있습니다."
+      },
+      "error": {
+        "title": "오류",
+        "loadDraft": "초안 불러오기 실패",
+        "saveDraft": "초안 저장 실패",
+        "submitListing": "매물 제출 실패"
+      }
     }
   }
 }

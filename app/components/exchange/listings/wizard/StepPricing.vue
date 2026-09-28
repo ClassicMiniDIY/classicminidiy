@@ -250,8 +250,14 @@
       "socialAutoPost": "Auto-posted to our Facebook, Instagram & Bluesky"
     },
     "upsell": { "text": "Premium listings are included for Sustaining Members.", "learnMore": "Learn more" },
-    "memberNote": { "title": "Your Sustaining membership covers Premium — no payment needed", "body": "Premium is included with your membership. Just submit your listing." },
-    "paymentNote": { "title": "Payment is collected after you submit your listing", "body": "Complete your listing first, then pay securely via Stripe if you chose Premium." },
+    "memberNote": {
+      "title": "Your Sustaining membership covers Premium — no payment needed",
+      "body": "Premium is included with your membership. Just submit your listing."
+    },
+    "paymentNote": {
+      "title": "Payment is collected after you submit your listing",
+      "body": "Complete your listing first, then pay securely via Stripe if you chose Premium."
+    },
     "nav": { "back": "Back", "saveDraft": "Save Draft", "continue": "Continue" }
   },
   "es": {
@@ -273,9 +279,18 @@
       "instantActivation": "Activación instantánea tras el pago",
       "socialAutoPost": "Publicado automáticamente en nuestro Facebook, Instagram y Bluesky"
     },
-    "upsell": { "text": "Los anuncios premium están incluidos para los Socios Colaboradores.", "learnMore": "Más información" },
-    "memberNote": { "title": "Tu membresía de Socio Colaborador cubre Premium: no se necesita pago", "body": "Premium está incluido con tu membresía. Solo envía tu anuncio." },
-    "paymentNote": { "title": "El pago se cobra después de enviar tu anuncio", "body": "Completa primero tu anuncio y luego paga de forma segura con Stripe si elegiste Premium." },
+    "upsell": {
+      "text": "Los anuncios premium están incluidos para los Socios Colaboradores.",
+      "learnMore": "Más información"
+    },
+    "memberNote": {
+      "title": "Tu membresía de Socio Colaborador cubre Premium: no se necesita pago",
+      "body": "Premium está incluido con tu membresía. Solo envía tu anuncio."
+    },
+    "paymentNote": {
+      "title": "El pago se cobra después de enviar tu anuncio",
+      "body": "Completa primero tu anuncio y luego paga de forma segura con Stripe si elegiste Premium."
+    },
     "nav": { "back": "Atrás", "saveDraft": "Guardar borrador", "continue": "Continuar" }
   },
   "fr": {
@@ -297,9 +312,18 @@
       "instantActivation": "Activation instantanée après paiement",
       "socialAutoPost": "Publié automatiquement sur nos Facebook, Instagram et Bluesky"
     },
-    "upsell": { "text": "Les annonces premium sont incluses pour les membres de soutien.", "learnMore": "En savoir plus" },
-    "memberNote": { "title": "Votre adhésion de soutien couvre Premium — aucun paiement nécessaire", "body": "Premium est inclus avec votre adhésion. Soumettez simplement votre annonce." },
-    "paymentNote": { "title": "Le paiement est collecté après la soumission de votre annonce", "body": "Complétez d'abord votre annonce, puis payez en toute sécurité via Stripe si vous avez choisi Premium." },
+    "upsell": {
+      "text": "Les annonces premium sont incluses pour les membres de soutien.",
+      "learnMore": "En savoir plus"
+    },
+    "memberNote": {
+      "title": "Votre adhésion de soutien couvre Premium — aucun paiement nécessaire",
+      "body": "Premium est inclus avec votre adhésion. Soumettez simplement votre annonce."
+    },
+    "paymentNote": {
+      "title": "Le paiement est collecté après la soumission de votre annonce",
+      "body": "Complétez d'abord votre annonce, puis payez en toute sécurité via Stripe si vous avez choisi Premium."
+    },
     "nav": { "back": "Retour", "saveDraft": "Enregistrer le brouillon", "continue": "Continuer" }
   },
   "de": {
@@ -322,15 +346,26 @@
       "socialAutoPost": "Automatisch auf unseren Kanälen Facebook, Instagram & Bluesky gepostet"
     },
     "upsell": { "text": "Premium-Anzeigen sind für Fördermitglieder inklusive.", "learnMore": "Mehr erfahren" },
-    "memberNote": { "title": "Deine Fördermitgliedschaft deckt Premium ab — keine Zahlung nötig", "body": "Premium ist in deiner Mitgliedschaft enthalten. Reiche einfach deine Anzeige ein." },
-    "paymentNote": { "title": "Die Zahlung wird nach dem Einreichen deiner Anzeige eingezogen", "body": "Vervollständige zuerst deine Anzeige und zahle dann sicher per Stripe, wenn du Premium gewählt hast." },
+    "memberNote": {
+      "title": "Deine Fördermitgliedschaft deckt Premium ab — keine Zahlung nötig",
+      "body": "Premium ist in deiner Mitgliedschaft enthalten. Reiche einfach deine Anzeige ein."
+    },
+    "paymentNote": {
+      "title": "Die Zahlung wird nach dem Einreichen deiner Anzeige eingezogen",
+      "body": "Vervollständige zuerst deine Anzeige und zahle dann sicher per Stripe, wenn du Premium gewählt hast."
+    },
     "nav": { "back": "Zurück", "saveDraft": "Entwurf speichern", "continue": "Weiter" }
   },
   "it": {
     "selected": "Selezionato",
     "recommended": "CONSIGLIATO",
     "free": { "name": "Annuncio gratuito", "price": "0 $" },
-    "premium": { "name": "Annuncio premium", "included": "Incluso", "price": "10 $", "oneTime": "pagamento una tantum" },
+    "premium": {
+      "name": "Annuncio premium",
+      "included": "Incluso",
+      "price": "10 $",
+      "oneTime": "pagamento una tantum"
+    },
     "feature": {
       "photosPerSection": "Fino a {count} foto per sezione",
       "photosTotal": "Fino a {count} foto in totale",
@@ -346,8 +381,14 @@
       "socialAutoPost": "Pubblicato automaticamente sui nostri Facebook, Instagram e Bluesky"
     },
     "upsell": { "text": "Gli annunci premium sono inclusi per i membri sostenitori.", "learnMore": "Scopri di più" },
-    "memberNote": { "title": "La tua iscrizione sostenitore copre Premium — nessun pagamento necessario", "body": "Premium è incluso nella tua iscrizione. Invia semplicemente il tuo annuncio." },
-    "paymentNote": { "title": "Il pagamento viene riscosso dopo l'invio dell'annuncio", "body": "Completa prima il tuo annuncio, poi paga in sicurezza tramite Stripe se hai scelto Premium." },
+    "memberNote": {
+      "title": "La tua iscrizione sostenitore copre Premium — nessun pagamento necessario",
+      "body": "Premium è incluso nella tua iscrizione. Invia semplicemente il tuo annuncio."
+    },
+    "paymentNote": {
+      "title": "Il pagamento viene riscosso dopo l'invio dell'annuncio",
+      "body": "Completa prima il tuo annuncio, poi paga in sicurezza tramite Stripe se hai scelto Premium."
+    },
     "nav": { "back": "Indietro", "saveDraft": "Salva bozza", "continue": "Continua" }
   },
   "pt": {
@@ -370,8 +411,14 @@
       "socialAutoPost": "Publicado automaticamente em nossos Facebook, Instagram e Bluesky"
     },
     "upsell": { "text": "Os anúncios premium estão incluídos para membros de apoio.", "learnMore": "Saiba mais" },
-    "memberNote": { "title": "Sua assinatura de apoio cobre o Premium — nenhum pagamento necessário", "body": "O Premium está incluído na sua assinatura. Basta enviar seu anúncio." },
-    "paymentNote": { "title": "O pagamento é cobrado depois que você envia seu anúncio", "body": "Conclua primeiro seu anúncio e depois pague com segurança via Stripe se escolheu o Premium." },
+    "memberNote": {
+      "title": "Sua assinatura de apoio cobre o Premium — nenhum pagamento necessário",
+      "body": "O Premium está incluído na sua assinatura. Basta enviar seu anúncio."
+    },
+    "paymentNote": {
+      "title": "O pagamento é cobrado depois que você envia seu anúncio",
+      "body": "Conclua primeiro seu anúncio e depois pague com segurança via Stripe se escolheu o Premium."
+    },
     "nav": { "back": "Voltar", "saveDraft": "Salvar rascunho", "continue": "Continuar" }
   },
   "ru": {
@@ -394,15 +441,26 @@
       "socialAutoPost": "Автоматически публикуется в наших Facebook, Instagram и Bluesky"
     },
     "upsell": { "text": "Премиум-объявления включены для постоянных участников.", "learnMore": "Подробнее" },
-    "memberNote": { "title": "Ваше постоянное участие покрывает Премиум — оплата не нужна", "body": "Премиум включён в ваше участие. Просто отправьте объявление." },
-    "paymentNote": { "title": "Оплата взимается после отправки объявления", "body": "Сначала заполните объявление, затем безопасно оплатите через Stripe, если выбрали Премиум." },
+    "memberNote": {
+      "title": "Ваше постоянное участие покрывает Премиум — оплата не нужна",
+      "body": "Премиум включён в ваше участие. Просто отправьте объявление."
+    },
+    "paymentNote": {
+      "title": "Оплата взимается после отправки объявления",
+      "body": "Сначала заполните объявление, затем безопасно оплатите через Stripe, если выбрали Премиум."
+    },
     "nav": { "back": "Назад", "saveDraft": "Сохранить черновик", "continue": "Продолжить" }
   },
   "ja": {
     "selected": "選択済み",
     "recommended": "おすすめ",
     "free": { "name": "無料出品", "price": "$0" },
-    "premium": { "name": "プレミアム出品", "included": "含まれています", "price": "$10", "oneTime": "一回限りの支払い" },
+    "premium": {
+      "name": "プレミアム出品",
+      "included": "含まれています",
+      "price": "$10",
+      "oneTime": "一回限りの支払い"
+    },
     "feature": {
       "photosPerSection": "セクションごとに最大 {count} 枚の写真",
       "photosTotal": "合計で最大 {count} 枚の写真",
@@ -418,8 +476,14 @@
       "socialAutoPost": "当社の Facebook、Instagram、Bluesky に自動投稿"
     },
     "upsell": { "text": "プレミアム出品はサステイニングメンバーに含まれています。", "learnMore": "詳しく見る" },
-    "memberNote": { "title": "サステイニング会員ならプレミアムは対象 — 支払いは不要です", "body": "プレミアムは会員資格に含まれています。出品を送信するだけです。" },
-    "paymentNote": { "title": "支払いは出品を送信した後に行われます", "body": "まず出品を完成させ、プレミアムを選んだ場合は Stripe で安全に支払ってください。" },
+    "memberNote": {
+      "title": "サステイニング会員ならプレミアムは対象 — 支払いは不要です",
+      "body": "プレミアムは会員資格に含まれています。出品を送信するだけです。"
+    },
+    "paymentNote": {
+      "title": "支払いは出品を送信した後に行われます",
+      "body": "まず出品を完成させ、プレミアムを選んだ場合は Stripe で安全に支払ってください。"
+    },
     "nav": { "back": "戻る", "saveDraft": "下書きを保存", "continue": "続ける" }
   },
   "zh": {
@@ -442,8 +506,14 @@
       "socialAutoPost": "自动发布到我们的 Facebook、Instagram 和 Bluesky"
     },
     "upsell": { "text": "高级刊登已包含在持续会员权益中。", "learnMore": "了解更多" },
-    "memberNote": { "title": "您的持续会员资格已涵盖高级刊登 — 无需付款", "body": "高级刊登已包含在您的会员资格中。直接提交您的刊登即可。" },
-    "paymentNote": { "title": "付款在您提交刊登后收取", "body": "请先完成您的刊登，若选择了高级刊登，再通过 Stripe 安全付款。" },
+    "memberNote": {
+      "title": "您的持续会员资格已涵盖高级刊登 — 无需付款",
+      "body": "高级刊登已包含在您的会员资格中。直接提交您的刊登即可。"
+    },
+    "paymentNote": {
+      "title": "付款在您提交刊登后收取",
+      "body": "请先完成您的刊登，若选择了高级刊登，再通过 Stripe 安全付款。"
+    },
     "nav": { "back": "返回", "saveDraft": "保存草稿", "continue": "继续" }
   },
   "ko": {
@@ -466,8 +536,14 @@
       "socialAutoPost": "당사 Facebook, Instagram, Bluesky에 자동 게시"
     },
     "upsell": { "text": "프리미엄 매물은 후원 회원에게 포함되어 있습니다.", "learnMore": "자세히 보기" },
-    "memberNote": { "title": "후원 멤버십에 프리미엄이 포함됩니다 — 결제가 필요 없습니다", "body": "프리미엄은 멤버십에 포함되어 있습니다. 매물만 제출하세요." },
-    "paymentNote": { "title": "결제는 매물을 제출한 후에 청구됩니다", "body": "먼저 매물을 완성한 다음, 프리미엄을 선택했다면 Stripe로 안전하게 결제하세요." },
+    "memberNote": {
+      "title": "후원 멤버십에 프리미엄이 포함됩니다 — 결제가 필요 없습니다",
+      "body": "프리미엄은 멤버십에 포함되어 있습니다. 매물만 제출하세요."
+    },
+    "paymentNote": {
+      "title": "결제는 매물을 제출한 후에 청구됩니다",
+      "body": "먼저 매물을 완성한 다음, 프리미엄을 선택했다면 Stripe로 안전하게 결제하세요."
+    },
     "nav": { "back": "뒤로", "saveDraft": "임시 저장", "continue": "계속" }
   }
 }
