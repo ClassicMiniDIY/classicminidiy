@@ -162,7 +162,7 @@
   }
 
   // The channel this member manages billing on (apple/google/stripe/comp/
-  // ghost/patreon), via get_my_membership(): a purchase is preferred over comp,
+  // ghost/patreon/youtube), via get_my_membership(): a purchase is preferred over comp,
   // then the highest plan, then the newest row. Drives the management UI so
   // non-Stripe members aren't shown the Stripe portal link. null while loading
   // or if the RPC isn't deployed yet — in which case we hide the Stripe link
@@ -474,6 +474,16 @@
                 >{{ t('member.manage_note_patreon') }}</a
               >
             </p>
+            <p v-else-if="membershipPlatform === 'youtube'" class="text-sm opacity-70 mt-4">
+              <i class="fab fa-youtube mr-2 text-primary"></i>
+              <a
+                href="https://www.youtube.com/paid_memberships"
+                target="_blank"
+                rel="noopener"
+                class="link link-primary"
+                >{{ t('member.manage_note_youtube') }}</a
+              >
+            </p>
             <!-- Unknown/null platform on an active member: never render an
                  empty manage area (parity with TME). -->
             <p v-else class="text-sm opacity-70 mt-4">
@@ -667,6 +677,7 @@
       "manage_note_store": "Manage or cancel your subscription in the App Store or Google Play, wherever you subscribed.",
       "manage_note_ghost": "Manage billing and cancellation from your Classic Mini DIY blog account.",
       "manage_note_patreon": "Manage your pledge on Patreon.",
+      "manage_note_youtube": "Manage your membership on YouTube.",
       "active_fallback": "Your membership is active.",
       "plan_line": "Your plan: {plan} — {count} DIY Mini Bot questions a month.",
       "change_plan_stripe": "You can switch plans there too.",
@@ -782,6 +793,7 @@
       "manage_note_store": "Gestiona o cancela tu suscripción en la App Store o en Google Play, según dónde te suscribieras.",
       "manage_note_ghost": "Gestiona la facturación y la cancelación desde tu cuenta del blog de Classic Mini DIY.",
       "manage_note_patreon": "Gestiona tu aportación en Patreon.",
+      "manage_note_youtube": "Gestiona tu membresía en YouTube.",
       "active_fallback": "Tu membresía está activa.",
       "plan_line": "Tu plan: {plan} — {count} preguntas al DIY Mini Bot al mes.",
       "change_plan_stripe": "Ahí también puedes cambiar de plan.",
@@ -897,6 +909,7 @@
       "manage_note_store": "Gérez ou annulez votre abonnement dans l'App Store ou sur Google Play, selon l'endroit où vous vous êtes abonné.",
       "manage_note_ghost": "Gérez la facturation et la résiliation depuis votre compte du blog Classic Mini DIY.",
       "manage_note_patreon": "Gérez votre contribution sur Patreon.",
+      "manage_note_youtube": "Gérez votre abonnement sur YouTube.",
       "active_fallback": "Votre adhésion est active.",
       "plan_line": "Votre formule : {plan} — {count} questions au DIY Mini Bot par mois.",
       "change_plan_stripe": "Vous pouvez aussi y changer de formule.",
@@ -1012,6 +1025,7 @@
       "manage_note_store": "Verwalte oder kündige dein Abo im App Store oder bei Google Play – dort, wo du es abgeschlossen hast.",
       "manage_note_ghost": "Verwalte Abrechnung und Kündigung in deinem Konto beim Classic Mini DIY Blog.",
       "manage_note_patreon": "Verwalte deinen Beitrag auf Patreon.",
+      "manage_note_youtube": "Verwalte deine Mitgliedschaft auf YouTube.",
       "active_fallback": "Deine Mitgliedschaft ist aktiv.",
       "plan_line": "Dein Plan: {plan} — {count} DIY-Mini-Bot-Fragen pro Monat.",
       "change_plan_stripe": "Dort kannst du auch den Plan wechseln.",
@@ -1127,6 +1141,7 @@
       "manage_note_store": "Gestisci o disdici l'abbonamento nell'App Store o su Google Play, dove ti sei iscritto.",
       "manage_note_ghost": "Gestisci fatturazione e disdetta dal tuo account del blog Classic Mini DIY.",
       "manage_note_patreon": "Gestisci il tuo contributo su Patreon.",
+      "manage_note_youtube": "Gestisci il tuo abbonamento su YouTube.",
       "active_fallback": "La tua iscrizione è attiva.",
       "plan_line": "Il tuo piano: {plan} — {count} domande al DIY Mini Bot al mese.",
       "change_plan_stripe": "Lì puoi anche cambiare piano.",
@@ -1242,6 +1257,7 @@
       "manage_note_store": "Faça a gestão ou cancele a subscrição na App Store ou no Google Play, onde a tiver feito.",
       "manage_note_ghost": "Faça a gestão da faturação e do cancelamento na sua conta do blogue Classic Mini DIY.",
       "manage_note_patreon": "Faça a gestão do seu contributo no Patreon.",
+      "manage_note_youtube": "Faça a gestão da sua subscrição no YouTube.",
       "active_fallback": "A sua adesão está ativa.",
       "plan_line": "Seu plano: {plan} — {count} perguntas ao DIY Mini Bot por mês.",
       "change_plan_stripe": "Você também pode trocar de plano por lá.",
@@ -1357,6 +1373,7 @@
       "manage_note_store": "Управляйте подпиской или отмените её в App Store или Google Play — там, где вы её оформили.",
       "manage_note_ghost": "Управляйте оплатой и отменой в своём аккаунте блога Classic Mini DIY.",
       "manage_note_patreon": "Управляйте своим взносом на Patreon.",
+      "manage_note_youtube": "Управляйте спонсорством на YouTube.",
       "active_fallback": "Ваше участие активно.",
       "plan_line": "Ваш план: {plan} — {count} вопросов DIY Mini Bot в месяц.",
       "change_plan_stripe": "Там же можно сменить план.",
@@ -1472,6 +1489,7 @@
       "manage_note_store": "登録した場所に応じて、App Store または Google Play でサブスクリプションの管理・解約ができます。",
       "manage_note_ghost": "お支払いと解約は Classic Mini DIY ブログのアカウントから管理できます。",
       "manage_note_patreon": "Patreon で支援内容を管理できます。",
+      "manage_note_youtube": "YouTube でメンバーシップを管理できます。",
       "active_fallback": "メンバーシップは有効です。",
       "plan_line": "現在のプラン: {plan} — DIY Mini Bot への質問 月{count}件。",
       "change_plan_stripe": "プランの変更もそちらから行えます。",
@@ -1587,6 +1605,7 @@
       "manage_note_store": "请在你订阅所在的 App Store 或 Google Play 中管理或取消订阅。",
       "manage_note_ghost": "在你的 Classic Mini DIY 博客账号中管理账单和取消。",
       "manage_note_patreon": "在 Patreon 上管理你的支持。",
+      "manage_note_youtube": "在 YouTube 上管理你的会员。",
       "active_fallback": "你的会员资格已生效。",
       "plan_line": "您的方案：{plan} — 每月 {count} 个 DIY Mini Bot 问题。",
       "change_plan_stripe": "您也可以在那里更换方案。",
@@ -1702,6 +1721,7 @@
       "manage_note_store": "구독하신 곳에 따라 App Store 또는 Google Play에서 구독을 관리하거나 해지하실 수 있습니다.",
       "manage_note_ghost": "결제와 해지는 Classic Mini DIY 블로그 계정에서 관리하실 수 있습니다.",
       "manage_note_patreon": "Patreon에서 후원을 관리하실 수 있습니다.",
+      "manage_note_youtube": "YouTube에서 멤버십을 관리하실 수 있습니다.",
       "active_fallback": "멤버십이 활성화되어 있습니다.",
       "plan_line": "내 플랜: {plan} — 월 DIY Mini Bot 질문 {count}개.",
       "change_plan_stripe": "플랜 변경도 그곳에서 할 수 있습니다.",

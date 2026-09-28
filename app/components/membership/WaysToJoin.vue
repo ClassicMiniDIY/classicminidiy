@@ -114,7 +114,15 @@
           <tr>
             <th scope="row" class="row-label align-top">{{ t('rows.link') }}</th>
             <td v-for="c in channels" :key="c" class="align-top" :data-link="c">
-              <span v-if="c === 'youtube'" class="badge badge-ghost badge-sm">{{ t('link.youtube') }}</span>
+              <template v-if="c === 'youtube'">
+                {{ t('link.youtube') }}
+                <NuxtLink
+                  to="/membership/youtube"
+                  class="link link-primary font-semibold mt-1 block"
+                  data-testid="ways-link-youtube"
+                  ><i class="fab fa-youtube mr-1"></i>{{ t('link.youtube_cta') }}</NuxtLink
+                >
+              </template>
               <template v-else>{{ t(`link.${c}`) }}</template>
             </td>
           </tr>
@@ -192,7 +200,8 @@
     "link": {
       "web": "Automatic.",
       "patreon": "Automatic if your Patreon email matches your account. If not, use the claim email we send you.",
-      "youtube": "Coming soon"
+      "youtube": "Link it once, through Discord.",
+      "youtube_cta": "Link your YouTube membership"
     },
     "billing": {
       "web": "The billing page if you joined on the website. The App Store or Google Play if you joined in an app.",
@@ -242,7 +251,8 @@
     "link": {
       "web": "Automático.",
       "patreon": "Automático si tu correo de Patreon coincide con tu cuenta. Si no, usa el correo de reclamación que te enviamos.",
-      "youtube": "Próximamente"
+      "youtube": "A través de Discord, una sola vez.",
+      "youtube_cta": "Vincula tu membresía de YouTube"
     },
     "billing": {
       "web": "La página de facturación si te uniste en la web. La App Store o Google Play si te uniste en una app.",
@@ -292,7 +302,8 @@
     "link": {
       "web": "Automatique.",
       "patreon": "Automatique si votre e-mail Patreon correspond à votre compte. Sinon, utilisez l'e-mail de réclamation que nous vous envoyons.",
-      "youtube": "Bientôt disponible"
+      "youtube": "Via Discord, une seule fois.",
+      "youtube_cta": "Lier votre abonnement YouTube"
     },
     "billing": {
       "web": "La page de facturation si vous avez adhéré sur le site. L'App Store ou Google Play si vous avez adhéré dans une appli.",
@@ -342,7 +353,8 @@
     "link": {
       "web": "Automatisch.",
       "patreon": "Automatisch, wenn deine Patreon-E-Mail zu deinem Konto passt. Sonst nutze die Einlöse-E-Mail, die wir dir schicken.",
-      "youtube": "Kommt bald"
+      "youtube": "Einmalig über Discord.",
+      "youtube_cta": "YouTube-Mitgliedschaft verknüpfen"
     },
     "billing": {
       "web": "Die Abrechnungsseite, wenn du auf der Website beigetreten bist. Der App Store oder Google Play, wenn du in einer App beigetreten bist.",
@@ -392,7 +404,8 @@
     "link": {
       "web": "Automatico.",
       "patreon": "Automatico se la tua email di Patreon corrisponde al tuo account. Altrimenti, usa l'email di riscatto che ti inviamo.",
-      "youtube": "In arrivo"
+      "youtube": "Tramite Discord, una sola volta.",
+      "youtube_cta": "Collega il tuo abbonamento YouTube"
     },
     "billing": {
       "web": "La pagina di fatturazione se ti sei iscritto sul sito. L'App Store o Google Play se ti sei iscritto in un'app.",
@@ -442,7 +455,8 @@
     "link": {
       "web": "Automático.",
       "patreon": "Automático se o seu email do Patreon corresponder à sua conta. Caso contrário, use o email de reclamação que lhe enviamos.",
-      "youtube": "Em breve"
+      "youtube": "Através do Discord, uma única vez.",
+      "youtube_cta": "Ligar a sua subscrição do YouTube"
     },
     "billing": {
       "web": "A página de faturação se aderiu no site. A App Store ou o Google Play se aderiu numa app.",
@@ -492,7 +506,8 @@
     "link": {
       "web": "Автоматически.",
       "patreon": "Автоматически, если ваш email на Patreon совпадает с аккаунтом. Если нет, используйте письмо для привязки, которое мы отправим.",
-      "youtube": "Скоро"
+      "youtube": "Один раз, через Discord.",
+      "youtube_cta": "Привязать спонсорство YouTube"
     },
     "billing": {
       "web": "Страница оплаты, если вы вступили на сайте. App Store или Google Play, если вы вступили в приложении.",
@@ -542,7 +557,8 @@
     "link": {
       "web": "自動。",
       "patreon": "Patreon のメールアドレスがアカウントと一致すれば自動です。一致しない場合は、お送りする連携用メールを使ってください。",
-      "youtube": "近日対応"
+      "youtube": "Discord を通じて一度だけ連携します。",
+      "youtube_cta": "YouTube メンバーシップを連携"
     },
     "billing": {
       "web": "ウェブサイトで参加した場合はお支払いページ。アプリで参加した場合は App Store または Google Play。",
@@ -592,7 +608,8 @@
     "link": {
       "web": "自动。",
       "patreon": "如果你的 Patreon 邮箱与账号一致则自动关联。否则,请使用我们发送的认领邮件。",
-      "youtube": "即将推出"
+      "youtube": "通过 Discord 关联一次即可。",
+      "youtube_cta": "关联你的 YouTube 会员"
     },
     "billing": {
       "web": "在网站加入的,使用账单页面。在应用中加入的,使用 App Store 或 Google Play。",
@@ -642,7 +659,8 @@
     "link": {
       "web": "자동.",
       "patreon": "Patreon 이메일이 계정과 일치하면 자동입니다. 일치하지 않으면 보내 드리는 연결 이메일을 이용해 주세요.",
-      "youtube": "곧 제공"
+      "youtube": "Discord를 통해 한 번만 연결하면 됩니다.",
+      "youtube_cta": "YouTube 멤버십 연결"
     },
     "billing": {
       "web": "웹사이트에서 가입하셨다면 결제 페이지. 앱에서 가입하셨다면 App Store 또는 Google Play.",

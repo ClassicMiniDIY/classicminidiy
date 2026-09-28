@@ -6,7 +6,7 @@
  *  - post-checkout activation poll on ?subscribed=1 (webhook race window):
  *    "Activating…" instead of the subscribe CTA, member area once the gate
  *    flips, gentle timeout note after ~30s
- *  - platform-aware manage branches: ghost / patreon / unknown-null fallback
+ *  - platform-aware manage branches: ghost / patreon / youtube / unknown-null fallback
  *  - hero "$1.99/month" badge gated on resolved auth (no member flash)
  *  - logged-out subscribe intent carried via /login?redirect=…&auto-start
  *
@@ -298,6 +298,16 @@ describe('manage area platform branches', () => {
     expect(link.exists()).toBe(true);
   });
 
+  it('youtube members get a manage link to YouTube paid memberships', async () => {
+    const wrapper = await mountAsMemberWithPlatform('youtube');
+    expect(wrapper.html()).toContain('member.manage_note_youtube');
+    const link = wrapper.find('a[href="https://www.youtube.com/paid_memberships"]');
+    expect(link.exists()).toBe(true);
+    expect(link.attributes('target')).toBe('_blank');
+    expect(wrapper.html()).not.toContain('member.active_fallback');
+    expect(wrapper.html()).not.toContain('member.manage_note_stripe');
+  });
+
   it('unknown/null platform on an active member renders the active fallback, not an empty area', async () => {
     const wrapper = await mountAsMemberWithPlatform(null);
     expect(wrapper.html()).toContain('member.active_fallback');
@@ -397,7 +407,7 @@ describe('member view copy', () => {
     expect(wrapper.find('[data-testid="member-title"]').text()).toBe("You're a Sustaining Member");
   });
 
-  it.each(['stripe', 'apple', 'google', 'ghost', 'patreon', 'comp', null])(
+  it.each(['stripe', 'apple', 'google', 'ghost', 'patreon', 'youtube', 'comp', null])(
     'platform %s: no "tip jar", no "Ghost", no "Stripe", and the new blog wording',
     async (platform) => {
       const wrapper = await mountMember({ platform, plan: 'plus' });
