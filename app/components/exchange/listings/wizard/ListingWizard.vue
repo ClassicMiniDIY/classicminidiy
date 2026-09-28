@@ -996,7 +996,7 @@
       "draftLoaded": { "title": "Borrador cargado", "description": "Continúa editando tu anuncio" },
       "draftSaved": { "title": "Borrador guardado", "description": "Tu anuncio se ha guardado como borrador" },
       "missingInfo": { "title": "Información faltante", "description": "Por favor completa todos los campos obligatorios" },
-      "premiumApplied": { "title": "Premium aplicado", "description": "Premium está incluido con tu membresía Sustaining." },
+      "premiumApplied": { "title": "Premium aplicado", "description": "Premium está incluido con tu membresía de Socio Colaborador." },
       "error": { "title": "Error", "loadDraft": "No se pudo cargar el borrador", "saveDraft": "No se pudo guardar el borrador", "submitListing": "No se pudo enviar el anuncio" }
     }
   },

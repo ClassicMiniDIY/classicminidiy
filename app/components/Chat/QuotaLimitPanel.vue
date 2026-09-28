@@ -243,8 +243,8 @@
     },
     "free": {
       "title": "Has usado los mensajes de este mes",
-      "body": "Los Miembros Sustaining tienen muchos más mensajes, y ayudan a mantener el archivo gratuito para todos.",
-      "cta": "Hazte Miembro Sustaining"
+      "body": "Los Socios Colaboradores tienen muchos más mensajes, y ayudan a mantener el archivo gratuito para todos.",
+      "cta": "Hazte Socio Colaborador"
     },
     "member": {
       "title": "Has usado los mensajes de este mes",

@@ -313,11 +313,11 @@
     "checking": "Comprobando tu enlace de reclamación…",
     "redeeming": {
       "title": "Activando tu membresía…",
-      "body": "Un momento: estamos vinculando tu Membresía Colaboradora a esta cuenta."
+      "body": "Un momento: estamos vinculando tu membresía de Socio Colaborador a esta cuenta."
     },
     "signin": {
       "title": "Inicia sesión para reclamar tu membresía",
-      "body": "Ya casi está: inicia sesión (o crea una cuenta gratuita) y vincularemos tu Membresía Colaboradora. Volverás aquí justo después.",
+      "body": "Ya casi está: inicia sesión (o crea una cuenta gratuita) y vincularemos tu membresía de Socio Colaborador. Volverás aquí justo después.",
       "cta": "Iniciar sesión para reclamar"
     },
     "success": {
@@ -327,7 +327,7 @@
     },
     "missing_code": {
       "title": "A ese enlace le falta el código de reclamación",
-      "body": "Esta página solo funciona desde el enlace de reclamación de tu correo de membresía. Abre el correo y vuelve a pulsar el botón, o consulta más abajo qué es la Membresía Colaboradora."
+      "body": "Esta página solo funciona desde el enlace de reclamación de tu correo de membresía. Abre el correo y vuelve a pulsar el botón, o consulta más abajo qué es la membresía de Socio Colaborador."
     },
     "already_claimed": {
       "title": "Esta membresía ya fue reclamada",
@@ -348,7 +348,7 @@
     },
     "contact_question": "¿Algo no cuadra?",
     "contact_cta": "Contáctanos y lo solucionamos.",
-    "membership_link": "Sobre la Membresía Colaboradora",
+    "membership_link": "Sobre la membresía de Socio Colaborador",
     "toasts": {
       "success_title": "¡Tu membresía está activa!",
       "success_body": "Gracias por apoyar a Classic Mini DIY: tus ventajas están activas allá donde inicies sesión."

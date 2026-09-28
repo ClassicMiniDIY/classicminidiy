@@ -125,7 +125,7 @@
   "es": {
     "ask_bot": "Pregunta a DIY Mini Bot: \"{query}\"",
     "ask_sign_in": "Inicia sesión para preguntar — {limit} preguntas al mes, gratis",
-    "ask_member": "Hazte Miembro Sustentador — {limit} preguntas al mes",
+    "ask_member": "Hazte Socio Colaborador — {limit} preguntas al mes",
     "ask_reset": "Tus preguntas se renuevan el día 1",
     "ask_upgrade": "Pasa a Member {plan} — {limit} preguntas al mes",
     "plan": {
