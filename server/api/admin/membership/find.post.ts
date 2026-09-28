@@ -25,14 +25,6 @@ import {
   type MemberLookupRow,
 } from '../../../../shared/utils/memberLookup';
 
-// `admin_find_member` is not in types/database.ts until it deploys and the
-// types are regenerated, so the typed `rpc` refuses its name. Drop this cast
-// after `bun run gen:types`.
-type UntypedRpc = (
-  fn: string,
-  args: Record<string, unknown>
-) => PromiseLike<{ data: unknown; error: { code?: string; message: string } | null }>;
-
 export default defineEventHandler(async (event): Promise<MemberLookupResponse> => {
   await requireAdminAuth(event);
 
@@ -46,14 +38,16 @@ export default defineEventHandler(async (event): Promise<MemberLookupResponse> =
   }
 
   const db = getServiceClient();
-  const { data, error } = await (db.rpc as unknown as UntypedRpc).call(db, 'admin_find_member', { p_query: q });
+  const { data, error } = await db.rpc('admin_find_member', { p_query: q });
   if (error) {
     // 22023 is the RPC's own short-query refusal: a bad request, not an outage.
     if (error.code === '22023') throw createError({ statusCode: 400, statusMessage: error.message });
     throw createError({ statusCode: 500, statusMessage: error.message });
   }
 
-  const rows = Array.isArray(data) ? (data as Partial<MemberLookupRow>[]) : [];
+  // The generated type has the jsonb columns as Json; normaliseMemberLookupRow
+  // checks and narrows each row, so the cast goes through unknown.
+  const rows = Array.isArray(data) ? (data as unknown as Partial<MemberLookupRow>[]) : [];
   return {
     results: rows.slice(0, MEMBER_LOOKUP_LIMIT).map(normaliseMemberLookupRow),
     truncated: rows.length > MEMBER_LOOKUP_LIMIT,
