@@ -523,9 +523,9 @@
     "discord_errors": {
       "missing_token": "Este enlace de invitación a Discord está incompleto. Inicia sesión y te emitiremos uno nuevo al momento.",
       "expired_link": "Este enlace de invitación a Discord ha caducado. Inicia sesión y te emitiremos uno nuevo al momento.",
-      "link_not_found": "No encontramos una invitación a Discord para tu cuenta. Inicia sesión como Miembro Sostenedor y te la emitiremos al momento.",
+      "link_not_found": "No encontramos una invitación a Discord para tu cuenta. Inicia sesión como Socio Colaborador y te la emitiremos al momento.",
       "link_superseded": "Se emitió una invitación a Discord más reciente. Inicia sesión y te daremos la actual al momento.",
-      "not_active": "Tu acceso a Discord no está activo. Se requiere una Membresía de Sostenedor activa para unirte al Discord exclusivo para miembros.",
+      "not_active": "Tu acceso a Discord no está activo. Se requiere una membresía de Socio Colaborador activa para unirte al Discord exclusivo para miembros.",
       "generic": "No pudimos completar tu invitación a Discord. Inicia sesión y te emitiremos una nueva — o escríbenos desde la página de contacto y lo resolveremos.",
       "cta_connect": "Obtener nueva invitación",
       "cta_membership": "Ver membresía"
@@ -543,7 +543,7 @@
         "title": "APOYA LA MISIÓN",
         "heading": "Apoyo",
         "content": "Classic Mini DIY es apoyado por nuestros espectadores. Si estás interesado en ayudar a mantener el canal vivo, considera apoyar en Patreon o si tienes habilidades en JS y tecnologías web modernas, por favor considera apoyar la base de código de código abierto en github.",
-        "member_cta": "Hazte Miembro Contribuyente"
+        "member_cta": "Hazte Socio Colaborador"
       },
       "toolgrid": {
         "eyebrow": "CAJA DE HERRAMIENTAS",

@@ -178,13 +178,13 @@
     "submitting": "Enviando tu anuncio...",
     "submitted": "¡Anuncio enviado!",
     "subtitle": {
-      "comped": "Premium incluido con tu membresía Sustaining: tu anuncio está en revisión.",
+      "comped": "Premium incluido con tu membresía de Socio Colaborador: tu anuncio está en revisión.",
       "paid": "Completa tu pago para activar tus funciones Premium.",
       "free": "Tu anuncio está en revisión."
     },
     "nextSteps": { "heading": "¿Qué sucede ahora?" },
     "comped": {
-      "premiumApplied": { "title": "Premium aplicado", "desc": "Incluido con tu membresía Sustaining" },
+      "premiumApplied": { "title": "Premium aplicado", "desc": "Incluido con tu membresía de Socio Colaborador" },
       "review": { "title": "Revisión del administrador", "desc": "Nuestro equipo revisa todos los anuncios por calidad (24-48 horas)" },
       "featured": { "title": "Destacado durante 30 días", "desc": "Una vez aprobado: posición prioritaria en búsquedas y aparición en el carrusel de la página de inicio" }
     },

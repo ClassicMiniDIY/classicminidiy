@@ -174,7 +174,7 @@
   },
   "es": {
     "compactSummary": "Miembro desde {year} · {count} vendidos",
-    "sustainingMember": "Miembro colaborador",
+    "sustainingMember": "Socio Colaborador",
     "memberSince": "Miembro desde {date}",
     "salesCompleted": "{count} venta completada | {count} ventas completadas",
     "activeListings": "{count} anuncio activo | {count} anuncios activos",

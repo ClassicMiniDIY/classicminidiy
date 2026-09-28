@@ -25,7 +25,7 @@
 <i18n lang="json">
 {
   "en": { "sustainingMember": "Sustaining Member", "sustaining": "Sustaining" },
-  "es": { "sustainingMember": "Miembro de apoyo", "sustaining": "Apoyo" },
+  "es": { "sustainingMember": "Socio Colaborador", "sustaining": "Colaborador" },
   "fr": { "sustainingMember": "Membre de soutien", "sustaining": "Soutien" },
   "de": { "sustainingMember": "Fördermitglied", "sustaining": "Förderer" },
   "it": { "sustainingMember": "Membro sostenitore", "sustaining": "Sostenitore" },

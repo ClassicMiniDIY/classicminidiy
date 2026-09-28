@@ -161,15 +161,22 @@
     }
   }
 
-  // Which channel grants this member's entitlement (apple/google/stripe/comp),
-  // via get_my_membership(). Drives the management UI so non-Stripe members
-  // aren't shown the Stripe portal link. null while loading or if the RPC isn't
-  // deployed yet — in which case we hide the Stripe link (the safe default for
-  // comp/Apple/Google members).
+  // The channel this member manages billing on (apple/google/stripe/comp/
+  // ghost/patreon), via get_my_membership(): a purchase is preferred over comp,
+  // then the highest plan, then the newest row. Drives the management UI so
+  // non-Stripe members aren't shown the Stripe portal link. null while loading
+  // or if the RPC isn't deployed yet — in which case we hide the Stripe link
+  // (the safe default for comp/Apple/Google members).
   const membershipPlatform = ref<string | null>(null);
-  // The plan on the granting row (base | plus | pro); null until loaded or for
-  // a row written before plans existed, which the server treats as base.
+  // The HIGHEST plan (base | plus | pro) across all of the member's entitling
+  // rows, comp included. It need not come from the same row as
+  // membershipPlatform, so never render the two as a pair ("Stripe · Pro").
+  // null until loaded or for rows written before plans existed, which the
+  // server treats as base.
   const membershipPlan = ref<string | null>(null);
+  // True once get_my_membership() has answered. The headline shows the level
+  // only after that, so a Pro member never sees "· Member" flash first.
+  const membershipLoaded = ref(false);
   async function loadMembershipPlatform() {
     if (!user.value) return;
     try {
@@ -180,6 +187,7 @@
       }
       membershipPlatform.value = data?.platform ?? null;
       membershipPlan.value = data?.plan ?? null;
+      membershipLoaded.value = true;
     } catch (err) {
       console.error('Error loading membership platform:', err);
     }
@@ -335,7 +343,11 @@
           <div class="card-body">
             <div class="flex flex-wrap items-center gap-3">
               <ProfileSustainingBadge size="md" />
-              <h2 class="text-2xl font-bold">{{ t('member.title') }}</h2>
+              <h2 class="text-2xl font-bold" data-testid="member-title">
+                {{
+                  membershipLoaded ? t('member.title', { level: planLabel(membershipPlan) }) : t('member.title_pending')
+                }}
+              </h2>
             </div>
             <p class="opacity-70">{{ t('member.subtitle') }}</p>
             <p class="text-sm mt-1">
@@ -367,7 +379,7 @@
                   <NuxtLink to="/contact" class="link link-primary">{{ t('member.discord_contact_cta') }}</NuxtLink>
                 </p>
               </div>
-              <!-- Pro blog access -->
+              <!-- Members-only blog posts -->
               <div class="rounded-box border border-base-300 p-4">
                 <p class="font-semibold">
                   <i class="fas fa-book-open mr-2 text-primary"></i>{{ t('member.blog_title') }}
@@ -524,12 +536,6 @@
           </section>
         </template>
       </ClientOnly>
-
-      <!-- Patreon disambiguation: membership is not the tip jar -->
-      <p class="text-center text-sm opacity-60">
-        {{ t('tip_jar_note') }}
-        <NuxtLink to="/" class="link">{{ t('tip_jar_link') }}</NuxtLink>
-      </p>
     </div>
   </div>
 </template>
@@ -539,7 +545,7 @@
   "en": {
     "meta": {
       "title": "Sustaining Member — Classic Mini DIY",
-      "description": "Become a Sustaining Member (from $1.99/month) for one account across Classic Mini DIY, The Mini Exchange, and the Toolbox apps, a members-only Discord, Pro blog access, free premium listings on The Mini Exchange, and to support the channel."
+      "description": "Become a Sustaining Member (from $1.99/month) for one account across Classic Mini DIY, The Mini Exchange, and the Toolbox apps, a members-only Discord, members-only blog posts, free premium listings on The Mini Exchange, and to support the channel."
     },
     "hero": {
       "eyebrow": "SUSTAINING MEMBER",
@@ -564,7 +570,7 @@
           "desc": "A private community to talk shop, share builds, and get help."
         },
         "blog": {
-          "title": "Pro access to the blog",
+          "title": "Members-only blog posts",
           "desc": "Complimentary access to subscriber content on the Classic Mini DIY blog."
         },
         "listings": {
@@ -589,7 +595,8 @@
       "also_apps": "Also available in the iOS and Android apps."
     },
     "member": {
-      "title": "You're a Sustaining Member",
+      "title": "You're a Sustaining Member · {level}",
+      "title_pending": "You're a Sustaining Member",
       "subtitle": "Thanks for keeping the Classic Mini community running. Here's what your membership unlocks.",
       "discord_title": "Members-only Discord",
       "discord_status": {
@@ -606,16 +613,16 @@
         "revoked": "Your Discord access was removed. Reactivate your membership to rejoin.",
         "failed": "We hit a snag issuing your Discord invite. Reach out via the contact page and we'll sort it out."
       },
-      "blog_title": "Pro access to the blog",
+      "blog_title": "Members-only blog posts",
       "blog_desc": "Complimentary access to subscriber content on the Classic Mini DIY blog.",
       "blog_cta": "Open the blog",
       "discord_lost_email": "Lost the invite email?",
       "discord_contact_cta": "Contact us and we'll resend it.",
       "manage": "Manage membership",
-      "manage_note_stripe": "Manage or cancel your membership any time through Stripe.",
+      "manage_note_stripe": "Manage or cancel your membership any time on the billing page.",
       "comp_note": "Your membership is complimentary — enjoy all the benefits, on us. There's nothing to manage.",
       "manage_note_store": "Manage or cancel your subscription in the App Store or Google Play, wherever you subscribed.",
-      "manage_note_ghost": "Manage your membership through your Ghost account billing email.",
+      "manage_note_ghost": "Manage billing and cancellation from your Classic Mini DIY blog account.",
       "manage_note_patreon": "Manage your pledge on Patreon.",
       "active_fallback": "Your membership is active.",
       "plan_line": "Your plan: {plan} — {count} DIY Mini Bot questions a month.",
@@ -633,17 +640,15 @@
       "canceled_title": "Checkout canceled",
       "canceled_body": "No charge was made. You can become a Sustaining Member whenever you're ready."
     },
-    "tip_jar_note": "Looking to leave a one-time tip instead? Patreon is a separate tip jar.",
-    "tip_jar_link": "See ways to support →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "Most popular",
       "per_month": "/month",
@@ -655,7 +660,7 @@
   "es": {
     "meta": {
       "title": "Socio Colaborador — Classic Mini DIY",
-      "description": "Hazte Socio Colaborador (desde 1,99 $/mes) y consigue una sola cuenta para Classic Mini DIY, The Mini Exchange y las apps Toolbox, un Discord exclusivo para socios, acceso Pro al blog, anuncios premium gratis en The Mini Exchange y apoya al canal."
+      "description": "Hazte Socio Colaborador (desde 1,99 $/mes) y consigue una sola cuenta para Classic Mini DIY, The Mini Exchange y las apps Toolbox, un Discord exclusivo para socios, artículos del blog exclusivos para socios, anuncios premium gratis en The Mini Exchange y apoya al canal."
     },
     "hero": {
       "eyebrow": "SOCIO COLABORADOR",
@@ -680,7 +685,7 @@
           "desc": "Una comunidad privada para hablar de mecánica, compartir proyectos y pedir ayuda."
         },
         "blog": {
-          "title": "Acceso Pro al blog",
+          "title": "Artículos del blog exclusivos para socios",
           "desc": "Acceso gratuito al contenido para suscriptores del blog de Classic Mini DIY."
         },
         "listings": {
@@ -705,7 +710,8 @@
       "also_apps": "También disponible en las apps de iOS y Android."
     },
     "member": {
-      "title": "Eres Socio Colaborador",
+      "title": "Eres Socio Colaborador · {level}",
+      "title_pending": "Eres Socio Colaborador",
       "subtitle": "Gracias por mantener viva la comunidad del Classic Mini. Esto es lo que desbloquea tu membresía.",
       "discord_title": "Discord exclusivo para socios",
       "discord_status": {
@@ -722,16 +728,16 @@
         "revoked": "Se ha retirado tu acceso a Discord. Reactiva tu membresía para volver a entrar.",
         "failed": "Hemos tenido un problema al emitir tu invitación de Discord. Escríbenos desde la página de contacto y lo solucionamos."
       },
-      "blog_title": "Acceso Pro al blog",
+      "blog_title": "Artículos del blog exclusivos para socios",
       "blog_desc": "Acceso gratuito al contenido para suscriptores del blog de Classic Mini DIY.",
       "blog_cta": "Abrir el blog",
       "discord_lost_email": "¿Has perdido el correo de invitación?",
       "discord_contact_cta": "Contáctanos y te lo reenviamos.",
       "manage": "Gestionar membresía",
-      "manage_note_stripe": "Gestiona o cancela tu membresía cuando quieras a través de Stripe.",
+      "manage_note_stripe": "Gestiona o cancela tu membresía cuando quieras en la página de facturación.",
       "comp_note": "Tu membresía es de cortesía: disfruta de todas las ventajas, invita la casa. No hay nada que gestionar.",
       "manage_note_store": "Gestiona o cancela tu suscripción en la App Store o en Google Play, según dónde te suscribieras.",
-      "manage_note_ghost": "Gestiona tu membresía con el correo de facturación de tu cuenta de Ghost.",
+      "manage_note_ghost": "Gestiona la facturación y la cancelación desde tu cuenta del blog de Classic Mini DIY.",
       "manage_note_patreon": "Gestiona tu aportación en Patreon.",
       "active_fallback": "Tu membresía está activa.",
       "plan_line": "Tu plan: {plan} — {count} preguntas al DIY Mini Bot al mes.",
@@ -749,17 +755,15 @@
       "canceled_title": "Pago cancelado",
       "canceled_body": "No se ha realizado ningún cargo. Puedes hacerte Socio Colaborador cuando quieras."
     },
-    "tip_jar_note": "¿Prefieres dejar una propina puntual? Patreon es un bote de propinas aparte.",
-    "tip_jar_link": "Ver formas de apoyar →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "Más popular",
       "per_month": "/mes",
@@ -771,7 +775,7 @@
   "fr": {
     "meta": {
       "title": "Membre de soutien — Classic Mini DIY",
-      "description": "Devenez membre de soutien (à partir de 1,99 $/mois) : un seul compte pour Classic Mini DIY, The Mini Exchange et les applis Toolbox, un Discord réservé aux membres, l'accès Pro au blog, des annonces premium gratuites sur The Mini Exchange, et un soutien à la chaîne."
+      "description": "Devenez membre de soutien (à partir de 1,99 $/mois) : un seul compte pour Classic Mini DIY, The Mini Exchange et les applis Toolbox, un Discord réservé aux membres, des articles de blog réservés aux membres, des annonces premium gratuites sur The Mini Exchange, et un soutien à la chaîne."
     },
     "hero": {
       "eyebrow": "MEMBRE DE SOUTIEN",
@@ -796,7 +800,7 @@
           "desc": "Une communauté privée pour parler mécanique, partager vos projets et obtenir de l'aide."
         },
         "blog": {
-          "title": "Accès Pro au blog",
+          "title": "Articles de blog réservés aux membres",
           "desc": "Accès offert au contenu réservé aux abonnés du blog Classic Mini DIY."
         },
         "listings": {
@@ -821,7 +825,8 @@
       "also_apps": "Également disponible dans les applis iOS et Android."
     },
     "member": {
-      "title": "Vous êtes membre de soutien",
+      "title": "Vous êtes membre de soutien · {level}",
+      "title_pending": "Vous êtes membre de soutien",
       "subtitle": "Merci de faire vivre la communauté Classic Mini. Voici ce que votre adhésion débloque.",
       "discord_title": "Discord réservé aux membres",
       "discord_status": {
@@ -838,16 +843,16 @@
         "revoked": "Votre accès Discord a été retiré. Réactivez votre adhésion pour revenir.",
         "failed": "Nous avons rencontré un problème en émettant votre invitation Discord. Écrivez-nous via la page de contact et nous réglerons ça."
       },
-      "blog_title": "Accès Pro au blog",
+      "blog_title": "Articles de blog réservés aux membres",
       "blog_desc": "Accès offert au contenu réservé aux abonnés du blog Classic Mini DIY.",
       "blog_cta": "Ouvrir le blog",
       "discord_lost_email": "Vous avez perdu l'e-mail d'invitation ?",
       "discord_contact_cta": "Contactez-nous, nous le renverrons.",
       "manage": "Gérer l'adhésion",
-      "manage_note_stripe": "Gérez ou annulez votre adhésion à tout moment via Stripe.",
+      "manage_note_stripe": "Gérez ou annulez votre adhésion à tout moment sur la page de facturation.",
       "comp_note": "Votre adhésion est offerte — profitez de tous les avantages, c'est cadeau. Il n'y a rien à gérer.",
       "manage_note_store": "Gérez ou annulez votre abonnement dans l'App Store ou sur Google Play, selon l'endroit où vous vous êtes abonné.",
-      "manage_note_ghost": "Gérez votre adhésion via l'e-mail de facturation de votre compte Ghost.",
+      "manage_note_ghost": "Gérez la facturation et la résiliation depuis votre compte du blog Classic Mini DIY.",
       "manage_note_patreon": "Gérez votre contribution sur Patreon.",
       "active_fallback": "Votre adhésion est active.",
       "plan_line": "Votre formule : {plan} — {count} questions au DIY Mini Bot par mois.",
@@ -865,17 +870,15 @@
       "canceled_title": "Paiement annulé",
       "canceled_body": "Aucun débit n'a été effectué. Vous pourrez devenir membre de soutien quand vous le souhaiterez."
     },
-    "tip_jar_note": "Vous préférez laisser un pourboire ponctuel ? Patreon est une cagnotte distincte.",
-    "tip_jar_link": "Voir comment soutenir →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "Le plus populaire",
       "per_month": "/mois",
@@ -887,7 +890,7 @@
   "de": {
     "meta": {
       "title": "Fördermitglied — Classic Mini DIY",
-      "description": "Werde Fördermitglied (ab 1,99 $/Monat): ein Konto für Classic Mini DIY, The Mini Exchange und die Toolbox-Apps, ein Discord nur für Mitglieder, Pro-Zugang zum Blog, kostenlose Premium-Anzeigen auf The Mini Exchange – und Unterstützung für den Kanal."
+      "description": "Werde Fördermitglied (ab 1,99 $/Monat): ein Konto für Classic Mini DIY, The Mini Exchange und die Toolbox-Apps, ein Discord nur für Mitglieder, Blogbeiträge nur für Mitglieder, kostenlose Premium-Anzeigen auf The Mini Exchange – und Unterstützung für den Kanal."
     },
     "hero": {
       "eyebrow": "FÖRDERMITGLIED",
@@ -912,7 +915,7 @@
           "desc": "Eine private Community zum Fachsimpeln, Projekte teilen und Hilfe holen."
         },
         "blog": {
-          "title": "Pro-Zugang zum Blog",
+          "title": "Blogbeiträge nur für Mitglieder",
           "desc": "Kostenloser Zugang zu den Abonnenteninhalten im Classic-Mini-DIY-Blog."
         },
         "listings": {
@@ -937,7 +940,8 @@
       "also_apps": "Auch in den iOS- und Android-Apps verfügbar."
     },
     "member": {
-      "title": "Du bist Fördermitglied",
+      "title": "Du bist Fördermitglied · {level}",
+      "title_pending": "Du bist Fördermitglied",
       "subtitle": "Danke, dass du die Classic-Mini-Community am Laufen hältst. Das schaltet deine Mitgliedschaft frei.",
       "discord_title": "Discord nur für Mitglieder",
       "discord_status": {
@@ -954,16 +958,16 @@
         "revoked": "Dein Discord-Zugang wurde entfernt. Reaktiviere deine Mitgliedschaft, um wieder beizutreten.",
         "failed": "Beim Ausstellen deiner Discord-Einladung gab es ein Problem. Melde dich über die Kontaktseite und wir klären das."
       },
-      "blog_title": "Pro-Zugang zum Blog",
+      "blog_title": "Blogbeiträge nur für Mitglieder",
       "blog_desc": "Kostenloser Zugang zu den Abonnenteninhalten im Classic-Mini-DIY-Blog.",
       "blog_cta": "Blog öffnen",
       "discord_lost_email": "Einladungs-E-Mail verloren?",
       "discord_contact_cta": "Kontaktiere uns, wir senden sie erneut.",
       "manage": "Mitgliedschaft verwalten",
-      "manage_note_stripe": "Verwalte oder kündige deine Mitgliedschaft jederzeit über Stripe.",
+      "manage_note_stripe": "Verwalte oder kündige deine Mitgliedschaft jederzeit auf der Abrechnungsseite.",
       "comp_note": "Deine Mitgliedschaft ist ein Geschenk – genieße alle Vorteile, geht aufs Haus. Es gibt nichts zu verwalten.",
       "manage_note_store": "Verwalte oder kündige dein Abo im App Store oder bei Google Play – dort, wo du es abgeschlossen hast.",
-      "manage_note_ghost": "Verwalte deine Mitgliedschaft über die Rechnungs-E-Mail deines Ghost-Kontos.",
+      "manage_note_ghost": "Verwalte Abrechnung und Kündigung in deinem Konto beim Classic Mini DIY Blog.",
       "manage_note_patreon": "Verwalte deinen Beitrag auf Patreon.",
       "active_fallback": "Deine Mitgliedschaft ist aktiv.",
       "plan_line": "Dein Plan: {plan} — {count} DIY-Mini-Bot-Fragen pro Monat.",
@@ -981,17 +985,15 @@
       "canceled_title": "Bezahlvorgang abgebrochen",
       "canceled_body": "Es wurde nichts abgebucht. Du kannst jederzeit Fördermitglied werden, wenn du so weit bist."
     },
-    "tip_jar_note": "Lieber einmalig etwas geben? Patreon ist ein separates Trinkgeldglas.",
-    "tip_jar_link": "Wege zu unterstützen ansehen →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "Am beliebtesten",
       "per_month": "/Monat",
@@ -1003,7 +1005,7 @@
   "it": {
     "meta": {
       "title": "Socio Sostenitore — Classic Mini DIY",
-      "description": "Diventa Socio Sostenitore (da 1,99 $/mese): un solo account per Classic Mini DIY, The Mini Exchange e le app Toolbox, un Discord riservato ai soci, accesso Pro al blog, annunci premium gratuiti su The Mini Exchange e il tuo sostegno al canale."
+      "description": "Diventa Socio Sostenitore (da 1,99 $/mese): un solo account per Classic Mini DIY, The Mini Exchange e le app Toolbox, un Discord riservato ai soci, articoli del blog riservati ai soci, annunci premium gratuiti su The Mini Exchange e il tuo sostegno al canale."
     },
     "hero": {
       "eyebrow": "SOCIO SOSTENITORE",
@@ -1028,7 +1030,7 @@
           "desc": "Una community privata per parlare di meccanica, condividere i progetti e chiedere aiuto."
         },
         "blog": {
-          "title": "Accesso Pro al blog",
+          "title": "Articoli del blog riservati ai soci",
           "desc": "Accesso gratuito ai contenuti riservati agli abbonati del blog Classic Mini DIY."
         },
         "listings": {
@@ -1053,7 +1055,8 @@
       "also_apps": "Disponibile anche nelle app iOS e Android."
     },
     "member": {
-      "title": "Sei un Socio Sostenitore",
+      "title": "Sei un Socio Sostenitore · {level}",
+      "title_pending": "Sei un Socio Sostenitore",
       "subtitle": "Grazie per tenere viva la community del Classic Mini. Ecco cosa sblocca la tua iscrizione.",
       "discord_title": "Discord riservato ai soci",
       "discord_status": {
@@ -1070,16 +1073,16 @@
         "revoked": "Il tuo accesso a Discord è stato rimosso. Riattiva l'iscrizione per rientrare.",
         "failed": "Abbiamo avuto un problema nell'emettere il tuo invito a Discord. Scrivici dalla pagina dei contatti e sistemiamo tutto."
       },
-      "blog_title": "Accesso Pro al blog",
+      "blog_title": "Articoli del blog riservati ai soci",
       "blog_desc": "Accesso gratuito ai contenuti riservati agli abbonati del blog Classic Mini DIY.",
       "blog_cta": "Apri il blog",
       "discord_lost_email": "Hai perso l'email di invito?",
       "discord_contact_cta": "Contattaci e te la rinviamo.",
       "manage": "Gestisci l'iscrizione",
-      "manage_note_stripe": "Gestisci o disdici la tua iscrizione quando vuoi tramite Stripe.",
+      "manage_note_stripe": "Gestisci o disdici la tua iscrizione quando vuoi dalla pagina di fatturazione.",
       "comp_note": "La tua iscrizione è offerta da noi: goditi tutti i vantaggi, offre la casa. Non c'è nulla da gestire.",
       "manage_note_store": "Gestisci o disdici l'abbonamento nell'App Store o su Google Play, dove ti sei iscritto.",
-      "manage_note_ghost": "Gestisci l'iscrizione tramite l'email di fatturazione del tuo account Ghost.",
+      "manage_note_ghost": "Gestisci fatturazione e disdetta dal tuo account del blog Classic Mini DIY.",
       "manage_note_patreon": "Gestisci il tuo contributo su Patreon.",
       "active_fallback": "La tua iscrizione è attiva.",
       "plan_line": "Il tuo piano: {plan} — {count} domande al DIY Mini Bot al mese.",
@@ -1097,17 +1100,15 @@
       "canceled_title": "Pagamento annullato",
       "canceled_body": "Non è stato effettuato alcun addebito. Puoi diventare Socio Sostenitore quando vuoi."
     },
-    "tip_jar_note": "Preferisci lasciare una mancia una tantum? Patreon è un salvadanaio separato.",
-    "tip_jar_link": "Scopri come sostenerci →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "Il più scelto",
       "per_month": "/mese",
@@ -1119,7 +1120,7 @@
   "pt": {
     "meta": {
       "title": "Membro Apoiador — Classic Mini DIY",
-      "description": "Torne-se Membro Apoiador (a partir de 1,99 $/mês): uma só conta para a Classic Mini DIY, The Mini Exchange e as apps Toolbox, um Discord exclusivo para membros, acesso Pro ao blogue, anúncios premium gratuitos no The Mini Exchange e apoio ao canal."
+      "description": "Torne-se Membro Apoiador (a partir de 1,99 $/mês): uma só conta para a Classic Mini DIY, The Mini Exchange e as apps Toolbox, um Discord exclusivo para membros, artigos do blogue exclusivos para membros, anúncios premium gratuitos no The Mini Exchange e apoio ao canal."
     },
     "hero": {
       "eyebrow": "MEMBRO APOIADOR",
@@ -1144,7 +1145,7 @@
           "desc": "Uma comunidade privada para falar de mecânica, partilhar projetos e pedir ajuda."
         },
         "blog": {
-          "title": "Acesso Pro ao blogue",
+          "title": "Artigos do blogue exclusivos para membros",
           "desc": "Acesso gratuito aos conteúdos para subscritores do blogue Classic Mini DIY."
         },
         "listings": {
@@ -1169,7 +1170,8 @@
       "also_apps": "Também disponível nas apps iOS e Android."
     },
     "member": {
-      "title": "É Membro Apoiador",
+      "title": "É Membro Apoiador · {level}",
+      "title_pending": "É Membro Apoiador",
       "subtitle": "Obrigado por manter a comunidade do Classic Mini a andar. Eis o que a sua adesão desbloqueia.",
       "discord_title": "Discord exclusivo para membros",
       "discord_status": {
@@ -1186,16 +1188,16 @@
         "revoked": "O seu acesso ao Discord foi removido. Reative a adesão para voltar a entrar.",
         "failed": "Tivemos um problema ao emitir o seu convite do Discord. Contacte-nos pela página de contacto e resolvemos."
       },
-      "blog_title": "Acesso Pro ao blogue",
+      "blog_title": "Artigos do blogue exclusivos para membros",
       "blog_desc": "Acesso gratuito aos conteúdos para subscritores do blogue Classic Mini DIY.",
       "blog_cta": "Abrir o blogue",
       "discord_lost_email": "Perdeu o email do convite?",
       "discord_contact_cta": "Contacte-nos e reenviamos.",
       "manage": "Gerir adesão",
-      "manage_note_stripe": "Faça a gestão ou cancele a sua adesão a qualquer momento através do Stripe.",
+      "manage_note_stripe": "Faça a gestão ou cancele a sua adesão a qualquer momento na página de faturação.",
       "comp_note": "A sua adesão é oferecida — aproveite todas as vantagens, é por nossa conta. Não há nada a gerir.",
       "manage_note_store": "Faça a gestão ou cancele a subscrição na App Store ou no Google Play, onde a tiver feito.",
-      "manage_note_ghost": "Faça a gestão da adesão através do email de faturação da sua conta Ghost.",
+      "manage_note_ghost": "Faça a gestão da faturação e do cancelamento na sua conta do blogue Classic Mini DIY.",
       "manage_note_patreon": "Faça a gestão do seu contributo no Patreon.",
       "active_fallback": "A sua adesão está ativa.",
       "plan_line": "Seu plano: {plan} — {count} perguntas ao DIY Mini Bot por mês.",
@@ -1213,17 +1215,15 @@
       "canceled_title": "Pagamento cancelado",
       "canceled_body": "Não foi feita qualquer cobrança. Pode tornar-se Membro Apoiador quando quiser."
     },
-    "tip_jar_note": "Prefere deixar um donativo único? O Patreon é um mealheiro à parte.",
-    "tip_jar_link": "Ver formas de apoiar →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "Mais popular",
       "per_month": "/mês",
@@ -1235,7 +1235,7 @@
   "ru": {
     "meta": {
       "title": "Постоянный участник — Classic Mini DIY",
-      "description": "Станьте постоянным участником (от 1,99 $ в месяц): один аккаунт для Classic Mini DIY, The Mini Exchange и приложений Toolbox, Discord только для участников, Pro-доступ к блогу, бесплатные премиум-объявления на The Mini Exchange и поддержка канала."
+      "description": "Станьте постоянным участником (от 1,99 $ в месяц): один аккаунт для Classic Mini DIY, The Mini Exchange и приложений Toolbox, Discord только для участников, записи блога только для участников, бесплатные премиум-объявления на The Mini Exchange и поддержка канала."
     },
     "hero": {
       "eyebrow": "ПОСТОЯННЫЙ УЧАСТНИК",
@@ -1260,7 +1260,7 @@
           "desc": "Закрытое сообщество, где можно обсуждать технику, показывать свои проекты и просить совета."
         },
         "blog": {
-          "title": "Pro-доступ к блогу",
+          "title": "Записи блога только для участников",
           "desc": "Бесплатный доступ к материалам для подписчиков блога Classic Mini DIY."
         },
         "listings": {
@@ -1285,7 +1285,8 @@
       "also_apps": "Также доступно в приложениях для iOS и Android."
     },
     "member": {
-      "title": "Вы постоянный участник",
+      "title": "Вы постоянный участник · {level}",
+      "title_pending": "Вы постоянный участник",
       "subtitle": "Спасибо, что поддерживаете сообщество Classic Mini. Вот что открывает ваше участие.",
       "discord_title": "Discord только для участников",
       "discord_status": {
@@ -1302,16 +1303,16 @@
         "revoked": "Доступ к Discord был отозван. Возобновите участие, чтобы вернуться.",
         "failed": "При выпуске приглашения в Discord возникла проблема. Напишите нам через страницу контактов, и мы всё решим."
       },
-      "blog_title": "Pro-доступ к блогу",
+      "blog_title": "Записи блога только для участников",
       "blog_desc": "Бесплатный доступ к материалам для подписчиков блога Classic Mini DIY.",
       "blog_cta": "Открыть блог",
       "discord_lost_email": "Потеряли письмо с приглашением?",
       "discord_contact_cta": "Свяжитесь с нами, и мы отправим его снова.",
       "manage": "Управление участием",
-      "manage_note_stripe": "Управляйте участием или отмените его в любой момент через Stripe.",
+      "manage_note_stripe": "Управляйте участием или отмените его в любой момент на странице оплаты.",
       "comp_note": "Ваше участие бесплатное — пользуйтесь всеми привилегиями за наш счёт. Управлять нечем.",
       "manage_note_store": "Управляйте подпиской или отмените её в App Store или Google Play — там, где вы её оформили.",
-      "manage_note_ghost": "Управляйте участием через платёжную почту вашего аккаунта Ghost.",
+      "manage_note_ghost": "Управляйте оплатой и отменой в своём аккаунте блога Classic Mini DIY.",
       "manage_note_patreon": "Управляйте своим взносом на Patreon.",
       "active_fallback": "Ваше участие активно.",
       "plan_line": "Ваш план: {plan} — {count} вопросов DIY Mini Bot в месяц.",
@@ -1329,17 +1330,15 @@
       "canceled_title": "Оплата отменена",
       "canceled_body": "Списаний не было. Вы можете стать постоянным участником в любой момент."
     },
-    "tip_jar_note": "Хотите вместо этого оставить разовые чаевые? Patreon — это отдельная копилка.",
-    "tip_jar_link": "Посмотреть способы поддержки →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "Самый популярный",
       "per_month": "/мес",
@@ -1351,7 +1350,7 @@
   "ja": {
     "meta": {
       "title": "サステイニングメンバー — Classic Mini DIY",
-      "description": "サステイニングメンバー (月額 1.99 ドルから) になると、Classic Mini DIY、The Mini Exchange、Toolbox アプリで使えるひとつのアカウント、メンバー限定 Discord、ブログの Pro アクセス、The Mini Exchange のプレミアム出品無料、そしてチャンネルの支援が可能になります。"
+      "description": "サステイニングメンバー (月額 1.99 ドルから) になると、Classic Mini DIY、The Mini Exchange、Toolbox アプリで使えるひとつのアカウント、メンバー限定 Discord、メンバー限定のブログ記事、The Mini Exchange のプレミアム出品無料、そしてチャンネルの支援が可能になります。"
     },
     "hero": {
       "eyebrow": "サステイニングメンバー",
@@ -1376,7 +1375,7 @@
           "desc": "整備の話をしたり、製作中の車両を共有したり、助けを求めたりできるプライベートなコミュニティ。"
         },
         "blog": {
-          "title": "ブログの Pro アクセス",
+          "title": "メンバー限定のブログ記事",
           "desc": "Classic Mini DIY ブログの購読者向けコンテンツを無料でご利用いただけます。"
         },
         "listings": {
@@ -1401,7 +1400,8 @@
       "also_apps": "iOS・Android アプリでもご利用いただけます。"
     },
     "member": {
-      "title": "あなたはサステイニングメンバーです",
+      "title": "あなたはサステイニングメンバーです · {level}",
+      "title_pending": "あなたはサステイニングメンバーです",
       "subtitle": "Classic Mini コミュニティを支えていただきありがとうございます。メンバーシップで使える特典はこちらです。",
       "discord_title": "メンバー限定 Discord",
       "discord_status": {
@@ -1418,16 +1418,16 @@
         "revoked": "Discord へのアクセスが解除されました。再参加するにはメンバーシップを再開してください。",
         "failed": "Discord の招待の発行で問題が発生しました。お問い合わせページからご連絡ください。こちらで対応します。"
       },
-      "blog_title": "ブログの Pro アクセス",
+      "blog_title": "メンバー限定のブログ記事",
       "blog_desc": "Classic Mini DIY ブログの購読者向けコンテンツを無料でご利用いただけます。",
       "blog_cta": "ブログを開く",
       "discord_lost_email": "招待メールが見つかりませんか?",
       "discord_contact_cta": "お問い合わせいただければ再送します。",
       "manage": "メンバーシップの管理",
-      "manage_note_stripe": "Stripe からいつでもメンバーシップの管理・解約ができます。",
+      "manage_note_stripe": "お支払いページからいつでもメンバーシップの管理・解約ができます。",
       "comp_note": "あなたのメンバーシップは無償提供です。すべての特典をどうぞご利用ください。管理する項目はありません。",
       "manage_note_store": "登録した場所に応じて、App Store または Google Play でサブスクリプションの管理・解約ができます。",
-      "manage_note_ghost": "Ghost アカウントの請求先メールアドレスからメンバーシップを管理できます。",
+      "manage_note_ghost": "お支払いと解約は Classic Mini DIY ブログのアカウントから管理できます。",
       "manage_note_patreon": "Patreon で支援内容を管理できます。",
       "active_fallback": "メンバーシップは有効です。",
       "plan_line": "現在のプラン: {plan} — DIY Mini Bot への質問 月{count}件。",
@@ -1445,17 +1445,15 @@
       "canceled_title": "お支払いをキャンセルしました",
       "canceled_body": "請求は発生していません。準備ができたらいつでもサステイニングメンバーになれます。"
     },
-    "tip_jar_note": "代わりに一回きりの支援をお考えですか? Patreon は別のチップ用の窓口です。",
-    "tip_jar_link": "支援の方法を見る →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "人気",
       "per_month": "/月",
@@ -1467,7 +1465,7 @@
   "zh": {
     "meta": {
       "title": "持续支持会员 — Classic Mini DIY",
-      "description": "成为持续支持会员(每月 1.99 美元起):在 Classic Mini DIY、The Mini Exchange 和 Toolbox 应用中共用一个账号,加入会员专属 Discord,获得博客 Pro 访问权限、The Mini Exchange 免费高级刊登,并支持本频道。"
+      "description": "成为持续支持会员(每月 1.99 美元起):在 Classic Mini DIY、The Mini Exchange 和 Toolbox 应用中共用一个账号,加入会员专属 Discord,获得会员专属博客文章、The Mini Exchange 免费高级刊登,并支持本频道。"
     },
     "hero": {
       "eyebrow": "持续支持会员",
@@ -1492,7 +1490,7 @@
           "desc": "一个私密社群,聊技术、晒改装、随时求助。"
         },
         "blog": {
-          "title": "博客 Pro 访问权限",
+          "title": "会员专属博客文章",
           "desc": "免费阅读 Classic Mini DIY 博客的订阅者内容。"
         },
         "listings": {
@@ -1517,7 +1515,8 @@
       "also_apps": "iOS 和 Android 应用中同样可用。"
     },
     "member": {
-      "title": "你是持续支持会员",
+      "title": "你是持续支持会员 · {level}",
+      "title_pending": "你是持续支持会员",
       "subtitle": "感谢你让 Classic Mini 社群持续运转。以下是你的会员资格所解锁的内容。",
       "discord_title": "会员专属 Discord",
       "discord_status": {
@@ -1534,16 +1533,16 @@
         "revoked": "你的 Discord 访问权限已被移除。重新启用会员资格即可再次加入。",
         "failed": "发放你的 Discord 邀请时出了点问题。请通过联系页面告诉我们,我们会帮你处理。"
       },
-      "blog_title": "博客 Pro 访问权限",
+      "blog_title": "会员专属博客文章",
       "blog_desc": "免费阅读 Classic Mini DIY 博客的订阅者内容。",
       "blog_cta": "打开博客",
       "discord_lost_email": "找不到邀请邮件?",
       "discord_contact_cta": "联系我们,我们会重新发送。",
       "manage": "管理会员资格",
-      "manage_note_stripe": "你可以随时通过 Stripe 管理或取消会员资格。",
+      "manage_note_stripe": "你可以随时在账单页面管理或取消会员资格。",
       "comp_note": "你的会员资格由我们赠送——尽情享用全部权益,无需任何操作。",
       "manage_note_store": "请在你订阅所在的 App Store 或 Google Play 中管理或取消订阅。",
-      "manage_note_ghost": "通过你的 Ghost 账号账单邮箱管理会员资格。",
+      "manage_note_ghost": "在你的 Classic Mini DIY 博客账号中管理账单和取消。",
       "manage_note_patreon": "在 Patreon 上管理你的支持。",
       "active_fallback": "你的会员资格已生效。",
       "plan_line": "您的方案：{plan} — 每月 {count} 个 DIY Mini Bot 问题。",
@@ -1561,17 +1560,15 @@
       "canceled_title": "结账已取消",
       "canceled_body": "未产生任何扣款。你随时都可以成为持续支持会员。"
     },
-    "tip_jar_note": "想改为一次性打赏? Patreon 是一个独立的打赏渠道。",
-    "tip_jar_link": "查看支持方式 →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "最受欢迎",
       "per_month": "/月",
@@ -1583,7 +1580,7 @@
   "ko": {
     "meta": {
       "title": "서포팅 멤버 — Classic Mini DIY",
-      "description": "서포팅 멤버(월 1.99달러부터)가 되시면 Classic Mini DIY, The Mini Exchange, Toolbox 앱에서 쓰는 하나의 계정, 멤버 전용 Discord, 블로그 Pro 이용, The Mini Exchange 프리미엄 매물 무료 등록, 그리고 채널 후원까지 함께하실 수 있습니다."
+      "description": "서포팅 멤버(월 1.99달러부터)가 되시면 Classic Mini DIY, The Mini Exchange, Toolbox 앱에서 쓰는 하나의 계정, 멤버 전용 Discord, 멤버 전용 블로그 글, The Mini Exchange 프리미엄 매물 무료 등록, 그리고 채널 후원까지 함께하실 수 있습니다."
     },
     "hero": {
       "eyebrow": "서포팅 멤버",
@@ -1608,7 +1605,7 @@
           "desc": "정비 이야기를 나누고, 작업 중인 차를 공유하고, 도움을 받을 수 있는 비공개 커뮤니티."
         },
         "blog": {
-          "title": "블로그 Pro 이용",
+          "title": "멤버 전용 블로그 글",
           "desc": "Classic Mini DIY 블로그의 구독자 전용 콘텐츠를 무료로 이용하실 수 있습니다."
         },
         "listings": {
@@ -1633,7 +1630,8 @@
       "also_apps": "iOS·Android 앱에서도 이용하실 수 있습니다."
     },
     "member": {
-      "title": "서포팅 멤버이십니다",
+      "title": "서포팅 멤버이십니다 · {level}",
+      "title_pending": "서포팅 멤버이십니다",
       "subtitle": "Classic Mini 커뮤니티를 지켜 주셔서 감사합니다. 멤버십으로 이용하실 수 있는 혜택입니다.",
       "discord_title": "멤버 전용 Discord",
       "discord_status": {
@@ -1650,16 +1648,16 @@
         "revoked": "Discord 접근 권한이 해제되었습니다. 다시 참여하시려면 멤버십을 재개해 주세요.",
         "failed": "Discord 초대를 발급하는 중 문제가 있었습니다. 문의 페이지로 연락 주시면 처리해 드리겠습니다."
       },
-      "blog_title": "블로그 Pro 이용",
+      "blog_title": "멤버 전용 블로그 글",
       "blog_desc": "Classic Mini DIY 블로그의 구독자 전용 콘텐츠를 무료로 이용하실 수 있습니다.",
       "blog_cta": "블로그 열기",
       "discord_lost_email": "초대 이메일을 못 찾으셨나요?",
       "discord_contact_cta": "문의해 주시면 다시 보내 드리겠습니다.",
       "manage": "멤버십 관리",
-      "manage_note_stripe": "Stripe에서 언제든 멤버십을 관리하거나 해지하실 수 있습니다.",
+      "manage_note_stripe": "결제 페이지에서 언제든 멤버십을 관리하거나 해지하실 수 있습니다.",
       "comp_note": "회원님의 멤버십은 무료로 제공됩니다. 모든 혜택을 마음껏 누리세요. 따로 관리하실 것은 없습니다.",
       "manage_note_store": "구독하신 곳에 따라 App Store 또는 Google Play에서 구독을 관리하거나 해지하실 수 있습니다.",
-      "manage_note_ghost": "Ghost 계정의 청구 이메일을 통해 멤버십을 관리하실 수 있습니다.",
+      "manage_note_ghost": "결제와 해지는 Classic Mini DIY 블로그 계정에서 관리하실 수 있습니다.",
       "manage_note_patreon": "Patreon에서 후원을 관리하실 수 있습니다.",
       "active_fallback": "멤버십이 활성화되어 있습니다.",
       "plan_line": "내 플랜: {plan} — 월 DIY Mini Bot 질문 {count}개.",
@@ -1677,17 +1675,15 @@
       "canceled_title": "결제가 취소되었습니다",
       "canceled_body": "청구된 금액은 없습니다. 준비되시면 언제든 서포팅 멤버가 되실 수 있습니다."
     },
-    "tip_jar_note": "대신 일회성 후원을 원하시나요? Patreon은 별도의 후원 창구입니다.",
-    "tip_jar_link": "후원 방법 보기 →",
     "plans": {
       "base": {
         "name": "Member"
       },
       "plus": {
-        "name": "Member Plus"
+        "name": "Plus"
       },
       "pro": {
-        "name": "Member Pro"
+        "name": "Pro"
       },
       "popular": "인기",
       "per_month": "/월",

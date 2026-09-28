@@ -107,8 +107,8 @@ export default defineEventHandler(async (event) => {
 
     // The account is proven at this point, so the floor is 'free'. Only the
     // membership perk is in question. `get_membership_plan` is the
-    // `user_has_subscription` predicate returning the granting row's plan
-    // instead of a boolean, so one round trip yields both "is a member" and
+    // `user_has_subscription` predicate returning the highest plan across the
+    // member's entitling rows (comp included) instead of a boolean, so one round trip yields both "is a member" and
     // "which allowance": NULL → free, base → member, plus / pro → themselves.
     // It is service-role only, which this client is.
     let tier: ChatTier = 'free';

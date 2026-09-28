@@ -25,7 +25,7 @@
     "label": "Sustaining Member"
   },
   "es": {
-    "label": "Miembro Sostenedor"
+    "label": "Socio Colaborador"
   },
   "fr": {
     "label": "Membre Soutien"

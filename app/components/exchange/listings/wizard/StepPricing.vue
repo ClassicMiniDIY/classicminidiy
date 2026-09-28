@@ -273,8 +273,8 @@
       "instantActivation": "Activación instantánea tras el pago",
       "socialAutoPost": "Publicado automáticamente en nuestro Facebook, Instagram y Bluesky"
     },
-    "upsell": { "text": "Los anuncios premium están incluidos para los miembros de apoyo.", "learnMore": "Más información" },
-    "memberNote": { "title": "Tu membresía de apoyo cubre Premium: no se necesita pago", "body": "Premium está incluido con tu membresía. Solo envía tu anuncio." },
+    "upsell": { "text": "Los anuncios premium están incluidos para los Socios Colaboradores.", "learnMore": "Más información" },
+    "memberNote": { "title": "Tu membresía de Socio Colaborador cubre Premium: no se necesita pago", "body": "Premium está incluido con tu membresía. Solo envía tu anuncio." },
     "paymentNote": { "title": "El pago se cobra después de enviar tu anuncio", "body": "Completa primero tu anuncio y luego paga de forma segura con Stripe si elegiste Premium." },
     "nav": { "back": "Atrás", "saveDraft": "Guardar borrador", "continue": "Continuar" }
   },

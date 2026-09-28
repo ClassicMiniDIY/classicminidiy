@@ -142,10 +142,10 @@
   },
   "es": {
     "title": "APOYA EL SITIO",
-    "description": "Classic Mini DIY es un recurso gratuito, sostenido por quienes lo usan. Hacerte Miembro Sostenedor es la mejor forma de apoyarlo, y trae ventajas exclusivas.",
+    "description": "Classic Mini DIY es un recurso gratuito, sostenido por quienes lo usan. Hacerte Socio Colaborador es la mejor forma de apoyarlo, y trae ventajas exclusivas.",
     "membership_benefits": "¿Prefieres Patreon o una aportación puntual? También ayudan.",
     "image_alt": "Marca de la rueda de Classic Mini DIY",
-    "membership_cta": "Hazte Miembro Sostenedor",
+    "membership_cta": "Hazte Socio Colaborador",
     "patreon_cta": "Apoya en Patreon",
     "donate_cta": "Donar"
   },

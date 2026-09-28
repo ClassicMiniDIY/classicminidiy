@@ -491,7 +491,7 @@
     },
     "membership": {
       "title": "Cancela primero tu membresía",
-      "body": "Eliminar tu cuenta no cancela una Membresía de Apoyo. La facturación la gestiona la tienda a través de la que pagaste y no podemos detenerla por ti. Cancélala primero y luego vuelve para eliminar la cuenta.",
+      "body": "Eliminar tu cuenta no cancela una membresía de Socio Colaborador. La facturación la gestiona la tienda a través de la que pagaste y no podemos detenerla por ti. Cancélala primero y luego vuelve para eliminar la cuenta.",
       "apple": "Suscripciones de App Store",
       "google": "Suscripciones de Google Play",
       "stripe": "Membresía web (Stripe)",

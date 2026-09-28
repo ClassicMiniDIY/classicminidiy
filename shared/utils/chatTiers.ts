@@ -48,8 +48,12 @@ export function isPaidChatTier(tier: ChatTier | null | undefined): boolean {
 }
 
 /**
- * `subscriptions.plan` on the granting row, as `get_membership_plan(uid)`
- * returns it (NULL = not a member). Only chat-tier resolution reads it.
+ * A member's plan, as `get_membership_plan(uid)` and `get_my_membership().plan`
+ * return it (NULL = not a member). It is the HIGHEST plan across all of the
+ * member's entitling `subscriptions` rows, comp included — not the plan of one
+ * "granting" row. `get_my_membership().platform` is chosen separately (the row
+ * they manage billing on), so the two need not come from one row; never render
+ * them as a pair. Only chat-tier resolution and display copy read it.
  */
 export type MembershipPlan = 'base' | 'plus' | 'pro';
 
