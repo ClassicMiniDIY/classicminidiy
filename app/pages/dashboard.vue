@@ -1,9 +1,9 @@
 <script lang="ts" setup>
   import { HERO_TYPES, BREADCRUMB_VERSIONS } from '~~/data/models/generic';
+  import type { AccountNavGroup } from '~/components/account/Shell.vue';
 
   const { t } = useI18n();
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const route = useRoute();
 
   /**
    * Auth state is only knowable AFTER mount, and the template must not branch
@@ -29,25 +29,45 @@
   const authReady = computed(() => hasMounted.value && !authLoading.value);
   const isSignedIn = computed(() => authReady.value && isAuthenticated.value);
 
-  // Marketplace (The Mini Exchange) tabs append only when the consolidation flag
-  // is live — their routes are 404'd by exchange-flag.global.ts until then.
+  // Marketplace (The Mini Exchange) sections append only when the consolidation
+  // flag is live — their routes are 404'd by exchange-flag.global.ts until then.
   const exchangeEnabled = useRuntimeConfig().public.exchangeEnabled;
 
-  const tabs = computed(() => [
-    { to: '/dashboard/models', key: 'models', icon: 'fa-cube' },
-    { to: '/dashboard/gear-configs', key: 'gear_configs', icon: 'fa-gears' },
-    { to: '/dashboard/alignment-configs', key: 'alignment_configs', icon: 'fa-tire' },
-    { to: '/dashboard/submissions', key: 'submissions', icon: 'fa-file-lines' },
-    { to: '/dashboard/external', key: 'external', icon: 'fa-link' },
-    { to: '/dashboard/selling', key: 'selling', icon: 'fa-store' },
-    { to: '/dashboard/purchases', key: 'purchases', icon: 'fa-bag-shopping' },
-    { to: '/dashboard/api-keys', key: 'api_keys', icon: 'fa-key' },
+  // Grouped sidebar rather than a tab strip: twelve labelled tabs overflowed the
+  // strip. Account settings (API keys, notifications) live on /settings.
+  const navGroups = computed<AccountNavGroup[]>(() => [
+    {
+      label: t('groups.models'),
+      entries: [
+        { to: '/dashboard/models', label: t('tabs.models'), icon: 'fas fa-cube' },
+        { to: '/dashboard/selling', label: t('tabs.selling'), icon: 'fas fa-store' },
+        { to: '/dashboard/purchases', label: t('tabs.purchases'), icon: 'fas fa-bag-shopping' },
+      ],
+    },
+    {
+      label: t('groups.tools'),
+      entries: [
+        { to: '/dashboard/gear-configs', label: t('tabs.gear_configs'), icon: 'fas fa-gears' },
+        { to: '/dashboard/alignment-configs', label: t('tabs.alignment_configs'), icon: 'fas fa-tire' },
+      ],
+    },
+    {
+      label: t('groups.contributions'),
+      entries: [
+        { to: '/dashboard/submissions', label: t('tabs.submissions'), icon: 'fas fa-file-lines' },
+        { to: '/dashboard/external', label: t('tabs.external'), icon: 'fas fa-link' },
+      ],
+    },
     ...(exchangeEnabled
       ? [
-          { to: '/dashboard/listings', key: 'listings', icon: 'fa-tag' },
-          { to: '/dashboard/wanted', key: 'wanted', icon: 'fa-bullhorn' },
-          { to: '/dashboard/saved-searches', key: 'saved_searches', icon: 'fa-bookmark' },
-          { to: '/dashboard/notifications', key: 'notifications', icon: 'fa-bell' },
+          {
+            label: t('groups.marketplace'),
+            entries: [
+              { to: '/dashboard/listings', label: t('tabs.listings'), icon: 'fas fa-tag' },
+              { to: '/dashboard/wanted', label: t('tabs.wanted'), icon: 'fas fa-bullhorn' },
+              { to: '/dashboard/saved-searches', label: t('tabs.saved_searches'), icon: 'fas fa-bookmark' },
+            ],
+          },
         ]
       : []),
   ]);
@@ -102,22 +122,15 @@
 
     <!-- Authenticated content -->
     <template v-else>
-      <!-- Routed tab bar -->
-      <div role="tablist" class="tabs tabs-border mb-6">
-        <NuxtLink
-          v-for="tab in tabs"
-          :key="tab.to"
-          :to="tab.to"
-          role="tab"
-          class="tab gap-2"
-          :class="{ 'tab-active': route.path === tab.to }"
-        >
-          <i class="fas" :class="tab.icon"></i>
-          <span>{{ t(`tabs.${tab.key}`) }}</span>
-        </NuxtLink>
-      </div>
-
-      <NuxtPage />
+      <AccountShell :groups="navGroups" :nav-label="t('nav_label')">
+        <NuxtPage />
+        <template #nav-footer>
+          <NuxtLink to="/settings" class="btn btn-ghost btn-sm mt-3 w-full justify-start gap-3">
+            <i class="fas fa-gear w-4" aria-hidden="true"></i>
+            {{ t('settings_link') }}
+          </NuxtLink>
+        </template>
+      </AccountShell>
     </template>
   </div>
 </template>
@@ -138,17 +151,23 @@
       "external": "External Links",
       "selling": "Selling",
       "purchases": "Purchases",
-      "api_keys": "API Keys",
       "listings": "Listings",
       "wanted": "Wanted",
-      "saved_searches": "Saved Searches",
-      "notifications": "Notifications"
+      "saved_searches": "Saved Searches"
     },
     "auth": {
       "sign_in_title": "Sign In to View Dashboard",
       "sign_in_description": "You need to be signed in to access your dashboard. Create a free account to get started.",
       "sign_in_button": "Sign In to Continue"
-    }
+    },
+    "groups": {
+      "models": "3D models",
+      "tools": "Saved tools",
+      "contributions": "Contributions",
+      "marketplace": "Marketplace"
+    },
+    "nav_label": "Dashboard sections",
+    "settings_link": "Settings"
   },
   "es": {
     "title": "Panel - Classic Mini DIY",
@@ -164,17 +183,23 @@
       "external": "Enlaces externos",
       "selling": "Ventas",
       "purchases": "Compras",
-      "api_keys": "Claves de API",
       "listings": "Anuncios",
       "wanted": "Buscados",
-      "saved_searches": "Búsquedas guardadas",
-      "notifications": "Notificaciones"
+      "saved_searches": "Búsquedas guardadas"
     },
     "auth": {
       "sign_in_title": "Inicia Sesión para Ver el Panel",
       "sign_in_description": "Debes iniciar sesión para acceder a tu panel. Crea una cuenta gratuita para empezar.",
       "sign_in_button": "Iniciar Sesión para Continuar"
-    }
+    },
+    "groups": {
+      "models": "Modelos 3D",
+      "tools": "Herramientas guardadas",
+      "contributions": "Contribuciones",
+      "marketplace": "Mercado"
+    },
+    "nav_label": "Secciones del panel",
+    "settings_link": "Ajustes"
   },
   "fr": {
     "title": "Tableau de Bord - Classic Mini DIY",
@@ -190,17 +215,23 @@
       "external": "Liens externes",
       "selling": "Ventes",
       "purchases": "Achats",
-      "api_keys": "Clés d'API",
       "listings": "Annonces",
       "wanted": "Recherches",
-      "saved_searches": "Recherches enregistrées",
-      "notifications": "Notifications"
+      "saved_searches": "Recherches enregistrées"
     },
     "auth": {
       "sign_in_title": "Connectez-vous pour Voir le Tableau de Bord",
       "sign_in_description": "Vous devez être connecté pour accéder à votre tableau de bord. Créez un compte gratuit pour commencer.",
       "sign_in_button": "Se Connecter pour Continuer"
-    }
+    },
+    "groups": {
+      "models": "Modèles 3D",
+      "tools": "Outils enregistrés",
+      "contributions": "Contributions",
+      "marketplace": "Marché"
+    },
+    "nav_label": "Sections du tableau de bord",
+    "settings_link": "Paramètres"
   },
   "de": {
     "title": "Dashboard - Classic Mini DIY",
@@ -216,17 +247,23 @@
       "external": "Externe Links",
       "selling": "Verkauf",
       "purchases": "Käufe",
-      "api_keys": "API-Schlüssel",
       "listings": "Anzeigen",
       "wanted": "Gesuche",
-      "saved_searches": "Gespeicherte Suchen",
-      "notifications": "Benachrichtigungen"
+      "saved_searches": "Gespeicherte Suchen"
     },
     "auth": {
       "sign_in_title": "Anmelden zum Dashboard",
       "sign_in_description": "Sie müssen angemeldet sein, um auf Ihr Dashboard zuzugreifen. Erstellen Sie ein kostenloses Konto.",
       "sign_in_button": "Anmelden und Fortfahren"
-    }
+    },
+    "groups": {
+      "models": "3D-Modelle",
+      "tools": "Gespeicherte Werkzeuge",
+      "contributions": "Beiträge",
+      "marketplace": "Marktplatz"
+    },
+    "nav_label": "Dashboard-Bereiche",
+    "settings_link": "Einstellungen"
   },
   "it": {
     "title": "Dashboard - Classic Mini DIY",
@@ -242,17 +279,23 @@
       "external": "Link esterni",
       "selling": "Vendite",
       "purchases": "Acquisti",
-      "api_keys": "Chiavi API",
       "listings": "Annunci",
       "wanted": "Cercasi",
-      "saved_searches": "Ricerche salvate",
-      "notifications": "Notifiche"
+      "saved_searches": "Ricerche salvate"
     },
     "auth": {
       "sign_in_title": "Accedi per Vedere la Dashboard",
       "sign_in_description": "Devi essere connesso per accedere alla tua dashboard. Crea un account gratuito per iniziare.",
       "sign_in_button": "Accedi per Continuare"
-    }
+    },
+    "groups": {
+      "models": "Modelli 3D",
+      "tools": "Strumenti salvati",
+      "contributions": "Contributi",
+      "marketplace": "Mercato"
+    },
+    "nav_label": "Sezioni della dashboard",
+    "settings_link": "Impostazioni"
   },
   "pt": {
     "title": "Painel - Classic Mini DIY",
@@ -268,17 +311,23 @@
       "external": "Links externos",
       "selling": "Vendas",
       "purchases": "Compras",
-      "api_keys": "Chaves de API",
       "listings": "Anúncios",
       "wanted": "Procurados",
-      "saved_searches": "Buscas salvas",
-      "notifications": "Notificações"
+      "saved_searches": "Buscas salvas"
     },
     "auth": {
       "sign_in_title": "Entre para Ver o Painel",
       "sign_in_description": "Você precisa estar conectado para acessar seu painel. Crie uma conta gratuita para começar.",
       "sign_in_button": "Entrar para Continuar"
-    }
+    },
+    "groups": {
+      "models": "Modelos 3D",
+      "tools": "Ferramentas salvas",
+      "contributions": "Contribuições",
+      "marketplace": "Mercado"
+    },
+    "nav_label": "Seções do painel",
+    "settings_link": "Configurações"
   },
   "ru": {
     "title": "Панель управления - Classic Mini DIY",
@@ -294,17 +343,23 @@
       "external": "Внешние ссылки",
       "selling": "Продажи",
       "purchases": "Покупки",
-      "api_keys": "Ключи API",
       "listings": "Объявления",
       "wanted": "Запросы",
-      "saved_searches": "Сохранённые поиски",
-      "notifications": "Уведомления"
+      "saved_searches": "Сохранённые поиски"
     },
     "auth": {
       "sign_in_title": "Войдите для Доступа к Панели",
       "sign_in_description": "Вы должны быть авторизованы для доступа к панели управления. Создайте бесплатную учётную запись.",
       "sign_in_button": "Войти и Продолжить"
-    }
+    },
+    "groups": {
+      "models": "3D-модели",
+      "tools": "Сохранённые инструменты",
+      "contributions": "Вклад",
+      "marketplace": "Маркетплейс"
+    },
+    "nav_label": "Разделы панели",
+    "settings_link": "Настройки"
   },
   "ja": {
     "title": "ダッシュボード - Classic Mini DIY",
@@ -320,17 +375,23 @@
       "external": "外部リンク",
       "selling": "販売",
       "purchases": "購入",
-      "api_keys": "APIキー",
       "listings": "出品",
       "wanted": "求む",
-      "saved_searches": "保存した検索",
-      "notifications": "通知"
+      "saved_searches": "保存した検索"
     },
     "auth": {
       "sign_in_title": "ダッシュボード表示にはログインが必要です",
       "sign_in_description": "ダッシュボードにアクセスするにはログインが必要です。無料アカウントを作成して始めましょう。",
       "sign_in_button": "ログインして続ける"
-    }
+    },
+    "groups": {
+      "models": "3Dモデル",
+      "tools": "保存したツール",
+      "contributions": "投稿",
+      "marketplace": "マーケットプレイス"
+    },
+    "nav_label": "ダッシュボードのセクション",
+    "settings_link": "設定"
   },
   "zh": {
     "title": "仪表板 - Classic Mini DIY",
@@ -346,17 +407,23 @@
       "external": "外部链接",
       "selling": "销售",
       "purchases": "购买",
-      "api_keys": "API 密钥",
       "listings": "刊登",
       "wanted": "求购",
-      "saved_searches": "已保存搜索",
-      "notifications": "通知"
+      "saved_searches": "已保存搜索"
     },
     "auth": {
       "sign_in_title": "登录以查看仪表板",
       "sign_in_description": "您需要登录才能访问您的仪表板。创建免费账户即可开始。",
       "sign_in_button": "登录并继续"
-    }
+    },
+    "groups": {
+      "models": "3D 模型",
+      "tools": "已保存的工具",
+      "contributions": "贡献",
+      "marketplace": "市场"
+    },
+    "nav_label": "仪表板栏目",
+    "settings_link": "设置"
   },
   "ko": {
     "title": "대시보드 - Classic Mini DIY",
@@ -372,17 +439,23 @@
       "external": "외부 링크",
       "selling": "판매",
       "purchases": "구매",
-      "api_keys": "API 키",
       "listings": "매물",
       "wanted": "구함",
-      "saved_searches": "저장한 검색",
-      "notifications": "알림"
+      "saved_searches": "저장한 검색"
     },
     "auth": {
       "sign_in_title": "대시보드 보기를 위해 로그인하세요",
       "sign_in_description": "대시보드에 접근하려면 로그인해야 합니다. 무료 계정을 만들어 시작하세요.",
       "sign_in_button": "로그인하고 계속하기"
-    }
+    },
+    "groups": {
+      "models": "3D 모델",
+      "tools": "저장된 도구",
+      "contributions": "기여",
+      "marketplace": "마켓플레이스"
+    },
+    "nav_label": "대시보드 섹션",
+    "settings_link": "설정"
   }
 }
 </i18n>
