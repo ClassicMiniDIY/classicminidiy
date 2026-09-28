@@ -3,9 +3,9 @@
  * docs/plans/2026-09-26-membership-clarity.md §8).
  *
  * The web Worker calls `public.admin_find_member(p_query text)` with the
- * service client after `requireAdminAuth`. That RPC lives in the private repo
- * and is typed here by hand, because `types/database.ts` is regenerated only
- * after it deploys. Client-safe: types, constants and pure helpers only.
+ * service client after `requireAdminAuth`. The row shape is restated here
+ * (types/database.ts types its jsonb columns as Json) so the client can render
+ * it. Client-safe: types, constants and pure helpers only.
  *
  * Contract, as the RPC returns it:
  * - Case-insensitive substring match on the account email, a pending claim

@@ -2067,6 +2067,8 @@ export type Database = {
         Row: {
           completed_at: string | null;
           completed_task_ids: string[];
+          completion_mileage: number | null;
+          completion_notes: string | null;
           created_at: string;
           due_date: string | null;
           id: string;
@@ -2079,6 +2081,8 @@ export type Database = {
         Insert: {
           completed_at?: string | null;
           completed_task_ids?: string[];
+          completion_mileage?: number | null;
+          completion_notes?: string | null;
           created_at?: string;
           due_date?: string | null;
           id: string;
@@ -2091,6 +2095,8 @@ export type Database = {
         Update: {
           completed_at?: string | null;
           completed_task_ids?: string[];
+          completion_mileage?: number | null;
+          completion_notes?: string | null;
           created_at?: string;
           due_date?: string | null;
           id?: string;
@@ -4659,6 +4665,7 @@ export type Database = {
           expires_at: string | null;
           external_ref: string;
           id: number;
+          plan: string | null;
           provider: string;
           raw: Json | null;
           status: string;
@@ -4674,6 +4681,7 @@ export type Database = {
           expires_at?: string | null;
           external_ref: string;
           id?: never;
+          plan?: string | null;
           provider: string;
           raw?: Json | null;
           status?: string;
@@ -4689,6 +4697,7 @@ export type Database = {
           expires_at?: string | null;
           external_ref?: string;
           id?: never;
+          plan?: string | null;
           provider?: string;
           raw?: Json | null;
           status?: string;
@@ -5564,6 +5573,24 @@ export type Database = {
           },
         ];
       };
+      vehicle_tombstones: {
+        Row: {
+          deleted_at: string;
+          id: string;
+          user_id: string;
+        };
+        Insert: {
+          deleted_at?: string;
+          id: string;
+          user_id: string;
+        };
+        Update: {
+          deleted_at?: string;
+          id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       vehicles: {
         Row: {
           color: Database['public']['Enums']['vehicle_color'];
@@ -5999,6 +6026,18 @@ export type Database = {
     };
     Functions: {
       admin_developer_overview: { Args: never; Returns: Json };
+      admin_find_member: {
+        Args: { p_query: string };
+        Returns: {
+          discord: Json;
+          display_name: string;
+          email: string;
+          matched_on: string[];
+          pending_claims: Json;
+          subscriptions: Json;
+          user_id: string;
+        }[];
+      };
       admin_get_developer_summary: {
         Args: { p_user_id: string };
         Returns: {
@@ -6834,6 +6873,65 @@ export type Database = {
       };
       record_submission_duplicate_hint: {
         Args: { p_hint: Json; p_submission_id: string; p_version: string };
+        Returns: boolean;
+      };
+      reference_gateway_assert: {
+        Args: {
+          p_counter: number;
+          p_key_id: string;
+          p_nonce_expires_at: string;
+          p_nonce_hash: string;
+        };
+        Returns: string;
+      };
+      reference_gateway_consume_nonce: {
+        Args: { p_expires_at: string; p_nonce_hash: string };
+        Returns: boolean;
+      };
+      reference_gateway_dataset: {
+        Args: { p_dataset: string; p_schema_version: number; p_version: number };
+        Returns: {
+          payload: string;
+          sha256: string;
+        }[];
+      };
+      reference_gateway_key: {
+        Args: { p_key_id: string };
+        Returns: {
+          environment: string;
+          public_key: string;
+          sign_count: number;
+        }[];
+      };
+      reference_gateway_manifest: {
+        Args: never;
+        Returns: {
+          bytes: number;
+          dataset: string;
+          published_at: string;
+          schema_version: number;
+          sha256: string;
+          version: number;
+        }[];
+      };
+      reference_gateway_peek_rate: {
+        Args: { p_bucket: string; p_limit: number; p_window_seconds: number };
+        Returns: boolean;
+      };
+      reference_gateway_register_key: {
+        Args: {
+          p_environment: string;
+          p_key_id: string;
+          p_nonce_expires_at: string;
+          p_nonce_hash: string;
+          p_public_key: string;
+          p_receipt: string;
+        };
+        Returns: string;
+      };
+      reference_gateway_settings: { Args: never; Returns: Json };
+      reference_gateway_take_rate: {
+        Args: { p_bucket: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;
       };
       reject_model_version: {
