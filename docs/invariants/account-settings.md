@@ -37,3 +37,21 @@ every converted price a hydration mismatch, so `app.vue` reads it in `onMounted`
 again when the user id changes. A choice made in Settings while the profile read is in
 flight wins: `setUserCurrency` bumps a generation counter that the read checks before
 it applies the profile value.
+
+## Section changes must not look like a reload
+
+Both shells are nested routes: the parent page stays mounted and only `<NuxtPage>`
+swaps. Two site-wide defaults still made a section change look like a full reload
+(reported 2026-09-29): `experimental.viewTransition` snapshots and cross-fades the
+whole document on every navigation, and Nuxt's default scroll behaviour scrolls to
+the top whenever the matched page components change, which a child change counts as.
+
+The first fix tried `definePageMeta({ scrollToTop: helper })` on the parent pages.
+The macro is extracted into its own module where auto-imports do not exist, so the
+helper was `undefined`, route resolution threw, and Nuxt fell back to a hard reload:
+the opposite of the goal. `viewTransition` in page meta is also static. The working
+fix is a client plugin that sets both flags on `to.meta` in `beforeEach`, which runs
+before the view-transition plugin's `beforeResolve`.
+
+Scroll behaviour cannot be verified in the backgrounded preview pane: Nuxt performs
+the scroll inside `requestAnimationFrame`, which does not run there.
