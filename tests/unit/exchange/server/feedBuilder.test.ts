@@ -111,7 +111,9 @@ describe('escapeHtml', () => {
   });
 
   it('neutralizes a script-injection payload', () => {
-    expect(escapeHtml('<script>alert("x")</script>')).toBe('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
+    expect(escapeHtml('<script>alert("x")</script>')).toBe(
+      '&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;'
+    );
   });
 
   it('escapes ampersand before producing entities (no double-escaping order bug)', () => {
@@ -922,7 +924,11 @@ describe('createFeedHandler', () => {
     const handler = createFeedHandler('listings', 'atom');
     const out = await handler({} as any);
     expect(out).toContain('<feed');
-    expect(setHeaderSpy).toHaveBeenCalledWith(expect.anything(), 'Content-Type', 'application/atom+xml; charset=utf-8');
+    expect(setHeaderSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      'Content-Type',
+      'application/atom+xml; charset=utf-8'
+    );
   });
 
   it('builds JSON Feed and sets the json content-type', async () => {

@@ -150,14 +150,10 @@
     "copy_error": "Could not copy. Select the text and copy it manually.",
     "items": {
       "claude_code": { "desc": "Run this in your terminal — one command registers the server for all your sessions." },
-      "claude_desktop": {
-        "desc": "Add this to claude_desktop_config.json (Settings → Developer → Edit Config), then restart Claude Desktop."
-      },
+      "claude_desktop": { "desc": "Add this to claude_desktop_config.json (Settings → Developer → Edit Config), then restart Claude Desktop." },
       "cursor": { "desc": "Add this to .cursor/mcp.json in your project, or to ~/.cursor/mcp.json for every project." },
       "vscode": { "desc": "Add this to .vscode/mcp.json, then start the server from the MCP panel." },
-      "generic": {
-        "desc": "Any client that speaks MCP over streamable HTTP works. This curl verifies your key and lists the tools."
-      }
+      "generic": { "desc": "Any client that speaks MCP over streamable HTTP works. This curl verifies your key and lists the tools." }
     },
     "try_prompt": "Then try asking:",
     "example_prompt": "What torque do my cylinder head nuts need, and what compression ratio does a 21.4cc head give my 1275?",
@@ -168,19 +164,11 @@
     "copied": "Copiado al portapapeles.",
     "copy_error": "No se pudo copiar. Selecciona el texto y cópialo manualmente.",
     "items": {
-      "claude_code": {
-        "desc": "Ejecuta esto en tu terminal: un solo comando registra el servidor para todas tus sesiones."
-      },
-      "claude_desktop": {
-        "desc": "Añade esto a claude_desktop_config.json (Ajustes → Desarrollador → Editar configuración) y reinicia Claude Desktop."
-      },
-      "cursor": {
-        "desc": "Añade esto a .cursor/mcp.json en tu proyecto, o a ~/.cursor/mcp.json para todos los proyectos."
-      },
+      "claude_code": { "desc": "Ejecuta esto en tu terminal: un solo comando registra el servidor para todas tus sesiones." },
+      "claude_desktop": { "desc": "Añade esto a claude_desktop_config.json (Ajustes → Desarrollador → Editar configuración) y reinicia Claude Desktop." },
+      "cursor": { "desc": "Añade esto a .cursor/mcp.json en tu proyecto, o a ~/.cursor/mcp.json para todos los proyectos." },
       "vscode": { "desc": "Añade esto a .vscode/mcp.json y luego inicia el servidor desde el panel MCP." },
-      "generic": {
-        "desc": "Funciona cualquier cliente que hable MCP sobre HTTP streamable. Este curl verifica tu clave y lista las herramientas."
-      }
+      "generic": { "desc": "Funciona cualquier cliente que hable MCP sobre HTTP streamable. Este curl verifica tu clave y lista las herramientas." }
     },
     "try_prompt": "Luego prueba a preguntar:",
     "example_prompt": "¿Qué par necesitan las tuercas de mi culata y qué relación de compresión da una culata de 21,4 cc en mi 1275?",
@@ -191,19 +179,11 @@
     "copied": "Copié dans le presse-papiers.",
     "copy_error": "Copie impossible. Sélectionnez le texte et copiez-le manuellement.",
     "items": {
-      "claude_code": {
-        "desc": "Exécutez ceci dans votre terminal — une seule commande enregistre le serveur pour toutes vos sessions."
-      },
-      "claude_desktop": {
-        "desc": "Ajoutez ceci à claude_desktop_config.json (Réglages → Développeur → Modifier la configuration), puis redémarrez Claude Desktop."
-      },
-      "cursor": {
-        "desc": "Ajoutez ceci à .cursor/mcp.json dans votre projet, ou à ~/.cursor/mcp.json pour tous les projets."
-      },
+      "claude_code": { "desc": "Exécutez ceci dans votre terminal — une seule commande enregistre le serveur pour toutes vos sessions." },
+      "claude_desktop": { "desc": "Ajoutez ceci à claude_desktop_config.json (Réglages → Développeur → Modifier la configuration), puis redémarrez Claude Desktop." },
+      "cursor": { "desc": "Ajoutez ceci à .cursor/mcp.json dans votre projet, ou à ~/.cursor/mcp.json pour tous les projets." },
       "vscode": { "desc": "Ajoutez ceci à .vscode/mcp.json, puis démarrez le serveur depuis le panneau MCP." },
-      "generic": {
-        "desc": "Tout client parlant MCP en HTTP streamable fonctionne. Ce curl vérifie votre clé et liste les outils."
-      }
+      "generic": { "desc": "Tout client parlant MCP en HTTP streamable fonctionne. Ce curl vérifie votre clé et liste les outils." }
     },
     "try_prompt": "Puis essayez de demander :",
     "example_prompt": "Quel couple pour mes écrous de culasse, et quel taux de compression donne une culasse de 21,4 cc sur mon 1275 ?",
@@ -215,14 +195,10 @@
     "copy_error": "Kopieren nicht möglich. Markieren Sie den Text und kopieren Sie ihn manuell.",
     "items": {
       "claude_code": { "desc": "Im Terminal ausführen — ein Befehl registriert den Server für alle Ihre Sitzungen." },
-      "claude_desktop": {
-        "desc": "In claude_desktop_config.json eintragen (Einstellungen → Entwickler → Konfiguration bearbeiten), dann Claude Desktop neu starten."
-      },
+      "claude_desktop": { "desc": "In claude_desktop_config.json eintragen (Einstellungen → Entwickler → Konfiguration bearbeiten), dann Claude Desktop neu starten." },
       "cursor": { "desc": "In .cursor/mcp.json im Projekt eintragen, oder in ~/.cursor/mcp.json für alle Projekte." },
       "vscode": { "desc": "In .vscode/mcp.json eintragen und den Server dann über das MCP-Panel starten." },
-      "generic": {
-        "desc": "Jeder Client mit MCP über Streamable HTTP funktioniert. Dieses curl prüft Ihren Schlüssel und listet die Tools."
-      }
+      "generic": { "desc": "Jeder Client mit MCP über Streamable HTTP funktioniert. Dieses curl prüft Ihren Schlüssel und listet die Tools." }
     },
     "try_prompt": "Dann fragen Sie zum Beispiel:",
     "example_prompt": "Welches Drehmoment brauchen meine Zylinderkopfmuttern, und welches Verdichtungsverhältnis ergibt ein 21,4-ccm-Kopf bei meinem 1275?",
@@ -233,19 +209,11 @@
     "copied": "Copiato negli appunti.",
     "copy_error": "Impossibile copiare. Seleziona il testo e copialo manualmente.",
     "items": {
-      "claude_code": {
-        "desc": "Esegui questo nel terminale: un solo comando registra il server per tutte le tue sessioni."
-      },
-      "claude_desktop": {
-        "desc": "Aggiungi questo a claude_desktop_config.json (Impostazioni → Sviluppatore → Modifica configurazione), poi riavvia Claude Desktop."
-      },
-      "cursor": {
-        "desc": "Aggiungi questo a .cursor/mcp.json nel progetto, o a ~/.cursor/mcp.json per tutti i progetti."
-      },
+      "claude_code": { "desc": "Esegui questo nel terminale: un solo comando registra il server per tutte le tue sessioni." },
+      "claude_desktop": { "desc": "Aggiungi questo a claude_desktop_config.json (Impostazioni → Sviluppatore → Modifica configurazione), poi riavvia Claude Desktop." },
+      "cursor": { "desc": "Aggiungi questo a .cursor/mcp.json nel progetto, o a ~/.cursor/mcp.json per tutti i progetti." },
       "vscode": { "desc": "Aggiungi questo a .vscode/mcp.json, poi avvia il server dal pannello MCP." },
-      "generic": {
-        "desc": "Funziona qualsiasi client che parla MCP su HTTP streamable. Questo curl verifica la tua chiave ed elenca gli strumenti."
-      }
+      "generic": { "desc": "Funziona qualsiasi client che parla MCP su HTTP streamable. Questo curl verifica la tua chiave ed elenca gli strumenti." }
     },
     "try_prompt": "Poi prova a chiedere:",
     "example_prompt": "Che coppia servono i dadi della mia testata, e che rapporto di compressione dà una testata da 21,4 cc sul mio 1275?",
@@ -256,19 +224,11 @@
     "copied": "Copiado para a área de transferência.",
     "copy_error": "Não foi possível copiar. Selecione o texto e copie manualmente.",
     "items": {
-      "claude_code": {
-        "desc": "Execute isto no terminal — um único comando registra o servidor para todas as suas sessões."
-      },
-      "claude_desktop": {
-        "desc": "Adicione isto ao claude_desktop_config.json (Configurações → Desenvolvedor → Editar configuração) e reinicie o Claude Desktop."
-      },
-      "cursor": {
-        "desc": "Adicione isto ao .cursor/mcp.json do projeto, ou ao ~/.cursor/mcp.json para todos os projetos."
-      },
+      "claude_code": { "desc": "Execute isto no terminal — um único comando registra o servidor para todas as suas sessões." },
+      "claude_desktop": { "desc": "Adicione isto ao claude_desktop_config.json (Configurações → Desenvolvedor → Editar configuração) e reinicie o Claude Desktop." },
+      "cursor": { "desc": "Adicione isto ao .cursor/mcp.json do projeto, ou ao ~/.cursor/mcp.json para todos os projetos." },
       "vscode": { "desc": "Adicione isto ao .vscode/mcp.json e inicie o servidor pelo painel MCP." },
-      "generic": {
-        "desc": "Qualquer cliente que fale MCP sobre HTTP streamable funciona. Este curl verifica sua chave e lista as ferramentas."
-      }
+      "generic": { "desc": "Qualquer cliente que fale MCP sobre HTTP streamable funciona. Este curl verifica sua chave e lista as ferramentas." }
     },
     "try_prompt": "Depois experimente perguntar:",
     "example_prompt": "Qual torque as porcas do meu cabeçote precisam, e qual taxa de compressão um cabeçote de 21,4 cc dá no meu 1275?",
@@ -280,14 +240,10 @@
     "copy_error": "Не удалось скопировать. Выделите текст и скопируйте вручную.",
     "items": {
       "claude_code": { "desc": "Выполните в терминале — одна команда регистрирует сервер для всех ваших сессий." },
-      "claude_desktop": {
-        "desc": "Добавьте это в claude_desktop_config.json (Настройки → Разработчик → Изменить конфигурацию) и перезапустите Claude Desktop."
-      },
+      "claude_desktop": { "desc": "Добавьте это в claude_desktop_config.json (Настройки → Разработчик → Изменить конфигурацию) и перезапустите Claude Desktop." },
       "cursor": { "desc": "Добавьте это в .cursor/mcp.json проекта или в ~/.cursor/mcp.json для всех проектов." },
       "vscode": { "desc": "Добавьте это в .vscode/mcp.json и запустите сервер из панели MCP." },
-      "generic": {
-        "desc": "Подойдёт любой клиент, говорящий на MCP по streamable HTTP. Этот curl проверяет ключ и выводит список инструментов."
-      }
+      "generic": { "desc": "Подойдёт любой клиент, говорящий на MCP по streamable HTTP. Этот curl проверяет ключ и выводит список инструментов." }
     },
     "try_prompt": "Затем попробуйте спросить:",
     "example_prompt": "Какой момент затяжки нужен гайкам моей головки блока и какую степень сжатия даст головка 21,4 см³ на моём 1275?",
@@ -298,19 +254,11 @@
     "copied": "クリップボードにコピーしました。",
     "copy_error": "コピーできませんでした。テキストを選択して手動でコピーしてください。",
     "items": {
-      "claude_code": {
-        "desc": "ターミナルで実行してください — 1つのコマンドですべてのセッションにサーバーが登録されます。"
-      },
-      "claude_desktop": {
-        "desc": "claude_desktop_config.json（設定 → 開発者 → 構成を編集）に追加し、Claude Desktop を再起動してください。"
-      },
-      "cursor": {
-        "desc": "プロジェクトの .cursor/mcp.json、または全プロジェクト共通の ~/.cursor/mcp.json に追加してください。"
-      },
+      "claude_code": { "desc": "ターミナルで実行してください — 1つのコマンドですべてのセッションにサーバーが登録されます。" },
+      "claude_desktop": { "desc": "claude_desktop_config.json（設定 → 開発者 → 構成を編集）に追加し、Claude Desktop を再起動してください。" },
+      "cursor": { "desc": "プロジェクトの .cursor/mcp.json、または全プロジェクト共通の ~/.cursor/mcp.json に追加してください。" },
       "vscode": { "desc": ".vscode/mcp.json に追加し、MCP パネルからサーバーを起動してください。" },
-      "generic": {
-        "desc": "Streamable HTTP で MCP を話せるクライアントなら何でも使えます。この curl でキーを確認し、ツール一覧を取得できます。"
-      }
+      "generic": { "desc": "Streamable HTTP で MCP を話せるクライアントなら何でも使えます。この curl でキーを確認し、ツール一覧を取得できます。" }
     },
     "try_prompt": "続いて、こう聞いてみてください：",
     "example_prompt": "シリンダーヘッドナットの締め付けトルクは？ 21.4cc のヘッドだと私の 1275 の圧縮比はいくつ？",
@@ -322,9 +270,7 @@
     "copy_error": "无法复制。请选中文本手动复制。",
     "items": {
       "claude_code": { "desc": "在终端中运行——一条命令即可为所有会话注册该服务器。" },
-      "claude_desktop": {
-        "desc": "将其添加到 claude_desktop_config.json（设置 → 开发者 → 编辑配置），然后重启 Claude Desktop。"
-      },
+      "claude_desktop": { "desc": "将其添加到 claude_desktop_config.json（设置 → 开发者 → 编辑配置），然后重启 Claude Desktop。" },
       "cursor": { "desc": "添加到项目的 .cursor/mcp.json，或添加到 ~/.cursor/mcp.json 以作用于所有项目。" },
       "vscode": { "desc": "添加到 .vscode/mcp.json，然后从 MCP 面板启动服务器。" },
       "generic": { "desc": "任何支持 streamable HTTP 的 MCP 客户端都可以。此 curl 可验证密钥并列出工具。" }
@@ -339,16 +285,10 @@
     "copy_error": "복사할 수 없습니다. 텍스트를 선택해 직접 복사하세요.",
     "items": {
       "claude_code": { "desc": "터미널에서 실행하세요 — 명령 하나로 모든 세션에 서버가 등록됩니다." },
-      "claude_desktop": {
-        "desc": "claude_desktop_config.json(설정 → 개발자 → 구성 편집)에 추가한 뒤 Claude Desktop을 재시작하세요."
-      },
-      "cursor": {
-        "desc": "프로젝트의 .cursor/mcp.json에 추가하거나, 모든 프로젝트에 적용하려면 ~/.cursor/mcp.json에 추가하세요."
-      },
+      "claude_desktop": { "desc": "claude_desktop_config.json(설정 → 개발자 → 구성 편집)에 추가한 뒤 Claude Desktop을 재시작하세요." },
+      "cursor": { "desc": "프로젝트의 .cursor/mcp.json에 추가하거나, 모든 프로젝트에 적용하려면 ~/.cursor/mcp.json에 추가하세요." },
       "vscode": { "desc": ".vscode/mcp.json에 추가한 뒤 MCP 패널에서 서버를 시작하세요." },
-      "generic": {
-        "desc": "Streamable HTTP로 MCP를 지원하는 클라이언트라면 무엇이든 됩니다. 이 curl로 키를 확인하고 도구 목록을 가져올 수 있습니다."
-      }
+      "generic": { "desc": "Streamable HTTP로 MCP를 지원하는 클라이언트라면 무엇이든 됩니다. 이 curl로 키를 확인하고 도구 목록을 가져올 수 있습니다." }
     },
     "try_prompt": "그다음 이렇게 물어보세요:",
     "example_prompt": "실린더 헤드 너트의 토크는 얼마이고, 21.4cc 헤드면 내 1275의 압축비는 얼마나 되나요?",

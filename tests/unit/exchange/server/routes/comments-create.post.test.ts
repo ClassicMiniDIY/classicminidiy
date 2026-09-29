@@ -162,8 +162,8 @@ describe('server/api/exchange/comments/create.post', () => {
   it('does NOT select email in the profiles join on the inserted comment', async () => {
     await handler(evt());
 
-    const selectArg = (mockSupabase._mockSelect as any).mock.calls.find(
-      (c: any[]) => typeof c[0] === 'string' && c[0].includes('profiles')
+    const selectArg = (mockSupabase._mockSelect as any).mock.calls.find((c: any[]) =>
+      typeof c[0] === 'string' && c[0].includes('profiles')
     )?.[0] as string;
 
     expect(selectArg).toBeTruthy();
@@ -468,7 +468,9 @@ describe('server/api/exchange/comments/create.post', () => {
   //  Auth
   // ===========================================================================
   it('propagates auth failure (401) from requireUserClient', async () => {
-    (requireUserClient as any).mockRejectedValue(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
+    (requireUserClient as any).mockRejectedValue(
+      Object.assign(new Error('Unauthorized'), { statusCode: 401 })
+    );
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 401 });
     expect(mockSupabase.from).not.toHaveBeenCalled();
   });

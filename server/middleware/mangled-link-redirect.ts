@@ -7,6 +7,8 @@
  * a member looped on exactly this). Strip the mangled tail and redirect to the
  * clean route for the handful of paths we send in emails.
  */
+// Transactional emails link to /dashboard/notifications, which 301s to
+// /settings/notifications; both are listed so a mangled link to either lands.
 const EMAILED_PATHS = [
   '/discord/connect',
   '/discord/claim',

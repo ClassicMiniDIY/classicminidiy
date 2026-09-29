@@ -1,6 +1,10 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import { getCountryFlag, getCountryWithFlag, getAllCountriesWithFlags } from '~~/app/utils/countryFlags';
+import {
+  getCountryFlag,
+  getCountryWithFlag,
+  getAllCountriesWithFlags,
+} from '~~/app/utils/countryFlags';
 
 /**
  * Build the expected flag emoji for a 2-letter ISO code using the same

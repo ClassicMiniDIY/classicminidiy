@@ -437,9 +437,10 @@ describe('useWantedPosts', () => {
       const useWantedPosts = await load();
       const result = await useWantedPosts().fetchUserWantedPosts();
       expect(result).toEqual([]);
-      expect(mockHandleError).toHaveBeenCalledWith(expect.objectContaining({ message: 'User not authenticated' }), {
-        toastTitle: 'Failed to load your wanted posts',
-      });
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'User not authenticated' }),
+        { toastTitle: 'Failed to load your wanted posts' }
+      );
     });
 
     it('falls back to the authed user id when none passed even if anon-style call', async () => {
@@ -918,10 +919,7 @@ describe('useWantedPosts', () => {
     });
 
     it('shows a success toast', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({
-        data: createMockWantedPost({ status: 'fulfilled' }),
-        error: null,
-      });
+      mockSupabase._mockSingle.mockResolvedValueOnce({ data: createMockWantedPost({ status: 'fulfilled' }), error: null });
       const useWantedPosts = await load();
       await useWantedPosts().markFulfilled('wp-123');
       expect(mockToast.add).toHaveBeenCalledWith({
@@ -932,10 +930,7 @@ describe('useWantedPosts', () => {
     });
 
     it('captures wanted_post_fulfilled on success', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({
-        data: createMockWantedPost({ status: 'fulfilled' }),
-        error: null,
-      });
+      mockSupabase._mockSingle.mockResolvedValueOnce({ data: createMockWantedPost({ status: 'fulfilled' }), error: null });
       const useWantedPosts = await load();
       await useWantedPosts().markFulfilled('wp-123');
       expect(mockCapture).toHaveBeenCalledWith('wanted_post_fulfilled', { wanted_post_id: 'wp-123' });

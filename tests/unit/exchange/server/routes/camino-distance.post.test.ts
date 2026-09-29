@@ -159,15 +159,14 @@ describe('server/api/exchange/camino/distance.post', () => {
       expect(mockCaminoFetch).not.toHaveBeenCalled();
     });
 
-    it.each([['boundary lat 90 / lon 180', { buyerLat: 90, buyerLon: 180, listingLat: -90, listingLon: -180 }]])(
-      'accepts %s (inclusive bounds via Math.abs)',
-      async (_label, override) => {
-        setBody({ ...VALID_BODY, ...override });
-        const result = await handler(makeEvent());
-        expect(result).toMatchObject({ distance_km: CAMINO_RESPONSE.actual_distance_km });
-        expect(mockCaminoFetch).toHaveBeenCalledTimes(1);
-      }
-    );
+    it.each([
+      ['boundary lat 90 / lon 180', { buyerLat: 90, buyerLon: 180, listingLat: -90, listingLon: -180 }],
+    ])('accepts %s (inclusive bounds via Math.abs)', async (_label, override) => {
+      setBody({ ...VALID_BODY, ...override });
+      const result = await handler(makeEvent());
+      expect(result).toMatchObject({ distance_km: CAMINO_RESPONSE.actual_distance_km });
+      expect(mockCaminoFetch).toHaveBeenCalledTimes(1);
+    });
 
     it('runs presence validation before range validation', async () => {
       // missing buyerLat AND an out-of-range listingLon -> presence wins.
@@ -351,14 +350,7 @@ describe('server/api/exchange/camino/distance.post', () => {
       const key = `camino:distance:${Math.round(VALID_BODY.buyerLat * 10)}:${Math.round(
         VALID_BODY.buyerLon * 10
       )}:${VALID_BODY.listingLat}:${VALID_BODY.listingLon}`;
-      cacheStore.set(key, {
-        distance_km: 1,
-        distance_miles: 1,
-        driving_time: '',
-        duration_seconds: 0,
-        direction: '',
-        description: '',
-      });
+      cacheStore.set(key, { distance_km: 1, distance_miles: 1, driving_time: '', duration_seconds: 0, direction: '', description: '' });
 
       for (let i = 0; i < limit; i++) {
         setBody({ ...VALID_BODY, listingLon: -10 - i * 0.001 });

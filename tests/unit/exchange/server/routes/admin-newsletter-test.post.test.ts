@@ -52,10 +52,7 @@ function defaultRuntimeConfig() {
 beforeEach(() => {
   vi.clearAllMocks();
   // adminAuth passes by default, yielding an admin with an email.
-  (requireAdminAuth as any).mockResolvedValue({
-    user: { id: 'admin-1', email: ADMIN_EMAIL },
-    profile: { is_admin: true },
-  });
+  (requireAdminAuth as any).mockResolvedValue({ user: { id: 'admin-1', email: ADMIN_EMAIL }, profile: { is_admin: true } });
   // body default: no email -> falls back to the admin's account email.
   (readBody as any).mockResolvedValue({});
   // edge function succeeds by default; the route returns its body verbatim.
@@ -83,7 +80,9 @@ describe('server/api/admin/exchange/newsletter/test.post', () => {
   });
 
   it('propagates 403 from requireAdminAuth (authenticated but not admin)', async () => {
-    (requireAdminAuth as any).mockRejectedValue(Object.assign(new Error('Admin access required'), { statusCode: 403 }));
+    (requireAdminAuth as any).mockRejectedValue(
+      Object.assign(new Error('Admin access required'), { statusCode: 403 })
+    );
 
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 403 });
     expect($fetch).not.toHaveBeenCalled();
@@ -263,7 +262,9 @@ describe('server/api/admin/exchange/newsletter/test.post', () => {
   });
 
   it('uses statusMessage from the error when data.error is absent', async () => {
-    ($fetch as any).mockRejectedValue(Object.assign(new Error('boom'), { statusCode: 418, statusMessage: 'Teapot' }));
+    ($fetch as any).mockRejectedValue(
+      Object.assign(new Error('boom'), { statusCode: 418, statusMessage: 'Teapot' })
+    );
 
     await expect(handler(evt())).rejects.toMatchObject({
       statusCode: 418,

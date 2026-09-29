@@ -250,12 +250,16 @@ describe('exchange-flag.global middleware', () => {
   describe('uses to.path (not fullPath) for matching', () => {
     it('matches on path even when fullPath carries a query string', () => {
       // path is the guarded value; the gate keys off to.path.
-      expect(() => middleware({ path: '/exchange', fullPath: '/exchange?ref=email' })).toThrow();
+      expect(() =>
+        middleware({ path: '/exchange', fullPath: '/exchange?ref=email' })
+      ).toThrow();
     });
 
     it('a child path passes flag-on regardless of query in fullPath', async () => {
       await reload(true);
-      expect(middleware({ path: '/exchange/listings', fullPath: '/exchange/listings?sort=new' })).toBeUndefined();
+      expect(
+        middleware({ path: '/exchange/listings', fullPath: '/exchange/listings?sort=new' })
+      ).toBeUndefined();
     });
   });
 });
