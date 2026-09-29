@@ -34,7 +34,9 @@ function setRuntimeConfig(overrides?: { supabaseUrl?: any; supabaseKey?: any }) 
 
 /** authorization header value used by the route. */
 function setAuthHeader(value: string | undefined) {
-  (getHeader as any).mockImplementation((_e: any, name: string) => (name === 'authorization' ? value : undefined));
+  (getHeader as any).mockImplementation((_e: any, name: string) =>
+    name === 'authorization' ? value : undefined
+  );
 }
 
 function setBody(body: any) {
@@ -319,7 +321,10 @@ describe('POST /api/exchange/payments/verify', () => {
       const handler = await loadHandler();
 
       await expect(handler({} as any)).rejects.toBeDefined();
-      expect(console.error).toHaveBeenCalledWith('[exchange/payments/verify] edge function error:', { error: 'boom' });
+      expect(console.error).toHaveBeenCalledWith(
+        '[exchange/payments/verify] edge function error:',
+        { error: 'boom' }
+      );
     });
   });
 });

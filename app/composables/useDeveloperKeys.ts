@@ -101,7 +101,8 @@ export function useDeveloperKeys() {
         platform: row.platform ?? null,
         status: row.status ?? null,
         expires_at: row.expires_at ?? null,
-        billing_interval: row.billing_interval === 'year' ? 'year' : row.billing_interval === 'month' ? 'month' : null,
+        billing_interval:
+          row.billing_interval === 'year' ? 'year' : row.billing_interval === 'month' ? 'month' : null,
       };
     } catch (err) {
       console.error('Failed to load developer subscription:', err);

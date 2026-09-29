@@ -46,23 +46,8 @@ const mockListingWithPhotos = {
 
 const mockListings = [
   mockListingWithPhotos,
-  {
-    ...mockListingWithPhotos,
-    id: 'listing-2',
-    title: '1967 Morris Mini Cooper',
-    model: 'Cooper',
-    year: 1967,
-    price: 35000,
-  },
-  {
-    ...mockListingWithPhotos,
-    id: 'listing-3',
-    title: '1972 Innocenti Mini',
-    model: 'Innocenti',
-    year: 1972,
-    price: 28000,
-    condition: 'good',
-  },
+  { ...mockListingWithPhotos, id: 'listing-2', title: '1967 Morris Mini Cooper', model: 'Cooper', year: 1967, price: 35000 },
+  { ...mockListingWithPhotos, id: 'listing-3', title: '1972 Innocenti Mini', model: 'Innocenti', year: 1972, price: 28000, condition: 'good' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -233,7 +218,9 @@ describe('useListings', () => {
       resolveListWith({ data: mockListings, error: null });
       const { useListings } = await import('~/app/composables/useListings');
       await useListings().fetchListings({ search: 'Cooper' });
-      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith('title.ilike.%Cooper%,description.ilike.%Cooper%');
+      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith(
+        'title.ilike.%Cooper%,description.ilike.%Cooper%'
+      );
     });
 
     it('applies multiple filters together', async () => {
@@ -450,10 +437,7 @@ describe('useListings', () => {
     };
 
     it('inserts with user_id and a generated slug, returns the row', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({
-        data: { ...mockListingWithPhotos, ...newListingData },
-        error: null,
-      });
+      mockSupabase._mockSingle.mockResolvedValueOnce({ data: { ...mockListingWithPhotos, ...newListingData }, error: null });
 
       const { useListings } = await import('~/app/composables/useListings');
       const result = await useListings().createListing(newListingData as any);
@@ -547,9 +531,7 @@ describe('useListings', () => {
     it('throws when the user is not authenticated', async () => {
       stubAuth(null);
       const { useListings } = await import('~/app/composables/useListings');
-      await expect(useListings().updateListing('test-listing-id', { ...updates })).rejects.toThrow(
-        'User not authenticated'
-      );
+      await expect(useListings().updateListing('test-listing-id', { ...updates })).rejects.toThrow('User not authenticated');
     });
 
     it('throws when the update errors and does not capture analytics', async () => {
@@ -719,9 +701,7 @@ describe('useListings', () => {
 
     it('returns undefined when listing_photos is missing', async () => {
       const { useListings } = await import('~/app/composables/useListings');
-      expect(
-        useListings().getPrimaryPhoto({ ...mockListingWithPhotos, listing_photos: undefined } as any)
-      ).toBeUndefined();
+      expect(useListings().getPrimaryPhoto({ ...mockListingWithPhotos, listing_photos: undefined } as any)).toBeUndefined();
     });
 
     it('returns undefined when the resolved photo is falsy (no primary, falsy first entry)', async () => {
@@ -745,10 +725,7 @@ describe('useListings', () => {
   // -------------------------------------------------------------------------
   describe('relistListing()', () => {
     it('resets sale fields, sets featured_until for paid tier, and updates filtered by ownership', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({
-        data: { ...mockListingWithPhotos, status: 'active' },
-        error: null,
-      });
+      mockSupabase._mockSingle.mockResolvedValueOnce({ data: { ...mockListingWithPhotos, status: 'active' }, error: null });
 
       const { useListings } = await import('~/app/composables/useListings');
       await useListings().relistListing('test-listing-id', 'sold', 'paid');
@@ -812,15 +789,16 @@ describe('useListings', () => {
       const { useListings } = await import('~/app/composables/useListings');
       await useListings().relistListing('test-listing-id', 'sold', 'free');
 
-      expect(mockCapture).toHaveBeenCalledWith('listing_relisted', expect.objectContaining({ price_changed: false }));
+      expect(mockCapture).toHaveBeenCalledWith(
+        'listing_relisted',
+        expect.objectContaining({ price_changed: false })
+      );
     });
 
     it('throws when the user is not authenticated', async () => {
       stubAuth(null);
       const { useListings } = await import('~/app/composables/useListings');
-      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toThrow(
-        'User not authenticated'
-      );
+      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toThrow('User not authenticated');
     });
 
     it('throws when the update errors and does not capture analytics', async () => {

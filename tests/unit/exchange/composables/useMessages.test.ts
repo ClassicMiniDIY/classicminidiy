@@ -97,7 +97,9 @@ describe('useMessages', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('conversations');
       expect(mockSupabase._mockSelect).toHaveBeenCalled();
-      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith('buyer_id.eq.test-user-id,seller_id.eq.test-user-id');
+      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith(
+        'buyer_id.eq.test-user-id,seller_id.eq.test-user-id'
+      );
       expect(mockSupabase._queryBuilder.order).toHaveBeenCalledWith('last_message_at', { ascending: false });
       expect(result).toEqual(conversations);
       // loading flag reset in finally
@@ -136,7 +138,9 @@ describe('useMessages', () => {
       const result = await fetchConversations();
 
       expect(result).toEqual([]);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Error', color: 'error' })
+      );
       expect(loading.value).toBe(false);
     });
   });
@@ -178,7 +182,9 @@ describe('useMessages', () => {
       const result = await fetchConversation('conv-1');
 
       expect(result).toBeNull();
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Error', color: 'error' })
+      );
     });
   });
 
@@ -265,7 +271,9 @@ describe('useMessages', () => {
       const result = await fetchMessages('conv-1');
 
       expect(result).toEqual({ messages: [], hasMore: false });
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Error', color: 'error' })
+      );
     });
   });
 
@@ -371,7 +379,9 @@ describe('useMessages', () => {
       const result = await startConversation({ listingId: 'listing-1', recipientId: 'seller-1' });
 
       expect(result).toBeNull();
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Error', color: 'error' })
+      );
       expect(sending.value).toBe(false);
     });
   });
@@ -436,7 +446,10 @@ describe('useMessages', () => {
       const { sendMessage } = useMessages();
       await sendMessage('conv-1', 'Hello there', { existingMessageCount: 3 });
 
-      expect(mockCapture).toHaveBeenCalledWith('message_sent', expect.objectContaining({ is_first_message: false }));
+      expect(mockCapture).toHaveBeenCalledWith(
+        'message_sent',
+        expect.objectContaining({ is_first_message: false })
+      );
     });
 
     it('rejects an empty message', async () => {
@@ -445,7 +458,9 @@ describe('useMessages', () => {
       const result = await sendMessage('conv-1', '');
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Invalid Message', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Invalid Message', color: 'error' })
+      );
       expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
@@ -455,7 +470,9 @@ describe('useMessages', () => {
       const result = await sendMessage('conv-1', 'a');
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Invalid Message', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Invalid Message', color: 'error' })
+      );
     });
 
     it('rejects a too-long message (> MAX_CONTENT_LENGTH)', async () => {
@@ -464,7 +481,9 @@ describe('useMessages', () => {
       const result = await sendMessage('conv-1', 'a'.repeat(2001));
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Invalid Message', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Invalid Message', color: 'error' })
+      );
     });
 
     it('warns about moderation issues (phone number) but still sends', async () => {
@@ -578,7 +597,10 @@ describe('useMessages', () => {
 
       // The send itself succeeds regardless of the notification queue failing.
       expect(result).toBe(true);
-      expect($fetch).toHaveBeenCalledWith('/api/exchange/notifications/queue-message', expect.anything());
+      expect($fetch).toHaveBeenCalledWith(
+        '/api/exchange/notifications/queue-message',
+        expect.anything()
+      );
       // Let the rejected fire-and-forget promise settle so its .catch handler runs.
       await Promise.resolve();
       await Promise.resolve();
@@ -639,7 +661,9 @@ describe('useMessages', () => {
         'message_failed',
         expect.objectContaining({ conversation_id: 'conv-1', error_type: 'insert failed' })
       );
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Error', color: 'error' })
+      );
       expect(sending.value).toBe(false);
     });
   });
@@ -752,7 +776,9 @@ describe('useMessages', () => {
     });
 
     it('returns 0 on error', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: { message: 'boom' } }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: { message: 'boom' } })
+      );
 
       const useMessages = await importComposable();
       const { getUnreadCount } = useMessages();
@@ -779,7 +805,9 @@ describe('useMessages', () => {
     });
 
     it('suppresses an error whose code is ABORT_ERR without logging', async () => {
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: { code: 'ABORT_ERR' } }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: { code: 'ABORT_ERR' } })
+      );
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const useMessages = await importComposable();
@@ -922,7 +950,9 @@ describe('useMessages', () => {
       const result = await reportMessage('msg-1', 'conv-1', 'spam');
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Already Reported', color: 'info' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Already Reported', color: 'info' })
+      );
       expect(mockCapture).not.toHaveBeenCalled();
     });
 
@@ -934,7 +964,9 @@ describe('useMessages', () => {
       const result = await reportMessage('msg-1', 'conv-1', 'spam');
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
+      expect(mockToast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Error', color: 'error' })
+      );
     });
   });
 });

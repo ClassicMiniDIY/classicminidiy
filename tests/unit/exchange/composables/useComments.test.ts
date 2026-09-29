@@ -216,10 +216,7 @@ describe('useComments', () => {
       const { fetchComments, comments } = useComments(listingId);
 
       comments.value = [makeComment({ id: 'existing' })];
-      vi.stubGlobal(
-        '$fetch',
-        vi.fn().mockResolvedValue({ comments: [makeComment({ id: 'appended' })], hasMore: false })
-      );
+      vi.stubGlobal('$fetch', vi.fn().mockResolvedValue({ comments: [makeComment({ id: 'appended' })], hasMore: false }));
 
       await fetchComments(true);
 

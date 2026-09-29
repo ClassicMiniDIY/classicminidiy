@@ -80,12 +80,10 @@ let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
  * lookup) resolves `profile`, and the SECOND `.single()` (wanted_posts insert)
  * resolves `insert`. The route calls `.single()` exactly twice in the happy path.
  */
-function wireSupabase(
-  opts: {
-    profile?: { data: any; error: any };
-    insert?: { data: any; error: any };
-  } = {}
-) {
+function wireSupabase(opts: {
+  profile?: { data: any; error: any };
+  insert?: { data: any; error: any };
+} = {}) {
   mockSupabase = createMockSupabaseClient();
   const profileRes = opts.profile ?? { data: { ...VALID_PROFILE }, error: null };
   const insertRes = opts.insert ?? { data: { id: 'wp-1', title: 'x' }, error: null };
@@ -284,7 +282,9 @@ describe('server/api/exchange/wanted/create.post', () => {
     });
 
     it('nulls optional location fields when not provided', async () => {
-      (readBody as any).mockResolvedValue(validBody({ city: undefined, stateProvince: undefined, country: undefined }));
+      (readBody as any).mockResolvedValue(
+        validBody({ city: undefined, stateProvince: undefined, country: undefined })
+      );
       await handler(evt());
       expect(mockSupabase._mockInsert).toHaveBeenCalledWith(
         expect.objectContaining({ city: null, state_province: null, country: null })

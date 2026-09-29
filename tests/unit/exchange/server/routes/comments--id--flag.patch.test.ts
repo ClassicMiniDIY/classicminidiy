@@ -52,12 +52,10 @@ let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
  * fetch path runs FIRST (its own `.single()`), so the overridden `then` only
  * affects the later update await.
  */
-function wire(
-  opts: {
-    fetch?: { data: any; error: any };
-    update?: { data: any; error: any };
-  } = {}
-) {
+function wire(opts: {
+  fetch?: { data: any; error: any };
+  update?: { data: any; error: any };
+} = {}) {
   mockSupabase = createMockSupabaseClient();
   const fetchResult = opts.fetch ?? { data: { ...OTHER_COMMENT }, error: null };
   const updateResult = opts.update ?? { data: null, error: null };
@@ -84,7 +82,7 @@ describe('server/api/exchange/comments/[id]/flag.patch', () => {
   // =========================================================================
   //  Happy path
   // =========================================================================
-  it("flags another user's comment and returns success", async () => {
+  it('flags another user\'s comment and returns success', async () => {
     const result = await handler(evt());
 
     expect(result).toEqual({

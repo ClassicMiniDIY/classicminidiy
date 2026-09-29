@@ -483,7 +483,9 @@ describe('useSearch', () => {
   describe('performSearch()', () => {
     it('toggles loading true while in flight then false', async () => {
       let resolveQuery!: (v: any) => void;
-      mockSupabase._queryBuilder.abortSignal = vi.fn(() => new Promise((resolve) => (resolveQuery = resolve)));
+      mockSupabase._queryBuilder.abortSignal = vi.fn(
+        () => new Promise((resolve) => (resolveQuery = resolve))
+      );
 
       const useSearch = await importUseSearch();
       const { performSearch, loading } = useSearch();
@@ -508,7 +510,11 @@ describe('useSearch', () => {
 
       expect(mockLoadVisibility).toHaveBeenCalled();
       expect(mockSupabase.from).toHaveBeenCalledWith('listings');
-      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('status', ['active', 'example_free', 'example_paid']);
+      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('status', [
+        'active',
+        'example_free',
+        'example_paid',
+      ]);
     });
 
     it('honors example-visibility setting (active only when examples hidden)', async () => {
@@ -538,7 +544,9 @@ describe('useSearch', () => {
       const { performSearch, searchQuery } = useSearch();
       searchQuery.value = 'Cooper';
       await performSearch();
-      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith('title.ilike.%Cooper%,description.ilike.%Cooper%');
+      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith(
+        'title.ilike.%Cooper%,description.ilike.%Cooper%'
+      );
     });
 
     it('strips injection characters from the search term before building .or()', async () => {
@@ -546,7 +554,9 @@ describe('useSearch', () => {
       const { performSearch, searchQuery } = useSearch();
       searchQuery.value = 'Cooper,S.';
       await performSearch();
-      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith('title.ilike.%CooperS%,description.ilike.%CooperS%');
+      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith(
+        'title.ilike.%CooperS%,description.ilike.%CooperS%'
+      );
     });
 
     it('applies eq filters for category, subcategory, condition, manufacturer, model, transmission', async () => {
@@ -608,7 +618,10 @@ describe('useSearch', () => {
       const { performSearch, selectedShipsInternational } = useSearch();
       selectedShipsInternational.value = true;
       await performSearch();
-      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('ships_to', ['international', 'specific_countries']);
+      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('ships_to', [
+        'international',
+        'specific_countries',
+      ]);
     });
 
     it('applies free_shipping as eq(shipping_available,true) + or(cost 0/null)', async () => {
@@ -778,7 +791,9 @@ describe('useSearch', () => {
     it('uses limit() instead of range() and requires coordinates when distance filter active', async () => {
       mockGeocodeLocation.mockResolvedValue({ latitude: 51.5, longitude: -0.12 });
       // Within-50mi for the first listing only.
-      mockCalculateDistance.mockImplementation((_la: number, _lo: number, lat: number) => (lat === 51.5074 ? 5 : 500));
+      mockCalculateDistance.mockImplementation((_la: number, _lo: number, lat: number) =>
+        lat === 51.5074 ? 5 : 500
+      );
       resolveQueryWith({ data: mockListings, error: null, count: 2 });
 
       const useSearch = await importUseSearch();
