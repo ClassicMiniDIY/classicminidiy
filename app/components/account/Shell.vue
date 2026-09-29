@@ -127,7 +127,9 @@
   const contentColumn = ref<HTMLElement | null>(null);
   watch(
     () => route.path,
-    async () => {
+    async (toPath, fromPath) => {
+      // Only a section change within this shell; leaving it is Nuxt's job.
+      if (!isAccountShellSectionChange({ path: toPath }, { path: fromPath })) return;
       await nextTick();
       const column = contentColumn.value;
       if (!column) return;

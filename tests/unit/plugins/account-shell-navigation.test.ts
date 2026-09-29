@@ -30,6 +30,19 @@ describe('account shell navigation plugin', () => {
     expect(to.meta).toEqual({ viewTransition: false, scrollToTop: false });
   });
 
+  it('keeps the saved scroll position on back/forward, still without the view transition', async () => {
+    const guard = await installPlugin();
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    const to = { path: '/settings/membership', meta: {} as Record<string, unknown> };
+    guard(to, { path: '/settings/api-keys' });
+    expect(to.meta).toEqual({ viewTransition: false });
+
+    // The flag is spent on that navigation; the next click keeps the position again.
+    const next = { path: '/settings/security', meta: {} as Record<string, unknown> };
+    guard(next, { path: '/settings/membership' });
+    expect(next.meta).toEqual({ viewTransition: false, scrollToTop: false });
+  });
+
   it('leaves navigation into a shell from another page alone', async () => {
     const guard = await installPlugin();
     const to = { path: '/settings/preferences', meta: {} as Record<string, unknown> };
