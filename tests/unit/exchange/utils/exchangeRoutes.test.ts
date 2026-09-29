@@ -1,10 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import {
-  EXCHANGE_PREFIXES,
-  EXCHANGE_FLAG_PREFIXES,
-  pathInPrefixes,
-} from '~~/app/utils/exchangeRoutes';
+import { EXCHANGE_PREFIXES, EXCHANGE_FLAG_PREFIXES, pathInPrefixes } from '~~/app/utils/exchangeRoutes';
 
 describe('EXCHANGE_PREFIXES', () => {
   it('is the canonical marketplace surface list', () => {
@@ -65,12 +61,9 @@ describe('pathInPrefixes — exact-match (path === prefix)', () => {
     expect(pathInPrefixes(prefix, EXCHANGE_PREFIXES)).toBe(true);
   });
 
-  it.each(EXCHANGE_FLAG_PREFIXES)(
-    'matches exact prefix %s against EXCHANGE_FLAG_PREFIXES',
-    (prefix) => {
-      expect(pathInPrefixes(prefix, EXCHANGE_FLAG_PREFIXES)).toBe(true);
-    }
-  );
+  it.each(EXCHANGE_FLAG_PREFIXES)('matches exact prefix %s against EXCHANGE_FLAG_PREFIXES', (prefix) => {
+    expect(pathInPrefixes(prefix, EXCHANGE_FLAG_PREFIXES)).toBe(true);
+  });
 });
 
 describe('pathInPrefixes — child paths (path under prefix)', () => {
