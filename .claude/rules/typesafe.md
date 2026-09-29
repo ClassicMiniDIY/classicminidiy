@@ -89,7 +89,11 @@ that must survive any phase.
   `INTENT_SHADOW_CEILING_MS` ceiling. Neither changes `/api/search`'s
   response, the surface order, or `shared/utils/searchIntent.ts`; a reorder
   from a model answer is a later change with its own switch.
-  `promote_search_miss()` stays a human act.
+  `promote_search_miss()` stays a human act. The ceiling is for measurement
+  (1000 ms); `INTENT_REORDER_BUDGET_MS` (250 ms) is what a reorder could
+  afford, logged as `within_budget`. Read `agree_lead` by kind: for `lookup`
+  the regex lead is always `tools` (`SURFACE_ORDER_BY_KIND.lookup[0]`), so it
+  counts how often Jev picks `tools`, not agreement with per-query logic.
 - **The queue duplicate hint scores only candidates code found.**
   `server/utils/queueDuplicates.ts` asks one Score per row that
   `find_submission_duplicates` (exact code, then trigram name) returned and
