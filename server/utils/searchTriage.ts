@@ -26,8 +26,16 @@ import { ToolCatalog, ARCHIVE_SEARCH_SECTIONS } from '~~/data/models/toolbox-cat
 export const MISS_KINDS = ['typo', 'synonym', 'missing_content', 'question', 'junk'] as const;
 export type MissKind = (typeof MISS_KINDS)[number];
 
-/** Longest the intent shadow waits; it runs beside the search and is dropped after this. */
-export const INTENT_SHADOW_CEILING_MS = 250;
+/**
+ * Longest the intent shadow waits; it runs beside the search and is dropped
+ * after this. A MEASUREMENT ceiling, not the reorder budget: the shadow never
+ * touches the response, so waiting longer costs a visitor nothing. At 250 ms
+ * the answered calls bunched just under the ceiling and 40% were cut off, so
+ * the readout measured the ceiling rather than the model.
+ */
+export const INTENT_SHADOW_CEILING_MS = 1000;
+/** What a reorder could afford to wait on the search path. Logged per answer as `within_budget`. */
+export const INTENT_REORDER_BUDGET_MS = 250;
 const TRIAGE_CEILING_MS = 2500;
 const MAX_TYPO_CANDIDATES = 5;
 
@@ -215,6 +223,7 @@ export function shadowSearchIntent(event: H3Event, query: string, regex: { kind:
         agree_kind: modelKind === regex.kind,
         agree_lead: modelLead === regex.lead,
         duration_ms: answer.durationMs,
+        within_budget: answer.durationMs <= INTENT_REORDER_BUDGET_MS,
       });
     })
     .catch(() => {

@@ -118,6 +118,7 @@ const MIRRORED: Record<string, readonly string[]> = {
     'agree_kind',
     'agree_lead',
     'duration_ms',
+    'within_budget',
   ],
   mcp_related_pick: ['tool', 'rows', 'picked', 'p', 'duration_ms'],
   contact_seller_screened: ['mode', 'decision', 'tags', 'duration_ms'],

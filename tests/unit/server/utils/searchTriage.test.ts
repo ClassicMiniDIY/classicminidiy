@@ -196,7 +196,20 @@ describe('shadowSearchIntent', () => {
       model_lead: 'videos',
       agree_kind: true,
       agree_lead: false,
+      duration_ms: 120,
+      within_budget: true,
     });
+  });
+
+  it('marks an answer slower than the reorder budget but inside the ceiling', async () => {
+    config.TYPESAFE_SEARCH_MODE = 'shadow';
+    const waits: Promise<unknown>[] = [];
+    const ev = { waitUntil: (p: Promise<unknown>) => waits.push(p) } as any;
+    ask.mockResolvedValue({ ...answer({ kind: c('lookup'), lead: c('parts') }), durationMs: 480 });
+    triage.shadowSearchIntent(ev, 'wiper motor', { kind: 'lookup', lead: 'tools' });
+    await Promise.all(waits);
+    expect(triage.INTENT_SHADOW_CEILING_MS).toBeGreaterThan(triage.INTENT_REORDER_BUDGET_MS);
+    expect(capture.mock.calls[0]![3]).toMatchObject({ outcome: 'answered', duration_ms: 480, within_budget: false });
   });
 
   it('counts a failure as an error outcome and never throws', async () => {
