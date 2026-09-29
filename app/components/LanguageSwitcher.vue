@@ -54,7 +54,7 @@
         :aria-pressed="loc.code === locale"
         :aria-label="
           loc.code === locale
-            ? `${t('current')}: ${getLanguageName(loc.code)}`
+            ? t('current_language', { language: getLanguageName(loc.code) })
             : t('switch_to_language', { language: getLanguageName(loc.code) })
         "
         :lang="loc.code"
@@ -75,62 +75,62 @@
   "en": {
     "title": "Language",
     "description": "Choose the language for menus and pages on this site.",
-    "current": "Current language",
-    "switch_to_language": "Switch to {language}"
+    "switch_to_language": "Switch to {language}",
+    "current_language": "Current language: {language}"
   },
   "es": {
     "title": "Idioma",
     "description": "Elige el idioma de los menús y las páginas de este sitio.",
-    "current": "Idioma actual",
-    "switch_to_language": "Cambiar a {language}"
+    "switch_to_language": "Cambiar a {language}",
+    "current_language": "Idioma actual: {language}"
   },
   "fr": {
     "title": "Langue",
     "description": "Choisissez la langue des menus et des pages de ce site.",
-    "current": "Langue actuelle",
-    "switch_to_language": "Passer à {language}"
+    "switch_to_language": "Passer à {language}",
+    "current_language": "Langue actuelle : {language}"
   },
   "de": {
     "title": "Sprache",
     "description": "Wählen Sie die Sprache für Menüs und Seiten dieser Website.",
-    "current": "Aktuelle Sprache",
-    "switch_to_language": "Wechseln zu {language}"
+    "switch_to_language": "Wechseln zu {language}",
+    "current_language": "Aktuelle Sprache: {language}"
   },
   "it": {
     "title": "Lingua",
     "description": "Scegli la lingua dei menu e delle pagine di questo sito.",
-    "current": "Lingua attuale",
-    "switch_to_language": "Passa a {language}"
+    "switch_to_language": "Passa a {language}",
+    "current_language": "Lingua attuale: {language}"
   },
   "pt": {
     "title": "Idioma",
     "description": "Escolha o idioma dos menus e das páginas deste site.",
-    "current": "Idioma atual",
-    "switch_to_language": "Mudar para {language}"
+    "switch_to_language": "Mudar para {language}",
+    "current_language": "Idioma atual: {language}"
   },
   "ru": {
     "title": "Язык",
     "description": "Выберите язык меню и страниц этого сайта.",
-    "current": "Текущий язык",
-    "switch_to_language": "Переключиться на {language}"
+    "switch_to_language": "Переключиться на {language}",
+    "current_language": "Текущий язык: {language}"
   },
   "ja": {
     "title": "言語",
     "description": "このサイトのメニューとページの言語を選択します。",
-    "current": "現在の言語",
-    "switch_to_language": "{language}に切り替え"
+    "switch_to_language": "{language}に切り替え",
+    "current_language": "現在の言語：{language}"
   },
   "zh": {
     "title": "语言",
     "description": "选择本网站菜单和页面的语言。",
-    "current": "当前语言",
-    "switch_to_language": "切换到{language}"
+    "switch_to_language": "切换到{language}",
+    "current_language": "当前语言：{language}"
   },
   "ko": {
     "title": "언어",
     "description": "이 사이트의 메뉴와 페이지 언어를 선택하세요.",
-    "current": "현재 언어",
-    "switch_to_language": "{language}로 전환"
+    "switch_to_language": "{language}로 전환",
+    "current_language": "현재 언어: {language}"
   }
 }
 </i18n>

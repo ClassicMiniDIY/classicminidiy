@@ -9,13 +9,25 @@
   // after sign-in `user` is set and `userProfile` is still null. Wait for the
   // profile, so a member never sees the join card.
   const { isSustainingMemberUser, mountedProfile } = useMountedAuth();
+
+  // A profile that never arrives (a failed read, no row) must not leave the
+  // section spinning: after a bounded wait, fall back to the join card, which
+  // links to /membership where the full state resolves.
+  const PROFILE_WAIT_MS = 8000;
+  const profileWaitExpired = ref(false);
+  let profileWaitTimer: ReturnType<typeof setTimeout> | undefined;
+  onMounted(() => {
+    profileWaitTimer = setTimeout(() => (profileWaitExpired.value = true), PROFILE_WAIT_MS);
+  });
+  onBeforeUnmount(() => clearTimeout(profileWaitTimer));
+  const waitingForProfile = computed(() => !mountedProfile.value && !profileWaitExpired.value);
 </script>
 
 <template>
   <div class="space-y-6" data-testid="settings-membership">
     <h2 class="text-xl font-semibold">{{ t('heading') }}</h2>
 
-    <div v-if="!mountedProfile" class="card border border-base-300 bg-base-100 shadow-sm">
+    <div v-if="waitingForProfile" class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body items-center py-12 text-center">
         <i class="fas fa-spinner fa-spin text-3xl text-primary" aria-hidden="true"></i>
       </div>

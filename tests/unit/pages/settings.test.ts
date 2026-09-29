@@ -120,6 +120,18 @@ describe('/settings/membership', () => {
     expect(wrapper.find('.fa-spinner').exists()).toBe(true);
   });
 
+  it('falls back to the join card when the profile never arrives', async () => {
+    vi.useFakeTimers();
+    try {
+      const wrapper = mountMembership({ member: false, profileLoaded: false });
+      await vi.advanceTimersByTimeAsync(8000);
+      expect(wrapper.find('.fa-spinner').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="settings-membership-join"]').exists()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('shows the manage card to a member', () => {
     const wrapper = mountMembership({ member: true, profileLoaded: true });
     expect(wrapper.find('[data-testid="manage-card"]').exists()).toBe(true);

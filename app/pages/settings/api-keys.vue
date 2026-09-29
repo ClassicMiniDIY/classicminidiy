@@ -265,7 +265,7 @@
             target="_blank"
             rel="noopener"
             class="btn btn-outline btn-sm"
-            @click="track('developer_portal_opened', { source: 'dashboard' })"
+            @click="track('developer_portal_opened', { source: 'settings' })"
           >
             <i class="fas fa-credit-card" aria-hidden="true"></i>
             {{ t('manage_billing') }}

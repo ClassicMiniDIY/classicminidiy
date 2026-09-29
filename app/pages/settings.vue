@@ -47,12 +47,13 @@
 
   const loginHref = computed(() => `/login?redirect=${encodeURIComponent(route.fullPath)}`);
 
+  // Reactive, so the title follows a language switch made on this page.
   useHead({
-    title: t('title'),
-    meta: [
+    title: computed(() => t('title')),
+    meta: computed(() => [
       { name: 'description', content: t('description') },
       { name: 'robots', content: 'noindex, nofollow' },
-    ],
+    ]),
   });
 </script>
 
