@@ -91,7 +91,8 @@ that must survive any phase.
   from a model answer is a later change with its own switch.
   `promote_search_miss()` stays a human act. The ceiling is for measurement
   (1000 ms); `INTENT_REORDER_BUDGET_MS` (250 ms) is what a reorder could
-  afford, logged as `within_budget`. Read `agree_lead` by kind: for `lookup`
+  afford, logged as `within_budget`; the readout's `over_budget` plus
+  `timeout` is what the `/admin/typesafe` search bar grades. Read `agree_lead` by kind: for `lookup`
   the regex lead is always `tools` (`SURFACE_ORDER_BY_KIND.lookup[0]`), so it
   counts how often Jev picks `tools`, not agreement with per-query logic.
 - **The queue duplicate hint scores only candidates code found.**
