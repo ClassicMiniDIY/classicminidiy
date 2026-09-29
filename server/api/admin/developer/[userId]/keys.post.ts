@@ -12,7 +12,7 @@ import { keyCacheId, mintApiKey, sha256Hex } from '../../../../utils/mcpTiers';
  * not indistinguishable from a key the user made:
  *
  *   - The name is FORCED to "Admin-issued by <admin email>", so the key is
- *     labelled as such in the user's own /dashboard/api-keys list and they can
+ *     labelled as such in the user's own /settings/api-keys list and they can
  *     revoke it. The admin does not get to name it something innocuous.
  *   - Every issue writes an admin_audit_log row naming the acting admin, the
  *     target user and the key prefix.

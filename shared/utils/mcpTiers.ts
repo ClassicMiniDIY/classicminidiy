@@ -3,7 +3,7 @@
  * Design doc: docs/plans/2026-08-28-developer-api-subscription.md
  *
  * Everything here is a plain constant or type, importable from BOTH the app
- * bundle (/developers pricing table, /dashboard/api-keys) and server code.
+ * bundle (/developers pricing table, /settings/api-keys) and server code.
  * The server-only half — key minting, hashing, the auth cache, the H3 context
  * accessors — lives in server/utils/mcpTiers.ts, which re-exports this module
  * so server consumers keep a single import path. Keep server-only imports out

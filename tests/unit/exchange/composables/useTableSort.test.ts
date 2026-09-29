@@ -27,7 +27,7 @@ describe('useTableSort', () => {
   // Initialization / default args
   // ---------------------------------------------------------------------------
   describe('initialization', () => {
-    it("defaults to created_at column and desc direction when called with no args", async () => {
+    it('defaults to created_at column and desc direction when called with no args', async () => {
       const useTableSort = await getUseTableSort();
       const { sortColumn, sortDirection } = useTableSort();
 
@@ -381,11 +381,7 @@ describe('useTableSort', () => {
       const sorted = [...rows].sort(sortFn);
 
       // assert on epoch millis (timezone-agnostic) rather than getFullYear()
-      expect(sorted.map((r) => r.when.getTime())).toEqual([
-        early.getTime(),
-        mid.getTime(),
-        late.getTime(),
-      ]);
+      expect(sorted.map((r) => r.when.getTime())).toEqual([early.getTime(), mid.getTime(), late.getTime()]);
     });
   });
 
@@ -461,11 +457,7 @@ describe('useTableSort', () => {
       const useTableSort = await getUseTableSort();
       const { sortFn } = useTableSort('seller.name', 'asc');
 
-      const rows = [
-        { seller: { name: 'Charlie' } },
-        { seller: { name: 'Alice' } },
-        { seller: { name: 'Bob' } },
-      ];
+      const rows = [{ seller: { name: 'Charlie' } }, { seller: { name: 'Alice' } }, { seller: { name: 'Bob' } }];
       const sorted = [...rows].sort(sortFn);
 
       expect(sorted.map((r) => r.seller.name)).toEqual(['Alice', 'Bob', 'Charlie']);
@@ -492,11 +484,7 @@ describe('useTableSort', () => {
       const useTableSort = await getUseTableSort();
       const { sortFn } = useTableSort('stats.views', 'desc');
 
-      const rows = [
-        { stats: { views: 5 } },
-        { stats: { views: 100 } },
-        { stats: { views: 30 } },
-      ];
+      const rows = [{ stats: { views: 5 } }, { stats: { views: 100 } }, { stats: { views: 30 } }];
       const sorted = [...rows].sort(sortFn);
 
       expect(sorted.map((r) => r.stats.views)).toEqual([100, 30, 5]);

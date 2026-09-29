@@ -26,9 +26,7 @@ async function loadHandler() {
 
 /** Set the authorization header returned by getHeader(event, 'authorization'). */
 function setAuth(value: string | undefined) {
-  (getHeader as any).mockImplementation((_e: any, name: string) =>
-    name === 'authorization' ? value : undefined
-  );
+  (getHeader as any).mockImplementation((_e: any, name: string) => (name === 'authorization' ? value : undefined));
 }
 
 /** Configure the next request body. */
@@ -401,7 +399,7 @@ describe('POST /api/exchange/payments/checkout', () => {
       });
     });
 
-    it('re-maps the route\'s own 502 (missing-url throw is caught and re-thrown as 502)', async () => {
+    it("re-maps the route's own 502 (missing-url throw is caught and re-thrown as 502)", async () => {
       // createError throws an Error with statusCode 502 inside the try; the catch
       // reads error.statusCode (502) and error.statusMessage and re-throws it.
       resolveEdge({ sessionId: 'no-url' });
@@ -417,10 +415,7 @@ describe('POST /api/exchange/payments/checkout', () => {
       rejectEdge({ statusCode: 403, data: { error: 'nope' } });
       const handler = await loadHandler();
       await expect(handler({} as any)).rejects.toMatchObject({ statusCode: 403 });
-      expect(spy).toHaveBeenCalledWith(
-        '[exchange/payments/checkout] edge function error:',
-        expect.anything()
-      );
+      expect(spy).toHaveBeenCalledWith('[exchange/payments/checkout] edge function error:', expect.anything());
       spy.mockRestore();
     });
   });

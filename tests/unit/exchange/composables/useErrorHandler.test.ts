@@ -154,9 +154,7 @@ describe('useErrorHandler', () => {
       handleError(new Error('oops'));
 
       expect(mockToast.add).toHaveBeenCalledTimes(1);
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ color: 'error' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ color: 'error' }));
     });
 
     it('uses the default "Error" title and the normalized message as description', async () => {
@@ -203,10 +201,7 @@ describe('useErrorHandler', () => {
 
       handleError(new Error('oops'));
 
-      expect(mockCapture).toHaveBeenCalledWith(
-        'error_displayed',
-        expect.objectContaining({ page: ROUTE_PATH })
-      );
+      expect(mockCapture).toHaveBeenCalledWith('error_displayed', expect.objectContaining({ page: ROUTE_PATH }));
     });
 
     it('uses the error code as error_type when present', async () => {
@@ -215,10 +210,7 @@ describe('useErrorHandler', () => {
 
       handleError({ message: 'denied', code: 'AUTH_401' });
 
-      expect(mockCapture).toHaveBeenCalledWith(
-        'error_displayed',
-        expect.objectContaining({ error_type: 'AUTH_401' })
-      );
+      expect(mockCapture).toHaveBeenCalledWith('error_displayed', expect.objectContaining({ error_type: 'AUTH_401' }));
     });
 
     it('falls back to the message for error_type when no code exists', async () => {
@@ -386,9 +378,7 @@ describe('useErrorHandler', () => {
         { errorTitle: 'Upload Failed' }
       );
 
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Upload Failed' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Upload Failed' }));
     });
 
     it('suppresses the toast when showToast is false on failure', async () => {

@@ -4,10 +4,7 @@ import { computed } from 'vue';
 // Helper: (re)stub the Nuxt route-middleware globals + useAuth, then import the
 // middleware fresh so it picks up the current useAuth stub. import.meta.server is
 // false under happy-dom (the default test env), so the client branch runs.
-async function loadMiddleware(opts: {
-  isAuthenticated: boolean;
-  waitForAuth?: () => Promise<unknown>;
-}) {
+async function loadMiddleware(opts: { isAuthenticated: boolean; waitForAuth?: () => Promise<unknown> }) {
   vi.resetModules();
   vi.stubGlobal('defineNuxtRouteMiddleware', (fn: any) => fn);
   vi.stubGlobal(

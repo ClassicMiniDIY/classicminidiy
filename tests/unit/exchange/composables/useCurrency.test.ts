@@ -589,6 +589,20 @@ describe('useCurrency', () => {
       expect(mockSupabase.from).toHaveBeenCalledTimes(2);
       expect(userCurrency.value).toBe('GBP');
     });
+
+    it('never overwrites a choice made while the profile read was in flight', async () => {
+      // app.vue starts the profile read on mount; the visitor then picks a
+      // currency in Settings before it answers. The stale row must not win.
+      let answer!: (value: unknown) => void;
+      mockSupabase._mockSingle.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+      const { initUserCurrency, setUserCurrency, userCurrency } = (await loadUseCurrency()).useCurrency();
+      const pendingSync = initUserCurrency('user-123');
+      await setUserCurrency('EUR');
+      answer({ data: { preferred_currency: 'GBP' }, error: null });
+      await pendingSync;
+      expect(userCurrency.value).toBe('EUR');
+      expect(localStorage.setItem).not.toHaveBeenCalledWith('preferred_currency', 'GBP');
+    });
   });
 
   // ===========================================================================

@@ -129,9 +129,7 @@ describe('useNotifications', () => {
       const result = await fetchPreferences();
 
       expect(result).toBeNull();
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Error', color: 'error' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
     });
 
     it('shows an error toast and returns null when the default insert errors', async () => {
@@ -147,16 +145,17 @@ describe('useNotifications', () => {
       const result = await fetchPreferences();
 
       expect(result).toBeNull();
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Error', color: 'error' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
     });
 
     it('clears the loading flag after a successful fetch', async () => {
       ({ mockSupabase } = setupGlobalMocks({ user: createMockUser() }));
       stubToast();
 
-      mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: { user_id: 'test-user-id', ...DEFAULT_PREFS }, error: null });
+      mockSupabase._mockMaybeSingle.mockResolvedValueOnce({
+        data: { user_id: 'test-user-id', ...DEFAULT_PREFS },
+        error: null,
+      });
 
       const useNotifications = await importComposable();
       const { fetchPreferences, loading } = useNotifications();
@@ -220,9 +219,7 @@ describe('useNotifications', () => {
       expect(mockSupabase._mockUpdate).toHaveBeenCalledWith({ email_weekly_digest: true });
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', 'test-user-id');
       expect(result).toBe(true);
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Saved', color: 'success' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Saved', color: 'success' }));
     });
 
     it('merges the update into the local preferences ref on success', async () => {
@@ -396,9 +393,7 @@ describe('useNotifications', () => {
       const result = await togglePreference('push_new_messages');
 
       expect(result).toBe(false);
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Error', color: 'error' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
     });
   });
 

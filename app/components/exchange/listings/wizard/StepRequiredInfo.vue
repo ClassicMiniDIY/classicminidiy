@@ -3,393 +3,399 @@
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-x-8">
       <!-- LEFT COLUMN: Form Fields -->
       <div class="lg:col-span-3 space-y-6">
-    <!-- Title -->
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">{{ t('titleLabel') }}</legend>
-      <input
-        v-model="form.title"
-        type="text"
-        class="input input-bordered w-full"
-        :class="{ 'input-error': errors.title }"
-        :placeholder="titlePlaceholder"
-        maxlength="100"
-        :aria-invalid="!!errors.title"
-        :aria-describedby="errors.title ? 'title-error' : undefined"
-      />
-      <p v-if="errors.title" id="title-error" class="text-error text-sm mt-1">{{ errors.title }}</p>
-    </fieldset>
-
-    <!-- Price -->
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend flex items-center gap-2">
-        <span>{{ t('priceLabel') }}</span>
-        <span class="tooltip tooltip-right" :data-tip="t('priceTooltip', { currency: form.currency })">
-          <i class="fas fa-circle-info text-base-content/60"></i>
-        </span>
-      </legend>
-      <label class="label cursor-pointer justify-start gap-3 mb-2">
-        <input type="checkbox" class="toggle toggle-primary" :checked="isFree" @change="toggleFree" />
-        <span class="label-text font-medium">{{ t('itemIsFree') }}</span>
-      </label>
-      <div v-if="!isFree" class="join w-full max-w-xs">
-        <span class="join-item btn btn-disabled">{{ currencySymbol }}</span>
-        <input
-          v-model.number="form.price"
-          type="number"
-          class="input input-bordered join-item w-full"
-          :class="{ 'input-error': errors.price }"
-          placeholder="0"
-          min="1"
-          :aria-invalid="!!errors.price"
-          :aria-describedby="errors.price ? 'price-error' : undefined"
-        />
-      </div>
-      <p v-if="!isFree" class="text-xs text-base-content/60 mt-1">
-        {{ t('pricedInPrefix') }} <span class="font-semibold">{{ form.currency }}</span> {{ t('pricedInSuffix') }}
-        <NuxtLink to="/profile/edit" class="link link-primary">{{ t('changeCurrency') }}</NuxtLink>
-      </p>
-      <p v-if="isFree" class="text-sm text-success mt-1">{{ t('freeNotice') }}</p>
-      <p v-if="errors.price" id="price-error" class="text-error text-sm mt-1">{{ errors.price }}</p>
-    </fieldset>
-
-    <!-- Vehicle-specific required fields -->
-    <template v-if="category === 'vehicle'">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Title -->
         <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('yearLabel') }}</legend>
+          <legend class="fieldset-legend">{{ t('titleLabel') }}</legend>
           <input
-            v-model.number="form.year"
-            type="number"
-            class="input input-bordered w-full"
-            :class="{ 'input-error': errors.year }"
-            placeholder="1965"
-            min="1959"
-            max="2000"
-            :aria-invalid="!!errors.year"
-            :aria-describedby="errors.year ? 'year-error' : undefined"
-          />
-          <p v-if="errors.year" id="year-error" class="text-error text-sm mt-1">{{ errors.year }}</p>
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('manufacturerLabel') }}</legend>
-          <select
-            v-model="form.manufacturer"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': errors.manufacturer }"
-            :aria-invalid="!!errors.manufacturer"
-            :aria-describedby="errors.manufacturer ? 'manufacturer-error' : undefined"
-          >
-            <option value="">{{ t('selectPlaceholder') }}</option>
-            <option value="austin">Austin</option>
-            <option value="morris">Morris</option>
-            <option value="rover">Rover</option>
-            <option value="leyland">Leyland</option>
-            <option value="innocenti">Innocenti</option>
-            <option value="wolseley">Wolseley</option>
-            <option value="riley">Riley</option>
-            <option value="other">{{ t('otherOption') }}</option>
-          </select>
-          <p v-if="errors.manufacturer" id="manufacturer-error" class="text-error text-sm mt-1">
-            {{ errors.manufacturer }}
-          </p>
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('modelLabel') }}</legend>
-          <select
-            v-model="form.model"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': errors.model }"
-            :aria-invalid="!!errors.model"
-            :aria-describedby="errors.model ? 'model-error' : undefined"
-          >
-            <option value="">{{ t('selectPlaceholder') }}</option>
-            <option value="Mini">Mini</option>
-            <option value="Mini Cooper">Mini Cooper</option>
-            <option value="Mini Cooper S">Mini Cooper S</option>
-            <option value="Clubman">Clubman</option>
-            <option value="Clubman GT">Clubman GT</option>
-            <option value="1275 GT">1275 GT</option>
-            <option value="Mini Moke">Mini Moke</option>
-            <option value="Mini Van">Mini Van</option>
-            <option value="Mini Pickup">Mini Pickup</option>
-            <option value="Mini Traveller">Mini Traveller</option>
-            <option value="Mini Countryman">Mini Countryman</option>
-            <option value="Riley Elf">Riley Elf</option>
-            <option value="Wolseley Hornet">Wolseley Hornet</option>
-            <option value="Other">{{ t('otherOption') }}</option>
-          </select>
-          <p v-if="errors.model" id="model-error" class="text-error text-sm mt-1">{{ errors.model }}</p>
-        </fieldset>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('mileageLabel') }}</legend>
-          <input
-            v-model.number="form.mileage"
-            type="number"
-            class="input input-bordered w-full"
-            :class="{ 'input-error': errors.mileage }"
-            placeholder="45000"
-            min="0"
-            :aria-invalid="!!errors.mileage"
-            :aria-describedby="errors.mileage ? 'mileage-error' : undefined"
-          />
-          <p v-if="errors.mileage" id="mileage-error" class="text-error text-sm mt-1">{{ errors.mileage }}</p>
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('exteriorColorLabel') }}</legend>
-          <input
-            v-model="form.color"
+            v-model="form.title"
             type="text"
             class="input input-bordered w-full"
-            :class="{ 'input-error': errors.color }"
-            :placeholder="t('colorPlaceholder')"
-            :aria-invalid="!!errors.color"
-            :aria-describedby="errors.color ? 'color-error' : undefined"
+            :class="{ 'input-error': errors.title }"
+            :placeholder="titlePlaceholder"
+            maxlength="100"
+            :aria-invalid="!!errors.title"
+            :aria-describedby="errors.title ? 'title-error' : undefined"
           />
-          <p v-if="errors.color" id="color-error" class="text-error text-sm mt-1">{{ errors.color }}</p>
+          <p v-if="errors.title" id="title-error" class="text-error text-sm mt-1">{{ errors.title }}</p>
         </fieldset>
 
+        <!-- Price -->
         <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('conditionLabel') }}</legend>
-          <select
-            v-model="form.condition"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': errors.condition }"
-            :aria-invalid="!!errors.condition"
-            :aria-describedby="errors.condition ? 'condition-error' : undefined"
-          >
-            <option value="">{{ t('selectPlaceholder') }}</option>
-            <option value="excellent">{{ t('vehicleCondExcellent') }}</option>
-            <option value="good">{{ t('vehicleCondGood') }}</option>
-            <option value="fair">{{ t('vehicleCondFair') }}</option>
-            <option value="project">{{ t('vehicleCondProject') }}</option>
-          </select>
-          <p v-if="errors.condition" id="condition-error" class="text-error text-sm mt-1">{{ errors.condition }}</p>
-        </fieldset>
-      </div>
-    </template>
-
-    <!-- Engine-specific fields -->
-    <template v-if="category === 'engine'">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('engineSeriesLabel') }}</legend>
-          <select
-            v-model="form.engineSeries"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': errors.engineSeries }"
-            :aria-invalid="!!errors.engineSeries"
-            :aria-describedby="errors.engineSeries ? 'engineSeries-error' : undefined"
-          >
-            <option value="">{{ t('selectSeriesPlaceholder') }}</option>
-            <option value="A-Series">A-Series</option>
-            <option value="A+-Series">A+-Series</option>
-          </select>
-          <p v-if="errors.engineSeries" id="engineSeries-error" class="text-error text-sm mt-1">
-            {{ errors.engineSeries }}
+          <legend class="fieldset-legend flex items-center gap-2">
+            <span>{{ t('priceLabel') }}</span>
+            <span class="tooltip tooltip-right" :data-tip="t('priceTooltip', { currency: form.currency })">
+              <i class="fas fa-circle-info text-base-content/60"></i>
+            </span>
+          </legend>
+          <label class="label cursor-pointer justify-start gap-3 mb-2">
+            <input type="checkbox" class="toggle toggle-primary" :checked="isFree" @change="toggleFree" />
+            <span class="label-text font-medium">{{ t('itemIsFree') }}</span>
+          </label>
+          <div v-if="!isFree" class="join w-full max-w-xs">
+            <span class="join-item btn btn-disabled">{{ currencySymbol }}</span>
+            <input
+              v-model.number="form.price"
+              type="number"
+              class="input input-bordered join-item w-full"
+              :class="{ 'input-error': errors.price }"
+              placeholder="0"
+              min="1"
+              :aria-invalid="!!errors.price"
+              :aria-describedby="errors.price ? 'price-error' : undefined"
+            />
+          </div>
+          <p v-if="!isFree" class="text-xs text-base-content/60 mt-1">
+            {{ t('pricedInPrefix') }} <span class="font-semibold">{{ form.currency }}</span> {{ t('pricedInSuffix') }}
+            <NuxtLink to="/settings/preferences" class="link link-primary">{{ t('changeCurrency') }}</NuxtLink>
           </p>
-          <p class="text-xs text-base-content/60 mt-1">
-            {{ t('engineSeriesHelp') }}
+          <p v-if="isFree" class="text-sm text-success mt-1">{{ t('freeNotice') }}</p>
+          <p v-if="errors.price" id="price-error" class="text-error text-sm mt-1">{{ errors.price }}</p>
+        </fieldset>
+
+        <!-- Vehicle-specific required fields -->
+        <template v-if="category === 'vehicle'">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('yearLabel') }}</legend>
+              <input
+                v-model.number="form.year"
+                type="number"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': errors.year }"
+                placeholder="1965"
+                min="1959"
+                max="2000"
+                :aria-invalid="!!errors.year"
+                :aria-describedby="errors.year ? 'year-error' : undefined"
+              />
+              <p v-if="errors.year" id="year-error" class="text-error text-sm mt-1">{{ errors.year }}</p>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('manufacturerLabel') }}</legend>
+              <select
+                v-model="form.manufacturer"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': errors.manufacturer }"
+                :aria-invalid="!!errors.manufacturer"
+                :aria-describedby="errors.manufacturer ? 'manufacturer-error' : undefined"
+              >
+                <option value="">{{ t('selectPlaceholder') }}</option>
+                <option value="austin">Austin</option>
+                <option value="morris">Morris</option>
+                <option value="rover">Rover</option>
+                <option value="leyland">Leyland</option>
+                <option value="innocenti">Innocenti</option>
+                <option value="wolseley">Wolseley</option>
+                <option value="riley">Riley</option>
+                <option value="other">{{ t('otherOption') }}</option>
+              </select>
+              <p v-if="errors.manufacturer" id="manufacturer-error" class="text-error text-sm mt-1">
+                {{ errors.manufacturer }}
+              </p>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('modelLabel') }}</legend>
+              <select
+                v-model="form.model"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': errors.model }"
+                :aria-invalid="!!errors.model"
+                :aria-describedby="errors.model ? 'model-error' : undefined"
+              >
+                <option value="">{{ t('selectPlaceholder') }}</option>
+                <option value="Mini">Mini</option>
+                <option value="Mini Cooper">Mini Cooper</option>
+                <option value="Mini Cooper S">Mini Cooper S</option>
+                <option value="Clubman">Clubman</option>
+                <option value="Clubman GT">Clubman GT</option>
+                <option value="1275 GT">1275 GT</option>
+                <option value="Mini Moke">Mini Moke</option>
+                <option value="Mini Van">Mini Van</option>
+                <option value="Mini Pickup">Mini Pickup</option>
+                <option value="Mini Traveller">Mini Traveller</option>
+                <option value="Mini Countryman">Mini Countryman</option>
+                <option value="Riley Elf">Riley Elf</option>
+                <option value="Wolseley Hornet">Wolseley Hornet</option>
+                <option value="Other">{{ t('otherOption') }}</option>
+              </select>
+              <p v-if="errors.model" id="model-error" class="text-error text-sm mt-1">{{ errors.model }}</p>
+            </fieldset>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('mileageLabel') }}</legend>
+              <input
+                v-model.number="form.mileage"
+                type="number"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': errors.mileage }"
+                placeholder="45000"
+                min="0"
+                :aria-invalid="!!errors.mileage"
+                :aria-describedby="errors.mileage ? 'mileage-error' : undefined"
+              />
+              <p v-if="errors.mileage" id="mileage-error" class="text-error text-sm mt-1">{{ errors.mileage }}</p>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('exteriorColorLabel') }}</legend>
+              <input
+                v-model="form.color"
+                type="text"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': errors.color }"
+                :placeholder="t('colorPlaceholder')"
+                :aria-invalid="!!errors.color"
+                :aria-describedby="errors.color ? 'color-error' : undefined"
+              />
+              <p v-if="errors.color" id="color-error" class="text-error text-sm mt-1">{{ errors.color }}</p>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('conditionLabel') }}</legend>
+              <select
+                v-model="form.condition"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': errors.condition }"
+                :aria-invalid="!!errors.condition"
+                :aria-describedby="errors.condition ? 'condition-error' : undefined"
+              >
+                <option value="">{{ t('selectPlaceholder') }}</option>
+                <option value="excellent">{{ t('vehicleCondExcellent') }}</option>
+                <option value="good">{{ t('vehicleCondGood') }}</option>
+                <option value="fair">{{ t('vehicleCondFair') }}</option>
+                <option value="project">{{ t('vehicleCondProject') }}</option>
+              </select>
+              <p v-if="errors.condition" id="condition-error" class="text-error text-sm mt-1">{{ errors.condition }}</p>
+            </fieldset>
+          </div>
+        </template>
+
+        <!-- Engine-specific fields -->
+        <template v-if="category === 'engine'">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('engineSeriesLabel') }}</legend>
+              <select
+                v-model="form.engineSeries"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': errors.engineSeries }"
+                :aria-invalid="!!errors.engineSeries"
+                :aria-describedby="errors.engineSeries ? 'engineSeries-error' : undefined"
+              >
+                <option value="">{{ t('selectSeriesPlaceholder') }}</option>
+                <option value="A-Series">A-Series</option>
+                <option value="A+-Series">A+-Series</option>
+              </select>
+              <p v-if="errors.engineSeries" id="engineSeries-error" class="text-error text-sm mt-1">
+                {{ errors.engineSeries }}
+              </p>
+              <p class="text-xs text-base-content/60 mt-1">
+                {{ t('engineSeriesHelp') }}
+              </p>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('engineDisplacementLabel') }}</legend>
+              <select
+                v-model="form.engineDisplacement"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': errors.engineDisplacement }"
+                :aria-invalid="!!errors.engineDisplacement"
+                :aria-describedby="errors.engineDisplacement ? 'engineDisplacement-error' : undefined"
+              >
+                <option value="">{{ t('selectDisplacementPlaceholder') }}</option>
+                <optgroup :label="t('displacementStandard')">
+                  <option value="850cc">850cc</option>
+                  <option value="997cc">997cc</option>
+                  <option value="998cc">998cc</option>
+                  <option value="1098cc">1098cc</option>
+                  <option value="1275cc">1275cc</option>
+                </optgroup>
+                <optgroup :label="t('displacement998Overbore')">
+                  <option value="1014cc">1014cc</option>
+                  <option value="1030cc">1030cc</option>
+                  <option value="1046cc">1046cc</option>
+                  <option value="1062cc">1062cc</option>
+                </optgroup>
+                <optgroup :label="t('displacement1100Overbore')">
+                  <option value="1114cc">1114cc</option>
+                  <option value="1132cc">1132cc</option>
+                  <option value="1149cc">1149cc</option>
+                  <option value="1167cc">1167cc</option>
+                  <option value="1216cc">1216cc</option>
+                </optgroup>
+                <optgroup :label="t('displacement1275Overbore')">
+                  <option value="1293cc">1293cc</option>
+                  <option value="1302cc">1302cc</option>
+                  <option value="1311cc">1311cc</option>
+                  <option value="1330cc">1330cc</option>
+                  <option value="1361cc">1361cc</option>
+                  <option value="1379cc">1379cc</option>
+                  <option value="1398cc">1398cc</option>
+                  <option value="1406cc">1406cc</option>
+                  <option value="1426cc">1426cc</option>
+                  <option value="1440cc">1440cc</option>
+                  <option value="1460cc">1460cc</option>
+                  <option value="1479cc">1479cc</option>
+                </optgroup>
+                <optgroup :label="t('displacementOther')">
+                  <option value="other">{{ t('otherUnknownOption') }}</option>
+                </optgroup>
+              </select>
+              <p v-if="errors.engineDisplacement" id="engineDisplacement-error" class="text-error text-sm mt-1">
+                {{ errors.engineDisplacement }}
+              </p>
+            </fieldset>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('conditionLabel') }}</legend>
+              <select
+                v-model="form.condition"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': errors.condition }"
+                :aria-invalid="!!errors.condition"
+                :aria-describedby="errors.condition ? 'condition-error' : undefined"
+              >
+                <option value="">{{ t('selectConditionPlaceholder') }}</option>
+                <option value="rebuilt">{{ t('engineCondRebuilt') }}</option>
+                <option value="running">{{ t('engineCondRunning') }}</option>
+                <option value="running_fair">{{ t('engineCondRunningFair') }}</option>
+                <option value="not_running">{{ t('engineCondNotRunning') }}</option>
+                <option value="core">{{ t('engineCondCore') }}</option>
+                <option value="parts_only">{{ t('engineCondPartsOnly') }}</option>
+              </select>
+              <p v-if="errors.condition" id="condition-error" class="text-error text-sm mt-1">{{ errors.condition }}</p>
+            </fieldset>
+
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{{ t('yearOptionalLabel') }}</legend>
+              <input
+                v-model.number="form.year"
+                type="number"
+                class="input input-bordered w-full"
+                placeholder="1965"
+                min="1959"
+                max="2000"
+              />
+            </fieldset>
+          </div>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">{{ t('enginePlateLabel') }}</legend>
+            <input
+              v-model="form.enginePlateDetails"
+              type="text"
+              class="input input-bordered w-full"
+              :class="{ 'input-error': errors.enginePlateDetails }"
+              :placeholder="t('enginePlatePlaceholder')"
+              :aria-invalid="!!errors.enginePlateDetails"
+              :aria-describedby="errors.enginePlateDetails ? 'enginePlateDetails-error' : undefined"
+            />
+            <p v-if="errors.enginePlateDetails" id="enginePlateDetails-error" class="text-error text-sm mt-1">
+              {{ errors.enginePlateDetails }}
+            </p>
+            <p class="text-xs text-base-content/60 mt-1">{{ t('enginePlateHelp') }}</p>
+          </fieldset>
+        </template>
+
+        <!-- Parts-specific fields -->
+        <template v-if="category === 'parts'">
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">{{ t('partConditionLabel') }}</legend>
+            <select
+              v-model="form.partCondition"
+              class="select select-bordered w-full"
+              :class="{ 'select-error': errors.partCondition }"
+              :aria-invalid="!!errors.partCondition"
+              :aria-describedby="errors.partCondition ? 'partCondition-error' : undefined"
+            >
+              <option value="">{{ t('selectConditionPlaceholder') }}</option>
+              <option value="new">{{ t('partCondNew') }}</option>
+              <option value="used_excellent">{{ t('partCondUsedExcellent') }}</option>
+              <option value="used_good">{{ t('partCondUsedGood') }}</option>
+              <option value="used_fair">{{ t('partCondUsedFair') }}</option>
+              <option value="rebuild">{{ t('partCondRebuild') }}</option>
+              <option value="core">{{ t('partCondCore') }}</option>
+            </select>
+            <p v-if="errors.partCondition" id="partCondition-error" class="text-error text-sm mt-1">
+              {{ errors.partCondition }}
+            </p>
+          </fieldset>
+        </template>
+
+        <!-- Location -->
+        <div>
+          <ExchangeListingsLocationAutocomplete v-model="locationModel" :error="errors.city" />
+        </div>
+
+        <!-- Description -->
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend">{{ t('descriptionLabel') }}</legend>
+          <textarea
+            v-model="form.description"
+            class="textarea textarea-bordered w-full h-40"
+            :class="{ 'textarea-error': errors.description }"
+            :placeholder="descriptionPlaceholder"
+            :aria-invalid="!!errors.description"
+            :aria-describedby="errors.description ? 'description-error' : undefined"
+          ></textarea>
+          <p v-if="errors.description" id="description-error" class="text-error text-sm mt-1">
+            {{ errors.description }}
+          </p>
+          <p class="text-sm text-base-content/70 mt-1">
+            {{ t('descriptionHelp') }}
           </p>
         </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('engineDisplacementLabel') }}</legend>
-          <select
-            v-model="form.engineDisplacement"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': errors.engineDisplacement }"
-            :aria-invalid="!!errors.engineDisplacement"
-            :aria-describedby="errors.engineDisplacement ? 'engineDisplacement-error' : undefined"
-          >
-            <option value="">{{ t('selectDisplacementPlaceholder') }}</option>
-            <optgroup :label="t('displacementStandard')">
-              <option value="850cc">850cc</option>
-              <option value="997cc">997cc</option>
-              <option value="998cc">998cc</option>
-              <option value="1098cc">1098cc</option>
-              <option value="1275cc">1275cc</option>
-            </optgroup>
-            <optgroup :label="t('displacement998Overbore')">
-              <option value="1014cc">1014cc</option>
-              <option value="1030cc">1030cc</option>
-              <option value="1046cc">1046cc</option>
-              <option value="1062cc">1062cc</option>
-            </optgroup>
-            <optgroup :label="t('displacement1100Overbore')">
-              <option value="1114cc">1114cc</option>
-              <option value="1132cc">1132cc</option>
-              <option value="1149cc">1149cc</option>
-              <option value="1167cc">1167cc</option>
-              <option value="1216cc">1216cc</option>
-            </optgroup>
-            <optgroup :label="t('displacement1275Overbore')">
-              <option value="1293cc">1293cc</option>
-              <option value="1302cc">1302cc</option>
-              <option value="1311cc">1311cc</option>
-              <option value="1330cc">1330cc</option>
-              <option value="1361cc">1361cc</option>
-              <option value="1379cc">1379cc</option>
-              <option value="1398cc">1398cc</option>
-              <option value="1406cc">1406cc</option>
-              <option value="1426cc">1426cc</option>
-              <option value="1440cc">1440cc</option>
-              <option value="1460cc">1460cc</option>
-              <option value="1479cc">1479cc</option>
-            </optgroup>
-            <optgroup :label="t('displacementOther')">
-              <option value="other">{{ t('otherUnknownOption') }}</option>
-            </optgroup>
-          </select>
-          <p v-if="errors.engineDisplacement" id="engineDisplacement-error" class="text-error text-sm mt-1">
-            {{ errors.engineDisplacement }}
-          </p>
-        </fieldset>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('conditionLabel') }}</legend>
-          <select
-            v-model="form.condition"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': errors.condition }"
-            :aria-invalid="!!errors.condition"
-            :aria-describedby="errors.condition ? 'condition-error' : undefined"
-          >
-            <option value="">{{ t('selectConditionPlaceholder') }}</option>
-            <option value="rebuilt">{{ t('engineCondRebuilt') }}</option>
-            <option value="running">{{ t('engineCondRunning') }}</option>
-            <option value="running_fair">{{ t('engineCondRunningFair') }}</option>
-            <option value="not_running">{{ t('engineCondNotRunning') }}</option>
-            <option value="core">{{ t('engineCondCore') }}</option>
-            <option value="parts_only">{{ t('engineCondPartsOnly') }}</option>
-          </select>
-          <p v-if="errors.condition" id="condition-error" class="text-error text-sm mt-1">{{ errors.condition }}</p>
-        </fieldset>
-
-        <fieldset class="fieldset">
-          <legend class="fieldset-legend">{{ t('yearOptionalLabel') }}</legend>
-          <input
-            v-model.number="form.year"
-            type="number"
-            class="input input-bordered w-full"
-            placeholder="1965"
-            min="1959"
-            max="2000"
-          />
-        </fieldset>
-      </div>
-
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">{{ t('enginePlateLabel') }}</legend>
-        <input
-          v-model="form.enginePlateDetails"
-          type="text"
-          class="input input-bordered w-full"
-          :class="{ 'input-error': errors.enginePlateDetails }"
-          :placeholder="t('enginePlatePlaceholder')"
-          :aria-invalid="!!errors.enginePlateDetails"
-          :aria-describedby="errors.enginePlateDetails ? 'enginePlateDetails-error' : undefined"
-        />
-        <p v-if="errors.enginePlateDetails" id="enginePlateDetails-error" class="text-error text-sm mt-1">
-          {{ errors.enginePlateDetails }}
-        </p>
-        <p class="text-xs text-base-content/60 mt-1">{{ t('enginePlateHelp') }}</p>
-      </fieldset>
-    </template>
-
-    <!-- Parts-specific fields -->
-    <template v-if="category === 'parts'">
-      <fieldset class="fieldset">
-        <legend class="fieldset-legend">{{ t('partConditionLabel') }}</legend>
-        <select
-          v-model="form.partCondition"
-          class="select select-bordered w-full"
-          :class="{ 'select-error': errors.partCondition }"
-          :aria-invalid="!!errors.partCondition"
-          :aria-describedby="errors.partCondition ? 'partCondition-error' : undefined"
-        >
-          <option value="">{{ t('selectConditionPlaceholder') }}</option>
-          <option value="new">{{ t('partCondNew') }}</option>
-          <option value="used_excellent">{{ t('partCondUsedExcellent') }}</option>
-          <option value="used_good">{{ t('partCondUsedGood') }}</option>
-          <option value="used_fair">{{ t('partCondUsedFair') }}</option>
-          <option value="rebuild">{{ t('partCondRebuild') }}</option>
-          <option value="core">{{ t('partCondCore') }}</option>
-        </select>
-        <p v-if="errors.partCondition" id="partCondition-error" class="text-error text-sm mt-1">
-          {{ errors.partCondition }}
-        </p>
-      </fieldset>
-    </template>
-
-    <!-- Location -->
-    <div>
-      <ExchangeListingsLocationAutocomplete v-model="locationModel" :error="errors.city" />
-    </div>
-
-    <!-- Description -->
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">{{ t('descriptionLabel') }}</legend>
-      <textarea
-        v-model="form.description"
-        class="textarea textarea-bordered w-full h-40"
-        :class="{ 'textarea-error': errors.description }"
-        :placeholder="descriptionPlaceholder"
-        :aria-invalid="!!errors.description"
-        :aria-describedby="errors.description ? 'description-error' : undefined"
-      ></textarea>
-      <p v-if="errors.description" id="description-error" class="text-error text-sm mt-1">{{ errors.description }}</p>
-      <p class="text-sm text-base-content/70 mt-1">
-        {{ t('descriptionHelp') }}
-      </p>
-    </fieldset>
-
       </div>
 
       <!-- RIGHT COLUMN: Photos (sticky on desktop) -->
-      <div class="lg:col-span-2 lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto space-y-6">
-    <!-- Photos Section -->
-    <div>
-      <h3 class="text-lg font-bold mb-4">{{ t('photosLabel') }}</h3>
-      <p class="text-base-content/70 mb-4">
-        {{ tier === 'paid' ? t('tierPremium') : t('tierFree') }} {{ t('tierAllowsUpTo') }}
-        <strong>{{ category === 'vehicle' ? t('photosPerSection', { count: photoLimit }) : t('photosTotal', { count: photoLimit }) }}</strong
-        >.
-      </p>
-      <p v-if="errors.photos" class="text-error text-sm mb-4">{{ errors.photos }}</p>
+      <div
+        class="lg:col-span-2 lg:sticky lg:top-8 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto space-y-6"
+      >
+        <!-- Photos Section -->
+        <div>
+          <h3 class="text-lg font-bold mb-4">{{ t('photosLabel') }}</h3>
+          <p class="text-base-content/70 mb-4">
+            {{ tier === 'paid' ? t('tierPremium') : t('tierFree') }} {{ t('tierAllowsUpTo') }}
+            <strong>{{
+              category === 'vehicle'
+                ? t('photosPerSection', { count: photoLimit })
+                : t('photosTotal', { count: photoLimit })
+            }}</strong
+            >.
+          </p>
+          <p v-if="errors.photos" class="text-error text-sm mb-4">{{ errors.photos }}</p>
 
-      <!-- Vehicle: 4 photo categories -->
-      <div v-if="category === 'vehicle'" class="space-y-6">
-        <ExchangeListingsWizardPhotoUploadSection
-          v-for="section in photoSections"
-          :key="section.id"
-          :title="section.title"
-          :description="section.description"
-          :photos="photosModel[section.id as keyof typeof photosModel]"
-          :max-photos="photoLimit"
-          @update:photos="updatePhotos(section.id, $event)"
-        />
-      </div>
+          <!-- Vehicle: 4 photo categories -->
+          <div v-if="category === 'vehicle'" class="space-y-6">
+            <ExchangeListingsWizardPhotoUploadSection
+              v-for="section in photoSections"
+              :key="section.id"
+              :title="section.title"
+              :description="section.description"
+              :photos="photosModel[section.id as keyof typeof photosModel]"
+              :max-photos="photoLimit"
+              @update:photos="updatePhotos(section.id, $event)"
+            />
+          </div>
 
-      <!-- Engine/Parts: single photo upload -->
-      <div v-else>
-        <ExchangeListingsWizardPhotoUploadSection
-          :title="t('photosLabel')"
-          :description="t('singleUploadDescription')"
-          :photos="allPhotosFlat"
-          :max-photos="photoLimit"
-          @update:photos="updateAllPhotos"
-        />
-      </div>
-    </div>
-
+          <!-- Engine/Parts: single photo upload -->
+          <div v-else>
+            <ExchangeListingsWizardPhotoUploadSection
+              :title="t('photosLabel')"
+              :description="t('singleUploadDescription')"
+              :photos="allPhotosFlat"
+              :max-photos="photoLimit"
+              @update:photos="updateAllPhotos"
+            />
+          </div>
+        </div>
       </div>
     </div>
 

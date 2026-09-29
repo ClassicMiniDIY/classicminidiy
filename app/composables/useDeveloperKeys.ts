@@ -1,6 +1,6 @@
 /**
  * State + API for the Developer API key management surface
- * (/dashboard/api-keys). All key CRUD goes through /api/developer/* server
+ * (/settings/api-keys). All key CRUD goes through /api/developer/* server
  * routes with a Bearer token ($authFetch) — RLS deliberately grants no writes
  * on api_keys. Design doc: docs/plans/2026-08-28-developer-api-subscription.md
  */
@@ -101,8 +101,7 @@ export function useDeveloperKeys() {
         platform: row.platform ?? null,
         status: row.status ?? null,
         expires_at: row.expires_at ?? null,
-        billing_interval:
-          row.billing_interval === 'year' ? 'year' : row.billing_interval === 'month' ? 'month' : null,
+        billing_interval: row.billing_interval === 'year' ? 'year' : row.billing_interval === 'month' ? 'month' : null,
       };
     } catch (err) {
       console.error('Failed to load developer subscription:', err);

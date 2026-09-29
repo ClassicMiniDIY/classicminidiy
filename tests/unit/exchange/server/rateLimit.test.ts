@@ -219,13 +219,7 @@ describe('server/utils/exchange/rateLimit', () => {
       return { context: { user } } as any;
     }
 
-    function stubH3({
-      header,
-      requestIp,
-    }: {
-      header?: string;
-      requestIp?: string;
-    }) {
+    function stubH3({ header, requestIp }: { header?: string; requestIp?: string }) {
       const getHeader = vi.fn(() => header);
       const getRequestIP = vi.fn(() => requestIp);
       const setResponseHeader = vi.fn();
@@ -302,8 +296,14 @@ describe('server/utils/exchange/rateLimit', () => {
     function stubH3() {
       const setResponseHeader = vi.fn();
       const createError = vi.fn((e: any) => Object.assign(new Error(e.message), e));
-      vi.stubGlobal('getHeader', vi.fn(() => '9.9.9.9'));
-      vi.stubGlobal('getRequestIP', vi.fn(() => undefined));
+      vi.stubGlobal(
+        'getHeader',
+        vi.fn(() => '9.9.9.9')
+      );
+      vi.stubGlobal(
+        'getRequestIP',
+        vi.fn(() => undefined)
+      );
       vi.stubGlobal('setResponseHeader', setResponseHeader);
       vi.stubGlobal('createError', createError);
       return { setResponseHeader, createError };

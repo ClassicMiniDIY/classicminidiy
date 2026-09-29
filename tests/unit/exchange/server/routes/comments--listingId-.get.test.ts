@@ -35,9 +35,7 @@ function resolveComments(result: { data?: any; error?: any }) {
 }
 
 function setRouterParam(value: any) {
-  (getRouterParam as any).mockImplementation((_e: any, name: string) =>
-    name === 'listingId' ? value : undefined
-  );
+  (getRouterParam as any).mockImplementation((_e: any, name: string) => (name === 'listingId' ? value : undefined));
 }
 
 function setQuery(query: Record<string, any>) {

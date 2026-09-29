@@ -430,9 +430,7 @@ describe('useExternalListings', () => {
 
       await submitFind({ url: 'https://some-random-site.example/x', title: 'Mystery part' });
 
-      expect(mockSupabase._mockInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ source_site: 'other' })
-      );
+      expect(mockSupabase._mockInsert).toHaveBeenCalledWith(expect.objectContaining({ source_site: 'other' }));
     });
 
     it('stamps metadata_fetched_at when og data is provided', async () => {
@@ -1020,10 +1018,7 @@ describe('useExternalListings', () => {
       const useExternalListings = await loadComposable();
       const { deleteFind, finds } = useExternalListings();
 
-      finds.value = [
-        createMockExternalListing({ id: 'find-123' }),
-        createMockExternalListing({ id: 'find-456' }),
-      ];
+      finds.value = [createMockExternalListing({ id: 'find-123' }), createMockExternalListing({ id: 'find-456' })];
 
       const result = await deleteFind('find-123');
 

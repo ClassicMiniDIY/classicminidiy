@@ -12,7 +12,7 @@
  *    'internal' with no database involved. scripts/test-mcp-transport.sh and
  *    scripts/verify-cf-deploy.sh authenticate this way.
  *
- *  - SELF-SERVE KEYS ('cmdiy_' + 40 base62, minted at /dashboard/api-keys) —
+ *  - SELF-SERVE KEYS ('cmdiy_' + 40 base62, minted at /settings/api-keys) —
  *    looked up by SHA-256 hash in api_keys via a KV-backed cache, with the
  *    owner's 'developer' subscription deciding tier 'developer' vs 'free'.
  *

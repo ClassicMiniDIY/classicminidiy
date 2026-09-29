@@ -1,10 +1,6 @@
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import {
-  EXCHANGE_PREFIXES,
-  EXCHANGE_FLAG_PREFIXES,
-  pathInPrefixes,
-} from '~~/app/utils/exchangeRoutes';
+import { EXCHANGE_PREFIXES, EXCHANGE_FLAG_PREFIXES, pathInPrefixes } from '~~/app/utils/exchangeRoutes';
 
 describe('EXCHANGE_PREFIXES', () => {
   it('is the canonical marketplace surface list', () => {
@@ -12,8 +8,8 @@ describe('EXCHANGE_PREFIXES', () => {
       '/exchange',
       '/dashboard/listings',
       '/dashboard/wanted',
-      '/dashboard/notifications',
       '/dashboard/saved-searches',
+      '/settings/notifications',
     ]);
   });
 
@@ -35,8 +31,8 @@ describe('EXCHANGE_FLAG_PREFIXES', () => {
       '/exchange',
       '/dashboard/listings',
       '/dashboard/wanted',
-      '/dashboard/notifications',
       '/dashboard/saved-searches',
+      '/settings/notifications',
       '/onboarding',
       '/admin/exchange',
     ]);
@@ -65,12 +61,9 @@ describe('pathInPrefixes — exact-match (path === prefix)', () => {
     expect(pathInPrefixes(prefix, EXCHANGE_PREFIXES)).toBe(true);
   });
 
-  it.each(EXCHANGE_FLAG_PREFIXES)(
-    'matches exact prefix %s against EXCHANGE_FLAG_PREFIXES',
-    (prefix) => {
-      expect(pathInPrefixes(prefix, EXCHANGE_FLAG_PREFIXES)).toBe(true);
-    }
-  );
+  it.each(EXCHANGE_FLAG_PREFIXES)('matches exact prefix %s against EXCHANGE_FLAG_PREFIXES', (prefix) => {
+    expect(pathInPrefixes(prefix, EXCHANGE_FLAG_PREFIXES)).toBe(true);
+  });
 });
 
 describe('pathInPrefixes — child paths (path under prefix)', () => {
@@ -81,7 +74,7 @@ describe('pathInPrefixes — child paths (path under prefix)', () => {
     ['/dashboard/listings/new', true],
     ['/dashboard/listings/42/edit', true],
     ['/dashboard/wanted/create', true],
-    ['/dashboard/notifications/unread', true],
+    ['/settings/notifications/unread', true],
     ['/dashboard/saved-searches/5', true],
   ])('treats %s as inside the exchange', (path, expected) => {
     expect(pathInPrefixes(path, EXCHANGE_PREFIXES)).toBe(expected);
@@ -103,7 +96,7 @@ describe('pathInPrefixes — prefix boundary safety (the load-bearing invariant)
     '/dashboard/listings-archive', // shares "/dashboard/listings"
     '/dashboard/listingsxyz',
     '/dashboard/wantedly',
-    '/dashboard/notifications-settings',
+    '/settings/notifications-settings',
     '/dashboard/saved-searches-export',
   ])('does NOT match sibling route %s', (path) => {
     expect(pathInPrefixes(path, EXCHANGE_PREFIXES)).toBe(false);

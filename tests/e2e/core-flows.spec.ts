@@ -160,29 +160,26 @@ test.describe('exchange browse', () => {
 });
 
 test.describe('i18n', () => {
-  test('switching locale changes the copy and survives a reload', async ({ page }) => {
+  test('switching locale on /settings/preferences changes the copy and survives a reload', async ({ page }) => {
     await gotoHydrated(page, '/');
-
     const before = await page.locator('body').innerText();
+
+    // The header links to the one language control on the site.
+    await page.getByTestId('nav-language-settings-link').click();
+    await expect(page).toHaveURL(/\/settings\/preferences$/);
+
+    await page.getByTestId('language-option-de').click();
 
     // `strategy: 'no_prefix'` — the locale lives in the i18n_redirected cookie,
     // there is no /de/ path prefix to assert on.
-    // The language dropdown is the one carrying the globe icon; the account /
-    // theme controls are siblings with the same shape.
-    const languageDropdown = page.locator('.dropdown:has(.fa-globe)').first();
-    await expect(languageDropdown).toBeVisible();
-    await languageDropdown.locator('[role="button"]').first().focus();
+    await expect
+      .poll(async () => (await page.context().cookies()).find((c) => c.name === 'i18n_redirected')?.value, {
+        timeout: 20_000,
+      })
+      .toBe('de');
+    await expect(page.getByTestId('language-option-de')).toHaveAttribute('aria-pressed', 'true');
 
-    const german = languageDropdown.getByRole('button', { name: 'Deutsch' });
-    await expect(german).toBeVisible();
-    await german.click();
-
-    await expect.poll(async () => (await page.locator('body').innerText()) !== before, { timeout: 20_000 }).toBe(true);
-
-    const cookies = await page.context().cookies();
-    expect(cookies.find((c) => c.name === 'i18n_redirected')?.value).toBe('de');
-
-    await page.reload();
+    await gotoHydrated(page, '/');
     const afterReload = await page.locator('body').innerText();
     expect(afterReload).not.toBe(before);
   });

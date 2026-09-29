@@ -196,9 +196,7 @@ describe('useNewsletter', () => {
       expect(nl.preview.value).toBeNull();
       // getAuthHeader returns null -> throws before $fetch is called.
       expect(mockFetch).not.toHaveBeenCalled();
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Error', color: 'error' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Error', color: 'error' }));
       expect(nl.loading.value).toBe(false);
     });
 
@@ -301,9 +299,7 @@ describe('useNewsletter', () => {
 
       expect(result).toBe(false);
       expect(mockFetch).not.toHaveBeenCalled();
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Failed to Send', color: 'error' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Failed to Send', color: 'error' }));
       expect(nl.testSending.value).toBe(false);
     });
 
@@ -423,9 +419,7 @@ describe('useNewsletter', () => {
 
       expect(result).toBe(false);
       expect(mockFetch).not.toHaveBeenCalled();
-      expect(mockToast.add).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'Failed to Send', color: 'error' })
-      );
+      expect(mockToast.add).toHaveBeenCalledWith(expect.objectContaining({ title: 'Failed to Send', color: 'error' }));
       expect(nl.sending.value).toBe(false);
     });
 
@@ -525,7 +519,9 @@ describe('useNewsletter', () => {
     it('toggles historyLoading during the call', async () => {
       let resolveQuery!: (v: any) => void;
       const queryResolved = new Promise<void>((res) => (resolveQuery = res));
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => queryResolved.then(() => resolve({ data: [], error: null })));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        queryResolved.then(() => resolve({ data: [], error: null }))
+      );
 
       const useNewsletter = await loadComposable();
       const nl = useNewsletter();

@@ -51,7 +51,7 @@ Each layer covers a case the one before cannot.
 
 Before this, the toggle could show ON on a device whose subscription the cleanup layers
 above had removed, and the only recovery was OFF then ON, with nothing telling the user.
-`/dashboard/notifications` now shows a line under the toggle when the preference is ON
+`/settings/notifications` now shows a line under the toggle when the preference is ON
 and this device has no owned subscription, with a "Turn on for this device" button, or a
 "blocked in this browser's settings" hint when permission is denied. The button is the
 recovery path. It is not automatic: an automatic re-subscribe would claim an endpoint

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 /**
- * /dashboard/notifications (app/pages/dashboard/notifications.vue): the push
+ * /settings/notifications (app/pages/settings/notifications.vue): the push
  * toggle is the all-devices preference; the line under it says when THIS
  * device receives nothing. Contract: .claude/rules/push-notifications.md.
  *
@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { ref, computed, readonly } from 'vue';
-import NotificationsPage from '~/app/pages/dashboard/notifications.vue';
+import NotificationsPage from '~/app/pages/settings/notifications.vue';
 import { pushDeviceStatus } from '~/app/utils/pushSubscription';
 
 interface PushStubOptions {
@@ -121,7 +121,7 @@ afterEach(() => {
   delete (global as any).Notification;
 });
 
-describe('/dashboard/notifications device push status', () => {
+describe('/settings/notifications device push status', () => {
   it('shows "not active on this device" when the preference is on and the device has no subscription', async () => {
     stubPage({ preferenceOn: true, owned: false });
     const wrapper = await mountPage();

@@ -91,8 +91,9 @@ from client code via `~~/` only), `data/` (static JSON + `data/models/` types),
 Surfaces: technical toolbox (`/technical/*` calculators and decoders), archive
 (`/archive/*` manuals, wiring, registry, wheels, colours, engines, weights), marketplace
 (`/exchange`), 3D model library (`/models`), AI chat (`/chat`), admin (`/admin/**`),
-membership (`/membership`), contribution wizard (`/contribute/*`), dashboard
-(`/dashboard`), account deletion (`/account/delete`: the URL on the Google Play Data
+membership (`/membership`, public sales page), contribution wizard (`/contribute/*`),
+dashboard (`/dashboard`), settings (`/settings`: language, currency, membership,
+notifications, API keys, security; see `account-settings.md`), account deletion (`/account/delete`: the URL on the Google Play Data
 Safety form, so it must stay public, logged-out readable and at that path; the
 deletion contract lives in `classicminidiy-supabase`). Ten locales via
 per-component `<i18n lang="json">` blocks.
@@ -175,25 +176,26 @@ per-component `<i18n lang="json">` blocks.
 
 ## Area rules (path-scoped, in `.claude/rules/`)
 
-| File                    | Loads for                                             | Covers                                                                        |
-| ----------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `vue-resolution.md`     | `app/**`, `shared/**`                                 | auto-imports, `~~/`, component names, `useFetch` form                         |
-| `layout-dropdowns.md`   | `main.css`, nav, hero, admin components               | hero alignment, dropdown CSS layering, hydration gate                         |
-| `calculators.md`        | `Calculators/**`, `/technical`                        | math breakdown fed from own computeds                                         |
-| `images-seo.md`         | `nuxt.config.ts`, `app/pages/**`                      | image allowlist, ipx, ogImage, 404s, faceted SEO                              |
-| `security.md`           | chat, mcp, middleware, queue approve                  | fail-open vs fail-closed, storefront token, tier fixture key, edit allowlists |
-| `passkeys.md`           | `usePasskeys`, `/login`, profile passkey card         | experimental flag, captcha, redirect stash, cancellation                      |
-| `reference-data.md`     | torque/clearance/weights data + consumers             | unit contracts                                                                |
-| `marketplace.md`        | `/exchange` pages, api, feeds                         | draft→pending→active, feeds, TME redirects                                    |
-| `admin.md`              | `/admin/**`, `server/api/admin/**`                    | AdminShell, queue, viewport rules                                             |
-| `contributions.md`      | contribute wizard, queue approve, search              | trust, `submitted_by`, colour merge, omnisearch                               |
-| `cloudflare-env.md`     | workflows, wrangler, rate-limit                       | build-time vs runtime secrets, env naming, CI owns deploy                     |
-| `testing.md`            | `tests/**`, configs, `package.json`                   | tiers, shrink-only lists, Playwright, pins                                    |
-| `models-3d.md`          | `/models`, `server/api/models`                        | Bearer, edge-fn proxies, Connect, entitlement                                 |
-| `parts-archive.md`      | `/archive/parts`, `/admin/parts`, `part_*` API        | kill switch + `is_current`, PostgREST caps, search allowlist, hotspot fill    |
-| `model-variants.md`     | `/archive/variants`, its api, tool, seed              | one read path, seed provenance, source units, SSR index, hosted photos only   |
-| `ecu-maps.md`           | `/maps`, `server/api/github/**`                       | support table from MiniECUMaps `maps.json`, repo coords, disclaimer           |
-| `push-notifications.md` | push composable + util, `useAuth`, pref page, `sw.ts` | shared-browser endpoints, sign-out order, no claim on reconcile, push-only SW |
+| File                    | Loads for                                                    | Covers                                                                             |
+| ----------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `vue-resolution.md`     | `app/**`, `shared/**`                                        | auto-imports, `~~/`, component names, `useFetch` form                              |
+| `layout-dropdowns.md`   | `main.css`, nav, hero, admin components                      | hero alignment, dropdown CSS layering, hydration gate                              |
+| `calculators.md`        | `Calculators/**`, `/technical`                               | math breakdown fed from own computeds                                              |
+| `images-seo.md`         | `nuxt.config.ts`, `app/pages/**`                             | image allowlist, ipx, ogImage, 404s, faceted SEO                                   |
+| `security.md`           | chat, mcp, middleware, queue approve                         | fail-open vs fail-closed, storefront token, tier fixture key, edit allowlists      |
+| `passkeys.md`           | `usePasskeys`, `/login`, profile passkey card                | experimental flag, captcha, redirect stash, cancellation                           |
+| `reference-data.md`     | torque/clearance/weights data + consumers                    | unit contracts                                                                     |
+| `marketplace.md`        | `/exchange` pages, api, feeds                                | draft→pending→active, feeds, TME redirects                                         |
+| `admin.md`              | `/admin/**`, `server/api/admin/**`                           | AdminShell, queue, viewport rules                                                  |
+| `contributions.md`      | contribute wizard, queue approve, search                     | trust, `submitted_by`, colour merge, omnisearch                                    |
+| `cloudflare-env.md`     | workflows, wrangler, rate-limit                              | build-time vs runtime secrets, env naming, CI owns deploy                          |
+| `testing.md`            | `tests/**`, configs, `package.json`                          | tiers, shrink-only lists, Playwright, pins                                         |
+| `models-3d.md`          | `/models`, `server/api/models`                               | Bearer, edge-fn proxies, Connect, entitlement                                      |
+| `parts-archive.md`      | `/archive/parts`, `/admin/parts`, `part_*` API               | kill switch + `is_current`, PostgREST caps, search allowlist, hotspot fill         |
+| `model-variants.md`     | `/archive/variants`, its api, tool, seed                     | one read path, seed provenance, source units, SSR index, hosted photos only        |
+| `ecu-maps.md`           | `/maps`, `server/api/github/**`                              | support table from MiniECUMaps `maps.json`, repo coords, disclaimer                |
+| `push-notifications.md` | push composable + util, `useAuth`, pref page, `sw.ts`        | shared-browser endpoints, sign-out order, no claim on reconcile, push-only SW      |
+| `account-settings.md`   | `/settings`, `/dashboard`, account shell, `LanguageSwitcher` | one language/currency control, `settingsAuth`, permanent 301s, member-or-join wait |
 
 Design docs in `docs/plans/`, runbooks in `docs/runbooks/`. Membership contract:
 `classicminidiy-supabase/docs/plans/2026-06-07-membership-entitlement-contract.md`.

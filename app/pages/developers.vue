@@ -285,7 +285,7 @@
             <h2 class="text-2xl font-bold mt-2">{{ t('subscriber.title') }}</h2>
             <p class="opacity-70 max-w-lg">{{ t('subscriber.subtitle', { n: allTools.length }) }}</p>
             <div class="card-actions mt-4">
-              <NuxtLink to="/dashboard/api-keys" class="btn btn-primary">
+              <NuxtLink to="/settings/api-keys" class="btn btn-primary">
                 <i class="fas fa-key" aria-hidden="true"></i>
                 {{ t('subscriber.manage_keys') }}
               </NuxtLink>
@@ -358,19 +358,19 @@
 
             <p class="text-sm opacity-60 mt-3">
               {{ t('cta.free_tier_note') }}
-              <NuxtLink to="/dashboard/api-keys" class="link link-primary">{{ t('cta.free_tier_cta') }}</NuxtLink>
+              <NuxtLink to="/settings/api-keys" class="link link-primary">{{ t('cta.free_tier_cta') }}</NuxtLink>
             </p>
           </div>
         </section>
       </ClientOnly>
 
-      <!-- Getting started: per-client setup (shared with /dashboard/api-keys) -->
+      <!-- Getting started: per-client setup (shared with /settings/api-keys) -->
       <section>
         <p class="eyebrow text-center"><i class="fas fa-rocket mr-1"></i>{{ t('clients.eyebrow') }}</p>
         <h2 class="text-3xl font-bold text-center pt-2 pb-2">{{ t('clients.title') }}</h2>
         <p class="text-center opacity-70 pb-8">
           {{ t('clients.subtitle') }}
-          <NuxtLink to="/dashboard/api-keys" class="link link-primary">{{ t('clients.key_cta') }}</NuxtLink>
+          <NuxtLink to="/settings/api-keys" class="link link-primary">{{ t('clients.key_cta') }}</NuxtLink>
         </p>
         <DeveloperClientSetupAccordion />
       </section>

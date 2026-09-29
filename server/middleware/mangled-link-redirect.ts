@@ -7,7 +7,14 @@
  * a member looped on exactly this). Strip the mangled tail and redirect to the
  * clean route for the handful of paths we send in emails.
  */
-const EMAILED_PATHS = ['/discord/connect', '/discord/claim', '/membership', '/login', '/settings/notifications'];
+const EMAILED_PATHS = [
+  '/discord/connect',
+  '/discord/claim',
+  '/membership',
+  '/login',
+  '/dashboard/notifications',
+  '/settings/notifications',
+];
 
 export default defineEventHandler((event) => {
   const path = event.path;
