@@ -72,7 +72,9 @@
       </div>
     </div>
 
-    <div class="min-w-0 flex-1">
+    <!-- scroll-mt clears the sticky MainNav when a section change brings this
+         column into view. -->
+    <div ref="contentColumn" class="min-w-0 flex-1 scroll-mt-24" data-testid="account-shell-content">
       <slot />
     </div>
   </div>
@@ -116,6 +118,26 @@
   });
 
   const isActive = (entry: AccountNavEntry) => currentEntry.value?.to === entry.to;
+
+  // A section change keeps the scroll position
+  // (app/plugins/account-shell-navigation.client.ts). If the visitor had scrolled past
+  // the top of the content column, bring the new section's start into view
+  // instead of leaving them partway down it (or clamped at the bottom of a
+  // shorter one).
+  const contentColumn = ref<HTMLElement | null>(null);
+  watch(
+    () => route.path,
+    async () => {
+      await nextTick();
+      const column = contentColumn.value;
+      if (!column) return;
+      // Under the sticky header counts as scrolled past.
+      const headerClearance = Number.parseFloat(getComputedStyle(column).scrollMarginTop) || 0;
+      if (column.getBoundingClientRect().top < headerClearance) {
+        column.scrollIntoView({ block: 'start' });
+      }
+    }
+  );
 
   // A daisyUI focus dropdown stays open while focus is inside it, and a client
   // navigation leaves focus on the clicked link. Blur so the menu closes.
