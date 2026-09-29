@@ -20,10 +20,21 @@
  */
 export default defineNuxtPlugin(() => {
   const router = useRouter();
+
+  // Back/forward must restore the position the browser saved, which Nuxt's
+  // scroll behaviour only does when `scrollToTop` is not false. The router's own
+  // popstate listener was registered first and runs its guards asynchronously,
+  // so this flag is set before `beforeEach` reads it.
+  let fromHistory = false;
+  window.addEventListener('popstate', () => {
+    fromHistory = true;
+  });
+
   router.beforeEach((to, from) => {
-    if (isAccountShellSectionChange(to, from)) {
-      to.meta.viewTransition = false;
-      to.meta.scrollToTop = false;
-    }
+    const viaHistory = fromHistory;
+    fromHistory = false;
+    if (!isAccountShellSectionChange(to, from)) return;
+    to.meta.viewTransition = false;
+    if (!viaHistory) to.meta.scrollToTop = false;
   });
 });

@@ -7,6 +7,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { reactive } from 'vue';
 import AccountShell from '~/app/components/account/Shell.vue';
+import { isAccountShellSectionChange } from '~/app/utils/accountShellNavigation';
 
 const groups = [
   {
@@ -72,6 +73,7 @@ describe('AccountShell', () => {
 
   describe('section change scroll', () => {
     function mountReactive(path: string) {
+      vi.stubGlobal('isAccountShellSectionChange', isAccountShellSectionChange);
       const route = reactive({ path, fullPath: path, params: {}, query: {}, meta: {}, matched: [] });
       vi.stubGlobal('useRoute', () => route);
       const wrapper = mount(AccountShell, {
@@ -90,6 +92,15 @@ describe('AccountShell', () => {
       route.path = '/dashboard/selling';
       await flushPromises();
       expect(column.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+      wrapper.unmount();
+    });
+
+    it('does nothing when the path leaves the shell', async () => {
+      const { wrapper, route, column } = mountReactive('/dashboard/models');
+      column.getBoundingClientRect = () => ({ top: -300 }) as DOMRect;
+      route.path = '/settings/preferences';
+      await flushPromises();
+      expect(column.scrollIntoView).not.toHaveBeenCalled();
       wrapper.unmount();
     });
 
