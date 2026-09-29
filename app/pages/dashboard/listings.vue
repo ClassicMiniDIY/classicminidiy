@@ -525,9 +525,7 @@
 
       toast.add({
         title: t('toast.soldMarked.title'),
-        description: data.notifyWatchers
-          ? t('toast.soldMarked.descriptionNotify')
-          : t('toast.soldMarked.description'),
+        description: data.notifyWatchers ? t('toast.soldMarked.descriptionNotify') : t('toast.soldMarked.description'),
         color: 'success',
       });
     } catch (error) {
@@ -624,7 +622,14 @@
       "bulkUpload": "Bulk Upload",
       "newListing": "New Listing"
     },
-    "tabs": { "Active": "Active", "Pending": "Pending", "Drafts": "Drafts", "Sold": "Sold", "Expired": "Expired", "Cancelled": "Cancelled" },
+    "tabs": {
+      "Active": "Active",
+      "Pending": "Pending",
+      "Drafts": "Drafts",
+      "Sold": "Sold",
+      "Expired": "Expired",
+      "Cancelled": "Cancelled"
+    },
     "empty": {
       "title": "No {tab} Listings",
       "active": "Get started by posting your first Classic Mini listing",
@@ -683,7 +688,14 @@
       "bulkUpload": "Carga masiva",
       "newListing": "Nuevo anuncio"
     },
-    "tabs": { "Active": "Activos", "Pending": "Pendientes", "Drafts": "Borradores", "Sold": "Vendidos", "Expired": "Caducados", "Cancelled": "Cancelados" },
+    "tabs": {
+      "Active": "Activos",
+      "Pending": "Pendientes",
+      "Drafts": "Borradores",
+      "Sold": "Vendidos",
+      "Expired": "Caducados",
+      "Cancelled": "Cancelados"
+    },
     "empty": {
       "title": "No hay anuncios en {tab}",
       "active": "Empieza publicando tu primer anuncio de Classic Mini",
@@ -719,7 +731,10 @@
     },
     "toast": {
       "error": "Error",
-      "trackingUpdated": { "title": "Seguimiento actualizado", "description": "La información de seguimiento se ha guardado." },
+      "trackingUpdated": {
+        "title": "Seguimiento actualizado",
+        "description": "La información de seguimiento se ha guardado."
+      },
       "trackingError": "No se pudo guardar la información de seguimiento. Inténtalo de nuevo.",
       "relisted": { "title": "Anuncio republicado", "description": "Tu anuncio vuelve a estar activo." },
       "relistError": "No se pudo volver a publicar el anuncio. Inténtalo de nuevo.",
@@ -742,7 +757,14 @@
       "bulkUpload": "Import groupé",
       "newListing": "Nouvelle annonce"
     },
-    "tabs": { "Active": "Actives", "Pending": "En attente", "Drafts": "Brouillons", "Sold": "Vendues", "Expired": "Expirées", "Cancelled": "Annulées" },
+    "tabs": {
+      "Active": "Actives",
+      "Pending": "En attente",
+      "Drafts": "Brouillons",
+      "Sold": "Vendues",
+      "Expired": "Expirées",
+      "Cancelled": "Annulées"
+    },
     "empty": {
       "title": "Aucune annonce {tab}",
       "active": "Commencez par publier votre première annonce Classic Mini",
@@ -778,7 +800,10 @@
     },
     "toast": {
       "error": "Erreur",
-      "trackingUpdated": { "title": "Suivi mis à jour", "description": "Les informations de suivi ont été enregistrées." },
+      "trackingUpdated": {
+        "title": "Suivi mis à jour",
+        "description": "Les informations de suivi ont été enregistrées."
+      },
       "trackingError": "Échec de l'enregistrement des informations de suivi. Veuillez réessayer.",
       "relisted": { "title": "Annonce republiée", "description": "Votre annonce est de nouveau active." },
       "relistError": "Échec de la republication de l'annonce. Veuillez réessayer.",
@@ -801,7 +826,14 @@
       "bulkUpload": "Massen-Upload",
       "newListing": "Neue Anzeige"
     },
-    "tabs": { "Active": "Aktiv", "Pending": "Ausstehend", "Drafts": "Entwürfe", "Sold": "Verkauft", "Expired": "Abgelaufen", "Cancelled": "Storniert" },
+    "tabs": {
+      "Active": "Aktiv",
+      "Pending": "Ausstehend",
+      "Drafts": "Entwürfe",
+      "Sold": "Verkauft",
+      "Expired": "Abgelaufen",
+      "Cancelled": "Storniert"
+    },
     "empty": {
       "title": "Keine Anzeigen in {tab}",
       "active": "Leg los und veröffentliche deine erste Classic-Mini-Anzeige",
@@ -837,7 +869,10 @@
     },
     "toast": {
       "error": "Fehler",
-      "trackingUpdated": { "title": "Tracking aktualisiert", "description": "Die Tracking-Informationen wurden gespeichert." },
+      "trackingUpdated": {
+        "title": "Tracking aktualisiert",
+        "description": "Die Tracking-Informationen wurden gespeichert."
+      },
       "trackingError": "Tracking-Informationen konnten nicht gespeichert werden. Bitte versuche es erneut.",
       "relisted": { "title": "Anzeige erneut eingestellt", "description": "Deine Anzeige ist jetzt wieder aktiv." },
       "relistError": "Anzeige konnte nicht erneut eingestellt werden. Bitte versuche es erneut.",
@@ -860,7 +895,14 @@
       "bulkUpload": "Caricamento in blocco",
       "newListing": "Nuovo annuncio"
     },
-    "tabs": { "Active": "Attivi", "Pending": "In attesa", "Drafts": "Bozze", "Sold": "Venduti", "Expired": "Scaduti", "Cancelled": "Annullati" },
+    "tabs": {
+      "Active": "Attivi",
+      "Pending": "In attesa",
+      "Drafts": "Bozze",
+      "Sold": "Venduti",
+      "Expired": "Scaduti",
+      "Cancelled": "Annullati"
+    },
     "empty": {
       "title": "Nessun annuncio in {tab}",
       "active": "Inizia pubblicando il tuo primo annuncio Classic Mini",
@@ -896,7 +938,10 @@
     },
     "toast": {
       "error": "Errore",
-      "trackingUpdated": { "title": "Tracciamento aggiornato", "description": "Le informazioni di tracciamento sono state salvate." },
+      "trackingUpdated": {
+        "title": "Tracciamento aggiornato",
+        "description": "Le informazioni di tracciamento sono state salvate."
+      },
       "trackingError": "Impossibile salvare le informazioni di tracciamento. Riprova.",
       "relisted": { "title": "Annuncio ripubblicato", "description": "Il tuo annuncio è di nuovo attivo." },
       "relistError": "Impossibile ripubblicare l'annuncio. Riprova.",
@@ -919,7 +964,14 @@
       "bulkUpload": "Envio em massa",
       "newListing": "Novo anúncio"
     },
-    "tabs": { "Active": "Ativos", "Pending": "Pendentes", "Drafts": "Rascunhos", "Sold": "Vendidos", "Expired": "Expirados", "Cancelled": "Cancelados" },
+    "tabs": {
+      "Active": "Ativos",
+      "Pending": "Pendentes",
+      "Drafts": "Rascunhos",
+      "Sold": "Vendidos",
+      "Expired": "Expirados",
+      "Cancelled": "Cancelados"
+    },
     "empty": {
       "title": "Nenhum anúncio em {tab}",
       "active": "Comece publicando seu primeiro anúncio de Classic Mini",
@@ -955,7 +1007,10 @@
     },
     "toast": {
       "error": "Erro",
-      "trackingUpdated": { "title": "Rastreamento atualizado", "description": "As informações de rastreamento foram salvas." },
+      "trackingUpdated": {
+        "title": "Rastreamento atualizado",
+        "description": "As informações de rastreamento foram salvas."
+      },
       "trackingError": "Falha ao salvar as informações de rastreamento. Tente novamente.",
       "relisted": { "title": "Anúncio republicado", "description": "Seu anúncio está ativo novamente." },
       "relistError": "Falha ao republicar o anúncio. Tente novamente.",
@@ -978,7 +1033,14 @@
       "bulkUpload": "Массовая загрузка",
       "newListing": "Новое объявление"
     },
-    "tabs": { "Active": "Активные", "Pending": "На рассмотрении", "Drafts": "Черновики", "Sold": "Проданные", "Expired": "Истёкшие", "Cancelled": "Отменённые" },
+    "tabs": {
+      "Active": "Активные",
+      "Pending": "На рассмотрении",
+      "Drafts": "Черновики",
+      "Sold": "Проданные",
+      "Expired": "Истёкшие",
+      "Cancelled": "Отменённые"
+    },
     "empty": {
       "title": "Нет объявлений в разделе «{tab}»",
       "active": "Начните с публикации вашего первого объявления Classic Mini",
@@ -1037,7 +1099,14 @@
       "bulkUpload": "一括アップロード",
       "newListing": "新規出品"
     },
-    "tabs": { "Active": "公開中", "Pending": "承認待ち", "Drafts": "下書き", "Sold": "売却済み", "Expired": "期限切れ", "Cancelled": "キャンセル済み" },
+    "tabs": {
+      "Active": "公開中",
+      "Pending": "承認待ち",
+      "Drafts": "下書き",
+      "Sold": "売却済み",
+      "Expired": "期限切れ",
+      "Cancelled": "キャンセル済み"
+    },
     "empty": {
       "title": "{tab}の出品はありません",
       "active": "最初のClassic Mini出品を投稿して始めましょう",
@@ -1096,7 +1165,14 @@
       "bulkUpload": "批量上传",
       "newListing": "新建刊登"
     },
-    "tabs": { "Active": "进行中", "Pending": "待审核", "Drafts": "草稿", "Sold": "已售", "Expired": "已过期", "Cancelled": "已取消" },
+    "tabs": {
+      "Active": "进行中",
+      "Pending": "待审核",
+      "Drafts": "草稿",
+      "Sold": "已售",
+      "Expired": "已过期",
+      "Cancelled": "已取消"
+    },
     "empty": {
       "title": "没有{tab}的刊登",
       "active": "发布你的第一个经典Mini刊登来开始吧",
@@ -1155,7 +1231,14 @@
       "bulkUpload": "일괄 업로드",
       "newListing": "새 매물"
     },
-    "tabs": { "Active": "활성", "Pending": "대기 중", "Drafts": "초안", "Sold": "판매됨", "Expired": "만료됨", "Cancelled": "취소됨" },
+    "tabs": {
+      "Active": "활성",
+      "Pending": "대기 중",
+      "Drafts": "초안",
+      "Sold": "판매됨",
+      "Expired": "만료됨",
+      "Cancelled": "취소됨"
+    },
     "empty": {
       "title": "{tab} 매물이 없습니다",
       "active": "첫 클래식 미니 매물을 등록하여 시작하세요",

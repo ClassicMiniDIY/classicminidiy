@@ -100,33 +100,8 @@ describe('exchange-onboarding global middleware', () => {
 
   // Open-browsing model: dashboard exchange tabs are NOT gated — pass through
   // even for an authed user with an incomplete profile.
-  it.each([
-    ['/dashboard/listings'],
-    ['/dashboard/wanted'],
-    ['/dashboard/saved-searches'],
-    ['/settings/notifications'],
-  ])('passes through exchange-owned dashboard tab %s (open to all, no onboarding required)', async (path) => {
-    user = ref({ id: 'u1' });
-    userProfile = ref({ onboarding_completed: false });
-    const middleware = await loadMiddleware(true);
-
-    const result = await middleware({ path, fullPath: path });
-
-    expect(result).toBeUndefined();
-    expect(navigateTo).not.toHaveBeenCalled();
-    // Dashboard tabs are open — middleware returns before ever reaching auth.
-    expect(waitForAuth).not.toHaveBeenCalled();
-  });
-
-  // Open-browsing model: browse/detail routes pass through for incomplete users.
-  it.each([
-    ['/exchange/listings'],
-    ['/exchange/listings/123'],
-    ['/exchange/wanted'],
-    ['/exchange/finds'],
-    ['/dashboard/listings'],
-  ])(
-    'passes through open browse/detail route %s for an authed incomplete user',
+  it.each([['/dashboard/listings'], ['/dashboard/wanted'], ['/dashboard/saved-searches'], ['/settings/notifications']])(
+    'passes through exchange-owned dashboard tab %s (open to all, no onboarding required)',
     async (path) => {
       user = ref({ id: 'u1' });
       userProfile = ref({ onboarding_completed: false });
@@ -136,8 +111,28 @@ describe('exchange-onboarding global middleware', () => {
 
       expect(result).toBeUndefined();
       expect(navigateTo).not.toHaveBeenCalled();
+      // Dashboard tabs are open — middleware returns before ever reaching auth.
+      expect(waitForAuth).not.toHaveBeenCalled();
     }
   );
+
+  // Open-browsing model: browse/detail routes pass through for incomplete users.
+  it.each([
+    ['/exchange/listings'],
+    ['/exchange/listings/123'],
+    ['/exchange/wanted'],
+    ['/exchange/finds'],
+    ['/dashboard/listings'],
+  ])('passes through open browse/detail route %s for an authed incomplete user', async (path) => {
+    user = ref({ id: 'u1' });
+    userProfile = ref({ onboarding_completed: false });
+    const middleware = await loadMiddleware(true);
+
+    const result = await middleware({ path, fullPath: path });
+
+    expect(result).toBeUndefined();
+    expect(navigateTo).not.toHaveBeenCalled();
+  });
 
   // The five real action routes in EXCHANGE_ONBOARDING_PREFIXES must redirect
   // an authed user with an incomplete profile.
@@ -248,9 +243,7 @@ describe('exchange-onboarding global middleware', () => {
     await middleware(ACTION_ROUTE);
 
     expect(fetchUserProfile).toHaveBeenCalledWith('u1');
-    expect(navigateTo).toHaveBeenCalledWith(
-      `/onboarding?redirect=${encodeURIComponent(ACTION_ROUTE.fullPath)}`
-    );
+    expect(navigateTo).toHaveBeenCalledWith(`/onboarding?redirect=${encodeURIComponent(ACTION_ROUTE.fullPath)}`);
   });
 
   it('properly URL-encodes the redirect target (spaces and ampersands)', async () => {
@@ -307,9 +300,7 @@ describe('exchange-onboarding global middleware', () => {
     userProfile = ref({ onboarding_completed: false });
     await middleware(ACTION_ROUTE);
 
-    expect(navigateTo).toHaveBeenCalledWith(
-      `/onboarding?redirect=${encodeURIComponent(ACTION_ROUTE.fullPath)}`
-    );
+    expect(navigateTo).toHaveBeenCalledWith(`/onboarding?redirect=${encodeURIComponent(ACTION_ROUTE.fullPath)}`);
   });
 
   it('extends the wait once when the bounded waitForAuth(1500) times out', async () => {
@@ -350,8 +341,6 @@ describe('exchange-onboarding global middleware', () => {
     await middleware(ACTION_ROUTE);
 
     expect(waitForAuth).toHaveBeenCalledTimes(2);
-    expect(navigateTo).toHaveBeenCalledWith(
-      `/onboarding?redirect=${encodeURIComponent(ACTION_ROUTE.fullPath)}`
-    );
+    expect(navigateTo).toHaveBeenCalledWith(`/onboarding?redirect=${encodeURIComponent(ACTION_ROUTE.fullPath)}`);
   });
 });
