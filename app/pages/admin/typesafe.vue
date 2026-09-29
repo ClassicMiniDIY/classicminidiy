@@ -62,6 +62,8 @@
           agree_kind?: number;
           agree_lead?: number;
           avg_ms?: number | null;
+          /** Answered, but slower than the 250 ms reorder budget. Absent until the readout migration is live. */
+          over_budget?: number;
         };
         by_regex_kind: { regex_kind: string; n: number; agree_kind: number; agree_lead: number }[];
         misses: Record<string, number>;
@@ -147,7 +149,7 @@
   const BARS = {
     chat: { minRuns: 100, maxTimeoutShare: 0.2, maxSpecToolRate: 0.6, minConfidence: 0.7 },
     screen: { minScreened: 30, maxHeldApprovedShare: 0.2 },
-    search: { minAnswered: 300, maxTimeoutShare: 0.3, leadAgreeLow: 0.5, leadAgreeHigh: 0.85 },
+    search: { minAnswered: 300, maxSlowShare: 0.3, leadAgreeLow: 0.5, leadAgreeHigh: 0.85 },
     parts: { minReviewed: 50, minPrecision: 0.95 },
     mcp: { minAvgP: 0.6 },
     review: { minHints: 30, maxFlagApprovedShare: 0.2 },
@@ -358,11 +360,13 @@
     if (answered < BARS.search.minAnswered) {
       return { state: 'no-data', text: `${answered} of ${BARS.search.minAnswered} answered reads.` };
     }
-    const timeoutShare = share(Number(s.timeout ?? 0), total);
-    if (timeoutShare > BARS.search.maxTimeoutShare) {
+    // The shadow ceiling (1000 ms) is for measurement; the bar is the 250 ms
+    // reorder budget, so a slow answer counts against it like a timeout.
+    const slow = Number(s.timeout ?? 0) + Number(s.over_budget ?? 0);
+    if (share(slow, total) > BARS.search.maxSlowShare) {
       return {
         state: 'below',
-        text: `${pct(Number(s.timeout ?? 0), total)} of reads miss 250 ms; a reorder would slow search or rarely apply.`,
+        text: `${pct(slow, total)} of reads took over 250 ms; a reorder would slow search or rarely apply.`,
       };
     }
     const lead = share(Number(s.agree_lead ?? 0), answered);
@@ -380,7 +384,7 @@
     }
     return {
       state: 'ready',
-      text: `Agreement ${pct(Number(s.agree_lead ?? 0), answered)} with timeouts under the bar: worth writing phase 4b.`,
+      text: `Agreement ${pct(Number(s.agree_lead ?? 0), answered)} with slow reads under the bar: worth writing phase 4b.`,
     };
   });
 
@@ -703,9 +707,10 @@
               </div>
               <p class="text-sm opacity-70">
                 <strong>Measures:</strong> for lookup and question searches, whether the model's query kind and lead
-                surface agree with the regex, and how often it answered inside 250 ms. The decision is whether to write
-                phase 4b (a reorder). Agreement between 50% and 85% with timeouts under 30% is the case for it; over 85%
-                there is nothing to gain; under 50% one side is noise.
+                surface agree with the regex, and how often it answered inside the 250 ms reorder budget (the call
+                itself may run to 1000 ms). The decision is whether to write phase 4b (a reorder). Agreement between 50%
+                and 85% with under 30% of reads over 250 ms is the case for it; over 85% there is nothing to gain; under
+                50% one side is noise.
               </p>
               <p class="text-sm"><strong>Verdict:</strong> {{ searchGrade.text }}</p>
               <div class="stats stats-vertical sm:stats-horizontal bg-base-200 text-sm">
@@ -714,6 +719,7 @@
                   <div class="stat-value text-xl">{{ data.readout.search.shadow.total ?? 0 }}</div>
                   <div class="stat-desc">
                     {{ data.readout.search.shadow.answered ?? 0 }} answered ·
+                    {{ data.readout.search.shadow.over_budget ?? 0 }} over 250 ms ·
                     {{ data.readout.search.shadow.timeout ?? 0 }} timeout ·
                     {{ data.readout.search.shadow.error ?? 0 }} error
                   </div>
