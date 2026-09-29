@@ -339,7 +339,7 @@ jobs:
           # MCP_SMOKE_KEY: unset, the script notes and skips instead of failing
           # the deploy — which is also the trap: unsetting this secret silences
           # a failure here by turning the whole gating section into a skip, with
-          # nothing red. Mint the key at /dashboard/api-keys on a DEDICATED
+          # nothing red. Mint the key at /settings/api-keys on a DEDICATED
           # account that will never hold a developer subscription (a comp
           # counts, and flips the key to the paid tier), then
           # `gh secret set MCP_FREE_TIER_KEY`. See .claude/rules/security.md, /mcp.

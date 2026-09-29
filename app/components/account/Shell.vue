@@ -8,63 +8,69 @@
        which groups a visitor sees (behind its own mount gate) and passes the
        labels already translated. -->
   <div class="flex flex-col gap-6 lg:flex-row lg:gap-8">
-    <div class="lg:hidden">
-      <div class="dropdown w-full">
-        <button
-          type="button"
-          tabindex="0"
-          class="btn btn-outline w-full justify-between"
-          :aria-label="navLabel"
-          data-testid="account-shell-menu-button"
-        >
-          <span class="flex min-w-0 items-center gap-2">
-            <i :class="[currentEntry?.icon || 'fas fa-bars', 'w-4']" aria-hidden="true"></i>
-            <span class="truncate">{{ currentEntry?.label || navLabel }}</span>
-          </span>
-          <i class="fas fa-chevron-down" aria-hidden="true"></i>
-        </button>
-        <ul
-          tabindex="0"
-          class="dropdown-content menu z-10 mt-1 w-full rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
-        >
-          <template v-for="group in groups" :key="`m-${group.label}`">
-            <li class="menu-title text-xs uppercase tracking-wider">{{ group.label }}</li>
-            <li v-for="entry in group.entries" :key="`m-${entry.to}`">
-              <NuxtLink
-                :to="entry.to"
-                :class="{ active: isActive(entry) }"
-                :aria-current="isActive(entry) ? 'page' : undefined"
-                @click="closeMenu"
-              >
-                <i :class="[entry.icon, 'w-4']" aria-hidden="true"></i>
-                {{ entry.label }}
-              </NuxtLink>
-            </li>
-          </template>
-        </ul>
+    <!-- One column for the nav at every width, so the `nav-footer` slot (the
+         signed-out sign-in hint, the dashboard's Settings link) shows on a
+         phone too, under the dropdown. -->
+    <div class="lg:w-64 lg:flex-shrink-0">
+      <div class="lg:sticky lg:top-24">
+        <div class="lg:hidden">
+          <div class="dropdown w-full">
+            <button
+              type="button"
+              tabindex="0"
+              class="btn btn-outline w-full justify-between"
+              :aria-label="navLabel"
+              data-testid="account-shell-menu-button"
+            >
+              <span class="flex min-w-0 items-center gap-2">
+                <i :class="[currentEntry?.icon || 'fas fa-bars', 'w-4']" aria-hidden="true"></i>
+                <span class="truncate">{{ currentEntry?.label || navLabel }}</span>
+              </span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <ul
+              tabindex="0"
+              class="dropdown-content menu z-10 mt-1 w-full rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
+            >
+              <template v-for="group in groups" :key="`m-${group.label}`">
+                <li class="menu-title text-xs uppercase tracking-wider">{{ group.label }}</li>
+                <li v-for="entry in group.entries" :key="`m-${entry.to}`">
+                  <NuxtLink
+                    :to="entry.to"
+                    :class="{ active: isActive(entry) }"
+                    :aria-current="isActive(entry) ? 'page' : undefined"
+                    @click="closeMenu"
+                  >
+                    <i :class="[entry.icon, 'w-4']" aria-hidden="true"></i>
+                    {{ entry.label }}
+                  </NuxtLink>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+
+        <nav class="hidden lg:block" :aria-label="navLabel" data-testid="account-shell-nav">
+          <ul class="menu w-full rounded-box border border-base-300 bg-base-100 shadow-sm">
+            <template v-for="group in groups" :key="group.label">
+              <li class="menu-title text-xs uppercase tracking-wider">{{ group.label }}</li>
+              <li v-for="entry in group.entries" :key="entry.to">
+                <NuxtLink
+                  :to="entry.to"
+                  :class="{ active: isActive(entry) }"
+                  :aria-current="isActive(entry) ? 'page' : undefined"
+                >
+                  <i :class="[entry.icon, 'w-4']" aria-hidden="true"></i>
+                  {{ entry.label }}
+                </NuxtLink>
+              </li>
+            </template>
+          </ul>
+        </nav>
+
+        <slot name="nav-footer" />
       </div>
     </div>
-
-    <aside class="hidden lg:block lg:w-64 lg:flex-shrink-0">
-      <nav :aria-label="navLabel" data-testid="account-shell-nav">
-        <ul class="menu w-full rounded-box border border-base-300 bg-base-100 shadow-sm lg:sticky lg:top-24">
-          <template v-for="group in groups" :key="group.label">
-            <li class="menu-title text-xs uppercase tracking-wider">{{ group.label }}</li>
-            <li v-for="entry in group.entries" :key="entry.to">
-              <NuxtLink
-                :to="entry.to"
-                :class="{ active: isActive(entry) }"
-                :aria-current="isActive(entry) ? 'page' : undefined"
-              >
-                <i :class="[entry.icon, 'w-4']" aria-hidden="true"></i>
-                {{ entry.label }}
-              </NuxtLink>
-            </li>
-          </template>
-        </ul>
-        <slot name="nav-footer" />
-      </nav>
-    </aside>
 
     <div class="min-w-0 flex-1">
       <slot />

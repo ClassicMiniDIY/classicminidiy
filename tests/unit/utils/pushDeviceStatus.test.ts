@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { pushDeviceStatus, type PushDeviceStatusInput } from '~/app/utils/pushSubscription';
 
-// pushDeviceStatus decides whether /dashboard/notifications tells the user that
+// pushDeviceStatus decides whether /settings/notifications tells the user that
 // THIS device receives no push although the all-devices preference is on.
 // Contract: .claude/rules/push-notifications.md.
 

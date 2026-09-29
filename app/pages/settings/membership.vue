@@ -5,14 +5,23 @@
   definePageMeta({ settingsAuth: true });
 
   const { t } = useI18n();
-  const { isSustainingMemberUser } = useMountedAuth();
+  // `isSustainingMember` reads the profile, which loads after the session: right
+  // after sign-in `user` is set and `userProfile` is still null. Wait for the
+  // profile, so a member never sees the join card.
+  const { isSustainingMemberUser, mountedProfile } = useMountedAuth();
 </script>
 
 <template>
   <div class="space-y-6" data-testid="settings-membership">
     <h2 class="text-xl font-semibold">{{ t('heading') }}</h2>
 
-    <MembershipManageCard v-if="isSustainingMemberUser" />
+    <div v-if="!mountedProfile" class="card border border-base-300 bg-base-100 shadow-sm">
+      <div class="card-body items-center py-12 text-center">
+        <i class="fas fa-spinner fa-spin text-3xl text-primary" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <MembershipManageCard v-else-if="isSustainingMemberUser" />
 
     <div v-else class="card border border-base-300 bg-base-100 shadow-sm" data-testid="settings-membership-join">
       <div class="card-body">

@@ -74,8 +74,8 @@ describe('exchange-flag.global middleware', () => {
       '/exchange',
       '/dashboard/listings',
       '/dashboard/wanted',
-      '/dashboard/notifications',
       '/dashboard/saved-searches',
+      '/settings/notifications',
       '/onboarding',
       '/admin/exchange',
     ]);
@@ -103,7 +103,7 @@ describe('exchange-flag.global middleware', () => {
       '/dashboard/listings/new',
       '/dashboard/listings/42/edit',
       '/dashboard/wanted/create',
-      '/dashboard/notifications/unread',
+      '/settings/notifications/unread',
       '/dashboard/saved-searches/5',
       '/onboarding/step-2',
       '/admin/exchange/reports/3',
@@ -171,7 +171,7 @@ describe('exchange-flag.global middleware', () => {
       '/dashboard/listings-archive',
       '/dashboard/listingsxyz',
       '/dashboard/wantedly',
-      '/dashboard/notifications-settings',
+      '/settings/notifications-settings',
       '/dashboard/saved-searches-export',
       '/onboarding-complete',
       '/admin/exchanger',
@@ -198,7 +198,7 @@ describe('exchange-flag.global middleware', () => {
       '/exchange/listings',
       '/dashboard/listings/new',
       '/dashboard/wanted/create',
-      '/dashboard/notifications/unread',
+      '/settings/notifications/unread',
       '/dashboard/saved-searches/5',
       '/onboarding/step-2',
       '/admin/exchange/reports/3',
@@ -250,16 +250,12 @@ describe('exchange-flag.global middleware', () => {
   describe('uses to.path (not fullPath) for matching', () => {
     it('matches on path even when fullPath carries a query string', () => {
       // path is the guarded value; the gate keys off to.path.
-      expect(() =>
-        middleware({ path: '/exchange', fullPath: '/exchange?ref=email' })
-      ).toThrow();
+      expect(() => middleware({ path: '/exchange', fullPath: '/exchange?ref=email' })).toThrow();
     });
 
     it('a child path passes flag-on regardless of query in fullPath', async () => {
       await reload(true);
-      expect(
-        middleware({ path: '/exchange/listings', fullPath: '/exchange/listings?sort=new' })
-      ).toBeUndefined();
+      expect(middleware({ path: '/exchange/listings', fullPath: '/exchange/listings?sort=new' })).toBeUndefined();
     });
   });
 });

@@ -516,7 +516,9 @@ describe('useExternalListingAdmin', () => {
       const mockAuth = createMockAuth(createMockUser());
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: new Error('Update failed') }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: new Error('Update failed') })
+      );
 
       const useExternalListingAdmin = await loadComposable();
       const { approve, pendingFinds } = useExternalListingAdmin();
@@ -637,7 +639,9 @@ describe('useExternalListingAdmin', () => {
       const mockAuth = createMockAuth(createMockUser());
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: new Error('Update failed') }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: new Error('Update failed') })
+      );
 
       const useExternalListingAdmin = await loadComposable();
       const { reject, pendingFinds } = useExternalListingAdmin();
@@ -1090,7 +1094,9 @@ describe('useExternalListingAdmin', () => {
       vi.stubGlobal('useAuth', () => mockAuth);
 
       mockSupabase._mockSingle.mockResolvedValue({ data: { is_editors_pick: false }, error: null });
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: new Error('Update failed') }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: new Error('Update failed') })
+      );
 
       const useExternalListingAdmin = await loadComposable();
       const { toggleEditorsPick, allFinds } = useExternalListingAdmin();
@@ -1176,7 +1182,9 @@ describe('useExternalListingAdmin', () => {
       const mockAuth = createMockAuth(createMockUser());
       vi.stubGlobal('useAuth', () => mockAuth);
 
-      mockSupabase._queryBuilder.then = vi.fn((resolve: any) => resolve({ data: null, error: new Error('Update failed') }));
+      mockSupabase._queryBuilder.then = vi.fn((resolve: any) =>
+        resolve({ data: null, error: new Error('Update failed') })
+      );
 
       const useExternalListingAdmin = await loadComposable();
       const { updateFind, allFinds } = useExternalListingAdmin();
@@ -1255,10 +1263,7 @@ describe('useExternalListingAdmin', () => {
         createMockExternalListing({ id: 'find-123' }),
         createMockExternalListing({ id: 'find-456' }),
       ];
-      allFinds.value = [
-        createMockExternalListing({ id: 'find-123' }),
-        createMockExternalListing({ id: 'find-789' }),
-      ];
+      allFinds.value = [createMockExternalListing({ id: 'find-123' }), createMockExternalListing({ id: 'find-789' })];
 
       await deleteFind('find-123');
 

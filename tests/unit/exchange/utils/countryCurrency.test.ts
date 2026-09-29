@@ -91,11 +91,7 @@ describe('currencyForCountry — case sensitivity & normalization', () => {
 });
 
 describe('currencyForCountry — fallback / falsy input returns undefined', () => {
-  it.each([
-    [null],
-    [undefined],
-    [''],
-  ])('returns undefined for falsy input %j', (country) => {
+  it.each([[null], [undefined], ['']])('returns undefined for falsy input %j', (country) => {
     expect(currencyForCountry(country as string | null | undefined)).toBeUndefined();
   });
 });

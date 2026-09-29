@@ -37,7 +37,15 @@ test.describe('authenticated surfaces hydrate cleanly', () => {
 
   // Routes that render a different tree depending on auth state. Each is a
   // place a structural `v-if` on `isAuthenticated` would tear the DOM.
-  const ROUTES = ['/', '/dashboard', '/profile', '/contribute', '/membership'];
+  const ROUTES = [
+    '/',
+    '/dashboard',
+    '/profile',
+    '/contribute',
+    '/membership',
+    '/settings/preferences',
+    '/settings/membership',
+  ];
 
   /**
    * Routes known to mismatch while signed in. EMPTY, and that is a finding in

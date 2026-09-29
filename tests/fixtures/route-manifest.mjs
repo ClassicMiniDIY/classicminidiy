@@ -136,7 +136,6 @@ export const ROUTE_EXPECTATIONS = {
   '/discord/connect': { noindex: true, allowNoH1: true },
   '/profile': { noindex: true },
   '/profile/edit': { noindex: true },
-  '/dashboard': { noindex: true },
   '/models/mine': { noindex: true },
   '/models/upload': { noindex: true },
   '/models/submit-external': { noindex: true },
@@ -150,13 +149,14 @@ export const ROUTE_EXPECTATIONS = {
   '/exchange/listings/payment/cancel': { noindex: true, allowNoJsonLd: true },
   // Tab shells that redirect to their default child.
   '/dashboard': { expectStatus: 302 },
+  '/settings': { expectStatus: 302 },
   '/models/mine': { expectStatus: 302 },
 };
 
-/** Admin pages are noindex by routeRule and gated client-side. */
+/** Admin, dashboard and settings pages are noindex and gated client-side. */
 export function expectationsFor(route) {
   const base = ROUTE_EXPECTATIONS[route] ?? {};
-  if (route.startsWith('/admin') || route.startsWith('/dashboard')) {
+  if (route.startsWith('/admin') || route.startsWith('/dashboard') || route.startsWith('/settings')) {
     return { noindex: true, allowNoJsonLd: true, ...base };
   }
   return base;

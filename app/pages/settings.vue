@@ -69,32 +69,14 @@
     </div>
 
     <AccountShell :groups="navGroups" :nav-label="t('nav_label')">
-      <!-- Resolving the session. The server renders this branch for an account
-           section too, so SSR and the first client render agree. -->
-      <div v-if="needsAuth && !authReady" class="card border border-base-300 bg-base-100 shadow-sm">
-        <div class="card-body items-center py-12 text-center">
-          <i class="fas fa-spinner fa-spin text-3xl text-primary" aria-hidden="true"></i>
-        </div>
-      </div>
-
-      <div
-        v-else-if="needsAuth && !isSignedIn"
-        class="card max-w-lg border border-base-300 bg-base-100 shadow-sm"
-        data-testid="settings-sign-in"
+      <AccountSignInGate
+        :required="needsAuth"
+        :title="t('auth.sign_in_title')"
+        :description="t('auth.sign_in_description')"
+        :button-label="t('auth.sign_in_button')"
       >
-        <div class="card-body p-6 text-center">
-          <div class="mb-4">
-            <i class="fas fa-lock text-5xl opacity-40" aria-hidden="true"></i>
-          </div>
-          <h2 class="mb-2 text-xl font-bold">{{ t('auth.sign_in_title') }}</h2>
-          <p class="mb-6 text-base opacity-70">{{ t('auth.sign_in_description') }}</p>
-          <NuxtLink :to="loginHref" class="btn btn-primary btn-block">
-            {{ t('auth.sign_in_button') }}
-          </NuxtLink>
-        </div>
-      </div>
-
-      <NuxtPage v-else />
+        <NuxtPage />
+      </AccountSignInGate>
 
       <template #nav-footer>
         <p v-if="authReady && !isSignedIn" class="mt-3 px-2 text-sm opacity-70" data-testid="settings-signed-out-hint">

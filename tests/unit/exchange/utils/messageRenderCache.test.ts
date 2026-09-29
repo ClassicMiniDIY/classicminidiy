@@ -66,7 +66,10 @@ describe('createMessageRenderCache — provisional output is never cached', () =
     // Documenting existing behaviour, not endorsing it: messages are immutable
     // once sent, so id is a sound key. If message editing ever ships, this
     // assertion is the one that must change.
-    const cached = createMessageRenderCache((content: string) => `purified:${content}`, () => true);
+    const cached = createMessageRenderCache(
+      (content: string) => `purified:${content}`,
+      () => true
+    );
 
     expect(cached('m1', 'original')).toBe('purified:original');
     expect(cached('m1', 'edited')).toBe('purified:original');

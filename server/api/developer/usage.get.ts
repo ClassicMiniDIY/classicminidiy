@@ -4,7 +4,7 @@ import { getServiceClient } from '../../utils/supabase';
 /**
  * The caller's MCP usage for the last 30 days — rows from mcp_usage_daily
  * (exact per-key/tool counts written by the worker on every successful tool
- * call). Feeds the usage chart on /dashboard/api-keys.
+ * call). Feeds the usage chart on /settings/api-keys.
  */
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserAuth(event);

@@ -45,7 +45,7 @@ const BASELINE = {
   // NotificationPreferences claimed non-null booleans over nullable columns,
   // and SavedSearch carried a `notified_listing_ids` no column backs. Both now
   // derive from the row and normalise on read. `keyof typeof preferences.value`
-  // in dashboard/notifications.vue collapsed to `never` (the ref is `T | null`)
+  // in settings/notifications.vue collapsed to `never` (the ref is `T | null`)
   // and cost six identical errors on its own.
   // 343 -> 339. `SearchResult`/`SearchResponse` were imported by the palette
   // and `/search` from `server/api/search/index.get`, which never exported

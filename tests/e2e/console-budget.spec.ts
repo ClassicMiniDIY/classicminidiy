@@ -36,6 +36,10 @@ const ROUTES = [
   // auth. Signed out it must render its neutral resolving state on both sides,
   // so hydration has nothing to repair.
   '/dashboard/models',
+  // /settings is open to everyone; Preferences renders for an anonymous visitor
+  // while the account sections render the gate.
+  '/settings/preferences',
+  '/settings/api-keys',
 ];
 
 /**

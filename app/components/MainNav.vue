@@ -12,14 +12,14 @@
    * the palette (OmniSearch.vue), and having two focusable text fields fighting
    * over the same query was the alternative.
    *
-   * Language selection moved into the account dropdown / mobile drawer. Row 1 is
-   * spec'd as search · theme · avatar, and a fourth control there crowded the
-   * search field at laptop widths.
+   * Language, currency, membership, notifications, API keys and account
+   * security live on /settings (docs/plans/2026-09-28-settings-page-and-dashboard-sidebar.md).
+   * The header only links there: the account menu and drawer have a Settings
+   * entry, and a signed-out visitor gets a globe link to /settings/preferences.
    */
   const route = useRoute();
   const router = useRouter();
-  const switchLocalePath = useSwitchLocalePath();
-  const { t, locale, locales, setLocale } = useI18n();
+  const { t, locale } = useI18n();
   const { user, userProfile, isAuthenticated, isAdmin, signOut } = useAuth();
 
   /**
@@ -106,31 +106,8 @@
     { label: t('navigation.about'), icon: 'fas fa-circle-info', to: '/about', external: false },
   ]);
 
-  const currentLocale = computed(() => locales.value.find((i) => i.code === locale.value));
-  const availableLocales = computed(() => locales.value.filter((i) => i.code !== locale.value));
-
-  const getLanguageName = (localeCode: string): string => {
-    const nativeNames: Record<string, string> = {
-      en: 'English',
-      de: 'Deutsch',
-      es: 'Español',
-      fr: 'Français',
-      it: 'Italiano',
-      pt: 'Português',
-      ru: 'Русский',
-      ja: '日本語',
-      zh: '中文',
-      ko: '한국어',
-    };
-    return nativeNames[localeCode] || localeCode;
-  };
-
-  const handleLanguageChange = async (localeCode: string) => {
-    await setLocale(localeCode as any);
-    await navigateTo(switchLocalePath(localeCode as any));
-    isMobileMenuOpen.value = false;
-    closeDropdowns();
-  };
+  const currentLocaleCode = computed(() => locale.value.toUpperCase());
+  const drawerSettingsLabel = computed(() => (isSignedIn.value ? t('profile.settings') : t('language_settings')));
 
   const isActive = (path: string): boolean => {
     if (path.startsWith('http')) return false;
@@ -297,7 +274,13 @@
         </template>
 
         <div class="dropdown">
-          <div tabindex="0" role="button" class="nav-link" :class="{ 'is-active': isMoreActive }">
+          <div
+            tabindex="0"
+            role="button"
+            class="nav-link"
+            :class="{ 'is-active': isMoreActive }"
+            data-testid="nav-more-menu"
+          >
             {{ t('navigation.more') }}
             <i class="fas fa-chevron-down text-[10px] opacity-60" aria-hidden="true"></i>
           </div>
@@ -410,31 +393,10 @@
             </NuxtLink>
           </li>
           <li>
-            <NuxtLink to="/membership" @click="closeDropdowns()">
-              <i class="fas fa-star w-4" aria-hidden="true"></i>
-              {{ t('profile.membership') }}
+            <NuxtLink to="/settings" data-testid="nav-settings-link" @click="closeDropdowns()">
+              <i class="fas fa-gear w-4" aria-hidden="true"></i>
+              {{ t('profile.settings') }}
             </NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/dashboard/api-keys" @click="closeDropdowns()">
-              <i class="fas fa-code w-4" aria-hidden="true"></i>
-              {{ t('profile.api_tools') }}
-            </NuxtLink>
-          </li>
-
-          <li class="menu-title mt-1">{{ t('language_label') }}</li>
-          <li>
-            <details>
-              <summary>
-                <i class="fas fa-globe w-4" aria-hidden="true"></i>
-                {{ getLanguageName(currentLocale?.code || 'en') }}
-              </summary>
-              <ul class="max-h-56 overflow-y-auto">
-                <li v-for="loc in availableLocales" :key="loc.code">
-                  <button type="button" @click="handleLanguageChange(loc.code)">{{ getLanguageName(loc.code) }}</button>
-                </li>
-              </ul>
-            </details>
           </li>
 
           <li v-if="showAdminLink" class="mt-1">
@@ -454,20 +416,16 @@
 
       <!-- Signed out -->
       <div v-else class="flex items-center gap-2">
-        <div class="dropdown dropdown-end hidden lg:block">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-sm" :aria-label="t('language_label')">
-            <i class="fas fa-globe" aria-hidden="true"></i>
-            <span class="text-xs font-medium">{{ currentLocale?.code?.toUpperCase() || 'EN' }}</span>
-          </div>
-          <ul
-            tabindex="0"
-            class="dropdown-content menu z-[60] mt-2 w-48 rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"
-          >
-            <li v-for="loc in availableLocales" :key="loc.code">
-              <button type="button" @click="handleLanguageChange(loc.code)">{{ getLanguageName(loc.code) }}</button>
-            </li>
-          </ul>
-        </div>
+        <NuxtLink
+          to="/settings/preferences"
+          class="btn btn-ghost btn-sm hidden lg:inline-flex"
+          :aria-label="t('language_settings')"
+          :title="t('language_settings')"
+          data-testid="nav-language-settings-link"
+        >
+          <i class="fas fa-globe" aria-hidden="true"></i>
+          <span class="text-xs font-medium">{{ currentLocaleCode }}</span>
+        </NuxtLink>
         <NuxtLink to="/login" class="btn btn-primary btn-sm">
           <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
           <span class="hidden sm:inline">{{ t('profile.sign_in') }}</span>
@@ -575,13 +533,28 @@
 
               <NuxtLink
                 v-if="isSignedIn"
-                to="/dashboard/api-keys"
+                to="/dashboard"
                 class="drawer-link"
-                :class="{ 'is-active': isActive('/dashboard/api-keys') }"
-                @click="goToDrawerLink(t('profile.api_tools'))"
+                :class="{ 'is-active': isActive('/dashboard') }"
+                @click="goToDrawerLink(t('profile.dashboard'))"
               >
-                <i class="fas fa-code w-[18px] text-secondary" aria-hidden="true"></i>
-                {{ t('profile.api_tools') }}
+                <i class="fas fa-gauge w-[18px] text-secondary" aria-hidden="true"></i>
+                {{ t('profile.dashboard') }}
+              </NuxtLink>
+
+              <!-- Signed out, /settings is where language and currency live. -->
+              <NuxtLink
+                to="/settings"
+                class="drawer-link"
+                :class="{ 'is-active': isActive('/settings') }"
+                data-testid="drawer-settings-link"
+                @click="goToDrawerLink(drawerSettingsLabel)"
+              >
+                <i
+                  :class="[isSignedIn ? 'fas fa-gear' : 'fas fa-globe', 'w-[18px] text-secondary']"
+                  aria-hidden="true"
+                ></i>
+                {{ drawerSettingsLabel }}
               </NuxtLink>
 
               <NuxtLink
@@ -593,23 +566,6 @@
                 <i class="fas fa-shield-check w-[18px] text-secondary" aria-hidden="true"></i>
                 {{ t('profile.admin') }}
               </NuxtLink>
-
-              <div class="px-3 pt-3">
-                <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] opacity-55">
-                  {{ t('language_label') }}
-                </p>
-                <div class="flex flex-wrap gap-1.5">
-                  <button
-                    v-for="loc in availableLocales"
-                    :key="loc.code"
-                    type="button"
-                    class="btn btn-outline btn-xs"
-                    @click="handleLanguageChange(loc.code)"
-                  >
-                    {{ getLanguageName(loc.code) }}
-                  </button>
-                </div>
-              </div>
             </div>
 
             <!-- Profile row, pinned: contributor identity is present everywhere -->
@@ -826,13 +782,12 @@
       "admin": "Admin",
       "submissions": "My Submissions",
       "profile": "Profile",
-      "membership": "Membership",
-      "api_tools": "API & Dev Tools",
-      "dashboard": "Dashboard"
+      "dashboard": "Dashboard",
+      "settings": "Settings"
     },
-    "language_label": "Language",
     "mobile_menu_title": "Menu",
-    "close_menu": "Close menu"
+    "close_menu": "Close menu",
+    "language_settings": "Language & settings"
   },
   "es": {
     "logo_alt": "Logo de Classic Mini DIY",
@@ -863,13 +818,12 @@
       "admin": "Admin",
       "submissions": "Mis envíos",
       "profile": "Perfil",
-      "membership": "Membresía",
-      "api_tools": "API y herramientas dev",
-      "dashboard": "Panel"
+      "dashboard": "Panel",
+      "settings": "Ajustes"
     },
-    "language_label": "Idioma",
     "mobile_menu_title": "Menú",
-    "close_menu": "Cerrar menú"
+    "close_menu": "Cerrar menú",
+    "language_settings": "Idioma y ajustes"
   },
   "fr": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -900,13 +854,12 @@
       "admin": "Admin",
       "submissions": "Mes soumissions",
       "profile": "Profil",
-      "membership": "Adhésion",
-      "api_tools": "API et outils dev",
-      "dashboard": "Tableau de bord"
+      "dashboard": "Tableau de bord",
+      "settings": "Paramètres"
     },
-    "language_label": "Langue",
     "mobile_menu_title": "Menu",
-    "close_menu": "Fermer le menu"
+    "close_menu": "Fermer le menu",
+    "language_settings": "Langue et paramètres"
   },
   "de": {
     "logo_alt": "Classic Mini DIY Logo",
@@ -937,13 +890,12 @@
       "admin": "Admin",
       "submissions": "Meine Einreichungen",
       "profile": "Profil",
-      "membership": "Mitgliedschaft",
-      "api_tools": "API & Dev-Tools",
-      "dashboard": "Dashboard"
+      "dashboard": "Dashboard",
+      "settings": "Einstellungen"
     },
-    "language_label": "Sprache",
     "mobile_menu_title": "Menü",
-    "close_menu": "Menü schließen"
+    "close_menu": "Menü schließen",
+    "language_settings": "Sprache und Einstellungen"
   },
   "it": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -974,13 +926,12 @@
       "admin": "Admin",
       "submissions": "I miei invii",
       "profile": "Profilo",
-      "membership": "Abbonamento",
-      "api_tools": "API e strumenti dev",
-      "dashboard": "Dashboard"
+      "dashboard": "Dashboard",
+      "settings": "Impostazioni"
     },
-    "language_label": "Lingua",
     "mobile_menu_title": "Menu",
-    "close_menu": "Chiudi menu"
+    "close_menu": "Chiudi menu",
+    "language_settings": "Lingua e impostazioni"
   },
   "pt": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -1011,13 +962,12 @@
       "admin": "Admin",
       "submissions": "Minhas submissões",
       "profile": "Perfil",
-      "membership": "Assinatura",
-      "api_tools": "API e ferramentas dev",
-      "dashboard": "Painel"
+      "dashboard": "Painel",
+      "settings": "Configurações"
     },
-    "language_label": "Idioma",
     "mobile_menu_title": "Menu",
-    "close_menu": "Fechar menu"
+    "close_menu": "Fechar menu",
+    "language_settings": "Idioma e configurações"
   },
   "ru": {
     "logo_alt": "Логотип Classic Mini DIY",
@@ -1048,13 +998,12 @@
       "admin": "Админ",
       "submissions": "Мои заявки",
       "profile": "Профиль",
-      "membership": "Подписка",
-      "api_tools": "API и инструменты разработчика",
-      "dashboard": "Панель управления"
+      "dashboard": "Панель управления",
+      "settings": "Настройки"
     },
-    "language_label": "Язык",
     "mobile_menu_title": "Меню",
-    "close_menu": "Закрыть меню"
+    "close_menu": "Закрыть меню",
+    "language_settings": "Язык и настройки"
   },
   "ja": {
     "logo_alt": "Classic Mini DIY ロゴ",
@@ -1085,13 +1034,12 @@
       "admin": "管理",
       "submissions": "投稿一覧",
       "profile": "プロフィール",
-      "membership": "メンバーシップ",
-      "api_tools": "API・開発ツール",
-      "dashboard": "ダッシュボード"
+      "dashboard": "ダッシュボード",
+      "settings": "設定"
     },
-    "language_label": "言語",
     "mobile_menu_title": "メニュー",
-    "close_menu": "メニューを閉じる"
+    "close_menu": "メニューを閉じる",
+    "language_settings": "言語と設定"
   },
   "zh": {
     "logo_alt": "Classic Mini DIY 徽标",
@@ -1122,13 +1070,12 @@
       "admin": "管理",
       "submissions": "我的提交",
       "profile": "个人资料",
-      "membership": "会员",
-      "api_tools": "API 与开发工具",
-      "dashboard": "仪表板"
+      "dashboard": "仪表板",
+      "settings": "设置"
     },
-    "language_label": "语言",
     "mobile_menu_title": "菜单",
-    "close_menu": "关闭菜单"
+    "close_menu": "关闭菜单",
+    "language_settings": "语言和设置"
   },
   "ko": {
     "logo_alt": "Classic Mini DIY 로고",
@@ -1159,13 +1106,12 @@
       "admin": "관리",
       "submissions": "내 제출",
       "profile": "프로필",
-      "membership": "멤버십",
-      "api_tools": "API 및 개발 도구",
-      "dashboard": "대시보드"
+      "dashboard": "대시보드",
+      "settings": "설정"
     },
-    "language_label": "언어",
     "mobile_menu_title": "메뉴",
-    "close_menu": "메뉴 닫기"
+    "close_menu": "메뉴 닫기",
+    "language_settings": "언어 및 설정"
   }
 }
 </i18n>

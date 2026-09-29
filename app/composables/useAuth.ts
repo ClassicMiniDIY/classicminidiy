@@ -289,7 +289,7 @@ export const useAuth = () => {
     // Same reasoning for the Developer API stores: without this, a logged-out
     // visitor keeps the previous subscriber's plan state on /developers, and
     // the next account to sign in briefly sees the previous user's API keys
-    // and usage chart on /dashboard/api-keys.
+    // and usage chart on /settings/api-keys.
     useState('developer-keys').value = [];
     useState('developer-usage').value = [];
     useState('developer-subscription').value = null;

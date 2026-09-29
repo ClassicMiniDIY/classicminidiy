@@ -59,7 +59,10 @@ function defaultRuntimeConfig() {
 beforeEach(() => {
   vi.clearAllMocks();
   // adminAuth passes by default, yielding an admin user.
-  (requireAdminAuth as any).mockResolvedValue({ user: { id: ADMIN_ID, email: ADMIN_EMAIL }, profile: { is_admin: true } });
+  (requireAdminAuth as any).mockResolvedValue({
+    user: { id: ADMIN_ID, email: ADMIN_EMAIL },
+    profile: { is_admin: true },
+  });
   // valid body by default: a listing id + a non-empty platforms array.
   (readBody as any).mockResolvedValue({ listingId: LISTING_ID, platforms: PLATFORMS });
   // edge function succeeds by default; the route returns its body verbatim.
@@ -86,9 +89,7 @@ describe('server/api/admin/exchange/social-retry.post', () => {
   });
 
   it('propagates 403 from requireAdminAuth (authenticated but not admin)', async () => {
-    (requireAdminAuth as any).mockRejectedValue(
-      Object.assign(new Error('Admin access required'), { statusCode: 403 })
-    );
+    (requireAdminAuth as any).mockRejectedValue(Object.assign(new Error('Admin access required'), { statusCode: 403 }));
 
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 403 });
     expect($fetch).not.toHaveBeenCalled();
@@ -278,9 +279,7 @@ describe('server/api/admin/exchange/social-retry.post', () => {
   });
 
   it('uses statusMessage from the error when data.error is absent', async () => {
-    ($fetch as any).mockRejectedValue(
-      Object.assign(new Error('boom'), { statusCode: 418, statusMessage: 'Teapot' })
-    );
+    ($fetch as any).mockRejectedValue(Object.assign(new Error('boom'), { statusCode: 418, statusMessage: 'Teapot' }));
 
     await expect(handler(evt())).rejects.toMatchObject({
       statusCode: 418,
@@ -290,9 +289,7 @@ describe('server/api/admin/exchange/social-retry.post', () => {
 
   it('logs the edge function error to console.error', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    ($fetch as any).mockRejectedValue(
-      Object.assign(new Error('boom'), { statusCode: 500, data: { error: 'kaboom' } })
-    );
+    ($fetch as any).mockRejectedValue(Object.assign(new Error('boom'), { statusCode: 500, data: { error: 'kaboom' } }));
 
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 500 });
     expect(spy).toHaveBeenCalled();

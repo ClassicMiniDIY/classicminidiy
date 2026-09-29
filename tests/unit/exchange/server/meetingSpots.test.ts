@@ -155,10 +155,7 @@ describe('findMeetingSpots — null lat/lon guard (0 is valid)', () => {
 
   it('keeps spots with valid coords and drops null ones in the same batch', async () => {
     resolveFirstThenEmpty({
-      results: [
-        spot({ name: 'Valid', lat: 0.01, lon: 0 }),
-        spot({ name: 'Null', lat: null, lon: null }),
-      ],
+      results: [spot({ name: 'Valid', lat: 0.01, lon: 0 }), spot({ name: 'Null', lat: null, lon: null })],
     });
     const result = await findMeetingSpots(MID.lat, MID.lon);
     expect(result.map((r) => r.name)).toEqual(['Valid']);
@@ -169,10 +166,7 @@ describe('findMeetingSpots — deduplication (<100m)', () => {
   it('collapses two spots within 100m of each other to one (first wins)', async () => {
     // ~55m apart (0.0005 deg lat) -> duplicate.
     resolveFirstThenEmpty({
-      results: [
-        spot({ name: 'First', lat: 0.01, lon: 0 }),
-        spot({ name: 'Near Dup', lat: 0.0105, lon: 0 }),
-      ],
+      results: [spot({ name: 'First', lat: 0.01, lon: 0 }), spot({ name: 'Near Dup', lat: 0.0105, lon: 0 })],
     });
     const result = await findMeetingSpots(MID.lat, MID.lon);
     expect(result).toHaveLength(1);
@@ -184,10 +178,7 @@ describe('findMeetingSpots — deduplication (<100m)', () => {
     const d = haversineDistance(0.01, 0, 0.011, 0);
     expect(d).toBeGreaterThan(100); // sanity-check the fixture geometry
     resolveFirstThenEmpty({
-      results: [
-        spot({ name: 'A', lat: 0.01, lon: 0 }),
-        spot({ name: 'B', lat: 0.011, lon: 0 }),
-      ],
+      results: [spot({ name: 'A', lat: 0.01, lon: 0 }), spot({ name: 'B', lat: 0.011, lon: 0 })],
     });
     const result = await findMeetingSpots(MID.lat, MID.lon);
     expect(result.map((r) => r.name).sort()).toEqual(['A', 'B']);
@@ -277,10 +268,7 @@ describe('findMeetingSpots — scoring & ranking', () => {
   it('with equal safety, the closer spot ranks higher', async () => {
     // Both keyword-less; closer one has smaller distance penalty.
     resolveFirstThenEmpty({
-      results: [
-        spot({ name: 'Far', lat: 0.05, lon: 0 }),
-        spot({ name: 'Near', lat: 0.01, lon: 0 }),
-      ],
+      results: [spot({ name: 'Far', lat: 0.05, lon: 0 }), spot({ name: 'Near', lat: 0.01, lon: 0 })],
     });
     const result = await findMeetingSpots(MID.lat, MID.lon);
     expect(result[0].name).toBe('Near');
@@ -308,18 +296,14 @@ describe('findMeetingSpots — scoring & ranking', () => {
 describe('findMeetingSpots — slice to top 5', () => {
   it('returns at most 5 ranked spots even when more survive dedup', async () => {
     // 8 distinct spots, each >100m from neighbors and from the midpoint.
-    const results = Array.from({ length: 8 }, (_, i) =>
-      spot({ name: `Spot ${i}`, lat: 0.01 + i * 0.002, lon: 0 })
-    );
+    const results = Array.from({ length: 8 }, (_, i) => spot({ name: `Spot ${i}`, lat: 0.01 + i * 0.002, lon: 0 }));
     resolveFirstThenEmpty({ results });
     const result = await findMeetingSpots(MID.lat, MID.lon);
     expect(result).toHaveLength(5);
   });
 
   it('the 5 kept spots are the 5 highest-scoring (closest, here unscored)', async () => {
-    const results = Array.from({ length: 8 }, (_, i) =>
-      spot({ name: `Spot ${i}`, lat: 0.01 + i * 0.002, lon: 0 })
-    );
+    const results = Array.from({ length: 8 }, (_, i) => spot({ name: `Spot ${i}`, lat: 0.01 + i * 0.002, lon: 0 }));
     resolveFirstThenEmpty({ results });
     const result = await findMeetingSpots(MID.lat, MID.lon);
     // With no keyword boosts, score is monotonic in -distance, so the 5
@@ -328,9 +312,7 @@ describe('findMeetingSpots — slice to top 5', () => {
   });
 
   it('results are sorted by score descending', async () => {
-    const results = Array.from({ length: 4 }, (_, i) =>
-      spot({ name: `Spot ${i}`, lat: 0.01 + i * 0.003, lon: 0 })
-    );
+    const results = Array.from({ length: 4 }, (_, i) => spot({ name: `Spot ${i}`, lat: 0.01 + i * 0.003, lon: 0 }));
     resolveFirstThenEmpty({ results });
     const result = await findMeetingSpots(MID.lat, MID.lon);
     for (let i = 1; i < result.length; i++) {

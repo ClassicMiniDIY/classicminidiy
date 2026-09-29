@@ -79,9 +79,7 @@ describe('server/api/admin/exchange/newsletter/preview.get', () => {
   });
 
   it('propagates 403 from requireAdminAuth (authenticated but not admin)', async () => {
-    (requireAdminAuth as any).mockRejectedValue(
-      Object.assign(new Error('Admin access required'), { statusCode: 403 })
-    );
+    (requireAdminAuth as any).mockRejectedValue(Object.assign(new Error('Admin access required'), { statusCode: 403 }));
 
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 403 });
     expect(globalThis.$fetch).not.toHaveBeenCalled();

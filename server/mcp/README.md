@@ -45,7 +45,7 @@ receive several hundred rows to answer one question.
 ### Getting a key (self-serve)
 
 Sign in at classicminidiy.com and mint a key at
-[/dashboard/api-keys](https://classicminidiy.com/dashboard/api-keys). Keys look
+[/settings/api-keys](https://classicminidiy.com/settings/api-keys). Keys look
 like `cmdiy_` + 40 characters, are shown exactly once at creation, and only a
 hash is stored — a lost key is replaced, never recovered. Up to 5 active keys
 per account; revocation from the dashboard is immediate.
@@ -85,7 +85,7 @@ Bearer token.
 ### Usage recording
 
 Successful tool calls are counted per key/tool/day into the usage chart on
-`/dashboard/api-keys` (fire-and-forget; a capture failure never fails a call).
+`/settings/api-keys` (fire-and-forget; a capture failure never fails a call).
 Known caveat: calls served from the response cache of the two cached tools
 (`chassis-decoder`, `compression-calculator`) are not counted. Rate limiting is
 per-request and unaffected.
@@ -338,11 +338,11 @@ const result = await client.callTool({
 1. **Keep API Keys Secret**: Never commit API keys to version control
 2. **Use Environment Variables**: Store keys in `.env` files (git-ignored) or
    your client's secret storage — never inline in shared config
-3. **Rotate by replacement**: Mint a new key at `/dashboard/api-keys`, move the
+3. **Rotate by replacement**: Mint a new key at `/settings/api-keys`, move the
    integration over, revoke the old one (revocation is immediate)
 4. **Unique Keys per Integration**: Give each LLM integration its own key — the
    per-key usage chart then tells you which integration is doing what
-5. **Monitor Usage**: Watch the usage chart on `/dashboard/api-keys`; calls you
+5. **Monitor Usage**: Watch the usage chart on `/settings/api-keys`; calls you
    don't recognize mean the key leaked — revoke it
 
 ## Error Responses

@@ -372,13 +372,12 @@ describe('detectSpamKeywords', () => {
     expect(detectSpamKeywords(content)).toBe(true);
   });
 
-  it.each([
-    'classic mini cooper for sale',
-    'looking for a 998cc engine',
-    'thanks for the quick reply',
-  ])('does NOT match legitimate content: %j', (content) => {
-    expect(detectSpamKeywords(content)).toBe(false);
-  });
+  it.each(['classic mini cooper for sale', 'looking for a 998cc engine', 'thanks for the quick reply'])(
+    'does NOT match legitimate content: %j',
+    (content) => {
+      expect(detectSpamKeywords(content)).toBe(false);
+    }
+  );
 
   it('matches case-insensitively (lowercased input)', () => {
     // detectSpamKeywords is called by detectSpam after .toLowerCase();

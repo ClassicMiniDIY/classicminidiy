@@ -37,6 +37,9 @@ export function useCurrency() {
   const userCurrency = useState<CurrencyCode>('currency:user-preferred', () => 'USD');
   const localStorageLoaded = useState<boolean>('currency:localStorage-loaded', () => false);
   const profileSyncedForUserId = useState<string | null>('currency:profile-synced-user-id', () => null);
+  // Bumped by every explicit choice. A profile read that started before the
+  // latest choice must not overwrite it when it resolves.
+  const choiceGeneration = useState<number>('currency:choice-generation', () => 0);
 
   const exchangeRates = ref<Record<string, number> | null>(cachedRates);
   const ratesLoading = ref(false);
@@ -163,17 +166,17 @@ export function useCurrency() {
     // Logged-in user's profile preference is authoritative — sync once per user
     if (userId && profileSyncedForUserId.value !== userId) {
       profileSyncedForUserId.value = userId;
+      const generationAtStart = choiceGeneration.value;
       try {
         const supabase = useSupabase();
         // Destructure `error` so a Supabase-level failure (which returns
         // { data: null, error } without throwing) is surfaced — otherwise
         // the sync flag stays set and blocks retries until reload.
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('preferred_currency')
-          .eq('id', userId)
-          .single();
+        const { data, error } = await supabase.from('profiles').select('preferred_currency').eq('id', userId).single();
         if (error) throw error;
+        // The visitor picked a currency while this read was in flight; their
+        // choice is newer than the profile row (setUserCurrency writes it).
+        if (choiceGeneration.value !== generationAtStart) return;
         if (data?.preferred_currency && isSupportedCurrency(data.preferred_currency)) {
           userCurrency.value = data.preferred_currency as CurrencyCode;
           if (import.meta.client) {
@@ -192,6 +195,7 @@ export function useCurrency() {
    * if a user id is provided, to their profile row.
    */
   const setUserCurrency = async (code: CurrencyCode, userId?: string) => {
+    choiceGeneration.value += 1;
     userCurrency.value = code;
     if (import.meta.client) {
       localStorage.setItem('preferred_currency', code);

@@ -70,13 +70,14 @@ test.describe('nav dropdown structure survives hydration', () => {
     expect(overflowing, 'a dropdown menu is rendered outside the viewport while closed').toEqual([]);
   });
 
-  test('the language menu opens on focus and stays inside the viewport', async ({ page }) => {
+  test('the More menu opens on focus and stays inside the viewport', async ({ page }) => {
     await gotoHydrated(page, '/');
 
-    // Anonymous header: language dropdown + sign-in button. daisyUI dropdowns
-    // here are pure CSS opened on :focus-within, so focusing the trigger IS
-    // opening the menu — there is no click handler to wait on.
-    const trigger = page.locator('.dropdown [role="button"]').first();
+    // Anonymous header. The language picker moved to /settings/preferences, so
+    // the More menu is the header's focus dropdown. daisyUI dropdowns here are
+    // pure CSS opened on :focus-within, so focusing the trigger IS opening the
+    // menu — there is no click handler to wait on.
+    const trigger = page.getByTestId('nav-more-menu');
     await expect(trigger).toBeVisible();
     await trigger.focus();
 
@@ -96,7 +97,7 @@ test.describe('nav dropdown structure survives hydration', () => {
   test('Escape dismisses an open menu', async ({ page }) => {
     await gotoHydrated(page, '/');
 
-    const trigger = page.locator('.dropdown [role="button"]').first();
+    const trigger = page.getByTestId('nav-more-menu');
     await trigger.focus();
     await expect(page.locator('.dropdown:focus-within')).toHaveCount(1);
 

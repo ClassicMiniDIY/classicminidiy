@@ -356,7 +356,7 @@ echo "== free-tier gating =="
 #
 # Optional, exactly like MCP_SMOKE_KEY: absent, this notes and skips rather
 # than failing a deploy on a missing secret. To arm it, mint a key at
-# /dashboard/api-keys and set it with `gh secret set MCP_FREE_TIER_KEY`.
+# /settings/api-keys and set it with `gh secret set MCP_FREE_TIER_KEY`.
 #
 # The account that owns that key must be a DEDICATED fixture account that will
 # never hold a subscription — not a real person's, and never an admin's. The
