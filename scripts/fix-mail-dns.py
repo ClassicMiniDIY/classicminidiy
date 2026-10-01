@@ -227,9 +227,6 @@ CHANGES = [
         # into this one. 2 lookups of 10 — still down from the original 8.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
         "delete": [
-            # `pm-bounces.classicminidiy.com` (Postmark return-path) is no longer
-            # deleted here: a Postmark sender still uses this domain. Its state
-            # is tracked in the private plan (classicminidiy-supabase).
             # Forward Email decommission, 2026-09-03. Inbound moved to
             # Cloudflare Email Routing and all three domains tested working.
             ("CNAME", "fe-bounces.classicminidiy.com"),
@@ -238,6 +235,20 @@ CHANGES = [
         # The apex `forward-email-site-verification` TXT shares a name with the
         # SPF and other verification TXTs, so it is matched on content.
         "delete_txt_containing": ["forward-email-site-verification"],
+        "create": [
+            # Postmark return-path. Deleted on 2026-09-03 as "dead"; it was not,
+            # and restored 2026-10-01 (value from the frozen Route 53 zone).
+            # Same story as cmdiy.co's: do not delete a provider record without
+            # a DMARC report proving that provider idle.
+            {
+                "type": "CNAME",
+                "name": "pm-bounces.classicminidiy.com",
+                "content": "pm.mtasv.net",
+                "proxied": False,  # mail host: proxying it breaks SPF
+                "ttl": 300,
+                "comment": "Postmark return-path for mail sent as classicminidiy.com",
+            },
+        ],
     },
     {
         "domain": "theminiexchange.com",
