@@ -141,7 +141,9 @@ DMARC_POLICY.update({d: "p=reject" for d in NON_SENDING})
 # `a=` is empty: no mark certificate. That displays in Yahoo, AOL and
 # Fastmail. Gmail needs a CMC or VMC; set `a=` to its .pem URL if one is bought.
 # Apple Mail is covered separately, by Apple Business Connect Branded Mail.
-BIMI_LOGO = "https://classicminidiy.com/bimi/classicminidiy.svg"
+# The www host: the apex 301s to it, and receivers do not reliably follow a
+# redirect for a BIMI logo.
+BIMI_LOGO = "https://www.classicminidiy.com/bimi/classicminidiy.svg"
 BIMI = {
     "classicminidiy.com": f"v=BIMI1; l={BIMI_LOGO}; a=;",
     "cmdiy.co": f"v=BIMI1; l={BIMI_LOGO}; a=;",
@@ -154,15 +156,21 @@ def dmarc_enforced(record):
     return bool(re.search(r"(?:^|;)\s*p=(quarantine|reject)\b", record)) and (not pct or pct.group(1) == "100")
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
 def logo_is_live(url):
-    """True when the BIMI logo URL serves an SVG Tiny PS file.
+    """True when the BIMI logo URL serves an SVG Tiny PS file directly.
 
     Checks the body as well as the content type: an optimiser once stripped
     `baseProfile` and `<title>` from this file, and receivers reject that.
+    A redirect counts as not live, because receivers may not follow it.
     """
     req = urllib.request.Request(url, method="GET", headers={"User-Agent": "cmdiy-fix-mail-dns/1.0"})
     try:
-        with urllib.request.urlopen(req, timeout=15) as r:
+        with urllib.request.build_opener(_NoRedirect).open(req, timeout=15) as r:
             body = r.read(64 * 1024).decode("utf-8", "replace")
             return (
                 r.status == 200
