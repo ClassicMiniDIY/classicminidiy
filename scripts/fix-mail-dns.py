@@ -126,6 +126,9 @@ DMARC_POLICY = {
 # written here, because this repository is public. The private plan holds it.
 NON_SENDING = [d.strip() for d in os.environ.get("MAIL_DNS_NON_SENDING", "").split(",") if d.strip()]
 NULL_SPF = "v=spf1 -all"
+if set(NON_SENDING) & set(DMARC_POLICY):
+    # A typo here would null the SPF and reject all mail of a domain that sends.
+    sys.exit(f"MAIL_DNS_NON_SENDING names a sending domain: {sorted(set(NON_SENDING) & set(DMARC_POLICY))}")
 DMARC_POLICY.update({d: "p=reject" for d in NON_SENDING})
 
 # BIMI: the logo receivers show beside our mail. Design in the plan doc.
@@ -145,19 +148,28 @@ BIMI = {
 }
 
 
-def dmarc_enforced(domain):
-    """True when the policy is quarantine or reject at the full 100 percent."""
-    policy = DMARC_POLICY.get(domain, "")
-    pct = re.search(r"pct=(\d+)", policy)
-    return bool(re.search(r"p=(quarantine|reject)", policy)) and (not pct or pct.group(1) == "100")
+def dmarc_enforced(record):
+    """True when a DMARC record or policy is quarantine or reject at 100 percent."""
+    pct = re.search(r"(?:^|;)\s*pct=(\d+)", record)
+    return bool(re.search(r"(?:^|;)\s*p=(quarantine|reject)\b", record)) and (not pct or pct.group(1) == "100")
 
 
 def logo_is_live(url):
-    """True when the BIMI logo URL answers 200 with an SVG content type."""
+    """True when the BIMI logo URL serves an SVG Tiny PS file.
+
+    Checks the body as well as the content type: an optimiser once stripped
+    `baseProfile` and `<title>` from this file, and receivers reject that.
+    """
     req = urllib.request.Request(url, method="GET", headers={"User-Agent": "cmdiy-fix-mail-dns/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
-            return r.status == 200 and "image/svg+xml" in r.headers.get("Content-Type", "")
+            body = r.read(64 * 1024).decode("utf-8", "replace")
+            return (
+                r.status == 200
+                and "image/svg+xml" in r.headers.get("Content-Type", "")
+                and 'baseProfile="tiny-ps"' in body
+                and "<title>" in body
+            )
     except Exception:
         return False
 
@@ -191,9 +203,12 @@ def dmarc_for(domain, current_record):
     """The record to publish, or None when Cloudflare's mailbox is not yet known."""
     rua = CF_DMARC_RUA.get(domain) or cloudflare_rua(current_record)
     if not rua:
-        # A zone that sends nothing has no reports worth reading, so the
-        # policy goes out without them rather than waiting on the dashboard.
-        return f"v=DMARC1; {DMARC_POLICY[domain]};" if domain in NON_SENDING else None
+        # A zone that sends nothing does not wait on the dashboard for a
+        # mailbox. Any reporting address it already has is kept.
+        if domain not in NON_SENDING:
+            return None
+        other = re.search(r"(?:^|;)\s*rua=([^;]+)", current_record or "")
+        return f"v=DMARC1; {DMARC_POLICY[domain]};" + (f" rua={other.group(1).strip()};" if other else "")
     return f"v=DMARC1; {DMARC_POLICY[domain]}; rua=mailto:{rua};"
 
 # --- the desired state -------------------------------------------------------
@@ -212,10 +227,9 @@ CHANGES = [
         # into this one. 2 lookups of 10 — still down from the original 8.
         "spf": "v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net -all",
         "delete": [
-            # `pm-bounces.classicminidiy.com` (Postmark return-path) was deleted
-            # here on 2026-09-03 as "dead". It was not: a Postmark sender still
-            # sends as this domain and lost SPF alignment that day, the same
-            # mistake as cmdiy.co. It is no longer deleted; see the private plan.
+            # `pm-bounces.classicminidiy.com` (Postmark return-path) is no longer
+            # deleted here: a Postmark sender still uses this domain. Its state
+            # is tracked in the private plan (classicminidiy-supabase).
             # Forward Email decommission, 2026-09-03. Inbound moved to
             # Cloudflare Email Routing and all three domains tested working.
             ("CNAME", "fe-bounces.classicminidiy.com"),
@@ -418,6 +432,14 @@ def main():
         ]
         want = change["spf"]
 
+        # The null SPF suits a zone that neither sends nor receives. A zone
+        # with an MX (Email Routing, say) forwards with an SRS envelope on its
+        # own name, and `-all` without the forwarder's include would fail it.
+        if domain in NON_SENDING and any(r["type"] == "MX" for r in records):
+            print("  spf   zone has an MX record — refusing the null SPF; remove it from MAIL_DNS_NON_SENDING")
+            failures += 1
+            continue
+
         # Email Routing onboarding adds its own SPF record alongside any that
         # already exists, and the wizard gives no way to decline it. Two SPF
         # records on one name is a permerror, so collapse them: delete exactly
@@ -491,6 +513,8 @@ def main():
         cur = [r for r in records if r["type"] == "TXT" and r["name"].rstrip(".") == name]
         current_dmarc = unquote_txt(cur[0]["content"]).strip() if len(cur) == 1 else ""
         want_dmarc = dmarc_for(domain, current_dmarc)
+        # What receivers will see after this run; BIMI is gated on it.
+        live_dmarc = current_dmarc
         if not want_dmarc and len(cur) <= 1:
             print(f"  dmarc no {CF_DMARC_RUA_DOMAIN} mailbox in the record — enable DMARC Management")
             print(f"        in the dashboard (zone -> Email -> DMARC Management) and re-run.")
@@ -508,8 +532,9 @@ def main():
                              body={"type": "TXT", "name": name, "content": want_dmarc, "ttl": 300})
                     print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
                     failures += 0 if res.get("success") else 1
+                    live_dmarc = want_dmarc if res.get("success") else live_dmarc
             elif current_dmarc == want_dmarc:
-                print(f"  dmarc via Cloudflare, already correct: {want_dmarc}")
+                print(f"  dmarc already correct: {want_dmarc}")
             else:
                 print(f"  dmarc from: {current_dmarc}")
                 print(f"          to: {want_dmarc}")
@@ -519,6 +544,7 @@ def main():
                              body={"content": want_dmarc})
                     print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
                     failures += 0 if res.get("success") else 1
+                    live_dmarc = want_dmarc if res.get("success") else live_dmarc
 
             # RFC 7489 s7.1 external-destination authorisation is not needed:
             # Cloudflare publishes the wildcard `*._report._dmarc` record on
@@ -535,8 +561,10 @@ def main():
                 failures += 1
             elif current_bimi == want_bimi:
                 print(f"  bimi  already correct: {want_bimi}")
-            elif not dmarc_enforced(domain):
-                print(f"  bimi  waiting: DMARC is `{DMARC_POLICY[domain]}`, BIMI needs pct=100")
+            elif not dmarc_enforced(live_dmarc):
+                # A dry run judges the record as it is now, so BIMI shows as
+                # waiting on the first run that also raises DMARC.
+                print(f"  bimi  waiting: published DMARC is not at enforcement (BIMI needs pct=100)")
             elif not logo_is_live(BIMI_LOGO):
                 print(f"  bimi  waiting: {BIMI_LOGO} does not serve an SVG yet (deploy first)")
                 manual += 1
