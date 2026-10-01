@@ -561,88 +561,13 @@ not been confirmed by a report, so `sp=reject` would be a guess with the
 newsletter as the stake. Subdomains inherit `p` when `sp` is absent, which is
 the right default here.
 
-### Ladder status, 2026-10-01
+### Ladder status and BIMI
 
-Stage 1 has been live on all three domains since 2026-09-20. Eleven days of
-reports:
-
-| Domain                | Evidence                                                   | Next                                 |
-| --------------------- | ---------------------------------------------------------- | ------------------------------------ |
-| `cmdiy.co`            | Shopify (SendGrid) and Postmark POs all pass on DKIM + SPF | Stage 2; apex SPF `~all` → `-all`    |
-| `theminiexchange.com` | No mail reported at all                                    | `p=reject` directly                  |
-| `classicminidiy.com`  | SES and Mailgun pass; one Postmark source is not aligned   | Hold at stage 1 until it is resolved |
-
-The remaining DKIM failures on `classicminidiy.com` are forwarders (Zoho,
-Outlook rewrites). They are expected and do not block a stage.
-
-Zones that send no mail (`classicminidiy.net`, `classicminidiy.org`,
-`wheeldictionary.com`, `deathlyhallows.co`, `oecua.org`) get the null policy:
-`v=spf1 -all` at the apex and `v=DMARC1; p=reject;` at `_dmarc`.
-`openecualliance.org` sends through Resend and has no `rua`; enable DMARC
-Management on it before it starts the ladder.
-
-### BIMI
-
-No domain publishes a BIMI record today, so every BIMI check reports "not in
-use". A record alone does not fix that. BIMI has three prerequisites, and the
-ladder above is the first of them.
-
-**Prerequisites.**
-
-1. **DMARC at enforcement on the organisational domain.** `p=quarantine` with
-   pct=100, or `p=reject`. `pct=25` does not qualify. `sp=none` disqualifies
-   subdomain mail, which is one more reason `sp` stays absent.
-2. **An SVG Tiny Portable/Secure logo** over HTTPS. Square, solid background,
-   `version="1.2"` and `baseProfile="tiny-ps"`, a `<title>`, no scripts, no
-   external references, no raster images. Keep it under 32 KB.
-3. **A mark certificate** for Gmail and Apple Mail. Yahoo, AOL and Fastmail
-   show the logo without one, for a sender with enough volume and reputation.
-   - **VMC** (Verified Mark Certificate): needs a registered trademark for the
-     logo. Gmail and Apple Mail.
-   - **CMC** (Common Mark Certificate): needs no trademark; needs evidence the
-     logo has been in public use for 12 months. Gmail only, not Apple Mail.
-   - Both are paid annually from DigiCert, Sectigo or GlobalSign, and issuance
-     includes identity validation that takes weeks. Start it in parallel with
-     the ladder, not after it.
-
-**Scope.** BIMI is per sending domain, and only a domain that sends mail gains
-anything from it.
-
-- `classicminidiy.com`: one record at `default._bimi.classicminidiy.com`.
-  Receivers fall back to the organisational domain, so it also covers
-  `noreply.` (SES) and `news.` (Ghost). Brand: Classic Mini DIY.
-- `cmdiy.co`: its own record. Shopify order mail and the purchase orders send
-  as this domain. Brand: the store's logo, which can be the same mark.
-- `theminiexchange.com` and the null-policy zones: none. They send no mail,
-  so their "BIMI: fail" is correct and harmless.
-- `openecualliance.org`: none until it has finished its own ladder.
-
-**Assets.** Host the logos and certificates on `classicminidiy.com`, which
-serves `public/` as static assets from the Worker:
-`public/bimi/classicminidiy.svg`, `public/bimi/cmdiy.svg`, and the `.pem` for
-each when issued. The `l=` URL can be on any HTTPS host, so `cmdiy.co` (a
-Shopify domain) does not need to host its own. These paths must not move
-once published; receivers and the certificate both reference them.
-
-**Records.** Declare them in `scripts/fix-mail-dns.py` beside `DMARC_POLICY`,
-and have the script refuse to publish one for a domain whose `DMARC_POLICY` is
-not at enforcement:
-
-```
-default._bimi.classicminidiy.com  TXT  "v=BIMI1; l=https://classicminidiy.com/bimi/classicminidiy.svg; a=;"
-default._bimi.cmdiy.co            TXT  "v=BIMI1; l=https://classicminidiy.com/bimi/cmdiy.svg; a=;"
-```
-
-`a=;` (no certificate) is valid and lights up Yahoo, AOL and Fastmail. When the
-certificate is issued, set `a=https://classicminidiy.com/bimi/<name>.pem`.
-
-**Order.**
-
-1. Now: produce the SVG Tiny PS logos; decide VMC or CMC and apply.
-2. `cmdiy.co` reaches stage 2 → publish its record with `a=;`.
-3. `classicminidiy.com` reaches stage 2 → publish its record with `a=;`.
-4. Certificate issued → add `a=` per domain.
-5. Verify with a BIMI checker and a test send to Gmail and Yahoo.
+Per-domain progress up the ladder, the zones that send no mail, and the BIMI plan
+(logo at `public/bimi/classicminidiy.svg`, records in `fix-mail-dns.py`'s `BIMI`)
+are tracked in `classicminidiy-supabase`:
+`docs/plans/2026-10-01-dmarc-enforcement-and-bimi.md`. It records operational
+state, which this public repo does not.
 
 ## Follow-ups, out of scope here
 

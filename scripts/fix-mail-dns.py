@@ -100,7 +100,13 @@ CF_DMARC_RUA = {
 # of Cloudflare DMARC reports (GraphQL `dmarcReportsAdaptive`): SES on both
 # .com zones, Shopify-via-SendGrid and Postmark on cmdiy.co all pass on DKIM;
 # the only failures were the pre-fix Postmark POs and a supplier forwarder
-# whose DKIM still passes. Next: pct=100 after a week, then p=reject.
+# whose DKIM still passes.
+#
+# 2026-10-01, after eleven days at stage 1: cmdiy.co to stage 2 and
+# theminiexchange.com straight to reject (no mail reported at all).
+# classicminidiy.com holds at stage 1; the reasoning and the per-domain
+# evidence are in classicminidiy-supabase
+# docs/plans/2026-10-01-dmarc-enforcement-and-bimi.md.
 #
 # `sp` is deliberately absent. classicminidiy.com has two sending subdomains
 # (`ghost.news.` on Mailgun for Ghost, `noreply.` on SES) and neither has been
@@ -108,9 +114,53 @@ CF_DMARC_RUA = {
 # the newsletter as the stake. With `sp` absent, subdomains inherit `p`.
 DMARC_POLICY = {
     "classicminidiy.com": "p=quarantine; pct=25",
-    "theminiexchange.com": "p=quarantine; pct=25",
-    "cmdiy.co": "p=quarantine; pct=25",
+    "theminiexchange.com": "p=reject",
+    "cmdiy.co": "p=quarantine",
 }
+
+# Zones that send no mail at all. They publish the null policy: an SPF record
+# that authorises nobody and `p=reject`, so nothing can send as them. A zone
+# without a Cloudflare DMARC Management mailbox gets the record without `rua`.
+#
+# The list is read from MAIL_DNS_NON_SENDING (comma-separated) rather than
+# written here, because this repository is public. The private plan holds it.
+NON_SENDING = [d.strip() for d in os.environ.get("MAIL_DNS_NON_SENDING", "").split(",") if d.strip()]
+NULL_SPF = "v=spf1 -all"
+DMARC_POLICY.update({d: "p=reject" for d in NON_SENDING})
+
+# BIMI: the logo receivers show beside our mail. Design in the plan doc.
+#
+# Published only for a domain whose DMARC policy is at enforcement (pct=100):
+# receivers ignore BIMI below that, so publishing earlier advertises a logo
+# that cannot display. The logo URL must also already serve an SVG, which it
+# does only after the PR that adds `public/bimi/` has deployed.
+#
+# `a=` is empty: no mark certificate. That displays in Yahoo, AOL and
+# Fastmail. Gmail needs a CMC or VMC; set `a=` to its .pem URL if one is bought.
+# Apple Mail is covered separately, by Apple Business Connect Branded Mail.
+BIMI_LOGO = "https://classicminidiy.com/bimi/classicminidiy.svg"
+BIMI = {
+    "classicminidiy.com": f"v=BIMI1; l={BIMI_LOGO}; a=;",
+    "cmdiy.co": f"v=BIMI1; l={BIMI_LOGO}; a=;",
+}
+
+
+def dmarc_enforced(domain):
+    """True when the policy is quarantine or reject at the full 100 percent."""
+    policy = DMARC_POLICY.get(domain, "")
+    pct = re.search(r"pct=(\d+)", policy)
+    return bool(re.search(r"p=(quarantine|reject)", policy)) and (not pct or pct.group(1) == "100")
+
+
+def logo_is_live(url):
+    """True when the BIMI logo URL answers 200 with an SVG content type."""
+    req = urllib.request.Request(url, method="GET", headers={"User-Agent": "cmdiy-fix-mail-dns/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return r.status == 200 and "image/svg+xml" in r.headers.get("Content-Type", "")
+    except Exception:
+        return False
+
 
 # Retired 2026-09-18 in favour of Cloudflare DMARC Management. Left so a dry
 # run against a zone that has not been switched yet prints a recognisable
@@ -141,7 +191,9 @@ def dmarc_for(domain, current_record):
     """The record to publish, or None when Cloudflare's mailbox is not yet known."""
     rua = CF_DMARC_RUA.get(domain) or cloudflare_rua(current_record)
     if not rua:
-        return None
+        # A zone that sends nothing has no reports worth reading, so the
+        # policy goes out without them rather than waiting on the dashboard.
+        return f"v=DMARC1; {DMARC_POLICY[domain]};" if domain in NON_SENDING else None
     return f"v=DMARC1; {DMARC_POLICY[domain]}; rua=mailto:{rua};"
 
 # --- the desired state -------------------------------------------------------
@@ -192,11 +244,13 @@ CHANGES = [
         #
         # It does not affect the Shopify store. Shopify's envelope sender runs
         # through mailer4wr/mailer701, which are CNAMEs to Shopify, so SPF for
-        # order mail is evaluated against Shopify's host, not this apex. The
-        # `~all` softfail is also weaker than the `-all` this plan once
-        # proposed, which is the right side to err on until DMARC aggregate
-        # reports confirm the envelope domain.
-        "spf": "v=spf1 include:_spf.mx.cloudflare.net ~all",
+        # order mail is evaluated against Shopify's host, not this apex.
+        #
+        # Tightened from `~all` to `-all` on 2026-10-01. Eleven days of DMARC
+        # reports showed every legitimate envelope on a subdomain
+        # (`mailer4wr.` for Shopify, `pm-bounces.` for Postmark) and none on
+        # this apex, which was the evidence the softfail was waiting for.
+        "spf": "v=spf1 include:_spf.mx.cloudflare.net -all",
         # Postmark sends the store's purchase orders as sales@cmdiy.co. It
         # authenticates by DKIM (this selector) and by SPF on its own
         # return-path host (`pm-bounces`, a CNAME that inherits pm.mtasv.net's
@@ -266,6 +320,11 @@ CHANGES = [
         "delete": [],
         "delete_txt_containing": ["forward-email-site-verification"],
     },
+] + [
+    # Not part of the Forward Email retirement; here so every zone's mail
+    # records live in one script. See NON_SENDING.
+    {"domain": d, "spf": NULL_SPF, "delete": []}
+    for d in NON_SENDING
 ]
 
 
@@ -423,8 +482,8 @@ def main():
 
 
         # --- DMARC ---
-        # Adding `rua=` is purely additive: it changes no policy, it only asks
-        # receivers to send aggregate reports. `p=` is left alone here.
+        # The record is composed by dmarc_for(): the policy from DMARC_POLICY
+        # and the Cloudflare DMARC Management mailbox as `rua`.
         name = f"_dmarc.{domain}"
         cur = [r for r in records if r["type"] == "TXT" and r["name"].rstrip(".") == name]
         current_dmarc = unquote_txt(cur[0]["content"]).strip() if len(cur) == 1 else ""
@@ -461,6 +520,35 @@ def main():
             # RFC 7489 s7.1 external-destination authorisation is not needed:
             # Cloudflare publishes the wildcard `*._report._dmarc` record on
             # dmarc-reports.cloudflare.net itself.
+
+        # --- BIMI ---
+        if domain in BIMI:
+            want_bimi = BIMI[domain]
+            name = f"default._bimi.{domain}"
+            cur = [r for r in records if r["type"] == "TXT" and r["name"].rstrip(".") == name]
+            current_bimi = unquote_txt(cur[0]["content"]).strip() if len(cur) == 1 else ""
+            if len(cur) > 1:
+                print(f"  bimi  {len(cur)} records at {name} — refusing to guess")
+                failures += 1
+            elif current_bimi == want_bimi:
+                print(f"  bimi  already correct: {want_bimi}")
+            elif not dmarc_enforced(domain):
+                print(f"  bimi  waiting: DMARC is `{DMARC_POLICY[domain]}`, BIMI needs pct=100")
+            elif not logo_is_live(BIMI_LOGO):
+                print(f"  bimi  waiting: {BIMI_LOGO} does not serve an SVG yet (deploy first)")
+                manual += 1
+            else:
+                print(f"  bimi  {'from: ' + current_bimi if cur else 'MISSING, will create:'}")
+                print(f"          {'to: ' if cur else ''}{want_bimi}")
+                total_ops += 1
+                if args.apply:
+                    if cur:
+                        res = cf(f"zones/{zid}/dns_records/{cur[0]['id']}", method="PATCH", body={"content": want_bimi})
+                    else:
+                        res = cf(f"zones/{zid}/dns_records", method="POST",
+                                 body={"type": "TXT", "name": name, "content": want_bimi, "ttl": 300})
+                    print(f"          {'ok' if res.get('success') else 'FAILED: ' + errmsg(res)}")
+                    failures += 0 if res.get("success") else 1
 
         # --- creations ---
         for body in change.get("create", []):
@@ -520,7 +608,7 @@ def main():
     else:
         print(f"{total_ops - failures} change(s) applied, {failures} failed")
     if manual:
-        print(f"{manual} zone(s) still need DMARC Management enabled in the dashboard")
+        print(f"{manual} item(s) need a manual step first (see the notes above)")
     if failures:
         sys.exit(1)
 

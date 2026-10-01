@@ -171,10 +171,11 @@ export const MAIL_DOMAINS: DomainSpec[] = [
     //
     // It does not reach the Shopify store either way: order mail's envelope
     // runs through mailer4wr/mailer701, which are CNAMEs to Shopify, so SPF is
-    // evaluated against Shopify's host rather than this apex. Do NOT tighten
-    // the `~all` to `-all` before DMARC aggregate reports confirm the real
-    // envelope domain — a hard fail is weighted heavily by some receivers even
-    // when DKIM aligns, and it would land on the store's own mail.
+    // evaluated against Shopify's host rather than this apex. The `~all` was
+    // tightened to `-all` on 2026-10-01, after eleven days of DMARC aggregate
+    // reports showed every legitimate envelope on a subdomain (`mailer4wr.`,
+    // `pm-bounces.`) and none on this apex. Re-check the reports before
+    // adding a sender that would use the apex as its envelope domain.
     expectedIncludes: [CF_ROUTING_INCLUDE_HOST],
     providerRecords: [
       ...shopifyConfig(
