@@ -561,6 +561,14 @@ not been confirmed by a report, so `sp=reject` would be a guess with the
 newsletter as the stake. Subdomains inherit `p` when `sp` is absent, which is
 the right default here.
 
+### Ladder status and BIMI
+
+Per-domain progress up the ladder, the zones that send no mail, and the BIMI plan
+(logo at `public/bimi/classicminidiy.svg`, records in `fix-mail-dns.py`'s `BIMI`)
+are tracked in `classicminidiy-supabase`:
+`docs/plans/2026-10-01-dmarc-enforcement-and-bimi.md`. It records operational
+state, which this public repo does not.
+
 ## Follow-ups, out of scope here
 
 1. **Authenticate Shopify's sending domain** (defect 2). Shopify admin →
