@@ -5,7 +5,7 @@
   const route = useRoute();
   const router = useRouter();
 
-  // The discord-claim Edge Function 302-redirects failed claims to
+  // The discord-callback Edge Function 302-redirects failed claims to
   // `/?discord_error=<code>` (keystone §12). Surface a friendly, dismissible
   // banner on the home page for the known codes; anything else gets a generic
   // message rather than leaking the raw code.
