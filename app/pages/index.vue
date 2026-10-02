@@ -9,7 +9,14 @@
   // `/?discord_error=<code>` (keystone §12). Surface a friendly, dismissible
   // banner on the home page for the known codes; anything else gets a generic
   // message rather than leaking the raw code.
-  const DISCORD_ERROR_CODES = ['missing_token', 'expired_link', 'link_not_found', 'link_superseded', 'not_active'];
+  const DISCORD_ERROR_CODES = [
+    'missing_token',
+    'expired_link',
+    'link_not_found',
+    'link_superseded',
+    'not_active',
+    'discord_in_use',
+  ];
   const discordError = ref<string | null>(null);
   const discordErrorMessage = computed(() => {
     if (!discordError.value) return '';
@@ -438,6 +445,7 @@
       "link_not_found": "We couldn't find a Discord invite for your account. Sign in as a Sustaining Member and we'll issue one right away.",
       "link_superseded": "A newer Discord invite was issued. Sign in and we'll get you the current one right away.",
       "not_active": "Your Discord access isn't active. An active Sustaining Membership is required to join the members-only Discord.",
+      "discord_in_use": "That Discord account is already linked to another Classic Mini DIY account. Connect a different Discord account, or contact us and we'll sort it out.",
       "generic": "We couldn't complete your Discord invite. Sign in and we'll issue you a fresh one — or reach out via the contact page and we'll sort it out.",
       "cta_connect": "Get a fresh invite",
       "cta_membership": "View membership"
@@ -526,6 +534,7 @@
       "link_not_found": "No encontramos una invitación a Discord para tu cuenta. Inicia sesión como Socio Colaborador y te la emitiremos al momento.",
       "link_superseded": "Se emitió una invitación a Discord más reciente. Inicia sesión y te daremos la actual al momento.",
       "not_active": "Tu acceso a Discord no está activo. Se requiere una membresía de Socio Colaborador activa para unirte al Discord exclusivo para miembros.",
+      "discord_in_use": "Esa cuenta de Discord ya está vinculada a otra cuenta de Classic Mini DIY. Conecta otra cuenta de Discord o contáctanos y lo resolveremos.",
       "generic": "No pudimos completar tu invitación a Discord. Inicia sesión y te emitiremos una nueva — o escríbenos desde la página de contacto y lo resolveremos.",
       "cta_connect": "Obtener nueva invitación",
       "cta_membership": "Ver membresía"
@@ -614,6 +623,7 @@
       "link_not_found": "Nous n'avons pas trouvé d'invitation Discord pour votre compte. Connectez-vous en tant que Membre Soutien et nous vous en délivrerons une immédiatement.",
       "link_superseded": "Une invitation Discord plus récente a été émise. Connectez-vous et nous vous fournirons la plus récente immédiatement.",
       "not_active": "Votre accès Discord n'est pas actif. Une adhésion Membre Soutien active est requise pour rejoindre le Discord réservé aux membres.",
+      "discord_in_use": "Ce compte Discord est déjà lié à un autre compte Classic Mini DIY. Connectez un autre compte Discord, ou contactez-nous et nous réglerons cela.",
       "generic": "Nous n'avons pas pu finaliser votre invitation Discord. Connectez-vous et nous vous en délivrerons une nouvelle — ou contactez-nous via la page de contact et nous réglerons cela.",
       "cta_connect": "Obtenir une nouvelle invitation",
       "cta_membership": "Voir l'adhésion"
@@ -702,6 +712,7 @@
       "link_not_found": "Non abbiamo trovato un invito a Discord per il tuo account. Accedi come Membro Sostenitore e te ne emetteremo subito uno.",
       "link_superseded": "È stato emesso un invito a Discord più recente. Accedi e ti forniremo subito quello attuale.",
       "not_active": "Il tuo accesso a Discord non è attivo. Per entrare nel Discord riservato ai membri è necessaria un'iscrizione attiva come Membro Sostenitore.",
+      "discord_in_use": "Questo account Discord è già collegato a un altro account Classic Mini DIY. Collega un altro account Discord, oppure contattaci e risolveremo.",
       "generic": "Non siamo riusciti a completare il tuo invito a Discord. Accedi e te ne emetteremo uno nuovo — oppure scrivici dalla pagina contatti e risolveremo.",
       "cta_connect": "Richiedi un nuovo invito",
       "cta_membership": "Vedi iscrizione"
@@ -790,6 +801,7 @@
       "link_not_found": "Wir konnten keine Discord-Einladung für Ihr Konto finden. Melden Sie sich als Sustaining Member an und wir stellen sofort eine aus.",
       "link_superseded": "Es wurde eine neuere Discord-Einladung ausgestellt. Melden Sie sich an und wir geben Ihnen sofort die aktuelle.",
       "not_active": "Ihr Discord-Zugang ist nicht aktiv. Für den Discord nur für Mitglieder ist eine aktive Sustaining-Mitgliedschaft erforderlich.",
+      "discord_in_use": "Dieses Discord-Konto ist bereits mit einem anderen Classic Mini DIY-Konto verknüpft. Verbinde ein anderes Discord-Konto oder kontaktiere uns, dann klären wir das.",
       "generic": "Ihre Discord-Einladung konnte nicht abgeschlossen werden. Melden Sie sich an und wir stellen eine neue aus — oder melden Sie sich über die Kontaktseite und wir kümmern uns darum.",
       "cta_connect": "Neue Einladung erhalten",
       "cta_membership": "Mitgliedschaft ansehen"
@@ -878,6 +890,7 @@
       "link_not_found": "Não encontramos um convite do Discord para a sua conta. Entre como Membro Mantenedor e emitiremos um imediatamente.",
       "link_superseded": "Um convite do Discord mais recente foi emitido. Entre na sua conta e forneceremos o atual imediatamente.",
       "not_active": "Seu acesso ao Discord não está ativo. É necessária uma assinatura ativa de Membro Mantenedor para entrar no Discord exclusivo para membros.",
+      "discord_in_use": "Essa conta do Discord já está vinculada a outra conta do Classic Mini DIY. Conecte outra conta do Discord ou fale conosco e resolveremos.",
       "generic": "Não foi possível concluir seu convite do Discord. Entre na sua conta e emitiremos um novo — ou fale conosco pela página de contato e resolveremos.",
       "cta_connect": "Obter novo convite",
       "cta_membership": "Ver assinatura"
@@ -966,6 +979,7 @@
       "link_not_found": "Мы не нашли приглашение в Discord для вашего аккаунта. Войдите как поддерживающий участник, и мы сразу его выдадим.",
       "link_superseded": "Было выдано более новое приглашение в Discord. Войдите, и мы сразу предоставим актуальное.",
       "not_active": "Ваш доступ к Discord не активен. Для входа в Discord только для участников требуется активное членство поддерживающего участника.",
+      "discord_in_use": "Этот аккаунт Discord уже привязан к другому аккаунту Classic Mini DIY. Подключите другой аккаунт Discord или свяжитесь с нами, и мы всё уладим.",
       "generic": "Не удалось завершить ваше приглашение в Discord. Войдите, и мы выдадим новое — или напишите нам через страницу контактов, и мы всё решим.",
       "cta_connect": "Получить новое приглашение",
       "cta_membership": "Посмотреть членство"
@@ -1054,6 +1068,7 @@
       "link_not_found": "アカウントのDiscord招待が見つかりませんでした。サステイニングメンバーとしてサインインすると、すぐに発行します。",
       "link_superseded": "より新しいDiscord招待が発行されています。サインインすると、最新の招待をすぐにお渡しします。",
       "not_active": "Discordアクセスが有効ではありません。メンバー限定Discordへの参加には、有効なサステイニングメンバーシップが必要です。",
+      "discord_in_use": "このDiscordアカウントは別のClassic Mini DIYアカウントに既にリンクされています。別のDiscordアカウントを接続するか、お問い合わせください。",
       "generic": "Discord招待を完了できませんでした。サインインすると新しい招待を発行します。解決しない場合はお問い合わせページからご連絡ください。",
       "cta_connect": "新しい招待を取得",
       "cta_membership": "メンバーシップを見る"
@@ -1142,6 +1157,7 @@
       "link_not_found": "未找到你账户的 Discord 邀请。以维持会员身份登录后，我们会立即为你发放。",
       "link_superseded": "已发放更新的 Discord 邀请。登录后我们会立即提供最新的邀请。",
       "not_active": "你的 Discord 访问权限未激活。加入会员专属 Discord 需要有效的维持会员资格。",
+      "discord_in_use": "该 Discord 账户已关联到另一个 Classic Mini DIY 账户。请连接其他 Discord 账户，或联系我们为你处理。",
       "generic": "无法完成你的 Discord 邀请。登录后我们会发放新的邀请——也可以通过联系页面联系我们解决。",
       "cta_connect": "获取新邀请",
       "cta_membership": "查看会员资格"
@@ -1225,6 +1241,7 @@
       "link_not_found": "계정에 대한 Discord 초대를 찾을 수 없습니다. 서스테이닝 멤버로 로그인하시면 즉시 발급해 드립니다.",
       "link_superseded": "더 새로운 Discord 초대가 발급되었습니다. 로그인하시면 최신 초대를 바로 제공해 드립니다.",
       "not_active": "Discord 이용 권한이 활성화되어 있지 않습니다. 멤버 전용 Discord에 참여하려면 유효한 서스테이닝 멤버십이 필요합니다.",
+      "discord_in_use": "이 Discord 계정은 이미 다른 Classic Mini DIY 계정에 연결되어 있습니다. 다른 Discord 계정을 연결하거나 문의해 주시면 해결해 드리겠습니다.",
       "generic": "Discord 초대를 완료하지 못했습니다. 로그인하시면 새 초대를 발급해 드립니다 — 문제가 계속되면 문의 페이지로 연락해 주세요.",
       "cta_connect": "새 초대 받기",
       "cta_membership": "멤버십 보기"
