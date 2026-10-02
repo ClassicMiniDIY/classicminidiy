@@ -23,7 +23,7 @@ A community 3D-printable parts library with a Stripe Connect marketplace. Backen
 - **Stripe Connect (model sales) is separate from membership Stripe.** Direct charges on the
   seller's Standard connected account + platform commission via `application_fee_amount`;
   metadata `cmdiy_kind` starts `model_`. Its webhook endpoint + `STRIPE_CONNECT_WEBHOOK_SECRET`
-  are distinct from the membership webhook. Do not conflate with the `$1.99/mo` membership.
+  are distinct from the membership webhook. Do not conflate with the recurring membership.
 - **Entitlement is the download gate.** `has_model_entitlement(model_id)` RPC: free/tips and
   owner/admin always true; paid needs a purchase row; `removed`/`flagged` revokes everyone.
   The download route (`/api/models/[modelId]/files/[fileId]/download`) enforces it server-side;

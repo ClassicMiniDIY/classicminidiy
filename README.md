@@ -135,7 +135,7 @@ Classic Mini DIY is part of a broader ecosystem of applications sharing a single
 > into this repo and went live at [classicminidiy.com/exchange](https://classicminidiy.com/exchange)
 > on 2026-07-13. `theminiexchange.com` now 301s here.
 
-All properties share authentication via Supabase with custom domain `auth.classicminidiy.com`. Users sign in once and their profile, avatar, and preferences carry across all platforms. Sustaining Members ($1.99/mo via the App Store, Google Play, or classicminidiy.com) unlock a unified set of benefits across all properties.
+All properties share authentication via Supabase with custom domain `auth.classicminidiy.com`. Users sign in once and their profile, avatar, and preferences carry across all platforms. Sustaining Members unlock the same benefits across all properties at every level: Member ($1.99/mo), Plus ($4.99/mo) or Pro ($9.99/mo), bought on classicminidiy.com, in the App Store or on Google Play. Patreon and YouTube channel memberships count too, once linked to a site account. The level changes only the DIY Mini Bot allowance; see [classicminidiy.com/membership](https://classicminidiy.com/membership#ways-to-join).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

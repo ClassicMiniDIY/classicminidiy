@@ -1,7 +1,9 @@
 # Sustaining Member Value Prop — classicminidiy.com (web)
 
 **Date:** 2026-06-07
-**Status:** Design — pre-implementation
+**Status:** Implemented (`/membership`, the Stripe subscribe flow and the Discord claim entry point are live).
+
+> **Superseded in part (2026-10-02).** The membership now has three levels — Member $1.99 / Plus $4.99 / Pro $9.99 a month on the web and in the apps — that differ only in the DIY Mini Bot allowance. Patreon and YouTube are membership channels, not a tip jar. The single $1.99 price, the "Pro access to the blog" name (now "Members-only blog posts") and the Patreon-as-tip-jar decision below are stale. Current model: the keystone's 2026-10-02 AS-BUILT block and `/membership#ways-to-join` (`app/components/membership/WaysToJoin.vue`).
 **Repo:** `classicminidiy` (knowledgebase / community site, Nuxt 4)
 **Keystone:** `classicminidiy-supabase/docs/plans/2026-06-07-membership-entitlement-contract.md` — single source of truth. Read it first. This doc covers only what the **web** does and must not restate the whole contract; references below point at "keystone §N."
 **Keystone phase:** **Phase 3** (keystone §11). Depends on Phase 0 (verify-subscription live, untracked work committed) and Phase 1 (entitlement fan-out: Ghost comp + Discord direct from `subscriptions`) being shipped in the supabase repo.
