@@ -2,8 +2,9 @@
  * GET /discord/claim?token=<jwt>
  *
  * Discord claim proxy page (keystone §12). The members-only Discord claim email
- * links here; this server route 302-forwards to the `discord-claim` Edge
- * Function, which validates the JWT and continues the redirect chain (→ Discord
+ * links here; this server route 302-forwards to the `discord-callback` Edge
+ * Function's claim step (`?token=`; it absorbed the former `discord-claim`
+ * function on 2026-10-02), which validates the JWT and continues the redirect chain (→ Discord
  * OAuth on success, → /?discord_error=<code> on failure). Using a server route
  * preserves clean 302 semantics with no client flash and keeps the proxy hop off
  * client JS.
@@ -35,6 +36,6 @@ export default defineEventHandler((event) => {
   // Transient redirect page — keep it out of search indexes.
   setHeader(event, 'X-Robots-Tag', 'noindex');
 
-  const target = `${supabaseUrl}/functions/v1/discord-claim?token=${encodeURIComponent(tokenParam)}`;
+  const target = `${supabaseUrl}/functions/v1/discord-callback?token=${encodeURIComponent(tokenParam)}`;
   return sendRedirect(event, target, 302);
 });

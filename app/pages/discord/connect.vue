@@ -9,7 +9,7 @@
   // /discord/claim with no token; the server proxy routes those bare hits here.
   // We mint a fresh claim token via /api/discord/reissue (discord-claim-reissue
   // Edge Function — paid members only), then re-enter the normal tokened chain:
-  // /discord/claim?token= → discord-claim → Discord OAuth → role granted.
+  // /discord/claim?token= → discord-callback → Discord OAuth → role granted.
   //
   // App users arrive in the system browser with NO web session even though
   // they're signed in to the app, so the signin card is the common first stop —
