@@ -504,7 +504,12 @@ describe('useNewsletter', () => {
       const result = await nl.fetchSendHistory();
 
       expect(mockSupabase.from).toHaveBeenCalledWith('newsletter_sends');
-      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('*');
+      // Named columns, never '*': the row also stores the rendered digest html.
+      const columns = mockSupabase._mockSelect.mock.calls[0][0] as string;
+      expect(columns).not.toContain('*');
+      expect(columns).not.toContain('html');
+      expect(columns).toContain('status');
+      expect(columns).toContain('recipient_count');
       expect(mockSupabase._queryBuilder.order).toHaveBeenCalledWith('sent_at', { ascending: false });
       expect(mockSupabase._queryBuilder.limit).toHaveBeenCalledWith(10);
       expect(result).toEqual(records);
