@@ -218,7 +218,10 @@ export const useNewsletter = () => {
     try {
       const { data, error } = await supabase
         .from('newsletter_sends')
-        .select('*')
+        // Named columns: since the send ledger (classicminidiy-supabase
+        // 20261002000005) the row also stores the rendered digest `html`,
+        // tens of KB per row, which this table view never shows.
+        .select('id, sent_at, sent_by, recipient_count, listing_ids, premium_count, free_count, status, error_message')
         .order('sent_at', { ascending: false })
         .limit(10);
 
