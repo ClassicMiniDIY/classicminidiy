@@ -1,5 +1,5 @@
 import type { Database } from '~~/types/database';
-import { featuredUntilFromNow } from '~~/shared/utils/listingPromotion';
+import { featuredUntilFromNow, relistSocialReset } from '~~/shared/utils/listingPromotion';
 
 type Listing = Database['public']['Tables']['listings']['Row'];
 type ListingInsert = Database['public']['Tables']['listings']['Insert'];
@@ -370,12 +370,24 @@ export const useListings = () => {
    * The reset field list MUST stay in sync with the admin relist branch in
    * server/api/admin/listings/[id]/status.put.ts — "relist" has to mean the same
    * thing whether the seller or an admin clicks it. That includes the social
-   * reset: the sweep selects on `promoted_on_social = false`, so the flag and
-   * the timestamp reset together, or a relisted paid listing is never re-posted.
+   * columns, which both paths take from `relistSocialReset()`: the listing is
+   * re-queued for the sweep only when it was never posted or its last post is
+   * older than `SOCIAL_REPOST_AFTER_DAYS`.
    */
   const relistListing = async (listingId: string, previousStatus: string, tier: string, newPrice?: number) => {
     const user = getUser();
     if (!user) throw new Error('User not authenticated');
+
+    // Read the last social post time from the row itself, not from the caller's
+    // copy, which can be stale or lack the column.
+    const { data: current, error: readError } = await supabase
+      .from('listings')
+      .select('promoted_on_social_at')
+      .eq('id', listingId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!current) throw new Error('Listing not found');
 
     const updates: Record<string, any> = {
       status: 'active',
@@ -384,8 +396,7 @@ export const useListings = () => {
       final_price: null,
       tracking_number: null,
       tracking_carrier: null,
-      promoted_on_social: false,
-      promoted_on_social_at: null,
+      ...relistSocialReset(current.promoted_on_social_at),
       featured_until: tier === 'paid' ? featuredUntilFromNow() : null,
     };
 

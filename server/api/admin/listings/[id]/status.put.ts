@@ -21,7 +21,7 @@
  */
 import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
-import { featuredUntilFromNow } from '../../../../../shared/utils/listingPromotion';
+import { featuredUntilFromNow, relistSocialReset } from '../../../../../shared/utils/listingPromotion';
 
 /** Statuses an admin may set. Mirrors the options the admin listings UI actually
  *  offers, including its "Set Example (Free/Paid)" actions — `example_*` rows are
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
   const db = getServiceClient();
   const { data: listing, error: loadErr } = await db
     .from('listings')
-    .select('id, user_id, title, slug, status, tier')
+    .select('id, user_id, title, slug, status, tier, promoted_on_social_at')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw createError({ statusCode: 500, statusMessage: 'Failed to load listing' });
@@ -77,19 +77,18 @@ export default defineEventHandler(async (event) => {
   // it. Leaving tracking_* behind resurfaces stale shipping info on the detail
   // page.
   //
-  // Social: a relisted paid listing is posted again. The social sweep selects on
-  // the FLAG (`promoted_on_social = false`) and orders by the timestamp, NULL
-  // first meaning "never attempted". So both columns reset together: clearing
-  // only the timestamp left the flag true, and the listing was never re-posted.
-  // The sweep's failure counter (on listing_promotions.features) is the
-  // backend's to manage and is not touched here.
+  // Social: `relistSocialReset()` re-queues the listing for the sweep (flag
+  // false, timestamp kept) only when it was never posted or its last post is
+  // older than SOCIAL_REPOST_AFTER_DAYS; otherwise both social columns stay as
+  // they are. The sweep selects on the FLAG, so clearing only the timestamp
+  // never re-posted anything. The sweep's failure counter (on
+  // listing_promotions.features) is the backend's and is not touched here.
   if (body?.relist) {
     updates.sold_date = null;
     updates.final_price = null;
     updates.tracking_number = null;
     updates.tracking_carrier = null;
-    updates.promoted_on_social = false;
-    updates.promoted_on_social_at = null;
+    Object.assign(updates, relistSocialReset(listing.promoted_on_social_at));
     updates.featured_until = listing.tier === 'paid' ? featuredUntilFromNow() : null;
   }
 

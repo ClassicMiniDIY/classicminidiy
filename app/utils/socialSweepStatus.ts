@@ -44,47 +44,75 @@ export function latestPromotionByListing<T extends PromotionRowLike>(
   return latest;
 }
 
-// Mirrors of the sweep policy constants in classicminidiy-supabase. Display only:
-// if they drift, the badge text is wrong, but nothing is posted or skipped.
+// Mirrors of the sweep policy in classicminidiy-supabase (`decideSweep` in
+// post-listing-social/sweep-policy.ts). Display only: if they drift, the badge
+// text is wrong, but nothing is posted or skipped.
 const MINUTE_MS = 60 * 1000;
 const RETRY_BASE_MS = 15 * MINUTE_MS;
 const PARK_AFTER_FAILURES = 5;
 const PARKED_RETRY_MS = 24 * 60 * MINUTE_MS;
+/** The sweep posts a listing up to this long before its retry time (cron jitter). */
+const RETRY_GRACE_MS = 5 * MINUTE_MS;
 
 export interface SocialSweepStatus {
+  /** Failed sweep attempts on the latest promotion row; 0 when there is no counter. */
   failures: number;
-  /** ISO time of the last failed sweep attempt. */
-  lastFailedAt: string;
+  /** ISO time the wait is timed from: the last failure, else the last claim. */
+  since: string;
   /** ISO time the sweep next tries this listing. */
   retryAt: string;
-  /** True on the daily retry (after 5 failures). */
+  /** True on the daily retry (5+ failures, or attempted with no counter). */
   parked: boolean;
 }
 
+function parseTime(value: unknown): number | null {
+  const ms = typeof value === 'string' ? Date.parse(value) : NaN;
+  return Number.isFinite(ms) ? ms : null;
+}
+
 /**
- * The sweep back-off state recorded in a promotion row's `features`, or null when
- * there is nothing to show: no counter, no failure time, or the back-off has
- * already run out (the listing is due on the next sweep).
+ * Why the sweep is holding a pending listing back, or null when the next sweep
+ * posts it. Same decision as `decideSweep`:
+ * - a failure counter of n: wait 15, 30, 60, 120 minutes for n = 1-4, then 24
+ *   hours, timed from `social_sweep_failed_at`, else from `promoted_on_social_at`;
+ * - no counter but `promoted_on_social_at` set (attempted before): 24 hours from it;
+ * - never attempted, or no usable time: due now.
+ * The sweep posts from 5 minutes before the retry time.
+ *
+ * `promotedOnSocialAt` is the listing's `promoted_on_social_at`; pass it only for
+ * a listing with `promoted_on_social = false`.
  */
-export function socialSweepStatus(features: unknown, now: number = Date.now()): SocialSweepStatus | null {
-  if (!features || typeof features !== 'object' || Array.isArray(features)) return null;
-  const f = features as Record<string, unknown>;
+export function socialSweepStatus(
+  features: unknown,
+  promotedOnSocialAt: string | null | undefined,
+  now: number = Date.now()
+): SocialSweepStatus | null {
+  const f =
+    features && typeof features === 'object' && !Array.isArray(features) ? (features as Record<string, unknown>) : {};
   const raw = f.social_sweep_failures;
   const failures = typeof raw === 'number' && Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
-  if (failures === 0) return null;
+  const lastAttemptAt = parseTime(promotedOnSocialAt);
 
-  const failedAt = typeof f.social_sweep_failed_at === 'string' ? Date.parse(f.social_sweep_failed_at) : NaN;
-  if (!Number.isFinite(failedAt)) return null;
+  let delay: number;
+  let from: number | null;
+  if (failures > 0) {
+    delay = failures >= PARK_AFTER_FAILURES ? PARKED_RETRY_MS : RETRY_BASE_MS * 2 ** (failures - 1);
+    from = parseTime(f.social_sweep_failed_at) ?? lastAttemptAt;
+  } else if (lastAttemptAt !== null) {
+    delay = PARKED_RETRY_MS;
+    from = lastAttemptAt;
+  } else {
+    return null;
+  }
+  if (from === null) return null;
 
-  const parked = failures >= PARK_AFTER_FAILURES;
-  const delay = parked ? PARKED_RETRY_MS : RETRY_BASE_MS * 2 ** (failures - 1);
-  const retryAt = failedAt + delay;
-  if (now >= retryAt) return null;
+  const retryAt = from + delay;
+  if (now >= retryAt - RETRY_GRACE_MS) return null;
 
   return {
     failures,
-    lastFailedAt: new Date(failedAt).toISOString(),
+    since: new Date(from).toISOString(),
     retryAt: new Date(retryAt).toISOString(),
-    parked,
+    parked: delay === PARKED_RETRY_MS,
   };
 }

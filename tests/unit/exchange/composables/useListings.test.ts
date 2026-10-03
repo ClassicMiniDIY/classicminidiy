@@ -744,6 +744,14 @@ describe('useListings', () => {
   // relistListing()
   // -------------------------------------------------------------------------
   describe('relistListing()', () => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    beforeEach(() => {
+      // relistListing reads the row's last social post time first. Default:
+      // never posted.
+      mockSupabase._mockMaybeSingle.mockResolvedValue({ data: { promoted_on_social_at: null }, error: null });
+    });
+
     it('resets sale fields, sets featured_until for paid tier, and updates filtered by ownership', async () => {
       mockSupabase._mockSingle.mockResolvedValueOnce({
         data: { ...mockListingWithPhotos, status: 'active' },
@@ -760,10 +768,9 @@ describe('useListings', () => {
       expect(updateArg.final_price).toBeNull();
       expect(updateArg.tracking_number).toBeNull();
       expect(updateArg.tracking_carrier).toBeNull();
-      // The sweep selects on the flag, so a relist must reset it too, or the
-      // relisted paid listing is never posted again.
+      // Never posted => re-queued for the sweep. The timestamp is never written.
       expect(updateArg.promoted_on_social).toBe(false);
-      expect(updateArg.promoted_on_social_at).toBeNull();
+      expect('promoted_on_social_at' in updateArg).toBe(false);
       // paid tier => featured_until ~30 days out
       expect(typeof updateArg.featured_until).toBe('string');
       const days = (new Date(updateArg.featured_until).getTime() - Date.now()) / (24 * 60 * 60 * 1000);
@@ -773,6 +780,52 @@ describe('useListings', () => {
 
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'test-listing-id');
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', 'test-user-id');
+    });
+
+    it('re-queues a listing whose last social post is older than SOCIAL_REPOST_AFTER_DAYS, keeping the timestamp', async () => {
+      mockSupabase._mockMaybeSingle.mockResolvedValue({
+        data: { promoted_on_social_at: new Date(Date.now() - 31 * DAY_MS).toISOString() },
+        error: null,
+      });
+      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
+
+      const { useListings } = await import('~/app/composables/useListings');
+      await useListings().relistListing('test-listing-id', 'sold', 'paid');
+
+      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
+      expect(updateArg.promoted_on_social).toBe(false);
+      expect('promoted_on_social_at' in updateArg).toBe(false);
+      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('promoted_on_social_at');
+    });
+
+    it('leaves both social columns alone when the last post is recent', async () => {
+      mockSupabase._mockMaybeSingle.mockResolvedValue({
+        data: { promoted_on_social_at: new Date(Date.now() - 3 * DAY_MS).toISOString() },
+        error: null,
+      });
+      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
+
+      const { useListings } = await import('~/app/composables/useListings');
+      await useListings().relistListing('test-listing-id', 'sold', 'paid');
+
+      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
+      expect('promoted_on_social' in updateArg).toBe(false);
+      expect('promoted_on_social_at' in updateArg).toBe(false);
+    });
+
+    it('throws without updating when the social read fails or finds no row', async () => {
+      const { useListings } = await import('~/app/composables/useListings');
+
+      mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'read failed' } });
+      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toMatchObject({
+        message: 'read failed',
+      });
+
+      mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toThrow('Listing not found');
+
+      expect(mockSupabase._mockUpdate).not.toHaveBeenCalled();
+      expect(mockCapture).not.toHaveBeenCalled();
     });
 
     it('leaves featured_until null for the free tier', async () => {

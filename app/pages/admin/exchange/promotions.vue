@@ -620,7 +620,9 @@
   const pendingSweepStatus = ref<Record<string, SocialSweepStatus>>({});
 
   const sweepStatusTitle = (status: SocialSweepStatus): string =>
-    `${status.failures} failed sweep attempt${status.failures === 1 ? '' : 's'}, last ${formatDateTime(status.lastFailedAt)}. ` +
+    (status.failures > 0
+      ? `${status.failures} failed sweep attempt${status.failures === 1 ? '' : 's'}, last ${formatDateTime(status.since)}. `
+      : `Last sweep attempt ${formatDateTime(status.since)}, no failure count recorded. `) +
     `Next sweep try after ${formatDateTime(status.retryAt)}. Post to Socials retries now.`;
 
   const hasDiagnostics = (detail: PlatformErrorDetail): boolean =>
@@ -720,7 +722,11 @@
         const now = Date.now();
         const sweepStatus: Record<string, SocialSweepStatus> = {};
         for (const listing of pendingSocialPromotions.value) {
-          const status = socialSweepStatus(latestPromotions.get(listing.id)?.features, now);
+          const status = socialSweepStatus(
+            latestPromotions.get(listing.id)?.features,
+            listing.promoted_on_social_at,
+            now
+          );
           if (status) sweepStatus[listing.id] = status;
         }
         pendingSweepStatus.value = sweepStatus;
