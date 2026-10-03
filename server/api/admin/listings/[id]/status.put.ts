@@ -75,13 +75,20 @@ export default defineEventHandler(async (event) => {
   // `relistListing()` in app/composables/useListings.ts — that is the seller's
   // own relist button, and "relist" has to mean the same thing whoever clicks
   // it. Leaving tracking_* behind resurfaces stale shipping info on the detail
-  // page, and leaving promoted_on_social_at set makes the relisted listing look
-  // already-promoted to the social worker.
+  // page.
+  //
+  // Social: a relisted paid listing is posted again. The social sweep selects on
+  // the FLAG (`promoted_on_social = false`) and orders by the timestamp, NULL
+  // first meaning "never attempted". So both columns reset together: clearing
+  // only the timestamp left the flag true, and the listing was never re-posted.
+  // The sweep's failure counter (on listing_promotions.features) is the
+  // backend's to manage and is not touched here.
   if (body?.relist) {
     updates.sold_date = null;
     updates.final_price = null;
     updates.tracking_number = null;
     updates.tracking_carrier = null;
+    updates.promoted_on_social = false;
     updates.promoted_on_social_at = null;
     updates.featured_until = listing.tier === 'paid' ? featuredUntilFromNow() : null;
   }

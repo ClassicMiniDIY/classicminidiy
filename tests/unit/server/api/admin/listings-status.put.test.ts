@@ -192,8 +192,9 @@ describe('PUT /api/admin/listings/:id/status', () => {
     await handler(evt());
 
     // Field-for-field parity with relistListing() in useListings.ts. Leaving
-    // tracking_* behind resurfaces stale shipping info on the detail page;
-    // leaving promoted_on_social_at set makes it look already-promoted.
+    // tracking_* behind resurfaces stale shipping info on the detail page.
+    // The social flag and timestamp reset together: the sweep selects on the
+    // flag, so clearing only the timestamp never re-posts the listing.
     const update = tableCall('listings', 'update')!;
     expect(update.values).toMatchObject({
       status: 'active',
@@ -201,6 +202,7 @@ describe('PUT /api/admin/listings/:id/status', () => {
       final_price: null,
       tracking_number: null,
       tracking_carrier: null,
+      promoted_on_social: false,
       promoted_on_social_at: null,
       featured_until: null, // free tier
     });
@@ -216,6 +218,31 @@ describe('PUT /api/admin/listings/:id/status', () => {
 
     const featuredUntil = tableCall('listings', 'update')!.values.featured_until as string;
     expect(new Date(featuredUntil).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('relisting a paid listing queues it for the social sweep again', async () => {
+    canned.listings = { data: { ...LISTING, status: 'sold', tier: 'paid' }, error: null };
+    (readBody as any).mockResolvedValue({ status: 'active', relist: true });
+
+    await handler(evt());
+
+    const values = tableCall('listings', 'update')!.values;
+    expect(values.promoted_on_social).toBe(false);
+    expect(values.promoted_on_social_at).toBeNull();
+    // The sweep's failure counter lives on listing_promotions and belongs to
+    // the backend; a relist must not touch that table.
+    expect(tableCall('listing_promotions')).toBeUndefined();
+  });
+
+  it('a plain approval does not reset the social state', async () => {
+    canned.listings = { data: { ...LISTING, status: 'pending', tier: 'paid' }, error: null };
+    (readBody as any).mockResolvedValue({ status: 'active' });
+
+    await handler(evt());
+
+    const values = tableCall('listings', 'update')!.values;
+    expect('promoted_on_social' in values).toBe(false);
+    expect('promoted_on_social_at' in values).toBe(false);
   });
 
   it('short-circuits when the status already matches, writing nothing', async () => {
