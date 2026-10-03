@@ -4,7 +4,7 @@
   // Like all /legal/* pages this is intentionally NOT internationalized.
   import { HERO_TYPES } from '~~/data/models/generic';
 
-  const lastUpdated = 'February 7, 2026';
+  const lastUpdated = 'October 3, 2026';
 
   useHead({
     title: 'Terms of Use | Classic Mini DIY',
@@ -317,9 +317,9 @@
           listings are subject to admin approval before going live.
         </li>
         <li>
-          <strong>Premium Tier</strong>: $10 USD one-time payment. Up to 20 photos, featured placement for 30 days,
-          priority in search results, homepage carousel exposure, and a featured badge on your listing. All listings are
-          subject to admin approval before going live.
+          <strong>Premium Tier</strong>: $10 USD one-time payment. Up to 20 photos, featured placement until the listing
+          sells, homepage carousel exposure, and a featured badge on your listing. All listings are subject to admin
+          approval before going live.
         </li>
       </ul>
       <p>
