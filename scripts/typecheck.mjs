@@ -53,7 +53,10 @@ const BASELINE = {
   // through `~~/shared`.
   // 339 -> 337. FloatingChatInput.vue is deleted with the unified search
   // (the hero search box is the single entry); its two errors went with it.
-  'app/': 337,
+  // 337 -> 336. The seller relist moved to a server route, so the
+  // `Record<string, any>` PostgREST update in useListings.relistListing (which
+  // the generated Update type rejected) is gone.
+  'app/': 336,
   // 64 -> 59. server/utils/runtimeConfig.ts gives `useRuntimeConfig(event)` its
   // real Nitro signature, which removes five identical "Expected 0 arguments,
   // but got 1" errors across bot-analytics, mcp-tiering, mcpUsage and the two
