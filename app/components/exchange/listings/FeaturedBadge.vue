@@ -8,22 +8,21 @@
 </template>
 
 <script setup lang="ts">
+  import { isListingFeatured } from '~~/shared/utils/listingPromotion';
+
   const { t } = useI18n();
 
   type ListingTier = 'free' | 'paid';
 
   interface Props {
     tier: ListingTier;
-    featuredUntil?: string | null;
+    /** The listing's status. A premium listing is featured only while it is live. */
+    status?: string | null;
   }
 
   const props = defineProps<Props>();
 
-  const shouldShowBadge = computed(() => {
-    if (props.tier !== 'paid') return false;
-    if (!props.featuredUntil) return false;
-    return new Date(props.featuredUntil) > new Date();
-  });
+  const shouldShowBadge = computed(() => isListingFeatured(props));
 </script>
 
 <i18n lang="json">

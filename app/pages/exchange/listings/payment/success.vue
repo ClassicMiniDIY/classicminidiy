@@ -34,7 +34,7 @@
               <div class="flex-1 text-left">
                 <div class="flex items-center gap-2 mb-2">
                   <h2 class="text-xl font-semibold">{{ listing.title }}</h2>
-                  <ExchangeListingsFeaturedBadge :tier="listing.tier" :featured-until="listing.featured_until" />
+                  <ExchangeListingsFeaturedBadge :tier="listing.tier" :status="listing.status" />
                 </div>
                 <p class="text-base-content/70 mb-2">{{ listing.year }} {{ listing.model }}</p>
                 <div class="text-2xl font-bold text-primary">${{ listing.price?.toLocaleString() }}</div>
@@ -186,7 +186,7 @@
       "heading": "Your {tier} Tier Benefits:",
       "paid": {
         "photos": "Up to 20 photos",
-        "featured": "Featured placement for 30 days",
+        "featured": "Featured placement until sold",
         "priority": "Priority in search results",
         "carousel": "Homepage carousel exposure",
         "badge": "Featured badge on your listing"
@@ -215,7 +215,7 @@
       "heading": "Beneficios de tu nivel {tier}:",
       "paid": {
         "photos": "Hasta 20 fotos",
-        "featured": "Colocación destacada durante 30 días",
+        "featured": "Colocación destacada hasta que se venda",
         "priority": "Prioridad en los resultados de búsqueda",
         "carousel": "Exposición en el carrusel de inicio",
         "badge": "Insignia destacada en tu anuncio"
@@ -241,7 +241,7 @@
       "heading": "Avantages de votre formule {tier} :",
       "paid": {
         "photos": "Jusqu'à 20 photos",
-        "featured": "Mise en avant pendant 30 jours",
+        "featured": "Mise en avant jusqu'à la vente",
         "priority": "Priorité dans les résultats de recherche",
         "carousel": "Exposition dans le carrousel d'accueil",
         "badge": "Badge en vedette sur votre annonce"
@@ -270,7 +270,7 @@
       "heading": "Vorteile deiner {tier}-Stufe:",
       "paid": {
         "photos": "Bis zu 20 Fotos",
-        "featured": "Hervorgehobene Platzierung für 30 Tage",
+        "featured": "Hervorgehobene Platzierung bis zum Verkauf",
         "priority": "Priorität in den Suchergebnissen",
         "carousel": "Präsenz im Startseiten-Karussell",
         "badge": "Hervorgehoben-Abzeichen auf deiner Anzeige"
@@ -299,7 +299,7 @@
       "heading": "Vantaggi del tuo livello {tier}:",
       "paid": {
         "photos": "Fino a 20 foto",
-        "featured": "Posizionamento in evidenza per 30 giorni",
+        "featured": "Posizionamento in evidenza fino alla vendita",
         "priority": "Priorità nei risultati di ricerca",
         "carousel": "Visibilità nel carosello della home",
         "badge": "Badge in evidenza sul tuo annuncio"
@@ -328,7 +328,7 @@
       "heading": "Benefícios do seu nível {tier}:",
       "paid": {
         "photos": "Até 20 fotos",
-        "featured": "Posição em destaque por 30 dias",
+        "featured": "Posição em destaque até ser vendido",
         "priority": "Prioridade nos resultados de busca",
         "carousel": "Exposição no carrossel da página inicial",
         "badge": "Selo de destaque no seu anúncio"
@@ -357,7 +357,7 @@
       "heading": "Преимущества уровня {tier}:",
       "paid": {
         "photos": "До 20 фотографий",
-        "featured": "Рекомендуемое размещение на 30 дней",
+        "featured": "Рекомендуемое размещение до продажи",
         "priority": "Приоритет в результатах поиска",
         "carousel": "Показ в карусели на главной",
         "badge": "Значок «рекомендуемое» на объявлении"
@@ -386,7 +386,7 @@
       "heading": "{tier} プランの特典:",
       "paid": {
         "photos": "最大20枚の写真",
-        "featured": "30日間の優先掲載",
+        "featured": "売れるまで優先掲載",
         "priority": "検索結果での優先表示",
         "carousel": "トップページのカルーセル掲載",
         "badge": "出品への注目バッジ"
@@ -408,7 +408,7 @@
       "heading": "您的 {tier} 等级权益:",
       "paid": {
         "photos": "最多 20 张照片",
-        "featured": "30 天精选展示",
+        "featured": "精选展示直至售出",
         "priority": "搜索结果优先",
         "carousel": "首页轮播展示",
         "badge": "刊登精选徽章"
@@ -427,7 +427,7 @@
       "heading": "{tier} 등급 혜택:",
       "paid": {
         "photos": "사진 최대 20장",
-        "featured": "30일간 추천 노출",
+        "featured": "판매될 때까지 추천 노출",
         "priority": "검색 결과 우선 노출",
         "carousel": "홈페이지 캐러셀 노출",
         "badge": "매물 추천 배지"

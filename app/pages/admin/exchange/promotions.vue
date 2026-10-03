@@ -237,7 +237,7 @@
                     <h3 class="font-semibold">{{ listing.title }}</h3>
                     <p class="text-sm text-base-content/70">{{ listing.year }} {{ listing.model }}</p>
                     <div class="mt-2 flex flex-wrap items-center gap-2">
-                      <ExchangeListingsFeaturedBadge :tier="listing.tier" :featured-until="listing.featured_until" />
+                      <ExchangeListingsFeaturedBadge :tier="listing.tier" :status="listing.status" />
                       <span
                         v-if="pendingSweepStatus[listing.id]"
                         class="badge badge-sm badge-soft"
@@ -329,7 +329,7 @@
                   </td>
                   <td>
                     <div class="flex flex-wrap items-center gap-2">
-                      <ExchangeListingsFeaturedBadge :tier="listing.tier" :featured-until="listing.featured_until" />
+                      <ExchangeListingsFeaturedBadge :tier="listing.tier" :status="listing.status" />
                       <span
                         v-if="pendingSweepStatus[listing.id]"
                         class="badge badge-sm badge-soft"
@@ -746,6 +746,7 @@
                 year,
                 model,
                 tier,
+                status,
                 payment_status,
                 created_at,
                 promoted_on_social_at,

@@ -388,6 +388,7 @@
   import type { CurrencyCode } from '~/composables/useCurrency';
   import { isExampleStatus } from '~/composables/useExampleListings';
   import { getCountryFlag } from '~/utils/countryFlags';
+  import { isListingFeatured } from '~~/shared/utils/listingPromotion';
 
   const { t } = useI18n();
 
@@ -527,12 +528,8 @@
   // Check if listing is an example listing
   const isExample = computed(() => isExampleStatus(props.listing.status));
 
-  // Check if listing is currently featured (paid tier with active featured_until)
-  const isFeatured = computed(() => {
-    if (props.listing.tier !== 'paid') return false;
-    if (!props.listing.featured_until) return false;
-    return new Date(props.listing.featured_until) > new Date();
-  });
+  // Featured = premium and live, with no end date (isListingFeatured()).
+  const isFeatured = computed(() => isListingFeatured(props.listing));
 
   // Status badge styling
   const statusBadgeClass = computed(() => {

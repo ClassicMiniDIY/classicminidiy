@@ -173,7 +173,7 @@
     "tier": { "premium": "Premium", "free": "Free" },
     "callout": {
       "selected": "{count} Premium listings selected",
-      "features": "Premium includes: 15 photos, featured placement for 30 days, priority in search, homepage carousel, featured badge."
+      "features": "Premium includes: 15 photos, featured placement until sold, priority in search, homepage carousel, featured badge."
     },
     "nav": { "back": "Back to Edit", "next": "Review Listings" },
     "condition": {
@@ -194,7 +194,7 @@
     "tier": { "premium": "Premium", "free": "Gratis" },
     "callout": {
       "selected": "{count} anuncios premium seleccionados",
-      "features": "Premium incluye: 15 fotos, colocación destacada durante 30 días, prioridad en búsquedas, carrusel en la página de inicio e insignia destacada."
+      "features": "Premium incluye: 15 fotos, colocación destacada hasta que se venda, prioridad en búsquedas, carrusel en la página de inicio e insignia destacada."
     },
     "nav": { "back": "Volver a editar", "next": "Revisar anuncios" },
     "condition": {
@@ -215,7 +215,7 @@
     "tier": { "premium": "Premium", "free": "Gratuit" },
     "callout": {
       "selected": "{count} annonces premium sélectionnées",
-      "features": "Premium inclut : 15 photos, mise en avant pendant 30 jours, priorité dans la recherche, carrousel en page d'accueil et badge en vedette."
+      "features": "Premium inclut : 15 photos, mise en avant jusqu'à la vente, priorité dans la recherche, carrousel en page d'accueil et badge en vedette."
     },
     "nav": { "back": "Retour à l'édition", "next": "Vérifier les annonces" },
     "condition": {
@@ -236,7 +236,7 @@
     "tier": { "premium": "Premium", "free": "Kostenlos" },
     "callout": {
       "selected": "{count} Premium-Anzeigen ausgewählt",
-      "features": "Premium beinhaltet: 15 Fotos, hervorgehobene Platzierung für 30 Tage, Priorität in der Suche, Startseiten-Karussell und Hervorhebungs-Badge."
+      "features": "Premium beinhaltet: 15 Fotos, hervorgehobene Platzierung bis zum Verkauf, Priorität in der Suche, Startseiten-Karussell und Hervorhebungs-Badge."
     },
     "nav": { "back": "Zurück zum Bearbeiten", "next": "Anzeigen prüfen" },
     "condition": {
@@ -257,7 +257,7 @@
     "tier": { "premium": "Premium", "free": "Gratis" },
     "callout": {
       "selected": "{count} annunci premium selezionati",
-      "features": "Premium include: 15 foto, posizionamento in evidenza per 30 giorni, priorità nella ricerca, carosello in homepage e badge in evidenza."
+      "features": "Premium include: 15 foto, posizionamento in evidenza fino alla vendita, priorità nella ricerca, carosello in homepage e badge in evidenza."
     },
     "nav": { "back": "Torna a modifica", "next": "Rivedi annunci" },
     "condition": {
@@ -278,7 +278,7 @@
     "tier": { "premium": "Premium", "free": "Grátis" },
     "callout": {
       "selected": "{count} anúncios premium selecionados",
-      "features": "Premium inclui: 15 fotos, destaque por 30 dias, prioridade na busca, carrossel na página inicial e selo de destaque."
+      "features": "Premium inclui: 15 fotos, destaque até ser vendido, prioridade na busca, carrossel na página inicial e selo de destaque."
     },
     "nav": { "back": "Voltar a editar", "next": "Revisar anúncios" },
     "condition": {
@@ -299,7 +299,7 @@
     "tier": { "premium": "Премиум", "free": "Бесплатно" },
     "callout": {
       "selected": "Выбрано премиум-объявлений: {count}",
-      "features": "Премиум включает: 15 фотографий, выделенное размещение на 30 дней, приоритет в поиске, карусель на главной странице и значок выделения."
+      "features": "Премиум включает: 15 фотографий, выделенное размещение до продажи, приоритет в поиске, карусель на главной странице и значок выделения."
     },
     "nav": { "back": "Назад к редактированию", "next": "Проверить объявления" },
     "condition": {
@@ -320,7 +320,7 @@
     "tier": { "premium": "プレミアム", "free": "無料" },
     "callout": {
       "selected": "プレミアム出品を{count}件選択",
-      "features": "プレミアムに含まれるもの：写真15枚、30日間の注目枠掲載、検索での優先表示、ホームページのカルーセル、注目バッジ。"
+      "features": "プレミアムに含まれるもの：写真15枚、売れるまで注目枠掲載、検索での優先表示、ホームページのカルーセル、注目バッジ。"
     },
     "nav": { "back": "編集に戻る", "next": "出品を確認" },
     "condition": {
@@ -341,7 +341,7 @@
     "tier": { "premium": "高级", "free": "免费" },
     "callout": {
       "selected": "已选择 {count} 个高级刊登",
-      "features": "高级包含：15 张照片、30 天精选展示、搜索优先、首页轮播和精选徽章。"
+      "features": "高级包含：15 张照片、精选展示直至售出、搜索优先、首页轮播和精选徽章。"
     },
     "nav": { "back": "返回编辑", "next": "审核刊登" },
     "condition": {
@@ -362,7 +362,7 @@
     "tier": { "premium": "프리미엄", "free": "무료" },
     "callout": {
       "selected": "프리미엄 매물 {count}개 선택됨",
-      "features": "프리미엄 포함: 사진 15장, 30일간 추천 노출, 검색 우선 노출, 홈페이지 캐러셀, 추천 배지."
+      "features": "프리미엄 포함: 사진 15장, 판매될 때까지 추천 노출, 검색 우선 노출, 홈페이지 캐러셀, 추천 배지."
     },
     "nav": { "back": "편집으로 돌아가기", "next": "매물 검토" },
     "condition": {

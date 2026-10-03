@@ -336,10 +336,11 @@
     }
   };
 
-  // Fetch featured (paid tier) listings
+  // Fetch featured listings: premium and live (isListingFeatured() as a query).
+  // Featured has no end date while the listing is live; the status filter
+  // already leaves out sold, expired and cancelled rows.
   const loadFeaturedListings = async () => {
     try {
-      const now = new Date().toISOString();
       const { data, error } = await applyPhotoOrdering(
         supabase
           .from('listings')
@@ -352,7 +353,6 @@
           )
           .in('status', activeStatuses.value)
           .eq('tier', 'paid')
-          .gte('featured_until', now)
           .order('created_at', { ascending: false })
       ).limit(6);
 

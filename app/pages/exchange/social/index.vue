@@ -198,7 +198,6 @@
             country,
             status,
             tier,
-            featured_until,
             final_price,
             listing_category,
             condition,
