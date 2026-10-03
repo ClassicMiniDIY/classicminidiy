@@ -61,7 +61,6 @@ export const usePayments = () => {
         'Vehicles: 20 photos per section',
         'Parts & Engines: 15 photos total',
         'Featured placement until sold',
-        'Priority in search results',
         'Homepage carousel exposure',
         'Featured badge on listing',
       ],

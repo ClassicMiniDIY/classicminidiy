@@ -128,7 +128,6 @@
       return [
         t('benefits.paid.photos'),
         t('benefits.paid.featured'),
-        t('benefits.paid.priority'),
         t('benefits.paid.carousel'),
         t('benefits.paid.badge'),
       ];
@@ -179,7 +178,7 @@
     "seo": { "title": "Payment Successful — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "Payment Successful!",
-      "subtitle": "Your listing has been upgraded and is now live on The Mini Exchange."
+      "subtitle": "Your listing has been upgraded and is submitted for review. We'll email you when it goes live on The Mini Exchange."
     },
     "tier": { "premium": "Premium" },
     "benefits": {
@@ -187,7 +186,6 @@
       "paid": {
         "photos": "Up to 20 photos",
         "featured": "Featured placement until sold",
-        "priority": "Priority in search results",
         "carousel": "Homepage carousel exposure",
         "badge": "Featured badge on your listing"
       },
@@ -208,7 +206,7 @@
     "seo": { "title": "Pago realizado — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "¡Pago realizado!",
-      "subtitle": "Tu anuncio se ha mejorado y ya está publicado en The Mini Exchange."
+      "subtitle": "Tu anuncio se ha mejorado y se ha enviado a revisión. Te avisaremos por correo cuando se publique en The Mini Exchange."
     },
     "tier": { "premium": "Premium" },
     "benefits": {
@@ -216,7 +214,6 @@
       "paid": {
         "photos": "Hasta 20 fotos",
         "featured": "Colocación destacada hasta que se venda",
-        "priority": "Prioridad en los resultados de búsqueda",
         "carousel": "Exposición en el carrusel de inicio",
         "badge": "Insignia destacada en tu anuncio"
       },
@@ -234,7 +231,7 @@
     "seo": { "title": "Paiement réussi — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "Paiement réussi !",
-      "subtitle": "Votre annonce a été améliorée et est maintenant en ligne sur The Mini Exchange."
+      "subtitle": "Votre annonce a été améliorée et envoyée pour vérification. Nous vous enverrons un e-mail quand elle sera en ligne sur The Mini Exchange."
     },
     "tier": { "premium": "Premium" },
     "benefits": {
@@ -242,7 +239,6 @@
       "paid": {
         "photos": "Jusqu'à 20 photos",
         "featured": "Mise en avant jusqu'à la vente",
-        "priority": "Priorité dans les résultats de recherche",
         "carousel": "Exposition dans le carrousel d'accueil",
         "badge": "Badge en vedette sur votre annonce"
       },
@@ -263,7 +259,7 @@
     "seo": { "title": "Zahlung erfolgreich — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "Zahlung erfolgreich!",
-      "subtitle": "Deine Anzeige wurde hochgestuft und ist jetzt auf The Mini Exchange live."
+      "subtitle": "Deine Anzeige wurde hochgestuft und zur Prüfung eingereicht. Wir senden dir eine E-Mail, sobald sie auf The Mini Exchange live ist."
     },
     "tier": { "premium": "Premium" },
     "benefits": {
@@ -271,7 +267,6 @@
       "paid": {
         "photos": "Bis zu 20 Fotos",
         "featured": "Hervorgehobene Platzierung bis zum Verkauf",
-        "priority": "Priorität in den Suchergebnissen",
         "carousel": "Präsenz im Startseiten-Karussell",
         "badge": "Hervorgehoben-Abzeichen auf deiner Anzeige"
       },
@@ -292,7 +287,7 @@
     "seo": { "title": "Pagamento riuscito — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "Pagamento riuscito!",
-      "subtitle": "Il tuo annuncio è stato potenziato ed è ora online su The Mini Exchange."
+      "subtitle": "Il tuo annuncio è stato potenziato ed è stato inviato per la revisione. Ti invieremo un'email quando sarà online su The Mini Exchange."
     },
     "tier": { "premium": "Premium" },
     "benefits": {
@@ -300,7 +295,6 @@
       "paid": {
         "photos": "Fino a 20 foto",
         "featured": "Posizionamento in evidenza fino alla vendita",
-        "priority": "Priorità nei risultati di ricerca",
         "carousel": "Visibilità nel carosello della home",
         "badge": "Badge in evidenza sul tuo annuncio"
       },
@@ -321,7 +315,7 @@
     "seo": { "title": "Pagamento concluído — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "Pagamento concluído!",
-      "subtitle": "Seu anúncio foi atualizado e já está no ar na The Mini Exchange."
+      "subtitle": "Seu anúncio foi atualizado e enviado para revisão. Enviaremos um e-mail quando ele for publicado na The Mini Exchange."
     },
     "tier": { "premium": "Premium" },
     "benefits": {
@@ -329,7 +323,6 @@
       "paid": {
         "photos": "Até 20 fotos",
         "featured": "Posição em destaque até ser vendido",
-        "priority": "Prioridade nos resultados de busca",
         "carousel": "Exposição no carrossel da página inicial",
         "badge": "Selo de destaque no seu anúncio"
       },
@@ -350,7 +343,7 @@
     "seo": { "title": "Оплата прошла — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "Оплата прошла успешно!",
-      "subtitle": "Ваше объявление повышено и теперь опубликовано на The Mini Exchange."
+      "subtitle": "Ваше объявление повышено и отправлено на проверку. Мы сообщим вам по почте, когда оно будет опубликовано на The Mini Exchange."
     },
     "tier": { "premium": "Премиум" },
     "benefits": {
@@ -358,7 +351,6 @@
       "paid": {
         "photos": "До 20 фотографий",
         "featured": "Рекомендуемое размещение до продажи",
-        "priority": "Приоритет в результатах поиска",
         "carousel": "Показ в карусели на главной",
         "badge": "Значок «рекомендуемое» на объявлении"
       },
@@ -379,7 +371,7 @@
     "seo": { "title": "支払い完了 — The Mini Exchange | Classic Mini DIY" },
     "success": {
       "title": "支払いが完了しました!",
-      "subtitle": "出品がアップグレードされ、The Mini Exchange に公開されました。"
+      "subtitle": "出品がアップグレードされ、審査に提出されました。The Mini Exchange に公開されたらメールでお知らせします。"
     },
     "tier": { "premium": "プレミアム" },
     "benefits": {
@@ -387,7 +379,6 @@
       "paid": {
         "photos": "最大20枚の写真",
         "featured": "売れるまで優先掲載",
-        "priority": "検索結果での優先表示",
         "carousel": "トップページのカルーセル掲載",
         "badge": "出品への注目バッジ"
       },
@@ -402,14 +393,16 @@
   },
   "zh": {
     "seo": { "title": "支付成功 — The Mini Exchange | Classic Mini DIY" },
-    "success": { "title": "支付成功!", "subtitle": "您的刊登已升级，现已在 The Mini Exchange 上线。" },
+    "success": {
+      "title": "支付成功!",
+      "subtitle": "您的刊登已升级并已提交审核。在 The Mini Exchange 上线时，我们会发邮件通知您。"
+    },
     "tier": { "premium": "高级" },
     "benefits": {
       "heading": "您的 {tier} 等级权益:",
       "paid": {
         "photos": "最多 20 张照片",
         "featured": "精选展示直至售出",
-        "priority": "搜索结果优先",
         "carousel": "首页轮播展示",
         "badge": "刊登精选徽章"
       },
@@ -421,14 +414,16 @@
   },
   "ko": {
     "seo": { "title": "결제 완료 — The Mini Exchange | Classic Mini DIY" },
-    "success": { "title": "결제 완료!", "subtitle": "매물이 업그레이드되어 The Mini Exchange에 게시되었습니다." },
+    "success": {
+      "title": "결제 완료!",
+      "subtitle": "매물이 업그레이드되어 검토를 위해 제출되었습니다. The Mini Exchange에 게시되면 이메일로 알려드립니다."
+    },
     "tier": { "premium": "프리미엄" },
     "benefits": {
       "heading": "{tier} 등급 혜택:",
       "paid": {
         "photos": "사진 최대 20장",
         "featured": "판매될 때까지 추천 노출",
-        "priority": "검색 결과 우선 노출",
         "carousel": "홈페이지 캐러셀 노출",
         "badge": "매물 추천 배지"
       },

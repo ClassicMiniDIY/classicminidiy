@@ -106,10 +106,6 @@
               <span>{{ t('feature.qaComments') }}</span>
             </li>
             <li class="flex items-center gap-2 font-medium text-primary">
-              <i class="fas fa-arrow-trend-up"></i>
-              <span>{{ t('feature.prioritySearch') }}</span>
-            </li>
-            <li class="flex items-center gap-2 font-medium text-primary">
               <i class="fas fa-house"></i>
               <span>{{ t('feature.homepageCarousel') }}</span>
             </li>
@@ -244,7 +240,6 @@
       "activeUntilSold": "Active until sold or cancelled",
       "standardSearch": "Standard search placement",
       "adminReview": "Admin review required (24-48 hrs)",
-      "prioritySearch": "Priority in search results",
       "homepageCarousel": "Homepage carousel exposure",
       "instantActivation": "Instant activation after payment",
       "socialAutoPost": "Auto-posted to our Facebook, Instagram & Bluesky"
@@ -274,7 +269,6 @@
       "activeUntilSold": "Activo hasta vender o cancelar",
       "standardSearch": "Posición estándar en búsquedas",
       "adminReview": "Requiere revisión del administrador (24-48 h)",
-      "prioritySearch": "Prioridad en los resultados de búsqueda",
       "homepageCarousel": "Aparición en el carrusel de la portada",
       "instantActivation": "Activación instantánea tras el pago",
       "socialAutoPost": "Publicado automáticamente en nuestro Facebook, Instagram y Bluesky"
@@ -307,7 +301,6 @@
       "activeUntilSold": "Active jusqu'à la vente ou l'annulation",
       "standardSearch": "Placement standard dans la recherche",
       "adminReview": "Révision par un administrateur requise (24-48 h)",
-      "prioritySearch": "Priorité dans les résultats de recherche",
       "homepageCarousel": "Exposition dans le carrousel d'accueil",
       "instantActivation": "Activation instantanée après paiement",
       "socialAutoPost": "Publié automatiquement sur nos Facebook, Instagram et Bluesky"
@@ -340,7 +333,6 @@
       "activeUntilSold": "Aktiv bis verkauft oder storniert",
       "standardSearch": "Standardplatzierung in der Suche",
       "adminReview": "Admin-Prüfung erforderlich (24-48 Std.)",
-      "prioritySearch": "Priorität in den Suchergebnissen",
       "homepageCarousel": "Sichtbarkeit im Startseiten-Karussell",
       "instantActivation": "Sofortige Aktivierung nach Zahlung",
       "socialAutoPost": "Automatisch auf unseren Kanälen Facebook, Instagram & Bluesky gepostet"
@@ -375,7 +367,6 @@
       "activeUntilSold": "Attivo fino alla vendita o all'annullamento",
       "standardSearch": "Posizionamento standard nella ricerca",
       "adminReview": "Revisione dell'amministratore richiesta (24-48 h)",
-      "prioritySearch": "Priorità nei risultati di ricerca",
       "homepageCarousel": "Visibilità nel carosello della homepage",
       "instantActivation": "Attivazione immediata dopo il pagamento",
       "socialAutoPost": "Pubblicato automaticamente sui nostri Facebook, Instagram e Bluesky"
@@ -405,7 +396,6 @@
       "activeUntilSold": "Ativo até ser vendido ou cancelado",
       "standardSearch": "Posicionamento padrão na busca",
       "adminReview": "Revisão do administrador necessária (24-48 h)",
-      "prioritySearch": "Prioridade nos resultados de busca",
       "homepageCarousel": "Exposição no carrossel da página inicial",
       "instantActivation": "Ativação instantânea após o pagamento",
       "socialAutoPost": "Publicado automaticamente em nossos Facebook, Instagram e Bluesky"
@@ -435,7 +425,6 @@
       "activeUntilSold": "Активно до продажи или отмены",
       "standardSearch": "Стандартное размещение в поиске",
       "adminReview": "Требуется проверка администратором (24-48 ч)",
-      "prioritySearch": "Приоритет в результатах поиска",
       "homepageCarousel": "Показ в карусели на главной странице",
       "instantActivation": "Мгновенная активация после оплаты",
       "socialAutoPost": "Автоматически публикуется в наших Facebook, Instagram и Bluesky"
@@ -470,7 +459,6 @@
       "activeUntilSold": "売却またはキャンセルまで有効",
       "standardSearch": "標準的な検索表示",
       "adminReview": "管理者の審査が必要（24〜48時間）",
-      "prioritySearch": "検索結果で優先表示",
       "homepageCarousel": "トップページのカルーセルに掲載",
       "instantActivation": "支払い後すぐに有効化",
       "socialAutoPost": "当社の Facebook、Instagram、Bluesky に自動投稿"
@@ -500,7 +488,6 @@
       "activeUntilSold": "在售出或取消前一直有效",
       "standardSearch": "标准搜索排位",
       "adminReview": "需要管理员审核（24-48 小时）",
-      "prioritySearch": "搜索结果中优先展示",
       "homepageCarousel": "首页轮播展示",
       "instantActivation": "付款后即时激活",
       "socialAutoPost": "自动发布到我们的 Facebook、Instagram 和 Bluesky"
@@ -530,7 +517,6 @@
       "activeUntilSold": "판매되거나 취소될 때까지 활성",
       "standardSearch": "일반 검색 노출",
       "adminReview": "관리자 검토 필요 (24-48시간)",
-      "prioritySearch": "검색 결과에서 우선 노출",
       "homepageCarousel": "홈페이지 캐러셀 노출",
       "instantActivation": "결제 후 즉시 활성화",
       "socialAutoPost": "당사 Facebook, Instagram, Bluesky에 자동 게시"
