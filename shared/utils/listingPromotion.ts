@@ -1,14 +1,20 @@
 /**
- * Paid-listing promotion window, shared by the client relist path
- * (`useListings.relistListing`) and the admin moderation route that activates
- * a paid listing. Both compute `featured_until` from it; one copy so a relist
- * and an approval never disagree on how long "featured" lasts.
+ * Listing promotion rules shared by the client and the server: what makes a
+ * listing "featured", and what a relist writes.
  */
-export const FEATURED_DURATION_DAYS = 30;
 
-/** `featured_until` for a paid listing activated or relisted now. */
-export function featuredUntilFromNow(now = Date.now()): string {
-  return new Date(now + FEATURED_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+/**
+ * A listing is featured when it is premium (`tier = 'paid'`) and live:
+ * `active`, or `example_paid` for the demo rows. It has no end date while it is
+ * live. A sold, expired, cancelled, pending or draft premium listing is never
+ * featured. `featured_until` plays no part: it is deprecated, and nothing may
+ * read it.
+ *
+ * Used by the homepage featured strip (as its query filters), the listing card
+ * ring and `FeaturedBadge`.
+ */
+export function isListingFeatured(listing: { tier?: string | null; status?: string | null }): boolean {
+  return listing.tier === 'paid' && (listing.status === 'active' || listing.status === 'example_paid');
 }
 
 /** The columns a relist writes. See `relistUpdates()`. */

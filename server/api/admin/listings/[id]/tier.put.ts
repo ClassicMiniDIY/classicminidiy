@@ -18,8 +18,6 @@ import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
 
 const ALLOWED = ['free', 'paid'] as const;
-/** Mirrors FEATURED_DAYS in the edge function's _shared/listings.ts. */
-const FEATURED_DAYS = 30;
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -36,7 +34,7 @@ export default defineEventHandler(async (event) => {
   const db = getServiceClient();
   const { data: listing, error: loadErr } = await db
     .from('listings')
-    .select('id, title, tier, featured_until')
+    .select('id, title, tier')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw createError({ statusCode: 500, statusMessage: 'Failed to load listing' });
@@ -44,17 +42,10 @@ export default defineEventHandler(async (event) => {
 
   if (listing.tier === tier) return { success: true, tier, unchanged: true };
 
-  // featured_until has to move with the tier or the two disagree: a listing
-  // downgraded to free while still holding a future featured_until keeps its
-  // priority placement and homepage carousel slot for free.
-  const updates: Record<string, unknown> = { tier };
-  if (tier === 'paid') {
-    updates.featured_until = new Date(Date.now() + FEATURED_DAYS * 24 * 60 * 60 * 1000).toISOString();
-  } else {
-    updates.featured_until = null;
-  }
-
-  const { error: upErr } = await db.from('listings').update(updates).eq('id', id);
+  // `tier` only. Featured = premium and live (isListingFeatured()), with no end
+  // date, so there is no featured_until to move with the tier; the column is
+  // deprecated and nothing reads it.
+  const { error: upErr } = await db.from('listings').update({ tier }).eq('id', id);
   if (upErr) throw createError({ statusCode: 500, statusMessage: upErr.message });
 
   await db.from('admin_audit_log').insert({

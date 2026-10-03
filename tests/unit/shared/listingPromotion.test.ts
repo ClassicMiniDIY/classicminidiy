@@ -1,18 +1,31 @@
 /** @vitest-environment node */
-import { describe, expect, it } from 'vitest';
-import { FEATURED_DURATION_DAYS, featuredUntilFromNow, relistUpdates } from '~~/shared/utils/listingPromotion';
+import { isListingFeatured, relistUpdates } from '~~/shared/utils/listingPromotion';
 
-describe('featuredUntilFromNow', () => {
-  it('is exactly FEATURED_DURATION_DAYS after the given instant, as ISO', () => {
-    const now = Date.UTC(2026, 0, 1);
-    expect(featuredUntilFromNow(now)).toBe(new Date(now + FEATURED_DURATION_DAYS * 86_400_000).toISOString());
+describe('isListingFeatured', () => {
+  it('features a premium listing while it is live', () => {
+    expect(isListingFeatured({ tier: 'paid', status: 'active' })).toBe(true);
+    expect(isListingFeatured({ tier: 'paid', status: 'example_paid' })).toBe(true);
   });
 
-  it('defaults to the current time', () => {
-    const before = Date.now();
-    const until = Date.parse(featuredUntilFromNow());
-    expect(until - before).toBeGreaterThanOrEqual(FEATURED_DURATION_DAYS * 86_400_000);
-    expect(until - before).toBeLessThan(FEATURED_DURATION_DAYS * 86_400_000 + 5_000);
+  it.each(['sold', 'expired', 'cancelled', 'pending', 'draft', 'example_free', null, undefined])(
+    'never features a premium listing that is %s',
+    (status) => {
+      expect(isListingFeatured({ tier: 'paid', status })).toBe(false);
+    }
+  );
+
+  it.each(['active', 'example_paid', 'sold', 'pending'])('never features a free listing (%s)', (status) => {
+    expect(isListingFeatured({ tier: 'free', status })).toBe(false);
+    expect(isListingFeatured({ tier: null, status })).toBe(false);
+  });
+
+  it('has no end date: featured_until plays no part', () => {
+    const past = { tier: 'paid', status: 'active', featured_until: '2020-01-01T00:00:00.000Z' };
+    const none = { tier: 'paid', status: 'active', featured_until: null };
+    const future = { tier: 'free', status: 'active', featured_until: '2099-01-01T00:00:00.000Z' };
+    expect(isListingFeatured(past)).toBe(true);
+    expect(isListingFeatured(none)).toBe(true);
+    expect(isListingFeatured(future)).toBe(false);
   });
 });
 

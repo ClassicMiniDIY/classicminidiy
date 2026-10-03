@@ -6,9 +6,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // useAdmin().updateListingTier() had been 404ing against it since the TME
 // consolidation, so an admin could not grant or revoke premium by hand.
 //
-// The behaviour worth pinning is that featured_until moves WITH the tier: a
-// listing downgraded to free while still holding a future featured_until keeps
-// its priority placement and homepage carousel slot for nothing.
+// The route writes `tier` only. Featured = premium and live
+// (isListingFeatured()), with no end date, so featured_until is never written:
+// the column is deprecated and nothing reads it.
 // ---------------------------------------------------------------------------
 
 interface Recorded {
@@ -73,7 +73,7 @@ vi.mock('~/server/utils/adminAuth', () => ({
 const handler = (await import('~~/server/api/admin/listings/[id]/tier.put')).default;
 
 const LISTING_ID = 'listing-1';
-const FREE_LISTING = { id: LISTING_ID, title: 'Fiberglass doors', tier: 'free', featured_until: null };
+const FREE_LISTING = { id: LISTING_ID, title: 'Fiberglass doors', tier: 'free', status: 'pending' };
 
 function evt(): any {
   return { node: { req: {} } };
@@ -116,14 +116,13 @@ describe('PUT /api/admin/listings/:id/tier', () => {
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 404 });
   });
 
-  it('granting paid opens a future featured window and audits it', async () => {
+  it('granting paid writes the tier only (no featured_until) and audits it', async () => {
     (readBody as any).mockResolvedValue({ tier: 'paid' });
 
     expect(await handler(evt())).toMatchObject({ success: true, tier: 'paid' });
 
     const update = tableCall('listings', 'update')!;
-    expect(update.values.tier).toBe('paid');
-    expect(new Date(update.values.featured_until).getTime()).toBeGreaterThan(Date.now());
+    expect(update.values).toEqual({ tier: 'paid' });
     expect(update.filters).toEqual([['id', LISTING_ID]]);
 
     expect(tableCall('admin_audit_log', 'insert')!.values).toMatchObject({
@@ -135,16 +134,13 @@ describe('PUT /api/admin/listings/:id/tier', () => {
     });
   });
 
-  it('revoking paid clears the featured window, so free placement is not free premium', async () => {
-    canned.listings = {
-      data: { ...FREE_LISTING, tier: 'paid', featured_until: '2099-01-01T00:00:00.000Z' },
-      error: null,
-    };
+  it('revoking paid writes the tier only; a free listing is never featured', async () => {
+    canned.listings = { data: { ...FREE_LISTING, tier: 'paid', status: 'active' }, error: null };
     (readBody as any).mockResolvedValue({ tier: 'free' });
 
     expect(await handler(evt())).toMatchObject({ success: true, tier: 'free' });
 
-    expect(tableCall('listings', 'update')!.values).toMatchObject({ tier: 'free', featured_until: null });
+    expect(tableCall('listings', 'update')!.values).toEqual({ tier: 'free' });
     expect(tableCall('admin_audit_log', 'insert')!.values.action).toBe('listing_tier_revoked');
   });
 

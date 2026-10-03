@@ -158,7 +158,7 @@
       "premiumApplied": { "title": "Premium Applied", "desc": "Included with your Sustaining membership" },
       "review": { "title": "Admin Review", "desc": "Our team reviews all listings for quality (24-48 hours)" },
       "featured": {
-        "title": "Featured for 30 Days",
+        "title": "Featured Until Sold",
         "desc": "Once approved: priority search placement and homepage carousel exposure"
       }
     },
@@ -193,7 +193,7 @@
         "desc": "Nuestro equipo revisa todos los anuncios por calidad (24-48 horas)"
       },
       "featured": {
-        "title": "Destacado durante 30 días",
+        "title": "Destacado hasta que se venda",
         "desc": "Una vez aprobado: posición prioritaria en búsquedas y aparición en el carrusel de la página de inicio"
       }
     },
@@ -234,7 +234,7 @@
         "desc": "Notre équipe examine la qualité de toutes les annonces (24-48 heures)"
       },
       "featured": {
-        "title": "Mis en avant pendant 30 jours",
+        "title": "Mis en avant jusqu'à la vente",
         "desc": "Après approbation : placement prioritaire dans la recherche et exposition dans le carrousel de la page d'accueil"
       }
     },
@@ -278,7 +278,7 @@
       "premiumApplied": { "title": "Premium angewendet", "desc": "In deiner Sustaining-Mitgliedschaft enthalten" },
       "review": { "title": "Admin-Prüfung", "desc": "Unser Team prüft alle Anzeigen auf Qualität (24-48 Stunden)" },
       "featured": {
-        "title": "30 Tage hervorgehoben",
+        "title": "Hervorgehoben bis zum Verkauf",
         "desc": "Nach der Genehmigung: vorrangige Platzierung in der Suche und Anzeige im Karussell der Startseite"
       }
     },
@@ -316,7 +316,7 @@
         "desc": "Il nostro team controlla la qualità di tutti gli annunci (24-48 ore)"
       },
       "featured": {
-        "title": "In evidenza per 30 giorni",
+        "title": "In evidenza fino alla vendita",
         "desc": "Una volta approvato: posizionamento prioritario nelle ricerche ed esposizione nel carosello della home page"
       }
     },
@@ -360,7 +360,7 @@
         "desc": "Nossa equipe revisa a qualidade de todos os anúncios (24-48 horas)"
       },
       "featured": {
-        "title": "Destaque por 30 dias",
+        "title": "Destaque até ser vendido",
         "desc": "Após a aprovação: posição prioritária na busca e exposição no carrossel da página inicial"
       }
     },
@@ -398,7 +398,7 @@
         "desc": "Наша команда проверяет качество всех объявлений (24-48 часов)"
       },
       "featured": {
-        "title": "Выделение на 30 дней",
+        "title": "Выделение до продажи",
         "desc": "После одобрения: приоритетное место в поиске и показ в карусели на главной странице"
       }
     },
@@ -435,7 +435,10 @@
     "comped": {
       "premiumApplied": { "title": "Premium 適用済み", "desc": "Sustaining メンバーシップに含まれます" },
       "review": { "title": "管理者による審査", "desc": "当チームがすべての出品の品質を確認します（24〜48時間）" },
-      "featured": { "title": "30 日間の注目掲載", "desc": "承認後：検索での優先表示とホームページのカルーセルへの露出" }
+      "featured": {
+        "title": "売れるまで注目掲載",
+        "desc": "承認後：検索での優先表示とホームページのカルーセルへの露出"
+      }
     },
     "paid": {
       "payment": { "title": "支払いを完了", "desc": "下のボタンから Stripe で安全に支払えます" },
@@ -464,7 +467,7 @@
     "comped": {
       "premiumApplied": { "title": "已应用 Premium", "desc": "已包含在您的 Sustaining 会籍中" },
       "review": { "title": "管理员审核", "desc": "我们的团队会审核所有刊登的质量（24-48 小时）" },
-      "featured": { "title": "精选展示 30 天", "desc": "审核通过后：搜索优先展示以及首页轮播曝光" }
+      "featured": { "title": "精选展示直至售出", "desc": "审核通过后：搜索优先展示以及首页轮播曝光" }
     },
     "paid": {
       "payment": { "title": "完成付款", "desc": "点击下方通过 Stripe 安全付款" },
@@ -493,7 +496,7 @@
     "comped": {
       "premiumApplied": { "title": "Premium 적용됨", "desc": "Sustaining 멤버십에 포함됨" },
       "review": { "title": "관리자 검토", "desc": "저희 팀이 모든 등록의 품질을 검토합니다 (24-48시간)" },
-      "featured": { "title": "30일간 추천 노출", "desc": "승인 후: 검색 우선 노출 및 홈페이지 캐러셀 노출" }
+      "featured": { "title": "판매될 때까지 추천 노출", "desc": "승인 후: 검색 우선 노출 및 홈페이지 캐러셀 노출" }
     },
     "paid": {
       "payment": { "title": "결제 완료", "desc": "아래를 클릭하여 Stripe로 안전하게 결제하세요" },

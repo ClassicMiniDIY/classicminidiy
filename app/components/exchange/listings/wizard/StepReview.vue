@@ -380,7 +380,7 @@
                       <i class="far fa-star text-2xl text-primary shrink-0"></i>
                       <div>
                         <div class="font-semibold text-primary">{{ t('sidebar.premiumListing') }}</div>
-                        <div class="text-xs text-base-content/70">{{ t('sidebar.featuredDays') }}</div>
+                        <div class="text-xs text-base-content/70">{{ t('sidebar.featuredUntilSold') }}</div>
                       </div>
                     </div>
                   </div>
@@ -620,7 +620,7 @@
       "free": "Free",
       "heritageCertified": "Heritage Certified",
       "premiumListing": "Premium Listing",
-      "featuredDays": "Featured for 30 days",
+      "featuredUntilSold": "Featured until sold",
       "contactSeller": "Contact Seller",
       "saveToWatchlist": "Save to Watchlist",
       "buttonsDisabled": "Buttons disabled in preview mode"
@@ -699,7 +699,7 @@
       "free": "Gratis",
       "heritageCertified": "Certificado de procedencia",
       "premiumListing": "Anuncio premium",
-      "featuredDays": "Destacado durante 30 días",
+      "featuredUntilSold": "Destacado hasta que se venda",
       "contactSeller": "Contactar al vendedor",
       "saveToWatchlist": "Guardar en seguimiento",
       "buttonsDisabled": "Botones desactivados en modo vista previa"
@@ -774,7 +774,7 @@
       "free": "Gratuit",
       "heritageCertified": "Certifié provenance",
       "premiumListing": "Annonce premium",
-      "featuredDays": "Mise en avant pendant 30 jours",
+      "featuredUntilSold": "Mise en avant jusqu'à la vente",
       "contactSeller": "Contacter le vendeur",
       "saveToWatchlist": "Ajouter aux favoris",
       "buttonsDisabled": "Boutons désactivés en mode aperçu"
@@ -853,7 +853,7 @@
       "free": "Kostenlos",
       "heritageCertified": "Heritage-zertifiziert",
       "premiumListing": "Premium-Anzeige",
-      "featuredDays": "30 Tage lang hervorgehoben",
+      "featuredUntilSold": "Hervorgehoben bis zum Verkauf",
       "contactSeller": "Verkäufer kontaktieren",
       "saveToWatchlist": "Zur Merkliste hinzufügen",
       "buttonsDisabled": "Schaltflächen im Vorschaumodus deaktiviert"
@@ -932,7 +932,7 @@
       "free": "Gratis",
       "heritageCertified": "Provenienza certificata",
       "premiumListing": "Annuncio premium",
-      "featuredDays": "In evidenza per 30 giorni",
+      "featuredUntilSold": "In evidenza fino alla vendita",
       "contactSeller": "Contatta il venditore",
       "saveToWatchlist": "Salva nei preferiti",
       "buttonsDisabled": "Pulsanti disattivati in modalità anteprima"
@@ -1014,7 +1014,7 @@
       "free": "Grátis",
       "heritageCertified": "Procedência certificada",
       "premiumListing": "Anúncio premium",
-      "featuredDays": "Em destaque por 30 dias",
+      "featuredUntilSold": "Em destaque até ser vendido",
       "contactSeller": "Contatar vendedor",
       "saveToWatchlist": "Salvar na lista de interesses",
       "buttonsDisabled": "Botões desativados no modo de visualização"
@@ -1093,7 +1093,7 @@
       "free": "Бесплатно",
       "heritageCertified": "Происхождение подтверждено",
       "premiumListing": "Премиум-объявление",
-      "featuredDays": "В рекомендуемых 30 дней",
+      "featuredUntilSold": "В рекомендуемых до продажи",
       "contactSeller": "Связаться с продавцом",
       "saveToWatchlist": "Добавить в избранное",
       "buttonsDisabled": "Кнопки отключены в режиме предпросмотра"
@@ -1166,7 +1166,7 @@
       "free": "無料",
       "heritageCertified": "ヘリテージ認証済み",
       "premiumListing": "プレミアム出品",
-      "featuredDays": "30日間注目掲載",
+      "featuredUntilSold": "売れるまで注目掲載",
       "contactSeller": "出品者に連絡",
       "saveToWatchlist": "ウォッチリストに保存",
       "buttonsDisabled": "プレビューモードではボタンは無効です"
@@ -1234,7 +1234,7 @@
       "free": "免费",
       "heritageCertified": "来历认证",
       "premiumListing": "高级刊登",
-      "featuredDays": "推荐展示 30 天",
+      "featuredUntilSold": "推荐展示直至售出",
       "contactSeller": "联系卖家",
       "saveToWatchlist": "保存到关注列表",
       "buttonsDisabled": "预览模式下按钮已禁用"
@@ -1302,7 +1302,7 @@
       "free": "무료",
       "heritageCertified": "내력 인증됨",
       "premiumListing": "프리미엄 매물",
-      "featuredDays": "30일간 추천 노출",
+      "featuredUntilSold": "판매될 때까지 추천 노출",
       "contactSeller": "판매자에게 문의",
       "saveToWatchlist": "관심목록에 저장",
       "buttonsDisabled": "미리보기 모드에서는 버튼이 비활성화됩니다"

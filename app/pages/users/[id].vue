@@ -63,7 +63,7 @@
           .from('listings')
           // Select * so ExchangeListingsListingCard gets every field it reads
           // (status, currency, listing_category, manufacturer, country, previous_price,
-          // final_price, city/state_province, featured_until) and sortExamplesLast has `status`.
+          // final_price, city/state_province, tier) and sortExamplesLast has `status`.
           .select(
             `*,
              listing_photos ( id, storage_path, is_primary, display_order )`

@@ -348,7 +348,7 @@ export const useAdmin = () => {
 
   /**
    * Update listing tier (admin only)
-   * Uses server API to update tier and featured_until
+   * Uses the server API, which writes `tier` only
    */
   const updateListingTier = async (listingId: string, tier: 'free' | 'paid') => {
     const session = await supabase.auth.getSession();
