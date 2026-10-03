@@ -206,7 +206,9 @@
                     <i class="fas fa-chart-column text-lg text-base-content/60"></i>
                     <div>
                       <div class="text-sm text-base-content/60">{{ t('specs.mileage') }}</div>
-                      <div class="font-medium">{{ t('specs.mileageValue', { miles: formData.mileage?.toLocaleString() }) }}</div>
+                      <div class="font-medium">
+                        {{ t('specs.mileageValue', { miles: formData.mileage?.toLocaleString() }) }}
+                      </div>
                     </div>
                   </div>
 
@@ -348,7 +350,9 @@
                 <div class="card-body">
                   <!-- Price -->
                   <div class="mb-6">
-                    <div v-if="formData.price !== 0" class="text-sm text-base-content/60 mb-1">{{ t('sidebar.askingPrice') }}</div>
+                    <div v-if="formData.price !== 0" class="text-sm text-base-content/60 mb-1">
+                      {{ t('sidebar.askingPrice') }}
+                    </div>
                     <div class="text-4xl font-bold" :class="formData.price === 0 ? 'text-success' : 'text-primary'">
                       {{ formatPrice(formData.price, formData.currency) }}
                     </div>
@@ -421,7 +425,11 @@
               <span v-if="submitting" class="loading loading-spinner"></span>
               <template v-else>
                 <i class="fas fa-paper-plane"></i>
-                {{ formData.tier === 'paid' && !memberPricingUnlocked ? t('submit.submitAndPay') : t('submit.submitListing') }}
+                {{
+                  formData.tier === 'paid' && !memberPricingUnlocked
+                    ? t('submit.submitAndPay')
+                    : t('submit.submitListing')
+                }}
               </template>
             </button>
           </div>
@@ -567,162 +575,759 @@
 {
   "en": {
     "preview": { "mode": "Preview Mode", "subtitle": "- This is how your listing will appear to buyers" },
-    "tabs": { "all": "All ({count})", "body": "Body ({count})", "engine": "Engine ({count})", "interior": "Interior ({count})", "details": "Details ({count})" },
+    "tabs": {
+      "all": "All ({count})",
+      "body": "Body ({count})",
+      "engine": "Engine ({count})",
+      "interior": "Interior ({count})",
+      "details": "Details ({count})"
+    },
     "photos": { "primary": "Primary", "photoN": "Photo {n}", "none": "No photos added" },
     "header": { "untitled": "Untitled Listing", "views": "{count} views", "locationNotSet": "Location not set" },
-    "sections": { "description": "Description", "noDescription": "No description provided", "specifications": "Specifications" },
-    "specs": { "mileage": "Mileage", "mileageValue": "{miles} miles", "engineSize": "Engine Size", "gearbox": "Gearbox", "color": "Color", "condition": "Condition", "partNumber": "Part Number", "type": "Type", "quantityAvailable": "Quantity Available", "shipping": "Shipping", "shippingAvailable": "Available", "pickupOnly": "Pickup Only", "shipsTo": "Ships to:" },
-    "heritage": { "section": "Heritage & Provenance", "vin": "VIN / Chassis", "engineNumber": "Engine Number", "originalColor": "Original Color", "previousOwners": "Previous Owners" },
-    "qa": { "section": "Questions & Answers", "placeholder": "Comments will appear here after your listing is published" },
-    "sidebar": { "askingPrice": "Asking Price", "free": "Free", "heritageCertified": "Heritage Certified", "premiumListing": "Premium Listing", "featuredDays": "Featured for 30 days", "contactSeller": "Contact Seller", "saveToWatchlist": "Save to Watchlist", "buttonsDisabled": "Buttons disabled in preview mode" },
-    "submit": { "backToEdit": "Back to Edit", "paymentNotice": "Payment of $10 via Stripe after submit", "submitAndPay": "Submit & Pay", "submitListing": "Submit Listing" },
+    "sections": {
+      "description": "Description",
+      "noDescription": "No description provided",
+      "specifications": "Specifications"
+    },
+    "specs": {
+      "mileage": "Mileage",
+      "mileageValue": "{miles} miles",
+      "engineSize": "Engine Size",
+      "gearbox": "Gearbox",
+      "color": "Color",
+      "condition": "Condition",
+      "partNumber": "Part Number",
+      "type": "Type",
+      "quantityAvailable": "Quantity Available",
+      "shipping": "Shipping",
+      "shippingAvailable": "Available",
+      "pickupOnly": "Pickup Only",
+      "shipsTo": "Ships to:"
+    },
+    "heritage": {
+      "section": "Heritage & Provenance",
+      "vin": "VIN / Chassis",
+      "engineNumber": "Engine Number",
+      "originalColor": "Original Color",
+      "previousOwners": "Previous Owners"
+    },
+    "qa": {
+      "section": "Questions & Answers",
+      "placeholder": "Comments will appear here after your listing is published"
+    },
+    "sidebar": {
+      "askingPrice": "Asking Price",
+      "free": "Free",
+      "heritageCertified": "Heritage Certified",
+      "premiumListing": "Premium Listing",
+      "featuredDays": "Featured for 30 days",
+      "contactSeller": "Contact Seller",
+      "saveToWatchlist": "Save to Watchlist",
+      "buttonsDisabled": "Buttons disabled in preview mode"
+    },
+    "submit": {
+      "backToEdit": "Back to Edit",
+      "paymentNotice": "Payment of $10 via Stripe after submit",
+      "submitAndPay": "Submit & Pay",
+      "submitListing": "Submit Listing"
+    },
     "conditions": { "excellent": "Excellent", "good": "Good", "fair": "Fair", "project": "Project" },
-    "partConditions": { "new": "New", "used_excellent": "Used - Excellent", "used_good": "Used - Good", "used_fair": "Used - Fair", "for_parts": "For Parts" },
-    "gearboxes": { "3-synchro": "3-Synchro", "4-synchro": "4-Synchro", "rod-change": "Rod Change", "magic-wand": "Magic Wand", "automatic": "Automatic" },
+    "partConditions": {
+      "new": "New",
+      "used_excellent": "Used - Excellent",
+      "used_good": "Used - Good",
+      "used_fair": "Used - Fair",
+      "for_parts": "For Parts"
+    },
+    "gearboxes": {
+      "3-synchro": "3-Synchro",
+      "4-synchro": "4-Synchro",
+      "rod-change": "Rod Change",
+      "magic-wand": "Magic Wand",
+      "automatic": "Automatic"
+    },
     "oemTypes": { "oem": "OEM / Genuine", "aftermarket": "Aftermarket", "reproduction": "Reproduction" }
   },
   "es": {
     "preview": { "mode": "Modo de vista previa", "subtitle": "- Así es como verán tu anuncio los compradores" },
-    "tabs": { "all": "Todas ({count})", "body": "Carrocería ({count})", "engine": "Motor ({count})", "interior": "Interior ({count})", "details": "Detalles ({count})" },
+    "tabs": {
+      "all": "Todas ({count})",
+      "body": "Carrocería ({count})",
+      "engine": "Motor ({count})",
+      "interior": "Interior ({count})",
+      "details": "Detalles ({count})"
+    },
     "photos": { "primary": "Principal", "photoN": "Foto {n}", "none": "No se han añadido fotos" },
-    "header": { "untitled": "Anuncio sin título", "views": "{count} vistas", "locationNotSet": "Ubicación no establecida" },
-    "sections": { "description": "Descripción", "noDescription": "No se proporcionó descripción", "specifications": "Especificaciones" },
-    "specs": { "mileage": "Kilometraje", "mileageValue": "{miles} millas", "engineSize": "Cilindrada", "gearbox": "Caja de cambios", "color": "Color", "condition": "Estado", "partNumber": "Número de pieza", "type": "Tipo", "quantityAvailable": "Cantidad disponible", "shipping": "Envío", "shippingAvailable": "Disponible", "pickupOnly": "Solo recogida", "shipsTo": "Envía a:" },
-    "heritage": { "section": "Historia y procedencia", "vin": "VIN / Bastidor", "engineNumber": "Número de motor", "originalColor": "Color original", "previousOwners": "Propietarios anteriores" },
-    "qa": { "section": "Preguntas y respuestas", "placeholder": "Los comentarios aparecerán aquí después de publicar tu anuncio" },
-    "sidebar": { "askingPrice": "Precio solicitado", "free": "Gratis", "heritageCertified": "Certificado de procedencia", "premiumListing": "Anuncio premium", "featuredDays": "Destacado durante 30 días", "contactSeller": "Contactar al vendedor", "saveToWatchlist": "Guardar en seguimiento", "buttonsDisabled": "Botones desactivados en modo vista previa" },
-    "submit": { "backToEdit": "Volver a editar", "paymentNotice": "Pago de 10 $ mediante Stripe tras enviar", "submitAndPay": "Enviar y pagar", "submitListing": "Publicar anuncio" },
+    "header": {
+      "untitled": "Anuncio sin título",
+      "views": "{count} vistas",
+      "locationNotSet": "Ubicación no establecida"
+    },
+    "sections": {
+      "description": "Descripción",
+      "noDescription": "No se proporcionó descripción",
+      "specifications": "Especificaciones"
+    },
+    "specs": {
+      "mileage": "Kilometraje",
+      "mileageValue": "{miles} millas",
+      "engineSize": "Cilindrada",
+      "gearbox": "Caja de cambios",
+      "color": "Color",
+      "condition": "Estado",
+      "partNumber": "Número de pieza",
+      "type": "Tipo",
+      "quantityAvailable": "Cantidad disponible",
+      "shipping": "Envío",
+      "shippingAvailable": "Disponible",
+      "pickupOnly": "Solo recogida",
+      "shipsTo": "Envía a:"
+    },
+    "heritage": {
+      "section": "Historia y procedencia",
+      "vin": "VIN / Bastidor",
+      "engineNumber": "Número de motor",
+      "originalColor": "Color original",
+      "previousOwners": "Propietarios anteriores"
+    },
+    "qa": {
+      "section": "Preguntas y respuestas",
+      "placeholder": "Los comentarios aparecerán aquí después de publicar tu anuncio"
+    },
+    "sidebar": {
+      "askingPrice": "Precio solicitado",
+      "free": "Gratis",
+      "heritageCertified": "Certificado de procedencia",
+      "premiumListing": "Anuncio premium",
+      "featuredDays": "Destacado durante 30 días",
+      "contactSeller": "Contactar al vendedor",
+      "saveToWatchlist": "Guardar en seguimiento",
+      "buttonsDisabled": "Botones desactivados en modo vista previa"
+    },
+    "submit": {
+      "backToEdit": "Volver a editar",
+      "paymentNotice": "Pago de 10 $ mediante Stripe tras enviar",
+      "submitAndPay": "Enviar y pagar",
+      "submitListing": "Publicar anuncio"
+    },
     "conditions": { "excellent": "Excelente", "good": "Bueno", "fair": "Aceptable", "project": "Proyecto" },
-    "partConditions": { "new": "Nuevo", "used_excellent": "Usado - Excelente", "used_good": "Usado - Bueno", "used_fair": "Usado - Aceptable", "for_parts": "Para piezas" },
-    "gearboxes": { "3-synchro": "3 sincronizadores", "4-synchro": "4 sincronizadores", "rod-change": "Cambio por varilla", "magic-wand": "Varilla mágica", "automatic": "Automática" },
+    "partConditions": {
+      "new": "Nuevo",
+      "used_excellent": "Usado - Excelente",
+      "used_good": "Usado - Bueno",
+      "used_fair": "Usado - Aceptable",
+      "for_parts": "Para piezas"
+    },
+    "gearboxes": {
+      "3-synchro": "3 sincronizadores",
+      "4-synchro": "4 sincronizadores",
+      "rod-change": "Cambio por varilla",
+      "magic-wand": "Varilla mágica",
+      "automatic": "Automática"
+    },
     "oemTypes": { "oem": "OEM / Original", "aftermarket": "Aftermarket", "reproduction": "Reproducción" }
   },
   "fr": {
     "preview": { "mode": "Mode aperçu", "subtitle": "- Voici comment votre annonce apparaîtra aux acheteurs" },
-    "tabs": { "all": "Toutes ({count})", "body": "Carrosserie ({count})", "engine": "Moteur ({count})", "interior": "Intérieur ({count})", "details": "Détails ({count})" },
+    "tabs": {
+      "all": "Toutes ({count})",
+      "body": "Carrosserie ({count})",
+      "engine": "Moteur ({count})",
+      "interior": "Intérieur ({count})",
+      "details": "Détails ({count})"
+    },
     "photos": { "primary": "Principale", "photoN": "Photo {n}", "none": "Aucune photo ajoutée" },
     "header": { "untitled": "Annonce sans titre", "views": "{count} vues", "locationNotSet": "Lieu non défini" },
-    "sections": { "description": "Description", "noDescription": "Aucune description fournie", "specifications": "Spécifications" },
-    "specs": { "mileage": "Kilométrage", "mileageValue": "{miles} miles", "engineSize": "Cylindrée", "gearbox": "Boîte de vitesses", "color": "Couleur", "condition": "État", "partNumber": "Référence de pièce", "type": "Type", "quantityAvailable": "Quantité disponible", "shipping": "Expédition", "shippingAvailable": "Disponible", "pickupOnly": "Retrait uniquement", "shipsTo": "Expédie vers :" },
-    "heritage": { "section": "Histoire et provenance", "vin": "VIN / Châssis", "engineNumber": "Numéro de moteur", "originalColor": "Couleur d'origine", "previousOwners": "Propriétaires précédents" },
-    "qa": { "section": "Questions et réponses", "placeholder": "Les commentaires apparaîtront ici après la publication de votre annonce" },
-    "sidebar": { "askingPrice": "Prix demandé", "free": "Gratuit", "heritageCertified": "Certifié provenance", "premiumListing": "Annonce premium", "featuredDays": "Mise en avant pendant 30 jours", "contactSeller": "Contacter le vendeur", "saveToWatchlist": "Ajouter aux favoris", "buttonsDisabled": "Boutons désactivés en mode aperçu" },
-    "submit": { "backToEdit": "Retour à l'édition", "paymentNotice": "Paiement de 10 $ via Stripe après l'envoi", "submitAndPay": "Envoyer et payer", "submitListing": "Publier l'annonce" },
+    "sections": {
+      "description": "Description",
+      "noDescription": "Aucune description fournie",
+      "specifications": "Spécifications"
+    },
+    "specs": {
+      "mileage": "Kilométrage",
+      "mileageValue": "{miles} miles",
+      "engineSize": "Cylindrée",
+      "gearbox": "Boîte de vitesses",
+      "color": "Couleur",
+      "condition": "État",
+      "partNumber": "Référence de pièce",
+      "type": "Type",
+      "quantityAvailable": "Quantité disponible",
+      "shipping": "Expédition",
+      "shippingAvailable": "Disponible",
+      "pickupOnly": "Retrait uniquement",
+      "shipsTo": "Expédie vers :"
+    },
+    "heritage": {
+      "section": "Histoire et provenance",
+      "vin": "VIN / Châssis",
+      "engineNumber": "Numéro de moteur",
+      "originalColor": "Couleur d'origine",
+      "previousOwners": "Propriétaires précédents"
+    },
+    "qa": {
+      "section": "Questions et réponses",
+      "placeholder": "Les commentaires apparaîtront ici après la publication de votre annonce"
+    },
+    "sidebar": {
+      "askingPrice": "Prix demandé",
+      "free": "Gratuit",
+      "heritageCertified": "Certifié provenance",
+      "premiumListing": "Annonce premium",
+      "featuredDays": "Mise en avant pendant 30 jours",
+      "contactSeller": "Contacter le vendeur",
+      "saveToWatchlist": "Ajouter aux favoris",
+      "buttonsDisabled": "Boutons désactivés en mode aperçu"
+    },
+    "submit": {
+      "backToEdit": "Retour à l'édition",
+      "paymentNotice": "Paiement de 10 $ via Stripe après l'envoi",
+      "submitAndPay": "Envoyer et payer",
+      "submitListing": "Publier l'annonce"
+    },
     "conditions": { "excellent": "Excellent", "good": "Bon", "fair": "Correct", "project": "Projet" },
-    "partConditions": { "new": "Neuf", "used_excellent": "Occasion - Excellent", "used_good": "Occasion - Bon", "used_fair": "Occasion - Correct", "for_parts": "Pour pièces" },
-    "gearboxes": { "3-synchro": "3 synchros", "4-synchro": "4 synchros", "rod-change": "Commande par tringle", "magic-wand": "Baguette magique", "automatic": "Automatique" },
+    "partConditions": {
+      "new": "Neuf",
+      "used_excellent": "Occasion - Excellent",
+      "used_good": "Occasion - Bon",
+      "used_fair": "Occasion - Correct",
+      "for_parts": "Pour pièces"
+    },
+    "gearboxes": {
+      "3-synchro": "3 synchros",
+      "4-synchro": "4 synchros",
+      "rod-change": "Commande par tringle",
+      "magic-wand": "Baguette magique",
+      "automatic": "Automatique"
+    },
     "oemTypes": { "oem": "OEM / Origine", "aftermarket": "Adaptable", "reproduction": "Reproduction" }
   },
   "de": {
     "preview": { "mode": "Vorschaumodus", "subtitle": "- So wird Ihre Anzeige für Käufer aussehen" },
-    "tabs": { "all": "Alle ({count})", "body": "Karosserie ({count})", "engine": "Motor ({count})", "interior": "Innenraum ({count})", "details": "Details ({count})" },
+    "tabs": {
+      "all": "Alle ({count})",
+      "body": "Karosserie ({count})",
+      "engine": "Motor ({count})",
+      "interior": "Innenraum ({count})",
+      "details": "Details ({count})"
+    },
     "photos": { "primary": "Hauptbild", "photoN": "Foto {n}", "none": "Keine Fotos hinzugefügt" },
-    "header": { "untitled": "Anzeige ohne Titel", "views": "{count} Aufrufe", "locationNotSet": "Standort nicht festgelegt" },
-    "sections": { "description": "Beschreibung", "noDescription": "Keine Beschreibung angegeben", "specifications": "Spezifikationen" },
-    "specs": { "mileage": "Kilometerstand", "mileageValue": "{miles} Meilen", "engineSize": "Hubraum", "gearbox": "Getriebe", "color": "Farbe", "condition": "Zustand", "partNumber": "Teilenummer", "type": "Typ", "quantityAvailable": "Verfügbare Menge", "shipping": "Versand", "shippingAvailable": "Verfügbar", "pickupOnly": "Nur Abholung", "shipsTo": "Versand nach:" },
-    "heritage": { "section": "Geschichte & Herkunft", "vin": "VIN / Fahrgestell", "engineNumber": "Motornummer", "originalColor": "Originalfarbe", "previousOwners": "Vorbesitzer" },
-    "qa": { "section": "Fragen & Antworten", "placeholder": "Kommentare erscheinen hier, nachdem Ihre Anzeige veröffentlicht wurde" },
-    "sidebar": { "askingPrice": "Verkaufspreis", "free": "Kostenlos", "heritageCertified": "Heritage-zertifiziert", "premiumListing": "Premium-Anzeige", "featuredDays": "30 Tage lang hervorgehoben", "contactSeller": "Verkäufer kontaktieren", "saveToWatchlist": "Zur Merkliste hinzufügen", "buttonsDisabled": "Schaltflächen im Vorschaumodus deaktiviert" },
-    "submit": { "backToEdit": "Zurück zur Bearbeitung", "paymentNotice": "Zahlung von 10 $ via Stripe nach dem Absenden", "submitAndPay": "Absenden & bezahlen", "submitListing": "Anzeige absenden" },
+    "header": {
+      "untitled": "Anzeige ohne Titel",
+      "views": "{count} Aufrufe",
+      "locationNotSet": "Standort nicht festgelegt"
+    },
+    "sections": {
+      "description": "Beschreibung",
+      "noDescription": "Keine Beschreibung angegeben",
+      "specifications": "Spezifikationen"
+    },
+    "specs": {
+      "mileage": "Kilometerstand",
+      "mileageValue": "{miles} Meilen",
+      "engineSize": "Hubraum",
+      "gearbox": "Getriebe",
+      "color": "Farbe",
+      "condition": "Zustand",
+      "partNumber": "Teilenummer",
+      "type": "Typ",
+      "quantityAvailable": "Verfügbare Menge",
+      "shipping": "Versand",
+      "shippingAvailable": "Verfügbar",
+      "pickupOnly": "Nur Abholung",
+      "shipsTo": "Versand nach:"
+    },
+    "heritage": {
+      "section": "Geschichte & Herkunft",
+      "vin": "VIN / Fahrgestell",
+      "engineNumber": "Motornummer",
+      "originalColor": "Originalfarbe",
+      "previousOwners": "Vorbesitzer"
+    },
+    "qa": {
+      "section": "Fragen & Antworten",
+      "placeholder": "Kommentare erscheinen hier, nachdem Ihre Anzeige veröffentlicht wurde"
+    },
+    "sidebar": {
+      "askingPrice": "Verkaufspreis",
+      "free": "Kostenlos",
+      "heritageCertified": "Heritage-zertifiziert",
+      "premiumListing": "Premium-Anzeige",
+      "featuredDays": "30 Tage lang hervorgehoben",
+      "contactSeller": "Verkäufer kontaktieren",
+      "saveToWatchlist": "Zur Merkliste hinzufügen",
+      "buttonsDisabled": "Schaltflächen im Vorschaumodus deaktiviert"
+    },
+    "submit": {
+      "backToEdit": "Zurück zur Bearbeitung",
+      "paymentNotice": "Zahlung von 10 $ via Stripe nach dem Absenden",
+      "submitAndPay": "Absenden & bezahlen",
+      "submitListing": "Anzeige absenden"
+    },
     "conditions": { "excellent": "Ausgezeichnet", "good": "Gut", "fair": "Akzeptabel", "project": "Projekt" },
-    "partConditions": { "new": "Neu", "used_excellent": "Gebraucht - Ausgezeichnet", "used_good": "Gebraucht - Gut", "used_fair": "Gebraucht - Akzeptabel", "for_parts": "Als Ersatzteile" },
-    "gearboxes": { "3-synchro": "3-Synchron", "4-synchro": "4-Synchron", "rod-change": "Stangenschaltung", "magic-wand": "Zauberstab-Schaltung", "automatic": "Automatik" },
+    "partConditions": {
+      "new": "Neu",
+      "used_excellent": "Gebraucht - Ausgezeichnet",
+      "used_good": "Gebraucht - Gut",
+      "used_fair": "Gebraucht - Akzeptabel",
+      "for_parts": "Als Ersatzteile"
+    },
+    "gearboxes": {
+      "3-synchro": "3-Synchron",
+      "4-synchro": "4-Synchron",
+      "rod-change": "Stangenschaltung",
+      "magic-wand": "Zauberstab-Schaltung",
+      "automatic": "Automatik"
+    },
     "oemTypes": { "oem": "OEM / Original", "aftermarket": "Zubehör", "reproduction": "Nachbau" }
   },
   "it": {
     "preview": { "mode": "Modalità anteprima", "subtitle": "- Ecco come apparirà il tuo annuncio agli acquirenti" },
-    "tabs": { "all": "Tutte ({count})", "body": "Carrozzeria ({count})", "engine": "Motore ({count})", "interior": "Interni ({count})", "details": "Dettagli ({count})" },
+    "tabs": {
+      "all": "Tutte ({count})",
+      "body": "Carrozzeria ({count})",
+      "engine": "Motore ({count})",
+      "interior": "Interni ({count})",
+      "details": "Dettagli ({count})"
+    },
     "photos": { "primary": "Principale", "photoN": "Foto {n}", "none": "Nessuna foto aggiunta" },
-    "header": { "untitled": "Annuncio senza titolo", "views": "{count} visualizzazioni", "locationNotSet": "Posizione non impostata" },
-    "sections": { "description": "Descrizione", "noDescription": "Nessuna descrizione fornita", "specifications": "Specifiche" },
-    "specs": { "mileage": "Chilometraggio", "mileageValue": "{miles} miglia", "engineSize": "Cilindrata", "gearbox": "Cambio", "color": "Colore", "condition": "Condizione", "partNumber": "Codice ricambio", "type": "Tipo", "quantityAvailable": "Quantità disponibile", "shipping": "Spedizione", "shippingAvailable": "Disponibile", "pickupOnly": "Solo ritiro", "shipsTo": "Spedisce a:" },
-    "heritage": { "section": "Storia e provenienza", "vin": "VIN / Telaio", "engineNumber": "Numero motore", "originalColor": "Colore originale", "previousOwners": "Proprietari precedenti" },
-    "qa": { "section": "Domande e risposte", "placeholder": "I commenti appariranno qui dopo la pubblicazione del tuo annuncio" },
-    "sidebar": { "askingPrice": "Prezzo richiesto", "free": "Gratis", "heritageCertified": "Provenienza certificata", "premiumListing": "Annuncio premium", "featuredDays": "In evidenza per 30 giorni", "contactSeller": "Contatta il venditore", "saveToWatchlist": "Salva nei preferiti", "buttonsDisabled": "Pulsanti disattivati in modalità anteprima" },
-    "submit": { "backToEdit": "Torna alla modifica", "paymentNotice": "Pagamento di 10 $ tramite Stripe dopo l'invio", "submitAndPay": "Invia e paga", "submitListing": "Pubblica annuncio" },
+    "header": {
+      "untitled": "Annuncio senza titolo",
+      "views": "{count} visualizzazioni",
+      "locationNotSet": "Posizione non impostata"
+    },
+    "sections": {
+      "description": "Descrizione",
+      "noDescription": "Nessuna descrizione fornita",
+      "specifications": "Specifiche"
+    },
+    "specs": {
+      "mileage": "Chilometraggio",
+      "mileageValue": "{miles} miglia",
+      "engineSize": "Cilindrata",
+      "gearbox": "Cambio",
+      "color": "Colore",
+      "condition": "Condizione",
+      "partNumber": "Codice ricambio",
+      "type": "Tipo",
+      "quantityAvailable": "Quantità disponibile",
+      "shipping": "Spedizione",
+      "shippingAvailable": "Disponibile",
+      "pickupOnly": "Solo ritiro",
+      "shipsTo": "Spedisce a:"
+    },
+    "heritage": {
+      "section": "Storia e provenienza",
+      "vin": "VIN / Telaio",
+      "engineNumber": "Numero motore",
+      "originalColor": "Colore originale",
+      "previousOwners": "Proprietari precedenti"
+    },
+    "qa": {
+      "section": "Domande e risposte",
+      "placeholder": "I commenti appariranno qui dopo la pubblicazione del tuo annuncio"
+    },
+    "sidebar": {
+      "askingPrice": "Prezzo richiesto",
+      "free": "Gratis",
+      "heritageCertified": "Provenienza certificata",
+      "premiumListing": "Annuncio premium",
+      "featuredDays": "In evidenza per 30 giorni",
+      "contactSeller": "Contatta il venditore",
+      "saveToWatchlist": "Salva nei preferiti",
+      "buttonsDisabled": "Pulsanti disattivati in modalità anteprima"
+    },
+    "submit": {
+      "backToEdit": "Torna alla modifica",
+      "paymentNotice": "Pagamento di 10 $ tramite Stripe dopo l'invio",
+      "submitAndPay": "Invia e paga",
+      "submitListing": "Pubblica annuncio"
+    },
     "conditions": { "excellent": "Eccellente", "good": "Buono", "fair": "Discreto", "project": "Progetto" },
-    "partConditions": { "new": "Nuovo", "used_excellent": "Usato - Eccellente", "used_good": "Usato - Buono", "used_fair": "Usato - Discreto", "for_parts": "Per ricambi" },
-    "gearboxes": { "3-synchro": "3 sincronizzatori", "4-synchro": "4 sincronizzatori", "rod-change": "Comando a leva", "magic-wand": "Leva magica", "automatic": "Automatico" },
+    "partConditions": {
+      "new": "Nuovo",
+      "used_excellent": "Usato - Eccellente",
+      "used_good": "Usato - Buono",
+      "used_fair": "Usato - Discreto",
+      "for_parts": "Per ricambi"
+    },
+    "gearboxes": {
+      "3-synchro": "3 sincronizzatori",
+      "4-synchro": "4 sincronizzatori",
+      "rod-change": "Comando a leva",
+      "magic-wand": "Leva magica",
+      "automatic": "Automatico"
+    },
     "oemTypes": { "oem": "OEM / Originale", "aftermarket": "Aftermarket", "reproduction": "Riproduzione" }
   },
   "pt": {
-    "preview": { "mode": "Modo de visualização", "subtitle": "- É assim que seu anúncio aparecerá para os compradores" },
-    "tabs": { "all": "Todas ({count})", "body": "Carroceria ({count})", "engine": "Motor ({count})", "interior": "Interior ({count})", "details": "Detalhes ({count})" },
+    "preview": {
+      "mode": "Modo de visualização",
+      "subtitle": "- É assim que seu anúncio aparecerá para os compradores"
+    },
+    "tabs": {
+      "all": "Todas ({count})",
+      "body": "Carroceria ({count})",
+      "engine": "Motor ({count})",
+      "interior": "Interior ({count})",
+      "details": "Detalhes ({count})"
+    },
     "photos": { "primary": "Principal", "photoN": "Foto {n}", "none": "Nenhuma foto adicionada" },
-    "header": { "untitled": "Anúncio sem título", "views": "{count} visualizações", "locationNotSet": "Localização não definida" },
-    "sections": { "description": "Descrição", "noDescription": "Nenhuma descrição fornecida", "specifications": "Especificações" },
-    "specs": { "mileage": "Quilometragem", "mileageValue": "{miles} milhas", "engineSize": "Cilindrada", "gearbox": "Câmbio", "color": "Cor", "condition": "Estado", "partNumber": "Número da peça", "type": "Tipo", "quantityAvailable": "Quantidade disponível", "shipping": "Envio", "shippingAvailable": "Disponível", "pickupOnly": "Apenas retirada", "shipsTo": "Envia para:" },
-    "heritage": { "section": "História e procedência", "vin": "VIN / Chassi", "engineNumber": "Número do motor", "originalColor": "Cor original", "previousOwners": "Proprietários anteriores" },
-    "qa": { "section": "Perguntas e respostas", "placeholder": "Os comentários aparecerão aqui após a publicação do seu anúncio" },
-    "sidebar": { "askingPrice": "Preço pedido", "free": "Grátis", "heritageCertified": "Procedência certificada", "premiumListing": "Anúncio premium", "featuredDays": "Em destaque por 30 dias", "contactSeller": "Contatar vendedor", "saveToWatchlist": "Salvar na lista de interesses", "buttonsDisabled": "Botões desativados no modo de visualização" },
-    "submit": { "backToEdit": "Voltar para editar", "paymentNotice": "Pagamento de US$ 10 via Stripe após o envio", "submitAndPay": "Enviar e pagar", "submitListing": "Publicar anúncio" },
+    "header": {
+      "untitled": "Anúncio sem título",
+      "views": "{count} visualizações",
+      "locationNotSet": "Localização não definida"
+    },
+    "sections": {
+      "description": "Descrição",
+      "noDescription": "Nenhuma descrição fornecida",
+      "specifications": "Especificações"
+    },
+    "specs": {
+      "mileage": "Quilometragem",
+      "mileageValue": "{miles} milhas",
+      "engineSize": "Cilindrada",
+      "gearbox": "Câmbio",
+      "color": "Cor",
+      "condition": "Estado",
+      "partNumber": "Número da peça",
+      "type": "Tipo",
+      "quantityAvailable": "Quantidade disponível",
+      "shipping": "Envio",
+      "shippingAvailable": "Disponível",
+      "pickupOnly": "Apenas retirada",
+      "shipsTo": "Envia para:"
+    },
+    "heritage": {
+      "section": "História e procedência",
+      "vin": "VIN / Chassi",
+      "engineNumber": "Número do motor",
+      "originalColor": "Cor original",
+      "previousOwners": "Proprietários anteriores"
+    },
+    "qa": {
+      "section": "Perguntas e respostas",
+      "placeholder": "Os comentários aparecerão aqui após a publicação do seu anúncio"
+    },
+    "sidebar": {
+      "askingPrice": "Preço pedido",
+      "free": "Grátis",
+      "heritageCertified": "Procedência certificada",
+      "premiumListing": "Anúncio premium",
+      "featuredDays": "Em destaque por 30 dias",
+      "contactSeller": "Contatar vendedor",
+      "saveToWatchlist": "Salvar na lista de interesses",
+      "buttonsDisabled": "Botões desativados no modo de visualização"
+    },
+    "submit": {
+      "backToEdit": "Voltar para editar",
+      "paymentNotice": "Pagamento de US$ 10 via Stripe após o envio",
+      "submitAndPay": "Enviar e pagar",
+      "submitListing": "Publicar anúncio"
+    },
     "conditions": { "excellent": "Excelente", "good": "Bom", "fair": "Razoável", "project": "Projeto" },
-    "partConditions": { "new": "Novo", "used_excellent": "Usado - Excelente", "used_good": "Usado - Bom", "used_fair": "Usado - Razoável", "for_parts": "Para peças" },
-    "gearboxes": { "3-synchro": "3 sincronizadores", "4-synchro": "4 sincronizadores", "rod-change": "Câmbio por haste", "magic-wand": "Varinha mágica", "automatic": "Automático" },
+    "partConditions": {
+      "new": "Novo",
+      "used_excellent": "Usado - Excelente",
+      "used_good": "Usado - Bom",
+      "used_fair": "Usado - Razoável",
+      "for_parts": "Para peças"
+    },
+    "gearboxes": {
+      "3-synchro": "3 sincronizadores",
+      "4-synchro": "4 sincronizadores",
+      "rod-change": "Câmbio por haste",
+      "magic-wand": "Varinha mágica",
+      "automatic": "Automático"
+    },
     "oemTypes": { "oem": "OEM / Original", "aftermarket": "Aftermarket", "reproduction": "Reprodução" }
   },
   "ru": {
     "preview": { "mode": "Режим предпросмотра", "subtitle": "- Так ваше объявление увидят покупатели" },
-    "tabs": { "all": "Все ({count})", "body": "Кузов ({count})", "engine": "Двигатель ({count})", "interior": "Салон ({count})", "details": "Детали ({count})" },
+    "tabs": {
+      "all": "Все ({count})",
+      "body": "Кузов ({count})",
+      "engine": "Двигатель ({count})",
+      "interior": "Салон ({count})",
+      "details": "Детали ({count})"
+    },
     "photos": { "primary": "Главное", "photoN": "Фото {n}", "none": "Фотографии не добавлены" },
-    "header": { "untitled": "Объявление без названия", "views": "{count} просмотров", "locationNotSet": "Местоположение не указано" },
-    "sections": { "description": "Описание", "noDescription": "Описание не предоставлено", "specifications": "Характеристики" },
-    "specs": { "mileage": "Пробег", "mileageValue": "{miles} миль", "engineSize": "Объём двигателя", "gearbox": "Коробка передач", "color": "Цвет", "condition": "Состояние", "partNumber": "Номер детали", "type": "Тип", "quantityAvailable": "Доступное количество", "shipping": "Доставка", "shippingAvailable": "Доступна", "pickupOnly": "Только самовывоз", "shipsTo": "Доставка в:" },
-    "heritage": { "section": "История и происхождение", "vin": "VIN / Шасси", "engineNumber": "Номер двигателя", "originalColor": "Оригинальный цвет", "previousOwners": "Предыдущие владельцы" },
-    "qa": { "section": "Вопросы и ответы", "placeholder": "Комментарии появятся здесь после публикации вашего объявления" },
-    "sidebar": { "askingPrice": "Запрашиваемая цена", "free": "Бесплатно", "heritageCertified": "Происхождение подтверждено", "premiumListing": "Премиум-объявление", "featuredDays": "В рекомендуемых 30 дней", "contactSeller": "Связаться с продавцом", "saveToWatchlist": "Добавить в избранное", "buttonsDisabled": "Кнопки отключены в режиме предпросмотра" },
-    "submit": { "backToEdit": "Назад к редактированию", "paymentNotice": "Оплата 10 $ через Stripe после отправки", "submitAndPay": "Отправить и оплатить", "submitListing": "Опубликовать объявление" },
-    "conditions": { "excellent": "Отличное", "good": "Хорошее", "fair": "Удовлетворительное", "project": "Под восстановление" },
-    "partConditions": { "new": "Новое", "used_excellent": "Б/у - Отличное", "used_good": "Б/у - Хорошее", "used_fair": "Б/у - Удовлетворительное", "for_parts": "На запчасти" },
-    "gearboxes": { "3-synchro": "3 синхронизатора", "4-synchro": "4 синхронизатора", "rod-change": "Тяговый привод", "magic-wand": "Привод «волшебная палочка»", "automatic": "Автоматическая" },
+    "header": {
+      "untitled": "Объявление без названия",
+      "views": "{count} просмотров",
+      "locationNotSet": "Местоположение не указано"
+    },
+    "sections": {
+      "description": "Описание",
+      "noDescription": "Описание не предоставлено",
+      "specifications": "Характеристики"
+    },
+    "specs": {
+      "mileage": "Пробег",
+      "mileageValue": "{miles} миль",
+      "engineSize": "Объём двигателя",
+      "gearbox": "Коробка передач",
+      "color": "Цвет",
+      "condition": "Состояние",
+      "partNumber": "Номер детали",
+      "type": "Тип",
+      "quantityAvailable": "Доступное количество",
+      "shipping": "Доставка",
+      "shippingAvailable": "Доступна",
+      "pickupOnly": "Только самовывоз",
+      "shipsTo": "Доставка в:"
+    },
+    "heritage": {
+      "section": "История и происхождение",
+      "vin": "VIN / Шасси",
+      "engineNumber": "Номер двигателя",
+      "originalColor": "Оригинальный цвет",
+      "previousOwners": "Предыдущие владельцы"
+    },
+    "qa": {
+      "section": "Вопросы и ответы",
+      "placeholder": "Комментарии появятся здесь после публикации вашего объявления"
+    },
+    "sidebar": {
+      "askingPrice": "Запрашиваемая цена",
+      "free": "Бесплатно",
+      "heritageCertified": "Происхождение подтверждено",
+      "premiumListing": "Премиум-объявление",
+      "featuredDays": "В рекомендуемых 30 дней",
+      "contactSeller": "Связаться с продавцом",
+      "saveToWatchlist": "Добавить в избранное",
+      "buttonsDisabled": "Кнопки отключены в режиме предпросмотра"
+    },
+    "submit": {
+      "backToEdit": "Назад к редактированию",
+      "paymentNotice": "Оплата 10 $ через Stripe после отправки",
+      "submitAndPay": "Отправить и оплатить",
+      "submitListing": "Опубликовать объявление"
+    },
+    "conditions": {
+      "excellent": "Отличное",
+      "good": "Хорошее",
+      "fair": "Удовлетворительное",
+      "project": "Под восстановление"
+    },
+    "partConditions": {
+      "new": "Новое",
+      "used_excellent": "Б/у - Отличное",
+      "used_good": "Б/у - Хорошее",
+      "used_fair": "Б/у - Удовлетворительное",
+      "for_parts": "На запчасти"
+    },
+    "gearboxes": {
+      "3-synchro": "3 синхронизатора",
+      "4-synchro": "4 синхронизатора",
+      "rod-change": "Тяговый привод",
+      "magic-wand": "Привод «волшебная палочка»",
+      "automatic": "Автоматическая"
+    },
     "oemTypes": { "oem": "OEM / Оригинал", "aftermarket": "Неоригинал", "reproduction": "Реплика" }
   },
   "ja": {
     "preview": { "mode": "プレビューモード", "subtitle": "- 購入者にはこのように表示されます" },
-    "tabs": { "all": "すべて ({count})", "body": "ボディ ({count})", "engine": "エンジン ({count})", "interior": "内装 ({count})", "details": "詳細 ({count})" },
+    "tabs": {
+      "all": "すべて ({count})",
+      "body": "ボディ ({count})",
+      "engine": "エンジン ({count})",
+      "interior": "内装 ({count})",
+      "details": "詳細 ({count})"
+    },
     "photos": { "primary": "メイン", "photoN": "写真 {n}", "none": "写真が追加されていません" },
     "header": { "untitled": "無題の出品", "views": "{count} 回閲覧", "locationNotSet": "所在地が未設定" },
     "sections": { "description": "説明", "noDescription": "説明がありません", "specifications": "仕様" },
-    "specs": { "mileage": "走行距離", "mileageValue": "{miles} マイル", "engineSize": "排気量", "gearbox": "ギアボックス", "color": "色", "condition": "状態", "partNumber": "部品番号", "type": "種類", "quantityAvailable": "在庫数", "shipping": "配送", "shippingAvailable": "可能", "pickupOnly": "引き取りのみ", "shipsTo": "配送先：" },
-    "heritage": { "section": "来歴・由来", "vin": "VIN / 車台", "engineNumber": "エンジン番号", "originalColor": "オリジナルカラー", "previousOwners": "前オーナー数" },
+    "specs": {
+      "mileage": "走行距離",
+      "mileageValue": "{miles} マイル",
+      "engineSize": "排気量",
+      "gearbox": "ギアボックス",
+      "color": "色",
+      "condition": "状態",
+      "partNumber": "部品番号",
+      "type": "種類",
+      "quantityAvailable": "在庫数",
+      "shipping": "配送",
+      "shippingAvailable": "可能",
+      "pickupOnly": "引き取りのみ",
+      "shipsTo": "配送先："
+    },
+    "heritage": {
+      "section": "来歴・由来",
+      "vin": "VIN / 車台",
+      "engineNumber": "エンジン番号",
+      "originalColor": "オリジナルカラー",
+      "previousOwners": "前オーナー数"
+    },
     "qa": { "section": "質問と回答", "placeholder": "出品を公開するとコメントがここに表示されます" },
-    "sidebar": { "askingPrice": "希望価格", "free": "無料", "heritageCertified": "ヘリテージ認証済み", "premiumListing": "プレミアム出品", "featuredDays": "30日間注目掲載", "contactSeller": "出品者に連絡", "saveToWatchlist": "ウォッチリストに保存", "buttonsDisabled": "プレビューモードではボタンは無効です" },
-    "submit": { "backToEdit": "編集に戻る", "paymentNotice": "送信後にStripeで10ドルのお支払い", "submitAndPay": "送信して支払う", "submitListing": "出品する" },
+    "sidebar": {
+      "askingPrice": "希望価格",
+      "free": "無料",
+      "heritageCertified": "ヘリテージ認証済み",
+      "premiumListing": "プレミアム出品",
+      "featuredDays": "30日間注目掲載",
+      "contactSeller": "出品者に連絡",
+      "saveToWatchlist": "ウォッチリストに保存",
+      "buttonsDisabled": "プレビューモードではボタンは無効です"
+    },
+    "submit": {
+      "backToEdit": "編集に戻る",
+      "paymentNotice": "送信後にStripeで10ドルのお支払い",
+      "submitAndPay": "送信して支払う",
+      "submitListing": "出品する"
+    },
     "conditions": { "excellent": "優良", "good": "良好", "fair": "可", "project": "レストア素材" },
-    "partConditions": { "new": "新品", "used_excellent": "中古 - 優良", "used_good": "中古 - 良好", "used_fair": "中古 - 可", "for_parts": "部品取り用" },
-    "gearboxes": { "3-synchro": "3速シンクロ", "4-synchro": "4速シンクロ", "rod-change": "ロッドチェンジ", "magic-wand": "マジックワンド", "automatic": "オートマチック" },
+    "partConditions": {
+      "new": "新品",
+      "used_excellent": "中古 - 優良",
+      "used_good": "中古 - 良好",
+      "used_fair": "中古 - 可",
+      "for_parts": "部品取り用"
+    },
+    "gearboxes": {
+      "3-synchro": "3速シンクロ",
+      "4-synchro": "4速シンクロ",
+      "rod-change": "ロッドチェンジ",
+      "magic-wand": "マジックワンド",
+      "automatic": "オートマチック"
+    },
     "oemTypes": { "oem": "OEM / 純正", "aftermarket": "社外品", "reproduction": "復刻品" }
   },
   "zh": {
     "preview": { "mode": "预览模式", "subtitle": "- 这是买家看到您刊登的样子" },
-    "tabs": { "all": "全部 ({count})", "body": "车身 ({count})", "engine": "发动机 ({count})", "interior": "内饰 ({count})", "details": "细节 ({count})" },
+    "tabs": {
+      "all": "全部 ({count})",
+      "body": "车身 ({count})",
+      "engine": "发动机 ({count})",
+      "interior": "内饰 ({count})",
+      "details": "细节 ({count})"
+    },
     "photos": { "primary": "主图", "photoN": "照片 {n}", "none": "未添加照片" },
     "header": { "untitled": "无标题刊登", "views": "{count} 次浏览", "locationNotSet": "未设置位置" },
     "sections": { "description": "描述", "noDescription": "未提供描述", "specifications": "规格" },
-    "specs": { "mileage": "里程", "mileageValue": "{miles} 英里", "engineSize": "排量", "gearbox": "变速箱", "color": "颜色", "condition": "状况", "partNumber": "零件号", "type": "类型", "quantityAvailable": "可售数量", "shipping": "运输", "shippingAvailable": "可运输", "pickupOnly": "仅限自取", "shipsTo": "运送至：" },
-    "heritage": { "section": "来历与出处", "vin": "VIN / 车架", "engineNumber": "发动机号", "originalColor": "原厂颜色", "previousOwners": "前任车主" },
+    "specs": {
+      "mileage": "里程",
+      "mileageValue": "{miles} 英里",
+      "engineSize": "排量",
+      "gearbox": "变速箱",
+      "color": "颜色",
+      "condition": "状况",
+      "partNumber": "零件号",
+      "type": "类型",
+      "quantityAvailable": "可售数量",
+      "shipping": "运输",
+      "shippingAvailable": "可运输",
+      "pickupOnly": "仅限自取",
+      "shipsTo": "运送至："
+    },
+    "heritage": {
+      "section": "来历与出处",
+      "vin": "VIN / 车架",
+      "engineNumber": "发动机号",
+      "originalColor": "原厂颜色",
+      "previousOwners": "前任车主"
+    },
     "qa": { "section": "问答", "placeholder": "刊登发布后评论将显示在此处" },
-    "sidebar": { "askingPrice": "要价", "free": "免费", "heritageCertified": "来历认证", "premiumListing": "高级刊登", "featuredDays": "推荐展示 30 天", "contactSeller": "联系卖家", "saveToWatchlist": "保存到关注列表", "buttonsDisabled": "预览模式下按钮已禁用" },
-    "submit": { "backToEdit": "返回编辑", "paymentNotice": "提交后通过 Stripe 支付 10 美元", "submitAndPay": "提交并支付", "submitListing": "提交刊登" },
+    "sidebar": {
+      "askingPrice": "要价",
+      "free": "免费",
+      "heritageCertified": "来历认证",
+      "premiumListing": "高级刊登",
+      "featuredDays": "推荐展示 30 天",
+      "contactSeller": "联系卖家",
+      "saveToWatchlist": "保存到关注列表",
+      "buttonsDisabled": "预览模式下按钮已禁用"
+    },
+    "submit": {
+      "backToEdit": "返回编辑",
+      "paymentNotice": "提交后通过 Stripe 支付 10 美元",
+      "submitAndPay": "提交并支付",
+      "submitListing": "提交刊登"
+    },
     "conditions": { "excellent": "极好", "good": "良好", "fair": "一般", "project": "待修复" },
-    "partConditions": { "new": "全新", "used_excellent": "二手 - 极好", "used_good": "二手 - 良好", "used_fair": "二手 - 一般", "for_parts": "用于拆件" },
-    "gearboxes": { "3-synchro": "3档同步器", "4-synchro": "4档同步器", "rod-change": "拉杆换挡", "magic-wand": "魔杖换挡", "automatic": "自动" },
+    "partConditions": {
+      "new": "全新",
+      "used_excellent": "二手 - 极好",
+      "used_good": "二手 - 良好",
+      "used_fair": "二手 - 一般",
+      "for_parts": "用于拆件"
+    },
+    "gearboxes": {
+      "3-synchro": "3档同步器",
+      "4-synchro": "4档同步器",
+      "rod-change": "拉杆换挡",
+      "magic-wand": "魔杖换挡",
+      "automatic": "自动"
+    },
     "oemTypes": { "oem": "OEM / 原厂", "aftermarket": "副厂", "reproduction": "复制件" }
   },
   "ko": {
     "preview": { "mode": "미리보기 모드", "subtitle": "- 구매자에게 이렇게 표시됩니다" },
-    "tabs": { "all": "전체 ({count})", "body": "차체 ({count})", "engine": "엔진 ({count})", "interior": "실내 ({count})", "details": "디테일 ({count})" },
+    "tabs": {
+      "all": "전체 ({count})",
+      "body": "차체 ({count})",
+      "engine": "엔진 ({count})",
+      "interior": "실내 ({count})",
+      "details": "디테일 ({count})"
+    },
     "photos": { "primary": "대표", "photoN": "사진 {n}", "none": "추가된 사진 없음" },
     "header": { "untitled": "제목 없는 매물", "views": "조회수 {count}", "locationNotSet": "위치가 설정되지 않음" },
     "sections": { "description": "설명", "noDescription": "설명이 제공되지 않음", "specifications": "사양" },
-    "specs": { "mileage": "주행거리", "mileageValue": "{miles} 마일", "engineSize": "배기량", "gearbox": "변속기", "color": "색상", "condition": "상태", "partNumber": "부품 번호", "type": "종류", "quantityAvailable": "재고 수량", "shipping": "배송", "shippingAvailable": "가능", "pickupOnly": "직접 수령만", "shipsTo": "배송 지역:" },
-    "heritage": { "section": "내력 및 출처", "vin": "VIN / 차대", "engineNumber": "엔진 번호", "originalColor": "원래 색상", "previousOwners": "이전 소유자" },
+    "specs": {
+      "mileage": "주행거리",
+      "mileageValue": "{miles} 마일",
+      "engineSize": "배기량",
+      "gearbox": "변속기",
+      "color": "색상",
+      "condition": "상태",
+      "partNumber": "부품 번호",
+      "type": "종류",
+      "quantityAvailable": "재고 수량",
+      "shipping": "배송",
+      "shippingAvailable": "가능",
+      "pickupOnly": "직접 수령만",
+      "shipsTo": "배송 지역:"
+    },
+    "heritage": {
+      "section": "내력 및 출처",
+      "vin": "VIN / 차대",
+      "engineNumber": "엔진 번호",
+      "originalColor": "원래 색상",
+      "previousOwners": "이전 소유자"
+    },
     "qa": { "section": "질문 및 답변", "placeholder": "매물이 게시되면 댓글이 여기에 표시됩니다" },
-    "sidebar": { "askingPrice": "희망 가격", "free": "무료", "heritageCertified": "내력 인증됨", "premiumListing": "프리미엄 매물", "featuredDays": "30일간 추천 노출", "contactSeller": "판매자에게 문의", "saveToWatchlist": "관심목록에 저장", "buttonsDisabled": "미리보기 모드에서는 버튼이 비활성화됩니다" },
-    "submit": { "backToEdit": "편집으로 돌아가기", "paymentNotice": "제출 후 Stripe로 $10 결제", "submitAndPay": "제출 및 결제", "submitListing": "매물 제출" },
+    "sidebar": {
+      "askingPrice": "희망 가격",
+      "free": "무료",
+      "heritageCertified": "내력 인증됨",
+      "premiumListing": "프리미엄 매물",
+      "featuredDays": "30일간 추천 노출",
+      "contactSeller": "판매자에게 문의",
+      "saveToWatchlist": "관심목록에 저장",
+      "buttonsDisabled": "미리보기 모드에서는 버튼이 비활성화됩니다"
+    },
+    "submit": {
+      "backToEdit": "편집으로 돌아가기",
+      "paymentNotice": "제출 후 Stripe로 $10 결제",
+      "submitAndPay": "제출 및 결제",
+      "submitListing": "매물 제출"
+    },
     "conditions": { "excellent": "최상", "good": "양호", "fair": "보통", "project": "복원용" },
-    "partConditions": { "new": "새 제품", "used_excellent": "중고 - 최상", "used_good": "중고 - 양호", "used_fair": "중고 - 보통", "for_parts": "부품용" },
-    "gearboxes": { "3-synchro": "3단 싱크로", "4-synchro": "4단 싱크로", "rod-change": "로드 체인지", "magic-wand": "매직 완드", "automatic": "자동" },
+    "partConditions": {
+      "new": "새 제품",
+      "used_excellent": "중고 - 최상",
+      "used_good": "중고 - 양호",
+      "used_fair": "중고 - 보통",
+      "for_parts": "부품용"
+    },
+    "gearboxes": {
+      "3-synchro": "3단 싱크로",
+      "4-synchro": "4단 싱크로",
+      "rod-change": "로드 체인지",
+      "magic-wand": "매직 완드",
+      "automatic": "자동"
+    },
     "oemTypes": { "oem": "OEM / 정품", "aftermarket": "애프터마켓", "reproduction": "재생산품" }
   }
 }

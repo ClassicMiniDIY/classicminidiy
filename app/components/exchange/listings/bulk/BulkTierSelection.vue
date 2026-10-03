@@ -16,7 +16,9 @@
       </div>
       <div class="stat">
         <div class="stat-title">{{ t('stats.totalCost') }}</div>
-        <div class="stat-value text-success">{{ totalCost === 0 ? t('free') : t('priceUsd', { amount: totalCost }) }}</div>
+        <div class="stat-value text-success">
+          {{ totalCost === 0 ? t('free') : t('priceUsd', { amount: totalCost }) }}
+        </div>
       </div>
     </div>
 
@@ -174,7 +176,14 @@
       "features": "Premium includes: 15 photos, featured placement for 30 days, priority in search, homepage carousel, featured badge."
     },
     "nav": { "back": "Back to Edit", "next": "Review Listings" },
-    "condition": { "new": "New", "usedExcellent": "Used - Excellent", "usedGood": "Used - Good", "usedFair": "Used - Fair", "rebuild": "Rebuild", "core": "Core" }
+    "condition": {
+      "new": "New",
+      "usedExcellent": "Used - Excellent",
+      "usedGood": "Used - Good",
+      "usedFair": "Used - Fair",
+      "rebuild": "Rebuild",
+      "core": "Core"
+    }
   },
   "es": {
     "free": "Gratis",
@@ -188,7 +197,14 @@
       "features": "Premium incluye: 15 fotos, colocación destacada durante 30 días, prioridad en búsquedas, carrusel en la página de inicio e insignia destacada."
     },
     "nav": { "back": "Volver a editar", "next": "Revisar anuncios" },
-    "condition": { "new": "Nuevo", "usedExcellent": "Usado - Excelente", "usedGood": "Usado - Bueno", "usedFair": "Usado - Aceptable", "rebuild": "Reconstruido", "core": "Núcleo" }
+    "condition": {
+      "new": "Nuevo",
+      "usedExcellent": "Usado - Excelente",
+      "usedGood": "Usado - Bueno",
+      "usedFair": "Usado - Aceptable",
+      "rebuild": "Reconstruido",
+      "core": "Núcleo"
+    }
   },
   "fr": {
     "free": "Gratuit",
@@ -202,7 +218,14 @@
       "features": "Premium inclut : 15 photos, mise en avant pendant 30 jours, priorité dans la recherche, carrousel en page d'accueil et badge en vedette."
     },
     "nav": { "back": "Retour à l'édition", "next": "Vérifier les annonces" },
-    "condition": { "new": "Neuf", "usedExcellent": "Occasion - Excellent", "usedGood": "Occasion - Bon", "usedFair": "Occasion - Correct", "rebuild": "Reconstruit", "core": "Pièce de base" }
+    "condition": {
+      "new": "Neuf",
+      "usedExcellent": "Occasion - Excellent",
+      "usedGood": "Occasion - Bon",
+      "usedFair": "Occasion - Correct",
+      "rebuild": "Reconstruit",
+      "core": "Pièce de base"
+    }
   },
   "de": {
     "free": "Kostenlos",
@@ -216,7 +239,14 @@
       "features": "Premium beinhaltet: 15 Fotos, hervorgehobene Platzierung für 30 Tage, Priorität in der Suche, Startseiten-Karussell und Hervorhebungs-Badge."
     },
     "nav": { "back": "Zurück zum Bearbeiten", "next": "Anzeigen prüfen" },
-    "condition": { "new": "Neu", "usedExcellent": "Gebraucht - Ausgezeichnet", "usedGood": "Gebraucht - Gut", "usedFair": "Gebraucht - Akzeptabel", "rebuild": "Überholt", "core": "Grundteil" }
+    "condition": {
+      "new": "Neu",
+      "usedExcellent": "Gebraucht - Ausgezeichnet",
+      "usedGood": "Gebraucht - Gut",
+      "usedFair": "Gebraucht - Akzeptabel",
+      "rebuild": "Überholt",
+      "core": "Grundteil"
+    }
   },
   "it": {
     "free": "Gratis",
@@ -230,7 +260,14 @@
       "features": "Premium include: 15 foto, posizionamento in evidenza per 30 giorni, priorità nella ricerca, carosello in homepage e badge in evidenza."
     },
     "nav": { "back": "Torna a modifica", "next": "Rivedi annunci" },
-    "condition": { "new": "Nuovo", "usedExcellent": "Usato - Eccellente", "usedGood": "Usato - Buono", "usedFair": "Usato - Discreto", "rebuild": "Ricostruito", "core": "Pezzo base" }
+    "condition": {
+      "new": "Nuovo",
+      "usedExcellent": "Usato - Eccellente",
+      "usedGood": "Usato - Buono",
+      "usedFair": "Usato - Discreto",
+      "rebuild": "Ricostruito",
+      "core": "Pezzo base"
+    }
   },
   "pt": {
     "free": "Grátis",
@@ -244,7 +281,14 @@
       "features": "Premium inclui: 15 fotos, destaque por 30 dias, prioridade na busca, carrossel na página inicial e selo de destaque."
     },
     "nav": { "back": "Voltar a editar", "next": "Revisar anúncios" },
-    "condition": { "new": "Novo", "usedExcellent": "Usado - Excelente", "usedGood": "Usado - Bom", "usedFair": "Usado - Razoável", "rebuild": "Recondicionado", "core": "Peça base" }
+    "condition": {
+      "new": "Novo",
+      "usedExcellent": "Usado - Excelente",
+      "usedGood": "Usado - Bom",
+      "usedFair": "Usado - Razoável",
+      "rebuild": "Recondicionado",
+      "core": "Peça base"
+    }
   },
   "ru": {
     "free": "Бесплатно",
@@ -258,7 +302,14 @@
       "features": "Премиум включает: 15 фотографий, выделенное размещение на 30 дней, приоритет в поиске, карусель на главной странице и значок выделения."
     },
     "nav": { "back": "Назад к редактированию", "next": "Проверить объявления" },
-    "condition": { "new": "Новое", "usedExcellent": "Б/у - Отличное", "usedGood": "Б/у - Хорошее", "usedFair": "Б/у - Удовлетворительное", "rebuild": "Восстановленное", "core": "На запчасти" }
+    "condition": {
+      "new": "Новое",
+      "usedExcellent": "Б/у - Отличное",
+      "usedGood": "Б/у - Хорошее",
+      "usedFair": "Б/у - Удовлетворительное",
+      "rebuild": "Восстановленное",
+      "core": "На запчасти"
+    }
   },
   "ja": {
     "free": "無料",
@@ -272,7 +323,14 @@
       "features": "プレミアムに含まれるもの：写真15枚、30日間の注目枠掲載、検索での優先表示、ホームページのカルーセル、注目バッジ。"
     },
     "nav": { "back": "編集に戻る", "next": "出品を確認" },
-    "condition": { "new": "新品", "usedExcellent": "中古 - 非常に良い", "usedGood": "中古 - 良い", "usedFair": "中古 - 可", "rebuild": "再生品", "core": "コア部品" }
+    "condition": {
+      "new": "新品",
+      "usedExcellent": "中古 - 非常に良い",
+      "usedGood": "中古 - 良い",
+      "usedFair": "中古 - 可",
+      "rebuild": "再生品",
+      "core": "コア部品"
+    }
   },
   "zh": {
     "free": "免费",
@@ -286,7 +344,14 @@
       "features": "高级包含：15 张照片、30 天精选展示、搜索优先、首页轮播和精选徽章。"
     },
     "nav": { "back": "返回编辑", "next": "审核刊登" },
-    "condition": { "new": "全新", "usedExcellent": "二手 - 极佳", "usedGood": "二手 - 良好", "usedFair": "二手 - 一般", "rebuild": "翻新", "core": "核心件" }
+    "condition": {
+      "new": "全新",
+      "usedExcellent": "二手 - 极佳",
+      "usedGood": "二手 - 良好",
+      "usedFair": "二手 - 一般",
+      "rebuild": "翻新",
+      "core": "核心件"
+    }
   },
   "ko": {
     "free": "무료",
@@ -300,7 +365,14 @@
       "features": "프리미엄 포함: 사진 15장, 30일간 추천 노출, 검색 우선 노출, 홈페이지 캐러셀, 추천 배지."
     },
     "nav": { "back": "편집으로 돌아가기", "next": "매물 검토" },
-    "condition": { "new": "새 제품", "usedExcellent": "중고 - 최상", "usedGood": "중고 - 양호", "usedFair": "중고 - 보통", "rebuild": "재생", "core": "코어 부품" }
+    "condition": {
+      "new": "새 제품",
+      "usedExcellent": "중고 - 최상",
+      "usedGood": "중고 - 양호",
+      "usedFair": "중고 - 보통",
+      "rebuild": "재생",
+      "core": "코어 부품"
+    }
   }
 }
 </i18n>
