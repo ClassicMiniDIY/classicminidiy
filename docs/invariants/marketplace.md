@@ -63,13 +63,15 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
   key or ownership: `tier` (except while the listing is a never-approved draft,
   which is the wizard choosing a plan), `featured_until`, `promoted_on_social`,
   `promoted_on_social_at`, the payment columns, `created_at`, `published_at` and
-  `user_id`. The database is the boundary and refuses such a write with `42501`;
-  the mechanism is documented in `classicminidiy-supabase`
+  `user_id`. The database is the boundary and refuses such a write with `42501`
+  (from `classicminidiy-supabase` migration `20261003000002`); the mechanism is
+  documented in `classicminidiy-supabase`
   (`docs/plans/2026-10-03-listing-owner-column-guard.md` and its CLAUDE.md). The
   wizard resends unchanged `tier` and `user_id` on every draft save, and that
-  stays legal: only a changed value is refused. So a client must never pass a protected `timestamptz` through a JS `Date`
-  and send it back: the microseconds are lost, the value differs, and the write
-  is refused. Omit the column instead.
+  stays legal: only a changed value is refused. So a client must never pass a
+  protected `timestamptz` through a JS `Date` and send it back: the microseconds
+  are lost, the value differs, and the write is refused. Omit the column
+  instead.
 
   The seller relist used to write `published_at`, `featured_until` and the social
   flag from the browser. It is now `POST /api/exchange/listings/[id]/relist`, a
