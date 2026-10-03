@@ -58,6 +58,7 @@ vi.stubGlobal('createError', (opts: any) => {
   const e: any = new Error(opts.statusMessage || opts.message);
   e.statusCode = opts.statusCode;
   e.statusMessage = opts.statusMessage;
+  e.data = opts.data;
   return e;
 });
 vi.stubGlobal('readBody', vi.fn());
@@ -142,6 +143,28 @@ describe('PUT /api/admin/listings/:id/tier', () => {
 
     expect(tableCall('listings', 'update')!.values).toEqual({ tier: 'free' });
     expect(tableCall('admin_audit_log', 'insert')!.values.action).toBe('listing_tier_revoked');
+  });
+
+  it.each(['paid', 'free'])('409s on a draft (%s), writing nothing', async (tier) => {
+    canned.listings = {
+      data: { ...FREE_LISTING, status: 'draft', tier: tier === 'paid' ? 'free' : 'paid' },
+      error: null,
+    };
+    (readBody as any).mockResolvedValue({ tier });
+
+    // A premium draft goes to review only through the payment path, so a grant
+    // on a draft would leave it unsubmittable.
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 409, data: { code: 'DRAFT' } });
+    expect(tableCall('listings', 'update')).toBeUndefined();
+    expect(tableCall('admin_audit_log')).toBeUndefined();
+  });
+
+  it.each(['pending', 'active', 'sold'])('grants premium on a %s listing', async (status) => {
+    canned.listings = { data: { ...FREE_LISTING, status }, error: null };
+    (readBody as any).mockResolvedValue({ tier: 'paid' });
+
+    expect(await handler(evt())).toMatchObject({ success: true, tier: 'paid' });
+    expect(tableCall('listings', 'update')!.values).toEqual({ tier: 'paid' });
   });
 
   it('short-circuits when the tier already matches, writing nothing', async () => {
