@@ -158,14 +158,17 @@
                       Set Example (Paid)
                     </a>
                   </li>
-                  <li v-if="listing.tier !== 'paid'" class="border-t border-base-300 mt-1 pt-1">
+                  <li
+                    v-if="listing.tier !== 'paid' && listing.status !== 'draft'"
+                    class="border-t border-base-300 mt-1 pt-1"
+                  >
                     <a @click="confirmChangeTier(listing.id, 'paid')">
                       <i class="fas fa-circle-arrow-up"></i>
                       Upgrade to Premium
                     </a>
                   </li>
                   <li
-                    v-if="listing.tier !== 'free'"
+                    v-if="listing.tier !== 'free' && listing.status !== 'draft'"
                     :class="{ 'border-t border-base-300 mt-1 pt-1': listing.tier === 'paid' }"
                   >
                     <a @click="confirmChangeTier(listing.id, 'free')">
@@ -336,14 +339,17 @@
                             Set Example (Paid)
                           </a>
                         </li>
-                        <li v-if="listing.tier !== 'paid'" class="border-t border-base-300 mt-1 pt-1">
+                        <li
+                          v-if="listing.tier !== 'paid' && listing.status !== 'draft'"
+                          class="border-t border-base-300 mt-1 pt-1"
+                        >
                           <a @click="confirmChangeTier(listing.id, 'paid')">
                             <i class="fas fa-circle-arrow-up"></i>
                             Upgrade to Premium
                           </a>
                         </li>
                         <li
-                          v-if="listing.tier !== 'free'"
+                          v-if="listing.tier !== 'free' && listing.status !== 'draft'"
                           :class="{ 'border-t border-base-300 mt-1 pt-1': listing.tier === 'paid' }"
                         >
                           <a @click="confirmChangeTier(listing.id, 'free')">
