@@ -19,7 +19,12 @@
 </script>
 
 <template>
-  <hero title="Terms of Use" :subtitle="'The Mini Exchange marketplace'" :heroType="HERO_TYPES.ARCHIVE" :navigation="true" />
+  <hero
+    title="Terms of Use"
+    :subtitle="'The Mini Exchange marketplace'"
+    :heroType="HERO_TYPES.ARCHIVE"
+    :navigation="true"
+  />
 
   <div class="container mx-auto px-4 py-8 max-w-4xl">
     <breadcrumb class="my-6" page="Terms of Use" />
@@ -39,9 +44,9 @@
         >
       </p>
       <p>
-        These Terms constitute a legally binding agreement between you and The Mini Exchange. We may modify these
-        Terms at any time, and your continued use of the Platform after changes are posted constitutes acceptance of
-        the modified Terms.
+        These Terms constitute a legally binding agreement between you and The Mini Exchange. We may modify these Terms
+        at any time, and your continued use of the Platform after changes are posted constitutes acceptance of the
+        modified Terms.
       </p>
 
       <h2>2. Description of Service and Platform Role</h2>
@@ -78,16 +83,16 @@
         <li>Act as an agent for buyers or sellers</li>
       </ul>
       <p>
-        All transactions occur directly between buyers and sellers. We provide the platform for users to connect, but
-        we are not a party to any transaction.
+        All transactions occur directly between buyers and sellers. We provide the platform for users to connect, but we
+        are not a party to any transaction.
       </p>
 
       <h2>3. User Accounts and Eligibility</h2>
 
       <h3>3.1 Account Registration</h3>
       <p>
-        To access certain features of the Platform (posting listings, messaging, commenting), you must create an
-        account by providing a valid email address. When you create an account, you agree to:
+        To access certain features of the Platform (posting listings, messaging, commenting), you must create an account
+        by providing a valid email address. When you create an account, you agree to:
       </p>
       <ul>
         <li>Provide accurate, current, and complete information</li>
@@ -97,20 +102,20 @@
         <li>Accept responsibility for all activities that occur under your account</li>
       </ul>
       <p>
-        You may not share, transfer, or sell your account to another person. You are solely responsible for your
-        account and any activity occurring through it, whether or not you authorized such activity.
+        You may not share, transfer, or sell your account to another person. You are solely responsible for your account
+        and any activity occurring through it, whether or not you authorized such activity.
       </p>
 
       <h3>3.2 Eligibility</h3>
       <p>
-        You must be at least 18 years old to use the Platform. By using the Platform, you represent and warrant that
-        you are at least 18 years of age and have the legal capacity to enter into these Terms.
+        You must be at least 18 years old to use the Platform. By using the Platform, you represent and warrant that you
+        are at least 18 years of age and have the legal capacity to enter into these Terms.
       </p>
 
       <h3>3.3 Account Suspension and Termination</h3>
       <p>
-        We reserve the right to suspend, disable, or terminate your account at any time, with or without notice, for
-        any reason, including if we believe you have:
+        We reserve the right to suspend, disable, or terminate your account at any time, with or without notice, for any
+        reason, including if we believe you have:
       </p>
       <ul>
         <li>Violated these Terms or our policies</li>
@@ -141,13 +146,12 @@
         <li>Harass, threaten, intimidate, abuse, defame, or otherwise harm other users</li>
         <li>Post or transmit content that is unlawful, hateful, discriminatory, or offensive</li>
         <li>
-          Impersonate any person or entity, or falsely state or misrepresent your affiliation with any person or
-          entity
+          Impersonate any person or entity, or falsely state or misrepresent your affiliation with any person or entity
         </li>
         <li>Interfere with or disrupt the Platform, servers, networks, or security measures</li>
         <li>
-          Collect, harvest, or scrape personal data from other users or use automated systems (bots, scripts,
-          crawlers) to access the Platform without our express written permission
+          Collect, harvest, or scrape personal data from other users or use automated systems (bots, scripts, crawlers)
+          to access the Platform without our express written permission
         </li>
         <li>Attempt to gain unauthorized access to any portion of the Platform, other accounts, or systems</li>
         <li>Transmit viruses, malware, or any other malicious code</li>
@@ -162,9 +166,7 @@
         <li>Misrepresent the condition, history, title status, or specifications of a vehicle</li>
         <li>List vehicles you do not own or have authority to sell</li>
         <li>List stolen vehicles or vehicles with fraudulent documentation</li>
-        <li>
-          List items that are not Classic Mini vehicles, parts, or directly related accessories (1959-2000 only)
-        </li>
+        <li>List items that are not Classic Mini vehicles, parts, or directly related accessories (1959-2000 only)</li>
         <li>Use photos you do not own or have permission to use</li>
         <li>Include external links or contact information intended to circumvent the Platform's messaging system</li>
         <li>
@@ -236,9 +238,9 @@
 
       <h3>5.4 Listing Moderation</h3>
       <p>
-        All listings are subject to review and moderation. We reserve the right to reject, remove, or modify any
-        listing that violates these Terms, contains inappropriate content, or does not meet our quality standards. We
-        may also remove listings that appear to be duplicates, spam, or not relevant to Classic Minis (1959-2000).
+        All listings are subject to review and moderation. We reserve the right to reject, remove, or modify any listing
+        that violates these Terms, contains inappropriate content, or does not meet our quality standards. We may also
+        remove listings that appear to be duplicates, spam, or not relevant to Classic Minis (1959-2000).
       </p>
       <p>
         Certain changes to published listings (such as price, year, model, or VIN) require admin review and approval
@@ -246,8 +248,8 @@
       </p>
       <p>
         Sold listings may remain publicly visible in our Sold Archive as historical reference for the Classic Mini
-        community. Sold listings are attributed to your account unless you delete your account, in which case they
-        will be anonymized.
+        community. Sold listings are attributed to your account unless you delete your account, in which case they will
+        be anonymized.
       </p>
       <p>
         Active listing data (including title, description, photos, seller display name, and creation date) is included
@@ -311,32 +313,31 @@
       <p>The Platform offers two listing tiers:</p>
       <ul>
         <li>
-          <strong>Free Tier</strong>: No cost. Up to 5 photos, standard visibility, Q&amp;A comments, and messaging.
-          All listings are subject to admin approval before going live.
+          <strong>Free Tier</strong>: No cost. Up to 5 photos, standard visibility, Q&amp;A comments, and messaging. All
+          listings are subject to admin approval before going live.
         </li>
         <li>
           <strong>Premium Tier</strong>: $10 USD one-time payment. Up to 20 photos, featured placement for 30 days,
-          priority in search results, homepage carousel exposure, and a featured badge on your listing. All listings
-          are subject to admin approval before going live.
+          priority in search results, homepage carousel exposure, and a featured badge on your listing. All listings are
+          subject to admin approval before going live.
         </li>
       </ul>
       <p>
-        Premium listing payments are processed securely through Stripe. All fees are non-refundable once your listing
-        is published, except as required by law or at our sole discretion.
+        Premium listing payments are processed securely through Stripe. All fees are non-refundable once your listing is
+        published, except as required by law or at our sole discretion.
       </p>
 
       <h3>7.2 Payment Processing</h3>
       <p>
         Premium listing payments are processed by Stripe, a third-party payment processor. By making a payment, you
-        agree to Stripe's Terms of Service and Privacy Policy. We do not store complete payment card information on
-        our servers.
+        agree to Stripe's Terms of Service and Privacy Policy. We do not store complete payment card information on our
+        servers.
       </p>
 
       <h3>7.3 Taxes</h3>
       <p>
         You are responsible for paying any applicable taxes on premium listing purchases. Sellers are responsible for
-        paying any applicable taxes on proceeds from vehicle sales. We do not collect or remit taxes on behalf of
-        users.
+        paying any applicable taxes on proceeds from vehicle sales. We do not collect or remit taxes on behalf of users.
       </p>
 
       <h3>7.4 No Vehicle Transaction Fees</h3>
@@ -370,8 +371,8 @@
       <p>
         <strong
           >We do not verify, authenticate, inspect, or endorse any listings, vehicles, or users. We make no
-          representations or warranties about the accuracy of listings, the quality of vehicles, or the
-          trustworthiness of users.</strong
+          representations or warranties about the accuracy of listings, the quality of vehicles, or the trustworthiness
+          of users.</strong
         >
         Any reliance on listings or user-generated content is at your own risk.
       </p>
@@ -386,9 +387,9 @@
 
       <h3>9.1 Damages Limitation</h3>
       <p>
-        TO THE FULLEST EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE MINI EXCHANGE, ITS OFFICERS, DIRECTORS,
-        EMPLOYEES, AGENTS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR
-        EXEMPLARY DAMAGES ARISING FROM OR RELATED TO YOUR USE OF THE PLATFORM, INCLUDING BUT NOT LIMITED TO:
+        TO THE FULLEST EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE MINI EXCHANGE, ITS OFFICERS, DIRECTORS, EMPLOYEES,
+        AGENTS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY
+        DAMAGES ARISING FROM OR RELATED TO YOUR USE OF THE PLATFORM, INCLUDING BUT NOT LIMITED TO:
       </p>
       <ul>
         <li>Loss of profits, revenue, business opportunities, or data</li>
@@ -416,10 +417,10 @@
         >
       </p>
       <p>
-        If you are a California resident, you waive California Civil Code Section 1542, which states: "A general
-        release does not extend to claims that the creditor or releasing party does not know or suspect to exist in
-        his or her favor at the time of executing the release and that, if known by him or her, would have materially
-        affected his or her settlement with the debtor or released party."
+        If you are a California resident, you waive California Civil Code Section 1542, which states: "A general release
+        does not extend to claims that the creditor or releasing party does not know or suspect to exist in his or her
+        favor at the time of executing the release and that, if known by him or her, would have materially affected his
+        or her settlement with the debtor or released party."
       </p>
 
       <h3>9.4 Force Majeure</h3>
@@ -451,10 +452,10 @@
 
       <h3>10.3 User Content License</h3>
       <p>
-        By posting content on the Platform (including listings, photos, messages, comments, and descriptions), you
-        grant The Mini Exchange a worldwide, non-exclusive, royalty-free, fully paid, sublicensable, and transferable
-        license to use, reproduce, modify, adapt, publish, display, distribute, and create derivative works from your
-        content for the purpose of operating, promoting, and improving the Platform.
+        By posting content on the Platform (including listings, photos, messages, comments, and descriptions), you grant
+        The Mini Exchange a worldwide, non-exclusive, royalty-free, fully paid, sublicensable, and transferable license
+        to use, reproduce, modify, adapt, publish, display, distribute, and create derivative works from your content
+        for the purpose of operating, promoting, and improving the Platform.
       </p>
       <p>This license continues even after you stop using the Platform or delete your account.</p>
 
@@ -471,8 +472,8 @@
       <p>
         If you believe content on the Platform infringes your copyright, please contact us at
         <a href="mailto:hello@theminiexchange.com" class="link link-primary">hello@theminiexchange.com</a>
-        with detailed information about the alleged infringement. We will investigate and take appropriate action,
-        which may include removing the content.
+        with detailed information about the alleged infringement. We will investigate and take appropriate action, which
+        may include removing the content.
       </p>
 
       <h2>11. Indemnification</h2>
@@ -506,8 +507,7 @@
       <p>
         If you have a dispute with The Mini Exchange, you agree to first contact us at
         <a href="mailto:hello@theminiexchange.com" class="link link-primary">hello@theminiexchange.com</a>
-        and attempt to resolve the dispute informally for at least 30 days before initiating arbitration or
-        litigation.
+        and attempt to resolve the dispute informally for at least 30 days before initiating arbitration or litigation.
       </p>
 
       <h3>12.2 Binding Arbitration</h3>
@@ -522,9 +522,7 @@
         Terms or your use of the Platform (except disputes related to intellectual property rights) shall be resolved
         exclusively through binding individual arbitration rather than in court.
       </p>
-      <p>
-        Arbitration shall be conducted under the American Arbitration Association (AAA) Consumer Arbitration Rules.
-      </p>
+      <p>Arbitration shall be conducted under the American Arbitration Association (AAA) Consumer Arbitration Rules.</p>
 
       <h3>12.3 Class Action Waiver</h3>
       <p>
@@ -541,9 +539,7 @@
       <ul>
         <li>Disputes related to intellectual property rights (trademarks, copyrights, patents)</li>
         <li>Claims that can be brought in small claims court</li>
-        <li>
-          Requests for injunctive or equitable relief to prevent infringement or misuse of intellectual property
-        </li>
+        <li>Requests for injunctive or equitable relief to prevent infringement or misuse of intellectual property</li>
       </ul>
 
       <h3>12.5 User-to-User Disputes</h3>
@@ -563,9 +559,9 @@
       <h2>13. Governing Law and Venue</h2>
       <p>
         These Terms shall be governed by and construed in accordance with the laws of the State of California, without
-        regard to its conflict of law provisions. Any litigation not subject to arbitration shall be brought
-        exclusively in the state or federal courts located in California, and you consent to the personal jurisdiction
-        of those courts.
+        regard to its conflict of law provisions. Any litigation not subject to arbitration shall be brought exclusively
+        in the state or federal courts located in California, and you consent to the personal jurisdiction of those
+        courts.
       </p>
 
       <h2>14. Modifications to Terms</h2>
@@ -585,24 +581,23 @@
 
       <h2>15. Modifications to Platform Services</h2>
       <p>
-        We reserve the right to modify, suspend, or discontinue any aspect of the Platform (including features,
-        pricing, and availability) at any time, with or without notice, and without liability to you or any third
-        party.
+        We reserve the right to modify, suspend, or discontinue any aspect of the Platform (including features, pricing,
+        and availability) at any time, with or without notice, and without liability to you or any third party.
       </p>
 
       <h2>16. Privacy</h2>
       <p>
         Your use of the Platform is also governed by our
         <NuxtLink to="/privacy" class="link link-primary">Privacy Notice</NuxtLink>, which describes how we collect,
-        use, and protect your personal information. By using the Platform, you consent to our collection and use of
-        your information as described in the Privacy Notice.
+        use, and protect your personal information. By using the Platform, you consent to our collection and use of your
+        information as described in the Privacy Notice.
       </p>
 
       <h2>17. Third-Party Links and Services</h2>
       <p>
         The Platform may contain links to third-party websites, services, or resources (such as Stripe for payment
-        processing). We are not responsible for the content, policies, or practices of third-party websites or
-        services. Your use of third-party services is subject to their own terms and policies.
+        processing). We are not responsible for the content, policies, or practices of third-party websites or services.
+        Your use of third-party services is subject to their own terms and policies.
       </p>
 
       <h2>18. Entire Agreement</h2>
@@ -621,16 +616,16 @@
 
       <h2>20. Waiver</h2>
       <p>
-        Our failure to enforce any provision of these Terms shall not constitute a waiver of that provision or any
-        other provision. No waiver shall be effective unless made in writing and signed by an authorized
-        representative of The Mini Exchange.
+        Our failure to enforce any provision of these Terms shall not constitute a waiver of that provision or any other
+        provision. No waiver shall be effective unless made in writing and signed by an authorized representative of The
+        Mini Exchange.
       </p>
 
       <h2>21. Assignment</h2>
       <p>
-        You may not assign, transfer, or delegate these Terms or your rights and obligations hereunder without our
-        prior written consent. We may assign these Terms without restriction. Any attempted assignment in violation of
-        this provision is void.
+        You may not assign, transfer, or delegate these Terms or your rights and obligations hereunder without our prior
+        written consent. We may assign these Terms without restriction. Any attempted assignment in violation of this
+        provision is void.
       </p>
 
       <h2>22. Survival</h2>
@@ -653,10 +648,10 @@
         <div>
           <h3 class="font-bold">Important Safety Notice</h3>
           <p class="text-sm mt-1">
-            <strong>Always inspect vehicles in person before purchasing.</strong> Verify ownership documentation,
-            obtain vehicle history reports, and use secure payment methods. Never wire money to unknown parties or
-            send payment before seeing a vehicle in person. If an offer seems too good to be true, it probably is.
-            Report suspicious activity to us immediately.
+            <strong>Always inspect vehicles in person before purchasing.</strong> Verify ownership documentation, obtain
+            vehicle history reports, and use secure payment methods. Never wire money to unknown parties or send payment
+            before seeing a vehicle in person. If an offer seems too good to be true, it probably is. Report suspicious
+            activity to us immediately.
           </p>
         </div>
       </div>
