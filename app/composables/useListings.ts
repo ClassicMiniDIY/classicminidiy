@@ -369,7 +369,9 @@ export const useListings = () => {
    *
    * The reset field list MUST stay in sync with the admin relist branch in
    * server/api/admin/listings/[id]/status.put.ts — "relist" has to mean the same
-   * thing whether the seller or an admin clicks it.
+   * thing whether the seller or an admin clicks it. That includes the social
+   * reset: the sweep selects on `promoted_on_social = false`, so the flag and
+   * the timestamp reset together, or a relisted paid listing is never re-posted.
    */
   const relistListing = async (listingId: string, previousStatus: string, tier: string, newPrice?: number) => {
     const user = getUser();
@@ -382,6 +384,7 @@ export const useListings = () => {
       final_price: null,
       tracking_number: null,
       tracking_carrier: null,
+      promoted_on_social: false,
       promoted_on_social_at: null,
       featured_until: tier === 'paid' ? featuredUntilFromNow() : null,
     };
