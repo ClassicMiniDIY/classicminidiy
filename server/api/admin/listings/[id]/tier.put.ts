@@ -19,6 +19,11 @@ import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
 
 const ALLOWED = ['free', 'paid'] as const;
+type Tier = (typeof ALLOWED)[number];
+
+function isTier(value: unknown): value is Tier {
+  return typeof value === 'string' && (ALLOWED as readonly string[]).includes(value);
+}
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdminAuth(event);
@@ -28,7 +33,7 @@ export default defineEventHandler(async (event) => {
 
   const body = await readBody<{ tier?: string }>(event);
   const tier = body?.tier;
-  if (!tier || !(ALLOWED as readonly string[]).includes(tier)) {
+  if (!isTier(tier)) {
     throw createError({ statusCode: 400, statusMessage: "tier must be 'free' or 'paid'" });
   }
 
