@@ -68,7 +68,9 @@ const BASELINE = {
   // like the rest of the admin reads do.
   // 58 -> 57. The search route now imports the wire types from `shared`
   // rather than re-declaring them.
-  'server/': 57,
+  // 57 -> 56. The admin tier route narrows the body's `tier` with a type guard
+  // (`isTier`), so the update no longer passes a bare string as the tier enum.
+  'server/': 56,
   'scripts/': 0,
   'data/': 1,
 };
