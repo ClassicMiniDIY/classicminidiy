@@ -39,3 +39,40 @@ export function relistSocialReset(
   if (!Number.isFinite(lastPost)) return { promoted_on_social: false };
   return now - lastPost >= SOCIAL_REPOST_AFTER_DAYS * 24 * 60 * 60 * 1000 ? { promoted_on_social: false } : {};
 }
+
+/** The columns a relist writes. See `relistUpdates()`. */
+export interface RelistUpdates {
+  status: 'active';
+  published_at: string;
+  sold_date: null;
+  final_price: null;
+  tracking_number: null;
+  tracking_carrier: null;
+  price?: number;
+}
+
+/**
+ * The full column set of a relist, shared by the seller route
+ * (`POST /api/exchange/listings/[id]/relist`) and the admin status route, so
+ * "relist" means the same thing whoever clicks it.
+ *
+ * It puts the listing back live, stamps `published_at` (a relisted listing
+ * sorts as newly published), clears the sale trail (a stale `tracking_*`
+ * resurfaces old shipping details on the detail page) and, when given, sets a
+ * new price.
+ *
+ * It never contains `featured_until`, `promoted_on_social` or
+ * `promoted_on_social_at`. Featured has no window to renew, and a relist never
+ * re-queues a social post.
+ */
+export function relistUpdates({ now = Date.now(), price }: { now?: number; price?: number } = {}): RelistUpdates {
+  return {
+    status: 'active',
+    published_at: new Date(now).toISOString(),
+    sold_date: null,
+    final_price: null,
+    tracking_number: null,
+    tracking_carrier: null,
+    ...(price !== undefined ? { price } : {}),
+  };
+}

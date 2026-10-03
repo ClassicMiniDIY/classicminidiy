@@ -638,32 +638,6 @@ describe('useListings', () => {
   });
 
   // -------------------------------------------------------------------------
-  // publishListing()
-  // -------------------------------------------------------------------------
-  describe('publishListing()', () => {
-    it('updates status to active and sets published_at (delegates to updateListing)', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({
-        data: { ...mockListingWithPhotos, status: 'active' },
-        error: null,
-      });
-
-      const { useListings } = await import('~/app/composables/useListings');
-      await useListings().publishListing('test-listing-id');
-
-      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
-      expect(updateArg.status).toBe('active');
-      expect(updateArg.published_at).toBeDefined();
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', 'test-user-id');
-    });
-
-    it('throws when the user is not authenticated', async () => {
-      stubAuth(null);
-      const { useListings } = await import('~/app/composables/useListings');
-      await expect(useListings().publishListing('test-listing-id')).rejects.toThrow('User not authenticated');
-    });
-  });
-
-  // -------------------------------------------------------------------------
   // getPhotoUrl()
   // -------------------------------------------------------------------------
   describe('getPhotoUrl()', () => {
@@ -744,113 +718,36 @@ describe('useListings', () => {
   // relistListing()
   // -------------------------------------------------------------------------
   describe('relistListing()', () => {
-    const DAY_MS = 24 * 60 * 60 * 1000;
+    let mockFetch: ReturnType<typeof vi.fn>;
+    const relisted = { ...mockListingWithPhotos, status: 'active' };
 
     beforeEach(() => {
-      // relistListing reads the row's last social post time first. Default:
-      // never posted.
-      mockSupabase._mockMaybeSingle.mockResolvedValue({ data: { promoted_on_social_at: null }, error: null });
+      mockFetch = vi.fn().mockResolvedValue({ success: true, listing: relisted });
+      vi.stubGlobal('$fetch', mockFetch);
     });
 
-    it('resets sale fields, sets featured_until for paid tier, and updates filtered by ownership', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({
-        data: { ...mockListingWithPhotos, status: 'active' },
-        error: null,
-      });
-
+    it('relists through the server route with the session token, not through PostgREST', async () => {
       const { useListings } = await import('~/app/composables/useListings');
-      await useListings().relistListing('test-listing-id', 'sold', 'paid');
+      const result = await useListings().relistListing('test-listing-id', 'sold', 'paid');
 
-      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
-      expect(updateArg.status).toBe('active');
-      expect(updateArg.published_at).toBeDefined();
-      expect(updateArg.sold_date).toBeNull();
-      expect(updateArg.final_price).toBeNull();
-      expect(updateArg.tracking_number).toBeNull();
-      expect(updateArg.tracking_carrier).toBeNull();
-      // Never posted => re-queued for the sweep. The timestamp is never written.
-      expect(updateArg.promoted_on_social).toBe(false);
-      expect('promoted_on_social_at' in updateArg).toBe(false);
-      // paid tier => featured_until ~30 days out
-      expect(typeof updateArg.featured_until).toBe('string');
-      const days = (new Date(updateArg.featured_until).getTime() - Date.now()) / (24 * 60 * 60 * 1000);
-      expect(days).toBeGreaterThan(29);
-      expect(days).toBeLessThan(31);
-      expect('price' in updateArg).toBe(false);
-
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('id', 'test-listing-id');
-      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('user_id', 'test-user-id');
-    });
-
-    it('re-queues a listing whose last social post is older than SOCIAL_REPOST_AFTER_DAYS, keeping the timestamp', async () => {
-      mockSupabase._mockMaybeSingle.mockResolvedValue({
-        data: { promoted_on_social_at: new Date(Date.now() - 31 * DAY_MS).toISOString() },
-        error: null,
+      expect(mockFetch).toHaveBeenCalledWith('/api/exchange/listings/test-listing-id/relist', {
+        method: 'POST',
+        body: {},
+        headers: { Authorization: 'Bearer mock-access-token' },
       });
-      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
-
-      const { useListings } = await import('~/app/composables/useListings');
-      await useListings().relistListing('test-listing-id', 'sold', 'paid');
-
-      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
-      expect(updateArg.promoted_on_social).toBe(false);
-      expect('promoted_on_social_at' in updateArg).toBe(false);
-      expect(mockSupabase._mockSelect).toHaveBeenCalledWith('promoted_on_social_at');
-    });
-
-    it('leaves both social columns alone when the last post is recent', async () => {
-      mockSupabase._mockMaybeSingle.mockResolvedValue({
-        data: { promoted_on_social_at: new Date(Date.now() - 3 * DAY_MS).toISOString() },
-        error: null,
-      });
-      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
-
-      const { useListings } = await import('~/app/composables/useListings');
-      await useListings().relistListing('test-listing-id', 'sold', 'paid');
-
-      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
-      expect('promoted_on_social' in updateArg).toBe(false);
-      expect('promoted_on_social_at' in updateArg).toBe(false);
-    });
-
-    it('throws without updating when the social read fails or finds no row', async () => {
-      const { useListings } = await import('~/app/composables/useListings');
-
-      mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'read failed' } });
-      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toMatchObject({
-        message: 'read failed',
-      });
-
-      mockSupabase._mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
-      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toThrow('Listing not found');
-
+      // The seller session writes nothing itself: the route builds the columns.
       expect(mockSupabase._mockUpdate).not.toHaveBeenCalled();
-      expect(mockCapture).not.toHaveBeenCalled();
+      expect(result).toEqual(relisted);
     });
 
-    it('leaves featured_until null for the free tier', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
-
-      const { useListings } = await import('~/app/composables/useListings');
-      await useListings().relistListing('test-listing-id', 'expired', 'free');
-
-      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
-      expect(updateArg.featured_until).toBeNull();
-    });
-
-    it('sets the new price when provided', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
-
+    it('sends the new price when provided', async () => {
       const { useListings } = await import('~/app/composables/useListings');
       await useListings().relistListing('test-listing-id', 'cancelled', 'free', 12345);
 
-      const updateArg = mockSupabase._mockUpdate.mock.calls[0][0];
-      expect(updateArg.price).toBe(12345);
+      expect(mockFetch.mock.calls[0][1].body).toEqual({ price: 12345 });
     });
 
-    it('captures listing_relisted with price_changed reflecting the newPrice arg', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
-
+    it("captures listing_relisted with via: 'route' and price_changed reflecting the newPrice arg", async () => {
       const { useListings } = await import('~/app/composables/useListings');
       await useListings().relistListing('test-listing-id', 'sold', 'paid', 9000);
 
@@ -859,16 +756,18 @@ describe('useListings', () => {
         previous_status: 'sold',
         tier: 'paid',
         price_changed: true,
+        via: 'route',
       });
     });
 
     it('reports price_changed false when no newPrice provided', async () => {
-      mockSupabase._mockSingle.mockResolvedValueOnce({ data: mockListingWithPhotos, error: null });
-
       const { useListings } = await import('~/app/composables/useListings');
       await useListings().relistListing('test-listing-id', 'sold', 'free');
 
-      expect(mockCapture).toHaveBeenCalledWith('listing_relisted', expect.objectContaining({ price_changed: false }));
+      expect(mockCapture).toHaveBeenCalledWith(
+        'listing_relisted',
+        expect.objectContaining({ price_changed: false, via: 'route' })
+      );
     });
 
     it('throws when the user is not authenticated', async () => {
@@ -877,14 +776,24 @@ describe('useListings', () => {
       await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toThrow(
         'User not authenticated'
       );
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('throws when the update errors and does not capture analytics', async () => {
-      const supabaseError = { message: 'Relist failed' };
-      mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: supabaseError });
+    it('throws when there is no session token, without calling the route', async () => {
+      mockSupabase.auth.getSession.mockResolvedValueOnce({ data: { session: null }, error: null });
+      const { useListings } = await import('~/app/composables/useListings');
+      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toThrow(
+        'User not authenticated'
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('throws when the route refuses and does not capture analytics', async () => {
+      const refusal = Object.assign(new Error('Not approved'), { statusCode: 409 });
+      mockFetch.mockRejectedValueOnce(refusal);
 
       const { useListings } = await import('~/app/composables/useListings');
-      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toEqual(supabaseError);
+      await expect(useListings().relistListing('test-listing-id', 'sold', 'paid')).rejects.toBe(refusal);
       expect(mockCapture).not.toHaveBeenCalled();
     });
   });

@@ -185,75 +185,56 @@ describe('PUT /api/admin/listings/:id/status', () => {
     });
   });
 
-  it('relisting clears the whole sale trail, matching the seller relist', async () => {
+  it('relisting writes exactly relistUpdates(), the same column set as the seller relist route', async () => {
     canned.listings = { data: { ...LISTING, status: 'sold', tier: 'free' }, error: null };
     (readBody as any).mockResolvedValue({ status: 'active', relist: true });
 
     await handler(evt());
 
-    // Field-for-field parity with relistListing() in useListings.ts. Leaving
-    // tracking_* behind resurfaces stale shipping info on the detail page.
-    // Never posted => re-queued (flag false); the timestamp is never written.
+    // Field-for-field parity with POST /api/exchange/listings/:id/relist: both
+    // take the columns from relistUpdates(). Leaving tracking_* behind
+    // resurfaces stale shipping info on the detail page.
     const update = tableCall('listings', 'update')!;
-    expect(update.values).toMatchObject({
+    expect(update.values).toEqual({
       status: 'active',
+      published_at: expect.any(String),
       sold_date: null,
       final_price: null,
       tracking_number: null,
       tracking_carrier: null,
-      promoted_on_social: false,
-      featured_until: null, // free tier
     });
-    expect('promoted_on_social_at' in update.values).toBe(false);
-    expect(update.values.published_at).toBeTypeOf('string');
     expect(tableCall('admin_audit_log', 'insert')!.values.action).toBe('listing_relisted');
   });
 
-  it('relisting a paid listing restores its featured window', async () => {
-    canned.listings = { data: { ...LISTING, status: 'sold', tier: 'paid' }, error: null };
+  it.each([
+    ['never posted', null],
+    ['posted long ago', '2020-01-01T00:00:00.000Z'],
+    ['posted recently', new Date().toISOString()],
+  ])('relisting a paid listing (%s) writes no featured or social column', async (_label, promotedOnSocialAt) => {
+    canned.listings = {
+      data: { ...LISTING, status: 'sold', tier: 'paid', promoted_on_social_at: promotedOnSocialAt },
+      error: null,
+    };
     (readBody as any).mockResolvedValue({ status: 'active', relist: true });
 
     await handler(evt());
 
-    const featuredUntil = tableCall('listings', 'update')!.values.featured_until as string;
-    expect(new Date(featuredUntil).getTime()).toBeGreaterThan(Date.now());
+    // Featured has no window to renew, and a relist never re-queues a social
+    // post: a paid listing is posted once.
+    const values = tableCall('listings', 'update')!.values;
+    expect('featured_until' in values).toBe(false);
+    expect('promoted_on_social' in values).toBe(false);
+    expect('promoted_on_social_at' in values).toBe(false);
+    // The sweep's failure counter (listing_promotions) is the backend's.
+    expect(tableCall('listing_promotions')).toBeUndefined();
   });
 
-  describe('relist social re-queue (SOCIAL_REPOST_AFTER_DAYS)', () => {
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    const relistWith = async (promotedOnSocialAt: string | null) => {
-      canned.listings = {
-        data: { ...LISTING, status: 'sold', tier: 'paid', promoted_on_social_at: promotedOnSocialAt },
-        error: null,
-      };
-      (readBody as any).mockResolvedValue({ status: 'active', relist: true });
-      await handler(evt());
-      return tableCall('listings', 'update')!.values;
-    };
+  it('refuses a relist to any status but active', async () => {
+    canned.listings = { data: { ...LISTING, status: 'sold' }, error: null };
+    (readBody as any).mockResolvedValue({ status: 'cancelled', relist: true });
 
-    it('re-queues a never-posted listing', async () => {
-      const values = await relistWith(null);
-      expect(values.promoted_on_social).toBe(false);
-      expect('promoted_on_social_at' in values).toBe(false);
-    });
-
-    it('re-queues a listing last posted more than 30 days ago and keeps its timestamp', async () => {
-      const values = await relistWith(new Date(Date.now() - 31 * DAY_MS).toISOString());
-      expect(values.promoted_on_social).toBe(false);
-      // Kept: the sweep treats flag false + an old timestamp + no recent failure as due.
-      expect('promoted_on_social_at' in values).toBe(false);
-    });
-
-    it('leaves both social columns alone for a listing posted recently', async () => {
-      const values = await relistWith(new Date(Date.now() - 2 * DAY_MS).toISOString());
-      expect('promoted_on_social' in values).toBe(false);
-      expect('promoted_on_social_at' in values).toBe(false);
-    });
-
-    it("never touches listing_promotions (the failure counter is the backend's)", async () => {
-      await relistWith(null);
-      expect(tableCall('listing_promotions')).toBeUndefined();
-    });
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 400 });
+    expect(tableCall('listings', 'update')).toBeUndefined();
   });
 
   it('a plain approval does not reset the social state', async () => {

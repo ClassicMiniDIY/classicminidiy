@@ -1,5 +1,4 @@
 import type { Database } from '~~/types/database';
-import { featuredUntilFromNow, relistSocialReset } from '~~/shared/utils/listingPromotion';
 
 type Listing = Database['public']['Tables']['listings']['Row'];
 type ListingInsert = Database['public']['Tables']['listings']['Insert'];
@@ -329,16 +328,6 @@ export const useListings = () => {
   };
 
   /**
-   * Publish a draft listing
-   */
-  const publishListing = async (listingId: string) => {
-    return updateListing(listingId, {
-      status: 'active',
-      published_at: new Date().toISOString(),
-    });
-  };
-
-  /**
    * Get public URL for a photo
    */
   const getPhotoUrl = (storagePath: string) => {
@@ -364,64 +353,42 @@ export const useListings = () => {
   };
 
   /**
-   * Relist a sold, expired, or cancelled listing back to active
-   * Resets sale-related fields, preserves tier, optionally updates price
+   * Relist a sold, expired, or cancelled listing back to active.
    *
-   * The reset field list MUST stay in sync with the admin relist branch in
-   * server/api/admin/listings/[id]/status.put.ts — "relist" has to mean the same
-   * thing whether the seller or an admin clicks it. That includes the social
-   * columns, which both paths take from `relistSocialReset()`: the listing is
-   * re-queued for the sweep only when it was never posted or its last post is
-   * older than `SOCIAL_REPOST_AFTER_DAYS`.
+   * Goes through `POST /api/exchange/listings/:id/relist`: a relist writes
+   * `published_at`, which a seller session may not write directly. The route
+   * builds the columns with `relistUpdates()`, the same helper as the admin
+   * relist, so "relist" means the same thing whoever clicks it. It keeps the
+   * tier and writes no featured or social column.
+   *
+   * `tier` is not used for the write (the route reads it from the row); it is
+   * kept in the signature for the analytics event.
    */
   const relistListing = async (listingId: string, previousStatus: string, tier: string, newPrice?: number) => {
     const user = getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Read the last social post time from the row itself, not from the caller's
-    // copy, which can be stale or lack the column.
-    const { data: current, error: readError } = await supabase
-      .from('listings')
-      .select('promoted_on_social_at')
-      .eq('id', listingId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-    if (readError) throw readError;
-    if (!current) throw new Error('Listing not found');
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    if (!token) throw new Error('User not authenticated');
 
-    const updates: Record<string, any> = {
-      status: 'active',
-      published_at: new Date().toISOString(),
-      sold_date: null,
-      final_price: null,
-      tracking_number: null,
-      tracking_carrier: null,
-      ...relistSocialReset(current.promoted_on_social_at),
-      featured_until: tier === 'paid' ? featuredUntilFromNow() : null,
-    };
-
-    if (newPrice !== undefined) {
-      updates.price = newPrice;
-    }
-
-    const { data, error } = await supabase
-      .from('listings')
-      .update(updates)
-      .eq('id', listingId)
-      .eq('user_id', user.id)
-      .select()
-      .single();
-
-    if (error) throw error;
+    const res = await $fetch<{ success: boolean; listing: Listing }>(`/api/exchange/listings/${listingId}/relist`, {
+      method: 'POST',
+      body: newPrice !== undefined ? { price: newPrice } : {},
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     capture('listing_relisted', {
       listing_id: listingId,
       previous_status: previousStatus,
       tier,
       price_changed: newPrice !== undefined,
+      // Lets the rollout see when clients that still relist through PostgREST
+      // are gone (no event without `via`).
+      via: 'route',
     });
 
-    return data as Listing;
+    return res.listing;
   };
 
   return {
@@ -432,7 +399,6 @@ export const useListings = () => {
     createListing,
     updateListing,
     deleteListing,
-    publishListing,
     getPhotoUrl,
     getPrimaryPhoto,
     relistListing,

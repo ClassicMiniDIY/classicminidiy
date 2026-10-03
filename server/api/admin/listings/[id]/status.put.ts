@@ -21,7 +21,7 @@
  */
 import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
-import { featuredUntilFromNow, relistSocialReset } from '../../../../../shared/utils/listingPromotion';
+import { relistUpdates } from '../../../../../shared/utils/listingPromotion';
 
 /** Statuses an admin may set. Mirrors the options the admin listings UI actually
  *  offers, including its "Set Example (Free/Paid)" actions — `example_*` rows are
@@ -48,11 +48,15 @@ export default defineEventHandler(async (event) => {
       statusMessage: `status must be one of: ${ALLOWED.join(', ')}`,
     });
   }
+  // A relist always puts the listing back live; `relistUpdates()` sets `active`.
+  if (body?.relist && status !== 'active') {
+    throw createError({ statusCode: 400, statusMessage: "relist requires status 'active'" });
+  }
 
   const db = getServiceClient();
   const { data: listing, error: loadErr } = await db
     .from('listings')
-    .select('id, user_id, title, slug, status, tier, promoted_on_social_at')
+    .select('id, user_id, title, slug, status, tier')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw createError({ statusCode: 500, statusMessage: 'Failed to load listing' });
@@ -64,32 +68,19 @@ export default defineEventHandler(async (event) => {
 
   const updates: Record<string, unknown> = { status };
 
-  // Going live — whether by approval or by relist — republishes, so published_at
-  // is stamped either way. (Relist matching approval here is intentional: a
-  // relisted listing should sort as newly published in browse.)
+  // Going live by approval republishes, so published_at is stamped.
   if (status === 'active') {
     updates.published_at = new Date().toISOString();
   }
 
-  // Relist: reset the sale trail. This MUST stay in sync with
-  // `relistListing()` in app/composables/useListings.ts — that is the seller's
-  // own relist button, and "relist" has to mean the same thing whoever clicks
-  // it. Leaving tracking_* behind resurfaces stale shipping info on the detail
-  // page.
-  //
-  // Social: `relistSocialReset()` re-queues the listing for the sweep (flag
-  // false, timestamp kept) only when it was never posted or its last post is
-  // older than SOCIAL_REPOST_AFTER_DAYS; otherwise both social columns stay as
-  // they are. The sweep selects on the FLAG, so clearing only the timestamp
-  // never re-posted anything. The sweep's failure counter (on
-  // listing_promotions.features) is the backend's and is not touched here.
+  // Relist: the same column set as the seller's own relist
+  // (`POST /api/exchange/listings/:id/relist`), from the same helper, so
+  // "relist" means the same thing whoever clicks it. It stamps published_at
+  // (a relisted listing sorts as newly published) and clears the sale trail.
+  // It writes no featured or social column: featured has no window to renew,
+  // and a relist never re-queues a social post.
   if (body?.relist) {
-    updates.sold_date = null;
-    updates.final_price = null;
-    updates.tracking_number = null;
-    updates.tracking_carrier = null;
-    Object.assign(updates, relistSocialReset(listing.promoted_on_social_at));
-    updates.featured_until = listing.tier === 'paid' ? featuredUntilFromNow() : null;
+    Object.assign(updates, relistUpdates());
   }
 
   const { error: upErr } = await db.from('listings').update(updates).eq('id', id);
