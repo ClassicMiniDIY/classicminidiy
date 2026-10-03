@@ -236,8 +236,20 @@
                   <div class="flex-1 min-w-0">
                     <h3 class="font-semibold">{{ listing.title }}</h3>
                     <p class="text-sm text-base-content/70">{{ listing.year }} {{ listing.model }}</p>
-                    <div class="mt-2">
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
                       <ExchangeListingsFeaturedBadge :tier="listing.tier" :featured-until="listing.featured_until" />
+                      <span
+                        v-if="pendingSweepStatus[listing.id]"
+                        class="badge badge-sm badge-soft"
+                        :class="pendingSweepStatus[listing.id]!.parked ? 'badge-error' : 'badge-warning'"
+                        :title="sweepStatusTitle(pendingSweepStatus[listing.id]!)"
+                      >
+                        <i
+                          class="fas"
+                          :class="pendingSweepStatus[listing.id]!.parked ? 'fa-calendar-day' : 'fa-hourglass-half'"
+                        ></i>
+                        {{ pendingSweepStatus[listing.id]!.parked ? 'Retrying daily' : 'Sweep backing off' }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -316,7 +328,21 @@
                     </div>
                   </td>
                   <td>
-                    <ExchangeListingsFeaturedBadge :tier="listing.tier" :featured-until="listing.featured_until" />
+                    <div class="flex flex-wrap items-center gap-2">
+                      <ExchangeListingsFeaturedBadge :tier="listing.tier" :featured-until="listing.featured_until" />
+                      <span
+                        v-if="pendingSweepStatus[listing.id]"
+                        class="badge badge-sm badge-soft"
+                        :class="pendingSweepStatus[listing.id]!.parked ? 'badge-error' : 'badge-warning'"
+                        :title="sweepStatusTitle(pendingSweepStatus[listing.id]!)"
+                      >
+                        <i
+                          class="fas"
+                          :class="pendingSweepStatus[listing.id]!.parked ? 'fa-calendar-day' : 'fa-hourglass-half'"
+                        ></i>
+                        {{ pendingSweepStatus[listing.id]!.parked ? 'Retrying daily' : 'Sweep backing off' }}
+                      </span>
+                    </div>
                   </td>
                   <td>{{ formatDate(listing.created_at) }}</td>
                   <td>
@@ -528,6 +554,7 @@
 
 <script setup lang="ts">
   import type { ListingWithPhotos } from '~/composables/useListings';
+  import type { SocialSweepStatus } from '~/utils/socialSweepStatus';
 
   interface SocialPostInfo {
     listing: ListingWithPhotos;
@@ -589,6 +616,12 @@
   const successfulSocialPosts = ref<SocialPostInfo[]>([]);
   // Per-listing diagnostic detail from the most recent retry attempt.
   const retryErrors = ref<Record<string, ListingErrorMap>>({});
+  // Sweep back-off state of pending listings, from their latest promotion row.
+  const pendingSweepStatus = ref<Record<string, SocialSweepStatus>>({});
+
+  const sweepStatusTitle = (status: SocialSweepStatus): string =>
+    `${status.failures} failed sweep attempt${status.failures === 1 ? '' : 's'}, last ${formatDateTime(status.lastFailedAt)}. ` +
+    `Next sweep try after ${formatDateTime(status.retryAt)}. Post to Socials retries now.`;
 
   const hasDiagnostics = (detail: PlatformErrorDetail): boolean =>
     detail.errorCode !== undefined ||
@@ -647,6 +680,7 @@
     loading.value = true;
     pendingPage.value = 1;
     successPage.value = 1;
+    pendingSweepStatus.value = {};
 
     try {
       // Fetch all active listings that need social media promotion
@@ -675,10 +709,24 @@
 
       // Fetch listings with promotions data to determine success/failure status
       try {
-        const { data: promotionData } = await supabase.from('listing_promotions').select('id, listing_id, features');
+        const { data: promotionData } = await supabase
+          .from('listing_promotions')
+          .select('id, listing_id, features, created_at');
 
-        if (promotionData && promotionData.length > 0) {
-          const listingIds = promotionData.map((p) => p.listing_id);
+        // A listing can have several promotion rows. The sweep writes post ids
+        // and its failure counter to the latest one, so read that one only.
+        const latestPromotions = latestPromotionByListing(promotionData);
+
+        const now = Date.now();
+        const sweepStatus: Record<string, SocialSweepStatus> = {};
+        for (const listing of pendingSocialPromotions.value) {
+          const status = socialSweepStatus(latestPromotions.get(listing.id)?.features, now);
+          if (status) sweepStatus[listing.id] = status;
+        }
+        pendingSweepStatus.value = sweepStatus;
+
+        if (latestPromotions.size > 0) {
+          const listingIds = [...latestPromotions.keys()];
 
           // Fetch listing details
           const { data: listingsData } = await applyPhotoOrdering(
@@ -717,7 +765,7 @@
             const successful: SocialPostInfo[] = [];
 
             for (const listing of listingsData) {
-              const promo = promotionData.find((p) => p.listing_id === listing.id);
+              const promo = latestPromotions.get(listing.id);
               if (!promo) continue;
 
               const features = (promo.features || {}) as Record<string, unknown>;
