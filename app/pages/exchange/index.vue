@@ -58,7 +58,11 @@
       </div>
     </section>
     <!-- Featured Listings Grid (Premium tier - most prominent) -->
-    <ExchangeHomeFeaturedGrid v-if="featuredListings.length > 0" :listings="featuredListings" :user-currency="userCurrency" />
+    <ExchangeHomeFeaturedGrid
+      v-if="featuredListings.length > 0"
+      :listings="featuredListings"
+      :user-currency="userCurrency"
+    />
 
     <!-- Staff Favorites (future feature)
     <ExchangeHomePromotedListings
