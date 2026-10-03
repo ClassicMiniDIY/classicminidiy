@@ -36,9 +36,9 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
   must never try to do it.** Only moderation makes a listing `active`, via the
   admin routes below. Client-side writes that set a listing live are rejected —
   the enforcement lives in the database, so a rejection surfaces as a permission
-  error rather than a validation message. `useListings().publishListing()` is a
-  leftover with no callers; it is not a supported path and should not be wired to
-  a "publish my draft" button.
+  error rather than a validation message. The old client-side
+  `useListings().publishListing()` had no callers and is deleted; do not bring
+  back a "publish my draft" button.
 
   **The mechanism, and the reasoning behind its exact shape, are documented in
   `classicminidiy-supabase` (private) — see the `listings` notes in that repo's
@@ -57,6 +57,43 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
   status route is also what emails the seller on approval — the `on_listing_approved`
   trigger only moves trust counters, so without it the "we'll email you when your
   listing is approved" promise in the submission confirmation goes unkept.
+
+- **Listing owner columns and relist (2026-10-03).** A seller session may write
+  the content of its own listing, and nothing that is money, a perk, a ranking
+  key or ownership: `tier` (except while the listing is a never-approved draft,
+  which is the wizard choosing a plan), `featured_until`, `promoted_on_social`,
+  `promoted_on_social_at`, the payment columns, `created_at`, `published_at` and
+  `user_id`. The database is the boundary and refuses such a write with `42501`;
+  the mechanism is documented in `classicminidiy-supabase`
+  (`docs/plans/2026-10-03-listing-owner-column-guard.md` and its CLAUDE.md). The
+  wizard resends unchanged `tier` and `user_id` on every draft save, and that
+  stays legal: only a changed value is refused. So a client must never pass a protected `timestamptz` through a JS `Date`
+  and send it back: the microseconds are lost, the value differs, and the write
+  is refused. Omit the column instead.
+
+  The seller relist used to write `published_at`, `featured_until` and the social
+  flag from the browser. It is now `POST /api/exchange/listings/[id]/relist`, a
+  service-role route that checks ownership, a relistable status
+  (`sold`/`expired`/`cancelled`) and an earlier moderator approval, and writes
+  only if the status is still the one it read. The admin relist and the seller
+  relist build their columns with the same `relistUpdates()`, so "relist" means
+  the same thing whoever clicks it by construction. `listing_relisted` carries
+  `via: 'route'`, so the rollout can see when tabs running the old client relist
+  are gone.
+
+- **Featured is perpetual while the listing is live, and a paid listing is
+  posted to social once (Cole, 2026-10-03).** Featured = `isListingFeatured()`:
+  `tier = 'paid'` and status `active` (or `example_paid` for demo rows). Before
+  this, every reader required a future `featured_until`, the window was 30 days
+  from payment, and it started while the listing still waited in moderation; on
+  2026-10-03 no active premium listing was featured anywhere on the site.
+  `featured_until` is deprecated: no web path reads or writes it, and the column
+  is dropped later in its own migration. A relist never writes
+  `promoted_on_social` or `promoted_on_social_at`; this reverses the 30-day
+  re-queue of #922 ("never repost on socials unless they buy a totally new
+  listing"). A new post needs a new listing. The admin tier route writes `tier`
+  only and refuses a draft with 409: a premium draft reaches review only through
+  the payment path, so a hand grant on a draft left it unsubmittable.
 
 - **Every feed item's `id` must be an absolute IRI, and the feed tests must seed
   rows before asserting on Atom.** The `feed` package renders the Atom entry id as
