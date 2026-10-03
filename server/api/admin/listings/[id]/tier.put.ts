@@ -13,6 +13,7 @@
  *
  *   body: { tier: 'free' | 'paid' }
  *   returns: { success: true, tier }
+ *   409 `DRAFT` for a draft listing (see below).
  */
 import { getServiceClient } from '../../../../utils/supabase';
 import { requireAdminAuth } from '../../../../utils/adminAuth';
@@ -34,11 +35,24 @@ export default defineEventHandler(async (event) => {
   const db = getServiceClient();
   const { data: listing, error: loadErr } = await db
     .from('listings')
-    .select('id, title, tier')
+    .select('id, title, tier, status')
     .eq('id', id)
     .maybeSingle();
   if (loadErr) throw createError({ statusCode: 500, statusMessage: 'Failed to load listing' });
   if (!listing) throw createError({ statusCode: 404, statusMessage: 'Listing not found' });
+
+  // Never on a draft. A premium draft can go to review only through the
+  // payment path, which an admin grant does not run (payment_status stays
+  // pending), so a granted draft could never be submitted: the seller would
+  // have to pay or switch back to free, which throws the grant away. Grant
+  // premium once the seller has submitted the listing (pending) or it is live.
+  if (listing.status === 'draft') {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'This listing is still a draft. Grant premium after the seller submits it.',
+      data: { code: 'DRAFT' },
+    });
+  }
 
   if (listing.tier === tier) return { success: true, tier, unchanged: true };
 
