@@ -421,7 +421,7 @@
     },
     "cta": {
       "title": "Ready to List Something?",
-      "body": "Reach Classic Mini enthusiasts worldwide. List for free or go Premium for featured placement and priority in search results.",
+      "body": "Reach Classic Mini enthusiasts worldwide. List for free or go Premium for featured placement until your listing sells.",
       "listFree": "List for Free",
       "goPremium": "Go Premium — $10"
     },
@@ -444,7 +444,7 @@
       },
       "free": {
         "title": "Free to List",
-        "body": "No upfront costs. Go Premium for $10 to get featured placement, more photos, and priority search results."
+        "body": "No upfront costs. Go Premium for $10 to get featured placement until it sells and more photos."
       },
       "photos": {
         "title": "Photo Galleries",
@@ -479,7 +479,7 @@
     },
     "cta": {
       "title": "¿Listo para publicar algo?",
-      "body": "Llega a entusiastas del Classic Mini en todo el mundo. Publica gratis o hazte Premium para obtener posicionamiento destacado y prioridad en los resultados de búsqueda.",
+      "body": "Llega a entusiastas del Classic Mini en todo el mundo. Publica gratis o hazte Premium para obtener posicionamiento destacado hasta que se venda.",
       "listFree": "Publicar gratis",
       "goPremium": "Hazte Premium — $10"
     },
@@ -502,7 +502,7 @@
       },
       "free": {
         "title": "Publicación gratuita",
-        "body": "Sin costes iniciales. Hazte Premium por $10 para obtener posicionamiento destacado, más fotos y prioridad en los resultados de búsqueda."
+        "body": "Sin costes iniciales. Hazte Premium por $10 para obtener posicionamiento destacado hasta que se venda y más fotos."
       },
       "photos": {
         "title": "Galerías de fotos",
@@ -537,7 +537,7 @@
     },
     "cta": {
       "title": "Prêt à publier quelque chose ?",
-      "body": "Atteignez des passionnés de Classic Mini du monde entier. Publiez gratuitement ou passez Premium pour un placement en vedette et une priorité dans les résultats de recherche.",
+      "body": "Atteignez des passionnés de Classic Mini du monde entier. Publiez gratuitement ou passez Premium pour un placement en vedette jusqu'à la vente.",
       "listFree": "Publier gratuitement",
       "goPremium": "Passer Premium — 10 $"
     },
@@ -560,7 +560,7 @@
       },
       "free": {
         "title": "Publication gratuite",
-        "body": "Sans frais initiaux. Passez Premium pour 10 $ afin d'obtenir un placement en vedette, plus de photos et une priorité dans les résultats de recherche."
+        "body": "Sans frais initiaux. Passez Premium pour 10 $ afin d'obtenir un placement en vedette jusqu'à la vente et plus de photos."
       },
       "photos": {
         "title": "Galeries de photos",
@@ -595,7 +595,7 @@
     },
     "cta": {
       "title": "Bereit, etwas zu inserieren?",
-      "body": "Erreiche Classic-Mini-Enthusiasten weltweit. Inseriere kostenlos oder wechsle zu Premium für hervorgehobene Platzierung und Priorität in den Suchergebnissen.",
+      "body": "Erreiche Classic-Mini-Enthusiasten weltweit. Inseriere kostenlos oder wechsle zu Premium für hervorgehobene Platzierung bis zum Verkauf.",
       "listFree": "Kostenlos inserieren",
       "goPremium": "Premium werden — 10 $"
     },
@@ -618,7 +618,7 @@
       },
       "free": {
         "title": "Kostenlos inserieren",
-        "body": "Keine Vorabkosten. Wechsle für 10 $ zu Premium für hervorgehobene Platzierung, mehr Fotos und Priorität in den Suchergebnissen."
+        "body": "Keine Vorabkosten. Wechsle für 10 $ zu Premium für hervorgehobene Platzierung bis zum Verkauf und mehr Fotos."
       },
       "photos": {
         "title": "Fotogalerien",
@@ -653,7 +653,7 @@
     },
     "cta": {
       "title": "Pronto a pubblicare qualcosa?",
-      "body": "Raggiungi gli appassionati di Classic Mini in tutto il mondo. Pubblica gratuitamente o passa a Premium per un posizionamento in evidenza e priorità nei risultati di ricerca.",
+      "body": "Raggiungi gli appassionati di Classic Mini in tutto il mondo. Pubblica gratuitamente o passa a Premium per un posizionamento in evidenza fino alla vendita.",
       "listFree": "Pubblica gratis",
       "goPremium": "Vai Premium — $10"
     },
@@ -676,7 +676,7 @@
       },
       "free": {
         "title": "Pubblicazione gratuita",
-        "body": "Nessun costo iniziale. Passa a Premium per $10 per ottenere posizionamento in evidenza, più foto e priorità nei risultati di ricerca."
+        "body": "Nessun costo iniziale. Passa a Premium per $10 per ottenere posizionamento in evidenza fino alla vendita e più foto."
       },
       "photos": {
         "title": "Gallerie fotografiche",
@@ -711,7 +711,7 @@
     },
     "cta": {
       "title": "Pronto para publicar algo?",
-      "body": "Alcance entusiastas do Classic Mini em todo o mundo. Publique gratuitamente ou passe para o Premium para destaque e prioridade nos resultados de pesquisa.",
+      "body": "Alcance entusiastas do Classic Mini em todo o mundo. Publique gratuitamente ou passe para o Premium para ter destaque até o anúncio ser vendido.",
       "listFree": "Publicar gratuitamente",
       "goPremium": "Ir para Premium — $10"
     },
@@ -734,7 +734,7 @@
       },
       "free": {
         "title": "Publicação gratuita",
-        "body": "Sem custos iniciais. Vá para o Premium por $10 para obter posicionamento em destaque, mais fotos e prioridade nos resultados de pesquisa."
+        "body": "Sem custos iniciais. Vá para o Premium por $10 para obter posicionamento em destaque até ser vendido e mais fotos."
       },
       "photos": {
         "title": "Galerias de fotos",
@@ -769,7 +769,7 @@
     },
     "cta": {
       "title": "Готовы разместить объявление?",
-      "body": "Достигайте энтузиастов Classic Mini по всему миру. Размещайте бесплатно или переходите на Premium для выделенного размещения и приоритета в результатах поиска.",
+      "body": "Достигайте энтузиастов Classic Mini по всему миру. Размещайте бесплатно или переходите на Premium для выделенного размещения до продажи.",
       "listFree": "Разместить бесплатно",
       "goPremium": "Перейти на Premium — $10"
     },
@@ -792,7 +792,7 @@
       },
       "free": {
         "title": "Бесплатное размещение",
-        "body": "Без предварительных затрат. Перейдите на Premium за $10 для выделенного размещения, большего количества фото и приоритета в результатах поиска."
+        "body": "Без предварительных затрат. Перейдите на Premium за $10 для выделенного размещения до продажи и большего количества фото."
       },
       "photos": {
         "title": "Фотогалереи",
@@ -827,7 +827,7 @@
     },
     "cta": {
       "title": "出品しませんか？",
-      "body": "世界中のクラシックミニ愛好家にリーチできます。無料で出品するか、プレミアムにアップグレードして注目の掲載枠と検索優先表示を手に入れましょう。",
+      "body": "世界中のクラシックミニ愛好家にリーチできます。無料で出品するか、プレミアムにアップグレードして、売れるまで注目の掲載枠を手に入れましょう。",
       "listFree": "無料で出品",
       "goPremium": "プレミアムにする — $10"
     },
@@ -850,7 +850,7 @@
       },
       "free": {
         "title": "無料で出品",
-        "body": "初期費用なし。$10でプレミアムにアップグレードすると、注目の掲載枠、より多くの写真、検索優先表示が得られます。"
+        "body": "初期費用なし。$10でプレミアムにアップグレードすると、売れるまでの注目の掲載枠と、より多くの写真が得られます。"
       },
       "photos": {
         "title": "フォトギャラリー",
@@ -885,7 +885,7 @@
     },
     "cta": {
       "title": "准备好发布了吗？",
-      "body": "触达全球经典 Mini 爱好者。免费发布，或升级 Premium 以获得特色展示位和搜索结果优先排名。",
+      "body": "触达全球经典 Mini 爱好者。免费发布，或升级 Premium，在售出前获得特色展示位。",
       "listFree": "免费发布",
       "goPremium": "升级 Premium — $10"
     },
@@ -908,7 +908,7 @@
       },
       "free": {
         "title": "免费发布",
-        "body": "无需预付费用。升级 Premium 仅需 $10，即可获得特色展示位、更多图片和搜索优先排名。"
+        "body": "无需预付费用。升级 Premium 仅需 $10，即可在售出前获得特色展示位，并上传更多图片。"
       },
       "photos": {
         "title": "照片库",
@@ -943,7 +943,7 @@
     },
     "cta": {
       "title": "무언가 등록할 준비가 되셨나요?",
-      "body": "전 세계 클래식 미니 애호가에게 다가가세요. 무료로 등록하거나 Premium으로 업그레이드하여 추천 배치와 검색 결과 우선 노출 혜택을 받으세요.",
+      "body": "전 세계 클래식 미니 애호가에게 다가가세요. 무료로 등록하거나 Premium으로 업그레이드하여 판매될 때까지 추천 배치 혜택을 받으세요.",
       "listFree": "무료로 등록",
       "goPremium": "Premium 이용하기 — $10"
     },
@@ -966,7 +966,7 @@
       },
       "free": {
         "title": "무료 등록",
-        "body": "선불 비용 없음. $10에 Premium으로 업그레이드하면 추천 배치, 더 많은 사진, 검색 결과 우선 노출을 받습니다."
+        "body": "선불 비용 없음. $10에 Premium으로 업그레이드하면 판매될 때까지 추천 배치와 더 많은 사진을 받습니다."
       },
       "photos": {
         "title": "사진 갤러리",

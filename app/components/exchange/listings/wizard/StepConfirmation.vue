@@ -159,7 +159,7 @@
       "review": { "title": "Admin Review", "desc": "Our team reviews all listings for quality (24-48 hours)" },
       "featured": {
         "title": "Featured Until Sold",
-        "desc": "Once approved: priority search placement and homepage carousel exposure"
+        "desc": "Once approved: homepage carousel exposure and a featured badge until it sells"
       }
     },
     "paid": {
@@ -194,7 +194,7 @@
       },
       "featured": {
         "title": "Destacado hasta que se venda",
-        "desc": "Una vez aprobado: posición prioritaria en búsquedas y aparición en el carrusel de la página de inicio"
+        "desc": "Una vez aprobado: aparición en el carrusel de la página de inicio e insignia destacada hasta que se venda"
       }
     },
     "paid": {
@@ -235,7 +235,7 @@
       },
       "featured": {
         "title": "Mis en avant jusqu'à la vente",
-        "desc": "Après approbation : placement prioritaire dans la recherche et exposition dans le carrousel de la page d'accueil"
+        "desc": "Après approbation : exposition dans le carrousel de la page d'accueil et badge en vedette jusqu'à la vente"
       }
     },
     "paid": {
@@ -279,7 +279,7 @@
       "review": { "title": "Admin-Prüfung", "desc": "Unser Team prüft alle Anzeigen auf Qualität (24-48 Stunden)" },
       "featured": {
         "title": "Hervorgehoben bis zum Verkauf",
-        "desc": "Nach der Genehmigung: vorrangige Platzierung in der Suche und Anzeige im Karussell der Startseite"
+        "desc": "Nach der Genehmigung: Anzeige im Karussell der Startseite und Hervorgehoben-Abzeichen bis zum Verkauf"
       }
     },
     "paid": {
@@ -317,7 +317,7 @@
       },
       "featured": {
         "title": "In evidenza fino alla vendita",
-        "desc": "Una volta approvato: posizionamento prioritario nelle ricerche ed esposizione nel carosello della home page"
+        "desc": "Una volta approvato: esposizione nel carosello della home page e badge in evidenza fino alla vendita"
       }
     },
     "paid": {
@@ -361,7 +361,7 @@
       },
       "featured": {
         "title": "Destaque até ser vendido",
-        "desc": "Após a aprovação: posição prioritária na busca e exposição no carrossel da página inicial"
+        "desc": "Após a aprovação: exposição no carrossel da página inicial e selo de destaque até ser vendido"
       }
     },
     "paid": {
@@ -399,7 +399,7 @@
       },
       "featured": {
         "title": "Выделение до продажи",
-        "desc": "После одобрения: приоритетное место в поиске и показ в карусели на главной странице"
+        "desc": "После одобрения: показ в карусели на главной странице и значок выделения до продажи"
       }
     },
     "paid": {
@@ -437,7 +437,7 @@
       "review": { "title": "管理者による審査", "desc": "当チームがすべての出品の品質を確認します（24〜48時間）" },
       "featured": {
         "title": "売れるまで注目掲載",
-        "desc": "承認後：検索での優先表示とホームページのカルーセルへの露出"
+        "desc": "承認後：売れるまでホームページのカルーセルに掲載され、注目バッジが付きます"
       }
     },
     "paid": {
@@ -467,7 +467,7 @@
     "comped": {
       "premiumApplied": { "title": "已应用 Premium", "desc": "已包含在您的 Sustaining 会籍中" },
       "review": { "title": "管理员审核", "desc": "我们的团队会审核所有刊登的质量（24-48 小时）" },
-      "featured": { "title": "精选展示直至售出", "desc": "审核通过后：搜索优先展示以及首页轮播曝光" }
+      "featured": { "title": "精选展示直至售出", "desc": "审核通过后：在售出前获得首页轮播曝光和精选徽章" }
     },
     "paid": {
       "payment": { "title": "完成付款", "desc": "点击下方通过 Stripe 安全付款" },
@@ -496,7 +496,10 @@
     "comped": {
       "premiumApplied": { "title": "Premium 적용됨", "desc": "Sustaining 멤버십에 포함됨" },
       "review": { "title": "관리자 검토", "desc": "저희 팀이 모든 등록의 품질을 검토합니다 (24-48시간)" },
-      "featured": { "title": "판매될 때까지 추천 노출", "desc": "승인 후: 검색 우선 노출 및 홈페이지 캐러셀 노출" }
+      "featured": {
+        "title": "판매될 때까지 추천 노출",
+        "desc": "승인 후: 판매될 때까지 홈페이지 캐러셀 노출 및 추천 배지"
+      }
     },
     "paid": {
       "payment": { "title": "결제 완료", "desc": "아래를 클릭하여 Stripe로 안전하게 결제하세요" },
