@@ -153,7 +153,9 @@
           v-if="showQuickActions && ['sold', 'expired', 'cancelled'].includes(listing.status)"
           class="flex items-center gap-2 pt-3 mt-3 border-t border-base-300"
         >
+          <!-- A listing a moderator never approved cannot be relisted (the route answers NOT_APPROVED). -->
           <button
+            v-if="listing.approved_at"
             class="btn btn-sm btn-ghost flex-1 gap-1"
             :disabled="relisting"
             @click.prevent="$emit('relist', listing)"
@@ -358,6 +360,7 @@
           >
             <button
               class="btn btn-xs btn-ghost btn-square"
+              v-if="listing.approved_at"
               :disabled="relisting"
               :title="t('relist')"
               :aria-label="t('relistListing')"

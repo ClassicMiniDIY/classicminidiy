@@ -208,6 +208,7 @@
 <script setup lang="ts">
   import type { ListingWithPhotos } from '~/composables/useListings';
   import { detectCarrier, getTrackingUrl, getAllCarriers } from '~/utils/shippingCarriers';
+  import { relistErrorKey } from '~/utils/relistError';
 
   const { t } = useI18n();
 
@@ -336,12 +337,15 @@
 
     try {
       const { relistListing } = useListings();
-      const priceChanged = relistPrice.value !== null && relistPrice.value !== listing.price;
+      // An emptied input gives '' (v-model.number), not null: that is no price change.
+      const entered: unknown = relistPrice.value;
+      const newPrice = typeof entered === 'number' && Number.isFinite(entered) ? entered : undefined;
+      const priceChanged = newPrice !== undefined && newPrice !== listing.price;
       const updatedListing = await relistListing(
         listing.id,
         listing.status,
         listing.tier,
-        priceChanged ? relistPrice.value! : undefined
+        priceChanged ? newPrice : undefined
       );
 
       // Replace local state with the returned listing from the database
@@ -359,7 +363,7 @@
       console.error('Failed to relist listing:', error);
       toast.add({
         title: t('toast.error'),
-        description: t('toast.relistError'),
+        description: t(relistErrorKey(error)),
         color: 'error',
       });
     } finally {
@@ -669,6 +673,9 @@
       "trackingError": "Failed to save tracking information. Please try again.",
       "relisted": { "title": "Listing Relisted", "description": "Your listing is now active again." },
       "relistError": "Failed to relist listing. Please try again.",
+      "relistNotApproved": "This listing was never approved, so it cannot be relisted. Create a new listing instead.",
+      "relistNotRelistable": "Only a sold, expired or cancelled listing can be relisted.",
+      "relistConflict": "This listing changed while you were relisting it. Reload the page and try again.",
       "soldMarked": {
         "title": "Listing Marked as Sold",
         "description": "Your listing has been moved to the Sold tab.",
@@ -738,6 +745,9 @@
       "trackingError": "No se pudo guardar la información de seguimiento. Inténtalo de nuevo.",
       "relisted": { "title": "Anuncio republicado", "description": "Tu anuncio vuelve a estar activo." },
       "relistError": "No se pudo volver a publicar el anuncio. Inténtalo de nuevo.",
+      "relistNotApproved": "Este anuncio nunca fue aprobado, así que no se puede volver a publicar. Crea un anuncio nuevo.",
+      "relistNotRelistable": "Solo se puede volver a publicar un anuncio vendido, caducado o cancelado.",
+      "relistConflict": "El anuncio cambió mientras lo volvías a publicar. Recarga la página e inténtalo de nuevo.",
       "soldMarked": {
         "title": "Anuncio marcado como vendido",
         "description": "Tu anuncio se ha movido a la pestaña Vendidos.",
@@ -807,6 +817,9 @@
       "trackingError": "Échec de l'enregistrement des informations de suivi. Veuillez réessayer.",
       "relisted": { "title": "Annonce republiée", "description": "Votre annonce est de nouveau active." },
       "relistError": "Échec de la republication de l'annonce. Veuillez réessayer.",
+      "relistNotApproved": "Cette annonce n'a jamais été approuvée, elle ne peut donc pas être republiée. Créez plutôt une nouvelle annonce.",
+      "relistNotRelistable": "Seule une annonce vendue, expirée ou annulée peut être republiée.",
+      "relistConflict": "L'annonce a changé pendant la republication. Rechargez la page et réessayez.",
       "soldMarked": {
         "title": "Annonce marquée comme vendue",
         "description": "Votre annonce a été déplacée vers l'onglet Vendues.",
@@ -876,6 +889,9 @@
       "trackingError": "Tracking-Informationen konnten nicht gespeichert werden. Bitte versuche es erneut.",
       "relisted": { "title": "Anzeige erneut eingestellt", "description": "Deine Anzeige ist jetzt wieder aktiv." },
       "relistError": "Anzeige konnte nicht erneut eingestellt werden. Bitte versuche es erneut.",
+      "relistNotApproved": "Diese Anzeige wurde nie freigegeben und kann daher nicht erneut eingestellt werden. Erstelle stattdessen eine neue Anzeige.",
+      "relistNotRelistable": "Nur eine verkaufte, abgelaufene oder stornierte Anzeige kann erneut eingestellt werden.",
+      "relistConflict": "Die Anzeige hat sich während des erneuten Einstellens geändert. Lade die Seite neu und versuche es erneut.",
       "soldMarked": {
         "title": "Anzeige als verkauft markiert",
         "description": "Deine Anzeige wurde in den Tab Verkauft verschoben.",
@@ -945,6 +961,9 @@
       "trackingError": "Impossibile salvare le informazioni di tracciamento. Riprova.",
       "relisted": { "title": "Annuncio ripubblicato", "description": "Il tuo annuncio è di nuovo attivo." },
       "relistError": "Impossibile ripubblicare l'annuncio. Riprova.",
+      "relistNotApproved": "Questo annuncio non è mai stato approvato, quindi non può essere ripubblicato. Crea invece un nuovo annuncio.",
+      "relistNotRelistable": "Solo un annuncio venduto, scaduto o annullato può essere ripubblicato.",
+      "relistConflict": "L'annuncio è cambiato durante la ripubblicazione. Ricarica la pagina e riprova.",
       "soldMarked": {
         "title": "Annuncio segnato come venduto",
         "description": "Il tuo annuncio è stato spostato nella scheda Venduti.",
@@ -1014,6 +1033,9 @@
       "trackingError": "Falha ao salvar as informações de rastreamento. Tente novamente.",
       "relisted": { "title": "Anúncio republicado", "description": "Seu anúncio está ativo novamente." },
       "relistError": "Falha ao republicar o anúncio. Tente novamente.",
+      "relistNotApproved": "Este anúncio nunca foi aprovado, por isso não pode ser republicado. Crie um novo anúncio.",
+      "relistNotRelistable": "Só é possível republicar um anúncio vendido, expirado ou cancelado.",
+      "relistConflict": "O anúncio mudou enquanto você o republicava. Recarregue a página e tente novamente.",
       "soldMarked": {
         "title": "Anúncio marcado como vendido",
         "description": "Seu anúncio foi movido para a aba Vendidos.",
@@ -1080,6 +1102,9 @@
       "trackingError": "Не удалось сохранить информацию об отслеживании. Попробуйте ещё раз.",
       "relisted": { "title": "Объявление опубликовано снова", "description": "Ваше объявление снова активно." },
       "relistError": "Не удалось опубликовать объявление снова. Попробуйте ещё раз.",
+      "relistNotApproved": "Это объявление не было одобрено, поэтому его нельзя опубликовать снова. Создайте новое объявление.",
+      "relistNotRelistable": "Снова опубликовать можно только проданное, истёкшее или отменённое объявление.",
+      "relistConflict": "Объявление изменилось во время повторной публикации. Обновите страницу и попробуйте ещё раз.",
       "soldMarked": {
         "title": "Объявление отмечено как проданное",
         "description": "Ваше объявление перемещено во вкладку «Проданные».",
@@ -1146,6 +1171,9 @@
       "trackingError": "追跡情報を保存できませんでした。もう一度お試しください。",
       "relisted": { "title": "出品を再出品しました", "description": "あなたの出品は再び公開されています。" },
       "relistError": "出品を再出品できませんでした。もう一度お試しください。",
+      "relistNotApproved": "この出品は承認されていないため、再出品できません。新しく出品してください。",
+      "relistNotRelistable": "再出品できるのは、売却済み・期限切れ・キャンセル済みの出品だけです。",
+      "relistConflict": "再出品中に出品が変更されました。ページを再読み込みして、もう一度お試しください。",
       "soldMarked": {
         "title": "出品を売却済みにしました",
         "description": "あなたの出品は売却済みタブに移動しました。",
@@ -1212,6 +1240,9 @@
       "trackingError": "保存追踪信息失败。请重试。",
       "relisted": { "title": "刊登已重新发布", "description": "你的刊登现已重新生效。" },
       "relistError": "重新刊登失败。请重试。",
+      "relistNotApproved": "此刊登从未获得批准，因此无法重新刊登。请创建新的刊登。",
+      "relistNotRelistable": "只有已售出、已过期或已取消的刊登才能重新刊登。",
+      "relistConflict": "重新刊登期间刊登已发生变化。请刷新页面后重试。",
       "soldMarked": {
         "title": "刊登已标记为已售",
         "description": "你的刊登已移至已售标签。",
@@ -1278,6 +1309,9 @@
       "trackingError": "추적 정보를 저장하지 못했습니다. 다시 시도하세요.",
       "relisted": { "title": "매물 다시 등록됨", "description": "매물이 다시 활성화되었습니다." },
       "relistError": "매물을 다시 등록하지 못했습니다. 다시 시도하세요.",
+      "relistNotApproved": "이 매물은 승인된 적이 없어 다시 등록할 수 없습니다. 새 매물을 등록해 주세요.",
+      "relistNotRelistable": "판매 완료, 만료 또는 취소된 매물만 다시 등록할 수 있습니다.",
+      "relistConflict": "다시 등록하는 동안 매물이 변경되었습니다. 페이지를 새로 고친 후 다시 시도해 주세요.",
       "soldMarked": {
         "title": "매물이 판매됨으로 표시됨",
         "description": "매물이 판매됨 탭으로 이동되었습니다.",

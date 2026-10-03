@@ -118,3 +118,21 @@ describe('ListingCard featured ring', () => {
     expect(ring(listing({ status: 'example_paid' }))).toBe(false);
   });
 });
+
+describe('ListingCard relist action', () => {
+  const relistButton = (l: Record<string, unknown>) =>
+    mount(ListingCard, {
+      props: { listing: l as any, showSellerInfo: false, showQuickActions: true },
+      global: { stubs: { NuxtLink: NuxtLinkStub, NuxtImg: true, 'nuxt-img': true } },
+    })
+      .findAll('button')
+      .find((b) => b.text().includes('relist'));
+
+  it('offers Relist on an ended listing a moderator approved', () => {
+    expect(relistButton(listing({ status: 'sold', approved_at: '2026-09-01T10:00:00Z' }))).toBeDefined();
+  });
+
+  it.each(['sold', 'cancelled', 'expired'])('hides Relist on a %s listing that was never approved', (status) => {
+    expect(relistButton(listing({ status, approved_at: null }))).toBeUndefined();
+  });
+});
