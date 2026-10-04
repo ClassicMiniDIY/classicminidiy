@@ -236,6 +236,7 @@ describe('useSearch', () => {
         shipping: 'true',
         international: 'true',
         free_shipping: 'true',
+        featured: 'true',
         sort: 'price_asc',
       };
 
@@ -255,6 +256,7 @@ describe('useSearch', () => {
         selectedShippingAvailable,
         selectedShipsInternational,
         selectedFreeShipping,
+        selectedFeatured,
         sortBy,
       } = useSearch();
 
@@ -272,6 +274,7 @@ describe('useSearch', () => {
       expect(selectedShippingAvailable.value).toBe(true);
       expect(selectedShipsInternational.value).toBe(true);
       expect(selectedFreeShipping.value).toBe(true);
+      expect(selectedFeatured.value).toBe(true);
       expect(sortBy.value).toBe('price_asc');
     });
 
@@ -469,6 +472,14 @@ describe('useSearch', () => {
       expect(f).not.toHaveProperty('free_shipping');
     });
 
+    it('includes featured only when set', async () => {
+      const useSearch = await importUseSearch();
+      const { buildFilters, selectedFeatured } = useSearch();
+      expect(buildFilters()).not.toHaveProperty('featured');
+      selectedFeatured.value = true;
+      expect(buildFilters().featured).toBe(true);
+    });
+
     it('includes the selected sort option', async () => {
       const useSearch = await importUseSearch();
       const { buildFilters, sortBy } = useSearch();
@@ -483,9 +494,7 @@ describe('useSearch', () => {
   describe('performSearch()', () => {
     it('toggles loading true while in flight then false', async () => {
       let resolveQuery!: (v: any) => void;
-      mockSupabase._queryBuilder.abortSignal = vi.fn(
-        () => new Promise((resolve) => (resolveQuery = resolve))
-      );
+      mockSupabase._queryBuilder.abortSignal = vi.fn(() => new Promise((resolve) => (resolveQuery = resolve)));
 
       const useSearch = await importUseSearch();
       const { performSearch, loading } = useSearch();
@@ -510,11 +519,7 @@ describe('useSearch', () => {
 
       expect(mockLoadVisibility).toHaveBeenCalled();
       expect(mockSupabase.from).toHaveBeenCalledWith('listings');
-      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('status', [
-        'active',
-        'example_free',
-        'example_paid',
-      ]);
+      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('status', ['active', 'example_free', 'example_paid']);
     });
 
     it('honors example-visibility setting (active only when examples hidden)', async () => {
@@ -544,9 +549,7 @@ describe('useSearch', () => {
       const { performSearch, searchQuery } = useSearch();
       searchQuery.value = 'Cooper';
       await performSearch();
-      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith(
-        'title.ilike.%Cooper%,description.ilike.%Cooper%'
-      );
+      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith('title.ilike.%Cooper%,description.ilike.%Cooper%');
     });
 
     it('strips injection characters from the search term before building .or()', async () => {
@@ -554,9 +557,7 @@ describe('useSearch', () => {
       const { performSearch, searchQuery } = useSearch();
       searchQuery.value = 'Cooper,S.';
       await performSearch();
-      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith(
-        'title.ilike.%CooperS%,description.ilike.%CooperS%'
-      );
+      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith('title.ilike.%CooperS%,description.ilike.%CooperS%');
     });
 
     it('applies eq filters for category, subcategory, condition, manufacturer, model, transmission', async () => {
@@ -605,6 +606,16 @@ describe('useSearch', () => {
       expect(mockSupabase._queryBuilder.ilike).toHaveBeenCalledWith('location', '%California%');
     });
 
+    it('applies featured as eq(tier, paid) on top of the live-status filter', async () => {
+      const useSearch = await importUseSearch();
+      const { performSearch, selectedFeatured } = useSearch();
+      await performSearch();
+      expect(mockSupabase._queryBuilder.eq).not.toHaveBeenCalledWith('tier', 'paid');
+      selectedFeatured.value = true;
+      await performSearch();
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('tier', 'paid');
+    });
+
     it('applies shipping_available eq filter', async () => {
       const useSearch = await importUseSearch();
       const { performSearch, selectedShippingAvailable } = useSearch();
@@ -618,10 +629,7 @@ describe('useSearch', () => {
       const { performSearch, selectedShipsInternational } = useSearch();
       selectedShipsInternational.value = true;
       await performSearch();
-      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('ships_to', [
-        'international',
-        'specific_countries',
-      ]);
+      expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('ships_to', ['international', 'specific_countries']);
     });
 
     it('applies free_shipping as eq(shipping_available,true) + or(cost 0/null)', async () => {
@@ -791,9 +799,7 @@ describe('useSearch', () => {
     it('uses limit() instead of range() and requires coordinates when distance filter active', async () => {
       mockGeocodeLocation.mockResolvedValue({ latitude: 51.5, longitude: -0.12 });
       // Within-50mi for the first listing only.
-      mockCalculateDistance.mockImplementation((_la: number, _lo: number, lat: number) =>
-        lat === 51.5074 ? 5 : 500
-      );
+      mockCalculateDistance.mockImplementation((_la: number, _lo: number, lat: number) => (lat === 51.5074 ? 5 : 500));
       resolveQueryWith({ data: mockListings, error: null, count: 2 });
 
       const useSearch = await importUseSearch();
@@ -847,6 +853,7 @@ describe('useSearch', () => {
       s.selectedShippingAvailable.value = true;
       s.selectedShipsInternational.value = true;
       s.selectedFreeShipping.value = true;
+      s.selectedFeatured.value = true;
       s.sortBy.value = 'price_asc';
       s.currentPage.value = 3;
 
@@ -866,6 +873,7 @@ describe('useSearch', () => {
       expect(s.selectedShippingAvailable.value).toBe(false);
       expect(s.selectedShipsInternational.value).toBe(false);
       expect(s.selectedFreeShipping.value).toBe(false);
+      expect(s.selectedFeatured.value).toBe(false);
       expect(s.sortBy.value).toBe('newest');
       expect(s.currentPage.value).toBe(1);
     });
@@ -914,7 +922,7 @@ describe('useSearch', () => {
       expect(s.hasActiveFilters.value).toBe(true);
     });
 
-    it.each(['selectedShippingAvailable', 'selectedShipsInternational', 'selectedFreeShipping'])(
+    it.each(['selectedShippingAvailable', 'selectedShipsInternational', 'selectedFreeShipping', 'selectedFeatured'])(
       'is true when %s boolean flag is set',
       async (key) => {
         const useSearch = await importUseSearch();
@@ -1122,6 +1130,7 @@ describe('useSearch', () => {
         'selectedShippingAvailable',
         'selectedShipsInternational',
         'selectedFreeShipping',
+        'selectedFeatured',
         'sortBy',
         'listings',
         'loading',

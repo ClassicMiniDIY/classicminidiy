@@ -351,6 +351,9 @@
         .eq('tier', 'paid')
         .limit(1000);
       if (poolError) throw poolError;
+      // The pool has no ORDER BY, so past the cap PostgREST returns an arbitrary
+      // subset and the rotation stops covering every paid listing.
+      if ((pool?.length ?? 0) >= 1000) console.warn('[exchange] featured pool hit the 1000-row cap');
 
       const ids = pickFeaturedRotation(pool || [], FEATURED_STRIP_SIZE).map((row) => row.id);
       if (ids.length === 0) {
@@ -369,6 +372,9 @@
         `
           )
           .in('id', ids)
+          // Re-check the featured predicate: a listing can end between the two reads.
+          .in('status', activeStatuses.value)
+          .eq('tier', 'paid')
       );
       if (error) throw error;
 
