@@ -44,7 +44,7 @@ describe('forum usernames', () => {
   });
 
   it('the reserved list is lowercase and each entry fits the pattern', () => {
-    expect(RESERVED_USERNAMES.size).toBe(79);
+    expect(RESERVED_USERNAMES.size).toBe(86);
     for (const name of RESERVED_USERNAMES) expect(USERNAME_PATTERN.test(name)).toBe(true);
   });
 

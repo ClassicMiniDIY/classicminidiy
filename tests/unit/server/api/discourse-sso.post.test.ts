@@ -365,6 +365,13 @@ describe('avatar_url allowlist (12)', () => {
     expect(payload.get('avatar_url')).toBe(avatar);
   });
 
+  it('forwards a legacy avatar on the Supabase project host', async () => {
+    const avatar = 'https://psoqirvbujwohemmwplv.supabase.co/storage/v1/object/public/avatars/u/a.png';
+    profileMaybeSingle.mockResolvedValue({ data: { ...profile, avatar_url: avatar }, error: null });
+    const { payload } = readAnswer((await handler(evt())).redirect);
+    expect(payload.get('avatar_url')).toBe(avatar);
+  });
+
   it.each([
     ['another host', 'https://cdn.example.com/storage/v1/object/public/avatars/u/a.png'],
     ['another storage bucket', `${SUPABASE_URL}/storage/v1/object/public/listing-photos/u/a.png`],

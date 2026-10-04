@@ -22,9 +22,14 @@ const MAX_DEPTH = 3;
  * at `/discourse/sso?…` keeps the parameter as the bare path. Anything else is
  * returned unchanged.
  */
+/** `/discourse/sso` in any letter case, with or without a trailing slash (the router matches all of them). */
+function isForumSsoPath(path: string): boolean {
+  return path.toLowerCase().replace(/\/$/, '') === FORUM_SSO_PATH;
+}
+
 export function redactForumSsoUrl(value: string): string {
   // Fast path: every shape we redact contains this word, raw or URL-encoded.
-  if (!value.includes('discourse')) return value;
+  if (!value.toLowerCase().includes('discourse')) return value;
   // Parse only what is a URL: an http(s) URL or a site path. Free text such as
   // `$elements_chain` can parse as an odd-scheme URL and must not be rebuilt.
   if (!ABSOLUTE_URL.test(value) && !(value.startsWith('/') && !value.startsWith('//'))) return value;
@@ -34,12 +39,12 @@ export function redactForumSsoUrl(value: string): string {
   } catch {
     return value;
   }
-  if (url.pathname === FORUM_SSO_PATH) {
+  if (isForumSsoPath(url.pathname)) {
     if (!url.search) return value;
     url.search = '';
   } else {
     const redirect = url.searchParams.get('redirect');
-    if (!redirect || redirect === FORUM_SSO_PATH || !redirect.startsWith(`${FORUM_SSO_PATH}?`)) return value;
+    if (!redirect || !redirect.includes('?') || !isForumSsoPath(redirect.slice(0, redirect.indexOf('?')))) return value;
     url.searchParams.set('redirect', FORUM_SSO_PATH);
   }
   return ABSOLUTE_URL.test(value) ? url.toString() : `${url.pathname}${url.search}${url.hash}`;
@@ -49,13 +54,14 @@ export function redactForumSsoUrl(value: string): string {
 // `$elements_chain` (`…attr__href="/login?redirect=%2Fdiscourse%2Fsso%3Fsso%3D…"`).
 // The query runs to the next quote, whitespace or `;`; the encoded form also
 // stops at a raw `&`, which starts the next outer parameter.
-const RAW_SSO_QUERY = /(\/discourse\/sso)\?[^"'\s;]*/g;
-const ENCODED_SSO_QUERY = /(%2Fdiscourse%2Fsso)%3F[^&"'\s;]*/gi;
+const RAW_SSO_QUERY = /(\/discourse\/sso\/?)\?[^"'\s;]*/gi;
+const ENCODED_SSO_QUERY = /(%2Fdiscourse%2Fsso(?:%2F)?)%3F[^&"'\s;]*/gi;
+const DOUBLE_ENCODED_SSO_QUERY = /(%252Fdiscourse%252Fsso(?:%252F)?)%253F[^&"'\s;]*/gi;
 
 /** Drop the query from every `/discourse/sso?…` in a non-URL string. */
 export function redactForumSsoText(value: string): string {
-  if (!value.includes('discourse')) return value;
-  return value.replace(RAW_SSO_QUERY, '$1').replace(ENCODED_SSO_QUERY, '$1');
+  if (!value.toLowerCase().includes('discourse')) return value;
+  return value.replace(RAW_SSO_QUERY, '$1').replace(ENCODED_SSO_QUERY, '$1').replace(DOUBLE_ENCODED_SSO_QUERY, '$1');
 }
 
 function redactString(value: string): string {
