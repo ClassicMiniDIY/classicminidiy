@@ -19,7 +19,9 @@ const profileMaybeSingle = vi.fn();
 const rpc = vi.fn();
 const profileSelect = vi.fn(() => ({ eq: () => ({ maybeSingle: profileMaybeSingle }) }));
 const ownerMaybeSingle = vi.fn();
-const ownerSelect = vi.fn(() => ({ eq: () => ({ eq: () => ({ maybeSingle: ownerMaybeSingle }) }) }));
+const ownerEqUser = vi.fn(() => ({ maybeSingle: ownerMaybeSingle }));
+const ownerEqName = vi.fn(() => ({ eq: ownerEqUser }));
+const ownerSelect = vi.fn(() => ({ eq: ownerEqName }));
 const mockService = {
   from: vi.fn((table: string) => {
     if (table === 'profiles') return { select: profileSelect };
@@ -306,6 +308,8 @@ describe('user checks', () => {
     ownerMaybeSingle.mockResolvedValue({ data: { user_id: 'owner' }, error: null });
     const { payload } = readAnswer((await handler(evt())).redirect);
     expect(payload.get('username')).toBe('classicminidiy');
+    expect(ownerEqName).toHaveBeenCalledWith('username', 'classicminidiy');
+    expect(ownerEqUser).toHaveBeenCalledWith('user_id', user.id);
   });
 
   it('a failed reserved-name owner read → 503, no redirect', async () => {

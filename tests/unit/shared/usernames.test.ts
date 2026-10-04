@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { RESERVED_USERNAMES, USERNAME_PATTERN, isValidForumUsername } from '~~/shared/utils/usernames';
+import {
+  RESERVED_USERNAMES,
+  USERNAME_PATTERN,
+  isValidForumUsername,
+  isWellFormedForumUsername,
+} from '~~/shared/utils/usernames';
 
 describe('forum usernames', () => {
   it.each(['abc', 'mini-jane', '1275gt', 'a'.repeat(30), 'cooper-s-1967'])('accepts %s', (name) => {
@@ -52,5 +57,15 @@ describe('forum usernames', () => {
     expect(isValidForumUsername(null)).toBe(false);
     expect(isValidForumUsername(undefined)).toBe(false);
     expect(isValidForumUsername(123)).toBe(false);
+  });
+});
+
+describe('isWellFormedForumUsername', () => {
+  it('accepts a well-formed name even when it is reserved', () => {
+    expect(isWellFormedForumUsername('classicminidiy')).toBe(true);
+    expect(isWellFormedForumUsername('mini-jane')).toBe(true);
+  });
+  it.each([['mini--jane'], ['Mini-Jane'], ['jo'], ['-mini'], [''], [null], [42]])('rejects %s', (name) => {
+    expect(isWellFormedForumUsername(name)).toBe(false);
   });
 });

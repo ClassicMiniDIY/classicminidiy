@@ -167,13 +167,26 @@ describe('identity step', () => {
     expect((wrapper.find('[data-testid="forum-display-name"]').element as HTMLInputElement).value).toBe('Jane Driver');
   });
 
-  it('a reserved username in the profile → identity step', async () => {
-    stubEnvironment({ supabase: makeSupabaseStub({ profile: { username: 'admin', display_name: 'Jane' } }) });
+  it('a reserved username in the profile goes to the server; its 409 shows the identity step', async () => {
+    stubEnvironment({
+      supabase: makeSupabaseStub({ profile: { username: 'admin', display_name: 'Jane' } }),
+      fetchImpl: () => Promise.reject(apiError(409, 'username_required')),
+    });
     const wrapper = mountPage();
     await flushPromises();
 
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(wrapper.text()).toContain('identity.title');
-    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('the owner of a reserved username signs straight in, with no identity step', async () => {
+    stubEnvironment({ supabase: makeSupabaseStub({ profile: { username: 'classicminidiy', display_name: 'Cole' } }) });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(wrapper.text()).not.toContain('identity.title');
+    expect(navigateToMock).toHaveBeenCalledWith(REDIRECT, { external: true });
   });
 
   it('a display name equal to the email local part is not prefilled in either field (19c)', async () => {

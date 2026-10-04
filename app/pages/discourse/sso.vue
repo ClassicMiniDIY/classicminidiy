@@ -1,5 +1,10 @@
 <script lang="ts" setup>
-  import { RESERVED_USERNAMES, USERNAME_PATTERN, isValidForumUsername } from '~~/shared/utils/usernames';
+  import {
+    RESERVED_USERNAMES,
+    USERNAME_PATTERN,
+    isValidForumUsername,
+    isWellFormedForumUsername,
+  } from '~~/shared/utils/usernames';
 
   // DiscourseConnect hand-off for Classic Mini DIY Community.
   // Design: docs/plans/2026-10-03-discourse-sso.md.
@@ -276,7 +281,11 @@
       return;
     }
     ownProfile = data;
-    if (!isValidForumUsername(data?.username)) {
+    // Only a missing or malformed name needs the step here. A reserved name goes to
+    // the server, which accepts it for the account that owns it and answers 409
+    // username_required (→ the step) for everyone else. Never send the owner to the
+    // step: saving another name there would overwrite theirs.
+    if (!isWellFormedForumUsername(data?.username)) {
       showIdentity();
       return;
     }
