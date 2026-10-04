@@ -12,8 +12,8 @@
  * issues a 302 itself, because the page calls it with `$fetch`.
  *
  * Errors carry `data.error` so the page can branch:
- *   400 bad_request | bad_signature, 401 (requireUserAuth), 403 email_unverified
- *   or a suspended account (requireUserAuth), 409 username_required,
+ *   400 bad_request | bad_signature, 401 (requireUserAuth), 403 email_unverified,
+ *   reauth_required or a suspended account (requireUserAuth), 409 username_required,
  *   503 sso_unconfigured | profile_unavailable | membership_unavailable.
  *
  * Never log `sso`, `sig` or the user's email.
@@ -30,13 +30,21 @@ import {
 } from '../../utils/discourseConnect';
 import { serverRuntimeConfig } from '../../utils/runtimeConfig';
 import { getServiceClient } from '../../utils/supabase';
-import { requireUserAuth } from '../../utils/userAuth';
+import { extractAccessToken, requireUserAuth } from '../../utils/userAuth';
 
 /** Body limit. A real body is about 250 bytes. */
 const MAX_BODY_BYTES = 2048;
 
 /** The forum group that carries the Sustaining Member flair. */
 const MEMBER_GROUP = 'sustaining_members';
+
+/** Discourse's DiscourseConnect endpoint. `return_sso_url` must be exactly this path. */
+const RETURN_PATH = '/session/sso_login';
+
+/** Supabase Storage prefix for profile avatars. Only these are forwarded to the forum. */
+const AVATAR_PATH_PREFIX = '/storage/v1/object/public/avatars/';
+/** The Supabase custom domain; the project host is added from runtimeConfig. */
+const AVATAR_HOSTS = ['auth.classicminidiy.com'] as const;
 
 function fail(statusCode: number, error: string, statusMessage: string): never {
   throw createError({ statusCode, statusMessage, data: { error } });
@@ -53,16 +61,50 @@ function forumOrigin(value: unknown): string | null {
   }
 }
 
-/** `return_sso_url` must be an https URL on exactly the forum origin, with no credentials, query or fragment. */
-function isForumReturnUrl(value: string | null, origin: string): value is string {
-  if (!value) return false;
+/**
+ * `return_sso_url` must be https on exactly the forum origin, at exactly
+ * RETURN_PATH, with no credentials, query or fragment. The raw string is
+ * checked for `?` and `#` too, because URL parsing drops an empty query or
+ * fragment. Returns the parsed URL, or null.
+ */
+function parseForumReturnUrl(value: string | null | undefined, origin: string): URL | null {
+  if (!value || value.includes('?') || value.includes('#')) return null;
   try {
     const url = new URL(value);
-    return (
-      url.protocol === 'https:' && url.origin === origin && !url.username && !url.password && !url.search && !url.hash
-    );
+    const ok =
+      url.protocol === 'https:' &&
+      url.origin === origin &&
+      url.pathname === RETURN_PATH &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash;
+    return ok ? url : null;
   } catch {
-    return false;
+    return null;
+  }
+}
+
+/**
+ * The sign-in methods recorded in the access token's `amr` claim, or null when
+ * the claim is absent or unreadable. The token was already verified by GoTrue
+ * in requireUserAuth; this only reads its payload.
+ */
+function sessionMethods(token: string | undefined): string[] | null {
+  const part = token?.split('.')[1];
+  if (!part) return null;
+  try {
+    const json = atob(
+      part
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(Math.ceil(part.length / 4) * 4, '=')
+    );
+    const amr = (JSON.parse(json) as { amr?: unknown }).amr;
+    if (!Array.isArray(amr)) return null;
+    return amr.map((entry) => (typeof entry === 'string' ? entry : String(entry?.method ?? '')));
+  } catch {
+    return null;
   }
 }
 
@@ -72,10 +114,22 @@ function emailLocalPart(email: string): string {
   return (at > 0 ? email.slice(0, at) : email).toLowerCase();
 }
 
-function isHttpsUrl(value: unknown): value is string {
+/** The host of the configured Supabase URL, or null. */
+function hostOf(value: unknown): string | null {
+  if (typeof value !== 'string' || !value) return null;
+  try {
+    return new URL(value).host;
+  } catch {
+    return null;
+  }
+}
+
+/** An avatar the forum may fetch: https, on our Supabase hosts, in the public avatars bucket. */
+function isSiteAvatarUrl(value: unknown, hosts: readonly string[]): value is string {
   if (typeof value !== 'string' || !value) return false;
   try {
-    return new URL(value).protocol === 'https:';
+    const url = new URL(value);
+    return url.protocol === 'https:' && hosts.includes(url.host) && url.pathname.startsWith(AVATAR_PATH_PREFIX);
   } catch {
     return false;
   }
@@ -115,13 +169,22 @@ export default defineEventHandler(async (event) => {
   // carries a user's email.
   const request = decodeDiscoursePayload(sso);
   const nonce = request?.get('nonce');
-  const returnUrl = request?.get('return_sso_url') ?? null;
-  if (!request || !nonce || !isForumReturnUrl(returnUrl, origin)) {
+  const returnUrl = parseForumReturnUrl(request?.get('return_sso_url'), origin);
+  if (!request || !nonce || !returnUrl) {
     fail(400, 'bad_request', 'Invalid forum sign-in request');
   }
 
   // 5. Session (401 no/invalid token, 403 suspended account).
   const { user } = await requireUserAuth(event);
+
+  // 5a. Forum sign-in requires a session from one of the site's own sign-in
+  // methods (magic link / OTP, Google, Apple, passkey). The site offers no
+  // password sign-in, so a session whose methods are all `password` is sent
+  // back through /login. A missing `amr` claim is accepted.
+  const methods = sessionMethods(extractAccessToken(event));
+  if (methods && methods.length > 0 && methods.every((method) => method === 'password')) {
+    fail(403, 'reauth_required', 'Sign in again to continue to the forum');
+  }
 
   // 6. Confirmed email only. Discourse links a DiscourseConnect login to an
   // existing forum account with the same email, so an unconfirmed address
@@ -170,14 +233,15 @@ export default defineEventHandler(async (event) => {
   if (displayName && displayName.toLowerCase() !== emailLocalPart(user.email)) {
     answer.set('name', displayName);
   }
-  if (isHttpsUrl(profile.avatar_url)) answer.set('avatar_url', profile.avatar_url);
+  const avatarHosts = [...AVATAR_HOSTS, hostOf(config.public.supabaseUrl)].filter((h): h is string => !!h);
+  if (isSiteAvatarUrl(profile.avatar_url, avatarHosts)) answer.set('avatar_url', profile.avatar_url);
   answer.set('require_activation', 'false');
   answer.set(isMember === true ? 'add_groups' : 'remove_groups', MEMBER_GROUP);
 
   // 10. Sign and hand the URL back to the page.
   const signed = await signDiscoursePayload(answer, secret);
   setHeader(event, 'cache-control', 'no-store');
-  return {
-    redirect: `${returnUrl}?sso=${encodeURIComponent(signed.sso)}&sig=${signed.sig}`,
-  };
+  returnUrl.searchParams.set('sso', signed.sso);
+  returnUrl.searchParams.set('sig', signed.sig);
+  return { redirect: returnUrl.href };
 });

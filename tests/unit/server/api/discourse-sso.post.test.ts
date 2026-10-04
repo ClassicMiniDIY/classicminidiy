@@ -14,6 +14,7 @@ const RETURN_URL = `${FORUM}/session/sso_login`;
 const NONCE = 'cb68251eefb5211e58c00ff1395f0c0b';
 
 const mockRequireUserAuth = vi.fn();
+const mockExtractAccessToken = vi.fn();
 const profileMaybeSingle = vi.fn();
 const rpc = vi.fn();
 const profileSelect = vi.fn(() => ({ eq: () => ({ maybeSingle: profileMaybeSingle }) }));
@@ -25,7 +26,10 @@ const mockService = {
   rpc,
 };
 
-vi.mock('~/server/utils/userAuth', () => ({ requireUserAuth: mockRequireUserAuth }));
+vi.mock('~/server/utils/userAuth', () => ({
+  requireUserAuth: mockRequireUserAuth,
+  extractAccessToken: mockExtractAccessToken,
+}));
 vi.mock('~/server/utils/supabase', () => ({ getServiceClient: () => mockService }));
 
 const readBody = vi.fn();
@@ -57,12 +61,23 @@ function signedRequest(fields: Record<string, string> = {}, secret = SECRET) {
   return { sso, sig: hmac(sso, secret) };
 }
 
+/** An access token whose payload carries these `amr` methods (signature irrelevant: GoTrue is mocked). */
+function accessToken(methods?: string[]) {
+  const enc = (v: unknown) => Buffer.from(JSON.stringify(v)).toString('base64url');
+  const payload: Record<string, unknown> = { sub: 'user', role: 'authenticated' };
+  if (methods) payload.amr = methods.map((method) => ({ method, timestamp: 1767225600 }));
+  return `${enc({ alg: 'HS256', typ: 'JWT' })}.${enc(payload)}.sig`;
+}
+
+const SUPABASE_URL = 'https://proj.supabase.co';
+const AVATAR = `${SUPABASE_URL}/storage/v1/object/public/avatars/6f1c2a8e/avatar.png`;
+
 const user = {
   id: '6f1c2a8e-4b1d-4c55-9a7e-0d5f2b1e9c33',
   email: 'jane.driver@example.com',
   email_confirmed_at: '2026-01-01T00:00:00Z',
 };
-const profile = { username: 'mini-jane', display_name: 'Jane Driver', avatar_url: 'https://cdn.example.com/jane.png' };
+const profile = { username: 'mini-jane', display_name: 'Jane Driver', avatar_url: AVATAR };
 
 /** Parse the returned redirect, check its signature, and decode its payload. */
 function readAnswer(redirect: string) {
@@ -81,7 +96,11 @@ function readAnswer(redirect: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => {});
-  runtimeConfig.mockReturnValue({ DISCOURSE_CONNECT_SECRET: SECRET, public: { discourseUrl: FORUM } });
+  runtimeConfig.mockReturnValue({
+    DISCOURSE_CONNECT_SECRET: SECRET,
+    public: { discourseUrl: FORUM, supabaseUrl: SUPABASE_URL },
+  });
+  mockExtractAccessToken.mockReturnValue(accessToken(['otp']));
   getHeader.mockReturnValue(undefined);
   readBody.mockResolvedValue(signedRequest());
   mockRequireUserAuth.mockResolvedValue({ user: { ...user } });
@@ -109,7 +128,7 @@ describe('a valid request', () => {
       email: user.email,
       username: 'mini-jane',
       name: 'Jane Driver',
-      avatar_url: 'https://cdn.example.com/jane.png',
+      avatar_url: AVATAR,
       require_activation: 'false',
       add_groups: 'sustaining_members',
     });
@@ -182,6 +201,11 @@ describe('request checks (no auth or DB call on failure)', () => {
     ['a look-alike host', 'https://community.example.com.evil.net/session/sso_login'],
     ['credentials in the URL', 'https://user@community.example.com/session/sso_login'],
     ['a query string', `${RETURN_URL}?next=/x`],
+    ['a trailing ?', `${RETURN_URL}?`],
+    ['a trailing #', `${RETURN_URL}#`],
+    ['a fragment', `${RETURN_URL}#top`],
+    ['another path', `${FORUM}/session/sso_login/extra`],
+    ['the forum root', `${FORUM}/`],
     ['not a URL', 'session/sso_login'],
   ])('return_sso_url with %s → 400 (7)', async (_label, returnUrl) => {
     readBody.mockResolvedValue(signedRequest({ return_sso_url: returnUrl }));
@@ -300,5 +324,69 @@ describe('optional fields (12)', () => {
     profileMaybeSingle.mockResolvedValue({ data: { ...profile, avatar_url: avatarUrl }, error: null });
     const { payload } = readAnswer((await handler(evt())).redirect);
     expect(payload.has('avatar_url')).toBe(false);
+  });
+});
+
+describe('session sign-in methods (amr)', () => {
+  it('a session whose methods are all password → 403 reauth_required, no DB call', async () => {
+    mockExtractAccessToken.mockReturnValue(accessToken(['password']));
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 403, data: { error: 'reauth_required' } });
+    expect(mockService.from).not.toHaveBeenCalled();
+  });
+
+  it('two password entries are still password-only', async () => {
+    mockExtractAccessToken.mockReturnValue(accessToken(['password', 'password']));
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 403, data: { error: 'reauth_required' } });
+  });
+
+  it.each([
+    ['otp', ['otp']],
+    ['oauth', ['oauth']],
+    ['magiclink', ['magiclink']],
+    ['passkey', ['webauthn']],
+    ['password then otp', ['password', 'otp']],
+    ['no amr claim', undefined],
+  ])('%s → allowed', async (_label, methods) => {
+    mockExtractAccessToken.mockReturnValue(accessToken(methods));
+    await expect(handler(evt())).resolves.toHaveProperty('redirect');
+  });
+
+  it('an unreadable token payload is treated as no amr claim', async () => {
+    mockExtractAccessToken.mockReturnValue('not-a-jwt');
+    await expect(handler(evt())).resolves.toHaveProperty('redirect');
+  });
+});
+
+describe('avatar_url allowlist (12)', () => {
+  it('forwards the auth custom domain', async () => {
+    const avatar = 'https://auth.classicminidiy.com/storage/v1/object/public/avatars/u/a.png';
+    profileMaybeSingle.mockResolvedValue({ data: { ...profile, avatar_url: avatar }, error: null });
+    const { payload } = readAnswer((await handler(evt())).redirect);
+    expect(payload.get('avatar_url')).toBe(avatar);
+  });
+
+  it.each([
+    ['another host', 'https://cdn.example.com/storage/v1/object/public/avatars/u/a.png'],
+    ['another storage bucket', `${SUPABASE_URL}/storage/v1/object/public/listing-photos/u/a.png`],
+    ['a signed storage URL', `${SUPABASE_URL}/storage/v1/object/sign/avatars/u/a.png`],
+    ['http on our host', 'http://proj.supabase.co/storage/v1/object/public/avatars/u/a.png'],
+  ])('%s → no avatar_url', async (_label, avatar) => {
+    profileMaybeSingle.mockResolvedValue({ data: { ...profile, avatar_url: avatar }, error: null });
+    const { payload } = readAnswer((await handler(evt())).redirect);
+    expect(payload.has('avatar_url')).toBe(false);
+  });
+});
+
+describe('payload encoding', () => {
+  it('a display name with &, = and a newline stays one name field and adds no others', async () => {
+    const tricky = 'Jane & co=1\nadmin=true&add_groups=staff';
+    profileMaybeSingle.mockResolvedValue({ data: { ...profile, display_name: tricky }, error: null });
+    const { payload } = readAnswer((await handler(evt())).redirect);
+    expect(payload.getAll('name')).toEqual([tricky]);
+    expect(payload.has('admin')).toBe(false);
+    expect(payload.getAll('add_groups')).toEqual(['sustaining_members']);
+    expect([...payload.keys()].sort()).toEqual(
+      ['add_groups', 'avatar_url', 'email', 'external_id', 'name', 'nonce', 'require_activation', 'username'].sort()
+    );
   });
 });

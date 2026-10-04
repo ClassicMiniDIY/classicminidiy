@@ -118,7 +118,10 @@ describe('signed out (14)', () => {
 
     expect(navigateToMock).toHaveBeenCalledWith(LOGIN_HREF);
     expect(wrapper.text()).toContain('signin.title');
-    expect(wrapper.find('a[href^="/login"]').attributes('href')).toBe(LOGIN_HREF);
+    const loginLink = wrapper.find('a[href^="/login"]');
+    expect(loginLink.attributes('href')).toBe(LOGIN_HREF);
+    // The href carries the sso query: autocapture must skip it.
+    expect(loginLink.classes()).toContain('ph-no-capture');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
@@ -202,6 +205,7 @@ describe('identity step', () => {
   it.each([
     ['an invalid name', 'ab', 'identity.errors.invalid'],
     ['a reserved name', 'classicminidiy', 'identity.errors.reserved'],
+    ['two hyphens in a row', 'mini--jane', 'identity.errors.invalid'],
   ])('%s is refused before any call', async (_label, name, message) => {
     const supabase = makeSupabaseStub({ profile: { username: null, display_name: null } });
     stubEnvironment({ supabase });
@@ -280,6 +284,18 @@ describe('server refusals', () => {
     expect(signOutOrder).toBeLessThan(navigateOrder);
   });
 
+  it('403 reauth_required → local sign-out, then the login redirect', async () => {
+    const supabase = makeSupabaseStub();
+    stubEnvironment({ supabase, fetchImpl: () => Promise.reject(apiError(403, 'reauth_required')) });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+    expect(navigateToMock).toHaveBeenCalledWith(LOGIN_HREF);
+    expect(wrapper.text()).not.toContain('suspended.title');
+    expect(trackMock).toHaveBeenCalledWith('forum_sso_failed', { reason: 'reauth_required' });
+  });
+
   it('403 email_unverified → the unverified state with the forum link (18)', async () => {
     stubEnvironment({ fetchImpl: () => Promise.reject(apiError(403, 'email_unverified')) });
     const wrapper = mountPage();
@@ -340,6 +356,40 @@ describe('one POST per nonce (19a)', () => {
     await flushPromises();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(second.text()).toContain('connecting.title');
+  });
+
+  it('a re-mount while the first POST is pending shows the start-again link when that POST fails', async () => {
+    let rejectFirst: (err: unknown) => void = () => {};
+    stubEnvironment({ fetchImpl: () => new Promise((_resolve, reject) => (rejectFirst = reject)) });
+    const first = mountPage();
+    await flushPromises();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const second = mountPage();
+    await flushPromises();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(second.text()).toContain('connecting.title');
+
+    rejectFirst(apiError(400, 'bad_signature'));
+    await flushPromises();
+    expect(first.text()).toContain('error.body');
+    expect(second.text()).toContain('error.body');
+    expect(second.find('[data-testid="forum-restart"]').attributes('href')).toBe(FORUM);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('a re-mount while the first POST is pending stays on connecting when that POST succeeds', async () => {
+    let resolveFirst: (value: unknown) => void = () => {};
+    stubEnvironment({ fetchImpl: () => new Promise((resolve) => (resolveFirst = resolve)) });
+    mountPage();
+    await flushPromises();
+    const second = mountPage();
+    await flushPromises();
+
+    resolveFirst({ redirect: REDIRECT });
+    await flushPromises();
+    expect(second.text()).toContain('connecting.title');
+    expect(navigateToMock).toHaveBeenCalledTimes(1);
   });
 
   it('a double click on the identity step sends one save and one POST', async () => {

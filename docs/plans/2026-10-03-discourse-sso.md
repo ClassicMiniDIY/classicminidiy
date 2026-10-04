@@ -283,19 +283,30 @@ Built as designed, with these differences:
   `DISCOURSE_CONNECT_SECRET`. Both are `OPTIONAL` in `scripts/set-cf-secrets.sh`, so the
   script does not fail before the secret exists; the route answers 503 until then. Neither
   is in the deploy workflow's required-secrets check.
-- **`return_sso_url`** must also have no credentials, query string or fragment, because the
-  answer appends `?sso=…&sig=…` to it.
+- **`return_sso_url`** must be exactly `https://<forum origin>/session/sso_login`: no
+  credentials, and no `?` or `#` anywhere in the raw string. The answer URL is built from
+  the parsed URL with `searchParams.set('sso', …)` and `searchParams.set('sig', …)`.
 - **Input `sso`** may contain line breaks (Ruby `encode64` output, as in Discourse's
   published example). The signature is checked over the text exactly as received. The
   answer is always strict base64.
 - **Extra error codes.** A profile read error is 503 `profile_unavailable`; a missing
   profile row is 409 `username_required`; a membership RPC error is 503
   `membership_unavailable`.
+- **Session sign-in methods.** Forum sign-in requires a session from one of the site's own
+  sign-in methods. When the access token's `amr` claim lists only `password`, the route
+  answers 403 `reauth_required`, and the page signs the browser out locally and sends it
+  to `/login` (as for a 401). A missing `amr` claim is accepted.
+- **Avatar.** `avatar_url` is sent only for an https URL on `auth.classicminidiy.com` or the
+  host of `runtimeConfig.public.supabaseUrl`, under `/storage/v1/object/public/avatars/`.
+- **Usernames.** Two hyphens in a row (`--`) are refused, and `admins`, `everyone`, `here`,
+  `all`, `discobot` and `sys` are reserved, to match the database rule.
 - **Suspended account.** The site has no shared suspended message, so the page has its own
   `suspended` state for a 403 without `email_unverified`.
 - **POST once.** The guard is `useState` keyed by the `sso` value, so a re-mount sees it.
   It is released on a failed POST (the server issued nothing), which keeps the
-  409 → name step → POST and 401 → sign-in → return paths working.
+  409 → name step → POST and 401 → sign-in → return paths working. A re-mounted page that
+  finds a POST still pending waits for it, and shows the start-again link if that POST is
+  released without a redirect.
 - **Name step.** The display name is required (1–50 characters, as on `/profile/edit`).
   The username suggestion comes from an existing but invalid username first, then the
   display name, and never from the email local part. A `23514` (check_violation) on save
@@ -304,8 +315,12 @@ Built as designed, with these differences:
   string, so `forum_sso_started`, `forum_sso_completed` and `forum_sso_failed` (`reason`)
   are untyped like the other `track()` events.
 - **PostHog query stripping** is a `before_send` hook (`app/utils/analyticsRedaction.ts`)
-  that covers every event, not only `$pageview`: properties, `$set` and `$set_once`.
-  Session-replay `$snapshot` events are not scrubbed.
+  that covers every event, not only `$pageview`: URL strings in properties, `$set` and
+  `$set_once`, and the hand-off query inside autocapture's `$elements_chain`. It writes a
+  property only when its value changes. The sign-in link on `/discourse/sso` is
+  `ph-no-capture`. posthog-js `get_current_url` is not used: it changes only client-side URL
+  targeting, not the URLs captured on events.
+- **Requirement:** session replay must be disabled on `/discourse/sso` in PostHog settings.
 - **Test 13** uses both of Discourse's published vectors (request and answer) and
   cross-checks them with `node:crypto` inside the test only.
 - **Route crawler.** `/discourse/sso` is in `ROUTE_EXPECTATIONS` as

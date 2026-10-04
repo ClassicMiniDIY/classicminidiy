@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { redactForumSsoEvent, redactForumSsoUrl } from '~/utils/analyticsRedaction';
+import { redactForumSsoEvent, redactForumSsoText, redactForumSsoUrl } from '~/utils/analyticsRedaction';
 
 const SSO = 'bm9uY2U9YWJj+/=';
 const SIG = 'a'.repeat(64);
@@ -61,5 +61,55 @@ describe('redactForumSsoEvent', () => {
     expect(redactForumSsoEvent(null)).toBeNull();
     const snapshot: any = { uuid: 'u', event: '$snapshot', properties: { href: SSO_PATH } };
     expect(redactForumSsoEvent(snapshot)?.properties.href).toBe(SSO_PATH);
+  });
+});
+
+describe('redactForumSsoText', () => {
+  it('scrubs raw and encoded hand-off queries inside free text', () => {
+    const raw = `a:attr__href="${SSO_PATH}"nth-child="1"`;
+    expect(redactForumSsoText(raw)).toBe('a:attr__href="/discourse/sso"nth-child="1"');
+    const encoded = `a.btn.ph-no-capture:attr__href="/login?redirect=${encodeURIComponent(SSO_PATH)}&x=1"`;
+    expect(redactForumSsoText(encoded)).toBe('a.btn.ph-no-capture:attr__href="/login?redirect=%2Fdiscourse%2Fsso&x=1"');
+    const unencodedRedirect = `a:attr__href="/login?redirect=${SSO_PATH}"`;
+    expect(redactForumSsoText(unencodedRedirect)).toBe('a:attr__href="/login?redirect=/discourse/sso"');
+  });
+
+  it('leaves text without a hand-off query unchanged', () => {
+    const chain = 'a:attr__href="/discourse/sso"nth-child="2";div.card:nth-child="1"';
+    expect(redactForumSsoText(chain)).toBe(chain);
+  });
+});
+
+describe('redactForumSsoEvent: autocapture and safe writes', () => {
+  it('scrubs $elements_chain and $elements hrefs', () => {
+    const href = `/login?redirect=${encodeURIComponent(SSO_PATH)}`;
+    const event: any = {
+      uuid: 'u',
+      event: '$autocapture',
+      properties: {
+        $elements_chain: `a.btn:attr__href="${href}"href="${href}";div.card-body`,
+        $elements: [{ tag_name: 'a', attr__href: href }],
+      },
+    };
+    const out: any = redactForumSsoEvent(event);
+    expect(JSON.stringify(out)).not.toContain(SIG);
+    expect(out.properties.$elements_chain).toContain('redirect=%2Fdiscourse%2Fsso"');
+    expect(out.properties.$elements[0].attr__href).toBe(`/login?redirect=${encodeURIComponent('/discourse/sso')}`);
+  });
+
+  it('never writes unchanged properties: a frozen nested object passes through without throwing', () => {
+    const frozen = Object.freeze({ a: 'plain', n: 1 });
+    const readOnly = {};
+    Object.defineProperty(readOnly, 'url', { value: '/membership', enumerable: true, writable: false });
+    const event: any = { uuid: 'u', event: 'x', properties: { frozen, readOnly, $current_url: '/membership' } };
+    expect(() => redactForumSsoEvent(event)).not.toThrow();
+    expect(event.properties.frozen).toBe(frozen);
+    expect(event.properties.frozen).toEqual({ a: 'plain', n: 1 });
+    expect(event.properties.readOnly.url).toBe('/membership');
+  });
+
+  it('does not throw on a frozen object that holds a hand-off URL', () => {
+    const event: any = { uuid: 'u', event: 'x', properties: { frozen: Object.freeze({ u: SSO_PATH }) } };
+    expect(() => redactForumSsoEvent(event)).not.toThrow();
   });
 });
