@@ -294,6 +294,8 @@ export default defineNuxtConfig({
       '/membership/claim',
       '/membership/youtube',
       '/discord/connect',
+      // DiscourseConnect hand-off for the forum: carries a single-use signed nonce.
+      '/discourse/sso',
       // All admin sub-pages are private/noindex — keep them out of the sitemap
       // (the bare `/admin` above only matched the index).
       '/admin/**',
@@ -715,6 +717,13 @@ export default defineNuxtConfig({
       prerender: false,
       headers: { 'cache-control': 'no-store, must-revalidate' },
     },
+    // DiscourseConnect identity provider for the forum. The query carries a
+    // single-use signed nonce, and the page reads the browser session, so it
+    // must never be prerendered or cached (docs/plans/2026-10-03-discourse-sso.md).
+    '/discourse/sso': {
+      prerender: false,
+      headers: { 'cache-control': 'no-store, must-revalidate' },
+    },
     // YouTube member bridge: Supabase linkIdentity returns here with a
     // single-use ?code= (and GoTrue error params). Same no-static treatment;
     // /membership links here, so crawlLinks would otherwise prerender it.
@@ -805,6 +814,10 @@ export default defineNuxtConfig({
       // Boolean default → Nuxt overrides it at runtime from NUXT_PUBLIC_EXCHANGE_ENABLED,
       // so go-live is a single env flip in Vercel Production with NO rebuild.
       exchangeEnabled: process.env.NUXT_PUBLIC_EXCHANGE_ENABLED === 'true',
+      // Classic Mini DIY Community (Discourse) origin. Public: /discourse/sso
+      // links back to it, and POST /api/discourse/sso only answers with a
+      // return_sso_url on exactly this origin. Must be https.
+      discourseUrl: process.env.NUXT_PUBLIC_DISCOURSE_URL || 'https://community.classicminidiy.com',
     },
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
     // Marketing email composer (/admin/marketing). Allowlist is checked ON TOP
@@ -815,6 +828,9 @@ export default defineNuxtConfig({
     // fn signs per-recipient /email/unsubscribe links, this side verifies them.
     // Unset = unsubscribe endpoints 503 (never silently accept unsigned links).
     MARKETING_UNSUB_SECRET: process.env.MARKETING_UNSUB_SECRET || '',
+    // DiscourseConnect shared secret with the forum (POST /api/discourse/sso).
+    // Unset = that route answers 503 sso_unconfigured; nothing else depends on it.
+    DISCOURSE_CONNECT_SECRET: process.env.DISCOURSE_CONNECT_SECRET || '',
     // 3D Model Library private S3 bucket (keystone §5/§10). Dedicated IAM user
     // scoped to `classicminidiy-models` ONLY — never the static-assets creds.
     // Used by server/utils/s3Models.ts for presigned upload POSTs and download

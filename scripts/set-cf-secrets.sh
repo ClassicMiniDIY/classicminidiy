@@ -197,6 +197,18 @@ put NUXT_MCP_API_KEYS MCP_API_KEYS OPTIONAL
 put NUXT_MARKETING_UNSUB_SECRET MARKETING_UNSUB_SECRET
 put NUXT_MARKETING_ADMIN_EMAILS MARKETING_ADMIN_EMAILS
 
+# --- Forum (DiscourseConnect) ----------------------------------------------
+# POST /api/discourse/sso signs forum sign-ins with this secret. It must be the
+# same value as the forum's `discourse_connect_secret`. Optional: unset makes
+# that route answer 503 sso_unconfigured and nothing else changes.
+#
+# The forum origin is public runtimeConfig `discourseUrl`, which defaults to
+# https://community.classicminidiy.com in nuxt.config.ts. Set DISCOURSE_URL only
+# if the forum moves; it must be an https origin. If you set it, put the same
+# value in the CI build env as NUXT_PUBLIC_DISCOURSE_URL.
+put NUXT_DISCOURSE_CONNECT_SECRET DISCOURSE_CONNECT_SECRET OPTIONAL
+put NUXT_PUBLIC_DISCOURSE_URL DISCOURSE_URL NUXT_PUBLIC_DISCOURSE_URL OPTIONAL
+
 # --- 3D model library S3 ---------------------------------------------------
 put NUXT_S3_MODELS_BUCKET S3_MODELS_BUCKET
 put NUXT_S3_MODELS_REGION S3_MODELS_REGION
