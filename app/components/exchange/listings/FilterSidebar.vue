@@ -174,6 +174,27 @@
         </div>
       </div>
 
+      <div class="divider my-0"></div>
+
+      <!-- Shipping Filters -->
+      <fieldset class="mb-2">
+        <legend class="text-sm font-medium mb-1">{{ t('shipping') }}</legend>
+        <div class="flex flex-col gap-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input v-model="selectedShippingAvailable" type="checkbox" class="checkbox checkbox-sm" />
+            <span class="text-sm">{{ t('shippingAvailable') }}</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input v-model="selectedShipsInternational" type="checkbox" class="checkbox checkbox-sm" />
+            <span class="text-sm">{{ t('shipsInternational') }}</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input v-model="selectedFreeShipping" type="checkbox" class="checkbox checkbox-sm" />
+            <span class="text-sm">{{ t('freeShipping') }}</span>
+          </label>
+        </div>
+      </fieldset>
+
       <!-- Active Filter Badges -->
       <div v-if="hasActiveFilters" class="mt-3 pt-3 border-t border-base-300">
         <p class="text-xs text-base-content/70 mb-2">{{ t('activeFilters') }}</p>
@@ -288,6 +309,39 @@
               <i class="fas fa-xmark"></i>
             </button>
           </div>
+          <div v-if="selectedShippingAvailable" class="badge badge-ghost gap-2">
+            {{ t('shippingAvailable') }}
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs btn-circle"
+              @click="selectedShippingAvailable = false"
+              :aria-label="t('removeShippingAvailableFilter')"
+            >
+              <i class="fas fa-xmark"></i>
+            </button>
+          </div>
+          <div v-if="selectedShipsInternational" class="badge badge-ghost gap-2">
+            {{ t('shipsInternational') }}
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs btn-circle"
+              @click="selectedShipsInternational = false"
+              :aria-label="t('removeShipsInternationalFilter')"
+            >
+              <i class="fas fa-xmark"></i>
+            </button>
+          </div>
+          <div v-if="selectedFreeShipping" class="badge badge-ghost gap-2">
+            {{ t('freeShipping') }}
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs btn-circle"
+              @click="selectedFreeShipping = false"
+              :aria-label="t('removeFreeShippingFilter')"
+            >
+              <i class="fas fa-xmark"></i>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -300,6 +354,9 @@
       />
       <p v-if="hasSavableFilters && selectedFeatured" class="text-xs text-base-content/70 mt-1">
         {{ t('featuredNotSaved') }}
+      </p>
+      <p v-if="hasSavableFilters && hasShippingFilters" class="text-xs text-base-content/70 mt-1">
+        {{ t('shippingNotSaved') }}
       </p>
     </div>
   </div>
@@ -333,11 +390,15 @@
   const selectedTransmission = defineModel<string>('transmission', { required: true });
   const selectedLocation = defineModel<string>('location', { required: true });
   const selectedDistance = defineModel<string>('distance', { required: true });
+  const selectedShippingAvailable = defineModel<boolean>('shippingAvailable', { default: false });
+  const selectedShipsInternational = defineModel<boolean>('shipsInternational', { default: false });
+  const selectedFreeShipping = defineModel<boolean>('freeShipping', { default: false });
   const selectedFeatured = defineModel<boolean>('featured', { default: false });
 
   // Track filter application
   const trackFilterApplied = (
-    filterType: 'category' | 'year' | 'price' | 'condition' | 'transmission' | 'location' | 'model' | 'featured',
+    filterType:
+      'category' | 'year' | 'price' | 'condition' | 'transmission' | 'location' | 'model' | 'featured' | 'shipping',
     value: string | number | [number, number]
   ) => {
     if (value) {
@@ -378,6 +439,18 @@
     if (newValue) trackFilterApplied('featured', 'true');
   });
 
+  watch(selectedShippingAvailable, (newValue) => {
+    if (newValue) trackFilterApplied('shipping', 'shipping_available');
+  });
+
+  watch(selectedShipsInternational, (newValue) => {
+    if (newValue) trackFilterApplied('shipping', 'ships_international');
+  });
+
+  watch(selectedFreeShipping, (newValue) => {
+    if (newValue) trackFilterApplied('shipping', 'free_shipping');
+  });
+
   // Debounced location tracking to avoid tracking every keystroke
   const debouncedLocationTrack = useDebounceFn((value: string) => {
     trackFilterApplied('location', value);
@@ -389,7 +462,9 @@
     }
   });
 
-  // Clear parts subcategory when category changes from parts
+  // Clear parts subcategory when category changes from parts. On the listings
+  // page useSearch clears it first (synchronously, so one search runs), and
+  // this write then changes nothing.
   watch(selectedCategory, (newCategory) => {
     if (newCategory !== 'parts') {
       selectedPartsSubcategory.value = '';
@@ -413,9 +488,10 @@
     clearFilters: [];
   }>();
 
-  // Saved-search alerts know nothing about "featured", so it is not a savable
-  // filter: it shows a chip and is cleared by "Clear all", but alone it does
-  // not offer the save button.
+  // Saved-search alerts (process-notifications' saved-search matcher) know
+  // nothing about "featured" or the shipping flags, so they are not savable
+  // filters: they show a chip and are cleared by "Clear all", but alone they
+  // do not offer the save button, and currentFilters leaves them out.
   const hasSavableFilters = computed(
     () =>
       !!(
@@ -432,7 +508,13 @@
       )
   );
 
-  const hasActiveFilters = computed(() => hasSavableFilters.value || selectedFeatured.value);
+  const hasShippingFilters = computed(
+    () => selectedShippingAvailable.value || selectedShipsInternational.value || selectedFreeShipping.value
+  );
+
+  const hasActiveFilters = computed(
+    () => hasSavableFilters.value || selectedFeatured.value || hasShippingFilters.value
+  );
 
   const onClearFilters = () => {
     emit('clearFilters');
@@ -517,6 +599,14 @@
     "featuredOnly": "Featured listings only",
     "removeFeaturedFilter": "Remove featured filter",
     "featuredNotSaved": "Alerts for a saved search include every matching listing, not only featured ones.",
+    "shipping": "Shipping",
+    "shippingAvailable": "Shipping available",
+    "shipsInternational": "Ships internationally",
+    "freeShipping": "Free shipping",
+    "removeShippingAvailableFilter": "Remove shipping available filter",
+    "removeShipsInternationalFilter": "Remove ships internationally filter",
+    "removeFreeShippingFilter": "Remove free shipping filter",
+    "shippingNotSaved": "Alerts for a saved search ignore the shipping filters.",
     "removePartsSubcategoryFilter": "Remove parts subcategory filter",
     "removeYearFilter": "Remove year filter",
     "removeManufacturerFilter": "Remove manufacturer filter",
@@ -575,6 +665,14 @@
     "featuredOnly": "Solo anuncios destacados",
     "removeFeaturedFilter": "Quitar filtro de destacados",
     "featuredNotSaved": "Las alertas de una búsqueda guardada incluyen todos los anuncios que coinciden, no solo los destacados.",
+    "shipping": "Envío",
+    "shippingAvailable": "Envío disponible",
+    "shipsInternational": "Envío internacional",
+    "freeShipping": "Envío gratis",
+    "removeShippingAvailableFilter": "Quitar filtro de envío disponible",
+    "removeShipsInternationalFilter": "Quitar filtro de envío internacional",
+    "removeFreeShippingFilter": "Quitar filtro de envío gratis",
+    "shippingNotSaved": "Las alertas de una búsqueda guardada no tienen en cuenta los filtros de envío.",
     "removePartsSubcategoryFilter": "Quitar filtro de tipo de pieza",
     "removeYearFilter": "Quitar filtro de año",
     "removeManufacturerFilter": "Quitar filtro de fabricante",
@@ -633,6 +731,14 @@
     "featuredOnly": "Annonces en vedette uniquement",
     "removeFeaturedFilter": "Supprimer le filtre en vedette",
     "featuredNotSaved": "Les alertes d'une recherche enregistrée incluent toutes les annonces correspondantes, pas seulement celles en vedette.",
+    "shipping": "Livraison",
+    "shippingAvailable": "Livraison disponible",
+    "shipsInternational": "Livraison internationale",
+    "freeShipping": "Livraison gratuite",
+    "removeShippingAvailableFilter": "Supprimer le filtre livraison disponible",
+    "removeShipsInternationalFilter": "Supprimer le filtre livraison internationale",
+    "removeFreeShippingFilter": "Supprimer le filtre livraison gratuite",
+    "shippingNotSaved": "Les alertes d'une recherche enregistrée ne tiennent pas compte des filtres de livraison.",
     "removePartsSubcategoryFilter": "Supprimer le filtre de type de pièce",
     "removeYearFilter": "Supprimer le filtre d'année",
     "removeManufacturerFilter": "Supprimer le filtre de fabricant",
@@ -691,6 +797,14 @@
     "featuredOnly": "Nur empfohlene Inserate",
     "removeFeaturedFilter": "Filter für empfohlene Inserate entfernen",
     "featuredNotSaved": "Benachrichtigungen für eine gespeicherte Suche umfassen alle passenden Inserate, nicht nur empfohlene.",
+    "shipping": "Versand",
+    "shippingAvailable": "Versand verfügbar",
+    "shipsInternational": "Internationaler Versand",
+    "freeShipping": "Kostenloser Versand",
+    "removeShippingAvailableFilter": "Filter für verfügbaren Versand entfernen",
+    "removeShipsInternationalFilter": "Filter für internationalen Versand entfernen",
+    "removeFreeShippingFilter": "Filter für kostenlosen Versand entfernen",
+    "shippingNotSaved": "Benachrichtigungen für eine gespeicherte Suche berücksichtigen die Versandfilter nicht.",
     "removePartsSubcategoryFilter": "Teiletyp-Filter entfernen",
     "removeYearFilter": "Jahresfilter entfernen",
     "removeManufacturerFilter": "Herstellerfilter entfernen",
@@ -749,6 +863,14 @@
     "featuredOnly": "Solo annunci in evidenza",
     "removeFeaturedFilter": "Rimuovi filtro in evidenza",
     "featuredNotSaved": "Gli avvisi di una ricerca salvata includono tutti gli annunci corrispondenti, non solo quelli in evidenza.",
+    "shipping": "Spedizione",
+    "shippingAvailable": "Spedizione disponibile",
+    "shipsInternational": "Spedizione internazionale",
+    "freeShipping": "Spedizione gratuita",
+    "removeShippingAvailableFilter": "Rimuovi filtro spedizione disponibile",
+    "removeShipsInternationalFilter": "Rimuovi filtro spedizione internazionale",
+    "removeFreeShippingFilter": "Rimuovi filtro spedizione gratuita",
+    "shippingNotSaved": "Gli avvisi di una ricerca salvata non considerano i filtri di spedizione.",
     "removePartsSubcategoryFilter": "Rimuovi filtro tipo di ricambio",
     "removeYearFilter": "Rimuovi filtro anno",
     "removeManufacturerFilter": "Rimuovi filtro produttore",
@@ -807,6 +929,14 @@
     "featuredOnly": "Apenas anúncios em destaque",
     "removeFeaturedFilter": "Remover filtro de destaque",
     "featuredNotSaved": "Os alertas de uma pesquisa salva incluem todos os anúncios correspondentes, não apenas os em destaque.",
+    "shipping": "Envio",
+    "shippingAvailable": "Envio disponível",
+    "shipsInternational": "Envio internacional",
+    "freeShipping": "Frete grátis",
+    "removeShippingAvailableFilter": "Remover filtro de envio disponível",
+    "removeShipsInternationalFilter": "Remover filtro de envio internacional",
+    "removeFreeShippingFilter": "Remover filtro de frete grátis",
+    "shippingNotSaved": "Os alertas de uma pesquisa salva não consideram os filtros de envio.",
     "removePartsSubcategoryFilter": "Remover filtro de tipo de peça",
     "removeYearFilter": "Remover filtro de ano",
     "removeManufacturerFilter": "Remover filtro de fabricante",
@@ -865,6 +995,14 @@
     "featuredOnly": "Только рекомендуемые объявления",
     "removeFeaturedFilter": "Убрать фильтр рекомендуемых",
     "featuredNotSaved": "Уведомления сохранённого поиска включают все подходящие объявления, а не только рекомендуемые.",
+    "shipping": "Доставка",
+    "shippingAvailable": "Доставка доступна",
+    "shipsInternational": "Международная доставка",
+    "freeShipping": "Бесплатная доставка",
+    "removeShippingAvailableFilter": "Убрать фильтр доступной доставки",
+    "removeShipsInternationalFilter": "Убрать фильтр международной доставки",
+    "removeFreeShippingFilter": "Убрать фильтр бесплатной доставки",
+    "shippingNotSaved": "Уведомления сохранённого поиска не учитывают фильтры доставки.",
     "removePartsSubcategoryFilter": "Убрать фильтр типа запчасти",
     "removeYearFilter": "Убрать фильтр года",
     "removeManufacturerFilter": "Убрать фильтр производителя",
@@ -923,6 +1061,14 @@
     "featuredOnly": "注目のリスティングのみ",
     "removeFeaturedFilter": "注目フィルターを削除",
     "featuredNotSaved": "保存した検索の通知には、注目のリスティングだけでなく、条件に合うすべてのリスティングが含まれます。",
+    "shipping": "発送",
+    "shippingAvailable": "発送可能",
+    "shipsInternational": "海外発送可",
+    "freeShipping": "送料無料",
+    "removeShippingAvailableFilter": "発送可能フィルターを削除",
+    "removeShipsInternationalFilter": "海外発送フィルターを削除",
+    "removeFreeShippingFilter": "送料無料フィルターを削除",
+    "shippingNotSaved": "保存した検索の通知では、発送フィルターは考慮されません。",
     "removePartsSubcategoryFilter": "パーツの種類フィルターを削除",
     "removeYearFilter": "年式フィルターを削除",
     "removeManufacturerFilter": "メーカーフィルターを削除",
@@ -981,6 +1127,14 @@
     "featuredOnly": "仅显示精选列表",
     "removeFeaturedFilter": "移除精选筛选",
     "featuredNotSaved": "已保存搜索的提醒包含所有匹配的列表，而不仅是精选列表。",
+    "shipping": "配送",
+    "shippingAvailable": "提供配送",
+    "shipsInternational": "支持国际配送",
+    "freeShipping": "免运费",
+    "removeShippingAvailableFilter": "移除提供配送筛选",
+    "removeShipsInternationalFilter": "移除国际配送筛选",
+    "removeFreeShippingFilter": "移除免运费筛选",
+    "shippingNotSaved": "已保存搜索的提醒不考虑配送筛选。",
     "removePartsSubcategoryFilter": "移除配件类型筛选",
     "removeYearFilter": "移除年份筛选",
     "removeManufacturerFilter": "移除制造商筛选",
@@ -1039,6 +1193,14 @@
     "featuredOnly": "추천 매물만",
     "removeFeaturedFilter": "추천 필터 제거",
     "featuredNotSaved": "저장된 검색 알림에는 추천 매물뿐 아니라 조건에 맞는 모든 매물이 포함됩니다.",
+    "shipping": "배송",
+    "shippingAvailable": "배송 가능",
+    "shipsInternational": "해외 배송",
+    "freeShipping": "무료 배송",
+    "removeShippingAvailableFilter": "배송 가능 필터 제거",
+    "removeShipsInternationalFilter": "해외 배송 필터 제거",
+    "removeFreeShippingFilter": "무료 배송 필터 제거",
+    "shippingNotSaved": "저장된 검색 알림에는 배송 필터가 적용되지 않습니다.",
     "removePartsSubcategoryFilter": "부품 유형 필터 제거",
     "removeYearFilter": "연식 필터 제거",
     "removeManufacturerFilter": "제조사 필터 제거",
