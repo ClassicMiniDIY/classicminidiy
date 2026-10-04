@@ -3571,42 +3571,80 @@ export type Database = {
           },
         ];
       };
+      newsletter_send_recipients: {
+        Row: {
+          email: string;
+          failed: boolean;
+          newsletter_send_id: string;
+          sent_at: string | null;
+        };
+        Insert: {
+          email: string;
+          failed?: boolean;
+          newsletter_send_id: string;
+          sent_at?: string | null;
+        };
+        Update: {
+          email?: string;
+          failed?: boolean;
+          newsletter_send_id?: string;
+          sent_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'newsletter_send_recipients_newsletter_send_id_fkey';
+            columns: ['newsletter_send_id'];
+            isOneToOne: false;
+            referencedRelation: 'newsletter_sends';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       newsletter_sends: {
         Row: {
           created_at: string | null;
           error_message: string | null;
           free_count: number;
+          html: string | null;
           id: string;
           listing_ids: string[];
           premium_count: number;
           recipient_count: number;
+          send_lease_expires_at: string | null;
           sent_at: string | null;
           sent_by: string | null;
           status: string;
+          subject: string | null;
         };
         Insert: {
           created_at?: string | null;
           error_message?: string | null;
           free_count?: number;
+          html?: string | null;
           id?: string;
           listing_ids?: string[];
           premium_count?: number;
           recipient_count?: number;
+          send_lease_expires_at?: string | null;
           sent_at?: string | null;
           sent_by?: string | null;
           status?: string;
+          subject?: string | null;
         };
         Update: {
           created_at?: string | null;
           error_message?: string | null;
           free_count?: number;
+          html?: string | null;
           id?: string;
           listing_ids?: string[];
           premium_count?: number;
           recipient_count?: number;
+          send_lease_expires_at?: string | null;
           sent_at?: string | null;
           sent_by?: string | null;
           status?: string;
+          subject?: string | null;
         };
         Relationships: [
           {
@@ -5112,6 +5150,7 @@ export type Database = {
           is_active: boolean;
           last_notified_at: string | null;
           name: string;
+          notified_listing_ids: string[];
           notify_email: boolean;
           user_id: string;
         };
@@ -5122,6 +5161,7 @@ export type Database = {
           is_active?: boolean;
           last_notified_at?: string | null;
           name: string;
+          notified_listing_ids?: string[];
           notify_email?: boolean;
           user_id: string;
         };
@@ -5132,6 +5172,7 @@ export type Database = {
           is_active?: boolean;
           last_notified_at?: string | null;
           name?: string;
+          notified_listing_ids?: string[];
           notify_email?: boolean;
           user_id?: string;
         };
@@ -6088,6 +6129,26 @@ export type Database = {
           started_at: string;
         }[];
       };
+      admin_list_claimed_transactions: {
+        Args: { p_days?: number };
+        Returns: {
+          attempts: number;
+          caller_email: string;
+          caller_entitled_now: boolean;
+          caller_user_id: string;
+          expires_at: string;
+          first_attempt_at: string;
+          last_attempt_at: string;
+          last_reassigned_at: string;
+          last_reassigned_by: string;
+          owner_email: string;
+          owner_user_id: string;
+          plan: string;
+          platform: string;
+          status: string;
+          subscription_id: string;
+        }[];
+      };
       admin_list_discord_roster: {
         Args: never;
         Returns: Database['public']['CompositeTypes']['discord_roster_row'][];
@@ -6117,6 +6178,20 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      admin_reassign_subscription: {
+        Args: {
+          p_admin_id: string;
+          p_expected_owner?: string;
+          p_new_user_id: string;
+          p_subscription_id: string;
+        };
+        Returns: {
+          moved: boolean;
+          previous_user_id: string;
+          subscription_id: string;
+          user_id: string;
+        }[];
       };
       admin_reference_datasets: {
         Args: never;
@@ -6260,6 +6335,14 @@ export type Database = {
         Returns: number;
       };
       delete_my_account: { Args: { p_user_id: string }; Returns: Json };
+      discord_identity_pairs: {
+        Args: { p_user_id?: string };
+        Returns: {
+          discord_user_id: string;
+          source: string;
+          user_id: string;
+        }[];
+      };
       discord_roster_classified: {
         Args: never;
         Returns: Database['public']['CompositeTypes']['discord_roster_row'][];
@@ -6760,6 +6843,45 @@ export type Database = {
       publish_model_version: {
         Args: { p_version_id: string };
         Returns: undefined;
+      };
+      reassign_subscription_row: {
+        Args: {
+          p_admin_id: string;
+          p_new_user_id: string;
+          p_subscription_id: string;
+        };
+        Returns: {
+          apple_original_transaction_id: string | null;
+          apple_product_id: string | null;
+          billing_interval: string | null;
+          cancelled_at: string | null;
+          comp_granted_by: string | null;
+          comp_note: string | null;
+          created_at: string;
+          expires_at: string | null;
+          external_ref: string | null;
+          google_order_id: string | null;
+          google_purchase_token: string | null;
+          id: string;
+          last_verified_at: string | null;
+          plan: string;
+          platform: string;
+          product_id: string;
+          raw_receipt: Json | null;
+          starts_at: string;
+          status: string;
+          stripe_customer_id: string | null;
+          stripe_price_id: string | null;
+          stripe_subscription_id: string | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'subscriptions';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       reassign_subscription_user: {
         Args: { p_new_user_id: string; p_subscription_id: string };
