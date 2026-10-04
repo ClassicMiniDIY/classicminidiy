@@ -134,6 +134,8 @@ export const ROUTE_EXPECTATIONS = {
   // markup, not better.
   '/membership/claim': { noindex: true, allowNoH1: true },
   '/discord/connect': { noindex: true, allowNoH1: true },
+  // Forum sign-in hand-off: same per-state headings and spinner first frame.
+  '/discourse/sso': { noindex: true, allowNoH1: true },
   '/profile': { noindex: true },
   '/profile/edit': { noindex: true },
   '/models/mine': { noindex: true },
