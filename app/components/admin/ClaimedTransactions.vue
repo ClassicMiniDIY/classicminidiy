@@ -5,6 +5,7 @@
     claimedTransactionKey,
     type ClaimedTransactionRow,
     type ClaimedTransactionsResponse,
+    type ReassignSubscriptionResponse,
   } from '~~/shared/utils/claimedTransactions';
 
   /**
@@ -28,6 +29,18 @@
   const moveError = ref('');
 
   const toast = useToast();
+
+  /** HTTP status of a failed $fetch, or undefined. */
+  function errorStatus(error: any): number | undefined {
+    return error?.statusCode ?? error?.status ?? error?.response?.status;
+  }
+
+  /**
+   * 404 (row gone) and 409 (owner changed, or the target already holds this
+   * platform's row) mean the list on screen is stale: keep the reason in the
+   * dialog and reload the list behind it.
+   */
+  const STALE_STATUSES = new Set([404, 409]);
 
   function errorText(error: any, fallback: string) {
     return error?.data?.statusMessage || error?.statusMessage || error?.message || fallback;
@@ -69,7 +82,7 @@
     moving.value = true;
     moveError.value = '';
     try {
-      await $adminFetch('/api/admin/membership/reassign', {
+      const res = await $adminFetch<ReassignSubscriptionResponse>('/api/admin/membership/reassign', {
         method: 'POST',
         body: {
           subscriptionId: row.subscription_id,
@@ -78,15 +91,26 @@
         },
       });
       pending.value = null;
-      toast.add({
-        title: 'Subscription moved',
-        description: `The ${row.platform} subscription now belongs to ${accountLabel(row.caller_email, row.caller_user_id)}.`,
-        color: 'success',
-        icon: 'fas fa-check',
-      });
+      const caller = accountLabel(row.caller_email, row.caller_user_id);
+      toast.add(
+        res?.moved === false
+          ? {
+              title: 'Already linked to that account',
+              description: `The ${row.platform} subscription already belonged to ${caller}. Nothing changed.`,
+              color: 'info',
+              icon: 'fas fa-circle-info',
+            }
+          : {
+              title: 'Subscription moved',
+              description: `The ${row.platform} subscription now belongs to ${caller}.`,
+              color: 'success',
+              icon: 'fas fa-check',
+            }
+      );
       await load();
     } catch (error: any) {
       moveError.value = errorText(error, 'Could not move the subscription');
+      if (STALE_STATUSES.has(errorStatus(error) ?? 0)) await load();
     } finally {
       moving.value = false;
     }
@@ -114,6 +138,12 @@
   /** An email, or the user id when the account has none. */
   function accountLabel(email: string | null, userId: string) {
     return email || userId;
+  }
+
+  /** "Moved here by support on <date>", with the admin when known. */
+  function movedNote(row: ClaimedTransactionRow) {
+    const by = row.last_reassigned_by ? ` (${row.last_reassigned_by})` : '';
+    return `Moved here by support${by} on ${fmtDate(row.last_reassigned_at)}`;
   }
 
   function fmtDate(value: string | null) {
@@ -182,6 +212,17 @@
                 <div class="text-sm max-w-[16rem] truncate" :title="accountLabel(row.owner_email, row.owner_user_id)">
                   {{ accountLabel(row.owner_email, row.owner_user_id) }}
                 </div>
+                <!-- Moved by hand before and back again: two accounts on one
+                     Apple ID verify the same purchase. Talk to the customer
+                     before moving it back. -->
+                <div
+                  v-if="row.last_reassigned_at"
+                  class="text-xs opacity-80 max-w-[16rem] truncate"
+                  :title="movedNote(row)"
+                  data-testid="claimed-moved-note"
+                >
+                  <i class="fas fa-clock-rotate-left mr-1 text-warning"></i>{{ movedNote(row) }}
+                </div>
               </td>
               <td>
                 <span class="badge badge-sm" :class="platformBadge(row.platform)">{{ row.platform }}</span>
@@ -236,6 +277,18 @@
             {{ accountLabel(pending.caller_email, pending.caller_user_id) }}
           </dd>
         </dl>
+        <div
+          v-if="pending.last_reassigned_at"
+          role="alert"
+          class="alert alert-warning text-sm mb-3"
+          data-testid="claimed-modal-moved"
+        >
+          <i class="fas fa-clock-rotate-left"></i>
+          <span class="min-w-0 break-words"
+            >{{ movedNote(pending) }}. It came back as a case, which usually means two accounts share one store ID.
+            Check with the customer before you move it again.</span
+          >
+        </div>
         <div class="bg-warning/10 border border-warning/30 rounded-lg p-3 mb-3 text-sm">
           <i class="fas fa-triangle-exclamation mr-1 text-warning"></i>
           The current owner loses the membership from this purchase unless another channel covers them. Discord and blog

@@ -34,7 +34,9 @@ export default defineEventHandler(async (event): Promise<ClaimedTransactionsResp
     p_days: CLAIMED_TRANSACTIONS_DAYS,
   });
   if (error) {
-    throw createError({ statusCode: 500, statusMessage: error.message });
+    // Logged, not returned: a database message is not for the browser.
+    console.error('[admin/membership/claimed] failed:', error.message);
+    throw createError({ statusCode: 500, statusMessage: 'Could not load claimed transactions' });
   }
 
   const rows = Array.isArray(data) ? (data as ClaimedTransactionRow[]) : [];

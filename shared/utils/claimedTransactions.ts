@@ -39,6 +39,15 @@ export interface ClaimedTransactionRow {
   last_attempt_at: string;
   /** True when the caller is a member through another row anyway. */
   caller_entitled_now: boolean;
+  /**
+   * The latest support move of this subscription (admin_audit_log), or null.
+   * Set on a case means the row was moved by hand before and came back: two
+   * accounts on one Apple ID both verify the same transaction. Talk to the
+   * customer before moving it again.
+   */
+  last_reassigned_at: string | null;
+  /** The admin who made that move: account email, else display name. */
+  last_reassigned_by: string | null;
 }
 
 export interface ClaimedTransactionsResponse {
@@ -53,6 +62,15 @@ export interface ReassignSubscriptionRequest {
   toUserId: string;
   /** The owner the admin saw. The move is refused if the row moved since. */
   expectedOwnerId: string;
+}
+
+/** Response of POST /api/admin/membership/reassign. */
+export interface ReassignSubscriptionResponse {
+  success: true;
+  subscriptionId: string;
+  userId: string;
+  /** False when the row already belonged to `toUserId`: nothing changed. */
+  moved: boolean;
 }
 
 /** Stable key for a case row: one row per (subscription, caller). */

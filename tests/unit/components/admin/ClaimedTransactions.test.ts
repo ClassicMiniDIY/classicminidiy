@@ -31,6 +31,8 @@ const CASE: ClaimedTransactionRow = {
   first_attempt_at: '2026-10-01T10:00:00Z',
   last_attempt_at: '2026-10-02T10:00:00Z',
   caller_entitled_now: false,
+  last_reassigned_at: null,
+  last_reassigned_by: null,
 };
 
 const SECOND: ClaimedTransactionRow = {
@@ -48,7 +50,7 @@ function listResponse(results: ClaimedTransactionRow[], truncated = false): Clai
 /** Route the two endpoints; `reassign` decides the POST outcome. */
 function routes(
   list: ClaimedTransactionsResponse[],
-  reassign: () => Promise<unknown> = async () => ({ success: true })
+  reassign: () => Promise<unknown> = async () => ({ success: true, moved: true })
 ) {
   const queue = [...list];
   adminFetch.mockImplementation((url: string) => {
@@ -111,9 +113,9 @@ describe('AdminClaimedTransactions', () => {
   });
 
   it('shows the route error instead of an empty state', async () => {
-    adminFetch.mockRejectedValue({ data: { statusMessage: 'function not found' } });
+    adminFetch.mockRejectedValue({ statusCode: 500, data: { statusMessage: 'Could not load claimed transactions' } });
     const wrapper = await mounted();
-    expect(wrapper.find('[data-testid="claimed-error"]').text()).toContain('function not found');
+    expect(wrapper.find('[data-testid="claimed-error"]').text()).toContain('Could not load claimed transactions');
     expect(wrapper.find('[data-testid="claimed-empty"]').exists()).toBe(false);
   });
 
@@ -171,9 +173,12 @@ describe('AdminClaimedTransactions', () => {
     expect(wrapper.find('[data-testid="claimed-empty"]').exists()).toBe(true);
   });
 
-  it('keeps the dialog open with the reason when the move is refused', async () => {
-    routes([listResponse([CASE])], () =>
-      Promise.reject({ data: { statusMessage: 'This subscription changed owner since the list loaded.' } })
+  it.each([
+    [409, 'This subscription changed owner since the list loaded.'],
+    [404, 'That subscription no longer exists'],
+  ])('on a %i keeps the reason in the dialog and reloads the stale list', async (statusCode, message) => {
+    routes([listResponse([CASE]), listResponse([])], () =>
+      Promise.reject({ statusCode, data: { statusMessage: message } })
     );
     const wrapper = await mounted();
     await wrapper.find('[data-testid="claimed-move"]').trigger('click');
@@ -181,10 +186,56 @@ describe('AdminClaimedTransactions', () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="claimed-modal"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="claimed-move-error"]').text()).toContain('changed owner');
+    expect(wrapper.find('[data-testid="claimed-move-error"]').text()).toContain(message);
     expect(toastAdd).not.toHaveBeenCalled();
-    // No reload after a refusal.
+    expect(adminFetch.mock.calls.map((c) => c[0])).toEqual([
+      '/api/admin/membership/claimed',
+      '/api/admin/membership/reassign',
+      '/api/admin/membership/claimed',
+    ]);
+    expect(wrapper.find('[data-testid="claimed-empty"]').exists()).toBe(true);
+  });
+
+  it('does not reload the list after any other refusal', async () => {
+    routes([listResponse([CASE])], () =>
+      Promise.reject({ statusCode: 500, data: { statusMessage: 'Could not move' } })
+    );
+    const wrapper = await mounted();
+    await wrapper.find('[data-testid="claimed-move"]').trigger('click');
+    await wrapper.find('[data-testid="claimed-confirm"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="claimed-move-error"]').text()).toContain('Could not move');
     expect(adminFetch.mock.calls.filter((c) => c[0] === '/api/admin/membership/claimed')).toHaveLength(1);
+  });
+
+  it('toasts "Already linked to that account" when nothing moved', async () => {
+    routes([listResponse([CASE]), listResponse([])], async () => ({ success: true, moved: false }));
+    const wrapper = await mounted();
+    await wrapper.find('[data-testid="claimed-move"]').trigger('click');
+    await wrapper.find('[data-testid="claimed-confirm"]').trigger('click');
+    await flushPromises();
+    expect(toastAdd).toHaveBeenCalledTimes(1);
+    expect(toastAdd.mock.calls[0]![0]).toMatchObject({ title: 'Already linked to that account', color: 'info' });
+  });
+
+  it('shows "Moved here by support" on a case support moved before, in the row and the dialog', async () => {
+    const bounced: ClaimedTransactionRow = {
+      ...CASE,
+      last_reassigned_at: '2026-09-30T12:00:00Z',
+      last_reassigned_by: 'admin@example.com',
+    };
+    routes([listResponse([bounced, SECOND])]);
+    const wrapper = await mounted();
+    const notes = wrapper.findAll('[data-testid="claimed-moved-note"]');
+    expect(notes).toHaveLength(1);
+    expect(notes[0]!.text()).toContain('Moved here by support (admin@example.com) on');
+    expect(notes[0]!.text()).toContain(new Date('2026-09-30T12:00:00Z').toLocaleDateString());
+    await wrapper.findAll('[data-testid="claimed-move"]')[0]!.trigger('click');
+    expect(wrapper.find('[data-testid="claimed-modal-moved"]').text()).toContain('Moved here by support');
+    // A case nobody moved has no note in the dialog.
+    await wrapper.findAll('.modal-action button')[0]!.trigger('click');
+    await wrapper.findAll('[data-testid="claimed-move"]')[1]!.trigger('click');
+    expect(wrapper.find('[data-testid="claimed-modal-moved"]').exists()).toBe(false);
   });
 
   it('exposes load so the page Refresh button can reload it', async () => {

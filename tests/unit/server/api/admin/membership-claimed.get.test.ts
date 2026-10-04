@@ -40,6 +40,8 @@ function row(i: number) {
     first_attempt_at: '2026-10-01T00:00:00Z',
     last_attempt_at: '2026-10-02T00:00:00Z',
     caller_entitled_now: false,
+    last_reassigned_at: null,
+    last_reassigned_by: null,
   };
 }
 
@@ -87,8 +89,13 @@ describe('GET /api/admin/membership/claimed', () => {
     expect(res.truncated).toBe(false);
   });
 
-  it('500s on an RPC error', async () => {
+  it('500s on an RPC error with a generic message, and logs the database one', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     rpc.mockResolvedValue({ data: null, error: { code: 'PGRST202', message: 'function not found' } });
-    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 500 });
+    const err: any = await handler(evt()).catch((e) => e);
+    expect(err.statusCode).toBe(500);
+    expect(err.statusMessage).toBe('Could not load claimed transactions');
+    expect(spy).toHaveBeenCalledWith(expect.any(String), 'function not found');
+    spy.mockRestore();
   });
 });

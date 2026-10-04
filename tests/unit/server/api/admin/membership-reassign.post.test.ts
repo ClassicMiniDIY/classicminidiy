@@ -36,8 +36,11 @@ const ADMIN = '33333333-3333-3333-3333-333333333333';
 const valid = () => ({ subscriptionId: SUB, toUserId: CALLER, expectedOwnerId: OWNER });
 
 beforeEach(() => {
-  rpc.mockReset().mockResolvedValue({ data: { id: SUB, user_id: CALLER }, error: null });
-  requireAdminAuth.mockReset().mockResolvedValue({ user: { id: ADMIN } });
+  rpc.mockReset().mockResolvedValue({
+    data: [{ subscription_id: SUB, user_id: CALLER, previous_user_id: OWNER, moved: true }],
+    error: null,
+  });
+  requireAdminAuth.mockReset().mockResolvedValue({ user: { id: ADMIN }, tokenSource: 'header' });
   readBody.mockReset().mockResolvedValue(valid());
 });
 
@@ -45,6 +48,16 @@ describe('POST /api/admin/membership/reassign', () => {
   it('checks admin auth before reading the body or calling the RPC', async () => {
     requireAdminAuth.mockRejectedValue(Object.assign(new Error('Forbidden'), { statusCode: 403 }));
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 403 });
+    expect(readBody).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('refuses the cookie token path (401) before reading the body', async () => {
+    requireAdminAuth.mockResolvedValue({ user: { id: ADMIN }, tokenSource: 'cookie' });
+    await expect(handler(evt())).rejects.toMatchObject({
+      statusCode: 401,
+      statusMessage: 'Authorization header required',
+    });
     expect(readBody).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
   });
@@ -72,7 +85,30 @@ describe('POST /api/admin/membership/reassign', () => {
       p_admin_id: ADMIN,
       p_expected_owner: OWNER,
     });
-    expect(res).toEqual({ success: true, subscriptionId: SUB, userId: CALLER });
+    expect(res).toEqual({ success: true, subscriptionId: SUB, userId: CALLER, moved: true });
+  });
+
+  it('reports moved: false when the row already belonged to the caller', async () => {
+    rpc.mockResolvedValue({
+      data: [{ subscription_id: SUB, user_id: CALLER, previous_user_id: CALLER, moved: false }],
+      error: null,
+    });
+    await expect(handler(evt())).resolves.toEqual({ success: true, subscriptionId: SUB, userId: CALLER, moved: false });
+  });
+
+  it('maps 23505 to 409 naming the platform from the HINT', async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: '23505', message: 'raised', hint: 'ghost' } });
+    await expect(handler(evt())).rejects.toMatchObject({
+      statusCode: 409,
+      statusMessage: 'That account already has a ghost membership',
+    });
+  });
+
+  it('maps 23505 with an unknown HINT to 409 without echoing it', async () => {
+    rpc.mockResolvedValue({ data: null, error: { code: '23505', message: 'raised', hint: '<b>x</b>' } });
+    const err: any = await handler(evt()).catch((e) => e);
+    expect(err.statusCode).toBe(409);
+    expect(err.statusMessage).toBe('That account already has a membership on this platform');
   });
 
   it.each([
