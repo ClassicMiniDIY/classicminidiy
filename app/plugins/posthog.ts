@@ -1,5 +1,6 @@
 import posthog from 'posthog-js';
 import { classifyAiReferrer } from '~/utils/geo/aiReferrer';
+import { redactForumSsoEvent } from '~/utils/analyticsRedaction';
 
 export default defineNuxtPlugin({
   name: 'posthog',
@@ -20,6 +21,8 @@ export default defineNuxtPlugin({
       person_profiles: 'identified_only',
       capture_pageview: false,
       capture_pageleave: true,
+      // Drop the DiscourseConnect sso/sig query from every event's URLs.
+      before_send: redactForumSsoEvent,
       loaded: (posthog) => {
         if (import.meta.env.MODE === 'development') posthog.debug();
       },
