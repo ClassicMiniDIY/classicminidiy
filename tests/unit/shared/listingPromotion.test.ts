@@ -1,5 +1,10 @@
 /** @vitest-environment node */
-import { isListingFeatured, relistUpdates } from '~~/shared/utils/listingPromotion';
+import {
+  FEATURED_STRIP_SIZE,
+  isListingFeatured,
+  pickFeaturedRotation,
+  relistUpdates,
+} from '~~/shared/utils/listingPromotion';
 
 describe('isListingFeatured', () => {
   it('features a premium listing while it is live', () => {
@@ -61,5 +66,76 @@ describe('relistUpdates', () => {
     const stamped = Date.parse(relistUpdates().published_at);
     expect(stamped).toBeGreaterThanOrEqual(before);
     expect(stamped - before).toBeLessThan(5_000);
+  });
+});
+
+describe('pickFeaturedRotation', () => {
+  const rows = (n: number, status = 'active') =>
+    Array.from({ length: n }, (_, i) => ({ id: `${status}-${i}`, status }));
+
+  it('shows six cards by default', () => {
+    expect(FEATURED_STRIP_SIZE).toBe(6);
+    expect(pickFeaturedRotation(rows(19))).toHaveLength(6);
+  });
+
+  it('returns every row, each once, when there are fewer than the strip holds', () => {
+    const input = rows(4);
+    const picked = pickFeaturedRotation(input);
+    expect(picked).toHaveLength(4);
+    expect(new Set(picked.map((r) => r.id))).toEqual(new Set(input.map((r) => r.id)));
+  });
+
+  it('does not change the input array', () => {
+    const input = rows(10);
+    const copy = input.map((r) => r.id);
+    pickFeaturedRotation(input);
+    expect(input.map((r) => r.id)).toEqual(copy);
+  });
+
+  it('can show any listing, not only the first ones (older paid listings get a turn)', () => {
+    const input = rows(19);
+    const seen = new Set<string>();
+    for (let i = 0; i < 400; i++) pickFeaturedRotation(input).forEach((r) => seen.add(r.id));
+    expect(seen.size).toBe(19);
+  });
+
+  it('randomises the order, not only the selection', () => {
+    const input = rows(6);
+    const orders = new Set<string>();
+    for (let i = 0; i < 200; i++)
+      orders.add(
+        pickFeaturedRotation(input)
+          .map((r) => r.id)
+          .join(',')
+      );
+    expect(orders.size).toBeGreaterThan(1);
+  });
+
+  it('puts demo rows after real listings and uses them only to fill places', () => {
+    const input = [...rows(2, 'example_paid'), ...rows(5)];
+    const picked = pickFeaturedRotation(input);
+    expect(picked.slice(0, 5).every((r) => r.status === 'active')).toBe(true);
+    expect(picked[5]!.status).toBe('example_paid');
+    expect(pickFeaturedRotation([...rows(2, 'example_paid'), ...rows(8)]).every((r) => r.status === 'active')).toBe(
+      true
+    );
+  });
+
+  it('is a uniform Fisher-Yates over the injected random source', () => {
+    // random() = 0 always swaps with index 0: [a,b,c] -> [b,c,a]
+    const input = [
+      { id: 'a', status: 'active' },
+      { id: 'b', status: 'active' },
+      { id: 'c', status: 'active' },
+    ];
+    expect(pickFeaturedRotation(input, 3, () => 0).map((r) => r.id)).toEqual(['b', 'c', 'a']);
+    // random() just under 1 never swaps
+    expect(pickFeaturedRotation(input, 3, () => 0.999999).map((r) => r.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('returns nothing for a non-positive count or no rows', () => {
+    expect(pickFeaturedRotation(rows(3), 0)).toEqual([]);
+    expect(pickFeaturedRotation(rows(3), -1)).toEqual([]);
+    expect(pickFeaturedRotation([])).toEqual([]);
   });
 });

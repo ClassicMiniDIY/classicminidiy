@@ -97,6 +97,19 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
   only and refuses a draft with 409: a premium draft reaches review only through
   the payment path, so a hand grant on a draft left it unsubmittable.
 
+- **The homepage featured strip is a random six of ALL featured listings, in a
+  random order, on every page load (Cole, 2026-10-03).** `pickFeaturedRotation()`
+  (`shared/utils/listingPromotion.ts`) picks them; demo rows only fill places the
+  real listings leave. With no end date, the old "newest six" strip never showed
+  an older paid listing again (13 of 19 on 2026-10-03). The page reads the ids
+  of the whole pool, picks, then loads only the picked rows, so the payload stays
+  six listings as the pool grows. Do not add an `ORDER BY` or `limit(6)` to that
+  pool query. Its "View All" link opens `/exchange/listings?featured=true`, the
+  `featured` search filter (`tier = 'paid'` on top of the live-status filter). The
+  strip loads in `onMounted`, so a random pick cannot cause a hydration mismatch;
+  moving it into SSR needs the pick carried in the payload. "Featured" is not a
+  saved-search filter: the alert matcher does not know it.
+
 - **Every feed item's `id` must be an absolute IRI, and the feed tests must seed
   rows before asserting on Atom.** The `feed` package renders the Atom entry id as
   `sanitizeUrl(item.id ?? item.link)` — i.e. `new URL(id)` — so a bare row id

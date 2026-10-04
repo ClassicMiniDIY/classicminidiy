@@ -209,6 +209,7 @@
 
 <script setup lang="ts">
   import type { ListingWithPhotos } from '~/composables/useListings';
+  import { FEATURED_STRIP_SIZE, pickFeaturedRotation } from '~~/shared/utils/listingPromotion';
 
   const { t } = useI18n();
   const config = useRuntimeConfig();
@@ -337,10 +338,26 @@
   };
 
   // Fetch featured listings: premium and live (isListingFeatured() as a query).
-  // Featured has no end date while the listing is live; the status filter
-  // already leaves out sold, expired and cancelled rows.
+  // Featured has no end date while the listing is live, so the strip rotates:
+  // read the ids of every featured listing, pick FEATURED_STRIP_SIZE of them at
+  // random in a random order (pickFeaturedRotation), then load only those rows.
+  // A strip of the newest few would never show an older paid listing.
   const loadFeaturedListings = async () => {
     try {
+      const { data: pool, error: poolError } = await supabase
+        .from('listings')
+        .select('id, status')
+        .in('status', activeStatuses.value)
+        .eq('tier', 'paid')
+        .limit(1000);
+      if (poolError) throw poolError;
+
+      const ids = pickFeaturedRotation(pool || [], FEATURED_STRIP_SIZE).map((row) => row.id);
+      if (ids.length === 0) {
+        featuredListings.value = [];
+        return;
+      }
+
       const { data, error } = await applyPhotoOrdering(
         supabase
           .from('listings')
@@ -351,14 +368,16 @@
           profiles:public_profiles!listings_user_id_fkey (id, display_name, username, location, avatar_url)
         `
           )
-          .in('status', activeStatuses.value)
-          .eq('tier', 'paid')
-          .order('created_at', { ascending: false })
-      ).limit(6);
+          .in('id', ids)
+      );
+      if (error) throw error;
 
-      if (!error) {
-        featuredListings.value = sortExamplesLast(data || []);
-      }
+      // Keep the random order of the pick; `.in()` returns rows in table order.
+      const byId = new Map((data || []).map((row) => [row.id, row]));
+      featuredListings.value = ids.flatMap((id) => {
+        const row = byId.get(id);
+        return row ? [row] : [];
+      });
     } catch (error) {
       console.error('Error loading featured listings:', error);
     }
