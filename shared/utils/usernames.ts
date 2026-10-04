@@ -94,6 +94,15 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
   'all',
   'discobot',
   'sys',
+  // Discourse's own default reserved names: Discourse would rename a site user who
+  // held one (info -> info1), so site and forum names would differ.
+  'info',
+  'you',
+  'name',
+  'username',
+  'nickname',
+  'discourseorg',
+  'discourseforum',
   'null',
   'undefined',
   'root',

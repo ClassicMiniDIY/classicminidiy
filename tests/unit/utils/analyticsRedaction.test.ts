@@ -113,3 +113,24 @@ describe('redactForumSsoEvent: autocapture and safe writes', () => {
     expect(() => redactForumSsoEvent(event)).not.toThrow();
   });
 });
+
+describe('forum SSO redaction — path variants (PR #930 review round 2)', () => {
+  it('drops the query for a trailing slash and any letter case', () => {
+    expect(redactForumSsoUrl('https://classicminidiy.com/discourse/sso/?sso=abc&sig=def')).toBe(
+      'https://classicminidiy.com/discourse/sso/'
+    );
+    expect(redactForumSsoUrl('/Discourse/SSO?sso=abc&sig=def')).toBe('/Discourse/SSO');
+  });
+
+  it('reduces a redirect to a trailing-slash or mixed-case forum path', () => {
+    expect(redactForumSsoUrl('/login?redirect=%2FDiscourse%2Fsso%2F%3Fsso%3Dabc')).toBe(
+      '/login?redirect=%2Fdiscourse%2Fsso'
+    );
+  });
+
+  it('scrubs double-encoded and mixed-case forms inside free text', () => {
+    const chain = 'a:attr__href="/login?redirect=%252Fdiscourse%252Fsso%253Fsso%253Dabc";text="x"';
+    expect(redactForumSsoText(chain)).not.toContain('sso%253D');
+    expect(redactForumSsoText('href="/DISCOURSE/SSO?sso=abc&sig=d"')).toBe('href="/DISCOURSE/SSO"');
+  });
+});

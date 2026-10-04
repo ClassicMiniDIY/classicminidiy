@@ -43,8 +43,11 @@ const RETURN_PATH = '/session/sso_login';
 
 /** Supabase Storage prefix for profile avatars. Only these are forwarded to the forum. */
 const AVATAR_PATH_PREFIX = '/storage/v1/object/public/avatars/';
-/** The Supabase custom domain; the project host is added from runtimeConfig. */
-const AVATAR_HOSTS = ['auth.classicminidiy.com'] as const;
+/**
+ * Hosts that serve our Supabase Storage: the custom domain, and the project host that
+ * older avatar URLs still use. The configured runtime host is added as well.
+ */
+const AVATAR_HOSTS = ['auth.classicminidiy.com', 'psoqirvbujwohemmwplv.supabase.co'] as const;
 
 function fail(statusCode: number, error: string, statusMessage: string): never {
   throw createError({ statusCode, statusMessage, data: { error } });
