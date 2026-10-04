@@ -98,6 +98,7 @@
 <script setup lang="ts">
   import type { CurrencyCode } from '~/composables/useCurrency';
   import type { BulkListingItem } from '~/types/bulk';
+  import { normalizeShippingCost } from '~/utils/shippingCost';
 
   const { t } = useI18n();
 
@@ -139,6 +140,7 @@
     parts_subcategory: '',
     shippingAvailable: false,
     shipsTo: '',
+    shippingCost: null,
     tier: 'free',
     location: {
       city: '',
@@ -242,6 +244,7 @@
     try {
       for (let i = 0; i < listings.value.length; i++) {
         const listing = listings.value[i];
+        if (!listing) continue;
         submissionProgress.value.current = i + 1;
 
         // Determine status: free → pending, paid → draft (will activate after payment)
@@ -271,8 +274,10 @@
           fits_models: listing.fitsModels.length > 0 ? [...listing.fitsModels] : null,
           oem_or_aftermarket: listing.oemOrAftermarket || null,
           quantity_available: listing.quantityAvailable,
+          // A pickup-only listing stores no destination or cost, as the wizard writes it.
           shipping_available: listing.shippingAvailable,
-          ships_to: listing.shipsTo || null,
+          ships_to: listing.shippingAvailable ? listing.shipsTo || null : null,
+          shipping_cost: listing.shippingAvailable ? normalizeShippingCost(listing.shippingCost) : null,
         };
 
         const created = await createListing(listingData);

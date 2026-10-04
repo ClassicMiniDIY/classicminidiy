@@ -97,6 +97,7 @@
   import type { CurrencyCode } from '~/composables/useCurrency';
   import type { Database } from '~~/types/database';
   import type { OptimizeResult } from '~/utils/imageOptimizer';
+  import { normalizeShippingCost } from '~/utils/shippingCost';
 
   const { t } = useI18n();
 
@@ -240,6 +241,8 @@
     quantityAvailable: 1,
     shippingAvailable: false,
     shipsTo: '' as string,
+    // 0 = free, null = varies by location (utils/shippingCost)
+    shippingCost: null as number | null,
   });
 
   // Location data
@@ -392,6 +395,7 @@
       formData.value.quantityAvailable = listing.quantity_available || 1;
       formData.value.shippingAvailable = listing.shipping_available || false;
       formData.value.shipsTo = listing.ships_to || '';
+      formData.value.shippingCost = normalizeShippingCost(listing.shipping_cost);
 
       // Location data
       locationData.value.city = listing.city || listing.location || '';
@@ -915,8 +919,20 @@
         fits_models: fitsModelsList,
         oem_or_aftermarket: formData.value.oemOrAftermarket || null,
         quantity_available: formData.value.quantityAvailable,
-        shipping_available: formData.value.shippingAvailable,
-        ships_to: formData.value.shipsTo || null,
+      });
+    }
+
+    // Parts and engines carry the shipping step (StepExtraDetails). Engines
+    // were left out here, so an engine listing took the column default
+    // (shipping_available = true) whatever the seller chose. A pickup-only
+    // listing stores no destination or cost, so it cannot match a shipping
+    // filter.
+    if (formData.value.category === 'parts' || formData.value.category === 'engine') {
+      const ships = formData.value.shippingAvailable;
+      Object.assign(data, {
+        shipping_available: ships,
+        ships_to: ships ? formData.value.shipsTo || null : null,
+        shipping_cost: ships ? normalizeShippingCost(formData.value.shippingCost) : null,
       });
     }
 

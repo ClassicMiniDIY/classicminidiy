@@ -56,7 +56,10 @@ const BASELINE = {
   // 337 -> 336. The seller relist moved to a server route, so the
   // `Record<string, any>` PostgREST update in useListings.relistListing (which
   // the generated Update type rejected) is gone.
-  'app/': 336,
+  // 336 -> 309. BulkUploader's submit loop skips an undefined
+  // `listings.value[i]`, which cleared 27 "'listing' is possibly 'undefined'"
+  // errors in one line.
+  'app/': 309,
   // 64 -> 59. server/utils/runtimeConfig.ts gives `useRuntimeConfig(event)` its
   // real Nitro signature, which removes five identical "Expected 0 arguments,
   // but got 1" errors across bot-analytics, mcp-tiering, mcpUsage and the two

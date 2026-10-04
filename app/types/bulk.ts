@@ -20,6 +20,8 @@ export interface BulkListingItem {
   parts_subcategory: PartsSubcategory | '';
   shippingAvailable: boolean;
   shipsTo: string;
+  /** 0 = free, null = varies by location (utils/shippingCost). */
+  shippingCost: number | null;
   tier: 'free' | 'paid';
   location: {
     city: string;
