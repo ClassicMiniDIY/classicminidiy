@@ -146,6 +146,8 @@ Rate limiting: POSTs under `/api/` already pass through `server/middleware/rate-
 
 ### Identity: the forum username
 
+Decided 2026-10-03 (Cole): the one-time name step below.
+
 The site has no UI to set `profiles.username`, so almost every account has none (counts
 are in the private forum repo). `display_name` defaults to the email local part, which
 for an Apple private-relay user is a random string, and for everyone else is part of
