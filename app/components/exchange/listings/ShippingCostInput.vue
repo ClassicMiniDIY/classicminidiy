@@ -2,16 +2,17 @@
   <fieldset class="fieldset">
     <legend class="fieldset-legend">{{ t('label') }}</legend>
     <label class="flex items-center gap-2 cursor-pointer">
-      <input v-model="isFree" type="checkbox" class="checkbox checkbox-sm checkbox-primary" />
+      <input v-model="freeChecked" type="checkbox" class="checkbox checkbox-sm checkbox-primary" />
       <span class="text-sm">{{ t('free') }}</span>
     </label>
-    <template v-if="!isFree">
+    <template v-if="!freeChecked">
       <label class="input w-full mt-2">
         <span class="text-base-content/50">{{ symbol }}</span>
         <input
           v-model.number="amount"
           type="number"
           min="0"
+          max="99999999.99"
           step="0.01"
           inputmode="decimal"
           placeholder="15.00"
@@ -25,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed } from 'vue';
+  import { computed, ref, watch } from 'vue';
   import { SUPPORTED_CURRENCIES } from '~/composables/useCurrency';
   import { normalizeShippingCost } from '~/utils/shippingCost';
 
@@ -44,11 +45,17 @@
     return SUPPORTED_CURRENCIES.find((c) => c.code === code)?.symbol || code;
   });
 
-  const isFree = computed({
-    get: () => model.value === 0,
-    set: (free) => {
-      model.value = free ? 0 : null;
-    },
+  // Only the checkbox sets "free". Deriving it from model === 0 hid the
+  // amount field the moment a seller typed the "0" of "0.75". A typed 0 is
+  // still stored as 0 (free) and shows ticked on the next load.
+  const freeChecked = ref(model.value === 0);
+  watch(freeChecked, (free) => {
+    if (free) model.value = 0;
+    else if (model.value === 0) model.value = null;
+  });
+  // The parent can replace the value (a draft that loads after mount).
+  watch(model, (value) => {
+    if (value !== 0 && freeChecked.value) freeChecked.value = false;
   });
 
   // v-model.number hands back '' for an empty field; store that as null.
