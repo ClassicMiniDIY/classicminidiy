@@ -15,6 +15,7 @@
 /**
  * 3 to 30 characters: lowercase letters, digits and hyphens, starting and
  * ending with a letter or digit. 30 is the forum's `max_username_length`.
+ * Two hyphens in a row are also refused; isValidForumUsername checks that.
  */
 export const USERNAME_PATTERN = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
 
@@ -87,6 +88,12 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
   'discourse',
   'administrator',
   'moderators',
+  'admins',
+  'everyone',
+  'here',
+  'all',
+  'discobot',
+  'sys',
   'null',
   'undefined',
   'root',
@@ -95,7 +102,9 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
   'www',
 ]);
 
-/** True when `name` matches USERNAME_PATTERN exactly and is not reserved. */
+/** True when `name` matches USERNAME_PATTERN, has no `--`, and is not reserved. */
 export function isValidForumUsername(name: unknown): name is string {
-  return typeof name === 'string' && USERNAME_PATTERN.test(name) && !RESERVED_USERNAMES.has(name);
+  return (
+    typeof name === 'string' && USERNAME_PATTERN.test(name) && !name.includes('--') && !RESERVED_USERNAMES.has(name)
+  );
 }

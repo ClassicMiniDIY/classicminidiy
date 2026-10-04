@@ -73,6 +73,7 @@
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+/, '')
+      .replace(/-{2,}/g, '-')
       .slice(0, 30)
       .replace(/-+$/, '');
     return isValidForumUsername(cleaned) ? cleaned : '';
@@ -102,6 +103,23 @@
     return session?.access_token ?? null;
   }
 
+  let stopPendingWatch: (() => void) | null = null;
+
+  function watchPendingPost() {
+    stopPendingWatch?.();
+    stopPendingWatch = watch(
+      () => ssoPosts.value[ssoParam],
+      (status) => {
+        if (status === 'pending') return;
+        stopPendingWatch?.();
+        stopPendingWatch = null;
+        if (!status) state.value = 'error';
+      }
+    );
+  }
+
+  onBeforeUnmount(() => stopPendingWatch?.());
+
   function releasePost() {
     const remaining = { ...ssoPosts.value };
     delete remaining[ssoParam];
@@ -111,7 +129,10 @@
   async function submit() {
     if (ssoPosts.value[ssoParam]) {
       // Already sent from this page load: never send the same nonce twice.
+      // If that POST is still pending, wait for it. A release without a
+      // redirect means it failed, so this instance shows the start-again link.
       state.value = 'connecting';
+      if (ssoPosts.value[ssoParam] === 'pending') watchPendingPost();
       return;
     }
     const token = await getAccessToken();
@@ -138,10 +159,11 @@
       releasePost();
       const status = err?.statusCode ?? err?.status ?? err?.response?.status;
       const code = err?.data?.data?.error ?? err?.data?.error;
-      if (status === 401) {
-        // The server rejected the token. Clear it first, or /login sees a
-        // session, bounces straight back here, and we loop. Local scope only.
-        fail('session_rejected');
+      if (status === 401 || (status === 403 && code === 'reauth_required')) {
+        // The server rejected the token, or forum sign-in needs a session from
+        // one of the site's own sign-in methods. Clear it first, or /login sees
+        // a session, bounces straight back here, and we loop. Local scope only.
+        fail(status === 401 ? 'session_rejected' : 'reauth_required');
         await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
         await navigateTo(loginHref);
         return;
@@ -167,7 +189,7 @@
     identityError.value = null;
     const username = usernameInput.value.trim().toLowerCase();
     const displayName = displayNameInput.value.trim();
-    if (!USERNAME_PATTERN.test(username)) {
+    if (!USERNAME_PATTERN.test(username) || username.includes('--')) {
       identityError.value = 'invalid';
       return;
     }
@@ -288,7 +310,8 @@
             <i class="fas fa-right-to-bracket text-4xl text-primary mt-2"></i>
             <h1 class="text-2xl font-bold mt-3">{{ t('signin.title') }}</h1>
             <p class="opacity-70">{{ t('signin.body') }}</p>
-            <NuxtLink :to="loginHref" class="btn btn-primary mt-4">
+            <!-- ph-no-capture: the href carries the sso query. -->
+            <NuxtLink :to="loginHref" class="btn btn-primary mt-4 ph-no-capture">
               <i class="fas fa-right-to-bracket"></i>
               {{ t('signin.cta') }}
             </NuxtLink>
@@ -418,12 +441,12 @@
       "title": "Choose your forum name",
       "body": "You do this one time. Your username shows on your posts and in mentions on the forum.",
       "username_label": "Username",
-      "username_hint": "3 to 30 characters: lowercase letters, numbers and hyphens. Start and end with a letter or number.",
+      "username_hint": "3 to 30 characters: lowercase letters, numbers and hyphens. Start and end with a letter or number. Do not use two hyphens in a row.",
       "display_name_label": "Display name",
       "display_name_hint": "The name other members see next to your username.",
       "submit": "Continue to the forum",
       "errors": {
-        "invalid": "Use 3 to 30 lowercase letters, numbers or hyphens. Start and end with a letter or number.",
+        "invalid": "Use 3 to 30 lowercase letters, numbers or hyphens. Start and end with a letter or number. Do not use two hyphens in a row.",
         "reserved": "That username is reserved. Choose a different one.",
         "taken": "That username is taken. Choose a different one.",
         "display_name": "Enter a display name.",
@@ -467,12 +490,12 @@
       "title": "Elige tu nombre en el foro",
       "body": "Solo lo haces una vez. Tu nombre de usuario aparece en tus mensajes y en las menciones del foro.",
       "username_label": "Nombre de usuario",
-      "username_hint": "De 3 a 30 caracteres: letras minúsculas, números y guiones. Empieza y termina con una letra o un número.",
+      "username_hint": "De 3 a 30 caracteres: letras minúsculas, números y guiones. Empieza y termina con una letra o un número. No uses dos guiones seguidos.",
       "display_name_label": "Nombre visible",
       "display_name_hint": "El nombre que los demás miembros ven junto a tu nombre de usuario.",
       "submit": "Continuar al foro",
       "errors": {
-        "invalid": "Usa de 3 a 30 letras minúsculas, números o guiones. Empieza y termina con una letra o un número.",
+        "invalid": "Usa de 3 a 30 letras minúsculas, números o guiones. Empieza y termina con una letra o un número. No uses dos guiones seguidos.",
         "reserved": "Ese nombre de usuario está reservado. Elige otro.",
         "taken": "Ese nombre de usuario ya está en uso. Elige otro.",
         "display_name": "Introduce un nombre visible.",
@@ -516,12 +539,12 @@
       "title": "Choisissez votre nom sur le forum",
       "body": "Vous le faites une seule fois. Votre nom d'utilisateur apparaît sur vos messages et dans les mentions du forum.",
       "username_label": "Nom d'utilisateur",
-      "username_hint": "De 3 à 30 caractères : lettres minuscules, chiffres et tirets. Commencez et terminez par une lettre ou un chiffre.",
+      "username_hint": "De 3 à 30 caractères : lettres minuscules, chiffres et tirets. Commencez et terminez par une lettre ou un chiffre. N'utilisez pas deux tirets à la suite.",
       "display_name_label": "Nom affiché",
       "display_name_hint": "Le nom que les autres membres voient à côté de votre nom d'utilisateur.",
       "submit": "Continuer vers le forum",
       "errors": {
-        "invalid": "Utilisez de 3 à 30 lettres minuscules, chiffres ou tirets. Commencez et terminez par une lettre ou un chiffre.",
+        "invalid": "Utilisez de 3 à 30 lettres minuscules, chiffres ou tirets. Commencez et terminez par une lettre ou un chiffre. N'utilisez pas deux tirets à la suite.",
         "reserved": "Ce nom d'utilisateur est réservé. Choisissez-en un autre.",
         "taken": "Ce nom d'utilisateur est déjà pris. Choisissez-en un autre.",
         "display_name": "Saisissez un nom affiché.",
@@ -565,12 +588,12 @@
       "title": "Wähle deinen Forumsnamen",
       "body": "Das machst du nur einmal. Dein Benutzername erscheint bei deinen Beiträgen und in Erwähnungen im Forum.",
       "username_label": "Benutzername",
-      "username_hint": "3 bis 30 Zeichen: Kleinbuchstaben, Ziffern und Bindestriche. Beginne und ende mit einem Buchstaben oder einer Ziffer.",
+      "username_hint": "3 bis 30 Zeichen: Kleinbuchstaben, Ziffern und Bindestriche. Beginne und ende mit einem Buchstaben oder einer Ziffer. Verwende keine zwei Bindestriche hintereinander.",
       "display_name_label": "Anzeigename",
       "display_name_hint": "Der Name, den andere Mitglieder neben deinem Benutzernamen sehen.",
       "submit": "Weiter zum Forum",
       "errors": {
-        "invalid": "Verwende 3 bis 30 Kleinbuchstaben, Ziffern oder Bindestriche. Beginne und ende mit einem Buchstaben oder einer Ziffer.",
+        "invalid": "Verwende 3 bis 30 Kleinbuchstaben, Ziffern oder Bindestriche. Beginne und ende mit einem Buchstaben oder einer Ziffer. Verwende keine zwei Bindestriche hintereinander.",
         "reserved": "Dieser Benutzername ist reserviert. Wähle einen anderen.",
         "taken": "Dieser Benutzername ist vergeben. Wähle einen anderen.",
         "display_name": "Gib einen Anzeigenamen ein.",
@@ -614,12 +637,12 @@
       "title": "Scegli il tuo nome sul forum",
       "body": "Lo fai una sola volta. Il tuo nome utente compare nei tuoi messaggi e nelle menzioni sul forum.",
       "username_label": "Nome utente",
-      "username_hint": "Da 3 a 30 caratteri: lettere minuscole, numeri e trattini. Inizia e finisci con una lettera o un numero.",
+      "username_hint": "Da 3 a 30 caratteri: lettere minuscole, numeri e trattini. Inizia e finisci con una lettera o un numero. Non usare due trattini di seguito.",
       "display_name_label": "Nome visualizzato",
       "display_name_hint": "Il nome che gli altri membri vedono accanto al tuo nome utente.",
       "submit": "Continua al forum",
       "errors": {
-        "invalid": "Usa da 3 a 30 lettere minuscole, numeri o trattini. Inizia e finisci con una lettera o un numero.",
+        "invalid": "Usa da 3 a 30 lettere minuscole, numeri o trattini. Inizia e finisci con una lettera o un numero. Non usare due trattini di seguito.",
         "reserved": "Quel nome utente è riservato. Scegline un altro.",
         "taken": "Quel nome utente è già in uso. Scegline un altro.",
         "display_name": "Inserisci un nome visualizzato.",
@@ -663,12 +686,12 @@
       "title": "Escolha o seu nome no fórum",
       "body": "Faz isto apenas uma vez. O seu nome de utilizador aparece nas suas publicações e nas menções do fórum.",
       "username_label": "Nome de utilizador",
-      "username_hint": "De 3 a 30 caracteres: letras minúsculas, números e hífenes. Comece e termine com uma letra ou um número.",
+      "username_hint": "De 3 a 30 caracteres: letras minúsculas, números e hífenes. Comece e termine com uma letra ou um número. Não use dois hífenes seguidos.",
       "display_name_label": "Nome apresentado",
       "display_name_hint": "O nome que os outros membros veem ao lado do seu nome de utilizador.",
       "submit": "Continuar para o fórum",
       "errors": {
-        "invalid": "Use de 3 a 30 letras minúsculas, números ou hífenes. Comece e termine com uma letra ou um número.",
+        "invalid": "Use de 3 a 30 letras minúsculas, números ou hífenes. Comece e termine com uma letra ou um número. Não use dois hífenes seguidos.",
         "reserved": "Esse nome de utilizador está reservado. Escolha outro.",
         "taken": "Esse nome de utilizador já está a ser usado. Escolha outro.",
         "display_name": "Introduza um nome apresentado.",
@@ -712,12 +735,12 @@
       "title": "Выберите имя на форуме",
       "body": "Это нужно сделать один раз. Имя пользователя видно в ваших сообщениях и упоминаниях на форуме.",
       "username_label": "Имя пользователя",
-      "username_hint": "От 3 до 30 символов: строчные латинские буквы, цифры и дефисы. Первый и последний символ — буква или цифра.",
+      "username_hint": "От 3 до 30 символов: строчные латинские буквы, цифры и дефисы. Первый и последний символ — буква или цифра. Не используйте два дефиса подряд.",
       "display_name_label": "Отображаемое имя",
       "display_name_hint": "Имя, которое другие участники видят рядом с вашим именем пользователя.",
       "submit": "Перейти на форум",
       "errors": {
-        "invalid": "Используйте от 3 до 30 строчных латинских букв, цифр или дефисов. Первый и последний символ — буква или цифра.",
+        "invalid": "Используйте от 3 до 30 строчных латинских букв, цифр или дефисов. Первый и последний символ — буква или цифра. Не используйте два дефиса подряд.",
         "reserved": "Это имя пользователя зарезервировано. Выберите другое.",
         "taken": "Это имя пользователя уже занято. Выберите другое.",
         "display_name": "Введите отображаемое имя.",
@@ -761,12 +784,12 @@
       "title": "フォーラムでの名前を選ぶ",
       "body": "この操作は一度だけです。ユーザー名はフォーラムの投稿とメンションに表示されます。",
       "username_label": "ユーザー名",
-      "username_hint": "3〜30 文字。半角小文字、数字、ハイフンを使用できます。最初と最後は文字か数字にしてください。",
+      "username_hint": "3〜30 文字。半角小文字、数字、ハイフンを使用できます。最初と最後は文字か数字にしてください。ハイフンを 2 つ続けて使わないでください。",
       "display_name_label": "表示名",
       "display_name_hint": "ほかのメンバーにユーザー名と一緒に表示される名前です。",
       "submit": "フォーラムに進む",
       "errors": {
-        "invalid": "半角小文字、数字、ハイフンで 3〜30 文字にしてください。最初と最後は文字か数字にしてください。",
+        "invalid": "半角小文字、数字、ハイフンで 3〜30 文字にしてください。最初と最後は文字か数字にしてください。ハイフンを 2 つ続けて使わないでください。",
         "reserved": "そのユーザー名は予約されています。別の名前を選んでください。",
         "taken": "そのユーザー名は使用されています。別の名前を選んでください。",
         "display_name": "表示名を入力してください。",
@@ -810,12 +833,12 @@
       "title": "选择你的论坛名称",
       "body": "此操作只需一次。你的用户名会显示在你的帖子和论坛提及中。",
       "username_label": "用户名",
-      "username_hint": "3 到 30 个字符：小写英文字母、数字和连字符。首尾必须是字母或数字。",
+      "username_hint": "3 到 30 个字符：小写英文字母、数字和连字符。首尾必须是字母或数字。不要连续使用两个连字符。",
       "display_name_label": "显示名称",
       "display_name_hint": "其他会员在你的用户名旁边看到的名称。",
       "submit": "继续前往论坛",
       "errors": {
-        "invalid": "请使用 3 到 30 个小写英文字母、数字或连字符。首尾必须是字母或数字。",
+        "invalid": "请使用 3 到 30 个小写英文字母、数字或连字符。首尾必须是字母或数字。不要连续使用两个连字符。",
         "reserved": "该用户名已被保留。请选择其他用户名。",
         "taken": "该用户名已被占用。请选择其他用户名。",
         "display_name": "请输入显示名称。",
@@ -859,12 +882,12 @@
       "title": "포럼 이름 선택",
       "body": "한 번만 하면 됩니다. 사용자 이름은 포럼의 게시물과 멘션에 표시됩니다.",
       "username_label": "사용자 이름",
-      "username_hint": "3~30자: 영문 소문자, 숫자, 하이픈. 처음과 끝은 문자나 숫자여야 합니다.",
+      "username_hint": "3~30자: 영문 소문자, 숫자, 하이픈. 처음과 끝은 문자나 숫자여야 합니다. 하이픈을 두 개 연속으로 쓰지 마세요.",
       "display_name_label": "표시 이름",
       "display_name_hint": "다른 멤버가 사용자 이름 옆에서 보는 이름입니다.",
       "submit": "포럼으로 계속",
       "errors": {
-        "invalid": "영문 소문자, 숫자, 하이픈으로 3~30자를 사용하세요. 처음과 끝은 문자나 숫자여야 합니다.",
+        "invalid": "영문 소문자, 숫자, 하이픈으로 3~30자를 사용하세요. 처음과 끝은 문자나 숫자여야 합니다. 하이픈을 두 개 연속으로 쓰지 마세요.",
         "reserved": "예약된 사용자 이름입니다. 다른 이름을 선택하세요.",
         "taken": "이미 사용 중인 사용자 이름입니다. 다른 이름을 선택하세요.",
         "display_name": "표시 이름을 입력하세요.",
