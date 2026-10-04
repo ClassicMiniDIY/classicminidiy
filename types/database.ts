@@ -5043,6 +5043,27 @@ export type Database = {
           },
         ];
       };
+      reserved_username_owners: {
+        Row: {
+          created_at: string;
+          note: string | null;
+          user_id: string;
+          username: string;
+        };
+        Insert: {
+          created_at?: string;
+          note?: string | null;
+          user_id: string;
+          username: string;
+        };
+        Update: {
+          created_at?: string;
+          note?: string | null;
+          user_id?: string;
+          username?: string;
+        };
+        Relationships: [];
+      };
       saved_alignment_configs: {
         Row: {
           created_at: string;
@@ -7104,6 +7125,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      reserved_usernames: { Args: never; Returns: string[] };
       reset_part_correlation_scoring: {
         Args: { p_source_id: string };
         Returns: number;
