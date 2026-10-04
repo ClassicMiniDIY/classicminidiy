@@ -20,6 +20,8 @@
   const search = ref('');
   const platformFilter = ref<string>('all');
   const entitledOnly = ref(false);
+  /** The Claimed transactions section loads itself; Refresh reloads it too. */
+  const claimed = ref<{ load: () => Promise<void> } | null>(null);
 
   async function load() {
     loading.value = true;
@@ -41,6 +43,11 @@
   }
 
   onMounted(load);
+
+  function refreshAll() {
+    claimed.value?.load();
+    load();
+  }
 
   // -- Health strip ---------------------------------------------------------
   // Collapsed across days: the question this answers is "is a platform broken
@@ -131,7 +138,7 @@
 <template>
   <AdminShell title="Membership" subtitle="Every purchase across all channels, and every account failing to verify">
     <template #actions>
-      <button type="button" class="btn btn-sm btn-outline" :disabled="loading" @click="load">
+      <button type="button" class="btn btn-sm btn-outline" :disabled="loading" @click="refreshAll">
         <i class="fas fa-rotate" :class="{ 'fa-spin': loading }"></i>
         Refresh
       </button>
@@ -140,7 +147,8 @@
     <p class="text-sm opacity-70 mb-4">
       <code>subscriptions</code> is the source of truth for the Sustaining Member entitlement; the failure feed comes
       from <code>subscription_verification_attempts</code>, which records every <code>verify-subscription</code> call.
-      Row actions here reuse the existing comp RPCs &mdash; nothing on this page writes a purchase.
+      The only write on this page is "Move to caller" under Claimed transactions, which moves an existing purchase to
+      another account; it never creates one.
     </p>
     <p class="text-sm opacity-70 mb-4">
       Scoped to the <strong>Sustaining</strong> product. <code>subscriptions</code> also holds the Developer API tier,
@@ -152,6 +160,10 @@
          route, loading and error states, so a failed purchases load does not
          take it down. -->
     <AdminMemberLookup class="mb-6" />
+
+    <!-- TXN_CLAIMED support cases. Independent of the page load, like the
+         lookup above: its own route, loading and error states. -->
+    <AdminClaimedTransactions ref="claimed" class="mb-6" />
 
     <div v-if="errorMessage" role="alert" class="alert alert-error mb-4">
       <i class="fas fa-triangle-exclamation"></i>
