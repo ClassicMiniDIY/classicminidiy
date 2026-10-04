@@ -158,14 +158,17 @@
   const listings = ref<BulkListingItem[]>([createBlankListing()]);
 
   // Sync currency when userProfile loads after component mount
-  watch(() => userProfile.value?.preferred_currency, (newCurrency) => {
-    if (newCurrency) {
-      listings.value.forEach((l) => {
-        // Only update untouched listings (no title yet, no price set)
-        if (!l.title && l.price === null) l.currency = newCurrency as CurrencyCode;
-      });
+  watch(
+    () => userProfile.value?.preferred_currency,
+    (newCurrency) => {
+      if (newCurrency) {
+        listings.value.forEach((l) => {
+          // Only update untouched listings (no title yet, no price set)
+          if (!l.title && l.price === null) l.currency = newCurrency as CurrencyCode;
+        });
+      }
     }
-  });
+  );
 
   const addListing = () => {
     // Collapse all existing
@@ -175,7 +178,11 @@
 
   const removeListing = (index: number) => {
     if (listings.value.length <= 1) {
-      toast.add({ title: t('toast.cannotRemove.title'), description: t('toast.cannotRemove.description'), color: 'warning' });
+      toast.add({
+        title: t('toast.cannotRemove.title'),
+        description: t('toast.cannotRemove.description'),
+        color: 'warning',
+      });
       return;
     }
     listings.value.splice(index, 1);
@@ -186,7 +193,7 @@
     const errors: Record<string, string> = {};
 
     if (!listing.title?.trim()) errors.title = t('errors.title');
-    if (listing.price === null || listing.price === undefined || listing.price === ('') as any) {
+    if (listing.price === null || listing.price === undefined || listing.price === ('' as any)) {
       errors.price = t('errors.priceRequired');
     } else if (listing.price < 0) {
       errors.price = t('errors.priceNegative');
@@ -284,21 +291,23 @@
 
       const emailSession = await supabase.auth.getSession();
       const emailToken = emailSession.data.session?.access_token;
-      await Promise.all(freeListings.map(async (listing) => {
-        try {
-          await $fetch('/api/exchange/listings/submit', {
-            method: 'POST',
-            body: {
-              listingId: listing.createdListingId,
-              userEmail,
-              listingTitle: listing.title,
-            },
-            headers: emailToken ? { Authorization: `Bearer ${emailToken}` } : {},
-          });
-        } catch (emailError) {
-          console.error('Failed to send submission email:', emailError);
-        }
-      }));
+      await Promise.all(
+        freeListings.map(async (listing) => {
+          try {
+            await $fetch('/api/exchange/listings/submit', {
+              method: 'POST',
+              body: {
+                listingId: listing.createdListingId,
+                userEmail,
+                listingTitle: listing.title,
+              },
+              headers: emailToken ? { Authorization: `Bearer ${emailToken}` } : {},
+            });
+          } catch (emailError) {
+            console.error('Failed to send submission email:', emailError);
+          }
+        })
+      );
 
       // Handle premium listings payment
       const premiumListings = listings.value.filter((l) => l.tier === 'paid' && l.createdListingId);
@@ -321,7 +330,7 @@
         // Sustaining Member comp: premium was granted free server-side (no Stripe
         // URL). Leave paymentUrl null so the confirmation step skips the "Pay Now"
         // affordance; otherwise surface the Stripe Checkout URL.
-        paymentUrl.value = response.comped ? null : response.url ?? null;
+        paymentUrl.value = response.comped ? null : (response.url ?? null);
       }
 
       // Track analytics
@@ -366,15 +375,34 @@
     "singleListing": "Single Listing",
     "continueToTiers": "Continue to Tier Selection",
     "listingsReady": "{valid} of {total} listings ready",
-    "errors": { "title": "Title is required", "priceRequired": "Price is required", "priceNegative": "Price cannot be negative", "partCondition": "Part condition is required", "description": "Description is required", "city": "Location is required", "photos": "At least one photo is required" },
+    "errors": {
+      "title": "Title is required",
+      "priceRequired": "Price is required",
+      "priceNegative": "Price cannot be negative",
+      "partCondition": "Part condition is required",
+      "description": "Description is required",
+      "city": "Location is required",
+      "photos": "At least one photo is required"
+    },
     "toast": {
       "cannotRemove": { "title": "Cannot Remove", "description": "You need at least one listing" },
-      "fixErrors": { "title": "Fix Errors", "description": "{count} listings have errors. Please fix them before continuing." },
-      "submissionError": { "title": "Submission Error", "description": "Failed to submit listings. Some may have been created — check your dashboard." }
+      "fixErrors": {
+        "title": "Fix Errors",
+        "description": "{count} listings have errors. Please fix them before continuing."
+      },
+      "submissionError": {
+        "title": "Submission Error",
+        "description": "Failed to submit listings. Some may have been created — check your dashboard."
+      }
     }
   },
   "es": {
-    "steps": { "addListings": "Agregar anuncios", "chooseTiers": "Elegir niveles", "review": "Revisar", "done": "Listo" },
+    "steps": {
+      "addListings": "Agregar anuncios",
+      "chooseTiers": "Elegir niveles",
+      "review": "Revisar",
+      "done": "Listo"
+    },
     "stepTitles": {
       "add": { "title": "Agrega tus piezas", "description": "Crea varios anuncios de piezas a la vez" },
       "tiers": { "title": "Elige tus niveles", "description": "Selecciona gratis o premium para cada anuncio" },
@@ -386,18 +414,40 @@
     "singleListing": "Anuncio individual",
     "continueToTiers": "Continuar a la selección de nivel",
     "listingsReady": "{valid} de {total} anuncios listos",
-    "errors": { "title": "El título es obligatorio", "priceRequired": "El precio es obligatorio", "priceNegative": "El precio no puede ser negativo", "partCondition": "La condición de la pieza es obligatoria", "description": "La descripción es obligatoria", "city": "La ubicación es obligatoria", "photos": "Se requiere al menos una foto" },
+    "errors": {
+      "title": "El título es obligatorio",
+      "priceRequired": "El precio es obligatorio",
+      "priceNegative": "El precio no puede ser negativo",
+      "partCondition": "La condición de la pieza es obligatoria",
+      "description": "La descripción es obligatoria",
+      "city": "La ubicación es obligatoria",
+      "photos": "Se requiere al menos una foto"
+    },
     "toast": {
       "cannotRemove": { "title": "No se puede eliminar", "description": "Necesitas al menos un anuncio" },
-      "fixErrors": { "title": "Corrige los errores", "description": "{count} anuncios tienen errores. Corrígelos antes de continuar." },
-      "submissionError": { "title": "Error al enviar", "description": "No se pudieron enviar los anuncios. Algunos pueden haberse creado — revisa tu panel." }
+      "fixErrors": {
+        "title": "Corrige los errores",
+        "description": "{count} anuncios tienen errores. Corrígelos antes de continuar."
+      },
+      "submissionError": {
+        "title": "Error al enviar",
+        "description": "No se pudieron enviar los anuncios. Algunos pueden haberse creado — revisa tu panel."
+      }
     }
   },
   "fr": {
-    "steps": { "addListings": "Ajouter des annonces", "chooseTiers": "Choisir les niveaux", "review": "Vérifier", "done": "Terminé" },
+    "steps": {
+      "addListings": "Ajouter des annonces",
+      "chooseTiers": "Choisir les niveaux",
+      "review": "Vérifier",
+      "done": "Terminé"
+    },
     "stepTitles": {
       "add": { "title": "Ajoutez vos pièces", "description": "Créez plusieurs annonces de pièces en une fois" },
-      "tiers": { "title": "Choisissez vos niveaux", "description": "Sélectionnez gratuit ou premium pour chaque annonce" },
+      "tiers": {
+        "title": "Choisissez vos niveaux",
+        "description": "Sélectionnez gratuit ou premium pour chaque annonce"
+      },
       "review": { "title": "Vérifier et soumettre", "description": "Assurez-vous que tout est correct" },
       "done": { "title": "Tout est terminé !", "description": "Vos annonces ont été soumises" }
     },
@@ -406,18 +456,43 @@
     "singleListing": "Annonce unique",
     "continueToTiers": "Continuer vers la sélection du niveau",
     "listingsReady": "{valid} sur {total} annonces prêtes",
-    "errors": { "title": "Le titre est obligatoire", "priceRequired": "Le prix est obligatoire", "priceNegative": "Le prix ne peut pas être négatif", "partCondition": "L'état de la pièce est obligatoire", "description": "La description est obligatoire", "city": "La localisation est obligatoire", "photos": "Au moins une photo est requise" },
+    "errors": {
+      "title": "Le titre est obligatoire",
+      "priceRequired": "Le prix est obligatoire",
+      "priceNegative": "Le prix ne peut pas être négatif",
+      "partCondition": "L'état de la pièce est obligatoire",
+      "description": "La description est obligatoire",
+      "city": "La localisation est obligatoire",
+      "photos": "Au moins une photo est requise"
+    },
     "toast": {
       "cannotRemove": { "title": "Suppression impossible", "description": "Vous avez besoin d'au moins une annonce" },
-      "fixErrors": { "title": "Corrigez les erreurs", "description": "{count} annonces comportent des erreurs. Veuillez les corriger avant de continuer." },
-      "submissionError": { "title": "Erreur de soumission", "description": "Échec de la soumission des annonces. Certaines ont peut-être été créées — vérifiez votre tableau de bord." }
+      "fixErrors": {
+        "title": "Corrigez les erreurs",
+        "description": "{count} annonces comportent des erreurs. Veuillez les corriger avant de continuer."
+      },
+      "submissionError": {
+        "title": "Erreur de soumission",
+        "description": "Échec de la soumission des annonces. Certaines ont peut-être été créées — vérifiez votre tableau de bord."
+      }
     }
   },
   "de": {
-    "steps": { "addListings": "Anzeigen hinzufügen", "chooseTiers": "Stufen wählen", "review": "Prüfen", "done": "Fertig" },
+    "steps": {
+      "addListings": "Anzeigen hinzufügen",
+      "chooseTiers": "Stufen wählen",
+      "review": "Prüfen",
+      "done": "Fertig"
+    },
     "stepTitles": {
-      "add": { "title": "Fügen Sie Ihre Teile hinzu", "description": "Erstellen Sie mehrere Teile-Anzeigen auf einmal" },
-      "tiers": { "title": "Wählen Sie Ihre Stufen", "description": "Wählen Sie für jede Anzeige kostenlos oder Premium" },
+      "add": {
+        "title": "Fügen Sie Ihre Teile hinzu",
+        "description": "Erstellen Sie mehrere Teile-Anzeigen auf einmal"
+      },
+      "tiers": {
+        "title": "Wählen Sie Ihre Stufen",
+        "description": "Wählen Sie für jede Anzeige kostenlos oder Premium"
+      },
       "review": { "title": "Prüfen & Absenden", "description": "Stellen Sie sicher, dass alles korrekt ist" },
       "done": { "title": "Alles erledigt!", "description": "Ihre Anzeigen wurden eingereicht" }
     },
@@ -426,15 +501,34 @@
     "singleListing": "Einzelanzeige",
     "continueToTiers": "Weiter zur Stufenauswahl",
     "listingsReady": "{valid} von {total} Anzeigen bereit",
-    "errors": { "title": "Titel ist erforderlich", "priceRequired": "Preis ist erforderlich", "priceNegative": "Preis darf nicht negativ sein", "partCondition": "Teilezustand ist erforderlich", "description": "Beschreibung ist erforderlich", "city": "Standort ist erforderlich", "photos": "Mindestens ein Foto ist erforderlich" },
+    "errors": {
+      "title": "Titel ist erforderlich",
+      "priceRequired": "Preis ist erforderlich",
+      "priceNegative": "Preis darf nicht negativ sein",
+      "partCondition": "Teilezustand ist erforderlich",
+      "description": "Beschreibung ist erforderlich",
+      "city": "Standort ist erforderlich",
+      "photos": "Mindestens ein Foto ist erforderlich"
+    },
     "toast": {
       "cannotRemove": { "title": "Entfernen nicht möglich", "description": "Sie benötigen mindestens eine Anzeige" },
-      "fixErrors": { "title": "Fehler beheben", "description": "{count} Anzeigen enthalten Fehler. Bitte beheben Sie sie, bevor Sie fortfahren." },
-      "submissionError": { "title": "Übermittlungsfehler", "description": "Anzeigen konnten nicht übermittelt werden. Einige wurden möglicherweise erstellt — prüfen Sie Ihr Dashboard." }
+      "fixErrors": {
+        "title": "Fehler beheben",
+        "description": "{count} Anzeigen enthalten Fehler. Bitte beheben Sie sie, bevor Sie fortfahren."
+      },
+      "submissionError": {
+        "title": "Übermittlungsfehler",
+        "description": "Anzeigen konnten nicht übermittelt werden. Einige wurden möglicherweise erstellt — prüfen Sie Ihr Dashboard."
+      }
     }
   },
   "it": {
-    "steps": { "addListings": "Aggiungi annunci", "chooseTiers": "Scegli i livelli", "review": "Rivedi", "done": "Fatto" },
+    "steps": {
+      "addListings": "Aggiungi annunci",
+      "chooseTiers": "Scegli i livelli",
+      "review": "Rivedi",
+      "done": "Fatto"
+    },
     "stepTitles": {
       "add": { "title": "Aggiungi i tuoi pezzi", "description": "Crea più annunci di pezzi in una volta" },
       "tiers": { "title": "Scegli i tuoi livelli", "description": "Seleziona gratis o premium per ogni annuncio" },
@@ -446,15 +540,34 @@
     "singleListing": "Annuncio singolo",
     "continueToTiers": "Continua alla selezione del livello",
     "listingsReady": "{valid} di {total} annunci pronti",
-    "errors": { "title": "Il titolo è obbligatorio", "priceRequired": "Il prezzo è obbligatorio", "priceNegative": "Il prezzo non può essere negativo", "partCondition": "La condizione del pezzo è obbligatoria", "description": "La descrizione è obbligatoria", "city": "La posizione è obbligatoria", "photos": "È richiesta almeno una foto" },
+    "errors": {
+      "title": "Il titolo è obbligatorio",
+      "priceRequired": "Il prezzo è obbligatorio",
+      "priceNegative": "Il prezzo non può essere negativo",
+      "partCondition": "La condizione del pezzo è obbligatoria",
+      "description": "La descrizione è obbligatoria",
+      "city": "La posizione è obbligatoria",
+      "photos": "È richiesta almeno una foto"
+    },
     "toast": {
       "cannotRemove": { "title": "Impossibile rimuovere", "description": "Hai bisogno di almeno un annuncio" },
-      "fixErrors": { "title": "Correggi gli errori", "description": "{count} annunci contengono errori. Correggili prima di continuare." },
-      "submissionError": { "title": "Errore di invio", "description": "Impossibile inviare gli annunci. Alcuni potrebbero essere stati creati — controlla la tua dashboard." }
+      "fixErrors": {
+        "title": "Correggi gli errori",
+        "description": "{count} annunci contengono errori. Correggili prima di continuare."
+      },
+      "submissionError": {
+        "title": "Errore di invio",
+        "description": "Impossibile inviare gli annunci. Alcuni potrebbero essere stati creati — controlla la tua dashboard."
+      }
     }
   },
   "pt": {
-    "steps": { "addListings": "Adicionar anúncios", "chooseTiers": "Escolher níveis", "review": "Revisar", "done": "Concluído" },
+    "steps": {
+      "addListings": "Adicionar anúncios",
+      "chooseTiers": "Escolher níveis",
+      "review": "Revisar",
+      "done": "Concluído"
+    },
     "stepTitles": {
       "add": { "title": "Adicione suas peças", "description": "Crie vários anúncios de peças de uma vez" },
       "tiers": { "title": "Escolha seus níveis", "description": "Selecione grátis ou premium para cada anúncio" },
@@ -466,15 +579,34 @@
     "singleListing": "Anúncio individual",
     "continueToTiers": "Continuar para a seleção de nível",
     "listingsReady": "{valid} de {total} anúncios prontos",
-    "errors": { "title": "O título é obrigatório", "priceRequired": "O preço é obrigatório", "priceNegative": "O preço não pode ser negativo", "partCondition": "A condição da peça é obrigatória", "description": "A descrição é obrigatória", "city": "A localização é obrigatória", "photos": "É necessária pelo menos uma foto" },
+    "errors": {
+      "title": "O título é obrigatório",
+      "priceRequired": "O preço é obrigatório",
+      "priceNegative": "O preço não pode ser negativo",
+      "partCondition": "A condição da peça é obrigatória",
+      "description": "A descrição é obrigatória",
+      "city": "A localização é obrigatória",
+      "photos": "É necessária pelo menos uma foto"
+    },
     "toast": {
       "cannotRemove": { "title": "Não é possível remover", "description": "Você precisa de pelo menos um anúncio" },
-      "fixErrors": { "title": "Corrija os erros", "description": "{count} anúncios contêm erros. Corrija-os antes de continuar." },
-      "submissionError": { "title": "Erro de envio", "description": "Falha ao enviar anúncios. Alguns podem ter sido criados — verifique seu painel." }
+      "fixErrors": {
+        "title": "Corrija os erros",
+        "description": "{count} anúncios contêm erros. Corrija-os antes de continuar."
+      },
+      "submissionError": {
+        "title": "Erro de envio",
+        "description": "Falha ao enviar anúncios. Alguns podem ter sido criados — verifique seu painel."
+      }
     }
   },
   "ru": {
-    "steps": { "addListings": "Добавить объявления", "chooseTiers": "Выбрать уровни", "review": "Проверка", "done": "Готово" },
+    "steps": {
+      "addListings": "Добавить объявления",
+      "chooseTiers": "Выбрать уровни",
+      "review": "Проверка",
+      "done": "Готово"
+    },
     "stepTitles": {
       "add": { "title": "Добавьте свои детали", "description": "Создайте несколько объявлений о деталях сразу" },
       "tiers": { "title": "Выберите уровни", "description": "Выберите бесплатный или премиум для каждого объявления" },
@@ -486,11 +618,25 @@
     "singleListing": "Одиночное объявление",
     "continueToTiers": "Перейти к выбору уровня",
     "listingsReady": "Готово объявлений: {valid} из {total}",
-    "errors": { "title": "Название обязательно", "priceRequired": "Цена обязательна", "priceNegative": "Цена не может быть отрицательной", "partCondition": "Состояние детали обязательно", "description": "Описание обязательно", "city": "Местоположение обязательно", "photos": "Требуется хотя бы одна фотография" },
+    "errors": {
+      "title": "Название обязательно",
+      "priceRequired": "Цена обязательна",
+      "priceNegative": "Цена не может быть отрицательной",
+      "partCondition": "Состояние детали обязательно",
+      "description": "Описание обязательно",
+      "city": "Местоположение обязательно",
+      "photos": "Требуется хотя бы одна фотография"
+    },
     "toast": {
       "cannotRemove": { "title": "Невозможно удалить", "description": "Нужно хотя бы одно объявление" },
-      "fixErrors": { "title": "Исправьте ошибки", "description": "В {count} объявлениях есть ошибки. Исправьте их перед продолжением." },
-      "submissionError": { "title": "Ошибка отправки", "description": "Не удалось отправить объявления. Некоторые могли быть созданы — проверьте свою панель." }
+      "fixErrors": {
+        "title": "Исправьте ошибки",
+        "description": "В {count} объявлениях есть ошибки. Исправьте их перед продолжением."
+      },
+      "submissionError": {
+        "title": "Ошибка отправки",
+        "description": "Не удалось отправить объявления. Некоторые могли быть созданы — проверьте свою панель."
+      }
     }
   },
   "ja": {
@@ -506,11 +652,25 @@
     "singleListing": "単一出品",
     "continueToTiers": "プラン選択に進む",
     "listingsReady": "{total}件中{valid}件の出品が準備完了",
-    "errors": { "title": "タイトルは必須です", "priceRequired": "価格は必須です", "priceNegative": "価格を負の値にすることはできません", "partCondition": "部品の状態は必須です", "description": "説明は必須です", "city": "所在地は必須です", "photos": "写真が少なくとも1枚必要です" },
+    "errors": {
+      "title": "タイトルは必須です",
+      "priceRequired": "価格は必須です",
+      "priceNegative": "価格を負の値にすることはできません",
+      "partCondition": "部品の状態は必須です",
+      "description": "説明は必須です",
+      "city": "所在地は必須です",
+      "photos": "写真が少なくとも1枚必要です"
+    },
     "toast": {
       "cannotRemove": { "title": "削除できません", "description": "少なくとも1件の出品が必要です" },
-      "fixErrors": { "title": "エラーを修正してください", "description": "{count}件の出品にエラーがあります。続行する前に修正してください。" },
-      "submissionError": { "title": "送信エラー", "description": "出品の送信に失敗しました。一部は作成された可能性があります — ダッシュボードを確認してください。" }
+      "fixErrors": {
+        "title": "エラーを修正してください",
+        "description": "{count}件の出品にエラーがあります。続行する前に修正してください。"
+      },
+      "submissionError": {
+        "title": "送信エラー",
+        "description": "出品の送信に失敗しました。一部は作成された可能性があります — ダッシュボードを確認してください。"
+      }
     }
   },
   "zh": {
@@ -526,7 +686,15 @@
     "singleListing": "单个刊登",
     "continueToTiers": "继续选择级别",
     "listingsReady": "{total} 个刊登中已就绪 {valid} 个",
-    "errors": { "title": "标题为必填项", "priceRequired": "价格为必填项", "priceNegative": "价格不能为负", "partCondition": "零件状况为必填项", "description": "描述为必填项", "city": "位置为必填项", "photos": "至少需要一张照片" },
+    "errors": {
+      "title": "标题为必填项",
+      "priceRequired": "价格为必填项",
+      "priceNegative": "价格不能为负",
+      "partCondition": "零件状况为必填项",
+      "description": "描述为必填项",
+      "city": "位置为必填项",
+      "photos": "至少需要一张照片"
+    },
     "toast": {
       "cannotRemove": { "title": "无法移除", "description": "您至少需要一个刊登" },
       "fixErrors": { "title": "修正错误", "description": "{count} 个刊登存在错误。请先修正再继续。" },
@@ -546,11 +714,25 @@
     "singleListing": "단일 매물",
     "continueToTiers": "등급 선택으로 계속",
     "listingsReady": "{total}개 중 {valid}개 매물 준비됨",
-    "errors": { "title": "제목은 필수입니다", "priceRequired": "가격은 필수입니다", "priceNegative": "가격은 음수일 수 없습니다", "partCondition": "부품 상태는 필수입니다", "description": "설명은 필수입니다", "city": "위치는 필수입니다", "photos": "사진이 최소 한 장 필요합니다" },
+    "errors": {
+      "title": "제목은 필수입니다",
+      "priceRequired": "가격은 필수입니다",
+      "priceNegative": "가격은 음수일 수 없습니다",
+      "partCondition": "부품 상태는 필수입니다",
+      "description": "설명은 필수입니다",
+      "city": "위치는 필수입니다",
+      "photos": "사진이 최소 한 장 필요합니다"
+    },
     "toast": {
       "cannotRemove": { "title": "제거할 수 없음", "description": "매물이 최소 한 개 필요합니다" },
-      "fixErrors": { "title": "오류 수정", "description": "{count}개의 매물에 오류가 있습니다. 계속하기 전에 수정하세요." },
-      "submissionError": { "title": "제출 오류", "description": "매물 제출에 실패했습니다. 일부는 생성되었을 수 있습니다 — 대시보드를 확인하세요." }
+      "fixErrors": {
+        "title": "오류 수정",
+        "description": "{count}개의 매물에 오류가 있습니다. 계속하기 전에 수정하세요."
+      },
+      "submissionError": {
+        "title": "제출 오류",
+        "description": "매물 제출에 실패했습니다. 일부는 생성되었을 수 있습니다 — 대시보드를 확인하세요."
+      }
     }
   }
 }

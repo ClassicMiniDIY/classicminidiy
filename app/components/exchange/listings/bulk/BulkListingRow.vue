@@ -1,10 +1,7 @@
 <template>
   <div class="card bg-base-200 border border-base-300">
     <!-- Header (always visible) -->
-    <div
-      class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
-      @click="toggleExpand"
-    >
+    <div class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none" @click="toggleExpand">
       <!-- Listing Number -->
       <span class="badge badge-neutral badge-sm font-mono">{{ index + 1 }}</span>
 
@@ -15,7 +12,10 @@
 
       <!-- Meta badges (hidden on mobile when collapsed for cleanliness) -->
       <div class="flex items-center gap-2">
-        <span v-if="listing.price !== null && listing.price !== undefined" class="text-sm text-base-content/60 hidden sm:inline">
+        <span
+          v-if="listing.price !== null && listing.price !== undefined"
+          class="text-sm text-base-content/60 hidden sm:inline"
+        >
           {{ listing.price === 0 ? t('free') : t('priceUsd', { amount: listing.price }) }}
         </span>
         <span v-if="listing.partCondition" class="badge badge-ghost badge-sm hidden sm:inline-flex">
@@ -133,7 +133,10 @@
         </div>
 
         <!-- Location -->
-        <ExchangeListingsLocationAutocomplete v-model="locationModel" :error="showError('city') ? listing.errors.city : undefined" />
+        <ExchangeListingsLocationAutocomplete
+          v-model="locationModel"
+          :error="showError('city') ? listing.errors.city : undefined"
+        />
 
         <!-- Description -->
         <fieldset class="fieldset">
@@ -208,16 +211,30 @@
           <fieldset class="fieldset md:col-span-2">
             <legend class="fieldset-legend">{{ t('fields.shipping') }}</legend>
             <label class="flex items-center gap-2 cursor-pointer mb-2">
-              <input v-model="listing.shippingAvailable" type="checkbox" class="checkbox checkbox-primary checkbox-sm" />
+              <input
+                v-model="listing.shippingAvailable"
+                type="checkbox"
+                class="checkbox checkbox-primary checkbox-sm"
+              />
               <span class="text-sm">{{ t('shipping.available') }}</span>
             </label>
             <div v-if="listing.shippingAvailable" class="flex flex-wrap gap-4">
               <label class="flex items-center gap-2 cursor-pointer">
-                <input v-model="listing.shipsTo" type="radio" value="domestic_only" class="radio radio-sm radio-primary" />
+                <input
+                  v-model="listing.shipsTo"
+                  type="radio"
+                  value="domestic_only"
+                  class="radio radio-sm radio-primary"
+                />
                 <span class="text-sm">{{ t('shipping.domesticOnly') }}</span>
               </label>
               <label class="flex items-center gap-2 cursor-pointer">
-                <input v-model="listing.shipsTo" type="radio" value="international" class="radio radio-sm radio-primary" />
+                <input
+                  v-model="listing.shipsTo"
+                  type="radio"
+                  value="international"
+                  class="radio radio-sm radio-primary"
+                />
                 <span class="text-sm">{{ t('shipping.international') }}</span>
               </label>
             </div>
@@ -309,13 +326,17 @@
 
   // When parent runs full validation (clicking Continue), it sets errors directly.
   // We watch for errors appearing on untouched fields to flip showAllErrors.
-  watch(() => listing.value.errors, (newErrors) => {
-    const hasUntouchedErrors = Object.keys(newErrors).some(field => !touched.value.has(field));
-    if (hasUntouchedErrors && Object.keys(newErrors).length > 0) {
-      // Parent must have run full validation — show everything
-      showAllErrors.value = true;
-    }
-  }, { deep: true });
+  watch(
+    () => listing.value.errors,
+    (newErrors) => {
+      const hasUntouchedErrors = Object.keys(newErrors).some((field) => !touched.value.has(field));
+      if (hasUntouchedErrors && Object.keys(newErrors).length > 0) {
+        // Parent must have run full validation — show everything
+        showAllErrors.value = true;
+      }
+    },
+    { deep: true }
+  );
 
   const isFree = computed(() => listing.value.price === 0);
 
@@ -347,10 +368,14 @@
   // Fits models helper
   const fitsModelsInput = ref(props.modelValue.fitsModels?.join(', ') || '');
 
-  watch(() => props.modelValue.fitsModels, (newVal) => {
-    const joined = newVal?.join(', ') || '';
-    if (joined !== fitsModelsInput.value) fitsModelsInput.value = joined;
-  }, { deep: true });
+  watch(
+    () => props.modelValue.fitsModels,
+    (newVal) => {
+      const joined = newVal?.join(', ') || '';
+      if (joined !== fitsModelsInput.value) fitsModelsInput.value = joined;
+    },
+    { deep: true }
+  );
 
   const parseFitsModels = () => {
     const models = fitsModelsInput.value
@@ -383,19 +408,70 @@
     "removeListing": "Remove listing",
     "itemIsFree": "This item is free",
     "optionalDetails": "Optional Details",
-    "fields": { "title": "Title *", "price": "Price *", "partCondition": "Part Condition *", "subcategory": "Subcategory", "description": "Description *", "partNumber": "Part Number", "oemOrAftermarket": "OEM / Aftermarket", "quantityAvailable": "Quantity Available", "fitsModels": "Fits Models", "shipping": "Shipping" },
-    "placeholders": { "title": "e.g., Original Mini Cooper S Grille Badge", "description": "Describe the part condition, compatibility, and any relevant details...", "partNumber": "e.g., AHH5594", "fitsModels": "e.g., Mk1, Mk2, Cooper S (comma separated)" },
+    "fields": {
+      "title": "Title *",
+      "price": "Price *",
+      "partCondition": "Part Condition *",
+      "subcategory": "Subcategory",
+      "description": "Description *",
+      "partNumber": "Part Number",
+      "oemOrAftermarket": "OEM / Aftermarket",
+      "quantityAvailable": "Quantity Available",
+      "fitsModels": "Fits Models",
+      "shipping": "Shipping"
+    },
+    "placeholders": {
+      "title": "e.g., Original Mini Cooper S Grille Badge",
+      "description": "Describe the part condition, compatibility, and any relevant details...",
+      "partNumber": "e.g., AHH5594",
+      "fitsModels": "e.g., Mk1, Mk2, Cooper S (comma separated)"
+    },
     "options": {
       "select": "Select...",
       "selectCondition": "Select condition...",
-      "condition": { "new": "New - Unused", "usedExcellent": "Used - Excellent", "usedGood": "Used - Good", "usedFair": "Used - Fair", "rebuild": "Rebuild / Rebuildable", "core": "Core / For Parts" },
-      "subcategory": { "bodyExterior": "Body Panels & Trim", "engineInternals": "Engine & Drivetrain Parts", "electrical": "Electrical & Lighting", "suspension": "Suspension & Brakes", "interior": "Interior & Upholstery", "wheelsTires": "Wheels & Tires", "other": "Accessories & Other" },
+      "condition": {
+        "new": "New - Unused",
+        "usedExcellent": "Used - Excellent",
+        "usedGood": "Used - Good",
+        "usedFair": "Used - Fair",
+        "rebuild": "Rebuild / Rebuildable",
+        "core": "Core / For Parts"
+      },
+      "subcategory": {
+        "bodyExterior": "Body Panels & Trim",
+        "engineInternals": "Engine & Drivetrain Parts",
+        "electrical": "Electrical & Lighting",
+        "suspension": "Suspension & Brakes",
+        "interior": "Interior & Upholstery",
+        "wheelsTires": "Wheels & Tires",
+        "other": "Accessories & Other"
+      },
       "oem": { "oem": "OEM / Genuine", "aftermarket": "Aftermarket", "reproduction": "Reproduction" }
     },
     "photos": { "title": "Photos *", "description": "Add 1-3 photos of this part" },
-    "shipping": { "available": "Shipping Available", "domesticOnly": "Domestic Only", "international": "International", "pickupOnly": "Listing will show as \"Pickup Only\"" },
-    "errors": { "title": "Title is required", "priceRequired": "Price is required", "priceNegative": "Price cannot be negative", "partCondition": "Part condition is required", "description": "Description is required", "city": "Location is required", "photos": "At least one photo is required" },
-    "badgeCondition": { "new": "New", "usedExcellent": "Excellent", "usedGood": "Good", "usedFair": "Fair", "rebuild": "Rebuild", "core": "Core" }
+    "shipping": {
+      "available": "Shipping Available",
+      "domesticOnly": "Domestic Only",
+      "international": "International",
+      "pickupOnly": "Listing will show as \"Pickup Only\""
+    },
+    "errors": {
+      "title": "Title is required",
+      "priceRequired": "Price is required",
+      "priceNegative": "Price cannot be negative",
+      "partCondition": "Part condition is required",
+      "description": "Description is required",
+      "city": "Location is required",
+      "photos": "At least one photo is required"
+    },
+    "badgeCondition": {
+      "new": "New",
+      "usedExcellent": "Excellent",
+      "usedGood": "Good",
+      "usedFair": "Fair",
+      "rebuild": "Rebuild",
+      "core": "Core"
+    }
   },
   "es": {
     "untitled": "Anuncio sin título",
@@ -405,19 +481,70 @@
     "removeListing": "Eliminar anuncio",
     "itemIsFree": "Este artículo es gratis",
     "optionalDetails": "Detalles opcionales",
-    "fields": { "title": "Título *", "price": "Precio *", "partCondition": "Condición de la pieza *", "subcategory": "Subcategoría", "description": "Descripción *", "partNumber": "Número de pieza", "oemOrAftermarket": "OEM / Aftermarket", "quantityAvailable": "Cantidad disponible", "fitsModels": "Modelos compatibles", "shipping": "Envío" },
-    "placeholders": { "title": "p. ej., Insignia original de parrilla Mini Cooper S", "description": "Describe la condición de la pieza, la compatibilidad y cualquier detalle relevante...", "partNumber": "p. ej., AHH5594", "fitsModels": "p. ej., Mk1, Mk2, Cooper S (separados por comas)" },
+    "fields": {
+      "title": "Título *",
+      "price": "Precio *",
+      "partCondition": "Condición de la pieza *",
+      "subcategory": "Subcategoría",
+      "description": "Descripción *",
+      "partNumber": "Número de pieza",
+      "oemOrAftermarket": "OEM / Aftermarket",
+      "quantityAvailable": "Cantidad disponible",
+      "fitsModels": "Modelos compatibles",
+      "shipping": "Envío"
+    },
+    "placeholders": {
+      "title": "p. ej., Insignia original de parrilla Mini Cooper S",
+      "description": "Describe la condición de la pieza, la compatibilidad y cualquier detalle relevante...",
+      "partNumber": "p. ej., AHH5594",
+      "fitsModels": "p. ej., Mk1, Mk2, Cooper S (separados por comas)"
+    },
     "options": {
       "select": "Seleccionar...",
       "selectCondition": "Seleccionar condición...",
-      "condition": { "new": "Nuevo - Sin usar", "usedExcellent": "Usado - Excelente", "usedGood": "Usado - Bueno", "usedFair": "Usado - Aceptable", "rebuild": "Reconstruido / Reconstruible", "core": "Núcleo / Para piezas" },
-      "subcategory": { "bodyExterior": "Paneles y molduras de carrocería", "engineInternals": "Piezas de motor y transmisión", "electrical": "Eléctrica e iluminación", "suspension": "Suspensión y frenos", "interior": "Interior y tapicería", "wheelsTires": "Ruedas y neumáticos", "other": "Accesorios y otros" },
+      "condition": {
+        "new": "Nuevo - Sin usar",
+        "usedExcellent": "Usado - Excelente",
+        "usedGood": "Usado - Bueno",
+        "usedFair": "Usado - Aceptable",
+        "rebuild": "Reconstruido / Reconstruible",
+        "core": "Núcleo / Para piezas"
+      },
+      "subcategory": {
+        "bodyExterior": "Paneles y molduras de carrocería",
+        "engineInternals": "Piezas de motor y transmisión",
+        "electrical": "Eléctrica e iluminación",
+        "suspension": "Suspensión y frenos",
+        "interior": "Interior y tapicería",
+        "wheelsTires": "Ruedas y neumáticos",
+        "other": "Accesorios y otros"
+      },
       "oem": { "oem": "OEM / Original", "aftermarket": "Aftermarket", "reproduction": "Reproducción" }
     },
     "photos": { "title": "Fotos *", "description": "Añade de 1 a 3 fotos de esta pieza" },
-    "shipping": { "available": "Envío disponible", "domesticOnly": "Solo nacional", "international": "Internacional", "pickupOnly": "El anuncio se mostrará como \"Solo recogida\"" },
-    "errors": { "title": "El título es obligatorio", "priceRequired": "El precio es obligatorio", "priceNegative": "El precio no puede ser negativo", "partCondition": "La condición de la pieza es obligatoria", "description": "La descripción es obligatoria", "city": "La ubicación es obligatoria", "photos": "Se requiere al menos una foto" },
-    "badgeCondition": { "new": "Nuevo", "usedExcellent": "Excelente", "usedGood": "Bueno", "usedFair": "Aceptable", "rebuild": "Reconstruido", "core": "Núcleo" }
+    "shipping": {
+      "available": "Envío disponible",
+      "domesticOnly": "Solo nacional",
+      "international": "Internacional",
+      "pickupOnly": "El anuncio se mostrará como \"Solo recogida\""
+    },
+    "errors": {
+      "title": "El título es obligatorio",
+      "priceRequired": "El precio es obligatorio",
+      "priceNegative": "El precio no puede ser negativo",
+      "partCondition": "La condición de la pieza es obligatoria",
+      "description": "La descripción es obligatoria",
+      "city": "La ubicación es obligatoria",
+      "photos": "Se requiere al menos una foto"
+    },
+    "badgeCondition": {
+      "new": "Nuevo",
+      "usedExcellent": "Excelente",
+      "usedGood": "Bueno",
+      "usedFair": "Aceptable",
+      "rebuild": "Reconstruido",
+      "core": "Núcleo"
+    }
   },
   "fr": {
     "untitled": "Annonce sans titre",
@@ -427,19 +554,70 @@
     "removeListing": "Supprimer l'annonce",
     "itemIsFree": "Cet article est gratuit",
     "optionalDetails": "Détails facultatifs",
-    "fields": { "title": "Titre *", "price": "Prix *", "partCondition": "État de la pièce *", "subcategory": "Sous-catégorie", "description": "Description *", "partNumber": "Numéro de pièce", "oemOrAftermarket": "OEM / Aftermarket", "quantityAvailable": "Quantité disponible", "fitsModels": "Modèles compatibles", "shipping": "Livraison" },
-    "placeholders": { "title": "ex. : Badge de calandre Mini Cooper S d'origine", "description": "Décrivez l'état de la pièce, la compatibilité et tout détail pertinent...", "partNumber": "ex. : AHH5594", "fitsModels": "ex. : Mk1, Mk2, Cooper S (séparés par des virgules)" },
+    "fields": {
+      "title": "Titre *",
+      "price": "Prix *",
+      "partCondition": "État de la pièce *",
+      "subcategory": "Sous-catégorie",
+      "description": "Description *",
+      "partNumber": "Numéro de pièce",
+      "oemOrAftermarket": "OEM / Aftermarket",
+      "quantityAvailable": "Quantité disponible",
+      "fitsModels": "Modèles compatibles",
+      "shipping": "Livraison"
+    },
+    "placeholders": {
+      "title": "ex. : Badge de calandre Mini Cooper S d'origine",
+      "description": "Décrivez l'état de la pièce, la compatibilité et tout détail pertinent...",
+      "partNumber": "ex. : AHH5594",
+      "fitsModels": "ex. : Mk1, Mk2, Cooper S (séparés par des virgules)"
+    },
     "options": {
       "select": "Sélectionner...",
       "selectCondition": "Sélectionner l'état...",
-      "condition": { "new": "Neuf - Non utilisé", "usedExcellent": "Occasion - Excellent", "usedGood": "Occasion - Bon", "usedFair": "Occasion - Correct", "rebuild": "Reconstruit / Reconstructible", "core": "Pièce de base / Pour pièces" },
-      "subcategory": { "bodyExterior": "Panneaux et garnitures de carrosserie", "engineInternals": "Pièces moteur et transmission", "electrical": "Électricité et éclairage", "suspension": "Suspension et freins", "interior": "Intérieur et sellerie", "wheelsTires": "Roues et pneus", "other": "Accessoires et autres" },
+      "condition": {
+        "new": "Neuf - Non utilisé",
+        "usedExcellent": "Occasion - Excellent",
+        "usedGood": "Occasion - Bon",
+        "usedFair": "Occasion - Correct",
+        "rebuild": "Reconstruit / Reconstructible",
+        "core": "Pièce de base / Pour pièces"
+      },
+      "subcategory": {
+        "bodyExterior": "Panneaux et garnitures de carrosserie",
+        "engineInternals": "Pièces moteur et transmission",
+        "electrical": "Électricité et éclairage",
+        "suspension": "Suspension et freins",
+        "interior": "Intérieur et sellerie",
+        "wheelsTires": "Roues et pneus",
+        "other": "Accessoires et autres"
+      },
       "oem": { "oem": "OEM / Authentique", "aftermarket": "Aftermarket", "reproduction": "Reproduction" }
     },
     "photos": { "title": "Photos *", "description": "Ajoutez 1 à 3 photos de cette pièce" },
-    "shipping": { "available": "Livraison disponible", "domesticOnly": "National uniquement", "international": "International", "pickupOnly": "L'annonce s'affichera comme « Retrait uniquement »" },
-    "errors": { "title": "Le titre est obligatoire", "priceRequired": "Le prix est obligatoire", "priceNegative": "Le prix ne peut pas être négatif", "partCondition": "L'état de la pièce est obligatoire", "description": "La description est obligatoire", "city": "La localisation est obligatoire", "photos": "Au moins une photo est requise" },
-    "badgeCondition": { "new": "Neuf", "usedExcellent": "Excellent", "usedGood": "Bon", "usedFair": "Correct", "rebuild": "Reconstruit", "core": "Pièce de base" }
+    "shipping": {
+      "available": "Livraison disponible",
+      "domesticOnly": "National uniquement",
+      "international": "International",
+      "pickupOnly": "L'annonce s'affichera comme « Retrait uniquement »"
+    },
+    "errors": {
+      "title": "Le titre est obligatoire",
+      "priceRequired": "Le prix est obligatoire",
+      "priceNegative": "Le prix ne peut pas être négatif",
+      "partCondition": "L'état de la pièce est obligatoire",
+      "description": "La description est obligatoire",
+      "city": "La localisation est obligatoire",
+      "photos": "Au moins une photo est requise"
+    },
+    "badgeCondition": {
+      "new": "Neuf",
+      "usedExcellent": "Excellent",
+      "usedGood": "Bon",
+      "usedFair": "Correct",
+      "rebuild": "Reconstruit",
+      "core": "Pièce de base"
+    }
   },
   "de": {
     "untitled": "Anzeige ohne Titel",
@@ -449,19 +627,70 @@
     "removeListing": "Anzeige entfernen",
     "itemIsFree": "Dieser Artikel ist kostenlos",
     "optionalDetails": "Optionale Angaben",
-    "fields": { "title": "Titel *", "price": "Preis *", "partCondition": "Teilezustand *", "subcategory": "Unterkategorie", "description": "Beschreibung *", "partNumber": "Teilenummer", "oemOrAftermarket": "OEM / Zubehör", "quantityAvailable": "Verfügbare Menge", "fitsModels": "Passende Modelle", "shipping": "Versand" },
-    "placeholders": { "title": "z. B. Original Mini Cooper S Kühlergrill-Emblem", "description": "Beschreiben Sie den Zustand des Teils, die Kompatibilität und alle relevanten Details...", "partNumber": "z. B. AHH5594", "fitsModels": "z. B. Mk1, Mk2, Cooper S (durch Kommas getrennt)" },
+    "fields": {
+      "title": "Titel *",
+      "price": "Preis *",
+      "partCondition": "Teilezustand *",
+      "subcategory": "Unterkategorie",
+      "description": "Beschreibung *",
+      "partNumber": "Teilenummer",
+      "oemOrAftermarket": "OEM / Zubehör",
+      "quantityAvailable": "Verfügbare Menge",
+      "fitsModels": "Passende Modelle",
+      "shipping": "Versand"
+    },
+    "placeholders": {
+      "title": "z. B. Original Mini Cooper S Kühlergrill-Emblem",
+      "description": "Beschreiben Sie den Zustand des Teils, die Kompatibilität und alle relevanten Details...",
+      "partNumber": "z. B. AHH5594",
+      "fitsModels": "z. B. Mk1, Mk2, Cooper S (durch Kommas getrennt)"
+    },
     "options": {
       "select": "Auswählen...",
       "selectCondition": "Zustand auswählen...",
-      "condition": { "new": "Neu - Unbenutzt", "usedExcellent": "Gebraucht - Ausgezeichnet", "usedGood": "Gebraucht - Gut", "usedFair": "Gebraucht - Akzeptabel", "rebuild": "Überholt / Überholbar", "core": "Grundteil / Für Teile" },
-      "subcategory": { "bodyExterior": "Karosserieteile & Zierleisten", "engineInternals": "Motor- & Antriebsteile", "electrical": "Elektrik & Beleuchtung", "suspension": "Fahrwerk & Bremsen", "interior": "Innenraum & Polsterung", "wheelsTires": "Räder & Reifen", "other": "Zubehör & Sonstiges" },
+      "condition": {
+        "new": "Neu - Unbenutzt",
+        "usedExcellent": "Gebraucht - Ausgezeichnet",
+        "usedGood": "Gebraucht - Gut",
+        "usedFair": "Gebraucht - Akzeptabel",
+        "rebuild": "Überholt / Überholbar",
+        "core": "Grundteil / Für Teile"
+      },
+      "subcategory": {
+        "bodyExterior": "Karosserieteile & Zierleisten",
+        "engineInternals": "Motor- & Antriebsteile",
+        "electrical": "Elektrik & Beleuchtung",
+        "suspension": "Fahrwerk & Bremsen",
+        "interior": "Innenraum & Polsterung",
+        "wheelsTires": "Räder & Reifen",
+        "other": "Zubehör & Sonstiges"
+      },
       "oem": { "oem": "OEM / Original", "aftermarket": "Zubehör", "reproduction": "Reproduktion" }
     },
     "photos": { "title": "Fotos *", "description": "Fügen Sie 1-3 Fotos dieses Teils hinzu" },
-    "shipping": { "available": "Versand verfügbar", "domesticOnly": "Nur Inland", "international": "International", "pickupOnly": "Anzeige wird als „Nur Abholung\" angezeigt" },
-    "errors": { "title": "Titel ist erforderlich", "priceRequired": "Preis ist erforderlich", "priceNegative": "Preis darf nicht negativ sein", "partCondition": "Teilezustand ist erforderlich", "description": "Beschreibung ist erforderlich", "city": "Standort ist erforderlich", "photos": "Mindestens ein Foto ist erforderlich" },
-    "badgeCondition": { "new": "Neu", "usedExcellent": "Ausgezeichnet", "usedGood": "Gut", "usedFair": "Akzeptabel", "rebuild": "Überholt", "core": "Grundteil" }
+    "shipping": {
+      "available": "Versand verfügbar",
+      "domesticOnly": "Nur Inland",
+      "international": "International",
+      "pickupOnly": "Anzeige wird als „Nur Abholung\" angezeigt"
+    },
+    "errors": {
+      "title": "Titel ist erforderlich",
+      "priceRequired": "Preis ist erforderlich",
+      "priceNegative": "Preis darf nicht negativ sein",
+      "partCondition": "Teilezustand ist erforderlich",
+      "description": "Beschreibung ist erforderlich",
+      "city": "Standort ist erforderlich",
+      "photos": "Mindestens ein Foto ist erforderlich"
+    },
+    "badgeCondition": {
+      "new": "Neu",
+      "usedExcellent": "Ausgezeichnet",
+      "usedGood": "Gut",
+      "usedFair": "Akzeptabel",
+      "rebuild": "Überholt",
+      "core": "Grundteil"
+    }
   },
   "it": {
     "untitled": "Annuncio senza titolo",
@@ -471,19 +700,70 @@
     "removeListing": "Rimuovi annuncio",
     "itemIsFree": "Questo articolo è gratuito",
     "optionalDetails": "Dettagli facoltativi",
-    "fields": { "title": "Titolo *", "price": "Prezzo *", "partCondition": "Condizione del pezzo *", "subcategory": "Sottocategoria", "description": "Descrizione *", "partNumber": "Numero pezzo", "oemOrAftermarket": "OEM / Aftermarket", "quantityAvailable": "Quantità disponibile", "fitsModels": "Modelli compatibili", "shipping": "Spedizione" },
-    "placeholders": { "title": "es. Stemma griglia originale Mini Cooper S", "description": "Descrivi la condizione del pezzo, la compatibilità e qualsiasi dettaglio rilevante...", "partNumber": "es. AHH5594", "fitsModels": "es. Mk1, Mk2, Cooper S (separati da virgole)" },
+    "fields": {
+      "title": "Titolo *",
+      "price": "Prezzo *",
+      "partCondition": "Condizione del pezzo *",
+      "subcategory": "Sottocategoria",
+      "description": "Descrizione *",
+      "partNumber": "Numero pezzo",
+      "oemOrAftermarket": "OEM / Aftermarket",
+      "quantityAvailable": "Quantità disponibile",
+      "fitsModels": "Modelli compatibili",
+      "shipping": "Spedizione"
+    },
+    "placeholders": {
+      "title": "es. Stemma griglia originale Mini Cooper S",
+      "description": "Descrivi la condizione del pezzo, la compatibilità e qualsiasi dettaglio rilevante...",
+      "partNumber": "es. AHH5594",
+      "fitsModels": "es. Mk1, Mk2, Cooper S (separati da virgole)"
+    },
     "options": {
       "select": "Seleziona...",
       "selectCondition": "Seleziona condizione...",
-      "condition": { "new": "Nuovo - Non usato", "usedExcellent": "Usato - Eccellente", "usedGood": "Usato - Buono", "usedFair": "Usato - Discreto", "rebuild": "Ricostruito / Ricostruibile", "core": "Pezzo base / Per ricambi" },
-      "subcategory": { "bodyExterior": "Pannelli e finiture carrozzeria", "engineInternals": "Componenti motore e trasmissione", "electrical": "Impianto elettrico e illuminazione", "suspension": "Sospensioni e freni", "interior": "Interni e tappezzeria", "wheelsTires": "Ruote e pneumatici", "other": "Accessori e altro" },
+      "condition": {
+        "new": "Nuovo - Non usato",
+        "usedExcellent": "Usato - Eccellente",
+        "usedGood": "Usato - Buono",
+        "usedFair": "Usato - Discreto",
+        "rebuild": "Ricostruito / Ricostruibile",
+        "core": "Pezzo base / Per ricambi"
+      },
+      "subcategory": {
+        "bodyExterior": "Pannelli e finiture carrozzeria",
+        "engineInternals": "Componenti motore e trasmissione",
+        "electrical": "Impianto elettrico e illuminazione",
+        "suspension": "Sospensioni e freni",
+        "interior": "Interni e tappezzeria",
+        "wheelsTires": "Ruote e pneumatici",
+        "other": "Accessori e altro"
+      },
       "oem": { "oem": "OEM / Originale", "aftermarket": "Aftermarket", "reproduction": "Riproduzione" }
     },
     "photos": { "title": "Foto *", "description": "Aggiungi 1-3 foto di questo pezzo" },
-    "shipping": { "available": "Spedizione disponibile", "domesticOnly": "Solo nazionale", "international": "Internazionale", "pickupOnly": "L'annuncio verrà mostrato come \"Solo ritiro\"" },
-    "errors": { "title": "Il titolo è obbligatorio", "priceRequired": "Il prezzo è obbligatorio", "priceNegative": "Il prezzo non può essere negativo", "partCondition": "La condizione del pezzo è obbligatoria", "description": "La descrizione è obbligatoria", "city": "La posizione è obbligatoria", "photos": "È richiesta almeno una foto" },
-    "badgeCondition": { "new": "Nuovo", "usedExcellent": "Eccellente", "usedGood": "Buono", "usedFair": "Discreto", "rebuild": "Ricostruito", "core": "Pezzo base" }
+    "shipping": {
+      "available": "Spedizione disponibile",
+      "domesticOnly": "Solo nazionale",
+      "international": "Internazionale",
+      "pickupOnly": "L'annuncio verrà mostrato come \"Solo ritiro\""
+    },
+    "errors": {
+      "title": "Il titolo è obbligatorio",
+      "priceRequired": "Il prezzo è obbligatorio",
+      "priceNegative": "Il prezzo non può essere negativo",
+      "partCondition": "La condizione del pezzo è obbligatoria",
+      "description": "La descrizione è obbligatoria",
+      "city": "La posizione è obbligatoria",
+      "photos": "È richiesta almeno una foto"
+    },
+    "badgeCondition": {
+      "new": "Nuovo",
+      "usedExcellent": "Eccellente",
+      "usedGood": "Buono",
+      "usedFair": "Discreto",
+      "rebuild": "Ricostruito",
+      "core": "Pezzo base"
+    }
   },
   "pt": {
     "untitled": "Anúncio sem título",
@@ -493,19 +773,70 @@
     "removeListing": "Remover anúncio",
     "itemIsFree": "Este item é grátis",
     "optionalDetails": "Detalhes opcionais",
-    "fields": { "title": "Título *", "price": "Preço *", "partCondition": "Condição da peça *", "subcategory": "Subcategoria", "description": "Descrição *", "partNumber": "Número da peça", "oemOrAftermarket": "OEM / Aftermarket", "quantityAvailable": "Quantidade disponível", "fitsModels": "Modelos compatíveis", "shipping": "Envio" },
-    "placeholders": { "title": "ex.: Emblema original da grade Mini Cooper S", "description": "Descreva a condição da peça, a compatibilidade e quaisquer detalhes relevantes...", "partNumber": "ex.: AHH5594", "fitsModels": "ex.: Mk1, Mk2, Cooper S (separados por vírgulas)" },
+    "fields": {
+      "title": "Título *",
+      "price": "Preço *",
+      "partCondition": "Condição da peça *",
+      "subcategory": "Subcategoria",
+      "description": "Descrição *",
+      "partNumber": "Número da peça",
+      "oemOrAftermarket": "OEM / Aftermarket",
+      "quantityAvailable": "Quantidade disponível",
+      "fitsModels": "Modelos compatíveis",
+      "shipping": "Envio"
+    },
+    "placeholders": {
+      "title": "ex.: Emblema original da grade Mini Cooper S",
+      "description": "Descreva a condição da peça, a compatibilidade e quaisquer detalhes relevantes...",
+      "partNumber": "ex.: AHH5594",
+      "fitsModels": "ex.: Mk1, Mk2, Cooper S (separados por vírgulas)"
+    },
     "options": {
       "select": "Selecionar...",
       "selectCondition": "Selecionar condição...",
-      "condition": { "new": "Novo - Sem uso", "usedExcellent": "Usado - Excelente", "usedGood": "Usado - Bom", "usedFair": "Usado - Razoável", "rebuild": "Recondicionado / Recondicionável", "core": "Peça base / Para peças" },
-      "subcategory": { "bodyExterior": "Painéis e acabamentos da carroceria", "engineInternals": "Peças de motor e transmissão", "electrical": "Elétrica e iluminação", "suspension": "Suspensão e freios", "interior": "Interior e estofamento", "wheelsTires": "Rodas e pneus", "other": "Acessórios e outros" },
+      "condition": {
+        "new": "Novo - Sem uso",
+        "usedExcellent": "Usado - Excelente",
+        "usedGood": "Usado - Bom",
+        "usedFair": "Usado - Razoável",
+        "rebuild": "Recondicionado / Recondicionável",
+        "core": "Peça base / Para peças"
+      },
+      "subcategory": {
+        "bodyExterior": "Painéis e acabamentos da carroceria",
+        "engineInternals": "Peças de motor e transmissão",
+        "electrical": "Elétrica e iluminação",
+        "suspension": "Suspensão e freios",
+        "interior": "Interior e estofamento",
+        "wheelsTires": "Rodas e pneus",
+        "other": "Acessórios e outros"
+      },
       "oem": { "oem": "OEM / Original", "aftermarket": "Aftermarket", "reproduction": "Reprodução" }
     },
     "photos": { "title": "Fotos *", "description": "Adicione 1 a 3 fotos desta peça" },
-    "shipping": { "available": "Envio disponível", "domesticOnly": "Somente nacional", "international": "Internacional", "pickupOnly": "O anúncio será exibido como \"Apenas retirada\"" },
-    "errors": { "title": "O título é obrigatório", "priceRequired": "O preço é obrigatório", "priceNegative": "O preço não pode ser negativo", "partCondition": "A condição da peça é obrigatória", "description": "A descrição é obrigatória", "city": "A localização é obrigatória", "photos": "É necessária pelo menos uma foto" },
-    "badgeCondition": { "new": "Novo", "usedExcellent": "Excelente", "usedGood": "Bom", "usedFair": "Razoável", "rebuild": "Recondicionado", "core": "Peça base" }
+    "shipping": {
+      "available": "Envio disponível",
+      "domesticOnly": "Somente nacional",
+      "international": "Internacional",
+      "pickupOnly": "O anúncio será exibido como \"Apenas retirada\""
+    },
+    "errors": {
+      "title": "O título é obrigatório",
+      "priceRequired": "O preço é obrigatório",
+      "priceNegative": "O preço não pode ser negativo",
+      "partCondition": "A condição da peça é obrigatória",
+      "description": "A descrição é obrigatória",
+      "city": "A localização é obrigatória",
+      "photos": "É necessária pelo menos uma foto"
+    },
+    "badgeCondition": {
+      "new": "Novo",
+      "usedExcellent": "Excelente",
+      "usedGood": "Bom",
+      "usedFair": "Razoável",
+      "rebuild": "Recondicionado",
+      "core": "Peça base"
+    }
   },
   "ru": {
     "untitled": "Объявление без названия",
@@ -515,19 +846,70 @@
     "removeListing": "Удалить объявление",
     "itemIsFree": "Этот товар бесплатный",
     "optionalDetails": "Дополнительные сведения",
-    "fields": { "title": "Название *", "price": "Цена *", "partCondition": "Состояние детали *", "subcategory": "Подкатегория", "description": "Описание *", "partNumber": "Номер детали", "oemOrAftermarket": "OEM / Неоригинал", "quantityAvailable": "Доступное количество", "fitsModels": "Подходящие модели", "shipping": "Доставка" },
-    "placeholders": { "title": "напр., Оригинальная эмблема решётки Mini Cooper S", "description": "Опишите состояние детали, совместимость и любые важные подробности...", "partNumber": "напр., AHH5594", "fitsModels": "напр., Mk1, Mk2, Cooper S (через запятую)" },
+    "fields": {
+      "title": "Название *",
+      "price": "Цена *",
+      "partCondition": "Состояние детали *",
+      "subcategory": "Подкатегория",
+      "description": "Описание *",
+      "partNumber": "Номер детали",
+      "oemOrAftermarket": "OEM / Неоригинал",
+      "quantityAvailable": "Доступное количество",
+      "fitsModels": "Подходящие модели",
+      "shipping": "Доставка"
+    },
+    "placeholders": {
+      "title": "напр., Оригинальная эмблема решётки Mini Cooper S",
+      "description": "Опишите состояние детали, совместимость и любые важные подробности...",
+      "partNumber": "напр., AHH5594",
+      "fitsModels": "напр., Mk1, Mk2, Cooper S (через запятую)"
+    },
     "options": {
       "select": "Выбрать...",
       "selectCondition": "Выберите состояние...",
-      "condition": { "new": "Новое - Неиспользованное", "usedExcellent": "Б/у - Отличное", "usedGood": "Б/у - Хорошее", "usedFair": "Б/у - Удовлетворительное", "rebuild": "Восстановленное / Восстанавливаемое", "core": "На запчасти" },
-      "subcategory": { "bodyExterior": "Кузовные панели и молдинги", "engineInternals": "Детали двигателя и трансмиссии", "electrical": "Электрика и освещение", "suspension": "Подвеска и тормоза", "interior": "Салон и обивка", "wheelsTires": "Колёса и шины", "other": "Аксессуары и прочее" },
+      "condition": {
+        "new": "Новое - Неиспользованное",
+        "usedExcellent": "Б/у - Отличное",
+        "usedGood": "Б/у - Хорошее",
+        "usedFair": "Б/у - Удовлетворительное",
+        "rebuild": "Восстановленное / Восстанавливаемое",
+        "core": "На запчасти"
+      },
+      "subcategory": {
+        "bodyExterior": "Кузовные панели и молдинги",
+        "engineInternals": "Детали двигателя и трансмиссии",
+        "electrical": "Электрика и освещение",
+        "suspension": "Подвеска и тормоза",
+        "interior": "Салон и обивка",
+        "wheelsTires": "Колёса и шины",
+        "other": "Аксессуары и прочее"
+      },
       "oem": { "oem": "OEM / Оригинал", "aftermarket": "Неоригинал", "reproduction": "Реплика" }
     },
     "photos": { "title": "Фотографии *", "description": "Добавьте 1-3 фотографии этой детали" },
-    "shipping": { "available": "Доставка доступна", "domesticOnly": "Только по стране", "international": "Международная", "pickupOnly": "Объявление будет отображаться как «Только самовывоз»" },
-    "errors": { "title": "Название обязательно", "priceRequired": "Цена обязательна", "priceNegative": "Цена не может быть отрицательной", "partCondition": "Состояние детали обязательно", "description": "Описание обязательно", "city": "Местоположение обязательно", "photos": "Требуется хотя бы одна фотография" },
-    "badgeCondition": { "new": "Новое", "usedExcellent": "Отличное", "usedGood": "Хорошее", "usedFair": "Удовлетворительное", "rebuild": "Восстановленное", "core": "На запчасти" }
+    "shipping": {
+      "available": "Доставка доступна",
+      "domesticOnly": "Только по стране",
+      "international": "Международная",
+      "pickupOnly": "Объявление будет отображаться как «Только самовывоз»"
+    },
+    "errors": {
+      "title": "Название обязательно",
+      "priceRequired": "Цена обязательна",
+      "priceNegative": "Цена не может быть отрицательной",
+      "partCondition": "Состояние детали обязательно",
+      "description": "Описание обязательно",
+      "city": "Местоположение обязательно",
+      "photos": "Требуется хотя бы одна фотография"
+    },
+    "badgeCondition": {
+      "new": "Новое",
+      "usedExcellent": "Отличное",
+      "usedGood": "Хорошее",
+      "usedFair": "Удовлетворительное",
+      "rebuild": "Восстановленное",
+      "core": "На запчасти"
+    }
   },
   "ja": {
     "untitled": "無題の出品",
@@ -537,19 +919,70 @@
     "removeListing": "出品を削除",
     "itemIsFree": "この商品は無料です",
     "optionalDetails": "任意の詳細",
-    "fields": { "title": "タイトル *", "price": "価格 *", "partCondition": "部品の状態 *", "subcategory": "サブカテゴリー", "description": "説明 *", "partNumber": "部品番号", "oemOrAftermarket": "OEM / 社外品", "quantityAvailable": "在庫数", "fitsModels": "適合モデル", "shipping": "配送" },
-    "placeholders": { "title": "例：純正 Mini Cooper S グリルバッジ", "description": "部品の状態、適合性、その他関連する詳細を記載してください...", "partNumber": "例：AHH5594", "fitsModels": "例：Mk1, Mk2, Cooper S（カンマ区切り）" },
+    "fields": {
+      "title": "タイトル *",
+      "price": "価格 *",
+      "partCondition": "部品の状態 *",
+      "subcategory": "サブカテゴリー",
+      "description": "説明 *",
+      "partNumber": "部品番号",
+      "oemOrAftermarket": "OEM / 社外品",
+      "quantityAvailable": "在庫数",
+      "fitsModels": "適合モデル",
+      "shipping": "配送"
+    },
+    "placeholders": {
+      "title": "例：純正 Mini Cooper S グリルバッジ",
+      "description": "部品の状態、適合性、その他関連する詳細を記載してください...",
+      "partNumber": "例：AHH5594",
+      "fitsModels": "例：Mk1, Mk2, Cooper S（カンマ区切り）"
+    },
     "options": {
       "select": "選択...",
       "selectCondition": "状態を選択...",
-      "condition": { "new": "新品 - 未使用", "usedExcellent": "中古 - 非常に良い", "usedGood": "中古 - 良い", "usedFair": "中古 - 可", "rebuild": "再生品 / 再生可能", "core": "コア / 部品取り用" },
-      "subcategory": { "bodyExterior": "ボディパネル・トリム", "engineInternals": "エンジン・駆動系部品", "electrical": "電装・ライト", "suspension": "サスペンション・ブレーキ", "interior": "内装・内張り", "wheelsTires": "ホイール・タイヤ", "other": "アクセサリー・その他" },
+      "condition": {
+        "new": "新品 - 未使用",
+        "usedExcellent": "中古 - 非常に良い",
+        "usedGood": "中古 - 良い",
+        "usedFair": "中古 - 可",
+        "rebuild": "再生品 / 再生可能",
+        "core": "コア / 部品取り用"
+      },
+      "subcategory": {
+        "bodyExterior": "ボディパネル・トリム",
+        "engineInternals": "エンジン・駆動系部品",
+        "electrical": "電装・ライト",
+        "suspension": "サスペンション・ブレーキ",
+        "interior": "内装・内張り",
+        "wheelsTires": "ホイール・タイヤ",
+        "other": "アクセサリー・その他"
+      },
       "oem": { "oem": "OEM / 純正", "aftermarket": "社外品", "reproduction": "復刻品" }
     },
     "photos": { "title": "写真 *", "description": "この部品の写真を1～3枚追加してください" },
-    "shipping": { "available": "配送可能", "domesticOnly": "国内のみ", "international": "国際配送", "pickupOnly": "出品は「引き取りのみ」と表示されます" },
-    "errors": { "title": "タイトルは必須です", "priceRequired": "価格は必須です", "priceNegative": "価格を負の値にすることはできません", "partCondition": "部品の状態は必須です", "description": "説明は必須です", "city": "所在地は必須です", "photos": "写真が少なくとも1枚必要です" },
-    "badgeCondition": { "new": "新品", "usedExcellent": "非常に良い", "usedGood": "良い", "usedFair": "可", "rebuild": "再生品", "core": "コア" }
+    "shipping": {
+      "available": "配送可能",
+      "domesticOnly": "国内のみ",
+      "international": "国際配送",
+      "pickupOnly": "出品は「引き取りのみ」と表示されます"
+    },
+    "errors": {
+      "title": "タイトルは必須です",
+      "priceRequired": "価格は必須です",
+      "priceNegative": "価格を負の値にすることはできません",
+      "partCondition": "部品の状態は必須です",
+      "description": "説明は必須です",
+      "city": "所在地は必須です",
+      "photos": "写真が少なくとも1枚必要です"
+    },
+    "badgeCondition": {
+      "new": "新品",
+      "usedExcellent": "非常に良い",
+      "usedGood": "良い",
+      "usedFair": "可",
+      "rebuild": "再生品",
+      "core": "コア"
+    }
   },
   "zh": {
     "untitled": "未命名刊登",
@@ -559,19 +992,70 @@
     "removeListing": "移除刊登",
     "itemIsFree": "此商品免费",
     "optionalDetails": "可选详情",
-    "fields": { "title": "标题 *", "price": "价格 *", "partCondition": "零件状况 *", "subcategory": "子分类", "description": "描述 *", "partNumber": "零件编号", "oemOrAftermarket": "原厂 / 副厂", "quantityAvailable": "可用数量", "fitsModels": "适配车型", "shipping": "运输" },
-    "placeholders": { "title": "例如：原厂 Mini Cooper S 进气格栅徽标", "description": "请描述零件状况、兼容性以及任何相关细节...", "partNumber": "例如：AHH5594", "fitsModels": "例如：Mk1、Mk2、Cooper S（用逗号分隔）" },
+    "fields": {
+      "title": "标题 *",
+      "price": "价格 *",
+      "partCondition": "零件状况 *",
+      "subcategory": "子分类",
+      "description": "描述 *",
+      "partNumber": "零件编号",
+      "oemOrAftermarket": "原厂 / 副厂",
+      "quantityAvailable": "可用数量",
+      "fitsModels": "适配车型",
+      "shipping": "运输"
+    },
+    "placeholders": {
+      "title": "例如：原厂 Mini Cooper S 进气格栅徽标",
+      "description": "请描述零件状况、兼容性以及任何相关细节...",
+      "partNumber": "例如：AHH5594",
+      "fitsModels": "例如：Mk1、Mk2、Cooper S（用逗号分隔）"
+    },
     "options": {
       "select": "选择...",
       "selectCondition": "选择状况...",
-      "condition": { "new": "全新 - 未使用", "usedExcellent": "二手 - 极佳", "usedGood": "二手 - 良好", "usedFair": "二手 - 一般", "rebuild": "翻新 / 可翻新", "core": "核心件 / 配件用" },
-      "subcategory": { "bodyExterior": "车身板件与装饰条", "engineInternals": "发动机与传动部件", "electrical": "电气与照明", "suspension": "悬挂与制动", "interior": "内饰与软装", "wheelsTires": "轮毂与轮胎", "other": "配件与其他" },
+      "condition": {
+        "new": "全新 - 未使用",
+        "usedExcellent": "二手 - 极佳",
+        "usedGood": "二手 - 良好",
+        "usedFair": "二手 - 一般",
+        "rebuild": "翻新 / 可翻新",
+        "core": "核心件 / 配件用"
+      },
+      "subcategory": {
+        "bodyExterior": "车身板件与装饰条",
+        "engineInternals": "发动机与传动部件",
+        "electrical": "电气与照明",
+        "suspension": "悬挂与制动",
+        "interior": "内饰与软装",
+        "wheelsTires": "轮毂与轮胎",
+        "other": "配件与其他"
+      },
       "oem": { "oem": "原厂 / 正品", "aftermarket": "副厂", "reproduction": "复刻" }
     },
     "photos": { "title": "照片 *", "description": "添加 1-3 张此零件的照片" },
-    "shipping": { "available": "提供运输", "domesticOnly": "仅限国内", "international": "国际", "pickupOnly": "刊登将显示为“仅限自取”" },
-    "errors": { "title": "标题为必填项", "priceRequired": "价格为必填项", "priceNegative": "价格不能为负", "partCondition": "零件状况为必填项", "description": "描述为必填项", "city": "位置为必填项", "photos": "至少需要一张照片" },
-    "badgeCondition": { "new": "全新", "usedExcellent": "极佳", "usedGood": "良好", "usedFair": "一般", "rebuild": "翻新", "core": "核心件" }
+    "shipping": {
+      "available": "提供运输",
+      "domesticOnly": "仅限国内",
+      "international": "国际",
+      "pickupOnly": "刊登将显示为“仅限自取”"
+    },
+    "errors": {
+      "title": "标题为必填项",
+      "priceRequired": "价格为必填项",
+      "priceNegative": "价格不能为负",
+      "partCondition": "零件状况为必填项",
+      "description": "描述为必填项",
+      "city": "位置为必填项",
+      "photos": "至少需要一张照片"
+    },
+    "badgeCondition": {
+      "new": "全新",
+      "usedExcellent": "极佳",
+      "usedGood": "良好",
+      "usedFair": "一般",
+      "rebuild": "翻新",
+      "core": "核心件"
+    }
   },
   "ko": {
     "untitled": "제목 없는 매물",
@@ -581,19 +1065,70 @@
     "removeListing": "매물 삭제",
     "itemIsFree": "이 품목은 무료입니다",
     "optionalDetails": "선택 세부정보",
-    "fields": { "title": "제목 *", "price": "가격 *", "partCondition": "부품 상태 *", "subcategory": "하위 카테고리", "description": "설명 *", "partNumber": "부품 번호", "oemOrAftermarket": "OEM / 애프터마켓", "quantityAvailable": "보유 수량", "fitsModels": "적합 모델", "shipping": "배송" },
-    "placeholders": { "title": "예: 정품 Mini Cooper S 그릴 배지", "description": "부품 상태, 호환성 및 관련 세부 정보를 설명하세요...", "partNumber": "예: AHH5594", "fitsModels": "예: Mk1, Mk2, Cooper S (쉼표로 구분)" },
+    "fields": {
+      "title": "제목 *",
+      "price": "가격 *",
+      "partCondition": "부품 상태 *",
+      "subcategory": "하위 카테고리",
+      "description": "설명 *",
+      "partNumber": "부품 번호",
+      "oemOrAftermarket": "OEM / 애프터마켓",
+      "quantityAvailable": "보유 수량",
+      "fitsModels": "적합 모델",
+      "shipping": "배송"
+    },
+    "placeholders": {
+      "title": "예: 정품 Mini Cooper S 그릴 배지",
+      "description": "부품 상태, 호환성 및 관련 세부 정보를 설명하세요...",
+      "partNumber": "예: AHH5594",
+      "fitsModels": "예: Mk1, Mk2, Cooper S (쉼표로 구분)"
+    },
     "options": {
       "select": "선택...",
       "selectCondition": "상태 선택...",
-      "condition": { "new": "새 제품 - 미사용", "usedExcellent": "중고 - 최상", "usedGood": "중고 - 양호", "usedFair": "중고 - 보통", "rebuild": "재생 / 재생 가능", "core": "코어 / 부품용" },
-      "subcategory": { "bodyExterior": "차체 패널 및 트림", "engineInternals": "엔진 및 구동계 부품", "electrical": "전기 및 조명", "suspension": "서스펜션 및 브레이크", "interior": "실내 및 시트", "wheelsTires": "휠 및 타이어", "other": "액세서리 및 기타" },
+      "condition": {
+        "new": "새 제품 - 미사용",
+        "usedExcellent": "중고 - 최상",
+        "usedGood": "중고 - 양호",
+        "usedFair": "중고 - 보통",
+        "rebuild": "재생 / 재생 가능",
+        "core": "코어 / 부품용"
+      },
+      "subcategory": {
+        "bodyExterior": "차체 패널 및 트림",
+        "engineInternals": "엔진 및 구동계 부품",
+        "electrical": "전기 및 조명",
+        "suspension": "서스펜션 및 브레이크",
+        "interior": "실내 및 시트",
+        "wheelsTires": "휠 및 타이어",
+        "other": "액세서리 및 기타"
+      },
       "oem": { "oem": "OEM / 정품", "aftermarket": "애프터마켓", "reproduction": "복제품" }
     },
     "photos": { "title": "사진 *", "description": "이 부품의 사진을 1~3장 추가하세요" },
-    "shipping": { "available": "배송 가능", "domesticOnly": "국내 전용", "international": "국제", "pickupOnly": "매물이 \"직접 수령만\"으로 표시됩니다" },
-    "errors": { "title": "제목은 필수입니다", "priceRequired": "가격은 필수입니다", "priceNegative": "가격은 음수일 수 없습니다", "partCondition": "부품 상태는 필수입니다", "description": "설명은 필수입니다", "city": "위치는 필수입니다", "photos": "사진이 최소 한 장 필요합니다" },
-    "badgeCondition": { "new": "새 제품", "usedExcellent": "최상", "usedGood": "양호", "usedFair": "보통", "rebuild": "재생", "core": "코어" }
+    "shipping": {
+      "available": "배송 가능",
+      "domesticOnly": "국내 전용",
+      "international": "국제",
+      "pickupOnly": "매물이 \"직접 수령만\"으로 표시됩니다"
+    },
+    "errors": {
+      "title": "제목은 필수입니다",
+      "priceRequired": "가격은 필수입니다",
+      "priceNegative": "가격은 음수일 수 없습니다",
+      "partCondition": "부품 상태는 필수입니다",
+      "description": "설명은 필수입니다",
+      "city": "위치는 필수입니다",
+      "photos": "사진이 최소 한 장 필요합니다"
+    },
+    "badgeCondition": {
+      "new": "새 제품",
+      "usedExcellent": "최상",
+      "usedGood": "양호",
+      "usedFair": "보통",
+      "rebuild": "재생",
+      "core": "코어"
+    }
   }
 }
 </i18n>
