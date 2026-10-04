@@ -450,8 +450,9 @@ export const useSearch = () => {
         query = query.eq('shipping_available', true);
       }
 
+      // A pickup-only listing can still carry an old ships_to value.
       if (filters.ships_international) {
-        query = query.in('ships_to', ['international', 'specific_countries']);
+        query = query.eq('shipping_available', true).in('ships_to', ['international', 'specific_countries']);
       }
 
       // Featured = premium and live (isListingFeatured()); the status filter

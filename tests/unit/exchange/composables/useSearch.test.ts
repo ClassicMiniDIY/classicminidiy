@@ -624,11 +624,12 @@ describe('useSearch', () => {
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('shipping_available', true);
     });
 
-    it('applies ships_international as an in() over international/specific_countries', async () => {
+    it('applies ships_international as eq(shipping_available,true) + an in() over international/specific_countries', async () => {
       const useSearch = await importUseSearch();
       const { performSearch, selectedShipsInternational } = useSearch();
       selectedShipsInternational.value = true;
       await performSearch();
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('shipping_available', true);
       expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('ships_to', ['international', 'specific_countries']);
     });
 
