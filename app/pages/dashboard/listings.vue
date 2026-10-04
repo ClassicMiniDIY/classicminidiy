@@ -61,9 +61,11 @@
               @delete="handleDelete"
               @relist="openRelistModal"
             />
-            <!-- Tracking button for sold listings with shipping -->
+            <!-- Tracking button for sold listings that are not pickup-only. A vehicle's
+                 shipping_available is NULL (not asked), and a sold car can still be
+                 transported, so only an explicit false hides it. -->
             <button
-              v-if="listing.status === 'sold' && listing.shipping_available"
+              v-if="listing.status === 'sold' && listing.shipping_available !== false"
               class="btn btn-sm btn-outline w-full mt-2 gap-2"
               @click="openTrackingModal(listing)"
             >
