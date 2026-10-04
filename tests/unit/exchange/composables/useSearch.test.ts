@@ -1065,6 +1065,66 @@ describe('useSearch', () => {
   });
 
   // -------------------------------------------------------------------------
+  // filters watcher — a filter change updates the URL and re-searches.
+  // -------------------------------------------------------------------------
+  describe('filters watcher', () => {
+    it('re-searches, updates the URL and resets the page when the part type changes', async () => {
+      resolveQueryWith({ data: mockListings, error: null, count: 36 }); // 3 pages
+      mockRouteQuery = { category: 'parts', page: '3' };
+      const useSearch = await importUseSearch();
+      const s = useSearch();
+      expect(s.currentPage.value).toBe(3);
+
+      mockSupabase.from = vi.fn().mockReturnValue(mockSupabase._queryBuilder);
+      mockRouterReplace.mockClear();
+
+      s.selectedPartsSubcategory.value = 'interior';
+      await nextTick();
+
+      expect(s.currentPage.value).toBe(1);
+      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('parts_subcategory', 'interior');
+      // The search ran on page 1, not on the stale page 3.
+      expect(mockSupabase._queryBuilder.range).toHaveBeenLastCalledWith(0, 11);
+      expect(mockRouterReplace).toHaveBeenCalledTimes(1);
+      expect(mockRouterReplace.mock.calls[0][0].query).toEqual({ category: 'parts', subcategory: 'interior' });
+    });
+
+    it('clears the part type with the category in one search when the category leaves Parts', async () => {
+      mockRouteQuery = { category: 'parts', subcategory: 'interior' };
+      const useSearch = await importUseSearch();
+      const s = useSearch();
+
+      mockSupabase.from = vi.fn().mockReturnValue(mockSupabase._queryBuilder);
+      mockRouterReplace.mockClear();
+
+      s.selectedCategory.value = 'vehicle';
+      // FilterSidebar clears the part type in its own watcher too; by then it
+      // must already be empty, so its write changes nothing.
+      expect(s.selectedPartsSubcategory.value).toBe('');
+      await nextTick();
+      await nextTick();
+
+      expect(mockSupabase.from).toHaveBeenCalledTimes(1);
+      expect(mockSupabase._queryBuilder.eq).not.toHaveBeenCalledWith('parts_subcategory', expect.anything());
+      expect(mockRouterReplace).toHaveBeenCalledTimes(1);
+      expect(mockRouterReplace.mock.calls[0][0].query).toEqual({ category: 'vehicle' });
+    });
+
+    it('keeps the part type when the category stays Parts', async () => {
+      mockRouteQuery = { category: 'parts', subcategory: 'interior' };
+      const useSearch = await importUseSearch();
+      const s = useSearch();
+
+      s.selectedCategory.value = 'parts';
+      s.selectedYearRange.value = '1960s';
+      await nextTick();
+
+      expect(s.selectedPartsSubcategory.value).toBe('interior');
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // cleanup()
   // -------------------------------------------------------------------------
   describe('cleanup()', () => {

@@ -597,10 +597,27 @@ export const useSearch = () => {
   });
   watchStopHandles.push(stopSearchWatch);
 
+  // A part type only means something under Parts. Clear it in the same tick
+  // as the category change (flush: 'sync'), before the pre-flush filters
+  // watcher below runs, so leaving Parts runs one search, not two.
+  // FilterSidebar has the same rule; by the time it runs, there is nothing
+  // left to clear.
+  const stopSubcategoryClearWatch = watch(
+    selectedCategory,
+    (category) => {
+      if (category !== 'parts' && selectedPartsSubcategory.value) {
+        selectedPartsSubcategory.value = '';
+      }
+    },
+    { flush: 'sync' }
+  );
+  watchStopHandles.push(stopSubcategoryClearWatch);
+
   // Watch other filters without debouncing
   const stopFiltersWatch = watch(
     [
       selectedCategory,
+      selectedPartsSubcategory,
       selectedYearRange,
       selectedManufacturer,
       selectedModel,
@@ -735,11 +752,14 @@ export const useSearch = () => {
     );
   });
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change. flush: 'sync' so the page is 1
+  // before the pre-flush filters watcher above writes the URL; otherwise the
+  // URL kept the old ?page= while the results showed page 1.
   const stopPageResetWatch = watch(
     [
       searchQuery,
       selectedCategory,
+      selectedPartsSubcategory,
       selectedYearRange,
       selectedManufacturer,
       selectedModel,
@@ -756,7 +776,8 @@ export const useSearch = () => {
     ],
     () => {
       currentPage.value = 1;
-    }
+    },
+    { flush: 'sync' }
   );
   watchStopHandles.push(stopPageResetWatch);
 
