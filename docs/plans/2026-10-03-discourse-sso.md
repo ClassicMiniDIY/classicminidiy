@@ -167,12 +167,9 @@ So the first forum sign-in shows one step on `/discourse/sso`: "Choose your foru
 - The step shows when `username` is null or the route answers 409. After that, sign-in
   is one redirect.
 
-**Prerequisite (classicminidiy-supabase):** the reserved list lives only in the
-`is_username_available()` RPC today, and the database enforces only format and
-uniqueness. A user can write `classicminidiy` to their own row through PostgREST and
-appear under it on the forum. A migration moves the reserved list into a trigger on
-`profiles` (see `classicminidiy-supabase/docs/plans/2026-10-03-discourse-member-flair.md`
-§2.5). It ships before this route.
+**Prerequisite (classicminidiy-supabase):** reserved usernames are enforced by the
+database, not only by the form. The mechanism and its rollout are in the private repo;
+it ships before this route.
 
 Discourse side: `max_username_length` is 30 (its default of 20 would truncate and
 collide), and the brand names are on its `reserved_usernames` too. An imported archive
