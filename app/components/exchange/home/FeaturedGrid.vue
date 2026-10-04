@@ -3,7 +3,8 @@
     <div class="container">
       <div class="flex items-center justify-between mb-8">
         <h2 class="text-2xl font-bold tracking-tight">{{ t('heading') }}</h2>
-        <NuxtLink to="/exchange/listings" class="btn btn-ghost btn-sm gap-1">
+        <!-- Every featured listing: the strip shows a random six of them per load. -->
+        <NuxtLink to="/exchange/listings?featured=true" class="btn btn-ghost btn-sm gap-1">
           {{ t('viewAll') }}
           <i class="fas fa-arrow-right text-sm" />
         </NuxtLink>

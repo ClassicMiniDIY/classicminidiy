@@ -53,3 +53,35 @@ export function relistUpdates({ now = Date.now(), price }: { now?: number; price
     ...(price !== undefined ? { price } : {}),
   };
 }
+
+/** How many cards the homepage featured strip shows. */
+export const FEATURED_STRIP_SIZE = 6;
+
+/**
+ * Pick the listings the homepage featured strip shows on this page load.
+ *
+ * Every featured listing has the same chance on every load, and the order is
+ * random too: featured has no end date (`isListingFeatured()`), so a strip of
+ * the newest few would never show an older paid listing. Real listings come
+ * before the `example_*` demo rows, which only fill places the real ones leave.
+ *
+ * Fisher-Yates over copies; the input is not changed. `random` is injectable
+ * for tests and must return a number in [0, 1).
+ */
+export function pickFeaturedRotation<T extends { status?: string | null }>(
+  rows: readonly T[],
+  count: number = FEATURED_STRIP_SIZE,
+  random: () => number = Math.random
+): T[] {
+  const shuffle = (list: T[]): T[] => {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [list[i], list[j]] = [list[j]!, list[i]!];
+    }
+    return list;
+  };
+  const isExample = (row: T) => typeof row.status === 'string' && row.status.startsWith('example_');
+  const real = shuffle(rows.filter((row) => !isExample(row)));
+  const examples = shuffle(rows.filter(isExample));
+  return [...real, ...examples].slice(0, Math.max(0, count));
+}

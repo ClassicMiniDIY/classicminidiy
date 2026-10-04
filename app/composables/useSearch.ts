@@ -21,6 +21,8 @@ export interface SearchFilters {
   shipping_available?: boolean;
   ships_international?: boolean;
   free_shipping?: boolean;
+  /** Featured listings only: premium and live (isListingFeatured()). */
+  featured?: boolean;
   sort?: 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'year_asc' | 'year_desc';
 }
 
@@ -67,6 +69,7 @@ const updateFiltersFromQuery = (
     selectedShippingAvailable: Ref<boolean>;
     selectedShipsInternational: Ref<boolean>;
     selectedFreeShipping: Ref<boolean>;
+    selectedFeatured: Ref<boolean>;
     sortBy: Ref<string>;
   }
 ) => {
@@ -84,6 +87,7 @@ const updateFiltersFromQuery = (
   filters.selectedShippingAvailable.value = query.shipping === 'true';
   filters.selectedShipsInternational.value = query.international === 'true';
   filters.selectedFreeShipping.value = query.free_shipping === 'true';
+  filters.selectedFeatured.value = query.featured === 'true';
   filters.sortBy.value = (query.sort as string) || 'newest';
 };
 
@@ -119,6 +123,7 @@ export const useSearch = () => {
   const selectedShippingAvailable = ref(false);
   const selectedShipsInternational = ref(false);
   const selectedFreeShipping = ref(false);
+  const selectedFeatured = ref(false);
   const sortBy = ref('newest');
 
   // Geocoding for distance-based filtering
@@ -144,6 +149,7 @@ export const useSearch = () => {
     selectedShippingAvailable,
     selectedShipsInternational,
     selectedFreeShipping,
+    selectedFeatured,
     sortBy,
   });
 
@@ -172,6 +178,7 @@ export const useSearch = () => {
     if (selectedShippingAvailable.value) count++;
     if (selectedShipsInternational.value) count++;
     if (selectedFreeShipping.value) count++;
+    if (selectedFeatured.value) count++;
     return count;
   };
 
@@ -261,6 +268,10 @@ export const useSearch = () => {
       filters.free_shipping = true;
     }
 
+    if (selectedFeatured.value) {
+      filters.featured = true;
+    }
+
     if (sortBy.value) {
       filters.sort = sortBy.value as SearchFilters['sort'];
     }
@@ -286,6 +297,7 @@ export const useSearch = () => {
     if (selectedShippingAvailable.value) query.shipping = 'true';
     if (selectedShipsInternational.value) query.international = 'true';
     if (selectedFreeShipping.value) query.free_shipping = 'true';
+    if (selectedFeatured.value) query.featured = 'true';
     if (sortBy.value && sortBy.value !== 'newest') query.sort = sortBy.value;
     // Include pagination so the URL survives reloads and back-navigation.
     // Page 1 is omitted to keep /listings clean.
@@ -442,6 +454,12 @@ export const useSearch = () => {
         query = query.in('ships_to', ['international', 'specific_countries']);
       }
 
+      // Featured = premium and live (isListingFeatured()); the status filter
+      // above already limits the query to live rows.
+      if (filters.featured) {
+        query = query.eq('tier', 'paid');
+      }
+
       if (filters.free_shipping) {
         query = query.eq('shipping_available', true).or('shipping_cost.eq.0,shipping_cost.is.null');
       }
@@ -594,6 +612,7 @@ export const useSearch = () => {
       selectedShippingAvailable,
       selectedShipsInternational,
       selectedFreeShipping,
+      selectedFeatured,
       sortBy,
     ],
     () => {
@@ -624,6 +643,7 @@ export const useSearch = () => {
         selectedShippingAvailable,
         selectedShipsInternational,
         selectedFreeShipping,
+        selectedFeatured,
         sortBy,
       });
 
@@ -653,6 +673,7 @@ export const useSearch = () => {
     selectedShippingAvailable.value = false;
     selectedShipsInternational.value = false;
     selectedFreeShipping.value = false;
+    selectedFeatured.value = false;
     sortBy.value = 'newest';
     currentPage.value = 1; // Reset to first page
     locationCoords.value = null; // Clear cached coordinates
@@ -709,7 +730,8 @@ export const useSearch = () => {
       selectedDistance.value ||
       selectedShippingAvailable.value ||
       selectedShipsInternational.value ||
-      selectedFreeShipping.value
+      selectedFreeShipping.value ||
+      selectedFeatured.value
     );
   });
 
@@ -729,6 +751,7 @@ export const useSearch = () => {
       selectedShippingAvailable,
       selectedShipsInternational,
       selectedFreeShipping,
+      selectedFeatured,
       sortBy,
     ],
     () => {
@@ -765,6 +788,7 @@ export const useSearch = () => {
     selectedShippingAvailable,
     selectedShipsInternational,
     selectedFreeShipping,
+    selectedFeatured,
     sortBy,
     listings,
     loading,

@@ -56,6 +56,7 @@
                 v-model:shipping-available="selectedShippingAvailable"
                 v-model:ships-international="selectedShipsInternational"
                 v-model:free-shipping="selectedFreeShipping"
+                v-model:featured="selectedFeatured"
                 :results-count="totalCount"
                 @clear-filters="clearFilters"
               />
@@ -220,6 +221,7 @@
     selectedShippingAvailable,
     selectedShipsInternational,
     selectedFreeShipping,
+    selectedFeatured,
     sortBy,
     listings,
     loading,

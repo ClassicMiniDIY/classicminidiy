@@ -35,6 +35,17 @@
         </select>
       </div>
 
+      <!-- Featured only: premium and live (isListingFeatured()) -->
+      <div class="mb-3">
+        <label class="label cursor-pointer justify-start gap-2 p-0">
+          <input v-model="selectedFeatured" type="checkbox" class="checkbox checkbox-sm checkbox-warning" />
+          <span class="text-sm font-medium">
+            <i class="fas fa-star text-warning text-xs"></i>
+            {{ t('featuredOnly') }}
+          </span>
+        </label>
+      </div>
+
       <div class="divider my-0"></div>
 
       <!-- Year Range Filter -->
@@ -167,6 +178,17 @@
       <div v-if="hasActiveFilters" class="mt-3 pt-3 border-t border-base-300">
         <p class="text-xs text-base-content/70 mb-2">{{ t('activeFilters') }}</p>
         <div class="flex flex-wrap gap-2">
+          <div v-if="selectedFeatured" class="badge badge-ghost gap-2">
+            {{ t('featuredOnly') }}
+            <button
+              type="button"
+              class="btn btn-ghost btn-xs btn-circle"
+              @click="selectedFeatured = false"
+              :aria-label="t('removeFeaturedFilter')"
+            >
+              <i class="fas fa-xmark"></i>
+            </button>
+          </div>
           <div v-if="selectedCategory" class="badge badge-ghost gap-2">
             {{ getCategoryLabel(selectedCategory) }}
             <button
@@ -271,7 +293,7 @@
 
       <!-- Save Search Button -->
       <ExchangeListingsSaveSearchButton
-        v-if="hasActiveFilters"
+        v-if="hasSavableFilters"
         :filters="currentFilters"
         :filter-summary="filterSummaryText"
         class="mt-3"
@@ -308,6 +330,7 @@
   const selectedTransmission = defineModel<string>('transmission', { required: true });
   const selectedLocation = defineModel<string>('location', { required: true });
   const selectedDistance = defineModel<string>('distance', { required: true });
+  const selectedFeatured = defineModel<boolean>('featured', { default: false });
 
   // Track filter application
   const trackFilterApplied = (
@@ -383,7 +406,10 @@
     clearFilters: [];
   }>();
 
-  const hasActiveFilters = computed(
+  // Saved-search alerts know nothing about "featured", so it is not a savable
+  // filter: it shows a chip and is cleared by "Clear all", but alone it does
+  // not offer the save button.
+  const hasSavableFilters = computed(
     () =>
       !!(
         selectedCategory.value ||
@@ -398,6 +424,8 @@
         selectedDistance.value
       )
   );
+
+  const hasActiveFilters = computed(() => hasSavableFilters.value || selectedFeatured.value);
 
   const onClearFilters = () => {
     emit('clearFilters');
@@ -479,6 +507,8 @@
     "distanceAny": "Any distance",
     "activeFilters": "Active Filters:",
     "removeCategoryFilter": "Remove category filter",
+    "featuredOnly": "Featured listings only",
+    "removeFeaturedFilter": "Remove featured filter",
     "removePartsSubcategoryFilter": "Remove parts subcategory filter",
     "removeYearFilter": "Remove year filter",
     "removeManufacturerFilter": "Remove manufacturer filter",
@@ -534,6 +564,8 @@
     "distanceAny": "Cualquier distancia",
     "activeFilters": "Filtros activos:",
     "removeCategoryFilter": "Quitar filtro de categoría",
+    "featuredOnly": "Solo anuncios destacados",
+    "removeFeaturedFilter": "Quitar filtro de destacados",
     "removePartsSubcategoryFilter": "Quitar filtro de tipo de pieza",
     "removeYearFilter": "Quitar filtro de año",
     "removeManufacturerFilter": "Quitar filtro de fabricante",
@@ -589,6 +621,8 @@
     "distanceAny": "N'importe quelle distance",
     "activeFilters": "Filtres actifs :",
     "removeCategoryFilter": "Supprimer le filtre de catégorie",
+    "featuredOnly": "Annonces en vedette uniquement",
+    "removeFeaturedFilter": "Supprimer le filtre en vedette",
     "removePartsSubcategoryFilter": "Supprimer le filtre de type de pièce",
     "removeYearFilter": "Supprimer le filtre d'année",
     "removeManufacturerFilter": "Supprimer le filtre de fabricant",
@@ -644,6 +678,8 @@
     "distanceAny": "Beliebige Entfernung",
     "activeFilters": "Aktive Filter:",
     "removeCategoryFilter": "Kategoriefilter entfernen",
+    "featuredOnly": "Nur empfohlene Inserate",
+    "removeFeaturedFilter": "Filter für empfohlene Inserate entfernen",
     "removePartsSubcategoryFilter": "Teiletyp-Filter entfernen",
     "removeYearFilter": "Jahresfilter entfernen",
     "removeManufacturerFilter": "Herstellerfilter entfernen",
@@ -699,6 +735,8 @@
     "distanceAny": "Qualsiasi distanza",
     "activeFilters": "Filtri attivi:",
     "removeCategoryFilter": "Rimuovi filtro categoria",
+    "featuredOnly": "Solo annunci in evidenza",
+    "removeFeaturedFilter": "Rimuovi filtro in evidenza",
     "removePartsSubcategoryFilter": "Rimuovi filtro tipo di ricambio",
     "removeYearFilter": "Rimuovi filtro anno",
     "removeManufacturerFilter": "Rimuovi filtro produttore",
@@ -754,6 +792,8 @@
     "distanceAny": "Qualquer distância",
     "activeFilters": "Filtros ativos:",
     "removeCategoryFilter": "Remover filtro de categoria",
+    "featuredOnly": "Apenas anúncios em destaque",
+    "removeFeaturedFilter": "Remover filtro de destaque",
     "removePartsSubcategoryFilter": "Remover filtro de tipo de peça",
     "removeYearFilter": "Remover filtro de ano",
     "removeManufacturerFilter": "Remover filtro de fabricante",
@@ -809,6 +849,8 @@
     "distanceAny": "Любое расстояние",
     "activeFilters": "Активные фильтры:",
     "removeCategoryFilter": "Убрать фильтр категории",
+    "featuredOnly": "Только рекомендуемые объявления",
+    "removeFeaturedFilter": "Убрать фильтр рекомендуемых",
     "removePartsSubcategoryFilter": "Убрать фильтр типа запчасти",
     "removeYearFilter": "Убрать фильтр года",
     "removeManufacturerFilter": "Убрать фильтр производителя",
@@ -864,6 +906,8 @@
     "distanceAny": "距離を問わない",
     "activeFilters": "適用中のフィルター:",
     "removeCategoryFilter": "カテゴリーフィルターを削除",
+    "featuredOnly": "注目のリスティングのみ",
+    "removeFeaturedFilter": "注目フィルターを削除",
     "removePartsSubcategoryFilter": "パーツの種類フィルターを削除",
     "removeYearFilter": "年式フィルターを削除",
     "removeManufacturerFilter": "メーカーフィルターを削除",
@@ -919,6 +963,8 @@
     "distanceAny": "任意距离",
     "activeFilters": "已启用筛选：",
     "removeCategoryFilter": "移除类别筛选",
+    "featuredOnly": "仅显示精选列表",
+    "removeFeaturedFilter": "移除精选筛选",
     "removePartsSubcategoryFilter": "移除配件类型筛选",
     "removeYearFilter": "移除年份筛选",
     "removeManufacturerFilter": "移除制造商筛选",
@@ -974,6 +1020,8 @@
     "distanceAny": "거리 제한 없음",
     "activeFilters": "적용된 필터:",
     "removeCategoryFilter": "카테고리 필터 제거",
+    "featuredOnly": "추천 매물만",
+    "removeFeaturedFilter": "추천 필터 제거",
     "removePartsSubcategoryFilter": "부품 유형 필터 제거",
     "removeYearFilter": "연식 필터 제거",
     "removeManufacturerFilter": "제조사 필터 제거",
