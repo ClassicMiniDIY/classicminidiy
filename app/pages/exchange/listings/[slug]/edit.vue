@@ -239,31 +239,43 @@
                             <option value="reproduction">{{ t('partTypeOptions.reproduction') }}</option>
                           </select>
                         </fieldset>
-
-                        <div class="flex flex-col gap-2 pt-8">
-                          <label class="label cursor-pointer justify-start gap-3">
-                            <input v-model="form.shipping_available" type="checkbox" class="checkbox" />
-                            <span class="label-text">{{ t('fields.shippingAvailable') }}</span>
-                          </label>
-                        </div>
                       </div>
+                    </div>
 
-                      <fieldset v-if="form.shipping_available" class="fieldset">
-                        <legend class="fieldset-legend text-base">{{ t('fields.shippingCost') }}</legend>
-                        <label class="input">
-                          <span class="text-base-content/50">$</span>
-                          <input
-                            v-model.number="form.shipping_cost"
-                            type="number"
-                            step="0.01"
-                            placeholder="15.00"
-                            class="grow"
-                          />
-                        </label>
-                        <p class="label text-base-content/50 text-sm">
-                          {{ t('help.shippingCost') }}
-                        </p>
-                      </fieldset>
+                    <!-- Shipping (parts and engines, as in the listing wizard) -->
+                    <div v-if="hasShippingFields" class="space-y-4">
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input v-model="form.shipping_available" type="checkbox" class="checkbox" />
+                        <span>{{ t('fields.shippingAvailable') }}</span>
+                      </label>
+
+                      <template v-if="form.shipping_available">
+                        <fieldset class="fieldset">
+                          <legend class="fieldset-legend text-base">{{ t('fields.shipsTo') }}</legend>
+                          <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                              <input
+                                v-model="form.ships_to"
+                                type="radio"
+                                value="domestic_only"
+                                class="radio radio-sm radio-primary"
+                              />
+                              <span class="text-sm">{{ t('fields.shipsToDomestic') }}</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                              <input
+                                v-model="form.ships_to"
+                                type="radio"
+                                value="international"
+                                class="radio radio-sm radio-primary"
+                              />
+                              <span class="text-sm">{{ t('fields.shipsToInternational') }}</span>
+                            </label>
+                          </div>
+                        </fieldset>
+
+                        <ExchangeListingsShippingCostInput v-model="form.shipping_cost" :currency="listing?.currency" />
+                      </template>
                     </div>
 
                     <!-- Color (for vehicles) -->
@@ -854,6 +866,7 @@
     DASHBOARD_TYPES,
     STEERING_WHEEL_TYPES,
   } from '~/utils/miniSpecs';
+  import { normalizeShippingCost } from '~/utils/shippingCost';
 
   const { t } = useI18n();
 
@@ -949,6 +962,8 @@
   // Category helpers
   const isVehicleOrEngine = computed(() => ['vehicle', 'engine'].includes(listing.value?.listing_category || ''));
   const isPartsCategory = computed(() => listing.value?.listing_category === 'parts');
+  // The listing wizard asks parts and engines about shipping (StepExtraDetails).
+  const hasShippingFields = computed(() => ['parts', 'engine'].includes(listing.value?.listing_category || ''));
 
   // Free listing toggle
   const isEditFree = computed(() => form.price === 0);
@@ -1024,7 +1039,9 @@
     quantity_available: listing.value.quantity_available || 1,
     oem_or_aftermarket: listing.value.oem_or_aftermarket || '',
     shipping_available: listing.value.shipping_available ?? true,
-    shipping_cost: listing.value.shipping_cost || null,
+    ships_to: listing.value.ships_to || '',
+    // Not `|| null`: that turned a stored 0 (free shipping) into "varies".
+    shipping_cost: normalizeShippingCost(listing.value.shipping_cost),
     // Location fields (with geocoding)
     city: listing.value.city || '',
     state_province: listing.value.state_province || '',
@@ -1243,6 +1260,20 @@
         changes[key] = newValue;
       });
 
+      // Shipping has values the blank-is-no-change rule above cannot express,
+      // for a seller as much as an admin: a blank cost is "varies by location"
+      // (NULL) and 0 is free. A pickup-only listing keeps no destination or
+      // cost, as the wizard writes it, so it cannot match a shipping filter.
+      if (hasShippingFields.value && listing.value) {
+        const ships = form.shipping_available;
+        const shipsTo = ships ? form.ships_to || null : null;
+        const cost = ships ? normalizeShippingCost(form.shipping_cost) : null;
+        delete changes.ships_to;
+        delete changes.shipping_cost;
+        if (shipsTo !== (listing.value.ships_to ?? null)) changes.ships_to = shipsTo;
+        if (cost !== normalizeShippingCost(listing.value.shipping_cost)) changes.shipping_cost = cost;
+      }
+
       // Check parts-specific changes (if applicable)
       if (isPartsCategory.value && fitsModelsInput.value && listing.value) {
         const fitsModelsArray = fitsModelsInput.value
@@ -1387,7 +1418,9 @@
       "fitsModels": "Fits Models",
       "partType": "Part Type",
       "shippingAvailable": "Shipping Available",
-      "shippingCost": "Shipping Cost",
+      "shipsTo": "Ships To",
+      "shipsToDomestic": "Domestic only",
+      "shipsToInternational": "International",
       "color": "Color *",
       "location": "Location *",
       "description": "Description *",
@@ -1455,7 +1488,6 @@
     },
     "help": {
       "fitsModels": "Which Mini models is this part compatible with?",
-      "shippingCost": "Leave blank if shipping cost varies by location",
       "vinNumber": "Vehicle Identification Number",
       "chassisNumber": "Body/chassis plate number",
       "heritageCertNumber": "BMIHT certificate number",
@@ -1608,7 +1640,9 @@
       "fitsModels": "Modelos compatibles",
       "partType": "Tipo de pieza",
       "shippingAvailable": "Envío disponible",
-      "shippingCost": "Coste de envío",
+      "shipsTo": "Envía a",
+      "shipsToDomestic": "Solo nacional",
+      "shipsToInternational": "Internacional",
       "color": "Color *",
       "location": "Ubicación *",
       "description": "Descripción *",
@@ -1676,7 +1710,6 @@
     },
     "help": {
       "fitsModels": "¿Con qué modelos de Mini es compatible esta pieza?",
-      "shippingCost": "Déjalo en blanco si el coste de envío varía según la ubicación",
       "vinNumber": "Número de identificación del vehículo",
       "chassisNumber": "Número de placa de carrocería/chasis",
       "heritageCertNumber": "Número de certificado BMIHT",
@@ -1829,7 +1862,9 @@
       "fitsModels": "Modèles compatibles",
       "partType": "Type de pièce",
       "shippingAvailable": "Livraison disponible",
-      "shippingCost": "Frais de livraison",
+      "shipsTo": "Expédie vers",
+      "shipsToDomestic": "National uniquement",
+      "shipsToInternational": "International",
       "color": "Couleur *",
       "location": "Localisation *",
       "description": "Description *",
@@ -1897,7 +1932,6 @@
     },
     "help": {
       "fitsModels": "Avec quels modèles de Mini cette pièce est-elle compatible ?",
-      "shippingCost": "Laissez vide si les frais de livraison varient selon le lieu",
       "vinNumber": "Numéro d'identification du véhicule",
       "chassisNumber": "Numéro de plaque de caisse/châssis",
       "heritageCertNumber": "Numéro de certificat BMIHT",
@@ -2050,7 +2084,9 @@
       "fitsModels": "Passende Modelle",
       "partType": "Teiletyp",
       "shippingAvailable": "Versand verfügbar",
-      "shippingCost": "Versandkosten",
+      "shipsTo": "Versand nach",
+      "shipsToDomestic": "Nur Inland",
+      "shipsToInternational": "International",
       "color": "Farbe *",
       "location": "Standort *",
       "description": "Beschreibung *",
@@ -2118,7 +2154,6 @@
     },
     "help": {
       "fitsModels": "Mit welchen Mini-Modellen ist dieses Teil kompatibel?",
-      "shippingCost": "Leer lassen, wenn die Versandkosten je nach Standort variieren",
       "vinNumber": "Fahrzeug-Identifizierungsnummer",
       "chassisNumber": "Karosserie-/Chassisplattennummer",
       "heritageCertNumber": "BMIHT-Zertifikatsnummer",
@@ -2271,7 +2306,9 @@
       "fitsModels": "Modelli compatibili",
       "partType": "Tipo di ricambio",
       "shippingAvailable": "Spedizione disponibile",
-      "shippingCost": "Costo di spedizione",
+      "shipsTo": "Spedisce a",
+      "shipsToDomestic": "Solo nazionale",
+      "shipsToInternational": "Internazionale",
       "color": "Colore *",
       "location": "Posizione *",
       "description": "Descrizione *",
@@ -2339,7 +2376,6 @@
     },
     "help": {
       "fitsModels": "Con quali modelli di Mini è compatibile questo ricambio?",
-      "shippingCost": "Lascia vuoto se il costo di spedizione varia in base alla località",
       "vinNumber": "Numero di identificazione del veicolo",
       "chassisNumber": "Numero della targhetta scocca/telaio",
       "heritageCertNumber": "Numero del certificato BMIHT",
@@ -2492,7 +2528,9 @@
       "fitsModels": "Modelos compatíveis",
       "partType": "Tipo de peça",
       "shippingAvailable": "Envio disponível",
-      "shippingCost": "Custo de envio",
+      "shipsTo": "Envia para",
+      "shipsToDomestic": "Apenas nacional",
+      "shipsToInternational": "Internacional",
       "color": "Cor *",
       "location": "Localização *",
       "description": "Descrição *",
@@ -2560,7 +2598,6 @@
     },
     "help": {
       "fitsModels": "Com que modelos de Mini é esta peça compatível?",
-      "shippingCost": "Deixe em branco se o custo de envio variar conforme a localização",
       "vinNumber": "Número de identificação do veículo",
       "chassisNumber": "Número da chapa da carroçaria/chassis",
       "heritageCertNumber": "Número do certificado BMIHT",
@@ -2713,7 +2750,9 @@
       "fitsModels": "Совместимые модели",
       "partType": "Тип детали",
       "shippingAvailable": "Доставка доступна",
-      "shippingCost": "Стоимость доставки",
+      "shipsTo": "Доставка в",
+      "shipsToDomestic": "Только по стране",
+      "shipsToInternational": "Международная",
       "color": "Цвет *",
       "location": "Местоположение *",
       "description": "Описание *",
@@ -2781,7 +2820,6 @@
     },
     "help": {
       "fitsModels": "С какими моделями Mini совместима эта деталь?",
-      "shippingCost": "Оставьте пустым, если стоимость доставки зависит от местоположения",
       "vinNumber": "Идентификационный номер транспортного средства",
       "chassisNumber": "Номер таблички кузова/шасси",
       "heritageCertNumber": "Номер сертификата BMIHT",
@@ -2934,7 +2972,9 @@
       "fitsModels": "適合モデル",
       "partType": "部品の種類",
       "shippingAvailable": "発送可能",
-      "shippingCost": "送料",
+      "shipsTo": "配送先",
+      "shipsToDomestic": "国内のみ",
+      "shipsToInternational": "海外対応",
       "color": "色 *",
       "location": "所在地 *",
       "description": "説明 *",
@@ -3002,7 +3042,6 @@
     },
     "help": {
       "fitsModels": "この部品はどのMiniモデルに適合しますか?",
-      "shippingCost": "送料が所在地によって異なる場合は空欄にしてください",
       "vinNumber": "車両識別番号",
       "chassisNumber": "ボディ/シャシープレート番号",
       "heritageCertNumber": "BMIHT証明書番号",
@@ -3155,7 +3194,9 @@
       "fitsModels": "适配车型",
       "partType": "零件类型",
       "shippingAvailable": "提供配送",
-      "shippingCost": "运费",
+      "shipsTo": "运送至",
+      "shipsToDomestic": "仅限国内",
+      "shipsToInternational": "国际",
       "color": "颜色 *",
       "location": "位置 *",
       "description": "描述 *",
@@ -3223,7 +3264,6 @@
     },
     "help": {
       "fitsModels": "此零件兼容哪些Mini车型?",
-      "shippingCost": "如运费因地区而异，请留空",
       "vinNumber": "车辆识别号码",
       "chassisNumber": "车身/底盘铭牌号码",
       "heritageCertNumber": "BMIHT证书编号",
@@ -3376,7 +3416,9 @@
       "fitsModels": "호환 모델",
       "partType": "부품 유형",
       "shippingAvailable": "배송 가능",
-      "shippingCost": "배송 비용",
+      "shipsTo": "배송 지역",
+      "shipsToDomestic": "국내만",
+      "shipsToInternational": "해외",
       "color": "색상 *",
       "location": "위치 *",
       "description": "설명 *",
@@ -3444,7 +3486,6 @@
     },
     "help": {
       "fitsModels": "이 부품은 어떤 Mini 모델과 호환됩니까?",
-      "shippingCost": "배송 비용이 위치에 따라 다른 경우 비워 두세요",
       "vinNumber": "차량 식별 번호",
       "chassisNumber": "차체/섀시 플레이트 번호",
       "heritageCertNumber": "BMIHT 인증서 번호",

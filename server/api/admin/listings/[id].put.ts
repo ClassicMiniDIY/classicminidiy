@@ -103,6 +103,7 @@ const ADMIN_EDITABLE_COLUMNS = new Set([
   'fits_models',
   'shipping_available',
   'shipping_cost',
+  'ships_to',
   // Location
   'location',
   'city',
