@@ -1111,13 +1111,27 @@ describe('useSearch', () => {
       expect(mockRouterReplace.mock.calls[0][0].query).toEqual({ category: 'vehicle' });
     });
 
-    it('keeps the part type when the category stays Parts', async () => {
-      mockRouteQuery = { category: 'parts', subcategory: 'interior' };
+    it('keeps the part type when the URL moves into Parts with one', async () => {
+      // updateFiltersFromQuery sets the category before the part type; the
+      // clear watcher must not wipe a part type that arrives with Parts.
+      mockRouteQuery = reactive({ category: 'vehicle' }) as Record<string, string>;
+      const useSearch = await importUseSearch();
+      const s = useSearch();
+
+      (mockRouteQuery as Record<string, string>).category = 'parts';
+      (mockRouteQuery as Record<string, string>).subcategory = 'interior';
+      await nextTick();
+
+      expect(s.selectedCategory.value).toBe('parts');
+      expect(s.selectedPartsSubcategory.value).toBe('interior');
+    });
+
+    it('keeps a part type already set when the category moves into Parts', async () => {
+      mockRouteQuery = { subcategory: 'interior' };
       const useSearch = await importUseSearch();
       const s = useSearch();
 
       s.selectedCategory.value = 'parts';
-      s.selectedYearRange.value = '1960s';
       await nextTick();
 
       expect(s.selectedPartsSubcategory.value).toBe('interior');
