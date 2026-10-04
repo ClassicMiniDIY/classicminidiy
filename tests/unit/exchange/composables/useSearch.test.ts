@@ -632,13 +632,14 @@ describe('useSearch', () => {
       expect(mockSupabase._queryBuilder.in).toHaveBeenCalledWith('ships_to', ['international', 'specific_countries']);
     });
 
-    it('applies free_shipping as eq(shipping_available,true) + or(cost 0/null)', async () => {
+    it('applies free_shipping as eq(shipping_available,true) + eq(shipping_cost,0), never matching a NULL cost', async () => {
       const useSearch = await importUseSearch();
       const { performSearch, selectedFreeShipping } = useSearch();
       selectedFreeShipping.value = true;
       await performSearch();
       expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('shipping_available', true);
-      expect(mockSupabase._queryBuilder.or).toHaveBeenCalledWith('shipping_cost.eq.0,shipping_cost.is.null');
+      expect(mockSupabase._queryBuilder.eq).toHaveBeenCalledWith('shipping_cost', 0);
+      expect(mockSupabase._queryBuilder.or).not.toHaveBeenCalledWith(expect.stringContaining('shipping_cost'));
     });
 
     it.each([

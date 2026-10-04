@@ -460,8 +460,11 @@ export const useSearch = () => {
         query = query.eq('tier', 'paid');
       }
 
+      // Free means a stored cost of 0. NULL is "cost varies by location"
+      // (the edit form's help text), and the detail page shows its free badge
+      // only for 0, so NULL must not match.
       if (filters.free_shipping) {
-        query = query.eq('shipping_available', true).or('shipping_cost.eq.0,shipping_cost.is.null');
+        query = query.eq('shipping_available', true).eq('shipping_cost', 0);
       }
 
       // Apply sorting
