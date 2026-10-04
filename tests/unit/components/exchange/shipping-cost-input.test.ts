@@ -51,6 +51,22 @@ describe('ExchangeListingsShippingCostInput', () => {
     expect(updates.at(-1)).toBeNull();
   });
 
+  it('keeps the amount field while the seller types a cost below 1', async () => {
+    const { wrapper, updates } = mountInput(null);
+    const amount = wrapper.find('input[type="number"]');
+    await amount.setValue('0');
+    expect(updates.at(-1)).toBe(0);
+    expect(wrapper.find('input[type="number"]').exists()).toBe(true);
+    await wrapper.find('input[type="number"]').setValue('0.75');
+    expect(updates.at(-1)).toBe(0.75);
+  });
+
+  it('unticks free shipping when the parent replaces 0 with a cost', async () => {
+    const { wrapper } = mountInput(0);
+    await wrapper.setProps({ modelValue: 9 });
+    expect((wrapper.find('input[type="checkbox"]').element as HTMLInputElement).checked).toBe(false);
+  });
+
   it('shows the listing currency symbol', () => {
     const { wrapper } = mountInput(null, 'GBP');
     expect(wrapper.text()).toContain('£');

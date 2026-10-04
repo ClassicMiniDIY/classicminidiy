@@ -1,3 +1,5 @@
+import { SUPPORTED_CURRENCIES } from '~/composables/useCurrency';
+
 /**
  * Shipping cost as stored on `listings.shipping_cost`:
  *
@@ -15,4 +17,26 @@ export function normalizeShippingCost(value: unknown): number | null {
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n) || n < 0) return null;
   return n;
+}
+
+/**
+ * A shipping amount in the listing's currency, with cents when it has them.
+ * Not useCurrency().formatCurrency: that rounds to whole units for prices, so
+ * a 12.50 shipping cost would read as 13. Callers word 0 ("Free") and null
+ * ("Varies") themselves.
+ */
+export function formatShippingAmount(amount: number, currencyCode: string | null | undefined): string {
+  const code = currencyCode || 'USD';
+  const currency = SUPPORTED_CURRENCIES.find((c) => c.code === code);
+  try {
+    return new Intl.NumberFormat(currency?.locale || 'en-US', {
+      style: 'currency',
+      currency: code,
+      // 15 -> "$15", 12.5 -> "$12.50"
+      minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency?.symbol || code}${amount}`;
+  }
 }

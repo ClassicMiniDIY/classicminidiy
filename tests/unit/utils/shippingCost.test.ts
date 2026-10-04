@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeShippingCost } from '~/app/utils/shippingCost';
+import { formatShippingAmount, normalizeShippingCost } from '~/app/utils/shippingCost';
 
 describe('normalizeShippingCost', () => {
   it('keeps 0, which means free shipping', () => {
@@ -24,5 +24,20 @@ describe('normalizeShippingCost', () => {
     expect(normalizeShippingCost(Number.NaN)).toBeNull();
     expect(normalizeShippingCost(Number.POSITIVE_INFINITY)).toBeNull();
     expect(normalizeShippingCost('abc')).toBeNull();
+  });
+});
+
+describe('formatShippingAmount', () => {
+  it('keeps cents, unlike the whole-unit price formatter', () => {
+    expect(formatShippingAmount(12.5, 'USD')).toBe('$12.50');
+    expect(formatShippingAmount(15, 'USD')).toBe('$15');
+  });
+
+  it('uses the listing currency', () => {
+    expect(formatShippingAmount(15, 'GBP')).toBe('£15');
+  });
+
+  it('falls back to USD without a currency', () => {
+    expect(formatShippingAmount(7, null)).toBe('$7');
   });
 });

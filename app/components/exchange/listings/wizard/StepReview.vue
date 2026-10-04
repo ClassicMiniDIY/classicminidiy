@@ -451,6 +451,7 @@
   import type { OptimizeResult } from '~/utils/imageOptimizer';
   import { getCountryFlag } from '~/utils/countryFlags';
   import { formatShipsTo } from '~/utils/shippingCarriers';
+  import { formatShippingAmount } from '~/utils/shippingCost';
 
   const { t } = useI18n();
 
@@ -508,6 +509,10 @@
     if (props.formData.category === 'parts') {
       return props.formData.partCondition || props.formData.partNumber || props.formData.oemOrAftermarket;
     }
+    // Engines have no spec cards, but the shipping summary lives in this section.
+    if (props.formData.category === 'engine') {
+      return props.formData.shippingAvailable !== undefined;
+    }
     return false;
   });
 
@@ -526,7 +531,7 @@
   const formatShippingCost = (cost: number | null | undefined) => {
     if (cost === 0) return t('specs.shippingFree');
     if (cost === null || cost === undefined) return t('specs.shippingVaries');
-    return formatCurrency(cost, props.formData.currency);
+    return formatShippingAmount(cost, props.formData.currency);
   };
 
   const formatPrice = (price: number | null, currency: CurrencyCode) => {

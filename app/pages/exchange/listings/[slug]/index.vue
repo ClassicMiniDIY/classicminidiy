@@ -235,7 +235,11 @@
                         <div v-if="listing.shipping_cost !== null" class="text-sm">
                           <span class="text-base-content/60">{{ t('shipping.domestic') }}</span>
                           <span class="font-medium ml-1">
-                            {{ listing.shipping_cost === 0 ? t('shipping.free') : `$${listing.shipping_cost}` }}
+                            {{
+                              listing.shipping_cost === 0
+                                ? t('shipping.free')
+                                : formatShippingAmount(listing.shipping_cost, listing.currency)
+                            }}
                           </span>
                         </div>
                         <div v-if="listing.shipping_cost_international !== null" class="text-sm">
@@ -244,7 +248,7 @@
                             {{
                               listing.shipping_cost_international === 0
                                 ? t('shipping.free')
-                                : `$${listing.shipping_cost_international}`
+                                : formatShippingAmount(listing.shipping_cost_international, listing.currency)
                             }}
                           </span>
                         </div>
@@ -762,6 +766,7 @@
 <script setup lang="ts">
   import type { ListingWithPhotos } from '~/composables/useListings';
   import { getCountryFlag } from '~/utils/countryFlags';
+  import { formatShippingAmount } from '~/utils/shippingCost';
   import type { CurrencyCode } from '~/composables/useCurrency';
   import { isExampleStatus } from '~/composables/useExampleListings';
   import {
