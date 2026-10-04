@@ -25,14 +25,6 @@ import type {
   ReassignSubscriptionResponse,
 } from '../../../../shared/utils/claimedTransactions';
 
-// `admin_reassign_subscription` is not in types/database.ts until it deploys
-// and the types are regenerated, so the typed `rpc` refuses its name. Drop
-// this cast after `bun run gen:types`.
-type UntypedRpc = (
-  fn: string,
-  args: Record<string, unknown>
-) => PromiseLike<{ data: unknown; error: { code?: string; message: string; hint?: string | null } | null }>;
-
 /** SQLSTATE from the function → HTTP status and the message the admin sees. */
 const ERRORS: Record<string, { statusCode: number; statusMessage: string }> = {
   '42501': { statusCode: 403, statusMessage: 'Admin access required' },
@@ -80,7 +72,7 @@ export default defineEventHandler(async (event): Promise<ReassignSubscriptionRes
   }
 
   const db = getServiceClient();
-  const { data, error } = await (db.rpc as unknown as UntypedRpc).call(db, 'admin_reassign_subscription', {
+  const { data, error } = await db.rpc('admin_reassign_subscription', {
     p_subscription_id: subscriptionId,
     p_new_user_id: toUserId,
     p_admin_id: user.id,
