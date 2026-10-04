@@ -328,3 +328,10 @@ Built as designed, with these differences:
   `{ noindex: true, allowNoH1: true }`, like `/discord/connect`.
 - **Prerequisite 0** is handled in `classicminidiy-supabase`; `types/database.ts` was not
   regenerated here (`is_username_available` and `user_has_subscription` were already in it).
+
+### Reserved-name owners (2026-10-04)
+
+A reserved username is accepted only for the account the database grants it to
+(`reserved_username_owners` in the supabase repo, service-role only). The route reads that
+table only when the stored username is on the reserved list. The brand account holds
+`classicminidiy`; every other account is still refused.
