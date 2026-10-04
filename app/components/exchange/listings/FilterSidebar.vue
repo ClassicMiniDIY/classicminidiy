@@ -37,7 +37,7 @@
 
       <!-- Featured only: premium and live (isListingFeatured()) -->
       <div class="mb-3">
-        <label class="label cursor-pointer justify-start gap-2 p-0">
+        <label class="flex items-center gap-2 cursor-pointer">
           <input v-model="selectedFeatured" type="checkbox" class="checkbox checkbox-sm checkbox-warning" />
           <span class="text-sm font-medium">
             <i class="fas fa-star text-warning text-xs"></i>
@@ -298,6 +298,9 @@
         :filter-summary="filterSummaryText"
         class="mt-3"
       />
+      <p v-if="hasSavableFilters && selectedFeatured" class="text-xs text-base-content/70 mt-1">
+        {{ t('featuredNotSaved') }}
+      </p>
     </div>
   </div>
 </template>
@@ -334,7 +337,7 @@
 
   // Track filter application
   const trackFilterApplied = (
-    filterType: 'category' | 'year' | 'price' | 'condition' | 'transmission' | 'location' | 'model',
+    filterType: 'category' | 'year' | 'price' | 'condition' | 'transmission' | 'location' | 'model' | 'featured',
     value: string | number | [number, number]
   ) => {
     if (value) {
@@ -369,6 +372,10 @@
 
   watch(selectedTransmission, (newValue) => {
     trackFilterApplied('transmission', newValue);
+  });
+
+  watch(selectedFeatured, (newValue) => {
+    if (newValue) trackFilterApplied('featured', 'true');
   });
 
   // Debounced location tracking to avoid tracking every keystroke
@@ -509,6 +516,7 @@
     "removeCategoryFilter": "Remove category filter",
     "featuredOnly": "Featured listings only",
     "removeFeaturedFilter": "Remove featured filter",
+    "featuredNotSaved": "Alerts for a saved search include every matching listing, not only featured ones.",
     "removePartsSubcategoryFilter": "Remove parts subcategory filter",
     "removeYearFilter": "Remove year filter",
     "removeManufacturerFilter": "Remove manufacturer filter",
@@ -566,6 +574,7 @@
     "removeCategoryFilter": "Quitar filtro de categoría",
     "featuredOnly": "Solo anuncios destacados",
     "removeFeaturedFilter": "Quitar filtro de destacados",
+    "featuredNotSaved": "Las alertas de una búsqueda guardada incluyen todos los anuncios que coinciden, no solo los destacados.",
     "removePartsSubcategoryFilter": "Quitar filtro de tipo de pieza",
     "removeYearFilter": "Quitar filtro de año",
     "removeManufacturerFilter": "Quitar filtro de fabricante",
@@ -623,6 +632,7 @@
     "removeCategoryFilter": "Supprimer le filtre de catégorie",
     "featuredOnly": "Annonces en vedette uniquement",
     "removeFeaturedFilter": "Supprimer le filtre en vedette",
+    "featuredNotSaved": "Les alertes d'une recherche enregistrée incluent toutes les annonces correspondantes, pas seulement celles en vedette.",
     "removePartsSubcategoryFilter": "Supprimer le filtre de type de pièce",
     "removeYearFilter": "Supprimer le filtre d'année",
     "removeManufacturerFilter": "Supprimer le filtre de fabricant",
@@ -680,6 +690,7 @@
     "removeCategoryFilter": "Kategoriefilter entfernen",
     "featuredOnly": "Nur empfohlene Inserate",
     "removeFeaturedFilter": "Filter für empfohlene Inserate entfernen",
+    "featuredNotSaved": "Benachrichtigungen für eine gespeicherte Suche umfassen alle passenden Inserate, nicht nur empfohlene.",
     "removePartsSubcategoryFilter": "Teiletyp-Filter entfernen",
     "removeYearFilter": "Jahresfilter entfernen",
     "removeManufacturerFilter": "Herstellerfilter entfernen",
@@ -737,6 +748,7 @@
     "removeCategoryFilter": "Rimuovi filtro categoria",
     "featuredOnly": "Solo annunci in evidenza",
     "removeFeaturedFilter": "Rimuovi filtro in evidenza",
+    "featuredNotSaved": "Gli avvisi di una ricerca salvata includono tutti gli annunci corrispondenti, non solo quelli in evidenza.",
     "removePartsSubcategoryFilter": "Rimuovi filtro tipo di ricambio",
     "removeYearFilter": "Rimuovi filtro anno",
     "removeManufacturerFilter": "Rimuovi filtro produttore",
@@ -794,6 +806,7 @@
     "removeCategoryFilter": "Remover filtro de categoria",
     "featuredOnly": "Apenas anúncios em destaque",
     "removeFeaturedFilter": "Remover filtro de destaque",
+    "featuredNotSaved": "Os alertas de uma pesquisa salva incluem todos os anúncios correspondentes, não apenas os em destaque.",
     "removePartsSubcategoryFilter": "Remover filtro de tipo de peça",
     "removeYearFilter": "Remover filtro de ano",
     "removeManufacturerFilter": "Remover filtro de fabricante",
@@ -851,6 +864,7 @@
     "removeCategoryFilter": "Убрать фильтр категории",
     "featuredOnly": "Только рекомендуемые объявления",
     "removeFeaturedFilter": "Убрать фильтр рекомендуемых",
+    "featuredNotSaved": "Уведомления сохранённого поиска включают все подходящие объявления, а не только рекомендуемые.",
     "removePartsSubcategoryFilter": "Убрать фильтр типа запчасти",
     "removeYearFilter": "Убрать фильтр года",
     "removeManufacturerFilter": "Убрать фильтр производителя",
@@ -908,6 +922,7 @@
     "removeCategoryFilter": "カテゴリーフィルターを削除",
     "featuredOnly": "注目のリスティングのみ",
     "removeFeaturedFilter": "注目フィルターを削除",
+    "featuredNotSaved": "保存した検索の通知には、注目のリスティングだけでなく、条件に合うすべてのリスティングが含まれます。",
     "removePartsSubcategoryFilter": "パーツの種類フィルターを削除",
     "removeYearFilter": "年式フィルターを削除",
     "removeManufacturerFilter": "メーカーフィルターを削除",
@@ -965,6 +980,7 @@
     "removeCategoryFilter": "移除类别筛选",
     "featuredOnly": "仅显示精选列表",
     "removeFeaturedFilter": "移除精选筛选",
+    "featuredNotSaved": "已保存搜索的提醒包含所有匹配的列表，而不仅是精选列表。",
     "removePartsSubcategoryFilter": "移除配件类型筛选",
     "removeYearFilter": "移除年份筛选",
     "removeManufacturerFilter": "移除制造商筛选",
@@ -1022,6 +1038,7 @@
     "removeCategoryFilter": "카테고리 필터 제거",
     "featuredOnly": "추천 매물만",
     "removeFeaturedFilter": "추천 필터 제거",
+    "featuredNotSaved": "저장된 검색 알림에는 추천 매물뿐 아니라 조건에 맞는 모든 매물이 포함됩니다.",
     "removePartsSubcategoryFilter": "부품 유형 필터 제거",
     "removeYearFilter": "연식 필터 제거",
     "removeManufacturerFilter": "제조사 필터 제거",
