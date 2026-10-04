@@ -111,6 +111,11 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
   'www',
 ]);
 
+/** True when `name` matches USERNAME_PATTERN and has no `--` (reserved or not). */
+export function isWellFormedForumUsername(name: unknown): name is string {
+  return typeof name === 'string' && USERNAME_PATTERN.test(name) && !name.includes('--');
+}
+
 /** True when `name` matches USERNAME_PATTERN, has no `--`, and is not reserved. */
 export function isValidForumUsername(name: unknown): name is string {
   return (

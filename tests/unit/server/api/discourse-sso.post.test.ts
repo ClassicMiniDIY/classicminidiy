@@ -18,9 +18,12 @@ const mockExtractAccessToken = vi.fn();
 const profileMaybeSingle = vi.fn();
 const rpc = vi.fn();
 const profileSelect = vi.fn(() => ({ eq: () => ({ maybeSingle: profileMaybeSingle }) }));
+const ownerMaybeSingle = vi.fn();
+const ownerSelect = vi.fn(() => ({ eq: () => ({ eq: () => ({ maybeSingle: ownerMaybeSingle }) }) }));
 const mockService = {
   from: vi.fn((table: string) => {
     if (table === 'profiles') return { select: profileSelect };
+    if (table === 'reserved_username_owners') return { select: ownerSelect };
     throw new Error(`unexpected table ${table}`);
   }),
   rpc,
@@ -105,6 +108,7 @@ beforeEach(() => {
   readBody.mockResolvedValue(signedRequest());
   mockRequireUserAuth.mockResolvedValue({ user: { ...user } });
   profileMaybeSingle.mockResolvedValue({ data: { ...profile }, error: null });
+  ownerMaybeSingle.mockResolvedValue({ data: null, error: null });
   rpc.mockResolvedValue({ data: true, error: null });
 });
 
@@ -295,6 +299,24 @@ describe('user checks', () => {
     await expect(handler(evt())).rejects.toMatchObject({ statusCode: 409, data: { error: 'username_required' } });
     expect(rpc).not.toHaveBeenCalled();
     expect(setHeader).not.toHaveBeenCalled();
+  });
+
+  it('a reserved name granted to this user in reserved_username_owners → signs in with it', async () => {
+    profileMaybeSingle.mockResolvedValue({ data: { ...profile, username: 'classicminidiy' }, error: null });
+    ownerMaybeSingle.mockResolvedValue({ data: { user_id: 'owner' }, error: null });
+    const { payload } = readAnswer((await handler(evt())).redirect);
+    expect(payload.get('username')).toBe('classicminidiy');
+  });
+
+  it('a failed reserved-name owner read → 503, no redirect', async () => {
+    profileMaybeSingle.mockResolvedValue({ data: { ...profile, username: 'classicminidiy' }, error: null });
+    ownerMaybeSingle.mockResolvedValue({ data: null, error: { message: 'boom' } });
+    await expect(handler(evt())).rejects.toMatchObject({ statusCode: 503 });
+  });
+
+  it('a non-reserved name never reads the owners table', async () => {
+    await handler(evt());
+    expect(ownerSelect).not.toHaveBeenCalled();
   });
 
   it('no profile row → 409 username_required', async () => {

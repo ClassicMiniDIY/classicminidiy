@@ -19,7 +19,7 @@
  * Never log `sso`, `sig` or the user's email.
  */
 import { SUSTAINING_PRODUCT_ID } from '../../../shared/utils/chatTiers';
-import { isValidForumUsername } from '../../../shared/utils/usernames';
+import { RESERVED_USERNAMES, isWellFormedForumUsername } from '../../../shared/utils/usernames';
 import {
   DISCOURSE_SSO_MAX_LENGTH,
   decodeDiscoursePayload,
@@ -209,8 +209,24 @@ export default defineEventHandler(async (event) => {
     console.error('[discourse/sso] profile read failed:', profileError.message);
     fail(503, 'profile_unavailable', 'Forum sign-in is temporarily unavailable');
   }
-  if (!profile || !isValidForumUsername(profile.username)) {
+  if (!profile || !isWellFormedForumUsername(profile.username)) {
     fail(409, 'username_required', 'Choose a forum username first');
+  }
+  // A reserved name is accepted only for the account the database grants it to
+  // (reserved_username_owners, service-role only; the profiles trigger enforces
+  // the same rule on write).
+  if (RESERVED_USERNAMES.has(profile.username)) {
+    const { data: owner, error: ownerError } = await db
+      .from('reserved_username_owners')
+      .select('user_id')
+      .eq('username', profile.username)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (ownerError) {
+      console.error('[discourse/sso] reserved-name owner read failed:', ownerError.message);
+      fail(503, 'profile_unavailable', 'Forum sign-in is temporarily unavailable');
+    }
+    if (!owner) fail(409, 'username_required', 'Choose a forum username first');
   }
 
   // 8. Membership. Gate on user_has_subscription, never on `plan`. A failed
