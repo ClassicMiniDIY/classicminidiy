@@ -270,7 +270,10 @@
                       <div class="font-medium">{{ formData.quantityAvailable }}</div>
                     </div>
                   </div>
+                </template>
 
+                <!-- Shipping (parts and engines) -->
+                <template v-if="formData.category === 'parts' || formData.category === 'engine'">
                   <div v-if="formData.shippingAvailable !== undefined" class="md:col-span-2 space-y-3">
                     <div class="flex items-center gap-3 p-4 bg-base-200 rounded-lg">
                       <i class="fas fa-truck text-lg text-base-content/60"></i>
@@ -287,6 +290,10 @@
                         <div v-if="formData.shipsTo" class="text-sm">
                           <span class="text-base-content/60">{{ t('specs.shipsTo') }}</span>
                           <span class="font-medium ml-1">{{ formatShipsTo(formData.shipsTo) }}</span>
+                        </div>
+                        <div class="text-sm">
+                          <span class="text-base-content/60">{{ t('specs.shippingCost') }}</span>
+                          <span class="font-medium ml-1">{{ formatShippingCost(formData.shippingCost) }}</span>
                         </div>
                       </div>
                     </template>
@@ -515,6 +522,13 @@
 
   const { formatManufacturer } = useFormatters();
 
+  // 0 = free, null = varies by location (utils/shippingCost)
+  const formatShippingCost = (cost: number | null | undefined) => {
+    if (cost === 0) return t('specs.shippingFree');
+    if (cost === null || cost === undefined) return t('specs.shippingVaries');
+    return formatCurrency(cost, props.formData.currency);
+  };
+
   const formatPrice = (price: number | null, currency: CurrencyCode) => {
     if (price === 0 || price === null || price === undefined) return t('sidebar.free');
     return formatCurrency(price, currency);
@@ -602,7 +616,10 @@
       "shipping": "Shipping",
       "shippingAvailable": "Available",
       "pickupOnly": "Pickup Only",
-      "shipsTo": "Ships to:"
+      "shipsTo": "Ships to:",
+      "shippingCost": "Shipping cost:",
+      "shippingFree": "Free",
+      "shippingVaries": "Varies by location"
     },
     "heritage": {
       "section": "Heritage & Provenance",
@@ -681,7 +698,10 @@
       "shipping": "Envío",
       "shippingAvailable": "Disponible",
       "pickupOnly": "Solo recogida",
-      "shipsTo": "Envía a:"
+      "shipsTo": "Envía a:",
+      "shippingCost": "Costo de envío:",
+      "shippingFree": "Gratis",
+      "shippingVaries": "Varía según la ubicación"
     },
     "heritage": {
       "section": "Historia y procedencia",
@@ -756,7 +776,10 @@
       "shipping": "Expédition",
       "shippingAvailable": "Disponible",
       "pickupOnly": "Retrait uniquement",
-      "shipsTo": "Expédie vers :"
+      "shipsTo": "Expédie vers :",
+      "shippingCost": "Frais de livraison :",
+      "shippingFree": "Gratuits",
+      "shippingVaries": "Variables selon la destination"
     },
     "heritage": {
       "section": "Histoire et provenance",
@@ -835,7 +858,10 @@
       "shipping": "Versand",
       "shippingAvailable": "Verfügbar",
       "pickupOnly": "Nur Abholung",
-      "shipsTo": "Versand nach:"
+      "shipsTo": "Versand nach:",
+      "shippingCost": "Versandkosten:",
+      "shippingFree": "Kostenlos",
+      "shippingVaries": "Je nach Zielort"
     },
     "heritage": {
       "section": "Geschichte & Herkunft",
@@ -914,7 +940,10 @@
       "shipping": "Spedizione",
       "shippingAvailable": "Disponibile",
       "pickupOnly": "Solo ritiro",
-      "shipsTo": "Spedisce a:"
+      "shipsTo": "Spedisce a:",
+      "shippingCost": "Costo di spedizione:",
+      "shippingFree": "Gratuita",
+      "shippingVaries": "Varia in base alla destinazione"
     },
     "heritage": {
       "section": "Storia e provenienza",
@@ -996,7 +1025,10 @@
       "shipping": "Envio",
       "shippingAvailable": "Disponível",
       "pickupOnly": "Apenas retirada",
-      "shipsTo": "Envia para:"
+      "shipsTo": "Envia para:",
+      "shippingCost": "Custo de envio:",
+      "shippingFree": "Grátis",
+      "shippingVaries": "Varia conforme o local"
     },
     "heritage": {
       "section": "História e procedência",
@@ -1075,7 +1107,10 @@
       "shipping": "Доставка",
       "shippingAvailable": "Доступна",
       "pickupOnly": "Только самовывоз",
-      "shipsTo": "Доставка в:"
+      "shipsTo": "Доставка в:",
+      "shippingCost": "Стоимость доставки:",
+      "shippingFree": "Бесплатно",
+      "shippingVaries": "Зависит от места доставки"
     },
     "heritage": {
       "section": "История и происхождение",
@@ -1151,7 +1186,10 @@
       "shipping": "配送",
       "shippingAvailable": "可能",
       "pickupOnly": "引き取りのみ",
-      "shipsTo": "配送先："
+      "shipsTo": "配送先：",
+      "shippingCost": "送料：",
+      "shippingFree": "無料",
+      "shippingVaries": "配送先により異なる"
     },
     "heritage": {
       "section": "来歴・由来",
@@ -1219,7 +1257,10 @@
       "shipping": "运输",
       "shippingAvailable": "可运输",
       "pickupOnly": "仅限自取",
-      "shipsTo": "运送至："
+      "shipsTo": "运送至：",
+      "shippingCost": "运费：",
+      "shippingFree": "免费",
+      "shippingVaries": "因地点而异"
     },
     "heritage": {
       "section": "来历与出处",
@@ -1287,7 +1328,10 @@
       "shipping": "배송",
       "shippingAvailable": "가능",
       "pickupOnly": "직접 수령만",
-      "shipsTo": "배송 지역:"
+      "shipsTo": "배송 지역:",
+      "shippingCost": "배송비:",
+      "shippingFree": "무료",
+      "shippingVaries": "지역에 따라 다름"
     },
     "heritage": {
       "section": "내력 및 출처",

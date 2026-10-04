@@ -390,6 +390,8 @@
                 </label>
               </div>
             </div>
+
+            <ExchangeListingsShippingCostInput v-model="form.shippingCost" :currency="form.currency" />
           </template>
 
           <!-- Pickup Only notice -->

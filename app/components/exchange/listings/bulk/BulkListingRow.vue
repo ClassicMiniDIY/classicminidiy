@@ -238,6 +238,12 @@
                 <span class="text-sm">{{ t('shipping.international') }}</span>
               </label>
             </div>
+            <ExchangeListingsShippingCostInput
+              v-if="listing.shippingAvailable"
+              v-model="listing.shippingCost"
+              :currency="listing.currency"
+              class="mt-2"
+            />
             <p v-if="!listing.shippingAvailable" class="text-xs text-base-content/60">{{ t('shipping.pickupOnly') }}</p>
           </fieldset>
         </div>
