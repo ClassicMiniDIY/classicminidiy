@@ -272,3 +272,43 @@ Manual (staging forum or the real one before launch):
    `scripts/set-cf-secrets.sh`: the two new keys.
 6. Code review (Opus), then PR. Set the Worker secrets only after Cole approves; the
    route answers 503 until they exist, so merging first is safe.
+
+## AS-BUILT (2026-10-04, branch `feature/discourse-sso`)
+
+Built as designed, with these differences:
+
+- **Forum URL config.** The origin is public runtimeConfig `discourseUrl`
+  (`NUXT_PUBLIC_DISCOURSE_URL`, default `https://community.classicminidiy.com`), because
+  the page needs it for the "Start again from the forum" link. The secret is private
+  `DISCOURSE_CONNECT_SECRET`. Both are `OPTIONAL` in `scripts/set-cf-secrets.sh`, so the
+  script does not fail before the secret exists; the route answers 503 until then. Neither
+  is in the deploy workflow's required-secrets check.
+- **`return_sso_url`** must also have no credentials, query string or fragment, because the
+  answer appends `?sso=…&sig=…` to it.
+- **Input `sso`** may contain line breaks (Ruby `encode64` output, as in Discourse's
+  published example). The signature is checked over the text exactly as received. The
+  answer is always strict base64.
+- **Extra error codes.** A profile read error is 503 `profile_unavailable`; a missing
+  profile row is 409 `username_required`; a membership RPC error is 503
+  `membership_unavailable`.
+- **Suspended account.** The site has no shared suspended message, so the page has its own
+  `suspended` state for a 403 without `email_unverified`.
+- **POST once.** The guard is `useState` keyed by the `sso` value, so a re-mount sees it.
+  It is released on a failed POST (the server issued nothing), which keeps the
+  409 → name step → POST and 401 → sign-in → return paths working.
+- **Name step.** The display name is required (1–50 characters, as on `/profile/edit`).
+  The username suggestion comes from an existing but invalid username first, then the
+  display name, and never from the email local part. A `23514` (check_violation) on save
+  shows the reserved message; this assumes the database rule raises that code.
+- **Analytics.** `types/analytics.ts` does not exist and `useAnalytics().track()` takes any
+  string, so `forum_sso_started`, `forum_sso_completed` and `forum_sso_failed` (`reason`)
+  are untyped like the other `track()` events.
+- **PostHog query stripping** is a `before_send` hook (`app/utils/analyticsRedaction.ts`)
+  that covers every event, not only `$pageview`: properties, `$set` and `$set_once`.
+  Session-replay `$snapshot` events are not scrubbed.
+- **Test 13** uses both of Discourse's published vectors (request and answer) and
+  cross-checks them with `node:crypto` inside the test only.
+- **Route crawler.** `/discourse/sso` is in `ROUTE_EXPECTATIONS` as
+  `{ noindex: true, allowNoH1: true }`, like `/discord/connect`.
+- **Prerequisite 0** is handled in `classicminidiy-supabase`; `types/database.ts` was not
+  regenerated here (`is_username_available` and `user_has_subscription` were already in it).
