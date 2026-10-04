@@ -95,8 +95,8 @@ community.classicminidiy.com  "Log in"
 2. Body: `{ sso: string, sig: string }`. Reject anything over 2 KB, a `sig` that is not
    64 hex characters, or an `sso` that is not base64 → 400 `bad_request`.
 3. Verify `sig` with Web Crypto: `crypto.subtle.importKey('raw', secret, { name: 'HMAC',
-   hash: 'SHA-256' })`, then `crypto.subtle.verify('HMAC', key, hexToBytes(sig),
-   utf8(sso))`. `subtle.verify` compares in constant time. Do not compare hex strings
+hash: 'SHA-256' })`, then `crypto.subtle.verify('HMAC', key, hexToBytes(sig),
+utf8(sso))`. `subtle.verify` compares in constant time. Do not compare hex strings
    with `===`. Failure → 400 `bad_signature`. Do not use `node:crypto`: this repo
    already does so in `marketingUnsub.ts`, but this route uses the platform API.
 4. Decode the payload. `nonce` must be present and non-empty. `return_sso_url` must
@@ -118,25 +118,26 @@ community.classicminidiy.com  "Log in"
    mirrors the database list) → 409 `username_required`, and the page shows the identity
    step. Without this, a direct POST with no username lets Discourse invent one.
 8. Membership: `getServiceClient().rpc('user_has_subscription', { p_user_id: user.id,
-   p_product_id: SUSTAINING_PRODUCT_ID })`. An RPC error → 503, because guessing would
+p_product_id: SUSTAINING_PRODUCT_ID })`. An RPC error → 503, because guessing would
    flip someone's flair. Never read `plan`.
 9. Build the payload with `URLSearchParams`:
 
-   | Field | Value |
-   |---|---|
-   | `nonce` | from the request |
-   | `external_id` | `user.id` (Supabase auth user id) |
-   | `email` | `user.email` |
-   | `username` | `profiles.username` (always set by this point; see Identity) |
-   | `name` | `profiles.display_name`, omitted when empty **or** when it equals the email local part (case-insensitive; the `handle_new_user` default) |
-   | `avatar_url` | `profiles.avatar_url`, only when it is an absolute `https:` URL |
-   | `require_activation` | `false` (the email is confirmed by step 6) |
-   | `add_groups` / `remove_groups` | `sustaining_members` in one or the other, from step 8 |
+   | Field                          | Value                                                                                                                                    |
+   | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+   | `nonce`                        | from the request                                                                                                                         |
+   | `external_id`                  | `user.id` (Supabase auth user id)                                                                                                        |
+   | `email`                        | `user.email`                                                                                                                             |
+   | `username`                     | `profiles.username` (always set by this point; see Identity)                                                                             |
+   | `name`                         | `profiles.display_name`, omitted when empty **or** when it equals the email local part (case-insensitive; the `handle_new_user` default) |
+   | `avatar_url`                   | `profiles.avatar_url`, only when it is an absolute `https:` URL                                                                          |
+   | `require_activation`           | `false` (the email is confirmed by step 6)                                                                                               |
+   | `add_groups` / `remove_groups` | `sustaining_members` in one or the other, from step 8                                                                                    |
 
    Booleans must be the strings `true` or `false`; Discourse reads anything else as
    unset. Do not send `admin`, `moderator`, `groups`, `title`, `bio`, `website` or
    `location`. Forum staff and profiles are managed in Discourse. The welcome message
    stays on (it is the forum's onboarding).
+
 10. Sign: base64 of the payload, then hex HMAC-SHA256 of that base64 string. Return
     `{ redirect: return_sso_url + '?sso=' + encodeURIComponent(b64) + '&sig=' + hex }`
     with `cache-control: no-store`. The route never issues a 302 itself, because the
@@ -227,7 +228,7 @@ Unit (`tests/unit/server/api/discourse-sso.post.test.ts`, `@vitest-environment n
 11. Secret or URL unset → 503 `sso_unconfigured`.
 12. Empty `display_name`, or one equal to the email local part → no `name` field. A
     storage-path `avatar_url` → no `avatar_url` field.
-12a. `username` null, malformed, or reserved (`classicminidiy`) → 409 `username_required`,
+    12a. `username` null, malformed, or reserved (`classicminidiy`) → 409 `username_required`,
     and no redirect is returned.
 13. The signing helper matches a fixed vector: a known secret and payload give a known
     hex digest (taken from Discourse's own spec example), so a change in encoding
@@ -242,9 +243,9 @@ Page (`tests/unit/pages/discourse-sso.test.ts`, as `discord-connect.test.ts`):
 17. 401 → local sign-out, then the login redirect.
 18. 403 `email_unverified` → the unverified state.
 19. Missing `sso` or `sig` → the error state, no POST.
-19a. Re-mount or a double click sends one POST only.
-19b. 409 `username_required` → the identity step.
-19c. A display name equal to the email local part is not prefilled in either field.
+    19a. Re-mount or a double click sends one POST only.
+    19b. 409 `username_required` → the identity step.
+    19c. A display name equal to the email local part is not prefilled in either field.
 
 Static: the existing hydration, i18n and auto-import checks cover the page. Add
 `/discourse/sso` to the route crawler's auth-page list if it has one.
@@ -261,7 +262,7 @@ Manual (staging forum or the real one before launch):
 0. Prerequisite: the reserved-username migration in `classicminidiy-supabase` is in
    production, and `types/database.ts` is regenerated.
 1. Branch `feature/discourse-sso` off `origin/main`.
-1a. `shared/utils/usernames.ts`: the username regex and the reserved list (a copy of the
+   1a. `shared/utils/usernames.ts`: the username regex and the reserved list (a copy of the
    database list; the database trigger stays the enforcement, this copy only gives the
    early 409 and the form message).
 2. `server/utils/discourseConnect.ts`: `verifyDiscourseSig`, `signDiscoursePayload`,
