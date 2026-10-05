@@ -27,6 +27,9 @@
   type IdentityError = 'invalid' | 'reserved' | 'taken' | 'display_name' | 'generic';
   type OwnProfile = { username: string | null; display_name: string | null };
 
+  // A minimal community frame instead of the site chrome (design doc §9a item 3).
+  definePageMeta({ bareLayout: true });
+
   const { t } = useI18n();
   const route = useRoute();
   const runtimeConfig = useRuntimeConfig();
@@ -302,7 +305,18 @@
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-base-200 px-4">
+  <div class="min-h-screen flex flex-col items-center justify-center gap-6 bg-base-200 px-4 py-10">
+    <!-- The forum's own mark: twin bonnet stripes (olive, orange) beside the name. -->
+    <div class="flex items-center gap-3" data-testid="community-frame">
+      <span class="flex gap-1 self-stretch" aria-hidden="true">
+        <span class="w-1.5 rounded-sm bg-[#859369]"></span>
+        <span class="w-1.5 rounded-sm bg-[#ed7135]"></span>
+      </span>
+      <span class="text-xl font-semibold leading-tight tracking-tight">
+        Classic Mini DIY<br />
+        <span class="opacity-70">Community</span>
+      </span>
+    </div>
     <div class="card bg-base-100 shadow-md border border-base-300 w-full max-w-md">
       <ClientOnly>
         <div class="card-body items-center text-center">
@@ -432,6 +446,9 @@
         </template>
       </ClientOnly>
     </div>
+    <a :href="forumUrl" class="link link-hover text-sm opacity-70" data-testid="community-home">
+      community.classicminidiy.com
+    </a>
   </div>
 </template>
 

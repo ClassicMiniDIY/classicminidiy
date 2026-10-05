@@ -1,5 +1,9 @@
 <script lang="ts" setup>
   const route = useRoute();
+  // Pages that set `definePageMeta({ bareLayout: true })` render without the site
+  // chrome (nav, footer, onboarding nudge): the forum sign-in hand-off at
+  // /discourse/sso should feel like part of the community, not like leaving it.
+  const bareLayout = computed(() => route.meta.bareLayout === true);
   const isHomepage = ref(route.path === '/');
   watch(
     () => route.path,
@@ -91,18 +95,18 @@
       Skip to main content
     </a>
     <div class="app-content">
-      <MainNav></MainNav>
+      <MainNav v-if="!bareLayout"></MainNav>
       <!-- Mounted once, opened from anywhere via useOmnisearch/useContributeWizard. -->
       <OmniSearch />
       <ContributeWizard />
       <Toaster />
-      <OnboardingNudge />
+      <OnboardingNudge v-if="!bareLayout" />
       <NuxtLoadingIndicator />
       <main id="main-content" class="bg-base-100">
         <NuxtPage />
       </main>
     </div>
-    <Footer></Footer>
+    <Footer v-if="!bareLayout"></Footer>
     <VitePwaManifest />
   </div>
 </template>
