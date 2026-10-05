@@ -163,10 +163,7 @@
 
                     <!-- Table body -->
                     <tbody>
-                      <template
-                        v-for="(tableItem, itemIndex) in filterItems(table.items, name)"
-                        :key="itemIndex"
-                      >
+                      <template v-for="(tableItem, itemIndex) in filterItems(table.items, name)" :key="itemIndex">
                         <tr class="border-b border-base-300 last:border-0 hover:bg-base-200 transition-colors">
                           <td class="p-2">{{ tableItem.item }}</td>
                           <td class="p-2">{{ tableItem.weight || '---' }}</td>

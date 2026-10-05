@@ -204,7 +204,9 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    transition: color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
+    transition:
+      color var(--t-fast) var(--ease-out),
+      transform var(--t-fast) var(--ease-out);
   }
   .social-pill:hover {
     color: var(--cm-secondary);
@@ -244,7 +246,13 @@
             rel="noopener"
             :aria-label="t('youtube_link_aria')"
             class="link hover:underline"
-            @click="trackOutbound({ destination: 'https://youtube.com/c/classicminidiy?sub_confirmation=1', label: 'YouTube', group: 'footer_social' })"
+            @click="
+              trackOutbound({
+                destination: 'https://youtube.com/c/classicminidiy?sub_confirmation=1',
+                label: 'YouTube',
+                group: 'footer_social',
+              })
+            "
           >
             {{ t('author_name') }}</NuxtLink
           >.
@@ -265,7 +273,11 @@
             <div class="divider my-4">{{ t('links_divider') }}</div>
 
             <div class="flex flex-wrap justify-center gap-3">
-              <NuxtLink to="/contact" class="link text-sm hover:underline" @click="track('contact_cta_clicked', { location: 'footer' })">
+              <NuxtLink
+                to="/contact"
+                class="link text-sm hover:underline"
+                @click="track('contact_cta_clicked', { location: 'footer' })"
+              >
                 {{ t('contact_link') }}
               </NuxtLink>
               <NuxtLink
@@ -282,14 +294,22 @@
                 {{ t('privacy_links.cmdiy_privacy') }}
               </NuxtLink>
               <NuxtLink to="/legal/model-terms" class="link text-sm hover:underline"> Model Library Terms </NuxtLink>
-              <NuxtLink to="/legal/paid-file-license" class="link text-sm hover:underline"> Paid File License </NuxtLink>
+              <NuxtLink to="/legal/paid-file-license" class="link text-sm hover:underline">
+                Paid File License
+              </NuxtLink>
               <NuxtLink to="/legal/dmca" class="link text-sm hover:underline"> DMCA </NuxtLink>
               <NuxtLink
                 to="https://www.youtube.com/t/terms"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="link text-sm hover:underline"
-                @click="trackOutbound({ destination: 'https://www.youtube.com/t/terms', label: 'YouTube Privacy Policy', group: 'footer' })"
+                @click="
+                  trackOutbound({
+                    destination: 'https://www.youtube.com/t/terms',
+                    label: 'YouTube Privacy Policy',
+                    group: 'footer',
+                  })
+                "
               >
                 {{ t('privacy_links.youtube_privacy') }}
               </NuxtLink>
@@ -298,7 +318,13 @@
                 target="_blank"
                 rel="noopener noreferrer"
                 class="link text-sm hover:underline"
-                @click="trackOutbound({ destination: 'http://www.google.com/policies/privacy', label: 'Google Privacy Policy', group: 'footer' })"
+                @click="
+                  trackOutbound({
+                    destination: 'http://www.google.com/policies/privacy',
+                    label: 'Google Privacy Policy',
+                    group: 'footer',
+                  })
+                "
               >
                 {{ t('privacy_links.google_privacy') }}
               </NuxtLink>
