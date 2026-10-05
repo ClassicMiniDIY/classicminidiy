@@ -7,6 +7,7 @@
    * into shared chrome (ToolFooter does). The link goes to the server route,
    * which finds or creates the topic and redirects; with the forum key unset it
    * redirects to the forum search. `nofollow` keeps crawlers off the create path.
+   * Below it, CommunityDiscussEmbed shows the existing topic inline, if there is one.
    */
   import { communityDiscussKeyForPath } from '~~/shared/utils/communityDiscuss';
 
@@ -19,22 +20,24 @@
 </script>
 
 <template>
-  <a
-    v-if="pageKey"
-    :href="href"
-    target="_blank"
-    rel="nofollow noopener"
-    class="mt-4 flex items-center gap-3.5 rounded-box border border-base-300 bg-base-100 px-5 py-4 transition-colors hover:border-secondary"
-    data-testid="community-discuss-link"
-    @click="trackOutbound({ destination: href, label: pageKey ?? undefined, group: 'community_discuss' })"
-  >
-    <i class="fas fa-comments text-lg text-secondary" aria-hidden="true"></i>
-    <span>
-      <span class="block text-sm font-semibold">{{ t('title') }} &rarr;</span>
-      <span class="mt-0.5 block text-[13px] opacity-75">{{ t('body') }}</span>
-    </span>
-    <span class="sr-only">{{ t('opens_new_tab') }}</span>
-  </a>
+  <div v-if="pageKey" class="mt-4">
+    <a
+      :href="href"
+      target="_blank"
+      rel="nofollow noopener"
+      class="flex items-center gap-3.5 rounded-box border border-base-300 bg-base-100 px-5 py-4 transition-colors hover:border-secondary"
+      data-testid="community-discuss-link"
+      @click="trackOutbound({ destination: href, label: pageKey ?? undefined, group: 'community_discuss' })"
+    >
+      <i class="fas fa-comments text-lg text-secondary" aria-hidden="true"></i>
+      <span>
+        <span class="block text-sm font-semibold">{{ t('title') }} &rarr;</span>
+        <span class="mt-0.5 block text-[13px] opacity-75">{{ t('body') }}</span>
+      </span>
+      <span class="sr-only">{{ t('opens_new_tab') }}</span>
+    </a>
+    <CommunityDiscussEmbed :page-key="pageKey" />
+  </div>
 </template>
 
 <i18n lang="json">

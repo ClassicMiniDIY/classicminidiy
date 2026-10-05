@@ -27,6 +27,7 @@ import { matchBot } from '../../utils/aiBots';
 import { clientIp } from '../../utils/clientIp';
 import { type DiscourseDiscussConfig, findOrCreateDiscussTopic } from '../../utils/discourseDiscuss';
 import { consumeRateLimit } from '../../utils/rateLimit';
+import { type DiscussCacheEntry, readDiscussCache, writeDiscussCache } from '../../utils/discussCache';
 import { serverRuntimeConfig } from '../../utils/runtimeConfig';
 
 const DEFAULT_FORUM = 'https://community.classicminidiy.com';
@@ -35,21 +36,18 @@ const DEFAULT_SITE = 'https://www.classicminidiy.com';
 /** Per-IP: a person clicks this a few times; a loop clicks it hundreds of times. */
 const RATE_LIMIT = { max: 20, windowMs: 60_000 };
 
-/** A found topic does not move: keep the mapping for 30 days. */
-const DISCUSS_TOPIC_TTL_SECONDS = 30 * 24 * 60 * 60;
+/**
+ * A found topic does not move: keep the mapping for a year. The comment embeds
+ * read only this mapping, so a short TTL would hide a page's discussion until
+ * someone clicked "Discuss this" again. If a moderator deletes a page topic,
+ * delete its KV key (docs/plans/2026-10-05-community-discuss-links.md).
+ */
+const DISCUSS_TOPIC_TTL_SECONDS = 365 * 24 * 60 * 60;
 /** A failure (forum down, create refused) is retried after 10 minutes. KV's minimum TTL is 60 s. */
 const DISCUSS_FAILURE_TTL_SECONDS = 10 * 60;
 
 /** Generic crawler words, for bots that `matchBot` does not name. `\bbot\b` so "CUBOT" phones pass. */
 const CRAWLER_UA = /\bbot\b|bot\/|crawl|spider|slurp|headless/i;
-
-/** What the cache holds for a page key. */
-type DiscussCacheEntry = { url: string } | { failed: true };
-
-/** Storage id for a page key's entry in useStorage('cache'). */
-function discussCacheId(key: CommunityDiscussKey): string {
-  return `community-discuss:${key}`;
-}
 
 /** The https origin of a configured URL, or null. */
 function httpsOrigin(value: unknown): string | null {
@@ -76,25 +74,6 @@ function discussConfig(config: Record<string, any>, forum: string): DiscourseDis
   return { forum, apiKey, apiUsername, categoryId };
 }
 
-/** A cached entry, null on a miss. Throws when the store cannot be read. */
-async function readCache(key: CommunityDiscussKey): Promise<DiscussCacheEntry | null> {
-  const entry = (await useStorage('cache').getItem(discussCacheId(key))) as DiscussCacheEntry | null;
-  if (entry && typeof entry === 'object') {
-    if ('url' in entry && typeof entry.url === 'string') return entry;
-    if ('failed' in entry && entry.failed === true) return entry;
-  }
-  return null;
-}
-
-/** Best effort: a failed write costs one more forum call later, nothing else. */
-async function writeCache(key: CommunityDiscussKey, entry: DiscussCacheEntry, ttl: number): Promise<void> {
-  try {
-    await useStorage('cache').setItem(discussCacheId(key), entry, { ttl });
-  } catch (error) {
-    console.error(`[community-discuss] ${key}: cache write failed: ${(error as Error).message}`);
-  }
-}
-
 export default defineEventHandler(async (event) => {
   setHeader(event, 'Cache-Control', 'no-store');
   setHeader(event, 'X-Robots-Tag', 'noindex, nofollow');
@@ -116,7 +95,7 @@ export default defineEventHandler(async (event) => {
 
   let cached: DiscussCacheEntry | null;
   try {
-    cached = await readCache(key);
+    cached = await readDiscussCache(key);
   } catch (error) {
     // Without the shared cache every click would reach the forum's shared limiter.
     console.error(`[community-discuss] ${key}: cache read failed: ${(error as Error).message}`);
@@ -135,12 +114,12 @@ export default defineEventHandler(async (event) => {
       title: communityDiscussTopicTitle(page),
       pageUrl: `${site}${page.path}`,
     });
-    await writeCache(key, { url: topicUrl }, DISCUSS_TOPIC_TTL_SECONDS);
+    await writeDiscussCache(key, { url: topicUrl }, DISCUSS_TOPIC_TTL_SECONDS);
     return sendRedirect(event, topicUrl, 302);
   } catch (error) {
     const status = (error as { status?: number }).status;
     console.error(`[community-discuss] ${key}: ${(error as Error).message}${status ? ` (${status})` : ''}`);
-    await writeCache(key, { failed: true }, DISCUSS_FAILURE_TTL_SECONDS);
+    await writeDiscussCache(key, { failed: true }, DISCUSS_FAILURE_TTL_SECONDS);
     return sendRedirect(event, searchUrl, 302);
   }
 });
