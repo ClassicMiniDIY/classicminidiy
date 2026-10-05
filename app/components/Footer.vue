@@ -14,6 +14,7 @@
           'The Classic Mini DIY toolbox is a passion project aligned with the Classic Mini DIY youtube channel. This is a completely free resource built to keep the Classic Mini technical knowledge base alive for years to come. Regularly updated and community fed data made to help Classic Mini owners around the world.',
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contact',
+        community_link: 'Community',
         links_divider: 'Links',
         privacy_links: {
           cmdiy_privacy: 'CMDIY Site Privacy Policy',
@@ -30,6 +31,7 @@
           'La caja de herramientas Classic Mini DIY es un proyecto de pasión alineado con el canal de youtube Classic Mini DIY. Este es un recurso completamente gratuito construido para mantener viva la base de conocimiento técnico del Classic Mini por años venideros. Datos actualizados regularmente y alimentados por la comunidad hechos para ayudar a propietarios de Classic Mini en todo el mundo.',
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contacto',
+        community_link: 'Comunidad',
         links_divider: 'Enlaces',
         privacy_links: {
           cmdiy_privacy: 'Política de Privacidad del Sitio CMDIY',
@@ -46,6 +48,7 @@
           "La boîte à outils Classic Mini DIY est un projet de passion aligné avec la chaîne youtube Classic Mini DIY. C'est une ressource complètement gratuite construite pour maintenir vivante la base de connaissances techniques du Classic Mini pour les années à venir. Données régulièrement mises à jour et alimentées par la communauté faites pour aider les propriétaires de Classic Mini dans le monde entier.",
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contact',
+        community_link: 'Communauté',
         links_divider: 'Liens',
         privacy_links: {
           cmdiy_privacy: 'Politique de Confidentialité du Site CMDIY',
@@ -62,6 +65,7 @@
           'Die Classic Mini DIY Toolbox ist ein Leidenschaftsprojekt, das mit dem Classic Mini DIY Youtube-Kanal abgestimmt ist. Dies ist eine völlig kostenlose Ressource, die entwickelt wurde, um die technische Wissensbasis des Classic Mini für die kommenden Jahre am Leben zu erhalten. Regelmäßig aktualisierte und von der Community gespeiste Daten, die Classic Mini-Besitzern auf der ganzen Welt helfen sollen.',
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Kontakt',
+        community_link: 'Community',
         links_divider: 'Links',
         privacy_links: {
           cmdiy_privacy: 'CMDIY Website Datenschutzrichtlinie',
@@ -78,6 +82,7 @@
           'La cassetta degli attrezzi Classic Mini DIY è un progetto di passione allineato con il canale youtube Classic Mini DIY. Questa è una risorsa completamente gratuita costruita per mantenere viva la base di conoscenze tecniche del Classic Mini per gli anni a venire. Dati regolarmente aggiornati e alimentati dalla comunità fatti per aiutare i proprietari di Classic Mini in tutto il mondo.',
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contatto',
+        community_link: 'Community',
         links_divider: 'Collegamenti',
         privacy_links: {
           cmdiy_privacy: 'Politica sulla Privacy del Sito CMDIY',
@@ -94,6 +99,7 @@
           'Classic Mini DIYツールボックスは、Classic Mini DIY youtubeチャンネルと連携した情熱プロジェクトです。これは、Classic Miniの技術知識ベースを今後何年も生き続けさせるために構築された完全に無料のリソースです。定期的に更新され、コミュニティによって供給されるデータは、世界中のClassic Miniオーナーを支援するために作られています。',
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'お問い合わせ',
+        community_link: 'コミュニティ',
         links_divider: 'リンク',
         privacy_links: {
           cmdiy_privacy: 'CMDIYサイトプライバシーポリシー',
@@ -110,6 +116,7 @@
           'Classic Mini DIY 도구상자는 Classic Mini DIY 유튜브 채널과 연계된 열정 프로젝트입니다. 이것은 앞으로 몇 년 동안 Classic Mini 기술 지식 기반을 살아있게 유지하기 위해 구축된 완전히 무료 리소스입니다. 정기적으로 업데이트되고 커뮤니티에서 제공하는 데이터로 전 세계 Classic Mini 소유자들을 돕기 위해 만들어졌습니다.',
         company_name: 'Classic Mini DIY LLC',
         contact_link: '연락처',
+        community_link: '커뮤니티',
         links_divider: '링크',
         privacy_links: {
           cmdiy_privacy: 'CMDIY 사이트 개인정보 보호정책',
@@ -126,6 +133,7 @@
           'A caixa de ferramentas Classic Mini DIY é um projeto de paixão alinhado com o canal do youtube Classic Mini DIY. Este é um recurso completamente gratuito construído para manter viva a base de conhecimento técnico do Classic Mini por anos vindouros. Regularmente atualizado e dados alimentados pela comunidade feitos para ajudar proprietários de Classic Mini em todo o mundo.',
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contato',
+        community_link: 'Comunidade',
         links_divider: 'Links',
         privacy_links: {
           cmdiy_privacy: 'Política de Privacidade do Site CMDIY',
@@ -142,6 +150,7 @@
           'Набор инструментов Classic Mini DIY - это проект страсти, согласованный с каналом youtube Classic Mini DIY. Это полностью бесплатный ресурс, созданный для поддержания базы технических знаний Classic Mini на годы вперед. Регулярно обновляемые и подпитываемые сообществом данные, созданные для помощи владельцам Classic Mini по всему миру.',
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Контакт',
+        community_link: 'Сообщество',
         links_divider: 'Ссылки',
         privacy_links: {
           cmdiy_privacy: 'Политика конфиденциальности сайта CMDIY',
@@ -158,6 +167,7 @@
           'Classic Mini DIY工具箱是与Classic Mini DIY youtube频道一致的激情项目。这是一个完全免费的资源，旨在让Classic Mini技术知识库在未来几年保持活力。定期更新和社区提供的数据，旨在帮助世界各地的Classic Mini车主。',
         company_name: 'Classic Mini DIY LLC',
         contact_link: '联系我们',
+        community_link: '社区',
         links_divider: '链接',
         privacy_links: {
           cmdiy_privacy: 'CMDIY网站隐私政策',
@@ -168,6 +178,9 @@
     },
   });
   const socials = ref(SocialItems);
+  /** Classic Mini DIY Community (Discourse), the same public origin MainNav links to. */
+  const runtimeConfig = useRuntimeConfig();
+  const communityUrl = computed(() => runtimeConfig.public.discourseUrl || 'https://community.classicminidiy.com');
 </script>
 
 <style scoped>
@@ -244,6 +257,15 @@
             <div class="flex flex-wrap justify-center gap-3">
               <NuxtLink to="/contact" class="link text-sm hover:underline" @click="track('contact_cta_clicked', { location: 'footer' })">
                 {{ t('contact_link') }}
+              </NuxtLink>
+              <NuxtLink
+                :to="communityUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link text-sm hover:underline"
+                @click="trackOutbound({ destination: communityUrl, label: 'Community', group: 'footer' })"
+              >
+                {{ t('community_link') }}
               </NuxtLink>
               <NuxtLink to="/privacy" class="link text-sm hover:underline">
                 {{ t('privacy_links.cmdiy_privacy') }}
