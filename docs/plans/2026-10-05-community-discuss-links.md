@@ -138,8 +138,10 @@ Checked against `discourse/discourse` `main` on 2026-10-05:
 - **Shared cache.** A per-isolate memory cache does not protect the forum's shared
   admin API limiter: every cold isolate would call the forum again. The route keeps
   the page key to topic URL mapping in the KV-backed `useStorage('cache')` (the
-  existing `CACHE` binding in `wrangler.jsonc`; no new binding) for 30 days. Every
-  isolate reads the same entry, so a page costs forum calls about once a month.
+  existing `CACHE` binding in `wrangler.jsonc`; no new binding) for a year
+  (30 days until the comment embeds; see below). Every isolate reads the same entry,
+  so a page costs forum calls about once a year. The helpers are in
+  `server/utils/discussCache.ts`.
 - **Failures are cached too**, for 10 minutes: forum down, a timeout, a 429, a post
   sent to the review queue, and a create refused with a 422 where the second lookup
   still finds nothing. A failing page therefore costs at most one forum attempt per
@@ -151,9 +153,13 @@ Checked against `discourse/discourse` `main` on 2026-10-05:
   line without secrets. A 422 logs the forum's `errors` array (validation messages,
   no secrets). If the topic was deleted by a moderator, its `external_id` stays
   taken, so the create fails and the link falls back to search. Restore the topic to
-  bring the link back; the failure entry expires within 10 minutes.
+  bring the link back; the failure entry expires within 10 minutes. While the KV entry
+  for a deleted topic lives, the link and the embed still point at it: delete the KV
+  key `community-discuss:<page key>` from the `CACHE` namespace after deleting a page
+  topic.
 - **Edge rate limit (recommended operator step).** Add a Cloudflare zone rate-limit
-  rule for `/api/community/discuss`. The in-Worker limit is per isolate, so it only
+  rule for the exact path `/api/community/discuss` (path equals, not starts with: the
+  embed's `/api/community/discuss/topic` is a cheap KV read on every page view). The in-Worker limit is per isolate, so it only
   dampens. Choose the threshold with the forum's admin API limit in view; record it
   in the private forum repo, not here.
 
@@ -184,9 +190,8 @@ exists.
 2. Choose the category for page topics. The default proposal is **Tech Help**. Staff
    creates the topics through `system`, and everyone can reply.
 3. Keep `embed_unlisted` off, so the topics are listed.
-4. Optional, for the later comment embed: add an Embeddable Host
-   `www.classicminidiy.com` mapped to the same category (Admin → Customize →
-   Embedding). The discuss route does not need it.
+4. For the comment embeds: add the Embeddable Host `www.classicminidiy.com`, see
+   "Comment embeds" below. The discuss route does not need it.
 5. Set the three secrets on the Worker.
 6. Cloudflare (zone operator): add a rate-limit rule for `/api/community/discuss` (see
    "Edge rate limit" above). Recommended, not required for the merge.
@@ -196,5 +201,109 @@ exists.
 `tests/unit/server/api/community-discuss.get.test.ts` (mocked `fetch`): unknown key,
 unconfigured, crawler (and a "CUBOT" phone that is not one), KV hit, KV unreadable,
 found by external id, an `http://` Location, created, 422 race, 422 reasons logged,
-cached failures, forum down, time budget, rate limited, enqueued post. `tests/unit/shared/communityDiscuss.test.ts`: the
-allowlist shape (title length, external id format, path to key lookup).
+cached failures, forum down, time budget, rate limited, enqueued post.
+`tests/unit/shared/communityDiscuss.test.ts`: the allowlist shape (title length,
+external id format, path to key lookup). Comment embeds:
+`tests/unit/server/api/community-discuss-topic.get.test.ts` (KV hit, miss, cached
+failure, malformed entry, KV down, rate limit, never calls the forum),
+`tests/unit/utils/discourseEmbed.test.ts` (src by `topic_id`, origin and source
+checks, height clamp), `tests/unit/components/community-discuss-embed.test.ts` (hit →
+button → iframe with `topic_id`; miss → nothing; resize only from the forum origin and
+its own frame).
+
+## Comment embeds (Phase 7 item 2)
+
+Date: 2026-10-05. Branch: `feature/community-comment-embeds`.
+
+Goal: on the same allowlisted pages, show the forum discussion inline, from the SAME
+topic that "Discuss this" uses. A page view never creates a topic. When no topic
+exists yet, the page shows only the "Discuss this" link.
+
+### How the page embeds the topic
+
+```
+page mounts ─ CommunityDiscussEmbed (inside CommunityDiscussLink, client-only)
+  GET /api/community/discuss/topic?page=<key>   KV read only → { topicId } | { topicId: null }
+  null ─▶ render nothing
+  id   ─▶ card "Community discussion" + button "Show the discussion"
+           click ─▶ <iframe src="{forum}/embed/comments?topic_id=<id>&class_name=cmdiy-embed-<light|dark>">
+           height ◀─ postMessage { type: "discourse-resize", height } from the forum origin
+```
+
+- **By `topic_id`, never by `embed_url`.** In `EmbedController#comments`, an
+  `embed_url` with no `TopicEmbed` enqueues `Jobs::RetrieveTopic`, which crawls the
+  page and creates a topic. `topic_id` only renders an existing topic (`TopicView`;
+  a missing or hidden topic is a 404) and cannot create one.
+- **The topic id comes from KV.** `GET /api/community/discuss/topic` reads the mapping
+  that `GET /api/community/discuss` writes and parses the id from the cached topic URL.
+  It never calls the forum, so page views do not spend the shared admin API limit. A
+  miss, a cached failure, an unknown key, an unreadable store or the per-IP limit all
+  answer `{ topicId: null }`. Browser cache: 5 minutes on a hit, 1 minute on a miss.
+- **TTL.** The embed only knows a topic while its KV entry lives, so the topic entry
+  TTL is now a year (was 30 days). Entries written before this change keep their
+  30-day TTL; the next "Discuss this" click after one expires rewrites it.
+- **Client-only and on demand.** The read runs in `onMounted`, so SSR and the first
+  client render agree (nothing) and crawlers get no iframe. The iframe loads only
+  when the reader presses "Show the discussion", so no request reaches the forum
+  before that. The forum's `X-Robots-Tag: noindex, indexifembedded` applies if a
+  crawler ever renders it.
+
+### Discourse behaviour verified against source (2026-10-05, `main`)
+
+- `EmbedController#comments`: the `EmbeddableHost.url_allowed?` check is skipped
+  when `topic_id` is present. `prepare_embeddable` deletes `X-Frame-Options` and sets
+  the embed's `data-referer` to the request's Referer (or `*` with
+  `embed_any_origin`). The response sets `X-Robots-Tag: noindex, indexifembedded`.
+- Framing is controlled by CSP: `ContentSecurityPolicy::Default` adds
+  `frame-ancestors 'self' https://<host>` for every `EmbeddableHost` row while
+  `content_security_policy_frame_ancestors` is on (default) and `embed_any_origin` is
+  off (default). Checked on the live forum: `frame-ancestors` lists only
+  `https://news.classicminidiy.com` today, so the site cannot frame the embed until
+  the `www.classicminidiy.com` row exists.
+- Resize: `embed-application.js` (inside the iframe) posts
+  `{ type: "discourse-resize", height }` on load and `{ type: "discourse-scroll", top }`
+  for post links, with `parent.postMessage(msg, referer)`. **The iframe request must
+  carry a Referer**, or the target origin is empty and no message is sent. The iframe
+  sets `referrerpolicy="strict-origin-when-cross-origin"`: the forum gets only
+  `https://www.classicminidiy.com/`, never the page path. The receiving code mirrors
+  `public/javascripts/embed.js` with stricter checks: exact origin equality (embed.js
+  uses a substring match) and `event.source` must be our iframe. Heights are clamped
+  to 120-8000 px (`app/utils/discourseEmbed.ts`).
+- Sandbox: `allow-scripts allow-same-origin allow-popups
+allow-popups-to-escape-sandbox`. Scripts run the resize. `allow-same-origin` keeps
+  the frame on its own (forum) origin; without it the origin is opaque (`null`) and
+  the origin check would reject every message. It grants nothing on our origin,
+  because the frame is cross-origin. Popups let the embed's links open the forum in a
+  new tab (the embed sets `target=_blank` on post links). No `allow-top-navigation`
+  and no `allow-forms`.
+- `classicminidiy.com` 301s to `www.classicminidiy.com`, so only the `www` host frames
+  the embed.
+
+### Dark mode
+
+The embed uses the forum's embed stylesheet and the theme's "Embedded CSS". It cannot
+read the site's theme. The iframe passes `class_name=cmdiy-embed-dark` or
+`cmdiy-embed-light` (from `useColorMode`), which Discourse puts on the embed's
+`<html>`. The iframe reloads when the reader switches theme. Until the forum theme
+styles `.cmdiy-embed-dark` in its Embedded CSS, the embed shows the forum's default
+(light) colours inside a dark page.
+
+### Privacy
+
+Reading the embed needs no forum cookie. A signed-out probe of
+`/embed/comments?topic_id=118` set no cookie. Nothing loads from the forum until the
+reader presses the button. The forum receives the reader's IP, user agent and the
+site origin as Referer, not the page path.
+
+### Forum-side prerequisites (forum operator)
+
+1. Admin → Customize → Embedding → add host `www.classicminidiy.com`, category
+   **Tech Help** (id 5, the discuss category). Leave "Allowed paths" empty or set it
+   to `/(technical|archive)/.*`. Do not add `classicminidiy.com` (it redirects).
+2. Keep `embed_any_origin` off (default) and `content_security_policy_frame_ancestors`
+   on (default): only the listed hosts can frame the forum.
+3. `embed_post_limit` (default 100) is the number of replies shown inline; the rest
+   are behind "continue discussion". Keep the default unless the page gets long.
+4. Optional: style `.cmdiy-embed-dark` in the theme's Embedded CSS (dark mode).
+5. Do not add a cache rule for `/embed/*`: the HTML carries the per-request Referer as
+   the postMessage target.
