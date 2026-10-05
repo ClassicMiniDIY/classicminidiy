@@ -132,18 +132,28 @@ function decodeEntities(text: string): string {
 }
 
 /**
+ * Remove HTML tags until none are left (one pass can leave a tag that a removal
+ * joined together), then any stray angle bracket.
+ */
+function stripTags(html: string): string {
+  let text = html;
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(/<[^<>]*>/g, '');
+  } while (text !== previous);
+  return text.replace(/[<>]/g, '');
+}
+
+/**
  * Plain text, one line, capped. The ellipsis is load-bearing: without it the
  * model cannot tell a sentence that ended from one this cut off.
  */
 function toSummary(blurb: unknown): string {
   if (typeof blurb !== 'string') return '';
   // Decoding can turn `&lt;script&gt;` back into a tag, so tags are stripped on both
-  // sides of it and any stray angle bracket is dropped: the summary is plain text.
-  const text = stripContactDetails(
-    decodeEntities(blurb.replace(/<[^>]*>/g, ''))
-      .replace(/<[^>]*>/g, '')
-      .replace(/[<>]/g, '')
-  )
+  // sides of it: the summary is plain text.
+  const text = stripContactDetails(stripTags(decodeEntities(stripTags(blurb))))
     .replace(/\s+/g, ' ')
     .trim();
   return text.length > SUMMARY_LIMIT ? `${text.slice(0, SUMMARY_LIMIT).trimEnd()}…` : text;
