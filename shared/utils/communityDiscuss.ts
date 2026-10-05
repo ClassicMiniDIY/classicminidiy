@@ -7,15 +7,17 @@
  * here, never from the request. Add a page by adding an entry; the component
  * shows the link on exactly these paths.
  *
- * Titles are English (the forum language), at least 15 characters
- * (Discourse `min_topic_title_length`), and unique on the forum
- * (`allow_duplicate_topic_titles` is off).
+ * `title` is the page name in English (the forum language). The forum topic
+ * title is `communityDiscussTopicTitle(page)`, which adds a prefix so it cannot
+ * clash with an imported archive topic (`allow_duplicate_topic_titles` is off)
+ * and stays at least 15 characters (`min_topic_title_length`). The forum search
+ * fallback uses the bare `title`.
  */
 
 export interface CommunityDiscussPage {
   /** Site path, no trailing slash, lowercase. */
   path: string;
-  /** Forum topic title. */
+  /** Page name, English. */
   title: string;
 }
 
@@ -64,4 +66,9 @@ export function communityDiscussKeyForPath(path: string): CommunityDiscussKey | 
  */
 export function communityDiscussExternalId(key: CommunityDiscussKey): string {
   return `cmdiy-${key}`;
+}
+
+/** The forum topic title for a new page topic. Changing it does not rename existing topics. */
+export function communityDiscussTopicTitle(page: CommunityDiscussPage): string {
+  return `Discussion: ${page.title}`;
 }

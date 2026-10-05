@@ -311,6 +311,7 @@
               >
                 <i :class="[link.icon, 'w-4 text-secondary']" aria-hidden="true"></i>
                 {{ link.label }}
+                <span class="sr-only">{{ t('opens_new_tab') }}</span>
               </a>
             </li>
           </ul>
@@ -517,6 +518,7 @@
                 >
                   <i :class="[link.icon, 'w-[18px] text-secondary']" aria-hidden="true"></i>
                   {{ link.label }}
+                  <span class="sr-only">{{ t('opens_new_tab') }}</span>
                 </a>
               </template>
 
@@ -793,7 +795,8 @@
     },
     "mobile_menu_title": "Menu",
     "close_menu": "Close menu",
-    "language_settings": "Language & settings"
+    "language_settings": "Language & settings",
+    "opens_new_tab": "(opens in a new tab)"
   },
   "es": {
     "logo_alt": "Logo de Classic Mini DIY",
@@ -830,7 +833,8 @@
     },
     "mobile_menu_title": "Menú",
     "close_menu": "Cerrar menú",
-    "language_settings": "Idioma y ajustes"
+    "language_settings": "Idioma y ajustes",
+    "opens_new_tab": "(se abre en una pestaña nueva)"
   },
   "fr": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -867,7 +871,8 @@
     },
     "mobile_menu_title": "Menu",
     "close_menu": "Fermer le menu",
-    "language_settings": "Langue et paramètres"
+    "language_settings": "Langue et paramètres",
+    "opens_new_tab": "(ouvre un nouvel onglet)"
   },
   "de": {
     "logo_alt": "Classic Mini DIY Logo",
@@ -904,7 +909,8 @@
     },
     "mobile_menu_title": "Menü",
     "close_menu": "Menü schließen",
-    "language_settings": "Sprache und Einstellungen"
+    "language_settings": "Sprache und Einstellungen",
+    "opens_new_tab": "(öffnet einen neuen Tab)"
   },
   "it": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -941,7 +947,8 @@
     },
     "mobile_menu_title": "Menu",
     "close_menu": "Chiudi menu",
-    "language_settings": "Lingua e impostazioni"
+    "language_settings": "Lingua e impostazioni",
+    "opens_new_tab": "(si apre in una nuova scheda)"
   },
   "pt": {
     "logo_alt": "Logo Classic Mini DIY",
@@ -978,7 +985,8 @@
     },
     "mobile_menu_title": "Menu",
     "close_menu": "Fechar menu",
-    "language_settings": "Idioma e configurações"
+    "language_settings": "Idioma e configurações",
+    "opens_new_tab": "(abre num separador novo)"
   },
   "ru": {
     "logo_alt": "Логотип Classic Mini DIY",
@@ -1015,7 +1023,8 @@
     },
     "mobile_menu_title": "Меню",
     "close_menu": "Закрыть меню",
-    "language_settings": "Язык и настройки"
+    "language_settings": "Язык и настройки",
+    "opens_new_tab": "(откроется в новой вкладке)"
   },
   "ja": {
     "logo_alt": "Classic Mini DIY ロゴ",
@@ -1052,7 +1061,8 @@
     },
     "mobile_menu_title": "メニュー",
     "close_menu": "メニューを閉じる",
-    "language_settings": "言語と設定"
+    "language_settings": "言語と設定",
+    "opens_new_tab": "（新しいタブで開きます）"
   },
   "zh": {
     "logo_alt": "Classic Mini DIY 徽标",
@@ -1089,7 +1099,8 @@
     },
     "mobile_menu_title": "菜单",
     "close_menu": "关闭菜单",
-    "language_settings": "语言和设置"
+    "language_settings": "语言和设置",
+    "opens_new_tab": "（在新标签页中打开）"
   },
   "ko": {
     "logo_alt": "Classic Mini DIY 로고",
@@ -1126,7 +1137,8 @@
     },
     "mobile_menu_title": "메뉴",
     "close_menu": "메뉴 닫기",
-    "language_settings": "언어 및 설정"
+    "language_settings": "언어 및 설정",
+    "opens_new_tab": "(새 탭에서 열림)"
   }
 }
 </i18n>
