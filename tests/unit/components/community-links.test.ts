@@ -12,7 +12,7 @@ import CommunityDiscussLink from '~/app/components/CommunityDiscussLink.vue';
 
 function mountAt(path: string) {
   vi.stubGlobal('useRoute', () => ({ path, params: {}, query: {} }));
-  return mount(CommunityDiscussLink);
+  return mount(CommunityDiscussLink, { global: { stubs: { CommunityDiscussEmbed: true } } });
 }
 
 afterEach(() => {

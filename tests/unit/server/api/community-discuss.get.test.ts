@@ -173,10 +173,10 @@ describe('an existing topic', () => {
     expect((await handler(evt())).location).toBe(TORQUE_TOPIC);
   });
 
-  it('is kept in the shared cache for 30 days: the next click makes no forum call', async () => {
+  it('is kept in the shared cache for a year: the next click makes no forum call', async () => {
     fetchMock.mockResolvedValueOnce(redirectResponse(`${FORUM}/t/classic-mini-torque-specifications/42.json`));
     await handler(evt());
-    expect(kv.get(CACHE_ID)).toEqual({ value: { url: TORQUE_TOPIC }, ttl: 30 * 24 * 60 * 60 });
+    expect(kv.get(CACHE_ID)).toEqual({ value: { url: TORQUE_TOPIC }, ttl: 365 * 24 * 60 * 60 });
 
     fetchMock.mockClear();
     expect((await handler(evt())).location).toBe(TORQUE_TOPIC);
