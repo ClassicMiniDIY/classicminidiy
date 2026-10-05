@@ -126,6 +126,17 @@ describe('signed out (14)', () => {
   });
 });
 
+describe('community frame (§9a item 3)', () => {
+  it('shows the community mark and a link back to the forum home in every state', async () => {
+    stubEnvironment({ auth: makeAuthStub({ user: null }) });
+    const wrapper = mountPage();
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="community-frame"]').text()).toContain('Community');
+    expect(wrapper.find('[data-testid="community-home"]').attributes('href')).toBe(FORUM);
+  });
+});
+
 describe('signed in with a username (15)', () => {
   it('POSTs sso and sig with the bearer token, then navigates externally to the redirect', async () => {
     stubEnvironment({ supabase: makeSupabaseStub({ accessToken: 'tok-123' }) });
