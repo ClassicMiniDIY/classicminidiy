@@ -166,6 +166,15 @@ describe('parseForumSearch', () => {
     expect(JSON.stringify(result)).not.toMatch(/someowner|Some Owner|avatar/);
   });
 
+  it('leaves no tag or angle bracket when decoding entities would rebuild one', () => {
+    const [result] = parseForumSearch(
+      body([post({ blurb: '&lt;script&gt;alert(1)&lt;/script&gt; check the float &lt;b' })], [topic()]),
+      ORIGIN
+    );
+    expect(result.summary).not.toMatch(/[<>]/);
+    expect(result.summary).toContain('check the float');
+  });
+
   it('skips posts whose thread the response did not describe', () => {
     expect(parseForumSearch(body([post({ topic_id: 999 })], [topic()]), ORIGIN)).toEqual([]);
   });

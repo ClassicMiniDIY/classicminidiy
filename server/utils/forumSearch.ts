@@ -137,7 +137,13 @@ function decodeEntities(text: string): string {
  */
 function toSummary(blurb: unknown): string {
   if (typeof blurb !== 'string') return '';
-  const text = stripContactDetails(decodeEntities(blurb.replace(/<[^>]*>/g, '')))
+  // Decoding can turn `&lt;script&gt;` back into a tag, so tags are stripped on both
+  // sides of it and any stray angle bracket is dropped: the summary is plain text.
+  const text = stripContactDetails(
+    decodeEntities(blurb.replace(/<[^>]*>/g, ''))
+      .replace(/<[^>]*>/g, '')
+      .replace(/[<>]/g, '')
+  )
     .replace(/\s+/g, ' ')
     .trim();
   return text.length > SUMMARY_LIMIT ? `${text.slice(0, SUMMARY_LIMIT).trimEnd()}…` : text;
