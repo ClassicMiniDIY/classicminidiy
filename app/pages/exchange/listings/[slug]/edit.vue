@@ -1038,7 +1038,9 @@
     part_condition: listing.value.part_condition || '',
     quantity_available: listing.value.quantity_available || 1,
     oem_or_aftermarket: listing.value.oem_or_aftermarket || '',
-    shipping_available: listing.value.shipping_available ?? true,
+    // NULL is "not asked" (every vehicle). `?? true` sent true on the first
+    // edit of any vehicle, so it claimed to ship again.
+    shipping_available: listing.value.shipping_available ?? null,
     ships_to: listing.value.ships_to || '',
     // Not `|| null`: that turned a stored 0 (free shipping) into "varies".
     shipping_cost: normalizeShippingCost(listing.value.shipping_cost),

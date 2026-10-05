@@ -934,6 +934,11 @@
         ships_to: ships ? formData.value.shipsTo || null : null,
         shipping_cost: ships ? normalizeShippingCost(formData.value.shippingCost) : null,
       });
+    } else {
+      // Vehicles have no shipping step: NULL is "not asked", which the detail
+      // page shows as no shipping card and the shipping filters never match.
+      // Shipping a whole car is rarely offered.
+      Object.assign(data, { shipping_available: null, ships_to: null, shipping_cost: null });
     }
 
     return data;
