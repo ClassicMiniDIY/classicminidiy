@@ -8,6 +8,15 @@ import { getVideoIndex, searchVideoIndex } from '../utils/youtubeCatalog';
 import { historyByCategory, searchHistory, HISTORY_CATEGORIES } from '../utils/historySearch';
 import { TRUSTED_DOMAINS } from '../../data/trustedSources';
 import {
+  FORUM_QUERY_MAX,
+  FORUM_QUERY_MIN,
+  FORUM_RESULTS_MAX,
+  forumSearchConfig,
+  normaliseForumCategory,
+  searchForum,
+  type ForumSearchConfig,
+} from '../utils/forumSearch';
+import {
   fetchProductByHandle,
   searchCatalogue,
   shopifyConfig,
@@ -56,6 +65,10 @@ import {
  * `web_search` is Anthropic's server-side search pinned to the allowlist in
  * `data/trustedSources.ts` — the specialists Cole would name himself, and
  * nothing else.
+ *
+ * `forum-search` (2026-10-05) reads the Classic Mini DIY Community forum, so a
+ * fix an owner already found and confirmed there is not invisible to the
+ * assistant. See docs/plans/2026-10-05-chat-forum-search.md.
  */
 
 /** Trimmed omnisearch row — the model does not need ids or icon classes. */
@@ -177,6 +190,13 @@ export const SITE_SEARCH_DEGRADED_MARKER = 'site-search:unavailable';
  * the subject, and would quietly undo the entire reason the tool exists.
  */
 export const VIDEO_SEARCH_DEGRADED_MARKER = 'video-search:unavailable';
+
+/**
+ * `forum-search` reports here when the forum could not be searched — a
+ * timeout, an outage, or the forum's anonymous search limit. Without it a
+ * broken lookup reads as "the community has never discussed this".
+ */
+export const FORUM_SEARCH_DEGRADED_MARKER = 'forum-search:unavailable';
 
 /** Markers `store-search` can report. Exported so a dashboard query has a source of truth. */
 export const STORE_DEGRADED_MARKERS = {
@@ -320,6 +340,86 @@ export function videoSearchTool(apiKey: string, hooks: AgentToolHooks = {}): Too
 }
 
 /**
+ * The Classic Mini DIY Community forum, read-only and anonymous.
+ *
+ * Owners asking and answering each other, some threads marked solved. The
+ * prompt treats it as owner experience, never as Classic Mini DIY guidance, and
+ * never as a source for a specification.
+ *
+ * Results come back under `results` with `url`, `title` and `summary` ON
+ * PURPOSE, so forum threads join the Useful Links rail
+ * (`app/utils/chatUsefulLinks.ts`) with no client change — the opposite choice
+ * to `video-search`, which has its own rail.
+ *
+ * The description is static (it is part of the cached prompt prefix), so it
+ * names no host and no category list that could drift.
+ *
+ * Design doc: docs/plans/2026-10-05-chat-forum-search.md.
+ */
+export function forumSearchTool(config: ForumSearchConfig, hooks: AgentToolHooks = {}): Tool {
+  return tool({
+    description:
+      'Search the Classic Mini DIY Community forum — owners asking and answering each other: real-world fixes, ' +
+      'symptoms, build logs and parts sourcing. Threads with an accepted answer come first and are marked ' +
+      '`solved`. Returns a link per thread; use that link exactly as given.',
+    // No `.optional()` — see the note on store-search's schema. An empty
+    // `category` is how "no category" is expressed.
+    inputSchema: z.object({
+      query: z
+        .string()
+        .min(FORUM_QUERY_MIN)
+        .max(FORUM_QUERY_MAX)
+        .describe('Keywords, e.g. "hif44 needle" or "rod change gearbox jumping out of gear".'),
+      category: z
+        .string()
+        .default('')
+        .describe(
+          'Optional. A forum category slug to search within, e.g. "tech-help" or "build-logs". Leave empty to search the whole forum.'
+        ),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .max(FORUM_RESULTS_MAX)
+        .default(4)
+        .describe('Maximum threads to return. Default 4.'),
+    }),
+    async execute({ query, category, limit }) {
+      const result = await searchForum(config, query, category, limit);
+
+      if (result.outcome !== 'ok') {
+        hooks.onDegraded?.(FORUM_SEARCH_DEGRADED_MARKER, result.reason);
+        // `checked: false`: "the forum has nothing on this" and "I could not
+        // look" are different answers, and only one of them is honest here.
+        return {
+          query,
+          checked: false,
+          results: [],
+          note:
+            'The forum lookup is unavailable right now, so this says nothing about whether the forum covers it. ' +
+            'Answer from your other tools and do not claim the forum has nothing on it.',
+        };
+      }
+
+      if (result.results.length === 0) {
+        return {
+          query,
+          checked: true,
+          results: [],
+          // A category the forum does not have returns nothing rather than an
+          // error, so a scoped miss says to drop the scope before giving up.
+          note: normaliseForumCategory(category)
+            ? 'No forum thread in that category matches. Try again without a category, or with other keywords.'
+            : 'No forum thread matches. Try other keywords, or answer from your other tools. Do not invent a forum link.',
+        };
+      }
+
+      return { query, checked: true, results: result.results };
+    },
+  }) as Tool;
+}
+
+/**
  * The Classic Mini history corpus.
  *
  * Static JSON in `data/miniHistory.json`, so this cannot fail and has no
@@ -451,12 +551,16 @@ export function buildAgentTools({
   modelId = 'claude-sonnet-5-5',
   ...hooks
 }: AgentToolHooks & { event?: H3Event; youtubeApiKey?: string; modelId?: string } = {}): Record<string, Tool> {
+  const forum = forumSearchConfig(event);
   return {
     ...buildMcpTools(event),
     'mini-history': historyTool(),
     'site-search': siteSearchTool(hooks),
     'store-search': storeSearchTool(shopifyConfig(event), hooks),
     'video-search': videoSearchTool(youtubeApiKey, hooks),
+    // Withheld, not degraded, when the forum URL is set but unusable: the
+    // prompt drops the tool's guidance on the same predicate (`hasForumSearch`).
+    ...(forum ? { 'forum-search': forumSearchTool(forum, hooks) } : {}),
     // The key is the tool name Anthropic sees, so it must be exactly
     // `web_search` — a renamed key is not a renamed tool, it is a 400.
     ...(webSearchSupported(modelId) ? { web_search: webSearchTool() } : {}),
