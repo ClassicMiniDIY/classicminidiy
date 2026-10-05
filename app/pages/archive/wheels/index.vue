@@ -136,6 +136,7 @@
           <WheelGrid></WheelGrid>
         </div>
       </div>
+      <CommunityDiscussLink class="mb-6" />
       <footer class="bg-base-200 text-center p-6 rounded-lg">
         <div>
           <h2 class="text-xl font-bold mb-2">

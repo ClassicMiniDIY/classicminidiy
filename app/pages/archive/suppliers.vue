@@ -536,6 +536,8 @@
       </div>
     </section>
 
+    <CommunityDiscussLink class="mt-10" />
+
     <footer class="mt-10 space-y-2 border-t border-base-300 pt-6 text-xs text-base-content/60">
       <p>{{ t('provenance', { date: VERIFIED_AT }) }}</p>
       <p>

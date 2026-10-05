@@ -562,6 +562,8 @@
           </div>
         </div>
 
+        <CommunityDiscussLink class="mt-8" />
+
         <!-- Support section -->
         <div class="mt-8 mb-10">
           <div class="divider mb-6">{{ t('support_divider') }}</div>

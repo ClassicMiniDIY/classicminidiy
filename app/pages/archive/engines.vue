@@ -198,6 +198,9 @@
         </div>
       </div>
       <div class="col-span-12 md:col-span-10 md:col-start-2">
+        <CommunityDiscussLink />
+      </div>
+      <div class="col-span-12 md:col-span-10 md:col-start-2">
         <div class="divider">
           <span class="text-sm opacity-70">{{ t('support_divider') }}</span>
         </div>

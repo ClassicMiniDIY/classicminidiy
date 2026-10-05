@@ -182,6 +182,10 @@
         </div>
       </div>
 
+      <div class="col-span-12 mb-6">
+        <CommunityDiscussLink />
+      </div>
+
       <!-- Support section -->
       <div class="col-span-12 pb-15">
         <patreon-card size="large" />

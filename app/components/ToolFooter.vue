@@ -9,6 +9,8 @@
    *      Fix or addition, so a correction lands in the same review queue as
    *      everything else.
    *   3. Records the visit for the toolbox's recently-used chips.
+   *   4. "Discuss this on the community" (CommunityDiscussLink), which renders
+   *      only on paths in shared/utils/communityDiscuss.ts.
    *
    * Drop it at the bottom of a tool page with `<ToolFooter slug="compression" />`.
    */
@@ -33,28 +35,32 @@
 </script>
 
 <template>
-  <div v-if="tool" class="mt-6 grid gap-4 md:grid-cols-2">
-    <div class="rounded-box bg-base-200 px-5 py-4.5">
-      <p class="mb-2.5 text-xs font-bold uppercase tracking-[0.08em] opacity-55">{{ t('from_archive') }}</p>
-      <p v-for="link in tool.relatedArchive" :key="link.to" class="mb-1.5 text-sm last:mb-0">
-        <NuxtLink :to="link.to" class="font-semibold text-primary hover:underline">
-          <i :class="link.icon" aria-hidden="true"></i>
-          {{ link.label }}
-        </NuxtLink>
-      </p>
-    </div>
-
-    <div class="flex items-center gap-3.5 rounded-box border border-dashed border-base-300 px-5 py-4.5">
-      <i class="fas fa-wrench text-lg text-secondary" aria-hidden="true"></i>
-      <div>
-        <p class="text-sm font-semibold">{{ t('spotted_title') }}</p>
-        <p class="mt-0.5 text-[13px] opacity-75">
-          <button type="button" class="font-bold text-secondary hover:underline" @click="suggestCorrection()">
-            {{ t('suggest_correction') }} &rarr;
-          </button>
+  <div class="mt-6">
+    <div v-if="tool" class="grid gap-4 md:grid-cols-2">
+      <div class="rounded-box bg-base-200 px-5 py-4.5">
+        <p class="mb-2.5 text-xs font-bold uppercase tracking-[0.08em] opacity-55">{{ t('from_archive') }}</p>
+        <p v-for="link in tool.relatedArchive" :key="link.to" class="mb-1.5 text-sm last:mb-0">
+          <NuxtLink :to="link.to" class="font-semibold text-primary hover:underline">
+            <i :class="link.icon" aria-hidden="true"></i>
+            {{ link.label }}
+          </NuxtLink>
         </p>
       </div>
+
+      <div class="flex items-center gap-3.5 rounded-box border border-dashed border-base-300 px-5 py-4.5">
+        <i class="fas fa-wrench text-lg text-secondary" aria-hidden="true"></i>
+        <div>
+          <p class="text-sm font-semibold">{{ t('spotted_title') }}</p>
+          <p class="mt-0.5 text-[13px] opacity-75">
+            <button type="button" class="font-bold text-secondary hover:underline" @click="suggestCorrection()">
+              {{ t('suggest_correction') }} &rarr;
+            </button>
+          </p>
+        </div>
+      </div>
     </div>
+
+    <CommunityDiscussLink />
   </div>
 </template>
 
