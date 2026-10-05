@@ -44,6 +44,13 @@
   const sigParam = typeof route.query.sig === 'string' ? route.query.sig : '';
   const loginHref = `/login?redirect=${encodeURIComponent(route.fullPath)}`;
   const forumUrl = (runtimeConfig.public.discourseUrl as string) || 'https://community.classicminidiy.com';
+  const forumHost = (() => {
+    try {
+      return new URL(forumUrl).host;
+    } catch {
+      return forumUrl;
+    }
+  })();
 
   // POST once per `sso` per page load. Kept in useState so a re-mount of this
   // page sees it. Cleared on a failure, because the server issued nothing then.
@@ -447,7 +454,7 @@
       </ClientOnly>
     </div>
     <a :href="forumUrl" class="link link-hover text-sm opacity-70" data-testid="community-home">
-      community.classicminidiy.com
+      {{ forumHost }}
     </a>
   </div>
 </template>
