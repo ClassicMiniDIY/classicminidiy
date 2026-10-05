@@ -97,12 +97,17 @@
     to: '/exchange/listings/new',
   }));
 
+  /** Classic Mini DIY Community (Discourse). Public runtimeConfig, the same origin the SSO pages use. */
+  const runtimeConfig = useRuntimeConfig();
+  const communityUrl = computed(() => runtimeConfig.public.discourseUrl || 'https://community.classicminidiy.com');
+
   /** The More dropdown, and the second block of the mobile drawer. */
   const secondaryLinks = computed(() => [
     { label: t('navigation.models'), icon: 'fas fa-cube', to: '/models', external: false },
     { label: t('navigation.maps'), icon: 'fas fa-map', to: '/maps', external: false },
     { label: t('navigation.store'), icon: 'fas fa-store', to: 'https://store.classicminidiy.com/', external: true },
     { label: t('navigation.news'), icon: 'fas fa-pencil', to: 'https://news.classicminidiy.com/', external: true },
+    { label: t('navigation.community'), icon: 'fas fa-users', to: communityUrl.value, external: true },
     { label: t('navigation.about'), icon: 'fas fa-circle-info', to: '/about', external: false },
   ]);
 
@@ -773,6 +778,7 @@
       "maps": "Maps",
       "store": "Store",
       "news": "News",
+      "community": "Community",
       "about": "About"
     },
     "profile": {
@@ -809,6 +815,7 @@
       "maps": "Mapas",
       "store": "Tienda",
       "news": "Noticias",
+      "community": "Comunidad",
       "about": "Acerca de"
     },
     "profile": {
@@ -845,6 +852,7 @@
       "maps": "Cartes",
       "store": "Boutique",
       "news": "Actualités",
+      "community": "Communauté",
       "about": "À propos"
     },
     "profile": {
@@ -881,6 +889,7 @@
       "maps": "Karten",
       "store": "Shop",
       "news": "News",
+      "community": "Community",
       "about": "Über uns"
     },
     "profile": {
@@ -917,6 +926,7 @@
       "maps": "Mappe",
       "store": "Negozio",
       "news": "Notizie",
+      "community": "Community",
       "about": "Chi siamo"
     },
     "profile": {
@@ -953,6 +963,7 @@
       "maps": "Mapas",
       "store": "Loja",
       "news": "Notícias",
+      "community": "Comunidade",
       "about": "Sobre"
     },
     "profile": {
@@ -989,6 +1000,7 @@
       "maps": "Карты",
       "store": "Магазин",
       "news": "Новости",
+      "community": "Сообщество",
       "about": "О нас"
     },
     "profile": {
@@ -1025,6 +1037,7 @@
       "maps": "マップ",
       "store": "ストア",
       "news": "ニュース",
+      "community": "コミュニティ",
       "about": "概要"
     },
     "profile": {
@@ -1061,6 +1074,7 @@
       "maps": "地图",
       "store": "商店",
       "news": "新闻",
+      "community": "社区",
       "about": "关于"
     },
     "profile": {
@@ -1097,6 +1111,7 @@
       "maps": "맵",
       "store": "스토어",
       "news": "뉴스",
+      "community": "커뮤니티",
       "about": "소개"
     },
     "profile": {
