@@ -137,10 +137,32 @@ function decodeEntities(text: string): string {
  */
 function toSummary(blurb: unknown): string {
   if (typeof blurb !== 'string') return '';
-  const text = decodeEntities(blurb.replace(/<[^>]*>/g, ''))
+  const text = stripContactDetails(decodeEntities(blurb.replace(/<[^>]*>/g, '')))
     .replace(/\s+/g, ' ')
     .trim();
   return text.length > SUMMARY_LIMIT ? `${text.slice(0, SUMMARY_LIMIT).trimEnd()}…` : text;
+}
+
+/** What replaces a link or an address inside forum text. */
+export const FORUM_LINK_PLACEHOLDER = '[link removed]';
+
+/**
+ * Remove URLs and email addresses from user-written forum text.
+ *
+ * Titles and excerpts are written by forum users and reach the model as tool
+ * output. A post can carry a link or an address meant to be repeated to the
+ * reader ("order from …"). The only forum links the model may cite are the
+ * `url` values this module builds, so a link inside the text has no use and
+ * is removed before the model sees it. Bare domains without a scheme or
+ * `www.` stay; the prompt rule and the tool `note` cover those.
+ */
+export function stripContactDetails(text: string): string {
+  return (
+    text
+      // Trailing sentence punctuation is kept: it belongs to the sentence, not the link.
+      .replace(/\b(?:https?:\/\/|www\.)[^\s<>"')\]]*[^\s<>"')\].,;:!?]/gi, FORUM_LINK_PLACEHOLDER)
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/gi, FORUM_LINK_PLACEHOLDER)
+  );
 }
 
 function positiveInt(value: unknown): number | null {
@@ -149,7 +171,10 @@ function positiveInt(value: unknown): number | null {
 
 /** `/t/<slug>/<id>` for the first post (the same page), `/t/<slug>/<id>/<n>` otherwise. */
 export function forumPostUrl(origin: string, slug: string, topicId: number, postNumber: number): string {
-  const base = `${origin}/t/${encodeURIComponent(slug || 'topic')}/${topicId}`;
+  // Only a plain ASCII slug goes into the path. A forum that generates encoded
+  // slugs would otherwise be double-encoded here; `/t/<id>` redirects to the
+  // canonical URL either way.
+  const base = /^[a-z0-9-]+$/i.test(slug) ? `${origin}/t/${slug}/${topicId}` : `${origin}/t/${topicId}`;
   return postNumber > 1 ? `${base}/${postNumber}` : base;
 }
 
@@ -185,7 +210,7 @@ export function parseForumSearch(body: any, origin: string): ForumSearchResult[]
     const postsCount = positiveInt(topic.posts_count) ?? 1;
     const created = typeof post.created_at === 'string' ? post.created_at : '';
     results.push({
-      title: topic.title.trim(),
+      title: stripContactDetails(topic.title).replace(/\s+/g, ' ').trim(),
       url: forumPostUrl(origin, typeof topic.slug === 'string' ? topic.slug : '', topicId, postNumber),
       summary: toSummary(post.blurb),
       solved: topic.has_accepted_answer === true,
