@@ -208,6 +208,13 @@ put NUXT_MARKETING_ADMIN_EMAILS MARKETING_ADMIN_EMAILS
 # value in the CI build env as NUXT_PUBLIC_DISCOURSE_URL.
 put NUXT_DISCOURSE_CONNECT_SECRET DISCOURSE_CONNECT_SECRET OPTIONAL
 put NUXT_PUBLIC_DISCOURSE_URL DISCOURSE_URL NUXT_PUBLIC_DISCOURSE_URL OPTIONAL
+# "Discuss this" links (GET /api/community/discuss). A granular forum API key
+# (topics read + write), the forum user it acts as, and the numeric category id
+# for new page topics. Optional: with any one unset, the links go to the forum
+# search and nothing is created.
+put NUXT_DISCOURSE_API_KEY DISCOURSE_API_KEY OPTIONAL
+put NUXT_DISCOURSE_API_USERNAME DISCOURSE_API_USERNAME OPTIONAL
+put NUXT_DISCOURSE_DISCUSS_CATEGORY_ID DISCOURSE_DISCUSS_CATEGORY_ID OPTIONAL
 
 # --- 3D model library S3 ---------------------------------------------------
 put NUXT_S3_MODELS_BUCKET S3_MODELS_BUCKET

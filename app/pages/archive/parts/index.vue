@@ -272,6 +272,8 @@
       </NuxtLink>
     </p>
 
+    <CommunityDiscussLink />
+
     <p class="mt-4 text-xs text-base-content/50">{{ t('attribution') }}</p>
   </div>
 </template>

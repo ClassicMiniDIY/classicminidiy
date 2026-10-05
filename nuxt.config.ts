@@ -831,6 +831,15 @@ export default defineNuxtConfig({
     // DiscourseConnect shared secret with the forum (POST /api/discourse/sso).
     // Unset = that route answers 503 sso_unconfigured; nothing else depends on it.
     DISCOURSE_CONNECT_SECRET: process.env.DISCOURSE_CONNECT_SECRET || '',
+    // "Discuss this" links (GET /api/community/discuss,
+    // docs/plans/2026-10-05-community-discuss-links.md). RUNTIME-only secrets:
+    //   DISCOURSE_API_KEY             -> NUXT_DISCOURSE_API_KEY (granular: topics read + write)
+    //   DISCOURSE_API_USERNAME        -> NUXT_DISCOURSE_API_USERNAME
+    //   DISCOURSE_DISCUSS_CATEGORY_ID -> NUXT_DISCOURSE_DISCUSS_CATEGORY_ID (numeric)
+    // Any one unset = the route sends every click to the forum search; nothing is created.
+    DISCOURSE_API_KEY: process.env.DISCOURSE_API_KEY || '',
+    DISCOURSE_API_USERNAME: process.env.DISCOURSE_API_USERNAME || '',
+    DISCOURSE_DISCUSS_CATEGORY_ID: process.env.DISCOURSE_DISCUSS_CATEGORY_ID || '',
     // 3D Model Library private S3 bucket (keystone §5/§10). Dedicated IAM user
     // scoped to `classicminidiy-models` ONLY — never the static-assets creds.
     // Used by server/utils/s3Models.ts for presigned upload POSTs and download

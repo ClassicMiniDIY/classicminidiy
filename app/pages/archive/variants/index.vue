@@ -380,6 +380,8 @@
         </div>
       </div>
 
+      <CommunityDiscussLink class="mt-10" />
+
       <footer class="bg-base-200 text-center p-6 rounded-lg mt-10">
         <h2 class="text-xl font-bold mb-2">{{ t('footer.title') }}</h2>
         <p class="pb-2">

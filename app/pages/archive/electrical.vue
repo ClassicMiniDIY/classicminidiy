@@ -272,6 +272,10 @@
         </div>
       </div>
 
+      <div class="col-span-12">
+        <CommunityDiscussLink />
+      </div>
+
       <!-- Support section -->
       <div class="col-span-12 mt-8 mb-10">
         <div class="divider mb-6">{{ t('support_divider') }}</div>
