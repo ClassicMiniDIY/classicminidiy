@@ -397,3 +397,116 @@ describe('web_search', () => {
     expect(tool.args.blockedDomains, 'allowed and blocked are mutually exclusive').toBeUndefined();
   });
 });
+
+/**
+ * The community forum, added 2026-10-05.
+ * See docs/plans/2026-10-05-chat-forum-search.md.
+ */
+const { forumSearchTool, FORUM_SEARCH_DEGRADED_MARKER } = await import('~~/server/agent/tools');
+
+describe('forum-search', () => {
+  const FORUM = { origin: 'https://community.classicminidiy.com' };
+
+  beforeEach(async () => {
+    // Pass-through cache, dropped between tests so no result leaks across.
+    (globalThis as any).defineCachedFunction = (fn: any) => fn;
+    const { resetForumSearchCache } = await import('~~/server/utils/forumSearch');
+    resetForumSearchCache();
+  });
+
+  function searchBody() {
+    return {
+      posts: [
+        { topic_id: 1, post_number: 1, blurb: 'Asked about a lean idle.', created_at: '2026-01-02T00:00:00Z' },
+        { topic_id: 2, post_number: 4, blurb: 'Swapped to an AAC needle.', created_at: '2026-02-03T00:00:00Z' },
+      ],
+      topics: [
+        { id: 1, title: 'Lean idle', slug: 'lean-idle', posts_count: 1, archetype: 'regular' },
+        {
+          id: 2,
+          title: 'Which needle for a 1275?',
+          slug: 'which-needle',
+          posts_count: 5,
+          archetype: 'regular',
+          has_accepted_answer: true,
+        },
+      ],
+      grouped_search_result: { error: null },
+    };
+  }
+
+  it('returns threads under `results`, solved first, so they reach the Useful Links rail', async () => {
+    // LOAD-BEARING, the opposite of video-search: the rail shape-matches any
+    // `results` array of `{ url, title }`, which is exactly where forum threads
+    // belong.
+    mockFetch.mockResolvedValueOnce(searchBody());
+    const out: any = await run(forumSearchTool(FORUM), { query: 'needle', category: '', limit: 4 });
+
+    expect(out.checked).toBe(true);
+    expect(out.results.map((r: any) => r.title)).toEqual(['Which needle for a 1275?', 'Lean idle']);
+    expect(out.results[0]).toEqual({
+      title: 'Which needle for a 1275?',
+      url: 'https://community.classicminidiy.com/t/which-needle/2/4',
+      summary: 'Swapped to an AAC needle.',
+      solved: true,
+      replies: 4,
+      date: '2026-02-03',
+    });
+  });
+
+  it('reports a failed lookup as `checked: false` with the degradation marker', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('The operation was aborted due to timeout'));
+    const onDegraded = vi.fn();
+    const out: any = await run(forumSearchTool(FORUM, { onDegraded }), { query: 'needle', category: '', limit: 4 });
+
+    expect(out.checked).toBe(false);
+    expect(out.results).toEqual([]);
+    expect(out.note).toMatch(/unavailable/i);
+    expect(out.note).toMatch(/do not claim the forum has nothing/i);
+    expect(onDegraded).toHaveBeenCalledWith(FORUM_SEARCH_DEGRADED_MARKER, expect.stringMatching(/timeout/));
+  });
+
+  it('distinguishes "no thread matches" from "I could not look", and stays silent', async () => {
+    mockFetch.mockResolvedValueOnce({ posts: [], topics: [], grouped_search_result: { error: null } });
+    const onDegraded = vi.fn();
+    const out: any = await run(forumSearchTool(FORUM, { onDegraded }), { query: 'sourdough', category: '', limit: 4 });
+
+    expect(out.checked).toBe(true);
+    expect(out.results).toEqual([]);
+    expect(out.note).toMatch(/do not invent a forum link/i);
+    expect(onDegraded).not.toHaveBeenCalled();
+  });
+
+  it('tells the model to drop a category that matched nothing', async () => {
+    // An unknown category slug returns zero results on Discourse, not an error.
+    mockFetch.mockResolvedValueOnce({ posts: [], topics: [], grouped_search_result: { error: null } });
+    const out: any = await run(forumSearchTool(FORUM), { query: 'gearbox', category: 'no-such-cat', limit: 4 });
+    expect(out.note).toMatch(/without a category/i);
+  });
+
+  it('takes no optional fields, so `tool()` can infer its schema', () => {
+    const shape = (forumSearchTool(FORUM) as any).inputSchema?.shape ?? {};
+    expect(Object.keys(shape)).toEqual(['query', 'category', 'limit']);
+    for (const [field, schema] of Object.entries<any>(shape)) {
+      expect(schema?.constructor?.name, `${field} is a ZodOptional`).not.toBe('ZodOptional');
+    }
+  });
+
+  it('is offered by default and withheld when the forum URL is set but unusable', () => {
+    expect(Object.keys(buildAgentTools())).toContain('forum-search');
+
+    mockUseRuntimeConfig.mockReturnValue({ public: { discourseUrl: '' } } as any);
+    expect(Object.keys(buildAgentTools())).not.toContain('forum-search');
+
+    mockUseRuntimeConfig.mockReturnValue({ public: { discourseUrl: 'http://insecure.example' } } as any);
+    expect(Object.keys(buildAgentTools())).not.toContain('forum-search');
+  });
+
+  it('passes onDegraded through buildAgentTools', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('503'));
+    const onDegraded = vi.fn();
+    const tools = buildAgentTools({ onDegraded });
+    await run(tools['forum-search'], { query: 'needle', category: '', limit: 4 });
+    expect(onDegraded).toHaveBeenCalledWith(FORUM_SEARCH_DEGRADED_MARKER, '503');
+  });
+});

@@ -194,6 +194,40 @@ describe('the system prompt', () => {
     );
   });
 
+  it('frames forum-search as owner experience, never official guidance or a spec source', () => {
+    // The two ways this tool can do harm: passing off an owner's post as
+    // Classic Mini DIY's word, and lifting a figure from a thread. Tier 1 is
+    // unchanged; the forum rule restates it for this tool.
+    const line = prompt.split('\n').find((l) => l.startsWith('- **`forum-search`'));
+    expect(line, 'forum-search has no rule of its own').toBeTruthy();
+    const lower = line!.toLowerCase();
+    expect(lower).toContain('never present a forum post as official classic mini diy guidance');
+    expect(lower).toContain('never take a specification from it');
+    expect(lower).toMatch(/link it and say it comes from the community forum/);
+    // `solved` marks the thread, not the excerpt the tool returned.
+    expect(lower).toMatch(/not that the excerpt you were given is it/);
+  });
+
+  it('drops every forum-search mention when the tool is withheld', () => {
+    // Same failure as web_search: a prompt that names a tool the model was not
+    // given invites it to report a call it never made.
+    const withoutForum = staticPrompt(true, false);
+    expect(withoutForum).not.toContain('forum-search');
+    expect(withoutForum).toContain('video-search');
+    expect(buildSystemPrompt({ hasForumSearch: false })).toBe(withoutForum);
+    expect(buildSystemPrompt({ hasForumSearch: true })).toBe(staticPrompt());
+
+    // And the tool set agrees on the same predicate.
+    const runtimeConfig = (globalThis as any).useRuntimeConfig;
+    const original = runtimeConfig.getMockImplementation();
+    runtimeConfig.mockImplementation(() => ({ public: { discourseUrl: '' } }));
+    try {
+      expect(Object.keys(buildAgentTools()).sort()).toEqual(AGENT_TOOL_NAMES.filter((name) => name !== 'forum-search'));
+    } finally {
+      runtimeConfig.mockImplementation(original);
+    }
+  });
+
   it('threads the flag through buildSystemPrompt, defaulting to the full prompt', () => {
     // A caller that does not pass it must get the same prompt production gets,
     // never a quietly reduced one.

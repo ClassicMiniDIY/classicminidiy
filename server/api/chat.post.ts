@@ -15,6 +15,7 @@ import { consumeChatQuota, quotaExhaustedError, recordChatTokens } from '../util
 import { isPaidChatTier, MEMBERSHIP_URL } from '../../shared/utils/chatTiers';
 import { getChatAuth } from '../utils/chatTiers';
 import { serverRuntimeConfig } from '../utils/runtimeConfig';
+import { forumSearchConfig } from '../utils/forumSearch';
 import { CHAT_REQUEST_MAX_CHARS, transcriptChars } from '../../shared/utils/chatTranscript';
 
 /**
@@ -129,10 +130,13 @@ export default defineEventHandler(async (event) => {
   // runs. Off by default; `TYPESAFE_CHAT_MODE` is the switch. A refused
   // request below simply never collects it.
   const modelIdForTools = ((config.CHAT_MODEL as string) || 'claude-sonnet-5-5').trim();
+  // The predicate `buildAgentTools` uses to offer `forum-search`, so the
+  // classifier, the prompt and the tool set describe the same tools.
+  const hasForumSearch = forumSearchConfig(event) !== null;
   const classifierRun: ClassifierRun = runClassifier(event, {
     messages: replayed,
     pageSlug: body?.pageSlug,
-    tools: toolGuidanceList(webSearchSupported(modelIdForTools)),
+    tools: toolGuidanceList(webSearchSupported(modelIdForTools), hasForumSearch),
     // A settings row first, the env second; cached a minute per isolate, so
     // this await is a memory read on every request but the first.
     mode: await typesafeMode(event, 'chat'),
@@ -299,6 +303,7 @@ export default defineEventHandler(async (event) => {
       pageSlug: body?.pageSlug,
       isMember: isPaidChatTier(getChatAuth(event)?.tier),
       hasWebSearch: webSearchSupported(modelId),
+      hasForumSearch,
       classifierHint: classified.hint ?? undefined,
     }),
     // Cache the tool definitions and the system prompt.

@@ -93,6 +93,11 @@ const TOOL_GUIDANCE: Record<string, string> = {
   // jobs he has filmed himself.
   'video-search':
     "Cole's own DIY videos on the Classic Mini DIY YouTube channel. Call it for any question about HOW to do a job — repairs, removals, installations, rebuilds — before you reach for anything off the site",
+  // Owner experience, never Classic Mini DIY guidance and never a source for a
+  // figure. The rules block below says so in full; this line is what the
+  // classifier sees too. Design doc: docs/plans/2026-10-05-chat-forum-search.md.
+  'forum-search':
+    "the Classic Mini DIY Community forum — owners' own questions, fixes and build logs, with solved threads first. Owner experience, not Classic Mini DIY guidance",
   'mini-history':
     'the history of the car — origins and the Issigonis brief, the Mk1 to Mk7 timeline, Cooper and Cooper S, rallying and the Monte Carlo results, variants and overseas assembly, production figures and the last car',
   web_search:
@@ -115,6 +120,7 @@ const TOOL_GUIDANCE: Record<string, string> = {
  */
 export const AGENT_TOOL_NAMES = [
   ...AGENT_MCP_TOOL_NAMES,
+  'forum-search',
   'mini-history',
   'site-search',
   'store-search',
@@ -129,16 +135,39 @@ export const AGENT_TOOL_NAMES = [
  * thing about every tool and the classifier can never name one the model does
  * not have.
  */
-export function toolGuidanceList(hasWebSearch: boolean): { name: string; use: string }[] {
-  return AGENT_TOOL_NAMES.filter((name) => TOOL_GUIDANCE[name] && (hasWebSearch || name !== 'web_search')).map(
-    (name) => ({ name, use: TOOL_GUIDANCE[name]! })
+export function toolGuidanceList(hasWebSearch: boolean, hasForumSearch = true): { name: string; use: string }[] {
+  return offeredToolNames(hasWebSearch, hasForumSearch).map((name) => ({ name, use: TOOL_GUIDANCE[name]! }));
+}
+
+/**
+ * The tools with guidance that this deploy actually offers. `web_search` and
+ * `forum-search` are the two that `buildAgentTools` can withhold, and a prompt
+ * that names a withheld tool invites the model to report a call it never made.
+ */
+function offeredToolNames(hasWebSearch: boolean, hasForumSearch: boolean): string[] {
+  return AGENT_TOOL_NAMES.filter(
+    (name) =>
+      TOOL_GUIDANCE[name] && (hasWebSearch || name !== 'web_search') && (hasForumSearch || name !== 'forum-search')
   );
 }
 
-function toolCatalogue(hasWebSearch: boolean): string {
-  return AGENT_TOOL_NAMES.filter((name) => TOOL_GUIDANCE[name] && (hasWebSearch || name !== 'web_search'))
+function toolCatalogue(hasWebSearch: boolean, hasForumSearch: boolean): string {
+  return offeredToolNames(hasWebSearch, hasForumSearch)
     .map((name) => `- \`${name}\` — ${TOOL_GUIDANCE[name]}`)
     .join('\n');
+}
+
+/**
+ * The forum rule, or nothing when the tool is withheld.
+ *
+ * Its own bullet rather than only a catalogue line, for the same reason
+ * `store-search` has one: the failure that matters here is the model passing
+ * off an owner's post as Classic Mini DIY's word, or lifting a torque figure
+ * from a thread, and one catalogue line is thin protection against that.
+ */
+function forumSearchRule(hasForumSearch: boolean): string {
+  if (!hasForumSearch) return '';
+  return '\n- **`forum-search` is owners talking, not Classic Mini DIY.** Use it for real-world fixes, symptoms and owner experience, after `video-search` and `site-search`. Prefer a thread marked `solved` — that flag means the thread has an accepted answer, not that the excerpt you were given is it. When your answer draws on a thread, link it and say it comes from the community forum. Never present a forum post as official Classic Mini DIY guidance, and never take a specification from it.';
 }
 
 /**
@@ -174,7 +203,7 @@ Use them when the archive and the videos fall short — a part number Cole has n
  * assistant ends up reporting a search it could not run. Defaults to true so
  * every caller that does not care gets the full prompt.
  */
-export function staticPrompt(hasWebSearch = true): string {
+export function staticPrompt(hasWebSearch = true, hasForumSearch = true): string {
   return `You are the Classic Mini DIY assistant, on classicminidiy.com. You help people work on classic Mini Coopers (1959-2000) — the A-series cars, not the modern BMW MINI.
 
 Classic Mini DIY is a free enthusiast archive built by Cole. It is a reference, not a professional mechanical service.
@@ -183,7 +212,7 @@ Classic Mini DIY is a free enthusiast archive built by Cole. It is a reference, 
 
 You have direct access to Classic Mini DIY's own reference data. It is more accurate and more specific than anything you remember, and using it is the whole reason people ask you rather than a general chatbot.
 
-${toolCatalogue(hasWebSearch)}
+${toolCatalogue(hasWebSearch, hasForumSearch)}
 
 Rules for using them:
 
@@ -193,7 +222,7 @@ Rules for using them:
 - Tools take short, keyword-style arguments. "main bearing" beats "what is the torque for the main bearing bolts".
 - If a tool returns no match, say so plainly and suggest a narrower or broader term. Do not fall back to a remembered figure.
 - Use \`site-search\` to point people at the page that covers a topic, and link what it returns.
-- **\`store-search\` only when someone is asking to buy.** A question about a figure, a tolerance or how something works is not a purchase. Never volunteer the shop in an answer nobody asked for, and never let a product stand in for a specification.
+- **\`store-search\` only when someone is asking to buy.** A question about a figure, a tolerance or how something works is not a purchase. Never volunteer the shop in an answer nobody asked for, and never let a product stand in for a specification.${forumSearchRule(hasForumSearch)}
 
 ## What you know, and where it comes from
 
@@ -201,9 +230,9 @@ Three tiers. Getting a question into the right one is the single most important 
 
 **1. Specifications — a tool, or nothing.** Torque figures, clearances, endfloats, gear ratios, part numbers, weights, needle profiles, paint codes, chassis and engine codes. These come from a tool call, always, and never from memory or from a web page. If the tool has no match, say so. People torque real fasteners against these answers.
 
-**2. Procedure, general knowledge and history — answer the question.** How a job is done, how a system works, what a component is for, what the likely options are, and anything about the car's past. This is most of what people ask and you are expected to answer it. Ground it: call \`video-search\` first, because Cole has filmed a great many of these jobs; then \`site-search\`; then \`mini-history\` for anything historical${hasWebSearch ? '; then `web_search` against the trusted sources' : ''}. If none of them covers it and you still know how the job goes, say so and say plainly that it is general practice rather than a documented Classic Mini procedure. **"I don't have that in the archive" is not an answer on its own.** It is the first half of one — the second half is what you do know, or where to look.
+**2. Procedure, general knowledge and history — answer the question.** How a job is done, how a system works, what a component is for, what the likely options are, and anything about the car's past. This is most of what people ask and you are expected to answer it. Ground it: call \`video-search\` first, because Cole has filmed a great many of these jobs; then \`site-search\`${hasForumSearch ? '; then `forum-search` for how other owners did the job' : ''}; then \`mini-history\` for anything historical${hasWebSearch ? '; then `web_search` against the trusted sources' : ''}. If none of them covers it and you still know how the job goes, say so and say plainly that it is general practice rather than a documented Classic Mini procedure. **"I don't have that in the archive" is not an answer on its own.** It is the first half of one — the second half is what you do know, or where to look.
 
-**3. Diagnosis — reason it through, then say what would confirm it.** Given a symptom, list the likely causes in order of likelihood and say what would tell them apart. That is genuinely useful and you should do it. What you must not do is claim to know which one it is from a description alone, or talk someone through work that could hurt them — see Safety below.
+**3. Diagnosis — reason it through, then say what would confirm it.** Given a symptom, list the likely causes in order of likelihood and say what would tell them apart. That is genuinely useful and you should do it. ${hasForumSearch ? '`forum-search` can show how other owners traced the same symptom; cite the thread. ' : ''}What you must not do is claim to know which one it is from a description alone, or talk someone through work that could hurt them — see Safety below.
 
 ## One fixed answer
 
@@ -276,6 +305,13 @@ export interface PromptContext {
    */
   hasWebSearch?: boolean;
   /**
+   * Whether `buildAgentTools` offers `forum-search` on this deploy
+   * (`forumSearchConfig(event) !== null`). STATIC half, like `hasWebSearch`:
+   * it comes from runtime config, so it is constant per deploy and cannot
+   * split the cache prefix between two requests.
+   */
+  hasForumSearch?: boolean;
+  /**
    * One paragraph from the TypeSafe pre-classifier (`server/agent/classifier.ts`),
    * or nothing. Lives in the DYNAMIC half on purpose: it changes per message,
    * so it must sit after the cached prefix, and it is a hint the model reads
@@ -317,6 +353,6 @@ export function dynamicPrompt({ locale, pageSlug, isMember, classifierHint }: Pr
 /** Convenience for callers that just want the whole system prompt. */
 export function buildSystemPrompt(context: PromptContext = {}): string {
   const dynamic = dynamicPrompt(context);
-  const invariant = staticPrompt(context.hasWebSearch ?? true);
+  const invariant = staticPrompt(context.hasWebSearch ?? true, context.hasForumSearch ?? true);
   return dynamic ? `${invariant}\n\n## This request\n\n${dynamic}` : invariant;
 }
