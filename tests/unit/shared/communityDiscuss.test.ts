@@ -6,6 +6,7 @@ import {
   communityDiscussExternalId,
   communityDiscussKeyForPath,
   communityDiscussPage,
+  communityDiscussTopicTitle,
   type CommunityDiscussKey,
 } from '~~/shared/utils/communityDiscuss';
 
@@ -15,13 +16,15 @@ import {
 const entries = Object.entries(COMMUNITY_DISCUSS_PAGES) as [CommunityDiscussKey, { path: string; title: string }][];
 
 describe('COMMUNITY_DISCUSS_PAGES', () => {
-  it.each(entries)('%s has a forum-valid title (15 to 255 characters)', (_key, page) => {
-    expect(page.title.length).toBeGreaterThanOrEqual(15);
-    expect(page.title.length).toBeLessThanOrEqual(255);
+  it.each(entries)('%s has a forum-valid, prefixed topic title (15 to 255 characters)', (_key, page) => {
+    const title = communityDiscussTopicTitle(page);
+    expect(title.startsWith('Discussion: ')).toBe(true);
+    expect(title.length).toBeGreaterThanOrEqual(15);
+    expect(title.length).toBeLessThanOrEqual(255);
   });
 
-  it('titles are unique (the forum refuses duplicate titles)', () => {
-    const titles = entries.map(([, page]) => page.title.toLowerCase());
+  it('topic titles are unique (the forum refuses duplicate titles)', () => {
+    const titles = entries.map(([, page]) => communityDiscussTopicTitle(page).toLowerCase());
     expect(new Set(titles).size).toBe(titles.length);
   });
 

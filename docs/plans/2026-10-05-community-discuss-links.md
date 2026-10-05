@@ -62,19 +62,25 @@ page  ─ <CommunityDiscussLink> ─▶ GET /api/community/discuss?page=technica
         (plain <a>, rel="nofollow")
 server
   1. resolve `page` against COMMUNITY_DISCUSS_PAGES          unknown ─▶ 302 forum home
-  2. config set? not a crawler? under the per-IP limit?      no      ─▶ 302 forum search
-  3. in-memory cache hit                                     yes     ─▶ 302 topic
-  4. GET  {forum}/t/external_id/cmdiy-technical-torque.json  found   ─▶ 302 topic
-  5. POST {forum}/posts.json { title, raw, category,
+  2. config set? not a crawler?                              no      ─▶ 302 forum search
+  3. KV cache: topic URL                                     hit     ─▶ 302 topic
+               cached failure, or KV unreadable              yes     ─▶ 302 forum search
+  4. under the per-IP limit?                                 no      ─▶ 302 forum search
+  5. GET  {forum}/t/external_id/cmdiy-technical-torque.json  found   ─▶ 302 topic
+  6. POST {forum}/posts.json { title, raw, category,
           embed_url, external_id }                          created ─▶ 302 topic
-     422 (a parallel request won) ─▶ repeat step 4 once
-  any failure                                                        ─▶ 302 forum search
+     422 (a parallel request won) ─▶ repeat step 5 once
+  steps 5-6 share one 8 s budget (5 s per call)
+  any failure ─▶ cache the failure for 10 minutes                    ─▶ 302 forum search
 ```
 
 - **The query string carries only a key.** The title, the canonical URL
   (`siteUrl` + path), the body text and the category all come from the server. A
   caller cannot make the route create a topic for any page outside the list, or with
   any text of its choice. At most one topic exists per listed page.
+- **Titles carry a prefix.** The topic title is `Discussion: <page name>`
+  (`communityDiscussTopicTitle`), so it does not clash with an imported archive topic
+  that has the bare page name. The search fallback uses the bare page name.
 - **`external_id` is the lookup key.** Each topic is created with
   `external_id = cmdiy-<page key>`. The route finds it with
   `GET /t/external_id/<id>.json`.
@@ -98,7 +104,13 @@ Checked against `discourse/discourse` `main` on 2026-10-05:
   `[\w-]+`, at most 50 characters, unique case-insensitively, with a unique partial
   index in the database. A second create with the same id fails with a 422.
 - `TopicsController#show_by_external_id` (`GET /t/external_id/:external_id`) answers a
-  redirect to the topic URL, with `.json` kept for a JSON request, or a 404.
+  redirect to the topic URL, with `.json` kept for a JSON request, or a 404. Rails
+  builds an absolute Location from the request protocol, which can be `http` if the
+  forwarded protocol is lost behind the tunnel. The route compares only the host and
+  rebuilds the URL on the configured https origin.
+- The admin API limiter (`admin_api_min`, in the current-user provider) is ONE counter
+  for every admin key on the forum. The flair sync and the importers spend the same
+  counter. This public route must spend as little of it as possible.
 - `EmbedController#info` (`GET /embed/info.json?embed_url=`) needs an API request, and
   matches `embed_url` exactly, without normalising it. **No granular API key scope
   covers it.** Only a key with global read can call it. That is why the lookup uses
@@ -109,9 +121,9 @@ Checked against `discourse/discourse` `main` on 2026-10-05:
 - If the site setting `embed_unlisted` is on, a topic created with `embed_url` is
   unlisted. Its default is off. Keep it off.
 - `min_topic_title_length` defaults to 15 and `allow_duplicate_topic_titles` to false.
-  Every title in the allowlist is at least 15 characters (a unit test checks it). If a
-  member already made a topic with the same title, the create fails and the link falls
-  back to search.
+  Every topic title is at least 15 characters and carries the `Discussion:` prefix (a
+  unit test checks both). If a topic with the same title still exists, the create
+  fails with a 422, the failure is cached and logged, and the link falls back to search.
 
 ## Abuse and cost controls
 
@@ -123,15 +135,27 @@ Checked against `discourse/discourse` `main` on 2026-10-05:
 - **Per-IP limit.** `consumeRateLimit` (the same in-memory limiter as
   `server/middleware/rate-limit.ts`), keyed on `clientIp`. Over the limit, the route
   sends the user to the forum search instead of an error.
-- **Cache.** The page key to topic URL mapping is kept in the per-isolate memory cache
-  (`server/utils/cache.ts`) for a day. A warm isolate answers without an API call. A
-  cold isolate does one `GET` per page. KV is not needed for this volume.
-- **Timeouts.** Each forum call has a 5 s timeout.
-- **Failure.** Forum down, a timeout, a 429 from the forum, a post sent to the review
-  queue, or any other error: the route sends the user to
-  `{forum}/search?q=<page title>` and logs one line without secrets. If the topic was
-  deleted by a moderator, its `external_id` stays taken, so the create fails and the
-  link falls back to search. Restore the topic to bring the link back.
+- **Shared cache.** A per-isolate memory cache does not protect the forum's shared
+  admin API limiter: every cold isolate would call the forum again. The route keeps
+  the page key to topic URL mapping in the KV-backed `useStorage('cache')` (the
+  existing `CACHE` binding in `wrangler.jsonc`; no new binding) for 30 days. Every
+  isolate reads the same entry, so a page costs forum calls about once a month.
+- **Failures are cached too**, for 10 minutes: forum down, a timeout, a 429, a post
+  sent to the review queue, and a create refused with a 422 where the second lookup
+  still finds nothing. A failing page therefore costs at most one forum attempt per
+  10 minutes, not one per click. If KV cannot be read, the route sends the user to
+  search and does not call the forum.
+- **Time budget.** Each forum call has a 5 s timeout, and the whole find-or-create has
+  8 s. After that the user goes to search.
+- **Failure.** The route sends the user to `{forum}/search?q=<page name>` and logs one
+  line without secrets. A 422 logs the forum's `errors` array (validation messages,
+  no secrets). If the topic was deleted by a moderator, its `external_id` stays
+  taken, so the create fails and the link falls back to search. Restore the topic to
+  bring the link back; the failure entry expires within 10 minutes.
+- **Edge rate limit (recommended operator step).** Add a Cloudflare zone rate-limit
+  rule for `/api/community/discuss`. The in-Worker limit is per isolate, so it only
+  dampens. Choose the threshold with the forum's admin API limit in view; record it
+  in the private forum repo, not here.
 
 ## Config
 
@@ -164,10 +188,13 @@ exists.
    `www.classicminidiy.com` mapped to the same category (Admin → Customize →
    Embedding). The discuss route does not need it.
 5. Set the three secrets on the Worker.
+6. Cloudflare (zone operator): add a rate-limit rule for `/api/community/discuss` (see
+   "Edge rate limit" above). Recommended, not required for the merge.
 
 ## Tests
 
 `tests/unit/server/api/community-discuss.get.test.ts` (mocked `fetch`): unknown key,
-unconfigured, crawler, cache hit, found by external id, created, 422 race, forum down,
-rate limited, enqueued post. `tests/unit/shared/communityDiscuss.test.ts`: the
+unconfigured, crawler (and a "CUBOT" phone that is not one), KV hit, KV unreadable,
+found by external id, an `http://` Location, created, 422 race, 422 reasons logged,
+cached failures, forum down, time budget, rate limited, enqueued post. `tests/unit/shared/communityDiscuss.test.ts`: the
 allowlist shape (title length, external id format, path to key lookup).

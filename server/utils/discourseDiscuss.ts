@@ -8,6 +8,10 @@
  * sends `external_id` and `embed_url` together. The forum keeps `external_id`
  * unique, so a parallel create fails with a 422 and the lookup runs once more.
  *
+ * Every forum call counts against the forum's admin API limiter, which is ONE
+ * counter shared by every admin key (the flair sync and the importers use it
+ * too). The route caches results in KV so these calls are rare.
+ *
  * Every function here throws on any failure. The caller turns a throw into a
  * redirect to the forum search. Never log the API key.
  */
@@ -28,7 +32,9 @@ export interface DiscussTopicRequest {
 }
 
 /** Per-call timeout for forum requests. */
-const FORUM_TIMEOUT_MS = 5000;
+const FORUM_CALL_TIMEOUT_MS = 5000;
+/** Budget for the whole find-or-create (up to three calls). */
+export const FORUM_TOTAL_BUDGET_MS = 8000;
 
 export class DiscourseDiscussError extends Error {
   constructor(
@@ -48,10 +54,19 @@ function apiHeaders(config: DiscourseDiscussConfig): Record<string, string> {
   };
 }
 
+/** A timeout signal for the next call: the per-call limit or what is left of the budget. */
+function callSignal(deadline: number): AbortSignal {
+  const left = deadline - Date.now();
+  if (left <= 0) throw new DiscourseDiscussError('forum time budget spent');
+  return AbortSignal.timeout(Math.min(FORUM_CALL_TIMEOUT_MS, left));
+}
+
 /**
- * A topic URL on the forum origin from a Location header or a path, with the
- * `.json` suffix, query and fragment removed. Null when it leaves the origin
- * or is not a topic path.
+ * A topic URL on the configured forum origin from a Location header, with the
+ * `.json` suffix, query and fragment removed. Only the host is compared: Rails
+ * builds the Location from the request protocol, which can arrive as `http`
+ * behind the tunnel, so the URL is rebuilt on the configured https origin.
+ * Null when the host differs or the path is not a topic path.
  */
 export function forumTopicUrl(location: string, forum: string): string | null {
   let url: URL;
@@ -60,8 +75,8 @@ export function forumTopicUrl(location: string, forum: string): string | null {
   } catch {
     return null;
   }
-  if (url.origin !== forum || !url.pathname.startsWith('/t/')) return null;
-  return `${url.origin}${url.pathname.replace(/\.json$/, '')}`;
+  if (url.host !== new URL(forum).host || !url.pathname.startsWith('/t/')) return null;
+  return `${forum}${url.pathname.replace(/\.json$/, '')}`;
 }
 
 function topicUrlFromIds(forum: string, slug: unknown, id: unknown): string | null {
@@ -75,11 +90,15 @@ function topicUrlFromIds(forum: string, slug: unknown, id: unknown): string | nu
  * The topic URL for `externalId`, or null when the forum has no such topic
  * (404). Throws on any other answer.
  */
-export async function findDiscussTopic(config: DiscourseDiscussConfig, externalId: string): Promise<string | null> {
+export async function findDiscussTopic(
+  config: DiscourseDiscussConfig,
+  externalId: string,
+  deadline = Date.now() + FORUM_TOTAL_BUDGET_MS
+): Promise<string | null> {
   const res = await fetch(`${config.forum}/t/external_id/${encodeURIComponent(externalId)}.json`, {
     headers: apiHeaders(config),
     redirect: 'manual',
-    signal: AbortSignal.timeout(FORUM_TIMEOUT_MS),
+    signal: callSignal(deadline),
   });
 
   if (res.status === 404) return null;
@@ -113,14 +132,28 @@ export function discussTopicBody(request: DiscussTopicRequest): string {
   ].join('\n');
 }
 
+/** The result of a create: the topic URL, or the forum's 422 reasons. */
+export type CreateDiscussResult = { url: string } | { refused: string[] };
+
+/** Discourse's `errors` array from a 422 body: strings only, bounded. */
+function refusalReasons(body: unknown): string[] {
+  const errors = (body as { errors?: unknown } | null)?.errors;
+  if (!Array.isArray(errors)) return [];
+  return errors
+    .filter((e): e is string => typeof e === 'string')
+    .slice(0, 5)
+    .map((e) => e.slice(0, 200));
+}
+
 /**
- * Create the topic. Returns its URL, or null when the forum refused it with a
- * 422 (for example, a parallel request created it first). Throws otherwise.
+ * Create the topic. Returns its URL, or the 422 reasons (for example, a
+ * parallel request created it first, or the title is taken). Throws otherwise.
  */
 export async function createDiscussTopic(
   config: DiscourseDiscussConfig,
-  request: DiscussTopicRequest
-): Promise<string | null> {
+  request: DiscussTopicRequest,
+  deadline = Date.now() + FORUM_TOTAL_BUDGET_MS
+): Promise<CreateDiscussResult> {
   const res = await fetch(`${config.forum}/posts.json`, {
     method: 'POST',
     headers: { ...apiHeaders(config), 'Content-Type': 'application/json' },
@@ -132,35 +165,44 @@ export async function createDiscussTopic(
       external_id: request.externalId,
     }),
     redirect: 'manual',
-    signal: AbortSignal.timeout(FORUM_TIMEOUT_MS),
+    signal: callSignal(deadline),
   });
 
-  if (res.status === 422) return null;
+  if (res.status === 422) {
+    return { refused: refusalReasons(await res.json().catch(() => null)) };
+  }
   if (!res.ok) throw new DiscourseDiscussError('create failed', res.status);
 
   const body = (await res.json().catch(() => null)) as {
     topic_id?: unknown;
     topic_slug?: unknown;
-    action?: unknown;
   } | null;
   // A post sent to the review queue answers 200 with `action: "enqueued"` and no topic.
   const url = body ? topicUrlFromIds(config.forum, body.topic_slug, body.topic_id) : null;
   if (!url) throw new DiscourseDiscussError('create answer has no topic id', res.status);
-  return url;
+  return { url };
 }
 
-/** Find the topic, create it when missing, and look again once after a 422. */
+/**
+ * Find the topic, create it when missing, and look again once after a 422.
+ * The whole sequence shares one time budget.
+ */
 export async function findOrCreateDiscussTopic(
   config: DiscourseDiscussConfig,
-  request: DiscussTopicRequest
+  request: DiscussTopicRequest,
+  budgetMs = FORUM_TOTAL_BUDGET_MS
 ): Promise<string> {
-  const existing = await findDiscussTopic(config, request.externalId);
+  const deadline = Date.now() + budgetMs;
+
+  const existing = await findDiscussTopic(config, request.externalId, deadline);
   if (existing) return existing;
 
-  const created = await createDiscussTopic(config, request);
-  if (created) return created;
+  const created = await createDiscussTopic(config, request, deadline);
+  if ('url' in created) return created.url;
 
-  const raced = await findDiscussTopic(config, request.externalId);
+  const raced = await findDiscussTopic(config, request.externalId, deadline);
   if (raced) return raced;
-  throw new DiscourseDiscussError('create refused and no topic found', 422);
+
+  const reasons = created.refused.length ? created.refused.join('; ') : 'no reason given';
+  throw new DiscourseDiscussError(`create refused and no topic found: ${reasons}`, 422);
 }

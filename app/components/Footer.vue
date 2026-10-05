@@ -15,6 +15,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contact',
         community_link: 'Community',
+        opens_new_tab: '(opens in a new tab)',
         links_divider: 'Links',
         privacy_links: {
           cmdiy_privacy: 'CMDIY Site Privacy Policy',
@@ -32,6 +33,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contacto',
         community_link: 'Comunidad',
+        opens_new_tab: '(se abre en una pestaña nueva)',
         links_divider: 'Enlaces',
         privacy_links: {
           cmdiy_privacy: 'Política de Privacidad del Sitio CMDIY',
@@ -49,6 +51,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contact',
         community_link: 'Communauté',
+        opens_new_tab: '(ouvre un nouvel onglet)',
         links_divider: 'Liens',
         privacy_links: {
           cmdiy_privacy: 'Politique de Confidentialité du Site CMDIY',
@@ -66,6 +69,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Kontakt',
         community_link: 'Community',
+        opens_new_tab: '(öffnet einen neuen Tab)',
         links_divider: 'Links',
         privacy_links: {
           cmdiy_privacy: 'CMDIY Website Datenschutzrichtlinie',
@@ -83,6 +87,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contatto',
         community_link: 'Community',
+        opens_new_tab: '(si apre in una nuova scheda)',
         links_divider: 'Collegamenti',
         privacy_links: {
           cmdiy_privacy: 'Politica sulla Privacy del Sito CMDIY',
@@ -100,6 +105,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'お問い合わせ',
         community_link: 'コミュニティ',
+        opens_new_tab: '（新しいタブで開きます）',
         links_divider: 'リンク',
         privacy_links: {
           cmdiy_privacy: 'CMDIYサイトプライバシーポリシー',
@@ -117,6 +123,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: '연락처',
         community_link: '커뮤니티',
+        opens_new_tab: '(새 탭에서 열림)',
         links_divider: '링크',
         privacy_links: {
           cmdiy_privacy: 'CMDIY 사이트 개인정보 보호정책',
@@ -134,6 +141,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Contato',
         community_link: 'Comunidade',
+        opens_new_tab: '(abre num separador novo)',
         links_divider: 'Links',
         privacy_links: {
           cmdiy_privacy: 'Política de Privacidade do Site CMDIY',
@@ -151,6 +159,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: 'Контакт',
         community_link: 'Сообщество',
+        opens_new_tab: '(откроется в новой вкладке)',
         links_divider: 'Ссылки',
         privacy_links: {
           cmdiy_privacy: 'Политика конфиденциальности сайта CMDIY',
@@ -168,6 +177,7 @@
         company_name: 'Classic Mini DIY LLC',
         contact_link: '联系我们',
         community_link: '社区',
+        opens_new_tab: '（在新标签页中打开）',
         links_divider: '链接',
         privacy_links: {
           cmdiy_privacy: 'CMDIY网站隐私政策',
@@ -266,6 +276,7 @@
                 @click="trackOutbound({ destination: communityUrl, label: 'Community', group: 'footer' })"
               >
                 {{ t('community_link') }}
+                <span class="sr-only">{{ t('opens_new_tab') }}</span>
               </NuxtLink>
               <NuxtLink to="/privacy" class="link text-sm hover:underline">
                 {{ t('privacy_links.cmdiy_privacy') }}
