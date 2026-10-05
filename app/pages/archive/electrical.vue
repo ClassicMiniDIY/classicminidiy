@@ -164,12 +164,7 @@
         <div class="w-full max-w-md">
           <label class="input input-bordered flex items-center gap-2 w-full">
             <i class="fas fa-magnifying-glass opacity-60"></i>
-            <input
-              v-model="searchQuery"
-              :placeholder="t('search_placeholder')"
-              type="search"
-              class="grow"
-            />
+            <input v-model="searchQuery" :placeholder="t('search_placeholder')" type="search" class="grow" />
           </label>
         </div>
       </div>
@@ -188,7 +183,14 @@
                     :href="result.link"
                     target="_blank"
                     class="flex justify-between py-4 hover:bg-base-200 rounded px-2 transition-colors"
-                    @click="trackDownload({ name: result.name, file_type: 'diagram', group: 'electrical', location: result.category })"
+                    @click="
+                      trackDownload({
+                        name: result.name,
+                        file_type: 'diagram',
+                        group: 'electrical',
+                        location: result.category,
+                      })
+                    "
                   >
                     <div>
                       <div class="text-lg">{{ result.name }}</div>
@@ -247,7 +249,14 @@
                       :href="diagramItem.link"
                       target="_blank"
                       class="flex justify-between py-4 hover:bg-base-200 px-4 transition-colors"
-                      @click="trackDownload({ name: diagramItem.name, file_type: 'diagram', group: 'electrical', location: diagram.title })"
+                      @click="
+                        trackDownload({
+                          name: diagramItem.name,
+                          file_type: 'diagram',
+                          group: 'electrical',
+                          location: diagram.title,
+                        })
+                      "
                     >
                       <div>
                         <div class="text-lg">{{ diagramItem.name }}</div>

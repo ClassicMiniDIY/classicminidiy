@@ -312,7 +312,12 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
           <div class="col-span-12 md:col-span-8">
-            <PageIntro :eyebrow="t('eyebrow')" :title="t('main_heading')" :description="t('description_text')" as="h2" />
+            <PageIntro
+              :eyebrow="t('eyebrow')"
+              :title="t('main_heading')"
+              :description="t('description_text')"
+              as="h2"
+            />
           </div>
         </div>
 
@@ -327,7 +332,11 @@
                   <p class="text-sm opacity-70">{{ t('contribute_banner_description') }}</p>
                 </div>
               </div>
-              <NuxtLink to="/contribute/document" class="btn btn-primary btn-outline btn-sm" @click="track('contribute_cta_clicked', { type: 'document', location: 'archive_documents' })">
+              <NuxtLink
+                to="/contribute/document"
+                class="btn btn-primary btn-outline btn-sm"
+                @click="track('contribute_cta_clicked', { type: 'document', location: 'archive_documents' })"
+              >
                 {{ t('contribute_banner_button') }}
               </NuxtLink>
             </div>
@@ -342,7 +351,13 @@
             type="button"
             class="btn btn-sm"
             :class="activeType === filter.value ? 'btn-primary' : 'btn-neutral btn-outline'"
-            @click="() => { const prev = activeType; activeType = filter.value; track('document_filter_changed', { filter_type: filter.value, is_active: filter.value !== prev }); }"
+            @click="
+              () => {
+                const prev = activeType;
+                activeType = filter.value;
+                track('document_filter_changed', { filter_type: filter.value, is_active: filter.value !== prev });
+              }
+            "
           >
             {{ t(filter.labelKey) }} ({{ getFilterCount(filter.value) }})
           </button>
@@ -353,17 +368,17 @@
           <div class="w-full lg:flex-1">
             <label class="input input-bordered input-lg flex items-center gap-2 w-full">
               <i class="fas fa-magnifying-glass opacity-60"></i>
-              <input
-                v-model="search"
-                :placeholder="t('search_placeholder')"
-                class="grow"
-              />
+              <input v-model="search" :placeholder="t('search_placeholder')" class="grow" />
             </label>
           </div>
 
           <div class="flex gap-2">
             <!-- Sort Dropdown -->
-            <select v-model="sortBy" class="select select-bordered" @change="track('document_list_changed', { sort_by: sortBy })">
+            <select
+              v-model="sortBy"
+              class="select select-bordered"
+              @change="track('document_list_changed', { sort_by: sortBy })"
+            >
               <option value="title">{{ t('sort.title') }}</option>
               <option value="newest">{{ t('sort.newest') }}</option>
               <option value="oldest">{{ t('sort.oldest') }}</option>
@@ -375,7 +390,12 @@
                 type="button"
                 class="btn join-item"
                 :class="viewMode === 'cards' ? 'btn-primary' : 'btn-neutral btn-outline'"
-                @click="() => { viewMode = 'cards'; track('document_list_changed', { view_mode: 'cards' }); }"
+                @click="
+                  () => {
+                    viewMode = 'cards';
+                    track('document_list_changed', { view_mode: 'cards' });
+                  }
+                "
               >
                 <i class="fad fa-grid-2"></i>
               </button>
@@ -383,7 +403,12 @@
                 type="button"
                 class="btn join-item"
                 :class="viewMode === 'table' ? 'btn-primary' : 'btn-neutral btn-outline'"
-                @click="() => { viewMode = 'table'; track('document_list_changed', { view_mode: 'table' }); }"
+                @click="
+                  () => {
+                    viewMode = 'table';
+                    track('document_list_changed', { view_mode: 'table' });
+                  }
+                "
               >
                 <i class="fad fa-table"></i>
               </button>
@@ -457,20 +482,13 @@
                       >
                         <i
                           :class="
-                            expandedCollections.has(row.collectionId!)
-                              ? 'fas fa-chevron-down'
-                              : 'fas fa-chevron-right'
+                            expandedCollections.has(row.collectionId!) ? 'fas fa-chevron-down' : 'fas fa-chevron-right'
                           "
                           class="text-xs"
                         ></i>
                       </button>
                       <div class="hidden md:block h-12 w-12 rounded-lg overflow-hidden">
-                        <img
-                          v-if="row.image"
-                          :src="row.image"
-                          :alt="row.title"
-                          class="h-12 w-12 object-cover"
-                        />
+                        <img v-if="row.image" :src="row.image" :alt="row.title" class="h-12 w-12 object-cover" />
                         <div v-else class="flex justify-center items-center h-12 w-12 bg-base-200">
                           <i
                             :class="
@@ -523,11 +541,7 @@
                   <!-- Actions cell -->
                   <td>
                     <div class="flex gap-2 justify-end">
-                      <NuxtLink
-                        v-if="row.isCollection"
-                        :to="row.path"
-                        class="btn btn-ghost btn-sm text-primary"
-                      >
+                      <NuxtLink v-if="row.isCollection" :to="row.path" class="btn btn-ghost btn-sm text-primary">
                         {{ t('table_view_collection') }}
                         <i class="fad fa-arrow-right ml-1"></i>
                       </NuxtLink>
@@ -549,13 +563,23 @@
           <!-- Pagination -->
           <div v-if="pageCount > 1" class="flex justify-center items-center mt-8">
             <div class="join">
-              <button type="button" class="btn btn-sm btn-square join-item" :disabled="currentPage === 1" @click="prevPage">
+              <button
+                type="button"
+                class="btn btn-sm btn-square join-item"
+                :disabled="currentPage === 1"
+                @click="prevPage"
+              >
                 <i class="fad fa-arrow-left"></i>
               </button>
               <button type="button" class="btn btn-sm btn-ghost join-item">
                 {{ t('pagination.page_text', { current: currentPage, total: pageCount }) }}
               </button>
-              <button type="button" class="btn btn-sm btn-square join-item" :disabled="currentPage >= pageCount" @click="nextPage">
+              <button
+                type="button"
+                class="btn btn-sm btn-square join-item"
+                :disabled="currentPage >= pageCount"
+                @click="nextPage"
+              >
                 <i class="fad fa-arrow-right"></i>
               </button>
             </div>
