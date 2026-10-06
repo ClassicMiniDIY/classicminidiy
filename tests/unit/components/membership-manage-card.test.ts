@@ -346,9 +346,34 @@ describe('change level', () => {
       body: { plan: 'plus' },
     });
     expect(wrapper.find('[data-testid="change-level-done"]').text()).toContain('Your level is now Plus.');
+    // The status is read again after the change.
+    expect(fetchMock.mock.calls.filter((c: any) => c[1].body.action === 'status').length).toBe(2);
     await vi.advanceTimersByTimeAsync(3000);
     await flushPromises();
     expect(wrapper.find('[data-testid="member-title"]').text()).toBe("You're a Sustaining Member · Plus");
+  });
+
+  it('a failed status reload after a change keeps the done message', async () => {
+    let statusCalls = 0;
+    const supabase = stripeSupabase('base');
+    stubEnvironment({ auth: makeAuthStub({ member: true }), supabase });
+    vi.stubGlobal('useI18n', () => ({ t: realT, locale: ref('en') }));
+    vi.stubGlobal(
+      '$fetch',
+      vi.fn(async (_url: string, init: any) => {
+        if (init.body.action === 'status') {
+          statusCalls += 1;
+          if (statusCalls > 1) throw new Error('blip');
+          return STATUS;
+        }
+        return { changed: true, plan: 'plus' };
+      })
+    );
+    const wrapper = mountCard();
+    await flushPromises();
+    await nextTick();
+    await choose(wrapper, 'plus');
+    expect(wrapper.find('[data-testid="change-level-done"]').exists()).toBe(true);
   });
 
   it('changed:false says the member is already on that level', async () => {
@@ -365,7 +390,7 @@ describe('change level', () => {
     });
     await choose(wrapper, 'pro');
     const box = wrapper.find('[data-testid="change-level-payment"]');
-    expect(box.text()).toContain('Pay it within 23 hours');
+    expect(box.text()).toContain('expires within a day');
     expect(box.find('a').attributes('href')).toBe('https://invoice.stripe.com/i/acct/x');
     expect(box.find('a').attributes('rel')).toBe('noopener noreferrer');
   });
