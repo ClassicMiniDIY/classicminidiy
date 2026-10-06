@@ -224,7 +224,11 @@
         <p class="eyebrow text-center"><i class="fas fa-list-check mr-1"></i>{{ t('benefits.eyebrow') }}</p>
         <h2 class="text-3xl font-bold text-center pt-2 pb-8">{{ t('benefits.title') }}</h2>
         <ul class="benefits-list grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <li v-for="benefit in benefits" :key="benefit.key" class="card bg-base-100 border border-base-300 shadow-sm">
+          <li
+            v-for="benefit in benefits"
+            :key="benefit.key"
+            class="card bg-base-100 border border-base-300 shadow-sm sm:last:odd:col-span-2"
+          >
             <div class="card-body p-5 flex-row items-start gap-4">
               <span class="text-2xl text-primary shrink-0 mt-1">
                 <i :class="benefit.icon"></i>
