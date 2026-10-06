@@ -64,8 +64,9 @@
 
           <!--
             A member on the base or Plus plan is offered the plan ABOVE, never
-            the ceiling just hit. Plan changes happen on /membership (the Stripe
-            Customer Portal for web members; the store for app members).
+            the ceiling just hit. Web members change level on /settings/membership
+            (the "Change level" picker; the Stripe portal cannot offer Plus or Pro);
+            app members change it in their store.
           -->
           <NuxtLink v-else :to="quota.upgradeUrl" class="btn btn-primary btn-sm" @click="trackCta('membership')">
             <i class="fas fa-star" aria-hidden="true"></i>

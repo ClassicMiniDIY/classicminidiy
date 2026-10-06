@@ -215,3 +215,123 @@ describe('member plan line', () => {
     expect(wrapper.find('[data-testid="member-title"]').text()).toBe("You're a Sustaining Member");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Change level (Stripe members): change-membership-plan via the web proxy
+// ---------------------------------------------------------------------------
+describe('change level', () => {
+  function stripeSupabase(plans: Array<string | null>) {
+    const supabase: any = makeSupabaseStub({ platform: 'stripe', plan: plans[0] ?? null });
+    // First answer = the initial load; later answers = the poll after a change.
+    for (const plan of plans)
+      supabase._rpcSingle.mockResolvedValueOnce({ data: { platform: 'stripe', plan }, error: null });
+    supabase.auth = { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }) };
+    return supabase;
+  }
+
+  async function mountStripe(supabase: any, fetchImpl: (...args: any[]) => unknown) {
+    stubEnvironment({ auth: makeAuthStub({ member: true }), supabase });
+    vi.stubGlobal('useI18n', () => ({ t: realT, locale: ref('en') }));
+    const fetchMock = vi.fn(fetchImpl);
+    vi.stubGlobal('$fetch', fetchMock);
+    const wrapper = mountCard();
+    await flushPromises();
+    await nextTick();
+    return { wrapper, fetchMock };
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows the three levels to a Stripe member, with the current one disabled', async () => {
+    const { wrapper } = await mountStripe(stripeSupabase(['base']), async () => ({}));
+    const picker = wrapper.find('[data-testid="change-level"]');
+    expect(picker.exists()).toBe(true);
+    expect(wrapper.find('[data-testid="change-level-base"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.find('[data-testid="change-level-plus"]').attributes('disabled')).toBeUndefined();
+    expect(wrapper.find('[data-testid="change-level-pro"]').text()).toContain('Pro · $9.99/month');
+    // The portal sentence that promised plan changes there is gone.
+    expect(wrapper.text()).not.toContain('switch plans there');
+  });
+
+  it.each(['apple', 'google', 'patreon', 'youtube', 'comp', null])(
+    'platform %s sees no level picker',
+    async (platform) => {
+      stubEnvironment({ auth: makeAuthStub({ member: true }), supabase: makeSupabaseStub({ platform, plan: 'base' }) });
+      const wrapper = mountCard();
+      await flushPromises();
+      await nextTick();
+      expect(wrapper.find('[data-testid="change-level"]').exists()).toBe(false);
+    }
+  );
+
+  it('moving up says the difference is charged today; moving down says it becomes credit', async () => {
+    const { wrapper } = await mountStripe(stripeSupabase(['plus']), async () => ({}));
+    await wrapper.find('[data-testid="change-level-pro"]').trigger('click');
+    const confirmUp = wrapper.find('[data-testid="change-level-confirm"]').text();
+    expect(confirmUp).toContain('Move to Pro ($9.99 a month, 135 DIY Mini Bot questions a month)?');
+    expect(confirmUp).toContain('You pay the difference');
+    await wrapper.find('[data-testid="change-level-base"]').trigger('click');
+    expect(wrapper.find('[data-testid="change-level-confirm"]').text()).toContain('becomes a credit');
+  });
+
+  it('confirm posts the plan with the access token, then waits for the webhook', async () => {
+    vi.useFakeTimers();
+    const supabase = stripeSupabase(['base', 'base', 'plus']);
+    const { wrapper, fetchMock } = await mountStripe(supabase, async () => ({ changed: true, plan: 'plus' }));
+    await wrapper.find('[data-testid="change-level-plus"]').trigger('click');
+    await wrapper.find('[data-testid="change-level-confirm-button"]').trigger('click');
+    await flushPromises();
+    expect(fetchMock).toHaveBeenCalledWith('/api/membership/change-plan', {
+      method: 'POST',
+      headers: { authorization: 'Bearer tok' },
+      body: { plan: 'plus' },
+    });
+    await vi.advanceTimersByTimeAsync(2000); // poll 1: still base
+    await vi.advanceTimersByTimeAsync(2000); // poll 2: plus
+    await flushPromises();
+    expect(wrapper.find('[data-testid="change-level-done"]').text()).toContain('Your level is now Plus.');
+    expect(wrapper.find('[data-testid="member-title"]').text()).toBe("You're a Sustaining Member · Plus");
+  });
+
+  it('PAYMENT_REQUIRED shows the invoice page link', async () => {
+    const err = Object.assign(new Error('402'), {
+      statusCode: 402,
+      data: { data: { code: 'PAYMENT_REQUIRED', invoiceUrl: 'https://invoice.stripe.com/i/acct/x' } },
+    });
+    const { wrapper } = await mountStripe(stripeSupabase(['base']), async () => {
+      throw err;
+    });
+    await wrapper.find('[data-testid="change-level-pro"]').trigger('click');
+    await wrapper.find('[data-testid="change-level-confirm-button"]').trigger('click');
+    await flushPromises();
+    const box = wrapper.find('[data-testid="change-level-payment"]');
+    expect(box.text()).toContain('Your bank needs to confirm the payment');
+    expect(box.find('a').attributes('href')).toBe('https://invoice.stripe.com/i/acct/x');
+  });
+
+  it('CANCEL_SCHEDULED tells the member to resume first', async () => {
+    const err = Object.assign(new Error('409'), { statusCode: 409, data: { data: { code: 'CANCEL_SCHEDULED' } } });
+    const { wrapper } = await mountStripe(stripeSupabase(['base']), async () => {
+      throw err;
+    });
+    await wrapper.find('[data-testid="change-level-plus"]').trigger('click');
+    await wrapper.find('[data-testid="change-level-confirm-button"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="change-level-error"]').text()).toContain('Resume it on the billing page first');
+  });
+
+  it('every locale carries every change-level string', () => {
+    const all = JSON.parse(
+      readFileSync('app/components/membership/ManageCard.vue', 'utf8').match(
+        /<i18n lang="json">\n([\s\S]*?)<\/i18n>/
+      )![1]!
+    );
+    const keys = Object.keys(all.en.member.change).sort();
+    for (const [locale, messages] of Object.entries<any>(all)) {
+      expect(Object.keys(messages.member.change).sort(), locale).toEqual(keys);
+      expect(messages.member.change_plan_stripe, locale).toBeUndefined();
+    }
+  });
+});
