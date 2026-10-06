@@ -14,9 +14,11 @@ const q = (k: string) => GOLDEN.searchParams.get(k);
 
 describe('checkConfirmToken', () => {
   it('accepts the edge function golden vector before it expires', () => {
+    // issuedAt = x - 7 days; mailing_list_confirm compares it to the latest unsubscribe.
     expect(checkConfirmToken(SECRET, q('e'), q('x'), q('t'), 1790000000)).toEqual({
       ok: true,
       email: 'reader@gmail.com',
+      issuedAt: new Date(1790000000 * 1000),
     });
   });
 

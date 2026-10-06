@@ -11,6 +11,7 @@
  * Covered by the /api/** write rate limit (server/middleware/rate-limit.ts).
  */
 import { callMarketingEdge } from '../../utils/marketingEdge';
+import { clientIp } from '../../utils/clientIp';
 import { turnstileConfigured, verifyTurnstile } from '../../utils/turnstile';
 
 export default defineEventHandler(async (event) => {
@@ -23,15 +24,21 @@ export default defineEventHandler(async (event) => {
   if (!token) throw createError({ statusCode: 400, statusMessage: 'captcha_required' });
   if (!turnstileConfigured()) throw createError({ statusCode: 503, statusMessage: 'signup_unavailable' });
 
-  const ip = getRequestIP(event, { xForwardedFor: true });
-  if (!(await verifyTurnstile(token, ip))) {
+  // cf-connecting-ip first: a caller-chosen X-Forwarded-For must not reach siteverify.
+  const ip = clientIp(event);
+  if (!(await verifyTurnstile(token, ip === 'unknown' ? undefined : ip, 'newsletter'))) {
     throw createError({ statusCode: 403, statusMessage: 'captcha_failed' });
   }
 
   try {
     await callMarketingEdge({ action: 'mailing_list_signup', email, source: 'signup_form' }, { timeout: 20000 });
   } catch (error: any) {
-    if (error?.statusCode === 400) throw createError({ statusCode: 400, statusMessage: 'invalid_email' });
+    // Only the edge's own invalid_email is the visitor's fault. Any other 400 (e.g.
+    // "Unknown action" while the edge function is not yet deployed) is ours.
+    if (error?.statusCode === 400 && error?.statusMessage === 'invalid_email') {
+      throw createError({ statusCode: 400, statusMessage: 'invalid_email' });
+    }
+    console.error('[newsletter/subscribe] edge signup failed:', error?.statusCode, error?.statusMessage);
     throw createError({ statusCode: 502, statusMessage: 'signup_failed' });
   }
   return { ok: true };

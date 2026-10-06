@@ -21,8 +21,12 @@ const postHandler = (await import('~~/server/routes/email/confirm.post')).defaul
 describe('/email/confirm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    verifyConfirmToken.mockReturnValue({ ok: true, email: 'reader@gmail.com' });
-    rpc.mockResolvedValue({ data: [{ status: 'subscribed' }], error: null });
+    verifyConfirmToken.mockReturnValue({
+      ok: true,
+      email: 'reader@gmail.com',
+      issuedAt: new Date('2026-10-01T00:00:00Z'),
+    });
+    rpc.mockResolvedValue({ data: [{ status: 'subscribed', cleared_unsubscribe: false }], error: null });
   });
 
   it('GET shows a POST form with the same token and writes nothing', () => {
@@ -32,10 +36,21 @@ describe('/email/confirm', () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it('POST confirms through mailing_list_confirm', async () => {
+  it('POST confirms through mailing_list_confirm with the link issue time', async () => {
     const html = await postHandler({});
-    expect(rpc).toHaveBeenCalledWith('mailing_list_confirm', { p_email: 'reader@gmail.com' });
+    expect(rpc).toHaveBeenCalledWith('mailing_list_confirm', {
+      p_email: 'reader@gmail.com',
+      p_issued_at: '2026-10-01T00:00:00.000Z',
+    });
     expect(html).toContain("You're subscribed");
+  });
+
+  it('POST: a link older than the latest unsubscribe is refused, not a false success', async () => {
+    rpc.mockResolvedValue({ data: [{ status: 'stale', cleared_unsubscribe: false }], error: null });
+    const html = await postHandler({});
+    expect(html).toContain('older than your unsubscribe');
+    expect(html).not.toContain("You're subscribed");
+    expect(setResponseStatus).toHaveBeenCalledWith({}, 409);
   });
 
   it('an invalid or expired token never reaches the database', async () => {

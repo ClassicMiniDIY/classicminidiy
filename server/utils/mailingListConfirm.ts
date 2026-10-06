@@ -10,7 +10,10 @@
  */
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-export type ConfirmCheck = { ok: true; email: string } | { ok: false; reason: 'invalid' | 'expired' };
+/** A confirm link lives this long; the link's issue time is its expiry minus this. */
+export const CONFIRM_TTL_SECONDS = 7 * 24 * 60 * 60;
+
+export type ConfirmCheck = { ok: true; email: string; issuedAt: Date } | { ok: false; reason: 'invalid' | 'expired' };
 
 function base64urlDecode(value: string): Buffer | null {
   if (!/^[A-Za-z0-9_-]+$/.test(value)) return null;
@@ -45,7 +48,7 @@ export function checkConfirmToken(
     return { ok: false, reason: 'invalid' };
   }
   if (Number(x) < nowSeconds) return { ok: false, reason: 'expired' };
-  return { ok: true, email };
+  return { ok: true, email, issuedAt: new Date((Number(x) - CONFIRM_TTL_SECONDS) * 1000) };
 }
 
 /** checkConfirmToken with MARKETING_UNSUB_SECRET and the current time. */

@@ -54,6 +54,12 @@ export default defineEventHandler(async (event) => {
     );
   }
 
+  // The upsert above is ignoreDuplicates: when a bounce row already holds the
+  // address it writes nothing and the list trigger never fires, so mark the
+  // newsletter row explicitly. Best-effort: the suppression already stops sends.
+  const { error: listError } = await db.rpc('mailing_list_unsubscribe', { p_email: email });
+  if (listError) console.error('[email/unsubscribe] mailing_list_unsubscribe failed:', listError.message);
+
   return unsubPage(
     'Unsubscribed',
     `<h1>You're unsubscribed</h1>

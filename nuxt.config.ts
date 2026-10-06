@@ -831,7 +831,13 @@ export default defineNuxtConfig({
     // Server-side Turnstile check for the newsletter signup (server/utils/turnstile.ts).
     // RUNTIME-only secret NUXT_TURNSTILE_SECRET_KEY; unset = POST /api/newsletter/subscribe
     // answers 503 (a public write never runs unverified). login.vue does not use it.
-    turnstile: { secretKey: process.env.NUXT_TURNSTILE_SECRET_KEY || '' },
+    // In `nuxt dev` only, Cloudflare's always-pass TEST secret pairs with the module's
+    // dev test site key, so the form works locally. Never in a production build.
+    turnstile: {
+      secretKey:
+        process.env.NUXT_TURNSTILE_SECRET_KEY ||
+        (process.env.NODE_ENV === 'development' ? '1x0000000000000000000000000000000AA' : ''),
+    },
     // DiscourseConnect shared secret with the forum (POST /api/discourse/sso).
     // Unset = that route answers 503 sso_unconfigured; nothing else depends on it.
     DISCOURSE_CONNECT_SECRET: process.env.DISCOURSE_CONNECT_SECRET || '',
