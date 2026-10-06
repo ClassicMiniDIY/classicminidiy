@@ -42,3 +42,20 @@ describe('POST /email/unsubscribe', () => {
     errSpy.mockRestore();
   });
 });
+
+describe('GET /email/unsubscribe?from=news (old Ghost newsletter links)', () => {
+  it('explains that the old newsletter stopped, without a token', async () => {
+    vi.stubGlobal('getQuery', () => ({ from: 'news', uuid: 'ghost-member', key: 'k' }));
+    const get = (await import('~~/server/routes/email/unsubscribe.get')).default as (e: any) => string;
+    const html = get({});
+    expect(html).toContain('The old blog newsletter has stopped');
+    expect(html).toContain('https://community.classicminidiy.com/c/news/16');
+    expect(html).not.toContain("This link isn't valid");
+  });
+
+  it('a real signed link still wins over from=news', async () => {
+    vi.stubGlobal('getQuery', () => ({ from: 'news', e: 'E', t: 'T' }));
+    const get = (await import('~~/server/routes/email/unsubscribe.get')).default as (e: any) => string;
+    expect(get({})).toContain('Unsubscribe from marketing emails?');
+  });
+});
