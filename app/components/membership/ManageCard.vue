@@ -105,15 +105,70 @@
   // The change-membership-plan edge function swaps the price on the member's
   // own Stripe subscription; the webhook then writes the new plan (design:
   // classicminidiy-supabase docs/plans/2026-10-06-membership-change-level.md).
-  const PLAN_ORDER: string[] = MEMBERSHIP_PLANS.map((p) => p.plan);
   const formatPrice = (usd: number) => `$${usd.toFixed(2)}`;
-  const currentPlan = computed(() => membershipPlan.value ?? 'base');
+
+  // The Stripe sub's OWN level and price (change-membership-plan, action
+  // 'status'). get_my_membership().plan is the highest level across every
+  // channel, so a comp Pro member who also pays Stripe Member would see the
+  // wrong level marked. null = not loaded or the call failed: the picker stays
+  // hidden, so the web can ship before the edge function.
+  interface ChangeStatus {
+    plan: string | null;
+    interval: 'month' | 'year' | null;
+    monthlyCents: number | null;
+    onCurrentPrice: boolean;
+    blocked: string | null;
+  }
+  const changeStatus = ref<ChangeStatus | null>(null);
+  const currentPlan = computed(() => changeStatus.value?.plan ?? membershipPlan.value ?? 'base');
+
+  async function accessToken(): Promise<string | null> {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  }
+
+  async function loadChangeStatus() {
+    changeStatus.value = null;
+    try {
+      const token = await accessToken();
+      if (!token) return;
+      changeStatus.value = await $fetch<ChangeStatus>('/api/membership/change-plan', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+        body: { action: 'status' },
+      });
+    } catch (error) {
+      console.error('Error loading membership level status:', error);
+    }
+  }
+  watch(
+    () => (membershipLoaded.value && membershipPlatform.value === 'stripe' ? user.value?.id : null),
+    (userId) => {
+      if (userId) loadChangeStatus();
+    },
+    { immediate: true }
+  );
+
+  // A level is selectable unless it is the current level on today's price.
+  // A legacy (Substack-era) price keeps its own level selectable: choosing it
+  // moves the member to today's price for that level.
+  const isCurrentOption = (plan: string) => plan === currentPlan.value && changeStatus.value?.onCurrentPrice !== false;
+
   const pendingPlan = ref<string | null>(null);
   const pendingOption = computed(() => MEMBERSHIP_PLANS.find((p) => p.plan === pendingPlan.value) ?? null);
-  const pendingIsUp = computed(
-    () => PLAN_ORDER.indexOf(pendingPlan.value ?? '') > PLAN_ORDER.indexOf(currentPlan.value)
-  );
-  type ChangeState = 'idle' | 'working' | 'done' | 'syncing' | 'payment' | 'error';
+  // Which rule the confirm step states. Compared by price, not by level order,
+  // so a legacy $8/mo Plus member moving to $4.99 Plus reads as a move down.
+  const pendingRuleKey = computed(() => {
+    if (changeStatus.value?.interval === 'year') return 'member.change.confirm_yearly';
+    const current = changeStatus.value?.monthlyCents;
+    const target = pendingOption.value ? Math.round(pendingOption.value.usd * 100) : null;
+    return current != null && target != null && target < current
+      ? 'member.change.confirm_down'
+      : 'member.change.confirm_up';
+  });
+  type ChangeState = 'idle' | 'working' | 'done' | 'already' | 'payment' | 'error';
   const changeState = ref<ChangeState>('idle');
   const changeErrorKey = ref('member.change.error');
   const changedTo = ref<string | null>(null);
@@ -128,26 +183,38 @@
     pendingPlan.value = null;
   }
 
-  // The webhook writes the new plan a few seconds after Stripe reports the
-  // change. Re-read get_my_membership() until it matches, for about 15 seconds.
-  // It reports the HIGHEST plan across every channel, so a member who also
-  // holds a higher level elsewhere never matches; that ends as 'syncing'.
-  async function waitForPlan(plan: string): Promise<boolean> {
-    for (let i = 0; i < 8; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+  // The webhook writes the new plan a few seconds after Stripe applies the
+  // change. Refresh the headline in the background until it moves (about 15
+  // seconds); it shows the highest level across channels, so it may never
+  // match, and nothing waits on it.
+  async function refreshHeadlineSoon() {
+    const before = membershipPlan.value;
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       const { data, error } = await supabase.rpc('get_my_membership').single();
-      if (!error && data?.plan === plan) {
-        membershipPlan.value = plan;
-        return true;
+      if (!error && data?.plan && data.plan !== before) {
+        membershipPlan.value = data.plan;
+        return;
       }
     }
-    return false;
   }
 
-  const CHANGE_ERRORS: Record<string, string> = {
-    CANCEL_SCHEDULED: 'member.change.error_cancel_scheduled',
-    NOT_ACTIVE: 'member.change.error_not_active',
-  };
+  const SUPPORT_CODES = [
+    'OWNER_MISMATCH',
+    'MULTIPLE_SUBSCRIPTIONS',
+    'UNEXPECTED_ITEMS',
+    'HAS_SCHEDULE',
+    'NO_STRIPE_MEMBERSHIP',
+  ];
+  function errorKeyFor(code: string | null | undefined): string {
+    if (code === 'CANCEL_SCHEDULED') return 'member.change.error_cancel_scheduled';
+    if (code === 'NOT_ACTIVE') return 'member.change.error_not_active';
+    if (code === 'PAYMENT_METHOD_UNSUPPORTED') return 'member.change.error_payment_method';
+    if (code === 'PLAN_UNAVAILABLE') return 'member.change.error_unavailable';
+    if (code && SUPPORT_CODES.includes(code)) return 'member.change.error_support';
+    return 'member.change.error';
+  }
+  const blockedKey = computed(() => (changeStatus.value?.blocked ? errorKeyFor(changeStatus.value.blocked) : null));
 
   async function confirmChange() {
     const plan = pendingPlan.value;
@@ -155,19 +222,23 @@
     changeState.value = 'working';
     track('membership_plan_change_started', { source: 'web', from: currentPlan.value, to: plan });
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session');
-      await $fetch('/api/membership/change-plan', {
+      const token = await accessToken();
+      if (!token) throw new Error('No session');
+      const res = await $fetch<{ changed?: boolean }>('/api/membership/change-plan', {
         method: 'POST',
-        headers: { authorization: `Bearer ${session.access_token}` },
+        headers: { authorization: `Bearer ${token}` },
         body: { plan },
       });
       pendingPlan.value = null;
       changedTo.value = plan;
-      changeState.value = (await waitForPlan(plan)) ? 'done' : 'syncing';
+      if (res?.changed === false) {
+        changeState.value = 'already';
+        return;
+      }
+      changeState.value = 'done';
       track('membership_plan_changed', { source: 'web', to: plan });
+      await loadChangeStatus();
+      void refreshHeadlineSoon();
     } catch (error: any) {
       // h3 puts createError's data under the body's own `data` key.
       const data = error?.data?.data ?? error?.data ?? {};
@@ -178,7 +249,7 @@
         return;
       }
       console.error('Membership level change failed:', error);
-      changeErrorKey.value = CHANGE_ERRORS[data.code] ?? 'member.change.error';
+      changeErrorKey.value = errorKeyFor(data.code);
       changeState.value = 'error';
     }
   }
@@ -302,64 +373,69 @@
         </div>
         <p class="text-xs opacity-60 mt-2">{{ t('member.manage_note_stripe') }}</p>
 
-        <div v-if="membershipLoaded" class="rounded-box border border-base-300 p-4 mt-4" data-testid="change-level">
+        <div v-if="changeStatus" class="rounded-box border border-base-300 p-4 mt-4" data-testid="change-level">
           <p class="font-semibold">
-            <i class="fas fa-arrows-up-down mr-2 text-primary"></i>{{ t('member.change.title') }}
+            <i class="fas fa-arrows-up-down mr-2 text-primary" aria-hidden="true"></i>{{ t('member.change.title') }}
           </p>
-          <p class="text-sm opacity-70 mt-1">{{ t('member.change.intro') }}</p>
-          <div class="flex flex-wrap gap-2 mt-3">
-            <button
-              v-for="option in MEMBERSHIP_PLANS"
-              :key="option.plan"
-              type="button"
-              class="btn btn-sm"
-              :class="option.plan === currentPlan ? 'btn-primary' : 'btn-outline'"
-              :disabled="option.plan === currentPlan || changeState === 'working'"
-              :aria-pressed="pendingPlan === option.plan"
-              :data-testid="`change-level-${option.plan}`"
-              @click="askChange(option.plan)"
-            >
-              {{ t('member.change.option', { plan: planLabel(option.plan), price: formatPrice(option.usd) }) }}
-              <span v-if="option.plan === currentPlan" class="badge badge-sm">{{ t('member.change.current') }}</span>
-            </button>
-          </div>
+          <p v-if="blockedKey" class="text-sm opacity-70 mt-1" data-testid="change-level-blocked">
+            {{ t(blockedKey) }}
+          </p>
+          <template v-else>
+            <p class="text-sm opacity-70 mt-1">{{ t('member.change.intro') }}</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button
+                v-for="option in MEMBERSHIP_PLANS"
+                :key="option.plan"
+                type="button"
+                class="btn btn-sm"
+                :class="option.plan === currentPlan ? 'btn-primary' : 'btn-outline'"
+                :disabled="isCurrentOption(option.plan) || changeState === 'working'"
+                :aria-pressed="pendingPlan === option.plan"
+                :data-testid="`change-level-${option.plan}`"
+                @click="askChange(option.plan)"
+              >
+                {{ t('member.change.option', { plan: planLabel(option.plan), price: formatPrice(option.usd) }) }}
+                <span v-if="option.plan === currentPlan" class="badge badge-sm">{{
+                  changeStatus.onCurrentPrice ? t('member.change.current') : t('member.change.older_price')
+                }}</span>
+              </button>
+            </div>
 
-          <div v-if="pendingOption" role="alert" class="alert mt-3 items-start" data-testid="change-level-confirm">
-            <div class="flex flex-col gap-2">
-              <p class="font-semibold">
-                {{
-                  t('member.change.confirm', {
-                    plan: planLabel(pendingOption.plan),
-                    price: formatPrice(pendingOption.usd),
-                    count: planQuestions(pendingOption.plan),
-                  })
-                }}
-              </p>
-              <p class="text-sm opacity-80">
-                {{ pendingIsUp ? t('member.change.confirm_up') : t('member.change.confirm_down') }}
-              </p>
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  :disabled="changeState === 'working'"
-                  data-testid="change-level-confirm-button"
-                  @click="confirmChange"
-                >
-                  <span v-if="changeState === 'working'" class="loading loading-spinner loading-xs"></span>
-                  {{ changeState === 'working' ? t('member.change.working') : t('member.change.confirm_cta') }}
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-ghost btn-sm"
-                  :disabled="changeState === 'working'"
-                  @click="cancelChange"
-                >
-                  {{ t('member.change.cancel') }}
-                </button>
+            <div v-if="pendingOption" role="alert" class="alert mt-3 items-start" data-testid="change-level-confirm">
+              <div class="flex flex-col gap-2">
+                <p class="font-semibold">
+                  {{
+                    t('member.change.confirm', {
+                      plan: planLabel(pendingOption.plan),
+                      price: formatPrice(pendingOption.usd),
+                      count: planQuestions(pendingOption.plan),
+                    })
+                  }}
+                </p>
+                <p class="text-sm opacity-80">{{ t(pendingRuleKey) }}</p>
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    :disabled="changeState === 'working'"
+                    data-testid="change-level-confirm-button"
+                    @click="confirmChange"
+                  >
+                    <span v-if="changeState === 'working'" class="loading loading-spinner loading-xs"></span>
+                    {{ changeState === 'working' ? t('member.change.working') : t('member.change.confirm_cta') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    :disabled="changeState === 'working'"
+                    @click="cancelChange"
+                  >
+                    {{ t('member.change.cancel') }}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
 
           <p
             v-if="changeState === 'done'"
@@ -367,16 +443,16 @@
             role="status"
             data-testid="change-level-done"
           >
-            <i class="fas fa-circle-check mr-1"></i>{{ t('member.change.done', { plan: planLabel(changedTo) }) }}
+            <i class="fas fa-circle-check mr-1" aria-hidden="true"></i
+            >{{ t('member.change.done', { plan: planLabel(changedTo) }) }}
           </p>
           <p
-            v-else-if="changeState === 'syncing'"
+            v-else-if="changeState === 'already'"
             class="text-sm mt-3"
             role="status"
-            data-testid="change-level-syncing"
+            data-testid="change-level-already"
           >
-            <i class="fas fa-clock mr-1 text-primary"></i
-            >{{ t('member.change.syncing', { plan: planLabel(changedTo) }) }}
+            {{ t('member.change.already', { plan: planLabel(changedTo) }) }}
           </p>
           <div
             v-else-if="changeState === 'payment'"
@@ -390,12 +466,18 @@
                 v-if="invoiceUrl"
                 :href="invoiceUrl"
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
                 class="btn btn-sm btn-warning w-fit"
               >
                 {{ t('member.change.payment_cta') }}
-                <i class="fas fa-arrow-up-right-from-square text-xs"></i>
+                <i class="fas fa-arrow-up-right-from-square text-xs" aria-hidden="true"></i>
               </a>
+              <p v-else class="text-sm">
+                {{ t('member.change.payment_no_link') }}
+                <a v-if="portalHref" :href="portalHref" target="_blank" rel="noopener" class="link">{{
+                  t('member.manage')
+                }}</a>
+              </p>
             </div>
           </div>
           <p
@@ -404,7 +486,7 @@
             role="alert"
             data-testid="change-level-error"
           >
-            <i class="fas fa-triangle-exclamation mr-1"></i>{{ t(changeErrorKey) }}
+            <i class="fas fa-triangle-exclamation mr-1" aria-hidden="true"></i>{{ t(changeErrorKey) }}
           </p>
         </div>
       </template>
@@ -485,18 +567,24 @@
         "option": "{plan} · {price}/month",
         "current": "Current",
         "confirm": "Move to {plan} ({price} a month, {count} DIY Mini Bot questions a month)?",
-        "confirm_up": "You pay the difference for the rest of this billing period today.",
+        "confirm_up": "You are charged the difference for the rest of this billing period.",
         "confirm_down": "The unused part of your current level becomes a credit toward your next payments.",
         "confirm_cta": "Confirm",
         "cancel": "Cancel",
         "working": "Changing…",
         "done": "Done. Your level is now {plan}.",
-        "syncing": "Done. {plan} shows here in a minute.",
-        "payment_needed": "Your bank needs to confirm the payment. The change applies when it is paid.",
+        "payment_needed": "The payment for this change did not go through. Pay it within 23 hours or the change is dropped, and nothing is charged.",
         "payment_cta": "Open the payment page",
         "error": "We could not change your level. Try again, or contact us.",
         "error_cancel_scheduled": "Your membership is set to end. Resume it on the billing page first, then change the level.",
-        "error_not_active": "There is a problem with your payment. Fix it on the billing page first."
+        "error_not_active": "There is a problem with your payment. Fix it on the billing page first.",
+        "confirm_yearly": "You move from yearly to monthly payments, starting today. The unused part of your yearly payment becomes a credit toward the new price.",
+        "older_price": "Older price",
+        "already": "You are already on {plan}.",
+        "payment_no_link": "Update your payment method on the billing page, then try again.",
+        "error_support": "This membership cannot be changed here. Contact us and we will change it for you.",
+        "error_unavailable": "This level is not available yet.",
+        "error_payment_method": "Changing level needs a card. Update your payment method on the billing page first."
       },
       "change_plan_store": "Switch plans from your App Store or Google Play subscription settings."
     },
@@ -552,18 +640,24 @@
         "option": "{plan} · {price}/mes",
         "current": "Actual",
         "confirm": "¿Cambiar a {plan} ({price} al mes, {count} preguntas al DIY Mini Bot al mes)?",
-        "confirm_up": "Hoy pagas la diferencia por lo que queda de este periodo de facturación.",
+        "confirm_up": "Se te cobra la diferencia por lo que queda de este periodo de facturación.",
         "confirm_down": "La parte no usada de tu nivel actual queda como saldo a favor para tus próximos pagos.",
         "confirm_cta": "Confirmar",
         "cancel": "Cancelar",
         "working": "Cambiando…",
         "done": "Hecho. Tu nivel ahora es {plan}.",
-        "syncing": "Hecho. {plan} aparecerá aquí en un minuto.",
-        "payment_needed": "Tu banco necesita confirmar el pago. El cambio se aplica cuando esté pagado.",
+        "payment_needed": "El pago de este cambio no se ha completado. Págalo en 23 horas o el cambio se descarta, sin ningún cobro.",
         "payment_cta": "Abrir la página de pago",
         "error": "No hemos podido cambiar tu nivel. Inténtalo de nuevo o contáctanos.",
         "error_cancel_scheduled": "Tu membresía está programada para terminar. Reactívala primero en la página de facturación y luego cambia el nivel.",
-        "error_not_active": "Hay un problema con tu pago. Resuélvelo primero en la página de facturación."
+        "error_not_active": "Hay un problema con tu pago. Resuélvelo primero en la página de facturación.",
+        "confirm_yearly": "Pasas de pago anual a pago mensual a partir de hoy. La parte no usada de tu pago anual queda como saldo a favor para el nuevo precio.",
+        "older_price": "Precio anterior",
+        "already": "Ya tienes el nivel {plan}.",
+        "payment_no_link": "Actualiza tu método de pago en la página de facturación y vuelve a intentarlo.",
+        "error_support": "Esta membresía no se puede cambiar aquí. Contáctanos y la cambiamos por ti.",
+        "error_unavailable": "Este nivel aún no está disponible.",
+        "error_payment_method": "Para cambiar de nivel necesitas una tarjeta. Actualiza primero tu método de pago en la página de facturación."
       },
       "change_plan_store": "Cambia de plan desde los ajustes de suscripción del App Store o Google Play."
     },
@@ -619,18 +713,24 @@
         "option": "{plan} · {price}/mois",
         "current": "Actuel",
         "confirm": "Passer à {plan} ({price} par mois, {count} questions au DIY Mini Bot par mois) ?",
-        "confirm_up": "Vous payez aujourd'hui la différence pour le reste de cette période de facturation.",
+        "confirm_up": "La différence pour le reste de cette période de facturation vous est facturée.",
         "confirm_down": "La partie non utilisée de votre niveau actuel devient un crédit sur vos prochains paiements.",
         "confirm_cta": "Confirmer",
         "cancel": "Annuler",
         "working": "Modification…",
         "done": "C'est fait. Votre niveau est maintenant {plan}.",
-        "syncing": "C'est fait. {plan} s'affichera ici dans une minute.",
-        "payment_needed": "Votre banque doit confirmer le paiement. Le changement s'applique une fois le paiement effectué.",
+        "payment_needed": "Le paiement de ce changement n'a pas abouti. Payez-le sous 23 heures, sinon le changement est annulé et rien n'est facturé.",
         "payment_cta": "Ouvrir la page de paiement",
         "error": "Nous n'avons pas pu changer votre niveau. Réessayez ou contactez-nous.",
         "error_cancel_scheduled": "Votre adhésion doit se terminer. Réactivez-la d'abord sur la page de facturation, puis changez de niveau.",
-        "error_not_active": "Il y a un problème avec votre paiement. Réglez-le d'abord sur la page de facturation."
+        "error_not_active": "Il y a un problème avec votre paiement. Réglez-le d'abord sur la page de facturation.",
+        "confirm_yearly": "Vous passez d'un paiement annuel à un paiement mensuel à partir d'aujourd'hui. La partie non utilisée de votre paiement annuel devient un crédit sur le nouveau prix.",
+        "older_price": "Ancien prix",
+        "already": "Vous êtes déjà au niveau {plan}.",
+        "payment_no_link": "Mettez à jour votre moyen de paiement sur la page de facturation, puis réessayez.",
+        "error_support": "Cette adhésion ne peut pas être modifiée ici. Contactez-nous et nous la modifierons pour vous.",
+        "error_unavailable": "Ce niveau n'est pas encore disponible.",
+        "error_payment_method": "Changer de niveau nécessite une carte. Mettez d'abord à jour votre moyen de paiement sur la page de facturation."
       },
       "change_plan_store": "Changez de formule depuis les réglages d'abonnement de l'App Store ou de Google Play."
     },
@@ -686,18 +786,24 @@
         "option": "{plan} · {price}/Monat",
         "current": "Aktuell",
         "confirm": "Zu {plan} wechseln ({price} pro Monat, {count} Fragen an den DIY Mini Bot pro Monat)?",
-        "confirm_up": "Du zahlst heute die Differenz für den Rest dieses Abrechnungszeitraums.",
+        "confirm_up": "Dir wird die Differenz für den Rest dieses Abrechnungszeitraums berechnet.",
         "confirm_down": "Der ungenutzte Teil deiner aktuellen Stufe wird als Guthaben mit deinen nächsten Zahlungen verrechnet.",
         "confirm_cta": "Bestätigen",
         "cancel": "Abbrechen",
         "working": "Wird geändert…",
         "done": "Erledigt. Deine Stufe ist jetzt {plan}.",
-        "syncing": "Erledigt. {plan} erscheint hier in einer Minute.",
-        "payment_needed": "Deine Bank muss die Zahlung bestätigen. Die Änderung gilt, sobald bezahlt ist.",
+        "payment_needed": "Die Zahlung für diese Änderung ist nicht durchgegangen. Bezahle sie innerhalb von 23 Stunden, sonst verfällt die Änderung und es wird nichts berechnet.",
         "payment_cta": "Zahlungsseite öffnen",
         "error": "Wir konnten deine Stufe nicht ändern. Versuche es erneut oder kontaktiere uns.",
         "error_cancel_scheduled": "Deine Mitgliedschaft endet bald. Setze sie zuerst auf der Abrechnungsseite fort und ändere dann die Stufe.",
-        "error_not_active": "Es gibt ein Problem mit deiner Zahlung. Behebe es zuerst auf der Abrechnungsseite."
+        "error_not_active": "Es gibt ein Problem mit deiner Zahlung. Behebe es zuerst auf der Abrechnungsseite.",
+        "confirm_yearly": "Du wechselst ab heute von jährlicher zu monatlicher Zahlung. Der ungenutzte Teil deiner Jahreszahlung wird als Guthaben mit dem neuen Preis verrechnet.",
+        "older_price": "Alter Preis",
+        "already": "Du hast bereits die Stufe {plan}.",
+        "payment_no_link": "Aktualisiere deine Zahlungsmethode auf der Abrechnungsseite und versuche es dann erneut.",
+        "error_support": "Diese Mitgliedschaft kann hier nicht geändert werden. Kontaktiere uns, und wir ändern sie für dich.",
+        "error_unavailable": "Diese Stufe ist noch nicht verfügbar.",
+        "error_payment_method": "Für einen Stufenwechsel brauchst du eine Karte. Aktualisiere zuerst deine Zahlungsmethode auf der Abrechnungsseite."
       },
       "change_plan_store": "Den Plan wechselst du in den Abo-Einstellungen des App Store oder von Google Play."
     },
@@ -753,18 +859,24 @@
         "option": "{plan} · {price}/mese",
         "current": "Attuale",
         "confirm": "Passare a {plan} ({price} al mese, {count} domande al DIY Mini Bot al mese)?",
-        "confirm_up": "Oggi paghi la differenza per il resto di questo periodo di fatturazione.",
+        "confirm_up": "Ti viene addebitata la differenza per il resto di questo periodo di fatturazione.",
         "confirm_down": "La parte non usata del tuo livello attuale diventa un credito sui prossimi pagamenti.",
         "confirm_cta": "Conferma",
         "cancel": "Annulla",
         "working": "Modifica in corso…",
         "done": "Fatto. Il tuo livello ora è {plan}.",
-        "syncing": "Fatto. {plan} comparirà qui tra un minuto.",
-        "payment_needed": "La tua banca deve confermare il pagamento. Il cambio si applica quando è pagato.",
+        "payment_needed": "Il pagamento per questa modifica non è andato a buon fine. Pagalo entro 23 ore, altrimenti la modifica viene annullata e non viene addebitato nulla.",
         "payment_cta": "Apri la pagina di pagamento",
         "error": "Non siamo riusciti a cambiare il tuo livello. Riprova o contattaci.",
         "error_cancel_scheduled": "La tua iscrizione sta per terminare. Riattivala prima nella pagina di fatturazione, poi cambia livello.",
-        "error_not_active": "C'è un problema con il tuo pagamento. Risolvilo prima nella pagina di fatturazione."
+        "error_not_active": "C'è un problema con il tuo pagamento. Risolvilo prima nella pagina di fatturazione.",
+        "confirm_yearly": "Passi dal pagamento annuale a quello mensile a partire da oggi. La parte non usata del pagamento annuale diventa un credito sul nuovo prezzo.",
+        "older_price": "Prezzo precedente",
+        "already": "Hai già il livello {plan}.",
+        "payment_no_link": "Aggiorna il metodo di pagamento nella pagina di fatturazione, poi riprova.",
+        "error_support": "Questa iscrizione non si può cambiare qui. Contattaci e la cambiamo noi per te.",
+        "error_unavailable": "Questo livello non è ancora disponibile.",
+        "error_payment_method": "Per cambiare livello serve una carta. Aggiorna prima il metodo di pagamento nella pagina di fatturazione."
       },
       "change_plan_store": "Cambia piano dalle impostazioni abbonamento dell'App Store o di Google Play."
     },
@@ -820,18 +932,24 @@
         "option": "{plan} · {price}/mês",
         "current": "Atual",
         "confirm": "Mudar para {plan} ({price} por mês, {count} perguntas ao DIY Mini Bot por mês)?",
-        "confirm_up": "Você paga hoje a diferença pelo restante deste período de cobrança.",
+        "confirm_up": "Você paga a diferença pelo restante deste período de cobrança.",
         "confirm_down": "A parte não usada do seu nível atual vira crédito para os próximos pagamentos.",
         "confirm_cta": "Confirmar",
         "cancel": "Cancelar",
         "working": "Alterando…",
         "done": "Pronto. Seu nível agora é {plan}.",
-        "syncing": "Pronto. {plan} aparece aqui em um minuto.",
-        "payment_needed": "Seu banco precisa confirmar o pagamento. A mudança vale quando estiver pago.",
+        "payment_needed": "O pagamento desta mudança não foi concluído. Pague em até 23 horas ou a mudança é descartada, sem nenhuma cobrança.",
         "payment_cta": "Abrir a página de pagamento",
         "error": "Não conseguimos mudar seu nível. Tente de novo ou fale conosco.",
         "error_cancel_scheduled": "Sua assinatura está programada para terminar. Reative-a primeiro na página de cobrança e depois mude o nível.",
-        "error_not_active": "Há um problema com seu pagamento. Resolva primeiro na página de cobrança."
+        "error_not_active": "Há um problema com seu pagamento. Resolva primeiro na página de cobrança.",
+        "confirm_yearly": "Você passa do pagamento anual para o mensal a partir de hoje. A parte não usada do pagamento anual vira crédito para o novo preço.",
+        "older_price": "Preço antigo",
+        "already": "Você já está no nível {plan}.",
+        "payment_no_link": "Atualize seu método de pagamento na página de cobrança e tente de novo.",
+        "error_support": "Esta assinatura não pode ser mudada aqui. Fale conosco e mudamos para você.",
+        "error_unavailable": "Este nível ainda não está disponível.",
+        "error_payment_method": "Para mudar de nível é preciso um cartão. Atualize primeiro seu método de pagamento na página de cobrança."
       },
       "change_plan_store": "Troque de plano nas configurações de assinatura da App Store ou do Google Play."
     },
@@ -887,18 +1005,24 @@
         "option": "{plan} · {price}/мес.",
         "current": "Текущий",
         "confirm": "Перейти на {plan} ({price} в месяц, {count} вопросов DIY Mini Bot в месяц)?",
-        "confirm_up": "Сегодня вы оплачиваете разницу за остаток текущего расчётного периода.",
+        "confirm_up": "С вас списывается разница за остаток текущего расчётного периода.",
         "confirm_down": "Неиспользованная часть текущего уровня станет кредитом в счёт следующих платежей.",
         "confirm_cta": "Подтвердить",
         "cancel": "Отмена",
         "working": "Меняем…",
         "done": "Готово. Ваш уровень теперь {plan}.",
-        "syncing": "Готово. {plan} появится здесь через минуту.",
-        "payment_needed": "Ваш банк должен подтвердить платёж. Изменение вступит в силу после оплаты.",
+        "payment_needed": "Оплата этого изменения не прошла. Оплатите её в течение 23 часов, иначе изменение отменится и ничего не будет списано.",
         "payment_cta": "Открыть страницу оплаты",
         "error": "Не удалось сменить уровень. Попробуйте ещё раз или свяжитесь с нами.",
         "error_cancel_scheduled": "Ваше членство скоро закончится. Сначала возобновите его на странице оплаты, затем смените уровень.",
-        "error_not_active": "С вашим платежом проблема. Сначала исправьте её на странице оплаты."
+        "error_not_active": "С вашим платежом проблема. Сначала исправьте её на странице оплаты.",
+        "confirm_yearly": "С сегодняшнего дня вы переходите с ежегодной оплаты на ежемесячную. Неиспользованная часть годового платежа станет кредитом в счёт новой цены.",
+        "older_price": "Старая цена",
+        "already": "У вас уже уровень {plan}.",
+        "payment_no_link": "Обновите способ оплаты на странице оплаты и попробуйте снова.",
+        "error_support": "Это членство нельзя изменить здесь. Свяжитесь с нами, и мы изменим его за вас.",
+        "error_unavailable": "Этот уровень пока недоступен.",
+        "error_payment_method": "Для смены уровня нужна карта. Сначала обновите способ оплаты на странице оплаты."
       },
       "change_plan_store": "Сменить план можно в настройках подписки App Store или Google Play."
     },
@@ -954,18 +1078,24 @@
         "option": "{plan} · {price}/月",
         "current": "現在",
         "confirm": "{plan}（月額{price}、DIY Mini Botへの質問は月{count}件）に変更しますか？",
-        "confirm_up": "今回の請求期間の残り分の差額を本日お支払いいただきます。",
+        "confirm_up": "今回の請求期間の残り分の差額が請求されます。",
         "confirm_down": "現在のレベルの未使用分は、次回以降のお支払いに充てるクレジットになります。",
         "confirm_cta": "確定",
         "cancel": "キャンセル",
         "working": "変更中…",
         "done": "完了しました。現在のレベルは{plan}です。",
-        "syncing": "完了しました。1分ほどで{plan}と表示されます。",
-        "payment_needed": "銀行による支払いの確認が必要です。支払いが完了すると変更が反映されます。",
+        "payment_needed": "この変更のお支払いが完了していません。23時間以内にお支払いください。期限を過ぎると変更は取り消され、請求は発生しません。",
         "payment_cta": "支払いページを開く",
         "error": "レベルを変更できませんでした。もう一度お試しいただくか、お問い合わせください。",
         "error_cancel_scheduled": "メンバーシップは終了予定になっています。先に請求ページで再開してから、レベルを変更してください。",
-        "error_not_active": "お支払いに問題があります。先に請求ページで解決してください。"
+        "error_not_active": "お支払いに問題があります。先に請求ページで解決してください。",
+        "confirm_yearly": "本日から年払いが月払いに変わります。年払いの未使用分は、新しい料金に充てるクレジットになります。",
+        "older_price": "以前の料金",
+        "already": "すでに{plan}です。",
+        "payment_no_link": "請求ページでお支払い方法を更新してから、もう一度お試しください。",
+        "error_support": "このメンバーシップはここでは変更できません。お問い合わせいただければ、こちらで変更します。",
+        "error_unavailable": "このレベルはまだご利用いただけません。",
+        "error_payment_method": "レベルの変更にはカードが必要です。先に請求ページでお支払い方法を更新してください。"
       },
       "change_plan_store": "プランの変更は App Store または Google Play のサブスクリプション設定から行えます。"
     },
@@ -1021,18 +1151,24 @@
         "option": "{plan} · {price}/月",
         "current": "当前",
         "confirm": "改为 {plan}（每月 {price}，每月 {count} 个 DIY Mini Bot 问题）？",
-        "confirm_up": "今天您需支付本计费周期剩余时间的差价。",
+        "confirm_up": "将向您收取本计费周期剩余时间的差价。",
         "confirm_down": "当前等级未使用的部分将作为余额，抵扣您之后的付款。",
         "confirm_cta": "确认",
         "cancel": "取消",
         "working": "正在更改…",
         "done": "已完成。您的等级现在是 {plan}。",
-        "syncing": "已完成。一分钟内这里会显示 {plan}。",
-        "payment_needed": "您的银行需要确认这笔付款。付款完成后更改才会生效。",
+        "payment_needed": "此次更改的付款未完成。请在 23 小时内付款，否则更改将被取消，且不会收取任何费用。",
         "payment_cta": "打开付款页面",
         "error": "无法更改您的等级。请重试或联系我们。",
         "error_cancel_scheduled": "您的会员资格即将结束。请先在账单页面恢复，然后再更改等级。",
-        "error_not_active": "您的付款有问题。请先在账单页面解决。"
+        "error_not_active": "您的付款有问题。请先在账单页面解决。",
+        "confirm_yearly": "从今天起，您将由按年付款改为按月付款。年付款中未使用的部分将作为余额，抵扣新价格。",
+        "older_price": "旧价格",
+        "already": "您已经是 {plan}。",
+        "payment_no_link": "请在账单页面更新付款方式，然后重试。",
+        "error_support": "无法在此更改此会员资格。请联系我们，我们会为您更改。",
+        "error_unavailable": "此等级暂不可用。",
+        "error_payment_method": "更改等级需要使用银行卡。请先在账单页面更新付款方式。"
       },
       "change_plan_store": "可在 App Store 或 Google Play 的订阅设置中更换方案。"
     },
@@ -1088,18 +1224,24 @@
         "option": "{plan} · {price}/월",
         "current": "현재",
         "confirm": "{plan}(월 {price}, 월 {count}개의 DIY Mini Bot 질문)(으)로 바꿀까요?",
-        "confirm_up": "이번 결제 기간의 남은 기간에 대한 차액을 오늘 결제합니다.",
+        "confirm_up": "이번 결제 기간의 남은 기간에 대한 차액이 청구됩니다.",
         "confirm_down": "현재 등급에서 사용하지 않은 부분은 다음 결제에 쓰이는 크레딧이 됩니다.",
         "confirm_cta": "확인",
         "cancel": "취소",
         "working": "변경 중…",
         "done": "완료되었습니다. 이제 등급은 {plan}입니다.",
-        "syncing": "완료되었습니다. 1분 안에 여기에 {plan}이(가) 표시됩니다.",
-        "payment_needed": "은행에서 결제를 확인해야 합니다. 결제가 완료되면 변경이 적용됩니다.",
+        "payment_needed": "이 변경에 대한 결제가 완료되지 않았습니다. 23시간 안에 결제하지 않으면 변경이 취소되며 아무것도 청구되지 않습니다.",
         "payment_cta": "결제 페이지 열기",
         "error": "등급을 변경하지 못했습니다. 다시 시도하거나 문의해 주세요.",
         "error_cancel_scheduled": "멤버십이 종료될 예정입니다. 먼저 결제 페이지에서 재개한 다음 등급을 변경해 주세요.",
-        "error_not_active": "결제에 문제가 있습니다. 먼저 결제 페이지에서 해결해 주세요."
+        "error_not_active": "결제에 문제가 있습니다. 먼저 결제 페이지에서 해결해 주세요.",
+        "confirm_yearly": "오늘부터 연간 결제가 월간 결제로 바뀝니다. 연간 결제에서 사용하지 않은 부분은 새 가격에 쓰이는 크레딧이 됩니다.",
+        "older_price": "이전 가격",
+        "already": "이미 {plan} 등급입니다.",
+        "payment_no_link": "결제 페이지에서 결제 수단을 업데이트한 다음 다시 시도해 주세요.",
+        "error_support": "이 멤버십은 여기에서 변경할 수 없습니다. 문의해 주시면 대신 변경해 드립니다.",
+        "error_unavailable": "이 등급은 아직 이용할 수 없습니다.",
+        "error_payment_method": "등급을 변경하려면 카드가 필요합니다. 먼저 결제 페이지에서 결제 수단을 업데이트해 주세요."
       },
       "change_plan_store": "플랜 변경은 App Store 또는 Google Play 구독 설정에서 할 수 있습니다."
     },

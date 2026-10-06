@@ -11,8 +11,12 @@
  * The web never writes `subscriptions`; the membership webhook writes the new
  * plan when Stripe reports the change.
  *
- * Answers: `{ changed, plan }`, or an error whose `data.code` the card maps to
- * copy (PAYMENT_REQUIRED carries `data.invoiceUrl`).
+ * Body `{ plan }` changes the level and answers `{ changed, plan }`. Body
+ * `{ action: 'status' }` answers the Stripe subscription's own level
+ * (`{ plan, interval, monthlyCents, onCurrentPrice, blocked }`), which the card
+ * needs because get_my_membership().plan is the highest level across channels.
+ * Errors carry `data.code` for the card's copy (PAYMENT_REQUIRED also carries
+ * `data.invoiceUrl`).
  */
 import { MEMBERSHIP_PLANS } from '../../../shared/utils/chatTiers';
 
@@ -30,27 +34,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'Supabase URL not configured' });
   }
 
-  let body: { plan?: unknown } | null;
+  let body: { plan?: unknown; action?: unknown } | null;
   try {
     body = (await readBody(event)) ?? null;
   } catch {
     throw createError({ statusCode: 400, statusMessage: 'Body must be JSON' });
   }
+  const isStatus = body?.action === 'status';
   const plan = body?.plan;
-  if (typeof plan !== 'string' || !MEMBERSHIP_PLANS.some((p) => p.plan === plan)) {
+  if (!isStatus && (typeof plan !== 'string' || !MEMBERSHIP_PLANS.some((p) => p.plan === plan))) {
     throw createError({ statusCode: 400, statusMessage: 'plan must be base, plus or pro' });
   }
 
   try {
-    const res = await $fetch<{ changed?: boolean; plan?: string }>(
-      `${supabaseUrl}/functions/v1/change-membership-plan`,
-      {
-        method: 'POST',
-        headers: { authorization, apikey: supabaseKey, 'content-type': 'application/json' },
-        body: { plan },
-      }
-    );
-    return { changed: res?.changed === true, plan: res?.plan ?? plan };
+    const res = await $fetch<Record<string, unknown>>(`${supabaseUrl}/functions/v1/change-membership-plan`, {
+      method: 'POST',
+      headers: { authorization, apikey: supabaseKey, 'content-type': 'application/json' },
+      body: isStatus ? { action: 'status' } : { plan },
+    });
+    if (isStatus) {
+      return {
+        plan: typeof res?.plan === 'string' ? res.plan : null,
+        interval: res?.interval === 'month' || res?.interval === 'year' ? res.interval : null,
+        monthlyCents: typeof res?.monthlyCents === 'number' ? res.monthlyCents : null,
+        onCurrentPrice: res?.onCurrentPrice !== false,
+        blocked: typeof res?.blocked === 'string' ? res.blocked : null,
+      };
+    }
+    return { changed: res?.changed === true, plan: typeof res?.plan === 'string' ? res.plan : plan };
   } catch (error: any) {
     const status = error?.statusCode || error?.response?.status || 502;
     console.error('[membership/change-plan] edge function error:', error?.data || error?.message || error);
