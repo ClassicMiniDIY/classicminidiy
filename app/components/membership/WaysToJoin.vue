@@ -30,7 +30,7 @@
     youtube: { base: 1.99, plus: 4.99, pro: 9.99, supporter: 24.99 },
   };
 
-  const coreBenefits = ['badge', 'discord', 'blog', 'early_access', 'listings', 'sync', 'bot'] as const;
+  const coreBenefits = ['badge', 'discord', 'early_access', 'listings', 'sync', 'bot'] as const;
 
   const fmtUsd = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
 </script>
@@ -185,7 +185,6 @@
     "core": {
       "badge": "The Sustaining Member badge",
       "discord": "Members-only Discord",
-      "blog": "Members-only blog posts",
       "early_access": "Early access to videos",
       "listings": "Free premium listings on The Mini Exchange",
       "sync": "Maintenance sync in the apps",
@@ -236,7 +235,6 @@
     "core": {
       "badge": "La insignia de Socio Colaborador",
       "discord": "Discord exclusivo para socios",
-      "blog": "Artículos del blog exclusivos para socios",
       "early_access": "Acceso anticipado a los vídeos",
       "listings": "Anuncios premium gratis en The Mini Exchange",
       "sync": "Sincronización del mantenimiento en las apps",
@@ -287,7 +285,6 @@
     "core": {
       "badge": "Le badge Membre de soutien",
       "discord": "Discord réservé aux membres",
-      "blog": "Articles de blog réservés aux membres",
       "early_access": "Accès anticipé aux vidéos",
       "listings": "Annonces premium gratuites sur The Mini Exchange",
       "sync": "Synchronisation de l'entretien dans les applis",
@@ -338,7 +335,6 @@
     "core": {
       "badge": "Das Fördermitglied-Abzeichen",
       "discord": "Discord nur für Mitglieder",
-      "blog": "Blogbeiträge nur für Mitglieder",
       "early_access": "Früher Zugang zu Videos",
       "listings": "Kostenlose Premium-Anzeigen auf The Mini Exchange",
       "sync": "Wartungs-Synchronisierung in den Apps",
@@ -389,7 +385,6 @@
     "core": {
       "badge": "Il badge di Socio Sostenitore",
       "discord": "Discord riservato ai soci",
-      "blog": "Articoli del blog riservati ai soci",
       "early_access": "Accesso anticipato ai video",
       "listings": "Annunci premium gratuiti su The Mini Exchange",
       "sync": "Sincronizzazione della manutenzione nelle app",
@@ -440,7 +435,6 @@
     "core": {
       "badge": "O distintivo de Membro Apoiador",
       "discord": "Discord exclusivo para membros",
-      "blog": "Artigos do blogue exclusivos para membros",
       "early_access": "Acesso antecipado aos vídeos",
       "listings": "Anúncios premium gratuitos no The Mini Exchange",
       "sync": "Sincronização da manutenção nas apps",
@@ -491,7 +485,6 @@
     "core": {
       "badge": "Значок постоянного участника",
       "discord": "Discord только для участников",
-      "blog": "Записи блога только для участников",
       "early_access": "Ранний доступ к видео",
       "listings": "Бесплатные премиум-объявления на The Mini Exchange",
       "sync": "Синхронизация обслуживания в приложениях",
@@ -542,7 +535,6 @@
     "core": {
       "badge": "サステイニングメンバーのバッジ",
       "discord": "メンバー限定 Discord",
-      "blog": "メンバー限定のブログ記事",
       "early_access": "動画の先行公開",
       "listings": "The Mini Exchange のプレミアム出品無料",
       "sync": "アプリでのメンテナンス記録の同期",
@@ -593,7 +585,6 @@
     "core": {
       "badge": "持续支持会员徽章",
       "discord": "会员专属 Discord",
-      "blog": "会员专属博客文章",
       "early_access": "视频抢先看",
       "listings": "The Mini Exchange 免费高级刊登",
       "sync": "应用内保养记录同步",
@@ -644,7 +635,6 @@
     "core": {
       "badge": "서포팅 멤버 배지",
       "discord": "멤버 전용 Discord",
-      "blog": "멤버 전용 블로그 글",
       "early_access": "영상 미리 보기",
       "listings": "The Mini Exchange 프리미엄 매물 무료 등록",
       "sync": "앱에서 정비 기록 동기화",

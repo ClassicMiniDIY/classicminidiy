@@ -291,8 +291,8 @@
         </div>
         <div class="bg-warning/10 border border-warning/30 rounded-lg p-3 mb-3 text-sm">
           <i class="fas fa-triangle-exclamation mr-1 text-warning"></i>
-          The current owner loses the membership from this purchase unless another channel covers them. Discord and blog
-          access are re-synced for both accounts.
+          The current owner loses the membership from this purchase unless another channel covers them. Discord access
+          is re-synced for both accounts.
         </div>
         <div v-if="moveError" role="alert" class="alert alert-error text-sm mb-3" data-testid="claimed-move-error">
           <i class="fas fa-triangle-exclamation"></i>

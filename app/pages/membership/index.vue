@@ -8,13 +8,13 @@
   const { add: addToast } = useToast();
   const { isAuthenticated, isSustainingMember, user, waitForAuth, fetchUserProfile } = useAuth();
 
-  // Canonical 6-benefit list (keystone §4). Order is part of the contract — do
+  // Canonical benefit list (keystone §4). Order is part of the contract — do
   // not reorder. Copy lives in the i18n block below, verbatim from the keystone.
+  // "Members-only blog posts" was retired 2026-10-06 with the Ghost blog.
   const benefits = [
     { icon: 'fas fa-user', key: 'one_account' },
     { icon: 'fas fa-screwdriver-wrench', key: 'maintenance' },
     { icon: 'fab fa-discord', key: 'discord' },
-    { icon: 'fas fa-book-open', key: 'blog' },
     { icon: 'fas fa-tag', key: 'listings' },
     { icon: 'fas fa-hand-holding-heart', key: 'support' },
   ];
@@ -372,7 +372,7 @@
   "en": {
     "meta": {
       "title": "Sustaining Member — Classic Mini DIY",
-      "description": "Become a Sustaining Member (from $1.99/month) for one account across Classic Mini DIY, The Mini Exchange, and the Toolbox apps, a members-only Discord, members-only blog posts, free premium listings on The Mini Exchange, and to support the channel."
+      "description": "Become a Sustaining Member (from $1.99/month) for one account across Classic Mini DIY, The Mini Exchange, and the Toolbox apps, a members-only Discord, free premium listings on The Mini Exchange, and to support the channel."
     },
     "hero": {
       "eyebrow": "SUSTAINING MEMBER",
@@ -395,10 +395,6 @@
         "discord": {
           "title": "Members-only Discord",
           "desc": "A private community to talk shop, share builds, and get help."
-        },
-        "blog": {
-          "title": "Members-only blog posts",
-          "desc": "Complimentary access to subscriber content on the Classic Mini DIY blog."
         },
         "listings": {
           "title": "Free premium listings on The Mini Exchange",
@@ -457,7 +453,7 @@
   "es": {
     "meta": {
       "title": "Socio Colaborador — Classic Mini DIY",
-      "description": "Hazte Socio Colaborador (desde 1,99 $/mes) y consigue una sola cuenta para Classic Mini DIY, The Mini Exchange y las apps Toolbox, un Discord exclusivo para socios, artículos del blog exclusivos para socios, anuncios premium gratis en The Mini Exchange y apoya al canal."
+      "description": "Hazte Socio Colaborador (desde 1,99 $/mes) y consigue una sola cuenta para Classic Mini DIY, The Mini Exchange y las apps Toolbox, un Discord exclusivo para socios, anuncios premium gratis en The Mini Exchange y apoya al canal."
     },
     "hero": {
       "eyebrow": "SOCIO COLABORADOR",
@@ -480,10 +476,6 @@
         "discord": {
           "title": "Discord exclusivo para socios",
           "desc": "Una comunidad privada para hablar de mecánica, compartir proyectos y pedir ayuda."
-        },
-        "blog": {
-          "title": "Artículos del blog exclusivos para socios",
-          "desc": "Acceso gratuito al contenido para suscriptores del blog de Classic Mini DIY."
         },
         "listings": {
           "title": "Anuncios premium gratis en The Mini Exchange",
@@ -542,7 +534,7 @@
   "fr": {
     "meta": {
       "title": "Membre de soutien — Classic Mini DIY",
-      "description": "Devenez membre de soutien (à partir de 1,99 $/mois) : un seul compte pour Classic Mini DIY, The Mini Exchange et les applis Toolbox, un Discord réservé aux membres, des articles de blog réservés aux membres, des annonces premium gratuites sur The Mini Exchange, et un soutien à la chaîne."
+      "description": "Devenez membre de soutien (à partir de 1,99 $/mois) : un seul compte pour Classic Mini DIY, The Mini Exchange et les applis Toolbox, un Discord réservé aux membres, des annonces premium gratuites sur The Mini Exchange, et un soutien à la chaîne."
     },
     "hero": {
       "eyebrow": "MEMBRE DE SOUTIEN",
@@ -565,10 +557,6 @@
         "discord": {
           "title": "Discord réservé aux membres",
           "desc": "Une communauté privée pour parler mécanique, partager vos projets et obtenir de l'aide."
-        },
-        "blog": {
-          "title": "Articles de blog réservés aux membres",
-          "desc": "Accès offert au contenu réservé aux abonnés du blog Classic Mini DIY."
         },
         "listings": {
           "title": "Annonces premium gratuites sur The Mini Exchange",
@@ -627,7 +615,7 @@
   "de": {
     "meta": {
       "title": "Fördermitglied — Classic Mini DIY",
-      "description": "Werde Fördermitglied (ab 1,99 $/Monat): ein Konto für Classic Mini DIY, The Mini Exchange und die Toolbox-Apps, ein Discord nur für Mitglieder, Blogbeiträge nur für Mitglieder, kostenlose Premium-Anzeigen auf The Mini Exchange – und Unterstützung für den Kanal."
+      "description": "Werde Fördermitglied (ab 1,99 $/Monat): ein Konto für Classic Mini DIY, The Mini Exchange und die Toolbox-Apps, ein Discord nur für Mitglieder, kostenlose Premium-Anzeigen auf The Mini Exchange – und Unterstützung für den Kanal."
     },
     "hero": {
       "eyebrow": "FÖRDERMITGLIED",
@@ -650,10 +638,6 @@
         "discord": {
           "title": "Discord nur für Mitglieder",
           "desc": "Eine private Community zum Fachsimpeln, Projekte teilen und Hilfe holen."
-        },
-        "blog": {
-          "title": "Blogbeiträge nur für Mitglieder",
-          "desc": "Kostenloser Zugang zu den Abonnenteninhalten im Classic-Mini-DIY-Blog."
         },
         "listings": {
           "title": "Kostenlose Premium-Anzeigen auf The Mini Exchange",
@@ -712,7 +696,7 @@
   "it": {
     "meta": {
       "title": "Socio Sostenitore — Classic Mini DIY",
-      "description": "Diventa Socio Sostenitore (da 1,99 $/mese): un solo account per Classic Mini DIY, The Mini Exchange e le app Toolbox, un Discord riservato ai soci, articoli del blog riservati ai soci, annunci premium gratuiti su The Mini Exchange e il tuo sostegno al canale."
+      "description": "Diventa Socio Sostenitore (da 1,99 $/mese): un solo account per Classic Mini DIY, The Mini Exchange e le app Toolbox, un Discord riservato ai soci, annunci premium gratuiti su The Mini Exchange e il tuo sostegno al canale."
     },
     "hero": {
       "eyebrow": "SOCIO SOSTENITORE",
@@ -735,10 +719,6 @@
         "discord": {
           "title": "Discord riservato ai soci",
           "desc": "Una community privata per parlare di meccanica, condividere i progetti e chiedere aiuto."
-        },
-        "blog": {
-          "title": "Articoli del blog riservati ai soci",
-          "desc": "Accesso gratuito ai contenuti riservati agli abbonati del blog Classic Mini DIY."
         },
         "listings": {
           "title": "Annunci premium gratuiti su The Mini Exchange",
@@ -797,7 +777,7 @@
   "pt": {
     "meta": {
       "title": "Membro Apoiador — Classic Mini DIY",
-      "description": "Torne-se Membro Apoiador (a partir de 1,99 $/mês): uma só conta para a Classic Mini DIY, The Mini Exchange e as apps Toolbox, um Discord exclusivo para membros, artigos do blogue exclusivos para membros, anúncios premium gratuitos no The Mini Exchange e apoio ao canal."
+      "description": "Torne-se Membro Apoiador (a partir de 1,99 $/mês): uma só conta para a Classic Mini DIY, The Mini Exchange e as apps Toolbox, um Discord exclusivo para membros, anúncios premium gratuitos no The Mini Exchange e apoio ao canal."
     },
     "hero": {
       "eyebrow": "MEMBRO APOIADOR",
@@ -820,10 +800,6 @@
         "discord": {
           "title": "Discord exclusivo para membros",
           "desc": "Uma comunidade privada para falar de mecânica, partilhar projetos e pedir ajuda."
-        },
-        "blog": {
-          "title": "Artigos do blogue exclusivos para membros",
-          "desc": "Acesso gratuito aos conteúdos para subscritores do blogue Classic Mini DIY."
         },
         "listings": {
           "title": "Anúncios premium gratuitos no The Mini Exchange",
@@ -882,7 +858,7 @@
   "ru": {
     "meta": {
       "title": "Постоянный участник — Classic Mini DIY",
-      "description": "Станьте постоянным участником (от 1,99 $ в месяц): один аккаунт для Classic Mini DIY, The Mini Exchange и приложений Toolbox, Discord только для участников, записи блога только для участников, бесплатные премиум-объявления на The Mini Exchange и поддержка канала."
+      "description": "Станьте постоянным участником (от 1,99 $ в месяц): один аккаунт для Classic Mini DIY, The Mini Exchange и приложений Toolbox, Discord только для участников, бесплатные премиум-объявления на The Mini Exchange и поддержка канала."
     },
     "hero": {
       "eyebrow": "ПОСТОЯННЫЙ УЧАСТНИК",
@@ -905,10 +881,6 @@
         "discord": {
           "title": "Discord только для участников",
           "desc": "Закрытое сообщество, где можно обсуждать технику, показывать свои проекты и просить совета."
-        },
-        "blog": {
-          "title": "Записи блога только для участников",
-          "desc": "Бесплатный доступ к материалам для подписчиков блога Classic Mini DIY."
         },
         "listings": {
           "title": "Бесплатные премиум-объявления на The Mini Exchange",
@@ -967,7 +939,7 @@
   "ja": {
     "meta": {
       "title": "サステイニングメンバー — Classic Mini DIY",
-      "description": "サステイニングメンバー (月額 1.99 ドルから) になると、Classic Mini DIY、The Mini Exchange、Toolbox アプリで使えるひとつのアカウント、メンバー限定 Discord、メンバー限定のブログ記事、The Mini Exchange のプレミアム出品無料、そしてチャンネルの支援が可能になります。"
+      "description": "サステイニングメンバー (月額 1.99 ドルから) になると、Classic Mini DIY、The Mini Exchange、Toolbox アプリで使えるひとつのアカウント、メンバー限定 Discord、The Mini Exchange のプレミアム出品無料、そしてチャンネルの支援が可能になります。"
     },
     "hero": {
       "eyebrow": "サステイニングメンバー",
@@ -990,10 +962,6 @@
         "discord": {
           "title": "メンバー限定 Discord",
           "desc": "整備の話をしたり、製作中の車両を共有したり、助けを求めたりできるプライベートなコミュニティ。"
-        },
-        "blog": {
-          "title": "メンバー限定のブログ記事",
-          "desc": "Classic Mini DIY ブログの購読者向けコンテンツを無料でご利用いただけます。"
         },
         "listings": {
           "title": "The Mini Exchange のプレミアム出品が無料",
@@ -1052,7 +1020,7 @@
   "zh": {
     "meta": {
       "title": "持续支持会员 — Classic Mini DIY",
-      "description": "成为持续支持会员(每月 1.99 美元起):在 Classic Mini DIY、The Mini Exchange 和 Toolbox 应用中共用一个账号,加入会员专属 Discord,获得会员专属博客文章、The Mini Exchange 免费高级刊登,并支持本频道。"
+      "description": "成为持续支持会员(每月 1.99 美元起):在 Classic Mini DIY、The Mini Exchange 和 Toolbox 应用中共用一个账号,加入会员专属 Discord,获得 The Mini Exchange 免费高级刊登,并支持本频道。"
     },
     "hero": {
       "eyebrow": "持续支持会员",
@@ -1075,10 +1043,6 @@
         "discord": {
           "title": "会员专属 Discord",
           "desc": "一个私密社群,聊技术、晒改装、随时求助。"
-        },
-        "blog": {
-          "title": "会员专属博客文章",
-          "desc": "免费阅读 Classic Mini DIY 博客的订阅者内容。"
         },
         "listings": {
           "title": "The Mini Exchange 免费高级刊登",
@@ -1137,7 +1101,7 @@
   "ko": {
     "meta": {
       "title": "서포팅 멤버 — Classic Mini DIY",
-      "description": "서포팅 멤버(월 1.99달러부터)가 되시면 Classic Mini DIY, The Mini Exchange, Toolbox 앱에서 쓰는 하나의 계정, 멤버 전용 Discord, 멤버 전용 블로그 글, The Mini Exchange 프리미엄 매물 무료 등록, 그리고 채널 후원까지 함께하실 수 있습니다."
+      "description": "서포팅 멤버(월 1.99달러부터)가 되시면 Classic Mini DIY, The Mini Exchange, Toolbox 앱에서 쓰는 하나의 계정, 멤버 전용 Discord, The Mini Exchange 프리미엄 매물 무료 등록, 그리고 채널 후원까지 함께하실 수 있습니다."
     },
     "hero": {
       "eyebrow": "서포팅 멤버",
@@ -1160,10 +1124,6 @@
         "discord": {
           "title": "멤버 전용 Discord",
           "desc": "정비 이야기를 나누고, 작업 중인 차를 공유하고, 도움을 받을 수 있는 비공개 커뮤니티."
-        },
-        "blog": {
-          "title": "멤버 전용 블로그 글",
-          "desc": "Classic Mini DIY 블로그의 구독자 전용 콘텐츠를 무료로 이용하실 수 있습니다."
         },
         "listings": {
           "title": "The Mini Exchange 프리미엄 매물 무료",
