@@ -48,7 +48,7 @@ describe('GET /email/unsubscribe?from=news (old Ghost newsletter links)', () => 
     vi.stubGlobal('getQuery', () => ({ from: 'news', uuid: 'ghost-member', key: 'k' }));
     const get = (await import('~~/server/routes/email/unsubscribe.get')).default as (e: any) => string;
     const html = get({});
-    expect(html).toContain('The old blog newsletter has stopped');
+    expect(html).toContain('The old blog newsletter has moved');
     expect(html).toContain('https://community.classicminidiy.com/c/news/16');
     expect(html).not.toContain("This link isn't valid");
   });
@@ -57,5 +57,21 @@ describe('GET /email/unsubscribe?from=news (old Ghost newsletter links)', () => 
     vi.stubGlobal('getQuery', () => ({ from: 'news', e: 'E', t: 'T' }));
     const get = (await import('~~/server/routes/email/unsubscribe.get')).default as (e: any) => string;
     expect(get({})).toContain('Unsubscribe from marketing emails?');
+  });
+
+  // Last on purpose: it replaces the module mock for the rest of the file.
+  it('shows even when unsubscribe is not configured, with a 200', async () => {
+    vi.resetModules();
+    vi.doMock('~~/server/utils/marketingUnsub', async (orig) => ({
+      ...(await orig<any>()),
+      unsubConfigured: () => false,
+    }));
+    vi.stubGlobal('getQuery', () => ({ from: 'news' }));
+    const setStatus = vi.fn();
+    vi.stubGlobal('setResponseStatus', setStatus);
+    const get = (await import('~~/server/routes/email/unsubscribe.get')).default as (e: any) => string;
+    expect(get({})).toContain('The old blog newsletter has moved');
+    expect(setStatus).not.toHaveBeenCalled();
+    vi.doUnmock('~~/server/utils/marketingUnsub');
   });
 });
