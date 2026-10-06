@@ -18,13 +18,15 @@ export default defineEventHandler((event) => {
   // An unsubscribe link in an old Ghost newsletter email. news.classicminidiy.com
   // redirects /unsubscribe* here (Cloudflare rule, Ghost retirement Phase 6). Ghost's
   // link names a Ghost member we cannot map to an address, so explain instead of
-  // answering "invalid link".
+  // answering "invalid link". Ghost's last newsletter went out 2026-07-28, so the
+  // 30-day CAN-SPAM opt-out window for its links had passed before this cutover.
   if (query.from === 'news' && !query.e) {
     return unsubPage(
       'Old blog newsletter',
-      `<h1>The old blog newsletter has stopped</h1>
-       <p>We no longer send email from the old Classic Mini DIY blog. Its articles now live on
-       <a href="https://community.classicminidiy.com/c/news/16" style="color:#435231">the community forum</a>.</p>
+      `<h1>The old blog newsletter has moved</h1>
+       <p>The old Classic Mini DIY blog no longer sends email. Its articles now live on
+       <a href="https://community.classicminidiy.com/c/news/16" style="color:#435231">the community forum</a>,
+       and the newsletter now comes from classicminidiy.com.</p>
        <p>To stop Classic Mini DIY emails, use the unsubscribe link at the bottom of any email
        we send you, or email
        <a href="mailto:classicminidiy@gmail.com" style="color:#435231">classicminidiy@gmail.com</a>.</p>`
