@@ -6,6 +6,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: '14.5';
   };
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       admin_audit_log: {
@@ -2063,6 +2088,54 @@ export type Database = {
           },
         ];
       };
+      mailing_list_subscribers: {
+        Row: {
+          confirm_count: number;
+          confirm_sent_at: string | null;
+          confirm_window_start: string | null;
+          consent_at: string | null;
+          consent_source: string | null;
+          created_at: string;
+          email: string;
+          id: string;
+          source: string;
+          status: string;
+          unsubscribed_at: string | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          confirm_count?: number;
+          confirm_sent_at?: string | null;
+          confirm_window_start?: string | null;
+          consent_at?: string | null;
+          consent_source?: string | null;
+          created_at?: string;
+          email: string;
+          id?: string;
+          source: string;
+          status?: string;
+          unsubscribed_at?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          confirm_count?: number;
+          confirm_sent_at?: string | null;
+          confirm_window_start?: string | null;
+          consent_at?: string | null;
+          consent_source?: string | null;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          source?: string;
+          status?: string;
+          unsubscribed_at?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       maintenance_instances: {
         Row: {
           completed_at: string | null;
@@ -2174,54 +2247,6 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
-      };
-      mailing_list_subscribers: {
-        Row: {
-          confirm_count: number;
-          confirm_sent_at: string | null;
-          confirm_window_start: string | null;
-          consent_at: string | null;
-          consent_source: string | null;
-          created_at: string;
-          email: string;
-          id: string;
-          source: string;
-          status: string;
-          unsubscribed_at: string | null;
-          updated_at: string;
-          user_id: string | null;
-        };
-        Insert: {
-          confirm_count?: number;
-          confirm_sent_at?: string | null;
-          confirm_window_start?: string | null;
-          consent_at?: string | null;
-          consent_source?: string | null;
-          created_at?: string;
-          email: string;
-          id?: string;
-          source: string;
-          status?: string;
-          unsubscribed_at?: string | null;
-          updated_at?: string;
-          user_id?: string | null;
-        };
-        Update: {
-          confirm_count?: number;
-          confirm_sent_at?: string | null;
-          confirm_window_start?: string | null;
-          consent_at?: string | null;
-          consent_source?: string | null;
-          created_at?: string;
-          email?: string;
-          id?: string;
-          source?: string;
-          status?: string;
-          unsubscribed_at?: string | null;
-          updated_at?: string;
-          user_id?: string | null;
-        };
-        Relationships: [];
       };
       marketing_email_recipients: {
         Row: {
@@ -6135,6 +6160,28 @@ export type Database = {
       };
     };
     Functions: {
+      admin_adopt_ghost_subscription: {
+        Args: {
+          p_admin_id: string;
+          p_billing_interval?: string;
+          p_expires_at?: string;
+          p_mode: string;
+          p_plan?: string;
+          p_starts_at?: string;
+          p_status?: string;
+          p_stripe_customer_id?: string;
+          p_stripe_price_id?: string;
+          p_stripe_subscription_id?: string;
+          p_user_id: string;
+        };
+        Returns: {
+          entitled: boolean;
+          ghost_cancelled: boolean;
+          ghost_subscription_id: string;
+          inserted: boolean;
+          subscription_id: string;
+        }[];
+      };
       admin_developer_overview: { Args: never; Returns: Json };
       admin_find_member: {
         Args: { p_query: string };
@@ -6724,6 +6771,7 @@ export type Database = {
           user_id: string;
         }[];
       };
+      ghost_inbound_enabled: { Args: never; Returns: boolean };
       grant_comp_membership: {
         Args: {
           p_expires_at?: string;
@@ -6788,7 +6836,12 @@ export type Database = {
         Returns: boolean;
       };
       mailing_list_begin_signup: {
-        Args: { p_cooldown?: string; p_email: string; p_source: string; p_user_id?: string };
+        Args: {
+          p_cooldown?: string;
+          p_email: string;
+          p_source: string;
+          p_user_id?: string;
+        };
         Returns: {
           send_confirm: boolean;
           state: string;
@@ -7613,6 +7666,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       announcement_type_enum: ['error', 'warning', 'info', 'success'],
