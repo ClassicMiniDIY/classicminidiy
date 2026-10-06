@@ -43,6 +43,15 @@ describe('Community nav and footer links', () => {
     expect(nav).toMatch(/runtimeConfig\.public\.discourseUrl/);
   });
 
+  it('MainNav links News to the forum News category, not the retired blog', () => {
+    expect(nav).toMatch(
+      /label: t\('navigation\.news'\),[^\n]*to: `\$\{communityUrl\.value\}\/c\/news\/16`, external: true/
+    );
+    expect(nav).not.toContain('news.classicminidiy.com');
+    // A trailing slash on the configured origin never produces `//c/news/16`.
+    expect(nav).toContain(".replace(/\\/+$/, '')");
+  });
+
   it('MainNav has the community label in all ten locales', () => {
     const block = JSON.parse(nav.match(/<i18n lang="json">\n([\s\S]*?)<\/i18n>/)![1]!);
     for (const locale of ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'zh', 'ko']) {

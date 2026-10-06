@@ -99,7 +99,9 @@
 
   /** Classic Mini DIY Community (Discourse). Public runtimeConfig, the same origin the SSO pages use. */
   const runtimeConfig = useRuntimeConfig();
-  const communityUrl = computed(() => runtimeConfig.public.discourseUrl || 'https://community.classicminidiy.com');
+  const communityUrl = computed(() =>
+    (runtimeConfig.public.discourseUrl || 'https://community.classicminidiy.com').replace(/\/+$/, '')
+  );
 
   /** The More dropdown, and the second block of the mobile drawer. */
   const secondaryLinks = computed(() => [
