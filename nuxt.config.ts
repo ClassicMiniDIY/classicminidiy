@@ -828,6 +828,10 @@ export default defineNuxtConfig({
     // fn signs per-recipient /email/unsubscribe links, this side verifies them.
     // Unset = unsubscribe endpoints 503 (never silently accept unsigned links).
     MARKETING_UNSUB_SECRET: process.env.MARKETING_UNSUB_SECRET || '',
+    // Server-side Turnstile check for the newsletter signup (server/utils/turnstile.ts).
+    // RUNTIME-only secret NUXT_TURNSTILE_SECRET_KEY; unset = POST /api/newsletter/subscribe
+    // answers 503 (a public write never runs unverified). login.vue does not use it.
+    turnstile: { secretKey: process.env.NUXT_TURNSTILE_SECRET_KEY || '' },
     // DiscourseConnect shared secret with the forum (POST /api/discourse/sso).
     // Unset = that route answers 503 sso_unconfigured; nothing else depends on it.
     DISCOURSE_CONNECT_SECRET: process.env.DISCOURSE_CONNECT_SECRET || '',

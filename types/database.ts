@@ -2175,6 +2175,48 @@ export type Database = {
           },
         ];
       };
+      mailing_list_subscribers: {
+        Row: {
+          confirm_sent_at: string | null;
+          consent_at: string | null;
+          consent_source: string | null;
+          created_at: string;
+          email: string;
+          id: string;
+          source: string;
+          status: string;
+          unsubscribed_at: string | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          confirm_sent_at?: string | null;
+          consent_at?: string | null;
+          consent_source?: string | null;
+          created_at?: string;
+          email: string;
+          id?: string;
+          source: string;
+          status?: string;
+          unsubscribed_at?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          confirm_sent_at?: string | null;
+          consent_at?: string | null;
+          consent_source?: string | null;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          source?: string;
+          status?: string;
+          unsubscribed_at?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       marketing_email_recipients: {
         Row: {
           email: string;
@@ -6738,6 +6780,20 @@ export type Database = {
       is_watchlisted: {
         Args: { p_listing_id: string; p_user_id: string };
         Returns: boolean;
+      };
+      mailing_list_begin_signup: {
+        Args: { p_cooldown?: string; p_email: string; p_source: string; p_user_id?: string };
+        Returns: {
+          send_confirm: boolean;
+          state: string;
+        }[];
+      };
+      mailing_list_confirm: {
+        Args: { p_email: string; p_user_id?: string };
+        Returns: {
+          cleared_unsubscribe: boolean;
+          status: string;
+        }[];
       };
       mark_messages_as_read: {
         Args: { p_conversation_id: string; p_user_id: string };

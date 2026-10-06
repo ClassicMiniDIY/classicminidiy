@@ -196,6 +196,10 @@ put NUXT_MCP_API_KEYS MCP_API_KEYS OPTIONAL
 # unsubscribe — which is a deliverability obligation, not an optional feature.
 put NUXT_MARKETING_UNSUB_SECRET MARKETING_UNSUB_SECRET
 put NUXT_MARKETING_ADMIN_EMAILS MARKETING_ADMIN_EMAILS
+# Newsletter signup (/newsletter -> POST /api/newsletter/subscribe) verifies
+# Turnstile server-side with this secret (the widget's site key is public and set
+# at build). Unset = the signup route answers 503; nothing else depends on it.
+put NUXT_TURNSTILE_SECRET_KEY TURNSTILE_SECRET_KEY OPTIONAL
 
 # --- Forum (DiscourseConnect) ----------------------------------------------
 # POST /api/discourse/sso signs forum sign-ins with this secret. It must be the

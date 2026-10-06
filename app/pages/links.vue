@@ -30,7 +30,8 @@
       id: 'newsletter',
       label: t('links.newsletter.label'),
       sub: t('links.newsletter.sub'),
-      href: 'https://news.classicminidiy.com/',
+      // The newsletter left Ghost (Ghost retirement Phase 2): double opt-in form here.
+      href: '/newsletter',
       icon: 'fad fa-envelope-open-text',
       btnClass: 'btn-primary',
     },
