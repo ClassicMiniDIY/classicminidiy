@@ -3,7 +3,9 @@
  *
  * Verifies the signed confirm: token, then calls mailing_list_confirm (service
  * role), which subscribes the address and clears ONLY an 'unsubscribe'
- * suppression; bounces, complaints and manual blocks stay. Idempotent.
+ * suppression; bounces, complaints and manual blocks stay. Idempotent. A link
+ * issued before the address's latest unsubscribe answers 'stale' and changes
+ * nothing, so pressing an old email again cannot undo an opt-out.
  */
 import { getServiceClient } from '../../utils/supabase';
 import { unsubConfigured, unsubPage } from '../../utils/marketingUnsub';
@@ -29,7 +31,10 @@ export default defineEventHandler(async (event) => {
     );
   }
 
-  const { error } = await getServiceClient().rpc('mailing_list_confirm', { p_email: check.email });
+  const { data, error } = await getServiceClient().rpc('mailing_list_confirm', {
+    p_email: check.email,
+    p_issued_at: check.issuedAt.toISOString(),
+  });
   if (error) {
     console.error('[email/confirm] mailing_list_confirm failed:', error.message);
     setResponseStatus(event, 500);
@@ -38,6 +43,17 @@ export default defineEventHandler(async (event) => {
       `<h1>Something went wrong</h1>
        <p>We couldn't confirm your subscription. Please try the link again, or email
        <a href="mailto:classicminidiy@gmail.com" style="color:#435231">classicminidiy@gmail.com</a>.</p>`
+    );
+  }
+
+  const status = (Array.isArray(data) ? data[0] : data)?.status;
+  if (status === 'stale') {
+    setResponseStatus(event, 409);
+    return unsubPage(
+      'Link replaced',
+      `<h1>This link is older than your unsubscribe</h1>
+       <p>You unsubscribed after this link was sent, so it no longer works.
+       <a href="/newsletter" style="color:#435231">Sign up again</a> if you want the newsletter back.</p>`
     );
   }
 

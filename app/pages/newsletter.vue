@@ -39,7 +39,11 @@
           </div>
 
           <div class="flex justify-center">
-            <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" :options="{ theme: 'auto' }" />
+            <NuxtTurnstile
+              ref="turnstileRef"
+              v-model="turnstileToken"
+              :options="{ theme: 'auto', action: 'newsletter' }"
+            />
           </div>
 
           <button type="submit" class="btn btn-primary btn-block" :disabled="state === 'sending' || !turnstileToken">

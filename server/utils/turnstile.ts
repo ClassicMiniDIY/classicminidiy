@@ -18,10 +18,15 @@ export function turnstileConfigured(): boolean {
   return turnstileSecret().length > 0;
 }
 
-/** True only when Cloudflare says success. Any network or shape error is false. */
+/**
+ * True only when Cloudflare says success. Any network or shape error is false.
+ * With `expectedAction`, the token must come from a widget rendered with that
+ * action, so a token minted on another form (login shares the site key) fails.
+ */
 export async function verifyTurnstile(
   token: string,
   remoteIp: string | undefined,
+  expectedAction?: string,
   fetcher: typeof fetch = fetch
 ): Promise<boolean> {
   const secret = turnstileSecret();
@@ -31,8 +36,9 @@ export async function verifyTurnstile(
   try {
     const res = await fetcher(SITEVERIFY, { method: 'POST', body: form });
     if (!res.ok) return false;
-    const body = (await res.json()) as { success?: unknown };
-    return body.success === true;
+    const body = (await res.json()) as { success?: unknown; action?: unknown };
+    if (body.success !== true) return false;
+    return expectedAction === undefined || body.action === expectedAction;
   } catch {
     return false;
   }

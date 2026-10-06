@@ -2177,7 +2177,9 @@ export type Database = {
       };
       mailing_list_subscribers: {
         Row: {
+          confirm_count: number;
           confirm_sent_at: string | null;
+          confirm_window_start: string | null;
           consent_at: string | null;
           consent_source: string | null;
           created_at: string;
@@ -2190,7 +2192,9 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
+          confirm_count?: number;
           confirm_sent_at?: string | null;
+          confirm_window_start?: string | null;
           consent_at?: string | null;
           consent_source?: string | null;
           created_at?: string;
@@ -2203,7 +2207,9 @@ export type Database = {
           user_id?: string | null;
         };
         Update: {
+          confirm_count?: number;
           confirm_sent_at?: string | null;
+          confirm_window_start?: string | null;
           consent_at?: string | null;
           consent_source?: string | null;
           created_at?: string;
@@ -6789,12 +6795,13 @@ export type Database = {
         }[];
       };
       mailing_list_confirm: {
-        Args: { p_email: string; p_user_id?: string };
+        Args: { p_email: string; p_issued_at: string; p_user_id?: string };
         Returns: {
           cleared_unsubscribe: boolean;
           status: string;
         }[];
       };
+      mailing_list_unsubscribe: { Args: { p_email: string }; Returns: boolean };
       mark_messages_as_read: {
         Args: { p_conversation_id: string; p_user_id: string };
         Returns: undefined;
