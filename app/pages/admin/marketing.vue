@@ -265,6 +265,10 @@
                 <div class="text-xl font-bold">{{ audience.shopify }}</div>
               </div>
               <div class="stat bg-base-200/50 rounded-lg p-3">
+                <div class="text-xs text-base-content/60">Mailing list</div>
+                <div class="text-xl font-bold">{{ audience.mailing_list ?? 0 }}</div>
+              </div>
+              <div class="stat bg-base-200/50 rounded-lg p-3">
                 <div class="text-xs text-base-content/60">Ghost</div>
                 <div class="text-xl font-bold">{{ audience.ghost }}</div>
               </div>
@@ -368,7 +372,9 @@
                 <td class="text-xs text-base-content/60">
                   <template v-if="record.audience_counts">
                     {{ record.audience_counts.profile }} site &bull; {{ record.audience_counts.shopify }} shopify &bull;
-                    {{ record.audience_counts.ghost }} ghost &bull; {{ record.audience_counts.patreon }} patreon
+                    <template v-if="record.audience_counts.mailing_list != null"
+                      >{{ record.audience_counts.mailing_list }} list &bull; </template
+                    >{{ record.audience_counts.ghost }} ghost &bull; {{ record.audience_counts.patreon }} patreon
                   </template>
                   <template v-else>—</template>
                 </td>
@@ -419,8 +425,8 @@
             >" will be sent to <strong>{{ audience?.total ?? '?' }}</strong> recipients.
           </p>
           <p v-if="audience" class="text-xs text-base-content/50 mt-1 ml-6">
-            {{ audience.profile }} site + {{ audience.shopify }} Shopify + {{ audience.ghost }} Ghost +
-            {{ audience.patreon }} Patreon ({{ audience.suppressed }} suppressed)
+            {{ audience.profile }} site + {{ audience.shopify }} Shopify + {{ audience.mailing_list ?? 0 }} list +
+            {{ audience.ghost }} Ghost + {{ audience.patreon }} Patreon ({{ audience.suppressed }} suppressed)
           </p>
         </div>
         <div v-if="!audience" class="bg-info/10 border border-info/30 rounded-lg p-4 mb-4">

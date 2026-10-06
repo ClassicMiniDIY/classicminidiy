@@ -197,6 +197,7 @@ per-component `<i18n lang="json">` blocks.
 | `ecu-maps.md`           | `/maps`, `server/api/github/**`                              | support table from MiniECUMaps `maps.json`, repo coords, disclaimer                |
 | `push-notifications.md` | push composable + util, `useAuth`, pref page, `sw.ts`        | shared-browser endpoints, sign-out order, no claim on reconcile, push-only SW      |
 | `account-settings.md`   | `/settings`, `/dashboard`, account shell, `LanguageSwitcher` | one language/currency control, `settingsAuth`, permanent 301s, member-or-join wait |
+| `newsletter.md`         | `/newsletter`, `/email/*` routes, Turnstile util, composer   | double opt-in, same answer for every state, GET never writes, `confirm:` token     |
 
 Design docs in `docs/plans/`, runbooks in `docs/runbooks/`. Membership contract:
 `classicminidiy-supabase/docs/plans/2026-06-07-membership-entitlement-contract.md`.

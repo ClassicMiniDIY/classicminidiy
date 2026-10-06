@@ -22,6 +22,8 @@ export type MarketingEmailStatus = 'draft' | 'sending' | 'sent' | 'partial' | 'f
 export interface MarketingAudienceCounts {
   profile: number;
   shopify: number;
+  /** The Supabase mailing list (Ghost retirement Phase 2). Absent on sends before it existed. */
+  mailing_list?: number;
   ghost: number;
   patreon: number;
   suppressed: number;
