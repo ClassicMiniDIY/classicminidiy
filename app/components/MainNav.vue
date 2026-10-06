@@ -106,7 +106,8 @@
     { label: t('navigation.models'), icon: 'fas fa-cube', to: '/models', external: false },
     { label: t('navigation.maps'), icon: 'fas fa-map', to: '/maps', external: false },
     { label: t('navigation.store'), icon: 'fas fa-store', to: 'https://store.classicminidiy.com/', external: true },
-    { label: t('navigation.news'), icon: 'fas fa-pencil', to: 'https://news.classicminidiy.com/', external: true },
+    // The Ghost blog is retired (2026-10-06); its articles live in the forum's News category.
+    { label: t('navigation.news'), icon: 'fas fa-pencil', to: `${communityUrl.value}/c/news/16`, external: true },
     { label: t('navigation.community'), icon: 'fas fa-users', to: communityUrl.value, external: true },
     { label: t('navigation.about'), icon: 'fas fa-circle-info', to: '/about', external: false },
   ]);
