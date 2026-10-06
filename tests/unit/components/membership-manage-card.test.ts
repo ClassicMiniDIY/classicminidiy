@@ -220,106 +220,182 @@ describe('member plan line', () => {
 // Change level (Stripe members): change-membership-plan via the web proxy
 // ---------------------------------------------------------------------------
 describe('change level', () => {
-  function stripeSupabase(plans: Array<string | null>) {
-    const supabase: any = makeSupabaseStub({ platform: 'stripe', plan: plans[0] ?? null });
-    // First answer = the initial load; later answers = the poll after a change.
-    for (const plan of plans)
-      supabase._rpcSingle.mockResolvedValueOnce({ data: { platform: 'stripe', plan }, error: null });
+  const STATUS = { plan: 'base', interval: 'month', monthlyCents: 199, onCurrentPrice: true, blocked: null };
+
+  function stripeSupabase(plan: string | null = 'base') {
+    const supabase: any = makeSupabaseStub({ platform: 'stripe', plan });
     supabase.auth = { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }) };
     return supabase;
   }
 
-  async function mountStripe(supabase: any, fetchImpl: (...args: any[]) => unknown) {
+  /** `status` answers the status call; `change` answers (or throws for) a level change. */
+  async function mountStripe(opts: { plan?: string | null; status?: any; change?: (body: any) => unknown } = {}) {
+    const supabase = stripeSupabase(opts.plan ?? 'base');
     stubEnvironment({ auth: makeAuthStub({ member: true }), supabase });
     vi.stubGlobal('useI18n', () => ({ t: realT, locale: ref('en') }));
-    const fetchMock = vi.fn(fetchImpl);
+    const fetchMock = vi.fn(async (_url: string, init: any) => {
+      if (init.body.action === 'status') {
+        if (opts.status instanceof Error) throw opts.status;
+        return opts.status ?? STATUS;
+      }
+      return opts.change ? opts.change(init.body) : { changed: true, plan: init.body.plan };
+    });
     vi.stubGlobal('$fetch', fetchMock);
     const wrapper = mountCard();
     await flushPromises();
     await nextTick();
-    return { wrapper, fetchMock };
+    return { wrapper, fetchMock, supabase };
   }
+
+  async function choose(wrapper: any, plan: string) {
+    await wrapper.find(`[data-testid="change-level-${plan}"]`).trigger('click');
+    await wrapper.find('[data-testid="change-level-confirm-button"]').trigger('click');
+    await flushPromises();
+  }
+
+  const apiError = (status: number, data: Record<string, unknown>) =>
+    Object.assign(new Error(String(status)), { statusCode: status, data: { data } });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
   it('shows the three levels to a Stripe member, with the current one disabled', async () => {
-    const { wrapper } = await mountStripe(stripeSupabase(['base']), async () => ({}));
-    const picker = wrapper.find('[data-testid="change-level"]');
-    expect(picker.exists()).toBe(true);
+    const { wrapper, fetchMock } = await mountStripe();
+    expect(fetchMock).toHaveBeenCalledWith('/api/membership/change-plan', {
+      method: 'POST',
+      headers: { authorization: 'Bearer tok' },
+      body: { action: 'status' },
+    });
     expect(wrapper.find('[data-testid="change-level-base"]').attributes('disabled')).toBeDefined();
     expect(wrapper.find('[data-testid="change-level-plus"]').attributes('disabled')).toBeUndefined();
     expect(wrapper.find('[data-testid="change-level-pro"]').text()).toContain('Pro · $9.99/month');
-    // The portal sentence that promised plan changes there is gone.
     expect(wrapper.text()).not.toContain('switch plans there');
+  });
+
+  it("marks the Stripe sub's own level, not the highest level across channels", async () => {
+    // comp Pro + Stripe Member: get_my_membership says pro, the Stripe sub is base.
+    const { wrapper } = await mountStripe({ plan: 'pro', status: STATUS });
+    expect(wrapper.find('[data-testid="change-level-base"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.find('[data-testid="change-level-pro"]').attributes('disabled')).toBeUndefined();
+    await wrapper.find('[data-testid="change-level-plus"]').trigger('click');
+    expect(wrapper.find('[data-testid="change-level-confirm"]').text()).toContain('charged the difference');
+  });
+
+  it('hides the picker when the status call fails (function not deployed yet)', async () => {
+    const { wrapper } = await mountStripe({ status: new Error('404') });
+    expect(wrapper.find('[data-testid="change-level"]').exists()).toBe(false);
+  });
+
+  it('a blocked status explains why instead of showing the picker', async () => {
+    const { wrapper } = await mountStripe({ status: { ...STATUS, blocked: 'CANCEL_SCHEDULED' } });
+    expect(wrapper.find('[data-testid="change-level-blocked"]').text()).toContain(
+      'Resume it on the billing page first'
+    );
+    expect(wrapper.find('[data-testid="change-level-plus"]').exists()).toBe(false);
   });
 
   it.each(['apple', 'google', 'patreon', 'youtube', 'comp', null])(
     'platform %s sees no level picker',
     async (platform) => {
       stubEnvironment({ auth: makeAuthStub({ member: true }), supabase: makeSupabaseStub({ platform, plan: 'base' }) });
+      const fetchMock = vi.fn();
+      vi.stubGlobal('$fetch', fetchMock);
       const wrapper = mountCard();
       await flushPromises();
       await nextTick();
       expect(wrapper.find('[data-testid="change-level"]').exists()).toBe(false);
+      expect(fetchMock).not.toHaveBeenCalled();
     }
   );
 
-  it('moving up says the difference is charged today; moving down says it becomes credit', async () => {
-    const { wrapper } = await mountStripe(stripeSupabase(['plus']), async () => ({}));
-    await wrapper.find('[data-testid="change-level-pro"]').trigger('click');
-    const confirmUp = wrapper.find('[data-testid="change-level-confirm"]').text();
+  it('the confirm rule follows the price: up, down, legacy same level, yearly', async () => {
+    const up = await mountStripe({ status: { ...STATUS, plan: 'plus', monthlyCents: 499 } });
+    await up.wrapper.find('[data-testid="change-level-pro"]').trigger('click');
+    const confirmUp = up.wrapper.find('[data-testid="change-level-confirm"]').text();
     expect(confirmUp).toContain('Move to Pro ($9.99 a month, 135 DIY Mini Bot questions a month)?');
-    expect(confirmUp).toContain('You pay the difference');
-    await wrapper.find('[data-testid="change-level-base"]').trigger('click');
-    expect(wrapper.find('[data-testid="change-level-confirm"]').text()).toContain('becomes a credit');
+    expect(confirmUp).toContain('charged the difference');
+    await up.wrapper.find('[data-testid="change-level-base"]').trigger('click');
+    expect(up.wrapper.find('[data-testid="change-level-confirm"]').text()).toContain('becomes a credit');
+
+    // A legacy $8/mo Plus member: Plus stays clickable and moving to $4.99 is a move down.
+    const legacy = await mountStripe({ status: { ...STATUS, plan: 'plus', monthlyCents: 800, onCurrentPrice: false } });
+    const plus = legacy.wrapper.find('[data-testid="change-level-plus"]');
+    expect(plus.attributes('disabled')).toBeUndefined();
+    expect(plus.text()).toContain('Older price');
+    await plus.trigger('click');
+    expect(legacy.wrapper.find('[data-testid="change-level-confirm"]').text()).toContain('becomes a credit');
+
+    const yearly = await mountStripe({
+      status: { ...STATUS, plan: 'plus', interval: 'year', monthlyCents: 667, onCurrentPrice: false },
+    });
+    await yearly.wrapper.find('[data-testid="change-level-pro"]').trigger('click');
+    expect(yearly.wrapper.find('[data-testid="change-level-confirm"]').text()).toContain(
+      'from yearly to monthly payments'
+    );
   });
 
-  it('confirm posts the plan with the access token, then waits for the webhook', async () => {
+  it('confirm posts the plan with the access token, shows done, and refreshes the headline', async () => {
     vi.useFakeTimers();
-    const supabase = stripeSupabase(['base', 'base', 'plus']);
-    const { wrapper, fetchMock } = await mountStripe(supabase, async () => ({ changed: true, plan: 'plus' }));
-    await wrapper.find('[data-testid="change-level-plus"]').trigger('click');
-    await wrapper.find('[data-testid="change-level-confirm-button"]').trigger('click');
-    await flushPromises();
+    const { wrapper, fetchMock, supabase } = await mountStripe();
+    supabase._rpcSingle.mockResolvedValue({ data: { platform: 'stripe', plan: 'plus' }, error: null });
+    await choose(wrapper, 'plus');
     expect(fetchMock).toHaveBeenCalledWith('/api/membership/change-plan', {
       method: 'POST',
       headers: { authorization: 'Bearer tok' },
       body: { plan: 'plus' },
     });
-    await vi.advanceTimersByTimeAsync(2000); // poll 1: still base
-    await vi.advanceTimersByTimeAsync(2000); // poll 2: plus
-    await flushPromises();
     expect(wrapper.find('[data-testid="change-level-done"]').text()).toContain('Your level is now Plus.');
+    await vi.advanceTimersByTimeAsync(3000);
+    await flushPromises();
     expect(wrapper.find('[data-testid="member-title"]').text()).toBe("You're a Sustaining Member · Plus");
   });
 
-  it('PAYMENT_REQUIRED shows the invoice page link', async () => {
-    const err = Object.assign(new Error('402'), {
-      statusCode: 402,
-      data: { data: { code: 'PAYMENT_REQUIRED', invoiceUrl: 'https://invoice.stripe.com/i/acct/x' } },
-    });
-    const { wrapper } = await mountStripe(stripeSupabase(['base']), async () => {
-      throw err;
-    });
-    await wrapper.find('[data-testid="change-level-pro"]').trigger('click');
-    await wrapper.find('[data-testid="change-level-confirm-button"]').trigger('click');
-    await flushPromises();
-    const box = wrapper.find('[data-testid="change-level-payment"]');
-    expect(box.text()).toContain('Your bank needs to confirm the payment');
-    expect(box.find('a').attributes('href')).toBe('https://invoice.stripe.com/i/acct/x');
+  it('changed:false says the member is already on that level', async () => {
+    const { wrapper } = await mountStripe({ change: () => ({ changed: false, plan: 'plus' }) });
+    await choose(wrapper, 'plus');
+    expect(wrapper.find('[data-testid="change-level-already"]').text()).toContain('You are already on Plus.');
   });
 
-  it('CANCEL_SCHEDULED tells the member to resume first', async () => {
-    const err = Object.assign(new Error('409'), { statusCode: 409, data: { data: { code: 'CANCEL_SCHEDULED' } } });
-    const { wrapper } = await mountStripe(stripeSupabase(['base']), async () => {
-      throw err;
+  it('PAYMENT_REQUIRED shows the invoice page link', async () => {
+    const { wrapper } = await mountStripe({
+      change: () => {
+        throw apiError(402, { code: 'PAYMENT_REQUIRED', invoiceUrl: 'https://invoice.stripe.com/i/acct/x' });
+      },
     });
-    await wrapper.find('[data-testid="change-level-plus"]').trigger('click');
-    await wrapper.find('[data-testid="change-level-confirm-button"]').trigger('click');
-    await flushPromises();
-    expect(wrapper.find('[data-testid="change-level-error"]').text()).toContain('Resume it on the billing page first');
+    await choose(wrapper, 'pro');
+    const box = wrapper.find('[data-testid="change-level-payment"]');
+    expect(box.text()).toContain('Pay it within 23 hours');
+    expect(box.find('a').attributes('href')).toBe('https://invoice.stripe.com/i/acct/x');
+    expect(box.find('a').attributes('rel')).toBe('noopener noreferrer');
+  });
+
+  it('PAYMENT_REQUIRED without an invoice link points at the billing page', async () => {
+    const { wrapper } = await mountStripe({
+      change: () => {
+        throw apiError(402, { code: 'PAYMENT_REQUIRED', invoiceUrl: null });
+      },
+    });
+    await choose(wrapper, 'pro');
+    expect(wrapper.find('[data-testid="change-level-payment"]').text()).toContain('Update your payment method');
+  });
+
+  it.each([
+    ['CANCEL_SCHEDULED', 'Resume it on the billing page first'],
+    ['NOT_ACTIVE', 'problem with your payment'],
+    ['PAYMENT_METHOD_UNSUPPORTED', 'needs a card'],
+    ['PLAN_UNAVAILABLE', 'not available yet'],
+    ['OWNER_MISMATCH', 'Contact us'],
+    ['MULTIPLE_SUBSCRIPTIONS', 'Contact us'],
+    ['SOMETHING_NEW', 'Try again'],
+  ])('error %s shows the matching message', async (code, text) => {
+    const { wrapper } = await mountStripe({
+      change: () => {
+        throw apiError(409, { code });
+      },
+    });
+    await choose(wrapper, 'plus');
+    expect(wrapper.find('[data-testid="change-level-error"]').text()).toContain(text);
   });
 
   it('every locale carries every change-level string', () => {

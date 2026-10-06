@@ -40,6 +40,26 @@ describe('POST /api/membership/change-plan', () => {
     });
   });
 
+  it('status: forwards the action and normalizes the answer', async () => {
+    g.readBody.mockResolvedValue({ action: 'status' });
+    fetchMock.mockResolvedValue({
+      plan: 'plus',
+      interval: 'year',
+      monthlyCents: 667,
+      onCurrentPrice: false,
+      blocked: null,
+      extra: 1,
+    });
+    await expect(handler({} as any)).resolves.toEqual({
+      plan: 'plus',
+      interval: 'year',
+      monthlyCents: 667,
+      onCurrentPrice: false,
+      blocked: null,
+    });
+    expect(fetchMock.mock.calls[0][1].body).toEqual({ action: 'status' });
+  });
+
   it('passes the edge code and a Stripe invoice URL through', async () => {
     fetchMock.mockRejectedValue(
       Object.assign(new Error('402'), {
