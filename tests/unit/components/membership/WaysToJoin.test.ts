@@ -75,7 +75,6 @@ describe('WaysToJoin', () => {
     for (const benefit of [
       'The Sustaining Member badge',
       'Members-only Discord',
-      'Members-only blog posts',
       'Early access to videos',
       'Free premium listings on The Mini Exchange',
       'Maintenance sync in the apps',
@@ -83,6 +82,8 @@ describe('WaysToJoin', () => {
     ]) {
       expect(text).toContain(benefit);
     }
+    // Retired 2026-10-06 with the Ghost blog; the articles moved to the public forum.
+    expect(text).not.toMatch(/blog/i);
   });
 
   it('states how each channel links the site account', () => {

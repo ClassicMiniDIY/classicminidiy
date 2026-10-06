@@ -794,10 +794,6 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
       supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_KEY || '',
       mapboxAccessToken: process.env.NUXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '',
-      // Ghost "Pro access to the blog" target for Sustaining Members. Empty
-      // until the Substack -> Ghost migration finalizes the URL (web design
-      // doc open question 3); the /membership member area hides the link when unset.
-      blogUrl: process.env.NUXT_PUBLIC_BLOG_URL || '',
       // Stripe Customer Portal no-code login link for membership self-management.
       // The /membership "Manage membership" button links here (with the member's
       // email pre-filled). Hidden when unset.

@@ -2,9 +2,9 @@
   import { CHAT_QUOTAS, MEMBERSHIP_PLANS } from '~~/shared/utils/chatTiers';
 
   /**
-   * The member-management card: plan and level, Discord status, the members-only
-   * blog, and the platform-aware manage affordance (Stripe portal, App Store /
-   * Google Play, comp, blog, Patreon, YouTube, fallback).
+   * The member-management card: plan and level, Discord status, and the
+   * platform-aware manage affordance (Stripe portal, App Store / Google Play,
+   * comp, Ghost blog account, Patreon, YouTube, fallback).
    *
    * Rendered by /settings/membership for an active member only. /membership is
    * the public sales and checkout page and points members here.
@@ -14,8 +14,6 @@
   const supabase = useSupabase();
   const { track } = useAnalytics();
   const { user } = useAuth();
-
-  const blogUrl = computed(() => (config.public.blogUrl as string) || '');
 
   // Same allowance contract as /membership: the count comes from the shared
   // quota table, so this card never quotes a number the chat does not enforce.
@@ -167,7 +165,7 @@
         }}
       </p>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+      <div class="grid grid-cols-1 gap-4 mt-4">
         <!-- Discord connection status (live via discord_links SELECT-own
              RLS policy, keystone §6.2) -->
         <div class="rounded-box border border-base-300 p-4">
@@ -185,20 +183,6 @@
             {{ t('member.discord_lost_email') }}
             <NuxtLink to="/contact" class="link link-primary">{{ t('member.discord_contact_cta') }}</NuxtLink>
           </p>
-        </div>
-        <!-- Members-only blog posts -->
-        <div class="rounded-box border border-base-300 p-4">
-          <p class="font-semibold"><i class="fas fa-book-open mr-2 text-primary"></i>{{ t('member.blog_title') }}</p>
-          <p class="text-sm opacity-70 mt-1">{{ t('member.blog_desc') }}</p>
-          <a
-            v-if="blogUrl"
-            :href="blogUrl"
-            target="_blank"
-            rel="noopener"
-            class="link link-primary text-sm font-semibold mt-2 inline-block"
-          >
-            {{ t('member.blog_cta') }} <i class="fas fa-arrow-up-right-from-square ml-1 text-xs"></i>
-          </a>
         </div>
       </div>
 
@@ -276,9 +260,6 @@
         "revoked": "Your Discord access was removed. Reactivate your membership to rejoin.",
         "failed": "We hit a snag issuing your Discord invite. Reach out via the contact page and we'll sort it out."
       },
-      "blog_title": "Members-only blog posts",
-      "blog_desc": "Complimentary access to subscriber content on the Classic Mini DIY blog.",
-      "blog_cta": "Open the blog",
       "discord_lost_email": "Lost the invite email?",
       "discord_contact_cta": "Contact us and we'll resend it.",
       "manage": "Manage membership",
@@ -325,9 +306,6 @@
         "revoked": "Se ha retirado tu acceso a Discord. Reactiva tu membresía para volver a entrar.",
         "failed": "Hemos tenido un problema al emitir tu invitación de Discord. Escríbenos desde la página de contacto y lo solucionamos."
       },
-      "blog_title": "Artículos del blog exclusivos para socios",
-      "blog_desc": "Acceso gratuito al contenido para suscriptores del blog de Classic Mini DIY.",
-      "blog_cta": "Abrir el blog",
       "discord_lost_email": "¿Has perdido el correo de invitación?",
       "discord_contact_cta": "Contáctanos y te lo reenviamos.",
       "manage": "Gestionar membresía",
@@ -374,9 +352,6 @@
         "revoked": "Votre accès Discord a été retiré. Réactivez votre adhésion pour revenir.",
         "failed": "Nous avons rencontré un problème en émettant votre invitation Discord. Écrivez-nous via la page de contact et nous réglerons ça."
       },
-      "blog_title": "Articles de blog réservés aux membres",
-      "blog_desc": "Accès offert au contenu réservé aux abonnés du blog Classic Mini DIY.",
-      "blog_cta": "Ouvrir le blog",
       "discord_lost_email": "Vous avez perdu l'e-mail d'invitation ?",
       "discord_contact_cta": "Contactez-nous, nous le renverrons.",
       "manage": "Gérer l'adhésion",
@@ -423,9 +398,6 @@
         "revoked": "Dein Discord-Zugang wurde entfernt. Reaktiviere deine Mitgliedschaft, um wieder beizutreten.",
         "failed": "Beim Ausstellen deiner Discord-Einladung gab es ein Problem. Melde dich über die Kontaktseite und wir klären das."
       },
-      "blog_title": "Blogbeiträge nur für Mitglieder",
-      "blog_desc": "Kostenloser Zugang zu den Abonnenteninhalten im Classic-Mini-DIY-Blog.",
-      "blog_cta": "Blog öffnen",
       "discord_lost_email": "Einladungs-E-Mail verloren?",
       "discord_contact_cta": "Kontaktiere uns, wir senden sie erneut.",
       "manage": "Mitgliedschaft verwalten",
@@ -472,9 +444,6 @@
         "revoked": "Il tuo accesso a Discord è stato rimosso. Riattiva l'iscrizione per rientrare.",
         "failed": "Abbiamo avuto un problema nell'emettere il tuo invito a Discord. Scrivici dalla pagina dei contatti e sistemiamo tutto."
       },
-      "blog_title": "Articoli del blog riservati ai soci",
-      "blog_desc": "Accesso gratuito ai contenuti riservati agli abbonati del blog Classic Mini DIY.",
-      "blog_cta": "Apri il blog",
       "discord_lost_email": "Hai perso l'email di invito?",
       "discord_contact_cta": "Contattaci e te la rinviamo.",
       "manage": "Gestisci l'iscrizione",
@@ -521,9 +490,6 @@
         "revoked": "O seu acesso ao Discord foi removido. Reative a adesão para voltar a entrar.",
         "failed": "Tivemos um problema ao emitir o seu convite do Discord. Contacte-nos pela página de contacto e resolvemos."
       },
-      "blog_title": "Artigos do blogue exclusivos para membros",
-      "blog_desc": "Acesso gratuito aos conteúdos para subscritores do blogue Classic Mini DIY.",
-      "blog_cta": "Abrir o blogue",
       "discord_lost_email": "Perdeu o email do convite?",
       "discord_contact_cta": "Contacte-nos e reenviamos.",
       "manage": "Gerir adesão",
@@ -570,9 +536,6 @@
         "revoked": "Доступ к Discord был отозван. Возобновите участие, чтобы вернуться.",
         "failed": "При выпуске приглашения в Discord возникла проблема. Напишите нам через страницу контактов, и мы всё решим."
       },
-      "blog_title": "Записи блога только для участников",
-      "blog_desc": "Бесплатный доступ к материалам для подписчиков блога Classic Mini DIY.",
-      "blog_cta": "Открыть блог",
       "discord_lost_email": "Потеряли письмо с приглашением?",
       "discord_contact_cta": "Свяжитесь с нами, и мы отправим его снова.",
       "manage": "Управление участием",
@@ -619,9 +582,6 @@
         "revoked": "Discord へのアクセスが解除されました。再参加するにはメンバーシップを再開してください。",
         "failed": "Discord の招待の発行で問題が発生しました。お問い合わせページからご連絡ください。こちらで対応します。"
       },
-      "blog_title": "メンバー限定のブログ記事",
-      "blog_desc": "Classic Mini DIY ブログの購読者向けコンテンツを無料でご利用いただけます。",
-      "blog_cta": "ブログを開く",
       "discord_lost_email": "招待メールが見つかりませんか?",
       "discord_contact_cta": "お問い合わせいただければ再送します。",
       "manage": "メンバーシップの管理",
@@ -668,9 +628,6 @@
         "revoked": "你的 Discord 访问权限已被移除。重新启用会员资格即可再次加入。",
         "failed": "发放你的 Discord 邀请时出了点问题。请通过联系页面告诉我们,我们会帮你处理。"
       },
-      "blog_title": "会员专属博客文章",
-      "blog_desc": "免费阅读 Classic Mini DIY 博客的订阅者内容。",
-      "blog_cta": "打开博客",
       "discord_lost_email": "找不到邀请邮件?",
       "discord_contact_cta": "联系我们,我们会重新发送。",
       "manage": "管理会员资格",
@@ -717,9 +674,6 @@
         "revoked": "Discord 접근 권한이 해제되었습니다. 다시 참여하시려면 멤버십을 재개해 주세요.",
         "failed": "Discord 초대를 발급하는 중 문제가 있었습니다. 문의 페이지로 연락 주시면 처리해 드리겠습니다."
       },
-      "blog_title": "멤버 전용 블로그 글",
-      "blog_desc": "Classic Mini DIY 블로그의 구독자 전용 콘텐츠를 무료로 이용하실 수 있습니다.",
-      "blog_cta": "블로그 열기",
       "discord_lost_email": "초대 이메일을 못 찾으셨나요?",
       "discord_contact_cta": "문의해 주시면 다시 보내 드리겠습니다.",
       "manage": "멤버십 관리",

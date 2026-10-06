@@ -162,7 +162,7 @@ describe('member view copy', () => {
   });
 
   it.each(['stripe', 'apple', 'google', 'ghost', 'patreon', 'youtube', 'comp', null])(
-    'platform %s: no "tip jar", no "Ghost", no "Stripe", and the new blog wording',
+    'platform %s: no "tip jar", no "Ghost", no "Stripe", and no blog benefit',
     async (platform) => {
       const wrapper = await mountMember({ platform, plan: 'plus' });
       const text = wrapper.text();
@@ -170,7 +170,9 @@ describe('member view copy', () => {
       expect(text).not.toContain('Ghost');
       expect(text).not.toContain('Stripe');
       expect(text).not.toContain('Pro access to the blog');
-      expect(text).toContain('Members-only blog posts');
+      // The members-only blog benefit was retired 2026-10-06 with the Ghost blog.
+      expect(text).not.toContain('Members-only blog posts');
+      expect(text).not.toContain('Open the blog');
     }
   );
 
