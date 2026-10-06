@@ -13,6 +13,24 @@ export default defineEventHandler((event) => {
   setHeader(event, 'X-Robots-Tag', 'noindex');
   setHeader(event, 'Content-Type', 'text/html; charset=utf-8');
 
+  const query = getQuery(event);
+
+  // An unsubscribe link in an old Ghost newsletter email. news.classicminidiy.com
+  // redirects /unsubscribe* here (Cloudflare rule, Ghost retirement Phase 6). Ghost's
+  // link names a Ghost member we cannot map to an address, so explain instead of
+  // answering "invalid link".
+  if (query.from === 'news' && !query.e) {
+    return unsubPage(
+      'Old blog newsletter',
+      `<h1>The old blog newsletter has stopped</h1>
+       <p>We no longer send email from the old Classic Mini DIY blog. Its articles now live on
+       <a href="https://community.classicminidiy.com/c/news/16" style="color:#435231">the community forum</a>.</p>
+       <p>To stop Classic Mini DIY emails, use the unsubscribe link at the bottom of any email
+       we send you, or email
+       <a href="mailto:classicminidiy@gmail.com" style="color:#435231">classicminidiy@gmail.com</a>.</p>`
+    );
+  }
+
   if (!unsubConfigured()) {
     setResponseStatus(event, 503);
     return unsubPage(
@@ -23,7 +41,6 @@ export default defineEventHandler((event) => {
     );
   }
 
-  const query = getQuery(event);
   const email = verifyUnsubToken(query.e, query.t);
   if (!email) {
     setResponseStatus(event, 400);
