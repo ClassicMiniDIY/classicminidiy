@@ -36,7 +36,7 @@ never remove those redirects.
 
 ## Stack
 
-- **Nuxt `~4.5.2`** (Vue 3.5, `<script setup>`, TypeScript strict), Node 26+, **Bun**.
+- **Nuxt `~4.6.1`** (Vue 3.5, `<script setup>`, TypeScript strict), Node 26+, **Bun**.
 - **daisyUI 5** as a Tailwind 4 plugin (`@plugin "daisyui"` in `app/assets/css/main.css`).
   `@nuxt/ui` is NOT installed; `<U*>` components do not exist. `@nuxt/ui` and `@nuxt/icon`
   on disk are transitive deps of the SEO devtools layer and prove nothing.

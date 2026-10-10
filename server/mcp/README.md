@@ -402,7 +402,10 @@ runs in CI as a pre-deploy gate. It has to be a real worker: mcp-toolkit picks i
 transport provider at **build time** from the Nitro preset, so a Nuxt/Vitest e2e
 test would exercise the Node provider while production runs the Cloudflare one.
 Issue #721 was a fault in exactly that provider — every authenticated call 500'd
-while the whole unit suite stayed green.
+while the whole unit suite stayed green. Since mcp-toolkit 0.23 the Cloudflare
+provider calls `agents`' `createLegacyMcpHandler` directly instead of going through
+the `createMcpHandler` compat shim, which is the change #721's investigation tried
+as a local patch and dropped.
 
 Set `SUPABASE_SERVICE_KEY` to include the two archive tools; without it they are
 skipped rather than failed.

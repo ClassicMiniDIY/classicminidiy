@@ -112,7 +112,7 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
 
 #### Intentional dependency pins (do not blindly bump)
 
-- **`nuxt` is on `~4.5.2`. The 4.4.8 hold is LIFTED — do not reinstate it.** It was held
+- **`nuxt` is on `~4.6.1`. The 4.4.8 hold is LIFTED — do not reinstate it.** It was held
   because Nuxt 4.5's head-pipeline change broke `nuxt-schema-org` (via `@nuxtjs/seo`): every
   SSR request threw `unhandledRejection ... reading 'resolveGraph'/'push'` and ALL schema.org
   JSON-LD rendered as an EMPTY `<script type="application/ld+json">`, silently killing the GEO
@@ -120,7 +120,8 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   longer reproduces on nuxt 4.5.2 with the current `@nuxtjs/seo`: a built page carries a full
   `@graph`, and `/chat` renders two non-empty blocks. **If you touch the nuxt or `@nuxtjs/seo`
   version, re-verify JSON-LD is non-empty on a BUILT page** — that check is the whole reason
-  this note exists, and an empty `ld+json` is silent.
+  this note exists, and an empty `ld+json` is silent. Re-verified on the 4.6.1 upgrade
+  (2026-10-10): prerendered and SSR pages all carry a non-empty `@graph`.
 
   The other 4.5 breakages are fixed in-tree, not worked around: rolldown-vite requires
   function-form `manualChunks` + `cssMinify: 'esbuild'` (lightningcss chokes on daisyUI
@@ -155,8 +156,13 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   default from `vitest.config.ts`. happy-dom 20.14.0 is still affected; recheck before
   "simplifying" the env back. The exact pin (no `^`) is deliberate: a DOMPurify bump is a security
   change and should be a visible, tested commit, not a silent range resolution.
-- **`@takumi-rs/core` AND `@takumi-rs/wasm` stay on 1.x, at the same version.** 2.x breaks
-  branded OG image rendering. They are a pair: `core` is the native binding used by the Node
+- **`@takumi-rs/core` AND `@takumi-rs/wasm` stay on 1.x, at the same version.** The hold
+  was set when nuxt-og-image's peer range was `^1`; since 6.10 it accepts `^2`, and 2.14
+  builds and renders every card (checked 2026-10-10 against the 1.x output, 13 cards).
+  The one visible change: `ModelCard`/`ArchiveCard` ask for `font-weight: 800`, but only
+  Inter 400 and 700 are bundled (`_og-static-fonts/`). 1.x synthesises the missing weight
+  (the heavy headline in production); 2.x falls back to true 700, so the title and price
+  render lighter. Moving to 2.x is a brand decision, not a compatibility one. They are a pair: `core` is the native binding used by the Node
   and Vercel builds, `wasm` is the one the **Cloudflare Workers** preset needs, because a
   native module cannot be bundled into a worker. `wasm` was missing entirely until 2026-08-26
   — declared nowhere, installed nowhere — so `NITRO_PRESET=cloudflare_module` died at the
@@ -164,7 +170,7 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
 not allowed!`. It surfaced only when CI first got far enough to reach bundling; before that
   the build failed earlier, on the sitemap sources. Keep both on the same version — bumping
   one alone is untested.
-- **`@types/node` stays on 25.x** while `engines.node` is `^24` (26.x types target Node 26 APIs).
+- **`@types/node` tracks `engines.node`** (`^26`, so 26.x).
 
 ## Two gates that reported success while checking nothing (2026-09-06)
 
@@ -174,7 +180,7 @@ recognising: **the tool did not run, and the harness read that as a pass.**
 ### `typescript` 7 breaks `vue-tsc`, and the typecheck gate called it an improvement
 
 TypeScript 7 is the native (Go) port and no longer exports
-`typescript/lib/tsc`. `vue-tsc` 3.3.11 resolves exactly that path, so it dies
+`typescript/lib/tsc`. `vue-tsc` 3.3.11 (and 3.3.12, re-checked 2026-10-10) resolves exactly that path, so it dies
 with `ERR_PACKAGE_PATH_NOT_EXPORTED` before checking a single file.
 
 `scripts/typecheck.mjs` counts lines matching `error TS\d+:`. A crashed checker
