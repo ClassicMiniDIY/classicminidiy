@@ -35,8 +35,8 @@ import { requireAdminAuth } from '../../../utils/adminAuth';
  *   - `user_id` — reassigning a listing steals or dumps ownership, and takes
  *     its trust credit with it.
  *   - `payment_status`, `paid_amount`, `stripe_*` — Stripe's webhook owns those.
- *   - `featured_until`, `promoted_on_social*`, `email_blast_sent` — worker
- *     bookkeeping; hand-editing them re-promotes or silently un-promotes.
+ *   - `promoted_on_social*`, `email_blast_sent` — worker bookkeeping;
+ *     hand-editing them re-promotes or silently un-promotes.
  *   - `id`, `slug`, `created_at`, `published_at` — identity and timeline.
  *     (`slug` IS rewritten here, but only as a derived consequence of a title
  *     change, never from client input.)

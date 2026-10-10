@@ -61,7 +61,7 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
 - **Listing owner columns and relist (2026-10-03).** A seller session may write
   the content of its own listing, and nothing that is money, a perk, a ranking
   key or ownership: `tier` (except while the listing is a never-approved draft,
-  which is the wizard choosing a plan), `featured_until`, `promoted_on_social`,
+  which is the wizard choosing a plan), `promoted_on_social`,
   `promoted_on_social_at`, the payment columns, `created_at`, `published_at` and
   `user_id`. The database is the boundary and refuses such a write with `42501`
   (from `classicminidiy-supabase` migration `20261003000002`); the mechanism is
@@ -89,8 +89,8 @@ Moved verbatim out of `CLAUDE.md` on 2026-09-02 to keep the per-session context 
   this, every reader required a future `featured_until`, the window was 30 days
   from payment, and it started while the listing still waited in moderation; on
   2026-10-03 no active premium listing was featured anywhere on the site.
-  `featured_until` is deprecated: no web path reads or writes it, and the column
-  is dropped later in its own migration. A relist never writes
+  `featured_until` is dropped (`classicminidiy-supabase` migration
+  `20261017000001`), and no web path reads or writes a featured end date. A relist never writes
   `promoted_on_social` or `promoted_on_social_at`; this reverses the 30-day
   re-queue of #922 ("never repost on socials unless they buy a totally new
   listing"). A new post needs a new listing. The admin tier route writes `tier`

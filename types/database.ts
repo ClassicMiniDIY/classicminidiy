@@ -1771,7 +1771,6 @@ export type Database = {
           estimated_delivery_days_min: number | null;
           exhaust_type: Database['public']['Enums']['exhaust_type_enum'] | null;
           factory_options: string[] | null;
-          featured_until: string | null;
           final_price: number | null;
           fits_models: string[] | null;
           formatted_address: string | null;
@@ -1880,7 +1879,6 @@ export type Database = {
           estimated_delivery_days_min?: number | null;
           exhaust_type?: Database['public']['Enums']['exhaust_type_enum'] | null;
           factory_options?: string[] | null;
-          featured_until?: string | null;
           final_price?: number | null;
           fits_models?: string[] | null;
           formatted_address?: string | null;
@@ -1989,7 +1987,6 @@ export type Database = {
           estimated_delivery_days_min?: number | null;
           exhaust_type?: Database['public']['Enums']['exhaust_type_enum'] | null;
           factory_options?: string[] | null;
-          featured_until?: string | null;
           final_price?: number | null;
           fits_models?: string[] | null;
           formatted_address?: string | null;

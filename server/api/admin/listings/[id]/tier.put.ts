@@ -62,8 +62,7 @@ export default defineEventHandler(async (event) => {
   if (listing.tier === tier) return { success: true, tier, unchanged: true };
 
   // `tier` only. Featured = premium and live (isListingFeatured()), with no end
-  // date, so there is no featured_until to move with the tier; the column is
-  // deprecated and nothing reads it.
+  // date, so there is no featured end date to move with the tier.
   const { error: upErr } = await db.from('listings').update({ tier }).eq('id', id);
   if (upErr) throw createError({ statusCode: 500, statusMessage: upErr.message });
 
