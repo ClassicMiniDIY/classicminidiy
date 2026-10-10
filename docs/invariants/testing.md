@@ -160,17 +160,25 @@ terminated due to reaching memory limit: JS heap out of memory`, after which
   was set when nuxt-og-image's peer range was `^1`; since 6.10 it accepts `^2`, and 2.14
   builds and renders every card (checked 2026-10-10 against the 1.x output, 13 cards).
   The one visible change: `ModelCard`/`ArchiveCard` ask for `font-weight: 800`, but only
-  Inter 400 and 700 are bundled (`_og-static-fonts/`). 1.x synthesises the missing weight
-  (the heavy headline in production); 2.x falls back to true 700, so the title and price
-  render lighter. Moving to 2.x is a brand decision, not a compatibility one. They are a pair: `core` is the native binding used by the Node
-  and Vercel builds, `wasm` is the one the **Cloudflare Workers** preset needs, because a
+  Inter 400 and 700 are bundled (nuxt-og-image build output, `/_og-static-fonts/`).
+  1.x synthesises the missing weight (the heavy headline in production); 2.x falls back to true 700, so the title and price
+  render lighter. Moving to 2.x is a brand decision, not a compatibility one.
+
+  They are a pair: `core` is the native binding for Node runtimes, `wasm` is the one the **Cloudflare Workers** preset needs, because a
   native module cannot be bundled into a worker. `wasm` was missing entirely until 2026-08-26
   — declared nowhere, installed nowhere — so `NITRO_PRESET=cloudflare_module` died at the
   Nitro bundling step with `Cannot resolve "@takumi-rs/wasm/no-bundler" ... and externals are
 not allowed!`. It surfaced only when CI first got far enough to reach bundling; before that
   the build failed earlier, on the sitemap sources. Keep both on the same version — bumping
   one alone is untested.
+
 - **`@types/node` tracks `engines.node`** (`^26`, so 26.x).
+- **`agents` and `@nuxtjs/mcp-toolkit` disagree on `@modelcontextprotocol/sdk`.** `agents`
+  0.28 declares an exact peer of `1.30.0`; mcp-toolkit 0.24 needs `^1.32.0`, so the tree
+  carries 1.32.1. The Cloudflare provider runs `agents`' `createLegacyMcpHandler`, which
+  imports the SDK's protocol versions and JSON-RPC schemas, so an SDK change can break
+  `/mcp` on Workers only. `scripts/test-mcp-transport.sh` is what covers it. On the next
+  bump of either package, check whether the two ranges agree again.
 
 ## Two gates that reported success while checking nothing (2026-09-06)
 
