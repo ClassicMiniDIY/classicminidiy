@@ -73,7 +73,11 @@ const BASELINE = {
   // rather than re-declaring them.
   // 57 -> 56. The admin tier route narrows the body's `tier` with a type guard
   // (`isTier`), so the update no longer passes a bare string as the tier enum.
-  'server/': 56,
+  // 56 -> 43. Nuxt 4.6 stopped hoisting h3/Nitro types into the app. Eight
+  // were TS2321 "Excessive stack depth" in newsletter/preview.get.ts from the
+  // old route-matching `$fetch` types; five were h3/Nitro signature mismatches
+  // in mcp-auth.ts, rate-limit.ts and mcp-tiering.ts. No source change.
+  'server/': 43,
   'scripts/': 0,
   'data/': 1,
 };

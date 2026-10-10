@@ -39,16 +39,16 @@
     "test:reference-live": "REFERENCE_SOURCE=snapshot vitest run tests/static/reference-nouns.test.ts tests/static/torque-unit-consistency.test.ts tests/unit/data/needles-data-integrity.test.ts tests/unit/server/utils/directAnswers.test.ts tests/unit/utils/generate-faqs.test.ts tests/unit/server/mcp/reference-tools.test.ts tests/unit/server/mcp/needle-compare.test.ts"
   },
   "overrides": {
-    "vue": "3.5.42",
-    "@vue/compiler-core": "3.5.42",
-    "@vue/compiler-dom": "3.5.42",
-    "@vue/compiler-sfc": "3.5.42",
-    "@vue/compiler-ssr": "3.5.42",
-    "@vue/reactivity": "3.5.42",
-    "@vue/runtime-core": "3.5.42",
-    "@vue/runtime-dom": "3.5.42",
-    "@vue/server-renderer": "3.5.42",
-    "@vue/shared": "3.5.42"
+    "vue": "3.5.43",
+    "@vue/compiler-core": "3.5.43",
+    "@vue/compiler-dom": "3.5.43",
+    "@vue/compiler-sfc": "3.5.43",
+    "@vue/compiler-ssr": "3.5.43",
+    "@vue/reactivity": "3.5.43",
+    "@vue/runtime-core": "3.5.43",
+    "@vue/runtime-dom": "3.5.43",
+    "@vue/server-renderer": "3.5.43",
+    "@vue/shared": "3.5.43"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.49",
@@ -117,7 +117,7 @@
     "happy-dom": "^20.14.6",
     "jsdom": "^30.1.2",
     "lodash": "^4.18.1",
-    "nuxt": "~4.5.2",
+    "nuxt": "~4.6.1",
     "nuxt-compress": "^5.0.0",
     "nuxt-delay-hydration": "^1.3.8",
     "patch-package": "^8.0.1",
@@ -125,7 +125,7 @@
     "sass-loader": "^17.0.1",
     "typescript": "6.0.3",
     "vitest": "^5.0.3",
-    "vue-tsc": "3.3.11"
+    "vue-tsc": "3.3.12"
   },
   "trustedDependencies": [
     "@parcel/watcher"
